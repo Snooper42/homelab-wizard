@@ -1,11 +1,14 @@
 import SwiftUI
 
-/// Backups: a card with a ring of the copies that are fresh, when the last
-/// backup ran and where to, and Back Up Now and Test a Restore; then
-/// where they go, the restore tests, the vault, Duplicati's jobs, and each
-/// app's copy.
+/// Backups, as the owner picked it (Nov 12): a card with a ring of the
+/// copies that are fresh, when the last backup ran and where to, and Back
+/// Up Now and Test a Restore; three tiles for the restore test, the
+/// password export and the second copy; the copies that need a look; the
+/// fresh ones folded to a row of logos; and the rest one tap down (More).
 struct BackupsView: View {
     let backups: BackupsViewModel
+    /// The fresh copies, opened from their row of logos. Kept like Status's folds.
+    @SceneStorage("backupsFreshOpen") private var freshOpen = false
 
     var body: some View {
         Form {
@@ -14,26 +17,22 @@ struct BackupsView: View {
                     BackupsHero(overview: overview)
                         .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
                         .listRowBackground(Color.clear)
-                } footer: {
-                    Text("A restore test restores the newest backup somewhere apart and checks it. Your apps aren't touched.")
+                    BackupTiles(tiles: overview.tiles())
+                        .listRowInsets(EdgeInsets(top: 6, leading: 0, bottom: 4, trailing: 0))
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
                 }
-                summary(overview)
-                restore(overview)
-                vault(overview)
-            } else {
-                if let error = backups.overviewError {
+                warnings(overview)
+                if !overview.needingALook.isEmpty {
                     Section {
-                        Label(error, systemImage: "exclamationmark.triangle").foregroundStyle(Theme.warning)
+                        ForEach(overview.needingALook) { copy in
+                            CopyRow(copy: copy)
+                        }
+                    } header: {
+                        CountHeader(title: "Needs a Look", count: overview.needingALook.count, tint: Theme.warning)
                     }
                 }
-                Section {
-                    TaskButton(task: .backup)
-                    TaskButton(task: .restoreTest)
-                }
-            }
-            jobs
-            if let overview = backups.overview {
-                ForEach(overview.copyGroups) { group in
+                ForEach(overview.waitingGroups) { group in
                     Section {
                         ForEach(group.copies) { copy in
                             CopyRow(copy: copy)
@@ -44,6 +43,44 @@ struct BackupsView: View {
                         if let note = group.note { Text(note) }
                     }
                 }
+                if !overview.freshCopies.isEmpty {
+                    Section {
+                        if freshOpen {
+                            ForEach(overview.freshCopies) { copy in
+                                CopyRow(copy: copy)
+                            }
+                        } else {
+                            FoldedCopies(copies: overview.freshCopies) { freshOpen = true }
+                        }
+                    } header: {
+                        Button {
+                            withAnimation(.snappy) { freshOpen.toggle() }
+                        } label: {
+                            HStack(spacing: 6) {
+                                Image(systemName: "chevron.right")
+                                    .font(.caption.weight(.semibold))
+                                    .foregroundStyle(.secondary)
+                                    .rotationEffect(.degrees(freshOpen ? 90 : 0))
+                                CountHeader(title: "Up to Date", count: overview.freshCopies.count, tint: .secondary)
+                            }
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityValue(freshOpen ? "Open" : "Folded")
+                    }
+                }
+                more(overview)
+            } else {
+                if let error = backups.overviewError {
+                    Section {
+                        Label(error, systemImage: "exclamationmark.triangle").foregroundStyle(Theme.warning)
+                    }
+                }
+                Section {
+                    TaskButton(task: .backup)
+                    TaskButton(task: .restoreTest)
+                }
+                jobs
             }
         }
         .formStyle(.grouped)
@@ -58,19 +95,72 @@ struct BackupsView: View {
         .navigationTitle("Backups")
     }
 
+    /// What can't wait for More: unencrypted password exports lying around,
+    /// and backups on the same disk as the data.
+    @ViewBuilder
+    private func warnings(_ o: BackupOverview) -> some View {
+        if !o.plainExports.isEmpty || !o.destinationOK {
+            Section {
+                if !o.plainExports.isEmpty {
+                    Label("Unencrypted password exports are lying in recovery-staging. Delete them on the computer.", systemImage: "exclamationmark.lock.fill")
+                        .foregroundStyle(Theme.danger)
+                }
+                if !o.destinationOK {
+                    Label("The backups are on the same disk as the data. Choose another drive on the computer, under Backups.", systemImage: "exclamationmark.triangle")
+                        .foregroundStyle(Theme.warning)
+                }
+            }
+        }
+    }
+
+    /// The detail, one tap down: Duplicati's jobs, the restore tests, where
+    /// the backups go, and the password export.
+    private func more(_ o: BackupOverview) -> some View {
+        Section("More") {
+            NavigationLink {
+                page("Duplicati") { jobs }
+            } label: {
+                IconTileLabel(title: "Duplicati’s jobs", systemImage: "shippingbox.fill", tint: TileColour.indigo) {
+                    if let jobs = backups.jobs { Text("\(jobs.count)") }
+                }
+            }
+            NavigationLink {
+                page("Restore Tests") { restore(o) }
+            } label: {
+                IconTileLabel(title: "Restore tests", systemImage: "arrow.counterclockwise", tint: TileColour.grey) {
+                    if let tested = o.restoreTest.lastTest { Text(tested, format: .relative(presentation: .named)) }
+                }
+            }
+            NavigationLink {
+                page("Where They Go") { summary(o) }
+            } label: {
+                IconTileLabel(title: "Where they go", systemImage: "externaldrive.fill", tint: TileColour.blue) {
+                    Text(verbatim: BackupOverview.placeName(o.destination)).lineLimit(1)
+                }
+            }
+            NavigationLink {
+                page("Password Export") { vault(o) }
+            } label: {
+                IconTileLabel(title: "Password export", systemImage: "key.horizontal.fill", tint: TileColour.orange) { EmptyView() }
+            }
+        }
+    }
+
+    /// A page of More, on the same canvas as Backups.
+    private func page(_ title: String, @ViewBuilder _ content: () -> some View) -> some View {
+        Form { content() }
+            .formStyle(.grouped)
+            .themedCanvas()
+            .navigationTitle(title)
+            #if os(iOS)
+            .navigationBarTitleDisplayMode(.inline)
+            #endif
+    }
+
     // MARK: Sections
 
     private func summary(_ o: BackupOverview) -> some View {
         Section {
-            if o.shrank > 0 {
-                Label(o.shrank == 1 ? "1 copy is less than half the night before's" : "\(o.shrank) copies are less than half the night before's",
-                      systemImage: "exclamationmark.triangle.fill")
-                    .foregroundStyle(Theme.danger)
-            }
-            if o.paused > 0 {
-                Label("\(o.paused) waiting for a drive", systemImage: "externaldrive.badge.timemachine")
-                    .foregroundStyle(.secondary)
-            }
             // The settings file (.env) goes with the nightly backup, as the computer says.
             LabeledContent("Settings file") {
                 if let copied = o.envCopied {
@@ -103,7 +193,7 @@ struct BackupsView: View {
     }
 
     private func restore(_ o: BackupOverview) -> some View {
-        Section("Restore Tests") {
+        Section {
             if let failed = o.restoreTest.failedSince {
                 Label("Failed \(failed.when.formatted(.relative(presentation: .named))): \(failed.summary)", systemImage: "xmark.octagon.fill")
                     .foregroundStyle(Theme.danger)
@@ -166,6 +256,8 @@ struct BackupsView: View {
                 }
                 .font(.callout)
             }
+        } footer: {
+            Text("A restore test restores the newest backup somewhere apart and checks it. Your apps aren't touched.")
         }
     }
 
@@ -467,5 +559,131 @@ private struct CopyRow: View {
         case "stale": Theme.warning
         default: .secondary
         }
+    }
+}
+
+/// The three tiles under the top card: the restore test, the password
+/// export, and the second copy (or the settings file), each a word or two
+/// in its colour. Side by side; one under another at the largest text sizes.
+private struct BackupTiles: View {
+    let tiles: [BackupOverview.Tile]
+    @Environment(\.dynamicTypeSize) private var typeSize
+
+    var body: some View {
+        let layout = typeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(spacing: 10))
+            : AnyLayout(HStackLayout(alignment: .top, spacing: 10))
+        layout {
+            ForEach(tiles) { tile in
+                TileView(tile: tile)
+            }
+        }
+    }
+
+    private struct TileView: View {
+        let tile: BackupOverview.Tile
+
+        var body: some View {
+            VStack(alignment: .leading, spacing: 5) {
+                Image(systemName: symbol)
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(tint)
+                    .frame(width: 28, height: 28)
+                    .background(tint.opacity(0.14), in: RoundedRectangle(cornerRadius: 7, style: .continuous))
+                    .accessibilityHidden(true)
+                Text(verbatim: tile.title)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(Theme.secondaryInk)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.85)
+                Text(verbatim: tile.value)
+                    .font(.subheadline.weight(.bold))
+                    .foregroundStyle(tile.tone == .good ? Theme.ink : tint)
+                    .lineLimit(2)
+                if let detail = tile.detail {
+                    Text(verbatim: detail)
+                        .font(.caption)
+                        .foregroundStyle(Theme.secondaryInk)
+                        .lineLimit(2)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(12)
+            .card(radius: 16)
+            .accessibilityElement(children: .combine)
+        }
+
+        private var tint: Color {
+            switch tile.tone {
+            case .good: tile.kind == .second ? Theme.info : Theme.success
+            case .warn: Theme.warning
+            case .bad: Theme.danger
+            }
+        }
+
+        private var symbol: String {
+            switch tile.kind {
+            case .restore: tile.tone == .bad ? "xmark" : tile.tone == .good ? "checkmark" : "clock"
+            case .vault: "lock.fill"
+            case .second: "square.stack.fill"
+            case .settingsFile: "doc.text.fill"
+            }
+        }
+    }
+}
+
+/// A section's name and how many are in it, as Status's group headers.
+private struct CountHeader: View {
+    let title: String
+    let count: Int
+    let tint: Color
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Text(verbatim: title)
+            Text("\(count)").pill(tint)
+        }
+        .textCase(nil)
+    }
+}
+
+/// The fresh copies, folded: their apps' logos in a row and their names
+/// under them, as a folded Status group shows its apps. A tap opens them.
+private struct FoldedCopies: View {
+    let copies: [BackupCopy]
+    let open: @MainActor () -> Void
+    @ScaledMetric(relativeTo: .body) private var logo: CGFloat = 30
+    private let shown = 6
+
+    var body: some View {
+        Button(action: open) {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(spacing: 8) {
+                    ForEach(copies.prefix(shown)) { copy in
+                        AppLogo(id: copy.app, size: min(logo, 44))
+                    }
+                    if copies.count > shown {
+                        Text(verbatim: "+\(copies.count - shown)")
+                            .font(.caption.weight(.semibold))
+                            .monospacedDigit()
+                            .foregroundStyle(.secondary)
+                            .frame(width: min(logo, 44), height: min(logo, 44))
+                            .background(Theme.canvas, in: RoundedRectangle(cornerRadius: min(logo, 44) * 0.22, style: .continuous))
+                    }
+                    Spacer(minLength: 0)
+                }
+                Text(verbatim: copies.map(\.name).joined(separator: ", "))
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
+            }
+            .padding(.vertical, 4)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(verbatim: "Up to date: " + copies.map(\.name).joined(separator: ", ")))
+        .accessibilityHint("Shows each copy")
     }
 }
