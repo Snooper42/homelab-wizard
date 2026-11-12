@@ -70,7 +70,9 @@ You are working on homelab-wizard (github.com/Snooper42/homelab-wizard) with its
 | #613 | The security session's N49 |
 | #614 | **Gap 6:** Settings on the phone's page (`phoneSettings`; read-only where it only looks, none on a wall screen); the hand-off after 2A |
 
-**In flight:** Tidy Up's look, L4 (2B step 3): cards in a row one height, as Finances' (the `#tidyRoot .tidybody .fx-board { align-items:start }` rule from #485 is gone, since L3 left no lone figure), and Genres' library picked with Finances' `Segmented`; on branch `claude/focused-gates-d35kz0`. *Done:* merged green, `tidy-loop.md` ticked. Then L5 (rows as Finances lists them).
+| #615 | Tidy Up's look, **L4**: cards in a row one height, as Finances'; Genres' library with Finances' switch |
+
+**In flight:** #616, Tidy Up's look, **L5's first half**: captions on one line at 860px (`Tidy Up: rows say their caption on one line at 860px`); on branch `claude/focused-gates-d35kz0`. *Done:* merged green. **Next:** L5's second half, a figure on the right of each row that has one, as Finances' amounts (read what the record keeps per row first: only films' and shows' *Shrink* rows have `gain` today); then L6 and L7 (`tidy-loop.md`).
 
 **Mockups (Nov 12, made-up apps):** the private canvas https://claude.ai/artifact/V6EmaatcLbMwdXu3UAzWd3 (gaps 1, 2, 4 on the iPad; 3 on the iPhone; 6 on the phone's page; the iPhone's Backups and Settings, both built). The owner asked that mocks match the iPhone app more closely (section 6).
 

@@ -717,6 +717,22 @@ const smokes = [
     if (Math.abs(a.h - b.h) > 1) throw new Error(`heights ${a.h} and ${b.h}`);
     if (a.pad !== b.pad || a.fig !== b.fig) throw new Error(`padding ${a.pad} / ${b.pad}, figure at ${a.fig} / ${b.fig}`);
   } },
+  // Rows as Finances lists them (L5): each caption on one line at 860px where it fits, said shorter where it ran on.
+  { name: 'Tidy Up: rows say their caption on one line at 860px', screen: 'tidy', mock: { tidy: { ...tidy, libraries: tidy.libraries.map((l) => (l.kind !== 'music' ? l
+    : { ...l, last: { ...l.last, lyrics: tidyRun('lyrics', 5, { check: true, synced: 9120, plain: 2210, none: 2402, to_clean: 0 }) } })) } }, run: async (page) => {
+    await page.setViewportSize({ width: 860, height: 900 });
+    const wraps = [];
+    for (const [tab, rows] of [['Music', ['could get lyrics', 'Lyrics']], ['Movies', ['Tdarr is shrinking', 'what Radarr downloads']], ['TV', ['what Sonarr downloads']]]) {
+      await page.click(`#tidy .seg button:text-is("${tab}")`, { timeout: 5000 });
+      for (const r of rows) {
+        const li = page.locator(`#tidy .tidyneeds li:has(strong:text-is("${r}")), #tidy .tidyneeds li:has(strong:has-text("${r}"))`).first();
+        await li.waitFor({ timeout: 5000 });
+        const lines = await li.evaluate((l) => { const e = l.querySelector('.grow > .muted, .grow > .line'); if (!e) return -1; return Math.round(e.getBoundingClientRect().height / (parseFloat(getComputedStyle(e).lineHeight) || 20)); });
+        if (lines !== 1) wraps.push(`${tab} › ${r}: ${lines} lines`);
+      }
+    }
+    if (wraps.length) throw new Error(wraps.join('; '));
+  } },
   // A library not counted yet offers it on its own tab, and runs its own count.
   { name: 'Tidy Up: TV’s genres are counted from its tab', screen: 'tidy', run: async (page) => {
     await page.click('#tidy .seg button:text-is("TV")', { timeout: 5000 });

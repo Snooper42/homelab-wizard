@@ -116,6 +116,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **Tidy Up's rows say it shorter:** the lyrics, Tdarr, Radarr and Sonarr rows, and Music's Lyrics row, now fit on one line in a window half your screen wide.
 - **Tidy Up's cards line up as Finances' do:** two cards side by side are the same height, and Genres picks which library it shows with the same switch Finances' cards use, not a drop-down.
 - **Settings on the iPhone, plainer:** the homelab's everyday settings come first, in plain words (nightly updates, quiet hours, restarting an app that stops answering, undoing an update that breaks one, alerts on the computer's screen), then this iPhone's own (Face ID, the widget, who sends alerts), and every other homelab setting is one tap down, under **All homelab settings**.
 - **Backups on the iPhone, tidier:** the top card is followed by three tiles (the restore test, the password export, and the second copy), then only the copies that need a look; the ones up to date fold to a row of their logos until you tap them, and Duplicati's jobs, the restore tests and where the backups go are one tap down, under More.
