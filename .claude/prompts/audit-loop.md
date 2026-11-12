@@ -367,6 +367,8 @@ behaviour, and the screenshots retaken where they changed.
 126. (done: holds, Nov 12, round 13) **Disk health** (internal/diskhealth): `smartctl` as this account, its arguments as a list, never elevated by the homelab.
 127. (done: holds, Nov 12, round 13) **Tidy Up and what a download names** (tools/media): names made from a download's metadata go through `safe_name` (no slash, no `..`, no device name); music is moved by beets, which cleans each part of a path itself; nothing runs a shell. The Inbox's zips unpack only inside their folder (an absolute path or one that resolves outside is refused) and Python's zipfile writes no links. Seen, not a finding: no limit on how much a zip unpacks to, so a download built to swell can fill the drive it lands on (only what the household downloads).
 
+128. (done: holds, Nov 12, round 14) **The last packages never read** (internal/savings, battery, storage, awake): their records are 0600 through `lockedfile`; battery reads `pmset -g batt` only; `homelab awake allow` writes one polkit rule granting this account `login1.inhibit-block-sleep` alone, its name held to `validUser`.
+
 ## The security team
 
 You audit every way into the homelab's own code: what can reach it, what
@@ -802,6 +804,8 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
     network on Linux: check where its requests come from first).
 
 ### Security done
+
+- **Round 14 (Nov 12): every package has now been read.** Item 128 holds. From here a round reads what merges (the other account's PRs as they land, by their diff) and goes back over the riskiest surfaces when they change: the phone companion's calls and permissions, the tunnel, what is published, `.env` from a phone (N52's list), the updates. Open: items 79, 87, 88 (the owner's decisions), 98, 105, 113 (left, with reasons).
 
 - **Round 13 (Nov 12):** items 124 to 127 hold (crash notes, the digest, disk health, Tidy Up against what a download names, the Inbox's zips). The other account's latest (#622) is Tidy Up's dark look. Next: what lands next, and what is left (internal/savings, battery, awake, storage).
 
