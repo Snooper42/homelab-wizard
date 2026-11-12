@@ -362,6 +362,11 @@ behaviour, and the screenshots retaken where they changed.
 122. (done: holds, Nov 12, round 12) **Claiming a public app's first account** (internal/claim): it only asks each app whether its first account exists, and handles no credential; Reach it away from home waits on it (N38).
 123. (done: holds, Nov 12, round 12) **What the desktop app starts** (app.go's native apps, tray_other.go): a service or program named by the catalog under Program Files or systemd, never a value from a page; `APPIMAGE` is the account's own environment.
 
+124. (done: holds, Nov 12, round 13) **Crash notes** (internal/crash): kept on this computer only, in a 0700 folder, each note 0600, 90 days; `homelab report` redacts what it carries (item 11).
+125. (done: holds, Nov 12, round 13) **The weekly digest** (internal/digest): sent only through the household's own ntfy (ntfy.sh sees only a message's ID, item 99).
+126. (done: holds, Nov 12, round 13) **Disk health** (internal/diskhealth): `smartctl` as this account, its arguments as a list, never elevated by the homelab.
+127. (done: holds, Nov 12, round 13) **Tidy Up and what a download names** (tools/media): names made from a download's metadata go through `safe_name` (no slash, no `..`, no device name); music is moved by beets, which cleans each part of a path itself; nothing runs a shell. The Inbox's zips unpack only inside their folder (an absolute path or one that resolves outside is refused) and Python's zipfile writes no links. Seen, not a finding: no limit on how much a zip unpacks to, so a download built to swell can fill the drive it lands on (only what the household downloads).
+
 ## The security team
 
 You audit every way into the homelab's own code: what can reach it, what
@@ -797,6 +802,8 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
     network on Linux: check where its requests come from first).
 
 ### Security done
+
+- **Round 13 (Nov 12):** items 124 to 127 hold (crash notes, the digest, disk health, Tidy Up against what a download names, the Inbox's zips). The other account's latest (#622) is Tidy Up's dark look. Next: what lands next, and what is left (internal/savings, battery, awake, storage).
 
 - **Round 12 (Nov 12):** N53 merged. Items 120 to 123 hold (the calendar feed's key, adopting, claiming, what the desktop app starts). The other account's latest (#618, #620) are Tidy Up's look only. Next: ten new items, from what is left unread and what lands next.
 
