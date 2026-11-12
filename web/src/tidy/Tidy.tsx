@@ -589,7 +589,7 @@ function genresOf(d: app.TidyUp): Record<string, { total: number; genres: [strin
 const hues: Hue[] = [7, 1, 8, 2, 3, 5, 6, 4];
 
 /** One genre chart; a dropdown picks the library when more than one has genres. */
-function GenresWidget({ d, job, act, only }: { d: app.TidyUp; job: TidyJob | null; act: TidyActions; only?: string }) {
+function GenresWidget({ d, job, act, only, span = 1 }: { d: app.TidyUp; job: TidyJob | null; act: TidyActions; only?: string; span?: 1 | 'all' }) {
   const all = genresOf(d);
   const kinds = only ? [only] : GENRED.filter((k) => all[k]) as string[];
   const [picked, setPicked] = useState(kinds[0] || 'music');
@@ -611,7 +611,7 @@ function GenresWidget({ d, job, act, only }: { d: app.TidyUp; job: TidyJob | nul
     const tried = last(lib(d, ask), 'genre-counts')?.result;
     const none = tried && n(tried.items) > 0 ? `Counted ${count(n(tried.items), genreUnit[ask].replace(/s$/, ''), genreUnit[ask])}: none has a genre yet.${tried.why ? ' ' + String(tried.why).charAt(0).toUpperCase() + String(tried.why).slice(1) + '.' : ''}` : '';
     return (
-      <Widget title="Genres" kind="fx-spend tidygenres">
+      <Widget title="Genres" span={span} kind="fx-spend tidygenres">
         <Empty>{none || genreAsk[ask]}</Empty>
         <div class="actions">
           {none && /API key isn't set/.test(String(tried.why)) && <button class="small primary" onClick={() => act.settings(['JELLYFIN_API_KEY'])}>Add Jellyfin’s API key</button>}
@@ -621,7 +621,7 @@ function GenresWidget({ d, job, act, only }: { d: app.TidyUp; job: TidyJob | nul
     );
   }
   return (
-    <Widget title="Genres" kind="fx-spend tidygenres" actions={picker || undefined}>
+    <Widget title="Genres" span={span} kind="fx-spend tidygenres" actions={picker || undefined}>
       <Stat value={<span class="fx-amount">{g.total.toLocaleString()}<small> {genreUnit[k]}</small></span>} caption={k === 'music' ? 'In your 14 genres' : g.source ? `One genre each, from ${g.source === 'Calibre' ? "Calibre's tags" : g.source}` : 'One genre each'} />
       <div class="fx-donutrow">
         <Donut slices={slices} label={`${names[k]} by genre`} center={<><strong>{g.total.toLocaleString()}</strong>{genreUnit[k]}</>} />
@@ -1173,11 +1173,10 @@ function LibraryTab({ kind, d, job, act, review, reviewError, reloadReview, skip
             {reviewApplied(l) && <div class="actions"><Go label="Undo the last apply" job={job} onClick={() => act.ask({ title: 'Undo the last apply?', action: 'Undo', lead: 'Puts back the titles, series, tags, and covers it changed.', go: () => act.run('books', 'undo', [], true) })} /></div>}
           </Widget>
         )}
-        {kind in genreAsk && !l.noCalibre && <GenresWidget d={d} job={job} act={act} only={kind} />}
+        {/* Films and TV pair Genres with Space (lean, could shrink, with Tdarr); elsewhere the space is the header's
+            (On the drive, Won back), so Genres takes the row rather than sit beside a card of one figure. */}
+        {kind in genreAsk && !l.noCalibre && <GenresWidget d={d} job={job} act={act} only={kind} span={kind === 'movies' || kind === 'tv' ? 1 : 'all'} />}
         {(kind === 'movies' || kind === 'tv') && <SpaceWidget l={l} d={d} />}
-        {kind !== 'movies' && kind !== 'tv' && l.size > 0 && (
-          <Widget title="Space" kind="fx-flow tidyspace"><Stat value={<span class="fx-amount">{size(l.size)}</span>} caption={l.freed ? size(l.freed) + ' won back so far' : 'On the drive'} /></Widget>
-        )}
         <DoneWidget d={d} job={job} act={act} kind={kind} />
       </div>
     </FolderGone.Provider>

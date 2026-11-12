@@ -939,11 +939,16 @@ const smokes = [
     const main = await page.$$eval('#tidy .tidyneeds button.primary', (b) => b.map((x) => x.textContent));
     if (main.length !== 1 || main[0] !== 'Add lyrics') throw new Error(`main buttons: ${JSON.stringify(main)}`);
   } },
-  // Music's tab shows its space beside its genres (it left half the row empty), and Tdarr's row says what it holds,
-  // not that it has finished it.
-  { name: 'Tidy Up: Music shows its space, and Tdarr’s row says what it is shrinking', screen: 'tidy', run: async (page) => {
+  // Music's space is its header's (tidy-loop.md's look, L3): no card that is one figure the header already shows, and
+  // Genres takes the whole row rather than leave half of it empty. Tdarr's row says what it holds, not that it has
+  // finished it.
+  { name: 'Tidy Up: Music’s space is in its header, Genres takes the row, and Tdarr’s row says what it is shrinking', screen: 'tidy', run: async (page) => {
     await page.click('#tidy .seg button:text-is("Music")', { timeout: 5000 });
-    await page.waitForSelector('#tidy .tidyspace .fx-amount:text-is("520 GB")', { timeout: 5000 });
+    await page.waitForSelector('#tidy .tidyhero .tidyfacts div:has(dt:text-is("On the drive")) dd:text-is("520 GB")', { timeout: 5000 });
+    await page.waitForSelector('#tidy .tidygenres', { timeout: 5000 });
+    if (await page.$('#tidy .tidyspace')) throw new Error('a Space card repeats the header\'s figure');
+    const widths = await page.$eval('#tidy .tidygenres', (g) => [g.getBoundingClientRect().width, g.parentElement.getBoundingClientRect().width]);
+    if (widths[0] < widths[1] - 2) throw new Error(`Genres leaves part of its row empty: ${widths}`);
     await page.click('#tidy .seg button:text-is("Movies")');
     await page.waitForSelector('#tidy .tidyneeds strong:text-is("Tdarr is shrinking 4 films")', { timeout: 5000 });
     // The Space card's notes sit at the card's own gap.

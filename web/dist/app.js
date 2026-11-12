@@ -17265,7 +17265,7 @@ ${pays}
     return out;
   }
   var hues2 = [7, 1, 8, 2, 3, 5, 6, 4];
-  function GenresWidget({ d: d3, job: job2, act, only }) {
+  function GenresWidget({ d: d3, job: job2, act, only, span = 1 }) {
     const all = genresOf(d3);
     const kinds2 = only ? [only] : GENRED.filter((k4) => all[k4]);
     const [picked, setPicked] = d2(kinds2[0] || "music");
@@ -17280,7 +17280,7 @@ ${pays}
       if (!ask || !genreAsk[ask] || !lib(d3, ask)?.found) return null;
       const tried = last(lib(d3, ask), "genre-counts")?.result;
       const none2 = tried && n2(tried.items) > 0 ? `Counted ${count(n2(tried.items), genreUnit[ask].replace(/s$/, ""), genreUnit[ask])}: none has a genre yet.${tried.why ? " " + String(tried.why).charAt(0).toUpperCase() + String(tried.why).slice(1) + "." : ""}` : "";
-      return /* @__PURE__ */ u3(Widget, { title: "Genres", kind: "fx-spend tidygenres", children: [
+      return /* @__PURE__ */ u3(Widget, { title: "Genres", span, kind: "fx-spend tidygenres", children: [
         /* @__PURE__ */ u3(Empty, { children: none2 || genreAsk[ask] }),
         /* @__PURE__ */ u3("div", { class: "actions", children: [
           none2 && /API key isn't set/.test(String(tried.why)) && /* @__PURE__ */ u3("button", { class: "small primary", onClick: () => act.settings(["JELLYFIN_API_KEY"]), children: "Add Jellyfin’s API key" }),
@@ -17288,7 +17288,7 @@ ${pays}
         ] })
       ] });
     }
-    return /* @__PURE__ */ u3(Widget, { title: "Genres", kind: "fx-spend tidygenres", actions: picker || void 0, children: [
+    return /* @__PURE__ */ u3(Widget, { title: "Genres", span, kind: "fx-spend tidygenres", actions: picker || void 0, children: [
       /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3("span", { class: "fx-amount", children: [
         g2.total.toLocaleString(),
         /* @__PURE__ */ u3("small", { children: [
@@ -17846,9 +17846,8 @@ ${pays}
           ] }) : review2.length ? /* @__PURE__ */ u3(Rows, { kind: "tidybooks", children: review2.map((b2) => /* @__PURE__ */ u3(BookRow, { b: b2, on: !b2.held && !skip2.has(b2.id), toggle: () => toggle(b2.id), cover: act.cover }, b2.id)) }) : /* @__PURE__ */ u3(Empty, { children: "Every book already looks tidy." }),
           reviewApplied(l3) && /* @__PURE__ */ u3("div", { class: "actions", children: /* @__PURE__ */ u3(Go, { label: "Undo the last apply", job: job2, onClick: () => act.ask({ title: "Undo the last apply?", action: "Undo", lead: "Puts back the titles, series, tags, and covers it changed.", go: () => act.run("books", "undo", [], true) }) }) })
         ] }),
-        kind in genreAsk && !l3.noCalibre && /* @__PURE__ */ u3(GenresWidget, { d: d3, job: job2, act, only: kind }),
+        kind in genreAsk && !l3.noCalibre && /* @__PURE__ */ u3(GenresWidget, { d: d3, job: job2, act, only: kind, span: kind === "movies" || kind === "tv" ? 1 : "all" }),
         (kind === "movies" || kind === "tv") && /* @__PURE__ */ u3(SpaceWidget, { l: l3, d: d3 }),
-        kind !== "movies" && kind !== "tv" && l3.size > 0 && /* @__PURE__ */ u3(Widget, { title: "Space", kind: "fx-flow tidyspace", children: /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3("span", { class: "fx-amount", children: size(l3.size) }), caption: l3.freed ? size(l3.freed) + " won back so far" : "On the drive" }) }),
         /* @__PURE__ */ u3(DoneWidget, { d: d3, job: job2, act, kind })
       ] })
     ] });
