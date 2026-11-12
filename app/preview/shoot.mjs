@@ -4969,6 +4969,9 @@ const smokes = [
     await page.click('#updateAll');
     await page.waitForSelector('#cliActions button:has-text("Update them")', { timeout: 5000 });
     const top = () => page.evaluate(() => Math.round(document.getElementById('cliPanel').getBoundingClientRect().top));
+    // The window slides in (sheet-in, .18s): measured before it settled, a slow runner read it a pixel off (73px, then
+    // 72px; #631's CI, Nov 12). Its own animations finish first; then it must not move at all.
+    await page.evaluate(() => Promise.all(document.getElementById('cliPanel').getAnimations().map((a) => a.finished)));
     const before = await top();
     const calls = await backendCalls(page);
     await page.click('#cliActions button:has-text("Update them")');
