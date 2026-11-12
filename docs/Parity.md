@@ -118,6 +118,7 @@ Each phone sees Finances at the level it was paired with: none, the money card, 
 | The household's own pictures for a logo (picked, or got from a website), drawn first | yes | yes | yes (before Nov 12 a letter or an icon: the app never read them) | yes | — | `Finances` (the plan's `logos`) |
 | Investments: the card, Read now, Add a holding | yes | yes (Finances to change) | yes, Face ID | yes | — | `FinancesReadInvestments`, `FinancesFindSymbol`, `FinancesAddInvestment` |
 | Investments: a holding's buys and sales, Change, Delete | yes | yes (Finances to change) | gap | gap | — | `FinancesInvestmentTrades`, `FinancesChangeInvestment`, `FinancesDeleteInvestment` |
+| Investments' Watchlist: tickers followed without owning them, priced at each read, never in the worth; Follow a ticker, Unfollow | yes | yes (Finances to change); a look-only phone sees the list | gap (2C step 4, PR 4) | gap | — | `FinancesFollow`, `FinancesFindSymbol`, `SaveFinances` |
 | The money flow (Sankey), the Dashboard's prompts (a subscription's new price, a bill's average, a bill not seen) | yes | yes | partly: Cash Flow and Month in Review, not the flow or the prompts | partly | — | |
 | The calendar (the days ahead and behind, a month in all, add on a day) | yes | yes | partly: Recurring as a calendar | partly | — | |
 | The calendar feed for a phone's calendar | yes | on purpose: it's made on the computer | on purpose | on purpose | — | |

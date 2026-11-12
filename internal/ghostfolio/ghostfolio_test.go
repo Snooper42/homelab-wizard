@@ -415,3 +415,44 @@ func TestDoubtfulWhenTheBuysCannotBeRead(t *testing.T) {
 		t.Errorf("BND %+v", h)
 	}
 }
+
+// The Watchlist (the owner, Nov 12): a ticker followed is priced now and
+// kept with the day and price it was followed at; each read prices it
+// again (a point a day); one Ghostfolio has no price for is said, and a
+// followed one it can't price on a read keeps its last; following it twice
+// keeps one.
+func TestFollowATickerAndReadItsPrice(t *testing.T) {
+	f := ghostfoliotest.New(map[string]any{"id": "gf-rh", "name": "Robinhood", "currency": "USD", "balance": 0})
+	defer f.Close()
+	root := homelab(t, f, "GHOSTFOLIO_SECURITY_TOKEN="+ghostfoliotest.Token+"\n")
+	ctx := context.Background()
+	f.Quotes = map[string]float64{"GLBX": 48.12}
+
+	p, err := ghostfolio.FollowInto(ctx, root, ghostfolio.Symbol{Symbol: "GLBX", Name: "Globex Energy", Currency: "USD", DataSource: "YAHOO"})
+	if err != nil || len(p.Watch) != 1 {
+		t.Fatalf("FollowInto: %+v, %v", p.Watch, err)
+	}
+	today := time.Now().Format("2006-01-02")
+	w := p.Watch[0]
+	if w.Symbol != "GLBX" || w.Name != "Globex Energy" || w.Since != today || w.From != 48.12 || w.Price != 48.12 || len(w.History) != 1 {
+		t.Errorf("followed: %+v", w)
+	}
+	if again, err := ghostfolio.FollowInto(ctx, root, ghostfolio.Symbol{Symbol: "glbx", DataSource: "YAHOO"}); err != nil || len(again.Watch) != 1 {
+		t.Errorf("followed twice: %+v, %v", again.Watch, err)
+	}
+	if _, err := ghostfolio.FollowInto(ctx, root, ghostfolio.Symbol{Symbol: "NOPE", DataSource: "YAHOO"}); err == nil || !strings.Contains(err.Error(), "no price") {
+		t.Errorf("one with no price: %v", err)
+	}
+
+	// A read prices it again: today's point replaced, its price now.
+	f.Quotes["GLBX"] = 50.5
+	r, err := ghostfolio.ReadInto(ctx, root)
+	if err != nil || len(r.Plan.Watch) != 1 || r.Plan.Watch[0].Price != 50.5 || r.Plan.Watch[0].From != 48.12 || len(r.Plan.Watch[0].History) != 1 || r.Plan.Watch[0].History[0].Amount != 50.5 {
+		t.Fatalf("read: %+v, %v", r.Plan.Watch, err)
+	}
+	// Ghostfolio has no price on a read: its last is kept.
+	delete(f.Quotes, "GLBX")
+	if r, err = ghostfolio.ReadInto(ctx, root); err != nil || r.Plan.Watch[0].Price != 50.5 {
+		t.Errorf("no price on a read: %+v, %v", r.Plan.Watch, err)
+	}
+}

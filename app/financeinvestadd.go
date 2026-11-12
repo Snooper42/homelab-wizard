@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/Snooper42/homelab-wizard/internal/core"
+	"github.com/Snooper42/homelab-wizard/internal/finance"
 	"github.com/Snooper42/homelab-wizard/internal/ghostfolio"
 )
 
@@ -124,4 +125,17 @@ func (a *App) FinancesDeleteInvestment(account, id string) (InvestmentsRead, err
 		return InvestmentsRead{}, err
 	}
 	return a.FinancesReadInvestments()
+}
+
+// FinancesFollow follows a ticker FindSymbol found (Investments'
+// Watchlist): priced by Ghostfolio now, kept in the plan with the day and
+// that price, and priced again at each read. It counts in no worth.
+func (a *App) FinancesFollow(s AppSymbol) (finance.View, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	p, err := ghostfolio.FollowInto(ctx, a.root, ghostfolio.Symbol(s))
+	if err != nil {
+		return finance.View{}, err
+	}
+	return finance.ProjectWith(p, a.ledger(), time.Now(), finance.Ahead), nil
 }

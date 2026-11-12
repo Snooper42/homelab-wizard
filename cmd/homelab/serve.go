@@ -558,6 +558,26 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 			}
 			return investmentsRead(root, r), nil, nil
 		}},
+		// The Watchlist: a ticker FindSymbol found, followed (priced by
+		// Ghostfolio now and at each read), as the card on the computer
+		// does. It writes the plan, so a phone needs Finances' edit level.
+		"FinancesFollow": {Finances: companion.FinancesEdit, Call: func(ctx context.Context, args []json.RawMessage) (any, []string, error) {
+			var sym ghostfolio.Symbol
+			if len(args) < 1 || json.Unmarshal(args[0], &sym) != nil || strings.TrimSpace(sym.Symbol) == "" {
+				return nil, nil, errors.New("FinancesFollow takes the ticker found: symbol, name, currency, dataSource")
+			}
+			ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+			defer cancel()
+			p, err := ghostfolio.FollowInto(ctx, root, sym)
+			if err != nil {
+				return nil, nil, err
+			}
+			l, lerr := finance.LoadLedger(finance.LedgerPath(root))
+			if lerr != nil {
+				l = finance.Ledger{}
+			}
+			return finance.ProjectWith(p, l, time.Now(), finance.Ahead), nil, nil
+		}},
 		// A buy or a sale typed wrong, put right from the card: listed under
 		// its holding, changed, or deleted in Ghostfolio, then read again.
 		"FinancesInvestmentTrades": {Finances: companion.FinancesEdit, Call: func(ctx context.Context, args []json.RawMessage) (any, []string, error) {

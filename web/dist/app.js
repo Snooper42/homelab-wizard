@@ -13309,7 +13309,7 @@ ${pays}
   }
   var share2 = (gain, paid) => Math.abs(paid) < 5e-3 ? "" : `${gain < 0 ? "−" : "+"}${Math.abs(gain / Math.abs(paid) * 100).toFixed(1)}%`;
   var shares = (n3) => amountsHidden() ? "•••" : n3.toLocaleString("en-US", { maximumFractionDigits: n3 < 1 ? 4 : 3 });
-  function InvestmentsWidget({ v: v3, read, state: state2 = {}, keep: keep3, add, find, trades }) {
+  function InvestmentsWidget({ v: v3, read, state: state2 = {}, keep: keep3, add, find, trades, follow: follow3 }) {
     const [open4, setOpen] = d2("");
     const [adding2, setAdding] = d2(false);
     const accounts = (v3.plan.accounts || []).filter((a3) => a3.holdings?.length);
@@ -13417,11 +13417,107 @@ ${pays}
         ] }) }),
         lines.map((l3) => /* @__PURE__ */ u3(HoldingRow, { v: v3, l: l3, open: open4 === l3.key, toggle: () => setOpen(open4 === l3.key ? "" : l3.key), trades }, l3.key))
       ] }),
+      /* @__PURE__ */ u3(Watchlist, { v: v3, keep: keep3, follow: follow3, find }),
       /* @__PURE__ */ u3(Unmatched, { v: v3, state: state2, keep: keep3, read }),
       keep3 && read && /* @__PURE__ */ u3("label", { class: "fx-investauto", children: [
         /* @__PURE__ */ u3("input", { type: "checkbox", checked: !v3.plan.readByHand, onChange: (e3) => keep3({ ...v3.plan, readByHand: e3.target.checked ? void 0 : true }) }),
         "Read Ghostfolio once a day when Finances opens"
       ] })
+    ] });
+  }
+  function Watchlist({ v: v3, keep: keep3, follow: follow3, find }) {
+    const list = v3.plan.watch || [];
+    const [adding2, setAdding] = d2(false);
+    const [q2, setQ] = d2("");
+    const [found2, setFound2] = d2(null);
+    const [busy2, setBusy] = d2(false);
+    const [problem, setProblem] = d2("");
+    const can = !!(follow3 && find);
+    if (!list.length && !can) return null;
+    const said2 = (e3) => setProblem(String(e3?.message || e3));
+    const look2 = async () => {
+      setBusy(true);
+      setProblem("");
+      try {
+        setFound2(await find(q2));
+      } catch (e3) {
+        said2(e3);
+      }
+      setBusy(false);
+    };
+    const pick = async (sym) => {
+      setBusy(true);
+      setProblem("");
+      try {
+        await follow3(sym);
+        setAdding(false);
+        setFound2(null);
+        setQ("");
+      } catch (e3) {
+        said2(e3);
+      }
+      setBusy(false);
+    };
+    const unfollow = (symbol) => keep3?.({ ...v3.plan, watch: list.filter((w3) => w3.symbol !== symbol) });
+    return /* @__PURE__ */ u3("div", { class: "fx-watch", children: [
+      /* @__PURE__ */ u3("div", { class: "fx-watchhead", children: [
+        /* @__PURE__ */ u3("div", { children: [
+          /* @__PURE__ */ u3("h3", { children: "Watchlist" }),
+          /* @__PURE__ */ u3("p", { class: "fx-sub", children: "Followed, not owned: priced by Ghostfolio at each read, never counted in your worth" })
+        ] }),
+        can && /* @__PURE__ */ u3("button", { type: "button", class: "small", "aria-expanded": adding2, onClick: () => {
+          setAdding(!adding2);
+          setProblem("");
+        }, children: "Follow a ticker" })
+      ] }),
+      adding2 && /* @__PURE__ */ u3("div", { class: "fx-watchadd", children: [
+        /* @__PURE__ */ u3("label", { class: "field", children: [
+          "Ticker or name ",
+          /* @__PURE__ */ u3("input", { value: q2, onInput: (e3) => setQ(e3.target.value), onKeyDown: (e3) => {
+            if (e3.key === "Enter" && q2.trim()) {
+              e3.preventDefault();
+              look2();
+            }
+          }, spellcheck: false, autocapitalize: "characters" })
+        ] }),
+        /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy2 || !q2.trim(), onClick: look2, children: busy2 && !found2 ? "Looking…" : "Look it up" }),
+        found2 && (found2.length ? /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: found2.map((sym) => /* @__PURE__ */ u3(
+          Row,
+          {
+            lead: /* @__PURE__ */ u3(Mark, { brand: tickerBrand(sym.symbol), name: sym.symbol, auto: true, size: "sm" }),
+            title: sym.symbol,
+            sub: sym.name,
+            end: /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy2 || list.some((w3) => w3.symbol === sym.symbol), onClick: () => pick(sym), children: list.some((w3) => w3.symbol === sym.symbol) ? "Followed" : "Follow" })
+          },
+          sym.symbol + sym.dataSource
+        )) }) : /* @__PURE__ */ u3("p", { class: "fx-say", children: "Ghostfolio found nothing by that." }))
+      ] }),
+      problem && /* @__PURE__ */ u3("p", { class: "formerr bad", role: "alert", children: problem }),
+      list.length ? /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: list.map((w3) => {
+        const pts = (w3.history || []).map((p3) => p3.amount);
+        const ch = w3.from ? (w3.price || 0) / w3.from - 1 : 0;
+        return /* @__PURE__ */ u3(
+          Row,
+          {
+            lead: /* @__PURE__ */ u3(Mark, { brand: tickerBrand(w3.symbol), name: w3.symbol, auto: true, size: "sm" }),
+            title: w3.symbol,
+            sub: `${w3.name ? w3.name + " · " : ""}followed since ${w3.since ? dayShort(w3.since) : "today"}`,
+            end: /* @__PURE__ */ u3(S, { children: [
+              pts.length > 1 && /* @__PURE__ */ u3("span", { class: "fx-holdtrend" + (ch < 0 ? " down" : ""), children: /* @__PURE__ */ u3(Spark, { values: pts, w: 72, h: 20, title: `${w3.symbol} since it was followed: ${ch < 0 ? "down" : "up"}` }) }),
+              !!w3.from && /* @__PURE__ */ u3("span", { class: "fx-change " + (ch >= 0 ? "fx-in" : "fx-out"), children: [
+                ch >= 0 ? "+" : "−",
+                Math.abs(ch * 100).toFixed(1),
+                "% since ",
+                w3.since ? dayShort(w3.since) : "today"
+              ] }),
+              keep3 && can && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => unfollow(w3.symbol), children: "Unfollow" })
+            ] }),
+            when: moneyIn(w3.price || 0, w3.currency),
+            whenPlain: true
+          },
+          w3.symbol
+        );
+      }) }) : /* @__PURE__ */ u3("p", { class: "fx-say", children: "Follow a ticker to see its price here without owning it." })
     ] });
   }
   var yearAgo = (day3) => `${+day3.slice(0, 4) - 1}${day3.slice(4)}`;
@@ -16958,7 +17054,9 @@ ${pays}
       phone,
       // Read now and Add a holding wherever Finances may be changed (the computer, a phone allowed to change it): never hidden
       // behind Status, which may not see the Ghostfolio that answers; when it does not answer, the card says so.
-      investments: !v3 || v3.readOnly ? void 0 : { read: readInvestments, state: invest, add: addInvestment, find: (q2) => go().FinancesFindSymbol(q2), trades: tradeOps }
+      investments: !v3 || v3.readOnly ? void 0 : { read: readInvestments, state: invest, add: addInvestment, find: (q2) => go().FinancesFindSymbol(q2), trades: tradeOps, follow: async (sym) => {
+        financesData.set(await go().FinancesFollow(sym));
+      } }
     });
     if (v3) readEachMorning(v3);
     if (editing && v3 && !v3.readOnly) mountFinanceSheet($2("finSheetBox"), { ...editing, plan: v3.plan, checking: v3.checking, start: v3.start, dues: v3.dues, categories: v3.categories, ledger: ledgerData.value, save, saveLedger, receipts, fetchLogo, fromApps: fromApps(), close: close2 });
