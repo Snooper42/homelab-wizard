@@ -73,6 +73,59 @@ struct DeepLinkTests {
         #expect(inbox.screen == .status(.all))
     }
 
+    private static func apps() throws -> [AppStatus] {
+        try JSONDecoder.homelab().decode([AppStatus].self, from: Data(#"""
+        [{"id":"radarr","name":"Radarr","state":"running"},
+         {"id":"immich-server","name":"Immich","state":"running"}]
+        """#.utf8))
+    }
+
+    /// What the iPhone's tabs and the iPad's and Mac's split view both do
+    /// with a request (#596's gap 1: the split view did nothing with one).
+    @Test @MainActor func aRequestComesToTheSameOnEveryLayout() throws {
+        let apps = try Self.apps()
+        let all: (AppStatus) -> [AppAction] = { _ in [.restart, .stop] }
+        let none: (AppStatus) -> [AppAction] = { _ in [] }
+        typealias R = IntentInbox.Request
+
+        // A link: the page, its action waiting for one tap.
+        #expect(IntentInbox.outcome(of: R(app: "radarr", action: .restart, fromLink: true), in: apps, available: all)
+            == .open("radarr", then: .ask(.restart)))
+        // Siri: as the button would.
+        #expect(IntentInbox.outcome(of: R(app: "Radarr", action: .restart), in: apps, available: all)
+            == .open("radarr", then: .run(.restart)))
+        // A look-only device, or an action the app doesn't offer: the page only.
+        #expect(IntentInbox.outcome(of: R(app: "radarr", action: .restart, fromLink: true), in: apps, available: none)
+            == .open("radarr", then: nil))
+        #expect(IntentInbox.outcome(of: R(app: "radarr", action: .start), in: apps, available: all)
+            == .open("radarr", then: nil))
+        // Logs, even look-only.
+        #expect(IntentInbox.outcome(of: R(app: "radarr", action: nil, fromLink: true, logs: true), in: apps, available: none)
+            == .open("radarr", then: .logs))
+        // A link names an app by its exact id, not its name; Siri by its name.
+        #expect(IntentInbox.outcome(of: R(app: "Immich", action: nil, fromLink: true), in: apps, available: all)
+            == .search("Immich"))
+        #expect(IntentInbox.outcome(of: R(app: "immich", action: nil), in: apps, available: all)
+            == .open("immich-server", then: nil))
+        // Nothing it can tell: a search.
+        #expect(IntentInbox.outcome(of: R(app: "plex", action: .stop), in: apps, available: all)
+            == .search("plex"))
+    }
+
+    @Test @MainActor func aScreenLandsWhereThisDeviceHasIt() {
+        // The owner's device has them all.
+        for screen: DashboardViewModel.SidebarItem in [.status(.all), .backups, .finances, .setup, .settings] {
+            #expect(IntentInbox.landing(screen, isMember: false, canSeeFinances: true) == screen)
+        }
+        // A member's: no Backups or Setup.
+        #expect(IntentInbox.landing(.backups, isMember: true, canSeeFinances: true) == .status(.all))
+        #expect(IntentInbox.landing(.setup, isMember: true, canSeeFinances: true) == .status(.all))
+        #expect(IntentInbox.landing(.finances, isMember: true, canSeeFinances: true) == .finances)
+        #expect(IntentInbox.landing(.settings, isMember: true, canSeeFinances: false) == .settings)
+        // Finances only where this device may see the plan.
+        #expect(IntentInbox.landing(.finances, isMember: false, canSeeFinances: false) == .status(.all))
+    }
+
     @Test func appIDs() {
         #expect(DeepLink.isAppID("immich"))
         #expect(DeepLink.isAppID("home-assistant"))

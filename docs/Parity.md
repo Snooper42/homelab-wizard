@@ -167,7 +167,7 @@ Each phone sees Finances at the level it was paired with: none, the money card, 
 |---|---|---|---|---|---|---|
 | Alerts on the phone (ntfy) | — | the ntfy app, on any phone | the ntfy app, or this app while it's open (**Alerts From**) | the same | the same | `AlertLog` |
 | Alerts on the computer's screen | yes (`DESKTOP_ALERTS`) | — | — | — | — | |
-| Buttons on alerts (Restart, Show Logs, Start) | — | on purpose: they open the iPhone app | yes: the app's page with the action waiting for a tap and Face ID | gap: the iPad doesn't follow links yet (below) | as the iPad | |
+| Buttons on alerts (Restart, Show Logs, Start) | — | on purpose: they open the iPhone app | yes: the app's page with the action waiting for a tap and Face ID | yes: the same, in the split view | as the iPad | |
 | Quiet hours, the memory alert, the weekly integrity check | yes, set on the computer, for every phone | yes | yes | yes | — | |
 | Alerts while the phone is locked | — | the ntfy app | the ntfy app (push from this app needs the paid Apple program) | the same | the same | |
 
@@ -175,7 +175,7 @@ Each phone sees Finances at the level it was paired with: none, the money card, 
 
 | Feature | Computer | Phone's page | iPhone | iPad | Mac app | Phone calls |
 |---|---|---|---|---|---|---|
-| Links into the app (`homelab://app/<id>`, `homelab://finances/<page>`, `?do=restart`) | — | on purpose: a web page has its own address | yes; a link never changes anything by itself | gap: the split view doesn't follow a link (only the iPhone's tabs read `IntentInbox`) | as the iPad | |
+| Links into the app (`homelab://app/<id>`, `homelab://finances/<page>`, `?do=restart`) | — | on purpose: a web page has its own address | yes; a link never changes anything by itself | yes: the split view follows them as the iPhone's tabs do (`IntentInbox.outcome`, `landing`) | as the iPad | |
 | A widget | the menu bar or tray | on purpose: add it to the Home Screen as a web app | yes, the Home Screen and the Lock Screen (with `HOMELAB_WIDGET`) | yes | yes, the Desktop widget | |
 | Siri and Shortcuts (is everything running, start, stop, restart, open an app) | — | on purpose | yes | yes | yes | |
 
@@ -193,7 +193,7 @@ Each phone sees Finances at the level it was paired with: none, the money card, 
 
 The cells marked *gap*, gathered, each with what closing it takes (S a few hours, M a day or two, L more):
 
-1. **iPad and Mac app: links into the app** (and with them, buttons on alerts). The split view needs to read `IntentInbox` as the iPhone's tabs do. S.
+1. ~~**iPad and Mac app: links into the app** (and with them, buttons on alerts).~~ **Closed (#604):** the split view reads `IntentInbox` as the iPhone's tabs do, through the same `IntentInbox.outcome` and `landing`.
 2. **iPad and Mac app: What was done.** Check More About on an iPad; if it doesn't open, give the detail column a navigation stack. S.
 3. **Every alert: Snooze… on an open alert**, everywhere, for one whose check still fails. S to M.
 4. **iPad and Mac app: Every alert from the split view's list.** Check it opens; fix as item 2 if it doesn't. S.

@@ -67,6 +67,51 @@ final class IntentInbox {
         let starts = apps.filter { $0.name.lowercased().hasPrefix(key) || $0.id.lowercased().hasPrefix(key) }
         return starts.count == 1 ? starts[0] : nil
     }
+
+    /// What a request comes to once Status is read, the same on the
+    /// iPhone's tabs and the iPad's and Mac's split view: an app's page and
+    /// what then waits on it, or a search when it can't tell which app.
+    enum Outcome: Equatable, Sendable {
+        case search(String)
+        case open(AppStatus.ID, then: Then?)
+    }
+
+    enum Then: Equatable, Sendable {
+        /// Its logs, once the page is up.
+        case logs
+        /// A link's action: anyone can send a link, so one confirming tap first.
+        case ask(AppAction)
+        /// Siri's or a shortcut's: as its button would (Face ID, and Stop asks).
+        case run(AppAction)
+    }
+
+    /// A link names an app by its exact id; Siri and Shortcuts by its name
+    /// as said (`match`). An action this device can't take on that app
+    /// (`available`: none on a look-only device) only opens the page.
+    static func outcome(of request: Request, in apps: [AppStatus], available: (AppStatus) -> [AppAction]) -> Outcome {
+        let found = request.fromLink
+            ? apps.first { $0.id.lowercased() == request.app.lowercased() }
+            : match(request.app, in: apps)
+        guard let app = found else { return .search(request.app) }
+        if request.logs { return .open(app.id, then: .logs) }
+        guard let action = request.action, available(app).contains(action) else {
+            return .open(app.id, then: nil)
+        }
+        return .open(app.id, then: request.fromLink ? .ask(action) : .run(action))
+    }
+
+    /// Where a screen a link asked for lands on this device: Backups and
+    /// Setup are the owner's, and Finances is only where this device may
+    /// see the plan. Anything this device doesn't have is Status.
+    static func landing(
+        _ screen: DashboardViewModel.SidebarItem,
+        isMember: Bool,
+        canSeeFinances: Bool
+    ) -> DashboardViewModel.SidebarItem {
+        if isMember, screen == .backups || screen == .setup { return .status(.all) }
+        if screen == .finances, !canSeeFinances { return .status(.all) }
+        return screen
+    }
 }
 
 /// Start, Stop or Restart, as Siri and Shortcuts offer them.
