@@ -91,15 +91,15 @@ You are working on homelab-wizard (github.com/Snooper42/homelab-wizard) with its
 | #624 | The hand-off after L7 |
 | #621 | The security session's N53 |
 | #622 | Tidy Up's look, **L7**: in the dark, Finances' night (`--fin-night` on `#tidy`); every tab compared at three widths in both themes |
-| #PR | **2D step 1: budgets keep their figures whole** (2C step 5's text that wraps, which the owner named *the spend boxes with budget categories*): the line under a budget's name breaks between its parts (`.fx-keep`), *$15.00 a day* without *for N days*, `.fx-budgetleft` one width so the bars end in line. Smoke *budgets with long names keep their figures whole and their bars in line* (1100px and a phone); this hand-off |
+| #641 | **2D step 1: budgets keep their figures whole** (2C step 5's text that wraps, which the owner named *the spend boxes with budget categories*): the line under a budget's name breaks between its parts (`.fx-keep`), *$15.00 a day* without *for N days*, `.fx-budgetleft` one width so the bars end in line. Smoke *budgets with long names keep their figures whole and their bars in line* (1100px and a phone); this hand-off |
 | #620 | Tidy Up's look, **L5's second half**: what a job freed on the right of its line in Recently done (`media.Activity.Freed`, `Activity.Said()`); Audiobooks' Merge says what it wins back |
 
-**In flight: nothing** once #PR is merged (it carries this file).
+**In flight: nothing** once #641 is merged (it carries this file).
 
 **Asked the owner, Nov 12, 10:45 PM (the pop-up), and their answers:**
 - The logo count for the phone's page: **later** (ask again; the command is in section 4, counts only).
 - The words after *Couldn't read Ghostfolio:*: **they don't have them** (ask again when they next try Read now on the phone).
-- The Dashboard's text that wraps: no screenshot; **"mostly the spend boxes … the ones that have budget categories"**: found with made-up data and fixed in #PR (Budgets to watch, and Spending's Budgets).
+- The Dashboard's text that wraps: no screenshot; **"mostly the spend boxes … the ones that have budget categories"**: found with made-up data and fixed in #641 (Budgets to watch, and Spending's Budgets).
 - Dashboard cards that open what they sum up: **yes** (2D step 2).
 - Tidy Up's L6: **leave the button in the list** (nothing to build; 2B step 3 is done).
 - The iPhone's next item: **Send to my phone / Open on the computer** (`unison-handoff.md` item 7; 2D step 5).
@@ -115,7 +115,7 @@ You are working on homelab-wizard (github.com/Snooper42/homelab-wizard) with its
 
 ## 2. The owner's pick (Nov 11): all of it, in this order
 
-The owner asked for "a handoff to do all this" (Nov 11): the feature check first (recommended), then the rest of the list. One PR at a time; ask where a step says so (*How to decide*, above). Mark each numbered step **Done (#PR)** in the PR that finishes it; the next session starts at the first step without the mark. What Alerts in the app built is in `unison-handoff.md` section 4, item 6, and #591 to #593.
+The owner asked for "a handoff to do all this" (Nov 11): the feature check first (recommended), then the rest of the list. One PR at a time; ask where a step says so (*How to decide*, above). Mark each numbered step **Done (#641)** in the PR that finishes it; the next session starts at the first step without the mark. What Alerts in the app built is in `unison-handoff.md` section 4, item 6, and #591 to #593.
 
 ### 2A. The feature check: every feature, everywhere: done (#596 to #614)
 
@@ -164,7 +164,7 @@ The owner, Nov 12: what doesn't work as they expect, and what they'd like next. 
 
 One PR each, a failing test first, mocks with made-up numbers only.
 
-1. **Budgets keep their figures whole. Done (#PR).**
+1. **Budgets keep their figures whole. Done (#641).**
 2. **Each Dashboard card opens what it sums up** (the owner's yes). *Where:* `web/src/finances/Overview.tsx`'s cards; `Spent.tsx` (*Spent this month* → Spending's Transactions for that period: `showIn({ month })`, or the past period's days), `Flow.tsx` (*Cash flow* → its transactions; it opens Recurring today, keep a month bar opening its month), `Subscriptions.tsx`/*Renewing soon* → Recurring. Check what already opens before adding (several cards have an ↗ `IconButton` or *See all*). The whole card's title is the way in, with the ↗ kept for the keyboard. *Test that fails today:* smoke *each Dashboard card opens what it sums up* (click each title, land on the right tab and filter). On the phone's page too; a look-only phone opens, never edits.
 3. **Step 5: Balance trend looking back** (yes): *Checking, last 90 days* as drawn on the Nov 11 canvas (https://claude.ai/artifact/2sogwZGydVNULUWaPBNMMu): the forward chart's look (`widgets/Checking.tsx`) facing back, 30/90/365 days, an account picker, a point opening its day. Balances back from the ledger's running balance (`balanceAfter`, `runsFrom`, #629) and each typed-in balance's history. *Test:* smoke *the look-back chart's last point is today's balance, and a point opens its day*.
 4. **Step 6: the Transactions table** (yes): sortable Date, Payee, Category, Account, Amount, and *Balance after* when one account is picked; under 860px and on a phone the list as now. Select and change many (#487) stays. *Test:* smoke *sorting by Amount puts the largest out first, and back again*.
@@ -236,7 +236,7 @@ Keep it the hub: detail belongs in the loop file for that area (`finances-handof
 - **A static helper on a SwiftUI `View` that a test calls must be `nonisolated`** (a View is main-actor isolated; the call from a test is a warning, and `build-and-test` fails on any warning): #627's `LogoCircle.cgImage`, #634's `WatchlistCard.sinceWords`/`changeWords`. Better still, keep such helpers on a model type.
 - **A macOS job *cancelled* at 15 minutes with no runner name and no steps** never got a Mac (GitHub's queue), Nov 12 on #630: main's ran in 5 minutes meanwhile. `gh api repos/Snooper42/homelab-wizard/actions/jobs/<id>` shows `runner_name` empty; re-run the failed jobs once.
 - **A warning about `bridge101` with `198.18.89.0/29`** (Proton VPN's *Bad Network Interface*, Nov 12) is the homelab's own tunnel network (`internal/docker` `TunnelSubnet`), shown on the Mac as a bridge by Docker: inside the computer only. Tell the owner **Continue**; a kill switch would cut the homelab off from its own apps.
-- **Budgets in a half-width card** (#PR): the mock's three short names hid the wrapping; long category names (*Streaming and subscriptions*) and a roll-over line show it. Test a card's text with long names at 1100px and on a phone.
+- **Budgets in a half-width card** (#641): the mock's three short names hid the wrapping; long category names (*Streaming and subscriptions*) and a roll-over line show it. Test a card's text with long names at 1100px and on a phone.
 - `go build ./cmd/homelab` fails in the repo root (a `homelab` script is there): use `-o /dev/null`. A merged PR's branch is deleted on GitHub: start the next from fresh `origin/main`.
 
 ## When a check is red or stuck (the playbook)
