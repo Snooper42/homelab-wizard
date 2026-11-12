@@ -229,6 +229,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- **Get the real logo asks only real websites:** Finances' logo lookup now also refuses the addresses the homelab's own networks use, and other ranges that are never a company's website, even when a site sends it there.
 - **A device at home can't pick the address Home Assistant sees:** Home Assistant now trusts only the proxy and Tailscale to say who a visitor is, so each password guess at its own port counts against the guesser. The homelab updates the starter `configuration.yaml` for you before Home Assistant next starts; anything you added there yourself stays. Home Assistant now finds Frigate, but no other app, by name inside Docker: for another app, use its https address.
 - **An impossible amount can't empty your transactions:** a bank file (or a phone) with an amount of a trillion or more is now refused with a plain message. Before, one such number could save an empty list over every transaction.
 - **Tidy Up says which day a job started:** a job that started before midnight (the agent's overnight Collect, say) now says *Started yesterday at 3:04 AM*, not just *Started at 3:04 AM*, which read as this morning; and a job that stopped part-way says when it started too.

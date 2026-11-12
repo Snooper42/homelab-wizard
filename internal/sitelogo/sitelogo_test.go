@@ -117,6 +117,15 @@ func TestSiteAndPrivate(t *testing.T) {
 			t.Errorf("%s is public", ip)
 		}
 	}
+	// N46: the homelab's own front and tunnel networks (which a Linux host
+	// reaches directly), "this network", the reserved ranges, and IPv6
+	// that carries an IPv4 address inside are not websites, however a
+	// site redirects there.
+	for _, ip := range []string{"198.18.89.18", "198.18.89.2", "198.19.255.1", "0.0.0.1", "100.64.0.1", "192.0.0.8", "240.0.0.1", "255.255.255.255", "::ffff:127.0.0.1", "::ffff:198.18.89.18", "64:ff9b::c0a8:105", "2002:c0a8:105::1", "2001:db8::1"} {
+		if Public(net.ParseIP(ip)) {
+			t.Errorf("%s was taken for a website", ip)
+		}
+	}
 }
 
 // Only images are taken: PNG, JPEG, GIF, WebP, ICO, and SVG, not a page.
