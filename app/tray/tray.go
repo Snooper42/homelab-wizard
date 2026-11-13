@@ -6,6 +6,7 @@ package tray
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net"
 	"net/url"
@@ -59,12 +60,20 @@ const lookSlots = 3
 // Run shows the item until Quit. openWizard opens the app on a screen
 // ("choose" or "status").
 func Run(openWizard func(screen string)) {
-	l, err := net.Listen("tcp", core.TrayAddr)
-	if err != nil {
-		return // another tray is running
+	// A socket in this account's own folder (core.ListenTray): another
+	// account can neither quit this item nor start first and keep it away.
+	l, err := core.ListenTray()
+	switch {
+	case errors.Is(err, core.ErrTrayRunning):
+		return // another one is running
+	case err != nil:
+		// No socket (said in the log): the item still shows, and homelab
+		// quit cannot reach it.
+		fmt.Fprintln(os.Stderr, "homelab-tray: no quit socket:", err)
+	default:
+		defer l.Close()
+		go quitWhenAsked(l)
 	}
-	defer l.Close()
-	go quitWhenAsked(l)
 	if root := core.Root(); root != "" {
 		_ = crash.Watch(filepath.Join(root, "scripts", "logs"), "tray", Version)
 	}

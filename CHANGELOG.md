@@ -251,6 +251,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- **The tray icon is yours alone:** on a computer with other accounts, another account can no longer quit your Homelab icon in the menu bar or tray, or keep it from starting.
 - **The books cleanup can't get stuck on a bad file:** reading a cover or writing a book's details now has a time limit, so one damaged download can't hold up Tidy Up.
 - **Frigate's and Firefly III's secrets stay off the process list:** Frigate's broker password and Firefly III's nightly-jobs token no longer appear, even for a moment, in the list of running programs other accounts on the computer can see.
 - **Lyrics go in as plain text:** Add lyrics now takes out stray control characters from what the lyrics site sends, and leaves out lyrics far longer than any song's.
