@@ -18,7 +18,7 @@ version: 0.17.0
 | Secrets | `.env` (0600, never committed) and Vaultwarden |
 | Backups | Encrypted by Duplicati before they leave the Mac |
 | Alerts | ntfy with deny-all access; only the alert topics are writable |
-| Tidy Up's lookups | Only for music, and only what a lookup needs: LRCLIB (lrclib.net) gets a song's title, artist, album and length, for songs without time-synced lyrics, from **Add lyrics** or new music (`TIDY_LYRICS_NEW_MUSIC=off` stops the second); MusicBrainz gets an album's tags (beets' matching) or the release picked; AcoustID gets a song's sound fingerprint and length, only when `fpcalc` is installed. No file, path, account or key of the household's goes with them |
+| Tidy Up's lookups | Only for music, and only what a lookup needs: LRCLIB (lrclib.net) gets a song's title, artist, album and length, for songs without time-synced lyrics, from **Add lyrics** or new music (`TIDY_LYRICS_NEW_MUSIC=off` stops the second); MusicBrainz gets an album's tags (beets' matching) or the release picked; AcoustID gets a song's sound fingerprint and length, only when `fpcalc` is installed; a music cleanup also asks Cover Art Archive, iTunes, Amazon and AlbumArt.org for an album's cover (beets' `fetchart`) and Last.fm for its genre (`lastgenre`), by artist and album. No file, path, account or key of the household's goes with them |
 
 ## Public apps
 
