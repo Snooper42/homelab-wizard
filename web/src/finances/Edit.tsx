@@ -47,6 +47,8 @@ export interface EditProps {
   fromApps?: { name: string; read: () => Promise<{ name: string; balance: number; currency?: string }[]> }[];
   /** Keeps a receipt (a data URL) and gives its name; reads one back by its name. */
   receipts?: { save: (dataURL: string) => Promise<string>; read: (name: string) => Promise<string> };
+  /** Keeps a card's own photo (a data URL) and gives its name; reads one back by its name. */
+  cardPictures?: { save: (dataURL: string) => Promise<string>; read: (name: string) => Promise<string> };
   /** Finds a company's real logo on its website (the desktop app's FinancesFetchLogo, internal/sitelogo); none on a phone. */
   fetchLogo?: (site: string) => Promise<{ image: string; from: string }>;
   close: () => void;
@@ -143,6 +145,19 @@ async function shrink(f: File): Promise<string> {
   const url = (b: Blob) => new Promise<string>((ok, bad) => { const r = new FileReader(); r.onload = () => ok(String(r.result)); r.onerror = () => bad(r.error); r.readAsDataURL(b); });
   const png = await url(await c.convertToBlob({ type: 'image/png' }));
   return png.length < 60000 ? png : url(await c.convertToBlob({ type: 'image/webp', quality: 0.85 }));
+}
+
+/**
+ * A card's photo made small on this device (never sent anywhere to be): drawn into at most 800 pixels on its longer side,
+ * as a JPEG, which the computer keeps as the card's picture.
+ */
+async function shrinkPhoto(f: File): Promise<string> {
+  const bmp = await createImageBitmap(f);
+  const scale = Math.min(800 / bmp.width, 800 / bmp.height, 1);
+  const w = Math.max(1, Math.round(bmp.width * scale)), h = Math.max(1, Math.round(bmp.height * scale));
+  const c = new OffscreenCanvas(w, h);
+  c.getContext('2d')!.drawImage(bmp, 0, 0, w, h);
+  return asDataURL(await c.convertToBlob({ type: 'image/jpeg', quality: 0.85 }));
 }
 
 /** A file as a data URL. */
@@ -1566,8 +1581,24 @@ function CardForm(props: EditProps) {
   const [price, setPrice] = useState(money2(c?.price));
   const [typed, setTyped] = useState(!!c?.typed);
   const [account, setAccount] = useState(c?.account || holding[0]?.id || '');
+  const [picture, setPicture] = useState(c?.picture || '');
+  const [shown, setShown] = useState('');
+  const [reading, setReading] = useState('');
   const { busy, keep, touched, watch } = useSaving(props);
   const [problem, setProblem] = useState('');
+  useEffect(() => {
+    if (!picture || !props.cardPictures) { setShown(''); return; }
+    let live = true;
+    props.cardPictures.read(picture).then((u) => { if (live) setShown(u); }, () => {});
+    return () => { live = false; };
+  }, [picture]);
+  // A photo picked here: made small on this device, then kept by the computer, which gives its name.
+  const pickPhoto = async (e: Event) => {
+    const f = (e.target as HTMLInputElement).files?.[0];
+    if (!f || !props.cardPictures) return;
+    setReading('Keeping the photo…');
+    try { setPicture(await props.cardPictures.save(await shrinkPhoto(f))); setReading(''); } catch (err) { setReading(`The photo wasn't kept: ${(err as Error)?.message || err}`); }
+  };
   const submit = (e: Event) => {
     e.preventDefault();
     const n = Math.round(num(count));
@@ -1578,7 +1609,7 @@ function CardForm(props: EditProps) {
     const worth = num(price);
     const next: finance.Collected = {
       ...(c || { id: '' }), account: fresh?.id || account, name: name.trim(), set: set.trim() || undefined, number: number.trim() || undefined, grade: grade.trim() || undefined,
-      count: n > 1 ? n : undefined, paid: num(paid) || undefined, paidOn: paidOn || undefined, price: worth || undefined, typed: typed || undefined,
+      count: n > 1 ? n : undefined, paid: num(paid) || undefined, paidOn: paidOn || undefined, price: worth || undefined, typed: typed || undefined, picture: picture || undefined,
       // A price changed here is set today.
       priceOn: worth !== (c?.price || 0) ? todayISO() : c?.priceOn || (worth ? todayISO() : undefined),
     };
@@ -1604,6 +1635,12 @@ function CardForm(props: EditProps) {
         {holding.length > 1 && <Field label="Kept in"><select value={account} onChange={(e) => setAccount((e.target as HTMLSelectElement).value)}>{holding.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}</select></Field>}
       </div>
       <label class="fcheckbox"><input type="checkbox" checked={typed} onClick={tick(setTyped)} /> Keep this price: never look it up (a graded card the price service doesn't list)</label>
+      {props.cardPictures && <div class="fx-cardphoto">
+        {shown ? <img class="fx-cardpic" src={shown} alt="" /> : <span class="fx-cardpic" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2" /><circle cx="12" cy="11" r="3.5" /></svg></span>}
+        <label class="btn">{picture ? 'Another photo' : 'Use my own photo'}<input type="file" accept="image/*" class="sr" onChange={pickPhoto} /></label>
+        {picture && <button type="button" class="small" onClick={() => setPicture('')}>No photo</button>}
+        {reading && <span class="muted" role="status">{reading}</span>}
+      </div>}
       <Actions busy={busy} exists={!!c} remove={remove} close={props.close} problem={problem} touched={touched} />
     </form>
   );

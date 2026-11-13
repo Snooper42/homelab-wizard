@@ -145,6 +145,7 @@ function draw() {
     printMonth: async (name, html) => (phone ? exportFile(name, html) : `Opened ${await go().PrintFinances(name, html)} to print`),
     toggleHidden: v && !v.readOnly ? toggleHideAmounts : undefined,
     readReceipt: receipts.read,
+    readCardPicture: cardPictures.read,
     saveLedger,
     running: runningApps(),
     calendar: phone ? undefined : () => go().FinancesCalendar(),
@@ -157,7 +158,7 @@ function draw() {
   });
   if (v) readEachMorning(v);
   // A form left open keeps what is typed in; its Save then builds on this plan.
-  if (editing && v && !v.readOnly) mountFinanceSheet($('finSheetBox'), { ...editing, plan: v.plan, checking: v.checking, start: v.start, dues: v.dues, categories: v.categories, ledger: ledgerData.value, save, saveLedger, receipts, fetchLogo, fromApps: fromApps(), close });
+  if (editing && v && !v.readOnly) mountFinanceSheet($('finSheetBox'), { ...editing, plan: v.plan, checking: v.checking, start: v.start, dues: v.dues, categories: v.categories, ledger: ledgerData.value, save, saveLedger, receipts, cardPictures, fetchLogo, fromApps: fromApps(), close });
   // The sidebar's balances, on every screen: a group opens Finances › Net worth.
   mountBalances($('finNav'), v, (g) => { tab = 'worth'; group = g; navigate('finances'); draw(); $('finRoot').querySelector('.fx-groupcard')?.scrollIntoView({ block: 'start' }); }, v && !v.readOnly ? toggleHideAmounts : undefined);
   // The sidebar counts the paychecks that leave checking under the cushion.
@@ -206,6 +207,8 @@ async function save(plan: finance.Plan): Promise<boolean> {
 /** Keeps the ledger; as with the plan, after a failure it is read again, the form kept open over it. */
 /** Receipts, kept on the homelab as soon as one is picked; a transaction names its own. */
 const receipts = { save: (dataURL: string) => go().SaveFinancesReceipt(dataURL), read: (name: string) => go().FinancesReceipt(name) };
+/** The Collection's pictures: a card's own photo kept, and each read back by its name. */
+const cardPictures = { save: (dataURL: string) => go().SaveFinancesCardPicture(dataURL), read: (name: string) => go().FinancesCardPicture(name) };
 // A company's real logo from its website, asked by the computer (the desktop app); a phone has none to ask with.
 const fetchLogo = phone ? undefined : (site: string) => go().FinancesFetchLogo(site);
 
@@ -263,7 +266,7 @@ function open(what: What, id?: string, kind?: string) {
   const v = financesData.value;
   if (!v || v.readOnly) return;
   editing = { what, id, kind, n: ++opened };
-  mountFinanceSheet($('finSheetBox'), { ...editing, plan: v.plan, checking: v.checking, start: v.start, dues: v.dues, categories: v.categories, ledger: ledgerData.value, save, saveLedger, receipts, fetchLogo, fromApps: fromApps(), close });
+  mountFinanceSheet($('finSheetBox'), { ...editing, plan: v.plan, checking: v.checking, start: v.start, dues: v.dues, categories: v.categories, ledger: ledgerData.value, save, saveLedger, receipts, cardPictures, fetchLogo, fromApps: fromApps(), close });
   $('finSheet').hidden = false;
 }
 

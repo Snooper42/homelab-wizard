@@ -1331,6 +1331,7 @@ interface Backend {
     Finances(): Promise<finance.View>;
     FinancesAddInvestment(arg1: app.InvestmentAdd): Promise<app.InvestmentsRead>;
     FinancesCalendar(): Promise<string>;
+    FinancesCardPicture(arg1: string): Promise<string>;
     FinancesChangeInvestment(arg1: app.InvestmentTrade): Promise<app.InvestmentsRead>;
     FinancesDeleteInvestment(arg1: string, arg2: string): Promise<app.InvestmentsRead>;
     FinancesFetchLogo(arg1: string): Promise<app.AppLogo>;
@@ -1376,6 +1377,7 @@ interface Backend {
     RunSetup(arg1: string): Promise<setup.Step[]>;
     RunSetupChoice(arg1: string, arg2: number): Promise<setup.Step[]>;
     SaveFinances(arg1: finance.Plan): Promise<finance.View>;
+    SaveFinancesCardPicture(arg1: string): Promise<string>;
     SaveFinancesLedger(arg1: finance.Ledger): Promise<finance.Ledger>;
     SaveFinancesReceipt(arg1: string): Promise<string>;
     SaveSettings(arg1: Record<string, string>): Promise<settings.Setting[]>;

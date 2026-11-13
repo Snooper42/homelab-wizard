@@ -444,6 +444,9 @@ try { if ((window.__MOCK || {}).tidyTab) localStorage.setItem('homelab.tidyTab',
     StatusFolds: () => later(M.statusFolds || {}),
     // Send to my phone: the paired phones a page can go to (no wall screen), and each send kept to look at.
     SendTargets: () => later(M.sendTargets ?? [{ id: 'p1', name: "Sam's iPhone", finances: true }, { id: 'p2', name: 'The iPad' }, { id: 'p3', name: "Anna's iPhone", member: true, apps: ['immich-server'] }]),
+    // The Collection's pictures: a card's own photo kept by its name (as the computer names it), and read back.
+    SaveFinancesCardPicture: (dataURL) => { const name = 'ab'.repeat(16) + '.jpg'; (M.cardPictures ??= {})[name] = dataURL; return later(name); },
+    FinancesCardPicture: (name) => later(M.cardPictures?.[name] || ''),
     SendToPhone: (device, link, title) => { (M.sent ??= []).push({ device, link, title }); return later(null); },
     SetStatusFolds: (open) => { M.statusFolds = open; (M.statusFoldsSaved ??= []).push(open); return later(null); },
     TidyStop: () => { M.tidyStopped = true; return later(null); },
