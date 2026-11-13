@@ -2210,6 +2210,44 @@ html .fx-month td { padding:0; vertical-align:top; height:92px; border-radius:va
 .alertlist.fx-rows > li .fwho:not(.sm):not(.lg), .alertlist.fx-rows > li .rowopen .fwho:not(.sm):not(.lg) { width:32px; height:32px; font-size:14px; }
 /* Transactions: by day, newest first; a day's heading over its rows. */
 .fx-txday + .fx-txday { margin-top:14px; }
+/* Transactions in columns on a wide card (Step 6): the same rows, their parts laid on one grid (logo, payee with its
+   notes under it, category, account, amount), a header of sort buttons above them on the same grid. Sorted by a column
+   other than the date, one list with each row's date after its logo. Narrow, the list as before and no header. */
+.fx-transactions { container:fxtx / inline-size; --fx-lead:32px; }
+.fx-transactions.fx-txpicking { --fx-lead:60px; }
+.fx-txlead { display:inline-flex; align-items:center; gap:8px; flex:none; }
+.fx-txhead { display:none; }
+@container fxtx (min-width: 760px) {
+  .fx-txhead, .fx-transactions .fx-rows li.opens > .rowopen, .fx-transactions .fx-rows li:not(.opens):not(.fx-receiptshown) {
+    display:grid; grid-template-columns:var(--fx-lead) minmax(0, 1fr) minmax(0, 11em) minmax(0, 11em) 9em; column-gap:12px; align-items:center; }
+  .fx-txhead:has(+ .fx-txflat), .fx-transactions .fx-txflat li.opens > .rowopen, .fx-transactions .fx-txflat li:not(.opens):not(.fx-receiptshown) {
+    grid-template-columns:var(--fx-lead) 5.5em minmax(0, 1fr) minmax(0, 10em) minmax(0, 10em) 9em; }
+  .fx-txhead { padding:0 6px 6px; margin:4px -6px 6px; border-bottom:1px solid var(--line); }
+  .fx-txhead .fx-txcol-date { grid-column:1 / span 1; }
+  .fx-txhead:has(+ .fx-txflat) .fx-txcol-date { grid-column:2; }
+  .fx-txhead .fx-txcol-amount { grid-column:-2; justify-self:end; }
+  .fx-txcol { all:unset; cursor:pointer; font-size:12px; font-weight:600; color:var(--muted); white-space:nowrap; border-radius:6px; padding:2px 4px; margin:0 -4px; }
+  .fx-txcol[aria-pressed="true"] { color:var(--text); }
+  .fx-txcol:hover { background:var(--shade-04); }
+  .fx-txcol:focus-visible { outline:2px solid var(--fin-accent); }
+  .fx-transactions .fx-rows .fx-txlead { grid-column:1; grid-row:1 / span 2; }
+  .fx-transactions .fx-rows li > .rowopen > .grow, .fx-transactions .fx-rows li > .rowopen > .grow > .muted, .fx-transactions .fx-rows li > .grow, .fx-transactions .fx-rows li > .grow > .muted { display:contents; }
+  .fx-transactions .fx-rows .grow > strong { grid-column:2; grid-row:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .fx-transactions .fx-rows .fx-txextra { grid-column:2; grid-row:2; display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 10px; font-size:12px; }
+  .fx-transactions .fx-rows .fx-txextra .fx-txtags { margin-left:0; }
+  .fx-transactions .fx-rows .fx-txextra:empty { display:none; }
+  .fx-transactions .fx-rows .fx-txsep { display:none; }
+  .fx-transactions .fx-rows .fx-txcat { grid-column:3; grid-row:1; }
+  .fx-transactions .fx-rows .fx-txacct { grid-column:4; grid-row:1; }
+  .fx-transactions .fx-rows .fx-txcat, .fx-transactions .fx-rows .fx-txacct { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .fx-transactions .fx-rows .when { grid-column:-2; grid-row:1; justify-self:end; }
+  .fx-transactions .fx-txflat .fx-txdate { grid-column:2; grid-row:1; }
+  .fx-transactions .fx-txflat .grow > strong, .fx-transactions .fx-txflat .fx-txextra { grid-column:3; }
+  .fx-transactions .fx-txflat .fx-txcat { grid-column:4; }
+  .fx-transactions .fx-txflat .fx-txacct { grid-column:5; }
+}
+@media (prefers-color-scheme: dark) { .fx-txcol:hover { background:var(--glow-06); } }
+
 .fx-txday h3 { display:flex; justify-content:space-between; align-items:baseline; gap:12px; margin:0 0 2px; font-size:13px; font-weight:600; color:var(--muted); }
 /* One account picked: what it held after the day, at the day's end of the line, in the text's own colour. */
 .fx-txday h3 .fx-txbal { color:var(--text); font-variant-numeric:tabular-nums; }
