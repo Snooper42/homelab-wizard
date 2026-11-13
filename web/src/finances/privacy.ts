@@ -55,6 +55,59 @@ let real: Backend;
 const watchers: (() => void)[] = [];
 const tell = () => watchers.forEach((fn) => fn());
 
+// Offline (2E step 6): her sealed envelope, and a change made while the
+// homelab didn't answer (sealed too), kept in IndexedDB, the one place the
+// spec allows and only for what's sealed: never the key, never plain data.
+// With no connection the page opens that copy (Face ID or her code), and a
+// change waits there until the homelab answers, when it is sent; one another
+// of her devices made meanwhile is said plainly and hers is shown instead.
+interface Kept {
+  person: string;
+  finances?: string;
+  envelope: Envelope;
+  /** When the envelope was last read from the computer. */
+  at: string;
+  /** Changes made away: the newest sealed, the rev they build on, how many. */
+  pending?: { was: string; envelope: Envelope; count: number };
+}
+let kept: Kept | null = null;
+let offlineAt = '';
+let notice = '';
+/** When the copy shown was last read, while the homelab doesn't answer ("" while it does). */
+export const offlineSince = () => offlineAt;
+/** How many changes wait to be sent to the homelab. */
+export const waitingChanges = () => kept?.pending?.count || 0;
+/** A plain line about what happened away (another device's change), until the next save. */
+export const privateNotice = () => notice;
+
+const DB = 'homelab-private';
+async function idb<T>(mode: IDBTransactionMode, fn: (s: IDBObjectStore) => IDBRequest): Promise<T> {
+  const db = await new Promise<IDBDatabase>((ok, no) => {
+    const r = indexedDB.open(DB, 1);
+    r.onupgradeneeded = () => r.result.createObjectStore('sealed');
+    r.onsuccess = () => ok(r.result);
+    r.onerror = () => no(r.error);
+  });
+  try {
+    return await new Promise<T>((ok, no) => {
+      const q = fn(db.transaction('sealed', mode).objectStore('sealed'));
+      q.onsuccess = () => ok(q.result as T);
+      q.onerror = () => no(q.error);
+    });
+  } finally {
+    db.close();
+  }
+}
+const keptRead = () => idb<Kept | undefined>('readonly', (s) => s.get('mine')).then((k) => k || null, () => null);
+const keptWrite = async () => { if (kept) await idb('readwrite', (s) => s.put(kept, 'mine')).catch(() => {}); };
+const keptForget = async () => { kept = null; await idb('readwrite', (s) => s.delete('mine')).catch(() => {}); };
+/** Keeps e as the last read from the computer, with what still waits. */
+const remember = async (e: Envelope) => { kept = { person: me.person!, finances: me.finances, envelope: e, at: new Date().toISOString(), pending: kept?.pending }; await keptWrite(); };
+/** The newest she has here: what waits, built on the rev it was made at, or the last read. */
+const keptNewest = (k: Kept): Envelope => (k.pending ? { ...k.pending.envelope, rev: k.pending.was } : k.envelope);
+// A call the homelab didn't answer (companion.js's Away, or the fetch itself).
+const isAway = (e: unknown) => (e as Error | null)?.name === 'Away' || e instanceof TypeError;
+
 /** Calls fn whenever her Finances lock, open, or turn private. */
 export const watchPrivate = (fn: () => void) => { watchers.push(fn); };
 export const privateState = () => state;
@@ -85,15 +138,61 @@ export async function householdShared(): Promise<Shared | null> {
 function find(): Promise<void> {
   return (known ??= (async () => {
     me = (await window.phoneMe?.catch(() => ({}))) || {};
+    const k = await keptRead();
+    // Away, /api/me didn't answer either: whose they are is kept with the sealed copy.
+    if (!me.person && k) me = { person: k.person, finances: k.finances };
     if (!me.person) { state = 'none'; return; }
+    if (k && k.person !== me.person) await keptForget(); // the phone given to someone else
+    else kept = k;
     try {
       const e = await sealedCalls().FinancesSealed();
       envelope = e || null;
       state = e ? 'locked' : 'plain';
-    } catch {
-      state = 'none'; // a computer from before private Finances
+      if (!e) await keptForget();
+      else if (kept?.pending) void home(); // came home with a change waiting
+      else await remember(e);
+    } catch (e) {
+      if (isAway(e) && kept) {
+        envelope = keptNewest(kept);
+        offlineAt = kept.at;
+        state = 'locked';
+        return;
+      }
+      state = 'none'; // a computer from before private Finances, or away with nothing kept
+      if (isAway(e)) known = null;
     }
   })());
+}
+
+/**
+ * The homelab answers again: what waits is sent (refused when another of her
+ * devices saved meanwhile, said plainly, and hers is shown), or the newest
+ * is read; nothing happens while it still doesn't answer.
+ */
+let homing: Promise<void> | null = null;
+function home(): Promise<void> {
+  return (homing ??= (async () => {
+    let latest: Envelope | null;
+    try { latest = await sealedCalls().FinancesSealed(); } catch { return; }
+    offlineAt = '';
+    if (!latest) { await keptForget(); key = null; data = null; envelope = null; state = 'plain'; tell(); return; }
+    const p = kept?.pending;
+    if (p) {
+      try {
+        const r = await sealedCalls().SaveFinancesSealed(p.was, p.envelope);
+        latest = { ...p.envelope, rev: r.rev };
+      } catch (e) {
+        if (isAway(e)) { offlineAt = kept!.at; return; }
+        if (!/changed on another device/.test(String((e as Error)?.message))) throw e;
+        notice = AWAY_CHANGED;
+      }
+      kept!.pending = undefined;
+    }
+    envelope = latest;
+    if (key) data = await seal.openSealed(key, latest, me.person!);
+    await remember(latest);
+    tell();
+  })().finally(() => { homing = null; }));
 }
 
 /** Puts the page's Finances calls in front of the computer's, on a phone. */
@@ -104,6 +203,9 @@ export function installPrivate() {
     get: (t, m) => (typeof m === 'string' && PLAIN.has(m) ? (...args: unknown[]) => answer(m, args) : (t as unknown as Record<string | symbol, unknown>)[m]),
   });
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') lock(); });
+  // Home again: what waits goes, and the newest is read.
+  window.addEventListener('online', () => { if (offlineAt || kept?.pending) void home(); });
+  setInterval(() => { if (offlineAt || kept?.pending) void home(); }, 30000);
   for (const ev of ['pointerdown', 'keydown']) document.addEventListener(ev, touched, { passive: true, capture: true });
 }
 
@@ -126,7 +228,12 @@ async function answer(method: string, args: unknown[]): Promise<unknown> {
     case 'FinancesLedger': return { ...(data.ledger as object), rev: envelope!.rev };
     case 'SaveFinances': await save({ ...data, plan: unrev(args[0]) }); return view();
     case 'SaveFinancesLedger': await save({ ...data, ledger: unrev(args[0]) }); return { ...(data.ledger as object), rev: envelope!.rev };
-    case 'SaveFinancesReceipt': return sealedCalls().SaveFinancesSealedReceipt(await seal.sealText(key, me.person!, String(args[0])));
+    case 'SaveFinancesReceipt': {
+      const sealed = await seal.sealText(key, me.person!, String(args[0]));
+      return sealedCalls().SaveFinancesSealedReceipt(sealed).catch((e) => {
+        throw isAway(e) ? new Error('A receipt waits until the homelab answers: add it again when you’re home.') : e;
+      });
+    }
     case 'FinancesReceipt': return seal.openText(key, me.person!, await sealedCalls().FinancesSealedReceipt(String(args[0])));
   }
   return pass();
@@ -157,15 +264,31 @@ async function view(): Promise<finance.View> {
 }
 
 const CHANGED = 'Your Finances were changed on another of your devices after this was read. The latest is shown now: make your change again.';
+const AWAY_CHANGED = 'While you were away, your Finances were changed on another of your devices, so the change made here wasn’t kept. The latest is shown now: make it again.';
 
 /** Seals next and keeps it on the computer; when another device of hers saved first, opens hers instead and says so. */
 async function save(next: Private) {
   const sealed = await seal.reseal(key!, envelope!, me.person!, next);
+  const base = kept?.pending?.was ?? envelope!.rev!;
+  notice = '';
   try {
-    const r = await sealedCalls().SaveFinancesSealed(envelope!.rev!, sealed);
+    if (offlineAt) throw Object.assign(new Error('away'), { name: 'Away' });
+    const r = await sealedCalls().SaveFinancesSealed(base, sealed);
     envelope = { ...sealed, rev: r.rev };
     data = next;
+    if (kept) kept.pending = undefined;
+    await remember(envelope);
   } catch (e) {
+    if (isAway(e) && kept) {
+      // Kept here, sealed, until the homelab answers.
+      offlineAt ||= kept.at;
+      kept.pending = { was: base, envelope: sealed, count: (kept.pending?.count || 0) + 1 };
+      await keptWrite();
+      envelope = { ...sealed, rev: base };
+      data = next;
+      tell();
+      return;
+    }
     if (!/changed on another device/.test(String((e as Error)?.message))) throw e;
     const latest = await sealedCalls().FinancesSealed();
     if (latest) { data = await seal.openSealed(key!, latest, me.person!); envelope = latest; }
@@ -175,8 +298,17 @@ async function save(next: Private) {
 
 /** Opens her Finances with the key, once unwrapped. */
 async function opened(k: CryptoKey) {
-  const latest = await sealedCalls().FinancesSealed();
-  if (!latest) { state = 'plain'; envelope = null; tell(); return; }
+  let latest: Envelope | null;
+  try {
+    latest = await sealedCalls().FinancesSealed();
+    if (latest && !kept?.pending) await remember(latest);
+    if (latest && kept?.pending) latest = envelope; // sent by home() as it comes
+  } catch (e) {
+    if (!isAway(e) || !kept) throw e;
+    latest = keptNewest(kept);
+    offlineAt ||= kept.at;
+  }
+  if (!latest) { state = 'plain'; envelope = null; await keptForget(); tell(); return; }
   data = await seal.openSealed(k, latest, me.person!);
   envelope = latest;
   key = k;
@@ -279,6 +411,7 @@ export async function turnOn(ways: seal.Ways) {
   const sealed = transactions.some((t, i) => t !== ledger.transactions![i]) ? await seal.reseal(k0.key, k0.envelope, me.person!, { plan, ledger: { ...ledger, transactions } }) : k0.envelope;
   const r = await sealedCalls().SaveFinancesSealed('new', sealed);
   envelope = { ...sealed, rev: r.rev };
+  await remember(envelope);
   data = { plan, ledger: { ...ledger, transactions } };
   key = k0.key;
   state = 'open';
@@ -301,6 +434,7 @@ export async function turnOff() {
   }
   const bare = { ...ledger, transactions: (ledger.transactions || []).map((t) => (pictures.has(t.id) ? { ...t, receipt: undefined } : t)) };
   await sealedCalls().UnsealFinances(envelope.rev!, data.plan, bare);
+  await keptForget();
   key = null;
   data = null;
   envelope = null;

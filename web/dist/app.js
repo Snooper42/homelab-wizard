@@ -3366,8 +3366,8 @@
     const v3 = localStorage.getItem(foldKey);
     if (v3 === "all") fold = { all: true, picked: {} };
     else if (v3) {
-      const kept4 = JSON.parse(v3);
-      fold = { all: false, picked: Array.isArray(kept4) ? Object.fromEntries(kept4.map((l3) => [l3, true])) : kept4 };
+      const kept5 = JSON.parse(v3);
+      fold = { all: false, picked: Array.isArray(kept5) ? Object.fromEntries(kept5.map((l3) => [l3, true])) : kept5 };
     }
   } catch {
   }
@@ -3552,17 +3552,17 @@
     const q2 = useFilter().text;
     const open5 = openGroups(p3.groups, f4, p3.held);
     const toggle = (label) => setFold({ all: false, picked: { ...f4.all ? open5 : f4.picked, [label]: !open5[label] } });
-    const kept4 = q2.trim() ? p3.groups.map((g2) => ({ g: g2, apps: g2.apps.filter((a3) => matches(a3, q2)) })).filter((x3) => x3.apps.length) : null;
+    const kept5 = q2.trim() ? p3.groups.map((g2) => ({ g: g2, apps: g2.apps.filter((a3) => matches(a3, q2)) })).filter((x3) => x3.apps.length) : null;
     const all = p3.groups.reduce((t3, g2) => t3 + g2.apps.length, 0);
-    const first = kept4?.[0]?.apps.find((a3) => a3.state !== "missing");
+    const first = kept5?.[0]?.apps.find((a3) => a3.state !== "missing");
     const openFirst = A2(() => {
     });
     openFirst.current = () => {
       if (first) p3.on.page(first);
     };
     const opener = A2(() => openFirst.current());
-    h2(() => setFound({ n: kept4 ? kept4.reduce((t3, x3) => t3 + x3.apps.length, 0) : all, of: all, first: first ? opener.current : null }));
-    if (kept4 && !kept4.length) {
+    h2(() => setFound({ n: kept5 ? kept5.reduce((t3, x3) => t3 + x3.apps.length, 0) : all, of: all, first: first ? opener.current : null }));
+    if (kept5 && !kept5.length) {
       return /* @__PURE__ */ u3("tr", { class: "nomatch", children: /* @__PURE__ */ u3("td", { colSpan: 4, children: [
         "No app’s name has “",
         q2.trim(),
@@ -3571,7 +3571,7 @@
       ] }) });
     }
     const row = (a3) => /* @__PURE__ */ u3(Row2, { a: a3, p: p3, menu, setMenu, said: said2?.id === a3.id ? said2.words : void 0, say }, a3.id);
-    return /* @__PURE__ */ u3(S, { children: kept4 ? kept4.flatMap(({ g: g2, apps: apps2 }) => [/* @__PURE__ */ u3(GroupHead, { g: g2, open: true, toggle: () => {
+    return /* @__PURE__ */ u3(S, { children: kept5 ? kept5.flatMap(({ g: g2, apps: apps2 }) => [/* @__PURE__ */ u3(GroupHead, { g: g2, open: true, toggle: () => {
     }, p: p3 }, "g:" + g2.label), ...apps2.map(row)]) : p3.groups.flatMap((g2) => [
       /* @__PURE__ */ u3(GroupHead, { g: g2, open: open5[g2.label], toggle: () => toggle(g2.label), p: p3 }, "g:" + g2.label),
       ...open5[g2.label] ? g2.apps.map(row) : []
@@ -4034,11 +4034,11 @@
   function Row3({ s: s3, p: p3, value, hidden: hidden3, edit }) {
     const [result, setResult] = d2(null);
     const [testing, setTesting] = d2(false);
-    const [kept4, setKept] = d2(void 0);
+    const [kept5, setKept] = d2(void 0);
     const step2 = p3.checks[s3.key];
     const toggle = !s3.secret && /^(true|false)$/i.test(s3.value || "");
     const label = p3.label(s3.key);
-    const input2 = toggle ? /* @__PURE__ */ u3("input", { type: "checkbox", class: "switch", role: "switch", "aria-label": label, disabled: p3.readOnly, checked: /^true$/i.test(value ?? kept4 ?? s3.value), onChange: (e3) => edit(s3.key, e3.currentTarget.checked ? "true" : "false") }) : /* @__PURE__ */ u3(
+    const input2 = toggle ? /* @__PURE__ */ u3("input", { type: "checkbox", class: "switch", role: "switch", "aria-label": label, disabled: p3.readOnly, checked: /^true$/i.test(value ?? kept5 ?? s3.value), onChange: (e3) => edit(s3.key, e3.currentTarget.checked ? "true" : "false") }) : /* @__PURE__ */ u3(
       "input",
       {
         type: s3.secret ? "password" : "text",
@@ -4046,7 +4046,7 @@
         spellcheck: false,
         "aria-label": label,
         disabled: p3.readOnly,
-        value: value ?? kept4 ?? (s3.secret ? "" : s3.value || ""),
+        value: value ?? kept5 ?? (s3.secret ? "" : s3.value || ""),
         placeholder: s3.secret ? s3.set ? "set · leave empty to keep" : "not set" : "",
         onInput: (e3) => edit(s3.key, e3.currentTarget.value)
       }
@@ -6858,9 +6858,9 @@
   $("settingsSearch").oninput = filterSettings;
   function showSettings(keys2) {
     settingsFocus = keys2;
-    const kept4 = settingsData.at > 0;
+    const kept5 = settingsData.at > 0;
     show3("settings");
-    if (kept4) drawSettings(false, true);
+    if (kept5) drawSettings(false, true);
   }
   $("saveSettings").onclick = async () => {
     const values = {};
@@ -7625,9 +7625,9 @@
     }
   }
   function drawStatus() {
-    const kept4 = !statusData.error && statusData.value === remembered?.status;
-    $("statusAge").hidden = !kept4;
-    if (kept4) $("statusAge").textContent = `As it was ${Date.now() - new Date(remembered.at).getTime() < 6e4 ? "a few seconds ago" : ago(remembered.at)}; checking now…`;
+    const kept5 = !statusData.error && statusData.value === remembered?.status;
+    $("statusAge").hidden = !kept5;
+    if (kept5) $("statusAge").textContent = `As it was ${Date.now() - new Date(remembered.at).getTime() < 6e4 ? "a few seconds ago" : ago(remembered.at)}; checking now…`;
     if (statusData.error) {
       statusById = {};
       if (catalog) renderApps();
@@ -7655,7 +7655,7 @@
     renderAppList(st);
     drawOvernight();
     if (lastWatch) drawWatchdog();
-    if (st.checking && !kept4) {
+    if (st.checking && !kept5) {
       if (st !== boardStatus) answerPages(st);
       else if (boardAnswers) applyAnswers(st, boardAnswers);
     }
@@ -8790,7 +8790,7 @@
     const daysText = switching2.sundays || !days.length ? "Sundays" : weekdaysText(days);
     const ids = [a3.id, ...entry?.dependsOn || []];
     const copy = o3?.copies?.find((c4) => ids.includes(c4.id) && !c4.volume && !never(c4.newest));
-    const kept4 = container ? copy ? `Its files, and its database's copy from ${when(copy.newest)}` : "Its files in the homelab folder, every night" : "It runs on its own, outside the homelab; its own app keeps its data";
+    const kept5 = container ? copy ? `Its files, and its database's copy from ${when(copy.newest)}` : "Its files in the homelab folder, every night" : "It runs on its own, outside the homelab; its own app keeps its data";
     return /* @__PURE__ */ u3(Card, { kind: "alerts pagecard", id: "appSettings", children: [
       /* @__PURE__ */ u3(CardHead, { title: "Settings", children: null }),
       /* @__PURE__ */ u3(Rows, { children: [
@@ -8834,7 +8834,7 @@
             sub: away2 ? "Opens anywhere through your Cloudflare tunnel; away from home, Cloudflare can see what passes" : "Home only: it opens on your home Wi-Fi, and nobody outside can reach it"
           }
         ),
-        /* @__PURE__ */ u3(Row, { title: "In the nightly backup", sub: kept4, end: /* @__PURE__ */ u3(ActionLink, { onClick: on2.openBackups, children: "Backups ›" }) })
+        /* @__PURE__ */ u3(Row, { title: "In the nightly backup", sub: kept5, end: /* @__PURE__ */ u3(ActionLink, { onClick: on2.openBackups, children: "Backups ›" }) })
       ] })
     ] });
   }
@@ -9376,16 +9376,16 @@
     const people = v3.plan.people || [];
     const payments = allPayments(v3.plan);
     const income = people.reduce((t3, e3) => t3 + e3.net * perMonth(e3.schedule), 0);
-    const kept4 = (id2) => saving(L2.account[id2 || ""]?.kind);
+    const kept5 = (id2) => saving(L2.account[id2 || ""]?.kind);
     const onCard2 = (x3) => L2.account[x3.from || ""]?.kind === "card";
     const fromPay = payments.filter((x3) => !x3.payer && (!x3.from || x3.from === v3.checking || onCard2(x3)) && !(x3.to && x3.to === v3.checking));
     const each = (x3) => x3.amount * perMonth(x3.schedule, people, v3.checking);
     const fromOthers = payments.filter((x3) => x3.payer);
     const others2 = fromOthers.map((x3) => ({ name: x3.name, payer: x3.payer, amount: each(x3) }));
-    const spentList = fromPay.filter((x3) => !kept4(x3.to));
+    const spentList = fromPay.filter((x3) => !kept5(x3.to));
     const spent = spentList.reduce((t3, x3) => t3 + each(x3), 0);
-    const saved = [...fromPay, ...fromOthers].filter((x3) => kept4(x3.to)).reduce((t3, x3) => t3 + each(x3), 0);
-    const viaPay = people.reduce((t3, e3) => t3 + (e3.deductions || []).filter((d3) => kept4(d3.account)).reduce((u4, d3) => u4 + d3.amount, 0) * perMonth(e3.schedule), 0);
+    const saved = [...fromPay, ...fromOthers].filter((x3) => kept5(x3.to)).reduce((t3, x3) => t3 + each(x3), 0);
+    const viaPay = people.reduce((t3, e3) => t3 + (e3.deductions || []).filter((d3) => kept5(d3.account)).reduce((u4, d3) => u4 + d3.amount, 0) * perMonth(e3.schedule), 0);
     const kinds2 = {};
     for (const x3 of spentList) kinds2[x3.kind || "other"] = (kinds2[x3.kind || "other"] || 0) + each(x3);
     const byKind = Object.entries(kinds2).map(([kind, amount]) => ({ kind, amount })).filter((k3) => k3.amount > 5e-3).sort((a3, b2) => b2.amount - a3.amount);
@@ -9430,8 +9430,8 @@
     const h3 = a3.history || [];
     let at2;
     for (const p3 of h3) if (p3.date <= day3) at2 = p3.amount;
-    const kept4 = at2 ?? h3[0]?.amount;
-    return kept4 !== void 0 ? kept4 * rateOf(v3.plan, a3) : todayOf(v3, a3);
+    const kept5 = at2 ?? h3[0]?.amount;
+    return kept5 !== void 0 ? kept5 * rateOf(v3.plan, a3) : todayOf(v3, a3);
   }
   function balanceAfter(acct, all, day3) {
     const effect = (t3) => (t3.account === acct.id ? t3.amount : t3.to === acct.id ? -t3.amount : 0) * (owed(acct.kind) ? -1 : 1);
@@ -10037,8 +10037,8 @@
     }, [picking]);
     if (!ledger) return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3(Empty, { children: "Reading…" }) });
     const all = ledger.transactions;
-    const home = new Map(inHome(v3.plan, all).map((t3) => [t3.id, t3.amount]));
-    const amt = (t3) => home.get(t3.id) ?? t3.amount;
+    const home2 = new Map(inHome(v3.plan, all).map((t3) => [t3.id, t3.amount]));
+    const amt = (t3) => home2.get(t3.id) ?? t3.amount;
     const groupOf2 = new Map((v3.categories || []).filter((c4) => c4.parent).map((c4) => [c4.name.toLowerCase(), c4.parent]));
     const used = [...new Set(all.flatMap(catsOf))];
     const cats = [.../* @__PURE__ */ new Set([...used, ...used.map((c4) => groupOf2.get(c4.toLowerCase())).filter((g2) => !!g2)])].sort();
@@ -10564,9 +10564,9 @@
       setProblem("");
       try {
         const url2 = await receiptOf(f4);
-        const kept4 = await receipts2.save(url2);
-        setShown({ name: kept4, url: url2 });
-        set2(kept4);
+        const kept5 = await receipts2.save(url2);
+        setShown({ name: kept5, url: url2 });
+        set2(kept5);
       } catch (e3) {
         setProblem(String(e3?.message || e3));
       }
@@ -10895,10 +10895,10 @@
     const [boughtOn, setBoughtOn] = d2(a3?.boughtOn || "");
     const [holds, setHolds] = d2(a3?.holds || "");
     const fromPrice = kind === "car" ? carFromPrice({ bought: num(bought), boughtOn, holds }, todayISO()) : void 0;
-    const home = currencyCode();
+    const home2 = currencyCode();
     const [currency, setCurrency2] = d2(a3?.currency || "");
     const code2 = currency.trim().toUpperCase();
-    const foreign = !!code2 && code2 !== home;
+    const foreign = !!code2 && code2 !== home2;
     const [xrate, setXrate] = d2(text(plan.rates?.[code2]));
     const typeCurrency = (c4) => {
       setCurrency2(c4);
@@ -10912,7 +10912,7 @@
     const loans = (plan.accounts || []).filter((q2) => q2.kind === "loan");
     const submit = (e3) => {
       e3.preventDefault();
-      const wrong = !name.trim() && !real2 ? "Give it a name, or pick its bank." : num(balance) < 0 && (owed(kind) || held2(kind)) ? "Type it without a minus." : kind === "card" && paidEach && payer ? `“${payer.name}” pays it off already: delete that payment, or leave this off.` : kind === "card" && paidEach && num(spend) < 0 ? "Type the spending without a minus." : kind === "loan" && firstDue && !(num(original) > 0) ? "Type what was borrowed, or leave the first payment day empty." : kind === "loan" && firstDue && !(num(payment) > 0) && !(planMonthly > 0) ? "Type each payment, or leave the first payment day empty." : kind === "loan" && (num(term) < 0 || num(term) !== Math.round(num(term))) ? "The number of payments is a whole number, as 36." : kind === "loan" && (num(payment) < 0 || num(charge) < 0) ? "Type the payment and the charge without a minus." : kind === "car" && num(bought) < 0 ? "Type what it cost without a minus." : kind === "car" && num(bought) > 0 && !boughtOn ? "Pick the day it was bought, or leave what it cost empty." : foreign && !/^[A-Z]{3}$/.test(code2) ? "A currency is its three letters, as EUR." : foreign && !(num(xrate) > 0) ? `Type how many ${home} one ${code2} is.` : "";
+      const wrong = !name.trim() && !real2 ? "Give it a name, or pick its bank." : num(balance) < 0 && (owed(kind) || held2(kind)) ? "Type it without a minus." : kind === "card" && paidEach && payer ? `“${payer.name}” pays it off already: delete that payment, or leave this off.` : kind === "card" && paidEach && num(spend) < 0 ? "Type the spending without a minus." : kind === "loan" && firstDue && !(num(original) > 0) ? "Type what was borrowed, or leave the first payment day empty." : kind === "loan" && firstDue && !(num(payment) > 0) && !(planMonthly > 0) ? "Type each payment, or leave the first payment day empty." : kind === "loan" && (num(term) < 0 || num(term) !== Math.round(num(term))) ? "The number of payments is a whole number, as 36." : kind === "loan" && (num(payment) < 0 || num(charge) < 0) ? "Type the payment and the charge without a minus." : kind === "car" && num(bought) < 0 ? "Type what it cost without a minus." : kind === "car" && num(bought) > 0 && !boughtOn ? "Pick the day it was bought, or leave what it cost empty." : foreign && !/^[A-Z]{3}$/.test(code2) ? "A currency is its three letters, as EUR." : foreign && !(num(xrate) > 0) ? `Type how many ${home2} one ${code2} is.` : "";
       setProblem(wrong);
       if (wrong) return;
       const owesNow = read ? read.owed : num(balance);
@@ -11048,15 +11048,15 @@
           ", falling a little each month. What you type as its worth counts instead, and falls from the day you type it."
         ] }),
         /* @__PURE__ */ u3(Field, { label: { home: "Address", car: "Year and model", card: "Last 4 digits", checking: "Last 4 digits", savings: "Last 4 digits" }[kind] || "Note", children: /* @__PURE__ */ u3("input", { value: detail, onInput: input(setDetail) }) }),
-        /* @__PURE__ */ u3(Field, { label: `Currency, if not ${home}`, children: /* @__PURE__ */ u3("input", { value: currency, onInput: input(typeCurrency), list: "finCurrencies", maxLength: 3, placeholder: home, autocapitalize: "characters" }) }),
-        foreign && /* @__PURE__ */ u3(Field, { label: `1 ${code2} is, in ${home}`, children: /* @__PURE__ */ u3("input", { inputmode: "decimal", value: xrate, onInput: input(setXrate), placeholder: "1.08" }) }),
+        /* @__PURE__ */ u3(Field, { label: `Currency, if not ${home2}`, children: /* @__PURE__ */ u3("input", { value: currency, onInput: input(typeCurrency), list: "finCurrencies", maxLength: 3, placeholder: home2, autocapitalize: "characters" }) }),
+        foreign && /* @__PURE__ */ u3(Field, { label: `1 ${code2} is, in ${home2}`, children: /* @__PURE__ */ u3("input", { inputmode: "decimal", value: xrate, onInput: input(setXrate), placeholder: "1.08" }) }),
         foreign && sign && num(xrate) > 0 && num(balance) !== 0 && /* @__PURE__ */ u3("p", { class: "formsub muted wide", children: [
           moneyIn(num(balance), code2),
           " is about ",
           money(num(balance) * num(xrate)),
           " at this rate, typed in by you: Finances never looks a rate up."
         ] }),
-        /* @__PURE__ */ u3("datalist", { id: "finCurrencies", children: ["USD", "EUR", "GBP", "CAD", "AUD", "NZD", "JPY", "CHF", "SEK", "NOK", "DKK", "MXN", "INR"].filter((c4) => c4 !== home).map((c4) => /* @__PURE__ */ u3("option", { value: c4 }, c4)) })
+        /* @__PURE__ */ u3("datalist", { id: "finCurrencies", children: ["USD", "EUR", "GBP", "CAD", "AUD", "NZD", "JPY", "CHF", "SEK", "NOK", "DKK", "MXN", "INR"].filter((c4) => c4 !== home2).map((c4) => /* @__PURE__ */ u3("option", { value: c4 }, c4)) })
       ] }),
       a3 && /* @__PURE__ */ u3(BalancesLately, { a: a3 }),
       /* @__PURE__ */ u3(Actions3, { busy: busy2, exists: !!a3, remove, close: props.close, problem, touched: touched2, uses, removeAll: () => without(true) })
@@ -11624,13 +11624,13 @@
     const named6 = (props.categories || []).map((c4) => c4.name);
     const submit = (e3) => {
       e3.preventDefault();
-      const kept4 = latest2.current.map((r3) => ({ match: r3.match.trim(), prefix: r3.prefix || void 0, payee: (r3.payee || "").trim() || void 0, category: (r3.category || "").trim() || void 0 }));
-      const bad = kept4.find((r3) => !r3.match || !r3.payee && !r3.category);
+      const kept5 = latest2.current.map((r3) => ({ match: r3.match.trim(), prefix: r3.prefix || void 0, payee: (r3.payee || "").trim() || void 0, category: (r3.category || "").trim() || void 0 }));
+      const bad = kept5.find((r3) => !r3.match || !r3.payee && !r3.category);
       if (bad) {
         setProblem(bad.match ? `The rule for ${bad.match} does nothing: give it a name or a category.` : "Each rule needs the name it is for.");
         return;
       }
-      keep3({ ...plan, rules: kept4.length ? kept4 : void 0 });
+      keep3({ ...plan, rules: kept5.length ? kept5 : void 0 });
     };
     return /* @__PURE__ */ u3("form", { class: "finform finrules", onSubmit: submit, ...watch2, children: [
       /* @__PURE__ */ u3("div", { class: "formhead", children: /* @__PURE__ */ u3("h2", { id: "finSheetTitle", children: "Rules" }) }),
@@ -11896,7 +11896,7 @@
       }
       const fix = new Map([...fixes].map(([i3, id2]) => [id2, found2[i3]]));
       const rename = new Map([...renames].map(([i3, id2]) => [id2, found2[i3].payee]));
-      const kept4 = have.map((q2) => {
+      const kept5 = have.map((q2) => {
         if (rename.has(q2.id) || recat.has(q2.id)) return { ...q2, payee: rename.get(q2.id) || q2.payee, category: q2.category || recat.get(q2.id) };
         const t3 = fix.get(q2.id);
         return t3 ? { ...q2, payee: t3.payee || q2.payee, note: q2.note || (t3.raw ? t3.memo ? `${t3.memo} (${t3.raw})` : t3.raw : t3.memo) || void 0, category: q2.category || t3.payee && lastCat(t3.payee) || void 0, institution: q2.institution || t3.payee && lastLogo(t3.payee) || void 0, bank: q2.bank || t3.id } : q2;
@@ -11908,7 +11908,7 @@
         return t3.amount < 0 ? { ...x3, to: g2.account, category: void 0, payment: void 0 } : { ...x3, account: g2.account, to: account, amount: -t3.amount, bank: void 0, toBank: t3.id, category: void 0, payment: void 0 };
       });
       setBusy(true);
-      const ok = await props.saveLedger({ ...ledger || { transactions: [] }, transactions: [...kept4, ...added] });
+      const ok = await props.saveLedger({ ...ledger || { transactions: [] }, transactions: [...kept5, ...added] });
       setBusy(false);
       if (ok) props.close();
     };
@@ -12715,12 +12715,12 @@ ${pays}
     const moved = {};
     for (const p3 of v3.paydays || []) if (p3.moved?.length) moved[p3.date] = p3.moved;
     const txs = ledger?.transactions || [];
-    const home = new Map(inHome(v3.plan, txs).map((t3) => [t3.id, t3.amount]));
+    const home2 = new Map(inHome(v3.plan, txs).map((t3) => [t3.id, t3.amount]));
     const byDay2 = {};
     for (const t3 of txs) (byDay2[t3.date] ||= []).push(t3);
     const recorded = (date) => {
       const spent = byDay2[date] || [];
-      return { spent, net: spent.filter((t3) => !t3.to).reduce((n3, t3) => n3 + (home.get(t3.id) ?? t3.amount), 0) };
+      return { spent, net: spent.filter((t3) => !t3.to).reduce((n3, t3) => n3 + (home2.get(t3.id) ?? t3.amount), 0) };
     };
     const out = {};
     const firstRead = (v3.days || [])[0]?.date;
@@ -14512,8 +14512,8 @@ ${pays}
         /* @__PURE__ */ u3(Row, { lead: /* @__PURE__ */ u3(Mark, { kind: "home", name: "Home" }), title: "A home or a car", sub: "What it is worth, and the loan against it: its equity", end: /* @__PURE__ */ u3("button", { class: "small", onClick: () => edit("account"), children: "Add property" }) })
       ] }) }) }) });
     }
-    const kept4 = parseDay(firstKept(v3)), today2 = parseDay(v3.today);
-    const back3 = Math.max(1, Math.min(ranges2.find(([k3]) => k3 === range)?.[2] ?? 3, (today2.getFullYear() - kept4.getFullYear()) * 12 + today2.getMonth() - kept4.getMonth()));
+    const kept5 = parseDay(firstKept(v3)), today2 = parseDay(v3.today);
+    const back3 = Math.max(1, Math.min(ranges2.find(([k3]) => k3 === range)?.[2] ?? 3, (today2.getFullYear() - kept5.getFullYear()) * 12 + today2.getMonth() - kept5.getMonth()));
     const months = worthByMonth(v3, back3, 3);
     const start = months[0];
     const now = netWorth(v3);
@@ -15534,14 +15534,14 @@ ${pays}
   function topOf(nodes, top, id2, hue2) {
     const sorted = [...nodes].sort((a3, b2) => b2.value - a3.value);
     if (top <= 0 || sorted.length <= top) return sorted;
-    const kept4 = sorted.slice(0, top - 1), rest = sorted.slice(top - 1);
-    return [...kept4, { id: id2, label: `Other (${rest.length})`, value: rest.reduce((t3, n3) => t3 + n3.value, 0), col: rest[0].col, hue: hue2, items: rest.flatMap((n3) => n3.items) }];
+    const kept5 = sorted.slice(0, top - 1), rest = sorted.slice(top - 1);
+    return [...kept5, { id: id2, label: `Other (${rest.length})`, value: rest.reduce((t3, n3) => t3 + n3.value, 0), col: rest[0].col, hue: hue2, items: rest.flatMap((n3) => n3.items) }];
   }
-  function build(sources, taxes, spend, kept4, top) {
+  function build(sources, taxes, spend, kept5, top) {
     const sum = (ns) => ns.reduce((t3, n3) => t3 + n3.value, 0);
     const income = sum(sources), tax = taxes?.value || 0, expenses = sum(spend);
     const saved = income - tax - expenses;
-    const into2 = kept4.filter((n3) => n3.value > 5e-3);
+    const into2 = kept5.filter((n3) => n3.value > 5e-3);
     const moved = sum(into2);
     const short = tax + expenses + moved - income;
     const nodes = [], links = [];
@@ -15628,7 +15628,7 @@ ${pays}
   }
   function typicalFlow(v3, L2, top) {
     const people = v3.plan.people || [];
-    const kept4 = (id2) => saving(L2.account[id2 || ""]?.kind);
+    const kept5 = (id2) => saving(L2.account[id2 || ""]?.kind);
     const src = [], spend = /* @__PURE__ */ new Map(), into2 = /* @__PURE__ */ new Map();
     let taxes = 0;
     const taxItems = [];
@@ -15650,7 +15650,7 @@ ${pays}
         taxItems.push({ label: `${e3.name}'s taxes`, amount: -tax, person: e3.id });
       }
       for (const d3 of ded) {
-        if (kept4(d3.account)) add(into2, "kept:" + d3.account, L2.account[d3.account]?.name || d3.account, savedHue, d3.amount * each2, { label: `${d3.name}, from ${e3.name}'s pay`, amount: d3.amount * each2, person: e3.id });
+        if (kept5(d3.account)) add(into2, "kept:" + d3.account, L2.account[d3.account]?.name || d3.account, savedHue, d3.amount * each2, { label: `${d3.name}, from ${e3.name}'s pay`, amount: d3.amount * each2, person: e3.id });
         else add(spend, "cat:frompay", "Taken from pay", 6, d3.amount * each2, { label: `${d3.name}, from ${e3.name}'s pay`, amount: -d3.amount * each2, person: e3.id });
       }
     }
@@ -15663,7 +15663,7 @@ ${pays}
       }
       const onCard2 = L2.account[x3.from || ""]?.kind === "card";
       if (!(!x3.from || x3.from === v3.checking || onCard2) || x3.to && x3.to === v3.checking) continue;
-      if (kept4(x3.to)) add(into2, "kept:" + x3.to, L2.account[x3.to]?.name || x3.to, savedHue, each(x3), { label: x3.name, amount: each(x3), payment: x3.id });
+      if (kept5(x3.to)) add(into2, "kept:" + x3.to, L2.account[x3.to]?.name || x3.to, savedHue, each(x3), { label: x3.name, amount: each(x3), payment: x3.id });
       else add(spend, "kind:" + (x3.kind || "other"), kindName(x3.kind || "other"), kindHueOf(x3.kind, v3.categories || []), each(x3), { label: x3.name, amount: -each(x3), payment: x3.id });
     }
     return build(src, taxes > 5e-3 ? { id: "taxes", label: "Taxes", value: taxes, col: 2, hue: 7, items: taxItems } : null, [...spend.values()], [...into2.values()], top);
@@ -15892,9 +15892,9 @@ ${pays}
       return m3;
     }, {})).map(([type, year]) => ({ type, year })).sort((a3, b2) => b2.year - a3.year || order2.indexOf(a3.type) - order2.indexOf(b2.type));
     if (types.length > 8) {
-      const kept4 = types.filter((t3) => t3.type !== "other").slice(0, 7);
-      const rest = types.filter((t3) => !kept4.includes(t3));
-      types.splice(0, types.length, ...kept4, { type: "other", year: rest.reduce((t3, x3) => t3 + x3.year, 0) });
+      const kept5 = types.filter((t3) => t3.type !== "other").slice(0, 7);
+      const rest = types.filter((t3) => !kept5.includes(t3));
+      types.splice(0, types.length, ...kept5, { type: "other", year: rest.reduce((t3, x3) => t3 + x3.year, 0) });
     }
     return /* @__PURE__ */ u3("div", { class: "fx-subs", children: [
       /* @__PURE__ */ u3("div", { class: "fx-stats", children: [
@@ -16173,7 +16173,7 @@ ${pays}
         ] })
       ] });
     };
-    const kept4 = (x3, n3) => {
+    const kept5 = (x3, n3) => {
       const a3 = L2.account[x3.to || ""];
       if (!a3 || !saving(a3.kind)) return null;
       const after2 = n3?.period.accounts?.[a3.id];
@@ -16255,7 +16255,7 @@ ${pays}
                     title: x3.name,
                     sub: /* @__PURE__ */ u3(S, { children: [
                       scheduleText(x3.schedule, L2) + into2 + (x3.card ? " · the card's balance" : x3.estimate ? " · about" : "") + (!x3.card && Math.abs(perMonth(x3.schedule, v3.plan.people || [], v3.checking) - 1) > 1e-3 && monthly(x3) > 5e-3 ? ` · ${money(monthly(x3))} a month` : ""),
-                      kept4(x3, n3),
+                      kept5(x3, n3),
                       paidLine(x3)
                     ] }),
                     end: /* @__PURE__ */ u3("span", { class: "fx-next", children: n3 ? /* @__PURE__ */ u3(S, { children: [
@@ -17001,8 +17001,8 @@ ${pays}
   function NetWorthWidget({ v: v3, open: open5 }) {
     if (!(v3.plan.accounts || []).length) return null;
     const now = netWorth(v3);
-    const kept4 = (v3.worth || []).filter((p3) => p3.date < v3.today);
-    const values = [...kept4.map((p3) => p3.amount), now];
+    const kept5 = (v3.worth || []).filter((p3) => p3.date < v3.today);
+    const values = [...kept5.map((p3) => p3.amount), now];
     const month3 = worthByMonth(v3, 1, 0)[0];
     const each = (v3.plan.accounts || []).map((a3) => worthOf(v3, a3));
     const owned = each.filter((n3) => n3 > 0).reduce((t3, n3) => t3 + n3, 0), owes = -each.filter((n3) => n3 < 0).reduce((t3, n3) => t3 + n3, 0);
@@ -17017,10 +17017,10 @@ ${pays}
           height: 92,
           fill: true,
           format: tick,
-          xLabels: [{ i: 0, label: dayShort(kept4[0]?.date || v3.today) }, { i: values.length - 1, label: "Today" }],
-          label: `Net worth from ${money(values[0])} on ${dayShort(kept4[0]?.date || v3.today)} to ${money(now)} today.`,
+          xLabels: [{ i: 0, label: dayShort(kept5[0]?.date || v3.today) }, { i: values.length - 1, label: "Today" }],
+          label: `Net worth from ${money(values[0])} on ${dayShort(kept5[0]?.date || v3.today)} to ${money(now)} today.`,
           tip: (i3) => /* @__PURE__ */ u3("div", { class: "fx-tiphead", children: [
-            /* @__PURE__ */ u3("span", { children: i3 === values.length - 1 ? "Today" : dayShort(kept4[i3].date) }),
+            /* @__PURE__ */ u3("span", { children: i3 === values.length - 1 ? "Today" : dayShort(kept5[i3].date) }),
             /* @__PURE__ */ u3(Amount, { value: values[i3], form: "whole" })
           ] })
         }
@@ -18103,6 +18103,46 @@ ${pays}
   var real;
   var watchers2 = [];
   var tell2 = () => watchers2.forEach((fn) => fn());
+  var kept3 = null;
+  var offlineAt = "";
+  var notice = "";
+  var offlineSince = () => offlineAt;
+  var waitingChanges = () => kept3?.pending?.count || 0;
+  var privateNotice = () => notice;
+  var DB = "homelab-private";
+  async function idb(mode, fn) {
+    const db = await new Promise((ok, no) => {
+      const r3 = indexedDB.open(DB, 1);
+      r3.onupgradeneeded = () => r3.result.createObjectStore("sealed");
+      r3.onsuccess = () => ok(r3.result);
+      r3.onerror = () => no(r3.error);
+    });
+    try {
+      return await new Promise((ok, no) => {
+        const q2 = fn(db.transaction("sealed", mode).objectStore("sealed"));
+        q2.onsuccess = () => ok(q2.result);
+        q2.onerror = () => no(q2.error);
+      });
+    } finally {
+      db.close();
+    }
+  }
+  var keptRead = () => idb("readonly", (s3) => s3.get("mine")).then((k3) => k3 || null, () => null);
+  var keptWrite = async () => {
+    if (kept3) await idb("readwrite", (s3) => s3.put(kept3, "mine")).catch(() => {
+    });
+  };
+  var keptForget = async () => {
+    kept3 = null;
+    await idb("readwrite", (s3) => s3.delete("mine")).catch(() => {
+    });
+  };
+  var remember = async (e3) => {
+    kept3 = { person: me.person, finances: me.finances, envelope: e3, at: (/* @__PURE__ */ new Date()).toISOString(), pending: kept3?.pending };
+    await keptWrite();
+  };
+  var keptNewest = (k3) => k3.pending ? { ...k3.pending.envelope, rev: k3.pending.was } : k3.envelope;
+  var isAway = (e3) => e3?.name === "Away" || e3 instanceof TypeError;
   var watchPrivate = (fn) => {
     watchers2.push(fn);
   };
@@ -18125,18 +18165,74 @@ ${pays}
   function find() {
     return known2 ??= (async () => {
       me = await window.phoneMe?.catch(() => ({})) || {};
+      const k3 = await keptRead();
+      if (!me.person && k3) me = { person: k3.person, finances: k3.finances };
       if (!me.person) {
         state2 = "none";
         return;
       }
+      if (k3 && k3.person !== me.person) await keptForget();
+      else kept3 = k3;
       try {
         const e3 = await sealedCalls().FinancesSealed();
         envelope = e3 || null;
         state2 = e3 ? "locked" : "plain";
-      } catch {
+        if (!e3) await keptForget();
+        else if (kept3?.pending) void home();
+        else await remember(e3);
+      } catch (e3) {
+        if (isAway(e3) && kept3) {
+          envelope = keptNewest(kept3);
+          offlineAt = kept3.at;
+          state2 = "locked";
+          return;
+        }
         state2 = "none";
+        if (isAway(e3)) known2 = null;
       }
     })();
+  }
+  var homing = null;
+  function home() {
+    return homing ??= (async () => {
+      let latest2;
+      try {
+        latest2 = await sealedCalls().FinancesSealed();
+      } catch {
+        return;
+      }
+      offlineAt = "";
+      if (!latest2) {
+        await keptForget();
+        key5 = null;
+        data = null;
+        envelope = null;
+        state2 = "plain";
+        tell2();
+        return;
+      }
+      const p3 = kept3?.pending;
+      if (p3) {
+        try {
+          const r3 = await sealedCalls().SaveFinancesSealed(p3.was, p3.envelope);
+          latest2 = { ...p3.envelope, rev: r3.rev };
+        } catch (e3) {
+          if (isAway(e3)) {
+            offlineAt = kept3.at;
+            return;
+          }
+          if (!/changed on another device/.test(String(e3?.message))) throw e3;
+          notice = AWAY_CHANGED;
+        }
+        kept3.pending = void 0;
+      }
+      envelope = latest2;
+      if (key5) data = await openSealed(key5, latest2, me.person);
+      await remember(latest2);
+      tell2();
+    })().finally(() => {
+      homing = null;
+    });
   }
   function installPrivate() {
     if (!onPhone() || !window.go?.main?.App) return;
@@ -18147,6 +18243,12 @@ ${pays}
     document.addEventListener("visibilitychange", () => {
       if (document.visibilityState === "hidden") lock();
     });
+    window.addEventListener("online", () => {
+      if (offlineAt || kept3?.pending) void home();
+    });
+    setInterval(() => {
+      if (offlineAt || kept3?.pending) void home();
+    }, 3e4);
     for (const ev of ["pointerdown", "keydown"]) document.addEventListener(ev, touched, { passive: true, capture: true });
   }
   async function answer(method, args) {
@@ -18178,8 +18280,12 @@ ${pays}
       case "SaveFinancesLedger":
         await save({ ...data, ledger: unrev(args[0]) });
         return { ...data.ledger, rev: envelope.rev };
-      case "SaveFinancesReceipt":
-        return sealedCalls().SaveFinancesSealedReceipt(await sealText(key5, me.person, String(args[0])));
+      case "SaveFinancesReceipt": {
+        const sealed = await sealText(key5, me.person, String(args[0]));
+        return sealedCalls().SaveFinancesSealedReceipt(sealed).catch((e3) => {
+          throw isAway(e3) ? new Error("A receipt waits until the homelab answers: add it again when you’re home.") : e3;
+        });
+      }
       case "FinancesReceipt":
         return openText(key5, me.person, await sealedCalls().FinancesSealedReceipt(String(args[0])));
     }
@@ -18207,13 +18313,28 @@ ${pays}
     return v3;
   }
   var CHANGED = "Your Finances were changed on another of your devices after this was read. The latest is shown now: make your change again.";
+  var AWAY_CHANGED = "While you were away, your Finances were changed on another of your devices, so the change made here wasn’t kept. The latest is shown now: make it again.";
   async function save(next) {
     const sealed = await reseal(key5, envelope, me.person, next);
+    const base = kept3?.pending?.was ?? envelope.rev;
+    notice = "";
     try {
-      const r3 = await sealedCalls().SaveFinancesSealed(envelope.rev, sealed);
+      if (offlineAt) throw Object.assign(new Error("away"), { name: "Away" });
+      const r3 = await sealedCalls().SaveFinancesSealed(base, sealed);
       envelope = { ...sealed, rev: r3.rev };
       data = next;
+      if (kept3) kept3.pending = void 0;
+      await remember(envelope);
     } catch (e3) {
+      if (isAway(e3) && kept3) {
+        offlineAt ||= kept3.at;
+        kept3.pending = { was: base, envelope: sealed, count: (kept3.pending?.count || 0) + 1 };
+        await keptWrite();
+        envelope = { ...sealed, rev: base };
+        data = next;
+        tell2();
+        return;
+      }
       if (!/changed on another device/.test(String(e3?.message))) throw e3;
       const latest2 = await sealedCalls().FinancesSealed();
       if (latest2) {
@@ -18224,10 +18345,20 @@ ${pays}
     }
   }
   async function opened(k3) {
-    const latest2 = await sealedCalls().FinancesSealed();
+    let latest2;
+    try {
+      latest2 = await sealedCalls().FinancesSealed();
+      if (latest2 && !kept3?.pending) await remember(latest2);
+      if (latest2 && kept3?.pending) latest2 = envelope;
+    } catch (e3) {
+      if (!isAway(e3) || !kept3) throw e3;
+      latest2 = keptNewest(kept3);
+      offlineAt ||= kept3.at;
+    }
     if (!latest2) {
       state2 = "plain";
       envelope = null;
+      await keptForget();
       tell2();
       return;
     }
@@ -18316,6 +18447,7 @@ ${pays}
     const sealed = transactions.some((t3, i3) => t3 !== ledger.transactions[i3]) ? await reseal(k0.key, k0.envelope, me.person, { plan, ledger: { ...ledger, transactions } }) : k0.envelope;
     const r3 = await sealedCalls().SaveFinancesSealed("new", sealed);
     envelope = { ...sealed, rev: r3.rev };
+    await remember(envelope);
     data = { plan, ledger: { ...ledger, transactions } };
     key5 = k0.key;
     state2 = "open";
@@ -18331,6 +18463,7 @@ ${pays}
     }
     const bare = { ...ledger, transactions: (ledger.transactions || []).map((t3) => pictures2.has(t3.id) ? { ...t3, receipt: void 0 } : t3) };
     await sealedCalls().UnsealFinances(envelope.rev, data.plan, bare);
+    await keptForget();
     key5 = null;
     data = null;
     envelope = null;
@@ -18459,6 +18592,16 @@ ${pays}
       said2 && /* @__PURE__ */ u3("p", { class: "formerr bad", role: "alert", children: said2 })
     ] });
   }
+  function Away() {
+    const at2 = new Date(offlineSince());
+    const today2 = at2.toDateString() === (/* @__PURE__ */ new Date()).toDateString();
+    const when3 = at2.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }) + (today2 ? "" : ", " + at2.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" }));
+    return /* @__PURE__ */ u3(S, { children: [
+      "Offline: as of ",
+      when3,
+      ". Changes stay on this phone and go to the homelab when it answers."
+    ] });
+  }
   function Unlock() {
     const [how, setHow] = d2("main");
     const [text2, setText] = d2("");
@@ -18481,6 +18624,7 @@ ${pays}
         byPasskey() ? "Face ID" : "your passphrase",
         " or your recovery code."
       ] }),
+      !!offlineSince() && /* @__PURE__ */ u3("p", { class: "muted", children: /* @__PURE__ */ u3(Away, {}) }),
       how === "main" && (byPasskey() ? /* @__PURE__ */ u3("button", { class: "primary small", disabled: busy2, onClick: () => run2(unlockWithPasskey2), children: "Unlock with Face ID" }) : /* @__PURE__ */ u3("form", { onSubmit: (e3) => {
         e3.preventDefault();
         run2(() => unlockWithPassphrase2(text2));
@@ -18519,11 +18663,16 @@ ${pays}
     const [busy2, setBusy] = d2(false);
     const [said2, setSaid] = d2("");
     if (!asking) {
+      const n3 = waitingChanges();
       return /* @__PURE__ */ u3("p", { class: "fx-privateon", id: "finPrivateOpen", children: [
         /* @__PURE__ */ u3("span", { children: "Private: only you can open these." }),
         " ",
         /* @__PURE__ */ u3("button", { class: "linkbtn", onClick: lock, children: "Lock" }),
-        mayChange() && /* @__PURE__ */ u3("button", { class: "linkbtn", onClick: () => setAsking(true), children: "Turn privacy off…" })
+        mayChange() && !offlineSince() && /* @__PURE__ */ u3("button", { class: "linkbtn", onClick: () => setAsking(true), children: "Turn privacy off…" }),
+        !!offlineSince() && /* @__PURE__ */ u3("span", { class: "fx-privateaway", children: [
+          /* @__PURE__ */ u3(Away, {}),
+          n3 ? ` ${n3} ${n3 === 1 ? "change waits" : "changes wait"} for the homelab.` : ""
+        ] })
       ] });
     }
     const off2 = async () => {
@@ -18551,6 +18700,13 @@ ${pays}
     ] });
   }
   function PrivateCard() {
+    const said2 = privateNotice();
+    return /* @__PURE__ */ u3(S, { children: [
+      said2 && /* @__PURE__ */ u3("p", { class: "formerr warn fx-privatesaid", role: "alert", children: said2 }),
+      /* @__PURE__ */ u3(Which, {})
+    ] });
+  }
+  function Which() {
     const s3 = privateState();
     if (s3 === "locked") return /* @__PURE__ */ u3(Unlock, {});
     if (s3 === "open") return /* @__PURE__ */ u3(Opened, {});
@@ -20664,7 +20820,7 @@ ${pays}
 
   // web/src/place.ts
   var key6 = "homelab.place";
-  var kept3 = /* @__PURE__ */ new Set(["choose", "status", "backups", "setup", "settings", "finances", "tidy"]);
+  var kept4 = /* @__PURE__ */ new Set(["choose", "status", "backups", "setup", "settings", "finances", "tidy"]);
   var places = {};
   try {
     places = JSON.parse(localStorage.getItem(key6) || "{}") || {};
@@ -20675,7 +20831,7 @@ ${pays}
   var main = () => $1("main");
   var aiming = { screen: "", top: 0 };
   function leavePlace(screen) {
-    if (!screen || !kept3.has(screen)) return;
+    if (!screen || !kept4.has(screen)) return;
     const all = sections(screen);
     places[screen] = { top: aiming.screen === screen ? aiming.top : Math.round(main().scrollTop), open: all.filter((d3) => d3.open).map((d3) => d3.id), shut: all.filter((d3) => !d3.open).map((d3) => d3.id) };
     try {
@@ -20693,7 +20849,7 @@ ${pays}
     anchorTimer = window.setTimeout(() => {
       main().style.overflowAnchor = "";
     }, 2e3);
-    const m3 = main(), p3 = kept3.has(screen) ? places[screen] : void 0;
+    const m3 = main(), p3 = kept4.has(screen) ? places[screen] : void 0;
     if (p3) {
       for (const d3 of sections(screen)) {
         if (p3.open.includes(d3.id)) d3.open = true;
@@ -20945,19 +21101,19 @@ ${pays}
       navigated = true;
       show3("status");
       updateFromMenu();
-      remember();
+      remember2();
       return;
     }
     navigated = true;
     show3(name);
-    remember();
+    remember2();
   }
   var back2 = [];
   var ahead = [];
   var current;
   var moving = false;
-  onTabChange(() => remember());
-  function remember() {
+  onTabChange(() => remember2());
+  function remember2() {
     const screen = document.querySelector(".screen.active")?.id;
     if (!screen) return;
     const next = { screen, app: screen === "app" ? openedApp() : void 0, tab: tabbed[screen]?.now() };
@@ -21051,7 +21207,7 @@ ${pays}
       placed = true;
     }
   }
-  remember();
+  remember2();
   addEventListener("pagehide", () => {
     const on2 = document.querySelector(".screen.active")?.id;
     if (on2 === "status" || on2 === "app") leftStatus();

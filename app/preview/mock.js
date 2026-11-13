@@ -539,6 +539,11 @@ try { if ((window.__MOCK || {}).tidyTab) localStorage.setItem('homelab.tidyTab',
   // that gives none, so a passphrase instead).
   if (M.person) {
     window.phoneMe = Promise.resolve({ person: M.person, personName: 'Anna', finances: M.phoneFinances || 'edit' });
+    // M.away: the computer doesn't answer (as companion.js says it: an Away error); M.meAway, nor does /api/me.
+    // sessionStorage's mock.next is what a case sets for the page opened again (its reload), as the phone would be.
+    try { const next = sessionStorage.getItem('mock.next'); if (next) { Object.assign(M, JSON.parse(next)); sessionStorage.removeItem('mock.next'); } } catch { /* none */ }
+    if (M.meAway) window.phoneMe = Promise.resolve({});
+    const away = () => later(null).then(() => { throw Object.assign(new Error("The homelab can't be reached from here: at home, or with Tailscale on, it can."), { name: 'Away' }); });
     window.homelabFinance = { project: (plan) => ({ view: JSON.stringify({ ...(M.finances || {}), plan: JSON.parse(plan) }) }) };
     const sealedRev = () => (M.sealedRev ??= 'sealed-1');
     app.FinancesSealed = () => later(M.sealed ? { ...M.sealed, rev: sealedRev() } : null);
@@ -570,6 +575,10 @@ try { if ((window.__MOCK || {}).tidyTab) localStorage.setItem('homelab.tidyTab',
       M.ledger = { rev: 'l-plain', transactions: ledger.transactions || [] };
       return later(true);
     };
+    for (const name of ['FinancesSealed', 'SaveFinancesSealed', 'FinancesSealedReceipt', 'SaveFinancesSealedReceipt', 'UnsealFinances', 'FinancesShared', 'Finances', 'FinancesLedger']) {
+      const there = app[name];
+      app[name] = (...args) => (M.away ? away() : there(...args));
+    }
     if (M.passkey) {
       const secret = new Uint8Array(32).fill(7);
       const answer = () => ({ rawId: new Uint8Array([1, 2, 3, 4]).buffer, getClientExtensionResults: () => ({ prf: M.passkey === 'noprf' ? { enabled: false } : { enabled: true, results: { first: secret.slice().buffer } } }) });

@@ -146,6 +146,8 @@
   function forget() {
     token = '';
     try { localStorage.removeItem(KEY); localStorage.removeItem(LAST); } catch (e) { /* nothing kept */ }
+    // A member's private Finances kept for offline: sealed, but this phone's no more (finances/privacy.ts).
+    try { indexedDB.deleteDatabase('homelab-private'); } catch (e) { /* none kept */ }
     pairForm('This phone is not paired, or it was removed on the Mac.');
   }
 
