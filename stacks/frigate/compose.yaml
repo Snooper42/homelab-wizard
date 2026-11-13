@@ -80,7 +80,9 @@ services:
       - -c
       - |
         printf 'listener 1883\npassword_file /mosquitto/passwd\nallow_anonymous false\npersistence false\n' > /mosquitto/frigate.conf
-        mosquitto_passwd -b -c /mosquitto/passwd frigate "$$FRIGATE_MQTT_PASSWORD"
+        # The password goes through the shell's own printf into a pipe, never
+        # as an argument (which every account's ps would show).
+        printf '%s\n%s\n' "$$FRIGATE_MQTT_PASSWORD" "$$FRIGATE_MQTT_PASSWORD" | mosquitto_passwd -c /mosquitto/passwd frigate
         chown mosquitto:mosquitto /mosquitto/passwd
         exec mosquitto -c /mosquitto/frigate.conf
     networks: [default, homelab, front]

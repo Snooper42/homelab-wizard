@@ -44,3 +44,46 @@ func TestNoSecretOnACommandLine(t *testing.T) {
 		}
 	}
 }
+
+// secretArg is a secret variable's value handed to a program as an argument
+// another way: as mosquitto_passwd -b's password, or inside a URL (a cron job
+// that calls .../cron/$TOKEN runs wget with the token in its arguments).
+var secretArg = []*regexp.Regexp{
+	regexp.MustCompile(`mosquitto_passwd\s[^|]*-b\b`),
+	regexp.MustCompile(`://[^\s"']*\$\$?\{?[A-Z0-9_]*(?:TOKEN|PASSWORD|SECRET|PASSPHRASE)`),
+}
+
+// envLine is a variable set in a service's environment: KEY: value.
+var envLine = regexp.MustCompile(`^\s*[A-Z][A-Z0-9_]*:\s`)
+
+// Item 113: Frigate's broker made its password file with mosquitto_passwd -b
+// and the password as an argument, and Firefly III's cron called
+// /api/v1/cron/<token> with wget; each was in every account's ps for a
+// moment. Both go through a shell's own printf (no process of its own)
+// into a pipe or a 0600 file now.
+func TestNoSecretAsAnArgument(t *testing.T) {
+	for _, dir := range []string{"compose", "stacks"} {
+		_ = filepath.WalkDir(filepath.Join("..", "..", dir), func(p string, d os.DirEntry, err error) error {
+			if err != nil || d.IsDir() || !(strings.HasSuffix(p, ".yaml") || strings.HasSuffix(p, ".yml")) {
+				return nil
+			}
+			raw, rerr := os.ReadFile(p)
+			if rerr != nil {
+				t.Fatal(rerr)
+			}
+			for i, line := range strings.Split(string(raw), "\n") {
+				// A variable in the environment (DATABASE_URL: postgres://…:${…}@…) is where a
+				// secret belongs (N48): only command lines are read.
+				if strings.HasPrefix(strings.TrimSpace(line), "#") || envLine.MatchString(line) {
+					continue
+				}
+				for _, re := range secretArg {
+					if m := re.FindString(line); m != "" {
+						t.Errorf("%s:%d hands a secret to a program as an argument (%s): pipe it, or read it from a 0600 file", p, i+1, m)
+					}
+				}
+			}
+			return nil
+		})
+	}
+}
