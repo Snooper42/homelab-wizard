@@ -103,14 +103,16 @@ services:
     # The token is kept in a 0600 file and sent through the shell's own printf
     # and cat into nc, never as an argument (which every account's ps would
     # show, as wget's URL did); the job is a file, as % means something in a
-    # crontab line.
+    # crontab line. busybox's nc hangs up when what it sends ends, before
+    # Firefly answers (nginx's 499, the jobs cut short), so the request is
+    # held open up to 15 minutes, as long as wget's own read timeout.
     command:
       - sh
       - -c
       - |
         umask 077
         printf %s "$$FIREFLY_CRON_TOKEN" > /run/cron-token
-        printf '%s\n' '{ printf "GET /api/v1/cron/"; cat /run/cron-token; printf " HTTP/1.0\r\nHost: firefly-iii\r\n\r\n"; } | nc -w 60 firefly-iii 8080 >/dev/null' > /run/cron-job
+        printf '%s\n' '{ printf "GET /api/v1/cron/"; cat /run/cron-token; printf " HTTP/1.0\r\nHost: firefly-iii\r\n\r\n"; sleep 900; } | nc -w 900 firefly-iii 8080 >/dev/null' > /run/cron-job
         echo "0 3 * * * sh /run/cron-job" | crontab -
         exec crond -f -L /dev/stdout
     x-homelab:
