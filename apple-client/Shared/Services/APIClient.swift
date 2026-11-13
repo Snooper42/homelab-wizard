@@ -286,7 +286,24 @@ actor APIClient {
     /// On a household member's phone: what of the household's money the
     /// owner shares with them, to look at.
     func financesShared() async throws -> HouseholdShared {
-        try await call("FinancesShared", as: HouseholdShared.self)
+        try await financesSharedAnswer().shared
+    }
+
+    /// The same, with the answer as it came (kept for offline).
+    func financesSharedAnswer() async throws -> (shared: HouseholdShared, answer: Data) {
+        let (request, endpoint) = try callRequest("FinancesShared", [])
+        let data = try await read(request, endpoint, tunnel: "FinancesShared", [], envelope: true)
+        return (try Self.sharedRead(from: data), data)
+    }
+
+    /// A `FinancesShared` answer, decoded.
+    static func sharedRead(from data: Data) throws -> HouseholdShared {
+        do {
+            return try JSONDecoder.homelab().decode(CallEnvelope<HouseholdShared>.self, from: data).result
+        } catch {
+            Log.network.error("The FinancesShared answer couldn't be decoded")
+            throw APIError.decoding
+        }
     }
 
     /// The plan read forward: accounts today and the pay periods ahead,
@@ -310,12 +327,13 @@ actor APIClient {
         return try Self.financesRead(from: try await send(request, to: endpoint, using: actionSession))
     }
 
-    private static func financesRead(from data: Data) throws -> FinancesRead {
+    /// A `Finances` (or `SaveFinances`) answer, decoded, with the answer as it came (kept for offline).
+    static func financesRead(from data: Data) throws -> FinancesRead {
         do {
             let decoder = JSONDecoder.homelab()
             let view = try decoder.decode(CallEnvelope<FinancesPlanView>.self, from: data).result
             let raw = try decoder.decode(CallEnvelope<RawFinancesView>.self, from: data).result
-            return FinancesRead(view: view, rawPlan: raw.plan)
+            return FinancesRead(view: view, rawPlan: raw.plan, answer: data)
         } catch {
             Log.network.error("The Finances answer couldn't be decoded")
             throw APIError.decoding
@@ -471,12 +489,13 @@ actor APIClient {
         return name
     }
 
-    private static func ledgerRead(from data: Data) throws -> LedgerRead {
+    /// A `FinancesLedger` answer, decoded, with the answer as it came (kept for offline).
+    static func ledgerRead(from data: Data) throws -> LedgerRead {
         do {
             let decoder = JSONDecoder.homelab()
             let ledger = try decoder.decode(CallEnvelope<FinanceLedger>.self, from: data).result
             let raw = try decoder.decode(CallEnvelope<JSONValue>.self, from: data).result
-            return LedgerRead(ledger: ledger, raw: raw)
+            return LedgerRead(ledger: ledger, raw: raw, answer: data)
         } catch {
             Log.network.error("The ledger answer couldn't be decoded")
             throw APIError.decoding

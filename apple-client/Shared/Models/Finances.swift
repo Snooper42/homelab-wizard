@@ -88,6 +88,8 @@ struct MoneyBill: Decodable, Sendable, Equatable, Identifiable {
 struct LedgerRead: Sendable {
     let ledger: FinanceLedger
     let raw: JSONValue
+    /// The computer's answer as it came, kept for offline (`OfflineFinances`).
+    var answer: Data? = nil
 }
 
 /// One read of Finances: what the screens show, and the plan exactly as
@@ -95,6 +97,8 @@ struct LedgerRead: Sendable {
 struct FinancesRead: Sendable {
     let view: FinancesPlanView
     let rawPlan: JSONValue
+    /// The computer's answer as it came, kept for offline (`OfflineFinances`).
+    var answer: Data? = nil
 }
 
 // MARK: - The plan, read forward (`finance.View`, the `Finances` call)

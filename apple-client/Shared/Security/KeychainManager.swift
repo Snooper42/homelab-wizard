@@ -102,6 +102,8 @@ struct KeychainManager: Sendable {
     func deleteCredential() throws {
         try delete(account: account)
         try delete(account: awayAccount)
+        // The key the offline Finances are sealed with: without it, a copy left behind opens nothing.
+        try delete(account: OfflineFinances.keyAccount)
         Log.security.notice("Deleted the device credential from the Keychain")
     }
 

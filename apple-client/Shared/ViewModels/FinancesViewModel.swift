@@ -39,18 +39,102 @@ final class FinancesViewModel {
     @ObservationIgnored private let device: @MainActor () -> DeviceInfo?
     @ObservationIgnored private let authorize: @MainActor (String) async -> Bool
 
+    // MARK: Offline (the owner, Nov 13)
+
+    /// The Finances kept on this device for when the Homelab doesn't answer.
+    @ObservationIgnored private let offline: OfflineFinances
+    /// What was kept, read once (in memory only while unlocked, as the rest is).
+    @ObservationIgnored private var kept: OfflineFinances.Kept?
+    @ObservationIgnored private var keptRead = false
+    /// The level the kept Finances were read at: what this device may see
+    /// while the Homelab can't say (right after unlock, or offline).
+    private(set) var keptLevel: FinancesLevel = .none
+    /// When the Finances shown were read, while they're the kept ones
+    /// because the Homelab doesn't answer; nil when they're live.
+    private(set) var offlineAsOf: Date?
+    /// The computer's latest answers, to keep.
+    @ObservationIgnored private var answers: (plan: Data?, ledger: Data?, shared: Data?) = (nil, nil, nil)
+    /// The last keep or forget, so each runs after the one before: a slow
+    /// keep can't bring back what a forget dropped.
+    @ObservationIgnored private var keeping: Task<Void, Never>?
+
     init(
         api: APIClient,
         device: @escaping @MainActor () -> DeviceInfo?,
-        authorize: @escaping @MainActor (String) async -> Bool
+        authorize: @escaping @MainActor (String) async -> Bool,
+        offline: OfflineFinances = .onThisDevice
     ) {
         self.api = api
         self.device = device
         self.authorize = authorize
+        self.offline = offline
+        Task { _ = await readKept() }
     }
 
-    /// The edit level, and a plan the computer didn't mark read-only.
-    var canEdit: Bool { level >= .edit && plan?.readOnly == false && rawPlan != nil }
+    /// Reads what was kept, once, off the main thread.
+    private func readKept() async -> OfflineFinances.Kept? {
+        if keptRead { return kept }
+        let offline = offline
+        let read = await Task.detached(priority: .userInitiated) { offline.load() }.value
+        if !keptRead {
+            keptRead = true
+            kept = read
+            keptLevel = read?.level ?? .none
+        }
+        return kept
+    }
+
+    /// Keeps the latest answers, off the main thread, when they changed.
+    private func keepAnswers() {
+        guard let plan = answers.plan, level >= .view else { return }
+        let toKeep = OfflineFinances.Answers(at: Date(), level: level, plan: plan, ledger: answers.ledger, shared: answers.shared)
+        let offline = offline
+        let before = keeping
+        keeping = Task.detached(priority: .utility) {
+            await before?.value
+            do {
+                try offline.keep(toKeep)
+            } catch {
+                Log.ui.error("Couldn't keep Finances for offline")
+            }
+        }
+    }
+
+    /// Drops the kept Finances: Finances taken from this device.
+    func forgetOffline() {
+        kept = nil
+        keptRead = true
+        keptLevel = .none
+        answers = (nil, nil, nil)
+        offlineAsOf = nil
+        let offline = offline
+        let before = keeping
+        keeping = Task.detached(priority: .utility) {
+            await before?.value
+            offline.forget()
+        }
+    }
+
+    /// Shows the kept Finances in place of the live ones, to look at only.
+    private func showKept() async -> Bool {
+        guard let kept = await readKept() else { return false }
+        ownLogos = OwnLogos(kept.plan.view.plan.logos)
+        plan = kept.plan.view
+        rawPlan = nil
+        planError = nil
+        if ledger == nil, let kept = kept.ledger {
+            ledger = kept.ledger
+            rawLedger = nil
+            ledgerError = nil
+        }
+        if shared == nil { shared = kept.shared }
+        offlineAsOf = kept.at
+        return true
+    }
+
+    /// The edit level, and a plan the computer didn't mark read-only, read
+    /// live: never the kept one, which is only to look at.
+    var canEdit: Bool { level >= .edit && plan?.readOnly == false && rawPlan != nil && offlineAsOf == nil }
 
     /// Marks a paycheck or payment as not in the balances yet, or back.
     func setWaiting(_ past: FinancePast, waiting: Bool) async -> Bool {
@@ -137,6 +221,8 @@ final class FinancesViewModel {
             ownLogos = OwnLogos(read.view.plan.logos)
             plan = read.view
             rawPlan = read.rawPlan
+            answers.plan = read.answer
+            keepAnswers()
             saveError = nil
             savedCount += 1
             return true
@@ -337,7 +423,12 @@ final class FinancesViewModel {
         return await savePlan(edited, reason: "Update \(account.name)'s balance.")
     }
 
-    var level: FinancesLevel { FinancesLevel(device()?.finances) }
+    /// What the computer says this device may see; while it can't say, the
+    /// level the kept Finances were read at.
+    var level: FinancesLevel {
+        if let device = device() { return FinancesLevel(device.finances) }
+        return keptLevel
+    }
     var canSeeMoney: Bool { level >= .card }
     var canSeePlan: Bool { level >= .view }
 
@@ -354,8 +445,16 @@ final class FinancesViewModel {
             rawLedger = read.raw
             ledgerError = nil
             noteSeen(in: read.ledger)
+            answers.ledger = read.answer
+            keepAnswers()
         } catch {
             let apiError = APIError.from(error)
+            if OfflineFinances.showsKept(after: apiError), let kept = await readKept()?.ledger {
+                ledger = kept.ledger
+                rawLedger = nil
+                ledgerError = nil
+                return
+            }
             if case .forbidden = apiError {
                 ledger = nil
                 rawLedger = nil
@@ -489,6 +588,8 @@ final class FinancesViewModel {
             let read = try await api.saveFinancesLedger(edited)
             ledger = read.ledger
             rawLedger = read.raw
+            answers.ledger = read.answer
+            keepAnswers()
             saveError = nil
             savedCount += 1
             return true
@@ -552,14 +653,19 @@ final class FinancesViewModel {
             plan = read.view
             rawPlan = read.rawPlan
             planError = nil
+            offlineAsOf = nil
+            answers.plan = read.answer
+            keepAnswers()
         } catch {
             let apiError = APIError.from(error)
+            Log.ui.error("Finances failed: \(apiError.logName, privacy: .public)")
+            if OfflineFinances.showsKept(after: apiError), await showKept() { return }
             if case .forbidden = apiError {
                 plan = nil
                 ownLogos = OwnLogos()
                 rawPlan = nil
+                forgetOffline()
             }
-            Log.ui.error("Finances failed: \(apiError.logName, privacy: .public)")
             planError = apiError.errorDescription
         }
     }
@@ -571,9 +677,17 @@ final class FinancesViewModel {
     func loadShared() async {
         guard isMember, canSeePlan else { return }
         do {
-            shared = try await api.financesShared()
+            let read = try await api.financesSharedAnswer()
+            shared = read.shared
+            answers.shared = read.answer
+            keepAnswers()
         } catch {
-            Log.ui.error("Shared Finances failed: \(APIError.from(error).logName, privacy: .public)")
+            let apiError = APIError.from(error)
+            Log.ui.error("Shared Finances failed: \(apiError.logName, privacy: .public)")
+            if OfflineFinances.showsKept(after: apiError), let kept = await readKept()?.shared {
+                shared = kept
+                return
+            }
             shared = nil
         }
     }
