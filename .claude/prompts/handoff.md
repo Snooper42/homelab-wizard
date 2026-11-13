@@ -32,7 +32,7 @@ You are working on homelab-wizard (github.com/Snooper42/homelab-wizard) with its
 - **Dropped by the owner, never offer again:** the phone away from home (Nov 10); background refresh (Nov 11); ⌘1 to ⌘4 for Finances tabs; syncing the Finances sidebar's folds.
 - **Two ways to do something and no answer:** the one that changes less for the partner's phone and the household (as "per phone" did), and the one that can be undone.
 
-## 1. Where it stands (Nov 12, 8:10 PM Eastern)
+## 1. Where it stands (Nov 12, 9:10 PM Eastern)
 
 **Merged Nov 10 to 12** (each green):
 
@@ -96,7 +96,7 @@ You are working on homelab-wizard (github.com/Snooper42/homelab-wizard) with its
 | #646 | **2D step 3 (Finances Step 5): the Dashboard looks back** (`widgets/Trend.tsx`: *Checking, last 90 days*, 30 days or a year, another account, a day opening on the calendar, the title the account's page; `balanceSeries` shared with the account's page); this hand-off |
 | #620 | Tidy Up's look, **L5's second half**: what a job freed on the right of its line in Recently done (`media.Activity.Freed`, `Activity.Said()`); Audiobooks' Merge says what it wins back |
 
-**In flight:** #646, 2D step 3 (the Dashboard looks back), with this hand-off. *Done:* merged green. Then 2D step 4 (below: the design is written out, nothing built yet). #641 merged 7:43 PM, #644 8:06 PM.
+**In flight: nothing.** #641 merged 7:43 PM, #644 8:06 PM, #646 9:05 PM. **Next: 2D step 4, Step 6 (the Transactions table)**: its design is written out under 2D; nothing of it is built yet. Then step 5 (Send to my phone), then step 6 (the Collection's mockup).
 
 **Asked the owner, Nov 12, 6:05 PM (the pop-up), and their answers:**
 - The logo count for the phone's page: **later** (ask again; the command is in section 4, counts only).
@@ -239,6 +239,9 @@ Keep it the hub: detail belongs in the loop file for that area (`finances-handof
 - **A macOS job *cancelled* at 15 minutes with no runner name and no steps** never got a Mac (GitHub's queue), Nov 12 on #630: main's ran in 5 minutes meanwhile. `gh api repos/Snooper42/homelab-wizard/actions/jobs/<id>` shows `runner_name` empty; re-run the failed jobs once.
 - **A warning about `bridge101` with `198.18.89.0/29`** (Proton VPN's *Bad Network Interface*, Nov 12) is the homelab's own tunnel network (`internal/docker` `TunnelSubnet`), shown on the Mac as a bridge by Docker: inside the computer only. Tell the owner **Continue**; a kill switch would cut the homelab off from its own apps.
 - **Budgets in a half-width card** (#641): the mock's three short names hid the wrapping; long category names (*Streaming and subscriptions*) and a roll-over line show it. Test a card's text with long names at 1100px and on a phone.
+- **The security session merges every 20 minutes or so, each adding a CHANGELOG line at the top of *Fixed***: a line of ours there conflicts every time (#641 needed main merged in three times). Put ours at the top of *New* or *Improved*, and merge main in from a scratchpad worktree (`git worktree add --detach`), never by switching branches in the main checkout while a smoke run reads `web/dist` there.
+- **Windows' `TestJobsInstalledForReal` can fail in its cleanup** (`TempDir RemoveAll … being used by another process`, an orphan `docker` holding the folder; #646, Nov 12): the test passed, the race is in its cleanup, and a re-run passed. Not fixed yet: offer it as its own PR (wait for the process it starts before the folder goes).
+- **A full local Finances smoke run takes hours here** (580 cases, about 70 in 20 minutes): run the cases a change touches (`SMOKE_ONLY`), the look-only phone case (*Finances with nothing to edit*) for any new control, and let CI run the rest.
 - `go build ./cmd/homelab` fails in the repo root (a `homelab` script is there): use `-o /dev/null`. A merged PR's branch is deleted on GitHub: start the next from fresh `origin/main`.
 
 ## When a check is red or stuck (the playbook)
