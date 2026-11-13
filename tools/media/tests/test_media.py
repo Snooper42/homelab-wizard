@@ -402,6 +402,29 @@ class Trash(Base):
         self.assertEqual(len(gone), 3)
 
 
+class ParsersHaveATimeout(Base):
+    """The Inbox's beets call decodes and fingerprints a download someone else made, under Tidy Up's lock: one
+    that hangs on a crafted file must not hold Tidy Up for good. (books_organizer.py's sips and calibredb calls
+    have none either, but it is vendored: item 148 leaves them.)"""
+
+    def test_the_inbox_beets_call_has_a_timeout(self):
+        seen = []
+
+        def fake(cmd, *a, **k):
+            seen.append(k)
+            return mock.Mock(returncode=0, stdout="", stderr="")
+        with mock.patch.object(music_tidy.subprocess, "run", side_effect=fake):
+            music_tidy.Beet(self.tmp)("import", str(self.tmp))
+        self.assertTrue(seen and seen[0].get("timeout"), "beet runs with no timeout")
+
+        def hang(cmd, *a, **k):
+            raise music_tidy.subprocess.TimeoutExpired(cmd, k.get("timeout"))
+        with mock.patch.object(music_tidy.subprocess, "run", side_effect=hang):
+            with self.assertRaises(RuntimeError) as e:
+                music_tidy.Beet(self.tmp)("import", str(self.tmp))
+        self.assertIn("longer than an hour", str(e.exception), "said plainly, as the Inbox's other failures are")
+
+
 class SavedRecords(Base):
     """A record two jobs can write at once (a film scan, unlocked, and Collect, locked, both keep movies.json):
     each save goes through a temporary file of its own, so one can't rename the other's half-written file
@@ -1510,6 +1533,16 @@ class Lyrics(Base):
 
 
 class LyricsText(Base):
+    def test_lyrics_from_outside_are_plain_text_of_a_sensible_size(self):
+        # LRCLIB's text goes into every song's tags, which Navidrome, Jellyfin and each player show: no control
+        # characters (a NUL ends some players' reading, an escape sequence drives a terminal), and nothing huge.
+        got = music_tidy.normalize_lyrics("[00:01.00]one\x00\x1b[31m red\x07\n\ttwo\x7f")
+        self.assertEqual(got, "[00:01.00]one[31m red\n\ttwo")
+        song = self.touch(self.lib["music"] / "A" / "01.mp3")
+        with self.assertRaises(RuntimeError):
+            music_tidy.write_lyrics(song, "la " * 50000, "lrc")
+        self.assertFalse(song.with_suffix(".lrc").exists(), "nothing written")
+
     def test_synced_is_read_through_a_byte_order_mark_and_old_line_endings(self):
         self.assertTrue(music_tidy.is_synced("\ufeff[00:01.00]one"))
         self.assertTrue(music_tidy.is_synced("[ti:x]\r[00:01.00]one\r[00:02.00]two"))

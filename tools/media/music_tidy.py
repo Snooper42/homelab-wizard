@@ -287,6 +287,8 @@ def normalize_lyrics(text):
     carry a translation after a caret, each translation on a line of its own under its original, with
     the same time, so a player shows the two together as the song reaches them."""
     text = (text or "").replace("\ufeff", "").replace("\r\n", "\n").replace("\r", "\n")
+    # Plain text only: they come from outside and every player shows them (a NUL ends some players' reading).
+    text = re.sub(r"[\x00-\x08\x0b-\x1f\x7f]", "", text)
     # The words of each line: not its times, and not the file's own tags ([ar:...], [offset:...]).
     words = [re.sub(r"\[\d{1,3}:\d{2}(?:[.:,]\d{1,3})?\]|<\d{1,3}:\d{2}(?:[.:,]\d{1,3})?>", "", l).strip()
              for l in text.split("\n") if not re.match(r"^\s*\[[a-z#]+:", l, re.I)]
@@ -355,12 +357,18 @@ def read_lyrics(path):
     return text, is_synced(text)
 
 
+# Longer than any song's lyrics, time-synced ones included (a few tens of thousands of characters at most).
+MAX_LYRICS = 100000
+
+
 def write_lyrics(path, text, where):
     """Into the file (every player reads it) or a .lrc beside it. The APE safety pass runs first:
     an old APE tag on an MP3 would otherwise keep its stale lyrics in front of Navidrome. A .lrc or .txt
     already beside the song is read before the file's tags, so lyrics written into the file would never
     show: the .lrc beside it gets them then (it comes first), and the file's tags are left as they are."""
     text = normalize_lyrics(text)
+    if len(text) > MAX_LYRICS:
+        raise RuntimeError("these lyrics are longer than any song's (%d characters)" % len(text))
     if where == "lrc" or sidecars(path):
         Path(path).with_suffix(".lrc").write_text(text, encoding="utf-8")
         return
@@ -653,8 +661,11 @@ class Beet:
         self.cmd = [sys.executable, "-c", "import sys; from beets.ui import main; sys.exit(main())"]
 
     def __call__(self, *args):
-        r = subprocess.run(self.cmd + list(args), env=self.env, stdin=subprocess.DEVNULL, capture_output=True,
-                           text=True, encoding="utf-8", errors="replace")
+        try:  # an hour: a big album with every lookup, and never for good on a file built to hang a decoder
+            r = subprocess.run(self.cmd + list(args), env=self.env, stdin=subprocess.DEVNULL, capture_output=True,
+                               text=True, encoding="utf-8", errors="replace", timeout=3600)
+        except subprocess.TimeoutExpired:
+            raise RuntimeError("beet %s took longer than an hour" % args[0])
         ui.to_log("       $ beet %s\n%s" % (" ".join(args), (r.stdout + r.stderr)[-2000:]))
         if r.returncode != 0:
             raise RuntimeError("beet %s failed: %s" % (args[0], (r.stderr or r.stdout).strip()[-300:]))

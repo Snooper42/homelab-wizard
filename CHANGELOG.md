@@ -248,6 +248,8 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- **Lyrics go in as plain text:** Add lyrics now takes out stray control characters from what the lyrics site sends, and leaves out lyrics far longer than any song's.
+- **A stuck download can't hold up Tidy Up:** filing new music gives beets an hour per step; a download that would keep it busy for good is stopped and said.
 - **Tidy Up's notes survive two jobs at once:** a film scan and Collect saving at the same moment can no longer leave Tidy Up's note of what Tdarr is shrinking half-written and forgotten.
 - **A zip that won't fit isn't unpacked:** Tidy Up's Inbox first checks how much a downloaded zip unpacks to, and leaves it alone, saying why, if it would leave the drive with less than 1 GB free.
 - **Moving the homelab leaves Tidy Up's lists behind:** a move file no longer carries what Tidy Up put in the old computer's Trash, filed there today, or found waiting in its Downloads; on the new computer they named files that aren't there.
