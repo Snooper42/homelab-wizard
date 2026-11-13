@@ -1728,6 +1728,19 @@ From task 2's re-run (Nov 13, the phone at 390px and 320px with big text, and th
 
     *Fixed looks like:* "Settings › Apps › Restart a stuck app turns this off"; "and on your own private network"; the dot kept on its word's line. *Smoke case:* the words lint refusing an UPPER_CASE setting name on a screen.
 
+From task 3, **Install an app that needs a login or a drive** (Nov 13, Choose apps against the fake backend: Frigate, which records to a drive, and qBittorrent, which needs a ProtonVPN key; on the Mac in light, and at 320px with big text in dark):
+
+18. **A dead end after installing Frigate: nothing says where the recordings go or what to do next** (`t3-frigate-done.png`). Choose apps, search, tick, Install: no question and no word on storage. Frigate records to `MEDIA_ROOT/frigate` (the Media drive by default) and can fill it. "Done… Ready to open: Frigate" then opens an app with no camera in it. *Fixed looks like:* before Install, the plan says where recordings go and how much room that drive has, with a way to pick another folder; after Done, "Next: add your camera in Frigate", with where to find its address. *Smoke case:* picking Frigate, the plan names the recordings' folder and the drive's free space.
+19. **The VPN key is called "Optional" while nothing installs without it** (`t3-qbittorrent-plan.png`). The plan says "Waiting for a setting: Gluetun: fill in ProtonVPN WireGuard key", but under the field the help reads "Optional qBittorrent VPN (ProtonVPN account > Downloads > WireGuard)". It doesn't say a paid ProtonVPN plan is needed, or link to where the key is made. *Fixed looks like:* "Needed: qBittorrent only downloads through your ProtonVPN (a paid plan). Make a key at account.protonvpn.com › Downloads › WireGuard, then paste it here", with the link. *Smoke case:* a setting a picked app waits for is never described as optional.
+20. **"Connect the apps for me" is offered for apps that aren't there, and "Done" leaves out half of what was installed** (`t3-qbittorrent-done.png`).
+    - The box is ticked and names Prowlarr and Seerr, neither picked nor running. After Install it says "Nothing to connect".
+    - "Done" lists only qBittorrent, not the VPN tunnel that started with it.
+    - The Gluetun row stays unticked though it is installed with qBittorrent.
+    - Words: "Gluetun", "WireGuard", "helper", "the download client".
+
+    *Fixed looks like:* the box shows only when something it links is picked or running; "Done" names the tunnel too ("qBittorrent, and its private VPN tunnel"); a helper is ticked and greyed while it is needed. *Smoke case:* picking qBittorrent alone shows no "Connect the apps for me".
+21. **Gluetun's "Settings" link can't be reached by keyboard.** It is a link with no address, so Tab goes from the checkbox above it straight past it (task 3's Tab order). *Fixed looks like:* a button, or a link with an address, in the Tab order. *Smoke case:* Tab reaches every control in a picked app's row.
+
 Not a screen, but yours: **`TestJobLogSplitsAtOnceAllFinish` (#471) failed once on Windows CI** (Nov 6, #475's run: "open …\\watchdog.log: The process cannot access the file because it is being used by another process"; green on a re-run). Either the test is flaky on Windows, or a log can't be rotated on Windows while another process has it open, which would also bite a household's Windows machine. Worth a look before it turns another lane's run red.
 
 - (done: #460) **N22: a phone removed on the computer can come back** (your note in
