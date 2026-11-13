@@ -14,6 +14,7 @@ import tempfile
 import time
 import unittest
 import zipfile
+from datetime import datetime
 from pathlib import Path
 from unittest import mock
 
@@ -488,6 +489,39 @@ class Which(Base):
         tool.write_text("")
         tool.chmod(0o755)
         self.assertEqual(mc.which(name), str(tool))
+
+
+class TidyTrashEmptied(Base):
+    """The owner chose (Nov 12): on a drive with no Recycle Bin (a USB drive, an SD card, a share), what Tidy
+    Up threw into its own .tidy-trash goes for good after 30 days, past Undo's reach; a day Undo still points
+    into stays. The scrubber's nightly run does it."""
+
+    def test_old_days_go_and_what_undo_reaches_stays(self):
+        drive = self.tmp / "usb"
+        top = drive / ".tidy-trash"
+        old = self.touch(top / "2026-09-01" / "a.mkv").parent
+        undo = self.touch(top / "2026-09-02" / "b.mkv").parent
+        recent = self.touch(top / "2026-11-01" / "c.mkv").parent
+        odd = self.touch(top / "keep me" / "d.mkv").parent
+        outside = self.touch(self.tmp / "elsewhere" / "e.mkv").parent
+        (top / "2026-08-01").symlink_to(outside)
+        log = self.tmp / "media-trash.jsonl"
+        log.write_text(json.dumps({"run": "r", "from": "/x/b.mkv", "to": str(undo / "b.mkv")}) + "\n")
+        mock.patch.dict(os.environ, {"HOMELAB_MEDIA_TRASH_LOG": str(log)}).start()
+        mock.patch.object(mc, "_drive_root", return_value=drive).start()
+        gone = mc.empty_old_tidy_trash(now=datetime(2026, 11, 13))
+        self.assertEqual([Path(g).name for g in gone], ["2026-09-01"])
+        self.assertFalse(old.exists())
+        self.assertTrue(undo.exists() and recent.exists() and odd.exists(), "Undo's, this month's and an odd name stay")
+        self.assertTrue((outside / "e.mkv").exists(), "never through a link")
+
+    def test_the_nightly_scrub_empties_them(self):
+        called = mock.patch.object(mc, "empty_old_tidy_trash", return_value=[]).start()
+        scrubber.scrub([("Movies", self.lib["movies"])], True)
+        called.assert_called_once()
+        called.reset_mock()
+        scrubber.scrub([("Movies", self.lib["movies"])], False)
+        called.assert_not_called()
 
 
 class Scrubber(Base):

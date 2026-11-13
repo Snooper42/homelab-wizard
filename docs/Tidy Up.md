@@ -4,7 +4,7 @@ version: 0.17.0
 
 # Tidy Up
 
-Tidy Up keeps the libraries on the media drive (`MEDIA_ROOT`) sorted, tagged, and lean: music, books, films, TV, and audiobooks. It has its own screen in the app, and `homelab media` does the same from a terminal. Everything it throws away goes to the Trash (the Recycle Bin on Windows), never straight away. On Windows, a USB drive, SD card or network share has no Recycle Bin, so what Tidy Up throws away there goes to a hidden `.tidy-trash` folder at the top of that drive, a folder a day; nothing empties it, so empty it yourself to free the space, and before the drive goes to someone else.
+Tidy Up keeps the libraries on the media drive (`MEDIA_ROOT`) sorted, tagged, and lean: music, books, films, TV, and audiobooks. It has its own screen in the app, and `homelab media` does the same from a terminal. Everything it throws away goes to the Trash (the Recycle Bin on Windows), never straight away. On Windows, a USB drive, SD card or network share has no Recycle Bin, so what Tidy Up throws away there goes to a hidden `.tidy-trash` folder at the top of that drive, a folder a day. The nightly sweep empties a day's folder once it is over 30 days old (as long as Undo reaches), unless Undo still offers something in it; empty it yourself sooner to free the space, or before the drive goes to someone else.
 
 ## The screen
 

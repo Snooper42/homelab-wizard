@@ -125,6 +125,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **Tidy Up's own trash on a USB drive empties itself:** on a drive with no Recycle Bin (a USB drive, an SD card, a network share), what Tidy Up set aside in its hidden `.tidy-trash` folder goes for good after 30 days, once Undo can no longer put it back.
 - **A Dashboard card opens what it sums up:** in Finances, click a card's title (or its ↗) to see what's behind it: *Spent this month* opens that month's transactions, *Cash flow* and *Where it goes* open Recurring, *Renewing soon* the subscriptions, *Budgets to watch* and *Latest transactions* Transactions, the checking chart the calendar, *This paycheck* Paychecks, and *Net worth* its tab. The phone's page does the same, a phone allowed only to look included.
 - **Budgets keep their figures whole:** on the Dashboard's *Budgets to watch* and Spending's *Budgets*, the line under a long category name now breaks between its parts, never inside *$200.00 of $150.00*; what's left a day reads *$15.00 a day* on one line (the end date is already under the name); and every bar ends in line with the others, on the computer and the phone.
 - **Investments as a list:** Finances' Investments card no longer has the bar of what each account holds. Each holding has its price and a line of its worth over the year (green up, orange down) beside what you paid, its worth and its gain, and a chart of all your investments' worth over the year is on top.
