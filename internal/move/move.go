@@ -37,7 +37,8 @@ var Folders = []string{".env", "data", "appdata", "stacks/custom", "recovery-sta
 var Newest = []string{"recovery-staging/databases", "recovery-staging/volumes"}
 
 // skip are paths a bundle leaves out: things made again on the new
-// machine, and what belongs to this one's running processes, which on the
+// machine, Tidy Up's records of this one's files, and what belongs to this
+// one's running processes, which on the
 // new one would stand for a job that is not there: a job's place in the
 // queue (data/turns), a record's lock (*.lock), and a save half made
 // (*.tmp…).
@@ -47,6 +48,15 @@ func skip(rel string) bool {
 	}
 	if turns := filepath.Join("data", "turns"); rel == turns || strings.HasPrefix(rel, turns+string(filepath.Separator)) {
 		return true
+	}
+	// Tidy Up's records name paths on the computer they were made on (its
+	// Trash, what it filed today, its own Downloads): media.TrashLogPath,
+	// FiledLogPath and NeedsPath. Another computer's would have Undo or
+	// Needs a look act on files here.
+	for _, tidy := range []string{"media-trash.jsonl", "media-filed.jsonl", "media-needs.json"} {
+		if rel == filepath.Join("data", tidy) {
+			return true
+		}
 	}
 	base := filepath.Base(rel)
 	return strings.HasPrefix(rel, "data"+string(filepath.Separator)) &&

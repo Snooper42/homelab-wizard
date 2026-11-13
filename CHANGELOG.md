@@ -247,6 +247,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- **Moving the homelab leaves Tidy Up's lists behind:** a move file no longer carries what Tidy Up put in the old computer's Trash, filed there today, or found waiting in its Downloads; on the new computer they named files that aren't there.
 - **Tidy Up reads only so much of an answer:** a reply from the lyrics site, MusicBrainz, or an app at home that never ends no longer takes Tidy Up's memory; past a sensible size the job says so and goes on.
 - **Needs a look names only downloads:** **It's a film…**, **It's an episode…** and picking an album act only on something in a Downloads folder Tidy Up watches, so a changed list can't have them move a video or songs from anywhere else into your library.
 - **Tidy Up's keys stay with their own app:** when Jellyfin, Tdarr, Plex, Audiobookshelf or Navidrome (or whatever answers at its address) sends Tidy Up on to another address, the app's key no longer goes along.
