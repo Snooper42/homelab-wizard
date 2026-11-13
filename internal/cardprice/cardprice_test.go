@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"strings"
 	"sync"
@@ -155,5 +156,40 @@ func TestPicturesOnlyFromTheService(t *testing.T) {
 	}
 	if _, err := (Client{Assets: []string{"assets.tcgdex.net"}}).picture(context.Background(), "http://assets.tcgdex.net/en/x"); err == nil {
 		t.Error("a picture over plain http was fetched")
+	}
+}
+
+// A redirect never takes a question or a picture anywhere but TCGdex's own
+// hosts, over https: the card's name in the question would go on to
+// whatever host a redirect named (in the clear, were it http), and a
+// picture "only from the service's own host" would come from anywhere.
+func TestARedirectStaysWithTheService(t *testing.T) {
+	elsewhere := 0
+	other := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		elsewhere++
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`[]`))
+	}))
+	defer other.Close()
+	svc := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, other.URL+r.URL.RequestURI(), http.StatusFound)
+	}))
+	defer svc.Close()
+	c := Client{Base: svc.URL, Assets: []string{strings.TrimPrefix(svc.URL, "http://")}, HTTP: svc.Client(), Insecure: true}
+	var into []card
+	if _, err := c.get(context.Background(), "/v2/en/cards", url.Values{"name": {"eq:Charmander"}}, &into); err == nil {
+		t.Error("a question followed a redirect to another host")
+	}
+	if _, err := c.picture(context.Background(), svc.URL+"/en/x/high.webp"); err == nil {
+		t.Error("a picture followed a redirect to another host")
+	}
+	if elsewhere != 0 {
+		t.Errorf("another host was asked %d times", elsewhere)
+	}
+	if err := sameService(c, &http.Request{URL: &url.URL{Scheme: "http", Host: strings.TrimPrefix(svc.URL, "http://")}}, nil); err != nil {
+		t.Errorf("a redirect within the service was refused: %v", err)
+	}
+	if err := sameService(Default(), &http.Request{URL: &url.URL{Scheme: "http", Host: "assets.tcgdex.net"}}, nil); err == nil {
+		t.Error("a redirect down to plain http was followed")
 	}
 }

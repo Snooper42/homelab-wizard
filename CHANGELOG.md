@@ -260,6 +260,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 - **A page sent to your phone is checked twice:** Send to my phone's page goes on only if that phone may still open it as it arrives, so one made a wall screen, given to a household member or with Finances taken away a moment after the send gets nothing.
 - **Release notes are plain text:** `homelab updates notes` takes out control characters from what a project's releases say, so a release can't rewrite your terminal or set its title, and keeps a release's link only when it is on GitHub.
 - **A household member's own Finances are backed up:** the money a member keeps on their own phone is now copied each night with the household's records, so the encrypted off-site backup has it too. Before, it was in no backup.
+- **Card prices stay with TCGdex:** Update prices no longer follows a redirect to another site, so a card's name is only ever sent to TCGdex, and its pictures only come from TCGdex.
 - **The books cleanup can't get stuck on a bad file:** reading a cover or writing a book's details now has a time limit, so one damaged download can't hold up Tidy Up.
 - **Frigate's and Firefly III's secrets stay off the process list:** Frigate's broker password and Firefly III's nightly-jobs token no longer appear, even for a moment, in the list of running programs other accounts on the computer can see.
 - **Lyrics go in as plain text:** Add lyrics now takes out stray control characters from what the lyrics site sends, and leaves out lyrics far longer than any song's.

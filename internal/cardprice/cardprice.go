@@ -84,7 +84,7 @@ func (c Client) get(ctx context.Context, path string, q url.Values, into any) (i
 		return 0, err
 	}
 	req.Header.Set("Accept", "application/json")
-	resp, err := c.HTTP.Do(req)
+	resp, err := c.web().Do(req)
 	if err != nil {
 		return 0, err
 	}
@@ -189,7 +189,7 @@ func (c Client) picture(ctx context.Context, raw string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	resp, err := c.HTTP.Do(req)
+	resp, err := c.web().Do(req)
 	if err != nil {
 		return "", err
 	}
@@ -307,4 +307,30 @@ func Update(ctx context.Context, root string, c Client, now time.Time) (Result, 
 		return res, err
 	}
 	return res, lockedfile.Write(HistoryPath(root), data, 0o600)
+}
+
+// web is c.HTTP, following a redirect only within the service (sameService).
+func (c Client) web() *http.Client {
+	h := http.Client{}
+	if c.HTTP != nil {
+		h = *c.HTTP
+	}
+	h.CheckRedirect = func(req *http.Request, via []*http.Request) error { return sameService(c, req, via) }
+	return &h
+}
+
+// sameService refuses a redirect anywhere but TCGdex's own hosts (the API's
+// and the pictures'), over https: a question carries a card's name, and a
+// picture is read only from the service's own host.
+func sameService(c Client, req *http.Request, via []*http.Request) error {
+	if len(via) >= 5 {
+		return errors.New("TCGdex sent the question round too many times")
+	}
+	base, _ := url.Parse(c.Base)
+	host := req.URL.Host
+	secure := req.URL.Scheme == "https" || (c.Insecure && req.URL.Scheme == "http")
+	if !secure || ((base == nil || host != base.Host) && !slices.Contains(c.Assets, host)) {
+		return fmt.Errorf("TCGdex sent the question on to %s, which isn't its own", req.URL.Redacted())
+	}
+	return nil
 }
