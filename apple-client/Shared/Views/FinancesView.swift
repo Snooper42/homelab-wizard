@@ -15,6 +15,7 @@ struct FinancesView: View {
         ScrollView {
             if let view = finances.plan {
                 VStack(spacing: 18) {
+                    if let asOf = finances.offlineAsOf { OfflineBanner(asOf: asOf) }
                     if view.plan.accounts.isEmpty, finances.canEdit {
                         FirstAccountCard(finances: finances)
                     }
@@ -28,7 +29,9 @@ struct FinancesView: View {
                     RecentTransactionsCard(view: view, finances: finances)
                     UpcomingBillsCard(view: view, finances: finances)
                     MoreFinancesCard(view: view, finances: finances)
-                    Text(finances.canEdit
+                    Text(finances.offlineAsOf != nil
+                         ? "Offline: these are the Finances last read on this device. Changes wait until the Homelab answers, and then the newest are read by themselves."
+                         : finances.canEdit
                          ? "Balances, the cushion, budgets, goals and what a payment costs change on their pages. The rest of the plan is on the computer."
                          : "Read-only on this device. Change the plan on the computer.")
                         .font(.footnote)
@@ -62,6 +65,20 @@ struct FinancesView: View {
         .task(id: finances.canSeePlan) {
             await finances.loadPlan()
             await finances.loadShared()
+        }
+        // Offline: try the Homelab again now and then, and read the newest
+        // by itself once it answers (home again, or the tunnel).
+        .task(id: finances.offlineAsOf) {
+            guard finances.offlineAsOf != nil else { return }
+            while !Task.isCancelled, finances.offlineAsOf != nil {
+                try? await Task.sleep(for: .seconds(30))
+                if Task.isCancelled { return }
+                await finances.loadPlan()
+                if finances.offlineAsOf == nil {
+                    await finances.loadLedger()
+                    await finances.loadShared()
+                }
+            }
         }
         // The latest transactions, once there's a plan to show them with.
         .task(id: finances.plan == nil) {
@@ -3721,3 +3738,28 @@ private struct ScreenshotTransaction: View {
     }
 }
 #endif
+
+/// Over Finances while the Homelab doesn't answer: when what's shown was
+/// read, and that nothing changes until it answers again.
+struct OfflineBanner: View {
+    let asOf: Date
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 10) {
+            Image(systemName: "wifi.slash")
+                .foregroundStyle(Theme.secondaryInk)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(verbatim: OfflineFinances.asOf(asOf))
+                    .font(.subheadline.weight(.semibold))
+                Text("The Homelab isn't answering, so these are the last Finances read on this device. Nothing can be changed until it answers again.")
+                    .font(.footnote)
+                    .foregroundStyle(Theme.secondaryInk)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.surface, in: RoundedRectangle(cornerRadius: Theme.cardRadius, style: .continuous))
+        .accessibilityElement(children: .combine)
+    }
+}
