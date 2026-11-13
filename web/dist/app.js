@@ -9553,13 +9553,35 @@
           const icon = iconOf(v3.categories, b2.category);
           const hue2 = categoryHue(b2.category, v3.categories);
           const days = Math.max(1, daysBetween(v3.today, b2.last) + 1);
-          const daily = b2.left > 5e-3 && b2.last >= v3.today ? `${money(b2.left / days)} a day${days > 1 ? ` for ${days} days` : ", today"}` : "";
+          const daily = b2.left > 5e-3 && b2.last >= v3.today ? `${money(b2.left / days)} ${days > 1 ? "a day" : "today"}` : "";
           return /* @__PURE__ */ u3(
             Row,
             {
               lead: /* @__PURE__ */ u3(Mark, { kind: icon, type: icon, name: b2.category, hue: hue2 }),
               title: b2.category,
-              sub: `${b2.per === "paycheck" ? `This pay period, to ${dayShort(b2.last)}` : `This month, to ${dayShort(b2.last)}`} · ${money(b2.spent)} of ${money(b2.amount)}${b2.rolled ? ` (${b2.rolled > 0 ? "with" : "less"} ${money(Math.abs(b2.rolled))} from last time)` : ""}`,
+              sub: /* @__PURE__ */ u3(S, { children: [
+                /* @__PURE__ */ u3("span", { class: "fx-keep", children: [
+                  b2.per === "paycheck" ? "This pay period" : "This month",
+                  ", to ",
+                  dayShort(b2.last)
+                ] }),
+                " · ",
+                /* @__PURE__ */ u3("span", { class: "fx-keep", children: [
+                  money(b2.spent),
+                  " of ",
+                  money(b2.amount)
+                ] }),
+                !!b2.rolled && /* @__PURE__ */ u3(S, { children: [
+                  " ",
+                  /* @__PURE__ */ u3("span", { class: "fx-keep", children: [
+                    "(",
+                    b2.rolled > 0 ? "with" : "less",
+                    " ",
+                    money(Math.abs(b2.rolled)),
+                    " from last time)"
+                  ] })
+                ] })
+              ] }),
               when: /* @__PURE__ */ u3("span", { class: "fx-budgetleft" + (tone ? " fx-" + tone : ""), children: [
                 b2.left < 0 ? /* @__PURE__ */ u3(S, { children: [
                   money(-b2.left),

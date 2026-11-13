@@ -2258,11 +2258,14 @@ html .fx-month td { padding:0; vertical-align:top; height:92px; border-radius:va
 .fx-budgetbar.warn > span { background:var(--warn); }
 .fx-budgetbar.out > span { background:var(--fin-out); }
 .fx-budgetbar > i { position:absolute; top:-3px; bottom:-3px; width:2px; margin-left:-1px; border-radius:1px; background:var(--text); opacity:.55; }
-.fx-budgetleft { font-variant-numeric:tabular-nums; white-space:nowrap; text-align:right; min-width:9.5em; }
+/* What is left takes the same width on every row, so the bars beside it end in line. */
+.fx-budgetleft { font-variant-numeric:tabular-nums; white-space:nowrap; text-align:right; min-width:8.5em; }
 /* Under what is left: how much a day keeps it on budget, in grey. */
 .fx-budgetday { display:block; font-size:12px; font-weight:400; color:var(--muted); }
-/* Narrow (a phone): no width held for the figures, and the day's allowance on two lines, so the bar keeps its room. */
-@container (max-width: 560px) { .fx-budgetleft { min-width:0; } .fx-budgetday { white-space:normal; max-width:7.5em; margin-left:auto; } }
+/* The line under a budget's name breaks between its parts, never inside an amount. */
+.fx-budgets .fx-keep { white-space:nowrap; }
+/* Narrow (a phone): a little less width held for the figures, so the bar keeps its room. */
+@container (max-width: 560px) { .fx-budgetleft { min-width:7.5em; } }
 .budgetlist li { grid-template-columns:minmax(0, 1fr) 8em 9em auto auto; }
 .budgetlist .moneyfield { display:flex; align-items:center; gap:4px; padding:0 8px; border:1px solid var(--line-strong); border-radius:7px; background:var(--panel); }
 .budgetlist .moneyfield input { border:0 !important; padding:4px 0 !important; background:none !important; min-height:0; }
