@@ -245,6 +245,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- **Tidy Up's keys stay with their own app:** when Jellyfin, Tdarr, Plex, Audiobookshelf or Navidrome (or whatever answers at its address) sends Tidy Up on to another address, the app's key no longer goes along.
 - **A download replaces only its own album:** when new music replaces an album already in your library, Tidy Up now takes out of beets only the album with exactly those names, not every album whose names contain them, and a download's odd tags can't make it take out all of them.
 - **The Inbox's Undo moves only what it filed:** Undo under What I did today takes back only files in a library, and puts them only into a Downloads folder Tidy Up watches, so a changed record of what was filed can't have it move any other file, or put one anywhere else.
 - **Undo in Tidy Up puts back only into its own folders:** a thing goes back only into a library, a Downloads folder Tidy Up watches, or its reports folder, so a changed list of what went to the Trash can't have Undo put a file anywhere else in your account. Anything else stays in the Trash, and Undo says so.
