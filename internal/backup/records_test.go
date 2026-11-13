@@ -123,3 +123,22 @@ func TestCopyRecordsSnapshotsTheHistory(t *testing.T) {
 		t.Fatalf("the copy: %+v %v", got, err)
 	}
 }
+
+// A household member's own Finances (data/members/<username>/data: their
+// plan, ledger and receipts, kept apart from the household's) are records
+// too: the encrypted Secrets job takes them off-site with the rest, so a
+// lost disk doesn't lose them.
+func TestCopyRecordsTakesAMembersOwnFinances(t *testing.T) {
+	data := filepath.Join(t.TempDir(), "data")
+	write(t, filepath.Join(data, "members", "anna", "data", "finance.json"), `{"accounts":[]}`)
+	write(t, filepath.Join(data, "members", "anna", "data", "finance-ledger.json"), `{"transactions":[]}`)
+	write(t, filepath.Join(data, "members", "anna", "data", "finance-receipts", "0123456789abcdef0123456789abcdef.jpg"), "a receipt")
+	dst := filepath.Join(t.TempDir(), "secrets", RecordsFolder)
+	if _, err := CopyRecords(data, dst); err != nil {
+		t.Fatal(err)
+	}
+	want := []string{"members/anna/data/finance-ledger.json", "members/anna/data/finance-receipts/0123456789abcdef0123456789abcdef.jpg", "members/anna/data/finance.json"}
+	if got := listed(t, dst); !slices.Equal(got, want) {
+		t.Fatalf("copied %v, want %v", got, want)
+	}
+}
