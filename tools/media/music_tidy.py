@@ -407,7 +407,7 @@ def _lrclib_get(path, q):
     url = LRCLIB + path + "?" + urllib.parse.urlencode(q)
     for attempt in (0, 1):
         try:
-            return mc.http_json("GET", url, headers={"User-Agent": USER_AGENT}, timeout=20)
+            return mc.http_json("GET", url, headers={"User-Agent": USER_AGENT}, timeout=20, max_bytes=2 * 1024 * 1024)
         except RuntimeError as e:
             if "answered 404" in str(e):
                 return None
@@ -714,7 +714,7 @@ def mb_release(mbid):
     url = "%s/release/%s?inc=recordings+artist-credits&fmt=json" % (MUSICBRAINZ, mbid)
     for attempt in (0, 1):
         try:
-            rel = mc.http_json("GET", url, headers={"User-Agent": USER_AGENT}, timeout=30)
+            rel = mc.http_json("GET", url, headers={"User-Agent": USER_AGENT}, timeout=30, max_bytes=8 * 1024 * 1024)
             break
         except RuntimeError as e:
             if "answered 404" in str(e):

@@ -185,3 +185,61 @@ func TestUnpackLeavesOutAnotherMachinesJobs(t *testing.T) {
 		}
 	}
 }
+
+// Tidy Up's records name paths on the computer they were made on: what its
+// Trash holds, what it filed today and from where, and the downloads in its
+// own Downloads waiting to be named. On another computer they mean nothing,
+// and one someone else made could have Undo or Needs a look act on any file
+// here (N58, N59, N62). Neither end of a move carries them.
+func TestTidyUpsRecordsStayOnTheirComputer(t *testing.T) {
+	records := []string{"data/media-trash.jsonl", "data/media-filed.jsonl", "data/media-needs.json"}
+	src := t.TempDir()
+	now := time.Now()
+	write(t, src, "data/stopped.json", "{}\n", now)
+	for _, r := range records {
+		write(t, src, r, "{}\n", now)
+	}
+	var b bytes.Buffer
+	if _, err := Pack(src, Manifest{Made: now}, &b); err != nil {
+		t.Fatal(err)
+	}
+	tr := tar.NewReader(bytes.NewReader(b.Bytes()))
+	for {
+		h, err := tr.Next()
+		if err != nil {
+			break
+		}
+		for _, r := range records {
+			if filepath.ToSlash(h.Name) == r {
+				t.Errorf("%s went in the bundle", r)
+			}
+		}
+	}
+
+	var c bytes.Buffer
+	tw := tar.NewWriter(&c)
+	add := func(name, body string) {
+		_ = tw.WriteHeader(&tar.Header{Name: name, Mode: 0o600, Size: int64(len(body)), Typeflag: tar.TypeReg})
+		_, _ = tw.Write([]byte(body))
+	}
+	add(ManifestName, `{"made":"2026-10-01T00:00:00Z","from":"x"}`)
+	add("data/stopped.json", "{}\n")
+	for _, r := range records {
+		add(r, `{"run":"x","from":"/home/someone/.config/autostart/evil.desktop","to":"/tmp/x"}`+"\n")
+	}
+	_ = tw.Close()
+	bundle := filepath.Join(t.TempDir(), "crafted.tar")
+	_ = os.WriteFile(bundle, c.Bytes(), 0o600)
+	root := filepath.Join(t.TempDir(), "root")
+	if _, _, err := Unpack(bundle, root); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(filepath.Join(root, "data", "stopped.json")); err != nil {
+		t.Fatalf("the rest of data/ was left out: %v", err)
+	}
+	for _, r := range records {
+		if _, err := os.Stat(filepath.Join(root, filepath.FromSlash(r))); !os.IsNotExist(err) {
+			t.Errorf("%s was unpacked: %v", r, err)
+		}
+	}
+}

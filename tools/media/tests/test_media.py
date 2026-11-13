@@ -402,6 +402,23 @@ class Trash(Base):
         self.assertEqual(len(gone), 3)
 
 
+class SavedRecords(Base):
+    """A record two jobs can write at once (a film scan, unlocked, and Collect, locked, both keep movies.json):
+    each save goes through a temporary file of its own, so one can't rename the other's half-written file
+    into place, which the next read would find damaged and start again (pending Tdarr work forgotten)."""
+
+    def test_a_save_leaves_another_writers_temporary_file_alone(self):
+        home = Path(os.path.expanduser("~")) / ".homelab-media"
+        with mock.patch.object(mc.mo, "state_dir", return_value=home):
+            home.mkdir(parents=True, exist_ok=True)
+            theirs = home / "movies.tmp"
+            theirs.write_text('{"files": {"half')  # another job, mid-write
+            mc.save_state("movies", {"files": {}, "pending": {"/x": 1}})
+            self.assertEqual(theirs.read_text(), '{"files": {"half', "the other job's file untouched")
+            self.assertEqual(mc.load_state("movies")["pending"], {"/x": 1}, "this save whole")
+            self.assertEqual(sorted(p.name for p in home.iterdir()), ["movies.json", "movies.tmp"], "no leftovers")
+
+
 class Which(Base):
     def test_what_install_fetched_is_found_after_path(self):
         name = "ffprobe-fetched-test"  # on no PATH
@@ -1107,6 +1124,25 @@ class Inbox(Base):
             inbox.unzip(zp, self.tmp / "into")
         self.assertFalse((self.tmp / "escape.txt").exists())
 
+    def test_a_zip_too_big_for_the_drive_is_not_unpacked(self):
+        # A download built to swell (a few KB that say gigabytes) would fill the drive it lands on. Python's
+        # zipfile reads each file only to its listed size, so the listed sizes are added up first.
+        zp = self.tmp / "swell.zip"
+        with zipfile.ZipFile(str(zp), "w", zipfile.ZIP_DEFLATED) as z:
+            z.writestr("film.mkv", b"\0" * (20 * 1024 * 1024))
+        self.assertLess(zp.stat().st_size, 1024 * 1024, "small in the file")
+        GiB = 1024 ** 3
+        tight = shutil._ntuple_diskusage(100 * GiB, 99 * GiB - 10 * 1024 * 1024, GiB + 10 * 1024 * 1024)
+        with mock.patch.object(inbox.shutil, "disk_usage", return_value=tight):
+            with self.assertRaises(RuntimeError) as e:
+                inbox.unzip(zp, self.tmp / "into")
+        self.assertIn("free", str(e.exception))
+        self.assertFalse((self.tmp / "into" / "film.mkv").exists(), "nothing written")
+        roomy = shutil._ntuple_diskusage(100 * GiB, 50 * GiB, 50 * GiB)
+        with mock.patch.object(inbox.shutil, "disk_usage", return_value=roomy):
+            inbox.unzip(zp, self.tmp / "into2")
+        self.assertEqual((self.tmp / "into2" / "film.mkv").stat().st_size, 20 * 1024 * 1024)
+
     def test_books_and_stragglers(self):
         d = self.tmp / "Downloads"
         (self.lib["books"] / "metadata.db").write_text("")
@@ -1672,6 +1708,38 @@ class KeysOnARedirect(unittest.TestCase):
         self.assertEqual(at_near[0].get("x-emby-token"), "jf-secret", "its own host gets it")
         sent = at_other[0]
         self.assertFalse([k for k in (h.lower() for h in keys) if k in sent], "another host gets none: %s" % sent)
+
+    def big_answer(self, size):
+        import http.server
+
+        class Big(http.server.BaseHTTPRequestHandler):
+            def do_GET(self):
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()  # no length: read until it closes, as a server can
+                chunk = b" " * 65536
+                try:
+                    for _ in range(size // len(chunk)):
+                        self.wfile.write(chunk)
+                    self.wfile.write(b"{}")
+                except OSError:
+                    pass
+
+            def log_message(self, *a):
+                pass
+        return self.serve(Big)
+
+    def test_an_answer_is_read_only_up_to_its_cap(self):
+        # lrclib.net, MusicBrainz, or a server at home could answer without end; the job reads only so much.
+        url = self.big_answer(5 * 1024 * 1024)
+        with self.assertRaises(RuntimeError) as e:
+            mc.http_json("GET", url + "/x", max_bytes=1024 * 1024)
+        self.assertIn("too large", str(e.exception))
+        self.assertEqual(mc.http_json("GET", url + "/x", max_bytes=8 * 1024 * 1024), {}, "under its cap, read whole")
+        self.assertTrue(0 < mc.MAX_ANSWER <= 256 * 1024 * 1024, "every call has a cap")
+        for name in ("_lrclib_get", "mb_release"):
+            src = __import__("inspect").getsource(getattr(music_tidy, name))
+            self.assertIn("max_bytes=", src, "%s, an outside service, asks for a small cap" % name)
 
     def test_a_redirect_within_the_same_host_keeps_the_key(self):
         same_h, seen = self.redirect_to("")

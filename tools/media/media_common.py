@@ -124,10 +124,21 @@ def load_state(name, default=None):
 
 
 def save_state(name, data):
+    """Saved whole or not at all: through a temporary file of this save's own (two jobs can keep the same
+    record: a film scan and Collect both keep movies.json), then renamed into place."""
+    import tempfile
     p = state_file(name)
-    tmp = p.with_suffix(".tmp")
-    tmp.write_text(json.dumps(data, indent=1, ensure_ascii=False, default=str), encoding="utf-8")
-    os.replace(str(tmp), str(p))
+    fd, tmp = tempfile.mkstemp(dir=str(p.parent), prefix=p.stem + ".", suffix=".saving")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            f.write(json.dumps(data, indent=1, ensure_ascii=False, default=str))
+        os.replace(tmp, str(p))
+    except BaseException:
+        try:
+            os.unlink(tmp)
+        except OSError:
+            pass
+        raise
 
 
 # ============================================================== files
@@ -686,7 +697,12 @@ class _KeysStayHome(urllib.request.HTTPRedirectHandler):
 _opener = urllib.request.build_opener(_KeysStayHome)
 
 
-def http_json(method, url, body=None, headers=None, timeout=30, form=False):
+# The most any answer is read to: room for a large library's list from Jellyfin, never without end. A call to an
+# outside service (lrclib.net, MusicBrainz) asks for far less with max_bytes.
+MAX_ANSWER = 64 * 1024 * 1024
+
+
+def http_json(method, url, body=None, headers=None, timeout=30, form=False, max_bytes=MAX_ANSWER):
     data = None
     h = {"Accept": "application/json"}
     if body is not None:
@@ -700,7 +716,10 @@ def http_json(method, url, body=None, headers=None, timeout=30, form=False):
     req = urllib.request.Request(url, data=data, method=method, headers=h)
     try:
         with _opener.open(req, timeout=timeout) as r:
-            raw = r.read()
+            raw = r.read(max_bytes + 1)
+        if len(raw) > max_bytes:
+            raise RuntimeError("%s %s answered too large a reply (over %d MB)" % (method, re.sub(r"[?].*", "", url),
+                                                                               max_bytes // (1024 * 1024)))
     except urllib.error.HTTPError as e:
         raise RuntimeError("%s %s answered %d" % (method, re.sub(r"[?].*", "", url), e.code))
     except (urllib.error.URLError, OSError) as e:

@@ -43,7 +43,7 @@ from pathlib import Path
 
 import media_common as mc
 from tv_organizer import parse_episode, PACK_RE, SEASON_DIR_RE
-from video_engine import SAMPLE_RE
+from video_engine import SAMPLE_RE, human
 
 mo = mc.mo
 ui = mc.ui
@@ -179,11 +179,21 @@ def leftovers_only(item):
 
 
 # ============================================================== zip files
+UNZIP_SPARE = 1024 ** 3  # what a drive keeps free after a zip is unpacked
+
+
 def unzip(zp, into):
     """Unpack safely: nothing may land outside the folder (no '../', no absolute paths)."""
     into.mkdir(parents=True, exist_ok=True)
     root = into.resolve()
     with zipfile.ZipFile(str(zp)) as z:
+        # A download built to swell (a few KB that say gigabytes) would fill the drive. zipfile reads each file
+        # only to its listed size, so the listed sizes are added up first, and the drive keeps UNZIP_SPARE free.
+        need = sum(i.file_size for i in z.infolist() if not i.is_dir())
+        free = shutil.disk_usage(str(root)).free
+        if need > free - UNZIP_SPARE:
+            raise RuntimeError("%s unpacks to %s, and its drive has %s free; not unpacked"
+                               % (zp.name, human(need), human(max(free, 0))))
         for info in z.infolist():
             name = info.filename.replace("\\", "/")
             if name.startswith("/") or re.match(r"^[A-Za-z]:", name):
