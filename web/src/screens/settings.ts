@@ -62,11 +62,13 @@ async function loadPeople() {
   const card = $('peopleCard');
   let list: people.Person[], st: api.Status;
   try { [list, st] = await Promise.all([go().People(), go().Status()]); } catch { card.hidden = true; return; }
+  // Who keeps their Finances private: the fact and the day, nothing more (a computer from before: none).
+  const privateFinances = await go().PrivateFinances().catch(() => ({}));
   card.hidden = false;
   const catOf = Object.fromEntries((catalog?.apps || []).map((x) => [x.id, x]));
   const personal = st.apps.filter((a) => a.state === 'running' && usedByPeople(a, catOf[a.id]));
   peopleLog = '';
-  peopleView = { people: list || [], pocket: st.apps.some((a) => a.id === 'pocket-id' && a.state === 'running'), apps: personal.map((a) => ({ id: a.id, name: a.name })), log: '', on: peopleActions };
+  peopleView = { people: list || [], pocket: st.apps.some((a) => a.id === 'pocket-id' && a.state === 'running'), apps: personal.map((a) => ({ id: a.id, name: a.name })), log: '', on: peopleActions, privateFinances };
   renderPeople();
 }
 const peopleActions: PeopleActions = {

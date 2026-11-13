@@ -4114,7 +4114,12 @@
 
   // web/src/settings/People.tsx
   var active = (p3) => !p3.removed || p3.removed.startsWith("0001");
-  function Person({ p: p3, on: on2 }) {
+  function privately(at2) {
+    if (at2 === void 0) return "";
+    const d3 = new Date(at2);
+    return `Keeps their Finances private${isNaN(d3.getTime()) ? "" : ` (last saved ${d3.toLocaleDateString("en-US", { month: "short", day: "numeric" })})`}`;
+  }
+  function Person({ p: p3, on: on2, sealed }) {
     const [busy2, setBusy] = d2("");
     const [sure, setSure] = d2(false);
     const run2 = async (action) => {
@@ -4124,7 +4129,7 @@
       return ok;
     };
     const apps2 = p3.apps || [];
-    return /* @__PURE__ */ u3(Row, { dot: "ok", title: p3.name, sub: [p3.email, apps2.length ? `${apps2.length} app${apps2.length === 1 ? "" : "s"}` : "every app"].filter(Boolean).join(" · "), end: /* @__PURE__ */ u3(S, { children: [
+    return /* @__PURE__ */ u3(Row, { dot: "ok", title: p3.name, sub: [p3.email, apps2.length ? `${apps2.length} app${apps2.length === 1 ? "" : "s"}` : "every app", privately(sealed)].filter(Boolean).join(" · "), end: /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3("button", { class: "small", title: "Open their welcome page, to print or send", onClick: () => on2.openWelcome(p3.username), children: "Welcome page" }),
       /* @__PURE__ */ u3(
         "button",
@@ -4154,7 +4159,7 @@
         "button",
         {
           class: "small danger",
-          title: "Turn their sign-in off; their photos, documents, and the rest stay",
+          title: "Turn their sign-in off; their photos, documents, and the rest stay" + (sealed !== void 0 ? ". Their private Finances stay too: you can delete them, but never open them" : ""),
           disabled: busy2 === "remove",
           onClick: async () => {
             if (!sure) {
@@ -4207,7 +4212,7 @@
       /* @__PURE__ */ u3("button", { class: "small primary", id: "addPerson", disabled: busy2, onClick: add, children: "Add them" })
     ] });
   }
-  function People({ people, pocket, apps: apps2, log: log2, on: on2 }) {
+  function People({ people, pocket, apps: apps2, log: log2, on: on2, privateFinances }) {
     const here3 = people.filter(active);
     const head = /* @__PURE__ */ u3(CardHead, { title: "People", children: /* @__PURE__ */ u3("span", { class: "muted", children: here3.length ? `${here3.length} in the household` : "just you so far" }) });
     const why = /* @__PURE__ */ u3("p", { class: "muted", children: "Each person gets one sign-in for the apps (with a passkey, no password to remember) and a welcome page with their apps and the phone apps to install. Jellyfin and Navidrome have a password of their own, for Infuse and music apps: with their keys in Settings, the homelab makes those accounts too, and Reset password gives a new one." });
@@ -4224,7 +4229,7 @@
     return /* @__PURE__ */ u3(S, { children: [
       head,
       why,
-      !!here3.length && /* @__PURE__ */ u3(Rows, { children: here3.map((p3) => /* @__PURE__ */ u3(Person, { p: p3, on: on2 }, p3.username)) }),
+      !!here3.length && /* @__PURE__ */ u3(Rows, { children: here3.map((p3) => /* @__PURE__ */ u3(Person, { p: p3, on: on2, sealed: privateFinances?.[p3.username] }, p3.username)) }),
       /* @__PURE__ */ u3(AddPerson, { apps: apps2, open: !here3.length, on: on2 }),
       /* @__PURE__ */ u3("pre", { id: "peopleLog", hidden: !log2, children: log2 })
     ] });
@@ -6425,11 +6430,12 @@
       card.hidden = true;
       return;
     }
+    const privateFinances = await go().PrivateFinances().catch(() => ({}));
     card.hidden = false;
     const catOf = Object.fromEntries((catalog?.apps || []).map((x3) => [x3.id, x3]));
     const personal = st.apps.filter((a3) => a3.state === "running" && usedByPeople(a3, catOf[a3.id]));
     peopleLog = "";
-    peopleView = { people: list || [], pocket: st.apps.some((a3) => a3.id === "pocket-id" && a3.state === "running"), apps: personal.map((a3) => ({ id: a3.id, name: a3.name })), log: "", on: peopleActions };
+    peopleView = { people: list || [], pocket: st.apps.some((a3) => a3.id === "pocket-id" && a3.state === "running"), apps: personal.map((a3) => ({ id: a3.id, name: a3.name })), log: "", on: peopleActions, privateFinances };
     renderPeople();
   }
   var peopleActions = {

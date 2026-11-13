@@ -2138,6 +2138,15 @@ const smokes = [
     if (act.join('|') !== 'add|Anna Smith|anna@example.com|vikunja') throw new Error(`asked ${act}`);
     if ((await page.evaluate(() => window.__MOCK.opened)) !== 'anna') throw new Error('the welcome page did not open');
   } },
+  // A member who keeps her Finances private (private-finances.md 3.3): her row says so and when she last saved,
+  // and nothing more; Remove's title says the owner can delete them but never open them.
+  { name: 'Settings › People: a member’s private Finances, the fact only', screen: 'settings', mock: { status: { ...status, apps: [...status.apps, { id: 'pocket-id', name: 'Pocket ID', state: 'running', health: 'healthy', url: 'http://localhost:1411' }] }, people: [{ username: 'anna', name: 'Anna Smith' }, { username: 'sam', name: 'Sam Smith' }], privateFinances: { anna: '2026-11-13T15:04:00-05:00' } }, run: async (page) => {
+    await page.click('#settingsNav .pagebtn[data-page="People"]', { timeout: 5000 });
+    const anna = page.locator('#peopleCard li:has-text("Anna Smith")');
+    await anna.locator(':text("Keeps their Finances private (last saved Nov 13)")').waitFor({ timeout: 5000 });
+    if (await page.locator('#peopleCard li:has-text("Sam Smith"):has-text("private")').count()) throw new Error('Sam’s row says private');
+    if (!/delete .*never open/.test(await anna.locator('button:has-text("Remove")').getAttribute('title'))) throw new Error('Remove doesn’t say their Finances can be deleted but never opened');
+  } },
   // What CrowdSec stopped: the proxy's page lists today's with where each came from and what it tried, says how
   // many more there were, and other apps' pages have no such card.
   { name: 'The proxy’s page: what CrowdSec stopped today', screen: 'app:nginx-proxy-manager', run: async (page) => {
