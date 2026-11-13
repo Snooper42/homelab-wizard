@@ -1,8 +1,9 @@
-// The README's walkthrough (docs/images/tour.gif): the app against the fake
+// The README's walkthrough (docs/images/tour.gif, and tour-dark.gif in dark): the app against the fake
 // backend, with a cursor and a caption for each screen, recorded as video and
 // made into a GIF with ffmpeg. Every app is well in it, for a first look.
 //
-//   node app/preview/tour.mjs            (needs Playwright, Chromium and ffmpeg)
+//   node app/preview/tour.mjs            (light; needs Playwright, Chromium and ffmpeg)
+//   node app/preview/tour.mjs dark       (the same in dark)
 //
 // The example state is shoot.mjs's own: this reads shoot.mjs up to its first
 // shot and keeps what it builds (the catalog from the real CLI, the example
@@ -34,24 +35,24 @@ const vik = base.status.apps.find((x) => x.id === 'vikunja');
 base.status.apps = base.status.apps.map((x) => (x.id === 'mealie' ? { ...x, state: 'running', health: 'healthy', since: vik.since, updatedAt: vik.updatedAt } : x));
 base.backups.copies = base.backups.copies.map((x) => (x.id === 'mealie' ? { ...x, state: 'fresh', newest: base.backups.copies.find((c) => c.id === 'vikunja').newest } : x));
 const W = 1280, H = 800;
-const scheme = 'light';
+const scheme = process.argv.includes('dark') ? 'dark' : 'light';
 const browser = await chromium.launch();
 const ctx = await browser.newContext({ viewport: { width: W, height: H }, colorScheme: scheme, recordVideo: { dir: work, size: { width: W, height: H } } });
 const page = await ctx.newPage();
 page.on('pageerror', (e) => console.log('PAGEERROR', String(e)));
 await page.addInitScript({ content: `window.__MOCK = ${JSON.stringify({ ...base, screen: 'status' })};\n${readFileSync(join(here, 'mock.js'), 'utf8')}` });
 // A cursor the video can see: an arrow that follows the mouse.
-await page.addInitScript(() => {
+await page.addInitScript((dark) => {
   addEventListener('DOMContentLoaded', () => {
     const c = document.createElement('div');
-    c.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24"><path d="M4 2l15 11-6.5 1.2L16 21l-3 1.4-3.4-6.6L4 20z" fill="#111" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>';
+    c.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24"><path d="M4 2l15 11-6.5 1.2L16 21l-3 1.4-3.4-6.6L4 20z" fill="${dark ? '#fff' : '#111'}" stroke="${dark ? '#111' : '#fff'}" stroke-width="1.6" stroke-linejoin="round"/></svg>`;
     Object.assign(c.style, { position: 'fixed', left: '640px', top: '420px', zIndex: 2147483647, pointerEvents: 'none', transition: 'transform .12s' });
     document.body.appendChild(c);
     addEventListener('mousemove', (e) => { c.style.left = e.clientX - 3 + 'px'; c.style.top = e.clientY - 2 + 'px'; }, true);
     addEventListener('mousedown', () => { c.style.transform = 'scale(.82)'; }, true);
     addEventListener('mouseup', () => { c.style.transform = ''; }, true);
   });
-});
+}, scheme === 'dark');
 await page.goto(pathToFileURL(join(root, 'web', 'dist', 'index.html')).href);
 await page.evaluate(() => document.documentElement.classList.add('preview'));
 const wait = (ms) => page.waitForTimeout(ms);
@@ -75,11 +76,11 @@ const captions = {
   backups: 'Backups: a copy of everything every night, and proof it restores',
   choose: 'Choose apps: tick what you want, and it installs and connects them',
 };
-const caption = (text) => page.evaluate((t) => {
+const caption = (text) => page.evaluate(([t, d]) => {
   let c = document.getElementById('tourcap');
-  if (!c) { c = document.createElement('div'); c.id = 'tourcap'; Object.assign(c.style, { position: 'fixed', left: '50%', bottom: '26px', transform: 'translateX(-50%)', zIndex: 2147483646, background: 'rgba(17,17,20,.86)', color: '#fff', font: '600 19px/1.3 Inter, -apple-system, system-ui, sans-serif', padding: '12px 22px', borderRadius: '14px', boxShadow: '0 8px 30px rgba(0,0,0,.25)', whiteSpace: 'nowrap', pointerEvents: 'none', transition: 'opacity .25s' }); document.body.appendChild(c); }
+  if (!c) { c = document.createElement('div'); c.id = 'tourcap'; Object.assign(c.style, { position: 'fixed', left: '50%', bottom: '26px', transform: 'translateX(-50%)', zIndex: 2147483646, background: d ? 'rgba(250,250,252,.94)' : 'rgba(17,17,20,.86)', color: d ? '#111' : '#fff', font: '600 19px/1.3 Inter, -apple-system, system-ui, sans-serif', padding: '12px 22px', borderRadius: '14px', boxShadow: '0 8px 30px rgba(0,0,0,.25)', whiteSpace: 'nowrap', pointerEvents: 'none', transition: 'opacity .25s' }); document.body.appendChild(c); }
   c.style.opacity = '0'; setTimeout(() => { c.textContent = t; c.style.opacity = '1'; }, 180);
-}, text);
+}, [text, scheme === 'dark']);
 const mark = (name) => { marks.push([name, Date.now()]); return caption(captions[name]); };
 const t0 = Date.now();
 await page.mouse.move(mx, my);
@@ -111,7 +112,7 @@ const video = page.video();
 await ctx.close();
 await browser.close();
 const webm = await video.path();
-const gif = join(root, 'docs', 'images', 'tour.gif');
+const gif = join(root, 'docs', 'images', scheme === 'dark' ? 'tour-dark.gif' : 'tour.gif');
 // 10 frames a second, 960 wide, one palette for the whole: about 5 MB.
 execFileSync('ffmpeg', ['-v', 'error', '-y', '-ss', '1.0', '-i', webm, '-vf', 'fps=10,scale=960:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=128:stats_mode=diff[p];[b][p]paletteuse=dither=none:diff_mode=rectangle', '-loop', '0', gif], { stdio: 'inherit' });
 rmSync(work, { recursive: true, force: true });
