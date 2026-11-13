@@ -123,6 +123,23 @@ export function balanceAfter(acct: finance.Account, all: finance.Transaction[], 
   return all.reduce((n, t) => n + (day < at ? (t.date > day && t.date <= at ? -effect(t) : 0) : (t.date > at && t.date <= day ? effect(t) : 0)), acct.balance);
 }
 
+/** The day `n` days before an ISO day. */
+export const daysBack = (day: string, n: number): string => {
+  const d = new Date(+day.slice(0, 4), +day.slice(5, 7) - 1, +day.slice(8, 10) - n);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
+/**
+ * An account at each day's end over the last `days` days, today last: worked through its transactions from the
+ * balance typed in, else what was typed in by then (a home, a car, an account with no transactions). The account's
+ * own page and the Dashboard's look back draw the same line.
+ */
+export function balanceSeries(v: finance.View, a: finance.Account, all: finance.Transaction[], days: number): { steps: string[]; values: number[]; runs: boolean } {
+  const runs = runsFrom(a) && all.some((t) => t.account === a.id || t.to === a.id);
+  const steps = Array.from({ length: days + 1 }, (_, i) => daysBack(v.today, days - i));
+  return { steps, runs, values: steps.map((d) => (runs ? balanceAfter(a, all, d) : Math.abs(worthOn(v, a, d)))) };
+}
+
 /** Whether an account's balance can be worked through its transactions: typed in on a day, and not a thing whose worth none moves. */
 export const runsFrom = (acct: finance.Account | undefined): boolean => !!acct?.updated && !['home', 'car', 'collectible'].includes(acct.kind);
 

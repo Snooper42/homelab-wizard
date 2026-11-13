@@ -135,8 +135,8 @@ export function Calendar({ v, L, ledger, edit }: CalendarProps) {
   // The first and last days checking is read for; before, what was recorded; after, only what is planned.
   const from = (v.days || [])[0]?.date || first;
   const read = (v.days || []).at(-1)?.date || last;
-  // Taken once, as it opens, if it is a day the calendar has.
-  const [opened] = useState(() => { const d = opening; opening = ''; return d && days[d] ? d : from; });
+  // Taken once, as it opens, if it is a day the calendar has; one before its first (a year back on the look back) opens on the first.
+  const [opened] = useState(() => { const d = opening; opening = ''; return d && days[d] ? d : d && d < first ? first : from; });
   const [month, setMonth] = useState(monthOf(opened));
   const [sel, setSel] = useState(opened);
   // The day the keys moved to: focused once it is drawn (in another month too).

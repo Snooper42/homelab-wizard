@@ -7651,6 +7651,36 @@ const smokes = [
     const bars = await page.$$eval('.fx-budgets .fx-budgetbar', (b) => b.map((x) => Math.round(x.getBoundingClientRect().width)), { timeout: 5000 });
     if (bars.length !== 3 || Math.min(...bars) < 150 || Math.max(...bars) - Math.min(...bars) > 1) throw new Error(`bars ${bars}`);
   } },
+  // Step 5 (the owner's yes, Nov 12): the Dashboard looks back as well as ahead. Checking, last 90 days, from the balance
+  // typed in through its transactions (the same line as the account's own page): 30 days or a year instead, another
+  // account picked, and a day clicked opens it on the calendar. The title opens the account's page.
+  { name: 'Finances: the Dashboard looks back at an account, and a day opens on the calendar', screen: 'finances', run: async (page) => {
+    await page.waitForSelector('#finRoot .fx-trend h2:text-is("Chase Checking, last 90 days")', { timeout: 5000 });
+    // Its last point is today's end, as the account's own page has it.
+    const said = await page.getAttribute('#finRoot .fx-trend figure', 'aria-label');
+    await page.click('#finRoot .fx-trend .seg button:text-is("A year")');
+    await page.waitForSelector('#finRoot .fx-trend h2:text-is("Chase Checking, last year")', { timeout: 5000 });
+    await page.selectOption('#finRoot .fx-trend select[aria-label="Account"]', { label: 'BofA Savings' });
+    await page.waitForSelector('#finRoot .fx-trend h2:text-is("BofA Savings, last year")', { timeout: 5000 });
+    await page.selectOption('#finRoot .fx-trend select[aria-label="Account"]', { label: 'Chase Checking' });
+    await page.click('#finRoot .fx-trend .seg button:text-is("90 days")');
+    await page.click('#finRoot .fx-trend button.fx-titleopen');
+    await page.waitForSelector('#finRoot .fx-account h2:text-is("Chase Checking")', { timeout: 5000 });
+    const own = await page.getAttribute('#finRoot .fx-acctbalance figure', 'aria-label');
+    const today = (x) => x?.match(/(\S+) today$/)?.[1];
+    if (!today(said) || today(said) !== today(own)) throw new Error(`the Dashboard ends at ${today(said)}, the account's page at ${today(own)}`);
+    await finTab(page, 'Dashboard');
+    // A day near the end (in October, which the calendar holds from the 1st): the one its tip names opens there.
+    const plot = page.locator('#finRoot .fx-trend .fx-plot');
+    await plot.scrollIntoViewIfNeeded();
+    const box = await plot.boundingBox();
+    await page.mouse.move(box.x + box.width * 0.86, box.y + box.height / 2);
+    const day = await page.textContent('#finRoot .fx-trend .fx-tip strong', { timeout: 5000 });
+    await page.mouse.click(box.x + box.width * 0.86, box.y + box.height / 2);
+    await page.waitForSelector('#finRoot .seg button[aria-checked="true"]:text-is("Calendar")', { timeout: 5000 });
+    const opened = await page.textContent('#finRoot .fx-dayone h2', { timeout: 5000 });
+    if (!opened.includes(day.replace(/^\w+, /, ''))) throw new Error(`the tip said ${day}, the calendar opened ${opened}`);
+  } },
   // Each Dashboard card that sums something up opens what is behind it from its title (a click or a tap; the keyboard
   // has the ↗ or See all beside it): Spent this month its month's transactions, Cash flow and Where it goes Recurring,
   // Renewing soon the subscriptions, Budgets to watch and Latest transactions Transactions, Checking ahead the calendar,
@@ -7667,6 +7697,7 @@ const smokes = [
       ['.fx-checking', page2('Calendar')],
       ['.fx-paycheck', page2('Paychecks')],
       ['.fx-worthmini', page2('Net worth')],
+      ['.fx-trend', '#finRoot .fx-account'],
     ];
     for (const [card, there, more] of cards) {
       await finTab(page, 'Dashboard', { timeout: 5000 });
