@@ -402,6 +402,23 @@ class Trash(Base):
         self.assertEqual(len(gone), 3)
 
 
+class SavedRecords(Base):
+    """A record two jobs can write at once (a film scan, unlocked, and Collect, locked, both keep movies.json):
+    each save goes through a temporary file of its own, so one can't rename the other's half-written file
+    into place, which the next read would find damaged and start again (pending Tdarr work forgotten)."""
+
+    def test_a_save_leaves_another_writers_temporary_file_alone(self):
+        home = Path(os.path.expanduser("~")) / ".homelab-media"
+        with mock.patch.object(mc.mo, "state_dir", return_value=home):
+            home.mkdir(parents=True, exist_ok=True)
+            theirs = home / "movies.tmp"
+            theirs.write_text('{"files": {"half')  # another job, mid-write
+            mc.save_state("movies", {"files": {}, "pending": {"/x": 1}})
+            self.assertEqual(theirs.read_text(), '{"files": {"half', "the other job's file untouched")
+            self.assertEqual(mc.load_state("movies")["pending"], {"/x": 1}, "this save whole")
+            self.assertEqual(sorted(p.name for p in home.iterdir()), ["movies.json", "movies.tmp"], "no leftovers")
+
+
 class Which(Base):
     def test_what_install_fetched_is_found_after_path(self):
         name = "ffprobe-fetched-test"  # on no PATH

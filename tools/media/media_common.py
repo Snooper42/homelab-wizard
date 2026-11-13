@@ -124,10 +124,21 @@ def load_state(name, default=None):
 
 
 def save_state(name, data):
+    """Saved whole or not at all: through a temporary file of this save's own (two jobs can keep the same
+    record: a film scan and Collect both keep movies.json), then renamed into place."""
+    import tempfile
     p = state_file(name)
-    tmp = p.with_suffix(".tmp")
-    tmp.write_text(json.dumps(data, indent=1, ensure_ascii=False, default=str), encoding="utf-8")
-    os.replace(str(tmp), str(p))
+    fd, tmp = tempfile.mkstemp(dir=str(p.parent), prefix=p.stem + ".", suffix=".saving")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            f.write(json.dumps(data, indent=1, ensure_ascii=False, default=str))
+        os.replace(tmp, str(p))
+    except BaseException:
+        try:
+            os.unlink(tmp)
+        except OSError:
+            pass
+        raise
 
 
 # ============================================================== files
