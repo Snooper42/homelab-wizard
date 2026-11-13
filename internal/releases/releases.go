@@ -16,6 +16,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unicode"
 
 	"github.com/Snooper42/homelab-wizard/internal/lockedfile"
 )
@@ -82,6 +83,9 @@ func Repo(meta, ref string, labels map[string]string) string {
 		return meta
 	}
 	if m := githubSource.FindStringSubmatch(labels["org.opencontainers.image.source"]); m != nil {
+		if dots(m[1]) || dots(m[2]) {
+			return "" // not a project: it would ask another of GitHub's addresses
+		}
 		return m[1] + "/" + m[2]
 	}
 	if rest, ok := strings.CutPrefix(ref, "ghcr.io/"); ok {
@@ -160,12 +164,12 @@ func List(ctx context.Context, path, repo string) ([]Release, error) {
 	mu.Unlock()
 	kept, ok := c[repo]
 	if ok && time.Since(kept.At) < TTL {
-		return kept.Releases, nil
+		return plainReleases(kept.Releases), nil
 	}
 	list, err := fetch(ctx, repo)
 	if err != nil {
 		if ok {
-			return kept.Releases, nil
+			return plainReleases(kept.Releases), nil
 		}
 		return nil, err
 	}
@@ -243,7 +247,35 @@ func fetch(ctx context.Context, repo string) ([]Release, error) {
 		}
 		list = append(list, Release{Tag: r.TagName, Name: name, When: r.PublishedAt, URL: r.HTMLURL, Notes: Brief(r.Body, 14)})
 	}
-	return list, nil
+	return plainReleases(list), nil
+}
+
+func dots(s string) bool { return s == "." || s == ".." }
+
+// plainReleases is list as plain text: a project's releases are a
+// stranger's words, printed in a terminal by homelab updates notes, so no
+// control character (an escape that rewrites the screen, sets the title or
+// the clipboard) is kept but the notes' line breaks, and a release's link
+// only when it is on GitHub. Cached copies are cleaned as they are read.
+func plainReleases(list []Release) []Release {
+	out := make([]Release, 0, len(list))
+	for _, r := range list {
+		r.Tag, r.Name, r.Notes = plainText(r.Tag, false), plainText(r.Name, false), plainText(r.Notes, true)
+		if !strings.HasPrefix(r.URL, "https://github.com/") || plainText(r.URL, false) != r.URL {
+			r.URL = ""
+		}
+		out = append(out, r)
+	}
+	return out
+}
+
+func plainText(s string, lines bool) string {
+	return strings.Map(func(c rune) rune {
+		if (c == '\n' && lines) || !unicode.IsControl(c) {
+			return c
+		}
+		return -1
+	}, s)
 }
 
 var (
