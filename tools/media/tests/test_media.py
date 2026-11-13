@@ -425,6 +425,42 @@ class ParsersHaveATimeout(Base):
         self.assertIn("longer than an hour", str(e.exception), "said plainly, as the Inbox's other failures are")
 
 
+class BooksRunWithLimits(Base):
+    """The owner chose (Nov 12): the books engine, books_organizer.py, stays exactly as it is (vendored), and
+    the jobs start it through books_run.py, which gives each tool it runs a time to finish in: sips on a
+    cover, calibredb writing a book's metadata or cover. One that hangs on a crafted file can't hold Tidy Up."""
+
+    def test_each_tool_the_books_engine_runs_has_a_time_limit(self):
+        import books_organizer as bo
+        import books_run
+        import subprocess
+        before = subprocess.run
+        seen = []
+
+        def fake(cmd, *a, **k):
+            seen.append((Path(str(cmd[0])).name, k.get("timeout")))
+            return mock.Mock(returncode=0, stdout="", stderr="")
+        with mock.patch.object(books_run, "_real_run", side_effect=fake), books_run.limits():
+            cover = self.touch(self.tmp / "cover.jpg")
+            with mock.patch.dict(sys.modules, {"PIL": None}), mock.patch.object(bo.shutil, "which", return_value="/usr/bin/sips"):
+                bo.thumb_pixels(str(cover))
+            covers = self.tmp / "covers"
+            (covers / "applied").mkdir(parents=True)
+            bo.set_covers([self.touch(covers / "7 - Dune.jpg")], "calibredb", str(self.lib["books"]), covers)
+            bo.embed([7], "calibredb", str(self.lib["books"]))
+        self.assertEqual(dict(seen).get("sips"), 60)
+        self.assertEqual([t for n, t in seen if n == "calibredb"], [3600, 3600])
+        self.assertIs(bo.subprocess.run, before, "the limits end with the job's own run")
+
+    def test_a_limit_the_engine_set_itself_is_kept(self):
+        import books_run
+        got = []
+        with mock.patch.object(books_run, "_real_run", side_effect=lambda c, *a, **k: got.append(k.get("timeout"))), books_run.limits():
+            import subprocess
+            subprocess.run(["ebook-meta", "x"], timeout=60)
+        self.assertEqual(got, [60])
+
+
 class SavedRecords(Base):
     """A record two jobs can write at once (a film scan, unlocked, and Collect, locked, both keep movies.json):
     each save goes through a temporary file of its own, so one can't rename the other's half-written file

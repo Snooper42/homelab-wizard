@@ -549,3 +549,15 @@ func TestActivityKeepsWhatItWas(t *testing.T) {
 		t.Errorf("a run that stopped says it was %q", r.Activity[2].Action)
 	}
 }
+
+// The owner chose (Nov 12): the books engine runs through books_run.py, which
+// gives each tool it starts a time limit, and books_organizer.py stays as it
+// is (tools/media/tests: test_vendored_engines_are_unchanged).
+func TestBooksEngineRunsWithLimits(t *testing.T) {
+	for _, act := range []string{"init", "status", "review", "apply", "undo"} {
+		a, err := Lookup("books", act)
+		if err != nil || a.Script != "books_run.py" {
+			t.Errorf("books %s runs %q (%v): it should go through books_run.py", act, a.Script, err)
+		}
+	}
+}
