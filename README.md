@@ -87,12 +87,39 @@ Two parts are its own: **Finances**, the household's money paycheck by paycheck,
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-setup-dark.png">
   <img alt="Setup: this machine, then the first-time checklist with progress" src="docs/images/app-setup.png">
 </picture></td>
-<td valign="top"><a href="docs/Tour.md#on-the-phone"><strong>On the phone</strong></a><br>Status, Backups, and Finances in the phone's browser, at home or away; a phone only looks until you let it change things.<br><br><p align="center"><picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-phone-dark.png">
-  <img alt="The phone companion: Status on a phone" src="docs/images/app-phone.png" width="210">
+<td valign="top"><a href="docs/Tour.md#on-your-iphone"><strong>On your iPhone</strong></a><br>The Homelab app: Status, each app's page, Backups, and Finances in your pocket, at home or away, behind Face ID.<br><br><p align="center"><picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/iphone-status-dark.png">
+  <img alt="The Homelab app on an iPhone: Status, with Mealie needing a look and each category of apps below" src="docs/images/iphone-status.png" width="210">
 </picture></p></td>
 </tr>
 </table>
+
+### On your iPhone
+
+The **Homelab app** for iPhone and iPad keeps the homelab in your pocket: Status with **Start** and **Logs**, each app's page, Backups, the household's Finances, alerts, and a widget, behind Face ID. A phone only looks until you let it make changes, and sees Finances only if you allow it. It's built with Xcode on your own Mac for now, not from the App Store ([apple-client](apple-client/README.md)).
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/iphone-status-dark.png">
+    <img alt="The Homelab app on an iPhone. Status: the app that needs a look first, with Start and Logs, then each category" src="docs/images/iphone-status.png" width="160">
+  </picture>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/iphone-app-dark.png">
+    <img alt="The Homelab app on an iPhone. An app's page: Vikunja running, with Open, Restart, Stop, and Logs" src="docs/images/iphone-app.png" width="160">
+  </picture>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/iphone-backups-dark.png">
+    <img alt="The Homelab app on an iPhone. Backups: the last backup, the restore test, and what needs a look" src="docs/images/iphone-backups.png" width="160">
+  </picture>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/iphone-finances-dark.png">
+    <img alt="The Homelab app on an iPhone. Finances: checking now, after the next paycheck, and net worth over three months" src="docs/images/iphone-finances.png" width="160">
+  </picture>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/iphone-spending-dark.png">
+    <img alt="The Homelab app on an iPhone. Spending: where the month went, by category, with each budget" src="docs/images/iphone-spending.png" width="160">
+  </picture>
+</p>
 
 Every screen in more detail, with what each button does: **[the full tour](docs/Tour.md)**.
 
