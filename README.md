@@ -21,6 +21,7 @@
 <p align="center">
   <a href="#what-it-is">What it is</a> ·
   <a href="#take-the-tour">Tour</a> ·
+  <a href="#how-it-works">How it works</a> ·
   <a href="#get-started">Get started</a> ·
   <a href="#what-it-replaces">What it replaces</a> ·
   <a href="#everyday-tasks">Everyday tasks</a> ·
@@ -94,6 +95,24 @@ Two parts are its own: **Finances**, the household's money paycheck by paycheck,
 </table>
 
 Every screen in more detail, with what each button does: **[the full tour](docs/Tour.md)**.
+
+## How it works
+
+```mermaid
+flowchart TB
+  you(["<b>Your phones and computers</b><br/>at home and away"])
+  subgraph home["The computer at home"]
+    direction LR
+    wizard["<b>Homelab Wizard</b><br/>the app, and its agent<br/>in the background"]
+    apps["<b>Your apps</b><br/>Photos · Passwords · Documents<br/>Films · Music · Books · …<br/>each in its own container"]
+    wizard -- "installs, connects,<br/>updates, restarts" --> apps
+  end
+  backup[("<b>Your backups</b><br/>a cloud drive's folder,<br/>or an external drive")]
+  you -- "Tailscale: private,<br/>nothing on the internet" --> apps
+  wizard -- "every night,<br/>an encrypted copy" --> backup
+```
+
+The apps are free, open-source projects (Immich, Vaultwarden, Paperless-ngx, Jellyfin, Navidrome, and 60-odd more), each running in its own container through Docker, or OrbStack on a Mac. Homelab Wizard is the part that picks them, sets them up with a strong password each, connects them to each other, and keeps them running, with an alert on your phone when something needs you. The traffic paths, the engine, and a night of jobs, drawn out: [Architecture](docs/Architecture.md).
 
 ## Get started
 
