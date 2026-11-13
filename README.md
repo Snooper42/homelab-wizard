@@ -162,7 +162,7 @@ You need a computer that stays on (a Mac, a Windows 10 or 11 PC, a Linux machine
 3. **Pick what you want** on Choose apps (Photos, Passwords, Movies and TV, Music, Files, or anything from the full list) and click **Install**.
 4. **Finish on Setup.** **Do the N I can do for you** runs every step that is ready; the rest say in one line what they give you. Signing in to Tailscale and installing it on your phones is the part only you can do.
 
-You are done when Setup leaves the sidebar (it comes back by itself if a step comes undone) and every app on **Status** has a green dot. Then put Tailscale and the apps' own phone apps on each phone ([Getting Started › Set up each person's phone](docs/Getting%20Started.md#4-set-up-each-persons-phone)).
+You are done when Setup leaves the sidebar (it comes back by itself if a step comes undone) and every app on **Status** has a green dot. Then put Tailscale, the Homelab app, and the apps' own phone apps on each phone ([Getting Started › Set up each person's phone](docs/Getting%20Started.md#4-set-up-each-persons-phone)).
 
 <details>
 <summary><strong>Every download, and the command line</strong></summary>
@@ -229,7 +229,7 @@ Each in the app, then the same from a terminal in the homelab folder (`homelab.c
 | Back up now, or prove a restore works | Backups › **Back up now**, **Test a restore** | `./homelab backup --apply`, `./homelab restore-test --auto` | [Backups](docs/Backups.md) |
 | Update Homelab Wizard and the homelab | **Update now** on the line at the top of the window | `./homelab upgrade` | [Upgrading](docs/Upgrading.md) |
 | Add someone in the household | Settings › **People** › **Add a person** | `./homelab person add "Anna Smith" --email anna@example.com` | [Pocket ID](<services/security/Pocket ID.md>) |
-| Pair a phone with the companion | Settings › **Phones** › **Pair a phone** | `./homelab phone pair` | [Phone companion](<services/system/Phone companion.md>) |
+| Pair a phone (the Homelab app, or its browser) | Settings › **Phones** › **Pair a phone**, then scan the QR code from the Homelab app | `./homelab phone pair` | [Phone companion](<services/system/Phone companion.md>) |
 | Use a domain of your own | Settings › `HOMELAB_DOMAIN`, then the new steps on Setup | `./homelab domain setup` | [Getting Started](docs/Getting%20Started.md#later-a-domain-of-your-own) |
 | Move to a new computer | Backups › **Moving to a new machine** › **Move out…** | `./homelab move out --to <file>`, then `move in` there | [Disaster Recovery](docs/Disaster%20Recovery.md#scenario-moving-to-a-new-machine) |
 | Rebuild a lost computer from the backups | Install the app on the new one, then in a terminal | `./homelab rebuild <backup folder>` | [Disaster Recovery](docs/Disaster%20Recovery.md#scenario-full-mac-rebuild) |
