@@ -162,7 +162,10 @@ never stop the loop.
 
 1. **Money stays on this machine.** No logo, price, or rate is fetched from
    the internet. The only outside sources allowed are the homelab's own apps
-   on its own network, read only on a click or an opt-in setting.
+   on its own network, read only on a click or an opt-in setting. **One
+   exception, the owner's yes (Nov 13):** the Collection's Update prices
+   reads TCGdex on its click, sending only a card's name and then its id
+   (`internal/cardprice`, docs/Security.md). Ask before any other.
 2. **Old finance.json files keep loading.** New fields are optional
    (`omitempty`) with safe defaults, and each comes with a Load/Clean test on
    a file without it. Never rename or drop a field. Keep the Rev check.

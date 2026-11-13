@@ -7777,10 +7777,21 @@ const smokes = [
         // Its page shows it, read back from the computer, large.
         await page.waitForSelector('#finRoot .fx-card img.fx-cardpic.lg[src^="data:image/jpeg"]', { timeout: 5000 });
       } },
+      { name: "Finances: Update prices says what it read, and a card's page draws its price over time", screen: 'finances', mock: withCards, run: async (page) => {
+        await finTab(page, 'Collection', { timeout: 5000 });
+        await page.click('#finRoot .fx-collection button:text-is("Update prices")');
+        await page.waitForSelector('#finRoot .fx-pricesaid:has-text("Updated 3 cards from TCGplayer\'s prices.")', { timeout: 5000 });
+        const said = await page.textContent('#finRoot .fx-pricesaid');
+        if (!said.includes('Not found: Leaf Lizard (check its name and number).') || !said.includes('More than one printing: Volt Mouse (add its set).') || !said.includes('1 card keeps your own price.')) throw new Error(`said: ${said}`);
+        if (await page.evaluate(() => window.__MOCK.calls.FinancesUpdatePrices) !== 1) throw new Error('not asked once');
+        await page.click('#finRoot .fx-cards li:has-text("Ember Fox") button.rowopen');
+        await page.waitForSelector('#finRoot .fx-cardnow figure[aria-label*="price on each day"]', { timeout: 5000 });
+      } },
       { name: 'The phone, view only: the Collection shows, with nothing to add or change', screen: 'finances', phone: ['companion', 'finances'], mock: { finances: { ...withCards.finances, readOnly: true } }, run: async (page) => {
         await finTab(page, 'Collection', { timeout: 5000 });
         await page.waitForSelector('#finRoot .fx-cards li', { timeout: 5000 });
         if (await page.$('#finRoot .fx-collection button:text-is("Add a card")')) throw new Error('a look-only phone can add a card');
+        if (await page.$('#finRoot .fx-collection button:text-is("Update prices")')) throw new Error('a look-only phone can update the prices');
         await page.click('#finRoot .fx-cards li:has-text("Ember Fox") button.rowopen');
         await page.waitForSelector('#finRoot .fx-card h2:text-is("Ember Fox")', { timeout: 5000 });
         if (await page.$('#finRoot .fx-card button:text-is("Edit")')) throw new Error('a look-only phone can edit a card');

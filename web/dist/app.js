@@ -12403,7 +12403,30 @@
       ] })
     ] });
   }
-  function CollectionPage({ v: v3, open: open4, edit, read }) {
+  function updateWords(r3) {
+    const list = (names5) => (names5 || []).join(", ");
+    return [
+      r3.updated ? `Updated ${r3.updated === 1 ? "1 card" : `${r3.updated} cards`} from TCGplayer's prices.` : "No price changed.",
+      r3.notFound?.length ? `Not found: ${list(r3.notFound)} (check its name and number).` : "",
+      r3.unclear?.length ? `More than one printing: ${list(r3.unclear)} (add its set).` : "",
+      r3.unpriced?.length ? `No TCGplayer price yet: ${list(r3.unpriced)}.` : "",
+      r3.kept ? `${r3.kept === 1 ? "1 card keeps" : `${r3.kept} cards keep`} your own price.` : ""
+    ].filter(Boolean).join(" ");
+  }
+  function CollectionPage({ v: v3, open: open4, edit, read, update }) {
+    const [said2, setSaid] = d2("");
+    const [busy2, setBusy] = d2(false);
+    const run2 = async () => {
+      setBusy(true);
+      setSaid("Reading prices from TCGdex…");
+      try {
+        setSaid(updateWords(await update()));
+      } catch (e3) {
+        setSaid(String(e3?.message || e3));
+      } finally {
+        setBusy(false);
+      }
+    };
     const cards = v3.plan.collection || [];
     const held3 = (v3.plan.accounts || []).filter((a3) => cards.some((c4) => c4.account === a3.id));
     const worth = cards.reduce((t3, c4) => t3 + cardWorth(c4), 0);
@@ -12425,41 +12448,47 @@
           ] }),
           span: "all",
           kind: "fx-collection",
-          actions: edit && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => edit(), children: "Add a card" }),
-          children: cards.length ? /* @__PURE__ */ u3(S, { children: [
-            /* @__PURE__ */ u3(
-              Stat,
-              {
-                size: "lg",
-                value: /* @__PURE__ */ u3(Amount, { value: worth }),
-                caption: "Worth now, counted in your net worth",
-                aside: paid > 5e-3 ? /* @__PURE__ */ u3("div", { class: "fx-right", children: [
-                  /* @__PURE__ */ u3(Gain, { worth: cards.filter((c4) => c4.paid).reduce((t3, c4) => t3 + cardWorth(c4), 0), paid }),
-                  /* @__PURE__ */ u3("div", { class: "fx-sub", children: [
-                    "on the ",
-                    money(paid),
-                    " you paid"
+          actions: /* @__PURE__ */ u3(S, { children: [
+            update && cards.length > 0 && /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy2, onClick: run2, children: "Update prices" }),
+            edit && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => edit(), children: "Add a card" })
+          ] }),
+          children: [
+            said2 && /* @__PURE__ */ u3("p", { class: "fx-sub fx-pricesaid", role: "status", children: said2 }),
+            cards.length ? /* @__PURE__ */ u3(S, { children: [
+              /* @__PURE__ */ u3(
+                Stat,
+                {
+                  size: "lg",
+                  value: /* @__PURE__ */ u3(Amount, { value: worth }),
+                  caption: "Worth now, counted in your net worth",
+                  aside: paid > 5e-3 ? /* @__PURE__ */ u3("div", { class: "fx-right", children: [
+                    /* @__PURE__ */ u3(Gain, { worth: cards.filter((c4) => c4.paid).reduce((t3, c4) => t3 + cardWorth(c4), 0), paid }),
+                    /* @__PURE__ */ u3("div", { class: "fx-sub", children: [
+                      "on the ",
+                      money(paid),
+                      " you paid"
+                    ] })
+                  ] }) : void 0
+                }
+              ),
+              values.length > 1 && /* @__PURE__ */ u3(
+                AreaChart,
+                {
+                  values,
+                  xLabels: [0, values.length - 1].map((i3) => ({ i: i3, label: i3 === values.length - 1 ? "Today" : dayShort(days[i3]) })),
+                  zero: false,
+                  height: 160,
+                  format: compact,
+                  label: `The collection's worth on each day a price was set, from ${dayShort(days[0])}: ${money(values[values.length - 1])} now`,
+                  tip: (i3) => /* @__PURE__ */ u3(S, { children: [
+                    /* @__PURE__ */ u3("strong", { children: dayShort(days[i3]) }),
+                    /* @__PURE__ */ u3("br", {}),
+                    money(values[i3])
                   ] })
-                ] }) : void 0
-              }
-            ),
-            values.length > 1 && /* @__PURE__ */ u3(
-              AreaChart,
-              {
-                values,
-                xLabels: [0, values.length - 1].map((i3) => ({ i: i3, label: i3 === values.length - 1 ? "Today" : dayShort(days[i3]) })),
-                zero: false,
-                height: 160,
-                format: compact,
-                label: `The collection's worth on each day a price was set, from ${dayShort(days[0])}: ${money(values[values.length - 1])} now`,
-                tip: (i3) => /* @__PURE__ */ u3(S, { children: [
-                  /* @__PURE__ */ u3("strong", { children: dayShort(days[i3]) }),
-                  /* @__PURE__ */ u3("br", {}),
-                  money(values[i3])
-                ] })
-              }
-            )
-          ] }) : /* @__PURE__ */ u3(Empty, { children: edit ? "No cards yet: add one with what it says on it, what you paid and what it is worth now. Your cards are kept in their own account, so they count in your net worth." : "No cards yet." })
+                }
+              )
+            ] }) : /* @__PURE__ */ u3(Empty, { children: edit ? "No cards yet: add one with what it says on it, what you paid and what it is worth now. Your cards are kept in their own account, so they count in your net worth." : "No cards yet." })
+          ]
         }
       ),
       !!cards.length && /* @__PURE__ */ u3(Widget, { title: "Cards", span: "all", kind: "fx-cards", children: [
@@ -12483,16 +12512,23 @@
           },
           c4.id
         )) }),
-        /* @__PURE__ */ u3("p", { class: "fx-sub", children: [
-          "Each card is worth the price set for it",
-          edit ? ": change one on its page" : "",
-          "."
-        ] })
+        /* @__PURE__ */ u3("p", { class: "fx-sub", children: update ? "Update prices reads TCGplayer's prices from TCGdex, sending only each card's name: never what you paid or how many. A card kept at your own price is never looked up." : "Each card is worth the price set for it." })
       ] })
     ] }) });
   }
-  function CardPage({ v: v3, id: id2, done, edit, read }) {
+  function CardPage({ v: v3, id: id2, done, edit, read, prices }) {
     const c4 = (v3.plan.collection || []).find((x3) => x3.id === id2);
+    const [points, setPoints] = d2([]);
+    h2(() => {
+      let live = true;
+      prices?.().then((h3) => {
+        if (live) setPoints(h3?.[id2] || []);
+      }, () => {
+      });
+      return () => {
+        live = false;
+      };
+    }, [id2, prices, c4?.priceOn]);
     if (!c4) return /* @__PURE__ */ u3(Empty, { children: [
       "This card isn't in the collection any more. ",
       /* @__PURE__ */ u3("button", { class: "small", onClick: done, children: "Collection" })
@@ -12511,25 +12547,43 @@
             /* @__PURE__ */ u3("p", { class: "muted", children: cardLine(c4) })
           ] }),
           /* @__PURE__ */ u3("div", { class: "fx-board", children: [
-            /* @__PURE__ */ u3(Widget, { title: "Worth now", span: "all", kind: "fx-cardnow", children: /* @__PURE__ */ u3(
-              Stat,
-              {
-                size: "lg",
-                value: /* @__PURE__ */ u3(Amount, { value: cardWorth(c4) }),
-                caption: c4.priceOn ? `${c4.typed ? "Your own price" : "Its price"}, set ${dayShort(c4.priceOn)}` : "No price set yet",
-                aside: c4.paid ? /* @__PURE__ */ u3("div", { class: "fx-right", children: [
-                  /* @__PURE__ */ u3(Gain, { worth: cardWorth(c4), paid: cardPaid(c4) }),
-                  /* @__PURE__ */ u3("div", { class: "fx-sub", children: [
-                    "You paid ",
-                    money(cardPaid(c4))
+            /* @__PURE__ */ u3(Widget, { title: "Worth now", span: "all", kind: "fx-cardnow", children: [
+              /* @__PURE__ */ u3(
+                Stat,
+                {
+                  size: "lg",
+                  value: /* @__PURE__ */ u3(Amount, { value: cardWorth(c4) }),
+                  caption: c4.priceOn ? `${c4.typed ? "Your own price" : "Its price"}, set ${dayShort(c4.priceOn)}` : "No price set yet",
+                  aside: c4.paid ? /* @__PURE__ */ u3("div", { class: "fx-right", children: [
+                    /* @__PURE__ */ u3(Gain, { worth: cardWorth(c4), paid: cardPaid(c4) }),
+                    /* @__PURE__ */ u3("div", { class: "fx-sub", children: [
+                      "You paid ",
+                      money(cardPaid(c4))
+                    ] })
+                  ] }) : void 0
+                }
+              ),
+              points.length > 1 && /* @__PURE__ */ u3(
+                AreaChart,
+                {
+                  values: points.map((p3) => p3.amount),
+                  xLabels: [0, points.length - 1].map((i3) => ({ i: i3, label: i3 === points.length - 1 ? "Today" : dayShort(points[i3].date) })),
+                  zero: false,
+                  height: 160,
+                  format: compact,
+                  label: `${c4.name}'s price on each day it was read, from ${dayShort(points[0].date)}: ${money(points[points.length - 1].amount)} now`,
+                  tip: (i3) => /* @__PURE__ */ u3(S, { children: [
+                    /* @__PURE__ */ u3("strong", { children: dayShort(points[i3].date) }),
+                    /* @__PURE__ */ u3("br", {}),
+                    money(points[i3].amount)
                   ] })
-                ] }) : void 0
-              }
-            ) }),
+                }
+              )
+            ] }),
             /* @__PURE__ */ u3(Widget, { title: "About it", span: "all", kind: "fx-cardabout", children: /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: [
               /* @__PURE__ */ u3(Row, { title: "How many", when: String(c4.count || 1), whenPlain: true }),
               /* @__PURE__ */ u3(Row, { title: "Paid", when: c4.paid ? `${money(c4.paid)} each${c4.paidOn ? `, ${dayShort(c4.paidOn)}` : ""}` : "Not typed in", whenPlain: true }),
-              /* @__PURE__ */ u3(Row, { title: "Its price", when: c4.typed ? "Your own: never looked up" : "Typed in for now", whenPlain: true }),
+              /* @__PURE__ */ u3(Row, { title: "Its price", when: c4.typed ? "Your own: never looked up" : c4.ref ? `TCGplayer's, from TCGdex (${c4.ref})` : "Typed in, until Update prices finds it", whenPlain: true }),
               /* @__PURE__ */ u3(Row, { title: "Counted in", when: account ? `Net worth, ${account.name}` : "Net worth", whenPlain: true })
             ] }) })
           ] })
@@ -17506,7 +17560,7 @@ ${pays}
       )
     ] });
   }
-  function FinancesScreen({ v: v3, ledger, error, retry, tab: tab3, setTab, sel: sel2, pick, setSince: setSince2, saveSettings, keep: keep3, edit: open4, exportFile: exportFile2, printMonth, readReceipt, readCardPicture, saveLedger: saveLedger2, running: running5, calendar, fromWallos, phone: phone2, toggleHidden, group: group2, setGroup, investments }) {
+  function FinancesScreen({ v: v3, ledger, error, retry, tab: tab3, setTab, sel: sel2, pick, setSince: setSince2, saveSettings, keep: keep3, edit: open4, exportFile: exportFile2, printMonth, readReceipt, readCardPicture, readCardPrices, updatePrices, saveLedger: saveLedger2, running: running5, calendar, fromWallos, phone: phone2, toggleHidden, group: group2, setGroup, investments }) {
     const edit = (what3, id2, kind) => cardOf(id2) ? open4("account", cardOf(id2)) : open4(what3, id2, kind);
     const L2 = v3 ? lookup(v3.plan) : null;
     setCurrency(v3?.plan.currency);
@@ -17554,7 +17608,7 @@ ${pays}
         error,
         " ",
         /* @__PURE__ */ u3("button", { class: "small", onClick: retry, children: "Try again" })
-      ] }) : !v3 ? /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : ro ? /* @__PURE__ */ u3(View, { v: v3, L: L2, phone: phone2, ledger, setTab, toTx, back: back3, exportFile: exportFile2, readReceipt, readCardPicture, running: running5, tab: tab3, sel: sel2, pick, openWorth: () => setTab("worth"), openSubscriptions: () => {
+      ] }) : !v3 ? /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : ro ? /* @__PURE__ */ u3(View, { v: v3, L: L2, phone: phone2, ledger, setTab, toTx, back: back3, exportFile: exportFile2, readReceipt, readCardPicture, readCardPrices, running: running5, tab: tab3, sel: sel2, pick, openWorth: () => setTab("worth"), openSubscriptions: () => {
         openOn("subscriptions");
         setTab("recurring");
       }, openRecurring: (f4) => {
@@ -17563,7 +17617,7 @@ ${pays}
       }, openTransactions: () => toTx({}), showIn: toTx, openCalendar: (day3) => {
         if (day3) showDay(day3);
         setTab("calendar");
-      }, openPay: () => setTab("pay"), openAccount: (id2) => setTab(`account:${id2}`), group: group2, setGroup }) : tab3 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2, ledger, edit: (w3, id2) => edit(w3, id2) }) : tab3 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, edit: (w3, id2) => edit(w3, id2), saveLedger: saveLedger2, logos: !phone2, back: back3 }) : tab3 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger, exportFile: exportFile2, open: toTx }) : tab3 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, edit, keep: keep3, running: running5, fromWallos }) : tab3 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2, edit, saveSettings, keep: keep3, calendar }) : tab3.startsWith("account:") ? /* @__PURE__ */ u3(AccountPage, { v: v3, L: L2, ledger, id: tab3.slice(8), done: () => setTab("worth"), edit: () => edit("account", tab3.slice(8)), update: () => edit("balances"), toTx, editTx: (w3, id2) => edit(w3, id2), saveLedger: saveLedger2 }) : tab3 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, edit, open: (id2) => setTab("account:" + id2), sel: Math.max(0, sel2), pick, update: () => edit("balances"), keep: keep3, group: group2, setGroup, invest: investments }) : tab3 === "collection" ? /* @__PURE__ */ u3(CollectionPage, { v: v3, open: (id2) => setTab("card:" + id2), edit: (id2) => edit("card", id2), read: readCardPicture }) : tab3.startsWith("card:") ? /* @__PURE__ */ u3(CardPage, { v: v3, id: tab3.slice(5), done: () => setTab("collection"), edit: () => edit("card", tab3.slice(5)), read: readCardPicture }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, ledger, sel: sel2, pick, setSince: ro ? void 0 : setSince2, keep: ro ? void 0 : keep3, add: (w3, k3) => edit(w3, void 0, k3), edit: (w3, id2) => edit(w3, id2), openWorth: () => setTab("worth"), openSubscriptions: () => {
+      }, openPay: () => setTab("pay"), openAccount: (id2) => setTab(`account:${id2}`), group: group2, setGroup }) : tab3 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2, ledger, edit: (w3, id2) => edit(w3, id2) }) : tab3 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, edit: (w3, id2) => edit(w3, id2), saveLedger: saveLedger2, logos: !phone2, back: back3 }) : tab3 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger, exportFile: exportFile2, open: toTx }) : tab3 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, edit, keep: keep3, running: running5, fromWallos }) : tab3 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2, edit, saveSettings, keep: keep3, calendar }) : tab3.startsWith("account:") ? /* @__PURE__ */ u3(AccountPage, { v: v3, L: L2, ledger, id: tab3.slice(8), done: () => setTab("worth"), edit: () => edit("account", tab3.slice(8)), update: () => edit("balances"), toTx, editTx: (w3, id2) => edit(w3, id2), saveLedger: saveLedger2 }) : tab3 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, edit, open: (id2) => setTab("account:" + id2), sel: Math.max(0, sel2), pick, update: () => edit("balances"), keep: keep3, group: group2, setGroup, invest: investments }) : tab3 === "collection" ? /* @__PURE__ */ u3(CollectionPage, { v: v3, open: (id2) => setTab("card:" + id2), edit: (id2) => edit("card", id2), read: readCardPicture, update: updatePrices }) : tab3.startsWith("card:") ? /* @__PURE__ */ u3(CardPage, { v: v3, id: tab3.slice(5), done: () => setTab("collection"), edit: () => edit("card", tab3.slice(5)), read: readCardPicture, prices: readCardPrices }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, ledger, sel: sel2, pick, setSince: ro ? void 0 : setSince2, keep: ro ? void 0 : keep3, add: (w3, k3) => edit(w3, void 0, k3), edit: (w3, id2) => edit(w3, id2), openWorth: () => setTab("worth"), openSubscriptions: () => {
         openOn("subscriptions");
         setTab("recurring");
       }, openRecurring: (f4) => {
@@ -17575,8 +17629,8 @@ ${pays}
       }, openPay: () => setTab("pay"), openAccount: (id2) => setTab(`account:${id2}`), phone: phone2 }) })
     ] });
   }
-  function View({ v: v3, L: L2, phone: phone2, ledger, setTab, toTx, back: back3, tab: tab3, sel: sel2, pick, openWorth, openSubscriptions, openRecurring, openTransactions, showIn: showIn2, openCalendar, openPay, openAccount, exportFile: exportFile2, readReceipt, readCardPicture, running: running5, group: group2, setGroup }) {
-    return tab3 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2, ledger }) : tab3 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, readReceipt, back: back3 }) : tab3 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger, exportFile: exportFile2, open: toTx }) : tab3 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, running: running5 }) : tab3 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2 }) : tab3.startsWith("account:") ? /* @__PURE__ */ u3(AccountPage, { v: v3, L: L2, ledger, id: tab3.slice(8), done: () => setTab("worth"), toTx }) : tab3 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, open: (id2) => setTab("account:" + id2), sel: Math.max(0, sel2), pick, group: group2, setGroup }) : tab3 === "collection" ? /* @__PURE__ */ u3(CollectionPage, { v: v3, open: (id2) => setTab("card:" + id2), read: readCardPicture }) : tab3.startsWith("card:") ? /* @__PURE__ */ u3(CardPage, { v: v3, id: tab3.slice(5), done: () => setTab("collection"), read: readCardPicture }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, ledger, sel: sel2, pick, openWorth, openSubscriptions, openRecurring, openTransactions, showIn: showIn2, openCalendar, openPay, openAccount, phone: phone2 });
+  function View({ v: v3, L: L2, phone: phone2, ledger, setTab, toTx, back: back3, tab: tab3, sel: sel2, pick, openWorth, openSubscriptions, openRecurring, openTransactions, showIn: showIn2, openCalendar, openPay, openAccount, exportFile: exportFile2, readReceipt, readCardPicture, readCardPrices, running: running5, group: group2, setGroup }) {
+    return tab3 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2, ledger }) : tab3 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, readReceipt, back: back3 }) : tab3 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger, exportFile: exportFile2, open: toTx }) : tab3 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, running: running5 }) : tab3 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2 }) : tab3.startsWith("account:") ? /* @__PURE__ */ u3(AccountPage, { v: v3, L: L2, ledger, id: tab3.slice(8), done: () => setTab("worth"), toTx }) : tab3 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, open: (id2) => setTab("account:" + id2), sel: Math.max(0, sel2), pick, group: group2, setGroup }) : tab3 === "collection" ? /* @__PURE__ */ u3(CollectionPage, { v: v3, open: (id2) => setTab("card:" + id2), read: readCardPicture }) : tab3.startsWith("card:") ? /* @__PURE__ */ u3(CardPage, { v: v3, id: tab3.slice(5), done: () => setTab("collection"), read: readCardPicture, prices: readCardPrices }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, ledger, sel: sel2, pick, openWorth, openSubscriptions, openRecurring, openTransactions, showIn: showIn2, openCalendar, openPay, openAccount, phone: phone2 });
   }
   function mountFinances(el3, props) {
     R(/* @__PURE__ */ u3(FinancesScreen, { ...props }), el3);
@@ -17722,6 +17776,13 @@ ${pays}
       toggleHidden: v3 && !v3.readOnly ? toggleHideAmounts : void 0,
       readReceipt: receipts.read,
       readCardPicture: cardPictures.read,
+      readCardPrices: () => go().FinancesCardPrices(),
+      // Update prices (TCGdex, on this click): wherever Finances may be changed; the plan comes back with the prices in.
+      updatePrices: !v3 || v3.readOnly ? void 0 : async () => {
+        const r3 = await go().FinancesUpdatePrices();
+        financesData.set(await go().Finances());
+        return r3;
+      },
       saveLedger,
       running: runningApps(),
       calendar: phone ? void 0 : () => go().FinancesCalendar(),

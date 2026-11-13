@@ -17,6 +17,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/api"
 	"github.com/Snooper42/homelab-wizard/internal/appicon"
 	"github.com/Snooper42/homelab-wizard/internal/board"
+	"github.com/Snooper42/homelab-wizard/internal/cardprice"
 	"github.com/Snooper42/homelab-wizard/internal/companion"
 	"github.com/Snooper42/homelab-wizard/internal/core"
 	"github.com/Snooper42/homelab-wizard/internal/domain"
@@ -656,6 +657,18 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 		// The Collection's pictures: a phone that sees Finances sees them, one
 		// that may change them keeps a card's own photo. The owner's alone, as
 		// the Collection is (a member's phone gets none of it).
+		// Update prices (TCGdex, on the click that asks): a phone that may
+		// change Finances may ask; each card's prices over time, one that sees them.
+		"FinancesUpdatePrices": {Finances: companion.FinancesEdit, Call: func(ctx context.Context, _ []json.RawMessage) (any, []string, error) {
+			ctx, cancel := context.WithTimeout(ctx, 2*time.Minute)
+			defer cancel()
+			r, err := cardprice.Update(ctx, root, cardprice.Default(), time.Now())
+			return r, nil, err
+		}},
+		"FinancesCardPrices": {Finances: companion.FinancesView, Call: func(ctx context.Context, _ []json.RawMessage) (any, []string, error) {
+			r, err := cardprice.LoadHistory(root)
+			return r, nil, err
+		}},
 		"FinancesCardPicture": {Finances: companion.FinancesView, Call: func(ctx context.Context, args []json.RawMessage) (any, []string, error) {
 			var name string
 			if len(args) < 1 || json.Unmarshal(args[0], &name) != nil {
