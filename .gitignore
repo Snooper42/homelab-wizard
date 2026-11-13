@@ -21,6 +21,9 @@ __pycache__/
 /bin/
 /app/app
 /app/app.exe
+# The page's Finances projection, built with the CLI (make phone-finance-page)
+/web/dist/finance.wasm
+/web/dist/wasm_exec.js
 
 # The printable recovery kit (homelab recovery-kit): this machine's, not the project's
 /recovery-kit.html

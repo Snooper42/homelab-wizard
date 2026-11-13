@@ -397,6 +397,32 @@ const mock = { platform: 'MacIntel', tidy, tidyReview, cliSteps, upgrade: { ...u
 // Finances' tabs are four: Spending holds Transactions and Reports, Plan holds Calendar, Recurring and Paychecks (Pay),
 // each in a second row under it. A page by its name, its tab first.
 const finGroups = { Transactions: 'Spending', Reports: 'Spending', Calendar: 'Plan', Recurring: 'Plan', Pay: 'Plan', Paychecks: 'Plan', Collection: 'Net worth' };
+// Makes a member's Finances private on her phone's page (Private.tsx), with Face ID or, given one, a passphrase:
+// answers her recovery code's 16 words, as shown once.
+async function makePrivate(page, passphrase) {
+  await page.click('#finPrivateOn button:text-is("Make them private…")', { timeout: 5000 });
+  if (!/comes from the homelab computer/.test(await page.textContent('#finPrivateLimit'))) throw new Error('the page’s limit is not said');
+  await page.click('#finPrivateOn button:text-is("Continue")');
+  const words = await page.locator('#finPrivateCode li').allTextContents();
+  if (words.length !== 16) throw new Error('the recovery code is not 16 words: ' + words);
+  await page.click('#finPrivateOn button:text-is("I wrote them down")');
+  const make = page.locator('#finPrivateOn button:text-is("Make them private with Face ID")');
+  if (!(await make.isDisabled())) throw new Error('Face ID offered before two words were typed back');
+  for (const label of await page.locator('#finPrivateOn label.field').allTextContents()) {
+    const n = Number(/Word (\d+)/.exec(label)[1]);
+    await page.getByLabel(`Word ${n}`).fill(words[n - 1]);
+  }
+  await make.click();
+  if (passphrase) {
+    await page.waitForSelector('#finPrivateOn [role=alert]:has-text("choose a passphrase instead")', { timeout: 5000 });
+    await page.locator('#finPrivateOn').getByLabel('Passphrase', { exact: true }).fill(passphrase);
+    await page.locator('#finPrivateOn').getByLabel('The same again').fill(passphrase);
+    await page.click('#finPrivateOn button:text-is("Make them private")');
+  }
+  await page.waitForSelector('#finPrivateOpen', { timeout: 15000 });
+  return words;
+}
+
 async function finTab(page, name, opts = {}) {
   const group = finGroups[name];
   if (!group) return page.click(`#finRoot > .seg button:text-is("${name}")`, opts);
@@ -2690,6 +2716,71 @@ const smokes = [
     await page.waitForSelector('#finances.active .fx-board .fx-widget', { timeout: 5000 });
     if (await page.locator('#finRoot button:text-is("Arrange the Dashboard"), #finRoot .fx-board.arranged').count()) throw new Error('the phone offers Arrange');
   } },
+  // A household member's private Finances on her phone's page (private-finances.md, step 3; mock.js's M.person):
+  // turned on with Face ID's passkey, her recovery code shown once and two of its words typed back; then the
+  // computer keeps only what it can't open, her Finances drawn from the phone's own projection, Lock drops them,
+  // and Face ID or the recovery code opens them again. Nothing plain is left in the page's storage.
+  ...[['with Face ID', { passkey: true }], ['with a passphrase, where the passkey can’t lock them', { passkey: 'noprf' }]].map(([how, extra]) => ({ name: `Private Finances on a member’s phone: made private ${how}, locked, opened again`, screen: 'finances', phone: ['companion', 'finances'], mock: { person: 'anna', ...extra }, run: async (page) => {
+    const words = await makePrivate(page, extra.passkey === 'noprf' ? 'correct horse battery' : '');
+    const m = await page.evaluate(() => ({ sealed: JSON.stringify(window.__MOCK.sealed || null), removed: window.__MOCK.plainRemoved, made: window.__MOCK.passkeyMade }));
+    if (!m.removed || m.sealed === 'null' || /Chase|Checking|cushion/.test(m.sealed)) throw new Error('the computer was given her plain Finances, or kept them: ' + m.sealed.slice(0, 200));
+    if (extra.passkey === true && m.made !== 1) throw new Error('no passkey was made for Face ID');
+    // Her Finances, from the phone's projection, while the plain calls are refused.
+    await page.waitForSelector('#finances.active #finRoot:not([hidden]) .fx-board .fx-widget', { timeout: 5000 });
+    if (await page.locator('#finRoot :text("are private: they open")').count()) throw new Error('the plain refusal is shown');
+    await page.click('#finPrivateOpen button:text-is("Lock")');
+    await page.waitForSelector('#finPrivateLocked', { timeout: 3000 });
+    if (await page.locator('#finRoot').isVisible()) throw new Error('locked, but Finances still show');
+    const kept = await page.evaluate(async () => {
+      const all = Object.keys(localStorage).map((k) => k + '=' + localStorage.getItem(k)).join('\n');
+      const dbs = indexedDB.databases ? (await indexedDB.databases()).map((d) => d.name) : [];
+      return { all, dbs };
+    });
+    if (/Chase|cushion|anna|"plan"/.test(kept.all) || kept.dbs.length) throw new Error('something plain is kept in the page: ' + JSON.stringify(kept).slice(0, 300));
+    if (extra.passkey === true) {
+      await page.click('#finPrivateLocked button:text-is("Unlock with Face ID")');
+    } else {
+      await page.fill('#finPrivateLocked input[type=password]', 'correct horse batter');
+      await page.click('#finPrivateLocked button:text-is("Unlock")');
+      await page.waitForSelector('#finPrivateLocked [role=alert]:has-text("That passphrase doesn’t open")', { timeout: 8000 });
+      await page.fill('#finPrivateLocked input[type=password]', 'correct horse battery');
+      await page.click('#finPrivateLocked button:text-is("Unlock")');
+    }
+    await page.waitForSelector('#finPrivateOpen', { timeout: 8000 });
+    await page.waitForSelector('#finRoot:not([hidden]) .fx-board .fx-widget', { timeout: 5000 });
+    // Another screen picked locks them; the recovery code opens them too, and a wrong one is refused in plain words.
+    await page.click('nav button[data-screen="status"]');
+    await page.click('nav button[data-screen="finances"]');
+    await page.waitForSelector('#finPrivateLocked', { timeout: 3000 });
+    await page.click('#finPrivateLocked button:text-is("Use your recovery code")');
+    await page.fill('#finPrivateWords', [...words.slice(1), words[0]].join(' '));
+    await page.click('#finPrivateLocked button:text-is("Unlock")');
+    await page.waitForSelector('#finPrivateLocked [role=alert]:has-text("That recovery code doesn’t open these Finances")', { timeout: 8000 });
+    await page.fill('#finPrivateWords', words.join(' ').toUpperCase());
+    await page.click('#finPrivateLocked button:text-is("Unlock")');
+    await page.waitForSelector('#finPrivateOpen', { timeout: 8000 });
+  } })),
+  // A change saved while private is sealed again on the phone: the computer gets a new envelope, never the plan; when
+  // another of her devices saved first, the save is refused in plain words and hers is shown again.
+  { name: 'Private Finances: a change is kept sealed, and one made elsewhere first is said plainly', screen: 'finances', phone: ['companion', 'finances'], mock: { person: 'anna', passkey: true }, run: async (page) => {
+    await makePrivate(page, '');
+    const save = (cushion) => page.evaluate(async (c) => {
+      const v = await window.go.main.App.Finances();
+      try { const w = await window.go.main.App.SaveFinances({ ...v.plan, cushion: c }); return { cushion: w.plan.cushion, rev: w.plan.rev }; } catch (e) { return { error: String(e.message) }; }
+    }, cushion);
+    const before = await page.evaluate(() => window.__MOCK.sealedRev);
+    const r = await save(777);
+    const m = await page.evaluate(() => ({ rev: window.__MOCK.sealedRev, saved: window.__MOCK.financesSaved, sealed: JSON.stringify(window.__MOCK.sealed) }));
+    if (r.cushion !== 777 || r.rev !== m.rev || m.rev === before || m.saved || m.sealed.includes('777')) throw new Error('the change was not kept sealed: ' + JSON.stringify({ r, before, rev: m.rev, saved: m.saved }));
+    await page.evaluate(() => { window.__MOCK.sealedConflict = true; });
+    const c = await save(888);
+    if (!/changed on another of your devices after this was read/.test(c.error || '')) throw new Error('a save another device beat was not said plainly: ' + JSON.stringify(c));
+  } },
+  // Her own phone that may only look gets no offer to make them private; the owner's phone neither.
+  ...[['a member’s phone that only looks', { person: 'anna', phoneFinances: 'view' }], ['the owner’s phone', {}]].map(([who, m]) => ({ name: `Private Finances: no offer on ${who}`, screen: 'finances', phone: ['companion', 'finances'], mock: m, run: async (page) => {
+    await page.waitForSelector('#finances.active .fx-board .fx-widget', { timeout: 5000 });
+    if (await page.locator('#finPrivate .fx-private').count()) throw new Error('offered to make them private');
+  } })),
   // The owner, Nov 12: clicking an account on Net worth opened the form to update its balance and logo. It opens the
   // account's own page: its balance and a chart of it, its latest transactions, and Update balance and Edit as buttons;
   // Back goes back to Net worth.

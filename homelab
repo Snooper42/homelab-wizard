@@ -6,7 +6,7 @@ BIN="$ROOT/bin/homelab"
 
 stale() {
   [ ! -x "$BIN" ] && return 0
-  [ -n "$(find "$ROOT/cmd" "$ROOT/internal" "$ROOT/go.mod" "$ROOT/go.sum" "$ROOT/VERSION" -newer "$BIN" -print 2>/dev/null | head -n 1)" ]
+  [ -n "$(find "$ROOT/cmd" "$ROOT/internal" "$ROOT/mobile" "$ROOT/web/dist" "$ROOT/go.mod" "$ROOT/go.sum" "$ROOT/VERSION" -newer "$BIN" -print 2>/dev/null | head -n 1)" ]
 }
 
 if stale; then
@@ -24,6 +24,10 @@ if stale; then
   fi
   echo "Building the homelab CLI..." >&2
   version="$(cat "$ROOT/VERSION" 2>/dev/null || echo dev)"
+  # Finances read forward on a household member's phone, for her private
+  # Finances (cmd/financewasm): built into the page the CLI serves.
+  (cd "$ROOT" && GOOS=js GOARCH=wasm go build -trimpath -ldflags "-s -w" -o web/dist/finance.wasm ./cmd/financewasm && cat "$(go env GOROOT)/lib/wasm/wasm_exec.js" > web/dist/wasm_exec.js) \
+    || echo "(private Finances on a phone's page wait for the next build)" >&2
   (cd "$ROOT" && go build -trimpath -ldflags "-s -w -X main.version=$version" -o "$BIN" ./cmd/homelab) || exit 1
 fi
 

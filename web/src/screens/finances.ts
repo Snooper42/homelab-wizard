@@ -18,6 +18,13 @@ import { statusData } from './status';
 import { $, errorText, go, showError } from '../core';
 import { navigate } from '../app';
 import { keepsTabs, tabChanged } from '../tabs';
+import { installPrivate, isLocked, lock, privateState, watchPrivate } from '../finances/privacy';
+import { mountPrivate } from '../finances/Private';
+
+// A member's private Finances, on her phone: the page answers the Finances
+// calls itself once they're sealed (finances/privacy.ts), so it is in front
+// before the first read.
+installPrivate();
 
 export const financesData = store(() => go().Finances());
 financesData.watch(draw);
@@ -26,6 +33,14 @@ export const ledgerData = store(() => go().FinancesLedger());
 ledgerData.watch(draw);
 // Which apps run (Status), for the payments the homelab does the job of: drawn again as it comes.
 statusData.watch(() => { if (financesData.value) draw(); });
+// Locked, opened, or made private: what was shown goes, and is read again (locked, the unlock card instead).
+watchPrivate(() => {
+  if (privateState() === 'locked') { financesData.forget(); ledgerData.forget(); close(); }
+  draw();
+  loadFinances();
+});
+// Another screen picked locks them.
+new MutationObserver(() => { if (!$('finances').classList.contains('active')) lock(); }).observe($('finances'), { attributes: true, attributeFilter: ['class'] });
 
 /** The apps running here, each with the paid services it stands in for (the catalog's, from docs/Savings.md). */
 function runningApps(): Running[] {
@@ -123,8 +138,12 @@ let editing: { what: What; id?: string; kind?: string; n: number } | null = null
 const phone = document.documentElement.classList.contains('companion');
 
 function draw() {
+  // Her private Finances, locked: the card that unlocks them, nothing else.
+  mountPrivate($('finPrivate'));
+  const locked = privateState() === 'locked' || isLocked(financesData.error);
+  $('finRoot').hidden = locked;
   // The plan is read for the sidebar on every screen: a failure is said on Finances only.
-  if (financesData.error && $('finances').classList.contains('active')) showError(financesData.error);
+  if (financesData.error && !locked && $('finances').classList.contains('active')) showError(financesData.error);
   const v = financesData.value || null;
   // Hide amounts, as the plan keeps it: every device that shows it follows.
   setHidden(!!v?.plan.hideAmounts);

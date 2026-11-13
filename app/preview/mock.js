@@ -528,6 +528,40 @@ try { if ((window.__MOCK || {}).tidyTab) localStorage.setItem('homelab.tidyTab',
       app[name] = () => { M.refused.push(name); return Promise.reject(Object.assign(new Error('not on the phone: use Homelab Wizard on the computer'), { name: 'NotOnPhone' })); };
     }
   }
+  // A household member's phone (M.person, her username): whose phone it is,
+  // as companion.js reads it, and her private Finances as the computer keeps
+  // them (serve.go's sealed methods): M.sealed is the envelope it can't open,
+  // M.sealedRev its rev; once sealed, the plain Finances calls are refused.
+  // M.sealedConflict: the next sealed save is refused as if another of her
+  // devices had saved first. The projection stands in for finance.wasm (the
+  // example household's view, with her plan in it). M.passkey: Face ID's
+  // passkey stands in, giving the same secret each time ('noprf': a passkey
+  // that gives none, so a passphrase instead).
+  if (M.person) {
+    window.phoneMe = Promise.resolve({ person: M.person, personName: 'Anna', finances: M.phoneFinances || 'edit' });
+    window.homelabFinance = { project: (plan) => ({ view: JSON.stringify({ ...(M.finances || {}), plan: JSON.parse(plan) }) }) };
+    const sealedRev = () => (M.sealedRev ??= 'sealed-1');
+    app.FinancesSealed = () => later(M.sealed ? { ...M.sealed, rev: sealedRev() } : null);
+    app.SaveFinancesSealed = (rev, e) => {
+      if (M.sealedConflict) { M.sealedConflict = false; M.sealedRev = 'sealed-elsewhere'; }
+      if (M.sealed ? rev !== sealedRev() : rev !== 'new') return later(null).then(() => { throw new Error('Finances were changed on another device after this was read. The latest is shown now: check your change and save it again'); });
+      if (rev === 'new') M.plainRemoved = true;
+      M.sealed = e;
+      M.sealedRev = 'sealed-' + ((M.sealedSaves = (M.sealedSaves || 0) + 1) + 1);
+      return later({ rev: M.sealedRev });
+    };
+    app.FinancesSealedReceipt = (name) => (M.sealedReceipts?.[name] ? later(M.sealedReceipts[name]) : later(null).then(() => { throw new Error('no such receipt'); }));
+    app.SaveFinancesSealedReceipt = (sealed) => { const name = `${String(Object.keys(M.sealedReceipts ??= {}).length).padStart(32, '0')}.sealed`; M.sealedReceipts[name] = sealed; return later(name); };
+    for (const name of ['Finances', 'SaveFinances', 'FinancesLedger', 'SaveFinancesLedger', 'FinancesReceipt', 'SaveFinancesReceipt', 'FinancesWall']) {
+      const plain = app[name];
+      app[name] = (...args) => (M.sealed ? later(null).then(() => { throw new Error('your Finances are private: they open on your own phone, with Face ID or your recovery code, not from the computer'); }) : plain(...args));
+    }
+    if (M.passkey) {
+      const secret = new Uint8Array(32).fill(7);
+      const answer = () => ({ rawId: new Uint8Array([1, 2, 3, 4]).buffer, getClientExtensionResults: () => ({ prf: M.passkey === 'noprf' ? { enabled: false } : { enabled: true, results: { first: secret.slice().buffer } } }) });
+      Object.defineProperty(navigator, 'credentials', { value: { create: async () => { M.passkeyMade = (M.passkeyMade || 0) + 1; return answer(); }, get: async () => { M.passkeyAsked = (M.passkeyAsked || 0) + 1; return answer(); } } });
+    }
+  }
   M.calls = {};
   for (const [name, fn] of Object.entries(app)) {
     if (typeof fn === 'function' && /^[A-Z]/.test(name)) app[name] = function (...args) { M.calls[name] = (M.calls[name] || 0) + 1; return fn.apply(this, args); };

@@ -157,25 +157,25 @@
     };
   }
   function q(n3, u4, t3, i3, r3, o3, e3, f4, c4, a3) {
-    var s3, h3, p3, v3, y3, d3, _3, k3, x3, M, I2, P2, A3, H2, T3, j3, F = u4.type;
+    var s3, h3, p3, v3, y3, d3, _3, k3, x3, M, I2, P3, A3, H2, T3, j3, F = u4.type;
     if (void 0 !== u4.constructor) return null;
     128 & t3.__u && (c4 = !!(32 & t3.__u), o3 = [f4 = u4.__e = t3.__e]), (s3 = l.__b) && s3(u4);
     n: if ("function" == typeof F) {
       h3 = e3.length;
       try {
-        if (x3 = u4.props, M = F.prototype && F.prototype.render, I2 = (s3 = F.contextType) && i3[s3.__c], P2 = s3 ? I2 ? I2.props.value : s3.__ : i3, t3.__c ? k3 = (p3 = u4.__c = t3.__c).__ = p3.__E : (M ? u4.__c = p3 = new F(x3, P2) : (u4.__c = p3 = new C(x3, P2), p3.constructor = F, p3.render = Q), I2 && I2.sub(p3), p3.state || (p3.state = {}), p3.__n = i3, v3 = p3.__d = true, p3.__h = [], p3._sb = []), M && null == p3.__s && (p3.__s = p3.state), M && null != F.getDerivedStateFromProps && (p3.__s == p3.state && (p3.__s = m({}, p3.__s)), m(p3.__s, F.getDerivedStateFromProps(x3, p3.__s))), y3 = p3.props, d3 = p3.state, p3.__v = u4, v3) M && null == F.getDerivedStateFromProps && null != p3.componentWillMount && p3.componentWillMount(), M && null != p3.componentDidMount && p3.__h.push(p3.componentDidMount);
+        if (x3 = u4.props, M = F.prototype && F.prototype.render, I2 = (s3 = F.contextType) && i3[s3.__c], P3 = s3 ? I2 ? I2.props.value : s3.__ : i3, t3.__c ? k3 = (p3 = u4.__c = t3.__c).__ = p3.__E : (M ? u4.__c = p3 = new F(x3, P3) : (u4.__c = p3 = new C(x3, P3), p3.constructor = F, p3.render = Q), I2 && I2.sub(p3), p3.state || (p3.state = {}), p3.__n = i3, v3 = p3.__d = true, p3.__h = [], p3._sb = []), M && null == p3.__s && (p3.__s = p3.state), M && null != F.getDerivedStateFromProps && (p3.__s == p3.state && (p3.__s = m({}, p3.__s)), m(p3.__s, F.getDerivedStateFromProps(x3, p3.__s))), y3 = p3.props, d3 = p3.state, p3.__v = u4, v3) M && null == F.getDerivedStateFromProps && null != p3.componentWillMount && p3.componentWillMount(), M && null != p3.componentDidMount && p3.__h.push(p3.componentDidMount);
         else {
-          if (M && null == F.getDerivedStateFromProps && x3 !== y3 && null != p3.componentWillReceiveProps && p3.componentWillReceiveProps(x3, P2), u4.__v == t3.__v || !p3.__e && null != p3.shouldComponentUpdate && false === p3.shouldComponentUpdate(x3, p3.__s, P2)) {
+          if (M && null == F.getDerivedStateFromProps && x3 !== y3 && null != p3.componentWillReceiveProps && p3.componentWillReceiveProps(x3, P3), u4.__v == t3.__v || !p3.__e && null != p3.shouldComponentUpdate && false === p3.shouldComponentUpdate(x3, p3.__s, P3)) {
             u4.__v != t3.__v && (p3.props = x3, p3.state = p3.__s, p3.__d = false), u4.__e = t3.__e, u4.__k = t3.__k, u4.__k.some(function(n4) {
               n4 && (n4.__ = u4);
             }), w.push.apply(p3.__h, p3._sb), p3._sb = [], p3.__h.length && e3.push(p3), f4 = $2(t3);
             break n;
           }
-          null != p3.componentWillUpdate && p3.componentWillUpdate(x3, p3.__s, P2), M && null != p3.componentDidUpdate && p3.__h.push(function() {
+          null != p3.componentWillUpdate && p3.componentWillUpdate(x3, p3.__s, P3), M && null != p3.componentDidUpdate && p3.__h.push(function() {
             p3.componentDidUpdate(y3, d3, _3);
           });
         }
-        if (p3.context = P2, p3.props = x3, p3.__P = n3, p3.__e = false, A3 = l.__r, H2 = 0, M) p3.state = p3.__s, p3.__d = false, A3 && A3(u4), s3 = p3.render(p3.props, p3.state, p3.context), w.push.apply(p3.__h, p3._sb), p3._sb = [];
+        if (p3.context = P3, p3.props = x3, p3.__P = n3, p3.__e = false, A3 = l.__r, H2 = 0, M) p3.state = p3.__s, p3.__d = false, A3 && A3(u4), s3 = p3.render(p3.props, p3.state, p3.context), w.push.apply(p3.__h, p3._sb), p3._sb = [];
         else do {
           p3.__d = false, A3 && A3(u4), s3 = p3.render(p3.props, p3.state, p3.context), p3.state = p3.__s;
         } while (p3.__d && ++H2 < 25);
@@ -555,21 +555,21 @@
     if (/^app\/[a-z0-9][a-z0-9_-]*$/.test(page)) return { screen: "app", app: page.slice(4) };
     return null;
   }
-  function showSent(o3, open4) {
+  function showSent(o3, open5) {
     const p3 = placeOf(o3.link);
     if (!p3) return;
-    showNote(`From the computer: ${o3.title || "a page"}`, "Open", () => open4(p3));
+    showNote(`From the computer: ${o3.title || "a page"}`, "Open", () => open5(p3));
   }
 
   // web/src/ActionLink.tsx
   function ActionLink({ onClick, title, id: id2, cls, children }) {
-    const key6 = (e3) => {
+    const key7 = (e3) => {
       if (e3.key === "Enter" || e3.key === " ") {
         e3.preventDefault();
         onClick(e3);
       }
     };
-    return /* @__PURE__ */ u3("a", { id: id2, class: cls, tabIndex: 0, role: "button", title, onClick, onKeyDown: key6, children });
+    return /* @__PURE__ */ u3("a", { id: id2, class: cls, tabIndex: 0, role: "button", title, onClick, onKeyDown: key7, children });
   }
 
   // web/src/icons.ts
@@ -602,13 +602,13 @@
   // web/src/setup/Checklist.tsx
   var failedLine = (f4) => `Did not work: ${f4.why.replace(/^✗\s*/, "").replace(/[.\s]+$/, "")}. Once that is put right, press ${f4.again} again.`;
   function Actions({ s: s3, running: running5, on: on2 }) {
-    const open4 = s3.state !== "waiting" && s3.state !== "done";
+    const open5 = s3.state !== "waiting" && s3.state !== "done";
     const items = [
-      open4 && !!s3.settings?.length && /* @__PURE__ */ u3("button", { class: "small", onClick: () => on2.fill(s3.settings), children: "Fill in settings" }),
-      open4 && !!s3.run?.length && /* @__PURE__ */ u3("button", { class: "small", disabled: running5, onClick: () => on2.run(s3), children: s3.runLabel || "Run" }),
-      ...open4 ? (s3.choices || []).map((c4, ci) => /* @__PURE__ */ u3("button", { class: "small choice", disabled: running5, onClick: () => on2.run(s3, ci), children: c4.label })) : [],
-      open4 && s3.open && /* @__PURE__ */ u3(ActionLink, { onClick: () => on2.open(s3.open), children: "Open " + s3.open.replace(/^https?:\/\//, "").replace(/\/$/, "") }),
-      open4 && s3.id === "vaultwarden" && /* @__PURE__ */ u3("button", { class: "small", onClick: on2.closeSignups, children: "Close sign-ups now" }),
+      open5 && !!s3.settings?.length && /* @__PURE__ */ u3("button", { class: "small", onClick: () => on2.fill(s3.settings), children: "Fill in settings" }),
+      open5 && !!s3.run?.length && /* @__PURE__ */ u3("button", { class: "small", disabled: running5, onClick: () => on2.run(s3), children: s3.runLabel || "Run" }),
+      ...open5 ? (s3.choices || []).map((c4, ci) => /* @__PURE__ */ u3("button", { class: "small choice", disabled: running5, onClick: () => on2.run(s3, ci), children: c4.label })) : [],
+      open5 && s3.open && /* @__PURE__ */ u3(ActionLink, { onClick: () => on2.open(s3.open), children: "Open " + s3.open.replace(/^https?:\/\//, "").replace(/\/$/, "") }),
+      open5 && s3.id === "vaultwarden" && /* @__PURE__ */ u3("button", { class: "small", onClick: on2.closeSignups, children: "Close sign-ups now" }),
       s3.manual && s3.state !== "waiting" && /* @__PURE__ */ u3("label", { class: "small", children: [
         /* @__PURE__ */ u3("input", { type: "checkbox", checked: s3.state === "done", onChange: (e3) => on2.markDone(s3, e3.currentTarget.checked) }),
         " Done"
@@ -633,27 +633,27 @@
     ] });
   }
   function Checklist({ steps, showDone, showLater, running: running5, failed = {}, on: on2 }) {
-    const [opened2, setOpened] = d2({});
-    const toggle = (id2) => setOpened({ ...opened2, [id2]: !opened2[id2] });
+    const [opened3, setOpened] = d2({});
+    const toggle = (id2) => setOpened({ ...opened3, [id2]: !opened3[id2] });
     const now = steps.filter((s3) => !waits(s3) && s3.state !== "done");
     const later2 = steps.filter(waits);
     const done = steps.filter((s3) => s3.state === "done");
     const row = (s3, n3) => {
-      const open4 = !!opened2[s3.id];
+      const open5 = !!opened3[s3.id];
       const more2 = s3.state !== "done" && !!s3.detail;
       return (
         // A row: the step's number, what it gives you, its buttons, and the
         // chevron that opens what else to know now (when there is any).
-        /* @__PURE__ */ u3("li", { class: s3.state + (open4 ? " open" : ""), children: [
+        /* @__PURE__ */ u3("li", { class: s3.state + (open5 ? " open" : ""), children: [
           /* @__PURE__ */ u3("span", { class: "mark", children: s3.state === "done" ? /* @__PURE__ */ u3(Icon, { name: "check" }) : String(n3) }),
           /* @__PURE__ */ u3("div", { class: "body", children: [
             /* @__PURE__ */ u3("strong", { class: "title", children: s3.title }),
             /* @__PURE__ */ u3("div", { class: "sub muted", children: s3.why }),
             failed[s3.id] && s3.state !== "done" && /* @__PURE__ */ u3("div", { class: "sub failed bad", children: failedLine(failed[s3.id]) }),
-            open4 && s3.state !== "done" && s3.detail && /* @__PURE__ */ u3("div", { class: "sub detail", children: s3.detail })
+            open5 && s3.state !== "done" && s3.detail && /* @__PURE__ */ u3("div", { class: "sub detail", children: s3.detail })
           ] }),
           /* @__PURE__ */ u3(Actions, { s: s3, running: running5 === s3.id, on: on2 }),
-          more2 && /* @__PURE__ */ u3("button", { class: "iconbtn more", "aria-expanded": open4, "aria-label": (open4 ? "Less about: " : "More about: ") + s3.title, onClick: () => toggle(s3.id), children: /* @__PURE__ */ u3(Icon, { name: "chevron" }) })
+          more2 && /* @__PURE__ */ u3("button", { class: "iconbtn more", "aria-expanded": open5, "aria-label": (open5 ? "Less about: " : "More about: ") + s3.title, onClick: () => toggle(s3.id), children: /* @__PURE__ */ u3(Icon, { name: "chevron" }) })
         ] }, s3.id)
       );
     };
@@ -743,7 +743,7 @@
   // web/src/parts/Hover.tsx
   var made = 0;
   function useHoverCard(tip, { wide, side = "below", lazy } = {}) {
-    const [open4, setOpen] = d2(false);
+    const [open5, setOpen] = d2(false);
     const [id2] = d2(() => `hover-${++made}`);
     const at2 = A2(null);
     const box = A2(null);
@@ -759,7 +759,7 @@
     };
     _2(() => {
       const t3 = at2.current, c4 = box.current;
-      if (!open4 || !t3 || !c4) return;
+      if (!open5 || !t3 || !c4) return;
       const r3 = t3.getBoundingClientRect(), w3 = c4.offsetWidth, h3 = c4.offsetHeight, pad = 8;
       let left, top;
       if (side === "right") {
@@ -772,7 +772,7 @@
       }
       c4.style.left = `${left}px`;
       c4.style.top = `${top}px`;
-    }, [open4]);
+    }, [open5]);
     const on2 = {
       ref: at2,
       "aria-describedby": id2,
@@ -781,14 +781,14 @@
       onFocus: () => show4(true),
       onBlur: hide,
       onKeyDown: (e3) => {
-        if (e3.key === "Escape" && open4) {
+        if (e3.key === "Escape" && open5) {
           e3.stopPropagation();
           hide();
         }
       }
     };
-    const card = /* @__PURE__ */ u3("span", { id: id2, role: "tooltip", class: "hovercard" + (wide ? " wide" : ""), ref: box, hidden: !open4, children: (!lazy || open4) && tip });
-    return { on: on2, card, show: show4, open: open4 };
+    const card = /* @__PURE__ */ u3("span", { id: id2, role: "tooltip", class: "hovercard" + (wide ? " wide" : ""), ref: box, hidden: !open5, children: (!lazy || open5) && tip });
+    return { on: on2, card, show: show4, open: open5 };
   }
   function Hover({ label, cls = "", tip, wide, lazy }) {
     const { on: on2, card, show: show4 } = useHoverCard(tip, { wide, lazy });
@@ -1354,7 +1354,7 @@
   }
   function guessColumns(header, body = []) {
     const lower = header.map((h3) => h3.toLowerCase());
-    const find = (...words5) => {
+    const find2 = (...words5) => {
       for (const w3 of words5) {
         const i3 = lower.findIndex((h3) => h3.includes(w3));
         if (i3 >= 0) return i3;
@@ -1362,14 +1362,14 @@
       return -1;
     };
     const col = {
-      date: find("date", "posted", "day", "datum"),
-      amount: find("amount", "value", "betrag"),
-      debit: find("debit", "withdrawal", "money out", "paid out"),
-      credit: find("credit", "deposit", "money in", "paid in"),
-      payee: find("payee", "description", "name", "merchant", "details", "empfänger", "beschreibung"),
-      memo: find("memo", "note", "reference"),
-      town: find("city"),
-      kind: find("category")
+      date: find2("date", "posted", "day", "datum"),
+      amount: find2("amount", "value", "betrag"),
+      debit: find2("debit", "withdrawal", "money out", "paid out"),
+      credit: find2("credit", "deposit", "money in", "paid in"),
+      payee: find2("payee", "description", "name", "merchant", "details", "empfänger", "beschreibung"),
+      memo: find2("memo", "note", "reference"),
+      town: find2("city"),
+      kind: find2("category")
     };
     if (body.length && !namesIn(body, col.payee)) {
       const taken = /* @__PURE__ */ new Set([col.date, col.amount, col.debit, col.credit, col.memo, col.town, col.kind]);
@@ -2270,25 +2270,25 @@
       downOnDim = e3.target === document.body && openSheets().length > 0;
     }, true);
     document.addEventListener("click", (e3) => {
-      const open4 = openSheets().pop();
-      if (!open4 || !downOnDim || e3.target !== document.body) return;
+      const open5 = openSheets().pop();
+      if (!open5 || !downOnDim || e3.target !== document.body) return;
       downOnDim = false;
-      closer(open4)?.click();
+      closer(open5)?.click();
     });
     document.addEventListener("keydown", (e3) => {
-      const open4 = openSheets().pop();
-      if (!open4) return;
+      const open5 = openSheets().pop();
+      if (!open5) return;
       if (e3.key === "Escape") {
-        const close3 = closer(open4);
+        const close3 = closer(open5);
         if (close3) {
           e3.preventDefault();
           close3.click();
         }
       } else if (e3.key === "Tab") {
-        const all = stops(open4);
+        const all = stops(open5);
         if (!all.length) {
           e3.preventDefault();
-          open4.focus();
+          open5.focus();
           return;
         }
         const at2 = all.indexOf(document.activeElement);
@@ -2597,7 +2597,7 @@
     const [problem, setProblem] = d2("");
     const [w3, setW] = d2(null);
     const sheet2 = () => document.getElementById("alertLogSheet");
-    const open4 = () => {
+    const open5 = () => {
       setProblem("");
       setW(watch2?.() || null);
       log2().then(setAll, (e3) => setProblem(String(e3?.message || e3)));
@@ -2617,13 +2617,13 @@
     };
     const tone = (a3) => a3.clearedAt ? "ok" : (a3.priority || 0) >= 4 ? "bad" : "";
     return /* @__PURE__ */ u3(S, { children: [
-      /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: open4, children: "Every alert…" }),
+      /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: open5, children: "Every alert…" }),
       /* @__PURE__ */ u3(Sheet, { id: "alertLogSheet", titleId: "alertLogTitle", children: [
         /* @__PURE__ */ u3("h2", { id: "alertLogTitle", children: "Every alert" }),
         /* @__PURE__ */ u3("p", { class: "muted", children: "What the homelab alerted about in the last 90 days, kept on this computer: when each problem cleared, and who snoozed one." }),
         problem ? /* @__PURE__ */ u3("p", { class: "muted", children: problem }) : all === null ? /* @__PURE__ */ u3("p", { class: "muted", children: "Reading…" }) : all.length ? /* @__PURE__ */ u3(Rows, { children: all.map((a3) => {
           const fate = alertFate(a3);
-          const open5 = snooze ? snoozable(a3, w3) : [];
+          const open6 = snooze ? snoozable(a3, w3) : [];
           return /* @__PURE__ */ u3(
             Row,
             {
@@ -2634,7 +2634,7 @@
                 fate && /* @__PURE__ */ u3("div", { class: "fate", children: fate })
               ] }),
               end: /* @__PURE__ */ u3(S, { children: [
-                open5.map((c4) => /* @__PURE__ */ u3(SnoozePick, { check: c4, until: w3?.snoozed?.[c4], snooze: pick }, c4)),
+                open6.map((c4) => /* @__PURE__ */ u3(SnoozePick, { check: c4, until: w3?.snoozed?.[c4], snooze: pick }, c4)),
                 /* @__PURE__ */ u3("span", { class: "badge", children: topicName[a3.topic] || a3.topic })
               ] }),
               when: ago(a3.at)
@@ -2714,26 +2714,26 @@
     if (!m3) return 0;
     return parseFloat(m3[1]) * (units[(m3[2] || "b").toLowerCase()] ?? 0);
   }
-  function formatMem(bytes2) {
-    if (bytes2 >= 1e9) return `${(bytes2 / 1e9).toFixed(bytes2 >= 1e10 ? 0 : 1)} GB`;
-    if (bytes2 >= 1e6) return `${Math.round(bytes2 / 1e6)} MB`;
-    return bytes2 > 0 ? "<1 MB" : "0 MB";
+  function formatMem(bytes3) {
+    if (bytes3 >= 1e9) return `${(bytes3 / 1e9).toFixed(bytes3 >= 1e10 ? 0 : 1)} GB`;
+    if (bytes3 >= 1e6) return `${Math.round(bytes3 / 1e6)} MB`;
+    return bytes3 > 0 ? "<1 MB" : "0 MB";
   }
   function memoryByApp(stats, catalog2) {
-    const bytes2 = new Map(stats.map((s3) => [s3.name, parseMem(s3.mem)]));
+    const bytes3 = new Map(stats.map((s3) => [s3.name, parseMem(s3.mem)]));
     const kind = new Map((catalog2?.apps || []).map((a3) => [a3.id, a3.kind]));
     const out = {};
     const claimed = /* @__PURE__ */ new Set();
     for (const a3 of catalog2?.apps || []) {
       if (a3.kind === "helper") continue;
-      let n3 = bytes2.get(a3.id) || 0;
+      let n3 = bytes3.get(a3.id) || 0;
       for (const d3 of a3.dependsOn || []) {
         if (kind.get(d3) === "helper" && !claimed.has(d3)) {
-          n3 += bytes2.get(d3) || 0;
+          n3 += bytes3.get(d3) || 0;
           claimed.add(d3);
         }
       }
-      if (bytes2.has(a3.id) || n3) out[a3.id] = n3;
+      if (bytes3.has(a3.id) || n3) out[a3.id] = n3;
     }
     return out;
   }
@@ -2914,8 +2914,8 @@
   };
   var alt = (os) => os === "mac" ? "⌥" : "Alt-";
   var shift = (os) => os === "mac" ? "⇧" : "Shift-";
-  function Link({ url, text: text2, open: open4, copy, os }) {
-    return /* @__PURE__ */ u3(ActionLink, { title: `${alt(os)}click copies it`, onClick: (e3) => e3?.altKey ? copy(url) : open4(url), children: /* @__PURE__ */ u3(Address, { text: text2 }) });
+  function Link({ url, text: text2, open: open5, copy, os }) {
+    return /* @__PURE__ */ u3(ActionLink, { title: `${alt(os)}click copies it`, onClick: (e3) => e3?.altKey ? copy(url) : open5(url), children: /* @__PURE__ */ u3(Address, { text: text2 }) });
   }
   var clock = (d3) => d3.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
   var weekday = (d3) => d3.toLocaleDateString("en-US", { weekday: "short" });
@@ -3020,11 +3020,11 @@
       week2 !== void 0 && week2 < 0.99 && /* @__PURE__ */ u3(Hover, { cls: "badge warn", wide: true, label: `${Math.floor(week2 * 1e3) / 10}% up this week`, tip: /* @__PURE__ */ u3(WeekOutages, { outages: outages2 }) })
     ] });
   }
-  function NativeButton({ a: a3, title, label, open: open4 }) {
+  function NativeButton({ a: a3, title, label, open: open5 }) {
     const [busy2, setBusy] = d2(false);
     return /* @__PURE__ */ u3("button", { class: "small", title, disabled: busy2, onClick: () => {
       setBusy(true);
-      open4().catch(() => setBusy(false));
+      open5().catch(() => setBusy(false));
     }, children: label });
   }
   function Actions2({ a: a3, entry, busy: busy2, os, on: on2 }) {
@@ -3167,16 +3167,16 @@
     const [at2, setAt] = d2(-1);
     const stopped2 = g2.apps.filter((a3) => startable(p3, a3) && p3.catalog?.apps.find((c4) => c4.id === a3.id)?.kind !== "native");
     if (!stopped2.length || p3.companion) return null;
-    const go2 = (e3) => {
+    const go3 = (e3) => {
       e3.stopPropagation();
       setAt(0);
       p3.on.startAll(stopped2, setAt).finally(() => setAt(-1));
     };
-    return /* @__PURE__ */ u3("button", { class: "small startall", title: "Start " + stopped2.map((a3) => a3.name).join(", "), disabled: at2 >= 0, onClick: go2, children: at2 >= 0 ? `Starting ${at2 + 1} of ${stopped2.length}…` : stopped2.length === 1 ? "Start it" : `Start the ${stopped2.length} stopped` });
+    return /* @__PURE__ */ u3("button", { class: "small startall", title: "Start " + stopped2.map((a3) => a3.name).join(", "), disabled: at2 >= 0, onClick: go3, children: at2 >= 0 ? `Starting ${at2 + 1} of ${stopped2.length}…` : stopped2.length === 1 ? "Start it" : `Start the ${stopped2.length} stopped` });
   }
   var isNative = (p3, a3) => p3.catalog?.apps.find((c4) => c4.id === a3.id)?.kind === "native";
   function GroupMenu({ g: g2, p: p3, count: count2 }) {
-    const [open4, setOpen] = d2(false);
+    const [open5, setOpen] = d2(false);
     const [sure, setSure] = d2(false);
     const [later2, setLater] = d2(false);
     const [doing3, setDoing] = d2(null);
@@ -3203,15 +3203,15 @@
       requestAnimationFrame(() => (on2 ? items()[0] : wrap.current?.querySelector(".stoplater"))?.focus());
     };
     h2(() => {
-      if (!open4) return;
+      if (!open5) return;
       const outside = (e3) => {
         if (!wrap.current?.contains(e3.target)) close3();
       };
       document.addEventListener("mousedown", outside, true);
       return () => document.removeEventListener("mousedown", outside, true);
-    }, [open4]);
+    }, [open5]);
     _2(() => {
-      if (!open4) {
+      if (!open5) {
         setUp(false);
         return;
       }
@@ -3219,7 +3219,7 @@
       if (!menu || !box || !at2) return;
       const m3 = menu.getBoundingClientRect(), b2 = box.getBoundingClientRect(), a3 = at2.getBoundingClientRect();
       setUp(m3.bottom > b2.bottom && a3.top - b2.top > m3.height);
-    }, [open4]);
+    }, [open5]);
     if (p3.companion || g2.alert) return /* @__PURE__ */ u3("span", { class: "n", children: count2 });
     const run2 = (action, apps2, until) => {
       if (action === "stop" && !sure && !until) {
@@ -3240,7 +3240,7 @@
         ref: wrap,
         onClick: (e3) => e3.stopPropagation(),
         onKeyDown: (e3) => {
-          if (!open4) return;
+          if (!open5) return;
           if (e3.key === "Escape") {
             e3.preventDefault();
             e3.stopPropagation();
@@ -3254,7 +3254,7 @@
           all[(to + all.length) % all.length].focus();
         },
         onFocusOut: () => setTimeout(() => {
-          if (open4 && document.hasFocus() && !wrap.current?.contains(document.activeElement)) close3();
+          if (open5 && document.hasFocus() && !wrap.current?.contains(document.activeElement)) close3();
         }),
         children: [
           /* @__PURE__ */ u3(
@@ -3264,11 +3264,11 @@
               ref: btn,
               class: "n groupcount",
               "aria-haspopup": "menu",
-              "aria-expanded": open4,
+              "aria-expanded": open5,
               disabled: !!doing3,
               title: `${g2.label}: start, stop, or restart them all, and what they hold in memory`,
               onClick: (e3) => {
-                if (open4) {
+                if (open5) {
                   close3();
                   return;
                 }
@@ -3276,7 +3276,7 @@
                 if (e3.detail === 0) requestAnimationFrame(() => items()[0]?.focus());
               },
               onKeyDown: (e3) => {
-                if (!open4 && (e3.key === "ArrowDown" || e3.key === "ArrowUp")) {
+                if (!open5 && (e3.key === "ArrowDown" || e3.key === "ArrowUp")) {
                   e3.preventDefault();
                   setOpen(true);
                   requestAnimationFrame(() => {
@@ -3291,13 +3291,13 @@
               ]
             }
           ),
-          open4 && later2 && /* @__PURE__ */ u3("div", { ref: list, class: "menu groupmenulist" + (up ? " up" : ""), role: "menu", "aria-label": `${g2.label}: stop for a while`, children: [
+          open5 && later2 && /* @__PURE__ */ u3("div", { ref: list, class: "menu groupmenulist" + (up ? " up" : ""), role: "menu", "aria-label": `${g2.label}: stop for a while`, children: [
             /* @__PURE__ */ u3("p", { class: "menuhead", children: running5.length === 1 ? `Stop ${running5[0].name} for a while` : `Stop the ${running5.length} running for a while` }),
             stopChoices().map((c4) => /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", disabled: p3.busy, onClick: () => run2("stop", running5, c4.until), children: c4.label }, c4.until)),
             /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", class: "menuback", onClick: () => showLater(false), children: "‹ Back" }),
             /* @__PURE__ */ u3("p", { class: "menufoot muted", children: running5.length === 1 ? "It starts again by itself then." : "They start again by themselves then." })
           ] }),
-          open4 && !later2 && /* @__PURE__ */ u3("div", { ref: list, class: "menu groupmenulist" + (up ? " up" : ""), role: "menu", "aria-label": `${g2.label}: all its apps`, children: [
+          open5 && !later2 && /* @__PURE__ */ u3("div", { ref: list, class: "menu groupmenulist" + (up ? " up" : ""), role: "menu", "aria-label": `${g2.label}: all its apps`, children: [
             /* @__PURE__ */ u3("p", { class: "menuhead", children: mem ? used ? `${formatMem(used)} in memory now` : "Nothing in memory now" : "Memory: measuring…" }),
             byMem.length > 0 && /* @__PURE__ */ u3("ul", { class: "memlist", "aria-label": "Memory by app", children: byMem.slice(0, 8).map((a3) => /* @__PURE__ */ u3("li", { children: [
               /* @__PURE__ */ u3("span", { children: a3.name }),
@@ -3320,7 +3320,7 @@
       }
     );
   }
-  function GroupHead({ g: g2, open: open4, toggle, p: p3 }) {
+  function GroupHead({ g: g2, open: open5, toggle, p: p3 }) {
     const running5 = g2.apps.filter((a3) => a3.state === "running").length;
     const counted = g2.apps.filter((a3) => !awaitingJobs(a3)).length;
     return (
@@ -3328,7 +3328,7 @@
       /* @__PURE__ */ u3(
         "tr",
         {
-          class: "grouphead fold" + (g2.alert ? " bad" : "") + (open4 ? " open" : ""),
+          class: "grouphead fold" + (g2.alert ? " bad" : "") + (open5 ? " open" : ""),
           onClick: toggle,
           onContextMenu: (e3) => {
             const c4 = e3.currentTarget.querySelector("button.groupcount");
@@ -3344,17 +3344,17 @@
             if (c4.getAttribute("aria-expanded") !== "true") c4.click();
           },
           children: /* @__PURE__ */ u3("th", { colSpan: 4, children: [
-            /* @__PURE__ */ u3("button", { type: "button", class: "foldbtn", "aria-expanded": open4, onClick: (e3) => {
+            /* @__PURE__ */ u3("button", { type: "button", class: "foldbtn", "aria-expanded": open5, onClick: (e3) => {
               e3.stopPropagation();
               toggle();
             }, children: [
-              /* @__PURE__ */ u3("span", { class: "chev", "aria-hidden": "true", children: open4 ? "▾" : "▸" }),
+              /* @__PURE__ */ u3("span", { class: "chev", "aria-hidden": "true", children: open5 ? "▾" : "▸" }),
               g2.label
             ] }),
             /* @__PURE__ */ u3("span", { class: "kiosklabel", children: g2.label }),
             /* @__PURE__ */ u3(GroupMenu, { g: g2, p: p3, count: g2.alert ? String(g2.apps.length) : running5 >= counted ? `${running5} running ✓` : `${running5} of ${counted} running` }),
             /* @__PURE__ */ u3(StartAll, { g: g2, p: p3 }),
-            !open4 && /* @__PURE__ */ u3("span", { class: "names", children: g2.apps.map((a3) => a3.name).join(" · ") })
+            !open5 && /* @__PURE__ */ u3("span", { class: "names", children: g2.apps.map((a3) => a3.name).join(" · ") })
           ] })
         }
       )
@@ -3550,8 +3550,8 @@
     const say = (id2, words5) => setSaid({ id: id2, words: words5 });
     h2(() => sayChanges(p3));
     const q2 = useFilter().text;
-    const open4 = openGroups(p3.groups, f4, p3.held);
-    const toggle = (label) => setFold({ all: false, picked: { ...f4.all ? open4 : f4.picked, [label]: !open4[label] } });
+    const open5 = openGroups(p3.groups, f4, p3.held);
+    const toggle = (label) => setFold({ all: false, picked: { ...f4.all ? open5 : f4.picked, [label]: !open5[label] } });
     const kept4 = q2.trim() ? p3.groups.map((g2) => ({ g: g2, apps: g2.apps.filter((a3) => matches(a3, q2)) })).filter((x3) => x3.apps.length) : null;
     const all = p3.groups.reduce((t3, g2) => t3 + g2.apps.length, 0);
     const first = kept4?.[0]?.apps.find((a3) => a3.state !== "missing");
@@ -3573,8 +3573,8 @@
     const row = (a3) => /* @__PURE__ */ u3(Row2, { a: a3, p: p3, menu, setMenu, said: said2?.id === a3.id ? said2.words : void 0, say }, a3.id);
     return /* @__PURE__ */ u3(S, { children: kept4 ? kept4.flatMap(({ g: g2, apps: apps2 }) => [/* @__PURE__ */ u3(GroupHead, { g: g2, open: true, toggle: () => {
     }, p: p3 }, "g:" + g2.label), ...apps2.map(row)]) : p3.groups.flatMap((g2) => [
-      /* @__PURE__ */ u3(GroupHead, { g: g2, open: open4[g2.label], toggle: () => toggle(g2.label), p: p3 }, "g:" + g2.label),
-      ...open4[g2.label] ? g2.apps.map(row) : []
+      /* @__PURE__ */ u3(GroupHead, { g: g2, open: open5[g2.label], toggle: () => toggle(g2.label), p: p3 }, "g:" + g2.label),
+      ...open5[g2.label] ? g2.apps.map(row) : []
     ]) });
   }
   function ShowAll() {
@@ -3594,10 +3594,10 @@
 
   // web/src/store.ts
   function store(read) {
-    const watchers2 = [];
+    const watchers3 = [];
     let running5 = null;
     let again = null;
-    const tell2 = () => watchers2.forEach((fn) => fn());
+    const tell3 = () => watchers3.forEach((fn) => fn());
     const s3 = {
       value: void 0,
       error: void 0,
@@ -3617,7 +3617,7 @@
             s3.at = 0;
           }
           running5 = null;
-          tell2();
+          tell3();
         })();
         return running5;
       },
@@ -3629,13 +3629,18 @@
         s3.value = v3;
         s3.error = void 0;
         s3.at = Date.now();
-        tell2();
+        tell3();
       },
       stale() {
         s3.at = 0;
       },
+      forget() {
+        s3.value = void 0;
+        s3.error = void 0;
+        s3.at = 0;
+      },
       watch(fn) {
-        watchers2.push(fn);
+        watchers3.push(fn);
       }
     };
     return s3;
@@ -3654,7 +3659,7 @@
     const d3 = new Date(when3);
     return isNaN(d3.getTime()) || d3.getFullYear() < 2e3 ? "" : dayText(d3, { day: "numeric", month: "short", year: "numeric" });
   };
-  function ReleaseNotes({ name, load, onUpdate, onCancel, open: open4 }) {
+  function ReleaseNotes({ name, load, onUpdate, onCancel, open: open5 }) {
     const [preview, setPreview] = d2(null);
     const [problem, setProblem] = d2("");
     h2(() => {
@@ -3684,7 +3689,7 @@
         r3.notes && /* @__PURE__ */ u3("pre", { children: r3.notes }),
         /* @__PURE__ */ u3("a", { href: "#", onClick: (e3) => {
           e3.preventDefault();
-          open4(r3.url);
+          open5(r3.url);
         }, children: "Full notes" })
       ] }, r3.tag)),
       preview && preview.releases.length > shown8.length && preview.page && /* @__PURE__ */ u3("p", { class: "muted", children: [
@@ -3693,7 +3698,7 @@
         " older ones: ",
         /* @__PURE__ */ u3("a", { href: "#", onClick: (e3) => {
           e3.preventDefault();
-          open4(preview.page);
+          open5(preview.page);
         }, children: "all releases" }),
         "."
       ] }),
@@ -3817,7 +3822,7 @@
   var tell = () => watchers.forEach((fn) => fn());
   function inTurn(title, job2, wait) {
     return new Promise((resolve, reject) => {
-      const go2 = () => {
+      const go3 = () => {
         running = title;
         tell();
         job2().then(resolve, reject).finally(() => {
@@ -3828,10 +3833,10 @@
         });
       };
       if (!running) {
-        go2();
+        go3();
         return;
       }
-      waiting.push({ title, go: go2 });
+      waiting.push({ title, go: go3 });
       wait?.(running);
       tell();
     });
@@ -3843,10 +3848,10 @@
   var hidden2 = false;
   var show2 = () => {
   };
-  function bgStart(title, open4) {
+  function bgStart(title, open5) {
     bg = { title, state: "running", pct: 0, step: "" };
     hidden2 = false;
-    show2 = open4;
+    show2 = open5;
     draw();
   }
   function bgHide() {
@@ -4002,17 +4007,17 @@
 
   // web/src/settings/Form.tsx
   var folderKey = /(_ROOT|_DESTINATION|_LOCATION|_DIR)$/;
-  function shown2(pages, view, wanted, label, checks2) {
-    const words5 = view.query.toLowerCase().split(/\s+/).filter(Boolean);
+  function shown2(pages, view2, wanted, label, checks2) {
+    const words5 = view2.query.toLowerCase().split(/\s+/).filter(Boolean);
     const out = { keys: /* @__PURE__ */ new Set(), counts: {}, pageMore: 0 };
     for (const pg of pages) {
-      const here3 = pg.name === view.page;
+      const here3 = pg.name === view2.page;
       for (const s3 of pg.items) {
         const more2 = pg.kind === "general" && !wanted.has(s3.key);
         if (here3 && more2) out.pageMore++;
         const step2 = checks2[s3.key];
         const text2 = [pg.name, label(s3.key), s3.key.replace(/_/g, " "), s3.help || "", step2 ? step2.title : "", "setting-" + s3.key].join(" ").toLowerCase();
-        const match2 = words5.length ? words5.every((w3) => text2.includes(w3)) : here3 && (view.showAll || !more2);
+        const match2 = words5.length ? words5.every((w3) => text2.includes(w3)) : here3 && (view2.showAll || !more2);
         if (match2) {
           out.keys.add(s3.key);
           out.counts[pg.name] = (out.counts[pg.name] || 0) + 1;
@@ -4084,11 +4089,11 @@
   }
   function Form(p3) {
     const [edits, setEdits] = d2({});
-    const edit = (key6, value) => {
+    const edit = (key7, value) => {
       setEdits((old) => {
         const next = { ...old };
-        if (value === void 0) delete next[key6];
-        else next[key6] = value;
+        if (value === void 0) delete next[key7];
+        else next[key7] = value;
         p3.on.edited(next);
         return next;
       });
@@ -4163,7 +4168,7 @@
       )
     ] }) });
   }
-  function AddPerson({ apps: apps2, open: open4, on: on2 }) {
+  function AddPerson({ apps: apps2, open: open5, on: on2 }) {
     const [name, setName] = d2("");
     const [email, setEmail] = d2("");
     const [picked, setPicked] = d2(/* @__PURE__ */ new Set());
@@ -4185,7 +4190,7 @@
       setBusy(false);
       if (ok) on2.added(who);
     };
-    return /* @__PURE__ */ u3("details", { class: "addperson", open: open4, children: [
+    return /* @__PURE__ */ u3("details", { class: "addperson", open: open5, children: [
       /* @__PURE__ */ u3("summary", { children: /* @__PURE__ */ u3("strong", { children: "Add a person" }) }),
       /* @__PURE__ */ u3("div", { class: "inputrow", children: [
         /* @__PURE__ */ u3("input", { id: "personName", placeholder: "Name, e.g. Anna Smith", autocomplete: "off", spellcheck: false, value: name, onInput: (e3) => setName(e3.currentTarget.value) }),
@@ -4345,7 +4350,7 @@
   var awayFor = 30 * 864e5;
   var away = (d3) => !d3.online && !never(d3.lastSeen) && Date.now() - new Date(d3.lastSeen).getTime() > awayFor;
   var systems = { iOS: "iPhone or iPad", macOS: "Mac", android: "Android", windows: "Windows", linux: "Linux" };
-  function TailnetDevices({ devices, open: open4 }) {
+  function TailnetDevices({ devices, open: open5 }) {
     const online = devices.filter((d3) => d3.online).length;
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3(CardHead, { title: "Devices on your tailnet", children: /* @__PURE__ */ u3("span", { class: "muted", children: [
@@ -4362,7 +4367,7 @@
           title: d3.name,
           sub: [systems[d3.os || ""] || d3.os, d3.self ? "this machine" : d3.online ? "online now" : never(d3.lastSeen) ? "not seen yet" : `last seen ${ago(d3.lastSeen)}`].filter(Boolean).join(" · ") + (away(d3) ? ". Not seen for a month: if it is lost, remove it" : ""),
           subTone: away(d3) ? "warn" : void 0,
-          end: !d3.self && /* @__PURE__ */ u3("button", { class: "small", "aria-label": `Remove ${d3.name}`, title: "Opens it in Tailscale's admin console, where Remove is", onClick: () => open4(d3.admin || ""), children: "Remove…" })
+          end: !d3.self && /* @__PURE__ */ u3("button", { class: "small", "aria-label": `Remove ${d3.name}`, title: "Opens it in Tailscale's admin console, where Remove is", onClick: () => open5(d3.admin || ""), children: "Remove…" })
         },
         d3.ip || d3.name
       )) })
@@ -4394,10 +4399,10 @@
       if (logRef.current) logRef.current.scrollTop = logRef.current.scrollHeight;
     }, [log2]);
     const phrase = o3.everythingElse ? "delete everything" : "uninstall";
-    const set2 = (key6, on3) => {
-      const next = { ...o3, [key6]: on3 };
-      if (key6 === "folder" && on3) next.data = true;
-      if (key6 === "data" && !on3) next.folder = false;
+    const set2 = (key7, on3) => {
+      const next = { ...o3, [key7]: on3 };
+      if (key7 === "folder" && on3) next.data = true;
+      if (key7 === "data" && !on3) next.folder = false;
       setO(next);
       setPlan("");
       setTyped("");
@@ -4411,7 +4416,7 @@
       }
       setBusy(false);
     };
-    const go2 = async () => {
+    const go3 = async () => {
       setBusy(true);
       setResult("");
       setLog("");
@@ -4456,7 +4461,7 @@
           /* @__PURE__ */ u3("input", { id: "uninstallTyped", type: "text", autocomplete: "off", spellcheck: false, value: typed, disabled: busy2, onInput: (e3) => setTyped(e3.currentTarget.value) })
         ] }),
         /* @__PURE__ */ u3("div", { class: "actions", children: [
-          /* @__PURE__ */ u3("button", { id: "uninstallGo", class: "btn danger", disabled: busy2 || typed.trim().toLowerCase() !== phrase, onClick: go2, children: "Uninstall" }),
+          /* @__PURE__ */ u3("button", { id: "uninstallGo", class: "btn danger", disabled: busy2 || typed.trim().toLowerCase() !== phrase, onClick: go3, children: "Uninstall" }),
           /* @__PURE__ */ u3("button", { class: "btn", disabled: busy2, onClick: () => {
             setPlan("");
             setTyped("");
@@ -4504,15 +4509,15 @@
         /* @__PURE__ */ u3("div", { class: "navhead", children: g2.head }, "h:" + g2.head),
         ...g2.items.map((item) => {
           if (typeof item === "string") return /* @__PURE__ */ u3(PageButton, { name: item, active: active2, counts, pick }, item);
-          const f4 = item, open4 = isOpen2(f4);
+          const f4 = item, open5 = isOpen2(f4);
           const n3 = counts ? f4.pages.reduce((sum, p3) => sum + (counts[p3] || 0), 0) : f4.pages.length;
           return [
             /* @__PURE__ */ u3(
               "button",
               {
-                class: "navfold" + (open4 ? " open" : "") + (counts && !n3 ? " nomatch" : ""),
-                "aria-expanded": open4,
-                onClick: () => setPicked({ ...picked, [f4.label]: !open4 }),
+                class: "navfold" + (open5 ? " open" : "") + (counts && !n3 ? " nomatch" : ""),
+                "aria-expanded": open5,
+                onClick: () => setPicked({ ...picked, [f4.label]: !open5 }),
                 children: [
                   /* @__PURE__ */ u3("span", { children: [
                     /* @__PURE__ */ u3(Icon, { name: "chevron" }),
@@ -4523,7 +4528,7 @@
               },
               "f:" + f4.label
             ),
-            ...open4 ? f4.pages.map((name) => /* @__PURE__ */ u3(PageButton, { name, active: active2, counts, pick, inFold: true }, name)) : []
+            ...open5 ? f4.pages.map((name) => /* @__PURE__ */ u3(PageButton, { name, active: active2, counts, pick, inFold: true }, name)) : []
           ];
         })
       ])
@@ -4793,7 +4798,7 @@
       ] }) })
     ] });
   }
-  function Flip({ id: id2, on: on2, yes, no, turnOn, turnOff, set: set2 }) {
+  function Flip({ id: id2, on: on2, yes, no, turnOn: turnOn3, turnOff, set: set2 }) {
     const [busy2, setBusy] = d2(false);
     return /* @__PURE__ */ u3(S, { children: [
       on2 ? /* @__PURE__ */ u3("span", { class: "ok", children: yes }) : /* @__PURE__ */ u3("span", { class: "muted", children: no }),
@@ -4802,7 +4807,7 @@
         setBusy(true);
         await set2(!on2);
         setBusy(false);
-      }, children: on2 ? turnOff : turnOn })
+      }, children: on2 ? turnOff : turnOn3 })
     ] });
   }
   function DiskBar({ d: d3 }) {
@@ -4817,7 +4822,7 @@
       d3.low && /* @__PURE__ */ u3("div", { class: "muted small", children: d3.hint })
     ] });
   }
-  function GoBack({ p: p3, go: go2 }) {
+  function GoBack({ p: p3, go: go3 }) {
     const [sure, setSure] = d2(false);
     const click = () => {
       if (!sure) {
@@ -4825,7 +4830,7 @@
         return;
       }
       setSure(false);
-      go2();
+      go3();
     };
     return /* @__PURE__ */ u3(ActionLink, { id: "upgradeBack", title: `The homelab files as they were before the update of ${dateTimeText(new Date(p3.when))}; settings and data stay`, onClick: click, children: sure ? `click again to go back to ${p3.version}` : `go back to ${p3.version} (${p3.commit.slice(0, 7)})` });
   }
@@ -4878,7 +4883,7 @@
     ] });
   }
   var signIn = (os) => os.startsWith("Windows") ? "sign-in" : "login";
-  function Runtime({ i: i3, start, open: open4 }) {
+  function Runtime({ i: i3, start, open: open5 }) {
     const service = (i3.os || "").startsWith("Linux");
     const steamos = i3.os === "SteamOS";
     const moves = "This screen moves on by itself once it is running.";
@@ -4907,7 +4912,7 @@
           /* @__PURE__ */ u3("li", { children: "Add yourself to the docker group, then log out and back in." })
         ] }),
         /* @__PURE__ */ u3("div", { class: "actions", children: [
-          i3.runtimeDownload && /* @__PURE__ */ u3("button", { id: "getRuntime", class: "primary", onClick: () => open4(i3.runtimeDownload), children: "Open the install guide" }),
+          i3.runtimeDownload && /* @__PURE__ */ u3("button", { id: "getRuntime", class: "primary", onClick: () => open5(i3.runtimeDownload), children: "Open the install guide" }),
           /* @__PURE__ */ u3("span", { class: "muted", children: moves })
         ] })
       ] }) : /* @__PURE__ */ u3(S, { children: [
@@ -4917,7 +4922,7 @@
           /* @__PURE__ */ u3("li", { children: "Open it once and accept what it asks." })
         ] }),
         /* @__PURE__ */ u3("div", { class: "actions", children: [
-          i3.runtimeDownload && /* @__PURE__ */ u3("button", { id: "getRuntime", class: "primary", onClick: () => open4(i3.runtimeDownload), children: `Download ${i3.runtime}` }),
+          i3.runtimeDownload && /* @__PURE__ */ u3("button", { id: "getRuntime", class: "primary", onClick: () => open5(i3.runtimeDownload), children: `Download ${i3.runtime}` }),
           /* @__PURE__ */ u3("span", { class: "muted", children: `Or in Terminal: ${i3.runtimeHint}. ${moves}` })
         ] })
       ] })
@@ -4925,7 +4930,7 @@
   }
   function NewHomelab({ i: i3, create, choose }) {
     const [busy2, setBusy] = d2(false);
-    const go2 = async () => {
+    const go3 = async () => {
       setBusy(true);
       try {
         await create();
@@ -4937,7 +4942,7 @@
       /* @__PURE__ */ u3(CardHead, { title: "Start your homelab" }),
       /* @__PURE__ */ u3("p", { children: `Homelab Wizard makes the folder everything lives in, at ${i3.newRoot}, with the apps' settings and guides. Your photos, media, and backups can live elsewhere; Settings says where.` }),
       /* @__PURE__ */ u3("div", { class: "actions", children: [
-        /* @__PURE__ */ u3("button", { id: "createHomelab", class: "primary", disabled: busy2, onClick: go2, children: busy2 ? "Setting it up…" : "Set it up for me" }),
+        /* @__PURE__ */ u3("button", { id: "createHomelab", class: "primary", disabled: busy2, onClick: go3, children: busy2 ? "Setting it up…" : "Set it up for me" }),
         /* @__PURE__ */ u3("span", { class: "muted", children: [
           "Already have one? ",
           /* @__PURE__ */ u3(ActionLink, { onClick: choose, children: "Choose it" })
@@ -4973,7 +4978,7 @@
   var cap = (s3) => s3.charAt(0).toUpperCase() + s3.slice(1);
   function StartAgent({ id: id2, start }) {
     const [busy2, setBusy] = d2(false);
-    const go2 = async () => {
+    const go3 = async () => {
       setBusy(true);
       try {
         await start();
@@ -4981,7 +4986,7 @@
         setBusy(false);
       }
     };
-    return /* @__PURE__ */ u3("button", { id: id2, class: "small", disabled: busy2, onClick: go2, children: busy2 ? "Starting…" : "Start it" });
+    return /* @__PURE__ */ u3("button", { id: id2, class: "small", disabled: busy2, onClick: go3, children: busy2 ? "Starting…" : "Start it" });
   }
   function HealthTiles(p3) {
     return /* @__PURE__ */ u3(S, { children: facts(p3).map((f4) => /* @__PURE__ */ u3(
@@ -5291,10 +5296,10 @@
   }
 
   // web/src/choose/Started.tsx
-  function Started({ started, open: open4, close: close3 }) {
+  function Started({ started, open: open5, close: close3 }) {
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3(CardHead, { title: "Ready to open" }),
-      started.length ? /* @__PURE__ */ u3("ul", { children: started.map((s3) => /* @__PURE__ */ u3("li", { children: s3.url ? /* @__PURE__ */ u3(ActionLink, { onClick: () => open4(s3.url), children: s3.name }) : s3.name }, s3.id)) }) : /* @__PURE__ */ u3("p", { class: "muted", children: "Nothing new to start." }),
+      started.length ? /* @__PURE__ */ u3("ul", { children: started.map((s3) => /* @__PURE__ */ u3("li", { children: s3.url ? /* @__PURE__ */ u3(ActionLink, { onClick: () => open5(s3.url), children: s3.name }) : s3.name }, s3.id)) }) : /* @__PURE__ */ u3("p", { class: "muted", children: "Nothing new to start." }),
       /* @__PURE__ */ u3("button", { type: "button", id: "installClose", class: "small", onClick: close3, children: "Close" })
     ] });
   }
@@ -5646,7 +5651,7 @@
       notes.length > 12 && /* @__PURE__ */ u3("li", { class: "muted", children: `and ${notes.length - 12} more` })
     ] });
   }
-  function UpdateLine({ s: s3, step: step2, download: download2, log: log2, update, later: later2, close: close3, open: open4 }) {
+  function UpdateLine({ s: s3, step: step2, download: download2, log: log2, update, later: later2, close: close3, open: open5 }) {
     const [more2, setMore] = d2(false);
     const v3 = s3.version;
     const whatsNew = (notes) => !!notes.length && /* @__PURE__ */ u3(ActionLink, { id: "updateWhatsNew", cls: "small", onClick: () => setMore(!more2), children: more2 ? "Hide" : "What’s new" });
@@ -5672,7 +5677,7 @@
       head = v3 ? `Homelab Wizard ${v3} did not install` : "The update did not install";
       sub = s3.notInstalled;
       end = /* @__PURE__ */ u3(S, { children: [
-        s3.page && /* @__PURE__ */ u3("button", { id: "updateDownload", class: "small", onClick: () => open4(s3.page), children: "Download it" }),
+        s3.page && /* @__PURE__ */ u3("button", { id: "updateDownload", class: "small", onClick: () => open5(s3.page), children: "Download it" }),
         /* @__PURE__ */ u3("button", { id: "updateRetry", class: "small primary", onClick: update, children: "Try again" }),
         /* @__PURE__ */ u3("button", { id: "updateClose", class: "iconbtn", "aria-label": "Close", onClick: close3, children: "×" })
       ] });
@@ -5690,7 +5695,7 @@
       tone = "blocked";
       head = v3 ? `Homelab Wizard ${v3} is ready` : "An update is ready";
       sub = s3.blocked || "";
-      end = s3.page ? /* @__PURE__ */ u3("button", { id: "updateDownload", class: "small", onClick: () => open4(s3.page), children: "Download it" }) : null;
+      end = s3.page ? /* @__PURE__ */ u3("button", { id: "updateDownload", class: "small", onClick: () => open5(s3.page), children: "Download it" }) : null;
     } else if (s3.state === "ready") {
       head = v3 ? `Homelab Wizard ${v3} is ready` : "An update is ready";
       end = /* @__PURE__ */ u3(S, { children: [
@@ -6571,7 +6576,7 @@
   var form = null;
   var formVersion = 0;
   var settingsView = () => ({ query: $("settingsSearch").value, page: settingsPage, showAll: settingsShowAll });
-  var isSecret = (key6) => !!form?.pages.some((pg) => pg.items.some((s3) => s3.key === key6 && s3.secret));
+  var isSecret = (key7) => !!form?.pages.some((pg) => pg.items.some((s3) => s3.key === key7 && s3.secret));
   var formActions = {
     edited: (edits) => {
       for (const k3 of Object.keys(changed)) delete changed[k3];
@@ -6580,39 +6585,39 @@
     },
     // The test checks the saved values, so a value just typed is saved
     // first, with the ones its test reads too (the Domain for the token).
-    test: async (key6, pending2) => {
+    test: async (key7, pending2) => {
       let used = false;
-      const save2 = {};
-      for (const k3 of testReads[key6] || []) if (k3 in changed && !(isSecret(k3) && changed[k3] === "")) save2[k3] = changed[k3];
+      const save3 = {};
+      for (const k3 of testReads[key7] || []) if (k3 in changed && !(isSecret(k3) && changed[k3] === "")) save3[k3] = changed[k3];
       if (pending2 !== void 0) {
-        if (!(isSecret(key6) && pending2 === "")) save2[key6] = pending2;
+        if (!(isSecret(key7) && pending2 === "")) save3[key7] = pending2;
         used = true;
       }
-      if (Object.keys(save2).length) {
+      if (Object.keys(save3).length) {
         try {
-          await go().SaveSettings(save2);
+          await go().SaveSettings(save3);
         } catch (e3) {
           return { result: { tone: "bad", text: errorText(e3) }, used: false };
         }
       }
       try {
-        const r3 = await go().TestSetting(key6);
+        const r3 = await go().TestSetting(key7);
         return { result: { tone: r3.ok ? "ok" : "bad", text: (r3.ok ? "✓ " : "✗ ") + r3.message }, used };
       } catch (e3) {
         return { result: { tone: "bad", text: errorText(e3) }, used };
       }
     },
-    copy: async (key6) => {
+    copy: async (key7) => {
       try {
-        await go().CopySetting(key6);
+        await go().CopySetting(key7);
         return { tone: "ok", text: "✓ Copied. Paste it into Vaultwarden; the clipboard clears in 90 seconds." };
       } catch (e3) {
         return { tone: "bad", text: errorText(e3) };
       }
     },
-    choose: async (key6) => {
+    choose: async (key7) => {
       try {
-        return await go().ChooseFolder(key6) || "";
+        return await go().ChooseFolder(key7) || "";
       } catch (e3) {
         showError(e3);
         return "";
@@ -6631,14 +6636,14 @@
       prefixes: [[norm(a3.id), 0], [norm(a3.name), 2], [norm(a3.id.split("-")[0]), 1]]
     }));
     const main2 = (a3) => a3 && a3.helper && a3.stack && apps2.find((b2) => !b2.helper && b2.stack === a3.stack) || a3;
-    const appOf = (key6) => main2(findApp(key6));
-    const findApp = (key6) => {
-      const own2 = apps2.find((a3) => a3.inputs.has(key6));
+    const appOf = (key7) => main2(findApp(key7));
+    const findApp = (key7) => {
+      const own2 = apps2.find((a3) => a3.inputs.has(key7));
       if (own2) return own2;
       let best = null, score = 0;
       for (const a3 of apps2) {
         for (const [p3, bonus] of a3.prefixes) {
-          const sc = key6.startsWith(p3) ? p3.length * 10 + bonus + (a3.helper ? 0 : 3) : 0;
+          const sc = key7.startsWith(p3) ? p3.length * 10 + bonus + (a3.helper ? 0 : 3) : 0;
           if (sc > score) {
             best = a3;
             score = sc;
@@ -6655,9 +6660,9 @@
         if (!p3) general.push(p3 = { name, kind, items: [] });
         return p3;
       }
-      const known2 = [...byApp.keys()].find((n3) => n3 === name || n3.startsWith(name + " "));
-      if (!byApp.has(known2 || name)) byApp.set(name, { name, kind, items: [] });
-      return byApp.get(known2 || name);
+      const known3 = [...byApp.keys()].find((n3) => n3 === name || n3.startsWith(name + " "));
+      if (!byApp.has(known3 || name)) byApp.set(name, { name, kind, items: [] });
+      return byApp.get(known3 || name);
     };
     for (const s3 of list) {
       if (!perApp(s3.section)) {
@@ -6681,9 +6686,9 @@
     const installed2 = (name) => Object.values(statusById || {}).some((a3) => a3.name === name && a3.state !== "missing");
     const general = [...pages.filter((p3) => p3.kind === "general").map((p3) => p3.name), ...onPhone() ? [] : extraPages];
     const apps2 = pages.filter((p3) => p3.kind === "app");
-    const known2 = Object.keys(statusById || {}).length > 0;
-    const mine = known2 ? apps2.filter((p3) => installed2(p3.name) || p3.name === "Other apps") : apps2;
-    const others2 = known2 ? apps2.filter((p3) => !mine.includes(p3)) : [];
+    const known3 = Object.keys(statusById || {}).length > 0;
+    const mine = known3 ? apps2.filter((p3) => installed2(p3.name) || p3.name === "Other apps") : apps2;
+    const others2 = known3 ? apps2.filter((p3) => !mine.includes(p3)) : [];
     const groups4 = pageGroups.map(([head, names5]) => ({ head, items: names5.filter((n3) => general.includes(n3)) }));
     const named6 = new Set(pageGroups.flatMap(([, names5]) => names5));
     groups4[0].items.push(...general.filter((n3) => !named6.has(n3)));
@@ -6802,26 +6807,26 @@
   var upper = /* @__PURE__ */ new Set(["API", "URL", "DNS", "IP", "HTTP", "HTTPS", "ID", "PDF", "AI", "IGDB", "SSL", "UI", "OCR", "JWT", "SSO", "VPN"]);
   var wordLabels = { DB: "database", NEXTAUTH: "NextAuth", MEILI: "Meilisearch", SCREENSCRAPER: "ScreenScraper", NPM: "Nginx Proxy Manager" };
   var envPrefix = (t3) => t3.toUpperCase().replace(/[^A-Z0-9]+/g, "_") + "_";
-  function keyApp(key6) {
+  function keyApp(key7) {
     let best = null, score = 0;
     for (const a3 of catalog?.apps || []) {
       const first = envPrefix(a3.id.split("-")[0]);
       const prefixes = [envPrefix(a3.id), envPrefix(a3.name)];
       if (a3.kind !== "helper" && envPrefix(a3.name).startsWith(first)) prefixes.push(first);
       for (const p3 of prefixes) {
-        const sc = key6.startsWith(p3) ? p3.length * 2 + (a3.kind === "helper" ? 0 : 1) : 0;
+        const sc = key7.startsWith(p3) ? p3.length * 2 + (a3.kind === "helper" ? 0 : 1) : 0;
         if (sc > score) {
-          best = [a3.name, key6.slice(p3.length)];
+          best = [a3.name, key7.slice(p3.length)];
           score = sc;
         }
       }
     }
     return best;
   }
-  function settingLabel(key6) {
-    if (settingLabels[key6]) return settingLabels[key6];
-    const app = keyApp(key6);
-    const words5 = (app ? app[1] : key6).split("_").filter(Boolean).map((w3) => wordLabels[w3] || (upper.has(w3) ? w3 : w3.toLowerCase()));
+  function settingLabel(key7) {
+    if (settingLabels[key7]) return settingLabels[key7];
+    const app = keyApp(key7);
+    const words5 = (app ? app[1] : key7).split("_").filter(Boolean).map((w3) => wordLabels[w3] || (upper.has(w3) ? w3 : w3.toLowerCase()));
     if (app) return [app[0], ...words5].join(" ");
     const text2 = words5.join(" ");
     return text2.charAt(0).toUpperCase() + text2.slice(1);
@@ -7078,7 +7083,7 @@
   }
   function copyGroups(o3) {
     const copies = sortedCopies(o3);
-    const of = (state2) => copies.filter((c4) => c4.state === state2);
+    const of = (state3) => copies.filter((c4) => c4.state === state3);
     const paused = of("paused"), none2 = of("none");
     const oldest = paused.filter((c4) => !never(c4.newest)).map((c4) => c4.newest).sort()[0];
     return [
@@ -7108,21 +7113,21 @@
     const groups4 = copyGroups(o3);
     if (!groups4.length) return /* @__PURE__ */ u3("tr", { children: /* @__PURE__ */ u3("td", { colSpan: 4, class: "muted", children: "No installed app has a database to dump yet." }) });
     return /* @__PURE__ */ u3(S, { children: groups4.map((g2) => {
-      const open4 = picked[g2.key] ?? (g2.key === "stale" || g2.key === "fresh");
-      const toggle = () => setPicked({ ...picked, [g2.key]: !open4 });
+      const open5 = picked[g2.key] ?? (g2.key === "stale" || g2.key === "fresh");
+      const toggle = () => setPicked({ ...picked, [g2.key]: !open5 });
       return [
-        /* @__PURE__ */ u3("tr", { class: "grouphead fold copygroup " + g2.key + (g2.tone === "bad" ? " bad" : "") + (open4 ? " open" : ""), onClick: toggle, children: /* @__PURE__ */ u3("th", { colSpan: 4, children: [
-          /* @__PURE__ */ u3("button", { type: "button", class: "foldbtn", "aria-expanded": open4, onClick: (e3) => {
+        /* @__PURE__ */ u3("tr", { class: "grouphead fold copygroup " + g2.key + (g2.tone === "bad" ? " bad" : "") + (open5 ? " open" : ""), onClick: toggle, children: /* @__PURE__ */ u3("th", { colSpan: 4, children: [
+          /* @__PURE__ */ u3("button", { type: "button", class: "foldbtn", "aria-expanded": open5, onClick: (e3) => {
             e3.stopPropagation();
             toggle();
           }, children: [
-            /* @__PURE__ */ u3("span", { class: "chev", "aria-hidden": "true", children: open4 ? "▾" : "▸" }),
+            /* @__PURE__ */ u3("span", { class: "chev", "aria-hidden": "true", children: open5 ? "▾" : "▸" }),
             g2.label
           ] }),
           /* @__PURE__ */ u3("span", { class: "n", children: String(g2.copies.length) }),
-          !open4 && g2.note && /* @__PURE__ */ u3("span", { class: "names", children: g2.note })
+          !open5 && g2.note && /* @__PURE__ */ u3("span", { class: "names", children: g2.note })
         ] }) }, "g:" + g2.key),
-        ...open4 ? g2.copies.map((c4) => /* @__PURE__ */ u3("tr", { class: "copy " + c4.state + (c4.shrank ? " shrank" : ""), children: [
+        ...open5 ? g2.copies.map((c4) => /* @__PURE__ */ u3("tr", { class: "copy " + c4.state + (c4.shrank ? " shrank" : ""), children: [
           /* @__PURE__ */ u3("td", { class: "name", children: [
             /* @__PURE__ */ u3("span", { class: "dot " + (c4.shrank ? "bad" : g2.tone) }),
             c4.name,
@@ -7572,7 +7577,7 @@
   async function statusAlone(n3, want) {
     const st = await go().Status();
     for (const name of want.filter((w3) => singly[w3])) {
-      go()[singly[name]]().then((data) => showCard({ board: n3, name, data }), (e3) => showCard({ board: n3, name, data: null, error: errorText(e3) }));
+      go()[singly[name]]().then((data2) => showCard({ board: n3, name, data: data2 }), (e3) => showCard({ board: n3, name, data: null, error: errorText(e3) }));
     }
     return st;
   }
@@ -7580,36 +7585,36 @@
   function showCard(c4) {
     if (c4.board === boardNo && boardFailed && c4.name !== "crash") return;
     const err = c4.error ? new Error(c4.error) : null;
-    const data = c4.data;
+    const data2 = c4.data;
     switch (c4.name) {
       case "watchdog":
-        showWatchdog(err ? null : data);
+        showWatchdog(err ? null : data2);
         break;
       case "crash":
-        showCrash(err ? null : data);
+        showCrash(err ? null : data2);
         break;
       case "savings":
-        savingsHistory = !err && data || [];
+        savingsHistory = !err && data2 || [];
         if (lastStatus) renderTiles(lastStatus);
         break;
       case "protection":
-        showProtection(data, err);
+        showProtection(data2, err);
         break;
       case "alerts":
-        showAlerts(data, err);
+        showAlerts(data2, err);
         break;
       case "storage":
-        showStorage(err ? null : data);
+        showStorage(err ? null : data2);
         break;
       case "usage":
-        showUsage(!err && data || []);
+        showUsage(!err && data2 || []);
         break;
       case "week":
-        showWeek(err ? null : data);
+        showWeek(err ? null : data2);
         break;
       case "answers":
         if (c4.board !== boardNo) return;
-        boardAnswers = data || {};
+        boardAnswers = data2 || {};
         if (boardStatus) applyAnswers(boardStatus, boardAnswers);
     }
   }
@@ -8269,7 +8274,7 @@
 
   // web/src/parts/MenuButton.tsx
   function MenuButton({ label, title, menuLabel, items, foot: foot2, disabled, cls = "btn" }) {
-    const [open4, setOpen] = d2(false);
+    const [open5, setOpen] = d2(false);
     const wrap = A2(null);
     const btn = A2(null);
     const all = () => [...wrap.current?.querySelectorAll("[role=menuitem]") || []];
@@ -8278,13 +8283,13 @@
       if (refocus) btn.current?.focus();
     };
     h2(() => {
-      if (!open4) return;
+      if (!open5) return;
       const outside = (e3) => {
         if (!wrap.current?.contains(e3.target)) close3();
       };
       document.addEventListener("mousedown", outside, true);
       return () => document.removeEventListener("mousedown", outside, true);
-    }, [open4]);
+    }, [open5]);
     const show4 = (first) => {
       setOpen(true);
       if (first) requestAnimationFrame(() => {
@@ -8298,7 +8303,7 @@
         class: "menuwrap",
         ref: wrap,
         onKeyDown: (e3) => {
-          if (!open4) return;
+          if (!open5) return;
           if (e3.key === "Escape") {
             e3.preventDefault();
             e3.stopPropagation();
@@ -8312,7 +8317,7 @@
           m3[(to + m3.length) % m3.length].focus();
         },
         onFocusOut: () => setTimeout(() => {
-          if (open4 && document.hasFocus() && !wrap.current?.contains(document.activeElement)) close3();
+          if (open5 && document.hasFocus() && !wrap.current?.contains(document.activeElement)) close3();
         }),
         children: [
           /* @__PURE__ */ u3(
@@ -8323,11 +8328,11 @@
               class: cls,
               title,
               "aria-haspopup": "menu",
-              "aria-expanded": open4,
+              "aria-expanded": open5,
               disabled,
-              onClick: (e3) => open4 ? close3() : show4(e3.detail === 0 ? "first" : null),
+              onClick: (e3) => open5 ? close3() : show4(e3.detail === 0 ? "first" : null),
               onKeyDown: (e3) => {
-                if (!open4 && (e3.key === "ArrowDown" || e3.key === "ArrowUp")) {
+                if (!open5 && (e3.key === "ArrowDown" || e3.key === "ArrowUp")) {
                   e3.preventDefault();
                   show4(e3.key === "ArrowDown" ? "first" : "last");
                 }
@@ -8338,7 +8343,7 @@
               ]
             }
           ),
-          open4 && /* @__PURE__ */ u3("div", { class: "menu", role: "menu", "aria-label": menuLabel, children: [
+          open5 && /* @__PURE__ */ u3("div", { class: "menu", role: "menu", "aria-label": menuLabel, children: [
             items.map((it) => /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", onClick: () => {
               close3(true);
               it.onClick();
@@ -8421,7 +8426,7 @@
   function Log({ explainer: explainer2, machine, dozzle, on: on2 }) {
     const [lines, setLines] = d2(200);
     const [text2, setText] = d2(null);
-    const [answer, setAnswer] = d2("");
+    const [answer2, setAnswer] = d2("");
     const [asking, setAsking] = d2(false);
     const [problem, setProblem] = d2("");
     const read = (n3) => {
@@ -8450,8 +8455,8 @@
         explainer2 && /* @__PURE__ */ u3("button", { class: "small tint", disabled: asking, onClick: ask, children: asking ? "Reading the log…" : "Explain this" })
       ] }) }),
       text2 === null ? /* @__PURE__ */ u3("p", { class: "muted", children: "Reading its log…" }) : /* @__PURE__ */ u3(LogLines, { text: text2 }),
-      (answer || problem) && !asking && /* @__PURE__ */ u3("div", { class: "explained", role: "status", children: [
-        answer && /* @__PURE__ */ u3("p", { class: "answer", children: answer }),
+      (answer2 || problem) && !asking && /* @__PURE__ */ u3("div", { class: "explained", role: "status", children: [
+        answer2 && /* @__PURE__ */ u3("p", { class: "answer", children: answer2 }),
         problem && /* @__PURE__ */ u3("p", { class: "muted", children: problem }),
         /* @__PURE__ */ u3("div", { class: "row", children: [
           /* @__PURE__ */ u3("span", { class: "muted", children: [
@@ -8692,7 +8697,7 @@
       const t3 = setTimeout(() => on2.allDone(q2).then(setAll, (e3) => setProblem(String(e3?.message || e3))), 200);
       return () => clearTimeout(t3);
     }, [q2]);
-    const open4 = () => {
+    const open5 = () => {
       on2.allDone(q2).then(setAll, (e3) => setProblem(String(e3?.message || e3)));
       const s3 = document.getElementById("doneSheet");
       if (s3) s3.hidden = false;
@@ -8703,7 +8708,7 @@
     };
     const shown8 = (rows || []).slice(0, 6);
     return /* @__PURE__ */ u3(Card, { kind: "alerts pagecard", id: "appDone", children: [
-      /* @__PURE__ */ u3(CardHead, { title: "Recently done", children: /* @__PURE__ */ u3("button", { class: "small change", onClick: open4, children: "Everything that was done…" }) }),
+      /* @__PURE__ */ u3(CardHead, { title: "Recently done", children: /* @__PURE__ */ u3("button", { class: "small change", onClick: open5, children: "Everything that was done…" }) }),
       problem ? /* @__PURE__ */ u3(Empty, { children: problem }) : rows === null ? /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : shown8.length ? /* @__PURE__ */ u3(Rows, { children: shown8.map((e3) => /* @__PURE__ */ u3(Row, { title: e3.text, sub: doneSub(e3) }, e3.id)) }) : /* @__PURE__ */ u3(Empty, { children: "Nothing done to it yet that's kept here. Its starts, stops, restarts and updates, and the watchdog's, are kept for 90 days." }),
       /* @__PURE__ */ u3(Sheet, { id: "doneSheet", titleId: "doneTitle", children: [
         /* @__PURE__ */ u3("h2", { id: "doneTitle", children: "Everything that was done" }),
@@ -8932,8 +8937,8 @@
     for (let i3 = 6; i3 >= 0; i3--) {
       const d3 = /* @__PURE__ */ new Date();
       d3.setDate(d3.getDate() - i3);
-      const key6 = `${d3.getFullYear()}-${String(d3.getMonth() + 1).padStart(2, "0")}-${String(d3.getDate()).padStart(2, "0")}`;
-      const [ok, all] = runs2[key6] || [0, 0];
+      const key7 = `${d3.getFullYear()}-${String(d3.getMonth() + 1).padStart(2, "0")}-${String(d3.getDate()).padStart(2, "0")}`;
+      const [ok, all] = runs2[key7] || [0, 0];
       out.push({ letter: dayText(d3, { weekday: "narrow" }), name: dayText(d3, { weekday: "long", day: "numeric", month: "short" }), weekday: dayText(d3, { weekday: "long" }), ok, all, today: i3 === 0 });
     }
     return out;
@@ -9591,14 +9596,14 @@
   }
 
   // web/src/finances/ui/Widget.tsx
-  function Widget({ title, id: id2, actions, span = 1, kind, open: open4, openLabel = "Open what it sums up", seeAll, children }) {
-    const head = open4 ? /* @__PURE__ */ u3(S, { children: [
+  function Widget({ title, id: id2, actions, span = 1, kind, open: open5, openLabel = "Open what it sums up", seeAll, children }) {
+    const head = open5 ? /* @__PURE__ */ u3(S, { children: [
       title,
-      /* @__PURE__ */ u3("button", { type: "button", class: "fx-titleopen", tabIndex: -1, "aria-hidden": "true", title: openLabel, onClick: open4 })
+      /* @__PURE__ */ u3("button", { type: "button", class: "fx-titleopen", tabIndex: -1, "aria-hidden": "true", title: openLabel, onClick: open5 })
     ] }) : title;
-    const all = open4 && !seeAll ? /* @__PURE__ */ u3(S, { children: [
+    const all = open5 && !seeAll ? /* @__PURE__ */ u3(S, { children: [
       actions,
-      /* @__PURE__ */ u3(IconButton, { icon: "open", label: openLabel, onClick: open4 })
+      /* @__PURE__ */ u3(IconButton, { icon: "open", label: openLabel, onClick: open5 })
     ] }) : actions;
     return /* @__PURE__ */ u3(Card, { id: id2, kind: "fx-widget" + (span === 1 ? "" : span === 2 ? " span2" : " spanall") + (kind ? " " + kind : ""), children: [
       /* @__PURE__ */ u3(CardHead, { title: head, children: all ? /* @__PURE__ */ u3("span", { class: "fx-actions", children: all }) : void 0 }),
@@ -9620,7 +9625,7 @@
   // web/src/finances/widgets/Budgets.tsx
   var budgetTone = (b2) => b2.left < 0 ? "out" : b2.spent > b2.pace + 5e-3 ? "warn" : "";
   var toWatch = (b2) => budgetTone(b2) !== "" || b2.spent >= b2.amount * 0.9;
-  function BudgetsWidget({ v: v3, edit, only, open: open4, title = "Budgets", span = "all", show: show4 }) {
+  function BudgetsWidget({ v: v3, edit, only, open: open5, title = "Budgets", span = "all", show: show4 }) {
     const list = (v3.budgets || []).filter(only || (() => true));
     if (only && !list.length) return null;
     return /* @__PURE__ */ u3(
@@ -9629,11 +9634,11 @@
         title,
         span,
         kind: "fx-budgets",
-        open: open4,
+        open: open5,
         seeAll: true,
         openLabel: "Open Transactions and every budget",
         actions: /* @__PURE__ */ u3(S, { children: [
-          open4 && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: open4, children: "See all" }),
+          open5 && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: open5, children: "See all" }),
           edit && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: edit, children: v3.budgets?.length ? "Edit budgets" : "Set budgets" })
         ] }),
         children: list.length ? /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: list.map((b2) => {
@@ -9728,12 +9733,12 @@
     for (const t3 of txs) {
       if (!inRange(t3, r3)) continue;
       for (const p3 of parts(t3, income)) {
-        const key6 = p3.category.toLowerCase();
-        const g2 = parent.get(key6) || name.get(key6) || p3.category;
+        const key7 = p3.category.toLowerCase();
+        const g2 = parent.get(key7) || name.get(key7) || p3.category;
         const top = groups4.get(g2) || { name: g2, amount: 0, children: [] };
         top.amount += p3.amount;
-        if (parent.get(key6)) {
-          const child = top.children.find((c4) => c4.name.toLowerCase() === key6) || (top.children.push({ name: name.get(key6) || p3.category, amount: 0 }), top.children.at(-1));
+        if (parent.get(key7)) {
+          const child = top.children.find((c4) => c4.name.toLowerCase() === key7) || (top.children.push({ name: name.get(key7) || p3.category, amount: 0 }), top.children.at(-1));
           child.amount += p3.amount;
         }
         groups4.set(g2, top);
@@ -9755,11 +9760,11 @@
     const by = /* @__PURE__ */ new Map();
     for (const t3 of txs) {
       if (t3.to || t3.amount >= 0 || !inRange(t3, r3) || !t3.payee) continue;
-      const key6 = t3.payee.toLowerCase();
-      const p3 = by.get(key6) || { payee: t3.payee, amount: 0, count: 0 };
+      const key7 = t3.payee.toLowerCase();
+      const p3 = by.get(key7) || { payee: t3.payee, amount: 0, count: 0 };
       p3.amount -= t3.amount;
       p3.count++;
-      by.set(key6, p3);
+      by.set(key7, p3);
     }
     return [...by.values()].sort((a3, b2) => b2.amount - a3.amount).slice(0, n3);
   }
@@ -9822,7 +9827,7 @@
   }
 
   // web/src/finances/Transactions.tsx
-  function LinksWidget({ v: v3, L: L2, ledger, save: save2 }) {
+  function LinksWidget({ v: v3, L: L2, ledger, save: save3 }) {
     const [busy2, setBusy] = d2(false);
     const found2 = suggestLinks(ledger.transactions, allPayments(v3.plan).filter((x3) => !x3.card), v3.dues || {}, v3.checking, withLearned(paysBill, ledger.transactions));
     if (!found2.size) return null;
@@ -9830,7 +9835,7 @@
     const keep3 = async (change) => {
       if (busy2) return;
       setBusy(true);
-      await save2({ ...ledger, transactions: ledger.transactions.map(change) });
+      await save3({ ...ledger, transactions: ledger.transactions.map(change) });
       setBusy(false);
     };
     const link = (ids) => keep3((t3) => ids.includes(t3.id) ? { ...t3, payment: found2.get(t3.id).payment } : t3);
@@ -9895,14 +9900,14 @@
     Math.abs(t3.amount).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
     dayShort(t3.date)
   ].filter(Boolean).join(" ").toLowerCase();
-  function PairsWidget({ L: L2, ledger, save: save2 }) {
+  function PairsWidget({ L: L2, ledger, save: save3 }) {
     const [busy2, setBusy] = d2(false);
     const list = pairs(ledger.transactions);
     if (!list.length) return null;
     const keep3 = async (change) => {
       if (busy2) return;
       setBusy(true);
-      await save2({ ...ledger, transactions: change(ledger.transactions) });
+      await save3({ ...ledger, transactions: change(ledger.transactions) });
       setBusy(false);
     };
     const join = (ps) => keep3((txs) => {
@@ -10145,7 +10150,7 @@
       const what2 = catOf(t3);
       const on2 = picking && picked.has(t3.id);
       const opens = picking ? (e3) => toggle(t3.id, e3.shiftKey) : edit ? () => edit("transaction", t3.id) : t3.receipt && readReceipt ? () => look2(t3) : void 0;
-      const open4 = !picking && seen2?.id === t3.id ? seen2 : null;
+      const open5 = !picking && seen2?.id === t3.id ? seen2 : null;
       return /* @__PURE__ */ u3(S, { children: [
         /* @__PURE__ */ u3(
           Row,
@@ -10184,10 +10189,10 @@
             whenPlain: true,
             onOpen: opens,
             pressed: picking ? on2 : void 0,
-            openLabel: picking ? void 0 : edit ? "edit" : opens ? open4 ? "hide the receipt" : "see the receipt" : void 0
+            openLabel: picking ? void 0 : edit ? "edit" : opens ? open5 ? "hide the receipt" : "see the receipt" : void 0
           }
         ),
-        open4 && /* @__PURE__ */ u3("li", { class: "fx-receiptshown", children: open4.url ? /* @__PURE__ */ u3(ReceiptView, { url: open4.url }) : open4.problem ? /* @__PURE__ */ u3("span", { class: "formerr bad", role: "alert", children: open4.problem }) : /* @__PURE__ */ u3("span", { class: "muted", role: "status", children: "Reading the receipt…" }) })
+        open5 && /* @__PURE__ */ u3("li", { class: "fx-receiptshown", children: open5.url ? /* @__PURE__ */ u3(ReceiptView, { url: open5.url }) : open5.problem ? /* @__PURE__ */ u3("span", { class: "formerr bad", role: "alert", children: open5.problem }) : /* @__PURE__ */ u3("span", { class: "muted", role: "status", children: "Reading the receipt…" }) })
       ] }, t3.id);
     };
     return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3("div", { class: "fx-board", children: [
@@ -10408,15 +10413,15 @@
   var adding = { checking: "a checking account", savings: "a savings account", card: "a credit card", loan: "a loan", investment: "an investment account", retirement: "a retirement account", home: "a home", car: "a car", collectible: "collectibles", other: "something else" };
   var named3 = (kind, b2) => ({ checking: `${b2} Checking`, savings: `${b2} Savings`, investment: `${b2} brokerage`, retirement: `${b2} retirement`, loan: `${b2} loan` })[kind] || b2;
   var held2 = (kind) => kind === "home" || kind === "car" || kind === "collectible";
-  function Actions3({ busy: busy2, exists, remove, close: close3, problem, touched, uses, removeAll }) {
+  function Actions3({ busy: busy2, exists, remove, close: close3, problem, touched: touched2, uses, removeAll }) {
     const [sure, setSure] = d2(false);
     const [leaving, setLeaving] = d2(false);
     const cancel = () => {
-      if (touched && !leaving) setLeaving(true);
+      if (touched2 && !leaving) setLeaving(true);
       else close3();
     };
     const asking = sure && !!uses && !!removeAll;
-    const said2 = leaving && touched ? "Nothing here is saved yet. Cancel again to drop it, or Save." : asking ? `${uses} it. Delete them with it, or keep them: one out of it then comes out of checking, one into it goes nowhere, and a paycheck lands in checking.` : problem;
+    const said2 = leaving && touched2 ? "Nothing here is saved yet. Cancel again to drop it, or Save." : asking ? `${uses} it. Delete them with it, or keep them: one out of it then comes out of checking, one into it goes nowhere, and a paycheck lands in checking.` : problem;
     return /* @__PURE__ */ u3(S, { children: [
       said2 && /* @__PURE__ */ u3("p", { class: "formerr " + (leaving || asking ? "warn" : "bad"), role: "alert", children: said2 }),
       /* @__PURE__ */ u3("div", { class: "actions finactions", children: [
@@ -10438,7 +10443,7 @@
   }
   function useSaving(props) {
     const [busy2, setBusy] = d2(false);
-    const [touched, setTouched] = d2(false);
+    const [touched2, setTouched] = d2(false);
     const watch2 = {
       onInput: (e3) => {
         if (!e3.target.matches(".brandsearch")) setTouched(true);
@@ -10456,7 +10461,7 @@
       setBusy(false);
       if (ok) props.close();
     };
-    return { busy: busy2, keep: keep3, touched, watch: watch2 };
+    return { busy: busy2, keep: keep3, touched: touched2, watch: watch2 };
   }
   async function shrink(f4) {
     const bmp = await createImageBitmap(f4);
@@ -10645,10 +10650,10 @@
       problem && /* @__PURE__ */ u3("span", { class: "formerr bad", role: "alert", children: problem })
     ] });
   }
-  function withLogo(plan, key6, img, opened2, had) {
+  function withLogo(plan, key7, img, opened3, had) {
     const logos = { ...plan.logos || {} };
-    if (img) logos[key6] = img;
-    else if (had) delete logos[opened2];
+    if (img) logos[key7] = img;
+    else if (had) delete logos[opened3];
     return Object.keys(logos).length ? logos : void 0;
   }
   var tick2 = (set2) => (e3) => set2(e3.currentTarget.checked);
@@ -10724,11 +10729,11 @@
     const [payer, setPayer] = d2(x3?.payer || "");
     const comesIn = way === "in";
     const [type, setType] = d2(x3?.type || "");
-    const opened2 = ownKey(brandOf(x3?.institution, x3?.name), x3?.name);
-    const had = plan.logos?.[opened2];
+    const opened3 = ownKey(brandOf(x3?.institution, x3?.name), x3?.name);
+    const had = plan.logos?.[opened3];
     const [img, setImg] = d2(had);
     const suggested2 = suggestType(brand, name);
-    const { busy: busy2, keep: keep3, touched, watch: watch2 } = useSaving(props);
+    const { busy: busy2, keep: keep3, touched: touched2, watch: watch2 } = useSaving(props);
     const [problem, setProblem] = d2("");
     const accounts = plan.accounts || [];
     const submit = (e3) => {
@@ -10752,7 +10757,7 @@
       const at2 = list.findIndex((q2) => q2.id === x3?.id);
       if (at2 >= 0) list[at2] = p3;
       else list.push(p3);
-      keep3({ ...plan, payments: list, logos: withLogo(plan, ownKey(brand, p3.name), img, opened2, had) });
+      keep3({ ...plan, payments: list, logos: withLogo(plan, ownKey(brand, p3.name), img, opened3, had) });
     };
     const remove = () => keep3({ ...plan, payments: (plan.payments || []).filter((q2) => q2.id !== x3?.id) });
     return /* @__PURE__ */ u3("form", { class: "finform", onSubmit: submit, ...watch2, children: [
@@ -10792,7 +10797,7 @@
         ] })
       ] }),
       x3 && /* @__PURE__ */ u3(PaidLately, { x: x3, ledger: props.ledger }),
-      /* @__PURE__ */ u3(Actions3, { busy: busy2, exists: !!x3, remove, close: props.close, problem, touched })
+      /* @__PURE__ */ u3(Actions3, { busy: busy2, exists: !!x3, remove, close: props.close, problem, touched: touched2 })
     ] });
   }
   function BrandPick({ kind, value, set: set2, payment }) {
@@ -10862,10 +10867,10 @@
       picked.current = true;
       setBrand(k3 || "none");
     };
-    const opened2 = ownKey(brandOf(a3?.institution, a3?.name, a3?.kind), a3?.name);
-    const had = plan.logos?.[opened2];
+    const opened3 = ownKey(brandOf(a3?.institution, a3?.name, a3?.kind), a3?.name);
+    const had = plan.logos?.[opened3];
     const [img, setImg] = d2(had);
-    const real = brand === "none" ? "" : brand;
+    const real2 = brand === "none" ? "" : brand;
     const [balance, setBalance] = d2(money2(a3?.balance));
     const [pending2, setPending2] = d2(text(a3?.pending));
     const [rate, setRate] = d2(text(a3?.rate));
@@ -10896,12 +10901,12 @@
     };
     const sign = foreign && /^[A-Z]{3}$/.test(code2) ? signOf(code2) : void 0;
     const payer = (plan.payments || []).find((x3) => a3 && x3.card === a3.id);
-    const { busy: busy2, keep: keep3, touched, watch: watch2 } = useSaving(props);
+    const { busy: busy2, keep: keep3, touched: touched2, watch: watch2 } = useSaving(props);
     const [problem, setProblem] = d2("");
     const loans = (plan.accounts || []).filter((q2) => q2.kind === "loan");
     const submit = (e3) => {
       e3.preventDefault();
-      const wrong = !name.trim() && !real ? "Give it a name, or pick its bank." : num(balance) < 0 && (owed(kind) || held2(kind)) ? "Type it without a minus." : kind === "card" && paidEach && payer ? `“${payer.name}” pays it off already: delete that payment, or leave this off.` : kind === "card" && paidEach && num(spend) < 0 ? "Type the spending without a minus." : kind === "loan" && firstDue && !(num(original) > 0) ? "Type what was borrowed, or leave the first payment day empty." : kind === "loan" && firstDue && !(num(payment) > 0) && !(planMonthly > 0) ? "Type each payment, or leave the first payment day empty." : kind === "loan" && (num(term) < 0 || num(term) !== Math.round(num(term))) ? "The number of payments is a whole number, as 36." : kind === "loan" && (num(payment) < 0 || num(charge) < 0) ? "Type the payment and the charge without a minus." : kind === "car" && num(bought) < 0 ? "Type what it cost without a minus." : kind === "car" && num(bought) > 0 && !boughtOn ? "Pick the day it was bought, or leave what it cost empty." : foreign && !/^[A-Z]{3}$/.test(code2) ? "A currency is its three letters, as EUR." : foreign && !(num(xrate) > 0) ? `Type how many ${home} one ${code2} is.` : "";
+      const wrong = !name.trim() && !real2 ? "Give it a name, or pick its bank." : num(balance) < 0 && (owed(kind) || held2(kind)) ? "Type it without a minus." : kind === "card" && paidEach && payer ? `“${payer.name}” pays it off already: delete that payment, or leave this off.` : kind === "card" && paidEach && num(spend) < 0 ? "Type the spending without a minus." : kind === "loan" && firstDue && !(num(original) > 0) ? "Type what was borrowed, or leave the first payment day empty." : kind === "loan" && firstDue && !(num(payment) > 0) && !(planMonthly > 0) ? "Type each payment, or leave the first payment day empty." : kind === "loan" && (num(term) < 0 || num(term) !== Math.round(num(term))) ? "The number of payments is a whole number, as 36." : kind === "loan" && (num(payment) < 0 || num(charge) < 0) ? "Type the payment and the charge without a minus." : kind === "car" && num(bought) < 0 ? "Type what it cost without a minus." : kind === "car" && num(bought) > 0 && !boughtOn ? "Pick the day it was bought, or leave what it cost empty." : foreign && !/^[A-Z]{3}$/.test(code2) ? "A currency is its three letters, as EUR." : foreign && !(num(xrate) > 0) ? `Type how many ${home} one ${code2} is.` : "";
       setProblem(wrong);
       if (wrong) return;
       const owesNow = read ? read.owed : num(balance);
@@ -10909,7 +10914,7 @@
       const next = {
         id: a3?.id || "",
         kind,
-        name: name.trim() || (real ? named3(kind, brandName(real)) : ""),
+        name: name.trim() || (real2 ? named3(kind, brandName(real2)) : ""),
         institution: brand || void 0,
         balance: owesNow,
         detail: detail.trim() || void 0,
@@ -10933,7 +10938,7 @@
       const at2 = list.findIndex((q2) => q2.id === a3?.id);
       if (at2 >= 0) list[at2] = next;
       else list.push(next);
-      keep3({ ...plan, accounts: list, logos: withLogo(plan, ownKey(brand, next.name), img, opened2, had), rates: foreign ? { ...plan.rates || {}, [code2]: num(xrate) } : plan.rates });
+      keep3({ ...plan, accounts: list, logos: withLogo(plan, ownKey(brand, next.name), img, opened3, had), rates: foreign ? { ...plan.rates || {}, [code2]: num(xrate) } : plan.rates });
     };
     const usesIt = (x3) => !!a3 && [x3.from, x3.to, x3.card].includes(a3.id);
     const users = [
@@ -10976,10 +10981,10 @@
         ] })
       ] });
     }
-    const said2 = name.trim() || (real ? named3(kind, brandName(real)) : "");
+    const said2 = name.trim() || (real2 ? named3(kind, brandName(real2)) : "");
     return /* @__PURE__ */ u3("form", { class: "finform", ref: form2, onSubmit: submit, ...watch2, children: [
       /* @__PURE__ */ u3("div", { class: "formhead", children: [
-        /* @__PURE__ */ u3(Mark, { brand: real, kind, name: said2 || "Account", img, size: "lg" }),
+        /* @__PURE__ */ u3(Mark, { brand: real2, kind, name: said2 || "Account", img, size: "lg" }),
         /* @__PURE__ */ u3("div", { class: "grow", children: [
           /* @__PURE__ */ u3("h2", { id: "finSheetTitle", children: a3 ? a3.name : `Add ${adding[kind] || "an account"}` }),
           !a3 && /* @__PURE__ */ u3("div", { class: "formsays muted", children: [
@@ -10990,10 +10995,10 @@
         !a3 && !props.kind && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => setStep("kind"), children: "Change" })
       ] }),
       a3 && (a3.kind === "other" || a3.kind === "collectible") && /* @__PURE__ */ u3("div", { class: "kindswap", children: /* @__PURE__ */ u3(Segmented, { label: "Kind", value: kind, pick: setKind, options: [["collectible", "Collectibles"], ["other", "Something else"]] }) }),
-      kind !== "other" && kind !== "collectible" && /* @__PURE__ */ u3(BrandPick, { kind, value: real, set: pickBrand }),
-      /* @__PURE__ */ u3(OwnLogo, { value: img, set: setImg, what: real ? brandName(real) : said2 || "this account", fetchLogo: props.fetchLogo, guess: siteFor(real || brandOf(void 0, name, kind), name) }),
+      kind !== "other" && kind !== "collectible" && /* @__PURE__ */ u3(BrandPick, { kind, value: real2, set: pickBrand }),
+      /* @__PURE__ */ u3(OwnLogo, { value: img, set: setImg, what: real2 ? brandName(real2) : said2 || "this account", fetchLogo: props.fetchLogo, guess: siteFor(real2 || brandOf(void 0, name, kind), name) }),
       /* @__PURE__ */ u3("div", { class: "formgrid", children: [
-        /* @__PURE__ */ u3(Field, { label: "Name", children: /* @__PURE__ */ u3("input", { value: name, onInput: input(rename), placeholder: real ? named3(kind, brandName(brand)) : { checking: "Chase Checking", savings: "Savings", card: "Chase Freedom", investment: "Brokerage", retirement: "401(k)", loan: "Car loan", home: "Home", car: "2022 RAV4", collectible: "Trading cards, jewelry", other: "A boat" }[kind], required: !brand }) }),
+        /* @__PURE__ */ u3(Field, { label: "Name", children: /* @__PURE__ */ u3("input", { value: name, onInput: input(rename), placeholder: real2 ? named3(kind, brandName(brand)) : { checking: "Chase Checking", savings: "Savings", card: "Chase Freedom", investment: "Brokerage", retirement: "401(k)", loan: "Car loan", home: "Home", car: "2022 RAV4", collectible: "Trading cards, jewelry", other: "A boat" }[kind], required: !brand }) }),
         !read && /* @__PURE__ */ u3(MoneyField, { label: owes ? "Owed" : held2(kind) ? "Worth" : "Balance", value: balance, set: setBalance, sign }),
         kind === "card" && /* @__PURE__ */ u3(MoneyField, { label: "Pending", value: pending2, set: setPending2, sign }),
         kind === "card" && /* @__PURE__ */ u3("label", { class: "fcheckbox wide", children: [
@@ -11048,7 +11053,7 @@
         /* @__PURE__ */ u3("datalist", { id: "finCurrencies", children: ["USD", "EUR", "GBP", "CAD", "AUD", "NZD", "JPY", "CHF", "SEK", "NOK", "DKK", "MXN", "INR"].filter((c4) => c4 !== home).map((c4) => /* @__PURE__ */ u3("option", { value: c4 }, c4)) })
       ] }),
       a3 && /* @__PURE__ */ u3(BalancesLately, { a: a3 }),
-      /* @__PURE__ */ u3(Actions3, { busy: busy2, exists: !!a3, remove, close: props.close, problem, touched, uses, removeAll: () => without(true) })
+      /* @__PURE__ */ u3(Actions3, { busy: busy2, exists: !!a3, remove, close: props.close, problem, touched: touched2, uses, removeAll: () => without(true) })
     ] });
   }
   function PersonForm(props) {
@@ -11062,7 +11067,7 @@
     const [day22, setDay2] = d2(String(e3?.schedule.day2 || 15));
     const [account, setAccount] = d2(e3?.account || checking || "");
     const [deds, setDeds] = d2((e3?.deductions || []).map((d3) => ({ name: d3.name, amount: money2(d3.amount), account: d3.account || "" })));
-    const { busy: busy2, keep: keep3, touched, watch: watch2 } = useSaving(props);
+    const { busy: busy2, keep: keep3, touched: touched2, watch: watch2 } = useSaving(props);
     const accounts = (plan.accounts || []).filter((a3) => !owed(a3.kind) && !held2(a3.kind));
     const [problem, setProblem] = d2("");
     const setDed = (i3, k3, v3) => setDeds(deds.map((d3, j3) => j3 === i3 ? { ...d3, [k3]: v3 } : d3));
@@ -11117,7 +11122,7 @@
         /* @__PURE__ */ u3("button", { type: "button", class: "small", "aria-label": `Remove ${d3.name || "deduction"}`, onClick: () => setDeds(deds.filter((_3, j3) => j3 !== i3)), children: "Remove" })
       ] }, i3)),
       /* @__PURE__ */ u3("p", { children: /* @__PURE__ */ u3("button", { type: "button", class: "small addded", onClick: () => setDeds([...deds, { name: "", amount: "", account: "" }]), children: "Add a deduction" }) }),
-      /* @__PURE__ */ u3(Actions3, { busy: busy2, exists: !!e3, remove, close: props.close, problem, touched })
+      /* @__PURE__ */ u3(Actions3, { busy: busy2, exists: !!e3, remove, close: props.close, problem, touched: touched2 })
     ] });
   }
   function PaidLately({ x: x3, ledger }) {
@@ -11173,7 +11178,7 @@
     const now = (a3) => start?.[a3.id] !== void 0 ? Math.round(start[a3.id] / rateOf(plan, a3) * 100) / 100 : void 0;
     const est = (a3) => owed(a3.kind) ? Math.max(0, Math.round(((now(a3) ?? a3.balance + (a3.pending || 0)) - (a3.pending || 0)) * 100) / 100) : now(a3) ?? a3.balance;
     const [typed, setTyped] = d2(() => ({ cushion: String(plan.cushion || 0), ...Object.fromEntries(accounts.flatMap((a3) => [[a3.id, cents(est(a3))], ...a3.kind === "card" ? [[a3.id + ":p", cents(a3.pending || 0)]] : []])) }));
-    const { busy: busy2, keep: keep3, touched, watch: watch2 } = useSaving(props);
+    const { busy: busy2, keep: keep3, touched: touched2, watch: watch2 } = useSaving(props);
     const [problem, setProblem] = d2("");
     const first = A2(null);
     _2(() => {
@@ -11182,9 +11187,9 @@
     }, []);
     const papered = (a3) => a3.kind === "loan" && !!a3.firstDue && (a3.original || 0) > 0;
     const firstShown = groups.flatMap((g2) => accounts.filter((a3) => g2.kinds.includes(a3.kind) && !papered(a3)))[0]?.id;
-    const read = (key6, was) => {
-      const n3 = parseAmount(typed[key6] ?? "");
-      return typed[key6]?.trim() && !isNaN(n3) ? n3 : was;
+    const read = (key7, was) => {
+      const n3 = parseAmount(typed[key7] ?? "");
+      return typed[key7]?.trim() && !isNaN(n3) ? n3 : was;
     };
     const submit = (e3) => {
       e3.preventDefault();
@@ -11195,7 +11200,7 @@
       const today2 = todayISO();
       keep3({ ...plan, updated: today2, cushion: Math.max(0, read("cushion", plan.cushion || 0)), accounts: accounts.map((a3) => ({ ...a3, balance: read(a3.id, est(a3)), pending: a3.kind === "card" ? read(a3.id + ":p", a3.pending || 0) : a3.pending, updated: today2 })) });
     };
-    const type = (key6) => (e3) => setTyped({ ...typed, [key6]: e3.target.value });
+    const type = (key7) => (e3) => setTyped({ ...typed, [key7]: e3.target.value });
     const [pulled, setPulled] = d2({});
     const fromApp = async (app) => {
       setPulled({ busy: app.name });
@@ -11289,7 +11294,7 @@
         ] })
       ] }),
       /* @__PURE__ */ u3(Actions3, { busy: busy2, exists: false, remove: () => {
-      }, close: props.close, problem, touched })
+      }, close: props.close, problem, touched: touched2 })
     ] });
   }
   function TransactionForm(props) {
@@ -11313,7 +11318,7 @@
     const setPart = (i3, k3, val) => setParts(parts3.map((sp, j3) => j3 === i3 ? { ...sp, [k3]: val } : sp));
     const placed2 = parts3.reduce((sum, sp) => sum + num(sp.amount), 0);
     const split2 = () => setParts(parts3.length ? [...parts3, { category: "", amount: "", note: "" }] : [{ category: category.trim(), amount: amount.trim(), note: "" }, { category: "", amount: "", note: "" }]);
-    const { busy: busy2, touched, watch: watch2 } = useSaving(props);
+    const { busy: busy2, touched: touched2, watch: watch2 } = useSaving(props);
     const [saving2, setSaving] = d2(false);
     const [problem, setProblem] = d2("");
     const past = (f4) => [...new Set((ledger?.transactions || []).map(f4).filter(Boolean))].sort();
@@ -11522,12 +11527,12 @@
       ] }),
       /* @__PURE__ */ u3("datalist", { id: "finPayees", children: past((q2) => q2.payee).map((x3) => /* @__PURE__ */ u3("option", { value: x3 }, x3)) }),
       /* @__PURE__ */ u3("datalist", { id: "finCategories", children: categoryList.map((x3) => /* @__PURE__ */ u3("option", { value: x3 }, x3)) }),
-      /* @__PURE__ */ u3(Actions3, { busy: busy2 || saving2, exists: !!t3, remove, close: props.close, problem, touched })
+      /* @__PURE__ */ u3(Actions3, { busy: busy2 || saving2, exists: !!t3, remove, close: props.close, problem, touched: touched2 })
     ] });
   }
   function LogosForm(props) {
     const { plan, ledger, fetchLogo: fetchLogo2 } = props;
-    const { busy: busy2, keep: keep3, touched, watch: watch2 } = useSaving(props);
+    const { busy: busy2, keep: keep3, touched: touched2, watch: watch2 } = useSaving(props);
     const rows = (() => {
       const seen2 = /* @__PURE__ */ new Map();
       const add = (brand, name, always) => {
@@ -11596,12 +11601,12 @@
       }) }),
       !rows.length && /* @__PURE__ */ u3("p", { class: "muted", children: "Every payee and account has a logo already." }),
       /* @__PURE__ */ u3(Actions3, { busy: busy2, exists: false, remove: () => {
-      }, close: props.close, touched: touched || Object.keys(got).length > 0 })
+      }, close: props.close, touched: touched2 || Object.keys(got).length > 0 })
     ] });
   }
   function RulesForm(props) {
     const { plan } = props;
-    const { busy: busy2, keep: keep3, touched, watch: watch2 } = useSaving(props);
+    const { busy: busy2, keep: keep3, touched: touched2, watch: watch2 } = useSaving(props);
     const [rules, setRulesState] = d2(plan.rules || []);
     const latest2 = A2(rules);
     const setRules = (next) => {
@@ -11648,7 +11653,7 @@
       ] }),
       problem && /* @__PURE__ */ u3("p", { class: "formerr bad", role: "alert", children: problem }),
       /* @__PURE__ */ u3(Actions3, { busy: busy2, exists: false, remove: () => {
-      }, close: props.close, touched: touched || JSON.stringify(rules) !== JSON.stringify(plan.rules || []) })
+      }, close: props.close, touched: touched2 || JSON.stringify(rules) !== JSON.stringify(plan.rules || []) })
     ] });
   }
   var categoryIcons = [
@@ -11681,7 +11686,7 @@
     const { plan, ledger } = props;
     const [rows, setRows] = d2(() => (props.categories || []).map((c4) => ({ was: c4.name, name: c4.name, parent: c4.parent || "", icon: c4.icon || "", income: !!c4.income })));
     const [busy2, setBusy] = d2(false);
-    const [touched, setTouched] = d2(false);
+    const [touched2, setTouched] = d2(false);
     const [problem, setProblem] = d2("");
     const set2 = (i3, k3, val) => {
       setTouched(true);
@@ -11755,14 +11760,14 @@
       }) }),
       /* @__PURE__ */ u3("p", { children: /* @__PURE__ */ u3("button", { type: "button", class: "small addded", onClick: add, children: "Add a category" }) }),
       /* @__PURE__ */ u3(Actions3, { busy: busy2, exists: false, remove: () => {
-      }, close: props.close, problem, touched })
+      }, close: props.close, problem, touched: touched2 })
     ] });
   }
   function BudgetsForm(props) {
     const { plan } = props;
     const names5 = (props.categories || []).map((c4) => c4.name);
     const [rows, setRows] = d2(() => (plan.budgets || []).map((b2) => ({ category: b2.category, amount: money2(b2.amount), per: b2.per || "month", rollover: !!b2.rollover })));
-    const { busy: busy2, keep: keep3, touched, watch: watch2 } = useSaving(props);
+    const { busy: busy2, keep: keep3, touched: touched2, watch: watch2 } = useSaving(props);
     const [problem, setProblem] = d2("");
     const set2 = (i3, k3, val) => setRows(rows.map((r3, j3) => j3 === i3 ? { ...r3, [k3]: val } : r3));
     const submit = (e3) => {
@@ -11799,7 +11804,7 @@
       ] }, i3)) }),
       /* @__PURE__ */ u3("p", { children: /* @__PURE__ */ u3("button", { type: "button", class: "small addded", onClick: () => setRows([...rows, { category: "", amount: "", per: "month", rollover: false }]), children: "Add a budget" }) }),
       /* @__PURE__ */ u3(Actions3, { busy: busy2, exists: false, remove: () => {
-      }, close: props.close, problem, touched })
+      }, close: props.close, problem, touched: touched2 })
     ] });
   }
   function ImportForm(props) {
@@ -12024,7 +12029,7 @@
     const [target, setTarget] = d2(money2(g2?.target));
     const [date, setDate] = d2(g2?.date || "");
     const [shares2, setShares] = d2(() => Object.fromEntries((g2?.shares || []).map((s3) => [s3.account, String(s3.percent)])));
-    const { busy: busy2, keep: keep3, touched, watch: watch2 } = useSaving(props);
+    const { busy: busy2, keep: keep3, touched: touched2, watch: watch2 } = useSaving(props);
     const [problem, setProblem] = d2("");
     const toggle = (acct) => (on2) => setShares((s3) => {
       const next = { ...s3 };
@@ -12076,7 +12081,7 @@
           ] })
         ] }, a3.id);
       }) }) : /* @__PURE__ */ u3("p", { class: "muted", children: "No account holds money yet: add a savings account first." }),
-      /* @__PURE__ */ u3(Actions3, { busy: busy2, exists: !!g2, remove, close: props.close, problem, touched })
+      /* @__PURE__ */ u3(Actions3, { busy: busy2, exists: !!g2, remove, close: props.close, problem, touched: touched2 })
     ] });
   }
   var cardsAccount = (plan) => {
@@ -12102,7 +12107,7 @@
     const [picture, setPicture] = d2(c4?.picture || "");
     const [shown8, setShown] = d2("");
     const [reading2, setReading] = d2("");
-    const { busy: busy2, keep: keep3, touched, watch: watch2 } = useSaving(props);
+    const { busy: busy2, keep: keep3, touched: touched2, watch: watch2 } = useSaving(props);
     const [problem, setProblem] = d2("");
     h2(() => {
       if (!picture || !props.cardPictures) {
@@ -12190,7 +12195,7 @@
         picture && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => setPicture(""), children: "No photo" }),
         reading2 && /* @__PURE__ */ u3("span", { class: "muted", role: "status", children: reading2 })
       ] }),
-      /* @__PURE__ */ u3(Actions3, { busy: busy2, exists: !!c4, remove, close: props.close, problem, touched })
+      /* @__PURE__ */ u3(Actions3, { busy: busy2, exists: !!c4, remove, close: props.close, problem, touched: touched2 })
     ] });
   }
   function FinanceSheet({ edit }) {
@@ -12413,7 +12418,7 @@
       r3.kept ? `${r3.kept === 1 ? "1 card keeps" : `${r3.kept} cards keep`} your own price.` : ""
     ].filter(Boolean).join(" ");
   }
-  function CollectionPage({ v: v3, open: open4, edit, read, update }) {
+  function CollectionPage({ v: v3, open: open5, edit, read, update }) {
     const [said2, setSaid] = d2("");
     const [busy2, setBusy] = d2(false);
     const run2 = async () => {
@@ -12507,7 +12512,7 @@
               /* @__PURE__ */ u3(Gain, { worth: cardWorth(c4), paid: cardPaid(c4) })
             ] }),
             whenPlain: true,
-            onOpen: () => open4(c4.id),
+            onOpen: () => open5(c4.id),
             openLabel: "its page"
           },
           c4.id
@@ -12760,13 +12765,13 @@ ${pays}
     const first = dates[0] || v3.today, last2 = dates[dates.length - 1] || v3.today;
     const from2 = (v3.days || [])[0]?.date || first;
     const read = (v3.days || []).at(-1)?.date || last2;
-    const [opened2] = d2(() => {
+    const [opened3] = d2(() => {
       const d3 = opening2;
       opening2 = "";
       return d3 && days[d3] ? d3 : d3 && d3 < first ? first : from2;
     });
-    const [month3, setMonth] = d2(monthOf(opened2));
-    const [sel2, setSel] = d2(opened2);
+    const [month3, setMonth] = d2(monthOf(opened3));
+    const [sel2, setSel] = d2(opened3);
     const focusing = A2("");
     const grid = A2(null);
     h2(() => {
@@ -12776,7 +12781,7 @@ ${pays}
     });
     const cushion = v3.plan.cushion || 0;
     if (!dates.length) return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3(Widget, { title: "Calendar", span: "all", children: /* @__PURE__ */ u3(Empty, { children: "Nothing to show yet: add a checking account, a paycheck, and the payments that repeat." }) }) });
-    const go2 = (day3, focus = false) => {
+    const go3 = (day3, focus = false) => {
       const d3 = day3 < first ? first : day3 > last2 ? last2 : day3;
       setSel(d3);
       setMonth(monthOf(d3));
@@ -12791,13 +12796,13 @@ ${pays}
     const keys2 = (e3) => {
       const day3 = sel2;
       const step2 = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 };
-      if (step2[e3.key]) go2(addDays(day3, step2[e3.key]), true);
+      if (step2[e3.key]) go3(addDays(day3, step2[e3.key]), true);
       else if (e3.key === "PageUp" || e3.key === "PageDown") {
         const m3 = addMonths(monthOf(day3), e3.key === "PageUp" ? -1 : 1);
-        go2(m3 + day3.slice(7) > last2 ? last2 : m3 + day3.slice(7), true);
-      } else if (e3.key === "Home") go2(addDays(day3, -col(day3)), true);
-      else if (e3.key === "End") go2(addDays(day3, 6 - col(day3)), true);
-      else if ((e3.key === "t" || e3.key === "T") && !e3.metaKey && !e3.ctrlKey && !e3.altKey) go2(days[v3.today] ? v3.today : from2, true);
+        go3(m3 + day3.slice(7) > last2 ? last2 : m3 + day3.slice(7), true);
+      } else if (e3.key === "Home") go3(addDays(day3, -col(day3)), true);
+      else if (e3.key === "End") go3(addDays(day3, 6 - col(day3)), true);
+      else if ((e3.key === "t" || e3.key === "T") && !e3.metaKey && !e3.ctrlKey && !e3.altKey) go3(days[v3.today] ? v3.today : from2, true);
       else return;
       e3.preventDefault();
     };
@@ -12821,7 +12826,7 @@ ${pays}
           span: 2,
           kind: "fx-calendar",
           actions: /* @__PURE__ */ u3(S, { children: [
-            /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: monthOf(v3.today) === month3 && sel2 === (days[v3.today] ? v3.today : from2), onClick: () => go2(days[v3.today] ? v3.today : from2), children: "Today" }),
+            /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: monthOf(v3.today) === month3 && sel2 === (days[v3.today] ? v3.today : from2), onClick: () => go3(days[v3.today] ? v3.today : from2), children: "Today" }),
             /* @__PURE__ */ u3(IconButton, { icon: "prev", label: "The month before", onClick: () => turn(-1), disabled: month3 <= monthOf(first) }),
             /* @__PURE__ */ u3(IconButton, { icon: "next", label: "The month after", onClick: () => turn(1), disabled: month3 >= monthOf(last2) })
           ] }),
@@ -13267,14 +13272,14 @@ ${pays}
     if (m3.spent <= 0) return null;
     const f4 = fire(m3.spent * 12, have, monthly, withdraw, growth);
     const share3 = Math.min(100, have / f4.target * 100);
-    const set2 = (key6, text2, lo, hi) => {
+    const set2 = (key7, text2, lo, hi) => {
       const n3 = parseAmount(text2);
-      if (isNaN(n3) || n3 < lo || n3 > hi || key6 === "withdraw" && n3 === 0) {
-        setProblem(key6 === "withdraw" ? "A share to spend a year is more than 0 and at most 20%." : "Growth a year is between -10% and 20%.");
+      if (isNaN(n3) || n3 < lo || n3 > hi || key7 === "withdraw" && n3 === 0) {
+        setProblem(key7 === "withdraw" ? "A share to spend a year is more than 0 and at most 20%." : "Growth a year is between -10% and 20%.");
         return;
       }
       setProblem("");
-      keep3({ ...v3.plan, [key6]: n3 });
+      keep3({ ...v3.plan, [key7]: n3 });
     };
     const range = f4.sooner !== null && f4.later !== null && f4.sooner !== f4.later ? ` (${when2(v3.today, f4.sooner)} at ${growth + 2}%, ${when2(v3.today, f4.later)} at ${growth - 2}%)` : "";
     return /* @__PURE__ */ u3(Widget, { title: "Financial independence", span: "all", kind: "fx-fire", children: [
@@ -13349,11 +13354,11 @@ ${pays}
     return `${d3.getFullYear()}-${String(d3.getMonth() + 1).padStart(2, "0")}`;
   };
   function WhatIf({ v: v3, goals }) {
-    const open4 = goals.filter((g3) => g3.left > 0);
+    const open5 = goals.filter((g3) => g3.left > 0);
     const [id2, setId] = d2("");
     const [amount, setAmount] = d2("");
     const [day3, setDay] = d2("");
-    const g2 = open4.find((x3) => x3.id === id2) || open4[0];
+    const g2 = open5.find((x3) => x3.id === id2) || open5[0];
     if (!g2) return null;
     const per = paydaysAMonth(v3);
     const n3 = parseAmount(amount);
@@ -13365,8 +13370,8 @@ ${pays}
     return /* @__PURE__ */ u3("section", { class: "fx-whatif", "aria-label": "What if", children: [
       /* @__PURE__ */ u3("h3", { children: "What if" }),
       /* @__PURE__ */ u3("div", { class: "fx-whatifrow", children: [
-        open4.length > 1 && /* @__PURE__ */ u3("select", { "aria-label": "Which goal", value: g2.id, onChange: (e3) => setId(e3.target.value), children: open4.map((x3) => /* @__PURE__ */ u3("option", { value: x3.id, children: x3.name }, x3.id)) }),
-        open4.length === 1 && /* @__PURE__ */ u3("strong", { children: g2.name }),
+        open5.length > 1 && /* @__PURE__ */ u3("select", { "aria-label": "Which goal", value: g2.id, onChange: (e3) => setId(e3.target.value), children: open5.map((x3) => /* @__PURE__ */ u3("option", { value: x3.id, children: x3.name }, x3.id)) }),
+        open5.length === 1 && /* @__PURE__ */ u3("strong", { children: g2.name }),
         /* @__PURE__ */ u3("label", { children: [
           "I put by ",
           /* @__PURE__ */ u3("span", { class: "moneyfield", children: [
@@ -13836,29 +13841,29 @@ ${pays}
   }
   var share2 = (gain, paid) => Math.abs(paid) < 5e-3 ? "" : `${gain < 0 ? "−" : "+"}${Math.abs(gain / Math.abs(paid) * 100).toFixed(1)}%`;
   var shares = (n3) => amountsHidden() ? "•••" : n3.toLocaleString("en-US", { maximumFractionDigits: n3 < 1 ? 4 : 3 });
-  function InvestmentsWidget({ v: v3, read, state: state2 = {}, keep: keep3, add, find, trades, follow: follow3 }) {
-    const [open4, setOpen] = d2("");
+  function InvestmentsWidget({ v: v3, read, state: state3 = {}, keep: keep3, add, find: find2, trades, follow: follow3 }) {
+    const [open5, setOpen] = d2("");
     const [adding2, setAdding] = d2(false);
     const accounts = (v3.plan.accounts || []).filter((a3) => a3.holdings?.length);
     const ever = !!v3.plan.holdingsRead;
     if (!accounts.length && !read) return null;
     const when3 = readWhen(v3.plan.holdingsRead, v3.today);
-    const canAdd = !!(add && find);
+    const canAdd = !!(add && find2);
     const button = /* @__PURE__ */ u3(S, { children: [
-      canAdd && !adding2 && /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: state2.busy, onClick: () => setAdding(true), children: "Add a holding" }),
-      read && /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: state2.busy, onClick: read, children: state2.busy ? "Reading…" : "Read now" })
+      canAdd && !adding2 && /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: state3.busy, onClick: () => setAdding(true), children: "Add a holding" }),
+      read && /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: state3.busy, onClick: read, children: state3.busy ? "Reading…" : "Read now" })
     ] });
-    const form2 = adding2 && add && find && /* @__PURE__ */ u3(AddForm, { v: v3, add, find, close: () => setAdding(false) });
+    const form2 = adding2 && add && find2 && /* @__PURE__ */ u3(AddForm, { v: v3, add, find: find2, close: () => setAdding(false) });
     const said2 = /* @__PURE__ */ u3(S, { children: [
-      state2.said && /* @__PURE__ */ u3("p", { class: "fx-sub fx-investsaid", role: "status", children: state2.said }),
-      state2.problem && /* @__PURE__ */ u3("p", { class: "formerr bad fx-investsaid", role: "alert", children: state2.problem })
+      state3.said && /* @__PURE__ */ u3("p", { class: "fx-sub fx-investsaid", role: "status", children: state3.said }),
+      state3.problem && /* @__PURE__ */ u3("p", { class: "formerr bad fx-investsaid", role: "alert", children: state3.problem })
     ] });
     if (!accounts.length) {
       return /* @__PURE__ */ u3(Widget, { title: "Investments", span: "all", kind: "fx-invest", actions: button, children: [
         form2,
-        !form2 && !(ever && state2.said) && /* @__PURE__ */ u3("p", { class: "fx-sub fx-investintro", children: ever ? canAdd ? "Nothing in Ghostfolio matched an investment or retirement account here yet. Add a holding to put one there." : "Nothing in Ghostfolio matched an investment or retirement account here yet." : "Read what each of your investment accounts holds from Ghostfolio, the investment tracker on your homelab: each fund and share, what went in, and what it is worth now. Only ticker symbols leave the homelab, when Ghostfolio looks prices up; amounts and accounts stay here." }),
+        !form2 && !(ever && state3.said) && /* @__PURE__ */ u3("p", { class: "fx-sub fx-investintro", children: ever ? canAdd ? "Nothing in Ghostfolio matched an investment or retirement account here yet. Add a holding to put one there." : "Nothing in Ghostfolio matched an investment or retirement account here yet." : "Read what each of your investment accounts holds from Ghostfolio, the investment tracker on your homelab: each fund and share, what went in, and what it is worth now. Only ticker symbols leave the homelab, when Ghostfolio looks prices up; amounts and accounts stay here." }),
         said2,
-        /* @__PURE__ */ u3(Unmatched, { v: v3, state: state2, keep: keep3, read })
+        /* @__PURE__ */ u3(Unmatched, { v: v3, state: state3, keep: keep3, read })
       ] });
     }
     const own2 = (a3) => worthOf(v3, a3);
@@ -13942,31 +13947,31 @@ ${pays}
           /* @__PURE__ */ u3("th", { scope: "col", class: "n", children: "Gain" }),
           /* @__PURE__ */ u3("th", { scope: "col", class: "n", children: "Year" })
         ] }) }),
-        lines.map((l3) => /* @__PURE__ */ u3(HoldingRow, { v: v3, l: l3, open: open4 === l3.key, toggle: () => setOpen(open4 === l3.key ? "" : l3.key), trades }, l3.key))
+        lines.map((l3) => /* @__PURE__ */ u3(HoldingRow, { v: v3, l: l3, open: open5 === l3.key, toggle: () => setOpen(open5 === l3.key ? "" : l3.key), trades }, l3.key))
       ] }),
-      /* @__PURE__ */ u3(Watchlist, { v: v3, keep: keep3, follow: follow3, find }),
-      /* @__PURE__ */ u3(Unmatched, { v: v3, state: state2, keep: keep3, read }),
+      /* @__PURE__ */ u3(Watchlist, { v: v3, keep: keep3, follow: follow3, find: find2 }),
+      /* @__PURE__ */ u3(Unmatched, { v: v3, state: state3, keep: keep3, read }),
       keep3 && read && /* @__PURE__ */ u3("label", { class: "fx-investauto", children: [
         /* @__PURE__ */ u3("input", { type: "checkbox", checked: !v3.plan.readByHand, onChange: (e3) => keep3({ ...v3.plan, readByHand: e3.target.checked ? void 0 : true }) }),
         "Read Ghostfolio once a day when Finances opens"
       ] })
     ] });
   }
-  function Watchlist({ v: v3, keep: keep3, follow: follow3, find }) {
+  function Watchlist({ v: v3, keep: keep3, follow: follow3, find: find2 }) {
     const list = v3.plan.watch || [];
     const [adding2, setAdding] = d2(false);
     const [q2, setQ] = d2("");
     const [found2, setFound2] = d2(null);
     const [busy2, setBusy] = d2(false);
     const [problem, setProblem] = d2("");
-    const can = !!(follow3 && find);
+    const can = !!(follow3 && find2);
     if (!list.length && !can) return null;
     const said2 = (e3) => setProblem(String(e3?.message || e3));
     const look2 = async () => {
       setBusy(true);
       setProblem("");
       try {
-        setFound2(await find(q2));
+        setFound2(await find2(q2));
       } catch (e3) {
         said2(e3);
       }
@@ -14048,7 +14053,7 @@ ${pays}
     ] });
   }
   var yearAgo = (day3) => `${+day3.slice(0, 4) - 1}${day3.slice(4)}`;
-  function HoldingRow({ v: v3, l: l3, open: open4, toggle, trades }) {
+  function HoldingRow({ v: v3, l: l3, open: open5, toggle, trades }) {
     const a3 = l3.account, cur = a3.currency;
     const symbol = l3.h ? l3.h.symbol : "Cash";
     const name = l3.h ? l3.h.name || l3.h.symbol : "Not in a holding";
@@ -14064,9 +14069,9 @@ ${pays}
         a3.name
       ] })
     ] });
-    return /* @__PURE__ */ u3("tbody", { class: "fx-hold" + (open4 ? " open" : ""), children: [
+    return /* @__PURE__ */ u3("tbody", { class: "fx-hold" + (open5 ? " open" : ""), children: [
       /* @__PURE__ */ u3("tr", { onClick: l3.h ? toggle : void 0, children: [
-        /* @__PURE__ */ u3("th", { scope: "row", children: l3.h ? /* @__PURE__ */ u3("button", { type: "button", class: "fx-holdbtn", "aria-expanded": open4, "aria-controls": id2, onClick: (e3) => {
+        /* @__PURE__ */ u3("th", { scope: "row", children: l3.h ? /* @__PURE__ */ u3("button", { type: "button", class: "fx-holdbtn", "aria-expanded": open5, "aria-controls": id2, onClick: (e3) => {
           e3.stopPropagation();
           toggle();
         }, children: [
@@ -14095,7 +14100,7 @@ ${pays}
         ] }) }),
         /* @__PURE__ */ u3("td", { class: "n fx-holdtrend" + (trend.length > 1 && trend[trend.length - 1] < trend[0] ? " down" : ""), children: trend.length > 1 && /* @__PURE__ */ u3(Spark, { values: trend, w: 72, h: 20, title: `${l3.h.symbol} over the year: ${trend[trend.length - 1] < trend[0] ? "down" : "up"}` }) })
       ] }),
-      l3.h && open4 && /* @__PURE__ */ u3("tr", { class: "fx-holddetail", id: id2, children: /* @__PURE__ */ u3("td", { colSpan: 7, children: [
+      l3.h && open5 && /* @__PURE__ */ u3("tr", { class: "fx-holddetail", id: id2, children: /* @__PURE__ */ u3("td", { colSpan: 7, children: [
         /* @__PURE__ */ u3(HoldingHistory, { v: v3, h: l3.h, cur }),
         trades && /* @__PURE__ */ u3(Trades, { account: a3, h: l3.h, ops: trades })
       ] }) })
@@ -14318,8 +14323,8 @@ ${pays}
       ] })
     ] });
   }
-  function Unmatched({ v: v3, state: state2, keep: keep3, read }) {
-    const left = state2.unmatched || [];
+  function Unmatched({ v: v3, state: state3, keep: keep3, read }) {
+    const left = state3.unmatched || [];
     if (!left.length || !keep3 || !read) return null;
     const free = (v3.plan.accounts || []).filter((a3) => (a3.kind === "investment" || a3.kind === "retirement") && !a3.ghostfolio);
     const pick = async (name, to) => {
@@ -14333,7 +14338,7 @@ ${pays}
       /* @__PURE__ */ u3("ul", { children: left.map((name) => /* @__PURE__ */ u3("li", { children: /* @__PURE__ */ u3("label", { children: [
         /* @__PURE__ */ u3("strong", { children: name }),
         " in Ghostfolio is",
-        /* @__PURE__ */ u3("select", { disabled: state2.busy, onChange: (e3) => pick(name, e3.target.value), children: [
+        /* @__PURE__ */ u3("select", { disabled: state3.busy, onChange: (e3) => pick(name, e3.target.value), children: [
           /* @__PURE__ */ u3("option", { value: "", children: "Pick an account…" }),
           free.map((a3) => /* @__PURE__ */ u3("option", { value: a3.id, children: a3.name }, a3.id)),
           /* @__PURE__ */ u3("option", { value: "new", children: [
@@ -14345,7 +14350,7 @@ ${pays}
       ] }) }, name)) })
     ] });
   }
-  function AddForm({ v: v3, add, find, close: close3 }) {
+  function AddForm({ v: v3, add, find: find2, close: close3 }) {
     const invest2 = (v3.plan.accounts || []).filter((a3) => a3.kind === "investment" || a3.kind === "retirement");
     const [way, setWay] = d2("bought");
     const [account, setAccount] = d2(invest2[0]?.id || "new");
@@ -14374,7 +14379,7 @@ ${pays}
         const n3 = ++asked.current;
         setLooking(true);
         try {
-          const r3 = await find(q2);
+          const r3 = await find2(q2);
           if (n3 === asked.current) {
             setFound2(r3);
             setProblem("");
@@ -14490,7 +14495,7 @@ ${pays}
     return n3 <= 0 ? "updated today" : n3 === 1 ? "updated yesterday" : n3 < 14 ? `updated ${n3} days ago` : `updated ${dayShort(day3)}`;
   }
   var month2 = (day3) => monthName(day3).slice(0, 3);
-  function NetWorth({ v: v3, L: L2, edit, open: open4, sel: sel2, pick, update, keep: keep3, group: group2, setGroup, invest: invest2 }) {
+  function NetWorth({ v: v3, L: L2, edit, open: open5, sel: sel2, pick, update, keep: keep3, group: group2, setGroup, invest: invest2 }) {
     const [range, setRange] = d2("3");
     const [counted, setCounted] = d2("all");
     const accounts = v3.plan.accounts || [];
@@ -14553,8 +14558,8 @@ ${pays}
           ] }) : void 0,
           when: /* @__PURE__ */ u3(Amount, { value: Math.abs(w3), form: "full" }),
           whenPlain: true,
-          onOpen: open4 ? () => open4(a3.id) : edit ? () => edit("account", a3.id) : void 0,
-          openLabel: open4 ? "open" : "edit"
+          onOpen: open5 ? () => open5(a3.id) : edit ? () => edit("account", a3.id) : void 0,
+          openLabel: open5 ? "open" : "edit"
         },
         a3.id
       );
@@ -14937,8 +14942,8 @@ ${pays}
   }
 
   // web/src/finances/Reports.tsx
-  function Reports({ v: v3, ledger, exportFile: exportFile2, open: open4 }) {
-    const [key6, setKey] = d2("month");
+  function Reports({ v: v3, ledger, exportFile: exportFile2, open: open5 }) {
+    const [key7, setKey] = d2("month");
     const [saved, setSaved] = d2("");
     const [tag, setTag] = d2("");
     const [trendOf, setTrendOf] = d2("");
@@ -14949,7 +14954,7 @@ ${pays}
     const typed = picked ? ledger.transactions.filter((t3) => t3.tags?.includes(picked)) : ledger.transactions;
     const txs = inHome(v3.plan, typed);
     const all = ranges(v3.today, txs[0]?.date || v3.today);
-    const r3 = all.find((x3) => x3.key === key6) || all[0];
+    const r3 = all.find((x3) => x3.key === key7) || all[0];
     const sum = totals(txs, r3);
     const groups4 = byCategory(txs, v3.categories || [], r3);
     const months = byMonth(txs, r3);
@@ -14957,7 +14962,7 @@ ${pays}
     const payees = allPayees ? everyPayee : everyPayee.slice(0, 5);
     const tagged = picked ? [] : byTag(txs, v3.categories || [], r3);
     const account = (id2) => v3.plan.accounts?.find((a3) => a3.id === id2)?.name || id2;
-    const save2 = async () => {
+    const save3 = async () => {
       setSaved("Saving…");
       try {
         const currency = v3.plan.rates && Object.keys(v3.plan.rates).length ? (id2) => v3.plan.accounts?.find((a3) => a3.id === id2)?.currency || currencyCode() : void 0;
@@ -14969,8 +14974,8 @@ ${pays}
     const yearGroups = byCategory(txs, v3.categories || [], twelveMonths(v3.today));
     const most = groups4[0]?.amount || 1;
     const spent = groups4.reduce((s3, g2) => s3 + g2.amount, 0);
-    const inMonth = key6 === "month" || key6 === "last" ? r3.from.slice(0, 7) : void 0;
-    const opens = (f4) => open4 ? () => open4({ ...f4, month: inMonth }) : void 0;
+    const inMonth = key7 === "month" || key7 === "last" ? r3.from.slice(0, 7) : void 0;
+    const opens = (f4) => open5 ? () => open5({ ...f4, month: inMonth }) : void 0;
     return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3("div", { class: "fx-board", children: [
       /* @__PURE__ */ u3(Widget, { title: picked ? `Reports, tagged ${picked}` : "Reports", span: "all", kind: "fx-reportsum", actions: /* @__PURE__ */ u3(S, { children: [
         !!tags.length && /* @__PURE__ */ u3("select", { class: "fx-reporttag", "aria-label": "Tag", value: picked, onChange: (e3) => setTag(e3.target.value), children: [
@@ -14978,7 +14983,7 @@ ${pays}
           tags.map((x3) => /* @__PURE__ */ u3("option", { value: x3, children: x3 }, x3))
         ] }),
         /* @__PURE__ */ u3(Segmented, { label: "Which stretch", value: r3.key, pick: setKey, options: all.map((x3) => [x3.key, x3.label]) }),
-        exportFile2 && !!txs.length && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: save2, children: "Export CSV" })
+        exportFile2 && !!txs.length && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: save3, children: "Export CSV" })
       ] }), children: [
         /* @__PURE__ */ u3("div", { class: "fx-stats", children: [
           /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: sum.in, form: "whole", tone: "in" }), caption: "Money in" }),
@@ -15030,7 +15035,7 @@ ${pays}
           },
           x3.tag
         )) }) }),
-        !!yearGroups.length && /* @__PURE__ */ u3(Trend, { v: v3, txs, groups: yearGroups, group: trendOf, pick: setTrendOf, open: open4 }),
+        !!yearGroups.length && /* @__PURE__ */ u3(Trend, { v: v3, txs, groups: yearGroups, group: trendOf, pick: setTrendOf, open: open5 }),
         months.length > 1 && /* @__PURE__ */ u3(Widget, { title: "In and out, month by month", span: "all", kind: "fx-inout", children: [
           /* @__PURE__ */ u3(
             StackedBars,
@@ -15039,7 +15044,7 @@ ${pays}
               height: 220,
               label: `Money in above the line and out below it, each month ${r3.label.toLowerCase()}; the line is what was kept. The table under it has every number.`,
               columns: months.map((m3) => ({ label: m3.label, up: [{ value: m3.in, color: "in" }], down: [{ value: m3.out, color: "out" }], line: m3.in - m3.out })),
-              onPick: open4 && ((i3) => open4({ month: months[i3].month })),
+              onPick: open5 && ((i3) => open5({ month: months[i3].month })),
               tip: (i3) => /* @__PURE__ */ u3(S, { children: [
                 /* @__PURE__ */ u3("div", { class: "fx-caption", children: [
                   months[i3].label,
@@ -15084,7 +15089,7 @@ ${pays}
       ] })
     ] }) });
   }
-  function Trend({ v: v3, txs, groups: groups4, group: group2, pick, open: open4 }) {
+  function Trend({ v: v3, txs, groups: groups4, group: group2, pick, open: open5 }) {
     const cats = v3.categories || [];
     const g2 = groups4.find((x3) => x3.name === group2) || groups4[0];
     const trend = categoryTrend(txs, cats, g2.name, v3.today);
@@ -15121,7 +15126,7 @@ ${pays}
               height: 180,
               label: `${g2.name}: what was spent each of the last 12 months. The table under it has every number.`,
               columns: trend.map((t3) => ({ label: t3.label, up: [{ value: Math.max(0, t3.amount), color: categoryHue(g2.name, cats) || "out" }], down: [], line: 0 })),
-              onPick: open4 && g2.name !== "No category" ? (i3) => open4({ category: g2.name, month: trend[i3].month }) : void 0,
+              onPick: open5 && g2.name !== "No category" ? (i3) => open5({ category: g2.name, month: trend[i3].month }) : void 0,
               tip: (i3) => /* @__PURE__ */ u3(S, { children: [
                 /* @__PURE__ */ u3("div", { class: "fx-caption", children: [
                   monthName(trend[i3].month + "-01"),
@@ -15659,7 +15664,7 @@ ${pays}
   }
 
   // web/src/finances/widgets/Flow.tsx
-  function LastMonths({ v: v3, ledger, open: open4 }) {
+  function LastMonths({ v: v3, ledger, open: open5 }) {
     if (!ledger?.transactions.length) return null;
     const t3 = new Date(+v3.today.slice(0, 4), +v3.today.slice(5, 7) - 1, 1);
     const from2 = new Date(t3.getFullYear(), t3.getMonth() - 5, 1);
@@ -15687,17 +15692,17 @@ ${pays}
               " in, ",
               money(x3.out),
               " out",
-              open4 ? ", see its transactions" : ""
+              open5 ? ", see its transactions" : ""
             ] })
           ] })
         ] });
-        return open4 ? /* @__PURE__ */ u3("button", { type: "button", class: "fx-monthbar", title: said2, onClick: () => open4({ month: x3.month }), children: body }, x3.month) : /* @__PURE__ */ u3("span", { class: "fx-monthbar", title: said2, children: body }, x3.month);
+        return open5 ? /* @__PURE__ */ u3("button", { type: "button", class: "fx-monthbar", title: said2, onClick: () => open5({ month: x3.month }), children: body }, x3.month) : /* @__PURE__ */ u3("span", { class: "fx-monthbar", title: said2, children: body }, x3.month);
       }) })
     ] });
   }
-  function CashFlowWidget({ v: v3, L: L2, open: open4, ledger, showIn: showIn2 }) {
+  function CashFlowWidget({ v: v3, L: L2, open: open5, ledger, showIn: showIn2 }) {
     const m3 = month(v3, L2);
-    return /* @__PURE__ */ u3(Widget, { title: "Cash flow", kind: "fx-flow", open: open4, openLabel: "Open Recurring: a typical month, payment by payment", children: [
+    return /* @__PURE__ */ u3(Widget, { title: "Cash flow", kind: "fx-flow", open: open5, openLabel: "Open Recurring: a typical month, payment by payment", children: [
       /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: m3.left, sign: true, tone: "auto" }), caption: "Left in a typical month" }),
       /* @__PURE__ */ u3(SplitBar, { label: "A typical month's pay", parts: [{ label: "Spent", value: m3.spent, color: "out" }, { label: "Saved", value: m3.saved, color: "save" }, { label: "Left", value: Math.max(0, m3.left), color: "in" }] }),
       /* @__PURE__ */ u3(Tiles2, { items: [
@@ -15709,11 +15714,11 @@ ${pays}
     ] });
   }
   var filterOf = (kind) => ({ cards: "cards", subscriptions: "subscriptions", spending: "spending", savings: "saving" })[kind] || "bills";
-  function SpendingWidget({ v: v3, L: L2, open: open4, openKind }) {
+  function SpendingWidget({ v: v3, L: L2, open: open5, openKind }) {
     const m3 = month(v3, L2);
     if (!m3.byKind.length) return null;
     const slices = m3.byKind.map((k3) => ({ kind: k3.kind, label: kindName(k3.kind), value: k3.amount, color: kindHueOf(k3.kind, v3.categories) }));
-    return /* @__PURE__ */ u3(Widget, { title: "Where it goes", kind: "fx-spend", open: open4, openLabel: "Open Recurring: a typical month, payment by payment", children: [
+    return /* @__PURE__ */ u3(Widget, { title: "Where it goes", kind: "fx-spend", open: open5, openLabel: "Open Recurring: a typical month, payment by payment", children: [
       /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: -m3.spent }), caption: "Spent in a typical month" }),
       /* @__PURE__ */ u3("div", { class: "fx-donutrow", children: [
         /* @__PURE__ */ u3(Donut, { slices, label: "A typical month's spending", center: /* @__PURE__ */ u3(S, { children: [
@@ -15741,7 +15746,7 @@ ${pays}
     }
     const node = f4.nodes.find((n3) => n3.id === picked);
     const share3 = (n3) => f4.income > 5e-3 ? `${Math.round(n3 / f4.income * 100)}%` : "";
-    const go2 = (i3) => {
+    const go3 = (i3) => {
       setPeriod(periods[i3]);
       setPicked("");
     };
@@ -15755,9 +15760,9 @@ ${pays}
         kind: "fx-moneyflow",
         actions: /* @__PURE__ */ u3(S, { children: [
           /* @__PURE__ */ u3("span", { class: "fx-period", children: [
-            /* @__PURE__ */ u3(IconButton, { icon: "prev", label: "The month before", disabled: at2 <= 0, onClick: () => go2(at2 - 1) }),
+            /* @__PURE__ */ u3(IconButton, { icon: "prev", label: "The month before", disabled: at2 <= 0, onClick: () => go3(at2 - 1) }),
             /* @__PURE__ */ u3("span", { class: "fx-periodname", "aria-live": "polite", children: periodName(p3) }),
-            /* @__PURE__ */ u3(IconButton, { icon: "next", label: "The month after", disabled: at2 >= periods.length - 1, onClick: () => go2(at2 + 1) })
+            /* @__PURE__ */ u3(IconButton, { icon: "next", label: "The month after", disabled: at2 >= periods.length - 1, onClick: () => go3(at2 + 1) })
           ] }),
           /* @__PURE__ */ u3("select", { class: "fx-top", "aria-label": "How many of each to show", value: top, onChange: (e3) => {
             setTop(e3.target.value);
@@ -15962,14 +15967,14 @@ ${pays}
   var currencies = ["USD", "CAD", "EUR", "GBP", "AUD", "NZD", "CHF", "SEK", "NOK", "DKK", "JPY", "MXN", "INR", "ZAR"];
   var newKey = () => Array.from(crypto.getRandomValues(new Uint8Array(24)), (b2) => b2.toString(16).padStart(2, "0")).join("");
   function CalendarFeed({ v: v3, calendar, busy: busy2, set: set2 }) {
-    const key6 = v3.plan.calendarKey, amounts = !!v3.plan.calendarAmounts;
+    const key7 = v3.plan.calendarKey, amounts = !!v3.plan.calendarAmounts;
     const [link, setLink] = d2({});
     const [said2, setSaid] = d2("");
     const [withAmounts, setWithAmounts] = d2(false);
     h2(() => {
-      if (!key6 || link.key === key6) return;
-      calendar().then((url) => setLink({ key: key6, url }), (e3) => setLink({ key: key6, problem: String(e3?.message || e3) }));
-    }, [key6]);
+      if (!key7 || link.key === key7) return;
+      calendar().then((url) => setLink({ key: key7, url }), (e3) => setLink({ key: key7, problem: String(e3?.message || e3) }));
+    }, [key7]);
     const copy = async () => {
       try {
         if (window.runtime?.ClipboardSetText) await window.runtime.ClipboardSetText(link.url);
@@ -15981,7 +15986,7 @@ ${pays}
     };
     return /* @__PURE__ */ u3("fieldset", { class: "fincalendar", children: [
       /* @__PURE__ */ u3("legend", { children: "Calendar feed" }),
-      !key6 ? /* @__PURE__ */ u3(S, { children: [
+      !key7 ? /* @__PURE__ */ u3(S, { children: [
         /* @__PURE__ */ u3("p", { class: "fx-sub", children: "Paydays and bills in your phone's calendar, through a link only you have. It works over Tailscale or the homelab's own domain, never over the home Wi-Fi." }),
         /* @__PURE__ */ u3("label", { class: "fcheckbox", children: [
           /* @__PURE__ */ u3("input", { type: "checkbox", checked: withAmounts, onClick: (e3) => setWithAmounts(e3.currentTarget.checked) }),
@@ -15989,14 +15994,14 @@ ${pays}
         ] }),
         /* @__PURE__ */ u3("p", { children: /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy2, onClick: () => set2(newKey(), withAmounts), children: "Make a calendar link" }) })
       ] }) : /* @__PURE__ */ u3(S, { children: [
-        link.key === key6 && link.url && /* @__PURE__ */ u3("div", { class: "fincalendarlink", children: [
+        link.key === key7 && link.url && /* @__PURE__ */ u3("div", { class: "fincalendarlink", children: [
           /* @__PURE__ */ u3("input", { readOnly: true, value: link.url, "aria-label": "Calendar link", onFocus: (e3) => e3.target.select() }),
           /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: copy, children: "Copy" })
         ] }),
-        link.key === key6 && link.problem && /* @__PURE__ */ u3("span", { class: "formerr bad", role: "alert", children: link.problem }),
+        link.key === key7 && link.problem && /* @__PURE__ */ u3("span", { class: "formerr bad", role: "alert", children: link.problem }),
         /* @__PURE__ */ u3("p", { class: "fx-sub", role: "status", children: said2 || "Subscribe to it in your phone's calendar (on an iPhone: Settings › Calendar › Accounts › Add Account › Other › Add Subscribed Calendar). Anyone with the link sees what it shows." }),
         /* @__PURE__ */ u3("label", { class: "fcheckbox", children: [
-          /* @__PURE__ */ u3("input", { type: "checkbox", disabled: busy2, checked: amounts, onClick: (e3) => set2(key6, e3.currentTarget.checked) }),
+          /* @__PURE__ */ u3("input", { type: "checkbox", disabled: busy2, checked: amounts, onClick: (e3) => set2(key7, e3.currentTarget.checked) }),
           " With amounts"
         ] }),
         /* @__PURE__ */ u3("p", { class: "fincalendarbuttons", children: [
@@ -16014,13 +16019,13 @@ ${pays}
   }
   var reminders = [["due", "A bill or card due tomorrow"], ["cushion", "Three days before a paycheck leaves checking under the cushion"], ["renewal", "A week before a yearly payment renews"], ["balances", "Each week the balances go without an update"]];
   var calendars = [["us", "US bank holidays"], ["uk", "UK bank holidays (England and Wales)"], ["none", "Weekends only"]];
-  function Settings2({ v: v3, save: save2, calendar }) {
+  function Settings2({ v: v3, save: save3, calendar }) {
     const [busy2, setBusy] = d2(false);
     const [problem, setProblem] = d2("");
     const currency = v3.plan.currency || "USD", holidays = v3.plan.holidays || "us", rates = v3.plan.rates || {};
     const keep3 = async (s3) => {
       setBusy(true);
-      await save2({ rates: v3.plan.rates, quiet: v3.plan.quiet, calendarKey: v3.plan.calendarKey, calendarAmounts: v3.plan.calendarAmounts, ...s3 });
+      await save3({ rates: v3.plan.rates, quiet: v3.plan.quiet, calendarKey: v3.plan.calendarKey, calendarAmounts: v3.plan.calendarAmounts, ...s3 });
       setBusy(false);
     };
     const quiet2 = v3.plan.quiet || [];
@@ -16072,7 +16077,7 @@ ${pays}
           words5
         ] }, kind))
       ] }),
-      calendar && /* @__PURE__ */ u3(CalendarFeed, { v: v3, calendar, busy: busy2, set: (key6, amounts) => keep3({ currency, holidays, calendarKey: key6, calendarAmounts: amounts }) })
+      calendar && /* @__PURE__ */ u3(CalendarFeed, { v: v3, calendar, busy: busy2, set: (key7, amounts) => keep3({ currency, holidays, calendarKey: key7, calendarAmounts: amounts }) })
     ] });
   }
   var groups2 = {
@@ -16634,7 +16639,7 @@ ${pays}
     }
     return out.sort((a3, b2) => a3.due.localeCompare(b2.due));
   }
-  function MissingWidget({ v: v3, L: L2, open: open4 }) {
+  function MissingWidget({ v: v3, L: L2, open: open5 }) {
     const list = missingBills(v3).filter((m3) => L2.payment[m3.payment]);
     if (!list.length) return null;
     return /* @__PURE__ */ u3(
@@ -16643,7 +16648,7 @@ ${pays}
         title: list.length === 1 ? "A bill not seen yet" : "Bills not seen yet",
         span: "all",
         kind: "fx-missing",
-        actions: open4 && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: open4, children: "Transactions" }),
+        actions: open5 && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: open5, children: "Transactions" }),
         children: [
           /* @__PURE__ */ u3("p", { class: "fx-sub fx-lead", children: list.length === 1 ? "Paid before, but nothing in your transactions pays it yet. If it went through, link it in Transactions." : "Paid before, but nothing in your transactions pays these yet. If one went through, link it in Transactions." }),
           /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: list.map((m3) => {
@@ -16790,7 +16795,7 @@ ${pays}
     if (held3.length) out.push(heldTile());
     return out;
   }
-  function PaycheckWidget({ v: v3, L: L2, sel: sel2, edit, open: open4 }) {
+  function PaycheckWidget({ v: v3, L: L2, sel: sel2, edit, open: open5 }) {
     const [all, setAll] = d2(false);
     const i3 = Math.min(sel2, v3.periods.length - 1);
     const p3 = v3.periods[i3];
@@ -16798,7 +16803,7 @@ ${pays}
     const rows = all ? p3.rows : p3.rows.slice(0, shown5);
     const cushion = v3.plan.cushion || 0;
     const row = tiles(v3, L2, i3);
-    return /* @__PURE__ */ u3(Widget, { title: p3.now ? "Until the next paycheck" : "This paycheck", kind: "fx-paycheck", span: "all", open: open4, openLabel: "Open Paychecks", children: [
+    return /* @__PURE__ */ u3(Widget, { title: p3.now ? "Until the next paycheck" : "This paycheck", kind: "fx-paycheck", span: "all", open: open5, openLabel: "Open Paychecks", children: [
       /* @__PURE__ */ u3("p", { class: "fx-sub fx-lead fx-dates", children: [
         dayShort(p3.start),
         " – ",
@@ -16987,7 +16992,7 @@ ${pays}
   }
 
   // web/src/finances/widgets/Worth.tsx
-  function NetWorthWidget({ v: v3, open: open4 }) {
+  function NetWorthWidget({ v: v3, open: open5 }) {
     if (!(v3.plan.accounts || []).length) return null;
     const now = netWorth(v3);
     const kept4 = (v3.worth || []).filter((p3) => p3.date < v3.today);
@@ -16995,7 +17000,7 @@ ${pays}
     const month3 = worthByMonth(v3, 1, 0)[0];
     const each = (v3.plan.accounts || []).map((a3) => worthOf(v3, a3));
     const owned = each.filter((n3) => n3 > 0).reduce((t3, n3) => t3 + n3, 0), owes = -each.filter((n3) => n3 < 0).reduce((t3, n3) => t3 + n3, 0);
-    return /* @__PURE__ */ u3(Widget, { title: "Net worth", span: "all", kind: "fx-worthmini", open: open4, openLabel: "Open Net worth", children: [
+    return /* @__PURE__ */ u3(Widget, { title: "Net worth", span: "all", kind: "fx-worthmini", open: open5, openLabel: "Open Net worth", children: [
       /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: now }), caption: "Today", aside: month3 && /* @__PURE__ */ u3(Delta, { value: now - month3.net, base: month3.net, shareOnly: true }) }),
       values.length > 2 && /* @__PURE__ */ u3(
         AreaChart,
@@ -17028,12 +17033,12 @@ ${pays}
       return [];
     }
   };
-  function Balances({ v: v3, open: open4, toggle }) {
+  function Balances({ v: v3, open: open5, toggle }) {
     const [folded2, setFolded] = d2(readFolded);
     const list = grouped(v3);
     if (!list.length) return null;
-    const fold2 = (key6) => {
-      const next = folded2.includes(key6) ? folded2.filter((k3) => k3 !== key6) : [...folded2, key6];
+    const fold2 = (key7) => {
+      const next = folded2.includes(key7) ? folded2.filter((k3) => k3 !== key7) : [...folded2, key7];
       setFolded(next);
       try {
         localStorage.setItem(foldedKey, JSON.stringify(next));
@@ -17054,9 +17059,9 @@ ${pays}
         return /* @__PURE__ */ u3("div", { class: "fx-balgroup", children: [
           /* @__PURE__ */ u3("div", { class: "fx-balrow", children: [
             /* @__PURE__ */ u3("button", { type: "button", class: "fx-balfold", "aria-expanded": !shut2, "aria-label": `${g2.name}'s accounts`, title: shut2 ? `Show ${g2.name}'s accounts` : `Hide ${g2.name}'s accounts`, onClick: () => fold2(g2.key), children: /* @__PURE__ */ u3("svg", { viewBox: "0 0 24 24", "aria-hidden": "true", children: /* @__PURE__ */ u3("path", { d: "M9 6l6 6-6 6" }) }) }),
-            /* @__PURE__ */ u3(Balance, { v: v3, g: g2, open: open4 })
+            /* @__PURE__ */ u3(Balance, { v: v3, g: g2, open: open5 })
           ] }),
-          !shut2 && /* @__PURE__ */ u3("ul", { class: "fx-balaccts", "aria-label": `${g2.name}'s accounts`, children: g2.accounts.map((a3) => /* @__PURE__ */ u3("li", { children: /* @__PURE__ */ u3("button", { type: "button", class: "fx-balacct", title: a3.name, onClick: () => open4(g2.key), children: [
+          !shut2 && /* @__PURE__ */ u3("ul", { class: "fx-balaccts", "aria-label": `${g2.name}'s accounts`, children: g2.accounts.map((a3) => /* @__PURE__ */ u3("li", { children: /* @__PURE__ */ u3("button", { type: "button", class: "fx-balacct", title: a3.name, onClick: () => open5(g2.key), children: [
             /* @__PURE__ */ u3(AcctMark, { a: a3, size: "sm" }),
             /* @__PURE__ */ u3("span", { class: "fx-balname", children: [
               stale(a3) && /* @__PURE__ */ u3("span", { class: "fx-staledot", "aria-label": "over a month since it was updated" }),
@@ -17101,10 +17106,10 @@ ${pays}
       ] })
     ] });
   }
-  function Balance({ v: v3, g: g2, open: open4 }) {
+  function Balance({ v: v3, g: g2, open: open5 }) {
     const { on: on2, card } = useHoverCard(/* @__PURE__ */ u3(GroupAccounts, { v: v3, accounts: g2.accounts }), { side: "right" });
     return /* @__PURE__ */ u3(S, { children: [
-      /* @__PURE__ */ u3("button", { type: "button", class: "fx-balance", ...on2, onClick: () => open4(g2.key), children: [
+      /* @__PURE__ */ u3("button", { type: "button", class: "fx-balance", ...on2, onClick: () => open5(g2.key), children: [
         /* @__PURE__ */ u3(Dot, { color: g2.color }),
         /* @__PURE__ */ u3("span", { class: "fx-legendlabel", children: g2.name }),
         /* @__PURE__ */ u3(Amount, { value: g2.total, form: "compact", tone: g2.total < 0 ? "out" : "" })
@@ -17112,8 +17117,8 @@ ${pays}
       card
     ] });
   }
-  function mountBalances(el3, v3, open4, toggle) {
-    R(v3 ? /* @__PURE__ */ u3(Balances, { v: v3, open: open4, toggle }) : null, el3);
+  function mountBalances(el3, v3, open5, toggle) {
+    R(v3 ? /* @__PURE__ */ u3(Balances, { v: v3, open: open5, toggle }) : null, el3);
   }
 
   // web/src/finances/widgets/ComingUp.tsx
@@ -17194,7 +17199,7 @@ ${pays}
 
   // web/src/finances/widgets/Spent.tsx
   var named5 = 5;
-  function SpentWidget({ v: v3, ledger, open: open4, days }) {
+  function SpentWidget({ v: v3, ledger, open: open5, days }) {
     if (!ledger?.transactions.length) return null;
     const month3 = days ? { key: "period", label: "", ...days } : ranges(v3.today, v3.today)[0];
     const inMonth = !days || days.from.slice(0, 7) === days.to.slice(0, 7);
@@ -17208,7 +17213,7 @@ ${pays}
       {
         title: days ? "Where it went" : "Spent this month",
         kind: "fx-spentmonth",
-        open: open4 && (() => open4(inMonth ? { month: month3.from.slice(0, 7) } : {})),
+        open: open5 && (() => open5(inMonth ? { month: month3.from.slice(0, 7) } : {})),
         openLabel: inMonth ? `Open ${monthName(month3.from)}'s transactions` : "Open Transactions",
         children: [
           /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: total }), caption: days ? `From your transactions, ${dayShort(days.from)} – ${dayShort(days.to)}` : `From your transactions, to ${dayShort(v3.today)}` }),
@@ -17224,7 +17229,7 @@ ${pays}
                 title: s3.label,
                 when: /* @__PURE__ */ u3(Amount, { value: s3.value, form: "whole" }),
                 whenPlain: true,
-                onOpen: open4 && s3.label !== "Everything else" && s3.label !== "No category" ? () => open4(inMonth ? { category: s3.label, month: month3.from.slice(0, 7) } : { category: s3.label }) : void 0,
+                onOpen: open5 && s3.label !== "Everything else" && s3.label !== "No category" ? () => open5(inMonth ? { category: s3.label, month: month3.from.slice(0, 7) } : { category: s3.label }) : void 0,
                 openLabel: "see its transactions"
               },
               s3.label
@@ -17348,14 +17353,14 @@ ${pays}
     const hidden3 = new Set(layout?.hidden || []);
     const shown8 = all.filter((s3) => !hidden3.has(s3.id));
     const widthOf = (s3) => layout?.widths[s3.id] || s3.width;
-    const save2 = (l3) => {
+    const save3 = (l3) => {
       keepLayout(l3);
       setLayout(l3);
     };
     const base = () => layout ? { ...layout, widths: { ...layout.widths }, hidden: [...layout.hidden] } : { order: all.map((s3) => s3.id), hidden: [], widths: {} };
     const reorder = (ids) => {
       const l3 = base();
-      save2({ ...l3, order: [...ids, ...all.map((s3) => s3.id).filter((id2) => !ids.includes(id2))] });
+      save3({ ...l3, order: [...ids, ...all.map((s3) => s3.id).filter((id2) => !ids.includes(id2))] });
     };
     const move = (id2, by) => {
       const ids = shown8.map((s3) => s3.id), i3 = ids.indexOf(id2), j3 = i3 + by;
@@ -17373,11 +17378,11 @@ ${pays}
     const setWidth = (id2, w3) => {
       const l3 = base();
       l3.widths[id2] = w3;
-      save2(l3);
+      save3(l3);
     };
     const hide = (id2, off2) => {
       const l3 = base();
-      save2({ ...l3, hidden: off2 ? [...l3.hidden, id2] : l3.hidden.filter((x3) => x3 !== id2) });
+      save3({ ...l3, hidden: off2 ? [...l3.hidden, id2] : l3.hidden.filter((x3) => x3 !== id2) });
     };
     return /* @__PURE__ */ u3(S, { children: [
       button,
@@ -17526,10 +17531,10 @@ ${pays}
   var adds = { overview: ["payment", "Add a payment"], calendar: ["payment", "Add a payment"], transactions: ["transaction", "Add a transaction"], reports: ["transaction", "Add a transaction"], recurring: ["payment", "Add a payment"], pay: ["person", "Add a paycheck"], worth: ["account", "Add an account"], collection: ["card", "Add a card"] };
   function ExportMenu({ v: v3, exportFile: exportFile2, printMonth }) {
     const [said2, setSaid] = d2("");
-    const run2 = (go2) => async () => {
+    const run2 = (go3) => async () => {
       setSaid("Saving…");
       try {
-        setSaid(await go2());
+        setSaid(await go3());
       } catch (e3) {
         setSaid(`Not saved: ${e3?.message || e3}`);
       }
@@ -17560,8 +17565,8 @@ ${pays}
       )
     ] });
   }
-  function FinancesScreen({ v: v3, ledger, error, retry, tab: tab3, setTab, sel: sel2, pick, setSince: setSince2, saveSettings, keep: keep3, edit: open4, exportFile: exportFile2, printMonth, readReceipt, readCardPicture, readCardPrices, updatePrices, saveLedger: saveLedger2, running: running5, calendar, fromWallos, phone: phone2, toggleHidden, group: group2, setGroup, investments }) {
-    const edit = (what3, id2, kind) => cardOf(id2) ? open4("account", cardOf(id2)) : open4(what3, id2, kind);
+  function FinancesScreen({ v: v3, ledger, error, retry, tab: tab3, setTab, sel: sel2, pick, setSince: setSince2, saveSettings, keep: keep3, edit: open5, exportFile: exportFile2, printMonth, readReceipt, readCardPicture, readCardPrices, updatePrices, saveLedger: saveLedger2, running: running5, calendar, fromWallos, phone: phone2, toggleHidden, group: group2, setGroup, investments }) {
+    const edit = (what3, id2, kind) => cardOf(id2) ? open5("account", cardOf(id2)) : open5(what3, id2, kind);
     const L2 = v3 ? lookup(v3.plan) : null;
     setCurrency(v3?.plan.currency);
     setOwnLogos(v3?.plan.logos);
@@ -17650,7 +17655,848 @@ ${pays}
     changed3 = f4;
   }
 
+  // web/src/finances/seal.ts
+  var N2 = 1 << 17;
+  var R2 = 8;
+  var P2 = 1;
+  var PRF_INPUT = new TextEncoder().encode("homelab-finances:1");
+  var MIN_PASSPHRASE = 12;
+  var enc = new TextEncoder();
+  var subtle = () => {
+    if (!globalThis.crypto?.subtle) throw new Error("This page can only keep Finances private over the homelab’s secure address (https).");
+    return crypto.subtle;
+  };
+  var b64 = (b2) => {
+    let s3 = "";
+    for (const c4 of b2) s3 += String.fromCharCode(c4);
+    return btoa(s3);
+  };
+  var unb64 = (s3) => Uint8Array.from(atob(s3 || ""), (c4) => c4.charCodeAt(0));
+  var random = (n3) => crypto.getRandomValues(new Uint8Array(n3));
+  var aad = (what2, username) => enc.encode(`${what2}:1:${username}`);
+  var WORDS = [
+    "acorn",
+    "actor",
+    "adult",
+    "agent",
+    "alarm",
+    "album",
+    "alley",
+    "amber",
+    "angle",
+    "ankle",
+    "apple",
+    "apron",
+    "arena",
+    "armor",
+    "arrow",
+    "atlas",
+    "attic",
+    "award",
+    "bacon",
+    "badge",
+    "bagel",
+    "baker",
+    "banjo",
+    "barn",
+    "basil",
+    "beach",
+    "beard",
+    "bench",
+    "berry",
+    "bike",
+    "bird",
+    "blank",
+    "blaze",
+    "bloom",
+    "board",
+    "boat",
+    "bonus",
+    "boots",
+    "bread",
+    "brick",
+    "bride",
+    "brook",
+    "broom",
+    "brush",
+    "bucket",
+    "buddy",
+    "bugle",
+    "cabin",
+    "cable",
+    "cactus",
+    "camel",
+    "camera",
+    "candy",
+    "canoe",
+    "canvas",
+    "cargo",
+    "carpet",
+    "carrot",
+    "castle",
+    "cedar",
+    "chain",
+    "chair",
+    "chalk",
+    "cherry",
+    "chess",
+    "chief",
+    "cider",
+    "circus",
+    "clay",
+    "cliff",
+    "clock",
+    "cloud",
+    "clover",
+    "coach",
+    "cobra",
+    "cocoa",
+    "comet",
+    "coral",
+    "corn",
+    "cotton",
+    "couch",
+    "crane",
+    "crayon",
+    "cream",
+    "crown",
+    "cube",
+    "daisy",
+    "dance",
+    "delta",
+    "denim",
+    "desert",
+    "diary",
+    "dinner",
+    "donkey",
+    "door",
+    "dragon",
+    "drum",
+    "eagle",
+    "easel",
+    "echo",
+    "elbow",
+    "ember",
+    "engine",
+    "falcon",
+    "fancy",
+    "farm",
+    "feather",
+    "fence",
+    "fern",
+    "ferry",
+    "fiddle",
+    "field",
+    "flag",
+    "flute",
+    "forest",
+    "fossil",
+    "fox",
+    "frost",
+    "garden",
+    "garlic",
+    "gecko",
+    "ginger",
+    "glove",
+    "goat",
+    "gold",
+    "grape",
+    "gravy",
+    "guitar",
+    "hammer",
+    "harbor",
+    "harp",
+    "hazel",
+    "helmet",
+    "heron",
+    "hill",
+    "honey",
+    "hotel",
+    "island",
+    "ivory",
+    "jacket",
+    "jelly",
+    "jewel",
+    "judge",
+    "juice",
+    "kayak",
+    "kettle",
+    "kitten",
+    "kiwi",
+    "koala",
+    "ladder",
+    "lake",
+    "lamp",
+    "lemon",
+    "lily",
+    "lizard",
+    "llama",
+    "magnet",
+    "mango",
+    "maple",
+    "marble",
+    "meadow",
+    "melon",
+    "mirror",
+    "mitten",
+    "monkey",
+    "moose",
+    "motor",
+    "muffin",
+    "napkin",
+    "nest",
+    "noodle",
+    "oasis",
+    "ocean",
+    "olive",
+    "onion",
+    "orange",
+    "otter",
+    "owl",
+    "paddle",
+    "panda",
+    "parade",
+    "parrot",
+    "pasta",
+    "peach",
+    "peanut",
+    "pebble",
+    "pencil",
+    "pepper",
+    "piano",
+    "pickle",
+    "pillow",
+    "pilot",
+    "pizza",
+    "planet",
+    "plum",
+    "pocket",
+    "pony",
+    "potato",
+    "puppy",
+    "quilt",
+    "rabbit",
+    "radio",
+    "rain",
+    "raven",
+    "ribbon",
+    "river",
+    "robin",
+    "rocket",
+    "rose",
+    "ruby",
+    "saddle",
+    "salad",
+    "salmon",
+    "sandal",
+    "scarf",
+    "shell",
+    "shovel",
+    "silver",
+    "skate",
+    "sled",
+    "snail",
+    "spider",
+    "spoon",
+    "squid",
+    "stamp",
+    "star",
+    "statue",
+    "stove",
+    "sugar",
+    "summer",
+    "sunset",
+    "swan",
+    "table",
+    "taco",
+    "teapot",
+    "tent",
+    "tiger",
+    "toast",
+    "tomato",
+    "train",
+    "tuba",
+    "tulip",
+    "turtle",
+    "valley",
+    "velvet",
+    "violin",
+    "wagon",
+    "walnut",
+    "walrus",
+    "whale",
+    "willow",
+    "window",
+    "winter",
+    "wizard",
+    "yogurt",
+    "zebra"
+  ];
+  var index = new Map(WORDS.map((w3, i3) => [w3, i3]));
+  var newCode = () => random(16);
+  var codeWords = (code2) => [...code2].map((b2) => WORDS[b2]);
+  function codeFromWords(text2) {
+    const words5 = text2.toLowerCase().split(/[^a-z]+/).filter(Boolean);
+    if (words5.length !== 16 || words5.some((w3) => !index.has(w3))) return null;
+    return Uint8Array.from(words5, (w3) => index.get(w3));
+  }
+  async function pbkdf2(password, salt, bytes3) {
+    const key7 = await subtle().importKey("raw", password, "PBKDF2", false, ["deriveBits"]);
+    return new Uint8Array(await subtle().deriveBits({ name: "PBKDF2", hash: "SHA-256", salt, iterations: 1 }, key7, bytes3 * 8));
+  }
+  function salsa8(b2, o3, x3) {
+    for (let i3 = 0; i3 < 16; i3++) x3[i3] = b2[o3 + i3];
+    const rot = (v3, n3) => v3 << n3 | v3 >>> 32 - n3;
+    for (let i3 = 0; i3 < 8; i3 += 2) {
+      x3[4] ^= rot(x3[0] + x3[12], 7);
+      x3[8] ^= rot(x3[4] + x3[0], 9);
+      x3[12] ^= rot(x3[8] + x3[4], 13);
+      x3[0] ^= rot(x3[12] + x3[8], 18);
+      x3[9] ^= rot(x3[5] + x3[1], 7);
+      x3[13] ^= rot(x3[9] + x3[5], 9);
+      x3[1] ^= rot(x3[13] + x3[9], 13);
+      x3[5] ^= rot(x3[1] + x3[13], 18);
+      x3[14] ^= rot(x3[10] + x3[6], 7);
+      x3[2] ^= rot(x3[14] + x3[10], 9);
+      x3[6] ^= rot(x3[2] + x3[14], 13);
+      x3[10] ^= rot(x3[6] + x3[2], 18);
+      x3[3] ^= rot(x3[15] + x3[11], 7);
+      x3[7] ^= rot(x3[3] + x3[15], 9);
+      x3[11] ^= rot(x3[7] + x3[3], 13);
+      x3[15] ^= rot(x3[11] + x3[7], 18);
+      x3[1] ^= rot(x3[0] + x3[3], 7);
+      x3[2] ^= rot(x3[1] + x3[0], 9);
+      x3[3] ^= rot(x3[2] + x3[1], 13);
+      x3[0] ^= rot(x3[3] + x3[2], 18);
+      x3[6] ^= rot(x3[5] + x3[4], 7);
+      x3[7] ^= rot(x3[6] + x3[5], 9);
+      x3[4] ^= rot(x3[7] + x3[6], 13);
+      x3[5] ^= rot(x3[4] + x3[7], 18);
+      x3[11] ^= rot(x3[10] + x3[9], 7);
+      x3[8] ^= rot(x3[11] + x3[10], 9);
+      x3[9] ^= rot(x3[8] + x3[11], 13);
+      x3[10] ^= rot(x3[9] + x3[8], 18);
+      x3[12] ^= rot(x3[15] + x3[14], 7);
+      x3[13] ^= rot(x3[12] + x3[15], 9);
+      x3[14] ^= rot(x3[13] + x3[12], 13);
+      x3[15] ^= rot(x3[14] + x3[13], 18);
+    }
+    for (let i3 = 0; i3 < 16; i3++) b2[o3 + i3] += x3[i3];
+  }
+  function blockMix(b2, y3, r3, x3, t3) {
+    t3.set(b2.subarray((2 * r3 - 1) * 16, 2 * r3 * 16));
+    for (let i3 = 0; i3 < 2 * r3; i3++) {
+      for (let k3 = 0; k3 < 16; k3++) t3[k3] ^= b2[i3 * 16 + k3];
+      salsa8(t3, 0, x3);
+      y3.set(t3, ((i3 & 1) * r3 + (i3 >> 1)) * 16);
+    }
+    b2.set(y3);
+  }
+  async function scrypt(password, salt, n3, r3, p3, dkLen) {
+    const bytes3 = await pbkdf2(password, salt, p3 * 128 * r3);
+    const view2 = new DataView(bytes3.buffer);
+    const words5 = 32 * r3;
+    const b2 = new Uint32Array(words5), y3 = new Uint32Array(words5), v3 = new Uint32Array(words5 * n3), x3 = new Uint32Array(16), t3 = new Uint32Array(16);
+    for (let q2 = 0; q2 < p3; q2++) {
+      for (let i3 = 0; i3 < words5; i3++) b2[i3] = view2.getUint32((q2 * words5 + i3) * 4, true);
+      for (let i3 = 0; i3 < n3; i3++) {
+        v3.set(b2, i3 * words5);
+        blockMix(b2, y3, r3, x3, t3);
+      }
+      for (let i3 = 0; i3 < n3; i3++) {
+        const j3 = b2[(2 * r3 - 1) * 16] & n3 - 1;
+        for (let k3 = 0; k3 < words5; k3++) b2[k3] ^= v3[j3 * words5 + k3];
+        blockMix(b2, y3, r3, x3, t3);
+      }
+      for (let i3 = 0; i3 < words5; i3++) view2.setUint32((q2 * words5 + i3) * 4, b2[i3], true);
+    }
+    return pbkdf2(password, bytes3, dkLen);
+  }
+  var aes = (raw, use) => subtle().importKey("raw", raw, "AES-GCM", false, use);
+  async function seal(key7, data2, ad) {
+    const nonce = random(12);
+    const out = new Uint8Array(await subtle().encrypt({ name: "AES-GCM", iv: nonce, additionalData: ad }, key7, data2));
+    const all = new Uint8Array(12 + out.length);
+    all.set(nonce);
+    all.set(out, 12);
+    return all;
+  }
+  async function open3(key7, data2, ad) {
+    if (data2.length < 28) throw new Error("nothing sealed");
+    return new Uint8Array(await subtle().decrypt({ name: "AES-GCM", iv: data2.subarray(0, 12), additionalData: ad }, key7, data2.subarray(12)));
+  }
+  var stretch = async (secret, salt) => aes(await scrypt(secret, unb64(salt), N2, R2, P2, 32), ["encrypt", "decrypt"]);
+  var passphraseBytes = (s3) => enc.encode(s3.normalize("NFKC"));
+  async function fromPasskey(secret) {
+    const k3 = await subtle().importKey("raw", secret, "HKDF", false, ["deriveBits"]);
+    const bits = await subtle().deriveBits({ name: "HKDF", hash: "SHA-256", salt: new Uint8Array(0), info: enc.encode("homelab-finances-passkey:1") }, k3, 256);
+    return aes(new Uint8Array(bits), ["encrypt", "decrypt"]);
+  }
+  async function unwrap(wrapping, wrapped, username, why) {
+    let raw;
+    try {
+      raw = await open3(wrapping, unb64(wrapped || ""), aad("homelab-finances-key", username));
+    } catch {
+      throw new Error(why);
+    }
+    return aes(raw, ["encrypt", "decrypt"]);
+  }
+  var sealData = async (key7, username, data2) => b64(await seal(key7, enc.encode(JSON.stringify(data2)), aad("homelab-finances", username)));
+  async function turnOn(data2, username, ways) {
+    if (!ways.prf && (ways.passphrase || "").length < MIN_PASSPHRASE) throw new Error(`A passphrase is ${MIN_PASSPHRASE} characters or more.`);
+    const raw = random(32);
+    const kdf = { name: "scrypt", salt: b64(random(16)), n: N2, r: R2, p: P2 };
+    const wrap = async (w3) => b64(await seal(w3, raw, aad("homelab-finances-key", username)));
+    const wrappedByCode = await wrap(await stretch(ways.code, kdf.salt));
+    let wrappedByPasskey;
+    if (ways.prf) {
+      kdf.passkey = b64(ways.prf.credential);
+      wrappedByPasskey = await wrap(await fromPasskey(ways.prf.secret));
+    } else {
+      kdf.passphraseSalt = b64(random(16));
+      wrappedByPasskey = await wrap(await stretch(passphraseBytes(ways.passphrase), kdf.passphraseSalt));
+    }
+    const key7 = await aes(raw, ["encrypt", "decrypt"]);
+    raw.fill(0);
+    return { envelope: { version: 1, kdf, wrappedByPasskey, wrappedByCode, sealed: await sealData(key7, username, data2) }, key: key7 };
+  }
+  var unlockWithCode = async (e3, username, code2) => unwrap(await stretch(code2, e3.kdf.salt), e3.wrappedByCode, username, "That recovery code doesn’t open these Finances. Check each word and try again.");
+  var unlockWithPassphrase = async (e3, username, passphrase) => unwrap(await stretch(passphraseBytes(passphrase), e3.kdf.passphraseSalt || ""), e3.wrappedByPasskey, username, "That passphrase doesn’t open these Finances. Try again, or use your recovery code.");
+  var unlockWithPasskey = async (e3, username, secret) => unwrap(await fromPasskey(secret), e3.wrappedByPasskey, username, "That passkey doesn’t open these Finances. Use your recovery code instead.");
+  async function openSealed(key7, e3, username) {
+    let plain2;
+    try {
+      plain2 = await open3(key7, unb64(e3.sealed), aad("homelab-finances", username));
+    } catch {
+      throw new Error("These private Finances couldn’t be opened: they were changed, or aren’t yours.");
+    }
+    return JSON.parse(new TextDecoder().decode(plain2));
+  }
+  async function reseal(key7, e3, username, data2) {
+    const { rev: _rev, ...rest } = e3;
+    return { ...rest, sealed: await sealData(key7, username, data2) };
+  }
+  var sealText = async (key7, username, text2) => b64(await seal(key7, enc.encode(text2), aad("homelab-finances-receipt", username)));
+  async function openText(key7, username, sealed) {
+    try {
+      return new TextDecoder().decode(await open3(key7, unb64(sealed), aad("homelab-finances-receipt", username)));
+    } catch {
+      throw new Error("This receipt couldn’t be opened: it was changed, or isn’t yours.");
+    }
+  }
+
+  // web/src/finances/privacy.ts
+  var PLAIN = /* @__PURE__ */ new Set(["Finances", "SaveFinances", "FinancesLedger", "SaveFinancesLedger", "FinancesReceipt", "SaveFinancesReceipt"]);
+  var LOCK_AFTER = 5 * 6e4;
+  var state2 = "none";
+  var known2 = null;
+  var me = {};
+  var envelope = null;
+  var key5 = null;
+  var data = null;
+  var real;
+  var watchers2 = [];
+  var tell2 = () => watchers2.forEach((fn) => fn());
+  var watchPrivate = (fn) => {
+    watchers2.push(fn);
+  };
+  var privateState = () => state2;
+  var byPasskey = () => !!envelope?.kdf.passkey;
+  var mayChange = () => me.finances === "edit";
+  var Locked = class extends Error {
+    constructor() {
+      super("Your Finances are private: unlock them to see them.");
+      this.name = "Locked";
+    }
+  };
+  var isLocked = (e3) => e3?.name === "Locked";
+  var sealedCalls = () => real;
+  function find() {
+    return known2 ??= (async () => {
+      me = await window.phoneMe?.catch(() => ({})) || {};
+      if (!me.person) {
+        state2 = "none";
+        return;
+      }
+      try {
+        const e3 = await sealedCalls().FinancesSealed();
+        envelope = e3 || null;
+        state2 = e3 ? "locked" : "plain";
+      } catch {
+        state2 = "none";
+      }
+    })();
+  }
+  function installPrivate() {
+    if (!onPhone() || !window.go?.main?.App) return;
+    real = window.go.main.App;
+    window.go.main.App = new Proxy(real, {
+      get: (t3, m3) => typeof m3 === "string" && PLAIN.has(m3) ? (...args) => answer(m3, args) : t3[m3]
+    });
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "hidden") lock();
+    });
+    for (const ev of ["pointerdown", "keydown"]) document.addEventListener(ev, touched, { passive: true, capture: true });
+  }
+  async function answer(method, args) {
+    await find();
+    const pass = () => real[method](...args);
+    if (state2 === "none" || state2 === "plain") {
+      try {
+        return await pass();
+      } catch (e3) {
+        if (state2 === "plain" && /Finances are private/.test(String(e3?.message))) {
+          known2 = null;
+          await find();
+          tell2();
+          if (state2 === "locked") throw new Locked();
+        }
+        throw e3;
+      }
+    }
+    if (state2 === "locked" || !key5 || !data) throw new Locked();
+    touched();
+    switch (method) {
+      case "Finances":
+        return view();
+      case "FinancesLedger":
+        return { ...data.ledger, rev: envelope.rev };
+      case "SaveFinances":
+        await save({ ...data, plan: unrev(args[0]) });
+        return view();
+      case "SaveFinancesLedger":
+        await save({ ...data, ledger: unrev(args[0]) });
+        return { ...data.ledger, rev: envelope.rev };
+      case "SaveFinancesReceipt":
+        return sealedCalls().SaveFinancesSealedReceipt(await sealText(key5, me.person, String(args[0])));
+      case "FinancesReceipt":
+        return openText(key5, me.person, await sealedCalls().FinancesSealedReceipt(String(args[0])));
+    }
+    return pass();
+  }
+  var unrev = (x3) => {
+    const { rev: _rev, ...rest } = x3 || {};
+    return rest;
+  };
+  async function projection() {
+    if (window.homelabFinance) return;
+    try {
+      await window.phoneProjection();
+    } catch {
+      throw new Error("This computer’s Homelab Wizard can’t open private Finances on this page yet: update it on the computer, then try again.");
+    }
+  }
+  async function view() {
+    await projection();
+    const r3 = window.homelabFinance.project(JSON.stringify(data.plan), JSON.stringify(data.ledger), todayISO());
+    if (r3.error || !r3.view) throw new Error(r3.error || "Finances couldn’t be read forward");
+    const v3 = JSON.parse(r3.view);
+    v3.plan.rev = envelope.rev;
+    v3.readOnly = !mayChange();
+    return v3;
+  }
+  var CHANGED = "Your Finances were changed on another of your devices after this was read. The latest is shown now: make your change again.";
+  async function save(next) {
+    const sealed = await reseal(key5, envelope, me.person, next);
+    try {
+      const r3 = await sealedCalls().SaveFinancesSealed(envelope.rev, sealed);
+      envelope = { ...sealed, rev: r3.rev };
+      data = next;
+    } catch (e3) {
+      if (!/changed on another device/.test(String(e3?.message))) throw e3;
+      const latest2 = await sealedCalls().FinancesSealed();
+      if (latest2) {
+        data = await openSealed(key5, latest2, me.person);
+        envelope = latest2;
+      }
+      throw new Error(CHANGED);
+    }
+  }
+  async function opened(k3) {
+    const latest2 = await sealedCalls().FinancesSealed();
+    if (!latest2) {
+      state2 = "plain";
+      envelope = null;
+      tell2();
+      return;
+    }
+    data = await openSealed(k3, latest2, me.person);
+    envelope = latest2;
+    key5 = k3;
+    state2 = "open";
+    await view();
+    touched();
+    tell2();
+  }
+  async function unlockWithPasskey2() {
+    await opened(await unlockWithPasskey(envelope, me.person, await passkeySecret(envelope.kdf.passkey)));
+  }
+  async function unlockWithPassphrase2(passphrase) {
+    await opened(await unlockWithPassphrase(envelope, me.person, passphrase));
+  }
+  async function unlockWithCode2(words5) {
+    const code2 = codeFromWords(words5);
+    if (!code2) throw new Error("A recovery code is 16 words from the list it was shown with. Check each word and try again.");
+    await opened(await unlockWithCode(envelope, me.person, code2));
+  }
+  function lock() {
+    if (state2 !== "open") return;
+    key5 = null;
+    data = null;
+    state2 = "locked";
+    clearTimeout(idle);
+    tell2();
+  }
+  var idle = 0;
+  function touched() {
+    if (state2 !== "open") return;
+    clearTimeout(idle);
+    idle = window.setTimeout(lock, LOCK_AFTER);
+  }
+  var random2 = (n3) => crypto.getRandomValues(new Uint8Array(n3));
+  var prfOf = (c4) => c4.getClientExtensionResults().prf;
+  var bytes2 = (b2) => new Uint8Array(b2 instanceof ArrayBuffer ? b2 : b2.buffer.slice(b2.byteOffset, b2.byteOffset + b2.byteLength));
+  async function passkeySecret(credential) {
+    const id2 = Uint8Array.from(atob(credential), (c5) => c5.charCodeAt(0));
+    const c4 = await navigator.credentials.get({ publicKey: {
+      challenge: random2(32),
+      allowCredentials: [{ type: "public-key", id: id2 }],
+      userVerification: "required",
+      extensions: { prf: { eval: { first: PRF_INPUT } } }
+    } });
+    const first = c4 && prfOf(c4)?.results?.first;
+    if (!first) throw new Error("This phone’s passkey can’t open them here. Use your recovery code instead.");
+    return bytes2(first);
+  }
+  async function makePasskey() {
+    if (!window.PublicKeyCredential || !navigator.credentials?.create) return null;
+    let c4;
+    try {
+      c4 = await navigator.credentials.create({ publicKey: {
+        rp: { name: "Homelab" },
+        challenge: random2(32),
+        user: { id: random2(16), name: `${me.person} (Finances)`, displayName: `${me.personName || me.person}’s private Finances` },
+        pubKeyCredParams: [{ type: "public-key", alg: -7 }, { type: "public-key", alg: -257 }],
+        authenticatorSelection: { residentKey: "required", userVerification: "required" },
+        extensions: { prf: { eval: { first: PRF_INPUT } } }
+      } });
+    } catch (e3) {
+      if (e3?.name === "NotAllowedError") throw new Error("Face ID was cancelled. Try again, or use a passphrase instead.");
+      return null;
+    }
+    const prf = c4 && prfOf(c4);
+    if (!c4 || !prf?.enabled) return null;
+    const credential = new Uint8Array(c4.rawId);
+    return { secret: prf.results?.first ? bytes2(prf.results.first) : await passkeySecret(btoa(String.fromCharCode(...credential))), credential };
+  }
+  async function turnOn2(ways) {
+    const plan = unrev((await real.Finances()).plan);
+    const ledger = unrev(await real.FinancesLedger());
+    const k0 = await turnOn({ plan, ledger }, me.person, ways);
+    const transactions = [];
+    for (const t3 of ledger.transactions || []) {
+      if (!t3.receipt || t3.receipt.endsWith(".sealed")) {
+        transactions.push(t3);
+        continue;
+      }
+      const name = await sealedCalls().SaveFinancesSealedReceipt(await sealText(k0.key, me.person, await real.FinancesReceipt(t3.receipt)));
+      transactions.push({ ...t3, receipt: name });
+    }
+    const sealed = transactions.some((t3, i3) => t3 !== ledger.transactions[i3]) ? await reseal(k0.key, k0.envelope, me.person, { plan, ledger: { ...ledger, transactions } }) : k0.envelope;
+    const r3 = await sealedCalls().SaveFinancesSealed("new", sealed);
+    envelope = { ...sealed, rev: r3.rev };
+    data = { plan, ledger: { ...ledger, transactions } };
+    key5 = k0.key;
+    state2 = "open";
+    touched();
+    tell2();
+  }
+
+  // web/src/finances/Private.tsx
+  function TurnOn() {
+    const [step2, setStep] = d2("idle");
+    const [code2] = d2(newCode);
+    const [ask] = d2(() => {
+      const a3 = Math.floor(Math.random() * 8);
+      return [a3, 8 + Math.floor(Math.random() * 8)];
+    });
+    const [typed, setTyped] = d2(["", ""]);
+    const [pass, setPass] = d2(["", ""]);
+    const [busy2, setBusy] = d2("");
+    const [said2, setSaid] = d2("");
+    const words5 = codeWords(code2);
+    const run2 = async (what2, fn) => {
+      setBusy(what2);
+      setSaid("");
+      try {
+        await fn();
+      } catch (e3) {
+        setSaid(errorText(e3));
+      } finally {
+        setBusy("");
+      }
+    };
+    const checked = typed.every((t3, i3) => t3.trim().toLowerCase() === words5[ask[i3]]);
+    const withPasskey = () => run2("Asking for Face ID…", async () => {
+      const prf = await makePasskey();
+      if (!prf) {
+        setStep("passphrase");
+        setSaid("This phone’s passkeys can’t lock them on this page, so choose a passphrase instead.");
+        return;
+      }
+      await turnOn2({ code: code2, prf });
+    });
+    const withPassphrase = () => run2("Making them private…", async () => {
+      if (pass[0].length < MIN_PASSPHRASE) throw new Error(`A passphrase is ${MIN_PASSPHRASE} characters or more.`);
+      if (pass[0] !== pass[1]) throw new Error("The two passphrases are different. Type the same one twice.");
+      await turnOn2({ code: code2, passphrase: pass[0] });
+    });
+    if (step2 === "idle") {
+      return /* @__PURE__ */ u3(Card, { kind: "fx-private", id: "finPrivateOn", children: [
+        /* @__PURE__ */ u3("p", { children: [
+          /* @__PURE__ */ u3("b", { children: "Only you can see these?" }),
+          " Make your Finances private: only you can open them, with Face ID or your recovery code. Not even the person who runs the homelab can."
+        ] }),
+        /* @__PURE__ */ u3("button", { class: "primary small", onClick: () => setStep("why"), children: "Make them private…" })
+      ] });
+    }
+    return /* @__PURE__ */ u3(Card, { kind: "fx-private", id: "finPrivateOn", children: [
+      /* @__PURE__ */ u3("h2", { children: "Make your Finances private" }),
+      step2 === "why" && /* @__PURE__ */ u3(S, { children: [
+        /* @__PURE__ */ u3("p", { children: "Your accounts, bills and bank files are locked on this phone before they go to the homelab, which keeps them without being able to open them. Only you can open them, with Face ID or your recovery code." }),
+        /* @__PURE__ */ u3("p", { class: "lead warn", id: "finPrivateLimit", children: "This page comes from the homelab computer, so they stay private as long as that page is the homelab’s own. The Homelab app on your iPhone is the stronger place to keep them." }),
+        /* @__PURE__ */ u3("p", { children: "If you lose both your passkey and your recovery code, no one can open them, you included. What the household shares with you stays as it is." }),
+        /* @__PURE__ */ u3("div", { class: "fx-privatebtns", children: [
+          /* @__PURE__ */ u3("button", { class: "primary small", onClick: () => setStep("code"), children: "Continue" }),
+          /* @__PURE__ */ u3("button", { class: "linkbtn", onClick: () => setStep("idle"), children: "Cancel" })
+        ] })
+      ] }),
+      step2 === "code" && /* @__PURE__ */ u3(S, { children: [
+        /* @__PURE__ */ u3("p", { children: "Your recovery code. Write these 16 words down, in order, and keep them somewhere safe: they open your Finances on a new phone. They’re shown only now." }),
+        /* @__PURE__ */ u3("ol", { class: "fx-code", id: "finPrivateCode", children: words5.map((w3) => /* @__PURE__ */ u3("li", { children: w3 })) }),
+        /* @__PURE__ */ u3("div", { class: "fx-privatebtns", children: [
+          /* @__PURE__ */ u3("button", { class: "primary small", onClick: () => setStep("check"), children: "I wrote them down" }),
+          /* @__PURE__ */ u3("button", { class: "linkbtn", onClick: () => setStep("idle"), children: "Cancel" })
+        ] })
+      ] }),
+      step2 === "check" && /* @__PURE__ */ u3(S, { children: [
+        /* @__PURE__ */ u3("p", { children: "To be sure they’re written down, type two of them." }),
+        ask.map((n3, i3) => /* @__PURE__ */ u3("label", { class: "field", children: [
+          "Word ",
+          n3 + 1,
+          " ",
+          /* @__PURE__ */ u3("input", { value: typed[i3], autocapitalize: "none", autocomplete: "off", spellcheck: false, onInput: (e3) => {
+            const t3 = [...typed];
+            t3[i3] = e3.currentTarget.value;
+            setTyped(t3);
+          } })
+        ] })),
+        /* @__PURE__ */ u3("div", { class: "fx-privatebtns", children: [
+          /* @__PURE__ */ u3("button", { class: "primary small", disabled: !checked || !!busy2, onClick: withPasskey, children: "Make them private with Face ID" }),
+          /* @__PURE__ */ u3("button", { class: "linkbtn", disabled: !checked || !!busy2, onClick: () => {
+            setSaid("");
+            setStep("passphrase");
+          }, children: "Use a passphrase instead" }),
+          /* @__PURE__ */ u3("button", { class: "linkbtn", onClick: () => setStep("code"), children: "Show the words again" })
+        ] })
+      ] }),
+      step2 === "passphrase" && /* @__PURE__ */ u3(S, { children: [
+        /* @__PURE__ */ u3("p", { children: [
+          "A passphrase opens them on this phone (",
+          MIN_PASSPHRASE,
+          " characters or more); your recovery code still opens them anywhere."
+        ] }),
+        /* @__PURE__ */ u3("label", { class: "field", children: [
+          "Passphrase ",
+          /* @__PURE__ */ u3("input", { type: "password", autocomplete: "new-password", value: pass[0], onInput: (e3) => setPass([e3.currentTarget.value, pass[1]]) })
+        ] }),
+        /* @__PURE__ */ u3("label", { class: "field", children: [
+          "The same again ",
+          /* @__PURE__ */ u3("input", { type: "password", autocomplete: "new-password", value: pass[1], onInput: (e3) => setPass([pass[0], e3.currentTarget.value]) })
+        ] }),
+        /* @__PURE__ */ u3("div", { class: "fx-privatebtns", children: [
+          /* @__PURE__ */ u3("button", { class: "primary small", disabled: !!busy2, onClick: withPassphrase, children: "Make them private" }),
+          /* @__PURE__ */ u3("button", { class: "linkbtn", onClick: () => setStep("idle"), children: "Cancel" })
+        ] })
+      ] }),
+      busy2 && /* @__PURE__ */ u3("p", { class: "muted", role: "status", children: busy2 }),
+      said2 && /* @__PURE__ */ u3("p", { class: "formerr bad", role: "alert", children: said2 })
+    ] });
+  }
+  function Unlock() {
+    const [how, setHow] = d2("main");
+    const [text2, setText] = d2("");
+    const [busy2, setBusy] = d2(false);
+    const [said2, setSaid] = d2("");
+    const run2 = async (fn) => {
+      setBusy(true);
+      setSaid("");
+      try {
+        await fn();
+      } catch (e3) {
+        setSaid(errorText(e3));
+        setBusy(false);
+      }
+    };
+    return /* @__PURE__ */ u3(Card, { kind: "fx-private", id: "finPrivateLocked", children: [
+      /* @__PURE__ */ u3("h2", { children: "Your Finances are private" }),
+      /* @__PURE__ */ u3("p", { children: [
+        "Only you can open them, with ",
+        byPasskey() ? "Face ID" : "your passphrase",
+        " or your recovery code."
+      ] }),
+      how === "main" && (byPasskey() ? /* @__PURE__ */ u3("button", { class: "primary small", disabled: busy2, onClick: () => run2(unlockWithPasskey2), children: "Unlock with Face ID" }) : /* @__PURE__ */ u3("form", { onSubmit: (e3) => {
+        e3.preventDefault();
+        run2(() => unlockWithPassphrase2(text2));
+      }, children: [
+        /* @__PURE__ */ u3("label", { class: "field", children: [
+          "Passphrase ",
+          /* @__PURE__ */ u3("input", { type: "password", autocomplete: "current-password", value: text2, onInput: (e3) => setText(e3.currentTarget.value) })
+        ] }),
+        /* @__PURE__ */ u3("button", { class: "primary small", disabled: busy2 || !text2, children: "Unlock" })
+      ] })),
+      how === "code" && /* @__PURE__ */ u3("form", { onSubmit: (e3) => {
+        e3.preventDefault();
+        run2(() => unlockWithCode2(text2));
+      }, children: [
+        /* @__PURE__ */ u3("label", { class: "field", children: [
+          "Your recovery code, its 16 words ",
+          /* @__PURE__ */ u3("textarea", { id: "finPrivateWords", rows: 3, autocapitalize: "none", autocomplete: "off", spellcheck: false, value: text2, onInput: (e3) => setText(e3.currentTarget.value) })
+        ] }),
+        /* @__PURE__ */ u3("button", { class: "primary small", disabled: busy2 || !text2.trim(), children: "Unlock" })
+      ] }),
+      /* @__PURE__ */ u3("div", { class: "fx-privatebtns", children: how === "main" ? /* @__PURE__ */ u3("button", { class: "linkbtn", onClick: () => {
+        setHow("code");
+        setText("");
+        setSaid("");
+      }, children: "Use your recovery code" }) : /* @__PURE__ */ u3("button", { class: "linkbtn", onClick: () => {
+        setHow("main");
+        setText("");
+        setSaid("");
+      }, children: byPasskey() ? "Use Face ID instead" : "Use your passphrase instead" }) }),
+      busy2 && /* @__PURE__ */ u3("p", { class: "muted", role: "status", children: "Opening…" }),
+      said2 && /* @__PURE__ */ u3("p", { class: "formerr bad", role: "alert", children: said2 })
+    ] });
+  }
+  function PrivateCard() {
+    const s3 = privateState();
+    if (s3 === "locked") return /* @__PURE__ */ u3(Unlock, {});
+    if (s3 === "open") {
+      return /* @__PURE__ */ u3("p", { class: "fx-privateon", id: "finPrivateOpen", children: [
+        /* @__PURE__ */ u3("span", { children: "Private: only you can open these." }),
+        " ",
+        /* @__PURE__ */ u3("button", { class: "linkbtn", onClick: lock, children: "Lock" })
+      ] });
+    }
+    if (s3 === "plain" && mayChange()) return /* @__PURE__ */ u3(TurnOn, {});
+    return null;
+  }
+  function mountPrivate(el3) {
+    R(/* @__PURE__ */ u3(PrivateCard, {}), el3);
+  }
+
   // web/src/screens/finances.ts
+  installPrivate();
   var financesData = store(() => go().Finances());
   financesData.watch(draw4);
   var ledgerData = store(() => go().FinancesLedger());
@@ -17658,6 +18504,18 @@ ${pays}
   statusData.watch(() => {
     if (financesData.value) draw4();
   });
+  watchPrivate(() => {
+    if (privateState() === "locked") {
+      financesData.forget();
+      ledgerData.forget();
+      close2();
+    }
+    draw4();
+    loadFinances();
+  });
+  new MutationObserver(() => {
+    if (!$("finances").classList.contains("active")) lock();
+  }).observe($("finances"), { attributes: true, attributeFilter: ["class"] });
   function runningApps() {
     const up = new Set((statusData.value?.apps || []).filter((a3) => a3.state === "running").map((a3) => a3.id));
     return (catalog?.apps || []).filter((a3) => up.has(a3.id) && a3.replaces?.length).map((a3) => ({ name: a3.name, replaces: a3.replaces }));
@@ -17734,11 +18592,14 @@ ${pays}
     draw4();
   });
   var sel = null;
-  var opened = 0;
+  var opened2 = 0;
   var editing = null;
   var phone = document.documentElement.classList.contains("companion");
   function draw4() {
-    if (financesData.error && $("finances").classList.contains("active")) showError(financesData.error);
+    mountPrivate($("finPrivate"));
+    const locked = privateState() === "locked" || isLocked(financesData.error);
+    $("finRoot").hidden = locked;
+    if (financesData.error && !locked && $("finances").classList.contains("active")) showError(financesData.error);
     const v3 = financesData.value || null;
     setHidden(!!v3?.plan.hideAmounts);
     mountFinances($("finRoot"), {
@@ -17766,10 +18627,10 @@ ${pays}
         sel = i3;
         draw4();
       },
-      edit: open3,
+      edit: open4,
       setSince,
-      saveSettings: (s3) => save({ ...financesData.value.plan, currency: s3.currency, holidays: s3.holidays, rates: s3.rates, quiet: s3.quiet?.length ? s3.quiet : void 0, calendarKey: s3.calendarKey, calendarAmounts: s3.calendarKey ? s3.calendarAmounts || void 0 : void 0 }),
-      keep: save,
+      saveSettings: (s3) => save2({ ...financesData.value.plan, currency: s3.currency, holidays: s3.holidays, rates: s3.rates, quiet: s3.quiet?.length ? s3.quiet : void 0, calendarKey: s3.calendarKey, calendarAmounts: s3.calendarKey ? s3.calendarAmounts || void 0 : void 0 }),
+      keep: save2,
       exportFile,
       // A month's page: opened in the browser to print (it prints itself); on a phone, shared or downloaded.
       printMonth: async (name, html) => phone ? exportFile(name, html) : `Opened ${await go().PrintFinances(name, html)} to print`,
@@ -17796,7 +18657,7 @@ ${pays}
       } }
     });
     if (v3) readEachMorning(v3);
-    if (editing && v3 && !v3.readOnly) mountFinanceSheet($("finSheetBox"), { ...editing, plan: v3.plan, checking: v3.checking, start: v3.start, dues: v3.dues, categories: v3.categories, ledger: ledgerData.value, save, saveLedger, receipts, cardPictures, fetchLogo, fromApps: fromApps(), close: close2 });
+    if (editing && v3 && !v3.readOnly) mountFinanceSheet($("finSheetBox"), { ...editing, plan: v3.plan, checking: v3.checking, start: v3.start, dues: v3.dues, categories: v3.categories, ledger: ledgerData.value, save: save2, saveLedger, receipts, cardPictures, fetchLogo, fromApps: fromApps(), close: close2 });
     mountBalances($("finNav"), v3, (g2) => {
       tab = "worth";
       group = g2;
@@ -17830,7 +18691,7 @@ ${pays}
     setTimeout(() => URL.revokeObjectURL(a3.href), 6e4);
     return `Downloaded ${name}`;
   }
-  async function save(plan) {
+  async function save2(plan) {
     try {
       financesData.set(await go().SaveFinances(plan));
       return true;
@@ -17854,15 +18715,15 @@ ${pays}
       return false;
     }
   }
-  function setSince(key6, state2) {
+  function setSince(key7, state3) {
     const v3 = financesData.value;
     const waiting2 = new Set((v3.since || []).filter((s3) => s3.waiting).map((s3) => s3.key));
     const held3 = new Set((v3.since || []).filter((s3) => s3.inBalance).map((s3) => s3.key));
-    waiting2.delete(key6);
-    held3.delete(key6);
-    if (state2 === "waiting") waiting2.add(key6);
-    if (state2 === "inBalance") held3.add(key6);
-    return save({ ...v3.plan, waiting: [...waiting2], inBalance: held3.size ? [...held3] : void 0, notYet: void 0 });
+    waiting2.delete(key7);
+    held3.delete(key7);
+    if (state3 === "waiting") waiting2.add(key7);
+    if (state3 === "inBalance") held3.add(key7);
+    return save2({ ...v3.plan, waiting: [...waiting2], inBalance: held3.size ? [...held3] : void 0, notYet: void 0 });
   }
   var toggled = 0;
   function toggleHideAmounts() {
@@ -17871,16 +18732,16 @@ ${pays}
     toggled = Date.now();
     const plan = { ...v3.plan, hideAmounts: !v3.plan.hideAmounts || void 0 };
     financesData.set({ ...v3, plan });
-    save(plan);
+    save2(plan);
   }
   function openFinanceForm(what2, id2, kind) {
-    open3(what2, id2, kind);
+    open4(what2, id2, kind);
   }
-  function open3(what2, id2, kind) {
+  function open4(what2, id2, kind) {
     const v3 = financesData.value;
     if (!v3 || v3.readOnly) return;
-    editing = { what: what2, id: id2, kind, n: ++opened };
-    mountFinanceSheet($("finSheetBox"), { ...editing, plan: v3.plan, checking: v3.checking, start: v3.start, dues: v3.dues, categories: v3.categories, ledger: ledgerData.value, save, saveLedger, receipts, cardPictures, fetchLogo, fromApps: fromApps(), close: close2 });
+    editing = { what: what2, id: id2, kind, n: ++opened2 };
+    mountFinanceSheet($("finSheetBox"), { ...editing, plan: v3.plan, checking: v3.checking, start: v3.start, dues: v3.dues, categories: v3.categories, ledger: ledgerData.value, save: save2, saveLedger, receipts, cardPictures, fetchLogo, fromApps: fromApps(), close: close2 });
     $("finSheet").hidden = false;
   }
   function close2() {
@@ -17987,12 +18848,12 @@ ${pays}
     return /* @__PURE__ */ u3("button", { class: primary ? "primary small" : "small", disabled: busy(job2) || gone || !!other, title: why, onClick, children: label });
   }
   var toneWords = { ok: "Done", warn: "To look at", bad: "Failed" };
-  function Bar({ title, p: p3, idle }) {
+  function Bar({ title, p: p3, idle: idle2 }) {
     const pct = p3 && p3.total ? Math.min(100, Math.round(p3.done / p3.total * 100)) : void 0;
     const left = p3?.eta ? p3.eta > 3600 ? `~${Math.floor(p3.eta / 3600)}h ${Math.round(p3.eta % 3600 / 60)}m left` : `~${Math.max(1, Math.round(p3.eta / 60))}m left` : "";
     return /* @__PURE__ */ u3("div", { class: "progress", children: [
       /* @__PURE__ */ u3("div", { class: "track", role: "progressbar", "aria-label": title, "aria-valuemin": 0, "aria-valuemax": 100, "aria-valuenow": pct, children: /* @__PURE__ */ u3("span", { class: "fill", style: { width: `${pct ?? 0}%` } }) }),
-      /* @__PURE__ */ u3("p", { class: "step", children: p3 ? `${p3.label} ${p3.done.toLocaleString()} of ${p3.total.toLocaleString()}${pct !== void 0 ? ` · ${pct}%` : ""}${left ? " · " + left : ""}` : idle })
+      /* @__PURE__ */ u3("p", { class: "step", children: p3 ? `${p3.label} ${p3.done.toLocaleString()} of ${p3.total.toLocaleString()}${pct !== void 0 ? ` · ${pct}%` : ""}${left ? " · " + left : ""}` : idle2 })
     ] });
   }
   function JobPanel({ job: job2, stop: stop2, done, fix, again }) {
@@ -18037,8 +18898,8 @@ ${pays}
       ] })
     ] });
   }
-  function RunningCard({ lock, now, stop: stop2, stopping }) {
-    const title = jobTitle(lock.kind, lock.action, lock.flags || []);
+  function RunningCard({ lock: lock2, now, stop: stop2, stopping }) {
+    const title = jobTitle(lock2.kind, lock2.action, lock2.flags || []);
     const p3 = now?.progress && now.progress.total ? { done: now.progress.done || 0, total: now.progress.total, label: now.progress.label || "", note: now.progress.note, eta: now.progress.eta } : void 0;
     return /* @__PURE__ */ u3(Card, { kind: "tidyjob", id: "tidyRunning", children: [
       /* @__PURE__ */ u3("p", { class: "sr", role: "status", children: [
@@ -18062,7 +18923,7 @@ ${pays}
       ] }),
       /* @__PURE__ */ u3("p", { class: "muted", children: [
         "Started ",
-        startedText(lock.start),
+        startedText(lock2.start),
         ", outside this window, and carries on with it closed. The buttons below wait until it's done."
       ] })
     ] });
@@ -18101,7 +18962,7 @@ ${pays}
     const [sure, setSure] = d2(false);
     const [entry, setEntry] = d2({ c: null, v: {} });
     const typed = entry.c === c4 ? entry.v : {};
-    const type = (key6, v3) => setEntry((e3) => ({ c: c4, v: { ...e3.c === c4 ? e3.v : {}, [key6]: v3 } }));
+    const type = (key7, v3) => setEntry((e3) => ({ c: c4, v: { ...e3.c === c4 ? e3.v : {}, [key7]: v3 } }));
     h2(() => setSure(false), [c4]);
     const [found2, setFound2] = d2(null);
     const look2 = found2?.c === c4 ? found2 : null;
@@ -18109,7 +18970,7 @@ ${pays}
     const ready2 = (c4?.fields || []).every((f4) => (f4.optional || val(f4)) && (!f4.number || /^\d{0,4}$/.test(val(f4))));
     const values = () => Object.fromEntries((c4?.fields || []).map((f4) => [f4.key, val(f4)]));
     const canFind = !!c4?.find && (c4.find.needs ? !!(typed[c4.find.needs] || "").trim() : ready2);
-    const find = () => {
+    const find2 = () => {
       if (!c4?.find || !canFind || look2?.busy) return;
       const asked = c4;
       setFound2({ c: asked, busy: true });
@@ -18118,9 +18979,9 @@ ${pays}
         (e3) => setFound2((f4) => f4?.c === asked && f4.busy ? { c: asked, error: errorText(e3) } : f4)
       );
     };
-    const typeAndForget = (key6, v3) => {
-      type(key6, v3);
-      if (look2 && (!c4?.find?.needs || key6 === c4.find.needs)) setFound2(null);
+    const typeAndForget = (key7, v3) => {
+      type(key7, v3);
+      if (look2 && (!c4?.find?.needs || key7 === c4.find.needs)) setFound2(null);
     };
     return /* @__PURE__ */ u3(Sheet, { id: "tidySheet", titleId: "tidySheetTitle", onClose: close3, children: [
       /* @__PURE__ */ u3("h2", { id: "tidySheetTitle", children: c4?.title }),
@@ -18143,14 +19004,14 @@ ${pays}
             onKeyDown: c4.find ? (e3) => {
               if (e3.key === "Enter") {
                 e3.preventDefault();
-                find();
+                find2();
               }
             } : void 0
           }
         )
       ] }, f4.key)) }),
       c4?.find && /* @__PURE__ */ u3("div", { class: "tidyfind", children: [
-        /* @__PURE__ */ u3("button", { class: "small", disabled: !canFind || !!look2?.busy, onClick: find, children: look2?.busy ? "Looking…" : look2?.list || look2?.error ? "Look again" : c4.find.label }),
+        /* @__PURE__ */ u3("button", { class: "small", disabled: !canFind || !!look2?.busy, onClick: find2, children: look2?.busy ? "Looking…" : look2?.list || look2?.error ? "Look again" : c4.find.label }),
         /* @__PURE__ */ u3("div", { "aria-live": "polite", children: [
           look2?.error && /* @__PURE__ */ u3("p", { class: "warn", children: look2.error }),
           look2?.list && !look2.list.length && /* @__PURE__ */ u3("p", { class: "muted", children: c4.find.none }),
@@ -18607,7 +19468,7 @@ ${pays}
     };
     const other = x2(Elsewhere);
     const waits2 = busy(job2) || !!other;
-    const state2 = (f4) => gone.has(f4) ? "Not there now: plug in its drive" : !ib.watching ? "Not watched: Tidy Up's background work is off in Settings" : when3 === "manual" ? "Tidied when you press Tidy up now" : when3 === "daily" ? "Tidied once a day, after 3 AM" : "Watched: tidied as things arrive";
+    const state3 = (f4) => gone.has(f4) ? "Not there now: plug in its drive" : !ib.watching ? "Not watched: Tidy Up's background work is off in Settings" : when3 === "manual" ? "Tidied when you press Tidy up now" : when3 === "daily" ? "Tidied once a day, after 3 AM" : "Watched: tidied as things arrive";
     return /* @__PURE__ */ u3(Widget, { title: "Drop anything here", span: "all", kind: "tidyinbox", children: [
       /* @__PURE__ */ u3("p", { class: "muted tidyinboxlead", children: "Music, films, shows, books, and audiobooks: put them in one of these folders, however messy, and Tidy Up works out what each is, cleans it up, and files it in your library." }),
       /* @__PURE__ */ u3("fieldset", { class: "tidyinboxset", disabled: waits2, children: [
@@ -18617,7 +19478,7 @@ ${pays}
             {
               lead: /* @__PURE__ */ u3(LibIcon, { kind: "folder" }),
               title: folderName(f4),
-              sub: `${f4} · ${state2(f4)}`,
+              sub: `${f4} · ${state3(f4)}`,
               subTone: gone.has(f4) ? "warn" : void 0,
               end: folders.length > 1 && /* @__PURE__ */ u3("button", { class: "small", "aria-label": `Remove ${folderName(f4)}`, onClick: () => act.inbox(folders.filter((x3) => x3 !== f4), when3), children: "Remove" })
             },
@@ -18925,7 +19786,7 @@ ${pays}
       if (!last(l3, "playlists")?.ok) extra.push({ kind: "music", title: "A smart playlist for each of your genres", sub: "Navidrome fills them by itself as music is added", go: { label: "Make playlists", run: () => act.run("music", "playlists"), quiet: true } });
       const lr = last(l3, "lyrics"), ly = lr?.result;
       if (lr && ly) {
-        const parts3 = [["synced", "time-synced"], ["plain", "plain"], ["none", "without lyrics"], ["not_found", "not on LRCLIB yet"]].filter(([key6]) => n2(ly[key6]) > 0).map(([key6, words5], i3) => `${i3 ? n2(ly[key6]).toLocaleString() : count(n2(ly[key6]), "song")} ${words5}`);
+        const parts3 = [["synced", "time-synced"], ["plain", "plain"], ["none", "without lyrics"], ["not_found", "not on LRCLIB yet"]].filter(([key7]) => n2(ly[key7]) > 0).map(([key7, words5], i3) => `${i3 ? n2(ly[key7]).toLocaleString() : count(n2(ly[key7]), "song")} ${words5}`);
         const found2 = n2(ly.to_clean) ? `${count(n2(ly.to_clean), "song")} with two languages on one line` : "none with two languages on one line";
         extra.push({
           kind: "lyrics",
@@ -19123,10 +19984,10 @@ ${pays}
           }
           go().TidyStop();
         },
-        stopElsewhere: (lock) => {
-          stoppingElsewhere = lock.start;
+        stopElsewhere: (lock2) => {
+          stoppingElsewhere = lock2.start;
           draw5();
-          Promise.resolve(go().TidyStopElsewhere(lock.pid, lock.start)).catch((e3) => {
+          Promise.resolve(go().TidyStopElsewhere(lock2.pid, lock2.start)).catch((e3) => {
             stoppingElsewhere = "";
             showError(e3);
             draw5();
@@ -19171,13 +20032,13 @@ ${pays}
           showError(e3);
           return "";
         }),
-        places: (open4) => {
-          placing = open4;
-          if (open4) {
+        places: (open5) => {
+          placing = open5;
+          if (open5) {
             tab2 = "overview";
           }
           draw5();
-          if (open4) document.querySelector("#tidy .tidyplaces")?.scrollIntoView({ block: "start" });
+          if (open5) document.querySelector("#tidy .tidyplaces")?.scrollIntoView({ block: "start" });
         },
         drives: () => Promise.resolve(go().TidyDrives()),
         place: (root) => Promise.resolve(go().TidyPlace(root)),
@@ -19485,9 +20346,9 @@ ${pays}
     } });
     const page = sendable();
     if (page && !phone2) for (const t3 of targetsFor(page.link)) add({ id: `send:${t3.id}`, label: `Send ${page.title} to ${t3.name}`, also: "send to my phone open on", run: () => sendTo(t3, page.link, page.title) });
-    for (const [id2, label, key6, also] of screenList) {
+    for (const [id2, label, key7, also] of screenList) {
       if (phone2 && (id2 === "setup" || id2 === "choose")) continue;
-      add({ id: "screen:" + id2, label, hint: mod + key6, also: "screen go " + also, run: () => navigate(id2) });
+      add({ id: "screen:" + id2, label, hint: mod + key7, also: "screen go " + also, run: () => navigate(id2) });
     }
     const apps2 = Object.values(statusById);
     if (!apps2.length) return list;
@@ -19689,11 +20550,11 @@ ${pays}
   }
 
   // web/src/place.ts
-  var key5 = "homelab.place";
+  var key6 = "homelab.place";
   var kept3 = /* @__PURE__ */ new Set(["choose", "status", "backups", "setup", "settings", "finances", "tidy"]);
   var places = {};
   try {
-    places = JSON.parse(localStorage.getItem(key5) || "{}") || {};
+    places = JSON.parse(localStorage.getItem(key6) || "{}") || {};
   } catch {
     places = {};
   }
@@ -19705,7 +20566,7 @@ ${pays}
     const all = sections(screen);
     places[screen] = { top: aiming.screen === screen ? aiming.top : Math.round(main().scrollTop), open: all.filter((d3) => d3.open).map((d3) => d3.id), shut: all.filter((d3) => !d3.open).map((d3) => d3.id) };
     try {
-      localStorage.setItem(key5, JSON.stringify(places));
+      localStorage.setItem(key6, JSON.stringify(places));
     } catch {
     }
   }
@@ -19868,17 +20729,17 @@ ${pays}
   function wireNavMenus() {
     $$("nav button[data-screen]").forEach((b2) => {
       const screen = b2.dataset.screen, name = b2.querySelector("span")?.textContent?.trim() || screen;
-      const open4 = (x3, y3) => openContextMenu(name, x3, y3, navItems(screen));
+      const open5 = (x3, y3) => openContextMenu(name, x3, y3, navItems(screen));
       b2.addEventListener("contextmenu", (e3) => {
         if (onPhone()) return;
         e3.preventDefault();
-        open4(e3.clientX, e3.clientY);
+        open5(e3.clientX, e3.clientY);
       });
       b2.addEventListener("keydown", (e3) => {
         if (onPhone() || !(e3.key === "ContextMenu" || e3.key === "F10" && e3.shiftKey)) return;
         e3.preventDefault();
         const r3 = b2.getBoundingClientRect();
-        open4(r3.left + 12, r3.bottom + 4);
+        open5(r3.left + 12, r3.bottom + 4);
       });
     });
   }

@@ -185,8 +185,10 @@ func TestServer(t *testing.T) {
 	if !strings.Contains(page.String(), `<script src="companion.js"></script>`+"\n"+`<script src="app.js">`) || !strings.Contains(page.String(), `class="companion"`) || !strings.Contains(page.String(), "manifest.webmanifest") {
 		t.Fatalf("page:\n%s", page.String())
 	}
-	if resp.Header.Get("Content-Security-Policy") == "" {
-		t.Error("no CSP")
+	// The page may compile WebAssembly (a member's private Finances read
+	// forward on her phone, finance.wasm), and never run a string as script.
+	if csp := resp.Header.Get("Content-Security-Policy"); !strings.Contains(csp, "script-src 'self' 'wasm-unsafe-eval';") || strings.Contains(csp, "'unsafe-eval'") || !strings.Contains(csp, "default-src 'self';") {
+		t.Errorf("CSP: %q", csp)
 	}
 }
 
