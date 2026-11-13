@@ -1769,6 +1769,12 @@ From task 5, **Get one file back from last week's backup** (Nov 13, Backups agai
 
     The security session ticks N76 in `docs/Security.md` once it merges.
 
+From task 9, **The computer is slow: find out why and free memory** (Nov 13, Status against the fake backend with memory 94% full, on the Mac in light; `t9-memory-card.png`, `t9-power-card.png`):
+
+25. **The two cards that answer "why is it slow" write memory two ways.** The watchdog's card says "Immich 2.5 GB… Paperless-ngx 900 MB", while "What's using power" says "Immich machine learning 162% · 1.4GiB… Paperless-ngx 9% · 610MiB". Each app's figure there is Docker's own text (`Usage.tsx` shows `s.mem` as `docker stats` gives it), where the line above it uses `formatMem`. *Fixed looks like:* one way of writing sizes everywhere ("1.5 GB"), with the app's memory read as a number. *Smoke case:* Status's power card shows no "GiB" or "MiB".
+26. **Something not of the homelab's is listed with no Stop and no word** (`t9-memory-card.png`): "someones-own 1.2 GB" sits among the biggest users of memory, with its raw name and no button. Nothing says it is a container started outside the homelab, or how to stop it. *Fixed looks like:* "someones-own (not one of the homelab's apps: stop it where it was started, e.g. Docker Desktop)", or a Stop that works for it too. *Smoke case:* a memory card row with no app ID says why it has no Stop.
+27. **Words:** "189% of a core in all" and "162%" (a share of one processor core); "What's using power" heading a card that is also about memory; "Docker has" (the household didn't choose Docker's share). *Fixed looks like:* "Busy: about 2 of your 8 processor cores", "What's working hardest", "of the 8.0 GB set aside for the apps". *Smoke case:* the words lint refusing "of a core" on Status.
+
 Not a screen, but yours: **`TestJobLogSplitsAtOnceAllFinish` (#471) failed once on Windows CI** (Nov 6, #475's run: "open …\\watchdog.log: The process cannot access the file because it is being used by another process"; green on a re-run). Either the test is flaky on Windows, or a log can't be rotated on Windows while another process has it open, which would also bite a household's Windows machine. Worth a look before it turns another lane's run red.
 
 - (done: #460) **N22: a phone removed on the computer can come back** (your note in
