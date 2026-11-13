@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -117,5 +118,57 @@ func TestList(t *testing.T) {
 	}
 	if _, err := List(context.Background(), path, "o/missing"); err == nil {
 		t.Error("a missing project gave no error")
+	}
+}
+
+// A project's releases are a stranger's text, printed by homelab updates
+// notes in a terminal: control characters (an escape that rewrites the
+// screen, sets the title or the clipboard) are taken out of the tag, the
+// name and the notes, also from a copy cached before; a release's link is
+// kept only on GitHub. An image's label naming "." or ".." as its project
+// names none, so no other address on GitHub's API is asked.
+func TestAReleaseIsPlainText(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_ = json.NewEncoder(w).Encode([]map[string]any{
+			{"tag_name": "v2.0.0\x1b[2J", "name": "Big\x1b]52;c;ZWNobyBoaQ==\x07 one", "html_url": "https://evil.example/x", "body": "- fixed\x1b[8m hidden\r\n- \x07two"},
+			{"tag_name": "v1.0.0", "html_url": "https://github.com/o/r/releases/tag/v1.0.0"},
+		})
+	}))
+	defer srv.Close()
+	API = srv.URL
+	defer func() { API = "https://api.github.com" }()
+	path := filepath.Join(t.TempDir(), "data", "releases.json")
+	list, err := List(context.Background(), path, "o/r")
+	if err != nil || len(list) != 2 {
+		t.Fatalf("%+v %v", list, err)
+	}
+	for _, r := range list {
+		for _, s := range []string{r.Tag, r.Name, r.Notes, r.URL} {
+			if strings.ContainsFunc(s, func(c rune) bool { return c != '\n' && (c < 0x20 || c == 0x7f || c >= 0x80 && c < 0xa0) }) {
+				t.Errorf("a control character is left: %q", s)
+			}
+		}
+	}
+	if list[0].URL != "" || list[1].URL != "https://github.com/o/r/releases/tag/v1.0.0" {
+		t.Errorf("links: %q, %q", list[0].URL, list[1].URL)
+	}
+	if !strings.Contains(list[0].Notes, "fixed") || !strings.Contains(list[0].Notes, "\n") {
+		t.Errorf("notes: %q", list[0].Notes)
+	}
+
+	// A copy cached by an older version is cleaned as it is read.
+	old := `{"x/y":{"at":"` + time.Now().UTC().Format(time.RFC3339) + `","releases":[{"tag":"v9\u001b[2J","url":"javascript:alert(1)"}]}}`
+	if err := os.WriteFile(path, []byte(old), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	list, _ = List(context.Background(), path, "x/y")
+	if len(list) != 1 || list[0].Tag != "v9[2J" || list[0].URL != "" {
+		t.Errorf("cached: %+v", list)
+	}
+
+	for _, label := range []string{"https://github.com/../orgs", "https://github.com/o/..", "https://github.com/./x"} {
+		if got := Repo("", "img:1", map[string]string{"org.opencontainers.image.source": label}); got != "" {
+			t.Errorf("%s names %q", label, got)
+		}
 	}
 }
