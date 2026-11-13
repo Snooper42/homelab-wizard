@@ -140,7 +140,7 @@ $SIGNED_FLAG
         CFBundleDisplayName: Homelab
 $IOS_GROUP_INFO
         NSFaceIDUsageDescription: Face ID unlocks Homelab, which controls your servers.
-        NSCameraUsageDescription: The camera scans the pairing QR code your computer shows.
+        NSCameraUsageDescription: The camera scans the pairing QR code your computer shows, and takes a photo of a card for your Collection when you ask.
         NSLocalNetworkUsageDescription: Homelab talks to your homelab on the home network.
         ITSAppUsesNonExemptEncryption: false
         # Links into the app (homelab://, Shared/Models/DeepLink.swift).

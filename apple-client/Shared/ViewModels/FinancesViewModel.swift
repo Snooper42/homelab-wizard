@@ -216,6 +216,56 @@ final class FinancesViewModel {
         return (try? await api.cardPrices()) ?? [:]
     }
 
+    /// Adds a card to the Collection (`id` nil) or changes one, after Face
+    /// ID. Returns whether it saved.
+    func saveCard(id: String?, _ draft: CardDraft) async -> Bool {
+        guard canEdit, !isSaving, let raw = rawPlan else { return false }
+        if let problem = FinancePlanEdit.cardProblem(draft) {
+            saveError = problem
+            return false
+        }
+        guard let edited = FinancePlanEdit.settingCard(id: id, to: draft, today: FinancePlanEdit.todayString(), in: raw) else {
+            saveError = "That card is no longer in the Collection."
+            return false
+        }
+        let name = draft.name.trimmingCharacters(in: .whitespacesAndNewlines)
+        return await savePlan(edited, reason: id == nil ? "Add \(name) to the Collection." : "Change \(name) in the Collection.")
+    }
+
+    /// Takes a card out of the Collection, after Face ID. Returns whether it saved.
+    func removeCard(_ card: FinanceCollected) async -> Bool {
+        guard canEdit, !isSaving, let raw = rawPlan else { return false }
+        guard let edited = FinancePlanEdit.removingCard(id: card.id, in: raw) else {
+            saveError = "That card is no longer in the Collection."
+            return false
+        }
+        return await savePlan(edited, reason: "Remove \(card.name) from the Collection.")
+    }
+
+    /// Keeps a card's own photo on the computer, made small here (800
+    /// pixels, a JPEG with no location or camera), after Face ID. Returns
+    /// the name the computer gives it, for the card to save with.
+    func attachCardPhoto(_ data: Data) async -> String? {
+        guard canEdit, !isSaving else { return nil }
+        isSaving = true
+        defer { isSaving = false }
+        guard await authorize("Keep a photo of a card in your Finances.") else { return nil }
+        guard let url = await Task.detached(priority: .userInitiated, operation: { ReceiptCodec.preparePhoto(data, pixels: CardDraft.photoPixels) }).value else {
+            saveError = "That picture couldn't be used for the card."
+            return nil
+        }
+        do {
+            let name = try await api.saveCardPicture(dataURL: url)
+            if let shown = FinanceCollected.pictureData(url) { cardPictures[name] = shown }
+            return name
+        } catch {
+            let apiError = APIError.from(error)
+            Log.ui.error("SaveFinancesCardPicture failed: \(apiError.logName, privacy: .public)")
+            saveError = apiError.errorDescription
+            return nil
+        }
+    }
+
     /// What Ghostfolio finds for a ticker or a name.
     func findSymbols(_ query: String) async throws -> [InvestmentSymbol] {
         guard canEdit else { return [] }
