@@ -21,6 +21,7 @@ Go 1.26 or newer for the CLI and the desktop app (Go fetches the version in `go.
 | The iPhone and iPad app (`apple-client/`) | `cd apple-client && swift build && swift test` on a Mac with full Xcode; [apple-client/README.md](apple-client/README.md) has the iOS build |
 | Finances' phone projection (`mobile/finance`) | `make check`, then `make phone-finance-wasm` (and `make phone-finance-framework` on a Mac with Xcode, for the iPhone app) |
 | Only docs | `make check` (it runs `homelab validate`: links, versions, generated blocks) |
+| A screen the docs show | `make screenshots` (every picture in `docs/images`, light and dark), and `node app/preview/tour.mjs` for the README's walkthrough (`docs/images/tour.gif`; needs ffmpeg) |
 
 ## Layout
 
