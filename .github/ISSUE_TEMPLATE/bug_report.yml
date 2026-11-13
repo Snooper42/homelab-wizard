@@ -42,6 +42,6 @@ body:
     id: report
     attributes:
       label: Diagnostics report
-      description: Run ./homelab report (or Setup › Make a diagnostics report in the app) and attach or paste the file. Every secret is already removed from it.
+      description: In the app, Settings › This Mac (This PC, This machine) › Make a diagnostics report; or run ./homelab report. Attach or paste the file. Every secret is already removed from it.
     validations:
       required: false

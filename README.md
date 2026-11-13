@@ -87,12 +87,39 @@ Two parts are its own: **Finances**, the household's money paycheck by paycheck,
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-setup-dark.png">
   <img alt="Setup: this machine, then the first-time checklist with progress" src="docs/images/app-setup.png">
 </picture></td>
-<td valign="top"><a href="docs/Tour.md#on-the-phone"><strong>On the phone</strong></a><br>Status, Backups, and Finances in the phone's browser, at home or away; a phone only looks until you let it change things.<br><br><p align="center"><picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-phone-dark.png">
-  <img alt="The phone companion: Status on a phone" src="docs/images/app-phone.png" width="210">
+<td valign="top"><a href="docs/Tour.md#on-your-iphone"><strong>On your iPhone</strong></a><br>The Homelab app: Status, each app's page, Backups, and Finances in your pocket, at home or away, behind Face ID.<br><br><p align="center"><picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/iphone-status-dark.png">
+  <img alt="The Homelab app on an iPhone: Status, with Mealie needing a look and each category of apps below" src="docs/images/iphone-status.png" width="210">
 </picture></p></td>
 </tr>
 </table>
+
+### On your iPhone
+
+The **Homelab app** for iPhone and iPad keeps the homelab in your pocket: Status with **Start** and **Logs**, each app's page, Backups, the household's Finances, alerts, and a widget, behind Face ID. A phone only looks until you let it make changes, and sees Finances only if you allow it. It's built with Xcode on your own Mac for now, not from the App Store ([apple-client](apple-client/README.md)).
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/iphone-status-dark.png">
+    <img alt="The Homelab app on an iPhone. Status: the app that needs a look first, with Start and Logs, then each category" src="docs/images/iphone-status.png" width="160">
+  </picture>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/iphone-app-dark.png">
+    <img alt="The Homelab app on an iPhone. An app's page: Vikunja running, with Open, Restart, Stop, and Logs" src="docs/images/iphone-app.png" width="160">
+  </picture>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/iphone-backups-dark.png">
+    <img alt="The Homelab app on an iPhone. Backups: the last backup, the restore test, and what needs a look" src="docs/images/iphone-backups.png" width="160">
+  </picture>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/iphone-finances-dark.png">
+    <img alt="The Homelab app on an iPhone. Finances: checking now, after the next paycheck, and net worth over three months" src="docs/images/iphone-finances.png" width="160">
+  </picture>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/iphone-spending-dark.png">
+    <img alt="The Homelab app on an iPhone. Spending: where the month went, by category, with each budget" src="docs/images/iphone-spending.png" width="160">
+  </picture>
+</p>
 
 Every screen in more detail, with what each button does: **[the full tour](docs/Tour.md)**.
 
@@ -214,7 +241,7 @@ Each in the app, then the same from a terminal in the homelab folder (`homelab.c
 <details>
 <summary><strong>Is it safe?</strong></summary>
 
-Nothing on the computer is opened to the internet. By default the apps answer only your own devices over Tailscale's private network. With an optional domain, the apps that work away from home go through a Cloudflare tunnel and past CrowdSec, which blocks known attackers. Passwords are stored encrypted, and backups are encrypted before they leave the house. The full review: [Security](docs/Security.md).
+Nothing on the computer is opened to the internet. By default the apps answer only your own devices over Tailscale's private network. With an optional domain, the apps that work away from home go through a Cloudflare tunnel and past CrowdSec, which blocks known attackers. Passwords are stored encrypted, and backups are encrypted before they leave the house. The full review: [Security](docs/Security.md). Found a hole? Please report it privately: [SECURITY.md](SECURITY.md).
 
 </details>
 
@@ -553,7 +580,7 @@ Combine them as you like (`--folder --backups --app` takes everything of the hom
 
 ## Getting help
 
-**Fix it** on Status (or `./homelab fix`) puts right what usually goes wrong. Otherwise see [Troubleshooting](docs/Troubleshooting.md) and [Known Issues](docs/Known%20Issues.md), then make a diagnostics report (Settings › This Mac › **Make a diagnostics report**, or `./homelab report`; passwords and tokens are removed), read it, and attach it to a [bug report](https://github.com/Snooper42/homelab-wizard/issues/new/choose). Never paste `.env`, a token, or a password.
+**Fix it** on Status (or `./homelab fix`) puts right what usually goes wrong. Otherwise see [Troubleshooting](docs/Troubleshooting.md) and [Known Issues](docs/Known%20Issues.md), then make a diagnostics report (Settings › This Mac › **Make a diagnostics report**, or `./homelab report`; passwords and tokens are removed), read it, and attach it to a [bug report](https://github.com/Snooper42/homelab-wizard/issues/new/choose). Never paste `.env`, a token, or a password. A security problem goes privately instead ([SECURITY.md](SECURITY.md)).
 
 ## Documentation
 

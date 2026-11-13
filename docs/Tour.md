@@ -18,7 +18,7 @@ This page walks through the app screen by screen. The pictures are the real app 
 | [Finances](#finances) | What does each paycheck leave once the bills are paid? |
 | [Tidy Up](#tidy-up) | Are the music, films, and books sorted, and where did the space go? |
 | [Settings and phones](#settings-and-phones) | How do I change a setting, add a person, or pair a phone? |
-| [On the phone](#on-the-phone) | Can I check on it from anywhere? |
+| [On your iPhone](#on-your-iphone) | Can I check on it, and fix it, from my phone? |
 | [Updates](#updates) | Is there a newer version, and what changed? |
 
 ## Status
@@ -165,22 +165,69 @@ Every setting of the homelab as a form, the everyday ones first, searchable. Pas
 
 More: [Environment](<Environment.md>) (every setting), [Pocket ID](<../services/security/Pocket ID.md>) (sign-in for the household).
 
-## On the phone
+## On your iPhone
 
-The phone companion: Status, Backups, and Finances (for the phones you allow) in the phone's browser, at home or over Tailscale, kept on the Home Screen like an app. A phone allowed changes can start, stop, and back up; one that only looks says so. On a TV or a wall tablet, kiosk mode shows Status alone, large.
+The **Homelab app** for iPhone and iPad is how the household keeps an eye on the homelab: the same homelab in your pocket, at home or away. It opens behind Face ID, and a phone only looks until you let it make changes (Settings › Phones on the computer); then Start, Restart, or a backup asks Face ID first.
 
-<p>
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="images/app-phone-dark.png">
-  <img alt="The phone companion: Status on a phone" src="images/app-phone.png" width="300">
-</picture>
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="images/app-phone-backups-dark.png">
-  <img alt="The phone companion: Backups on a phone" src="images/app-phone-backups.png" width="300">
-</picture>
+**Status** leads with what needs a look, with **Start** and **Logs** right there, then each category folded into one line. A tap on any app opens its page: its state, **Open**, **Restart**, **Stop**, its log, and **Roll back**. **Backups** shows the last one, the restore test, and anything stale.
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="images/iphone-status-dark.png">
+    <img alt="The Homelab app on an iPhone. Status: the app that needs a look first, with Start and Logs, then each category" src="images/iphone-status.png" width="200">
+  </picture>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="images/iphone-app-dark.png">
+    <img alt="The Homelab app on an iPhone. An app's page: Vikunja running, with Open, Restart, Stop, and Logs" src="images/iphone-app.png" width="200">
+  </picture>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="images/iphone-backups-dark.png">
+    <img alt="The Homelab app on an iPhone. Backups: the last backup, the restore test, and what needs a look" src="images/iphone-backups.png" width="200">
+  </picture>
 </p>
 
-On an iPhone or iPad there is also a native app, built with Xcode on your own Mac ([apple-client](<../apple-client/README.md>)). What each device can do: [What each device can do](<Parity.md>).
+**Finances**, on the phones you allow, is laid out as the phone's own Settings: checking now and after the next paycheck, net worth over three months, then Transactions, Budgets, Investments, and the rest, each a tap away. Without a connection it shows the last Finances it read, marked **As of**, to look at.
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="images/iphone-finances-dark.png">
+    <img alt="The Homelab app on an iPhone. Finances: checking now, after the next paycheck, and net worth over three months" src="images/iphone-finances.png" width="200">
+  </picture>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="images/iphone-transactions-dark.png">
+    <img alt="The Homelab app on an iPhone. Transactions: checking's card on top, the other accounts beside it, then what happened, with each payee's logo" src="images/iphone-transactions.png" width="200">
+  </picture>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="images/iphone-spending-dark.png">
+    <img alt="The Homelab app on an iPhone. Spending: where the month went, by category, with each budget" src="images/iphone-spending.png" width="200">
+  </picture>
+</p>
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="images/iphone-budgets-dark.png">
+    <img alt="The Homelab app on an iPhone. Budgets: what's left to spend this month, and each budget's bar" src="images/iphone-budgets.png" width="200">
+  </picture>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="images/iphone-investments-dark.png">
+    <img alt="The Homelab app on an iPhone. Investments: the holdings as Ghostfolio last read them, and their worth over three months" src="images/iphone-investments.png" width="200">
+  </picture>
+</p>
+
+It locks itself whenever you leave it, and **Settings** has the homelab's everyday settings, each change asking Face ID.
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="images/iphone-lock-dark.png">
+    <img alt="The Homelab app on an iPhone. Homelab Is Locked, with Unlock with Face ID" src="images/iphone-lock.png" width="200">
+  </picture>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="images/iphone-settings-dark.png">
+    <img alt="The Homelab app on an iPhone. Settings: what this iPhone may do, then the homelab's everyday settings with their switches" src="images/iphone-settings.png" width="200">
+  </picture>
+</p>
+
+It's built with Xcode on your own Mac for now, not from the App Store: [apple-client](<../apple-client/README.md>) has the steps. Any other phone (Android, a visitor's) can open the same Status, Backups, and Finances in its browser once paired. What each device can do: [What each device can do](<Parity.md>).
 
 ## Updates
 
