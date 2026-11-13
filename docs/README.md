@@ -7,7 +7,7 @@ version: 0.17.0
 <p align="center">
   <img src="../assets/logo.svg" alt="" width="72" height="72"><br>
   <strong>Everything about Homelab Wizard, in one place.</strong><br>
-  New here? Start with <a href="Getting%20Started.md">Getting Started</a>. Something wrong? <a href="Troubleshooting.md">Troubleshooting</a>. Trying a new build? Follow <a href="Testing.md">Testing</a>.
+  New here? <a href="Tour.md">Take the tour</a>, then <a href="Getting%20Started.md">Getting Started</a>. Something wrong? <a href="Troubleshooting.md">Troubleshooting</a>. Trying a new build? Follow <a href="Testing.md">Testing</a>.
 </p>
 
 ## Quick reference
@@ -35,6 +35,7 @@ The full app list with addresses and ports is in [Inventory](<Inventory.md>). It
 
 | Page | For |
 |---|---|
+| [A tour of Homelab Wizard](<Tour.md>) | Every screen, with pictures: what the app is and what it does |
 | [Getting Started](<Getting Started.md>) | From an empty computer to a homelab the household uses, step by step, without code |
 | [Testing](<Testing.md>) | The script for each test session on a real machine, with what every step should show |
 | [To-do](<To-do.md>) | The next things only a person can do, in order |
