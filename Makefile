@@ -44,8 +44,9 @@ phone-finance-wasm:
 # phone-finance-framework binds the same package for the iPhone app with
 # gomobile (on a Mac with Xcode, gomobile and gobind installed), in a new
 # module of its own under bin/ each time, so go.mod gains nothing, and says
-# the sizes: the whole xcframework, and the iPhone's own part once stripped
-# as an app's link strips it.
+# the sizes: the whole xcframework, the iPhone's own part, and that part's
+# code and data, which is what an app ships once its link drops the debug
+# information (Apple's strip can't read Go's archive, so size counts it).
 MOBILE_VERSION := v0.0.0-20261011034528-197770444867
 phone-finance-framework:
 	@mkdir -p bin
@@ -57,9 +58,10 @@ phone-finance-framework:
 	  gomobile bind -target=ios,iossimulator -trimpath -ldflags "-s -w" -o HomelabFinance.xcframework github.com/Snooper42/homelab-wizard/mobile/finance && \
 	  all=$$(du -sk HomelabFinance.xcframework | cut -f1) && \
 	  lib=$$(find HomelabFinance.xcframework/ios-arm64 -type f -name HomelabFinance | head -1) && \
-	  dev=$$(wc -c < "$$lib") && cp "$$lib" device.a && strip -S device.a && stripped=$$(wc -c < device.a) && \
-	  echo "HomelabFinance.xcframework: $$all KB in all; the iPhone's part $$dev bytes, $$stripped stripped" && \
-	  if [ -n "$$GITHUB_STEP_SUMMARY" ]; then echo "**HomelabFinance.xcframework:** $$all KB in all; the iPhone's part $$dev bytes, $$stripped once stripped" >> "$$GITHUB_STEP_SUMMARY"; fi
+	  dev=$$(wc -c < "$$lib") && \
+	  shipped=$$(xcrun size -A -d "$$lib" | awk '$$1 !~ /debug|DWARF|apple_names|apple_types|apple_namespac|apple_objc/ && $$2 ~ /^[0-9]+$$/ && $$1 != "Total" {s += $$2} END {print s + 0}') && \
+	  echo "HomelabFinance.xcframework: $$all KB in all; the iPhone's part $$dev bytes, $$shipped of it code and data (what an app ships, without debug info)" && \
+	  if [ -n "$$GITHUB_STEP_SUMMARY" ]; then echo "**HomelabFinance.xcframework:** $$all KB in all; the iPhone's part $$dev bytes, $$shipped of it code and data (what an app ships)" >> "$$GITHUB_STEP_SUMMARY"; fi
 
 # Each package's test coverage against its floor in coverage-floors.txt
 # (CI runs it): raise a floor as tests are added, never lower it without a
