@@ -27,6 +27,7 @@ version: 0.17.0
 | Alerts | ntfy (topics: `watchtower`, `duplicati-alerts`, `uptime-kuma`, `tunnel-watchdog`, `reminders`), plus a healthchecks.io heartbeat |
 | Media | An external drive (`/Volumes/Media` on a Mac) |
 | Household money | **Finances**, a screen of the app itself: typed in by hand, kept in `data/finance.json`, on the phones you allow |
+| Media libraries | **Tidy Up**, a screen of the app itself: files downloads into the music, film, TV, book, and audiobook libraries on the media drive ([Tidy Up](<Tidy Up.md>)) |
 
 The full app list with addresses and ports is in [Inventory](<Inventory.md>). It is generated from the compose files, so it is always current.
 
@@ -48,6 +49,7 @@ The full app list with addresses and ports is in [Inventory](<Inventory.md>). It
 | [Automation](<Automation.md>) | Scheduled jobs, the nightly updates, the Duplicati jobs, and alert topics |
 | [Monitoring](<Monitoring.md>) | The watchdog, ntfy, Uptime Kuma, the heartbeat, and CrowdSec |
 | [Backups](<Backups.md>) | What is backed up, how, and the restore test |
+| [Tidy Up](<Tidy Up.md>) | The media libraries: the Inbox that files each download, every library's clean-up, and the engines behind them |
 | [Disaster Recovery](<Disaster Recovery.md>) | Rebuilding a lost machine from the backups in one command (`homelab rebuild`), moving to a new one, and the recovery kit |
 | [Troubleshooting](<Troubleshooting.md>) | Symptoms and their usual fixes, by where you notice them |
 | [Known Issues](<Known Issues.md>) | Open problems and what is still to verify |

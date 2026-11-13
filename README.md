@@ -102,6 +102,7 @@ A small private cloud on a computer at home. It does the jobs you would otherwis
 | Keep everyone's passwords | Vaultwarden (with the Bitwarden apps) | 1Password Families |
 | Scan and search receipts, letters, and paperwork | Paperless-ngx | Evernote |
 | See what each paycheck leaves after the bills, and your net worth | Finances, a screen of Homelab Wizard itself | a spreadsheet, or a budgeting app |
+| Sort and tag the music, films, shows, books, and audiobooks you download, and free the space they waste | Tidy Up, a screen of Homelab Wizard itself | a music tagger, a file-renaming app |
 | Plan the budget, and track investments | MoneyMatter or Actual Budget, Ghostfolio | YNAB, a portfolio tracker |
 | Watch your movies and shows | Jellyfin | Netflix and others, for what you own |
 | Listen to your music, audiobooks, and podcasts | Navidrome, Audiobookshelf | Spotify Family, Audible |
@@ -124,6 +125,7 @@ Each in the app, then the same from a terminal in the homelab folder (`homelab.c
 | Update an app now, or undo an update | The app's page › **Check for an update**, or **Roll back** | `./homelab update <app>`, `./homelab rollback <app>` | [Automation](docs/Automation.md#nightly-updates-the-background-agent) |
 | Pause the nightly updates | Status › *Nightly updates* › **Pause** | `./homelab updates pause` (and `resume`) | [Automation](docs/Automation.md) |
 | See what's left after each paycheck | **Finances** in the sidebar (on a phone too, once allowed in Settings › Phones) | — | [Phone companion](<services/system/Phone companion.md>) |
+| File a download into the right library, or free space | **Tidy Up** › Inbox › **Tidy up now**, or a library's tab | `./homelab media inbox --apply`, `./homelab media <library> scan` | [Tidy Up](<docs/Tidy Up.md>) |
 | Back up now, or prove a restore works | Backups › **Back up now**, **Test a restore** | `./homelab backup --apply`, `./homelab restore-test --auto` | [Backups](docs/Backups.md) |
 | Update Homelab Wizard and the homelab | **Update now** on the line at the top of the window | `./homelab upgrade` | [Upgrading](docs/Upgrading.md) |
 | Add someone in the household | Settings › **People** › **Add a person** | `./homelab person add "Anna Smith" --email anna@example.com` | [Pocket ID](<services/security/Pocket ID.md>) |
@@ -353,7 +355,7 @@ Over 70 apps in nine categories: the baseline ones start with the homelab, the r
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-phones-dark.png">
   <img alt="Settings › Phones: two paired phones, and a QR code to pair another" src="docs/images/app-phones.png">
 </picture></td>
-<td><strong>On the phone</strong><br>Status and Backups in the phone's browser, at home or over Tailscale, kept on the Home Screen like an app, and Finances on the phones you allow. On a TV or a wall tablet, kiosk mode shows Status alone, large.<br><br><picture>
+<td><strong>On the phone</strong><br>Status and Backups in the phone's browser, at home or over Tailscale, kept on the Home Screen like an app, and Finances on the phones you allow. On a TV or a wall tablet, kiosk mode shows Status alone, large. On an iPhone or iPad there is also a native app to build yourself (<a href="apple-client/README.md">apple-client</a>).<br><br><picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-phone-dark.png">
   <img alt="The phone companion: Status on a phone" src="docs/images/app-phone.png">
 </picture></td>
@@ -372,6 +374,12 @@ Over 70 apps in nine categories: the baseline ones start with the homelab, the r
 <td colspan="2"><strong>Finances</strong><br>The household's money, typed in by hand and kept on this computer: one pay period at a time (step from paycheck to paycheck: each account after its bills, the ones money goes into lit, and what it pays), checking over the next month with paydays and big bills marked, cash flow, and where the spending goes. Net worth also lists every account after each of the next paychecks. Calendar lays out the money month by month: who is paid on which day, each bill with its logo, bank holidays, and the days checking falls under your cushion. Transactions keeps what actually happened (by category, with budgets), Reports reads it back by category, payee, and month, and Recurring sums up a typical month (spent, saved, left), Pay shows each person's pay and where it goes, and Net worth draws it month by month, with a home's and a car's equity. No bank connection; the file goes off-site with the nightly backup, encrypted.<br><br><picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-finances-dark.png">
   <img alt="Finances: checking over the next 30 days with paydays and big bills marked and the lowest point under the cushion, and the accounts' groups in the sidebar" src="docs/images/app-finances.png">
+</picture></td>
+</tr>
+<tr>
+<td colspan="2"><strong>Tidy Up</strong><br>The music, films, shows, books, and audiobooks on the media drive, sorted, tagged, and lean. Drop a download in a watched folder (Downloads, or one you add) and Tidy Up works out what it is, cleans it up, and files it in the right library, as it arrives, once a day, or when you press <strong>Tidy up now</strong>. <strong>What I did today</strong> lists each one with <strong>Undo</strong>; one it can't place waits under <strong>Needs a look</strong>. Each library has its own tab: clean up the music with beets, shrink films and shows with Tdarr, merge an audiobook's files into one, tidy the books in Calibre. Anything thrown away goes to the Trash. More: <a href="docs/Tidy%20Up.md">Tidy Up</a>.<br><br><picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-tidy-dark.png">
+  <img alt="Tidy Up's Inbox: the watched folders, when to tidy up, and Tidy up now" src="docs/images/app-tidy.png">
 </picture></td>
 </tr>
 <tr>
@@ -400,7 +408,7 @@ Over 70 apps in nine categories: the baseline ones start with the homelab, the r
 | Media | 14 services | $205.82 | $2,137.94 | $2,469.84 |
 | Media Automation | 1 service | $5.00 | $60.00 | $60.00 |
 | Household | 4 services | $17.19 | $159.87 | $206.28 |
-| | **Everything** | **39 services** | **$452.24** | **$4,487.08** | **$5,426.88** |
+| **Everything** | **39 services** | **$452.24** | **$4,487.08** | **$5,426.88** |
 
 Each saving is tagged **Direct** (the app does the same job), **Library** (needs media you own), or **Equivalent** (a paid product with the same function). Every row, with its condition and price source: [Savings](docs/Savings.md). US list prices before tax, checked October 2026.
 
