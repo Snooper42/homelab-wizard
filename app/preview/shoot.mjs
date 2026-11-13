@@ -10083,6 +10083,8 @@ for (const scheme of ['light', 'dark']) {
     const page = await ctx.newPage();
     const errors = [];
     page.on('pageerror', (e) => errors.push(String(e)));
+    // Each picture starts as a first visit: the app keeps a screen's scroll in localStorage (Remember where you were), which one shot would hand to the next.
+    await page.addInitScript(() => { if (!sessionStorage.getItem('shotFresh')) { localStorage.clear(); sessionStorage.setItem('shotFresh', '1'); } });
     await page.addInitScript({ content: `window.__MOCK = ${JSON.stringify({ ...mock, ...phoneMock(shot.phone), ...shot.mock, screen: shot.screen })};\n${readFileSync(join(here, 'mock.js'), 'utf8')}` });
     if (shot.phone) await page.setViewportSize(phoneSize);
     if (shot.clock) await page.clock.install();

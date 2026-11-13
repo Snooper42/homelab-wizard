@@ -7,7 +7,7 @@ version: 0.17.0
 <p align="center">
   <img src="../assets/logo.svg" alt="" width="72" height="72"><br>
   <strong>Everything about Homelab Wizard, in one place.</strong><br>
-  New here? Start with <a href="Getting%20Started.md">Getting Started</a>. Something wrong? <a href="Troubleshooting.md">Troubleshooting</a>. Trying a new build? Follow <a href="Testing.md">Testing</a>.
+  New here? <a href="Tour.md">Take the tour</a>, then <a href="Getting%20Started.md">Getting Started</a>. Something wrong? <a href="Troubleshooting.md">Troubleshooting</a>. Trying a new build? Follow <a href="Testing.md">Testing</a>.
 </p>
 
 ## Quick reference
@@ -27,6 +27,7 @@ version: 0.17.0
 | Alerts | ntfy (topics: `watchtower`, `duplicati-alerts`, `uptime-kuma`, `tunnel-watchdog`, `reminders`), plus a healthchecks.io heartbeat |
 | Media | An external drive (`/Volumes/Media` on a Mac) |
 | Household money | **Finances**, a screen of the app itself: typed in by hand, kept in `data/finance.json`, on the phones you allow |
+| Media libraries | **Tidy Up**, a screen of the app itself: files downloads into the music, film, TV, book, and audiobook libraries on the media drive ([Tidy Up](<Tidy Up.md>)) |
 
 The full app list with addresses and ports is in [Inventory](<Inventory.md>). It is generated from the compose files, so it is always current.
 
@@ -34,6 +35,7 @@ The full app list with addresses and ports is in [Inventory](<Inventory.md>). It
 
 | Page | For |
 |---|---|
+| [A tour of Homelab Wizard](<Tour.md>) | Every screen, with pictures: what the app is and what it does |
 | [Getting Started](<Getting Started.md>) | From an empty computer to a homelab the household uses, step by step, without code |
 | [Testing](<Testing.md>) | The script for each test session on a real machine, with what every step should show |
 | [To-do](<To-do.md>) | The next things only a person can do, in order |
@@ -48,6 +50,7 @@ The full app list with addresses and ports is in [Inventory](<Inventory.md>). It
 | [Automation](<Automation.md>) | Scheduled jobs, the nightly updates, the Duplicati jobs, and alert topics |
 | [Monitoring](<Monitoring.md>) | The watchdog, ntfy, Uptime Kuma, the heartbeat, and CrowdSec |
 | [Backups](<Backups.md>) | What is backed up, how, and the restore test |
+| [Tidy Up](<Tidy Up.md>) | The media libraries: the Inbox that files each download, every library's clean-up, and the engines behind them |
 | [Disaster Recovery](<Disaster Recovery.md>) | Rebuilding a lost machine from the backups in one command (`homelab rebuild`), moving to a new one, and the recovery kit |
 | [Troubleshooting](<Troubleshooting.md>) | Symptoms and their usual fixes, by where you notice them |
 | [Known Issues](<Known Issues.md>) | Open problems and what is still to verify |
@@ -62,7 +65,7 @@ The full app list with addresses and ports is in [Inventory](<Inventory.md>). It
 | [Usability](<Usability.md>) | The household's tasks, tried end to end, and whether each is getting easier |
 | [Storage](<Storage.md>) | Folders, volumes, and the paths Duplicati sees |
 | [Docker](<Docker.md>) | The container runtime, Compose projects, and container standards |
-| [What each device can do](<Parity.md>) | Every feature on the computer, the phone's page, the iPhone, the iPad and the Mac app, and why one isn't somewhere |
+| [What each device can do](<Parity.md>) | Every feature on the computer, the phone's page, the iPhone and the iPad, and why one isn't somewhere |
 | [Host](<Host.md>) | The machine: the Mac's power, login, and FileVault settings, and the Linux and Windows profiles |
 | [Environment](<Environment.md>) | Every `.env` setting and what it is for |
 

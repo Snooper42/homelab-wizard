@@ -17,7 +17,11 @@ Go 1.26 or newer for the CLI and the desktop app (Go fetches the version in `go.
 | A compose file or `x-homelab` metadata | `./homelab docs`, `make check`, and `make compose-config` |
 | The desktop app (`app/`) | `make app-check` |
 | The frontend (`web/src`) | `make frontend` (commit `web/dist`), `make frontend-check`, and `make app-smoke` |
+| Tidy Up's engines (`tools/media`) | `make check` (it runs their tests, `python3 -m unittest discover -s tools/media/tests`); `make music-pins` after changing `tools/media/requirements/music.in`, and `make music-pins-check` |
+| The iPhone and iPad app (`apple-client/`) | `cd apple-client && swift build && swift test` on a Mac with full Xcode; [apple-client/README.md](apple-client/README.md) has the iOS build |
+| Finances' phone projection (`mobile/finance`) | `make check`, then `make phone-finance-wasm` (and `make phone-finance-framework` on a Mac with Xcode, for the iPhone app) |
 | Only docs | `make check` (it runs `homelab validate`: links, versions, generated blocks) |
+| A screen the docs show | `make screenshots` (every picture in `docs/images`, light and dark), and `node app/preview/tour.mjs` for the README's walkthrough (`docs/images/tour.gif`; needs ffmpeg) |
 
 ## Layout
 
@@ -42,9 +46,12 @@ Go 1.26 or newer for the CLI and the desktop app (Go fetches the version in `go.
 | `internal/setup`, `settings`, `api`, `host` | The first-time checklist and Settings tests, `.env` as a form, status for the app, per-OS profiles |
 | `internal/wiring`, `homepage`, `adopt`, `custom` | Connecting apps through their APIs, Homepage's list of apps, moving old containers in, your own apps |
 | `internal/docs` | Generated blocks in the notes, version and link checks |
-| The rest of `internal/` | [Maintainer Guide › Code layout](docs/Maintainer%20Guide.md#code-layout) lists every package |
 | `internal/ui` | Terminal output and prompts |
+| The rest of `internal/` | [Maintainer Guide › Code layout](docs/Maintainer%20Guide.md#code-layout) lists every package |
 | `app/` | The desktop app (its own module): `app.go` binds the engine to the frontend in `web/dist` (shared with `homelab serve`, as is `internal/core`); `tray/` and `cmd/homelab-tray` are the menu bar item; per-platform files (`menu_darwin.go`, `backdrop_windows.go`, `autostart_*.go`, `menuentry_linux.go`) hold each OS's window, menus, and login items; `packaging/` builds the Linux packages and the AppImage; `preview/` runs the frontend in Chromium with a fake backend |
+| `tools/media/` | Tidy Up's engines (Python), with their tests in `tools/media/tests` and the music jobs' pinned versions in `tools/media/requirements` |
+| `apple-client/` | The native iPhone and iPad app (SwiftUI), a client of the phone companion |
+| `mobile/finance`, `cmd/financewasm` | Finances' projection built for a phone (WebAssembly and an iOS framework) |
 
 ## Rules
 
