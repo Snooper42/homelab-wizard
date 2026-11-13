@@ -15,7 +15,16 @@ import (
 // test's own, and the old address at nothing.
 func useTraySocket(t *testing.T) string {
 	t.Helper()
-	path := filepath.Join(t.TempDir(), "hw", "tray.sock")
+	// A short folder: a Unix socket's path is held to about 104 bytes on the
+	// Mac, which t.TempDir's long name there passes. (The real one,
+	// ~/Library/Caches/homelab-wizard/tray.sock, is short, beside the
+	// engine's socket.)
+	dir, err := os.MkdirTemp("", "tr")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { os.RemoveAll(dir) })
+	path := filepath.Join(dir, "hw", "tray.sock")
 	savedSock, savedAddr := TraySocket, TrayAddr
 	TraySocket = func() string { return path }
 	TrayAddr = "127.0.0.1:1"
