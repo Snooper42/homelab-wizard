@@ -1,0 +1,12 @@
+{
+ "transactions": [
+  {
+   "id": "c1",
+   "date": "2026-11-02",
+   "account": "checking",
+   "amount": -310,
+   "payee": "Example Auto Finance",
+   "payment": "car"
+  }
+ ]
+}

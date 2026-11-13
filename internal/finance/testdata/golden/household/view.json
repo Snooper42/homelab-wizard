@@ -1,0 +1,2519 @@
+{
+ "plan": {
+  "people": [
+   {
+    "id": "alex",
+    "name": "Alex",
+    "schedule": {
+     "every": "2 weeks",
+     "start": "2026-11-06"
+    },
+    "net": 1850,
+    "account": "checking"
+   },
+   {
+    "id": "sam",
+    "name": "Sam",
+    "schedule": {
+     "every": "twice a month",
+     "start": "2026-11-01",
+     "day2": 15
+    },
+    "net": 1400,
+    "account": "checking"
+   }
+  ],
+  "accounts": [
+   {
+    "id": "checking",
+    "name": "Example Checking",
+    "kind": "checking",
+    "balance": 2310.45,
+    "updated": "2026-11-10",
+    "history": [
+     {
+      "date": "2026-11-10",
+      "amount": 2310.45
+     }
+    ]
+   },
+   {
+    "id": "savings",
+    "name": "Example Savings",
+    "kind": "savings",
+    "balance": 5200,
+    "rate": 4.1,
+    "updated": "2026-11-10",
+    "history": [
+     {
+      "date": "2026-11-10",
+      "amount": 5200
+     }
+    ]
+   },
+   {
+    "id": "visa",
+    "name": "Example Card",
+    "kind": "card",
+    "balance": 640.2,
+    "updated": "2026-11-10",
+    "history": [
+     {
+      "date": "2026-11-10",
+      "amount": 640.2
+     }
+    ]
+   }
+  ],
+  "payments": [
+   {
+    "id": "rent",
+    "name": "Rent",
+    "amount": 1600,
+    "schedule": {
+     "every": "month",
+     "start": "2026-12-01"
+    },
+    "kind": "home"
+   },
+   {
+    "id": "power",
+    "name": "Power",
+    "amount": 95,
+    "schedule": {
+     "every": "month",
+     "start": "2026-11-18"
+    },
+    "kind": "utilities",
+    "estimate": true
+   },
+   {
+    "id": "stream",
+    "name": "Streaming",
+    "amount": 15.49,
+    "schedule": {
+     "every": "month",
+     "start": "2026-11-21"
+    },
+    "kind": "subscriptions",
+    "from": "visa",
+    "type": "streaming"
+   },
+   {
+    "id": "renters",
+    "name": "Renters insurance",
+    "amount": 180,
+    "schedule": {
+     "every": "year",
+     "start": "2027-02-01"
+    },
+    "kind": "home"
+   },
+   {
+    "id": "visa-pay",
+    "name": "Pay the card",
+    "amount": 300,
+    "schedule": {
+     "every": "month",
+     "start": "2026-11-25"
+    },
+    "kind": "cards",
+    "card": "visa"
+   },
+   {
+    "id": "save",
+    "name": "To savings",
+    "amount": 200,
+    "schedule": {
+     "every": "paycheck",
+     "start": "2026-11-06",
+     "person": "alex"
+    },
+    "kind": "savings",
+    "to": "savings"
+   }
+  ],
+  "cushion": 250,
+  "updated": "2026-11-10",
+  "currency": "USD",
+  "holidays": "us",
+  "categories": [
+   {
+    "name": "Food"
+   },
+   {
+    "name": "Groceries",
+    "parent": "Food"
+   },
+   {
+    "name": "Eating out",
+    "parent": "Food"
+   },
+   {
+    "name": "Fun"
+   },
+   {
+    "name": "Paycheck",
+    "income": true
+   }
+  ],
+  "budgets": [
+   {
+    "category": "Groceries",
+    "amount": 450
+   },
+   {
+    "category": "Eating out",
+    "amount": 120,
+    "rollover": true
+   },
+   {
+    "category": "Fun",
+    "amount": 75,
+    "per": "paycheck"
+   }
+  ],
+  "goals": [
+   {
+    "id": "trip",
+    "name": "A trip",
+    "target": 3000,
+    "date": "2027-06-01",
+    "shares": [
+     {
+      "account": "savings",
+      "percent": 50
+     }
+    ]
+   }
+  ],
+  "rev": "6e127562f3e55b64"
+ },
+ "today": "2026-11-13",
+ "checking": "checking",
+ "typed": "2026-11-10",
+ "start": {
+  "checking": 2237.05,
+  "savings": 5201.17,
+  "visa": 640.2
+ },
+ "since": [],
+ "periods": [
+  {
+   "now": false,
+   "start": "2026-11-13",
+   "last": "2026-11-19",
+   "pay": {
+    "date": "2026-11-13",
+    "people": [
+     "sam"
+    ],
+    "amount": 1400,
+    "total": 1400,
+    "moved": [
+     {
+      "person": "sam",
+      "from": "2026-11-15",
+      "why": "the weekend"
+     }
+    ]
+   },
+   "carried": 2237.05,
+   "in": 1400,
+   "out": 95,
+   "saved": 0,
+   "left": 3542.05,
+   "rows": [
+    {
+     "date": "2026-11-18",
+     "payment": "power",
+     "amount": 95,
+     "estimate": true,
+     "after": 3542.05
+    }
+   ],
+   "accounts": {
+    "checking": 3542.05,
+    "savings": 5205.26,
+    "visa": 640.2
+   }
+  },
+  {
+   "now": false,
+   "start": "2026-11-20",
+   "last": "2026-11-30",
+   "pay": {
+    "date": "2026-11-20",
+    "people": [
+     "alex"
+    ],
+    "amount": 1850,
+    "total": 1850
+   },
+   "carried": 3542.05,
+   "in": 1850,
+   "out": 855.69,
+   "saved": 200,
+   "left": 4536.36,
+   "rows": [
+    {
+     "date": "2026-11-20",
+     "payment": "save",
+     "amount": 200,
+     "after": 5192.05,
+     "saved": true
+    },
+    {
+     "date": "2026-11-21",
+     "payment": "stream",
+     "amount": 15.49,
+     "after": 0,
+     "outside": true
+    },
+    {
+     "date": "2026-11-25",
+     "payment": "visa-pay",
+     "amount": 655.69,
+     "after": 4536.36
+    }
+   ],
+   "accounts": {
+    "checking": 4536.36,
+    "savings": 5411.94,
+    "visa": 60
+   }
+  },
+  {
+   "now": false,
+   "start": "2026-12-01",
+   "last": "2026-12-03",
+   "pay": {
+    "date": "2026-12-01",
+    "people": [
+     "sam"
+    ],
+    "amount": 1400,
+    "total": 1400
+   },
+   "carried": 4536.36,
+   "in": 1400,
+   "out": 1600,
+   "saved": 0,
+   "left": 4336.36,
+   "rows": [
+    {
+     "date": "2026-12-01",
+     "payment": "rent",
+     "amount": 1600,
+     "after": 4336.36
+    }
+   ],
+   "accounts": {
+    "checking": 4336.36,
+    "savings": 5413.77,
+    "visa": 90
+   }
+  },
+  {
+   "now": false,
+   "start": "2026-12-04",
+   "last": "2026-12-14",
+   "pay": {
+    "date": "2026-12-04",
+    "people": [
+     "alex"
+    ],
+    "amount": 1850,
+    "total": 1850
+   },
+   "carried": 4336.36,
+   "in": 1850,
+   "out": 200,
+   "saved": 200,
+   "left": 5986.36,
+   "rows": [
+    {
+     "date": "2026-12-04",
+     "payment": "save",
+     "amount": 200,
+     "after": 5986.36,
+     "saved": true
+    }
+   ],
+   "accounts": {
+    "checking": 5986.36,
+    "savings": 5620.71,
+    "visa": 200
+   }
+  },
+  {
+   "now": false,
+   "start": "2026-12-15",
+   "last": "2026-12-17",
+   "pay": {
+    "date": "2026-12-15",
+    "people": [
+     "sam"
+    ],
+    "amount": 1400,
+    "total": 1400
+   },
+   "carried": 5986.36,
+   "in": 1400,
+   "out": 0,
+   "saved": 0,
+   "left": 7386.36,
+   "rows": [],
+   "accounts": {
+    "checking": 7386.36,
+    "savings": 5622.6,
+    "visa": 230
+   }
+  },
+  {
+   "now": false,
+   "start": "2026-12-18",
+   "last": "2026-12-30",
+   "pay": {
+    "date": "2026-12-18",
+    "people": [
+     "alex"
+    ],
+    "amount": 1850,
+    "total": 1850
+   },
+   "carried": 7386.36,
+   "in": 1850,
+   "out": 610.49,
+   "saved": 200,
+   "left": 8625.87,
+   "rows": [
+    {
+     "date": "2026-12-18",
+     "payment": "save",
+     "amount": 200,
+     "after": 9036.36,
+     "saved": true
+    },
+    {
+     "date": "2026-12-18",
+     "payment": "power",
+     "amount": 95,
+     "estimate": true,
+     "after": 8941.36
+    },
+    {
+     "date": "2026-12-21",
+     "payment": "stream",
+     "amount": 15.49,
+     "after": 0,
+     "outside": true
+    },
+    {
+     "date": "2026-12-25",
+     "payment": "visa-pay",
+     "amount": 315.49,
+     "after": 8625.87
+    }
+   ],
+   "accounts": {
+    "checking": 8625.87,
+    "savings": 5831.11,
+    "visa": 58.06
+   }
+  },
+  {
+   "now": false,
+   "start": "2026-12-31",
+   "last": "2027-01-14",
+   "pay": {
+    "date": "2026-12-31",
+    "people": [
+     "alex",
+     "sam"
+    ],
+    "amount": 3250,
+    "total": 3250,
+    "moved": [
+     {
+      "person": "alex",
+      "from": "2027-01-01",
+      "why": "New Year's Day"
+     },
+     {
+      "person": "sam",
+      "from": "2027-01-01",
+      "why": "New Year's Day"
+     }
+    ]
+   },
+   "carried": 8625.87,
+   "in": 3250,
+   "out": 1800,
+   "saved": 200,
+   "left": 10075.87,
+   "rows": [
+    {
+     "date": "2026-12-31",
+     "payment": "save",
+     "amount": 200,
+     "after": 11675.87,
+     "saved": true
+    },
+    {
+     "date": "2027-01-01",
+     "payment": "rent",
+     "amount": 1600,
+     "after": 10075.87
+    }
+   ],
+   "accounts": {
+    "checking": 10075.87,
+    "savings": 6041.28,
+    "visa": 203.23
+   }
+  },
+  {
+   "now": false,
+   "start": "2027-01-15",
+   "last": "2027-01-28",
+   "pay": {
+    "date": "2027-01-15",
+    "people": [
+     "alex",
+     "sam"
+    ],
+    "amount": 3250,
+    "total": 3250
+   },
+   "carried": 10075.87,
+   "in": 3250,
+   "out": 610.49,
+   "saved": 200,
+   "left": 12715.38,
+   "rows": [
+    {
+     "date": "2027-01-15",
+     "payment": "save",
+     "amount": 200,
+     "after": 13125.87,
+     "saved": true
+    },
+    {
+     "date": "2027-01-18",
+     "payment": "power",
+     "amount": 95,
+     "estimate": true,
+     "after": 13030.87
+    },
+    {
+     "date": "2027-01-21",
+     "payment": "stream",
+     "amount": 15.49,
+     "after": 0,
+     "outside": true
+    },
+    {
+     "date": "2027-01-25",
+     "payment": "visa-pay",
+     "amount": 315.49,
+     "after": 12715.38
+    }
+   ],
+   "accounts": {
+    "checking": 12715.38,
+    "savings": 6251.1,
+    "visa": 38.71
+   }
+  },
+  {
+   "now": false,
+   "start": "2027-01-29",
+   "last": "2027-01-31",
+   "pay": {
+    "date": "2027-01-29",
+    "people": [
+     "alex"
+    ],
+    "amount": 1850,
+    "total": 1850
+   },
+   "carried": 12715.38,
+   "in": 1850,
+   "out": 200,
+   "saved": 200,
+   "left": 14365.38,
+   "rows": [
+    {
+     "date": "2027-01-29",
+     "payment": "save",
+     "amount": 200,
+     "after": 14365.38,
+     "saved": true
+    }
+   ],
+   "accounts": {
+    "checking": 14365.38,
+    "savings": 6453.28,
+    "visa": 67.74
+   }
+  },
+  {
+   "now": false,
+   "start": "2027-02-01",
+   "last": "2027-02-11",
+   "pay": {
+    "date": "2027-02-01",
+    "people": [
+     "sam"
+    ],
+    "amount": 1400,
+    "total": 1400
+   },
+   "carried": 14365.38,
+   "in": 1400,
+   "out": 1780,
+   "saved": 0,
+   "left": 13985.38,
+   "rows": [
+    {
+     "date": "2027-02-01",
+     "payment": "rent",
+     "amount": 1600,
+     "after": 14165.38
+    },
+    {
+     "date": "2027-02-01",
+     "payment": "renters",
+     "amount": 180,
+     "after": 13985.38
+    }
+   ],
+   "accounts": {
+    "checking": 13985.38,
+    "savings": 6461.25,
+    "visa": 174.19
+   }
+  },
+  {
+   "now": false,
+   "start": "2027-02-12",
+   "last": "2027-02-25",
+   "pay": {
+    "date": "2027-02-12",
+    "people": [
+     "alex",
+     "sam"
+    ],
+    "amount": 3250,
+    "total": 3250,
+    "moved": [
+     {
+      "person": "sam",
+      "from": "2027-02-15",
+      "why": "Presidents' Day and the weekend"
+     }
+    ]
+   },
+   "carried": 13985.38,
+   "in": 3250,
+   "out": 610.49,
+   "saved": 200,
+   "left": 16624.89,
+   "rows": [
+    {
+     "date": "2027-02-12",
+     "payment": "save",
+     "amount": 200,
+     "after": 17035.38,
+     "saved": true
+    },
+    {
+     "date": "2027-02-18",
+     "payment": "power",
+     "amount": 95,
+     "estimate": true,
+     "after": 16940.38
+    },
+    {
+     "date": "2027-02-21",
+     "payment": "stream",
+     "amount": 15.49,
+     "after": 0,
+     "outside": true
+    },
+    {
+     "date": "2027-02-25",
+     "payment": "visa-pay",
+     "amount": 315.49,
+     "after": 16624.89
+    }
+   ],
+   "accounts": {
+    "checking": 16624.89,
+    "savings": 6671.74,
+    "visa": 10.71
+   }
+  },
+  {
+   "now": false,
+   "start": "2027-02-26",
+   "last": "2027-02-28",
+   "pay": {
+    "date": "2027-02-26",
+    "people": [
+     "alex"
+    ],
+    "amount": 1850,
+    "total": 1850
+   },
+   "carried": 16624.89,
+   "in": 1850,
+   "out": 200,
+   "saved": 200,
+   "left": 18274.89,
+   "rows": [
+    {
+     "date": "2027-02-26",
+     "payment": "save",
+     "amount": 200,
+     "after": 18274.89,
+     "saved": true
+    }
+   ],
+   "accounts": {
+    "checking": 18274.89,
+    "savings": 6874.05,
+    "visa": 42.86
+   }
+  },
+  {
+   "now": false,
+   "start": "2027-03-01",
+   "last": "2027-03-11",
+   "pay": {
+    "date": "2027-03-01",
+    "people": [
+     "sam"
+    ],
+    "amount": 1400,
+    "total": 1400
+   },
+   "carried": 18274.89,
+   "in": 1400,
+   "out": 1600,
+   "saved": 0,
+   "left": 18074.89,
+   "rows": [
+    {
+     "date": "2027-03-01",
+     "payment": "rent",
+     "amount": 1600,
+     "after": 18074.89
+    }
+   ],
+   "accounts": {
+    "checking": 18074.89,
+    "savings": 6882.55,
+    "visa": 160.71
+   }
+  }
+ ],
+ "paydays": [
+  {
+   "date": "2026-11-13",
+   "people": [
+    "sam"
+   ],
+   "amount": 1400,
+   "total": 1400,
+   "moved": [
+    {
+     "person": "sam",
+     "from": "2026-11-15",
+     "why": "the weekend"
+    }
+   ]
+  },
+  {
+   "date": "2026-11-20",
+   "people": [
+    "alex"
+   ],
+   "amount": 1850,
+   "total": 1850
+  },
+  {
+   "date": "2026-12-01",
+   "people": [
+    "sam"
+   ],
+   "amount": 1400,
+   "total": 1400
+  },
+  {
+   "date": "2026-12-04",
+   "people": [
+    "alex"
+   ],
+   "amount": 1850,
+   "total": 1850
+  },
+  {
+   "date": "2026-12-15",
+   "people": [
+    "sam"
+   ],
+   "amount": 1400,
+   "total": 1400
+  },
+  {
+   "date": "2026-12-18",
+   "people": [
+    "alex"
+   ],
+   "amount": 1850,
+   "total": 1850
+  },
+  {
+   "date": "2026-12-31",
+   "people": [
+    "alex",
+    "sam"
+   ],
+   "amount": 3250,
+   "total": 3250,
+   "moved": [
+    {
+     "person": "alex",
+     "from": "2027-01-01",
+     "why": "New Year's Day"
+    },
+    {
+     "person": "sam",
+     "from": "2027-01-01",
+     "why": "New Year's Day"
+    }
+   ]
+  },
+  {
+   "date": "2027-01-15",
+   "people": [
+    "alex",
+    "sam"
+   ],
+   "amount": 3250,
+   "total": 3250
+  },
+  {
+   "date": "2027-01-29",
+   "people": [
+    "alex"
+   ],
+   "amount": 1850,
+   "total": 1850
+  },
+  {
+   "date": "2027-02-01",
+   "people": [
+    "sam"
+   ],
+   "amount": 1400,
+   "total": 1400
+  },
+  {
+   "date": "2027-02-12",
+   "people": [
+    "alex",
+    "sam"
+   ],
+   "amount": 3250,
+   "total": 3250,
+   "moved": [
+    {
+     "person": "sam",
+     "from": "2027-02-15",
+     "why": "Presidents' Day and the weekend"
+    }
+   ]
+  },
+  {
+   "date": "2027-02-26",
+   "people": [
+    "alex"
+   ],
+   "amount": 1850,
+   "total": 1850
+  }
+ ],
+ "before": [
+  {
+   "date": "2026-11-06",
+   "people": [
+    "alex"
+   ],
+   "amount": 1850,
+   "total": 1850
+  },
+  {
+   "date": "2026-10-30",
+   "people": [
+    "sam"
+   ],
+   "amount": 1400,
+   "total": 1400,
+   "moved": [
+    {
+     "person": "sam",
+     "from": "2026-11-01",
+     "why": "the weekend"
+    }
+   ]
+  },
+  {
+   "date": "2026-10-23",
+   "people": [
+    "alex"
+   ],
+   "amount": 1850,
+   "total": 1850
+  },
+  {
+   "date": "2026-10-15",
+   "people": [
+    "sam"
+   ],
+   "amount": 1400,
+   "total": 1400
+  },
+  {
+   "date": "2026-10-09",
+   "people": [
+    "alex"
+   ],
+   "amount": 1850,
+   "total": 1850
+  },
+  {
+   "date": "2026-10-01",
+   "people": [
+    "sam"
+   ],
+   "amount": 1400,
+   "total": 1400
+  },
+  {
+   "date": "2026-09-25",
+   "people": [
+    "alex"
+   ],
+   "amount": 1850,
+   "total": 1850
+  },
+  {
+   "date": "2026-09-15",
+   "people": [
+    "sam"
+   ],
+   "amount": 1400,
+   "total": 1400
+  },
+  {
+   "date": "2026-09-11",
+   "people": [
+    "alex"
+   ],
+   "amount": 1850,
+   "total": 1850
+  },
+  {
+   "date": "2026-09-01",
+   "people": [
+    "sam"
+   ],
+   "amount": 1400,
+   "total": 1400
+  },
+  {
+   "date": "2026-08-28",
+   "people": [
+    "alex"
+   ],
+   "amount": 1850,
+   "total": 1850
+  },
+  {
+   "date": "2026-08-14",
+   "people": [
+    "alex",
+    "sam"
+   ],
+   "amount": 3250,
+   "total": 3250,
+   "moved": [
+    {
+     "person": "sam",
+     "from": "2026-08-15",
+     "why": "the weekend"
+    }
+   ]
+  }
+ ],
+ "days": [
+  {
+   "date": "2026-11-13",
+   "balance": 3637.05,
+   "events": [
+    {
+     "people": [
+      "sam"
+     ],
+     "amount": 1400
+    }
+   ]
+  },
+  {
+   "date": "2026-11-14",
+   "balance": 3637.05
+  },
+  {
+   "date": "2026-11-15",
+   "balance": 3637.05
+  },
+  {
+   "date": "2026-11-16",
+   "balance": 3637.05
+  },
+  {
+   "date": "2026-11-17",
+   "balance": 3637.05
+  },
+  {
+   "date": "2026-11-18",
+   "balance": 3542.05,
+   "events": [
+    {
+     "payment": "power",
+     "amount": -95
+    }
+   ]
+  },
+  {
+   "date": "2026-11-19",
+   "balance": 3542.05
+  },
+  {
+   "date": "2026-11-20",
+   "balance": 5192.05,
+   "events": [
+    {
+     "people": [
+      "alex"
+     ],
+     "amount": 1850
+    },
+    {
+     "payment": "save",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2026-11-21",
+   "balance": 5192.05,
+   "charges": [
+    {
+     "payment": "stream",
+     "amount": -15.49,
+     "card": "visa",
+     "due": "2026-11-25"
+    }
+   ]
+  },
+  {
+   "date": "2026-11-22",
+   "balance": 5192.05
+  },
+  {
+   "date": "2026-11-23",
+   "balance": 5192.05
+  },
+  {
+   "date": "2026-11-24",
+   "balance": 5192.05
+  },
+  {
+   "date": "2026-11-25",
+   "balance": 4536.36,
+   "events": [
+    {
+     "payment": "visa-pay",
+     "amount": -655.69
+    }
+   ]
+  },
+  {
+   "date": "2026-11-26",
+   "balance": 4536.36
+  },
+  {
+   "date": "2026-11-27",
+   "balance": 4536.36
+  },
+  {
+   "date": "2026-11-28",
+   "balance": 4536.36
+  },
+  {
+   "date": "2026-11-29",
+   "balance": 4536.36
+  },
+  {
+   "date": "2026-11-30",
+   "balance": 4536.36
+  },
+  {
+   "date": "2026-12-01",
+   "balance": 4336.36,
+   "events": [
+    {
+     "people": [
+      "sam"
+     ],
+     "amount": 1400
+    },
+    {
+     "payment": "rent",
+     "amount": -1600
+    }
+   ]
+  },
+  {
+   "date": "2026-12-02",
+   "balance": 4336.36
+  },
+  {
+   "date": "2026-12-03",
+   "balance": 4336.36
+  },
+  {
+   "date": "2026-12-04",
+   "balance": 5986.36,
+   "events": [
+    {
+     "people": [
+      "alex"
+     ],
+     "amount": 1850
+    },
+    {
+     "payment": "save",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2026-12-05",
+   "balance": 5986.36
+  },
+  {
+   "date": "2026-12-06",
+   "balance": 5986.36
+  },
+  {
+   "date": "2026-12-07",
+   "balance": 5986.36
+  },
+  {
+   "date": "2026-12-08",
+   "balance": 5986.36
+  },
+  {
+   "date": "2026-12-09",
+   "balance": 5986.36
+  },
+  {
+   "date": "2026-12-10",
+   "balance": 5986.36
+  },
+  {
+   "date": "2026-12-11",
+   "balance": 5986.36
+  },
+  {
+   "date": "2026-12-12",
+   "balance": 5986.36
+  },
+  {
+   "date": "2026-12-13",
+   "balance": 5986.36
+  },
+  {
+   "date": "2026-12-14",
+   "balance": 5986.36
+  },
+  {
+   "date": "2026-12-15",
+   "balance": 7386.36,
+   "events": [
+    {
+     "people": [
+      "sam"
+     ],
+     "amount": 1400
+    }
+   ]
+  },
+  {
+   "date": "2026-12-16",
+   "balance": 7386.36
+  },
+  {
+   "date": "2026-12-17",
+   "balance": 7386.36
+  },
+  {
+   "date": "2026-12-18",
+   "balance": 8941.36,
+   "events": [
+    {
+     "people": [
+      "alex"
+     ],
+     "amount": 1850
+    },
+    {
+     "payment": "save",
+     "amount": -200
+    },
+    {
+     "payment": "power",
+     "amount": -95
+    }
+   ]
+  },
+  {
+   "date": "2026-12-19",
+   "balance": 8941.36
+  },
+  {
+   "date": "2026-12-20",
+   "balance": 8941.36
+  },
+  {
+   "date": "2026-12-21",
+   "balance": 8941.36,
+   "charges": [
+    {
+     "payment": "stream",
+     "amount": -15.49,
+     "card": "visa",
+     "due": "2026-12-25"
+    }
+   ]
+  },
+  {
+   "date": "2026-12-22",
+   "balance": 8941.36
+  },
+  {
+   "date": "2026-12-23",
+   "balance": 8941.36
+  },
+  {
+   "date": "2026-12-24",
+   "balance": 8941.36
+  },
+  {
+   "date": "2026-12-25",
+   "balance": 8625.87,
+   "events": [
+    {
+     "payment": "visa-pay",
+     "amount": -315.49
+    }
+   ]
+  },
+  {
+   "date": "2026-12-26",
+   "balance": 8625.87
+  },
+  {
+   "date": "2026-12-27",
+   "balance": 8625.87
+  },
+  {
+   "date": "2026-12-28",
+   "balance": 8625.87
+  },
+  {
+   "date": "2026-12-29",
+   "balance": 8625.87
+  },
+  {
+   "date": "2026-12-30",
+   "balance": 8625.87
+  },
+  {
+   "date": "2026-12-31",
+   "balance": 11675.87,
+   "events": [
+    {
+     "people": [
+      "alex",
+      "sam"
+     ],
+     "amount": 3250
+    },
+    {
+     "payment": "save",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2027-01-01",
+   "balance": 10075.87,
+   "events": [
+    {
+     "payment": "rent",
+     "amount": -1600
+    }
+   ]
+  },
+  {
+   "date": "2027-01-02",
+   "balance": 10075.87
+  },
+  {
+   "date": "2027-01-03",
+   "balance": 10075.87
+  },
+  {
+   "date": "2027-01-04",
+   "balance": 10075.87
+  },
+  {
+   "date": "2027-01-05",
+   "balance": 10075.87
+  },
+  {
+   "date": "2027-01-06",
+   "balance": 10075.87
+  },
+  {
+   "date": "2027-01-07",
+   "balance": 10075.87
+  },
+  {
+   "date": "2027-01-08",
+   "balance": 10075.87
+  },
+  {
+   "date": "2027-01-09",
+   "balance": 10075.87
+  },
+  {
+   "date": "2027-01-10",
+   "balance": 10075.87
+  },
+  {
+   "date": "2027-01-11",
+   "balance": 10075.87
+  },
+  {
+   "date": "2027-01-12",
+   "balance": 10075.87
+  },
+  {
+   "date": "2027-01-13",
+   "balance": 10075.87
+  },
+  {
+   "date": "2027-01-14",
+   "balance": 10075.87
+  },
+  {
+   "date": "2027-01-15",
+   "balance": 13125.87,
+   "events": [
+    {
+     "people": [
+      "alex",
+      "sam"
+     ],
+     "amount": 3250
+    },
+    {
+     "payment": "save",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2027-01-16",
+   "balance": 13125.87
+  },
+  {
+   "date": "2027-01-17",
+   "balance": 13125.87
+  },
+  {
+   "date": "2027-01-18",
+   "balance": 13030.87,
+   "events": [
+    {
+     "payment": "power",
+     "amount": -95
+    }
+   ]
+  },
+  {
+   "date": "2027-01-19",
+   "balance": 13030.87
+  },
+  {
+   "date": "2027-01-20",
+   "balance": 13030.87
+  },
+  {
+   "date": "2027-01-21",
+   "balance": 13030.87,
+   "charges": [
+    {
+     "payment": "stream",
+     "amount": -15.49,
+     "card": "visa",
+     "due": "2027-01-25"
+    }
+   ]
+  },
+  {
+   "date": "2027-01-22",
+   "balance": 13030.87
+  },
+  {
+   "date": "2027-01-23",
+   "balance": 13030.87
+  },
+  {
+   "date": "2027-01-24",
+   "balance": 13030.87
+  },
+  {
+   "date": "2027-01-25",
+   "balance": 12715.38,
+   "events": [
+    {
+     "payment": "visa-pay",
+     "amount": -315.49
+    }
+   ]
+  },
+  {
+   "date": "2027-01-26",
+   "balance": 12715.38
+  },
+  {
+   "date": "2027-01-27",
+   "balance": 12715.38
+  },
+  {
+   "date": "2027-01-28",
+   "balance": 12715.38
+  },
+  {
+   "date": "2027-01-29",
+   "balance": 14365.38,
+   "events": [
+    {
+     "people": [
+      "alex"
+     ],
+     "amount": 1850
+    },
+    {
+     "payment": "save",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2027-01-30",
+   "balance": 14365.38
+  },
+  {
+   "date": "2027-01-31",
+   "balance": 14365.38
+  },
+  {
+   "date": "2027-02-01",
+   "balance": 13985.38,
+   "events": [
+    {
+     "people": [
+      "sam"
+     ],
+     "amount": 1400
+    },
+    {
+     "payment": "rent",
+     "amount": -1600
+    },
+    {
+     "payment": "renters",
+     "amount": -180
+    }
+   ]
+  },
+  {
+   "date": "2027-02-02",
+   "balance": 13985.38
+  },
+  {
+   "date": "2027-02-03",
+   "balance": 13985.38
+  },
+  {
+   "date": "2027-02-04",
+   "balance": 13985.38
+  },
+  {
+   "date": "2027-02-05",
+   "balance": 13985.38
+  },
+  {
+   "date": "2027-02-06",
+   "balance": 13985.38
+  },
+  {
+   "date": "2027-02-07",
+   "balance": 13985.38
+  },
+  {
+   "date": "2027-02-08",
+   "balance": 13985.38
+  },
+  {
+   "date": "2027-02-09",
+   "balance": 13985.38
+  },
+  {
+   "date": "2027-02-10",
+   "balance": 13985.38
+  },
+  {
+   "date": "2027-02-11",
+   "balance": 13985.38
+  },
+  {
+   "date": "2027-02-12",
+   "balance": 17035.38,
+   "events": [
+    {
+     "people": [
+      "alex",
+      "sam"
+     ],
+     "amount": 3250
+    },
+    {
+     "payment": "save",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2027-02-13",
+   "balance": 17035.38
+  }
+ ],
+ "later": [
+  {
+   "date": "2027-02-18",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "power",
+     "amount": -95
+    }
+   ]
+  },
+  {
+   "date": "2027-02-21",
+   "balance": 0,
+   "charges": [
+    {
+     "payment": "stream",
+     "amount": -15.49,
+     "card": "visa",
+     "due": "2027-02-25"
+    }
+   ]
+  },
+  {
+   "date": "2027-02-25",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "visa-pay",
+     "amount": -315.49
+    }
+   ]
+  },
+  {
+   "date": "2027-02-26",
+   "balance": 0,
+   "events": [
+    {
+     "people": [
+      "alex"
+     ],
+     "amount": 1850
+    },
+    {
+     "payment": "save",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2027-03-01",
+   "balance": 0,
+   "events": [
+    {
+     "people": [
+      "sam"
+     ],
+     "amount": 1400
+    },
+    {
+     "payment": "rent",
+     "amount": -1600
+    }
+   ]
+  },
+  {
+   "date": "2027-03-12",
+   "balance": 0,
+   "events": [
+    {
+     "people": [
+      "alex"
+     ],
+     "amount": 1850
+    },
+    {
+     "payment": "save",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2027-03-15",
+   "balance": 0,
+   "events": [
+    {
+     "people": [
+      "sam"
+     ],
+     "amount": 1400
+    }
+   ]
+  },
+  {
+   "date": "2027-03-18",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "power",
+     "amount": -95
+    }
+   ]
+  },
+  {
+   "date": "2027-03-21",
+   "balance": 0,
+   "charges": [
+    {
+     "payment": "stream",
+     "amount": -15.49,
+     "card": "visa",
+     "due": "2027-03-25"
+    }
+   ]
+  },
+  {
+   "date": "2027-03-25",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "visa-pay",
+     "amount": -315.49
+    }
+   ]
+  },
+  {
+   "date": "2027-03-26",
+   "balance": 0,
+   "events": [
+    {
+     "people": [
+      "alex"
+     ],
+     "amount": 1850
+    },
+    {
+     "payment": "save",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2027-04-01",
+   "balance": 0,
+   "events": [
+    {
+     "people": [
+      "sam"
+     ],
+     "amount": 1400
+    },
+    {
+     "payment": "rent",
+     "amount": -1600
+    }
+   ]
+  },
+  {
+   "date": "2027-04-09",
+   "balance": 0,
+   "events": [
+    {
+     "people": [
+      "alex"
+     ],
+     "amount": 1850
+    },
+    {
+     "payment": "save",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2027-04-15",
+   "balance": 0,
+   "events": [
+    {
+     "people": [
+      "sam"
+     ],
+     "amount": 1400
+    }
+   ]
+  },
+  {
+   "date": "2027-04-18",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "power",
+     "amount": -95
+    }
+   ]
+  },
+  {
+   "date": "2027-04-21",
+   "balance": 0,
+   "charges": [
+    {
+     "payment": "stream",
+     "amount": -15.49,
+     "card": "visa",
+     "due": "2027-04-25"
+    }
+   ]
+  },
+  {
+   "date": "2027-04-23",
+   "balance": 0,
+   "events": [
+    {
+     "people": [
+      "alex"
+     ],
+     "amount": 1850
+    },
+    {
+     "payment": "save",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2027-04-25",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "visa-pay",
+     "amount": -315.49
+    }
+   ]
+  },
+  {
+   "date": "2027-04-30",
+   "balance": 0,
+   "events": [
+    {
+     "people": [
+      "sam"
+     ],
+     "amount": 1400
+    }
+   ]
+  },
+  {
+   "date": "2027-05-01",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "rent",
+     "amount": -1600
+    }
+   ]
+  },
+  {
+   "date": "2027-05-07",
+   "balance": 0,
+   "events": [
+    {
+     "people": [
+      "alex"
+     ],
+     "amount": 1850
+    },
+    {
+     "payment": "save",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2027-05-14",
+   "balance": 0,
+   "events": [
+    {
+     "people": [
+      "sam"
+     ],
+     "amount": 1400
+    }
+   ]
+  },
+  {
+   "date": "2027-05-18",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "power",
+     "amount": -95
+    }
+   ]
+  },
+  {
+   "date": "2027-05-21",
+   "balance": 0,
+   "events": [
+    {
+     "people": [
+      "alex"
+     ],
+     "amount": 1850
+    },
+    {
+     "payment": "save",
+     "amount": -200
+    }
+   ],
+   "charges": [
+    {
+     "payment": "stream",
+     "amount": -15.49,
+     "card": "visa",
+     "due": "2027-05-25"
+    }
+   ]
+  },
+  {
+   "date": "2027-05-25",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "visa-pay",
+     "amount": -315.49
+    }
+   ]
+  },
+  {
+   "date": "2027-06-01",
+   "balance": 0,
+   "events": [
+    {
+     "people": [
+      "sam"
+     ],
+     "amount": 1400
+    },
+    {
+     "payment": "rent",
+     "amount": -1600
+    }
+   ]
+  },
+  {
+   "date": "2027-06-04",
+   "balance": 0,
+   "events": [
+    {
+     "people": [
+      "alex"
+     ],
+     "amount": 1850
+    },
+    {
+     "payment": "save",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2027-06-15",
+   "balance": 0,
+   "events": [
+    {
+     "people": [
+      "sam"
+     ],
+     "amount": 1400
+    }
+   ]
+  },
+  {
+   "date": "2027-06-18",
+   "balance": 0,
+   "events": [
+    {
+     "people": [
+      "alex"
+     ],
+     "amount": 1850
+    },
+    {
+     "payment": "save",
+     "amount": -200
+    },
+    {
+     "payment": "power",
+     "amount": -95
+    }
+   ]
+  },
+  {
+   "date": "2027-06-21",
+   "balance": 0,
+   "charges": [
+    {
+     "payment": "stream",
+     "amount": -15.49,
+     "card": "visa",
+     "due": "2027-06-25"
+    }
+   ]
+  },
+  {
+   "date": "2027-06-25",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "visa-pay",
+     "amount": -315.49
+    }
+   ]
+  },
+  {
+   "date": "2027-07-01",
+   "balance": 0,
+   "events": [
+    {
+     "people": [
+      "sam"
+     ],
+     "amount": 1400
+    },
+    {
+     "payment": "rent",
+     "amount": -1600
+    }
+   ]
+  },
+  {
+   "date": "2027-07-02",
+   "balance": 0,
+   "events": [
+    {
+     "people": [
+      "alex"
+     ],
+     "amount": 1850
+    },
+    {
+     "payment": "save",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2027-07-15",
+   "balance": 0,
+   "events": [
+    {
+     "people": [
+      "sam"
+     ],
+     "amount": 1400
+    }
+   ]
+  },
+  {
+   "date": "2027-07-16",
+   "balance": 0,
+   "events": [
+    {
+     "people": [
+      "alex"
+     ],
+     "amount": 1850
+    },
+    {
+     "payment": "save",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2027-07-18",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "power",
+     "amount": -95
+    }
+   ]
+  },
+  {
+   "date": "2027-07-21",
+   "balance": 0,
+   "charges": [
+    {
+     "payment": "stream",
+     "amount": -15.49,
+     "card": "visa",
+     "due": "2027-07-25"
+    }
+   ]
+  },
+  {
+   "date": "2027-07-25",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "visa-pay",
+     "amount": -315.49
+    }
+   ]
+  },
+  {
+   "date": "2027-07-30",
+   "balance": 0,
+   "events": [
+    {
+     "people": [
+      "alex",
+      "sam"
+     ],
+     "amount": 3250
+    },
+    {
+     "payment": "save",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2027-08-01",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "rent",
+     "amount": -1600
+    }
+   ]
+  },
+  {
+   "date": "2027-08-13",
+   "balance": 0,
+   "events": [
+    {
+     "people": [
+      "alex",
+      "sam"
+     ],
+     "amount": 3250
+    },
+    {
+     "payment": "save",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2027-08-18",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "power",
+     "amount": -95
+    }
+   ]
+  },
+  {
+   "date": "2027-08-21",
+   "balance": 0,
+   "charges": [
+    {
+     "payment": "stream",
+     "amount": -15.49,
+     "card": "visa",
+     "due": "2027-08-25"
+    }
+   ]
+  },
+  {
+   "date": "2027-08-25",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "visa-pay",
+     "amount": -315.49
+    }
+   ]
+  },
+  {
+   "date": "2027-08-27",
+   "balance": 0,
+   "events": [
+    {
+     "people": [
+      "alex"
+     ],
+     "amount": 1850
+    },
+    {
+     "payment": "save",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2027-09-01",
+   "balance": 0,
+   "events": [
+    {
+     "people": [
+      "sam"
+     ],
+     "amount": 1400
+    },
+    {
+     "payment": "rent",
+     "amount": -1600
+    }
+   ]
+  },
+  {
+   "date": "2027-09-10",
+   "balance": 0,
+   "events": [
+    {
+     "people": [
+      "alex"
+     ],
+     "amount": 1850
+    },
+    {
+     "payment": "save",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2027-09-15",
+   "balance": 0,
+   "events": [
+    {
+     "people": [
+      "sam"
+     ],
+     "amount": 1400
+    }
+   ]
+  },
+  {
+   "date": "2027-09-18",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "power",
+     "amount": -95
+    }
+   ]
+  },
+  {
+   "date": "2027-09-21",
+   "balance": 0,
+   "charges": [
+    {
+     "payment": "stream",
+     "amount": -15.49,
+     "card": "visa",
+     "due": "2027-09-25"
+    }
+   ]
+  },
+  {
+   "date": "2027-09-24",
+   "balance": 0,
+   "events": [
+    {
+     "people": [
+      "alex"
+     ],
+     "amount": 1850
+    },
+    {
+     "payment": "save",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2027-09-25",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "visa-pay",
+     "amount": -315.49
+    }
+   ]
+  },
+  {
+   "date": "2027-10-01",
+   "balance": 0,
+   "events": [
+    {
+     "people": [
+      "sam"
+     ],
+     "amount": 1400
+    },
+    {
+     "payment": "rent",
+     "amount": -1600
+    }
+   ]
+  },
+  {
+   "date": "2027-10-08",
+   "balance": 0,
+   "events": [
+    {
+     "people": [
+      "alex"
+     ],
+     "amount": 1850
+    },
+    {
+     "payment": "save",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2027-10-15",
+   "balance": 0,
+   "events": [
+    {
+     "people": [
+      "sam"
+     ],
+     "amount": 1400
+    }
+   ]
+  },
+  {
+   "date": "2027-10-18",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "power",
+     "amount": -95
+    }
+   ]
+  },
+  {
+   "date": "2027-10-21",
+   "balance": 0,
+   "charges": [
+    {
+     "payment": "stream",
+     "amount": -15.49,
+     "card": "visa",
+     "due": "2027-10-25"
+    }
+   ]
+  },
+  {
+   "date": "2027-10-22",
+   "balance": 0,
+   "events": [
+    {
+     "people": [
+      "alex"
+     ],
+     "amount": 1850
+    },
+    {
+     "payment": "save",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2027-10-25",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "visa-pay",
+     "amount": -315.49
+    }
+   ]
+  },
+  {
+   "date": "2027-11-01",
+   "balance": 0,
+   "events": [
+    {
+     "people": [
+      "sam"
+     ],
+     "amount": 1400
+    },
+    {
+     "payment": "rent",
+     "amount": -1600
+    }
+   ]
+  },
+  {
+   "date": "2027-11-05",
+   "balance": 0,
+   "events": [
+    {
+     "people": [
+      "alex"
+     ],
+     "amount": 1850
+    },
+    {
+     "payment": "save",
+     "amount": -200
+    }
+   ]
+  }
+ ],
+ "worth": [
+  {
+   "date": "2026-11-10",
+   "amount": 6870.25
+  },
+  {
+   "date": "2026-11-11",
+   "amount": 6870.25
+  },
+  {
+   "date": "2026-11-12",
+   "amount": 6870.25
+  },
+  {
+   "date": "2026-11-13",
+   "amount": 6870.25
+  }
+ ],
+ "next": {
+  "power": "2026-11-18",
+  "rent": "2026-12-01",
+  "renters": "2027-02-01",
+  "save": "2026-11-20",
+  "stream": "2026-11-21",
+  "visa-pay": "2026-11-25"
+ },
+ "last": {
+  "save": "2026-11-06"
+ },
+ "dues": {
+  "power": [
+   "2026-07-18",
+   "2026-08-18",
+   "2026-09-18",
+   "2026-10-18",
+   "2026-11-18"
+  ],
+  "rent": [
+   "2026-08-01",
+   "2026-09-01",
+   "2026-10-01",
+   "2026-11-01"
+  ],
+  "save": [
+   "2026-11-06",
+   "2026-11-20"
+  ],
+  "stream": [
+   "2026-07-21",
+   "2026-08-21",
+   "2026-09-21",
+   "2026-10-21",
+   "2026-11-21"
+  ]
+ },
+ "categories": [
+  {
+   "name": "Food"
+  },
+  {
+   "name": "Groceries",
+   "parent": "Food"
+  },
+  {
+   "name": "Eating out",
+   "parent": "Food"
+  },
+  {
+   "name": "Fun"
+  },
+  {
+   "name": "Paycheck",
+   "income": true
+  }
+ ],
+ "budgets": [
+  {
+   "category": "Groceries",
+   "per": "month",
+   "start": "2026-11-01",
+   "last": "2026-11-30",
+   "amount": 450,
+   "spent": 147.52,
+   "left": 302.48,
+   "pace": 195
+  },
+  {
+   "category": "Eating out",
+   "per": "month",
+   "start": "2026-11-01",
+   "last": "2026-11-30",
+   "amount": 240,
+   "rolled": 120,
+   "spent": 54.5,
+   "left": 185.5,
+   "pace": 104
+  },
+  {
+   "category": "Fun",
+   "per": "paycheck",
+   "start": "2026-11-13",
+   "last": "2026-11-19",
+   "amount": 75,
+   "spent": 0,
+   "left": 75,
+   "pace": 10.71
+  }
+ ],
+ "goals": [
+  {
+   "id": "trip",
+   "name": "A trip",
+   "target": 3000,
+   "date": "2027-06-01",
+   "saved": 2600.59,
+   "left": 399.41,
+   "needsMonth": 60.79,
+   "needsPaycheck": 18.16,
+   "pace": 0.59,
+   "paced": true,
+   "reaches": "2083-04",
+   "behind": true
+  }
+ ],
+ "holidays": {
+  "2026-11-26": "Thanksgiving",
+  "2026-12-25": "Christmas",
+  "2027-01-01": "New Year's Day",
+  "2027-01-18": "Martin Luther King Jr. Day",
+  "2027-02-15": "Presidents' Day",
+  "2027-05-31": "Memorial Day",
+  "2027-07-05": "Independence Day",
+  "2027-09-06": "Labor Day",
+  "2027-10-11": "Columbus Day",
+  "2027-11-11": "Veterans Day"
+ },
+ "checkingNow": {
+  "date": "2026-11-13",
+  "from": "2026-11-10",
+  "start": 2310.45,
+  "steps": [
+   {
+    "date": "2026-11-11",
+    "transaction": "t5",
+    "name": "Corner Grocer",
+    "amount": -61.4,
+    "after": 2249.05
+   },
+   {
+    "date": "2026-11-12",
+    "transaction": "t6",
+    "name": "Coffee Cart",
+    "amount": -12,
+    "after": 2237.05
+   }
+  ],
+  "result": 2237.05
+ },
+ "afterPay": {
+  "date": "2026-11-13",
+  "from": "2026-11-13",
+  "start": 2237.05,
+  "steps": [
+   {
+    "date": "2026-11-13",
+    "people": [
+     "sam"
+    ],
+    "amount": 1400,
+    "after": 3637.05
+   }
+  ],
+  "result": 3637.05
+ }
+}

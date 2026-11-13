@@ -3,7 +3,7 @@ COMPOSE_FILES := compose.yaml $(wildcard stacks/*/compose.yaml)
 # One project per category, run from the homelab folder.
 CATEGORY_FILES := $(wildcard compose/*.yaml)
 
-.PHONY: build test lint check coverage music-pins music-pins-check security compose-config app app-check screenshots frontend frontend-check app-smoke help
+.PHONY: build test lint check coverage music-pins music-pins-check security compose-config app app-check screenshots frontend frontend-check app-smoke phone-finance-wasm phone-finance-framework help
 
 build:
 	go build -trimpath -ldflags "-s -w -X main.version=$(VERSION)" -o bin/homelab ./cmd/homelab
@@ -13,7 +13,7 @@ test:
 	python3 -m unittest discover -s tools/media/tests
 
 lint:
-	@test -z "$$(gofmt -l cmd internal)" || (gofmt -l cmd internal; exit 1)
+	@test -z "$$(gofmt -l cmd internal mobile)" || (gofmt -l cmd internal mobile; exit 1)
 	go vet ./...
 	go vet -tags forreal ./...
 	python3 -m py_compile tools/media/*.py
@@ -23,6 +23,46 @@ lint:
 # What CI runs: formatting, vet, tests, and the catalog/docs validation.
 check: lint test
 	go run ./cmd/homelab --root . validate
+
+# Finances' projection on a phone that keeps a member's Finances sealed
+# (mobile/finance, .claude/prompts/private-finances.md 3.2): the same Go the
+# computer runs, built for the phone. phone-finance-wasm builds the web
+# page's finance.wasm, says its size (over 4 MB compressed is the owner's
+# call), and runs the golden views under it with Node; the environment is
+# kept small, as Go's WebAssembly runner refuses a large one.
+PHONE_WASM_LIMIT := 4194304
+phone-finance-wasm:
+	@mkdir -p bin
+	GOOS=js GOARCH=wasm go build -trimpath -ldflags "-s -w" -o bin/finance.wasm ./cmd/financewasm
+	@raw=$$(wc -c < bin/finance.wasm); gz=$$(gzip -9 -c bin/finance.wasm | wc -c); \
+	  echo "finance.wasm: $$raw bytes, $$gz gzip-compressed"; \
+	  if [ -n "$$GITHUB_STEP_SUMMARY" ]; then echo "**finance.wasm:** $$raw bytes, $$gz compressed (gzip -9)" >> "$$GITHUB_STEP_SUMMARY"; fi; \
+	  if [ $$gz -gt $(PHONE_WASM_LIMIT) ]; then echo "over 4 MB compressed: ask the owner first (private-finances.md 3.2)"; exit 1; fi
+	env -i HOME="$$HOME" PATH="$$(go env GOROOT)/lib/wasm:$$PATH" GOCACHE="$$(go env GOCACHE)" GOMODCACHE="$$(go env GOMODCACHE)" \
+	  GOPATH="$$(go env GOPATH)" GOTOOLCHAIN="$$(go env GOTOOLCHAIN)" GOOS=js GOARCH=wasm go test -count=1 ./mobile/finance
+
+# phone-finance-framework binds the same package for the iPhone app with
+# gomobile (on a Mac with Xcode, gomobile and gobind installed), in a new
+# module of its own under bin/ each time, so go.mod gains nothing, and says
+# the sizes: the whole xcframework, the iPhone's own part, and that part's
+# code and data, which is what an app ships once its link drops the debug
+# information (Apple's strip can't read Go's archive, so size counts it).
+MOBILE_VERSION := v0.0.0-20261011034528-197770444867
+phone-finance-framework:
+	@mkdir -p bin
+	@d=$$(mktemp -d "$$PWD/bin/bind.XXXXXX") && cd "$$d" && echo "binding in $$d" && \
+	  go mod init example.invalid/bind && \
+	  go mod edit -require=github.com/Snooper42/homelab-wizard@v0.0.0 -replace=github.com/Snooper42/homelab-wizard=../.. && \
+	  printf 'package bind\n\nimport (\n\t_ "github.com/Snooper42/homelab-wizard/mobile/finance"\n\t_ "golang.org/x/mobile/bind"\n)\n' > bind.go && \
+	  go get golang.org/x/mobile@$(MOBILE_VERSION) && go mod tidy && \
+	  gomobile bind -target=ios,iossimulator -trimpath -ldflags "-s -w" -o HomelabFinance.xcframework github.com/Snooper42/homelab-wizard/mobile/finance && \
+	  all=$$(du -sk HomelabFinance.xcframework | cut -f1) && \
+	  lib=$$(find HomelabFinance.xcframework/ios-arm64 -type f -name HomelabFinance | head -1) && \
+	  dev=$$(wc -c < "$$lib") && \
+	  shipped=$$(xcrun size -m "$$lib" | awk '/^Segment/ {seg = $$2} /Section/ { if ($$0 ~ /\(__DWARF/ || seg ~ /^__DWARF/) next; n = $$NF; if (n ~ /^[0-9]+$$/) s += n } END {print s + 0}') && \
+	  if [ "$$shipped" -le 0 ]; then echo "size counted no code in $$lib: the count is wrong, not the framework"; exit 1; fi && \
+	  echo "HomelabFinance.xcframework: $$all KB in all; the iPhone's part $$dev bytes, $$shipped of it code and data (what an app ships, without debug info)" && \
+	  if [ -n "$$GITHUB_STEP_SUMMARY" ]; then echo "**HomelabFinance.xcframework:** $$all KB in all; the iPhone's part $$dev bytes, $$shipped of it code and data (what an app ships)" >> "$$GITHUB_STEP_SUMMARY"; fi
 
 # Each package's test coverage against its floor in coverage-floors.txt
 # (CI runs it): raise a floor as tests are added, never lower it without a
