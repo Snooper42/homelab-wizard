@@ -60,6 +60,7 @@ On the phones you allow, it is also the household's Finances: the same screen as
 - Open it from the Home Screen. It follows the homelab as it changes, like Status on the computer.
 - Tap an app's address to open the app itself.
 - Tap an app's row for its page: its state, its last 200 log lines, its week, and its last backup.
+- **Send to my phone:** on the computer, right-click an app on Status and pick **Send to my phone ›** and the phone, or use ⌘K for the page you're on; the phone shows *From the computer: …* at the bottom with **Open**. Only the app's own pages are sent (never a link out, nor anything secret), never to a wall screen, Finances only to a phone allowed to see them.
 - **Send a report** (top of Status) makes the diagnostics report, with every password and token removed, and opens the share sheet to send it to whoever helps you.
 - A lost or sold phone: **Remove** in Settings › Phones (or `./homelab phone remove <id>`); its token stops working at once.
 

@@ -4,6 +4,7 @@
 // in web/types. This file chooses the screen, answers the keyboard, and
 // starts the app; each screen's code is in web/src/screens, drawn by Preact
 // components (*.tsx). app/preview/lint.mjs keeps it under 400 lines.
+import { readTargets, showSent } from './phone/send';
 import { progress } from './setup/Checklist';
 import { drawRemembered, leftStatus, loadStatus, refreshStatus, statusData, undoNow } from './screens/status';
 import { drawHealth } from './status/healthLine';
@@ -122,6 +123,15 @@ function visit(p: Place) {
       focusScreen(p.screen);
     }
   } finally { moving = false; }
+}
+/** Where the window is now: the screen, an app's page with its app, a screen's tab. */
+export const here = (): Place | undefined => current;
+/** Opens a place as a click would (a page the computer sent the phone): an app's page, or a screen on its tab. */
+export function goTo(p: Place) {
+  if (p.app) return openApp(p.app);
+  if (p.tab !== undefined && tabbed[p.screen]?.now() !== p.tab) tabbed[p.screen]?.put(p.tab);
+  navigate(p.screen);
+  focusScreen(p.screen);
 }
 /** Back to the screen before (false when there is none). */
 export function goBack(): boolean {
@@ -284,6 +294,9 @@ window.addEventListener('load', async () => {
   window.runtime.EventsOn('hideAmounts', () => toggleHideAmounts());
   window.runtime.EventsOn('palette', () => openPalette());
   window.runtime.EventsOn('status:changed', refreshStatus);
+  // A page the computer sent this phone (Send to my phone): at the bottom, with Open.
+  window.runtime.EventsOn('phone:open', (o) => showSent(o, goTo));
+  void readTargets(); // the phones Send to my phone lists, read before a menu first asks
   window.runtime.EventsOn('cli:step', cliProgress);
   window.runtime.EventsOn('job:app', jobApp);
   window.runtime.EventsOn('refresh', reloadScreen);

@@ -254,6 +254,13 @@ declare namespace app {
     qr: string;
     off: boolean;
   }
+  interface SendTarget {
+    id: string;
+    name: string;
+    finances?: boolean;
+    member?: boolean;
+    apps?: string[];
+  }
   interface TidyBook {
     id: number;
     title: string;
@@ -558,6 +565,11 @@ declare namespace engine {
     runtime?: boolean;
     status?: api.Status | null;
     again?: boolean;
+    open?: engine.Open | null;
+  }
+  interface Open {
+    link: string;
+    title?: string;
   }
 }
 
@@ -1347,6 +1359,8 @@ interface Backend {
     SaveSettings(arg1: Record<string, string>): Promise<settings.Setting[]>;
     SavingsHistory(): Promise<savings.Point[]>;
     Screen(): Promise<string>;
+    SendTargets(): Promise<app.SendTarget[]>;
+    SendToPhone(arg1: string, arg2: string, arg3: string): Promise<void>;
     SetAppSetting(arg1: string, arg2: string, arg3: boolean): Promise<void>;
     SetAppearance(arg1: tray.Appearance): Promise<tray.Appearance>;
     SetAttention(arg1: number): Promise<void>;
@@ -1419,4 +1433,5 @@ interface BackendEvents {
     "update:state": app.UpdateState;
     "update:step": app.UpdateStep;
     "media:event": Record<string, unknown>;
+    "phone:open": engine.Open;
 }

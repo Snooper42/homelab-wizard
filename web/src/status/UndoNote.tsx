@@ -11,12 +11,14 @@ export interface UndoNoteProps {
   words: string;
   undo: () => void;
   close: () => void;
+  /** Its button's word: Undo, or Open for a page sent from the computer (showNote). */
+  label?: string;
 }
 
 /** How long the note stays. */
 export const undoFor = 10000;
 
-export function UndoNote({ words, undo, close }: UndoNoteProps) {
+export function UndoNote({ words, undo, close, label = 'Undo' }: UndoNoteProps) {
   const [held, setHeld] = useState(false);
   const box = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -29,7 +31,7 @@ export function UndoNote({ words, undo, close }: UndoNoteProps) {
       onMouseEnter={() => setHeld(true)} onMouseLeave={() => setHeld(!!box.current?.contains(document.activeElement))}
       onFocusIn={() => setHeld(true)} onFocusOut={() => setTimeout(() => setHeld(!!box.current?.matches(':hover') || !!box.current?.contains(document.activeElement)))}>
       <span class="undowords">{words}</span>
-      <button type="button" class="undobtn" onClick={undo}>Undo</button>
+      <button type="button" class="undobtn" onClick={undo}>{label}</button>
       <button type="button" class="iconbtn" aria-label="Close" onClick={close}>×</button>
     </div>
   );
@@ -59,4 +61,12 @@ export function undoShown(): boolean {
   if (!shown) return false;
   shown();
   return true;
+}
+
+/** The same note with another button (Open: a page the computer sent the phone): no ⌘Z, since it undoes nothing. */
+export function showNote(words: string, label: string, act: () => void) {
+  const el = document.getElementById('undoNote');
+  if (!el) return;
+  const close = () => mountUndoNote(el, null);
+  mountUndoNote(el, { words, label, undo: () => { close(); act(); }, close });
 }
