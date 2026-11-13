@@ -146,6 +146,9 @@ function draw() {
     toggleHidden: v && !v.readOnly ? toggleHideAmounts : undefined,
     readReceipt: receipts.read,
     readCardPicture: cardPictures.read,
+    readCardPrices: () => go().FinancesCardPrices(),
+    // Update prices (TCGdex, on this click): wherever Finances may be changed; the plan comes back with the prices in.
+    updatePrices: !v || v.readOnly ? undefined : async () => { const r = await go().FinancesUpdatePrices(); financesData.set(await go().Finances()); return r; },
     saveLedger,
     running: runningApps(),
     calendar: phone ? undefined : () => go().FinancesCalendar(),

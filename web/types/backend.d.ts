@@ -473,6 +473,16 @@ declare namespace board {
   }
 }
 
+declare namespace cardprice {
+  interface Result {
+    updated: number;
+    kept: number;
+    notFound?: string[];
+    unclear?: string[];
+    unpriced?: string[];
+  }
+}
+
 declare namespace companion {
   interface Asked {
     link: string;
@@ -1332,6 +1342,7 @@ interface Backend {
     FinancesAddInvestment(arg1: app.InvestmentAdd): Promise<app.InvestmentsRead>;
     FinancesCalendar(): Promise<string>;
     FinancesCardPicture(arg1: string): Promise<string>;
+    FinancesCardPrices(): Promise<Record<string, finance.Point[]>>;
     FinancesChangeInvestment(arg1: app.InvestmentTrade): Promise<app.InvestmentsRead>;
     FinancesDeleteInvestment(arg1: string, arg2: string): Promise<app.InvestmentsRead>;
     FinancesFetchLogo(arg1: string): Promise<app.AppLogo>;
@@ -1344,6 +1355,7 @@ interface Backend {
     FinancesLedger(): Promise<finance.Ledger>;
     FinancesReadInvestments(): Promise<app.InvestmentsRead>;
     FinancesReceipt(arg1: string): Promise<string>;
+    FinancesUpdatePrices(): Promise<cardprice.Result>;
     FinancesWall(): Promise<finance.Wall>;
     Health(): Promise<app.HealthInfo>;
     History(arg1: string, arg2: string, arg3: number): Promise<history.Entry[]>;

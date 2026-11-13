@@ -16,6 +16,7 @@ internal/backup 80
 internal/awake 78
 internal/battery 85
 internal/board 99
+internal/cardprice 75
 internal/catalog 71
 internal/claim 91
 internal/companion 83

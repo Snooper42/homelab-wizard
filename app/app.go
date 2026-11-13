@@ -24,6 +24,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/backup"
 	"github.com/Snooper42/homelab-wizard/internal/board"
 	"github.com/Snooper42/homelab-wizard/internal/catalog"
+	"github.com/Snooper42/homelab-wizard/internal/cardprice"
 	"github.com/Snooper42/homelab-wizard/internal/companion"
 	"github.com/Snooper42/homelab-wizard/internal/core"
 	"github.com/Snooper42/homelab-wizard/internal/crash"
@@ -1048,6 +1049,23 @@ func (a *App) SaveFinancesReceipt(dataURL string) (string, error) {
 // FinancesReceipt reads a kept receipt back as a data URL.
 func (a *App) FinancesReceipt(name string) (string, error) {
 	return finance.ReadReceipt(finance.ReceiptsDir(a.root), name)
+}
+
+// FinancesUpdatePrices reads the Collection's prices (and a picture for a
+// card with none) from TCGdex, on the click that asks, and says what it did.
+func (a *App) FinancesUpdatePrices() (cardprice.Result, error) {
+	ctx, cancel := context.WithTimeout(a.ctx, 2*time.Minute)
+	defer cancel()
+	res, err := cardprice.Update(ctx, a.root, cardprice.Default(), time.Now())
+	if err == nil {
+		history.Record(a.root, history.Entry{Kind: "finances", Who: history.ThisComputer, Text: "Updated the Collection's prices"})
+	}
+	return res, err
+}
+
+// FinancesCardPrices is each card's price over time, by its id.
+func (a *App) FinancesCardPrices() (map[string][]finance.Point, error) {
+	return cardprice.LoadHistory(a.root)
 }
 
 // SaveFinancesCardPicture keeps a card's own photo (made small on this
