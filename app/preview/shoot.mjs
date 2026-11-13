@@ -7759,6 +7759,24 @@ const smokes = [
         const c = saved?.collection?.[0];
         if (!acct || c?.account !== acct.id || c.name !== 'Ember Fox' || c.number !== '4/102' || c.paid !== 45 || c.price !== 182.4 || !/^\d{4}-\d\d-\d\d$/.test(c.priceOn || '')) throw new Error(`saved: ${JSON.stringify({ acct, c })}`);
       } },
+      { name: "Finances: a card's own photo, picked in its form, is kept and shown on its page", screen: 'finances', mock: withCards, run: async (page) => {
+        await finTab(page, 'Collection', { timeout: 5000 });
+        await page.click('#finRoot .fx-cards li:has-text("Ember Fox") button.rowopen');
+        await page.click('#finRoot .fx-card button:text-is("Edit")', { timeout: 5000 });
+        await page.waitForSelector('#finSheet:not([hidden]) h2:text-is("Ember Fox")', { timeout: 5000 });
+        // A made-up photo (a plain 600×840 PNG), picked from a file.
+        const png = await page.evaluate(async () => { const c = new OffscreenCanvas(600, 840); c.getContext('2d').fillRect(0, 0, 600, 840); const b = await c.convertToBlob({ type: 'image/png' }); return [...new Uint8Array(await b.arrayBuffer())]; });
+        await page.setInputFiles('#finSheet .fx-cardphoto input[type=file]', { name: 'card.png', mimeType: 'image/png', buffer: Buffer.from(png) });
+        await page.waitForSelector('#finSheet .fx-cardphoto img.fx-cardpic', { timeout: 5000 });
+        const kept = await page.evaluate(() => Object.values(window.__MOCK.cardPictures || {})[0] || '');
+        if (!kept.startsWith('data:image/jpeg;base64,')) throw new Error(`kept: ${kept.slice(0, 40)}`);
+        await page.click('#finSheet button:text-is("Save")');
+        await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+        const saved = await page.evaluate(() => window.__MOCK.financesSaved?.at(-1)?.collection?.find((c) => c.name === 'Ember Fox'));
+        if (saved?.picture !== 'ab'.repeat(16) + '.jpg') throw new Error(`the card's picture: ${saved?.picture}`);
+        // Its page shows it, read back from the computer, large.
+        await page.waitForSelector('#finRoot .fx-card img.fx-cardpic.lg[src^="data:image/jpeg"]', { timeout: 5000 });
+      } },
       { name: 'The phone, view only: the Collection shows, with nothing to add or change', screen: 'finances', phone: ['companion', 'finances'], mock: { finances: { ...withCards.finances, readOnly: true } }, run: async (page) => {
         await finTab(page, 'Collection', { timeout: 5000 });
         await page.waitForSelector('#finRoot .fx-cards li', { timeout: 5000 });

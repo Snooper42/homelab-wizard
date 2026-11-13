@@ -6,6 +6,7 @@
 // collectible account worth what they are (internal/finance/collection.go),
 // so Net worth counts them. A picture is the computer's own file; until a
 // card has one it shows a plain placeholder, never one fetched.
+import { useEffect, useState } from 'preact/hooks';
 import { Empty } from '../parts/Empty';
 import { Row, Rows } from '../parts/Row';
 import { Amount, Stat } from './ui/Amount';
@@ -21,8 +22,26 @@ const cardPaid = (c: finance.Collected) => (c.paid || 0) * Math.max(1, c.count |
 /** Its printing, condition and how many, as one line: "Set A · 4/102 · Near mint · ×2". */
 const cardLine = (c: finance.Collected) => [c.set, c.number, c.grade, (c.count || 1) > 1 ? `×${c.count}` : ''].filter(Boolean).join(' · ') || 'A card';
 
-/** The card's picture: its own, once the computer has saved one; until then a plain placeholder. */
-export function CardPicture({ c, large }: { c: finance.Collected; large?: boolean }) {
+/** Pictures read back from the computer, by name: each read once while the screen is open. */
+const pictures = new Map<string, Promise<string>>();
+
+/** Reads a card's picture by name (the computer's own file), once. */
+const pictureOf = (name: string, read: (name: string) => Promise<string>) => {
+  if (!pictures.has(name)) pictures.set(name, read(name).catch((e) => { pictures.delete(name); throw e; }));
+  return pictures.get(name)!;
+};
+
+/** The card's picture: its own, once the computer has saved one; until then (or while it reads) a plain placeholder. */
+export function CardPicture({ c, large, read }: { c: finance.Collected; large?: boolean; read?: (name: string) => Promise<string> }) {
+  const [url, setUrl] = useState('');
+  useEffect(() => {
+    setUrl('');
+    if (!c.picture || !read) return;
+    let live = true;
+    pictureOf(c.picture, read).then((u) => { if (live && u.startsWith('data:image/')) setUrl(u); }, () => {});
+    return () => { live = false; };
+  }, [c.picture, read]);
+  if (url) return <img class={'fx-cardpic' + (large ? ' lg' : '')} src={url} alt={large ? c.name : ''} />;
   return (
     <span class={'fx-cardpic' + (large ? ' lg' : '')} role="img" aria-label={`${c.name}: no picture yet`}>
       <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2" /><circle cx="12" cy="11" r="3.5" /></svg>
@@ -44,9 +63,11 @@ export interface CollectionProps {
   open: (id: string) => void;
   /** Add a card, or change one; none on a phone allowed only to look. */
   edit?: (id?: string) => void;
+  /** A card's picture by its name, from the computer. */
+  read?: (name: string) => Promise<string>;
 }
 
-export function CollectionPage({ v, open, edit }: CollectionProps) {
+export function CollectionPage({ v, open, edit, read }: CollectionProps) {
   const cards = v.plan.collection || [];
   const held = (v.plan.accounts || []).filter((a) => cards.some((c) => c.account === a.id));
   const worth = cards.reduce((t, c) => t + cardWorth(c), 0);
@@ -71,7 +92,7 @@ export function CollectionPage({ v, open, edit }: CollectionProps) {
         {!!cards.length && <Widget title="Cards" span="all" kind="fx-cards">
           <Rows kind="fx-rows">
             {cards.map((c) => (
-              <Row key={c.id} lead={<CardPicture c={c} />} title={c.name} sub={cardLine(c)}
+              <Row key={c.id} lead={<CardPicture c={c} read={read} />} title={c.name} sub={cardLine(c)}
                 end={c.paid ? <span class="fx-cardpaid muted">paid {money(cardPaid(c))}</span> : undefined}
                 when={<span class="fx-cardworth"><Amount value={cardWorth(c)} form="full" /><Gain worth={cardWorth(c)} paid={cardPaid(c)} /></span>} whenPlain
                 onOpen={() => open(c.id)} openLabel="its page" />
@@ -91,10 +112,12 @@ export interface CardPageProps {
   done: () => void;
   /** Its form; none on a phone allowed only to look. */
   edit?: () => void;
+  /** Its picture by its name, from the computer. */
+  read?: (name: string) => Promise<string>;
 }
 
 /** A card opened large: its picture, what it is worth and its gain, what it cost and when, and where it is counted. */
-export function CardPage({ v, id, done, edit }: CardPageProps) {
+export function CardPage({ v, id, done, edit, read }: CardPageProps) {
   const c = (v.plan.collection || []).find((x) => x.id === id);
   if (!c) return <Empty>This card isn't in the collection any more. <button class="small" onClick={done}>Collection</button></Empty>;
   const account = (v.plan.accounts || []).find((a) => a.id === c.account);
@@ -105,7 +128,7 @@ export function CardPage({ v, id, done, edit }: CardPageProps) {
       </div>
       <div class="fx-cardpage">
         <div class="fx-cardside">
-          <CardPicture c={c} large />
+          <CardPicture c={c} large read={read} />
           {edit && <span class="actions"><button class="btn" onClick={edit}>Edit</button></span>}
         </div>
         <div class="fx-cardmain">

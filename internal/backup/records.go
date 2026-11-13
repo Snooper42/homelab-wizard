@@ -17,8 +17,9 @@ const RecordsFolder = "data"
 
 // recordDirs are the folders in data/ that are records rather than an app's
 // data or a cache: the household's welcome pages, the apps' sign-in
-// settings, and the receipts kept with Finances' transactions.
-var recordDirs = []string{"people", "sso", "finance-receipts"}
+// settings, the receipts kept with Finances' transactions, and the pictures
+// of the Collection's cards.
+var recordDirs = []string{"people", "sso", "finance-receipts", "finance-cards"}
 
 // CopyRecords copies the homelab's own records from dataDir (the homelab
 // folder's data/) into dst: every .json file directly in it, the people,

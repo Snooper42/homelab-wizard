@@ -2218,6 +2218,8 @@ html .fx-month td { padding:0; vertical-align:top; height:92px; border-radius:va
 .fx-cardpic.lg svg { width:44px; height:44px; stroke-width:1.3; }
 .fx-cardworth { display:inline-flex; flex-direction:column; align-items:flex-end; gap:2px; font-variant-numeric:tabular-nums; }
 .fx-cardgain { font-size:12px; font-weight:500; white-space:nowrap; font-variant-numeric:tabular-nums; }
+img.fx-cardpic { object-fit:cover; padding:0; }
+.fx-cardphoto { display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin:12px 0 4px; }
 .fx-cardpaid { font-size:13px; white-space:nowrap; font-variant-numeric:tabular-nums; }
 /* Narrow (a phone): what it cost goes, its gain under what it is worth says enough, and the name keeps its room. */
 @media (max-width: 600px) { .fx-cardpaid { display:none; } }

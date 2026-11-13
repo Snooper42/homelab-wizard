@@ -380,8 +380,11 @@ func Save(path string, p Plan) (Plan, error) {
 	p.Rev, err = write(path, was, data)
 	if err != nil {
 		p.Rev = was
+		return p, err
 	}
-	return p, err
+	// Pictures no card names any more go after a day; failing to remove one leaves it for the next save.
+	_ = pruneCardPictures(filepath.Join(filepath.Dir(path), "finance-cards"), p, time.Now())
+	return p, nil
 }
 
 // maxMoney is where a number stops being money: nothing a household keeps

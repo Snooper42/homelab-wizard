@@ -1050,6 +1050,17 @@ func (a *App) FinancesReceipt(name string) (string, error) {
 	return finance.ReadReceipt(finance.ReceiptsDir(a.root), name)
 }
 
+// SaveFinancesCardPicture keeps a card's own photo (made small on this
+// device), sent as a data URL, and returns its name for the card.
+func (a *App) SaveFinancesCardPicture(dataURL string) (string, error) {
+	return finance.SaveCardPicture(finance.CardPicturesDir(a.root), dataURL)
+}
+
+// FinancesCardPicture reads a card's kept picture back as a data URL.
+func (a *App) FinancesCardPicture(name string) (string, error) {
+	return finance.ReadCardPicture(finance.CardPicturesDir(a.root), name)
+}
+
 // FinancesCalendar is the calendar feed's link for the plan's key, for a
 // phone's calendar to subscribe to: the companion's https address only
 // (the feed is never sent over the home Wi-Fi). "" with no key; an error

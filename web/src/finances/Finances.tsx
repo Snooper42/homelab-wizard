@@ -49,6 +49,8 @@ export interface FinancesProps {
   fromWallos?: () => Promise<app.AppSubscription[]>;
   /** Reads a receipt by its name: a phone allowed only to look shows it under its transaction. */
   readReceipt: (name: string) => Promise<string>;
+  /** A card of the Collection's picture, by its name, as a data URL. */
+  readCardPicture?: (name: string) => Promise<string>;
   /** Keeps the ledger (a link to a planned payment, from Transactions); false when it failed. */
   saveLedger?: (l: finance.Ledger) => Promise<boolean>;
   /** Saves an export (Reports' CSV, the plan, what's ahead) and says where it went; "" when cancelled. */
@@ -113,7 +115,7 @@ function ExportMenu({ v, exportFile, printMonth }: { v: finance.View; exportFile
   );
 }
 
-function FinancesScreen({ v, ledger, error, retry, tab, setTab, sel, pick, setSince, saveSettings, keep, edit: open, exportFile, printMonth, readReceipt, saveLedger, running, calendar, fromWallos, phone, toggleHidden, group, setGroup, investments }: FinancesProps) {
+function FinancesScreen({ v, ledger, error, retry, tab, setTab, sel, pick, setSince, saveSettings, keep, edit: open, exportFile, printMonth, readReceipt, readCardPicture, saveLedger, running, calendar, fromWallos, phone, toggleHidden, group, setGroup, investments }: FinancesProps) {
   // A card's payoff with each paycheck is no payment of its own: it opens the card's form.
   const edit = (what: What, id?: string, kind?: string) => (cardOf(id) ? open('account', cardOf(id)) : open(what, id, kind));
   const L = v ? lookup(v.plan) : null;
@@ -152,7 +154,7 @@ function FinancesScreen({ v, ledger, error, retry, tab, setTab, sel, pick, setSi
       <div class="finbody">
         {!v && error ? <Empty>The finances file could not be read: {error} <button class="small" onClick={retry}>Try again</button></Empty>
           : !v ? <Empty>Reading…</Empty>
-          : ro ? <View v={v} L={L} phone={phone} ledger={ledger} setTab={setTab} toTx={toTx} back={back} exportFile={exportFile} readReceipt={readReceipt} running={running} tab={tab} sel={sel} pick={pick} openWorth={() => setTab('worth')} openSubscriptions={() => { openOn('subscriptions'); setTab('recurring'); }} openRecurring={(f?: string) => { if (f) openOn(f); setTab('recurring'); }} openTransactions={() => toTx({})} showIn={toTx} openCalendar={(day?: string) => { if (day) showDay(day); setTab('calendar'); }} openPay={() => setTab('pay')} openAccount={(id: string) => setTab(`account:${id}`)} group={group} setGroup={setGroup} />
+          : ro ? <View v={v} L={L} phone={phone} ledger={ledger} setTab={setTab} toTx={toTx} back={back} exportFile={exportFile} readReceipt={readReceipt} readCardPicture={readCardPicture} running={running} tab={tab} sel={sel} pick={pick} openWorth={() => setTab('worth')} openSubscriptions={() => { openOn('subscriptions'); setTab('recurring'); }} openRecurring={(f?: string) => { if (f) openOn(f); setTab('recurring'); }} openTransactions={() => toTx({})} showIn={toTx} openCalendar={(day?: string) => { if (day) showDay(day); setTab('calendar'); }} openPay={() => setTab('pay')} openAccount={(id: string) => setTab(`account:${id}`)} group={group} setGroup={setGroup} />
           : tab === 'calendar' ? <Calendar v={v} L={L} ledger={ledger} edit={(w, id) => edit(w, id)} />
           : tab === 'transactions' ? <Transactions v={v} L={L} ledger={ledger} edit={(w, id) => edit(w, id)} saveLedger={saveLedger} logos={!phone} back={back} />
           : tab === 'reports' ? <Reports v={v} ledger={ledger} exportFile={exportFile} open={toTx} />
@@ -160,8 +162,8 @@ function FinancesScreen({ v, ledger, error, retry, tab, setTab, sel, pick, setSi
           : tab === 'pay' ? <Pay v={v} L={L} edit={edit} saveSettings={saveSettings} keep={keep} calendar={calendar} />
           : tab.startsWith('account:') ? <AccountPage v={v} L={L} ledger={ledger} id={tab.slice(8)} done={() => setTab('worth')} edit={() => edit('account', tab.slice(8))} update={() => edit('balances')} toTx={toTx} editTx={(w, id) => edit(w, id)} saveLedger={saveLedger} />
           : tab === 'worth' ? <NetWorth v={v} L={L} edit={edit} open={(id) => setTab('account:' + id)} sel={Math.max(0, sel)} pick={pick} update={() => edit('balances')} keep={keep} group={group} setGroup={setGroup} invest={investments} />
-          : tab === 'collection' ? <CollectionPage v={v} open={(id) => setTab('card:' + id)} edit={(id) => edit('card', id)} />
-          : tab.startsWith('card:') ? <CardPage v={v} id={tab.slice(5)} done={() => setTab('collection')} edit={() => edit('card', tab.slice(5))} />
+          : tab === 'collection' ? <CollectionPage v={v} open={(id) => setTab('card:' + id)} edit={(id) => edit('card', id)} read={readCardPicture} />
+          : tab.startsWith('card:') ? <CardPage v={v} id={tab.slice(5)} done={() => setTab('collection')} edit={() => edit('card', tab.slice(5))} read={readCardPicture} />
           : <Overview v={v} L={L} ledger={ledger} sel={sel} pick={pick} setSince={ro ? undefined : setSince} keep={ro ? undefined : keep} add={(w, k) => edit(w, undefined, k)} edit={(w, id) => edit(w, id)} openWorth={() => setTab('worth')} openSubscriptions={() => { openOn('subscriptions'); setTab('recurring'); }} openRecurring={(f?: string) => { if (f) openOn(f); setTab('recurring'); }} openTransactions={() => toTx({})} showIn={toTx} openCalendar={(day?: string) => { if (day) showDay(day); setTab('calendar'); }} openPay={() => setTab('pay')} openAccount={(id: string) => setTab(`account:${id}`)} phone={phone} />}
       </div>
     </>
@@ -169,7 +171,7 @@ function FinancesScreen({ v, ledger, error, retry, tab, setTab, sel, pick, setSi
 }
 
 /** A view as a phone allowed only to look draws it: the same, without a way to change anything (an export changes nothing). */
-function View({ v, L, phone, ledger, setTab, toTx, back, tab, sel, pick, openWorth, openSubscriptions, openRecurring, openTransactions, showIn, openCalendar, openPay, openAccount, exportFile, readReceipt, running, group, setGroup }: { v: finance.View; L: Lookup; phone?: boolean; ledger: finance.Ledger | null; setTab: (tab: string) => void; toTx: (f: Parameters<typeof showTransactions>[0]) => void; back?: { label: string; go: () => void }; exportFile: FinancesProps['exportFile']; readReceipt: FinancesProps['readReceipt']; running?: Running[]; tab: string; sel: number; pick: (i: number) => void; openWorth: () => void; openSubscriptions: () => void; openRecurring: (filter?: string) => void; openTransactions: () => void; showIn: (f: Parameters<typeof showTransactions>[0]) => void; openCalendar: (day?: string) => void; openPay: () => void; openAccount: (id: string) => void; group?: string; setGroup?: (group: string) => void }) {
+function View({ v, L, phone, ledger, setTab, toTx, back, tab, sel, pick, openWorth, openSubscriptions, openRecurring, openTransactions, showIn, openCalendar, openPay, openAccount, exportFile, readReceipt, readCardPicture, running, group, setGroup }: { v: finance.View; L: Lookup; phone?: boolean; ledger: finance.Ledger | null; setTab: (tab: string) => void; toTx: (f: Parameters<typeof showTransactions>[0]) => void; back?: { label: string; go: () => void }; exportFile: FinancesProps['exportFile']; readReceipt: FinancesProps['readReceipt']; readCardPicture?: FinancesProps['readCardPicture']; running?: Running[]; tab: string; sel: number; pick: (i: number) => void; openWorth: () => void; openSubscriptions: () => void; openRecurring: (filter?: string) => void; openTransactions: () => void; showIn: (f: Parameters<typeof showTransactions>[0]) => void; openCalendar: (day?: string) => void; openPay: () => void; openAccount: (id: string) => void; group?: string; setGroup?: (group: string) => void }) {
   return tab === 'calendar' ? <Calendar v={v} L={L} ledger={ledger} />
     : tab === 'transactions' ? <Transactions v={v} L={L} ledger={ledger} readReceipt={readReceipt} back={back} />
     : tab === 'reports' ? <Reports v={v} ledger={ledger} exportFile={exportFile} open={toTx} />
@@ -177,8 +179,8 @@ function View({ v, L, phone, ledger, setTab, toTx, back, tab, sel, pick, openWor
     : tab === 'pay' ? <Pay v={v} L={L} />
     : tab.startsWith('account:') ? <AccountPage v={v} L={L} ledger={ledger} id={tab.slice(8)} done={() => setTab('worth')} toTx={toTx} />
     : tab === 'worth' ? <NetWorth v={v} L={L} open={(id) => setTab('account:' + id)} sel={Math.max(0, sel)} pick={pick} group={group} setGroup={setGroup} />
-    : tab === 'collection' ? <CollectionPage v={v} open={(id) => setTab('card:' + id)} />
-    : tab.startsWith('card:') ? <CardPage v={v} id={tab.slice(5)} done={() => setTab('collection')} />
+    : tab === 'collection' ? <CollectionPage v={v} open={(id) => setTab('card:' + id)} read={readCardPicture} />
+    : tab.startsWith('card:') ? <CardPage v={v} id={tab.slice(5)} done={() => setTab('collection')} read={readCardPicture} />
     : <Overview v={v} L={L} ledger={ledger} sel={sel} pick={pick} openWorth={openWorth} openSubscriptions={openSubscriptions} openRecurring={openRecurring} openTransactions={openTransactions} showIn={showIn} openCalendar={openCalendar} openPay={openPay} openAccount={openAccount} phone={phone} />;
 }
 

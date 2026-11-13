@@ -653,6 +653,25 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 			name, err := finance.SaveReceipt(finance.ReceiptsDir(froot), data)
 			return name, nil, err
 		}},
+		// The Collection's pictures: a phone that sees Finances sees them, one
+		// that may change them keeps a card's own photo. The owner's alone, as
+		// the Collection is (a member's phone gets none of it).
+		"FinancesCardPicture": {Finances: companion.FinancesView, Call: func(ctx context.Context, args []json.RawMessage) (any, []string, error) {
+			var name string
+			if len(args) < 1 || json.Unmarshal(args[0], &name) != nil {
+				return nil, nil, errors.New("FinancesCardPicture takes the picture's name")
+			}
+			r, err := finance.ReadCardPicture(finance.CardPicturesDir(root), name)
+			return r, nil, err
+		}},
+		"SaveFinancesCardPicture": {Finances: companion.FinancesEdit, Call: func(ctx context.Context, args []json.RawMessage) (any, []string, error) {
+			var data string
+			if len(args) < 1 || json.Unmarshal(args[0], &data) != nil {
+				return nil, nil, errors.New("SaveFinancesCardPicture takes the picture")
+			}
+			name, err := finance.SaveCardPicture(finance.CardPicturesDir(root), data)
+			return name, nil, err
+		}},
 		// The Settings form (.env), for the native app's Settings screen:
 		// read by any paired phone but a wall screen, over the https link
 		// only; everyday settings changed by one allowed to make changes.
