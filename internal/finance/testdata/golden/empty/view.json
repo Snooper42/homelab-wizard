@@ -1,0 +1,552 @@
+{
+ "plan": {
+  "people": null,
+  "accounts": null,
+  "payments": null,
+  "cushion": 0,
+  "rev": "ca3d163bab055381"
+ },
+ "today": "2026-11-13",
+ "checking": "",
+ "typed": "",
+ "start": {},
+ "since": [],
+ "periods": [
+  {
+   "now": true,
+   "start": "2026-11-13",
+   "last": "2026-12-12",
+   "carried": 0,
+   "in": 0,
+   "out": 0,
+   "saved": 0,
+   "left": 0,
+   "rows": [],
+   "accounts": {}
+  }
+ ],
+ "paydays": [],
+ "days": [
+  {
+   "date": "2026-11-13",
+   "balance": 0
+  },
+  {
+   "date": "2026-11-14",
+   "balance": 0
+  },
+  {
+   "date": "2026-11-15",
+   "balance": 0
+  },
+  {
+   "date": "2026-11-16",
+   "balance": 0
+  },
+  {
+   "date": "2026-11-17",
+   "balance": 0
+  },
+  {
+   "date": "2026-11-18",
+   "balance": 0
+  },
+  {
+   "date": "2026-11-19",
+   "balance": 0
+  },
+  {
+   "date": "2026-11-20",
+   "balance": 0
+  },
+  {
+   "date": "2026-11-21",
+   "balance": 0
+  },
+  {
+   "date": "2026-11-22",
+   "balance": 0
+  },
+  {
+   "date": "2026-11-23",
+   "balance": 0
+  },
+  {
+   "date": "2026-11-24",
+   "balance": 0
+  },
+  {
+   "date": "2026-11-25",
+   "balance": 0
+  },
+  {
+   "date": "2026-11-26",
+   "balance": 0
+  },
+  {
+   "date": "2026-11-27",
+   "balance": 0
+  },
+  {
+   "date": "2026-11-28",
+   "balance": 0
+  },
+  {
+   "date": "2026-11-29",
+   "balance": 0
+  },
+  {
+   "date": "2026-11-30",
+   "balance": 0
+  },
+  {
+   "date": "2026-12-01",
+   "balance": 0
+  },
+  {
+   "date": "2026-12-02",
+   "balance": 0
+  },
+  {
+   "date": "2026-12-03",
+   "balance": 0
+  },
+  {
+   "date": "2026-12-04",
+   "balance": 0
+  },
+  {
+   "date": "2026-12-05",
+   "balance": 0
+  },
+  {
+   "date": "2026-12-06",
+   "balance": 0
+  },
+  {
+   "date": "2026-12-07",
+   "balance": 0
+  },
+  {
+   "date": "2026-12-08",
+   "balance": 0
+  },
+  {
+   "date": "2026-12-09",
+   "balance": 0
+  },
+  {
+   "date": "2026-12-10",
+   "balance": 0
+  },
+  {
+   "date": "2026-12-11",
+   "balance": 0
+  },
+  {
+   "date": "2026-12-12",
+   "balance": 0
+  },
+  {
+   "date": "2026-12-13",
+   "balance": 0
+  },
+  {
+   "date": "2026-12-14",
+   "balance": 0
+  },
+  {
+   "date": "2026-12-15",
+   "balance": 0
+  },
+  {
+   "date": "2026-12-16",
+   "balance": 0
+  },
+  {
+   "date": "2026-12-17",
+   "balance": 0
+  },
+  {
+   "date": "2026-12-18",
+   "balance": 0
+  },
+  {
+   "date": "2026-12-19",
+   "balance": 0
+  },
+  {
+   "date": "2026-12-20",
+   "balance": 0
+  },
+  {
+   "date": "2026-12-21",
+   "balance": 0
+  },
+  {
+   "date": "2026-12-22",
+   "balance": 0
+  },
+  {
+   "date": "2026-12-23",
+   "balance": 0
+  },
+  {
+   "date": "2026-12-24",
+   "balance": 0
+  },
+  {
+   "date": "2026-12-25",
+   "balance": 0
+  },
+  {
+   "date": "2026-12-26",
+   "balance": 0
+  },
+  {
+   "date": "2026-12-27",
+   "balance": 0
+  },
+  {
+   "date": "2026-12-28",
+   "balance": 0
+  },
+  {
+   "date": "2026-12-29",
+   "balance": 0
+  },
+  {
+   "date": "2026-12-30",
+   "balance": 0
+  },
+  {
+   "date": "2026-12-31",
+   "balance": 0
+  },
+  {
+   "date": "2027-01-01",
+   "balance": 0
+  },
+  {
+   "date": "2027-01-02",
+   "balance": 0
+  },
+  {
+   "date": "2027-01-03",
+   "balance": 0
+  },
+  {
+   "date": "2027-01-04",
+   "balance": 0
+  },
+  {
+   "date": "2027-01-05",
+   "balance": 0
+  },
+  {
+   "date": "2027-01-06",
+   "balance": 0
+  },
+  {
+   "date": "2027-01-07",
+   "balance": 0
+  },
+  {
+   "date": "2027-01-08",
+   "balance": 0
+  },
+  {
+   "date": "2027-01-09",
+   "balance": 0
+  },
+  {
+   "date": "2027-01-10",
+   "balance": 0
+  },
+  {
+   "date": "2027-01-11",
+   "balance": 0
+  },
+  {
+   "date": "2027-01-12",
+   "balance": 0
+  },
+  {
+   "date": "2027-01-13",
+   "balance": 0
+  },
+  {
+   "date": "2027-01-14",
+   "balance": 0
+  },
+  {
+   "date": "2027-01-15",
+   "balance": 0
+  },
+  {
+   "date": "2027-01-16",
+   "balance": 0
+  },
+  {
+   "date": "2027-01-17",
+   "balance": 0
+  },
+  {
+   "date": "2027-01-18",
+   "balance": 0
+  },
+  {
+   "date": "2027-01-19",
+   "balance": 0
+  },
+  {
+   "date": "2027-01-20",
+   "balance": 0
+  },
+  {
+   "date": "2027-01-21",
+   "balance": 0
+  },
+  {
+   "date": "2027-01-22",
+   "balance": 0
+  },
+  {
+   "date": "2027-01-23",
+   "balance": 0
+  },
+  {
+   "date": "2027-01-24",
+   "balance": 0
+  },
+  {
+   "date": "2027-01-25",
+   "balance": 0
+  },
+  {
+   "date": "2027-01-26",
+   "balance": 0
+  },
+  {
+   "date": "2027-01-27",
+   "balance": 0
+  },
+  {
+   "date": "2027-01-28",
+   "balance": 0
+  },
+  {
+   "date": "2027-01-29",
+   "balance": 0
+  },
+  {
+   "date": "2027-01-30",
+   "balance": 0
+  },
+  {
+   "date": "2027-01-31",
+   "balance": 0
+  },
+  {
+   "date": "2027-02-01",
+   "balance": 0
+  },
+  {
+   "date": "2027-02-02",
+   "balance": 0
+  },
+  {
+   "date": "2027-02-03",
+   "balance": 0
+  },
+  {
+   "date": "2027-02-04",
+   "balance": 0
+  },
+  {
+   "date": "2027-02-05",
+   "balance": 0
+  },
+  {
+   "date": "2027-02-06",
+   "balance": 0
+  },
+  {
+   "date": "2027-02-07",
+   "balance": 0
+  },
+  {
+   "date": "2027-02-08",
+   "balance": 0
+  },
+  {
+   "date": "2027-02-09",
+   "balance": 0
+  },
+  {
+   "date": "2027-02-10",
+   "balance": 0
+  },
+  {
+   "date": "2027-02-11",
+   "balance": 0
+  },
+  {
+   "date": "2027-02-12",
+   "balance": 0
+  },
+  {
+   "date": "2027-02-13",
+   "balance": 0
+  }
+ ],
+ "worth": [],
+ "next": {},
+ "categories": [
+  {
+   "name": "Income",
+   "icon": "savings",
+   "income": true
+  },
+  {
+   "name": "Paycheck",
+   "parent": "Income",
+   "income": true
+  },
+  {
+   "name": "Interest",
+   "parent": "Income",
+   "income": true
+  },
+  {
+   "name": "Refunds",
+   "parent": "Income",
+   "income": true
+  },
+  {
+   "name": "Home",
+   "icon": "home"
+  },
+  {
+   "name": "Mortgage or rent",
+   "parent": "Home"
+  },
+  {
+   "name": "Repairs",
+   "parent": "Home"
+  },
+  {
+   "name": "Utilities",
+   "icon": "utilities"
+  },
+  {
+   "name": "Electric",
+   "parent": "Utilities",
+   "icon": "utilities"
+  },
+  {
+   "name": "Water",
+   "parent": "Utilities",
+   "icon": "water"
+  },
+  {
+   "name": "Internet",
+   "parent": "Utilities",
+   "icon": "internet"
+  },
+  {
+   "name": "Phone",
+   "parent": "Utilities",
+   "icon": "phone"
+  },
+  {
+   "name": "Food",
+   "icon": "food"
+  },
+  {
+   "name": "Groceries",
+   "parent": "Food",
+   "icon": "spending"
+  },
+  {
+   "name": "Eating out",
+   "parent": "Food",
+   "icon": "food"
+  },
+  {
+   "name": "Car",
+   "icon": "car"
+  },
+  {
+   "name": "Gas",
+   "parent": "Car",
+   "icon": "heat"
+  },
+  {
+   "name": "Car insurance",
+   "parent": "Car",
+   "icon": "insurance"
+  },
+  {
+   "name": "Subscriptions",
+   "icon": "subscriptions"
+  },
+  {
+   "name": "Streaming and music",
+   "parent": "Subscriptions",
+   "icon": "streaming"
+  },
+  {
+   "name": "Software and apps",
+   "parent": "Subscriptions",
+   "icon": "software"
+  },
+  {
+   "name": "Cloud and homelab",
+   "parent": "Subscriptions",
+   "icon": "cloud"
+  },
+  {
+   "name": "Health",
+   "icon": "health"
+  },
+  {
+   "name": "Fitness",
+   "parent": "Health",
+   "icon": "fitness"
+  },
+  {
+   "name": "Shopping",
+   "icon": "spending"
+  },
+  {
+   "name": "Kids and school",
+   "icon": "school"
+  },
+  {
+   "name": "Gifts and giving"
+  },
+  {
+   "name": "Travel"
+  },
+  {
+   "name": "Fees and interest"
+  },
+  {
+   "name": "Other",
+   "icon": "other"
+  }
+ ],
+ "holidays": {
+  "2026-11-26": "Thanksgiving",
+  "2026-12-25": "Christmas",
+  "2027-01-01": "New Year's Day",
+  "2027-01-18": "Martin Luther King Jr. Day",
+  "2027-02-15": "Presidents' Day",
+  "2027-05-31": "Memorial Day",
+  "2027-07-05": "Independence Day",
+  "2027-09-06": "Labor Day",
+  "2027-10-11": "Columbus Day",
+  "2027-11-11": "Veterans Day"
+ }
+}

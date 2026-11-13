@@ -1,0 +1,56 @@
+{
+ "transactions": [
+  {
+   "id": "t1",
+   "date": "2026-11-06",
+   "account": "checking",
+   "amount": 1850,
+   "payee": "Example Employer",
+   "category": "Paycheck"
+  },
+  {
+   "id": "t2",
+   "date": "2026-11-07",
+   "account": "checking",
+   "amount": -86.12,
+   "payee": "Corner Grocer",
+   "category": "Groceries"
+  },
+  {
+   "id": "t3",
+   "date": "2026-11-08",
+   "account": "visa",
+   "amount": -42.5,
+   "payee": "Noodle Place",
+   "category": "Eating out"
+  },
+  {
+   "id": "t4",
+   "date": "2026-11-09",
+   "account": "checking",
+   "amount": -23,
+   "payee": "Mini Golf",
+   "category": "Fun"
+  },
+  {
+   "id": "t5",
+   "date": "2026-11-11",
+   "account": "checking",
+   "amount": -61.4,
+   "payee": "Corner Grocer",
+   "category": "Groceries",
+   "note": "made-up"
+  },
+  {
+   "id": "t6",
+   "date": "2026-11-12",
+   "account": "checking",
+   "amount": -12,
+   "payee": "Coffee Cart",
+   "category": "Eating out",
+   "tags": [
+    "work"
+   ]
+  }
+ ]
+}

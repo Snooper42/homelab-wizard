@@ -30,6 +30,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       desktop: ${{ steps.diff.outputs.desktop }}
+      phonefinance: ${{ steps.diff.outputs.phonefinance }}
     steps:
       # A pull request's checkout is its merge into main: its first parent
       # is main, so the two commits are enough to say what it changes, with
@@ -49,6 +50,15 @@ jobs:
           fi
           echo "desktop=$desktop" >> "$GITHUB_OUTPUT"
           echo "The desktop's long checks run: $desktop"
+          # Finances' projection built for the phone (mobile/finance): on
+          # main, and on a pull request that changes it, the model under it,
+          # or how it's built.
+          phonefinance=true
+          if [ "$GITHUB_EVENT_NAME" = pull_request ] && [ -n "$files" ]; then
+            printf '%s\n' "$files" | grep -qE '^(mobile/|internal/finance/|cmd/financewasm/|Makefile$|go\.(mod|sum)$|\.github/workflows/ci\.yml$)' || phonefinance=false
+          fi
+          echo "phonefinance=$phonefinance" >> "$GITHUB_OUTPUT"
+          echo "Finances on the phone is built: $phonefinance"
 
   check:
     runs-on: ubuntu-latest
@@ -152,6 +162,50 @@ jobs:
       - name: The "needs a look" count sent over D-Bus and heard as Ubuntu's dock and Plasma's taskbar hear it, for real
         working-directory: app
         run: go test -tags forreal -run BadgeArrivesForReal -count=1 -v .
+
+  # Finances' projection for a phone that keeps a member's Finances sealed
+  # (.claude/prompts/private-finances.md 3.2): the same Go the computer
+  # runs, built as the web page's WebAssembly and as the iPhone app's
+  # framework, each with its size on the run's summary. The page's build
+  # must give the golden plans' saved views (internal/finance/testdata)
+  # and stay under 4 MB compressed; over that is the owner's call.
+  phone-finance:
+    needs: changes
+    if: needs.changes.outputs.phonefinance == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+      - name: finance.wasm built, measured, and checked against the golden views under Node
+        run: make phone-finance-wasm
+
+  phone-finance-framework:
+    needs: changes
+    if: needs.changes.outputs.phonefinance == 'true'
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+      - name: Pick the newest Xcode
+        run: |
+          XCODE="$(ls -d /Applications/Xcode_*.app | grep -viE 'beta|release_candidate|_rc' | sort -V | tail -1)"
+          echo "Using $XCODE"
+          sudo xcode-select -s "$XCODE/Contents/Developer"
+          xcodebuild -version
+      # gomobile and gobind at the version the Makefile binds with.
+      - name: gomobile and gobind
+        run: |
+          v="$(sed -n 's/^MOBILE_VERSION := //p' Makefile)"
+          go install "golang.org/x/mobile/cmd/gomobile@$v" "golang.org/x/mobile/cmd/gobind@$v"
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+      - name: HomelabFinance.xcframework bound and measured
+        run: make phone-finance-framework
 
   # The Go tests on macOS and Windows as well (Ubuntu runs them in check
   # and app): each system's own files (*_darwin.go, *_windows.go) are

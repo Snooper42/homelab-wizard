@@ -1,0 +1,2225 @@
+{
+ "plan": {
+  "people": [
+   {
+    "id": "jo",
+    "name": "Jo",
+    "schedule": {
+     "every": "month",
+     "start": "2026-11-30"
+    },
+    "net": 2100,
+    "gross": 2900,
+    "deductions": [
+     {
+      "name": "Retirement",
+      "amount": 290,
+      "account": "k401"
+     }
+    ]
+   }
+  ],
+  "accounts": [
+   {
+    "id": "checking",
+    "name": "Example Checking",
+    "kind": "checking",
+    "balance": 980,
+    "updated": "2026-11-12",
+    "history": [
+     {
+      "date": "2026-11-12",
+      "amount": 980
+     }
+    ]
+   },
+   {
+    "id": "k401",
+    "name": "Example 401(k)",
+    "kind": "retirement",
+    "balance": 15400,
+    "updated": "2026-11-01",
+    "history": [
+     {
+      "date": "2026-11-01",
+      "amount": 15400
+     }
+    ]
+   },
+   {
+    "id": "car-loan",
+    "name": "Example Car Loan",
+    "kind": "loan",
+    "balance": 8200,
+    "rate": 6.5,
+    "updated": "2026-11-01",
+    "history": [
+     {
+      "date": "2026-11-01",
+      "amount": 8200
+     }
+    ]
+   },
+   {
+    "id": "binder",
+    "name": "Card binder",
+    "kind": "collectible",
+    "balance": 460.6,
+    "updated": "2026-11-12",
+    "history": [
+     {
+      "date": "2026-11-12",
+      "amount": 460.6
+     }
+    ]
+   }
+  ],
+  "payments": [
+   {
+    "id": "car",
+    "name": "Car payment",
+    "amount": 310,
+    "schedule": {
+     "every": "month",
+     "start": "2026-11-20"
+    },
+    "kind": "car",
+    "to": "car-loan"
+   },
+   {
+    "id": "phone",
+    "name": "Phone",
+    "amount": 40,
+    "schedule": {
+     "every": "month",
+     "start": "2026-11-28"
+    },
+    "kind": "utilities"
+   },
+   {
+    "id": "gym",
+    "name": "Gym",
+    "amount": 120,
+    "schedule": {
+     "every": "3 months",
+     "start": "2026-12-15"
+    },
+    "kind": "subscriptions",
+    "type": "fitness"
+   },
+   {
+    "id": "rent-share",
+    "name": "Rent share",
+    "amount": 400,
+    "schedule": {
+     "every": "month",
+     "start": "2026-12-01"
+    },
+    "payer": "Roommate"
+   }
+  ],
+  "cushion": 100,
+  "currency": "USD",
+  "collection": [
+   {
+    "id": "ember-fox",
+    "account": "binder",
+    "name": "Ember Fox",
+    "set": "Set A",
+    "number": "4/102",
+    "paid": 45,
+    "price": 182.4,
+    "priceOn": "2026-11-12"
+   },
+   {
+    "id": "tide-turtle",
+    "account": "binder",
+    "name": "Tide Turtle",
+    "count": 2,
+    "paid": 30,
+    "price": 64.1,
+    "priceOn": "2026-11-12"
+   },
+   {
+    "id": "moon-moth",
+    "account": "binder",
+    "name": "Moon Moth",
+    "grade": "Graded 9",
+    "price": 150,
+    "priceOn": "2026-10-01",
+    "typed": true
+   }
+  ],
+  "withdraw": 4,
+  "growth": 5,
+  "hideAmounts": true,
+  "rev": "c59cf2ac5cc2c07b"
+ },
+ "today": "2026-11-13",
+ "checking": "checking",
+ "typed": "2026-11-12",
+ "start": {
+  "binder": 460.6,
+  "car-loan": 8216.08,
+  "checking": 980,
+  "k401": 15400
+ },
+ "since": [],
+ "periods": [
+  {
+   "now": true,
+   "start": "2026-11-13",
+   "last": "2026-11-29",
+   "carried": 980,
+   "in": 0,
+   "out": 350,
+   "saved": 0,
+   "left": 630,
+   "rows": [
+    {
+     "date": "2026-11-20",
+     "payment": "car",
+     "amount": 310,
+     "after": 670
+    },
+    {
+     "date": "2026-11-28",
+     "payment": "phone",
+     "amount": 40,
+     "after": 630
+    }
+   ],
+   "accounts": {
+    "binder": 460.6,
+    "car-loan": 7930.43,
+    "checking": 630,
+    "k401": 15400
+   }
+  },
+  {
+   "now": false,
+   "start": "2026-11-30",
+   "last": "2026-12-29",
+   "pay": {
+    "date": "2026-11-30",
+    "people": [
+     "jo"
+    ],
+    "amount": 2100,
+    "total": 2100
+   },
+   "carried": 630,
+   "in": 2500,
+   "out": 470,
+   "saved": 0,
+   "left": 2660,
+   "rows": [
+    {
+     "date": "2026-12-01",
+     "payment": "rent-share",
+     "amount": 400,
+     "after": 3130,
+     "into": true
+    },
+    {
+     "date": "2026-12-15",
+     "payment": "gym",
+     "amount": 120,
+     "after": 3010
+    },
+    {
+     "date": "2026-12-20",
+     "payment": "car",
+     "amount": 310,
+     "after": 2700
+    },
+    {
+     "date": "2026-12-28",
+     "payment": "phone",
+     "amount": 40,
+     "after": 2660
+    }
+   ],
+   "accounts": {
+    "binder": 460.6,
+    "car-loan": 7662.36,
+    "checking": 2660,
+    "k401": 15690
+   }
+  },
+  {
+   "now": false,
+   "start": "2026-12-30",
+   "last": "2027-01-28",
+   "pay": {
+    "date": "2026-12-30",
+    "people": [
+     "jo"
+    ],
+    "amount": 2100,
+    "total": 2100
+   },
+   "carried": 2660,
+   "in": 2500,
+   "out": 350,
+   "saved": 0,
+   "left": 4810,
+   "rows": [
+    {
+     "date": "2027-01-01",
+     "payment": "rent-share",
+     "amount": 400,
+     "after": 5160,
+     "into": true
+    },
+    {
+     "date": "2027-01-20",
+     "payment": "car",
+     "amount": 310,
+     "after": 4850
+    },
+    {
+     "date": "2027-01-28",
+     "payment": "phone",
+     "amount": 40,
+     "after": 4810
+    }
+   ],
+   "accounts": {
+    "binder": 460.6,
+    "car-loan": 7392.9,
+    "checking": 4810,
+    "k401": 15980
+   }
+  },
+  {
+   "now": false,
+   "start": "2027-01-29",
+   "last": "2027-02-25",
+   "pay": {
+    "date": "2027-01-29",
+    "people": [
+     "jo"
+    ],
+    "amount": 2100,
+    "total": 2100,
+    "moved": [
+     {
+      "person": "jo",
+      "from": "2027-01-30",
+      "why": "the weekend"
+     }
+    ]
+   },
+   "carried": 4810,
+   "in": 2500,
+   "out": 310,
+   "saved": 0,
+   "left": 7000,
+   "rows": [
+    {
+     "date": "2027-02-01",
+     "payment": "rent-share",
+     "amount": 400,
+     "after": 7310,
+     "into": true
+    },
+    {
+     "date": "2027-02-20",
+     "payment": "car",
+     "amount": 310,
+     "after": 7000
+    }
+   ],
+   "accounts": {
+    "binder": 460.6,
+    "car-loan": 7119.52,
+    "checking": 7000,
+    "k401": 16270
+   }
+  },
+  {
+   "now": false,
+   "start": "2027-02-26",
+   "last": "2027-03-29",
+   "pay": {
+    "date": "2027-02-26",
+    "people": [
+     "jo"
+    ],
+    "amount": 2100,
+    "total": 2100,
+    "moved": [
+     {
+      "person": "jo",
+      "from": "2027-02-28",
+      "why": "the weekend"
+     }
+    ]
+   },
+   "carried": 7000,
+   "in": 2500,
+   "out": 510,
+   "saved": 0,
+   "left": 8990,
+   "rows": [
+    {
+     "date": "2027-02-28",
+     "payment": "phone",
+     "amount": 40,
+     "after": 9060
+    },
+    {
+     "date": "2027-03-01",
+     "payment": "rent-share",
+     "amount": 400,
+     "after": 9460,
+     "into": true
+    },
+    {
+     "date": "2027-03-15",
+     "payment": "gym",
+     "amount": 120,
+     "after": 9340
+    },
+    {
+     "date": "2027-03-20",
+     "payment": "car",
+     "amount": 310,
+     "after": 9030
+    },
+    {
+     "date": "2027-03-28",
+     "payment": "phone",
+     "amount": 40,
+     "after": 8990
+    }
+   ],
+   "accounts": {
+    "binder": 460.6,
+    "car-loan": 6849.66,
+    "checking": 8990,
+    "k401": 16560
+   }
+  },
+  {
+   "now": false,
+   "start": "2027-03-30",
+   "last": "2027-04-29",
+   "pay": {
+    "date": "2027-03-30",
+    "people": [
+     "jo"
+    ],
+    "amount": 2100,
+    "total": 2100
+   },
+   "carried": 8990,
+   "in": 2500,
+   "out": 350,
+   "saved": 0,
+   "left": 11140,
+   "rows": [
+    {
+     "date": "2027-04-01",
+     "payment": "rent-share",
+     "amount": 400,
+     "after": 11490,
+     "into": true
+    },
+    {
+     "date": "2027-04-20",
+     "payment": "car",
+     "amount": 310,
+     "after": 11180
+    },
+    {
+     "date": "2027-04-28",
+     "payment": "phone",
+     "amount": 40,
+     "after": 11140
+    }
+   ],
+   "accounts": {
+    "binder": 460.6,
+    "car-loan": 6577.02,
+    "checking": 11140,
+    "k401": 16850
+   }
+  },
+  {
+   "now": false,
+   "start": "2027-04-30",
+   "last": "2027-05-27",
+   "pay": {
+    "date": "2027-04-30",
+    "people": [
+     "jo"
+    ],
+    "amount": 2100,
+    "total": 2100
+   },
+   "carried": 11140,
+   "in": 2500,
+   "out": 310,
+   "saved": 0,
+   "left": 13330,
+   "rows": [
+    {
+     "date": "2027-05-01",
+     "payment": "rent-share",
+     "amount": 400,
+     "after": 13640,
+     "into": true
+    },
+    {
+     "date": "2027-05-20",
+     "payment": "car",
+     "amount": 310,
+     "after": 13330
+    }
+   ],
+   "accounts": {
+    "binder": 460.6,
+    "car-loan": 6299.45,
+    "checking": 13330,
+    "k401": 17140
+   }
+  },
+  {
+   "now": false,
+   "start": "2027-05-28",
+   "last": "2027-06-29",
+   "pay": {
+    "date": "2027-05-28",
+    "people": [
+     "jo"
+    ],
+    "amount": 2100,
+    "total": 2100,
+    "moved": [
+     {
+      "person": "jo",
+      "from": "2027-05-30",
+      "why": "the weekend"
+     }
+    ]
+   },
+   "carried": 13330,
+   "in": 2500,
+   "out": 510,
+   "saved": 0,
+   "left": 15320,
+   "rows": [
+    {
+     "date": "2027-05-28",
+     "payment": "phone",
+     "amount": 40,
+     "after": 15390
+    },
+    {
+     "date": "2027-06-01",
+     "payment": "rent-share",
+     "amount": 400,
+     "after": 15790,
+     "into": true
+    },
+    {
+     "date": "2027-06-15",
+     "payment": "gym",
+     "amount": 120,
+     "after": 15670
+    },
+    {
+     "date": "2027-06-20",
+     "payment": "car",
+     "amount": 310,
+     "after": 15360
+    },
+    {
+     "date": "2027-06-28",
+     "payment": "phone",
+     "amount": 40,
+     "after": 15320
+    }
+   ],
+   "accounts": {
+    "binder": 460.6,
+    "car-loan": 6026.02,
+    "checking": 15320,
+    "k401": 17430
+   }
+  },
+  {
+   "now": false,
+   "start": "2027-06-30",
+   "last": "2027-07-29",
+   "pay": {
+    "date": "2027-06-30",
+    "people": [
+     "jo"
+    ],
+    "amount": 2100,
+    "total": 2100
+   },
+   "carried": 15320,
+   "in": 2500,
+   "out": 350,
+   "saved": 0,
+   "left": 17470,
+   "rows": [
+    {
+     "date": "2027-07-01",
+     "payment": "rent-share",
+     "amount": 400,
+     "after": 17820,
+     "into": true
+    },
+    {
+     "date": "2027-07-20",
+     "payment": "car",
+     "amount": 310,
+     "after": 17510
+    },
+    {
+     "date": "2027-07-28",
+     "payment": "phone",
+     "amount": 40,
+     "after": 17470
+    }
+   ],
+   "accounts": {
+    "binder": 460.6,
+    "car-loan": 5747.75,
+    "checking": 17470,
+    "k401": 17720
+   }
+  },
+  {
+   "now": false,
+   "start": "2027-07-30",
+   "last": "2027-08-29",
+   "pay": {
+    "date": "2027-07-30",
+    "people": [
+     "jo"
+    ],
+    "amount": 2100,
+    "total": 2100
+   },
+   "carried": 17470,
+   "in": 2500,
+   "out": 350,
+   "saved": 0,
+   "left": 19620,
+   "rows": [
+    {
+     "date": "2027-08-01",
+     "payment": "rent-share",
+     "amount": 400,
+     "after": 19970,
+     "into": true
+    },
+    {
+     "date": "2027-08-20",
+     "payment": "car",
+     "amount": 310,
+     "after": 19660
+    },
+    {
+     "date": "2027-08-28",
+     "payment": "phone",
+     "amount": 40,
+     "after": 19620
+    }
+   ],
+   "accounts": {
+    "binder": 460.6,
+    "car-loan": 5469.01,
+    "checking": 19620,
+    "k401": 18010
+   }
+  },
+  {
+   "now": false,
+   "start": "2027-08-30",
+   "last": "2027-09-29",
+   "pay": {
+    "date": "2027-08-30",
+    "people": [
+     "jo"
+    ],
+    "amount": 2100,
+    "total": 2100
+   },
+   "carried": 19620,
+   "in": 2500,
+   "out": 470,
+   "saved": 0,
+   "left": 21650,
+   "rows": [
+    {
+     "date": "2027-09-01",
+     "payment": "rent-share",
+     "amount": 400,
+     "after": 22120,
+     "into": true
+    },
+    {
+     "date": "2027-09-15",
+     "payment": "gym",
+     "amount": 120,
+     "after": 22000
+    },
+    {
+     "date": "2027-09-20",
+     "payment": "car",
+     "amount": 310,
+     "after": 21690
+    },
+    {
+     "date": "2027-09-28",
+     "payment": "phone",
+     "amount": 40,
+     "after": 21650
+    }
+   ],
+   "accounts": {
+    "binder": 460.6,
+    "car-loan": 5188.73,
+    "checking": 21650,
+    "k401": 18300
+   }
+  },
+  {
+   "now": false,
+   "start": "2027-09-30",
+   "last": "2027-10-28",
+   "pay": {
+    "date": "2027-09-30",
+    "people": [
+     "jo"
+    ],
+    "amount": 2100,
+    "total": 2100
+   },
+   "carried": 21650,
+   "in": 2500,
+   "out": 350,
+   "saved": 0,
+   "left": 23800,
+   "rows": [
+    {
+     "date": "2027-10-01",
+     "payment": "rent-share",
+     "amount": 400,
+     "after": 24150,
+     "into": true
+    },
+    {
+     "date": "2027-10-20",
+     "payment": "car",
+     "amount": 310,
+     "after": 23840
+    },
+    {
+     "date": "2027-10-28",
+     "payment": "phone",
+     "amount": 40,
+     "after": 23800
+    }
+   ],
+   "accounts": {
+    "binder": 460.6,
+    "car-loan": 4905.1,
+    "checking": 23800,
+    "k401": 18590
+   }
+  },
+  {
+   "now": false,
+   "start": "2027-10-29",
+   "last": "2027-11-29",
+   "pay": {
+    "date": "2027-10-29",
+    "people": [
+     "jo"
+    ],
+    "amount": 2100,
+    "total": 2100,
+    "moved": [
+     {
+      "person": "jo",
+      "from": "2027-10-30",
+      "why": "the weekend"
+     }
+    ]
+   },
+   "carried": 23800,
+   "in": 2500,
+   "out": 350,
+   "saved": 0,
+   "left": 25950,
+   "rows": [
+    {
+     "date": "2027-11-01",
+     "payment": "rent-share",
+     "amount": 400,
+     "after": 26300,
+     "into": true
+    },
+    {
+     "date": "2027-11-20",
+     "payment": "car",
+     "amount": 310,
+     "after": 25990
+    },
+    {
+     "date": "2027-11-28",
+     "payment": "phone",
+     "amount": 40,
+     "after": 25950
+    }
+   ],
+   "accounts": {
+    "binder": 460.6,
+    "car-loan": 4622.57,
+    "checking": 25950,
+    "k401": 18880
+   }
+  }
+ ],
+ "paydays": [
+  {
+   "date": "2026-11-30",
+   "people": [
+    "jo"
+   ],
+   "amount": 2100,
+   "total": 2100
+  },
+  {
+   "date": "2026-12-30",
+   "people": [
+    "jo"
+   ],
+   "amount": 2100,
+   "total": 2100
+  },
+  {
+   "date": "2027-01-29",
+   "people": [
+    "jo"
+   ],
+   "amount": 2100,
+   "total": 2100,
+   "moved": [
+    {
+     "person": "jo",
+     "from": "2027-01-30",
+     "why": "the weekend"
+    }
+   ]
+  },
+  {
+   "date": "2027-02-26",
+   "people": [
+    "jo"
+   ],
+   "amount": 2100,
+   "total": 2100,
+   "moved": [
+    {
+     "person": "jo",
+     "from": "2027-02-28",
+     "why": "the weekend"
+    }
+   ]
+  },
+  {
+   "date": "2027-03-30",
+   "people": [
+    "jo"
+   ],
+   "amount": 2100,
+   "total": 2100
+  },
+  {
+   "date": "2027-04-30",
+   "people": [
+    "jo"
+   ],
+   "amount": 2100,
+   "total": 2100
+  },
+  {
+   "date": "2027-05-28",
+   "people": [
+    "jo"
+   ],
+   "amount": 2100,
+   "total": 2100,
+   "moved": [
+    {
+     "person": "jo",
+     "from": "2027-05-30",
+     "why": "the weekend"
+    }
+   ]
+  },
+  {
+   "date": "2027-06-30",
+   "people": [
+    "jo"
+   ],
+   "amount": 2100,
+   "total": 2100
+  },
+  {
+   "date": "2027-07-30",
+   "people": [
+    "jo"
+   ],
+   "amount": 2100,
+   "total": 2100
+  },
+  {
+   "date": "2027-08-30",
+   "people": [
+    "jo"
+   ],
+   "amount": 2100,
+   "total": 2100
+  },
+  {
+   "date": "2027-09-30",
+   "people": [
+    "jo"
+   ],
+   "amount": 2100,
+   "total": 2100
+  },
+  {
+   "date": "2027-10-29",
+   "people": [
+    "jo"
+   ],
+   "amount": 2100,
+   "total": 2100,
+   "moved": [
+    {
+     "person": "jo",
+     "from": "2027-10-30",
+     "why": "the weekend"
+    }
+   ]
+  }
+ ],
+ "before": [
+  {
+   "date": "2026-10-30",
+   "people": [
+    "jo"
+   ],
+   "amount": 2100,
+   "total": 2100
+  },
+  {
+   "date": "2026-09-30",
+   "people": [
+    "jo"
+   ],
+   "amount": 2100,
+   "total": 2100
+  },
+  {
+   "date": "2026-08-28",
+   "people": [
+    "jo"
+   ],
+   "amount": 2100,
+   "total": 2100,
+   "moved": [
+    {
+     "person": "jo",
+     "from": "2026-08-30",
+     "why": "the weekend"
+    }
+   ]
+  },
+  {
+   "date": "2026-07-30",
+   "people": [
+    "jo"
+   ],
+   "amount": 2100,
+   "total": 2100
+  },
+  {
+   "date": "2026-06-30",
+   "people": [
+    "jo"
+   ],
+   "amount": 2100,
+   "total": 2100
+  },
+  {
+   "date": "2026-05-29",
+   "people": [
+    "jo"
+   ],
+   "amount": 2100,
+   "total": 2100,
+   "moved": [
+    {
+     "person": "jo",
+     "from": "2026-05-30",
+     "why": "the weekend"
+    }
+   ]
+  },
+  {
+   "date": "2026-04-30",
+   "people": [
+    "jo"
+   ],
+   "amount": 2100,
+   "total": 2100
+  },
+  {
+   "date": "2026-03-30",
+   "people": [
+    "jo"
+   ],
+   "amount": 2100,
+   "total": 2100
+  },
+  {
+   "date": "2026-02-27",
+   "people": [
+    "jo"
+   ],
+   "amount": 2100,
+   "total": 2100,
+   "moved": [
+    {
+     "person": "jo",
+     "from": "2026-02-28",
+     "why": "the weekend"
+    }
+   ]
+  },
+  {
+   "date": "2026-01-30",
+   "people": [
+    "jo"
+   ],
+   "amount": 2100,
+   "total": 2100
+  },
+  {
+   "date": "2025-12-30",
+   "people": [
+    "jo"
+   ],
+   "amount": 2100,
+   "total": 2100
+  },
+  {
+   "date": "2025-11-28",
+   "people": [
+    "jo"
+   ],
+   "amount": 2100,
+   "total": 2100,
+   "moved": [
+    {
+     "person": "jo",
+     "from": "2025-11-30",
+     "why": "the weekend"
+    }
+   ]
+  }
+ ],
+ "days": [
+  {
+   "date": "2026-11-13",
+   "balance": 980
+  },
+  {
+   "date": "2026-11-14",
+   "balance": 980
+  },
+  {
+   "date": "2026-11-15",
+   "balance": 980
+  },
+  {
+   "date": "2026-11-16",
+   "balance": 980
+  },
+  {
+   "date": "2026-11-17",
+   "balance": 980
+  },
+  {
+   "date": "2026-11-18",
+   "balance": 980
+  },
+  {
+   "date": "2026-11-19",
+   "balance": 980
+  },
+  {
+   "date": "2026-11-20",
+   "balance": 670,
+   "events": [
+    {
+     "payment": "car",
+     "amount": -310
+    }
+   ]
+  },
+  {
+   "date": "2026-11-21",
+   "balance": 670
+  },
+  {
+   "date": "2026-11-22",
+   "balance": 670
+  },
+  {
+   "date": "2026-11-23",
+   "balance": 670
+  },
+  {
+   "date": "2026-11-24",
+   "balance": 670
+  },
+  {
+   "date": "2026-11-25",
+   "balance": 670
+  },
+  {
+   "date": "2026-11-26",
+   "balance": 670
+  },
+  {
+   "date": "2026-11-27",
+   "balance": 670
+  },
+  {
+   "date": "2026-11-28",
+   "balance": 630,
+   "events": [
+    {
+     "payment": "phone",
+     "amount": -40
+    }
+   ]
+  },
+  {
+   "date": "2026-11-29",
+   "balance": 630
+  },
+  {
+   "date": "2026-11-30",
+   "balance": 2730,
+   "events": [
+    {
+     "people": [
+      "jo"
+     ],
+     "amount": 2100
+    }
+   ]
+  },
+  {
+   "date": "2026-12-01",
+   "balance": 3130,
+   "events": [
+    {
+     "payment": "rent-share",
+     "amount": 400
+    }
+   ]
+  },
+  {
+   "date": "2026-12-02",
+   "balance": 3130
+  },
+  {
+   "date": "2026-12-03",
+   "balance": 3130
+  },
+  {
+   "date": "2026-12-04",
+   "balance": 3130
+  },
+  {
+   "date": "2026-12-05",
+   "balance": 3130
+  },
+  {
+   "date": "2026-12-06",
+   "balance": 3130
+  },
+  {
+   "date": "2026-12-07",
+   "balance": 3130
+  },
+  {
+   "date": "2026-12-08",
+   "balance": 3130
+  },
+  {
+   "date": "2026-12-09",
+   "balance": 3130
+  },
+  {
+   "date": "2026-12-10",
+   "balance": 3130
+  },
+  {
+   "date": "2026-12-11",
+   "balance": 3130
+  },
+  {
+   "date": "2026-12-12",
+   "balance": 3130
+  },
+  {
+   "date": "2026-12-13",
+   "balance": 3130
+  },
+  {
+   "date": "2026-12-14",
+   "balance": 3130
+  },
+  {
+   "date": "2026-12-15",
+   "balance": 3010,
+   "events": [
+    {
+     "payment": "gym",
+     "amount": -120
+    }
+   ]
+  },
+  {
+   "date": "2026-12-16",
+   "balance": 3010
+  },
+  {
+   "date": "2026-12-17",
+   "balance": 3010
+  },
+  {
+   "date": "2026-12-18",
+   "balance": 3010
+  },
+  {
+   "date": "2026-12-19",
+   "balance": 3010
+  },
+  {
+   "date": "2026-12-20",
+   "balance": 2700,
+   "events": [
+    {
+     "payment": "car",
+     "amount": -310
+    }
+   ]
+  },
+  {
+   "date": "2026-12-21",
+   "balance": 2700
+  },
+  {
+   "date": "2026-12-22",
+   "balance": 2700
+  },
+  {
+   "date": "2026-12-23",
+   "balance": 2700
+  },
+  {
+   "date": "2026-12-24",
+   "balance": 2700
+  },
+  {
+   "date": "2026-12-25",
+   "balance": 2700
+  },
+  {
+   "date": "2026-12-26",
+   "balance": 2700
+  },
+  {
+   "date": "2026-12-27",
+   "balance": 2700
+  },
+  {
+   "date": "2026-12-28",
+   "balance": 2660,
+   "events": [
+    {
+     "payment": "phone",
+     "amount": -40
+    }
+   ]
+  },
+  {
+   "date": "2026-12-29",
+   "balance": 2660
+  },
+  {
+   "date": "2026-12-30",
+   "balance": 4760,
+   "events": [
+    {
+     "people": [
+      "jo"
+     ],
+     "amount": 2100
+    }
+   ]
+  },
+  {
+   "date": "2026-12-31",
+   "balance": 4760
+  },
+  {
+   "date": "2027-01-01",
+   "balance": 5160,
+   "events": [
+    {
+     "payment": "rent-share",
+     "amount": 400
+    }
+   ]
+  },
+  {
+   "date": "2027-01-02",
+   "balance": 5160
+  },
+  {
+   "date": "2027-01-03",
+   "balance": 5160
+  },
+  {
+   "date": "2027-01-04",
+   "balance": 5160
+  },
+  {
+   "date": "2027-01-05",
+   "balance": 5160
+  },
+  {
+   "date": "2027-01-06",
+   "balance": 5160
+  },
+  {
+   "date": "2027-01-07",
+   "balance": 5160
+  },
+  {
+   "date": "2027-01-08",
+   "balance": 5160
+  },
+  {
+   "date": "2027-01-09",
+   "balance": 5160
+  },
+  {
+   "date": "2027-01-10",
+   "balance": 5160
+  },
+  {
+   "date": "2027-01-11",
+   "balance": 5160
+  },
+  {
+   "date": "2027-01-12",
+   "balance": 5160
+  },
+  {
+   "date": "2027-01-13",
+   "balance": 5160
+  },
+  {
+   "date": "2027-01-14",
+   "balance": 5160
+  },
+  {
+   "date": "2027-01-15",
+   "balance": 5160
+  },
+  {
+   "date": "2027-01-16",
+   "balance": 5160
+  },
+  {
+   "date": "2027-01-17",
+   "balance": 5160
+  },
+  {
+   "date": "2027-01-18",
+   "balance": 5160
+  },
+  {
+   "date": "2027-01-19",
+   "balance": 5160
+  },
+  {
+   "date": "2027-01-20",
+   "balance": 4850,
+   "events": [
+    {
+     "payment": "car",
+     "amount": -310
+    }
+   ]
+  },
+  {
+   "date": "2027-01-21",
+   "balance": 4850
+  },
+  {
+   "date": "2027-01-22",
+   "balance": 4850
+  },
+  {
+   "date": "2027-01-23",
+   "balance": 4850
+  },
+  {
+   "date": "2027-01-24",
+   "balance": 4850
+  },
+  {
+   "date": "2027-01-25",
+   "balance": 4850
+  },
+  {
+   "date": "2027-01-26",
+   "balance": 4850
+  },
+  {
+   "date": "2027-01-27",
+   "balance": 4850
+  },
+  {
+   "date": "2027-01-28",
+   "balance": 4810,
+   "events": [
+    {
+     "payment": "phone",
+     "amount": -40
+    }
+   ]
+  },
+  {
+   "date": "2027-01-29",
+   "balance": 6910,
+   "events": [
+    {
+     "people": [
+      "jo"
+     ],
+     "amount": 2100
+    }
+   ]
+  },
+  {
+   "date": "2027-01-30",
+   "balance": 6910
+  },
+  {
+   "date": "2027-01-31",
+   "balance": 6910
+  },
+  {
+   "date": "2027-02-01",
+   "balance": 7310,
+   "events": [
+    {
+     "payment": "rent-share",
+     "amount": 400
+    }
+   ]
+  },
+  {
+   "date": "2027-02-02",
+   "balance": 7310
+  },
+  {
+   "date": "2027-02-03",
+   "balance": 7310
+  },
+  {
+   "date": "2027-02-04",
+   "balance": 7310
+  },
+  {
+   "date": "2027-02-05",
+   "balance": 7310
+  },
+  {
+   "date": "2027-02-06",
+   "balance": 7310
+  },
+  {
+   "date": "2027-02-07",
+   "balance": 7310
+  },
+  {
+   "date": "2027-02-08",
+   "balance": 7310
+  },
+  {
+   "date": "2027-02-09",
+   "balance": 7310
+  },
+  {
+   "date": "2027-02-10",
+   "balance": 7310
+  },
+  {
+   "date": "2027-02-11",
+   "balance": 7310
+  },
+  {
+   "date": "2027-02-12",
+   "balance": 7310
+  },
+  {
+   "date": "2027-02-13",
+   "balance": 7310
+  }
+ ],
+ "later": [
+  {
+   "date": "2027-02-20",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "car",
+     "amount": -310
+    }
+   ]
+  },
+  {
+   "date": "2027-02-26",
+   "balance": 0,
+   "events": [
+    {
+     "people": [
+      "jo"
+     ],
+     "amount": 2100
+    }
+   ]
+  },
+  {
+   "date": "2027-02-28",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "phone",
+     "amount": -40
+    }
+   ]
+  },
+  {
+   "date": "2027-03-01",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "rent-share",
+     "amount": 400
+    }
+   ]
+  },
+  {
+   "date": "2027-03-15",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "gym",
+     "amount": -120
+    }
+   ]
+  },
+  {
+   "date": "2027-03-20",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "car",
+     "amount": -310
+    }
+   ]
+  },
+  {
+   "date": "2027-03-28",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "phone",
+     "amount": -40
+    }
+   ]
+  },
+  {
+   "date": "2027-03-30",
+   "balance": 0,
+   "events": [
+    {
+     "people": [
+      "jo"
+     ],
+     "amount": 2100
+    }
+   ]
+  },
+  {
+   "date": "2027-04-01",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "rent-share",
+     "amount": 400
+    }
+   ]
+  },
+  {
+   "date": "2027-04-20",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "car",
+     "amount": -310
+    }
+   ]
+  },
+  {
+   "date": "2027-04-28",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "phone",
+     "amount": -40
+    }
+   ]
+  },
+  {
+   "date": "2027-04-30",
+   "balance": 0,
+   "events": [
+    {
+     "people": [
+      "jo"
+     ],
+     "amount": 2100
+    }
+   ]
+  },
+  {
+   "date": "2027-05-01",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "rent-share",
+     "amount": 400
+    }
+   ]
+  },
+  {
+   "date": "2027-05-20",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "car",
+     "amount": -310
+    }
+   ]
+  },
+  {
+   "date": "2027-05-28",
+   "balance": 0,
+   "events": [
+    {
+     "people": [
+      "jo"
+     ],
+     "amount": 2100
+    },
+    {
+     "payment": "phone",
+     "amount": -40
+    }
+   ]
+  },
+  {
+   "date": "2027-06-01",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "rent-share",
+     "amount": 400
+    }
+   ]
+  },
+  {
+   "date": "2027-06-15",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "gym",
+     "amount": -120
+    }
+   ]
+  },
+  {
+   "date": "2027-06-20",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "car",
+     "amount": -310
+    }
+   ]
+  },
+  {
+   "date": "2027-06-28",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "phone",
+     "amount": -40
+    }
+   ]
+  },
+  {
+   "date": "2027-06-30",
+   "balance": 0,
+   "events": [
+    {
+     "people": [
+      "jo"
+     ],
+     "amount": 2100
+    }
+   ]
+  },
+  {
+   "date": "2027-07-01",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "rent-share",
+     "amount": 400
+    }
+   ]
+  },
+  {
+   "date": "2027-07-20",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "car",
+     "amount": -310
+    }
+   ]
+  },
+  {
+   "date": "2027-07-28",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "phone",
+     "amount": -40
+    }
+   ]
+  },
+  {
+   "date": "2027-07-30",
+   "balance": 0,
+   "events": [
+    {
+     "people": [
+      "jo"
+     ],
+     "amount": 2100
+    }
+   ]
+  },
+  {
+   "date": "2027-08-01",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "rent-share",
+     "amount": 400
+    }
+   ]
+  },
+  {
+   "date": "2027-08-20",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "car",
+     "amount": -310
+    }
+   ]
+  },
+  {
+   "date": "2027-08-28",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "phone",
+     "amount": -40
+    }
+   ]
+  },
+  {
+   "date": "2027-08-30",
+   "balance": 0,
+   "events": [
+    {
+     "people": [
+      "jo"
+     ],
+     "amount": 2100
+    }
+   ]
+  },
+  {
+   "date": "2027-09-01",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "rent-share",
+     "amount": 400
+    }
+   ]
+  },
+  {
+   "date": "2027-09-15",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "gym",
+     "amount": -120
+    }
+   ]
+  },
+  {
+   "date": "2027-09-20",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "car",
+     "amount": -310
+    }
+   ]
+  },
+  {
+   "date": "2027-09-28",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "phone",
+     "amount": -40
+    }
+   ]
+  },
+  {
+   "date": "2027-09-30",
+   "balance": 0,
+   "events": [
+    {
+     "people": [
+      "jo"
+     ],
+     "amount": 2100
+    }
+   ]
+  },
+  {
+   "date": "2027-10-01",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "rent-share",
+     "amount": 400
+    }
+   ]
+  },
+  {
+   "date": "2027-10-20",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "car",
+     "amount": -310
+    }
+   ]
+  },
+  {
+   "date": "2027-10-28",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "phone",
+     "amount": -40
+    }
+   ]
+  },
+  {
+   "date": "2027-10-29",
+   "balance": 0,
+   "events": [
+    {
+     "people": [
+      "jo"
+     ],
+     "amount": 2100
+    }
+   ]
+  },
+  {
+   "date": "2027-11-01",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "rent-share",
+     "amount": 400
+    }
+   ]
+  }
+ ],
+ "worth": [
+  {
+   "date": "2026-11-01",
+   "amount": 8640.6
+  },
+  {
+   "date": "2026-11-02",
+   "amount": 8640.6
+  },
+  {
+   "date": "2026-11-03",
+   "amount": 8640.6
+  },
+  {
+   "date": "2026-11-04",
+   "amount": 8640.6
+  },
+  {
+   "date": "2026-11-05",
+   "amount": 8640.6
+  },
+  {
+   "date": "2026-11-06",
+   "amount": 8640.6
+  },
+  {
+   "date": "2026-11-07",
+   "amount": 8640.6
+  },
+  {
+   "date": "2026-11-08",
+   "amount": 8640.6
+  },
+  {
+   "date": "2026-11-09",
+   "amount": 8640.6
+  },
+  {
+   "date": "2026-11-10",
+   "amount": 8640.6
+  },
+  {
+   "date": "2026-11-11",
+   "amount": 8640.6
+  },
+  {
+   "date": "2026-11-12",
+   "amount": 8640.6
+  },
+  {
+   "date": "2026-11-13",
+   "amount": 8640.6
+  }
+ ],
+ "next": {
+  "car": "2026-11-20",
+  "gym": "2026-12-15",
+  "phone": "2026-11-28",
+  "rent-share": "2026-12-01"
+ },
+ "dues": {
+  "car": [
+   "2026-07-20",
+   "2026-08-20",
+   "2026-09-20",
+   "2026-10-20",
+   "2026-11-20"
+  ],
+  "gym": [
+   "2026-09-15"
+  ],
+  "phone": [
+   "2026-07-28",
+   "2026-08-28",
+   "2026-09-28",
+   "2026-10-28",
+   "2026-11-28"
+  ],
+  "rent-share": [
+   "2026-08-01",
+   "2026-09-01",
+   "2026-10-01",
+   "2026-11-01"
+  ]
+ },
+ "paid": [
+  {
+   "payment": "car",
+   "due": "2026-10-20",
+   "date": "2026-11-02",
+   "amount": 310,
+   "planned": 310,
+   "transaction": "c1"
+  }
+ ],
+ "categories": [
+  {
+   "name": "Income",
+   "icon": "savings",
+   "income": true
+  },
+  {
+   "name": "Paycheck",
+   "parent": "Income",
+   "income": true
+  },
+  {
+   "name": "Interest",
+   "parent": "Income",
+   "income": true
+  },
+  {
+   "name": "Refunds",
+   "parent": "Income",
+   "income": true
+  },
+  {
+   "name": "Home",
+   "icon": "home"
+  },
+  {
+   "name": "Mortgage or rent",
+   "parent": "Home"
+  },
+  {
+   "name": "Repairs",
+   "parent": "Home"
+  },
+  {
+   "name": "Utilities",
+   "icon": "utilities"
+  },
+  {
+   "name": "Electric",
+   "parent": "Utilities",
+   "icon": "utilities"
+  },
+  {
+   "name": "Water",
+   "parent": "Utilities",
+   "icon": "water"
+  },
+  {
+   "name": "Internet",
+   "parent": "Utilities",
+   "icon": "internet"
+  },
+  {
+   "name": "Phone",
+   "parent": "Utilities",
+   "icon": "phone"
+  },
+  {
+   "name": "Food",
+   "icon": "food"
+  },
+  {
+   "name": "Groceries",
+   "parent": "Food",
+   "icon": "spending"
+  },
+  {
+   "name": "Eating out",
+   "parent": "Food",
+   "icon": "food"
+  },
+  {
+   "name": "Car",
+   "icon": "car"
+  },
+  {
+   "name": "Gas",
+   "parent": "Car",
+   "icon": "heat"
+  },
+  {
+   "name": "Car insurance",
+   "parent": "Car",
+   "icon": "insurance"
+  },
+  {
+   "name": "Subscriptions",
+   "icon": "subscriptions"
+  },
+  {
+   "name": "Streaming and music",
+   "parent": "Subscriptions",
+   "icon": "streaming"
+  },
+  {
+   "name": "Software and apps",
+   "parent": "Subscriptions",
+   "icon": "software"
+  },
+  {
+   "name": "Cloud and homelab",
+   "parent": "Subscriptions",
+   "icon": "cloud"
+  },
+  {
+   "name": "Health",
+   "icon": "health"
+  },
+  {
+   "name": "Fitness",
+   "parent": "Health",
+   "icon": "fitness"
+  },
+  {
+   "name": "Shopping",
+   "icon": "spending"
+  },
+  {
+   "name": "Kids and school",
+   "icon": "school"
+  },
+  {
+   "name": "Gifts and giving"
+  },
+  {
+   "name": "Travel"
+  },
+  {
+   "name": "Fees and interest"
+  },
+  {
+   "name": "Other",
+   "icon": "other"
+  }
+ ],
+ "loans": [
+  {
+   "account": "car-loan",
+   "balance": 8216.08,
+   "rate": 6.5,
+   "monthly": 310,
+   "months": 29,
+   "date": "2029-04",
+   "interest": 677.25,
+   "path": [
+    7950.58,
+    7683.65,
+    7415.27,
+    7145.44,
+    6874.14,
+    6601.37,
+    6327.13,
+    6051.4,
+    5774.18,
+    5495.46,
+    5215.23,
+    4933.48,
+    4650.2,
+    4365.39,
+    4079.03,
+    3791.13,
+    3501.66,
+    3210.63,
+    2918.02,
+    2623.83,
+    2328.04,
+    2030.65,
+    1731.65,
+    1431.03,
+    1128.78,
+    824.89,
+    519.36,
+    212.18,
+    0
+   ]
+  }
+ ],
+ "holidays": {
+  "2026-11-26": "Thanksgiving",
+  "2026-12-25": "Christmas",
+  "2027-01-01": "New Year's Day",
+  "2027-01-18": "Martin Luther King Jr. Day",
+  "2027-02-15": "Presidents' Day",
+  "2027-05-31": "Memorial Day",
+  "2027-07-05": "Independence Day",
+  "2027-09-06": "Labor Day",
+  "2027-10-11": "Columbus Day",
+  "2027-11-11": "Veterans Day"
+ },
+ "checkingNow": {
+  "date": "2026-11-13",
+  "from": "2026-11-12",
+  "start": 980,
+  "steps": [],
+  "result": 980
+ },
+ "afterPay": {
+  "date": "2026-11-30",
+  "from": "2026-11-13",
+  "start": 980,
+  "steps": [
+   {
+    "date": "2026-11-20",
+    "payment": "car",
+    "amount": -310,
+    "after": 670
+   },
+   {
+    "date": "2026-11-28",
+    "payment": "phone",
+    "amount": -40,
+    "after": 630
+   },
+   {
+    "date": "2026-11-30",
+    "people": [
+     "jo"
+    ],
+    "amount": 2100,
+    "after": 2730
+   }
+  ],
+  "result": 2730
+ }
+}

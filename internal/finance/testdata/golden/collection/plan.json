@@ -1,0 +1,155 @@
+{
+ "people": [
+  {
+   "id": "jo",
+   "name": "Jo",
+   "schedule": {
+    "every": "month",
+    "start": "2026-11-30"
+   },
+   "net": 2100,
+   "gross": 2900,
+   "deductions": [
+    {
+     "name": "Retirement",
+     "amount": 290,
+     "account": "k401"
+    }
+   ]
+  }
+ ],
+ "accounts": [
+  {
+   "id": "checking",
+   "name": "Example Checking",
+   "kind": "checking",
+   "balance": 980,
+   "updated": "2026-11-12",
+   "history": [
+    {
+     "date": "2026-11-12",
+     "amount": 980
+    }
+   ]
+  },
+  {
+   "id": "k401",
+   "name": "Example 401(k)",
+   "kind": "retirement",
+   "balance": 15400,
+   "updated": "2026-11-01",
+   "history": [
+    {
+     "date": "2026-11-01",
+     "amount": 15400
+    }
+   ]
+  },
+  {
+   "id": "car-loan",
+   "name": "Example Car Loan",
+   "kind": "loan",
+   "balance": 8200,
+   "rate": 6.5,
+   "updated": "2026-11-01",
+   "history": [
+    {
+     "date": "2026-11-01",
+     "amount": 8200
+    }
+   ]
+  },
+  {
+   "id": "binder",
+   "name": "Card binder",
+   "kind": "collectible",
+   "balance": 460.6,
+   "updated": "2026-11-12",
+   "history": [
+    {
+     "date": "2026-11-12",
+     "amount": 460.6
+    }
+   ]
+  }
+ ],
+ "payments": [
+  {
+   "id": "car",
+   "name": "Car payment",
+   "amount": 310,
+   "schedule": {
+    "every": "month",
+    "start": "2026-11-20"
+   },
+   "kind": "car",
+   "to": "car-loan"
+  },
+  {
+   "id": "phone",
+   "name": "Phone",
+   "amount": 40,
+   "schedule": {
+    "every": "month",
+    "start": "2026-11-28"
+   },
+   "kind": "utilities"
+  },
+  {
+   "id": "gym",
+   "name": "Gym",
+   "amount": 120,
+   "schedule": {
+    "every": "3 months",
+    "start": "2026-12-15"
+   },
+   "kind": "subscriptions",
+   "type": "fitness"
+  },
+  {
+   "id": "rent-share",
+   "name": "Rent share",
+   "amount": 400,
+   "schedule": {
+    "every": "month",
+    "start": "2026-12-01"
+   },
+   "payer": "Roommate"
+  }
+ ],
+ "cushion": 100,
+ "currency": "USD",
+ "collection": [
+  {
+   "id": "ember-fox",
+   "account": "binder",
+   "name": "Ember Fox",
+   "set": "Set A",
+   "number": "4/102",
+   "paid": 45,
+   "price": 182.4,
+   "priceOn": "2026-11-12"
+  },
+  {
+   "id": "tide-turtle",
+   "account": "binder",
+   "name": "Tide Turtle",
+   "count": 2,
+   "paid": 30,
+   "price": 64.1,
+   "priceOn": "2026-11-12"
+  },
+  {
+   "id": "moon-moth",
+   "account": "binder",
+   "name": "Moon Moth",
+   "grade": "Graded 9",
+   "price": 150,
+   "priceOn": "2026-10-01",
+   "typed": true
+  }
+ ],
+ "withdraw": 4,
+ "growth": 5,
+ "hideAmounts": true
+}

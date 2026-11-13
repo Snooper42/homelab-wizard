@@ -90,7 +90,13 @@ func LoadLedger(path string) (Ledger, error) {
 	if err != nil {
 		return l, err
 	}
-	err = json.Unmarshal(data, &l)
+	return ParseLedger(data)
+}
+
+// ParseLedger reads a ledger from what its file holds, as LoadLedger does.
+func ParseLedger(data []byte) (Ledger, error) {
+	var l Ledger
+	err := json.Unmarshal(data, &l)
 	if l.Transactions == nil {
 		l.Transactions = []Transaction{}
 	}
