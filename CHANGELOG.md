@@ -123,6 +123,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **Budgets keep their figures whole:** on the Dashboard's *Budgets to watch* and Spending's *Budgets*, the line under a long category name now breaks between its parts, never inside *$200.00 of $150.00*; what's left a day reads *$15.00 a day* on one line (the end date is already under the name); and every bar ends in line with the others, on the computer and the phone.
 - **Investments as a list:** Finances' Investments card no longer has the bar of what each account holds. Each holding has its price and a line of its worth over the year (green up, orange down) beside what you paid, its worth and its gain, and a chart of all your investments' worth over the year is on top.
 - **Tidy Up in the dark looks like Finances:** a near-black background, with cards a step lighter and a thin line round each, instead of the grey the rest of the app uses. With more contrast asked for, it keeps the app's own colours.
 - **Tidy Up lists sizes as Finances lists amounts:** what a job freed is now on the right of its line in **Recently done** (*Movies shrunk · 12 files replaced*, and *412 GB* on the right), in the same place and type as Finances' amounts, instead of at the end of its words; and **Merge** on Audiobooks says what it wins back, as **Shrink** does for films.
@@ -245,7 +246,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
-- **Budgets keep their figures whole:** on the Dashboard's *Budgets to watch* and Spending's *Budgets*, the line under a long category name now breaks between its parts, never inside *$200.00 of $150.00*; what's left a day reads *$15.00 a day* on one line (the end date is already under the name); and every bar ends in line with the others, on the computer and the phone.
+- **A download replaces only its own album:** when new music replaces an album already in your library, Tidy Up now takes out of beets only the album with exactly those names, not every album whose names contain them, and a download's odd tags can't make it take out all of them.
 - **The Inbox's Undo moves only what it filed:** Undo under What I did today takes back only files in a library, and puts them only into a Downloads folder Tidy Up watches, so a changed record of what was filed can't have it move any other file, or put one anywhere else.
 - **Undo in Tidy Up puts back only into its own folders:** a thing goes back only into a library, a Downloads folder Tidy Up watches, or its reports folder, so a changed list of what went to the Trash can't have Undo put a file anywhere else in your account. Anything else stays in the Trash, and Undo says so.
 - **A ticker stays a ticker:** adding an investment, following a ticker in the Watchlist, and looking up a price now refuse a ticker or source of `.` or `..`, which could reach another of Ghostfolio's admin addresses, and a followed ticker's name is kept short.
