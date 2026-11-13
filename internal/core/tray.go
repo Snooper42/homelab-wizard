@@ -24,7 +24,7 @@ var TraySocket = func() string { return filepath.Join(filepath.Dir(engine.Socket
 var TrayAddr = "127.0.0.1:47231"
 
 // ErrTrayRunning is ListenTray's answer when a menu bar item already runs.
-var ErrTrayRunning = errors.New("another menu bar item is running")
+var ErrTrayRunning = errors.New("the homelab's icon is running already")
 
 // ListenTray is the menu bar item's listener on TraySocket, mode 0600 in
 // a 0700 folder. A socket left by an item that stopped is replaced; one
