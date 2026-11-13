@@ -78,6 +78,18 @@ An app's log usually says why it is unwell. With [Ollama](<../services/documents
 | A loan or card owes more or less than its statement | Give it its interest rate (the account's form): interest is charged a day at a time and each payment pays it first. A card paid in full each time is charged none |
 | Finances do not show on a phone, or show no Edit | Settings › Phones: **Sees Finances** or **Changes Finances** beside it. A phone paired with the `http:` link never gets them ([Phone companion](<../services/system/Phone companion.md#troubleshooting>)) |
 
+## Tidy Up
+
+| Symptom | Fix |
+|---|---|
+| A download stays in Downloads and shows under **Needs a look** | Tidy Up couldn't tell what it is (a video whose name says nothing, songs with no artist or album). **It's a film…**, **It's an episode…**, or **Name these songs…** says what it is, and Tidy Up files it; **Leave it** keeps it where it is for good ([Tidy Up › Needs a look](<Tidy Up.md#needs-a-look>)) |
+| *It's packed in a .rar file…* | Tidy Up doesn't open `.rar` or `.7z` files. Double-click it to unpack it, and what's inside is filed on the next sweep. A `.zip` is unpacked for you |
+| A library or watched folder says *Not there now* | Its drive isn't plugged in. Plug it in, or **Choose another…** beside it |
+| A step waits for a tool (ffmpeg, Python, Calibre) | **This machine** on Tidy Up (or `homelab media preflight`) lists what is missing with its fix. Without ffmpeg, **Install** gets it with no Terminal (`homelab media install ffmpeg --yes`) |
+| The music check finds songs missing, and the space can't be freed | It says how many and whose. **Put the old library back…** returns the library as it was; **Check again** once they are found. Nothing is freed until every song is there |
+| Films or shows wait in Tdarr and never shrink | **Set up Tdarr** (or a library's **Shrink**) gives Tdarr's node the worker it needs, and its sign-in if it asks for one ([Tidy Up › Settings](<Tidy Up.md#settings>)) |
+| Something went that shouldn't have | **Undo** beside it in **What I did today** or **Recently done** puts it back from the Trash (the Recycle Bin on Windows: restore it from there) |
+
 ## Backups and jobs
 
 | Symptom | Fix |
