@@ -1107,6 +1107,25 @@ class Inbox(Base):
             inbox.unzip(zp, self.tmp / "into")
         self.assertFalse((self.tmp / "escape.txt").exists())
 
+    def test_a_zip_too_big_for_the_drive_is_not_unpacked(self):
+        # A download built to swell (a few KB that say gigabytes) would fill the drive it lands on. Python's
+        # zipfile reads each file only to its listed size, so the listed sizes are added up first.
+        zp = self.tmp / "swell.zip"
+        with zipfile.ZipFile(str(zp), "w", zipfile.ZIP_DEFLATED) as z:
+            z.writestr("film.mkv", b"\0" * (20 * 1024 * 1024))
+        self.assertLess(zp.stat().st_size, 1024 * 1024, "small in the file")
+        GiB = 1024 ** 3
+        tight = shutil._ntuple_diskusage(100 * GiB, 99 * GiB - 10 * 1024 * 1024, GiB + 10 * 1024 * 1024)
+        with mock.patch.object(inbox.shutil, "disk_usage", return_value=tight):
+            with self.assertRaises(RuntimeError) as e:
+                inbox.unzip(zp, self.tmp / "into")
+        self.assertIn("free", str(e.exception))
+        self.assertFalse((self.tmp / "into" / "film.mkv").exists(), "nothing written")
+        roomy = shutil._ntuple_diskusage(100 * GiB, 50 * GiB, 50 * GiB)
+        with mock.patch.object(inbox.shutil, "disk_usage", return_value=roomy):
+            inbox.unzip(zp, self.tmp / "into2")
+        self.assertEqual((self.tmp / "into2" / "film.mkv").stat().st_size, 20 * 1024 * 1024)
+
     def test_books_and_stragglers(self):
         d = self.tmp / "Downloads"
         (self.lib["books"] / "metadata.db").write_text("")
