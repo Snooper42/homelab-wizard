@@ -2733,7 +2733,10 @@ const smokes = [
     if ((await ids()).includes('spent')) throw new Error('Spent this month still shows');
     await page.click('#finRoot button:text-is("Done")');
     if (await page.locator('#finRoot .fx-slotbar').count()) throw new Error('the bars stayed after Done');
-    // Kept on this device: after a reload, as it was left.
+    // Kept on this device: after a reload, as it was left. Chromium keeps localStorage's writes a moment before
+    // storing them, and a reload straight after the last click could start before they were (about one run in three
+    // since Finances' page grew, Nov 13): the layout read back was none. Nothing on the page says when; a second waits.
+    await page.waitForTimeout(1000);
     await page.reload();
     await page.waitForSelector('#finRoot .fx-board.arranged .fx-slot[data-card="networth"] .card', { timeout: 5000 });
     const kept = await ids();
