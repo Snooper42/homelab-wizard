@@ -59,6 +59,11 @@ On a Mac:
 
 Either way, Homelab Wizard finds `~/Homelab` on its own and opens on **Setup**. Every new homelab starts in **Home mode**: no domain, and every app at an address on your tailnet.
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="images/app-firstrun-dark.png">
+  <img alt="Setup on a new Mac: Start OrbStack, then Start your homelab with Set it up for me" src="images/app-firstrun.png">
+</picture>
+
 ### On Windows, Linux, or a Steam Machine
 
 The steps are the same with each system's pieces ([Host](<Host.md#linux-and-windows-hosts>) has the details):
@@ -151,6 +156,7 @@ For the person who looks after the homelab: Settings › **Phones** › **Pair a
 - **Updates** to the apps install themselves at night. Pause them with **Pause** on Status's *Nightly updates* tile, or from the menu bar, before something important. If an update breaks an app, **Roll back** on its page puts the previous version back (kept for a week), and an app that stays unwell after an update is put back by itself.
 - **Updates to the homelab itself** show by themselves as one line at the top of the window (and *Update to …* in the menu bar): the app looks every 15 minutes and downloads what it finds. **Update now** puts the homelab files in place, then the newest Homelab Wizard, checked, and opens it again (on Windows, asking for an administrator's approval only when the app is in Program Files; on Linux, when it was installed from a package). If it cannot go in place, the line says why, with the release page to install it by hand.
 - **Finances** in the sidebar is the household's money, typed in by hand and kept on this computer: who gets paid and when, the accounts and cards, and the payments that repeat. Its dashboard shows checking over the next month, which paycheck covers each bill, and every account after each paycheck; **Net worth** draws it month by month, with your home's and car's equity. Nothing connects to a bank, and the file goes off-site with the nightly backup, encrypted.
+- **Tidy Up** in the sidebar keeps the music, films, shows, books, and audiobooks on the media drive in order. Drop a download into a folder it watches (Downloads, to start) and it works out what it is, cleans it up, and files it into the right library; **What I did today** lists each one with **Undo**, and each library's tab has its own clean-up. Anything it throws away goes to the Trash ([Tidy Up](<Tidy Up.md>)).
 - **Backups** run at night. The **Backups** screen shows each app's newest copy and when a restore was last proven; once a month, click **Test a restore** to prove they work ([Backups](<Backups.md>)), and the homelab reminds you.
 - **When something breaks**, an alert arrives on the phone. Open Status and click **Fix it**, or read the app's log and restart it; with Ollama on this computer, **Explain this** under the log says in plain words what it shows. If that does not help, make a diagnostics report.
 - **Text too small?** Cmd and + or − (Ctrl on Windows and Linux) makes the whole app bigger or smaller, and Cmd and 0 goes back.

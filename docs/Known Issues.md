@@ -209,7 +209,9 @@ Found on a Windows PC (October 2026): updating went round in a loop (the app clo
 
 ---
 
-## ISSUE-0022: A rollback brings back the image, not the data the newer version changed
+## Resolved
+
+### ISSUE-0022: A rollback brings back the image, not the data the newer version changed
 
 Found by the nightly run against real Docker (October 2026). `homelab rollback` (and the watchdog's automatic rollback of an update that leaves an app unwell) starts the image the app ran before its update, on the data as it is now. An app that changes its own data when a newer version starts (a database schema moved on) can then refuse it: ntfy 2.11 rolled back from 2.34 stopped with "unexpected schema version: version 17 is higher than current version 13" and restarted in a loop. The update dumps the app's databases first, but the rollback does not put them back, and not every file an app migrates is dumped (ntfy's message cache is not).
 
@@ -219,13 +221,7 @@ Found by the nightly run against real Docker (October 2026). `homelab rollback` 
 
 **Fix (decided in [ADR-0020](<Decisions.md#adr-0020-a-rollback-puts-back-the-apps-data-with-its-image>), October 2026; [Roadmap](<Roadmap.md#10-stable>)):** before an update, keep a copy of the app's data folders and named volumes as well as its dumps, and have the rollback put that copy back with the older image. Large data (photo libraries, media) stays where it is; the apps that keep those (Immich) keep their schema in the database, which the dump covers. `homelab update` and `homelab rollback` do this since 0.13.0 (Progress, above), and since Watchtower went the nightly updates are `homelab update --all --nightly`, so they do it too.
 
----
-
----
-
-## Resolved
-
-- [ISSUE-0022](<#issue-0022-a-rollback-brings-back-the-image-not-the-data-the-newer-version-changed>), after 0.14.0: every update, the nightly ones included, copies the app's data first, and a rollback puts it back.
+**Resolved (after 0.14.0):** every update, the nightly ones included, copies the app's data first, and a rollback puts it back.
 
 ### ISSUE-0023: Nextcloud's default port is the phone companion's
 
