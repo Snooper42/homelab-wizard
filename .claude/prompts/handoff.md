@@ -32,7 +32,7 @@ You are working on homelab-wizard (github.com/Snooper42/homelab-wizard) with its
 - **Dropped by the owner, never offer again:** the phone away from home (Nov 10); background refresh (Nov 11); ⌘1 to ⌘4 for Finances tabs; syncing the Finances sidebar's folds.
 - **Two ways to do something and no answer:** the one that changes less for the partner's phone and the household (as "per phone" did), and the one that can be undone.
 
-## 1. Where it stands (Nov 12, 9:10 PM Eastern)
+## 1. Where it stands (Nov 12, 9:50 PM Eastern)
 
 **Merged Nov 10 to 12** (each green):
 
@@ -94,9 +94,11 @@ You are working on homelab-wizard (github.com/Snooper42/homelab-wizard) with its
 | #641 | **2D step 1: budgets keep their figures whole** (2C step 5's text that wraps, which the owner named *the spend boxes with budget categories*): the line under a budget's name breaks between its parts (`.fx-keep`), *$15.00 a day* without *for N days*, `.fx-budgetleft` one width so the bars end in line. Smoke *budgets with long names keep their figures whole and their bars in line* (1100px and a phone); this hand-off |
 | #644 | **2D step 2: a Dashboard card opens what it sums up** (`Widget`'s `open`, a click target over the title; the ↗ or See all for the keyboard; `openPay`) |
 | #646 | **2D step 3 (Finances Step 5): the Dashboard looks back** (`widgets/Trend.tsx`: *Checking, last 90 days*, 30 days or a year, another account, a day opening on the calendar, the title the account's page; `balanceSeries` shared with the account's page); this hand-off |
+| #649 | The hand-off after #646 |
+| #650 | **2D step 4 (Finances Step 6): Transactions in columns**, sorted by the date, payee, category, account or amount (`.fx-txhead`, `@container fxtx`, `homelab.finances.txSort`) |
 | #620 | Tidy Up's look, **L5's second half**: what a job freed on the right of its line in Recently done (`media.Activity.Freed`, `Activity.Said()`); Audiobooks' Merge says what it wins back |
 
-**In flight:** #650, 2D step 4 (Transactions in columns). *Done:* merged green. Then step 5 (Send to my phone), then step 6 (the Collection's mockup). #641 merged 7:43 PM, #644 8:06 PM, #646 9:05 PM, #649 9:23 PM.
+**In flight: nothing.** #641 merged 7:43 PM, #644 8:06 PM, #646 9:05 PM, #649 9:23 PM, #650 9:43 PM. **Next: 2D step 5, Send to my phone**, which waits on the owner's two answers (section 4: ask them first, with the pop-up); while it waits, step 6 (the Collection's mockup) needs nothing from them.
 
 **Asked the owner, Nov 12, 6:05 PM (the pop-up), and their answers:**
 - The logo count for the phone's page: **later** (ask again; the command is in section 4, counts only).
@@ -187,6 +189,7 @@ Keep it the hub: detail belongs in the loop file for that area (`finances-handof
 
 ## 4. Waiting on the owner
 
+- **Send to my phone (2D step 5), asked Nov 12, 9:40 PM; the pop-up was cut off twice by the session restarting, so not seen yet: ask first, with the pop-up.** (1) Which phone a send goes to: **pick a phone each time from the paired ones, a wall screen never listed (recommended)**, every phone allowed to see it, or only the owner's. (2) Which phones may *Open on the computer* (the computer's window goes to the phone's page): **phones allowed to change things, no Face ID since it changes no data (recommended)**, any paired phone but a wall screen, or skip that direction. Build nothing of it until they answer; it's a new phone call (section 0 rule 7) and an event on `/api/events` (`internal/companion/server.go`).
 - **The phone's page logos (2C step 1), "later" on Nov 12:** ask them (the pop-up) to paste what this prints in Terminal on the Mac (counts only, never a name): `python3 -c 'import json,os;l=json.load(open(os.path.expanduser("~/Homelab/data/finance.json"))).get("logos",{});print("pictures",len(l),"over64KB",sum(len(v)>65536 for v in l.values()),"notPNGJPEGWebP",sum(not v.startswith(("data:image/png;base64,","data:image/jpeg;base64,","data:image/webp;base64,")) for v in l.values()),"byName",sum(k.startswith("name:") for k in l))'`. Give them the line in the text before the pop-up (on Nov 12 the pop-up named a command the text never gave).
 - **Read now from the phone (2C step 2):** the words after *Couldn't read Ghostfolio:*, next time they try it.
 - **Rules by amount or direction:** the owner said not now (Nov 12, 6:05 PM); offer again another time.
