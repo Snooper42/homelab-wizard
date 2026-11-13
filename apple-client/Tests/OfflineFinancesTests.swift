@@ -122,8 +122,10 @@ struct OfflineFinancesTests {
         let morning = try #require(calendar.date(from: DateComponents(year: 2026, month: 11, day: 13, hour: 9, minute: 40)))
         let lastNight = try #require(calendar.date(from: DateComponents(year: 2026, month: 11, day: 12, hour: 22, minute: 15)))
         let lastWeek = try #require(calendar.date(from: DateComponents(year: 2026, month: 11, day: 6, hour: 7, minute: 0)))
-        #expect(OfflineFinances.asOf(morning, now: now, calendar: calendar, locale: locale) == "As of today, 9:40 AM")
-        #expect(OfflineFinances.asOf(lastNight, now: now, calendar: calendar, locale: locale) == "As of yesterday, 10:15 PM")
-        #expect(OfflineFinances.asOf(lastWeek, now: now, calendar: calendar, locale: locale) == "As of Nov 6, 7:00 AM")
+        // The system's time puts a narrow no-break space before AM and PM: the same words.
+        let words = { (at: Date) in OfflineFinances.asOf(at, now: now, calendar: calendar, locale: locale).replacingOccurrences(of: "\u{202F}", with: " ") }
+        #expect(words(morning) == "As of today, 9:40 AM")
+        #expect(words(lastNight) == "As of yesterday, 10:15 PM")
+        #expect(words(lastWeek) == "As of Nov 6, 7:00 AM")
     }
 }
