@@ -2919,3 +2919,6 @@ button.fx-symbol small { color:var(--muted); }
 .fx-household li.fx-householdbudget { grid-template-columns:1fr auto; }
 .fx-householdbar { grid-column:1 / -1; height:6px; border-radius:3px; background:var(--line); overflow:hidden; }
 .fx-householdbar span { display:block; height:100%; background:var(--primary); }
+.fx-privateaway { flex-basis:100%; }
+.fx-privateon { flex-wrap:wrap; }
+.fx-privatesaid { max-width:640px; margin:0 0 10px; }

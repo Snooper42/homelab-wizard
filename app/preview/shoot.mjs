@@ -400,6 +400,26 @@ const finGroups = { Transactions: 'Spending', Reports: 'Spending', Calendar: 'Pl
 // What the household shares with a member (serve.go's memberShared), made up.
 const householdShared = { currency: 'USD', shares: ['bills', 'subscriptions', 'budgets'], bills: [{ name: 'Made-up Power', kind: 'utility', amount: 120, date: '2026-11-20', every: 'month' }], subscriptions: [{ name: 'Made-up Stream', amount: 15.99, every: 'month' }], budgets: [{ category: 'Groceries', amount: 600, spent: 200, left: 400 }] };
 
+// What the phone's page keeps: localStorage, the IndexedDB databases, and private Finances' one record (privacy.ts).
+async function keptInPage(page) {
+  return page.evaluate(async () => {
+    const all = Object.keys(localStorage).map((k) => k + '=' + localStorage.getItem(k)).join('\n');
+    const dbs = indexedDB.databases ? (await indexedDB.databases()).map((d) => d.name) : [];
+    const sealed = !dbs.includes('homelab-private') ? 'null' : await new Promise((ok) => {
+      const r = indexedDB.open('homelab-private');
+      r.onsuccess = () => {
+        const db = r.result;
+        if (!db.objectStoreNames.contains('sealed')) { db.close(); ok('null'); return; }
+        const g = db.transaction('sealed').objectStore('sealed').get('mine');
+        g.onsuccess = () => { db.close(); ok(JSON.stringify(g.result ?? null)); };
+        g.onerror = () => { db.close(); ok('null'); };
+      };
+      r.onerror = () => ok('null');
+    });
+    return { all, dbs, sealed };
+  });
+}
+
 // Makes a member's Finances private on her phone's page (Private.tsx), with Face ID or, given one, a passphrase:
 // answers her recovery code's 16 words, as shown once.
 async function makePrivate(page, passphrase) {
@@ -2743,12 +2763,9 @@ const smokes = [
     await page.click('#finPrivateOpen button:text-is("Lock")');
     await page.waitForSelector('#finPrivateLocked', { timeout: 3000 });
     if (await page.locator('#finRoot').isVisible()) throw new Error('locked, but Finances still show');
-    const kept = await page.evaluate(async () => {
-      const all = Object.keys(localStorage).map((k) => k + '=' + localStorage.getItem(k)).join('\n');
-      const dbs = indexedDB.databases ? (await indexedDB.databases()).map((d) => d.name) : [];
-      return { all, dbs };
-    });
-    if (/Chase|cushion|anna|"plan"/.test(kept.all) || kept.dbs.length) throw new Error('something plain is kept in the page: ' + JSON.stringify(kept).slice(0, 300));
+    const kept = await keptInPage(page);
+    if (/Chase|cushion|anna|"plan"/.test(kept.all) || kept.dbs.some((d) => d !== 'homelab-private') || /Chase|cushion|"plan"|Made-up/.test(kept.sealed)) throw new Error('something plain is kept in the page: ' + JSON.stringify(kept).slice(0, 300));
+    if (!/"envelope"/.test(kept.sealed) || JSON.parse(kept.sealed).key) throw new Error('the sealed copy for offline is not kept, or a key is kept with it: ' + kept.sealed.slice(0, 200));
     if (extra.passkey === true) {
       await page.click('#finPrivateLocked button:text-is("Unlock with Face ID")');
     } else {
@@ -2828,6 +2845,54 @@ const smokes = [
     const t = m.ledger.transactions.find((x) => x.id === 't1');
     if (!t || !/^[0-9a-f]{32}\.jpg$/.test(t.receipt || '') || (m.saved || []).at(-1) !== 'data:image/jpeg;base64,AAAA') throw new Error('the receipt did not come back plain: ' + JSON.stringify({ t, saved: m.saved }));
     await page.waitForSelector('#finRoot:not([hidden]) .fx-board .fx-widget', { timeout: 5000 });
+  } },
+  // Offline (2E step 6, the page's half): her phone keeps only the sealed copy (IndexedDB), opens it with no
+  // connection, keeps a change on the phone and sends it when the homelab answers again.
+  { name: 'Private Finances offline: opened with no connection, a change kept and sent when home again', screen: 'finances', phone: ['companion', 'finances'], mock: { person: 'anna', passkey: true }, run: async (page) => {
+    const words = await makePrivate(page, '');
+    await page.click('#finPrivateOpen button:text-is("Lock")');
+    // The page opened afresh away from home: no answer from the computer, nor from /api/me.
+    const m = await page.evaluate(() => ({ sealed: window.__MOCK.sealed, sealedRev: window.__MOCK.sealedRev, sealedSaves: window.__MOCK.sealedSaves }));
+    await page.evaluate((m) => sessionStorage.setItem('mock.next', JSON.stringify({ ...m, away: true, meAway: true })), m);
+    await page.reload();
+    await page.evaluate(() => document.documentElement.classList.add('preview', 'companion', 'finances'));
+    await page.click('nav button[data-screen="finances"]');
+    await page.waitForSelector('#finPrivateLocked', { timeout: 5000 });
+    await page.click('#finPrivateLocked button:text-is("Use your recovery code")');
+    await page.fill('#finPrivateWords', words.join(' '));
+    await page.click('#finPrivateLocked button:text-is("Unlock")');
+    await page.waitForSelector('#finPrivateOpen :text("Offline")', { timeout: 8000 });
+    await page.waitForSelector('#finRoot:not([hidden]) .fx-board .fx-widget', { timeout: 5000 });
+    const before = await page.evaluate(() => window.__MOCK.sealedRev);
+    const r = await page.evaluate(async () => { const v = await window.go.main.App.Finances(); const w = await window.go.main.App.SaveFinances({ ...v.plan, cushion: 777 }); return w.plan.cushion; });
+    if (r !== 777) throw new Error('the change was not kept on the phone');
+    await page.waitForSelector('#finPrivateOpen :text("1 change waits for the homelab")', { timeout: 3000 });
+    if ((await page.evaluate(() => window.__MOCK.sealedRev)) !== before) throw new Error('saved while away?');
+    const kept = await keptInPage(page);
+    if (!/"pending"/.test(kept.sealed) || /cushion|777|Made-up/.test(kept.sealed.replace(/"[A-Za-z0-9+/=]{40,}"/g, '""'))) throw new Error('the waiting change is not kept sealed: ' + kept.sealed.slice(0, 200));
+    // Home again: sent by itself, and the line goes.
+    await page.evaluate(() => { window.__MOCK.away = false; window.dispatchEvent(new Event('online')); });
+    await page.waitForFunction((b) => window.__MOCK.sealedRev !== b, before, { timeout: 5000 });
+    await page.waitForSelector('#finPrivateOpen:not(:has-text("Offline"))', { timeout: 5000 });
+    if (/"pending"/.test((await keptInPage(page)).sealed)) throw new Error('the change sent still waits');
+  } },
+  { name: 'Private Finances offline: a change another device made meanwhile is said plainly when home again', screen: 'finances', phone: ['companion', 'finances'], mock: { person: 'anna', passkey: true }, run: async (page) => {
+    await makePrivate(page, '');
+    await page.evaluate(() => { window.__MOCK.away = true; });
+    await page.evaluate(async () => { const v = await window.go.main.App.Finances(); await window.go.main.App.SaveFinances({ ...v.plan, cushion: 777 }); });
+    await page.waitForSelector('#finPrivateOpen :text("1 change waits for the homelab")', { timeout: 3000 });
+    await page.evaluate(() => { window.__MOCK.sealedRev = 'sealed-elsewhere'; window.__MOCK.away = false; window.dispatchEvent(new Event('online')); });
+    await page.waitForSelector('#finPrivate [role=alert]:has-text("While you were away, your Finances were changed on another of your devices")', { timeout: 5000 });
+    if (/"pending"/.test((await keptInPage(page)).sealed)) throw new Error('the beaten change still waits');
+  } },
+  // Turned off: the sealed copy goes from the phone too.
+  { name: 'Private Finances: turned off, nothing kept on the phone', screen: 'finances', phone: ['companion', 'finances'], mock: { person: 'anna', passkey: true }, run: async (page) => {
+    await makePrivate(page, '');
+    await page.click('#finPrivateOpen button:text-is("Turn privacy off…")');
+    await page.click('#finPrivateOff button:text-is("Turn privacy off")');
+    await page.waitForSelector('#finPrivateOn button:text-is("Make them private…")', { timeout: 8000 });
+    const kept = await keptInPage(page);
+    if (kept.sealed !== 'null') throw new Error('the sealed copy is still kept: ' + kept.sealed.slice(0, 100));
   } },
   // Her own phone that may only look gets no offer to make them private; the owner's phone neither.
   ...[['a member’s phone that only looks', { person: 'anna', phoneFinances: 'view' }], ['the owner’s phone', {}]].map(([who, m]) => ({ name: `Private Finances: no offer on ${who}`, screen: 'finances', phone: ['companion', 'finances'], mock: m, run: async (page) => {

@@ -77,6 +77,14 @@ function TurnOn() {
   </Card>;
 }
 
+/** "Offline: as of 4:10 PM." while the homelab doesn't answer, and what that means for changes. */
+function Away() {
+  const at = new Date(priv.offlineSince());
+  const today = at.toDateString() === new Date().toDateString();
+  const when = at.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) + (today ? '' : ', ' + at.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' }));
+  return <>Offline: as of {when}. Changes stay on this phone and go to the homelab when it answers.</>;
+}
+
 function Unlock() {
   const [how, setHow] = useState<'main' | 'code'>('main');
   const [text, setText] = useState('');
@@ -90,6 +98,7 @@ function Unlock() {
   return <Card kind="fx-private" id="finPrivateLocked">
     <h2>Your Finances are private</h2>
     <p>Only you can open them, with {priv.byPasskey() ? 'Face ID' : 'your passphrase'} or your recovery code.</p>
+    {!!priv.offlineSince() && <p class="muted"><Away /></p>}
     {how === 'main' && (priv.byPasskey()
       ? <button class="primary small" disabled={busy} onClick={() => run(priv.unlockWithPasskey)}>Unlock with Face ID</button>
       : <form onSubmit={(e) => { e.preventDefault(); run(() => priv.unlockWithPassphrase(text)); }}>
@@ -115,8 +124,10 @@ function Opened() {
   const [busy, setBusy] = useState(false);
   const [said, setSaid] = useState('');
   if (!asking) {
+    const n = priv.waitingChanges();
     return <p class="fx-privateon" id="finPrivateOpen"><span>Private: only you can open these.</span> <button class="linkbtn" onClick={priv.lock}>Lock</button>
-      {priv.mayChange() && <button class="linkbtn" onClick={() => setAsking(true)}>Turn privacy off…</button>}</p>;
+      {priv.mayChange() && !priv.offlineSince() && <button class="linkbtn" onClick={() => setAsking(true)}>Turn privacy off…</button>}
+      {!!priv.offlineSince() && <span class="fx-privateaway"><Away />{n ? ` ${n} ${n === 1 ? 'change waits' : 'changes wait'} for the homelab.` : ''}</span>}</p>;
   }
   const off = async () => {
     setBusy(true);
@@ -133,6 +144,11 @@ function Opened() {
 }
 
 function PrivateCard() {
+  const said = priv.privateNotice();
+  return <>{said && <p class="formerr warn fx-privatesaid" role="alert">{said}</p>}<Which /></>;
+}
+
+function Which() {
   const s = priv.privateState();
   if (s === 'locked') return <Unlock />;
   if (s === 'open') return <Opened />;
