@@ -1,19 +1,19 @@
 name: Feature request
-description: Suggest a curated wizard improvement
+description: Something Homelab Wizard could do, or do more simply
 title: "[Feature]: "
 labels: [enhancement]
 body:
   - type: textarea
     id: capability
     attributes:
-      label: Capability or workflow
-      description: Describe the user problem. Avoid proposing overlapping defaults unless there is a clear compatibility reason.
+      label: What you want to do
+      description: The task, in your words, and what gets in the way today (a screen, a step, a word that isn't clear). If it's an app for the catalog, which one, and what it would replace.
     validations:
       required: true
   - type: textarea
     id: safety
     attributes:
-      label: Safety impact
-      description: Explain public exposure, secrets, backup/restore, or destructive-action implications.
+      label: Anything it would open up or put at risk
+      description: Would it put an app on the internet, handle a password or token, or delete or move files? Say so, and what should keep it safe.
     validations:
       required: false

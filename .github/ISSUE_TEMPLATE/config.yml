@@ -1,0 +1,11 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Something isn't working
+    url: https://github.com/Snooper42/homelab-wizard/blob/main/docs/Troubleshooting.md
+    about: Symptoms and their usual fixes, by where you notice them. Status › Fix it in the app puts right what usually goes wrong.
+  - name: What is Homelab Wizard?
+    url: https://github.com/Snooper42/homelab-wizard/blob/main/docs/Tour.md
+    about: A tour of every screen, with pictures, before you ask.
+  - name: A security problem
+    url: https://github.com/Snooper42/homelab-wizard/blob/main/SECURITY.md
+    about: Please don't open a public issue for a security hole. How to report one privately.
