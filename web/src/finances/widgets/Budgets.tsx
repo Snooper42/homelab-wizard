@@ -37,11 +37,17 @@ export function BudgetsWidget({ v, edit, only, open, title = 'Budgets', span = '
           const pace = b.amount > 0 ? Math.min(100, (b.pace / b.amount) * 100) : 0;
           const icon = iconOf(v.categories, b.category);
           const hue = categoryHue(b.category, v.categories);
-          // What is left spread over the days to the end, today's included: how much a day keeps it on budget.
+          // What is left spread over the days to the end, today's included: how much a day keeps it on budget. The
+          // end is in the line under the name, so this says only the sum, short enough for one line on a phone.
           const days = Math.max(1, daysBetween(v.today, b.last) + 1);
-          const daily = b.left > 0.005 && b.last >= v.today ? `${money(b.left / days)} a day${days > 1 ? ` for ${days} days` : ', today'}` : '';
+          const daily = b.left > 0.005 && b.last >= v.today ? `${money(b.left / days)} ${days > 1 ? 'a day' : 'today'}` : '';
           return <Row key={b.category} lead={<Mark kind={icon} type={icon} name={b.category} hue={hue} />} title={b.category}
-            sub={`${b.per === 'paycheck' ? `This pay period, to ${dayShort(b.last)}` : `This month, to ${dayShort(b.last)}`} · ${money(b.spent)} of ${money(b.amount)}${b.rolled ? ` (${b.rolled > 0 ? 'with' : 'less'} ${money(Math.abs(b.rolled))} from last time)` : ''}`}
+            // Its parts break apart on a narrow card, never inside one ("$200.00 / of $150.00").
+            sub={<>
+              <span class="fx-keep">{b.per === 'paycheck' ? 'This pay period' : 'This month'}, to {dayShort(b.last)}</span>
+              {' · '}<span class="fx-keep">{money(b.spent)} of {money(b.amount)}</span>
+              {!!b.rolled && <>{' '}<span class="fx-keep">({b.rolled > 0 ? 'with' : 'less'} {money(Math.abs(b.rolled))} from last time)</span></>}
+            </>}
             when={<span class={'fx-budgetleft' + (tone ? ' fx-' + tone : '')}>{b.left < 0 ? <>{money(-b.left)} over</> : <><Amount value={b.left} form="full" /> left</>}{daily && <span class="fx-budgetday">{daily}</span>}</span>} whenPlain
             onOpen={show && (() => show(b.category, b.per === 'paycheck' ? undefined : b.start.slice(0, 7)))} openLabel={show ? 'see its transactions' : undefined}>
             <span class={'fx-budgetbar' + (tone ? ' ' + tone : '')} role="img" aria-label={`${b.category}: ${money(b.spent)} spent of ${money(b.amount)}${tone === 'warn' ? ', ahead of an even pace' : ''}`}>
