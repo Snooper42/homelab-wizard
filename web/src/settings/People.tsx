@@ -23,12 +23,21 @@ export interface PeopleProps {
   apps: { id: string; name: string }[];
   /** What the last command printed. */
   log: string;
+  /** Who keeps their Finances private, and when they last saved them (username → RFC 3339): all the computer knows of them. */
+  privateFinances?: Record<string, string>;
   on: PeopleActions;
 }
 
 const active = (p: people.Person) => !p.removed || p.removed.startsWith('0001');
 
-function Person({ p, on }: { p: people.Person; on: PeopleActions }) {
+/** "Keeps their Finances private (last saved Nov 13)", for a member whose Finances only their phone opens. */
+function privately(at: string | undefined) {
+  if (at === undefined) return '';
+  const d = new Date(at);
+  return `Keeps their Finances private${isNaN(d.getTime()) ? '' : ` (last saved ${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })})`}`;
+}
+
+function Person({ p, on, sealed }: { p: people.Person; on: PeopleActions; sealed?: string }) {
   const [busy, setBusy] = useState('');
   const [sure, setSure] = useState(false);
   const run = async (action: string) => {
@@ -39,13 +48,13 @@ function Person({ p, on }: { p: people.Person; on: PeopleActions }) {
   };
   const apps = p.apps || [];
   return (
-    <Row dot="ok" title={p.name} sub={[p.email, apps.length ? `${apps.length} app${apps.length === 1 ? '' : 's'}` : 'every app'].filter(Boolean).join(' · ')} end={<>
+    <Row dot="ok" title={p.name} sub={[p.email, apps.length ? `${apps.length} app${apps.length === 1 ? '' : 's'}` : 'every app', privately(sealed)].filter(Boolean).join(' · ')} end={<>
       <button class="small" title="Open their welcome page, to print or send" onClick={() => on.openWelcome(p.username)}>Welcome page</button>
       <button class="small" title="A new sign-in link (the old one stops working) and a fresh welcome page" disabled={busy === 'welcome'}
         onClick={async () => { if (await run('welcome')) on.openWelcome(p.username); }}>New sign-in link</button>
       <button class="small" title="A new password for their Jellyfin and Navidrome accounts (Infuse and music apps), on a fresh welcome page" disabled={busy === 'password'}
         onClick={async () => { if (await run('password')) on.openWelcome(p.username); }}>Reset password</button>
-      <button class="small danger" title="Turn their sign-in off; their photos, documents, and the rest stay" disabled={busy === 'remove'}
+      <button class="small danger" title={'Turn their sign-in off; their photos, documents, and the rest stay' + (sealed !== undefined ? '. Their private Finances stay too: you can delete them, but never open them' : '')} disabled={busy === 'remove'}
         onClick={async () => { if (!sure) { setSure(true); return; } if (await run('remove')) on.reload(); }}>{sure ? 'Click again to remove' : 'Remove'}</button>
     </>} />
   );
@@ -83,7 +92,7 @@ function AddPerson({ apps, open, on }: { apps: { id: string; name: string }[]; o
   );
 }
 
-export function People({ people, pocket, apps, log, on }: PeopleProps) {
+export function People({ people, pocket, apps, log, on, privateFinances }: PeopleProps) {
   const here = people.filter(active);
   const head = <CardHead title="People"><span class="muted">{here.length ? `${here.length} in the household` : 'just you so far'}</span></CardHead>;
   const why = <p class="muted">Each person gets one sign-in for the apps (with a passkey, no password to remember) and a welcome page with their apps and the phone apps to install. Jellyfin and Navidrome have a password of their own, for Infuse and music apps: with their keys in Settings, the homelab makes those accounts too, and Reset password gives a new one.</p>;
@@ -101,7 +110,7 @@ export function People({ people, pocket, apps, log, on }: PeopleProps) {
   return (
     <>
       {head}{why}
-      {!!here.length && <Rows>{here.map((p) => <Person key={p.username} p={p} on={on} />)}</Rows>}
+      {!!here.length && <Rows>{here.map((p) => <Person key={p.username} p={p} on={on} sealed={privateFinances?.[p.username]} />)}</Rows>}
       <AddPerson apps={apps} open={!here.length} on={on} />
       <pre id="peopleLog" hidden={!log}>{log}</pre>
     </>

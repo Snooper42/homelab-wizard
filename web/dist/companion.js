@@ -195,10 +195,14 @@
 
   // Who this phone is: whether it may make changes (start, stop, back up),
   // and whether it sees Finances (the screen itself says if it may change them).
+  // The answer is window.phoneMe too: a member's private Finances need whose phone it is.
+  let told;
+  window.phoneMe = new Promise((r) => { told = r; });
   async function me() {
     const r = await fetch('api/me', { headers: { Authorization: 'Bearer ' + token } });
     if (r.status === 401) return forget();
     const d = await r.json().catch(() => ({}));
+    told(d);
     document.documentElement.classList.toggle('can-change', !!d.canChange);
     document.documentElement.classList.toggle('finances', !kiosk && (d.finances === 'view' || d.finances === 'edit'));
     // The money card on Status: a phone allowed only it, or a wall screen allowed it or more.
@@ -206,6 +210,24 @@
     const foot = document.getElementById('foot');
     if (foot && d.name) foot.dataset.phone = d.name;
   }
+
+  // Finances read forward on this phone (cmd/financewasm), for a household
+  // member's private Finances, which the computer can't open: the Go runner
+  // and finance.wasm, loaded the first time they're wanted. finances/privacy.ts calls it.
+  let projection = null;
+  window.phoneProjection = () => (projection ??= new Promise((ok, no) => {
+    if (window.homelabFinance || window.Go) return ok();
+    const s = document.createElement('script');
+    s.src = 'wasm_exec.js';
+    s.onload = ok;
+    s.onerror = () => no(new Error('no wasm_exec.js'));
+    document.head.append(s);
+  }).then(async () => {
+    if (window.homelabFinance) return;
+    const g = new window.Go();
+    const r = await WebAssembly.instantiateStreaming(fetch('finance.wasm'), g.importObject);
+    g.run(r.instance); // sets window.homelabFinance, then waits for its calls
+  }).catch((e) => { projection = null; throw e; }));
 
   // Status follows the computer's engine (api/events), as on the computer:
   // each change comes as status:changed. fetch reads the stream, since it
@@ -261,7 +283,7 @@
 
   window.addEventListener('DOMContentLoaded', () => {
     if (!token) return pairForm(kiosk ? 'Pair this screen as you would a phone; it then shows Status only.' : '');
-    me().catch(() => {});
+    me().catch(() => told({})); // away: not known, so Finances answer as the computer does
     follow();
     if (kiosk) {
       clock();

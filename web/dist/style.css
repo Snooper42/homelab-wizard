@@ -2897,3 +2897,14 @@ button.fx-symbol small { color:var(--muted); }
 .swipehint.back { left:16px; } .swipehint.forward { right:16px; }
 @keyframes swipehint { from { opacity:1; } to { opacity:0; } }
 @media (prefers-reduced-motion: reduce) { .swipehint { animation:none; opacity:.8; } }
+/* A member's private Finances on her phone (finances/Private.tsx): turning them private, unlocking, Lock. */
+.fx-private { padding:14px 16px; margin:0 0 14px; max-width:640px; }
+.fx-private h2 { margin:0 0 6px; font-size:17px; }
+.fx-private p { margin:6px 0; }
+.fx-private .field { display:block; margin-top:8px; }
+.fx-private textarea { width:100%; box-sizing:border-box; }
+.fx-privatebtns { display:flex; flex-wrap:wrap; gap:8px 16px; align-items:center; margin-top:10px; }
+.fx-privatebtns button.primary.small, .fx-private form button.primary.small { margin-top:0; }
+.fx-private form button.primary.small { margin-top:10px; }
+.fx-code { display:grid; grid-template-columns:repeat(auto-fill, minmax(110px, 1fr)); gap:4px 12px; margin:10px 0; padding-left:28px; font-family:var(--mono, ui-monospace, monospace); font-size:15px; }
+.fx-privateon { display:flex; gap:10px; align-items:baseline; margin:0 0 10px; color:var(--muted); font-size:13px; }

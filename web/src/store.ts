@@ -21,6 +21,8 @@ export interface Store<T> {
   set(v: T): void;
   /** Marks it out of date: the next fresh() reads it. */
   stale(): void;
+  /** Drops what it holds (private Finances, locked), without telling the watchers. */
+  forget(): void;
   /** Calls fn after every read or set. */
   watch(fn: () => void): void;
 }
@@ -61,6 +63,7 @@ export function store<T>(read: () => Promise<T>): Store<T> {
       tell();
     },
     stale() { s.at = 0; },
+    forget() { s.value = undefined; s.error = undefined; s.at = 0; },
     watch(fn: () => void) { watchers.push(fn); },
   };
   return s;
