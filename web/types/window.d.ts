@@ -25,4 +25,8 @@ interface Backend {
   FinancesSealedReceipt?(name: string): Promise<string>;
   /** Keeps a sealed receipt; answers its name. */
   SaveFinancesSealedReceipt?(sealed: string): Promise<string>;
+  /** Turns her privacy off: her plan and ledger kept plain again, the envelope and sealed receipts removed. */
+  UnsealFinances?(rev: string, plan: unknown, ledger: unknown): Promise<boolean>;
+  /** What the household shares with a member, to look at. */
+  FinancesShared?(): Promise<import('../src/finances/privacy').Shared>;
 }

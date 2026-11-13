@@ -4803,7 +4803,7 @@
       ] }) })
     ] });
   }
-  function Flip({ id: id2, on: on2, yes, no, turnOn: turnOn3, turnOff, set: set2 }) {
+  function Flip({ id: id2, on: on2, yes, no, turnOn: turnOn3, turnOff: turnOff2, set: set2 }) {
     const [busy2, setBusy] = d2(false);
     return /* @__PURE__ */ u3(S, { children: [
       on2 ? /* @__PURE__ */ u3("span", { class: "ok", children: yes }) : /* @__PURE__ */ u3("span", { class: "muted", children: no }),
@@ -4812,7 +4812,7 @@
         setBusy(true);
         await set2(!on2);
         setBusy(false);
-      }, children: on2 ? turnOff : turnOn3 })
+      }, children: on2 ? turnOff2 : turnOn3 })
     ] });
   }
   function DiskBar({ d: d3 }) {
@@ -18117,6 +18117,11 @@ ${pays}
   };
   var isLocked = (e3) => e3?.name === "Locked";
   var sealedCalls = () => real;
+  async function householdShared() {
+    await find();
+    if (!me.person) return null;
+    return sealedCalls().FinancesShared();
+  }
   function find() {
     return known2 ??= (async () => {
       me = await window.phoneMe?.catch(() => ({})) || {};
@@ -18317,6 +18322,31 @@ ${pays}
     touched();
     tell2();
   }
+  async function turnOff() {
+    if (state2 !== "open" || !key5 || !data || !envelope) throw new Locked();
+    const ledger = data.ledger;
+    const pictures2 = /* @__PURE__ */ new Map();
+    for (const t3 of ledger.transactions || []) {
+      if (t3.receipt?.endsWith(".sealed")) pictures2.set(t3.id, await openText(key5, me.person, await sealedCalls().FinancesSealedReceipt(t3.receipt)));
+    }
+    const bare = { ...ledger, transactions: (ledger.transactions || []).map((t3) => pictures2.has(t3.id) ? { ...t3, receipt: void 0 } : t3) };
+    await sealedCalls().UnsealFinances(envelope.rev, data.plan, bare);
+    key5 = null;
+    data = null;
+    envelope = null;
+    state2 = "plain";
+    clearTimeout(idle);
+    try {
+      if (pictures2.size) {
+        const names5 = /* @__PURE__ */ new Map();
+        for (const [id2, url] of pictures2) names5.set(id2, await real.SaveFinancesReceipt(url));
+        const l3 = await real.FinancesLedger();
+        await real.SaveFinancesLedger({ ...l3, transactions: (l3.transactions || []).map((t3) => names5.has(t3.id) ? { ...t3, receipt: names5.get(t3.id) } : t3) });
+      }
+    } finally {
+      tell2();
+    }
+  }
 
   // web/src/finances/Private.tsx
   function TurnOn() {
@@ -18484,21 +18514,95 @@ ${pays}
       said2 && /* @__PURE__ */ u3("p", { class: "formerr bad", role: "alert", children: said2 })
     ] });
   }
-  function PrivateCard() {
-    const s3 = privateState();
-    if (s3 === "locked") return /* @__PURE__ */ u3(Unlock, {});
-    if (s3 === "open") {
+  function Opened() {
+    const [asking, setAsking] = d2(false);
+    const [busy2, setBusy] = d2(false);
+    const [said2, setSaid] = d2("");
+    if (!asking) {
       return /* @__PURE__ */ u3("p", { class: "fx-privateon", id: "finPrivateOpen", children: [
         /* @__PURE__ */ u3("span", { children: "Private: only you can open these." }),
         " ",
-        /* @__PURE__ */ u3("button", { class: "linkbtn", onClick: lock, children: "Lock" })
+        /* @__PURE__ */ u3("button", { class: "linkbtn", onClick: lock, children: "Lock" }),
+        mayChange() && /* @__PURE__ */ u3("button", { class: "linkbtn", onClick: () => setAsking(true), children: "Turn privacy off…" })
       ] });
     }
+    const off2 = async () => {
+      setBusy(true);
+      setSaid("");
+      try {
+        await turnOff();
+      } catch (e3) {
+        setSaid(errorText(e3));
+        setBusy(false);
+      }
+    };
+    return /* @__PURE__ */ u3(Card, { kind: "fx-private", id: "finPrivateOff", children: [
+      /* @__PURE__ */ u3("h2", { children: "Turn privacy off?" }),
+      /* @__PURE__ */ u3("p", { children: "Your Finances go back to the homelab as they are now, kept plain again, where the person who runs it can read them. Your recovery code and passkey won’t be needed any more." }),
+      /* @__PURE__ */ u3("div", { class: "fx-privatebtns", children: [
+        /* @__PURE__ */ u3("button", { class: "primary small", disabled: busy2, onClick: off2, children: "Turn privacy off" }),
+        /* @__PURE__ */ u3("button", { class: "linkbtn", disabled: busy2, onClick: () => {
+          setAsking(false);
+          setSaid("");
+        }, children: "Cancel" })
+      ] }),
+      busy2 && /* @__PURE__ */ u3("p", { class: "muted", role: "status", children: "Turning privacy off…" }),
+      said2 && /* @__PURE__ */ u3("p", { class: "formerr bad", role: "alert", children: said2 })
+    ] });
+  }
+  function PrivateCard() {
+    const s3 = privateState();
+    if (s3 === "locked") return /* @__PURE__ */ u3(Unlock, {});
+    if (s3 === "open") return /* @__PURE__ */ u3(Opened, {});
     if (s3 === "plain" && mayChange()) return /* @__PURE__ */ u3(TurnOn, {});
     return null;
   }
   function mountPrivate(el3) {
     R(/* @__PURE__ */ u3(PrivateCard, {}), el3);
+  }
+
+  // web/src/finances/Shared.tsx
+  var often = { week: "Weekly", "2 weeks": "Every other week", "twice a month": "Twice a month", month: "Monthly", "3 months": "Every 3 months", year: "Yearly", paycheck: "With each paycheck" };
+  function Pay2({ p: p3, end, currency }) {
+    return /* @__PURE__ */ u3("li", { children: [
+      /* @__PURE__ */ u3("span", { children: p3.name }),
+      /* @__PURE__ */ u3("span", { class: "muted", children: end }),
+      /* @__PURE__ */ u3("strong", { children: [
+        p3.estimate ? "≈ " : "",
+        moneyIn(p3.amount, currency)
+      ] })
+    ] });
+  }
+  function Household({ s: s3 }) {
+    const c4 = s3.currency;
+    return /* @__PURE__ */ u3(Card, { kind: "fx-household", children: [
+      /* @__PURE__ */ u3("div", { class: "fx-householdhead", children: [
+        /* @__PURE__ */ u3("h2", { children: "Household" }),
+        /* @__PURE__ */ u3("span", { class: "muted", children: "Shared with you" })
+      ] }),
+      !!s3.bills?.length && /* @__PURE__ */ u3(S, { children: [
+        /* @__PURE__ */ u3("h3", { children: "Coming up" }),
+        /* @__PURE__ */ u3("ul", { children: s3.bills.slice(0, 5).map((b2) => /* @__PURE__ */ u3(Pay2, { p: b2, currency: c4, end: b2.date ? dayShort(b2.date) : "" })) })
+      ] }),
+      !!s3.subscriptions?.length && /* @__PURE__ */ u3(S, { children: [
+        /* @__PURE__ */ u3("h3", { children: "Subscriptions" }),
+        /* @__PURE__ */ u3("ul", { children: s3.subscriptions.map((b2) => /* @__PURE__ */ u3(Pay2, { p: b2, currency: c4, end: often[b2.every || ""] || "" })) })
+      ] }),
+      !!s3.budgets?.length && /* @__PURE__ */ u3(S, { children: [
+        /* @__PURE__ */ u3("h3", { children: "Budgets this month" }),
+        /* @__PURE__ */ u3("ul", { children: s3.budgets.map((b2) => /* @__PURE__ */ u3("li", { class: "fx-householdbudget", children: [
+          /* @__PURE__ */ u3("span", { children: b2.category }),
+          /* @__PURE__ */ u3("strong", { class: b2.left < 0 ? "bad" : "", children: [
+            moneyIn(Math.max(b2.left, 0), c4).replace(/\.00$/, ""),
+            " left"
+          ] }),
+          /* @__PURE__ */ u3("span", { class: "fx-householdbar", "aria-hidden": "true", children: /* @__PURE__ */ u3("span", { style: { width: `${Math.min(100, b2.amount > 0 ? b2.spent / b2.amount * 100 : 0)}%` } }) })
+        ] })) })
+      ] })
+    ] });
+  }
+  function mountShared(el3, s3) {
+    R(s3 && (s3.bills?.length || s3.subscriptions?.length || s3.budgets?.length) ? /* @__PURE__ */ u3(Household, { s: s3 }) : null, el3);
   }
 
   // web/src/screens/finances.ts
@@ -18507,6 +18611,8 @@ ${pays}
   financesData.watch(draw4);
   var ledgerData = store(() => go().FinancesLedger());
   ledgerData.watch(draw4);
+  var sharedData = store(() => householdShared());
+  sharedData.watch(draw4);
   statusData.watch(() => {
     if (financesData.value) draw4();
   });
@@ -18586,7 +18692,7 @@ ${pays}
   }
   function loadFinances() {
     statusData.fresh(5 * 6e4);
-    return Promise.all([financesData.load(), ledgerData.load()]).then(() => {
+    return Promise.all([financesData.load(), ledgerData.load(), phone ? sharedData.load() : null]).then(() => {
     });
   }
   var tab = "overview";
@@ -18603,6 +18709,7 @@ ${pays}
   var phone = document.documentElement.classList.contains("companion");
   function draw4() {
     mountPrivate($("finPrivate"));
+    mountShared($("finShared"), sharedData.value);
     const locked = privateState() === "locked" || isLocked(financesData.error);
     $("finRoot").hidden = locked;
     if (financesData.error && !locked && $("finances").classList.contains("active")) showError(financesData.error);
@@ -20797,6 +20904,7 @@ ${pays}
     if (name === "finances") {
       financesData.fresh(minute);
       ledgerData.fresh(minute);
+      if (onPhone()) sharedData.fresh(5 * minute);
     } else if (!onPhone()) financesData.fresh(5 * minute);
   }
   function reloadScreen() {

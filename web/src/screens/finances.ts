@@ -18,8 +18,9 @@ import { statusData } from './status';
 import { $, errorText, go, showError } from '../core';
 import { navigate } from '../app';
 import { keepsTabs, tabChanged } from '../tabs';
-import { installPrivate, isLocked, lock, privateState, watchPrivate } from '../finances/privacy';
+import { householdShared, installPrivate, isLocked, lock, privateState, watchPrivate } from '../finances/privacy';
 import { mountPrivate } from '../finances/Private';
+import { mountShared } from '../finances/Shared';
 
 // A member's private Finances, on her phone: the page answers the Finances
 // calls itself once they're sealed (finances/privacy.ts), so it is in front
@@ -31,6 +32,9 @@ financesData.watch(draw);
 // What actually happened, beside the plan: read with it, kept as it is.
 export const ledgerData = store(() => go().FinancesLedger());
 ledgerData.watch(draw);
+// On a member's phone, what the household shares with her: read with hers, shown locked or not.
+export const sharedData = store(() => householdShared());
+sharedData.watch(draw);
 // Which apps run (Status), for the payments the homelab does the job of: drawn again as it comes.
 statusData.watch(() => { if (financesData.value) draw(); });
 // Locked, opened, or made private: what was shown goes, and is read again (locked, the unlock card instead).
@@ -121,7 +125,7 @@ function readEachMorning(v: finance.View) {
   autoTried = v.today;
   readInvestments();
 }
-export function loadFinances() { statusData.fresh(5 * 60000); return Promise.all([financesData.load(), ledgerData.load()]).then(() => {}); }
+export function loadFinances() { statusData.fresh(5 * 60000); return Promise.all([financesData.load(), ledgerData.load(), phone ? sharedData.load() : null]).then(() => {}); }
 
 // The view shown and the paycheck picked, kept between visits; until one
 // is picked, the next paycheck (the first stretch when it lands today and
@@ -140,6 +144,7 @@ const phone = document.documentElement.classList.contains('companion');
 function draw() {
   // Her private Finances, locked: the card that unlocks them, nothing else.
   mountPrivate($('finPrivate'));
+  mountShared($('finShared'), sharedData.value);
   const locked = privateState() === 'locked' || isLocked(financesData.error);
   $('finRoot').hidden = locked;
   // The plan is read for the sidebar on every screen: a failure is said on Finances only.

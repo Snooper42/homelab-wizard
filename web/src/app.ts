@@ -14,7 +14,7 @@ import { loadCatalog } from './screens/choose';
 import { backupsData, jobsData, loadBackups } from './screens/backups';
 import { openApp, openedApp, refreshApp } from './screens/apppage';
 import { updateFromMenu } from './screens/updates';
-import { financesData, ledgerData, loadFinances, toggleHideAmounts } from './screens/finances';
+import { financesData, ledgerData, loadFinances, sharedData, toggleHideAmounts } from './screens/finances';
 import { loadTidy, tidyData } from './screens/tidy';
 import { cliProgress, jobApp } from './jobs';
 import { openPalette } from './palette/Palette';
@@ -58,7 +58,7 @@ function freshen(name) {
   if (name === 'setup') { hostData.fresh(minute); stepsData.fresh(minute); healthData.fresh(minute); statusData.fresh(minute); }
   if (name === 'settings') { hostData.fresh(minute); if (!Object.keys(changed).length) settingsData.fresh(minute); }
   if (name === 'tidy') tidyData.fresh(minute);
-  if (name === 'finances') { financesData.fresh(minute); ledgerData.fresh(minute); }
+  if (name === 'finances') { financesData.fresh(minute); ledgerData.fresh(minute); if (onPhone()) sharedData.fresh(5 * minute); }
   // The sidebar's balances show on every screen (not on a phone): the plan
   // is read for them too, at most every five minutes off Finances.
   else if (!onPhone()) financesData.fresh(5 * minute);

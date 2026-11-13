@@ -2908,3 +2908,14 @@ button.fx-symbol small { color:var(--muted); }
 .fx-private form button.primary.small { margin-top:10px; }
 .fx-code { display:grid; grid-template-columns:repeat(auto-fill, minmax(110px, 1fr)); gap:4px 12px; margin:10px 0; padding-left:28px; font-family:var(--mono, ui-monospace, monospace); font-size:15px; }
 .fx-privateon { display:flex; gap:10px; align-items:baseline; margin:0 0 10px; color:var(--muted); font-size:13px; }
+/* On a member's phone: what the household shares with her (finances/Shared.tsx), to look at. */
+.fx-household { padding:14px 16px; margin:14px 0; max-width:640px; }
+.fx-householdhead { display:flex; justify-content:space-between; align-items:baseline; gap:12px; }
+.fx-household h2 { margin:0; font-size:17px; }
+.fx-household h3 { margin:12px 0 4px; font-size:13px; color:var(--muted); font-weight:600; }
+.fx-household ul { list-style:none; margin:0; padding:0; }
+.fx-household li { display:grid; grid-template-columns:1fr auto auto; gap:4px 12px; padding:5px 0; align-items:baseline; }
+.fx-household li strong { font-variant-numeric:tabular-nums; }
+.fx-household li.fx-householdbudget { grid-template-columns:1fr auto; }
+.fx-householdbar { grid-column:1 / -1; height:6px; border-radius:3px; background:var(--line); overflow:hidden; }
+.fx-householdbar span { display:block; height:100%; background:var(--primary); }
