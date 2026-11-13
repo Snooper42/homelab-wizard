@@ -80,3 +80,38 @@ for (const how of [{ code, prf }, { code, passphrase: 'correct horse battery' }]
 }
 await refused('a passphrase under 12 characters', s.turnOn(data, 'anna', { code, passphrase: 'short one' }));
 console.log('seal.ts: scrypt matches RFC 7914; sealed Finances open by each way and refuse the rest');
+
+// What the iPhone app's sealing is tested against (apple-client/Tests/
+// Resources/PrivateSealVectors.json, PrivateSealTests): envelopes this file
+// sealed, made-up Finances, a fixed code, passphrase and passkey secret, and
+// the word list. Written with --update-vectors; checked here each run, so the
+// page and the app keep one format.
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+const vectorsPath = join(here, '..', '..', 'apple-client', 'Tests', 'Resources', 'PrivateSealVectors.json');
+const b64 = (u) => Buffer.from(u).toString('base64');
+if (process.argv.includes('--update-vectors')) {
+  const fixedCode = Uint8Array.from({ length: 16 }, (_, i) => i * 17);
+  const fixedPrf = { secret: new Uint8Array(32).fill(7), credential: new Uint8Array([1, 2, 3, 4]) };
+  const byPasskey = await s.turnOn(data, 'anna', { code: fixedCode, prf: fixedPrf });
+  const byPassphrase = await s.turnOn(data, 'anna', { code: fixedCode, passphrase: 'correct horse battery' });
+  const v = {
+    username: 'anna', plain: JSON.stringify(data), code: b64(fixedCode), codeWords: s.codeWords(fixedCode), words: s.WORDS,
+    passphrase: 'correct horse battery', passkeySecret: b64(fixedPrf.secret), passkeyCredential: b64(fixedPrf.credential), prfInput: Buffer.from(s.PRF_INPUT).toString('utf8'),
+    byPasskey: byPasskey.envelope, byPassphrase: byPassphrase.envelope,
+    receipt: { plain: 'data:image/jpeg;base64,AAAA', sealed: await s.sealText(byPasskey.key, 'anna', 'data:image/jpeg;base64,AAAA') },
+  };
+  writeFileSync(vectorsPath, JSON.stringify(v, null, 2) + '\n');
+  console.log('seal.ts: wrote ' + vectorsPath);
+}
+if (existsSync(vectorsPath)) {
+  const v = JSON.parse(readFileSync(vectorsPath, 'utf8'));
+  const code = Buffer.from(v.code, 'base64');
+  if (v.words.join() !== s.WORDS.join() || v.codeWords.join() !== s.codeWords(code).join()) fail('the vectors’ words differ from seal.ts: --update-vectors');
+  const k1 = await s.unlockWithPasskey(v.byPasskey, v.username, Buffer.from(v.passkeySecret, 'base64'));
+  const k2 = await s.unlockWithPassphrase(v.byPassphrase, v.username, v.passphrase);
+  for (const [k, e] of [[k1, v.byPasskey], [await s.unlockWithCode(v.byPasskey, v.username, code), v.byPasskey], [k2, v.byPassphrase]]) {
+    if (JSON.stringify(await s.openSealed(k, e, v.username)) !== v.plain) fail('a vector didn’t open to its plain Finances');
+  }
+  if ((await s.openText(k1, v.username, v.receipt.sealed)) !== v.receipt.plain) fail('the vectors’ receipt didn’t open');
+  console.log('seal.ts: the iPhone app’s vectors open as the page seals them');
+}
