@@ -1673,6 +1673,38 @@ class KeysOnARedirect(unittest.TestCase):
         sent = at_other[0]
         self.assertFalse([k for k in (h.lower() for h in keys) if k in sent], "another host gets none: %s" % sent)
 
+    def big_answer(self, size):
+        import http.server
+
+        class Big(http.server.BaseHTTPRequestHandler):
+            def do_GET(self):
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()  # no length: read until it closes, as a server can
+                chunk = b" " * 65536
+                try:
+                    for _ in range(size // len(chunk)):
+                        self.wfile.write(chunk)
+                    self.wfile.write(b"{}")
+                except OSError:
+                    pass
+
+            def log_message(self, *a):
+                pass
+        return self.serve(Big)
+
+    def test_an_answer_is_read_only_up_to_its_cap(self):
+        # lrclib.net, MusicBrainz, or a server at home could answer without end; the job reads only so much.
+        url = self.big_answer(5 * 1024 * 1024)
+        with self.assertRaises(RuntimeError) as e:
+            mc.http_json("GET", url + "/x", max_bytes=1024 * 1024)
+        self.assertIn("too large", str(e.exception))
+        self.assertEqual(mc.http_json("GET", url + "/x", max_bytes=8 * 1024 * 1024), {}, "under its cap, read whole")
+        self.assertTrue(0 < mc.MAX_ANSWER <= 256 * 1024 * 1024, "every call has a cap")
+        for name in ("_lrclib_get", "mb_release"):
+            src = __import__("inspect").getsource(getattr(music_tidy, name))
+            self.assertIn("max_bytes=", src, "%s, an outside service, asks for a small cap" % name)
+
     def test_a_redirect_within_the_same_host_keeps_the_key(self):
         same_h, seen = self.redirect_to("")
         base = self.serve(same_h)

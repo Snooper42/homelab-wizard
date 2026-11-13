@@ -247,6 +247,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- **Tidy Up reads only so much of an answer:** a reply from the lyrics site, MusicBrainz, or an app at home that never ends no longer takes Tidy Up's memory; past a sensible size the job says so and goes on.
 - **Needs a look names only downloads:** **It's a film…**, **It's an episode…** and picking an album act only on something in a Downloads folder Tidy Up watches, so a changed list can't have them move a video or songs from anywhere else into your library.
 - **Tidy Up's keys stay with their own app:** when Jellyfin, Tdarr, Plex, Audiobookshelf or Navidrome (or whatever answers at its address) sends Tidy Up on to another address, the app's key no longer goes along.
 - **A download replaces only its own album:** when new music replaces an album already in your library, Tidy Up now takes out of beets only the album with exactly those names, not every album whose names contain them, and a download's odd tags can't make it take out all of them.

@@ -686,7 +686,12 @@ class _KeysStayHome(urllib.request.HTTPRedirectHandler):
 _opener = urllib.request.build_opener(_KeysStayHome)
 
 
-def http_json(method, url, body=None, headers=None, timeout=30, form=False):
+# The most any answer is read to: room for a large library's list from Jellyfin, never without end. A call to an
+# outside service (lrclib.net, MusicBrainz) asks for far less with max_bytes.
+MAX_ANSWER = 64 * 1024 * 1024
+
+
+def http_json(method, url, body=None, headers=None, timeout=30, form=False, max_bytes=MAX_ANSWER):
     data = None
     h = {"Accept": "application/json"}
     if body is not None:
@@ -700,7 +705,10 @@ def http_json(method, url, body=None, headers=None, timeout=30, form=False):
     req = urllib.request.Request(url, data=data, method=method, headers=h)
     try:
         with _opener.open(req, timeout=timeout) as r:
-            raw = r.read()
+            raw = r.read(max_bytes + 1)
+        if len(raw) > max_bytes:
+            raise RuntimeError("%s %s answered too large a reply (over %d MB)" % (method, re.sub(r"[?].*", "", url),
+                                                                               max_bytes // (1024 * 1024)))
     except urllib.error.HTTPError as e:
         raise RuntimeError("%s %s answered %d" % (method, re.sub(r"[?].*", "", url), e.code))
     except (urllib.error.URLError, OSError) as e:
