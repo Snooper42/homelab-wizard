@@ -15,7 +15,7 @@ Encrypted, versioned, deduplicated backups of everything that matters, written t
 | Starts with `./homelab up` | Yes (`./homelab up`) |
 | Address | https://backups.example.com (LAN, through Nginx Proxy Manager) |
 | On this machine | http://localhost:8200 (`DUPLICATI_PORT`) |
-| Data | `data/appdata/duplicati` → `/config`<br>`data/appdata, read-only` → `/source/appdata`<br>`appdata, read-only` → `/source/homelab-appdata`<br>`stacks, read-only` → `/source/stacks`<br>`~/.local/share/jellyfin, read-only` → `/source/jellyfin`<br>`/Volumes/Media/photos, read-only` → `/source/immich`<br>`/Volumes/Media/Books, read-only` → `/source/calibre`<br>`recovery-staging` → `/staging`<br>`backups` → `/destination` |
+| Data | `data/appdata/duplicati` → `/config`<br>`data/appdata, read-only` → `/source/appdata`<br>`appdata, read-only` → `/source/homelab-appdata`<br>`stacks, read-only` → `/source/stacks`<br>`~/.local/share/jellyfin, read-only` → `/source/jellyfin`<br>`/Volumes/Media/photos, read-only` → `/source/immich`<br>`/Volumes/Media/Books, read-only` → `/source/calibre`<br>`data/sync, read-only` → `/source/sync`<br>`recovery-staging` → `/staging`<br>`backups` → `/destination` |
 | Updates | Nightly at 4 AM, with a copy of its data first |
 <!-- END homelab:generated -->
 
@@ -53,7 +53,7 @@ By hand instead: in Duplicati, add a job per row of the table in [Automation](<.
 | Backup files | `BACKUP_DESTINATION/<job folder>` (`/destination/...`): `photos`, `databases`, `secrets`, `appdata`, `stack-data`, `infrastructure`, `jellyfin`, `calibre` |
 | Database dumps and volume archives | `recovery-staging/databases/`, `recovery-staging/volumes/` (`/staging/...`) |
 | Copy of `.env` for the Secrets job | `recovery-staging/secrets/` |
-| Sources, read-only | `/source/appdata`, `/source/homelab-appdata`, `/source/stacks`, `/source/jellyfin`, `/source/immich`, `/source/calibre` |
+| Sources, read-only | `/source/appdata`, `/source/homelab-appdata`, `/source/stacks`, `/source/jellyfin`, `/source/immich`, `/source/calibre`, `/source/sync` |
 
 ## Everyday use
 

@@ -27,6 +27,7 @@ var backupHolds = map[string]string{ // #nosec G101 -- descriptions of backup jo
 	"infrastructure": "the stacks folder, your own apps included",
 	"jellyfin":       "Jellyfin's library data",
 	"calibre":        "the books",
+	"files":          "the synced Files (SYNC_ROOT)",
 }
 
 // recoveryKit writes the printable recovery kit: where the backups and

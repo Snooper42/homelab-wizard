@@ -1,6 +1,7 @@
 package main
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"os"
@@ -148,6 +149,9 @@ func (h *homelab) duplicatiSetup(ctx context.Context, args []string) error {
 		return err
 	}
 	home, _ := os.UserHomeDir()
+	// The synced Files' folder as Compose resolves it: a relative SYNC_ROOT
+	// is the homelab folder's.
+	env["SYNC_ROOT"] = h.hostPath(cmp.Or(env["SYNC_ROOT"], "./data/sync"))
 	plan := duplicati.Plan(env, home, existing, time.Now())
 
 	u := h.ui
@@ -398,4 +402,40 @@ func (h *homelab) hostPath(p string) string {
 		return p
 	}
 	return filepath.Join(h.root, p)
+}
+
+// addMissingBackupJobs makes the homelab's backup jobs added since Setup
+// made the others (Homelab Files, N76), so a homelab set up before they
+// existed gets them too: only once Setup has made jobs, and only those
+// duplicati setup makes now (a large one once its folder has files, waiting
+// for its schedule). Best effort: the night goes on whatever happens.
+func (h *homelab) addMissingBackupJobs(ctx context.Context) {
+	c, err := h.duplicatiLogin(ctx)
+	if err != nil {
+		return
+	}
+	existing, err := c.Jobs(ctx, time.Now())
+	if err != nil {
+		return
+	}
+	setUp := false
+	for _, e := range existing {
+		for _, j := range duplicati.HomelabJobs {
+			setUp = setUp || strings.EqualFold(e.Name, j.Name)
+		}
+	}
+	if !setUp {
+		return // Setup › Create the backup jobs makes them all
+	}
+	env := h.envMap()
+	env["SYNC_ROOT"] = h.hostPath(cmp.Or(env["SYNC_ROOT"], "./data/sync"))
+	home, _ := os.UserHomeDir()
+	for _, p := range duplicati.Plan(env, home, existing, time.Now()) {
+		if p.Action == "create" {
+			if err := h.duplicatiSetup(ctx, []string{"--apply", "--no-run"}); err != nil {
+				h.ui.Warn("adding the new backup jobs: %v", err)
+			}
+			return
+		}
+	}
 }

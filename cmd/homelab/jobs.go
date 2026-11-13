@@ -343,6 +343,8 @@ func (h *homelab) backup(ctx context.Context, args []string) error {
 	}
 	// Finances' reminders go whatever became of the backup.
 	h.sendFinanceReminders(ctx, time.Now())
+	// A backup job added since Setup made the others (the synced Files).
+	h.addMissingBackupJobs(ctx)
 	if len(failures) > 0 {
 		// Failing for days (a copy two nights old) is serious: it sounds
 		// in the quiet hours too.
