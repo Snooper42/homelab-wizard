@@ -1677,14 +1677,14 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
 
 From task 2, **Something is down: find out what, and fix it** (Nov 6, against the fake backend: Mealie stopped). Pictures in `docs/images/usability/`.
 
-1. **A stopped app's page never says why, or what to do if Start does not help** (`t2-mealie-page.png`). The page shows "▲ Stopped", a Start button, and a log of old, normal lines from Oct 10 ("Starting server on :3456"). Nothing says whether it was stopped on purpose, stopped for a while, crashed, or kept restarting, nor what to try next. *Fixed looks like:* a line under the title saying why it stopped and since when (stopped by you or for a while; crashed with its last error line; kept restarting and was stopped), and what to do (Start; or Restart, then the log's error; or "it needs X"). *Smoke case that fails today:* the app page for an app the watchdog stopped in a restart loop names the reason and when.
+1. (done: confirmed in task 2's re-run, Nov 13: the page says "It was stopped outside the homelab (by Docker, or a shutdown). Start starts it again.") **A stopped app's page never says why, or what to do if Start does not help** (`t2-mealie-page.png`). The page shows "▲ Stopped", a Start button, and a log of old, normal lines from Oct 10 ("Starting server on :3456"). Nothing says whether it was stopped on purpose, stopped for a while, crashed, or kept restarting, nor what to try next. *Fixed looks like:* a line under the title saying why it stopped and since when (stopped by you or for a while; crashed with its last error line; kept restarting and was stopped), and what to do (Start; or Restart, then the log's error; or "it needs X"). *Smoke case that fails today:* the app page for an app the watchdog stopped in a restart loop names the reason and when.
 2. (done: the phone's web page in #524; the iPhone app on Nov 10, after #575) **On the phone, a stopped app offers nothing and says nothing** (`t2-phone-status.png`, `t2-phone-mealie-page.png`). Every running app has Open; Mealie has no button and no word, on the list or on its page. *Fixed looks like:* a phone that may make changes gets Start; one that only looks says "Start it from the computer". *Smoke case:* the phone's Status (look-only and may-change) for a stopped app shows the action or the sentence.
-3. **The screens disagree about checks** (`t2-phone-status.png`, `t2-mealie-page.png`).
+3. (done: confirmed in task 2's re-run, Nov 13: both screens' watchdog line says "Not checked while stopped: Mealie", and the page says the watchdog doesn't check it while stopped) **The screens disagree about checks** (`t2-phone-status.png`, `t2-mealie-page.png`).
    - The phone's Status says "Watchdog ✓ All 47 checks passed" while Mealie is stopped and the desktop's "Needs a look" card names it.
    - Mealie's page says "Not checked yet… once Setup turns it on", while Status's header says "Backups and checks on".
 
    *Fixed looks like:* the watchdog line counts a stopped app (or says why it is not checked), and the page says the same as the header. *Smoke case:* Status with one app stopped says it in the watchdog line.
-4. **Words a household cannot read** (`t2-status.png`, `t2-phone-status.png`):
+4. (done: confirmed in task 2's re-run, Nov 13: "Choose apps", "The homelab's own apps are all up", "Instead of subscriptions", and Protection in plain words) **Words a household cannot read** (`t2-status.png`, `t2-phone-status.png`):
    - "Choose stacks" (the sidebar);
    - "All baseline apps are up";
    - "Replaces a year $3,292", which does not say it means what the apps would cost as subscriptions;
@@ -1718,6 +1718,15 @@ From task 7, **Give a person their own account, and send the welcome page** (Nov
     - "The apps they use (none ticked: all of them)": ticking one app gives them only that app.
 
     *Fixed looks like:* plain words ("a sign-in with her phone's face or fingerprint", "the household's sign-in"), the music and films password named on its button, and "All the apps" as a choice of its own beside "Only these". *Smoke case:* the words lint refusing "passkey" and "Pocket ID" without a plain gloss on People.
+
+From task 2's re-run (Nov 13, the phone at 390px and 320px with big text, and the computer, against the fake backend with Mealie stopped; `t2-rerun-phone-status.png`):
+
+17. **Two words left, and a dot cut from its word.**
+    - The watchdog's restart note says "(once in 6 hours at most; AUTO_HEAL=false turns this off)": a setting's code name, on the phone and the computer.
+    - Mealie's page says "At home and on your tailnet" (item 10's word, on another screen).
+    - At 320px with big text, a running app's green dot sits alone on a line above "Running".
+
+    *Fixed looks like:* "Settings › Apps › Restart a stuck app turns this off"; "and on your own private network"; the dot kept on its word's line. *Smoke case:* the words lint refusing an UPPER_CASE setting name on a screen.
 
 Not a screen, but yours: **`TestJobLogSplitsAtOnceAllFinish` (#471) failed once on Windows CI** (Nov 6, #475's run: "open …\\watchdog.log: The process cannot access the file because it is being used by another process"; green on a re-run). Either the test is flaky on Windows, or a log can't be rotated on Windows while another process has it open, which would also bite a household's Windows machine. Worth a look before it turns another lane's run red.
 
