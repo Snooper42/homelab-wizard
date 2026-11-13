@@ -915,6 +915,7 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
 - **N71 (Nov 12, round 40):** items 105 and 166: the tray listens on a socket in the account's own folder (`core.ListenTray`), the kind the engine already serves on every system; `homelab quit` asks there and at the old address. No item is open. Next: the next merge, or audit again.
 - **Round 41 (Nov 13, N72 and N73):** #655 merged (N71; the Mac's real tray test needed a short socket path under a long home folder, which a too-long path now falls back to, in a folder of the account's own). Read #654 (Send to my phone): one of the app's own links, to one phone, the title as text; N72 built from it (the companion checks the phone again as it passes a send on). The backlog was empty: items 167–176 added; N73 built (release notes in a terminal as plain text); the rest hold. Then read #656 (Open on the Computer: `OpenOnComputer` is a change, so only a phone allowed them; `MayOpen` with no member apps, so a member's phone may ask only Status; the app's own links with no action; the desktop window only goes to that page, the phone's name shown as text): holds. No item is open. Next: the next merge, or audit again.
 - **Round 42 (Nov 13, usability first; N74 and N75):** task 7 run (People and the welcome page: four findings for Account 2, items 13 to 16). N74 found while writing the owner's spec for a member's private Finances (`.claude/prompts/private-finances.md`, for the other account's session): `data/members` was in no backup; now a record folder. Read #659 (the Collection: plan fields, clipped and capped), #661 (a card's photo: bytes and pixels by its header, a content name, the owner's phones only), #662 (prices from TCGdex on a click, the owner's yes: N75, a redirect followed anywhere, now only within TCGdex over https) and #663 (the iPhone's Collection). Next: task 1 or 3, and the private Finances PRs as they merge.
+- **Round 43 (Nov 13):** #660 merged. No merges to read. Task 2 re-run (better in every column; findings 1, 3 and 4 confirmed fixed; item 17), task 3 first run (items 18 to 21). Next: task 1 or 5, and the private Finances PRs as they merge.
 
 - **The owner's decisions (Nov 12):** items 87 and 88, a short hold before Vaultwarden, Pocket ID and CrowdSec take a new release; item 79, a git checkout moves only to releases whose provenance verifies; item 86, kept as is. Next: build 87 and 88, then 79.
 
@@ -1677,14 +1678,14 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
 
 From task 2, **Something is down: find out what, and fix it** (Nov 6, against the fake backend: Mealie stopped). Pictures in `docs/images/usability/`.
 
-1. **A stopped app's page never says why, or what to do if Start does not help** (`t2-mealie-page.png`). The page shows "▲ Stopped", a Start button, and a log of old, normal lines from Oct 10 ("Starting server on :3456"). Nothing says whether it was stopped on purpose, stopped for a while, crashed, or kept restarting, nor what to try next. *Fixed looks like:* a line under the title saying why it stopped and since when (stopped by you or for a while; crashed with its last error line; kept restarting and was stopped), and what to do (Start; or Restart, then the log's error; or "it needs X"). *Smoke case that fails today:* the app page for an app the watchdog stopped in a restart loop names the reason and when.
+1. (done: confirmed in task 2's re-run, Nov 13: the page says "It was stopped outside the homelab (by Docker, or a shutdown). Start starts it again.") **A stopped app's page never says why, or what to do if Start does not help** (`t2-mealie-page.png`). The page shows "▲ Stopped", a Start button, and a log of old, normal lines from Oct 10 ("Starting server on :3456"). Nothing says whether it was stopped on purpose, stopped for a while, crashed, or kept restarting, nor what to try next. *Fixed looks like:* a line under the title saying why it stopped and since when (stopped by you or for a while; crashed with its last error line; kept restarting and was stopped), and what to do (Start; or Restart, then the log's error; or "it needs X"). *Smoke case that fails today:* the app page for an app the watchdog stopped in a restart loop names the reason and when.
 2. (done: the phone's web page in #524; the iPhone app on Nov 10, after #575) **On the phone, a stopped app offers nothing and says nothing** (`t2-phone-status.png`, `t2-phone-mealie-page.png`). Every running app has Open; Mealie has no button and no word, on the list or on its page. *Fixed looks like:* a phone that may make changes gets Start; one that only looks says "Start it from the computer". *Smoke case:* the phone's Status (look-only and may-change) for a stopped app shows the action or the sentence.
-3. **The screens disagree about checks** (`t2-phone-status.png`, `t2-mealie-page.png`).
+3. (done: confirmed in task 2's re-run, Nov 13: both screens' watchdog line says "Not checked while stopped: Mealie", and the page says the watchdog doesn't check it while stopped) **The screens disagree about checks** (`t2-phone-status.png`, `t2-mealie-page.png`).
    - The phone's Status says "Watchdog ✓ All 47 checks passed" while Mealie is stopped and the desktop's "Needs a look" card names it.
    - Mealie's page says "Not checked yet… once Setup turns it on", while Status's header says "Backups and checks on".
 
    *Fixed looks like:* the watchdog line counts a stopped app (or says why it is not checked), and the page says the same as the header. *Smoke case:* Status with one app stopped says it in the watchdog line.
-4. **Words a household cannot read** (`t2-status.png`, `t2-phone-status.png`):
+4. (done: confirmed in task 2's re-run, Nov 13: "Choose apps", "The homelab's own apps are all up", "Instead of subscriptions", and Protection in plain words) **Words a household cannot read** (`t2-status.png`, `t2-phone-status.png`):
    - "Choose stacks" (the sidebar);
    - "All baseline apps are up";
    - "Replaces a year $3,292", which does not say it means what the apps would cost as subscriptions;
@@ -1718,6 +1719,28 @@ From task 7, **Give a person their own account, and send the welcome page** (Nov
     - "The apps they use (none ticked: all of them)": ticking one app gives them only that app.
 
     *Fixed looks like:* plain words ("a sign-in with her phone's face or fingerprint", "the household's sign-in"), the music and films password named on its button, and "All the apps" as a choice of its own beside "Only these". *Smoke case:* the words lint refusing "passkey" and "Pocket ID" without a plain gloss on People.
+
+From task 2's re-run (Nov 13, the phone at 390px and 320px with big text, and the computer, against the fake backend with Mealie stopped; `t2-rerun-phone-status.png`):
+
+17. **Two words left, and a dot cut from its word.**
+    - The watchdog's restart note says "(once in 6 hours at most; AUTO_HEAL=false turns this off)": a setting's code name, on the phone and the computer.
+    - Mealie's page says "At home and on your tailnet" (item 10's word, on another screen).
+    - At 320px with big text, a running app's green dot sits alone on a line above "Running".
+
+    *Fixed looks like:* "Settings › Apps › Restart a stuck app turns this off"; "and on your own private network"; the dot kept on its word's line. *Smoke case:* the words lint refusing an UPPER_CASE setting name on a screen.
+
+From task 3, **Install an app that needs a login or a drive** (Nov 13, Choose apps against the fake backend: Frigate, which records to a drive, and qBittorrent, which needs a ProtonVPN key; on the Mac in light, and at 320px with big text in dark):
+
+18. **A dead end after installing Frigate: nothing says where the recordings go or what to do next** (`t3-frigate-done.png`). Choose apps, search, tick, Install: no question and no word on storage. Frigate records to `MEDIA_ROOT/frigate` (the Media drive by default) and can fill it. "Done… Ready to open: Frigate" then opens an app with no camera in it. *Fixed looks like:* before Install, the plan says where recordings go and how much room that drive has, with a way to pick another folder; after Done, "Next: add your camera in Frigate", with where to find its address. *Smoke case:* picking Frigate, the plan names the recordings' folder and the drive's free space.
+19. **The VPN key is called "Optional" while nothing installs without it** (`t3-qbittorrent-plan.png`). The plan says "Waiting for a setting: Gluetun: fill in ProtonVPN WireGuard key", but under the field the help reads "Optional qBittorrent VPN (ProtonVPN account > Downloads > WireGuard)". It doesn't say a paid ProtonVPN plan is needed, or link to where the key is made. *Fixed looks like:* "Needed: qBittorrent only downloads through your ProtonVPN (a paid plan). Make a key at account.protonvpn.com › Downloads › WireGuard, then paste it here", with the link. *Smoke case:* a setting a picked app waits for is never described as optional.
+20. **"Connect the apps for me" is offered for apps that aren't there, and "Done" leaves out half of what was installed** (`t3-qbittorrent-done.png`).
+    - The box is ticked and names Prowlarr and Seerr, neither picked nor running. After Install it says "Nothing to connect".
+    - "Done" lists only qBittorrent, not the VPN tunnel that started with it.
+    - The Gluetun row stays unticked though it is installed with qBittorrent.
+    - Words: "Gluetun", "WireGuard", "helper", "the download client".
+
+    *Fixed looks like:* the box shows only when something it links is picked or running; "Done" names the tunnel too ("qBittorrent, and its private VPN tunnel"); a helper is ticked and greyed while it is needed. *Smoke case:* picking qBittorrent alone shows no "Connect the apps for me".
+21. **Gluetun's "Settings" link can't be reached by keyboard.** It is a link with no address, so Tab goes from the checkbox above it straight past it (task 3's Tab order). *Fixed looks like:* a button, or a link with an address, in the Tab order. *Smoke case:* Tab reaches every control in a picked app's row.
 
 Not a screen, but yours: **`TestJobLogSplitsAtOnceAllFinish` (#471) failed once on Windows CI** (Nov 6, #475's run: "open …\\watchdog.log: The process cannot access the file because it is being used by another process"; green on a re-run). Either the test is flaky on Windows, or a log can't be rotated on Windows while another process has it open, which would also bite a household's Windows machine. Worth a look before it turns another lane's run red.
 
