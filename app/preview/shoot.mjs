@@ -396,7 +396,7 @@ const alertLog = [
 const mock = { platform: 'MacIntel', tidy, tidyReview, cliSteps, upgrade: { ...upgrade, behind: 0, changes: [], appChanged: false, appCommit: '7d9be080888433f921c9fa860a38b329ac368c88', appBehind: 0 }, catalog, status, setup, settings, host, logs, actionLog, urls, envFor, tests, backups, cliLog, alerts, watchdog, protection, savingsHistory, duplicatiJobs, phones, finances, ledger, history, alertLog, screen: 'status' };
 // Finances' tabs are four: Spending holds Transactions and Reports, Plan holds Calendar, Recurring and Paychecks (Pay),
 // each in a second row under it. A page by its name, its tab first.
-const finGroups = { Transactions: 'Spending', Reports: 'Spending', Calendar: 'Plan', Recurring: 'Plan', Pay: 'Plan', Paychecks: 'Plan' };
+const finGroups = { Transactions: 'Spending', Reports: 'Spending', Calendar: 'Plan', Recurring: 'Plan', Pay: 'Plan', Paychecks: 'Plan', Collection: 'Net worth' };
 async function finTab(page, name, opts = {}) {
   const group = finGroups[name];
   if (!group) return page.click(`#finRoot > .seg button:text-is("${name}")`, opts);
@@ -6601,9 +6601,9 @@ const smokes = [
   // Paycheck; paying the household's own card, and money in from its own savings account, are moves, not spending; a Zelle
   // payment to someone is left for the household to pick. The preview says each before it comes in.
   // Four tabs, as the owner picked (Nov 10): Dashboard, Spending (Transactions, Reports), Plan (Calendar, Recurring,
-  // Paychecks), Net worth. A tab with pages opens its first and shows them in a second row, and again on the page it was
+  // Paychecks), Net worth (Net worth, Collection). A tab with pages opens its first and shows them in a second row, and again on the page it was
   // left on; a way into a page (a Dashboard card) picks its tab and page.
-  { name: 'Finances: four tabs, Spending and Plan with their pages in a second row', screen: 'finances', run: async (page) => {
+  { name: 'Finances: four tabs, Spending, Plan and Net worth with their pages in a second row', screen: 'finances', run: async (page) => {
     const top = await page.$$eval('#finRoot > .seg button', (bs) => bs.map((b) => b.textContent));
     if (top.join('|') !== 'Dashboard|Spending|Plan|Net worth') throw new Error(`tabs ${top.join('|')}`);
     if (await page.isVisible('#finRoot .fx-subtabs')) throw new Error('a second row on the Dashboard');
@@ -6617,8 +6617,9 @@ const smokes = [
     if ((await second()) !== 'Calendar*|Recurring|Paychecks') throw new Error(`Plan's pages ${await second()}`);
     await page.click('#finRoot .fx-subtabs .seg button:text-is("Paychecks")');
     await page.waitForSelector('#finRoot > .seg button[aria-checked=true]:text-is("Plan")', { timeout: 2000 });
+    // Net worth has its Collection beside it (Nov 13), so its pages are a second row too, Net worth first.
     await page.click('#finRoot > .seg button:text-is("Net worth")');
-    if (await page.isVisible('#finRoot .fx-subtabs')) throw new Error('a second row on Net worth');
+    if ((await second()) !== 'Net worth*|Collection') throw new Error(`Net worth's pages ${await second()}`);
     // Each tab opens again on the page it was left on.
     await page.click('#finRoot > .seg button:text-is("Spending")');
     if ((await second()) !== 'Transactions|Reports*') throw new Error(`Spending again ${await second()}`);
@@ -7714,6 +7715,60 @@ const smokes = [
     const bars = await page.$$eval('.fx-budgets .fx-budgetbar', (b) => b.map((x) => Math.round(x.getBoundingClientRect().width)), { timeout: 5000 });
     if (bars.length !== 3 || Math.min(...bars) < 150 || Math.max(...bars) - Math.min(...bars) > 1) throw new Error(`bars ${bars}`);
   } },
+  // The Collection (the owner's yes to the mockup, Nov 13): made-up cards in a collectible account worth what they are.
+  ...(() => {
+    const pokemon = { id: 'pokemon-cards', name: 'Pokémon cards', kind: 'collectible', balance: 417.55, updated: '2026-10-29', history: [{ date: '2026-06-01', amount: 260 }, { date: '2026-10-29', amount: 417.55 }] };
+    const collection = [
+      { id: 'ember-fox', account: 'pokemon-cards', name: 'Ember Fox', set: 'Set A', number: '4/102', grade: 'Near mint', paid: 45, paidOn: '2025-11-03', price: 182.4, priceOn: '2026-10-29' },
+      { id: 'moon-moth', account: 'pokemon-cards', name: 'Moon Moth', grade: 'Graded 9', paid: 120, price: 150, priceOn: '2026-10-02', typed: true },
+      { id: 'tide-turtle', account: 'pokemon-cards', name: 'Tide Turtle', set: 'Set A', number: '2/102', paid: 30, price: 64.1, priceOn: '2026-10-29' },
+      { id: 'leaf-lizard', account: 'pokemon-cards', name: 'Leaf Lizard', set: 'Set B', number: '44/64', paid: 8.5, price: 11.25, priceOn: '2026-10-29' },
+      { id: 'volt-mouse', account: 'pokemon-cards', name: 'Volt Mouse', set: 'Promo', number: '25', paid: 12, price: 9.8, priceOn: '2026-10-29' },
+    ];
+    const withCards = { finances: { ...finances, plan: { ...finances.plan, accounts: [...finances.plan.accounts, pokemon], collection } } };
+    return [
+      { name: 'Finances: the Collection lists your cards, and a card opens large', screen: 'finances', mock: withCards, run: async (page) => {
+        await finTab(page, 'Collection', { timeout: 5000 });
+        await page.waitForSelector('#finRoot .fx-collection .fx-figure, #finRoot .fx-collection .fx-stat', { timeout: 5000 });
+        const head = await page.textContent('#finRoot .fx-collection');
+        if (!head.includes('5 cards') || !head.includes('$417') || !head.includes('+$202.05') || !head.includes('$215.50')) throw new Error(`the collection says: ${head.replace(/\s+/g, ' ').slice(0, 300)}`);
+        const rows = await page.$$eval('#finRoot .fx-cards li .grow > strong', (els) => els.map((e) => e.textContent));
+        if (rows.join('|') !== 'Ember Fox|Moon Moth|Tide Turtle|Leaf Lizard|Volt Mouse') throw new Error(`rows: ${rows}`);
+        const volt = await page.textContent('#finRoot .fx-cards li:has-text("Volt Mouse")');
+        if (!volt.includes('$9.80') || !volt.includes('−$2.20') && !volt.includes('-$2.20')) throw new Error(`Volt Mouse: ${volt}`);
+        await page.click('#finRoot .fx-cards li:has-text("Ember Fox") button.rowopen');
+        await page.waitForSelector('#finRoot .fx-card h2:text-is("Ember Fox")', { timeout: 5000 });
+        const card = await page.textContent('#finRoot .fx-card');
+        if (!card.includes('$182') || !card.includes('You paid $45.00') || !card.includes('Set A · 4/102 · Near mint')) throw new Error(`the card's page: ${card.replace(/\s+/g, ' ').slice(0, 300)}`);
+        if (!(await page.isVisible('#finRoot .fx-subtabs button[aria-checked="true"]:text-is("Collection")'))) throw new Error('a card is not under the Collection');
+        await page.click('#finRoot .fx-card button:text-is("‹ Collection")');
+        await page.waitForSelector('#finRoot .fx-cards', { timeout: 5000 });
+      } },
+      { name: 'Finances: Add a card keeps it in a new Pokémon cards account', screen: 'finances', run: async (page) => {
+        await finTab(page, 'Collection', { timeout: 5000 });
+        await page.click('#finRoot .fx-collection button:text-is("Add a card")');
+        await page.waitForSelector('#finSheet:not([hidden]) h2:text-is("Add a card")', { timeout: 5000 });
+        await page.fill('#finSheet label:has-text("Name") input', 'Ember Fox');
+        await page.fill('#finSheet label:has-text("Number") input', '4/102');
+        await page.fill('#finSheet label:has-text("Paid, each") input', '45');
+        await page.fill('#finSheet label:has-text("Worth now, each") input', '182.40');
+        await page.click('#finSheet button:text-is("Save")');
+        await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+        const saved = await page.evaluate(() => window.__MOCK.financesSaved?.at(-1));
+        const acct = saved?.accounts?.find((a) => a.kind === 'collectible' && a.name === 'Pokémon cards');
+        const c = saved?.collection?.[0];
+        if (!acct || c?.account !== acct.id || c.name !== 'Ember Fox' || c.number !== '4/102' || c.paid !== 45 || c.price !== 182.4 || !/^\d{4}-\d\d-\d\d$/.test(c.priceOn || '')) throw new Error(`saved: ${JSON.stringify({ acct, c })}`);
+      } },
+      { name: 'The phone, view only: the Collection shows, with nothing to add or change', screen: 'finances', phone: ['companion', 'finances'], mock: { finances: { ...withCards.finances, readOnly: true } }, run: async (page) => {
+        await finTab(page, 'Collection', { timeout: 5000 });
+        await page.waitForSelector('#finRoot .fx-cards li', { timeout: 5000 });
+        if (await page.$('#finRoot .fx-collection button:text-is("Add a card")')) throw new Error('a look-only phone can add a card');
+        await page.click('#finRoot .fx-cards li:has-text("Ember Fox") button.rowopen');
+        await page.waitForSelector('#finRoot .fx-card h2:text-is("Ember Fox")', { timeout: 5000 });
+        if (await page.$('#finRoot .fx-card button:text-is("Edit")')) throw new Error('a look-only phone can edit a card');
+      } },
+    ];
+  })(),
   // Step 6 (the owner's yes, Nov 12): Transactions in columns on a wide screen (Payee, Category, Account, Amount, each
   // in line down the rows), sorted by any column from the header above them: Amount most out first, again for most in;
   // Payee A to Z; Date again gives the days back. Narrow (800px, a phone) it is the list as before, no header.

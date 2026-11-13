@@ -88,6 +88,9 @@ type Plan struct {
 	// Watch is the tickers followed without owning them (Investments'
 	// Watchlist): priced by Ghostfolio, in no account and no worth.
 	Watch []Watched `json:"watch,omitempty"`
+	// Collection is the cards the household keeps (collection.go), each in
+	// a collectible account that is worth what they are.
+	Collection []Collected `json:"collection,omitempty"`
 	// Categories are what transactions are sorted into, each named once,
 	// some under a group (Groceries under Food), each with an icon. None
 	// typed in, the screen offers DefaultCategories.
@@ -485,11 +488,28 @@ func Clean(p Plan) (Plan, error) {
 		used[out] = true
 		return out
 	}
+	// The accounts keep their IDs first, so the cards know theirs.
+	for i := range p.Accounts {
+		if a := &p.Accounts[i]; strings.TrimSpace(a.Name) != "" {
+			a.ID = id(a.ID, a.Name, "account")
+		}
+	}
+	held, priced, err := cleanCollection(&p, id)
+	if err != nil {
+		return p, err
+	}
 	for i := range p.Accounts {
 		a := &p.Accounts[i]
 		a.Name = strings.TrimSpace(a.Name)
 		if a.Name == "" {
 			return p, fmt.Errorf("an account has no name")
+		}
+		// A collectible account with cards in it is worth what they are, as of the last price set.
+		if worth, ok := held[a.ID]; ok && a.Kind == Collectible {
+			a.Balance = math.Round(worth*100) / 100
+			if priced[a.ID] > a.Updated {
+				a.Updated = priced[a.ID]
+			}
 		}
 		if !kinds[a.Kind] {
 			return p, fmt.Errorf("%s: unknown kind %q", a.Name, a.Kind)
@@ -505,7 +525,6 @@ func Clean(p Plan) (Plan, error) {
 		if err := cleanHoldings(a); err != nil {
 			return p, err
 		}
-		a.ID = id(a.ID, a.Name, "account")
 		sort.SliceStable(a.History, func(i, j int) bool { return a.History[i].Date < a.History[j].Date })
 		a.record()
 	}
