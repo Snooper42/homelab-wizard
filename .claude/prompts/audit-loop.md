@@ -916,6 +916,7 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
 - **Round 41 (Nov 13, N72 and N73):** #655 merged (N71; the Mac's real tray test needed a short socket path under a long home folder, which a too-long path now falls back to, in a folder of the account's own). Read #654 (Send to my phone): one of the app's own links, to one phone, the title as text; N72 built from it (the companion checks the phone again as it passes a send on). The backlog was empty: items 167–176 added; N73 built (release notes in a terminal as plain text); the rest hold. Then read #656 (Open on the Computer: `OpenOnComputer` is a change, so only a phone allowed them; `MayOpen` with no member apps, so a member's phone may ask only Status; the app's own links with no action; the desktop window only goes to that page, the phone's name shown as text): holds. No item is open. Next: the next merge, or audit again.
 - **Round 42 (Nov 13, usability first; N74 and N75):** task 7 run (People and the welcome page: four findings for Account 2, items 13 to 16). N74 found while writing the owner's spec for a member's private Finances (`.claude/prompts/private-finances.md`, for the other account's session): `data/members` was in no backup; now a record folder. Read #659 (the Collection: plan fields, clipped and capped), #661 (a card's photo: bytes and pixels by its header, a content name, the owner's phones only), #662 (prices from TCGdex on a click, the owner's yes: N75, a redirect followed anywhere, now only within TCGdex over https) and #663 (the iPhone's Collection). Next: task 1 or 3, and the private Finances PRs as they merge.
 - **Round 43 (Nov 13):** #660 merged. No merges to read. Task 2 re-run (better in every column; findings 1, 3 and 4 confirmed fixed; item 17), task 3 first run (items 18 to 21). Next: task 1 or 5, and the private Finances PRs as they merge.
+- **Round 44 (Nov 13):** #660 merged (round 43's run). No merges to read. Task 5 first run: nothing in the app gets a file back (item 22), words (item 23), and N76: the synced Files (`SYNC_ROOT`) are in no backup, handed to Account 2 as storage (item 24) with the test that shows it. Next: task 1, and the private Finances PRs as they merge (#665 open).
 
 - **The owner's decisions (Nov 12):** items 87 and 88, a short hold before Vaultwarden, Pocket ID and CrowdSec take a new release; item 79, a git checkout moves only to releases whose provenance verifies; item 86, kept as is. Next: build 87 and 88, then 79.
 
@@ -1741,6 +1742,30 @@ From task 3, **Install an app that needs a login or a drive** (Nov 13, Choose ap
 
     *Fixed looks like:* the box shows only when something it links is picked or running; "Done" names the tunnel too ("qBittorrent, and its private VPN tunnel"); a helper is ticked and greyed while it is needed. *Smoke case:* picking qBittorrent alone shows no "Connect the apps for me".
 21. **Gluetun's "Settings" link can't be reached by keyboard.** It is a link with no address, so Tab goes from the checkbox above it straight past it (task 3's Tab order). *Fixed looks like:* a button, or a link with an address, in the Tab order. *Smoke case:* Tab reaches every control in a picked app's row.
+
+From task 5, **Get one file back from last week's backup** (Nov 13, Backups against the fake backend, on the Mac in light; `t5-backups.png`):
+
+22. **A dead end: nothing in the app gets one file back.** Backups shows the last backup, each app's copies, the off-site jobs, Test a restore, the recovery kit and moving. None of them restores a file. The only door is **Open Duplicati**: the backup engine's own admin page, behind `DUPLICATI_PASSWORD`. Per `docs/Backups.md`, "a restore goes into `/staging/...` and is copied back by hand". A household member who deleted last week's document or photo is stuck. *Fixed looks like:* Backups › **Get a file back**:
+    1. pick where it was (Photos, Documents, the synced Files, an app);
+    2. pick a night;
+    3. browse to the file and Restore.
+
+    It is put back beside the original with the night in its name, never over it, then "Restored: … (Show it)". *Smoke case:* Backups has Get a file back, and its sheet lists the nights kept.
+23. **Words:** "Open Duplicati" (the engine's name, where "Browse the backups" would do), "Stale" for a copy that is days old, and "12 of 12 sampled files identical". *Fixed looks like:* plain words ("3 days old", "12 files checked, all the same as now"). *Smoke case:* the words lint refusing "Stale" and "sampled" on Backups.
+24. **N76 (High, storage: yours, ahead of your order, lanes Rule 3): the synced Files are in no backup, and nothing says so.**
+    - Syncthing keeps the household's synced folders in `SYNC_ROOT` (default `./data/sync`), the "Files" starter's files.
+    - Duplicati mounts `data/appdata`, `appdata`, `stacks`, Jellyfin, the photos and the Books. None of its jobs (`internal/duplicati/homelab.go`, `HomelabJobs`) takes `SYNC_ROOT`, and `backup.CopyRecords` leaves it out on purpose.
+    - Syncthing passes a deletion on to every device, so a file deleted or overwritten by mistake has no copy anywhere.
+    - `docs/Backups.md`'s "What is covered" lists it neither as covered nor as not.
+
+    **The test that shows it** (write it; it fails today): every folder a Files app keeps the household's own files in (`SYNC_ROOT`, and any other the catalog marks as the household's files) is mounted read-only into Duplicati and is the source of one of `HomelabJobs`, or is listed in `docs/Backups.md` as not backed up, with why.
+
+    *Fixed looks like:*
+    - `${SYNC_ROOT:-./data/sync}:/source/sync:ro` in `compose/system.yaml`;
+    - a "Homelab Files" job (daily, `Large` if it can be big), on the Backups screen with the rest;
+    - a row in "What is covered".
+
+    The security session ticks N76 in `docs/Security.md` once it merges.
 
 Not a screen, but yours: **`TestJobLogSplitsAtOnceAllFinish` (#471) failed once on Windows CI** (Nov 6, #475's run: "open …\\watchdog.log: The process cannot access the file because it is being used by another process"; green on a re-run). Either the test is flaky on Windows, or a log can't be rotated on Windows while another process has it open, which would also bite a household's Windows machine. Worth a look before it turns another lane's run red.
 
