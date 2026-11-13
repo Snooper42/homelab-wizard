@@ -158,3 +158,18 @@ func TestQuitTray(t *testing.T) {
 		t.Fatal("QuitTray answered true with nothing listening")
 	}
 }
+
+// A home folder long enough that its socket path would not fit (macOS
+// takes 104 bytes) gets the tray's socket in this account's own folder
+// under the temporary folder instead; a short one keeps its own.
+func TestATooLongTrayPathMovesToAShortOne(t *testing.T) {
+	short := filepath.Join("/Users", "sam", "Library", "Caches", "homelab-wizard")
+	if got := trayPath(short, "/tmp", 501); got != filepath.Join(short, "tray.sock") {
+		t.Errorf("short home: %s", got)
+	}
+	long := filepath.Join("/var", "folders", strings.Repeat("x", 60), "T", "Test001", "Library", "Caches", "homelab-wizard")
+	got := trayPath(long, "/var/folders/xy/T", 501)
+	if got != filepath.Join("/var/folders/xy/T", "homelab-wizard-501", "tray.sock") || len(got) > maxSocketPath {
+		t.Errorf("long home: %s", got)
+	}
+}

@@ -5,6 +5,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"strconv"
 	"time"
 
 	"github.com/Snooper42/homelab-wizard/internal/engine"
@@ -15,8 +16,25 @@ import (
 // starting, and a "quit" line sent there makes it quit (homelab quit). It
 // is a socket in this account's own folder, beside the engine's (0700),
 // so no other account on the computer can reach it, take it first, or
-// quit the item. A variable only so tests can use a socket of their own.
-var TraySocket = func() string { return filepath.Join(filepath.Dir(engine.SocketPath()), "tray.sock") }
+// quit the item. When that path is too long for a socket (macOS allows
+// 104 bytes, as with a long home folder), it is a folder of this
+// account's own under the temporary folder instead, which ListenTray
+// checks belongs to this account alone. A variable only so tests can use
+// a socket of their own.
+var TraySocket = func() string {
+	return trayPath(filepath.Dir(engine.SocketPath()), os.TempDir(), os.Getuid())
+}
+
+// maxSocketPath is the longest socket path every system takes (macOS's
+// sun_path holds 104 bytes with its ending zero; Linux's and Windows's 108).
+const maxSocketPath = 103
+
+func trayPath(home, tmp string, uid int) string {
+	if p := filepath.Join(home, "tray.sock"); len(p) <= maxSocketPath {
+		return p
+	}
+	return filepath.Join(tmp, "homelab-wizard-"+strconv.Itoa(uid), "tray.sock")
+}
 
 // TrayAddr is where a menu bar item from before 0.17's tray socket
 // listened (any account on the computer could reach it): QuitTray still
@@ -32,6 +50,9 @@ var ErrTrayRunning = errors.New("the homelab's icon is running already")
 func ListenTray() (net.Listener, error) {
 	path := TraySocket()
 	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
+		return nil, err
+	}
+	if err := ownFolder(filepath.Dir(path)); err != nil {
 		return nil, err
 	}
 	if c, err := net.DialTimeout("unix", path, time.Second); err == nil {
