@@ -17,4 +17,12 @@ interface Window {
 interface Backend {
   /** A diagnostics report with every secret removed, and who to send it to. */
   Report?(): Promise<{ text: string; helper: string }>;
+  /** A member's private Finances, as the computer keeps them (null: not private). Her own phone only. */
+  FinancesSealed?(): Promise<import('../src/finances/seal').Envelope | null>;
+  /** Keeps her sealed Finances: "new" turns privacy on; a stale rev is refused. */
+  SaveFinancesSealed?(rev: string, e: import('../src/finances/seal').Envelope): Promise<{ rev: string }>;
+  /** A sealed receipt, by its name, as her phone sealed it. */
+  FinancesSealedReceipt?(name: string): Promise<string>;
+  /** Keeps a sealed receipt; answers its name. */
+  SaveFinancesSealedReceipt?(sealed: string): Promise<string>;
 }

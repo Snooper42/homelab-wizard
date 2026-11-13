@@ -3,9 +3,9 @@ COMPOSE_FILES := compose.yaml $(wildcard stacks/*/compose.yaml)
 # One project per category, run from the homelab folder.
 CATEGORY_FILES := $(wildcard compose/*.yaml)
 
-.PHONY: build test lint check coverage music-pins music-pins-check security compose-config app app-check screenshots frontend frontend-check app-smoke phone-finance-wasm phone-finance-framework help
+.PHONY: build test lint check coverage music-pins music-pins-check security compose-config app app-check screenshots frontend frontend-check app-smoke phone-finance-wasm phone-finance-page phone-finance-framework help
 
-build:
+build: phone-finance-page
 	go build -trimpath -ldflags "-s -w -X main.version=$(VERSION)" -o bin/homelab ./cmd/homelab
 
 test:
@@ -40,6 +40,13 @@ phone-finance-wasm:
 	  if [ $$gz -gt $(PHONE_WASM_LIMIT) ]; then echo "over 4 MB compressed: ask the owner first (private-finances.md 3.2)"; exit 1; fi
 	env -i HOME="$$HOME" PATH="$$(go env GOROOT)/lib/wasm:$$PATH" GOCACHE="$$(go env GOCACHE)" GOMODCACHE="$$(go env GOMODCACHE)" \
 	  GOPATH="$$(go env GOPATH)" GOTOOLCHAIN="$$(go env GOTOOLCHAIN)" GOOS=js GOARCH=wasm go test -count=1 ./mobile/finance
+
+# phone-finance-page puts the same projection in the page homelab serve
+# gives phones (web/dist, not committed: every build of the CLI makes it),
+# with the Go runner's own wasm_exec.js, for a member's private Finances.
+phone-finance-page:
+	GOOS=js GOARCH=wasm go build -trimpath -ldflags "-s -w" -o web/dist/finance.wasm ./cmd/financewasm
+	cat "$$(go env GOROOT)/lib/wasm/wasm_exec.js" > web/dist/wasm_exec.js
 
 # phone-finance-framework binds the same package for the iPhone app with
 # gomobile (on a Mac with Xcode, gomobile and gobind installed), in a new
@@ -152,6 +159,7 @@ frontend-check:
 	npx --no-install tsc -p .
 	node app/preview/words.mjs
 	node app/preview/companion.mjs
+	node app/preview/seal.mjs
 	node web/build.mjs --check
 
 # Compiles web/src into web/dist/app.js (commit both).
