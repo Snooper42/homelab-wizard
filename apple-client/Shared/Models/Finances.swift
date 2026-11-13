@@ -223,8 +223,10 @@ struct FinancePlan: Decodable, Sendable, Equatable {
     /// The tickers followed without owning them (Investments' Watchlist):
     /// priced by Ghostfolio at each read, never in the worth.
     let watch: [FinanceWatched]
+    /// The cards the household keeps (the Collection), each in a collectible account.
+    let collection: [FinanceCollected]
 
-    enum CodingKeys: String, CodingKey { case people, accounts, payments, cushion, currency, hideAmounts, holdingsRead, logos, watch }
+    enum CodingKeys: String, CodingKey { case people, accounts, payments, cushion, currency, hideAmounts, holdingsRead, logos, watch, collection }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -237,6 +239,7 @@ struct FinancePlan: Decodable, Sendable, Equatable {
         holdingsRead = ((try? c.decodeIfPresent(String.self, forKey: .holdingsRead)) ?? nil).flatMap(GoTime.parse)
         logos = (try? c.decodeIfPresent([String: String].self, forKey: .logos)) ?? [:]
         watch = Array((((try? c.decodeIfPresent([FinanceWatched].self, forKey: .watch)) ?? nil) ?? []).prefix(50))
+        collection = Array((((try? c.decodeIfPresent([FinanceCollected].self, forKey: .collection)) ?? nil) ?? []).prefix(2000))
     }
 }
 
@@ -1265,5 +1268,107 @@ enum Spending {
     static func isIncome(_ name: String, in categories: [FinanceCategory]) -> Bool {
         if let c = categories.first(where: { $0.name.lowercased() == name.lowercased() }) { return c.income ?? false }
         return name.lowercased() == "income"
+    }
+}
+
+/// A card of the Collection (`finance.Collected`): kept in a collectible
+/// account whose worth is what its cards are, so it counts in net worth.
+struct FinanceCollected: Decodable, Sendable, Equatable, Identifiable {
+    let id: String
+    let account: String
+    let name: String
+    let set: String?
+    let number: String?
+    let grade: String?
+    /// How many are kept (1 when the computer leaves it out).
+    let count: Int
+    /// What one cost, and what one is worth now.
+    let paid: Double
+    let price: Double
+    /// YYYY-MM-DD, as the computer wrote them.
+    let paidOnText: String?
+    let priceOnText: String?
+    /// Kept at the household's own price: never looked up.
+    let typed: Bool
+    /// TCGdex's id for it, once Update Prices found it.
+    let ref: String?
+    /// Its picture's name on the computer (FinancesCardPicture).
+    let picture: String?
+
+    var worth: Double { price * Double(max(1, count)) }
+    var paidTotal: Double { paid * Double(max(1, count)) }
+    var priceOn: Date? { priceOnText.flatMap(LocalDay.parse) }
+
+    /// Its printing, condition and how many, as one line: "Set A · 4/102 · Near Mint · ×2".
+    var line: String {
+        let parts = [set, number, grade, count > 1 ? "×\(count)" : nil].compactMap { part -> String? in
+            guard let part, !part.isEmpty else { return nil }
+            return part
+        }
+        return parts.isEmpty ? "A card" : parts.joined(separator: " · ")
+    }
+
+    enum CodingKeys: String, CodingKey { case id, account, name, set, number, grade, count, paid, price, paidOn, priceOn, typed, ref, picture }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(String.self, forKey: .id)
+        account = try c.decodeIfPresent(String.self, forKey: .account) ?? ""
+        name = try c.decodeIfPresent(String.self, forKey: .name) ?? ""
+        set = try c.decodeIfPresent(String.self, forKey: .set)
+        number = try c.decodeIfPresent(String.self, forKey: .number)
+        grade = try c.decodeIfPresent(String.self, forKey: .grade)
+        count = max(1, try c.decodeIfPresent(Int.self, forKey: .count) ?? 1)
+        paid = try c.decodeIfPresent(Double.self, forKey: .paid) ?? 0
+        price = try c.decodeIfPresent(Double.self, forKey: .price) ?? 0
+        paidOnText = try c.decodeIfPresent(String.self, forKey: .paidOn)
+        priceOnText = try c.decodeIfPresent(String.self, forKey: .priceOn)
+        typed = try c.decodeIfPresent(Bool.self, forKey: .typed) ?? false
+        ref = try c.decodeIfPresent(String.self, forKey: .ref)
+        picture = try c.decodeIfPresent(String.self, forKey: .picture)
+    }
+
+    /// The gain on what was paid, as a share (0.94 is 94% up); nil when nothing was paid.
+    static func gain(worth: Double, paid: Double) -> Double? { paid > 0.005 ? worth / paid - 1 : nil }
+
+    /// A picture's bytes from the data URL the computer sends (a JPEG, PNG
+    /// or WebP); nil for anything else.
+    nonisolated static func pictureData(_ dataURL: String) -> Data? {
+        for kind in ["jpeg", "png", "webp"] {
+            let head = "data:image/\(kind);base64,"
+            if dataURL.hasPrefix(head) { return Data(base64Encoded: String(dataURL.dropFirst(head.count))) }
+        }
+        return nil
+    }
+}
+
+/// What Update Prices did (`cardprice.Result`), to say under the Collection.
+struct CardPricesRead: Decodable, Sendable, Equatable {
+    let updated: Int
+    let kept: Int
+    let notFound: [String]
+    let unclear: [String]
+    let unpriced: [String]
+
+    enum CodingKeys: String, CodingKey { case updated, kept, notFound, unclear, unpriced }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        updated = try c.decodeIfPresent(Int.self, forKey: .updated) ?? 0
+        kept = try c.decodeIfPresent(Int.self, forKey: .kept) ?? 0
+        notFound = try c.decodeIfPresent([String].self, forKey: .notFound) ?? []
+        unclear = try c.decodeIfPresent([String].self, forKey: .unclear) ?? []
+        unpriced = try c.decodeIfPresent([String].self, forKey: .unpriced) ?? []
+    }
+
+    /// In words, as the computer says it.
+    var words: String {
+        [
+            updated == 0 ? "No price changed." : "Updated \(updated == 1 ? "1 card" : "\(updated) cards") from TCGplayer's prices.",
+            notFound.isEmpty ? nil : "Not found: \(notFound.joined(separator: ", ")) (check its name and number).",
+            unclear.isEmpty ? nil : "More than one printing: \(unclear.joined(separator: ", ")) (add its set).",
+            unpriced.isEmpty ? nil : "No TCGplayer price yet: \(unpriced.joined(separator: ", ")).",
+            kept == 0 ? nil : "\(kept == 1 ? "1 card keeps" : "\(kept) cards keep") your own price.",
+        ].compactMap { $0 }.joined(separator: " ")
     }
 }

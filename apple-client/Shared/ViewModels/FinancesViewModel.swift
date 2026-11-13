@@ -175,6 +175,47 @@ final class FinancesViewModel {
         }
     }
 
+    /// What the last Update Prices said, under the Collection.
+    private(set) var pricesSaid: String?
+    private(set) var isUpdatingPrices = false
+
+    /// Update Prices: the computer reads TCGplayer's prices from TCGdex. It
+    /// changes the plan, so it asks first, as any change does.
+    func updatePrices() async {
+        guard canEdit, !isUpdatingPrices, !isSaving else { return }
+        guard await authorize("Update the Collection's prices from TCGdex.") else {
+            pricesSaid = "Not confirmed, so nothing was read."
+            return
+        }
+        isUpdatingPrices = true
+        defer { isUpdatingPrices = false }
+        do {
+            pricesSaid = try await api.updateCardPrices().words
+            await loadPlan()
+        } catch {
+            let apiError = APIError.from(error)
+            Log.ui.error("FinancesUpdatePrices failed: \(apiError.logName, privacy: .public)")
+            pricesSaid = apiError.errorDescription ?? "TCGdex didn't answer, so no price changed."
+        }
+    }
+
+    /// The cards' pictures read so far, by name, while the app is unlocked.
+    @ObservationIgnored private var cardPictures: [String: Data] = [:]
+
+    /// A card's picture's bytes, read from the computer once.
+    func cardPicture(_ name: String) async -> Data? {
+        if let kept = cardPictures[name] { return kept }
+        guard canSeePlan, let url = try? await api.cardPicture(named: name), let data = FinanceCollected.pictureData(url) else { return nil }
+        cardPictures[name] = data
+        return data
+    }
+
+    /// Each card's prices over time, by its id; none when the computer has none.
+    func cardPrices() async -> [String: [FinancePoint]] {
+        guard canSeePlan else { return [:] }
+        return (try? await api.cardPrices()) ?? [:]
+    }
+
     /// What Ghostfolio finds for a ticker or a name.
     func findSymbols(_ query: String) async throws -> [InvestmentSymbol] {
         guard canEdit else { return [] }
