@@ -2323,6 +2323,20 @@ class InboxNeeds(Base):
         self.assertEqual([(n["name"], n["kind"]) for n in got], [("vid_0042.mkv", "movies")])
         self.assertIn("You put it back", got[0]["why"])
 
+    def test_only_what_is_in_an_inbox_folder_is_named_and_filed(self):
+        # Needs a look lists what the needs record says, and the record is under data/, which a homelab
+        # moved in from someone else's file brings. Naming one must never move a video or songs from
+        # anywhere else in the account into a library.
+        private = self.touch(self.home / "Videos" / "private.mkv", age=600)
+        songs = self.touch(self.home / "Music Projects" / "demo" / "01.flac", age=600).parent
+        escape = self.d / ".." / "home" / "Videos" / "private.mkv"
+        for path, words in ((private, ["movie", "Heat", "1995"]), (escape, ["movie", "Heat", "1995"]),
+                            (songs, ["album", RUMOURS])):
+            with self.assertRaises(SystemExit):
+                inbox.name_as(str(path), words[0], words[1:])
+        self.assertEqual(self.calls, [], "no engine was asked to file it")
+        self.assertTrue(private.exists() and (songs / "01.flac").exists(), "nothing moved")
+
     def test_asks_for_what_it_needs(self):
         for words in (["movie"], ["film", "Heat"], ["episode", "Show"], ["movie", "Heat", "soon"]):
             with self.assertRaises(SystemExit):

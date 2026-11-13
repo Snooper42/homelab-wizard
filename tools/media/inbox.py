@@ -426,6 +426,10 @@ def name_as(path, what, words):
     item = Path(path)
     if not item.exists():
         mc.die("%s isn't there any more" % item.name)
+    # The path comes from Needs a look's record, under data/, which a homelab moved in from someone else's file
+    # brings: only something inside an inbox folder (links and .. resolved) is renamed and filed.
+    if not mc.inside(item, mc.inbox_roots()):
+        mc.die("%s isn't in a folder Tidy Up watches for downloads" % item.name)
     if what == "album":
         return name_album(item, words)
     kind = {"movie": "movies", "episode": "tv"}.get(what)
