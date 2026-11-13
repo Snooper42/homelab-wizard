@@ -442,6 +442,9 @@ Tailscale devices, anywhere ─► tailnet ─► the same proxy (and AdGuard, w
 | `dockerfiles/npm-crowdsec/` | Nginx Proxy Manager with CrowdSec's Lua bouncer built in |
 | `cmd/`, `internal/` | The `homelab` CLI (Go, single binary, no runtime) |
 | `app/`, `web/` | The desktop app (Wails) and its TypeScript and Preact frontend, which the phone companion shares |
+| `tools/media/` | Tidy Up's engines (Python): music, books, films, TV, audiobooks, the inbox, and the nightly sweep |
+| `apple-client/` | The native iPhone and iPad app (SwiftUI), built with Xcode on your own Mac |
+| `mobile/finance/` | Finances' projection for a phone that keeps a member's Finances sealed (WebAssembly and an iOS framework) |
 | `docs/`, `services/` | The knowledge base: one note per app, Obsidian-friendly |
 
 See [Architecture](docs/Architecture.md) and [Decisions](docs/Decisions.md).
@@ -509,6 +512,7 @@ Multi-container apps get their own `stacks/<name>/` folder. The full guide and c
 ./homelab backup                # database dumps, volume archives, .env copy
 ./homelab watchdog              # every app and address checked, a hung app restarted, ntfy alerts
 ./homelab digest                # this week's summary, as on Status
+./homelab media                 # Tidy Up: each library, and the engines (music, books, movies, tv, audiobooks)
 ./homelab schedule install      # the background agent (launchd, systemd, or the Windows Run key)
 ./homelab person add "Anna Smith" --email anna@example.com   # an account, a welcome page, a start-page tab
 ./homelab sso setup             # the apps sign in with Pocket ID
@@ -552,10 +556,11 @@ Combine them as you like (`--folder --backups --app` takes everything of the hom
 |---|---|
 | Set it up, step by step, without code | [Getting Started](docs/Getting%20Started.md) |
 | Fix something | [Troubleshooting](docs/Troubleshooting.md), [Known Issues](docs/Known%20Issues.md) |
-| Run it day to day | [Runbooks](docs/Runbooks.md), [Backups](docs/Backups.md), [Monitoring](docs/Monitoring.md), [Automation](docs/Automation.md) |
+| Run it day to day | [Runbooks](docs/Runbooks.md), [Backups](docs/Backups.md), [Monitoring](docs/Monitoring.md), [Automation](docs/Automation.md), [Tidy Up](docs/Tidy%20Up.md) |
 | Recover from a lost machine, or move to a new one | [Disaster Recovery](docs/Disaster%20Recovery.md) |
 | Look up an app, an address, or a setting | [Services](docs/Services.md), [Inventory](docs/Inventory.md), [Environment](docs/Environment.md), [Commands](docs/Commands.md) |
 | Understand how it works | [Architecture](docs/Architecture.md), [Networking](docs/Networking.md), [Security](docs/Security.md), [Storage](docs/Storage.md), [Host](docs/Host.md) |
+| See what works on a phone, an iPhone, or an iPad | [What each device can do](docs/Parity.md), [apple-client](apple-client/README.md) |
 | Try a new build on a real machine | [Testing](docs/Testing.md), [Upgrading](docs/Upgrading.md) |
 | Change the code or add an app | [CONTRIBUTING](CONTRIBUTING.md), [Contributing (services)](docs/Contributing.md), [Maintainer Guide](docs/Maintainer%20Guide.md), [Decisions](docs/Decisions.md) |
 
