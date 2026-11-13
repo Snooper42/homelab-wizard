@@ -139,6 +139,7 @@ In Home mode, first install the **Tailscale** app on the phone and sign in with 
 | Tailscale | Reach the apps at home and away (Home mode) | your Tailscale account |
 | Bitwarden | Use the shared password manager | the passwords address, with the account from step 2 |
 | Immich | Back up photos and browse them by face, place, or thing | the photos address |
+| The Homelab app (iPhone and iPad) | See Status, Backups, and Finances, and start or restart an app, behind Face ID | pair it with the QR code in Settings › **Phones** (below); built with Xcode on your Mac for now ([apple-client](<../apple-client/README.md>)) |
 | ntfy | Get the homelab's alerts (the person who looks after it) | the ntfy address, as user `phone` |
 | Jellyfin or Infuse | Watch the movies and shows you own | the Jellyfin address |
 | Any Subsonic music app, or Feishin in a browser | Listen to your music | the music address |
@@ -147,7 +148,7 @@ To open an app on a phone without typing its address, click its row in **Status*
 
 Each person can have their own sign-in. In **Settings** › **People**, click **Add a person**, give their name, email, and the apps they use, and click **Add them**: the homelab makes their account and opens a welcome page to print or send, with a one-time link to set up a passkey (Face ID or Touch ID), the apps they use, and their own tab on the start page. **New sign-in link** makes a fresh link, and **Remove** turns their sign-in off and keeps their data. Jellyfin and Navidrome have a password of their own, so that Infuse, the TV apps, and music apps such as Arpeggi can sign in: with `JELLYFIN_API_KEY` and a Navidrome administrator's login in **Settings**, adding someone makes those accounts too (one password for both, on their welcome page and nowhere else), **Reset password** gives them a new one, and **Remove** turns them off. People use **Pocket ID**; without it, the card offers **Install Pocket ID** first. With a domain, `./homelab sso setup` then lets Karakeep, Paperless-ngx, Mealie, Vikunja, and Open WebUI sign in with it.
 
-For the person who looks after the homelab: Settings › **Phones** › **Pair a phone** shows a QR code. Scanned on the phone, it opens Status and Backups in the phone's browser (Share › Add to Home Screen keeps it as an app), at home or over Tailscale. Your partner's phone pairs the same way; beside each phone, **Sees Finances** or **Changes Finances** adds the household's Finances to it (only for a phone paired with the https link).
+For the person who looks after the homelab: Settings › **Phones** › **Pair a phone** shows a QR code. Scan it from the **Homelab app** on an iPhone or iPad, and the app shows Status, each app's page, and Backups, at home or over Tailscale. A phone without the app (Android, a visitor's) scans it with its camera instead, and gets the same screens in its browser (Share › Add to Home Screen keeps it as an app). Your partner's phone pairs the same way; beside each phone, **Sees Finances** or **Changes Finances** adds the household's Finances to it (only for a phone paired with the https link).
 
 ## 5. Day to day
 

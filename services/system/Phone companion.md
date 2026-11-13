@@ -19,9 +19,18 @@ Status, alerts, backups, and Finances on your phones, each paired with a code; h
 
 ## Purpose
 
-![The companion on a phone](../../docs/images/app-phone.png)
+<p>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../docs/images/iphone-status-dark.png">
+  <img alt="The Homelab app on an iPhone: Status" src="../../docs/images/iphone-status.png" width="220">
+</picture>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../docs/images/iphone-finances-dark.png">
+  <img alt="The Homelab app on an iPhone: Finances" src="../../docs/images/iphone-finances.png" width="220">
+</picture>
+</p>
 
-The homelab on your phone: the same Status and Backups screens as Homelab Wizard on the Mac, with each app's dot and address, alerts, the watchdog, savings, and the backups and restore test. It is for checking on the homelab from the sofa or from away, and for a quick restart without walking to the Mac.
+The homelab on your phone, served by `homelab serve` on the computer. Most phones reach it through the **Homelab app** for iPhone and iPad ([apple-client](<../../apple-client/README.md>), above); any other phone gets the same screens in its browser. Either way: the same Status and Backups screens as Homelab Wizard on the Mac, with each app's dot and address, alerts, the watchdog, savings, and the backups and restore test. It is for checking on the homelab from the sofa or from away, and for a quick restart without walking to the Mac.
 
 On the phones you allow, it is also the household's Finances: the same screen as on the Mac (Dashboard, Calendar, Recurring, Pay, Net worth; the calendar is a list of the days something happens, week by week), on your phone and your partner's, to look at or to change.
 
