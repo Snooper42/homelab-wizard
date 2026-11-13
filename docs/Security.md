@@ -304,6 +304,15 @@ Everything merged from #544 to #560 was read again by a session that wrote none 
 - **CSV a spreadsheet would run (backlog item 77):** the two CSVs made to be opened in a spreadsheet, Finances' Reports and its money ahead, put an apostrophe before any cell that starts with `=`, `+`, `-`, `@`, a tab or a return (`cell` in `web/src/finances/reportData.ts` and `exportData.ts`). Amounts stay numbers, so a payee or a bank reference someone else wrote is never run as a formula. The data export (`internal/export`) writes every database's tables as they are, for another service to import, so changing a cell there would corrupt the copy. It is not offered as a spreadsheet.
 - **Investments (#558):** no new network call, log line or alert: Ghostfolio's counts are compared with its own buys and sales on the machine, and the tests use made-up numbers.
 
+## Finances' one outside source: card prices (November 2026)
+
+Finances reads nothing from the internet but this, which the owner asked for (Nov 13): **Update prices** on the Collection reads TCGplayer's prices and the cards' pictures from TCGdex (`internal/cardprice`).
+
+- Only on the click that asks, from the computer (or a phone allowed to change Finances, through the computer). Nothing reads on its own.
+- What is sent: a card's name, to find it (`api.tcgdex.net/v2/en/cards?name=eq:…`), then the id TCGdex gave it. Never what was paid, how many, a grade, an account, a balance or any other part of the plan; a card's number and set narrow the answer on the computer, not in the question. `TestUpdatePrices` checks what goes out.
+- A picture comes only from `assets.tcgdex.net` over https, at most 2 MB, a JPEG, PNG or WebP by its own bytes and at most 2,048 pixels on a side; it is saved on the computer (`data/finance-cards/`) and every screen shows it from there.
+- An answer is read up to 4 MB; a price over $10 million is not one. A failure to reach TCGdex changes nothing.
+
 ## Incident response
 
 1. Look: `cscli alerts list`, the proxy logs, the app's logs.

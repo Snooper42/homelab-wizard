@@ -2210,6 +2210,25 @@ html .fx-month td { padding:0; vertical-align:top; height:92px; border-radius:va
 .alertlist.fx-rows > li .fwho:not(.sm):not(.lg), .alertlist.fx-rows > li .rowopen .fwho:not(.sm):not(.lg) { width:32px; height:32px; font-size:14px; }
 /* Transactions: by day, newest first; a day's heading over its rows. */
 .fx-txday + .fx-txday { margin-top:14px; }
+/* The Collection (Net worth › Collection): a card's picture, or a plain placeholder until the computer has one; its
+   own page, the picture large beside what it is worth. */
+.fx-cardpic { display:inline-flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; flex:none; width:40px; height:56px; box-sizing:border-box; border-radius:4px; background:var(--sunken); border:1px solid var(--line-strong); color:var(--muted); }
+.fx-cardpic svg { width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:1.6; }
+.fx-cardpic.lg { width:min(300px, 100%); height:auto; aspect-ratio:63 / 88; border-radius:14px; font-size:13px; }
+.fx-cardpic.lg svg { width:44px; height:44px; stroke-width:1.3; }
+.fx-cardworth { display:inline-flex; flex-direction:column; align-items:flex-end; gap:2px; font-variant-numeric:tabular-nums; }
+.fx-cardgain { font-size:12px; font-weight:500; white-space:nowrap; font-variant-numeric:tabular-nums; }
+img.fx-cardpic { object-fit:cover; padding:0; }
+.fx-cardphoto { display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin:12px 0 4px; }
+.fx-cardpaid { font-size:13px; white-space:nowrap; font-variant-numeric:tabular-nums; }
+/* Narrow (a phone): what it cost goes, its gain under what it is worth says enough, and the name keeps its room. */
+@media (max-width: 600px) { .fx-cardpaid { display:none; } }
+.fx-cardpage { display:flex; flex-wrap:wrap; gap:24px; align-items:flex-start; margin-top:12px; }
+.fx-cardside { flex:0 0 300px; max-width:100%; display:flex; flex-direction:column; gap:10px; }
+.fx-cardmain { flex:999 1 420px; min-width:0; display:flex; flex-direction:column; gap:12px; }
+#finRoot .fx-cardmain h2, .fx-cardmain h2 { margin:0; font-size:24px; font-weight:700; letter-spacing:-.02em; }
+.fx-cardmain p { margin:4px 0 0; }
+
 /* Transactions in columns on a wide card (Step 6): the same rows, their parts laid on one grid (logo, payee with its
    notes under it, category, account, amount), a header of sort buttons above them on the same grid. Sorted by a column
    other than the date, one list with each row's date after its logo. Narrow, the list as before and no header. */

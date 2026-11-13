@@ -2,6 +2,7 @@
 // Transactions, Reports, Recurring, Pay, Net worth), and the one shown. screens/finances.ts reads the plan,
 // keeps it, and opens the sheet; this only draws. On a phone allowed only
 // to look (v.readOnly) it draws no Edit or Add.
+import { CardPage, CollectionPage } from './Collection';
 import { render } from 'preact';
 import { HideAmounts } from './ui/HideAmounts';
 import { useState } from 'preact/hooks';
@@ -48,6 +49,12 @@ export interface FinancesProps {
   fromWallos?: () => Promise<app.AppSubscription[]>;
   /** Reads a receipt by its name: a phone allowed only to look shows it under its transaction. */
   readReceipt: (name: string) => Promise<string>;
+  /** A card of the Collection's picture, by its name, as a data URL. */
+  readCardPicture?: (name: string) => Promise<string>;
+  /** Each card's prices over time, by its id. */
+  readCardPrices?: () => Promise<Record<string, finance.Point[]>>;
+  /** Update prices (TCGdex, on the click); none on a phone allowed only to look. */
+  updatePrices?: () => Promise<cardprice.Result>;
   /** Keeps the ledger (a link to a planned payment, from Transactions); false when it failed. */
   saveLedger?: (l: finance.Ledger) => Promise<boolean>;
   /** Saves an export (Reports' CSV, the plan, what's ahead) and says where it went; "" when cancelled. */
@@ -65,7 +72,7 @@ export interface FinancesProps {
   investments?: NetWorthProps['invest'];
 }
 
-const tabs: [string, string][] = [['overview', 'Dashboard'], ['calendar', 'Calendar'], ['transactions', 'Transactions'], ['reports', 'Reports'], ['recurring', 'Recurring'], ['pay', 'Paychecks'], ['worth', 'Net worth']];
+const tabs: [string, string][] = [['overview', 'Dashboard'], ['calendar', 'Calendar'], ['transactions', 'Transactions'], ['reports', 'Reports'], ['recurring', 'Recurring'], ['pay', 'Paychecks'], ['worth', 'Net worth'], ['collection', 'Collection']];
 
 /**
  * The tabs in four: what happened (Spending: Transactions, Reports) and what
@@ -74,13 +81,14 @@ const tabs: [string, string][] = [['overview', 'Dashboard'], ['calendar', 'Calen
  * its own name inside (`tab`), so every way into one still opens it.
  */
 const groups: [string, string, string[]][] = [['overview', 'Dashboard', ['overview']], ['spending', 'Spending', ['transactions', 'reports']],
-  ['plan', 'Plan', ['calendar', 'recurring', 'pay']], ['worth', 'Net worth', ['worth']]];
-// An account's own page ("account:<id>") is under Net worth.
-const groupOf = (tab: string) => groups.find(([, , pages]) => pages.includes(tab.startsWith('account:') ? 'worth' : tab)) || groups[0];
+  ['plan', 'Plan', ['calendar', 'recurring', 'pay']], ['worth', 'Net worth', ['worth', 'collection']]];
+// An account's own page ("account:<id>") is under Net worth, a card's ("card:<id>") under its Collection.
+const pageFor = (tab: string) => (tab.startsWith('account:') ? 'worth' : tab.startsWith('card:') ? 'collection' : tab);
+const groupOf = (tab: string) => groups.find(([, , pages]) => pages.includes(pageFor(tab))) || groups[0];
 /** The page each tab was left on, so it opens there again (Plan on Paychecks); its first until one is. */
 const leftOn: Record<string, string> = {};
 const pageOf = (group: string) => leftOn[group] || groups.find(([k]) => k === group)![2][0];
-const adds: Record<string, [What, string]> = { overview: ['payment', 'Add a payment'], calendar: ['payment', 'Add a payment'], transactions: ['transaction', 'Add a transaction'], reports: ['transaction', 'Add a transaction'], recurring: ['payment', 'Add a payment'], pay: ['person', 'Add a paycheck'], worth: ['account', 'Add an account'] };
+const adds: Record<string, [What, string]> = { overview: ['payment', 'Add a payment'], calendar: ['payment', 'Add a payment'], transactions: ['transaction', 'Add a transaction'], reports: ['transaction', 'Add a transaction'], recurring: ['payment', 'Add a payment'], pay: ['person', 'Add a paycheck'], worth: ['account', 'Add an account'], collection: ['card', 'Add a card'] };
 
 /**
  * Export (F18): the plan as JSON, what's ahead as CSV, and this month or the
@@ -111,7 +119,7 @@ function ExportMenu({ v, exportFile, printMonth }: { v: finance.View; exportFile
   );
 }
 
-function FinancesScreen({ v, ledger, error, retry, tab, setTab, sel, pick, setSince, saveSettings, keep, edit: open, exportFile, printMonth, readReceipt, saveLedger, running, calendar, fromWallos, phone, toggleHidden, group, setGroup, investments }: FinancesProps) {
+function FinancesScreen({ v, ledger, error, retry, tab, setTab, sel, pick, setSince, saveSettings, keep, edit: open, exportFile, printMonth, readReceipt, readCardPicture, readCardPrices, updatePrices, saveLedger, running, calendar, fromWallos, phone, toggleHidden, group, setGroup, investments }: FinancesProps) {
   // A card's payoff with each paycheck is no payment of its own: it opens the card's form.
   const edit = (what: What, id?: string, kind?: string) => (cardOf(id) ? open('account', cardOf(id)) : open(what, id, kind));
   const L = v ? lookup(v.plan) : null;
@@ -119,7 +127,7 @@ function FinancesScreen({ v, ledger, error, retry, tab, setTab, sel, pick, setSi
   setOwnLogos(v?.plan.logos);
   setCategories(v?.categories);
   // An account's own page is under Net worth: its button adds an account too.
-  const [what, label] = adds[tab.startsWith('account:') ? 'worth' : tab] || adds.overview;
+  const [what, label] = adds[pageFor(tab)] || adds.overview;
   // Where Transactions was opened from, filtered (a report's row, a Dashboard card), for its Back; a tab picked forgets it.
   const [from, setFrom] = useState('');
   const toTx = (f: Parameters<typeof showTransactions>[0]) => { showTransactions(f); setFrom(tab); setTab('transactions'); };
@@ -146,11 +154,11 @@ function FinancesScreen({ v, ledger, error, retry, tab, setTab, sel, pick, setSi
         </div>
       </div>
       <Segmented label="View" value={groupOf(tab)[0]} pick={(g) => pickTab(pageOf(g))} options={groups.map(([k, label]) => [k, label] as [string, string])} />
-      {groupOf(tab)[2].length > 1 && <div class="fx-subtabs"><Segmented label={groupOf(tab)[1]} value={tab} pick={pickTab} options={tabs.filter(([k]) => groupOf(tab)[2].includes(k))} /></div>}
+      {groupOf(tab)[2].length > 1 && <div class="fx-subtabs"><Segmented label={groupOf(tab)[1]} value={pageFor(tab)} pick={pickTab} options={tabs.filter(([k]) => groupOf(tab)[2].includes(k))} /></div>}
       <div class="finbody">
         {!v && error ? <Empty>The finances file could not be read: {error} <button class="small" onClick={retry}>Try again</button></Empty>
           : !v ? <Empty>Reading…</Empty>
-          : ro ? <View v={v} L={L} phone={phone} ledger={ledger} setTab={setTab} toTx={toTx} back={back} exportFile={exportFile} readReceipt={readReceipt} running={running} tab={tab} sel={sel} pick={pick} openWorth={() => setTab('worth')} openSubscriptions={() => { openOn('subscriptions'); setTab('recurring'); }} openRecurring={(f?: string) => { if (f) openOn(f); setTab('recurring'); }} openTransactions={() => toTx({})} showIn={toTx} openCalendar={(day?: string) => { if (day) showDay(day); setTab('calendar'); }} openPay={() => setTab('pay')} openAccount={(id: string) => setTab(`account:${id}`)} group={group} setGroup={setGroup} />
+          : ro ? <View v={v} L={L} phone={phone} ledger={ledger} setTab={setTab} toTx={toTx} back={back} exportFile={exportFile} readReceipt={readReceipt} readCardPicture={readCardPicture} readCardPrices={readCardPrices} running={running} tab={tab} sel={sel} pick={pick} openWorth={() => setTab('worth')} openSubscriptions={() => { openOn('subscriptions'); setTab('recurring'); }} openRecurring={(f?: string) => { if (f) openOn(f); setTab('recurring'); }} openTransactions={() => toTx({})} showIn={toTx} openCalendar={(day?: string) => { if (day) showDay(day); setTab('calendar'); }} openPay={() => setTab('pay')} openAccount={(id: string) => setTab(`account:${id}`)} group={group} setGroup={setGroup} />
           : tab === 'calendar' ? <Calendar v={v} L={L} ledger={ledger} edit={(w, id) => edit(w, id)} />
           : tab === 'transactions' ? <Transactions v={v} L={L} ledger={ledger} edit={(w, id) => edit(w, id)} saveLedger={saveLedger} logos={!phone} back={back} />
           : tab === 'reports' ? <Reports v={v} ledger={ledger} exportFile={exportFile} open={toTx} />
@@ -158,6 +166,8 @@ function FinancesScreen({ v, ledger, error, retry, tab, setTab, sel, pick, setSi
           : tab === 'pay' ? <Pay v={v} L={L} edit={edit} saveSettings={saveSettings} keep={keep} calendar={calendar} />
           : tab.startsWith('account:') ? <AccountPage v={v} L={L} ledger={ledger} id={tab.slice(8)} done={() => setTab('worth')} edit={() => edit('account', tab.slice(8))} update={() => edit('balances')} toTx={toTx} editTx={(w, id) => edit(w, id)} saveLedger={saveLedger} />
           : tab === 'worth' ? <NetWorth v={v} L={L} edit={edit} open={(id) => setTab('account:' + id)} sel={Math.max(0, sel)} pick={pick} update={() => edit('balances')} keep={keep} group={group} setGroup={setGroup} invest={investments} />
+          : tab === 'collection' ? <CollectionPage v={v} open={(id) => setTab('card:' + id)} edit={(id) => edit('card', id)} read={readCardPicture} update={updatePrices} />
+          : tab.startsWith('card:') ? <CardPage v={v} id={tab.slice(5)} done={() => setTab('collection')} edit={() => edit('card', tab.slice(5))} read={readCardPicture} prices={readCardPrices} />
           : <Overview v={v} L={L} ledger={ledger} sel={sel} pick={pick} setSince={ro ? undefined : setSince} keep={ro ? undefined : keep} add={(w, k) => edit(w, undefined, k)} edit={(w, id) => edit(w, id)} openWorth={() => setTab('worth')} openSubscriptions={() => { openOn('subscriptions'); setTab('recurring'); }} openRecurring={(f?: string) => { if (f) openOn(f); setTab('recurring'); }} openTransactions={() => toTx({})} showIn={toTx} openCalendar={(day?: string) => { if (day) showDay(day); setTab('calendar'); }} openPay={() => setTab('pay')} openAccount={(id: string) => setTab(`account:${id}`)} phone={phone} />}
       </div>
     </>
@@ -165,7 +175,7 @@ function FinancesScreen({ v, ledger, error, retry, tab, setTab, sel, pick, setSi
 }
 
 /** A view as a phone allowed only to look draws it: the same, without a way to change anything (an export changes nothing). */
-function View({ v, L, phone, ledger, setTab, toTx, back, tab, sel, pick, openWorth, openSubscriptions, openRecurring, openTransactions, showIn, openCalendar, openPay, openAccount, exportFile, readReceipt, running, group, setGroup }: { v: finance.View; L: Lookup; phone?: boolean; ledger: finance.Ledger | null; setTab: (tab: string) => void; toTx: (f: Parameters<typeof showTransactions>[0]) => void; back?: { label: string; go: () => void }; exportFile: FinancesProps['exportFile']; readReceipt: FinancesProps['readReceipt']; running?: Running[]; tab: string; sel: number; pick: (i: number) => void; openWorth: () => void; openSubscriptions: () => void; openRecurring: (filter?: string) => void; openTransactions: () => void; showIn: (f: Parameters<typeof showTransactions>[0]) => void; openCalendar: (day?: string) => void; openPay: () => void; openAccount: (id: string) => void; group?: string; setGroup?: (group: string) => void }) {
+function View({ v, L, phone, ledger, setTab, toTx, back, tab, sel, pick, openWorth, openSubscriptions, openRecurring, openTransactions, showIn, openCalendar, openPay, openAccount, exportFile, readReceipt, readCardPicture, readCardPrices, running, group, setGroup }: { v: finance.View; L: Lookup; phone?: boolean; ledger: finance.Ledger | null; setTab: (tab: string) => void; toTx: (f: Parameters<typeof showTransactions>[0]) => void; back?: { label: string; go: () => void }; exportFile: FinancesProps['exportFile']; readReceipt: FinancesProps['readReceipt']; readCardPicture?: FinancesProps['readCardPicture']; readCardPrices?: FinancesProps['readCardPrices']; running?: Running[]; tab: string; sel: number; pick: (i: number) => void; openWorth: () => void; openSubscriptions: () => void; openRecurring: (filter?: string) => void; openTransactions: () => void; showIn: (f: Parameters<typeof showTransactions>[0]) => void; openCalendar: (day?: string) => void; openPay: () => void; openAccount: (id: string) => void; group?: string; setGroup?: (group: string) => void }) {
   return tab === 'calendar' ? <Calendar v={v} L={L} ledger={ledger} />
     : tab === 'transactions' ? <Transactions v={v} L={L} ledger={ledger} readReceipt={readReceipt} back={back} />
     : tab === 'reports' ? <Reports v={v} ledger={ledger} exportFile={exportFile} open={toTx} />
@@ -173,6 +183,8 @@ function View({ v, L, phone, ledger, setTab, toTx, back, tab, sel, pick, openWor
     : tab === 'pay' ? <Pay v={v} L={L} />
     : tab.startsWith('account:') ? <AccountPage v={v} L={L} ledger={ledger} id={tab.slice(8)} done={() => setTab('worth')} toTx={toTx} />
     : tab === 'worth' ? <NetWorth v={v} L={L} open={(id) => setTab('account:' + id)} sel={Math.max(0, sel)} pick={pick} group={group} setGroup={setGroup} />
+    : tab === 'collection' ? <CollectionPage v={v} open={(id) => setTab('card:' + id)} read={readCardPicture} />
+    : tab.startsWith('card:') ? <CardPage v={v} id={tab.slice(5)} done={() => setTab('collection')} read={readCardPicture} prices={readCardPrices} />
     : <Overview v={v} L={L} ledger={ledger} sel={sel} pick={pick} openWorth={openWorth} openSubscriptions={openSubscriptions} openRecurring={openRecurring} openTransactions={openTransactions} showIn={showIn} openCalendar={openCalendar} openPay={openPay} openAccount={openAccount} phone={phone} />;
 }
 

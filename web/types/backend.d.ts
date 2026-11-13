@@ -473,6 +473,16 @@ declare namespace board {
   }
 }
 
+declare namespace cardprice {
+  interface Result {
+    updated: number;
+    kept: number;
+    notFound?: string[];
+    unclear?: string[];
+    unpriced?: string[];
+  }
+}
+
 declare namespace companion {
   interface Asked {
     link: string;
@@ -633,6 +643,22 @@ declare namespace finance {
     parent?: string;
     icon?: string;
     income?: boolean;
+  }
+  interface Collected {
+    id: string;
+    account: string;
+    name: string;
+    set?: string;
+    number?: string;
+    grade?: string;
+    count?: number;
+    paid?: number;
+    paidOn?: string;
+    price?: number;
+    priceOn?: string;
+    typed?: boolean;
+    ref?: string;
+    picture?: string;
   }
   interface Day {
     date: string;
@@ -806,6 +832,7 @@ declare namespace finance {
     inBalance?: string[];
     logos?: Record<string, string>;
     watch?: finance.Watched[];
+    collection?: finance.Collected[];
     categories?: finance.Category[];
     budgets?: finance.Budget[];
     goals?: finance.Goal[];
@@ -1314,6 +1341,8 @@ interface Backend {
     Finances(): Promise<finance.View>;
     FinancesAddInvestment(arg1: app.InvestmentAdd): Promise<app.InvestmentsRead>;
     FinancesCalendar(): Promise<string>;
+    FinancesCardPicture(arg1: string): Promise<string>;
+    FinancesCardPrices(): Promise<Record<string, finance.Point[]>>;
     FinancesChangeInvestment(arg1: app.InvestmentTrade): Promise<app.InvestmentsRead>;
     FinancesDeleteInvestment(arg1: string, arg2: string): Promise<app.InvestmentsRead>;
     FinancesFetchLogo(arg1: string): Promise<app.AppLogo>;
@@ -1326,6 +1355,7 @@ interface Backend {
     FinancesLedger(): Promise<finance.Ledger>;
     FinancesReadInvestments(): Promise<app.InvestmentsRead>;
     FinancesReceipt(arg1: string): Promise<string>;
+    FinancesUpdatePrices(): Promise<cardprice.Result>;
     FinancesWall(): Promise<finance.Wall>;
     Health(): Promise<app.HealthInfo>;
     History(arg1: string, arg2: string, arg3: number): Promise<history.Entry[]>;
@@ -1359,6 +1389,7 @@ interface Backend {
     RunSetup(arg1: string): Promise<setup.Step[]>;
     RunSetupChoice(arg1: string, arg2: number): Promise<setup.Step[]>;
     SaveFinances(arg1: finance.Plan): Promise<finance.View>;
+    SaveFinancesCardPicture(arg1: string): Promise<string>;
     SaveFinancesLedger(arg1: finance.Ledger): Promise<finance.Ledger>;
     SaveFinancesReceipt(arg1: string): Promise<string>;
     SaveSettings(arg1: Record<string, string>): Promise<settings.Setting[]>;

@@ -17,13 +17,14 @@ const RecordsFolder = "data"
 
 // recordDirs are the folders in data/ that are records rather than an app's
 // data or a cache: the household's welcome pages, the apps' sign-in
-// settings, the receipts kept with Finances' transactions, and each
-// household member's own Finances (members/<username>/data).
-var recordDirs = []string{"people", "sso", "finance-receipts", "members"}
+// settings, the receipts kept with Finances' transactions, the pictures
+// of the Collection's cards, and each household member's own Finances
+// (members/<username>/data).
+var recordDirs = []string{"people", "sso", "finance-receipts", "finance-cards", "members"}
 
 // CopyRecords copies the homelab's own records from dataDir (the homelab
 // folder's data/) into dst: every .json file directly in it, the people,
-// sso, finance-receipts, and members folders, and a snapshot of homelab.db (the
+// sso, finance-receipts, finance-cards, and members folders, and a snapshot of homelab.db (the
 // record of what was done). Not data/appdata (the AppData job has it), the icon cache,
 // or a sync folder. dst is replaced as a whole, so a record removed here is
 // gone from the next night's copy too, and a copy that fails halfway leaves

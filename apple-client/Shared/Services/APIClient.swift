@@ -386,6 +386,41 @@ actor APIClient {
         return try Self.ledgerRead(from: try await send(request, to: endpoint, using: actionSession))
     }
 
+    /// A card of the Collection's picture, as a data URL (FinancesCardPicture). It needs the view or edit level.
+    func cardPicture(named name: String) async throws -> String {
+        let (request, endpoint) = try callRequest("FinancesCardPicture", [.string(name)])
+        let data = try await send(request, to: endpoint, using: actionSession)
+        do {
+            return try JSONDecoder().decode(CallEnvelope<String>.self, from: data).result
+        } catch {
+            throw APIError.decoding
+        }
+    }
+
+    /// Each card's price over time, by its id (FinancesCardPrices).
+    func cardPrices() async throws -> [String: [FinancePoint]] {
+        let (request, endpoint) = try callRequest("FinancesCardPrices", [])
+        let data = try await send(request, to: endpoint, using: actionSession)
+        do {
+            return try JSONDecoder().decode(CallEnvelope<[String: [FinancePoint]]>.self, from: data).result
+        } catch {
+            throw APIError.decoding
+        }
+    }
+
+    /// Update Prices: the Collection's prices (and missing pictures) read
+    /// from TCGdex by the computer (FinancesUpdatePrices). A change: the edit level.
+    func updateCardPrices() async throws -> CardPricesRead {
+        let (request, endpoint) = try callRequest("FinancesUpdatePrices", [])
+        Log.network.notice("FinancesUpdatePrices")
+        let data = try await send(request, to: endpoint, using: actionSession)
+        do {
+            return try JSONDecoder.homelab().decode(CallEnvelope<CardPricesRead>.self, from: data).result
+        } catch {
+            throw APIError.decoding
+        }
+    }
+
     /// A kept receipt, as a data URL. It needs the view or edit level.
     func receipt(named name: String) async throws -> String {
         guard ReceiptCodec.isValidName(name) else { throw APIError.invalidResponse }

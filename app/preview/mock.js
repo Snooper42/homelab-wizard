@@ -444,6 +444,12 @@ try { if ((window.__MOCK || {}).tidyTab) localStorage.setItem('homelab.tidyTab',
     StatusFolds: () => later(M.statusFolds || {}),
     // Send to my phone: the paired phones a page can go to (no wall screen), and each send kept to look at.
     SendTargets: () => later(M.sendTargets ?? [{ id: 'p1', name: "Sam's iPhone", finances: true }, { id: 'p2', name: 'The iPad' }, { id: 'p3', name: "Anna's iPhone", member: true, apps: ['immich-server'] }]),
+    // The Collection's pictures: a card's own photo kept by its name (as the computer names it), and read back.
+    SaveFinancesCardPicture: (dataURL) => { const name = 'ab'.repeat(16) + '.jpg'; (M.cardPictures ??= {})[name] = dataURL; return later(name); },
+    FinancesCardPicture: (name) => later(M.cardPictures?.[name] || ''),
+    // Update prices: what a read from TCGdex did (made up), and each card's prices over time.
+    FinancesUpdatePrices: () => later(M.pricesRead ?? { updated: 3, kept: 1, notFound: ['Leaf Lizard'], unclear: ['Volt Mouse'] }),
+    FinancesCardPrices: () => later(M.cardPrices ?? { 'ember-fox': [{ date: '2026-09-01', amount: 120 }, { date: '2026-10-01', amount: 150 }, { date: '2026-10-29', amount: 182.4 }] }),
     SendToPhone: (device, link, title) => { (M.sent ??= []).push({ device, link, title }); return later(null); },
     SetStatusFolds: (open) => { M.statusFolds = open; (M.statusFoldsSaved ??= []).push(open); return later(null); },
     TidyStop: () => { M.tidyStopped = true; return later(null); },

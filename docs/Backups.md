@@ -57,7 +57,7 @@ Job settings always use the container paths on the right. Sources are read-only,
 | Calibre library (`metadata.db` and books) | Homelab Calibre job (`/source/calibre`) |
 | MoneyMatter attachments | `homelab backup` archives the `moneymatter-attachments` volume → Homelab Databases job (`/staging/volumes`) |
 | Music, movies, TV, audiobooks, comics | **Not backed up** (re-obtainable, and too large for most cloud drives) |
-| The homelab's own records in `data/` (the household, paired phones, single sign-on settings, Finances with each balance's history, update history) | `homelab backup` copies them into `recovery-staging/secrets/data` → Homelab Secrets job |
+| The homelab's own records in `data/` (the household, paired phones, single sign-on settings, Finances with each balance's history, its receipts and the Collection's pictures, update history) | `homelab backup` copies them into `recovery-staging/secrets/data` → Homelab Secrets job |
 
 ## Database dumps
 

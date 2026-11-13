@@ -10473,6 +10473,14 @@
     const png = await url(await c4.convertToBlob({ type: "image/png" }));
     return png.length < 6e4 ? png : url(await c4.convertToBlob({ type: "image/webp", quality: 0.85 }));
   }
+  async function shrinkPhoto(f4) {
+    const bmp = await createImageBitmap(f4);
+    const scale = Math.min(800 / bmp.width, 800 / bmp.height, 1);
+    const w3 = Math.max(1, Math.round(bmp.width * scale)), h3 = Math.max(1, Math.round(bmp.height * scale));
+    const c4 = new OffscreenCanvas(w3, h3);
+    c4.getContext("2d").drawImage(bmp, 0, 0, w3, h3);
+    return asDataURL(await c4.convertToBlob({ type: "image/jpeg", quality: 0.85 }));
+  }
   var asDataURL = (b2) => new Promise((ok, bad) => {
     const r3 = new FileReader();
     r3.onload = () => ok(String(r3.result));
@@ -12071,6 +12079,120 @@
       /* @__PURE__ */ u3(Actions3, { busy: busy2, exists: !!g2, remove, close: props.close, problem, touched })
     ] });
   }
+  var cardsAccount = (plan) => {
+    const taken = new Set((plan.accounts || []).map((a3) => a3.id));
+    let id2 = "pokemon-cards";
+    for (let i3 = 2; taken.has(id2); i3++) id2 = `pokemon-cards-${i3}`;
+    return { id: id2, name: "Pokémon cards", kind: "collectible", balance: 0 };
+  };
+  function CardForm(props) {
+    const { plan, id: id2 } = props;
+    const c4 = (plan.collection || []).find((x3) => x3.id === id2);
+    const holding = (plan.accounts || []).filter((a3) => a3.kind === "collectible" && (plan.collection || []).some((x3) => x3.account === a3.id));
+    const [name, setName] = d2(c4?.name || "");
+    const [set2, setSet] = d2(c4?.set || "");
+    const [number, setNumber] = d2(c4?.number || "");
+    const [grade, setGrade] = d2(c4?.grade || "");
+    const [count2, setCount] = d2(String(c4?.count || 1));
+    const [paid, setPaid] = d2(money2(c4?.paid));
+    const [paidOn, setPaidOn] = d2(c4?.paidOn || (c4 ? "" : todayISO()));
+    const [price, setPrice] = d2(money2(c4?.price));
+    const [typed, setTyped] = d2(!!c4?.typed);
+    const [account, setAccount] = d2(c4?.account || holding[0]?.id || "");
+    const [picture, setPicture] = d2(c4?.picture || "");
+    const [shown8, setShown] = d2("");
+    const [reading2, setReading] = d2("");
+    const { busy: busy2, keep: keep3, touched, watch: watch2 } = useSaving(props);
+    const [problem, setProblem] = d2("");
+    h2(() => {
+      if (!picture || !props.cardPictures) {
+        setShown("");
+        return;
+      }
+      let live = true;
+      props.cardPictures.read(picture).then((u4) => {
+        if (live) setShown(u4);
+      }, () => {
+      });
+      return () => {
+        live = false;
+      };
+    }, [picture]);
+    const pickPhoto = async (e3) => {
+      const f4 = e3.target.files?.[0];
+      if (!f4 || !props.cardPictures) return;
+      setReading("Keeping the photo…");
+      try {
+        setPicture(await props.cardPictures.save(await shrinkPhoto(f4)));
+        setReading("");
+      } catch (err) {
+        setReading(`The photo wasn't kept: ${err?.message || err}`);
+      }
+    };
+    const submit = (e3) => {
+      e3.preventDefault();
+      const n3 = Math.round(num(count2));
+      const wrong = !name.trim() ? "Give it a name: what is on the card." : !(n3 >= 1) ? "How many: 1 or more." : num(paid) < 0 || num(price) < 0 ? "A price is nothing or more." : "";
+      setProblem(wrong);
+      if (wrong) return;
+      const fresh = !account ? cardsAccount(plan) : null;
+      const worth = num(price);
+      const next = {
+        ...c4 || { id: "" },
+        account: fresh?.id || account,
+        name: name.trim(),
+        set: set2.trim() || void 0,
+        number: number.trim() || void 0,
+        grade: grade.trim() || void 0,
+        count: n3 > 1 ? n3 : void 0,
+        paid: num(paid) || void 0,
+        paidOn: paidOn || void 0,
+        price: worth || void 0,
+        typed: typed || void 0,
+        picture: picture || void 0,
+        // A price changed here is set today.
+        priceOn: worth !== (c4?.price || 0) ? todayISO() : c4?.priceOn || (worth ? todayISO() : void 0)
+      };
+      const collection = (plan.collection || []).slice();
+      const at2 = collection.findIndex((x3) => x3.id === c4?.id);
+      if (at2 >= 0) collection[at2] = next;
+      else collection.push(next);
+      keep3({ ...plan, accounts: fresh ? [...plan.accounts || [], fresh] : plan.accounts, collection });
+    };
+    const remove = () => keep3({ ...plan, collection: (plan.collection || []).filter((x3) => x3.id !== c4?.id) });
+    return /* @__PURE__ */ u3("form", { class: "finform", onSubmit: submit, ...watch2, children: [
+      /* @__PURE__ */ u3("div", { class: "formhead", children: /* @__PURE__ */ u3("h2", { id: "finSheetTitle", children: c4 ? c4.name : "Add a card" }) }),
+      /* @__PURE__ */ u3("p", { class: "formsub muted", children: holding.length ? "Its worth counts in your net worth, in the account it is kept in." : "Your cards are kept in a new account, Pokémon cards, worth what they are: it counts in your net worth." }),
+      /* @__PURE__ */ u3("div", { class: "formgrid", children: [
+        /* @__PURE__ */ u3(Field, { label: "Name", wide: true, children: /* @__PURE__ */ u3("input", { value: name, onInput: input(setName), placeholder: "As it says on the card" }) }),
+        /* @__PURE__ */ u3(Field, { label: "Set (optional)", children: /* @__PURE__ */ u3("input", { value: set2, onInput: input(setSet), placeholder: "Base Set" }) }),
+        /* @__PURE__ */ u3(Field, { label: "Number (optional)", children: /* @__PURE__ */ u3("input", { value: number, onInput: input(setNumber), placeholder: "4/102" }) }),
+        /* @__PURE__ */ u3(Field, { label: "Condition or grade (optional)", children: /* @__PURE__ */ u3("input", { value: grade, onInput: input(setGrade), placeholder: "Near mint, or Graded 9" }) }),
+        /* @__PURE__ */ u3(Field, { label: "How many", children: /* @__PURE__ */ u3("input", { inputmode: "numeric", value: count2, onInput: input(setCount) }) }),
+        /* @__PURE__ */ u3(MoneyField, { label: "Paid, each (optional)", value: paid, set: setPaid, hint: "45.00" }),
+        /* @__PURE__ */ u3(Field, { label: "Paid on (optional)", children: /* @__PURE__ */ u3("input", { type: "date", value: paidOn, onInput: input(setPaidOn) }) }),
+        /* @__PURE__ */ u3(MoneyField, { label: "Worth now, each", value: price, set: setPrice, hint: "182.40" }),
+        holding.length > 1 && /* @__PURE__ */ u3(Field, { label: "Kept in", children: /* @__PURE__ */ u3("select", { value: account, onChange: (e3) => setAccount(e3.target.value), children: holding.map((a3) => /* @__PURE__ */ u3("option", { value: a3.id, children: a3.name }, a3.id)) }) })
+      ] }),
+      /* @__PURE__ */ u3("label", { class: "fcheckbox", children: [
+        /* @__PURE__ */ u3("input", { type: "checkbox", checked: typed, onClick: tick2(setTyped) }),
+        " Keep this price: never look it up (a graded card the price service doesn't list)"
+      ] }),
+      props.cardPictures && /* @__PURE__ */ u3("div", { class: "fx-cardphoto", children: [
+        shown8 ? /* @__PURE__ */ u3("img", { class: "fx-cardpic", src: shown8, alt: "" }) : /* @__PURE__ */ u3("span", { class: "fx-cardpic", "aria-hidden": "true", children: /* @__PURE__ */ u3("svg", { viewBox: "0 0 24 24", children: [
+          /* @__PURE__ */ u3("rect", { x: "4", y: "3", width: "16", height: "18", rx: "2" }),
+          /* @__PURE__ */ u3("circle", { cx: "12", cy: "11", r: "3.5" })
+        ] }) }),
+        /* @__PURE__ */ u3("label", { class: "btn", children: [
+          picture ? "Another photo" : "Use my own photo",
+          /* @__PURE__ */ u3("input", { type: "file", accept: "image/*", class: "sr", onChange: pickPhoto })
+        ] }),
+        picture && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => setPicture(""), children: "No photo" }),
+        reading2 && /* @__PURE__ */ u3("span", { class: "muted", role: "status", children: reading2 })
+      ] }),
+      /* @__PURE__ */ u3(Actions3, { busy: busy2, exists: !!c4, remove, close: props.close, problem, touched })
+    ] });
+  }
   function FinanceSheet({ edit }) {
     return /* @__PURE__ */ u3(Sheet, { id: "finSheet", titleId: "finSheetTitle", children: [
       edit?.what === "payment" && /* @__PURE__ */ u3(PaymentForm, { ...edit }, "p" + edit.n),
@@ -12084,11 +12206,390 @@
       edit?.what === "logos" && /* @__PURE__ */ u3(LogosForm, { ...edit }, "l" + edit.n),
       edit?.what === "rules" && /* @__PURE__ */ u3(RulesForm, { ...edit }, "r" + edit.n),
       edit?.what === "goal" && /* @__PURE__ */ u3(GoalForm, { ...edit }, "o" + edit.n),
+      edit?.what === "card" && /* @__PURE__ */ u3(CardForm, { ...edit }, "k" + edit.n),
       !edit && /* @__PURE__ */ u3("h2", { id: "finSheetTitle", children: "Finances" })
     ] });
   }
   function mountFinanceSheet(el3, edit) {
     R(/* @__PURE__ */ u3(FinanceSheet, { edit }), el3);
+  }
+
+  // web/src/finances/ui/charts.tsx
+  function ticks(lo, hi, count2 = 4) {
+    const span = Math.max(hi - lo, 1);
+    const raw = span / count2;
+    const mag = 10 ** Math.floor(Math.log10(raw));
+    const step2 = [1, 2, 2.5, 5, 10].map((m3) => m3 * mag).find((s3) => s3 >= raw) || 10 * mag;
+    const bottom = Math.floor(lo / step2) * step2, top = Math.ceil(hi / step2) * step2;
+    const out = [];
+    for (let t3 = bottom; t3 <= top + step2 / 1e6; t3 += step2) out.push(Math.round(t3 * 100) / 100);
+    return { ticks: out, top, bottom };
+  }
+  var tipSide = (x3) => x3 < 60 ? { left: `calc(${x3}% + 14px)` } : { right: `calc(${100 - x3}% + 14px)` };
+  function Axis({ marks: marks2, y: y3, format: format2 }) {
+    return /* @__PURE__ */ u3("div", { class: "fx-axis", "aria-hidden": "true", children: marks2.map((t3) => /* @__PURE__ */ u3("span", { class: t3 === 0 ? "zero" : "", style: { top: `${y3(t3)}px` }, children: format2(t3) }, t3)) });
+  }
+  function AreaChart({ values, xLabels, marks: marks2 = [], threshold, aheadFrom, band, height = 200, format: format2, tip, label, zero = true, axis: showAxis = true, fill, onPick }) {
+    const [at2, setAt] = d2(-1);
+    const n3 = values.length;
+    const plot = A2(null);
+    const [room, setRoom] = d2(0);
+    _2(() => {
+      if (!fill || !plot.current) return;
+      const watch2 = new ResizeObserver(([e3]) => setRoom(Math.round(e3.contentRect.height)));
+      watch2.observe(plot.current);
+      return () => watch2.disconnect();
+    }, [fill, n3 >= 2]);
+    if (n3 < 2) return null;
+    const tall = fill ? Math.max(height, room) : height;
+    const lo = zero ? Math.min(0, ...values, threshold ?? 0) : Math.min(...values), hi = zero ? Math.max(...values, threshold ?? 0, 1) : Math.max(...values);
+    const axis = zero ? ticks(lo, hi * 1.08) : ticks(lo - (hi - lo) * 0.1, hi + (hi - lo) * 0.1);
+    const y3 = (v3) => (axis.top - v3) / (axis.top - axis.bottom || 1) * tall;
+    const x3 = (i3) => i3 / (n3 - 1) * 1e3;
+    const pct = (i3) => i3 / (n3 - 1) * 100;
+    const cut = aheadFrom === void 0 ? n3 - 1 : Math.min(n3 - 1, aheadFrom);
+    const path = (from2, to) => values.slice(from2, to + 1).map((v3, k3) => `${k3 ? "L" : "M"}${x3(from2 + k3).toFixed(1)} ${y3(v3).toFixed(1)}`).join(" ");
+    const solid = path(0, cut);
+    const move = (e3) => {
+      const r3 = e3.currentTarget.getBoundingClientRect();
+      setAt(Math.max(0, Math.min(n3 - 1, Math.round((e3.clientX - r3.left) / r3.width * (n3 - 1)))));
+    };
+    return /* @__PURE__ */ u3("figure", { class: "fx-chart fx-area" + (fill ? " fill" : ""), "aria-label": label, children: [
+      /* @__PURE__ */ u3("div", { class: "fx-plotrow", children: [
+        showAxis && /* @__PURE__ */ u3(Axis, { marks: axis.ticks, y: y3, format: format2 }),
+        /* @__PURE__ */ u3(
+          "div",
+          {
+            ref: plot,
+            class: "fx-plot" + (onPick ? " pick" : ""),
+            style: fill ? { minHeight: `${height}px` } : { height: `${height}px` },
+            onPointerMove: move,
+            onPointerLeave: () => setAt(-1),
+            onClick: onPick && ((e3) => {
+              const r3 = e3.currentTarget.getBoundingClientRect();
+              onPick(Math.max(0, Math.min(n3 - 1, Math.round((e3.clientX - r3.left) / r3.width * (n3 - 1)))));
+            }),
+            children: [
+              showAxis && axis.ticks.map((t3) => /* @__PURE__ */ u3("span", { class: "fx-grid" + (t3 === 0 ? " zero" : ""), style: { top: `${y3(t3)}px` } }, t3)),
+              band && /* @__PURE__ */ u3("span", { class: "fx-band", style: { left: `${pct(band.from)}%`, width: `${pct(band.to) - pct(band.from)}%` } }),
+              threshold !== void 0 && /* @__PURE__ */ u3("span", { class: "fx-threshold", style: { top: `${y3(threshold)}px` } }),
+              /* @__PURE__ */ u3("svg", { viewBox: `0 0 1000 ${tall}`, preserveAspectRatio: "none", "aria-hidden": "true", children: [
+                /* @__PURE__ */ u3("path", { class: "fx-areafill", d: `${solid} L${x3(cut).toFixed(1)} ${tall} L0 ${tall} Z` }),
+                /* @__PURE__ */ u3("path", { class: "fx-line", d: solid, "vector-effect": "non-scaling-stroke" }),
+                cut < n3 - 1 && /* @__PURE__ */ u3("path", { class: "fx-line ahead", d: path(cut, n3 - 1), "vector-effect": "non-scaling-stroke" })
+              ] }),
+              marks2.map((m3, k3) => /* @__PURE__ */ u3("span", { class: "fx-mark fx-h-" + m3.tone, style: { left: `${pct(m3.i)}%`, top: `${y3(values[m3.i])}px` } }, k3)),
+              at2 >= 0 && /* @__PURE__ */ u3(S, { children: [
+                /* @__PURE__ */ u3("span", { class: "fx-cross", style: { left: `${pct(at2)}%` } }),
+                /* @__PURE__ */ u3("span", { class: "fx-pin", style: { left: `${pct(at2)}%`, top: `${y3(values[at2])}px` } }),
+                tip && /* @__PURE__ */ u3("div", { class: "fx-tip", style: tipSide(pct(at2)), children: tip(at2) })
+              ] })
+            ]
+          }
+        )
+      ] }),
+      /* @__PURE__ */ u3("div", { class: "fx-xlabels" + (showAxis ? "" : " bare"), "aria-hidden": "true", children: xLabels.map((l3) => /* @__PURE__ */ u3("span", { style: { left: `${pct(l3.i)}%` }, children: l3.label }, l3.i)) })
+    ] });
+  }
+  function StackedBars({ columns: columns2, height = 260, format: format2, tip, label, lineless, onPick }) {
+    const last2 = columns2.map((c4) => !c4.ahead).lastIndexOf(true);
+    const [at2, setAt] = d2(-1);
+    const shown8 = at2 >= 0 ? at2 : last2;
+    const lines = lineless ? [] : columns2.map((c4) => c4.line);
+    const top = Math.max(...columns2.map((c4) => c4.up.reduce((t3, p3) => t3 + p3.value, 0)), ...lines, 1);
+    const bottom = Math.min(0, ...columns2.map((c4) => -c4.down.reduce((t3, p3) => t3 + p3.value, 0)), ...lines);
+    const axis = ticks(bottom, top, 4);
+    const pad = (top - bottom) * 0.04;
+    const ceil = Math.min(axis.top, top + pad), floor = bottom < 0 ? Math.max(axis.bottom, bottom - pad) : 0;
+    const marks2 = axis.ticks.filter((t3) => t3 <= ceil + 1e-6 && t3 >= floor - 1e-6);
+    const y3 = (v3) => (ceil - v3) / (ceil - floor || 1) * height;
+    const n3 = columns2.length;
+    const cx = (i3) => (i3 + 0.5) / n3 * 1e3;
+    const line = (from2, to) => columns2.slice(from2, to + 1).map((c4, k3) => `${cx(from2 + k3).toFixed(1)},${y3(c4.line).toFixed(1)}`).join(" ");
+    return /* @__PURE__ */ u3("figure", { class: "fx-chart fx-stacked", "aria-label": label, children: [
+      /* @__PURE__ */ u3("div", { class: "fx-plotrow", children: [
+        /* @__PURE__ */ u3(Axis, { marks: marks2, y: y3, format: format2 }),
+        /* @__PURE__ */ u3("div", { class: "fx-plot", style: { height: `${height}px` }, onPointerLeave: () => setAt(-1), children: [
+          marks2.map((t3) => /* @__PURE__ */ u3("span", { class: "fx-grid" + (t3 === 0 ? " zero" : ""), style: { top: `${y3(t3)}px` } }, t3)),
+          floor < 0 && /* @__PURE__ */ u3("span", { class: "fx-below", style: { top: `${y3(0)}px` } }),
+          columns2.map((c4, i3) => {
+            let up = 0, down = 0;
+            return /* @__PURE__ */ u3("div", { class: "fx-stackcol" + (c4.ahead ? " ahead" : "") + (i3 === shown8 ? " on" : "") + (onPick ? " pick" : ""), style: { left: `${i3 / n3 * 100}%`, width: `${100 / n3}%` }, onPointerEnter: () => setAt(i3), onClick: onPick && (() => onPick(i3)), children: [
+              c4.up.map((p3, k3) => {
+                const t3 = y3(up + p3.value), h3 = y3(up) - t3;
+                up += p3.value;
+                return /* @__PURE__ */ u3("span", { class: "fx-seg " + hue(p3.color) + (k3 === c4.up.length - 1 ? " cap" : ""), style: { top: `${t3}px`, height: `${Math.max(h3, p3.value > 0 ? 1 : 0)}px` } }, "u" + k3);
+              }),
+              c4.down.map((p3, k3) => {
+                const t3 = y3(-down), h3 = y3(-down - p3.value) - t3;
+                down += p3.value;
+                return /* @__PURE__ */ u3("span", { class: "fx-seg " + hue(p3.color) + (k3 === c4.down.length - 1 ? " foot" : ""), style: { top: `${t3}px`, height: `${Math.max(h3, p3.value > 0 ? 1 : 0)}px` } }, "d" + k3);
+              })
+            ] }, i3);
+          }),
+          !lineless && /* @__PURE__ */ u3("svg", { viewBox: `0 0 1000 ${height}`, preserveAspectRatio: "none", "aria-hidden": "true", children: [
+            /* @__PURE__ */ u3("polyline", { class: "fx-netline", points: line(0, last2), "vector-effect": "non-scaling-stroke" }),
+            last2 < n3 - 1 && /* @__PURE__ */ u3("polyline", { class: "fx-netline ahead", points: line(last2, n3 - 1), "vector-effect": "non-scaling-stroke" })
+          ] }),
+          !lineless && columns2.map((c4, i3) => /* @__PURE__ */ u3("span", { class: "fx-netdot" + (i3 === shown8 ? " on" : ""), style: { left: `${(i3 + 0.5) / n3 * 100}%`, top: `${y3(c4.line)}px` } }, i3)),
+          at2 >= 0 && /* @__PURE__ */ u3("div", { class: "fx-tip wide", style: tipSide((at2 + 0.5) / n3 * 100), children: tip(at2) })
+        ] })
+      ] }),
+      /* @__PURE__ */ u3("div", { class: "fx-barlabels" + (n3 > 8 ? " many" : ""), "aria-hidden": "true", style: { gridTemplateColumns: `repeat(${n3}, minmax(0, 1fr))` }, children: columns2.map((c4, i3) => /* @__PURE__ */ u3("span", { class: i3 === shown8 ? "on" : "", children: c4.label }, i3)) })
+    ] });
+  }
+  function Donut({ slices, center, size: size2 = 150, label }) {
+    const total = slices.reduce((t3, s3) => t3 + Math.max(0, s3.value), 0) || 1;
+    const r3 = 56, c4 = 2 * Math.PI * r3, gap2 = slices.length > 1 ? 2 : 0;
+    let run2 = 0;
+    const said2 = slices.map((s3) => `${s3.label} ${Math.round(s3.value / total * 100)}%`).join(", ");
+    return /* @__PURE__ */ u3("div", { class: "fx-donut", style: { width: `${size2}px`, height: `${size2}px` }, children: [
+      /* @__PURE__ */ u3("svg", { viewBox: "0 0 150 150", role: "img", "aria-label": `${label}: ${said2}`, children: slices.map((s3) => {
+        const len = Math.max(0, s3.value) / total * c4;
+        const el3 = /* @__PURE__ */ u3("circle", { class: "fx-slice " + hue(s3.color), cx: "75", cy: "75", r: r3, "stroke-dasharray": `${Math.max(len - gap2, 0.5).toFixed(2)} ${c4.toFixed(2)}`, "stroke-dashoffset": (-run2).toFixed(2) }, s3.label);
+        run2 += len;
+        return el3;
+      }) }),
+      /* @__PURE__ */ u3("div", { class: "fx-donutcenter", children: center })
+    ] });
+  }
+
+  // web/src/finances/Collection.tsx
+  var cardWorth = (c4) => (c4.price || 0) * Math.max(1, c4.count || 1);
+  var cardPaid = (c4) => (c4.paid || 0) * Math.max(1, c4.count || 1);
+  var cardLine = (c4) => [c4.set, c4.number, c4.grade, (c4.count || 1) > 1 ? `×${c4.count}` : ""].filter(Boolean).join(" · ") || "A card";
+  var pictures = /* @__PURE__ */ new Map();
+  var pictureOf = (name, read) => {
+    if (!pictures.has(name)) pictures.set(name, read(name).catch((e3) => {
+      pictures.delete(name);
+      throw e3;
+    }));
+    return pictures.get(name);
+  };
+  function CardPicture({ c: c4, large, read }) {
+    const [url, setUrl] = d2("");
+    h2(() => {
+      setUrl("");
+      if (!c4.picture || !read) return;
+      let live = true;
+      pictureOf(c4.picture, read).then((u4) => {
+        if (live && u4.startsWith("data:image/")) setUrl(u4);
+      }, () => {
+      });
+      return () => {
+        live = false;
+      };
+    }, [c4.picture, read]);
+    if (url) return /* @__PURE__ */ u3("img", { class: "fx-cardpic" + (large ? " lg" : ""), src: url, alt: large ? c4.name : "" });
+    return /* @__PURE__ */ u3("span", { class: "fx-cardpic" + (large ? " lg" : ""), role: "img", "aria-label": `${c4.name}: no picture yet`, children: [
+      /* @__PURE__ */ u3("svg", { viewBox: "0 0 24 24", "aria-hidden": "true", children: [
+        /* @__PURE__ */ u3("rect", { x: "4", y: "3", width: "16", height: "18", rx: "2" }),
+        /* @__PURE__ */ u3("circle", { cx: "12", cy: "11", r: "3.5" })
+      ] }),
+      large && /* @__PURE__ */ u3("span", { children: "No picture yet" })
+    ] });
+  }
+  function Gain({ worth, paid }) {
+    if (!(paid > 5e-3)) return null;
+    const pct = Math.round((worth - paid) / paid * 100);
+    return /* @__PURE__ */ u3("span", { class: "fx-cardgain", children: [
+      /* @__PURE__ */ u3(Amount, { value: worth - paid, sign: true, tone: "auto", form: "full" }),
+      " ",
+      /* @__PURE__ */ u3("span", { class: pct < 0 ? "fx-out" : pct > 0 ? "fx-in" : "", children: [
+        "(",
+        pct > 0 ? "+" : "",
+        pct,
+        "%)"
+      ] })
+    ] });
+  }
+  function updateWords(r3) {
+    const list = (names5) => (names5 || []).join(", ");
+    return [
+      r3.updated ? `Updated ${r3.updated === 1 ? "1 card" : `${r3.updated} cards`} from TCGplayer's prices.` : "No price changed.",
+      r3.notFound?.length ? `Not found: ${list(r3.notFound)} (check its name and number).` : "",
+      r3.unclear?.length ? `More than one printing: ${list(r3.unclear)} (add its set).` : "",
+      r3.unpriced?.length ? `No TCGplayer price yet: ${list(r3.unpriced)}.` : "",
+      r3.kept ? `${r3.kept === 1 ? "1 card keeps" : `${r3.kept} cards keep`} your own price.` : ""
+    ].filter(Boolean).join(" ");
+  }
+  function CollectionPage({ v: v3, open: open4, edit, read, update }) {
+    const [said2, setSaid] = d2("");
+    const [busy2, setBusy] = d2(false);
+    const run2 = async () => {
+      setBusy(true);
+      setSaid("Reading prices from TCGdex…");
+      try {
+        setSaid(updateWords(await update()));
+      } catch (e3) {
+        setSaid(String(e3?.message || e3));
+      } finally {
+        setBusy(false);
+      }
+    };
+    const cards = v3.plan.collection || [];
+    const held3 = (v3.plan.accounts || []).filter((a3) => cards.some((c4) => c4.account === a3.id));
+    const worth = cards.reduce((t3, c4) => t3 + cardWorth(c4), 0);
+    const paid = cards.reduce((t3, c4) => t3 + cardPaid(c4), 0);
+    const latest2 = cards.map((c4) => c4.priceOn || "").sort().at(-1);
+    const days = [...new Set(held3.flatMap((a3) => (a3.history || []).map((p3) => p3.date)))].sort();
+    const values = days.map((d3) => held3.reduce((t3, a3) => t3 + worthOn(v3, a3, d3), 0));
+    return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3("div", { class: "fx-board", children: [
+      /* @__PURE__ */ u3(
+        Widget,
+        {
+          title: /* @__PURE__ */ u3(S, { children: [
+            "Collection",
+            cards.length ? /* @__PURE__ */ u3("span", { class: "fx-sub", children: [
+              " ",
+              cards.length === 1 ? "1 card" : `${cards.length} cards`,
+              latest2 ? `, prices from ${dayShort(latest2)}` : ""
+            ] }) : null
+          ] }),
+          span: "all",
+          kind: "fx-collection",
+          actions: /* @__PURE__ */ u3(S, { children: [
+            update && cards.length > 0 && /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy2, onClick: run2, children: "Update prices" }),
+            edit && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => edit(), children: "Add a card" })
+          ] }),
+          children: [
+            said2 && /* @__PURE__ */ u3("p", { class: "fx-sub fx-pricesaid", role: "status", children: said2 }),
+            cards.length ? /* @__PURE__ */ u3(S, { children: [
+              /* @__PURE__ */ u3(
+                Stat,
+                {
+                  size: "lg",
+                  value: /* @__PURE__ */ u3(Amount, { value: worth }),
+                  caption: "Worth now, counted in your net worth",
+                  aside: paid > 5e-3 ? /* @__PURE__ */ u3("div", { class: "fx-right", children: [
+                    /* @__PURE__ */ u3(Gain, { worth: cards.filter((c4) => c4.paid).reduce((t3, c4) => t3 + cardWorth(c4), 0), paid }),
+                    /* @__PURE__ */ u3("div", { class: "fx-sub", children: [
+                      "on the ",
+                      money(paid),
+                      " you paid"
+                    ] })
+                  ] }) : void 0
+                }
+              ),
+              values.length > 1 && /* @__PURE__ */ u3(
+                AreaChart,
+                {
+                  values,
+                  xLabels: [0, values.length - 1].map((i3) => ({ i: i3, label: i3 === values.length - 1 ? "Today" : dayShort(days[i3]) })),
+                  zero: false,
+                  height: 160,
+                  format: compact,
+                  label: `The collection's worth on each day a price was set, from ${dayShort(days[0])}: ${money(values[values.length - 1])} now`,
+                  tip: (i3) => /* @__PURE__ */ u3(S, { children: [
+                    /* @__PURE__ */ u3("strong", { children: dayShort(days[i3]) }),
+                    /* @__PURE__ */ u3("br", {}),
+                    money(values[i3])
+                  ] })
+                }
+              )
+            ] }) : /* @__PURE__ */ u3(Empty, { children: edit ? "No cards yet: add one with what it says on it, what you paid and what it is worth now. Your cards are kept in their own account, so they count in your net worth." : "No cards yet." })
+          ]
+        }
+      ),
+      !!cards.length && /* @__PURE__ */ u3(Widget, { title: "Cards", span: "all", kind: "fx-cards", children: [
+        /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: cards.map((c4) => /* @__PURE__ */ u3(
+          Row,
+          {
+            lead: /* @__PURE__ */ u3(CardPicture, { c: c4, read }),
+            title: c4.name,
+            sub: cardLine(c4),
+            end: c4.paid ? /* @__PURE__ */ u3("span", { class: "fx-cardpaid muted", children: [
+              "paid ",
+              money(cardPaid(c4))
+            ] }) : void 0,
+            when: /* @__PURE__ */ u3("span", { class: "fx-cardworth", children: [
+              /* @__PURE__ */ u3(Amount, { value: cardWorth(c4), form: "full" }),
+              /* @__PURE__ */ u3(Gain, { worth: cardWorth(c4), paid: cardPaid(c4) })
+            ] }),
+            whenPlain: true,
+            onOpen: () => open4(c4.id),
+            openLabel: "its page"
+          },
+          c4.id
+        )) }),
+        /* @__PURE__ */ u3("p", { class: "fx-sub", children: update ? "Update prices reads TCGplayer's prices from TCGdex, sending only each card's name: never what you paid or how many. A card kept at your own price is never looked up." : "Each card is worth the price set for it." })
+      ] })
+    ] }) });
+  }
+  function CardPage({ v: v3, id: id2, done, edit, read, prices }) {
+    const c4 = (v3.plan.collection || []).find((x3) => x3.id === id2);
+    const [points, setPoints] = d2([]);
+    h2(() => {
+      let live = true;
+      prices?.().then((h3) => {
+        if (live) setPoints(h3?.[id2] || []);
+      }, () => {
+      });
+      return () => {
+        live = false;
+      };
+    }, [id2, prices, c4?.priceOn]);
+    if (!c4) return /* @__PURE__ */ u3(Empty, { children: [
+      "This card isn't in the collection any more. ",
+      /* @__PURE__ */ u3("button", { class: "small", onClick: done, children: "Collection" })
+    ] });
+    const account = (v3.plan.accounts || []).find((a3) => a3.id === c4.account);
+    return /* @__PURE__ */ u3("div", { class: "fin fx-card", children: [
+      /* @__PURE__ */ u3("div", { class: "fx-accthead", children: /* @__PURE__ */ u3("button", { type: "button", class: "link", onClick: done, children: "‹ Collection" }) }),
+      /* @__PURE__ */ u3("div", { class: "fx-cardpage", children: [
+        /* @__PURE__ */ u3("div", { class: "fx-cardside", children: [
+          /* @__PURE__ */ u3(CardPicture, { c: c4, large: true, read }),
+          edit && /* @__PURE__ */ u3("span", { class: "actions", children: /* @__PURE__ */ u3("button", { class: "btn", onClick: edit, children: "Edit" }) })
+        ] }),
+        /* @__PURE__ */ u3("div", { class: "fx-cardmain", children: [
+          /* @__PURE__ */ u3("div", { children: [
+            /* @__PURE__ */ u3("h2", { children: c4.name }),
+            /* @__PURE__ */ u3("p", { class: "muted", children: cardLine(c4) })
+          ] }),
+          /* @__PURE__ */ u3("div", { class: "fx-board", children: [
+            /* @__PURE__ */ u3(Widget, { title: "Worth now", span: "all", kind: "fx-cardnow", children: [
+              /* @__PURE__ */ u3(
+                Stat,
+                {
+                  size: "lg",
+                  value: /* @__PURE__ */ u3(Amount, { value: cardWorth(c4) }),
+                  caption: c4.priceOn ? `${c4.typed ? "Your own price" : "Its price"}, set ${dayShort(c4.priceOn)}` : "No price set yet",
+                  aside: c4.paid ? /* @__PURE__ */ u3("div", { class: "fx-right", children: [
+                    /* @__PURE__ */ u3(Gain, { worth: cardWorth(c4), paid: cardPaid(c4) }),
+                    /* @__PURE__ */ u3("div", { class: "fx-sub", children: [
+                      "You paid ",
+                      money(cardPaid(c4))
+                    ] })
+                  ] }) : void 0
+                }
+              ),
+              points.length > 1 && /* @__PURE__ */ u3(
+                AreaChart,
+                {
+                  values: points.map((p3) => p3.amount),
+                  xLabels: [0, points.length - 1].map((i3) => ({ i: i3, label: i3 === points.length - 1 ? "Today" : dayShort(points[i3].date) })),
+                  zero: false,
+                  height: 160,
+                  format: compact,
+                  label: `${c4.name}'s price on each day it was read, from ${dayShort(points[0].date)}: ${money(points[points.length - 1].amount)} now`,
+                  tip: (i3) => /* @__PURE__ */ u3(S, { children: [
+                    /* @__PURE__ */ u3("strong", { children: dayShort(points[i3].date) }),
+                    /* @__PURE__ */ u3("br", {}),
+                    money(points[i3].amount)
+                  ] })
+                }
+              )
+            ] }),
+            /* @__PURE__ */ u3(Widget, { title: "About it", span: "all", kind: "fx-cardabout", children: /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: [
+              /* @__PURE__ */ u3(Row, { title: "How many", when: String(c4.count || 1), whenPlain: true }),
+              /* @__PURE__ */ u3(Row, { title: "Paid", when: c4.paid ? `${money(c4.paid)} each${c4.paidOn ? `, ${dayShort(c4.paidOn)}` : ""}` : "Not typed in", whenPlain: true }),
+              /* @__PURE__ */ u3(Row, { title: "Its price", when: c4.typed ? "Your own: never looked up" : c4.ref ? `TCGplayer's, from TCGdex (${c4.ref})` : "Typed in, until Update prices finds it", whenPlain: true }),
+              /* @__PURE__ */ u3(Row, { title: "Counted in", when: account ? `Net worth, ${account.name}` : "Net worth", whenPlain: true })
+            ] }) })
+          ] })
+        ] })
+      ] })
+    ] });
   }
 
   // web/src/finances/ui/HideAmounts.tsx
@@ -12623,146 +13124,6 @@ ${pays}
         ] }, d3);
       }) }, w3[0])),
       !busy2.length && /* @__PURE__ */ u3(Empty, { children: "Nothing comes or goes this month." })
-    ] });
-  }
-
-  // web/src/finances/ui/charts.tsx
-  function ticks(lo, hi, count2 = 4) {
-    const span = Math.max(hi - lo, 1);
-    const raw = span / count2;
-    const mag = 10 ** Math.floor(Math.log10(raw));
-    const step2 = [1, 2, 2.5, 5, 10].map((m3) => m3 * mag).find((s3) => s3 >= raw) || 10 * mag;
-    const bottom = Math.floor(lo / step2) * step2, top = Math.ceil(hi / step2) * step2;
-    const out = [];
-    for (let t3 = bottom; t3 <= top + step2 / 1e6; t3 += step2) out.push(Math.round(t3 * 100) / 100);
-    return { ticks: out, top, bottom };
-  }
-  var tipSide = (x3) => x3 < 60 ? { left: `calc(${x3}% + 14px)` } : { right: `calc(${100 - x3}% + 14px)` };
-  function Axis({ marks: marks2, y: y3, format: format2 }) {
-    return /* @__PURE__ */ u3("div", { class: "fx-axis", "aria-hidden": "true", children: marks2.map((t3) => /* @__PURE__ */ u3("span", { class: t3 === 0 ? "zero" : "", style: { top: `${y3(t3)}px` }, children: format2(t3) }, t3)) });
-  }
-  function AreaChart({ values, xLabels, marks: marks2 = [], threshold, aheadFrom, band, height = 200, format: format2, tip, label, zero = true, axis: showAxis = true, fill, onPick }) {
-    const [at2, setAt] = d2(-1);
-    const n3 = values.length;
-    const plot = A2(null);
-    const [room, setRoom] = d2(0);
-    _2(() => {
-      if (!fill || !plot.current) return;
-      const watch2 = new ResizeObserver(([e3]) => setRoom(Math.round(e3.contentRect.height)));
-      watch2.observe(plot.current);
-      return () => watch2.disconnect();
-    }, [fill, n3 >= 2]);
-    if (n3 < 2) return null;
-    const tall = fill ? Math.max(height, room) : height;
-    const lo = zero ? Math.min(0, ...values, threshold ?? 0) : Math.min(...values), hi = zero ? Math.max(...values, threshold ?? 0, 1) : Math.max(...values);
-    const axis = zero ? ticks(lo, hi * 1.08) : ticks(lo - (hi - lo) * 0.1, hi + (hi - lo) * 0.1);
-    const y3 = (v3) => (axis.top - v3) / (axis.top - axis.bottom || 1) * tall;
-    const x3 = (i3) => i3 / (n3 - 1) * 1e3;
-    const pct = (i3) => i3 / (n3 - 1) * 100;
-    const cut = aheadFrom === void 0 ? n3 - 1 : Math.min(n3 - 1, aheadFrom);
-    const path = (from2, to) => values.slice(from2, to + 1).map((v3, k3) => `${k3 ? "L" : "M"}${x3(from2 + k3).toFixed(1)} ${y3(v3).toFixed(1)}`).join(" ");
-    const solid = path(0, cut);
-    const move = (e3) => {
-      const r3 = e3.currentTarget.getBoundingClientRect();
-      setAt(Math.max(0, Math.min(n3 - 1, Math.round((e3.clientX - r3.left) / r3.width * (n3 - 1)))));
-    };
-    return /* @__PURE__ */ u3("figure", { class: "fx-chart fx-area" + (fill ? " fill" : ""), "aria-label": label, children: [
-      /* @__PURE__ */ u3("div", { class: "fx-plotrow", children: [
-        showAxis && /* @__PURE__ */ u3(Axis, { marks: axis.ticks, y: y3, format: format2 }),
-        /* @__PURE__ */ u3(
-          "div",
-          {
-            ref: plot,
-            class: "fx-plot" + (onPick ? " pick" : ""),
-            style: fill ? { minHeight: `${height}px` } : { height: `${height}px` },
-            onPointerMove: move,
-            onPointerLeave: () => setAt(-1),
-            onClick: onPick && ((e3) => {
-              const r3 = e3.currentTarget.getBoundingClientRect();
-              onPick(Math.max(0, Math.min(n3 - 1, Math.round((e3.clientX - r3.left) / r3.width * (n3 - 1)))));
-            }),
-            children: [
-              showAxis && axis.ticks.map((t3) => /* @__PURE__ */ u3("span", { class: "fx-grid" + (t3 === 0 ? " zero" : ""), style: { top: `${y3(t3)}px` } }, t3)),
-              band && /* @__PURE__ */ u3("span", { class: "fx-band", style: { left: `${pct(band.from)}%`, width: `${pct(band.to) - pct(band.from)}%` } }),
-              threshold !== void 0 && /* @__PURE__ */ u3("span", { class: "fx-threshold", style: { top: `${y3(threshold)}px` } }),
-              /* @__PURE__ */ u3("svg", { viewBox: `0 0 1000 ${tall}`, preserveAspectRatio: "none", "aria-hidden": "true", children: [
-                /* @__PURE__ */ u3("path", { class: "fx-areafill", d: `${solid} L${x3(cut).toFixed(1)} ${tall} L0 ${tall} Z` }),
-                /* @__PURE__ */ u3("path", { class: "fx-line", d: solid, "vector-effect": "non-scaling-stroke" }),
-                cut < n3 - 1 && /* @__PURE__ */ u3("path", { class: "fx-line ahead", d: path(cut, n3 - 1), "vector-effect": "non-scaling-stroke" })
-              ] }),
-              marks2.map((m3, k3) => /* @__PURE__ */ u3("span", { class: "fx-mark fx-h-" + m3.tone, style: { left: `${pct(m3.i)}%`, top: `${y3(values[m3.i])}px` } }, k3)),
-              at2 >= 0 && /* @__PURE__ */ u3(S, { children: [
-                /* @__PURE__ */ u3("span", { class: "fx-cross", style: { left: `${pct(at2)}%` } }),
-                /* @__PURE__ */ u3("span", { class: "fx-pin", style: { left: `${pct(at2)}%`, top: `${y3(values[at2])}px` } }),
-                tip && /* @__PURE__ */ u3("div", { class: "fx-tip", style: tipSide(pct(at2)), children: tip(at2) })
-              ] })
-            ]
-          }
-        )
-      ] }),
-      /* @__PURE__ */ u3("div", { class: "fx-xlabels" + (showAxis ? "" : " bare"), "aria-hidden": "true", children: xLabels.map((l3) => /* @__PURE__ */ u3("span", { style: { left: `${pct(l3.i)}%` }, children: l3.label }, l3.i)) })
-    ] });
-  }
-  function StackedBars({ columns: columns2, height = 260, format: format2, tip, label, lineless, onPick }) {
-    const last2 = columns2.map((c4) => !c4.ahead).lastIndexOf(true);
-    const [at2, setAt] = d2(-1);
-    const shown8 = at2 >= 0 ? at2 : last2;
-    const lines = lineless ? [] : columns2.map((c4) => c4.line);
-    const top = Math.max(...columns2.map((c4) => c4.up.reduce((t3, p3) => t3 + p3.value, 0)), ...lines, 1);
-    const bottom = Math.min(0, ...columns2.map((c4) => -c4.down.reduce((t3, p3) => t3 + p3.value, 0)), ...lines);
-    const axis = ticks(bottom, top, 4);
-    const pad = (top - bottom) * 0.04;
-    const ceil = Math.min(axis.top, top + pad), floor = bottom < 0 ? Math.max(axis.bottom, bottom - pad) : 0;
-    const marks2 = axis.ticks.filter((t3) => t3 <= ceil + 1e-6 && t3 >= floor - 1e-6);
-    const y3 = (v3) => (ceil - v3) / (ceil - floor || 1) * height;
-    const n3 = columns2.length;
-    const cx = (i3) => (i3 + 0.5) / n3 * 1e3;
-    const line = (from2, to) => columns2.slice(from2, to + 1).map((c4, k3) => `${cx(from2 + k3).toFixed(1)},${y3(c4.line).toFixed(1)}`).join(" ");
-    return /* @__PURE__ */ u3("figure", { class: "fx-chart fx-stacked", "aria-label": label, children: [
-      /* @__PURE__ */ u3("div", { class: "fx-plotrow", children: [
-        /* @__PURE__ */ u3(Axis, { marks: marks2, y: y3, format: format2 }),
-        /* @__PURE__ */ u3("div", { class: "fx-plot", style: { height: `${height}px` }, onPointerLeave: () => setAt(-1), children: [
-          marks2.map((t3) => /* @__PURE__ */ u3("span", { class: "fx-grid" + (t3 === 0 ? " zero" : ""), style: { top: `${y3(t3)}px` } }, t3)),
-          floor < 0 && /* @__PURE__ */ u3("span", { class: "fx-below", style: { top: `${y3(0)}px` } }),
-          columns2.map((c4, i3) => {
-            let up = 0, down = 0;
-            return /* @__PURE__ */ u3("div", { class: "fx-stackcol" + (c4.ahead ? " ahead" : "") + (i3 === shown8 ? " on" : "") + (onPick ? " pick" : ""), style: { left: `${i3 / n3 * 100}%`, width: `${100 / n3}%` }, onPointerEnter: () => setAt(i3), onClick: onPick && (() => onPick(i3)), children: [
-              c4.up.map((p3, k3) => {
-                const t3 = y3(up + p3.value), h3 = y3(up) - t3;
-                up += p3.value;
-                return /* @__PURE__ */ u3("span", { class: "fx-seg " + hue(p3.color) + (k3 === c4.up.length - 1 ? " cap" : ""), style: { top: `${t3}px`, height: `${Math.max(h3, p3.value > 0 ? 1 : 0)}px` } }, "u" + k3);
-              }),
-              c4.down.map((p3, k3) => {
-                const t3 = y3(-down), h3 = y3(-down - p3.value) - t3;
-                down += p3.value;
-                return /* @__PURE__ */ u3("span", { class: "fx-seg " + hue(p3.color) + (k3 === c4.down.length - 1 ? " foot" : ""), style: { top: `${t3}px`, height: `${Math.max(h3, p3.value > 0 ? 1 : 0)}px` } }, "d" + k3);
-              })
-            ] }, i3);
-          }),
-          !lineless && /* @__PURE__ */ u3("svg", { viewBox: `0 0 1000 ${height}`, preserveAspectRatio: "none", "aria-hidden": "true", children: [
-            /* @__PURE__ */ u3("polyline", { class: "fx-netline", points: line(0, last2), "vector-effect": "non-scaling-stroke" }),
-            last2 < n3 - 1 && /* @__PURE__ */ u3("polyline", { class: "fx-netline ahead", points: line(last2, n3 - 1), "vector-effect": "non-scaling-stroke" })
-          ] }),
-          !lineless && columns2.map((c4, i3) => /* @__PURE__ */ u3("span", { class: "fx-netdot" + (i3 === shown8 ? " on" : ""), style: { left: `${(i3 + 0.5) / n3 * 100}%`, top: `${y3(c4.line)}px` } }, i3)),
-          at2 >= 0 && /* @__PURE__ */ u3("div", { class: "fx-tip wide", style: tipSide((at2 + 0.5) / n3 * 100), children: tip(at2) })
-        ] })
-      ] }),
-      /* @__PURE__ */ u3("div", { class: "fx-barlabels" + (n3 > 8 ? " many" : ""), "aria-hidden": "true", style: { gridTemplateColumns: `repeat(${n3}, minmax(0, 1fr))` }, children: columns2.map((c4, i3) => /* @__PURE__ */ u3("span", { class: i3 === shown8 ? "on" : "", children: c4.label }, i3)) })
-    ] });
-  }
-  function Donut({ slices, center, size: size2 = 150, label }) {
-    const total = slices.reduce((t3, s3) => t3 + Math.max(0, s3.value), 0) || 1;
-    const r3 = 56, c4 = 2 * Math.PI * r3, gap2 = slices.length > 1 ? 2 : 0;
-    let run2 = 0;
-    const said2 = slices.map((s3) => `${s3.label} ${Math.round(s3.value / total * 100)}%`).join(", ");
-    return /* @__PURE__ */ u3("div", { class: "fx-donut", style: { width: `${size2}px`, height: `${size2}px` }, children: [
-      /* @__PURE__ */ u3("svg", { viewBox: "0 0 150 150", role: "img", "aria-label": `${label}: ${said2}`, children: slices.map((s3) => {
-        const len = Math.max(0, s3.value) / total * c4;
-        const el3 = /* @__PURE__ */ u3("circle", { class: "fx-slice " + hue(s3.color), cx: "75", cy: "75", r: r3, "stroke-dasharray": `${Math.max(len - gap2, 0.5).toFixed(2)} ${c4.toFixed(2)}`, "stroke-dashoffset": (-run2).toFixed(2) }, s3.label);
-        run2 += len;
-        return el3;
-      }) }),
-      /* @__PURE__ */ u3("div", { class: "fx-donutcenter", children: center })
     ] });
   }
 
@@ -17151,17 +17512,18 @@ ${pays}
   }
 
   // web/src/finances/Finances.tsx
-  var tabs = [["overview", "Dashboard"], ["calendar", "Calendar"], ["transactions", "Transactions"], ["reports", "Reports"], ["recurring", "Recurring"], ["pay", "Paychecks"], ["worth", "Net worth"]];
+  var tabs = [["overview", "Dashboard"], ["calendar", "Calendar"], ["transactions", "Transactions"], ["reports", "Reports"], ["recurring", "Recurring"], ["pay", "Paychecks"], ["worth", "Net worth"], ["collection", "Collection"]];
   var groups3 = [
     ["overview", "Dashboard", ["overview"]],
     ["spending", "Spending", ["transactions", "reports"]],
     ["plan", "Plan", ["calendar", "recurring", "pay"]],
-    ["worth", "Net worth", ["worth"]]
+    ["worth", "Net worth", ["worth", "collection"]]
   ];
-  var groupOf = (tab3) => groups3.find(([, , pages]) => pages.includes(tab3.startsWith("account:") ? "worth" : tab3)) || groups3[0];
+  var pageFor = (tab3) => tab3.startsWith("account:") ? "worth" : tab3.startsWith("card:") ? "collection" : tab3;
+  var groupOf = (tab3) => groups3.find(([, , pages]) => pages.includes(pageFor(tab3))) || groups3[0];
   var leftOn = {};
   var pageOf = (group2) => leftOn[group2] || groups3.find(([k3]) => k3 === group2)[2][0];
-  var adds = { overview: ["payment", "Add a payment"], calendar: ["payment", "Add a payment"], transactions: ["transaction", "Add a transaction"], reports: ["transaction", "Add a transaction"], recurring: ["payment", "Add a payment"], pay: ["person", "Add a paycheck"], worth: ["account", "Add an account"] };
+  var adds = { overview: ["payment", "Add a payment"], calendar: ["payment", "Add a payment"], transactions: ["transaction", "Add a transaction"], reports: ["transaction", "Add a transaction"], recurring: ["payment", "Add a payment"], pay: ["person", "Add a paycheck"], worth: ["account", "Add an account"], collection: ["card", "Add a card"] };
   function ExportMenu({ v: v3, exportFile: exportFile2, printMonth }) {
     const [said2, setSaid] = d2("");
     const run2 = (go2) => async () => {
@@ -17198,13 +17560,13 @@ ${pays}
       )
     ] });
   }
-  function FinancesScreen({ v: v3, ledger, error, retry, tab: tab3, setTab, sel: sel2, pick, setSince: setSince2, saveSettings, keep: keep3, edit: open4, exportFile: exportFile2, printMonth, readReceipt, saveLedger: saveLedger2, running: running5, calendar, fromWallos, phone: phone2, toggleHidden, group: group2, setGroup, investments }) {
+  function FinancesScreen({ v: v3, ledger, error, retry, tab: tab3, setTab, sel: sel2, pick, setSince: setSince2, saveSettings, keep: keep3, edit: open4, exportFile: exportFile2, printMonth, readReceipt, readCardPicture, readCardPrices, updatePrices, saveLedger: saveLedger2, running: running5, calendar, fromWallos, phone: phone2, toggleHidden, group: group2, setGroup, investments }) {
     const edit = (what3, id2, kind) => cardOf(id2) ? open4("account", cardOf(id2)) : open4(what3, id2, kind);
     const L2 = v3 ? lookup(v3.plan) : null;
     setCurrency(v3?.plan.currency);
     setOwnLogos(v3?.plan.logos);
     setCategories(v3?.categories);
-    const [what2, label] = adds[tab3.startsWith("account:") ? "worth" : tab3] || adds.overview;
+    const [what2, label] = adds[pageFor(tab3)] || adds.overview;
     const [from2, setFrom] = d2("");
     const toTx = (f4) => {
       showTransactions(f4);
@@ -17240,13 +17602,13 @@ ${pays}
         ] })
       ] }),
       /* @__PURE__ */ u3(Segmented, { label: "View", value: groupOf(tab3)[0], pick: (g2) => pickTab(pageOf(g2)), options: groups3.map(([k3, label2]) => [k3, label2]) }),
-      groupOf(tab3)[2].length > 1 && /* @__PURE__ */ u3("div", { class: "fx-subtabs", children: /* @__PURE__ */ u3(Segmented, { label: groupOf(tab3)[1], value: tab3, pick: pickTab, options: tabs.filter(([k3]) => groupOf(tab3)[2].includes(k3)) }) }),
+      groupOf(tab3)[2].length > 1 && /* @__PURE__ */ u3("div", { class: "fx-subtabs", children: /* @__PURE__ */ u3(Segmented, { label: groupOf(tab3)[1], value: pageFor(tab3), pick: pickTab, options: tabs.filter(([k3]) => groupOf(tab3)[2].includes(k3)) }) }),
       /* @__PURE__ */ u3("div", { class: "finbody", children: !v3 && error ? /* @__PURE__ */ u3(Empty, { children: [
         "The finances file could not be read: ",
         error,
         " ",
         /* @__PURE__ */ u3("button", { class: "small", onClick: retry, children: "Try again" })
-      ] }) : !v3 ? /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : ro ? /* @__PURE__ */ u3(View, { v: v3, L: L2, phone: phone2, ledger, setTab, toTx, back: back3, exportFile: exportFile2, readReceipt, running: running5, tab: tab3, sel: sel2, pick, openWorth: () => setTab("worth"), openSubscriptions: () => {
+      ] }) : !v3 ? /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : ro ? /* @__PURE__ */ u3(View, { v: v3, L: L2, phone: phone2, ledger, setTab, toTx, back: back3, exportFile: exportFile2, readReceipt, readCardPicture, readCardPrices, running: running5, tab: tab3, sel: sel2, pick, openWorth: () => setTab("worth"), openSubscriptions: () => {
         openOn("subscriptions");
         setTab("recurring");
       }, openRecurring: (f4) => {
@@ -17255,7 +17617,7 @@ ${pays}
       }, openTransactions: () => toTx({}), showIn: toTx, openCalendar: (day3) => {
         if (day3) showDay(day3);
         setTab("calendar");
-      }, openPay: () => setTab("pay"), openAccount: (id2) => setTab(`account:${id2}`), group: group2, setGroup }) : tab3 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2, ledger, edit: (w3, id2) => edit(w3, id2) }) : tab3 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, edit: (w3, id2) => edit(w3, id2), saveLedger: saveLedger2, logos: !phone2, back: back3 }) : tab3 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger, exportFile: exportFile2, open: toTx }) : tab3 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, edit, keep: keep3, running: running5, fromWallos }) : tab3 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2, edit, saveSettings, keep: keep3, calendar }) : tab3.startsWith("account:") ? /* @__PURE__ */ u3(AccountPage, { v: v3, L: L2, ledger, id: tab3.slice(8), done: () => setTab("worth"), edit: () => edit("account", tab3.slice(8)), update: () => edit("balances"), toTx, editTx: (w3, id2) => edit(w3, id2), saveLedger: saveLedger2 }) : tab3 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, edit, open: (id2) => setTab("account:" + id2), sel: Math.max(0, sel2), pick, update: () => edit("balances"), keep: keep3, group: group2, setGroup, invest: investments }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, ledger, sel: sel2, pick, setSince: ro ? void 0 : setSince2, keep: ro ? void 0 : keep3, add: (w3, k3) => edit(w3, void 0, k3), edit: (w3, id2) => edit(w3, id2), openWorth: () => setTab("worth"), openSubscriptions: () => {
+      }, openPay: () => setTab("pay"), openAccount: (id2) => setTab(`account:${id2}`), group: group2, setGroup }) : tab3 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2, ledger, edit: (w3, id2) => edit(w3, id2) }) : tab3 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, edit: (w3, id2) => edit(w3, id2), saveLedger: saveLedger2, logos: !phone2, back: back3 }) : tab3 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger, exportFile: exportFile2, open: toTx }) : tab3 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, edit, keep: keep3, running: running5, fromWallos }) : tab3 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2, edit, saveSettings, keep: keep3, calendar }) : tab3.startsWith("account:") ? /* @__PURE__ */ u3(AccountPage, { v: v3, L: L2, ledger, id: tab3.slice(8), done: () => setTab("worth"), edit: () => edit("account", tab3.slice(8)), update: () => edit("balances"), toTx, editTx: (w3, id2) => edit(w3, id2), saveLedger: saveLedger2 }) : tab3 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, edit, open: (id2) => setTab("account:" + id2), sel: Math.max(0, sel2), pick, update: () => edit("balances"), keep: keep3, group: group2, setGroup, invest: investments }) : tab3 === "collection" ? /* @__PURE__ */ u3(CollectionPage, { v: v3, open: (id2) => setTab("card:" + id2), edit: (id2) => edit("card", id2), read: readCardPicture, update: updatePrices }) : tab3.startsWith("card:") ? /* @__PURE__ */ u3(CardPage, { v: v3, id: tab3.slice(5), done: () => setTab("collection"), edit: () => edit("card", tab3.slice(5)), read: readCardPicture, prices: readCardPrices }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, ledger, sel: sel2, pick, setSince: ro ? void 0 : setSince2, keep: ro ? void 0 : keep3, add: (w3, k3) => edit(w3, void 0, k3), edit: (w3, id2) => edit(w3, id2), openWorth: () => setTab("worth"), openSubscriptions: () => {
         openOn("subscriptions");
         setTab("recurring");
       }, openRecurring: (f4) => {
@@ -17267,8 +17629,8 @@ ${pays}
       }, openPay: () => setTab("pay"), openAccount: (id2) => setTab(`account:${id2}`), phone: phone2 }) })
     ] });
   }
-  function View({ v: v3, L: L2, phone: phone2, ledger, setTab, toTx, back: back3, tab: tab3, sel: sel2, pick, openWorth, openSubscriptions, openRecurring, openTransactions, showIn: showIn2, openCalendar, openPay, openAccount, exportFile: exportFile2, readReceipt, running: running5, group: group2, setGroup }) {
-    return tab3 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2, ledger }) : tab3 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, readReceipt, back: back3 }) : tab3 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger, exportFile: exportFile2, open: toTx }) : tab3 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, running: running5 }) : tab3 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2 }) : tab3.startsWith("account:") ? /* @__PURE__ */ u3(AccountPage, { v: v3, L: L2, ledger, id: tab3.slice(8), done: () => setTab("worth"), toTx }) : tab3 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, open: (id2) => setTab("account:" + id2), sel: Math.max(0, sel2), pick, group: group2, setGroup }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, ledger, sel: sel2, pick, openWorth, openSubscriptions, openRecurring, openTransactions, showIn: showIn2, openCalendar, openPay, openAccount, phone: phone2 });
+  function View({ v: v3, L: L2, phone: phone2, ledger, setTab, toTx, back: back3, tab: tab3, sel: sel2, pick, openWorth, openSubscriptions, openRecurring, openTransactions, showIn: showIn2, openCalendar, openPay, openAccount, exportFile: exportFile2, readReceipt, readCardPicture, readCardPrices, running: running5, group: group2, setGroup }) {
+    return tab3 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2, ledger }) : tab3 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, readReceipt, back: back3 }) : tab3 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger, exportFile: exportFile2, open: toTx }) : tab3 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, running: running5 }) : tab3 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2 }) : tab3.startsWith("account:") ? /* @__PURE__ */ u3(AccountPage, { v: v3, L: L2, ledger, id: tab3.slice(8), done: () => setTab("worth"), toTx }) : tab3 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, open: (id2) => setTab("account:" + id2), sel: Math.max(0, sel2), pick, group: group2, setGroup }) : tab3 === "collection" ? /* @__PURE__ */ u3(CollectionPage, { v: v3, open: (id2) => setTab("card:" + id2), read: readCardPicture }) : tab3.startsWith("card:") ? /* @__PURE__ */ u3(CardPage, { v: v3, id: tab3.slice(5), done: () => setTab("collection"), read: readCardPicture, prices: readCardPrices }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, ledger, sel: sel2, pick, openWorth, openSubscriptions, openRecurring, openTransactions, showIn: showIn2, openCalendar, openPay, openAccount, phone: phone2 });
   }
   function mountFinances(el3, props) {
     R(/* @__PURE__ */ u3(FinancesScreen, { ...props }), el3);
@@ -17413,6 +17775,14 @@ ${pays}
       printMonth: async (name, html) => phone ? exportFile(name, html) : `Opened ${await go().PrintFinances(name, html)} to print`,
       toggleHidden: v3 && !v3.readOnly ? toggleHideAmounts : void 0,
       readReceipt: receipts.read,
+      readCardPicture: cardPictures.read,
+      readCardPrices: () => go().FinancesCardPrices(),
+      // Update prices (TCGdex, on this click): wherever Finances may be changed; the plan comes back with the prices in.
+      updatePrices: !v3 || v3.readOnly ? void 0 : async () => {
+        const r3 = await go().FinancesUpdatePrices();
+        financesData.set(await go().Finances());
+        return r3;
+      },
       saveLedger,
       running: runningApps(),
       calendar: phone ? void 0 : () => go().FinancesCalendar(),
@@ -17426,7 +17796,7 @@ ${pays}
       } }
     });
     if (v3) readEachMorning(v3);
-    if (editing && v3 && !v3.readOnly) mountFinanceSheet($("finSheetBox"), { ...editing, plan: v3.plan, checking: v3.checking, start: v3.start, dues: v3.dues, categories: v3.categories, ledger: ledgerData.value, save, saveLedger, receipts, fetchLogo, fromApps: fromApps(), close: close2 });
+    if (editing && v3 && !v3.readOnly) mountFinanceSheet($("finSheetBox"), { ...editing, plan: v3.plan, checking: v3.checking, start: v3.start, dues: v3.dues, categories: v3.categories, ledger: ledgerData.value, save, saveLedger, receipts, cardPictures, fetchLogo, fromApps: fromApps(), close: close2 });
     mountBalances($("finNav"), v3, (g2) => {
       tab = "worth";
       group = g2;
@@ -17471,6 +17841,7 @@ ${pays}
     }
   }
   var receipts = { save: (dataURL) => go().SaveFinancesReceipt(dataURL), read: (name) => go().FinancesReceipt(name) };
+  var cardPictures = { save: (dataURL) => go().SaveFinancesCardPicture(dataURL), read: (name) => go().FinancesCardPicture(name) };
   var fetchLogo = phone ? void 0 : (site2) => go().FinancesFetchLogo(site2);
   async function saveLedger(l3) {
     try {
@@ -17509,7 +17880,7 @@ ${pays}
     const v3 = financesData.value;
     if (!v3 || v3.readOnly) return;
     editing = { what: what2, id: id2, kind, n: ++opened };
-    mountFinanceSheet($("finSheetBox"), { ...editing, plan: v3.plan, checking: v3.checking, start: v3.start, dues: v3.dues, categories: v3.categories, ledger: ledgerData.value, save, saveLedger, receipts, fetchLogo, fromApps: fromApps(), close: close2 });
+    mountFinanceSheet($("finSheetBox"), { ...editing, plan: v3.plan, checking: v3.checking, start: v3.start, dues: v3.dues, categories: v3.categories, ledger: ledgerData.value, save, saveLedger, receipts, cardPictures, fetchLogo, fromApps: fromApps(), close: close2 });
     $("finSheet").hidden = false;
   }
   function close2() {
