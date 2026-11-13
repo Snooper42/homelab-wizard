@@ -59,7 +59,9 @@ const lookSlots = 3
 // Run shows the item until Quit. openWizard opens the app on a screen
 // ("choose" or "status").
 func Run(openWizard func(screen string)) {
-	l, err := net.Listen("tcp", core.TrayAddr)
+	// A socket in this account's own folder (core.ListenTray): another
+	// account can neither quit this item nor start first and keep it away.
+	l, err := core.ListenTray()
 	if err != nil {
 		return // another tray is running
 	}
