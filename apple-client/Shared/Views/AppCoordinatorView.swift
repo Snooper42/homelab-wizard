@@ -28,6 +28,16 @@ struct AppCoordinatorView: View {
             case .unlocked:
                 DashboardView(coordinator: coordinator)
                     .transition(.opacity)
+                    // A page the computer sent (Send to my phone): Open goes there as a link does.
+                    .overlay(alignment: .bottom) {
+                        if let page = coordinator.liveEvents.sent, let link = page.deepLink {
+                            SentBanner(page: page, open: {
+                                coordinator.liveEvents.dismissSent()
+                                IntentInbox.shared.open(link)
+                            }, dismiss: { coordinator.liveEvents.dismissSent() })
+                        }
+                    }
+                    .animation(.default, value: coordinator.liveEvents.sent)
             }
         }
         .animation(.default, value: coordinator.route)

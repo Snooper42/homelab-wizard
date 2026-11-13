@@ -157,3 +157,73 @@ func takeSent(root string, now time.Time) []Sent {
 	}
 	return out
 }
+
+// Asked is a page a phone asked the computer's window to show (Open on the
+// computer; the owner, Nov 12: a phone allowed to change things, no Face
+// ID, since it changes no data): the link, the phone's name, and when.
+type Asked struct {
+	Link string    `json:"link"`
+	From string    `json:"from,omitempty"`
+	At   time.Time `json:"at"`
+}
+
+// AskedPath is where the companion leaves the last page a phone asked for,
+// for the desktop app (another process) to take.
+func AskedPath(root string) string { return filepath.Join(root, "data", "phone-asked.json") }
+
+// Ask leaves a for the desktop app, in place of any it hasn't taken yet:
+// the last page asked for is the one the window should show.
+func Ask(root string, a Asked) error {
+	if !OpenLink(a.Link) {
+		return errors.New("only a page of the app can be opened on the computer")
+	}
+	a.From = shownTitle(a.From)
+	a.At = time.Now().UTC()
+	data, err := json.Marshal(a)
+	if err != nil {
+		return err
+	}
+	path := AskedPath(root)
+	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
+		return err
+	}
+	tmp := path + ".tmp"
+	if err := os.WriteFile(tmp, data, 0o600); err != nil {
+		return err
+	}
+	return os.Rename(tmp, path)
+}
+
+// TakeAsked takes the page a phone asked for, once: none, one too old (the
+// app wasn't open), or one that isn't a page of the app, is false.
+func TakeAsked(root string, now time.Time) (Asked, bool) {
+	path := AskedPath(root)
+	data, err := os.ReadFile(path) // #nosec G304 -- the homelab's own file
+	if err != nil {
+		return Asked{}, false
+	}
+	_ = os.Remove(path)
+	var a Asked
+	if json.Unmarshal(data, &a) != nil || !OpenLink(a.Link) || now.Sub(a.At) > sentFor || a.At.After(now.Add(time.Minute)) {
+		return Asked{}, false
+	}
+	a.From = shownTitle(a.From)
+	return a, true
+}
+
+// FollowAsked passes each page a phone asks for to show, looking every
+// `every` until ctx ends.
+func FollowAsked(ctx context.Context, root string, every time.Duration, show func(Asked)) {
+	tick := time.NewTicker(every)
+	defer tick.Stop()
+	for {
+		if a, ok := TakeAsked(root, time.Now()); ok {
+			show(a)
+		}
+		select {
+		case <-ctx.Done():
+			return
+		case <-tick.C:
+		}
+	}
+}

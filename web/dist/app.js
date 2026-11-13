@@ -19815,6 +19815,10 @@ ${pays}
     window.runtime.EventsOn("status:changed", refreshStatus);
     window.runtime.EventsOn("phone:open", (o3) => showSent(o3, goTo));
     void readTargets();
+    window.runtime.EventsOn("open:link", (o3) => {
+      const p3 = placeOf(o3.link);
+      if (p3) goTo(p3);
+    });
     window.runtime.EventsOn("cli:step", cliProgress);
     window.runtime.EventsOn("job:app", jobApp);
     window.runtime.EventsOn("refresh", reloadScreen);

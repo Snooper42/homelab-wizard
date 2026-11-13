@@ -31,6 +31,7 @@
         "Host",
         "LastStatus",
         "Logs",
+        "OpenOnComputer",
         "Protection",
         "Report",
         "SaveFinances",

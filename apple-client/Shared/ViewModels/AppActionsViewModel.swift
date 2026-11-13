@@ -125,6 +125,22 @@ final class AppActionsViewModel {
     /// Start, Stop, Restart and Roll back: this device may, and the computer can.
     var canChangeApps: Bool { canChange && computerAnswers("AppAction") }
 
+    /// Open on the Computer (the owner, Nov 12): a phone allowed to change
+    /// things, on a computer that answers it; no Face ID, since it changes no data.
+    var canOpenOnComputer: Bool { canChange && device()?.computer?.answers("OpenOnComputer") == true }
+    /// What the last Open on the Computer said, under its button.
+    private(set) var openedOnComputer: String?
+
+    /// Asks the computer's window to show link (an app's page).
+    func openOnComputer(_ link: String) async {
+        do {
+            try await api.openOnComputer(link)
+            openedOnComputer = "Opened on the computer."
+        } catch {
+            openedOnComputer = APIError.from(error).errorDescription ?? "The computer didn't open it."
+        }
+    }
+
     /// Snooze… on a failing check: this device may, and the computer can.
     var canSnooze: Bool { canChange && computerAnswers("SnoozeCheck") }
 

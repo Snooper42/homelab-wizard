@@ -39,6 +39,16 @@ struct AppDetailView: View {
             }
             detailsSection(for: app)
             addressesSection(for: app)
+            // Open on the Computer: the computer's window goes to this app's page.
+            if actions.canOpenOnComputer {
+                Section {
+                    Button("Open on the Computer", systemImage: "desktopcomputer") {
+                        Task { await actions.openOnComputer("homelab://app/\(app.id)") }
+                    }
+                } footer: {
+                    if let said = actions.openedOnComputer { Text(verbatim: said) }
+                }
+            }
             settingsSection(for: app)
             if app.settingsChanged == true {
                 Section("Notes") {

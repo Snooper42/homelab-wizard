@@ -58,6 +58,12 @@ final class LiveEventManager {
     /// Whether the last refresh failed because nothing answered: not home,
     /// and not the tunnel either (Away mode, ADR-0023).
     private(set) var cannotReach = false
+    /// A page the computer sent this phone (Send to my phone), until it's
+    /// opened or closed: the banner over the dashboard.
+    private(set) var sent: SentPage?
+
+    /// The banner's page, opened or closed.
+    func dismissSent() { sent = nil }
     private(set) var isRefreshing = false
 
     /// Called on the main actor when the computer no longer accepts this device.
@@ -105,6 +111,7 @@ final class LiveEventManager {
     /// Stops and forgets everything shown. Called when the app locks or unpairs.
     func clear() {
         stop()
+        sent = nil
         status = nil
         statusReadAt = nil
         refreshError = nil
@@ -268,6 +275,11 @@ final class LiveEventManager {
     }
 
     private func apply(_ change: EngineChange) {
+        // A page the computer sent: the banner, and nothing else changed.
+        if let open = change.open {
+            if open.deepLink != nil { sent = open }
+            return
+        }
         Log.events.debug("Change: \(change.apps.count, privacy: .public) apps, runtime=\(change.runtime, privacy: .public), again=\(change.again, privacy: .public)")
         if let fresh = change.status {
             status = fresh
