@@ -452,6 +452,25 @@ actor APIClient {
         return name
     }
 
+    /// Keeps a card's own photo on the computer (SaveFinancesCardPicture),
+    /// a JPEG made small here; returns the name the computer gives it. A
+    /// change: the edit level.
+    func saveCardPicture(dataURL: String) async throws -> String {
+        let body = try JSONEncoder().encode([dataURL])
+        guard body.count <= 4 << 20 else { throw APIError.responseTooLarge }
+        let (request, endpoint) = try authorizedRequest(path: "/api/call/SaveFinancesCardPicture", method: "POST", body: body)
+        Log.network.notice("SaveFinancesCardPicture, \(body.count, privacy: .public) bytes")
+        let data = try await send(request, to: endpoint, using: actionSession)
+        let name: String
+        do {
+            name = try JSONDecoder().decode(CallEnvelope<String>.self, from: data).result
+        } catch {
+            throw APIError.decoding
+        }
+        guard CardDraft.isPictureName(name) else { throw APIError.invalidResponse }
+        return name
+    }
+
     private static func ledgerRead(from data: Data) throws -> LedgerRead {
         do {
             let decoder = JSONDecoder.homelab()

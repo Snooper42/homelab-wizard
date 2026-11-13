@@ -57,12 +57,13 @@ enum ReceiptCodec {
         return .image(DecodedIcon(image: image))
     }
 
-    /// A photo prepared for sending: shrunk to `uploadPixels`, turned the
+    /// A photo prepared for sending: shrunk to `pixels` (a receipt's
+    /// `uploadPixels`, a card's `CardDraft.photoPixels`), turned the
     /// right way up, and re-encoded as JPEG with **no metadata**, so no
     /// location, camera or time travels with it. Quality steps down until
     /// it fits in 2 MB.
-    static func preparePhoto(_ data: Data) -> String? {
-        guard data.count <= 64 << 20, let image = thumbnail(from: data, maxPixels: uploadPixels) else { return nil }
+    static func preparePhoto(_ data: Data, pixels: Int = uploadPixels) -> String? {
+        guard data.count <= 64 << 20, let image = thumbnail(from: data, maxPixels: pixels) else { return nil }
         for quality in [0.8, 0.65, 0.5, 0.35] {
             let out = NSMutableData()
             guard let destination = CGImageDestinationCreateWithData(out, UTType.jpeg.identifier as CFString, 1, nil) else { return nil }

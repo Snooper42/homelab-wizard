@@ -625,8 +625,9 @@ private struct MoreFinancesCard: View {
                     }
                 }
             }
-            // The Collection: the household's cards, worth what they are (finance.Collected).
-            if !view.plan.collection.isEmpty {
+            // The Collection: the household's cards, worth what they are
+            // (finance.Collected); a phone allowed to change Finances adds the first.
+            if !view.plan.collection.isEmpty || finances.canEdit {
                 row { FinanceCollectionPage(finances: finances) } label: {
                     IconTileLabel(title: "Collection", systemImage: "rectangle.stack.fill", tint: Color(light: 0xB45309, dark: 0xF59E0B)) {
                         Text(verbatim: amountText(view.plan.collection.reduce(0) { $0 + $1.worth }, view.plan.currency, finances, whole: true))
