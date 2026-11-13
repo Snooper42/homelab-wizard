@@ -18283,7 +18283,7 @@ ${pays}
       case "SaveFinancesReceipt": {
         const sealed = await sealText(key5, me.person, String(args[0]));
         return sealedCalls().SaveFinancesSealedReceipt(sealed).catch((e3) => {
-          throw isAway(e3) ? new Error("A receipt waits until the homelab answers: add it again when you’re home (or on Tailscale).") : e3;
+          throw isAway(e3) ? new Error("A receipt waits until the homelab answers: add it again when you’re home.") : e3;
         });
       }
       case "FinancesReceipt":

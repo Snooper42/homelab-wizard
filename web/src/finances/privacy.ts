@@ -231,7 +231,7 @@ async function answer(method: string, args: unknown[]): Promise<unknown> {
     case 'SaveFinancesReceipt': {
       const sealed = await seal.sealText(key, me.person!, String(args[0]));
       return sealedCalls().SaveFinancesSealedReceipt(sealed).catch((e) => {
-        throw isAway(e) ? new Error('A receipt waits until the homelab answers: add it again when you’re home (or on Tailscale).') : e;
+        throw isAway(e) ? new Error('A receipt waits until the homelab answers: add it again when you’re home.') : e;
       });
     }
     case 'FinancesReceipt': return seal.openText(key, me.person!, await sealedCalls().FinancesSealedReceipt(String(args[0])));

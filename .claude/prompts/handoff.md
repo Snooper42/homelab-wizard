@@ -30,6 +30,7 @@ You are working on homelab-wizard (github.com/Snooper42/homelab-wizard) with its
 - **A step says "ask the owner":** ask once, in one short message with one recommendation first. While you wait, go on to the next step that doesn't need the answer; never sit idle and never build the asked-about thing on a guess. Write the question into section 4.
 - **Never without the owner's yes:** anything that weakens a security choice (the Keychain's unlock-only pairing, a phone call made a change without `Change: true`, anything published to the internet); deleting a branch or data; pushing to a branch that isn't this session's; a second open PR; changing CI to skip or loosen a step. These are asked even if they say "continue".
 - **Dropped by the owner, never offer again:** the phone away from home (Nov 10); background refresh (Nov 11); ⌘1 to ⌘4 for Finances tabs; syncing the Finances sidebar's folds.
+- **How the owner reaches the homelab (the owner, Nov 13): no Tailscale.** Only the Cloudflare Tunnel and the iPhone's custom DNS setting. Never tell them to turn Tailscale on or off, or test "with Tailscale", in "Try this tonight" or anywhere; say "away from home" or "Wi-Fi off" instead. The product still supports Tailscale for other households, so leave its generic words in the code; just don't add new ones aimed at the owner.
 - **Two ways to do something and no answer:** the one that changes less for the partner's phone and the household (as "per phone" did), and the one that can be undone.
 
 ## 1. Where it stands (Nov 13, 12:15 AM Eastern)
