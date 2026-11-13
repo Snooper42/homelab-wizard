@@ -44,7 +44,8 @@ What a phone may do also depends on how it was paired, on every phone (the phone
 | A stopped app's **Start** on its row | yes | yes; a look-only phone says *Start it from the computer* | yes; the same | yes | — | |
 | Open an app; Alt-click to copy its address; Shift-click for its address on this computer | yes | partly: Open only | partly: Open only | partly: Open only | — | |
 | Open on a phone (a QR code) | yes | on purpose: it's already on the phone | on purpose: the same | on purpose | — | |
-| Send to my phone: an app's page (its row's menu) or the page you're on (⌘K), to a paired phone picked each time; never a wall screen, Finances only to a phone that sees them, a member's phone only Status and their own apps | yes, sends | yes, shows it at the bottom with Open | gap: next (a banner with Open) | gap: next | — | |
+| Send to my phone: an app's page (its row's menu) or the page you're on (⌘K), to a paired phone picked each time; never a wall screen, Finances only to a phone that sees them, a member's phone only Status and their own apps | yes, sends | yes, shows it at the bottom with Open | yes, a banner with Open | yes, as the iPhone | — | |
+| Open on the Computer: the computer's window goes to the page the phone is on (an app's page, Status, Backups, Finances) | yes, follows it | on purpose: the computer's own page is a click away there | yes, a phone allowed to change things (no Face ID: it changes no data) | yes, as the iPhone | — | `OpenOnComputer` |
 | A native app (Jellyfin) started from Status | yes ([Host](<Host.md#running>)) | on purpose: it runs on the computer | on purpose | on purpose | — | |
 | Pin to the top | yes | yes, from the app's page | yes, from the app's page | yes | — | `SetAppSetting` |
 | Update all, and an update's notes | yes | on purpose: no notes for a phone yet (`ReleaseNotes` isn't a phone call), so no blind update | on purpose: the same | on purpose | — | |

@@ -3312,6 +3312,16 @@ const smokes = [
     const sent = await page.evaluate(() => window.__MOCK.sent?.at(-1));
     if (sent?.device !== 'p1' || sent.link !== 'homelab://finances/recurring' || sent.title !== 'Finances › Recurring') throw new Error(`sent: ${JSON.stringify(sent)}`);
   } },
+  // Open on the computer: a page a phone asked for, the window goes to it; anything but the app's own pages, nothing.
+  { name: 'Open on the computer: the window goes to the page a phone asked for', screen: 'status', run: async (page) => {
+    await page.evaluate(() => window.__emit('open:link', { link: 'homelab://finances/recurring', from: "Sam's iPhone" }));
+    await page.waitForSelector('#finances.active #finRoot .seg button[aria-checked="true"]:text-is("Recurring")', { timeout: 5000 });
+    await page.evaluate(() => window.__emit('open:link', { link: 'homelab://app/vikunja', from: "Sam's iPhone" }));
+    await page.waitForSelector('#app.active h1:has-text("Vikunja")', { timeout: 5000 });
+    await page.evaluate(() => window.__emit('open:link', { link: 'https://example.com', from: "Sam's iPhone" }));
+    await page.waitForTimeout(300);
+    if (!(await page.isVisible('#app.active h1:has-text("Vikunja")'))) throw new Error('a link that is not the app\'s own moved the window');
+  } },
   // On the phone's page, a page the computer sent shows at the bottom with Open, which goes there.
   { name: 'The phone: a page sent from the computer shows with Open', screen: 'status', phone: ['companion', 'finances'], run: async (page) => {
     await page.evaluate(() => window.__emit('phone:open', { link: 'homelab://finances/recurring', title: 'Finances › Recurring' }));

@@ -475,6 +475,15 @@ actor APIClient {
         _ = try await send(request, to: endpoint, using: actionSession)
     }
 
+    /// Puts the computer's window on a page of the app (Open on the
+    /// Computer; OpenOnComputer). A change the computer allows only a phone
+    /// allowed to make them, asked without Face ID: it changes no data.
+    func openOnComputer(_ link: String) async throws {
+        let (request, endpoint) = try callRequest("OpenOnComputer", [.string(link)])
+        Log.network.notice("OpenOnComputer")
+        _ = try await send(request, to: endpoint, using: actionSession)
+    }
+
     /// Changes one of an app's settings. This is a change.
     func setAppSetting(_ setting: AppSetting, on: Bool, appID: String) async throws -> [String] {
         guard AppStatus.isValidID(appID) else { throw APIError.invalidAppID }

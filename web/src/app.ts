@@ -4,7 +4,7 @@
 // in web/types. This file chooses the screen, answers the keyboard, and
 // starts the app; each screen's code is in web/src/screens, drawn by Preact
 // components (*.tsx). app/preview/lint.mjs keeps it under 400 lines.
-import { readTargets, showSent } from './phone/send';
+import { placeOf, readTargets, showSent } from './phone/send';
 import { progress } from './setup/Checklist';
 import { drawRemembered, leftStatus, loadStatus, refreshStatus, statusData, undoNow } from './screens/status';
 import { drawHealth } from './status/healthLine';
@@ -297,6 +297,8 @@ window.addEventListener('load', async () => {
   // A page the computer sent this phone (Send to my phone): at the bottom, with Open.
   window.runtime.EventsOn('phone:open', (o) => showSent(o, goTo));
   void readTargets(); // the phones Send to my phone lists, read before a menu first asks
+  // Open on the computer: a page a phone asked this window to show (the window has come forward already).
+  window.runtime.EventsOn('open:link', (o) => { const p = placeOf(o.link); if (p) goTo(p); });
   window.runtime.EventsOn('cli:step', cliProgress);
   window.runtime.EventsOn('job:app', jobApp);
   window.runtime.EventsOn('refresh', reloadScreen);

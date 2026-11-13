@@ -727,6 +727,21 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 		}},
 		// Snooze… on a failing check, from a phone allowed to change things (as the computer's SnoozeCheck): no
 		// alerts about it for so many hours, up to a week; 0 alerts again now.
+		// Open on the computer (the owner, Nov 12): the computer's window goes
+		// to the page the phone is on. A change, so only a phone allowed to
+		// make them (no Face ID asked on the iPhone: it changes no data); a
+		// page it may not see itself, and anything but the app's own pages,
+		// are refused. The desktop app takes it within a second.
+		"OpenOnComputer": {Change: true, Call: func(ctx context.Context, args []json.RawMessage) (any, []string, error) {
+			var link string
+			if len(args) < 1 || json.Unmarshal(args[0], &link) != nil {
+				return nil, nil, errors.New("OpenOnComputer takes a link")
+			}
+			if d, _ := companion.Caller(ctx); !companion.MayOpen(d, link, nil) {
+				return nil, nil, errors.New("this phone can't open that page on the computer")
+			}
+			return nil, nil, companion.Ask(root, companion.Asked{Link: link, From: whoAsked(ctx)})
+		}},
 		"SnoozeCheck": {Change: true, Call: func(ctx context.Context, args []json.RawMessage) (any, []string, error) {
 			var check string
 			var hours int
