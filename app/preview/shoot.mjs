@@ -413,7 +413,7 @@ async function makePrivate(page, passphrase) {
   if (!(await make.isDisabled())) throw new Error('Face ID offered before two words were typed back');
   for (const label of await page.locator('#finPrivateOn label.field').allTextContents()) {
     const n = Number(/Word (\d+)/.exec(label)[1]);
-    await page.getByLabel(`Word ${n}`).fill(words[n - 1]);
+    await page.locator('#finPrivateOn').getByLabel(`Word ${n}`, { exact: true }).fill(words[n - 1]);
   }
   await make.click();
   if (passphrase) {
@@ -2781,9 +2781,10 @@ const smokes = [
       try { const w = await window.go.main.App.SaveFinances({ ...v.plan, cushion: c }); return { cushion: w.plan.cushion, rev: w.plan.rev }; } catch (e) { return { error: String(e.message) }; }
     }, cushion);
     const before = await page.evaluate(() => window.__MOCK.sealedRev);
+    const was = await page.evaluate(() => window.__MOCK.sealed.sealed);
     const r = await save(777);
-    const m = await page.evaluate(() => ({ rev: window.__MOCK.sealedRev, saved: window.__MOCK.financesSaved, sealed: JSON.stringify(window.__MOCK.sealed) }));
-    if (r.cushion !== 777 || r.rev !== m.rev || m.rev === before || m.saved || m.sealed.includes('777')) throw new Error('the change was not kept sealed: ' + JSON.stringify({ r, before, rev: m.rev, saved: m.saved }));
+    const m = await page.evaluate(() => ({ rev: window.__MOCK.sealedRev, saved: window.__MOCK.financesSaved, sealed: window.__MOCK.sealed.sealed }));
+    if (r.cushion !== 777 || r.rev !== m.rev || m.rev === before || m.saved || m.sealed === was) throw new Error('the change was not kept sealed: ' + JSON.stringify({ r, before, rev: m.rev, saved: m.saved }));
     await page.evaluate(() => { window.__MOCK.sealedConflict = true; });
     const c = await save(888);
     if (!/changed on another of your devices after this was read/.test(c.error || '')) throw new Error('a save another device beat was not said plainly: ' + JSON.stringify(c));
