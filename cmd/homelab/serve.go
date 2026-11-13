@@ -414,7 +414,7 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 		// same plan the computer keeps, read forward the same way. A phone
 		// that may only look gets it marked read-only, so it offers no Edit.
 		"Finances": {Member: true, Finances: companion.FinancesView, Call: func(ctx context.Context, _ []json.RawMessage) (any, []string, error) {
-			froot, err := h.financeRoot(ctx)
+			froot, err := h.plainFinanceRoot(ctx)
 			if err != nil {
 				return nil, nil, err
 			}
@@ -432,7 +432,7 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 		// sees Finances): a few facts, never the plan, and no amount at all
 		// while Hide amounts is on.
 		"FinancesWall": {Member: true, Finances: companion.FinancesCard, Call: func(ctx context.Context, _ []json.RawMessage) (any, []string, error) {
-			froot, err := h.financeRoot(ctx)
+			froot, err := h.plainFinanceRoot(ctx)
 			if err != nil {
 				return nil, nil, err
 			}
@@ -449,7 +449,7 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 		// A save from a phone is refused, as on the computer, when the
 		// plan changed after the phone read it (finance.ErrChanged).
 		"SaveFinances": {Member: true, Finances: companion.FinancesEdit, Call: func(ctx context.Context, args []json.RawMessage) (any, []string, error) {
-			froot, err := h.financeRoot(ctx)
+			froot, err := h.plainFinanceRoot(ctx)
 			if err != nil {
 				return nil, nil, err
 			}
@@ -496,7 +496,7 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 		// The ledger, what actually happened, goes to the same phones the
 		// plan does, at the same levels, and is refused when stale as it is.
 		"FinancesLedger": {Member: true, Finances: companion.FinancesView, Call: func(ctx context.Context, _ []json.RawMessage) (any, []string, error) {
-			froot, err := h.financeRoot(ctx)
+			froot, err := h.plainFinanceRoot(ctx)
 			if err != nil {
 				return nil, nil, err
 			}
@@ -504,7 +504,7 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 			return l, nil, err
 		}},
 		"SaveFinancesLedger": {Member: true, Finances: companion.FinancesEdit, Call: func(ctx context.Context, args []json.RawMessage) (any, []string, error) {
-			froot, err := h.financeRoot(ctx)
+			froot, err := h.plainFinanceRoot(ctx)
 			if err != nil {
 				return nil, nil, err
 			}
@@ -631,7 +631,7 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 		// Receipts go with the ledger: a phone that may change it may keep one
 		// (from its camera), and one that may only look may see them.
 		"FinancesReceipt": {Member: true, Finances: companion.FinancesView, Call: func(ctx context.Context, args []json.RawMessage) (any, []string, error) {
-			froot, err := h.financeRoot(ctx)
+			froot, err := h.plainFinanceRoot(ctx)
 			if err != nil {
 				return nil, nil, err
 			}
@@ -643,7 +643,7 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 			return r, nil, err
 		}},
 		"SaveFinancesReceipt": {Member: true, Finances: companion.FinancesEdit, Call: func(ctx context.Context, args []json.RawMessage) (any, []string, error) {
-			froot, err := h.financeRoot(ctx)
+			froot, err := h.plainFinanceRoot(ctx)
 			if err != nil {
 				return nil, nil, err
 			}
@@ -652,6 +652,106 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 				return nil, nil, errors.New("SaveFinancesReceipt takes the receipt")
 			}
 			name, err := finance.SaveReceipt(finance.ReceiptsDir(froot), data)
+			return name, nil, err
+		}},
+		// A member's private Finances (private-finances.md 3.3): sealed on her
+		// phone, kept here as one envelope the computer can't open, and only
+		// for her own phone (sealedRoot). The computer checks the envelope's
+		// shape and size, never what is inside.
+		"FinancesSealed": {Member: true, Finances: companion.FinancesView, Call: func(ctx context.Context, _ []json.RawMessage) (any, []string, error) {
+			froot, err := h.sealedRoot(ctx)
+			if err != nil {
+				return nil, nil, err
+			}
+			e, ok, err := finance.LoadSealed(finance.SealedPath(froot))
+			if err != nil || !ok {
+				return nil, nil, err
+			}
+			return e, nil, nil
+		}},
+		// SaveFinancesSealed(rev, envelope): "new" turns privacy on, and then,
+		// only once the envelope is written, her plain Finances are removed.
+		"SaveFinancesSealed": {Member: true, Finances: companion.FinancesEdit, Call: func(ctx context.Context, args []json.RawMessage) (any, []string, error) {
+			froot, err := h.sealedRoot(ctx)
+			if err != nil {
+				return nil, nil, err
+			}
+			var was string
+			if len(args) < 2 || json.Unmarshal(args[0], &was) != nil {
+				return nil, nil, errors.New("SaveFinancesSealed takes the rev it was read at and the sealed Finances")
+			}
+			e, err := finance.ParseEnvelope(args[1])
+			if err != nil {
+				return nil, nil, err
+			}
+			saved, err := finance.SaveSealed(finance.SealedPath(froot), was, e)
+			if err != nil {
+				return nil, nil, err
+			}
+			if was == "new" {
+				if err := finance.RemovePlainFinances(froot); err != nil {
+					return sealedSaved{Rev: saved.Rev}, nil, fmt.Errorf("private now, but a plain file wasn't removed: %w", err)
+				}
+			}
+			return sealedSaved{Rev: saved.Rev}, nil, nil
+		}},
+		// UnsealFinances(rev, plan, ledger): privacy turned off, from her phone
+		// (which read her sealed receipts first, and sends them back plain):
+		// her plain plan and ledger written, then the envelope and her sealed
+		// receipts removed.
+		"UnsealFinances": {Member: true, Finances: companion.FinancesEdit, Call: func(ctx context.Context, args []json.RawMessage) (any, []string, error) {
+			froot, err := h.sealedRoot(ctx)
+			if err != nil {
+				return nil, nil, err
+			}
+			var was string
+			var p finance.Plan
+			var l finance.Ledger
+			if len(args) < 3 || json.Unmarshal(args[0], &was) != nil || json.Unmarshal(args[1], &p) != nil || json.Unmarshal(args[2], &l) != nil {
+				return nil, nil, errors.New("UnsealFinances takes the rev it was read at, the plan and the ledger")
+			}
+			e, ok, err := finance.LoadSealed(finance.SealedPath(froot))
+			if err != nil {
+				return nil, nil, err
+			}
+			if !ok || e.Rev != was {
+				return nil, nil, finance.ErrChanged
+			}
+			p.Rev, l.Rev = "", ""
+			saved, err := finance.Save(finance.Path(froot), p)
+			if err != nil {
+				return nil, nil, err
+			}
+			if _, err := finance.SaveLedger(finance.LedgerPath(froot), l, saved); err != nil {
+				return nil, nil, err
+			}
+			if err := finance.RemoveSealed(finance.SealedPath(froot), was); err != nil {
+				return nil, nil, err
+			}
+			return true, nil, finance.RemoveSealedReceipts(finance.ReceiptsDir(froot))
+		}},
+		"FinancesSealedReceipt": {Member: true, Finances: companion.FinancesView, Call: func(ctx context.Context, args []json.RawMessage) (any, []string, error) {
+			froot, err := h.sealedRoot(ctx)
+			if err != nil {
+				return nil, nil, err
+			}
+			var name string
+			if len(args) < 1 || json.Unmarshal(args[0], &name) != nil {
+				return nil, nil, errors.New("FinancesSealedReceipt takes the receipt's name")
+			}
+			r, err := finance.ReadSealedReceipt(finance.ReceiptsDir(froot), name)
+			return r, nil, err
+		}},
+		"SaveFinancesSealedReceipt": {Member: true, Finances: companion.FinancesEdit, Call: func(ctx context.Context, args []json.RawMessage) (any, []string, error) {
+			froot, err := h.sealedRoot(ctx)
+			if err != nil {
+				return nil, nil, err
+			}
+			var sealed string
+			if len(args) < 1 || json.Unmarshal(args[0], &sealed) != nil {
+				return nil, nil, errors.New("SaveFinancesSealedReceipt takes the sealed receipt")
+			}
+			name, err := finance.SaveSealedReceipt(finance.ReceiptsDir(froot), sealed)
 			return name, nil, err
 		}},
 		// The Collection's pictures: a phone that sees Finances sees them, one

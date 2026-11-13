@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/Snooper42/homelab-wizard/internal/docker"
+	"github.com/Snooper42/homelab-wizard/internal/finance"
 	"github.com/Snooper42/homelab-wizard/internal/people"
 	"github.com/Snooper42/homelab-wizard/internal/ui"
 )
@@ -66,8 +67,27 @@ func TestPersonAddAndRemove(t *testing.T) {
 		t.Errorf("list:\n%s", out)
 	}
 
-	if out, code := homelabCmd(t, root, "", "person", "remove", "anna", "--apply"); code != 0 {
+	// Her Finances private (sealed on her phone): the list says so, and
+	// Remove keeps them unless asked, saying the owner can't open them.
+	sealed := finance.SealedPath(memberRoot(root, "anna"))
+	if err := os.MkdirAll(filepath.Dir(sealed), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(sealed, []byte(`{"version":1}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if out, _ := homelabCmd(t, root, "", "person"); !strings.Contains(out, "keeps their Finances private") {
+		t.Errorf("list:\n%s", out)
+	}
+	out, code = homelabCmd(t, root, "", "person", "remove", "anna", "--apply")
+	if code != 0 {
 		t.Fatalf("remove (exit %d):\n%s", code, out)
+	}
+	if !strings.Contains(out, "keep their private Finances") || !strings.Contains(out, "never open them") {
+		t.Errorf("remove says nothing of her private Finances:\n%s", out)
+	}
+	if _, err := os.Stat(sealed); err != nil {
+		t.Errorf("her private Finances went with her: %v", err)
 	}
 	if users["u-1"]["disabled"] != true || users["u-1"]["username"] != "anna" {
 		t.Errorf("after remove Pocket ID has %v", users["u-1"])

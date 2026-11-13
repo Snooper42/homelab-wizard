@@ -26,6 +26,8 @@
         "FinancesLedger",
         "FinancesReadInvestments",
         "FinancesReceipt",
+        "FinancesSealed",
+        "FinancesSealedReceipt",
         "FinancesShared",
         "FinancesUpdatePrices",
         "FinancesWall",
@@ -41,6 +43,8 @@
         "SaveFinancesCardPicture",
         "SaveFinancesLedger",
         "SaveFinancesReceipt",
+        "SaveFinancesSealed",
+        "SaveFinancesSealedReceipt",
         "SaveSettings",
         "SavingsHistory",
         "Screen",
@@ -53,6 +57,7 @@
         "StatusBoard",
         "StatusFolds",
         "StopUntil",
+        "UnsealFinances",
         "Watchdog"
       ],
       "features": [

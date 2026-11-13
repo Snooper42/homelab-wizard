@@ -35,9 +35,7 @@ var memberName = regexp.MustCompile(`^[a-z0-9][a-z0-9._-]{0,63}$`)
 // memberRoot is a member's own homelab-like folder, where their Finances
 // are kept as the household's are under the homelab folder:
 // data/members/<username>/data/finance.json, and its ledger and receipts.
-func memberRoot(root, username string) string {
-	return filepath.Join(root, "data", "members", username)
-}
+func memberRoot(root, username string) string { return people.MemberRoot(root, username) }
 
 // errNotMember is a phone given to someone no longer in the household.
 var errNotMember = errors.New("this phone's person is no longer in the household: homelab phone person <phone> none gives it back to you")
@@ -85,6 +83,74 @@ func (h *homelab) financeRoot(ctx context.Context) (string, error) {
 		return "", err
 	}
 	return dir, nil
+}
+
+// errPrivate is a plain Finances call from a member's phone once her
+// Finances are private (private-finances.md 3.3): nothing plain is read or
+// written for her again.
+var errPrivate = errors.New("your Finances are private: they open on your own phone, with Face ID or your recovery code, not from the computer")
+
+// plainFinanceRoot is financeRoot for the plain Finances calls: a member's
+// whose Finances are private is refused.
+func (h *homelab) plainFinanceRoot(ctx context.Context) (string, error) {
+	froot, err := h.financeRoot(ctx)
+	if err != nil {
+		return froot, err
+	}
+	if _, isMember, _ := h.member(ctx); isMember && finance.HasSealed(froot) {
+		return "", errPrivate
+	}
+	return froot, nil
+}
+
+// errNotHers is a sealed Finances call from any phone but a household
+// member's own.
+var errNotHers = errors.New("private Finances are a household member's own, on her own phone: this phone isn't one")
+
+// sealedRoot is a member's own folder, for the sealed Finances calls: only
+// her own phone reaches it. The owner's phones, a wall screen, and a phone
+// given to someone removed or never added are refused here, whatever the
+// method's flags say, so none of them can ever reach the household's root.
+func (h *homelab) sealedRoot(ctx context.Context) (string, error) {
+	d, ok := companion.Caller(ctx)
+	if !ok || d.Person == "" || d.Kiosk {
+		return "", errNotHers
+	}
+	_, isMember, err := h.member(ctx)
+	if err != nil {
+		return "", err
+	}
+	if !isMember {
+		return "", errNotHers
+	}
+	froot, err := h.financeRoot(ctx)
+	if err != nil {
+		return "", err
+	}
+	if froot == h.root {
+		return "", errNotHers
+	}
+	return froot, nil
+}
+
+// sealedSaved is what SaveFinancesSealed answers: the new rev, nothing else.
+type sealedSaved struct {
+	Rev string `json:"rev"`
+}
+
+// privateFinances is who in the household keeps their Finances private,
+// and when they last saved them: for Settings › People, nothing more.
+func privateFinances(root string, list []people.Person) map[string]time.Time {
+	out := map[string]time.Time{}
+	for _, p := range list {
+		if !people.Valid(p.Username) {
+			continue
+		}
+		if at, ok := finance.PrivateSince(memberRoot(root, p.Username)); ok {
+			out[p.Username] = at
+		}
+	}
+	return out
 }
 
 // onlyTheirs is Status as a member's phone sees it: the apps they use and

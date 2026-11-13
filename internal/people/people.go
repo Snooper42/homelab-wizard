@@ -51,6 +51,14 @@ func (p Person) Uses(id string) bool {
 // Active reports whether the person can sign in.
 func (p Person) Active() bool { return p.Removed.IsZero() }
 
+// MemberRoot is a member's own homelab-like folder, where their Finances
+// are kept as the household's are under the homelab folder:
+// data/members/<username>/data/finance.json, its ledger and receipts, or
+// once private, finance.sealed. username must be Valid.
+func MemberRoot(root, username string) string {
+	return filepath.Join(root, "data", "members", username)
+}
+
 // Path is the household list in the homelab folder.
 func Path(root string) string { return filepath.Join(root, "data", "people.json") }
 
