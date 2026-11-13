@@ -15,17 +15,11 @@ import { AcctMark } from './Mark';
 import { ago } from './Worth';
 import { TxRow } from './widgets/Latest';
 import { LoanSection } from './Loan';
-import { balanceAfter, runsFrom, todayOf, worthOn } from './model';
+import { balanceSeries, todayOf } from './model';
 import { compact, dayShort, type Lookup, money, owed } from './money';
 
 const kindName: Record<string, string> = { checking: 'Checking', savings: 'Savings', card: 'Credit card', investment: 'Investments', retirement: 'Retirement', loan: 'Loan', home: 'Home', car: 'Car', collectible: 'Collectible' };
-const spans: [string, string, number][] = [['30', '30 days', 30], ['90', '90 days', 90], ['365', 'A year', 365]];
-
-/** The day `n` days before an ISO day. */
-const back = (day: string, n: number): string => {
-  const d = new Date(+day.slice(0, 4), +day.slice(5, 7) - 1, +day.slice(8, 10) - n);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-};
+export const spans: [string, string, number][] = [['30', '30 days', 30], ['90', '90 days', 90], ['365', 'A year', 365]];
 
 export interface AccountProps {
   v: finance.View;
@@ -54,11 +48,8 @@ export function AccountPage({ v, L, ledger, id, done, edit, update, toTx, editTx
   const owes = owed(a.kind);
   const all = ledger?.transactions || [];
   const mine = all.filter((t) => t.account === a.id || t.to === a.id).sort((x, y) => (x.date < y.date ? 1 : x.date > y.date ? -1 : 0));
-  const runs = runsFrom(a) && !!mine.length;
   const days = spans.find(([k]) => k === span)![2];
-  const steps = Array.from({ length: days + 1 }, (_, i) => back(v.today, days - i));
-  // Each day's end: worked through its transactions, else what was typed in by then (a home, a car, no transactions).
-  const values = steps.map((d) => (runs ? balanceAfter(a, all, d) : Math.abs(worthOn(v, a, d))));
+  const { steps, values, runs } = balanceSeries(v, a, all, days);
   const low = values.reduce((m, x, i) => (x < values[m] ? i : m), 0);
   const thisMonth = mine.filter((t) => t.date.startsWith(v.today.slice(0, 7)));
   const into = (t: finance.Transaction) => (t.to === a.id ? -t.amount : t.amount);

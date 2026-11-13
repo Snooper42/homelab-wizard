@@ -8,6 +8,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### New
 
+- **The Dashboard looks back:** Finances' Dashboard has *Checking, last 90 days*: what checking held at the end of each day, from the balance you typed in through its transactions, as the account's own page draws it. Pick 30 days or a year, or another account; click a day to open it on the calendar, or the title for the account's page. On the phone's page too.
 - **Arrange the Dashboard:** on Finances' Dashboard, **Arrange the Dashboard** lets you move each card (drag its handle, or ▲ ▼), give it a third, half or the whole row, and hide the ones you don't use (they wait below to come back). **Reset to the usual** puts it back. Each computer keeps its own arrangement; the phone's page stacks its cards as before.
 - **A loan's page on the iPhone and iPad:** in the Homelab app, a loan's page says what it costs each month, the months left and when it's paid off, and lists the payments linked to it. **Link a Payment** links one, the same payee's next ones are offered with **Link** and **Not This One**, and one that paid more than the plan's payment asks whether to count all of it. Each asks Face ID first.
 - **The Watchlist on the iPhone and iPad:** the Homelab app's Investments page lists the tickers you follow, with their price and how much they've moved since you followed them; **Follow a Ticker** looks one up and follows it (after Face ID), and its menu unfollows it. The bar of each holding's share is gone there too.

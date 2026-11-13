@@ -34,6 +34,7 @@ import { ComingUpWidget } from './widgets/ComingUp';
 import { GoalsWidget } from './widgets/Goals';
 import { LatestWidget } from './widgets/Latest';
 import { SpentWidget } from './widgets/Spent';
+import { TrendWidget } from './widgets/Trend';
 import { ArrangedBoard } from './Arrange';
 import type { showTransactions } from './Transactions';
 
@@ -67,11 +68,13 @@ export interface OverviewProps {
   openCalendar?: (day?: string) => void;
   /** Shows Paychecks: each pay period ahead. */
   openPay?: () => void;
+  /** Shows an account's own page. */
+  openAccount?: (id: string) => void;
   /** Drawn on a phone (the companion): what is coming up first, and the goals. */
   phone?: boolean;
 }
 
-export function Overview({ v, L, sel, pick, add, edit, setSince, keep, ledger, openWorth, openSubscriptions, openRecurring, openTransactions, openCalendar, openPay, showIn, phone }: OverviewProps) {
+export function Overview({ v, L, sel, pick, add, edit, setSince, keep, ledger, openWorth, openSubscriptions, openRecurring, openTransactions, openCalendar, openPay, openAccount, showIn, phone }: OverviewProps) {
   // The period bar: by paycheck (now and the paychecks ahead, the plan's; before now, what happened, from the ledger)
   // or by month (before this one from the ledger, this one so far and then the plan, after it the plan).
   const [by, setByState] = useState<PeriodBy>(readBy);
@@ -134,6 +137,7 @@ export function Overview({ v, L, sel, pick, add, edit, setSince, keep, ledger, o
         })() },
         { id: 'paycheck', title: 'This paycheck', width: 'full', node: p && <PaycheckWidget v={v} L={L} sel={picked} edit={edit} open={openPay} /> },
         { id: 'checking', title: 'Checking ahead', width: 'half', node: <CheckingWidget v={v} L={L} sel={p ? picked : -1} openDay={openCalendar} /> },
+        { id: 'trend', title: 'Looking back', width: 'full', node: <TrendWidget v={v} ledger={ledger} openDay={openCalendar} openAccount={openAccount} /> },
         { id: 'renewing', title: 'Renewing soon', width: 'half', node: <RenewingWidget v={v} L={L} edit={edit} all={openSubscriptions} /> },
         { id: 'budgets', title: 'Budgets to watch', width: 'half', node: <BudgetsWidget v={v} only={toWatch} title="Budgets to watch" span={1} open={openTransactions} show={showIn && ((category, month) => showIn({ category, month }))} /> },
         { id: 'cashflow', title: 'Cash flow', width: 'half', node: <CashFlowWidget v={v} L={L} open={openRecurring && (() => openRecurring())} ledger={ledger} showIn={showIn} /> },
