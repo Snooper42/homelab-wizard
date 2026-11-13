@@ -296,6 +296,10 @@ def undo(entry_id):
     if not files:
         mc.die("%s isn't in the library any more: nothing to put back" % entry["title"])
     src = Path(entry["from"])
+    # The record is under data/, which a homelab moved in from someone else's file brings: only files in a
+    # library go back, and only into an inbox folder, so a line can't move any other file, or put one anywhere.
+    if not all(mc.inside(f, mc.library_roots()) for f in files) or not mc.inside(src, mc.inbox_roots()):
+        mc.die("%s can't be put back from here: it isn't from an inbox folder into a library" % entry["title"])
     ui.title("Inbox", "putting %s back" % entry["title"])
     if len(files) == 1 and not src.is_dir() and src.suffix.lower() == files[0].suffix.lower():
         dest = mc.unique_path(src)

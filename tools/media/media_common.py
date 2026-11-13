@@ -341,23 +341,31 @@ def trashed_from(src, at):
     return os.path.realpath(str(at.parent)) == os.path.realpath(str(files))
 
 
+def library_roots():
+    """Each library Tidy Up files into."""
+    return [expand(r) for r in (cfg(sec, "library") for sec in ("music", "movies", "tv", "audiobooks", "books")) if r]
+
+
+def inbox_roots():
+    """The inbox folders the sweep files downloads from."""
+    return [expand(r) for r in (cfg("inbox", "folders") or ["~/Downloads"]) if r]
+
+
 def media_roots():
     """The folders Tidy Up throws things away from: each library, the inbox folders, the scrubber's
     own roots, and the reports folder (where a music cleanup sets duplicates aside)."""
-    roots = [cfg(sec, "library") for sec in ("music", "movies", "tv", "audiobooks", "books")]
-    roots += list(cfg("inbox", "folders") or ["~/Downloads"]) + list(cfg("scrubber", "roots") or [])
+    roots = list(cfg("scrubber", "roots") or [])
     roots.append(os.environ.get("HOMELAB_MEDIA_REPORTS") or mo.CFG.get("reports_dir") or "~/Downloads")
-    return [expand(r) for r in roots if r]
+    return library_roots() + inbox_roots() + [expand(r) for r in roots if r]
 
 
-def in_media_root(p):
-    """Whether p, with its links and any .. resolved, is inside one of media_roots() (never one itself).
-    Undo puts a thing back only there, so a line in the trash log can't name any other place."""
+def inside(p, roots):
+    """Whether p, with its links and any .. resolved, is inside one of roots (never one itself)."""
     p = Path(p)
     if not p.is_absolute():
         return False
     real = os.path.normcase(os.path.realpath(str(p)))
-    for r in media_roots():
+    for r in roots:
         root = os.path.normcase(os.path.realpath(str(r)))
         try:
             if real != root and os.path.commonpath([real, root]) == root:
@@ -365,6 +373,12 @@ def in_media_root(p):
         except ValueError:  # another drive on Windows
             continue
     return False
+
+
+def in_media_root(p):
+    """Whether p is inside one of media_roots(). Undo puts a thing back only there, so a line in the
+    trash log can't name any other place."""
+    return inside(p, media_roots())
 
 
 def _trash_windows(p):
