@@ -109,12 +109,33 @@ function Unlock() {
   </Card>;
 }
 
+// While open: Lock, and Turn privacy off once she confirms.
+function Opened() {
+  const [asking, setAsking] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [said, setSaid] = useState('');
+  if (!asking) {
+    return <p class="fx-privateon" id="finPrivateOpen"><span>Private: only you can open these.</span> <button class="linkbtn" onClick={priv.lock}>Lock</button>
+      {priv.mayChange() && <button class="linkbtn" onClick={() => setAsking(true)}>Turn privacy off…</button>}</p>;
+  }
+  const off = async () => {
+    setBusy(true);
+    setSaid('');
+    try { await priv.turnOff(); } catch (e) { setSaid(errorText(e)); setBusy(false); }
+  };
+  return <Card kind="fx-private" id="finPrivateOff">
+    <h2>Turn privacy off?</h2>
+    <p>Your Finances go back to the homelab as they are now, kept plain again, where the person who runs it can read them. Your recovery code and passkey won’t be needed any more.</p>
+    <div class="fx-privatebtns"><button class="primary small" disabled={busy} onClick={off}>Turn privacy off</button><button class="linkbtn" disabled={busy} onClick={() => { setAsking(false); setSaid(''); }}>Cancel</button></div>
+    {busy && <p class="muted" role="status">Turning privacy off…</p>}
+    {said && <p class="formerr bad" role="alert">{said}</p>}
+  </Card>;
+}
+
 function PrivateCard() {
   const s = priv.privateState();
   if (s === 'locked') return <Unlock />;
-  if (s === 'open') {
-    return <p class="fx-privateon" id="finPrivateOpen"><span>Private: only you can open these.</span> <button class="linkbtn" onClick={priv.lock}>Lock</button></p>;
-  }
+  if (s === 'open') return <Opened />;
   if (s === 'plain' && priv.mayChange()) return <TurnOn />;
   return null;
 }

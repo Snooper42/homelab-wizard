@@ -556,6 +556,20 @@ try { if ((window.__MOCK || {}).tidyTab) localStorage.setItem('homelab.tidyTab',
       const plain = app[name];
       app[name] = (...args) => (M.sealed ? later(null).then(() => { throw new Error('your Finances are private: they open on your own phone, with Face ID or your recovery code, not from the computer'); }) : plain(...args));
     }
+    // What the household shares with her (M.shared, as memberShared), and privacy turned off: refused for a stale
+    // rev, or a ledger naming a sealed receipt (as the computer's SaveLedger refuses one); M.unsealed is what came.
+    app.FinancesShared = () => later(M.shared || { currency: 'USD', shares: [] });
+    app.UnsealFinances = (rev, plan, ledger) => {
+      if (!M.sealed || rev !== sealedRev()) return later(null).then(() => { throw new Error('Finances were changed on another device after this was read. The latest is shown now: check your change and save it again'); });
+      const bad = (ledger.transactions || []).find((t) => t.receipt && !/^[0-9a-f]{32}\.(jpg|png|webp|pdf)$/.test(t.receipt));
+      if (bad) return later(null).then(() => { throw new Error(`${bad.date}: no receipt "${bad.receipt}"`); });
+      M.unsealed = { plan, ledger };
+      M.sealed = null;
+      M.sealedReceipts = {};
+      M.finances = { ...M.finances, plan };
+      M.ledger = { rev: 'l-plain', transactions: ledger.transactions || [] };
+      return later(true);
+    };
     if (M.passkey) {
       const secret = new Uint8Array(32).fill(7);
       const answer = () => ({ rawId: new Uint8Array([1, 2, 3, 4]).buffer, getClientExtensionResults: () => ({ prf: M.passkey === 'noprf' ? { enabled: false } : { enabled: true, results: { first: secret.slice().buffer } } }) });
