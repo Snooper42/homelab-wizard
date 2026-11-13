@@ -439,7 +439,7 @@ Added in round 41 (Nov 13; the backlog was empty: #654's Send to my phone, and s
 The second account ran this loop all day and handed it to a fresh session here. Read this first.
 
 - **State:** no security PR is open; main has every finding through **N57** (`docs/Security.md`, "Threat review (November 2026)"). Every package has been read once (item 128). The backlog runs to item 130; all are done or decided (105: N71) and no open item from 131 on but 105 and 113 (151: N68; 148: N67; 142: N66; 98: N58; 131: N59; 132: N60; 133: N61; 134: N62; 138: N63; 135: N64; 137: N65), left open with their reasons in the backlog below.
-- **Last merges read:** everything through **#665** (round 44: #665 is the other account's private Finances step 1, the projection built for the phone). Start the next round at the first merge after `3ef1029`.
+- **Last merges read:** everything through **#668** (round 64). Start the next round at the first merge after `aec1310`.
 - **Each round from here:** `git fetch origin`; read every PR merged since the last one by its diff, riskiest first: a new `phoneMethods` entry in `cmd/homelab/serve.go` (which permission, what it writes), anything building a URL, path or command from input (escaping leaves `.` and `..`, as N57 found), anything a phone or another household member sends that is stored and later unpacked (sizes in bytes *and* pixels, as N56 found), and update and provenance code. Display-only changes (Swift views, TSX without raw HTML or links) get a quick scan. Record each round in the done log at the end of this section.
 - **Splitting the work (the owner, Nov 12):** this session does the security audit only; the other account does feature work. Never touch the other account's PRs or features. Fix security holes yourself, each with a test that fails first.
 - **Asking the owner:** always as a multiple-choice question (AskUserQuestion), never open-ended. Report briefly each round with the time in **Eastern** (UTC−5 in November: 19:00 UTC is 2:00 PM ET; check with `TZ=America/New_York date`).
@@ -1635,6 +1635,19 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
   which a forged ticket cannot use as Unpack leaves tickets out), #470 and
   #479 (the page only). No new hole.
 
+- **Round 64 (Nov 13, #666 and #668 read; usability task 15):** #668 (a
+  member's private Finances on the computer): the five sealed calls reach
+  only her own phone (`sealedRoot`: no kiosk, no owner's phone, no one
+  removed, never the household's root), the seven plain calls refuse her
+  once sealed, the envelope is checked for shape and size and written
+  0600 under the lock, sealed receipts are named by their hash and read
+  only by that pattern, and `data/members` is already in the encrypted
+  Secrets job (N74). One Low note for Account 1 (sealed receipts never
+  pruned). #666 (the owner's Finances kept offline on the iPhone): sealed
+  under a this-device Keychain key, complete file protection, out of
+  backups, gone on unpair. No new hole. Task 15 run: five findings for
+  Account 1.
+
 ## For Account 1
 
 - **Tidy Up has its own loop now** (the owner's ask, Nov 7): `.claude/prompts/tidy-loop.md`, run with `/loop Read .claude/prompts/tidy-loop.md and do the next round.` Its queue starts with two High items found reading the code: **Tidy lyrics** is refused by `tidyScreenArgs` (`--tidy` isn't allowed; proved with `tidyArgs("music", "lyrics", ["--tidy"])`), and **Carry on** loses a stopped job's flags. Item 1 loosens this lane's N12 guard: allow `--tidy` for `music lyrics` only.
@@ -1674,6 +1687,18 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
 
   Worth finding what each waits on (a re-fetch, an animation) rather
   than only raising the timeout.
+
+- **Sealed receipts are never pruned** (#668, `finance.SaveSealedReceipt`; Low, no fix needed now): a plain receipt no transaction names goes after `keepUnused` (`pruneReceipts`), but the computer can't read a private ledger, so a sealed receipt whose transaction was deleted stays for good, and a member's phone that may change her Finances can add them without end (as a plain one can between prunes). Worth her phone sending the names it still uses with each save, so the computer removes the rest.
+
+### Usability findings (Account 3's tester, worst first; take these ahead of your own order)
+
+From task 15, **Finances: set up the month's bills and see what's left** (Nov 13, Finances against the fake backend from nothing, then the example household; the Mac at 1280px in light, the phone at 390px light and 320px dark with big text). Pictures in `docs/images/usability/`.
+
+1. **A dead end: "Start with three things" goes after the first one** (`t15-after-account.png`). From nothing, the Dashboard offers three rows: Your checking account, Who gets paid, What comes out each month. Add the checking account and the whole card goes (`Overview.tsx`: it shows only while the plan has no account and no person), leaving a 90-day chart of one flat line and a Cash flow of $0. Nothing says a paycheck comes next or where to add one (Plan › Paychecks). *Fixed looks like:* the card stays until each of the three is done, each row ticked as it's done ("✓ Chase Checking"), and goes once all three are there. *Smoke case:* Finances with one checking account and no paycheck or payment still shows Add a paycheck and Add a payment on the Dashboard.
+2. **"What's left" reads as the wrong number** (`t15-dashboard.png`). The Dashboard's first card says **$2,557.91, "After Alex's paycheck, Nov 6"**: checking the moment the paycheck lands, before any of that paycheck's bills. What is actually left to spend is in the second card, smaller, in capitals: "$739.77 CHECKING ON NOV 19, AFTER ITS BILLS". Between them the screen shows five checking figures ($2,512.40, $2,557.91, $2,357.91, $739.77 twice). "Under your $500 cushion on Thu, Nov 5" is only in the fourth card down. Someone who reads the top number thinks they have $1,800 more than they do. *Fixed looks like:* the first card answers the question in words, "Left until Nov 19, after the bills: $739.77", with the cushion warning there when there is one, and the other figures behind How it adds up. *Smoke case:* the Dashboard's first card holds the picked period's `left` and the word "left", and a period under the cushion names it in that card.
+3. **Add a payment takes 344 presses of Tab to reach Name** (`t15-payment-sheet.png`). Every one of the 337 logos is its own Tab stop, ahead of Name, Amount and Next on (Add an account: 84). The logo grid also fills the top half of the sheet, so at 800px tall Name and Amount sit at the bottom and Next on is behind the footer. *Fixed looks like:* the grid is one Tab stop with the arrow keys inside it, or Name and Amount come first and the logo after (filled in from the name, as typing "Netflix" could). *Smoke case:* from opening Add a payment, Tab reaches Name in 5 presses or fewer.
+4. **The phone's period bar splits its arrows** (`t15-phone-320-dark.png`). At 390px the back arrow sits beside By month and the forward arrow beside the title, a line lower; at 320px with big text, back is top right and forward bottom left, under the title. The tab row also ends "Net wort" (it scrolls, with nothing to say so). *Fixed looks like:* back, the title and forward on one line, the title wrapping between them. *Smoke case:* at 320px with text at 1.5×, the period bar's two arrows have the same top.
+5. **Words:** "Its name, below" under "Add a checking account"; "company.com" and "Get the real logo" ahead of the account's name; a "?" in a green circle at the top of the paycheck sheet, which reads as help but is the empty name's initial. *Fixed looks like:* "Pick your bank, or type its name"; "Its website, for the logo (optional)"; no initial until a name is typed. *Smoke case:* the words lint refusing "Its name, below", and the paycheck sheet showing no "?" mark.
 
 ## For Account 2
 
