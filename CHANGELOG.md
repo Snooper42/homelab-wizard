@@ -249,6 +249,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- **Frigate's and Firefly III's secrets stay off the process list:** Frigate's broker password and Firefly III's nightly-jobs token no longer appear, even for a moment, in the list of running programs other accounts on the computer can see.
 - **Lyrics go in as plain text:** Add lyrics now takes out stray control characters from what the lyrics site sends, and leaves out lyrics far longer than any song's.
 - **A stuck download can't hold up Tidy Up:** filing new music gives beets an hour per step; a download that would keep it busy for good is stopped and said.
 - **Tidy Up's notes survive two jobs at once:** a film scan and Collect saving at the same moment can no longer leave Tidy Up's note of what Tdarr is shrinking half-written and forgotten.
