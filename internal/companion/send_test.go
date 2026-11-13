@@ -163,3 +163,66 @@ func TestASendReachesOnlyItsPhone(t *testing.T) {
 		t.Errorf("the iPad got another phone's send: %s", got)
 	}
 }
+
+// The companion checks again, as it passes a send on, that the phone may
+// open it now: the desktop app checked when it sent, but a phone made a
+// wall screen, given to a member or with Finances taken away in the
+// minutes between, or a file the desktop app didn't write, gets nothing.
+func TestASendIsCheckedAgainAsItIsPassedOn(t *testing.T) {
+	store := NewStore(filepath.Join(t.TempDir(), "phones.json"))
+	pair := func(name, finances string) (Device, *http.Request) {
+		code, _ := store.NewPairing(name, true, finances)
+		d, token, err := store.Pair(code, "")
+		if err != nil {
+			t.Fatal(err)
+		}
+		r := httptest.NewRequest(http.MethodGet, "/api/events", nil)
+		r.Header.Set("Authorization", "Bearer "+token)
+		return d, r
+	}
+	theirs := func(d Device, c engine.Change) (engine.Change, bool) {
+		if len(c.Apps) == 1 && c.Apps[0] == "immich" {
+			return c, true
+		}
+		return engine.Change{}, false
+	}
+	s := &Server{Store: store, ForMember: theirs}
+	open := func(d Device, link string) *engine.Open { return &engine.Open{Device: d.ID, Link: link} }
+
+	sam, samReq := pair("Sam's iPhone", FinancesView)
+	if !s.passOpen(samReq, open(sam, "homelab://finances")) || !s.passOpen(samReq, open(sam, "homelab://app/radarr")) {
+		t.Fatal("a phone allowed them got nothing")
+	}
+	other, _ := pair("The iPad", "")
+	if s.passOpen(samReq, open(other, "homelab://status")) {
+		t.Error("another phone's send was passed to Sam's")
+	}
+	if s.passOpen(samReq, open(sam, "https://example.com")) {
+		t.Error("a link not the app's own was passed on")
+	}
+	if _, err := store.SetFinances(sam.ID, ""); err != nil {
+		t.Fatal(err)
+	}
+	if s.passOpen(samReq, open(sam, "homelab://finances/recurring")) {
+		t.Error("Finances reached a phone that may no longer see them")
+	}
+	if _, err := store.SetPerson(sam.ID, "alex", "Alex"); err != nil {
+		t.Fatal(err)
+	}
+	if s.passOpen(samReq, open(sam, "homelab://app/radarr")) || !s.passOpen(samReq, open(sam, "homelab://app/immich")) || !s.passOpen(samReq, open(sam, "homelab://status")) {
+		t.Error("a member's phone: only Status and their own apps")
+	}
+	wall, wallReq := pair("The hall", "")
+	if _, err := store.MarkKiosk(wall.ID); err != nil {
+		t.Fatal(err)
+	}
+	if s.passOpen(wallReq, open(wall, "homelab://status")) {
+		t.Error("a wall screen was sent a page")
+	}
+	if _, err := store.Remove(wall.ID); err != nil {
+		t.Fatal(err)
+	}
+	if s.passOpen(wallReq, open(wall, "homelab://status")) {
+		t.Error("a removed phone was sent a page")
+	}
+}

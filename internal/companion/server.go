@@ -571,12 +571,32 @@ func (s *Server) events(w http.ResponseWriter, r *http.Request) {
 		// A page sent from the computer goes to the one phone it was sent to,
 		// and to no other (Send to my phone).
 		if c.Open != nil {
-			return engine.Change{Open: c.Open}, c.Open.Device == d.ID
+			return engine.Change{Open: c.Open}, c.Open.Device == d.ID && s.passOpen(r, c.Open)
 		}
 		if d.Person != "" {
 			return s.ForMember(d, c)
 		}
 		return c, true
+	})
+}
+
+// passOpen reports whether a page sent from the computer goes to the phone
+// following r's stream: the phone it was sent to, as it is paired now
+// (the desktop app checked when it sent, but a phone may since have become
+// a wall screen, a member's, or lost Finances, and a file in the send
+// folder may not be the desktop app's), allowed to open it (MayOpen); a
+// member's own apps are those ForMember passes.
+func (s *Server) passOpen(r *http.Request, o *engine.Open) bool {
+	d, ok := s.device(r)
+	if !ok || d.ID != o.Device {
+		return false
+	}
+	return MayOpen(d, o.Link, func(id string) bool {
+		if s.ForMember == nil {
+			return false
+		}
+		_, theirs := s.ForMember(d, engine.Change{Apps: []string{id}})
+		return theirs
 	})
 }
 
