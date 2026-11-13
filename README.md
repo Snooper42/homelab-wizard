@@ -32,7 +32,10 @@
 </p>
 
 <p align="center">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/tour-dark.gif">
   <img alt="A walk through Homelab Wizard: Status, an app's page, Finances, Tidy Up, Backups, and Choose apps, each with a caption saying what it is for" src="docs/images/tour.gif" width="960">
+</picture>
 </p>
 
 > [!NOTE]
