@@ -666,6 +666,26 @@ def same_length(a, b, tolerance=2.0):
 
 
 # ============================================================== HTTP
+def _origin(url):
+    u = urllib.parse.urlsplit(url)
+    return (u.scheme.lower(), (u.hostname or "").lower(), u.port or {"http": 80, "https": 443}.get(u.scheme.lower()))
+
+
+class _KeysStayHome(urllib.request.HTTPRedirectHandler):
+    """A redirect is followed, but to another host (or scheme, or port) only Accept and User-Agent go along:
+    urlopen would carry every header, a server's key (X-Emby-Token, x-api-key, Authorization) included."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        new = super().redirect_request(req, fp, code, msg, headers, newurl)
+        if new is not None and _origin(newurl) != _origin(req.full_url):
+            keep = {"accept", "user-agent"}
+            new.headers = {k: v for k, v in new.headers.items() if k.lower() in keep}
+        return new
+
+
+_opener = urllib.request.build_opener(_KeysStayHome)
+
+
 def http_json(method, url, body=None, headers=None, timeout=30, form=False):
     data = None
     h = {"Accept": "application/json"}
@@ -679,7 +699,7 @@ def http_json(method, url, body=None, headers=None, timeout=30, form=False):
     h.update(headers or {})
     req = urllib.request.Request(url, data=data, method=method, headers=h)
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as r:
+        with _opener.open(req, timeout=timeout) as r:
             raw = r.read()
     except urllib.error.HTTPError as e:
         raise RuntimeError("%s %s answered %d" % (method, re.sub(r"[?].*", "", url), e.code))

@@ -1625,6 +1625,61 @@ class Servers(Base):
         self.assertEqual(told, [], "Jellyfin here is set for films and TV only")
 
 
+class KeysOnARedirect(unittest.TestCase):
+    """A server answering 302 to another host must not be handed the key Tidy Up sent it: Python's urlopen
+    keeps every header but the body's on a redirect, X-Emby-Token and x-api-key included."""
+
+    def serve(self, handler):
+        import http.server
+        import threading
+        srv = http.server.HTTPServer(("127.0.0.1", 0), handler)
+        threading.Thread(target=srv.serve_forever, daemon=True).start()
+        self.addCleanup(srv.server_close)
+        self.addCleanup(srv.shutdown)
+        return "http://127.0.0.1:%d" % srv.server_port
+
+    def redirect_to(self, target):
+        import http.server
+        seen = []
+
+        class Answer(http.server.BaseHTTPRequestHandler):
+            def do_GET(self):
+                seen.append({k.lower(): v for k, v in self.headers.items()})
+                if self.path.startswith("/go"):
+                    self.send_response(302)
+                    self.send_header("Location", (target or "") + "/landed")
+                    self.end_headers()
+                    return
+                body = b'{"ok": true}'
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+
+            def log_message(self, *a):
+                pass
+        return Answer, seen
+
+    def test_a_key_stays_with_its_own_host(self):
+        other, at_other = self.redirect_to(None)
+        far = self.serve(other)
+        near_h, at_near = self.redirect_to(far)
+        near = self.serve(near_h)
+        keys = {"X-Emby-Token": "jf-secret", "x-api-key": "td-secret", "Authorization": "Bearer ab-secret",
+                "X-Plex-Token": "px-secret", "x-nd-authorization": "Bearer nd-secret"}
+        self.assertEqual(mc.http_json("GET", near + "/go", headers=keys), {"ok": True}, "the redirect is still followed")
+        self.assertEqual(at_near[0].get("x-emby-token"), "jf-secret", "its own host gets it")
+        sent = at_other[0]
+        self.assertFalse([k for k in (h.lower() for h in keys) if k in sent], "another host gets none: %s" % sent)
+
+    def test_a_redirect_within_the_same_host_keeps_the_key(self):
+        same_h, seen = self.redirect_to("")
+        base = self.serve(same_h)
+        mc.http_json("GET", base + "/go", headers={"X-Emby-Token": "jf-secret"})
+        self.assertEqual([s.get("x-emby-token") for s in seen], ["jf-secret", "jf-secret"])
+
+
 class Tdarr(Base):
     def test_stack_and_calls(self):
         stack = mc.plugin_stack(gpu=True, keep_langs=["eng", "jpn"])
@@ -2267,6 +2322,20 @@ class InboxNeeds(Base):
         got = self.listed()
         self.assertEqual([(n["name"], n["kind"]) for n in got], [("vid_0042.mkv", "movies")])
         self.assertIn("You put it back", got[0]["why"])
+
+    def test_only_what_is_in_an_inbox_folder_is_named_and_filed(self):
+        # Needs a look lists what the needs record says, and the record is under data/, which a homelab
+        # moved in from someone else's file brings. Naming one must never move a video or songs from
+        # anywhere else in the account into a library.
+        private = self.touch(self.home / "Videos" / "private.mkv", age=600)
+        songs = self.touch(self.home / "Music Projects" / "demo" / "01.flac", age=600).parent
+        escape = self.d / ".." / "home" / "Videos" / "private.mkv"
+        for path, words in ((private, ["movie", "Heat", "1995"]), (escape, ["movie", "Heat", "1995"]),
+                            (songs, ["album", RUMOURS])):
+            with self.assertRaises(SystemExit):
+                inbox.name_as(str(path), words[0], words[1:])
+        self.assertEqual(self.calls, [], "no engine was asked to file it")
+        self.assertTrue(private.exists() and (songs / "01.flac").exists(), "nothing moved")
 
     def test_asks_for_what_it_needs(self):
         for words in (["movie"], ["film", "Heat"], ["episode", "Show"], ["movie", "Heat", "soon"]):
