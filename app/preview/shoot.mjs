@@ -397,6 +397,9 @@ const mock = { platform: 'MacIntel', tidy, tidyReview, cliSteps, upgrade: { ...u
 // Finances' tabs are four: Spending holds Transactions and Reports, Plan holds Calendar, Recurring and Paychecks (Pay),
 // each in a second row under it. A page by its name, its tab first.
 const finGroups = { Transactions: 'Spending', Reports: 'Spending', Calendar: 'Plan', Recurring: 'Plan', Pay: 'Plan', Paychecks: 'Plan', Collection: 'Net worth' };
+// What the household shares with a member (serve.go's memberShared), made up.
+const householdShared = { currency: 'USD', shares: ['bills', 'subscriptions', 'budgets'], bills: [{ name: 'Made-up Power', kind: 'utility', amount: 120, date: '2026-11-20', every: 'month' }], subscriptions: [{ name: 'Made-up Stream', amount: 15.99, every: 'month' }], budgets: [{ category: 'Groceries', amount: 600, spent: 200, left: 400 }] };
+
 // Makes a member's Finances private on her phone's page (Private.tsx), with Face ID or, given one, a passphrase:
 // answers her recovery code's 16 words, as shown once.
 async function makePrivate(page, passphrase) {
@@ -410,7 +413,7 @@ async function makePrivate(page, passphrase) {
   if (!(await make.isDisabled())) throw new Error('Face ID offered before two words were typed back');
   for (const label of await page.locator('#finPrivateOn label.field').allTextContents()) {
     const n = Number(/Word (\d+)/.exec(label)[1]);
-    await page.getByLabel(`Word ${n}`).fill(words[n - 1]);
+    await page.locator('#finPrivateOn').getByLabel(`Word ${n}`, { exact: true }).fill(words[n - 1]);
   }
   await make.click();
   if (passphrase) {
@@ -2778,12 +2781,53 @@ const smokes = [
       try { const w = await window.go.main.App.SaveFinances({ ...v.plan, cushion: c }); return { cushion: w.plan.cushion, rev: w.plan.rev }; } catch (e) { return { error: String(e.message) }; }
     }, cushion);
     const before = await page.evaluate(() => window.__MOCK.sealedRev);
+    const was = await page.evaluate(() => window.__MOCK.sealed.sealed);
     const r = await save(777);
-    const m = await page.evaluate(() => ({ rev: window.__MOCK.sealedRev, saved: window.__MOCK.financesSaved, sealed: JSON.stringify(window.__MOCK.sealed) }));
-    if (r.cushion !== 777 || r.rev !== m.rev || m.rev === before || m.saved || m.sealed.includes('777')) throw new Error('the change was not kept sealed: ' + JSON.stringify({ r, before, rev: m.rev, saved: m.saved }));
+    const m = await page.evaluate(() => ({ rev: window.__MOCK.sealedRev, saved: window.__MOCK.financesSaved, sealed: window.__MOCK.sealed.sealed }));
+    if (r.cushion !== 777 || r.rev !== m.rev || m.rev === before || m.saved || m.sealed === was) throw new Error('the change was not kept sealed: ' + JSON.stringify({ r, before, rev: m.rev, saved: m.saved }));
     await page.evaluate(() => { window.__MOCK.sealedConflict = true; });
     const c = await save(888);
     if (!/changed on another of your devices after this was read/.test(c.error || '')) throw new Error('a save another device beat was not said plainly: ' + JSON.stringify(c));
+  } },
+  // What the household shares with her (FinancesShared): read-only, beside her own, and still there while hers are
+  // locked, as it is the household's and never sealed with hers.
+  { name: 'A member’s phone: what the household shares shows read-only, locked or not', screen: 'finances', phone: ['companion', 'finances'], mock: { person: 'anna', passkey: true, shared: householdShared }, run: async (page) => {
+    const card = page.locator('#finShared');
+    await card.locator(':text("Shared with you")').waitFor({ timeout: 5000 });
+    for (const t of ['Coming up', 'Made-up Power', 'Subscriptions', 'Made-up Stream', 'Budgets this month', 'Groceries', '$400 left']) {
+      if (!(await card.locator(`:text("${t}")`).count())) throw new Error('the household card has no ' + t);
+    }
+    if (await card.locator('button, input, a').count()) throw new Error('the household card offers a change');
+    await makePrivate(page, '');
+    await page.click('#finPrivateOpen button:text-is("Lock")');
+    await page.waitForSelector('#finPrivateLocked', { timeout: 3000 });
+    if (!(await card.locator(':text("Made-up Power")').isVisible())) throw new Error('locked, the household card went too');
+  } },
+  { name: 'A member’s phone with nothing shared: no household card', screen: 'finances', phone: ['companion', 'finances'], mock: { person: 'anna' }, run: async (page) => {
+    await page.waitForSelector('#finances.active .fx-board .fx-widget', { timeout: 5000 });
+    await page.waitForTimeout(300);
+    if (await page.locator('#finShared .fx-household').count()) throw new Error('a household card with nothing shared');
+  } },
+  // Privacy turned off from her phone, after she confirms: her plan and ledger kept plain again, a sealed receipt
+  // opened on the phone and kept plain, the ledger naming it; then the offer to make them private comes back.
+  { name: 'Private Finances: turned off from her phone, receipts and all, after she confirms', screen: 'finances', phone: ['companion', 'finances'], mock: { person: 'anna', passkey: true, ledger: { rev: 'l1', transactions: [{ id: 't1', date: '2026-11-02', payee: 'Made-up Grocer', amount: -42.17, receipt: '0'.repeat(31) + '9.jpg' }] }, receipts: { ['0'.repeat(31) + '9.jpg']: 'data:image/jpeg;base64,AAAA' } }, run: async (page) => {
+    await makePrivate(page, '');
+    const sealed = await page.evaluate(() => Object.values(window.__MOCK.sealedReceipts || {}));
+    if (sealed.length !== 1 || sealed[0].includes('AAAA')) throw new Error('the receipt was not sealed: ' + JSON.stringify(sealed));
+    await page.click('#finPrivateOpen button:text-is("Turn privacy off…")');
+    const ask = page.locator('#finPrivateOff');
+    await ask.locator(':text("the person who runs it can read them")').waitFor({ timeout: 3000 });
+    if (await page.evaluate(() => window.__MOCK.unsealed)) throw new Error('turned off before she confirmed');
+    await ask.locator('button:text-is("Cancel")').click();
+    await page.waitForSelector('#finPrivateOpen', { timeout: 3000 });
+    await page.click('#finPrivateOpen button:text-is("Turn privacy off…")');
+    await page.click('#finPrivateOff button:text-is("Turn privacy off")');
+    await page.waitForSelector('#finPrivateOn button:text-is("Make them private…")', { timeout: 8000 });
+    const m = await page.evaluate(() => ({ sealed: window.__MOCK.sealed, unsealed: window.__MOCK.unsealed, ledger: window.__MOCK.ledger, saved: window.__MOCK.receiptsSaved }));
+    if (m.sealed || !m.unsealed) throw new Error('privacy is still on');
+    const t = m.ledger.transactions.find((x) => x.id === 't1');
+    if (!t || !/^[0-9a-f]{32}\.jpg$/.test(t.receipt || '') || (m.saved || []).at(-1) !== 'data:image/jpeg;base64,AAAA') throw new Error('the receipt did not come back plain: ' + JSON.stringify({ t, saved: m.saved }));
+    await page.waitForSelector('#finRoot:not([hidden]) .fx-board .fx-widget', { timeout: 5000 });
   } },
   // Her own phone that may only look gets no offer to make them private; the owner's phone neither.
   ...[['a member’s phone that only looks', { person: 'anna', phoneFinances: 'view' }], ['the owner’s phone', {}]].map(([who, m]) => ({ name: `Private Finances: no offer on ${who}`, screen: 'finances', phone: ['companion', 'finances'], mock: m, run: async (page) => {

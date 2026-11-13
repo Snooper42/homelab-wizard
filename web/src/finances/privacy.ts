@@ -16,6 +16,16 @@ import { todayISO } from './money';
 import * as seal from './seal';
 import type { Bytes, Envelope, Private } from './seal';
 
+/** What the household shares with a member (serve.go's memberShared). */
+export interface Shared {
+  currency: string;
+  shares: string[];
+  bills?: SharedPayment[];
+  subscriptions?: SharedPayment[];
+  budgets?: { category: string; amount: number; spent: number; left: number }[];
+}
+export interface SharedPayment { name: string; kind?: string; amount: number; estimate?: boolean; date?: string; every?: string }
+
 /** Where her Finances are: not a member's phone (or not known yet), plain, sealed and locked, or opened here. */
 export type State = 'none' | 'plain' | 'locked' | 'open';
 
@@ -62,7 +72,14 @@ export class Locked extends Error {
 }
 export const isLocked = (e: unknown) => (e as Error | null)?.name === 'Locked';
 
-const sealedCalls = () => real as Required<Pick<Backend, 'FinancesSealed' | 'SaveFinancesSealed' | 'FinancesSealedReceipt' | 'SaveFinancesSealedReceipt'>>;
+const sealedCalls = () => real as Required<Pick<Backend, 'FinancesSealed' | 'SaveFinancesSealed' | 'FinancesSealedReceipt' | 'SaveFinancesSealedReceipt' | 'UnsealFinances' | 'FinancesShared'>>;
+
+/** What the household shares with her, to look at (never sealed with hers); null on a phone that isn't a member's. */
+export async function householdShared(): Promise<Shared | null> {
+  await find();
+  if (!me.person) return null;
+  return sealedCalls().FinancesShared();
+}
 
 /** Finds out, once, whether this is a member's phone and whether her Finances are sealed. */
 function find(): Promise<void> {
@@ -267,4 +284,36 @@ export async function turnOn(ways: seal.Ways) {
   state = 'open';
   touched();
   tell();
+}
+
+/**
+ * Turns privacy off, from her phone, once she has confirmed: her sealed
+ * receipts opened here first, her plan and ledger kept plain again (the
+ * computer then removes the envelope and the sealed receipts), and each
+ * receipt kept plain after, the ledger naming it again.
+ */
+export async function turnOff() {
+  if (state !== 'open' || !key || !data || !envelope) throw new Locked();
+  const ledger = data.ledger as finance.Ledger;
+  const pictures = new Map<string, string>(); // a transaction's id → its receipt, opened
+  for (const t of ledger.transactions || []) {
+    if (t.receipt?.endsWith('.sealed')) pictures.set(t.id, await seal.openText(key, me.person!, await sealedCalls().FinancesSealedReceipt(t.receipt)));
+  }
+  const bare = { ...ledger, transactions: (ledger.transactions || []).map((t) => (pictures.has(t.id) ? { ...t, receipt: undefined } : t)) };
+  await sealedCalls().UnsealFinances(envelope.rev!, data.plan, bare);
+  key = null;
+  data = null;
+  envelope = null;
+  state = 'plain';
+  clearTimeout(idle);
+  try {
+    if (pictures.size) {
+      const names = new Map<string, string>();
+      for (const [id, url] of pictures) names.set(id, await real.SaveFinancesReceipt(url));
+      const l = await real.FinancesLedger();
+      await real.SaveFinancesLedger({ ...l, transactions: (l.transactions || []).map((t) => (names.has(t.id) ? { ...t, receipt: names.get(t.id) } : t)) });
+    }
+  } finally {
+    tell();
+  }
 }
