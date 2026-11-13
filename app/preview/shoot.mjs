@@ -6601,9 +6601,9 @@ const smokes = [
   // Paycheck; paying the household's own card, and money in from its own savings account, are moves, not spending; a Zelle
   // payment to someone is left for the household to pick. The preview says each before it comes in.
   // Four tabs, as the owner picked (Nov 10): Dashboard, Spending (Transactions, Reports), Plan (Calendar, Recurring,
-  // Paychecks), Net worth. A tab with pages opens its first and shows them in a second row, and again on the page it was
+  // Paychecks), Net worth (Net worth, Collection). A tab with pages opens its first and shows them in a second row, and again on the page it was
   // left on; a way into a page (a Dashboard card) picks its tab and page.
-  { name: 'Finances: four tabs, Spending and Plan with their pages in a second row', screen: 'finances', run: async (page) => {
+  { name: 'Finances: four tabs, Spending, Plan and Net worth with their pages in a second row', screen: 'finances', run: async (page) => {
     const top = await page.$$eval('#finRoot > .seg button', (bs) => bs.map((b) => b.textContent));
     if (top.join('|') !== 'Dashboard|Spending|Plan|Net worth') throw new Error(`tabs ${top.join('|')}`);
     if (await page.isVisible('#finRoot .fx-subtabs')) throw new Error('a second row on the Dashboard');
@@ -6617,8 +6617,9 @@ const smokes = [
     if ((await second()) !== 'Calendar*|Recurring|Paychecks') throw new Error(`Plan's pages ${await second()}`);
     await page.click('#finRoot .fx-subtabs .seg button:text-is("Paychecks")');
     await page.waitForSelector('#finRoot > .seg button[aria-checked=true]:text-is("Plan")', { timeout: 2000 });
+    // Net worth has its Collection beside it (Nov 13), so its pages are a second row too, Net worth first.
     await page.click('#finRoot > .seg button:text-is("Net worth")');
-    if (await page.isVisible('#finRoot .fx-subtabs')) throw new Error('a second row on Net worth');
+    if ((await second()) !== 'Net worth*|Collection') throw new Error(`Net worth's pages ${await second()}`);
     // Each tab opens again on the page it was left on.
     await page.click('#finRoot > .seg button:text-is("Spending")');
     if ((await second()) !== 'Transactions|Reports*') throw new Error(`Spending again ${await second()}`);
