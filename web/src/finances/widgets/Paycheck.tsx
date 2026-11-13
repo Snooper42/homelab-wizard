@@ -77,7 +77,7 @@ function tiles(v: finance.View, L: Lookup, i: number): Tile[] {
   return out;
 }
 
-export function PaycheckWidget({ v, L, sel, edit }: { v: finance.View; L: Lookup; sel: number; edit?: (what: 'payment', id: string) => void }) {
+export function PaycheckWidget({ v, L, sel, edit, open }: { v: finance.View; L: Lookup; sel: number; edit?: (what: 'payment', id: string) => void; /** Shows Paychecks, every period ahead. */ open?: () => void }) {
   const [all, setAll] = useState(false);
   const i = Math.min(sel, v.periods.length - 1);
   const p = v.periods[i];
@@ -86,7 +86,7 @@ export function PaycheckWidget({ v, L, sel, edit }: { v: finance.View; L: Lookup
   const cushion = v.plan.cushion || 0;
   const row = tiles(v, L, i);
   return (
-    <Widget title={p.now ? 'Until the next paycheck' : 'This paycheck'} kind="fx-paycheck" span="all">
+    <Widget title={p.now ? 'Until the next paycheck' : 'This paycheck'} kind="fx-paycheck" span="all" open={open} openLabel="Open Paychecks">
       <p class="fx-sub fx-lead fx-dates">{dayShort(p.start)} – {dayShort(p.last)}{p.now ? ', from today' : ''}</p>
       {!!row.length && <ul class="fx-acctrow" aria-label="Each account after this paycheck's bills">
         {row.map((t) => {

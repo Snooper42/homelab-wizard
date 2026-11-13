@@ -38,6 +38,7 @@ export function CheckingWidget({ v, L, sel, openDay }: { v: finance.View; L: Loo
   const said = (e: finance.Event) => (e.people ? e.people.map((id) => L.person[id]?.name || id).join(' and ') + "'s paycheck" : L.payment[e.payment]?.name || e.payment);
   return (
     <Widget title={span === '31' ? 'Checking, next 30 days' : 'Checking, next 3 months'} span={2} kind="fx-checking"
+      open={openDay && (() => openDay(v.today))} openLabel="Open the calendar"
       actions={<Segmented label="How far ahead" value={span} pick={setSpan} options={[['31', '30 days'], ['93', '3 months']]} />}>
       <Stat value={<Amount value={now} />} caption="Today"
         aside={<div class="fx-right"><Amount value={values[low]} form="full" tone={values[low] < cushion ? 'out' : ''} /><div class="fx-sub">lowest, {dayLong(days[low].date)}{values[low] < cushion ? `, under your ${compact(cushion)} cushion` : ''}</div></div>} />

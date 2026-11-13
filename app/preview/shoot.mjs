@@ -4792,8 +4792,8 @@ const smokes = [
       await finTab(page, view);
       await page.waitForTimeout(150);
       // What only looks may stay: an account's row on Net worth (it opens the account's page, which only looks: its own case),
-      // the views and ranges, the pay period's ‹ › and Today, Renewing soon's, Budgets to watch's, and Goals' See all, Coming up's Calendar, a paycheck's column, Show all, Open Net worth, Export (which saves a copy and changes nothing), checking's two figures (each shows how it adds up), a holding on Investments (it opens its worth at each read), and what opens Transactions on what is behind it (Latest transactions' See all, a category of Spent this month, a month of Cash flow's six, a budget), and the order Recurring's payments are listed in.
-      const found = await page.evaluate(() => [...document.querySelectorAll('#finances button, #finances select, #finances input')].filter((e) => e.checkVisibility() && !e.closest('.seg, .finpost thead, .fx-clearfig, .fx-moneyflow, .fx-paycheck .fx-actions, #finPeriod, .fx-renewing .fx-actions, .fx-budgets .fx-actions, .fx-comingup .fx-actions, .fx-goals .fx-actions, .fx-more, .fx-export, .fx-holdings, .fx-latest .fx-actions, .fx-spentrows, .fx-monthbars, .fx-budgets .fx-rows, .fx-paytotal, .fx-ownlist .rowopen, .fx-owelist .rowopen') && !e.matches('button[aria-label^="Open "]')).map((e) => e.textContent.trim() || e.getAttribute('aria-label') || e.tagName));
+      // the views and ranges, the pay period's ‹ › and Today, Renewing soon's, Budgets to watch's, and Goals' See all, Coming up's Calendar, a paycheck's column, Show all, Open Net worth, Export (which saves a copy and changes nothing), checking's two figures (each shows how it adds up), a holding on Investments (it opens its worth at each read), and what opens Transactions on what is behind it (Latest transactions' See all, a category of Spent this month, a month of Cash flow's six, a budget), a card's title that opens what it sums up, and the order Recurring's payments are listed in.
+      const found = await page.evaluate(() => [...document.querySelectorAll('#finances button, #finances select, #finances input')].filter((e) => e.checkVisibility() && !e.closest('.seg, .finpost thead, .fx-clearfig, .fx-moneyflow, .fx-paycheck .fx-actions, #finPeriod, .fx-renewing .fx-actions, .fx-budgets .fx-actions, .fx-comingup .fx-actions, .fx-goals .fx-actions, .fx-more, .fx-export, .fx-holdings, .fx-latest .fx-actions, .fx-spentrows, .fx-monthbars, .fx-budgets .fx-rows, .fx-paytotal, .fx-ownlist .rowopen, .fx-owelist .rowopen, .fx-titleopen') && !e.matches('button[aria-label^="Open "]')).map((e) => e.textContent.trim() || e.getAttribute('aria-label') || e.tagName));
       if (found.length) throw new Error(`${view}: ${found.join(', ')}`);
     }
     // Net worth's change shows on a phone that may not make changes (.change once hid it).
@@ -7651,6 +7651,33 @@ const smokes = [
     const bars = await page.$$eval('.fx-budgets .fx-budgetbar', (b) => b.map((x) => Math.round(x.getBoundingClientRect().width)), { timeout: 5000 });
     if (bars.length !== 3 || Math.min(...bars) < 150 || Math.max(...bars) - Math.min(...bars) > 1) throw new Error(`bars ${bars}`);
   } },
+  // Each Dashboard card that sums something up opens what is behind it from its title (a click or a tap; the keyboard
+  // has the ↗ or See all beside it): Spent this month its month's transactions, Cash flow and Where it goes Recurring,
+  // Renewing soon the subscriptions, Budgets to watch and Latest transactions Transactions, Checking ahead the calendar,
+  // This paycheck Paychecks, Net worth its tab. On the phone's page too, a phone allowed only to look included.
+  ...[['the computer', undefined, {}], ['a phone allowed only to look', ['companion', 'finances'], { finances: { ...finances, readOnly: true } }]].map(([where, phone, mock]) => ({ name: `Finances: a Dashboard card's title opens what it sums up, ${where}`, screen: 'finances', phone, mock, run: async (page) => {
+    const page2 = (name) => `#finRoot .seg button[aria-checked="true"]:text-is("${name}")`;
+    const cards = [
+      ['.fx-spentmonth', page2('Transactions'), async () => { if ((await page.inputValue('.fx-txfilters select[aria-label="Month"]')) !== '2026-10') throw new Error('Spent this month: not October'); }],
+      ['.fx-flow', page2('Recurring')],
+      ['.fx-spend', page2('Recurring')],
+      ['.fx-renewing', page2('Recurring')],
+      ['.fx-budgets', page2('Transactions')],
+      ['.fx-latest', page2('Transactions')],
+      ['.fx-checking', page2('Calendar')],
+      ['.fx-paycheck', page2('Paychecks')],
+      ['.fx-worthmini', page2('Net worth')],
+    ];
+    for (const [card, there, more] of cards) {
+      await finTab(page, 'Dashboard', { timeout: 5000 });
+      const title = page.locator(`#finRoot ${card} button.fx-titleopen`);
+      if (!(await title.count())) { if (phone && (card === '.fx-latest')) continue; throw new Error(`${card}: its title opens nothing`); }
+      await title.scrollIntoViewIfNeeded();
+      await title.click({ timeout: 5000 });
+      await page.waitForSelector(there, { timeout: 5000 }).catch(() => { throw new Error(`${card}: did not open ${there}`); });
+      if (more) await more();
+    }
+  } })),
   // Budgets with long names, at half width on the Dashboard and on a phone: a line under a name breaks only between its
   // parts (the period, what is spent of what it may take, what came from last time), never inside an amount or "of";
   // what is left and its day's allowance keep one line each; and every bar is as wide as the others, so they line up.
