@@ -214,7 +214,7 @@ Each in the app, then the same from a terminal in the homelab folder (`homelab.c
 <details>
 <summary><strong>Is it safe?</strong></summary>
 
-Nothing on the computer is opened to the internet. By default the apps answer only your own devices over Tailscale's private network. With an optional domain, the apps that work away from home go through a Cloudflare tunnel and past CrowdSec, which blocks known attackers. Passwords are stored encrypted, and backups are encrypted before they leave the house. The full review: [Security](docs/Security.md).
+Nothing on the computer is opened to the internet. By default the apps answer only your own devices over Tailscale's private network. With an optional domain, the apps that work away from home go through a Cloudflare tunnel and past CrowdSec, which blocks known attackers. Passwords are stored encrypted, and backups are encrypted before they leave the house. The full review: [Security](docs/Security.md). Found a hole? Please report it privately: [SECURITY.md](SECURITY.md).
 
 </details>
 
@@ -553,7 +553,7 @@ Combine them as you like (`--folder --backups --app` takes everything of the hom
 
 ## Getting help
 
-**Fix it** on Status (or `./homelab fix`) puts right what usually goes wrong. Otherwise see [Troubleshooting](docs/Troubleshooting.md) and [Known Issues](docs/Known%20Issues.md), then make a diagnostics report (Settings › This Mac › **Make a diagnostics report**, or `./homelab report`; passwords and tokens are removed), read it, and attach it to a [bug report](https://github.com/Snooper42/homelab-wizard/issues/new/choose). Never paste `.env`, a token, or a password.
+**Fix it** on Status (or `./homelab fix`) puts right what usually goes wrong. Otherwise see [Troubleshooting](docs/Troubleshooting.md) and [Known Issues](docs/Known%20Issues.md), then make a diagnostics report (Settings › This Mac › **Make a diagnostics report**, or `./homelab report`; passwords and tokens are removed), read it, and attach it to a [bug report](https://github.com/Snooper42/homelab-wizard/issues/new/choose). Never paste `.env`, a token, or a password. A security problem goes privately instead ([SECURITY.md](SECURITY.md)).
 
 ## Documentation
 
