@@ -65,11 +65,13 @@ export interface OverviewProps {
   openTransactions?: () => void;
   /** Shows the Calendar, on a day when one is given (the checking chart's). */
   openCalendar?: (day?: string) => void;
+  /** Shows Paychecks: each pay period ahead. */
+  openPay?: () => void;
   /** Drawn on a phone (the companion): what is coming up first, and the goals. */
   phone?: boolean;
 }
 
-export function Overview({ v, L, sel, pick, add, edit, setSince, keep, ledger, openWorth, openSubscriptions, openRecurring, openTransactions, openCalendar, showIn, phone }: OverviewProps) {
+export function Overview({ v, L, sel, pick, add, edit, setSince, keep, ledger, openWorth, openSubscriptions, openRecurring, openTransactions, openCalendar, openPay, showIn, phone }: OverviewProps) {
   // The period bar: by paycheck (now and the paychecks ahead, the plan's; before now, what happened, from the ledger)
   // or by month (before this one from the ledger, this one so far and then the plan, after it the plan).
   const [by, setByState] = useState<PeriodBy>(readBy);
@@ -130,7 +132,7 @@ export function Overview({ v, L, sel, pick, add, edit, setSince, keep, ledger, o
           const from = month.when === 'now' ? isoDay(new Date(parseDay(v.today).getTime() + 864e5)) : month.start;
           return from <= month.last && <PlannedWidget v={v} L={L} title={month.when === 'now' ? 'Still to come' : 'The plan'} start={from} last={month.last} edit={edit} />;
         })() },
-        { id: 'paycheck', title: 'This paycheck', width: 'full', node: p && <PaycheckWidget v={v} L={L} sel={picked} edit={edit} /> },
+        { id: 'paycheck', title: 'This paycheck', width: 'full', node: p && <PaycheckWidget v={v} L={L} sel={picked} edit={edit} open={openPay} /> },
         { id: 'checking', title: 'Checking ahead', width: 'half', node: <CheckingWidget v={v} L={L} sel={p ? picked : -1} openDay={openCalendar} /> },
         { id: 'renewing', title: 'Renewing soon', width: 'half', node: <RenewingWidget v={v} L={L} edit={edit} all={openSubscriptions} /> },
         { id: 'budgets', title: 'Budgets to watch', width: 'half', node: <BudgetsWidget v={v} only={toWatch} title="Budgets to watch" span={1} open={openTransactions} show={showIn && ((category, month) => showIn({ category, month }))} /> },

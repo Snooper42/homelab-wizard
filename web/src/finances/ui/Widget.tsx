@@ -15,13 +15,25 @@ export interface WidgetProps {
   span?: 1 | 2 | 'all';
   /** A look of its own (style.css), beside fx-widget. */
   kind?: string;
+  /**
+   * Opens what the card sums up (its transactions, Recurring, the calendar): a click or a tap on its title does. The
+   * keyboard has the ↗ added after its actions for it, so the title is no second stop for Tab.
+   */
+  open?: () => void;
+  /** Its actions already open the same (See all): no ↗ is added. */
+  seeAll?: boolean;
+  /** Where open goes, for the ↗ and a screen reader: "Open Recurring: a typical month, payment by payment". */
+  openLabel?: string;
   children?: ComponentChildren;
 }
 
-export function Widget({ title, id, actions, span = 1, kind, children }: WidgetProps) {
+export function Widget({ title, id, actions, span = 1, kind, open, openLabel = 'Open what it sums up', seeAll, children }: WidgetProps) {
+  // Laid over the title, which stays its heading's own words: the ↗ is the button a keyboard and a screen reader have.
+  const head = open ? <>{title}<button type="button" class="fx-titleopen" tabIndex={-1} aria-hidden="true" title={openLabel} onClick={open} /></> : title;
+  const all = open && !seeAll ? <>{actions}<IconButton icon="open" label={openLabel} onClick={open} /></> : actions;
   return (
     <Card id={id} kind={'fx-widget' + (span === 1 ? '' : span === 2 ? ' span2' : ' spanall') + (kind ? ' ' + kind : '')}>
-      <CardHead title={title}>{actions ? <span class="fx-actions">{actions}</span> : undefined}</CardHead>
+      <CardHead title={head}>{all ? <span class="fx-actions">{all}</span> : undefined}</CardHead>
       {children}
     </Card>
   );

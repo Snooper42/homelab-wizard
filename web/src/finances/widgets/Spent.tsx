@@ -11,7 +11,7 @@ import { Widget } from '../ui/Widget';
 import { inHome } from '../model';
 import { categoryHue } from '../hues';
 import { byCategory, ranges } from '../reportData';
-import { dayShort, whole } from '../money';
+import { dayShort, monthName, whole } from '../money';
 import type { showTransactions } from '../Transactions';
 
 /** How many categories it names; the rest are one slice, Everything else. */
@@ -29,7 +29,8 @@ export function SpentWidget({ v, ledger, open, days }: { v: finance.View; ledger
   const hueOf = (name: string): Hue => categoryHue(name, v.categories) || 'muted';
   const slices = [...groups.slice(0, named).map((g) => ({ label: g.name, value: g.amount, color: hueOf(g.name) })), ...(rest > 0.005 ? [{ label: 'Everything else', value: rest, color: 'muted' as Hue }] : [])];
   return (
-    <Widget title={days ? 'Where it went' : 'Spent this month'} kind="fx-spentmonth">
+    <Widget title={days ? 'Where it went' : 'Spent this month'} kind="fx-spentmonth"
+      open={open && (() => open(inMonth ? { month: month.from.slice(0, 7) } : {}))} openLabel={inMonth ? `Open ${monthName(month.from)}'s transactions` : 'Open Transactions'}>
       <Stat value={<Amount value={total} />} caption={days ? `From your transactions, ${dayShort(days.from)} – ${dayShort(days.to)}` : `From your transactions, to ${dayShort(v.today)}`} />
       {groups.length ? <div class="fx-donutrow">
         <Donut slices={slices} label={days ? 'Spending by category in these days' : "This month's spending by category"} center={<><strong>{whole(total)}</strong>{days ? 'spent' : 'so far'}</>} />
