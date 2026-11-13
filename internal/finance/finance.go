@@ -340,7 +340,14 @@ func Load(path string) (Plan, error) {
 	if err != nil {
 		return p, err
 	}
-	err = json.Unmarshal(data, &p)
+	return ParsePlan(data)
+}
+
+// ParsePlan reads a plan from what its file holds, as Load does: on the
+// computer, or on a phone that keeps its plan sealed (mobile/finance).
+func ParsePlan(data []byte) (Plan, error) {
+	var p Plan
+	err := json.Unmarshal(data, &p)
 	p.Rev = rev(data)
 	// One kept before a check it fails (N56) is not handed on.
 	p.Logos = keptLogos(p.Logos)

@@ -1,0 +1,189 @@
+{
+ "people": [
+  {
+   "id": "alex",
+   "name": "Alex",
+   "schedule": {
+    "every": "2 weeks",
+    "start": "2026-11-06"
+   },
+   "net": 1850,
+   "account": "checking"
+  },
+  {
+   "id": "sam",
+   "name": "Sam",
+   "schedule": {
+    "every": "twice a month",
+    "start": "2026-11-01",
+    "day2": 15
+   },
+   "net": 1400,
+   "account": "checking"
+  }
+ ],
+ "accounts": [
+  {
+   "id": "checking",
+   "name": "Example Checking",
+   "kind": "checking",
+   "balance": 2310.45,
+   "updated": "2026-11-10",
+   "history": [
+    {
+     "date": "2026-11-10",
+     "amount": 2310.45
+    }
+   ]
+  },
+  {
+   "id": "savings",
+   "name": "Example Savings",
+   "kind": "savings",
+   "balance": 5200,
+   "rate": 4.1,
+   "updated": "2026-11-10",
+   "history": [
+    {
+     "date": "2026-11-10",
+     "amount": 5200
+    }
+   ]
+  },
+  {
+   "id": "visa",
+   "name": "Example Card",
+   "kind": "card",
+   "balance": 640.2,
+   "updated": "2026-11-10",
+   "history": [
+    {
+     "date": "2026-11-10",
+     "amount": 640.2
+    }
+   ]
+  }
+ ],
+ "payments": [
+  {
+   "id": "rent",
+   "name": "Rent",
+   "amount": 1600,
+   "schedule": {
+    "every": "month",
+    "start": "2026-12-01"
+   },
+   "kind": "home"
+  },
+  {
+   "id": "power",
+   "name": "Power",
+   "amount": 95,
+   "schedule": {
+    "every": "month",
+    "start": "2026-11-18"
+   },
+   "kind": "utilities",
+   "estimate": true
+  },
+  {
+   "id": "stream",
+   "name": "Streaming",
+   "amount": 15.49,
+   "schedule": {
+    "every": "month",
+    "start": "2026-11-21"
+   },
+   "kind": "subscriptions",
+   "from": "visa",
+   "type": "streaming"
+  },
+  {
+   "id": "renters",
+   "name": "Renters insurance",
+   "amount": 180,
+   "schedule": {
+    "every": "year",
+    "start": "2027-02-01"
+   },
+   "kind": "home"
+  },
+  {
+   "id": "visa-pay",
+   "name": "Pay the card",
+   "amount": 300,
+   "schedule": {
+    "every": "month",
+    "start": "2026-11-25"
+   },
+   "kind": "cards",
+   "card": "visa"
+  },
+  {
+   "id": "save",
+   "name": "To savings",
+   "amount": 200,
+   "schedule": {
+    "every": "paycheck",
+    "start": "2026-11-06",
+    "person": "alex"
+   },
+   "kind": "savings",
+   "to": "savings"
+  }
+ ],
+ "cushion": 250,
+ "updated": "2026-11-10",
+ "currency": "USD",
+ "holidays": "us",
+ "categories": [
+  {
+   "name": "Food"
+  },
+  {
+   "name": "Groceries",
+   "parent": "Food"
+  },
+  {
+   "name": "Eating out",
+   "parent": "Food"
+  },
+  {
+   "name": "Fun"
+  },
+  {
+   "name": "Paycheck",
+   "income": true
+  }
+ ],
+ "budgets": [
+  {
+   "category": "Groceries",
+   "amount": 450
+  },
+  {
+   "category": "Eating out",
+   "amount": 120,
+   "rollover": true
+  },
+  {
+   "category": "Fun",
+   "amount": 75,
+   "per": "paycheck"
+  }
+ ],
+ "goals": [
+  {
+   "id": "trip",
+   "name": "A trip",
+   "target": 3000,
+   "date": "2027-06-01",
+   "shares": [
+    {
+     "account": "savings",
+     "percent": 50
+    }
+   ]
+  }
+ ]
+}
