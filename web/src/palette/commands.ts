@@ -8,7 +8,8 @@
 import { appsBusyNow, batteryPausedNow, heldNow, pageOpener, rowActions, statusById } from '../screens/status';
 import { catalog } from '../screens/choose';
 import { financesData, toggleHideAmounts } from '../screens/finances';
-import { navigate, reloadScreen } from '../app';
+import { here, navigate, reloadScreen } from '../app';
+import { sendTo, targetsFor } from '../phone/send';
 import { $, isMac, mod, onPhone } from '../core';
 import { openShortcuts } from './Shortcuts';
 
@@ -57,6 +58,22 @@ const screenList: [string, string, string, string][] = [
   ['tidy', 'Tidy Up', '7', 'media library music books films'],
 ];
 
+/** Finances' tabs as a link and a phone name them. */
+const finTabs: Record<string, string> = { overview: 'Dashboard', transactions: 'Transactions', reports: 'Reports', calendar: 'Calendar', recurring: 'Recurring', pay: 'Paychecks', worth: 'Net worth' };
+
+/** The page the window is on as a link a phone can open, and its name: an app's page, Status, Backups, a Finances tab. */
+function sendable(): { link: string; title: string } | null {
+  const p = here();
+  if (!p) return null;
+  if (p.screen === 'app' && p.app) return { link: 'homelab://app/' + p.app, title: statusById[p.app]?.name || p.app };
+  if (p.screen === 'status' || p.screen === 'backups') return { link: 'homelab://' + p.screen, title: p.screen === 'status' ? 'Status' : 'Backups' };
+  if (p.screen === 'finances') {
+    const tab = p.tab && finTabs[p.tab] ? p.tab : 'overview';
+    return { link: tab === 'overview' ? 'homelab://finances' : 'homelab://finances/' + tab, title: tab === 'overview' ? 'Finances' : `Finances › ${finTabs[tab]}` };
+  }
+  return null;
+}
+
 /** Status first, with the row's action showing, then fn. */
 const onStatus = (fn: () => void) => () => { navigate('status'); fn(); };
 
@@ -75,6 +92,9 @@ export function commands(): Command[] {
   if (fin && !fin.readOnly) add({ id: 'hide', label: fin.plan.hideAmounts ? 'Show amounts' : 'Hide amounts', hint: isMac ? '⌘⇧H' : 'Ctrl+Shift+H', also: 'money privacy blur', run: toggleHideAmounts });
   // Opened once the palette has closed and put the focus back, where the sheet returns it.
   if (!phone) add({ id: 'shortcuts', label: 'Keyboard shortcuts', hint: '?', also: 'keys help', run: () => { requestAnimationFrame(() => requestAnimationFrame(() => openShortcuts())); } });
+  // Send to my phone: this page, to each phone it can go to (the owner, Nov 12: pick a phone each time).
+  const page = sendable();
+  if (page && !phone) for (const t of targetsFor(page.link)) add({ id: `send:${t.id}`, label: `Send ${page.title} to ${t.name}`, also: 'send to my phone open on', run: () => sendTo(t, page.link, page.title) });
   for (const [id, label, key, also] of screenList) {
     if (phone && (id === 'setup' || id === 'choose')) continue;
     add({ id: 'screen:' + id, label, hint: mod + key, also: 'screen go ' + also, run: () => navigate(id) });

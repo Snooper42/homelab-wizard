@@ -567,11 +567,17 @@ func (s *Server) events(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}()
-	if d.Person != "" {
-		s.Changes.StreamOnly(w, r.WithContext(ctx), func(c engine.Change) (engine.Change, bool) { return s.ForMember(d, c) })
-		return
-	}
-	s.Changes.Stream(w, r.WithContext(ctx))
+	s.Changes.StreamOnly(w, r.WithContext(ctx), func(c engine.Change) (engine.Change, bool) {
+		// A page sent from the computer goes to the one phone it was sent to,
+		// and to no other (Send to my phone).
+		if c.Open != nil {
+			return engine.Change{Open: c.Open}, c.Open.Device == d.ID
+		}
+		if d.Person != "" {
+			return s.ForMember(d, c)
+		}
+		return c, true
+	})
 }
 
 // files serves the frontend. index.html gets the companion's script (in

@@ -4,7 +4,8 @@
 // and End move through it, Escape closes it back where the focus was, and
 // a press elsewhere closes it (read as the press begins, since WebKit moves
 // no focus on a click). Stop asks for a second click; Stop for a while ›
-// shows its times in place of the menu.
+// shows its times in place of the menu, and Send to my phone › the phones
+// it can go to (the owner, Nov 12: pick a phone each time).
 import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { stopChoices } from './stopFor';
 
@@ -22,6 +23,10 @@ export interface RowMenuActions {
   alerts: (a: api.AppStatus, on: boolean) => void;
   /** Pinned to the top of Status (and the menu bar's Open an app), or back in its group. */
   pin: (a: api.AppStatus, on: boolean) => void;
+  /** The paired phones its page can be sent to (none on a phone, or with none paired). */
+  targets: (a: api.AppStatus) => app.SendTarget[];
+  /** Sends its page to a phone, which shows it with one tap to open; resolves to what to say under the row. */
+  send: (a: api.AppStatus, t: app.SendTarget) => Promise<string>;
 }
 
 export interface RowMenuProps {
@@ -46,6 +51,8 @@ export function RowMenu({ a, x, y, native, busy, companion, on, close, said }: R
   const box = useRef<HTMLDivElement>(null);
   const [sure, setSure] = useState(false);
   const [later, setLater] = useState(false);
+  const [sending, setSending] = useState(false);
+  const phones = companion ? [] : on.targets(a);
   const [at, setAt] = useState({ left: x, top: y });
   const items = () => [...(box.current?.querySelectorAll<HTMLButtonElement>('[role^=menuitem]:not([disabled])') || [])];
   // Inside the window: moved left or up when it would run past an edge.
@@ -65,22 +72,30 @@ export function RowMenu({ a, x, y, native, busy, companion, on, close, said }: R
     return () => { document.removeEventListener('mousedown', outside, true); window.removeEventListener('blur', gone); window.removeEventListener('resize', gone); };
   }, []);
   const showLater = (to: boolean) => { setLater(to); setSure(false); requestAnimationFrame(() => (to ? items()[0] : box.current?.querySelector<HTMLButtonElement>('.stoplater'))?.focus()); };
+  const showSend = (to: boolean) => { setSending(to); setSure(false); requestAnimationFrame(() => (to ? items()[0] : box.current?.querySelector<HTMLButtonElement>('.sendphone'))?.focus()); };
   const pick = (fn: () => void) => () => { close(true); fn(); };
   const url = a.address ? 'https://' + a.address : a.url || '';
   const running = a.state === 'running', stopped = a.state === 'stopped';
   const item = (label: string, fn: () => void, opts: { cls?: string; disabled?: boolean } = {}) =>
     <button type="button" role="menuitem" class={opts.cls} disabled={opts.disabled} onClick={fn}>{label}</button>;
   return (
-    <div ref={box} class="menu rowmenu" role="menu" aria-label={later ? `Stop ${a.name} for a while` : a.name} style={{ left: at.left + 'px', top: at.top + 'px' }}
+    <div ref={box} class="menu rowmenu" role="menu" aria-label={later ? `Stop ${a.name} for a while` : sending ? `Send ${a.name} to a phone` : a.name} style={{ left: at.left + 'px', top: at.top + 'px' }}
       onKeyDown={(e) => {
-        if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); if (later) showLater(false); else close(true); return; }
+        if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); if (later) showLater(false); else if (sending) showSend(false); else close(true); return; }
         const all = items(), i = all.indexOf(document.activeElement as HTMLButtonElement);
         const to = ({ ArrowDown: i + 1, ArrowUp: i - 1, Home: 0, End: all.length - 1 } as Record<string, number>)[e.key];
         if (to === undefined || !all.length) return;
         e.preventDefault();
         all[(to + all.length) % all.length].focus();
       }}>
-      {later ? (
+      {sending ? (
+        <>
+          <p class="menuhead">Send {a.name} to</p>
+          {phones.map((t) => <button key={t.id} type="button" role="menuitem" onClick={pick(() => { on.send(a, t).then(said, (e) => said(String(e?.message || e))); })}>{t.name}</button>)}
+          {item('‹ Back', () => showSend(false), { cls: 'menuback' })}
+          <p class="menufoot muted">It shows there with one tap to open.</p>
+        </>
+      ) : later ? (
         <>
           <p class="menuhead">Stop {a.name} for a while</p>
           {stopChoices().map((c) => <button key={c.until} type="button" role="menuitem" disabled={busy} onClick={pick(() => on.stopFor(a, c.until))}>{c.label}</button>)}
@@ -92,6 +107,7 @@ export function RowMenu({ a, x, y, native, busy, companion, on, close, said }: R
           {running && url && item('Open', pick(() => on.open(url)))}
           {running && a.address && !companion && item('Open on a phone', pick(() => on.phone(a)))}
           {url && item('Copy address', pick(() => { on.copy(url).then(() => said('Address copied'), () => said('Could not copy the address')); }))}
+          {!!phones.length && <button type="button" role="menuitem" class="sendphone" aria-haspopup="menu" onClick={() => showSend(true)}>Send to my phone ›</button>}
           {!native && url && <hr />}
           {!native && stopped && item('Start', pick(() => on.act(a, 'start')), { disabled: busy })}
           {!native && running && item('Restart', pick(() => on.act(a, 'restart')), { disabled: busy })}

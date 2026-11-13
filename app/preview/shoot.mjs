@@ -3218,6 +3218,9 @@ const smokes = [
   // screen. Copy address copies it and says so under the row; Stop asks for a second click; Escape closes it back on what had
   // the focus, and a press elsewhere (as WebKit's, which moves no focus) closes it too.
   { name: 'Right-click an app’s row: its menu', screen: 'status', run: async (page) => {
+    // Tall enough for the whole menu under the pointer (Send to my phone › made it a row longer); a menu that would not
+    // fit moves up, its own case.
+    await page.setViewportSize({ width: 1280, height: 1000 });
     const row = page.locator('tr:has(strong:text-is("Vikunja"))');
     await row.waitFor({ timeout: 5000 });
     await row.scrollIntoViewIfNeeded();
@@ -3226,7 +3229,7 @@ const smokes = [
     const menu = page.locator('.rowmenu');
     await menu.waitFor({ timeout: 2000 });
     const labels = (await menu.locator('[role^=menuitem]').allTextContents()).map((t) => t.replace('✓', '').trim());
-    const want = ['Open', 'Open on a phone', 'Copy address', 'Restart', 'Stop', 'Stop for a while ›', 'Logs', 'Back up now', 'Tell me if it stops', 'Pin to the top'];
+    const want = ['Open', 'Open on a phone', 'Copy address', 'Send to my phone ›', 'Restart', 'Stop', 'Stop for a while ›', 'Logs', 'Back up now', 'Tell me if it stops', 'Pin to the top'];
     if (labels.join('|') !== want.join('|')) throw new Error(`items: ${labels.join(', ')}`);
     const m = await menu.boundingBox();
     if (Math.abs(m.x - (box.x + 20)) > 2 || Math.abs(m.y - (box.y + box.height / 2)) > 2) throw new Error(`the menu opened at ${m.x},${m.y}, not at the pointer`);
@@ -3274,6 +3277,55 @@ const smokes = [
       await link.click();
       if ((await page.evaluate(() => window.__MOCK.opened)) !== 'https://todo.example.com') throw new Error('the address opened ' + await page.evaluate(() => window.__MOCK.opened));
     } })),
+  // Send to my phone (the owner, Nov 12: pick a phone each time): a row's menu lists the phones its page can go to, a
+  // member's only for their own apps, never a wall screen; one picked gets the app's own link, and the row says so.
+  { name: "Status: an app's menu sends its page to a phone picked from the paired ones", screen: 'status', run: async (page) => {
+    const sendFrom = async (app) => {
+      const row = page.locator(`tr:has(strong:text-is("${app}"))`);
+      await row.waitFor({ timeout: 5000 });
+      await row.scrollIntoViewIfNeeded();
+      const box = await row.locator('td.state').boundingBox();
+      await page.mouse.click(box.x + 20, box.y + box.height / 2, { button: 'right' });
+      await page.click('.rowmenu button:text-is("Send to my phone ›")', { timeout: 2000 });
+      return (await page.locator('.rowmenu [role=menuitem]').allTextContents()).map((t) => t.trim());
+    };
+    let phones = await sendFrom('Immich');
+    if (phones.join('|') !== "Sam's iPhone|The iPad|Anna's iPhone|‹ Back") throw new Error(`Immich goes to: ${phones}`);
+    await page.click('.rowmenu button:text-is("The iPad")');
+    const sent = await page.evaluate(() => window.__MOCK.sent?.at(-1));
+    if (sent?.device !== 'p2' || sent.link !== 'homelab://app/immich-server' || sent.title !== 'Immich') throw new Error(`sent: ${JSON.stringify(sent)}`);
+    await page.waitForSelector('tr:has(strong:text-is("Immich")) :text("Sent to The iPad")', { timeout: 5000 });
+    await page.keyboard.press('Escape');
+    phones = await sendFrom('Vikunja');
+    if (phones.includes("Anna's iPhone")) throw new Error(`Anna's phone is offered an app that isn't hers: ${phones}`);
+    await page.keyboard.press('Escape');
+    await page.keyboard.press('Escape');
+  } },
+  // ⌘K sends the page the window is on: a Finances tab only to a phone that sees Finances.
+  { name: 'The command palette sends the page you are on to a phone', screen: 'finances', run: async (page) => {
+    await finTab(page, 'Recurring', { timeout: 5000 });
+    await page.keyboard.press('Meta+k'); // the mock's computer is a Mac
+    await page.keyboard.type('send');
+    const offered = await page.locator('#palette [role=option]').allTextContents();
+    if (!offered.some((o) => o.includes("Send Finances › Recurring to Sam's iPhone")) || offered.some((o) => o.includes('The iPad') || o.includes('Anna'))) throw new Error(`offered: ${offered}`);
+    await page.click('#palette [role=option]:has-text("Send Finances › Recurring to Sam\'s iPhone")');
+    const sent = await page.evaluate(() => window.__MOCK.sent?.at(-1));
+    if (sent?.device !== 'p1' || sent.link !== 'homelab://finances/recurring' || sent.title !== 'Finances › Recurring') throw new Error(`sent: ${JSON.stringify(sent)}`);
+  } },
+  // On the phone's page, a page the computer sent shows at the bottom with Open, which goes there.
+  { name: 'The phone: a page sent from the computer shows with Open', screen: 'status', phone: ['companion', 'finances'], run: async (page) => {
+    await page.evaluate(() => window.__emit('phone:open', { link: 'homelab://finances/recurring', title: 'Finances › Recurring' }));
+    await page.waitForSelector('#undoNote .undonote:has-text("From the computer: Finances › Recurring")', { timeout: 5000 });
+    await page.click('#undoNote button:text-is("Open")');
+    await page.waitForSelector('#finances.active #finRoot .seg button[aria-checked="true"]:text-is("Recurring")', { timeout: 5000 });
+    await page.evaluate(() => window.__emit('phone:open', { link: 'homelab://app/vikunja', title: 'Vikunja' }));
+    await page.click('#undoNote button:text-is("Open")', { timeout: 5000 });
+    await page.waitForSelector('#app.active h1:has-text("Vikunja")', { timeout: 5000 });
+    // Not one of the app's own pages: nothing shows.
+    await page.evaluate(() => window.__emit('phone:open', { link: 'https://example.com', title: 'Somewhere' }));
+    await page.waitForTimeout(300);
+    if (await page.isVisible('#undoNote .undonote')) throw new Error('a link that is not the app\'s own showed');
+  } },
   // Pin to the top (a row's right-click): the app moves to Pinned, open under Needs a look, in the order pinned, and leaves
   // its own group; unpinned, it goes back. Ticked in the menu while pinned.
   { name: 'Pin an app to the top of Status', screen: 'status', run: async (page) => {
@@ -3387,7 +3439,8 @@ const smokes = [
     await page.keyboard.press('ContextMenu');
     await menu.waitFor({ timeout: 2000 });
     await page.waitForFunction(() => document.activeElement?.closest('.rowmenu') && document.activeElement.textContent === 'Open', null, { timeout: 2000 });
-    await page.keyboard.press('ArrowDown'); await page.keyboard.press('ArrowDown'); await page.keyboard.press('ArrowDown');
+    // Open, Open on a phone, Copy address, Send to my phone ›, then Restart.
+    for (let i = 0; i < 4; i++) await page.keyboard.press('ArrowDown');
     if ((await page.evaluate(() => document.activeElement.textContent)) !== 'Restart') throw new Error('the arrows did not reach Restart');
     await page.keyboard.press('Enter');
     await page.waitForFunction(() => window.__MOCK.calls.AppAction >= 1, null, { timeout: 3000 });

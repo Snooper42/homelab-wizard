@@ -45,6 +45,7 @@ version: 0.17.0
 | `data/people.json`, `data/people/<name>.html` | `homelab person` | The household, and each person's welcome page |
 | `data/sso/<app>.env` | `homelab sso setup` | An app's Pocket ID sign-in settings |
 | `data/phones.json` | `homelab phone` | Paired phones, with what each may do (make changes, see or change Finances) |
+| `data/phone-sent/` | Send to my phone (an app's row menu, ⌘K) | A page sent to one paired phone, a small file each, until the phone companion passes it on (within a second) and removes it; one left over two minutes is dropped. Safe to delete |
 | `data/finance.json` | Finances (the app, and phones allowed to change them) | The household's money plan: who gets paid, the accounts with each balance typed in kept by its day (for net worth over time), the payments that repeat, the currency and bank holidays |
 | `data/homelab-rebuild.json` | `homelab rebuild` | Which backup folder a rebuild restored from, while it runs, so running it again carries on; `homelab-rebuild-done.json` once it is done |
 | `data/icons/<app>` | the app's page | The app's own icon (its home screen icon or favicon, asked of the app on this machine once a week; empty when it has none) |

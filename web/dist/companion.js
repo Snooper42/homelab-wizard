@@ -226,7 +226,8 @@
             for (let i; (i = buf.indexOf('\n\n')) >= 0;) {
               const data = buf.slice(0, i).split('\n').find((l) => l.startsWith('data: '));
               buf = buf.slice(i + 2);
-              if (data) { try { emit('status:changed', JSON.parse(data.slice(6))); } catch (e) { /* not a change */ } }
+              // A page the computer sent this phone (Send to my phone) comes as phone:open, every other change as status:changed.
+              if (data) { try { const c = JSON.parse(data.slice(6)); if (c.open) emit('phone:open', c.open); else emit('status:changed', c); } catch (e) { /* not a change */ } }
             }
           }
         }

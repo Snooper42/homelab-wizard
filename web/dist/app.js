@@ -1,4 +1,29 @@
 (() => {
+  // web/src/core.ts
+  var go = () => window.go.main.App;
+  var onPhone = () => document.documentElement.classList.contains("companion");
+  var notOnPhone = (e3) => e3?.name === "NotOnPhone";
+  var $ = (id2) => document.getElementById(id2);
+  var $$ = (sel2, root = document) => [...root.querySelectorAll(sel2)];
+  var $1 = (sel2, root = document) => root.querySelector(sel2);
+  var errorTimer = 0;
+  function showError(e3) {
+    if (e3?.name === "Away" && document.documentElement.classList.contains("away")) return;
+    const el3 = $("error");
+    el3.textContent = String(e3 && e3.message || e3);
+    el3.hidden = false;
+    clearTimeout(errorTimer);
+    errorTimer = setTimeout(() => el3.hidden = true, 6e3);
+  }
+  var platform = navigator.platform || navigator.userAgent;
+  var osName = /Mac/.test(platform) ? "mac" : /Win/.test(platform) ? "windows" : "linux";
+  document.documentElement.classList.add("os-" + osName);
+  var isMac = osName === "mac";
+  var thisMachine = isMac ? "This Mac" : osName === "windows" ? "This PC" : "This machine";
+  var mod = isMac ? "⌘" : "Ctrl+";
+  var minute = 6e4;
+  var errorText = (e3) => String(e3 && e3.message || e3);
+
   // node_modules/preact/dist/preact.module.js
   var n;
   var l;
@@ -43,15 +68,15 @@
   function C(n3, l3) {
     this.props = n3, this.context = l3;
   }
-  function $(n3, l3) {
-    if (null == l3) return n3.__ ? $(n3.__, n3.__i + 1) : null;
+  function $2(n3, l3) {
+    if (null == l3) return n3.__ ? $2(n3.__, n3.__i + 1) : null;
     for (var u4; l3 < n3.__k.length; l3++) if (null != (u4 = n3.__k[l3]) && null != u4.__e) return u4.__e;
-    return "function" == typeof n3.type ? $(n3) : null;
+    return "function" == typeof n3.type ? $2(n3) : null;
   }
   function I(n3) {
     if (n3.__P && n3.__d) {
       var u4 = n3.__v, t3 = u4.__e, i3 = [], r3 = [], o3 = m({}, u4);
-      o3.__v = u4.__v + 1, l.vnode && l.vnode(o3), q(n3.__P, o3, u4, n3.__n, n3.__P.namespaceURI, 32 & u4.__u ? [t3] : null, i3, null == t3 ? $(u4) : t3, !!(32 & u4.__u), r3), o3.__v = u4.__v, o3.__.__k[o3.__i] = o3, D(i3, o3, r3), u4.__e = u4.__ = null, o3.__e != t3 && P(o3);
+      o3.__v = u4.__v + 1, l.vnode && l.vnode(o3), q(n3.__P, o3, u4, n3.__n, n3.__P.namespaceURI, 32 & u4.__u ? [t3] : null, i3, null == t3 ? $2(u4) : t3, !!(32 & u4.__u), r3), o3.__v = u4.__v, o3.__.__k[o3.__i] = o3, D(i3, o3, r3), u4.__e = u4.__ = null, o3.__e != t3 && P(o3);
     }
   }
   function P(n3) {
@@ -77,7 +102,7 @@
   function T(n3, l3, u4, t3, i3) {
     var r3, o3, e3, f4, c4, a3 = u4.length, s3 = a3, h3 = 0;
     for (n3.__k = new Array(i3), r3 = 0; r3 < i3; r3++) null != (o3 = l3[r3]) && "boolean" != typeof o3 && "function" != typeof o3 ? ("string" == typeof o3 || "number" == typeof o3 || "bigint" == typeof o3 || o3.constructor == String ? o3 = n3.__k[r3] = x(null, o3, null, null, null) : g(o3) ? o3 = n3.__k[r3] = x(S, { children: o3 }, null, null, null) : void 0 === o3.constructor && o3.__b > 0 ? o3 = n3.__k[r3] = x(o3.type, o3.props, o3.key, o3.ref ? o3.ref : null, o3.__v) : n3.__k[r3] = o3, f4 = r3 + h3, o3.__ = n3, o3.__b = n3.__b + 1, e3 = null, -1 != (c4 = o3.__i = O(o3, u4, f4, s3)) && (s3--, (e3 = u4[c4]) && (e3.__u |= 2)), null == e3 || null == e3.__v ? (-1 == c4 && (i3 > a3 ? h3-- : i3 < a3 && h3++), "function" != typeof o3.type && (o3.__u |= 4)) : c4 != f4 && (c4 == f4 - 1 ? h3-- : c4 == f4 + 1 ? h3++ : (c4 > f4 ? h3-- : h3++, o3.__u |= 4))) : n3.__k[r3] = null;
-    if (s3) for (r3 = 0; r3 < a3; r3++) null != (e3 = u4[r3]) && 0 == (2 & e3.__u) && (e3.__e == t3 && (t3 = $(e3)), K(e3, e3));
+    if (s3) for (r3 = 0; r3 < a3; r3++) null != (e3 = u4[r3]) && 0 == (2 & e3.__u) && (e3.__e == t3 && (t3 = $2(e3)), K(e3, e3));
     return t3;
   }
   function j(n3, l3, u4) {
@@ -86,7 +111,7 @@
       for (t3 = n3.__k, i3 = 0; t3 && i3 < t3.length; i3++) t3[i3] && (t3[i3].__ = n3, l3 = j(t3[i3], l3, u4));
       return l3;
     }
-    n3.__e != l3 && (l3 && n3.type && !l3.parentNode && (l3 = $(n3)), l3 = u4.insertBefore(n3.__e, l3 || null));
+    n3.__e != l3 && (l3 && n3.type && !l3.parentNode && (l3 = $2(n3)), l3 = u4.insertBefore(n3.__e, l3 || null));
     do {
       l3 = l3 && l3.nextSibling;
     } while (null != l3 && 8 == l3.nodeType);
@@ -143,7 +168,7 @@
           if (M && null == F.getDerivedStateFromProps && x3 !== y3 && null != p3.componentWillReceiveProps && p3.componentWillReceiveProps(x3, P2), u4.__v == t3.__v || !p3.__e && null != p3.shouldComponentUpdate && false === p3.shouldComponentUpdate(x3, p3.__s, P2)) {
             u4.__v != t3.__v && (p3.props = x3, p3.state = p3.__s, p3.__d = false), u4.__e = t3.__e, u4.__k = t3.__k, u4.__k.some(function(n4) {
               n4 && (n4.__ = u4);
-            }), w.push.apply(p3.__h, p3._sb), p3._sb = [], p3.__h.length && e3.push(p3), f4 = $(t3);
+            }), w.push.apply(p3.__h, p3._sb), p3._sb = [], p3.__h.length && e3.push(p3), f4 = $2(t3);
             break n;
           }
           null != p3.componentWillUpdate && p3.componentWillUpdate(x3, p3.__s, P2), M && null != p3.componentDidUpdate && p3.__h.push(function() {
@@ -203,7 +228,7 @@
       for (s3 in m3) y3 = m3[s3], "dangerouslySetInnerHTML" == s3 ? p3 = y3 : "children" == s3 || s3 in k3 || "value" == s3 && "defaultValue" in k3 || "checked" == s3 && "defaultChecked" in k3 || N(u4, s3, null, y3, o3);
       for (s3 in k3) y3 = k3[s3], "children" == s3 ? v3 = y3 : "dangerouslySetInnerHTML" == s3 ? h3 = y3 : "value" == s3 ? w3 = y3 : "checked" == s3 ? _3 = y3 : c4 && "function" != typeof y3 || m3[s3] === y3 || N(u4, s3, y3, m3[s3], o3);
       if (h3) c4 || p3 && (h3.__html == p3.__html || h3.__html == u4.innerHTML) || (u4.innerHTML = h3.__html), t3.__k = [];
-      else if (p3 && (u4.innerHTML = ""), L("template" == t3.type ? u4.content : u4, g(v3) ? v3 : [v3], t3, i3, r3, "foreignObject" == x3 ? "http://www.w3.org/1999/xhtml" : o3, e3, f4, e3 ? e3[0] : i3.__k && $(i3, 0), c4, a3), null != e3) for (s3 = e3.length; s3--; ) b(e3[s3]);
+      else if (p3 && (u4.innerHTML = ""), L("template" == t3.type ? u4.content : u4, g(v3) ? v3 : [v3], t3, i3, r3, "foreignObject" == x3 ? "http://www.w3.org/1999/xhtml" : o3, e3, f4, e3 ? e3[0] : i3.__k && $2(i3, 0), c4, a3), null != e3) for (s3 = e3.length; s3--; ) b(e3[s3]);
       c4 && "textarea" != x3 || (s3 = "value", "progress" == x3 && null == w3 ? u4.removeAttribute("value") : null != w3 && (w3 !== u4[s3] || "progress" == x3 && !w3 || "option" == x3 && w3 != m3[s3]) && N(u4, s3, w3, m3[s3], o3), s3 = "checked", null != _3 && _3 != u4[s3] && N(u4, s3, _3, m3[s3], o3));
     }
     return u4;
@@ -437,6 +462,103 @@
     var l3 = { type: e3, props: p3, key: n3, ref: a3, __k: null, __: null, __b: 0, __e: null, __c: null, constructor: void 0, __v: --f3, __i: -1, __u: 0, __source: i3, __self: u4 };
     if ("function" == typeof e3 && (a3 = e3.defaultProps)) for (c4 in a3) void 0 === p3[c4] && (p3[c4] = a3[c4]);
     return l.vnode && l.vnode(l3), l3;
+  }
+
+  // web/src/status/UndoNote.tsx
+  var undoFor = 1e4;
+  function UndoNote({ words: words5, undo, close: close3, label = "Undo" }) {
+    const [held3, setHeld] = d2(false);
+    const box = A2(null);
+    h2(() => {
+      if (held3) return;
+      const t3 = setTimeout(close3, undoFor);
+      return () => clearTimeout(t3);
+    }, [held3, words5]);
+    return /* @__PURE__ */ u3(
+      "div",
+      {
+        ref: box,
+        class: "undonote",
+        role: "status",
+        onMouseEnter: () => setHeld(true),
+        onMouseLeave: () => setHeld(!!box.current?.contains(document.activeElement)),
+        onFocusIn: () => setHeld(true),
+        onFocusOut: () => setTimeout(() => setHeld(!!box.current?.matches(":hover") || !!box.current?.contains(document.activeElement))),
+        children: [
+          /* @__PURE__ */ u3("span", { class: "undowords", children: words5 }),
+          /* @__PURE__ */ u3("button", { type: "button", class: "undobtn", onClick: undo, children: label }),
+          /* @__PURE__ */ u3("button", { type: "button", class: "iconbtn", "aria-label": "Close", onClick: close3, children: "×" })
+        ]
+      }
+    );
+  }
+  var shown = null;
+  var mountUndoNote = (el3, p3) => {
+    if (!p3 || p3.undo !== shown) shown = null;
+    R(p3 && /* @__PURE__ */ u3(UndoNote, { ...p3 }), el3);
+  };
+  function showUndo(words5, undo) {
+    const el3 = document.getElementById("undoNote");
+    if (!el3) return;
+    const close3 = () => mountUndoNote(el3, null);
+    const now = () => {
+      close3();
+      undo();
+    };
+    mountUndoNote(el3, { words: words5, undo: now, close: close3 });
+    shown = now;
+  }
+  function undoShown() {
+    if (!shown) return false;
+    shown();
+    return true;
+  }
+  function showNote(words5, label, act) {
+    const el3 = document.getElementById("undoNote");
+    if (!el3) return;
+    const close3 = () => mountUndoNote(el3, null);
+    mountUndoNote(el3, { words: words5, label, undo: () => {
+      close3();
+      act();
+    }, close: close3 });
+  }
+
+  // web/src/phone/send.ts
+  var targets = [];
+  var reading = null;
+  function readTargets() {
+    if (onPhone()) return Promise.resolve();
+    reading ??= Promise.resolve().then(() => go().SendTargets()).then((t3) => {
+      targets = t3 || [];
+    }, () => {
+    }).finally(() => {
+      reading = null;
+    });
+    return reading;
+  }
+  function targetsFor(link) {
+    void readTargets();
+    const page = link.replace(/^homelab:\/\//, "");
+    return targets.filter((t3) => {
+      if (t3.member) return page === "status" || page.startsWith("app/") && (!t3.apps?.length || t3.apps.includes(page.slice(4)));
+      return page === "finances" || page.startsWith("finances/") ? !!t3.finances : true;
+    });
+  }
+  async function sendTo(t3, link, title) {
+    await go().SendToPhone(t3.id, link, title);
+    return `Sent to ${t3.name}`;
+  }
+  function placeOf(link) {
+    const page = link.replace(/^homelab:\/\//, "");
+    if (page === "status" || page === "backups" || page === "finances") return { screen: page };
+    if (page.startsWith("finances/")) return { screen: "finances", tab: page.slice(9) };
+    if (/^app\/[a-z0-9][a-z0-9_-]*$/.test(page)) return { screen: "app", app: page.slice(4) };
+    return null;
+  }
+  function showSent(o3, open4) {
+    const p3 = placeOf(o3.link);
+    if (!p3) return;
+    showNote(`From the computer: ${o3.title || "a page"}`, "Open", () => open4(p3));
   }
 
   // web/src/ActionLink.tsx
@@ -860,56 +982,6 @@
   }
   function mountTiles(el3, props) {
     R(/* @__PURE__ */ u3(Tiles, { ...props }), el3);
-  }
-
-  // web/src/status/UndoNote.tsx
-  var undoFor = 1e4;
-  function UndoNote({ words: words5, undo, close: close3 }) {
-    const [held3, setHeld] = d2(false);
-    const box = A2(null);
-    h2(() => {
-      if (held3) return;
-      const t3 = setTimeout(close3, undoFor);
-      return () => clearTimeout(t3);
-    }, [held3, words5]);
-    return /* @__PURE__ */ u3(
-      "div",
-      {
-        ref: box,
-        class: "undonote",
-        role: "status",
-        onMouseEnter: () => setHeld(true),
-        onMouseLeave: () => setHeld(!!box.current?.contains(document.activeElement)),
-        onFocusIn: () => setHeld(true),
-        onFocusOut: () => setTimeout(() => setHeld(!!box.current?.matches(":hover") || !!box.current?.contains(document.activeElement))),
-        children: [
-          /* @__PURE__ */ u3("span", { class: "undowords", children: words5 }),
-          /* @__PURE__ */ u3("button", { type: "button", class: "undobtn", onClick: undo, children: "Undo" }),
-          /* @__PURE__ */ u3("button", { type: "button", class: "iconbtn", "aria-label": "Close", onClick: close3, children: "×" })
-        ]
-      }
-    );
-  }
-  var shown = null;
-  var mountUndoNote = (el3, p3) => {
-    if (!p3 || p3.undo !== shown) shown = null;
-    R(p3 && /* @__PURE__ */ u3(UndoNote, { ...p3 }), el3);
-  };
-  function showUndo(words5, undo) {
-    const el3 = document.getElementById("undoNote");
-    if (!el3) return;
-    const close3 = () => mountUndoNote(el3, null);
-    const now = () => {
-      close3();
-      undo();
-    };
-    mountUndoNote(el3, { words: words5, undo: now, close: close3 });
-    shown = now;
-  }
-  function undoShown() {
-    if (!shown) return false;
-    shown();
-    return true;
   }
 
   // web/src/finances/payees.ts
@@ -2671,6 +2743,8 @@
     const box = A2(null);
     const [sure, setSure] = d2(false);
     const [later2, setLater] = d2(false);
+    const [sending, setSending] = d2(false);
+    const phones = companion2 ? [] : on2.targets(a3);
     const [at2, setAt] = d2({ left: x3, top: y3 });
     const items = () => [...box.current?.querySelectorAll("[role^=menuitem]:not([disabled])") || []];
     _2(() => {
@@ -2698,6 +2772,11 @@
       setSure(false);
       requestAnimationFrame(() => (to ? items()[0] : box.current?.querySelector(".stoplater"))?.focus());
     };
+    const showSend = (to) => {
+      setSending(to);
+      setSure(false);
+      requestAnimationFrame(() => (to ? items()[0] : box.current?.querySelector(".sendphone"))?.focus());
+    };
     const pick = (fn) => () => {
       close3(true);
       fn();
@@ -2711,13 +2790,14 @@
         ref: box,
         class: "menu rowmenu",
         role: "menu",
-        "aria-label": later2 ? `Stop ${a3.name} for a while` : a3.name,
+        "aria-label": later2 ? `Stop ${a3.name} for a while` : sending ? `Send ${a3.name} to a phone` : a3.name,
         style: { left: at2.left + "px", top: at2.top + "px" },
         onKeyDown: (e3) => {
           if (e3.key === "Escape") {
             e3.preventDefault();
             e3.stopPropagation();
             if (later2) showLater(false);
+            else if (sending) showSend(false);
             else close3(true);
             return;
           }
@@ -2727,7 +2807,18 @@
           e3.preventDefault();
           all[(to + all.length) % all.length].focus();
         },
-        children: later2 ? /* @__PURE__ */ u3(S, { children: [
+        children: sending ? /* @__PURE__ */ u3(S, { children: [
+          /* @__PURE__ */ u3("p", { class: "menuhead", children: [
+            "Send ",
+            a3.name,
+            " to"
+          ] }),
+          phones.map((t3) => /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", onClick: pick(() => {
+            on2.send(a3, t3).then(said2, (e3) => said2(String(e3?.message || e3)));
+          }), children: t3.name }, t3.id)),
+          item("‹ Back", () => showSend(false), { cls: "menuback" }),
+          /* @__PURE__ */ u3("p", { class: "menufoot muted", children: "It shows there with one tap to open." })
+        ] }) : later2 ? /* @__PURE__ */ u3(S, { children: [
           /* @__PURE__ */ u3("p", { class: "menuhead", children: [
             "Stop ",
             a3.name,
@@ -2742,6 +2833,7 @@
           url && item("Copy address", pick(() => {
             on2.copy(url).then(() => said2("Address copied"), () => said2("Could not copy the address"));
           })),
+          !!phones.length && /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", class: "sendphone", "aria-haspopup": "menu", onClick: () => showSend(true), children: "Send to my phone ›" }),
           !native && url && /* @__PURE__ */ u3("hr", {}),
           !native && stopped2 && item("Start", pick(() => on2.act(a3, "start")), { disabled: busy2 }),
           !native && running5 && item("Restart", pick(() => on2.act(a3, "restart")), { disabled: busy2 }),
@@ -3714,31 +3806,6 @@
     R(/* @__PURE__ */ u3(S, { children: node }), el3);
   }
 
-  // web/src/core.ts
-  var go = () => window.go.main.App;
-  var onPhone = () => document.documentElement.classList.contains("companion");
-  var notOnPhone = (e3) => e3?.name === "NotOnPhone";
-  var $2 = (id2) => document.getElementById(id2);
-  var $$ = (sel2, root = document) => [...root.querySelectorAll(sel2)];
-  var $1 = (sel2, root = document) => root.querySelector(sel2);
-  var errorTimer = 0;
-  function showError(e3) {
-    if (e3?.name === "Away" && document.documentElement.classList.contains("away")) return;
-    const el3 = $2("error");
-    el3.textContent = String(e3 && e3.message || e3);
-    el3.hidden = false;
-    clearTimeout(errorTimer);
-    errorTimer = setTimeout(() => el3.hidden = true, 6e3);
-  }
-  var platform = navigator.platform || navigator.userAgent;
-  var osName = /Mac/.test(platform) ? "mac" : /Win/.test(platform) ? "windows" : "linux";
-  document.documentElement.classList.add("os-" + osName);
-  var isMac = osName === "mac";
-  var thisMachine = isMac ? "This Mac" : osName === "windows" ? "This PC" : "This machine";
-  var mod = isMac ? "⌘" : "Ctrl+";
-  var minute = 6e4;
-  var errorText = (e3) => String(e3 && e3.message || e3);
-
   // web/src/job/queue.ts
   var running = "";
   var waiting = [];
@@ -3841,7 +3908,7 @@
     if (hidden2 && bg) draw();
   });
   function draw() {
-    const el3 = $2("bgJob");
+    const el3 = $("bgJob");
     if (el3) R(hidden2 && bg ? /* @__PURE__ */ u3(Chip, { b: bg }) : null, el3);
   }
 
@@ -3939,13 +4006,13 @@
     const words5 = view.query.toLowerCase().split(/\s+/).filter(Boolean);
     const out = { keys: /* @__PURE__ */ new Set(), counts: {}, pageMore: 0 };
     for (const pg of pages) {
-      const here2 = pg.name === view.page;
+      const here3 = pg.name === view.page;
       for (const s3 of pg.items) {
         const more2 = pg.kind === "general" && !wanted.has(s3.key);
-        if (here2 && more2) out.pageMore++;
+        if (here3 && more2) out.pageMore++;
         const step2 = checks2[s3.key];
         const text2 = [pg.name, label(s3.key), s3.key.replace(/_/g, " "), s3.help || "", step2 ? step2.title : "", "setting-" + s3.key].join(" ").toLowerCase();
-        const match2 = words5.length ? words5.every((w3) => text2.includes(w3)) : here2 && (view.showAll || !more2);
+        const match2 = words5.length ? words5.every((w3) => text2.includes(w3)) : here3 && (view.showAll || !more2);
         if (match2) {
           out.keys.add(s3.key);
           out.counts[pg.name] = (out.counts[pg.name] || 0) + 1;
@@ -4136,8 +4203,8 @@
     ] });
   }
   function People({ people, pocket, apps: apps2, log: log2, on: on2 }) {
-    const here2 = people.filter(active);
-    const head = /* @__PURE__ */ u3(CardHead, { title: "People", children: /* @__PURE__ */ u3("span", { class: "muted", children: here2.length ? `${here2.length} in the household` : "just you so far" }) });
+    const here3 = people.filter(active);
+    const head = /* @__PURE__ */ u3(CardHead, { title: "People", children: /* @__PURE__ */ u3("span", { class: "muted", children: here3.length ? `${here3.length} in the household` : "just you so far" }) });
     const why = /* @__PURE__ */ u3("p", { class: "muted", children: "Each person gets one sign-in for the apps (with a passkey, no password to remember) and a welcome page with their apps and the phone apps to install. Jellyfin and Navidrome have a password of their own, for Infuse and music apps: with their keys in Settings, the homelab makes those accounts too, and Reset password gives a new one." });
     if (!pocket) {
       return /* @__PURE__ */ u3(S, { children: [
@@ -4152,8 +4219,8 @@
     return /* @__PURE__ */ u3(S, { children: [
       head,
       why,
-      !!here2.length && /* @__PURE__ */ u3(Rows, { children: here2.map((p3) => /* @__PURE__ */ u3(Person, { p: p3, on: on2 }, p3.username)) }),
-      /* @__PURE__ */ u3(AddPerson, { apps: apps2, open: !here2.length, on: on2 }),
+      !!here3.length && /* @__PURE__ */ u3(Rows, { children: here3.map((p3) => /* @__PURE__ */ u3(Person, { p: p3, on: on2 }, p3.username)) }),
+      /* @__PURE__ */ u3(AddPerson, { apps: apps2, open: !here3.length, on: on2 }),
       /* @__PURE__ */ u3("pre", { id: "peopleLog", hidden: !log2, children: log2 })
     ] });
   }
@@ -5273,24 +5340,24 @@
     clearJob(box);
   }
   function clearJob(box) {
-    mountJobApps($2(box + "Apps"), []);
-    const d3 = $2(box + "Details");
+    mountJobApps($(box + "Apps"), []);
+    const d3 = $(box + "Details");
     if (d3) {
       d3.open = true;
       delete d3.dataset.touched;
     }
-    const p3 = $2(box + "Progress");
+    const p3 = $(box + "Progress");
     if (p3) p3.hidden = true;
   }
   function jobApp(u4) {
     const fresh = !jobRows[u4.app];
     jobRows[u4.app] = u4;
     const rows = Object.values(jobRows);
-    mountJobApps($2(jobBox + "Apps"), rows);
-    const d3 = $2(jobBox + "Details");
+    mountJobApps($(jobBox + "Apps"), rows);
+    const d3 = $(jobBox + "Details");
     if (d3 && fresh && !d3.dataset.touched) d3.open = false;
     if (jobSteps) return;
-    const box = $2(jobBox + "Progress");
+    const box = $(jobBox + "Progress");
     if (!box) return;
     const ready2 = rows.filter((r3) => r3.done && !r3.failed).length;
     box.hidden = false;
@@ -5308,7 +5375,7 @@
     return text2.replace(/[a-z0-9][a-z0-9-]*[a-z0-9]/g, (w3) => byID[w3] || w3);
   }
   function cliProgress(s3) {
-    const box = $2(jobBox + "Progress");
+    const box = $(jobBox + "Progress");
     if (!s3) {
       box.hidden = true;
       return;
@@ -5332,7 +5399,7 @@
   }
   function mirror() {
     if (jobBox !== "cli") return;
-    const box = $2("cliProgress");
+    const box = $("cliProgress");
     bgProgress(parseFloat(box.querySelector(".fill").style.width) || 0, box.querySelector(".step").textContent || "");
   }
 
@@ -5345,42 +5412,42 @@
     try {
       catalog = await go().Catalog();
     } catch (e3) {
-      catalogProblem($2("groups"), String(e3));
+      catalogProblem($("groups"), String(e3));
       return;
     }
     statusData.fresh(minute);
     fillCategories();
     const starters = catalog.presets.filter((p3) => p3.starter);
-    $2("starterBox").hidden = !starters.length;
-    if (!starters.length) $2("more").open = true;
+    $("starterBox").hidden = !starters.length;
+    if (!starters.length) $("more").open = true;
     renderApps();
   }
-  $2("search").oninput = (e3) => {
+  $("search").oninput = (e3) => {
     query2 = e3.target.value.trim().toLowerCase();
-    if (query2) $2("more").open = true;
-    $2("choose").classList.toggle("searching", !!query2);
+    if (query2) $("more").open = true;
+    $("choose").classList.toggle("searching", !!query2);
     renderApps();
   };
   function fillCategories() {
-    mountCategories($2("cCategory"), catalog.categories);
-    $2("cCategory").value = "documents";
+    mountCategories($("cCategory"), catalog.categories);
+    $("cCategory").value = "documents";
   }
-  $2("cAdd").onclick = async () => {
-    const log2 = $2("cLog");
+  $("cAdd").onclick = async () => {
+    const log2 = $("cLog");
     const spec = {
       id: "",
       // the Go side makes it from the name
-      name: $2("cName").value.trim(),
-      image: $2("cImage").value.trim(),
-      port: Number($2("cPort").value) || 0,
-      category: $2("cCategory").value,
-      description: $2("cDesc").value.trim(),
-      volumes: $2("cVolumes").value.split(",").map((v3) => v3.trim()).filter(Boolean),
+      name: $("cName").value.trim(),
+      image: $("cImage").value.trim(),
+      port: Number($("cPort").value) || 0,
+      category: $("cCategory").value,
+      description: $("cDesc").value.trim(),
+      volumes: $("cVolumes").value.split(",").map((v3) => v3.trim()).filter(Boolean),
       env: {}
     };
     log2.hidden = false;
     log2.textContent = "";
-    $2("cAdd").disabled = true;
+    $("cAdd").disabled = true;
     let off2 = null;
     try {
       const before3 = new Set(catalog.apps.map((a3) => a3.id));
@@ -5403,12 +5470,12 @@
         renderApps();
         replan();
       }
-      for (const id2 of ["cName", "cImage", "cPort", "cDesc", "cVolumes"]) $2(id2).value = "";
+      for (const id2 of ["cName", "cImage", "cPort", "cDesc", "cVolumes"]) $(id2).value = "";
     } catch (e3) {
       showError(e3);
     } finally {
       if (typeof off2 === "function") off2();
-      $2("cAdd").disabled = false;
+      $("cAdd").disabled = false;
     }
   };
   var query2 = "";
@@ -5420,9 +5487,9 @@
   }
   function renderApps() {
     const picks = { selected, status: statusById, toggle: togglePreset };
-    mountStarters($2("starters"), { ...picks, presets: catalog.presets.filter((p3) => p3.starter) });
-    mountBundles($2("presets"), { ...picks, presets: catalog.presets.filter((p3) => !p3.starter && !p3.id.startsWith("stack:")) });
-    mountGroups($2("groups"), {
+    mountStarters($("starters"), { ...picks, presets: catalog.presets.filter((p3) => p3.starter) });
+    mountBundles($("presets"), { ...picks, presets: catalog.presets.filter((p3) => !p3.starter && !p3.id.startsWith("stack:")) });
+    mountGroups($("groups"), {
       catalog,
       status: statusById,
       selected,
@@ -5441,12 +5508,12 @@
   var planSeq = 0;
   var replanTimer = 0;
   function clearInstall() {
-    $2("installProgress").hidden = true;
-    mountJobApps($2("installApps"), []);
-    mountStarted($2("started"), null);
-    mountWiring($2("wiring"), null);
-    $2("installLog").textContent = "";
-    $2("installDetails").hidden = true;
+    $("installProgress").hidden = true;
+    mountJobApps($("installApps"), []);
+    mountStarted($("started"), null);
+    mountWiring($("wiring"), null);
+    $("installLog").textContent = "";
+    $("installDetails").hidden = true;
   }
   function replan() {
     clearTimeout(replanTimer);
@@ -5457,10 +5524,10 @@
     const seq = ++planSeq;
     const tokens = [...selected];
     if (tokens.length && !installing) clearInstall();
-    const plan = (p4) => mountPlan($2("plan"), { plan: p4, appName, reason: friendlyReason });
+    const plan = (p4) => mountPlan($("plan"), { plan: p4, appName, reason: friendlyReason });
     if (!tokens.length) {
       plan(null);
-      $2("installBtn").disabled = true;
+      $("installBtn").disabled = true;
       return;
     }
     let p3;
@@ -5469,7 +5536,7 @@
     } catch (e3) {
       if (seq === planSeq) {
         plan(String(e3));
-        $2("installBtn").disabled = true;
+        $("installBtn").disabled = true;
       }
       return;
     }
@@ -5477,8 +5544,8 @@
     plan(p3);
     renderInputs(p3);
     const wireable = new Set(catalog.wireable || []);
-    $2("wireRow").hidden = ![...p3.start, ...selected].some((id2) => wireable.has(id2));
-    $2("installBtn").disabled = !(p3.ready && p3.start.length);
+    $("wireRow").hidden = ![...p3.start, ...selected].some((id2) => wireable.has(id2));
+    $("installBtn").disabled = !(p3.ready && p3.start.length);
   }
   function friendlyReason(r3) {
     return r3.replace(/set ([A-Z0-9_]+(?:(?:, | and | or )[A-Z0-9_]+)*) in \.env first/g, (_3, keys2) => "fill in " + keys2.split(/, | and | or /).map(settingLabel).join(" and ") + " below");
@@ -5494,28 +5561,28 @@
         settingHelp = {};
       }
     }
-    mountInputs($2("inputs"), { keys: keys2, meta: settingHelp || {}, values: settings, label: settingLabel, input: (k3, v3) => {
+    mountInputs($("inputs"), { keys: keys2, meta: settingHelp || {}, values: settings, label: settingLabel, input: (k3, v3) => {
       settings[k3] = v3;
       replan();
     } });
   }
   var installing = false;
-  $2("installBtn").onclick = async () => {
-    const btn = $2("installBtn");
+  $("installBtn").onclick = async () => {
+    const btn = $("installBtn");
     installing = true;
     btn.disabled = true;
     btn.textContent = "Installing…";
-    mountStarted($2("started"), null);
-    mountWiring($2("wiring"), null);
+    mountStarted($("started"), null);
+    mountWiring($("wiring"), null);
     const words5 = { env: "Saving your settings", folders: "Making the folders", networks: "Getting the network ready" };
-    const ilog = $2("installLog");
+    const ilog = $("installLog");
     ilog.textContent = "";
-    $2("installDetails").hidden = true;
+    $("installDetails").hidden = true;
     await inTurn("Installing", async () => {
       btn.textContent = "Installing…";
       startJob("install");
       const offLog = window.runtime.EventsOn("install:log", (line) => {
-        $2("installDetails").hidden = false;
+        $("installDetails").hidden = false;
         ilog.textContent += line + "\n";
         ilog.scrollTop = ilog.scrollHeight;
       });
@@ -5527,11 +5594,11 @@
       try {
         const started = await go().Install([...selected], filled());
         cliProgress("done");
-        mountStarted($2("started"), { started, open: (url) => go().Open(url), close: () => {
+        mountStarted($("started"), { started, open: (url) => go().Open(url), close: () => {
           clearInstall();
-          $2("search").focus();
+          $("search").focus();
         } });
-        if (!$2("wireRow").hidden && $2("wire").checked && started.length) await wire($2("wiring"));
+        if (!$("wireRow").hidden && $("wire").checked && started.length) await wire($("wiring"));
         selected.clear();
         settingsData.stale();
         await loadStatus();
@@ -5568,7 +5635,7 @@
       if (typeof off2 === "function") off2();
     }
   }
-  $2("connect").onclick = () => wire($2("statusWiring"));
+  $("connect").onclick = () => wire($("statusWiring"));
 
   // web/src/updates/UpdateLine.tsx
   var running2 = (step2) => !!step2 && step2.step !== "done" && step2.step !== "failed";
@@ -5696,7 +5763,7 @@
   var ready = () => state?.state === "ready";
   var running3 = () => !!step && step.step !== "done" && step.step !== "failed";
   function draw2() {
-    const box = $2("updateLine");
+    const box = $("updateLine");
     if (companion() || !state) {
       box.hidden = true;
       mountUpdateLine(box, null);
@@ -5709,7 +5776,7 @@
     box.className = "updateline" + (failed ? " failed" : state.updated && !ready() && !running3() ? " done" : "");
     mountUpdateLine(box, shown8 ? { s: state, step, download, log, update: updateNow, later, close, open: (url) => go().Open(url) } : null);
     drawFoot({ update: running3() ? "finishing" : ready() && hidden3 ? "ready" : "", openSetup: showLine });
-    const settings2 = $2("updatesSettings");
+    const settings2 = $("updatesSettings");
     if (settings2) mountUpdateSettings(settings2, { s: state, looking, look: lookNow, setInstallOnQuit });
   }
   function set(s3) {
@@ -5840,7 +5907,7 @@
       showError(e3);
     }
   }
-  var renderAppearance = () => mountAppearance($2("appearanceCard"), { look, system: systemAccent, noAccent: noAccentNote(systemOf(osName, hostOS)), set: setAppearance });
+  var renderAppearance = () => mountAppearance($("appearanceCard"), { look, system: systemAccent, noAccent: noAccentNote(systemOf(osName, hostOS)), set: setAppearance });
   var hostData = store(async () => {
     const i3 = await go().Host();
     const [atLogin, menu] = onPhone() ? [null, null] : await Promise.all([go().TrayAtLogin().catch(() => null), go().MenuEntry().catch(() => null)]);
@@ -5867,10 +5934,10 @@
       },
       openSetup: () => navigate("setup")
     } : null;
-    $2("healthTiles").hidden = !props || !i3.rootOK;
-    $2("healthLine").hidden = !props || !i3.rootOK;
-    mountHealthTiles($2("healthTiles"), props);
-    mountHealthLine($2("healthLine"), props);
+    $("healthTiles").hidden = !props || !i3.rootOK;
+    $("healthLine").hidden = !props || !i3.rootOK;
+    mountHealthTiles($("healthTiles"), props);
+    mountHealthLine($("healthLine"), props);
   }
   async function loadHost() {
     await hostData.load();
@@ -5890,7 +5957,7 @@
     host = { i: i3, atLogin, menu, upgrade: host?.upgrade || null, on: hostActions };
     renderHost();
     if (lastSteps.length) renderSetup(lastSteps);
-    $2("thisMacTitle").textContent = thisMachine;
+    $("thisMacTitle").textContent = thisMachine;
     drawFoot({ system: i3.osVersion || i3.os, version: i3.version });
     if (i3.rootOK && !onPhone()) loadUpgrade(false);
     renderNewHomelab(i3);
@@ -5898,25 +5965,25 @@
   }
   function setupJob() {
     startJob("setup");
-    $2("setupClear").hidden = true;
+    $("setupClear").hidden = true;
   }
   function setupJobEnded() {
     endJob();
-    $2("setupClear").hidden = false;
+    $("setupClear").hidden = false;
   }
-  $2("setupClear").onclick = () => {
-    $2("setupProgress").hidden = true;
-    $2("setupProgress").classList.remove("failed");
-    mountJobApps($2("setupApps"), []);
-    const log2 = $2("setupLog");
+  $("setupClear").onclick = () => {
+    $("setupProgress").hidden = true;
+    $("setupProgress").classList.remove("failed");
+    mountJobApps($("setupApps"), []);
+    const log2 = $("setupLog");
     log2.hidden = true;
     log2.textContent = "";
-    $2("setupClear").hidden = true;
+    $("setupClear").hidden = true;
     setupNav();
   };
   var host = null;
   var renderHost = () => {
-    if (host) mountHost($2("hostInfo"), host);
+    if (host) mountHost($("hostInfo"), host);
   };
   var hostActions = {
     background: async () => {
@@ -5951,7 +6018,7 @@
     chooseRoot: () => chooseRoot(),
     goBack: async () => {
       navigate("setup");
-      const log2 = $2("setupLog");
+      const log2 = $("setupLog");
       log2.hidden = false;
       log2.textContent = "Going back…\n";
       try {
@@ -5980,7 +6047,7 @@
   };
   var runtimeWatch = null;
   function renderRuntime(i3) {
-    const card = $2("runtimeCard");
+    const card = $("runtimeCard");
     card.hidden = !!i3.runtimeOK;
     clearInterval(runtimeWatch);
     if (card.hidden) return;
@@ -5997,7 +6064,7 @@
     }, open: (url) => go().Open(url) });
   }
   function renderNewHomelab(i3) {
-    const card = $2("newHomelab");
+    const card = $("newHomelab");
     card.hidden = i3.rootOK || !i3.kit;
     if (card.hidden) return;
     mountNewHomelab(card, {
@@ -6038,12 +6105,12 @@
   var foot = { system: "", version: "", update: "", openSetup: () => {
   } };
   function drawFoot(change) {
-    mountFoot($2("foot"), foot = { ...foot, ...change });
+    mountFoot($("foot"), foot = { ...foot, ...change });
   }
-  $2("report").onclick = async () => {
-    const log2 = $2("reportLog"), btn = $2("report");
+  $("report").onclick = async () => {
+    const log2 = $("reportLog"), btn = $("report");
     btn.disabled = true;
-    mountReportActions($2("reportActions"), null);
+    mountReportActions($("reportActions"), null);
     log2.hidden = false;
     log2.textContent = "Making the report (about a minute)…\n";
     let ok = true;
@@ -6068,7 +6135,7 @@
     btn.disabled = false;
     if (ok) {
       const reveal = hostOS.startsWith("macOS") ? "Show in Finder" : hostOS.startsWith("Windows") ? "Show in Explorer" : "Show the file";
-      mountReportActions($2("reportActions"), { reveal, show: () => go().RevealReport().catch(showError), email: () => go().EmailReport().catch(showError) });
+      mountReportActions($("reportActions"), { reveal, show: () => go().RevealReport().catch(showError), email: () => go().EmailReport().catch(showError) });
     }
   };
   async function chooseRoot() {
@@ -6089,30 +6156,30 @@
   var failStep = (s3, e3, choice) => {
     failedSteps[s3.id] = { why: errorText(e3), again: (choice === void 0 ? s3.runLabel : s3.choices?.[choice]?.label) || "Run" };
   };
-  $2("firstAppsGo").onclick = () => navigate("choose");
+  $("firstAppsGo").onclick = () => navigate("choose");
   var watchingApps = false;
   function renderSetup(steps) {
     lastSteps = steps;
     const noHomelab = hostData.value ? !hostData.value.i.rootOK : false;
-    $2("checkWait").hidden = !noHomelab;
-    $2("checkHead").hidden = noHomelab;
-    $2("checklist").hidden = noHomelab;
+    $("checkWait").hidden = !noHomelab;
+    $("checkHead").hidden = noHomelab;
+    $("checklist").hidden = noHomelab;
     if (!watchingApps) {
       watchingApps = true;
       statusData.watch(() => renderSetup(lastSteps));
     }
-    $2("firstApps").hidden = noHomelab || !hostData.value || statusData.value?.apps?.length !== 0;
+    $("firstApps").hidden = noHomelab || !hostData.value || statusData.value?.apps?.length !== 0;
     const { done, total, left, wait } = progress(steps);
     const all = !left && !wait;
-    $2("checkTitle").textContent = all ? "Everything is set up" : "Finish setting up";
-    $2("checkCount").textContent = all ? "" : `${done} of ${total} done` + (wait ? ` · ${wait} can wait` : "");
-    $2("setupMeter").parentElement.hidden = all;
-    $2("setupMeter").style.width = total ? `${Math.round(100 * done / total)}%` : "0";
+    $("checkTitle").textContent = all ? "Everything is set up" : "Finish setting up";
+    $("checkCount").textContent = all ? "" : `${done} of ${total} done` + (wait ? ` · ${wait} can wait` : "");
+    $("setupMeter").parentElement.hidden = all;
+    $("setupMeter").style.width = total ? `${Math.round(100 * done / total)}%` : "0";
     setupBadge(noHomelab ? 0 : left);
     const ready2 = runnable(steps);
-    $2("runAll").hidden = runningAll || ready2.length < 2;
-    if (!runningAll) $2("runAll").textContent = `Do the ${ready2.length} I can do for you`;
-    mountChecklist($2("checklist"), { steps, showDone: showDoneSteps, showLater: showLaterSteps, running: runningStep, failed: failedSteps, on: checklistActions });
+    $("runAll").hidden = runningAll || ready2.length < 2;
+    if (!runningAll) $("runAll").textContent = `Do the ${ready2.length} I can do for you`;
+    mountChecklist($("checklist"), { steps, showDone: showDoneSteps, showLater: showLaterSteps, running: runningStep, failed: failedSteps, on: checklistActions });
     setupNav();
   }
   function setupNav() {
@@ -6120,7 +6187,7 @@
     if (!btn) return;
     const p3 = lastSteps.length ? progress(lastSteps) : null;
     const i3 = hostData.value?.i;
-    const needed = !p3 || p3.left > 0 || p3.wait > 0 || !i3?.rootOK || !i3?.runtimeOK || !$2("setupClear").hidden || runningAll || !!runningStep || $2("setup").classList.contains("active");
+    const needed = !p3 || p3.left > 0 || p3.wait > 0 || !i3?.rootOK || !i3?.runtimeOK || !$("setupClear").hidden || runningAll || !!runningStep || $("setup").classList.contains("active");
     btn.hidden = !needed;
   }
   var checklistActions = {
@@ -6128,7 +6195,7 @@
     run: (s3, choice) => runStep(s3, choice),
     open: (url) => go().Open(url),
     closeSignups: async () => {
-      const log2 = $2("setupLog");
+      const log2 = $("setupLog");
       log2.hidden = false;
       try {
         await inTurn("Closing sign-ups", async () => {
@@ -6165,7 +6232,7 @@
     }
   };
   function setupBadge(left) {
-    $2("setupCount").textContent = left ? String(left) : "";
+    $("setupCount").textContent = left ? String(left) : "";
   }
   var stepsData = store(() => go().Setup());
   stepsData.watch(() => {
@@ -6174,10 +6241,10 @@
     if (form) drawSettings(false, false);
   });
   async function loadSetup() {
-    $2("checkCount").textContent = "checking…";
+    $("checkCount").textContent = "checking…";
     await stepsData.load();
   }
-  $2("recheck").onclick = () => {
+  $("recheck").onclick = () => {
     loadSetup();
     healthData.load();
     loadHost();
@@ -6187,8 +6254,8 @@
     return steps.filter((s3) => s3.state === "todo" && s3.run?.length);
   }
   var runningAll = false;
-  $2("runAll").onclick = async () => {
-    const log2 = $2("setupLog"), btn = $2("runAll");
+  $("runAll").onclick = async () => {
+    const log2 = $("setupLog"), btn = $("runAll");
     runningAll = true;
     btn.disabled = true;
     log2.hidden = false;
@@ -6233,7 +6300,7 @@
     loadSetup();
   };
   async function runStep(step2, choice) {
-    const log2 = $2("setupLog");
+    const log2 = $("setupLog");
     log2.hidden = false;
     log2.textContent = "";
     runningStep = step2.id;
@@ -6270,7 +6337,7 @@
   var changed = {};
   var testable = null;
   async function loadPhones() {
-    const card = $2("phonesCard");
+    const card = $("phonesCard");
     let phones;
     try {
       phones = await go().Phones();
@@ -6282,7 +6349,7 @@
     mountPhones(card, { phones: phones || [], on: phonesActions });
   }
   async function loadTailnet() {
-    const card = $2("tailnetCard");
+    const card = $("tailnetCard");
     let devices;
     try {
       devices = await go().TailnetDevices();
@@ -6342,10 +6409,10 @@
   var peopleView = null;
   var peopleLog = "";
   function renderPeople() {
-    if (peopleView) mountPeople($2("peopleCard"), { ...peopleView, log: peopleLog });
+    if (peopleView) mountPeople($("peopleCard"), { ...peopleView, log: peopleLog });
   }
   async function loadPeople() {
-    const card = $2("peopleCard");
+    const card = $("peopleCard");
     let list, st;
     try {
       [list, st] = await Promise.all([go().People(), go().Status()]);
@@ -6428,7 +6495,7 @@
       }
     }
   };
-  mountUninstall($2("uninstallCard"), { machine: thisMachine, on: uninstallActions });
+  mountUninstall($("uninstallCard"), { machine: thisMachine, on: uninstallActions });
   var settingsFocus = [];
   var settingsData = store(async () => {
     if (onPhone()) {
@@ -6447,7 +6514,7 @@
   settingsData.watch(() => {
     if (settingsData.error) {
       form = null;
-      formProblem($2("settingsForm"), String(settingsData.error));
+      formProblem($("settingsForm"), String(settingsData.error));
       return;
     }
     drawSettings(true, true);
@@ -6503,7 +6570,7 @@
   };
   var form = null;
   var formVersion = 0;
-  var settingsView = () => ({ query: $2("settingsSearch").value, page: settingsPage, showAll: settingsShowAll });
+  var settingsView = () => ({ query: $("settingsSearch").value, page: settingsPage, showAll: settingsShowAll });
   var isSecret = (key6) => !!form?.pages.some((pg) => pg.items.some((s3) => s3.key === key6 && s3.secret));
   var formActions = {
     edited: (edits) => {
@@ -6632,7 +6699,7 @@
   }
   function pickSettingsPage(name) {
     settingsPage = name;
-    $2("settingsSearch").value = "";
+    $("settingsSearch").value = "";
     filterSettings();
     document.querySelector("main").scrollTo({ top: 0 });
   }
@@ -6680,7 +6747,7 @@
   var everydayCount = 0;
   var moreCount = 0;
   var settingsShowAll = false;
-  $2("settingsAll").onclick = () => {
+  $("settingsAll").onclick = () => {
     settingsShowAll = !settingsShowAll;
     filterSettings();
   };
@@ -6761,30 +6828,30 @@
   }
   function markChanged() {
     const n3 = Object.keys(changed).length;
-    $2("saveSettings").hidden = n3 === 0;
-    $2("saveSettings").textContent = n3 === 1 ? "Save 1 change" : `Save ${n3} changes`;
+    $("saveSettings").hidden = n3 === 0;
+    $("saveSettings").textContent = n3 === 1 ? "Save 1 change" : `Save ${n3} changes`;
   }
   function filterSettings() {
     if (!form) return;
     form = { ...form, view: settingsView() };
-    mountForm($2("settingsForm"), form, formVersion);
+    mountForm($("settingsForm"), form, formVersion);
     const searching = !!form.view.query.trim();
     const sh = shown2(form.pages, form.view, form.wanted, form.label, form.checks);
-    for (const [id2, name] of [["thisMacCard", thisMachine], ["appearanceCard", "Appearance"], ["peopleCard", "People"], ["phonesCard", "Phones"], ["tailnetCard", "Phones"]]) $2(id2).classList.toggle("offpage", searching || settingsPage !== name);
-    mountNav($2("settingsNav"), { groups: navGroups, active: settingsPage, counts: searching ? sh.counts : null, pick: pickSettingsPage });
-    $2("settingsForm").classList.toggle("searching", searching);
-    $2("settingsNone").hidden = sh.keys.size > 0 || !searching;
-    $2("settingsAll").hidden = searching || !sh.pageMore;
-    $2("settingsAll").textContent = settingsShowAll ? "Show the everyday settings only" : `Show all settings (${sh.pageMore} more)`;
+    for (const [id2, name] of [["thisMacCard", thisMachine], ["appearanceCard", "Appearance"], ["peopleCard", "People"], ["phonesCard", "Phones"], ["tailnetCard", "Phones"]]) $(id2).classList.toggle("offpage", searching || settingsPage !== name);
+    mountNav($("settingsNav"), { groups: navGroups, active: settingsPage, counts: searching ? sh.counts : null, pick: pickSettingsPage });
+    $("settingsForm").classList.toggle("searching", searching);
+    $("settingsNone").hidden = sh.keys.size > 0 || !searching;
+    $("settingsAll").hidden = searching || !sh.pageMore;
+    $("settingsAll").textContent = settingsShowAll ? "Show the everyday settings only" : `Show all settings (${sh.pageMore} more)`;
   }
-  $2("settingsSearch").oninput = filterSettings;
+  $("settingsSearch").oninput = filterSettings;
   function showSettings(keys2) {
     settingsFocus = keys2;
     const kept4 = settingsData.at > 0;
     show3("settings");
     if (kept4) drawSettings(false, true);
   }
-  $2("saveSettings").onclick = async () => {
+  $("saveSettings").onclick = async () => {
     const values = {};
     for (const [k3, v3] of Object.entries(changed)) {
       if (isSecret(k3) && v3 === "") continue;
@@ -7202,26 +7269,26 @@
   }
   function drawBackups() {
     if (backupsData.error) {
-      mountCopyRows($2("backupRows"), null);
+      mountCopyRows($("backupRows"), null);
       showError(backupsData.error);
       return;
     }
     const o3 = backupsData.value;
     const testable2 = (jobsData.value || []).some((j3) => j3.name.toLowerCase() === "homelab appdata" && j3.state !== "never");
     const test = () => backupTask("restore-test", "Testing a restore (a few minutes)…", "Restore test passed", "The restore test failed: the log says why");
-    mountBackupTiles($2("backupTiles"), { o: o3, os: osName, test: testable2 ? test : void 0 });
-    mountCopyRows($2("backupRows"), { o: o3, apps: statusData.value ? statusById : void 0 });
-    mountVault($2("vaultCard"), { o: o3 });
-    $2("kopiaCard").hidden = !o3.kopia;
-    mountKopia($2("kopiaCard"), o3.kopia ? { k: o3.kopia, test: () => backupTask("restore-test-kopia", "Testing Kopia's restore (a few minutes)…", "Kopia's restore test passed", "Kopia's restore test failed: the log says why") } : null);
+    mountBackupTiles($("backupTiles"), { o: o3, os: osName, test: testable2 ? test : void 0 });
+    mountCopyRows($("backupRows"), { o: o3, apps: statusData.value ? statusById : void 0 });
+    mountVault($("vaultCard"), { o: o3 });
+    $("kopiaCard").hidden = !o3.kopia;
+    mountKopia($("kopiaCard"), o3.kopia ? { k: o3.kopia, test: () => backupTask("restore-test-kopia", "Testing Kopia's restore (a few minutes)…", "Kopia's restore test passed", "Kopia's restore test failed: the log says why") } : null);
     const problems = (o3.copies || []).filter((c4) => c4.state === "stale").length + (o3.plainExports || []).length + (o3.kopia?.failed ? 1 : 0);
-    $2("backupsCount").textContent = problems ? String(problems) : "";
+    $("backupsCount").textContent = problems ? String(problems) : "";
     const dup = statusById.duplicati;
-    $2("openDuplicati").hidden = !(dup?.state === "running" && dup.url);
-    $2("openDuplicati").onclick = () => go().Open(dup.url);
+    $("openDuplicati").hidden = !(dup?.state === "running" && dup.url);
+    $("openDuplicati").onclick = () => go().Open(dup.url);
   }
   function drawJobs() {
-    const card = $2("dupCard");
+    const card = $("dupCard");
     const create = () => backupTask("duplicati-setup", "Creating the backup jobs…", "Backup jobs created", "Creating the jobs stopped: the log says why");
     if (!jobsData.value && !jobsData.error) return;
     const o3 = backupsData.value;
@@ -7234,17 +7301,17 @@
     mountJobs(card, { jobs: jobsData.value, place, create });
   }
   async function backupTask(action, busy2, done, failed) {
-    const panel = $2("backupPanel"), log2 = $2("backupLog");
-    const btns = () => [$2("backupNow"), document.getElementById("restoreTest")].filter(Boolean);
+    const panel = $("backupPanel"), log2 = $("backupLog");
+    const btns = () => [$("backupNow"), document.getElementById("restoreTest")].filter(Boolean);
     panel.hidden = false;
-    $2("backupTitle").textContent = busy2;
+    $("backupTitle").textContent = busy2;
     log2.textContent = "";
     btns().forEach((b2) => {
       b2.disabled = true;
     });
     let ok = true;
     await inTurn(busy2.replace(/…$/, ""), async () => {
-      $2("backupTitle").textContent = busy2;
+      $("backupTitle").textContent = busy2;
       startJob("backup");
       const off2 = window.runtime.EventsOn("cli:log", (line) => {
         log2.textContent += line + "\n";
@@ -7261,9 +7328,9 @@
         if (typeof off2 === "function") off2();
       }
     }, (behind) => {
-      $2("backupTitle").textContent = `${waitWords(behind)}, then: ${busy2}`;
+      $("backupTitle").textContent = `${waitWords(behind)}, then: ${busy2}`;
     });
-    $2("backupTitle").textContent = ok ? done : failed;
+    $("backupTitle").textContent = ok ? done : failed;
     btns().forEach((b2) => {
       b2.disabled = false;
     });
@@ -7275,15 +7342,15 @@
       button.textContent = "Click again: back up, stop every app, and pack";
       return;
     }
-    const panel = $2("backupPanel"), log2 = $2("backupLog");
+    const panel = $("backupPanel"), log2 = $("backupLog");
     button.disabled = true;
     panel.hidden = false;
-    $2("backupTitle").textContent = direction === "out" ? "Moving out (a backup first, then packing)…" : "Moving in…";
+    $("backupTitle").textContent = direction === "out" ? "Moving out (a backup first, then packing)…" : "Moving in…";
     log2.textContent = "";
-    const busy2 = $2("backupTitle").textContent;
+    const busy2 = $("backupTitle").textContent;
     let file = "", ok = true;
     await inTurn(direction === "out" ? "Moving out" : "Moving in", async () => {
-      $2("backupTitle").textContent = busy2;
+      $("backupTitle").textContent = busy2;
       const off2 = window.runtime.EventsOn("cli:log", (line) => {
         log2.textContent += line + "\n";
         log2.scrollTop = log2.scrollHeight;
@@ -7297,7 +7364,7 @@
         if (typeof off2 === "function") off2();
       }
     }, (behind) => {
-      $2("backupTitle").textContent = `${waitWords(behind)}, then: ${busy2}`;
+      $("backupTitle").textContent = `${waitWords(behind)}, then: ${busy2}`;
     });
     button.disabled = false;
     delete button.dataset.sure;
@@ -7306,13 +7373,13 @@
       panel.hidden = true;
       return;
     }
-    $2("backupTitle").textContent = !ok ? "The move stopped: the log says why" : direction === "out" ? "Packed. This machine is stopped: take the file and the media drive to the new one" : "Moved in: the apps that ran before are starting";
+    $("backupTitle").textContent = !ok ? "The move stopped: the log says why" : direction === "out" ? "Packed. This machine is stopped: take the file and the media drive to the new one" : "Moved in: the apps that ran before are starting";
   }
-  $2("moveOut").onclick = (e3) => moveTask("out", e3.target);
-  $2("moveIn").onclick = (e3) => moveTask("in", e3.target);
-  $2("backupNow").onclick = () => backupTask("backup", "Backing up…", "Backup done", "The backup failed: the log says which step");
-  $2("recoveryKit").onclick = async () => {
-    const btn = $2("recoveryKit");
+  $("moveOut").onclick = (e3) => moveTask("out", e3.target);
+  $("moveIn").onclick = (e3) => moveTask("in", e3.target);
+  $("backupNow").onclick = () => backupTask("backup", "Backing up…", "Backup done", "The backup failed: the log says which step");
+  $("recoveryKit").onclick = async () => {
+    const btn = $("recoveryKit");
     btn.disabled = true;
     try {
       await go().RecoveryKit();
@@ -7338,7 +7405,7 @@
       backupsAsked = now;
       backupsData.fresh(10 * 6e4);
     }
-    mountOvernight($2("overnightLine"), { now, apps: lastStatus.apps, events: lastEvents, outages, copies: backupsData.value?.copies || null, watched });
+    mountOvernight($("overnightLine"), { now, apps: lastStatus.apps, events: lastEvents, outages, copies: backupsData.value?.copies || null, watched });
   }
   backupsData.watch(drawOvernight);
   var seen = loadSeen();
@@ -7346,7 +7413,7 @@
   var lastAttention = -1;
   function renderTiles(st) {
     const trouble2 = st.apps.filter((a3) => troubled(a3, st.stopped));
-    mountTiles($2("tiles"), {
+    mountTiles($("tiles"), {
       status: st,
       history: savingsHistory,
       onPause: async (paused) => {
@@ -7360,16 +7427,16 @@
       onChoose: () => navigate("choose")
     });
     const n3 = trouble2.length;
-    $2("statusCount").textContent = n3 ? String(n3) : "";
+    $("statusCount").textContent = n3 ? String(n3) : "";
     setHealthApps(trouble2.map((a3) => ({ id: a3.id, name: a3.name, words: stateOf(a3, batteryPaused, held)[1] })), () => navigate("status"));
     if (n3 !== lastAttention && !document.documentElement.classList.contains("companion")) {
       lastAttention = n3;
       Promise.resolve(go().SetAttention(n3)).catch(() => {
       });
     }
-    $2("fixIt").hidden = !(st.missing || st.apps.some((a3) => a3.health === "unhealthy" || a3.health === "restarting" || a3.notAnswering || a3.settingsChanged));
+    $("fixIt").hidden = !(st.missing || st.apps.some((a3) => a3.health === "unhealthy" || a3.health === "restarting" || a3.notAnswering || a3.settingsChanged));
   }
-  mountShowAll($2("statusAllBox"));
+  mountShowAll($("statusAllBox"));
   var lastStatus = null;
   function renderAppList(st) {
     const trouble2 = (a3) => a3.health === "unhealthy" || a3.health === "restarting" || a3.state === "missing";
@@ -7384,7 +7451,7 @@
       { label: "Other", apps: st.apps.filter((a3) => rest(a3) && !(catalog?.categories || []).some((c4) => c4.id === catOf[a3.id])) }
     ].filter((g2) => g2.apps.length);
     appList = { groups: groups4, pending, catalog, weekUp, outages, seen, batteryPaused, held, busy: appsBusy, companion: document.documentElement.classList.contains("companion"), os: osName, on: appListActions, memory };
-    mountAppList($2("statusRows"), appList);
+    mountAppList($("statusRows"), appList);
   }
   async function answerPages(st) {
     let why;
@@ -7419,13 +7486,13 @@
   function showCrash(c4) {
     const seen2 = () => go().CrashSeen().catch(() => {
     }).then(loadCrash);
-    mountCrashNote($2("crashNote"), {
+    mountCrashNote($("crashNote"), {
       crash: c4,
       send: () => {
         seen2();
         navigate("settings");
         showSettingsPage(thisMachine);
-        $2("report").click();
+        $("report").click();
       },
       hide: seen2
     });
@@ -7548,21 +7615,21 @@
   }
   function drawStatus() {
     const kept4 = !statusData.error && statusData.value === remembered?.status;
-    $2("statusAge").hidden = !kept4;
-    if (kept4) $2("statusAge").textContent = `As it was ${Date.now() - new Date(remembered.at).getTime() < 6e4 ? "a few seconds ago" : ago(remembered.at)}; checking now…`;
+    $("statusAge").hidden = !kept4;
+    if (kept4) $("statusAge").textContent = `As it was ${Date.now() - new Date(remembered.at).getTime() < 6e4 ? "a few seconds ago" : ago(remembered.at)}; checking now…`;
     if (statusData.error) {
       statusById = {};
       if (catalog) renderApps();
       appList = lastStatus = null;
-      clearAppList($2("statusRows"));
-      $2("statusRows").closest("table").hidden = true;
-      $2("tiles").replaceChildren();
-      $2("alertsCard").hidden = true;
-      $2("watchCard").hidden = true;
-      $2("protectCard").hidden = true;
+      clearAppList($("statusRows"));
+      $("statusRows").closest("table").hidden = true;
+      $("tiles").replaceChildren();
+      $("alertsCard").hidden = true;
+      $("watchCard").hidden = true;
+      $("protectCard").hidden = true;
       protectionAt = 0;
       const e3 = statusData.error;
-      mountStatusNote($2("statusNote"), { text: "", down: String(e3 && e3.message || e3) });
+      mountStatusNote($("statusNote"), { text: "", down: String(e3 && e3.message || e3) });
       return;
     }
     const st = statusData.value;
@@ -7572,7 +7639,7 @@
     held = st.stopped || {};
     renderTiles(st);
     showWall();
-    $2("statusRows").closest("table").hidden = false;
+    $("statusRows").closest("table").hidden = false;
     lastStatus = st;
     renderAppList(st);
     drawOvernight();
@@ -7582,7 +7649,7 @@
       else if (boardAnswers) applyAnswers(st, boardAnswers);
     }
     const waiting2 = [...new Set(st.apps.filter((a3) => a3.state === "stopped" && a3.waitingFor).map((a3) => a3.waitingFor.replace(/^\/Volumes\//, "")))];
-    mountStatusNote($2("statusNote"), { text: [
+    mountStatusNote($("statusNote"), { text: [
       waiting2.length ? `Plug in ${waiting2.join(" and ")}: the apps waiting for ${waiting2.length === 1 ? "it" : "them"} start within 15 minutes of ${waiting2.length === 1 ? "it" : "them"} appearing.` : "",
       batteryPaused.size ? `On battery: ${batteryPaused.size} app${batteryPaused.size === 1 ? "" : "s"} paused until this computer is plugged in (Settings › Battery saver).` : "",
       st.unmatched === 1 ? "1 other container on this machine isn’t a catalog app." : st.unmatched ? `${st.unmatched} other containers on this machine aren’t catalog apps.` : ""
@@ -7590,7 +7657,7 @@
   }
   var wallAt = 0;
   async function showWall() {
-    const el3 = $2("wallCard");
+    const el3 = $("wallCard");
     if (!document.documentElement.classList.contains("wallcard")) {
       el3.hidden = true;
       return;
@@ -7605,14 +7672,14 @@
     }
   }
   setInterval(() => {
-    if (!$2("wallCard").hidden) {
+    if (!$("wallCard").hidden) {
       wallAt = 0;
       showWall();
     }
   }, 6e4);
   var lastWatch = null;
   function showWatchdog(w3) {
-    const card = $2("watchCard");
+    const card = $("watchCard");
     lastWatch = w3;
     const apps2 = new Set((catalog?.apps || []).map((a3) => a3.id));
     setHealthChecks((w3?.failing || []).map((f4) => f4.name).filter((name) => !apps2.has(name)));
@@ -7632,7 +7699,7 @@
   function drawWatchdog() {
     const w3 = lastWatch;
     if (!w3) return;
-    mountWatchdog($2("watchCard"), {
+    mountWatchdog($("watchCard"), {
       w: w3,
       unchecked: unchecked(lastStatus, w3),
       openSetup: () => {
@@ -7657,7 +7724,7 @@
   }
   var protectionAt = 0;
   function showProtection(p3, err) {
-    const card = $2("protectCard");
+    const card = $("protectCard");
     if (err) {
       card.hidden = true;
       return;
@@ -7666,7 +7733,7 @@
     mountProtection(card, { p: p3, fix: () => cliFlow("Fix it", "fix", "", "Fix these") });
   }
   function showStorage(rec) {
-    const card = $2("storageCard");
+    const card = $("storageCard");
     card.hidden = !storageShown(rec);
     if (card.hidden) return;
     mountStorage(card, { rec, nameOf: (id2) => catalog?.apps.find((a3) => a3.id === id2)?.name || id2 });
@@ -7685,18 +7752,18 @@
   }
   function showUsage(stats) {
     record(usageHistory, stats);
-    mountUsage($2("usageCard"), { stats, history: usageHistory, nameOf: (id2) => catalog?.apps.find((a3) => a3.id === id2)?.name || id2 });
+    mountUsage($("usageCard"), { stats, history: usageHistory, nameOf: (id2) => catalog?.apps.find((a3) => a3.id === id2)?.name || id2 });
     memory = memoryByApp(stats, catalog);
-    if (appList) mountAppList($2("statusRows"), appList = { ...appList, memory });
+    if (appList) mountAppList($("statusRows"), appList = { ...appList, memory });
   }
   var memory;
   var usageHistory = /* @__PURE__ */ new Map();
   setInterval(() => {
-    if (!document.hidden && $2("status").classList.contains("active")) loadUsage();
+    if (!document.hidden && $("status").classList.contains("active")) loadUsage();
   }, 1e4);
   var weekAt = 0;
   function showWeek(w3) {
-    const card = $2("weekCard");
+    const card = $("weekCard");
     if (!w3) {
       card.hidden = true;
       return;
@@ -7705,7 +7772,7 @@
     if (!card.hidden) mountWeek(card, { w: w3 });
   }
   function showAlerts(events, err) {
-    const card = $2("alertsCard");
+    const card = $("alertsCard");
     const openSetup = () => {
       navigate("setup");
     };
@@ -7761,7 +7828,7 @@
       // Backups runs it, in its own panel with its progress.
       backupNow: () => {
         navigate("backups");
-        $2("backupNow").click();
+        $("backupNow").click();
       },
       alerts: async (a3, on2) => {
         try {
@@ -7778,7 +7845,10 @@
           showError(e3);
         }
         await loadStatus();
-      }
+      },
+      // Send to my phone: the phones its page can go to, and the send.
+      targets: (a3) => targetsFor("homelab://app/" + a3.id),
+      send: (a3, t3) => sendTo(t3, "homelab://app/" + a3.id, a3.name)
     }
   };
   function leftStatus() {
@@ -7819,11 +7889,11 @@
     const what2 = apps2.length === 1 ? apps2[0].name : `${apps2.length} ${label ? label + " " : ""}apps`;
     const words5 = `Stopped ${what2}` + (until ? " " + stoppedWords({ since: "", until }).replace(/^Stopped /, "") : "");
     undoing = { apps: apps2 };
-    mountUndoNote($2("undoNote"), { words: words5, undo: undoNow, close: dropUndo });
+    mountUndoNote($("undoNote"), { words: words5, undo: undoNow, close: dropUndo });
   }
   function dropUndo() {
     undoing = null;
-    mountUndoNote($2("undoNote"), null);
+    mountUndoNote($("undoNote"), null);
   }
   function undoNow() {
     if (!undoing) return false;
@@ -7849,12 +7919,12 @@
   function setPending(id2, p3) {
     if (p3) pending[id2] = p3;
     else delete pending[id2];
-    if (appList) mountAppList($2("statusRows"), appList = { ...appList, pending: { ...pending } });
+    if (appList) mountAppList($("statusRows"), appList = { ...appList, pending: { ...pending } });
     rowWatchers.forEach((fn) => fn());
   }
   async function showQR(a3) {
     if (sheetBusy()) return;
-    const panel = $2("cliPanel"), url = "https://" + a3.address;
+    const panel = $("cliPanel"), url = "https://" + a3.address;
     if (cliStop) cliStop();
     let img;
     try {
@@ -7863,31 +7933,31 @@
       return showError(e3);
     }
     panel.hidden = false;
-    $2("cliTitle").textContent = `Open ${a3.name} on a phone`;
-    $2("cliLog").hidden = true;
-    mountSheet($2("cliActions"), k(PhoneCode, { url, img, tailnet: /\.ts\.net(:|$)/.test(a3.address), phoneApp: catalog?.apps.find((c4) => c4.id === a3.id)?.phone, close: closeCli }));
+    $("cliTitle").textContent = `Open ${a3.name} on a phone`;
+    $("cliLog").hidden = true;
+    mountSheet($("cliActions"), k(PhoneCode, { url, img, tailnet: /\.ts\.net(:|$)/.test(a3.address), phoneApp: catalog?.apps.find((c4) => c4.id === a3.id)?.phone, close: closeCli }));
     panel.scrollIntoView({ block: "nearest" });
   }
   function closeCli() {
-    $2("cliPanel").hidden = true;
-    $2("cliLog").hidden = false;
+    $("cliPanel").hidden = true;
+    $("cliLog").hidden = false;
   }
   function cliButtons(buttons) {
-    const row = $2("cliActions"), had = row.contains(document.activeElement);
+    const row = $("cliActions"), had = row.contains(document.activeElement);
     mountSheet(row, k(Buttons, { buttons, key: buttons.map((b2) => b2.label).join("|") }));
-    if (had && !row.contains(document.activeElement)) (row.querySelector("button") || $2("cliPanel")).focus();
+    if (had && !row.contains(document.activeElement)) (row.querySelector("button") || $("cliPanel")).focus();
   }
   var hideButton = { label: "Hide", title: "It carries on, its bar in the sidebar", onClick: () => {
     bgHide();
-    $2("cliPanel").hidden = true;
+    $("cliPanel").hidden = true;
   } };
   var runInSheet = (title) => bgStart(title, () => {
-    $2("cliPanel").hidden = false;
+    $("cliPanel").hidden = false;
   });
   var sheetBusy = waitForBg;
   async function showSignIn(a3, keys2) {
     if (sheetBusy()) return;
-    const panel = $2("cliPanel");
+    const panel = $("cliPanel");
     if (cliStop) cliStop();
     let list = [];
     try {
@@ -7898,9 +7968,9 @@
     const byKey2 = Object.fromEntries(list.map((s3) => [s3.key, s3]));
     const label = (k3) => /PASSWORD$/.test(k3) ? "Password" : /EMAIL$/.test(k3) ? "Email" : /USER$/.test(k3) ? "User name" : settingLabel(k3);
     panel.hidden = false;
-    $2("cliTitle").textContent = `Sign in to ${a3.name}`;
-    $2("cliLog").textContent = "";
-    $2("cliLog").hidden = true;
+    $("cliTitle").textContent = `Sign in to ${a3.name}`;
+    $("cliLog").textContent = "";
+    $("cliLog").hidden = true;
     const rows = keys2.map((k3) => {
       const s3 = byKey2[k3] || {};
       const copy = s3.secret ? () => go().CopySetting(k3).then(() => "✓ Password copied; the clipboard clears in 90 seconds.", (e3) => {
@@ -7912,7 +7982,7 @@
       };
       return { label: label(k3), shown: s3.secret ? s3.set ? "••••••••" : "not set" : s3.value || "not set", copy: s3.set ? copy : void 0 };
     });
-    mountSheet($2("cliActions"), k(SignIns, { rows, close: closeCli }));
+    mountSheet($("cliActions"), k(SignIns, { rows, close: closeCli }));
     panel.scrollIntoView({ block: "nearest" });
   }
   var actionTitle = { start: "Starting", stop: "Stopping", restart: "Restarting", update: "Updating", rollback: "Rolling back" };
@@ -7922,11 +7992,11 @@
   async function runAppAction(a3, action, until) {
     if (quiet.has(action)) return runQuietly(a3, action, until);
     if (sheetBusy()) return;
-    const panel = $2("cliPanel"), log2 = $2("cliLog");
+    const panel = $("cliPanel"), log2 = $("cliLog");
     log2.hidden = false;
     if (cliStop) cliStop();
     panel.hidden = false;
-    $2("cliTitle").textContent = `${actionTitle[action]} ${a3.name}…`;
+    $("cliTitle").textContent = `${actionTitle[action]} ${a3.name}…`;
     log2.textContent = "";
     clearJob("cli");
     const title = `${actionTitle[action]} ${a3.name}`;
@@ -7959,7 +8029,7 @@
     });
     if (failed) setPending(a3.id, { action, failed });
     if (!failed && action === "stop") offerUndo([a3], until);
-    $2("cliTitle").textContent = failed ? `${actionTitle[action]} ${a3.name} failed` : `${a3.name}: ${action} done`;
+    $("cliTitle").textContent = failed ? `${actionTitle[action]} ${a3.name} failed` : `${a3.name}: ${action} done`;
     cliButtons([{ label: "Close", onClick: () => {
       panel.hidden = true;
     } }]);
@@ -7993,10 +8063,10 @@
   }
   function showDetails(a3) {
     if (sheetBusy()) return;
-    const panel = $2("cliPanel"), log2 = $2("cliLog");
+    const panel = $("cliPanel"), log2 = $("cliLog");
     if (cliStop) cliStop();
     panel.hidden = false;
-    $2("cliTitle").textContent = `${a3.name}: what happened`;
+    $("cliTitle").textContent = `${a3.name}: what happened`;
     log2.hidden = false;
     log2.textContent = lastLog[a3.id] || "Nothing was kept.";
     cliButtons([{ label: "Close", onClick: () => {
@@ -8006,13 +8076,13 @@
   }
   function showUpdate(a3) {
     if (sheetBusy()) return;
-    const panel = $2("cliPanel");
+    const panel = $("cliPanel");
     if (cliStop) cliStop();
     panel.hidden = false;
-    $2("cliTitle").textContent = `Update ${a3.name}`;
-    $2("cliLog").hidden = true;
+    $("cliTitle").textContent = `Update ${a3.name}`;
+    $("cliLog").hidden = true;
     cliProgress(null);
-    mountSheet($2("cliActions"), k(ReleaseNotes, {
+    mountSheet($("cliActions"), k(ReleaseNotes, {
       key: a3.id,
       name: a3.name,
       load: () => go().ReleaseNotes(a3.id),
@@ -8022,17 +8092,17 @@
     }));
     panel.scrollIntoView({ block: "nearest" });
   }
-  mountSheets($2("sheets"), () => {
+  mountSheets($("sheets"), () => {
     if (missed) refreshStatus();
   });
   var cliStop = null;
   async function cliFlow(title, action, target, confirmLabel) {
     if (sheetBusy()) return;
-    const panel = $2("cliPanel"), log2 = $2("cliLog");
+    const panel = $("cliPanel"), log2 = $("cliLog");
     log2.hidden = false;
     if (cliStop) cliStop();
     panel.hidden = false;
-    $2("cliTitle").textContent = title;
+    $("cliTitle").textContent = title;
     log2.textContent = "";
     clearJob("cli");
     let off2 = null, cancelled = false;
@@ -8116,50 +8186,50 @@
       } }
     ]);
   }
-  $2("cleanup").onclick = () => cliFlow("Remove old containers whose apps now run in the homelab", "cleanup", "", "Remove them");
-  $2("fixIt").onclick = () => cliFlow("Fix it", "fix", "", "Fix these");
-  $2("updateAll").onclick = () => cliFlow("Update all apps now", "update-all", "", "Update them");
-  var menuItems = () => [...$2("statusMenu").querySelectorAll("[role=menuitem]")].filter((b2) => !b2.hidden && !b2.disabled);
+  $("cleanup").onclick = () => cliFlow("Remove old containers whose apps now run in the homelab", "cleanup", "", "Remove them");
+  $("fixIt").onclick = () => cliFlow("Fix it", "fix", "", "Fix these");
+  $("updateAll").onclick = () => cliFlow("Update all apps now", "update-all", "", "Update them");
+  var menuItems = () => [...$("statusMenu").querySelectorAll("[role=menuitem]")].filter((b2) => !b2.hidden && !b2.disabled);
   function closeMenu() {
-    $2("statusMenu").hidden = true;
-    $2("statusMore").setAttribute("aria-expanded", "false");
+    $("statusMenu").hidden = true;
+    $("statusMore").setAttribute("aria-expanded", "false");
   }
   function openMenu(at2) {
-    $2("statusMenu").hidden = false;
-    $2("statusMore").setAttribute("aria-expanded", "true");
+    $("statusMenu").hidden = false;
+    $("statusMore").setAttribute("aria-expanded", "true");
     const items = menuItems();
     if (at2 && items.length) items[at2 === "first" ? 0 : items.length - 1].focus();
   }
-  $2("statusMore").onclick = (e3) => {
+  $("statusMore").onclick = (e3) => {
     e3.stopPropagation();
-    if ($2("statusMenu").hidden) openMenu(e3.detail === 0 ? "first" : void 0);
+    if ($("statusMenu").hidden) openMenu(e3.detail === 0 ? "first" : void 0);
     else closeMenu();
   };
-  $2("statusMore").addEventListener("keydown", (e3) => {
+  $("statusMore").addEventListener("keydown", (e3) => {
     if (e3.key === "ArrowDown" || e3.key === "ArrowUp") {
       e3.preventDefault();
       openMenu(e3.key === "ArrowDown" ? "first" : "last");
     }
   });
-  $2("statusMenu").addEventListener("keydown", (e3) => {
+  $("statusMenu").addEventListener("keydown", (e3) => {
     const items = menuItems(), at2 = items.indexOf(document.activeElement);
     const to = { ArrowDown: at2 + 1, ArrowUp: at2 - 1, Home: 0, End: items.length - 1 }[e3.key];
     if (to === void 0 || !items.length) return;
     e3.preventDefault();
     items[(to + items.length) % items.length].focus();
   });
-  $2("statusMenu").addEventListener("click", closeMenu);
+  $("statusMenu").addEventListener("click", closeMenu);
   document.addEventListener("click", (e3) => {
-    if (!$2("statusMenu").hidden && !e3.target.closest(".menuwrap")) closeMenu();
+    if (!$("statusMenu").hidden && !e3.target.closest(".menuwrap")) closeMenu();
   });
   document.addEventListener("keydown", (e3) => {
-    if (e3.key !== "Escape" || $2("statusMenu").hidden) return;
-    const inside = $2("statusMenu").contains(document.activeElement);
+    if (e3.key !== "Escape" || $("statusMenu").hidden) return;
+    const inside = $("statusMenu").contains(document.activeElement);
     closeMenu();
-    if (inside) $2("statusMore").focus();
+    if (inside) $("statusMore").focus();
   });
-  $2("statusMore").closest(".menuwrap").addEventListener("focusout", () => setTimeout(() => {
-    if (!$2("statusMenu").hidden && document.hasFocus() && !$2("statusMore").closest(".menuwrap").contains(document.activeElement)) closeMenu();
+  $("statusMore").closest(".menuwrap").addEventListener("focusout", () => setTimeout(() => {
+    if (!$("statusMenu").hidden && document.hasFocus() && !$("statusMore").closest(".menuwrap").contains(document.activeElement)) closeMenu();
   }));
   var missed = false;
   function refreshStatus(c4) {
@@ -8169,11 +8239,11 @@
       statusData.set(c4.status);
       return;
     }
-    if ($2("status").classList.contains("active") && !behind) loadStatus();
+    if ($("status").classList.contains("active") && !behind) loadStatus();
     else statusData.stale();
   }
   setInterval(refreshStatus, 6e4);
-  $2("phoneReport").onclick = async (e3) => {
+  $("phoneReport").onclick = async (e3) => {
     const btn = e3.target;
     btn.disabled = true;
     btn.textContent = "Making the report…";
@@ -8184,7 +8254,7 @@
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({ files: [file], title: "Homelab report", text: text2 });
       } else {
-        const a3 = $2("reportDownload");
+        const a3 = $("reportDownload");
         a3.href = URL.createObjectURL(file);
         a3.download = file.name;
         a3.click();
@@ -8645,15 +8715,15 @@
     ] });
   }
   function Stopped({ stopped: stopped2 }) {
-    const reading = stopped2 === "reading", s3 = reading ? null : stopped2;
+    const reading2 = stopped2 === "reading", s3 = reading2 ? null : stopped2;
     const today2 = s3?.today || [];
     const more2 = (s3?.todayCount || 0) - today2.length;
     const head = s3 && (s3.todayCount === 1 ? "1 today" : `${s3.todayCount} today`) + (s3.bannedNow ? ` · ${s3.bannedNow} banned now` : "");
     const quiet2 = !s3 ? "" : s3.week ? `Nothing yet today; ${s3.week === 1 ? "1" : s3.week} this week${s3.recent?.[0] ? `, the last ${ago(s3.recent[0].when)}` : ""}.` : "Nothing this week.";
     return /* @__PURE__ */ u3(Card, { kind: "alerts pagecard", id: "appStopped", children: [
       /* @__PURE__ */ u3(CardHead, { title: "What CrowdSec stopped today", children: head && /* @__PURE__ */ u3("span", { class: "muted", children: head }) }),
-      reading && /* @__PURE__ */ u3(Empty, { children: "Asking CrowdSec…" }),
-      !s3 && !reading && /* @__PURE__ */ u3(Empty, { children: "CrowdSec can't be read right now: it and the proxy both need to be running." }),
+      reading2 && /* @__PURE__ */ u3(Empty, { children: "Asking CrowdSec…" }),
+      !s3 && !reading2 && /* @__PURE__ */ u3(Empty, { children: "CrowdSec can't be read right now: it and the proxy both need to be running." }),
       s3 && !s3.enforced && /* @__PURE__ */ u3(Rows, { children: /* @__PURE__ */ u3(Row, { dot: "bad", title: "Bans aren't reaching the proxy", sub: `${s3.bouncer}. Status › Protection › Fix reconnects them.` }) }),
       s3 && (today2.length ? /* @__PURE__ */ u3(Rows, { children: [
         today2.map((a3, i3) => /* @__PURE__ */ u3(
@@ -8829,7 +8899,7 @@
     draw3();
   }
   var icons2 = {};
-  var shown3 = () => !!id && $2("app").classList.contains("active");
+  var shown3 = () => !!id && $("app").classList.contains("active");
   var openedApp = () => id;
   function openApp(appId) {
     if (appId !== id) {
@@ -8845,7 +8915,7 @@
       h1.tabIndex = -1;
       h1.focus({ preventScroll: true });
     }
-    $2("app").scrollIntoView?.({ block: "start" });
+    $("app").scrollIntoView?.({ block: "start" });
   }
   pageOpener.open = openApp;
   function refreshApp() {
@@ -8909,14 +8979,14 @@
     const a3 = statusById[id];
     if (!a3) {
       if (shown3() && statusData.value) {
-        mountAppPage($2("appPage"), null);
+        mountAppPage($("appPage"), null);
         show3("status");
       }
       return;
     }
     const entry = catalog?.apps.find((c4) => c4.id === id);
     const companion2 = document.documentElement.classList.contains("companion");
-    mountAppPage($2("appPage"), {
+    mountAppPage($("appPage"), {
       a: a3,
       entry,
       state: stateOf(a3, new Set(statusData.value?.batteryPaused || []), statusData.value?.stopped || {}),
@@ -8960,14 +9030,14 @@
         // Backups runs it, in its own panel with its progress.
         backupNow: () => {
           navigate("backups");
-          $2("backupNow").click();
+          $("backupNow").click();
         },
         openBackups: () => navigate("backups"),
         setting: (setting, on2) => setSetting(a3.id, setting, on2),
         remove: () => cliFlow(`Remove ${a3.name}: a backup of its data first, then its container goes`, "remove", a3.id, "Back up and remove"),
         openPeople: () => {
           navigate("settings");
-          $2("peopleCard")?.scrollIntoView({ block: "start" });
+          $("peopleCard")?.scrollIntoView({ block: "start" });
         }
       }
     });
@@ -11760,8 +11830,8 @@
     const amexCards = cards.filter((a3) => brandOf(a3.institution, a3.name) === "americanexpress");
     const toCard = amexCards.length === 1 ? amexCards[0] : cards.length === 1 ? cards[0] : void 0;
     const plusRead = signed2 && !flipped && chargesPlus(asRead);
-    const here2 = accounts.find((a3) => a3.id === account);
-    const cardHere = card || !!here2 && brandOf(here2.institution, here2.name) === "americanexpress";
+    const here3 = accounts.find((a3) => a3.id === account);
+    const cardHere = card || !!here3 && brandOf(here3.institution, here3.name) === "americanexpress";
     const have = ledger?.transactions || [];
     const memory3 = renameMemory(have, cleanPayee);
     const found2 = read_.map((t3) => {
@@ -11867,7 +11937,7 @@
         ] }),
         plusRead && cardHere && /* @__PURE__ */ u3("p", { class: "importnote importwarn", role: "alert", children: [
           "Most of these rows are read as money coming in, which on ",
-          here2?.name || "this card",
+          here3?.name || "this card",
           " lowers what it owes. A card's file writes its charges as plus amounts (American Express does).",
           " ",
           /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => setFlip(true), children: "Read them as charges" })
@@ -17283,7 +17353,7 @@ ${pays}
   function readEachMorning(v3) {
     const at2 = new Date(v3.plan.holdingsRead || "");
     if (phone || v3.readOnly || v3.plan.readByHand || isNaN(at2.getTime()) || autoTried === v3.today || invest.busy) return;
-    if (!$2("finances").classList.contains("active") || !runs("ghostfolio")) return;
+    if (!$("finances").classList.contains("active") || !runs("ghostfolio")) return;
     if (isoDay(at2) >= v3.today && Date.now() - at2.getTime() < 12 * 36e5) return;
     autoTried = v3.today;
     readInvestments();
@@ -17306,10 +17376,10 @@ ${pays}
   var editing = null;
   var phone = document.documentElement.classList.contains("companion");
   function draw4() {
-    if (financesData.error && $2("finances").classList.contains("active")) showError(financesData.error);
+    if (financesData.error && $("finances").classList.contains("active")) showError(financesData.error);
     const v3 = financesData.value || null;
     setHidden(!!v3?.plan.hideAmounts);
-    mountFinances($2("finRoot"), {
+    mountFinances($("finRoot"), {
       v: v3,
       ledger: ledgerData.value || null,
       tab,
@@ -17356,16 +17426,16 @@ ${pays}
       } }
     });
     if (v3) readEachMorning(v3);
-    if (editing && v3 && !v3.readOnly) mountFinanceSheet($2("finSheetBox"), { ...editing, plan: v3.plan, checking: v3.checking, start: v3.start, dues: v3.dues, categories: v3.categories, ledger: ledgerData.value, save, saveLedger, receipts, fetchLogo, fromApps: fromApps(), close: close2 });
-    mountBalances($2("finNav"), v3, (g2) => {
+    if (editing && v3 && !v3.readOnly) mountFinanceSheet($("finSheetBox"), { ...editing, plan: v3.plan, checking: v3.checking, start: v3.start, dues: v3.dues, categories: v3.categories, ledger: ledgerData.value, save, saveLedger, receipts, fetchLogo, fromApps: fromApps(), close: close2 });
+    mountBalances($("finNav"), v3, (g2) => {
       tab = "worth";
       group = g2;
       navigate("finances");
       draw4();
-      $2("finRoot").querySelector(".fx-groupcard")?.scrollIntoView({ block: "start" });
+      $("finRoot").querySelector(".fx-groupcard")?.scrollIntoView({ block: "start" });
     }, v3 && !v3.readOnly ? toggleHideAmounts : void 0);
     const low = v3 ? v3.periods.filter((p3) => p3.left < (v3.plan.cushion || 0)).length : 0;
-    $2("financesCount").textContent = low ? String(low) : "";
+    $("financesCount").textContent = low ? String(low) : "";
   }
   async function exportFile(name, text2) {
     if (!phone) {
@@ -17383,7 +17453,7 @@ ${pays}
       }
       return `Shared ${name}`;
     }
-    const a3 = $2("reportDownload");
+    const a3 = $("reportDownload");
     a3.href = URL.createObjectURL(file);
     a3.download = name;
     a3.click();
@@ -17439,14 +17509,14 @@ ${pays}
     const v3 = financesData.value;
     if (!v3 || v3.readOnly) return;
     editing = { what: what2, id: id2, kind, n: ++opened };
-    mountFinanceSheet($2("finSheetBox"), { ...editing, plan: v3.plan, checking: v3.checking, start: v3.start, dues: v3.dues, categories: v3.categories, ledger: ledgerData.value, save, saveLedger, receipts, fetchLogo, fromApps: fromApps(), close: close2 });
-    $2("finSheet").hidden = false;
+    mountFinanceSheet($("finSheetBox"), { ...editing, plan: v3.plan, checking: v3.checking, start: v3.start, dues: v3.dues, categories: v3.categories, ledger: ledgerData.value, save, saveLedger, receipts, fetchLogo, fromApps: fromApps(), close: close2 });
+    $("finSheet").hidden = false;
   }
   function close2() {
     editing = null;
-    $2("finSheet").hidden = true;
+    $("finSheet").hidden = true;
   }
-  mountFinanceSheet($2("finSheetBox"), null);
+  mountFinanceSheet($("finSheetBox"), null);
   draw4();
 
   // web/src/tidy/Tidy.tsx
@@ -18116,8 +18186,8 @@ ${pays}
       go: { label: "Choose another…", run: () => act.places(true), quiet: true }
     }] : [];
     const gone = away2.filter((l3) => !onIt.includes(l3)).map((l3) => ({ kind: l3.kind, title: `${names3[l3.kind]}: its drive isn't plugged in`, sub: `${l3.folder} could not be found. It shows up here again once it's back.`, warn: true }));
-    const here2 = new Set(d3.libraries.filter((l3) => l3.found).map((l3) => l3.kind));
-    const tools = toolsRow(d3, act, (needs) => needs === "all" || (toolFor[needs] || []).some((k3) => here2.has(k3)));
+    const here3 = new Set(d3.libraries.filter((l3) => l3.found).map((l3) => l3.kind));
+    const tools = toolsRow(d3, act, (needs) => needs === "all" || (toolFor[needs] || []).some((k3) => here3.has(k3)));
     const machine = d3.checks.filter((c4) => !c4.ok && c4.needs && c4.id !== "drive" && !TOOLS.has(c4.id)).map((c4) => ({ kind: "machine", title: c4.name, sub: `${c4.note}. ${c4.fix}`, warn: true }));
     return [...plug, ...tools, ...machine, ...LIBRARIES.flatMap((k3) => todosFor(lib(d3, k3), d3, act, review2, pick)), ...gone];
   }
@@ -18635,7 +18705,7 @@ ${pays}
   var FOLLOW_MS = 3e3;
   function draw5() {
     const d3 = tidyData.value || null;
-    mountTidy($2("tidyRoot"), {
+    mountTidy($("tidyRoot"), {
       d: d3,
       error: tidyData.error ? errorText(tidyData.error) : void 0,
       tab: tab2,
@@ -18694,7 +18764,7 @@ ${pays}
         ask: (c4) => {
           confirm = c4;
           drawSheet();
-          $2("tidySheet").hidden = false;
+          $("tidySheet").hidden = false;
         },
         reveal: (path) => {
           Promise.resolve(go().TidyReveal(path)).catch(showError);
@@ -18757,7 +18827,7 @@ ${pays}
         }
       }
     });
-    if (job && (!document.activeElement || document.activeElement === document.body) && $2("tidy").classList.contains("active")) document.querySelector("#tidyJob button:not([disabled])")?.focus();
+    if (job && (!document.activeElement || document.activeElement === document.body) && $("tidy").classList.contains("active")) document.querySelector("#tidyJob button:not([disabled])")?.focus();
     if (showReview && tab2 === "books" && (review || reviewError)) {
       showReview = false;
       const box = document.getElementById("tidyReview") || document.getElementById("tidyReviewError");
@@ -18765,7 +18835,7 @@ ${pays}
       box?.querySelector("input, button")?.focus({ preventScroll: true });
     }
     const looks2 = (d3?.checks || []).filter((c4) => !c4.ok && c4.needs === "all").length + (d3?.libraries || []).filter((l3) => l3.stage === "swapped").length;
-    $2("tidyCount").textContent = looks2 ? String(looks2) : "";
+    $("tidyCount").textContent = looks2 ? String(looks2) : "";
     follow2();
   }
   function follow2() {
@@ -18777,7 +18847,7 @@ ${pays}
           running4 = null;
           return;
         }
-        if (!$2("tidy").classList.contains("active")) {
+        if (!$("tidy").classList.contains("active")) {
           follow2();
           return;
         }
@@ -18796,14 +18866,14 @@ ${pays}
     }
   }
   function drawSheet() {
-    mountTidySheet($2("tidySheetBox"), confirm, () => {
-      const s3 = $2("tidySheet");
+    mountTidySheet($("tidySheetBox"), confirm, () => {
+      const s3 = $("tidySheet");
       if (!s3.hidden) s3.hidden = true;
     });
   }
   tidyData.watch(draw5);
   window.addEventListener("focus", () => {
-    if ($2("tidy").classList.contains("active") && (!job || job.ended) && (tidyData.value?.checks || []).some((c4) => !c4.ok && c4.needs)) tidyData.load();
+    if ($("tidy").classList.contains("active") && (!job || job.ended) && (tidyData.value?.checks || []).some((c4) => !c4.ok && c4.needs)) tidyData.load();
   });
   function loadTidy() {
     running4 = null;
@@ -19008,6 +19078,18 @@ ${pays}
     ["finances", "Finances", "6", "money budget bills"],
     ["tidy", "Tidy Up", "7", "media library music books films"]
   ];
+  var finTabs = { overview: "Dashboard", transactions: "Transactions", reports: "Reports", calendar: "Calendar", recurring: "Recurring", pay: "Paychecks", worth: "Net worth" };
+  function sendable() {
+    const p3 = here2();
+    if (!p3) return null;
+    if (p3.screen === "app" && p3.app) return { link: "homelab://app/" + p3.app, title: statusById[p3.app]?.name || p3.app };
+    if (p3.screen === "status" || p3.screen === "backups") return { link: "homelab://" + p3.screen, title: p3.screen === "status" ? "Status" : "Backups" };
+    if (p3.screen === "finances") {
+      const tab3 = p3.tab && finTabs[p3.tab] ? p3.tab : "overview";
+      return { link: tab3 === "overview" ? "homelab://finances" : "homelab://finances/" + tab3, title: tab3 === "overview" ? "Finances" : `Finances › ${finTabs[tab3]}` };
+    }
+    return null;
+  }
   var onStatus = (fn) => () => {
     navigate("status");
     fn();
@@ -19018,18 +19100,20 @@ ${pays}
     const add = (c4) => list.push(c4);
     add({ id: "reload", label: "Check again", hint: mod + "R", also: "reload refresh", run: () => reloadScreen() });
     if (!phone2) {
-      add({ id: "updateall", label: "Update all apps", also: "upgrade everything", run: onStatus(() => $2("updateAll").click()) });
+      add({ id: "updateall", label: "Update all apps", also: "upgrade everything", run: onStatus(() => $("updateAll").click()) });
       add({ id: "backupnow", label: "Back up now", also: "backup", run: () => {
         navigate("backups");
-        $2("backupNow").click();
+        $("backupNow").click();
       } });
     }
-    if (!$2("fixIt").hidden) add({ id: "fixit", label: "Fix it", also: "repair what is wrong", run: onStatus(() => $2("fixIt").click()) });
+    if (!$("fixIt").hidden) add({ id: "fixit", label: "Fix it", also: "repair what is wrong", run: onStatus(() => $("fixIt").click()) });
     const fin = financesData.value;
     if (fin && !fin.readOnly) add({ id: "hide", label: fin.plan.hideAmounts ? "Show amounts" : "Hide amounts", hint: isMac ? "⌘⇧H" : "Ctrl+Shift+H", also: "money privacy blur", run: toggleHideAmounts });
     if (!phone2) add({ id: "shortcuts", label: "Keyboard shortcuts", hint: "?", also: "keys help", run: () => {
       requestAnimationFrame(() => requestAnimationFrame(() => openShortcuts()));
     } });
+    const page = sendable();
+    if (page && !phone2) for (const t3 of targetsFor(page.link)) add({ id: `send:${t3.id}`, label: `Send ${page.title} to ${t3.name}`, also: "send to my phone open on", run: () => sendTo(t3, page.link, page.title) });
     for (const [id2, label, key6, also] of screenList) {
       if (phone2 && (id2 === "setup" || id2 === "choose")) continue;
       add({ id: "screen:" + id2, label, hint: mod + key6, also: "screen go " + also, run: () => navigate(id2) });
@@ -19369,7 +19453,7 @@ ${pays}
   }
   var from = null;
   function openContextMenu(label, x3, y3, items) {
-    const host2 = $2("contextMenu");
+    const host2 = $("contextMenu");
     from = document.activeElement;
     const close3 = (refocus) => {
       R(null, host2);
@@ -19387,8 +19471,8 @@ ${pays}
   function navItems(screen) {
     const again = { label: "Check again", run: on(screen, () => reloadScreen()) };
     if (screen === "status") {
-      const items = [again, "-", { label: "Update all apps…", run: on("status", () => $2("updateAll").click()), disabled: $2("updateAll").disabled }];
-      if (!$2("fixIt").hidden) items.push({ label: "Fix it", run: on("status", () => $2("fixIt").click()) });
+      const items = [again, "-", { label: "Update all apps…", run: on("status", () => $("updateAll").click()), disabled: $("updateAll").disabled }];
+      if (!$("fixIt").hidden) items.push({ label: "Fix it", run: on("status", () => $("fixIt").click()) });
       return items;
     }
     if (screen === "backups") {
@@ -19396,7 +19480,7 @@ ${pays}
       return [
         again,
         "-",
-        { label: "Back up now", run: on("backups", () => $2("backupNow").click()), disabled: $2("backupNow").disabled },
+        { label: "Back up now", run: on("backups", () => $("backupNow").click()), disabled: $("backupNow").disabled },
         { label: "Test a restore", run: on("backups", () => test()?.click()), disabled: !test() || test().disabled }
       ];
     }
@@ -19551,6 +19635,13 @@ ${pays}
       moving = false;
     }
   }
+  var here2 = () => current;
+  function goTo(p3) {
+    if (p3.app) return openApp(p3.app);
+    if (p3.tab !== void 0 && tabbed[p3.screen]?.now() !== p3.tab) tabbed[p3.screen]?.put(p3.tab);
+    navigate(p3.screen);
+    focusScreen(p3.screen);
+  }
   function goBack() {
     const p3 = back2.pop();
     if (!p3) return false;
@@ -19704,8 +19795,8 @@ ${pays}
       const search = { choose: "search", settings: "settingsSearch" }[current2];
       if (search) {
         e3.preventDefault();
-        $2(search).focus();
-        $2(search).select();
+        $(search).focus();
+        $(search).select();
       }
       const box = current2 === "finances" ? document.querySelector("#finances .fx-txsearch") : null;
       if (box) {
@@ -19722,6 +19813,8 @@ ${pays}
     window.runtime.EventsOn("hideAmounts", () => toggleHideAmounts());
     window.runtime.EventsOn("palette", () => openPalette());
     window.runtime.EventsOn("status:changed", refreshStatus);
+    window.runtime.EventsOn("phone:open", (o3) => showSent(o3, goTo));
+    void readTargets();
     window.runtime.EventsOn("cli:step", cliProgress);
     window.runtime.EventsOn("job:app", jobApp);
     window.runtime.EventsOn("refresh", reloadScreen);
