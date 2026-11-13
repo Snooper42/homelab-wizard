@@ -17,6 +17,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/backup"
 	"github.com/Snooper42/homelab-wizard/internal/detect"
 	"github.com/Snooper42/homelab-wizard/internal/docker"
+	"github.com/Snooper42/homelab-wizard/internal/duplicati"
 	"github.com/Snooper42/homelab-wizard/internal/envfile"
 	"github.com/Snooper42/homelab-wizard/internal/ui"
 )
@@ -305,5 +306,82 @@ func TestDuplicatiDestination(t *testing.T) {
 	}
 	if got, _ := saved.Get("BACKUP_DESTINATION"); got != other {
 		t.Fatalf("named folder not saved: BACKUP_DESTINATION=%q, want %q", got, other)
+	}
+}
+
+// A backup job added to the homelab after Setup made the others (Homelab
+// Files, N76) is made by the nightly backup on a homelab that has the rest,
+// without a first run (it is large, so it waits for its schedule); a
+// homelab whose jobs Setup hasn't made yet gets none.
+func TestTheNightAddsANewBackupJob(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
+	dest := t.TempDir()
+	have := `[]`
+	var created []string
+	var ran int
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method + " " + r.URL.Path {
+		case "POST /api/v1/auth/login":
+			w.Write([]byte(`{"AccessToken":"tok"}`))
+		case "GET /api/v1/backups":
+			w.Write([]byte(have))
+		case "POST /api/v1/filesystem":
+			var nodes []map[string]string
+			entries, _ := os.ReadDir(dest)
+			for _, e := range entries {
+				nodes = append(nodes, map[string]string{"text": e.Name()})
+			}
+			_ = json.NewEncoder(w).Encode(nodes)
+		case "POST /api/v1/backups":
+			var body map[string]any
+			_ = json.NewDecoder(r.Body).Decode(&body)
+			created = append(created, body["Backup"].(map[string]any)["Name"].(string))
+			fmt.Fprintf(w, `{"ID":"%d"}`, len(created)+10)
+		case "PATCH /api/v1/serversettings":
+		default:
+			if strings.HasSuffix(r.URL.Path, "/run") {
+				ran++
+				w.Write([]byte(`{"Status":"OK","ID":3}`))
+				return
+			}
+			w.WriteHeader(http.StatusNotFound)
+		}
+	}))
+	defer srv.Close()
+	_, port, _ := net.SplitHostPort(strings.TrimPrefix(srv.URL, "http://"))
+	root, _ := repoCopy(t, "BACKUP_DESTINATION="+dest, "DUPLICATI_PORT="+port, "DUPLICATI_PASSWORD=pw",
+		"DUPLICATI_PASSPHRASE=0123456789abcdef0123456789abcdef", "DUPLICATI_SECRETS_PASSPHRASE=fedcba9876543210fedcba9876543210")
+	if err := os.MkdirAll(filepath.Join(root, "data", "sync", "Documents"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "data", "sync", "Documents", "notes.txt"), []byte("a synced file"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	for _, j := range duplicati.HomelabJobs {
+		_ = os.MkdirAll(filepath.Join(dest, j.Folder), 0o755) // what Duplicati sees at /destination
+	}
+	out := &bytes.Buffer{}
+	h, err := newHomelab(&ui.UI{Out: out}, root)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	h.addMissingBackupJobs(context.Background())
+	if len(created) != 0 {
+		t.Fatalf("jobs made before Setup made any: %v\n%s", created, out)
+	}
+
+	var jobs []string
+	for i, j := range duplicati.HomelabJobs {
+		if j.Name != "Homelab Files" {
+			jobs = append(jobs, fmt.Sprintf(`{"Backup":{"ID":"%d","Name":%q,"Metadata":{}}}`, i+1, j.Name))
+		}
+	}
+	have = "[" + strings.Join(jobs, ",") + "]"
+	h.addMissingBackupJobs(context.Background())
+	if strings.Join(created, ",") != "Homelab Files" || ran != 0 {
+		t.Fatalf("made %v, %d run(s) started; want Homelab Files, waiting for its schedule\n%s", created, ran, out)
 	}
 }

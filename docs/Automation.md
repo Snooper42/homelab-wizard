@@ -170,7 +170,7 @@ Duplicati runs the jobs below. **Create the backup jobs** on the Setup screen (o
 - Zip compression and smart retention (a version a day for a week, a week for a month, a month for a year).
 - Each job writes into its own folder in `BACKUP_DESTINATION`.
 
-It leaves a job that already exists (by name) as it is. When a new job's folder already holds a backup (a rebuilt machine), it rebuilds the job's database from it (a repair) instead of a first run. It creates the photo, Jellyfin, and books jobs only once their folder on this machine has something in it, and runs the small jobs once straight away. It first checks that Duplicati sees `BACKUP_DESTINATION` at `/destination`, and recreates Duplicati when it still has an older folder (after the setting changed). The sources are container paths. See [Backups](<Backups.md>) for the full mapping.
+It leaves a job that already exists (by name) as it is. When a new job's folder already holds a backup (a rebuilt machine), it rebuilds the job's database from it (a repair) instead of a first run. It creates the photo, Jellyfin, books, and synced Files jobs only once their folder on this machine has something in it, and runs the small jobs once straight away. It first checks that Duplicati sees `BACKUP_DESTINATION` at `/destination`, and recreates Duplicati when it still has an older folder (after the setting changed). The sources are container paths. See [Backups](<Backups.md>) for the full mapping.
 
 | Job | Source | Folder | Schedule |
 |---|---|---|---|
@@ -182,6 +182,7 @@ It leaves a job that already exists (by name) as it is. When a new job's folder 
 | Homelab Infrastructure | `/source/stacks` | `infrastructure` | Sundays 06:00 |
 | Homelab Jellyfin | `/source/jellyfin` (without its cache, transcodes, and logs) | `jellyfin` | Sundays 02:00 |
 | Homelab Calibre | `/source/calibre` | `calibre` | Sundays 03:00 |
+| Homelab Files | `/source/sync` (Syncthing's synced folders, `SYNC_ROOT`) | `files` | Daily 05:45 |
 
 `./homelab duplicati jobs` lists them with their last and next run, as the app's Backups screen does.
 

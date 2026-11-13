@@ -52,6 +52,8 @@ services:
       - ${JELLYFIN_DATA_DIR:-~/.local/share/jellyfin}:/source/jellyfin:ro
       - ${IMMICH_UPLOAD_LOCATION:-/Volumes/Media/photos}:/source/immich:ro
       - ${MEDIA_ROOT:-/Volumes/Media}/Books:/source/calibre:ro
+      # The household's synced Files (Syncthing), for the Homelab Files job.
+      - ${SYNC_ROOT:-./data/sync}:/source/sync:ro
       - ./recovery-staging:/staging
       - ${BACKUP_DESTINATION:-./backups}:/destination
     x-homelab:

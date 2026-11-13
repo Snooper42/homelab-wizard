@@ -38,6 +38,7 @@ In the app, **Backups** shows all of it: the last backup, each app's newest copy
 | `JELLYFIN_DATA_DIR` | `/source/jellyfin` | read-only |
 | `IMMICH_UPLOAD_LOCATION` | `/source/immich` | read-only |
 | `MEDIA_ROOT/Books` | `/source/calibre` | read-only |
+| `SYNC_ROOT` (default `~/Homelab/data/sync`) | `/source/sync` | read-only |
 | `~/Homelab/recovery-staging` | `/staging` | read-write |
 | `BACKUP_DESTINATION` | `/destination` | read-write |
 
@@ -55,6 +56,7 @@ Job settings always use the container paths on the right. Sources are read-only,
 | Photos and videos | Homelab Photos job (`/source/immich`) |
 | Jellyfin settings and metadata | Homelab Jellyfin job (`/source/jellyfin`) |
 | Calibre library (`metadata.db` and books) | Homelab Calibre job (`/source/calibre`) |
+| The synced Files (Syncthing's folders, `SYNC_ROOT`) | Homelab Files job (`/source/sync`), made once the folder has something in it. Syncthing passes a deletion on to every device, so this is the copy a file deleted by mistake comes back from |
 | MoneyMatter attachments | `homelab backup` archives the `moneymatter-attachments` volume → Homelab Databases job (`/staging/volumes`) |
 | Music, movies, TV, audiobooks, comics | **Not backed up** (re-obtainable, and too large for most cloud drives) |
 | The homelab's own records in `data/` (the household, paired phones, single sign-on settings, Finances with each balance's history, its receipts and the Collection's pictures, update history) | `homelab backup` copies them into `recovery-staging/secrets/data` → Homelab Secrets job |

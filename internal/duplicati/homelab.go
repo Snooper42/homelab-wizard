@@ -53,6 +53,14 @@ var HomelabJobs = []HomelabJob{
 		Host: func(env map[string]string, _ string) string {
 			return filepath.Join(or(env["MEDIA_ROOT"], "/Volumes/Media"), "Books")
 		}},
+	// The household's synced Files (Syncthing's SYNC_ROOT): Syncthing passes a
+	// deletion on to every device, so this is the copy a file deleted by
+	// mistake comes back from. Made once the folder has something in it; the
+	// caller gives SYNC_ROOT resolved against the homelab folder.
+	{Name: "Homelab Files", Folder: "files", Sources: []string{"/source/sync/"}, Every: "1D", Hour: 5, Minute: 45, Large: true,
+		Host: func(env map[string]string, _ string) string {
+			return or(env["SYNC_ROOT"], "./data/sync")
+		}},
 }
 
 // Planned is what setup would do with one job.
