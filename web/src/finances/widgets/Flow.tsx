@@ -50,7 +50,7 @@ function LastMonths({ v, ledger, open }: { v: finance.View; ledger?: finance.Led
 export function CashFlowWidget({ v, L, open, ledger, showIn }: { v: finance.View; L: Lookup; open?: () => void; ledger?: finance.Ledger | null; showIn?: (f: Parameters<typeof showTransactions>[0]) => void }) {
   const m = month(v, L);
   return (
-    <Widget title="Cash flow" kind="fx-flow" actions={open && <IconButton icon="open" label="Open Recurring: a typical month, payment by payment" onClick={open} />}>
+    <Widget title="Cash flow" kind="fx-flow" open={open} openLabel="Open Recurring: a typical month, payment by payment">
       <Stat value={<Amount value={m.left} sign tone="auto" />} caption="Left in a typical month" />
       <SplitBar label="A typical month's pay" parts={[{ label: 'Spent', value: m.spent, color: 'out' }, { label: 'Saved', value: m.saved, color: 'save' }, { label: 'Left', value: Math.max(0, m.left), color: 'in' }]} />
       <Tiles items={[
@@ -72,7 +72,7 @@ export function SpendingWidget({ v, L, open, openKind }: { v: finance.View; L: L
   if (!m.byKind.length) return null;
   const slices = m.byKind.map((k) => ({ kind: k.kind, label: kindName(k.kind), value: k.amount, color: kindHueOf(k.kind, v.categories) }));
   return (
-    <Widget title="Where it goes" kind="fx-spend" actions={open && <IconButton icon="open" label="Open Recurring: a typical month, payment by payment" onClick={open} />}>
+    <Widget title="Where it goes" kind="fx-spend" open={open} openLabel="Open Recurring: a typical month, payment by payment">
       <Stat value={<Amount value={-m.spent} />} caption="Spent in a typical month" />
       <div class="fx-donutrow">
         <Donut slices={slices} label="A typical month's spending" center={<><strong>{whole(m.spent)}</strong>a month</>} />

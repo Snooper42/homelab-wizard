@@ -31,7 +31,7 @@ export function LatestWidget({ v, L, ledger, edit, all }: { v: finance.View; L: 
   const list = latest(ledger?.transactions || []);
   if (!list.length) return null;
   return (
-    <Widget title="Latest transactions" kind="fx-latest" actions={all && <button type="button" class="small" onClick={all}>See all</button>}>
+    <Widget title="Latest transactions" kind="fx-latest" open={all} seeAll openLabel="Open Transactions" actions={all && <button type="button" class="small" onClick={all}>See all</button>}>
       <Rows kind="fx-rows">
         {list.map((t) => <TxRow key={t.id} t={t} v={v} L={L} edit={edit} />)}
       </Rows>

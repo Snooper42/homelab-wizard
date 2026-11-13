@@ -9,7 +9,7 @@ import { useState } from 'preact/hooks';
 import { Amount, Delta, Stat } from '../ui/Amount';
 import { AreaChart } from '../ui/charts';
 import { Dot } from '../ui/Legend';
-import { IconButton, Widget } from '../ui/Widget';
+import { Widget } from '../ui/Widget';
 import { HideAmounts } from '../ui/HideAmounts';
 import { grouped, netWorth, worthOf, worthByMonth } from '../model';
 import { compact, daysBetween, dayShort, money, tick } from '../money';
@@ -27,7 +27,7 @@ export function NetWorthWidget({ v, open }: { v: finance.View; open: () => void 
   const each = (v.plan.accounts || []).map((a) => worthOf(v, a));
   const owned = each.filter((n) => n > 0).reduce((t, n) => t + n, 0), owes = -each.filter((n) => n < 0).reduce((t, n) => t + n, 0);
   return (
-    <Widget title="Net worth" span="all" kind="fx-worthmini" actions={<IconButton icon="open" label="Open Net worth" onClick={open} />}>
+    <Widget title="Net worth" span="all" kind="fx-worthmini" open={open} openLabel="Open Net worth">
       <Stat value={<Amount value={now} />} caption="Today" aside={month && <Delta value={now - month.net} base={month.net} shareOnly />} />
       {values.length > 2 && <AreaChart values={values} zero={false} axis={false} height={92} fill format={tick}
         xLabels={[{ i: 0, label: dayShort(kept[0]?.date || v.today) }, { i: values.length - 1, label: 'Today' }]}

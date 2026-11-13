@@ -99,7 +99,7 @@ export function RenewingWidget({ v, L, edit, all }: SubscriptionsProps & { all?:
   if (!due.length) return null;
   const total = due.reduce((t, s) => t + s.x.amount, 0);
   return (
-    <Widget title="Renewing soon" kind="fx-renewing"
+    <Widget title="Renewing soon" kind="fx-renewing" open={all} seeAll openLabel="Open Recurring's subscriptions"
       actions={all && <button type="button" class="small" onClick={all}>See all</button>}>
       <Stat value={<Amount value={total} form="full" />} caption={`${plural(due.length, 'subscription')} in the next ${soonDays} days`} />
       <Rows kind="fx-rows">
