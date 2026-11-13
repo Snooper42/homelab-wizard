@@ -66,7 +66,7 @@ func mediaHomelab(t *testing.T, fx pythonFixture, env ...string) (root, calls st
 	t.Setenv("USERPROFILE", home)
 	tools := media.ToolsDir(root)
 	_ = os.MkdirAll(tools, 0o755)
-	for _, s := range []string{"music_organizer.py", "music_tidy.py", "books_organizer.py", "movies_organizer.py", "tv_organizer.py",
+	for _, s := range []string{"music_organizer.py", "music_tidy.py", "books_organizer.py", "books_run.py", "movies_organizer.py", "tv_organizer.py",
 		"audiobook_organizer.py", "inbox.py", "scrubber.py", "tdarr_setup.py"} {
 		_ = os.WriteFile(filepath.Join(tools, s), []byte("# stub\n"), 0o644)
 	}

@@ -448,6 +448,55 @@ def _trash_beside(p):
     return dest
 
 
+# How long a day's folder in .tidy-trash is kept (the owner, Nov 12): as long as Undo reaches (TrashKeep).
+TIDY_TRASH_DAYS = 30
+
+
+def empty_old_tidy_trash(now=None):
+    """On a drive with no Recycle Bin, Tidy Up keeps what it throws away in .tidy-trash at the drive's top,
+    a folder a day (_trash_beside). Days older than TIDY_TRASH_DAYS go for good, unless a line of the trash
+    log (what Undo can still put back) points into one; only real folders named for a date, never through
+    a link. What went, as paths."""
+    now = now or datetime.now()
+    reached = set()
+    log = os.environ.get("HOMELAB_MEDIA_TRASH_LOG")
+    if log and Path(log).is_file():
+        for line in Path(log).read_text(encoding="utf-8", errors="replace").splitlines():
+            try:
+                to = json.loads(line).get("to") or ""
+            except ValueError:
+                continue
+            if to:
+                reached.add(os.path.normcase(os.path.realpath(str(Path(to).parent))))
+    tops = set()
+    for r in media_roots():
+        try:
+            if r and Path(r).exists():
+                tops.add(_drive_root(r) / ".tidy-trash")
+        except OSError:
+            continue
+    gone = []
+    for top in sorted(tops):
+        if top.is_symlink() or not top.is_dir():
+            continue
+        for day in sorted(top.iterdir()):
+            try:
+                when = datetime.strptime(day.name, "%Y-%m-%d")
+            except ValueError:
+                continue
+            if day.is_symlink() or not day.is_dir() or (now - when).days <= TIDY_TRASH_DAYS:
+                continue
+            if os.path.normcase(os.path.realpath(str(day))) in reached:
+                continue
+            try:
+                shutil.rmtree(str(day))
+            except OSError as e:
+                ui.to_log("NOTE   couldn't empty %s: %s" % (day, e))
+                continue
+            gone.append(str(day))
+    return gone
+
+
 def note_thrown(src, dest):
     """Note what went to the Trash under this run (the app's HOMELAB_MEDIA_RUN), for Undo: where it
     was, and where it is now (none for the Recycle Bin, which doesn't say)."""

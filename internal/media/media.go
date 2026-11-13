@@ -48,13 +48,15 @@ var actions = map[string]map[string]Action{
 		"file":              {Script: "music_tidy.py", Lock: true},
 	},
 	"books": {
-		"init":   {Script: "books_organizer.py"},
-		"status": {Script: "books_organizer.py"},
-		"review": {Script: "books_organizer.py"},
-		"apply":  {Script: "books_organizer.py", Lock: true, Confirm: true},
+		// books_run.py starts books_organizer.py (the owner's, never edited)
+		// with a time limit on each tool it runs (the owner, Nov 12).
+		"init":   {Script: "books_run.py"},
+		"status": {Script: "books_run.py"},
+		"review": {Script: "books_run.py"},
+		"apply":  {Script: "books_run.py", Lock: true, Confirm: true},
 		// A Calibre library from a folder of books with none: asks first.
 		"build": {Script: "books_tidy.py", Lock: true, Confirm: true},
-		"undo":  {Script: "books_organizer.py", Lock: true, Confirm: true},
+		"undo":  {Script: "books_run.py", Lock: true, Confirm: true},
 		// Reads Calibre's database, writes nothing: no lock.
 		"genre-counts": {Script: "books_tidy.py"},
 	},

@@ -14,6 +14,7 @@ import tempfile
 import time
 import unittest
 import zipfile
+from datetime import datetime
 from pathlib import Path
 from unittest import mock
 
@@ -425,6 +426,42 @@ class ParsersHaveATimeout(Base):
         self.assertIn("longer than an hour", str(e.exception), "said plainly, as the Inbox's other failures are")
 
 
+class BooksRunWithLimits(Base):
+    """The owner chose (Nov 12): the books engine, books_organizer.py, stays exactly as it is (vendored), and
+    the jobs start it through books_run.py, which gives each tool it runs a time to finish in: sips on a
+    cover, calibredb writing a book's metadata or cover. One that hangs on a crafted file can't hold Tidy Up."""
+
+    def test_each_tool_the_books_engine_runs_has_a_time_limit(self):
+        import books_organizer as bo
+        import books_run
+        import subprocess
+        before = subprocess.run
+        seen = []
+
+        def fake(cmd, *a, **k):
+            seen.append((Path(str(cmd[0])).name, k.get("timeout")))
+            return mock.Mock(returncode=0, stdout="", stderr="")
+        with mock.patch.object(books_run, "_real_run", side_effect=fake), books_run.limits():
+            cover = self.touch(self.tmp / "cover.jpg")
+            with mock.patch.dict(sys.modules, {"PIL": None}), mock.patch.object(bo.shutil, "which", return_value="/usr/bin/sips"):
+                bo.thumb_pixels(str(cover))
+            covers = self.tmp / "covers"
+            (covers / "applied").mkdir(parents=True)
+            bo.set_covers([self.touch(covers / "7 - Dune.jpg")], "calibredb", str(self.lib["books"]), covers)
+            bo.embed([7], "calibredb", str(self.lib["books"]))
+        self.assertEqual(dict(seen).get("sips"), 60)
+        self.assertEqual([t for n, t in seen if n == "calibredb"], [3600, 3600])
+        self.assertIs(bo.subprocess.run, before, "the limits end with the job's own run")
+
+    def test_a_limit_the_engine_set_itself_is_kept(self):
+        import books_run
+        got = []
+        with mock.patch.object(books_run, "_real_run", side_effect=lambda c, *a, **k: got.append(k.get("timeout"))), books_run.limits():
+            import subprocess
+            subprocess.run(["ebook-meta", "x"], timeout=60)
+        self.assertEqual(got, [60])
+
+
 class SavedRecords(Base):
     """A record two jobs can write at once (a film scan, unlocked, and Collect, locked, both keep movies.json):
     each save goes through a temporary file of its own, so one can't rename the other's half-written file
@@ -452,6 +489,39 @@ class Which(Base):
         tool.write_text("")
         tool.chmod(0o755)
         self.assertEqual(mc.which(name), str(tool))
+
+
+class TidyTrashEmptied(Base):
+    """The owner chose (Nov 12): on a drive with no Recycle Bin (a USB drive, an SD card, a share), what Tidy
+    Up threw into its own .tidy-trash goes for good after 30 days, past Undo's reach; a day Undo still points
+    into stays. The scrubber's nightly run does it."""
+
+    def test_old_days_go_and_what_undo_reaches_stays(self):
+        drive = self.tmp / "usb"
+        top = drive / ".tidy-trash"
+        old = self.touch(top / "2026-09-01" / "a.mkv").parent
+        undo = self.touch(top / "2026-09-02" / "b.mkv").parent
+        recent = self.touch(top / "2026-11-01" / "c.mkv").parent
+        odd = self.touch(top / "keep me" / "d.mkv").parent
+        outside = self.touch(self.tmp / "elsewhere" / "e.mkv").parent
+        (top / "2026-08-01").symlink_to(outside)
+        log = self.tmp / "media-trash.jsonl"
+        log.write_text(json.dumps({"run": "r", "from": "/x/b.mkv", "to": str(undo / "b.mkv")}) + "\n")
+        mock.patch.dict(os.environ, {"HOMELAB_MEDIA_TRASH_LOG": str(log)}).start()
+        mock.patch.object(mc, "_drive_root", return_value=drive).start()
+        gone = mc.empty_old_tidy_trash(now=datetime(2026, 11, 13))
+        self.assertEqual([Path(g).name for g in gone], ["2026-09-01"])
+        self.assertFalse(old.exists())
+        self.assertTrue(undo.exists() and recent.exists() and odd.exists(), "Undo's, this month's and an odd name stay")
+        self.assertTrue((outside / "e.mkv").exists(), "never through a link")
+
+    def test_the_nightly_scrub_empties_them(self):
+        called = mock.patch.object(mc, "empty_old_tidy_trash", return_value=[]).start()
+        scrubber.scrub([("Movies", self.lib["movies"])], True)
+        called.assert_called_once()
+        called.reset_mock()
+        scrubber.scrub([("Movies", self.lib["movies"])], False)
+        called.assert_not_called()
 
 
 class Scrubber(Base):
