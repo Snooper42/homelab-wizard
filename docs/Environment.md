@@ -65,6 +65,8 @@ Every new homelab starts in Home mode: `HOMELAB_DOMAIN` is empty, and a domain i
 | `VAULTWARDEN_URL`, `PAPERLESS_URL`, `KARAKEEP_URL`, `MONEYMATTER_URL`, `POCKET_ID_URL`, `NTFY_URL`, `NAVIDROME_URL`, and the other `*_URL` settings | empty | The address an app is opened at, for the apps that need to know it (sign-in, links). Empty: `https://<subdomain>.<domain>`. Home mode writes the tailnet address, and Set up the domain clears it again (x-homelab `url`) |
 | `CLOUDFLARE_API_TOKEN` | empty | Secret. For the wildcard certificate and the tunnel's public hostnames. Permissions: Zone:Read, DNS:Edit, Cloudflare Tunnel:Edit |
 | `TUNNEL_TOKEN` | empty | Secret. The tunnel's token; cloudflared stays off until it is set |
+| `COMPANION_PROXY_KEY` | empty | Made by Set up the domain: the phone companion's proxy host sends it, so the companion knows a phone reached it over https and not over the Wi-Fi ([Security](<Security.md>), N25). A secret |
+| `COMPANION_ACCESS_TEAM`, `COMPANION_ACCESS_AUD`, `COMPANION_ACCESS_CLIENT_ID`, `COMPANION_ACCESS_CLIENT_SECRET`, `COMPANION_AWAY_HOST` | empty | The iPhone app away from home through the tunnel ([ADR-0023](<Decisions.md#adr-0023-the-iphone-app-away-from-home-the-companion-through-the-tunnel-behind-access-and-sealed-end-to-end>)), made by Setup's **Reach Finances away from home** (`homelab phone away`): the Cloudflare Access team and application, the household's service token (its secret given to a phone only when it pairs at home), and the companion's name through the tunnel. Empty: the companion answers only at home and on the tailnet |
 
 ## Nginx Proxy Manager and CrowdSec
 
@@ -109,6 +111,27 @@ Every new homelab starts in Home mode: `HOMELAB_DOMAIN` is empty, and a domain i
 | `OLLAMA_MODEL` | empty | The Ollama model that explains logs (**Explain this** under an app's log, `homelab logs <app> --explain`), such as `llama3.2`. Empty: the first of Llama, Qwen, Gemma, Mistral, or Phi that Ollama has. Ollama's own `OLLAMA_HOST` says where it runs (this machine by default) |
 | `<APP>_DIGEST` (`PAPERLESS_DIGEST`, `VAULTWARDEN_DIGEST`, …) | not in the template | The version each app the nightly update moves forward runs: its image and that image's digest (`ghcr.io/paperless-ngx/paperless-ngx:latest@sha256:…`). Written by `homelab update`, a rollback, and the watchdog when what runs changes; `homelab up`, `install`, a move, and a rebuild start that version again, so a restore or a new machine opens the data with the version that wrote it. A version you choose by hand (`IMMICH_VERSION`) wins: a kept line for another image is left alone until the app runs the new one. Delete a line to let that app start on its newest version |
 | `UPDATES_HELD` | empty | Apps left out of nightly updates (after a rollback, or `homelab updates hold`). Written by the CLI; `homelab updates release <app>` takes one off |
+
+## Tidy Up
+
+[Tidy Up](<Tidy Up.md>) sorts, tags, and shrinks the libraries on the media drive (`MEDIA_ROOT`). Settings (its **Tidy Up** section) changes them.
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `TIDY_UP` | `true` | `false` turns its background work off (the inbox, Tdarr's finished work, and the nightly sweep); the screen still works |
+| `TIDY_INBOX`, `TIDY_INBOX_FOLDERS` | `true`, empty | File what finishes downloading in Downloads and `DOWNLOADS_ROOT` into the libraries; other folders to watch instead, separated by `;` |
+| `TIDY_INBOX_WHEN` | `arrive` | When the inbox files: `arrive` (checked every minute), `daily` (once a day, after 03:00), or `manual` (only on **Tidy up now**) |
+| `TIDY_SCRUB` | `true` | Every night at 03:00, leftovers whose film, song, or book is gone (posters, `.nfo` and subtitle files, empty folders) go to the Trash |
+| `TIDY_TDARR_REST`, `TIDY_ARR_REST` | `true` | Tdarr, and the download apps (Sonarr, Radarr, Lidarr, Prowlarr, Bazarr, FlareSolverr, qBittorrent, Gluetun), rest stopped while they have nothing to do, freeing their memory; `false` keeps them running |
+| `TIDY_KEEP_LANGUAGES` | `eng` | The audio and subtitle languages films and episodes keep (ISO 639-2: `eng`, `jpn`); Tdarr removes the rest when it shrinks them |
+| `TIDY_VIDEO_CODEC` | `hevc` | What Tdarr shrinks video to: `hevc` (plays everywhere) or `av1` (smaller, newer players) |
+| `TIDY_SHRINK_LOSSLESS` | `true` | New lossless music (FLAC, WAV) is stored as 256k AAC, about a fifth of the size; `false` keeps it lossless |
+| `TIDY_LYRICS` | `embed` | Lyrics inside each song file (`embed`) or in a `.lrc` file beside it (`lrc`) |
+| `TIDY_MUSIC_ENGINE` | empty | Where beets runs: `local` (this computer, fastest) or `container`; empty picks `local` when Python can make its own environment here |
+| `PLEX_URL`, `PLEX_TOKEN`, `PLEX_PATH_MAP` | empty | A Plex server to tell about each new or changed file, its token, and how its folders map to this computer's (`/Volumes/Media=/data`) |
+| `AUDIOBOOKSHELF_API_KEY` | empty | Audiobookshelf's API token (Settings › Users › your user), so Tidy Up tells it about new files |
+| `TDARR_API_KEY` | generated | Tidy Up's key to Tdarr, which Tdarr takes as its own when it starts. A secret |
+| `TDARR_USER`, `TDARR_PASSWORD` | empty | An older Tdarr's sign-in: made by Tidy Up (user `homelab`) when Tdarr had none; one you made first goes here |
 
 ## App ports
 
