@@ -166,6 +166,22 @@ function PairsWidget({ L, ledger, save }: { L: Lookup; ledger: finance.Ledger; s
 /** How many transactions are drawn at first, and more each time Show more is clicked. */
 export const txPage = 200;
 
+/** What Transactions is sorted by (the column header, on a wide screen), and whether up (oldest, A to Z, most out first). */
+export type TxSort = { by: 'date' | 'payee' | 'category' | 'account' | 'amount'; up: boolean };
+const sortKey = 'homelab.finances.txSort';
+const newestFirst: TxSort = { by: 'date', up: false };
+/** The sort this device keeps (newest first when none, or none can be read). */
+const readSort = (): TxSort => {
+  try {
+    const x = JSON.parse(localStorage.getItem(sortKey) || 'null');
+    if (x && ['date', 'payee', 'category', 'account', 'amount'].includes(x.by) && typeof x.up === 'boolean') return { by: x.by, up: x.up };
+  } catch { /* none kept */ }
+  return newestFirst;
+};
+const keepSort = (x: TxSort) => { try { localStorage.setItem(sortKey, JSON.stringify(x)); } catch { /* not kept */ } };
+/** The columns a wide screen heads the rows with, and which way each sorts first: a date newest first, words A to Z, amounts most out first. */
+const columns: [TxSort['by'], string, boolean][] = [['date', 'Date', false], ['payee', 'Payee', true], ['category', 'Category', true], ['account', 'Account', true], ['amount', 'Amount', true]];
+
 /** What Transactions opens filtered to next (a Reports row picked it): a category or group, a month, words. Then everything again. */
 let opening: { category?: string; month?: string; q?: string; account?: string } = {};
 export const showTransactions = (f: { category?: string; month?: string; q?: string; account?: string }) => { opening = f; };
@@ -198,6 +214,8 @@ export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger, logo
   const [sure, setSure] = useState(false);
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState('');
+  const [sort, setSortState] = useState<TxSort>(readSort);
+  const setSort = (x: TxSort) => { keepSort(x); setSortState(x); };
   // While selecting, outside a field or a sheet: Ctrl+A (⌘A) selects every row shown, Escape stops selecting (Shortcuts.tsx says so).
   const keyed = useRef({ all: () => {}, stop: () => {} });
   // The ledger as now, for an Undo pressed after it changed.
@@ -243,7 +261,16 @@ export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger, logo
     && (!way || (way === 'move' ? !!t.to : !t.to && (way === 'in' ? t.amount > 0 : t.amount < 0)))
     && want.every((w) => wordsOf(t, L).includes(w)));
   const filtered = shown.length !== all.length;
-  const list = [...shown].reverse();
+  // What each row says in its columns, for the sort as for the row.
+  const catOf = (t: finance.Transaction) => (t.splits?.length ? t.splits.map((x) => x.category).join(', ') : t.category || (t.to ? 'Transfer' : 'No category'));
+  const acctOf = (t: finance.Transaction) => (t.to ? `${L.account[t.account]?.name || t.account} → ${L.account[t.to]?.name || t.to}` : L.account[t.account]?.name || t.account);
+  // Newest first (the ledger is oldest first), or by the column picked, newest first among the same; Show more and a
+  // Shift+click range follow the order shown.
+  const byWords = (f: (t: finance.Transaction) => string) => (x: finance.Transaction, y: finance.Transaction) => f(x).localeCompare(f(y), undefined, { sensitivity: 'base' });
+  const cmp = sort.by === 'payee' ? byWords((t) => txTitle(t, L)) : sort.by === 'category' ? byWords(catOf) : sort.by === 'account' ? byWords(acctOf) : sort.by === 'amount' ? (x: finance.Transaction, y: finance.Transaction) => amt(x) - amt(y) : null;
+  const newest = [...shown].reverse();
+  const list = sort.by === 'date' ? (sort.up ? [...shown] : newest) : newest.map((t, i) => ({ t, i })).sort((x, y) => (sort.up ? 1 : -1) * cmp!(x.t, y.t) || x.i - y.i).map((x) => x.t);
+  const byDay = sort.by === 'date';
   const filterKey = [q, account, category, month, way, tag].join('\u0000');
   const upTo = drawn.key === filterKey ? drawn.n : txPage;
   // What the picked act on: those picked that the filters still show.
@@ -318,6 +345,21 @@ export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger, logo
     if (days.at(-1)?.date !== t.date) days.push({ date: t.date, list: [] });
     days.at(-1)!.list.push(t);
   }
+  /** A transaction's row: its date first when the list isn't by day (sorted by another column). */
+  const rowOf = (t: finance.Transaction, dated: boolean) => {
+    const a = L.account[t.account];
+    const where = acctOf(t);
+    const what = catOf(t);
+    const on = picking && picked.has(t.id);
+    const opens = picking ? (e: MouseEvent) => toggle(t.id, e.shiftKey) : edit ? () => edit('transaction', t.id) : t.receipt && readReceipt ? () => look(t) : undefined;
+    const open = !picking && seen?.id === t.id ? seen : null;
+    return <Fragment key={t.id}><Row lead={<span class="fx-txlead">{picking && <span class={'fx-check' + (on ? ' on' : '')} aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-7" /></svg></span>}<TxMark t={t} categories={v.categories} /></span>} title={txTitle(t, L)}
+      sub={<>{dated && <span class="fx-txdate">{dayShort(t.date)}<span class="fx-txsep"> · </span></span>}<span class="fx-txcat" title={what}>{what}</span><span class="fx-txsep"> · </span><span class="fx-txacct" title={where}>{where}</span><span class="fx-txextra">{t.payment && L.payment[t.payment] && <span class="fx-txpays"><span class="fx-txsep"> · </span>pays {L.payment[t.payment].name}</span>}{t.receipt && <span class="fx-txreceipt"><span class="fx-txsep"> · </span>Receipt</span>}{shownNote(t.note, t.payee) && <span class="fx-txnote"><span class="fx-txsep"> · </span>{shownNote(t.note, t.payee)}</span>}{!!t.tags?.length && <span class="fx-txtags">{t.tags.map((x) => <span key={x} class="fx-tag">{x}</span>)}</span>}</span></>}
+      when={<Amount value={t.amount} sign={t.amount > 0} tone={t.amount > 0 && !t.to ? 'in' : ''} form="full" currency={a?.currency} />} whenPlain
+      onOpen={opens} pressed={picking ? on : undefined} openLabel={picking ? undefined : edit ? 'edit' : opens ? (open ? 'hide the receipt' : 'see the receipt') : undefined} />
+      {open && <li class="fx-receiptshown">{open.url ? <ReceiptView url={open.url} /> : open.problem ? <span class="formerr bad" role="alert">{open.problem}</span> : <span class="muted" role="status">Reading the receipt…</span>}</li>}
+    </Fragment>;
+  };
   return (
     <div class="fin">
       <div class="fx-board">
@@ -334,7 +376,7 @@ export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger, logo
         {saveLedger && <PairsWidget L={L} ledger={ledger} save={saveLedger} />}
         {saveLedger && <LinksWidget v={v} L={L} ledger={ledger} save={saveLedger} />}
         <BudgetsWidget v={v} edit={edit ? () => edit('budgets') : undefined} show={(c, m) => { setCategory(c); setMonthPick(m || ''); setQ(''); setAccount(''); setWay(''); setTag(''); document.querySelector('.fx-transactions')?.scrollIntoView({ block: 'start', behavior: 'smooth' }); }} />
-        <Widget title={filtered ? `${plural(shown.length, 'transaction')} of ${all.length}` : 'Transactions'} span="all" kind="fx-transactions"
+        <Widget title={filtered ? `${plural(shown.length, 'transaction')} of ${all.length}` : 'Transactions'} span="all" kind={'fx-transactions' + (picking ? ' fx-txpicking' : '')}
           actions={edit && <>
             {saveLedger && !!all.length && <button type="button" class="small" aria-pressed={picking} onClick={() => (picking ? stopPicking() : setPicking(true))}>{picking ? 'Done' : 'Select'}</button>}
             <button type="button" class="small" onClick={() => edit('import')}>Import a file</button>
@@ -390,33 +432,29 @@ export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger, logo
           </div>}
           {runs && !!shown.length && <p class="fx-sub fx-txrunning">After each day, what {acct!.name} {owed(acct!.kind) ? 'owed' : 'held'}: worked from the {moneyIn(acct!.balance, acct!.currency)} typed in on {dayShort(acct!.updated!)} through these transactions.</p>}
           {filtered && !!shown.length && <p class="fx-sub fx-txtotal">Together <Amount value={shown.filter((t) => !t.to || account).reduce((s, t) => s + (account && t.to === account ? -amt(t) : amt(t)), 0)} form="full" sign /></p>}
-          {days.map((d) => (
+          {!!shown.length && <div class="fx-txhead" role="group" aria-label="Sort the transactions by">
+            {columns.map(([by, label, up]) => {
+              const on = sort.by === by;
+              const next = on ? { by, up: !sort.up } : { by, up };
+              const way = (x: TxSort) => (x.by === 'date' ? (x.up ? 'oldest first' : 'newest first') : x.by === 'amount' ? (x.up ? 'most out first' : 'most in first') : x.up ? 'A to Z' : 'Z to A');
+              return <button key={by} type="button" class={'fx-txcol fx-txcol-' + by} aria-pressed={on} title={`Sort by ${label.toLowerCase()}, ${way(next)}`} onClick={() => setSort(next)}>{label}{on && <span aria-hidden="true">{sort.up ? ' ↑' : ' ↓'}</span>}{on && <span class="fx-hidden">, {way(sort)}</span>}</button>;
+            })}
+          </div>}
+          {!byDay && !!shown.length && <Rows kind="fx-rows fx-txflat">{list.slice(0, upTo).map((t) => rowOf(t, true))}</Rows>}
+          {byDay && days.map((d) => (
             <section key={d.date} class="fx-txday" aria-label={dayLong(d.date)}>
               <h3><span>{dayLong(d.date)}{d.date === v.today ? ', today' : ''}</span>
                 {runs ? <span class="fx-txbal">{moneyIn(after(d.date), acct!.currency)}<span class="fx-hidden"> {owed(acct!.kind) ? 'owed' : 'in ' + acct!.name} after the day</span></span>
                   // More than one in or out that day: what they came to together (a transfer is neither).
                   : d.list.filter((t) => !t.to).length > 1 && <span class="fx-txdaysum"><Amount value={d.list.filter((t) => !t.to).reduce((n, t) => n + amt(t), 0)} sign form="full" /><span class="fx-hidden"> in all that day</span></span>}</h3>
               <Rows kind="fx-rows">
-                {d.list.map((t) => {
-                  const a = L.account[t.account];
-                  const where = t.to ? `${a?.name || t.account} → ${L.account[t.to]?.name || t.to}` : a?.name || t.account;
-                  const what = t.splits?.length ? t.splits.map((s) => s.category).join(', ') : t.category || (t.to ? 'Transfer' : 'No category');
-                  const on = picking && picked.has(t.id);
-                  const opens = picking ? (e: MouseEvent) => toggle(t.id, e.shiftKey) : edit ? () => edit('transaction', t.id) : t.receipt && readReceipt ? () => look(t) : undefined;
-                  const open = !picking && seen?.id === t.id ? seen : null;
-                  return <Fragment key={t.id}><Row lead={picking ? <><span class={'fx-check' + (on ? ' on' : '')} aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-7" /></svg></span><TxMark t={t} categories={v.categories} /></> : <TxMark t={t} categories={v.categories} />} title={txTitle(t, L)}
-                    sub={<>{what} · {where}{t.payment && L.payment[t.payment] && <span class="fx-txpays"> · pays {L.payment[t.payment].name}</span>}{t.receipt && <span class="fx-txreceipt"> · Receipt</span>}{shownNote(t.note, t.payee) && <span class="fx-txnote"> · {shownNote(t.note, t.payee)}</span>}{!!t.tags?.length && <span class="fx-txtags">{t.tags.map((x) => <span key={x} class="fx-tag">{x}</span>)}</span>}</>}
-                    when={<Amount value={t.amount} sign={t.amount > 0} tone={t.amount > 0 && !t.to ? 'in' : ''} form="full" currency={a?.currency} />} whenPlain
-                    onOpen={opens} pressed={picking ? on : undefined} openLabel={picking ? undefined : edit ? 'edit' : opens ? (open ? 'hide the receipt' : 'see the receipt') : undefined} />
-                    {open && <li class="fx-receiptshown">{open.url ? <ReceiptView url={open.url} /> : open.problem ? <span class="formerr bad" role="alert">{open.problem}</span> : <span class="muted" role="status">Reading the receipt…</span>}</li>}
-                  </Fragment>;
-                })}
+                {d.list.map((t) => rowOf(t, false))}
               </Rows>
             </section>
           ))}
           {!all.length && <Empty>{edit ? 'No transactions yet: add what you spend with Add a transaction, as it happens or from the receipt.' : 'No transactions yet.'}</Empty>}
           {list.length > upTo && <p class="fx-txmore"><button type="button" class="small" onClick={() => setDrawn({ key: filterKey, n: upTo + txPage })}>Show {Math.min(txPage, list.length - upTo)} more</button>
-            <span class="fx-sub">{upTo} of {list.length} shown, newest first</span></p>}
+            <span class="fx-sub">{upTo} of {list.length} shown, {sort.by === 'date' ? (sort.up ? 'oldest first' : 'newest first') : `by ${sort.by}`}</span></p>}
           {!!all.length && !shown.length && <Empty>None match: try fewer words, or Show all.</Empty>}
         </Widget>
       </div>

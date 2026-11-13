@@ -7651,6 +7651,42 @@ const smokes = [
     const bars = await page.$$eval('.fx-budgets .fx-budgetbar', (b) => b.map((x) => Math.round(x.getBoundingClientRect().width)), { timeout: 5000 });
     if (bars.length !== 3 || Math.min(...bars) < 150 || Math.max(...bars) - Math.min(...bars) > 1) throw new Error(`bars ${bars}`);
   } },
+  // Step 6 (the owner's yes, Nov 12): Transactions in columns on a wide screen (Payee, Category, Account, Amount, each
+  // in line down the rows), sorted by any column from the header above them: Amount most out first, again for most in;
+  // Payee A to Z; Date again gives the days back. Narrow (800px, a phone) it is the list as before, no header.
+  { name: 'Finances: Transactions in columns, sorted by any of them; the list again when narrow', screen: 'finances', run: async (page) => {
+    await finTab(page, 'Transactions', { timeout: 5000 });
+    await page.waitForSelector('.fx-txhead button:text-is("Amount")', { timeout: 5000 });
+    const left = (sel) => page.$$eval(sel, (els) => [...new Set(els.slice(0, 12).map((e) => Math.round(e.getBoundingClientRect().left)))]);
+    for (const col of ['.fx-txcat', '.fx-txacct']) {
+      const xs = await left(`.fx-transactions li ${col}`);
+      if (xs.length !== 1) throw new Error(`${col} is not in one column: ${xs}`);
+    }
+    const amounts = () => page.$$eval('.fx-transactions li .when', (els) => els.map((e) => parseFloat(e.textContent.replace(/[−–]/g, '-').replace(/[^0-9.-]/g, ''))));
+    await page.click('.fx-txhead button:text-is("Amount")');
+    let a = await amounts();
+    if (a[0] !== Math.min(...a)) throw new Error(`Amount: the first is ${a[0]}, not the most out (${Math.min(...a)})`);
+    if (await page.$('.fx-transactions .fx-txday')) throw new Error('sorted by amount, still by day');
+    await page.click('.fx-txhead button:has-text("Amount")');
+    a = await amounts();
+    if (a[0] !== Math.max(...a)) throw new Error(`Amount again: the first is ${a[0]}, not the most in (${Math.max(...a)})`);
+    await page.click('.fx-txhead button:text-is("Payee")');
+    const names = await page.$$eval('.fx-transactions li .grow > strong', (els) => els.map((e) => e.textContent.trim().toLowerCase()));
+    if (names.some((n, i) => i && names[i - 1].localeCompare(n) > 0)) throw new Error(`Payee: not A to Z: ${names.slice(0, 6)}`);
+    await page.click('.fx-txhead button:text-is("Date")');
+    await page.waitForSelector('.fx-transactions .fx-txday', { timeout: 5000 });
+    await page.setViewportSize({ width: 800, height: 900 });
+    await page.waitForTimeout(200);
+    if (await page.isVisible('.fx-txhead')) throw new Error('at 800px, a header over the list');
+    const xs = await left('.fx-transactions li .fx-txcat');
+    const names2 = await left('.fx-transactions li .grow > strong');
+    if (xs.length === 1 && xs[0] > names2[0] + 200) throw new Error('at 800px, still in columns');
+  } },
+  { name: 'The phone: Transactions is the list, no columns to sort', screen: 'finances', phone: ['companion', 'finances'], run: async (page) => {
+    await finTab(page, 'Transactions', { timeout: 5000 });
+    await page.waitForSelector('.fx-transactions .fx-txday', { timeout: 5000 });
+    if (await page.isVisible('.fx-txhead')) throw new Error('a header over the list on a phone');
+  } },
   // Step 5 (the owner's yes, Nov 12): the Dashboard looks back as well as ahead. Checking, last 90 days, from the balance
   // typed in through its transactions (the same line as the account's own page): 30 days or a year instead, another
   // account picked, and a day clicked opens it on the calendar. The title opens the account's page.
