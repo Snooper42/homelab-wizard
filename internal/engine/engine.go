@@ -25,6 +25,18 @@ type Change struct {
 	// went away and this process follows the runtime itself), so whatever
 	// changed meanwhile was missed: read Status again.
 	Again bool `json:"again,omitempty"`
+	// Open is a page the computer sent to one phone (Send to my phone): the
+	// companion passes it only to that phone's stream, which shows it with
+	// one tap to open. Nil in every other change.
+	Open *Open `json:"open,omitempty"`
+}
+
+// Open is what Send to my phone sends: one of the app's own links and its
+// name. Device is the phone it is for, never sent on.
+type Open struct {
+	Device string `json:"-"`
+	Link   string `json:"link"`
+	Title  string `json:"title,omitempty"`
 }
 
 // Watcher follows the runtime and reports changes.

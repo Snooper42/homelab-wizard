@@ -1,6 +1,7 @@
 // Status: the apps as last read (store.ts) with their cards, each row's
 // actions and the sheets they open, a homelab command with its preview,
 // and the phone's report.
+import { sendTo, targetsFor } from '../phone/send';
 import { ago } from '../format';
 import { mountTiles, troubled } from '../status/Tiles';
 import { mountUndoNote } from '../status/UndoNote';
@@ -442,6 +443,9 @@ const appListActions: AppListActions = {
       try { await go().SetAppSetting(a.id, 'pinned', on); } catch (e) { showError(e); }
       await loadStatus();
     },
+    // Send to my phone: the phones its page can go to, and the send.
+    targets: (a) => targetsFor('homelab://app/' + a.id),
+    send: (a, t) => sendTo(t, 'homelab://app/' + a.id, a.name),
   },
 };
 /**

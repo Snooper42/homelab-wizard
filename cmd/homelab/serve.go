@@ -58,6 +58,11 @@ func (h *homelab) serve(ctx context.Context, args []string) error {
 	// One follower of the engine (the agent's, else the runtime's) for every phone.
 	changes := &engine.Hub{}
 	go engine.Follow(ctx, h.root, changes.Publish)
+	// Send to my phone: a page the computer's window sent one phone (a file the
+	// desktop app leaves), passed to that phone's stream within a second.
+	go companion.FollowSent(ctx, h.root, time.Second, func(sent companion.Sent) {
+		changes.Publish(engine.Change{Open: &engine.Open{Device: sent.Device, Link: sent.Link, Title: sent.Title}})
+	})
 	s := &companion.Server{Store: companion.NewStore(companion.StorePath(h.root)), Methods: h.phoneMethods(), Version: version, Files: web.Files(), Changes: changes, Calendar: h.financeCalendar,
 		ProxyKey: func() string { return h.envMap()["COMPANION_PROXY_KEY"] }, ForMember: h.forMember,
 		// Away from home through the tunnel (ADR-0023): Setup's "Reach

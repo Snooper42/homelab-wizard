@@ -52,6 +52,8 @@ var events = []struct {
 	{"update:state", UpdateState{}},
 	{"update:step", UpdateStep{}},
 	{"media:event", map[string]any{}},
+	// On the phone's page only: companion.js passes a page the computer sent it (Send to my phone).
+	{"phone:open", engine.Open{}},
 }
 
 func TestBindings(t *testing.T) {
