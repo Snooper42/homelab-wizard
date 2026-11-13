@@ -634,6 +634,22 @@ declare namespace finance {
     icon?: string;
     income?: boolean;
   }
+  interface Collected {
+    id: string;
+    account: string;
+    name: string;
+    set?: string;
+    number?: string;
+    grade?: string;
+    count?: number;
+    paid?: number;
+    paidOn?: string;
+    price?: number;
+    priceOn?: string;
+    typed?: boolean;
+    ref?: string;
+    picture?: string;
+  }
   interface Day {
     date: string;
     balance: number;
@@ -806,6 +822,7 @@ declare namespace finance {
     inBalance?: string[];
     logos?: Record<string, string>;
     watch?: finance.Watched[];
+    collection?: finance.Collected[];
     categories?: finance.Category[];
     budgets?: finance.Budget[];
     goals?: finance.Goal[];
