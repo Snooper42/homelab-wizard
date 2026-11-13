@@ -1158,6 +1158,24 @@ func (a *App) People() ([]people.Person, error) {
 	return list, err
 }
 
+// PrivateFinances is who in the household keeps their Finances private
+// (sealed on their own phone, private-finances.md), by username, with when
+// they last saved them (RFC 3339): Settings › People says that and nothing
+// more, as nothing on the computer can read what is in them.
+func (a *App) PrivateFinances() (map[string]string, error) {
+	list, err := people.Load(people.Path(a.root))
+	out := map[string]string{}
+	for _, p := range list {
+		if !people.Valid(p.Username) {
+			continue
+		}
+		if at, ok := finance.PrivateSince(people.MemberRoot(a.root, p.Username)); ok {
+			out[p.Username] = at.UTC().Format(time.RFC3339)
+		}
+	}
+	return out, err
+}
+
 // PersonAction adds someone (action "add", with email and the apps they
 // use; none means every household app), makes a new welcome page and
 // sign-in link ("welcome"), gives them a new password in Jellyfin and

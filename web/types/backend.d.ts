@@ -1380,6 +1380,7 @@ interface Backend {
     Phones(): Promise<companion.Phone[]>;
     Plan(arg1: string[], arg2: Record<string, string>): Promise<api.Plan>;
     PrintFinances(arg1: string, arg2: string): Promise<string>;
+    PrivateFinances(): Promise<Record<string, string>>;
     Protection(): Promise<crowdsec.Protection>;
     QR(arg1: string): Promise<string>;
     RecoveryKit(): Promise<void>;

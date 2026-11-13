@@ -385,6 +385,8 @@ try { if ((window.__MOCK || {}).tidyTab) localStorage.setItem('homelab.tidyTab',
     async Wire() { for (const l of M.wireLinks || []) { await later(null, 80); emit('link', l); } return later(M.wireLinks || []); },
     Phones: () => later(M.phones || []),
     People: () => later(M.people || []),
+    // Who keeps their Finances private, and when they last saved them (only that).
+    PrivateFinances: () => later(M.privateFinances || {}),
     PersonAction: (action, name, email, apps) => {
       M.people ||= [];
       if (action === 'add') M.people.push({ username: name.split(' ')[0].toLowerCase(), name, email, apps, added: new Date().toISOString(), removed: '0001-01-01T00:00:00Z' });

@@ -15,6 +15,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/catalog"
 	"github.com/Snooper42/homelab-wizard/internal/compose"
 	"github.com/Snooper42/homelab-wizard/internal/detect"
+	"github.com/Snooper42/homelab-wizard/internal/finance"
 	"github.com/Snooper42/homelab-wizard/internal/homepage"
 	"github.com/Snooper42/homelab-wizard/internal/people"
 	"github.com/Snooper42/homelab-wizard/internal/sso"
@@ -39,6 +40,7 @@ func (h *homelab) personCmd(ctx context.Context, args []string) error {
 	admin := fs.Bool("admin", false, "")
 	appList := fs.String("apps", "", "")
 	all := fs.Bool("all", false, "")
+	deleteFinances := fs.Bool("delete-finances", false, "")
 	apply := applyFlag(fs)
 	pos, err := parseFlags(fs, args)
 	if err != nil {
@@ -52,6 +54,7 @@ func (h *homelab) personCmd(ctx context.Context, args []string) error {
 	}
 	switch sub {
 	case "list":
+		private := privateFinances(h.root, list)
 		if len(list) == 0 {
 			u.Info("no one added yet: homelab person add \"Anna Smith\" --email anna@example.com")
 			return nil
@@ -61,6 +64,9 @@ func (h *homelab) personCmd(ctx context.Context, args []string) error {
 			state := "added " + p.Added.Local().Format("2 Jan 2006")
 			if !p.Active() {
 				state = u.Dim("removed " + p.Removed.Local().Format("2 Jan 2006") + " (data kept)")
+			}
+			if at, ok := private[p.Username]; ok {
+				state += ", keeps their Finances private (last saved " + at.Local().Format("2 Jan 2006") + ")"
 			}
 			rows = append(rows, []string{p.Name, p.Username, p.Email, state})
 		}
@@ -72,7 +78,7 @@ func (h *homelab) personCmd(ctx context.Context, args []string) error {
 		return h.personShare(list, pos)
 	case "add", "remove", "welcome", "password":
 	default:
-		return fmt.Errorf("usage: homelab person [list] | add \"<name>\" --email <address> [--apps <ids>] | apps <name> [<ids>|--all] | share <name> [bills,subscriptions,budgets|none] | welcome <name> | password <name> | remove <name>")
+		return fmt.Errorf("usage: homelab person [list] | add \"<name>\" --email <address> [--apps <ids>] | apps <name> [<ids>|--all] | share <name> [bills,subscriptions,budgets|none] | welcome <name> | password <name> | remove <name> [--delete-finances]")
 	}
 	if len(pos) != 1 {
 		return fmt.Errorf("usage: homelab person %s \"<name>\"", sub)
@@ -169,8 +175,15 @@ func (h *homelab) personCmd(ctx context.Context, args []string) error {
 			u.Info("turn off their Jellyfin and Navidrome accounts the homelab can reach")
 		}
 		u.Info("Vaultwarden has a password of its own: turn their account off in its admin page")
+		sealed := people.Valid(p.Username) && finance.HasSealed(memberRoot(h.root, p.Username))
+		if sealed {
+			u.Info("%s", privateOnRemove(*deleteFinances))
+		}
 		if err := h.goAhead(*apply, "\nRemove them?"); err != nil {
 			return err
+		}
+		if sealed && !*deleteFinances && !*apply && h.ui.Interactive {
+			*deleteFinances = h.ui.Confirm("Delete their private Finances too? You can delete them, but never open them.", false)
 		}
 		if err := api.SetDisabled(ctx, p.PocketID, true); err != nil {
 			return err
@@ -182,10 +195,34 @@ func (h *homelab) personCmd(ctx context.Context, args []string) error {
 		}
 		_ = os.Remove(people.WelcomePath(h.root, p.Username))
 		_ = os.Remove(people.SheetPath(h.root, p.Username))
+		if sealed && *deleteFinances {
+			if err := deletePrivateFinances(memberRoot(h.root, p.Username)); err != nil {
+				return err
+			}
+			u.OK("their private Finances are deleted")
+		}
 		u.OK("%s can no longer sign in with Pocket ID; their data stays", p.Name)
 		h.afterChange(ctx)
 		return nil
 	}
+}
+
+// privateOnRemove is what Remove says of a member's private Finances: kept
+// unless the owner asks, and never readable by the owner either way.
+func privateOnRemove(deleting bool) string {
+	if deleting {
+		return "delete their private Finances: they're sealed on their phone, so the computer can delete them but never open them"
+	}
+	return "keep their private Finances, sealed as they are: you can delete them (--delete-finances), but never open them"
+}
+
+// deletePrivateFinances removes a removed member's sealed Finances and
+// sealed receipts: all the computer can do with them.
+func deletePrivateFinances(froot string) error {
+	if err := os.Remove(finance.SealedPath(froot)); err != nil && !os.IsNotExist(err) {
+		return err
+	}
+	return finance.RemoveSealedReceipts(finance.ReceiptsDir(froot))
 }
 
 // planAccounts says, in a plan, what would happen in each app with a
