@@ -474,6 +474,11 @@ declare namespace board {
 }
 
 declare namespace companion {
+  interface Asked {
+    link: string;
+    from?: string;
+    at: string;
+  }
   interface Phone {
     id: string;
     name: string;
@@ -1434,4 +1439,5 @@ interface BackendEvents {
     "update:step": app.UpdateStep;
     "media:event": Record<string, unknown>;
     "phone:open": engine.Open;
+    "open:link": companion.Asked;
 }

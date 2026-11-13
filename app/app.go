@@ -123,6 +123,14 @@ func (a *App) startup(ctx context.Context) {
 		}
 		emitEvent(a.ctx, "status:changed", c)
 	})
+	// Open on the computer: a page a phone asked this window to show (the
+	// companion leaves it, as a file in the homelab folder): the window
+	// comes forward on it, saying which phone asked.
+	go companion.FollowAsked(ctx, a.root, time.Second, func(x companion.Asked) {
+		runtime.WindowUnminimise(a.ctx)
+		runtime.Show(a.ctx)
+		emitEvent(a.ctx, "open:link", x)
+	})
 	a.windowTheme(tray.LoadAppearance())
 	// What Quit and Stop stopped starts again when the app opens (not when
 	// it opens from the tray's Quit, which asks to stop it).

@@ -163,3 +163,31 @@ func TestASendReachesOnlyItsPhone(t *testing.T) {
 		t.Errorf("the iPad got another phone's send: %s", got)
 	}
 }
+
+// Open on the computer: a phone's ask waits for the desktop app (another
+// process), the last one asked only, and goes stale as a send does.
+func TestAskedIsTakenOnce(t *testing.T) {
+	root := t.TempDir()
+	if err := Ask(root, Asked{Link: "https://example.com"}); err == nil {
+		t.Error("a link that isn't the app's own was kept")
+	}
+	if err := Ask(root, Asked{Link: "homelab://status", From: "Sam's iPhone"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := Ask(root, Asked{Link: "homelab://backups", From: "Sam's iPhone"}); err != nil {
+		t.Fatal(err)
+	}
+	if got, ok := TakeAsked(root, time.Now().Add(3*time.Minute)); ok {
+		t.Errorf("a stale ask was taken: %+v", got)
+	}
+	if err := Ask(root, Asked{Link: "homelab://backups", From: "Sam's iPhone"}); err != nil {
+		t.Fatal(err)
+	}
+	got, ok := TakeAsked(root, time.Now())
+	if !ok || got.Link != "homelab://backups" || got.From != "Sam's iPhone" {
+		t.Errorf("taken: %+v %v", got, ok)
+	}
+	if _, ok := TakeAsked(root, time.Now()); ok {
+		t.Error("taken twice")
+	}
+}

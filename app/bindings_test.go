@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/Snooper42/homelab-wizard/internal/board"
+	"github.com/Snooper42/homelab-wizard/internal/companion"
 	"github.com/Snooper42/homelab-wizard/internal/engine"
 	"github.com/Snooper42/homelab-wizard/internal/install"
 	"github.com/Snooper42/homelab-wizard/internal/progress"
@@ -54,6 +55,8 @@ var events = []struct {
 	{"media:event", map[string]any{}},
 	// On the phone's page only: companion.js passes a page the computer sent it (Send to my phone).
 	{"phone:open", engine.Open{}},
+	// A page a phone asked this window to show (Open on the computer).
+	{"open:link", companion.Asked{}},
 }
 
 func TestBindings(t *testing.T) {

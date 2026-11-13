@@ -206,6 +206,23 @@ struct DecodingTests {
         #expect(full.status?.unmatched == 1)
     }
 
+    /// Send to my phone: a page the computer sent shows as a banner with
+    /// Open, reads no Status again, and is never a link out or an action.
+    @Test func aPageSentFromTheComputer() throws {
+        let decoder = JSONDecoder.homelab()
+        let sent = try decoder.decode(EngineChange.self, from: Data(#"{"open":{"link":"homelab://app/radarr","title":"Radarr"}}"#.utf8))
+        #expect(!sent.needsRefresh)
+        #expect(sent.open?.deepLink == .app(id: "radarr", then: nil))
+        #expect(sent.open?.words == "From the Computer: Radarr")
+        let page = try decoder.decode(EngineChange.self, from: Data(#"{"open":{"link":"homelab://finances/recurring","title":"Finances › Recurring"}}"#.utf8))
+        #expect(page.open?.deepLink == .finances(page: .recurring))
+        let out = try decoder.decode(EngineChange.self, from: Data(#"{"open":{"link":"https://example.com","title":"Somewhere"}}"#.utf8))
+        #expect(out.open?.deepLink == nil)
+        let action = try decoder.decode(EngineChange.self, from: Data(#"{"open":{"link":"homelab://app/radarr?do=stop"}}"#.utf8))
+        #expect(action.open?.deepLink == nil)
+        #expect(SentPage(link: "homelab://status", title: nil).words == "From the Computer: a Page")
+    }
+
     @Test func serverMessagesAreCleaned() {
         #expect(APIError.sanitize("  bad\u{1B}[31m code\n ") == "bad[31m code")
         #expect(APIError.sanitize(String(repeating: "a", count: 1000))?.count == 300)
