@@ -1533,6 +1533,16 @@ class Lyrics(Base):
 
 
 class LyricsText(Base):
+    def test_lyrics_from_outside_are_plain_text_of_a_sensible_size(self):
+        # LRCLIB's text goes into every song's tags, which Navidrome, Jellyfin and each player show: no control
+        # characters (a NUL ends some players' reading, an escape sequence drives a terminal), and nothing huge.
+        got = music_tidy.normalize_lyrics("[00:01.00]one\x00\x1b[31m red\x07\n\ttwo\x7f")
+        self.assertEqual(got, "[00:01.00]one[31m red\n\ttwo")
+        song = self.touch(self.lib["music"] / "A" / "01.mp3")
+        with self.assertRaises(RuntimeError):
+            music_tidy.write_lyrics(song, "la " * 50000, "lrc")
+        self.assertFalse(song.with_suffix(".lrc").exists(), "nothing written")
+
     def test_synced_is_read_through_a_byte_order_mark_and_old_line_endings(self):
         self.assertTrue(music_tidy.is_synced("\ufeff[00:01.00]one"))
         self.assertTrue(music_tidy.is_synced("[ti:x]\r[00:01.00]one\r[00:02.00]two"))
