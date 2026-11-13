@@ -884,8 +884,11 @@ def file_music(args):
                 continue
             by_sound = True
         existing = []
+        # A download's tags are whoever made it's: beets reads "albumartist:X" as "contains X", and an X starting
+        # with ":" as a pattern (":." is every album), so ask for exactly these names (=~, any case).
+        exact = ["albumartist:=~" + artist, "album:=~" + album]
         if artist and album:
-            for line in beet("ls", "-f", "$albumartist\t$album\t$path", "albumartist:" + artist, "album:" + album):
+            for line in beet("ls", "-f", "$albumartist\t$album\t$path", *exact):
                 aa, al, path = (line.split("\t") + ["", "", ""])[:3]
                 if aa.casefold() == artist.casefold() and al.casefold() == album.casefold() and Path(path).exists():
                     existing.append(Path(path))
@@ -909,7 +912,7 @@ def file_music(args):
         if existing:
             for e in existing:
                 mc.trash(e)
-            beet("rm", "-f", "albumartist:" + artist, "album:" + album)
+            beet("rm", "-f", *exact)
             replaced += 1
         if by_sound:
             beet("-c", str(skip_unmatched()), "import", str(item))
