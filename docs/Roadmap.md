@@ -27,16 +27,17 @@ Since October 2026 the work is organised around two goals. 0.11 (real Docker in 
 
 A heavy app (Nextcloud, Frigate, Tdarr) is optional and in no starter or preset a newcomer picks by default.
 
-## Where it stands: 0.15
+## Where it stands (November 2026)
 
-A desktop app (macOS, Windows, Linux) and the `homelab` CLI that install, connect, back up, update, and watch over 71 self-hosted apps on one computer (the count in the README's generated table).
+A desktop app (macOS, Windows, Linux) and the `homelab` CLI that install, connect, back up, update, and watch over 72 self-hosted apps on one computer (the count in the README's generated table).
 
 - **Setting up:** Choose apps (starters, presets, every app by category, your own apps), a Setup checklist that runs the ready steps for you and leaves the sidebar once they are done, Home mode on the tailnet by default, and a domain with the proxy, AdGuard Home, Cloudflare Tunnel, and CrowdSec when wanted
 - **Running:** Status follows the container runtime live through Docker's own API (one engine, served by the background agent, which sends each change with the Status read after it and reads Status's cards once for every window and phone), says why an app failed to start or stopped answering, starts apps waiting for a drive, pauses heavy apps on battery, and gives background work a smaller CPU share
 - **Healing:** the watchdog every 15 minutes restarts an app that hangs, makes one whose container is gone again, rolls back an update that leaves an app unwell (with its data from before when it never came up well), and alerts through ntfy and an outside heartbeat
 - **Backups:** nightly database dumps and volume archives, Duplicati jobs off-site, a monthly restore test the app runs and times, moving the homelab to another machine, and rebuilding a lost one from the backups in one command (`homelab rebuild`), each app on the version that wrote its data (`<APP>_DIGEST` in `.env`)
 - **Updates:** the agent updates the apps nightly (each copied first; every app unless pinned, a database, or built here; held or paused from the app), the homelab files and the app itself found by themselves and put in place with one **Update now**, each app's release notes before it updates
-- **The household:** People with one sign-in (Pocket ID), **Finances** (the household's money, paycheck by paycheck, and net worth over time, typed in by hand and kept on this machine), a phone companion with Status, Backups, and Finances for the phones allowed them, kiosk mode for a wall screen, open-format export
+- **The household:** People with one sign-in (Pocket ID), **Finances** (the household's money, paycheck by paycheck, and net worth over time, typed in by hand and kept on this machine), a phone companion with Status, Backups, and Finances for the phones allowed them (in the browser, or the native iPhone and iPad app in `apple-client/`), kiosk mode for a wall screen, open-format export
+- **The media libraries:** **Tidy Up** files each download into its library (music, films, TV, books, audiobooks), cleans the music with beets, shrinks video with Tdarr, merges audiobooks, and tidies the books in Calibre, with Undo and the Trash behind every change ([Tidy Up](<Tidy Up.md>))
 - **The app:** a typed Preact frontend, native look per system (accent, Mica, translucent sidebar, high contrast, VoiceOver landmarks), Settings › **Appearance** (theme, accent, contrast, Islands, motion, transparency, tray icon colour), every screen fitting big text in a small window, and an AI that explains a log on this machine only
 - **Safety:** a threat review of the app's own code, govulncheck, gosec, and npm audit in CI, pinned Actions, and checksummed self-updates
 
@@ -378,7 +379,7 @@ Music and books arrive messy; the homelab tidies them, the same way on every sys
 
 ### Later
 
-- [ ] A native iOS app with widgets and Lock Screen status, once signing is in place
+- [ ] A native iOS app with widgets and Lock Screen status in the App Store, once signing is in place (the app itself is in `apple-client/`, built with Xcode on your own Mac)
 - [ ] The taskbar and Dock icon in the colour picked in Appearance
 - [ ] A router that can hand out the AdGuard DNS server (ISSUE-0008)
 - [ ] MoneyMatter on native arm64 images when upstream publishes them (ISSUE-0009)

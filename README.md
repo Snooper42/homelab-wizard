@@ -19,27 +19,100 @@
 </p>
 
 <p align="center">
+  <a href="#what-it-is">What it is</a> ·
+  <a href="#take-the-tour">Tour</a> ·
+  <a href="#how-it-works">How it works</a> ·
   <a href="#get-started">Get started</a> ·
-  <a href="#what-it-does">What it does</a> ·
+  <a href="#what-it-replaces">What it replaces</a> ·
   <a href="#everyday-tasks">Everyday tasks</a> ·
-  <a href="#what-runs">Apps</a> ·
   <a href="#questions">Questions</a> ·
-  <a href="#more">More</a> ·
-  <a href="#getting-help">Help</a> ·
+  <a href="#what-runs">Apps</a> ·
   <a href="#documentation">Docs</a> ·
-  <a href="CHANGELOG.md">What's new</a> ·
-  <a href="docs/Roadmap.md">Roadmap</a>
+  <a href="CHANGELOG.md">What's new</a>
 </p>
 
 <p align="center">
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-status-dark.png">
-  <img alt="Homelab Wizard's Status screen: every app running, what they replace, and categories where everything runs folded into one line" src="docs/images/app-status.png">
-</picture>
+  <img alt="A walk through Homelab Wizard: Status, an app's page, Finances, Tidy Up, Backups, and Choose apps, each with a caption saying what it is for" src="docs/images/tour.gif" width="960">
 </p>
 
 > [!NOTE]
 > **Beta.** Homelab Wizard runs a real household on a Mac, and it is now being tested on Windows and Linux machines too. The builds are not signed yet (no Apple Developer ID or Windows code-signing certificate), so each system asks once whether to trust them. Open problems are in [Known Issues](docs/Known%20Issues.md); what changed in each version is in the [CHANGELOG](CHANGELOG.md).
+
+## What it is
+
+Homelab Wizard turns a computer you already own (a Mac mini, a desktop PC, a Steam Machine) into your household's own private cloud. It installs free, open-source apps that do the jobs you pay subscriptions for, such as photo backup, a password manager, and streaming for the films and music you own. It connects them to each other, and then it looks after them:
+
+- **A copy of everything, every night,** encrypted before it leaves the house, and a monthly test that proves a restore works.
+- **Updates while you sleep,** each app's data copied first, with a one-click undo. An app that comes back unwell is put back by itself.
+- **A watchdog every 15 minutes** that restarts what hangs, and an alert on your phone when something needs you.
+- **Nothing published to the internet.** Your phones and computers reach the apps over Tailscale's private network, at home and away.
+
+Two parts are its own: **Finances**, the household's money paycheck by paycheck, and **Tidy Up**, which keeps the music, films, and books you download sorted. No command line is needed: install the app, click **Set it up for me**, tick what you want, and it does the rest.
+
+## Take the tour
+
+<table>
+<tr>
+<td width="50%" valign="top"><a href="docs/Tour.md#status"><strong>Status</strong></a><br>Every app on the computer, live: what runs, what needs a look, and one button to open or start each.<br><br><picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-status-dark.png">
+  <img alt="Status: 21 of 22 apps running, one that needs a look, and each category folded into one line" src="docs/images/app-status.png">
+</picture></td>
+<td width="50%" valign="top"><a href="docs/Tour.md#an-apps-page"><strong>An app's page</strong></a><br>Restart it, read its log in plain words (explained by the AI on this computer), and undo an update.<br><br><picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-page-dark.png">
+  <img alt="Vikunja's page: its address, its week up, its last backup, its log explained, and its last update with Roll back" src="docs/images/app-page.png">
+</picture></td>
+</tr>
+<tr>
+<td valign="top"><a href="docs/Tour.md#choose-apps"><strong>Choose apps</strong></a><br>Tick what you want; each app says what it does and which subscription it can replace. The plan says what it will install before anything happens.<br><br><picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-choose-dark.png">
+  <img alt="Choose apps: Start here with Photos, Passwords, Movies and TV, Music, and Files, and the install plan" src="docs/images/app-choose.png">
+</picture></td>
+<td valign="top"><a href="docs/Tour.md#backups"><strong>Backups</strong></a><br>Each app's newest copy, the encrypted off-site jobs, the last restore test, and a printable recovery kit.<br><br><picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-backups-dark.png">
+  <img alt="Backups: last backup, destination, restore test, and each app's newest copy" src="docs/images/app-backups.png">
+</picture></td>
+</tr>
+<tr>
+<td valign="top"><a href="docs/Tour.md#finances"><strong>Finances</strong></a><br>What each paycheck leaves once the bills are paid, and net worth month by month. Typed in by you, kept at home, no bank connection.<br><br><picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-finances-dark.png">
+  <img alt="Finances: checking now and after the next paycheck, and every account after its bills" src="docs/images/app-finances.png">
+</picture></td>
+<td valign="top"><a href="docs/Tour.md#tidy-up"><strong>Tidy Up</strong></a><br>Drop in a download and it's filed in the right library: music, films, shows, books, audiobooks. Undo for every change.<br><br><picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-tidy-dark.png">
+  <img alt="Tidy Up's Inbox: the watched folders, when to tidy up, and Tidy up now" src="docs/images/app-tidy.png">
+</picture></td>
+</tr>
+<tr>
+<td valign="top"><a href="docs/Tour.md#setup"><strong>Setup</strong></a><br>The checklist for finishing up, checked live. <strong>Do the N I can do for you</strong> runs every step that's ready.<br><br><picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-setup-dark.png">
+  <img alt="Setup: this machine, then the first-time checklist with progress" src="docs/images/app-setup.png">
+</picture></td>
+<td valign="top"><a href="docs/Tour.md#on-the-phone"><strong>On the phone</strong></a><br>Status, Backups, and Finances in the phone's browser, at home or away; a phone only looks until you let it change things.<br><br><p align="center"><picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-phone-dark.png">
+  <img alt="The phone companion: Status on a phone" src="docs/images/app-phone.png" width="210">
+</picture></p></td>
+</tr>
+</table>
+
+Every screen in more detail, with what each button does: **[the full tour](docs/Tour.md)**.
+
+## How it works
+
+```mermaid
+flowchart TB
+  you(["<b>Your phones and computers</b><br/>at home and away"])
+  subgraph home["The computer at home"]
+    direction LR
+    wizard["<b>Homelab Wizard</b><br/>the app, and its agent<br/>in the background"]
+    apps["<b>Your apps</b><br/>Photos · Passwords · Documents<br/>Films · Music · Books · …<br/>each in its own container"]
+    wizard -- "installs, connects,<br/>updates, restarts" --> apps
+  end
+  backup[("<b>Your backups</b><br/>a cloud drive's folder,<br/>or an external drive")]
+  you -- "Tailscale: private,<br/>nothing on the internet" --> apps
+  wizard -- "every night,<br/>an encrypted copy" --> backup
+```
+
+The apps are free, open-source projects (Immich, Vaultwarden, Paperless-ngx, Jellyfin, Navidrome, and 60-odd more), each running in its own container through Docker, or OrbStack on a Mac. Homelab Wizard is the part that picks them, sets them up with a strong password each, connects them to each other, and keeps them running, with an alert on your phone when something needs you. The traffic paths, the engine, and a night of jobs, drawn out: [Architecture](docs/Architecture.md).
 
 ## Get started
 
@@ -92,7 +165,7 @@ The [runbook](docs/Runbooks.md#first-time-bring-up) has every setup step as comm
 
 </details>
 
-## What it does
+## What it replaces
 
 A small private cloud on a computer at home. It does the jobs you would otherwise pay monthly subscriptions for, but the apps run at home and the files stay yours.
 
@@ -102,6 +175,7 @@ A small private cloud on a computer at home. It does the jobs you would otherwis
 | Keep everyone's passwords | Vaultwarden (with the Bitwarden apps) | 1Password Families |
 | Scan and search receipts, letters, and paperwork | Paperless-ngx | Evernote |
 | See what each paycheck leaves after the bills, and your net worth | Finances, a screen of Homelab Wizard itself | a spreadsheet, or a budgeting app |
+| Sort and tag the music, films, shows, books, and audiobooks you download, and free the space they waste | Tidy Up, a screen of Homelab Wizard itself | a music tagger, a file-renaming app |
 | Plan the budget, and track investments | MoneyMatter or Actual Budget, Ghostfolio | YNAB, a portfolio tracker |
 | Watch your movies and shows | Jellyfin | Netflix and others, for what you own |
 | Listen to your music, audiobooks, and podcasts | Navidrome, Audiobookshelf | Spotify Family, Audible |
@@ -124,6 +198,7 @@ Each in the app, then the same from a terminal in the homelab folder (`homelab.c
 | Update an app now, or undo an update | The app's page › **Check for an update**, or **Roll back** | `./homelab update <app>`, `./homelab rollback <app>` | [Automation](docs/Automation.md#nightly-updates-the-background-agent) |
 | Pause the nightly updates | Status › *Nightly updates* › **Pause** | `./homelab updates pause` (and `resume`) | [Automation](docs/Automation.md) |
 | See what's left after each paycheck | **Finances** in the sidebar (on a phone too, once allowed in Settings › Phones) | — | [Phone companion](<services/system/Phone companion.md>) |
+| File a download into the right library, or free space | **Tidy Up** › Inbox › **Tidy up now**, or a library's tab | `./homelab media inbox --apply`, `./homelab media <library> scan` | [Tidy Up](<docs/Tidy Up.md>) |
 | Back up now, or prove a restore works | Backups › **Back up now**, **Test a restore** | `./homelab backup --apply`, `./homelab restore-test --auto` | [Backups](docs/Backups.md) |
 | Update Homelab Wizard and the homelab | **Update now** on the line at the top of the window | `./homelab upgrade` | [Upgrading](docs/Upgrading.md) |
 | Add someone in the household | Settings › **People** › **Add a person** | `./homelab person add "Anna Smith" --email anna@example.com` | [Pocket ID](<services/security/Pocket ID.md>) |
@@ -325,68 +400,6 @@ Over 70 apps in nine categories: the baseline ones start with the homelab, the r
 ## More
 
 <details>
-<summary><strong>The desktop app, screen by screen</strong></summary>
-
-<table>
-<tr>
-<td width="50%"><strong>Choose apps</strong><br>Pick a starter or a bundle, or tick apps; the plan says in one line what it installs.<br><br><picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-choose-dark.png">
-  <img alt="Choose apps: apps by category with what each replaces, and the install plan" src="docs/images/app-choose.png">
-</picture></td>
-<td width="50%"><strong>Setup</strong><br>Only while something needs you: how this machine looks after the homelab, then <strong>Finish setting up</strong>, checked live. <strong>Do the N I can do for you</strong> runs every ready step.<br><br><picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-setup-dark.png">
-  <img alt="Setup: this machine, then the first-time checklist with progress" src="docs/images/app-setup.png">
-</picture></td>
-</tr>
-<tr>
-<td><strong>Backups</strong><br>Each app's newest copy, the off-site jobs, the last restore test, Back up now, the Recovery kit, and Move out… / Move in… for a new computer.<br><br><picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-backups-dark.png">
-  <img alt="Backups: last backup, destination, restore test, and each app's newest copy" src="docs/images/app-backups.png">
-</picture></td>
-<td><strong>Settings</strong><br>This Mac (the machine, updates, a diagnostics report), Appearance (theme, accent, contrast, the Islands layout, motion, transparency, the tray icon's colour), People, Phones, then each app's settings, the everyday ones first. Passwords are never shown back: Test checks one, Copy hands it to the password manager.<br><br><picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-settings-dark.png">
-  <img alt="Settings: the everyday settings as a form" src="docs/images/app-settings.png">
-</picture></td>
-</tr>
-<tr>
-<td><strong>Phones</strong><br>Pair a phone with a QR code; it can only look until you let it make changes, and sees Finances only if you pick that for it.<br><br><picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-phones-dark.png">
-  <img alt="Settings › Phones: two paired phones, and a QR code to pair another" src="docs/images/app-phones.png">
-</picture></td>
-<td><strong>On the phone</strong><br>Status and Backups in the phone's browser, at home or over Tailscale, kept on the Home Screen like an app, and Finances on the phones you allow. On a TV or a wall tablet, kiosk mode shows Status alone, large.<br><br><picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-phone-dark.png">
-  <img alt="The phone companion: Status on a phone" src="docs/images/app-phone.png">
-</picture></td>
-</tr>
-<tr>
-<td><strong>Status, further down</strong><br>What each person and app keeps on disk, and what is using power right now, with each busy app's last minutes, live.<br><br><picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-status-cards-dark.png">
-  <img alt="Status further down: photos per person and what the apps keep as storage bars, and what is using power with a live line per app" src="docs/images/app-status-cards.png">
-</picture></td>
-<td><strong>Logs, explained</strong><br>An app's last 200 lines, and with Ollama on the computer, what they mean in plain words. The log never leaves the house.<br><br><picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-logs-dark.png">
-  <img alt="Navidrome's page: its log with a warning tinted, explained in plain words by the AI on this computer" src="docs/images/app-logs.png">
-</picture></td>
-</tr>
-<tr>
-<td colspan="2"><strong>Finances</strong><br>The household's money, typed in by hand and kept on this computer: one pay period at a time (step from paycheck to paycheck: each account after its bills, the ones money goes into lit, and what it pays), checking over the next month with paydays and big bills marked, cash flow, and where the spending goes. Net worth also lists every account after each of the next paychecks. Calendar lays out the money month by month: who is paid on which day, each bill with its logo, bank holidays, and the days checking falls under your cushion. Transactions keeps what actually happened (by category, with budgets), Reports reads it back by category, payee, and month, and Recurring sums up a typical month (spent, saved, left), Pay shows each person's pay and where it goes, and Net worth draws it month by month, with a home's and a car's equity. No bank connection; the file goes off-site with the nightly backup, encrypted.<br><br><picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-finances-dark.png">
-  <img alt="Finances: checking over the next 30 days with paydays and big bills marked and the lowest point under the cushion, and the accounts' groups in the sidebar" src="docs/images/app-finances.png">
-</picture></td>
-</tr>
-<tr>
-<td colspan="2"><strong>An app's page</strong><br>Everything about one app, a click from its row on Status: its state with Restart, Stop, and Open; its address, what it uses now, its week as the watchdog saw it, and its last backup; its log with Explain this; its updates with Roll back; who in the household uses it; and its own settings (nightly updates, alerts) with Remove.<br><br><picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-page-dark.png">
-  <img alt="Vikunja's page: running for 8 hours, its address, memory and processor use, up 99.5% of the week, its last backup, its log explained in plain words, its last update with Roll back, and the two people who use it" src="docs/images/app-page.png">
-</picture></td>
-</tr>
-</table>
-
-**Status** (the picture at the top) changes as things happen and shows every app with its state and address, one button (Open, or Start when it is stopped), and a click to its page. An app that runs but does not answer, or still runs settings you have since changed, is marked, and **Fix it** sees to it. Below the apps: the watchdog's checks, what CrowdSec blocked, recent alerts, **This week**'s summary, what each person and app keeps on disk, and a live line of what each busy app uses. More on each screen: [app/README.md](app/README.md).
-
-</details>
-
-<details>
 <summary><strong>What it saves, by category</strong></summary>
 
 | Stack | Replaces | Monthly | Annual plan | Paid monthly for a year |
@@ -400,7 +413,7 @@ Over 70 apps in nine categories: the baseline ones start with the homelab, the r
 | Media | 14 services | $205.82 | $2,137.94 | $2,469.84 |
 | Media Automation | 1 service | $5.00 | $60.00 | $60.00 |
 | Household | 4 services | $17.19 | $159.87 | $206.28 |
-| | **Everything** | **39 services** | **$452.24** | **$4,487.08** | **$5,426.88** |
+| **Everything** | **39 services** | **$452.24** | **$4,487.08** | **$5,426.88** |
 
 Each saving is tagged **Direct** (the app does the same job), **Library** (needs media you own), or **Equivalent** (a paid product with the same function). Every row, with its condition and price source: [Savings](docs/Savings.md). US list prices before tax, checked October 2026.
 
@@ -434,6 +447,9 @@ Tailscale devices, anywhere ─► tailnet ─► the same proxy (and AdGuard, w
 | `dockerfiles/npm-crowdsec/` | Nginx Proxy Manager with CrowdSec's Lua bouncer built in |
 | `cmd/`, `internal/` | The `homelab` CLI (Go, single binary, no runtime) |
 | `app/`, `web/` | The desktop app (Wails) and its TypeScript and Preact frontend, which the phone companion shares |
+| `tools/media/` | Tidy Up's engines (Python): music, books, films, TV, audiobooks, the inbox, and the nightly sweep |
+| `apple-client/` | The native iPhone and iPad app (SwiftUI), built with Xcode on your own Mac |
+| `mobile/finance/` | Finances' projection for a phone that keeps a member's Finances sealed (WebAssembly and an iOS framework) |
 | `docs/`, `services/` | The knowledge base: one note per app, Obsidian-friendly |
 
 See [Architecture](docs/Architecture.md) and [Decisions](docs/Decisions.md).
@@ -501,6 +517,7 @@ Multi-container apps get their own `stacks/<name>/` folder. The full guide and c
 ./homelab backup                # database dumps, volume archives, .env copy
 ./homelab watchdog              # every app and address checked, a hung app restarted, ntfy alerts
 ./homelab digest                # this week's summary, as on Status
+./homelab media                 # Tidy Up: each library, and the engines (music, books, movies, tv, audiobooks)
 ./homelab schedule install      # the background agent (launchd, systemd, or the Windows Run key)
 ./homelab person add "Anna Smith" --email anna@example.com   # an account, a welcome page, a start-page tab
 ./homelab sso setup             # the apps sign in with Pocket ID
@@ -544,10 +561,11 @@ Combine them as you like (`--folder --backups --app` takes everything of the hom
 |---|---|
 | Set it up, step by step, without code | [Getting Started](docs/Getting%20Started.md) |
 | Fix something | [Troubleshooting](docs/Troubleshooting.md), [Known Issues](docs/Known%20Issues.md) |
-| Run it day to day | [Runbooks](docs/Runbooks.md), [Backups](docs/Backups.md), [Monitoring](docs/Monitoring.md), [Automation](docs/Automation.md) |
+| Run it day to day | [Runbooks](docs/Runbooks.md), [Backups](docs/Backups.md), [Monitoring](docs/Monitoring.md), [Automation](docs/Automation.md), [Tidy Up](docs/Tidy%20Up.md) |
 | Recover from a lost machine, or move to a new one | [Disaster Recovery](docs/Disaster%20Recovery.md) |
 | Look up an app, an address, or a setting | [Services](docs/Services.md), [Inventory](docs/Inventory.md), [Environment](docs/Environment.md), [Commands](docs/Commands.md) |
 | Understand how it works | [Architecture](docs/Architecture.md), [Networking](docs/Networking.md), [Security](docs/Security.md), [Storage](docs/Storage.md), [Host](docs/Host.md) |
+| See what works on a phone, an iPhone, or an iPad | [What each device can do](docs/Parity.md), [apple-client](apple-client/README.md) |
 | Try a new build on a real machine | [Testing](docs/Testing.md), [Upgrading](docs/Upgrading.md) |
 | Change the code or add an app | [CONTRIBUTING](CONTRIBUTING.md), [Contributing (services)](docs/Contributing.md), [Maintainer Guide](docs/Maintainer%20Guide.md), [Decisions](docs/Decisions.md) |
 

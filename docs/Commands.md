@@ -47,6 +47,7 @@ Every command that takes apps (`install`, `plan`, `start`, `stop`, `restart`, `u
 ./homelab plan qbittorrent       # what an install would do, nothing changed
 ./homelab stop|start|restart <app>
 ./homelab stop <app> --until 21:00  # stopped for a while (21:00, 1h, or a date and time); it starts again by itself then
+./homelab pin|unpin <app>        # an app at the top of Status and the menu bar's Open an app, or back in its group
 ./homelab update <app>           # dump its databases, pull or rebuild, then recreate
 ./homelab update --all           # every app the nightly update would, now
 ./homelab db upgrade paperless-db  # a database to its next PostgreSQL major version (--to N), back by itself on failure
@@ -117,6 +118,7 @@ The first argument is an app, a category (`network`, `media`, `media-automation`
 ./homelab domain setup             # proxy hosts, AdGuard rewrite, tunnel hostnames
 ./homelab domain setup --ssl       # also the wildcard certificate (first time)
 ./homelab domain status
+./homelab away on|off <app>        # a public app reached away from home through the tunnel, or (off) home only, nothing of it on the internet
 ./homelab domain resolver          # this machine finds every app by name, also with a VPN on (asks for the administrator's password once)
 ./homelab domain resolver --undo   # takes that back, and homelab's lines in the hosts file
 ```
@@ -201,6 +203,7 @@ The companion also serves Finances' calendar feed, `/finances.ics?key=…`: the 
 ./homelab duplicati setup          # create the Duplicati backup jobs (preview, then confirm)
 ./homelab duplicati jobs           # each job's last and next run
 ./homelab kopia repository <folder>  # KOPIA_REPOSITORY: Kopia's second copy, never in Duplicati's folder; Kopia starts again there
+./homelab backup-check             # Duplicati's own check of each backup (the agent runs it weekly, on Sundays)
 ./homelab restore-test --auto      # Duplicati restores a sample; checked against the live files
 ./homelab restore-test --auto --engine kopia   # the same from Kopia's newest snapshot, when it is installed
 ./homelab restore-test recovery-staging/restore-test data/appdata
