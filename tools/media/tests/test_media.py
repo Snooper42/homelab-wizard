@@ -402,6 +402,29 @@ class Trash(Base):
         self.assertEqual(len(gone), 3)
 
 
+class ParsersHaveATimeout(Base):
+    """The Inbox's beets call decodes and fingerprints a download someone else made, under Tidy Up's lock: one
+    that hangs on a crafted file must not hold Tidy Up for good. (books_organizer.py's sips and calibredb calls
+    have none either, but it is vendored: item 148 leaves them.)"""
+
+    def test_the_inbox_beets_call_has_a_timeout(self):
+        seen = []
+
+        def fake(cmd, *a, **k):
+            seen.append(k)
+            return mock.Mock(returncode=0, stdout="", stderr="")
+        with mock.patch.object(music_tidy.subprocess, "run", side_effect=fake):
+            music_tidy.Beet(self.tmp)("import", str(self.tmp))
+        self.assertTrue(seen and seen[0].get("timeout"), "beet runs with no timeout")
+
+        def hang(cmd, *a, **k):
+            raise music_tidy.subprocess.TimeoutExpired(cmd, k.get("timeout"))
+        with mock.patch.object(music_tidy.subprocess, "run", side_effect=hang):
+            with self.assertRaises(RuntimeError) as e:
+                music_tidy.Beet(self.tmp)("import", str(self.tmp))
+        self.assertIn("longer than an hour", str(e.exception), "said plainly, as the Inbox's other failures are")
+
+
 class SavedRecords(Base):
     """A record two jobs can write at once (a film scan, unlocked, and Collect, locked, both keep movies.json):
     each save goes through a temporary file of its own, so one can't rename the other's half-written file

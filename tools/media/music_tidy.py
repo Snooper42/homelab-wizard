@@ -653,8 +653,11 @@ class Beet:
         self.cmd = [sys.executable, "-c", "import sys; from beets.ui import main; sys.exit(main())"]
 
     def __call__(self, *args):
-        r = subprocess.run(self.cmd + list(args), env=self.env, stdin=subprocess.DEVNULL, capture_output=True,
-                           text=True, encoding="utf-8", errors="replace")
+        try:  # an hour: a big album with every lookup, and never for good on a file built to hang a decoder
+            r = subprocess.run(self.cmd + list(args), env=self.env, stdin=subprocess.DEVNULL, capture_output=True,
+                               text=True, encoding="utf-8", errors="replace", timeout=3600)
+        except subprocess.TimeoutExpired:
+            raise RuntimeError("beet %s took longer than an hour" % args[0])
         ui.to_log("       $ beet %s\n%s" % (" ".join(args), (r.stdout + r.stderr)[-2000:]))
         if r.returncode != 0:
             raise RuntimeError("beet %s failed: %s" % (args[0], (r.stderr or r.stdout).strip()[-300:]))
