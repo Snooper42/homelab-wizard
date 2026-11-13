@@ -2379,6 +2379,33 @@ class NameTheseSongs(Base):
         music_tidy.file_music(args)
         return self.results()[-1]
 
+    def test_a_replaced_album_is_found_and_removed_by_its_exact_names(self):
+        # A download's tags come from whoever made it. beets reads "albumartist:Queen" as "contains Queen"
+        # (Queen + Adam Lambert too), and a tag starting with ":" as a pattern: "albumartist::." is every
+        # album. Tried on beets 2.14.1 (the pinned one): "field:=~value" matches that one album alone.
+        calls = self.beets()
+        old = self.touch(self.lib["music"] / "x" / "01.flac")
+
+        class FakeBeet:
+            def __init__(self, d):
+                pass
+
+            def __call__(self, *a):
+                calls.append(a)
+                return [":.\t:.\t%s" % old] if a[0] == "ls" else []
+        mock.patch.object(music_tidy, "Beet", FakeBeet).start()
+        mock.patch.object(music_tidy, "album_key", return_value=(":.", ":.")).start()
+        mock.patch.object(mc, "media_facts", return_value={"codec": "flac"}).start()
+        mock.patch.object(mc, "audio_more_efficient", return_value=True).start()
+        mock.patch.object(music_tidy, "lyrics").start()
+        mock.patch.object(music_tidy.mo, "read_genre_fields", return_value=[]).start()
+        self.file()
+        queries = [c for c in calls if c[0] in ("ls", "rm") and any(t.startswith("albumartist:") for t in c)]
+        self.assertEqual([c[0] for c in queries], ["ls", "rm"], "found, then taken out of beets")
+        for c in queries:
+            self.assertEqual([t for t in c if t.startswith(("albumartist:", "album:"))],
+                             ["albumartist:=~:.", "album:=~:."], c)
+
     def test_songs_with_no_names_are_not_filed_as_they_are(self):
         calls = self.beets()
         mock.patch.object(music_tidy, "can_fingerprint", return_value=False).start()
