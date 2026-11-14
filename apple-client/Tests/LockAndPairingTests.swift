@@ -85,8 +85,15 @@ struct LockStateMachineTests {
         return d
     }
 
-    private func make(store: FakeCredentialStore, auth: FakeOwnerAuthenticator = FakeOwnerAuthenticator(), installed: Bool = true) -> AppCoordinator {
-        AppCoordinator(keychain: store, biometrics: auth, defaults: Self.defaults(installed: installed))
+    /// The tests' clock: moved forward by hand.
+    private final class TestClock {
+        var now = ContinuousClock.now
+        func wait(_ d: Duration) { now = now.advanced(by: d) }
+    }
+
+    private func make(store: FakeCredentialStore, auth: FakeOwnerAuthenticator = FakeOwnerAuthenticator(), installed: Bool = true,
+                      defaults: UserDefaults? = nil, clock: TestClock = TestClock()) -> AppCoordinator {
+        AppCoordinator(keychain: store, biometrics: auth, defaults: defaults ?? Self.defaults(installed: installed), now: { clock.now })
     }
 
     @Test func aFreshInstallClearsWhatAnEarlierOneLeft() {
@@ -115,6 +122,7 @@ struct LockStateMachineTests {
     @Test func unlockThenTheBackgroundLocksAndForgets() async {
         let auth = FakeOwnerAuthenticator()
         let c = make(store: FakeCredentialStore(Self.credential()), auth: auth)
+        c.lockAfter = .rightAway
         c.bootstrap()
         await c.unlock()
         #expect(c.route == .unlocked)
@@ -128,6 +136,64 @@ struct LockStateMachineTests {
         // Locked: no change is authorized, and no prompt is shown for one.
         #expect(await c.authorizeChange(reason: "test") == false)
         #expect(auth.prompts == 1)
+    }
+
+    // Lock After (the owner, Nov 14: not Face ID "every single second").
+    @Test func backWithinLockAfterTheAppIsAsItWasLeft() async {
+        let auth = FakeOwnerAuthenticator(), clock = TestClock()
+        let c = make(store: FakeCredentialStore(Self.credential()), auth: auth, clock: clock)
+        c.lockAfter = .fiveMinutes
+        c.bootstrap()
+        await c.unlock()
+        c.requestedAppID = "jellyfin"
+        c.scenePhaseChanged(to: .background)
+        clock.wait(.seconds(4 * 60 + 59))
+        c.scenePhaseChanged(to: .active)
+        #expect(c.route == .unlocked)
+        #expect(c.requestedAppID == "jellyfin")
+        #expect(auth.prompts == 1)
+        // Leaving ended the change grace: a change asks again.
+        #expect(await c.authorizeChange(reason: "test"))
+        #expect(auth.prompts == 2)
+    }
+
+    @Test func awayLongerThanLockAfterItLocksOnReturn() async {
+        let auth = FakeOwnerAuthenticator(), clock = TestClock()
+        let c = make(store: FakeCredentialStore(Self.credential()), auth: auth, clock: clock)
+        c.lockAfter = .oneMinute
+        c.bootstrap()
+        await c.unlock()
+        c.requestedAppID = "jellyfin"
+        c.scenePhaseChanged(to: .background)
+        clock.wait(.seconds(60))
+        c.scenePhaseChanged(to: .active)
+        #expect(c.requestedAppID == nil)
+        #expect(c.serverName == nil)
+        // Locked, and it asks by itself as it comes back.
+        try? await Task.sleep(for: .milliseconds(50))
+        #expect(auth.prompts == 2)
+    }
+
+    @Test func lockingTheScreenLocksWhateverLockAfterSays() async {
+        let c = make(store: FakeCredentialStore(Self.credential()))
+        c.lockAfter = .fifteenMinutes
+        c.bootstrap()
+        await c.unlock()
+        c.scenePhaseChanged(to: .background)
+        c.screenLocked()
+        #expect(c.route == .locked)
+        #expect(c.serverName == nil)
+    }
+
+    @Test func lockAfterIsKeptOnThisDevice() {
+        let d = Self.defaults(installed: true)
+        let c = make(store: FakeCredentialStore(Self.credential()), defaults: d)
+        c.lockAfter = .oneMinute
+        #expect(make(store: FakeCredentialStore(Self.credential()), defaults: d).lockAfter == .oneMinute)
+        #expect(LockAfter.read(Self.defaults(installed: true)) == LockAfter.standard)
+        #expect(LockAfter.fiveMinutes.words.hasPrefix("Back within 5 minutes, the app opens as you left it"))
+        #expect(LockAfter.oneMinute.words.hasPrefix("Back within 1 minute,"))
+        #expect(LockAfter.rightAway.words == "The app locks as soon as it leaves the screen.")
     }
 
     @Test func aCancelledPromptStaysLockedQuietly() async {

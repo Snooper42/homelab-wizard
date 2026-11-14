@@ -217,7 +217,16 @@ struct ComputerView: View {
             } label: {
                 IconTileLabel(title: lockName, systemImage: "faceid", tint: TileColour.indigo)
             }
-            .accessibilityHint("The app locks when it leaves the screen, and asks again before any change.")
+            .accessibilityHint("The app locks when it leaves the screen, or after the time below, and asks again before any change.")
+            #if os(iOS)
+            Picker(selection: Binding(get: { coordinator.lockAfter }, set: { coordinator.lockAfter = $0 })) {
+                ForEach(LockAfter.allCases) { choice in
+                    Text(choice.label).tag(choice)
+                }
+            } label: {
+                IconTileLabel(title: "Lock After", systemImage: "lock.rotation", tint: TileColour.indigo)
+            }
+            #endif
             if WidgetSummaryStore.isAvailable {
                 Toggle(isOn: Binding(get: { widgetOn }, set: { on in Task { await setWidget(on) } })) {
                     IconTileLabel(title: widgetName, systemImage: "square.grid.2x2", tint: TileColour.blue)
@@ -238,12 +247,17 @@ struct ComputerView: View {
         } header: {
             Text("This \(deviceWord)")
         } footer: {
-            if actions.computerAnswers("AlertLog") {
-                switch alertSource {
-                case .ntfy:
-                    Text("The ntfy app notifies this device of the homelab's alerts. Every Alert, under Recent Alerts, lists them here.")
-                case .thisApp:
-                    Text("This app notifies while it's open. Turn off the ntfy app's notifications on this device so nothing arrives twice. A locked phone hears only from the ntfy app until the paid Apple program.")
+            VStack(alignment: .leading, spacing: 8) {
+                #if os(iOS)
+                Text(verbatim: coordinator.lockAfter.words)
+                #endif
+                if actions.computerAnswers("AlertLog") {
+                    switch alertSource {
+                    case .ntfy:
+                        Text("The ntfy app notifies this device of the homelab's alerts. Every Alert, under Recent Alerts, lists them here.")
+                    case .thisApp:
+                        Text("This app notifies while it's open. Turn off the ntfy app's notifications on this device so nothing arrives twice. A locked phone hears only from the ntfy app until the paid Apple program.")
+                    }
                 }
             }
         }

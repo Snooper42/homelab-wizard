@@ -22,6 +22,7 @@ struct DashboardView: View {
     #if os(iOS)
     @Environment(\.horizontalSizeClass) private var sizeClass
     #endif
+    @Environment(\.scenePhase) private var scenePhase
 
     init(coordinator: AppCoordinator) {
         api = coordinator.api
@@ -110,6 +111,11 @@ struct DashboardView: View {
         }
         .onDisappear {
             model.rememberSeen()
+        }
+        // Lock After keeps the app open a while after it leaves the screen;
+        // a member's private Finances still lock as it leaves (private-finances.md).
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .background { finances.lockPrivate() }
         }
         // The cards change slowly: read them now, then every 5 minutes while
         // unlocked. What this device may do is read again with them: the
