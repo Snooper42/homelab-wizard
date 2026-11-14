@@ -681,6 +681,8 @@ private struct SplitDashboard: View {
         // sidebar showing later doesn't undo it), and beside Status's list
         // an app's page, as a tap opens it.
         .onAppear {
+            // Amounts shown, as the iPhone's pictures show them (light-finances-hidden keeps them hidden).
+            finances.amountsShown = !ScreenshotMode.hidesAmounts
             guard let screen = ScreenshotMode.screen else { return }
             savedSidebar = screen.storageKey
             model.sidebar = screen
@@ -1058,18 +1060,22 @@ struct GroupHeader: View {
                         .foregroundStyle(.secondary)
                         .rotationEffect(.degrees(open ? 90 : 0))
                     Text(verbatim: group.label)
+                        .lineLimit(1)
                     Text("\(group.apps.count)")
                         .pill(group.alert ? Theme.danger : .secondary)
                 }
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
+            // The group's name first: the menu beside it gives way to ⋯ (GroupActionsMenu).
+            .layoutPriority(1)
             .accessibilityLabel(Text(verbatim: "\(group.label), \(group.apps.count) \(group.apps.count == 1 ? "app" : "apps")"))
             .accessibilityValue(open ? "Open" : "Folded")
             .accessibilityHint(open ? "Folds the group" : "Opens the group")
             Spacer()
             GroupActionsMenu(apps: group.apps)
                 .font(.caption)
+                .dynamicTypeSize(...DynamicTypeSize.accessibility1)
         }
         .textCase(nil)
     }

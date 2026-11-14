@@ -141,6 +141,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **Status's groups in the Homelab app keep their names whole:** in the iPad's list, or at the largest text, the menu beside a group's name shows only **⋯** when its words don't fit, instead of breaking the name (*Docu-ments*).
 - **The Homelab app's buttons read clearly in dark mode:** filled buttons (Back Up Now, Start, Unlock) keep the app's violet under their white words, and the lighter violet of links and bordered buttons (Test a Restore) is brighter, so each reads at 4.5:1 or more; light mode is unchanged.
 - **Spending and Transactions in the Homelab app at larger text:** Spending's legend shows names like *Subscriptions* whole, and its *+$1,021 on Sep* stays inside the ring; at the largest sizes Transactions puts **5 New** under *Latest Transactions* instead of breaking the heading mid-word.
 - **The Homelab app at the largest text sizes, and Setup's steps:** Finances' big amounts (what's left, net worth, investments, bills a month) grow with the text as their titles do; Setup says **Look for Problems** lists what it would fix first, and nothing changes until **Fix These** under that list.
