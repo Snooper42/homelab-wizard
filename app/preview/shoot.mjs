@@ -4390,6 +4390,24 @@ const smokes = [
     if (!/Out of date: Mealie, last copied 3 days ago/.test(text)) throw new Error('the out-of-date copy doesn’t say how old');
     if (!/12 files checked, all the same as now/.test(text)) throw new Error('the restore test doesn’t say what it checked');
   } },
+  // Usability task 3, item 20: picking qBittorrent alone offers no "Connect the apps for me" (nothing to connect it to);
+  // the VPN tunnel it brings shows ticked and greyed while it's needed; and Done names the tunnel too.
+  { name: 'Choose apps: qBittorrent alone, no Connect the apps, its tunnel ticked, and Done names it', screen: 'choose', run: async (page) => {
+    await page.click('#more > summary');
+    await page.fill('#search', 'qbittorrent');
+    await page.click('#groups label.app:has(strong:text-is("qBittorrent")) input');
+    await page.waitForSelector('#inputs .fieldName:has-text("ProtonVPN WireGuard key")', { timeout: 5000 });
+    await page.fill('#inputs input', 'wg-key-test');
+    await page.waitForSelector('#plan .planLead:has-text("Installs 1 app")', { timeout: 5000 });
+    if (await page.isVisible('#wireRow')) throw new Error('Connect the apps for me is offered with nothing to connect qBittorrent to');
+    const tunnel = page.locator('#groups label.app:has(strong:text-is("Gluetun")) input');
+    if (!(await tunnel.isChecked()) || !(await tunnel.isDisabled())) throw new Error('the tunnel qBittorrent brings is not ticked and greyed');
+    if (/helper|download client/i.test(await page.textContent('#planBox, #plan'))) throw new Error('the plan says helper or download client');
+    await page.click('#installBtn');
+    await page.waitForSelector('#started li', { timeout: 10000 });
+    const done = await page.textContent('#started');
+    if (!/Gluetun/.test(done)) throw new Error(`Done leaves out the tunnel: ${done}`);
+  } },
   { name: 'Photos per person on Status', screen: 'status', run: async (page) => {
     await page.waitForSelector('#storageCard:not([hidden]) li:has-text("Anna Smith") .when:has-text("412 GB")', { timeout: 5000 });
     await page.waitForSelector('#storageCard .muted:has-text("580 GB in Immich")');

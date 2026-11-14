@@ -94,12 +94,15 @@ function togglePreset(p: api.Preset) {
   replan();
 }
 
+// What the last plan brings in for what was picked (a tunnel, a database): app id → the app that needs it.
+let neededBy: Record<string, string> = {};
+
 export function renderApps() {
   const picks = { selected, status: statusById, toggle: togglePreset };
   mountStarters($('starters'), { ...picks, presets: catalog.presets.filter((p) => p.starter) });
   mountBundles($('presets'), { ...picks, presets: catalog.presets.filter((p) => !p.starter && !p.id.startsWith('stack:')) });
   mountGroups($('groups'), {
-    catalog, status: statusById, selected, query,
+    catalog, status: statusById, selected, query, needed: neededBy,
     tick: (id, on) => { if (on) selected.add(id); else selected.delete(id); renderApps(); replan(); },
     open: (url) => go().Open(url),
     settings: (keys) => showSettings(keys),
@@ -131,6 +134,8 @@ async function doPlan() {
   if (!tokens.length) {
     plan(null);
     $('installBtn').disabled = true;
+    $('wireRow').hidden = true;
+    if (Object.keys(neededBy).length) { neededBy = {}; renderApps(); }
     return;
   }
   let p: api.Plan;
@@ -143,8 +148,15 @@ async function doPlan() {
   if (seq !== planSeq) return; // a newer selection is being planned
   plan(p);
   renderInputs(p);
+  if (JSON.stringify(p.added || {}) !== JSON.stringify(neededBy)) { neededBy = { ...(p.added || {}) }; renderApps(); }
+  // Connect the apps for me (usability task 3, item 20): only when there are two to connect, one of them new, named.
   const wireable = new Set(catalog.wireable || []);
-  $('wireRow').hidden = ![...p.start, ...selected].some((id) => wireable.has(id));
+  const picked = [...p.start, ...selected].filter((id) => wireable.has(id));
+  const running = Object.values(statusById || {}).filter((a) => a.state === 'running' && wireable.has(a.id)).map((a) => a.id);
+  const linked = [...new Set([...picked, ...running])];
+  $('wireRow').hidden = !(picked.length && linked.length >= 2);
+  const names = linked.map(appName);
+  $('wireWhat').textContent = `Links ${names.length > 1 ? names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1] : names[0] || ''} to each other, so everything works the first time you open it.`;
   $('installBtn').disabled = !(p.ready && p.start.length);
 }
 
@@ -194,9 +206,15 @@ $('installBtn').onclick = async () => {
       cliProgress({ n: ev.step, total: ev.steps + 1, text });
     });
     try {
+      const brought = { ...neededBy };
       const started = await go().Install([...selected], filled());
       cliProgress('done');
-      mountStarted($('started'), { started, open: (url) => go().Open(url), close: () => { clearInstall(); $('search').focus(); } });
+      // What started with them, not a database (usability task 3, item 20): Gluetun, the tunnel qBittorrent goes through.
+      const also = Object.entries(brought).flatMap(([id, by]) => {
+        const a = catalog.apps.find((x) => x.id === id);
+        return a && a.kind !== 'helper' ? [{ name: a.name, what: a.description, by: appName(by) }] : [];
+      });
+      mountStarted($('started'), { started, also, open: (url) => go().Open(url), close: () => { clearInstall(); $('search').focus(); } });
       if (!$('wireRow').hidden && $('wire').checked && started.length) await wire($('wiring'));
       selected.clear();
       // New apps: Settings has their settings, and Status (with the ticks here) changed.

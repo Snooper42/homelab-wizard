@@ -5165,14 +5165,20 @@
       target && /* @__PURE__ */ u3("button", { type: "button", class: "linkbtn", onClick: quiet2(() => p3.open(target)), children: "Open" }),
       !!a3.inputs?.length && /* @__PURE__ */ u3("button", { type: "button", class: "linkbtn", onClick: quiet2(() => p3.settings(a3.inputs)), children: "Settings" })
     ].filter(Boolean);
+    const by = !p3.selected.has(a3.id) && p3.needed?.[a3.id] ? p3.catalog.apps.find((x3) => x3.id === p3.needed[a3.id])?.name || p3.needed[a3.id] : "";
     return /* @__PURE__ */ u3("label", { class: "app", children: [
-      /* @__PURE__ */ u3("input", { type: "checkbox", checked: p3.selected.has(a3.id), disabled: native, onChange: (e3) => p3.tick(a3.id, e3.currentTarget.checked) }),
+      /* @__PURE__ */ u3("input", { type: "checkbox", checked: p3.selected.has(a3.id) || !!by, disabled: native || !!by, title: by ? `Installed with ${by}, which needs it` : void 0, onChange: (e3) => p3.tick(a3.id, e3.currentTarget.checked) }),
       /* @__PURE__ */ u3("div", { class: "grow", children: [
         /* @__PURE__ */ u3("strong", { children: a3.name }),
         native && /* @__PURE__ */ u3("span", { class: "badge", children: "runs natively" }),
         stateText && /* @__PURE__ */ u3("span", { class: "badge " + stateCls, children: stateText }),
         /* @__PURE__ */ u3("div", { class: "desc", children: a3.description }),
         !!p3.note(a3.id) && /* @__PURE__ */ u3("div", { class: "sysnote muted", children: p3.note(a3.id) }),
+        by && /* @__PURE__ */ u3("div", { class: "sysnote muted", children: [
+          "Installed with ",
+          by,
+          ", which needs it"
+        ] }),
         !!a3.replaces?.length && /* @__PURE__ */ u3("div", { class: "replaces", children: [
           "Replaces ",
           a3.replaces.join(", ")
@@ -5245,9 +5251,9 @@
     const quiet2 = p3.skips.filter((s3) => /^only needed by/.test(s3.reason));
     const outside = p3.skips.filter((s3) => /^(runs natively|is installed on)/.test(s3.reason));
     const needs = p3.skips.filter((s3) => !running5.includes(s3) && !quiet2.includes(s3) && !outside.includes(s3));
-    const lead2 = picked.length ? `Installs ${plural2(picked.length, "app", "apps")}` + (helpers.length ? `, with ${plural2(helpers.length, "helper", "helpers")} they need` : "") + "." : "";
+    const lead2 = picked.length ? `Installs ${plural2(picked.length, "app", "apps")}` + (helpers.length ? `, with ${plural2(helpers.length, "more app", "more apps")} they need` : "") + "." : "";
     const details = [
-      { title: "Helpers that start with them", items: helpers.map((id2) => `${appName2(id2)} (for ${appName2(p3.added[id2])})`) },
+      { title: "Also started, as they need them", items: helpers.map((id2) => `${appName2(id2)} (for ${appName2(p3.added[id2])})`) },
       { title: "Port changes", items: p3.portChanges.map((c4) => `${c4.var}: ${c4.from} → ${c4.to} (${c4.reason})`) },
       { title: "Settings written", items: p3.envChanges.map((c4) => c4.secret ? `${c4.key} (hidden)` : `${c4.key} = ${c4.value}`) }
     ].filter((d3) => d3.items.length);
@@ -5369,10 +5375,11 @@
   }
 
   // web/src/choose/Started.tsx
-  function Started({ started, open: open5, close: close3 }) {
+  function Started({ started, also = [], open: open5, close: close3 }) {
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3(CardHead, { title: "Ready to open" }),
       started.length ? /* @__PURE__ */ u3("ul", { children: started.map((s3) => /* @__PURE__ */ u3("li", { children: s3.url ? /* @__PURE__ */ u3(ActionLink, { onClick: () => open5(s3.url), children: s3.name }) : s3.name }, s3.id)) }) : /* @__PURE__ */ u3("p", { class: "muted", children: "Nothing new to start." }),
+      !!also.length && /* @__PURE__ */ u3("p", { class: "muted", id: "alsoStarted", children: also.map((x3) => `With ${x3.by}: ${x3.name}, ${x3.what.charAt(0).toLowerCase() + x3.what.slice(1)}.`).join(" ") }),
       /* @__PURE__ */ u3("button", { type: "button", id: "installClose", class: "small", onClick: close3, children: "Close" })
     ] });
   }
@@ -5563,6 +5570,7 @@
     renderApps();
     replan();
   }
+  var neededBy = {};
   function renderApps() {
     const picks = { selected, status: statusById, toggle: togglePreset };
     mountStarters($("starters"), { ...picks, presets: catalog.presets.filter((p3) => p3.starter) });
@@ -5572,6 +5580,7 @@
       status: statusById,
       selected,
       query: query2,
+      needed: neededBy,
       tick: (id2, on2) => {
         if (on2) selected.add(id2);
         else selected.delete(id2);
@@ -5606,6 +5615,11 @@
     if (!tokens.length) {
       plan(null);
       $("installBtn").disabled = true;
+      $("wireRow").hidden = true;
+      if (Object.keys(neededBy).length) {
+        neededBy = {};
+        renderApps();
+      }
       return;
     }
     let p3;
@@ -5621,8 +5635,17 @@
     if (seq !== planSeq) return;
     plan(p3);
     renderInputs(p3);
+    if (JSON.stringify(p3.added || {}) !== JSON.stringify(neededBy)) {
+      neededBy = { ...p3.added || {} };
+      renderApps();
+    }
     const wireable = new Set(catalog.wireable || []);
-    $("wireRow").hidden = ![...p3.start, ...selected].some((id2) => wireable.has(id2));
+    const picked = [...p3.start, ...selected].filter((id2) => wireable.has(id2));
+    const running5 = Object.values(statusById || {}).filter((a3) => a3.state === "running" && wireable.has(a3.id)).map((a3) => a3.id);
+    const linked = [.../* @__PURE__ */ new Set([...picked, ...running5])];
+    $("wireRow").hidden = !(picked.length && linked.length >= 2);
+    const names5 = linked.map(appName);
+    $("wireWhat").textContent = `Links ${names5.length > 1 ? names5.slice(0, -1).join(", ") + " and " + names5[names5.length - 1] : names5[0] || ""} to each other, so everything works the first time you open it.`;
     $("installBtn").disabled = !(p3.ready && p3.start.length);
   }
   function friendlyReason(r3) {
@@ -5670,9 +5693,14 @@
         cliProgress({ n: ev.step, total: ev.steps + 1, text: text2 });
       });
       try {
+        const brought = { ...neededBy };
         const started = await go().Install([...selected], filled());
         cliProgress("done");
-        mountStarted($("started"), { started, open: (url) => go().Open(url), close: () => {
+        const also = Object.entries(brought).flatMap(([id2, by]) => {
+          const a3 = catalog.apps.find((x3) => x3.id === id2);
+          return a3 && a3.kind !== "helper" ? [{ name: a3.name, what: a3.description, by: appName(by) }] : [];
+        });
+        mountStarted($("started"), { started, also, open: (url) => go().Open(url), close: () => {
           clearInstall();
           $("search").focus();
         } });

@@ -5,13 +5,17 @@ import { ActionLink } from '../ActionLink';
 import { CardHead } from '../parts/Card';
 
 /** The apps an install started, each opening in the browser, and Close, which takes the finished install away. */
-export function Started({ started, open, close }: { started: api.Started[]; open: (url: string) => void; close: () => void }) {
+export interface AlsoStarted { name: string; what: string; by: string }
+
+export function Started({ started, also = [], open, close }: { started: api.Started[]; also?: AlsoStarted[]; open: (url: string) => void; close: () => void }) {
   return (
     <>
       <CardHead title="Ready to open" />
       {started.length
         ? <ul>{started.map((s) => <li key={s.id}>{s.url ? <ActionLink onClick={() => open(s.url!)}>{s.name}</ActionLink> : s.name}</li>)}</ul>
         : <p class="muted">Nothing new to start.</p>}
+      {/* What started with them, so nothing installed goes unsaid. */}
+      {!!also.length && <p class="muted" id="alsoStarted">{also.map((x) => `With ${x.by}: ${x.name}, ${x.what.charAt(0).toLowerCase() + x.what.slice(1)}.`).join(' ')}</p>}
       <button type="button" id="installClose" class="small" onClick={close}>Close</button>
     </>
   );
@@ -37,7 +41,7 @@ export function Wiring({ links, note }: { links: WireLink[]; note: string }) {
   );
 }
 
-export function mountStarted(el: Element, props: { started: api.Started[]; open: (url: string) => void; close: () => void } | null) { render(props && <Started {...props} />, el); }
+export function mountStarted(el: Element, props: { started: api.Started[]; also?: AlsoStarted[]; open: (url: string) => void; close: () => void } | null) { render(props && <Started {...props} />, el); }
 export function mountWiring(el: Element, props: { links: WireLink[]; note: string } | null) { render(props && <Wiring {...props} />, el); }
 /** The categories, as the custom app form's options. */
 export function mountCategories(el: Element, categories: api.Category[]) { render(<>{categories.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}</>, el); }

@@ -54,6 +54,8 @@ export interface GroupsProps {
   settings: (keys: string[]) => void;
   /** A line where the app does less on this system (differs.ts), or "". */
   note: (id: string) => string;
+  /** What the plan brings in for a picked app (a tunnel): id → the app that needs it. */
+  needed?: Record<string, string>;
 }
 
 /** The search box filters by name, what an app does, and what it replaces. */
@@ -94,15 +96,18 @@ function AppRow({ a, p }: { a: api.App; p: GroupsProps }) {
     target && <button type="button" class="linkbtn" onClick={quiet(() => p.open(target!))}>Open</button>,
     !!a.inputs?.length && <button type="button" class="linkbtn" onClick={quiet(() => p.settings(a.inputs!))}>Settings</button>,
   ].filter(Boolean);
+  // Brought in by a picked app (usability task 3, item 20): ticked and greyed while that one needs it.
+  const by = !p.selected.has(a.id) && p.needed?.[a.id] ? p.catalog.apps.find((x) => x.id === p.needed![a.id])?.name || p.needed[a.id] : '';
   return (
     <label class="app">
-      <input type="checkbox" checked={p.selected.has(a.id)} disabled={native} onChange={(e) => p.tick(a.id, e.currentTarget.checked)} />
+      <input type="checkbox" checked={p.selected.has(a.id) || !!by} disabled={native || !!by} title={by ? `Installed with ${by}, which needs it` : undefined} onChange={(e) => p.tick(a.id, e.currentTarget.checked)} />
       <div class="grow">
         <strong>{a.name}</strong>
         {native && <span class="badge">runs natively</span>}
         {stateText && <span class={'badge ' + stateCls}>{stateText}</span>}
         <div class="desc">{a.description}</div>
         {!!p.note(a.id) && <div class="sysnote muted">{p.note(a.id)}</div>}
+        {by && <div class="sysnote muted">Installed with {by}, which needs it</div>}
         {!!a.replaces?.length && <div class="replaces">Replaces {a.replaces.join(', ')}</div>}
         {sameJob(a, p).map(([other, why]) => <div key={other.id} class="samejob muted">You already run {other.name}: {why}</div>)}
         {suggested(a, p).map(([with_, why]) => <div key={with_.id} class="goeswith muted">Goes with {with_.name}, which you run: {why}</div>)}
@@ -171,9 +176,9 @@ export function Plan({ plan: p, appName, reason }: PlanProps) {
   // Apps that run on the computer itself (Jellyfin): installed by hand, or there already.
   const outside = p.skips.filter((s) => /^(runs natively|is installed on)/.test(s.reason));
   const needs = p.skips.filter((s) => !running.includes(s) && !quiet.includes(s) && !outside.includes(s));
-  const lead = picked.length ? `Installs ${plural(picked.length, 'app', 'apps')}` + (helpers.length ? `, with ${plural(helpers.length, 'helper', 'helpers')} they need` : '') + '.' : '';
+  const lead = picked.length ? `Installs ${plural(picked.length, 'app', 'apps')}` + (helpers.length ? `, with ${plural(helpers.length, 'more app', 'more apps')} they need` : '') + '.' : '';
   const details = [
-    { title: 'Helpers that start with them', items: helpers.map((id) => `${appName(id)} (for ${appName(p.added[id])})`) },
+    { title: 'Also started, as they need them', items: helpers.map((id) => `${appName(id)} (for ${appName(p.added[id])})`) },
     { title: 'Port changes', items: p.portChanges.map((c) => `${c.var}: ${c.from} → ${c.to} (${c.reason})`) },
     { title: 'Settings written', items: p.envChanges.map((c) => (c.secret ? `${c.key} (hidden)` : `${c.key} = ${c.value}`)) },
   ].filter((d) => d.items.length);
