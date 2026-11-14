@@ -3130,8 +3130,11 @@
               changed4 && /* @__PURE__ */ u3("span", { class: "changedot", role: "img", "aria-label": changed4, title: changed4 })
             ] }),
             /* @__PURE__ */ u3("td", { class: "state", children: [
-              /* @__PURE__ */ u3("span", { class: "dot " + cls }),
-              words5,
+              /* @__PURE__ */ u3("span", { class: "statehead", children: [
+                /* @__PURE__ */ u3("span", { class: "dot " + cls }),
+                words5.split(" ")[0]
+              ] }),
+              words5.includes(" ") ? words5.slice(words5.indexOf(" ")) : "",
               pend && !pend.failed ? null : a3.state === "elsewhere" ? /* @__PURE__ */ u3(S, { children: [
                 /* @__PURE__ */ u3("span", { class: "local", children: [
                   "container ",
@@ -5159,8 +5162,8 @@
       fn();
     };
     const links = [
-      target && /* @__PURE__ */ u3("a", { onClick: quiet2(() => p3.open(target)), children: "Open" }),
-      !!a3.inputs?.length && /* @__PURE__ */ u3("a", { onClick: quiet2(() => p3.settings(a3.inputs)), children: "Settings" })
+      target && /* @__PURE__ */ u3("button", { type: "button", class: "linkbtn", onClick: quiet2(() => p3.open(target)), children: "Open" }),
+      !!a3.inputs?.length && /* @__PURE__ */ u3("button", { type: "button", class: "linkbtn", onClick: quiet2(() => p3.settings(a3.inputs)), children: "Settings" })
     ].filter(Boolean);
     return /* @__PURE__ */ u3("label", { class: "app", children: [
       /* @__PURE__ */ u3("input", { type: "checkbox", checked: p3.selected.has(a3.id), disabled: native, onChange: (e3) => p3.tick(a3.id, e3.currentTarget.checked) }),
@@ -8689,7 +8692,7 @@
   function Facts({ p: p3 }) {
     const { a: a3, entry, usage: usage2, disk: disk2, days, backup: o3, on: on2 } = p3;
     const url = a3.address ? "https://" + a3.address : a3.url || "";
-    const reach = entry?.public ? "At home, and on the internet through the Cloudflare Tunnel" : a3.address ? "At home and on your tailnet, not on the internet" : "On this machine only";
+    const reach = entry?.public ? "At home, and on the internet through the Cloudflare Tunnel" : a3.address ? "At home and on your own private network, not on the internet" : "On this machine only";
     const seen2 = { watching: p3.watching, stopped: a3.state === "stopped" };
     const [weekValue] = weekWords(days, p3.outages, Date.now(), seen2);
     const late = o3 && !never(o3.lastRun) && Date.now() - new Date(o3.lastRun).getTime() > (o3.staleAfterHours || 30) * 36e5;

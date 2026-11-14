@@ -317,7 +317,8 @@ function Row({ a, p, menu, setMenu, said, say }: { a: api.AppStatus; p: AppListP
       } : undefined}>
       <td><strong>{a.name}</strong>{changed && <span class="changedot" role="img" aria-label={changed} title={changed} />}</td>
       <td class="state">
-        <span class={'dot ' + cls} />{words}
+        {/* The dot kept on its first word's line (usability task 2, item 17): the rest wraps as it must. */}
+        <span class="statehead"><span class={'dot ' + cls} />{words.split(' ')[0]}</span>{words.includes(' ') ? words.slice(words.indexOf(' ')) : ''}
         {pend && !pend.failed ? null : a.state === 'elsewhere'
           ? <><span class="local">container {a.container}</span><button class="small" onClick={() => p.on.adopt(a)}>Move in</button></>
           : <Uptime a={a} week={p.weekUp[a.id]} outages={p.outages?.[a.id]} load={p.on.releaseNotes} />}

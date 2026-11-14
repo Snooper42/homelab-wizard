@@ -89,9 +89,10 @@ function AppRow({ a, p }: { a: api.App; p: GroupsProps }) {
   const target = st?.state === 'running' ? (st.address ? 'https://' + st.address : st.url) : '';
   // Links inside the label must not toggle the checkbox.
   const quiet = (fn: () => void) => (e: Event) => { e.preventDefault(); e.stopPropagation(); fn(); };
+  // Buttons, so Tab reaches them (usability task 3, item 21: a link with no address is skipped).
   const links = [
-    target && <a onClick={quiet(() => p.open(target!))}>Open</a>,
-    !!a.inputs?.length && <a onClick={quiet(() => p.settings(a.inputs!))}>Settings</a>,
+    target && <button type="button" class="linkbtn" onClick={quiet(() => p.open(target!))}>Open</button>,
+    !!a.inputs?.length && <button type="button" class="linkbtn" onClick={quiet(() => p.settings(a.inputs!))}>Settings</button>,
   ].filter(Boolean);
   return (
     <label class="app">
