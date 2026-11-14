@@ -1,0 +1,4031 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Your household's photos, passwords, documents, money, music, and books, on a computer you own.">
+      
+      
+      
+        <link rel="canonical" href="https://snooper42.github.io/homelab-wizard/docs/Testing/">
+      
+      
+        <link rel="prev" href="../Everyday%20Tasks/">
+      
+      
+        <link rel="next" href="../Upgrading/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/logo.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+    
+    
+      
+        <title>Testing a new build - Homelab Wizard</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.57a0d79d.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.fb2fffe2.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#testing" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Homelab Wizard" class="md-header__button md-logo" aria-label="Homelab Wizard" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Homelab Wizard
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Testing a new build
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue"  aria-label="Dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="blue"  aria-label="Light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Snooper42/homelab-wizard" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Snooper42/homelab-wizard
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Homelab Wizard" class="md-nav__button md-logo" aria-label="Homelab Wizard" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    Homelab Wizard
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Snooper42/homelab-wizard" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Snooper42/homelab-wizard
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Start here
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Start here
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Tour/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    A tour of the app
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Getting%20Started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Everyday%20Tasks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Everyday tasks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing a new build
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing a new build
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-bring-the-mac-up-to-date" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Bring the Mac up to date
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-the-desktop-app" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. The desktop app
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-setup-in-order" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Setup, in order
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Setup, in order">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#memory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Memory
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-the-jobs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. The jobs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-the-proxy-and-crowdsec" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. The proxy and CrowdSec
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-the-first-restore-test" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. The first restore test
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-the-new-apps-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. The new apps (optional)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-after-a-few-days" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. After a few days
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#a-newcomers-first-run" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A newcomer's first run
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#proven-every-night" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Proven every night
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#waiting-for-real-hardware" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Waiting for real hardware
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Waiting for real hardware">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-mac" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Mac
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-windows-pc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Windows PC
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-steam-machine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Steam Machine
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#after-testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        After testing
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Upgrading/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Upgrading
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Commands/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Run it
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Run it
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Runbooks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Runbooks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Automation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Automation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Monitoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Monitoring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Backups/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backups
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Tidy%20Up/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tidy Up
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Private%20Finances/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Private Finances
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Disaster%20Recovery/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Disaster Recovery
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Known%20Issues/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Known Issues
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How it works
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    How it works
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Networking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Networking
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Usability/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Usability
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Storage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Storage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Docker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docker
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Parity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What each device can do
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../apple-client/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The iPhone and iPad app
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Host/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Host
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Environment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Environment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The apps
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    The apps
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Services/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Services
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Inventory/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Inventory
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Savings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Savings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Service%20Organization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Service Organization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The project
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    The project
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Roadmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Feature%20Roadmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Feature Roadmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Decisions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Decisions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../CHANGELOG/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What's new
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../CONTRIBUTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing (services)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Standards/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Standards
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Releasing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Releasing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../SECURITY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security policy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Homelab%20Manifest/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Homelab Manifest
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Homelab%20Context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Homelab Context
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Maintainer%20Guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Maintainer Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../To-do/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    To-do
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Knowledge base index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-bring-the-mac-up-to-date" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Bring the Mac up to date
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-the-desktop-app" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. The desktop app
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-setup-in-order" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Setup, in order
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Setup, in order">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#memory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Memory
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-the-jobs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. The jobs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-the-proxy-and-crowdsec" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. The proxy and CrowdSec
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-the-first-restore-test" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. The first restore test
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-the-new-apps-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. The new apps (optional)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-after-a-few-days" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. After a few days
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#a-newcomers-first-run" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A newcomer's first run
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#proven-every-night" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Proven every night
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#waiting-for-real-hardware" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Waiting for real hardware
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Waiting for real hardware">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-mac" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Mac
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-windows-pc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Windows PC
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-steam-machine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Steam Machine
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#after-testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        After testing
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="testing">Testing<a class="headerlink" href="#testing" title="Permanent link">&para;</a></h1>
+<p>A script for testing a new build on the Mac, in order. Each step says what to do and what you should see. When something does not match, check <a href="../Troubleshooting/">Troubleshooting</a>, then stop there and make a report:</p>
+<div class="highlight"><pre><span></span><code>./homelab<span class="w"> </span>report
+</code></pre></div>
+<p>It writes <code>scripts/logs/report-&lt;date&gt;.txt</code> with doctor, status, the setup checklist, the jobs, Duplicati's jobs, the weekly summary, the updates waiting, which settings are set, and the logs of anything unwell. Passwords, tokens, and anything shaped like one are replaced with <code>[redacted …]</code>. Read it through, then share the file or paste it. Never paste <code>.env</code> itself, a token, or a password. The app has the same thing as Settings › This Mac › <strong>Make a diagnostics report</strong>.</p>
+<p>Type each command as shown, one line at a time. In zsh a <code>#</code> on the line is not a comment, so there are none here.</p>
+<h2 id="1-bring-the-mac-up-to-date">1. Bring the Mac up to date<a class="headerlink" href="#1-bring-the-mac-up-to-date" title="Permanent link">&para;</a></h2>
+<p>If you tested an earlier build, read <a href="../Upgrading/">Upgrading</a> first: it lists what changed and the few steps it asks of you.</p>
+<div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>~/Homelab
+./homelab<span class="w"> </span>upgrade
+./homelab<span class="w"> </span>version
+./homelab<span class="w"> </span>doctor
+</code></pre></div>
+<ul>
+<li><code>upgrade</code> lists what changed and what is new, asks, moves the folder forward, and runs <code>up</code> afterwards. <strong>Update now</strong> in the app does the same, and updates the app too. (A clone from before <code>upgrade</code> existed: <code>git checkout main</code> and <code>git pull</code> once instead.)</li>
+<li><code>version</code> prints the repository's version; the first run after an update builds the CLI ("Building the homelab CLI...").</li>
+<li><code>doctor</code> ends without ✗ lines. Expected ! warnings: a VPN if one is on, and settings you have not filled in yet.</li>
+<li>If OrbStack still lists a <code>homelab_core</code> project, <code>upgrade</code> moves the containers into their category projects (<code>homelab migrate</code>, a backup first). OrbStack then lists them grouped as homelab_network, homelab_security, homelab_system, homelab_media, and so on, every app keeps its data and settings, and <code>doctor</code> no longer mentions <code>homelab_core</code>.</li>
+<li>With <code>brew install smartmontools</code> done, <code>doctor</code> lists each drive under <strong>Drive health</strong> as passed (the Mac's own SSD at least; a USB drive may say it gives no report).</li>
+</ul>
+<h2 id="2-the-desktop-app">2. The desktop app<a class="headerlink" href="#2-the-desktop-app" title="Permanent link">&para;</a></h2>
+<ol>
+<li>The first time only, in Terminal (Linux too; on Windows, <code>irm https://raw.githubusercontent.com/Snooper42/homelab-wizard/main/install.ps1 | iex</code> in PowerShell):</li>
+</ol>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-fsSL<span class="w"> </span>https://raw.githubusercontent.com/Snooper42/homelab-wizard/main/install.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>sh
+</code></pre></div>
+<p>It installs the newest build from GitHub › Releases › <strong>Latest</strong> after checking its checksum, and opens it. Once the app is installed, it updates itself (<strong>Update now</strong> on the line at the top), so skip to step 3.
+2. From a browser instead: download <code>Homelab-Wizard-macOS.dmg</code>, drag <strong>Homelab Wizard</strong> to Applications, then clear the download flag once (the build is not signed):</p>
+<div class="highlight"><pre><span></span><code>xattr<span class="w"> </span>-dr<span class="w"> </span>com.apple.quarantine<span class="w"> </span><span class="s2">"/Applications/Homelab Wizard.app"</span>
+</code></pre></div>
+<ol>
+<li>Open it from Applications.</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th>Check</th>
+<th>You should see</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>First screen</td>
+<td>Setup, with the number of steps left beside it in the sidebar, unless every step is done</td>
+</tr>
+<tr>
+<td>Scroll down Choose apps with <strong>Add more</strong> open, pick Status, then Choose apps again; quit and open the app again</td>
+<td>Status opens at its own top (or where you left it), not partway down; Choose apps is back where it was with Add more open, and so is each screen after opening the app again</td>
+</tr>
+<tr>
+<td>Settings › This Mac</td>
+<td>macOS, OrbStack with its engine version, the homelab folder <code>~/Homelab</code>, the version, and <strong>Storage</strong>: a green line for the Mac's disk (homelab folder, backups) and one for the media drive (photos, media, downloads), each with its free space. <code>./homelab doctor</code> lists the same under Disk space</td>
+</tr>
+<tr>
+<td>Settings › This Mac › Version</td>
+<td>"✓ up to date" after the pull, and "build" with the commit this app was made from</td>
+</tr>
+<tr>
+<td>An update found by itself</td>
+<td>Within 15 minutes of a newer build (or on bringing the window forward after 10), with no click: one line at the top of every screen, <em>Homelab Wizard … is ready</em>, with <strong>What's new</strong>, <strong>Later</strong>, and <strong>Update now</strong>; Settings › This Mac › Updates says when it last looked</td>
+</tr>
+<tr>
+<td><strong>Update now</strong>, with changes waiting and a newer build on GitHub</td>
+<td>The line says <em>Updating…</em> with a bar while the homelab files move forward and the new app goes in place (no log, no Setup); the app closes, and the new one opens by itself within a minute on the same screen, saying <em>Updated to …</em>, its build commit changed</td>
+</tr>
+<tr>
+<td><strong>Later</strong></td>
+<td>The line goes; the sidebar says <strong>● Update ready</strong>, and clicking it (or Enter on it) brings the line back</td>
+</tr>
+<tr>
+<td>Window and menus</td>
+<td>The window buttons sit at the top of the sidebar, which shows the desktop through it (as in Finder). The menu bar has View (Choose Apps to Setup on ⌘1 to ⌘4, Finances on ⌘6, Settings… on ⌘,, Hide Amounts on ⌘⇧H, Reload on ⌘R) and Help; ⌘5 opens Settings too, and Homelab Wizard › About shows the version. Buttons show the arrow, not a hand; dragging the sidebar or the strip above a screen moves the window</td>
+</tr>
+<tr>
+<td>Menu bar</td>
+<td>One house icon. Its menu lists the apps' health and the yearly savings, and <em>Update to …</em> once the app (or, with the window closed, the menu bar item itself, every 15 minutes) found an update; clicking it opens the window, which puts it in place. Opening the app again from it brings the same window forward</td>
+</tr>
+<tr>
+<td>Text size</td>
+<td>⌘+ makes the whole app bigger, ⌘− smaller (80% to 200%), ⌘0 back to the usual size; after quitting and opening again, the size is kept. With the window made as small as it goes, a few ⌘+ turn the sidebar into its icons (the counts on them, the names on hover), and no screen scrolls sideways</td>
+</tr>
+<tr>
+<td>Keyboard</td>
+<td>Tab reaches every link that acts (Open Setup, Show, <em>go back to …</em>, Settings on an app row) and Enter or Space presses it</td>
+</tr>
+<tr>
+<td>VoiceOver (⌘F5)</td>
+<td>Picking a screen reads its heading and the sidebar button says <em>current page</em>; a finished backup or an error is read out without moving there; the search fields are read by name</td>
+</tr>
+<tr>
+<td>VoiceOver (⌘F5) on Status, then <strong>Restart</strong> an app from its menu; then <code>docker pause</code> two apps (and <code>docker unpause</code> them) while Status stays open; Narrator (Ctrl+Win+Enter) on Windows the same</td>
+<td><em>Vikunja: Restarting…</em>, then <em>Vikunja: Running</em>, read without the focus moving; after Status checks again, <em>Navidrome and Vikunja: Not answering: …</em> as one line when their reason is the same, then their return. Nothing is read for Status's changes while another screen is shown</td>
+</tr>
+<tr>
+<td>Choose apps › tick Speedtest Tracker</td>
+<td>The plan says in one line that it installs 1 app and lists Speedtest Tracker only; helpers, port moves, and settings are under <strong>Details</strong></td>
+</tr>
+<tr>
+<td>Then <strong>Install</strong></td>
+<td>Each step ticks off; <strong>Details</strong> shows Compose pulling and starting. Then it is listed under Started with a link</td>
+</tr>
+<tr>
+<td>Choose apps › preset <em>Media automation</em></td>
+<td>The plan lists Prowlarr, Sonarr, Radarr, Lidarr, Bazarr, FlareSolverr, qBittorrent, and Seerr (Gluetun under Details as qBittorrent's VPN), says the VPN key is needed by its setting's name, and shows the field to fill in with where to find it. Do not install unless you mean to</td>
+</tr>
+<tr>
+<td>Choose apps › type "spotify" in the search box</td>
+<td><strong>Add more</strong> opens by itself; Navidrome and Feishin only</td>
+</tr>
+<tr>
+<td>Choose apps › click <strong>Music</strong> under Start here</td>
+<td>The card is marked ✓, Navidrome, Feishin, and beets are ticked under Add more, and the plan lists them; clicking it again unticks them</td>
+</tr>
+<tr>
+<td>Choose apps › Presets under Add more</td>
+<td>Only the bundles (<em>Media automation</em>, <em>Household</em>, <em>Ad blocking</em>, and the starters), no stack folders or categories; app rows have no baseline/optional badges</td>
+</tr>
+<tr>
+<td>Settings › <code>HELPER_EMAIL</code> (your own address), then Settings › This Mac › Make a diagnostics report › <strong>Email it to my helper</strong></td>
+<td>Mail opens a message to you, and Finder shows the report to attach</td>
+</tr>
+<tr>
+<td>Settings › This Mac › Make a diagnostics report › Show in Finder</td>
+<td>Finder opens with the new report selected</td>
+</tr>
+<tr>
+<td>Quit OrbStack, then look at Setup</td>
+<td>A card <em>Start OrbStack</em> with <strong>Open OrbStack</strong>; clicking it starts OrbStack and the card goes away by itself within a few seconds of it answering</td>
+</tr>
+<tr>
+<td>Quit (⌘Q)</td>
+<td>It asks <em>Quit Homelab Wizard and stop the homelab?</em>; <strong>Quit and Stop</strong> stops every app, the agent, and the menu bar icon, and opening the app again starts them all</td>
+</tr>
+<tr>
+<td>On the Mac: Status, then Backups, then Finances; <strong>⌘[</strong> twice, <strong>⌘]</strong> once; then open an app's page, go to Settings, and swipe right with two fingers on the trackpad; then swipe left</td>
+<td>Back goes to Backups, then Status; Forward to Backups; the swipe right brings back that app's page (an arrow shows at the left edge for a moment), the swipe left Settings; over Finances' wide Net worth table a sideways swipe scrolls the table instead</td>
+</tr>
+<tr>
+<td>From Status, open Finances, then Spending, then Plan › Recurring; press <strong>⌘[</strong> four times, then <strong>⌘]</strong> four times</td>
+<td>Back goes to Plan's Calendar (where Plan opened), Spending's Transactions, the Dashboard, then Status; Forward comes back the same way to Recurring. Tidy Up's tabs step the same way</td>
+</tr>
+<tr>
+<td>Finances › Net worth: click an account (checking, then a card, then the home)</td>
+<td>Its own page: today's balance (a card says owed) with a chart, this month's in and out, its latest transactions, <strong>Update balance</strong> and <strong>Edit</strong>; <strong>All of them in Transactions</strong> opens Transactions with that account picked; <strong>‹ Net worth</strong> and ⌘[ go back; a home charts what was typed in over time</td>
+</tr>
+<tr>
+<td>Finances' Dashboard: <strong>Arrange the Dashboard</strong>; drag a card by its handle, then ▲ on another; set one to ⅓; <strong>Hide</strong> one; <strong>Done</strong>; quit and open the app again; then <strong>Reset to the usual</strong></td>
+<td>Each moves as asked, the width applies, the hidden waits below with <strong>+</strong>; after reopening it's as left; Reset puts the usual board back. The phone's page has no Arrange</td>
+</tr>
+<tr>
+<td>Finances › Net worth › a loan (the mortgage): link a payment that pays it (<strong>Link a payment…</strong>), then another from the same payee</td>
+<td><strong>The loan</strong> says each month's payment (and the whole one, when only a share is in the plan), months left and when it's paid off; the payment shows <strong>Counted</strong>; the next one from the same payee is offered with <strong>Link</strong> and <strong>Not this one</strong>; one that paid more than the plan's asks <em>count all of it?</em> (<strong>Count it</strong> keeps it, <strong>Not this one</strong> takes it off)</td>
+</tr>
+<tr>
+<td>Finances › Net worth › Investments: <strong>Follow a ticker</strong>, look one up, <strong>Follow</strong>; then <strong>Read now</strong>; then <strong>Unfollow</strong></td>
+<td>The Watchlist lists it with its price and its change since today; the figures above don't change; a read prices it again; Unfollow takes it off. A ticker Ghostfolio can't price says so and isn't added</td>
+</tr>
+<tr>
+<td>Status</td>
+<td>Four tiles at the top (running, needs a look, savings, nightly updates). Categories where every app runs are folded into one line with the apps' names; clicking one opens it, <strong>Show every app</strong> opens them all, and after quitting and opening again the choice is kept</td>
+</tr>
+<tr>
+<td>Choose apps › <strong>Add more</strong> (with Navidrome running and Sonarr not installed)</td>
+<td>First, <em>Suggested for what you run</em>: Beets says <em>Goes with Navidrome, which you run: Tags and sorts the music…</em>; Bazarr is not there. Install Sonarr: Bazarr and Prowlarr join it. Ticking one there picks it below too</td>
+</tr>
+<tr>
+<td>Choose apps › Add more, search <em>kavita</em> (with Komga running)</td>
+<td>Kavita's row says <em>You already run Komga: Both read comics and manga from the same folders…</em>; Komga's own row says nothing of the kind. <em>tandoor</em> with Mealie installed says the same of Mealie</td>
+</tr>
+<tr>
+<td>Status › hover (or Tab to) the figure under <em>Instead of subscriptions</em></td>
+<td>A card: <em>Saved so far: $… since …, from what the apps replace each day</em>, then each month (up to 12), newest first, the month so far at the top. With fewer than one nightly record, just the figure</td>
+</tr>
+<tr>
+<td>Status › a category's count ("7 running ✓ · 2.1 GB")</td>
+<td>A menu: what the group holds in memory now, each running app's memory biggest first, and Start the stopped, Restart, and Stop them all; Stop needs a second click; <strong>Stop for a while ›</strong> offers For an hour, Until 9 PM tonight, and Until 8 AM tomorrow, with ‹ Back; Escape or a click elsewhere closes it. <strong>What's using power</strong> says how much memory the apps hold in all</td>
+</tr>
+<tr>
+<td>An app that stops by itself: run a container labelled as one (<code>docker run -d --name homelab_household-mealie-1 --label com.docker.compose.project=homelab_household --label com.docker.compose.service=mealie --memory 16m --memory-swap 16m --entrypoint sh &lt;any image with sh&gt; -c 'x=$(head -c 200000000 /dev/zero \| tr "\0" a)'</code>), or one with <code>exit 3</code>, or one whose <code>-p</code> port another program holds</td>
+<td><code>homelab status</code> says <em>it ran out of memory</em>, <em>it quit with an error</em>, or <em>another program is using its port …</em> in HEALTH; Status's row and its page say <em>Stopped at …: …</em> with a red dot, and <em>Needs a look</em> counts it. After <code>docker stop</code> the row says only <em>Stopped at …</em>. Tried on Linux with Docker Engine 29.9.2, Nov 6, 2026 (the CLI; the screens against the fake backend)</td>
+</tr>
+<tr>
+<td>Stop an app from its group's menu or its page, then wait 15 minutes, plug a laptop in, or <strong>Start the N stopped</strong></td>
+<td>Its row says <em>Stopped by you</em> with Start, its group stays folded, and nothing starts it: not Start them, the watchdog, the battery saver, a drive appearing, <strong>Fix it</strong>, or logging in again (<code>homelab up</code>, which also leaves out an app that needs it, such as Feishin for Navidrome). <strong>Stop for a while</strong> on its page or the group's menu says <em>Stopped until 9:00 PM</em> (or <em>until tomorrow, 8:00 AM</em>), and within a minute of that time it runs again. <code>data/stopped.json</code> holds the record; <strong>Start</strong> clears it</td>
+</tr>
+<tr>
+<td>Status › type <em>navi</em> with nothing focused</td>
+<td>A box beside the list holds <em>navi</em> and has the focus, the list shows only Navidrome under its open group (the heading's count still the whole group's), and the box says <em>1 of 22 apps</em>. A name nothing has says <em>No app's name has "…"</em> across the table with <strong>Show every app</strong>. Escape brings every app back and the focus to where it was; Return opens the first app's page. ⌘A, Space, or a letter in an open menu does not start it</td>
+</tr>
+<tr>
+<td>Any screen › ⌘K (Ctrl+K), then <em>navi</em></td>
+<td>A box near the top with the focus in it; <em>navi</em> lists Open Navidrome first, then its page, Restart, Stop, its logs, and Copy its address. Down and Up pick (round from the first to the last), Return runs the one picked, a name nothing has says <em>Nothing has "…"</em>. Escape or a press outside closes it, the focus back where it was. <em>stop media</em> picks <strong>Stop the N Media apps</strong>, which asks <em>Press Return again</em> (or <em>Click again</em>) before it stops them, with the Undo note after; <em>back up now</em> starts the backup on Backups; <em>update all</em> shows Update all's list on Status with nothing done yet. While a sheet is open ⌘K does nothing. On a Mac, View › Command Palette… opens it too</td>
+</tr>
+<tr>
+<td>Status › ? (Shift+/ on most keyboards; another layout's own key for ? works the same), then Escape; then Choose apps › type ? in the search box; then ⌘K (Ctrl+K) › <em>keyboard</em> › Return on Finances</td>
+<td>A sheet: <em>On Status</em> (typing to filter, the menu arrows), <em>Everywhere</em> (⌘K, ⌘R, ⌘+ ⌘− ⌘0, ⌘⇧H, ⌘Z, Shift+F10, Escape; on Windows Ctrl, with F5, the menu key and F1) and <em>The screens</em>; no filter box opens, and Escape closes it. In the search box ? is typed. From the palette, Finances' sheet starts with the calendar's keys, and Close puts the focus back. A screen reader reads it as a dialog named <em>Keyboard shortcuts</em>, each key beside what it does</td>
+</tr>
+<tr>
+<td>Status › <strong>Start</strong> on a stopped app's row (one whose image isn't here yet), then <strong>Restart</strong> and <strong>Stop</strong> from its menu</td>
+<td>No panel opens: the row says <em>Downloading the app…</em> while the image comes down, then <em>Starting…</em>, then <em>Running</em>; Restart and Stop the same, Stop with the <em>Stopped … · Undo</em> note. One that fails says <em>Could not start: …</em> under the row with <strong>Details</strong>, which opens Docker's output. <strong>Update</strong> still opens its panel with what's new</td>
+</tr>
+<tr>
+<td>Status › right-click an app's row (or Shift+F10 on its button)</td>
+<td>A menu where the pointer is (under its name from the keyboard), inside the window: Open, Open on a phone, Copy address, Restart, Stop, Stop for a while ›, Logs, Back up now, and Tell me if it stops (ticked when its alerts are on); Start in place of Restart and Stop when it is stopped. Copy address says <em>Address copied</em> under the row; Stop asks <em>Click again</em>; Escape or a click elsewhere closes it. A right-click on a group's heading opens the group's menu</td>
+</tr>
+<tr>
+<td>Status: ⌥-click (Alt-click) an app's address, then ⇧-click (Shift-click) its <strong>Open</strong></td>
+<td>The address is copied and <em>Address copied</em> shows under the row, with nothing opened; ⇧-click opens its address on this machine (<code>http://localhost:…</code>) in the browser, where a plain click opens the domain. The tooltips say so, with ⌥ and ⇧ on a Mac and Alt- and Shift- elsewhere</td>
+</tr>
+<tr>
+<td>Status › right-click an app › <strong>Pin to the top</strong>, then another</td>
+<td>A Pinned group under Needs a look (open, even when everything in it is fine) holds both, in the order pinned, and neither shows in its own group; the menu bar's Open an app lists them first, under Pinned. <strong>Pin to the top</strong> is ticked on a pinned app; picking it again puts the app back in its group</td>
+</tr>
+<tr>
+<td>Right-click <strong>Status</strong>, <strong>Backups</strong>, or <strong>Finances</strong> in the sidebar (or Shift+F10 on it)</td>
+<td>A menu where the pointer is (under it from the keyboard), and the screen showing stays as it was: Status has Check again and Update all apps… (and Fix it when there's something to fix); Backups has Back up now and Test a restore; Finances has Add a transaction, Update balances, and Hide amounts. Each opens its screen and does what its button there does: Update all shows its list first. Escape closes it back on the sidebar</td>
+</tr>
+<tr>
+<td>Status › a group's menu › <strong>Stop the N running</strong>, twice</td>
+<td>A note at the bottom: <em>Stopped 6 Media apps · Undo</em> (an app's name for one; <em>until 9:00 PM</em> after Stop for a while). <strong>Undo</strong> or ⌘Z starts the same apps again; with the pointer on it, it stays; otherwise it goes after 10 seconds. Restart all shows none</td>
+</tr>
+<tr>
+<td>Status › an app's row</td>
+<td>One button, Open (or Start when stopped), and the chevron; a click on the row opens the app's page; each row shows one address, with the address on this machine in the tooltip</td>
+</tr>
+<tr>
+<td>Status › Vaultwarden's page › <strong>Open on a phone</strong></td>
+<td>A QR code of its address; the phone's camera opens it (with Tailscale on in Home mode); the panel says what the phone needs and names Bitwarden</td>
+</tr>
+<tr>
+<td>Status › Nginx Proxy Manager's page › <strong>Sign-in details</strong></td>
+<td>The user name the homelab made, and <strong>Copy</strong> puts the password on the clipboard (cleared after 90 seconds); the password is never shown</td>
+</tr>
+<tr>
+<td>Status › <strong>This week</strong></td>
+<td>The same lines as <code>./homelab digest</code> (apps, backups, restore test, attacks caught, disk space), with ✓ All well or what needs a look marked</td>
+</tr>
+<tr>
+<td>Status › <strong>What the apps keep</strong> (after a nightly backup)</td>
+<td>Up to six app folders with their sizes, largest first, under <strong>Photos per person</strong> when Immich runs, each on one line (name, bar, size); with Protection, in one column beside Recent alerts. A long alert (eleven apps down) shows 3 lines and <strong>Show 8 more</strong></td>
+</tr>
+<tr>
+<td>Status, after an app was down for a while this week</td>
+<td>Its row has a badge such as <em>96.2% up this week</em>; apps up over 99% have none. Hovering it (or Tab, or a tap) shows the week as a strip with each time it was down, how long, and why; Escape or moving away closes it</td>
+</tr>
+<tr>
+<td>Status, opened between 5 AM and noon</td>
+<td>Under the heading, <em>Overnight: …</em>: the apps updated since 8 PM, any rolled back, the size of the night's database copies, and <em>nothing needed you</em>, or which app was down for a while. <strong>Hide until tomorrow</strong> puts it away until the next morning; after noon there is none</td>
+</tr>
+<tr>
+<td>Status: rest the pointer on an app's <em>up 9 minutes</em> (or Tab to it) after restarting it, after Fix it, after the watchdog restarted it, or after the power came back on battery</td>
+<td>A card says why it last started (<em>You started it</em>, <em>Fix it restarted it</em>, <em>The watchdog restarted it…</em>, <em>It started again when the power came back…</em>) and when; an app with no reason kept has plain words, with no card</td>
+</tr>
+<tr>
+<td>Status, after leaving it for another screen while an app restarts, updates, stops, or starts (or after quitting and opening the app again)</td>
+<td>Each of those rows has a small dot after its name; hovering it (or VoiceOver) says <em>Restarted since you looked</em>, <em>Updated…</em>, <em>Stopped…</em>, or <em>Started…</em>. An app's page counts as Status. Leaving Status and coming back clears them</td>
+</tr>
+<tr>
+<td>Status: hover <em>updates held</em> on an app rolled back (or Tab to it)</td>
+<td>A card says it is left out of the nightly updates after a rollback, that Nightly updates on its page puts it back, and its newest release (tag, date, what it runs now) with the first lines of its notes; read once, when the card first opens. With GitHub unreachable it says <em>Could not read its releases: …</em></td>
+</tr>
+<tr>
+<td>Choose apps › tick Memos › Install (with a domain, after Set up the domain has run)</td>
+<td>The install log ends with <code>domain setup --auto</code> and <code>https://notes.example.com</code>, which opens with a padlock without running anything else</td>
+</tr>
+<tr>
+<td>Paperless's page › <strong>Reach it away from home</strong> off (with the domain and its Cloudflare tunnel); then on a phone on mobile data, and at home</td>
+<td>The switch moves at once and says <em>Home only: it opens on your home Wi-Fi…</em>; <code>./homelab domain status</code> lists Paperless as home only; <code>https://&lt;paperless&gt;.&lt;domain&gt;</code> does not open on mobile data and does at home. Turned on again, it opens on mobile data within a minute. An app that can't be published (Vikunja) has no such switch, and neither does any app before the tunnel is set up</td>
+</tr>
+<tr>
+<td><code>./homelab stop navidrome</code>, then Status</td>
+<td><strong>Fix it</strong> appears; it shows the plan (start the homelab's own apps that are down), and <strong>Fix these</strong> brings Navidrome back. After a watchdog run that saw it down, the <strong>Watchdog</strong> card has <strong>Fix it</strong> too</td>
+</tr>
+<tr>
+<td><code>./homelab compose crowdsec exec crowdsec cscli bouncers delete nginx_proxy_manager</code>, then Status (within a minute)</td>
+<td><strong>Protection</strong> says <em>Bans not enforced</em> with <strong>Fix</strong>; it shows the plan (remove the stale bouncer, restart CrowdSec and the proxy), and afterwards Protection says ✓ Bans enforced</td>
+</tr>
+<tr>
+<td>Status › an app's page › its log</td>
+<td>Its last 200 lines (<strong>Show more of it</strong> for 2000), warnings and errors tinted; <strong>Dozzle</strong> appears when Dozzle runs</td>
+</tr>
+<tr>
+<td>Status › an app's page › <strong>Stop</strong></td>
+<td>It says <em>Click again to stop</em>; only the second click stops it, and it goes back to <strong>Stop</strong> after 5 seconds or when the focus leaves it</td>
+</tr>
+<tr>
+<td>Status › Speedtest Tracker's page › <strong>Restart</strong></td>
+<td>The page says <em>Restarting…</em> at once, then <em>Running</em> again once Status has read it; the dot stays green</td>
+</tr>
+<tr>
+<td>Status › an app's row</td>
+<td>"up 3 days" (or however long) under each running app; a <em>restarted N×</em> badge only on one Docker had to restart</td>
+</tr>
+<tr>
+<td>Backups › <strong>Recovery kit</strong></td>
+<td>The browser opens a page to print: the backup folder (<code>BACKUP_DESTINATION</code>), each backup job and what it holds, a blank line for the Secrets passphrase, the accounts, the apps that run, and the restore steps. No password or key appears on it; <code>recovery-kit.html</code> is in the homelab folder</td>
+</tr>
+<tr>
+<td>At night (between 22:00 and 07:00), <code>docker pause homelab_media-navidrome-1</code> (it keeps running but stops answering; an app stopped by hand is never alerted about), then wait two watchdog runs</td>
+<td>The phone shows <em>Homelab: …down</em> without a sound or vibration (ntfy's low priority). <code>docker pause homelab_security-vaultwarden-1</code> the same way: that one sounds. Settings › Quiet hours › <code>off</code>: the next alert sounds again. <code>docker unpause</code> both afterwards</td>
+</tr>
+<tr>
+<td>Memory nearly full: on a machine (or a Docker Desktop or OrbStack memory limit) small enough, start apps until <code>docker stats</code> adds up to over 90% of the total; wait for two watchdog runs (<code>./homelab watchdog</code> twice, 10 minutes or more apart); then <strong>Stop</strong> one in Status › Watchdog; then <code>./homelab watchdog</code> once more</td>
+<td>The first run says nothing; the second sends <em>Homelab: memory nearly full</em> to the phone and the computer, with the three biggest apps and their sizes. Status's Watchdog card lists the same three, each the catalog knows with <strong>Stop</strong>; a phone that only looks shows no Stop. After Stop (with Undo, as a row's), the next run sends <em>memory is back to normal</em>, and the card's list goes</td>
+</tr>
+<tr>
+<td>With every app well, open Backups, Settings and Finances; then <code>docker stop</code> an app (say Mealie) and wait for Status to notice (a minute at most); then open Status</td>
+<td>Each of the other screens starts with <em>✓ All well</em>; after the stop, <em>Mealie: Stopped</em> (the words its row on Status uses) with <strong>Open Status</strong>, which opens Status, where the line is not shown. Two or more apps in trouble are one line (<em>3 apps need a look: …</em>)</td>
+</tr>
+<tr>
+<td>With alerts set up: <code>docker pause</code> an app (say Navidrome), then <code>./homelab watchdog</code> twice: an alert. Then Status › Watchdog › <strong>Snooze…</strong> › <strong>For an hour</strong> beside it, and <code>./homelab watchdog</code> twice more; then <strong>Alert again now</strong></td>
+<td>After the snooze, its line says <em>No alerts about it until …</em> and the menu <em>Snoozed until …</em>; the next watchdog runs send nothing about it (the other checks still alert). With the snooze ended (Alert again now, or the hour gone), the next run sends one alert while it still fails, and none if it was unpaused</td>
+</tr>
+<tr>
+<td>With Tailscale running and a phone and a laptop signed in to the tailnet: Settings › Phones; then turn Tailscale off on the phone and look again; then <strong>Remove…</strong> beside the phone</td>
+<td><strong>Devices on your tailnet</strong> lists this machine first (no Remove), then the others, each with its system and <em>online now</em> or <em>last seen …</em>; the phone says <em>last seen a minute ago</em> once it is off. <strong>Remove…</strong> opens login.tailscale.com at that phone's page in the browser, where Remove takes it off the tailnet; once it is removed, the card no longer lists it. Without Tailscale running, the card is not there</td>
+</tr>
+<tr>
+<td>With the off-site jobs set up and run once: <code>./homelab backup-check</code>; then change a few bytes of one <code>duplicati-*.dblock.zip.aes</code> file in the destination (a copy of it kept aside), run it again, then <code>./homelab watchdog</code> twice; put the file back and run it once more</td>
+<td>The first says each job's sample matches. The second, after about a minute, says <em>Hash mismatch on file "duplicati-….dblock.zip.aes"</em> and exits with an error; the watchdog then lists <em>duplicati <job>: the check of its backup on … failed</em> and alerts on its second run; Backups shows the job in red, its hover <em>Checked …: a file is damaged</em>. After the file is back, the check passes and the job is well again on the next watchdog run. Tried in a cloud container on Linux with Docker Engine 29.9 and Duplicati 2.4.1 (Nov 6, 2026), from the CLI; not on a Mac or Windows, nor on a cloud drive</td>
+</tr>
+<tr>
+<td>With Karakeep (or another app with a database) running: <code>./homelab sso setup --apply</code>, or <code>./homelab tailnet setup</code>, or change one of its settings in <code>.env</code> and <strong>Fix it</strong></td>
+<td>Before the app restarts, the output says <em>dumping karakeep first, before …</em>, and <code>recovery-staging/databases/karakeep/</code> has a new dump beside the nightly ones (the newest 7 are kept). If the dump fails, the app isn't restarted on the new settings and the output says why</td>
+</tr>
+<tr>
+<td>Backups › Off-site jobs</td>
+<td>Beside each job's last run, "next in N hours"; a job with no schedule shows none. Hovering it (or Tab) shows a card: <em>Last ran Tue 4:02 AM, in 41 minutes</em>, <em>Holds 301.2 GB of yours, 48,211 files</em>, its size where it is kept and the versions to go back to, the folders it copies, and the exact next run; a job Duplicati says little about shows only what it knows</td>
+</tr>
+<tr>
+<td>Backups › the copies, after two nightly backups</td>
+<td>Hovering a copy's size shows <em>The night before: …</em>; a size that moved by a tenth or more shows <em>(was …)</em> beside it. To see the warning: in <code>recovery-staging/databases/&lt;app&gt;/</code>, put a much smaller file as its newest copy (<code>cp</code> the newest aside, then <code>head -c 100000 it.sql.gz &gt; &lt;app&gt;-&lt;today&gt;-043000.sql.gz</code>): its row gets a red dot and <em>Less than half the night before's …: check that … still has its data</em>. Put the real copy back afterwards</td>
+</tr>
+<tr>
+<td>Backups › <strong>Moving to a new machine</strong> › <strong>Move out…</strong></td>
+<td>The first click only asks <em>Click again…</em>; the second opens a save dialog. Cancel there: nothing happens and no app stops (the real move is in section 7)</td>
+</tr>
+<tr>
+<td>Settings › <strong>Appearance</strong></td>
+<td>Each choice shows at once and is kept after reopening the app: <strong>Dark</strong> on a light system (the sidebar too on the Mac, the title bar on Windows), an accent swatch or <strong>Any colour…</strong> (the system's picker), <strong>More</strong> contrast, <strong>Islands</strong>, <strong>Motion</strong> › <strong>None</strong> (no sheet slides in, no bar grows), <strong>Transparency</strong> › <strong>Off</strong> (the side panel and the save bar drawn solid), and <strong>Tray icon</strong> › <strong>Its own colour</strong>, which the menu bar or tray icon takes within a few seconds</td>
+</tr>
+<tr>
+<td>Settings</td>
+<td><strong>Appearance</strong>, <strong>People</strong>, and <strong>Phones</strong> at the top, then only the everyday settings; <strong>Show all settings</strong> adds ports, versions, generated passwords, and internal addresses; searching "port" finds them even when hidden</td>
+</tr>
+<tr>
+<td>Settings › type a new <code>HEARTBEAT_URL</code>, then <strong>Test</strong> without saving</td>
+<td>It saves the value, then tests it; <strong>Save</strong> no longer counts it</td>
+</tr>
+<tr>
+<td>Settings › <strong>People</strong>, without Pocket ID</td>
+<td>The card says adding people uses Pocket ID, with <strong>Install Pocket ID</strong>, which opens Choose apps with it ticked</td>
+</tr>
+<tr>
+<td><code>./homelab stop navidrome</code> with Status open</td>
+<td>Its row turns <em>Stopped</em> within two seconds, without waiting for a refresh; the menu bar's health line too. <code>./homelab start navidrome</code> turns it back</td>
+</tr>
+<tr>
+<td><code>docker pause</code> an app's container (Memos), then Status</td>
+<td>After a few seconds the row says <em>Not answering: no answer in time</em>, and <strong>Fix it</strong> appears. <code>docker unpause</code> it: the row is <em>Running</em> again</td>
+</tr>
+<tr>
+<td>The same, left paused through two watchdog runs (30 minutes)</td>
+<td>The second run restarts it: an alert <em>Homelab: restarted an app that hung</em> names it and why, and it is running again. A third run within 6 hours leaves it alone</td>
+</tr>
+<tr>
+<td>Close a laptop's lid (or put the Mac to sleep) for an hour with an app stopped, then wake it</td>
+<td>Within about a minute, Status's watchdog line says it just ran, and the stopped app is restarted or alerted about, without waiting for the next 15-minute run; the agent's log says <em>awake again: checking every app now</em></td>
+</tr>
+<tr>
+<td>Change an app's port in Settings (<code>MEMOS_PORT</code>), save, then Status</td>
+<td>The row has <em>settings changed</em>; <strong>Fix it</strong> lists <em>recreate the apps whose settings changed</em>, and <strong>Fix these</strong> brings it back on the new address. Change it back the same way</td>
+</tr>
+<tr>
+<td>Status › Uptime Kuma's page › <strong>Only on Sundays</strong> (on a day that is not Sunday), then <code>./homelab update --all</code></td>
+<td>The switch's line says <em>On Sundays only</em>; the plan leaves Uptime Kuma out with <em>Updated on their own days, so not today: Uptime Kuma (Sundays)</em>, and <code>data/update-days.json</code> holds <code>"uptime-kuma": ["sun"]</code>. Switch it off: the next plan takes it again. Tried on Linux with Docker Engine 29.9 (Nov 5, 2026, a Thursday), from the CLI: <code>homelab updates days navidrome sun</code>, then <code>update --all --apply</code> left Navidrome's container as it was.</td>
+</tr>
+<tr>
+<td>Status › Uptime Kuma's page › <strong>Check for an update</strong></td>
+<td>A panel lists the releases newer than the version it runs, with the start of each one's notes and <strong>Full notes</strong>, then <strong>Update</strong> and <strong>Cancel</strong>. <code>./homelab updates notes uptime-kuma</code> prints the same</td>
+</tr>
+<tr>
+<td>Status › <strong>Update apps</strong></td>
+<td>The list of apps with what each update brings (<em>2.0.1 → 2.0.2</em>); after <strong>Update them</strong>, a bar with <em>Updating … · 2 of 5</em> above the log</td>
+</tr>
+<tr>
+<td>With Ollama and a model (<code>ollama pull llama3.2</code>): Status › an app's page › <strong>Explain this</strong></td>
+<td>A few lines in plain words on whether something is wrong, the line that shows it, and what to try, naming the model. Without Ollama the button is not there. <code>./homelab logs memos --explain</code> prints the same</td>
+</tr>
+<tr>
+<td>Settings › Phones › <strong>Pair a phone</strong> with <strong>Can make changes</strong> ticked, then open the <code>http://</code> link on a phone on the home Wi-Fi and pair</td>
+<td>Settings › Phones shows it as <em>Looks only (paired over the home Wi-Fi, without encryption)</em> with no <strong>Allow changes</strong>; the same with the <code>https://</code> (Tailscale) link shows <em>Can make changes</em>, and <strong>Restart</strong> on the phone works</td>
+</tr>
+<tr>
+<td>Settings › Phones › <strong>Pair a phone</strong>, then the link with <code>&amp;kiosk</code> on an iPad or a TV's browser</td>
+<td>After pairing it shows Status alone, larger, with the time in the corner and no buttons; stopping an app on the computer shows there within seconds, and the screen does not go dark</td>
+</tr>
+<tr>
+<td>Status › <strong>What's using power</strong>, with an app busy</td>
+<td>Each busy app's share of a core, and after half a minute a small line of its last minutes beside it</td>
+</tr>
+<tr>
+<td>Status: fold a group (say, Security) on the computer, then open Status on the phone's page (a phone allowed changes); open it there, then look at the computer's Status again</td>
+<td>The phone shows Security folded; after opening it there, the computer's Status shows it open (on its next read, or when the window comes back to the front). <strong>Show every app</strong> on one changes nothing on the other; <strong>Fold them again</strong> puts both back to the usual</td>
+</tr>
+<tr>
+<td><code>./homelab --json status \| head -1</code></td>
+<td>The line starts with <code>{"schema":1,</code></td>
+</tr>
+<tr>
+<td>An update that didn't go in place, then a newer release installed by hand from GitHub</td>
+<td>The app opens with no red line (or <em>Updated to</em> the version installed); <strong>Try again</strong>, if a line showed it, closes the line instead of <em>The update stopped · no update is ready</em></td>
+</tr>
+<tr>
+<td>Tidy Up, on a new homelab</td>
+<td><strong>Tidy Up</strong> in the sidebar (⌘7, Ctrl+7 elsewhere), with a tab for <strong>Overview</strong> and one for each library (Music, Movies, TV, Books, Audiobooks). <strong>Overview</strong>: <strong>Needs your OK</strong> lists what each library waits on, each with its one button (<em>Scan</em> for a library not yet looked at, a scan changing nothing), the heading saying how many; <strong>Genres</strong> offers <strong>Count genres</strong>; <strong>On the … drive</strong> names the media drive with what is free; <strong>Recently done</strong> is empty</td>
+</tr>
+<tr>
+<td>Setup › <strong>Reach Finances away from home</strong>, with the domain and tunnel set up and <code>CLOUDFLARE_API_TOKEN</code> given <em>Access: Apps and Policies</em> and <em>Access: Service Tokens</em> (Edit)</td>
+<td><strong>Do it</strong> says what it made: a service token, an Access application for <code>homelab-away.&lt;domain&gt;</code>, its policy, the proxy host, and the hostname through the tunnel. In Cloudflare Zero Trust › Access › Applications, <em>Homelab phone companion</em> lets in only that service token. Opening <code>https://homelab-away.&lt;domain&gt;</code> in a browser shows Cloudflare's sign-in page, never the companion. Run it again: nothing new is made</td>
+</tr>
+<tr>
+<td>Tidy Up › Overview on a machine with no ffmpeg, then Movies › <strong>Scan</strong></td>
+<td>With Homebrew installed (but not ffmpeg), <strong>Needs your OK</strong> lists <em>ffmpeg and ffprobe</em> with <em>Install runs brew install ffmpeg for you</em>, and <strong>Install</strong> shows brew's lines on the card, then <em>ffmpeg is ready</em>; no Terminal opens. On a Mac without Homebrew, it lists what Install fetches, from whom, and how big. The scan stops saying <em>ffmpeg and ffprobe: Not installed…</em> (not <em>exit status 1</em>), with <strong>Install ffmpeg</strong>: it downloads with a bar, says <em>ffmpeg 7.1 is ready</em>, and runs the scan again by itself; the row is gone, and <code>~/.homelab-media/bin</code> holds ffmpeg and ffprobe. With ffmpeg installed another way (Homebrew), that one is used and no Install shows. Without Calibre, its row has <strong>Get Calibre</strong>, which opens Calibre's download page; back in the window after installing, the row goes by itself</td>
+</tr>
+<tr>
+<td>Tidy Up › Movies › <strong>Set up Tdarr</strong> on a new Tdarr, then on one with an account you made in Tdarr</td>
+<td>New Tdarr: the details say <em>Made Tdarr's account for Tidy Up: homelab</em>, Settings › Tidy Up has <em>Tdarr user</em> homelab and a password, which also signs in to Tdarr's page, and the two libraries are made. With your own account and nothing in Settings: <em>Tdarr asks for a sign-in: put your Tdarr user name and password in Settings › Tidy Up…</em>, never <em>answered 401</em>; with them in Settings, it goes through</td>
+</tr>
+<tr>
+<td>Tidy Up › Overview › <strong>Add lyrics</strong>, then again</td>
+<td>The card says <em>Lyrics added to N songs</em>, then on grey lines how many already had time-synced lyrics, kept plain ones, are instrumentals, aren't on LRCLIB yet (asked again in a month), or have no title tag. Overview's row then counts only songs not yet asked, with <em>N songs not on LRCLIB yet</em>; a second run skips those and is quick</td>
+</tr>
+<tr>
+<td>Tidy Up › Overview, then unplug the media drive and open Audiobooks</td>
+<td><strong>Needs your OK</strong> says <em>Audiobooks: its drive isn't plugged in</em>, with no button and not counted in the heading. The Audiobooks tab says <em>Audiobooks: its folder isn't there</em> above everything, and every button on it is greyed out with <em>Its folder isn't there: plug in its drive</em> on hover; plugged in again, they come back</td>
+</tr>
+<tr>
+<td>Tidy Up › Music › <strong>Scan</strong>, <strong>Build</strong>, <strong>Swap in…</strong>, <strong>Check</strong>, <strong>Free it…</strong></td>
+<td><strong>Can be tidier</strong> shows the one next step each time. A job shows <em>Step 2 of 5 · …</em>, a bar with done of total and time left, <em>Now:</em> the album, and <strong>Stop</strong>; every other button, on every tab, waits meanwhile. <strong>Swap in…</strong> asks first, listing the five things it does; <strong>Free it…</strong> needs a second click, and puts the old library and the duplicates in the Trash (the Recycle Bin on Windows), never deleting them outright. Between the swap and freeing the space, <strong>Undo</strong> beside <em>Cleaned library swapped in</em> in <strong>Recently done</strong> asks <em>Put the old library back?</em> and puts it back. Move a few songs out of the new library before <strong>Check</strong>: <em>3 songs didn't make it into the new library</em>, naming the artists short, with <strong>Put the old library back…</strong> and <strong>Check again</strong>, and no <strong>Free it…</strong></td>
+</tr>
+<tr>
+<td>Tidy Up › Music › <strong>Count genres</strong> (Overview's Genres card), then Movies, TV, and Books › <strong>Count genres</strong>, then a few hours later Overview</td>
+<td>A ring of your 14 genres, the six biggest by name with their share, the rest as <em>N more</em>, and the songs counted; the films', shows', and books' rings say where their genres came from (<em>from Jellyfin</em>, <em>from Calibre's tags</em>), and Overview's dropdown switches between them. The drive card shows each library's size beside what is free (<em>Measuring the rest</em> until a big drive has been read)</td>
+</tr>
+<tr>
+<td>Tidy Up › Books › <strong>Review</strong> (or Overview's <strong>Look…</strong>)</td>
+<td>The review lists each book that would change with before → after, its old and new cover side by side, and a <strong>Change/Leave</strong> switch; a book that looks misfiled says so and is left alone. <strong>Apply to N books…</strong> asks, then passes the ones left alone as <code>--skip</code>; then <strong>Undo</strong> beside <em>Books tidied</em> puts them back. After the apply, Overview no longer offers the review and Books says <em>Applied …: the books in it were changed</em> with <strong>Undo the last apply</strong> and no second <strong>Apply</strong>; after an Undo, the review is offered again</td>
+</tr>
+<tr>
+<td>Tidy Up › Overview, then a library's tile</td>
+<td><strong>Needs your OK</strong> starts with <em>Next up</em>: the one thing with the filled button, larger (a drive to plug in or a tool to install stays above it); a step that throws things away is never it. The drive's ring beside it adds up to the drive. <strong>Your libraries</strong> has a tile for each in its colour, with what it holds, a bar only where it can say (songs with lyrics, films already lean), and what it waits on; an unplugged one is outlined and says so. A tile opens its tab, which starts with that library's folder and figures, and Music's with its five steps, each done one with when. At 860px and on a phone the tiles wrap and nothing is cut off; light and dark both read.</td>
+</tr>
+<tr>
+<td>Tidy Up › Movies or TV</td>
+<td>With Tdarr installed: <strong>Set up Tdarr</strong> once, then <strong>Scan</strong>: <em>Shrink N films</em> with why (H.264, lossless audio, extra tracks) and about how much would come back; <strong>Shrink</strong> hands them to Tdarr's queue, and <strong>Space</strong> shows lean, could shrink, and with Tdarr, with <em>Tdarr: HEVC, English only</em>. Within a few minutes of Tdarr finishing, each smaller copy replaces its original (which goes to the Trash), its subtitles are re-timed, and Jellyfin or Plex refreshes that folder alone. A film saved twice in its folder (<em>Heat (1995).mkv</em> and <em>Heat.1995.1080p.x264.mkv</em>), then <strong>Scan again</strong>: <em>1 film is in the library twice</em> with what the extra takes; <strong>Remove extras…</strong> names which goes and which stays, and after it only the extra copy is in the Trash. Move one episode out of a season, then TV › <strong>Scan again</strong>: <em>1 episode is missing from 1 show</em>, naming the show, season, and episode. With Jellyfin and a film it shows with no poster, Movies › <strong>Scan again</strong>: <em>1 film has no poster in Jellyfin</em>, naming it; <strong>Fetch posters</strong>, and a few minutes later Jellyfin shows one. Leave a poster beside a film you've moved away, then the nightly sweep (or <code>homelab media scrub --apply</code>): <em>Leftovers swept</em> in Recently done has <strong>Undo</strong>, which asks, then puts the poster back from the Trash</td>
+</tr>
+<tr>
+<td>Tidy Up › Movies or TV with Tdarr installed, after Tdarr was stopped part-way through a video (stop it from Status mid-convert, then wait two hours with it stopped or idle)</td>
+<td><code>tdarr-cache</code> on the media drive holds a <code>tdarr-workDir2-…</code> folder as large as the video. <strong>Shrink</strong>, or the agent's next collect within 5 minutes: the details say <em>Cleared 1 of Tdarr's unfinished work folders: … back on the drive</em>, the folder is gone, and anything else in <code>tdarr-cache</code> is still there. While Tdarr is converting a file, nothing in the cache is removed</td>
+</tr>
+<tr>
+<td>A laptop on power with Tdarr converting a video (Tidy Up › Movies › <strong>Shrink</strong>), then unplugged, then plugged in again</td>
+<td>Within 15 minutes of unplugging (or at once with <code>homelab watchdog</code>), Sonarr and the other busy apps say <em>Paused on battery</em>, but Tdarr keeps converting that video and starts no other (its node's Transcode CPU workers read 0 on Tdarr's page). Within a minute of the video being done, Tdarr says <em>Paused on battery</em> too, and <code>tdarr-cache</code> holds no <code>tdarr-workDir2-…</code> folder. Plugged in: everything starts within a minute, and Tdarr's Transcode CPU workers are back as they were</td>
+</tr>
+<tr>
+<td>Tidy Up › Books with a books folder of <code>Author/Title/Title.epub</code> (plus <code>metadata.opf</code> and <code>cover.jpg</code>) and no <code>metadata.db</code></td>
+<td>Books offers <em>Make a Calibre library from your N books</em> and no review; <strong>Make it…</strong> asks first, naming <code>Books (before Calibre)</code>; after <strong>Make it</strong>, <code>Books</code> holds <code>metadata.db</code> and every book, Calibre-Web lists them, the old folders are in <code>Books (before Calibre)</code>, and a script or other folder that held no book is still in <code>Books</code>. Recently done says <em>Calibre library made · N books</em>. A second try with <code>Books (before Calibre)</code> still there stops and says so</td>
+</tr>
+<tr>
+<td>Tidy Up › Audiobooks with every book one <code>.m4b</code> already, then <strong>Scan again</strong></td>
+<td><em>All N audiobooks are one file each</em> with no Merge button</td>
+</tr>
+<tr>
+<td>Tidy Up › Movies with Tdarr paused on battery (unplug while it shrinks)</td>
+<td>The <em>Tdarr is shrinking N films</em> row turns amber: <em>Tdarr isn't answering, so nothing is shrinking…</em>; Recently done gets no <em>collect stopped</em> lines; plugged in, the row is as before within a few minutes</td>
+</tr>
+<tr>
+<td>Tidy Up while the agent collects Tdarr's work (or <code>homelab media movies collect</code> runs in Terminal), then a job that stops part-way, then <strong>Stop</strong>, then a job that fails</td>
+<td>Tidy Up shows <em>Collecting Tdarr's work</em> with its step and bar and <em>Started at 2:02 PM, outside this window</em> (<em>Started yesterday at …</em> for one from before midnight); every button is greyed out, <em>Waits for collecting Tdarr's work to finish</em> on hover, and they come back by themselves once it's done. Quit the app mid-<strong>Swap in…</strong>: back in Tidy Up, <em>Swapping in your cleaned library: stopped part-way</em> with <strong>Carry on…</strong>, which asks again and then finishes the swap (never <em>This step needs your OK</em>); a books apply stopped part-way offers <strong>Open the review</strong> instead. <strong>Stop</strong> turns to <em>Stopping…</em> until the job reaches a safe point. A job that fails says <em>…: didn't finish</em> with its reason and <strong>Try again</strong>, and the keyboard stays on the panel's buttons</td>
+</tr>
+<tr>
+<td>Tidy Up › Overview, then Books with Calibre's database locked (Calibre open on a big write), then <strong>Look…</strong></td>
+<td>The first line's <em>won back so far</em> is the same figure as Recently done's <em>freed</em>, and the drive card says <em>Of 4 TB</em> for a 4 TB drive, as the Finder does; with ffmpeg missing, the first line and <strong>Needs your OK</strong> both count its <strong>Install</strong>. A review that can't be read says <em>Couldn't read the last review: …</em> with <strong>Try again</strong>, never <em>Every book already looks tidy</em>. <strong>Look…</strong> on Books scrolls to the review and puts the keyboard on its first switch. If Tidy Up can't read its record, its card has <strong>Try again</strong></td>
+</tr>
+<tr>
+<td>Tidy Up › Overview, Music, and Movies, then the screen on a phone-width window, then VoiceOver (⌘F5) on a running job</td>
+<td>Overview has one main button, on the first thing to do but never on <strong>Free it…</strong> or <strong>Remove extras…</strong>; Music shows its <strong>Space</strong> beside <strong>Genres</strong>; Movies says <em>Tdarr is shrinking 4 films</em> while Tdarr has them. On a narrow window the six tabs sit in two rows of three. VoiceOver reads a job's step as it changes and its end (<em>…: didn't finish. Tdarr isn't answering</em>), not every file, and a red line as <em>Failed: …</em></td>
+</tr>
+<tr>
+<td>Tidy Up › <strong>Inbox</strong></td>
+<td><strong>Drop anything here</strong> lists Downloads (and the download client's folder) as <em>Watched: tidied as things arrive</em>. <strong>Add…</strong> opens the folder picker; a folder on the media drive picked there is listed and watched. <strong>Once a day, 3 AM</strong>: a file dropped in waits until after 3 AM (or <strong>Tidy up now</strong>), and <code>.env</code> has <code>TIDY_INBOX_WHEN=daily</code>; <strong>Only when I press it</strong>: nothing is filed by itself. Unplug the drive: its folder says <em>Not there now: plug in its drive</em>. <strong>Remove</strong> is offered only while another folder is left. <strong>Tidy up now</strong> files what's waiting at once</td>
+</tr>
+<tr>
+<td>Tidy Up › Inbox › <strong>Change where your libraries live…</strong>, with the media drive and a second, empty drive plugged in</td>
+<td>Each drive is listed with its size and free space; the media drive is ringed, says <em>Your libraries are here now</em>, and lists each library's folder with what's there (artists, films, shows; <em>a Calibre library</em> for Books). The backup drive is greyed out. Pick the empty drive: each library says <em>new</em>. <strong>Use</strong> it: <code>.env</code>'s <code>MEDIA_ROOT</code> is that drive, and the Fix it sheet lists Jellyfin, Navidrome and Calibre-Web to recreate; <strong>Restart them</strong>, and they start on the new drive. Change back the same way</td>
+</tr>
+<tr>
+<td>Tidy Up › Inbox › <strong>Needs a look</strong> › <strong>It's a film…</strong> › <strong>Look it up</strong>, with Radarr running (or Jellyfin and its key in Settings)</td>
+<td>Type <em>lebowski</em>, <strong>Look it up</strong>: <em>The Big Lebowski</em> with <em>1998 · from Radarr</em> among what's listed; pick it, <strong>File it</strong>: it's in Movies as <em>The Big Lebowski (1998)</em>. <strong>It's an episode…</strong>, <em>severance</em>, <strong>Look it up</strong> (Sonarr): <em>Severance</em> is picked, typing the season keeps it, and it's filed under <em>Severance</em>. With Radarr, Sonarr and Jellyfin's key all gone: the sheet says nothing here can look titles up, and <strong>File it</strong> files what's typed</td>
+</tr>
+<tr>
+<td>Tidy Up › Inbox › <strong>Needs a look</strong>, after a <code>.rar</code> (or a folder of <code>.rar</code> parts) is dropped in Downloads</td>
+<td>A minute later it is listed with <em>It's packed in a .rar file, which Tidy Up doesn't open…</em>, with <strong>Show in Finder</strong> and <strong>Leave it</strong> and no film or episode buttons. Double-click it to open it: a minute later what was inside is filed, and the row stays until <strong>Leave it</strong> or the archive is removed</td>
+</tr>
+<tr>
+<td>Tidy Up › Inbox › <strong>Needs a look</strong>, after a video named <code>vid_0042.mkv</code> is dropped in Downloads</td>
+<td>A minute later it is listed with <em>Couldn't tell which film it is from its name.</em> and is still in Downloads. <strong>It's a film…</strong>, <em>Heat</em>, <em>1995</em>, <strong>File it</strong>: it's in Movies as <em>Heat (1995)</em>, gone from the card, and What I did today says <em>named by you, then filed</em>. Undo on it: back in Downloads and listed again with <em>You put it back</em>. <strong>Leave it</strong>: gone from the card, and still in Downloads an hour later. <strong>Show in Finder</strong> opens Downloads with it selected</td>
+</tr>
+<tr>
+<td>Tidy Up › Inbox › <strong>Needs a look</strong> › <strong>Name these songs…</strong>, after a folder of untagged songs (<code>01.mp3</code>, <code>02.mp3</code>…, no artist or album) is dropped in Downloads</td>
+<td>A minute later it is listed with <em>These songs don't say which artist or album they are.</em>, and nothing new is in Music. <strong>Name these songs…</strong>, <em>Fleetwood Mac</em>, <em>Rumours</em>, <strong>Look it up</strong>: the editions MusicBrainz has, each with its year, songs, and format. Pick the one with as many songs as the folder, <strong>File them</strong>: the songs are in Music under <em>Fleetwood Mac/Rumours</em> with their titles, What I did today says <em>named by you, then filed</em>, and its Undo puts the files back. Pick one with a different count instead: the folder stays, saying <em>That album has … songs and this has …</em></td>
+</tr>
+<tr>
+<td><code>homelab history</code> after restarting an app from the window, stopping one from the iPhone, and changing a setting</td>
+<td>Newest first: <em>Changed settings: QUIET_HOURS (this computer)</em>, <em>Stopped Immich (Sam's iPhone)</em>, <em>Restarted Vikunja (this computer)</em>; <code>data/homelab.db</code> is there, 0600. The watchdog's restarts say <em>(the watchdog)</em>, the nightly update's <em>(the nightly update)</em>. After the nightly backup, the Secrets backup's <code>data/</code> has a <code>homelab.db</code> that opens</td>
+</tr>
+<tr>
+<td>Tidy Up with Tdarr installed and nothing with it (no film or episode shrinking), on the agent, 15 minutes after the last Shrink or Collect</td>
+<td>Tdarr's container is stopped (Activity Monitor or <code>docker ps</code> no longer shows it), <code>data/stopped.json</code> lists <code>tdarr</code> with <code>"why": "tidy"</code>, and Tdarr's memory is free. Press <strong>Shrink</strong> on Movies: the job's first line is <em>Starting Tdarr, which was resting</em>, and it goes on as before. Start Tdarr from Status instead: it stays up until the next Shrink, then rests 15 minutes after it. With <code>TIDY_TDARR_REST=false</code> in Settings it stays up</td>
+</tr>
+<tr>
+<td>Tidy Up with Sonarr, Radarr and qBittorrent installed, nothing downloading or requested, on the agent, 15 minutes after the last download</td>
+<td>Their containers are stopped (<code>docker ps</code>), <code>data/stopped.json</code> lists each with <code>"why": "tidy"</code>. With a torrent seeding (and <code>QBITTORRENT_PASSWORD</code> set), qBittorrent and Gluetun stay up. Request a film in Seerr: within a minute they start again and Radarr picks it up. Start Sonarr from Status: it stays up until the next 12-hour wake. With <code>TIDY_ARR_REST=false</code> they stay up</td>
+</tr>
+<tr>
+<td>Tidy Up › Inbox › <strong>What I did today</strong>, after a film, an album, and a season dropped in Downloads are filed</td>
+<td>A line each, newest first: the film's name with <em>Movies › …</em> and what was done; the album as <em>Album · Artist</em> with its song count, <em>tags cleaned</em> and <em>lyrics added where found</em>; the season as <em>Show · N episodes</em>. <strong>Undo</strong> on the film: it's back in Downloads under its own name, the library no longer has it, the line says <em>Put back where it came from</em> with no Undo, and a minute later it is still in Downloads (not filed again) until it changes. Undo on the album puts back only its songs, never others already in that album's folder</td>
+</tr>
+<tr>
+<td>Tidy Up, a download</td>
+<td>A film, an episode, an album, an audiobook, or an .epub dropped in Downloads is filed within a minute of five quiet minutes (a .part file holds it back), and shows in Overview's <strong>Recently done</strong>; a duplicate no leaner than the library's copy goes to the Trash. <strong>Tidy up now</strong> on Inbox files what is waiting now. Movies › <strong>Hand over…</strong> asks, then turns Sonarr's, Radarr's, and Lidarr's renaming and importing off</td>
+</tr>
+<tr>
+<td>Tidy Up › Music › <strong>Tidy lyrics</strong>, quit the app (or restart the computer) part-way, open Tidy Up again, then <strong>Carry on</strong>; the same with <strong>Set up Tdarr</strong></td>
+<td>The card says <em>Tidying lyrics: stopped part-way</em> (not <em>Adding lyrics</em>), and Carry on tidies the lyrics; Tdarr's card says <em>Setting up Tdarr</em> and Carry on finishes the setup, after which the card is gone</td>
+</tr>
+<tr>
+<td>In Terminal, <code>./homelab media movies collect</code> (or wait for the agent's Collect); then Tidy Up › Movies › <strong>Stop</strong> on its card</td>
+<td>The card says <em>Collecting Tdarr's work: stopping</em> and <strong>Stopping…</strong> (pressed once only); the Terminal job stops at its next safe point; the card goes and the buttons are back</td>
+</tr>
+<tr>
+<td>Finances, in a homelab with none typed in</td>
+<td><em>Start with three things</em>: <strong>Add an account</strong>, <strong>Add a paycheck</strong>, and <strong>Add a payment</strong>. Each form opens at its top with the cursor in its first field; Escape closes it</td>
+</tr>
+<tr>
+<td>Finances, after a checking account, a paycheck every other Friday, and a monthly bill</td>
+<td><strong>Dashboard</strong>: checking over the next 30 days with the payday in green and a bill of $300 or more in red, the paycheck picked with the bill it covers, and every account today and after each paycheck. A payday on a bank holiday or a weekend moves to the working day before (<strong>Pay</strong> shows why). The sidebar lists the account's group with its balance under Finances, on every screen (Status and Choose apps too); clicking a group opens Finances › Net worth</td>
+</tr>
+<tr>
+<td>Finances › Dashboard, with a balance typed in a few days ago and a bill since</td>
+<td><strong>Checking</strong> comes first: <em>Now, typed in</em> that day, and <em>After <name>'s paycheck</em> with its day. Resting on either, Tab to it, or a tap on a phone shows how it adds up: the balance as typed in (or checking now), each bill, transfer, transaction and paycheck with its day, amount and checking after it, and the result, which is the figure; a payment due on payday is named as coming out after. Escape or moving away closes it. A phone that may only look shows it the same</td>
+</tr>
+<tr>
+<td>Finances › <strong>Update balances</strong> on a day a bill is due, then the Dashboard</td>
+<td><em>Taken as done</em> lists the bill, <em>due the day the balance was typed</em>, with <strong>Comes out</strong> picked, and checking at the end of today is that much lower. <strong>Already in</strong> keeps it in the balance (nothing more comes out) and stays picked after Quit; a paycheck that day is still taken to be in the balance. A phone that may only look lists them with nothing to pick</td>
+</tr>
+<tr>
+<td>Finances › Transactions › <strong>Import a file</strong> with rows from a gas station, a payroll deposit, a planned bill, a payment to your own card, and money in from your own savings account</td>
+<td>The preview says each one's category (<em>· Gas</em>, <em>· Paycheck</em>, the bill's), <em>· moves to <your card></em>, and <em>· moves from <your savings></em>; after <strong>Bring in</strong>, the card payment and the savings transfer are transfers between those accounts, not spending, and a Zelle payment to someone has no category. Importing the file again over rows with none: <em>given a category</em>; one with a category keeps it</td>
+</tr>
+<tr>
+<td>Finances › Transactions › <strong>Import a file</strong> with a Chase checking CSV holding a direct debit (<em>… PPD ID: …</em>), a Zelle payment, and a card payment; then the same file again</td>
+<td>Each comes in by a person's name: the company without its codes, <em>Zelle from <name></em>, <em>Payment to Chase card ••<last four></em>; the bank's wording is in the note. Imported again: <em>0 to bring in</em>, any brought in before with the codes in their names <em>given clearer names</em> (their categories kept), and one renamed by hand left as it is, not added twice</td>
+</tr>
+<tr>
+<td>Finances › Transactions › <strong>Import a file</strong> with a row for a planned bill paid a few days early (its name, about its amount)</td>
+<td>The preview says <em>Looks like <bill>, planned <amount></em> under that row, with a pick to change it; a row a third off the bill's amount isn't linked. <strong>Nothing planned</strong> takes the link off. After <strong>Bring in</strong>, the Dashboard's checking no longer takes that bill out again on its day</td>
+</tr>
+<tr>
+<td>Finances › Transactions › <strong>Import a file</strong> with an FPL direct debit, an American Express ACH payment, a Mazda Financial payment, and a bill whose wording names nothing but whose amount is a planned payment's to the cent; then rename one payee (an HOA) and import next month's</td>
+<td>Each reads as the company (<em>FPL</em>, <em>Mazda</em>); the American Express payment <em>moves to</em> your American Express card; the bill pays the planned payment of its amount. The list shows no bank wording (open a row: it's in the note). Renaming asks to rename the others by that name, and next month's row comes in by the new name</td>
+</tr>
+<tr>
+<td>Finances › Transactions › <strong>Import a file</strong> into an American Express card with rows written <em>AplPay …</em>, <em>WWP*…</em>, <em>WL *…</em>, a shop and its town spaced into columns, a town run into a store number (<em>#100SUNRISE FL</em>), a website for a town, and a City/State column</td>
+<td>Each comes in as the shop alone (<em>Starbucks</em>, <em>Sunny Days School</em>, <em>Steam</em>, <em>Blue Bottle Coffee</em>, <em>Pet Supermarket</em>, <em>Amazon</em>), with no AplPay, processor, town or state; the bank's wording stays in the note on one line; the iPhone app shows the same names</td>
+</tr>
+<tr>
+<td>Finances › Transactions › <strong>Import a file</strong> with an American Express activity file, leaving <em>Into the ledger of</em> on checking</td>
+<td>Before anything comes in: <em>Most of these rows are money coming in…</em> with <strong>Bring it into</strong> your Amex card; pressed, the rows read as charges (minus), the box <em>Charges are plus amounts</em> is ticked, the warning goes, and the line above the list says <em>N out, $… · M in, $…</em></td>
+</tr>
+<tr>
+<td>Finances › Transactions › <strong>Import a file</strong> with <em>WL *STEAM PURCHASE</em>, <em>STEAMGAMES.COM</em>, <em>PLAYSTATION NETWORK</em>, <em>MICROSOFT*XBOX</em>, <em>NINTENDO</em>, <em>EPIC GAMES STORE</em>, <em>GAMESTOP #1234</em> and <em>ROBLOX CORPORATION</em>, with a Gaming category in Categories; then without one</td>
+<td>Each comes in as its brand (<em>Steam</em>, <em>PlayStation</em>, <em>Xbox</em>, <em>Nintendo</em>, <em>Epic Games</em>, <em>GameStop</em>, <em>Roblox</em>) with its logo, and the preview says <em>· Gaming</em>; with no Gaming (or Games, or Video games) category, <em>· Shopping</em></td>
+</tr>
+<tr>
+<td>Finances › <strong>Add a payment</strong> › <strong>Comes in from someone</strong>: <em>Mortgage share</em>, from <em>Sam</em>, $900, monthly</td>
+<td>The form asks who sends it and which account it comes into (checking first), and nothing it comes out of. On its day checking goes up by it in the pay period's rows (<em>from Sam</em>, +$900.00), with no new pay period; Recurring shows it in green, <em>A typical month</em> says <em>In · … and Sam</em>, the money flow has <em>Mortgage share, from Sam</em>, the calendar's day says <em>From Sam</em>, and the calendar feed <em>Mortgage share from Sam</em>. A bank's file with <em>ZELLE FROM SAM</em> for about $900 near that day links to it</td>
+</tr>
+<tr>
+<td>Finances › Transactions, with a transaction in the ledger for about a planned bill's amount near its day, not linked</td>
+<td><em>These look like planned payments</em> lists it (<em>looks like <bill>, planned <amount> for <day></em>) with <strong>Link</strong> and <strong>Not it</strong>; <strong>Link</strong> makes its row say <em>pays <bill></em> and the card goes; <strong>Not it</strong> keeps it from being offered again. <strong>Add a transaction</strong> for a planned bill's payee, amount and day picks the bill under <em>Pays a planned payment</em>, saying <em>Looks like …</em>; picking None keeps it unlinked. A phone that may only look shows no card</td>
+</tr>
+<tr>
+<td>Finances, after linking two charges of a subscription for the same new amount (Transactions › <strong>Link</strong>)</td>
+<td>The Dashboard says <em>A price changed: <name> is now <new>, was <old></em> with <strong>Update to <new></strong> (Recurring then shows it) and <strong>Keep <old></strong> (the card goes, and stays gone after Quit on this computer). One charge at a new price asks nothing. A phone that may only look says it, with no buttons</td>
+</tr>
+<tr>
+<td>Finances, with a bill linked to a transaction last month and none for it this month, three days after its day</td>
+<td>The Dashboard says <em>A bill not seen yet</em>: its name, <em>Due <day>, N days ago</em>, and its amount; <strong>Transactions</strong> opens them. Linking a transaction to it takes it away. A bill never linked before is not said</td>
+</tr>
+<tr>
+<td>Finances, with a bill marked <em>The amount changes each time</em> linked to three transactions in six months that average 3% or more off its amount</td>
+<td>The Dashboard says <em><bill> has averaged <average> over N months</em>, <em>Paid 3 times; the plan says <amount></em>, with <strong>Use <average></strong> (the bill keeps it, still an estimate) and <strong>Keep <amount></strong> (the card goes, on this computer). Two payments ask nothing</td>
+</tr>
+<tr>
+<td>Finances › Transactions, after importing checking's file with <em>TRANSFER TO SAVINGS</em> −$500 and savings' with <em>TRANSFER FROM CHECKING</em> +$500 a day later</td>
+<td><em>These look like transfers</em> lists <em>Checking → Savings</em>, $500, with both days; <strong>Join</strong> makes one row <em>Checking → Savings</em> (This month's money in and out no longer count it); importing savings' file again says <em>1 already in, skipped</em>. <strong>Not one transfer</strong> keeps both rows and stops asking. A $40 out and $45 in are not offered</td>
+</tr>
+<tr>
+<td>Finances › Dashboard › <strong>Money flow</strong>, with a month of transactions</td>
+<td>This month first: income, taxes, expenses and saved over it, each with its share; boxes from each kind of money in, through <em>Total income</em>, to <em>Taxes</em>, <em>Expenses</em> and <em>Savings</em>, and on to each category and savings account, the rest <em>Kept as cash</em>, each with its amount and share. Resting on a box or band lights it and its bands (a band says <em>from → to</em> and how much); clicking a box (or Tab and Return) lists what is behind it, each transaction opening its form. ‹ steps back a month and to <em>A typical month</em> from the plan; <strong>Top 5</strong> puts the rest in <em>Other</em>. On a phone the chart keeps two columns, nothing sliding sideways; one that may only look opens nothing to change</td>
+</tr>
+<tr>
+<td>Finances › Transactions, Reports, and the Dashboard, with transactions in several categories</td>
+<td>Each category's icon is in its own colour on a tint of it, the same on a transaction with no logo, its budget, its row and bar on Reports, its box in the money flow, and a payment of that kind on Recurring (a subcategory takes its group's). Each reads clearly in light and dark; a more-contrast theme draws them in the system's colours</td>
+</tr>
+<tr>
+<td>The sidebar, on any screen, with accounts in several groups</td>
+<td>Under each group (Cash, Credit cards, Investments…) its accounts, each with its round logo, its name (cut with … when long; the whole name on hover) and its balance; a click opens Net worth on that group. A group's arrow folds its accounts away and back; Quit and open again, and it is still folded. With big text in a small window the sidebar still becomes icons, nothing sliding sideways. Every logo and icon on Finances is round</td>
+</tr>
+<tr>
+<td>Finances in dark mode, then with the system's <em>Increase contrast</em> (or a contrast theme) on</td>
+<td>Dark: a near-black background, each card a step lighter with a thin line and no shadow; other screens unchanged. With more contrast: the system's own colours, as before</td>
+</tr>
+<tr>
+<td>Finances › <strong>Hide amounts</strong> (or ⌘⇧H, Ctrl+Shift+H elsewhere, or the eye by the sidebar's Accounts)</td>
+<td>Every amount on every view, the sidebar's balances, and the charts' axes says <em>$•••</em>, grey, with no + or −; the button says <strong>Show amounts</strong>. Quit and open again: still hidden. A paired phone shows them hidden too, saying <em>Amounts hidden</em>; one that may only look has no button to show them. <strong>Show amounts</strong> brings them back everywhere</td>
+</tr>
+<tr>
+<td>Settings › Phones › <strong>For a day</strong> beside a phone allowed changes and Finances, then the same phone a day later (or <code>./homelab phone until &lt;phone&gt; 1h</code> and an hour later)</td>
+<td>Its row says <em>until</em> the day and time; afterwards it says <em>Looks only</em>, the phone's Status has no Start or Stop, and Finances is gone from its tab bar</td>
+</tr>
+<tr>
+<td>Settings › Phones › <strong>Money card only</strong> beside a screen paired with <code>&amp;kiosk</code></td>
+<td>The screen's Status shows a card above the tiles within a minute: <em>Next payday</em> with its day and who is paid, <em>Left after its bills</em>, and the next 3 bills with their logos, days, and amounts; still no buttons. With Finances' amounts hidden, each amount says <em>$•••</em> (the screen is sent none). <strong>No Finances</strong> beside it takes the card away</td>
+</tr>
+<tr>
+<td>Finances › <strong>Calendar</strong>, then <strong>The month after</strong> to a year from today</td>
+<td>Past the three months checking is read for, each month still shows its paydays and payments on their days, without a balance (<em>What is planned this month</em>); a yearly renewal shows in its month; the calendar stops a year from today</td>
+</tr>
+<tr>
+<td>Finances › <strong>Calendar</strong> with transactions from before today, then a past day, then <strong>The month before</strong></td>
+<td>Each day before today shows its payees' logos and what it came to (<em>−$48</em>, money in green; a transfer between your own accounts has no total); a day picked lists them under <em>What your transactions recorded</em>, each opening its form; a month before says <em>What your transactions recorded: 2 payments out, +$2,225.00 in all</em>, and the calendar goes back no further than the first month with a transaction (a year at most). Each day fills its square, its outline on the square's edge</td>
+</tr>
+<tr>
+<td>Finances › <strong>Calendar</strong>, then <strong>The month after</strong></td>
+<td>Beside the day picked, <em>October in all</em> (then <em>November in all</em>): Paychecks with how many and whose, Bills and payments from checking, Lowest in checking with its day (amber, <em>under your $500 cushion</em>, when it is), and for this month <em>Recorded so far</em> from your transactions; a month ahead has no recorded line. In a narrow window it comes before the week list</td>
+</tr>
+<tr>
+<td>Finances › <strong>Pay</strong></td>
+<td><em>Next paychecks</em> in months: <em>November · 3 paychecks</em> with what they bring in all (+$6,700.00) over its paydays, then December (four: Alex's Jan 1 payday moved to Dec 31), then January 2027; a last month read only partly says <em>to Jan 29</em></td>
+</tr>
+<tr>
+<td>Finances › <strong>Transactions</strong> › <em>Every account</em> › Chase Checking, then Chase Freedom</td>
+<td>Each day's heading has what the account held after it at its end ($2,512.40 on Oct 28, $2,560.60 on Oct 27 before Shell, $2,810.60 before the Roth IRA transfer), with a line saying it is worked from the $2,512.40 typed in on Oct 30; the card says what it owed ($1,240.55 owed, $1,154.45 before Costco). With every account, no balance shows</td>
+</tr>
+<tr>
+<td>Finances › <strong>Recurring</strong> › Payments, then <strong>Bills</strong>, then <strong>Subscriptions</strong></td>
+<td>Over the list: <em>18 payments: about $5,948.10 a month, $71,377 a year, with each card's balance as it is now</em> (the typical month's Spent and Saved together); Bills says its own 8; Subscriptions shows its own summary, with no second total</td>
+</tr>
+<tr>
+<td>Finances › <strong>Reports</strong> › <em>Spending by category</em> › Food, then Reports › <em>Where it went</em> › Shell</td>
+<td>Food's line reads <em>30% of the spending · Groceries $149.85</em>; picking it opens Transactions on <em>2 transactions of 7</em>, filtered to Food in October 2026 (Costco and Trader Joe's, both Groceries); Shell opens it searched for <em>Shell</em>. Opened again from its own tab, Transactions shows everything</td>
+</tr>
+<tr>
+<td>Finances on a phone allowed to see them: <em>Coming up</em></td>
+<td>Under the total, <em>$2,104.49 of it before Alex's paycheck on Nov 6</em>; among the bills, <em>Alex's paycheck · In 7 days, Fri, Nov 6 · +$2,150.00</em> with Alex's initial, between Thursday's Peloton and Saturday's groceries. Savings is still not listed</td>
+</tr>
+<tr>
+<td>Finances › <strong>Dashboard</strong>, with transactions</td>
+<td><em>Latest transactions</em>: the five newest, today's first (<em>Costco · Today · Groceries · Chase Freedom</em>), each opening its form; <strong>See all</strong> opens Transactions. With no transactions, no card; on a phone allowed only to look, the rows open nothing</td>
+</tr>
+<tr>
+<td>Finances › <strong>Transactions</strong> › <strong>Import a file</strong>: a bill linked once by hand (an HOA whose bank wording says nothing of it), then next month's file</td>
+<td>The new row <em>Looks like HOA</em> though a few dollars off and days from its planned day; a bill of $100 or more to the cent links within two weeks of its day; a small amount ($15.49) by its cents alone only within five days</td>
+</tr>
+<tr>
+<td>Finances › <strong>Dashboard</strong> › the period bar at the top, then › (the paycheck card and the checking chart's shaded days follow it; the card has no ‹ › of its own); then <strong>By month</strong> (this month: <em>So far this month</em> from your transactions and <em>Still to come</em> from the plan; › a month ahead: <em>The plan</em>; ‹ a month before: <em>What happened</em>; the choice still there after quitting), then <strong>By paycheck</strong>, <strong>Today</strong> and ‹ (the last paycheck before today: <strong>What happened</strong>, from your transactions, with <em>Came in</em> and <em>Went out</em> matching what the bank says for those days, and <strong>Where it went</strong>)</td>
+<td>Under <em>Checking on Nov 19, after its bills</em>: <em>On payday, Nov 6, once its own payments are out: $…</em>, the same as the calendar's Nov 6; stepping on, Nov 20's</td>
+</tr>
+<tr>
+<td>Finances › <strong>Net worth</strong> › a loan's row, then <em>First payment due</em>, <em>Each payment</em>, <em>Number of payments</em>, <em>Finance charge</em>, then <strong>Save</strong></td>
+<td>As the papers are typed, <em>Owes $… today, after 3 of 36 payments; paid off Nov 2029</em>, and no <em>Owed</em> to type; saved, the Loans card's row says <em>3 of 36 payments made</em>, and picking it shows the payments ring, what is paid down of what was borrowed, the next payment split into what pays it down and its interest, who pays it each month, half paid off and paid off, and <strong>Every payment</strong> with the ones made dimmed and the next one marked. The day after a payment is due it comes off by itself; Update balances says <em>From its papers</em> instead of a box</td>
+</tr>
+<tr>
+<td>Finances › <strong>Transactions</strong> › <strong>Import a file</strong>: an American Express CSV into the Amex card</td>
+<td>The charges show as minus amounts (−$56.61) and the payment as plus; <em>Charges are plus amounts in this file</em> is ticked with a line saying why; unticked, they show as written; brought in, the charges lower what the card has, the payment pays it</td>
+</tr>
+<tr>
+<td>Finances › <strong>Net worth</strong> › Investments › <strong>Add a holding</strong>: VOO, <em>11.038</em> shares, <em>6653.35</em> paid</td>
+<td>Under the fields, <em>11.038 shares at $602.77 each.</em>; added, Ghostfolio has 11.038 shares, the row says 11.038 and You paid $6,653.35 even before Ghostfolio has VOO's prices, Worth now at today's price (its details: <em>Ghostfolio has no prices of its own for VOO yet…</em>); a day later, Ghostfolio's own</td>
+</tr>
+<tr>
+<td>Finances › <strong>Net worth</strong> › Investments › <strong>Read now</strong>, a holding Ghostfolio counts far over its buys</td>
+<td>The row's shares are its buys less its sales (<em>Buys and sales in Ghostfolio</em>), Worth now and the totals follow; its details: <em>Ghostfolio's holdings count disagreed with its buys and sales; this uses the buys and sales.</em>; earlier days worth over a hundred times what was paid are gone from its chart, <em>This month</em> and net worth. With its buys and sales unreadable, one worth over a hundred times what was paid says <em>This looks wrong: check … in Ghostfolio.</em></td>
+</tr>
+<tr>
+<td>Finances › <strong>Update balances</strong></td>
+<td>The accounts under Cash, Credit cards, Investments, Home &amp; Car and Loans, each heading with its colour's dot; the cursor in checking; Save and Cancel stay at the foot; the sheet doesn't bounce at its ends</td>
+</tr>
+<tr>
+<td>Finances › <strong>Dashboard</strong> › <em>Spent this month</em> › Food</td>
+<td>Beside <em>Latest transactions</em>: $493.05 from your transactions to Oct 30, a ring and Subscriptions, Food, Utilities, Car, largest first; Food opens Transactions on its 2 this month (Costco and Trader Joe's)</td>
+</tr>
+<tr>
+<td>Finances at 1280px, then at 1500px: Net worth, Reports, Calendar</td>
+<td>At 1280: <em>What you own</em> and <em>What you owe</em> side by side; Reports' <em>By tag</em> the whole row. At 1500: the calendar takes two rows with the day picked above <em>October in all</em> beside it. No card alone with half its row empty</td>
+</tr>
+<tr>
+<td>Finances › <strong>Export</strong></td>
+<td>A menu: <strong>The plan, as JSON</strong> saves <em>finances-plan-<today>.json</em> where you pick (it opens as the plan, accounts and payments and all); <strong>The year ahead, as a spreadsheet (CSV)</strong> saves <em>finances-ahead-<today>.csv</em>, opening in Numbers or Excel with each payday and payment to a year out, oldest first, and checking after each day for the next three months; <strong><em>this month</em>, to print</strong> and the next month's open a page in the browser that prints itself, with each day's paydays and payments and each paycheck's in, out, saved, and left. Beside the menu it says where each went. With Hide amounts on, the printed page hides them too. A phone allowed only to look has it, and downloads or shares the file</td>
+</tr>
+<tr>
+<td>Finances on a phone allowed to see them</td>
+<td><strong>Coming up</strong> comes first: each bill of the next 14 days with <em>Tomorrow, Sat, Oct 31</em> or <em>In 2 days, Sun, Nov 1</em> and its amount, today's and tomorrow's in amber; a bill charged to a card says <em>on Chase Freedom, due Nov 21</em> and is left out of the total out of checking; no paycheck or savings. <strong>Goals</strong> follows, each with <em>$90.16 a paycheck, by Jun 30, 2028</em> and its bar; <strong>See all</strong> opens Net worth, <strong>Calendar</strong> the calendar. On the Mac's own Finances, neither shows on the Dashboard</td>
+</tr>
+<tr>
+<td>Finances › <strong>Calendar</strong>, with a bill charged to a card (its form's <em>From</em> a card)</td>
+<td>Its logo shows on its day; the day says <em>on Chase Freedom, due Nov 21</em> with its amount in grey, and checking that day does not change for it. On a phone, the day's list has it the same way</td>
+</tr>
+<tr>
+<td>Finances, with Ghostfolio running in a container the homelab did not start (Status: <em>Runs elsewhere</em>) and read before, on a later day</td>
+<td>Opening Finances reads Ghostfolio once (Investments says <em>Read from Ghostfolio at …</em>), and Update balances offers <strong>From Ghostfolio</strong></td>
+</tr>
+<tr>
+<td>Finances › Net worth › Investments, on the computer and on a phone allowed to change Finances, whatever Status says of Ghostfolio</td>
+<td><strong>Add a holding</strong> and <strong>Read now</strong> are there; with Ghostfolio stopped, Read now says <em>Could not read Ghostfolio: Ghostfolio does not answer on this machine</em>. A phone allowed only to look has neither</td>
+</tr>
+<tr>
+<td>Finances › Net worth › Investments › <strong>Add a holding</strong>, with Ghostfolio running</td>
+<td>A form in the card: Bought or Sold, the account (or <em>A new account…</em> and its name), <em>What you bought</em> (typing VTI lists Ghostfolio's matches; picking one fills the box), Shares, What you paid in all, Day. <strong>Add to Ghostfolio</strong> closes it and says <em>Added to Ghostfolio: bought 10 VTI. Read again at <time></em>; the holding is in Ghostfolio's Activities, in the account of the same name (made there if it had none), and on the card. Nothing picked, 0 shares, or a day still to come is said before Ghostfolio is asked; what Ghostfolio turns down is said in its words, the form kept. No Add with Ghostfolio stopped, or on a phone</td>
+</tr>
+<tr>
+<td>Finances › Net worth › Investments, with Ghostfolio running: add two buys to one account, then open a holding</td>
+<td><strong>Total value</strong> is the sum of the rows (both holdings and any cash), at once, not just the first buy. The open holding lists <em>Buys and sales in Ghostfolio</em>, newest first, each <em>Bought 46 shares · paid $0.00 · Nov 8, 2026</em> with <strong>Change</strong> and <strong>Delete</strong>. Change: a form from what Ghostfolio has; 0 shares or a day still to come is said before Ghostfolio is asked; <strong>Save in Ghostfolio</strong> says <em>Changed in Ghostfolio: the buy of … Read again at <time></em>, and the row's You paid follows (Ghostfolio's Activities shows the new price). Delete asks <em>Delete it from Ghostfolio?</em>; <strong>Keep it</strong> leaves it; Delete takes it out (the holding leaves the card with its last buy). A phone allowed to change Finances has the same; one allowed only to look has no list</td>
+</tr>
+<tr>
+<td>Finances › Net worth › Investments › <strong>Read now</strong>, with Ghostfolio running and a new account in it with nothing added yet</td>
+<td><em>Signed in to Ghostfolio at <time>: it has no accounts yet</em>, with what to add there; with accounts but no holdings, <em>its N accounts hold nothing yet</em>. A wrong token says <em>Could not read Ghostfolio: Ghostfolio refused the security token</em>. Settings › Ghostfolio security token says the Investments card uses it</td>
+</tr>
+<tr>
+<td>Finances › Net worth, with Ghostfolio running, its security token in Settings, and an account in it named like an investment account in Finances</td>
+<td><strong>Investments</strong> offers <strong>Read now</strong>; after it, the card says <em>from Ghostfolio, read <time> today</em>, four figures (Total value, You paid, Gain, This month), a bar split by account, and a row for each holding with its logo or initials, shares, what you paid, what it's worth, and the gain in green or red. A Ghostfolio account with no match is listed to pick one by hand. Clicking a holding shows its worth at each read. Opening Finances the next day reads it once by itself (not with the box unticked). Stopping Ghostfolio, the card still shows the last read, and <strong>Read now</strong> says it does not answer. At 860px and on a phone each holding is a row of its own; a phone that may only look shows the card with nothing to read or pick</td>
+</tr>
+<tr>
+<td>Finances › <strong>Update balances</strong></td>
+<td>Each box starts at what is expected today; typing another amount says how far off it is, and Enter keeps them. The heading says <em>Balances from today</em></td>
+</tr>
+<tr>
+<td>Finances › <strong>Net worth</strong> with a home and its mortgage</td>
+<td>Month by month, the home as its equity above zero and the rest owed below, net worth's line through them; <strong>Without home and car</strong> rescales to cash and savings; the months ahead faded</td>
+</tr>
+<tr>
+<td>Finances: click <strong>Cash</strong> (or another group's balance) in the sidebar</td>
+<td>Net worth opens on that group: its total, a chart with each of its accounts as a band month by month (a tip names each), and only its accounts under What you own or owe. <strong>Show everything</strong> brings the whole page back; another tab and back to Net worth shows it all too</td>
+</tr>
+<tr>
+<td>Finances: rest the pointer on <strong>Investments</strong> (or another group) in the sidebar, or Tab to it</td>
+<td>A card beside it lists the group's accounts, each with its balance and <em>updated 2 days ago</em>; one not updated in over a month has an amber dot and says <em>over a month ago</em>. With amounts hidden, the card's amounts are hidden too. Moving away or Escape closes it; a click still opens Net worth</td>
+</tr>
+<tr>
+<td>Finances: delete an account a payment uses</td>
+<td>It names the payment and asks: <strong>Delete it and them</strong>, or <strong>Delete it, keep them</strong>; neither quietly moves the payment to checking</td>
+</tr>
+</tbody>
+</table>
+<p>If the app says it cannot find the homelab folder, use <strong>Choose…</strong> beside Homelab folder in Settings › This Mac and pick <code>~/Homelab</code>. To try the new-machine path without touching <code>~/Homelab</code>, open the app on another Mac user account (or rename the folder for a moment): Setup offers <strong>Set it up for me</strong>, which makes <code>~/Homelab</code> with <code>.homelab-kit.json</code> in it, and <code>./homelab kit</code> names the build.</p>
+<p>The window remembers itself: make it smaller and move it, quit (⌘Q), open the app again: it opens the same size in the same place. Zoom it to fill the screen (double-click the title area), quit, open: it fills the screen; zoom back: the earlier size returns.</p>
+<p>The Dock: with an app stopped by hand (<code>./homelab stop memos</code>), the app's Dock icon shows a red <em>1</em> within seconds, like Mail's unread count; <code>./homelab start memos</code> clears it.</p>
+<p>The accent colour: System Settings › Appearance › Accent colour › Purple, then the app's Setup › <strong>Check again</strong> (or reopen the app): links, buttons, the progress bar, and the selected sidebar item turn purple, on light and dark; Yellow gives buttons dark text; Multicolor brings back the blue.</p>
+<p>Increase contrast: System Settings › Accessibility › Display › <strong>Increase contrast</strong> on: the app's dividers and card edges get darker and grey text gets darker too, on light and dark; off, as before.</p>
+<h2 id="3-setup-in-order">3. Setup, in order<a class="headerlink" href="#3-setup-in-order" title="Permanent link">&para;</a></h2>
+<p>Work down the Setup screen (or <code>./homelab setup</code> in Terminal). After each step, <strong>Check again</strong> should turn it ✓. Each step's first line says what it gives you, then what to do.</p>
+<p>On a homelab whose Setup was first opened less than a week ago (<code>data/setup.json</code> › <code>since</code>), <em>Backups leave this machine</em>, <em>Backup jobs in Duplicati</em>, and <em>Alerts when this machine is down</em> show last, under <strong>Can wait</strong>; the group says <em>Can wait · 3</em> and the Setup tab's number leaves them out. Done early, they count as done.</p>
+<p>First, with a few steps ready: <strong>Do the N I can do for you</strong>. It runs each ready step in turn (its button shows <em>Doing: …</em>), and stops with <em>What is left needs you</em> or at the first step that fails, with the log saying why.</p>
+<p>Home mode is the default (<code>HOMELAB_DOMAIN</code> empty in <code>.env</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>What to do</th>
+<th>You should see</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>This laptop stays plugged in and open (a MacBook only; a Mac mini has no such step)</td>
+<td>Unplug the charger, <strong>Check again</strong>; plug it back in, <strong>Check again</strong></td>
+<td>Unplugged: <em>It is on battery now: plug it in</em>; plugged in: ✓. With the lid closed and no display, a phone loses the apps within a few minutes (expected: that is what the step warns about)</td>
+</tr>
+<tr>
+<td>Addresses on your tailnet (Tailscale)</td>
+<td>With <code>TAILSCALE_AUTHKEY</code> empty: <strong>Set up the addresses</strong>. Tailscale's sign-in page opens in the browser; sign in (no auth key needed). In the Tailscale admin console › DNS, turn on HTTPS Certificates</td>
+<td>✓; <code>./homelab tailnet setup</code> lists <code>https://homelab.&lt;tailnet&gt;.ts.net:&lt;port&gt;</code> addresses, Status shows them, and Vaultwarden's opens on the phone with Tailscale on</td>
+</tr>
+<tr>
+<td>Password manager account</td>
+<td><strong>Open sign-ups for 10 minutes</strong>, create the accounts at the passwords address, then close sign-ups (or wait)</td>
+<td>The countdown, then "sign-ups closed"; a new sign-up is refused afterwards</td>
+</tr>
+<tr>
+<td>Two-step sign-in</td>
+<td>Each Vaultwarden account: Settings › Security › Two-step login (authenticator app). Nginx Proxy Manager: add a personal administrator under Users, then its avatar menu › Two-Factor Auth. Tick <strong>Done</strong></td>
+<td>Signing in again asks for the code; with a domain, <strong>Set up the domain</strong> still works (it uses <code>NPM_API_EMAIL</code>, which stays without it)</td>
+</tr>
+<tr>
+<td>Backups leave this machine</td>
+<td>One button per place found: <strong>Use Proton Drive</strong> (it makes <code>Homelab Backups</code> in the Proton Drive folder), and <strong>Use iCloud Drive</strong> or <strong>Use the … drive</strong> where those exist; the media drive is not offered. For another folder, use Settings › <code>BACKUP_DESTINATION</code> › <strong>Choose…</strong> and Save instead. Then <strong>Test</strong> beside the setting</td>
+<td>✓, and the test wrote and removed a file there</td>
+</tr>
+<tr>
+<td>A second copy with Kopia (once Kopia is installed)</td>
+<td>Plug in a second drive, <strong>Check again</strong>, then <strong>Use the … drive</strong></td>
+<td>No button for the drive with <code>BACKUP_DESTINATION</code> or the media; Kopia starts again and its page lists the repository at <code>Homelab Kopia</code> on that drive; the step turns ✓ with "Kopia's copies go to …". With <code>KOPIA_REPOSITORY</code> inside Duplicati's folder, the step says it is no second copy</td>
+</tr>
+<tr>
+<td>Backup jobs in Duplicati</td>
+<td><strong>Create the backup jobs</strong>, then Settings › <code>DUPLICATI_SECRETS_PASSPHRASE</code> › <strong>Copy</strong> into Vaultwarden, and onto the recovery kit</td>
+<td>The plan, then (recreating Duplicati first if it still had an older folder) each job created and the first runs queued; Duplicati shows the jobs; their files appear in the Proton Drive web app (ISSUE-0003); Backups › Off-site jobs shows each ran, and the step turns ✓</td>
+</tr>
+<tr>
+<td>Alerts on the phone</td>
+<td><strong>Set up the alert token</strong> (it also makes the app's read token and the phone's login), in the phone's ntfy app add the server with user <code>phone</code> and Settings › <code>NTFY_PHONE_PASSWORD</code> › <strong>Copy</strong>, subscribe to the topics, add the alert address to Uptime Kuma (<a href="../Monitoring/">Monitoring</a>; Duplicati gets it from this step)</td>
+<td>Settings › <strong>Test</strong> passes beside <code>NTFY_PUBLISH_TOKEN</code>, <code>NTFY_READ_TOKEN</code>, and <code>NTFY_PHONE_PASSWORD</code>; <code>./homelab notify test</code> reaches the phone, also on mobile data (ISSUE-0011), and shows under Recent alerts on Status and in the menu bar</td>
+</tr>
+<tr>
+<td>Scheduled jobs</td>
+<td><strong>Install the jobs</strong></td>
+<td><code>./homelab schedule status</code> lists the agent, loaded (<em>always</em>), and System Settings › Login Items &amp; Extensions shows one homelab entry; <code>pmset -g assertions</code> lists caffeinate preventing sleep, and <code>doctor</code> says the awake job keeps the Mac up</td>
+</tr>
+<tr>
+<td>Alerts when this machine is down</td>
+<td>A healthchecks.io check (15 minutes, 15 minutes grace); its ping URL in Settings › <code>HEARTBEAT_URL</code></td>
+<td>After the next watchdog run (up to 15 minutes) the check turns green</td>
+</tr>
+<tr>
+<td>Tailscale on phones and computers</td>
+<td>Install Tailscale on the phone, sign in with the same account, tick <strong>Done</strong></td>
+<td>✓; on mobile data, the apps' tailnet addresses open</td>
+</tr>
+<tr>
+<td>Admin apps on the tailnet</td>
+<td>Settings › <strong>Admin apps on the tailnet</strong> off (<code>TAILNET_ADMIN_APPS=false</code>), Save, then <code>./homelab tailnet setup</code></td>
+<td>On the phone, Nginx Proxy Manager's, AdGuard's, Duplicati's, and Dozzle's tailnet addresses no longer open, while Immich's and Vaultwarden's still do; on the Mac they open at their local address. Turn it back on afterwards if you prefer</td>
+</tr>
+</tbody>
+</table>
+<p>With a domain (in a copy, or once you are ready: Settings › <code>HOMELAB_DOMAIN</code> = your domain, Save), the tailnet step gives way to these:</p>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>What to do</th>
+<th>You should see</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Home DNS answers (AdGuard Home)</td>
+<td><strong>Set up AdGuard</strong> (or, if you already made a login in AdGuard's wizard, put it in Settings › <code>ADGUARD_USER</code>, <code>ADGUARD_PASSWORD</code> › Save)</td>
+<td>✓, and <code>ADGUARD_PASSWORD</code> is filled in</td>
+</tr>
+<tr>
+<td>Cloudflare API token</td>
+<td>Create it with the three permissions the step lists; paste it in Settings › <code>CLOUDFLARE_API_TOKEN</code>, Save, then <strong>Test</strong> beside it</td>
+<td>✓, and the test says the token can read example.com</td>
+</tr>
+<tr>
+<td>Addresses and certificate</td>
+<td><strong>Set up the domain</strong>; the first time takes a few minutes (the certificate)</td>
+<td><code>https://npm.example.com</code> opens with a padlock, on the Mac and on your phone over Wi-Fi</td>
+</tr>
+<tr>
+<td>This Mac finds its apps by name</td>
+<td>With Proton VPN connected (<em>Allow LAN connections</em> on): <strong>Find the apps on this Mac</strong>, enter the Mac password once</td>
+<td><code>cat /etc/resolver/&lt;domain&gt;</code> shows <code>nameserver</code> and the Mac's address, <code>https://photos.example.com</code> opens in the browser, and an app installed afterwards opens too, with nothing run again</td>
+</tr>
+<tr>
+<td>Access away from home</td>
+<td>Create the tunnel in Cloudflare Zero Trust, paste its token in Settings › <code>TUNNEL_TOKEN</code>, <strong>Start the tunnel</strong></td>
+<td>On your phone with Wi-Fi off, <code>https://passwords.example.com</code> opens</td>
+</tr>
+<tr>
+<td>Alerts on the phone, again</td>
+<td><strong>Set up the domain</strong> again so ntfy is published</td>
+<td>The ntfy app on the phone reaches <code>https://ntfy.example.com</code> on mobile data</td>
+</tr>
+<tr>
+<td>Phones and computers use the home DNS</td>
+<td>Set the Wi-Fi DNS server on each device to the Mac's address, tick <strong>Done</strong></td>
+<td>The app names open at home</td>
+</tr>
+</tbody>
+</table>
+<h3 id="memory">Memory<a class="headerlink" href="#memory" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Check</th>
+<th>You should see</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>./homelab plan immich-server vaultwarden navidrome feishin filebrowser syncthing</code></td>
+<td>No <em>Memory:</em> warning (about 2.2 GB of the room an 8 GB Mac has)</td>
+</tr>
+<tr>
+<td><code>./homelab --json plan paperless open-webui karakeep dawarich stirling-pdf immich-machine-learning</code> on an 8 GB Mac</td>
+<td>A <em>Memory:</em> warning naming the heaviest; on 16 GB, none. <code>memory.room</code> is this Mac's memory less 4 GB</td>
+</tr>
+<tr>
+<td>After a week of use: <code>./homelab doctor</code>'s memory line against the plan's <code>memory.use</code></td>
+<td>Within about a third of each other; if not, the estimates in the compose files need adjusting</td>
+</tr>
+</tbody>
+</table>
+<h2 id="4-the-jobs">4. The jobs<a class="headerlink" href="#4-the-jobs" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>./homelab<span class="w"> </span>watchdog
+./homelab<span class="w"> </span>backup<span class="w"> </span>--apply
+./homelab<span class="w"> </span>schedule<span class="w"> </span>status
+</code></pre></div>
+<ul>
+<li>Stop one baseline app (<code>./homelab stop navidrome</code>), run <code>./homelab watchdog</code> twice: the second run shows <em>Homelab: something is down</em> in Notification Center as well as on the phone. <code>./homelab start navidrome</code> and the next run shows <em>recovered</em>.</li>
+<li>A restart that keeps failing: <code>./homelab custom add crashy --image alpine:3.20 --install --apply</code> (it exits at once, so Docker keeps restarting it). Run <code>./homelab watchdog</code>, wait 3 minutes (Docker waits longer between each restart, up to a minute), and run it again: the second run says <em>stopped crashy: Docker restarted it … times in an hour</em>, the phone gets <em>Homelab: stopped an app that kept restarting</em>, and Status's crashy row says <em>Stopped: it restarted … times in an hour</em> with a red dot. Another <code>./homelab watchdog</code> leaves it stopped. <code>./homelab start crashy</code> makes the row plain again (and the app loops again); <code>./homelab remove crashy --apply</code>, then <code>./homelab custom remove crashy --apply</code>, takes it away. (A wrong <code>NAVIDROME_MUSIC_PATH</code> doesn't make a loop: Navidrome mounts the music folder at that path itself.) Tried on Linux with Docker Engine 29.9, Nov 5, 2026.</li>
+<li><code>watchdog</code> lists every check as ✓. A check that fails once only says so; it alerts when it fails twice in a row. The app's Status screen then shows <strong>Watchdog</strong> with all checks passed and when it ran.</li>
+<li><code>backup</code> writes the database dumps and the <code>.env</code> copy into <code>recovery-staging</code> (Duplicati takes them off-site from 05:00) and ends with a summary.</li>
+<li><code>schedule status</code> shows each job loaded, with a last exit code of 0 once it has run.</li>
+<li>The app's <strong>Backups</strong> screen lists each app's newest copy under <em>Up to date</em>, the settings file copied a moment ago, and the Off-site tile naming the place (Proton Drive, the Backup drive); <strong>Back up now</strong> streams the same backup and ends with "Backup done".</li>
+<li>The menu bar's <strong>Back up now</strong> ends with "done" and the time.</li>
+<li><code>./homelab digest</code> prints the same lines as Status › <strong>This week</strong>; <code>./homelab digest --send</code> reaches the phone as <em>Homelab this week</em>, listing what needs a look (expect the restore test until step 6). From then on it arrives each Sunday morning.</li>
+<li>After logging out and back in, <code>schedule status</code> still lists the jobs; the next morning there is a new dump in <code>recovery-staging/databases</code> (ISSUE-0005).</li>
+<li>With <code>HEARTBEAT_URL</code> set: quit OrbStack, and within 30 minutes healthchecks.io alerts (ISSUE-0006). Start OrbStack again afterwards.</li>
+</ul>
+<h2 id="5-the-proxy-and-crowdsec">5. The proxy and CrowdSec<a class="headerlink" href="#5-the-proxy-and-crowdsec" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>./homelab<span class="w"> </span>update<span class="w"> </span>nginx-proxy-manager
+./homelab<span class="w"> </span>logs<span class="w"> </span>nginx-proxy-manager
+./homelab<span class="w"> </span>compose<span class="w"> </span>crowdsec<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>crowdsec<span class="w"> </span>cscli<span class="w"> </span>bouncers<span class="w"> </span>list
+</code></pre></div>
+<ul>
+<li><code>update</code> rebuilds the proxy image with CrowdSec AppSec; <code>logs</code> shows no Lua errors (ISSUE-0001).</li>
+<li><code>bouncers list</code> shows <code>nginx_proxy_manager</code> with a recent last pull, and <code>./homelab doctor</code> says <em>the proxy's bouncer pulled decisions … seconds ago</em>.</li>
+<li>With a domain, the ban test in <a href="../Runbooks/">Runbooks</a> returns 403 on the phone, then loads again once lifted. Within a minute the app's Status › <strong>Protection</strong> lists it as a manual ban.</li>
+<li>Status › Nginx Proxy Manager (or CrowdSec) › <strong>What CrowdSec stopped today</strong>: after the ban test, its row says <em>manual 'ban' from 'localhost'</em> with the address, <strong>Banned</strong>, and the time; the heading counts today's and those banned now. With nothing since midnight it says <em>Nothing yet today</em> and the week's count; with CrowdSec stopped it says it can't be read. Other apps' pages have no such card.</li>
+<li>With a domain, open any app from a phone on Wi-Fi, then check which address the proxy logged (ISSUE-0002):</li>
+</ul>
+<div class="highlight"><pre><span></span><code>./homelab<span class="w"> </span>compose<span class="w"> </span>nginx-proxy-manager<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>nginx-proxy-manager<span class="w"> </span>sh<span class="w"> </span>-c<span class="w"> </span><span class="s1">'tail -n 1 /data/logs/proxy-host-*_access.log'</span>
+</code></pre></div>
+<h2 id="6-the-first-restore-test">6. The first restore test<a class="headerlink" href="#6-the-first-restore-test" title="Permanent link">&para;</a></h2>
+<p>Once the Homelab AppData job has run in Duplicati, the Backups screen shows <strong>Test a restore</strong>. Click it (or run the command):</p>
+<div class="highlight"><pre><span></span><code>./homelab<span class="w"> </span>restore-test<span class="w"> </span>--auto
+</code></pre></div>
+<ul>
+<li>The panel shows Duplicati restoring a dozen files, then ends with "12 files checked, all the same as now" (fewer when few files have settled for a day) and "Restore test passed". The Restore test tile says a moment ago and "in N minutes" (how long it took), hovering it lists the test on record, and <code>recovery-staging/restore-test</code> is gone again. <code>./homelab report</code> has it under "restore tests".</li>
+<li>Then the manual way once, as in <a href="../Backups/#restore-testing">Backups</a>: restore Homelab AppData in Duplicati to <code>/staging/restore-test</code>, run <code>./homelab restore-test recovery-staging/restore-test data/appdata</code>, and delete the folder afterwards.</li>
+<li>With Kopia installed and its first snapshot made (3:45, or <strong>Snapshot now</strong> in its page): <code>./homelab restore-test --auto --engine kopia</code> ends the same way, with "Kopia restores N files". A restore you make in its page (into <code>/staging/restore-test</code>, <strong>Restore File Ownership</strong> unticked) lands as yours, not root's.</li>
+</ul>
+<h2 id="7-the-new-apps-optional">7. The new apps (optional)<a class="headerlink" href="#7-the-new-apps-optional" title="Permanent link">&para;</a></h2>
+<p>Install one at a time from Choose apps, then open it from Status.</p>
+<table>
+<thead>
+<tr>
+<th>App</th>
+<th>Check</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Karakeep</td>
+<td><code>https://links.example.com</code> opens; save a link and its page archive appears after a minute</td>
+</tr>
+<tr>
+<td>Grocy</td>
+<td>Opens; the default login is admin / admin, change it at once</td>
+</tr>
+<tr>
+<td>Vikunja</td>
+<td>Create your account with the command in <a href="../../services/household/Vikunja/">its note</a>, sign in at <code>https://todo.example.com</code>, add a task, then <code>./homelab compose vikunja restart vikunja</code>: you are still signed in and the task is there</td>
+</tr>
+<tr>
+<td>Homepage</td>
+<td>Comes with <em>Household</em>. <code>https://homepage.example.com</code> lists every running app with its icon; stop one from Status and it drops off the page within a few seconds of the page reloading</td>
+</tr>
+<tr>
+<td>Syncthing</td>
+<td>Set a GUI password first (Actions › Settings › GUI), then add a device</td>
+</tr>
+<tr>
+<td>Home Assistant</td>
+<td>Onboarding opens at <code>https://home.example.com</code> without a "400: Bad Request"</td>
+</tr>
+<tr>
+<td>Open WebUI</td>
+<td>After <code>brew install ollama</code>, <code>brew services start ollama</code>, <code>ollama pull llama3.2</code>: a chat answers</td>
+</tr>
+<tr>
+<td>Tailscale</td>
+<td>With <code>TAILSCALE_AUTHKEY</code> empty: <code>./homelab tailnet login</code> opens Tailscale's sign-in page; after signing in it says it is signed in as homelab on your tailnet. Approve the route in Tailscale's admin, then <code>./homelab doctor</code> says the route is approved</td>
+</tr>
+<tr>
+<td>Small baseline</td>
+<td>In a folder made with <strong>Set it up for me</strong>: <code>.env</code> has <code>HOMELAB_BASELINE=small</code> and an empty <code>HOMELAB_DOMAIN</code>, Start the homelab starts only Duplicati, ntfy, and Uptime Kuma, and Setup shows no password-manager step until Passwords is installed</td>
+</tr>
+<tr>
+<td>Home mode by default</td>
+<td>A fresh <code>git clone</code> into a new folder, then <code>./homelab up</code>: <code>.env</code> has an empty <code>HOMELAB_DOMAIN</code>, and Setup shows <strong>Addresses on your tailnet</strong> instead of the domain steps. An existing <code>.env</code> keeps its domain after <code>./homelab upgrade</code></td>
+</tr>
+<tr>
+<td>Ad blocking (Home mode)</td>
+<td>After Home mode works: Choose apps › <strong>Ad blocking</strong> › Install. The install log ends with the tailnet address to use; in the Tailscale admin console › DNS add it as a custom nameserver and turn on Override DNS servers. On the phone with Tailscale on and Wi-Fi off, <code>https://doubleclick.net</code> does not open, and AdGuard's dashboard counts the query. Setup shows <strong>Ad blocking on every device</strong></td>
+</tr>
+<tr>
+<td>Phone companion</td>
+<td>Settings › Phones › name it › <strong>Pair a phone</strong>, and scan the QR code with the phone's camera (or <code>./homelab phone pair --name "My iPhone"</code> and open the address it prints); <strong>Pair</strong></td>
+</tr>
+<tr>
+<td>Phone companion, away</td>
+<td>On a phone paired at the homelab's HTTPS address (the domain, or the tailnet's): open Status once at home; then turn Wi-Fi and Tailscale off (mobile data on) and open it again; then turn them back on</td>
+</tr>
+<tr>
+<td>Phone companion on the Home Screen</td>
+<td>Once paired: Safari › Share › <strong>Add to Home Screen</strong> on an iPhone; Chrome › ⋮ › <strong>Add to Home screen</strong> (or <strong>Install app</strong>) on Android; then open it from there, in light and then dark mode</td>
+</tr>
+<tr>
+<td>Quick actions on the phone</td>
+<td>On a phone paired with changes allowed: hold an app's row on Status for half a second; then a quick tap on another</td>
+</tr>
+<tr>
+<td>Finances on a phone</td>
+<td>Settings › Phones › <strong>Sees Finances</strong> beside a phone paired with the https link</td>
+</tr>
+<tr>
+<td>Finances, a mortgage read from its papers (a whole payment of, say, $2,000) with only your half ($1,000) planned from checking › <strong>Net worth</strong>'s paycheck-by-paycheck table and <strong>Loans</strong></td>
+<td>After each payment day the table's mortgage owes what the Loans card's payments say (it falls by the papers' whole payment), and checking's rows still take only $1,000</td>
+</tr>
+<tr>
+<td>Finances, its tabs; then <strong>Spending</strong>, <strong>Reports</strong>, <strong>Plan</strong>, <strong>Paychecks</strong>, <strong>Net worth</strong>; then on the Dashboard, Cash flow's <strong>Open Recurring</strong></td>
+<td>Four tabs: Dashboard, Spending, Plan, Net worth. Spending opens on Transactions with <em>Transactions · Reports</em> in a second row; Plan opens on Calendar with <em>Calendar · Recurring · Paychecks</em>; Dashboard and Net worth have no second row; the card opens Plan with Recurring picked</td>
+</tr>
+<tr>
+<td>Finances › Spending › Transactions: open a transaction whose payee came in messy, give it a clear name and a category, tick <strong>Always do this for “…”</strong>, Save; then <strong>Import a file</strong> with a row by that name; then <strong>Rules</strong></td>
+<td>Its other transactions take the name (and the category where they had none); the import's row shows the clear name and <em>· <category></em>; <strong>Rules (1)</strong> lists it, and <strong>Remove</strong> then <strong>Save</strong> takes it away</td>
+</tr>
+<tr>
+<td>Finances › Transactions: a payee with a branch number (<em>Shop 80</em>), with others (<em>Shop 81</em>, one with a category already); rename it <em>Shop</em>, give it a category, tick <strong>Always do this for…</strong>; then <strong>Rules</strong></td>
+<td><em>Any name starting with Shop</em> is picked, and <em>Also change the 2 already in</em> is ticked; after Save all three are <em>Shop</em> in that category; in <strong>Rules</strong> the rule's category can be changed and saved</td>
+</tr>
+<tr>
+<td>Add a person</td>
+<td>With Pocket ID running: Settings › <strong>People</strong> › <strong>Add a person</strong>, name <em>Test Person</em>, email <code>you+test@example.com</code>, pick <strong>Only these</strong> and tick two apps, <strong>Add them</strong>. It says <em>Test Person is added</em>; <strong>Show their sign-in to scan</strong> opens their welcome page: the sign-in link opens Pocket ID on a phone and adds a passkey; the page lists the two apps with their addresses and phone apps. <strong>Make a new sign-in link</strong> opens a fresh page (the old link stops working); with <code>JELLYFIN_API_KEY</code> and the Navidrome login set (each <strong>Test</strong> says it is accepted), the page has an <em>Apps with a password of their own</em> table, the person is in Jellyfin's Dashboard › Users and Navidrome's Users, and the password signs in to both and to Infuse; <strong>New music and films password</strong> opens a page with a new one, which works where the old one no longer does; <strong>Remove</strong> (click twice) stops that passkey signing in (Pocket ID says the account is disabled) and the card drops them. <code>./homelab person</code> lists the same</td>
+</tr>
+<tr>
+<td>Photos per person</td>
+<td>With Immich running and two people uploading: after the nightly backup (or Backups › <strong>Back up now</strong>), Status has <strong>Photos per person</strong> with each person and their size, matching Immich › Administration › Users › storage used</td>
+</tr>
+<tr>
+<td>A start page each</td>
+<td>With Homepage running and two people added: <code>./homelab person apps &lt;second person&gt; mealie</code>. <code>https://homepage.example.com</code> shows a tab per person and <em>Everything</em>; <code>…/#&lt;first name&gt;</code> opens straight on that person's tab with only Mealie; their welcome page (<code>./homelab person welcome &lt;name&gt;</code>) links to it</td>
+</tr>
+<tr>
+<td>A sheet for the fridge</td>
+<td>After <strong>Add a person</strong> (or <code>./homelab person welcome &lt;name&gt;</code>): their welcome page links to <em>your apps on one page</em>; open it and print it</td>
+</tr>
+<tr>
+<td>Single sign-on</td>
+<td>With Pocket ID's admin made and Karakeep running: <code>./homelab sso setup</code> lists Karakeep, then "Karakeep signs in with Pocket ID"; Karakeep's sign-in page has <strong>Sign in with Pocket ID</strong>, and a passkey signs in. Pocket ID › OIDC Clients lists <code>karakeep</code>. For Immich it prints the steps; after them, Immich's login has the Pocket ID button. With Vikunja running, <code>./homelab sso setup</code> connects it too: its sign-in page has <strong>Pocket ID</strong>, and a passkey signs in</td>
+</tr>
+<tr>
+<td>Database upgrade</td>
+<td>With Ghostfolio installed and some holdings: <code>./homelab db upgrade ghostfolio-db</code> shows the plan, then dumps, archives, and ends with "runs PostgreSQL 18 with the data loaded"; Ghostfolio signs in and shows the holdings; <code>.env</code> has <code>GHOSTFOLIO_DB_VERSION=18</code></td>
+</tr>
+<tr>
+<td>Release channels</td>
+<td>Settings › <code>UPDATE_CHANNEL</code> = <code>stable</code>, Save: <code>./homelab upgrade</code> says there is no release on the stable channel yet (until the first tag), and goes back to listing the newest release of <code>main</code> with <code>testing</code> (newer commits on <code>main</code> show as waiting for the next release). Once a <code>v*</code> release is published, the update line at the top of the window and the menu bar's <em>Update to …</em> follow it instead of the latest build</td>
+</tr>
+<tr>
+<td>Upgrade and go back</td>
+<td>With a change waiting: the line's <strong>What's new</strong> lists the CHANGELOG entries; <strong>Update now</strong>. Beside the version in Settings › This Mac, <em>go back to …</em> (click twice) returns the folder to the earlier commit, and <code>./homelab upgrade</code> offers the update again</td>
+</tr>
+<tr>
+<td>Undo an update</td>
+<td><code>./homelab update vikunja</code>: the log starts with its database dump. Within 15 minutes (or <code>./homelab watchdog</code>) <code>docker images homelab-rollback/*</code> lists <code>vikunja</code> when the image changed, and Vikunja's page on Status shows <strong>Roll back</strong>. Click it: Vikunja restarts on the earlier image, shows <em>updates held</em>, and <code>./homelab updates</code> lists it as held; <code>./homelab updates release vikunja</code> clears it</td>
+</tr>
+<tr>
+<td>@arr and qBittorrent</td>
+<td>Install with "Connect the apps for me", set <code>QBITTORRENT_PASSWORD</code>, run <code>./homelab wire --apply</code>: Prowlarr › Settings › Apps and Sonarr › Settings › Download Clients are filled in (ISSUE-0015)</td>
+</tr>
+<tr>
+<td>Export</td>
+<td><code>./homelab export --apply</code> (with Paperless and Immich running): <code>export-&lt;date&gt;/README.html</code> lists Tables, Documents, Photos, and Passwords. A CSV under <code>tables/moneymatter-db</code> opens in Numbers with the transactions; <code>documents/manifest.json</code> has the documents' tags; <code>photos/albums.csv</code> lists an album you made with its photos' paths, and each path opens</td>
+</tr>
+<tr>
+<td>Move to another machine</td>
+<td>Only with a second machine to hand: Backups › <strong>Move out…</strong> (click twice), save the file on a drive: the log ends with the steps for the new machine, and the old one's apps are stopped. On the new one, install Homelab Wizard, <strong>Set it up for me</strong>, then Backups › <strong>Move in…</strong> and choose the file: it stops if the media drive is not plugged in, and after it is, ends with "moved in"; Status is green and a photo, a password, and a document open. (<code>./homelab move out --to &lt;drive&gt;/homelab.tar</code> and <code>move in</code> do the same)</td>
+</tr>
+<tr>
+<td>Rebuild from the backups (in a copy)</td>
+<td>Once the Duplicati jobs have run: make a new folder with <strong>Set it up for me</strong> on another account (or <code>git clone</code> to <code>~/Homelab-test</code>), then <code>./homelab rebuild &lt;the backup folder&gt;</code> there and type <code>DUPLICATI_SECRETS_PASSPHRASE</code></td>
+</tr>
+<tr>
+<td>Uninstall (last, in a copy)</td>
+<td>In a copy of the homelab folder: <code>./homelab uninstall</code> shows the plan and changes nothing; <code>--apply</code> removes the containers, <code>./homelab schedule status</code> lists no jobs, and the menu bar item does not come back after signing out and in. <code>data/</code> and <code>.env</code> are still there; <strong>Start the homelab</strong> brings it all back. Then, in another copy with a backup folder of its own: Settings › This machine › <strong>Take the homelab off this machine</strong> with every box but the last ticked: the plan names the folder and the backups (and keeps a backup folder in a cloud drive), Uninstall stays greyed until <code>uninstall</code> is typed, and after it the folder and the backups are gone, the machine is gone from Tailscale's admin console, and the app has quit and is in the Trash (Mac), uninstalled after approval (Windows), or gone with its menu entry (AppImage)</td>
+</tr>
+<tr>
+<td>Baikal</td>
+<td>Setup runs at <code>https://dav.example.com</code>; add a user, then an iPhone's CalDAV account syncs a new event both ways</td>
+</tr>
+<tr>
+<td>Pocket ID</td>
+<td><code>https://id.example.com/setup</code> makes the admin with a passkey (Face ID or Touch ID)</td>
+</tr>
+<tr>
+<td>Wallos, Memos, Homebox</td>
+<td>Each opens at its address (<code>subscriptions</code>, <code>notes</code>, <code>inventory</code>); the first account is made, and the nightly backup lists a dump for each</td>
+</tr>
+<tr>
+<td>Changedetection.io</td>
+<td>Watch a page; a test notification to <code>reminders</code> reaches the phone after <strong>Set up the alert token</strong> again</td>
+</tr>
+<tr>
+<td>PairDrop</td>
+<td><code>https://drop.example.com</code> on the Mac and a phone: each sees the other and a photo goes across</td>
+</tr>
+<tr>
+<td>PsiTransfer</td>
+<td>Upload with the upload password; the link downloads on another device and stops working after its expiry</td>
+</tr>
+<tr>
+<td>RomM</td>
+<td>With a game you own in <code>games/roms/&lt;platform&gt;</code> on the media drive, <strong>Scan</strong> finds it, and an older console's game plays in the browser</td>
+</tr>
+<tr>
+<td>Dawarich</td>
+<td>After the first start's migrations, the demo sign-in works and its password changes; a Google Takeout or GPX import finishes, and the day shows on the map</td>
+</tr>
+<tr>
+<td>Docmost</td>
+<td>The first visit makes the workspace and its owner; a page with an image survives <code>./homelab compose docmost restart docmost</code>, and Settings › Members shows an invite link</td>
+</tr>
+<tr>
+<td>Ghostfolio</td>
+<td><strong>Get started</strong> makes the admin and shows a security token; an imported CSV lists the holdings</td>
+</tr>
+<tr>
+<td>Your own app</td>
+<td>Choose apps › <strong>Add your own app</strong> with a small image (for example <code>traefik/whoami</code>): it installs, shows in Status, and removing it leaves nothing behind</td>
+</tr>
+</tbody>
+</table>
+<h2 id="8-after-a-few-days">8. After a few days<a class="headerlink" href="#8-after-a-few-days" title="Permanent link">&para;</a></h2>
+<p>Once everything has run without trouble: Status › More… › <strong>Clean up old containers</strong> (or <code>./homelab cleanup</code>, then <code>./homelab cleanup --volumes</code>). Delete the older setup's folders only when you are sure.</p>
+<h2 id="a-newcomers-first-run">A newcomer's first run<a class="headerlink" href="#a-newcomers-first-run" title="Permanent link">&para;</a></h2>
+<p>For handing it to someone who is not technical (the 1.0 test), on an M1 MacBook Air with 8 GB. Watch without helping, and note every place they stop, hesitate, or ask; each becomes its own fix.</p>
+<p><strong>What they meet, in Home mode</strong> (counted in October 2026 against the code, before a real run):</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Step</th>
+<th>Who does it</th>
+<th>Friction</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Install OrbStack: the website's download, drag it to Applications, open it, approve its helper with the Mac's password</td>
+<td>Them</td>
+<td>Four actions and a password prompt; the app's <strong>Open the install guide</strong> only opens the page (an <strong>Install OrbStack</strong> button is next, once it can be tried on a Mac)</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Install Homelab Wizard: a Terminal line, or the download and <strong>Open Anyway</strong> in System Settings</td>
+<td>Them</td>
+<td>The unsigned-app warning, until the Developer ID</td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>Set it up for me</strong></td>
+<td>App</td>
+<td>None</td>
+</tr>
+<tr>
+<td>4</td>
+<td>OrbStack is running</td>
+<td>App checks</td>
+<td>None once OrbStack is open</td>
+</tr>
+<tr>
+<td>5</td>
+<td><strong>Start the homelab</strong></td>
+<td>App</td>
+<td>A long first download</td>
+</tr>
+<tr>
+<td>6</td>
+<td>This laptop stays plugged in and open</td>
+<td>App checks</td>
+<td>A sentence to read (new)</td>
+</tr>
+<tr>
+<td>7</td>
+<td><strong>Set up the addresses</strong>: sign in to Tailscale in the browser, then turn on HTTPS Certificates in its admin console</td>
+<td>Them</td>
+<td>An account, and a toggle on a website the app cannot reach without an API key</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Alerts on the phone: the ntfy app, a server, a user, and a password copied from Settings</td>
+<td>Them</td>
+<td>The most typing of any step</td>
+</tr>
+<tr>
+<td>9</td>
+<td><strong>Install the jobs</strong></td>
+<td>App</td>
+<td>macOS shows <em>Background items added</em> (expected)</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Tailscale on phones and computers</td>
+<td>Them</td>
+<td>An app per device, the same account</td>
+</tr>
+<tr>
+<td>11, 12</td>
+<td>Password manager account and two-step sign-in, once Passwords is picked</td>
+<td>Them</td>
+<td>Accounts and an authenticator app</td>
+</tr>
+<tr>
+<td>later</td>
+<td>Backups (where they go, the jobs) and the outside check (healthchecks.io)</td>
+<td>Them</td>
+<td><strong>Can wait a week</strong> now: not counted until then</td>
+</tr>
+</tbody>
+</table>
+<p>Removed in this pass: the router's DHCP reservation (Home mode does not need it), and backups and healthchecks.io on day one. Added: the laptop step, and the install plan's memory warning (the small baseline with every <em>Start here</em> pick uses about 2.2 GB of the 4 GB an 8 GB Mac has room for).</p>
+<p><strong>What only a real Mac can prove</strong> (tonight, and on the Air):</p>
+<table>
+<thead>
+<tr>
+<th>Check</th>
+<th>You should see</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Setup on a fresh account (or after <code>rm data/setup.json</code>)</td>
+<td>No <em>This machine keeps its address</em> in Home mode; backups and the outside check under <strong>Can wait a week</strong>; the Setup tab's number leaves them out</td>
+</tr>
+<tr>
+<td>On the MacBook Air: unplug, <strong>Check again</strong>, plug in, <strong>Check again</strong></td>
+<td>The laptop step goes to <em>plug it in</em>, then ✓</td>
+</tr>
+<tr>
+<td>The lid closed for five minutes on the charger, no display</td>
+<td>The phone loses the apps (expected); open, they come back within a minute</td>
+</tr>
+<tr>
+<td>Choose apps with every <em>Start here</em> pick on the Air</td>
+<td>No memory warning; <code>./homelab doctor</code>'s memory line after a day stays under 4 GB</td>
+</tr>
+<tr>
+<td>Each prompt macOS shows during the first run (OrbStack's helper, <em>Background items added</em>, notifications)</td>
+<td>Note each one and whether the person understood it</td>
+</tr>
+</tbody>
+</table>
+<h2 id="proven-every-night">Proven every night<a class="headerlink" href="#proven-every-night" title="Permanent link">&para;</a></h2>
+<p>Before a step reaches this page, CI tries it against a real Docker Engine on a Linux runner every night (<code>.github/workflows/nightly.yml</code>, the tests in <code>test/realdocker</code>), and on each pull request that changes the catalog: ntfy, Vaultwarden, Paperless with its PostgreSQL, and Nginx Proxy Manager installed; <code>doctor</code>; the alert token made and a test alert read back; data put into each app through its own API; Duplicati given a backup folder and its jobs (<code>duplicati destination</code>, <code>duplicati setup</code>), each job read back through Duplicati's API (sources, destination, AES, retention, schedule, the alert URL), then, once the AppData job has run, <code>restore-test --auto</code> restoring a sample of settled files and comparing them; Status timed, failing at more than twice the last good run; the nightly backup; the app's page served by <code>homelab serve</code> and paired as a phone, with Status, Backups, and <strong>Back up now</strong> clicked through against the real containers; the watchdog bringing back an app that hung and one whose container was removed, with its alert in ntfy; an update and its rollback, across a change of ntfy's database schema (the run starts on ntfy v2.25.0, which refuses the newer ntfy's migrated databases), with ntfy answering on its tokens from before; the same update again with ntfy made to hang before the watchdog saw it well, which the watchdog puts back with its data from before, its tokens checked the same way; then the homelab moved out, wiped, moved in, and the data read back, with ntfy back on the older version it ran, not the newest (the restore drill: timed from the move in to every app answering with its data, written on the run's summary page beside Status's time, and failing at more than twice the last good run and a minute more), and Duplicati's jobs made again on that "new machine" from their existing backups (repaired, then backing up into the same folders). A failed night opens an issue with the run's diagnostics report. Beside it, each night starts a seventh of the rest of the catalog (<code>TestTheCatalogStarts</code>, by the day of the week): each app installed alone on a homelab of its own, then its page answering (or, with no page, its container still running a minute on), so every app starts against real Docker at least once a week. An app that needs a setting only the person's own account gives (a tunnel token, a VPN key) is listed as skipped with that reason. Run by hand, the workflow starts all seven shares at once. Beside it, the <code>rebuild</code> job (on pull requests that change the real-Docker tests too) is the full rebuild of <a href="../Disaster%20Recovery/#scenario-full-mac-rebuild">Disaster Recovery</a>: Vaultwarden, Paperless with its PostgreSQL, Actual Budget, and Firefly III given data, the nightly backup and every Duplicati job run into a backup folder beside the homelab, the homelab wiped, and <code>homelab rebuild &lt;that folder&gt;</code> with the Secrets passphrase bringing it back from the backups alone, each app answering with its data again; its time is on the run's summary page, and a rebuild taking more than twice the last good run's, and a minute more, fails. Beside it, the <code>domain</code> job takes <code>domain setup</code> through the real proxy and AdGuard Home (Cloudflare left out, as it needs a real account): each proxy host and the rewrite read back, the name resolved through AdGuard, and ntfy answering through the proxy by its name. Beside it, the <code>wire</code> job runs <code>homelab wire</code> against the real Prowlarr, Sonarr, Radarr, Lidarr, and FlareSolverr, and reads each link back from Prowlarr. Beside it, the <code>proxy</code> job builds the homelab's proxy image and runs it with CrowdSec: the bouncer pulling, and a banned address getting 403 until the ban is lifted. Beside it, the <code>home</code> job is a new household's first run in Home mode, with a fake tailnet (a Headscale server of the run's own) in place of Tailscale's: Setup's checklist walked as <strong>Do the N I can do for you</strong> walks it (the homelab started, Tailscale installed and signed in, the addresses set up, the alert token, the scheduled jobs installed for real), each step left checked to name the person's part, then that part played (the boxes ticked, a backup folder chosen, the outside check's address filled in) and every step ending done. What it cannot reach (a real Mac, Windows, the Steam Machine, the phone, Proton Drive) stays in the lists below.</p>
+<p>Upgrades are proven on every pull request: <code>testdata/upgrades</code> keeps the files a homelab folder of each release keeps (<code>.env</code> as <code>homelab.env</code>, the paired phones, the update history with ntfy's updates held, Setup's steps, the restore tests, the watchdog's state, the savings, the household), made by that release's own code (<code>testdata/upgrades/make.sh</code>). <code>TestEachReleasesFolderUpgrades</code> opens each with this build, runs install, Setup, and Status, and fails on a question asked, a setting changed or lost, or a file that no longer reads back.</p>
+<h2 id="waiting-for-real-hardware">Waiting for real hardware<a class="headerlink" href="#waiting-for-real-hardware" title="Permanent link">&para;</a></h2>
+<p>What only the Mac, the Windows PC, or the Steam Machine can prove: each row of the parity table in <a href="../Host/#the-same-on-every-system">Host</a> that CI shows only against fakes, and each change made since without the machine to run it on. Work down a machine's list in one session; each step says what to do and what you should see. When a step does not match, make a report (<code>homelab report</code>), note the step's number, and go on to the next. When a step passes, write <em>Passed</em> and the day in its Result column; Host's <em>Proven by</em> names the steps, and this column is where they are marked.</p>
+<h3 id="the-mac">The Mac<a class="headerlink" href="#the-mac" title="Permanent link">&para;</a></h3>
+<p>Run by the owner on their Mac, where the homelab runs day to day: 13 of 18 passed on Nov 3, 2026. Still to run: M5, M7, M10, M11, and M18.</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Do</th>
+<th>You should see</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>M1</td>
+<td>Steps 1–6 of this page</td>
+<td>Each as written; this closes the first-install item of the <a href="../Roadmap/#still-open-from-the-first-months">Roadmap</a></td>
+<td>Passed, Nov 3, 2026</td>
+</tr>
+<tr>
+<td>M2</td>
+<td>Unplug the MacBook (or pull the Mac mini's power cable on a UPS), wait 2 minutes, <code>pmset -g assertions</code></td>
+<td>No <code>PreventUserIdleSystemSleep</code> from <code>caffeinate</code> while on battery; plugged in again, it is back within a minute</td>
+<td>Passed, Nov 3, 2026</td>
+</tr>
+<tr>
+<td>M3</td>
+<td>Quit OrbStack, then <code>launchctl kickstart -k gui/$(id -u)/com.homelab.agent</code></td>
+<td>OrbStack opens by itself within a minute and the apps start</td>
+<td>Passed, Nov 3, 2026</td>
+</tr>
+<tr>
+<td>M4</td>
+<td>Stop Jellyfin, restart the Mac, log in</td>
+<td>Jellyfin opens by itself after the drives are there (<code>scripts/logs/startup.log</code> says "opened Jellyfin")</td>
+<td>Passed, Nov 3, 2026</td>
+</tr>
+<tr>
+<td>M5</td>
+<td><code>./homelab notify test</code> with the app closed</td>
+<td>A notification titled <em>Homelab</em> in Notification Center, and the same on the phone through ntfy</td>
+<td>Not yet</td>
+</tr>
+<tr>
+<td>M6</td>
+<td>With a domain: Setup › <strong>This Mac finds its apps by name</strong>; afterwards <code>./homelab domain resolver --undo</code></td>
+<td>The password window says "Homelab needs to look up your … apps"; <code>cat /etc/resolver/&lt;domain&gt;</code> shows the address; after the undo (the password window again) the file is gone and <code>scutil --dns</code> no longer lists the domain</td>
+<td>Passed, Nov 3, 2026</td>
+</tr>
+<tr>
+<td>M7</td>
+<td><code>brew install smartmontools</code>, then <code>./homelab doctor</code></td>
+<td>A drive health line for the Mac's disk and the media drive</td>
+<td>Not yet</td>
+</tr>
+<tr>
+<td>M8</td>
+<td>With the tray icon running and an older build of the app installed: the line's <strong>Update now</strong> (it shows by itself within 15 minutes)</td>
+<td>The app quits and opens again on the new build within a minute (Settings shows its version), the tray icon comes back, and <code>~/Library/Caches/Homelab Wizard/update</code> is empty</td>
+<td>Passed, Nov 3, 2026</td>
+</tr>
+<tr>
+<td>M9</td>
+<td>From the menu bar item: <strong>Update apps now</strong> with an app behind</td>
+<td>The item's title names the step and the app ("Updating Vikunja · 1 of 2: Vikunja downloading · 54%"), then "done" with the time</td>
+<td>Passed, Nov 3, 2026</td>
+</tr>
+<tr>
+<td>M10</td>
+<td><code>./homelab install paperless-ai</code> (with its token in Settings) and Ollama stopped (<code>brew services stop ollama</code>), then Setup</td>
+<td>The step <em>Ollama answers on this machine</em> says to <code>brew install ollama &amp;&amp; brew services start ollama</code>; once started it turns done, and Paperless-AI's setup page accepts Ollama at <code>http://host.docker.internal:11434</code></td>
+<td>Not yet</td>
+</tr>
+<tr>
+<td>M11</td>
+<td>A camera with an RTSP stream added to Frigate (its note, Setup), then Home Assistant paired (Pairing)</td>
+<td>Frigate shows the camera live and lists a person who walks past; Home Assistant has the camera and a person sensor that turns on</td>
+<td>Not yet</td>
+</tr>
+<tr>
+<td>M12</td>
+<td>Quit Jellyfin, then Status › Jellyfin › <strong>Open</strong></td>
+<td>Jellyfin opens, and within a few seconds its row says it is running</td>
+<td>Passed, Nov 3, 2026</td>
+</tr>
+<tr>
+<td>M13</td>
+<td><code>docker stop homelab_security-ntfy-1</code>, then wait for Status to check again</td>
+<td>A count on the app's Dock icon; it goes away once <code>docker start homelab_security-ntfy-1</code> has run and Status has checked again</td>
+<td>Passed, Nov 3, 2026</td>
+</tr>
+<tr>
+<td>M14</td>
+<td>The app in light, then dark (System Settings › Appearance)</td>
+<td>The sidebar is translucent, the app menu has the app's items, and nothing is hard to read in either</td>
+<td>Passed, Nov 3, 2026</td>
+</tr>
+<tr>
+<td>M15</td>
+<td>Log out and back in</td>
+<td>The menu bar item appears once, and its menu opens</td>
+<td>Passed, Nov 3, 2026</td>
+</tr>
+<tr>
+<td>M16</td>
+<td>On a MacBook with Immich installed: unplug it and wait up to 15 minutes (the watchdog's next run), then <code>docker ps</code></td>
+<td>Immich's machine learning is stopped and <code>scripts/logs/watchdog.log</code> says "on battery: paused … until it is plugged in"; plugged in again, it runs within 15 minutes</td>
+<td>Passed, Nov 3, 2026</td>
+</tr>
+<tr>
+<td>M16b</td>
+<td>With the media drive unplugged and its apps waiting for it (Status says <em>Waiting for Hobbies</em>), plug the drive back in and wait a minute</td>
+<td>Komga, Kavita, and the rest that waited start by themselves within about a minute, not at the watchdog's next run; the awake job's log says <em>its drive is back: started …</em></td>
+<td>Linux: yes, Docker Engine 29.9 with the drive bind-mounted at <code>/media/Hobbies</code> and unmounted across a Docker restart: Navidrome waited, and started 50 s after it was back (Nov 5, 2026, #428). Mac, Windows: not yet</td>
+</tr>
+<tr>
+<td>M17</td>
+<td>With a domain and no AdGuard Home: <code>./homelab domain setup &lt;domain&gt; --dns hosts --no-tunnel --apply</code>, then <code>ping -c1 ntfy.&lt;domain&gt;</code>; afterwards <code>./homelab domain resolver --undo</code></td>
+<td>One password window; the name answers from this Mac's address; after the undo, <code>/etc/hosts</code> has no homelab line and is otherwise as it was</td>
+<td>Passed, Nov 3, 2026</td>
+</tr>
+<tr>
+<td>M18</td>
+<td><code>./homelab install beszel</code>, then Beszel's page</td>
+<td>One system, <em>homelab</em>, with OrbStack's Linux machine's memory and CPUs (not the Mac's own), as Host says</td>
+<td>Not yet</td>
+</tr>
+</tbody>
+</table>
+<h3 id="the-windows-pc">The Windows PC<a class="headerlink" href="#the-windows-pc" title="Permanent link">&para;</a></h3>
+<p>The owner ran the homelab on Windows for a while in autumn 2026, before the Mac setup went further; these steps have not been run one by one yet, so none is marked.</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Do</th>
+<th>You should see</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>W1</td>
+<td><a href="../Known%20Issues/#issue-0013-windows-host-profile-not-yet-run-on-the-windows-pc">ISSUE-0013</a>'s Verify and Also check lists, and <a href="../Known%20Issues/#issue-0021-installing-and-updating-the-app-on-windows-and-linux-not-yet-run-everywhere">ISSUE-0021</a>'s</td>
+<td>Each as written</td>
+<td>Not yet</td>
+</tr>
+<tr>
+<td>W2</td>
+<td>On a laptop: unplug it, wait 2 minutes, then in an administrator's PowerShell <code>powercfg /requests</code></td>
+<td>No <code>homelab</code> request under SYSTEM while on battery; plugged in again, it is back within a minute</td>
+<td>Not yet</td>
+</tr>
+<tr>
+<td>W3</td>
+<td>Turn off Docker Desktop's <em>Start when you sign in</em>, sign out and back in</td>
+<td>Docker Desktop opens by itself within a minute of signing in, and <code>scripts\logs\startup.log</code> shows the apps starting</td>
+<td>Not yet</td>
+</tr>
+<tr>
+<td>W4</td>
+<td><code>homelab.cmd notify test</code></td>
+<td>A toast from <em>Homelab Wizard</em> titled <em>Homelab test</em>, and Settings › System › Notifications lists <em>Homelab Wizard</em></td>
+<td>Not yet</td>
+</tr>
+<tr>
+<td>W5</td>
+<td>Choose apps with Immich and Paperless picked</td>
+<td>The plan's memory line names the PC's memory, and warns when the picks do not fit</td>
+<td>Not yet</td>
+</tr>
+<tr>
+<td>W6</td>
+<td>A new <code>.env</code> (<code>homelab.cmd up</code> in a fresh folder), then <code>findstr TZ .env</code></td>
+<td>The PC's time zone in its IANA form (for example <code>TZ=Europe/Berlin</code> for <em>W. Europe Standard Time</em>)</td>
+<td>Not yet</td>
+</tr>
+<tr>
+<td>W7</td>
+<td>With a domain: Setup › <strong>This PC finds its apps by name</strong>; afterwards <code>homelab domain resolver --undo</code></td>
+<td>One approval prompt; <code>Get-DnsClientNrptRule</code> lists the domain with the address; after the undo (one more prompt) it lists nothing for it</td>
+<td>Not yet</td>
+</tr>
+<tr>
+<td>W8</td>
+<td>Install smartmontools from smartmontools.org, then <code>homelab.cmd doctor</code></td>
+<td>Doctor finds <code>smartctl</code> and lists each drive: without administrator rights each says smartctl's own reason (no permission); in an administrator's terminal, a health line per drive</td>
+<td>Not yet</td>
+</tr>
+<tr>
+<td>W9</td>
+<td>From the tray icon: <strong>Update apps now</strong> with an app behind</td>
+<td>The item's title names the step and the app as it goes, then "done" with the time</td>
+<td>Not yet</td>
+</tr>
+<tr>
+<td>W10</td>
+<td><code>homelab install paperless-ai</code> (with its token in Settings) with Ollama not installed, then Setup</td>
+<td>The step <em>Ollama answers on this machine</em> says <code>winget install Ollama.Ollama</code>; once installed it turns done, and Paperless-AI's setup page accepts Ollama at <code>http://host.docker.internal:11434</code></td>
+<td>Not yet</td>
+</tr>
+<tr>
+<td>W11</td>
+<td>As M11, with Frigate on the PC, and with an NVIDIA card: the <code>-tensorrt</code> image and its detector (Frigate's note)</td>
+<td>The camera is live and a person is listed; with the card, Frigate's System page shows the detector on the GPU</td>
+<td>Not yet</td>
+</tr>
+<tr>
+<td>W12</td>
+<td>Stop Jellyfin (its tray app, or the <code>JellyfinServer</code> service), then Status › Jellyfin › <strong>Start</strong></td>
+<td>One approval prompt for the service (none for the tray app); Jellyfin starts and its row says it is running</td>
+<td>Not yet</td>
+</tr>
+<tr>
+<td>W13</td>
+<td><code>docker stop homelab_security-ntfy-1</code>, then wait for Status to check again</td>
+<td>An orange dot on the tray icon; it goes away once <code>docker start homelab_security-ntfy-1</code> has run and Status has checked again</td>
+<td>Not yet</td>
+</tr>
+<tr>
+<td>W14</td>
+<td>The app in light, then dark (Settings › Personalization › Colors), on Windows 11</td>
+<td>Mica behind the sidebar, Segoe UI Variable, and nothing is hard to read in either</td>
+<td>Not yet</td>
+</tr>
+<tr>
+<td>W15</td>
+<td>Sign out and back in</td>
+<td>The tray icon appears once in the notification area, and its menu opens</td>
+<td>Not yet</td>
+</tr>
+<tr>
+<td>W16</td>
+<td>On a laptop with Immich installed: unplug it and wait up to 15 minutes, then <code>docker ps</code></td>
+<td>Immich's machine learning is stopped and <code>scripts\logs\watchdog.log</code> says "on battery: paused … until it is plugged in"; plugged in again, it runs within 15 minutes</td>
+<td>Not yet</td>
+</tr>
+<tr>
+<td>W17</td>
+<td>With a domain and no AdGuard Home: <code>homelab.cmd domain setup &lt;domain&gt; --dns hosts --no-tunnel --apply</code>, then <code>ping ntfy.&lt;domain&gt;</code>; afterwards <code>homelab.cmd domain resolver --undo</code></td>
+<td>One approval prompt; the name answers from this PC's address; after the undo, <code>C:\Windows\System32\drivers\etc\hosts</code> has no homelab line</td>
+<td>Not yet</td>
+</tr>
+<tr>
+<td>W18</td>
+<td>With Jellyfin installed as a service: restart the PC and wait at the sign-in screen for two minutes, then sign in</td>
+<td>Jellyfin answered before you signed in (its own log's start time), and Status shows it running</td>
+<td>Not yet</td>
+</tr>
+<tr>
+<td>W19</td>
+<td><code>homelab.cmd install beszel</code>, then Beszel's page</td>
+<td>One system, <em>homelab</em>, with Docker Desktop's WSL machine's memory and CPUs (not the PC's own), as Host says</td>
+<td>Not yet</td>
+</tr>
+<tr>
+<td>W20</td>
+<td>A USB drive plugged in, then Setup's step <em>A second copy with Kopia</em> (with Kopia installed)</td>
+<td>A <strong>Use the … drive</strong> button for the USB drive's letter, never for Duplicati's or the media's; once used, Kopia's page lists the repository at <code>Homelab Kopia</code> on it</td>
+<td>Not yet</td>
+</tr>
+<tr>
+<td>W21</td>
+<td>With an older build installed by the installer (in Program Files): the line's <strong>Update now</strong></td>
+<td>One approval prompt (no SmartScreen), then the app opens again on the new build (Settings shows its version). <code>%LOCALAPPDATA%\Homelab Wizard\update.log</code> ends with <code>done</code>. With the portable copy in a folder of your own, no prompt at all</td>
+<td>Not yet</td>
+</tr>
+<tr>
+<td>W22</td>
+<td>Make the update fail (deny the approval prompt)</td>
+<td>The app opens on the old build, and the line says the update did not go in place and why, with the release page; it does not offer the same update again. <code>update.log</code> has an <code>ERROR:</code> line</td>
+<td>Not yet</td>
+</tr>
+<tr>
+<td>W23</td>
+<td>Settings › Accessibility › Contrast themes › <em>Night sky</em>, then <code>docker pause homelab_security-ntfy-1</code> (running, but not answering) and <code>docker stop</code> one other app, and Status once it has checked again</td>
+<td>Every dot is one colour, yet the running apps read as circles, the stopped one as a triangle, and ntfy, not answering, as a cross; afterwards <code>docker unpause homelab_security-ntfy-1</code>, start the other, and <em>None</em> puts the colours back</td>
+<td>Not yet</td>
+</tr>
+</tbody>
+</table>
+<h3 id="the-steam-machine">The Steam Machine<a class="headerlink" href="#the-steam-machine" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Do</th>
+<th>You should see</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>S1</td>
+<td><a href="../Known%20Issues/#issue-0012-linux-host-profile-not-yet-run-on-the-steam-machine">ISSUE-0012</a>'s Verify and Also check lists, and <a href="../Known%20Issues/#issue-0014-release-builds-not-yet-opened-on-a-mac-a-windows-pc-or-steamos">ISSUE-0014</a>'s</td>
+<td>Each as written</td>
+<td>Not yet</td>
+</tr>
+<tr>
+<td>S2</td>
+<td>In desktop mode: the tray icon after a reboot</td>
+<td>It appears once in Plasma's tray, its menu opens, and <strong>Open Homelab Wizard</strong> opens the app</td>
+<td>Not yet</td>
+</tr>
+<tr>
+<td>S3</td>
+<td><code>./homelab notify test</code></td>
+<td>A Plasma notification titled <em>Homelab</em> (if <code>notify-send</code> is missing, note it)</td>
+<td>Not yet</td>
+</tr>
+<tr>
+<td>S4</td>
+<td>System Settings › Power Management › <em>Suspend session</em> after 15 minutes on AC, then <code>./homelab doctor</code></td>
+<td>Doctor says the machine is set to sleep after 15 minutes, and that the awake job keeps it up while plugged in</td>
+<td>Not yet</td>
+</tr>
+<tr>
+<td>S5</td>
+<td><code>systemctl is-active systemd-resolved; ls /run/systemd/resolve</code></td>
+<td>Note both: they decide whether <em>This machine finds its apps by name</em> can work here</td>
+<td>Not yet</td>
+</tr>
+<tr>
+<td>S6</td>
+<td><code>which smartctl</code></td>
+<td>Note whether SteamOS has it</td>
+<td>Not yet</td>
+</tr>
+<tr>
+<td>S7</td>
+<td>A drive or SD card plugged in, then Setup's backup step</td>
+<td>It offers <code>/run/media/deck/&lt;name&gt;</code></td>
+<td>Not yet</td>
+</tr>
+<tr>
+<td>S8</td>
+<td>Switch to Game Mode for an hour, then back</td>
+<td>The apps kept answering (<code>./homelab status</code>), and the agent's watchdog ran (<code>scripts/logs/watchdog.log</code>)</td>
+<td>Not yet</td>
+</tr>
+<tr>
+<td>S9</td>
+<td><code>./homelab install paperless-ai</code> (with its token in Settings) with Ollama not running, then Setup</td>
+<td>The step <em>Ollama answers on this machine</em> names the standalone build and <code>OLLAMA_HOST=0.0.0.0 ollama serve</code>; once running it turns done, and Paperless-AI's setup page accepts Ollama at <code>http://host.docker.internal:11434</code></td>
+<td>Not yet</td>
+</tr>
+<tr>
+<td>S10</td>
+<td>As M11, with Frigate on the Steam Machine, then the <code>-rocm</code> image with <code>/dev/dri</code> passed through</td>
+<td>The camera is live and a person is listed; with <code>-rocm</code>, Frigate's System page shows the detector on the GPU</td>
+<td>Not yet</td>
+</tr>
+<tr>
+<td>S11</td>
+<td>In desktop mode: <code>docker stop homelab_security-ntfy-1</code>, then wait for Status to check again</td>
+<td>A count on the app's button in Plasma's taskbar; it goes away once <code>docker start homelab_security-ntfy-1</code> has run and Status has checked again</td>
+<td>Not yet</td>
+</tr>
+<tr>
+<td>S12</td>
+<td>In desktop mode: the app in Breeze light, then Breeze dark (System Settings › Colors &amp; Themes)</td>
+<td>Breeze's look and font, and nothing is hard to read in either</td>
+<td>Not yet</td>
+</tr>
+<tr>
+<td>S13</td>
+<td>Setup › <strong>This machine stays awake while plugged in</strong> › <strong>Allow it</strong> (if it is listed), then <code>systemd-inhibit --list</code></td>
+<td>One password prompt; within a minute the list has a <code>homelab</code> line blocking <code>sleep</code>, and <code>./homelab doctor</code> no longer warns about sleep</td>
+<td>Not yet</td>
+</tr>
+<tr>
+<td>S14</td>
+<td><code>systemctl --user stop docker</code>, then Setup</td>
+<td>The runtime step says Docker is not running with <strong>Start</strong>; after it, the apps answer again within a minute, with no password asked</td>
+<td>Not yet</td>
+</tr>
+<tr>
+<td>S15</td>
+<td>With a domain: <code>./homelab domain setup &lt;domain&gt; --dns hosts --no-tunnel --apply</code>, then a SteamOS update and a reboot, then <code>getent hosts ntfy.&lt;domain&gt;</code></td>
+<td>One password prompt; the name still answers from this machine after the update (SteamOS keeps <code>/etc/hosts</code>)</td>
+<td>Not yet</td>
+</tr>
+<tr>
+<td>S16</td>
+<td>With Kopia installed: a drive or SD card plugged in, then Setup's step <em>A second copy with Kopia</em></td>
+<td>A <strong>Use the … drive</strong> button for <code>/run/media/deck/&lt;name&gt;</code>; once used, Kopia's page lists the repository at <code>Homelab Kopia</code> there</td>
+<td>Not yet</td>
+</tr>
+<tr>
+<td>S17</td>
+<td><code>./homelab install jellyfin</code>, then Status, then a restart</td>
+<td>It installs <strong>Jellyfin in a container</strong> (not a native app); its page opens at http://localhost:8096 and plays a film from the media folder; after the restart Status shows it running again. With <code>devices: ["/dev/dri:/dev/dri"]</code> added (its note), Dashboard › Activity shows a transcode using VA-API</td>
+<td>Not yet</td>
+</tr>
+</tbody>
+</table>
+<h2 id="after-testing">After testing<a class="headerlink" href="#after-testing" title="Permanent link">&para;</a></h2>
+<p>Tick what worked in <a href="../Known%20Issues/">Known Issues</a> (the "To verify" items) and in the <a href="../To-do/">To-do</a>, and make a report for anything that did not.</p>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../Everyday%20Tasks/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Everyday tasks">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Everyday tasks
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../Upgrading/" class="md-footer__link md-footer__link--next" aria-label="Next: Upgrading">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Upgrading
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.top", "navigation.footer", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.a5f9d56c.min.js"></script>
+      
+    
+  </body>
+</html>

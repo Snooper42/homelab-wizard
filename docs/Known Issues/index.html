@@ -1,0 +1,2806 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Your household's photos, passwords, documents, money, music, and books, on a computer you own.">
+      
+      
+      
+        <link rel="canonical" href="https://snooper42.github.io/homelab-wizard/docs/Known%20Issues/">
+      
+      
+        <link rel="prev" href="../Troubleshooting/">
+      
+      
+        <link rel="next" href="../Architecture/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/logo.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+    
+    
+      
+        <title>Known Issues - Homelab Wizard</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.57a0d79d.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.fb2fffe2.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#known-issues" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Homelab Wizard" class="md-header__button md-logo" aria-label="Homelab Wizard" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Homelab Wizard
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Known Issues
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue"  aria-label="Dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="blue"  aria-label="Light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Snooper42/homelab-wizard" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Snooper42/homelab-wizard
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Homelab Wizard" class="md-nav__button md-logo" aria-label="Homelab Wizard" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    Homelab Wizard
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Snooper42/homelab-wizard" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Snooper42/homelab-wizard
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Start here
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Start here
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Tour/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    A tour of the app
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Getting%20Started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Everyday%20Tasks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Everyday tasks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing a new build
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Upgrading/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Upgrading
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Commands/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Run it
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Run it
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Runbooks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Runbooks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Automation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Automation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Monitoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Monitoring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Backups/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backups
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Tidy%20Up/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tidy Up
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Private%20Finances/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Private Finances
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Disaster%20Recovery/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Disaster Recovery
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Known Issues
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Known Issues
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#issue-0001-custom-proxy-image-not-yet-built-on-the-mac" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ISSUE-0001: Custom proxy image not yet built on the Mac
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#issue-0002-client-addresses-for-lan-requests-through-orbstack" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ISSUE-0002: Client addresses for LAN requests through OrbStack
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#issue-0003-duplicati-writing-into-the-proton-drive-folder" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ISSUE-0003: Duplicati writing into the Proton Drive folder
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#issue-0004-domain-automation-not-yet-run-against-the-live-services" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ISSUE-0004: Domain automation not yet run against the live services
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#issue-0005-scheduled-jobs-not-yet-run-under-launchd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ISSUE-0005: Scheduled jobs not yet run under launchd
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#issue-0006-no-alert-when-orbstack-itself-is-down" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ISSUE-0006: No alert when OrbStack itself is down
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#issue-0007-nothing-starts-after-a-restart-until-someone-logs-in" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ISSUE-0007: Nothing starts after a restart until someone logs in
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#issue-0008-with-a-domain-each-devices-dns-is-set-by-hand" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ISSUE-0008: With a domain, each device's DNS is set by hand
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#issue-0009-moneymatter-runs-intel-only-images-under-rosetta" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ISSUE-0009: MoneyMatter runs Intel-only images under Rosetta
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#issue-0010-immich-machine-learning-runs-on-the-cpu" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ISSUE-0010: Immich machine learning runs on the CPU
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#issue-0011-alerts-reach-the-phone-only-on-the-home-network" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ISSUE-0011: Alerts reach the phone only on the home network
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#issue-0012-linux-host-profile-not-yet-run-on-the-steam-machine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ISSUE-0012: Linux host profile not yet run on the Steam Machine
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#issue-0013-windows-host-profile-not-yet-run-on-the-windows-pc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ISSUE-0013: Windows host profile not yet run on the Windows PC
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#issue-0014-release-builds-not-yet-opened-on-a-mac-a-windows-pc-or-steamos" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ISSUE-0014: Release builds not yet opened on a Mac, a Windows PC, or SteamOS
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#issue-0015-app-wiring-and-the-menu-bar-item-not-yet-run-against-real-apps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ISSUE-0015: App wiring and the menu bar item not yet run against real apps
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#issue-0016-duplicati-jobs-restores-and-repairs-through-its-api-not-yet-run-against-the-real-image" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ISSUE-0016: Duplicati jobs, restores, and repairs through its API not yet run against the real image
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#issue-0017-updates-from-the-app-not-yet-run-on-the-mac" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ISSUE-0017: Updates from the app not yet run on the Mac
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#issue-0018-disk-space-readings-not-yet-compared-on-the-mac" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ISSUE-0018: Disk space readings not yet compared on the Mac
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#issue-0019-a-cloud-drives-own-quota-cannot-be-read" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ISSUE-0019: A cloud drive's own quota cannot be read
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#issue-0020-vaultwarden-web-vault-shows-a-black-screen-in-librewolf" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ISSUE-0020: Vaultwarden web vault shows a black screen in LibreWolf
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#issue-0021-installing-and-updating-the-app-on-windows-and-linux-not-yet-run-everywhere" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ISSUE-0021: Installing and updating the app on Windows and Linux not yet run everywhere
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#resolved" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Resolved
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Resolved">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#issue-0022-a-rollback-brings-back-the-image-not-the-data-the-newer-version-changed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ISSUE-0022: A rollback brings back the image, not the data the newer version changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#issue-0023-nextclouds-default-port-is-the-phone-companions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ISSUE-0023: Nextcloud's default port is the phone companion's
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#issue-0024-the-homelabs-own-records-in-data-were-not-in-the-off-site-backup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ISSUE-0024: The homelab's own records in data/ were not in the off-site backup
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How it works
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    How it works
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Networking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Networking
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Usability/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Usability
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Storage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Storage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Docker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docker
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Parity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What each device can do
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../apple-client/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The iPhone and iPad app
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Host/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Host
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Environment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Environment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The apps
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    The apps
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Services/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Services
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Inventory/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Inventory
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Savings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Savings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Service%20Organization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Service Organization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The project
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    The project
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Roadmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Feature%20Roadmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Feature Roadmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Decisions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Decisions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../CHANGELOG/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What's new
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../CONTRIBUTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing (services)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Standards/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Standards
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Releasing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Releasing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../SECURITY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security policy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Homelab%20Manifest/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Homelab Manifest
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Homelab%20Context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Homelab Context
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Maintainer%20Guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Maintainer Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../To-do/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    To-do
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Knowledge base index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#issue-0001-custom-proxy-image-not-yet-built-on-the-mac" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ISSUE-0001: Custom proxy image not yet built on the Mac
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#issue-0002-client-addresses-for-lan-requests-through-orbstack" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ISSUE-0002: Client addresses for LAN requests through OrbStack
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#issue-0003-duplicati-writing-into-the-proton-drive-folder" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ISSUE-0003: Duplicati writing into the Proton Drive folder
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#issue-0004-domain-automation-not-yet-run-against-the-live-services" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ISSUE-0004: Domain automation not yet run against the live services
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#issue-0005-scheduled-jobs-not-yet-run-under-launchd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ISSUE-0005: Scheduled jobs not yet run under launchd
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#issue-0006-no-alert-when-orbstack-itself-is-down" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ISSUE-0006: No alert when OrbStack itself is down
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#issue-0007-nothing-starts-after-a-restart-until-someone-logs-in" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ISSUE-0007: Nothing starts after a restart until someone logs in
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#issue-0008-with-a-domain-each-devices-dns-is-set-by-hand" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ISSUE-0008: With a domain, each device's DNS is set by hand
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#issue-0009-moneymatter-runs-intel-only-images-under-rosetta" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ISSUE-0009: MoneyMatter runs Intel-only images under Rosetta
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#issue-0010-immich-machine-learning-runs-on-the-cpu" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ISSUE-0010: Immich machine learning runs on the CPU
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#issue-0011-alerts-reach-the-phone-only-on-the-home-network" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ISSUE-0011: Alerts reach the phone only on the home network
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#issue-0012-linux-host-profile-not-yet-run-on-the-steam-machine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ISSUE-0012: Linux host profile not yet run on the Steam Machine
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#issue-0013-windows-host-profile-not-yet-run-on-the-windows-pc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ISSUE-0013: Windows host profile not yet run on the Windows PC
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#issue-0014-release-builds-not-yet-opened-on-a-mac-a-windows-pc-or-steamos" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ISSUE-0014: Release builds not yet opened on a Mac, a Windows PC, or SteamOS
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#issue-0015-app-wiring-and-the-menu-bar-item-not-yet-run-against-real-apps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ISSUE-0015: App wiring and the menu bar item not yet run against real apps
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#issue-0016-duplicati-jobs-restores-and-repairs-through-its-api-not-yet-run-against-the-real-image" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ISSUE-0016: Duplicati jobs, restores, and repairs through its API not yet run against the real image
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#issue-0017-updates-from-the-app-not-yet-run-on-the-mac" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ISSUE-0017: Updates from the app not yet run on the Mac
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#issue-0018-disk-space-readings-not-yet-compared-on-the-mac" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ISSUE-0018: Disk space readings not yet compared on the Mac
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#issue-0019-a-cloud-drives-own-quota-cannot-be-read" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ISSUE-0019: A cloud drive's own quota cannot be read
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#issue-0020-vaultwarden-web-vault-shows-a-black-screen-in-librewolf" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ISSUE-0020: Vaultwarden web vault shows a black screen in LibreWolf
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#issue-0021-installing-and-updating-the-app-on-windows-and-linux-not-yet-run-everywhere" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ISSUE-0021: Installing and updating the app on Windows and Linux not yet run everywhere
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#resolved" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Resolved
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Resolved">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#issue-0022-a-rollback-brings-back-the-image-not-the-data-the-newer-version-changed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ISSUE-0022: A rollback brings back the image, not the data the newer version changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#issue-0023-nextclouds-default-port-is-the-phone-companions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ISSUE-0023: Nextcloud's default port is the phone companion's
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#issue-0024-the-homelabs-own-records-in-data-were-not-in-the-off-site-backup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ISSUE-0024: The homelab's own records in data/ were not in the off-site backup
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="known-issues">Known Issues<a class="headerlink" href="#known-issues" title="Permanent link">&para;</a></h1>
+<p>Open issues, risks, and items to verify on the Mac. Close an issue by moving it to Resolved with the date and what fixed it.</p>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Title</th>
+<th>Severity</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ISSUE-0001</td>
+<td>Custom proxy image not yet built on the Mac</td>
+<td>High</td>
+<td>Verified on Linux, to verify on the Mac</td>
+</tr>
+<tr>
+<td>ISSUE-0002</td>
+<td>Client addresses for LAN requests through OrbStack</td>
+<td>Low</td>
+<td>To verify</td>
+</tr>
+<tr>
+<td>ISSUE-0003</td>
+<td>Duplicati writing into the Proton Drive folder</td>
+<td>High</td>
+<td>To verify</td>
+</tr>
+<tr>
+<td>ISSUE-0004</td>
+<td>Domain automation not yet run against the live services</td>
+<td>Medium</td>
+<td>Partly verified, to verify</td>
+</tr>
+<tr>
+<td>ISSUE-0005</td>
+<td>Scheduled jobs not yet run under launchd</td>
+<td>Medium</td>
+<td>To verify</td>
+</tr>
+<tr>
+<td>ISSUE-0006</td>
+<td>No alert when OrbStack itself is down</td>
+<td>Medium</td>
+<td>Fixed, to verify</td>
+</tr>
+<tr>
+<td>ISSUE-0007</td>
+<td>Nothing starts after a restart until someone logs in</td>
+<td>Medium</td>
+<td>Accepted</td>
+</tr>
+<tr>
+<td>ISSUE-0008</td>
+<td>With a domain, each device's DNS is set by hand</td>
+<td>Low</td>
+<td>Accepted</td>
+</tr>
+<tr>
+<td>ISSUE-0009</td>
+<td>MoneyMatter runs Intel-only images under Rosetta</td>
+<td>Low</td>
+<td>Accepted</td>
+</tr>
+<tr>
+<td>ISSUE-0010</td>
+<td>Immich machine learning runs on the CPU</td>
+<td>Low</td>
+<td>Accepted</td>
+</tr>
+<tr>
+<td>ISSUE-0011</td>
+<td>Alerts reach the phone only on the home network</td>
+<td>Medium</td>
+<td>Fixed, to verify</td>
+</tr>
+<tr>
+<td>ISSUE-0012</td>
+<td>Linux host profile not yet run on the Steam Machine</td>
+<td>Medium</td>
+<td>To verify</td>
+</tr>
+<tr>
+<td>ISSUE-0013</td>
+<td>Windows host profile not yet run on the Windows PC</td>
+<td>Medium</td>
+<td>To verify</td>
+</tr>
+<tr>
+<td>ISSUE-0014</td>
+<td>Release builds not yet opened on a Mac, a Windows PC, or SteamOS</td>
+<td>Medium</td>
+<td>Partly verified, to verify</td>
+</tr>
+<tr>
+<td>ISSUE-0015</td>
+<td>App wiring and the menu bar item not yet run against real apps</td>
+<td>Medium</td>
+<td>Partly verified, to verify</td>
+</tr>
+<tr>
+<td>ISSUE-0016</td>
+<td>Duplicati jobs, restores, and repairs through its API not yet run against the real image</td>
+<td>High</td>
+<td>Partly verified, to verify</td>
+</tr>
+<tr>
+<td>ISSUE-0017</td>
+<td>Updates from the app not yet run on the Mac</td>
+<td>Medium</td>
+<td>To verify</td>
+</tr>
+<tr>
+<td>ISSUE-0018</td>
+<td>Disk space readings not yet compared on the Mac</td>
+<td>Low</td>
+<td>To verify</td>
+</tr>
+<tr>
+<td>ISSUE-0019</td>
+<td>A cloud drive's own quota cannot be read</td>
+<td>Low</td>
+<td>Accepted</td>
+</tr>
+<tr>
+<td>ISSUE-0020</td>
+<td>Vaultwarden web vault shows a black screen in LibreWolf</td>
+<td>Low</td>
+<td>Accepted</td>
+</tr>
+<tr>
+<td>ISSUE-0021</td>
+<td>Installing and updating the app on Windows and Linux not yet run everywhere</td>
+<td>Medium</td>
+<td>To verify</td>
+</tr>
+<tr>
+<td>ISSUE-0022</td>
+<td>A rollback brings back the image, not the data the newer version changed</td>
+<td>Medium</td>
+<td>Resolved</td>
+</tr>
+<tr>
+<td>ISSUE-0023</td>
+<td>Nextcloud's default port is the phone companion's</td>
+<td>Low</td>
+<td>Resolved</td>
+</tr>
+<tr>
+<td>ISSUE-0024</td>
+<td>The homelab's own records in <code>data/</code> were not in the off-site backup</td>
+<td>Medium</td>
+<td>Resolved</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="issue-0001-custom-proxy-image-not-yet-built-on-the-mac">ISSUE-0001: Custom proxy image not yet built on the Mac<a class="headerlink" href="#issue-0001-custom-proxy-image-not-yet-built-on-the-mac" title="Permanent link">&para;</a></h2>
+<p>The image in <code>dockerfiles/npm-crowdsec</code> follows CrowdSec's OpenResty reference build, but has not been built and run on Apple Silicon yet.</p>
+<p><strong>Verify:</strong></p>
+<ol>
+<li><code>./homelab up</code> builds it; <code>./homelab logs nginx-proxy-manager</code> shows no Lua errors.</li>
+<li><code>./homelab compose crowdsec exec crowdsec cscli bouncers list</code> shows <code>nginx_proxy_manager</code> with a recent last pull.</li>
+<li>Status › Protection says bans are enforced, and the ban test in <a href="../Runbooks/">Runbooks</a> returns 403.</li>
+</ol>
+<p><strong>Progress (October 2026):</strong> on Linux, the nightly workflow's <code>proxy</code> job builds this image and runs it with CrowdSec: the bouncer is registered and pulling (<code>cscli bouncers list</code>, and the watchdog's check), and a banned address gets 403 through the proxy until the ban is lifted. Still to verify: the build and run on Apple Silicon.</p>
+<p><strong>If it fails:</strong> the proxy still serves traffic with the bouncer off (empty <code>CROWDSEC_BOUNCER_KEY</code>). Detection keeps working; only enforcement is missing. A bouncer that worked and then stopped (stale or revoked, often after CrowdSec restarted) is a different case: Protection's <strong>Fix</strong> (<code>./homelab fix</code>) reconnects it.</p>
+<h2 id="issue-0002-client-addresses-for-lan-requests-through-orbstack">ISSUE-0002: Client addresses for LAN requests through OrbStack<a class="headerlink" href="#issue-0002-client-addresses-for-lan-requests-through-orbstack" title="Permanent link">&para;</a></h2>
+<p>Requests from other LAN devices reach the proxy through OrbStack's port forwarding. Whether the proxy logs the device's real address or OrbStack's gateway address is to be confirmed.</p>
+<p><strong>Impact:</strong> low. CrowdSec never bans private addresses (its default whitelist), so LAN devices cannot be locked out either way. Tunnel traffic carries the visitor's address in <code>CF-Connecting-IP</code>, which the proxy uses.</p>
+<p><strong>Verify:</strong> open any app from a phone on Wi-Fi, then look at the address in the newest access log line:</p>
+<div class="highlight"><pre><span></span><code>./homelab<span class="w"> </span>compose<span class="w"> </span>nginx-proxy-manager<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>nginx-proxy-manager<span class="w"> </span>sh<span class="w"> </span>-c<span class="w"> </span><span class="s1">'tail -n 1 /data/logs/proxy-host-*_access.log'</span>
+</code></pre></div>
+<h2 id="issue-0003-duplicati-writing-into-the-proton-drive-folder">ISSUE-0003: Duplicati writing into the Proton Drive folder<a class="headerlink" href="#issue-0003-duplicati-writing-into-the-proton-drive-folder" title="Permanent link">&para;</a></h2>
+<p>Proton Drive on macOS stores its folder under <code>~/Library/CloudStorage</code> (a File Provider folder). Duplicati writes there through OrbStack's file sharing. This combination is to be verified.</p>
+<p><strong>Verify:</strong> run the Homelab Secrets job, confirm the files appear in the Proton Drive web app, then restore one file to <code>/staging/restore</code>.</p>
+<p><strong>If it fails:</strong> point <code>BACKUP_DESTINATION</code> at a plain local folder and use the Proton Drive app's folder sync, or use Duplicati's own remote destination.</p>
+<h2 id="issue-0004-domain-automation-not-yet-run-against-the-live-services">ISSUE-0004: Domain automation not yet run against the live services<a class="headerlink" href="#issue-0004-domain-automation-not-yet-run-against-the-live-services" title="Permanent link">&para;</a></h2>
+<p>Only with a domain; Home mode does not use it. <code>./homelab domain setup</code> is tested against fakes of the Nginx Proxy Manager, AdGuard Home, and Cloudflare APIs.</p>
+<p><strong>Verify:</strong> run <code>./homelab domain setup --dry-run</code>, then for real, and check each proxy host, the AdGuard rewrite, the tunnel's public hostnames, and the CNAME records in Cloudflare.</p>
+<p><strong>Progress (October 2026):</strong> the nightly workflow's <code>domain</code> job runs <code>domain setup example.test --dns adguard --ip 127.0.0.1 --no-tunnel</code> against the real Nginx Proxy Manager (the homelab's own image) and AdGuard Home. It reads each proxy host and the <code>*.example.test</code> rewrite back through their APIs, asks AdGuard's DNS for ntfy's name, and gets ntfy's health through the proxy by that name. Still to verify: everything through Cloudflare (the certificate, the tunnel's public hostnames, the CNAME records), which needs a real account.</p>
+<h2 id="issue-0005-scheduled-jobs-not-yet-run-under-launchd">ISSUE-0005: Scheduled jobs not yet run under launchd<a class="headerlink" href="#issue-0005-scheduled-jobs-not-yet-run-under-launchd" title="Permanent link">&para;</a></h2>
+<p><strong>Verify:</strong> after <code>./homelab schedule install</code>, log out and back in, then check <code>./homelab schedule status</code> and the logs in <code>scripts/logs</code>. The next morning, confirm a new dump in <code>recovery-staging/databases</code>.</p>
+<h2 id="issue-0006-no-alert-when-orbstack-itself-is-down">ISSUE-0006: No alert when OrbStack itself is down<a class="headerlink" href="#issue-0006-no-alert-when-orbstack-itself-is-down" title="Permanent link">&para;</a></h2>
+<p>The watchdog notices that OrbStack is down, but ntfy runs inside OrbStack, so the alert cannot be delivered. The failure is written to <code>scripts/logs/watchdog.log</code>.</p>
+<p><strong>Fix (0.3.0):</strong> the watchdog pings <code>HEARTBEAT_URL</code> (healthchecks.io) every run, and <code>/fail</code> when something is down; the outside monitor alerts when the pings stop (<a href="../Monitoring/">Monitoring</a>). <strong>Verify:</strong> set it up, then quit OrbStack and wait for the alert.</p>
+<h2 id="issue-0007-nothing-starts-after-a-restart-until-someone-logs-in">ISSUE-0007: Nothing starts after a restart until someone logs in<a class="headerlink" href="#issue-0007-nothing-starts-after-a-restart-until-someone-logs-in" title="Permanent link">&para;</a></h2>
+<p>FileVault prevents automatic login. OrbStack and the jobs run in the login session.</p>
+<p><strong>Mitigation:</strong> install macOS updates by hand, then log in straight away. The startup job brings the baseline back.</p>
+<h2 id="issue-0008-with-a-domain-each-devices-dns-is-set-by-hand">ISSUE-0008: With a domain, each device's DNS is set by hand<a class="headerlink" href="#issue-0008-with-a-domain-each-devices-dns-is-set-by-hand" title="Permanent link">&para;</a></h2>
+<p>Home mode (the default) is not affected: devices find the apps through Tailscale. With a domain, many ISP gateways cannot hand out a custom DNS server, so devices that do not use 192.168.1.10 cannot resolve <code>*.example.com</code> on the LAN; public apps still work through Cloudflare. On the Mac itself, Setup › <strong>This Mac finds its apps by name</strong> (<code>./homelab domain resolver --apply</code>) covers it, also with a VPN on.</p>
+<h2 id="issue-0009-moneymatter-runs-intel-only-images-under-rosetta">ISSUE-0009: MoneyMatter runs Intel-only images under Rosetta<a class="headerlink" href="#issue-0009-moneymatter-runs-intel-only-images-under-rosetta" title="Permanent link">&para;</a></h2>
+<p>The first start takes several minutes (the health checks allow 300 seconds). The images are pinned and left out of the nightly updates.</p>
+<p><strong>Native option:</strong> the frontend and backend build for arm64 from MoneyMatter's own Dockerfiles at the pinned commit; <a href="../../services/finance/MoneyMatter/">its note</a> has the two build commands and the three settings that switch to them (and back). The exchange-rate service stays on Intel because its source is not public. Not yet tried on the Mac. The lasting fix is upstream publishing multi-arch images, which its release workflow already anticipates.</p>
+<h2 id="issue-0010-immich-machine-learning-runs-on-the-cpu">ISSUE-0010: Immich machine learning runs on the CPU<a class="headerlink" href="#issue-0010-immich-machine-learning-runs-on-the-cpu" title="Permanent link">&para;</a></h2>
+<p>Containers on macOS have no GPU. The first face and smart-search indexing of a large library takes hours; afterwards new photos are processed quickly.</p>
+<h2 id="issue-0011-alerts-reach-the-phone-only-on-the-home-network">ISSUE-0011: Alerts reach the phone only on the home network<a class="headerlink" href="#issue-0011-alerts-reach-the-phone-only-on-the-home-network" title="Permanent link">&para;</a></h2>
+<p>Applies with a domain; in Home mode the phone reaches ntfy over Tailscale. ntfy was LAN-only: its publishers (Duplicati, Uptime Kuma, the watchdog) use anonymous write grants, which must not be reachable from the internet. Away from home the phone cannot fetch messages.</p>
+<p><strong>Fix (0.3.0):</strong> <code>./homelab notify setup</code> gives the publishers an access token and removes the anonymous grants; ntfy is marked public, and <code>domain setup</code> publishes it only once the token exists. <strong>Verify:</strong> after <code>notify setup</code>, the token in Uptime Kuma and Duplicati, and <code>domain setup</code>, send <code>./homelab notify test</code> with the phone on mobile data.</p>
+<hr />
+<h2 id="issue-0012-linux-host-profile-not-yet-run-on-the-steam-machine">ISSUE-0012: Linux host profile not yet run on the Steam Machine<a class="headerlink" href="#issue-0012-linux-host-profile-not-yet-run-on-the-steam-machine" title="Permanent link">&para;</a></h2>
+<p>The Linux profile (Docker Engine, systemd user units) is tested only with fakes in CI. On SteamOS, whose root filesystem is read-only, Docker runs in the home folder as the user (<code>homelab runtime install</code>, <a href="../Host/#steamos">Host</a>). That route was run on a Linux machine in October 2026: the downloads and their checksums, the administrator's script, Docker 29.9.2 started as an ordinary user, and Compose publishing port 80 without root; Docker's setup tool making the user service was not (no systemd for the user there).</p>
+<p><strong>Verify:</strong> on the Steam Machine, Setup › <strong>Set up Docker for me</strong> (or <code>homelab runtime install --apply</code>), a reboot, and <code>docker info</code> shows <em>rootless</em>; then <code>./homelab doctor</code>, <code>./homelab up</code>, then <code>./homelab schedule install</code>, <code>loginctl enable-linger $USER</code>, a reboot, and <code>./homelab schedule status</code>. MoneyMatter's Intel-only images run natively on x86, so ISSUE-0009 does not apply there.</p>
+<p><strong>Also check, from the October 2026 changes that could not be run here:</strong> as a normal user (not root), <code>./homelab plan adguard-home nginx-proxy-manager</code> keeps ports 53, 80, and 443 (only a real holder moves them); on a desktop with systemd-resolved, a new <code>.env</code> sets <code>ADGUARD_DNS_BIND_IP</code> to the machine's address and AdGuard Home starts; <code>doctor</code> reads GNOME's <em>Automatic suspend</em>; Setup's backup step offers an external drive mounted in <code>/media/&lt;you&gt;</code>; and Status's <strong>Start</strong> for a stopped Jellyfin asks for the password and starts <code>jellyfin.service</code>.</p>
+<p><strong>Also check, the native feel:</strong> in KDE's System Settings › Colors &amp; Themes, an accent other than the default blue: the app's links, buttons, and selected sidebar item take it (after Setup › <strong>Check again</strong>, or reopening the app). On GNOME 47 or later, the same with Settings › Appearance › Style › Accent colour.</p>
+<p><strong>Also check, KDE's look:</strong> in desktop mode on the Steam Machine, the app looks like Plasma's own apps (System Settings, Dolphin): Noto Sans, bordered buttons, and the selected sidebar item tinted blue with a blue edge, on Breeze and Breeze Dark.</p>
+<hr />
+<h2 id="issue-0013-windows-host-profile-not-yet-run-on-the-windows-pc">ISSUE-0013: Windows host profile not yet run on the Windows PC<a class="headerlink" href="#issue-0013-windows-host-profile-not-yet-run-on-the-windows-pc" title="Permanent link">&para;</a></h2>
+<p>The Windows profile (Docker Desktop, Task Scheduler, <code>homelab.cmd</code>) is tested only with fakes and a cross-compile in CI. Expected rough edge: bind mounts from Windows folders into containers are slower than from WSL 2.</p>
+<p>The app is a GUI program, so each command it starts (docker for Status every few seconds, git, the CLI) would get a console window of its own; they start hidden instead. The one background job, the agent (it starts the apps, keeps the PC awake on power, runs the watchdog every 15 minutes and the nightly backup), starts at sign-in from the user's Run key (<code>HKCU\Software\Microsoft\Windows\CurrentVersion\Run</code>, value <code>homelab-agent</code>) through <code>homelab-run.exe</code> (installed beside the CLI, and built by <code>homelab.cmd</code>), a windowless program, so signing in shows no window; without <code>homelab-run.exe</code> it is a script in the Startup folder. Installing it removes the separate Task Scheduler jobs older versions made.</p>
+<p><strong>Verify:</strong> on the Windows PC, <code>homelab.cmd doctor</code>, <code>homelab.cmd up</code>, <code>homelab.cmd schedule install</code>, sign out and back in, then <code>homelab.cmd schedule status</code> (the agent <em>runs at sign-in</em>) and the logs. Task Manager › Startup apps lists <code>homelab-agent</code>, signing in opens no window, and Task Scheduler has no Homelab folder left from an older version.</p>
+<p><strong>Also check, from the October 2026 changes:</strong> <code>doctor</code> reads the power plan's <em>Sleep after</em> (with no console window flashing from the app); Setup's backup step offers OneDrive and the other drive letters, and leaves out Google Drive's own drive; with a domain, <strong>This PC finds its apps by name</strong> shows in the app and its button asks for approval once; Status's <strong>Start</strong> for a stopped Jellyfin starts the <code>JellyfinServer</code> service or its tray app; and an account outside <code>docker-users</code> gets the group hint, not "Docker Desktop is not running".</p>
+<p><strong>Also check, the native feel:</strong> with an accent other than blue in Settings › Personalization › Colors, the app's links, buttons, and the selected sidebar item take it on light and on dark (after <strong>Check again</strong> on Setup, or reopening the app).</p>
+<p><strong>Also check, high contrast:</strong> Settings › Accessibility › Contrast themes › <em>Night sky</em>, Apply: the selected screen is outlined, buttons have borders, links are the theme's link colour, and Status's dots and Setup's bars still show.</p>
+<hr />
+<h2 id="issue-0014-release-builds-not-yet-opened-on-a-mac-a-windows-pc-or-steamos">ISSUE-0014: Release builds not yet opened on a Mac, a Windows PC, or SteamOS<a class="headerlink" href="#issue-0014-release-builds-not-yet-opened-on-a-mac-a-windows-pc-or-steamos" title="Permanent link">&para;</a></h2>
+<p><code>release.yml</code> runs green without secrets and builds, for each platform, the app with its tray and the <code>homelab</code> CLI: the macOS universal DMG (signed ad hoc), the Windows installer (x64 and ARM64) and portable zips, the Linux .deb, .rpm, Arch package, and tarball, and an AppImage for SteamOS. The AppImage carries WebKitGTK; each run starts it with the system's copy moved away and checks the window comes up on its own (a screenshot is kept with the run).</p>
+<p>Still unproven: opening each on its real machine (step 2 of <a href="../Testing/">Testing</a> for the Mac), and signing, notarization, and the signed installer rebuild, which run once the secrets are added (docs/Releasing.md). The AppImage is built on Ubuntu 22.04, so it needs that release's glibc (2.35) or newer: <code>ldd --version</code> on the Steam Machine shows its own.</p>
+<p><strong>Verify:</strong> on the Mac, the DMG as in Testing step 2. On the Steam Machine (desktop mode), download the AppImage, <code>chmod +x Homelab-Wizard-x86_64.AppImage</code>, open it, check Settings › This machine shows the machine and the tray icon appears; with the homelab folder chosen, <strong>Install the jobs</strong> and confirm <code>systemctl --user list-timers</code> points at <code>bin/homelab</code> in the folder. On a Windows PC, run the installer and check <code>homelab.exe</code> sits beside the app in its folder.</p>
+<p><strong>Progress (October 2026):</strong> every run of <code>release.yml</code> now opens what it built on that system's runner, and keeps a screenshot: the DMG mounted, the app dragged to Applications and started (macOS 15); the installer run silently and the app started with its window, the CLI beside it (Windows Server 2022); the AppImage started without the system's WebKitGTK (Ubuntu 22.04). Still to verify: each on a real machine, with a person's account and screen, and the signed builds.</p>
+<hr />
+<h2 id="issue-0015-app-wiring-and-the-menu-bar-item-not-yet-run-against-real-apps">ISSUE-0015: App wiring and the menu bar item not yet run against real apps<a class="headerlink" href="#issue-0015-app-wiring-and-the-menu-bar-item-not-yet-run-against-real-apps" title="Permanent link">&para;</a></h2>
+<p><code>homelab wire</code> is tested against fake Prowlarr and Sonarr APIs only; the field names it fills come from each app's own templates, but a version that renames one fails that link with a clear message. The macOS menu bar helper (Objective-C for hiding its Dock icon) has not been compiled yet; the release workflow is the first place it builds.</p>
+<p><strong>Verify:</strong> install <code>@arr</code> and qBittorrent with "Connect the apps for me", set <code>QBITTORRENT_PASSWORD</code>, run <code>homelab wire --apply</code> again, and check Prowlarr › Settings › Apps and Sonarr › Settings › Download Clients. On each machine, check the menu bar or tray item appears once, its links open, and Back up now writes a new dump.</p>
+<p><strong>Progress (October 2026):</strong> the nightly workflow's <code>wire</code> job runs <code>homelab wire --apply</code> against the real Prowlarr, Sonarr, Radarr, Lidarr, and FlareSolverr: Prowlarr's own API then lists Sonarr, Radarr, and Lidarr as applications at their container addresses and FlareSolverr as its indexer proxy, and a second run finds each link already made. Still to verify: qBittorrent as each app's download client (it waits for Gluetun's VPN key, which needs an account), the menu bar or tray item on each machine.</p>
+<h2 id="issue-0016-duplicati-jobs-restores-and-repairs-through-its-api-not-yet-run-against-the-real-image">ISSUE-0016: Duplicati jobs, restores, and repairs through its API not yet run against the real image<a class="headerlink" href="#issue-0016-duplicati-jobs-restores-and-repairs-through-its-api-not-yet-run-against-the-real-image" title="Permanent link">&para;</a></h2>
+<p><code>homelab duplicati setup</code> creates jobs (<code>POST /api/v1/backups</code>), runs and repairs them, and sets the alert URL as a default option (<code>PATCH /api/v1/serversettings</code>). <code>restore-test --auto</code> restores a sample, and Backups reads each job's next run from the proposed schedule in <code>/api/v1/serverstate</code>. All of this was written against Duplicati's current source and tested against fakes. The image is <code>lscr.io/linuxserver/duplicati:latest</code>, which may be an older 2.1 release with small API differences. A refused request fails with Duplicati's own message. Each job is created whole or not at all, and running the step again creates only the jobs still missing.</p>
+<p><strong>Verify:</strong> Setup › <strong>Create the backup jobs</strong>: Duplicati's UI lists the jobs with the right sources, the <code>/destination/&lt;folder&gt;</code> targets, AES, and smart retention; Settings › Default options shows <code>send-http-url</code>; the first runs finish (Backups › Off-site jobs), and each job shows "next in N hours" matching Duplicati's own <em>Next scheduled task</em>. Then Backups › <strong>Test a restore</strong> passes and its tile says how long it took.</p>
+<p><strong>Progress (October 2026):</strong> the nightly run against real Docker (<code>lscr.io/linuxserver/duplicati:latest</code>) now does most of this. It gives Duplicati a backup folder and runs <code>duplicati setup --apply</code>, then reads each job back through Duplicati's own API: its sources, its <code>/destination/&lt;folder&gt;</code> target, AES, smart retention, and its schedule. It checks that <code>send-http-url</code> is a default option once the alert token exists, and that Backups (<code>homelab duplicati jobs</code>) knows each job's next run. Once Homelab AppData's first run finishes, <code>restore-test --auto</code> restores a sample and passes. After the move, the run plays a new machine: the jobs are taken out of Duplicati (their backups stay), <code>duplicati setup --apply</code> makes them again and rebuilds each one's database from its backup, and Homelab AppData then backs up into its old folder without an error. Beside it, the nightly <code>rebuild</code> job runs every job into a folder, wipes the homelab, and restores each one from its backup files alone with Duplicati's own command line (<code>homelab rebuild</code>), then makes the jobs again from their backups. Still to verify: the same on the Mac with Proton Drive (ISSUE-0003).</p>
+<h2 id="issue-0017-updates-from-the-app-not-yet-run-on-the-mac">ISSUE-0017: Updates from the app not yet run on the Mac<a class="headerlink" href="#issue-0017-updates-from-the-app-not-yet-run-on-the-mac" title="Permanent link">&para;</a></h2>
+<p><strong>Update now</strong> (the line at the top of the window) moves the homelab files forward, then on a Mac downloads the newest Homelab Wizard (the latest build, or the newest <code>v*</code> release with <code>UPDATE_CHANNEL=stable</code>), checks it against GitHub's SHA-256 checksum, replaces the running app, and opens it again. For a git checkout, the update check runs <code>git fetch</code> as the user, with prompts turned off (<code>GIT_TERMINAL_PROMPT=0</code>, <code>ssh -o BatchMode=yes</code>), and moving forward is a fast-forward to the newest release tag whose build provenance names the commit it points at, followed by <code>up</code>. An app opened from Finder relies on the macOS SSH agent (or the keychain) for the GitHub key; without it the check says GitHub could not be reached and uses the last fetch. A folder the app made (<strong>Set it up for me</strong>) moves forward from the files inside the newer app instead.</p>
+<p><strong>Verify:</strong> within 15 minutes of a build of a merged change (or on bringing the window forward), the line at the top says the update is ready, with no <strong>Check again</strong>; <strong>Update now</strong> brings the files in and runs <code>up</code>, then replaces the app and opens the new one, which says <em>Updated to …</em>; the menu bar's <em>Update to …</em> goes away. When only the app is behind, <strong>Update now</strong> does the app alone. With a build from the release workflow, the version row shows <code>build &lt;commit&gt;</code>.</p>
+<h2 id="issue-0018-disk-space-readings-not-yet-compared-on-the-mac">ISSUE-0018: Disk space readings not yet compared on the Mac<a class="headerlink" href="#issue-0018-disk-space-readings-not-yet-compared-on-the-mac" title="Permanent link">&para;</a></h2>
+<p>Settings › This Mac › Storage, <code>homelab doctor</code>, and the watchdog read free space with <code>statfs</code>, as <code>df</code> does: the space free right now. Finder's <em>Available</em> also counts purgeable space (caches and iCloud copies macOS deletes when room is needed), so on the Mac the homelab's number can be lower than Finder's, and a disk could read low while Finder still shows room. That errs on the side of warning early. On Windows the reading comes from <code>GetDiskFreeSpaceEx</code>. Disks are grouped by device, so folders on the Mac's disk (the homelab folder, the Proton Drive folder) share one line, and the media drive gets its own.</p>
+<p><strong>Verify:</strong> Settings › This Mac › Storage shows two lines, the Mac's disk and the media drive, with free space matching <code>df -h ~ /Volumes/Media</code>. With the drive unplugged, its line goes away instead of showing the Mac's disk under its name.</p>
+<h2 id="issue-0019-a-cloud-drives-own-quota-cannot-be-read">ISSUE-0019: A cloud drive's own quota cannot be read<a class="headerlink" href="#issue-0019-a-cloud-drives-own-quota-cannot-be-read" title="Permanent link">&para;</a></h2>
+<p>The watchdog, <code>doctor</code>, and Settings › This Mac › Storage read the free space on the disk that holds <code>BACKUP_DESTINATION</code>. A cloud drive's folder (Proton Drive, iCloud Drive, and the like) sits on the Mac's own disk, and the account's storage limit is not visible from the Mac, so a full cloud account is not warned about ahead of time. The off-site jobs then fail, and the watchdog alerts once a job fails or has not succeeded for a week.</p>
+<p><strong>Mitigation:</strong> check the space left in the cloud drive's own app or website now and then (the monthly checks in <a href="../Monitoring/#daily-and-weekly-checks">Monitoring</a>).</p>
+<h2 id="issue-0020-vaultwarden-web-vault-shows-a-black-screen-in-librewolf">ISSUE-0020: Vaultwarden web vault shows a black screen in LibreWolf<a class="headerlink" href="#issue-0020-vaultwarden-web-vault-shows-a-black-screen-in-librewolf" title="Permanent link">&para;</a></h2>
+<p>In LibreWolf, Vaultwarden's web vault can load as a black screen. The server and the Bitwarden apps are not affected.</p>
+<p><strong>Workaround:</strong> open the web vault in Safari or another browser.</p>
+<hr />
+<h2 id="issue-0021-installing-and-updating-the-app-on-windows-and-linux-not-yet-run-everywhere">ISSUE-0021: Installing and updating the app on Windows and Linux not yet run everywhere<a class="headerlink" href="#issue-0021-installing-and-updating-the-app-on-windows-and-linux-not-yet-run-everywhere" title="Permanent link">&para;</a></h2>
+<p><code>install.sh</code> was run on Ubuntu 24.04: it installed the .deb with apt, and with <code>HOMELAB_APPIMAGE=1</code> put the AppImage in <code>~/Applications</code>. The self-update code (<code>Stage</code> and <code>Swap</code>, run from a test harness) replaced an AppImage with the live release's. The silent installer runs on the Windows runner in every <code>release.yml</code> run (ISSUE-0014's progress). Still unproven: <code>install.ps1</code> on Windows (the agent and tray stopped and started again around the installer), the portable zip's update, a package update through pkexec, and the .rpm and Arch package paths.</p>
+<p>Found on a Windows PC (October 2026): updating went round in a loop (the app closed, opened again, still the old version), because SmartScreen or Smart App Control blocked the unsigned installer the update ran as an administrator. Since then the update unpacks the new files with Windows' own PowerShell, as an administrator only when the app is in Program Files, and a build that does not go in place says why when the app opens again instead of offering the same update. Each attempt's steps are in <code>%LOCALAPPDATA%\Homelab Wizard\update.log</code>. A PC already in the loop needs this build installed by hand once (<a href="../Upgrading/">Upgrading</a>).</p>
+<p><strong>Verify:</strong> on Windows, run <code>irm https://raw.githubusercontent.com/Snooper42/homelab-wizard/main/install.ps1 | iex</code>; the app opens, and after the next change to main the line's <strong>Update now</strong> brings the new build (one approval prompt for Program Files, and no SmartScreen), with the tray item and <code>homelab-agent</code> running again after, and <code>update.log</code> ending with <code>done</code> (Testing W21, W22). On Fedora or Arch, <code>install.sh</code>, then the same update from the line (pkexec asks for the password).</p>
+<hr />
+<h2 id="resolved">Resolved<a class="headerlink" href="#resolved" title="Permanent link">&para;</a></h2>
+<h3 id="issue-0022-a-rollback-brings-back-the-image-not-the-data-the-newer-version-changed">ISSUE-0022: A rollback brings back the image, not the data the newer version changed<a class="headerlink" href="#issue-0022-a-rollback-brings-back-the-image-not-the-data-the-newer-version-changed" title="Permanent link">&para;</a></h3>
+<p>Found by the nightly run against real Docker (October 2026). <code>homelab rollback</code> (and the watchdog's automatic rollback of an update that leaves an app unwell) starts the image the app ran before its update, on the data as it is now. An app that changes its own data when a newer version starts (a database schema moved on) can then refuse it: ntfy 2.11 rolled back from 2.34 stopped with "unexpected schema version: version 17 is higher than current version 13" and restarted in a loop. The update dumps the app's databases first, but the rollback does not put them back, and not every file an app migrates is dumped (ntfy's message cache is not).</p>
+<p><strong>Workaround:</strong> restore the dump the update took (<code>recovery-staging/databases/&lt;app&gt;</code>, the newest before the update's time) as <a href="../Disaster%20Recovery/">Disaster Recovery</a> describes for that app, or update again (<code>homelab updates release &lt;app&gt;</code>, then <code>homelab update &lt;app&gt;</code>).</p>
+<p><strong>Progress (October 2026):</strong> <code>homelab update</code> now stops each app whose image changed, copies its folders and named volumes and keeps its dumps (<code>recovery-staging/before-update</code>), then starts the new image; <code>homelab rollback</code> sets today's data aside and puts that copy back with the earlier image. The watchdog's rollback puts the copy back by itself only when the app was never well after the update; otherwise it keeps today's data and its alert names <code>homelab rollback &lt;app&gt; --data</code>. Resolved: the nightly updates are run by the agent (<code>homelab update --all --nightly</code>), so they are copied too, and Watchtower is gone. The nightly run now proves it across a schema change: it starts on ntfy v2.25.0 (its cache database at schema 15, its users at 8), which refuses the newer ntfy's migrated databases; after the update to the newest (17 and 9), both <code>homelab rollback</code> and the watchdog put it back on v2.25.0 with its data from before, and its tokens from then still publish and read.</p>
+<p><strong>Fix (decided in <a href="../Decisions/#adr-0020-a-rollback-puts-back-the-apps-data-with-its-image">ADR-0020</a>, October 2026; <a href="../Roadmap/#10-stable">Roadmap</a>):</strong> before an update, keep a copy of the app's data folders and named volumes as well as its dumps, and have the rollback put that copy back with the older image. Large data (photo libraries, media) stays where it is; the apps that keep those (Immich) keep their schema in the database, which the dump covers. <code>homelab update</code> and <code>homelab rollback</code> do this since 0.13.0 (Progress, above), and since Watchtower went the nightly updates are <code>homelab update --all --nightly</code>, so they do it too.</p>
+<p><strong>Resolved (after 0.14.0):</strong> every update, the nightly ones included, copies the app's data first, and a rollback puts it back.</p>
+<h3 id="issue-0023-nextclouds-default-port-is-the-phone-companions">ISSUE-0023: Nextcloud's default port is the phone companion's<a class="headerlink" href="#issue-0023-nextclouds-default-port-is-the-phone-companions" title="Permanent link">&para;</a></h3>
+<p><code>NEXTCLOUD_PORT</code> defaulted to 8099, the port the phone companion (<code>homelab serve</code>) always listens on, so Nextcloud could take it while the companion was not running.</p>
+<p><strong>Fixed (October 2026):</strong> the install plan never hands a container the fixed port of an app that runs on the machine itself (the phone companion's 8099, Jellyfin's 8096), whether or not that app runs now; a <code>.env</code> that still says 8099 gets Nextcloud moved to a free port, and says why. A new <code>.env</code> starts Nextcloud on 8089. Jellyfin in a container still takes 8096, the port it stands in for.</p>
+<h3 id="issue-0024-the-homelabs-own-records-in-data-were-not-in-the-off-site-backup">ISSUE-0024: The homelab's own records in <code>data/</code> were not in the off-site backup<a class="headerlink" href="#issue-0024-the-homelabs-own-records-in-data-were-not-in-the-off-site-backup" title="Permanent link">&para;</a></h3>
+<p>Duplicati's jobs read <code>data/appdata</code>, not the files beside it in <code>data/</code>: the household (<code>people.json</code> and the welcome pages), the paired phones (<code>phones.json</code>), the apps' single sign-on settings (<code>data/sso</code>), the update history, Setup's ticked steps, and the savings history. A rebuild from the backups lost them.</p>
+<p><strong>Fixed (October 2026):</strong> the nightly backup copies <code>data/*.json</code>, <code>data/people</code>, and <code>data/sso</code> into <code>recovery-staging/secrets/data</code>, which the encrypted Homelab Secrets job takes off-site with <code>.env</code>. A restore puts them back with <code>.env</code> (<a href="../Disaster%20Recovery/#scenario-full-mac-rebuild">Disaster Recovery</a>, step 3).</p>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../Troubleshooting/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Troubleshooting">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Troubleshooting
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../Architecture/" class="md-footer__link md-footer__link--next" aria-label="Next: Architecture">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Architecture
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.top", "navigation.footer", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.a5f9d56c.min.js"></script>
+      
+    
+  </body>
+</html>

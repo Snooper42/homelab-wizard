@@ -1,0 +1,3252 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Your household's photos, passwords, documents, money, music, and books, on a computer you own.">
+      
+      
+      
+        <link rel="canonical" href="https://snooper42.github.io/homelab-wizard/docs/Savings/">
+      
+      
+        <link rel="prev" href="../Inventory/">
+      
+      
+        <link rel="next" href="../Service%20Organization/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/logo.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+    
+    
+      
+        <title>Savings - Homelab Wizard</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.57a0d79d.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.fb2fffe2.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#savings" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Homelab Wizard" class="md-header__button md-logo" aria-label="Homelab Wizard" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Homelab Wizard
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Savings
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue"  aria-label="Dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="blue"  aria-label="Light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Snooper42/homelab-wizard" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Snooper42/homelab-wizard
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Homelab Wizard" class="md-nav__button md-logo" aria-label="Homelab Wizard" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    Homelab Wizard
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Snooper42/homelab-wizard" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Snooper42/homelab-wizard
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Start here
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Start here
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Tour/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    A tour of the app
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Getting%20Started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Everyday%20Tasks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Everyday tasks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing a new build
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Upgrading/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Upgrading
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Commands/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Run it
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Run it
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Runbooks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Runbooks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Automation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Automation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Monitoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Monitoring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Backups/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backups
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Tidy%20Up/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tidy Up
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Private%20Finances/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Private Finances
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Disaster%20Recovery/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Disaster Recovery
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Known%20Issues/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Known Issues
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How it works
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    How it works
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Networking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Networking
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Usability/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Usability
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Storage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Storage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Docker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docker
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Parity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What each device can do
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../apple-client/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The iPhone and iPad app
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Host/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Host
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Environment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Environment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The apps
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    The apps
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Services/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Services
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Inventory/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Inventory
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Savings
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Savings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Summary
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Summary">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#by-kind-of-saving" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        By kind of saving
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#network" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Network
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#security" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#system" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        System
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cloud-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cloud &amp; Files
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#documents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Documents
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#finance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Finance
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#media" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Media
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#media-automation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Media Automation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#household" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Household
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-the-homelab-costs-to-run" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What the homelab costs to run
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#over-time" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Over time
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#keeping-this-page-current" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Keeping this page current
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#price-sources" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Price sources
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Service%20Organization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Service Organization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The project
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    The project
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Roadmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Feature%20Roadmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Feature Roadmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Decisions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Decisions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../CHANGELOG/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What's new
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../CONTRIBUTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing (services)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Standards/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Standards
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Releasing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Releasing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../SECURITY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security policy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Homelab%20Manifest/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Homelab Manifest
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Homelab%20Context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Homelab Context
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Maintainer%20Guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Maintainer Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../To-do/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    To-do
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Knowledge base index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Summary
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Summary">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#by-kind-of-saving" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        By kind of saving
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#network" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Network
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#security" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#system" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        System
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cloud-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cloud &amp; Files
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#documents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Documents
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#finance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Finance
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#media" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Media
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#media-automation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Media Automation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#household" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Household
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-the-homelab-costs-to-run" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What the homelab costs to run
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#over-time" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Over time
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#keeping-this-page-current" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Keeping this page current
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#price-sources" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Price sources
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="savings">Savings<a class="headerlink" href="#savings" title="Permanent link">&para;</a></h1>
+<p>What the homelab could replace if the household used it to the full: every paid service each app can stand in for, with its monthly and annual price, organised by stack (the same categories as <code>services/</code>).</p>
+<p>This is the full-replacement picture. Each saving is tagged with what it takes to get it, so you can see how much is automatic and how much depends on owning the media.</p>
+<h2 id="summary">Summary<a class="headerlink" href="#summary" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Stack</th>
+<th style="text-align: right;">Services replaced</th>
+<th style="text-align: right;">Monthly</th>
+<th style="text-align: right;">Annual plan</th>
+<th style="text-align: right;">Paid monthly for a year</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Network</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">$11.99</td>
+<td style="text-align: right;">$115.90</td>
+<td style="text-align: right;">$143.88</td>
+</tr>
+<tr>
+<td>Security</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">$57.98</td>
+<td style="text-align: right;">$559.87</td>
+<td style="text-align: right;">$695.76</td>
+</tr>
+<tr>
+<td>System</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">$16.00</td>
+<td style="text-align: right;">$183.00</td>
+<td style="text-align: right;">$192.00</td>
+</tr>
+<tr>
+<td>Cloud &amp; Files</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">$29.98</td>
+<td style="text-align: right;">$323.76</td>
+<td style="text-align: right;">$359.76</td>
+</tr>
+<tr>
+<td>Documents</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">$74.97</td>
+<td style="text-align: right;">$697.75</td>
+<td style="text-align: right;">$899.64</td>
+</tr>
+<tr>
+<td>Finance</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">$33.31</td>
+<td style="text-align: right;">$248.99</td>
+<td style="text-align: right;">$399.72</td>
+</tr>
+<tr>
+<td>Media</td>
+<td style="text-align: right;">14</td>
+<td style="text-align: right;">$205.82</td>
+<td style="text-align: right;">$2,137.94</td>
+<td style="text-align: right;">$2,469.84</td>
+</tr>
+<tr>
+<td>Media Automation</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">$5.00</td>
+<td style="text-align: right;">$60.00</td>
+<td style="text-align: right;">$60.00</td>
+</tr>
+<tr>
+<td>Household</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">$17.19</td>
+<td style="text-align: right;">$159.87</td>
+<td style="text-align: right;">$206.28</td>
+</tr>
+<tr>
+<td><strong>Everything</strong></td>
+<td style="text-align: right;"><strong>39</strong></td>
+<td style="text-align: right;"><strong>$452.24</strong></td>
+<td style="text-align: right;"><strong>$4,487.08</strong></td>
+<td style="text-align: right;"><strong>$5,426.88</strong></td>
+</tr>
+<tr>
+<td>Baseline apps only (no optional apps)</td>
+<td style="text-align: right;">24</td>
+<td style="text-align: right;">$324.76</td>
+<td style="text-align: right;">$3,291.58</td>
+<td style="text-align: right;">$3,897.12</td>
+</tr>
+</tbody>
+</table>
+<p>Used to the full, the homelab replaces about <strong>$4,487 a year</strong> in subscriptions, or <strong>$5,427</strong> at month-to-month prices. After running costs (about $36 a year) that is roughly <strong>$4,451 a year</strong>.</p>
+<h3 id="by-kind-of-saving">By kind of saving<a class="headerlink" href="#by-kind-of-saving" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Kind</th>
+<th>What it means</th>
+<th style="text-align: right;">Services</th>
+<th style="text-align: right;">Annual plan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Direct</td>
+<td>The app does the same job; the saving is real as soon as you switch</td>
+<td style="text-align: right;">15</td>
+<td style="text-align: right;">$1,376.39</td>
+</tr>
+<tr>
+<td>Library</td>
+<td>Needs media you own (films, music, books); the app replaces the service's player and catalogue</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">$2,027.96</td>
+</tr>
+<tr>
+<td>Equivalent</td>
+<td>A paid product with the same function that a household may not otherwise buy</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">$1,082.73</td>
+</tr>
+</tbody>
+</table>
+<p><strong>How to read the numbers</strong></p>
+<ul>
+<li><strong>Monthly</strong>: the month-to-month price. Marked † where the service only bills yearly; the figure is the annual price ÷ 12.</li>
+<li><strong>Annual plan</strong>: the cheapest way to pay for a year (an annual plan where one exists, otherwise 12 × monthly). The headline totals use this column.</li>
+<li><strong>Paid monthly for a year</strong>: 12 × Monthly, what a year costs without an annual commitment.</li>
+<li><strong>Runs</strong>: Baseline apps start with <code>./homelab up</code>; Optional apps need <code>./homelab install &lt;app&gt;</code> first; Native is Jellyfin, installed on the computer itself rather than in a container.</li>
+</ul>
+<h2 id="network">Network<a class="headerlink" href="#network" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>App</th>
+<th>Runs</th>
+<th>Replaces</th>
+<th>Kind</th>
+<th style="text-align: right;">Monthly</th>
+<th style="text-align: right;">Annual plan</th>
+<th>Condition</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="../../services/network/AdGuard%20Home/">AdGuard Home</a></td>
+<td>Baseline</td>
+<td>NextDNS Pro</td>
+<td>Direct</td>
+<td style="text-align: right;">$1.99</td>
+<td style="text-align: right;">$19.90</td>
+<td>Every device uses 192.168.1.10 for DNS, or the tailnet's DNS setting points at it</td>
+</tr>
+<tr>
+<td><a href="../../services/network/Cloudflare%20Tunnel/">Cloudflare Tunnel</a> + <a href="../../services/network/Nginx%20Proxy%20Manager/">Nginx Proxy Manager</a></td>
+<td>Baseline</td>
+<td>ngrok Hobbyist</td>
+<td>Equivalent</td>
+<td style="text-align: right;">$10.00</td>
+<td style="text-align: right;">$96.00</td>
+<td>Public apps reach you through your own tunnel and proxy instead of a paid tunnel service</td>
+</tr>
+<tr>
+<td><strong>Subtotal</strong></td>
+<td></td>
+<td></td>
+<td></td>
+<td style="text-align: right;"><strong>$11.99</strong></td>
+<td style="text-align: right;"><strong>$115.90</strong></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>Not counted: Gluetun (needs your existing ProtonVPN plan); Ad blocking on the tailnet (it carries DNS to AdGuard Home, already counted against NextDNS Pro); Tailscale (its Personal plan is free, and the homelab uses that plan rather than replacing it); Speedtest Tracker (no consumer service sells scheduled speed tests with a history).</p>
+<h2 id="security">Security<a class="headerlink" href="#security" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>App</th>
+<th>Runs</th>
+<th>Replaces</th>
+<th>Kind</th>
+<th style="text-align: right;">Monthly</th>
+<th style="text-align: right;">Annual plan</th>
+<th>Condition</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="../../services/security/Vaultwarden/">Vaultwarden</a></td>
+<td>Baseline</td>
+<td>1Password Families</td>
+<td>Direct</td>
+<td style="text-align: right;">$7.99</td>
+<td style="text-align: right;">$71.88</td>
+<td>Everyone's passwords live in Vaultwarden (Bitwarden Families would be $47.88)</td>
+</tr>
+<tr>
+<td><a href="../../services/security/Uptime%20Kuma/">Uptime Kuma</a></td>
+<td>Baseline</td>
+<td>UptimeRobot Solo</td>
+<td>Equivalent</td>
+<td style="text-align: right;">$10.00</td>
+<td style="text-align: right;">$108.00</td>
+<td>Monitors set up as in <a href="../Monitoring/">Monitoring</a></td>
+</tr>
+<tr>
+<td><a href="../../services/security/ntfy/">ntfy</a></td>
+<td>Baseline</td>
+<td>Pushbullet Pro</td>
+<td>Equivalent</td>
+<td style="text-align: right;">$4.99</td>
+<td style="text-align: right;">$39.99</td>
+<td>Alerts and pushes go through ntfy</td>
+</tr>
+<tr>
+<td><a href="../../services/security/CrowdSec/">CrowdSec</a></td>
+<td>Baseline</td>
+<td>Cloudflare Pro (WAF)</td>
+<td>Equivalent</td>
+<td style="text-align: right;">$25.00</td>
+<td style="text-align: right;">$240.00</td>
+<td>CrowdSec and the proxy's bouncer block attacks on public apps, the job of a paid web application firewall</td>
+</tr>
+<tr>
+<td><a href="../../services/security/Frigate/">Frigate</a></td>
+<td>Optional</td>
+<td>Google Home Premium Standard (formerly Nest Aware)</td>
+<td>Equivalent</td>
+<td style="text-align: right;">$10.00</td>
+<td style="text-align: right;">$100.00</td>
+<td>The household's cameras are recorded and watched by Frigate instead of a camera maker's cloud plan (cameras that give an RTSP stream; Nest cameras do not)</td>
+</tr>
+<tr>
+<td><strong>Subtotal</strong></td>
+<td></td>
+<td></td>
+<td></td>
+<td style="text-align: right;"><strong>$57.98</strong></td>
+<td style="text-align: right;"><strong>$559.87</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>Baseline apps only</td>
+<td></td>
+<td></td>
+<td></td>
+<td style="text-align: right;">$47.98</td>
+<td style="text-align: right;">$459.87</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>UptimeRobot's Solo price varies by source; some list $13 a month or $144 a year after a mid-2026 change.</p>
+<p>Not counted: Pocket ID (sign-in services for a household are free; for businesses they are priced per user).</p>
+<h2 id="system">System<a class="headerlink" href="#system" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>App</th>
+<th>Runs</th>
+<th>Replaces</th>
+<th>Kind</th>
+<th style="text-align: right;">Monthly</th>
+<th style="text-align: right;">Annual plan</th>
+<th>Condition</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="../../services/system/Duplicati/">Duplicati</a></td>
+<td>Baseline</td>
+<td>Backblaze Personal Backup</td>
+<td>Direct</td>
+<td style="text-align: right;">$9.00</td>
+<td style="text-align: right;">$99.00</td>
+<td>Backups run nightly and pass the monthly restore test; storage stays on your Proton Drive plan</td>
+</tr>
+<tr>
+<td><a href="../../services/system/Dozzle/">Dozzle</a></td>
+<td>Optional</td>
+<td>Papertrail (paid plan)</td>
+<td>Equivalent</td>
+<td style="text-align: right;">$7.00</td>
+<td style="text-align: right;">$84.00</td>
+<td>Container logs are read and searched in Dozzle instead of a hosted log service; counted at 12 × monthly</td>
+</tr>
+<tr>
+<td><strong>Subtotal</strong></td>
+<td></td>
+<td></td>
+<td></td>
+<td style="text-align: right;"><strong>$16.00</strong></td>
+<td style="text-align: right;"><strong>$183.00</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>Baseline apps only</td>
+<td></td>
+<td></td>
+<td></td>
+<td style="text-align: right;">$9.00</td>
+<td style="text-align: right;">$99.00</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>Not counted: Kopia (a second copy beside Duplicati: the backup service it resembles is counted once, against Duplicati); Beszel (watching your own machine is free with its own tools; hosted monitoring is priced for businesses); the Phone companion (it shows the homelab rather than replacing a service); Homarr and Homepage (start pages have free commercial equivalents).</p>
+<h2 id="cloud-files">Cloud &amp; Files<a class="headerlink" href="#cloud-files" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>App</th>
+<th>Runs</th>
+<th>Replaces</th>
+<th>Kind</th>
+<th style="text-align: right;">Monthly</th>
+<th style="text-align: right;">Annual plan</th>
+<th>Condition</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="../../services/cloud%20and%20files/File%20Browser/">File Browser</a></td>
+<td>Optional</td>
+<td>Dropbox Plus</td>
+<td>Equivalent</td>
+<td style="text-align: right;">$11.99</td>
+<td style="text-align: right;">$119.88</td>
+<td>Files are shared from the media drive instead of cloud storage</td>
+</tr>
+<tr>
+<td><a href="../../services/cloud%20and%20files/Immich/">Immich</a></td>
+<td>Baseline</td>
+<td>iCloud+ 2 TB</td>
+<td>Direct</td>
+<td style="text-align: right;">$9.99</td>
+<td style="text-align: right;">$119.88</td>
+<td>Phones back up photos to Immich instead of iCloud Photos; no annual plan exists</td>
+</tr>
+<tr>
+<td><a href="../../services/cloud%20and%20files/Nextcloud/">Nextcloud</a></td>
+<td>Optional</td>
+<td>Dropbox Plus</td>
+<td>Equivalent</td>
+<td style="text-align: right;">$11.99</td>
+<td style="text-align: right;">$119.88</td>
+<td>The family's files sync to their phones and computers through Nextcloud instead of Dropbox; with File Browser too, Dropbox Plus is counted once, here and on Status</td>
+</tr>
+<tr>
+<td><a href="../../services/cloud%20and%20files/PsiTransfer/">PsiTransfer</a></td>
+<td>Optional</td>
+<td>WeTransfer Starter</td>
+<td>Equivalent</td>
+<td style="text-align: right;">$8.00</td>
+<td style="text-align: right;">$84.00</td>
+<td>Large files are sent from the homelab instead of a transfer service ($7 a month billed yearly)</td>
+</tr>
+<tr>
+<td><strong>Subtotal</strong></td>
+<td></td>
+<td></td>
+<td></td>
+<td style="text-align: right;"><strong>$29.98</strong></td>
+<td style="text-align: right;"><strong>$323.76</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>Baseline apps only</td>
+<td></td>
+<td></td>
+<td></td>
+<td style="text-align: right;">$9.99</td>
+<td style="text-align: right;">$119.88</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>Dropbox Plus is counted once in the subtotal, though File Browser and Nextcloud can each replace it.</p>
+<p>Not counted: Syncthing (the paid sync services it resembles are counted once, against File Browser, and Resilio Sync Home Pro is a one-off licence, not a subscription); Baikal (calendar and contact sync is free with iCloud and Google); PairDrop (AirDrop and Quick Share are free); Dawarich (Google Maps Timeline is free).</p>
+<h2 id="documents">Documents<a class="headerlink" href="#documents" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>App</th>
+<th>Runs</th>
+<th>Replaces</th>
+<th>Kind</th>
+<th style="text-align: right;">Monthly</th>
+<th style="text-align: right;">Annual plan</th>
+<th>Condition</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="../../services/documents/Paperless-ngx/">Paperless-ngx</a></td>
+<td>Baseline</td>
+<td>Evernote Advanced</td>
+<td>Direct</td>
+<td style="text-align: right;">$24.99</td>
+<td style="text-align: right;">$249.99</td>
+<td>Documents are scanned into Paperless (Advanced is Evernote's tier without a note cap)</td>
+</tr>
+<tr>
+<td><a href="../../services/documents/Stirling%20PDF/">Stirling PDF</a></td>
+<td>Optional</td>
+<td>Adobe Acrobat Pro</td>
+<td>Direct</td>
+<td style="text-align: right;">$29.99</td>
+<td style="text-align: right;">$239.88</td>
+<td>OCR, redaction, comparing, and signing are done in Stirling PDF</td>
+</tr>
+<tr>
+<td><a href="../../services/documents/FreshRSS/">FreshRSS</a></td>
+<td>Optional</td>
+<td>Feedly Pro</td>
+<td>Direct</td>
+<td style="text-align: right;">$8.00</td>
+<td style="text-align: right;">$72.00</td>
+<td>Feeds are read through FreshRSS</td>
+</tr>
+<tr>
+<td><a href="../../services/documents/Karakeep/">Karakeep</a></td>
+<td>Optional</td>
+<td>Raindrop.io Pro</td>
+<td>Direct</td>
+<td style="text-align: right;">$3.00</td>
+<td style="text-align: right;">$28.00</td>
+<td>Bookmarks and read-later live in Karakeep, with its full-text search and page archives</td>
+</tr>
+<tr>
+<td><a href="../../services/documents/Linkwarden/">Linkwarden</a></td>
+<td>Optional</td>
+<td>Raindrop.io Pro</td>
+<td>Direct</td>
+<td style="text-align: right;">$3.00</td>
+<td style="text-align: right;">$28.00</td>
+<td>Shared bookmark collections live in Linkwarden, each page kept; with Karakeep too, Raindrop.io is counted once, here and on Status</td>
+</tr>
+<tr>
+<td><a href="../../services/documents/Changedetection.io/">Changedetection.io</a></td>
+<td>Optional</td>
+<td>changedetection.io (hosted)</td>
+<td>Direct</td>
+<td style="text-align: right;">$8.99</td>
+<td style="text-align: right;">$107.88</td>
+<td>Pages are watched by your own copy instead of the hosted service; no annual plan exists</td>
+</tr>
+<tr>
+<td><strong>Subtotal</strong></td>
+<td></td>
+<td></td>
+<td></td>
+<td style="text-align: right;"><strong>$74.97</strong></td>
+<td style="text-align: right;"><strong>$697.75</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>Baseline apps only</td>
+<td></td>
+<td></td>
+<td></td>
+<td style="text-align: right;">$24.99</td>
+<td style="text-align: right;">$249.99</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>Raindrop.io Pro is counted once in the subtotal, though Karakeep and Linkwarden can each replace it (Linkwarden's own hosted plan is $3 a month per person too).</p>
+<p>Not counted: Kiwix (Wikipedia and the other libraries are free online; it keeps them readable without the internet); Open WebUI (local models are a private assistant, not a ChatGPT Plus replacement); Memos (note-taking is counted once, against Paperless-ngx); Docmost (Notion's free plan covers a household wiki); Paperless-AI (it adds to Paperless-ngx, already counted against Evernote, rather than replacing a service of its own).</p>
+<h2 id="finance">Finance<a class="headerlink" href="#finance" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>App</th>
+<th>Runs</th>
+<th>Replaces</th>
+<th>Kind</th>
+<th style="text-align: right;">Monthly</th>
+<th style="text-align: right;">Annual plan</th>
+<th>Condition</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="../../services/finance/MoneyMatter/">MoneyMatter</a></td>
+<td>Baseline</td>
+<td>YNAB</td>
+<td>Direct</td>
+<td style="text-align: right;">$14.99</td>
+<td style="text-align: right;">$109.00</td>
+<td>The budget lives in MoneyMatter</td>
+</tr>
+<tr>
+<td><a href="../../services/finance/Actual%20Budget/">Actual Budget</a></td>
+<td>Optional</td>
+<td>YNAB</td>
+<td>Direct</td>
+<td style="text-align: right;">$14.99</td>
+<td style="text-align: right;">$109.00</td>
+<td>The budget lives in Actual Budget, an envelope budget like YNAB's; with MoneyMatter too, YNAB is counted once, here and on Status</td>
+</tr>
+<tr>
+<td><a href="../../services/finance/Firefly%20III/">Firefly III</a></td>
+<td>Optional</td>
+<td>Monarch Money Core</td>
+<td>Equivalent</td>
+<td style="text-align: right;">$14.99</td>
+<td style="text-align: right;">$99.99</td>
+<td>The household's accounts and budgets are kept in Firefly III instead of a hosted tracker (bank files come in through its importer, not a live bank sync)</td>
+</tr>
+<tr>
+<td><a href="../../services/finance/Ghostfolio/">Ghostfolio</a></td>
+<td>Optional</td>
+<td>Ghostfolio Premium</td>
+<td>Direct</td>
+<td style="text-align: right;">$3.33 †</td>
+<td style="text-align: right;">$40.00</td>
+<td>Investments are tracked in your own copy instead of the hosted one (market data comes from free sources)</td>
+</tr>
+<tr>
+<td><strong>Subtotal</strong></td>
+<td></td>
+<td></td>
+<td></td>
+<td style="text-align: right;"><strong>$33.31</strong></td>
+<td style="text-align: right;"><strong>$248.99</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>Baseline apps only</td>
+<td></td>
+<td></td>
+<td></td>
+<td style="text-align: right;">$14.99</td>
+<td style="text-align: right;">$109.00</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>YNAB is counted once in the subtotal, though two apps can replace it. Goodbudget Premium, the closest envelope app, is $10 a month or $80 a year.</p>
+<p>Not counted: Wallos (it finds savings rather than replacing a paid service; trackers such as Rocket Money bundle it with other features).</p>
+<h2 id="media">Media<a class="headerlink" href="#media" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>App</th>
+<th>Runs</th>
+<th>Replaces</th>
+<th>Kind</th>
+<th style="text-align: right;">Monthly</th>
+<th style="text-align: right;">Annual plan</th>
+<th>Condition</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="../../services/media/Jellyfin/">Jellyfin</a></td>
+<td>Native</td>
+<td>Plex Pass</td>
+<td>Direct</td>
+<td style="text-align: right;">$6.99</td>
+<td style="text-align: right;">$69.99</td>
+<td>Jellyfin is the media server</td>
+</tr>
+<tr>
+<td><a href="../../services/media/Jellyfin/">Jellyfin</a></td>
+<td>Native</td>
+<td>Netflix Standard</td>
+<td>Library</td>
+<td style="text-align: right;">$19.99</td>
+<td style="text-align: right;">$239.88</td>
+<td>Your own library; no annual plan exists</td>
+</tr>
+<tr>
+<td><a href="../../services/media/Jellyfin/">Jellyfin</a></td>
+<td>Native</td>
+<td>Hulu (No Ads)</td>
+<td>Library</td>
+<td style="text-align: right;">$18.99</td>
+<td style="text-align: right;">$227.88</td>
+<td>Your own library; no annual plan exists</td>
+</tr>
+<tr>
+<td><a href="../../services/media/Jellyfin/">Jellyfin</a></td>
+<td>Native</td>
+<td>Disney+ Premium</td>
+<td>Library</td>
+<td style="text-align: right;">$21.49</td>
+<td style="text-align: right;">$214.99</td>
+<td>Your own library</td>
+</tr>
+<tr>
+<td><a href="../../services/media/Jellyfin/">Jellyfin</a></td>
+<td>Native</td>
+<td>HBO Max Standard</td>
+<td>Library</td>
+<td style="text-align: right;">$18.49</td>
+<td style="text-align: right;">$184.99</td>
+<td>Your own library</td>
+</tr>
+<tr>
+<td><a href="../../services/media/Jellyfin/">Jellyfin</a></td>
+<td>Native</td>
+<td>Peacock Premium Plus</td>
+<td>Library</td>
+<td style="text-align: right;">$19.99</td>
+<td style="text-align: right;">$199.99</td>
+<td>Your own library</td>
+</tr>
+<tr>
+<td><a href="../../services/media/Jellyfin/">Jellyfin</a></td>
+<td>Native</td>
+<td>Paramount+ Premium</td>
+<td>Library</td>
+<td style="text-align: right;">$13.99</td>
+<td style="text-align: right;">$139.99</td>
+<td>Your own library</td>
+</tr>
+<tr>
+<td><a href="../../services/media/Jellyfin/">Jellyfin</a></td>
+<td>Native</td>
+<td>Apple TV</td>
+<td>Library</td>
+<td style="text-align: right;">$14.99</td>
+<td style="text-align: right;">$119.00</td>
+<td>Your own library</td>
+</tr>
+<tr>
+<td><a href="../../services/media/Navidrome/">Navidrome</a> + <a href="../../services/media/Feishin/">Feishin</a></td>
+<td>Baseline</td>
+<td>Spotify Premium Family</td>
+<td>Library</td>
+<td style="text-align: right;">$21.99</td>
+<td style="text-align: right;">$263.88</td>
+<td>Your music library covers what the household plays; no annual plan exists</td>
+</tr>
+<tr>
+<td><a href="../../services/media/Audiobookshelf/">Audiobookshelf</a></td>
+<td>Baseline</td>
+<td>Audible Premium Plus</td>
+<td>Library</td>
+<td style="text-align: right;">$14.95</td>
+<td style="text-align: right;">$149.50</td>
+<td>Audiobooks you own (for example DRM-free purchases)</td>
+</tr>
+<tr>
+<td><a href="../../services/media/Audiobookshelf/">Audiobookshelf</a></td>
+<td>Baseline</td>
+<td>Pocket Casts Plus</td>
+<td>Direct</td>
+<td style="text-align: right;">$3.99</td>
+<td style="text-align: right;">$39.99</td>
+<td>Podcasts sync across devices through Audiobookshelf</td>
+</tr>
+<tr>
+<td><a href="../../services/media/Calibre-Web/">Calibre-Web</a></td>
+<td>Baseline</td>
+<td>Kindle Unlimited</td>
+<td>Library</td>
+<td style="text-align: right;">$11.99</td>
+<td style="text-align: right;">$143.88</td>
+<td>Reading comes from your own e-book library; counted at 12 × monthly</td>
+</tr>
+<tr>
+<td><a href="../../services/media/Komga/">Komga</a></td>
+<td>Baseline</td>
+<td>Marvel Unlimited</td>
+<td>Library</td>
+<td style="text-align: right;">$9.99</td>
+<td style="text-align: right;">$68.99</td>
+<td>Comics come from your own collection</td>
+</tr>
+<tr>
+<td><a href="../../services/media/Komga/">Komga</a></td>
+<td>Baseline</td>
+<td>DC Universe Infinite</td>
+<td>Library</td>
+<td style="text-align: right;">$7.99</td>
+<td style="text-align: right;">$74.99</td>
+<td>Comics come from your own collection</td>
+</tr>
+<tr>
+<td><strong>Subtotal</strong></td>
+<td></td>
+<td></td>
+<td></td>
+<td style="text-align: right;"><strong>$205.82</strong></td>
+<td style="text-align: right;"><strong>$2,137.94</strong></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Streaming video.</strong> Jellyfin with a library of films and shows you own (ripped discs, DRM-free purchases, home video) covers what the seven streaming services would provide: $1,327 a year on their own. Drop only the services your library actually covers; the rows are independent, so the total shrinks one row at a time.</p>
+<p>Not counted: Kavita (optional; it overlaps Calibre-Web and Komga, so counting it would count the same saving twice); RomM (no subscription sells a library of games you own).</p>
+<h2 id="media-automation">Media Automation<a class="headerlink" href="#media-automation" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>App</th>
+<th>Runs</th>
+<th>Replaces</th>
+<th>Kind</th>
+<th style="text-align: right;">Monthly</th>
+<th style="text-align: right;">Annual plan</th>
+<th>Condition</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="../../services/media%20automation/Sonarr/">Sonarr</a> + <a href="../../services/media%20automation/Radarr/">Radarr</a> + <a href="../../services/media%20automation/Seerr/">Seerr</a></td>
+<td>Optional</td>
+<td>Trakt VIP</td>
+<td>Equivalent</td>
+<td style="text-align: right;">$5.00 †</td>
+<td style="text-align: right;">$60.00</td>
+<td>Sonarr and Radarr calendars and Seerr's watchlist do the tracking and release alerts</td>
+</tr>
+<tr>
+<td><strong>Subtotal</strong></td>
+<td></td>
+<td></td>
+<td></td>
+<td style="text-align: right;"><strong>$5.00</strong></td>
+<td style="text-align: right;"><strong>$60.00</strong></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>These apps keep the Media stack's library organised: they track series and films, fetch subtitles, and take requests. Their value shows up in the Media stack, where the streaming services are counted once against Jellyfin. No saving is claimed for what the download apps fetch, since that would mean pricing content rather than software.</p>
+<p>Not counted: Prowlarr, Lidarr, Bazarr, LazyLibrarian, qBittorrent, and FlareSolverr (they feed the library rather than stand in for a subscription); Tdarr (it saves space on the media drive, not a subscription).</p>
+<h2 id="household">Household<a class="headerlink" href="#household" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>App</th>
+<th>Runs</th>
+<th>Replaces</th>
+<th>Kind</th>
+<th style="text-align: right;">Monthly</th>
+<th style="text-align: right;">Annual plan</th>
+<th>Condition</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="../../services/household/Mealie/">Mealie</a></td>
+<td>Optional</td>
+<td>Plan to Eat</td>
+<td>Direct</td>
+<td style="text-align: right;">$5.95</td>
+<td style="text-align: right;">$49.00</td>
+<td>Recipes and meal plans live in Mealie</td>
+</tr>
+<tr>
+<td><a href="../../services/household/Tandoor/">Tandoor</a></td>
+<td>Optional</td>
+<td>Plan to Eat</td>
+<td>Direct</td>
+<td style="text-align: right;">$5.95</td>
+<td style="text-align: right;">$49.00</td>
+<td>Recipes, meal plans, and shopping lists live in Tandoor; with Mealie too, Plan to Eat is counted once, here and on Status</td>
+</tr>
+<tr>
+<td><a href="../../services/household/Vikunja/">Vikunja</a></td>
+<td>Optional</td>
+<td>Todoist Pro</td>
+<td>Direct</td>
+<td style="text-align: right;">$7.00</td>
+<td style="text-align: right;">$60.00</td>
+<td>To-dos and projects live in Vikunja</td>
+</tr>
+<tr>
+<td><a href="../../services/household/Grocy/">Grocy</a></td>
+<td>Optional</td>
+<td>AnyList Complete (household)</td>
+<td>Equivalent</td>
+<td style="text-align: right;">$1.25 †</td>
+<td style="text-align: right;">$14.99</td>
+<td>Shopping lists and what is in the cupboards are kept in Grocy</td>
+</tr>
+<tr>
+<td><a href="../../services/household/Home%20Assistant/">Home Assistant</a></td>
+<td>Optional</td>
+<td>Homey Premium</td>
+<td>Equivalent</td>
+<td style="text-align: right;">$2.99</td>
+<td style="text-align: right;">$35.88</td>
+<td>Devices and automations run in Home Assistant instead of a hosted smart-home platform (Homey's free tier stops at 5 devices); no annual plan exists</td>
+</tr>
+<tr>
+<td><strong>Subtotal</strong></td>
+<td></td>
+<td></td>
+<td></td>
+<td style="text-align: right;"><strong>$17.19</strong></td>
+<td style="text-align: right;"><strong>$159.87</strong></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>Plan to Eat is counted once in the subtotal, though Mealie and Tandoor can each replace it.</p>
+<p>Home Assistant is counted against Homey Premium, the subscription for a hosted hub with no device cap; the big-brand hubs (Google Home, Alexa, Apple Home) have free apps, so the saving is Equivalent, not Direct.</p>
+<p>Not counted: Homebox (home inventory apps are free for a household, or priced for businesses).</p>
+<h2 id="what-the-homelab-costs-to-run">What the homelab costs to run<a class="headerlink" href="#what-the-homelab-costs-to-run" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Cost</th>
+<th style="text-align: right;">Per year</th>
+<th>Note</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Domain (<code>example.com</code>, Cloudflare at cost)</td>
+<td style="text-align: right;">about $11</td>
+<td></td>
+</tr>
+<tr>
+<td>Electricity</td>
+<td style="text-align: right;">about $25</td>
+<td>About 15 W average for the Mac, 131 kWh a year at about $0.18 per kWh</td>
+</tr>
+<tr>
+<td>Proton Drive, ProtonVPN</td>
+<td style="text-align: right;">not counted</td>
+<td>Existing plans, paid for anyway</td>
+</tr>
+<tr>
+<td>The Mac and the media drive</td>
+<td style="text-align: right;">not counted</td>
+<td>Already owned</td>
+</tr>
+<tr>
+<td>Buying the media in your library</td>
+<td style="text-align: right;">not counted</td>
+<td>One-off purchases instead of rentals</td>
+</tr>
+<tr>
+<td><strong>Total</strong></td>
+<td style="text-align: right;"><strong>about $36</strong></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th></th>
+<th style="text-align: right;">Per year</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Everything, annual plans</td>
+<td style="text-align: right;">$4,487.08</td>
+</tr>
+<tr>
+<td>Minus running costs</td>
+<td style="text-align: right;">−$36</td>
+</tr>
+<tr>
+<td><strong>Net, everything</strong></td>
+<td style="text-align: right;"><strong>about $4,451</strong></td>
+</tr>
+<tr>
+<td><strong>Net, baseline apps only</strong></td>
+<td style="text-align: right;"><strong>about $3,256</strong></td>
+</tr>
+</tbody>
+</table>
+<h2 id="over-time">Over time<a class="headerlink" href="#over-time" title="Permanent link">&para;</a></h2>
+<p>Every night the backup job records what the running apps replace that day (the figure Status shows) in <code>data/savings-history.json</code>, keeping about a year. The app's Status tile draws the last 90 days and the change since the first of them, so adding or removing apps shows up the next morning.</p>
+<h2 id="keeping-this-page-current">Keeping this page current<a class="headerlink" href="#keeping-this-page-current" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Prices are US list prices before tax, checked in October 2026 from vendor pricing as reported by current pricing guides, news coverage of price changes, and app-store listings. Where sources disagreed, the lower figure was used.</li>
+<li>Streaming prices change often (several rose in 2026). Check them once a year and update the tables and the summary.</li>
+<li>When you slot in a service that replaces a paid one, add a row to its stack and update the summary (<a href="../Contributing/">Contributing</a>).</li>
+</ul>
+<h2 id="price-sources">Price sources<a class="headerlink" href="#price-sources" title="Permanent link">&para;</a></h2>
+<ul>
+<li>NextDNS: <a href="https://www.techradar.com/reviews/nextdns">TechRadar review</a></li>
+<li>Backblaze: <a href="https://www.cloudwards.net/backblaze-pricing/">Cloudwards</a></li>
+<li>ngrok: <a href="https://www.toolsurf.com/ngrok-pricing-in-2025-every-plan-explained-free-personal-pro-enterprise-2026-plans-features-best-deals-compared/">toolsurf</a>, <a href="https://pricingsaas.com/companies/ngrok">PricingSaaS</a></li>
+<li>1Password Families: <a href="https://9to5google.com/2026/02/24/1passwords-annual-subscription-plans-are-getting-a-price-hike-next-month/">9to5Google</a>, <a href="https://www.ubergizmo.com/2026/02/1password-price-increase/">Ubergizmo</a></li>
+<li>Bitwarden Families: <a href="https://tech-insider.org/ca/bitwarden-families-plan-setup-2026/">tech-insider.org</a></li>
+<li>UptimeRobot: <a href="https://notifier.so/guides/uptimerobot-pricing-2026/">Notifier</a>, <a href="https://hyperping.com/blog/uptimerobot-pricing">Hyperping</a></li>
+<li>Pushbullet: <a href="https://www.fonearena.com/blog/164995/pushbullet-introduces-optional-pro-account-costs-us39-99-per-year.html/amp">Fonearena</a></li>
+<li>Cloudflare Pro: <a href="https://blog.cdnsun.com/cloudflare-pricing/">CDNsun</a></li>
+<li>Google Home Premium (Nest Aware): <a href="https://www.resetera.com/threads/google-is-increasing-the-price-of-nest-aware-subscriptions-again-the-verge.1247103/">The Verge via ResetEra</a>, <a href="https://www.homecamcafe.com/subscribe-nest-aware-service/">homecamcafe</a>, <a href="https://blog.google/products-and-platforms/devices/google-nest/googe-home-premium-google-ai-pro-subscription/">Google</a></li>
+<li>Evernote: <a href="https://www.eesel.ai/blog/evernote-pricing">eesel.ai</a>, <a href="https://harbor.my/blog/evernote-price-history/">harbor.my</a></li>
+<li>YNAB: <a href="https://getfinny.app/blog/ynab-pricing-2026">getfinny</a></li>
+<li>Monarch Money: <a href="https://getfinny.app/blog/monarch-money-pricing-2026">getfinny</a>, <a href="https://www.costbench.com/software/personal-finance/monarch-money/">CostBench</a></li>
+<li>Goodbudget: <a href="https://goodbudget.com/?p=20645">Goodbudget</a>, <a href="https://www.nerdwallet.com/finance/learn/goodbudget-app-review">NerdWallet</a></li>
+<li>Adobe Acrobat Pro: <a href="https://www.xodo.com/blog/adobe-acrobat-pricing-explained">Xodo</a>, <a href="https://thebusinessdive.com/adobe-acrobat-pricing">thebusinessdive</a></li>
+<li>Dropbox: <a href="https://blog.internxt.com/dropbox-pricing/">Internxt</a></li>
+<li>Feedly: <a href="https://feeder.co/knowledge-base/rss-basics/feedly-vs-feedbin/">Feeder</a></li>
+<li>Plan to Eat: <a href="https://learn.plantoeat.com/help/how-much-does-plan-to-eat-cost">Plan to Eat help</a></li>
+<li>Todoist Pro: <a href="https://routine.co/blog/posts/todoist-pricing">Routine</a>, <a href="https://morgen.so/blog-posts/todoist-pricing">Morgen</a></li>
+<li>iCloud+: <a href="https://bestcloudstorageguide.com/blog/icloud-pricing-2026-pricing-guide-2026">bestcloudstorageguide.com</a></li>
+<li>Plex Pass: <a href="https://9to5mac.com/2026/05/19/plex-increasing-lifetime-plex-pass-cost-to-whopping-750/">9to5Mac</a></li>
+<li>Netflix: <a href="https://www.fox5ny.com/news/netflix-raising-prices-again-all-plans-how-much-more-youll-be-paying">FOX 5 New York</a></li>
+<li>Hulu: <a href="https://agoodmovietowatch.com/platforms/hulu-review/">agoodmovietowatch</a></li>
+<li>Disney+: <a href="https://www.gadgetreview.com/?p=414004">Gadget Review</a>, <a href="https://smarttvs.org/disney-plus-hulu-price-increase-2026/">smarttvs.org</a></li>
+<li>HBO Max: <a href="https://www.tvguide.com/news/hbo-max-price-and-bundles/">TV Guide</a>, <a href="https://smarttvs.org/hbo-max-plans-2026/">smarttvs.org</a></li>
+<li>Peacock: <a href="https://www.droid-life.com/2026/08/18/peacock-raises-prices/">Droid Life</a></li>
+<li>Paramount+: <a href="https://clark.com/streaming-tv/paramount-plus-pricing-2026/">Clark</a></li>
+<li>Apple TV: <a href="https://www.thewrap.com/media-platforms/streaming/apple-tv-price-increase-per-month/">TheWrap</a></li>
+<li>Spotify: <a href="https://www.documentarytube.com/blog/spotify-raises-premium-prices-again-what-u-s-subscribers-will-pay-in-2026/">documentarytube</a></li>
+<li>Audible: <a href="https://www.nerdwallet.com/finance/learn/how-much-does-audible-cost">NerdWallet</a></li>
+<li>Pocket Casts: <a href="https://apps.apple.com/us/app/pocket-casts-podcast-player/id414834813">App Store</a></li>
+<li>Kindle Unlimited: <a href="https://subger.com/en/service/kindle-unlimited">subger</a></li>
+<li>Marvel Unlimited: <a href="https://www.apppricinglab.com/app/apple/607205403">App Pricing Lab</a></li>
+<li>DC Universe Infinite: <a href="https://apppricinglab.com/iap/apple/1329018000">App Pricing Lab</a></li>
+<li>Trakt VIP: <a href="https://alternativeto.net/news/2025/5/trakt-announces-all-vip-renewals-will-switch-to-a-new-standard-rate-doubling-prices/">AlternativeTo</a></li>
+<li>Raindrop.io Pro: <a href="https://raindrop.io/pro">Raindrop.io</a>, <a href="https://contextbolt.com/blog/raindrop-pricing/">ContextBolt</a></li>
+<li>Linkwarden Cloud: <a href="https://linkwarden.app/pricing">Linkwarden</a></li>
+<li>AnyList Complete: <a href="https://www.anylist.com/premium">AnyList</a>, <a href="https://apppricinglab.com/app/apple/522167641">App Pricing Lab</a></li>
+<li>Papertrail: <a href="https://www.softwareadvice.com/product/144190-Papertrail/">Software Advice</a>, <a href="https://costbench.com/software/log-management/papertrail/alternatives/">CostBench</a> (some list consumption pricing at $5 per GB instead; the lowest fixed plan was used)</li>
+<li>Homey Premium: <a href="https://homey.app/premium">Homey</a></li>
+<li>Ghostfolio Premium: <a href="https://gappsy.com/tools/ghostfolio/">Gappsy</a>, <a href="https://www.findmymoat.com/vs/ghostfolio-vs-myinvestor">FindMyMoat</a> (some list $48 a year)</li>
+<li>changedetection.io: <a href="https://us.fitgap.com/products/changedetection-io">fitgap</a>, <a href="https://mintlify.com/dgtlmoon/changedetection.io/introduction">the project's documentation</a> (older pages list $6.99)</li>
+<li>WeTransfer: <a href="https://getcomics.wetransfer.com/help-center/subscriptions/plan-limits">WeTransfer help center</a>, <a href="https://goodsign.io/blog/wetransfer-pricing.md">goodsign.io</a>, <a href="https://pricingsaas.com/companies/wetransfer">PricingSaaS</a></li>
+</ul>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../Inventory/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Inventory">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Inventory
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../Service%20Organization/" class="md-footer__link md-footer__link--next" aria-label="Next: Service Organization">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Service Organization
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.top", "navigation.footer", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.a5f9d56c.min.js"></script>
+      
+    
+  </body>
+</html>

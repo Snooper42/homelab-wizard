@@ -1,0 +1,2501 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Your household's photos, passwords, documents, money, music, and books, on a computer you own.">
+      
+      
+      
+        <link rel="canonical" href="https://snooper42.github.io/homelab-wizard/docs/Storage/">
+      
+      
+        <link rel="prev" href="../Usability/">
+      
+      
+        <link rel="next" href="../Docker/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/logo.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+    
+    
+      
+        <title>Storage - Homelab Wizard</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.57a0d79d.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.fb2fffe2.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#storage" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Homelab Wizard" class="md-header__button md-logo" aria-label="Homelab Wizard" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Homelab Wizard
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Storage
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue"  aria-label="Dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="blue"  aria-label="Light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Snooper42/homelab-wizard" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Snooper42/homelab-wizard
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Homelab Wizard" class="md-nav__button md-logo" aria-label="Homelab Wizard" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    Homelab Wizard
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Snooper42/homelab-wizard" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Snooper42/homelab-wizard
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Start here
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Start here
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Tour/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    A tour of the app
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Getting%20Started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Everyday%20Tasks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Everyday tasks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing a new build
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Upgrading/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Upgrading
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Commands/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Run it
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Run it
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Runbooks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Runbooks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Automation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Automation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Monitoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Monitoring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Backups/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backups
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Tidy%20Up/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tidy Up
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Private%20Finances/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Private Finances
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Disaster%20Recovery/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Disaster Recovery
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Known%20Issues/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Known Issues
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How it works
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    How it works
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Networking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Networking
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Usability/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Usability
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Storage
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Storage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#repository-layout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Repository layout
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-homelabs-own-records" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The homelab's own records
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#recovery-staging" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        recovery-staging
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#named-volumes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Named volumes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#media-drive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Media drive
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#duplicati-paths" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Duplicati paths
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#native-app-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Native app data
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Docker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docker
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Parity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What each device can do
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../apple-client/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The iPhone and iPad app
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Host/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Host
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Environment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Environment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The apps
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    The apps
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Services/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Services
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Inventory/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Inventory
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Savings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Savings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Service%20Organization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Service Organization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The project
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    The project
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Roadmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Feature%20Roadmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Feature Roadmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Decisions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Decisions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../CHANGELOG/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What's new
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../CONTRIBUTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing (services)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Standards/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Standards
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Releasing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Releasing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../SECURITY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security policy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Homelab%20Manifest/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Homelab Manifest
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Homelab%20Context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Homelab Context
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Maintainer%20Guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Maintainer Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../To-do/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    To-do
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Knowledge base index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#repository-layout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Repository layout
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-homelabs-own-records" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The homelab's own records
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#recovery-staging" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        recovery-staging
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#named-volumes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Named volumes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#media-drive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Media drive
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#duplicati-paths" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Duplicati paths
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#native-app-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Native app data
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="storage">Storage<a class="headerlink" href="#storage" title="Permanent link">&para;</a></h1>
+<h2 id="repository-layout">Repository layout<a class="headerlink" href="#repository-layout" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>~/Homelab/
+├── compose.yaml                 the catalog: categories, presets, native apps
+├── compose/&lt;category&gt;.yaml      homelab_&lt;category&gt;: the single-container apps, one project each
+├── stacks/
+│   ├── cloudflare/compose.yaml  homelab_cloudflare
+│   ├── immich/compose.yaml      homelab_immich
+│   ├── paperless/compose.yaml   homelab_paperless
+│   ├── budget-tracker/compose.yaml  homelab_budget_tracker (MoneyMatter)
+│   ├── karakeep/, romm/, ghostfolio/, docmost/, dawarich/, beszel/,
+│   │   firefly-iii/, frigate/, linkwarden/, nextcloud/, tandoor/   one project each
+│   └── custom/compose.yaml      your own apps (homelab custom add; not in git)
+├── dockerfiles/npm-crowdsec/    the custom proxy image
+├── config/crowdsec/             CrowdSec log acquisition
+├── cmd/, internal/              the CLI's Go source
+├── homelab                      runs the CLI, building it when the source changed
+├── docs/, services/             this knowledge base
+│
+├── .env                         settings and secrets (not in git)
+├── bin/                         the built CLI (not in git)
+├── data/appdata/&lt;service&gt;/      core service data (not in git)
+├── data/                        the homelab's own records (below; not in git)
+├── appdata/&lt;stack&gt;/             stack data, e.g. Paperless documents (not in git)
+├── recovery-staging/            dumps, archives, .env copy, restores (not in git)
+├── backups/                     default Duplicati destination until set to Proton Drive (not in git)
+├── recovery-kit.html            homelab recovery-kit: the printable page (no secrets)
+├── export-&lt;date&gt;/               homelab export: the data in open formats
+└── scripts/logs/                the jobs' logs and state files (not in git)
+</code></pre></div>
+<h2 id="the-homelabs-own-records">The homelab's own records<a class="headerlink" href="#the-homelabs-own-records" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Written by</th>
+<th>Holds</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>data/storage.json</code></td>
+<td>the nightly backup</td>
+<td>Photos per person (Immich, read from its database) and the size of each app folder in <code>data/appdata</code> and <code>appdata</code>, largest first; Status shows them</td>
+</tr>
+<tr>
+<td><code>data/updates.json</code></td>
+<td>the watchdog, <code>homelab rollback</code></td>
+<td>The image each app ran before its update, kept a week (<code>homelab-rollback/&lt;app&gt;:previous</code>); its data from just before is in <code>recovery-staging/before-update</code></td>
+</tr>
+<tr>
+<td><code>data/people.json</code>, <code>data/people/&lt;name&gt;.html</code></td>
+<td><code>homelab person</code></td>
+<td>The household, and each person's welcome page</td>
+</tr>
+<tr>
+<td><code>data/sso/&lt;app&gt;.env</code></td>
+<td><code>homelab sso setup</code></td>
+<td>An app's Pocket ID sign-in settings</td>
+</tr>
+<tr>
+<td><code>data/phones.json</code></td>
+<td><code>homelab phone</code></td>
+<td>Paired phones, with what each may do (make changes, see or change Finances)</td>
+</tr>
+<tr>
+<td><code>data/members/&lt;username&gt;/data/</code></td>
+<td>a household member's phone</td>
+<td>Her own Finances, apart from the household's: <code>finance.json</code>, <code>finance-ledger.json</code> and <code>finance-receipts/</code> while plain; once she keeps them private (<a href="../Private%20Finances/">Private Finances</a>), only <code>finance.sealed</code> (one locked file the computer can't open, 0600) and her receipts locked as <code>finance-receipts/&lt;hash&gt;.sealed</code>. In the nightly backup of the homelab's records</td>
+</tr>
+<tr>
+<td><code>data/finance-card-prices.json</code></td>
+<td>Finances › Collection's <strong>Update prices</strong></td>
+<td>Each card's price on each day it was read (TCGplayer's, from TCGdex), a year and a month at most, by the card's id: its page's chart. A card removed takes its prices with it</td>
+</tr>
+<tr>
+<td><code>data/finance-cards/</code></td>
+<td>Finances › Collection (a card's form, on the computer or a phone allowed to change Finances)</td>
+<td>Each card's picture, by its content's name: a photo of your own made small on the device it was picked on. One no card uses goes a day after the plan is next saved</td>
+</tr>
+<tr>
+<td><code>data/phone-sent/</code></td>
+<td>Send to my phone (an app's row menu, ⌘K)</td>
+<td>A page sent to one paired phone, a small file each, until the phone companion passes it on (within a second) and removes it; one left over two minutes is dropped. Safe to delete</td>
+</tr>
+<tr>
+<td><code>data/finance.json</code></td>
+<td>Finances (the app, and phones allowed to change them)</td>
+<td>The household's money plan: who gets paid, the accounts with each balance typed in kept by its day (for net worth over time), the payments that repeat, the currency and bank holidays</td>
+</tr>
+<tr>
+<td><code>data/homelab-rebuild.json</code></td>
+<td><code>homelab rebuild</code></td>
+<td>Which backup folder a rebuild restored from, while it runs, so running it again carries on; <code>homelab-rebuild-done.json</code> once it is done</td>
+</tr>
+<tr>
+<td><code>data/icons/&lt;app&gt;</code></td>
+<td>the app's page</td>
+<td>The app's own icon (its home screen icon or favicon, asked of the app on this machine once a week; empty when it has none)</td>
+</tr>
+<tr>
+<td><code>data/setup.json</code></td>
+<td>Setup</td>
+<td>Steps marked done by hand</td>
+</tr>
+<tr>
+<td><code>data/alerts-off.json</code></td>
+<td><code>homelab notify off\|on &lt;app&gt;</code> (an app's page › <strong>Tell me if it stops</strong>, or a phone)</td>
+<td>The apps the watchdog still checks and shows on Status but does not alert about. It used to be <code>ALERTS_OFF</code> in <code>.env</code>: the first install or <code>homelab notify</code> after an upgrade moves it here and takes the key out</td>
+</tr>
+<tr>
+<td><code>data/home-only.json</code></td>
+<td><code>homelab away off\|on &lt;app&gt;</code> (an app's page › <strong>Reach it away from home</strong>, or a phone); a new install of a public app adds it</td>
+<td>The public apps kept off the internet: Set up the domain leaves them out of the tunnel and Cloudflare's DNS, and <code>homelab away off</code> removes the tunnel rule and DNS record the homelab made for one. Never a <code>.env</code> key</td>
+</tr>
+<tr>
+<td><code>data/alerts-snoozed.json</code></td>
+<td><code>homelab notify snooze &lt;check&gt; 1h\|1d\|off</code>, or Status › Watchdog › <strong>Snooze…</strong> beside a failing check</td>
+<td>Each snoozed check and when it wakes: the watchdog still checks it but does not alert about it until then, and alerts then if it still fails. Safe to delete (every check alerts again)</td>
+</tr>
+<tr>
+<td><code>data/pinned.json</code></td>
+<td><code>homelab pin\|unpin &lt;app&gt;</code> (a row's right-click › <strong>Pin to the top</strong>, or a phone)</td>
+<td>The apps at the top of Status and of the menu bar's Open an app, in the order pinned. It used to be <code>APPS_PINNED</code> in <code>.env</code>: the first install or <code>homelab pin</code> after an upgrade moves it here and takes the key out</td>
+</tr>
+<tr>
+<td><code>data/savings-history.json</code></td>
+<td>the nightly backup</td>
+<td>The yearly savings over time</td>
+</tr>
+<tr>
+<td><code>data/upgrade/</code></td>
+<td><code>homelab upgrade</code></td>
+<td>Where the folder was before the last upgrade (<code>previous.json</code>; for a folder the app made, a copy of its files), for <code>upgrade --back</code></td>
+</tr>
+<tr>
+<td><code>data/homelab-move.json</code></td>
+<td><code>homelab move in</code></td>
+<td>Where the bundle came from and what ran there, until the move is done</td>
+</tr>
+<tr>
+<td><code>data/appdata/tailscale/serve.json</code></td>
+<td><code>homelab tailnet setup</code></td>
+<td>Home mode: the app addresses Tailscale Serve answers</td>
+</tr>
+<tr>
+<td><code>scripts/logs/watchdog-state.json</code></td>
+<td>the watchdog</td>
+<td>Its last run, failing checks, and per-check pass and run counts for each of the last 7 days (<code>days</code>)</td>
+</tr>
+<tr>
+<td><code>scripts/logs/restore-test.json</code></td>
+<td><code>homelab restore-test</code></td>
+<td>The last 24 restore tests</td>
+</tr>
+<tr>
+<td><code>scripts/logs/digest.json</code></td>
+<td>the nightly backup</td>
+<td>When the weekly summary was last sent</td>
+</tr>
+<tr>
+<td><code>scripts/logs/&lt;part&gt;.log</code>, <code>&lt;part&gt;.1.log</code></td>
+<td>the background agent</td>
+<td>Each part's output (the watchdog, the backup, startup, …); at 5 MB the older half moves to <code>&lt;part&gt;.1.log</code>, replacing the one before</td>
+</tr>
+<tr>
+<td><code>scripts/logs/crash-&lt;date&gt;.log</code></td>
+<td>the app, the menu bar item, the background agent</td>
+<td>What a part was doing when it stopped unexpectedly, a file a day; kept 90 days</td>
+</tr>
+<tr>
+<td><code>scripts/logs/media/&lt;kind&gt;-&lt;action&gt;-&lt;time&gt;.jsonl</code>, <code>background.log</code></td>
+<td>Tidy Up</td>
+<td>Each job's events, a file a job (kept 30 days); the jobs run in the background write <code>background.log</code>, which at 5 MB moves its older half to <code>background.1.log</code></td>
+</tr>
+<tr>
+<td><code>data/media-trash.jsonl</code></td>
+<td>Tidy Up's jobs</td>
+<td>What each run put in the Trash, for <strong>Undo</strong>. A line stays while Tidy Up still offers Undo for its run (Recent activity, or an action's last run), and at least 30 days</td>
+</tr>
+</tbody>
+</table>
+<p>The nightly backup copies the <code>.json</code> files here, <code>data/people</code>, and <code>data/sso</code> into <code>recovery-staging/secrets/data</code>, which the Homelab Secrets job takes off-site with <code>.env</code>; the rest of <code>data/</code> is in <code>data/appdata</code> (the AppData job) or rebuilt by itself.</p>
+<p>Keep the repository at <code>~/Homelab</code>. Inside <code>~/Desktop</code>, <code>~/Documents</code>, <code>~/Downloads</code>, or a cloud-synced folder, macOS privacy controls and file syncing interfere with containers (<code>./homelab doctor</code> warns).</p>
+<h2 id="recovery-staging">recovery-staging<a class="headerlink" href="#recovery-staging" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Folder</th>
+<th>Written by</th>
+<th>Read by</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>databases/&lt;service&gt;/</code></td>
+<td><code>homelab backup</code> (gzipped <code>pg_dumpall</code>, newest 7)</td>
+<td>Homelab Databases job (<code>/staging/databases</code>)</td>
+</tr>
+<tr>
+<td><code>volumes/&lt;volume&gt;/</code></td>
+<td><code>homelab backup</code> (tar.gz, newest 7)</td>
+<td>Homelab Databases job (<code>/staging/volumes</code>)</td>
+</tr>
+<tr>
+<td><code>secrets/homelab.env</code></td>
+<td><code>homelab backup</code> (copy of <code>.env</code>, mode 0600)</td>
+<td>Homelab Secrets job (<code>/staging/secrets</code>)</td>
+</tr>
+<tr>
+<td><code>secrets/data/</code></td>
+<td><code>homelab backup</code> (the homelab's own records from <code>data/</code>, mode 0600)</td>
+<td>Homelab Secrets job (<code>/staging/secrets</code>)</td>
+</tr>
+<tr>
+<td><code>restore/</code>, <code>restore-test/</code></td>
+<td>Duplicati restores</td>
+<td>You, and <code>homelab restore-test</code></td>
+</tr>
+<tr>
+<td><code>before-update/&lt;app&gt;/&lt;time&gt;/</code></td>
+<td><code>homelab update</code>, just before an app moves to a newer image: a tar.gz of each folder in the homelab folder and named volume it writes to (up to <code>UPDATE_COPY_LIMIT</code> each), its databases' dumps, and <code>copy.json</code> saying what is in it. The newest per app, for a week</td>
+<td><code>homelab rollback</code></td>
+</tr>
+<tr>
+<td><code>rolled-back/&lt;app&gt;/&lt;time&gt;/</code></td>
+<td><code>homelab rollback</code>: the app's data as it was when its copy was put back, and its databases' dumps. Never deleted by the homelab</td>
+<td>You</td>
+</tr>
+</tbody>
+</table>
+<h2 id="named-volumes">Named volumes<a class="headerlink" href="#named-volumes" title="Permanent link">&para;</a></h2>
+<p>Databases and caches use named volumes inside the container runtime (OrbStack's VM on a Mac): faster than bind mounts on macOS, and safe from Finder and Spotlight. Their contents reach backups only through <code>homelab backup</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Volume</th>
+<th>Holds</th>
+<th>Backed up</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>homelab_immich_immich-pgdata</code></td>
+<td>Immich database</td>
+<td>Daily dump</td>
+</tr>
+<tr>
+<td><code>homelab_immich_immich-model-cache</code></td>
+<td>Machine-learning models</td>
+<td>No (downloaded again)</td>
+</tr>
+<tr>
+<td><code>homelab_paperless_paperless-pgdata</code></td>
+<td>Paperless database</td>
+<td>Daily dump</td>
+</tr>
+<tr>
+<td><code>homelab_paperless_paperless-redisdata</code></td>
+<td>Paperless task queue</td>
+<td>No</td>
+</tr>
+<tr>
+<td><code>homelab_budget_tracker_moneymatter-db</code></td>
+<td>MoneyMatter database</td>
+<td>Daily dump</td>
+</tr>
+<tr>
+<td><code>homelab_budget_tracker_moneymatter-attachments</code></td>
+<td>MoneyMatter attachments</td>
+<td>Daily archive</td>
+</tr>
+<tr>
+<td><code>homelab_budget_tracker_moneymatter-redis</code>, <code>-rates</code></td>
+<td>Cache, exchange rates</td>
+<td>No (rebuilt)</td>
+</tr>
+<tr>
+<td><code>homelab_karakeep_karakeep-meilisearch</code></td>
+<td>Karakeep's search index</td>
+<td>No (rebuilds itself)</td>
+</tr>
+<tr>
+<td><code>homelab_&lt;stack&gt;_&lt;app&gt;-pgdata</code> (RomM, Ghostfolio, Docmost, Dawarich, Firefly III, Linkwarden, Nextcloud, Tandoor)</td>
+<td>Each optional stack's database</td>
+<td>Daily dump</td>
+</tr>
+<tr>
+<td><code>homelab_romm_romm-redis</code>, <code>homelab_dawarich_dawarich-public</code></td>
+<td>Cache, generated files</td>
+<td>No</td>
+</tr>
+<tr>
+<td><code>homelab_core_npm-logs</code></td>
+<td>Proxy logs, shared with CrowdSec (kept its <code>homelab_core</code> name after the category split)</td>
+<td>No</td>
+</tr>
+<tr>
+<td><code>homelab_core_adguard-work</code></td>
+<td>AdGuard query log and statistics</td>
+<td>No</td>
+</tr>
+</tbody>
+</table>
+<p>Never run <code>docker volume prune</code> or <code>docker system prune --volumes</code>.</p>
+<h2 id="media-drive">Media drive<a class="headerlink" href="#media-drive" title="Permanent link">&para;</a></h2>
+<p><code>/Volumes/Media</code>, an external drive.</p>
+<table>
+<thead>
+<tr>
+<th>Folder</th>
+<th>Used by</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>music</code></td>
+<td>Navidrome (read-only, same path inside the container), Lidarr, beets</td>
+</tr>
+<tr>
+<td><code>audiobooks</code>, <code>podcasts</code></td>
+<td>Audiobookshelf</td>
+</tr>
+<tr>
+<td><code>Books</code></td>
+<td>Calibre-Web (the Calibre library), Kavita, LazyLibrarian</td>
+</tr>
+<tr>
+<td><code>comics</code></td>
+<td>Komga, Kavita (read-only)</td>
+</tr>
+<tr>
+<td><code>movies</code>, <code>tv</code></td>
+<td>Jellyfin, Radarr, Sonarr, Bazarr</td>
+</tr>
+<tr>
+<td><code>photos</code></td>
+<td>Immich (<code>IMMICH_UPLOAD_LOCATION</code>)</td>
+</tr>
+<tr>
+<td><code>downloads</code></td>
+<td>qBittorrent and the *arr apps; beets imports music from it</td>
+</tr>
+</tbody>
+</table>
+<p>The startup job waits up to 15 minutes for the drive. Photos and the Calibre library are backed up by their own Duplicati jobs; other media is not (see <a href="../Backups/">Backups</a>).</p>
+<h2 id="duplicati-paths">Duplicati paths<a class="headerlink" href="#duplicati-paths" title="Permanent link">&para;</a></h2>
+<p>Jobs always use container paths. The full mapping is in <a href="../Backups/">Backups</a>.</p>
+<h2 id="native-app-data">Native app data<a class="headerlink" href="#native-app-data" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>App</th>
+<th>Folder</th>
+<th>Backed up</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Jellyfin</td>
+<td><code>JELLYFIN_DATA_DIR</code> (default <code>~/.local/share/jellyfin</code>)</td>
+<td>Homelab Jellyfin job</td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../Usability/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Usability">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Usability
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../Docker/" class="md-footer__link md-footer__link--next" aria-label="Next: Docker">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Docker
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.top", "navigation.footer", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.a5f9d56c.min.js"></script>
+      
+    
+  </body>
+</html>

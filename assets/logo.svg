@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title">
+  <title id="title">Homelab Wizard</title>
+  <!-- A blue shield with a house and a keyhole door: bold enough to read at
+       taskbar size, on light and dark. The Mac's Dock icon puts it on a tile
+       (app/build/appicon.png, from assets/appicon-mac.svg). -->
+  <defs>
+    <linearGradient id="shield" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#38bdf8"/>
+      <stop offset="1" stop-color="#2563eb"/>
+    </linearGradient>
+  </defs>
+  <path d="M128 12 226 48v74c0 66-40 108-98 124C70 230 30 188 30 122V48l98-36Z" fill="url(#shield)"/>
+  <path d="M74 124 128 80l54 44" fill="none" stroke="#fff" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M90 116v66h76v-66" fill="none" stroke="#fff" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="128" cy="144" r="12" fill="#fff"/>
+  <rect x="122" y="148" width="12" height="24" rx="5" fill="#fff"/>
+</svg>

@@ -1,0 +1,2428 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Your household's photos, passwords, documents, money, music, and books, on a computer you own.">
+      
+      
+      
+        <link rel="canonical" href="https://snooper42.github.io/homelab-wizard/docs/Monitoring/">
+      
+      
+        <link rel="prev" href="../Automation/">
+      
+      
+        <link rel="next" href="../Backups/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/logo.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+    
+    
+      
+        <title>Monitoring - Homelab Wizard</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.57a0d79d.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.fb2fffe2.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#monitoring" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Homelab Wizard" class="md-header__button md-logo" aria-label="Homelab Wizard" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Homelab Wizard
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Monitoring
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue"  aria-label="Dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="blue"  aria-label="Light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Snooper42/homelab-wizard" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Snooper42/homelab-wizard
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Homelab Wizard" class="md-nav__button md-logo" aria-label="Homelab Wizard" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    Homelab Wizard
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Snooper42/homelab-wizard" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Snooper42/homelab-wizard
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Start here
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Start here
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Tour/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    A tour of the app
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Getting%20Started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Everyday%20Tasks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Everyday tasks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing a new build
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Upgrading/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Upgrading
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Commands/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Run it
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Run it
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Runbooks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Runbooks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Automation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Automation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Monitoring
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Monitoring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#in-the-app" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        In the app
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#uptime-kuma" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Uptime Kuma
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#watchdog" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Watchdog
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Watchdog">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#weekly-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Weekly summary
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#external-heartbeat" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        External heartbeat
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#on-this-machines-screen" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        On this machine's screen
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ntfy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ntfy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#crowdsec" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CrowdSec
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#daily-and-weekly-checks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Daily and weekly checks
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Backups/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backups
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Tidy%20Up/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tidy Up
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Private%20Finances/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Private Finances
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Disaster%20Recovery/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Disaster Recovery
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Known%20Issues/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Known Issues
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How it works
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    How it works
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Networking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Networking
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Usability/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Usability
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Storage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Storage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Docker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docker
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Parity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What each device can do
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../apple-client/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The iPhone and iPad app
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Host/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Host
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Environment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Environment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The apps
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    The apps
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Services/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Services
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Inventory/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Inventory
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Savings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Savings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Service%20Organization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Service Organization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The project
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    The project
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Roadmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Feature%20Roadmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Feature Roadmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Decisions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Decisions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../CHANGELOG/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What's new
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../CONTRIBUTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing (services)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Standards/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Standards
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Releasing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Releasing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../SECURITY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security policy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Homelab%20Manifest/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Homelab Manifest
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Homelab%20Context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Homelab Context
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Maintainer%20Guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Maintainer Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../To-do/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    To-do
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Knowledge base index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#in-the-app" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        In the app
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#uptime-kuma" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Uptime Kuma
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#watchdog" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Watchdog
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Watchdog">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#weekly-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Weekly summary
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#external-heartbeat" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        External heartbeat
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#on-this-machines-screen" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        On this machine's screen
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ntfy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ntfy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#crowdsec" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CrowdSec
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#daily-and-weekly-checks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Daily and weekly checks
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="monitoring">Monitoring<a class="headerlink" href="#monitoring" title="Permanent link">&para;</a></h1>
+<p>Three layers: the watchdog checks every app every 15 minutes (and an outside heartbeat notices if the watchdog itself stops), Uptime Kuma adds history and a dashboard, and CrowdSec watches who is knocking. All alerts arrive through ntfy, and on this machine's screen.</p>
+<h2 id="in-the-app">In the app<a class="headerlink" href="#in-the-app" title="Permanent link">&para;</a></h2>
+<p>The <strong>Status</strong> screen is the everyday view; nothing below needs Terminal.</p>
+<table>
+<thead>
+<tr>
+<th>Where</th>
+<th>What it tells you</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>The app list</td>
+<td>Each app's state, as it changes. A running app whose page on this machine does not answer shows <em>Not answering</em> with why (<em>HTTP 502</em>, <em>nothing answers on its port</em>, <em>no answer in time</em>): Status asks each running app's address whenever it loads, as the watchdog does every 15 minutes, past an app's first 90 seconds. An app whose settings (<code>.env</code>, or its compose file after an upgrade) changed since its container was made shows <em>settings changed</em>: it still runs the old ones until <strong>Fix it</strong> (or <code>up</code>) recreates it; Compose's own configuration hash says so. An app that passed fewer than 99% of the watchdog's checks in the last 7 days gets a badge such as <em>96.2% up this week</em></td>
+</tr>
+<tr>
+<td><strong>Watchdog</strong></td>
+<td>The last run: all checks passed, or each failing check with what it said and since when. <strong>Fix it</strong> appears when a check fails</td>
+</tr>
+<tr>
+<td><strong>This week</strong></td>
+<td>The Sunday summary at any time: apps, backups, restore test, attacks caught, disk space, with what needs a look marked (<code>./homelab digest</code>)</td>
+</tr>
+<tr>
+<td><strong>What’s using power</strong></td>
+<td>While apps work hard: each busy app's share of a processor core now, with a line of the last five minutes (sampled every 10 seconds while Status is open)</td>
+</tr>
+<tr>
+<td><strong>What the apps keep</strong></td>
+<td>The six largest app folders, and <strong>Photos per person</strong>, as last night's backup measured them</td>
+</tr>
+<tr>
+<td><strong>Protection</strong></td>
+<td>While CrowdSec and the proxy run: bans enforced or not, attacks caught this week, addresses banned now. When bans are not enforced, <strong>Fix</strong> reconnects the proxy to CrowdSec</td>
+</tr>
+<tr>
+<td><strong>Recent alerts</strong></td>
+<td>The last 12 hours of alerts from ntfy, each line of an alert on its own, less those whose problem has cleared: a watchdog alert once a later run passed every check it named, a backup's once each app it skipped runs again. <strong>Check again</strong> reads them now</td>
+</tr>
+</tbody>
+</table>
+<p>The cards come in the same answer as Status, each drawn the moment it is read, so a slow one (the week asks several apps) holds up none of the rest. While the background agent runs, it reads them once for the window and the phone companion together.</p>
+<p><strong>Fix it</strong> (<code>./homelab fix</code>) shows its plan first, then starts the runtime if it is stopped, starts or restarts apps that are down or unwell, recreates apps whose settings changed since they started, frees disk space when a disk is low, installs missing scheduled jobs, and reconnects the proxy to CrowdSec when bans are not enforced.</p>
+<h2 id="uptime-kuma">Uptime Kuma<a class="headerlink" href="#uptime-kuma" title="Permanent link">&para;</a></h2>
+<p>Uptime Kuma runs with the baseline, but setting up its monitors is optional: the watchdog already alerts on every app, so Uptime Kuma is for history graphs and a status page. Its monitors are set up by hand (it has no API for creating them).</p>
+<p>Add monitors only for the apps you have installed. Uptime Kuma is on the <code>homelab</code> network, so monitors use service names and container ports, not localhost addresses.</p>
+<table>
+<thead>
+<tr>
+<th>Monitor</th>
+<th>Type</th>
+<th>Target</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Nginx Proxy Manager</td>
+<td>HTTP</td>
+<td><code>http://nginx-proxy-manager:81</code></td>
+</tr>
+<tr>
+<td>AdGuard Home</td>
+<td>HTTP</td>
+<td><code>http://adguard-home:80</code></td>
+</tr>
+<tr>
+<td>AdGuard DNS</td>
+<td>DNS</td>
+<td><code>npm.example.com</code>, resolver <code>192.168.1.10</code>, port 53</td>
+</tr>
+<tr>
+<td>CrowdSec</td>
+<td>TCP port</td>
+<td><code>crowdsec</code>, port 8080</td>
+</tr>
+<tr>
+<td>Duplicati</td>
+<td>HTTP</td>
+<td><code>http://duplicati:8200</code></td>
+</tr>
+<tr>
+<td>Vaultwarden</td>
+<td>HTTP</td>
+<td><code>http://vaultwarden:80/alive</code></td>
+</tr>
+<tr>
+<td>ntfy</td>
+<td>HTTP</td>
+<td><code>http://ntfy:80/v1/health</code></td>
+</tr>
+<tr>
+<td>Navidrome</td>
+<td>HTTP</td>
+<td><code>http://navidrome:4533/ping</code></td>
+</tr>
+<tr>
+<td>Feishin</td>
+<td>HTTP</td>
+<td><code>http://feishin:9180</code></td>
+</tr>
+<tr>
+<td>Audiobookshelf</td>
+<td>HTTP</td>
+<td><code>http://audiobookshelf:80/healthcheck</code></td>
+</tr>
+<tr>
+<td>Calibre-Web</td>
+<td>HTTP</td>
+<td><code>http://calibre-web:8083</code></td>
+</tr>
+<tr>
+<td>Komga</td>
+<td>HTTP</td>
+<td><code>http://komga:25600</code></td>
+</tr>
+<tr>
+<td>Immich</td>
+<td>HTTP</td>
+<td><code>http://immich-server:2283/api/server/ping</code></td>
+</tr>
+<tr>
+<td>Paperless-ngx</td>
+<td>HTTP</td>
+<td><code>http://paperless:8000</code></td>
+</tr>
+<tr>
+<td>MoneyMatter</td>
+<td>HTTP</td>
+<td><code>http://moneymatter-frontend:80</code></td>
+</tr>
+<tr>
+<td>Jellyfin</td>
+<td>HTTP</td>
+<td><code>http://host.docker.internal:8096/health</code></td>
+</tr>
+</tbody>
+</table>
+<p>Add one for each optional app you install (<code>http://&lt;service&gt;:&lt;container port&gt;</code>; the port is the <code>web</code> value in its note's table).</p>
+<p><strong>Notifications:</strong> Settings › Notifications › Setup Notification › ntfy. Server URL <code>http://ntfy:80</code>, topic <code>uptime-kuma</code>, priority 4, authentication method <em>Access token</em> with <code>NTFY_PUBLISH_TOKEN</code> from <code>.env</code> (after <code>./homelab notify setup</code>). Apply it to every monitor.</p>
+<p>These monitors check that each app answers on the Docker network. They do not prove the public path works; that is the watchdog's job.</p>
+<h2 id="watchdog">Watchdog<a class="headerlink" href="#watchdog" title="Permanent link">&para;</a></h2>
+<p><code>./homelab watchdog</code> runs every 15 minutes (a part of the background agent; <a href="../Automation/#scheduled-jobs">Automation</a>) and checks:</p>
+<ul>
+<li>that the container runtime (OrbStack on a Mac) is running;</li>
+<li>every app the homelab runs: a container that is unhealthy or keeps restarting (Docker counts one waiting to be restarted as running, so this is checked apart), a baseline app that is not running, and, for apps without a health check, whether the web page answers on this Mac. Optional apps that are stopped and the tunnel before it has a token are left alone;</li>
+<li><em>with a domain</em>, every public hostname, resolved through public DNS (Cloudflare 1.1.1.1), so the request takes the same path as a visitor's;</li>
+<li>each running app's newest database dump, which fails when it is over 26 hours old (backups that quietly stopped);</li>
+<li>each Duplicati job, with <code>DUPLICATI_PASSWORD</code> set: one whose last run failed, or with no successful run for over a week (jobs never run yet are left alone), and one whose last weekly check (<code>homelab backup-check</code>) found a damaged file, until a check passes again;</li>
+<li>the proxy's CrowdSec bouncer, while CrowdSec and the proxy run: missing, revoked, or without a pull for over 5 minutes means bans are not enforced (it pulls every 10 seconds). It reads every entry CrowdSec keeps for the proxy, <code>nginx_proxy_manager</code> and the <code>nginx_proxy_manager@&lt;address&gt;</code> it adds when the proxy comes back with a new address;</li>
+<li>free space on each disk the homelab writes to: the homelab folder's, and those under <code>IMMICH_UPLOAD_LOCATION</code>, <code>MEDIA_ROOT</code>, <code>DOWNLOADS_ROOT</code>, <code>BACKUP_DESTINATION</code>, <code>JELLYFIN_DATA_DIR</code>, and <code>SYNC_ROOT</code> that are connected. A disk fails under 5% free, at least 10 GB and at most 50 GB (a full disk stops databases, downloads, and the container runtime, whose disk image lives on the Mac's own disk). This check runs even while the runtime is down. <code>homelab doctor</code> and Settings › This Mac › Storage show the same;</li>
+<li>each drive's own health report (SMART), when <code>smartctl</code> is installed (<code>brew install smartmontools</code>): a drive that says it is failing fails the check. Containers cannot read a Mac's disks, which is why this runs on the host rather than as an app like Scrutiny. Many USB enclosures do not pass the report through; those drives are listed by <code>homelab doctor</code> as having no report and are left alone. <code>doctor</code> also warns about early signs on a passing drive: reallocated or pending sectors, media errors, or an SSD past 90% of its rated wear.</li>
+<li>the apps' memory, against what Docker has (the whole machine on Linux; Docker Desktop's or OrbStack's share on a Mac or Windows): above 90% on two runs in a row at least 10 minutes apart, it alerts once, <em>Homelab: memory nearly full</em>, with the three biggest apps and how much each uses, and Status's Watchdog card lists them, each with <strong>Stop</strong>, until it comes down (then <em>memory is back to normal</em>, once). A moment's peak, such as an import, says nothing.</li>
+</ul>
+<p>A failing check you already know of can be snoozed: Status › Watchdog › <strong>Snooze…</strong> beside it (for an hour or a day), or <code>./homelab notify snooze &lt;check&gt; 1h|1d</code>. The watchdog still checks it and shows it, but sends no alert about it until the snooze ends; if it still fails then, it alerts once. <strong>Alert again now</strong> in the same menu, or <code>off</code>, ends it early.</p>
+<p>At night (<code>QUIET_HOURS</code>, 22:00 to 07:00 by default) every alert still reaches the phone, but at ntfy's low priority, without a sound or a vibration, except the serious ones: the vault (Vaultwarden) not answering, and a backup that has failed two nights running. Those sound at any hour. <code>QUIET_HOURS=off</code> sounds every alert; <code>13-15</code> picks other hours.</p>
+<p>An app whose container runs but is unhealthy, or whose page does not answer, on two runs in a row (15 to 30 minutes) is restarted: Docker restarts a container that stops, but not one that hangs. Each app is restarted once in 6 hours at most, so one a restart does not help is left for a person, and an app updated in the last 6 hours is left to the rollback. An alert on <code>tunnel-watchdog</code> says which app was restarted and why; <code>AUTO_HEAL=false</code> in Settings makes the watchdog only alert. An app whose container is gone (removed outside the homelab, or by a prune) is made again on the same terms, if the watchdog saw it running in the last week. When it last restarted each app is kept in <code>data/healed.json</code>.</p>
+<p>An app that stopped by itself and stays stopped (one whose restart policy is off, or that Docker couldn't start) is not stopped on purpose: Status's row and its page say when it stopped and, when Docker knows, why: <em>Stopped at 3:12 AM: it ran out of memory</em>, <em>it quit with an error</em>, <em>another program is using its port 9925</em>, or <em>Docker couldn't start it</em>, with a red dot, and <em>Needs a look</em> and the menu bar count it. One stopped cleanly (by <code>docker stop</code>, or a shutdown) says only when, with a yellow dot. <code>homelab status</code> puts the why in its HEALTH column. The watchdog counts one that stopped by itself as a failing check (<em>mealie: stopped: it ran out of memory</em>), so the phone hears of it; it alerts, and doesn't restart it. Any other stopped app it doesn't check, and Status's Watchdog line names it (<em>Not checked while stopped: Mealie</em>). Its page says under its name what to do: Start, or what to put right first; on a phone that can only look, to start it from the computer.</p>
+<p>An app that keeps stopping on its own is restarted by Docker, forever. When Docker restarted one 3 times within an hour and it is still not settled (between restarts, unhealthy, or up less than a minute), the watchdog stops it instead and alerts <code>tunnel-watchdog</code> with its last 10 log lines, secrets taken out. It is kept as stopped by the watchdog in <code>data/stopped.json</code>, so nothing starts it by itself: Status's row says <em>Stopped: it restarted 5 times in an hour</em> with a red dot, <em>Needs a look</em> counts it, and the menu bar lists it. Starting it again (its row's <strong>Start</strong>, or <code>homelab start</code>) forgets that. One that restarted a few times while its database started and has run since is left, and so is one updated in the last 6 hours (the rollback decides). The counts it compares are kept in <code>data/restarts.json</code>; <code>AUTO_HEAL=false</code> leaves it to Docker.</p>
+<p>It alerts the <code>tunnel-watchdog</code> topic when a check starts failing and again when it recovers, not on every run. State is kept in <code>scripts/logs/watchdog-state.json</code>, with the last run's time, how many checks ran, what each failing check said, and a count of passed and failed runs per check for each of the last 7 days (<code>days</code>; the <em>% up this week</em> badges come from it): the app's Status screen shows it under <strong>Watchdog</strong>, and <code>homelab report</code> includes it. An app's page says its week under <strong>This week</strong>: the share of checks passed and, from the outages kept beside it, the last time it was down, for how long, and why (<em>Last down Tue at 3:10 AM for 45 minutes: HTTP 502 · 2 outages</em>), or <em>Down since …</em> while it is. Checks it missed that passed the next time say so; an older agent with no outages says how many checks it didn't answer, and on which days.</p>
+<h3 id="weekly-summary">Weekly summary<a class="headerlink" href="#weekly-summary" title="Permanent link">&para;</a></h3>
+<p>On Sundays the nightly backup also sends <em>Homelab this week</em> to the <code>tunnel-watchdog</code> topic: the apps (all healthy, or which need a look), the watchdog (still running every 15 minutes, and any other check it alerted about, such as a public address or the CrowdSec bouncer), the database copies, the off-site jobs, the last restore test, a due or readable vault export, the free space on each disk (or which is low), each drive's health (passing, wearing, or failing), homelab updates waiting on GitHub, how many attacks CrowdSec caught, the yearly savings, and, once Finances has a plan, what the next paycheck leaves, the biggest bills before it, net worth with its change since last week, and, from the transactions, what went out in the last seven days and where most of it went. A good week arrives quietly (low priority) as <em>all well</em>; otherwise the title counts the things that need a look. Status › <strong>This week</strong> shows the same summary at any time; <code>./homelab digest</code> prints it, and <code>--send</code> sends it now. Sending waits until <strong>Set up the alert token</strong> has run.</p>
+<p>The nightly backup also sends Finances' reminders to the same topic, each on its one day: a bill or card due tomorrow, three days before a paycheck that will leave checking under the cushion, a week before a yearly payment renews, and each week the balances go without an update. Finances › Pay › Paydays and money turns each off.</p>
+<h3 id="external-heartbeat">External heartbeat<a class="headerlink" href="#external-heartbeat" title="Permanent link">&para;</a></h3>
+<p>When OrbStack (or the whole Mac) is down, ntfy is down too, so it cannot say so. With <code>HEARTBEAT_URL</code> set, every watchdog run also pings an outside monitor: the URL when all checks pass, <code>&lt;URL&gt;/fail</code> with the failures otherwise. Create a free check at healthchecks.io with a 15-minute period and a 15-minute grace, give it your phone's or email alerts, and put its ping URL in <code>HEARTBEAT_URL</code> (the app's Settings screen, or <code>.env</code>). If the pings stop, because the Mac is off, asleep, or offline, or launchd stopped running the watchdog, healthchecks.io alerts you.</p>
+<h2 id="on-this-machines-screen">On this machine's screen<a class="headerlink" href="#on-this-machines-screen" title="Permanent link">&para;</a></h2>
+<p>Every alert the homelab's own jobs send (the watchdog, backups, the weekly summary) also shows as a notification on the machine running the homelab: Notification Center on a Mac, the desktop's notifications on Linux, a toast on Windows. So alerts reach someone before the phone is set up, and while ntfy itself is down. <code>DESKTOP_ALERTS=false</code> in Settings sends them to the phone only. Until <strong>Set up the alert token</strong> has run, the screen is the only place they go.</p>
+<h2 id="ntfy">ntfy<a class="headerlink" href="#ntfy" title="Permanent link">&para;</a></h2>
+<p>ntfy denies everything by default. <code>./homelab notify setup</code> creates the <code>homelab</code> user that every alert source publishes as, gives it write-only access to the topics below, saves its access token in <code>.env</code> (<code>NTFY_PUBLISH_TOKEN</code>, and the same as an <code>?auth=</code> parameter in <code>NTFY_PUBLISH_AUTH</code>), and removes anonymous write access. The watchdog uses it automatically; Duplicati gets it as a default option for every job (by <code>notify setup</code> itself, and by <code>duplicati setup</code>), and Uptime Kuma as described above. In Home mode the phone reaches ntfy over Tailscale, at home and away. <em>With a domain</em>, once the token exists, <code>./homelab domain setup</code> publishes ntfy through the tunnel, so the phone gets alerts away from home too.</p>
+<p>It also creates <code>homelab-reader</code>, with read-only access to the same topics, and keeps its token in <code>NTFY_READ_TOKEN</code>. The desktop app uses it to show the last 12 hours of alerts on Status (ntfy keeps 12 hours), and the menu bar shows the newest one. Re-running <code>notify setup</code> on an existing homelab adds the reader and keeps the publisher's token.</p>
+<p>And it creates <code>phone</code>, the account the phone subscribes with: read-only on the same topics, with a generated password kept in <code>.env</code> as <code>NTFY_PHONE_PASSWORD</code>. The password reaches ntfy through docker's environment, never a command line; an account named <code>phone</code> made by hand before gets the generated password. In the ntfy app on the phone: Settings › Users › add ntfy's address as the server (its tailnet address from Status in Home mode; <em>with a domain</em>, <code>https://ntfy.example.com</code>), user <code>phone</code>, and the password from the desktop app's Settings › <code>NTFY_PHONE_PASSWORD</code> › <strong>Copy</strong> (Universal Clipboard pastes it on an iPhone signed in to the same Apple ID). Then subscribe to the topics below on that server.</p>
+<table>
+<thead>
+<tr>
+<th>Topic</th>
+<th>Expect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>watchtower</code></td>
+<td>A summary after each night's updates, and each rollback (the agent sends it; the name is from Watchtower)</td>
+</tr>
+<tr>
+<td><code>duplicati-alerts</code></td>
+<td>Only failures</td>
+</tr>
+<tr>
+<td><code>uptime-kuma</code></td>
+<td>Down and up messages</td>
+</tr>
+<tr>
+<td><code>tunnel-watchdog</code></td>
+<td>Down and recovered messages</td>
+</tr>
+<tr>
+<td><code>reminders</code></td>
+<td>From the apps you set up for it: Wallos renewals, Changedetection.io changes</td>
+</tr>
+</tbody>
+</table>
+<p><code>./homelab notify test &lt;topic&gt;</code> sends a test message.</p>
+<h2 id="crowdsec">CrowdSec<a class="headerlink" href="#crowdsec" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>./homelab<span class="w"> </span>compose<span class="w"> </span>crowdsec<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>crowdsec<span class="w"> </span>cscli<span class="w"> </span>metrics<span class="w">            </span><span class="c1"># what is parsed, per source</span>
+./homelab<span class="w"> </span>compose<span class="w"> </span>crowdsec<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>crowdsec<span class="w"> </span>cscli<span class="w"> </span>alerts<span class="w"> </span>list<span class="w">        </span><span class="c1"># recent detections</span>
+./homelab<span class="w"> </span>compose<span class="w"> </span>crowdsec<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>crowdsec<span class="w"> </span>cscli<span class="w"> </span>decisions<span class="w"> </span>list<span class="w">     </span><span class="c1"># active bans</span>
+./homelab<span class="w"> </span>compose<span class="w"> </span>crowdsec<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>crowdsec<span class="w"> </span>cscli<span class="w"> </span>bouncers<span class="w"> </span>list<span class="w">      </span><span class="c1"># the proxy's bouncer and its last pull</span>
+</code></pre></div>
+<p><code>./homelab doctor</code> and the watchdog read the bouncer list themselves: doctor says how long ago the proxy pulled decisions, and the watchdog alerts when it stops. The app's Status screen shows <strong>Protection</strong>: bans enforced or not, the attacks caught this week (<code>cscli alerts list --since 168h</code>, the community blocklist left out), how many addresses are banned now, and the latest three. The weekly summary counts the week's attacks too.</p>
+<p>When bans are not enforced (the bouncer is missing, revoked, or stale, often after CrowdSec restarted), Protection's <strong>Fix</strong> button, <strong>Fix it</strong>, or <code>./homelab fix</code> removes the proxy's old bouncer entries (the <code>@&lt;address&gt;</code> ones too), restarts CrowdSec (which registers it again), and restarts the proxy.</p>
+<p>The proxy's bouncer also asks CrowdSec's AppSec component about each request. It loads only the virtual-patching rules (exploits of known vulnerabilities in common apps; <code>config/crowdsec/appsec.yaml</code>), and lets requests through when AppSec is down.</p>
+<p><code>cscli metrics</code> should show lines read from <code>/var/log/npm/*.log</code> and parsed by the nginx-proxy-manager parser. If it reads nothing, check the <code>npm-logs</code> volume and <code>config/crowdsec/acquis.yaml</code>.</p>
+<p>Optionally enroll the engine in the CrowdSec console (<code>CROWDSEC_ENROLL_KEY</code>) for a web view of alerts.</p>
+<h2 id="daily-and-weekly-checks">Daily and weekly checks<a class="headerlink" href="#daily-and-weekly-checks" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>When</th>
+<th>Check</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Daily, glance</td>
+<td>No unread alerts in ntfy</td>
+</tr>
+<tr>
+<td>Weekly</td>
+<td>Status › <strong>This week</strong> (or the Sunday alert); Backups › Off-site jobs</td>
+</tr>
+<tr>
+<td>Monthly</td>
+<td>Backups › <strong>Test a restore</strong> (<a href="../Backups/">Backups</a>); <code>./homelab doctor</code>; disk space on the media drive and in the cloud drive's own app</td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../Automation/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Automation">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Automation
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../Backups/" class="md-footer__link md-footer__link--next" aria-label="Next: Backups">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Backups
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.top", "navigation.footer", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.a5f9d56c.min.js"></script>
+      
+    
+  </body>
+</html>

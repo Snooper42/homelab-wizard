@@ -1,0 +1,2538 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Your household's photos, passwords, documents, money, music, and books, on a computer you own.">
+      
+      
+      
+        <link rel="canonical" href="https://snooper42.github.io/homelab-wizard/docs/Commands/">
+      
+      
+        <link rel="prev" href="../Upgrading/">
+      
+      
+        <link rel="next" href="../Runbooks/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/logo.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+    
+    
+      
+        <title>Commands - Homelab Wizard</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.57a0d79d.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.fb2fffe2.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#commands" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Homelab Wizard" class="md-header__button md-logo" aria-label="Homelab Wizard" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Homelab Wizard
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Commands
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue"  aria-label="Dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="blue"  aria-label="Light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Snooper42/homelab-wizard" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Snooper42/homelab-wizard
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Homelab Wizard" class="md-nav__button md-logo" aria-label="Homelab Wizard" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    Homelab Wizard
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Snooper42/homelab-wizard" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Snooper42/homelab-wizard
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Start here
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Start here
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Tour/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    A tour of the app
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Getting%20Started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Everyday%20Tasks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Everyday tasks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing a new build
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Upgrading/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Upgrading
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commands
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#the-main-loop" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The main loop
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#picking-apps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Picking apps
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#start-add-remove" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Start, add, remove
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#compose-without-changing-folders" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Compose, without changing folders
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#domain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Domain
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phones" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phones
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#jobs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Jobs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#docs-and-checks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docs and checks
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#global-flags" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Global flags
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#driving-the-cli-from-an-app" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Driving the CLI from an app
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#first-time-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        First-time setup
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rules-of-thumb" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rules of thumb
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Run it
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Run it
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Runbooks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Runbooks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Automation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Automation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Monitoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Monitoring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Backups/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backups
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Tidy%20Up/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tidy Up
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Private%20Finances/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Private Finances
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Disaster%20Recovery/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Disaster Recovery
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Known%20Issues/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Known Issues
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How it works
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    How it works
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Networking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Networking
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Usability/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Usability
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Storage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Storage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Docker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docker
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Parity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What each device can do
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../apple-client/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The iPhone and iPad app
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Host/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Host
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Environment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Environment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The apps
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    The apps
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Services/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Services
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Inventory/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Inventory
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Savings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Savings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Service%20Organization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Service Organization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The project
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    The project
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Roadmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Feature%20Roadmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Feature Roadmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Decisions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Decisions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../CHANGELOG/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What's new
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../CONTRIBUTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing (services)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Standards/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Standards
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Releasing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Releasing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../SECURITY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security policy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Homelab%20Manifest/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Homelab Manifest
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Homelab%20Context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Homelab Context
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Maintainer%20Guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Maintainer Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../To-do/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    To-do
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Knowledge base index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#the-main-loop" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The main loop
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#picking-apps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Picking apps
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#start-add-remove" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Start, add, remove
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#compose-without-changing-folders" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Compose, without changing folders
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#domain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Domain
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phones" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phones
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#jobs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Jobs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#docs-and-checks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docs and checks
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#global-flags" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Global flags
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#driving-the-cli-from-an-app" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Driving the CLI from an app
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#first-time-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        First-time setup
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rules-of-thumb" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rules of thumb
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="commands">Commands<a class="headerlink" href="#commands" title="Permanent link">&para;</a></h1>
+<p>Everything runs from a terminal in the homelab folder: <code>./homelab</code> on macOS and Linux, <code>homelab.cmd</code> on Windows. It builds itself the first time when Go is installed (<code>brew install go</code> on the Mac, <code>winget install GoLang.Go</code> on Windows); without Go it runs the copy the desktop app carries, so the app's buttons and the terminal both work without it. <code>./homelab help</code> prints the full list.</p>
+<h2 id="the-main-loop">The main loop<a class="headerlink" href="#the-main-loop" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>./homelab<span class="w">               </span><span class="c1"># an interactive menu (in a terminal)</span>
+./homelab<span class="w"> </span>status<span class="w">        </span><span class="c1"># what runs, its health, and its addresses (--all: the helpers too)</span>
+./homelab<span class="w"> </span>status<span class="w"> </span>--timing<span class="w">   </span><span class="c1"># how long each part of Status takes on this machine</span>
+./homelab<span class="w"> </span>doctor<span class="w">        </span><span class="c1"># anything wrong with this machine, the runtime, disk space, drive health, or .env</span>
+./homelab<span class="w"> </span>runtime<span class="w"> </span>install<span class="w"> </span>--apply<span class="w">   </span><span class="c1"># Linux and SteamOS: Docker in your home folder, run as you, kept across system updates</span>
+./homelab<span class="w"> </span>kit<span class="w">           </span><span class="c1"># a folder the app made: which build of the homelab files it is</span>
+./homelab<span class="w"> </span>kit<span class="w"> </span>update<span class="w"> </span>homelab-kit.tar.gz<span class="w">   </span><span class="c1"># bring such a folder up to a newer kit (never .env, data, or your own apps)</span>
+./homelab<span class="w"> </span>fix<span class="w">           </span><span class="c1"># repair what usually goes wrong (the plan first): runtime, apps down or unwell, settings not yet applied, CrowdSec's bouncer, a full disk, jobs</span>
+./homelab<span class="w"> </span>migrate<span class="w">       </span><span class="c1"># move apps from homelab_core into their category's project (backup first)</span>
+./homelab<span class="w"> </span>report<span class="w">        </span><span class="c1"># a file to share when asking for help: secrets, tokens, your account name, and email addresses removed (--stdout: print it)</span>
+./homelab<span class="w"> </span>upgrade<span class="w">       </span><span class="c1"># the newest homelab files from GitHub (fast-forward only), then up (the app's Update now)</span>
+./homelab<span class="w"> </span>homepage<span class="w">      </span><span class="c1"># Homepage's list of apps, from what runs (also after each install)</span>
+./homelab<span class="w"> </span>version<span class="w">       </span><span class="c1"># this CLI's version</span>
+</code></pre></div>
+<h2 id="picking-apps">Picking apps<a class="headerlink" href="#picking-apps" title="Permanent link">&para;</a></h2>
+<p>Every command that takes apps (<code>install</code>, <code>plan</code>, <code>start</code>, <code>stop</code>, <code>restart</code>, <code>update</code>, <code>remove</code>) takes any mix of these:</p>
+<table>
+<thead>
+<tr>
+<th>Write</th>
+<th>Selects</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>sonarr radarr</code></td>
+<td>Apps by name (<code>./homelab apps</code> lists them)</td>
+</tr>
+<tr>
+<td><code>overseerr</code>, <code>money</code></td>
+<td>An alias (Seerr, MoneyMatter)</td>
+</tr>
+<tr>
+<td><code>'*-arr'</code>, <code>'son*'</code></td>
+<td>The whole *arr set (the bundle's alias), or a pattern over app names; quote it so the shell leaves the <code>*</code> alone</td>
+</tr>
+<tr>
+<td><code>@arr</code>, <code>arr</code>, <code>@household</code>, <code>@adblock</code></td>
+<td>A bundle (<code>./homelab bundles</code> lists them; the <code>@</code> is optional, as PowerShell needs)</td>
+</tr>
+<tr>
+<td><code>stack:immich</code></td>
+<td>Everything in one stack folder</td>
+</tr>
+<tr>
+<td><code>cat:media</code></td>
+<td>A whole category (<code>cat:network</code>, <code>cat:household</code>, …)</td>
+</tr>
+<tr>
+<td><code>--exclude x</code></td>
+<td>Leave an app out of the rest</td>
+</tr>
+</tbody>
+</table>
+<h2 id="start-add-remove">Start, add, remove<a class="headerlink" href="#start-add-remove" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>./homelab<span class="w"> </span>up<span class="w">                     </span><span class="c1"># start the baseline (preview, then confirm)</span>
+./homelab<span class="w"> </span>install<span class="w"> </span>sonarr<span class="w"> </span>radarr<span class="w">  </span><span class="c1"># slot in optional apps</span>
+./homelab<span class="w"> </span>install<span class="w"> </span><span class="s1">'*-arr'</span><span class="w">        </span><span class="c1"># the whole *arr set</span>
+./homelab<span class="w"> </span>plan<span class="w"> </span>qbittorrent<span class="w">       </span><span class="c1"># what an install would do, nothing changed</span>
+./homelab<span class="w"> </span>stop<span class="p">|</span>start<span class="p">|</span>restart<span class="w"> </span>&lt;app&gt;
+./homelab<span class="w"> </span>stop<span class="w"> </span>&lt;app&gt;<span class="w"> </span>--until<span class="w"> </span><span class="m">21</span>:00<span class="w">  </span><span class="c1"># stopped for a while (21:00, 1h, or a date and time); it starts again by itself then</span>
+./homelab<span class="w"> </span>pin<span class="p">|</span>unpin<span class="w"> </span>&lt;app&gt;<span class="w">        </span><span class="c1"># an app at the top of Status and the menu bar's Open an app, or back in its group</span>
+./homelab<span class="w"> </span>update<span class="w"> </span>&lt;app&gt;<span class="w">           </span><span class="c1"># dump its databases, pull or rebuild, then recreate</span>
+./homelab<span class="w"> </span>update<span class="w"> </span>--all<span class="w">           </span><span class="c1"># every app the nightly update would, now</span>
+./homelab<span class="w"> </span>db<span class="w"> </span>upgrade<span class="w"> </span>paperless-db<span class="w">  </span><span class="c1"># a database to its next PostgreSQL major version (--to N), back by itself on failure</span>
+./homelab<span class="w"> </span>upgrade<span class="w"> </span>--back<span class="w">         </span><span class="c1"># the homelab files as they were before the last upgrade, then up</span>
+./homelab<span class="w"> </span>rollback<span class="w"> </span>&lt;app&gt;<span class="w">         </span><span class="c1"># back to the image before its last update (kept a week), with its data from just before; holds its updates</span>
+./homelab<span class="w"> </span>rollback<span class="w"> </span>&lt;app&gt;<span class="w"> </span>--image-only<span class="w">  </span><span class="c1"># the earlier image on today's data</span>
+./homelab<span class="w"> </span>rollback<span class="w"> </span>&lt;app&gt;<span class="w"> </span>--data<span class="w">  </span><span class="c1"># after a rollback that kept today's data: put back the copy from before the update</span>
+./homelab<span class="w"> </span>remove<span class="w"> </span>&lt;app&gt;<span class="w">           </span><span class="c1"># remove the container; data stays</span>
+./homelab<span class="w"> </span>logs<span class="w"> </span>&lt;app&gt;<span class="w"> </span>-f
+./homelab<span class="w"> </span>logs<span class="w"> </span>&lt;app&gt;<span class="w"> </span>--explain<span class="w">   </span><span class="c1"># what its log says, from the Ollama on this machine</span>
+./homelab<span class="w"> </span>apps<span class="w">                   </span><span class="c1"># the catalog (--category ID)</span>
+./homelab<span class="w"> </span>bundles<span class="w">                </span><span class="c1"># the bundles, such as @arr and @adblock (the @ is optional: install adblock, as PowerShell needs)</span>
+./homelab<span class="w"> </span>detect<span class="w">                 </span><span class="c1"># containers already running on this machine</span>
+./homelab<span class="w"> </span>adopt<span class="w"> </span>vaultwarden<span class="w">      </span><span class="c1"># move an app from an older setup into the homelab</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code>./homelab<span class="w"> </span>cleanup<span class="w">                </span><span class="c1"># remove old containers whose apps now run in the homelab</span>
+./homelab<span class="w"> </span>cleanup<span class="w"> </span>--volumes<span class="w">      </span><span class="c1"># ...and their volumes, when nothing else uses them</span>
+./homelab<span class="w"> </span>signups<span class="w"> </span>open<span class="w">           </span><span class="c1"># Vaultwarden sign-ups for 10 minutes (--for 30m), then closed</span>
+./homelab<span class="w"> </span>signups<span class="w"> </span>close
+./homelab<span class="w"> </span>updates<span class="w">                </span><span class="c1"># whether the nightly updates run, and when</span>
+./homelab<span class="w"> </span>updates<span class="w"> </span>pause<span class="w">          </span><span class="c1"># stop them until resumed (kept across up)</span>
+./homelab<span class="w"> </span>updates<span class="w"> </span>resume
+./homelab<span class="w"> </span>updates<span class="w"> </span>hold<span class="w"> </span>&lt;app&gt;<span class="w">     </span><span class="c1"># leave one app out of nightly updates</span>
+./homelab<span class="w"> </span>updates<span class="w"> </span>release<span class="w"> </span>&lt;app&gt;<span class="w">  </span><span class="c1"># put it back (after a rollback too)</span>
+./homelab<span class="w"> </span>updates<span class="w"> </span>days<span class="w"> </span>immich<span class="w"> </span>sun<span class="w">  </span><span class="c1"># update Immich on Sundays only (sat+sun, weekend; every: each night)</span>
+./homelab<span class="w"> </span>updates<span class="w"> </span>notes<span class="w"> </span>&lt;app&gt;<span class="w">    </span><span class="c1"># what updating it brings: its newer releases' notes</span>
+./homelab<span class="w"> </span>wire<span class="w">                   </span><span class="c1"># connect running apps: Prowlarr, FlareSolverr, qBittorrent, root folders, Bazarr, Seerr</span>
+./homelab<span class="w"> </span>move<span class="w"> </span>out<span class="w"> </span>--to<span class="w"> </span>/Volumes/Drive/homelab.tar<span class="w">   </span><span class="c1"># moving machines: back up, stop, pack it into one file</span>
+./homelab<span class="w"> </span>move<span class="w"> </span><span class="k">in</span><span class="w"> </span>/Volumes/Drive/homelab.tar<span class="w">         </span><span class="c1"># on the new machine: unpack, load the databases, start what ran</span>
+./homelab<span class="w"> </span>rebuild<span class="w"> </span>~/ProtonDrive/Homelab<span class="se">\ </span>Backups<span class="w">      </span><span class="c1"># the machine is lost: restore .env and the data from Duplicati's backups, start what ran</span>
+<span class="w">                                                     </span><span class="c1">#   (--force: into a folder that already has apps' data)</span>
+./homelab<span class="w"> </span>uninstall<span class="w">              </span><span class="c1"># take the homelab off this machine; the folder, data, and backups stay</span>
+./homelab<span class="w"> </span>uninstall<span class="w"> </span>--data<span class="w">       </span><span class="c1"># ...and delete the apps' data too, and sign out of the tailnet (never the backups or the media drive)</span>
+./homelab<span class="w"> </span>uninstall<span class="w"> </span>--folder<span class="w">     </span><span class="c1"># ...and the whole homelab folder, .env included (implies --data)</span>
+./homelab<span class="w"> </span>uninstall<span class="w"> </span>--backups<span class="w">    </span><span class="c1"># ...and the backup folders on this machine (BACKUP_DESTINATION, KOPIA_REPOSITORY), never one in a cloud drive</span>
+./homelab<span class="w"> </span>uninstall<span class="w"> </span>--app<span class="w">        </span><span class="c1"># ...and Homelab Wizard, its settings, and its downloads</span>
+./homelab<span class="w"> </span>uninstall<span class="w"> </span>--everything-else<span class="w">  </span><span class="c1"># ...and every other container, image, volume, and network in the runtime, and the build cache</span>
+</code></pre></div>
+<p><code>uninstall</code> refuses <code>--folder</code> for a folder without <code>compose.yaml</code> and <code>.env.example</code>, a home folder, or a drive. A backup folder in a cloud drive's folder (or one named after a cloud drive: Proton Drive, Google Drive, My Drive, OneDrive, Dropbox, iCloud Drive, pCloud, MEGA, Nextcloud, Sync) is kept and named in the plan, as is one that holds the home folder, the homelab folder, or the media drive. <code>--backups</code> deletes only what the backups wrote: Duplicati's job folders (<code>secrets</code>, <code>databases</code>, …) and <code>duplicati-</code> files, and a Kopia repository (its folder, marked by <code>kopia.repository.f</code>, unless it is the top of a drive); anything else in a backup folder, such as the household's own files on a backup drive, stays and is named. <code>--folder</code> without <code>--backups</code> keeps the backups inside the homelab folder (<code>./backups</code>, <code>./backups-kopia</code> by default) and any media folder there, and deletes the rest. In a terminal, <code>--everything-else</code> asks for <code>delete everything</code> typed out, and <code>--folder</code> or <code>--backups</code> for <code>delete</code>; <code>--apply</code> (scripts, and the app, which asks for its own) goes ahead without.</p>
+<div class="highlight"><pre><span></span><code>./homelab<span class="w"> </span>custom<span class="w"> </span>add<span class="w"> </span>wiki<span class="w"> </span>--image<span class="w"> </span>ghcr.io/requarks/wiki:2<span class="w"> </span>--port<span class="w"> </span><span class="m">3000</span><span class="w"> </span>--volume<span class="w"> </span>/wiki/data
+./homelab<span class="w"> </span>custom<span class="w">                 </span><span class="c1"># your own apps</span>
+./homelab<span class="w"> </span>custom<span class="w"> </span>remove<span class="w"> </span>wiki<span class="w">     </span><span class="c1"># take one out; its data stays</span>
+</code></pre></div>
+<p><code>custom add</code> writes the app into <code>stacks/custom/compose.yaml</code> (optional, on the shared network, on a free port, its folders under <code>data/appdata/&lt;id&gt;</code>) and validates the catalog, putting everything back on any problem. The custom stack is yours alone, like <code>.env</code>: git ignores it and the generated docs leave it out, so <code>git pull</code> keeps working. <code>--install</code> starts it straight away; <code>--env KEY=value</code> passes settings.</p>
+<p><code>adopt</code> is for apps that <code>status</code> lists as <strong>elsewhere</strong>. It stops the old container (and, by name, its helpers such as <code>moneymatter-db</code>), copies each folder or volume the old container used to where the homelab keeps it (matched by the path inside the container; shared folders like the media drive stay put), carries the generated secrets the copied data depends on (a database password) into <code>.env</code> without printing them, and starts the app. It refuses to overwrite a folder that has files or a volume that exists, and to copy PostgreSQL data across major versions. The old container is only stopped; the last line says how to go back.</p>
+<h2 id="compose-without-changing-folders">Compose, without changing folders<a class="headerlink" href="#compose-without-changing-folders" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>./homelab<span class="w"> </span>compose<span class="w"> </span>immich<span class="w"> </span>ps
+./homelab<span class="w"> </span>compose<span class="w"> </span>paperless<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>paperless<span class="w"> </span>document_exporter<span class="w"> </span>../export
+./homelab<span class="w"> </span>compose<span class="w"> </span>media<span class="w"> </span>down<span class="w">      </span><span class="c1"># a whole category's project (homelab_media)</span>
+</code></pre></div>
+<p>The first argument is an app, a category (<code>network</code>, <code>media</code>, <code>media-automation</code>, …), or a stack folder (<code>immich</code>, <code>paperless</code>, <code>budget-tracker</code>, <code>cloudflare</code>).</p>
+<h2 id="domain">Domain<a class="headerlink" href="#domain" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>./homelab<span class="w"> </span>domain<span class="w"> </span>setup<span class="w"> </span>--dry-run<span class="w">   </span><span class="c1"># preview</span>
+./homelab<span class="w"> </span>domain<span class="w"> </span>setup<span class="w">             </span><span class="c1"># proxy hosts, AdGuard rewrite, tunnel hostnames</span>
+./homelab<span class="w"> </span>domain<span class="w"> </span>setup<span class="w"> </span>--ssl<span class="w">       </span><span class="c1"># also the wildcard certificate (first time)</span>
+./homelab<span class="w"> </span>domain<span class="w"> </span>status
+./homelab<span class="w"> </span>away<span class="w"> </span>on<span class="p">|</span>off<span class="w"> </span>&lt;app&gt;<span class="w">        </span><span class="c1"># a public app reached away from home through the tunnel, or (off) home only, nothing of it on the internet</span>
+./homelab<span class="w"> </span>domain<span class="w"> </span>resolver<span class="w">          </span><span class="c1"># this machine finds every app by name, also with a VPN on (asks for the administrator's password once)</span>
+./homelab<span class="w"> </span>domain<span class="w"> </span>resolver<span class="w"> </span>--undo<span class="w">   </span><span class="c1"># takes that back, and homelab's lines in the hosts file</span>
+</code></pre></div>
+<p><code>domain resolver</code> writes <code>/etc/resolver/&lt;domain&gt;</code> on macOS, a systemd-resolved drop-in (<code>/etc/systemd/resolved.conf.d/homelab-&lt;domain&gt;.conf</code>) on Linux, or a Name Resolution Policy Table rule on Windows, pointing at AdGuard Home on this machine's home-network address (<code>--ip</code> to name it). Outside a terminal it previews; <code>--apply</code> writes it. <code>--undo</code> removes it again (only what homelab wrote: a file it did not write, or a rule without its <code>homelab</code> comment, stays), and homelab's lines in the hosts file from <code>domain setup --dns hosts</code>; name the domain (<code>--undo old.example.org</code>) to take back one the homelab had before. <code>uninstall</code> leaves them, and says so.</p>
+<p>Home mode (no domain), every app on the tailnet:</p>
+<div class="highlight"><pre><span></span><code>./homelab<span class="w"> </span>tailnet<span class="w"> </span>login<span class="w">            </span><span class="c1"># sign Tailscale in through its page in the browser; no auth key needed</span>
+./homelab<span class="w"> </span>tailnet<span class="w"> </span>setup<span class="w">            </span><span class="c1"># https://&lt;TAILSCALE_HOST&gt;:&lt;port&gt; for the running apps (signs in first when needed)</span>
+</code></pre></div>
+<p>With <code>TAILNET_ADMIN_APPS=false</code>, the admin apps (the proxy, AdGuard Home, Duplicati, Dozzle) stay off the tailnet and open on this machine only.</p>
+<p>Ad blocking (AdGuard Home), in either mode:</p>
+<div class="highlight"><pre><span></span><code>./homelab<span class="w"> </span>install<span class="w"> </span>@adblock<span class="w">         </span><span class="c1"># AdGuard Home, and DNS on the tailnet address</span>
+./homelab<span class="w"> </span>adguard<span class="w"> </span>setup<span class="w">            </span><span class="c1"># first-run wizard with a generated login; the tailnet DNS setting</span>
+</code></pre></div>
+<p>The household (Pocket ID accounts):</p>
+<div class="highlight"><pre><span></span><code>./homelab<span class="w"> </span>person<span class="w"> </span>add<span class="w"> </span><span class="s2">"Anna Smith"</span><span class="w"> </span>--email<span class="w"> </span>anna@example.com<span class="w">   </span><span class="c1"># account, first sign-in link, welcome page</span>
+./homelab<span class="w"> </span>person<span class="w">                   </span><span class="c1"># who is in the household</span>
+./homelab<span class="w"> </span>person<span class="w"> </span>welcome<span class="w"> </span>anna<span class="w">      </span><span class="c1"># a new sign-in link and welcome page</span>
+./homelab<span class="w"> </span>person<span class="w"> </span>password<span class="w"> </span>anna<span class="w">     </span><span class="c1"># a new password in Jellyfin and Navidrome, on a fresh welcome page</span>
+./homelab<span class="w"> </span>person<span class="w"> </span>apps<span class="w"> </span>anna<span class="w"> </span>immich-server<span class="w"> </span>paperless<span class="w"> </span>mealie<span class="w">   </span><span class="c1"># only these on their page and Homepage tab (--all: every app)</span>
+./homelab<span class="w"> </span>person<span class="w"> </span>share<span class="w"> </span>anna<span class="w"> </span>bills,budgets<span class="w">                    </span><span class="c1"># what of the household's money her phone shows her, to look at (bills, subscriptions, budgets; none)</span>
+./homelab<span class="w"> </span>person<span class="w"> </span>remove<span class="w"> </span>anna<span class="w">       </span><span class="c1"># sign-in off; their data stays in every app</span>
+</code></pre></div>
+<p>Single sign-on with Pocket ID (needs a domain):</p>
+<div class="highlight"><pre><span></span><code>./homelab<span class="w"> </span>sso<span class="w">                      </span><span class="c1"># which apps sign in with Pocket ID</span>
+./homelab<span class="w"> </span>sso<span class="w"> </span>setup<span class="w">                </span><span class="c1"># connect the rest: their clients in Pocket ID, their settings</span>
+</code></pre></div>
+<h2 id="phones">Phones<a class="headerlink" href="#phones" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>./homelab<span class="w"> </span>phone<span class="w"> </span>pair<span class="w"> </span>--name<span class="w"> </span><span class="s2">"My iPhone"</span><span class="w">   </span><span class="c1"># a one-time code and the links to open on the phone (--can-change: it may make changes;</span>
+<span class="w">                                          </span><span class="c1">#   --finances view|edit: it sees Finances, or changes them too)</span>
+./homelab<span class="w"> </span>phone<span class="w"> </span>list<span class="w">                      </span><span class="c1"># paired phones, what they may do, when last seen</span>
+./homelab<span class="w"> </span>phone<span class="w"> </span>allow<span class="w"> </span>&lt;id&gt;<span class="w">                </span><span class="c1"># may start, stop, restart, and back up</span>
+./homelab<span class="w"> </span>phone<span class="w"> </span>read-only<span class="w"> </span>&lt;id&gt;
+./homelab<span class="w"> </span>phone<span class="w"> </span>finances<span class="w"> </span>&lt;id&gt;<span class="w"> </span>view<span class="w">        </span><span class="c1"># it sees Finances (edit: it may change them too; card: a wall screen's money card only; off: hidden again)</span>
+./homelab<span class="w"> </span>phone<span class="w"> </span>person<span class="w"> </span>&lt;id&gt;<span class="w"> </span>anna<span class="w">          </span><span class="c1"># Anna's phone: only her apps (homelab person apps) and her own Finances, apart from the household's; none: yours again</span>
+./homelab<span class="w"> </span>phone<span class="w"> </span><span class="k">until</span><span class="w"> </span>&lt;id&gt;<span class="w"> </span>7d<span class="w">             </span><span class="c1"># its changes and Finances end in a week (12h, 2w); then it only looks. never: no end</span>
+./homelab<span class="w"> </span>phone<span class="w"> </span>remove<span class="w"> </span>&lt;id&gt;<span class="w">               </span><span class="c1"># its token stops working</span>
+./homelab<span class="w"> </span>serve<span class="w">                           </span><span class="c1"># the companion itself (the serve job runs it)</span>
+</code></pre></div>
+<p>A household member's phone (<code>phone person</code>) sees only the apps they use, and starts or stops none. Its Finances are their own, in <code>data/members/&lt;username&gt;/</code> beside the household's, and of the household's money it shows only what <code>person share</code> names: bills in the next five weeks, subscriptions, budgets, with names, amounts and days, never an account, a balance or a transaction. Nothing else of the homelab answers it.</p>
+<p>Finances go only to a phone paired with the https link (Tailscale, or <code>https://homelab.example.com</code> with a domain), never to one paired over plain home Wi-Fi, nor to a TV or wall screen in kiosk mode, whatever is picked for it.</p>
+<p>The companion also serves Finances' calendar feed, <code>/finances.ics?key=…</code>: the paydays and bills ahead for a phone's calendar to subscribe to, made in Finances › Pay › Paydays and money, with amounts or without. Like Finances on a phone it goes only over the https link, and only for the plan's key: a new link, or Turn it off, stops the old one at once.</p>
+<h2 id="jobs">Jobs<a class="headerlink" href="#jobs" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>./homelab<span class="w"> </span>backup<span class="w">                   </span><span class="c1"># preview; --apply to run</span>
+./homelab<span class="w"> </span>watchdog<span class="w">                 </span><span class="c1"># the checks the watchdog job runs every 15 minutes</span>
+./homelab<span class="w"> </span>agent<span class="w">                    </span><span class="c1"># the background agent itself, which runs the parts below (schedule install sets it up)</span>
+./homelab<span class="w"> </span>awake<span class="w">                    </span><span class="c1"># hold off sleep while plugged in (the awake job runs it)</span>
+./homelab<span class="w"> </span>awake<span class="w"> </span>allow<span class="w">              </span><span class="c1"># Linux: let the awake job hold off sleep (once, with the administrator's password); --undo takes it back</span>
+./homelab<span class="w"> </span>notify<span class="w"> </span>setup<span class="w">             </span><span class="c1"># write grants for the alert topics</span>
+./homelab<span class="w"> </span>notify<span class="w"> </span><span class="nb">test</span><span class="w"> </span>duplicati-alerts
+./homelab<span class="w"> </span>notify<span class="w"> </span>off<span class="w"> </span>vikunja<span class="w">        </span><span class="c1"># checked, but no alerts about it (on: alerts again)</span>
+./homelab<span class="w"> </span>notify<span class="w"> </span>snooze<span class="w"> </span><span class="s2">"crowdsec bouncer"</span><span class="w"> </span>1h<span class="w">  </span><span class="c1"># one check not alerted about for an hour (1d: a day; off: now); alerted then if it still fails</span>
+./homelab<span class="w"> </span>digest<span class="w">                   </span><span class="c1"># the weekly summary; --send sends it now</span>
+./homelab<span class="w"> </span>schedule<span class="w"> </span>install<span class="w">         </span><span class="c1"># the startup, backup, watchdog, awake, and serve jobs</span>
+./homelab<span class="w"> </span>schedule<span class="w"> </span>status
+./homelab<span class="w"> </span>schedule<span class="w"> </span>remove<span class="w">          </span><span class="c1"># take the jobs out again</span>
+./homelab<span class="w"> </span>quit<span class="w">                     </span><span class="c1"># stop the homelab until the next login: the agent (still installed), the tray item, every app</span>
+./homelab<span class="w"> </span>resume<span class="w">                   </span><span class="c1"># start what quit stopped; opening the app or the next login does it too</span>
+./homelab<span class="w"> </span>duplicati<span class="w"> </span>destination<span class="w">    </span><span class="c1"># BACKUP_DESTINATION: "Homelab Backups" in Proton Drive, or a folder you name</span>
+./homelab<span class="w"> </span>duplicati<span class="w"> </span>setup<span class="w">          </span><span class="c1"># create the Duplicati backup jobs (preview, then confirm)</span>
+./homelab<span class="w"> </span>duplicati<span class="w"> </span><span class="nb">jobs</span><span class="w">           </span><span class="c1"># each job's last and next run</span>
+./homelab<span class="w"> </span>kopia<span class="w"> </span>repository<span class="w"> </span>&lt;folder&gt;<span class="w">  </span><span class="c1"># KOPIA_REPOSITORY: Kopia's second copy, never in Duplicati's folder; Kopia starts again there</span>
+./homelab<span class="w"> </span>backup-check<span class="w">             </span><span class="c1"># Duplicati's own check of each backup (the agent runs it weekly, on Sundays)</span>
+./homelab<span class="w"> </span>restore-test<span class="w"> </span>--auto<span class="w">      </span><span class="c1"># Duplicati restores a sample; checked against the live files</span>
+./homelab<span class="w"> </span>restore-test<span class="w"> </span>--auto<span class="w"> </span>--engine<span class="w"> </span>kopia<span class="w">   </span><span class="c1"># the same from Kopia's newest snapshot, when it is installed</span>
+./homelab<span class="w"> </span>restore-test<span class="w"> </span>recovery-staging/restore-test<span class="w"> </span>data/appdata
+./homelab<span class="w"> </span>recovery-kit<span class="w">             </span><span class="c1"># recovery-kit.html to print: where the backups and passphrases are, how to restore</span>
+./homelab<span class="w"> </span><span class="nb">export</span><span class="w">                   </span><span class="c1"># every app's data in open formats in export-&lt;date&gt;: tables as CSV, documents, albums</span>
+./homelab<span class="w"> </span><span class="nb">export</span><span class="w"> </span>--photos<span class="w"> </span>--to<span class="w"> </span>/Volumes/Drive/Export<span class="w">   </span><span class="c1"># ...with the original photos, onto a drive with room</span>
+</code></pre></div>
+<h2 id="docs-and-checks">Docs and checks<a class="headerlink" href="#docs-and-checks" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>./homelab<span class="w"> </span>docs<span class="w">        </span><span class="c1"># refresh the generated tables in docs/ and services/</span>
+./homelab<span class="w"> </span>docs<span class="w"> </span>--check<span class="w">   </span><span class="c1"># fail if a generated table is out of date</span>
+./homelab<span class="w"> </span>validate<span class="w">    </span><span class="c1"># compose metadata and docs (links, versions, lines left from a merge); CI runs this</span>
+make<span class="w"> </span>check<span class="w">            </span><span class="c1"># gofmt, vet, tests, validate</span>
+</code></pre></div>
+<h2 id="global-flags">Global flags<a class="headerlink" href="#global-flags" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Flag</th>
+<th>Does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--apply</code> (or <code>-y</code>)</td>
+<td>Go ahead without asking; needed outside a terminal (scheduled jobs, scripts)</td>
+</tr>
+<tr>
+<td><code>--json</code></td>
+<td>One JSON object per line (below)</td>
+</tr>
+<tr>
+<td><code>--root DIR</code></td>
+<td>The homelab folder, when not run from it (<code>HOMELAB_ROOT</code> does the same)</td>
+</tr>
+<tr>
+<td><code>--no-color</code></td>
+<td>Plain output</td>
+</tr>
+<tr>
+<td><code>--set KEY=value</code>, <code>--set-stdin</code></td>
+<td>For <code>install</code>, <code>plan</code>, and <code>up</code>: write a setting to <code>.env</code> first, never echoed</td>
+</tr>
+</tbody>
+</table>
+<h2 id="driving-the-cli-from-an-app">Driving the CLI from an app<a class="headerlink" href="#driving-the-cli-from-an-app" title="Permanent link">&para;</a></h2>
+<p>The desktop app (and scripts) use <code>--json</code>: every line of output is one object, <code>{"schema": 1, "type": ..., "data": ...}</code>. <code>schema</code> changes only when a field a client may read is removed or changes meaning; new fields can appear at any time, so ignore the ones you do not know. The fields are the JSON types in <code>internal/api</code> (plus <code>setup.Step</code> and <code>install.Event</code>), and <code>internal/api/testdata/contract.json</code> is the list a test holds them to.</p>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Lines</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>homelab --json apps</code></td>
+<td><code>catalog</code>: categories, apps (kind, dependencies, the <code>.env</code> inputs each needs), and presets (bundles like <code>@arr</code>, whole stacks like <code>stack:immich</code>)</td>
+</tr>
+<tr>
+<td><code>homelab --json plan &lt;apps&gt;</code></td>
+<td><code>plan</code>: what would start, what was added as a dependency, skips, port and <code>.env</code> changes, problems</td>
+</tr>
+<tr>
+<td><code>homelab --json install &lt;apps&gt; --apply</code></td>
+<td><code>plan</code>, then a <code>progress</code> pair (start, done) per step, then <code>done</code> with each started app's address; without <code>--apply</code>, <code>plan</code> then <code>preview</code></td>
+</tr>
+<tr>
+<td><code>homelab --json status</code></td>
+<td><code>status</code>: state, health, and address of every app</td>
+</tr>
+<tr>
+<td><code>homelab --json updates [pause\|resume] --apply</code></td>
+<td><code>updates</code>: whether nightly updates are paused, and their schedule</td>
+</tr>
+<tr>
+<td><code>homelab --json setup</code></td>
+<td><code>setup</code>: each first-time step with its state, detail, and the settings it needs</td>
+</tr>
+<tr>
+<td><code>homelab --json upgrade</code></td>
+<td><code>upgrade</code>: the check only: changes waiting on GitHub, and whether the app or the settings changed</td>
+</tr>
+<tr>
+<td><code>homelab --json digest</code></td>
+<td><code>digest</code>: the weekly summary's title, body, and what needs a look (<code>problems</code>)</td>
+</tr>
+<tr>
+<td><code>homelab --json duplicati jobs</code></td>
+<td><code>jobs</code>: each backup job's last and next run</td>
+</tr>
+<tr>
+<td><code>homelab --json wire --apply</code></td>
+<td><code>wiring</code> (the planned links), then a <code>link</code> line as each connection is made: <code>done</code>, <code>already</code>, <code>manual</code> (with what to do), or <code>failed</code></td>
+</tr>
+</tbody>
+</table>
+<p>Longer jobs (<code>update</code>, <code>start</code>, <code>stop</code>, <code>restart</code>, <code>remove</code> across several projects, <code>fix</code>, <code>backup</code>, and <code>restore-test --auto</code>) report their steps as <code>step</code> lines, <code>{"n": 2, "total": 5, "text": "Updating vikunja"}</code>; in a terminal they read <code>[2/5] Updating vikunja</code>, and <code>HOMELAB_PROGRESS=json</code> writes them as JSON lines without the rest of <code>--json</code> (the desktop app sets it to show a progress bar). Any failure ends with an <code>error</code> line and exit code 1; a command that only previewed (no <code>--apply</code>) ends with a <code>preview</code> line. Form values go in with <code>--set KEY=value</code>, or <code>--set-stdin</code> (<code>KEY=value</code> lines) to keep secrets out of the process list; plans mark them secret and never print them. Go code can call the same engine directly: <code>internal/api</code> holds the JSON types and <code>install.ApplyWithProgress</code> reports the steps.</p>
+<h2 id="first-time-setup">First-time setup<a class="headerlink" href="#first-time-setup" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>./homelab<span class="w"> </span>setup<span class="w">                  </span><span class="c1"># the bring-up as a checklist, each step checked live</span>
+</code></pre></div>
+<p><code>./homelab doctor</code> also checks the network: the home-network address (a VPN's tunnel or a container bridge is never taken for it), whether a VPN carries all traffic (other devices may then not reach the homelab), whether this machine uses the home DNS, how much of the runtime's memory the containers use, the free space on each disk the homelab writes to (with what the runtime keeps in images, volumes, and build cache), and, with <code>smartctl</code> installed, each drive's own health report. With CrowdSec and the proxy running, it also says when the proxy's bouncer last pulled CrowdSec's decisions (bans are only enforced while it does).</p>
+<p>Each step says what is missing, which <code>.env</code> settings it needs, and the command that does it. The app's Setup screen shows the same checklist with buttons, and its Settings screen edits <code>.env</code>.</p>
+<h2 id="rules-of-thumb">Rules of thumb<a class="headerlink" href="#rules-of-thumb" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Without <code>--apply</code>, a command only previews. In a terminal it asks first.</li>
+<li>If an output looks wrong, stop and read it before applying anything.</li>
+<li>Never <code>docker volume prune</code> or <code>docker system prune --volumes</code>: databases live in volumes.</li>
+</ul>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../Upgrading/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Upgrading">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Upgrading
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../Runbooks/" class="md-footer__link md-footer__link--next" aria-label="Next: Runbooks">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Runbooks
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.top", "navigation.footer", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.a5f9d56c.min.js"></script>
+      
+    
+  </body>
+</html>

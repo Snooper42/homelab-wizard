@@ -1,0 +1,2804 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Your household's photos, passwords, documents, money, music, and books, on a computer you own.">
+      
+      
+      
+        <link rel="canonical" href="https://snooper42.github.io/homelab-wizard/docs/Feature%20Roadmap/">
+      
+      
+        <link rel="prev" href="../Roadmap/">
+      
+      
+        <link rel="next" href="../Decisions/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/logo.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+    
+    
+      
+        <title>Feature Roadmap - Homelab Wizard</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.57a0d79d.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.fb2fffe2.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#feature-roadmap" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Homelab Wizard" class="md-header__button md-logo" aria-label="Homelab Wizard" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Homelab Wizard
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Feature Roadmap
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue"  aria-label="Dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="blue"  aria-label="Light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Snooper42/homelab-wizard" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Snooper42/homelab-wizard
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Homelab Wizard" class="md-nav__button md-logo" aria-label="Homelab Wizard" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    Homelab Wizard
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Snooper42/homelab-wizard" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Snooper42/homelab-wizard
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Start here
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Start here
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Tour/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    A tour of the app
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Getting%20Started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Everyday%20Tasks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Everyday tasks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing a new build
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Upgrading/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Upgrading
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Commands/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Run it
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Run it
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Runbooks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Runbooks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Automation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Automation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Monitoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Monitoring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Backups/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backups
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Tidy%20Up/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tidy Up
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Private%20Finances/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Private Finances
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Disaster%20Recovery/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Disaster Recovery
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Known%20Issues/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Known Issues
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How it works
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    How it works
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Networking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Networking
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Usability/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Usability
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Storage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Storage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Docker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docker
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Parity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What each device can do
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../apple-client/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The iPhone and iPad app
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Host/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Host
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Environment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Environment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The apps
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    The apps
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Services/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Services
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Inventory/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Inventory
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Savings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Savings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Service%20Organization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Service Organization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The project
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    The project
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Roadmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Feature Roadmap
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Feature Roadmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#built-in-november-2026" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Built in November 2026
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#everyday-control" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Everyday control
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#answers-on-hover" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Answers on hover
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#memory-and-performance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Memory and performance
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reliability-and-self-healing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reliability and self-healing
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#security-and-privacy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security and privacy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#backups-and-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Backups and data
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#notifications-and-alerts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Notifications and alerts
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-household" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The household
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#apps-and-the-catalog" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Apps and the catalog
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-desktop-and-the-menu-bar" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The desktop and the menu bar
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-phone-companion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The phone companion
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#media-library-cleanup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Media library cleanup
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#finances" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Finances
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#accessibility-and-polish" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Accessibility and polish
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#insight" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Insight
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Decisions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Decisions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../CHANGELOG/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What's new
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../CONTRIBUTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing (services)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Standards/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Standards
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Releasing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Releasing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../SECURITY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security policy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Homelab%20Manifest/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Homelab Manifest
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Homelab%20Context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Homelab Context
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Maintainer%20Guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Maintainer Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../To-do/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    To-do
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Knowledge base index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#built-in-november-2026" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Built in November 2026
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#everyday-control" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Everyday control
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#answers-on-hover" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Answers on hover
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#memory-and-performance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Memory and performance
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reliability-and-self-healing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reliability and self-healing
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#security-and-privacy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security and privacy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#backups-and-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Backups and data
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#notifications-and-alerts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Notifications and alerts
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-household" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The household
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#apps-and-the-catalog" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Apps and the catalog
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-desktop-and-the-menu-bar" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The desktop and the menu bar
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-phone-companion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The phone companion
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#media-library-cleanup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Media library cleanup
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#finances" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Finances
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#accessibility-and-polish" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Accessibility and polish
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#insight" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Insight
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="feature-roadmap">Feature Roadmap<a class="headerlink" href="#feature-roadmap" title="Permanent link">&para;</a></h1>
+<p>The features that would make Homelab Wizard a pleasure to use, grouped by area: the small touches (a right-click menu, an undo, a hover that answers a question) as much as the big screens. The <a href="../Roadmap/">Roadmap</a> says what each version must prove; this page is the list of what to build, to pick from.</p>
+<p>Each item has a size and a status:</p>
+<ul>
+<li><strong>Size:</strong> <strong>S</strong> is a day or less, <strong>M</strong> a few days, <strong>L</strong> a week or more, or a piece of the backend that does not exist yet.</li>
+<li><strong>Status:</strong> <em>Idea</em> (only written here), <em>Mocked up</em> (drawn, not built), <em>Next</em> (the next batch), or <em>Built</em> (in the app, with the pull request).</li>
+</ul>
+<p>The Finances screen's history and rules are in <a href="https://github.com/Snooper42/homelab-wizard/blob/main/.claude/prompts/finances-loop.md">the Finances loop's file</a>; its unfinished items are under <strong>Finances</strong> below.</p>
+<h2 id="built-in-november-2026">Built in November 2026<a class="headerlink" href="#built-in-november-2026" title="Permanent link">&para;</a></h2>
+<p>What started this page: small features asked for one by one, each now in the app.</p>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>What it does</th>
+<th>Pull request</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Home only</td>
+<td>An app's page › <strong>Reach it away from home</strong>, on each public app once the domain has the Cloudflare tunnel, on the computer and the iPhone: off takes it off the tunnel and public DNS (<code>homelab away off</code>), removing only what the homelab made; new public installs start home only</td>
+<td>#559 and the iPhone's next</td>
+</tr>
+<tr>
+<td>Health in one line</td>
+<td>At the top of every screen but Status: ✓ All well, or the one thing that needs you, with Open Status</td>
+<td>#470</td>
+</tr>
+<tr>
+<td>Snooze an alert</td>
+<td>Snooze… beside a failing check on Status's Watchdog card: no alerts about it for an hour or a day, and one then if it still fails</td>
+<td>#469</td>
+</tr>
+<tr>
+<td>Tailnet devices</td>
+<td>Settings › Phones lists every device on the tailnet, online or when last seen, one unseen for a month marked, and Remove… opens it in Tailscale's admin console</td>
+<td>#465</td>
+</tr>
+<tr>
+<td>Weekly integrity check</td>
+<td>On Sundays each Duplicati job's backup is checked with Duplicati's own Verify; a damaged file is a failing check (and an alert) and a red line on Backups, the last check on each job's hover</td>
+<td>#463</td>
+</tr>
+<tr>
+<td>A copy before anything risky</td>
+<td>An app's databases are dumped before it starts again on changed settings (a domain or tailnet address, Pocket ID sign-in, Fix it's changed settings), as before an update; a dump that fails stops the change</td>
+<td>#461</td>
+</tr>
+<tr>
+<td>Memory pressure alert</td>
+<td>The apps above 90% of the memory Docker has for two watchdog runs in a row: one alert naming the three biggest, and Status's Watchdog card lists them, each with Stop</td>
+<td>#458</td>
+</tr>
+<tr>
+<td>An update window per app</td>
+<td>An app's page › <strong>Only on Sundays</strong>, or <code>homelab updates days</code> for any days: the other nights' updates leave it alone</td>
+<td>#457</td>
+</tr>
+<tr>
+<td>Phones that expire</td>
+<td>Settings › Phones › <strong>For a week</strong> beside a phone: its changes and Finances end then, and it only looks</td>
+<td>#455</td>
+</tr>
+<tr>
+<td>The last Status, offline</td>
+<td>Away from home with no tailnet, the phone opens on the last Status it saw, with a line saying when, rather than an error</td>
+<td>#453</td>
+</tr>
+<tr>
+<td>Add to Home Screen, done right</td>
+<td>The phone companion added to the Home Screen has the app's icon on an iPhone and Android (PNG, maskable), its name, a splash in the app's own background, and a bar that follows light or dark mode</td>
+<td>#452</td>
+</tr>
+<tr>
+<td>Status read aloud</td>
+<td>A screen reader hears each row's change on Status as it is drawn (a Restart's step and its end, an app that goes down), apps that change together in one line</td>
+<td>#451</td>
+</tr>
+<tr>
+<td>A sheet of shortcuts</td>
+<td>Press ? on any screen (or pick <em>Keyboard shortcuts</em> in ⌘K) for that screen's shortcuts, those that work everywhere, and each screen's key</td>
+<td>#450</td>
+</tr>
+<tr>
+<td>Shapes as well as colours</td>
+<td>Status's dots are a circle when up, a triangle when an app is stopped or needs a look, and a cross when it's down, so a state reads without its colour</td>
+<td>#449</td>
+</tr>
+<tr>
+<td>Quick actions</td>
+<td>On a phone that may make changes, hold an app's row on Status for Open, Start, Restart, Stop, Stop for a while, and Logs</td>
+<td>#447</td>
+</tr>
+<tr>
+<td>A sheet for the fridge</td>
+<td>Each person's apps, addresses, phone apps, and a code for the camera, on one printed page, without passwords or the sign-in link</td>
+<td>#446</td>
+</tr>
+<tr>
+<td>Suggestions from what you use</td>
+<td>Choose apps › Add more opens on the apps that go with ones you run (Beets with Navidrome, Bazarr with Sonarr), each with what it brings</td>
+<td>#445</td>
+</tr>
+<tr>
+<td>Quiet hours</td>
+<td>From 10 PM to 7 AM alerts reach the phone without a sound, unless the vault is unreachable or backups have failed two nights running</td>
+<td>#439</td>
+</tr>
+<tr>
+<td>Two apps that do the same job</td>
+<td>Choose apps says when you already run one that does it (Komga and Kavita, Mealie and Tandoor), and why you might keep one or both</td>
+<td>#438</td>
+</tr>
+<tr>
+<td>Savings over time</td>
+<td>Hover <em>Instead of subscriptions</em> on Status for what the apps have saved since the first nightly record, month by month</td>
+<td>#437</td>
+</tr>
+<tr>
+<td>What changed since last night</td>
+<td>On Backups, each copy's size beside the night before's; one less than half the night before's is marked in red</td>
+<td>#435</td>
+</tr>
+<tr>
+<td>What CrowdSec stopped</td>
+<td>The proxy's page lists every address CrowdSec stopped since midnight, where from, what it tried, and whether it's still banned</td>
+<td>#430</td>
+</tr>
+<tr>
+<td>What happened overnight</td>
+<td>Status's first line in the morning: the night's updates, rollbacks, backup, and whether anything needed you</td>
+<td>#420</td>
+</tr>
+<tr>
+<td>After sleep</td>
+<td>When the machine wakes, every app is checked at once rather than at the watchdog's next run</td>
+<td>#422</td>
+</tr>
+<tr>
+<td>A restart that keeps failing</td>
+<td>An app Docker restarted 3 times in an hour is stopped and flagged with its last log lines, instead of restarting forever</td>
+<td>#427</td>
+</tr>
+<tr>
+<td>A drive comes back</td>
+<td>Apps waiting for an unplugged drive start within a minute of it being plugged in again</td>
+<td>#423</td>
+</tr>
+<tr>
+<td>An update's notes</td>
+<td>Hover <em>updates held</em> on Status for why, how to put it back, and the first lines of its newest release</td>
+<td>#419</td>
+</tr>
+<tr>
+<td>A backup's contents</td>
+<td>Hover an off-site job's time on Backups for its last run, how long it took, what it holds, the versions kept, its folders, and its next run</td>
+<td>#418</td>
+</tr>
+<tr>
+<td>Remember where you were</td>
+<td>Each screen keeps its scroll and open sections between visits and after quitting; another screen opens at its own place</td>
+<td>#417</td>
+</tr>
+<tr>
+<td>What changed since you looked</td>
+<td>A dot beside each app on Status that restarted, updated, stopped, or started since your last visit, cleared once you leave</td>
+<td>#416</td>
+</tr>
+<tr>
+<td>Open, your way</td>
+<td>Alt-click (⌥-click) an address on Status to copy it; Shift-click (⇧-click) Open for its address on this computer</td>
+<td>#415</td>
+</tr>
+<tr>
+<td>Pinned apps</td>
+<td>Right-click › Pin to the top keeps an app in a Pinned group at the top of Status, and first in the menu bar's Open an app</td>
+<td>#414</td>
+</tr>
+<tr>
+<td>Right-click the sidebar</td>
+<td>A screen's own menu from the sidebar: Status's Check again and Update all, Backups' Back up now and Test a restore, Finances' Add a transaction, Update balances, and Hide amounts</td>
+<td>#413</td>
+</tr>
+<tr>
+<td>Why it restarted</td>
+<td>Hover <em>up 9 minutes</em> on Status for why the app last started and when: you, an update, Fix it, the watchdog, the power back, its drive back, a Stop for a while ending, or Docker after a crash</td>
+<td>#411</td>
+</tr>
+<tr>
+<td>A balance's accounts</td>
+<td>Rest on a group in the sidebar's Accounts for its accounts, each balance, and how long since each was updated; a dot on one older than a month</td>
+<td>#409</td>
+</tr>
+<tr>
+<td>The week's outages</td>
+<td>Hover <em>96.2% up this week</em> on Status for the week as a strip, with each time the app was down, how long, and why</td>
+<td>#406</td>
+</tr>
+<tr>
+<td>Command palette</td>
+<td>⌘K (Ctrl+K) on any screen, then an app's name for its Open, page, Restart, Stop, or Logs, or <em>stop media</em>, <em>back up now</em>, <em>update all</em>, a screen; Stop asks twice</td>
+<td>#395</td>
+</tr>
+<tr>
+<td>Export your finances</td>
+<td>Finances › <strong>Export</strong>: the plan as JSON, the year ahead as a spreadsheet, and this month or the next on a page that prints itself; on a phone too</td>
+<td>#405</td>
+</tr>
+<tr>
+<td>Type to filter Status</td>
+<td>Typing an app's name on Status keeps only the apps that have it; Return opens the first, Escape brings every app back</td>
+<td>#385</td>
+</tr>
+<tr>
+<td>Finances on the phone</td>
+<td>A phone's Finances opens with the next two weeks of bills, card charges on their cards, and the goals with what each needs a paycheck</td>
+<td>#381</td>
+</tr>
+<tr>
+<td>Card charges on the calendar</td>
+<td>A bill charged to a card shows on its day, on its card with the card's due day, never as checking money; on the phone too</td>
+<td>#380</td>
+</tr>
+<tr>
+<td>Tidy Up</td>
+<td>Music, books, films, TV, and audiobooks sorted, tagged, and shrunk; new downloads filed by themselves, lyrics, and a nightly sweep of leftovers (<a href="../Tidy%20Up/">Tidy Up</a>)</td>
+<td>#376</td>
+</tr>
+<tr>
+<td>A balance opens its own group</td>
+<td>A sidebar balance opens Net worth on that group alone: its total, and each of its accounts month by month</td>
+<td>#379</td>
+</tr>
+<tr>
+<td>The calendar a year ahead</td>
+<td>Past the three months checking is read for, each payday and payment on its day to a year out, so a yearly renewal shows in its month</td>
+<td>#373</td>
+</tr>
+<tr>
+<td>Right-click an app's row</td>
+<td>Open, Open on a phone, Copy address, Restart, Stop, Stop for a while, Logs, Back up now, and Tell me if it stops, where you click; Shift+F10 too</td>
+<td>#369</td>
+</tr>
+<tr>
+<td>Hide amounts, and the money card</td>
+<td>⌘⇧H or the eye writes every amount as $•••, on the phones too; a wall screen picked for it shows the next payday, what is left, and the next 3 bills</td>
+<td>#368</td>
+</tr>
+<tr>
+<td>Stopped on purpose, and Stop for a while</td>
+<td>An app stopped from its group's menu or its page stays stopped: nothing starts it by itself, and its row says <em>Stopped by you</em>. Stop for a while stops it for an hour, until tonight, or until tomorrow, then it starts again</td>
+<td>#367</td>
+</tr>
+<tr>
+<td>A group's menu</td>
+<td>Click a category's count on Status ("Media · 7 running ✓ · 1.6 GB") for its memory, each app's share, and Start, Restart, or Stop them all</td>
+<td>#362</td>
+</tr>
+<tr>
+<td>Balances on every screen</td>
+<td>The sidebar's Accounts shows whatever screen is open; a group opens Net worth</td>
+<td>#361</td>
+</tr>
+<tr>
+<td>Click outside to close</td>
+<td>A click on the dimmed screen around a panel closes it, as its Close or Cancel would</td>
+<td>#361</td>
+</tr>
+<tr>
+<td>Back on power</td>
+<td>Apps paused on battery start within a minute of plugging in, and one that will not start no longer holds the rest</td>
+<td>#361</td>
+</tr>
+<tr>
+<td>beets in the Music pick</td>
+<td>Tagging and filing music comes with Navidrome and Feishin</td>
+<td>#358, #360</td>
+</tr>
+</tbody>
+</table>
+<h2 id="next">Next<a class="headerlink" href="#next" title="Permanent link">&para;</a></h2>
+<p>The first batch, chosen because each makes the group menu safer or quicker. A loop builds this page in order, one pull request per feature (<a href="https://github.com/Snooper42/homelab-wizard/blob/main/.claude/prompts/features-loop.md">its prompt</a>):</p>
+<ol>
+<li>Right-click an app's row (Everyday control): <em>Built</em></li>
+<li>Stopped on purpose (Everyday control): <em>Built</em></li>
+<li>Stop for a while (Memory): <em>Built</em></li>
+<li>Undo (Everyday control): <em>Built</em></li>
+</ol>
+<h2 id="everyday-control">Everyday control<a class="headerlink" href="#everyday-control" title="Permanent link">&para;</a></h2>
+<p>The things you do many times a day, made one click shorter.</p>
+<ul>
+<li><strong>Right-click an app's row</strong> (M, <em>Built</em>, #369): Open, Open on a phone, Copy address, Restart, Stop, Logs, Back up now, Tell me if it stops. Everything on the app's page, without opening it. A right-click on a group's heading opens its menu.</li>
+<li><strong>Stopped on purpose</strong> (M, <em>Built</em>, #367): an app you stop from the menu stays stopped. Start them all, the watchdog, and plugging in skip it, and its row says "Stopped by you" with Start beside it. The wait for a drive skips it too.</li>
+<li><strong>Undo</strong> (S, <em>Built</em>, #375): after Stop, Stop all, or Stop for a while, a note for 10 seconds: "Stopped 6 Media apps · Undo", and ⌘Z. Restart all has none (nothing to take back).</li>
+<li><strong>Right-click the sidebar</strong> (S, <em>Built</em>, #413): Status: Check again, Update all. Backups: Back up now, Test a restore. Finances: Add a transaction, Update balances.</li>
+<li><strong>Command palette</strong> (M, <em>Built</em>, #395): ⌘K (Ctrl+K elsewhere), then type "immich" for Open, Restart, or Logs, or type "stop media", "back up now", "update all".</li>
+<li><strong>Type to filter Status</strong> (S, <em>Built</em>, #385): start typing an app's name on Status and the list narrows, as Finder does; Escape clears it, and Return opens the first one's page.</li>
+<li><strong>A quick peek</strong> (M, <em>Idea</em>): Space on a selected row shows its last log lines, memory, uptime, and its address's QR code, without leaving Status.</li>
+<li><strong>Pinned apps</strong> (S, <em>Built</em>, #414): pin the apps you open most to the top of Status and of the menu bar item's Open an app.</li>
+<li><strong>Open, your way</strong> (S, <em>Built</em>, #415): ⌥-click (Alt-click) an address to copy it; ⇧-click Open to use the address on this computer instead of the domain.</li>
+<li><strong>What changed since you looked</strong> (S, <em>Built</em>, #416): a dot on each row whose state changed since you last opened Status (restarted, updated, stopped), cleared once seen.</li>
+<li><strong>Remember where you were</strong> (S, <em>Built</em>, #417): each screen keeps its scroll position and open sections between visits and restarts.</li>
+<li><strong>Drop files onto an app</strong> (M, <em>Idea</em>): drop a PDF on Paperless's row and it goes into its import folder; an album folder on beets lands in its downloads; photos on Immich go to an album named for the day.</li>
+</ul>
+<h2 id="answers-on-hover">Answers on hover<a class="headerlink" href="#answers-on-hover" title="Permanent link">&para;</a></h2>
+<p>Questions the screen can answer without a click.</p>
+<ul>
+<li><strong>Why it restarted</strong> (S, <em>Built</em>, #411): hover "up 9 minutes" for the reason: an update, a crash, the battery saver, the watchdog, or you, with the time.</li>
+<li><strong>The week's outages</strong> (S, <em>Built</em>, #406): hover "94% up this week" for a strip of the week with each time it was down, and why.</li>
+<li><strong>A balance opens its own group</strong> (S, <em>Built</em>, #379): clicking Cash or Investments in the sidebar opens Net worth on that group's accounts, not the whole page; each account opens its own history.</li>
+<li><strong>A balance's accounts</strong> (S, <em>Built</em>, #409): hover a group in the sidebar's Accounts for its accounts and how long since each was updated; a dot marks one older than a month.</li>
+<li><strong>A backup's contents</strong> (S, <em>Built</em>, #418): hover a backup's time on Backups for its size, what it holds, and how long it took.</li>
+<li><strong>An update's notes</strong> (S, <em>Built</em>, #419; "updates held" only, as Status has no per-app update waiting yet): hover "updates held" or an update waiting for the release's first lines.</li>
+</ul>
+<h2 id="memory-and-performance">Memory and performance<a class="headerlink" href="#memory-and-performance" title="Permanent link">&para;</a></h2>
+<p>So a laptop or a small machine stays responsive, and you can see why when it does not.</p>
+<ul>
+<li><strong>A Memory screen</strong> (L, <em>Mocked up</em>): what OrbStack (or Docker Desktop) uses of the machine's memory, split into the apps, the runtime and its cache, and what is free; today's peak; a chart of the day with its spikes named (the nightly updates, Immich reading photos); every group and app with its memory now and its peak; and Ways to free memory. Needs a day of samples kept by the agent, and the runtime's own total.</li>
+<li><strong>An app's Memory tab</strong> (M, <em>Mocked up</em>): each part of an app (its server, its database, its machine learning) with its line over the day, its peak, and how often it was stopped for memory.</li>
+<li><strong>Stop for a while</strong> (S, <em>Built</em>, #367): Stop for an hour, until tonight, or until tomorrow, then it starts again by itself; from the group menu and an app's page, and later from a row's right-click and the Memory screen.</li>
+<li><strong>Memory limits</strong> (M, <em>Mocked up</em>): a limit for an app or one part of it, suggested from its peak; reaching it restarts that part, and the watchdog says so.</li>
+<li><strong>Stop when idle</strong> (L, <em>Mocked up</em>): stop Immich's machine learning after an hour with no new photos and start it when a phone uploads; the same for other apps with a clear sign of work.</li>
+<li><strong>Ways to free memory</strong> (M, <em>Mocked up</em>): suggestions from what the apps actually do: one idle for hours, two that do the same job (Komga and Kavita), one not opened in a month, and the runtime's limit set higher than the apps need.</li>
+<li><strong>Memory pressure alert</strong> (S, <em>Built</em>, #458): an alert when the apps stay above 90% of the memory Docker has for 10 minutes or more (two watchdog runs in a row), naming the three biggest; Status's Watchdog card lists them, each with Stop, until it comes down.</li>
+<li><strong>Quiet hours for heavy work</strong> (M, <em>Idea</em>): Tdarr, Immich's jobs, and the downloads run at night, or while the machine is idle and plugged in, and pause when you use it.</li>
+<li><strong>Disk space ahead</strong> (M, <em>Idea</em>): at today's rate, when each drive fills (photos, downloads, backups), and which app grows fastest.</li>
+</ul>
+<h2 id="reliability-and-self-healing">Reliability and self-healing<a class="headerlink" href="#reliability-and-self-healing" title="Permanent link">&para;</a></h2>
+<p>The homelab looks after itself, and says what it did.</p>
+<ul>
+<li><strong>Start in order</strong> (M, <em>Idea</em>): Start all and Restart all start databases and VPNs first (Gluetun before qBittorrent), from each app's dependencies.</li>
+<li><strong>One app at a time</strong> (M, <em>Idea</em>): the nightly update updates one app, waits for it to answer, then the next; the first that stays unwell is rolled back and the rest are held until morning.</li>
+<li><strong>An update window per app</strong> (S, <em>Built</em>, #457): update Immich only on Sundays (an app's page › <strong>Only on Sundays</strong>, or <code>homelab updates days immich sun</code> for any days). Still an idea: Vaultwarden at once when a security release comes out.</li>
+<li><strong>A restart that keeps failing</strong> (S, <em>Built</em>, #427): an app Docker restarted three times in an hour is stopped and flagged, with its last log lines, instead of restarting forever.</li>
+<li><strong>After sleep</strong> (S, <em>Built</em>, #422): when the machine wakes, every app is checked at once rather than at the watchdog's next run.</li>
+<li><strong>A drive comes back</strong> (S, <em>Built</em>, #423): when an unplugged drive returns, the apps waiting for it start within a minute, as the battery saver now does for power. On Linux, where Docker made an empty folder in the drive's place and started the app on it, the library folders now wait for the drive too (#428).</li>
+<li><strong>What happened overnight</strong> (S, <em>Built</em>, #420): Status's first line in the morning: "Overnight: 4 apps updated, 1 rolled back, a backup of 2.1 GB, nothing needed you."</li>
+</ul>
+<h2 id="security-and-privacy">Security and privacy<a class="headerlink" href="#security-and-privacy" title="Permanent link">&para;</a></h2>
+<p>Safe by default, and easy to check.</p>
+<ul>
+<li><strong>Hide amounts</strong> (S, <em>Built</em>, #368): one shortcut (⌘⇧H) and a menu item blur every money figure, the sidebar's balances included, for screen sharing or someone at your shoulder (Finances' <em>Hide amounts and a wall-screen card</em>).</li>
+<li><strong>Lock with Touch ID or Windows Hello</strong> (M, <em>Idea</em>): Finances, sign-in details, and the recovery kit ask for the system's own unlock after the app has been idle.</li>
+<li><strong>What is reachable from the internet</strong> (M, <em>Idea</em>): a check from outside, through the tunnel, that lists every address it can reach and flags anything admin that answers.</li>
+<li><strong>A log of what was done</strong> (M, <em>Idea</em>): every start, stop, update, restore, and settings change, by whom (this computer, or which phone), kept for 90 days and searchable.</li>
+<li><strong>Phones that expire</strong> (S, <em>Built</em>, #455): a phone's access to Finances or to changes ends after a time you choose, and Settings › Phones shows when each was last seen.</li>
+<li><strong>Tailnet devices</strong> (S, <em>Built</em>, #465): every device on the household's tailnet in Settings › Phones, online or when it was last seen (a month unseen is marked), and Remove for a lost phone, in Tailscale's admin console where it is done.</li>
+<li><strong>Rotate a secret</strong> (M, <em>Idea</em>): a new database password or API key put in <code>.env</code> and into the app, then the app restarted, in one step; old ones flagged after a year.</li>
+<li><strong>Images with known holes</strong> (M, <em>Idea</em>): each running image checked against the public vulnerability lists weekly; one with a critical finding is named with its fix version.</li>
+<li><strong>What CrowdSec stopped</strong> (S, <em>Built</em>, #430): the addresses banned today, where from, and what they tried, on the proxy's page (and CrowdSec's): Status › Nginx Proxy Manager.</li>
+<li><strong>Two-step sign-in, nudged</strong> (S, <em>Idea</em>): Setup and the weekly summary name each admin app without a second factor until it has one.</li>
+</ul>
+<h2 id="backups-and-data">Backups and data<a class="headerlink" href="#backups-and-data" title="Permanent link">&para;</a></h2>
+<p>Confidence that what matters can come back.</p>
+<ul>
+<li><strong>Restore one file</strong> (M, <em>Idea</em>): browse a backup by app and date and bring back one document, photo, or setting without restoring the whole app.</li>
+<li><strong>Yesterday's version of an app</strong> (M, <em>Idea</em>): Restore to last night on an app's page: its data and its image as they were, the current ones kept aside in case.</li>
+<li><strong>A copy before anything risky</strong> (S, <em>Built</em>, #461): a database dump just before an update (with the app's own data, kept for the week a rollback can use it), before a restore (<code>rollback --data</code> sets today's aside), and now before an app starts again on changed settings (a new address, signing in with Pocket ID, settings changed by hand), kept with the nightly dumps.</li>
+<li><strong>What changed since last night</strong> (S, <em>Built</em>, #435): each backup's size beside the night before's, with a warning when an app's data shrinks sharply (under half of a copy of 1 MB or more).</li>
+<li><strong>Weekly integrity check</strong> (S, <em>Built</em>, #463): Duplicati's own Verify of each job on Sundays (<code>homelab backup-check</code>, a sample of its files against the hashes it recorded); a damaged file is a failing check on Status and a red line on Backups until a check passes again.</li>
+</ul>
+<h2 id="notifications-and-alerts">Notifications and alerts<a class="headerlink" href="#notifications-and-alerts" title="Permanent link">&para;</a></h2>
+<p>Few, clear, and useful when they come.</p>
+<ul>
+<li><strong>Buttons on alerts</strong> (M, <em>Built</em>, Nov 2026): "Radarr stopped" on the phone with <strong>Restart</strong> and <strong>Show logs</strong>: ntfy's view buttons, as links into the iPhone app (<code>homelab://</code>), which open the app's page with the action waiting for a tap and Face ID; more than one app down gets <strong>Open Status</strong>.</li>
+<li><strong>Quiet hours</strong> (S, <em>Built</em>, #439): no sound overnight unless it is serious (backups failing for days, the vault unreachable). <code>QUIET_HOURS=22-7</code> by default; Settings › Quiet hours.</li>
+<li><strong>One alert for many</strong> (S, <em>Idea</em>): three apps stopping together is one alert, "3 apps stopped: the drive was unplugged", not three.</li>
+<li><strong>Snooze an alert</strong> (S, <em>Built</em>, #469): snooze one failing check for an hour or a day beside it on Status's Watchdog card (or <code>homelab notify snooze</code>): still checked, not alerted about until it wakes, and alerted then if it still fails. Not from the phone's alert itself: ntfy's buttons would need a way in to the computer from the notification.</li>
+<li><strong>Who hears what</strong> (S, <em>Idea</em>): each person picks the alerts they get; the household's other members get only the ones about their apps.</li>
+</ul>
+<h2 id="the-household">The household<a class="headerlink" href="#the-household" title="Permanent link">&para;</a></h2>
+<p>The homelab as something a family uses, not one person.</p>
+<ul>
+<li><strong>Guest access</strong> (M, <em>Idea</em>): a guest's sign-in to chosen apps (Jellyfin, an Immich album) that ends on a date.</li>
+<li><strong>A printable welcome sheet</strong> (S, <em>Built</em>, #446): each person's apps, addresses, and QR codes on one page for the fridge, linked from their welcome page, with no sign-in link or password on it.</li>
+<li><strong>Each person's apps</strong> (S, <em>Built</em>): a person's welcome page lists only the apps they use, with their phone app for each (<code>homelab person apps &lt;name&gt; &lt;app&gt;…</code>).</li>
+<li><strong>What's new for the family</strong> (S, <em>Idea</em>): a short page in plain words when an app they use gains something (a new player in Navidrome), not the technical notes.</li>
+</ul>
+<h2 id="apps-and-the-catalog">Apps and the catalog<a class="headerlink" href="#apps-and-the-catalog" title="Permanent link">&para;</a></h2>
+<p>Picking, trying, and using apps.</p>
+<ul>
+<li><strong>Import music on a button</strong> (M, <em>Idea</em>): beets' import from Status, with the albums it is unsure of asked in the app instead of Terminal. The <a href="../Roadmap/#the-library-in-order">Roadmap</a> has the library work in order.</li>
+<li><strong>Try an app for a day</strong> (M, <em>Idea</em>): install an app on trial; tomorrow the app asks to keep it or removes it with its data.</li>
+<li><strong>Suggestions from what you use</strong> (S, <em>Built</em>, #445): with Navidrome, beets; with Sonarr, Bazarr; each with one line on why. Thirteen, in each app's <code>goes_with</code>, under Choose apps › Add more › <em>Suggested for what you run</em>.</li>
+<li><strong>Two apps that do the same job</strong> (S, <em>Built</em>, #438): Choose apps says when you already run one that does it (Komga and Kavita, Navidrome and Jellyfin's music), and why you might want both. Eight pairs, in each app's <code>same_job</code>.</li>
+<li><strong>Quick settings on an app's page</strong> (M, <em>Idea</em>): the two or three settings people change most (Navidrome's scan interval, Immich's machine learning on or off) as switches, without opening the app.</li>
+</ul>
+<h2 id="the-desktop-and-the-menu-bar">The desktop and the menu bar<a class="headerlink" href="#the-desktop-and-the-menu-bar" title="Permanent link">&para;</a></h2>
+<p>The app at home on each system.</p>
+<ul>
+<li><strong>A Dock menu</strong> (M, <em>Idea</em>): right-click the Dock icon for Open an app ▸, Back up now, Pause updates. Likely needs native code beyond the app's framework; the Windows taskbar's jump list and a Linux desktop file's actions are the same idea.</li>
+<li><strong>An app's submenu in the menu bar</strong> (S, <em>Idea</em>): Open an app ▸ Immich ▸ Open, Restart, Logs.</li>
+<li><strong>⌥-click the menu bar item</strong> (S, <em>Idea</em>): Option-click (as with Wi-Fi) for more: each app's memory, the runtime's version, Restart the runtime.</li>
+<li><strong>A global shortcut</strong> (S, <em>Idea</em>): one key anywhere opens the command palette over whatever you are doing.</li>
+<li><strong>Shortcuts and Siri</strong> (L, <em>Idea</em>): actions for the Shortcuts app: back up now, stop an app, the homelab's state.</li>
+<li><strong>Widgets</strong> (L, <em>Idea</em>): Status and net worth on the desktop and the phone's home screen, once signing is in place (the <a href="../Roadmap/#later">Roadmap</a> has the iOS app).</li>
+</ul>
+<h2 id="the-phone-companion">The phone companion<a class="headerlink" href="#the-phone-companion" title="Permanent link">&para;</a></h2>
+<p>The household's phones as a second screen.</p>
+<ul>
+<li><strong>The last Status, offline</strong> (S, <em>Built</em>, #453): away from home with no tailnet, it shows the last Status it saw and when, rather than an error. The page itself is kept on the phone too (a service worker), where it's served over HTTPS.</li>
+<li><strong>Add to Home Screen, done right</strong> (S, <em>Built</em>, #452): an icon, a name, and a splash screen, so it opens like an app: PNG icons an iPhone takes (and a maskable one for Android), a splash in the app's own background, and the bar above it light or dark with the phone.</li>
+<li><strong>Quick actions</strong> (S, <em>Built</em>, #447): long-press an app for Open, Restart, Stop for a while, on a phone that may make changes (also Start, Stop, and Logs).</li>
+</ul>
+<h2 id="media-library-cleanup">Media library cleanup<a class="headerlink" href="#media-library-cleanup" title="Permanent link">&para;</a></h2>
+<p>Begun by the owner on Nov 3, 2026, with the two scripts and a wider brief (films, TV, audiobooks, the Downloads inbox, lyrics, a nightly sweep, and space reclaimed by itself): built as <a href="../Tidy%20Up/">Tidy Up</a>. The plan below was its starting point; where the brief changed it (reports in <code>reports/media</code>; Windows too; duplicates and verified backups to the Trash by themselves rather than kept for review), Tidy Up's page says how it works now.</p>
+<ul>
+<li><strong>Library cleanup</strong> (L, <em>Built</em>, #376): the owner's tested engine, two stdlib Python scripts added unchanged at <code>tools/media/</code> (<code>music_organizer.py</code>: init, status, scan, run, finalize, verify, undo, delete-backup; <code>books_organizer.py</code>: init, status, review, apply, undo), wrapped, not rewritten. The plan, agreed in outline:</li>
+<li><strong>Settings from the homelab:</strong> <code>homelab media</code> writes <code>data/homelab_media.json</code> before each run (libraries from <code>MEDIA_ROOT</code>, <code>pause_containers</code> as the containers that mount each library, the beets container's image, <code>engine: container</code>) and always passes <code>--config</code>.</li>
+<li><strong>CLI:</strong> <code>homelab media music|books &lt;action&gt; [flags]</code> runs the script with <code>--events json</code>, prints the events as ordinary CLI lines, forwards flags, and never adds <code>--yes</code> itself.</li>
+<li><strong>Background and lock:</strong> <code>--background</code> runs the job detached (it outlives the window and the app), holding <code>data/media.lock</code> (pid, script, action, start) and writing <code>logs/media/&lt;job&gt;.jsonl</code>; one media job at a time; a stale lock (its process gone) offers to run the same action again, which the scripts resume.</li>
+<li><strong>A Library cleanup page</strong> from the Media group's menu and Navidrome's and Calibre-Web's pages: <code>status --json</code>; Scan → Run → Finalize → Verify → Delete backup, Undo after Finalize; Books: Review → Apply → Undo; live progress, a summary from the <code>result</code> event, and buttons for the album report CSV, the planned changes CSV, the books review page, and <em>Music - Needs Attention</em>.</li>
+<li><strong>Confirmations:</strong> a native dialog before each step that changes anything, and only then <code>--yes</code>; Delete backup in an in-app sheet that needs DELETE typed (Wails' dialogs take no text).</li>
+<li><strong>Battery:</strong> no <code>music run</code> on battery; <em>Start when plugged in</em>, picked up by the awake job within a minute of power.</li>
+<li><strong>Updates:</strong> while the lock is held, nightly updates and Update apps postpone every app whose container mounts a media library (Navidrome, beets, Calibre-Web, Komga, Kavita), and say so; updating one alone is refused; <code>homelab up</code> at login leaves them too, so nothing starts Navidrome mid-swap.</li>
+<li><strong>Backups:</strong> nothing backs up the music library today (Duplicati and Kopia have no music source), so the guard is a doctor and Needs a look warning for any job, the owner's own included, that covers the music folder without excluding <code>.music-cleanup</code>, and the exclusion built in should a music job ever be added.</li>
+<li><strong>Needs a look</strong>, from what the wrapper records after each step (<code>data/media.json</code>), so Status runs no Python: verify exit 2; built but not swapped; the originals' backup still there 14 days after finalize (Verify, then Delete backup); a books review that flagged misfiled books.</li>
+<li><strong>Preflight</strong> with plain fixes: python3 on the Mac (checked without macOS's install prompt), the library drive mounted, OrbStack running, the beets image pulled (offer to pull it), calibredb installed.</li>
+<li><strong>Tests</strong> with no Docker or Python: a stub <code>python3</code> replays recorded event fixtures and exit codes; event parsing, settings generation, the lock, battery, nightly and single updates, <code>up</code>, and each Needs a look case.</li>
+</ul>
+<p><strong>Never</strong> delete <code>~/.music-cleanup</code> or <code>&lt;library&gt;/.music-cleanup/original</code> (the original library's backup and the scripts' saved progress); only the script's own <code>delete-backup</code>, after DELETE is typed. Don't change the scripts' genre lists or matching rules; any other change to them small, in its own commit, with why. Four PRs: the CLI, settings, and lock; the page, dialogs, and progress; battery, updates, <code>up</code>, and backups; Needs a look and preflight.</p>
+<p><strong>Still to decide with the owner:</strong> where reports go (<code>&lt;homelab&gt;/reports/media</code> rather than <code>~/Downloads</code>, proposed); after a crash or restart, a Resume button (proposed) or resuming a stopped Run at login; Mac and Linux only (proposed; the scripts and Calibre's paths are Mac and Linux); Needs a look as a line in its tile plus a note atop Status opening the page (proposed).</p>
+<h2 id="finances">Finances<a class="headerlink" href="#finances" title="Permanent link">&para;</a></h2>
+<p>The Finances loop's unfinished items, built by the features loop now, with their numbers from its backlog. The rest of its backlog (items 1 to 15, 22 to 24, and the MoneyMatter list) is in the app.</p>
+<ul>
+<li><strong>Hide amounts and a wall-screen card</strong> (S, <em>Built</em>, #368; F16): every money figure as $••• on ⌘⇧H, View › Hide Amounts, or the eye on Finances, kept in the plan so the phones follow; and a money card with the next payday, what is left after it, and the next 3 bills, on a wall screen allowed it in Settings › Phones.</li>
+<li><strong>The calendar, further ahead</strong> (S, <em>Built</em>, #373; F20): a payment past the chart's 93 days, such as a yearly renewal, shows in its month a year ahead, without a balance.</li>
+<li><strong>Card charges on the calendar</strong> (S, <em>Built</em>, #380; F21): a bill charged to a card shows on its day, marked "on Chase Freedom", with the card's due day.</li>
+<li><strong>Finances on the phone</strong> (M, <em>Built</em>, #381; F17): the phone's Dashboard opens with Coming up (the next two weeks of bills, card charges on their cards) and the goals; the calendar (a list of days), Renewing soon, and Update balances (one sheet, every account) were already there.</li>
+<li><strong>Export</strong> (S, <em>Built</em>, #405; F18): the plan and its projection as CSV and JSON, and a printable month.</li>
+<li><strong>Polish, all along</strong> (S, <em>Idea</em>; F19): empty states for a new plan, alignment, 860px and phone widths, contrast themes, focus order, labels; a little in each Finances round.</li>
+</ul>
+<h2 id="accessibility-and-polish">Accessibility and polish<a class="headerlink" href="#accessibility-and-polish" title="Permanent link">&para;</a></h2>
+<p>Details that make it feel finished.</p>
+<ul>
+<li><strong>Status read aloud</strong> (S, <em>Built</em>, #451): VoiceOver and Narrator announce a job's progress and a row's change, not only the result: <em>Vikunja: Restarting…</em>, then <em>Vikunja: Running</em>, and apps that go down together in one line.</li>
+<li><strong>A sheet of shortcuts</strong> (S, <em>Built</em>, #450): press ? (or <em>Keyboard shortcuts</em> in ⌘K) for the shortcuts of the screen you are on, then those that work everywhere and each screen's key.</li>
+<li><strong>Shapes as well as colours</strong> (S, <em>Built</em>, #449): each state's dot also has a shape (a circle when up, a triangle when stopped or it needs a look, a cross when down), for colour-blind eyes, small screens, and contrast themes.</li>
+<li><strong>Every menu by keyboard</strong> (S, <em>Built</em>, #369, #413): right-click menus open with the context-menu key and Shift+F10, and work like More… (arrows, Escape): an app's row, a group's heading, and the sidebar.</li>
+</ul>
+<h2 id="insight">Insight<a class="headerlink" href="#insight" title="Permanent link">&para;</a></h2>
+<p>What the homelab did for you, in numbers you can trust.</p>
+<ul>
+<li><strong>A monthly report</strong> (M, <em>Idea</em>): uptime, backups and restore tests, updates, memory, and what the apps replaced in money, as a page and a PDF.</li>
+<li><strong>Health in one line</strong> (S, <em>Built</em>, #470): "All well", or the one thing that needs you (an app in its row's words, several in one line, or a failing check that is no app's), at the top of every screen but Status, with Open Status.</li>
+<li><strong>Savings over time</strong> (S, <em>Built</em>, #437): what the apps have saved since the homelab started, month by month, from <a href="../Savings/">Savings</a>: hover <em>Instead of subscriptions</em> on Status.</li>
+</ul>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../Roadmap/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Roadmap">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Roadmap
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../Decisions/" class="md-footer__link md-footer__link--next" aria-label="Next: Decisions">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Decisions
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.top", "navigation.footer", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.a5f9d56c.min.js"></script>
+      
+    
+  </body>
+</html>

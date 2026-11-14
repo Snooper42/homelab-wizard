@@ -1,0 +1,2739 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Your household's photos, passwords, documents, money, music, and books, on a computer you own.">
+      
+      
+      
+        <link rel="canonical" href="https://snooper42.github.io/homelab-wizard/">
+      
+      
+      
+        <link rel="next" href="docs/Tour/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="assets/logo.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+    
+    
+      
+        <title>Homelab Wizard</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/main.57a0d79d.min.css">
+      
+        
+        <link rel="stylesheet" href="assets/stylesheets/palette.fb2fffe2.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#what-it-is" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="." title="Homelab Wizard" class="md-header__button md-logo" aria-label="Homelab Wizard" data-md-component="logo">
+      
+  <img src="assets/logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Homelab Wizard
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Home
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue"  aria-label="Dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="blue"  aria-label="Light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Snooper42/homelab-wizard" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Snooper42/homelab-wizard
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="." title="Homelab Wizard" class="md-nav__button md-logo" aria-label="Homelab Wizard" data-md-component="logo">
+      
+  <img src="assets/logo.svg" alt="logo">
+
+    </a>
+    Homelab Wizard
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Snooper42/homelab-wizard" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Snooper42/homelab-wizard
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="." class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-it-is" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What it is
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#take-the-tour" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Take the tour
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Take the tour">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#on-your-iphone" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        On your iPhone
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-it-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How it works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#get-started" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Get started
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-it-replaces" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What it replaces
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#everyday-tasks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Everyday tasks
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#questions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Questions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-runs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What runs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#getting-help" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Getting help
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Documentation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#development" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Development
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#license" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        License
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Start here
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Start here
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="docs/Tour/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    A tour of the app
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="docs/Getting%20Started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="docs/Everyday%20Tasks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Everyday tasks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="docs/Testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing a new build
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="docs/Upgrading/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Upgrading
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="docs/Commands/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Run it
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Run it
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="docs/Runbooks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Runbooks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="docs/Automation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Automation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="docs/Monitoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Monitoring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="docs/Backups/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backups
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="docs/Tidy%20Up/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tidy Up
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="docs/Private%20Finances/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Private Finances
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="docs/Disaster%20Recovery/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Disaster Recovery
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="docs/Troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="docs/Known%20Issues/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Known Issues
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How it works
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    How it works
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="docs/Architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="docs/Networking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Networking
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="docs/Security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="docs/Usability/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Usability
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="docs/Storage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Storage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="docs/Docker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docker
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="docs/Parity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What each device can do
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="apple-client/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The iPhone and iPad app
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="docs/Host/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Host
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="docs/Environment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Environment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The apps
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    The apps
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="docs/Services/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Services
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="docs/Inventory/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Inventory
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="docs/Savings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Savings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="docs/Service%20Organization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Service Organization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The project
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    The project
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="docs/Roadmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="docs/Feature%20Roadmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Feature Roadmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="docs/Decisions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Decisions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CHANGELOG/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What's new
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CONTRIBUTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="docs/Contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing (services)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="docs/Standards/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Standards
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="docs/Releasing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Releasing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="SECURITY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security policy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="docs/Homelab%20Manifest/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Homelab Manifest
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="docs/Homelab%20Context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Homelab Context
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="docs/Maintainer%20Guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Maintainer Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="docs/To-do/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    To-do
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="docs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Knowledge base index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-it-is" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What it is
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#take-the-tour" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Take the tour
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Take the tour">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#on-your-iphone" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        On your iPhone
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-it-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How it works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#get-started" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Get started
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-it-replaces" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What it replaces
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#everyday-tasks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Everyday tasks
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#questions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Questions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-runs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What runs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#getting-help" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Getting help
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Documentation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#development" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Development
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#license" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        License
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<p align="center">
+  <img src="assets/logo.svg" alt="Homelab Wizard" width="120" height="120">
+</p>
+
+<h1 align="center">Homelab Wizard</h1>
+
+<p align="center">
+  <strong>Your household's photos, passwords, documents, money, music, and books, on a computer you own.</strong><br>
+  A desktop app and a small CLI that install, connect, back up, update, and watch over 70+ self-hosted apps.
+</p>
+
+<p align="center">
+  <a href="https://github.com/Snooper42/homelab-wizard/releases"><img alt="Latest release" src="https://img.shields.io/github/v/release/Snooper42/homelab-wizard?include_prereleases&sort=semver&style=flat-square&color=orange"></a>
+  <a href="https://github.com/Snooper42/homelab-wizard/blob/main/LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-blue?style=flat-square"></a>
+  <img alt="macOS" src="https://img.shields.io/badge/macOS-Apple%20Silicon%20%C2%B7%20Intel-000000?style=flat-square&logo=apple&logoColor=white">
+  <img alt="Windows" src="https://img.shields.io/badge/Windows-x64%20%C2%B7%20ARM64-0078D4?style=flat-square&logo=windows&logoColor=white">
+  <img alt="Linux" src="https://img.shields.io/badge/Linux-deb%20%C2%B7%20rpm%20%C2%B7%20AppImage-FCC624?style=flat-square&logo=linux&logoColor=black">
+  <img alt="Go" src="https://img.shields.io/badge/Go-1.26%2B-00ADD8?style=flat-square&logo=go&logoColor=white">
+</p>
+
+<p align="center">
+  <a href="#what-it-is">What it is</a> ·
+  <a href="#take-the-tour">Tour</a> ·
+  <a href="#how-it-works">How it works</a> ·
+  <a href="#get-started">Get started</a> ·
+  <a href="#what-it-replaces">What it replaces</a> ·
+  <a href="#everyday-tasks">Everyday tasks</a> ·
+  <a href="#questions">Questions</a> ·
+  <a href="#what-runs">Apps</a> ·
+  <a href="#documentation">Docs</a> ·
+  <a href="CHANGELOG.md">What's new</a>
+</p>
+
+<p align="center">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/tour-dark.gif">
+  <img alt="A walk through Homelab Wizard: Status, an app's page, Finances, Tidy Up, Backups, and Choose apps, each with a caption saying what it is for" src="docs/images/tour.gif" width="960">
+</picture>
+</p>
+
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><strong>Beta.</strong> Homelab Wizard runs a real household on a Mac, and it is now being tested on Windows and Linux machines too. The builds are not signed yet (no Apple Developer ID or Windows code-signing certificate), so each system asks once whether to trust them. Open problems are in <a href="docs/Known%20Issues/">Known Issues</a>; what changed in each version is in the <a href="CHANGELOG/">CHANGELOG</a>.</p>
+</div>
+<h2 id="what-it-is">What it is<a class="headerlink" href="#what-it-is" title="Permanent link">&para;</a></h2>
+<p>Homelab Wizard turns a computer you already own (a Mac mini, a desktop PC, a Steam Machine) into your household's own private cloud. It installs free, open-source apps that do the jobs you pay subscriptions for, such as photo backup, a password manager, and streaming for the films and music you own. It connects them to each other, and then it looks after them:</p>
+<ul>
+<li><strong>A copy of everything, every night,</strong> encrypted before it leaves the house, and a monthly test that proves a restore works.</li>
+<li><strong>Updates while you sleep,</strong> each app's data copied first, with a one-click undo. An app that comes back unwell is put back by itself.</li>
+<li><strong>A watchdog every 15 minutes</strong> that restarts what hangs, and an alert on your phone when something needs you.</li>
+<li><strong>Nothing published to the internet.</strong> Your phones and computers reach the apps over Tailscale's private network, at home and away.</li>
+</ul>
+<p>Two parts are its own: <strong>Finances</strong>, the household's money paycheck by paycheck, and <strong>Tidy Up</strong>, which keeps the music, films, and books you download sorted. No command line is needed: install the app, click <strong>Set it up for me</strong>, tick what you want, and it does the rest.</p>
+<h2 id="take-the-tour">Take the tour<a class="headerlink" href="#take-the-tour" title="Permanent link">&para;</a></h2>
+<table>
+<tr>
+<td width="50%" valign="top"><a href="docs/Tour.md#status"><strong>Status</strong></a><br>Every app on the computer, live: what runs, what needs a look, and one button to open or start each.<br><br><picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-status-dark.png">
+  <img alt="Status: all 22 apps running, nothing that needs a look, and each category folded into one line" src="docs/images/app-status.png">
+</picture></td>
+<td width="50%" valign="top"><a href="docs/Tour.md#an-apps-page"><strong>An app's page</strong></a><br>Restart it, read its log in plain words (explained by the AI on this computer), and undo an update.<br><br><picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-page-dark.png">
+  <img alt="Vikunja's page: its address, its week up, its last backup, its log explained, and its last update with Roll back" src="docs/images/app-page.png">
+</picture></td>
+</tr>
+<tr>
+<td valign="top"><a href="docs/Tour.md#choose-apps"><strong>Choose apps</strong></a><br>Tick what you want; each app says what it does and which subscription it can replace. The plan says what it will install before anything happens.<br><br><picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-choose-dark.png">
+  <img alt="Choose apps: Start here with Photos, Passwords, Movies and TV, Music, and Files, and the install plan" src="docs/images/app-choose.png">
+</picture></td>
+<td valign="top"><a href="docs/Tour.md#backups"><strong>Backups</strong></a><br>Each app's newest copy, the encrypted off-site jobs, the last restore test, and a printable recovery kit.<br><br><picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-backups-dark.png">
+  <img alt="Backups: last backup, destination, restore test, and each app's newest copy" src="docs/images/app-backups.png">
+</picture></td>
+</tr>
+<tr>
+<td valign="top"><a href="docs/Tour.md#finances"><strong>Finances</strong></a><br>What each paycheck leaves once the bills are paid, and net worth month by month. Typed in by you, kept at home, no bank connection.<br><br><picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-finances-dark.png">
+  <img alt="Finances: checking now and after the next paycheck, and every account after its bills" src="docs/images/app-finances.png">
+</picture></td>
+<td valign="top"><a href="docs/Tour.md#tidy-up"><strong>Tidy Up</strong></a><br>Drop in a download and it's filed in the right library: music, films, shows, books, audiobooks. Undo for every change.<br><br><picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-tidy-dark.png">
+  <img alt="Tidy Up's Inbox: the watched folders, when to tidy up, and Tidy up now" src="docs/images/app-tidy.png">
+</picture></td>
+</tr>
+<tr>
+<td valign="top"><a href="docs/Tour.md#setup"><strong>Setup</strong></a><br>The checklist for finishing up, checked live. <strong>Do the N I can do for you</strong> runs every step that's ready.<br><br><picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-setup-dark.png">
+  <img alt="Setup: this machine, then the first-time checklist with progress" src="docs/images/app-setup.png">
+</picture></td>
+<td valign="top"><a href="docs/Tour.md#on-your-iphone"><strong>On your iPhone</strong></a><br>The Homelab app: Status, each app's page, Backups, and Finances in your pocket, at home or away, behind Face ID.<br><br><p align="center"><picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/iphone-status-dark.png">
+  <img alt="The Homelab app on an iPhone: Status, with Mealie needing a look and each category of apps below" src="docs/images/iphone-status.png" width="210">
+</picture></p></td>
+</tr>
+</table>
+
+<h3 id="on-your-iphone">On your iPhone<a class="headerlink" href="#on-your-iphone" title="Permanent link">&para;</a></h3>
+<p>The <strong>Homelab app</strong> for iPhone and iPad keeps the homelab in your pocket: Status with <strong>Start</strong> and <strong>Logs</strong>, each app's page, Backups, the household's Finances, alerts, and a widget, behind Face ID. A phone only looks until you let it make changes, and sees Finances only if you allow it. It's built with Xcode on your own Mac for now, not from the App Store (<a href="apple-client/">apple-client</a>).</p>
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/iphone-status-dark.png">
+    <img alt="The Homelab app on an iPhone. Status: the app that needs a look first, with Start and Logs, then each category" src="docs/images/iphone-status.png" width="160">
+  </picture>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/iphone-app-dark.png">
+    <img alt="The Homelab app on an iPhone. An app's page: Vikunja running, with Open, Restart, Stop, and Logs" src="docs/images/iphone-app.png" width="160">
+  </picture>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/iphone-backups-dark.png">
+    <img alt="The Homelab app on an iPhone. Backups: the last backup, the restore test, and what needs a look" src="docs/images/iphone-backups.png" width="160">
+  </picture>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/iphone-finances-dark.png">
+    <img alt="The Homelab app on an iPhone. Finances: checking now, after the next paycheck, and net worth over three months" src="docs/images/iphone-finances.png" width="160">
+  </picture>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/iphone-spending-dark.png">
+    <img alt="The Homelab app on an iPhone. Spending: where the month went, by category, with each budget" src="docs/images/iphone-spending.png" width="160">
+  </picture>
+</p>
+
+<p>Every screen in more detail, with what each button does: <strong><a href="docs/Tour/">the full tour</a></strong>.</p>
+<h2 id="how-it-works">How it works<a class="headerlink" href="#how-it-works" title="Permanent link">&para;</a></h2>
+<pre class="mermaid"><code>flowchart TB
+  you(["&lt;b&gt;Your phones and computers&lt;/b&gt;&lt;br/&gt;at home and away"])
+  subgraph home["The computer at home"]
+    direction LR
+    wizard["&lt;b&gt;Homelab Wizard&lt;/b&gt;&lt;br/&gt;the app, and its agent&lt;br/&gt;in the background"]
+    apps["&lt;b&gt;Your apps&lt;/b&gt;&lt;br/&gt;Photos · Passwords · Documents&lt;br/&gt;Films · Music · Books · …&lt;br/&gt;each in its own container"]
+    wizard -- "installs, connects,&lt;br/&gt;updates, restarts" --&gt; apps
+  end
+  backup[("&lt;b&gt;Your backups&lt;/b&gt;&lt;br/&gt;a cloud drive's folder,&lt;br/&gt;or an external drive")]
+  you -- "Tailscale: private,&lt;br/&gt;nothing on the internet" --&gt; apps
+  wizard -- "every night,&lt;br/&gt;an encrypted copy" --&gt; backup</code></pre>
+<p>The apps are free, open-source projects (Immich, Vaultwarden, Paperless-ngx, Jellyfin, Navidrome, and 60-odd more), each running in its own container through Docker, or OrbStack on a Mac. Homelab Wizard is the part that picks them, sets them up with a strong password each, connects them to each other, and keeps them running, with an alert on your phone when something needs you. The traffic paths, the engine, and a night of jobs, drawn out: <a href="docs/Architecture/">Architecture</a>.</p>
+<h2 id="get-started">Get started<a class="headerlink" href="#get-started" title="Permanent link">&para;</a></h2>
+<p>You need a computer that stays on (a Mac, a Windows 10 or 11 PC, a Linux machine, or a Steam Machine; 8 GB of memory runs the <em>Start here</em> apps, 16 GB is comfortable), its container runtime (<a href="https://orbstack.dev">OrbStack</a> on a Mac, Docker Desktop on Windows, Docker Engine on Linux), and a free <a href="https://tailscale.com">Tailscale</a> account. Within the first week, add somewhere for backups: a cloud drive's synced folder or an external drive. No domain and no router changes. <a href="docs/Getting%20Started/">Getting Started</a> walks through every step with pictures.</p>
+<ol>
+<li><strong>Install the app</strong> with one pasted line. On a Mac or Linux, in Terminal:</li>
+</ol>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-fsSL<span class="w"> </span>https://raw.githubusercontent.com/Snooper42/homelab-wizard/main/install.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>sh
+</code></pre></div>
+<p>On Windows, in PowerShell:</p>
+<div class="highlight"><pre><span></span><code><span class="nb">irm </span><span class="n">https</span><span class="p">://</span><span class="n">raw</span><span class="p">.</span><span class="n">githubusercontent</span><span class="p">.</span><span class="n">com</span><span class="p">/</span><span class="n">Snooper42</span><span class="p">/</span><span class="n">homelab-wizard</span><span class="p">/</span><span class="n">main</span><span class="p">/</span><span class="n">install</span><span class="p">.</span><span class="n">ps1</span> <span class="p">|</span> <span class="nb">iex</span>
+</code></pre></div>
+<p>Both download the newest build from <a href="https://github.com/Snooper42/homelab-wizard/releases/latest">Releases</a>, check it against GitHub's SHA-256 checksum, install it, and open it. The line is there because the builds aren't signed yet: a browser download gets blocked, a download from Terminal or PowerShell doesn't. Both scripts are short enough to read first (<a href="https://github.com/Snooper42/homelab-wizard/blob/main/install.sh">install.sh</a>, <a href="https://github.com/Snooper42/homelab-wizard/blob/main/install.ps1">install.ps1</a>).
+2. <strong>Open it and choose Set it up for me.</strong> It makes the homelab folder (<code>~/Homelab</code>), with a strong password for every app, and starts the essentials (updates, backups, alerts).
+3. <strong>Pick what you want</strong> on Choose apps (Photos, Passwords, Movies and TV, Music, Files, or anything from the full list) and click <strong>Install</strong>.
+4. <strong>Finish on Setup.</strong> <strong>Do the N I can do for you</strong> runs every step that is ready; the rest say in one line what they give you. Signing in to Tailscale and installing it on your phones is the part only you can do.</p>
+<p>You are done when Setup leaves the sidebar (it comes back by itself if a step comes undone) and every app on <strong>Status</strong> has a green dot. Then put Tailscale, the Homelab app, and the apps' own phone apps on each phone (<a href="docs/Getting%20Started/#4-set-up-each-persons-phone">Getting Started › Set up each person's phone</a>).</p>
+<details>
+<summary><strong>Every download, and the command line</strong></summary>
+
+| Platform | Download | Install |
+|---|---|---|
+| macOS (Apple Silicon and Intel) | [Releases › Latest](https://github.com/Snooper42/homelab-wizard/releases/latest) › `Homelab-Wizard-macOS.dmg` | `install.sh` (above). Or open the download, drag the app to Applications, and clear the download flag once: `xattr -dr com.apple.quarantine "/Applications/Homelab Wizard.app"`. Later updates install themselves |
+| Windows 10 and 11, x64 or ARM | [Releases › Latest](https://github.com/Snooper42/homelab-wizard/releases/latest) › `Homelab-Wizard-Windows-Setup.exe` | `install.ps1` (above). Or run the download (SmartScreen: More info › Run anyway, while it's unsigned), or unzip the portable build. Later updates install themselves |
+| Ubuntu, Debian, Fedora, Arch | Releases › Latest › `.deb`, `.rpm`, or `.pkg.tar.zst` | `curl -fsSL https://raw.githubusercontent.com/Snooper42/homelab-wizard/main/install.sh \| sh` picks the package and installs it; or `sudo apt install ./homelab-wizard_*.deb` (or `dnf install`, `pacman -U`). Later updates install themselves |
+| SteamOS, or Linux without WebKitGTK | Releases › Latest › `Homelab-Wizard-x86_64.AppImage` | The same `install.sh` line (on SteamOS it puts the AppImage in `~/Applications`), or `chmod +x` and open it; Settings › This machine › **Add to the app menu** |
+
+Every build carries the `homelab` CLI, so nothing else is needed. What each contains: [Releasing](docs/Releasing.md#each-platforms-build). Building it yourself: [app/README.md](https://github.com/Snooper42/homelab-wizard/blob/main/app/README.md).
+
+Prefer the command line? The same homelab from git, shown here on a Mac (on Linux, install Docker and Go from your package manager; on Windows, use `homelab.cmd`):
+
+<div class="highlight"><pre><span></span><code>brew<span class="w"> </span>install<span class="w"> </span>--cask<span class="w"> </span>orbstack<span class="w">     </span><span class="c1"># then OrbStack › Settings › Start at login</span>
+brew<span class="w"> </span>install<span class="w"> </span>go<span class="w">                  </span><span class="c1"># ./homelab builds itself on first run</span>
+git<span class="w"> </span>clone<span class="w"> </span>https://github.com/Snooper42/homelab-wizard.git<span class="w"> </span>~/Homelab
+<span class="nb">cd</span><span class="w"> </span>~/Homelab
+./homelab<span class="w"> </span>doctor<span class="w">                 </span><span class="c1"># checks the machine, the runtime, and the settings</span>
+./homelab<span class="w"> </span>up<span class="w">                     </span><span class="c1"># makes .env with generated passwords, starts the essentials</span>
+./homelab<span class="w"> </span>setup<span class="w">                  </span><span class="c1"># the same checklist as the app's Setup screen</span>
+</code></pre></div>
+
+The [runbook](docs/Runbooks.md#first-time-bring-up) has every setup step as commands.
+
+</details>
+
+<h2 id="what-it-replaces">What it replaces<a class="headerlink" href="#what-it-replaces" title="Permanent link">&para;</a></h2>
+<p>A small private cloud on a computer at home. It does the jobs you would otherwise pay monthly subscriptions for, but the apps run at home and the files stay yours.</p>
+<table>
+<thead>
+<tr>
+<th>When you want to…</th>
+<th>Open</th>
+<th>Instead of paying for</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Back up phone photos and find them by face, place, or thing</td>
+<td>Immich</td>
+<td>iCloud+ 2 TB</td>
+</tr>
+<tr>
+<td>Keep everyone's passwords</td>
+<td>Vaultwarden (with the Bitwarden apps)</td>
+<td>1Password Families</td>
+</tr>
+<tr>
+<td>Scan and search receipts, letters, and paperwork</td>
+<td>Paperless-ngx</td>
+<td>Evernote</td>
+</tr>
+<tr>
+<td>See what each paycheck leaves after the bills, and your net worth</td>
+<td>Finances, a screen of Homelab Wizard itself</td>
+<td>a spreadsheet, or a budgeting app</td>
+</tr>
+<tr>
+<td>Sort and tag the music, films, shows, books, and audiobooks you download, and free the space they waste</td>
+<td>Tidy Up, a screen of Homelab Wizard itself</td>
+<td>a music tagger, a file-renaming app</td>
+</tr>
+<tr>
+<td>Plan the budget, and track investments</td>
+<td>MoneyMatter or Actual Budget, Ghostfolio</td>
+<td>YNAB, a portfolio tracker</td>
+</tr>
+<tr>
+<td>Watch your movies and shows</td>
+<td>Jellyfin</td>
+<td>Netflix and others, for what you own</td>
+</tr>
+<tr>
+<td>Listen to your music, audiobooks, and podcasts</td>
+<td>Navidrome, Audiobookshelf</td>
+<td>Spotify Family, Audible</td>
+</tr>
+<tr>
+<td>Recipes, groceries, chores, and to-dos</td>
+<td>Mealie, Grocy, Vikunja</td>
+<td>Plan to Eat, a list app, Todoist</td>
+</tr>
+<tr>
+<td>Run the lights, locks, sensors, and cameras</td>
+<td>Home Assistant, Frigate</td>
+<td>each device's own cloud app</td>
+</tr>
+<tr>
+<td>Reach everything while away, with ads blocked</td>
+<td>Tailscale, AdGuard Home</td>
+<td>a VPN, NextDNS</td>
+</tr>
+</tbody>
+</table>
+<p>…and <a href="#what-runs">60-odd more</a>. The apps are free; Homelab Wizard is the part that sets them up, connects them, backs them up every night (and proves a restore works), updates them overnight with a one-click undo, restarts what hangs, alerts your phone, and gives each person in the household one sign-in. Used to the full, it can replace about <strong>$4,487 a year</strong> in subscriptions (<a href="docs/Savings/">what it saves</a>).</p>
+<h2 id="everyday-tasks">Everyday tasks<a class="headerlink" href="#everyday-tasks" title="Permanent link">&para;</a></h2>
+<p>Adding an app, opening one on a phone, fixing what's down, updating or undoing an update, backing up and testing a restore, adding a person, moving to a new computer: each one in the app and the same from a terminal, in <a href="docs/Everyday%20Tasks/">Everyday tasks</a>. Adding your own app, every command, and taking the homelab off a machine are there too.</p>
+<h2 id="questions">Questions<a class="headerlink" href="#questions" title="Permanent link">&para;</a></h2>
+<details>
+<summary><strong>Is it safe?</strong></summary>
+
+Nothing on the computer is opened to the internet. By default the apps answer only your own devices over Tailscale's private network. With an optional domain, the apps that work away from home go through a Cloudflare tunnel and past CrowdSec, which blocks known attackers. Passwords are stored encrypted, and backups are encrypted before they leave the house. The full review: [Security](docs/Security.md). Found a hole? Please report it privately: [SECURITY.md](SECURITY.md).
+
+</details>
+
+<details>
+<summary><strong>What if the computer breaks?</strong></summary>
+
+The nightly backup holds the settings, passwords, documents, databases, and photos, so everything can be rebuilt elsewhere: on a new machine, `./homelab rebuild <backup folder>` brings the homelab back from the backups alone, each app on the version that wrote its data. Backups › **Recovery kit** prints where the backups and passphrases are. Movies and music on the media drive are not backed up (too large) and can be obtained again. [Disaster Recovery](docs/Disaster%20Recovery.md) has each case.
+
+</details>
+
+<details>
+<summary><strong>Do I need a domain?</strong></summary>
+
+No. Every new homelab starts in Home mode: each app gets an `https://` address on your tailnet, at home and away. A domain adds short names (`photos.example.com`) and lets chosen apps open without Tailscale; add one any time ([Getting Started](docs/Getting%20Started.md#later-a-domain-of-your-own)).
+
+</details>
+
+<details>
+<summary><strong>Will it fit on my computer?</strong></summary>
+
+The install plan adds up the memory the apps you picked need and warns before they would not fit beside the system and everyday apps. On 8 GB, the *Start here* picks fit; Immich's face and smart search is the one to add with care.
+
+</details>
+
+<details>
+<summary><strong>How does it stay up to date?</strong></summary>
+
+The app looks for updates every 15 minutes and when its window comes forward. A line at the top of the window then says *Homelab Wizard … is ready*: **What's new** shows the patch notes, **Update now** puts the homelab files and the new app in place and opens it again, keeping your settings, data, and own apps (`./homelab upgrade` in a terminal). The apps themselves update overnight, each with a fresh database dump first; an update that leaves an app unwell is rolled back by itself. [Upgrading](docs/Upgrading.md) says what each version asks of you, if anything.
+
+</details>
+
+<details>
+<summary><strong>Does anything leave the house?</strong></summary>
+
+From Homelab Wizard itself: the backups (encrypted, to the place you pick), the outside heartbeat if you set one up, and what it asks GitHub (homelab and app updates, and the release notes of the apps you run). **Explain this** uses the Ollama on this computer. The apps do what they always do online (image downloads, film and book details, CrowdSec's community blocklist), and Tailscale's coordination server knows your devices; your files, photos, and passwords stay home.
+
+</details>
+
+<details>
+<summary><strong>I already run some of these apps in Docker.</strong></summary>
+
+`./homelab detect` finds them, and `./homelab adopt <app>` (Status › **Move in**) moves each into the homelab with its data; `./homelab cleanup` removes the old containers once all is well ([Commands](docs/Commands.md)).
+
+</details>
+
+<details>
+<summary><strong>Which systems are proven?</strong></summary>
+
+It runs a real household on a Mac. Windows, Linux, and SteamOS are built, tested in CI every night, and being tried on real machines: [Host › The same on every system](docs/Host.md#the-same-on-every-system) shows what each system has shown so far, and [Known Issues](docs/Known%20Issues.md) what is open.
+
+</details>
+
+<h2 id="what-runs">What runs<a class="headerlink" href="#what-runs" title="Permanent link">&para;</a></h2>
+<p>Over 70 apps in nine categories: the baseline ones start with the homelab, the rest are a tick in Choose apps (or <code>./homelab install &lt;app&gt;</code>) away. Each name links to the app's own page: ports, data folders, everyday use, useful commands, its API, and how it is backed up and fixed.</p>
+<details>
+<summary><strong>Every app, by category: what it does, how it starts, its address, and what it replaces</strong></summary>
+
+<!-- BEGIN homelab:generated (./homelab docs rewrites this block) -->
+### Network
+
+| App | What it does | Runs | Address | Replaces |
+|---|---|---|---|---|
+| [Nginx Proxy Manager](services/network/Nginx%20Proxy%20Manager.md) | Reverse proxy and TLS for every hostname, with CrowdSec blocking built in | Baseline | https://npm.example.com | ngrok Hobbyist |
+| [AdGuard Home](services/network/AdGuard%20Home.md) | LAN DNS with ad blocking; answers *.domain with this Mac's address | Baseline | https://ads.example.com | NextDNS Pro |
+| [Ad blocking on the tailnet](services/network/Ad%20blocking%20on%20the%20tailnet.md) | Sends DNS from your Tailscale devices to AdGuard Home, so ads are blocked at home and away | Optional: `./homelab install tailnet-dns` |  |  |
+| [Tailscale](services/network/Tailscale.md) | Reach the home network from anywhere, privately, without opening router ports | Optional: `./homelab install tailscale` |  |  |
+| [Speedtest Tracker](services/network/Speedtest%20Tracker.md) | Measures the internet connection on a schedule and keeps the history | Optional: `./homelab install speedtest-tracker` | https://speedtest.example.com |  |
+| [Cloudflare Tunnel](services/network/Cloudflare%20Tunnel.md) | Publishes the public apps through Cloudflare without opening router ports | Baseline |  | ngrok Hobbyist |
+
+### Security
+
+| App | What it does | Runs | Address | Replaces |
+|---|---|---|---|---|
+| [CrowdSec](services/security/CrowdSec.md) | Reads the proxy's logs, bans attackers, and pulls the community blocklist | Baseline |  | Cloudflare Pro (WAF) |
+| [Vaultwarden](services/security/Vaultwarden.md) | Password manager for the Bitwarden apps | Baseline | https://passwords.example.com | 1Password Families |
+| [Uptime Kuma](services/security/Uptime%20Kuma.md) | Watches every app and alerts through ntfy when one goes down | Baseline | https://uptime.example.com | UptimeRobot Solo |
+| [ntfy](services/security/ntfy.md) | Push notifications for alerts from every other service | Baseline | https://ntfy.example.com | Pushbullet Pro |
+| [Pocket ID](services/security/Pocket%20ID.md) | One sign-in with passkeys for the household's apps (OpenID Connect) | Optional: `./homelab install pocket-id` | https://id.example.com |  |
+| [Frigate](services/security/Frigate.md) | Cameras recorded on this machine, with person, car, and animal detection | Optional: `./homelab install frigate` | https://cameras.example.com | Google Home Premium Standard (formerly Nest Aware) |
+
+### System
+
+| App | What it does | Runs | Address | Replaces |
+|---|---|---|---|---|
+| [Duplicati](services/system/Duplicati.md) | Encrypted, versioned backups to Proton Drive | Baseline | https://backups.example.com | Backblaze Personal Backup |
+| [Kopia](services/system/Kopia.md) | A second, independent backup beside Duplicati, to another drive | Optional: `./homelab install kopia` | https://kopia.example.com |  |
+| [Homarr](services/system/Homarr.md) | Dashboard with live container status | Optional: `./homelab install homarr` | https://homarr.example.com |  |
+| [Homepage](services/system/Homepage.md) | Simple dashboard of links and widgets | Optional: `./homelab install homepage` | https://homepage.example.com |  |
+| [Dozzle](services/system/Dozzle.md) | Live logs of every container, in the browser | Optional: `./homelab install dozzle` | this computer only | Papertrail (paid plan) |
+| [Beszel](services/system/Beszel.md) | How this machine and its apps are doing over time, with alerts | Optional: `./homelab install beszel` | https://monitor.example.com |  |
+| [Beszel agent](services/system/Beszel%20agent.md) | Reads this machine and its containers for Beszel | Optional: `./homelab install beszel-agent` |  |  |
+| [Phone companion](services/system/Phone%20companion.md) | Status, alerts, backups, and Finances on your phones, each paired with a code; home network and tailnet only | Native app | https://homelab.example.com |  |
+
+### Cloud & Files
+
+| App | What it does | Runs | Address | Replaces |
+|---|---|---|---|---|
+| [File Browser](services/cloud%20and%20files/File%20Browser.md) | Browse and share files on the media drive | Optional: `./homelab install filebrowser` | https://files.example.com | Dropbox Plus |
+| [Syncthing](services/cloud%20and%20files/Syncthing.md) | Keeps folders in sync between your devices, with no cloud in between | Optional: `./homelab install syncthing` | https://sync.example.com |  |
+| [Baikal](services/cloud%20and%20files/Baikal.md) | Calendars and contacts for every phone and computer (CalDAV and CardDAV) | Optional: `./homelab install baikal` | https://dav.example.com |  |
+| [PairDrop](services/cloud%20and%20files/PairDrop.md) | AirDrop between any devices on the home network, from the browser | Optional: `./homelab install pairdrop` | https://drop.example.com |  |
+| [PsiTransfer](services/cloud%20and%20files/PsiTransfer.md) | Send large files to anyone with a link that expires | Optional: `./homelab install psitransfer` | https://send.example.com | WeTransfer Starter |
+| [Dawarich](services/cloud%20and%20files/Dawarich.md) | Where you have been, from the phone's location history, on a map with trips and stats | Optional: `./homelab install dawarich` | https://location.example.com |  |
+| [Immich](services/cloud%20and%20files/Immich.md) | Photo and video backup with face and object search | Baseline | https://photos.example.com | iCloud+ 2 TB |
+| [Nextcloud](services/cloud%20and%20files/Nextcloud.md) | The family's shared files, synced to every phone and computer | Optional: `./homelab install nextcloud` | https://cloud.example.com | Dropbox Plus |
+
+### Documents
+
+| App | What it does | Runs | Address | Replaces |
+|---|---|---|---|---|
+| [FreshRSS](services/documents/FreshRSS.md) | RSS reader | Optional: `./homelab install freshrss` | https://freshrss.example.com | Feedly Pro |
+| [Stirling PDF](services/documents/Stirling%20PDF.md) | Merge, split, convert, and sign PDFs | Optional: `./homelab install stirling-pdf` | https://pdf.example.com | Adobe Acrobat Pro |
+| [Open WebUI](services/documents/Open%20WebUI.md) | Private AI chat with models that run on this machine (Ollama) | Optional: `./homelab install open-webui` | https://ai.example.com |  |
+| [Changedetection.io](services/documents/Changedetection.io.md) | Watches web pages for price drops, restocks, and changes, and tells you through ntfy | Optional: `./homelab install changedetection` | https://watch.example.com | changedetection.io (hosted) |
+| [Memos](services/documents/Memos.md) | Quick notes from any device, with tags and search | Optional: `./homelab install memos` | https://notes.example.com |  |
+| [Kiwix](services/documents/Kiwix.md) | Wikipedia and other reference libraries, readable offline | Optional: `./homelab install kiwix` | https://kiwix.example.com |  |
+| [Docmost](services/documents/Docmost.md) | The household wiki, with pages, spaces, comments, and diagrams | Optional: `./homelab install docmost` | https://wiki.example.com |  |
+| [Karakeep](services/documents/Karakeep.md) | Saved links and read-later, with full-page archives and search | Optional: `./homelab install karakeep` | https://links.example.com | Raindrop.io Pro |
+| [Linkwarden](services/documents/Linkwarden.md) | Bookmarks for the household, each page kept as a screenshot, a PDF, and text | Optional: `./homelab install linkwarden` | https://bookmarks.example.com | Raindrop.io Pro |
+| [Paperless-ngx](services/documents/Paperless-ngx.md) | Scanned documents with OCR and full-text search | Baseline | https://docs.example.com | Evernote Advanced |
+| [Paperless-AI](services/documents/Paperless-AI.md) | Titles, tags, and correspondents for Paperless-ngx's documents, from an AI model | Optional: `./homelab install paperless-ai` | https://docs-ai.example.com |  |
+
+### Finance
+
+| App | What it does | Runs | Address | Replaces |
+|---|---|---|---|---|
+| [Wallos](services/finance/Wallos.md) | Every subscription you still pay for, with renewal dates and the yearly total | Optional: `./homelab install wallos` | https://subscriptions.example.com |  |
+| [Actual Budget](services/finance/Actual%20Budget.md) | An envelope budget, lighter than MoneyMatter, with the same budget on every device | Optional: `./homelab install actual-budget` | https://actual.example.com | YNAB |
+| [MoneyMatter](services/finance/MoneyMatter.md) | Budget tracker | Baseline | https://money.example.com | YNAB |
+| [Firefly III](services/finance/Firefly%20III.md) | A full household ledger, with budgets, bills, rules, and reports | Optional: `./homelab install firefly-iii` | https://firefly.example.com | Monarch Money Core |
+| [Firefly III importer](services/finance/Firefly%20III%20importer.md) | Brings bank files (CSV, CAMT) into Firefly III | Optional: `./homelab install firefly-iii-importer` | https://firefly-import.example.com |  |
+| [Ghostfolio](services/finance/Ghostfolio.md) | Investments and net worth across every account, with performance and dividends | Optional: `./homelab install ghostfolio` | https://invest.example.com | Ghostfolio Premium |
+
+### Media
+
+| App | What it does | Runs | Address | Replaces |
+|---|---|---|---|---|
+| [Navidrome](services/media/Navidrome.md) | Music server for the Subsonic apps and Feishin | Baseline | https://navidrome.example.com | Spotify Premium Family |
+| [Feishin](services/media/Feishin.md) | Web music player for Navidrome | Baseline | https://music.example.com | Spotify Premium Family |
+| [beets](services/media/beets.md) | Tags, renames, and organizes music into the library Navidrome plays | Optional: `./homelab install beets` | this computer only |  |
+| [Audiobookshelf](services/media/Audiobookshelf.md) | Audiobooks and podcasts | Baseline | https://audiobooks.example.com | Audible Premium Plus, Pocket Casts Plus |
+| [Calibre-Web](services/media/Calibre-Web.md) | E-book library and reader for the Calibre library | Baseline | https://books.example.com | Kindle Unlimited |
+| [Komga](services/media/Komga.md) | Comics and manga reader | Baseline | https://comics.example.com | Marvel Unlimited, DC Universe Infinite |
+| [Kavita](services/media/Kavita.md) | Books, comics, and manga reader | Optional: `./homelab install kavita` | https://kavita.example.com |  |
+| [Jellyfin in a container](services/media/Jellyfin%20in%20a%20container.md) | Movies and TV in a container, the Jellyfin for SteamOS; elsewhere the native Jellyfin can use the graphics for transcoding | Optional: `./homelab install jellyfin-container` | https://jellyfin.example.com |  |
+| [RomM](services/media/RomM.md) | The game library, with artwork, saves, and play in the browser | Optional: `./homelab install romm` | https://games.example.com |  |
+| [Jellyfin](services/media/Jellyfin.md) | Movies and TV, installed natively (not in a container) so it can use hardware transcoding | Native app | https://jellyfin.example.com | Plex Pass, Netflix Standard, Hulu (No Ads), Disney+ Premium, HBO Max Standard, Peacock Premium Plus, Paramount+ Premium, Apple TV |
+
+### Media Automation
+
+| App | What it does | Runs | Address | Replaces |
+|---|---|---|---|---|
+| [Prowlarr](services/media%20automation/Prowlarr.md) | Indexer manager for the *arr apps | Optional: `./homelab install prowlarr` | https://prowlarr.example.com |  |
+| [Sonarr](services/media%20automation/Sonarr.md) | TV show automation | Optional: `./homelab install sonarr` | https://sonarr.example.com | Trakt VIP |
+| [Radarr](services/media%20automation/Radarr.md) | Movie automation | Optional: `./homelab install radarr` | https://radarr.example.com | Trakt VIP |
+| [Lidarr](services/media%20automation/Lidarr.md) | Music automation | Optional: `./homelab install lidarr` | https://lidarr.example.com |  |
+| [Bazarr](services/media%20automation/Bazarr.md) | Subtitles for Sonarr and Radarr | Optional: `./homelab install bazarr` | https://bazarr.example.com |  |
+| [Tdarr](services/media%20automation/Tdarr.md) | Shrinks the media library by converting films and shows to a smaller format | Optional: `./homelab install tdarr` | https://tdarr.example.com |  |
+| [FlareSolverr](services/media%20automation/FlareSolverr.md) | Solves Cloudflare challenges for Prowlarr's indexers (http://flaresolverr:8191) | Optional: `./homelab install flaresolverr` |  |  |
+| [Seerr](services/media%20automation/Seerr.md) | Media requests for Jellyfin (successor to Overseerr and Jellyseerr) | Optional: `./homelab install seerr` | https://seerr.example.com | Trakt VIP |
+| [LazyLibrarian](services/media%20automation/LazyLibrarian.md) | E-book and audiobook automation | Optional: `./homelab install lazylibrarian` | https://lazylibrarian.example.com |  |
+| [qBittorrent](services/media%20automation/qBittorrent.md) | Torrent client; it has no network except the ProtonVPN tunnel | Optional: `./homelab install qbittorrent` | https://qbittorrent.example.com |  |
+| [Gluetun](services/media%20automation/Gluetun.md) | ProtonVPN tunnel that qBittorrent's traffic is forced through | Optional: `./homelab install gluetun` |  |  |
+
+### Household
+
+| App | What it does | Runs | Address | Replaces |
+|---|---|---|---|---|
+| [Mealie](services/household/Mealie.md) | Recipes and meal planning | Optional: `./homelab install mealie` | https://mealie.example.com | Plan to Eat |
+| [Vikunja](services/household/Vikunja.md) | To-do lists and projects, shared with the household | Optional: `./homelab install vikunja` | https://todo.example.com | Todoist Pro |
+| [Home Assistant](services/household/Home%20Assistant.md) | Smart-home hub for lights, locks, sensors, and automations | Optional: `./homelab install home-assistant` | https://home.example.com | Homey Premium |
+| [Grocy](services/household/Grocy.md) | Groceries and household stock, chores, and shared to-dos | Optional: `./homelab install grocy` | https://grocy.example.com | AnyList Complete (household) |
+| [Homebox](services/household/Homebox.md) | What you own, where it is, and its receipts, serial numbers, and warranties | Optional: `./homelab install homebox` | https://inventory.example.com |  |
+| [Tandoor](services/household/Tandoor.md) | Recipes with meal planning, shopping lists, and nutrition | Optional: `./homelab install tandoor` | https://recipes.example.com | Plan to Eat |
+
+72 apps: 16 baseline (started by `./homelab up`), 54 optional, 2 native. Databases and caches that apps need start with them and are not listed.
+<!-- END homelab:generated -->
+
+</details>
+
+<h2 id="getting-help">Getting help<a class="headerlink" href="#getting-help" title="Permanent link">&para;</a></h2>
+<p><strong>Fix it</strong> on Status (or <code>./homelab fix</code>) puts right what usually goes wrong. Otherwise see <a href="docs/Troubleshooting/">Troubleshooting</a> and <a href="docs/Known%20Issues/">Known Issues</a>, then make a diagnostics report (Settings › This Mac › <strong>Make a diagnostics report</strong>, or <code>./homelab report</code>; passwords and tokens are removed), read it, and attach it to a <a href="https://github.com/Snooper42/homelab-wizard/issues/new/choose">bug report</a>. Never paste <code>.env</code>, a token, or a password. A security problem goes privately instead (<a href="SECURITY/">SECURITY.md</a>).</p>
+<h2 id="documentation">Documentation<a class="headerlink" href="#documentation" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>If you want to…</th>
+<th>Read</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Set it up, step by step, without code</td>
+<td><a href="docs/Getting%20Started/">Getting Started</a></td>
+</tr>
+<tr>
+<td>Fix something</td>
+<td><a href="docs/Troubleshooting/">Troubleshooting</a>, <a href="docs/Known%20Issues/">Known Issues</a></td>
+</tr>
+<tr>
+<td>Run it day to day</td>
+<td><a href="docs/Everyday%20Tasks/">Everyday tasks</a>, <a href="docs/Runbooks/">Runbooks</a>, <a href="docs/Backups/">Backups</a>, <a href="docs/Monitoring/">Monitoring</a>, <a href="docs/Automation/">Automation</a>, <a href="docs/Tidy%20Up/">Tidy Up</a></td>
+</tr>
+<tr>
+<td>Recover from a lost machine, or move to a new one</td>
+<td><a href="docs/Disaster%20Recovery/">Disaster Recovery</a></td>
+</tr>
+<tr>
+<td>Look up an app, an address, or a setting</td>
+<td><a href="docs/Services/">Services</a>, <a href="docs/Inventory/">Inventory</a>, <a href="docs/Environment/">Environment</a>, <a href="docs/Commands/">Commands</a></td>
+</tr>
+<tr>
+<td>Understand how it works</td>
+<td><a href="docs/Architecture/">Architecture</a>, <a href="docs/Networking/">Networking</a>, <a href="docs/Security/">Security</a>, <a href="docs/Storage/">Storage</a>, <a href="docs/Host/">Host</a></td>
+</tr>
+<tr>
+<td>See what works on a phone, an iPhone, or an iPad</td>
+<td><a href="docs/Parity/">What each device can do</a>, <a href="apple-client/">apple-client</a></td>
+</tr>
+<tr>
+<td>Try a new build on a real machine</td>
+<td><a href="docs/Testing/">Testing</a>, <a href="docs/Upgrading/">Upgrading</a></td>
+</tr>
+<tr>
+<td>Change the code or add an app</td>
+<td><a href="CONTRIBUTING/">CONTRIBUTING</a>, <a href="docs/Contributing/">Contributing (services)</a>, <a href="docs/Maintainer%20Guide/">Maintainer Guide</a>, <a href="docs/Decisions/">Decisions</a></td>
+</tr>
+</tbody>
+</table>
+<p>Everything else is in the <a href="docs/">knowledge base index</a>.</p>
+<h2 id="development">Development<a class="headerlink" href="#development" title="Permanent link">&para;</a></h2>
+<p><code>make check</code> before every commit (<code>make help</code> lists the rest); <a href="CONTRIBUTING/">CONTRIBUTING</a> says what to run for each kind of change. Patch notes: <a href="CHANGELOG/">CHANGELOG</a>. What comes next: <a href="docs/Roadmap/">Roadmap</a>.</p>
+<h2 id="license">License<a class="headerlink" href="#license" title="Permanent link">&para;</a></h2>
+<p><a href="https://github.com/Snooper42/homelab-wizard/blob/main/LICENSE">MIT</a>. Each app the homelab runs keeps its own license.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+        
+          
+          <a href="docs/Tour/" class="md-footer__link md-footer__link--next" aria-label="Next: A tour of the app">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                A tour of the app
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": ".", "features": ["navigation.sections", "navigation.top", "navigation.footer", "search.suggest", "search.highlight", "content.code.copy"], "search": "assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="assets/javascripts/bundle.a5f9d56c.min.js"></script>
+      
+    
+  </body>
+</html>

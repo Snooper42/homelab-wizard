@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <!-- The Mac's Dock icon: the shield on a tile, on macOS's icon grid (an
+       824-point rounded square with room around it), since macOS 26 puts
+       an icon of any other shape in a grey tile of its own. -->
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#6366f1"/>
+      <stop offset="1" stop-color="#2563eb"/>
+    </linearGradient>
+  </defs>
+  <rect x="100" y="100" width="824" height="824" rx="185" fill="url(#tile)"/>
+  <path d="M512 212 752 300v180c0 160-97 263-240 307-143-44-240-147-240-307V300l240-88Z" fill="#fff"/>
+  <path d="M386 520 512 414l126 106v146H386Z" fill="url(#tile)"/>
+  <rect x="485" y="572" width="54" height="94" rx="14" fill="#fff"/>
+</svg>
