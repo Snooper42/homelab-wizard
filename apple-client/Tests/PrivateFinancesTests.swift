@@ -313,6 +313,15 @@ struct PrivateFinancesTests {
         #expect(mine.reminders(days: 14, from: start, calendar: calendar).isEmpty, "none while locked")
     }
 
+    /// A test run isn't an app: planning and cancelling do nothing there,
+    /// rather than the notification center stopping the run (unpair cancels them).
+    @Test("Outside an app, reminders are neither planned nor cancelled")
+    func notAnApp() async {
+        #expect(!PrivateReminders.canNotify)
+        await PrivateReminders.cancel()
+        await PrivateReminders.schedule([PrivateReminders.Planned(id: "private-finances-2026-11-20-0", title: "Made-up", body: "Made-up", at: nil)])
+    }
+
     @Test("Today's reminders are shown once a day; past days never")
     func plannedOnce() {
         let r = [FinanceProjection.Reminder(kind: "due", title: "Due tomorrow: Made-up Rent $900.00", body: "It comes out tomorrow.")]

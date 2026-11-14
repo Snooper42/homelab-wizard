@@ -43,8 +43,13 @@ enum PrivateReminders {
         return out
     }
 
+    /// Whether this process may use notifications: an app, not a test run
+    /// (the notification center throws without an app's bundle).
+    static var canNotify: Bool { Bundle.main.bundleURL.pathExtension == "app" }
+
     /// Plans them, in place of any planned before.
     static func schedule(_ planned: [Planned]) async {
+        guard canNotify else { return }
         await cancel()
         let center = UNUserNotificationCenter.current()
         for p in planned {
@@ -60,6 +65,7 @@ enum PrivateReminders {
 
     /// Takes every planned one away (privacy off, unpaired).
     static func cancel() async {
+        guard canNotify else { return }
         let center = UNUserNotificationCenter.current()
         let ids = await center.pendingNotificationRequests().map(\.identifier).filter { $0.hasPrefix(prefix) }
         center.removePendingNotificationRequests(withIdentifiers: ids)

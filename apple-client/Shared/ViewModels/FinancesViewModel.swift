@@ -714,7 +714,7 @@ final class FinancesViewModel {
     /// notifications, from her own Finances (PrivateReminders): the computer
     /// can't read them to send its nightly ones. Today's are shown once a day.
     func planPrivateReminders(now: Date = Date(), defaults: UserDefaults = .standard) {
-        guard let store = openedPrivate, FinanceProjection.available else { return }
+        guard let store = openedPrivate, FinanceProjection.available, PrivateReminders.canNotify else { return }
         let today = FinancePlanEdit.todayString(now)
         let planned = PrivateReminders.planned(store.reminders(days: PrivateReminders.days, from: now),
                                                today: today, shownDay: defaults.string(forKey: PrivateReminders.shownKey))
