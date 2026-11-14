@@ -196,6 +196,56 @@ enum FinancePlanEdit {
         return .object(root)
     }
 
+    /// The accounts a goal can count a share of (`goalKinds` on the computer).
+    static let goalFromKinds: Set<String> = ["checking", "savings", "investment", "retirement", "other"]
+
+    /// How much of `account` the plan's goals already count, in percent.
+    static func goalShareGiven(of account: String, in plan: JSONValue) -> Double {
+        guard case .object(let root) = plan, case .array(let goals)? = root["goals"] else { return 0 }
+        var given = 0.0
+        for goal in goals {
+            guard case .array(let shares)? = goal["shares"] else { continue }
+            for share in shares where share["account"] == .string(account) {
+                if case .number(let p)? = share["percent"] { given += p }
+            }
+        }
+        return given
+    }
+
+    /// `plan` with a new goal, as the computer's Add a goal makes one: its
+    /// name, what it needs, the day it's wanted by (or none: whenever), and a
+    /// share of one account's balance that counts toward it. The computer
+    /// gives it its id. Nil for no name, a target that isn't more than
+    /// nothing, a day that isn't one, an account the plan doesn't have or that
+    /// holds no money to put by, or a share past what's left of the account
+    /// once the other goals have theirs.
+    static func addingGoal(name: String, target: Double, date: String?, account: String, percent: Double,
+                           in plan: JSONValue) -> JSONValue? {
+        let name = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        let cents = roundedToCents(target)
+        guard !name.isEmpty, name.count <= 80,
+              target.isFinite, cents > 0, cents <= maxBalance,
+              date.map({ $0.count == 10 && LocalDay.parse($0) != nil }) ?? true,
+              percent.isFinite, percent > 0, percent <= 100,
+              goalShareGiven(of: account, in: plan) + percent <= 100 + 1e-9,
+              case .object(var root) = plan,
+              case .array(let accounts)? = root["accounts"],
+              let held = accounts.first(where: { $0["id"] == .string(account) }),
+              case .string(let kind)? = held["kind"], goalFromKinds.contains(kind)
+        else { return nil }
+        var goal: [String: JSONValue] = [
+            "name": .string(name),
+            "target": .number(cents),
+            "shares": .array([.object(["account": .string(account), "percent": .number(percent)])]),
+        ]
+        if let date { goal["date"] = .string(date) }
+        var goals: [JSONValue] = []
+        if case .array(let have)? = root["goals"] { goals = have }
+        goals.append(.object(goal))
+        root["goals"] = .array(goals)
+        return .object(root)
+    }
+
     /// `plan` with the cushion, the least checking should hold, set to
     /// `amount`. A pay period that leaves less is flagged. Nothing (0)
     /// turns the warning off. Nil for a negative or nonsense amount.
