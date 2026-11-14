@@ -116,7 +116,10 @@ func TakeHoldings(p Plan, found []Invested, now time.Time) (Plan, []string) {
 	var left []string
 	for i, f := range found {
 		if matched[i] < 0 {
-			if strings.TrimSpace(f.Name) != "" {
+			// One with nothing in it (Ghostfolio's own My Account, made with
+			// a new sign-in) has nothing to bring over: not named to match.
+			empty := len(f.Holdings) == 0 && math.Abs(f.Value) < 0.005
+			if strings.TrimSpace(f.Name) != "" && !empty {
 				left = append(left, strings.TrimSpace(f.Name))
 			}
 			continue

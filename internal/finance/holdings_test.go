@@ -325,3 +325,19 @@ func TestAFollowedTickerIsSmall(t *testing.T) {
 		t.Errorf("kept %+v", got)
 	}
 }
+
+// Ghostfolio's own account made with a new sign-in (My Account), with
+// nothing in it, isn't named as one to match: there's nothing to bring
+// over. One that holds something, or cash, still is.
+func TestTakeHoldingsEmptyUnmatchedNotNamed(t *testing.T) {
+	p := investing()
+	now := time.Date(2026, 11, 13, 19, 42, 0, 0, time.UTC)
+	_, left := TakeHoldings(p, []Invested{
+		{Name: "My Account", Value: 0, Currency: "USD", Holdings: []Holding{}},
+		{Name: "Old brokerage", Value: 40, Holdings: []Holding{}},
+		{Name: "Another one", Value: 0, Holdings: []Holding{{Symbol: "VTI", Shares: 1, Paid: 1, Value: 0}}},
+	}, now)
+	if len(left) != 2 || left[0] != "Old brokerage" || left[1] != "Another one" {
+		t.Errorf("not matched: %q, want only the two that hold something", left)
+	}
+}
