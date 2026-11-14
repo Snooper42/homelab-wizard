@@ -180,6 +180,47 @@ func TestUpdateAll(t *testing.T) {
 	}
 }
 
+// After an update, it says what changed (usability task 4, item 12): an
+// app on a new image with the versions its tags say, one on a newer build of
+// the same tag, and one already up to date, each by its name.
+func TestUpdateSaysWhatChanged(t *testing.T) {
+	paperless := func(tag, id string) docker.FakeContainer {
+		return docker.FakeContainer{Name: "paperless", Image: "ghcr.io/paperless-ngx/paperless-ngx:" + tag, ImageID: id, Running: true, Project: "homelab_paperless", Service: "paperless"}
+	}
+	db := docker.FakeContainer{Name: "paperless-db", Image: "postgres:16", ImageID: "sha256:d1", Running: true, Project: "homelab_paperless", Service: "paperless-db"}
+	before := []docker.FakeContainer{sonarr("sha256:s1", ""), paperless("2.11.0", "sha256:p1"), db}
+	fakeDocker(t, before)
+	after := []docker.FakeContainer{sonarr("sha256:s1", ""), paperless("2.12.1", "sha256:p2"), db}
+	inspect, _ := (&docker.FakeRunner{Containers: after}).Output(context.Background(), "docker", "inspect")
+	src := filepath.Join(t.TempDir(), "after.json")
+	if err := os.WriteFile(src, inspect, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("FAKE_AFTER_UP", src)
+	root, _ := repoCopy(t)
+	out, code := homelabCmd(t, root, "", "update", "--all", "--apply")
+	if code != 0 {
+		t.Fatalf("exit %d:\n%s", code, out)
+	}
+	if !strings.Contains(out, "Updated: Paperless-ngx 2.11.0 → 2.12.1.") {
+		t.Errorf("not said what Paperless went from and to:\n%s", out)
+	}
+	if !strings.Contains(out, "Already up to date: Sonarr.") {
+		t.Errorf("not said Sonarr was already up to date:\n%s", out)
+	}
+
+	c, err := catalog.Load(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var buf strings.Builder
+	h := &homelab{root: root, ui: &ui.UI{Out: &buf}, catalog: c}
+	h.sayUpdated(map[string]ranImage{"x": {"sha256:1", "latest"}}, map[string]ranImage{"x": {"sha256:2", "latest"}}, []string{"x"})
+	if !strings.Contains(buf.String(), "Updated: x (a newer build).") {
+		t.Errorf("a newer build of the same tag: %q", buf.String())
+	}
+}
+
 func TestAnUpdateThatStopsAnsweringIsRolledBack(t *testing.T) {
 	root, _ := repoCopy(t, "AUTO_ROLLBACK=true")
 	c, err := catalog.Load(root)

@@ -25,6 +25,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/media"
 	"github.com/Snooper42/homelab-wizard/internal/notify"
 	"github.com/Snooper42/homelab-wizard/internal/ports"
+	"github.com/Snooper42/homelab-wizard/internal/releases"
 	"github.com/Snooper42/homelab-wizard/internal/selector"
 	"github.com/Snooper42/homelab-wizard/internal/started"
 	"github.com/Snooper42/homelab-wizard/internal/stopped"
@@ -876,6 +877,8 @@ func (h *homelab) lifecycle(action string) func(context.Context, []string) error
 		if err != nil {
 			return err
 		}
+		// What each runs now, to say afterwards what changed (sayUpdated).
+		var ranBefore map[string]ranImage
 		if action == "update" {
 			if !all {
 				var ids []string
@@ -883,6 +886,9 @@ func (h *homelab) lifecycle(action string) func(context.Context, []string) error
 					ids = append(ids, a.ID)
 				}
 				h.whatsNew(ctx, ids)
+			}
+			if cs, err := client.Containers(ctx); err == nil {
+				ranBefore = h.imagesOf(cs)
 			}
 			if err := h.beforeUpdate(ctx, client, apps); err != nil {
 				return err
@@ -943,9 +949,11 @@ func (h *homelab) lifecycle(action string) func(context.Context, []string) error
 		h.markStopped(action, append(done, updated...), end)
 		h.noteLifecycle(action, nightly, done, updated)
 		if action == "update" {
-			// Keep what they ran before, to go back to (homelab rollback).
+			// Keep what they ran before, to go back to (homelab rollback),
+			// and say what changed, in words.
 			if cs, err := client.Containers(ctx); err == nil {
 				h.trackUpdates(ctx, client, cs, false)
+				h.sayUpdated(ranBefore, h.imagesOf(cs), updated)
 			}
 		}
 		if action == "remove" {
@@ -1211,4 +1219,49 @@ func splitList(s string) []string {
 		return nil
 	}
 	return strings.Split(s, ",")
+}
+
+// ranImage is the image an app runs and the version it says (its label or
+// tag), as releases.Version reads it; "" when it says none.
+type ranImage struct{ imageID, version string }
+
+// imagesOf is each catalog app's running image, by its id.
+func (h *homelab) imagesOf(containers []docker.Container) map[string]ranImage {
+	report := detect.Analyze(h.catalog, containers)
+	out := map[string]ranImage{}
+	for _, a := range h.catalog.Apps {
+		if ctr, ok := runningContainer(report, a.ID); ok {
+			out[a.ID] = ranImage{ctr.ImageID, releases.Version(ctr.Image, ctr.Labels)}
+		}
+	}
+	return out
+}
+
+// sayUpdated says what an update did (usability task 4, item 12): each app
+// now on a new image, from which version to which when its image says (or
+// "a newer build"), then those already up to date. ids are the apps it ran.
+func (h *homelab) sayUpdated(before, after map[string]ranImage, ids []string) {
+	var changed, same []string
+	for _, id := range ids {
+		b, was := before[id]
+		a, is := after[id]
+		if !was || !is {
+			continue
+		}
+		name := h.appName(id)
+		switch {
+		case a.imageID == b.imageID:
+			same = append(same, name)
+		case b.version != "" && a.version != "" && a.version != b.version:
+			changed = append(changed, fmt.Sprintf("%s %s → %s", name, b.version, a.version))
+		default:
+			changed = append(changed, name+" (a newer build)")
+		}
+	}
+	if len(changed) > 0 {
+		h.ui.Printf("Updated: %s.\n", strings.Join(changed, ", "))
+	}
+	if len(same) > 0 {
+		h.ui.Printf("Already up to date: %s.\n", strings.Join(same, ", "))
+	}
 }

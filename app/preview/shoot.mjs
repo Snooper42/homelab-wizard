@@ -159,7 +159,7 @@ const duplicatiJobs = [
   // What its last run was (Duplicati's metadata): Photos' is the long one.
   ...(name === 'Homelab Photos' ? { took: 2460, holds: '301.2 GB', files: 48211, versions: 9, sources: ['/source/photos/library/', '/source/photos/upload/'] }
     : name === 'Homelab AppData' ? { took: 212, holds: '3.6 GB', files: 18342, versions: 14, sources: ['/source/appdata/'] } : {}) }));
-const cliLog = { remove: ['Remove the containers for %s? App data on disk is kept.'], 'update-all': ['Updates now what the nightly update would (3 apps): navidrome, vikunja, mealie.', '→ dumping mealie-db first', '✓ updated navidrome, vikunja, mealie'], backup: ['→ dump vaultwarden → recovery-staging/databases/vaultwarden', '✓ vaultwarden: vaultwarden-20261010-091502.sqlite.gz (96 KB)', '✓ immich-database: immich-database-20261010-091503.sql.gz (58.2 MB)', '✓ .env copied and verified'], upgrade: ['Homelab files', '  → 3 change(s) on origin/main:', '  ✓ now at origin/main', 'Start the homelab', '  ✓ nothing to change'], fix: ['Fix it', '  • restart the apps that are unwell, and recreate any that stay unwell: Navidrome', '  ✓ done; homelab doctor checks the rest'], 'restore-test': ['→ asking Duplicati to restore 12 file(s) from "Homelab AppData" into recovery-staging/restore-test', '✓ 12 of 12 sampled files identical'], 'restore-test-kopia': ['→ restoring 12 file(s) from Kopia\'s newest snapshot into recovery-staging/restore-test', '✓ 12 of 12 sampled files identical'] };
+const cliLog = { remove: ['Remove the containers for %s? App data on disk is kept.'], 'update-all': ['These 3 apps have updates: Navidrome, Vikunja, Mealie.', '→ dumping mealie-db first', 'Updated: Navidrome 0.53.3 → 0.54.0.', 'Already up to date: Vikunja, Mealie.'], backup: ['→ dump vaultwarden → recovery-staging/databases/vaultwarden', '✓ vaultwarden: vaultwarden-20261010-091502.sqlite.gz (96 KB)', '✓ immich-database: immich-database-20261010-091503.sql.gz (58.2 MB)', '✓ .env copied and verified'], upgrade: ['Homelab files', '  → 3 change(s) on origin/main:', '  ✓ now at origin/main', 'Start the homelab', '  ✓ nothing to change'], fix: ['Fix it', '  • restart the apps that are unwell, and recreate any that stay unwell: Navidrome', '  ✓ done; homelab doctor checks the rest'], 'restore-test': ['→ asking Duplicati to restore 12 file(s) from "Homelab AppData" into recovery-staging/restore-test', '✓ 12 of 12 sampled files identical'], 'restore-test-kopia': ['→ restoring 12 file(s) from Kopia\'s newest snapshot into recovery-staging/restore-test', '✓ 12 of 12 sampled files identical'] };
 const alerts = [
   { id: 'a1', time: hoursAgo(0.6), topic: 'tunnel-watchdog', title: 'Homelab: recovered', message: 'photos.example.com answering again', tags: ['white_check_mark'] },
   { id: 'a2', time: hoursAgo(1.1), topic: 'tunnel-watchdog', title: 'Homelab: restarted an app that hung', message: 'vikunja\nUnwell on two checks in a row, so the watchdog restarted it (once in 6 hours at most; AUTO_HEAL=false turns this off).', tags: ['arrows_counterclockwise'] },
@@ -5221,7 +5221,7 @@ const smokes = [
     await page.waitForSelector('#cliPlan:has-text("These 3 apps have updates")', { timeout: 5000 });
     await page.click('#cliActions button:has-text("Update them")');
     if (await page.isVisible('#cliPlan')) throw new Error('the plan stayed once it ran');
-    await page.waitForSelector('#cliLog:has-text("updated navidrome")', { state: 'attached', timeout: 5000 });
+    await page.waitForSelector('#cliLog:has-text("Updated: Navidrome")', { state: 'attached', timeout: 5000 });
     // A row per app, each finished, with Docker's lines folded away.
     await page.waitForSelector('#cliApps li.done:has-text("Mealie")', { timeout: 8000 });
     if (await page.$$eval('#cliApps li.done', (l) => l.length) !== 3) throw new Error('not a finished row per app');
@@ -5241,6 +5241,20 @@ const smokes = [
     for (const mark of ['✓', '$ homelab', '→', 'navidrome,']) if (shown.includes(mark)) throw new Error(`the sheet says "${mark}" before Update them: ${shown}`);
     await page.click('#cliDetails > summary');
     if (!(await page.textContent('#cliLog')).includes('$ homelab update-all')) throw new Error('the command is not under Show details');
+  } },
+  // Usability task 4, item 12: once Update apps is done, the sheet says what changed in words, above the rows:
+  // which app went from which version to which, and which were already up to date.
+  { name: 'Update apps, once done, says what changed and what was already up to date', screen: 'status', mock: { jobApps: { 'update-all': ['navidrome', 'vikunja', 'mealie'] } }, run: async (page) => {
+    await page.click('#updateAll', { timeout: 5000 });
+    await page.click('#cliActions button:has-text("Update them")', { timeout: 5000 });
+    await page.waitForSelector('#cliActions button:text-is("Close")', { timeout: 8000 });
+    await page.waitForSelector('#cliPlan:not([hidden])', { timeout: 3000 });
+    const said = await page.textContent('#cliPlan');
+    if (!said.includes('Updated: Navidrome 0.53.3 → 0.54.0.') || !said.includes('Already up to date: Vikunja, Mealie.')) throw new Error(`the sheet says: ${said}`);
+    if (/These 3 apps|→ dumping/.test(said)) throw new Error(`the plan's or a terminal's words stayed: ${said}`);
+    await page.$eval('#cliDetails', (d) => { d.open = false; });
+    const fold = await page.$eval('#cliDetails > summary', (s) => getComputedStyle(s, '::after').content);
+    if (/Docker/.test(fold) || !/as it ran/.test(fold)) throw new Error(`Show details reads ${fold}`);
   } },
   { name: 'Install shows a row per app', screen: 'choose', run: async (page) => {
     await page.click('#starters .starter:has-text("Files")');

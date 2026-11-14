@@ -1074,7 +1074,7 @@ html.companion .panel.sheet:not([hidden]) { width:calc(100vw - 24px); max-height
 .jobdetails { margin:4px 0 0; }
 .jobdetails > summary { cursor:pointer; color:var(--muted); font-size:13px; padding:2px 0; }
 .jobdetails > summary:hover { color:var(--link); }
-.jobdetails:not([open]) > summary::after { content:" (what Docker said)"; }
+.jobdetails:not([open]) > summary::after { content:" (each step, as it ran)"; }
 .jobdetails:has(> pre[hidden]) { display:none; }
 .jobclear { margin:6px 0 0; }
 .jobclear:has(> button[hidden]) { display:none; }
