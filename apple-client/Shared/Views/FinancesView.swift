@@ -932,6 +932,7 @@ private struct FinanceBillsPage: View {
         .refreshable { await finances.loadPlan() }
         .sensoryFeedback(.success, trigger: finances.savedCount)
         .navigationTitle("Bills")
+        .modifier(AddPaymentButton(finances: finances))
         .sheet(item: $editingPayment) { payment in
             AmountEditor(
                 title: "Change Payment", heading: payment.name,
@@ -1402,6 +1403,7 @@ private struct FinanceRecurringPage: View {
         .refreshable { await finances.loadPlan() }
         .sensoryFeedback(.success, trigger: finances.savedCount)
         .navigationTitle("Recurring")
+        .modifier(AddPaymentButton(finances: finances))
         .sheet(item: $editing) { payment in
             AmountEditor(
                 title: "Change Payment", heading: payment.name,

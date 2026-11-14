@@ -8,6 +8,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### New
 
+- **Add a payment in the Homelab app:** **+** on Bills or Recurring opens Add Payment: its name and kind, what it costs (or about this much), how often and when next, and the account it comes out of. It shows in Bills and in what's left from then on.
 - **Lock After in the Homelab app:** back within 5 minutes (or 1 or 15, or Right Away, under Settings › This iPhone), the app opens as you left it, Finances' amounts shown or hidden included, without Face ID. Locking the screen still locks it, and a change still asks for Face ID first.
 - **Finances reminders for private Finances:** the Homelab can't read a household member's private Finances, so the Homelab app on her phone reminds her itself: a bill due tomorrow, a paycheck that leaves checking under her cushion, a yearly renewal, balances not updated for weeks, worked out on her phone with the computer's own code each time she opens them, and planned two weeks ahead.
 - **Private Finances offline in the Homelab app:** with no signal, or away from home, a household member's iPhone or iPad still opens her private Finances with Face ID, her passphrase or her recovery code, from the locked copy it keeps (only ever locked). A change she makes waits on the device, said in one line, and goes to the Homelab by itself once it answers; if another of her devices changed them meanwhile, the app says so plainly and shows the newest.
