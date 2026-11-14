@@ -1373,6 +1373,7 @@ interface Backend {
     Move(arg1: string): Promise<string>;
     Open(arg1: string): Promise<void>;
     OpenNativeApp(arg1: string): Promise<void>;
+    OpenSheet(arg1: string): Promise<void>;
     OpenWelcome(arg1: string): Promise<void>;
     PairPhone(arg1: string, arg2: boolean, arg3: string): Promise<app.PhonePairing>;
     PendingAppUpdate(): Promise<app.PendingUpdate | null>;

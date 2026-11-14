@@ -204,7 +204,7 @@ label.field input:focus, .setting input:focus, .customForm select:focus { outlin
 /* Setup */
 .hostcard { display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:4px 24px; padding:14px 18px; margin:0 0 12px; }
 .hostcard dt { color:var(--muted); font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; margin-top:6px; }
-.hostcard dd { margin:0 0 6px; overflow-wrap:anywhere; }
+.hostcard dd { margin:0 0 6px; overflow-wrap:break-word; min-width:0; }
 dl { margin:0; }
 .meter { height:8px; border-radius:999px; background:var(--line); overflow:hidden; margin:8px 0 4px; }
 .meter > div { height:100%; border-radius:999px; background:linear-gradient(90deg, var(--sky), var(--green)); transition:width .4s ease; }
@@ -263,6 +263,10 @@ dl { margin:0; }
 .usage .bar { height:6px; border-radius:3px; background:var(--line); margin-top:6px; overflow:hidden; }
 .usage .bar span { display:block; height:100%; background:var(--accent); border-radius:3px; }
 /* What the apps keep, photos per person: each on one line, its name, its bar, its size. */
+/* A person's row: their name keeps a line's room, and their four buttons wrap under it when it's narrow (320px, big text). */
+.alertlist.people li { flex-wrap:wrap; row-gap:6px; }
+.alertlist.people li .grow { flex:1 1 12em; }
+.alertlist.people li > button { white-space:normal; max-width:100%; text-align:left; }
 .alertlist.sizes li { align-items:center; padding-top:6px; padding-bottom:6px; }
 .sizes .grow { display:flex; align-items:center; gap:14px; }
 .sizes .grow strong { flex:0 0 9.5em; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
@@ -550,6 +554,9 @@ details.group > summary h2 .n { font-weight:600; color:var(--muted); letter-spac
 
 /* Settings › Phones */
 .phones > p { margin:4px 0 10px; }
+.addednote { margin:10px 0 12px; padding:12px 14px; border:1px solid var(--line); border-radius:10px; background:var(--sunken); }
+.addednote p { margin:0 0 8px; }
+.addednote .actions { display:flex; flex-wrap:wrap; gap:8px; margin:0 0 8px; }
 .pairrow { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:10px; }
 .pairrow input:not([type]) { flex:1; min-width:200px; padding:7px 9px; border:1px solid var(--line-strong); border-radius:7px; background:var(--sunken); color:var(--text); font:inherit; }
 .pairrow .check { display:flex; align-items:center; gap:6px; white-space:nowrap; }
@@ -766,7 +773,7 @@ html:is(.os-mac, .os-windows, .os-linux) .meter > div { background:var(--accent)
 /* Setup on the Mac: the machine as a list of label and value, as in About
    This Mac, and the first-time steps as one grouped list. */
 html:is(.os-mac, .os-windows, .os-linux) .hostcard { display:block; padding:0; overflow:hidden; }
-html:is(.os-mac, .os-windows, .os-linux) .hostcard > div { display:flex; align-items:baseline; justify-content:space-between; gap:24px; padding:8px 14px; border-top:.5px solid var(--line); }
+html:is(.os-mac, .os-windows, .os-linux) .hostcard > div { display:flex; flex-wrap:wrap; align-items:baseline; justify-content:space-between; gap:2px 24px; padding:8px 14px; border-top:.5px solid var(--line); }
 html:is(.os-mac, .os-windows, .os-linux) .hostcard > div:first-child { border-top:0; }
 html:is(.os-mac, .os-windows, .os-linux) .hostcard dt { margin:0; font-size:13px; font-weight:400; color:var(--text); white-space:nowrap; }
 html:is(.os-mac, .os-windows, .os-linux) .hostcard dd { margin:0; text-align:right; color:var(--muted); font-size:13px; }
@@ -1353,6 +1360,8 @@ html.motion-none *, html.motion-none *::before, html.motion-none *::after { tran
 /* Transparency off: the bars that float over the page and the side panel
    are drawn solid, with no blur behind them. */
 html.no-blur *, html.no-blur *::before, html.no-blur *::after { -webkit-backdrop-filter:none !important; backdrop-filter:none !important; }
+/* A line shown above the screen (an app stopped, away from home, an update waiting): the bar under it no longer pulls up over it to the window's top (usability task 7, item 15). */
+:is(#awayNote, #oneLine, #updateLine):not([hidden]) ~ .screen > .savebar:first-child { margin-top:0; top:0; padding-top:12px; }
 html.no-blur .savebar, html.no-blur.companion nav { background:var(--bg); }
 html.no-blur .error { background:var(--panel); }
 html.os-mac.no-blur body, html.os-mac.no-blur nav { background:var(--sunken); }

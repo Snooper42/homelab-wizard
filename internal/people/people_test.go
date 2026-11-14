@@ -95,12 +95,18 @@ func TestWelcomePage(t *testing.T) {
 	if strings.Contains(page, "<script>x") || strings.Contains(page, "<b>Smith") {
 		t.Error("what people typed is put on the page as text, not as HTML")
 	}
+	// Her sign-in as a code to scan from the computer's screen (usability
+	// task 7, item 13): opened there, her phone's camera takes it.
+	if !strings.Contains(page, `<img class="signinqr" src="data:image/svg`) {
+		i := strings.Index(page, "signinqr\" ")
+		t.Errorf("the sign-in link has no code to scan: %.200s", page[max(i, 0):])
+	}
 
 	b.Reset()
 	if err := Render(&b, Welcome{Person: Person{Name: "Ben"}}); err != nil {
 		t.Fatal(err)
 	}
-	if page := b.String(); !strings.Contains(page, "Your homelab") || strings.Contains(page, "It works once") || strings.Contains(page, "Tailscale") {
+	if page := b.String(); !strings.Contains(page, "Your homelab") || strings.Contains(page, "It works once") || strings.Contains(page, "Tailscale") || strings.Contains(page, `<img class="signinqr"`) {
 		t.Errorf("without a link, a household name, or the tailnet, the page says none of them:\n%s", page)
 	}
 }

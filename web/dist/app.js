@@ -4131,29 +4131,29 @@
     };
     const apps2 = p3.apps || [];
     return /* @__PURE__ */ u3(Row, { dot: "ok", title: p3.name, sub: [p3.email, apps2.length ? `${apps2.length} app${apps2.length === 1 ? "" : "s"}` : "every app", privately(sealed)].filter(Boolean).join(" · "), end: /* @__PURE__ */ u3(S, { children: [
-      /* @__PURE__ */ u3("button", { class: "small", title: "Open their welcome page, to print or send", onClick: () => on2.openWelcome(p3.username), children: "Welcome page" }),
+      /* @__PURE__ */ u3("button", { class: "small", title: "Their welcome page again, on this computer: to show them or print", onClick: () => on2.openWelcome(p3.username), children: "Welcome page" }),
       /* @__PURE__ */ u3(
         "button",
         {
           class: "small",
-          title: "A new sign-in link (the old one stops working) and a fresh welcome page",
+          title: "Their sign-in link works once: if they never used it, or it ran out, this makes a new one on a fresh welcome page (the old link stops working)",
           disabled: busy2 === "welcome",
           onClick: async () => {
             if (await run2("welcome")) on2.openWelcome(p3.username);
           },
-          children: "New sign-in link"
+          children: "Make a new sign-in link"
         }
       ),
       /* @__PURE__ */ u3(
         "button",
         {
           class: "small",
-          title: "A new password for their Jellyfin and Navidrome accounts (Infuse and music apps), on a fresh welcome page",
+          title: "A new password for their films and music apps (Jellyfin and Navidrome), on a fresh welcome page",
           disabled: busy2 === "password",
           onClick: async () => {
             if (await run2("password")) on2.openWelcome(p3.username);
           },
-          children: "Reset password"
+          children: "New music and films password"
         }
       ),
       /* @__PURE__ */ u3(
@@ -4174,17 +4174,38 @@
       )
     ] }) });
   }
+  function Added({ who, on: on2 }) {
+    return /* @__PURE__ */ u3("div", { id: "personAdded", class: "addednote", role: "status", children: [
+      /* @__PURE__ */ u3("p", { children: [
+        /* @__PURE__ */ u3("strong", { children: [
+          who.name,
+          " is added."
+        ] }),
+        " Next, hand them their welcome page: it has their sign-in and the apps they use."
+      ] }),
+      /* @__PURE__ */ u3("div", { class: "actions", children: [
+        /* @__PURE__ */ u3("button", { class: "small primary", onClick: () => on2.openWelcome(who.username), children: "Show their sign-in to scan" }),
+        /* @__PURE__ */ u3("button", { class: "small", onClick: () => on2.openSheet(who.username), children: "Open the fridge sheet" }),
+        /* @__PURE__ */ u3("button", { class: "small", onClick: on2.doneAdding, children: "Done" })
+      ] }),
+      /* @__PURE__ */ u3("p", { class: "muted", children: "The welcome page opens here, on this computer: they scan its code with their phone's camera, or you print it for them. It's for them alone, as it holds their sign-in link and their music and films password, so don't email it. To send something, send the fridge sheet: their apps with a code each, and neither of those." })
+    ] });
+  }
   function AddPerson({ apps: apps2, open: open5, on: on2 }) {
     const [name, setName] = d2("");
     const [email, setEmail] = d2("");
     const [picked, setPicked] = d2(/* @__PURE__ */ new Set());
+    const [only, setOnly] = d2(false);
     const [busy2, setBusy] = d2(false);
-    const toggle = (id2, on3) => setPicked((s3) => {
-      const n3 = new Set(s3);
-      if (on3) n3.add(id2);
-      else n3.delete(id2);
-      return n3;
-    });
+    const toggle = (id2, on3) => {
+      if (on3) setOnly(true);
+      setPicked((s3) => {
+        const n3 = new Set(s3);
+        if (on3) n3.add(id2);
+        else n3.delete(id2);
+        return n3;
+      });
+    };
     const add = async () => {
       const who = name.trim();
       if (!who) {
@@ -4192,7 +4213,7 @@
         return;
       }
       setBusy(true);
-      const ok = await on2.act("add", who, email.trim(), apps2.map((a3) => a3.id).filter((id2) => picked.has(id2)));
+      const ok = await on2.act("add", who, email.trim(), only ? apps2.map((a3) => a3.id).filter((id2) => picked.has(id2)) : []);
       setBusy(false);
       if (ok) on2.added(who);
     };
@@ -4202,10 +4223,21 @@
         /* @__PURE__ */ u3("input", { id: "personName", placeholder: "Name, e.g. Anna Smith", autocomplete: "off", spellcheck: false, value: name, onInput: (e3) => setName(e3.currentTarget.value) }),
         /* @__PURE__ */ u3("input", { id: "personEmail", type: "email", placeholder: "Email (optional)", autocomplete: "off", spellcheck: false, value: email, onInput: (e3) => setEmail(e3.currentTarget.value) })
       ] }),
-      !!apps2.length && /* @__PURE__ */ u3("div", { class: "picks", children: [
-        /* @__PURE__ */ u3("div", { class: "muted small", children: "The apps they use (none ticked: all of them)" }),
+      !!apps2.length && /* @__PURE__ */ u3("div", { class: "picks", role: "group", "aria-label": "The apps they use", children: [
+        /* @__PURE__ */ u3("div", { class: "muted small", children: "The apps they use" }),
+        /* @__PURE__ */ u3("label", { class: "check", children: [
+          /* @__PURE__ */ u3("input", { type: "radio", name: "personApps", id: "personAllApps", checked: !only, onChange: () => {
+            setOnly(false);
+            setPicked(/* @__PURE__ */ new Set());
+          } }),
+          " All the apps"
+        ] }),
+        /* @__PURE__ */ u3("label", { class: "check", children: [
+          /* @__PURE__ */ u3("input", { type: "radio", name: "personApps", id: "personOnlyApps", checked: only, onChange: () => setOnly(true) }),
+          " Only these:"
+        ] }),
         apps2.map((a3) => /* @__PURE__ */ u3("label", { class: "check", children: [
-          /* @__PURE__ */ u3("input", { type: "checkbox", value: a3.id, checked: picked.has(a3.id), onChange: (e3) => toggle(a3.id, e3.currentTarget.checked) }),
+          /* @__PURE__ */ u3("input", { type: "checkbox", value: a3.id, checked: only && picked.has(a3.id), onChange: (e3) => toggle(a3.id, e3.currentTarget.checked) }),
           " ",
           a3.name
         ] }, a3.id))
@@ -4213,24 +4245,25 @@
       /* @__PURE__ */ u3("button", { class: "small primary", id: "addPerson", disabled: busy2, onClick: add, children: "Add them" })
     ] });
   }
-  function People({ people, pocket, apps: apps2, log: log2, on: on2, privateFinances }) {
+  function People({ people, pocket, apps: apps2, log: log2, on: on2, privateFinances, justAdded: justAdded2 }) {
     const here3 = people.filter(active);
     const head = /* @__PURE__ */ u3(CardHead, { title: "People", children: /* @__PURE__ */ u3("span", { class: "muted", children: here3.length ? `${here3.length} in the household` : "just you so far" }) });
-    const why = /* @__PURE__ */ u3("p", { class: "muted", children: "Each person gets one sign-in for the apps (with a passkey, no password to remember) and a welcome page with their apps and the phone apps to install. Jellyfin and Navidrome have a password of their own, for Infuse and music apps: with their keys in Settings, the homelab makes those accounts too, and Reset password gives a new one." });
+    const why = /* @__PURE__ */ u3("p", { class: "muted", children: "Each person gets one sign-in for the apps, with their phone's face or fingerprint and no password to remember, and a welcome page with their apps and the phone apps to install. Their films and music apps (Jellyfin and Navidrome) have a password of their own: once each app's admin key is on its page in Settings (Jellyfin, Navidrome), the homelab makes their accounts too. Their sign-in link works once: Welcome page shows it again until it's used, and Make a new sign-in link replaces one they lost." });
     if (!pocket) {
       return /* @__PURE__ */ u3(S, { children: [
         head,
         why,
         /* @__PURE__ */ u3("div", { class: "row", children: [
-          /* @__PURE__ */ u3("span", { class: "muted", children: "Adding people uses Pocket ID, the household’s sign-in." }),
-          /* @__PURE__ */ u3("button", { class: "small", id: "installPocket", onClick: on2.installPocket, children: "Install Pocket ID" })
+          /* @__PURE__ */ u3("span", { class: "muted", children: "Adding people needs the household’s sign-in first (the Pocket ID app)." }),
+          /* @__PURE__ */ u3("button", { class: "small", id: "installPocket", onClick: on2.installPocket, children: "Set up the household’s sign-in" })
         ] })
       ] });
     }
     return /* @__PURE__ */ u3(S, { children: [
       head,
       why,
-      !!here3.length && /* @__PURE__ */ u3(Rows, { children: here3.map((p3) => /* @__PURE__ */ u3(Person, { p: p3, on: on2, sealed: privateFinances?.[p3.username] }, p3.username)) }),
+      justAdded2 && /* @__PURE__ */ u3(Added, { who: justAdded2, on: on2 }),
+      !!here3.length && /* @__PURE__ */ u3(Rows, { kind: "people", children: here3.map((p3) => /* @__PURE__ */ u3(Person, { p: p3, on: on2, sealed: privateFinances?.[p3.username] }, p3.username)) }),
       /* @__PURE__ */ u3(AddPerson, { apps: apps2, open: !here3.length, on: on2 }),
       /* @__PURE__ */ u3("pre", { id: "peopleLog", hidden: !log2, children: log2 })
     ] });
@@ -6450,8 +6483,9 @@
   var usedByPeople = (a3, entry) => !!(a3.address || a3.url) && a3.id !== "homepage" && entry?.kind !== "helper" && (!["network", "system", "security"].includes(entry?.category || "") || a3.id === "vaultwarden");
   var peopleView = null;
   var peopleLog = "";
+  var justAdded;
   function renderPeople() {
-    if (peopleView) mountPeople($("peopleCard"), { ...peopleView, log: peopleLog });
+    if (peopleView) mountPeople($("peopleCard"), { ...peopleView, log: peopleLog, justAdded });
   }
   async function loadPeople() {
     const card = $("peopleCard");
@@ -6499,17 +6533,24 @@
     openWelcome: (username) => {
       go().OpenWelcome(username).catch(showError);
     },
+    openSheet: (username) => {
+      go().OpenSheet(username).catch(showError);
+    },
     installPocket: () => {
       selected.add("pocket-id");
       navigate("choose");
       renderApps();
       replan();
     },
+    // Said on the screen, with ways to hand them their welcome page, rather than opened by itself.
     added: async (name) => {
       const added = (await go().People()).find((p3) => p3.name === name);
-      if (added) go().OpenWelcome(added.username).catch(() => {
-      });
-      loadPeople();
+      justAdded = added ? { name: added.name, username: added.username } : void 0;
+      await loadPeople();
+    },
+    doneAdding: () => {
+      justAdded = void 0;
+      renderPeople();
     },
     reload: () => loadPeople()
   };

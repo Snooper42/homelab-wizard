@@ -55,8 +55,9 @@ export const usedByPeople = (a: api.AppStatus, entry?: api.App) => !!(a.address 
   && (!['network', 'system', 'security'].includes(entry?.category || '') || a.id === 'vaultwarden');
 let peopleView: PeopleProps | null = null;
 let peopleLog = '';
+let justAdded: PeopleProps['justAdded'];
 function renderPeople() {
-  if (peopleView) mountPeople($('peopleCard'), { ...peopleView, log: peopleLog });
+  if (peopleView) mountPeople($('peopleCard'), { ...peopleView, log: peopleLog, justAdded });
 }
 async function loadPeople() {
   const card = $('peopleCard');
@@ -85,12 +86,15 @@ const peopleActions: PeopleActions = {
     return ok;
   },
   openWelcome: (username) => { go().OpenWelcome(username).catch(showError); },
+  openSheet: (username) => { go().OpenSheet(username).catch(showError); },
   installPocket: () => { selected.add('pocket-id'); navigate('choose'); renderApps(); replan(); },
+  // Said on the screen, with ways to hand them their welcome page, rather than opened by itself.
   added: async (name) => {
     const added = (await go().People()).find((p) => p.name === name);
-    if (added) go().OpenWelcome(added.username).catch(() => {});
-    loadPeople();
+    justAdded = added ? { name: added.name, username: added.username } : undefined;
+    await loadPeople();
   },
+  doneAdding: () => { justAdded = undefined; renderPeople(); },
   reload: () => loadPeople(),
 };
 

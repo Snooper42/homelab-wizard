@@ -159,15 +159,15 @@ In Home mode, first install the **Tailscale** app on the phone and sign in with 
 
 To open an app on a phone without typing its address, click its row in **Status** and then **Open on a phone** on its page: it shows the address as a QR code for the phone's camera, with what the phone needs (home Wi-Fi or Tailscale) and the app's phone app. Everything else opens in a web browser. Install **Homepage** from Choose apps for one start page with every app on it, kept up to date by the homelab; the [Inventory](<Inventory.md>) lists every address too.
 
-Each person can have their own sign-in, through **Pocket ID** (without it, the card offers **Install Pocket ID** first):
+Each person can have their own sign-in, through **Pocket ID**, the household's sign-in app (without it, the card offers **Set up the household's sign-in** first):
 
 1. In **Settings** › **People**, click **Add a person**.
-2. Give their name, email, and the apps they use, and click **Add them**.
-3. The homelab makes their account and opens a welcome page to print or send: a one-time link to set up a passkey (Face ID or Touch ID), the apps they use, and their own tab on the start page.
+2. Give their name, email, and the apps they use (**All the apps**, or **Only these**), and click **Add them**.
+3. The homelab makes their account and says so, with two ways to hand it over: **Show their sign-in to scan** opens their welcome page on the computer (a one-time link to sign in with their phone's face or fingerprint, as a code for its camera too, the apps they use, and their own tab on the start page); **Open the fridge sheet** opens a page with just their apps. The welcome page holds their sign-in link and their films and music password, so keep it for them: the fridge sheet is the one to email or hang up.
 
-Later, **New sign-in link** makes a fresh link, and **Remove** turns their sign-in off and keeps their data.
+Later, **Make a new sign-in link** makes a fresh link (the old one stops working), and **Remove** turns their sign-in off and keeps their data.
 
-Jellyfin and Navidrome have a password of their own, so that Infuse, the TV apps, and music apps such as Arpeggi can sign in. With `JELLYFIN_API_KEY` and a Navidrome administrator's login in **Settings**, adding someone makes those accounts too (one password for both, on their welcome page and nowhere else); **Reset password** gives them a new one, and **Remove** turns them off. With a domain, `./homelab sso setup` then lets Karakeep, Paperless-ngx, Mealie, Vikunja, and Open WebUI sign in with Pocket ID.
+Jellyfin and Navidrome have a password of their own, so that Infuse, the TV apps, and music apps such as Arpeggi can sign in. With `JELLYFIN_API_KEY` and a Navidrome administrator's login in **Settings**, adding someone makes those accounts too (one password for both, on their welcome page and nowhere else); **New music and films password** gives them a new one, and **Remove** turns them off. With a domain, `./homelab sso setup` then lets Karakeep, Paperless-ngx, Mealie, Vikunja, and Open WebUI sign in with Pocket ID.
 
 For the person who looks after the homelab: Settings › **Phones** › **Pair a phone** shows a QR code. Scan it from the **Homelab app** on an iPhone or iPad, and the app shows Status, each app's page, and Backups, at home or over Tailscale. A phone without the app (Android, a visitor's) scans it with its camera instead, and gets the same screens in its browser (Share › Add to Home Screen keeps it as an app). Your partner's phone pairs the same way; beside each phone, **Sees Finances** or **Changes Finances** adds the household's Finances to it (only for a phone paired with the https link).
 

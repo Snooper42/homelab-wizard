@@ -2150,7 +2150,7 @@ const smokes = [
   } },
   { name: 'Add a person needs Pocket ID', screen: 'settings', run: async (page) => {
     await page.click('#settingsNav .pagebtn[data-page="People"]', { timeout: 5000 }); 
-    await page.waitForSelector('#peopleCard:has-text("Install Pocket ID")', { timeout: 5000 });
+    await page.waitForSelector('#peopleCard button:has-text("Set up the household’s sign-in")', { timeout: 5000 });
   } },
   { name: 'Add a person', screen: 'settings', mock: { status: { ...status, apps: [...status.apps, { id: 'pocket-id', name: 'Pocket ID', state: 'running', health: 'healthy', url: 'http://localhost:1411' }] } }, run: async (page) => {
     await page.click('#settingsNav .pagebtn[data-page="People"]', { timeout: 5000 }); 
@@ -2161,7 +2161,84 @@ const smokes = [
     await page.waitForSelector('#peopleCard li:has-text("Anna Smith")', { timeout: 5000 });
     const [act] = await page.evaluate(() => window.__MOCK.personActions);
     if (act.join('|') !== 'add|Anna Smith|anna@example.com|vikunja') throw new Error(`asked ${act}`);
-    if ((await page.evaluate(() => window.__MOCK.opened)) !== 'anna') throw new Error('the welcome page did not open');
+    // Usability task 7, item 13: said on the screen, with ways to hand over the welcome page, not opened by itself.
+    const note = page.locator('#personAdded');
+    await note.waitFor({ timeout: 5000 });
+    if (!/Anna Smith is added/.test(await note.textContent())) throw new Error(`the note: ${await note.textContent()}`);
+    if (await page.evaluate(() => window.__MOCK.opened)) throw new Error('the welcome page opened by itself');
+    if (!/for them alone.*fridge sheet/s.test(await note.textContent())) throw new Error('the note does not say the welcome page is theirs alone, and what to send instead');
+    await note.locator('button:text-is("Show their sign-in to scan")').click();
+    await page.waitForFunction(() => window.__MOCK.opened === 'anna', null, { timeout: 3000 });
+    await note.locator('button:text-is("Open the fridge sheet")').click();
+    await page.waitForFunction(() => window.__MOCK.openedSheet === 'anna', null, { timeout: 3000 });
+    await note.locator('button:text-is("Done")').click();
+    await page.waitForSelector('#personAdded', { state: 'detached', timeout: 3000 });
+  } },
+  // Usability task 7, item 14: at 320px with big text (1.25×, as the tester's picture), a person's row keeps their
+  // name in words and its buttons wrap under it, none past the card's right edge.
+  { name: 'Settings › People at 320px with big text: names in words, buttons inside the card', screen: 'settings', mock: { status: { ...status, apps: [...status.apps, { id: 'pocket-id', name: 'Pocket ID', state: 'running', health: 'healthy', url: 'http://localhost:1411' }] }, people: [{ username: 'anna', name: 'Anna Smith', email: 'anna.smith@example.com' }] }, run: async (page) => {
+    await page.click('#settingsNav .pagebtn[data-page="People"]', { timeout: 5000 });
+    await page.waitForSelector('#peopleCard li:has-text("Anna Smith")', { timeout: 5000 });
+    await page.setViewportSize({ width: 320, height: 640 });
+    await page.evaluate(() => document.documentElement.style.setProperty('--zoom', '1.25'));
+    await page.waitForTimeout(200);
+    const bad = await page.$eval('#peopleCard', (card) => {
+      const edge = card.getBoundingClientRect().right + 1, out = [];
+      for (const el of card.querySelectorAll('li strong, li button')) {
+        const r = el.getBoundingClientRect();
+        if (r.right > edge) out.push(`${el.textContent} past the edge`);
+      }
+      const name = card.querySelector('li strong');
+      const line = parseFloat(getComputedStyle(name).lineHeight) || parseFloat(getComputedStyle(name).fontSize) * 1.3;
+      if (name.getBoundingClientRect().height > line * 2.2) out.push(`the name on ${Math.round(name.getBoundingClientRect().height / line)} lines`);
+      return out;
+    });
+    if (bad.length) throw new Error(bad.join('; '));
+    // This machine's facts (Settings › This Mac): each value wraps between its words, never a letter a line.
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.click('#settingsNav .pagebtn[data-page="This Mac"]', { timeout: 5000 });
+    await page.waitForSelector('.hostcard dd', { timeout: 5000 });
+    await page.setViewportSize({ width: 320, height: 640 });
+    await page.waitForTimeout(200);
+    const thin = await page.$$eval('.hostcard dd', (dds) => dds.filter((d) => d.textContent.trim() && d.getBoundingClientRect().width < 64).map((d) => `${d.previousElementSibling?.textContent}: ${Math.round(d.getBoundingClientRect().width)}px`));
+    if (thin.length) throw new Error(`values a few letters wide: ${thin.join(', ')}`);
+  } },
+  // Usability task 7, item 15: with an app stopped, the line atop Settings shows whole, above the heading, and its
+  // Open Status is uncovered and clicks through, at full width and at 320px with big text.
+  ...[[1280, 800, '1'], [320, 640, '1.25']].map(([w, h, zoom]) => ({ name: `Settings with an app stopped: the line on top shows whole, ${w}px`, screen: 'settings', run: async (page) => {
+    await page.setViewportSize({ width: w, height: h });
+    await page.evaluate((z) => document.documentElement.style.setProperty('--zoom', z), zoom);
+    await page.waitForSelector('#oneLine:not([hidden]) #oneOpen:not([hidden])', { timeout: 5000 });
+    await page.waitForTimeout(200);
+    const covered = await page.evaluate(() => {
+      const line = document.getElementById('oneLine'), r = line.getBoundingClientRect(), btn = document.getElementById('oneOpen').getBoundingClientRect();
+      const at = (x, y) => { const e = document.elementFromPoint(x, y); return e && line.contains(e); };
+      const out = [];
+      if (!at(btn.left + btn.width / 2, btn.top + btn.height / 2)) out.push('Open Status is covered');
+      if (!at(r.left + r.width / 2, r.bottom - 3)) out.push('the line’s lower edge is covered');
+      const head = document.querySelector('#settings h1').getBoundingClientRect();
+      if (head.top < r.bottom - 1) out.push('the heading sits over the line');
+      return out;
+    });
+    if (covered.length) throw new Error(covered.join('; '));
+    await page.click('#oneOpen');
+    await page.waitForSelector('#status.screen.active', { timeout: 5000 });
+  } })),
+  // Usability task 7, item 16: People in plain words: no "passkey", no bare "Pocket ID", the films and music
+  // password named on its button, and All the apps a choice of its own beside Only these.
+  { name: 'Settings › People in plain words, All the apps a choice of its own', screen: 'settings', mock: { status: { ...status, apps: [...status.apps, { id: 'pocket-id', name: 'Pocket ID', state: 'running', health: 'healthy', url: 'http://localhost:1411' }] }, people: [{ username: 'anna', name: 'Anna Smith' }] }, run: async (page) => {
+    await page.click('#settingsNav .pagebtn[data-page="People"]', { timeout: 5000 });
+    await page.waitForSelector('#peopleCard li:has-text("Anna Smith")', { timeout: 5000 });
+    const text = await page.$eval('#peopleCard', (c) => c.innerText);
+    if (/passkey|Infuse|Reset password|none ticked/i.test(text)) throw new Error(`words: ${text.match(/passkey|Infuse|Reset password|none ticked/i)[0]}`);
+    if (/Pocket ID/.test(text.replace(/the Pocket ID app|\(Pocket ID\)/g, ''))) throw new Error('Pocket ID named without saying what it is');
+    if (!(await page.locator('#peopleCard li button:text-is("New music and films password")').count())) throw new Error('the password is not named on its button');
+    await page.click('#peopleCard details.addperson > summary');
+    if (!(await page.isChecked('#personAllApps'))) throw new Error('All the apps is not the first choice');
+    await page.click('#peopleCard label.check:has-text("Vikunja") input');
+    if (!(await page.isChecked('#personOnlyApps'))) throw new Error('ticking an app did not pick Only these');
+    await page.check('#personAllApps');
+    if (await page.isChecked('#peopleCard label.check:has-text("Vikunja") input')) throw new Error('All the apps left an app ticked');
   } },
   // A member who keeps her Finances private (private-finances.md 3.3): her row says so and when she last saved,
   // and nothing more; Remove's title says the owner can delete them but never open them.
