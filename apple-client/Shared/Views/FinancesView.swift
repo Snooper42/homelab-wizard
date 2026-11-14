@@ -1189,10 +1189,11 @@ private struct FinanceSpendingPage: View {
                             .font(.caption2.weight(.semibold))
                             .foregroundStyle(change > 0 ? Theme.danger : Theme.success)
                             .lineLimit(1)
-                            .minimumScaleFactor(0.7)
+                            .minimumScaleFactor(0.6)
                     }
                 }
-                .padding(.horizontal, 22)
+                // Inside the hole: its third line is where the hole is narrowest.
+                .padding(.horizontal, 28)
             }
             .frame(width: 144, height: 144)
             .dynamicTypeSize(...DynamicTypeSize.xLarge)
@@ -1206,10 +1207,12 @@ private struct FinanceSpendingPage: View {
                 ForEach(Array(spent.prefix(5).enumerated()), id: \.element.id) { i, c in
                     HStack(spacing: 6) {
                         Circle().fill(tint(c.name, i, view)).frame(width: 9, height: 9)
+                        // Shrinks rather than cuts a long name at the largest sizes ("Subscri…", large-spending).
                         Text(verbatim: c.name)
                             .font(.subheadline)
                             .foregroundStyle(Theme.ink)
                             .lineLimit(1)
+                            .minimumScaleFactor(0.6)
                         Spacer(minLength: 4)
                         Text(c.spent / max(total, 0.01), format: .percent.precision(.fractionLength(0)))
                             .font(.subheadline)
@@ -2738,6 +2741,7 @@ struct TransactionsView: View {
     /// Money in or out, a category, or the larger ones only.
     @State private var filter = TransactionFilter()
     @Namespace private var zoom
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     private struct MonthGroup: Identifiable {
         let month: Date
@@ -2849,11 +2853,14 @@ struct TransactionsView: View {
                         .listRowSeparator(.hidden)
                 }
             } header: {
-                HStack(alignment: .firstTextBaseline) {
+                // At the largest text sizes the button goes under the heading: beside it,
+                // "Latest Transactions" broke mid-word ("Trans- actions", large-transactions).
+                (typeSize.isAccessibilitySize ? AnyLayout(VStackLayout(alignment: .leading, spacing: 6))
+                                              : AnyLayout(HStackLayout(alignment: .firstTextBaseline))) {
                     Text("Latest Transactions")
                         .font(.title2.weight(.bold))
                         .foregroundStyle(Theme.ink)
-                    Spacer()
+                    if !typeSize.isAccessibilitySize { Spacer() }
                     if filter.isOn {
                         Button("Clear Filter") {
                             withAnimation(.snappy) { filter = TransactionFilter() }
@@ -2868,6 +2875,7 @@ struct TransactionsView: View {
                         .buttonStyle(.bordered)
                         .buttonBorderShape(.capsule)
                         .controlSize(.small)
+                        .dynamicTypeSize(...DynamicTypeSize.accessibility1)
                     }
                 }
                 .textCase(nil)

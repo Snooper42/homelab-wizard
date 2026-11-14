@@ -140,6 +140,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **Spending and Transactions in the Homelab app at larger text:** Spending's legend shows names like *Subscriptions* whole, and its *+$1,021 on Sep* stays inside the ring; at the largest sizes Transactions puts **5 New** under *Latest Transactions* instead of breaking the heading mid-word.
 - **The Homelab app at the largest text sizes, and Setup's steps:** Finances' big amounts (what's left, net worth, investments, bills a month) grow with the text as their titles do; Setup says **Look for Problems** lists what it would fix first, and nothing changes until **Fix These** under that list.
 - **Transactions in the Homelab app:** a transfer's line takes a second line when it needs one, so *From Chase Checking · Oct 28* shows whole, and a transaction's **Mark Reviewed** shows its checkmark.
 - **Status in the Homelab app, clearer:** a group's menu says what it does (*Start or Stop All*, *Start All* or *Restart or Stop All*, by what the group's apps can do) instead of *All of These*; and at the largest text sizes, what needs a look puts **Open Its Page** under **Start** and **Logs**, so Start no longer breaks in two.
