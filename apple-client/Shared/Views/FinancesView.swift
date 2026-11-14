@@ -27,8 +27,19 @@ struct FinancesView: View {
             } else if let view = finances.plan {
                 VStack(spacing: 18) {
                     if finances.privacy == .open { PrivateOpenBanner(finances: finances) }
-                    if let asOf = finances.offlineAsOf { OfflineBanner(asOf: asOf) }
-                    if view.plan.accounts.isEmpty, finances.canEdit {
+                    if let asOf = finances.offlineAsOf {
+                        if finances.canEditAway { AwayBanner(asOf: asOf, finances: finances) } else { OfflineBanner(asOf: asOf) }
+                    }
+                    // Changes made away: sent once home, or why they still wait.
+                    if let sent = finances.awaySent {
+                        AwaySentCard(sent: sent.sent, dropped: sent.dropped) { finances.dismissAwaySent() }
+                    } else if finances.offlineAsOf == nil, !finances.awayChanges.isEmpty, let why = finances.awaySendError {
+                        Label(why, systemImage: "exclamationmark.triangle.fill")
+                            .font(.footnote)
+                            .foregroundStyle(Theme.warning)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    if view.plan.accounts.isEmpty, finances.canEditPlan {
                         FirstAccountCard(finances: finances)
                     }
                     if let now = view.checkingNow { CheckingHero(now: now, view: view, finances: finances) }
@@ -44,7 +55,9 @@ struct FinancesView: View {
                     if finances.canMakePrivate { PrivateOfferCard(finances: finances) }
                     if finances.privacy == .open, finances.canEdit { PrivateOffButton(finances: finances) }
                     Text(finances.offlineAsOf != nil
-                         ? "Offline: these are the Finances last read on this device. Changes wait until the Homelab answers, and then the newest are read by themselves."
+                         ? (finances.canEditAway
+                            ? "Offline: today's Finances, worked out on this device. Balances, the cushion, budgets, goals and payments change here and go to the Homelab once it answers."
+                            : "Offline: these are the Finances last read on this device. Changes wait until the Homelab answers, and then the newest are read by themselves.")
                          : finances.canEdit
                          ? "Balances, the cushion, budgets, goals and what a payment costs change on their pages. The rest of the plan is on the computer."
                          : "Read-only on this device. Change the plan on the computer.")
@@ -114,6 +127,7 @@ struct FinancesView: View {
         }
         .sensoryFeedback(.success, trigger: finances.savedCount)
         .animation(.smooth, value: finances.amountsShown)
+        .modifier(AwayClashSheet(finances: finances))
         .navigationTitle(finances.isMember ? "My Finances" : "Finances")
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
@@ -826,7 +840,7 @@ private struct FinanceBudgetsPage: View {
                 }
                 Section {
                     ForEach(view.budgets) { budget in
-                        if finances.canEdit {
+                        if finances.canEditPlan {
                             Button {
                                 finances.clearSaveError()
                                 editingBudget = budget
@@ -840,7 +854,7 @@ private struct FinanceBudgetsPage: View {
                         }
                     }
                 } footer: {
-                    if finances.canEdit { Text("Tap a budget to change its amount.") }
+                    if finances.canEditPlan { Text("Tap a budget to change its amount.") }
                 }
             }
         }
@@ -1390,8 +1404,8 @@ private struct FinanceRecurringPage: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .card(radius: 24)
                     }
-                    if finances.canEdit, !items.isEmpty {
-                        Text("Tap one to change what it costs. Add or remove them on the computer.")
+                    if finances.canEditPlan, !items.isEmpty {
+                        Text("Tap one to change what it costs, or + to add one. Remove them on the computer.")
                             .font(.footnote)
                             .foregroundStyle(Theme.secondaryInk)
                             .frame(maxWidth: .infinity, alignment: .leading)
@@ -1475,7 +1489,7 @@ private struct FinanceRecurringPage: View {
             .padding(.bottom, 6)
             ForEach(Array(rows.enumerated()), id: \.element.id) { i, item in
                 if i > 0 { Divider().padding(.leading, 54) }
-                if finances.canEdit, item.payment.canChangeAmount {
+                if finances.canEditPlan, item.payment.canChangeAmount {
                     Button {
                         finances.clearSaveError()
                         editing = item.payment
@@ -2097,7 +2111,7 @@ private struct FinanceAccountsPage: View {
                     ForEach(view.accountGroups) { group in
                         groupCard(group, view)
                     }
-                    if finances.canEdit || view.plan.cushion > 0 { cushionCard(view) }
+                    if finances.canEditPlan || view.plan.cushion > 0 { cushionCard(view) }
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Tap an account for its page: its balance day by day and its latest transactions.")
                         if view.plan.accounts.contains(where: { $0.currency != nil && $0.currency != "" }) {
@@ -2117,7 +2131,7 @@ private struct FinanceAccountsPage: View {
         .refreshable { await finances.loadPlan() }
         .sensoryFeedback(.success, trigger: finances.savedCount)
         .toolbar {
-            if finances.canEdit {
+            if finances.canEditPlan {
                 ToolbarItem(placement: .primaryAction) {
                     Button { adding = true } label: { Label("Add Account", systemImage: "plus") }
                 }
@@ -2239,7 +2253,7 @@ private struct FinanceAccountsPage: View {
                 } else {
                     Text("None").foregroundStyle(Theme.secondaryInk)
                 }
-                if finances.canEdit {
+                if finances.canEditPlan {
                     Image(systemName: "chevron.right")
                         .font(.footnote.weight(.semibold))
                         .foregroundStyle(.tertiary)
@@ -2250,8 +2264,8 @@ private struct FinanceAccountsPage: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(PressableButtonStyle())
-        .disabled(!finances.canEdit)
-        .accessibilityHint(finances.canEdit ? "Change the least checking should hold" : "")
+        .disabled(!finances.canEditPlan)
+        .accessibilityHint(finances.canEditPlan ? "Change the least checking should hold" : "")
     }
 
     private func accountRow(_ account: FinanceAccount, _ view: FinancesPlanView) -> some View {
@@ -2295,7 +2309,7 @@ private struct FinanceGoalsPage: View {
             if let view = finances.plan {
                 Section {
                     ForEach(view.goals) { goal in
-                        if finances.canEdit {
+                        if finances.canEditPlan {
                             Button {
                                 finances.clearSaveError()
                                 editingGoal = goal
@@ -2309,7 +2323,7 @@ private struct FinanceGoalsPage: View {
                         }
                     }
                 } footer: {
-                    if finances.canEdit { Text("Tap a goal to change its target.") }
+                    if finances.canEditPlan { Text("Tap a goal to change its target.") }
                 }
             }
         }
@@ -2436,7 +2450,7 @@ private struct SinceSection: View {
                     }
                     Spacer()
                     Money(value: past.moneyIn ? past.amount : -past.amount, currency: view.plan.currency, finances: finances)
-                    if finances.canEdit {
+                    if finances.canEditPlan {
                         Picker(name(past), selection: Binding(
                             get: { past.waiting },
                             set: { waiting in Task { _ = await finances.setWaiting(past, waiting: waiting) } }
@@ -2458,7 +2472,7 @@ private struct SinceSection: View {
         } header: {
             Text("Taken as Done")
         } footer: {
-            Text(finances.canEdit
+            Text(finances.canEditPlan
                  ? "Counted in the balances you typed in. Mark any that hasn't happened yet: it comes today."
                  : "Counted in the balances that were typed in.")
         }
@@ -2502,7 +2516,7 @@ private struct PeriodSection: View {
             // By position: the same payment can come twice on one day.
             ForEach(period.rows.indices, id: \.self) { i in
                 let row = period.rows[i]
-                if finances.canEdit, let payment = view.payment(row.payment), payment.canChangeAmount {
+                if finances.canEditPlan, let payment = view.payment(row.payment), payment.canChangeAmount {
                     Button {
                         edit(payment)
                     } label: {

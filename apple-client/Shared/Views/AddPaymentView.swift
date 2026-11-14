@@ -120,7 +120,7 @@ struct AddPaymentButton: ViewModifier {
     func body(content: Content) -> some View {
         content
             .toolbar {
-                if finances.canEdit {
+                if finances.canEditPlan {
                     ToolbarItem(placement: .primaryAction) {
                         Button { adding = true } label: {
                             Label("Add Payment", systemImage: "plus")
