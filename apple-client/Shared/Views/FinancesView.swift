@@ -1233,9 +1233,12 @@ private struct FinanceSpendingPage: View {
         let shown = months.filter { $0.total > 0 }
         let average = shown.isEmpty ? 0 : shown.reduce(0) { $0 + $1.total } / Double(shown.count)
         return VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .firstTextBaseline) {
+            // The average under the heading at the largest text sizes: side by side, both were cut
+            // ("Each" and "About…", large-spending).
+            (typeSize.isAccessibilitySize ? AnyLayout(VStackLayout(alignment: .leading, spacing: 4))
+                                          : AnyLayout(HStackLayout(alignment: .firstTextBaseline))) {
                 CardHeading("Each Month")
-                Spacer()
+                if !typeSize.isAccessibilitySize { Spacer() }
                 if average > 0 {
                     Text(verbatim: "About \(amountText(average, view.plan.currency, finances, whole: true)) a month")
                         .font(.subheadline)
