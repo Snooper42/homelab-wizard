@@ -17557,6 +17557,18 @@ ${pays}
   }
 
   // web/src/finances/Overview.tsx
+  function StartThree({ v: v3, add }) {
+    const acct = (v3.plan.accounts || []).find((a3) => a3.kind === "checking");
+    const person = (v3.plan.people || [])[0];
+    const bill = (v3.plan.payments || [])[0];
+    const row = (done, lead2, title, sub, label, onAdd) => /* @__PURE__ */ u3(Row, { lead: lead2, title: done ? `✓ ${done}` : title, sub: done ? "Done" : sub, end: done ? void 0 : /* @__PURE__ */ u3("button", { class: "small", onClick: onAdd, children: label }) });
+    return /* @__PURE__ */ u3(Widget, { title: "Start with three things", span: "all", kind: "finstart", children: /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: [
+      row(acct?.name || "", /* @__PURE__ */ u3(Mark, { kind: "checking", name: "Checking" }), "Your checking account", "Where paychecks land and bills come out", "Add an account", () => add("account", "checking")),
+      row(person ? `${person.name}'s paycheck` : "", /* @__PURE__ */ u3(Mark, { kind: "savings", name: "Pay" }), "Who gets paid, and when", "Every other Friday, the 26th, twice a month", "Add a paycheck", () => add("person")),
+      row(bill?.name || "", /* @__PURE__ */ u3(Mark, { kind: "home", name: "Bills" }), "What comes out each month", "The mortgage, the car, subscriptions, a card’s balance", "Add a payment", () => add("payment"))
+    ] }) });
+  }
+  var startedThree = (v3) => !!v3.plan.people?.length && !!v3.plan.payments?.length;
   function Overview({ v: v3, L: L2, sel: sel2, pick, add, edit, setSince: setSince2, keep: keep3, ledger, openWorth, openSubscriptions, openRecurring, openTransactions, openCalendar, openPay, openAccount, showIn: showIn2, phone: phone2 }) {
     const [by, setByState] = d2(readBy);
     const { months, now: thisMonth } = monthPeriods(v3);
@@ -17595,14 +17607,11 @@ ${pays}
     const spentDays = month3 ? month3.when === "past" ? { from: month3.start, to: month3.last } : void 0 : was && { from: was.start, to: was.last };
     if (!v3.plan.accounts?.length && !v3.plan.people?.length && !add) return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3(Card, { kind: "finstart", children: /* @__PURE__ */ u3(Empty, { children: "Nothing typed in yet: Finances are filled in on the computer, or on a phone allowed to change them." }) }) });
     if (!v3.plan.accounts?.length && !v3.plan.people?.length) {
-      return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3("div", { class: "fx-board", children: /* @__PURE__ */ u3(Widget, { title: "Start with three things", span: "all", kind: "finstart", children: /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: [
-        /* @__PURE__ */ u3(Row, { lead: /* @__PURE__ */ u3(Mark, { kind: "checking", name: "Checking" }), title: "Your checking account", sub: "Where paychecks land and bills come out", end: /* @__PURE__ */ u3("button", { class: "small", onClick: () => add("account", "checking"), children: "Add an account" }) }),
-        /* @__PURE__ */ u3(Row, { lead: /* @__PURE__ */ u3(Mark, { kind: "savings", name: "Pay" }), title: "Who gets paid, and when", sub: "Every other Friday, the 26th, twice a month", end: /* @__PURE__ */ u3("button", { class: "small", onClick: () => add("person"), children: "Add a paycheck" }) }),
-        /* @__PURE__ */ u3(Row, { lead: /* @__PURE__ */ u3(Mark, { kind: "home", name: "Bills" }), title: "What comes out each month", sub: "The mortgage, the car, subscriptions, a card's balance", end: /* @__PURE__ */ u3("button", { class: "small", onClick: () => add("payment"), children: "Add a payment" }) })
-      ] }) }) }) });
+      return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3("div", { class: "fx-board", children: /* @__PURE__ */ u3(StartThree, { v: v3, add }) }) });
     }
     return /* @__PURE__ */ u3("div", { class: "fin", children: [
-      !v3.checking && /* @__PURE__ */ u3(Card, { kind: "finnote", role: "status", children: [
+      add && !startedThree(v3) && /* @__PURE__ */ u3("div", { class: "fx-board", children: /* @__PURE__ */ u3(StartThree, { v: v3, add }) }),
+      !v3.checking && !(add && !startedThree(v3)) && /* @__PURE__ */ u3(Card, { kind: "finnote", role: "status", children: [
         /* @__PURE__ */ u3(Mark, { kind: "checking", name: "Checking" }),
         /* @__PURE__ */ u3("span", { class: "grow", children: [
           /* @__PURE__ */ u3("strong", { children: "No checking account yet." }),

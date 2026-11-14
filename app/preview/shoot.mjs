@@ -10064,6 +10064,15 @@ const smokes = [
     if (saved.holidays !== 'uk' || saved.currency !== 'GBP') throw new Error(`saved ${saved.holidays} ${saved.currency}`);
     await page.waitForSelector('.fx-person:has-text("£")', { timeout: 5000 });
   } },
+  // Usability task 15, item 1: with a checking account and no paycheck or payment yet, the three things stay on the
+  // Dashboard, the account ticked, until all three are there.
+  { name: 'Finances: the three things stay until each is there, the done ones ticked', screen: 'finances', mock: { finances: { plan: { people: [], accounts: [{ id: 'chk', name: 'Example Checking', kind: 'checking', balance: 1200, updated: '2026-10-30' }], payments: [], cushion: 0 }, today: '2026-10-30', checking: 'chk', periods: [], days: [] } }, run: async (page) => {
+    const card = page.locator('.finstart');
+    await card.waitFor({ timeout: 5000 });
+    for (const b of ['Add a paycheck', 'Add a payment']) if (!(await card.locator(`button:text-is("${b}")`).count())) throw new Error(`no ${b}`);
+    if (await card.locator('button:text-is("Add an account")').count()) throw new Error('the account is offered again');
+    if (!/✓\s*Example Checking/.test(await card.textContent())) throw new Error('the account is not ticked as done');
+  } },
   { name: 'Finances: a new homelab starts with three things to add', screen: 'finances', mock: { finances: null }, run: async (page) => {
     await page.click('.finstart button:text-is("Add an account")', { timeout: 5000 });
     await page.waitForSelector('#finSheet:not([hidden]) h2:text-is("Add a checking account")', { timeout: 5000 });
