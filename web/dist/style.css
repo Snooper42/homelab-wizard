@@ -1360,6 +1360,8 @@ html.motion-none *, html.motion-none *::before, html.motion-none *::after { tran
 /* Transparency off: the bars that float over the page and the side panel
    are drawn solid, with no blur behind them. */
 html.no-blur *, html.no-blur *::before, html.no-blur *::after { -webkit-backdrop-filter:none !important; backdrop-filter:none !important; }
+/* A line shown above the screen (an app stopped, away from home, an update waiting): the bar under it no longer pulls up over it to the window's top (usability task 7, item 15). */
+:is(#awayNote, #oneLine, #updateLine):not([hidden]) ~ .screen > .savebar:first-child { margin-top:0; top:0; padding-top:12px; }
 html.no-blur .savebar, html.no-blur.companion nav { background:var(--bg); }
 html.no-blur .error { background:var(--panel); }
 html.os-mac.no-blur body, html.os-mac.no-blur nav { background:var(--sunken); }

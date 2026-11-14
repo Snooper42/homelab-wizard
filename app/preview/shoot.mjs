@@ -2203,6 +2203,27 @@ const smokes = [
     const thin = await page.$$eval('.hostcard dd', (dds) => dds.filter((d) => d.textContent.trim() && d.getBoundingClientRect().width < 64).map((d) => `${d.previousElementSibling?.textContent}: ${Math.round(d.getBoundingClientRect().width)}px`));
     if (thin.length) throw new Error(`values a few letters wide: ${thin.join(', ')}`);
   } },
+  // Usability task 7, item 15: with an app stopped, the line atop Settings shows whole, above the heading, and its
+  // Open Status is uncovered and clicks through, at full width and at 320px with big text.
+  ...[[1280, 800, '1'], [320, 640, '1.25']].map(([w, h, zoom]) => ({ name: `Settings with an app stopped: the line on top shows whole, ${w}px`, screen: 'settings', run: async (page) => {
+    await page.setViewportSize({ width: w, height: h });
+    await page.evaluate((z) => document.documentElement.style.setProperty('--zoom', z), zoom);
+    await page.waitForSelector('#oneLine:not([hidden]) #oneOpen:not([hidden])', { timeout: 5000 });
+    await page.waitForTimeout(200);
+    const covered = await page.evaluate(() => {
+      const line = document.getElementById('oneLine'), r = line.getBoundingClientRect(), btn = document.getElementById('oneOpen').getBoundingClientRect();
+      const at = (x, y) => { const e = document.elementFromPoint(x, y); return e && line.contains(e); };
+      const out = [];
+      if (!at(btn.left + btn.width / 2, btn.top + btn.height / 2)) out.push('Open Status is covered');
+      if (!at(r.left + r.width / 2, r.bottom - 3)) out.push('the line’s lower edge is covered');
+      const head = document.querySelector('#settings h1').getBoundingClientRect();
+      if (head.top < r.bottom - 1) out.push('the heading sits over the line');
+      return out;
+    });
+    if (covered.length) throw new Error(covered.join('; '));
+    await page.click('#oneOpen');
+    await page.waitForSelector('#status.screen.active', { timeout: 5000 });
+  } })),
   // A member who keeps her Finances private (private-finances.md 3.3): her row says so and when she last saved,
   // and nothing more; Remove's title says the owner can delete them but never open them.
   { name: 'Settings › People: a member’s private Finances, the fact only', screen: 'settings', mock: { status: { ...status, apps: [...status.apps, { id: 'pocket-id', name: 'Pocket ID', state: 'running', health: 'healthy', url: 'http://localhost:1411' }] }, people: [{ username: 'anna', name: 'Anna Smith' }, { username: 'sam', name: 'Sam Smith' }], privateFinances: { anna: '2026-11-13T15:04:00-05:00' } }, run: async (page) => {
