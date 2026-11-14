@@ -58,7 +58,7 @@ Two parts are its own: **Finances**, the household's money paycheck by paycheck,
 <tr>
 <td width="50%" valign="top"><a href="docs/Tour.md#status"><strong>Status</strong></a><br>Every app on the computer, live: what runs, what needs a look, and one button to open or start each.<br><br><picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-status-dark.png">
-  <img alt="Status: 21 of 22 apps running, one that needs a look, and each category folded into one line" src="docs/images/app-status.png">
+  <img alt="Status: all 22 apps running, nothing that needs a look, and each category folded into one line" src="docs/images/app-status.png">
 </picture></td>
 <td width="50%" valign="top"><a href="docs/Tour.md#an-apps-page"><strong>An app's page</strong></a><br>Restart it, read its log in plain words (explained by the AI on this computer), and undo an update.<br><br><picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-page-dark.png">
