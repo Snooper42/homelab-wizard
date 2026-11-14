@@ -235,6 +235,11 @@ private struct CheckingHero: View {
         let brand = account.flatMap { logos.brandOf(institution: $0.institution, name: $0.name, kind: $0.kind) }
         let caption = now.typedSameDay ? "Now, as typed in today" : "Now, typed in \(Self.short(now.from))"
         VStack(spacing: 10) {
+            // What's left first, in words: the number people open Finances for (apple-loop.md item 1).
+            if let left = LeftUntil(view) {
+                LeftUntilCard(left: left, view: view, finances: finances)
+                    .padding(.bottom, 8)
+            }
             NavigationLink {
                 CheckingWorkingView(working: now, view: view, finances: finances, title: caption,
                                     start: "Checking, typed in \(Self.long(now.from))", end: "Checking now", note: nil)
@@ -273,7 +278,8 @@ private struct CheckingHero: View {
                                 .foregroundStyle(Theme.ink)
                                 .lineLimit(typeSize.isAccessibilitySize ? 3 : 1)
                                 .minimumScaleFactor(typeSize.isAccessibilitySize ? 1 : 0.8)
-                            Text(verbatim: Self.long(pay.date))
+                            // Before its bills: what's left after them is the card on top.
+                            Text(verbatim: "\(Self.long(pay.date)), before its bills")
                                 .font(.caption)
                                 .foregroundStyle(Theme.secondaryInk)
                         }
@@ -304,6 +310,62 @@ private struct CheckingHero: View {
     /// "Friday, November 14".
     static func long(_ date: Date?) -> String {
         date?.formatted(.dateTime.weekday(.wide).month(.wide).day()) ?? "a day"
+    }
+}
+
+/// What's left until the paycheck after next, once the next one is in and
+/// its bills are paid, with the cushion's warning: Finances' first card (the
+/// web's Dashboard says it the same way). It opens Bills, paycheck by paycheck.
+private struct LeftUntilCard: View {
+    let left: LeftUntil
+    let view: FinancesPlanView
+    let finances: FinancesViewModel
+
+    private var shown: Bool { finances.amountsShown && !finances.amountsHiddenByPlan }
+
+    var body: some View {
+        let currency = view.plan.currency
+        let warning = left.warning(cushion: amountText(view.plan.cushion, currency, finances, whole: true),
+                                   short: amountText(abs(left.low?.amount ?? 0), currency, finances, whole: true))
+        NavigationLink {
+            FinanceBillsPage(finances: finances)
+        } label: {
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(alignment: .firstTextBaseline) {
+                    Text(verbatim: left.title())
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Theme.secondaryInk)
+                    Spacer(minLength: 8)
+                    Image(systemName: "chevron.right")
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(.tertiary)
+                }
+                Text(verbatim: amountText(left.amount, currency, finances))
+                    .font(.system(size: 34, weight: .heavy))
+                    .monospacedDigit()
+                    .foregroundStyle(!shown ? Theme.secondaryInk : left.amount < 0 ? Theme.danger : Theme.ink)
+                    .contentTransition(.numericText())
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
+                if let detail = left.detail(view) {
+                    Text(verbatim: detail)
+                        .font(.subheadline)
+                        .foregroundStyle(Theme.secondaryInk)
+                }
+                if let warning {
+                    Label(warning, systemImage: "exclamationmark.triangle.fill")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(left.low?.short == true ? Theme.danger : Theme.warning)
+                        .padding(.top, 2)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(18)
+            .contentShape(Rectangle())
+            .card(radius: 24)
+        }
+        .buttonStyle(PressableButtonStyle())
+        .accessibilityHint("Bills, paycheck by paycheck")
     }
 }
 

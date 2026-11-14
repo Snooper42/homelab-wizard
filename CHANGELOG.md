@@ -139,6 +139,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **What's left comes first in the Homelab app's Finances:** the first card reads *Left until Nov 19, after the bills*, what checking comes to once the next paycheck is in and its bills are paid, with *Under your $500 cushion on Thu, Nov 5* when checking dips under it before then, and opens Bills. Checking after the paycheck now says it's before its bills.
 - **Spending in the Homelab app says what its change is against:** the month's ring reads *+$1,021 on Sep*, not a bare red *+$1,021*.
 - **A transfer's line in the Homelab app's Transactions fits:** it names the account the payee doesn't (*From Main Checking* under *Roth IRA*), instead of both accounts cut off after the first.
 - **Times in the Homelab app in the phone's own clock:** Settings shows quiet hours as *10 PM to 7 AM* (not *22-7*), and nightly updates as *Every night at 4 AM* (not *Daily at 04:00*), on the iPhone and iPad, in 12- or 24-hour time as the phone is set.

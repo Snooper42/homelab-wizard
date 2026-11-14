@@ -114,6 +114,7 @@ Each phone sees Finances at the level it was paired with: none, the money card, 
 | An account's own page: its balance and chart (30 or 90 days, a year), this month's in and out, its latest transactions, Update balance and Edit | yes | yes; a look-only phone has no Update balance or Edit | yes: the Accounts page opens it; Update Balance at its top (Face ID) | yes | `Finances`, `FinancesLedger` |
 | A loan's page: its payment, rate, months left and payoff; the payments linked to it (one over the plan's asked about), the same payee's next ones offered, Link a payment… | yes | yes; a look-only phone only sees them | yes: its account's page; Link a Payment, Not This One, Count It (Face ID) | yes | `Finances`, `FinancesLedger`, `SaveFinancesLedger` |
 | Checking now and after the next paycheck, how it adds up | yes | yes | yes | yes | |
+| What's left after the next paycheck's bills, first and in words (*Left until …, after the bills*), with the cushion's warning | as This paycheck's *Checking on …, after its bills* (in words first: task 15 item 2) | the same | yes, Finances' first card, opening Bills | yes | |
 | Change balances, budgets, goals, a payment's amount, Hide amounts | yes | yes (Finances to change) | yes, Face ID | yes, ⇧⌘H hides amounts | `SaveFinances` |
 | Add a payment, an account, a goal; money that comes in from someone | yes | yes (Finances to change) | partly: an account, not a payment or a goal | partly | `SaveFinances` |
 | Transactions: list, search, filters | yes | yes | yes | yes | `FinancesLedger` |
