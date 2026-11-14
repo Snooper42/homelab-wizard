@@ -184,6 +184,7 @@ type Welcome struct {
 var page = template.Must(template.New("welcome").Funcs(template.FuncMap{
 	"date":  func(t time.Time) string { return t.Local().Format("Monday 2 January") },
 	"first": func(name string) string { f, _ := Split(name); return f },
+	"qr":    qrURL,
 }).Parse(`<!doctype html>
 <html lang="en">
 <head>
@@ -204,6 +205,7 @@ var page = template.Must(template.New("welcome").Funcs(template.FuncMap{
   a { color: var(--accent); }
   code { font: 15px ui-monospace, SFMono-Regular, Menlo, monospace; white-space: nowrap; }
   @media (max-width: 480px) { td { display: block; } td + td { border-top: 0; padding-top: 0; } }
+  .signinqr { display: block; margin: 10px 0 4px; padding: 8px; background: #fff; border-radius: 10px; }
   @media print { .link { color: #000; background: none; border: 1px solid #000; } }
 </style>
 </head>
@@ -216,7 +218,7 @@ var page = template.Must(template.New("welcome").Funcs(template.FuncMap{
 {{- if .Tailnet}}
   <li>Install <strong>Tailscale</strong> on your phone and computer, and sign in with the account you were invited to. The addresses below open only with it on.</li>
 {{- end}}
-  <li>Open this link on your phone and add a <strong>passkey</strong> (Face ID or Touch ID). It is your sign-in for the apps below{{if .Accounts}}, except the few with a password of their own (at the end of this page){{else}}; there is no password to remember{{end}}.{{if .SignIn}}<br><a class="link" href="{{.SignIn}}">{{.SignIn}}</a><br><small>It works once, until {{date .Until}}. After that, sign in at {{.Issuer}} with your passkey.</small>{{end}}</li>
+  <li>Open this link on your phone and add a <strong>passkey</strong> (Face ID or Touch ID). It is your sign-in for the apps below{{if .Accounts}}, except the few with a password of their own (at the end of this page){{else}}; there is no password to remember{{end}}.{{if .SignIn}}<br><a class="link" href="{{.SignIn}}">{{.SignIn}}</a><img class="signinqr" src="{{qr .SignIn}}" width="168" height="168" alt="A code for your phone's camera that opens this link"><small>Or, with this page open on the computer, scan the code with your phone's camera. It works once, until {{date .Until}}. After that, sign in at {{.Issuer}} with your passkey.</small>{{end}}</li>
   <li>In each app, choose <strong>Sign in with Pocket ID</strong> where it is offered.</li>
 </ol>
 {{- if .Sheet}}
@@ -253,16 +255,19 @@ const qrPrefix = "data:image/svg+xml;base64,"
 // sheet is the page for the fridge: each app's name, address, phone app,
 // and a code the phone's camera opens. It never holds the sign-in link or
 // a password, so it can hang where guests see it.
+// qrURL is text as a QR code, a data: URL for an img, or "" when it can't be drawn.
+func qrURL(text string) template.URL {
+	u, err := companion.QRDataURL(text)
+	if err != nil || !strings.HasPrefix(u, qrPrefix) {
+		return ""
+	}
+	// #nosec G203 -- QRDataURL's own SVG as base64 after a fixed data: prefix (checked above); the text is only drawn as the code
+	return template.URL(u)
+}
+
 var sheet = template.Must(template.New("sheet").Funcs(template.FuncMap{
 	"first": func(name string) string { f, _ := Split(name); return f },
-	"qr": func(text string) template.URL {
-		u, err := companion.QRDataURL(text)
-		if err != nil || !strings.HasPrefix(u, qrPrefix) {
-			return ""
-		}
-		// #nosec G203 -- QRDataURL's own SVG as base64 after a fixed data: prefix (checked above); the text is only drawn as the code
-		return template.URL(u)
-	},
+	"qr":    qrURL,
 }).Parse(`<!doctype html>
 <html lang="en">
 <head>

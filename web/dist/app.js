@@ -4174,6 +4174,23 @@
       )
     ] }) });
   }
+  function Added({ who, on: on2 }) {
+    return /* @__PURE__ */ u3("div", { id: "personAdded", class: "addednote", role: "status", children: [
+      /* @__PURE__ */ u3("p", { children: [
+        /* @__PURE__ */ u3("strong", { children: [
+          who.name,
+          " is added."
+        ] }),
+        " Next, hand them their welcome page: it has their sign-in and the apps they use."
+      ] }),
+      /* @__PURE__ */ u3("div", { class: "actions", children: [
+        /* @__PURE__ */ u3("button", { class: "small primary", onClick: () => on2.openWelcome(who.username), children: "Show their sign-in to scan" }),
+        /* @__PURE__ */ u3("button", { class: "small", onClick: () => on2.openSheet(who.username), children: "Open the fridge sheet" }),
+        /* @__PURE__ */ u3("button", { class: "small", onClick: on2.doneAdding, children: "Done" })
+      ] }),
+      /* @__PURE__ */ u3("p", { class: "muted", children: "The welcome page opens here, on this computer: they scan its code with their phone's camera, or you print it for them. It's for them alone, as it holds their sign-in link and their music and films password, so don't email it. To send something, send the fridge sheet: their apps with a code each, and neither of those." })
+    ] });
+  }
   function AddPerson({ apps: apps2, open: open5, on: on2 }) {
     const [name, setName] = d2("");
     const [email, setEmail] = d2("");
@@ -4213,7 +4230,7 @@
       /* @__PURE__ */ u3("button", { class: "small primary", id: "addPerson", disabled: busy2, onClick: add, children: "Add them" })
     ] });
   }
-  function People({ people, pocket, apps: apps2, log: log2, on: on2, privateFinances }) {
+  function People({ people, pocket, apps: apps2, log: log2, on: on2, privateFinances, justAdded: justAdded2 }) {
     const here3 = people.filter(active);
     const head = /* @__PURE__ */ u3(CardHead, { title: "People", children: /* @__PURE__ */ u3("span", { class: "muted", children: here3.length ? `${here3.length} in the household` : "just you so far" }) });
     const why = /* @__PURE__ */ u3("p", { class: "muted", children: "Each person gets one sign-in for the apps (with a passkey, no password to remember) and a welcome page with their apps and the phone apps to install. Jellyfin and Navidrome have a password of their own, for Infuse and music apps: with their keys in Settings, the homelab makes those accounts too, and Reset password gives a new one." });
@@ -4230,6 +4247,7 @@
     return /* @__PURE__ */ u3(S, { children: [
       head,
       why,
+      justAdded2 && /* @__PURE__ */ u3(Added, { who: justAdded2, on: on2 }),
       !!here3.length && /* @__PURE__ */ u3(Rows, { children: here3.map((p3) => /* @__PURE__ */ u3(Person, { p: p3, on: on2, sealed: privateFinances?.[p3.username] }, p3.username)) }),
       /* @__PURE__ */ u3(AddPerson, { apps: apps2, open: !here3.length, on: on2 }),
       /* @__PURE__ */ u3("pre", { id: "peopleLog", hidden: !log2, children: log2 })
@@ -6450,8 +6468,9 @@
   var usedByPeople = (a3, entry) => !!(a3.address || a3.url) && a3.id !== "homepage" && entry?.kind !== "helper" && (!["network", "system", "security"].includes(entry?.category || "") || a3.id === "vaultwarden");
   var peopleView = null;
   var peopleLog = "";
+  var justAdded;
   function renderPeople() {
-    if (peopleView) mountPeople($("peopleCard"), { ...peopleView, log: peopleLog });
+    if (peopleView) mountPeople($("peopleCard"), { ...peopleView, log: peopleLog, justAdded });
   }
   async function loadPeople() {
     const card = $("peopleCard");
@@ -6499,17 +6518,24 @@
     openWelcome: (username) => {
       go().OpenWelcome(username).catch(showError);
     },
+    openSheet: (username) => {
+      go().OpenSheet(username).catch(showError);
+    },
     installPocket: () => {
       selected.add("pocket-id");
       navigate("choose");
       renderApps();
       replan();
     },
+    // Said on the screen, with ways to hand them their welcome page, rather than opened by itself.
     added: async (name) => {
       const added = (await go().People()).find((p3) => p3.name === name);
-      if (added) go().OpenWelcome(added.username).catch(() => {
-      });
-      loadPeople();
+      justAdded = added ? { name: added.name, username: added.username } : void 0;
+      await loadPeople();
+    },
+    doneAdding: () => {
+      justAdded = void 0;
+      renderPeople();
     },
     reload: () => loadPeople()
   };

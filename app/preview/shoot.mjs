@@ -2161,7 +2161,18 @@ const smokes = [
     await page.waitForSelector('#peopleCard li:has-text("Anna Smith")', { timeout: 5000 });
     const [act] = await page.evaluate(() => window.__MOCK.personActions);
     if (act.join('|') !== 'add|Anna Smith|anna@example.com|vikunja') throw new Error(`asked ${act}`);
-    if ((await page.evaluate(() => window.__MOCK.opened)) !== 'anna') throw new Error('the welcome page did not open');
+    // Usability task 7, item 13: said on the screen, with ways to hand over the welcome page, not opened by itself.
+    const note = page.locator('#personAdded');
+    await note.waitFor({ timeout: 5000 });
+    if (!/Anna Smith is added/.test(await note.textContent())) throw new Error(`the note: ${await note.textContent()}`);
+    if (await page.evaluate(() => window.__MOCK.opened)) throw new Error('the welcome page opened by itself');
+    if (!/for them alone.*fridge sheet/s.test(await note.textContent())) throw new Error('the note does not say the welcome page is theirs alone, and what to send instead');
+    await note.locator('button:text-is("Show their sign-in to scan")').click();
+    await page.waitForFunction(() => window.__MOCK.opened === 'anna', null, { timeout: 3000 });
+    await note.locator('button:text-is("Open the fridge sheet")').click();
+    await page.waitForFunction(() => window.__MOCK.openedSheet === 'anna', null, { timeout: 3000 });
+    await note.locator('button:text-is("Done")').click();
+    await page.waitForSelector('#personAdded', { state: 'detached', timeout: 3000 });
   } },
   // A member who keeps her Finances private (private-finances.md 3.3): her row says so and when she last saved,
   // and nothing more; Remove's title says the owner can delete them but never open them.

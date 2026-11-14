@@ -1219,6 +1219,20 @@ func (a *App) OpenWelcome(username string) error {
 	return core.OpenFile(path)
 }
 
+// OpenSheet opens a person's sheet for the fridge: their apps with a code
+// each, and no sign-in link or password, so it is the one to email or print
+// for anyone to see (Settings › People, after adding them).
+func (a *App) OpenSheet(username string) error {
+	path := people.SheetPath(a.root, username)
+	if filepath.Base(path) != username+"-sheet.html" {
+		return fmt.Errorf("unknown person %q", username)
+	}
+	if _, err := os.Stat(path); err != nil {
+		return errors.New("no sheet yet: make a new welcome page")
+	}
+	return core.OpenFile(path)
+}
+
 // QR is an app's address as a QR code (an SVG data: URL), for opening it
 // on a phone with its camera.
 func (a *App) QR(address string) (string, error) {

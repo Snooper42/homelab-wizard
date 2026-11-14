@@ -653,6 +653,13 @@ func TestPhonesAndLinks(t *testing.T) {
 	if err := a.OpenWelcome("anna"); err == nil || !strings.Contains(err.Error(), "no welcome page yet") {
 		t.Fatalf("no page: %v", err)
 	}
+	// The fridge sheet: the same checks, its own words.
+	if err := a.OpenSheet("../../etc/passwd"); err == nil {
+		t.Error("OpenSheet took a path")
+	}
+	if err := a.OpenSheet("anna"); err == nil || !strings.Contains(err.Error(), "no sheet yet") {
+		t.Errorf("OpenSheet without a sheet: %v", err)
+	}
 	if err := a.OpenNativeApp("ntfy"); err == nil || !strings.Contains(err.Error(), "not a native app") {
 		t.Fatalf("OpenNativeApp of a container app: %v", err)
 	}
