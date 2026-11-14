@@ -74,6 +74,16 @@ enum AppAction: String, Sendable, CaseIterable, Identifiable {
         }
     }
 
+    /// The group menu's own name, by what it can do for the group: "All of
+    /// These" didn't say it was a menu of actions (apple-loop.md item 1).
+    static func groupMenuTitle(starting: Int, running: Int) -> String {
+        switch (starting > 0, running > 0) {
+        case (true, true): "Start or Stop All"
+        case (true, false): "Start All"
+        default: "Restart or Stop All"
+        }
+    }
+
     func groupTitle(count: Int) -> String {
         switch self {
         case .start: "Start the \(count) Stopped"

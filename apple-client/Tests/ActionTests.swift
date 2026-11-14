@@ -22,6 +22,13 @@ struct AppActionTests {
         #expect(AppAction.available(for: try app(state: "elsewhere")).isEmpty)
     }
 
+    // A group's menu says what it does ("All of These" didn't, apple-loop.md item 1).
+    @Test func aGroupsMenuSaysWhatItDoes() {
+        #expect(AppAction.groupMenuTitle(starting: 2, running: 3) == "Start or Stop All")
+        #expect(AppAction.groupMenuTitle(starting: 1, running: 0) == "Start All")
+        #expect(AppAction.groupMenuTitle(starting: 0, running: 4) == "Restart or Stop All")
+    }
+
     @Test func stopAndRollBackAreConfirmed() {
         #expect(AppAction.allCases.filter(\.needsConfirmation) == [.stop, .rollback])
         #expect(!AppAction.rollback.isEveryday)
