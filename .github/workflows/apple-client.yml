@@ -12,6 +12,8 @@ on:
     paths:
       - "apple-client/**"
       - ".github/workflows/apple-client.yml"
+      - "mobile/**"
+      - "internal/finance/**"
       - "web/src/finances/logos.ts"
       - "web/src/finances/Mark.tsx"
       - "web/src/finances/payees.ts"
@@ -22,6 +24,8 @@ on:
     paths:
       - "apple-client/**"
       - ".github/workflows/apple-client.yml"
+      - "mobile/**"
+      - "internal/finance/**"
       - "web/src/finances/logos.ts"
       - "web/src/finances/Mark.tsx"
       - "web/src/finances/payees.ts"
@@ -61,7 +65,7 @@ jobs:
         run: |
           if [ "$EVENT" = pull_request ]; then BASE="$(git rev-parse HEAD^1 2>/dev/null || true)"; else BASE="$BEFORE"; fi
           if [ -z "$BASE" ] || ! git cat-file -e "$BASE^{commit}" 2>/dev/null \
-            || git diff --name-only "$BASE" HEAD | grep -qE '^(apple-client/|\.github/workflows/apple-client\.yml$)'; then
+            || git diff --name-only "$BASE" HEAD | grep -qE '^(apple-client/|mobile/|internal/finance/|\.github/workflows/apple-client\.yml$)'; then
             echo "app=true" >> "$GITHUB_OUTPUT"; echo "The app changed"
           else
             echo "app=false" >> "$GITHUB_OUTPUT"; echo "Only the computer's side changed"
@@ -109,6 +113,19 @@ jobs:
           }
           SH
           echo "BASH_ENV=$RUNNER_TEMP/build.sh" >> "$GITHUB_ENV"
+
+      # The computer's own Finances code for the phone (FinanceProjection),
+      # bound with gomobile at the Makefile's version into Frameworks/.
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+      - name: HomelabFinance.xcframework
+        run: |
+          v="$(sed -n 's/^MOBILE_VERSION := //p' ../Makefile)"
+          go install "golang.org/x/mobile/cmd/gomobile@$v" "golang.org/x/mobile/cmd/gobind@$v"
+          export PATH="$(go env GOPATH)/bin:$PATH"
+          (cd .. && make phone-finance-framework)
+          echo "HOMELAB_FINANCE_FRAMEWORK=1" >> "$GITHUB_ENV"
 
       - name: Build the package for macOS (Swift 6 mode)
         run: |

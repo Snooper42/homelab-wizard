@@ -10,7 +10,14 @@
 // The app itself is still made from the Xcode Multiplatform project the
 // README describes. This package leaves out only its @main entry point,
 // since a library can't have one.
+import Foundation
 import PackageDescription
+
+// The computer's own Finances code for the phone (mobile/finance through
+// gomobile), when `make phone-finance-framework` has put it in Frameworks/
+// (not committed): FinanceProjection uses it, and says so when it's missing.
+let financeFramework = "Frameworks/HomelabFinance.xcframework"
+let hasFinance = FileManager.default.fileExists(atPath: URL(fileURLWithPath: #filePath).deletingLastPathComponent().appendingPathComponent(financeFramework).path)
 
 let package = Package(
     name: "HomelabClient",
@@ -21,6 +28,7 @@ let package = Package(
     targets: [
         .target(
             name: "HomelabClient",
+            dependencies: hasFinance ? ["HomelabFinance"] : [],
             path: "Shared",
             exclude: ["App/HomelabClientApp.swift", "App/PrivacyInfo.xcprivacy", "Assets.xcassets"],
             // The payee logos (scripts/make-payee-logos.mjs makes it).
@@ -36,6 +44,6 @@ let package = Package(
             // sealing, for PrivateSealTests.
             resources: [.copy("Resources/PayeeVectors.json"), .copy("Resources/TunnelVectors.json"), .copy("Resources/CompanionContract.json"), .copy("Resources/PrivateSealVectors.json")]
         ),
-    ],
+    ] + (hasFinance ? [.binaryTarget(name: "HomelabFinance", path: financeFramework)] : []),
     swiftLanguageModes: [.v6]
 )

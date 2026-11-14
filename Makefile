@@ -62,14 +62,16 @@ phone-finance-framework:
 	  go mod edit -require=github.com/Snooper42/homelab-wizard@v0.0.0 -replace=github.com/Snooper42/homelab-wizard=../.. && \
 	  printf 'package bind\n\nimport (\n\t_ "github.com/Snooper42/homelab-wizard/mobile/finance"\n\t_ "golang.org/x/mobile/bind"\n)\n' > bind.go && \
 	  go get golang.org/x/mobile@$(MOBILE_VERSION) && go mod tidy && \
-	  gomobile bind -target=ios,iossimulator -trimpath -ldflags "-s -w" -o HomelabFinance.xcframework github.com/Snooper42/homelab-wizard/mobile/finance && \
+	  gomobile bind -target=ios,iossimulator,macos -trimpath -ldflags "-s -w" -o HomelabFinance.xcframework github.com/Snooper42/homelab-wizard/mobile/finance && \
 	  all=$$(du -sk HomelabFinance.xcframework | cut -f1) && \
 	  lib=$$(find HomelabFinance.xcframework/ios-arm64 -type f -name HomelabFinance | head -1) && \
 	  dev=$$(wc -c < "$$lib") && \
 	  shipped=$$(xcrun size -m "$$lib" | awk '/^Segment/ {seg = $$2} /Section/ { if ($$0 ~ /\(__DWARF/ || seg ~ /^__DWARF/) next; n = $$NF; if (n ~ /^[0-9]+$$/) s += n } END {print s + 0}') && \
 	  if [ "$$shipped" -le 0 ]; then echo "size counted no code in $$lib: the count is wrong, not the framework"; exit 1; fi && \
 	  echo "HomelabFinance.xcframework: $$all KB in all; the iPhone's part $$dev bytes, $$shipped of it code and data (what an app ships, without debug info)" && \
-	  if [ -n "$$GITHUB_STEP_SUMMARY" ]; then echo "**HomelabFinance.xcframework:** $$all KB in all; the iPhone's part $$dev bytes, $$shipped of it code and data (what an app ships)" >> "$$GITHUB_STEP_SUMMARY"; fi
+	  if [ -n "$$GITHUB_STEP_SUMMARY" ]; then echo "**HomelabFinance.xcframework:** $$all KB in all; the iPhone's part $$dev bytes, $$shipped of it code and data (what an app ships)" >> "$$GITHUB_STEP_SUMMARY"; fi && \
+	  mkdir -p ../../apple-client/Frameworks && rm -rf ../../apple-client/Frameworks/HomelabFinance.xcframework && \
+	  cp -R HomelabFinance.xcframework ../../apple-client/Frameworks/ && echo "put in apple-client/Frameworks/ for the app's build"
 
 # Each package's test coverage against its floor in coverage-floors.txt
 # (CI runs it): raise a floor as tests are added, never lower it without a
