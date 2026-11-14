@@ -148,7 +148,7 @@ func TestAutoRestoreTest(t *testing.T) {
 	if _, err := os.Stat(staging); !os.IsNotExist(err) {
 		t.Error("a passing restore should be removed")
 	}
-	if l := backup.LoadRestoreLog(h.restoreLogPath()); l.LastTest.IsZero() || !strings.Contains(l.LastSummary, "3 of 3") {
+	if l := backup.LoadRestoreLog(h.restoreLogPath()); l.LastTest.IsZero() || !strings.Contains(l.LastSummary, "3 files checked, all the same as now") {
 		t.Errorf("not recorded: %+v\n%s", l, out)
 	}
 
@@ -165,7 +165,7 @@ func TestAutoRestoreTest(t *testing.T) {
 	if len(l.History) != 2 || !l.History[0].Passed || l.History[0].Seconds < 1 || l.History[0].Job != "Homelab AppData" {
 		t.Errorf("history: %+v", l.History)
 	}
-	if f, failed := l.LastFailed(); !failed || !strings.Contains(f.Summary, "1 different") || !strings.Contains(l.LastSummary, "3 of 3") {
+	if f, failed := l.LastFailed(); !failed || !strings.Contains(f.Summary, "1 different") || !strings.Contains(l.LastSummary, "3 files checked, all the same as now") {
 		t.Errorf("failure: %+v, last summary %q", f, l.LastSummary)
 	}
 }
