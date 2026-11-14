@@ -375,13 +375,15 @@ jobs:
           done
           ls "$out" | wc -l
           # Every picture, iPhone and iPad, at half size, for a session here to look at after each change
-          # (.claude/prompts/apple-loop.md: git fetch origin iphone-screenshots).
-          mkdir -p "$out/review"
+          # (.claude/prompts/apple-loop.md: git fetch origin iphone-screenshots), in review/ beside docs/,
+          # so taking the docs' pictures (CONTRIBUTING) never brings these in.
+          review="$RUNNER_TEMP/docs-pictures/review"
+          mkdir -p "$review"
           for src in "$RUNNER_TEMP"/pictures/*.png; do
             w="$(sips -g pixelWidth "$src" | awk '/pixelWidth/{print $2}')"
-            sips --resampleWidth "$(( w / 2 ))" "$src" --out "$out/review/$(basename "$src")" > /dev/null
+            sips --resampleWidth "$(( w / 2 ))" "$src" --out "$review/$(basename "$src")" > /dev/null
           done
-          ls "$out/review" | wc -l
+          ls "$review" | wc -l
 
       - name: Keep the docs' pictures
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -418,8 +420,8 @@ jobs:
           set -e
           cd pictures
           git init -q -b iphone-screenshots
-          git add docs
+          git add docs review
           git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
             commit -q -m "The Homelab app's pictures for the docs, from ${GITHUB_SHA::7}"
           git push -q --force "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" iphone-screenshots
-          echo "iphone-screenshots: $(git rev-parse --short HEAD), $(ls docs/images | wc -l) pictures"
+          echo "iphone-screenshots: $(git rev-parse --short HEAD), $(ls docs/images | wc -l) pictures for the docs, $(ls review | wc -l) to review"

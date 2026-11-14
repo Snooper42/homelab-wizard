@@ -40,7 +40,7 @@ The owner, Nov 14: "I want to iterate the shit out of the iphone and ipad app." 
   - The names the app knows are switched on in `DashboardView.swift` (around `ScreenshotMode.shot`) and `FinancesView.swift` (around line 3735).
   - A PR's pictures are an artifact this container **can't download** (its storage host is blocked).
   - **On main**, the iphone-docs-pictures job force-pushes 10 of them (half size, light and dark) to the **`iphone-screenshots` branch**, and this container **can** read that.
-  - **Every picture, iPhone and iPad, at half size, is in `docs/images/review/`** there, since item 0 (Nov 14): `<look>-<shot>.png`, `large-<shot>.png`, `ipad-<look>-<shot>.png`, `ipad-large-<shot>.png`.
+  - **Every picture, iPhone and iPad, at half size, is in `review/`** there (beside `docs/images`, so CONTRIBUTING's checkout never takes it), since item 0 (Nov 14): `<look>-<shot>.png`, `large-<shot>.png`, `ipad-<look>-<shot>.png`, `ipad-large-<shot>.png`.
 - **The app's look** (the owner's choice): a plain iPhone app, with the system's large titles, lists and tab bar, SF Pro, light and dark, and a violet accent. `Shared/Views/Theme.swift` holds the colours: warm canvas `#F5F4F2`, white cards, violet `#6A4FF0`, calm status colours at 4.5:1. `Shared/Views/Design.swift` holds the pieces: `.card()`, `LogoCircle`, `RoundActionButton`, `WalletCard`, `ProgressRing`, `DotPill`. Reuse these pieces; don't invent new ones. Mocks for the owner have to look like the app (the owner, Nov 12: "every time it is less like the iPhone app"). Read the view you're changing first and use its exact words.
 - **The size:** about 11,700 lines of views (`Shared/Views/`), 29 test files. `FinancesView.swift` is the largest; grep before you read.
 - **What's on the iPhone and iPad and what isn't:** `docs/Parity.md`. Its **Gaps** list at the bottom is the feature backlog.
@@ -59,20 +59,20 @@ The owner, Nov 14: "I want to iterate the shit out of the iphone and ipad app." 
    - If it goes red, read the log (section 1) and fix. One re-run at most for anything that looks like GitHub's fault.
 6. **Green: merge.** Then wait for main's Apple client run (it photographs after build-and-test), and fetch:
    ```bash
-   d=<scratchpad>/shots && mkdir -p "$d" && git fetch -q --depth=1 origin iphone-screenshots && git --work-tree="$d" checkout FETCH_HEAD -- docs/images && git reset -q docs/images
+   d=<scratchpad>/shots && mkdir -p "$d" && git fetch -q --depth=1 origin iphone-screenshots && git --work-tree="$d" checkout FETCH_HEAD -- review && git reset -q review
    ```
-   Check that `git log -1 --format=%cd FETCH_HEAD` is after your merge, then Read the PNGs in `$d/docs/images`. Compare each with what you meant. Anything still off goes first in the next round.
+   Check that `git log -1 --format=%cd FETCH_HEAD` is after your merge, then Read the PNGs in `$d/review` (never under the repo: the pictures stay out of commits). Compare each with what you meant. Anything still off goes first in the next round.
 
 ## 3. Where it stands
 
-- **Nov 14:** this file written (the owner's picks: no merge cap for this lane, and the order in section 4), in one PR with item 0's CI change and lane 1's last two web fixes (Finances task 15, items 3 and 4). **Next:** once it's merged and main's Apple client run is done, fetch the pictures. `docs/images/review/` should hold about 100: the iPhone's, then `ipad-*`. Look at the iPad ones first (item 0's last step), then start item 1.
+- **Nov 14:** this file written (the owner's picks: no merge cap for this lane, and the order in section 4), in one PR with item 0's CI change and lane 1's last two web fixes (Finances task 15, items 3 and 4). **Next:** once it's merged and main's Apple client run is done, fetch the pictures. `review/` should hold about 100: the iPhone's, then `ipad-*`. Look at the iPad ones first (item 0's last step), then start item 1.
 - **Not yet tried on the owner's iPhone and iPad** (each needs the cable re-install, once covers all): the private Finances work in the app (#676, #678, #680, #683, #686, #688), and the earlier list in `handoff.md` section 4 (*Trying on the phone*). One re-install covers them all; don't ask again until the owner has done it.
 
 ## 4. The order (the owner's, Nov 14)
 
 **0. The picture loop first (one PR, CI only, no app change). Written Nov 14 (the screenshots job's `Pick an iPad simulator` and `take()`, and `review/` in the docs step).** It lets each round see every screen on both devices:
 - In the **screenshots** job, after the iPhone set, boot an iPad simulator. Pick the newest available `iPad Air 11-inch` or `iPad Pro 11-inch`, the same way as "Pick an iPhone simulator". Take the same `shots` in light and dark, plus `large-*`, named `ipad-<look>-<shot>.png`.
-- In "The docs' pictures, at half size", keep the 10 docs pictures as they are, and also write **every** picture (iPhone and iPad, light, dark, large, hidden) to `docs/images/review/`, half size with `sips --resampleWidth`. The `iphone-docs-pictures` job then carries them to the branch with no change.
+- In "The docs' pictures, at half size", keep the 10 docs pictures as they are, and also write **every** picture (iPhone and iPad, light, dark, large, hidden) to `review/` beside `docs/`, half size with `sips --resampleWidth`, which the `iphone-docs-pictures` job adds to the branch.
 - **Not loosening CI:** the push still happens only from main, with the same token. Say so in the PR.
 - After it merges, fetch the pictures and look at the iPad ones. If the split view's sidebar or detail column shows nothing for a shot, add what `ScreenshotMode` needs for the iPad (the selected screen in the sidebar and the first app in the detail column) as item 1's first PR.
 
