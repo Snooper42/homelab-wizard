@@ -241,7 +241,7 @@ struct GroupActionsMenu: View {
                 if let group = actions.group {
                     Text(group.label).font(.caption.monospacedDigit())
                 } else {
-                    Label("All of These", systemImage: "ellipsis.circle")
+                    Label(AppAction.groupMenuTitle(starting: start.count, running: running.count), systemImage: "ellipsis.circle")
                 }
             }
             .disabled(actions.isBusy)

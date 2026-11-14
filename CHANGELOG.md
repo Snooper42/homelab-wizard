@@ -139,6 +139,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **Status in the Homelab app, clearer:** a group's menu says what it does (*Start or Stop All*, *Start All* or *Restart or Stop All*, by what the group's apps can do) instead of *All of These*; and at the largest text sizes, what needs a look puts **Open Its Page** under **Start** and **Logs**, so Start no longer breaks in two.
 - **What's left comes first in the Homelab app's Finances:** the first card reads *Left until Nov 19, after the bills*, what checking comes to once the next paycheck is in and its bills are paid, with *Under your $500 cushion on Thu, Nov 5* when checking dips under it before then, and opens Bills. Checking after the paycheck now says it's before its bills.
 - **Spending in the Homelab app says what its change is against:** the month's ring reads *+$1,021 on Sep*, not a bare red *+$1,021*.
 - **A transfer's line in the Homelab app's Transactions fits:** it names the account the payee doesn't (*From Main Checking* under *Roth IRA*), instead of both accounts cut off after the first.
