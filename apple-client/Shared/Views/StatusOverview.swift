@@ -311,8 +311,13 @@ struct StatusAlertCard: View {
     var words: String? = nil
     /// Opens the app's page.
     var open: @MainActor () -> Void = {}
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     var body: some View {
+        // The buttons side by side, or Open Its Page under the others at the
+        // largest text sizes (beside them it squeezed Start to "Star / t").
+        let buttons = typeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8)) : AnyLayout(HStackLayout(spacing: 8))
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 11) {
                 if let app {
@@ -334,13 +339,14 @@ struct StatusAlertCard: View {
                     .font(.subheadline)
                     .foregroundStyle(Theme.secondaryInk)
                     .lineLimit(2)
-                HStack(spacing: 8) {
+                buttons {
                     HeroButtons(app: app)
                     Button("Open Its Page") { open() }
                     .buttonStyle(.bordered)
                     .buttonBorderShape(.capsule)
                     .controlSize(.small)
                     .font(.subheadline.weight(.semibold))
+                    .dynamicTypeSize(...DynamicTypeSize.accessibility1)
                 }
             }
         }

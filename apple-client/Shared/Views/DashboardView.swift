@@ -257,8 +257,15 @@ private struct PhoneDashboard: View {
 
     #if SCREENSHOTS
     /// The tab a screenshot shows.
-    private var screenshotTab: Screen? {
-        switch ScreenshotMode.shot {
+    private var screenshotTab: Screen? { ScreenshotMode.screen }
+    #endif
+}
+
+#if SCREENSHOTS
+extension ScreenshotMode {
+    /// The screen a picture shows: the iPhone's tab, the iPad's sidebar row.
+    @MainActor static var screen: DashboardViewModel.SidebarItem? {
+        switch shot {
         case nil: nil
         case "status", "app": .status(.all)
         case "backups": .backups
@@ -267,8 +274,8 @@ private struct PhoneDashboard: View {
         default: .finances
         }
     }
-    #endif
 }
+#endif
 
 /// Status on iPhone, as the owner trimmed it (Nov 9): one line when all is
 /// well, or a card for what needs a look; then the apps by category, the
@@ -603,7 +610,7 @@ private struct SplitDashboard: View {
                     .navigationSplitViewColumnWidth(min: 320, ideal: 420)
                     .toolbar { toolbarItems }
             case .finances?:
-                FinancesView(finances: finances)
+                financesColumn
                     // A link to one of its pages (homelab://finances/budgets).
                     .navigationDestination(item: Binding(
                         get: { IntentInbox.shared.financePage },
@@ -623,7 +630,7 @@ private struct SplitDashboard: View {
                 MemberSettingsView()
                     .navigationSplitViewColumnWidth(min: 320, ideal: 420)
             case .settings?:
-                ComputerView(computer: computer, page: .settings)
+                settingsColumn
                     .safeAreaInset(edge: .top) { healthLine }
                     .navigationSplitViewColumnWidth(min: 320, ideal: 420)
                     .toolbar { toolbarItems }
@@ -663,6 +670,46 @@ private struct SplitDashboard: View {
             model.sidebar = screen
         })
         .linkAskDialog($linkAsk)
+        #if SCREENSHOTS
+        // The iPad's pictures: the shot's screen (kept as the place, so the
+        // sidebar showing later doesn't undo it), and beside Status's list
+        // an app's page, as a tap opens it.
+        .onAppear {
+            guard let screen = ScreenshotMode.screen else { return }
+            savedSidebar = screen.storageKey
+            model.sidebar = screen
+        }
+        .onChange(of: model.hasLoaded, initial: true) {
+            guard model.hasLoaded, model.selectedAppID == nil,
+                  ScreenshotMode.shot == "status" || ScreenshotMode.shot == "app",
+                  let app = model.app(id: "vikunja") ?? model.latestApps.first else { return }
+            model.selectedAppID = app.id
+        }
+        #endif
+    }
+
+    /// Finances in the content column (in the pictures, the page the shot names).
+    @ViewBuilder
+    private var financesColumn: some View {
+        #if SCREENSHOTS
+        FinancesView.screenshotRoot(finances: finances)
+        #else
+        FinancesView(finances: finances)
+        #endif
+    }
+
+    /// Settings in the content column (in the pictures, every setting for `settings-all`).
+    @ViewBuilder
+    private var settingsColumn: some View {
+        #if SCREENSHOTS
+        if ScreenshotMode.shot == "settings-all" {
+            SettingsFormView(computer: computer, section: nil)
+        } else {
+            ComputerView(computer: computer, page: .settings)
+        }
+        #else
+        ComputerView(computer: computer, page: .settings)
+        #endif
     }
 
     /// The screen a link asked for, where this device has it (else Status).
