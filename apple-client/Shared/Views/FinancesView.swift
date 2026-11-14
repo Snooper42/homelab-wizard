@@ -3138,11 +3138,13 @@ struct WalletTransactionRow: View {
                             .accessibilityLabel("Receipt kept")
                     }
                 }
-                // What it was and the day, on one line: two lines a row, as Wallet's.
+                // What it was and the day: one line, as Wallet's, or two when it needs them
+                // (a transfer's other account and the day cut off as "From Chase Checki…").
                 Text(verbatim: [subtitle, TransactionsView.dayWords(transaction.date)].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · "))
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
-                    .lineLimit(1)
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             Spacer(minLength: 8)
             Money(value: transaction.amount, currency: finances.currency, finances: finances)
@@ -3207,7 +3209,13 @@ private struct TransactionDetailView: View {
                         Button {
                             finances.markReviewed([t])
                         } label: {
-                            Label("Mark Reviewed", systemImage: "checkmark")
+                            // The icon in the button's white: in a list a Label's icon takes the accent,
+                            // violet on the violet button, so it didn't show.
+                            Label {
+                                Text("Mark Reviewed")
+                            } icon: {
+                                Image(systemName: "checkmark").foregroundStyle(.white)
+                            }
                         }
                         .buttonStyle(.borderedProminent)
                         .buttonBorderShape(.capsule)
