@@ -8,6 +8,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### New
 
+- **Add a goal in the Homelab app:** **+** on Goals opens Add Goal: its name, what it needs, by a day or whenever, and the share of an account that counts toward it (what other goals leave of it, said under it).
 - **Add a payment in the Homelab app:** **+** on Bills or Recurring opens Add Payment: its name and kind, what it costs (or about this much), how often and when next, and the account it comes out of. It shows in Bills and in what's left from then on.
 - **Lock After in the Homelab app:** back within 5 minutes (or 1 or 15, or Right Away, under Settings › This iPhone), the app opens as you left it, Finances' amounts shown or hidden included, without Face ID. Locking the screen still locks it, and a change still asks for Face ID first.
 - **Finances reminders for private Finances:** the Homelab can't read a household member's private Finances, so the Homelab app on her phone reminds her itself: a bill due tomorrow, a paycheck that leaves checking under her cushion, a yearly renewal, balances not updated for weeks, worked out on her phone with the computer's own code each time she opens them, and planned two weeks ahead.

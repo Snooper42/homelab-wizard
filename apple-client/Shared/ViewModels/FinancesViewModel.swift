@@ -221,6 +221,24 @@ final class FinancesViewModel {
         return await savePlan(edited, reason: "Add \(name.trimmingCharacters(in: .whitespaces)) to Finances.")
     }
 
+    /// How much of an account the plan's goals don't count yet, in percent.
+    func goalShareLeft(of account: String) -> Double {
+        guard let raw = rawPlan else { return 0 }
+        return max(0, 100 - FinancePlanEdit.goalShareGiven(of: account, in: raw))
+    }
+
+    /// Adds a goal to the plan, as the computer's Add a goal does
+    /// (`FinancePlanEdit.addingGoal`). Returns whether it saved.
+    func addGoal(name: String, target: Double, by date: Date?, account: String, percent: Double) async -> Bool {
+        guard canEdit, !isSaving, let raw = rawPlan else { return false }
+        guard let edited = FinancePlanEdit.addingGoal(name: name, target: target, date: date.map { FinancePlanEdit.todayString($0) },
+                                                      account: account, percent: percent, in: raw) else {
+            saveError = "A goal needs a name, what it needs, and a share of an account that's still free."
+            return false
+        }
+        return await savePlan(edited, reason: "Add \(name.trimmingCharacters(in: .whitespaces)) to Finances.")
+    }
+
     /// Changes a budget's amount. Returns whether it saved.
     func setBudget(_ budget: FinanceBudget, to amount: Double) async -> Bool {
         guard canEdit, !isSaving, let raw = rawPlan else { return false }

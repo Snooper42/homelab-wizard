@@ -2318,6 +2318,7 @@ private struct FinanceGoalsPage: View {
         .refreshable { await finances.loadPlan() }
         .sensoryFeedback(.success, trigger: finances.savedCount)
         .navigationTitle("Goals")
+        .modifier(AddGoalButton(finances: finances))
         .sheet(item: $editingGoal) { goal in
             AmountEditor(
                 title: "Change Goal", heading: goal.name,
