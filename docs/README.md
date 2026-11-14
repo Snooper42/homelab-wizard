@@ -53,6 +53,7 @@ The full app list with addresses and ports is in [Inventory](<Inventory.md>). It
 | [Monitoring](<Monitoring.md>) | The watchdog, ntfy, Uptime Kuma, the heartbeat, and CrowdSec |
 | [Backups](<Backups.md>) | What is backed up, how, and the restore test |
 | [Tidy Up](<Tidy Up.md>) | The media libraries: the Inbox that files each download, every library's clean-up, and the engines behind them |
+| [Private Finances](<Private Finances.md>) | A household member's own Finances, locked on her phone so only she can open them: what it means, how she opens them, and what whoever runs the homelab can and can't do |
 | [Disaster Recovery](<Disaster Recovery.md>) | Rebuilding a lost machine from the backups in one command (`homelab rebuild`), moving to a new one, and the recovery kit |
 | [Troubleshooting](<Troubleshooting.md>) | Symptoms and their usual fixes, by where you notice them |
 | [Known Issues](<Known Issues.md>) | Open problems and what is still to verify |
