@@ -17049,12 +17049,14 @@ ${pays}
     const unit2 = by === "month" ? "month" : "pay period";
     return /* @__PURE__ */ u3(Card, { kind: "fx-periodbar", id: "finPeriod", children: [
       /* @__PURE__ */ u3(Segmented, { label: "Show the Dashboard by", value: by, pick: (b2) => setBy(b2), options: [["pay", "By paycheck"], ["month", "By month"]] }),
-      /* @__PURE__ */ u3(IconButton, { icon: "prev", label: `The ${unit2} before`, disabled: !canBack, onClick: () => step2(-1) }),
-      /* @__PURE__ */ u3("div", { class: "fx-periodname", "aria-live": "polite", children: [
-        /* @__PURE__ */ u3("h2", { children: title }),
-        /* @__PURE__ */ u3("p", { class: "fx-sub fx-dates", children: dates })
+      /* @__PURE__ */ u3("div", { class: "fx-periodstep", children: [
+        /* @__PURE__ */ u3(IconButton, { icon: "prev", label: `The ${unit2} before`, disabled: !canBack, onClick: () => step2(-1) }),
+        /* @__PURE__ */ u3("div", { class: "fx-periodname", "aria-live": "polite", children: [
+          /* @__PURE__ */ u3("h2", { children: title }),
+          /* @__PURE__ */ u3("p", { class: "fx-sub fx-dates", children: dates })
+        ] }),
+        /* @__PURE__ */ u3(IconButton, { icon: "next", label: `The ${unit2} after`, disabled: !canOn, onClick: () => step2(1) })
       ] }),
-      /* @__PURE__ */ u3(IconButton, { icon: "next", label: `The ${unit2} after`, disabled: !canOn, onClick: () => step2(1) }),
       /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: atToday, onClick: today2, children: "Today" })
     ] });
   }

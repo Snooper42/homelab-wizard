@@ -139,6 +139,8 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **Add a payment by keyboard:** Name and Amount come first, and the logos after them are one stop for Tab: the arrow keys move between them, and Space picks one. Tab used to pass every one of the 337 logos before reaching Name.
+- **The period bar on a phone:** back, the period's name and forward stay on one line, the name wrapping between them, at any width and text size.
 - **Finances' first three things stay until they're done:** with a checking account and no paycheck or payment yet, *Start with three things* stays on the Dashboard, the account ticked (*✓ Example Checking*), and **Add a paycheck** and **Add a payment** still there; it goes once all three are in.
 - **Frigate says where its recordings go:** picking it, the plan says *Frigate's recordings go to /Volumes/Media/frigate, on a drive with 1.6 TB free*, and Settings › Frigate has a **Frigate recordings folder** to pick another; once it's installed, Done says what to do next (add your camera). Any app can say the same with `stores` and `next` in its `x-homelab`.
 - **Choose apps says what it installs, all of it:** *Connect the apps for me* shows only when there are two apps to connect, one of them new, and names them; an app another one brings in (qBittorrent's VPN tunnel) shows ticked and greyed, *Installed with qBittorrent, which needs it*; Done names it too (*With qBittorrent: Gluetun, the ProtonVPN tunnel…*); and the plan says *more apps they need* rather than *helpers*.

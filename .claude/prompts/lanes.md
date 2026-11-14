@@ -11,7 +11,7 @@ The app is to become clearly easier to use. A round that a household member woul
 | 1 | `features-loop.md` | `claude/feature-*` | Tidy Up and Finances, end to end: `web/src/tidy`, `web/src/screens/tidy.ts`, `web/src/finances`, `web/src/screens/finances.ts`, `internal/media`, `internal/finance`, `tools/media`, their docs and smoke cases |
 | 2 | `maintenance-loop.md` | `claude/fix-*` | Every other screen and what is under it: Setup, Status, Choose and install, an app's page, Updates, Backups, Settings, the menu bar and tray, the phone's screens other than Finances; failure issues; how records are stored, and the SQLite base (ADR-0022) |
 | 3 | `audit-loop.md` | `claude/audit-security-*`, `claude/security-*` | Usability testing of the whole app (findings go to the owning lane); security findings and their fixes; `docs/Security.md`, `docs/Usability.md` |
-| 4 | (its own) | its own | `apple-client/` (the SwiftUI app). No other lane touches it |
+| 4 | `apple-loop.md` | its own | `apple-client/` (the SwiftUI app). No other lane touches it |
 
 A `claude/*` branch that matches no row is no loop's: leave it alone and list it for the owner.
 
@@ -42,6 +42,7 @@ Only these may be changed by two open PRs at once, each lane adding its own line
 - **A PR merges** when every check is green on its current head, and every commit main gained since that run touches none of its files (a newer `CHANGELOG.md` line on main does not count, provided main merges in with no conflict). Otherwise merge main in and let CI run again. Never merge with a red check.
 - Always squash-merge with `expectedHeadSha` pinned to the head CI passed on.
 - **At most 3 merges a day per lane.** Batch related fixes into one PR.
+- **Lane 4 (the iPhone and iPad app) has no daily cap** (the owner, Nov 14, 2026: CI's Mac runners are the only compiler and camera, and the pictures come only from main, so each look-and-fix round is a merge). Its loop file is `apple-loop.md`.
 
 ## Rule 6: issues
 

@@ -5981,7 +5981,7 @@ const smokes = [
   } },
   // Usability task 15, item 4: on the phone (390px, and 320px with text at 1.5×, which is 213px), back, the period's name
   // and forward on one line, the name wrapping between them.
-  ...[390, 213].map((w) => ({ name: `Finances: the period bar's arrows on one line with its name, ${w}px`, screen: 'finances', run: async (page) => {
+  ...[390, 213].map((w) => ({ name: `Finances: the period bar's arrows on one line with its name, on the phone at ${w}px`, screen: 'finances', phone: ['companion', 'finances'], run: async (page) => {
     await page.setViewportSize({ width: w, height: 700 });
     await page.waitForSelector('#finances.active #finPeriod h2', { timeout: 5000 });
     for (const by of ['By paycheck', 'By month']) {
