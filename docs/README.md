@@ -41,6 +41,7 @@ The full app list with addresses and ports is in [Inventory](<Inventory.md>). It
 | [Testing](<Testing.md>) | The script for each test session on a real machine, with what every step should show |
 | [To-do](<To-do.md>) | The next things only a person can do, in order |
 | [Upgrading](<Upgrading.md>) | What to do after pulling a newer version, batch by batch |
+| [Everyday tasks](<Everyday Tasks.md>) | The common jobs, in the app and from a terminal: add an app, fix what's down, back up, add a person, move, uninstall |
 | [Commands](<Commands.md>) | Every `./homelab` command on one page |
 
 ## Run it
