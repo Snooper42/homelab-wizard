@@ -478,7 +478,7 @@ actor APIClient {
     }
 
     /// One of the sealed calls, sent once, never retried.
-    private func sealedChange<Arguments: Encodable, Value: Decodable & Sendable>(_ method: String, _ arguments: Arguments, as type: Value.Type) async throws -> Value {
+    private func sealedCall<Arguments: Encodable, Value: Decodable & Sendable>(_ method: String, _ arguments: Arguments, as type: Value.Type) async throws -> Value {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.withoutEscapingSlashes]
         let body = try encoder.encode(arguments)
