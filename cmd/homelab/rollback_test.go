@@ -135,8 +135,19 @@ func TestUpdateAll(t *testing.T) {
 	})
 	root, _ := repoCopy(t)
 	out, _ := homelabCmd(t, root, "", "update", "--all")
-	if !strings.Contains(out, "(2 apps): paperless, sonarr") && !strings.Contains(out, "(2 apps): sonarr, paperless") {
+	// In plain words, by name (usability task 4, item 11): the two nightly
+	// apps, not the database; whose data is copied first; nothing a terminal
+	// says before anything has happened.
+	if !strings.Contains(out, "These 2 apps have updates: Paperless-ngx, Sonarr.") && !strings.Contains(out, "These 2 apps have updates: Sonarr, Paperless-ngx.") {
 		t.Fatalf("the plan should name the two nightly apps, not the database:\n%s", out)
+	}
+	if !strings.Contains(out, "Their data is copied first, so each update can be undone: Paperless-ngx.") {
+		t.Errorf("the plan doesn't say Paperless's data is copied first:\n%s", out)
+	}
+	for _, mark := range []string{"✓", "→", "paperless-db", "sonarr,"} {
+		if strings.Contains(out, mark) {
+			t.Errorf("the plan says %q before anything happened:\n%s", mark, out)
+		}
 	}
 	if strings.Contains(readCalls(t, calls), " pull ") {
 		t.Fatalf("pulled without --apply:\n%s", readCalls(t, calls))
@@ -164,7 +175,7 @@ func TestUpdateAll(t *testing.T) {
 	if !pulled {
 		t.Errorf("paperless was not pulled:\n%s", log)
 	}
-	if strings.Contains(log, "pull --ignore-buildable sonarr") || !strings.Contains(out, "Held, so left alone: sonarr") {
+	if strings.Contains(log, "pull --ignore-buildable sonarr") || !strings.Contains(out, "Held, so left alone: Sonarr") {
 		t.Errorf("held sonarr should be left alone:\n%s\n%s", out, log)
 	}
 }

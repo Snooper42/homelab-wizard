@@ -703,11 +703,16 @@ function showUpdate(a) {
 mountSheets($('sheets'), () => { if (missed) refreshStatus(); });
 
 // A homelab command with a preview: show its plan, then run it on confirm.
+// plain: the plan's own words above (usability task 4: Update apps), the
+// command and anything a terminal says folded under Show details until it runs.
 let cliStop = null; // the open flow's log listener
-export async function cliFlow(title, action, target, confirmLabel) {
+export async function cliFlow(title, action, target, confirmLabel, plain = false) {
   if (sheetBusy()) return;
-  const panel = $('cliPanel'), log = $('cliLog');
+  const panel = $('cliPanel'), log = $('cliLog'), plan = $('cliPlan'), details = $('cliDetails') as HTMLDetailsElement;
   log.hidden = false;
+  plan.textContent = '';
+  plan.hidden = !plain;
+  details.open = !plain;
   if (cliStop) cliStop();
   panel.hidden = false;
   $('cliTitle').textContent = title;
@@ -722,6 +727,8 @@ export async function cliFlow(title, action, target, confirmLabel) {
       if (/^Preview only: nothing was changed/.test(line.trim())) return;
       log.textContent += line + '\n';
       log.scrollTop = log.scrollHeight;
+      // The plan in plain words: not the command, nor a terminal's marks.
+      if (!plan.hidden && line.trim() && !/^\s*[$→✓•✗]/.test(line)) plan.textContent += line.trim() + '\n';
     });
   };
   const unlisten = () => { if (typeof off === 'function') off(); off = null; };
@@ -733,6 +740,7 @@ export async function cliFlow(title, action, target, confirmLabel) {
       if (cancelled) return;
       log.textContent = '';
       startJob('cli');
+      if (plain) details.open = false; // a job opens it; the plan's words say it here
       listen();
       try { await go().Homelab(action, target, false); } finally { unlisten(); }
     }, (behind) => { log.textContent = waitWords(behind) + ', then this shows what it would do…\n'; });
@@ -745,6 +753,9 @@ export async function cliFlow(title, action, target, confirmLabel) {
   cliButtons([
     { label: confirmLabel, primary: true, onClick: async () => {
       log.textContent += '\n';
+      // Running: the plan's words give way to the job's rows and its log.
+      plan.hidden = true;
+      details.open = true;
       // Running, it can no longer be cancelled, but it can be hidden: it carries on.
       runInSheet(title);
       cliButtons([hideButton]);
@@ -769,7 +780,7 @@ export async function cliFlow(title, action, target, confirmLabel) {
 }
 $('cleanup').onclick = () => cliFlow('Remove old containers whose apps now run in the homelab', 'cleanup', '', 'Remove them');
 $('fixIt').onclick = () => cliFlow('Fix it', 'fix', '', 'Fix these');
-$('updateAll').onclick = () => cliFlow('Update all apps now', 'update-all', '', 'Update them');
+$('updateAll').onclick = () => cliFlow('Update all apps now', 'update-all', '', 'Update them', true);
 
 // More… on Status: the actions needed now and then, with the keys every
 // menu takes: Down (or Enter) opens it on its first item, Up and Down move

@@ -70,7 +70,7 @@ func (h *homelab) whatsNew(ctx context.Context, ids []string) {
 	if len(ps) == 0 {
 		return
 	}
-	h.ui.Info("what is new (homelab updates notes <app> has the notes):")
+	h.ui.Printf("What's new:\n")
 	for _, p := range ps {
 		name := p.App
 		if a, ok := h.catalog.Get(p.App); ok {

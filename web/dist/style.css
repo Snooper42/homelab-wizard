@@ -1070,6 +1070,7 @@ html.companion .panel.sheet:not([hidden]) { width:calc(100vw - 24px); max-height
 .jobbar.moving > span { background-image:linear-gradient(90deg, transparent, var(--glow-45), transparent); background-size:60% 100%; background-repeat:no-repeat; animation:jobshine 1.4s ease-in-out infinite; }
 @keyframes jobspin { to { transform:rotate(360deg); } }
 @keyframes jobshine { from { background-position:-60% 0; } to { background-position:160% 0; } }
+.jobplan { margin:4px 0 8px; white-space:pre-line; line-height:1.5; }
 .jobdetails { margin:4px 0 0; }
 .jobdetails > summary { cursor:pointer; color:var(--muted); font-size:13px; padding:2px 0; }
 .jobdetails > summary:hover { color:var(--link); }

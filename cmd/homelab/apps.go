@@ -801,9 +801,28 @@ func (h *homelab) lifecycle(action string) func(context.Context, []string) error
 				h.ui.Printf("Nothing to update now: no running app takes image updates today.\n")
 				return nil
 			}
-			h.ui.Printf("Updates now what the nightly update would (%d apps): %s.\n", len(tokens), strings.Join(tokens, ", "))
+			// In plain words, by the apps' names (usability task 4): what has
+			// an update, whose data is copied first, and what is held.
+			names := make([]string, len(tokens))
+			for i, id := range tokens {
+				names[i] = h.appName(id)
+			}
+			if len(names) == 1 {
+				h.ui.Printf("This app has an update: %s.\n", names[0])
+			} else {
+				h.ui.Printf("These %d apps have updates: %s.\n", len(names), strings.Join(names, ", "))
+			}
+			if !*apply {
+				if copied := h.copiedFirst(ctx, tokens); len(copied) > 0 {
+					h.ui.Printf("Their data is copied first, so each update can be undone: %s.\n", strings.Join(copied, ", "))
+				}
+			}
 			if held := updates.Held(h.envMap()); len(held) > 0 {
-				h.ui.Printf("Held, so left alone: %s.\n", strings.Join(held, ", "))
+				heldNames := make([]string, len(held))
+				for i, id := range held {
+					heldNames[i] = h.appName(id)
+				}
+				h.ui.Printf("Held, so left alone: %s.\n", strings.Join(heldNames, ", "))
 			}
 			if !nightly {
 				h.whatsNew(ctx, tokens)

@@ -327,6 +327,8 @@ const phones = [
   { id: 'd4e5f6', name: 'Kitchen iPad', canChange: false, paired: hoursAgo(24 * 3), lastSeen: hoursAgo(20) },
 ];
 
+// What a preview says before anything runs, as the computer words it (cmd/homelab: update --all).
+const cliPreview = { 'update-all': ['These 3 apps have updates: Navidrome, Vikunja, Mealie.', 'Their data is copied first, so each update can be undone: Mealie.'] };
 const cliSteps = { 'update-all': ['Updating navidrome', 'Updating vikunja', 'Updating mealie'], backup: ["Copying Vaultwarden's database", "Copying Immich's database", 'Copying the settings (.env)'] };
 // Tidy Up: a music library swapped in and checked, films waiting to shrink,
 // and what the last weeks did (app/tidy.go's TidyUp).
@@ -393,7 +395,7 @@ const alertLog = [
   { id: 2, at: hoursAgo(14), topic: 'tunnel-watchdog', title: 'Homelab: something is down', body: 'vikunja: not answering', priority: 4, checks: ['vikunja'], clearedAt: hoursAgo(13.6) },
   { id: 1, at: hoursAgo(50), topic: 'watchtower', title: 'Homelab: an update was rolled back', body: 'Navidrome' },
 ];
-const mock = { platform: 'MacIntel', tidy, tidyReview, cliSteps, upgrade: { ...upgrade, behind: 0, changes: [], appChanged: false, appCommit: '7d9be080888433f921c9fa860a38b329ac368c88', appBehind: 0 }, catalog, status, setup, settings, host, logs, actionLog, urls, envFor, tests, backups, cliLog, alerts, watchdog, protection, savingsHistory, duplicatiJobs, phones, finances, ledger, history, alertLog, screen: 'status' };
+const mock = { platform: 'MacIntel', tidy, tidyReview, cliSteps, upgrade: { ...upgrade, behind: 0, changes: [], appChanged: false, appCommit: '7d9be080888433f921c9fa860a38b329ac368c88', appBehind: 0 }, catalog, status, setup, settings, host, logs, actionLog, urls, envFor, tests, backups, cliLog, cliPreview, alerts, watchdog, protection, savingsHistory, duplicatiJobs, phones, finances, ledger, history, alertLog, screen: 'status' };
 // Finances' tabs are four: Spending holds Transactions and Reports, Plan holds Calendar, Recurring and Paychecks (Pay),
 // each in a second row under it. A page by its name, its tab first.
 const finGroups = { Transactions: 'Spending', Reports: 'Spending', Calendar: 'Plan', Recurring: 'Plan', Pay: 'Plan', Paychecks: 'Plan', Collection: 'Net worth' };
@@ -5216,8 +5218,9 @@ const smokes = [
   } },
   { name: 'Update all apps now', screen: 'status', mock: { jobApps: { 'update-all': ['navidrome', 'vikunja', 'mealie'] } }, run: async (page) => {
     await page.click('#updateAll');
-    await page.waitForSelector('#cliLog:has-text("Updates now what the nightly update would")', { timeout: 5000 });
+    await page.waitForSelector('#cliPlan:has-text("These 3 apps have updates")', { timeout: 5000 });
     await page.click('#cliActions button:has-text("Update them")');
+    if (await page.isVisible('#cliPlan')) throw new Error('the plan stayed once it ran');
     await page.waitForSelector('#cliLog:has-text("updated navidrome")', { state: 'attached', timeout: 5000 });
     // A row per app, each finished, with Docker's lines folded away.
     await page.waitForSelector('#cliApps li.done:has-text("Mealie")', { timeout: 8000 });
@@ -5225,6 +5228,19 @@ const smokes = [
     if (await page.isVisible('#cliLog')) throw new Error('Show details stayed open under the rows');
     // The steps came as a bar, filled at the end.
     await page.waitForSelector('#cliProgress:not([hidden]) .step:text-is("Done")', { timeout: 5000 });
+  } },
+  // Usability task 4, item 11: before Update them, the sheet says what will happen in plain words, the apps by
+  // their names and whose data is copied first, with the command and a terminal's marks folded under Show details.
+  { name: 'Update apps says its plan in plain words before anything runs', screen: 'status', mock: { jobApps: { 'update-all': ['navidrome', 'vikunja', 'mealie'] } }, run: async (page) => {
+    await page.click('#updateAll', { timeout: 5000 });
+    await page.waitForSelector('#cliActions button:has-text("Update them")', { timeout: 5000 });
+    const plan = await page.textContent('#cliPlan');
+    if (!plan.includes('Navidrome, Vikunja, Mealie') || !/copied first.*Mealie/.test(plan)) throw new Error(`the plan: ${plan}`);
+    if (await page.$eval('#cliDetails', (d) => d.open)) throw new Error('Show details is open before anything ran');
+    const shown = await page.$eval('#cliPanel', (p) => p.innerText);
+    for (const mark of ['✓', '$ homelab', '→', 'navidrome,']) if (shown.includes(mark)) throw new Error(`the sheet says "${mark}" before Update them: ${shown}`);
+    await page.click('#cliDetails > summary');
+    if (!(await page.textContent('#cliLog')).includes('$ homelab update-all')) throw new Error('the command is not under Show details');
   } },
   { name: 'Install shows a row per app', screen: 'choose', run: async (page) => {
     await page.click('#starters .starter:has-text("Files")');
