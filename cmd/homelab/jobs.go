@@ -787,7 +787,7 @@ func (h *homelab) watchdog(ctx context.Context, args []string) error {
 			apps = slices.DeleteFunc(apps, func(r health.Result) bool { return slices.Contains(loops, r.Name) })
 			h.alert(ctx, "tunnel-watchdog", notify.Message{
 				Title:    "Homelab: stopped an app that kept restarting",
-				Body:     strings.Join(lines, "\n\n") + "\n\nIt stays stopped until you start it again, from Status or homelab start, once its log says what to fix (AUTO_HEAL=false leaves it to Docker).",
+				Body:     strings.Join(lines, "\n\n") + "\n\nIt stays stopped until you start it again, from Status or homelab start, once its log says what to fix (with Settings › Notifications › Restart an app that stops answering off, Docker keeps restarting it instead).",
 				Priority: 4,
 				Tags:     []string{"octagonal_sign"},
 				Actions:  notify.StoppedButtons(loops, h.isApp),
@@ -877,7 +877,7 @@ func (h *homelab) watchdog(ctx context.Context, args []string) error {
 	}
 	if engineUp {
 		if healed := h.heal(ctx, client, unwell, missing, state, env, time.Now()); len(healed) > 0 {
-			h.alert(ctx, "tunnel-watchdog", notify.Message{Title: "Homelab: restarted an app that hung", Body: strings.Join(healed, "\n") + "\nUnwell on two checks in a row, so the watchdog restarted it (once in 6 hours at most; AUTO_HEAL=false turns this off).", Tags: []string{"arrows_counterclockwise"}})
+			h.alert(ctx, "tunnel-watchdog", notify.Message{Title: "Homelab: restarted an app that hung", Body: strings.Join(healed, "\n") + "\nUnwell on two checks in a row, so the watchdog restarted it (once in 6 hours at most; Settings › Notifications › Restart an app that stops answering turns this off).", Tags: []string{"arrows_counterclockwise"}})
 		}
 	}
 	if url := env["HEARTBEAT_URL"]; url != "" {

@@ -139,9 +139,9 @@ const dumped = [['nginx-proxy-manager', 'Nginx Proxy Manager', 182e3], ['vaultwa
 const backups = {
   destination: '~/Library/CloudStorage/ProtonDrive-you@proton.me-folder/homelab-backups', destinationOK: true,
   lastRun: hoursAgo(7.4), envCopied: hoursAgo(7.4), stale: 1, paused: 2, restoreDue: false, staleAfterHours: 26,
-  restoreTest: { lastTest: hoursAgo(12 * 24), lastSummary: '12 of 12 sampled files identical', history: [
-    { when: hoursAgo(43 * 24), seconds: 212, passed: true, summary: '12 of 12 sampled files identical', job: 'Homelab AppData' },
-    { when: hoursAgo(12 * 24), seconds: 187, passed: true, summary: '12 of 12 sampled files identical', job: 'Homelab AppData' },
+  restoreTest: { lastTest: hoursAgo(12 * 24), lastSummary: '12 files checked, all the same as now', history: [
+    { when: hoursAgo(43 * 24), seconds: 212, passed: true, summary: '12 files checked, all the same as now', job: 'Homelab AppData' },
+    { when: hoursAgo(12 * 24), seconds: 187, passed: true, summary: '12 files checked, all the same as now', job: 'Homelab AppData' },
   ] },
   vaultExport: hoursAgo(9 * 24), vaultDue: false,
   copies: [
@@ -159,10 +159,10 @@ const duplicatiJobs = [
   // What its last run was (Duplicati's metadata): Photos' is the long one.
   ...(name === 'Homelab Photos' ? { took: 2460, holds: '301.2 GB', files: 48211, versions: 9, sources: ['/source/photos/library/', '/source/photos/upload/'] }
     : name === 'Homelab AppData' ? { took: 212, holds: '3.6 GB', files: 18342, versions: 14, sources: ['/source/appdata/'] } : {}) }));
-const cliLog = { remove: ['Remove the containers for %s? App data on disk is kept.'], 'update-all': ['These 3 apps have updates: Navidrome, Vikunja, Mealie.', '→ dumping mealie-db first', 'Updated: Navidrome 0.53.3 → 0.54.0.', 'Already up to date: Vikunja, Mealie.'], backup: ['→ dump vaultwarden → recovery-staging/databases/vaultwarden', '✓ vaultwarden: vaultwarden-20261010-091502.sqlite.gz (96 KB)', '✓ immich-database: immich-database-20261010-091503.sql.gz (58.2 MB)', '✓ .env copied and verified'], upgrade: ['Homelab files', '  → 3 change(s) on origin/main:', '  ✓ now at origin/main', 'Start the homelab', '  ✓ nothing to change'], fix: ['Fix it', '  • restart the apps that are unwell, and recreate any that stay unwell: Navidrome', '  ✓ done; homelab doctor checks the rest'], 'restore-test': ['→ asking Duplicati to restore 12 file(s) from "Homelab AppData" into recovery-staging/restore-test', '✓ 12 of 12 sampled files identical'], 'restore-test-kopia': ['→ restoring 12 file(s) from Kopia\'s newest snapshot into recovery-staging/restore-test', '✓ 12 of 12 sampled files identical'] };
+const cliLog = { remove: ['Remove the containers for %s? App data on disk is kept.'], 'update-all': ['These 3 apps have updates: Navidrome, Vikunja, Mealie.', '→ dumping mealie-db first', 'Updated: Navidrome 0.53.3 → 0.54.0.', 'Already up to date: Vikunja, Mealie.'], backup: ['→ dump vaultwarden → recovery-staging/databases/vaultwarden', '✓ vaultwarden: vaultwarden-20261010-091502.sqlite.gz (96 KB)', '✓ immich-database: immich-database-20261010-091503.sql.gz (58.2 MB)', '✓ .env copied and verified'], upgrade: ['Homelab files', '  → 3 change(s) on origin/main:', '  ✓ now at origin/main', 'Start the homelab', '  ✓ nothing to change'], fix: ['Fix it', '  • restart the apps that are unwell, and recreate any that stay unwell: Navidrome', '  ✓ done; homelab doctor checks the rest'], 'restore-test': ['→ asking Duplicati to restore 12 file(s) from "Homelab AppData" into recovery-staging/restore-test', '✓ 12 files checked, all the same as now'], 'restore-test-kopia': ['→ restoring 12 file(s) from Kopia\'s newest snapshot into recovery-staging/restore-test', '✓ 12 files checked, all the same as now'] };
 const alerts = [
   { id: 'a1', time: hoursAgo(0.6), topic: 'tunnel-watchdog', title: 'Homelab: recovered', message: 'photos.example.com answering again', tags: ['white_check_mark'] },
-  { id: 'a2', time: hoursAgo(1.1), topic: 'tunnel-watchdog', title: 'Homelab: restarted an app that hung', message: 'vikunja\nUnwell on two checks in a row, so the watchdog restarted it (once in 6 hours at most; AUTO_HEAL=false turns this off).', tags: ['arrows_counterclockwise'] },
+  { id: 'a2', time: hoursAgo(1.1), topic: 'tunnel-watchdog', title: 'Homelab: restarted an app that hung', message: 'vikunja\nUnwell on two checks in a row, so the watchdog restarted it (once in 6 hours at most; Settings › Notifications › Restart an app that stops answering turns this off).', tags: ['arrows_counterclockwise'] },
   { id: 'a3', time: hoursAgo(7.9), topic: 'watchtower', title: 'Homelab: apps updated tonight', message: 'Vikunja, Speedtest Tracker' },
 ];
 // The watchdog's last run, a few minutes ago.
@@ -2240,6 +2240,36 @@ const smokes = [
     await page.check('#personAllApps');
     if (await page.isChecked('#peopleCard label.check:has-text("Vikunja") input')) throw new Error('All the apps left an app ticked');
   } },
+  // Usability task 2's re-run, item 17's words: an app's page says where it's reached without "tailnet", and Status'
+  // Recent alerts name a setting as Settings does, never by its code name.
+  { name: 'An app’s page and Recent alerts in plain words: no tailnet, no setting’s code name', screen: 'app:vikunja', run: async (page) => {
+    await page.waitForSelector('#app :text("not on the internet")', { timeout: 5000 });
+    const facts = await page.$eval('#app', (e) => e.innerText);
+    if (/tailnet/i.test(facts)) throw new Error('the page says tailnet');
+    if (!/own private network/.test(facts)) throw new Error('the page doesn’t say where it is reached');
+    await page.click('button[data-screen="status"]');
+    await page.waitForSelector('#statusRows tr', { timeout: 5000 });
+    const shown = await page.$eval('main', (m) => m.innerText);
+    const code = shown.match(/\b[A-Z][A-Z0-9]*_[A-Z0-9_]+=(true|false)\b/);
+    if (code) throw new Error(`Status says ${code[0]}`);
+  } },
+  // Usability task 2's re-run, item 17: at 320px with big text, a running app's dot stays on the line of its word.
+  ...[['the phone', ['companion']], ['the computer', undefined]].map(([where, phone]) => ({ name: `Status at 320px with big text: each dot on its word’s line, on ${where}`, screen: 'status', phone, run: async (page) => {
+    await page.setViewportSize({ width: 320, height: 700 });
+    await page.evaluate(() => document.documentElement.style.setProperty('--zoom', '1.25'));
+    await page.waitForSelector('#statusRows td.state .dot', { timeout: 5000 });
+    await page.waitForTimeout(200);
+    const alone = await page.$$eval('#statusRows td.state', (cells) => cells.filter((td) => {
+      const dot = td.querySelector('.dot');
+      if (!dot || !dot.nextSibling || !dot.nextSibling.textContent) return false;
+      const range = document.createRange();
+      range.setStart(dot.nextSibling, 0);
+      range.setEnd(dot.nextSibling, Math.min(1, dot.nextSibling.textContent.length));
+      const word = range.getBoundingClientRect(), d = dot.getBoundingClientRect();
+      return word.height && Math.abs((word.top + word.bottom) / 2 - (d.top + d.bottom) / 2) > word.height / 2;
+    }).map((td) => td.closest('tr').querySelector('strong')?.textContent));
+    if (alone.length) throw new Error(`a dot alone on its line: ${alone.join(', ')}`);
+  } })),
   // A member who keeps her Finances private (private-finances.md 3.3): her row says so and when she last saved,
   // and nothing more; Remove's title says the owner can delete them but never open them.
   { name: 'Settings › People: a member’s private Finances, the fact only', screen: 'settings', mock: { status: { ...status, apps: [...status.apps, { id: 'pocket-id', name: 'Pocket ID', state: 'running', health: 'healthy', url: 'http://localhost:1411' }] }, people: [{ username: 'anna', name: 'Anna Smith' }, { username: 'sam', name: 'Sam Smith' }], privateFinances: { anna: '2026-11-13T15:04:00-05:00' } }, run: async (page) => {
@@ -3252,7 +3282,7 @@ const smokes = [
     if ((await head.locator('.foldbtn').getAttribute('aria-expanded')) !== 'false') throw new Error('a group with only an app stopped on purpose opened by itself');
     if (await head.locator('.startall').count()) throw new Error(`Start them offers an app stopped on purpose: ${await head.locator('.startall').textContent()}`);
     await page.click('#statusAll');
-    await page.waitForSelector('tr:has(strong:text-is("Mealie")) td.state:text-is("Stopped by you")', { timeout: 3000 });
+    await page.waitForFunction(([n, t]) => [...document.querySelectorAll('tr')].some((r) => r.querySelector('strong')?.textContent === n && r.querySelector('td.state')?.textContent.replace(/\s+/g, ' ').trim() === t), ['Mealie', 'Stopped by you'], { timeout: 3000 });
     await page.waitForSelector('tr:has(strong:text-is("Vikunja")) td.state:has-text("Stopped until tomorrow, 8")');
     if (await page.$('tr:has(strong:text-is("Mealie")) td.state .dot.warn')) throw new Error('stopped on purpose is shown as a warning');
     await page.waitForSelector('tr:has(strong:text-is("Mealie")) button.rowmain:text-is("Start")');
@@ -3287,7 +3317,7 @@ const smokes = [
     await page.waitForSelector('tr:has(strong:text-is("Mealie")) td.state:has-text("Stopped at 3:12 AM: it ran out of memory")', { timeout: 5000 });
     if (!(await page.$('tr:has(strong:text-is("Mealie")) td.state .dot.bad'))) throw new Error('an app that ran out of memory has no red dot');
     await page.waitForSelector('#tiles .tile:has-text("Needs a look"):has-text("Mealie")', { timeout: 3000 });
-    await page.waitForSelector('tr:has(strong:text-is("Vikunja")) td.state:text-is("Stopped yesterday, 9:40 PM")');
+    await page.waitForFunction(([n, t]) => [...document.querySelectorAll('tr')].some((r) => r.querySelector('strong')?.textContent === n && r.querySelector('td.state')?.textContent.replace(/\s+/g, ' ').trim() === t), ['Vikunja', 'Stopped yesterday, 9:40 PM']);
     await page.waitForSelector('tr:has(strong:text-is("Mealie")) button.rowmain:text-is("Start")');
   } },
   // On the phone, 320px wide and with big text (213px is 320 at 1.5×): the why is all there, on a line of its own if
@@ -4327,9 +4357,69 @@ const smokes = [
     await page.click('#groups label.app:has(strong:text-is("qBittorrent")) input');
     await page.waitForSelector('#plan li:has-text("Gluetun"):has-text("fill in ProtonVPN WireGuard key below")', { timeout: 5000 });
     await page.waitForSelector('#inputs .fieldName:has-text("ProtonVPN WireGuard key")');
+    // A setting a picked app waits for is never called optional (usability task 3, item 19), and says where it's made.
+    const help = await page.textContent('#inputs .help');
+    if (/optional/i.test(help) || !/Needed/.test(help) || !/account\.protonvpn\.com/.test(help)) throw new Error(`the key's help: ${help}`);
     await page.fill('#inputs input', 'wg-key-test');
     await page.waitForSelector('#plan .planLead:has-text("Installs 1 app")', { timeout: 5000 });
     if (await page.isVisible('#presets .chip:has-text("Immich")')) throw new Error("a stack's own preset is still a chip");
+  } },
+  // Usability task 3, item 21: Tab from an app's checkbox in Choose apps reaches its own links (Open, Settings).
+  { name: 'Choose apps: Tab reaches each app’s Open and Settings', screen: 'choose', run: async (page) => {
+    await page.click('#more > summary');
+    await page.fill('#search', 'qbittorrent');
+    await page.waitForSelector('#groups label.app:has(strong:text-is("qBittorrent"))', { timeout: 5000 });
+    const rows = page.locator('#groups label.app:has(.links-inline)');
+    const n = await rows.count();
+    if (!n) throw new Error('no app with links to try');
+    for (let i = 0; i < n; i++) {
+      const row = rows.nth(i);
+      await row.locator('input[type=checkbox]').focus();
+      await page.keyboard.press('Tab');
+      if (!(await row.locator('.links-inline').evaluate((l) => l.contains(document.activeElement)))) throw new Error(`Tab went past ${await row.locator('strong').first().textContent()}'s links`);
+    }
+  } },
+  // Usability task 5, item 23: Backups in plain words: a copy days old says how old, not "Stale"; the restore test
+  // says what it checked, not "sampled"; the engine's page is Browse the backups, not Open Duplicati.
+  { name: 'Backups in plain words: out of date by how old, files checked, Browse the backups', screen: 'backups', run: async (page) => {
+    await page.waitForSelector('#copiesTile', { timeout: 5000 });
+    await page.waitForTimeout(300);
+    const text = await page.$eval('#backups', (e) => e.innerText);
+    const bad = text.match(/\bStale\b|sampled|Open Duplicati/i);
+    if (bad) throw new Error(`Backups says "${bad[0]}"`);
+    if (!/Out of date: Mealie, last copied 3 days ago/.test(text)) throw new Error('the out-of-date copy doesn’t say how old');
+    if (!/12 files checked, all the same as now/.test(text)) throw new Error('the restore test doesn’t say what it checked');
+  } },
+  // Usability task 3, item 20: picking qBittorrent alone offers no "Connect the apps for me" (nothing to connect it to);
+  // the VPN tunnel it brings shows ticked and greyed while it's needed; and Done names the tunnel too.
+  { name: 'Choose apps: qBittorrent alone, no Connect the apps, its tunnel ticked, and Done names it', screen: 'choose', run: async (page) => {
+    await page.click('#more > summary');
+    await page.fill('#search', 'qbittorrent');
+    await page.click('#groups label.app:has(strong:text-is("qBittorrent")) input');
+    await page.waitForSelector('#inputs .fieldName:has-text("ProtonVPN WireGuard key")', { timeout: 5000 });
+    await page.fill('#inputs input', 'wg-key-test');
+    await page.waitForSelector('#plan .planLead:has-text("Installs 1 app")', { timeout: 5000 });
+    if (await page.isVisible('#wireRow')) throw new Error('Connect the apps for me is offered with nothing to connect qBittorrent to');
+    const tunnel = page.locator('#groups label.app:has(strong:text-is("Gluetun")) input');
+    if (!(await tunnel.isChecked()) || !(await tunnel.isDisabled())) throw new Error('the tunnel qBittorrent brings is not ticked and greyed');
+    if (/helper|download client/i.test(await page.textContent('#planBox, #plan'))) throw new Error('the plan says helper or download client');
+    await page.click('#installBtn');
+    await page.waitForSelector('#started li', { timeout: 10000 });
+    const done = await page.textContent('#started');
+    if (!/Gluetun/.test(done)) throw new Error(`Done leaves out the tunnel: ${done}`);
+  } },
+  // Usability task 3, item 18: picking Frigate, the plan says where its recordings go and the room there; once it's
+  // installed, Done says what to do next (add a camera).
+  { name: 'Choose apps: Frigate’s plan says where recordings go, and Done what to do next', screen: 'choose', run: async (page) => {
+    await page.click('#more > summary');
+    await page.fill('#search', 'frigate');
+    await page.click('#groups label.app:has(strong:text-is("Frigate")) input');
+    await page.waitForSelector('#plan :text("Frigate’s recordings go to"), #plan :text("Frigate\'s recordings go to")', { timeout: 5000 });
+    const plan = await page.textContent('#plan');
+    if (!/recordings go to \/Volumes\/Media\/frigate, on a drive with 1\.6 TB free/.test(plan) || !/Settings › Frigate picks another folder/.test(plan)) throw new Error(`the plan: ${plan}`);
+    await page.click('#installBtn');
+    await page.waitForSelector('#started li:has-text("Frigate")', { timeout: 10000 });
+    if (!/Next: add your camera/.test(await page.textContent('#started'))) throw new Error(`Done says nothing to do next: ${await page.textContent('#started')}`);
   } },
   { name: 'Photos per person on Status', screen: 'status', run: async (page) => {
     await page.waitForSelector('#storageCard:not([hidden]) li:has-text("Anna Smith") .when:has-text("412 GB")', { timeout: 5000 });
@@ -9973,6 +10063,15 @@ const smokes = [
     const saved = await page.evaluate(() => window.__MOCK.financesSaved[1]);
     if (saved.holidays !== 'uk' || saved.currency !== 'GBP') throw new Error(`saved ${saved.holidays} ${saved.currency}`);
     await page.waitForSelector('.fx-person:has-text("£")', { timeout: 5000 });
+  } },
+  // Usability task 15, item 1: with a checking account and no paycheck or payment yet, the three things stay on the
+  // Dashboard, the account ticked, until all three are there.
+  { name: 'Finances: the three things stay until each is there, the done ones ticked', screen: 'finances', mock: { finances: { plan: { people: [], accounts: [{ id: 'chk', name: 'Example Checking', kind: 'checking', balance: 1200, updated: '2026-10-30' }], payments: [], cushion: 0 }, today: '2026-10-30', checking: 'chk', periods: [], days: [] } }, run: async (page) => {
+    const card = page.locator('.finstart');
+    await card.waitFor({ timeout: 5000 });
+    for (const b of ['Add a paycheck', 'Add a payment']) if (!(await card.locator(`button:text-is("${b}")`).count())) throw new Error(`no ${b}`);
+    if (await card.locator('button:text-is("Add an account")').count()) throw new Error('the account is offered again');
+    if (!/✓\s*Example Checking/.test(await card.textContent())) throw new Error('the account is not ticked as done');
   } },
   { name: 'Finances: a new homelab starts with three things to add', screen: 'finances', mock: { finances: null }, run: async (page) => {
     await page.click('.finstart button:text-is("Add an account")', { timeout: 5000 });

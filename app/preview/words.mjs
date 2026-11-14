@@ -18,6 +18,10 @@ const macWords = ['menu bar', 'Finder', 'this Mac', 'This Mac', 'OrbStack', 'Doc
 // tester, Nov 6): an app is an app, and the homelab's own apps are that.
 const jargon = [/\bstacks?\b/i, /\bbaseline\b/i];
 
+// A setting named by its code name and a value (usability task 2's re-run,
+// item 17: "AUTO_HEAL=false turns this off"): say where it is in Settings.
+const codeName = /\b[A-Z][A-Z0-9]*_[A-Z0-9_]+=(true|false)\b/;
+
 const allowed = [
   { file: 'web/src/settings/Appearance.tsx', text: 'the system tray on Windows and Linux', why: 'names each system' },
   { file: 'web/src/screens/settings.ts', text: 'This Mac', exact: true, why: ".env.example's section, which the app renames for each system (thisMachine)" },
@@ -61,6 +65,8 @@ for (const path of files) {
         const m = re.exec(node.text);
         if (m && !/^[\w.:-]+$/.test(node.text)) said(rel, src.getLineAndCharacterOfPosition(node.getStart()).line + 1, node.text, m[0]);
       }
+      const c = codeName.exec(node.text);
+      if (c) problems.push(`${rel}:${src.getLineAndCharacterOfPosition(node.getStart()).line + 1}: …${node.text.slice(Math.max(0, c.index - 40), c.index + c[0].length + 40)}… names a setting by its code name (${c[0]}): say where it is in Settings`);
     }
     ts.forEachChild(node, visit);
   };

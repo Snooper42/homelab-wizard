@@ -92,7 +92,9 @@ try { if ((window.__MOCK || {}).tidyTab) localStorage.setItem('homelab.tidyTab',
       return later({
         ready: true, requested: tokens, added, notes: [], start,
         skips: [...tokens.filter((id) => running.has(id)).map((id) => ({ app: id, reason: 'already running' })), ...waiting],
-        portChanges: [], folders: [], networks: [], warnings: [], problems: [],
+        // Where an app fills a folder, as the computer words it (install's storesWords): Frigate's recordings.
+        portChanges: [], folders: [], networks: [], problems: [],
+        warnings: start.includes('frigate') ? ["Frigate's recordings go to /Volumes/Media/frigate, on a drive with 1.6 TB free; Settings › Frigate picks another folder."] : [],
         envChanges: start.flatMap((id) => (M.envFor[id] || []).map((key) => ({ key, secret: /SECRET|PASSWORD|TOKEN|KEY/.test(key), value: '' }))),
       });
     },
@@ -116,7 +118,7 @@ try { if ((window.__MOCK || {}).tidyTab) localStorage.setItem('homelab.tidyTab',
         await later(null, 300);
         emit('progress', { step: i + 1, steps: steps.length, name, apps, done: true });
       }
-      return tokens.map((id) => ({ id, name: appByID(id).name, url: M.urls[id] }));
+      return tokens.map((id) => ({ id, name: appByID(id).name, url: M.urls[id], next: appByID(id).next }));
     },
     // actionDelay: a slow runtime (ms); actionError: the action fails with it.
     async AppAction(id, action) {

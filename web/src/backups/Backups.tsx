@@ -91,7 +91,7 @@ export function BackupTiles({ o, os, test }: { o: backup.Overview; os: string; t
       <Tile label="Last backup" value={never(o.lastRun) ? 'Never' : ago(o.lastRun)} sub={never(o.envCopied) ? 'Settings file not copied yet' : 'Every night at 03:30; the settings file too'} />
       <Tile id="copiesTile" label="Copies up to date" value={copies.length ? <>{String(fresh)}<small> of {copies.length - paused.length}</small></> : 'None yet'}
         sub={!copies.length ? 'The first are made the night after an app with a database starts' : stale.length || paused.length ? <>
-          {!!stale.length && <span class="bad">Stale: {stale.map((c) => c.name).join(', ')}</span>}
+          {!!stale.length && <span class="bad">Out of date: {stale.map((c) => `${c.name}, last copied ${ago(c.newest)}`).join('; ')}</span>}
           {!!paused.length && <span>{`${paused.length} more paused: ${paused.length === 1 ? 'its app waits' : 'their apps wait'} for ${drivesOf(paused)}`}</span>}
         </> : `Each under ${o.staleAfterHours} hours old`} />
       <Tile id="offsiteTile" label="Off-site" value={o.destinationOK ? placeName(o.destination) : <span class="warn">Not set</span>}
@@ -111,7 +111,7 @@ export function copyGroups(o: backup.Overview): CopyGroup[] {
   const paused = of('paused'), none = of('none');
   const oldest = paused.filter((c) => !never(c.newest)).map((c) => c.newest).sort()[0];
   return [
-    { key: 'stale', label: 'Stale', tone: 'bad' as Tone, copies: of('stale'), note: '' },
+    { key: 'stale', label: 'Out of date', tone: 'bad' as Tone, copies: of('stale'), note: '' },
     { key: 'fresh', label: 'Up to date', tone: 'ok' as Tone, copies: of('fresh'), note: '' },
     { key: 'paused', label: 'Paused', tone: '' as Tone, copies: paused,
       note: `${paused.map((c) => c.name).join(', ')} ${paused.length === 1 ? 'waits' : 'wait'} for ${drivesOf(paused)}` + (oldest ? `; ${paused.length === 1 ? 'its last copy' : 'their last copies'} (${ago(oldest)}) ${paused.length === 1 ? 'is' : 'are'} kept` : '') },

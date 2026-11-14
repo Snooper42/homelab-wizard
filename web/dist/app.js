@@ -3130,8 +3130,11 @@
               changed4 && /* @__PURE__ */ u3("span", { class: "changedot", role: "img", "aria-label": changed4, title: changed4 })
             ] }),
             /* @__PURE__ */ u3("td", { class: "state", children: [
-              /* @__PURE__ */ u3("span", { class: "dot " + cls }),
-              words5,
+              /* @__PURE__ */ u3("span", { class: "statehead", children: [
+                /* @__PURE__ */ u3("span", { class: "dot " + cls }),
+                words5.split(" ")[0]
+              ] }),
+              words5.includes(" ") ? words5.slice(words5.indexOf(" ")) : "",
               pend && !pend.failed ? null : a3.state === "elsewhere" ? /* @__PURE__ */ u3(S, { children: [
                 /* @__PURE__ */ u3("span", { class: "local", children: [
                   "container ",
@@ -5159,17 +5162,23 @@
       fn();
     };
     const links = [
-      target && /* @__PURE__ */ u3("a", { onClick: quiet2(() => p3.open(target)), children: "Open" }),
-      !!a3.inputs?.length && /* @__PURE__ */ u3("a", { onClick: quiet2(() => p3.settings(a3.inputs)), children: "Settings" })
+      target && /* @__PURE__ */ u3("button", { type: "button", class: "linkbtn", onClick: quiet2(() => p3.open(target)), children: "Open" }),
+      !!a3.inputs?.length && /* @__PURE__ */ u3("button", { type: "button", class: "linkbtn", onClick: quiet2(() => p3.settings(a3.inputs)), children: "Settings" })
     ].filter(Boolean);
+    const by = !p3.selected.has(a3.id) && p3.needed?.[a3.id] ? p3.catalog.apps.find((x3) => x3.id === p3.needed[a3.id])?.name || p3.needed[a3.id] : "";
     return /* @__PURE__ */ u3("label", { class: "app", children: [
-      /* @__PURE__ */ u3("input", { type: "checkbox", checked: p3.selected.has(a3.id), disabled: native, onChange: (e3) => p3.tick(a3.id, e3.currentTarget.checked) }),
+      /* @__PURE__ */ u3("input", { type: "checkbox", checked: p3.selected.has(a3.id) || !!by, disabled: native || !!by, title: by ? `Installed with ${by}, which needs it` : void 0, onChange: (e3) => p3.tick(a3.id, e3.currentTarget.checked) }),
       /* @__PURE__ */ u3("div", { class: "grow", children: [
         /* @__PURE__ */ u3("strong", { children: a3.name }),
         native && /* @__PURE__ */ u3("span", { class: "badge", children: "runs natively" }),
         stateText && /* @__PURE__ */ u3("span", { class: "badge " + stateCls, children: stateText }),
         /* @__PURE__ */ u3("div", { class: "desc", children: a3.description }),
         !!p3.note(a3.id) && /* @__PURE__ */ u3("div", { class: "sysnote muted", children: p3.note(a3.id) }),
+        by && /* @__PURE__ */ u3("div", { class: "sysnote muted", children: [
+          "Installed with ",
+          by,
+          ", which needs it"
+        ] }),
         !!a3.replaces?.length && /* @__PURE__ */ u3("div", { class: "replaces", children: [
           "Replaces ",
           a3.replaces.join(", ")
@@ -5242,9 +5251,9 @@
     const quiet2 = p3.skips.filter((s3) => /^only needed by/.test(s3.reason));
     const outside = p3.skips.filter((s3) => /^(runs natively|is installed on)/.test(s3.reason));
     const needs = p3.skips.filter((s3) => !running5.includes(s3) && !quiet2.includes(s3) && !outside.includes(s3));
-    const lead2 = picked.length ? `Installs ${plural2(picked.length, "app", "apps")}` + (helpers.length ? `, with ${plural2(helpers.length, "helper", "helpers")} they need` : "") + "." : "";
+    const lead2 = picked.length ? `Installs ${plural2(picked.length, "app", "apps")}` + (helpers.length ? `, with ${plural2(helpers.length, "more app", "more apps")} they need` : "") + "." : "";
     const details = [
-      { title: "Helpers that start with them", items: helpers.map((id2) => `${appName2(id2)} (for ${appName2(p3.added[id2])})`) },
+      { title: "Also started, as they need them", items: helpers.map((id2) => `${appName2(id2)} (for ${appName2(p3.added[id2])})`) },
       { title: "Port changes", items: p3.portChanges.map((c4) => `${c4.var}: ${c4.from} → ${c4.to} (${c4.reason})`) },
       { title: "Settings written", items: p3.envChanges.map((c4) => c4.secret ? `${c4.key} (hidden)` : `${c4.key} = ${c4.value}`) }
     ].filter((d3) => d3.items.length);
@@ -5366,10 +5375,14 @@
   }
 
   // web/src/choose/Started.tsx
-  function Started({ started, open: open5, close: close3 }) {
+  function Started({ started, also = [], open: open5, close: close3 }) {
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3(CardHead, { title: "Ready to open" }),
-      started.length ? /* @__PURE__ */ u3("ul", { children: started.map((s3) => /* @__PURE__ */ u3("li", { children: s3.url ? /* @__PURE__ */ u3(ActionLink, { onClick: () => open5(s3.url), children: s3.name }) : s3.name }, s3.id)) }) : /* @__PURE__ */ u3("p", { class: "muted", children: "Nothing new to start." }),
+      started.length ? /* @__PURE__ */ u3("ul", { children: started.map((s3) => /* @__PURE__ */ u3("li", { children: [
+        s3.url ? /* @__PURE__ */ u3(ActionLink, { onClick: () => open5(s3.url), children: s3.name }) : s3.name,
+        s3.next && /* @__PURE__ */ u3("div", { class: "muted startednext", children: s3.next })
+      ] }, s3.id)) }) : /* @__PURE__ */ u3("p", { class: "muted", children: "Nothing new to start." }),
+      !!also.length && /* @__PURE__ */ u3("p", { class: "muted", id: "alsoStarted", children: also.map((x3) => `With ${x3.by}: ${x3.name}, ${x3.what.charAt(0).toLowerCase() + x3.what.slice(1)}.`).join(" ") }),
       /* @__PURE__ */ u3("button", { type: "button", id: "installClose", class: "small", onClick: close3, children: "Close" })
     ] });
   }
@@ -5560,6 +5573,7 @@
     renderApps();
     replan();
   }
+  var neededBy = {};
   function renderApps() {
     const picks = { selected, status: statusById, toggle: togglePreset };
     mountStarters($("starters"), { ...picks, presets: catalog.presets.filter((p3) => p3.starter) });
@@ -5569,6 +5583,7 @@
       status: statusById,
       selected,
       query: query2,
+      needed: neededBy,
       tick: (id2, on2) => {
         if (on2) selected.add(id2);
         else selected.delete(id2);
@@ -5603,6 +5618,11 @@
     if (!tokens.length) {
       plan(null);
       $("installBtn").disabled = true;
+      $("wireRow").hidden = true;
+      if (Object.keys(neededBy).length) {
+        neededBy = {};
+        renderApps();
+      }
       return;
     }
     let p3;
@@ -5618,8 +5638,17 @@
     if (seq !== planSeq) return;
     plan(p3);
     renderInputs(p3);
+    if (JSON.stringify(p3.added || {}) !== JSON.stringify(neededBy)) {
+      neededBy = { ...p3.added || {} };
+      renderApps();
+    }
     const wireable = new Set(catalog.wireable || []);
-    $("wireRow").hidden = ![...p3.start, ...selected].some((id2) => wireable.has(id2));
+    const picked = [...p3.start, ...selected].filter((id2) => wireable.has(id2));
+    const running5 = Object.values(statusById || {}).filter((a3) => a3.state === "running" && wireable.has(a3.id)).map((a3) => a3.id);
+    const linked = [.../* @__PURE__ */ new Set([...picked, ...running5])];
+    $("wireRow").hidden = !(picked.length && linked.length >= 2);
+    const names5 = linked.map(appName);
+    $("wireWhat").textContent = `Links ${names5.length > 1 ? names5.slice(0, -1).join(", ") + " and " + names5[names5.length - 1] : names5[0] || ""} to each other, so everything works the first time you open it.`;
     $("installBtn").disabled = !(p3.ready && p3.start.length);
   }
   function friendlyReason(r3) {
@@ -5667,9 +5696,14 @@
         cliProgress({ n: ev.step, total: ev.steps + 1, text: text2 });
       });
       try {
+        const brought = { ...neededBy };
         const started = await go().Install([...selected], filled());
         cliProgress("done");
-        mountStarted($("started"), { started, open: (url) => go().Open(url), close: () => {
+        const also = Object.entries(brought).flatMap(([id2, by]) => {
+          const a3 = catalog.apps.find((x3) => x3.id === id2);
+          return a3 && a3.kind !== "helper" ? [{ name: a3.name, what: a3.description, by: appName(by) }] : [];
+        });
+        mountStarted($("started"), { started, also, open: (url) => go().Open(url), close: () => {
           clearInstall();
           $("search").focus();
         } });
@@ -6848,6 +6882,7 @@
     IMMICH_UPLOAD_LOCATION: "Photos folder",
     BACKUP_DESTINATION: "Backups go to",
     JELLYFIN_DATA_DIR: "Jellyfin data folder",
+    FRIGATE_RECORDINGS: "Frigate recordings folder",
     SYNC_ROOT: "Syncthing folder",
     HOMELAB_DOMAIN: "Domain (empty: addresses on your tailnet)",
     HOMELAB_BASELINE: "Apps that always start (small or full)",
@@ -7138,8 +7173,8 @@
           ] }) : "None yet",
           sub: !copies.length ? "The first are made the night after an app with a database starts" : stale.length || paused.length ? /* @__PURE__ */ u3(S, { children: [
             !!stale.length && /* @__PURE__ */ u3("span", { class: "bad", children: [
-              "Stale: ",
-              stale.map((c4) => c4.name).join(", ")
+              "Out of date: ",
+              stale.map((c4) => `${c4.name}, last copied ${ago(c4.newest)}`).join("; ")
             ] }),
             !!paused.length && /* @__PURE__ */ u3("span", { children: `${paused.length} more paused: ${paused.length === 1 ? "its app waits" : "their apps wait"} for ${drivesOf(paused)}` })
           ] }) : `Each under ${o3.staleAfterHours} hours old`
@@ -7166,7 +7201,7 @@
     const paused = of("paused"), none2 = of("none");
     const oldest = paused.filter((c4) => !never(c4.newest)).map((c4) => c4.newest).sort()[0];
     return [
-      { key: "stale", label: "Stale", tone: "bad", copies: of("stale"), note: "" },
+      { key: "stale", label: "Out of date", tone: "bad", copies: of("stale"), note: "" },
       { key: "fresh", label: "Up to date", tone: "ok", copies: of("fresh"), note: "" },
       {
         key: "paused",
@@ -8689,7 +8724,7 @@
   function Facts({ p: p3 }) {
     const { a: a3, entry, usage: usage2, disk: disk2, days, backup: o3, on: on2 } = p3;
     const url = a3.address ? "https://" + a3.address : a3.url || "";
-    const reach = entry?.public ? "At home, and on the internet through the Cloudflare Tunnel" : a3.address ? "At home and on your tailnet, not on the internet" : "On this machine only";
+    const reach = entry?.public ? "At home, and on the internet through the Cloudflare Tunnel" : a3.address ? "At home and on your own private network, not on the internet" : "On this machine only";
     const seen2 = { watching: p3.watching, stopped: a3.state === "stopped" };
     const [weekValue] = weekWords(days, p3.outages, Date.now(), seen2);
     const late = o3 && !never(o3.lastRun) && Date.now() - new Date(o3.lastRun).getTime() > (o3.staleAfterHours || 30) * 36e5;
@@ -17522,6 +17557,18 @@ ${pays}
   }
 
   // web/src/finances/Overview.tsx
+  function StartThree({ v: v3, add }) {
+    const acct = (v3.plan.accounts || []).find((a3) => a3.kind === "checking");
+    const person = (v3.plan.people || [])[0];
+    const bill = (v3.plan.payments || [])[0];
+    const row = (done, lead2, title, sub, label, onAdd) => /* @__PURE__ */ u3(Row, { lead: lead2, title: done ? `✓ ${done}` : title, sub: done ? "Done" : sub, end: done ? void 0 : /* @__PURE__ */ u3("button", { class: "small", onClick: onAdd, children: label }) });
+    return /* @__PURE__ */ u3(Widget, { title: "Start with three things", span: "all", kind: "finstart", children: /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: [
+      row(acct?.name || "", /* @__PURE__ */ u3(Mark, { kind: "checking", name: "Checking" }), "Your checking account", "Where paychecks land and bills come out", "Add an account", () => add("account", "checking")),
+      row(person ? `${person.name}'s paycheck` : "", /* @__PURE__ */ u3(Mark, { kind: "savings", name: "Pay" }), "Who gets paid, and when", "Every other Friday, the 26th, twice a month", "Add a paycheck", () => add("person")),
+      row(bill?.name || "", /* @__PURE__ */ u3(Mark, { kind: "home", name: "Bills" }), "What comes out each month", "The mortgage, the car, subscriptions, a card’s balance", "Add a payment", () => add("payment"))
+    ] }) });
+  }
+  var startedThree = (v3) => !!v3.plan.people?.length && !!v3.plan.payments?.length;
   function Overview({ v: v3, L: L2, sel: sel2, pick, add, edit, setSince: setSince2, keep: keep3, ledger, openWorth, openSubscriptions, openRecurring, openTransactions, openCalendar, openPay, openAccount, showIn: showIn2, phone: phone2 }) {
     const [by, setByState] = d2(readBy);
     const { months, now: thisMonth } = monthPeriods(v3);
@@ -17560,14 +17607,11 @@ ${pays}
     const spentDays = month3 ? month3.when === "past" ? { from: month3.start, to: month3.last } : void 0 : was && { from: was.start, to: was.last };
     if (!v3.plan.accounts?.length && !v3.plan.people?.length && !add) return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3(Card, { kind: "finstart", children: /* @__PURE__ */ u3(Empty, { children: "Nothing typed in yet: Finances are filled in on the computer, or on a phone allowed to change them." }) }) });
     if (!v3.plan.accounts?.length && !v3.plan.people?.length) {
-      return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3("div", { class: "fx-board", children: /* @__PURE__ */ u3(Widget, { title: "Start with three things", span: "all", kind: "finstart", children: /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: [
-        /* @__PURE__ */ u3(Row, { lead: /* @__PURE__ */ u3(Mark, { kind: "checking", name: "Checking" }), title: "Your checking account", sub: "Where paychecks land and bills come out", end: /* @__PURE__ */ u3("button", { class: "small", onClick: () => add("account", "checking"), children: "Add an account" }) }),
-        /* @__PURE__ */ u3(Row, { lead: /* @__PURE__ */ u3(Mark, { kind: "savings", name: "Pay" }), title: "Who gets paid, and when", sub: "Every other Friday, the 26th, twice a month", end: /* @__PURE__ */ u3("button", { class: "small", onClick: () => add("person"), children: "Add a paycheck" }) }),
-        /* @__PURE__ */ u3(Row, { lead: /* @__PURE__ */ u3(Mark, { kind: "home", name: "Bills" }), title: "What comes out each month", sub: "The mortgage, the car, subscriptions, a card's balance", end: /* @__PURE__ */ u3("button", { class: "small", onClick: () => add("payment"), children: "Add a payment" }) })
-      ] }) }) }) });
+      return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3("div", { class: "fx-board", children: /* @__PURE__ */ u3(StartThree, { v: v3, add }) }) });
     }
     return /* @__PURE__ */ u3("div", { class: "fin", children: [
-      !v3.checking && /* @__PURE__ */ u3(Card, { kind: "finnote", role: "status", children: [
+      add && !startedThree(v3) && /* @__PURE__ */ u3("div", { class: "fx-board", children: /* @__PURE__ */ u3(StartThree, { v: v3, add }) }),
+      !v3.checking && !(add && !startedThree(v3)) && /* @__PURE__ */ u3(Card, { kind: "finnote", role: "status", children: [
         /* @__PURE__ */ u3(Mark, { kind: "checking", name: "Checking" }),
         /* @__PURE__ */ u3("span", { class: "grow", children: [
           /* @__PURE__ */ u3("strong", { children: "No checking account yet." }),

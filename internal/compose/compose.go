@@ -134,6 +134,13 @@ type Meta struct {
 	Archive []string `yaml:"archive"` // named volumes `homelab backup` tars up
 	Doc     string   `yaml:"doc"`
 	Warning string   `yaml:"warning"`
+	// Stores names the .env folder settings an app fills (Frigate's
+	// recordings), each with what it keeps there: the install's plan says
+	// where that folder is and how much room its drive has.
+	Stores map[string]string `yaml:"stores"`
+	// Next is what to do once it is installed, for Choose apps' Done
+	// (Frigate: add a camera).
+	Next string `yaml:"next"`
 	// Memory is about what the app uses, in MB, rounded up from a busy
 	// day; set for apps above the default of their kind (catalog.Memory).
 	Memory int `yaml:"memory"`

@@ -109,7 +109,7 @@ func TestKopiaRestoreTest(t *testing.T) {
 		t.Error("a passing restore should be removed")
 	}
 	l := backup.LoadRestoreLog(h.restoreLogPath())
-	if l.LastKopiaTest.IsZero() || !l.LastTest.IsZero() || len(l.History) != 1 || l.History[0].Engine != "kopia" || !strings.Contains(l.History[0].Summary, "3 of 3") {
+	if l.LastKopiaTest.IsZero() || !l.LastTest.IsZero() || len(l.History) != 1 || l.History[0].Engine != "kopia" || !strings.Contains(l.History[0].Summary, "3 files checked, all the same as now") {
 		t.Errorf("recorded as Kopia's, not Duplicati's: %+v\n%s", l, out)
 	}
 

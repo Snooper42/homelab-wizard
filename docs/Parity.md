@@ -93,7 +93,7 @@ What a phone may do also depends on how it was paired, on every phone (the phone
 | Each app's copy, grouped; the night before's size; one that shrank by half in red | yes | yes | yes | yes | `Backups` |
 | Duplicati's jobs, their last run, the weekly integrity check, a job's contents | yes | yes | yes | yes | `DuplicatiJobs` |
 | Back up now, Test a restore | yes | yes (allowed changes) | yes, Face ID | yes | `Homelab` |
-| Open Duplicati | yes | on purpose: kept to the computer | on purpose | on purpose | |
+| Browse the backups (Duplicati's own page) | yes | on purpose: kept to the computer | on purpose | on purpose | |
 | Move the homelab to another drive; the recovery kit | yes | on purpose: they move or write files on the computer | on purpose | on purpose | |
 | Backups on a household member's phone | — | on purpose: the owner's only | on purpose | on purpose | |
 

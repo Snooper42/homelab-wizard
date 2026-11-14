@@ -402,7 +402,11 @@ func changedSince(original, restored string) bool {
 
 // Summary is a one-line description of a report.
 func (r RestoreReport) Summary() string {
-	parts := []string{fmt.Sprintf("%d of %d sampled files identical", r.Matched, r.Checked)}
+	// In words a household reads (usability task 5, item 23): what was checked, and how it compares with now.
+	parts := []string{fmt.Sprintf("%d of %d files checked are the same as now", r.Matched, r.Checked)}
+	if r.Checked > 0 && r.Matched == r.Checked {
+		parts[0] = fmt.Sprintf("%d files checked, all the same as now", r.Checked)
+	}
 	if len(r.Different) > 0 {
 		parts = append(parts, fmt.Sprintf("%d different", len(r.Different)))
 	}

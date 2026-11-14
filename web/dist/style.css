@@ -139,7 +139,7 @@ th { border-top:0; font-size:11px; text-transform:uppercase; letter-spacing:.05e
 tbody tr:hover td { background:var(--sunken); }
 td .local { display:block; font-size:12px; color:var(--muted); }
 /* A narrowing window wraps a row's state between its parts, never inside "up 4 days" or a badge (below that, the rows become a list: see the end of this file). */
-td.state .local, td.state .badge { white-space:nowrap; }
+td.state .local, td.state .badge, td.state .statehead { white-space:nowrap; }
 /* Why a row's action failed, under its state (AppList's pending). */
 td.state .rowerr { display:block; white-space:normal; font-size:12px; color:var(--bad); }
 .rowActions { white-space:nowrap; text-align:right; width:1%; }

@@ -57,6 +57,8 @@ type App struct {
 	Login   []string `json:"login,omitempty"`
 	Public  bool     `json:"public"`
 	Warning string   `json:"warning,omitempty"`
+	// Next is what to do once it is installed (x-homelab next), for Done.
+	Next string `json:"next,omitempty"`
 	// MacApp: a native app installed as a Mac app, which Status can open
 	// (or start as a service, off the Mac).
 	MacApp bool `json:"macApp,omitempty"`
@@ -132,7 +134,7 @@ func appOf(c *catalog.Catalog, a *catalog.App) App {
 	out := App{
 		ID: a.ID, Name: a.Name(), Category: a.Category(), Description: a.Meta.Description, Kind: kind,
 		Aliases: a.Meta.Aliases, DependsOn: a.DependsOn, Conflicts: a.Meta.Conflicts, GoesWith: a.Meta.GoesWith, SameJob: a.Meta.SameJob,
-		Inputs: a.Meta.Requires, Login: a.Meta.Login, Phone: a.Phone(), Public: a.Public(), Warning: a.Meta.Warning,
+		Inputs: a.Meta.Requires, Login: a.Meta.Login, Phone: a.Phone(), Public: a.Public(), Warning: a.Meta.Warning, Next: a.Meta.Next,
 	}
 	out.Stack = a.Stack()
 	if n := a.Native(); n != nil {
@@ -229,6 +231,8 @@ type Started struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
 	URL  string `json:"url,omitempty"`
+	// Next is what to do now it is installed (x-homelab next), or "".
+	Next string `json:"next,omitempty"`
 }
 
 // StartedOf lists the apps a plan starts, helpers left out, with the
@@ -238,7 +242,7 @@ func StartedOf(p *install.Plan) []Started {
 	out := []Started{}
 	for _, a := range p.Start {
 		if !a.Internal() {
-			out = append(out, Started{ID: a.ID, Name: a.Name(), URL: ports.WebURL(a, p.Ports.Bindings, lookup)})
+			out = append(out, Started{ID: a.ID, Name: a.Name(), URL: ports.WebURL(a, p.Ports.Bindings, lookup), Next: a.Meta.Next})
 		}
 	}
 	return out

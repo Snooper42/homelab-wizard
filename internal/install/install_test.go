@@ -497,3 +497,24 @@ func TestLibraryFoldersDockerLeavesAreMade(t *testing.T) {
 		}
 	}
 }
+
+// An app that fills a folder (x-homelab stores) has its plan say where that
+// folder is and how much room its drive has, and where to pick another
+// (usability task 3, item 18: nothing said where Frigate's recordings go).
+func TestPlanSaysWhereAnAppFillsAFolder(t *testing.T) {
+	media := t.TempDir()
+	in, _, _ := fixture(t, nil, "MEDIA_ROOT="+media)
+	sel, err := selector.Resolve(in.Catalog, []string{"frigate"}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	p, err := Build(in, sel)
+	if err != nil {
+		t.Fatal(err)
+	}
+	said := strings.Join(p.Warnings, "\n")
+	want := "Frigate's recordings go to " + filepath.Join(media, "frigate") + ", on a drive with "
+	if !strings.Contains(said, want) || !strings.Contains(said, "free; Settings › Frigate picks another folder.") {
+		t.Errorf("the plan doesn't say where Frigate's recordings go, and the room there:\n%s", said)
+	}
+}

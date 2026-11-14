@@ -200,3 +200,19 @@ func TestSQLiteDump(t *testing.T) {
 		t.Errorf("keep 0 should still keep the newest: removed %v", removed)
 	}
 }
+
+// The restore test's line in words a household reads (usability task 5,
+// item 23): what was checked and how it compares with now, never "sampled".
+func TestRestoreSummaryInPlainWords(t *testing.T) {
+	for _, c := range []struct {
+		r    RestoreReport
+		want string
+	}{
+		{RestoreReport{Checked: 12, Matched: 12}, "12 files checked, all the same as now"},
+		{RestoreReport{Checked: 12, Matched: 10, Different: []string{"a"}, Changed: []string{"b"}}, "10 of 12 files checked are the same as now, 1 different, 1 changed since the backup"},
+	} {
+		if got := c.r.Summary(); got != c.want {
+			t.Errorf("Summary() = %q, want %q", got, c.want)
+		}
+	}
+}

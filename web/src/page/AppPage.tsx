@@ -338,7 +338,7 @@ function Facts({ p }: { p: AppPageProps }) {
   const { a, entry, usage, disk, days, backup: o, on } = p;
   const url = a.address ? 'https://' + a.address : a.url || '';
   const reach = entry?.public ? 'At home, and on the internet through the Cloudflare Tunnel'
-    : a.address ? 'At home and on your tailnet, not on the internet' : 'On this machine only';
+    : a.address ? 'At home and on your own private network, not on the internet' : 'On this machine only';
   const seen = { watching: p.watching, stopped: a.state === 'stopped' };
   const [weekValue] = weekWords(days, p.outages, Date.now(), seen);
   const late = o && !never(o.lastRun) && Date.now() - new Date(o.lastRun).getTime() > (o.staleAfterHours || 30) * 36e5;

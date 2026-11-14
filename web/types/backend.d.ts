@@ -19,6 +19,7 @@ declare namespace api {
     login?: string[];
     public: boolean;
     warning?: string;
+    next?: string;
     macApp?: boolean;
     phone?: string;
     replaces?: string[];
@@ -107,6 +108,7 @@ declare namespace api {
     id: string;
     name: string;
     url?: string;
+    next?: string;
   }
   interface Status {
     apps: api.AppStatus[];

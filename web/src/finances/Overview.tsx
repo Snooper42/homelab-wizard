@@ -74,6 +74,35 @@ export interface OverviewProps {
   phone?: boolean;
 }
 
+/**
+ * The three things a plan starts with (usability task 15, item 1): each row
+ * ticked once it's there ("✓ Example Checking"), its button gone; the card
+ * goes only once all three are there.
+ */
+function StartThree({ v, add }: { v: finance.View; add: NonNullable<OverviewProps['add']> }) {
+  const acct = (v.plan.accounts || []).find((a) => a.kind === 'checking');
+  const person = (v.plan.people || [])[0];
+  const bill = (v.plan.payments || [])[0];
+  const row = (done: string, lead: preact.ComponentChildren, title: string, sub: string, label: string, onAdd: () => void) => (
+    <Row lead={lead} title={done ? `✓ ${done}` : title} sub={done ? 'Done' : sub} end={done ? undefined : <button class="small" onClick={onAdd}>{label}</button>} />
+  );
+  return (
+    <Widget title="Start with three things" span="all" kind="finstart">
+      <Rows kind="fx-rows">
+        {row(acct?.name || '', <Mark kind="checking" name="Checking" />, 'Your checking account', 'Where paychecks land and bills come out', 'Add an account', () => add('account', 'checking'))}
+        {row(person ? `${person.name}'s paycheck` : '', <Mark kind="savings" name="Pay" />, 'Who gets paid, and when', 'Every other Friday, the 26th, twice a month', 'Add a paycheck', () => add('person'))}
+        {row(bill?.name || '', <Mark kind="home" name="Bills" />, 'What comes out each month', 'The mortgage, the car, subscriptions, a card\u2019s balance', 'Add a payment', () => add('payment'))}
+      </Rows>
+    </Widget>
+  );
+}
+
+/**
+ * Whether a plan is past its start: a paycheck and a payment are in. A
+ * missing checking account after that is the note's to say, as before.
+ */
+const startedThree = (v: finance.View) => !!v.plan.people?.length && !!v.plan.payments?.length;
+
 export function Overview({ v, L, sel, pick, add, edit, setSince, keep, ledger, openWorth, openSubscriptions, openRecurring, openTransactions, openCalendar, openPay, openAccount, showIn, phone }: OverviewProps) {
   // The period bar: by paycheck (now and the paychecks ahead, the plan's; before now, what happened, from the ledger)
   // or by month (before this one from the ledger, this one so far and then the plan, after it the plan).
@@ -100,19 +129,13 @@ export function Overview({ v, L, sel, pick, add, edit, setSince, keep, ledger, o
   const spentDays = month ? (month.when === 'past' ? { from: month.start, to: month.last } : undefined) : was && { from: was.start, to: was.last };
   if (!v.plan.accounts?.length && !v.plan.people?.length && !add) return <div class="fin"><Card kind="finstart"><Empty>Nothing typed in yet: Finances are filled in on the computer, or on a phone allowed to change them.</Empty></Card></div>;
   if (!v.plan.accounts?.length && !v.plan.people?.length) {
-    return (
-      <div class="fin"><div class="fx-board"><Widget title="Start with three things" span="all" kind="finstart">
-        <Rows kind="fx-rows">
-          <Row lead={<Mark kind="checking" name="Checking" />} title="Your checking account" sub="Where paychecks land and bills come out" end={<button class="small" onClick={() => add('account', 'checking')}>Add an account</button>} />
-          <Row lead={<Mark kind="savings" name="Pay" />} title="Who gets paid, and when" sub="Every other Friday, the 26th, twice a month" end={<button class="small" onClick={() => add('person')}>Add a paycheck</button>} />
-          <Row lead={<Mark kind="home" name="Bills" />} title="What comes out each month" sub="The mortgage, the car, subscriptions, a card's balance" end={<button class="small" onClick={() => add('payment')}>Add a payment</button>} />
-        </Rows>
-      </Widget></div></div>
-    );
+    return <div class="fin"><div class="fx-board"><StartThree v={v} add={add} /></div></div>;
   }
   return (
     <div class="fin">
-      {!v.checking && (
+      {add && !startedThree(v) && <div class="fx-board"><StartThree v={v} add={add} /></div>}
+      {/* The three things say it while they show; otherwise the note does (on a phone that only looks too). */}
+      {!v.checking && !(add && !startedThree(v)) && (
         <Card kind="finnote" role="status">
           <Mark kind="checking" name="Checking" />
           <span class="grow"><strong>No checking account yet.</strong> Paychecks land in it and payments come out of it, so until there is one every balance below reads $0.00.</span>
