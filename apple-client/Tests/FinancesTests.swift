@@ -267,6 +267,9 @@ struct ReceiptTests {
         #expect(!ReceiptCodec.isValidName("../etc/passwd"))
         #expect(!ReceiptCodec.isValidName("0123456789abcdef0123456789abcdef.svg"))
         #expect(!ReceiptCodec.isValidName("short.jpg"))
+        // A member's private receipt, as the computer names a sealed one.
+        #expect(ReceiptCodec.isValidName("0123456789abcdef0123456789abcdef.sealed"))
+        #expect(!ReceiptCodec.isValidName("0123456789abcdef.sealed"))
     }
 
     @Test func showsImagesAndPDFs() {

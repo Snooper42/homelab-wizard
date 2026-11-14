@@ -58,7 +58,7 @@ Two parts are its own: **Finances**, the household's money paycheck by paycheck,
 <tr>
 <td width="50%" valign="top"><a href="docs/Tour.md#status"><strong>Status</strong></a><br>Every app on the computer, live: what runs, what needs a look, and one button to open or start each.<br><br><picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-status-dark.png">
-  <img alt="Status: 21 of 22 apps running, one that needs a look, and each category folded into one line" src="docs/images/app-status.png">
+  <img alt="Status: all 22 apps running, nothing that needs a look, and each category folded into one line" src="docs/images/app-status.png">
 </picture></td>
 <td width="50%" valign="top"><a href="docs/Tour.md#an-apps-page"><strong>An app's page</strong></a><br>Restart it, read its log in plain words (explained by the AI on this computer), and undo an update.<br><br><picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-page-dark.png">
@@ -213,31 +213,11 @@ A small private cloud on a computer at home. It does the jobs you would otherwis
 | Run the lights, locks, sensors, and cameras | Home Assistant, Frigate | each device's own cloud app |
 | Reach everything while away, with ads blocked | Tailscale, AdGuard Home | a VPN, NextDNS |
 
-…and [60-odd more](#what-runs). The apps are free; Homelab Wizard is the part that sets them up, connects them, backs them up every night (and proves a restore works), updates them overnight with a one-click undo, restarts what hangs, alerts your phone, and gives each person in the household one sign-in. Used to the full, it can replace about **$4,487 a year** in subscriptions ([what it saves](#more)).
+…and [60-odd more](#what-runs). The apps are free; Homelab Wizard is the part that sets them up, connects them, backs them up every night (and proves a restore works), updates them overnight with a one-click undo, restarts what hangs, alerts your phone, and gives each person in the household one sign-in. Used to the full, it can replace about **$4,487 a year** in subscriptions ([what it saves](docs/Savings.md)).
 
 ## Everyday tasks
 
-Each in the app, then the same from a terminal in the homelab folder (`homelab.cmd` on Windows).
-
-| To… | In the app | In a terminal | More |
-|---|---|---|---|
-| Add an app | Choose apps › tick it › **Install** | `./homelab install <app>` | [Services](docs/Services.md) |
-| Open an app on a phone | Status › the app's page › **Open on a phone** (a QR code) | `./homelab status` lists the addresses | [Inventory](docs/Inventory.md) |
-| Put right what is down | Status › **Fix it** (the plan first) | `./homelab fix` | [Troubleshooting](docs/Troubleshooting.md) |
-| Read an app's log, in plain words | Status › the app's page › its log › **Explain this** | `./homelab logs <app> --explain` | [Monitoring](docs/Monitoring.md) |
-| Update an app now, or undo an update | The app's page › **Check for an update**, or **Roll back** | `./homelab update <app>`, `./homelab rollback <app>` | [Automation](docs/Automation.md#nightly-updates-the-background-agent) |
-| Pause the nightly updates | Status › *Nightly updates* › **Pause** | `./homelab updates pause` (and `resume`) | [Automation](docs/Automation.md) |
-| See what's left after each paycheck | **Finances** in the sidebar (on a phone too, once allowed in Settings › Phones) | — | [Phone companion](<services/system/Phone companion.md>) |
-| File a download into the right library, or free space | **Tidy Up** › Inbox › **Tidy up now**, or a library's tab | `./homelab media inbox --apply`, `./homelab media <library> scan` | [Tidy Up](<docs/Tidy Up.md>) |
-| Back up now, or prove a restore works | Backups › **Back up now**, **Test a restore** | `./homelab backup --apply`, `./homelab restore-test --auto` | [Backups](docs/Backups.md) |
-| Update Homelab Wizard and the homelab | **Update now** on the line at the top of the window | `./homelab upgrade` | [Upgrading](docs/Upgrading.md) |
-| Add someone in the household | Settings › **People** › **Add a person** | `./homelab person add "Anna Smith" --email anna@example.com` | [Pocket ID](<services/security/Pocket ID.md>) |
-| Pair a phone (the Homelab app, or its browser) | Settings › **Phones** › **Pair a phone**, then scan the QR code from the Homelab app | `./homelab phone pair` | [Phone companion](<services/system/Phone companion.md>) |
-| Use a domain of your own | Settings › `HOMELAB_DOMAIN`, then the new steps on Setup | `./homelab domain setup` | [Getting Started](docs/Getting%20Started.md#later-a-domain-of-your-own) |
-| Move to a new computer | Backups › **Moving to a new machine** › **Move out…** | `./homelab move out --to <file>`, then `move in` there | [Disaster Recovery](docs/Disaster%20Recovery.md#scenario-moving-to-a-new-machine) |
-| Rebuild a lost computer from the backups | Install the app on the new one, then in a terminal | `./homelab rebuild <backup folder>` | [Disaster Recovery](docs/Disaster%20Recovery.md#scenario-full-mac-rebuild) |
-| Print the recovery kit | Backups › **Recovery kit** | `./homelab recovery-kit` | [Disaster Recovery](docs/Disaster%20Recovery.md) |
-| Ask for help | Settings › This Mac › **Make a diagnostics report** | `./homelab report` | [Getting help](#getting-help) |
+Adding an app, opening one on a phone, fixing what's down, updating or undoing an update, backing up and testing a restore, adding a person, moving to a new computer: each one in the app and the same from a terminal, in [Everyday tasks](docs/Everyday%20Tasks.md). Adding your own app, every command, and taking the homelab off a machine are there too.
 
 ## Questions
 
@@ -427,160 +407,6 @@ Over 70 apps in nine categories: the baseline ones start with the homelab, the r
 
 </details>
 
-## More
-
-<details>
-<summary><strong>What it saves, by category</strong></summary>
-
-| Stack | Replaces | Monthly | Annual plan | Paid monthly for a year |
-|---|---|---:|---:|---:|
-| Network | 2 services | $11.99 | $115.90 | $143.88 |
-| Security | 5 services | $57.98 | $559.87 | $695.76 |
-| System | 2 services | $16.00 | $183.00 | $192.00 |
-| Cloud & Files | 3 services | $29.98 | $323.76 | $359.76 |
-| Documents | 5 services | $74.97 | $697.75 | $899.64 |
-| Finance | 3 services | $33.31 | $248.99 | $399.72 |
-| Media | 14 services | $205.82 | $2,137.94 | $2,469.84 |
-| Media Automation | 1 service | $5.00 | $60.00 | $60.00 |
-| Household | 4 services | $17.19 | $159.87 | $206.28 |
-| **Everything** | **39 services** | **$452.24** | **$4,487.08** | **$5,426.88** |
-
-Each saving is tagged **Direct** (the app does the same job), **Library** (needs media you own), or **Equivalent** (a paid product with the same function). Every row, with its condition and price source: [Savings](docs/Savings.md). US list prices before tax, checked October 2026.
-
-</details>
-
-<details>
-<summary><strong>How it fits together</strong></summary>
-
-Home mode (the default, no domain):
-
-```text
-Your phones and computers, anywhere ─► Tailscale (private) ─► Tailscale Serve on the homelab computer ─► each app, at https://homelab.<tailnet>.ts.net:<port>
-```
-
-With a domain of your own:
-
-```text
-Internet ─► Cloudflare ─► Tunnel (outbound only) ─┐
-                                                  ▼
-LAN ─► AdGuard (*.example.com → this computer) ─► Nginx Proxy Manager + CrowdSec ─► app by service name
-                                                  │
-             Docker, one shared "homelab" network ┘   Jellyfin and the phone companion run on the computer itself
-Tailscale devices, anywhere ─► tailnet ─► the same proxy (and AdGuard, with ad blocking on the tailnet)
-```
-
-| Piece | Where |
-|---|---|
-| `compose.yaml` | Categories, presets, and native apps |
-| `compose/<category>.yaml` | The platform and single-container apps: one Compose project per category (`homelab_network`, `homelab_media`, …), grouped that way in Docker |
-| `stacks/<name>/compose.yaml` | Apps with their own database or helpers, one project each: Immich, Paperless-ngx, MoneyMatter (`budget-tracker`), the Cloudflare Tunnel, and the optional stacks (Nextcloud, Firefly III, Frigate, and the rest) |
-| `dockerfiles/npm-crowdsec/` | Nginx Proxy Manager with CrowdSec's Lua bouncer built in |
-| `cmd/`, `internal/` | The `homelab` CLI (Go, single binary, no runtime) |
-| `app/`, `web/` | The desktop app (Wails) and its TypeScript and Preact frontend, which the phone companion shares |
-| `tools/media/` | Tidy Up's engines (Python): music, books, films, TV, audiobooks, the inbox, and the nightly sweep |
-| `apple-client/` | The native iPhone and iPad app (SwiftUI), built with Xcode on your own Mac |
-| `mobile/finance/` | Finances' projection for a phone that keeps a member's Finances sealed (WebAssembly and an iOS framework) |
-| `docs/`, `services/` | The knowledge base: one note per app, Obsidian-friendly |
-
-See [Architecture](docs/Architecture.md) and [Decisions](docs/Decisions.md).
-
-</details>
-
-<details>
-<summary><strong>Adding your own app, or one to the catalog</strong></summary>
-
-The quick way, for any container image: **Add your own app** at the bottom of the app's Choose apps screen, or
-
-```bash
-./homelab custom add wiki --image ghcr.io/requarks/wiki:2 --port 3000 --volume /wiki/data --install
-```
-
-It goes into `stacks/custom/compose.yaml` with the same metadata as the catalog, a free port, an address on your tailnet (or `https://wiki.example.com` with a domain), and its folders under `data/appdata/wiki`, which the nightly backup already covers. Like `.env`, the custom stack is yours alone: git ignores it, so `git pull` keeps working. `./homelab custom` lists your apps; `./homelab custom remove wiki` takes one out (its data stays).
-
-**Adding an app to the catalog itself** (with its note, bundles, and wiring):
-
-```yaml
-  myapp:
-    <<: *service
-    image: example/myapp:latest
-    profiles: [optional]
-    ports:
-      - ${BIND_IP:-127.0.0.1}:${MYAPP_PORT:-8123}:8080
-    volumes:
-      - ./data/appdata/myapp:/config
-    x-homelab:
-      name: My App
-      category: documents
-      description: What it is for
-      subdomain: myapp
-      web: 8080
-```
-
-```bash
-./homelab docs && make check          # creates its note, checks everything
-./homelab install myapp               # starts it
-./homelab domain setup                # with a domain: https://myapp.example.com
-```
-
-Multi-container apps get their own `stacks/<name>/` folder. The full guide and checklist are in [Contributing](docs/Contributing.md).
-
-</details>
-
-<details>
-<summary><strong>Commands</strong></summary>
-
-```bash
-./homelab                       # interactive menu
-./homelab help                  # every command
-./homelab status                # what runs, health, addresses
-./homelab doctor                # anything wrong with this machine, the runtime, disk space, or .env
-./homelab install '*-arr'       # slot in apps by name, alias, bundle, or category
-./homelab update <app>          # what is new first, then dump its database, pull (or rebuild), and recreate
-./homelab updates notes <app>   # the release notes newer than the version it runs
-./homelab rollback <app>        # back to the image before its last update
-./homelab fix                   # restart what is down or unwell, apply changed settings, reconnect the proxy to CrowdSec
-./homelab logs <app> --explain  # what its log says, in plain words, from the Ollama on this machine
-./homelab upgrade               # the newest homelab files, then up (the app's Update now)
-./homelab tailnet setup         # Home mode: every app's address on the tailnet (signs in if needed)
-./homelab domain setup          # with a domain: proxy hosts, LAN DNS, certificate, tunnel hostnames
-./homelab domain resolver       # with a domain: this machine finds every app by name
-./homelab backup                # database dumps, volume archives, .env copy
-./homelab watchdog              # every app and address checked, a hung app restarted, ntfy alerts
-./homelab digest                # this week's summary, as on Status
-./homelab media                 # Tidy Up: each library, and the engines (music, books, movies, tv, audiobooks)
-./homelab schedule install      # the background agent (launchd, systemd, or the Windows Run key)
-./homelab person add "Anna Smith" --email anna@example.com   # an account, a welcome page, a start-page tab
-./homelab sso setup             # the apps sign in with Pocket ID
-./homelab phone pair            # the phone companion
-./homelab export                # everyone's data in open formats, in one folder
-./homelab move out              # to a new machine (then move in there)
-./homelab rebuild <folder>      # the machine is lost: everything back from Duplicati's backups
-./homelab report                # a diagnostics file to share, every secret removed
-./homelab compose immich ps     # docker compose for any project
-```
-
-Commands that change something show a plan first and ask (or need `--apply` when not in a terminal). `--json` gives one object per line, each with `"schema": 1`, for scripts and apps. Full list, with how to pick apps (`@arr`, `cat:media`, `--exclude`): [Commands](docs/Commands.md).
-
-</details>
-
-<details>
-<summary><strong>Uninstalling</strong></summary>
-
-In the app: Settings › This Mac (*This PC*, *This machine*) › **Take the homelab off this machine**. Tick what else goes, **Review what goes…** shows the plan, and nothing happens until you type `uninstall` (`delete everything` with the last box ticked). The same from a terminal:
-
-```bash
-./homelab uninstall                    # the plan first; --apply removes the containers, images (the update undo copies too), scheduled jobs, and the tray icon at login
-./homelab uninstall --data             # ...and the apps' data, and signs this machine's homelab out of the tailnet
-./homelab uninstall --folder           # ...and the whole homelab folder, .env included (print the recovery kit first)
-./homelab uninstall --backups          # ...and the backups on this machine; a backup folder in a cloud drive always stays
-./homelab uninstall --app              # ...and Homelab Wizard itself, with its settings and downloads
-./homelab uninstall --everything-else  # ...and every other container, image, and volume in the runtime, the homelab's or not
-```
-
-Combine them as you like (`--folder --backups --app` takes everything of the homelab off). In a terminal, `--folder`, `--backups`, and `--everything-else` are typed out before anything goes. The media drive is never touched, `--folder` alone keeps the backups inside the folder (`./backups` by default), `--backups` deletes only the backups' own files and folders (anything else on a backup drive stays), and a backup folder in a cloud drive (Proton Drive, iCloud Drive, Google Drive, OneDrive, Dropbox) is never deleted: another machine's homelab may use it, and the deletion would sync. `--app` moves the app to the Trash on a Mac, runs its uninstaller on Windows (Windows asks for approval), deletes the AppImage, or names the package command on Linux (it needs your password). With a domain, `./homelab domain resolver --undo` takes back this machine's name lookups first. The container runtime itself stays; the last lines say how to remove it.
-
-</details>
-
 ## Getting help
 
 **Fix it** on Status (or `./homelab fix`) puts right what usually goes wrong. Otherwise see [Troubleshooting](docs/Troubleshooting.md) and [Known Issues](docs/Known%20Issues.md), then make a diagnostics report (Settings › This Mac › **Make a diagnostics report**, or `./homelab report`; passwords and tokens are removed), read it, and attach it to a [bug report](https://github.com/Snooper42/homelab-wizard/issues/new/choose). Never paste `.env`, a token, or a password. A security problem goes privately instead ([SECURITY.md](SECURITY.md)).
@@ -591,7 +417,7 @@ Combine them as you like (`--folder --backups --app` takes everything of the hom
 |---|---|
 | Set it up, step by step, without code | [Getting Started](docs/Getting%20Started.md) |
 | Fix something | [Troubleshooting](docs/Troubleshooting.md), [Known Issues](docs/Known%20Issues.md) |
-| Run it day to day | [Runbooks](docs/Runbooks.md), [Backups](docs/Backups.md), [Monitoring](docs/Monitoring.md), [Automation](docs/Automation.md), [Tidy Up](docs/Tidy%20Up.md) |
+| Run it day to day | [Everyday tasks](docs/Everyday%20Tasks.md), [Runbooks](docs/Runbooks.md), [Backups](docs/Backups.md), [Monitoring](docs/Monitoring.md), [Automation](docs/Automation.md), [Tidy Up](docs/Tidy%20Up.md) |
 | Recover from a lost machine, or move to a new one | [Disaster Recovery](docs/Disaster%20Recovery.md) |
 | Look up an app, an address, or a setting | [Services](docs/Services.md), [Inventory](docs/Inventory.md), [Environment](docs/Environment.md), [Commands](docs/Commands.md) |
 | Understand how it works | [Architecture](docs/Architecture.md), [Networking](docs/Networking.md), [Security](docs/Security.md), [Storage](docs/Storage.md), [Host](docs/Host.md) |
