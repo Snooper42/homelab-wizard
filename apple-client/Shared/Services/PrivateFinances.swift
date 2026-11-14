@@ -299,6 +299,28 @@ final class PrivateFinances {
         return try APIClient.financesRead(from: encoder.encode(JSONValue.object(["result": .object(v)])))
     }
 
+    /// A day's reminders, from her own Finances.
+    struct DayReminders: Equatable, Sendable {
+        let day: String
+        let reminders: [FinanceProjection.Reminder]
+    }
+
+    /// What Finances would tell her on each of the next `days` days from
+    /// start (start first), worked out on this phone with the computer's own
+    /// code; none while locked, or in a build without it.
+    func reminders(days: Int, from start: Date = Date(), calendar: Calendar = .current) -> [DayReminders] {
+        guard state == .open, let p = try? JSONEncoder().encode(plan), let l = try? JSONEncoder().encode(ledger) else { return [] }
+        var out: [DayReminders] = []
+        for n in 0..<days {
+            guard let d = calendar.date(byAdding: .day, value: n, to: start) else { continue }
+            let day = FinancePlanEdit.todayString(d, calendar: calendar)
+            if let r = try? FinanceProjection.reminders(plan: p, ledger: l, day: day), !r.isEmpty {
+                out.append(DayReminders(day: day, reminders: r))
+            }
+        }
+        return out
+    }
+
     /// Her ledger, as the computer would have answered `FinancesLedger`.
     func financesLedger() throws -> LedgerRead {
         guard state == .open, let envelope else { throw Problem.locked }

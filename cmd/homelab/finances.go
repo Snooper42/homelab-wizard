@@ -4,48 +4,16 @@ import (
 	"context"
 	"crypto/subtle"
 	"encoding/json"
-	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/Snooper42/homelab-wizard/internal/finance"
 	"github.com/Snooper42/homelab-wizard/internal/notify"
 )
 
-// currencySigns are the signs Finances writes amounts with; another code
-// is written before the amount ("CHF 12.00").
-var currencySigns = map[string]string{"USD": "$", "CAD": "CA$", "AUD": "A$", "NZD": "NZ$", "EUR": "€", "GBP": "£", "JPY": "¥", "INR": "₹", "MXN": "MX$"}
-
-// moneyIn writes an amount as Finances' screen does, in a plan's currency:
-// "$1,234.56", "−$12.00".
-func moneyIn(code string) func(float64) string {
-	code = strings.ToUpper(code)
-	if code == "" {
-		code = "USD"
-	}
-	sign, ok := currencySigns[code]
-	if !ok {
-		sign = code + " "
-	}
-	return func(n float64) string {
-		minus := ""
-		if n < -0.005 {
-			minus, n = "−", -n
-		}
-		whole := fmt.Sprintf("%.2f", n)
-		units, cents := whole[:len(whole)-3], whole[len(whole)-3:]
-		var b strings.Builder
-		for i, c := range units {
-			if i > 0 && (len(units)-i)%3 == 0 {
-				b.WriteByte(',')
-			}
-			b.WriteRune(c)
-		}
-		return minus + sign + b.String() + cents
-	}
-}
+// moneyIn writes an amount as Finances' screen does (finance.MoneyIn).
+var moneyIn = finance.MoneyIn
 
 // financeView is Finances read forward for today, and its money writer;
 // ok is false with no plan typed in yet.
@@ -63,14 +31,7 @@ func (h *homelab) financeView(now time.Time) (finance.View, func(float64) string
 	if err != nil {
 		l = finance.Ledger{}
 	}
-	money := moneyIn(p.Currency)
-	// Hide amounts covers the phones' alerts too: a lock screen shows
-	// them, and ntfy keeps them.
-	if p.HideAmounts {
-		sign := strings.TrimSuffix(money(0), "0.00")
-		money = func(float64) string { return sign + "•••" }
-	}
-	return finance.ProjectWith(p, l, now, finance.Ahead), money, true
+	return finance.ProjectWith(p, l, now, finance.Ahead), finance.AlertMoney(p), true
 }
 
 // sendFinanceReminders sends what Finances has to tell the household today

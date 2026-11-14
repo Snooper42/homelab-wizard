@@ -40,7 +40,7 @@ Her phone keeps the locked copy it last read (only ever locked, never her key). 
 - **Can't:** open them, read them, or see any amount, account, payee or receipt of hers, on the computer, in a backup, a log or the record of who changed what.
 - **Can see:** that she keeps them private, and when they were last saved (Settings › People, and `homelab person list`).
 - **Can delete them:** removing her from the household (`homelab person remove`) asks whether to keep her Finances, and keeps them unless told otherwise (`--delete-finances`). Deleting them can't be undone.
-- **No longer does for her:** the nightly Finances reminders, the Finances calendar feed, and the money card on a wall screen. The computer can't read her Finances to make them.
+- **No longer does for her:** the nightly Finances reminders, the Finances calendar feed, and the money card on a wall screen. The computer can't read her Finances to make them. The Homelab app on her phone gives her the same reminders itself (a bill due tomorrow, a paycheck that leaves checking under her cushion, a yearly renewal, balances not updated for weeks), worked out on her phone with the computer's own code each time she opens her Finances, and planned two weeks ahead.
 
 ## The phone's page has one limit
 

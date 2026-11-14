@@ -287,6 +287,45 @@ struct PrivateFinancesTests {
         #expect(PrivateAwayLine.words(since: at, waiting: 3, now: now, calendar: calendar, locale: locale).hasSuffix("3 changes wait for the Homelab."))
     }
 
+    /// Her reminders, worked out on her phone with the computer's own code
+    /// (the computer can't read hers to send them), and planned as this
+    /// device's notifications: today's once, later days' at 9 AM.
+    @Test("Her reminders come from her own Finances, on her phone")
+    func reminders() async throws {
+        guard FinanceProjection.available else { return }
+        let computer = SealedComputer()
+        let mine = PrivateFinances(username: "riley", mayChange: true, calls: computer, today: { "2026-11-13" })
+        let withABill = #"{"currency":"USD","people":[],"accounts":[{"id":"chk","name":"Made-up Checking","kind":"checking","balance":900,"updated":"2026-11-13"}],"payments":[{"id":"power","name":"Made-up Power","amount":95,"schedule":{"every":"month","start":"2026-11-18"},"kind":"utilities"}]}"#
+        try await mine.turnOn(plan: json(withABill), ledger: json(#"{"transactions":[]}"#), code: PrivateSeal.newCode(), passkey: passkey) { _ in receiptURL }
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "America/New_York")!
+        let start = Date(timeIntervalSince1970: 1_794_600_000) // Nov 13, 2026, Eastern
+        let days = mine.reminders(days: 14, from: start, calendar: calendar)
+        let dayBefore = try #require(days.first { $0.day == "2026-11-17" }, "the day before the bill: \(days)")
+        #expect(dayBefore.reminders.contains { $0.kind == "due" && $0.title.contains("Made-up Power") && $0.title.contains("$95.00") })
+
+        let planned = PrivateReminders.planned(days, today: "2026-11-13", shownDay: nil)
+        let due = try #require(planned.first { $0.title.contains("Made-up Power") })
+        #expect(due.id.hasPrefix(PrivateReminders.prefix))
+        #expect(due.at == DateComponents(year: 2026, month: 11, day: 17, hour: 9))
+
+        mine.lock()
+        #expect(mine.reminders(days: 14, from: start, calendar: calendar).isEmpty, "none while locked")
+    }
+
+    @Test("Today's reminders are shown once a day; past days never")
+    func plannedOnce() {
+        let r = [FinanceProjection.Reminder(kind: "due", title: "Due tomorrow: Made-up Rent $900.00", body: "It comes out tomorrow.")]
+        let days = [PrivateFinances.DayReminders(day: "2026-11-12", reminders: r),
+                    PrivateFinances.DayReminders(day: "2026-11-13", reminders: r),
+                    PrivateFinances.DayReminders(day: "2026-11-20", reminders: r + r)]
+        let first = PrivateReminders.planned(days, today: "2026-11-13", shownDay: "2026-11-12")
+        #expect(first.map(\.id) == ["private-finances-2026-11-13-0", "private-finances-2026-11-20-0", "private-finances-2026-11-20-1"])
+        #expect(first[0].at == nil, "today's at once")
+        let again = PrivateReminders.planned(days, today: "2026-11-13", shownDay: "2026-11-13")
+        #expect(again.map(\.id) == ["private-finances-2026-11-20-0", "private-finances-2026-11-20-1"])
+    }
+
     @Test("The computer's words for a stale save are known")
     func staleWords() {
         #expect(PrivateFinances.changedElsewhere(APIError.server(status: 500, message: "Finances were changed on another device after this was read.")))

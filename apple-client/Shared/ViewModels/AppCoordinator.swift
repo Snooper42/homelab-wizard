@@ -268,6 +268,7 @@ final class AppCoordinator {
         // The Finances kept for offline go with the pairing (and their key, with the credential).
         OfflineFinances.onThisDevice.forget()
         PrivateOffline.onThisDevice.forget()
+        Task { await PrivateReminders.cancel() }
         do {
             try keychain.deleteCredential()
         } catch {

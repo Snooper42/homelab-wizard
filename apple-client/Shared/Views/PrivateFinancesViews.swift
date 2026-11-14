@@ -263,7 +263,7 @@ struct MakePrivateSheet: View {
                         Text("You’ll get a recovery code: 16 words to write down. With it, or your passphrase, they open on a new phone too.")
                         Text("If you lose both the code and your passphrase, no one can open them, ever.")
                             .fontWeight(.semibold)
-                        Text("What the household shares with you still shows, as now. The Homelab stops its reminders and its calendar for your Finances; this phone can’t remind you yet.")
+                        Text("What the household shares with you still shows, as now. The Homelab stops its reminders and its calendar for your Finances: this app reminds you itself instead (a bill due tomorrow, a paycheck under your cushion), planned each time you open them.")
                             .foregroundStyle(Theme.secondaryInk)
                     }
                 case .code:
