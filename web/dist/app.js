@@ -7141,8 +7141,8 @@
           ] }) : "None yet",
           sub: !copies.length ? "The first are made the night after an app with a database starts" : stale.length || paused.length ? /* @__PURE__ */ u3(S, { children: [
             !!stale.length && /* @__PURE__ */ u3("span", { class: "bad", children: [
-              "Stale: ",
-              stale.map((c4) => c4.name).join(", ")
+              "Out of date: ",
+              stale.map((c4) => `${c4.name}, last copied ${ago(c4.newest)}`).join("; ")
             ] }),
             !!paused.length && /* @__PURE__ */ u3("span", { children: `${paused.length} more paused: ${paused.length === 1 ? "its app waits" : "their apps wait"} for ${drivesOf(paused)}` })
           ] }) : `Each under ${o3.staleAfterHours} hours old`
@@ -7169,7 +7169,7 @@
     const paused = of("paused"), none2 = of("none");
     const oldest = paused.filter((c4) => !never(c4.newest)).map((c4) => c4.newest).sort()[0];
     return [
-      { key: "stale", label: "Stale", tone: "bad", copies: of("stale"), note: "" },
+      { key: "stale", label: "Out of date", tone: "bad", copies: of("stale"), note: "" },
       { key: "fresh", label: "Up to date", tone: "ok", copies: of("fresh"), note: "" },
       {
         key: "paused",

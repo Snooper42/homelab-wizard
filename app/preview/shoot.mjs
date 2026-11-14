@@ -139,9 +139,9 @@ const dumped = [['nginx-proxy-manager', 'Nginx Proxy Manager', 182e3], ['vaultwa
 const backups = {
   destination: '~/Library/CloudStorage/ProtonDrive-you@proton.me-folder/homelab-backups', destinationOK: true,
   lastRun: hoursAgo(7.4), envCopied: hoursAgo(7.4), stale: 1, paused: 2, restoreDue: false, staleAfterHours: 26,
-  restoreTest: { lastTest: hoursAgo(12 * 24), lastSummary: '12 of 12 sampled files identical', history: [
-    { when: hoursAgo(43 * 24), seconds: 212, passed: true, summary: '12 of 12 sampled files identical', job: 'Homelab AppData' },
-    { when: hoursAgo(12 * 24), seconds: 187, passed: true, summary: '12 of 12 sampled files identical', job: 'Homelab AppData' },
+  restoreTest: { lastTest: hoursAgo(12 * 24), lastSummary: '12 files checked, all the same as now', history: [
+    { when: hoursAgo(43 * 24), seconds: 212, passed: true, summary: '12 files checked, all the same as now', job: 'Homelab AppData' },
+    { when: hoursAgo(12 * 24), seconds: 187, passed: true, summary: '12 files checked, all the same as now', job: 'Homelab AppData' },
   ] },
   vaultExport: hoursAgo(9 * 24), vaultDue: false,
   copies: [
@@ -159,7 +159,7 @@ const duplicatiJobs = [
   // What its last run was (Duplicati's metadata): Photos' is the long one.
   ...(name === 'Homelab Photos' ? { took: 2460, holds: '301.2 GB', files: 48211, versions: 9, sources: ['/source/photos/library/', '/source/photos/upload/'] }
     : name === 'Homelab AppData' ? { took: 212, holds: '3.6 GB', files: 18342, versions: 14, sources: ['/source/appdata/'] } : {}) }));
-const cliLog = { remove: ['Remove the containers for %s? App data on disk is kept.'], 'update-all': ['These 3 apps have updates: Navidrome, Vikunja, Mealie.', '→ dumping mealie-db first', 'Updated: Navidrome 0.53.3 → 0.54.0.', 'Already up to date: Vikunja, Mealie.'], backup: ['→ dump vaultwarden → recovery-staging/databases/vaultwarden', '✓ vaultwarden: vaultwarden-20261010-091502.sqlite.gz (96 KB)', '✓ immich-database: immich-database-20261010-091503.sql.gz (58.2 MB)', '✓ .env copied and verified'], upgrade: ['Homelab files', '  → 3 change(s) on origin/main:', '  ✓ now at origin/main', 'Start the homelab', '  ✓ nothing to change'], fix: ['Fix it', '  • restart the apps that are unwell, and recreate any that stay unwell: Navidrome', '  ✓ done; homelab doctor checks the rest'], 'restore-test': ['→ asking Duplicati to restore 12 file(s) from "Homelab AppData" into recovery-staging/restore-test', '✓ 12 of 12 sampled files identical'], 'restore-test-kopia': ['→ restoring 12 file(s) from Kopia\'s newest snapshot into recovery-staging/restore-test', '✓ 12 of 12 sampled files identical'] };
+const cliLog = { remove: ['Remove the containers for %s? App data on disk is kept.'], 'update-all': ['These 3 apps have updates: Navidrome, Vikunja, Mealie.', '→ dumping mealie-db first', 'Updated: Navidrome 0.53.3 → 0.54.0.', 'Already up to date: Vikunja, Mealie.'], backup: ['→ dump vaultwarden → recovery-staging/databases/vaultwarden', '✓ vaultwarden: vaultwarden-20261010-091502.sqlite.gz (96 KB)', '✓ immich-database: immich-database-20261010-091503.sql.gz (58.2 MB)', '✓ .env copied and verified'], upgrade: ['Homelab files', '  → 3 change(s) on origin/main:', '  ✓ now at origin/main', 'Start the homelab', '  ✓ nothing to change'], fix: ['Fix it', '  • restart the apps that are unwell, and recreate any that stay unwell: Navidrome', '  ✓ done; homelab doctor checks the rest'], 'restore-test': ['→ asking Duplicati to restore 12 file(s) from "Homelab AppData" into recovery-staging/restore-test', '✓ 12 files checked, all the same as now'], 'restore-test-kopia': ['→ restoring 12 file(s) from Kopia\'s newest snapshot into recovery-staging/restore-test', '✓ 12 files checked, all the same as now'] };
 const alerts = [
   { id: 'a1', time: hoursAgo(0.6), topic: 'tunnel-watchdog', title: 'Homelab: recovered', message: 'photos.example.com answering again', tags: ['white_check_mark'] },
   { id: 'a2', time: hoursAgo(1.1), topic: 'tunnel-watchdog', title: 'Homelab: restarted an app that hung', message: 'vikunja\nUnwell on two checks in a row, so the watchdog restarted it (once in 6 hours at most; Settings › Notifications › Restart an app that stops answering turns this off).', tags: ['arrows_counterclockwise'] },
@@ -4378,6 +4378,17 @@ const smokes = [
       await page.keyboard.press('Tab');
       if (!(await row.locator('.links-inline').evaluate((l) => l.contains(document.activeElement)))) throw new Error(`Tab went past ${await row.locator('strong').first().textContent()}'s links`);
     }
+  } },
+  // Usability task 5, item 23: Backups in plain words: a copy days old says how old, not "Stale"; the restore test
+  // says what it checked, not "sampled"; the engine's page is Browse the backups, not Open Duplicati.
+  { name: 'Backups in plain words: out of date by how old, files checked, Browse the backups', screen: 'backups', run: async (page) => {
+    await page.waitForSelector('#copiesTile', { timeout: 5000 });
+    await page.waitForTimeout(300);
+    const text = await page.$eval('#backups', (e) => e.innerText);
+    const bad = text.match(/\bStale\b|sampled|Open Duplicati/i);
+    if (bad) throw new Error(`Backups says "${bad[0]}"`);
+    if (!/Out of date: Mealie, last copied 3 days ago/.test(text)) throw new Error('the out-of-date copy doesn’t say how old');
+    if (!/12 files checked, all the same as now/.test(text)) throw new Error('the restore test doesn’t say what it checked');
   } },
   { name: 'Photos per person on Status', screen: 'status', run: async (page) => {
     await page.waitForSelector('#storageCard:not([hidden]) li:has-text("Anna Smith") .when:has-text("412 GB")', { timeout: 5000 });
