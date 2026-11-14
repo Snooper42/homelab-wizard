@@ -327,7 +327,8 @@ jobs:
               xcrun simctl ui "$dev" appearance "$look"
               for shot in $shots; do
                 xcrun simctl launch --terminate-running-process "$dev" "$BID" -shot "$shot" > /dev/null || { echo "couldn't open $pre$shot"; continue; }
-                sleep 7
+                # Finances' pages read the plan and the ledger first: longer, or they're pictured still reading.
+                case "$shot" in status|backups|setup|settings|settings-all|lock|app|loading) sleep 7 ;; *) sleep 11 ;; esac
                 file="$RUNNER_TEMP/pictures/$pre$look-$shot.png"
                 xcrun simctl io "$dev" screenshot "$file" > /dev/null 2>&1 || { echo "no picture of $pre$look-$shot"; continue; }
                 # A plain white or black screen (the app still opening) is a small file: wait, and take it again.

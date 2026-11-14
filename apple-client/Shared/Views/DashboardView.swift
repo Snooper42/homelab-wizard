@@ -612,7 +612,7 @@ private struct SplitDashboard: View {
                 appList
             case .backups?:
                 BackupsView(backups: model.backups)
-                    .safeAreaInset(edge: .top) { healthLine }
+                    .modifier(HealthLineInset(model: model) { model.sidebar = .status(.attention) })
                     .navigationSplitViewColumnWidth(min: 320, ideal: 420)
                     .toolbar { toolbarItems }
             case .finances?:
@@ -624,12 +624,12 @@ private struct SplitDashboard: View {
                     )) { page in
                         FinancesView.linkedPage(page, finances: finances)
                     }
-                    .safeAreaInset(edge: .top) { healthLine }
+                    .modifier(HealthLineInset(model: model) { model.sidebar = .status(.attention) })
                     .navigationSplitViewColumnWidth(min: 320, ideal: 420)
                     .toolbar { toolbarItems }
             case .setup?:
                 ComputerView(computer: computer, page: .setup)
-                    .safeAreaInset(edge: .top) { healthLine }
+                    .modifier(HealthLineInset(model: model) { model.sidebar = .status(.attention) })
                     .navigationSplitViewColumnWidth(min: 320, ideal: 420)
                     .toolbar { toolbarItems }
             case .settings? where isMember:
@@ -637,7 +637,7 @@ private struct SplitDashboard: View {
                     .navigationSplitViewColumnWidth(min: 320, ideal: 420)
             case .settings?:
                 settingsColumn
-                    .safeAreaInset(edge: .top) { healthLine }
+                    .modifier(HealthLineInset(model: model) { model.sidebar = .status(.attention) })
                     .navigationSplitViewColumnWidth(min: 320, ideal: 420)
                     .toolbar { toolbarItems }
             default:
@@ -873,10 +873,6 @@ private struct SplitDashboard: View {
     }
 
     /// Health in one line, with Open Status to the apps that need a look.
-    private var healthLine: some View {
-        HealthLineBar(model: model) { model.sidebar = .status(.attention) }
-    }
-
     @ToolbarContentBuilder
     private var toolbarItems: some ToolbarContent {
         ToolbarItemGroup(placement: .primaryAction) {
@@ -1004,6 +1000,23 @@ private struct AwayModeView: View {
         case false?: "Not answering"
         case nil: "Asking…"
         }
+    }
+}
+
+/// The health line beside Status's list: atop the screen on the Mac, under it
+/// on the iPad. Atop, it took the place of the iPad's large titles (a blank
+/// band over Backups, Finances, Setup and Settings, apple-loop.md item 1); the
+/// iPad keeps it, as the sidebar that badges Status is hidden in portrait.
+private struct HealthLineInset: ViewModifier {
+    let model: DashboardViewModel
+    let open: @MainActor () -> Void
+
+    func body(content: Content) -> some View {
+        #if os(iOS)
+        content.safeAreaInset(edge: .bottom) { HealthLineBar(model: model, open: open) }
+        #else
+        content.safeAreaInset(edge: .top) { HealthLineBar(model: model, open: open) }
+        #endif
     }
 }
 
