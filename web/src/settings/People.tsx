@@ -138,7 +138,7 @@ export function People({ people, pocket, apps, log, on, privateFinances, justAdd
     <>
       {head}{why}
       {justAdded && <Added who={justAdded} on={on} />}
-      {!!here.length && <Rows>{here.map((p) => <Person key={p.username} p={p} on={on} sealed={privateFinances?.[p.username]} />)}</Rows>}
+      {!!here.length && <Rows kind="people">{here.map((p) => <Person key={p.username} p={p} on={on} sealed={privateFinances?.[p.username]} />)}</Rows>}
       <AddPerson apps={apps} open={!here.length} on={on} />
       <pre id="peopleLog" hidden={!log}>{log}</pre>
     </>

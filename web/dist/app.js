@@ -4248,7 +4248,7 @@
       head,
       why,
       justAdded2 && /* @__PURE__ */ u3(Added, { who: justAdded2, on: on2 }),
-      !!here3.length && /* @__PURE__ */ u3(Rows, { children: here3.map((p3) => /* @__PURE__ */ u3(Person, { p: p3, on: on2, sealed: privateFinances?.[p3.username] }, p3.username)) }),
+      !!here3.length && /* @__PURE__ */ u3(Rows, { kind: "people", children: here3.map((p3) => /* @__PURE__ */ u3(Person, { p: p3, on: on2, sealed: privateFinances?.[p3.username] }, p3.username)) }),
       /* @__PURE__ */ u3(AddPerson, { apps: apps2, open: !here3.length, on: on2 }),
       /* @__PURE__ */ u3("pre", { id: "peopleLog", hidden: !log2, children: log2 })
     ] });

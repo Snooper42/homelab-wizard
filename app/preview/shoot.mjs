@@ -2174,6 +2174,35 @@ const smokes = [
     await note.locator('button:text-is("Done")').click();
     await page.waitForSelector('#personAdded', { state: 'detached', timeout: 3000 });
   } },
+  // Usability task 7, item 14: at 320px with big text (1.25×, as the tester's picture), a person's row keeps their
+  // name in words and its buttons wrap under it, none past the card's right edge.
+  { name: 'Settings › People at 320px with big text: names in words, buttons inside the card', screen: 'settings', mock: { status: { ...status, apps: [...status.apps, { id: 'pocket-id', name: 'Pocket ID', state: 'running', health: 'healthy', url: 'http://localhost:1411' }] }, people: [{ username: 'anna', name: 'Anna Smith', email: 'anna.smith@example.com' }] }, run: async (page) => {
+    await page.click('#settingsNav .pagebtn[data-page="People"]', { timeout: 5000 });
+    await page.waitForSelector('#peopleCard li:has-text("Anna Smith")', { timeout: 5000 });
+    await page.setViewportSize({ width: 320, height: 640 });
+    await page.evaluate(() => document.documentElement.style.setProperty('--zoom', '1.25'));
+    await page.waitForTimeout(200);
+    const bad = await page.$eval('#peopleCard', (card) => {
+      const edge = card.getBoundingClientRect().right + 1, out = [];
+      for (const el of card.querySelectorAll('li strong, li button')) {
+        const r = el.getBoundingClientRect();
+        if (r.right > edge) out.push(`${el.textContent} past the edge`);
+      }
+      const name = card.querySelector('li strong');
+      const line = parseFloat(getComputedStyle(name).lineHeight) || parseFloat(getComputedStyle(name).fontSize) * 1.3;
+      if (name.getBoundingClientRect().height > line * 2.2) out.push(`the name on ${Math.round(name.getBoundingClientRect().height / line)} lines`);
+      return out;
+    });
+    if (bad.length) throw new Error(bad.join('; '));
+    // This machine's facts (Settings › This Mac): each value wraps between its words, never a letter a line.
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.click('#settingsNav .pagebtn[data-page="This Mac"]', { timeout: 5000 });
+    await page.waitForSelector('.hostcard dd', { timeout: 5000 });
+    await page.setViewportSize({ width: 320, height: 640 });
+    await page.waitForTimeout(200);
+    const thin = await page.$$eval('.hostcard dd', (dds) => dds.filter((d) => d.textContent.trim() && d.getBoundingClientRect().width < 64).map((d) => `${d.previousElementSibling?.textContent}: ${Math.round(d.getBoundingClientRect().width)}px`));
+    if (thin.length) throw new Error(`values a few letters wide: ${thin.join(', ')}`);
+  } },
   // A member who keeps her Finances private (private-finances.md 3.3): her row says so and when she last saved,
   // and nothing more; Remove's title says the owner can delete them but never open them.
   { name: 'Settings › People: a member’s private Finances, the fact only', screen: 'settings', mock: { status: { ...status, apps: [...status.apps, { id: 'pocket-id', name: 'Pocket ID', state: 'running', health: 'healthy', url: 'http://localhost:1411' }] }, people: [{ username: 'anna', name: 'Anna Smith' }, { username: 'sam', name: 'Sam Smith' }], privateFinances: { anna: '2026-11-13T15:04:00-05:00' } }, run: async (page) => {

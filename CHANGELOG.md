@@ -269,6 +269,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- **Settings in a narrow window with big text:** a person's row in People keeps their name in words, its buttons wrapping under it rather than running past the edge, and This Mac's values (the container runtime, the folder, the version) wrap between words rather than a letter a line.
 - **The tray icon is yours alone:** on a computer with other accounts, another account can no longer quit your Homelab icon in the menu bar or tray, or keep it from starting.
 - **A page sent to your phone is checked twice:** Send to my phone's page goes on only if that phone may still open it as it arrives, so one made a wall screen, given to a household member or with Finances taken away a moment after the send gets nothing.
 - **Release notes are plain text:** `homelab updates notes` takes out control characters from what a project's releases say, so a release can't rewrite your terminal or set its title, and keeps a release's link only when it is on GitHub.
