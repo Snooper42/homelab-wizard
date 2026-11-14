@@ -33,7 +33,7 @@ cd ~/Homelab
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="images/app-update-dark.png">
-  <img alt="Status with one line at the top: Homelab Wizard 0.15.0 is ready, What's new, Later, and Update now" src="images/app-update.png">
+  <img alt="Status with one line at the top: Homelab Wizard, the next version, is ready, with What's new, Later, and Update now" src="images/app-update.png">
 </picture>
 
 ## After 0.15.0: Finances, and a rebuild in one command
