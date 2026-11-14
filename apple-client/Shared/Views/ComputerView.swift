@@ -111,7 +111,8 @@ struct ComputerView: View {
         } header: {
             Text("Problems")
         } footer: {
-            Text("Nothing changes until you tap Fix These.")
+            // The steps by their buttons' names: the footnote named only Fix These, under Look for Problems.
+            Text("Look for Problems lists what it would fix first. Nothing changes until you tap Fix These under that list.")
         }
     }
 
