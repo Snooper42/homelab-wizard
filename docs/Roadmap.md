@@ -71,24 +71,6 @@ These need the real machines, accounts, or money, not code. 0.11 proves in CI wh
 - [ ] Hand it to someone who is not technical and watch without helping; each place they stop becomes the next fix
   - **Done when:** the session is written up in [Testing](<Testing.md#a-newcomers-first-run>), and each stop is either fixed or in Known Issues
 
-## 0.10: fast, everywhere
-
-The app should answer at once on every system, the Windows PC included, where each `docker` command costs more. The work so far removed the waits that could be found from here; what is left is measuring on the real machines.
-
-- [x] Opening a category on Status redraws the list instead of loading Status again
-  - Opening or folding a category is a local change; nothing is asked of Docker or the agent
-- [x] A Status load timed in parts (`homelab status --timing`, and in the diagnostics report), so what is slow is measured, not guessed
-  - Each part (the runtime, the catalog, the pages' checks, the power card) has its own time, and `homelab report` carries the same table
-- [x] The window and the menu bar item read Status through the agent, which reads the runtime once for requests that arrive together (both are told of the same change)
-  - Two screens open at once cost one look at Docker, not two
-- [x] Page checks fill in after the list instead of holding it (one app not answering cost 3 seconds); the power card reads `docker stats` only while Status is open
-  - The list draws from the runtime alone; each app's "is it answering" fills in as it comes back
-- [x] Each screen loads its cards side by side, not one after another (Status, Backups, Settings)
-- [x] The timings measured on each real machine, with a number to hold: moved to 0.15 (October 2026, the owner's call), where the real machines are tested and where the Engine API needs these numbers
-- [x] A timing check in CI, so a change that makes Status slower is seen before it ships
-  - The 0.11 integration run records `status --timing` against its real containers and fails when the list takes more than twice the last good run
-  - Done in October 2026: with every app running and holding data, the real-Docker run times `status --json` (the middle of three warm runs) and logs `status --timing`; the time is kept in an Actions cache when the run passes, and a run taking more than twice the last good one (and a second more) fails, with both runs' parts in the failure
-
 ## 0.11: proven against real Docker
 
 New in the October 2026 audit. Most of the "To verify" in [Known Issues](<Known Issues.md>) wait for a real runtime, not for the Mac: CI can start real containers, run the tests on each system, and click through the app. This version moves as much of that proof as it can from "try it on the machine" to "CI shows it every night", before more features are built on top.
@@ -165,146 +147,6 @@ New in the October 2026 audit. Most of the "To verify" in [Known Issues](<Known 
   - **Done when:** a test crashes a real process and reads its log back, and the click-through shows the note, sends the report, and hides it
 - [x] The jobs' logs trimmed: each file kept under 5 MB, with the older half moved to `<job>.1.log` (one kept); `homelab report` reads both
   - **Done when:** a test runs the watchdog's logging for a simulated year and the folder stays under 30 MB
-
-## 0.12: the same on every system
-
-Goal 1. The parity audit of October 2026 ([Host](<Host.md#the-same-on-every-system>)) lists each feature on macOS, Windows, Linux, and SteamOS as *works*, *works differently*, *missing*, or *can't*. This version turns every *missing* into one of the others, and every *works* into something CI shows.
-
-### Know where it differs
-
-- [x] The parity table in Host: one row per feature (Setup, Status, the jobs, alerts, the tray, self-update, installers, drives, sleep and battery, the hosts file and names, the administrator prompt, the app's look), one column per system
-  - **Done when:** every cell says *works*, *works differently (how)*, *missing*, or *can't (why)*, and each *works* names the test or CI job that shows it
-  - Done in October 2026: the last *works* cells without a test got one: `TestNativeAppOpensForReal` and `TestNativeAppsOpenAfterARestartForReal` (`go test -tags forreal`, CI's macOS runner, with the Jellyfin cask installed) open Jellyfin as Status's button and the startup after a restart do, and wait for its server. Frigate's detector on Linux is *works differently*: added by hand, as Frigate's note says, and the homelab does none of it
-- [x] No Mac-only words on other systems: "menu bar", "Finder", "this Mac", and OrbStack only where the app runs on a Mac, and the system's own words elsewhere ("tray", "File Explorer", "this PC")
-  - **Done when:** a check in `make frontend-check` and a Go test over the CLI's and the engine's messages fail on a Mac-only word outside a Mac branch, and both pass
-  - Done in October 2026: the Go test (`internal/host`, every string literal in `cmd`, `internal`, and `app`), and `app/preview/words.mjs` in `make frontend-check` (every string, template, and JSX text in `web/src` through TypeScript's parser, and `index.html`). The click-through also reads each screen as Windows, GNOME, KDE, and SteamOS, its text and what a screen reader says, for the same words. The Go test also catches the Mac's `open -e .env` and "to the Trash" (two CLI messages had them on every system)
-
-### Close the gaps
-
-- [x] Each *missing* cell in the table either built, with a test on that system's runner, or turned into *can't* with the reason written in Host
-  - **Done when:** the table has no *missing* cell
-  - Signed builds moved to 1.0 in October 2026 (the owner's call; 1.0 already has *Signed releases*): the Mac's build is signed ad hoc and Windows' is unsigned until the certificates are in place, which the table now says as *works differently*
-  - Progress in October 2026: Jellyfin on SteamOS, both cells, is *works differently*: SteamOS takes no native install, so there `homelab install jellyfin` and the **Movies and TV** pick install Jellyfin in a container (`jellyfin-container`, `catalog.ForSteamOS`), with its library in `JELLYFIN_DATA_DIR` as the native app's is (`TestOnSteamOSJellyfinIsTheContainer`; the nightly catalog job starts the container on Ubuntu). Left: signed builds on macOS and Windows, which wait for the certificates
-- [x] Each *works differently* cell that a person would notice (a step that asks for more, a screen that says less) brought level, or its difference said in plain words on the screen where it shows
-  - **Done when:** each such row in the table names the screen that explains it, and the click-through shows that text as that system
-  - Done in October 2026 (the screens' hold lifted for it): `web/src/differs.ts` holds each system's words. Choose apps says under Beszel what it sees on a Mac and Windows, and under Frigate how each system detects; Setup's machine card says under Tray icon how *needs a look* shows on Windows and GNOME, and that GNOME needs the AppIndicator extension; Appearance says why there is no system accent on a Linux desktop without one; Status's **Start** for Jellyfin says what Windows and Linux ask for. Each is a click-through check drawn as that system, and each row in Host names its screen. Host lists the cells no one sees on a screen, and Getting Started says how to answer the unsigned build's question on Windows, as it did on the Mac
-
-### Progress everywhere
-
-The job window already shows a bar and a row per app for an install, Fix it, Update apps, the backups, and Setup's steps (`internal/progress` reads Compose's JSON progress). Four places still say only "busy":
-
-- [x] A bar wherever something waits on a download or a row of apps: the app's own update (now "Downloading…"), Setup's **Set up Docker for me** on SteamOS (one "Downloading …" line per file), the tray's **Update apps now** ("updating…", then "done"), and the CLI in a terminal (Docker's raw lines)
-  - **Done when:** the app's update shows how much of its download is in; Docker's setup moves its bar through each file's download; the tray's item names the app it is at and how far along; `homelab up`, `install`, and `update` in a terminal print a line per app as its stage changes instead of Compose's own; and smoke checks (or unit tests, for the tray and the terminal) see each
-  - Done in October 2026: `internal/transfer` counts both downloads; the update banner and Setup's **Update now** show the app's (`app:download`), and a step can carry a percent (`ui.StepPercent`), which moves the window's bar within the step and draws a terminal's line again in place. The tray's two jobs follow the CLI's steps and Compose's rows into their title. In a terminal, Compose's output goes through `internal/progress` too (`cmd/homelab/rows.go`). Smoke checks for the banner, Update now, and Docker's setup; unit tests for the tray and the terminal rows, and the rows were run against a real Docker in a pseudo-terminal
-
-### Proven on each runner
-
-- [x] The jobs installed and read back on each system's runner (0.11's *The jobs installed for real*), as the parity table's proof for the jobs row
-- [x] The awake job's hold on sleep, on each runner: held while the job runs, and gone when it stops
-  - **Done when:** each system's runner sees the hold in the system's own list of what keeps it awake
-  - Done in October 2026: `TestKeepAwakeForReal` (`cmd/homelab`, `go test -tags forreal`) starts `keepAwake` as the job does, finds caffeinate's PreventSystemSleep in `pmset -g assertions`, the test's program under SYSTEM in `powercfg /requests`, or homelab's block in `systemd-inhibit --list`, then stops it and sees the hold gone. On Ubuntu it first found polkit refusing the hold to a job outside a login session, as the agent is: Setup's step **This machine stays awake while plugged in** (`homelab awake allow`) now writes a rule letting this account block sleep, the test grants it that way, and `doctor` checks the hold is really there. Letting go on battery stays with M2 and W2: a runner has no battery
-- [x] The tray started at login, on each runner: turned on as Settings does, run the way login runs it, and turned off with nothing left
-  - **Done when:** each system's runner turns it on, has the system start what it wrote, and sees it gone when turned off
-  - Done in October 2026: `TestTrayAtLoginForReal` (`app`, `go test -tags forreal`) writes the LaunchAgent, the Run value, or the autostart entry with a stand-in program; `launchctl bootstrap` runs it on macOS, the Run value's own command line runs on Windows, and `gio launch` starts the entry on Linux, its path with a space
-- [x] The tray item started on each runner: on macOS and Windows its menu read back, on Linux it registers with the desktop's status notifier (a test watcher on D-Bus)
-  - **Done when:** CI starts `homelab-tray` on each system and reads its items, and the job fails when it does not come up
-  - Linux is in (October 2026): `TestTrayRegistersForReal` (`app/tray`, `go test -tags forreal`, in CI's `app` job) starts `homelab-tray` on a session bus of its own, sees it register with a watcher the test plays, reads its menu over dbusmenu, and clicks Quit. The Mac is in too: the same test on the macOS runner starts the helper, clicks its menu bar item and reads its menu through System Events (the Accessibility API, which the runner allows), then clicks Quit and sees it end. On Windows the test starts it, finds its icon in `HKCU\Control Panel\NotifyIconSettings` (Windows' own record of the notification area's icons), sends its window the message the taskbar sends on a right click on the icon, reads the menu Windows shows (`MN_GETHMENU`, `GetMenuStringW`), and chooses Quit
-- [x] The "needs a look" mark on each runner: the Dock count on macOS, the tray icon's dot on Windows, the taskbar count over D-Bus on Linux
-  - **Done when:** each system's runner sets the mark and reads it back from where the system shows it
-  - Linux is in (October 2026): `TestBadgeArrivesForReal` (`app`, `go test -tags forreal`, in CI's `app` job) sends the count through `setBadge` on a session bus of its own and hears the Unity launcher update Plasma's taskbar and Ubuntu's dock read, then the count cleared
-  - The Mac is in too: `TestDockBadgeForReal` (`app/dock`, on the macOS runner) runs an app of its own in the Dock, sets its badge to 3 through `dock.SetBadge` (the app's own call) and then clears it, and reads each from the Dock's own record (`lsappinfo`'s `StatusLabel`)
-  - Windows' dot cannot be read back on a runner: Windows has no way for one program to read another's notification-area icon. The dot is drawn by the tray's icon code (unit tests) whenever the menu's reading needs a look, which the Windows runner's tray test reads; seeing it on the PC is W13, which the owner moved with the other real-machine steps to 0.15
-- [x] An alert from each system's own path: the tray's notification on macOS and Windows, `notify-send` on Linux, and ntfy everywhere
-  - **Done when:** a test on each runner sends one through the code path the watchdog uses and sees it arrive (a fake notification daemon on Linux)
-  - Linux and Windows are in (October 2026): `TestDesktopAlertArrivesForReal` sends one through `notify.Desktop` and `notify-send` to a notification server the test plays on D-Bus, and `TestToastArrivesForReal` sends one through the same call on the Windows runner and finds it in Windows' toast history (`ToastNotificationManager.History`) under Homelab.Wizard. The Mac's is in too: `TestDesktopAlertArrivesForReal` (`internal/notify`) sends one through `notify.Desktop` (`osascript`) on the macOS runner and finds its title in Notification Center's own record (usernoted's database, `~/Library/Group Containers/group.com.apple.usernoted/db2`)
-- [x] The names with a domain written and removed on each runner: `/etc/resolver` on macOS, the NRPT rule on Windows, the systemd-resolved drop-in on Linux; and the hosts-file entries the same
-  - **Done when:** `domain resolver --apply` then its undo run on each runner with the administrator step automated, and leave the system as it was
-  - Done in October 2026: `domain resolver --undo` removes what homelab wrote (and its lines in the hosts file). CI's `ChangedForReal` tests (`go test -tags forreal`) set the resolver and take it back on the Ubuntu, macOS, and Windows runners through sudo or the approval, checking the system's own DNS each time (`resolvectl status`, `scutil --dns`, the NRPT policy), and write the hosts file, look the name up, and put the file back byte for byte
-- [x] Drives, sleep, and battery read on each runner the way the machine would: an external drive (a disk image on macOS, a VHD on Windows, a loop device on Linux) found and its free space read; the sleep setting and the power state read
-  - **Done when:** each system's runner has a test for each, not only a fake
-  - Done in October 2026: `go test -tags forreal` on each runner. `TestExternalDriveForReal` makes a 32 MB drive (hdiutil, diskpart, a loop mount under `/mnt`), finds it with `ExternalDrive`, reads its space, takes it away, and sees it missing. `TestSleepSettingForReal` changes the sleep on power with `pmset` or `powercfg` and reads it back (then puts it back), and on Linux reads GNOME's keys through `gsettings` and Plasma's `powerdevilrc`. `TestPowerStateForReal` reads each system's own source and finds the runner on mains power, with no battery.
-- [x] What Setup reads from the system, changed and read back on each runner: the time zone a new `.env` gets, the Machine row's system and model, and the system's accent colour
-  - **Done when:** each system's runner has a test for each that goes through the system's own tool or store, and puts it back as it was
-  - Done in October 2026: `TestTimeZoneForReal` (`internal/envfile`) sets two zones with `systemsetup`, `tzutil`, or `timedatectl`, reads each back, and makes a new `.env` with it; `TestMachineReadForReal` (`app`) reads the system and model; `TestAccentReadForReal` sets the accent with `defaults` on macOS and in the registry on Windows, and on Ubuntu through `gsettings` and a `kdeglobals` of its own
-- [x] The click-through as SteamOS too (Plasma in desktop mode, its Breeze look and font), beside Mac, Windows, GNOME, and KDE
-  - **Done when:** `make app-smoke` checks every screen as SteamOS with axe, light and dark
-  - Done in October 2026: SteamOS is a system of its own in the sweep (the Steam Machine, Docker run as you, `/home/deck`), and KDE is now a Fedora KDE machine. Each system carries what its Go side reports (runtime, scheduler, folder, the runtime's hint), so a screen as Windows no longer shows the Mac's OrbStack
-
-### What only the real machines show
-
-Some of Goal 1 cannot be proven by a runner: a signed app opening without a warning, the tray on a real Plasma session in Game Mode, a real external drive, real sleep. Each of these is a step in [Testing › Waiting for real hardware](<Testing.md#waiting-for-real-hardware>), so the first session on each machine is a checklist.
-
-- [x] Every row of the parity table that CI cannot prove has a numbered step there for the machine that can
-  - **Done when:** the list covers the Mac, the Windows PC, and the Steam Machine, each step with what to do and what you should see
-  - Progress in October 2026: steps added for a native app started from Status (M12, W12), the "needs a look" mark on the icon (M13, W13, S11), each system's look (M14, W14, S12), and the tray at login (M15, W15; S2 on the Steam Machine)
-  - Done in October 2026: each row of the parity table in Host now ends its *Proven by* with *on the machine* and the steps that show it there; the rows CI cannot show on every system that had none got M16 to M18 (battery saver, the hosts file, Beszel's view), W16 to W20 (the same, Jellyfin's service at boot, Kopia on a drive letter), and S14 to S16 (Docker started from Setup, the hosts file across an update, Kopia on `/run/media/deck`). Rows without one are shown by CI on each system already, or have nothing to show yet (signed builds)
-
-## 0.13: more apps
-
-Goal 2. Each item is done when the app passes the bar in [The two goals](#the-two-goals); the **Done when** lines say what is particular to it. In the order they are planned: the light, self-contained apps first, then the ones that lean on another app, then the heavy ones.
-
-- [x] **Actual Budget:** an envelope budget, lighter than MoneyMatter (one container, no database server)
-  - **Done when:** the nightly run creates a budget through its API and reads it back after a restore
-  - Done in October 2026: the run sets the server's password through its API, then makes a budget with an account and a transaction through Actual's own API package (`@actual-app/api`, which syncs it to the server as the app does); after the move a fresh client downloads it from the server and reads the transaction back
-- [x] **Linkwarden:** bookmarks saved permanently (a copy of each page, a screenshot, and a PDF), with its own PostgreSQL
-  - **Done when:** the nightly run saves a link and finds its archived copy after a restore; its note says how it differs from Karakeep
-- [x] **Tandoor:** recipes with meal planning and nutrition, with its own PostgreSQL
-  - **Done when:** the nightly run adds a recipe through its API and reads it back after a restore; its note says how it differs from Mealie
-- [x] **Kiwix:** offline Wikipedia and reference sites, read from a folder of `.zim` files
-  - **Done when:** the nightly run serves a small `.zim` file and finds a page in it; its note says where to get the files and how big they are
-- [x] **Firefly III:** where the money went, from bank imports (with its data importer and its own database)
-  - **Done when:** the nightly run imports a sample CSV through the importer and Firefly's API lists the transactions
-  - Done in October 2026: the run sets the importer up as its note says (the token in `.env`, then installed), sends a two-line bank CSV through the importer's own `importer:import`, and finds both transactions through Firefly's API, before and after the move
-- [x] **Beszel:** CPU, memory, and disk history per container (its hub, and its agent with the runtime's socket)
-  - **Done when:** the nightly run sees the agent connected to the hub and a container's history in the hub's API; the parity table says what the agent sees on each runtime (OrbStack, Docker Desktop, rootless Docker)
-- [x] **Paperless-AI:** automatic titles and tags for Paperless, using Ollama on this machine
-  - **Done when:** it installs only beside Paperless (it `requires` Paperless's API token), the nightly run starts it against the real Paperless and a fake Ollama, and Setup says when Ollama is missing, on each system
-- [x] **Tdarr:** shrinks the media library (its server, with a node of its own); heavy, optional
-  - **Done when:** the nightly run starts it, its web page answers, and its note says how much CPU a library takes and how to keep it to the night
-- [x] **Frigate:** cameras with local person and car detection, paired with Home Assistant; heavy, optional
-  - **Done when:** the nightly run starts it with a test video as its camera and its API answers; its note covers adding it to Home Assistant, and the parity table says which systems can pass a detector (Coral, GPU) through (no USB or GPU in containers on macOS)
-  - Done in October 2026 (#204): FFmpeg's test pattern is its camera (the runner has none), saved through Frigate's own API; the run sees frames arrive in its stats and Frigate online on its broker, before and after the move
-- [x] **Nextcloud:** shared family files with phone sync; heavy, optional, in no starter
-  - **Done when:** the nightly run installs it with its PostgreSQL and Redis, signs in, uploads a file over WebDAV, and reads it back after a restore
-  - Done in October 2026 (#208): installed by itself on its first start with the administrator from `.env`, a file uploaded over WebDAV, and read back after the move
-- [x] **Immich share links for the family:** a guided step (Setup, or the note) for sending an album to someone without an account, such as grandparents: the shared-link address that works away from home, how long it lasts, and turning it off
-  - **Done when:** the step is in Immich's note and, where the address can be made by the homelab, on Setup; a newcomer can follow it without help
-  - Done in October 2026: Immich's note has *Sending an album to family without an account* (the address that works away from home, with a domain or in Home mode; how long a link lasts, a password, what they may do; and turning a link off), and with a domain Setup shows *Photo links that open anywhere* with your own address once the tunnel is up (`TestSteps`, `internal/setup`). The newcomer following it is a real-person step, which the owner moved to 0.15 with the real machines
-- [x] **Kopia, a second backup engine beside Duplicati:** proposed first as an ADR in [Decisions](<Decisions.md>) (now [ADR-0019](<Decisions.md#adr-0019-kopia-as-an-optional-second-backup-engine-beside-duplicati>), accepted in October 2026: beside Duplicati, Kopia rather than restic, offered by Setup with a second drive by default, and a nightly restore test of both engines)
-  - **Done when:** the ADR is accepted, and then Kopia passes the same restore test Duplicati does in the nightly run
-  - Progress in October 2026: Kopia is an optional app (Choose apps › System), pinned, with its repository at `KOPIA_REPOSITORY` made or reconnected at each start and every source scheduled for 3:45. The nightly run snapshots a file through Kopia's API, restores its folder into `recovery-staging` and reads it, then after the move finds it in the repository again. Setup's step *A second copy with Kopia* offers each drive plugged in (then the cloud drives), never the one with Duplicati's backups or the media, through `homelab kopia repository`, which checks you can write there and starts Kopia again on it; start.sh then connects to the repository in the new folder, or makes one, instead of writing into a folder with no repository file (tried against the real image, and on an exFAT drive mounted as you). `homelab restore-test --auto --engine kopia` restores a sample of settled files from Kopia's newest snapshot and compares them, on record as Kopia's with its own monthly reminder, and the real-Docker run runs it after the folder restore. The nightly run also tests Duplicati's own restore: Setup's two backup steps (a folder beside the homelab, then the jobs), and once Homelab AppData has run, `homelab restore-test --auto` restoring a sample of settled files and comparing them. The Backups screen has a line for each engine: Duplicati's jobs, and, with Kopia installed, *Second copy (Kopia)*: where its repository is, its own last restore test (or the failure, or that one is due), and **Test Kopia's restore** (`homelab restore-test --auto --engine kopia`); `TestKopiaLine` and three click-through checks
-
-## 0.14: a frontend that grows
-
-Make each screen cheap to change and hard to break. 0.11's click-through is the safety net for this work: each step below must leave it green.
-
-- [x] One store per screen's data, written by the engine's changes; components keep their own small state (which categories are open), so a click never reloads a screen
-  - **Done when:** no screen calls the backend from a click handler except for an action, and the smoke test counts zero reloads while opening and folding every category
-  - `web/src/store.ts` keeps each screen's data; picking a screen draws it and reads it again only when the engine said it changed or it is over a minute old. The click-through counts the fake backend's calls: none while opening and folding every category, and none when going back to screens already read
-- [x] The last screens built by hand (the command and log sheets, Settings' page list) as components; `app.ts` down to loading data and choosing screens
-  - **Done when:** `app.ts` is under 400 lines (1,713 in October 2026), and no screen builds elements with `document.createElement`
-  - Done in three steps: the sheets' contents (#260), the rest of what was built by hand (#261), then each screen's code in `web/src/screens` with `core.ts` and `jobs.ts` beside it; `app.ts` is 141 lines, and `app/preview/lint.mjs` (in `make frontend-check`) fails if it reaches 400 or anything in `web/src` calls `document.createElement`
-- [x] Shared building blocks (card, sheet, row, segmented control, empty state) used everywhere, with the colours as tokens only
-  - **Done when:** a check in `frontend-check` fails on a colour written outside the tokens, or on a block's markup written outside the blocks
-  - Every colour a rule uses is a token in `style.css`'s `:root`; the blocks are components in `web/src/parts` (Card, CardHead, Rows and Row, Segmented, Empty, Sheet) that every screen draws with; `app/preview/lint.mjs` fails on a colour written in a rule or a component, and on a block's markup written anywhere else. A preview page per block was dropped (October 2026): the click-through already draws every screen, and so every block, on each system
-- [x] A job's window: a row per app in plain words with its own bar, the whole job's bar, Docker's lines under Show details (installing, Fix it, Update apps, Backups, Setup)
-  - Every long job shows the same window: what each app is doing ("Downloading · 54%", "Starting"), and Docker's own output only when asked for
-- [x] An app page: one app's state, address, logs, usage, week, settings, and actions in one place, instead of a row of icons
-  - Its log with **Explain this** (the AI on this machine), its last backup and its last restore test, its update history with **Roll back**, and the people who can sign in to it
-  - **Done when:** every action on a Status row is also on the app's page, and the row keeps only Open and the page
-  - Done in October 2026 in two steps, to the owner's mockup: the page with the app's own icon (#279), then its settings (Nightly updates and Tell me if it stops as switches, what the nightly backup keeps), Remove with a backup first, and rows with one button (Open, or Start) whose click opens the page. The click-through runs every action from the page, on each system and on the phone
-- [x] The window draws the last Status at once when it opens, then refreshes it
-  - The agent keeps the last Status it read; the window draws it marked with its age ("a few seconds ago") and replaces it when the fresh one arrives, instead of an empty list while Docker answers
-  - **Done when:** the click-through opens the app against a slow fake engine and the list is drawn before the engine answers, then updated once it does
-  - The engine keeps its last good reading (`GET /v1/status/last`; `/v1/status` itself still always reads the runtime); the window and the phone companion ask for it with `LastStatus` and draw it under "As it was a few seconds ago; checking now…". The click-through's *Status draws the last reading at once, then the fresh one* opens against an engine that takes 3 seconds
-- [x] A click answers at once: Start, Stop, Restart, and Update change their row straight away ("Starting…"), then the runtime confirms it or the row goes back with the error
-  - **Done when:** the click-through sees the row change before the fake backend answers, and a failed action puts the row back and says why
-  - Roll back and a category's Start them do the same. The row keeps "Restarting…" until Status has read the result, so it never flickers back to the old state; a failure stays under the row ("Could not stop: …") until the next action on that app
-- [x] Motion and transparency in Settings › Appearance, beside Theme and Contrast: **Motion** (Like the system, Less, None) and **Transparency** (Like the system, Off)
-  - Every animation and transition follows them, the ones that ignore the system's "reduce motion" today included (the meter, the row buttons' fade, the switch); Off drops the blur behind the save bar and the phone companion's bar
-  - Each system's default may differ (less blur on SteamOS, if 0.10's timings or the Steam Machine show it costs there)
-  - **Done when:** the click-through draws each screen with Motion at None and finds no animation or transition running, and with Transparency Off finds no `backdrop-filter`
-  - `tray.Appearance` keeps Motion and Transparency; appearance.ts sets `motion-less`, `motion-none`, and `no-blur` on the page from them, or from the system's reduce motion and reduce transparency while they are Like the system (followed live), the phone included; style.css's own reduced-motion blocks went into those classes. Less stops what slides, spins, or grows and keeps colour fades; Off also draws Windows' Mica and the Mac's see-through side panel solid
 
 ## 0.15: the Docker API, in the agent
 
@@ -384,3 +226,170 @@ Music and books arrive messy; the homelab tidies them, the same way on every sys
 - [ ] A router that can hand out the AdGuard DNS server (ISSUE-0008)
 - [ ] MoneyMatter on native arm64 images when upstream publishes them (ISSUE-0009)
 - Left out, with reasons ([Decisions](<Decisions.md#adr-0018-not-now-docker-go-sdk-tsnet-several-machines>)): Tailscale built into the binary (tsnet), several machines as one, and GitOps
+
+## History: the versions finished
+
+Versions whose every item is done, kept for what they did and the measurements in them. What is still open is above.
+
+<details>
+<summary><strong>0.10, 0.12, 0.13, and 0.14</strong></summary>
+
+### 0.10: fast, everywhere
+
+The app should answer at once on every system, the Windows PC included, where each `docker` command costs more. The work so far removed the waits that could be found from here; what is left is measuring on the real machines.
+
+- [x] Opening a category on Status redraws the list instead of loading Status again
+  - Opening or folding a category is a local change; nothing is asked of Docker or the agent
+- [x] A Status load timed in parts (`homelab status --timing`, and in the diagnostics report), so what is slow is measured, not guessed
+  - Each part (the runtime, the catalog, the pages' checks, the power card) has its own time, and `homelab report` carries the same table
+- [x] The window and the menu bar item read Status through the agent, which reads the runtime once for requests that arrive together (both are told of the same change)
+  - Two screens open at once cost one look at Docker, not two
+- [x] Page checks fill in after the list instead of holding it (one app not answering cost 3 seconds); the power card reads `docker stats` only while Status is open
+  - The list draws from the runtime alone; each app's "is it answering" fills in as it comes back
+- [x] Each screen loads its cards side by side, not one after another (Status, Backups, Settings)
+- [x] The timings measured on each real machine, with a number to hold: moved to 0.15 (October 2026, the owner's call), where the real machines are tested and where the Engine API needs these numbers
+- [x] A timing check in CI, so a change that makes Status slower is seen before it ships
+  - The 0.11 integration run records `status --timing` against its real containers and fails when the list takes more than twice the last good run
+  - Done in October 2026: with every app running and holding data, the real-Docker run times `status --json` (the middle of three warm runs) and logs `status --timing`; the time is kept in an Actions cache when the run passes, and a run taking more than twice the last good one (and a second more) fails, with both runs' parts in the failure
+
+### 0.12: the same on every system
+
+Goal 1. The parity audit of October 2026 ([Host](<Host.md#the-same-on-every-system>)) lists each feature on macOS, Windows, Linux, and SteamOS as *works*, *works differently*, *missing*, or *can't*. This version turns every *missing* into one of the others, and every *works* into something CI shows.
+
+#### Know where it differs
+
+- [x] The parity table in Host: one row per feature (Setup, Status, the jobs, alerts, the tray, self-update, installers, drives, sleep and battery, the hosts file and names, the administrator prompt, the app's look), one column per system
+  - **Done when:** every cell says *works*, *works differently (how)*, *missing*, or *can't (why)*, and each *works* names the test or CI job that shows it
+  - Done in October 2026: the last *works* cells without a test got one: `TestNativeAppOpensForReal` and `TestNativeAppsOpenAfterARestartForReal` (`go test -tags forreal`, CI's macOS runner, with the Jellyfin cask installed) open Jellyfin as Status's button and the startup after a restart do, and wait for its server. Frigate's detector on Linux is *works differently*: added by hand, as Frigate's note says, and the homelab does none of it
+- [x] No Mac-only words on other systems: "menu bar", "Finder", "this Mac", and OrbStack only where the app runs on a Mac, and the system's own words elsewhere ("tray", "File Explorer", "this PC")
+  - **Done when:** a check in `make frontend-check` and a Go test over the CLI's and the engine's messages fail on a Mac-only word outside a Mac branch, and both pass
+  - Done in October 2026: the Go test (`internal/host`, every string literal in `cmd`, `internal`, and `app`), and `app/preview/words.mjs` in `make frontend-check` (every string, template, and JSX text in `web/src` through TypeScript's parser, and `index.html`). The click-through also reads each screen as Windows, GNOME, KDE, and SteamOS, its text and what a screen reader says, for the same words. The Go test also catches the Mac's `open -e .env` and "to the Trash" (two CLI messages had them on every system)
+
+#### Close the gaps
+
+- [x] Each *missing* cell in the table either built, with a test on that system's runner, or turned into *can't* with the reason written in Host
+  - **Done when:** the table has no *missing* cell
+  - Signed builds moved to 1.0 in October 2026 (the owner's call; 1.0 already has *Signed releases*): the Mac's build is signed ad hoc and Windows' is unsigned until the certificates are in place, which the table now says as *works differently*
+  - Progress in October 2026: Jellyfin on SteamOS, both cells, is *works differently*: SteamOS takes no native install, so there `homelab install jellyfin` and the **Movies and TV** pick install Jellyfin in a container (`jellyfin-container`, `catalog.ForSteamOS`), with its library in `JELLYFIN_DATA_DIR` as the native app's is (`TestOnSteamOSJellyfinIsTheContainer`; the nightly catalog job starts the container on Ubuntu). Left: signed builds on macOS and Windows, which wait for the certificates
+- [x] Each *works differently* cell that a person would notice (a step that asks for more, a screen that says less) brought level, or its difference said in plain words on the screen where it shows
+  - **Done when:** each such row in the table names the screen that explains it, and the click-through shows that text as that system
+  - Done in October 2026 (the screens' hold lifted for it): `web/src/differs.ts` holds each system's words. Choose apps says under Beszel what it sees on a Mac and Windows, and under Frigate how each system detects; Setup's machine card says under Tray icon how *needs a look* shows on Windows and GNOME, and that GNOME needs the AppIndicator extension; Appearance says why there is no system accent on a Linux desktop without one; Status's **Start** for Jellyfin says what Windows and Linux ask for. Each is a click-through check drawn as that system, and each row in Host names its screen. Host lists the cells no one sees on a screen, and Getting Started says how to answer the unsigned build's question on Windows, as it did on the Mac
+
+#### Progress everywhere
+
+The job window already shows a bar and a row per app for an install, Fix it, Update apps, the backups, and Setup's steps (`internal/progress` reads Compose's JSON progress). Four places still say only "busy":
+
+- [x] A bar wherever something waits on a download or a row of apps: the app's own update (now "Downloading…"), Setup's **Set up Docker for me** on SteamOS (one "Downloading …" line per file), the tray's **Update apps now** ("updating…", then "done"), and the CLI in a terminal (Docker's raw lines)
+  - **Done when:** the app's update shows how much of its download is in; Docker's setup moves its bar through each file's download; the tray's item names the app it is at and how far along; `homelab up`, `install`, and `update` in a terminal print a line per app as its stage changes instead of Compose's own; and smoke checks (or unit tests, for the tray and the terminal) see each
+  - Done in October 2026: `internal/transfer` counts both downloads; the update banner and Setup's **Update now** show the app's (`app:download`), and a step can carry a percent (`ui.StepPercent`), which moves the window's bar within the step and draws a terminal's line again in place. The tray's two jobs follow the CLI's steps and Compose's rows into their title. In a terminal, Compose's output goes through `internal/progress` too (`cmd/homelab/rows.go`). Smoke checks for the banner, Update now, and Docker's setup; unit tests for the tray and the terminal rows, and the rows were run against a real Docker in a pseudo-terminal
+
+#### Proven on each runner
+
+- [x] The jobs installed and read back on each system's runner (0.11's *The jobs installed for real*), as the parity table's proof for the jobs row
+- [x] The awake job's hold on sleep, on each runner: held while the job runs, and gone when it stops
+  - **Done when:** each system's runner sees the hold in the system's own list of what keeps it awake
+  - Done in October 2026: `TestKeepAwakeForReal` (`cmd/homelab`, `go test -tags forreal`) starts `keepAwake` as the job does, finds caffeinate's PreventSystemSleep in `pmset -g assertions`, the test's program under SYSTEM in `powercfg /requests`, or homelab's block in `systemd-inhibit --list`, then stops it and sees the hold gone. On Ubuntu it first found polkit refusing the hold to a job outside a login session, as the agent is: Setup's step **This machine stays awake while plugged in** (`homelab awake allow`) now writes a rule letting this account block sleep, the test grants it that way, and `doctor` checks the hold is really there. Letting go on battery stays with M2 and W2: a runner has no battery
+- [x] The tray started at login, on each runner: turned on as Settings does, run the way login runs it, and turned off with nothing left
+  - **Done when:** each system's runner turns it on, has the system start what it wrote, and sees it gone when turned off
+  - Done in October 2026: `TestTrayAtLoginForReal` (`app`, `go test -tags forreal`) writes the LaunchAgent, the Run value, or the autostart entry with a stand-in program; `launchctl bootstrap` runs it on macOS, the Run value's own command line runs on Windows, and `gio launch` starts the entry on Linux, its path with a space
+- [x] The tray item started on each runner: on macOS and Windows its menu read back, on Linux it registers with the desktop's status notifier (a test watcher on D-Bus)
+  - **Done when:** CI starts `homelab-tray` on each system and reads its items, and the job fails when it does not come up
+  - Linux is in (October 2026): `TestTrayRegistersForReal` (`app/tray`, `go test -tags forreal`, in CI's `app` job) starts `homelab-tray` on a session bus of its own, sees it register with a watcher the test plays, reads its menu over dbusmenu, and clicks Quit. The Mac is in too: the same test on the macOS runner starts the helper, clicks its menu bar item and reads its menu through System Events (the Accessibility API, which the runner allows), then clicks Quit and sees it end. On Windows the test starts it, finds its icon in `HKCU\Control Panel\NotifyIconSettings` (Windows' own record of the notification area's icons), sends its window the message the taskbar sends on a right click on the icon, reads the menu Windows shows (`MN_GETHMENU`, `GetMenuStringW`), and chooses Quit
+- [x] The "needs a look" mark on each runner: the Dock count on macOS, the tray icon's dot on Windows, the taskbar count over D-Bus on Linux
+  - **Done when:** each system's runner sets the mark and reads it back from where the system shows it
+  - Linux is in (October 2026): `TestBadgeArrivesForReal` (`app`, `go test -tags forreal`, in CI's `app` job) sends the count through `setBadge` on a session bus of its own and hears the Unity launcher update Plasma's taskbar and Ubuntu's dock read, then the count cleared
+  - The Mac is in too: `TestDockBadgeForReal` (`app/dock`, on the macOS runner) runs an app of its own in the Dock, sets its badge to 3 through `dock.SetBadge` (the app's own call) and then clears it, and reads each from the Dock's own record (`lsappinfo`'s `StatusLabel`)
+  - Windows' dot cannot be read back on a runner: Windows has no way for one program to read another's notification-area icon. The dot is drawn by the tray's icon code (unit tests) whenever the menu's reading needs a look, which the Windows runner's tray test reads; seeing it on the PC is W13, which the owner moved with the other real-machine steps to 0.15
+- [x] An alert from each system's own path: the tray's notification on macOS and Windows, `notify-send` on Linux, and ntfy everywhere
+  - **Done when:** a test on each runner sends one through the code path the watchdog uses and sees it arrive (a fake notification daemon on Linux)
+  - Linux and Windows are in (October 2026): `TestDesktopAlertArrivesForReal` sends one through `notify.Desktop` and `notify-send` to a notification server the test plays on D-Bus, and `TestToastArrivesForReal` sends one through the same call on the Windows runner and finds it in Windows' toast history (`ToastNotificationManager.History`) under Homelab.Wizard. The Mac's is in too: `TestDesktopAlertArrivesForReal` (`internal/notify`) sends one through `notify.Desktop` (`osascript`) on the macOS runner and finds its title in Notification Center's own record (usernoted's database, `~/Library/Group Containers/group.com.apple.usernoted/db2`)
+- [x] The names with a domain written and removed on each runner: `/etc/resolver` on macOS, the NRPT rule on Windows, the systemd-resolved drop-in on Linux; and the hosts-file entries the same
+  - **Done when:** `domain resolver --apply` then its undo run on each runner with the administrator step automated, and leave the system as it was
+  - Done in October 2026: `domain resolver --undo` removes what homelab wrote (and its lines in the hosts file). CI's `ChangedForReal` tests (`go test -tags forreal`) set the resolver and take it back on the Ubuntu, macOS, and Windows runners through sudo or the approval, checking the system's own DNS each time (`resolvectl status`, `scutil --dns`, the NRPT policy), and write the hosts file, look the name up, and put the file back byte for byte
+- [x] Drives, sleep, and battery read on each runner the way the machine would: an external drive (a disk image on macOS, a VHD on Windows, a loop device on Linux) found and its free space read; the sleep setting and the power state read
+  - **Done when:** each system's runner has a test for each, not only a fake
+  - Done in October 2026: `go test -tags forreal` on each runner. `TestExternalDriveForReal` makes a 32 MB drive (hdiutil, diskpart, a loop mount under `/mnt`), finds it with `ExternalDrive`, reads its space, takes it away, and sees it missing. `TestSleepSettingForReal` changes the sleep on power with `pmset` or `powercfg` and reads it back (then puts it back), and on Linux reads GNOME's keys through `gsettings` and Plasma's `powerdevilrc`. `TestPowerStateForReal` reads each system's own source and finds the runner on mains power, with no battery.
+- [x] What Setup reads from the system, changed and read back on each runner: the time zone a new `.env` gets, the Machine row's system and model, and the system's accent colour
+  - **Done when:** each system's runner has a test for each that goes through the system's own tool or store, and puts it back as it was
+  - Done in October 2026: `TestTimeZoneForReal` (`internal/envfile`) sets two zones with `systemsetup`, `tzutil`, or `timedatectl`, reads each back, and makes a new `.env` with it; `TestMachineReadForReal` (`app`) reads the system and model; `TestAccentReadForReal` sets the accent with `defaults` on macOS and in the registry on Windows, and on Ubuntu through `gsettings` and a `kdeglobals` of its own
+- [x] The click-through as SteamOS too (Plasma in desktop mode, its Breeze look and font), beside Mac, Windows, GNOME, and KDE
+  - **Done when:** `make app-smoke` checks every screen as SteamOS with axe, light and dark
+  - Done in October 2026: SteamOS is a system of its own in the sweep (the Steam Machine, Docker run as you, `/home/deck`), and KDE is now a Fedora KDE machine. Each system carries what its Go side reports (runtime, scheduler, folder, the runtime's hint), so a screen as Windows no longer shows the Mac's OrbStack
+
+#### What only the real machines show
+
+Some of Goal 1 cannot be proven by a runner: a signed app opening without a warning, the tray on a real Plasma session in Game Mode, a real external drive, real sleep. Each of these is a step in [Testing › Waiting for real hardware](<Testing.md#waiting-for-real-hardware>), so the first session on each machine is a checklist.
+
+- [x] Every row of the parity table that CI cannot prove has a numbered step there for the machine that can
+  - **Done when:** the list covers the Mac, the Windows PC, and the Steam Machine, each step with what to do and what you should see
+  - Progress in October 2026: steps added for a native app started from Status (M12, W12), the "needs a look" mark on the icon (M13, W13, S11), each system's look (M14, W14, S12), and the tray at login (M15, W15; S2 on the Steam Machine)
+  - Done in October 2026: each row of the parity table in Host now ends its *Proven by* with *on the machine* and the steps that show it there; the rows CI cannot show on every system that had none got M16 to M18 (battery saver, the hosts file, Beszel's view), W16 to W20 (the same, Jellyfin's service at boot, Kopia on a drive letter), and S14 to S16 (Docker started from Setup, the hosts file across an update, Kopia on `/run/media/deck`). Rows without one are shown by CI on each system already, or have nothing to show yet (signed builds)
+
+### 0.13: more apps
+
+Goal 2. Each item is done when the app passes the bar in [The two goals](#the-two-goals); the **Done when** lines say what is particular to it. In the order they are planned: the light, self-contained apps first, then the ones that lean on another app, then the heavy ones.
+
+- [x] **Actual Budget:** an envelope budget, lighter than MoneyMatter (one container, no database server)
+  - **Done when:** the nightly run creates a budget through its API and reads it back after a restore
+  - Done in October 2026: the run sets the server's password through its API, then makes a budget with an account and a transaction through Actual's own API package (`@actual-app/api`, which syncs it to the server as the app does); after the move a fresh client downloads it from the server and reads the transaction back
+- [x] **Linkwarden:** bookmarks saved permanently (a copy of each page, a screenshot, and a PDF), with its own PostgreSQL
+  - **Done when:** the nightly run saves a link and finds its archived copy after a restore; its note says how it differs from Karakeep
+- [x] **Tandoor:** recipes with meal planning and nutrition, with its own PostgreSQL
+  - **Done when:** the nightly run adds a recipe through its API and reads it back after a restore; its note says how it differs from Mealie
+- [x] **Kiwix:** offline Wikipedia and reference sites, read from a folder of `.zim` files
+  - **Done when:** the nightly run serves a small `.zim` file and finds a page in it; its note says where to get the files and how big they are
+- [x] **Firefly III:** where the money went, from bank imports (with its data importer and its own database)
+  - **Done when:** the nightly run imports a sample CSV through the importer and Firefly's API lists the transactions
+  - Done in October 2026: the run sets the importer up as its note says (the token in `.env`, then installed), sends a two-line bank CSV through the importer's own `importer:import`, and finds both transactions through Firefly's API, before and after the move
+- [x] **Beszel:** CPU, memory, and disk history per container (its hub, and its agent with the runtime's socket)
+  - **Done when:** the nightly run sees the agent connected to the hub and a container's history in the hub's API; the parity table says what the agent sees on each runtime (OrbStack, Docker Desktop, rootless Docker)
+- [x] **Paperless-AI:** automatic titles and tags for Paperless, using Ollama on this machine
+  - **Done when:** it installs only beside Paperless (it `requires` Paperless's API token), the nightly run starts it against the real Paperless and a fake Ollama, and Setup says when Ollama is missing, on each system
+- [x] **Tdarr:** shrinks the media library (its server, with a node of its own); heavy, optional
+  - **Done when:** the nightly run starts it, its web page answers, and its note says how much CPU a library takes and how to keep it to the night
+- [x] **Frigate:** cameras with local person and car detection, paired with Home Assistant; heavy, optional
+  - **Done when:** the nightly run starts it with a test video as its camera and its API answers; its note covers adding it to Home Assistant, and the parity table says which systems can pass a detector (Coral, GPU) through (no USB or GPU in containers on macOS)
+  - Done in October 2026 (#204): FFmpeg's test pattern is its camera (the runner has none), saved through Frigate's own API; the run sees frames arrive in its stats and Frigate online on its broker, before and after the move
+- [x] **Nextcloud:** shared family files with phone sync; heavy, optional, in no starter
+  - **Done when:** the nightly run installs it with its PostgreSQL and Redis, signs in, uploads a file over WebDAV, and reads it back after a restore
+  - Done in October 2026 (#208): installed by itself on its first start with the administrator from `.env`, a file uploaded over WebDAV, and read back after the move
+- [x] **Immich share links for the family:** a guided step (Setup, or the note) for sending an album to someone without an account, such as grandparents: the shared-link address that works away from home, how long it lasts, and turning it off
+  - **Done when:** the step is in Immich's note and, where the address can be made by the homelab, on Setup; a newcomer can follow it without help
+  - Done in October 2026: Immich's note has *Sending an album to family without an account* (the address that works away from home, with a domain or in Home mode; how long a link lasts, a password, what they may do; and turning a link off), and with a domain Setup shows *Photo links that open anywhere* with your own address once the tunnel is up (`TestSteps`, `internal/setup`). The newcomer following it is a real-person step, which the owner moved to 0.15 with the real machines
+- [x] **Kopia, a second backup engine beside Duplicati:** proposed first as an ADR in [Decisions](<Decisions.md>) (now [ADR-0019](<Decisions.md#adr-0019-kopia-as-an-optional-second-backup-engine-beside-duplicati>), accepted in October 2026: beside Duplicati, Kopia rather than restic, offered by Setup with a second drive by default, and a nightly restore test of both engines)
+  - **Done when:** the ADR is accepted, and then Kopia passes the same restore test Duplicati does in the nightly run
+  - Progress in October 2026: Kopia is an optional app (Choose apps › System), pinned, with its repository at `KOPIA_REPOSITORY` made or reconnected at each start and every source scheduled for 3:45. The nightly run snapshots a file through Kopia's API, restores its folder into `recovery-staging` and reads it, then after the move finds it in the repository again. Setup's step *A second copy with Kopia* offers each drive plugged in (then the cloud drives), never the one with Duplicati's backups or the media, through `homelab kopia repository`, which checks you can write there and starts Kopia again on it; start.sh then connects to the repository in the new folder, or makes one, instead of writing into a folder with no repository file (tried against the real image, and on an exFAT drive mounted as you). `homelab restore-test --auto --engine kopia` restores a sample of settled files from Kopia's newest snapshot and compares them, on record as Kopia's with its own monthly reminder, and the real-Docker run runs it after the folder restore. The nightly run also tests Duplicati's own restore: Setup's two backup steps (a folder beside the homelab, then the jobs), and once Homelab AppData has run, `homelab restore-test --auto` restoring a sample of settled files and comparing them. The Backups screen has a line for each engine: Duplicati's jobs, and, with Kopia installed, *Second copy (Kopia)*: where its repository is, its own last restore test (or the failure, or that one is due), and **Test Kopia's restore** (`homelab restore-test --auto --engine kopia`); `TestKopiaLine` and three click-through checks
+
+### 0.14: a frontend that grows
+
+Make each screen cheap to change and hard to break. 0.11's click-through is the safety net for this work: each step below must leave it green.
+
+- [x] One store per screen's data, written by the engine's changes; components keep their own small state (which categories are open), so a click never reloads a screen
+  - **Done when:** no screen calls the backend from a click handler except for an action, and the smoke test counts zero reloads while opening and folding every category
+  - `web/src/store.ts` keeps each screen's data; picking a screen draws it and reads it again only when the engine said it changed or it is over a minute old. The click-through counts the fake backend's calls: none while opening and folding every category, and none when going back to screens already read
+- [x] The last screens built by hand (the command and log sheets, Settings' page list) as components; `app.ts` down to loading data and choosing screens
+  - **Done when:** `app.ts` is under 400 lines (1,713 in October 2026), and no screen builds elements with `document.createElement`
+  - Done in three steps: the sheets' contents (#260), the rest of what was built by hand (#261), then each screen's code in `web/src/screens` with `core.ts` and `jobs.ts` beside it; `app.ts` is 141 lines, and `app/preview/lint.mjs` (in `make frontend-check`) fails if it reaches 400 or anything in `web/src` calls `document.createElement`
+- [x] Shared building blocks (card, sheet, row, segmented control, empty state) used everywhere, with the colours as tokens only
+  - **Done when:** a check in `frontend-check` fails on a colour written outside the tokens, or on a block's markup written outside the blocks
+  - Every colour a rule uses is a token in `style.css`'s `:root`; the blocks are components in `web/src/parts` (Card, CardHead, Rows and Row, Segmented, Empty, Sheet) that every screen draws with; `app/preview/lint.mjs` fails on a colour written in a rule or a component, and on a block's markup written anywhere else. A preview page per block was dropped (October 2026): the click-through already draws every screen, and so every block, on each system
+- [x] A job's window: a row per app in plain words with its own bar, the whole job's bar, Docker's lines under Show details (installing, Fix it, Update apps, Backups, Setup)
+  - Every long job shows the same window: what each app is doing ("Downloading · 54%", "Starting"), and Docker's own output only when asked for
+- [x] An app page: one app's state, address, logs, usage, week, settings, and actions in one place, instead of a row of icons
+  - Its log with **Explain this** (the AI on this machine), its last backup and its last restore test, its update history with **Roll back**, and the people who can sign in to it
+  - **Done when:** every action on a Status row is also on the app's page, and the row keeps only Open and the page
+  - Done in October 2026 in two steps, to the owner's mockup: the page with the app's own icon (#279), then its settings (Nightly updates and Tell me if it stops as switches, what the nightly backup keeps), Remove with a backup first, and rows with one button (Open, or Start) whose click opens the page. The click-through runs every action from the page, on each system and on the phone
+- [x] The window draws the last Status at once when it opens, then refreshes it
+  - The agent keeps the last Status it read; the window draws it marked with its age ("a few seconds ago") and replaces it when the fresh one arrives, instead of an empty list while Docker answers
+  - **Done when:** the click-through opens the app against a slow fake engine and the list is drawn before the engine answers, then updated once it does
+  - The engine keeps its last good reading (`GET /v1/status/last`; `/v1/status` itself still always reads the runtime); the window and the phone companion ask for it with `LastStatus` and draw it under "As it was a few seconds ago; checking now…". The click-through's *Status draws the last reading at once, then the fresh one* opens against an engine that takes 3 seconds
+- [x] A click answers at once: Start, Stop, Restart, and Update change their row straight away ("Starting…"), then the runtime confirms it or the row goes back with the error
+  - **Done when:** the click-through sees the row change before the fake backend answers, and a failed action puts the row back and says why
+  - Roll back and a category's Start them do the same. The row keeps "Restarting…" until Status has read the result, so it never flickers back to the old state; a failure stays under the row ("Could not stop: …") until the next action on that app
+- [x] Motion and transparency in Settings › Appearance, beside Theme and Contrast: **Motion** (Like the system, Less, None) and **Transparency** (Like the system, Off)
+  - Every animation and transition follows them, the ones that ignore the system's "reduce motion" today included (the meter, the row buttons' fade, the switch); Off drops the blur behind the save bar and the phone companion's bar
+  - Each system's default may differ (less blur on SteamOS, if 0.10's timings or the Steam Machine show it costs there)
+  - **Done when:** the click-through draws each screen with Motion at None and finds no animation or transition running, and with Transparency Off finds no `backdrop-filter`
+  - `tray.Appearance` keeps Motion and Transparency; appearance.ts sets `motion-less`, `motion-none`, and `no-blur` on the page from them, or from the system's reduce motion and reduce transparency while they are Like the system (followed live), the phone included; style.css's own reduced-motion blocks went into those classes. Less stops what slides, spins, or grows and keeps colour fades; Off also draws Windows' Mica and the Mac's see-through side panel solid
+
+</details>
