@@ -179,7 +179,17 @@ func Build(in Inputs, sel *selector.Selection) (*Plan, error) {
 	for _, a := range plan.Start {
 		for _, v := range a.Volumes {
 			r, err := v.Resolve(lookup, a.File.Dir, in.Home)
-			if err != nil || !r.Bind || seen[r.Source] {
+			if err != nil || !r.Bind {
+				continue
+			}
+			// A folder it fills (x-homelab stores): where it is and the room
+			// its drive has, in words (usability task 3, item 18).
+			for key, what := range a.Meta.Stores {
+				if strings.Contains(v.Source, "${"+key) {
+					plan.Warnings = append(plan.Warnings, storesWords(a, what, r.Source))
+				}
+			}
+			if seen[r.Source] {
 				continue
 			}
 			seen[r.Source] = true
@@ -575,4 +585,19 @@ func nativePorts(c *catalog.Catalog, start []*catalog.App) map[int]string {
 		}
 	}
 	return out
+}
+
+// storesWords says where an app keeps what it fills, and how much room the
+// drive under it has (its nearest folder that exists, the folder itself
+// being made at install): "Frigate's recordings go to /Volumes/Media/frigate,
+// on a drive with 1.6 TB free; Settings › Frigate picks another folder."
+func storesWords(a *catalog.App, what, folder string) string {
+	room := ""
+	for dir := folder; dir != "" && dir != filepath.Dir(dir); dir = filepath.Dir(dir) {
+		if vols := diskspace.Check([]diskspace.Location{{Name: what, Path: dir}}); len(vols) == 1 {
+			room = ", on a drive with " + diskspace.Size(vols[0].Free) + " free"
+			break
+		}
+	}
+	return fmt.Sprintf("%s's %s go to %s%s; Settings › %s picks another folder.", a.Name(), what, folder, room, a.Name())
 }

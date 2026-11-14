@@ -94,6 +94,8 @@ Use `../../appdata/<name>/...` for bind mounts so data sits next to the other st
 | `aliases` | Other names that select it (`overseerr` → `seerr`) |
 | `requires` | `.env` variables that must be set before it starts (for example a token) |
 | `warning` | One line the install plan shows under *Worth knowing* (for example that its page has no password at first) |
+| `stores` | The `.env` folder settings it fills, each with what it keeps there (`{ FRIGATE_RECORDINGS: recordings }`): the install plan says where that folder is and how much room its drive has |
+| `next` | What to do once it's installed, shown under *Ready to open* (Frigate: add a camera) |
 | `seed` | A repository folder of starter files copied into its data folder on install, never over existing files |
 | `login` | `.env` variables the homelab set the app's sign-in up with, user then password; the app's page on Status shows them behind **Sign-in details** (the password is only copied) |
 | `dump: postgres` | `homelab backup` dumps this database daily |

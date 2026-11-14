@@ -346,7 +346,7 @@ $('settingsAll').onclick = () => { settingsShowAll = !settingsShowAll; filterSet
 const settingLabels = {
   TZ: 'Time zone', PUID: 'User ID', PGID: 'Group ID', BIND_IP: 'Apps listen on', LAN_BIND_IP: 'Proxy and DNS listen on',
   KEEP_AWAKE: 'Keep this machine awake', BATTERY_SAVER: 'Battery saver', MEDIA_ROOT: 'Media drive', DOWNLOADS_ROOT: 'Downloads folder',
-  IMMICH_UPLOAD_LOCATION: 'Photos folder', BACKUP_DESTINATION: 'Backups go to', JELLYFIN_DATA_DIR: 'Jellyfin data folder',
+  IMMICH_UPLOAD_LOCATION: 'Photos folder', BACKUP_DESTINATION: 'Backups go to', JELLYFIN_DATA_DIR: 'Jellyfin data folder', FRIGATE_RECORDINGS: 'Frigate recordings folder',
   SYNC_ROOT: 'Syncthing folder', HOMELAB_DOMAIN: 'Domain (empty: addresses on your tailnet)', HOMELAB_BASELINE: 'Apps that always start (small or full)', AUTO_DOMAIN: 'Give new apps their addresses',
   CLOUDFLARE_API_TOKEN: 'Cloudflare API token', TUNNEL_TOKEN: 'Cloudflare Tunnel token', DESKTOP_ALERTS: 'Alerts on this screen', QUIET_HOURS: 'Quiet hours (no sound at night)',
   HELPER_EMAIL: "Your helper's email", HEARTBEAT_URL: 'Heartbeat ping URL', UPDATES_PAUSED: 'Pause nightly updates',

@@ -63,6 +63,8 @@ services:
       web: 8971
       admin: true
       warning: "heavy: detection runs on the processor unless a Coral or graphics chip is passed through (not possible on a Mac); plan on about one processor core for each camera"
+      stores: { FRIGATE_RECORDINGS: recordings }
+      next: "Next: add your camera. In Frigate, open Settings › Configuration editor, put your camera's address (rtsp://…) where the example camera is, turn it on, and Save & Restart."
       # Its first settings: the broker, the processor detector, and an
       # example camera, off until you fill it in.
       seed: config/frigate

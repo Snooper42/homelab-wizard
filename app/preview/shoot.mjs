@@ -4408,6 +4408,19 @@ const smokes = [
     const done = await page.textContent('#started');
     if (!/Gluetun/.test(done)) throw new Error(`Done leaves out the tunnel: ${done}`);
   } },
+  // Usability task 3, item 18: picking Frigate, the plan says where its recordings go and the room there; once it's
+  // installed, Done says what to do next (add a camera).
+  { name: 'Choose apps: Frigate’s plan says where recordings go, and Done what to do next', screen: 'choose', run: async (page) => {
+    await page.click('#more > summary');
+    await page.fill('#search', 'frigate');
+    await page.click('#groups label.app:has(strong:text-is("Frigate")) input');
+    await page.waitForSelector('#plan :text("Frigate’s recordings go to"), #plan :text("Frigate\'s recordings go to")', { timeout: 5000 });
+    const plan = await page.textContent('#plan');
+    if (!/recordings go to \/Volumes\/Media\/frigate, on a drive with 1\.6 TB free/.test(plan) || !/Settings › Frigate picks another folder/.test(plan)) throw new Error(`the plan: ${plan}`);
+    await page.click('#installBtn');
+    await page.waitForSelector('#started li:has-text("Frigate")', { timeout: 10000 });
+    if (!/Next: add your camera/.test(await page.textContent('#started'))) throw new Error(`Done says nothing to do next: ${await page.textContent('#started')}`);
+  } },
   { name: 'Photos per person on Status', screen: 'status', run: async (page) => {
     await page.waitForSelector('#storageCard:not([hidden]) li:has-text("Anna Smith") .when:has-text("412 GB")', { timeout: 5000 });
     await page.waitForSelector('#storageCard .muted:has-text("580 GB in Immich")');

@@ -5378,7 +5378,10 @@
   function Started({ started, also = [], open: open5, close: close3 }) {
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3(CardHead, { title: "Ready to open" }),
-      started.length ? /* @__PURE__ */ u3("ul", { children: started.map((s3) => /* @__PURE__ */ u3("li", { children: s3.url ? /* @__PURE__ */ u3(ActionLink, { onClick: () => open5(s3.url), children: s3.name }) : s3.name }, s3.id)) }) : /* @__PURE__ */ u3("p", { class: "muted", children: "Nothing new to start." }),
+      started.length ? /* @__PURE__ */ u3("ul", { children: started.map((s3) => /* @__PURE__ */ u3("li", { children: [
+        s3.url ? /* @__PURE__ */ u3(ActionLink, { onClick: () => open5(s3.url), children: s3.name }) : s3.name,
+        s3.next && /* @__PURE__ */ u3("div", { class: "muted startednext", children: s3.next })
+      ] }, s3.id)) }) : /* @__PURE__ */ u3("p", { class: "muted", children: "Nothing new to start." }),
       !!also.length && /* @__PURE__ */ u3("p", { class: "muted", id: "alsoStarted", children: also.map((x3) => `With ${x3.by}: ${x3.name}, ${x3.what.charAt(0).toLowerCase() + x3.what.slice(1)}.`).join(" ") }),
       /* @__PURE__ */ u3("button", { type: "button", id: "installClose", class: "small", onClick: close3, children: "Close" })
     ] });
@@ -6879,6 +6882,7 @@
     IMMICH_UPLOAD_LOCATION: "Photos folder",
     BACKUP_DESTINATION: "Backups go to",
     JELLYFIN_DATA_DIR: "Jellyfin data folder",
+    FRIGATE_RECORDINGS: "Frigate recordings folder",
     SYNC_ROOT: "Syncthing folder",
     HOMELAB_DOMAIN: "Domain (empty: addresses on your tailnet)",
     HOMELAB_BASELINE: "Apps that always start (small or full)",
