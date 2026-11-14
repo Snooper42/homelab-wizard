@@ -14,8 +14,14 @@ import AppKit
 ///
 /// The app's own look: no other product's name, logo or artwork.
 enum Theme {
-    /// The accent: buttons, links, the selection, the "changed" dot.
-    static let accent = Color(light: 0x6A4FF0, dark: 0x8C7BFF)
+    /// The accent: links, bordered buttons' text, the selection, the "changed"
+    /// dot. Light in dark mode so it reads as text: 8.2:1 on a card, 4.9:1 on a
+    /// bordered button's own tint (Nov 14: 0x8C7BFF gave 3.6:1 there).
+    static let accent = Color(light: 0x6A4FF0, dark: 0xB4AAFF)
+    /// The accent as a fill under white text: filled buttons, the lock screen's
+    /// Unlock, a picked chip. The light accent in both looks (white on it 5.3:1);
+    /// the dark accent is too light for white text.
+    static let accentFill = Color(light: 0x6A4FF0, dark: 0x6A4FF0)
     /// The accent's deeper end, for the app mark's gradient.
     static let accentDeep = Color(light: 0x4B32C3, dark: 0x5B45D6)
 
@@ -137,7 +143,7 @@ struct AppMark: View {
             .overlay {
                 Image(systemName: "server.rack")
                     .font(.system(size: size * 0.5, weight: .semibold))
-                    .foregroundStyle(LinearGradient(colors: [Theme.accent, Theme.accentDeep],
+                    .foregroundStyle(LinearGradient(colors: [Theme.accentFill, Theme.accentDeep],
                                                     startPoint: .top, endPoint: .bottom))
             }
             .overlay(alignment: .bottomTrailing) {

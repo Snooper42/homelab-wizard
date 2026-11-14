@@ -921,6 +921,7 @@ private struct NotLoadedView: View {
                     Task { await model.refresh() }
                 }
                 .buttonStyle(.borderedProminent)
+                .tint(Theme.accentFill)
                 .disabled(live.isRefreshing || model.cards.isLoading)
             }
         } else {
@@ -980,6 +981,7 @@ private struct AwayModeView: View {
                     }
                 }
                 .buttonStyle(.borderedProminent)
+                .tint(Theme.accentFill)
                 .disabled(model.liveEvents.isRefreshing)
             }
             .padding()

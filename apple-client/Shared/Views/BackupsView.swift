@@ -439,6 +439,7 @@ private struct BackupsHero: View {
                     HStack(spacing: 8) {
                         Button(HomelabTask.backup.title) { tasks.start(.backup) }
                             .buttonStyle(.borderedProminent)
+                            .tint(Theme.accentFill)
                         Button(HomelabTask.restoreTest.title) { tasks.start(.restoreTest) }
                             .buttonStyle(.bordered)
                     }

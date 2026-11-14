@@ -152,7 +152,7 @@ struct FirstAccountCard: View {
                 .font(.title2)
                 .foregroundStyle(.white)
                 .frame(width: 48, height: 48)
-                .background(Theme.accent, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .background(Theme.accentFill, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
             Text(finances.isMember ? "Your own Finances start here" : "Finances start here")
                 .font(.title3.weight(.bold))
                 .foregroundStyle(Theme.ink)
@@ -170,6 +170,7 @@ struct FirstAccountCard: View {
                     .padding(.vertical, 6)
             }
             .buttonStyle(.borderedProminent)
+            .tint(Theme.accentFill)
             .buttonBorderShape(.capsule)
         }
         .padding(18)

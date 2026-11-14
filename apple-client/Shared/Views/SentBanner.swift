@@ -19,6 +19,7 @@ struct SentBanner: View {
             Spacer(minLength: 8)
             Button("Open", action: open)
                 .buttonStyle(.borderedProminent)
+                .tint(Theme.accentFill)
             Button(action: dismiss) {
                 Image(systemName: "xmark")
             }

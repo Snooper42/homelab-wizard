@@ -598,7 +598,7 @@ private struct RecentTransactionsCard: View {
                         .foregroundStyle(.white)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 5)
-                        .background(Theme.accent, in: Capsule())
+                        .background(Theme.accentFill, in: Capsule())
                     }
                     .buttonStyle(PressableButtonStyle())
                 } else {
@@ -1066,7 +1066,7 @@ private struct CategoryPicker: View {
                                 .padding(.horizontal, 12)
                                 .padding(.vertical, 9)
                                 .frame(maxWidth: .infinity)
-                                .background(picked ? Theme.accent : (tint?.soft ?? Theme.accent.opacity(0.14)), in: Capsule())
+                                .background(picked ? Theme.accentFill : (tint?.soft ?? Theme.accent.opacity(0.14)), in: Capsule())
                             }
                             .buttonStyle(PressableButtonStyle())
                             .disabled(finances.isSaving)
@@ -1605,7 +1605,7 @@ private struct FinanceInvestmentsPage: View {
                 .foregroundStyle(.white)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 9)
-                .background(Theme.accent, in: Capsule())
+                .background(Theme.accentFill, in: Capsule())
             }
             .buttonStyle(PressableButtonStyle())
             Button {
@@ -3228,6 +3228,7 @@ private struct TransactionDetailView: View {
                             }
                         }
                         .buttonStyle(.borderedProminent)
+                        .tint(Theme.accentFill)
                         .buttonBorderShape(.capsule)
                         .padding(.top, 8)
                     }

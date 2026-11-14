@@ -43,7 +43,7 @@ struct LockScreenView: View {
                     .foregroundStyle(.white)
                     .frame(maxWidth: 420)
                     .frame(height: 54)
-                    .background(Theme.accent, in: Capsule())
+                    .background(Theme.accentFill, in: Capsule())
                     .shadow(color: Theme.accent.opacity(0.32), radius: 12, y: 8)
             }
             .buttonStyle(PressableButtonStyle())

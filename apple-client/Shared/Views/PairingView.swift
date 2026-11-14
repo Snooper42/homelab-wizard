@@ -191,6 +191,7 @@ struct PairingView: View {
                 .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
+            .tint(Theme.accentFill)
             .controlSize(.large)
             .disabled(!model.canSubmit)
             .keyboardShortcut(.defaultAction)
