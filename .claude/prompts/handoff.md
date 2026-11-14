@@ -283,6 +283,7 @@ Keep it the hub: detail belongs in the loop file for that area (`finances-handof
 
 ## 6. Lessons from this container (save yourself the time)
 
+- **`UNUserNotificationCenter.current()` throws in `swift test`** (no app bundle: `bundleProxyForCurrentProcess is nil`, signal 6, the whole run stops; #688 through `AppCoordinator.unpair`). Anything that can reach it from a test checks `PrivateReminders.canNotify` (`Bundle.main.bundleURL.pathExtension == "app"`) first.
 - **A rename by `sed 's/name(/…/'` misses the definition `name<T…>(`** (#680's first compile: `cannot find 'sealedCall' in scope`). Grep the old name after renaming.
 - **The app's models quietly drop what they don't expect:** `FinanceTransaction` keeps a receipt only if `ReceiptCodec.isValidName` takes it, so a new kind of name needs it there too (#680).
 - **A new page under `docs/` needs `---\nversion: …\n---` on top:** `homelab validate` (and `TestValidateAndUsage`) refuses it otherwise.
