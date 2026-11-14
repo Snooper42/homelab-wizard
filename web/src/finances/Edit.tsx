@@ -397,13 +397,16 @@ function PaymentForm(props: EditProps) {
   return (
     <form class="finform" onSubmit={submit} {...watch}>
       <div class="formhead"><Mark brand={brand === 'none' ? '' : brand} kind={kind} name={name || 'Payment'} type={kind === 'subscriptions' ? type || suggested : undefined} img={img} size="lg" /><h2 id="finSheetTitle">{x ? x.name : 'Add a payment'}</h2></div>
-      <BrandPick kind={kind} value={brand === 'none' ? '' : brand} set={(k) => { picked.current = true; setBrand(k || 'none'); follow(k); if (k && !name.trim()) setName(brandName(k)); }} payment />
-      <OwnLogo value={img} set={setImg} what={brand && brand !== 'none' ? brandName(brand) : name.trim() || 'this payment'} fetchLogo={props.fetchLogo} guess={siteFor(brand || brandOf(undefined, name, kind), name)} />
+      {/* Name and Amount first: the logo follows the name as it is typed, and its grid comes after (usability task 15, item 3). */}
       <div class="finway"><Segmented label="Which way the money goes" value={way} pick={setWay} options={[['out', 'Goes out'], ['in', 'Comes in from someone']]} /></div>
       <div class="formgrid">
         <Field label="Name"><input value={name} onInput={input(rename)} placeholder={comesIn ? 'Mortgage share' : 'Mortgage'} required /></Field>
         {comesIn && <Field label="From"><input value={payer} onInput={input(setPayer)} placeholder="Who sends it" /></Field>}
         <MoneyField label={!comesIn && card ? 'Other spending on it each time (each pays the balance)' : 'Amount'} value={amount} set={setAmount} />
+      </div>
+      <BrandPick kind={kind} value={brand === 'none' ? '' : brand} set={(k) => { picked.current = true; setBrand(k || 'none'); follow(k); if (k && !name.trim()) setName(brandName(k)); }} payment />
+      <OwnLogo value={img} set={setImg} what={brand && brand !== 'none' ? brandName(brand) : name.trim() || 'this payment'} fetchLogo={props.fetchLogo} guess={siteFor(brand || brandOf(undefined, name, kind), name)} />
+      <div class="formgrid">
         <Field label="Category"><select value={kind} onChange={input((k) => { kindPicked.current = true; setKind(k); })}>{categories.map(([v, t]) => <option key={v} value={v}>{t}</option>)}</select></Field>
         {kind === 'subscriptions' && <Field label="Type"><select value={type} onChange={input(setType)}>
           <option value="">{suggested ? `${subTypeName(suggested)} (from its ${brand && brand !== 'none' ? 'logo' : 'name'})` : 'Other (pick one)'}</option>
@@ -453,17 +456,34 @@ function BrandPick({ kind, value, set, payment }: { kind: string; value: string;
   const label = payment || kind === 'home' ? 'Logo' : kind === 'car' ? 'Make' : broker ? 'Broker' : 'Bank';
   const none = payment || kind === 'home' ? 'None' : kind === 'car' ? 'Another make' : broker ? 'Another broker' : 'Another bank';
   const what = payment ? 'logos' : kind === 'car' ? 'makes' : 'banks and brokers';
+  // One Tab stop for the whole grid (337 logos were 337 stops): the picked tile, and the arrow keys
+  // move between tiles (up and down by a row as it is laid out), Home and End to the ends.
+  const keys = (e: KeyboardEvent) => {
+    const tiles = Array.from(grid.current?.querySelectorAll<HTMLButtonElement>('button') || []);
+    const at = tiles.indexOf(document.activeElement as HTMLButtonElement);
+    if (at < 0) return;
+    const row = tiles.filter((t) => t.offsetTop === tiles[0].offsetTop).length || 1;
+    const to = ({ ArrowRight: at + 1, ArrowLeft: at - 1, ArrowDown: at + row, ArrowUp: at - row, Home: 0, End: tiles.length - 1 } as Record<string, number>)[e.key];
+    if (to === undefined) return;
+    e.preventDefault();
+    const t = tiles[Math.max(0, Math.min(tiles.length - 1, to))];
+    t.focus();
+    t.scrollIntoView({ block: 'nearest' });
+  };
+  const list = value && !shown.includes(value) ? [value, ...shown] : shown;
+  // The stop: the picked tile, else (searched away) the first.
+  const stop = list.includes(value) || !value ? value : list[0] ?? '';
   return (
     <div class="brandpick">
       <div class="brandhead">
         <span>{label}</span>
         {all.length > 9 && <input type="search" class="brandsearch" value={q} onInput={input(setQ)} placeholder={`Search ${all.length} ${what}`} aria-label={`Search ${what}`} />}
       </div>
-      <div class="brandgrid" ref={grid} role="radiogroup" aria-label={label}>
-        {(value && !shown.includes(value) ? [value, ...shown] : shown).map((k) => (
-          <button key={k} type="button" role="radio" aria-checked={value === k} class={value === k ? 'on' : ''} onClick={() => set(k)}><Mark brand={k} name={brandName(k)} size="sm" /><span>{brandName(k)}</span></button>
+      <div class="brandgrid" ref={grid} role="radiogroup" aria-label={label} onKeyDown={keys}>
+        {list.map((k) => (
+          <button key={k} type="button" role="radio" aria-checked={value === k} tabIndex={stop === k ? 0 : -1} class={value === k ? 'on' : ''} onClick={() => set(k)}><Mark brand={k} name={brandName(k)} size="sm" /><span>{brandName(k)}</span></button>
         ))}
-        <button type="button" role="radio" aria-checked={!value} class={!value ? 'on' : ''} onClick={() => set('')}><Mark kind={kind} name={none} size="sm" /><span>{none}</span></button>
+        <button type="button" role="radio" aria-checked={!value} tabIndex={stop === '' ? 0 : -1} class={!value ? 'on' : ''} onClick={() => set('')}><Mark kind={kind} name={none} size="sm" /><span>{none}</span></button>
       </div>
       {!shown.length && <p class="muted brandnone">None by that name: pick {none}, and type its name below.</p>}
     </div>

@@ -2150,7 +2150,10 @@ html .fx-month td { padding:0; vertical-align:top; height:92px; border-radius:va
 .fx-dates { margin-bottom:12px; }
 /* The period the Dashboard shows (Period.tsx): one bar above every card, ‹ the name and days › and Today. */
 #finRoot .card.fx-periodbar { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:0; padding:10px calc(var(--fin-pad) + 2px); border-radius:var(--fin-radius); }
-#finRoot .fx-periodbar .fx-periodname { flex:0 1 auto; min-width:0; text-align:center; padding:0 6px; }
+/* Back, the name and forward stay on one line (usability task 15, item 4): the name wraps between the arrows. */
+#finRoot .fx-periodbar .fx-periodstep { display:flex; align-items:center; gap:8px; flex:0 1 auto; min-width:0; }
+#finRoot .fx-periodbar .fx-periodstep > button { flex:none; }
+#finRoot .fx-periodbar .fx-periodname { flex:0 1 auto; min-width:0; text-align:center; padding:0 6px; overflow-wrap:anywhere; }
 #finRoot .fx-periodbar h2 { margin:0; font-size:16px; font-weight:600; letter-spacing:-.01em; }
 #finRoot .fx-periodbar .fx-dates { margin:2px 0 0; }
 #finRoot .fx-periodbar > button.small { margin-left:auto; }

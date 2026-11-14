@@ -5979,6 +5979,23 @@ const smokes = [
     const box = await page.$eval('.fx-clear .hovercard:has(.fx-working)', (e) => { const r = e.getBoundingClientRect(); return { l: r.left, r: r.right, w: innerWidth }; });
     if (box.l < 0 || box.r > box.w) throw new Error(`the card leaves the screen: ${JSON.stringify(box)}`);
   } },
+  // Usability task 15, item 4: on the phone (390px, and 320px with text at 1.5×, which is 213px), back, the period's name
+  // and forward on one line, the name wrapping between them.
+  ...[390, 213].map((w) => ({ name: `Finances: the period bar's arrows on one line with its name, on the phone at ${w}px`, screen: 'finances', phone: ['companion', 'finances'], run: async (page) => {
+    await page.setViewportSize({ width: w, height: 700 });
+    await page.waitForSelector('#finances.active #finPeriod h2', { timeout: 5000 });
+    for (const by of ['By paycheck', 'By month']) {
+      await page.click(`#finPeriod [role=radio]:text-is("${by}")`);
+      const box = await page.$eval('#finPeriod', (bar) => {
+        const r = (q) => bar.querySelector(q).getBoundingClientRect();
+        const back = r('button[aria-label$=" before"]'), on = r('button[aria-label$=" after"]'), name = r('.fx-periodname');
+        return { back: [back.top, back.left, back.right], on: [on.top, on.left, on.right], name: [name.left, name.right], w: document.documentElement.clientWidth };
+      });
+      if (Math.abs(box.back[0] - box.on[0]) > 1) throw new Error(`${by}: the arrows' tops differ: ${JSON.stringify(box)}`);
+      if (!(box.back[2] <= box.name[0] + 1 && box.name[1] <= box.on[1] + 1)) throw new Error(`${by}: the name is not between the arrows: ${JSON.stringify(box)}`);
+      if (box.on[2] > box.w) throw new Error(`${by}: forward leaves the screen: ${JSON.stringify(box)}`);
+    }
+  } })),
   // One period picker for the whole Dashboard (finances-handoff.md, Step 4): a bar above every card, with the period's
   // name and days, ‹ › and Today; the paycheck card has no ‹ › of its own and follows it, as the checking chart does.
   { name: 'Finances: one period picker atop the Dashboard, the cards follow it', screen: 'finances', run: async (page) => {
@@ -7183,6 +7200,30 @@ const smokes = [
     const saved = await page.evaluate(() => window.__MOCK.financesSaved?.[0]);
     const gym = saved?.payments.find((x) => x.name === 'Gym');
     if (!gym || gym.amount !== 40 || gym.schedule.every !== 'month') throw new Error(`saved ${JSON.stringify(gym)}`);
+  } },
+  // Usability task 15, item 3: the logo grid is one Tab stop (arrows inside), after Name and Amount, so Tab reaches Name at once.
+  { name: 'Finances: from opening Add a payment, Tab reaches Name in 5 presses or fewer, and the logos by arrow keys', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .toolbar button:text-is("Add a payment")', { timeout: 5000 });
+    await page.waitForSelector('#finSheet:not([hidden])', { timeout: 5000 });
+    const onName = () => page.evaluate(() => { const a = document.activeElement; return !!a && a.matches('#finSheet input') && !!a.closest('label')?.textContent?.startsWith('Name'); });
+    let presses = 0;
+    while (!(await onName()) && presses < 6) { await page.keyboard.press('Tab'); presses++; }
+    if (!(await onName())) throw new Error('Tab took more than 5 presses to reach Name');
+    // The grid: one stop, its picked tile (None, for a new one); the arrows move inside it, Space picks.
+    let stops = 0, inGrid = false;
+    for (let i = 0; i < 40 && !inGrid; i++) { await page.keyboard.press('Tab'); stops++; inGrid = await page.evaluate(() => !!document.activeElement?.closest('#finSheet .brandgrid')); }
+    if (!inGrid) throw new Error('Tab never reached the logos');
+    const at = () => page.evaluate(() => document.activeElement?.textContent || '');
+    if (await at() !== 'None') throw new Error(`the logos' Tab stop is ${await at()}, not the picked None`);
+    await page.keyboard.press('Home');
+    const first = await at();
+    await page.keyboard.press('ArrowRight');
+    const second = await at();
+    if (!first || !second || first === second) throw new Error(`the arrows didn't move in the logos: ${first}, ${second}`);
+    await page.keyboard.press('Space');
+    if (await page.evaluate(() => document.querySelector('#finSheet .brandgrid .on')?.textContent) !== second) throw new Error('Space did not pick the logo');
+    await page.keyboard.press('Tab');
+    if (await page.evaluate(() => !!document.activeElement?.closest('#finSheet .brandgrid'))) throw new Error('Tab stayed in the logos');
   } },
   // Money in from someone outside the household: Comes in from someone asks who sends it, and keeps no account it comes out of.
   { name: 'Finances: add money that comes in from someone', screen: 'finances', run: async (page) => {

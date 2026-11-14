@@ -10889,6 +10889,12 @@
         /* @__PURE__ */ u3(Mark, { brand: brand === "none" ? "" : brand, kind, name: name || "Payment", type: kind === "subscriptions" ? type || suggested2 : void 0, img, size: "lg" }),
         /* @__PURE__ */ u3("h2", { id: "finSheetTitle", children: x3 ? x3.name : "Add a payment" })
       ] }),
+      /* @__PURE__ */ u3("div", { class: "finway", children: /* @__PURE__ */ u3(Segmented, { label: "Which way the money goes", value: way, pick: setWay, options: [["out", "Goes out"], ["in", "Comes in from someone"]] }) }),
+      /* @__PURE__ */ u3("div", { class: "formgrid", children: [
+        /* @__PURE__ */ u3(Field, { label: "Name", children: /* @__PURE__ */ u3("input", { value: name, onInput: input(rename), placeholder: comesIn ? "Mortgage share" : "Mortgage", required: true }) }),
+        comesIn && /* @__PURE__ */ u3(Field, { label: "From", children: /* @__PURE__ */ u3("input", { value: payer, onInput: input(setPayer), placeholder: "Who sends it" }) }),
+        /* @__PURE__ */ u3(MoneyField, { label: !comesIn && card ? "Other spending on it each time (each pays the balance)" : "Amount", value: amount, set: setAmount })
+      ] }),
       /* @__PURE__ */ u3(BrandPick, { kind, value: brand === "none" ? "" : brand, set: (k3) => {
         picked.current = true;
         setBrand(k3 || "none");
@@ -10896,11 +10902,7 @@
         if (k3 && !name.trim()) setName(brandName(k3));
       }, payment: true }),
       /* @__PURE__ */ u3(OwnLogo, { value: img, set: setImg, what: brand && brand !== "none" ? brandName(brand) : name.trim() || "this payment", fetchLogo: props.fetchLogo, guess: siteFor(brand || brandOf(void 0, name, kind), name) }),
-      /* @__PURE__ */ u3("div", { class: "finway", children: /* @__PURE__ */ u3(Segmented, { label: "Which way the money goes", value: way, pick: setWay, options: [["out", "Goes out"], ["in", "Comes in from someone"]] }) }),
       /* @__PURE__ */ u3("div", { class: "formgrid", children: [
-        /* @__PURE__ */ u3(Field, { label: "Name", children: /* @__PURE__ */ u3("input", { value: name, onInput: input(rename), placeholder: comesIn ? "Mortgage share" : "Mortgage", required: true }) }),
-        comesIn && /* @__PURE__ */ u3(Field, { label: "From", children: /* @__PURE__ */ u3("input", { value: payer, onInput: input(setPayer), placeholder: "Who sends it" }) }),
-        /* @__PURE__ */ u3(MoneyField, { label: !comesIn && card ? "Other spending on it each time (each pays the balance)" : "Amount", value: amount, set: setAmount }),
         /* @__PURE__ */ u3(Field, { label: "Category", children: /* @__PURE__ */ u3("select", { value: kind, onChange: input((k3) => {
           kindPicked.current = true;
           setKind(k3);
@@ -10944,17 +10946,31 @@
     const label = payment || kind === "home" ? "Logo" : kind === "car" ? "Make" : broker ? "Broker" : "Bank";
     const none2 = payment || kind === "home" ? "None" : kind === "car" ? "Another make" : broker ? "Another broker" : "Another bank";
     const what2 = payment ? "logos" : kind === "car" ? "makes" : "banks and brokers";
+    const keys2 = (e3) => {
+      const tiles2 = Array.from(grid.current?.querySelectorAll("button") || []);
+      const at2 = tiles2.indexOf(document.activeElement);
+      if (at2 < 0) return;
+      const row = tiles2.filter((t4) => t4.offsetTop === tiles2[0].offsetTop).length || 1;
+      const to = { ArrowRight: at2 + 1, ArrowLeft: at2 - 1, ArrowDown: at2 + row, ArrowUp: at2 - row, Home: 0, End: tiles2.length - 1 }[e3.key];
+      if (to === void 0) return;
+      e3.preventDefault();
+      const t3 = tiles2[Math.max(0, Math.min(tiles2.length - 1, to))];
+      t3.focus();
+      t3.scrollIntoView({ block: "nearest" });
+    };
+    const list = value && !shown8.includes(value) ? [value, ...shown8] : shown8;
+    const stop2 = list.includes(value) || !value ? value : list[0] ?? "";
     return /* @__PURE__ */ u3("div", { class: "brandpick", children: [
       /* @__PURE__ */ u3("div", { class: "brandhead", children: [
         /* @__PURE__ */ u3("span", { children: label }),
         all.length > 9 && /* @__PURE__ */ u3("input", { type: "search", class: "brandsearch", value: q2, onInput: input(setQ), placeholder: `Search ${all.length} ${what2}`, "aria-label": `Search ${what2}` })
       ] }),
-      /* @__PURE__ */ u3("div", { class: "brandgrid", ref: grid, role: "radiogroup", "aria-label": label, children: [
-        (value && !shown8.includes(value) ? [value, ...shown8] : shown8).map((k3) => /* @__PURE__ */ u3("button", { type: "button", role: "radio", "aria-checked": value === k3, class: value === k3 ? "on" : "", onClick: () => set2(k3), children: [
+      /* @__PURE__ */ u3("div", { class: "brandgrid", ref: grid, role: "radiogroup", "aria-label": label, onKeyDown: keys2, children: [
+        list.map((k3) => /* @__PURE__ */ u3("button", { type: "button", role: "radio", "aria-checked": value === k3, tabIndex: stop2 === k3 ? 0 : -1, class: value === k3 ? "on" : "", onClick: () => set2(k3), children: [
           /* @__PURE__ */ u3(Mark, { brand: k3, name: brandName(k3), size: "sm" }),
           /* @__PURE__ */ u3("span", { children: brandName(k3) })
         ] }, k3)),
-        /* @__PURE__ */ u3("button", { type: "button", role: "radio", "aria-checked": !value, class: !value ? "on" : "", onClick: () => set2(""), children: [
+        /* @__PURE__ */ u3("button", { type: "button", role: "radio", "aria-checked": !value, tabIndex: stop2 === "" ? 0 : -1, class: !value ? "on" : "", onClick: () => set2(""), children: [
           /* @__PURE__ */ u3(Mark, { kind, name: none2, size: "sm" }),
           /* @__PURE__ */ u3("span", { children: none2 })
         ] })
@@ -17033,12 +17049,14 @@ ${pays}
     const unit2 = by === "month" ? "month" : "pay period";
     return /* @__PURE__ */ u3(Card, { kind: "fx-periodbar", id: "finPeriod", children: [
       /* @__PURE__ */ u3(Segmented, { label: "Show the Dashboard by", value: by, pick: (b2) => setBy(b2), options: [["pay", "By paycheck"], ["month", "By month"]] }),
-      /* @__PURE__ */ u3(IconButton, { icon: "prev", label: `The ${unit2} before`, disabled: !canBack, onClick: () => step2(-1) }),
-      /* @__PURE__ */ u3("div", { class: "fx-periodname", "aria-live": "polite", children: [
-        /* @__PURE__ */ u3("h2", { children: title }),
-        /* @__PURE__ */ u3("p", { class: "fx-sub fx-dates", children: dates })
+      /* @__PURE__ */ u3("div", { class: "fx-periodstep", children: [
+        /* @__PURE__ */ u3(IconButton, { icon: "prev", label: `The ${unit2} before`, disabled: !canBack, onClick: () => step2(-1) }),
+        /* @__PURE__ */ u3("div", { class: "fx-periodname", "aria-live": "polite", children: [
+          /* @__PURE__ */ u3("h2", { children: title }),
+          /* @__PURE__ */ u3("p", { class: "fx-sub fx-dates", children: dates })
+        ] }),
+        /* @__PURE__ */ u3(IconButton, { icon: "next", label: `The ${unit2} after`, disabled: !canOn, onClick: () => step2(1) })
       ] }),
-      /* @__PURE__ */ u3(IconButton, { icon: "next", label: `The ${unit2} after`, disabled: !canOn, onClick: () => step2(1) }),
       /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: atToday, onClick: today2, children: "Today" })
     ] });
   }
