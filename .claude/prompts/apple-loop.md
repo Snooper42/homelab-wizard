@@ -66,7 +66,14 @@ The owner, Nov 14: "I want to iterate the shit out of the iphone and ipad app." 
 
 ## 3. Where it stands
 
-- **Nov 14:** this file written (the owner's picks: no merge cap for this lane, and the order in section 4), in one PR with item 0's CI change and lane 1's last two web fixes (Finances task 15, items 3 and 4). **Next:** once it's merged and main's Apple client run is done, fetch the pictures. `review/` should hold about 100: the iPhone's, then `ipad-*`. Look at the iPad ones first (item 0's last step), then start item 1.
+- **Merged Nov 14, 12:14 PM Eastern: #694.** This file, item 0 (the iPad's pictures on main), and lane 1's last two web fixes. Its main run is the first full set: 94 pictures in `review/` about 45 minutes after the merge (around 1 PM).
+- **Open: round 1 of item 1** (the PR from the session that wrote this file; its first Mac compile):
+  - `ClockWords` with `ClockWordsTests`: Settings and Status's Updates tile in the phone's clock.
+  - `TransferWords` with `TransferWordsTests`: a transfer's line.
+  - The `app` shot opens the page as a tap does.
+  - Spending's ring: *+$X on Sep*.
+  - **First:** land it. If build-and-test is red, read the log and fix (section 1).
+- **Then:** fetch the 94 pictures and look at all of them, the iPad's first (item 0's last step). Check that round 1's fixes show on main's next run, then carry on with item 1's list.
 - **Not yet tried on the owner's iPhone and iPad** (each needs the cable re-install, once covers all): the private Finances work in the app (#676, #678, #680, #683, #686, #688), and the earlier list in `handoff.md` section 4 (*Trying on the phone*). One re-install covers them all; don't ask again until the owner has done it.
 
 ## 4. The order (the owner's, Nov 14)
