@@ -160,11 +160,12 @@ final class FinancesViewModel {
             awayBase = kept.plan.rawPlan
             current = awayChanges.reduce(current) { $1.apply(to: $0) ?? $0 }
         }
-        let (rawLedger, readOnly) = (kept.ledger?.raw, kept.plan.view.readOnly)
+        // Named apart from `rawPlan` and `rawLedger`, which this sets below.
+        let (keptLedger, readOnly) = (kept.ledger?.raw, kept.plan.view.readOnly)
         let working = current
         let day = FinancePlanEdit.todayString()
         let worked = await Task.detached(priority: .userInitiated) {
-            try? HouseholdOffline.project(rawPlan: working, rawLedger: rawLedger, today: day, readOnly: readOnly)
+            try? HouseholdOffline.project(rawPlan: working, rawLedger: keptLedger, today: day, readOnly: readOnly)
         }.value
         if let worked { plan = worked.view }
         rawPlan = mayChangeAway && worked != nil ? current : nil
@@ -220,9 +221,9 @@ final class FinancesViewModel {
 
     /// The plan worked out on this phone from `raw`, shown.
     private func showWorked(_ raw: JSONValue) async {
-        let (ledger, readOnly, day) = (kept?.ledger?.raw, plan?.readOnly ?? false, FinancePlanEdit.todayString())
+        let (keptLedger, readOnly, day) = (kept?.ledger?.raw, plan?.readOnly ?? false, FinancePlanEdit.todayString())
         let worked = await Task.detached(priority: .userInitiated) {
-            try? HouseholdOffline.project(rawPlan: raw, rawLedger: ledger, today: day, readOnly: readOnly)
+            try? HouseholdOffline.project(rawPlan: raw, rawLedger: keptLedger, today: day, readOnly: readOnly)
         }.value
         if let worked { plan = worked.view }
     }
