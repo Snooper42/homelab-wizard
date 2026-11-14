@@ -118,4 +118,5 @@ Mock the palette and any new layout for the owner first (a private canvas, made-
 | `Failed to CreateArtifact … Unexpected token '<'` | GitHub's artifact service | Re-run that job once |
 | A check says in progress long after its log ended | GitHub lag | Read the job's log before calling it stuck |
 | No new pictures on `iphone-screenshots` | main's run was skipped (no app path changed) or the screenshots job failed | Read main's Apple client run |
+| **screenshots** says *cancelled* after its pictures uploaded | its `timeout-minutes` (80 since Nov 14; both devices take about 45) | Read the log's times; if a new shot pushed it over, raise the limit in the same PR and say why |
 | A picture is plain white or black | the app was still opening | Re-take it in the next run; the job already waits once |

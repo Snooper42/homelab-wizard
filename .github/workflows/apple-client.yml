@@ -221,7 +221,8 @@ jobs:
     needs: payee-logos
     if: ${{ !cancelled() && needs.payee-logos.outputs.app == 'true' }}
     runs-on: macos-latest
-    timeout-minutes: 45
+    # The iPhone and the iPad, each in light, dark and the largest text: about 45 minutes in all (Nov 14).
+    timeout-minutes: 80
     defaults:
       run:
         working-directory: apple-client
