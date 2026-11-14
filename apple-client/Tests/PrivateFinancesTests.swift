@@ -14,11 +14,20 @@ private actor SealedComputer: PrivateFinancesCalls {
     var stored: PrivateSeal.Envelope?
     var receipts: [String: String] = [:]
     var unsealed: (plan: JSONValue, ledger: JSONValue)?
+    /// Not answering at all, as a homelab away from this phone's network.
+    var away = false
     private var count = 0
 
-    func financesSealed() -> PrivateSeal.Envelope? { stored }
+    func setAway(_ a: Bool) { away = a }
+    private func answer() throws { if away { throw URLError(.cannotConnectToHost) } }
+
+    func financesSealed() throws -> PrivateSeal.Envelope? {
+        try answer()
+        return stored
+    }
 
     func saveFinancesSealed(was: String, _ envelope: PrivateSeal.Envelope) throws -> String {
+        try answer()
         guard was == (stored?.rev ?? "new") else {
             throw APIError.server(status: 500, message: "Finances were changed on another device after this was read. The latest is shown now: check your change and save it again")
         }
@@ -41,7 +50,8 @@ private actor SealedComputer: PrivateFinancesCalls {
         return r
     }
 
-    func saveFinancesSealedReceipt(_ sealed: String) -> String {
+    func saveFinancesSealedReceipt(_ sealed: String) throws -> String {
+        try answer()
         let name = String(repeating: "\(receipts.count % 10)", count: 32) + ".sealed"
         receipts[name] = sealed
         return name
@@ -76,9 +86,13 @@ private let ledger = #"""
 private let receiptURL = "data:image/jpeg;base64,bWFkZS11cCByZWNlaXB0"
 private let passkey = PrivateSeal.Passkey(secret: Data(repeating: 7, count: 32), credential: Data([1, 2, 3, 4]))
 
+private func offlineFile() -> PrivateOffline {
+    PrivateOffline(file: FileManager.default.temporaryDirectory.appendingPathComponent("private-\(UUID().uuidString).json"))
+}
+
 @MainActor
-private func turnedOn(_ computer: SealedComputer, code: Data, mayChange: Bool = true) async throws -> PrivateFinances {
-    let mine = PrivateFinances(username: "riley", mayChange: true, calls: computer, today: { "2026-11-13" })
+private func turnedOn(_ computer: SealedComputer, code: Data, mayChange: Bool = true, offline: PrivateOffline? = nil) async throws -> PrivateFinances {
+    let mine = PrivateFinances(username: "riley", mayChange: true, calls: computer, offline: offline, today: { "2026-11-13" })
     var asked: [String] = []
     try await mine.turnOn(plan: json(plan), ledger: json(ledger), code: code, passkey: passkey) { name in
         asked.append(name)
@@ -189,6 +203,88 @@ struct PrivateFinancesTests {
         #expect(t1["receipt"] == nil, "the sealed name isn't sent back plain")
         #expect(await computer.stored == nil)
         #expect(throws: PrivateFinances.Problem.locked) { try mine.financesLedger() }
+    }
+
+    /// Away: what's kept opens with no connection, changes wait locked on the
+    /// phone, and go when the Homelab answers.
+    @Test("Offline: opened from the copy kept here, and changes sent once home")
+    func offline() async throws {
+        let computer = SealedComputer()
+        let kept = offlineFile()
+        _ = try await turnedOn(computer, code: PrivateSeal.newCode(), offline: kept)
+        let onDisk = String(decoding: try Data(contentsOf: kept.file), as: UTF8.self)
+        for plain in ["Made-up Checking", "Made-up Cafe", "1234.5"] {
+            #expect(!onDisk.contains(plain), "\(plain) is readable in the copy kept for offline")
+        }
+
+        await computer.setAway(true)
+        let away = PrivateFinances(username: "riley", mayChange: true, calls: computer, offline: kept, today: { "2026-11-13" })
+        #expect(try await away.find() == .locked)
+        #expect(away.awaySince != nil)
+        try await away.unlock(passkeySecret: passkey.secret)
+        #expect(away.state == .open)
+
+        guard case .object(var raw) = try away.financesLedger().raw, case .array(var ts)? = raw["transactions"] else {
+            Issue.record("no ledger")
+            return
+        }
+        ts.removeLast()
+        raw["transactions"] = .array(ts)
+        _ = try await away.saveFinancesLedger(.object(raw))
+        ts.removeLast()
+        raw["transactions"] = .array(ts)
+        _ = try await away.saveFinancesLedger(.object(raw))
+        #expect(away.waiting == 2)
+        #expect(try away.financesLedger().ledger.transactions.isEmpty, "shown as changed")
+        await #expect(throws: PrivateFinances.Problem.receiptAway) { try await away.saveReceipt(dataURL: receiptURL) }
+        await #expect(throws: PrivateFinances.Problem.offAway) { _ = try await away.turnOff() }
+        #expect(await computer.stored?.rev == "r1", "nothing reached the computer")
+
+        // Locked and opened again away: what waits is what opens.
+        away.lock()
+        try await away.unlock(passkeySecret: passkey.secret)
+        #expect(try away.financesLedger().ledger.transactions.isEmpty)
+
+        await computer.setAway(false)
+        await away.comeHome()
+        #expect(away.waiting == 0 && away.awaySince == nil && away.notice == nil)
+        #expect(await computer.stored?.rev == "r2", "both changes, sent as one")
+        #expect(try away.financesLedger().raw["rev"] == .string("r2"))
+    }
+
+    @Test("Offline: a change made away after another of her devices saved isn't kept, and that's said")
+    func offlineChangedElsewhere() async throws {
+        let computer = SealedComputer()
+        let kept = offlineFile()
+        let mine = try await turnedOn(computer, code: PrivateSeal.newCode(), offline: kept)
+        await computer.setAway(true)
+        guard case .object(var raw) = try mine.financesLedger().raw, case .array(var ts)? = raw["transactions"] else {
+            Issue.record("no ledger")
+            return
+        }
+        ts.removeLast()
+        raw["transactions"] = .array(ts)
+        _ = try await mine.saveFinancesLedger(.object(raw))
+        #expect(mine.waiting == 1)
+
+        await computer.setAway(false)
+        await computer.savedElsewhere()
+        await mine.comeHome()
+        #expect(mine.waiting == 0)
+        #expect(mine.notice == PrivateFinances.Problem.changedAway.errorDescription)
+        #expect(try mine.financesLedger().ledger.transactions.count == 2, "the latest is shown")
+    }
+
+    @Test("Offline's words")
+    func awayWords() {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "America/New_York")!
+        let now = Date(timeIntervalSince1970: 1_794_618_000) // Nov 13, 2026, 8:00 PM Eastern
+        let at = now.addingTimeInterval(-3600)
+        let locale = Locale(identifier: "en_US")
+        #expect(PrivateAwayLine.words(since: at, waiting: 0, now: now, calendar: calendar, locale: locale).hasPrefix("Offline: as of today, 7:00"))
+        #expect(PrivateAwayLine.words(since: at, waiting: 1, now: now, calendar: calendar, locale: locale).hasSuffix("1 change waits for the Homelab."))
+        #expect(PrivateAwayLine.words(since: at, waiting: 3, now: now, calendar: calendar, locale: locale).hasSuffix("3 changes wait for the Homelab."))
     }
 
     @Test("The computer's words for a stale save are known")

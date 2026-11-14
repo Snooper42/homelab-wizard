@@ -95,6 +95,14 @@ struct FinancesView: View {
                 }
             }
         }
+        // Her private Finances away: try the Homelab again now and then, and send what waits.
+        .task(id: finances.privateAwaySince != nil || finances.privateWaiting > 0) {
+            while !Task.isCancelled, finances.privateAwaySince != nil || finances.privateWaiting > 0 {
+                try? await Task.sleep(for: .seconds(30))
+                if Task.isCancelled { return }
+                await finances.privateComeHome()
+            }
+        }
         // The latest transactions, once there's a plan to show them with.
         .task(id: finances.plan == nil) {
             if finances.plan != nil, finances.ledger == nil { await finances.loadLedger() }

@@ -63,13 +63,15 @@ final class FinancesViewModel {
         device: @escaping @MainActor () -> DeviceInfo?,
         authorize: @escaping @MainActor (String) async -> Bool,
         offline: OfflineFinances = .onThisDevice,
-        privateKey: PrivateFinancesKey = PrivateFinancesKey()
+        privateKey: PrivateFinancesKey = PrivateFinancesKey(),
+        privateOffline: PrivateOffline = .onThisDevice
     ) {
         self.api = api
         self.device = device
         self.authorize = authorize
         self.offline = offline
         self.privateKey = privateKey
+        self.privateOffline = privateOffline
         Task { _ = await readKept() }
     }
 
@@ -427,6 +429,8 @@ final class FinancesViewModel {
     @ObservationIgnored private var sealedStore: PrivateFinances?
     /// Her key, kept behind Face ID on this device once she opened them here.
     @ObservationIgnored private let privateKey: PrivateFinancesKey
+    /// Her sealed Finances kept on this device for offline (never her key, never plain).
+    @ObservationIgnored private let privateOffline: PrivateOffline
     /// Where her Finances are: unknown on the owner's phones and wall screens.
     private(set) var privacy: PrivateFinances.State = .unknown
     /// Why the last unlock didn't open them, in words.
@@ -455,7 +459,7 @@ final class FinancesViewModel {
             store.mayChange = level >= .edit
             return store
         }
-        let store = PrivateFinances(username: person, mayChange: level >= .edit, calls: api)
+        let store = PrivateFinances(username: person, mayChange: level >= .edit, calls: api, offline: privateOffline)
         sealedStore = store
         return store
     }
@@ -680,6 +684,26 @@ final class FinancesViewModel {
         ledger = nil
         rawLedger = nil
         amountsShown = false
+    }
+
+    /// While the Homelab doesn't answer: when her private Finances shown were last read.
+    var privateAwaySince: Date? { sealedStore?.awaySince }
+    /// Her changes made away, waiting to be sent.
+    var privateWaiting: Int { sealedStore?.waiting ?? 0 }
+    /// What happened away, in words (another of her devices saved first).
+    var privateNotice: String? { sealedStore?.notice }
+
+    /// Tries the Homelab again for her private Finances: what waits goes, and the newest is shown.
+    func privateComeHome() async {
+        guard let store = sealedStore else { return }
+        await store.comeHome()
+        syncPrivacy(store)
+        if store.state == .open {
+            showPrivatePlan(store)
+            showPrivateLedger(store)
+        } else if !isPrivate {
+            await loadPlan()
+        }
     }
 
     /// Her private Finances were used: the 5 minutes start again.
