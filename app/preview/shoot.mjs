@@ -5002,11 +5002,40 @@ const smokes = [
     await page.click('#pairPhone');
     await page.waitForSelector('#pairing img[src^="data:image/svg"]');
     await page.waitForSelector('#pairing code:has-text("K7QX4MRA")');
-    await page.click('#phonesCard li:has-text("Kitchen iPad") button:has-text("Allow changes")');
+    await page.selectOption('#phonesCard select[aria-label="What Kitchen iPad may do"]', 'change');
     await page.waitForSelector('#phonesCard li:has-text("Kitchen iPad"):has-text("Can make changes")');
     await page.click('#phonesCard li:has-text("Kitchen iPad") button:has-text("Remove")');
     await page.waitForSelector('#phonesCard .row:has-text("1 paired")');
     if (await page.isVisible('#phonesCard li:has-text("Kitchen iPad")')) throw new Error('the removed phone is still listed');
+  } },
+  // Usability task 6 (items 6 to 10): a phone and a wall screen pair as two choices, each with its own QR code
+  // (the wall screen's with kiosk in it, nothing to edit), the link the QR code holds named as the one to use, the
+  // home Wi-Fi link behind "If the phone can't open it" saying it only looks; every phone's row has the same
+  // controls, and no warning mark nothing explains.
+  { name: 'Settings › Phones: Pair a phone or a wall screen, each with its own QR code and the link to use', screen: 'settings', run: async (page) => {
+    await page.click('#settingsNav .pagebtn[data-page="Phones"]', { timeout: 5000 });
+    await page.click('#pairPhone', { timeout: 5000 });
+    await page.waitForSelector('#pairing[data-kind="phone"] img', { timeout: 5000 });
+    const use = await page.textContent('#pairing .pairuse');
+    if (!/QR code holds it/.test(use) || !use.includes('https://homelab.example.com/#pair=K7QX4MRA') || use.includes('kiosk')) throw new Error(`the phone's link to use: ${use}`);
+    const wifi = page.locator('#pairing details.pairwifi');
+    if (!/can’t open it/.test(await wifi.locator('summary').textContent())) throw new Error('the home Wi-Fi link is not behind "If the phone can’t open it"');
+    await wifi.locator('summary').click();
+    if (!/192\.168\.1\.10:8099.*can only look/s.test(await wifi.textContent())) throw new Error(`the home Wi-Fi link: ${await wifi.textContent()}`);
+    const text = await page.textContent('#phonesCard');
+    for (const word of ['tailnet', 'kiosk', 'https:', 'http:', ' key']) {
+      if (text.replace(/(https?:\/\/\S+)/g, '').includes(word)) throw new Error(`"${word}" on the Phones card, outside a link`);
+    }
+    await page.click('#pairing button:text-is("Done")');
+    await page.click('#pairWall');
+    await page.waitForSelector('#pairing[data-kind="wall"] img[alt*="wall screen"]', { timeout: 5000 });
+    const wall = await page.textContent('#pairing .pairuse');
+    if (!wall.includes('#pair=K7QX4MRA&kiosk')) throw new Error(`the wall screen's link holds no kiosk: ${wall}`);
+    const paired = await page.evaluate(() => window.__MOCK.paired);
+    if (paired?.canChange || paired?.finances) throw new Error(`a wall screen paired to do more than look: ${JSON.stringify(paired)}`);
+    if (await page.locator('#phonesCard .dot.warn, #phonesCard .dot.bad').count()) throw new Error('a phone carries a warning mark nothing explains');
+    const controls = await page.$$eval('#phonesCard li', (rows) => rows.map((r) => [...r.querySelectorAll('select, button')].map((c) => c.className.split(' ')[0] + (c.tagName === 'BUTTON' ? ':' + c.textContent : '')).join(',')));
+    if (new Set(controls).size !== 1) throw new Error(`the phones' controls differ: ${controls.join(' | ')}`);
   } },
   { name: 'Settings › Phones: Finances phone by phone, and for a phone being paired', screen: 'settings', run: async (page) => {
     await page.click('#settingsNav .pagebtn[data-page="Phones"]', { timeout: 5000 });
@@ -5048,7 +5077,8 @@ const smokes = [
     await page.click('#settingsNav .pagebtn[data-page="Phones"]', { timeout: 5000 });
     const anna = '#phonesCard li:has-text("Anna’s iPhone")';
     await page.waitForSelector(`${anna} select[aria-label="How long Anna’s iPhone keeps it"]`, { timeout: 5000 });
-    if (await page.locator('#phonesCard select[aria-label="How long Kitchen iPad keeps it"]').count()) throw new Error('a phone that only looks offers an end');
+    // Every phone has the same controls in the same places (usability task 6): one that only looks has the end greyed.
+    if (!(await page.locator('#phonesCard select[aria-label="How long Kitchen iPad keeps it"]').isDisabled())) throw new Error('a phone that only looks offers an end');
     await page.selectOption(`${anna} select[aria-label="How long Anna’s iPhone keeps it"]`, String(24 * 7));
     await page.waitForSelector(`${anna} .phoneuntil:has-text("then it only looks")`, { timeout: 5000 });
     const until = await page.evaluate(() => window.__MOCK.phones.find((p) => p.name === 'Anna’s iPhone').until);

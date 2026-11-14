@@ -4247,42 +4247,56 @@
     const d3 = new Date(t3);
     return `${dayText(d3, { weekday: "short", month: "short", day: "numeric" })}, ${clockText(d3)}`;
   };
-  function Pairing({ p: p3, asked, done }) {
+  function Pairing({ p: p3, wall, asked, done }) {
     const links = p3.links || [];
-    const onlyLooks = !!links.length && !links.some((l3) => l3.startsWith("https:")) && (asked.canChange || !!asked.finances);
-    return /* @__PURE__ */ u3("div", { id: "pairing", children: /* @__PURE__ */ u3("div", { class: "pairing", children: [
-      p3.qr && /* @__PURE__ */ u3("img", { src: p3.qr, alt: "QR code for pairing", width: 180, height: 180 }),
+    const secure = links.find((l3) => l3.startsWith("https:"));
+    const wifi = links.find((l3) => l3.startsWith("http:"));
+    const use = links[0] ? links[0] + (wall ? "&kiosk" : "") : "";
+    const onlyLooks = !wall && !!links.length && !secure && (asked.canChange || !!asked.finances);
+    const qr = wall ? p3.wallQR : p3.qr;
+    return /* @__PURE__ */ u3("div", { id: "pairing", "data-kind": wall ? "wall" : "phone", children: /* @__PURE__ */ u3("div", { class: "pairing", children: [
+      qr && /* @__PURE__ */ u3("img", { src: qr, alt: wall ? "QR code for pairing a wall screen" : "QR code for pairing a phone", width: 180, height: 180 }),
       /* @__PURE__ */ u3("div", { children: [
-        /* @__PURE__ */ u3("p", { children: [
-          "Scan this with the phone’s camera, or open a link on the phone, then tap ",
+        wall ? /* @__PURE__ */ u3("p", { id: "pairSay", children: [
+          "Scan this with the TV’s or the wall screen’s camera, or open the link below in its browser, then tap ",
           /* @__PURE__ */ u3("strong", { children: "Pair" }),
-          ". The code is ",
+          ". It shows Status only, large, without buttons, and stays on. It never makes changes or shows Finances."
+        ] }) : /* @__PURE__ */ u3("p", { id: "pairSay", children: [
+          "Scan this with the phone’s camera, then tap ",
+          /* @__PURE__ */ u3("strong", { children: "Pair" }),
+          ". Then, in Safari: Share › Add to Home Screen."
+        ] }),
+        use && /* @__PURE__ */ u3("p", { class: "pairuse", children: [
+          "The link to use",
+          qr ? " (the QR code holds it)" : "",
+          ": ",
+          /* @__PURE__ */ u3("code", { children: use })
+        ] }),
+        /* @__PURE__ */ u3("p", { class: "muted", children: [
+          "It works once, for 10 minutes. The code in it is ",
           /* @__PURE__ */ u3("code", { children: p3.code }),
-          " and works once, for 10 minutes."
+          "."
         ] }),
-        /* @__PURE__ */ u3("ul", { children: links.map((l3) => /* @__PURE__ */ u3("li", { children: /* @__PURE__ */ u3("code", { children: l3 }) }, l3)) }),
-        onlyLooks && /* @__PURE__ */ u3("p", { class: "warn", id: "pairOnlyLooks", children: [
-          "This phone will only look, without Finances, whatever is picked: there is no ",
-          /* @__PURE__ */ u3("code", { children: "https:" }),
-          " link yet, so it pairs over the home Wi-Fi without encryption. Set up the domain or Tailscale in Setup first to give it more."
+        onlyLooks && /* @__PURE__ */ u3("p", { class: "warn", id: "pairOnlyLooks", children: "This phone will only look, without Finances, whatever is picked: there is no secure link yet, so it pairs over the home Wi-Fi. Set up your domain in Setup first to give it more." }),
+        p3.off && /* @__PURE__ */ u3("p", { class: "bad", children: "The phone companion is off: turn it on below and save first." }),
+        secure && wifi && /* @__PURE__ */ u3("details", { class: "pairwifi", children: [
+          /* @__PURE__ */ u3("summary", { children: [
+            "If ",
+            wall ? "the screen" : "the phone",
+            " can’t open it"
+          ] }),
+          /* @__PURE__ */ u3("p", { class: "muted", children: [
+            "Use the home Wi-Fi link instead: ",
+            /* @__PURE__ */ u3("code", { children: wifi + (wall ? "&kiosk" : "") }),
+            ". ",
+            wall ? "A screen" : "A phone",
+            " paired with it can only look, and never sees Finances, so nobody else on the Wi-Fi can copy what it signs in with or read your money."
+          ] })
         ] }),
-        p3.off && /* @__PURE__ */ u3("p", { class: "bad", children: "The phone companion is off (PHONE_COMPANION=false): turn it on below and save first." }),
-        /* @__PURE__ */ u3("p", { class: "muted", children: "Then, in Safari: Share › Add to Home Screen." }),
-        links.some((l3) => l3.startsWith("http:")) && /* @__PURE__ */ u3("p", { class: "muted", children: [
-          "A phone paired with the ",
-          /* @__PURE__ */ u3("code", { children: "http:" }),
-          " link (the home Wi-Fi, without encryption) can only look, and never sees Finances, so that nobody else on the Wi-Fi can copy its key or read your money. To make changes or see Finances from a phone, pair it with an ",
-          /* @__PURE__ */ u3("code", { children: "https:" }),
-          " link."
-        ] }),
-        !!links.length && /* @__PURE__ */ u3("p", { class: "muted", children: [
-          "A TV or a wall screen pairs the same way, with ",
-          /* @__PURE__ */ u3("code", { children: "&kiosk" }),
-          " at the end of the link (",
-          /* @__PURE__ */ u3("code", { children: links[0] + "&kiosk" }),
-          "): it then shows Status only, large, without buttons, and stays on. A screen never makes changes or shows Finances, whatever is picked here; once it is paired, ",
+        wall && /* @__PURE__ */ u3("p", { class: "muted", children: [
+          "Once it’s paired, ",
           /* @__PURE__ */ u3("strong", { children: "Money card only" }),
-          " beside it puts the next payday, what is left after it, and the next 3 bills on its Status (with their amounts hidden while Finances hides them)."
+          " beside it puts the next payday, what’s left after it, and the next 3 bills on its Status (their amounts hidden while Finances hides them)."
         ] }),
         /* @__PURE__ */ u3("button", { class: "small", onClick: done, children: "Done" })
       ] })
@@ -4294,22 +4308,24 @@
     const [canChange, setCanChange] = d2(false);
     const [finances, setFinances] = d2("");
     const [pairing, setPairing] = d2(null);
-    const pair = async () => {
+    const [wall, setWall] = d2(false);
+    const pair = async (screen) => {
       try {
-        setPairing(await on2.pair(name, canChange, finances));
+        setWall(screen);
+        setPairing(await on2.pair(name || (screen ? "Wall screen" : ""), screen ? false : canChange, screen ? "" : finances));
       } catch {
       }
     };
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3(CardHead, { title: "Phones", children: /* @__PURE__ */ u3("span", { class: "muted", children: phones.length ? `${phones.length} paired` : "none paired yet" }) }),
-      /* @__PURE__ */ u3("p", { class: "muted", children: "Status and Backups on your phones, at home and on the tailnet (never on the internet). Each phone pairs once with a code; it can only look unless you let it make changes, and it sees Finances only if you pick that for it." }),
+      /* @__PURE__ */ u3("p", { class: "muted", children: "Status and Backups on your phones, at home and on your own private network (never on the internet). Each pairs once; it can only look unless you let it make changes, and it sees Finances only if you pick that for it." }),
       !!phones.length && /* @__PURE__ */ u3(Rows, { children: phones.map((p3) => /* @__PURE__ */ u3(
         Row,
         {
-          dot: p3.canChange ? "warn" : "ok",
+          dot: "ok",
           title: p3.name,
           sub: /* @__PURE__ */ u3(S, { children: [
-            p3.canChange ? "Can make changes" : p3.unencrypted ? "Looks only (paired over the home Wi-Fi, without encryption)" : "Looks only",
+            p3.canChange ? "Can make changes" : p3.unencrypted ? "Looks only (paired over the home Wi-Fi)" : "Looks only",
             p3.finances === "edit" ? " · changes Finances" : p3.finances === "view" ? " · sees Finances" : p3.finances === "card" ? " · shows the money card" : "",
             p3.until && more(p3) ? /* @__PURE__ */ u3("span", { class: "phoneuntil", children: [
               ", until ",
@@ -4320,15 +4336,29 @@
             ago(p3.lastSeen)
           ] }),
           end: /* @__PURE__ */ u3(S, { children: [
-            !p3.unencrypted && /* @__PURE__ */ u3(FinancesPick, { paired: true, value: p3.finances || "", set: (level) => on2.setFinances(p3.id, level), label: `Finances on ${p3.name}` }),
-            more(p3) && /* @__PURE__ */ u3("select", { class: "untilpick", "aria-label": `How long ${p3.name} keeps it`, value: p3.until ? "set" : "0", onChange: (e3) => on2.setUntil(p3.id, Number(e3.currentTarget.value)), children: [
-              p3.until && /* @__PURE__ */ u3("option", { value: "set", disabled: true, children: [
-                "Until ",
-                untilText2(p3.until)
-              ] }),
-              untilChoices.map(([h3, t3]) => /* @__PURE__ */ u3("option", { value: String(h3), children: t3 }, h3))
+            !p3.unencrypted && /* @__PURE__ */ u3("select", { class: "changepick", "aria-label": `What ${p3.name} may do`, value: p3.canChange ? "change" : "look", onChange: (e3) => on2.setCanChange(p3.id, e3.currentTarget.value === "change"), children: [
+              /* @__PURE__ */ u3("option", { value: "look", children: "Looks only" }),
+              /* @__PURE__ */ u3("option", { value: "change", children: "Can make changes" })
             ] }),
-            !p3.unencrypted && /* @__PURE__ */ u3("button", { class: "small", title: p3.canChange ? "Only look from now on" : "Let it start, stop, restart, update, and back up", onClick: () => on2.setCanChange(p3.id, !p3.canChange), children: p3.canChange ? "Make read-only" : "Allow changes" }),
+            !p3.unencrypted && /* @__PURE__ */ u3(FinancesPick, { paired: true, value: p3.finances || "", set: (level) => on2.setFinances(p3.id, level), label: `Finances on ${p3.name}` }),
+            !p3.unencrypted && /* @__PURE__ */ u3(
+              "select",
+              {
+                class: "untilpick",
+                "aria-label": `How long ${p3.name} keeps it`,
+                value: p3.until && more(p3) ? "set" : "0",
+                disabled: !more(p3),
+                title: more(p3) ? void 0 : "Only for a phone that may make changes or see Finances",
+                onChange: (e3) => on2.setUntil(p3.id, Number(e3.currentTarget.value)),
+                children: [
+                  p3.until && more(p3) && /* @__PURE__ */ u3("option", { value: "set", disabled: true, children: [
+                    "Until ",
+                    untilText2(p3.until)
+                  ] }),
+                  untilChoices.map(([h3, t3]) => /* @__PURE__ */ u3("option", { value: String(h3), children: t3 }, h3))
+                ]
+              }
+            ),
             /* @__PURE__ */ u3("button", { class: "small", title: "Unpair it: it stops working at once", onClick: () => on2.remove(p3.id), children: "Remove" })
           ] })
         },
@@ -4341,9 +4371,10 @@
           " Can make changes"
         ] }),
         /* @__PURE__ */ u3(FinancesPick, { id: "phoneFinances", value: finances, set: setFinances, label: "Finances on the new phone" }),
-        /* @__PURE__ */ u3("button", { class: "small", id: "pairPhone", onClick: pair, children: "Pair a phone" })
+        /* @__PURE__ */ u3("button", { class: "small", id: "pairPhone", onClick: () => pair(false), children: "Pair a phone" }),
+        /* @__PURE__ */ u3("button", { class: "small", id: "pairWall", onClick: () => pair(true), children: "Pair a wall screen" })
       ] }),
-      pairing ? /* @__PURE__ */ u3(Pairing, { p: pairing, asked: { canChange, finances }, done: () => {
+      pairing ? /* @__PURE__ */ u3(Pairing, { p: pairing, wall, asked: { canChange, finances }, done: () => {
         setPairing(null);
         on2.reload();
       } }) : /* @__PURE__ */ u3("div", { id: "pairing", hidden: true })

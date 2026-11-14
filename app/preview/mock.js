@@ -404,7 +404,7 @@ try { if ((window.__MOCK || {}).tidyTab) localStorage.setItem('homelab.tidyTab',
     Weekly: () => later(M.weekly || { title: 'Homelab this week: 1 thing to look at', body: '\u2713 22 apps running\n\u2713 Backups: 12 copies, all fresh\n\u2022 No restore test yet (Backups \u203a Test a restore)\n\u2713 3 attacks blocked', problems: 1 }),
     Move: (direction) => { M.moved = direction; emit('cli:log', `$ homelab move ${direction}`); return later(M.moveFile ?? '/Users/you/homelab-move.tar', 200); },
     OpenWelcome: (u) => { M.opened = u; return later(null); },
-    PairPhone: (name, canChange, finances) => { M.paired = { name, canChange, finances }; return later({ code: 'K7QX4MRA', links: M.pairLinks || ['https://homelab.example.com/#pair=K7QX4MRA', 'http://192.168.1.10:8099/#pair=K7QX4MRA'], qr: qrStandIn, off: false }); },
+    PairPhone: (name, canChange, finances) => { M.paired = { name, canChange, finances }; return later({ code: 'K7QX4MRA', links: M.pairLinks || ['https://homelab.example.com/#pair=K7QX4MRA', 'http://192.168.1.10:8099/#pair=K7QX4MRA'], qr: qrStandIn, wallQR: qrStandIn, off: false }); },
     // The money card a wall screen shows (M.wall), as homelab serve sends it: no amount while hidden.
     FinancesWall: () => later(M.wall || { payday: '2026-11-06', who: ['Alex'], left: 739.77, currency: 'USD', bills: [
       { name: 'Mortgage', institution: 'wellsfargo', date: '2026-11-01', amount: 1845 },
