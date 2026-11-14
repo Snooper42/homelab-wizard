@@ -175,3 +175,54 @@ func TestProjectRefusesWhatIsNotAPlan(t *testing.T) {
 		t.Errorf("an empty plan and no ledger yet: %v", err)
 	}
 }
+
+// Her phone's reminders are the computer's: on each golden plan, the days
+// from its today on give what finance.Reminders gives the nightly job, and
+// the household's Power (due Nov 18) is said the day before.
+func TestRemindersAreTheComputers(t *testing.T) {
+	for _, c := range goldenCases(t) {
+		t.Run(c.name, func(t *testing.T) {
+			p, err := finance.ParsePlan(c.plan)
+			if err != nil {
+				t.Fatal(err)
+			}
+			l := finance.Ledger{Transactions: []finance.Transaction{}}
+			if len(c.ledger) > 0 {
+				if l, err = finance.ParseLedger(c.ledger); err != nil {
+					t.Fatal(err)
+				}
+			}
+			start, _ := time.Parse(time.DateOnly, string(c.today))
+			for n := 0; n < 10; n++ {
+				day := start.AddDate(0, 0, n)
+				got, err := Reminders(c.plan, c.ledger, day.Format(time.DateOnly))
+				if err != nil {
+					t.Fatal(err)
+				}
+				want := finance.Reminders(finance.ProjectWith(p, l, day, finance.Ahead), day, finance.AlertMoney(p))
+				if want == nil {
+					want = []finance.Reminder{}
+				}
+				w, _ := json.Marshal(want)
+				if string(got) != string(w) {
+					t.Errorf("%s on %s: %s, the computer's %s", c.name, day.Format(time.DateOnly), got, w)
+				}
+				if c.name == "household" && day.Format(time.DateOnly) == "2026-11-17" && !strings.Contains(string(got), "Due tomorrow: Power") {
+					t.Errorf("the day before Power: %s", got)
+				}
+			}
+		})
+	}
+	if _, err := Reminders([]byte(`{}`), nil, "Nov 13"); err == nil {
+		t.Error("a day that isn't one is refused")
+	}
+	if _, err := Reminders([]byte(`not a plan`), nil, "2026-11-13"); err == nil {
+		t.Error("a plan that isn't one is refused")
+	}
+	if _, err := Reminders([]byte(`{}`), []byte(`not a ledger`), "2026-11-13"); err == nil {
+		t.Error("a ledger that isn't one is refused")
+	}
+	if out, err := Reminders([]byte(`{}`), nil, "2026-11-13"); err != nil || string(out) != "[]" {
+		t.Errorf("nothing to say is an empty list: %s, %v", out, err)
+	}
+}

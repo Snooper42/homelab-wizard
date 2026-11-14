@@ -37,4 +37,25 @@ enum FinanceProjection {
         return nil
         #endif
     }
+
+    /// One of Finances' reminders, as the computer's nightly job sends them (finance.Reminder).
+    struct Reminder: Decodable, Equatable, Sendable {
+        let kind: String
+        let title: String
+        let body: String
+    }
+
+    /// What Finances would tell her on day (YYYY-MM-DD): the computer's own
+    /// reminders (mobile/finance.Reminders), or nil in a build without the framework.
+    static func reminders(plan: Data, ledger: Data, day: String) throws -> [Reminder]? {
+        #if canImport(HomelabFinance)
+        var error: NSError?
+        let out = FinanceReminders(plan, ledger, day, &error)
+        if let error { throw Failed(message: error.localizedDescription) }
+        guard let out else { throw Failed(message: "Finances’ reminders couldn’t be read") }
+        return try JSONDecoder().decode([Reminder].self, from: out)
+        #else
+        return nil
+        #endif
+    }
 }

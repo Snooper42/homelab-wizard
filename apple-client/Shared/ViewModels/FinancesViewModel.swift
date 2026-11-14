@@ -575,6 +575,7 @@ final class FinancesViewModel {
         syncPrivacy(store)
         showPrivatePlan(store)
         showPrivateLedger(store)
+        planPrivateReminders()
         savedCount += 1
         return true
     }
@@ -598,6 +599,8 @@ final class FinancesViewModel {
         privateKey.forget()
         lockTimer?.cancel()
         syncPrivacy(store)
+        // The computer sends her reminders again: this device's own go.
+        await PrivateReminders.cancel()
         // Her receipts, kept plain again and named by the ledger.
         if !pictures.isEmpty {
             do {
@@ -666,6 +669,7 @@ final class FinancesViewModel {
         syncPrivacy(store)
         showPrivatePlan(store)
         showPrivateLedger(store)
+        planPrivateReminders()
         return store.state == .open
     }
 
@@ -703,6 +707,21 @@ final class FinancesViewModel {
             showPrivateLedger(store)
         } else if !isPrivate {
             await loadPlan()
+        }
+    }
+
+    /// Plans her reminders for the next two weeks as this device's own
+    /// notifications, from her own Finances (PrivateReminders): the computer
+    /// can't read them to send its nightly ones. Today's are shown once a day.
+    func planPrivateReminders(now: Date = Date(), defaults: UserDefaults = .standard) {
+        guard let store = openedPrivate, FinanceProjection.available, PrivateReminders.canNotify else { return }
+        let today = FinancePlanEdit.todayString(now)
+        let planned = PrivateReminders.planned(store.reminders(days: PrivateReminders.days, from: now),
+                                               today: today, shownDay: defaults.string(forKey: PrivateReminders.shownKey))
+        Task {
+            guard !planned.isEmpty, await LocalAlerts.ask() else { return }
+            await PrivateReminders.schedule(planned)
+            if planned.contains(where: { $0.at == nil }) { defaults.set(today, forKey: PrivateReminders.shownKey) }
         }
     }
 

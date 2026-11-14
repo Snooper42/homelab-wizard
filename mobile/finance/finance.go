@@ -40,3 +40,32 @@ func Project(plan, ledger []byte, today string) ([]byte, error) {
 	}
 	return json.Marshal(finance.ProjectWith(p, l, day, finance.Ahead))
 }
+
+// Reminders is what Finances would tell her on day (YYYY-MM-DD), as the
+// computer's nightly job tells the household (finance.Reminders): a bill
+// due tomorrow, a paycheck that leaves checking under the cushion, a yearly
+// renewal in a week, balances not typed in for weeks; each kind the plan
+// quiets left out, amounts hidden while Hide amounts is on. As JSON, a
+// list of {kind, title, body}. Her phone asks it for the days ahead and
+// shows them itself, since the computer can't read private Finances.
+func Reminders(plan, ledger []byte, day string) ([]byte, error) {
+	on, err := time.Parse(time.DateOnly, day)
+	if err != nil {
+		return nil, fmt.Errorf("day %q is no day", day)
+	}
+	p, err := finance.ParsePlan(plan)
+	if err != nil {
+		return nil, fmt.Errorf("the plan: %w", err)
+	}
+	l := finance.Ledger{Transactions: []finance.Transaction{}}
+	if len(ledger) > 0 {
+		if l, err = finance.ParseLedger(ledger); err != nil {
+			return nil, fmt.Errorf("the ledger: %w", err)
+		}
+	}
+	out := finance.Reminders(finance.ProjectWith(p, l, on, finance.Ahead), on, finance.AlertMoney(p))
+	if out == nil {
+		out = []finance.Reminder{}
+	}
+	return json.Marshal(out)
+}
