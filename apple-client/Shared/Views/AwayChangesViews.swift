@@ -42,7 +42,7 @@ struct AwayBanner: View {
     @Bindable var finances: FinancesViewModel
     @State private var listing = false
 
-    private var waiting: Int { finances.awayChanges.count }
+    private var waiting: Int { finances.awayCount }
 
     var body: some View {
         Button { listing = true } label: {
@@ -79,6 +79,21 @@ struct AwayBanner: View {
     }
 }
 
+/// A transaction's change in words: "Added Example Bakery, $12.50".
+@MainActor
+func awayWords(_ change: LedgerChange, finances: FinancesViewModel) -> String {
+    let currency = finances.plan?.plan.currency ?? "USD"
+    func payee(_ id: String) -> String {
+        finances.ledger?.newestFirst.first { $0.id == id }?.payee ?? "A transaction"
+    }
+    switch change {
+    case .add(let t): return "Added \(t.payee.trimmingCharacters(in: .whitespaces)), \(amountText(t.amount, currency, finances))"
+    case .update(_, let t): return "Changed \(t.payee.trimmingCharacters(in: .whitespaces))"
+    case .category(let id, let to): return to.isEmpty ? "\(payee(id)): no category" : "\(payee(id)): \(to)"
+    case .delete(let id): return "Deleted \(payee(id))"
+    }
+}
+
 /// What waits for the Homelab, each with Undo.
 struct AwayChangesList: View {
     @Bindable var finances: FinancesViewModel
@@ -94,6 +109,12 @@ struct AwayChangesList: View {
                                 Button("Undo", role: .destructive) { Task { await finances.undoAway(at: i) } }
                             }
                     }
+                    ForEach(Array(finances.awayLedger.enumerated()), id: \.offset) { i, change in
+                        Text(verbatim: awayWords(change, finances: finances))
+                            .swipeActions {
+                                Button("Undo", role: .destructive) { Task { await finances.undoAwayLedger(at: i) } }
+                            }
+                    }
                 } footer: {
                     Text("They go to the Homelab by themselves once it answers. Swipe one to undo it.")
                 }
@@ -107,7 +128,7 @@ struct AwayChangesList: View {
                     Button("Done") { dismiss() }
                 }
             }
-            .onChange(of: finances.awayChanges.isEmpty) { _, empty in if empty { dismiss() } }
+            .onChange(of: finances.awayCount) { _, count in if count == 0 { dismiss() } }
         }
         .presentationDetents([.medium, .large])
     }

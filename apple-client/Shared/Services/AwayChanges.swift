@@ -25,18 +25,20 @@ struct AwayChanges: Sendable {
     private struct Stored: Codable {
         var version = 1
         var changes: [FinanceChange]
+        /// The ledger's (offline Finances 3 of 3); none in a file from before them.
+        var ledger: [LedgerChange]?
     }
 
     enum KeepError: Error { case noKey }
 
-    /// Keeps `changes` in place of what was kept; none drops the file.
-    func keep(_ changes: [FinanceChange]) throws {
-        guard !changes.isEmpty else {
+    /// Keeps the plan's `changes` and the ledger's in place of what was kept; none drops the file.
+    func keep(_ changes: [FinanceChange], ledger: [LedgerChange] = []) throws {
+        guard !changes.isEmpty || !ledger.isEmpty else {
             forget()
             return
         }
         guard let key = key() else { throw KeepError.noKey }
-        let sealed = try AES.GCM.seal(try JSONEncoder().encode(Stored(changes: changes)), using: key, authenticating: Self.purpose)
+        let sealed = try AES.GCM.seal(try JSONEncoder().encode(Stored(changes: changes, ledger: ledger)), using: key, authenticating: Self.purpose)
         guard let bytes = sealed.combined else { throw KeepError.noKey }
         try FileManager.default.createDirectory(at: file.deletingLastPathComponent(), withIntermediateDirectories: true)
         #if os(iOS)
@@ -52,17 +54,17 @@ struct AwayChanges: Sendable {
 
     /// What waits; none when nothing does or the Keychain is locked. A file
     /// this device's key doesn't open is removed.
-    func load() -> [FinanceChange] {
-        guard let bytes = try? Data(contentsOf: file), let key = key() else { return [] }
+    func load() -> (plan: [FinanceChange], ledger: [LedgerChange]) {
+        guard let bytes = try? Data(contentsOf: file), let key = key() else { return ([], []) }
         guard let box = try? AES.GCM.SealedBox(combined: bytes),
               let json = try? AES.GCM.open(box, using: key, authenticating: Self.purpose),
               let stored = try? JSONDecoder().decode(Stored.self, from: json),
               stored.version == 1
         else {
             forget()
-            return []
+            return ([], [])
         }
-        return stored.changes
+        return (stored.changes, stored.ledger ?? [])
     }
 
     func forget() {

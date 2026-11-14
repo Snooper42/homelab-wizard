@@ -57,10 +57,14 @@ final class FinancesViewModel {
     /// The changes made while the Homelab didn't answer, kept sealed (`AwayChanges`).
     @ObservationIgnored private let away: AwayChanges
     @ObservationIgnored private var awayRead = false
-    /// What waits to be sent, in the order made.
+    /// What waits to be sent, in the order made: the plan's, and the ledger's.
     private(set) var awayChanges: [FinanceChange] = []
-    /// The kept plan they build on: the computer's last, with its rev.
+    private(set) var awayLedger: [LedgerChange] = []
+    /// How many changes wait, the plan's and the ledger's.
+    var awayCount: Int { awayChanges.count + awayLedger.count }
+    /// The kept plan and ledger they build on: the computer's last, with their revs.
     @ObservationIgnored private var awayBase: JSONValue?
+    @ObservationIgnored private var awayLedgerBase: JSONValue?
     /// Changes another device made differently meanwhile, for the person to decide.
     private(set) var awayClashes: [FinanceClash] = []
     @ObservationIgnored private var awayDecisions: [Int: Bool] = [:]
@@ -127,7 +131,9 @@ final class FinancesViewModel {
     /// Drops the kept Finances: Finances taken from this device.
     func forgetOffline() {
         awayChanges = []
+        awayLedger = []
         awayBase = nil
+        awayLedgerBase = nil
         awayClashes = []
         awayDecisions = [:]
         away.forget()
@@ -160,17 +166,27 @@ final class FinancesViewModel {
             awayBase = kept.plan.rawPlan
             current = awayChanges.reduce(current) { $1.apply(to: $0) ?? $0 }
         }
+        var currentLedger = kept.ledger?.raw
+        if mayChangeAway, let keptLedger = kept.ledger?.raw {
+            awayLedgerBase = keptLedger
+            currentLedger = LedgerChange.replay(awayLedger, on: keptLedger, accounts: Self.accountIDs(in: current)).ledger
+        }
         // Named apart from `rawPlan` and `rawLedger`, which this sets below.
-        let (keptLedger, readOnly) = (kept.ledger?.raw, kept.plan.view.readOnly)
+        let (workingLedger, readOnly) = (currentLedger, kept.plan.view.readOnly)
         let working = current
         let day = FinancePlanEdit.todayString()
         let worked = await Task.detached(priority: .userInitiated) {
-            try? HouseholdOffline.project(rawPlan: working, rawLedger: keptLedger, today: day, readOnly: readOnly)
+            try? HouseholdOffline.project(rawPlan: working, rawLedger: workingLedger, today: day, readOnly: readOnly)
         }.value
         if let worked { plan = worked.view }
         rawPlan = mayChangeAway && worked != nil ? current : nil
         planError = nil
-        if ledger == nil, let kept = kept.ledger {
+        if mayChangeAway, awayLedgerBase != nil, let currentLedger, let read = Self.ledgerRead(currentLedger) {
+            // Transactions change away too (offline Finances 3 of 3), on the kept ledger with what waits.
+            ledger = read.ledger
+            rawLedger = currentLedger
+            ledgerError = nil
+        } else if ledger == nil, let kept = kept.ledger {
             ledger = kept.ledger
             rawLedger = nil
             ledgerError = nil
@@ -206,7 +222,7 @@ final class FinancesViewModel {
         guard await authorize(reason) else { return false }
         let changes = FinanceChange.adding(change, to: awayChanges)
         do {
-            try away.keep(changes)
+            try away.keep(changes, ledger: awayLedger)
         } catch {
             saveError = "This device couldn't keep the change. Try again once the Homelab answers."
             return false
@@ -221,7 +237,7 @@ final class FinancesViewModel {
 
     /// The plan worked out on this phone from `raw`, shown.
     private func showWorked(_ raw: JSONValue) async {
-        let (keptLedger, readOnly, day) = (kept?.ledger?.raw, plan?.readOnly ?? false, FinancePlanEdit.todayString())
+        let (keptLedger, readOnly, day) = (rawLedger ?? kept?.ledger?.raw, plan?.readOnly ?? false, FinancePlanEdit.todayString())
         let worked = await Task.detached(priority: .userInitiated) {
             try? HouseholdOffline.project(rawPlan: raw, rawLedger: keptLedger, today: day, readOnly: readOnly)
         }.value
@@ -233,7 +249,7 @@ final class FinancesViewModel {
         guard awayChanges.indices.contains(index), let base = awayBase else { return }
         var changes = awayChanges
         changes.remove(at: index)
-        do { try away.keep(changes) } catch { return }
+        do { try away.keep(changes, ledger: awayLedger) } catch { return }
         awayChanges = changes
         let raw = changes.reduce(base) { $1.apply(to: $0) ?? $0 }
         rawPlan = raw
@@ -247,7 +263,8 @@ final class FinancesViewModel {
         let read = await Task.detached(priority: .userInitiated) { away.load() }.value
         if !awayRead {
             awayRead = true
-            awayChanges = read
+            awayChanges = read.plan
+            awayLedger = read.ledger
         }
     }
 
@@ -257,31 +274,106 @@ final class FinancesViewModel {
     /// a failed save keeps them waiting.
     private func sendAway(on newest: FinancesRead) async {
         await readAway()
-        guard !awayChanges.isEmpty, level >= .edit, !isPrivate else { return }
-        let r = FinanceReplay.replay(awayChanges, on: newest.rawPlan, keepMine: awayDecisions)
-        guard r.clashes.isEmpty else {
-            awayClashes = r.clashes
-            return
-        }
+        guard !awayChanges.isEmpty || !awayLedger.isEmpty, level >= .edit, !isPrivate else { return }
         isSaving = true
         defer { isSaving = false }
-        do {
-            let read = try await api.saveFinances(r.plan)
-            ownLogos = OwnLogos(read.view.plan.logos)
-            plan = read.view
-            rawPlan = read.rawPlan
-            answers.plan = read.answer
-            keepAnswers()
-            awaySent = (sent: awayChanges.count - r.dropped.count, dropped: r.dropped.count)
-            awayChanges = []
-            awayDecisions = [:]
-            awayClashes = []
-            awaySendError = nil
-            away.forget()
-        } catch {
-            Log.ui.error("Sending the changes made away failed: \(APIError.from(error).logName, privacy: .public)")
-            awaySendError = Self.words(error)
+        var sent = 0, dropped = 0
+        var planRaw = newest.rawPlan
+        if !awayChanges.isEmpty {
+            let r = FinanceReplay.replay(awayChanges, on: newest.rawPlan, keepMine: awayDecisions)
+            guard r.clashes.isEmpty else {
+                awayClashes = r.clashes
+                return
+            }
+            do {
+                let read = try await api.saveFinances(r.plan)
+                ownLogos = OwnLogos(read.view.plan.logos)
+                plan = read.view
+                rawPlan = read.rawPlan
+                planRaw = read.rawPlan
+                answers.plan = read.answer
+                keepAnswers()
+                sent += awayChanges.count - r.dropped.count
+                dropped += r.dropped.count
+                awayChanges = []
+                awayDecisions = [:]
+                awayClashes = []
+                try? away.keep([], ledger: awayLedger)
+            } catch {
+                Log.ui.error("Sending the changes made away failed: \(APIError.from(error).logName, privacy: .public)")
+                awaySendError = Self.words(error)
+                return
+            }
         }
+        if !awayLedger.isEmpty {
+            do {
+                let newestLedger = try await api.financesLedger()
+                let r = LedgerChange.replay(awayLedger, on: newestLedger.raw, accounts: Self.accountIDs(in: planRaw))
+                let read = try await api.saveFinancesLedger(r.ledger)
+                ledger = read.ledger
+                rawLedger = read.raw
+                answers.ledger = read.answer
+                keepAnswers()
+                sent += awayLedger.count - r.dropped.count
+                dropped += r.dropped.count
+                awayLedger = []
+            } catch {
+                Log.ui.error("Sending the transactions changed away failed: \(APIError.from(error).logName, privacy: .public)")
+                awaySendError = Self.words(error)
+                if sent > 0 { awaySent = (sent: sent, dropped: dropped) }
+                return
+            }
+        }
+        awaySent = (sent: sent, dropped: dropped)
+        awaySendError = nil
+        away.forget()
+    }
+
+    /// The plan's account ids, for a transaction's account.
+    nonisolated static func accountIDs(in raw: JSONValue) -> Set<String> {
+        guard case .array(let accounts)? = raw["accounts"] else { return [] }
+        return Set(accounts.compactMap { if case .string(let id)? = $0["id"] { return id }; return nil })
+    }
+
+    /// A ledger as the computer would have answered `FinancesLedger`.
+    nonisolated static func ledgerRead(_ raw: JSONValue) -> LedgerRead? {
+        guard let data = try? JSONEncoder().encode(JSONValue.object(["result": raw])) else { return nil }
+        return try? APIClient.ledgerRead(from: data)
+    }
+
+    /// Makes one of the ledger's changes: saved now when the Homelab answers, else kept to go once it does.
+    private func makeLedger(_ change: LedgerChange, edited: JSONValue, reason: String) async -> Bool {
+        if offlineAsOf == nil { return await saveLedger(edited, reason: reason) }
+        isSaving = true
+        defer { isSaving = false }
+        guard await authorize(reason) else { return false }
+        let changes = LedgerChange.adding(change, to: awayLedger)
+        do {
+            try away.keep(awayChanges, ledger: changes)
+        } catch {
+            saveError = "This device couldn't keep the change. Try again once the Homelab answers."
+            return false
+        }
+        awayLedger = changes
+        rawLedger = edited
+        if let read = Self.ledgerRead(edited) { ledger = read.ledger }
+        if let raw = rawPlan { await showWorked(raw) }
+        saveError = nil
+        savedCount += 1
+        return true
+    }
+
+    /// Takes back a transaction's change that waits.
+    func undoAwayLedger(at index: Int) async {
+        guard awayLedger.indices.contains(index), let base = awayLedgerBase else { return }
+        var changes = awayLedger
+        changes.remove(at: index)
+        do { try away.keep(awayChanges, ledger: changes) } catch { return }
+        awayLedger = changes
+        let raw = LedgerChange.replay(changes, on: base, accounts: Self.accountIDs(in: rawPlan ?? .object([:]))).ledger
+        rawLedger = raw
+        if let read = Self.ledgerRead(raw) { ledger = read.ledger }
+        if let plan = rawPlan { await showWorked(plan) }
     }
 
     /// The person's pick for a clash: this device's change, or the other device's.
@@ -1064,7 +1156,7 @@ final class FinancesViewModel {
             saveError = "The ledger couldn't take that."
             return false
         }
-        return await saveLedger(edited, reason: "Add a transaction to your Finances.")
+        return await makeLedger(.add(transaction), edited: edited, reason: "Add a transaction to your Finances.")
     }
 
     func clearSaveError() { saveError = nil }
@@ -1081,7 +1173,7 @@ final class FinancesViewModel {
             saveError = "This transaction is changed on the computer."
             return false
         }
-        return await saveLedger(edited, reason: "Change a transaction in your Finances.")
+        return await makeLedger(.update(id: original.id, t), edited: edited, reason: "Change a transaction in your Finances.")
     }
 
     /// Sets a transaction's category and marks it reviewed. Returns whether it saved.
@@ -1091,7 +1183,7 @@ final class FinancesViewModel {
             saveError = "This transaction is changed on the computer."
             return false
         }
-        let saved = await saveLedger(edited, reason: "Change a transaction's category in your Finances.")
+        let saved = await makeLedger(.category(id: t.id, to: category), edited: edited, reason: "Change a transaction's category in your Finances.")
         if saved { markReviewed([t]) }
         return saved
     }
@@ -1099,21 +1191,21 @@ final class FinancesViewModel {
     /// A loan's page: `t` linked to the planned payment `payment`, after
     /// Face ID. Returns whether it saved.
     func link(_ t: FinanceTransaction, to payment: String) async -> Bool {
-        guard canAddTransactions, !isSaving, let raw = rawLedger,
+        guard canAddTransactions, offlineAsOf == nil, !isSaving, let raw = rawLedger,
               let edited = LedgerEdit.settingLink(id: t.id, payment: payment, in: raw) else { return false }
         return await saveLedger(edited, reason: "Link a payment to your loan.")
     }
 
     /// A loan's page: `t` pays none of the plan's payments (Not this one).
     func notThisOne(_ t: FinanceTransaction) async -> Bool {
-        guard canAddTransactions, !isSaving, let raw = rawLedger,
+        guard canAddTransactions, offlineAsOf == nil, !isSaving, let raw = rawLedger,
               let edited = LedgerEdit.settingLink(id: t.id, payment: nil, in: raw) else { return false }
         return await saveLedger(edited, reason: "Take a payment off your loan.")
     }
 
     /// A loan's page: all of `t`, paid over its planned payment, counted (Count it).
     func countInFull(_ t: FinanceTransaction) async -> Bool {
-        guard canAddTransactions, !isSaving, let raw = rawLedger, let payment = t.payment,
+        guard canAddTransactions, offlineAsOf == nil, !isSaving, let raw = rawLedger, let payment = t.payment,
               let edited = LedgerEdit.settingLink(id: t.id, payment: payment, extra: true, in: raw) else { return false }
         return await saveLedger(edited, reason: "Count all of a payment towards your loan.")
     }
@@ -1126,7 +1218,7 @@ final class FinancesViewModel {
             await loadLedger()
             return false
         }
-        return await saveLedger(edited, reason: "Delete a transaction from your Finances.")
+        return await makeLedger(.delete(id: t.id), edited: edited, reason: "Delete a transaction from your Finances.")
     }
 
     private func saveLedger(_ edited: JSONValue, reason: String) async -> Bool {
@@ -1219,6 +1311,7 @@ final class FinancesViewModel {
             planError = nil
             offlineAsOf = nil
             awayBase = nil
+            awayLedgerBase = nil
             answers.plan = read.answer
             keepAnswers()
             await sendAway(on: read)

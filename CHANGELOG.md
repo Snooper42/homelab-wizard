@@ -8,6 +8,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### New
 
+- **Transactions away from home in the Homelab app:** with no signal, add a transaction, change one, set its category or delete it on the iPhone or iPad; it shows at once and waits with the rest (*3 changes wait for the Homelab*, each with Undo), then goes on the computer's newest ledger once it answers. A transaction added away is changed once home, when the computer has given it its id.
 - **Change Finances away from home in the Homelab app:** with no signal, or the Homelab not answering, balances, the cushion, budgets, goals, what a payment costs, waiting marks, and a new account, payment or goal change on the iPhone or iPad at once, shown everywhere they count, and wait (*2 changes wait for the Homelab*, each with Undo). Once it answers they go by themselves (*Sent 2 changes to the Homelab*), made on its newest Finances so another device's changes stay; only when both changed the same thing does it ask which to keep.
 - **Add a goal in the Homelab app:** **+** on Goals opens Add Goal: its name, what it needs, by a day or whenever, and the share of an account that counts toward it (what other goals leave of it, said under it).
 - **Add a payment in the Homelab app:** **+** on Bills or Recurring opens Add Payment: its name and kind, what it costs (or about this much), how often and when next, and the account it comes out of. It shows in Bills and in what's left from then on.
