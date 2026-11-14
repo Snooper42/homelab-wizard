@@ -66,15 +66,11 @@ The owner, Nov 14: "I want to iterate the shit out of the iphone and ipad app." 
 
 ## 3. Where it stands
 
-- **Merged Nov 14, 12:14 PM Eastern: #694.** This file, item 0 (the iPad's pictures on main), and lane 1's last two web fixes. Its main run is the first full set: 94 pictures in `review/` about 45 minutes after the merge (around 1 PM).
-- **Open: round 1 of item 1** (the PR from the session that wrote this file; its first Mac compile):
-  - `ClockWords` with `ClockWordsTests`: Settings and Status's Updates tile in the phone's clock.
-  - `TransferWords` with `TransferWordsTests`: a transfer's line.
-  - The `app` shot opens the page as a tap does.
-  - Spending's ring: *+$X on Sep*.
-  - **First:** land it. If build-and-test is red, read the log and fix (section 1).
-- **Then:** fetch the 94 pictures and look at all of them, the iPad's first (item 0's last step). Check that round 1's fixes show on main's next run, then carry on with item 1's list.
-- **Not yet tried on the owner's iPhone and iPad** (each needs the cable re-install, once covers all): the private Finances work in the app (#676, #678, #680, #683, #686, #688), and the earlier list in `handoff.md` section 4 (*Trying on the phone*). One re-install covers them all; don't ask again until the owner has done it.
+- **Merged Nov 14:** #694 at 12:14 PM Eastern (this file, item 0: the iPad's pictures on main, and lane 1's last two web fixes), and #695 at 12:31 PM (round 1 of item 1: `ClockWords`, `TransferWords`, Spending's *+$X on Sep*, the `app` shot pushed as a tap; green on its first Mac compile).
+- **The pictures:** #694's main run (started 12:13 PM) is the first full set, but at 12:31 PM `iphone-screenshots` still held only the 10 docs pictures (4:40 AM UTC, no `review/`). Read that run (`apple-client.yml` on main, 2743f2c) before anything else: if `review/` never came, the docs step is the cause (section 5, *No new pictures*). #695's main run follows it.
+- **Open: round 2 of item 1, Finances home** (`LeftUntil` with `LeftUntilTests`, `LeftUntilCard` in `FinancesView.swift`; its first Mac compile). The first card reads *Left until Nov 19, after the bills* (the next paycheck's period's `left`, or now's with no paycheck ahead), with *Under your $500 cushion on Thu, Nov 5* or *Short $X on …* from the first period up to it that dips, and opens Bills. *After Alex's paycheck* stays under the Wallet card with *…, before its bills*. **First:** land it. If red, read the log (section 1).
+- **Then:** fetch `review/` and look at every picture, the iPad's first (item 0's last step), and check rounds 1 and 2 show: Settings' times, a transfer's line, Spending's ring, the `app` picture's own title, Finances' first card. Then the rest of item 1's first look (Status's *⋯ All of These*, Backups' dark accent), then the screen order.
+- **Not yet tried on the owner's iPhone and iPad** (each needs the cable re-install, once covers all): rounds 1 and 2 (#695 and the open one), the private Finances work in the app (#676, #678, #680, #683, #686, #688), and the earlier list in `handoff.md` section 4 (*Trying on the phone*). One re-install covers them all; don't ask again until the owner has done it.
 
 ## 4. The order (the owner's, Nov 14)
 
@@ -94,7 +90,7 @@ The owner, Nov 14: "I want to iterate the shit out of the iphone and ipad app." 
    **First look (Nov 14, from main's 10 iPhone pictures; check each again in the full set before fixing):**
    - *Settings:* **Quiet hours … 22-7** and **Daily at 04:00** are raw clock numbers. **Written** (`ClockWords`, `ClockWordsTests`; Settings, and Status's Updates tile): *10 PM to 7 AM*, *Every night at 4 AM*.
    - *An app's page:* the bar still says **Status**, with Status's **Apps** search field above the app. **This one is the picture, not the app:** the `app` shot laid the page over Status's list instead of opening it. Fixed with the ClockWords PR (the shot now pushes the page as a tap does). Check the new picture has the app's own title.
-   - *Finances home:* the same problem as the web's task 15 item 2. The big card is checking **now**; *After Alex's paycheck* comes next; **Left to spend**, the number people want, is below the fold. Put what's left first, in words (*Left until …*), as the web does once item 2 lands.
+   - *Finances home:* the same problem as the web's task 15 item 2. The big card is checking **now**; *After Alex's paycheck* comes next; **Left to spend**, the number people want, is below the fold. Put what's left first, in words (*Left until …*), as the web does once item 2 lands. **Written Nov 14** (`LeftUntil`, round 2), ahead of the web's item 2: say so to lane 1 if the web picks other words.
    - *Transactions:* a transfer's second line is cut off (*Chase Checking →…*). **Written with the ClockWords PR** (`TransferWords`: *From Chase Checking* under *Roth IRA*).
    - *Spending:* the ring's red **+$1,021** said nothing about what it's compared to. **Written:** *+$1,021 on Sep*, the month review's own words.
    - *Status:* each folded group's **⋯ All of These** reads vaguely for a menu of actions on the whole group. Look at it in the full set: *Start All*, *Restart All*, or the group's name (*All of Network*)?
