@@ -128,10 +128,11 @@ final class FinancesViewModel {
         guard let kept = await readKept() else { return false }
         ownLogos = OwnLogos(kept.plan.view.plan.logos)
         plan = kept.plan.view
-        let (rawPlan, rawLedger, readOnly) = (kept.plan.rawPlan, kept.ledger?.raw, kept.plan.view.readOnly)
+        // Named apart from `rawPlan` and `rawLedger`, which this sets below.
+        let (keptPlan, keptLedger, readOnly) = (kept.plan.rawPlan, kept.ledger?.raw, kept.plan.view.readOnly)
         let day = FinancePlanEdit.todayString()
         let worked = await Task.detached(priority: .userInitiated) {
-            try? HouseholdOffline.project(rawPlan: rawPlan, rawLedger: rawLedger, today: day, readOnly: readOnly)
+            try? HouseholdOffline.project(rawPlan: keptPlan, rawLedger: keptLedger, today: day, readOnly: readOnly)
         }.value
         if let worked { plan = worked.view }
         rawPlan = nil
