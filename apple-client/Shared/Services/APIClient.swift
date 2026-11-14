@@ -439,6 +439,61 @@ actor APIClient {
         }
     }
 
+    // MARK: A member's private Finances (sealed on her phone: PrivateFinances)
+
+    /// Her envelope, or nil while her Finances are plain. Her own phone only.
+    func financesSealed() async throws -> PrivateSeal.Envelope? {
+        try await call("FinancesSealed", as: PrivateSeal.Envelope?.self)
+    }
+
+    /// Keeps her envelope, built on the rev it was read at ("new" turns
+    /// privacy on); the new rev. A change, never retried.
+    func saveFinancesSealed(was: String, _ envelope: PrivateSeal.Envelope) async throws -> String {
+        try await sealedCall("SaveFinancesSealed", SealedArguments(first: was, envelope: envelope), as: SealedSaved.self).rev
+    }
+
+    /// Privacy off, from her phone: her plan and ledger kept plain again.
+    func unsealFinances(was: String, plan: JSONValue, ledger: JSONValue) async throws {
+        _ = try await sealedCall("UnsealFinances", [JSONValue.string(was), plan, ledger], as: Bool.self)
+    }
+
+    /// One of her sealed receipts, as the computer keeps it.
+    func financesSealedReceipt(_ name: String) async throws -> String {
+        guard Self.isSealedReceiptName(name) else { throw APIError.invalidResponse }
+        return try await sealedCall("FinancesSealedReceipt", [name], as: String.self)
+    }
+
+    /// Keeps one of her receipts, sealed; the name the computer gives it.
+    func saveFinancesSealedReceipt(_ sealed: String) async throws -> String {
+        let name = try await sealedCall("SaveFinancesSealedReceipt", [sealed], as: String.self)
+        guard Self.isSealedReceiptName(name) else { throw APIError.invalidResponse }
+        return name
+    }
+
+    /// A sealed receipt's name: 32 hex digits and `.sealed` (finance.SaveSealedReceipt).
+    nonisolated static func isSealedReceiptName(_ name: String) -> Bool {
+        guard name.hasSuffix(".sealed") else { return false }
+        let stem = name.dropLast(".sealed".count)
+        return stem.count == 32 && stem.allSatisfy { ("0"..."9").contains($0) || ("a"..."f").contains($0) }
+    }
+
+    /// One of the sealed calls, sent once, never retried.
+    private func sealedChange<Arguments: Encodable, Value: Decodable & Sendable>(_ method: String, _ arguments: Arguments, as type: Value.Type) async throws -> Value {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.withoutEscapingSlashes]
+        let body = try encoder.encode(arguments)
+        guard body.count <= 4 << 20 else { throw APIError.responseTooLarge } // the companion's MaxCall
+        let (request, endpoint) = try authorizedRequest(path: "/api/call/\(method)", method: "POST", body: body)
+        Log.network.notice("\(method, privacy: .public), \(body.count, privacy: .public) bytes")
+        let data = try await send(request, to: endpoint, using: actionSession)
+        do {
+            return try JSONDecoder().decode(CallEnvelope<Value>.self, from: data).result
+        } catch {
+            Log.network.error("The \(method, privacy: .public) answer couldn't be decoded")
+            throw APIError.decoding
+        }
+    }
+
     /// A kept receipt, as a data URL. It needs the view or edit level.
     func receipt(named name: String) async throws -> String {
         guard ReceiptCodec.isValidName(name) else { throw APIError.invalidResponse }
@@ -874,6 +929,23 @@ private struct CallEnvelope<Value: Decodable>: Decodable {
 private struct ErrorBody: Decodable {
     let error: String?
     let log: [String]?
+}
+
+/// SaveFinancesSealed's arguments: the rev it was read at, and the envelope.
+private struct SealedArguments: Encodable {
+    let first: String
+    let envelope: PrivateSeal.Envelope
+
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.unkeyedContainer()
+        try c.encode(first)
+        try c.encode(envelope)
+    }
+}
+
+/// SaveFinancesSealed's answer.
+private struct SealedSaved: Decodable, Sendable {
+    let rev: String
 }
 
 /// A Finances view with only its plan kept, as raw JSON.
