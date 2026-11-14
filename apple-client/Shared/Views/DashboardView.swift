@@ -347,11 +347,12 @@ private struct PhoneStatus: View {
                     .zoomTransition(id: id, in: zoom)
             }
             #if SCREENSHOTS
-            .overlay {
-                // The screenshots: an app's page, as if tapped.
-                if ScreenshotMode.shot == "app", let app = model.app(id: "vikunja") ?? model.latestApps.first {
-                    AppDetailView(app: app).background(Theme.canvas)
-                }
+            // The screenshots: an app's page, opened as a tap opens it (its own title, no Status search over
+            // it: an overlay on the list showed both, apple-loop.md item 1).
+            .onChange(of: model.hasLoaded, initial: true) {
+                guard ScreenshotMode.shot == "app", path.isEmpty, model.hasLoaded,
+                      let app = model.app(id: "vikunja") ?? model.latestApps.first else { return }
+                path.append(app.id)
             }
             #endif
             .refreshable {

@@ -1120,9 +1120,14 @@ private struct FinanceSpendingPage: View {
                         .contentTransition(.numericText())
                     if let before, before > 0, finances.amountsShown, !finances.amountsHiddenByPlan {
                         let change = total - before
-                        Text(verbatim: "\(change > 0 ? "+" : "−")\(amountText(abs(change), view.plan.currency, finances, whole: true))")
+                        // Against what: the month before, in the words the month's review uses ("+$1,021 on Sep"),
+                        // not a bare red number (apple-loop.md item 1).
+                        let last = Calendar.current.date(byAdding: .month, value: -1, to: month) ?? month
+                        Text(verbatim: "\(change > 0 ? "+" : "−")\(amountText(abs(change), view.plan.currency, finances, whole: true)) on \(last.formatted(.dateTime.month(.abbreviated)))")
                             .font(.caption2.weight(.semibold))
                             .foregroundStyle(change > 0 ? Theme.danger : Theme.success)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
                     }
                 }
                 .padding(.horizontal, 22)
@@ -3088,7 +3093,7 @@ struct WalletTransactionRow: View {
 
     private var subtitle: String? {
         if let to = transaction.to, !to.isEmpty {
-            return "\(finances.accountName(transaction.account) ?? "Account") → \(finances.accountName(to) ?? "Account")"
+            return TransferWords.line(payee: transaction.payee, from: finances.accountName(transaction.account) ?? "Account", to: finances.accountName(to) ?? "Account")
         }
         if transaction.isSplit { return "Split" }
         return transaction.category.isEmpty ? nil : transaction.category

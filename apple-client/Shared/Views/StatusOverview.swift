@@ -203,7 +203,7 @@ struct StatusTiles: View {
             if let updates = model.liveEvents.status?.updates {
                 StatusTile(title: "Updates", systemImage: "arrow.triangle.2.circlepath", tint: updates.paused ? Theme.warning : Theme.info,
                            value: updates.paused ? "Paused" : "On",
-                           detail: updates.paused ? "Nightly updates are off" : Self.capitalized(updates.schedule))
+                           detail: updates.paused ? "Nightly updates are off" : updates.schedule.isEmpty ? nil : ClockWords.schedule(updates.schedule))
             }
             if let watchdog = model.cards.watchdog, watchdog.checks > 0 {
                 let failing = model.failingChecks

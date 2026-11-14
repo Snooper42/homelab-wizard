@@ -41,6 +41,7 @@ The owner, Nov 14: "I want to iterate the shit out of the iphone and ipad app." 
   - A PR's pictures are an artifact this container **can't download** (its storage host is blocked), so **a PR takes only the iPhone's 47** (a screen that won't open still fails it). **Main takes all 94**, the iPad's too (the owner, Nov 14: "full set on main only").
   - **On main**, the iphone-docs-pictures job force-pushes 10 of them (half size, light and dark) to the **`iphone-screenshots` branch**, and this container **can** read that.
   - **Every picture, iPhone and iPad, at half size, is in `review/`** there (beside `docs/images`, so CONTRIBUTING's checkout never takes it), since item 0 (Nov 14): `<look>-<shot>.png`, `large-<shot>.png`, `ipad-<look>-<shot>.png`, `ipad-large-<shot>.png`.
+- **Measuring contrast from a picture** (Pillow is here): crop the button with `Image.open(p).convert('RGB').crop(box)`, take the most common colour as the background and the colour farthest from it as the text, then apply the WCAG ratio. The pictures are half size, so a box is in half-size pixels.
 - **The app's look** (the owner's choice): a plain iPhone app, with the system's large titles, lists and tab bar, SF Pro, light and dark, and a violet accent. `Shared/Views/Theme.swift` holds the colours: warm canvas `#F5F4F2`, white cards, violet `#6A4FF0`, calm status colours at 4.5:1. `Shared/Views/Design.swift` holds the pieces: `.card()`, `LogoCircle`, `RoundActionButton`, `WalletCard`, `ProgressRing`, `DotPill`. Reuse these pieces; don't invent new ones. Mocks for the owner have to look like the app (the owner, Nov 12: "every time it is less like the iPhone app"). Read the view you're changing first and use its exact words.
 - **The size:** about 11,700 lines of views (`Shared/Views/`), 29 test files. `FinancesView.swift` is the largest; grep before you read.
 - **What's on the iPhone and iPad and what isn't:** `docs/Parity.md`. Its **Gaps** list at the bottom is the feature backlog.
@@ -65,7 +66,14 @@ The owner, Nov 14: "I want to iterate the shit out of the iphone and ipad app." 
 
 ## 3. Where it stands
 
-- **Nov 14:** this file written (the owner's picks: no merge cap for this lane, and the order in section 4), in one PR with item 0's CI change and lane 1's last two web fixes (Finances task 15, items 3 and 4). **Next:** once it's merged and main's Apple client run is done, fetch the pictures. `review/` should hold about 100: the iPhone's, then `ipad-*`. Look at the iPad ones first (item 0's last step), then start item 1.
+- **Merged Nov 14, 12:14 PM Eastern: #694.** This file, item 0 (the iPad's pictures on main), and lane 1's last two web fixes. Its main run is the first full set: 94 pictures in `review/` about 45 minutes after the merge (around 1 PM).
+- **Open: round 1 of item 1** (the PR from the session that wrote this file; its first Mac compile):
+  - `ClockWords` with `ClockWordsTests`: Settings and Status's Updates tile in the phone's clock.
+  - `TransferWords` with `TransferWordsTests`: a transfer's line.
+  - The `app` shot opens the page as a tap does.
+  - Spending's ring: *+$X on Sep*.
+  - **First:** land it. If build-and-test is red, read the log and fix (section 1).
+- **Then:** fetch the 94 pictures and look at all of them, the iPad's first (item 0's last step). Check that round 1's fixes show on main's next run, then carry on with item 1's list.
 - **Not yet tried on the owner's iPhone and iPad** (each needs the cable re-install, once covers all): the private Finances work in the app (#676, #678, #680, #683, #686, #688), and the earlier list in `handoff.md` section 4 (*Trying on the phone*). One re-install covers them all; don't ask again until the owner has done it.
 
 ## 4. The order (the owner's, Nov 14)
@@ -84,11 +92,13 @@ The owner, Nov 14: "I want to iterate the shit out of the iphone and ipad app." 
 - Done when a full pass over the pictures finds nothing you'd fix.
 
    **First look (Nov 14, from main's 10 iPhone pictures; check each again in the full set before fixing):**
-   - *Settings:* **Quiet hours … 22-7** and **Daily at 04:00** are raw clock numbers. Make them the phone's own time words (*10 PM to 7 AM*, *Every night at 4 AM*), in a test of the words.
-   - *An app's page:* the bar still says **Status**, with Status's **Apps** search field above the app. The app's page should have its own title (or none) and no search.
+   - *Settings:* **Quiet hours … 22-7** and **Daily at 04:00** are raw clock numbers. **Written** (`ClockWords`, `ClockWordsTests`; Settings, and Status's Updates tile): *10 PM to 7 AM*, *Every night at 4 AM*.
+   - *An app's page:* the bar still says **Status**, with Status's **Apps** search field above the app. **This one is the picture, not the app:** the `app` shot laid the page over Status's list instead of opening it. Fixed with the ClockWords PR (the shot now pushes the page as a tap does). Check the new picture has the app's own title.
    - *Finances home:* the same problem as the web's task 15 item 2. The big card is checking **now**; *After Alex's paycheck* comes next; **Left to spend**, the number people want, is below the fold. Put what's left first, in words (*Left until …*), as the web does once item 2 lands.
-   - *Transactions:* a transfer's second line is cut off (*Chase Checking →…*). Give it two lines, or *To Roth IRA*.
-   - *Backups, dark:* **Test a Restore** (violet text on dark violet) reads weaker than **Back Up Now**. Check it at 4.5:1.
+   - *Transactions:* a transfer's second line is cut off (*Chase Checking →…*). **Written with the ClockWords PR** (`TransferWords`: *From Chase Checking* under *Roth IRA*).
+   - *Spending:* the ring's red **+$1,021** said nothing about what it's compared to. **Written:** *+$1,021 on Sep*, the month review's own words.
+   - *Status:* each folded group's **⋯ All of These** reads vaguely for a menu of actions on the whole group. Look at it in the full set: *Start All*, *Restart All*, or the group's name (*All of Network*)?
+   - *Backups, dark:* **measured Nov 14:** **Back Up Now** is white on violet `(140,123,255)`, 3.3:1; **Test a Restore** is violet on `(57,51,93)`, 3.7:1. Both pass 3:1 for large bold text, not the README's 4.5:1. The fix is the dark accent (`Theme.swift`), which every button shares. Look at every dark picture before changing it, and check each colour pair again after.
 
 **2. The missing Finances pieces** (`docs/Parity.md` gap 5). Each is its own PR, with a failing test first. Mock it first only where it's a new screen. In this order:
 - add a payment, then a goal;
