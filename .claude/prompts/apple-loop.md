@@ -85,7 +85,7 @@ The owner, Nov 14: "I want to iterate the shit out of the iphone and ipad app." 
 
    **First look (Nov 14, from main's 10 iPhone pictures; check each again in the full set before fixing):**
    - *Settings:* **Quiet hours … 22-7** and **Daily at 04:00** are raw clock numbers. Make them the phone's own time words (*10 PM to 7 AM*, *Every night at 4 AM*), in a test of the words.
-   - *An app's page:* the bar still says **Status**, with Status's **Apps** search field above the app. The app's page should have its own title (or none) and no search.
+   - *An app's page:* the bar still says **Status**, with Status's **Apps** search field above the app. **This one is the picture, not the app:** the `app` shot laid the page over Status's list instead of opening it. Fixed with the ClockWords PR (the shot now pushes the page as a tap does). Check the new picture has the app's own title.
    - *Finances home:* the same problem as the web's task 15 item 2. The big card is checking **now**; *After Alex's paycheck* comes next; **Left to spend**, the number people want, is below the fold. Put what's left first, in words (*Left until …*), as the web does once item 2 lands.
    - *Transactions:* a transfer's second line is cut off (*Chase Checking →…*). Give it two lines, or *To Roth IRA*.
    - *Backups, dark:* **Test a Restore** (violet text on dark violet) reads weaker than **Back Up Now**. Check it at 4.5:1.
