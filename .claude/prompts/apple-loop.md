@@ -38,7 +38,7 @@ The owner, Nov 14: "I want to iterate the shit out of the iphone and ipad app." 
 - **The pictures:**
   - The **screenshots** job builds with the `SCREENSHOTS` flag (`Shared/Screenshots/ScreenshotMode.swift`, data from `apple-client/Screenshots/data.json`). It launches `-shot <name>` for each name in its `shots=` list, in light and dark, plus `large-*` at the largest text size and `light-finances-hidden`.
   - The names the app knows are switched on in `DashboardView.swift` (around `ScreenshotMode.shot`) and `FinancesView.swift` (around line 3735).
-  - A PR's pictures are an artifact this container **can't download** (its storage host is blocked).
+  - A PR's pictures are an artifact this container **can't download** (its storage host is blocked), so **a PR takes only the iPhone's 47** (a screen that won't open still fails it). **Main takes all 94**, the iPad's too (the owner, Nov 14: "full set on main only").
   - **On main**, the iphone-docs-pictures job force-pushes 10 of them (half size, light and dark) to the **`iphone-screenshots` branch**, and this container **can** read that.
   - **Every picture, iPhone and iPad, at half size, is in `review/`** there (beside `docs/images`, so CONTRIBUTING's checkout never takes it), since item 0 (Nov 14): `<look>-<shot>.png`, `large-<shot>.png`, `ipad-<look>-<shot>.png`, `ipad-large-<shot>.png`.
 - **The app's look** (the owner's choice): a plain iPhone app, with the system's large titles, lists and tab bar, SF Pro, light and dark, and a violet accent. `Shared/Views/Theme.swift` holds the colours: warm canvas `#F5F4F2`, white cards, violet `#6A4FF0`, calm status colours at 4.5:1. `Shared/Views/Design.swift` holds the pieces: `.card()`, `LogoCircle`, `RoundActionButton`, `WalletCard`, `ProgressRing`, `DotPill`. Reuse these pieces; don't invent new ones. Mocks for the owner have to look like the app (the owner, Nov 12: "every time it is less like the iPhone app"). Read the view you're changing first and use its exact words.
@@ -118,5 +118,5 @@ Mock the palette and any new layout for the owner first (a private canvas, made-
 | `Failed to CreateArtifact … Unexpected token '<'` | GitHub's artifact service | Re-run that job once |
 | A check says in progress long after its log ended | GitHub lag | Read the job's log before calling it stuck |
 | No new pictures on `iphone-screenshots` | main's run was skipped (no app path changed) or the screenshots job failed | Read main's Apple client run |
-| **screenshots** says *cancelled* after its pictures uploaded | its `timeout-minutes` (80 since Nov 14; both devices take about 45) | Read the log's times; if a new shot pushed it over, raise the limit in the same PR and say why |
+| **screenshots** says *cancelled* after its pictures uploaded | its `timeout-minutes` (80 since Nov 14; main's run, both devices, takes about 45) | Read the log's times; if a new shot pushed it over, raise the limit in the same PR and say why |
 | A picture is plain white or black | the app was still opening | Re-take it in the next run; the job already waits once |

@@ -221,7 +221,8 @@ jobs:
     needs: payee-logos
     if: ${{ !cancelled() && needs.payee-logos.outputs.app == 'true' }}
     runs-on: macos-latest
-    # The iPhone and the iPad, each in light, dark and the largest text: about 45 minutes in all (Nov 14).
+    # On main, the iPhone and the iPad, each in light, dark and the largest text: about 45 minutes in all
+    # (Nov 14); a pull request, the iPhone's only.
     timeout-minutes: 80
     defaults:
       run:
@@ -280,7 +281,11 @@ jobs:
           warnings="$(grep -E "warning:" "$RUNNER_TEMP/shots.log" | grep -v "^ld: warning" | grep -v appintentsmetadataprocessor | sed -E 's#^.*/apple-client/##' | sort -u || true)"
           if [ -n "$warnings" ]; then echo "$warnings"; echo "::error::compiler warnings in the screenshots build"; exit 1; fi
 
+      # The iPad only on main: a pull request's pictures are an artifact the sessions here can't open, so a
+      # pull request takes the iPhone's (a screen that won't open still fails it) and main the whole set,
+      # which goes to the iphone-screenshots branch to look at (the owner, Nov 14).
       - name: Pick an iPad simulator
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
           # The newest iPad Air or Pro 11-inch (the split view at a common size), else any iPad.
           UDID="$(/usr/bin/python3 -I - "$RUNNER_TEMP/devices.json" <<'PY'
@@ -301,8 +306,8 @@ jobs:
           xcrun simctl boot "$UDID" || true
           xcrun simctl bootstatus "$UDID" -b
 
-      # Every screen on the iPhone, then on the iPad (named ipad-…): light and dark, the largest text, and
-      # Finances with its amounts hidden.
+      # Every screen on the iPhone, then on main on the iPad (named ipad-…): light and dark, the largest
+      # text, and Finances with its amounts hidden.
       - name: Take the pictures
         run: |
           APP="$(ls -d "$RUNNER_TEMP"/shots/Build/Products/Debug-iphonesimulator/*.app | grep -v Widget | head -1)"
@@ -347,8 +352,10 @@ jobs:
               && xcrun simctl io "$dev" screenshot "$RUNNER_TEMP/pictures/${pre}light-finances-hidden.png" > /dev/null 2>&1 || true
           }
           take "$UDID" ""
-          xcrun simctl shutdown "$UDID" || true
-          take "$IPAD" "ipad-"
+          if [ -n "${IPAD:-}" ]; then
+            xcrun simctl shutdown "$UDID" || true
+            take "$IPAD" "ipad-"
+          fi
 
       - name: Keep the pictures
         if: always()
