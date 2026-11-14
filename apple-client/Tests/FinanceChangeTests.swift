@@ -93,6 +93,29 @@ struct FinanceChangeTests {
         #expect(r.plan["cushion"] == .number(300))
     }
 
+    @Test func twiceToTheSameThingIsOneChange() throws {
+        // Away: Electric 90 → 95, then 95 → 100. One change, from 90.
+        var waiting = FinanceChange.adding(FinanceChange.paymentAmount(id: "electric", to: 95, was: nil).noting(kept), to: [])
+        let after = try #require(waiting[0].apply(to: kept))
+        waiting = FinanceChange.adding(FinanceChange.paymentAmount(id: "electric", to: 100, was: nil).noting(after), to: waiting)
+        #expect(waiting == [.paymentAmount(id: "electric", to: 100, was: 90)])
+        // Replayed on the kept plan itself, it's no clash with itself.
+        let r = FinanceReplay.replay(waiting, on: kept)
+        #expect(r.clashes.isEmpty)
+        #expect(payments(r.plan)[0]["amount"] == .number(100))
+        // Adding never merges.
+        let two = FinanceChange.adding(.addGoal(name: "A", target: 1, date: nil, account: "sav", percent: 10),
+                                       to: [.addGoal(name: "A", target: 1, date: nil, account: "sav", percent: 10)])
+        #expect(two.count == 2)
+    }
+
+    @Test func notingRemembersWhatWasThere() {
+        #expect(FinanceChange.cushion(to: 300, was: nil).noting(kept) == .cushion(to: 300, was: 250))
+        #expect(FinanceChange.budget(category: " groceries", to: 650, was: nil).noting(kept) == .budget(category: " groceries", to: 650, was: 600))
+        #expect(FinanceChange.balance(account: "chk", to: 1100, was: nil, today: "2026-11-20").noting(kept)
+                == .balance(account: "chk", to: 1100, was: 1200, today: "2026-11-20"))
+    }
+
     @Test func changesKeepAndComeBack() throws {
         let mine: [FinanceChange] = [.addGoal(name: "Laptop", target: 1500, date: "2027-06-01", account: "sav", percent: 25),
                                      .waiting(key: "payment:rent:2026-12-01", waiting: false)]

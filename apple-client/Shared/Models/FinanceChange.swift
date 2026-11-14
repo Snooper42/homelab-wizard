@@ -85,6 +85,47 @@ enum FinanceChange: Codable, Sendable, Equatable {
         }
     }
 
+    /// What a change that sets a value sets: one place in the plan. Nil for one that adds.
+    var target: String? {
+        switch self {
+        case .balance(let account, _, _, _): "balance:\(account)"
+        case .cushion: "cushion"
+        case .budget(let category, _, _): "budget:\(category.trimmingCharacters(in: .whitespaces).lowercased())"
+        case .goalTarget(let id, _, _): "goal:\(id)"
+        case .paymentAmount(let id, _, _): "payment:\(id)"
+        case .waiting(let key, _): "waiting:\(key)"
+        default: nil
+        }
+    }
+
+    /// The same change, remembering `was` as what it replaced.
+    func with(was: Double?) -> FinanceChange {
+        switch self {
+        case .balance(let account, let to, _, let today): .balance(account: account, to: to, was: was, today: today)
+        case .cushion(let to, _): .cushion(to: to, was: was)
+        case .budget(let category, let to, _): .budget(category: category, to: to, was: was)
+        case .goalTarget(let id, let to, _): .goalTarget(id: id, to: to, was: was)
+        case .paymentAmount(let id, let to, _): .paymentAmount(id: id, to: to, was: was)
+        default: self
+        }
+    }
+
+    /// The same change, remembering what `plan` held there before it.
+    func noting(_ plan: JSONValue) -> FinanceChange { with(was: current(in: plan)) }
+
+    /// `changes` with `change` made after them. A change to what an earlier
+    /// one already changed takes its place, keeping what was there before
+    /// either, so the two are one change, never a clash with itself.
+    static func adding(_ change: FinanceChange, to changes: [FinanceChange]) -> [FinanceChange] {
+        var out = changes
+        if let target = change.target, let i = out.firstIndex(where: { $0.target == target }) {
+            out[i] = change.setting == nil ? change : change.with(was: out[i].setting?.was)
+        } else {
+            out.append(change)
+        }
+        return out
+    }
+
     /// The keys waiting now in a plan as the computer keeps it (`waiting`).
     static func waitingKeys(in plan: JSONValue) -> [String] {
         guard case .array(let keys)? = plan["waiting"] else { return [] }
