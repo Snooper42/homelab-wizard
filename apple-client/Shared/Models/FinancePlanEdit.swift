@@ -140,6 +140,62 @@ enum FinancePlanEdit {
         return .object(root)
     }
 
+    /// How often a new payment comes, in the order the computer's Add a payment
+    /// offers them. Twice a month and With each paycheck are the computer's for now.
+    static let paymentEveries: [(id: String, title: String)] = [
+        ("month", "Monthly"), ("2 weeks", "Every 2 weeks"), ("week", "Weekly"),
+        ("3 months", "Every 3 months"), ("year", "Yearly"), ("once", "Once"),
+    ]
+
+    /// What a payment is for, as the computer names them (`kindName`).
+    static let paymentKinds: [(id: String, title: String)] = [
+        ("home", "Home"), ("utilities", "Utilities"), ("car", "Car"), ("subscriptions", "Subscriptions"),
+        ("loans", "Loans"), ("cards", "Cards"), ("spending", "Spending"), ("savings", "Saving"), ("other", "Other"),
+    ]
+
+    /// The accounts a payment can come out of: checking, savings, or a card it's charged to.
+    static let paymentFromKinds: Set<String> = ["checking", "savings", "card"]
+
+    /// `plan` with a new payment, as the computer's Add a payment makes one:
+    /// its name, what it costs each time (about this much, for one that
+    /// changes), how often from its next day, what it's for, and the account
+    /// it comes out of (empty: the first checking account, as the computer
+    /// reads it). The computer gives it its id. Nil for no name, an amount
+    /// that isn't more than nothing, an unknown schedule or kind, a day that
+    /// isn't one, or an account the plan doesn't have or a payment can't
+    /// come out of.
+    static func addingPayment(name: String, amount: Double, every: String, start: String, kind: String,
+                              from: String, estimate: Bool, in plan: JSONValue) -> JSONValue? {
+        let name = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        let cents = roundedToCents(amount)
+        guard !name.isEmpty, name.count <= 80,
+              amount.isFinite, cents > 0, cents <= maxBalance,
+              paymentEveries.contains(where: { $0.id == every }),
+              paymentKinds.contains(where: { $0.id == kind }),
+              LocalDay.parse(start) != nil,
+              case .object(var root) = plan
+        else { return nil }
+        if !from.isEmpty {
+            guard case .array(let accounts)? = root["accounts"],
+                  let account = accounts.first(where: { $0["id"] == .string(from) }),
+                  case .string(let accountKind)? = account["kind"], paymentFromKinds.contains(accountKind)
+            else { return nil }
+        }
+        var payment: [String: JSONValue] = [
+            "name": .string(name),
+            "amount": .number(cents),
+            "schedule": .object(["every": .string(every), "start": .string(start)]),
+            "kind": .string(kind),
+        ]
+        if !from.isEmpty { payment["from"] = .string(from) }
+        if estimate { payment["estimate"] = .bool(true) }
+        var payments: [JSONValue] = []
+        if case .array(let have)? = root["payments"] { payments = have }
+        payments.append(.object(payment))
+        root["payments"] = .array(payments)
+        return .object(root)
+    }
+
     /// `plan` with the cushion, the least checking should hold, set to
     /// `amount`. A pay period that leaves less is flagged. Nothing (0)
     /// turns the warning off. Nil for a negative or nonsense amount.
