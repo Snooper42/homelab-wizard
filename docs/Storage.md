@@ -45,6 +45,7 @@ version: 0.17.0
 | `data/people.json`, `data/people/<name>.html` | `homelab person` | The household, and each person's welcome page |
 | `data/sso/<app>.env` | `homelab sso setup` | An app's Pocket ID sign-in settings |
 | `data/phones.json` | `homelab phone` | Paired phones, with what each may do (make changes, see or change Finances) |
+| `data/members/<username>/data/` | a household member's phone | Her own Finances, apart from the household's: `finance.json`, `finance-ledger.json` and `finance-receipts/` while plain; once she keeps them private ([Private Finances](<Private Finances.md>)), only `finance.sealed` (one locked file the computer can't open, 0600) and her receipts locked as `finance-receipts/<hash>.sealed`. In the nightly backup of the homelab's records |
 | `data/finance-card-prices.json` | Finances › Collection's **Update prices** | Each card's price on each day it was read (TCGplayer's, from TCGdex), a year and a month at most, by the card's id: its page's chart. A card removed takes its prices with it |
 | `data/finance-cards/` | Finances › Collection (a card's form, on the computer or a phone allowed to change Finances) | Each card's picture, by its content's name: a photo of your own made small on the device it was picked on. One no card uses goes a day after the plan is next saved |
 | `data/phone-sent/` | Send to my phone (an app's row menu, ⌘K) | A page sent to one paired phone, a small file each, until the phone companion passes it on (within a second) and removes it; one left over two minutes is dropped. Safe to delete |
