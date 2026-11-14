@@ -183,7 +183,7 @@ struct ComputerView: View {
                     set: { on in Task { await computer.setNightlyUpdates(on: on) } }
                 )) {
                     IconTileLabel(title: "Update apps nightly", systemImage: "arrow.triangle.2.circlepath", tint: TileColour.green,
-                                  subtitle: updates.schedule.isEmpty ? nil : updates.schedule.prefix(1).uppercased() + updates.schedule.dropFirst())
+                                  subtitle: updates.schedule.isEmpty ? nil : ClockWords.schedule(updates.schedule))
                 }
                 .disabled(!computer.canChange || computer.isSavingUpdates)
                 if let error = computer.updatesError {

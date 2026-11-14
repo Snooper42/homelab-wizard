@@ -139,6 +139,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **Times in the Homelab app in the phone's own clock:** Settings shows quiet hours as *10 PM to 7 AM* (not *22-7*), and nightly updates as *Every night at 4 AM* (not *Daily at 04:00*), on the iPhone and iPad, in 12- or 24-hour time as the phone is set.
 - **Add a payment by keyboard:** Name and Amount come first, and the logos after them are one stop for Tab: the arrow keys move between them, and Space picks one. Tab used to pass every one of the 337 logos before reaching Name.
 - **The period bar on a phone:** back, the period's name and forward stay on one line, the name wrapping between them, at any width and text size.
 - **Finances' first three things stay until they're done:** with a checking account and no paycheck or payment yet, *Start with three things* stays on the Dashboard, the account ticked (*✓ Example Checking*), and **Add a paycheck** and **Add a payment** still there; it goes once all three are in.
