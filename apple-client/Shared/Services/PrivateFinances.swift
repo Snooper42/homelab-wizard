@@ -119,6 +119,17 @@ final class PrivateFinances {
         try await opened(Self.raw(PrivateSeal.unlock(e, username: username, passkeySecret: passkeySecret)))
     }
 
+    /// Opens them with the key kept behind Face ID on this device
+    /// (`PrivateFinancesKey`); one that no longer opens them is refused.
+    func unlock(key raw: Data) async throws {
+        guard raw.count == 32 else { throw PrivateSeal.Problem.notTheirs }
+        _ = try sealed()
+        try await opened(raw)
+    }
+
+    /// The opened key, to keep behind Face ID on this device; nil while locked.
+    var openedKey: Data? { key.map { Self.raw($0) } }
+
     /// Drops the opened key and her plain Finances from this phone.
     func lock() {
         guard state == .open else { return }

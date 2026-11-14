@@ -155,7 +155,11 @@ private struct PhoneDashboard: View {
                 let screen = (Screen(storageKey: savedTab) ?? .status(.all)).row
                 return IntentInbox.landing(screen, isMember: isMember, canSeeFinances: finances.canSeePlan)
             },
-            set: { savedTab = $0.storageKey }
+            set: { screen in
+                // Leaving Finances locks a member's private ones.
+                if screen != .finances { finances.lockPrivate() }
+                savedTab = screen.storageKey
+            }
         )
     }
 
@@ -563,6 +567,8 @@ private struct SplitDashboard: View {
             .onChange(of: model.hasLoaded) { takeRequest() }
             .onChange(of: model.sidebar) { _, item in
                 if let item { savedSidebar = item.storageKey }
+                // Leaving Finances locks a member's private ones.
+                if item != .finances { finances.lockPrivate() }
             }
             // Finances gone from this device: back to Status.
             .onChange(of: finances.canSeePlan) { _, can in

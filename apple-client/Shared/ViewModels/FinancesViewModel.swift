@@ -62,12 +62,14 @@ final class FinancesViewModel {
         api: APIClient,
         device: @escaping @MainActor () -> DeviceInfo?,
         authorize: @escaping @MainActor (String) async -> Bool,
-        offline: OfflineFinances = .onThisDevice
+        offline: OfflineFinances = .onThisDevice,
+        privateKey: PrivateFinancesKey = PrivateFinancesKey()
     ) {
         self.api = api
         self.device = device
         self.authorize = authorize
         self.offline = offline
+        self.privateKey = privateKey
         Task { _ = await readKept() }
     }
 
@@ -86,7 +88,8 @@ final class FinancesViewModel {
 
     /// Keeps the latest answers, off the main thread, when they changed.
     private func keepAnswers() {
-        guard let plan = answers.plan, level >= .view else { return }
+        // Her private Finances are never kept in the clear (4c-3 keeps them sealed).
+        guard let plan = answers.plan, level >= .view, !isPrivate else { return }
         let toKeep = OfflineFinances.Answers(at: Date(), level: level, plan: plan, ledger: answers.ledger, shared: answers.shared)
         let offline = offline
         let before = keeping
@@ -217,7 +220,13 @@ final class FinancesViewModel {
         defer { isSaving = false }
         guard await authorize(reason) else { return false }
         do {
-            let read = try await api.saveFinances(edited)
+            let read: FinancesRead
+            if let store = openedPrivate {
+                read = try await store.saveFinances(edited)
+                touchPrivate()
+            } else {
+                read = try await api.saveFinances(edited)
+            }
             ownLogos = OwnLogos(read.view.plan.logos)
             plan = read.view
             rawPlan = read.rawPlan
@@ -227,9 +236,8 @@ final class FinancesViewModel {
             savedCount += 1
             return true
         } catch {
-            let apiError = APIError.from(error)
-            Log.ui.error("SaveFinances failed: \(apiError.logName, privacy: .public)")
-            saveError = apiError.errorDescription
+            Log.ui.error("SaveFinances failed: \(APIError.from(error).logName, privacy: .public)")
+            saveError = Self.words(error)
             await loadPlan()
             return false
         }
@@ -413,6 +421,304 @@ final class FinancesViewModel {
         investmentsUnmatched = r.unmatched
     }
 
+    // MARK: A member's private Finances (2E step 4c)
+
+    /// Her private Finances, on a member's own phone: made once her username is known.
+    @ObservationIgnored private var sealedStore: PrivateFinances?
+    /// Her key, kept behind Face ID on this device once she opened them here.
+    @ObservationIgnored private let privateKey: PrivateFinancesKey
+    /// Where her Finances are: unknown on the owner's phones and wall screens.
+    private(set) var privacy: PrivateFinances.State = .unknown
+    /// Why the last unlock didn't open them, in words.
+    private(set) var privateError: String?
+    private(set) var isUnlocking = false
+    /// Whether Face ID opens them on this device (her key kept here).
+    private(set) var faceIDOpens = false
+    /// Whether her envelope also opens by a passphrase (made where passkeys can't lock them).
+    var opensByPassphrase: Bool { sealedStore?.envelope?.kdf.passphraseSalt != nil }
+    /// Locks them after 5 minutes untouched.
+    @ObservationIgnored private var lockTimer: Task<Void, Never>?
+    static let lockAfter: Duration = .seconds(5 * 60)
+
+    /// Her Finances are private (locked or open) on this phone.
+    var isPrivate: Bool { privacy == .locked || privacy == .open }
+
+    private var openedPrivate: PrivateFinances? {
+        guard let store = sealedStore, store.state == .open else { return nil }
+        return store
+    }
+
+    /// The store for her own phone; nil on any other.
+    private func privateStore() -> PrivateFinances? {
+        guard let me = device(), me.isMember, let person = me.person else { return nil }
+        if let store = sealedStore, store.username == person {
+            store.mayChange = level >= .edit
+            return store
+        }
+        let store = PrivateFinances(username: person, mayChange: level >= .edit, calls: api)
+        sealedStore = store
+        return store
+    }
+
+    /// Her store when her Finances are private; nil while they're plain or
+    /// not known (a computer from before private Finances answers plainly).
+    private func privateNow() async -> PrivateFinances? {
+        guard let store = privateStore() else { return nil }
+        if store.state == .unknown { _ = try? await store.find() }
+        syncPrivacy(store)
+        return isPrivate ? store : nil
+    }
+
+    /// Asks the computer again (a plain call was refused as private).
+    private func privateFound() async -> PrivateFinances? {
+        guard let store = privateStore() else { return nil }
+        _ = try? await store.find()
+        syncPrivacy(store)
+        return isPrivate ? store : nil
+    }
+
+    private func syncPrivacy(_ store: PrivateFinances) {
+        let was = isPrivate
+        privacy = store.state
+        faceIDOpens = isPrivate && privateKey.has(for: store.username)
+        // Turned private: no plain copy of hers stays on this device.
+        if isPrivate, !was { forgetOffline() }
+    }
+
+    private func showPrivatePlan(_ store: PrivateFinances) {
+        offlineAsOf = nil
+        guard store.state == .open else {
+            plan = nil
+            rawPlan = nil
+            ownLogos = OwnLogos()
+            planError = nil
+            return
+        }
+        do {
+            let read = try store.finances()
+            ownLogos = OwnLogos(read.view.plan.logos)
+            plan = read.view
+            rawPlan = read.rawPlan
+            planError = nil
+            touchPrivate()
+        } catch {
+            plan = nil
+            rawPlan = nil
+            planError = Self.words(error)
+        }
+    }
+
+    private func showPrivateLedger(_ store: PrivateFinances) {
+        guard store.state == .open, let read = try? store.financesLedger() else {
+            ledger = nil
+            rawLedger = nil
+            ledgerError = nil
+            return
+        }
+        ledger = read.ledger
+        rawLedger = read.raw
+        ledgerError = nil
+        noteSeen(in: read.ledger)
+    }
+
+    /// Opens them with the 16 words of her recovery code; keepForFaceID
+    /// keeps her key behind Face ID on this device. Returns whether they opened.
+    func unlockPrivate(words: String, keepForFaceID: Bool) async -> Bool {
+        await unlockPrivate(keepForFaceID: keepForFaceID) { try await $0.unlock(words: words) }
+    }
+
+    /// Opens them with her passphrase.
+    func unlockPrivate(passphrase: String, keepForFaceID: Bool) async -> Bool {
+        await unlockPrivate(keepForFaceID: keepForFaceID) { try await $0.unlock(passphrase: passphrase) }
+    }
+
+    /// A member's own phone that may change her Finances, while they're
+    /// plain: it may make them private.
+    var canMakePrivate: Bool { isMember && privacy == .plain && canEdit }
+
+    /// Makes her Finances private (private-finances.md 3.3), once she has
+    /// written her recovery code down and typed two of its words back:
+    /// each plain receipt sealed and kept, then her plan and ledger sealed
+    /// and kept as new, and only then her plain files removed by the
+    /// computer. Her passphrase opens them too (where passkeys can't);
+    /// keepForFaceID keeps her key behind Face ID on this device. After Face
+    /// ID, as any change. Returns whether they're private now.
+    func makePrivate(code: Data, passphrase: String, keepForFaceID: Bool) async -> Bool {
+        guard canMakePrivate, !isSaving, let store = privateStore() else { return false }
+        if rawLedger == nil { await loadLedger() }
+        guard let rawPlan, let rawLedger else {
+            privateError = "Your Finances couldn’t be read just now, so nothing was changed. Try again in a moment."
+            return false
+        }
+        isSaving = true
+        defer { isSaving = false }
+        guard await authorize("Make your Finances private.") else { return false }
+        let api = api
+        do {
+            try await store.turnOn(plan: rawPlan, ledger: rawLedger, code: code, passphrase: passphrase) { name in
+                try await api.receipt(named: name)
+            }
+        } catch {
+            Log.ui.error("Making Finances private failed: \(APIError.from(error).logName, privacy: .public)")
+            privateError = Self.words(error)
+            return false
+        }
+        privateError = nil
+        if keepForFaceID, let raw = store.openedKey {
+            let keeper = privateKey, who = store.username
+            _ = await Task.detached(priority: .utility) { try? keeper.keep(raw, for: who) }.value
+        }
+        syncPrivacy(store)
+        showPrivatePlan(store)
+        showPrivateLedger(store)
+        savedCount += 1
+        return true
+    }
+
+    /// Turns privacy off, once she has confirmed: her Finances kept plain on
+    /// the Homelab again, her receipts with them, and her key gone from this
+    /// device. After Face ID. Returns whether they're plain now.
+    func turnPrivacyOff() async -> Bool {
+        guard let store = openedPrivate, store.mayChange, !isSaving else { return false }
+        isSaving = true
+        defer { isSaving = false }
+        guard await authorize("Turn privacy off for your Finances.") else { return false }
+        let pictures: [String: String]
+        do {
+            pictures = try await store.turnOff()
+        } catch {
+            Log.ui.error("Turning privacy off failed: \(APIError.from(error).logName, privacy: .public)")
+            saveError = Self.words(error)
+            return false
+        }
+        privateKey.forget()
+        lockTimer?.cancel()
+        syncPrivacy(store)
+        // Her receipts, kept plain again and named by the ledger.
+        if !pictures.isEmpty {
+            do {
+                var names: [String: String] = [:]
+                for (id, url) in pictures { names[id] = try await api.saveReceipt(dataURL: url) }
+                let read = try await api.financesLedger()
+                if case .object(var o) = read.raw, case .array(let ts)? = o["transactions"] {
+                    o["transactions"] = .array(ts.map { (t: JSONValue) -> JSONValue in
+                        guard case .object(var row) = t, case .string(let id)? = row["id"], let name = names[id] else { return t }
+                        row["receipt"] = .string(name)
+                        return .object(row)
+                    })
+                    _ = try await api.saveFinancesLedger(.object(o))
+                }
+            } catch {
+                Log.ui.error("A receipt wasn't kept again: \(APIError.from(error).logName, privacy: .public)")
+                saveError = "Your Finances are plain again, but a receipt couldn’t be kept with them. Add it again from its transaction."
+            }
+        }
+        plan = nil
+        rawPlan = nil
+        ledger = nil
+        rawLedger = nil
+        await loadPlan()
+        await loadLedger()
+        savedCount += 1
+        return true
+    }
+
+    /// Opens them with the key kept behind Face ID on this device.
+    func unlockPrivateWithFaceID() async -> Bool {
+        guard let store = privateStore() else { return false }
+        let keeper = privateKey, who = store.username
+        let raw = await Task.detached(priority: .userInitiated) { keeper.read(for: who, reason: "Open your private Finances.") }.value
+        guard let raw else {
+            privateError = "Face ID didn’t open them. Use your passphrase or recovery code instead."
+            return false
+        }
+        return await unlockPrivate(keepForFaceID: false) { store in
+            do {
+                try await store.unlock(key: raw)
+            } catch PrivateSeal.Problem.notTheirs {
+                // Made private again elsewhere, with a new key: this one goes.
+                keeper.forget()
+                throw Problem.faceIDStale
+            }
+        }
+    }
+
+    private func unlockPrivate(keepForFaceID: Bool, _ open: (PrivateFinances) async throws -> Void) async -> Bool {
+        guard let store = privateStore(), !isUnlocking else { return false }
+        isUnlocking = true
+        defer { isUnlocking = false }
+        do {
+            try await open(store)
+        } catch {
+            privateError = Self.words(error)
+            syncPrivacy(store)
+            return false
+        }
+        privateError = nil
+        if keepForFaceID, store.state == .open, let raw = store.openedKey {
+            let keeper = privateKey, who = store.username
+            _ = await Task.detached(priority: .utility) { try? keeper.keep(raw, for: who) }.value
+        }
+        syncPrivacy(store)
+        showPrivatePlan(store)
+        showPrivateLedger(store)
+        return store.state == .open
+    }
+
+    /// Locks her private Finances: the key and her plain Finances leave this
+    /// phone's memory. On leaving Finances, after 5 minutes untouched, and with
+    /// the app (which drops everything when it goes to the background).
+    func lockPrivate() {
+        lockTimer?.cancel()
+        lockTimer = nil
+        guard let store = openedPrivate else { return }
+        store.lock()
+        syncPrivacy(store)
+        plan = nil
+        rawPlan = nil
+        ownLogos = OwnLogos()
+        ledger = nil
+        rawLedger = nil
+        amountsShown = false
+    }
+
+    /// Her private Finances were used: the 5 minutes start again.
+    func touchPrivate() {
+        guard openedPrivate != nil else { return }
+        lockTimer?.cancel()
+        lockTimer = Task { [weak self] in
+            try? await Task.sleep(for: FinancesViewModel.lockAfter)
+            guard !Task.isCancelled else { return }
+            self?.lockPrivate()
+        }
+    }
+
+    /// What the app itself says about her private Finances.
+    enum Problem: Error, LocalizedError {
+        case faceIDStale
+
+        var errorDescription: String? {
+            switch self {
+            case .faceIDStale: "Face ID’s key no longer opens them: they were made private again on another device. Use your recovery code, and Face ID opens them again after."
+            }
+        }
+    }
+
+    /// An error in the words to show: her private Finances' own, or the computer's.
+    nonisolated static func words(_ error: Error) -> String? {
+        if let e = error as? PrivateFinances.Problem { return e.errorDescription }
+        if let e = error as? PrivateSeal.Problem { return e.errorDescription }
+        if let e = error as? Problem { return e.errorDescription }
+        if let e = error as? FinanceProjection.Failed { return e.errorDescription }
+        return APIError.from(error).errorDescription
+    }
+
+    /// The computer refusing a plain Finances call because hers are private (cmd/homelab's errPrivate).
+    nonisolated static func isPrivateRefusal(_ error: APIError) -> Bool {
+        if case .server(_, let message?) = error { return message.contains("Finances are private") }
+        return false
+    }
+
     /// Types in an account's balance, as on the computer. Returns whether it saved.
     func setBalance(of account: FinanceAccount, to value: Double) async -> Bool {
         guard canEdit, !isSaving, let raw = rawPlan else { return false }
@@ -439,6 +745,10 @@ final class FinancesViewModel {
         guard canSeePlan, !isLoadingLedger else { return }
         isLoadingLedger = true
         defer { isLoadingLedger = false }
+        if let store = await privateNow() {
+            showPrivateLedger(store)
+            return
+        }
         do {
             let read = try await api.financesLedger()
             ledger = read.ledger
@@ -585,7 +895,13 @@ final class FinancesViewModel {
         defer { isSaving = false }
         guard await authorize(reason) else { return false }
         do {
-            let read = try await api.saveFinancesLedger(edited)
+            let read: LedgerRead
+            if let store = openedPrivate {
+                read = try await store.saveFinancesLedger(edited)
+                touchPrivate()
+            } else {
+                read = try await api.saveFinancesLedger(edited)
+            }
             ledger = read.ledger
             rawLedger = read.raw
             answers.ledger = read.answer
@@ -594,9 +910,8 @@ final class FinancesViewModel {
             savedCount += 1
             return true
         } catch {
-            let apiError = APIError.from(error)
-            Log.ui.error("SaveFinancesLedger failed: \(apiError.logName, privacy: .public)")
-            saveError = apiError.errorDescription
+            Log.ui.error("SaveFinancesLedger failed: \(APIError.from(error).logName, privacy: .public)")
+            saveError = Self.words(error)
             await loadLedger()
             return false
         }
@@ -606,10 +921,16 @@ final class FinancesViewModel {
     func openReceipt(_ name: String) async -> ReceiptCodec.Content? {
         guard canSeePlan else { return nil }
         do {
-            let url = try await api.receipt(named: name)
+            let url: String
+            if let store = openedPrivate {
+                url = try await store.receipt(named: name)
+                touchPrivate()
+            } else {
+                url = try await api.receipt(named: name)
+            }
             return await Task.detached(priority: .userInitiated) { ReceiptCodec.content(fromDataURL: url) }.value
         } catch {
-            saveError = APIError.from(error).errorDescription
+            saveError = Self.words(error)
             return nil
         }
     }
@@ -628,11 +949,11 @@ final class FinancesViewModel {
             return nil
         }
         do {
+            if let store = openedPrivate { return try await store.saveReceipt(dataURL: url) }
             return try await api.saveReceipt(dataURL: url)
         } catch {
-            let apiError = APIError.from(error)
-            Log.ui.error("SaveFinancesReceipt failed: \(apiError.logName, privacy: .public)")
-            saveError = apiError.errorDescription
+            Log.ui.error("SaveFinancesReceipt failed: \(APIError.from(error).logName, privacy: .public)")
+            saveError = Self.words(error)
             return nil
         }
     }
@@ -647,6 +968,10 @@ final class FinancesViewModel {
         guard canSeePlan, !isLoadingPlan else { return }
         isLoadingPlan = true
         defer { isLoadingPlan = false }
+        if let store = await privateNow() {
+            showPrivatePlan(store)
+            return
+        }
         do {
             let read = try await api.financesPlan()
             ownLogos = OwnLogos(read.view.plan.logos)
@@ -659,6 +984,11 @@ final class FinancesViewModel {
         } catch {
             let apiError = APIError.from(error)
             Log.ui.error("Finances failed: \(apiError.logName, privacy: .public)")
+            // Made private on another of her devices since: they open here now.
+            if Self.isPrivateRefusal(apiError), let store = await privateFound() {
+                showPrivatePlan(store)
+                return
+            }
             if OfflineFinances.showsKept(after: apiError), await showKept() { return }
             if case .forbidden = apiError {
                 plan = nil
@@ -703,6 +1033,12 @@ final class FinancesViewModel {
             let apiError = APIError.from(error)
             // The level changed on the computer since /api/me: drop what was shown.
             if case .forbidden = apiError { money = nil }
+            // Her Finances are private: the computer can't sum them up, so there's no card.
+            if Self.isPrivateRefusal(apiError) {
+                money = nil
+                self.error = nil
+                return
+            }
             Log.ui.error("Money card failed: \(apiError.logName, privacy: .public)")
             self.error = apiError.errorDescription
         }

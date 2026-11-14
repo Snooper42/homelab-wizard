@@ -13,8 +13,20 @@ struct FinancesView: View {
 
     var body: some View {
         ScrollView {
-            if let view = finances.plan {
+            if finances.privacy == .locked {
+                // A member's private Finances, locked: nothing of hers is on this device until they open.
                 VStack(spacing: 18) {
+                    PrivateLockedView(finances: finances)
+                    if let shared = finances.shared, !shared.isEmpty {
+                        HouseholdCard(shared: shared, finances: finances)
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 4)
+                .padding(.bottom, 28)
+            } else if let view = finances.plan {
+                VStack(spacing: 18) {
+                    if finances.privacy == .open { PrivateOpenBanner(finances: finances) }
                     if let asOf = finances.offlineAsOf { OfflineBanner(asOf: asOf) }
                     if view.plan.accounts.isEmpty, finances.canEdit {
                         FirstAccountCard(finances: finances)
@@ -29,6 +41,8 @@ struct FinancesView: View {
                     RecentTransactionsCard(view: view, finances: finances)
                     UpcomingBillsCard(view: view, finances: finances)
                     MoreFinancesCard(view: view, finances: finances)
+                    if finances.canMakePrivate { PrivateOfferCard(finances: finances) }
+                    if finances.privacy == .open, finances.canEdit { PrivateOffButton(finances: finances) }
                     Text(finances.offlineAsOf != nil
                          ? "Offline: these are the Finances last read on this device. Changes wait until the Homelab answers, and then the newest are read by themselves."
                          : finances.canEdit
@@ -55,6 +69,7 @@ struct FinancesView: View {
         }
         .background(Theme.canvas.ignoresSafeArea())
         .animation(.smooth(duration: 0.3), value: finances.plan == nil)
+        .animation(.smooth(duration: 0.3), value: finances.privacy)
         .overlay {
             if !finances.canSeePlan {
                 ContentUnavailableView("Finances Aren't on This Device", systemImage: "banknote",
@@ -102,6 +117,15 @@ struct FinancesView: View {
                               systemImage: finances.amountsShown ? "eye.slash" : "eye")
                     }
                     .sensoryFeedback(.selection, trigger: finances.amountsShown)
+                }
+            }
+            if finances.privacy == .open {
+                ToolbarItem(placement: .secondaryAction) {
+                    Button {
+                        finances.lockPrivate()
+                    } label: {
+                        Label("Lock My Finances", systemImage: "lock")
+                    }
                 }
             }
             if finances.canEdit {

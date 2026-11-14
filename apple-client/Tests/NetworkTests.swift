@@ -735,3 +735,119 @@ extension NetworkRuleTests {
         #expect(old.stoppedOffer(for: apps[0]) == nil && old.updateHint(for: apps[0]) != nil)
     }
 }
+
+// A member's private Finances (2E step 4c): on her own phone, the plain
+// calls aren't sent once the computer keeps hers sealed; they show locked
+// until her passphrase (or code, or Face ID) opens them, and lock again.
+// The envelope is the page's own (PrivateSealVectors.json, made up).
+extension NetworkRuleTests {
+    @MainActor
+    private func memberModel() throws -> FinancesViewModel {
+        let (api, _) = client()
+        let device = try JSONDecoder().decode(DeviceInfo.self, from: Data(#"{"id":"abc123","name":"Test","canChange":true,"finances":"edit","person":"anna","personName":"Anna"}"#.utf8))
+        let file = FileManager.default.temporaryDirectory.appendingPathComponent("private-\(UUID().uuidString).sealed")
+        return FinancesViewModel(api: api, device: { device }, authorize: { _ in true },
+                                 offline: OfflineFinances(file: file, key: { nil }),
+                                 privateKey: PrivateFinancesKey(service: "test.private-finances.\(UUID().uuidString)"))
+    }
+
+    @Test @MainActor func aMembersPrivateFinancesOpenOnlyWithWhatIsHers() async throws {
+        let url = try #require(Bundle.module.url(forResource: "PrivateSealVectors", withExtension: "json"))
+        let vectors = try JSONDecoder().decode(JSONValue.self, from: Data(contentsOf: url))
+        guard case .object(var envelope)? = vectors["byPassphrase"], case .string(let passphrase)? = vectors["passphrase"] else {
+            Issue.record("no envelope in the vectors")
+            return
+        }
+        envelope["rev"] = .string("s1")
+        let sealed = String(decoding: try JSONEncoder().encode(JSONValue.object(["result": .object(envelope)])), as: UTF8.self)
+        StubProtocol.reset { request in
+            switch request.url?.path {
+            case "/api/call/FinancesSealed": return (200, [:], Self.json(sealed), nil)
+            case "/api/call/Finances", "/api/call/FinancesLedger", "/api/call/FinancesWall":
+                return (500, [:], Self.json(#"{"error":"your Finances are private: they open on your own phone, with Face ID or your recovery code, not from the computer"}"#), nil)
+            case "/api/call/FinancesShared": return (200, [:], Self.json(#"{"result":{"currency":"USD","shares":[]}}"#), nil)
+            default: return (404, [:], Self.json(#"{"error":"not here"}"#), nil)
+            }
+        }
+        let model = try memberModel()
+        await model.loadPlan()
+        #expect(model.privacy == .locked)
+        #expect(model.plan == nil && model.planError == nil)
+        #expect(model.opensByPassphrase)
+        #expect(!model.faceIDOpens)
+
+        #expect(await model.unlockPrivate(passphrase: "not the passphrase at all", keepForFaceID: false) == false)
+        #expect(model.privateError?.contains("passphrase") == true)
+        #expect(model.privacy == .locked)
+
+        #expect(await model.unlockPrivate(passphrase: passphrase, keepForFaceID: false))
+        #expect(model.privacy == .open && model.privateError == nil)
+        if FinanceProjection.available {
+            #expect(model.plan?.plan.accounts.first?.name == "Checking")
+            #expect(model.canEdit)
+        }
+
+        model.lockPrivate()
+        #expect(model.privacy == .locked)
+        #expect(model.plan == nil && model.ledger == nil)
+
+        // The money card isn't one: the computer can't sum hers up, and says nothing about it.
+        await model.load()
+        #expect(model.money == nil && model.error == nil)
+        // Her plain Finances were never asked for: the computer keeps none.
+        #expect(!StubProtocol.requests.contains { $0.url.path == "/api/call/Finances" || $0.url.path == "/api/call/FinancesLedger" })
+    }
+
+    @Test func thePrivateRefusalIsKnown() {
+        #expect(FinancesViewModel.isPrivateRefusal(.server(status: 500, message: "your Finances are private: they open on your own phone")))
+        #expect(!FinancesViewModel.isPrivateRefusal(.server(status: 500, message: "Finances were changed on another device")))
+        #expect(!FinancesViewModel.isPrivateRefusal(.forbidden("this phone cannot see Finances")))
+        #expect(FinancesViewModel.words(PrivateFinances.Problem.changed)?.contains("another of your devices") == true)
+        #expect(FinancesViewModel.words(PrivateSeal.Problem.wrongCode)?.contains("recovery code") == true)
+    }
+}
+
+// Make Them Private… and Turn Privacy Off… from her phone: only what the
+// computer can't open is sent while they're private; turned off, her plan
+// and ledger go back to it plain, and its plain Finances are read again.
+extension NetworkRuleTests {
+    @Test @MainActor func herFinancesAreMadePrivateAndPlainAgainFromHerPhone() async throws {
+        StubProtocol.reset { request in
+            switch request.url?.path {
+            case "/api/call/FinancesSealed": return (200, [:], Self.json(#"{"result":null}"#), nil)
+            case "/api/call/Finances": return (200, [:], Self.json(Self.financesView), nil)
+            case "/api/call/FinancesLedger":
+                return (200, [:], Self.json(#"{"result":{"rev":"l1","transactions":[{"id":"t1","date":"2026-11-02","account":"chk","amount":-9.5,"payee":"Made-up Bakery"}]}}"#), nil)
+            case "/api/call/SaveFinancesSealed": return (200, [:], Self.json(#"{"result":{"rev":"s1"}}"#), nil)
+            case "/api/call/UnsealFinances": return (200, [:], Self.json(#"{"result":true}"#), nil)
+            case "/api/call/FinancesShared", "/api/call/FinancesWall": return (200, [:], Self.json(#"{"result":null}"#), nil)
+            default: return (404, [:], Self.json(#"{"error":"not here"}"#), nil)
+            }
+        }
+        let model = try memberModel()
+        await model.loadPlan()
+        await model.loadLedger()
+        #expect(model.privacy == .plain)
+        #expect(model.canMakePrivate)
+
+        #expect(await model.makePrivate(code: PrivateSeal.newCode(), passphrase: "a made-up passphrase", keepForFaceID: false))
+        #expect(model.privacy == .open)
+        let sent = try #require(StubProtocol.requests.first { $0.url.path == "/api/call/SaveFinancesSealed" })
+        let body = String(decoding: sent.body, as: UTF8.self)
+        #expect(body.hasPrefix(#"["new","#), "turned on as new")
+        for plain in ["Everyday", "Made-up Bakery", "unknownFutureField"] {
+            #expect(!body.contains(plain), "\(plain) went to the computer readable")
+        }
+        #expect(!model.canMakePrivate)
+        #expect(model.ledger?.transactions.first?.payee == "Made-up Bakery", "hers, opened on the phone")
+
+        #expect(await model.turnPrivacyOff())
+        #expect(model.privacy == .plain)
+        let off = try #require(StubProtocol.requests.first { $0.url.path == "/api/call/UnsealFinances" })
+        let args = try JSONDecoder().decode([JSONValue].self, from: off.body)
+        #expect(args.first == .string("s1"), "built on the rev it was saved at")
+        #expect(args.count == 3 && args[1]["accounts"] != nil && args[2]["transactions"] != nil)
+        #expect(args[1]["rev"] == nil, "her plan without a rev of its own")
+        #expect(model.plan?.plan.accounts.first?.name == "Everyday", "the plain Finances, read again")
+    }
+}
