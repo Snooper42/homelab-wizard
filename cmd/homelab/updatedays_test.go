@@ -50,7 +50,7 @@ func TestUpdateWindowLeavesAnAppForItsDays(t *testing.T) {
 
 	// Today is one of its days: tonight takes it.
 	homelabCmd(t, root, "", "updates", "days", "paperless", name(today))
-	if out, _ = homelabCmd(t, root, "", "update", "--all"); !strings.Contains(out, "(1 apps): paperless") || strings.Contains(out, "not today") {
+	if out, _ = homelabCmd(t, root, "", "update", "--all"); !strings.Contains(out, "This app has an update: Paperless-ngx.") || strings.Contains(out, "not today") {
 		t.Errorf("its day should take it:\n%s", out)
 	}
 	if out, _ = homelabCmd(t, root, "", "updates", "days", "paperless"); !strings.Contains(out, "only.") {

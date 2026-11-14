@@ -3741,6 +3741,7 @@
         /* @__PURE__ */ u3("p", { class: "step", "aria-live": "polite" })
       ] }),
       /* @__PURE__ */ u3("div", { id: "cliApps", "aria-live": "polite" }),
+      /* @__PURE__ */ u3("p", { id: "cliPlan", class: "jobplan", "aria-live": "polite", hidden: true }),
       /* @__PURE__ */ u3("details", { id: "cliDetails", class: "jobdetails", open: true, children: [
         /* @__PURE__ */ u3("summary", { children: "Show details" }),
         /* @__PURE__ */ u3("pre", { id: "cliLog", role: "log" })
@@ -8138,10 +8139,13 @@
     if (missed) refreshStatus();
   });
   var cliStop = null;
-  async function cliFlow(title, action, target, confirmLabel) {
+  async function cliFlow(title, action, target, confirmLabel, plain2 = false) {
     if (sheetBusy()) return;
-    const panel = $("cliPanel"), log2 = $("cliLog");
+    const panel = $("cliPanel"), log2 = $("cliLog"), plan = $("cliPlan"), details = $("cliDetails");
     log2.hidden = false;
+    plan.textContent = "";
+    plan.hidden = !plain2;
+    details.open = !plain2;
     if (cliStop) cliStop();
     panel.hidden = false;
     $("cliTitle").textContent = title;
@@ -8153,6 +8157,7 @@
         if (/^Preview only: nothing was changed/.test(line.trim())) return;
         log2.textContent += line + "\n";
         log2.scrollTop = log2.scrollHeight;
+        if (!plan.hidden && line.trim() && !/^\s*[$→✓•✗]/.test(line)) plan.textContent += line.trim() + "\n";
       });
     };
     const unlisten = () => {
@@ -8174,6 +8179,7 @@
         if (cancelled) return;
         log2.textContent = "";
         startJob("cli");
+        if (plain2) details.open = false;
         listen();
         try {
           await go().Homelab(action, target, false);
@@ -8192,6 +8198,8 @@
     cliButtons([
       { label: confirmLabel, primary: true, onClick: async () => {
         log2.textContent += "\n";
+        plan.hidden = true;
+        details.open = true;
         runInSheet(title);
         cliButtons([hideButton]);
         let failed = false;
@@ -8230,7 +8238,7 @@
   }
   $("cleanup").onclick = () => cliFlow("Remove old containers whose apps now run in the homelab", "cleanup", "", "Remove them");
   $("fixIt").onclick = () => cliFlow("Fix it", "fix", "", "Fix these");
-  $("updateAll").onclick = () => cliFlow("Update all apps now", "update-all", "", "Update them");
+  $("updateAll").onclick = () => cliFlow("Update all apps now", "update-all", "", "Update them", true);
   var menuItems = () => [...$("statusMenu").querySelectorAll("[role=menuitem]")].filter((b2) => !b2.hidden && !b2.disabled);
   function closeMenu() {
     $("statusMenu").hidden = true;

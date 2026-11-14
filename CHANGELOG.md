@@ -139,6 +139,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **Update apps says what it will do, in plain words, before you press Update:** *These 3 apps have updates: Navidrome, Vikunja, Mealie. Their data is copied first, so each update can be undone: Mealie.*, by the apps' names. The command and anything a terminal says stay folded under Show details until it runs (and `homelab update --all` says the same).
 - **Settings › Phones is simpler to pair with:** **Pair a phone** and **Pair a wall screen** are two buttons, each with its own QR code: a TV's has what makes it a wall screen in it already, so no link is edited by hand. The pairing says which link the QR code holds, and the home Wi-Fi link sits under *If the phone can't open it*, saying a phone paired with it only looks. Every phone's row has the same controls in the same places (what it may do, Finances, for how long, Remove), with no warning mark nothing explained, and the words are plain (no tailnet, key or kiosk).
 - **Read now in Investments no longer asks you to match an empty Ghostfolio account:** Ghostfolio's own *My Account*, made when you sign up, with nothing in it, isn't listed under *In Ghostfolio but matched to no account here*. One that holds something still is.
 - **Tidy Up's own trash on a USB drive empties itself:** on a drive with no Recycle Bin (a USB drive, an SD card, a network share), what Tidy Up set aside in its hidden `.tidy-trash` folder goes for good after 30 days, once Undo can no longer put it back.

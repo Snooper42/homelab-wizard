@@ -343,7 +343,8 @@ try { if ((window.__MOCK || {}).tidyTab) localStorage.setItem('homelab.tidyTab',
       emit('cli:log', `$ homelab ${action}`);
       const steps = apply ? M.cliSteps?.[action] || [] : [];
       for (const [i, text] of steps.entries()) { await later(null, 80); emit('cli:step', { n: i + 1, total: steps.length, text }); }
-      for (const line of M.cliLog[action] || ['Nothing to do.']) { await later(null, 80); emit('cli:log', line.replace('%s', target)); }
+      // A preview says what the command would do (cliPreview, as the computer words it), the run what it did.
+      for (const line of (!apply && M.cliPreview?.[action]) || M.cliLog[action] || ['Nothing to do.']) { await later(null, 80); emit('cli:log', line.replace('%s', target)); }
       if (apply && M.jobApps?.[action]) await this.playApps(M.jobApps[action]);
       // homelabDelay: a long command (ms more once applied), to hide it while it runs.
       if (apply && M.homelabDelay) await later(null, M.homelabDelay);

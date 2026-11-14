@@ -301,6 +301,28 @@ func (h *homelab) beforeUpdate(ctx context.Context, client *docker.Client, apps 
 	return nil
 }
 
+// copiedFirst is, by name, which of the apps (ids) have a database the
+// update dumps first (beforeUpdate), for its plan to say; none when Docker
+// can't be asked.
+func (h *homelab) copiedFirst(ctx context.Context, ids []string) []string {
+	client, err := h.docker(ctx)
+	if err != nil {
+		return nil
+	}
+	containers, err := client.Containers(ctx)
+	if err != nil {
+		return nil
+	}
+	report := detect.Analyze(h.catalog, containers)
+	var out []string
+	for _, id := range ids {
+		if a, ok := h.catalog.Get(id); ok && len(h.dumpsFor(report, []*catalog.App{a})) > 0 {
+			out = append(out, a.Name())
+		}
+	}
+	return out
+}
+
 // dumpsFor is which databases to dump before changing apps: each running
 // app's own and those of the databases it uses, once each.
 func (h *homelab) dumpsFor(report *detect.Report, apps []*catalog.App) []string {

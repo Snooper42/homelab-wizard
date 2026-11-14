@@ -13,6 +13,7 @@ function CommandSheet({ onClose }: { onClose: () => void }) {
       <h2 id="cliTitle" aria-live="polite"></h2>
       <div id="cliProgress" class="progress" hidden><div class="track"><span class="fill"></span></div><p class="step" aria-live="polite"></p></div>
       <div id="cliApps" aria-live="polite"></div>
+      <p id="cliPlan" class="jobplan" aria-live="polite" hidden></p>
       <details id="cliDetails" class="jobdetails" open><summary>Show details</summary><pre id="cliLog" role="log"></pre></details>
       <div id="cliActions" class="actions"></div>
     </Sheet>
