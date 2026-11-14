@@ -1120,9 +1120,14 @@ private struct FinanceSpendingPage: View {
                         .contentTransition(.numericText())
                     if let before, before > 0, finances.amountsShown, !finances.amountsHiddenByPlan {
                         let change = total - before
-                        Text(verbatim: "\(change > 0 ? "+" : "−")\(amountText(abs(change), view.plan.currency, finances, whole: true))")
+                        // Against what: the month before, in the words the month's review uses ("+$1,021 on Sep"),
+                        // not a bare red number (apple-loop.md item 1).
+                        let last = Calendar.current.date(byAdding: .month, value: -1, to: month) ?? month
+                        Text(verbatim: "\(change > 0 ? "+" : "−")\(amountText(abs(change), view.plan.currency, finances, whole: true)) on \(last.formatted(.dateTime.month(.abbreviated)))")
                             .font(.caption2.weight(.semibold))
                             .foregroundStyle(change > 0 ? Theme.danger : Theme.success)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
                     }
                 }
                 .padding(.horizontal, 22)

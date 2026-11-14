@@ -89,6 +89,8 @@ The owner, Nov 14: "I want to iterate the shit out of the iphone and ipad app." 
    - *An app's page:* the bar still says **Status**, with Status's **Apps** search field above the app. **This one is the picture, not the app:** the `app` shot laid the page over Status's list instead of opening it. Fixed with the ClockWords PR (the shot now pushes the page as a tap does). Check the new picture has the app's own title.
    - *Finances home:* the same problem as the web's task 15 item 2. The big card is checking **now**; *After Alex's paycheck* comes next; **Left to spend**, the number people want, is below the fold. Put what's left first, in words (*Left until …*), as the web does once item 2 lands.
    - *Transactions:* a transfer's second line is cut off (*Chase Checking →…*). **Written with the ClockWords PR** (`TransferWords`: *From Chase Checking* under *Roth IRA*).
+   - *Spending:* the ring's red **+$1,021** said nothing about what it's compared to. **Written:** *+$1,021 on Sep*, the month review's own words.
+   - *Status:* each folded group's **⋯ All of These** reads vaguely for a menu of actions on the whole group. Look at it in the full set: *Start All*, *Restart All*, or the group's name (*All of Network*)?
    - *Backups, dark:* **measured Nov 14:** **Back Up Now** is white on violet `(140,123,255)`, 3.3:1; **Test a Restore** is violet on `(57,51,93)`, 3.7:1. Both pass 3:1 for large bold text, not the README's 4.5:1. The fix is the dark accent (`Theme.swift`), which every button shares. Look at every dark picture before changing it, and check each colour pair again after.
 
 **2. The missing Finances pieces** (`docs/Parity.md` gap 5). Each is its own PR, with a failing test first. Mock it first only where it's a new screen. In this order:
