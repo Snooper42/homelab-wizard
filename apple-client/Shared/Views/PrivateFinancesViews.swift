@@ -32,6 +32,9 @@ struct PrivateLockedView: View {
                 .font(.subheadline)
                 .foregroundStyle(Theme.secondaryInk)
                 .fixedSize(horizontal: false, vertical: true)
+            if let away = finances.privateAwaySince {
+                PrivateAwayLine(since: away, waiting: finances.privateWaiting)
+            }
 
             if finances.faceIDOpens {
                 Button {
@@ -135,6 +138,24 @@ struct PrivateOpenBanner: View {
     let finances: FinancesViewModel
 
     var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            line
+            if let away = finances.privateAwaySince {
+                PrivateAwayLine(since: away, waiting: finances.privateWaiting)
+            }
+            if let notice = finances.privateNotice {
+                Text(verbatim: notice)
+                    .font(.footnote)
+                    .foregroundStyle(Theme.warning)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.surface, in: RoundedRectangle(cornerRadius: Theme.cardRadius, style: .continuous))
+    }
+
+    private var line: some View {
         HStack(alignment: .firstTextBaseline, spacing: 10) {
             Image(systemName: "lock.open.fill")
                 .foregroundStyle(Theme.accent)
@@ -147,9 +168,36 @@ struct PrivateOpenBanner: View {
             Button("Lock") { finances.lockPrivate() }
                 .font(.subheadline.weight(.semibold))
         }
-        .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.surface, in: RoundedRectangle(cornerRadius: Theme.cardRadius, style: .continuous))
+    }
+}
+
+/// Her private Finances while the Homelab doesn't answer: from when, and what waits.
+struct PrivateAwayLine: View {
+    let since: Date
+    let waiting: Int
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+            Image(systemName: "wifi.slash")
+                .foregroundStyle(Theme.secondaryInk)
+                .accessibilityHidden(true)
+            Text(verbatim: Self.words(since: since, waiting: waiting))
+                .font(.footnote)
+                .foregroundStyle(Theme.secondaryInk)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    /// "Offline: as of today, 9:40 AM. 2 changes wait for the Homelab."
+    nonisolated static func words(since: Date, waiting: Int, now: Date = Date(), calendar: Calendar = .current, locale: Locale = .current) -> String {
+        let asOf = OfflineFinances.asOf(since, now: now, calendar: calendar, locale: locale)
+        let first = "Offline: " + asOf.prefix(1).lowercased() + String(asOf.dropFirst()) + "."
+        switch waiting {
+        case 0: return first + " Changes made now wait here, locked, and go when the Homelab answers."
+        case 1: return first + " 1 change waits for the Homelab."
+        default: return first + " \(waiting) changes wait for the Homelab."
+        }
     }
 }
 

@@ -2874,7 +2874,14 @@ const smokes = [
     await page.waitForSelector('#finPrivateOpen :text("1 change waits for the homelab")', { timeout: 3000 });
     if ((await page.evaluate(() => window.__MOCK.sealedRev)) !== before) throw new Error('saved while away?');
     const kept = await keptInPage(page);
-    if (!/"pending"/.test(kept.sealed) || /cushion|777|Made-up/.test(kept.sealed.replace(/"[A-Za-z0-9+/=]{40,}"/g, '""'))) throw new Error('the waiting change is not kept sealed: ' + kept.sealed.slice(0, 200));
+    // What's readable in it: its keys, numbers and plain strings, not what's sealed (base64) nor when it was read
+    // (a time ending .777 matched "777" by chance, Nov 13 on #686).
+    const readable = (json) => { const out = []; const walk = (v) => {
+      if (typeof v === 'string') { if (!/^[A-Za-z0-9+/=]+$/.test(v) && !/^\d{4}-\d\d-\d\dT[\d:.]+Z$/.test(v)) out.push(v); }
+      else if (typeof v === 'number') out.push(String(v));
+      else if (v && typeof v === 'object') for (const [k, x] of Object.entries(v)) { out.push(k); walk(x); }
+    }; walk(JSON.parse(json)); return out.join(' '); };
+    if (!/"pending"/.test(kept.sealed) || /cushion|777|Made-up/.test(readable(kept.sealed))) throw new Error('the waiting change is not kept sealed: ' + readable(kept.sealed).slice(0, 300));
     // Home again: sent by itself, and the line goes.
     await page.evaluate(() => { window.__MOCK.away = false; window.dispatchEvent(new Event('online')); });
     await page.waitForFunction((b) => window.__MOCK.sealedRev !== b, before, { timeout: 5000 });

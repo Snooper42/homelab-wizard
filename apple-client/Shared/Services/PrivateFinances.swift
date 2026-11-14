@@ -34,7 +34,7 @@ final class PrivateFinances {
     enum State: Equatable, Sendable { case unknown, plain, locked, open }
 
     enum Problem: Error, Equatable, LocalizedError {
-        case locked, notAllowed, changed, notACode, noProjection, unreadable
+        case locked, notAllowed, changed, notACode, noProjection, unreadable, changedAway, receiptAway, offAway
 
         var errorDescription: String? {
             switch self {
@@ -44,6 +44,9 @@ final class PrivateFinances {
             case .notACode: "A recovery code is 16 words from the list it was shown with. Check each word and try again."
             case .noProjection: "This copy of the Homelab app can’t open private Finances: update it, then try again."
             case .unreadable: "Your private Finances opened, but couldn’t be read. Nothing was changed."
+            case .changedAway: "While you were away, your Finances were changed on another of your devices, so the change made here wasn’t kept. The latest is shown now: make it again."
+            case .receiptAway: "A receipt waits until the Homelab answers: add it again when you’re home."
+            case .offAway: "Privacy can be turned off once the Homelab answers and what you changed away is saved."
             }
         }
     }
@@ -61,12 +64,90 @@ final class PrivateFinances {
     @ObservationIgnored private var plan: JSONValue = .object([:])
     @ObservationIgnored private var ledger: JSONValue = .object([:])
 
-    init(username: String, mayChange: Bool, calls: any PrivateFinancesCalls,
+    // Offline (2E step 6): her envelope kept sealed on this phone, and a change made away.
+    @ObservationIgnored private let offline: PrivateOffline?
+    @ObservationIgnored private var kept: PrivateOffline.Kept?
+    @ObservationIgnored private var keptRead = false
+    /// When the copy shown was last read, while the Homelab doesn't answer; nil while it does.
+    private(set) var awaySince: Date?
+    /// How many changes made away wait to be sent.
+    private(set) var waiting = 0
+    /// A plain line about what happened away (another device's change), until the next save.
+    private(set) var notice: String?
+
+    init(username: String, mayChange: Bool, calls: any PrivateFinancesCalls, offline: PrivateOffline? = nil,
          today: @escaping @MainActor () -> String = { FinancePlanEdit.todayString() }) {
         self.username = username
         self.mayChange = mayChange
         self.calls = calls
+        self.offline = offline
         self.today = today
+    }
+
+    /// A call the Homelab didn't answer (not here, or not answering), never a refusal.
+    nonisolated static func isAway(_ error: Error) -> Bool { APIError.from(error).unreachable }
+
+    /// What's kept on this device for her; another member's (the phone given to someone else) goes.
+    private func keptCopy() -> PrivateOffline.Kept? {
+        if !keptRead {
+            keptRead = true
+            kept = offline?.load()
+        }
+        if let k = kept, k.username != username {
+            forgetKept()
+        }
+        waiting = kept?.pending?.count ?? 0
+        return kept
+    }
+
+    /// Keeps e as the last read from the computer, with what still waits.
+    private func remember(_ e: PrivateSeal.Envelope) {
+        guard let offline else { return }
+        let k = PrivateOffline.Kept(username: username, at: Date(), envelope: e, pending: keptCopy()?.pending)
+        kept = k
+        offline.keep(k)
+    }
+
+    private func forgetKept() {
+        kept = nil
+        keptRead = true
+        waiting = 0
+        awaySince = nil
+        offline?.forget()
+    }
+
+    /// The computer answered with her newest envelope: what waits here goes
+    /// first (refused when another of her devices saved meanwhile, said
+    /// plainly), then what's shown is the newest.
+    private func arrived(_ read: PrivateSeal.Envelope) async throws {
+        var latest = read
+        if let p = keptCopy()?.pending {
+            do {
+                var sent = p.envelope
+                sent.rev = try await calls.saveFinancesSealed(was: p.was, p.envelope)
+                latest = sent
+            } catch let error where Self.isAway(error) {
+                return // read, but not saved: it still waits
+            } catch let error where Self.changedElsewhere(error) {
+                notice = Problem.changedAway.errorDescription
+            }
+            kept?.pending = nil
+            waiting = 0
+        }
+        awaySince = nil
+        if state == .open, let key, latest.rev != envelope?.rev || notice != nil {
+            try take(latest, key: key)
+        }
+        envelope = latest
+        remember(latest)
+    }
+
+    /// The Homelab may answer again: what waits is sent and the newest read.
+    /// Nothing happens while it still doesn't answer.
+    func comeHome() async {
+        guard awaySince != nil || waiting > 0 else { return }
+        guard let latest = try? await calls.financesSealed() else { return }
+        try? await arrived(latest)
     }
 
     /// Whether her envelope opens by a passkey (else by a passphrase), besides the code.
@@ -78,17 +159,25 @@ final class PrivateFinances {
     /// open, read again when another of her devices saved since.
     @discardableResult
     func find() async throws -> State {
-        let latest = try await calls.financesSealed()
+        let latest: PrivateSeal.Envelope?
+        do {
+            latest = try await calls.financesSealed()
+        } catch let error where Self.isAway(error) {
+            // Away: the copy kept here, if there is one.
+            guard let k = keptCopy() else { throw error }
+            if state != .open { envelope = k.newest }
+            awaySince = k.at
+            if state != .open { state = .locked }
+            return state
+        }
         guard let latest else {
             forget()
+            forgetKept()
             state = .plain
             return state
         }
-        if state == .open, let key, latest.rev != envelope?.rev {
-            try take(latest, key: key)
-        }
-        envelope = latest
         if state != .open { state = .locked }
+        try await arrived(latest)
         return state
     }
 
@@ -149,14 +238,31 @@ final class PrivateFinances {
     /// The key, unwrapped: the newest envelope read and opened with it.
     private func opened(_ raw: Data) async throws {
         let k = SymmetricKey(data: raw)
-        let latest = try await calls.financesSealed()
+        let latest: PrivateSeal.Envelope?
+        do {
+            latest = try await calls.financesSealed()
+        } catch let error where Self.isAway(error) {
+            // Away: opened from the copy kept here (Face ID or the code needs no connection).
+            guard let kc = keptCopy() else { throw error }
+            try take(kc.newest, key: k)
+            awaySince = kc.at
+            state = .open
+            return
+        }
         guard let latest else {
             forget()
+            forgetKept()
             state = .plain
             return
         }
-        try take(latest, key: k)
+        // What waits here opens first, then goes.
+        if let waits = keptCopy(), waits.pending != nil {
+            try take(waits.newest, key: k)
+        } else {
+            try take(latest, key: k)
+        }
         state = .open
+        try await arrived(latest)
     }
 
     /// e opened with k: her plan and ledger, held while open.
@@ -217,7 +323,12 @@ final class PrivateFinances {
     func saveReceipt(dataURL: String) async throws -> String {
         guard state == .open, let key else { throw Problem.locked }
         guard mayChange else { throw Problem.notAllowed }
-        return try await calls.saveFinancesSealedReceipt(try PrivateSeal.sealText(dataURL, key: key, username: username))
+        guard awaySince == nil else { throw Problem.receiptAway }
+        do {
+            return try await calls.saveFinancesSealedReceipt(try PrivateSeal.sealText(dataURL, key: key, username: username))
+        } catch let error where Self.isAway(error) {
+            throw Problem.receiptAway
+        }
     }
 
     /// A kept receipt, opened: its data URL.
@@ -235,13 +346,33 @@ final class PrivateFinances {
         guard mayChange else { throw Problem.notAllowed }
         let plain = try JSONEncoder().encode(JSONValue.object(["plan": next, "ledger": nextLedger]))
         var sealed = try PrivateSeal.reseal(envelope, key: key, username: username, plain: plain)
+        // While a change waits, the next builds on what it built on.
+        let base = keptCopy()?.pending?.was ?? envelope.rev ?? ""
+        notice = nil
         do {
-            sealed.rev = try await calls.saveFinancesSealed(was: envelope.rev ?? "", sealed)
+            if awaySince != nil { throw APIError.transport(.notConnectedToInternet) }
+            sealed.rev = try await calls.saveFinancesSealed(was: base, sealed)
+        } catch let error where Self.isAway(error) && offline != nil {
+            // Kept here, sealed, until the Homelab answers (comeHome).
+            var k = keptCopy() ?? PrivateOffline.Kept(username: username, at: Date(), envelope: envelope, pending: nil)
+            k.pending = PrivateOffline.Pending(was: base, envelope: sealed, count: (k.pending?.count ?? 0) + 1)
+            kept = k
+            offline?.keep(k)
+            waiting = k.pending?.count ?? 0
+            if awaySince == nil { awaySince = k.at }
+            sealed.rev = base
+            self.envelope = sealed
+            plan = next
+            ledger = nextLedger
+            return
         } catch {
             guard Self.changedElsewhere(error) else { throw error }
             if let latest = try await calls.financesSealed(), let key = self.key { try take(latest, key: key) }
             throw Problem.changed
         }
+        if kept?.pending != nil { kept?.pending = nil }
+        waiting = 0
+        remember(sealed)
         guard self.key != nil else { return } // locked while it saved: kept, but nothing held
         self.envelope = sealed
         plan = next
@@ -292,6 +423,7 @@ final class PrivateFinances {
             }
         }
         sealed.rev = try await calls.saveFinancesSealed(was: "new", sealed)
+        remember(sealed)
         envelope = sealed
         key = k
         plan = p
@@ -307,6 +439,7 @@ final class PrivateFinances {
     func turnOff() async throws -> [String: String] {
         guard state == .open, let key, let envelope else { throw Problem.locked }
         guard mayChange else { throw Problem.notAllowed }
+        guard awaySince == nil, waiting == 0 else { throw Problem.offAway }
         var pictures: [String: String] = [:]
         var bare = ledger
         if case .object(var o) = ledger, case .array(let ts)? = o["transactions"] {
@@ -325,6 +458,7 @@ final class PrivateFinances {
         }
         try await calls.unsealFinances(was: envelope.rev ?? "", plan: plan, ledger: bare)
         forget()
+        forgetKept()
         state = .plain
         return pictures
     }

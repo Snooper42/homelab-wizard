@@ -208,7 +208,10 @@ final class AppCoordinator {
             guard route == .unlocked else { return }
             device = me
             // Finances taken from this device on the computer: what was kept for offline goes too.
-            if FinancesLevel(me.finances) < .view { OfflineFinances.onThisDevice.forget() }
+            if FinancesLevel(me.finances) < .view {
+                OfflineFinances.onThisDevice.forget()
+                PrivateOffline.onThisDevice.forget()
+            }
         } catch {
             let apiError = APIError.from(error)
             if apiError == .unauthorized { handleUnauthorized() }
@@ -264,6 +267,7 @@ final class AppCoordinator {
         liveEvents.clear()
         // The Finances kept for offline go with the pairing (and their key, with the credential).
         OfflineFinances.onThisDevice.forget()
+        PrivateOffline.onThisDevice.forget()
         do {
             try keychain.deleteCredential()
         } catch {
