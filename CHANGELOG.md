@@ -142,6 +142,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **Finances away from home in the Homelab app are today's:** with no signal, or the Homelab not answering, the iPhone and iPad work out what's due, what's left and each pay period from today, with the computer's own Finances code, instead of showing them as they were when last read.
 - **The iPad's screens show their titles:** in the Homelab app on an iPad, the line that says what needs a look sits under Backups, Finances, Setup and Settings instead of in the place of their titles.
 - **Status's groups in the Homelab app keep their names whole:** in the iPad's list, or at the largest text, the menu beside a group's name shows only **⋯** when its words don't fit, instead of breaking the name (*Docu-ments*).
 - **The Homelab app's buttons read clearly in dark mode:** filled buttons (Back Up Now, Start, Unlock) keep the app's violet under their white words, and the lighter violet of links and bordered buttons (Test a Restore) is brighter, so each reads at 4.5:1 or more; light mode is unchanged.

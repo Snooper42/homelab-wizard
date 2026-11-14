@@ -3875,7 +3875,9 @@ struct OfflineBanner: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(verbatim: OfflineFinances.asOf(asOf))
                     .font(.subheadline.weight(.semibold))
-                Text("The Homelab isn't answering, so these are the last Finances read on this device. Nothing can be changed until it answers again.")
+                Text(FinanceProjection.available
+                     ? "The Homelab isn't answering, so this device works out today's Finances from the last ones it read. Nothing can be changed until it answers again."
+                     : "The Homelab isn't answering, so these are the last Finances read on this device. Nothing can be changed until it answers again.")
                     .font(.footnote)
                     .foregroundStyle(Theme.secondaryInk)
             }

@@ -120,11 +120,20 @@ final class FinancesViewModel {
         }
     }
 
-    /// Shows the kept Finances in place of the live ones, to look at only.
+    /// Shows the kept Finances in place of the live ones, to look at only:
+    /// worked out from today on this phone (`HouseholdOffline`), so what's
+    /// due and what's left are today's, or as they were kept in a build
+    /// without the computer's Finances code.
     private func showKept() async -> Bool {
         guard let kept = await readKept() else { return false }
         ownLogos = OwnLogos(kept.plan.view.plan.logos)
         plan = kept.plan.view
+        let (rawPlan, rawLedger, readOnly) = (kept.plan.rawPlan, kept.ledger?.raw, kept.plan.view.readOnly)
+        let day = FinancePlanEdit.todayString()
+        let worked = await Task.detached(priority: .userInitiated) {
+            try? HouseholdOffline.project(rawPlan: rawPlan, rawLedger: rawLedger, today: day, readOnly: readOnly)
+        }.value
+        if let worked { plan = worked.view }
         rawPlan = nil
         planError = nil
         if ledger == nil, let kept = kept.ledger {
