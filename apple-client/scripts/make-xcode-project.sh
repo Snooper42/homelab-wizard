@@ -68,8 +68,7 @@ IOS_WIDGET_DEP="" IOS_GROUP_INFO="" IOS_GROUP_ENT="" WIDGET_TARGETS=""
 if [ -n "${HOMELAB_WIDGET:-}" ]; then
   # iPhone's App Groups start with "group.".
   IOS_GROUP="group.$PREFIX.HomelabClient"
-  IOS_WIDGET_DEP="    dependencies:
-      - target: HomelabWidget-iOS"
+  IOS_WIDGET_DEP="      - target: HomelabWidget-iOS"
   IOS_GROUP_INFO="        HomelabAppGroup: \"$IOS_GROUP\""
   IOS_GROUP_ENT="        com.apple.security.application-groups:
           - \"$IOS_GROUP\""
@@ -100,6 +99,39 @@ $IOS_GROUP_ENT"
 fi
 
 mkdir -p "$OUT"
+
+# The computer's own Finances code for the phone (mobile/finance, built with
+# gomobile by `make phone-finance-framework`): a household member's private
+# Finances open with it, read forward on her phone. Made here when Go is on
+# this Mac and that code changed since; without it the app is made all the
+# same, and says so where they'd open. HOMELAB_FINANCE_XCFRAMEWORK names one
+# already made (and builds nothing).
+ROOT="$(cd "$HERE/.." && pwd)"
+FINANCE="${HOMELAB_FINANCE_XCFRAMEWORK:-$HERE/Frameworks/HomelabFinance.xcframework}"
+if [ -z "${HOMELAB_FINANCE_XCFRAMEWORK:-}" ] && command -v go >/dev/null 2>&1; then
+  if [ ! -d "$FINANCE" ] || [ -n "$(find "$ROOT/mobile" "$ROOT/internal/finance" -name '*.go' -newer "$FINANCE" 2>/dev/null | head -1)" ]; then
+    echo "Building the Finances code for the phone (a minute or two the first time)…"
+    v="$(sed -n 's/^MOBILE_VERSION := //p' "$ROOT/Makefile")"
+    if ! { go install "golang.org/x/mobile/cmd/gomobile@$v" "golang.org/x/mobile/cmd/gobind@$v" \
+           && PATH="$(go env GOPATH)/bin:$PATH" make -C "$ROOT" phone-finance-framework; } >"$OUT/finance-build.log" 2>&1; then
+      echo "The Finances code for the phone didn't build (its log: $OUT/finance-build.log), so the app is made without it." >&2
+    fi
+  fi
+fi
+FINANCE_DEP=""
+if [ -d "$FINANCE" ]; then
+  FINANCE_DEP="      - framework: \"$FINANCE\"
+        embed: false"
+else
+  echo "Without Go on this Mac (go.dev/dl), a household member's private Finances can't open in this build of the app. Install it and run this again."
+fi
+DEPENDENCIES=""
+if [ -n "$IOS_WIDGET_DEP$FINANCE_DEP" ]; then
+  DEPENDENCIES="    dependencies:
+$IOS_WIDGET_DEP
+$FINANCE_DEP"
+fi
+
 cat > "$OUT/project.yml" <<YAML
 name: HomelabClient
 options:
@@ -127,7 +159,7 @@ targets:
       - path: "$SHARED"
     scheme:
       gatherCoverageData: false
-$IOS_WIDGET_DEP
+$DEPENDENCIES
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: $PREFIX.HomelabClient

@@ -50,6 +50,8 @@ stub scutil 'echo "Test Mac"'
 stub pbcopy 'cat >"$CALLS.clipboard"'
 stub security 'exit 1'
 stub xcodegen 'mkdir -p HomelabClient.xcodeproj'
+# go: there, but nothing it's asked builds (no network here); the project is made without the Finances code.
+stub go 'echo "go $*" >>"$CALLS"; exit 1'
 # xcodebuild: makes the app where the scheme's build puts it.
 stub xcodebuild 'echo "xcodebuild $*" >>"$CALLS"
 [ -n "${FAKE_BUILD_FAIL:-}" ] && { echo "Foo.swift:1:1: error: cannot find x in scope"; exit 65; }
@@ -106,6 +108,13 @@ expect "the widget project is valid YAML" yaml_ok
 run env HOMELAB_NO_OPEN=1 HOMELAB_SIGNED=1 "$HERE/make-xcode-project.sh" com.example ABCDE12345
 expect "HOMELAB_SIGNED=1: push, the signed code, and the widget" bash -c '[ "$0" = 0 ] && grep -q "aps-environment: development" "$1" && grep -q "HOMELAB_SIGNED" "$1" && grep -q "HomelabWidget-iOS:" "$1"' "$RC" "$yml"
 expect "the signed project is valid YAML" yaml_ok
+run env HOMELAB_NO_OPEN=1 "$HERE/make-xcode-project.sh" com.example ABCDE12345
+expect "Go that builds nothing: the project all the same, without the Finances code, and says so" bash -c '[ "$0" = 0 ] && grep -q "gomobile" "$2" && ! grep -q "HomelabFinance.xcframework" "$1"' "$RC" "$yml" "$CALLS"
+expect "it says private Finances need Go" says "private Finances can't open in this build"
+mkdir -p "$WORK/HomelabFinance.xcframework"
+run env HOMELAB_NO_OPEN=1 HOMELAB_FINANCE_XCFRAMEWORK="$WORK/HomelabFinance.xcframework" HOMELAB_WIDGET=1 "$HERE/make-xcode-project.sh" com.example ABCDE12345
+expect "the Finances code made: linked, not embedded, beside the widget" bash -c '[ "$0" = 0 ] && grep -q "framework: \"$2\"" "$1" && grep -q "embed: false" "$1" && grep -q "target: HomelabWidget-iOS" "$1" && [ "$(grep -c "dependencies:" "$1")" = 1 ]' "$RC" "$yml" "$WORK/HomelabFinance.xcframework"
+expect "the project with the Finances code is valid YAML" yaml_ok
 
 echo "phones.sh"
 run "$HERE/phones.sh"

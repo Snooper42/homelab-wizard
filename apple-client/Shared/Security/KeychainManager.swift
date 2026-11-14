@@ -104,6 +104,8 @@ struct KeychainManager: Sendable {
         try delete(account: awayAccount)
         // The key the offline Finances are sealed with: without it, a copy left behind opens nothing.
         try delete(account: OfflineFinances.keyAccount)
+        // A member's private Finances' key, kept behind Face ID (PrivateFinancesKey).
+        try delete(account: PrivateFinancesKey.account)
         Log.security.notice("Deleted the device credential from the Keychain")
     }
 
