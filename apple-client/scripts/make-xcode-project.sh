@@ -107,7 +107,8 @@ mkdir -p "$OUT"
 # same, and says so where they'd open. HOMELAB_FINANCE_XCFRAMEWORK names one
 # already made (and builds nothing).
 ROOT="$(cd "$HERE/.." && pwd)"
-FINANCE="${HOMELAB_FINANCE_XCFRAMEWORK:-$HERE/Frameworks/HomelabFinance.xcframework}"
+# (HOMELAB_FINANCE_HOME: the folder it is looked for in, for the script checks.)
+FINANCE="${HOMELAB_FINANCE_XCFRAMEWORK:-${HOMELAB_FINANCE_HOME:-$HERE/Frameworks}/HomelabFinance.xcframework}"
 if [ -z "${HOMELAB_FINANCE_XCFRAMEWORK:-}" ] && command -v go >/dev/null 2>&1; then
   if [ ! -d "$FINANCE" ] || [ -n "$(find "$ROOT/mobile" "$ROOT/internal/finance" -name '*.go' -newer "$FINANCE" 2>/dev/null | head -1)" ]; then
     echo "Building the Finances code for the phone (a minute or two the first time)…"

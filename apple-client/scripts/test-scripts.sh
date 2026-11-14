@@ -76,7 +76,8 @@ echo "xcrun $*" >>"$CALLS"'
 
 run() { # run <name> <command...>: output in $OUT, exit code in $RC
   : >"$CALLS"
-  OUT="$(HOME="$WORK/home" HOMELAB_ROOT="$HL" HOMELAB_XCODE_DIR="$WORK/xcode" PATH="$BIN:$PATH" "$@" 2>&1)"
+  # HOMELAB_FINANCE_HOME: not this checkout's Frameworks/, which CI's Mac job has built the Finances code into.
+  OUT="$(HOME="$WORK/home" HOMELAB_ROOT="$HL" HOMELAB_XCODE_DIR="$WORK/xcode" HOMELAB_FINANCE_HOME="$WORK/frameworks" PATH="$BIN:$PATH" "$@" 2>&1)"
   RC=$?
 }
 expect() { # expect <what> <condition...>
