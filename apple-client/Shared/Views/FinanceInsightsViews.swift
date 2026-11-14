@@ -467,7 +467,7 @@ struct RecurringCalendarCard: View {
                     .frame(width: 30, height: 30)
                     .background {
                         if selected {
-                            Circle().fill(Theme.accent)
+                            Circle().fill(Theme.accentFill)
                         } else if isToday {
                             Circle().strokeBorder(Theme.accent, lineWidth: 1.5)
                         }

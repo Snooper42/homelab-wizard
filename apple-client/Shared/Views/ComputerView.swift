@@ -519,6 +519,7 @@ struct TaskOutputView: View {
                             Text("Fix These").fontWeight(.semibold).frame(maxWidth: .infinity)
                         }
                         .buttonStyle(.borderedProminent)
+                        .tint(Theme.accentFill)
                         .controlSize(.large)
                         .disabled(tasks.running != nil)
                         Text("Nothing has changed yet.")

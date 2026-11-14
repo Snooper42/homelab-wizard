@@ -52,6 +52,7 @@ struct FinanceCollectionPage: View {
                             if finances.canEdit {
                                 Button("Add a Card") { adding = true }
                                     .buttonStyle(.borderedProminent)
+                                    .tint(Theme.accentFill)
                             }
                         }
                     }

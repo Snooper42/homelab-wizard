@@ -128,6 +128,7 @@ struct HeroButtons: View {
             if let action = actions.available(for: app).first(where: \.isEveryday) {
                 Button(action.title) { actions.request(action, on: app) }
                     .buttonStyle(.borderedProminent)
+                    .tint(Theme.accentFill)
                     .disabled(actions.isBusy)
             }
             if app.hasLogs {

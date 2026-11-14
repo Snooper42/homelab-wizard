@@ -23,7 +23,7 @@ struct PrivateLockedView: View {
                 .font(.title2)
                 .foregroundStyle(.white)
                 .frame(width: 48, height: 48)
-                .background(Theme.accent, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .background(Theme.accentFill, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                 .accessibilityHidden(true)
             Text("Your Finances are private")
                 .font(.title3.weight(.bold))
@@ -46,6 +46,7 @@ struct PrivateLockedView: View {
                         .padding(.vertical, 6)
                 }
                 .buttonStyle(.borderedProminent)
+                .tint(Theme.accentFill)
                 .buttonBorderShape(.capsule)
                 .disabled(finances.isUnlocking)
             }
