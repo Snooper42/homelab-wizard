@@ -1,0 +1,106 @@
+# The docs website: python3 tools/site/assemble.py, then
+# mkdocs build -f tools/site/mkdocs.yml (or serve, to browse it on this machine).
+# The pages are the repository's own Markdown (assemble.py says what it changes);
+# .github/workflows/docs-site.yml builds it for each change to main and puts it
+# on the gh-pages branch, which GitHub Pages serves.
+site_name: Homelab Wizard
+site_description: Your household's photos, passwords, documents, money, music, and books, on a computer you own.
+site_url: https://snooper42.github.io/homelab-wizard/
+repo_url: https://github.com/Snooper42/homelab-wizard
+repo_name: Snooper42/homelab-wizard
+edit_uri: blob/main/
+docs_dir: ../../build/site-src
+site_dir: ../../build/site
+strict: false
+
+theme:
+  name: material
+  logo: assets/logo.svg
+  favicon: assets/logo.svg
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: white
+      accent: blue
+      toggle:
+        icon: material/weather-night
+        name: Dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: black
+      accent: blue
+      toggle:
+        icon: material/weather-sunny
+        name: Light mode
+  features:
+    - navigation.sections
+    - navigation.top
+    - navigation.footer
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+
+nav:
+  - Home: index.md
+  - Start here:
+      - A tour of the app: docs/Tour.md
+      - Getting Started: docs/Getting Started.md
+      - Everyday tasks: docs/Everyday Tasks.md
+      - Testing a new build: docs/Testing.md
+      - Upgrading: docs/Upgrading.md
+      - Commands: docs/Commands.md
+  - Run it:
+      - Runbooks: docs/Runbooks.md
+      - Automation: docs/Automation.md
+      - Monitoring: docs/Monitoring.md
+      - Backups: docs/Backups.md
+      - Tidy Up: docs/Tidy Up.md
+      - Disaster Recovery: docs/Disaster Recovery.md
+      - Troubleshooting: docs/Troubleshooting.md
+      - Known Issues: docs/Known Issues.md
+  - How it works:
+      - Architecture: docs/Architecture.md
+      - Networking: docs/Networking.md
+      - Security: docs/Security.md
+      - Usability: docs/Usability.md
+      - Storage: docs/Storage.md
+      - Docker: docs/Docker.md
+      - What each device can do: docs/Parity.md
+      - The iPhone and iPad app: apple-client/README.md
+      - Host: docs/Host.md
+      - Environment: docs/Environment.md
+  - The apps:
+      - Services: docs/Services.md
+      - Inventory: docs/Inventory.md
+      - Savings: docs/Savings.md
+      - Service Organization: docs/Service Organization.md
+  - The project:
+      - Roadmap: docs/Roadmap.md
+      - Feature Roadmap: docs/Feature Roadmap.md
+      - Decisions: docs/Decisions.md
+      - What's new: CHANGELOG.md
+      - Contributing: CONTRIBUTING.md
+      - Contributing (services): docs/Contributing.md
+      - Standards: docs/Standards.md
+      - Releasing: docs/Releasing.md
+      - Security policy: SECURITY.md
+      - Homelab Manifest: docs/Homelab Manifest.md
+      - Homelab Context: docs/Homelab Context.md
+      - Maintainer Guide: docs/Maintainer Guide.md
+      - To-do: docs/To-do.md
+      - Knowledge base index: docs/README.md
+
