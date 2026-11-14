@@ -1,6 +1,9 @@
 import Foundation
 import Observation
 import SwiftUI
+#if os(iOS)
+import UIKit
+#endif
 
 /// Owns the app's security state: paired or not, locked or not.
 ///
@@ -18,7 +21,11 @@ import SwiftUI
 /// Rules:
 /// - The dashboard only shows while `.unlocked`. Locking stops the live
 ///   stream and drops every reading from memory.
-/// - The app locks when it goes to the background. On macOS it also locks
+/// - The app locks when it goes to the background, or on iPhone and iPad
+///   once it has been away longer than `lockAfter` (Settings › This iPhone ›
+///   Lock After; 5 minutes unless changed), checked as it comes back, and at
+///   once when the screen locks while it still runs. Leaving always ends
+///   `changeGrace`, so a change asks again. On macOS it also locks
 ///   when the app is hidden, the screens sleep, the Mac sleeps, the user
 ///   session switches away, or it has been behind other apps for five minutes.
 /// - A biometric prompt makes the scene `.inactive`, not `.background`, so
@@ -68,6 +75,20 @@ final class AppCoordinator {
     /// How long one authentication also covers changes.
     static let changeGrace: Duration = .seconds(120)
 
+    /// How long the app may be away before it locks (`LockAfter`), kept on this device.
+    var lockAfter: LockAfter {
+        didSet { defaults.set(lockAfter.rawValue, forKey: LockAfter.defaultsKey) }
+    }
+    /// When the app left the screen unlocked, by the monotonic clock (which
+    /// runs on while the device sleeps); nil while it's in front or locked.
+    @ObservationIgnored private var leftAt: ContinuousClock.Instant?
+    @ObservationIgnored private let now: @MainActor () -> ContinuousClock.Instant
+    #if os(iOS)
+    /// A few seconds' running in the background after leaving, so locking the
+    /// screen then is heard (`protectedDataWillBecomeUnavailable`).
+    @ObservationIgnored private var keptRunning: UIBackgroundTaskIdentifier = .invalid
+    #endif
+
     private static let installMarkerKey = "installMarker.v1"
 
     /// - Parameter protocolClasses: for tests and the screenshots build only,
@@ -76,14 +97,25 @@ final class AppCoordinator {
         keychain: any CredentialStore = KeychainManager(),
         biometrics: any OwnerAuthenticator = BiometricAuthManager(),
         defaults: UserDefaults = .standard,
-        protocolClasses: [AnyClass] = []
+        protocolClasses: [AnyClass] = [],
+        now: @escaping @MainActor () -> ContinuousClock.Instant = { ContinuousClock.now }
     ) {
         self.keychain = keychain
         self.biometrics = biometrics
         self.defaults = defaults
+        self.now = now
+        lockAfter = LockAfter.read(defaults)
         api = APIClient(keychain: keychain, protocolClasses: protocolClasses)
         liveEvents = LiveEventManager(api: api)
         liveEvents.onUnauthorized = { [weak self] in self?.handleUnauthorized() }
+        #if os(iOS)
+        // The screen locking locks the app, whatever Lock After says.
+        _ = NotificationCenter.default.addObserver(
+            forName: UIApplication.protectedDataWillBecomeUnavailableNotification, object: nil, queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated { self?.screenLocked() }
+        }
+        #endif
     }
 
 
@@ -126,12 +158,53 @@ final class AppCoordinator {
         scenePhase = phase
         switch phase {
         case .background:
-            lock(promptOnReturn: true)
+            // A change asks again after leaving, whatever Lock After says.
+            lastOwnerAuth = nil
+            if route == .unlocked, lockAfter != .rightAway {
+                if leftAt == nil { leftAt = now() }
+                // What's shown stays; the stream starts again on return, and reads Status then.
+                liveEvents.stop()
+                keepRunningBriefly()
+            } else {
+                lock(promptOnReturn: true)
+            }
         case .active:
+            stopRunningInBackground()
+            if let left = leftAt {
+                leftAt = nil
+                if now() - left >= lockAfter.duration {
+                    lock(promptOnReturn: true)
+                } else if route == .unlocked {
+                    liveEvents.start()
+                }
+            }
             requestAutoUnlock()
         default:
             break
         }
+    }
+
+    /// The screen locked (or the device is locking): the app locks too.
+    func screenLocked() {
+        stopRunningInBackground()
+        lock(promptOnReturn: true)
+    }
+
+    private func keepRunningBriefly() {
+        #if os(iOS)
+        guard keptRunning == .invalid else { return }
+        keptRunning = UIApplication.shared.beginBackgroundTask(withName: "Lock with the screen") { [weak self] in
+            MainActor.assumeIsolated { self?.stopRunningInBackground() }
+        }
+        #endif
+    }
+
+    private func stopRunningInBackground() {
+        #if os(iOS)
+        guard keptRunning != .invalid else { return }
+        UIApplication.shared.endBackgroundTask(keptRunning)
+        keptRunning = .invalid
+        #endif
     }
 
     /// Prompts for authentication by itself if the app is locked, in front,
@@ -148,6 +221,7 @@ final class AppCoordinator {
     func lock(promptOnReturn: Bool = false) {
         autoPromptArmed = promptOnReturn
         lastOwnerAuth = nil
+        leftAt = nil
         guard route == .unlocked else { return }
         liveEvents.clear()
         device = nil

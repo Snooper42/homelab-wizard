@@ -164,6 +164,7 @@ Each phone sees Finances at the level it was paired with: none, the money card, 
 | Devices on your tailnet | yes | on purpose | on purpose | on purpose | |
 | Quiet hours | yes | yes, as a setting | yes, as a setting | yes | |
 | The lock (Face ID), the widget's switch, **Alerts From** | — | — | yes | yes | |
+| **Lock After**: how long the app may be away before Face ID again (Right Away, 1, 5 or 15 minutes) | — | — | yes, 5 minutes unless changed (a change still asks; the screen locking locks it) | yes | |
 | Appearance, start at login, the menu bar or tray | yes ([Host](<Host.md>)) | on purpose: the phone's own | on purpose | on purpose | |
 | Update Homelab Wizard | yes | on purpose: no release notes for a phone yet | on purpose | on purpose | |
 | Uninstall | yes | on purpose | on purpose | on purpose | |
