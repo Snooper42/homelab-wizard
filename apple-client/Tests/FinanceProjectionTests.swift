@@ -10,7 +10,7 @@ import Testing
 // made up). CI's Mac job builds the framework first, so this runs there; a
 // package built without it says so instead.
 
-private let golden = URL(fileURLWithPath: #filePath)
+private let goldenDir = URL(fileURLWithPath: #filePath)
     .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
     .appendingPathComponent("internal/finance/testdata/golden")
 
@@ -18,7 +18,7 @@ private let golden = URL(fileURLWithPath: #filePath)
 struct FinanceProjectionTests {
     @Test("The golden plans read forward as on the computer", arguments: ["collection", "empty", "household"])
     func golden(_ name: String) throws {
-        let dir = golden.appendingPathComponent(name)
+        let dir = goldenDir.appendingPathComponent(name)
         let today = try String(contentsOf: dir.appendingPathComponent("today"), encoding: .utf8).trimmingCharacters(in: .whitespacesAndNewlines)
         let got = try FinanceProjection.project(plan: Data(contentsOf: dir.appendingPathComponent("plan.json")),
                                                 ledger: Data(contentsOf: dir.appendingPathComponent("ledger.json")), today: today)
