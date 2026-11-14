@@ -1,3 +1,4 @@
+import CryptoKit
 import Foundation
 import Testing
 @testable import HomelabClient
@@ -97,5 +98,39 @@ struct FinanceChangeTests {
                                      .waiting(key: "payment:rent:2026-12-01", waiting: false)]
         let back = try JSONDecoder().decode([FinanceChange].self, from: JSONEncoder().encode(mine))
         #expect(back == mine)
+    }
+}
+
+/// The changes made away, sealed on this device.
+@Suite("Changes made away, kept sealed")
+struct AwayChangesTests {
+    private func store(_ key: SymmetricKey?) -> AwayChanges {
+        let file = FileManager.default.temporaryDirectory.appendingPathComponent("away-\(UUID().uuidString).sealed")
+        return AwayChanges(file: file) { key }
+    }
+
+    @Test func keptSealedAndReadBack() throws {
+        let key = SymmetricKey(size: .bits256)
+        let s = store(key)
+        let changes: [FinanceChange] = [.cushion(to: 300, was: 250), .paymentAmount(id: "electric", to: 95, was: 90)]
+        try s.keep(changes)
+        #expect(s.load() == changes)
+        // Sealed: the amounts aren't in the file as text.
+        let bytes = try Data(contentsOf: s.file)
+        #expect(String(decoding: bytes, as: UTF8.self).contains("electric") == false)
+        try s.keep([])
+        #expect(FileManager.default.fileExists(atPath: s.file.path) == false)
+    }
+
+    @Test func anotherKeyOpensNothingAndTheFileGoes() throws {
+        let s = store(SymmetricKey(size: .bits256))
+        try s.keep([.cushion(to: 300, was: 250)])
+        let other = AwayChanges(file: s.file) { SymmetricKey(size: .bits256) }
+        #expect(other.load().isEmpty)
+        #expect(FileManager.default.fileExists(atPath: s.file.path) == false)
+    }
+
+    @Test func noKeyKeepsNothing() {
+        #expect(throws: AwayChanges.KeepError.self) { try store(nil).keep([.cushion(to: 300, was: 250)]) }
     }
 }
