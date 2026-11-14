@@ -140,6 +140,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **The Homelab app at the largest text sizes, and Setup's steps:** Finances' big amounts (what's left, net worth, investments, bills a month) grow with the text as their titles do; Setup says **Look for Problems** lists what it would fix first, and nothing changes until **Fix These** under that list.
 - **Transactions in the Homelab app:** a transfer's line takes a second line when it needs one, so *From Chase Checking · Oct 28* shows whole, and a transaction's **Mark Reviewed** shows its checkmark.
 - **Status in the Homelab app, clearer:** a group's menu says what it does (*Start or Stop All*, *Start All* or *Restart or Stop All*, by what the group's apps can do) instead of *All of These*; and at the largest text sizes, what needs a look puts **Open Its Page** under **Start** and **Logs**, so Start no longer breaks in two.
 - **What's left comes first in the Homelab app's Finances:** the first card reads *Left until Nov 19, after the bills*, what checking comes to once the next paycheck is in and its bills are paid, with *Under your $500 cushion on Thu, Nov 5* when checking dips under it before then, and opens Bills. Checking after the paycheck now says it's before its bills.

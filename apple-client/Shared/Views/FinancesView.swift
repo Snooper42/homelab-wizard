@@ -341,7 +341,7 @@ private struct LeftUntilCard: View {
                         .foregroundStyle(.tertiary)
                 }
                 Text(verbatim: amountText(left.amount, currency, finances))
-                    .font(.system(size: 34, weight: .heavy))
+                    .font(.largeTitle.weight(.heavy))
                     .monospacedDigit()
                     .foregroundStyle(!shown ? Theme.secondaryInk : left.amount < 0 ? Theme.danger : Theme.ink)
                     .contentTransition(.numericText())
@@ -421,7 +421,7 @@ private struct NetWorthCard: View {
                             .foregroundStyle(.tertiary)
                     }
                     Text(verbatim: amountText(point?.value ?? view.netWorth, view.plan.currency, finances))
-                        .font(.system(size: 34, weight: .heavy))
+                        .font(.largeTitle.weight(.heavy))
                         .monospacedDigit()
                         .foregroundStyle(shown ? Theme.ink : Theme.secondaryInk)
                         .contentTransition(.numericText())
@@ -1421,8 +1421,10 @@ private struct FinanceRecurringPage: View {
             HStack(alignment: .firstTextBaseline, spacing: 4) {
                 Text(verbatim: "≈").foregroundStyle(Theme.secondaryInk)
                 Text(verbatim: amountText(view.recurringPerMonth, view.plan.currency, finances, whole: true))
-                    .font(.system(size: 34, weight: .heavy))
+                    .font(.largeTitle.weight(.heavy))
                     .monospacedDigit()
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
                     .foregroundStyle(Theme.ink)
                     .contentTransition(.numericText())
             }
@@ -1755,7 +1757,7 @@ private struct InvestmentsHero<Actions: View>: View {
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(Theme.secondaryInk)
             Text(verbatim: amountText(point?.value ?? investments.total, view.plan.currency, finances))
-                .font(.system(size: 34, weight: .heavy))
+                .font(.largeTitle.weight(.heavy))
                 .monospacedDigit()
                 .foregroundStyle(shown ? Theme.ink : Theme.secondaryInk)
                 .contentTransition(.numericText())
@@ -2135,7 +2137,7 @@ private struct FinanceAccountsPage: View {
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(Theme.secondaryInk)
             Text(verbatim: amountText(view.netWorth, view.plan.currency, finances))
-                .font(.system(size: 34, weight: .heavy))
+                .font(.largeTitle.weight(.heavy))
                 .monospacedDigit()
                 .foregroundStyle(shown ? Theme.ink : Theme.secondaryInk)
                 .contentTransition(.numericText())
