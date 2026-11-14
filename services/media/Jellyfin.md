@@ -127,5 +127,5 @@ The data folder (`JELLYFIN_DATA_DIR`: users, watch history, metadata) is in the 
 |---|---|
 | Proxy gives 502 | Jellyfin is not running on the Mac. Open it |
 | Library empty after a restart | The drive mounted after Jellyfin started. Scan the libraries again |
-| Lost the administrator's password | On this Mac, open http://localhost:8096 › **Forgot Password**, give the username: Jellyfin writes a PIN to `passwordreset*.json` in its data folder (`cat ~/.local/share/jellyfin/passwordreset*.json`). Enter the PIN, sign in with an empty password (some versions take the PIN as the password), and set a new one under Profile › Password. Someone else's: Settings › People › **Reset password** |
+| Lost the administrator's password | On this Mac, open http://localhost:8096 › **Forgot Password**, give the username: Jellyfin writes a PIN to `passwordreset*.json` in its data folder (`cat ~/.local/share/jellyfin/passwordreset*.json`). Enter the PIN, sign in with an empty password (some versions take the PIN as the password), and set a new one under Profile › Password. Someone else's: Settings › People › **New music and films password** |
 | Playback stutters | Check that VideoToolbox is selected; Dashboard › Activity shows whether a stream is transcoding |

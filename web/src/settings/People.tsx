@@ -55,11 +55,11 @@ function Person({ p, on, sealed }: { p: people.Person; on: PeopleActions; sealed
   const apps = p.apps || [];
   return (
     <Row dot="ok" title={p.name} sub={[p.email, apps.length ? `${apps.length} app${apps.length === 1 ? '' : 's'}` : 'every app', privately(sealed)].filter(Boolean).join(' · ')} end={<>
-      <button class="small" title="Open their welcome page, to print or send" onClick={() => on.openWelcome(p.username)}>Welcome page</button>
-      <button class="small" title="A new sign-in link (the old one stops working) and a fresh welcome page" disabled={busy === 'welcome'}
-        onClick={async () => { if (await run('welcome')) on.openWelcome(p.username); }}>New sign-in link</button>
-      <button class="small" title="A new password for their Jellyfin and Navidrome accounts (Infuse and music apps), on a fresh welcome page" disabled={busy === 'password'}
-        onClick={async () => { if (await run('password')) on.openWelcome(p.username); }}>Reset password</button>
+      <button class="small" title="Their welcome page again, on this computer: to show them or print" onClick={() => on.openWelcome(p.username)}>Welcome page</button>
+      <button class="small" title="Their sign-in link works once: if they never used it, or it ran out, this makes a new one on a fresh welcome page (the old link stops working)" disabled={busy === 'welcome'}
+        onClick={async () => { if (await run('welcome')) on.openWelcome(p.username); }}>Make a new sign-in link</button>
+      <button class="small" title="A new password for their films and music apps (Jellyfin and Navidrome), on a fresh welcome page" disabled={busy === 'password'}
+        onClick={async () => { if (await run('password')) on.openWelcome(p.username); }}>New music and films password</button>
       <button class="small danger" title={'Turn their sign-in off; their photos, documents, and the rest stay' + (sealed !== undefined ? '. Their private Finances stay too: you can delete them, but never open them' : '')} disabled={busy === 'remove'}
         onClick={async () => { if (!sure) { setSure(true); return; } if (await run('remove')) on.reload(); }}>{sure ? 'Click again to remove' : 'Remove'}</button>
     </>} />
@@ -91,13 +91,15 @@ function AddPerson({ apps, open, on }: { apps: { id: string; name: string }[]; o
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [picked, setPicked] = useState<Set<string>>(new Set());
+  // All the apps, or only those ticked: ticking one picks Only these.
+  const [only, setOnly] = useState(false);
   const [busy, setBusy] = useState(false);
-  const toggle = (id: string, on: boolean) => setPicked((s) => { const n = new Set(s); if (on) n.add(id); else n.delete(id); return n; });
+  const toggle = (id: string, on: boolean) => { if (on) setOnly(true); setPicked((s) => { const n = new Set(s); if (on) n.add(id); else n.delete(id); return n; }); };
   const add = async () => {
     const who = name.trim();
     if (!who) { (document.getElementById('personName') as HTMLInputElement | null)?.focus(); return; }
     setBusy(true);
-    const ok = await on.act('add', who, email.trim(), apps.map((a) => a.id).filter((id) => picked.has(id)));
+    const ok = await on.act('add', who, email.trim(), only ? apps.map((a) => a.id).filter((id) => picked.has(id)) : []);
     setBusy(false);
     if (ok) on.added(who);
   };
@@ -109,9 +111,11 @@ function AddPerson({ apps, open, on }: { apps: { id: string; name: string }[]; o
         <input id="personEmail" type="email" placeholder="Email (optional)" autocomplete="off" spellcheck={false} value={email} onInput={(e) => setEmail(e.currentTarget.value)} />
       </div>
       {!!apps.length && (
-        <div class="picks">
-          <div class="muted small">The apps they use (none ticked: all of them)</div>
-          {apps.map((a) => <label key={a.id} class="check"><input type="checkbox" value={a.id} checked={picked.has(a.id)} onChange={(e) => toggle(a.id, e.currentTarget.checked)} /> {a.name}</label>)}
+        <div class="picks" role="group" aria-label="The apps they use">
+          <div class="muted small">The apps they use</div>
+          <label class="check"><input type="radio" name="personApps" id="personAllApps" checked={!only} onChange={() => { setOnly(false); setPicked(new Set()); }} /> All the apps</label>
+          <label class="check"><input type="radio" name="personApps" id="personOnlyApps" checked={only} onChange={() => setOnly(true)} /> Only these:</label>
+          {apps.map((a) => <label key={a.id} class="check"><input type="checkbox" value={a.id} checked={only && picked.has(a.id)} onChange={(e) => toggle(a.id, e.currentTarget.checked)} /> {a.name}</label>)}
         </div>
       )}
       <button class="small primary" id="addPerson" disabled={busy} onClick={add}>Add them</button>
@@ -122,14 +126,14 @@ function AddPerson({ apps, open, on }: { apps: { id: string; name: string }[]; o
 export function People({ people, pocket, apps, log, on, privateFinances, justAdded }: PeopleProps) {
   const here = people.filter(active);
   const head = <CardHead title="People"><span class="muted">{here.length ? `${here.length} in the household` : 'just you so far'}</span></CardHead>;
-  const why = <p class="muted">Each person gets one sign-in for the apps (with a passkey, no password to remember) and a welcome page with their apps and the phone apps to install. Jellyfin and Navidrome have a password of their own, for Infuse and music apps: with their keys in Settings, the homelab makes those accounts too, and Reset password gives a new one.</p>;
+  const why = <p class="muted">Each person gets one sign-in for the apps, with their phone's face or fingerprint and no password to remember, and a welcome page with their apps and the phone apps to install. Their films and music apps (Jellyfin and Navidrome) have a password of their own: once each app's admin key is on its page in Settings (Jellyfin, Navidrome), the homelab makes their accounts too. Their sign-in link works once: Welcome page shows it again until it's used, and Make a new sign-in link replaces one they lost.</p>;
   if (!pocket) {
     return (
       <>
         {head}{why}
         <div class="row">
-          <span class="muted">Adding people uses Pocket ID, the household’s sign-in.</span>
-          <button class="small" id="installPocket" onClick={on.installPocket}>Install Pocket ID</button>
+          <span class="muted">Adding people needs the household’s sign-in first (the Pocket ID app).</span>
+          <button class="small" id="installPocket" onClick={on.installPocket}>Set up the household’s sign-in</button>
         </div>
       </>
     );

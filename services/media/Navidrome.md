@@ -115,7 +115,7 @@ curl -s "http://localhost:4533/rest/getScanStatus.view?u=USER&p=PASSWORD&v=1.16.
 
 | Symptom | Fix |
 |---|---|
-| Lost the administrator's password | `docker exec -it homelab_media-navidrome-1 /app/navidrome user edit -u <username> --set-password -n` asks for a new one (nothing shows as you type). Someone else's: Settings › People › **Reset password** |
+| Lost the administrator's password | `docker exec -it homelab_media-navidrome-1 /app/navidrome user edit -u <username> --set-password -n` asks for a new one (nothing shows as you type). Someone else's: Settings › People › **New music and films password** |
 | After a password change, covers stay blurred and scans do nothing | Navidrome's web page keeps a key made from the password it signed in with. Sign out (user menu › Logout) and in again; in Feishin too. Music apps need the new password as well |
 | Library empty | The drive was not mounted. `./homelab doctor`, then rescan |
 | Playlist missing tracks | Paths in the `.m3u` must match `/Volumes/Media/music/...` |

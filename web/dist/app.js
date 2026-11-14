@@ -4131,29 +4131,29 @@
     };
     const apps2 = p3.apps || [];
     return /* @__PURE__ */ u3(Row, { dot: "ok", title: p3.name, sub: [p3.email, apps2.length ? `${apps2.length} app${apps2.length === 1 ? "" : "s"}` : "every app", privately(sealed)].filter(Boolean).join(" · "), end: /* @__PURE__ */ u3(S, { children: [
-      /* @__PURE__ */ u3("button", { class: "small", title: "Open their welcome page, to print or send", onClick: () => on2.openWelcome(p3.username), children: "Welcome page" }),
+      /* @__PURE__ */ u3("button", { class: "small", title: "Their welcome page again, on this computer: to show them or print", onClick: () => on2.openWelcome(p3.username), children: "Welcome page" }),
       /* @__PURE__ */ u3(
         "button",
         {
           class: "small",
-          title: "A new sign-in link (the old one stops working) and a fresh welcome page",
+          title: "Their sign-in link works once: if they never used it, or it ran out, this makes a new one on a fresh welcome page (the old link stops working)",
           disabled: busy2 === "welcome",
           onClick: async () => {
             if (await run2("welcome")) on2.openWelcome(p3.username);
           },
-          children: "New sign-in link"
+          children: "Make a new sign-in link"
         }
       ),
       /* @__PURE__ */ u3(
         "button",
         {
           class: "small",
-          title: "A new password for their Jellyfin and Navidrome accounts (Infuse and music apps), on a fresh welcome page",
+          title: "A new password for their films and music apps (Jellyfin and Navidrome), on a fresh welcome page",
           disabled: busy2 === "password",
           onClick: async () => {
             if (await run2("password")) on2.openWelcome(p3.username);
           },
-          children: "Reset password"
+          children: "New music and films password"
         }
       ),
       /* @__PURE__ */ u3(
@@ -4195,13 +4195,17 @@
     const [name, setName] = d2("");
     const [email, setEmail] = d2("");
     const [picked, setPicked] = d2(/* @__PURE__ */ new Set());
+    const [only, setOnly] = d2(false);
     const [busy2, setBusy] = d2(false);
-    const toggle = (id2, on3) => setPicked((s3) => {
-      const n3 = new Set(s3);
-      if (on3) n3.add(id2);
-      else n3.delete(id2);
-      return n3;
-    });
+    const toggle = (id2, on3) => {
+      if (on3) setOnly(true);
+      setPicked((s3) => {
+        const n3 = new Set(s3);
+        if (on3) n3.add(id2);
+        else n3.delete(id2);
+        return n3;
+      });
+    };
     const add = async () => {
       const who = name.trim();
       if (!who) {
@@ -4209,7 +4213,7 @@
         return;
       }
       setBusy(true);
-      const ok = await on2.act("add", who, email.trim(), apps2.map((a3) => a3.id).filter((id2) => picked.has(id2)));
+      const ok = await on2.act("add", who, email.trim(), only ? apps2.map((a3) => a3.id).filter((id2) => picked.has(id2)) : []);
       setBusy(false);
       if (ok) on2.added(who);
     };
@@ -4219,10 +4223,21 @@
         /* @__PURE__ */ u3("input", { id: "personName", placeholder: "Name, e.g. Anna Smith", autocomplete: "off", spellcheck: false, value: name, onInput: (e3) => setName(e3.currentTarget.value) }),
         /* @__PURE__ */ u3("input", { id: "personEmail", type: "email", placeholder: "Email (optional)", autocomplete: "off", spellcheck: false, value: email, onInput: (e3) => setEmail(e3.currentTarget.value) })
       ] }),
-      !!apps2.length && /* @__PURE__ */ u3("div", { class: "picks", children: [
-        /* @__PURE__ */ u3("div", { class: "muted small", children: "The apps they use (none ticked: all of them)" }),
+      !!apps2.length && /* @__PURE__ */ u3("div", { class: "picks", role: "group", "aria-label": "The apps they use", children: [
+        /* @__PURE__ */ u3("div", { class: "muted small", children: "The apps they use" }),
+        /* @__PURE__ */ u3("label", { class: "check", children: [
+          /* @__PURE__ */ u3("input", { type: "radio", name: "personApps", id: "personAllApps", checked: !only, onChange: () => {
+            setOnly(false);
+            setPicked(/* @__PURE__ */ new Set());
+          } }),
+          " All the apps"
+        ] }),
+        /* @__PURE__ */ u3("label", { class: "check", children: [
+          /* @__PURE__ */ u3("input", { type: "radio", name: "personApps", id: "personOnlyApps", checked: only, onChange: () => setOnly(true) }),
+          " Only these:"
+        ] }),
         apps2.map((a3) => /* @__PURE__ */ u3("label", { class: "check", children: [
-          /* @__PURE__ */ u3("input", { type: "checkbox", value: a3.id, checked: picked.has(a3.id), onChange: (e3) => toggle(a3.id, e3.currentTarget.checked) }),
+          /* @__PURE__ */ u3("input", { type: "checkbox", value: a3.id, checked: only && picked.has(a3.id), onChange: (e3) => toggle(a3.id, e3.currentTarget.checked) }),
           " ",
           a3.name
         ] }, a3.id))
@@ -4233,14 +4248,14 @@
   function People({ people, pocket, apps: apps2, log: log2, on: on2, privateFinances, justAdded: justAdded2 }) {
     const here3 = people.filter(active);
     const head = /* @__PURE__ */ u3(CardHead, { title: "People", children: /* @__PURE__ */ u3("span", { class: "muted", children: here3.length ? `${here3.length} in the household` : "just you so far" }) });
-    const why = /* @__PURE__ */ u3("p", { class: "muted", children: "Each person gets one sign-in for the apps (with a passkey, no password to remember) and a welcome page with their apps and the phone apps to install. Jellyfin and Navidrome have a password of their own, for Infuse and music apps: with their keys in Settings, the homelab makes those accounts too, and Reset password gives a new one." });
+    const why = /* @__PURE__ */ u3("p", { class: "muted", children: "Each person gets one sign-in for the apps, with their phone's face or fingerprint and no password to remember, and a welcome page with their apps and the phone apps to install. Their films and music apps (Jellyfin and Navidrome) have a password of their own: once each app's admin key is on its page in Settings (Jellyfin, Navidrome), the homelab makes their accounts too. Their sign-in link works once: Welcome page shows it again until it's used, and Make a new sign-in link replaces one they lost." });
     if (!pocket) {
       return /* @__PURE__ */ u3(S, { children: [
         head,
         why,
         /* @__PURE__ */ u3("div", { class: "row", children: [
-          /* @__PURE__ */ u3("span", { class: "muted", children: "Adding people uses Pocket ID, the household’s sign-in." }),
-          /* @__PURE__ */ u3("button", { class: "small", id: "installPocket", onClick: on2.installPocket, children: "Install Pocket ID" })
+          /* @__PURE__ */ u3("span", { class: "muted", children: "Adding people needs the household’s sign-in first (the Pocket ID app)." }),
+          /* @__PURE__ */ u3("button", { class: "small", id: "installPocket", onClick: on2.installPocket, children: "Set up the household’s sign-in" })
         ] })
       ] });
     }

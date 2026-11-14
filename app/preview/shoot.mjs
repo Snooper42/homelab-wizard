@@ -2150,7 +2150,7 @@ const smokes = [
   } },
   { name: 'Add a person needs Pocket ID', screen: 'settings', run: async (page) => {
     await page.click('#settingsNav .pagebtn[data-page="People"]', { timeout: 5000 }); 
-    await page.waitForSelector('#peopleCard:has-text("Install Pocket ID")', { timeout: 5000 });
+    await page.waitForSelector('#peopleCard button:has-text("Set up the household’s sign-in")', { timeout: 5000 });
   } },
   { name: 'Add a person', screen: 'settings', mock: { status: { ...status, apps: [...status.apps, { id: 'pocket-id', name: 'Pocket ID', state: 'running', health: 'healthy', url: 'http://localhost:1411' }] } }, run: async (page) => {
     await page.click('#settingsNav .pagebtn[data-page="People"]', { timeout: 5000 }); 
@@ -2224,6 +2224,22 @@ const smokes = [
     await page.click('#oneOpen');
     await page.waitForSelector('#status.screen.active', { timeout: 5000 });
   } })),
+  // Usability task 7, item 16: People in plain words: no "passkey", no bare "Pocket ID", the films and music
+  // password named on its button, and All the apps a choice of its own beside Only these.
+  { name: 'Settings › People in plain words, All the apps a choice of its own', screen: 'settings', mock: { status: { ...status, apps: [...status.apps, { id: 'pocket-id', name: 'Pocket ID', state: 'running', health: 'healthy', url: 'http://localhost:1411' }] }, people: [{ username: 'anna', name: 'Anna Smith' }] }, run: async (page) => {
+    await page.click('#settingsNav .pagebtn[data-page="People"]', { timeout: 5000 });
+    await page.waitForSelector('#peopleCard li:has-text("Anna Smith")', { timeout: 5000 });
+    const text = await page.$eval('#peopleCard', (c) => c.innerText);
+    if (/passkey|Infuse|Reset password|none ticked/i.test(text)) throw new Error(`words: ${text.match(/passkey|Infuse|Reset password|none ticked/i)[0]}`);
+    if (/Pocket ID/.test(text.replace(/the Pocket ID app|\(Pocket ID\)/g, ''))) throw new Error('Pocket ID named without saying what it is');
+    if (!(await page.locator('#peopleCard li button:text-is("New music and films password")').count())) throw new Error('the password is not named on its button');
+    await page.click('#peopleCard details.addperson > summary');
+    if (!(await page.isChecked('#personAllApps'))) throw new Error('All the apps is not the first choice');
+    await page.click('#peopleCard label.check:has-text("Vikunja") input');
+    if (!(await page.isChecked('#personOnlyApps'))) throw new Error('ticking an app did not pick Only these');
+    await page.check('#personAllApps');
+    if (await page.isChecked('#peopleCard label.check:has-text("Vikunja") input')) throw new Error('All the apps left an app ticked');
+  } },
   // A member who keeps her Finances private (private-finances.md 3.3): her row says so and when she last saved,
   // and nothing more; Remove's title says the owner can delete them but never open them.
   { name: 'Settings › People: a member’s private Finances, the fact only', screen: 'settings', mock: { status: { ...status, apps: [...status.apps, { id: 'pocket-id', name: 'Pocket ID', state: 'running', health: 'healthy', url: 'http://localhost:1411' }] }, people: [{ username: 'anna', name: 'Anna Smith' }, { username: 'sam', name: 'Sam Smith' }], privateFinances: { anna: '2026-11-13T15:04:00-05:00' } }, run: async (page) => {
