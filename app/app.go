@@ -1239,6 +1239,10 @@ type PhonePairing struct {
 	Code  string   `json:"code"`
 	Links []string `json:"links"`
 	QR    string   `json:"qr"`
+	// WallQR is the first link's QR code for a TV or a wall screen (the
+	// link with &kiosk, so nothing is typed onto it): Settings › Phones'
+	// Pair a wall screen.
+	WallQR string `json:"wallQR"`
 	// Off: PHONE_COMPANION=false, so nothing answers the links.
 	Off bool `json:"off"`
 }
@@ -1258,7 +1262,9 @@ func (a *App) PairPhone(name string, canChange bool, finances string) (PhonePair
 	lan, _ := domain.LANAddress()
 	p := PhonePairing{Code: code, Links: companion.Links(env, lan, code), Off: strings.EqualFold(env["PHONE_COMPANION"], "false")}
 	if len(p.Links) > 0 {
-		p.QR, err = companion.QRDataURL(p.Links[0])
+		if p.QR, err = companion.QRDataURL(p.Links[0]); err == nil {
+			p.WallQR, err = companion.QRDataURL(p.Links[0] + "&kiosk")
+		}
 	}
 	return p, err
 }

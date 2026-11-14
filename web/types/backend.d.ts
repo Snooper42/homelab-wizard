@@ -252,6 +252,7 @@ declare namespace app {
     code: string;
     links: string[];
     qr: string;
+    wallQR: string;
     off: boolean;
   }
   interface SendTarget {

@@ -34,24 +34,39 @@ const untilChoices: [number, string][] = [[0, 'Until you change it'], [24, 'For 
 /** When a phone's changes and Finances end: "Thu, Nov 12, 3:00 PM". */
 const untilText = (t: string) => { const d = new Date(t); return `${dayText(d, { weekday: 'short', month: 'short', day: 'numeric' })}, ${clockText(d)}`; };
 
-/** The code, its QR code, and the links, until Done. asked is what was picked for the phone. */
-function Pairing({ p, asked, done }: { p: app.PhonePairing; asked: { canChange: boolean; finances: string }; done: () => void }) {
+/**
+ * The code, its QR code, and the link to use, until Done: for a phone, or
+ * for a TV or a wall screen (its own QR code, the link with &kiosk in it, so
+ * nothing is typed onto a link). asked is what was picked for the phone.
+ */
+function Pairing({ p, wall, asked, done }: { p: app.PhonePairing; wall: boolean; asked: { canChange: boolean; finances: string }; done: () => void }) {
   const links = p.links || [];
-  // With no https link the phone pairs over the home Wi-Fi, so it can only
+  const secure = links.find((l) => l.startsWith('https:'));
+  const wifi = links.find((l) => l.startsWith('http:'));
+  const use = links[0] ? links[0] + (wall ? '&kiosk' : '') : '';
+  // With no secure link the phone pairs over the home Wi-Fi, so it can only
   // look, without Finances: say so when something more was picked for it.
-  const onlyLooks = !!links.length && !links.some((l) => l.startsWith('https:')) && (asked.canChange || !!asked.finances);
+  const onlyLooks = !wall && !!links.length && !secure && (asked.canChange || !!asked.finances);
+  const qr = wall ? p.wallQR : p.qr;
   return (
-    <div id="pairing">
+    <div id="pairing" data-kind={wall ? 'wall' : 'phone'}>
       <div class="pairing">
-        {p.qr && <img src={p.qr} alt="QR code for pairing" width={180} height={180} />}
+        {qr && <img src={qr} alt={wall ? 'QR code for pairing a wall screen' : 'QR code for pairing a phone'} width={180} height={180} />}
         <div>
-          <p>Scan this with the phone’s camera, or open a link on the phone, then tap <strong>Pair</strong>. The code is <code>{p.code}</code> and works once, for 10 minutes.</p>
-          <ul>{links.map((l) => <li key={l}><code>{l}</code></li>)}</ul>
-          {onlyLooks && <p class="warn" id="pairOnlyLooks">This phone will only look, without Finances, whatever is picked: there is no <code>https:</code> link yet, so it pairs over the home Wi-Fi without encryption. Set up the domain or Tailscale in Setup first to give it more.</p>}
-          {p.off && <p class="bad">The phone companion is off (PHONE_COMPANION=false): turn it on below and save first.</p>}
-          <p class="muted">Then, in Safari: Share › Add to Home Screen.</p>
-          {links.some((l) => l.startsWith('http:')) && <p class="muted">A phone paired with the <code>http:</code> link (the home Wi-Fi, without encryption) can only look, and never sees Finances, so that nobody else on the Wi-Fi can copy its key or read your money. To make changes or see Finances from a phone, pair it with an <code>https:</code> link.</p>}
-          {!!links.length && <p class="muted">A TV or a wall screen pairs the same way, with <code>&amp;kiosk</code> at the end of the link (<code>{links[0] + '&kiosk'}</code>): it then shows Status only, large, without buttons, and stays on. A screen never makes changes or shows Finances, whatever is picked here; once it is paired, <strong>Money card only</strong> beside it puts the next payday, what is left after it, and the next 3 bills on its Status (with their amounts hidden while Finances hides them).</p>}
+          {wall
+            ? <p id="pairSay">Scan this with the TV’s or the wall screen’s camera, or open the link below in its browser, then tap <strong>Pair</strong>. It shows Status only, large, without buttons, and stays on. It never makes changes or shows Finances.</p>
+            : <p id="pairSay">Scan this with the phone’s camera, then tap <strong>Pair</strong>. Then, in Safari: Share › Add to Home Screen.</p>}
+          {use && <p class="pairuse">The link to use{qr ? ' (the QR code holds it)' : ''}: <code>{use}</code></p>}
+          <p class="muted">It works once, for 10 minutes. The code in it is <code>{p.code}</code>.</p>
+          {onlyLooks && <p class="warn" id="pairOnlyLooks">This phone will only look, without Finances, whatever is picked: there is no secure link yet, so it pairs over the home Wi-Fi. Set up your domain in Setup first to give it more.</p>}
+          {p.off && <p class="bad">The phone companion is off: turn it on below and save first.</p>}
+          {secure && wifi && (
+            <details class="pairwifi">
+              <summary>If {wall ? 'the screen' : 'the phone'} can’t open it</summary>
+              <p class="muted">Use the home Wi-Fi link instead: <code>{wifi + (wall ? '&kiosk' : '')}</code>. {wall ? 'A screen' : 'A phone'} paired with it can only look, and never sees Finances, so nobody else on the Wi-Fi can copy what it signs in with or read your money.</p>
+            </details>
+          )}
+          {wall && <p class="muted">Once it’s paired, <strong>Money card only</strong> beside it puts the next payday, what’s left after it, and the next 3 bills on its Status (their amounts hidden while Finances hides them).</p>}
           <button class="small" onClick={done}>Done</button>
         </div>
       </div>
@@ -67,24 +82,35 @@ export function Phones({ phones, on }: { phones: companion.Phone[]; on: PhonesAc
   const [canChange, setCanChange] = useState(false);
   const [finances, setFinances] = useState('');
   const [pairing, setPairing] = useState<app.PhonePairing | null>(null);
-  const pair = async () => { try { setPairing(await on.pair(name, canChange, finances)); } catch { /* shown by app.ts */ } };
+  const [wall, setWall] = useState(false);
+  // A wall screen pairs to look only, without Finances, whatever is picked for a phone.
+  const pair = async (screen: boolean) => {
+    try { setWall(screen); setPairing(await on.pair(name || (screen ? 'Wall screen' : ''), screen ? false : canChange, screen ? '' : finances)); } catch { /* shown by app.ts */ }
+  };
   return (
     <>
       <CardHead title="Phones"><span class="muted">{phones.length ? `${phones.length} paired` : 'none paired yet'}</span></CardHead>
-      <p class="muted">Status and Backups on your phones, at home and on the tailnet (never on the internet). Each phone pairs once with a code; it can only look unless you let it make changes, and it sees Finances only if you pick that for it.</p>
+      <p class="muted">Status and Backups on your phones, at home and on your own private network (never on the internet). Each pairs once; it can only look unless you let it make changes, and it sees Finances only if you pick that for it.</p>
       {!!phones.length && (
         <Rows>
           {phones.map((p) => (
-            <Row key={p.id} dot={p.canChange ? 'warn' : 'ok'} title={p.name}
-              sub={<>{p.canChange ? 'Can make changes' : p.unencrypted ? 'Looks only (paired over the home Wi-Fi, without encryption)' : 'Looks only'}{p.finances === 'edit' ? ' · changes Finances' : p.finances === 'view' ? ' · sees Finances' : p.finances === 'card' ? ' · shows the money card' : ''}{p.until && more(p) ? <span class="phoneuntil">, until {untilText(p.until)}, then it only looks</span> : ''} · last seen {ago(p.lastSeen)}</>} end={<>
+            <Row key={p.id} dot="ok" title={p.name}
+              sub={<>{p.canChange ? 'Can make changes' : p.unencrypted ? 'Looks only (paired over the home Wi-Fi)' : 'Looks only'}{p.finances === 'edit' ? ' · changes Finances' : p.finances === 'view' ? ' · sees Finances' : p.finances === 'card' ? ' · shows the money card' : ''}{p.until && more(p) ? <span class="phoneuntil">, until {untilText(p.until)}, then it only looks</span> : ''} · last seen {ago(p.lastSeen)}</>} end={<>
+              {/* The same controls on every phone, in the same places: what it may do, Finances, for how long, Remove. */}
+              {!p.unencrypted && (
+                <select class="changepick" aria-label={`What ${p.name} may do`} value={p.canChange ? 'change' : 'look'} onChange={(e) => on.setCanChange(p.id, e.currentTarget.value === 'change')}>
+                  <option value="look">Looks only</option>
+                  <option value="change">Can make changes</option>
+                </select>
+              )}
               {!p.unencrypted && <FinancesPick paired value={p.finances || ''} set={(level) => on.setFinances(p.id, level)} label={`Finances on ${p.name}`} />}
-              {more(p) && (
-                <select class="untilpick" aria-label={`How long ${p.name} keeps it`} value={p.until ? 'set' : '0'} onChange={(e) => on.setUntil(p.id, Number(e.currentTarget.value))}>
-                  {p.until && <option value="set" disabled>Until {untilText(p.until)}</option>}
+              {!p.unencrypted && (
+                <select class="untilpick" aria-label={`How long ${p.name} keeps it`} value={p.until && more(p) ? 'set' : '0'} disabled={!more(p)}
+                  title={more(p) ? undefined : 'Only for a phone that may make changes or see Finances'} onChange={(e) => on.setUntil(p.id, Number(e.currentTarget.value))}>
+                  {p.until && more(p) && <option value="set" disabled>Until {untilText(p.until)}</option>}
                   {untilChoices.map(([h, t]) => <option key={h} value={String(h)}>{t}</option>)}
                 </select>
               )}
-              {!p.unencrypted && <button class="small" title={p.canChange ? 'Only look from now on' : 'Let it start, stop, restart, update, and back up'} onClick={() => on.setCanChange(p.id, !p.canChange)}>{p.canChange ? 'Make read-only' : 'Allow changes'}</button>}
               <button class="small" title="Unpair it: it stops working at once" onClick={() => on.remove(p.id)}>Remove</button>
             </>} />
           ))}
@@ -94,9 +120,10 @@ export function Phones({ phones, on }: { phones: companion.Phone[]; on: PhonesAc
         <input id="phoneName" placeholder="Name, e.g. Anna’s iPhone" autocomplete="off" spellcheck={false} value={name} onInput={(e) => setName(e.currentTarget.value)} />
         <label class="check"><input type="checkbox" id="phoneCanChange" checked={canChange} onChange={(e) => setCanChange(e.currentTarget.checked)} /> Can make changes</label>
         <FinancesPick id="phoneFinances" value={finances} set={setFinances} label="Finances on the new phone" />
-        <button class="small" id="pairPhone" onClick={pair}>Pair a phone</button>
+        <button class="small" id="pairPhone" onClick={() => pair(false)}>Pair a phone</button>
+        <button class="small" id="pairWall" onClick={() => pair(true)}>Pair a wall screen</button>
       </div>
-      {pairing ? <Pairing p={pairing} asked={{ canChange, finances }} done={() => { setPairing(null); on.reload(); }} /> : <div id="pairing" hidden />}
+      {pairing ? <Pairing p={pairing} wall={wall} asked={{ canChange, finances }} done={() => { setPairing(null); on.reload(); }} /> : <div id="pairing" hidden />}
     </>
   );
 }

@@ -599,6 +599,10 @@ func TestPhonesAndLinks(t *testing.T) {
 	if err != nil || len(p.Code) != 8 {
 		t.Fatalf("PairPhone: %+v %v", p, err)
 	}
+	// A wall screen's QR code is the first link with &kiosk: nothing to type onto a link.
+	if len(p.Links) == 0 || p.QR == "" || p.WallQR == "" || p.WallQR == p.QR {
+		t.Errorf("a phone's and a wall screen's QR codes: %q / %q for %q", p.QR, p.WallQR, p.Links)
+	}
 	if len(a.Phones()) != 0 {
 		t.Fatal("a code alone is a phone")
 	}
