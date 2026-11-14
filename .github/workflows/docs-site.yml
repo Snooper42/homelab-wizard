@@ -1,0 +1,88 @@
+name: Docs site
+
+# The docs website (tools/site): built from the repository's own Markdown for
+# every change to the docs, and on main put on the gh-pages branch, which
+# GitHub Pages serves (Settings › Pages › Deploy from a branch › gh-pages).
+# A pull request only builds it, read-only, so a broken page shows before it
+# merges; only main's push job may write, and it runs nothing a pull request
+# wrote.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "README.md"
+      - "CONTRIBUTING.md"
+      - "SECURITY.md"
+      - "CHANGELOG.md"
+      - "docs/**"
+      - "services/**"
+      - "assets/**"
+      - "apple-client/README.md"
+      - "tools/site/**"
+      - ".github/workflows/docs-site.yml"
+  pull_request:
+    paths:
+      - "README.md"
+      - "docs/**"
+      - "services/**"
+      - "tools/site/**"
+      - ".github/workflows/docs-site.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docs-site-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Build the site
+        run: |
+          python3 -m venv "$RUNNER_TEMP/mkdocs"
+          "$RUNNER_TEMP/mkdocs/bin/pip" install -q -r tools/site/requirements.txt
+          python3 tools/site/assemble.py
+          "$RUNNER_TEMP/mkdocs/bin/mkdocs" build -f tools/site/mkdocs.yml 2>&1 | tee "$RUNNER_TEMP/build.log"
+          if grep -E "^WARNING" "$RUNNER_TEMP/build.log"; then echo "::error::the docs site has warnings (above)"; exit 1; fi
+          touch build/site/.nojekyll
+
+      - name: Keep the site
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: docs-site
+          path: build/site/
+          include-hidden-files: true
+          retention-days: 7
+
+  publish:
+    needs: build
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: docs-site
+          path: site
+
+      - name: Put it on the gh-pages branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+          cd site
+          git init -q -b gh-pages
+          git add -A
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+            commit -q -m "The docs site, from ${GITHUB_SHA::7}"
+          git push -q --force "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" gh-pages
+          echo "gh-pages: $(git rev-parse --short HEAD), $(find . -name '*.html' -not -path './.git/*' | wc -l) pages"
