@@ -241,7 +241,13 @@ struct GroupActionsMenu: View {
                 if let group = actions.group {
                     Text(group.label).font(.caption.monospacedDigit())
                 } else {
-                    Label(AppAction.groupMenuTitle(starting: start.count, running: running.count), systemImage: "ellipsis.circle")
+                    // Its words where there's room, else only ⋯: in the iPad's list column, or at
+                    // the largest text, the words squeezed the group's name ("Docu-ments", "Ne…").
+                    ViewThatFits(in: .horizontal) {
+                        Label(AppAction.groupMenuTitle(starting: start.count, running: running.count), systemImage: "ellipsis.circle")
+                            .lineLimit(1)
+                        Image(systemName: "ellipsis.circle")
+                    }
                 }
             }
             .disabled(actions.isBusy)
