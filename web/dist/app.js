@@ -8157,7 +8157,8 @@
         if (/^Preview only: nothing was changed/.test(line.trim())) return;
         log2.textContent += line + "\n";
         log2.scrollTop = log2.scrollHeight;
-        if (!plan.hidden && line.trim() && !/^\s*[$→✓•✗]/.test(line)) plan.textContent += line.trim() + "\n";
+        const said2 = line.trim();
+        if (plain2 && said2 && !/^[$→✓•✗]/.test(said2) && (!plan.hidden || /^(Updated|Already up to date):/.test(said2))) plan.textContent += said2 + "\n";
       });
     };
     const unlisten = () => {
@@ -8199,6 +8200,7 @@
       { label: confirmLabel, primary: true, onClick: async () => {
         log2.textContent += "\n";
         plan.hidden = true;
+        plan.textContent = "";
         details.open = true;
         runInSheet(title);
         cliButtons([hideButton]);
@@ -8225,6 +8227,7 @@
           showError(err);
         }
         stop2();
+        if (plain2 && plan.textContent) plan.hidden = false;
         cliButtons([{ label: "Close", onClick: () => {
           panel.hidden = true;
         } }]);

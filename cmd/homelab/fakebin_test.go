@@ -106,6 +106,13 @@ func fakeDockerMain(d string, args []string) int {
 			}
 		}
 	}
+	// FAKE_AFTER_UP=src: a Compose up puts src over the containers inspect
+	// gives, as they then run their new images (an update that changed them).
+	if src := os.Getenv("FAKE_AFTER_UP"); src != "" && has(" up ") {
+		if data, err := os.ReadFile(src); err == nil {
+			_ = os.WriteFile(filepath.Join(d, "inspect.json"), data, 0o644)
+		}
+	}
 	// FAKE_REGISTRY_BUSY=n: no image is here until a pull gets through,
 	// and the registry is busy for the first n pulls, and for a run that
 	// would pull its image itself, as ghcr.io's per-minute limit is.

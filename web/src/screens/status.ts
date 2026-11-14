@@ -727,8 +727,10 @@ export async function cliFlow(title, action, target, confirmLabel, plain = false
       if (/^Preview only: nothing was changed/.test(line.trim())) return;
       log.textContent += line + '\n';
       log.scrollTop = log.scrollHeight;
-      // The plan in plain words: not the command, nor a terminal's marks.
-      if (!plan.hidden && line.trim() && !/^\s*[$→✓•✗]/.test(line)) plan.textContent += line.trim() + '\n';
+      // The plan in plain words: not the command, nor a terminal's marks; once
+      // it runs, only what it says it did (Updated: …, Already up to date: …).
+      const said = line.trim();
+      if (plain && said && !/^[$→✓•✗]/.test(said) && (!plan.hidden || /^(Updated|Already up to date):/.test(said))) plan.textContent += said + '\n';
     });
   };
   const unlisten = () => { if (typeof off === 'function') off(); off = null; };
@@ -755,6 +757,7 @@ export async function cliFlow(title, action, target, confirmLabel, plain = false
       log.textContent += '\n';
       // Running: the plan's words give way to the job's rows and its log.
       plan.hidden = true;
+      plan.textContent = '';
       details.open = true;
       // Running, it can no longer be cancelled, but it can be hidden: it carries on.
       runInSheet(title);
@@ -772,6 +775,8 @@ export async function cliFlow(title, action, target, confirmLabel, plain = false
         }, (behind) => { log.textContent += waitWords(behind) + '…\n'; bgProgress(0, waitWords(behind)); });
       } catch (err) { showError(err); }
       stop();
+      // Done: what changed, in words, above the rows.
+      if (plain && plan.textContent) plan.hidden = false;
       cliButtons([{ label: 'Close', onClick: () => { panel.hidden = true; } }]);
       loadStatus();
     } },
