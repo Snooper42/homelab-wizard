@@ -207,6 +207,20 @@ final class FinancesViewModel {
         return await savePlan(edited, reason: "Add \(name.trimmingCharacters(in: .whitespaces)) to Finances.")
     }
 
+    /// Adds a payment to the plan, as the computer's Add a payment does
+    /// (`FinancePlanEdit.addingPayment`). Returns whether it saved.
+    func addPayment(name: String, amount: Double, every: String, start: Date, kind: String,
+                    from: String, estimate: Bool) async -> Bool {
+        guard canEdit, !isSaving, let raw = rawPlan else { return false }
+        guard let edited = FinancePlanEdit.addingPayment(name: name, amount: amount, every: every,
+                                                         start: FinancePlanEdit.todayString(start), kind: kind,
+                                                         from: from, estimate: estimate, in: raw) else {
+            saveError = "A payment needs a name, and what it costs: an amount more than nothing."
+            return false
+        }
+        return await savePlan(edited, reason: "Add \(name.trimmingCharacters(in: .whitespaces)) to Finances.")
+    }
+
     /// Changes a budget's amount. Returns whether it saved.
     func setBudget(_ budget: FinanceBudget, to amount: Double) async -> Bool {
         guard canEdit, !isSaving, let raw = rawPlan else { return false }
