@@ -139,6 +139,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **A transfer's line in the Homelab app's Transactions fits:** it names the account the payee doesn't (*From Main Checking* under *Roth IRA*), instead of both accounts cut off after the first.
 - **Times in the Homelab app in the phone's own clock:** Settings shows quiet hours as *10 PM to 7 AM* (not *22-7*), and nightly updates as *Every night at 4 AM* (not *Daily at 04:00*), on the iPhone and iPad, in 12- or 24-hour time as the phone is set.
 - **Add a payment by keyboard:** Name and Amount come first, and the logos after them are one stop for Tab: the arrow keys move between them, and Space picks one. Tab used to pass every one of the 337 logos before reaching Name.
 - **The period bar on a phone:** back, the period's name and forward stay on one line, the name wrapping between them, at any width and text size.

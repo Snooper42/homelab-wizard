@@ -3088,7 +3088,7 @@ struct WalletTransactionRow: View {
 
     private var subtitle: String? {
         if let to = transaction.to, !to.isEmpty {
-            return "\(finances.accountName(transaction.account) ?? "Account") → \(finances.accountName(to) ?? "Account")"
+            return TransferWords.line(payee: transaction.payee, from: finances.accountName(transaction.account) ?? "Account", to: finances.accountName(to) ?? "Account")
         }
         if transaction.isSplit { return "Split" }
         return transaction.category.isEmpty ? nil : transaction.category
