@@ -24,7 +24,8 @@ enum ReceiptCodec {
     /// A name as the computer gives one: its content's hash and kind.
     static func isValidName(_ name: String) -> Bool {
         let parts = name.split(separator: ".")
-        guard parts.count == 2, ["jpg", "png", "webp", "pdf"].contains(String(parts[1])) else { return false }
+        // .sealed: one of a member's private receipts, sealed on her phone (finance.SaveSealedReceipt).
+        guard parts.count == 2, ["jpg", "png", "webp", "pdf", "sealed"].contains(String(parts[1])) else { return false }
         let hash = parts[0]
         return hash.count == 32 && hash.allSatisfy { $0.isHexDigit && ($0.isNumber || $0.isLowercase) }
     }

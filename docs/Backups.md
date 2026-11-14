@@ -65,7 +65,13 @@ Job settings always use the container paths on the right. Sources are read-only,
 
 `homelab backup` runs `pg_dumpall --clean --if-exists` inside each database container, using the container's own `POSTGRES_USER` (so no password leaves the container). It gzips the output and keeps the file only if it ends with Postgres's completion marker. Databases are marked in the compose files with `dump: postgres`; a new database with that line is included automatically.
 
-Apps that keep their data in SQLite (Vaultwarden, Nginx Proxy Manager, Uptime Kuma, ntfy's accounts, Navidrome, beets, Audiobookshelf, Calibre-Web, Komga, Kavita, Seerr, Mealie, Grocy, Homarr, Karakeep) are marked `dump: sqlite:/path/in/the/container`. Their files are copied by Duplicati too, but a copy of a database file taken while the app writes can be torn. So `homelab backup` also takes a consistent copy with SQLite's online backup, through a small helper image it builds once (`dockerfiles/sqlite`), as the file's owner, checks it with `PRAGMA integrity_check`, and keeps it gzipped as `<app>-<stamp>.sqlite.gz`. An app with no database at that path yet (Uptime Kuma set up on MariaDB, say) is skipped.
+Apps that keep their data in SQLite (Vaultwarden, Nginx Proxy Manager, Uptime Kuma, ntfy's accounts, Navidrome, beets, Audiobookshelf, Calibre-Web, Komga, Kavita, Seerr, Mealie, Grocy, Homarr, Karakeep) are marked `dump: sqlite:/path/in/the/container`. Duplicati copies their files too, but a copy of a database file taken while the app writes can be torn. So `homelab backup` also:
+
+- takes a consistent copy with SQLite's online backup, through a small helper image it builds once (`dockerfiles/sqlite`), as the file's owner;
+- checks it with `PRAGMA integrity_check`;
+- keeps it gzipped as `<app>-<stamp>.sqlite.gz`.
+
+An app with no database at that path yet (Uptime Kuma set up on MariaDB, say) is skipped.
 
 An app that is installed but stopped, or runs outside the homelab, makes the backup fail with an alert, rather than leaving last night's dump as the newest. Each dump has two hours to finish.
 
@@ -126,7 +132,13 @@ The nightly backup looks there: when the newest `bitwarden_encrypted_export_*.js
 
 ## Moving to a new machine
 
-When the old machine still works, nothing needs restoring from Duplicati. Backups › **Moving to a new machine**: **Move out…** on the old machine asks where to save one file, takes a fresh backup, stops the apps, and packs the settings, the apps' data, and the newest database dumps into it (click twice to confirm). On the new machine, install Homelab Wizard, choose **Set it up for me**, plug in the drive with the photos and media, and **Move in…** with that file. Moving between kinds of computer (a Mac, Windows, Linux) works too: **Move in** sets this machine's account and network settings itself, and stops for any folder from the old machine (`/Volumes/…`, `D:\…`) until you pick its place here in Settings › Storage, then carries on. In Terminal: `./homelab move out --to <file>` and `./homelab move in <file>`. [Disaster Recovery](<Disaster Recovery.md#scenario-moving-to-a-new-machine>) has the details.
+When the old machine still works, nothing needs restoring from Duplicati: Backups › **Moving to a new machine** carries everything over.
+
+1. On the old machine, **Move out…** asks where to save one file, takes a fresh backup, stops the apps, and packs the settings, the apps' data, and the newest database dumps into it (click twice to confirm).
+2. On the new machine, install Homelab Wizard and choose **Set it up for me**.
+3. Plug in the drive with the photos and media, and **Move in…** with that file.
+
+Moving between kinds of computer (a Mac, Windows, Linux) works too: **Move in** sets this machine's account and network settings itself, and stops for any folder from the old machine (`/Volumes/…`, `D:\…`) until you pick its place here in Settings › Storage, then carries on. In Terminal: `./homelab move out --to <file>` and `./homelab move in <file>`. [Disaster Recovery](<Disaster Recovery.md#scenario-moving-to-a-new-machine>) has the details.
 
 ## Rebuilding a lost machine
 

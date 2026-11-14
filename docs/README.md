@@ -19,6 +19,7 @@ version: 0.17.0
 | Container runtime | OrbStack on a Mac, Docker Desktop on Windows, Docker Engine on Linux |
 | Repository / root | `~/Homelab` |
 | Desktop app | Homelab Wizard for macOS, Windows, and Linux. Every build of main is a numbered release (Releases › Latest), and the app updates itself ([app/README.md](<../app/README.md>)) |
+| Version numbers | Three you may see, and why they differ. **The app's version** (the README's release badge, Settings › This Mac) goes up with every build of main: 0.35.6, then 0.35.7, and after .10 the next minor by itself. **`version:` at the top of each page** is the version line the docs were last checked against, the `VERSION` file (0.17.0): the floor the builds count up from, raised only for a new minor version by hand. **The pictures** show the newest release at the time they were taken. More: [Releasing › Version numbers](<Releasing.md#version-numbers>) |
 | Domain | None by default (Home mode: every app on the tailnet), or your domain on Cloudflare (`example.com` in these docs) |
 | External access | Home mode: Tailscale Serve. With a domain: Cloudflare Tunnel → Nginx Proxy Manager. No open router ports either way |
 | LAN access | With a domain: AdGuard Home answers `*.example.com` with this computer's address → Nginx Proxy Manager |
@@ -40,6 +41,7 @@ The full app list with addresses and ports is in [Inventory](<Inventory.md>). It
 | [Testing](<Testing.md>) | The script for each test session on a real machine, with what every step should show |
 | [To-do](<To-do.md>) | The next things only a person can do, in order |
 | [Upgrading](<Upgrading.md>) | What to do after pulling a newer version, batch by batch |
+| [Everyday tasks](<Everyday Tasks.md>) | The common jobs, in the app and from a terminal: add an app, fix what's down, back up, add a person, move, uninstall |
 | [Commands](<Commands.md>) | Every `./homelab` command on one page |
 
 ## Run it

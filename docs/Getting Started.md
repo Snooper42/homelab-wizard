@@ -84,7 +84,13 @@ Each app build carries the `homelab` CLI and the homelab files, so Setup's butto
 
 ## 2. Work down the Setup screen
 
-The steps are grouped as **Needs you**, **Can wait**, and **Done**. Each says first what it gives you, then what to do; a step with more to know right now has a chevron that opens it. A step that didn't work says why under it, and what to press once that is put right. It moves to Done when its check passes, and **Check again** re-runs every check. Backups and *Alerts when this machine is down* sit under **Can wait** for the first week: get the apps going, then do them within the week. After that they count as left to do again, and the Setup tab's number says so. **Do the N I can do for you** runs every step that is ready, one after another, and stops at the first that fails or when what is left needs you: a setting, a choice, or something only a person can do.
+The steps are grouped as **Needs you**, **Can wait**, and **Done**.
+
+- Each step says first what it gives you, then what to do. One with more to know right now has a chevron that opens it.
+- A step that didn't work says why under it, and what to press once that is put right.
+- A step moves to Done when its check passes. **Check again** runs every check again.
+- Backups and *Alerts when this machine is down* sit under **Can wait** for the first week: get the apps going, then do them within the week. After that they count as left to do again, and the Setup tab's number says so.
+- **Do the N I can do for you** runs every step that is ready, one after another. It stops at the first that fails, or when what is left needs you: a setting, a choice, or something only a person can do.
 
 | Step | What it gives you | What you do |
 |---|---|---|
@@ -123,7 +129,14 @@ Home mode needs no domain. When you want short addresses such as `photos.example
 
 ## 3. Choose more apps
 
-Open **Choose apps**. **Start here** has the five things most homes want first: Photos, Passwords, Movies and TV, Music, and Files. Click the ones you want. Every other app is under **Add more**, where each app says what it does and which subscription it can replace. Tick what you want, or pick a preset such as *Household* (smart home, groceries, to-dos, saved links, and a start page) or *Media automation* (the *arr apps, Seerr for requests, and qBittorrent behind a VPN). The plan on the right says in one line how many apps it installs and lists the ones you picked; helpers, port moves, and settings written wait under **Details**. When an app needs a setting first (the VPN key for qBittorrent, for example), the plan names it and the field to fill in appears below, with where to find it. Then click **Install**. If the apps would need more memory than the Mac has room for beside macOS and everyday apps, the plan says so and names the heaviest to leave out; on an 8 GB Mac, the *Start here* picks fit, and Immich's face and smart search (machine learning) is the one to add with care.
+Open **Choose apps**.
+
+1. **Start here** has the five things most homes want first: Photos, Passwords, Movies and TV, Music, and Files. Click the ones you want.
+2. Every other app is under **Add more**, where each says what it does and which subscription it can replace. Tick what you want, or pick a preset such as *Household* (smart home, groceries, to-dos, saved links, and a start page) or *Media automation* (the *arr apps, Seerr for requests, and qBittorrent behind a VPN).
+3. Read the plan on the right. It says in one line how many apps it installs and lists the ones you picked; helpers, port moves, and settings written wait under **Details**. When an app needs a setting first (the VPN key for qBittorrent, for example), the plan names it and the field to fill in appears below, with where to find it.
+4. Click **Install**.
+
+If the apps would need more memory than the Mac has room for beside macOS and everyday apps, the plan says so and names the heaviest to leave out. On an 8 GB Mac the *Start here* picks fit; Immich's face and smart search (machine learning) is the one to add with care.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="images/app-choose-dark.png">
@@ -146,7 +159,15 @@ In Home mode, first install the **Tailscale** app on the phone and sign in with 
 
 To open an app on a phone without typing its address, click its row in **Status** and then **Open on a phone** on its page: it shows the address as a QR code for the phone's camera, with what the phone needs (home Wi-Fi or Tailscale) and the app's phone app. Everything else opens in a web browser. Install **Homepage** from Choose apps for one start page with every app on it, kept up to date by the homelab; the [Inventory](<Inventory.md>) lists every address too.
 
-Each person can have their own sign-in. In **Settings** › **People**, click **Add a person**, give their name, email, and the apps they use, and click **Add them**: the homelab makes their account and opens a welcome page to print or send, with a one-time link to set up a passkey (Face ID or Touch ID), the apps they use, and their own tab on the start page. **New sign-in link** makes a fresh link, and **Remove** turns their sign-in off and keeps their data. Jellyfin and Navidrome have a password of their own, so that Infuse, the TV apps, and music apps such as Arpeggi can sign in: with `JELLYFIN_API_KEY` and a Navidrome administrator's login in **Settings**, adding someone makes those accounts too (one password for both, on their welcome page and nowhere else), **Reset password** gives them a new one, and **Remove** turns them off. People use **Pocket ID**; without it, the card offers **Install Pocket ID** first. With a domain, `./homelab sso setup` then lets Karakeep, Paperless-ngx, Mealie, Vikunja, and Open WebUI sign in with it.
+Each person can have their own sign-in, through **Pocket ID** (without it, the card offers **Install Pocket ID** first):
+
+1. In **Settings** › **People**, click **Add a person**.
+2. Give their name, email, and the apps they use, and click **Add them**.
+3. The homelab makes their account and opens a welcome page to print or send: a one-time link to set up a passkey (Face ID or Touch ID), the apps they use, and their own tab on the start page.
+
+Later, **New sign-in link** makes a fresh link, and **Remove** turns their sign-in off and keeps their data.
+
+Jellyfin and Navidrome have a password of their own, so that Infuse, the TV apps, and music apps such as Arpeggi can sign in. With `JELLYFIN_API_KEY` and a Navidrome administrator's login in **Settings**, adding someone makes those accounts too (one password for both, on their welcome page and nowhere else); **Reset password** gives them a new one, and **Remove** turns them off. With a domain, `./homelab sso setup` then lets Karakeep, Paperless-ngx, Mealie, Vikunja, and Open WebUI sign in with Pocket ID.
 
 For the person who looks after the homelab: Settings › **Phones** › **Pair a phone** shows a QR code. Scan it from the **Homelab app** on an iPhone or iPad, and the app shows Status, each app's page, and Backups, at home or over Tailscale. A phone without the app (Android, a visitor's) scans it with its camera instead, and gets the same screens in its browser (Share › Add to Home Screen keeps it as an app). Your partner's phone pairs the same way; beside each phone, **Sees Finances** or **Changes Finances** adds the household's Finances to it (only for a phone paired with the https link).
 

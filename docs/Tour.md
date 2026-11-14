@@ -27,7 +27,7 @@ The screen the app opens on. Every app the computer runs, live, with a coloured 
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="images/app-status-dark.png">
-  <img alt="Status: 21 of 22 apps running, one that needs a look, what they replace as subscriptions, and each category folded into one line" src="images/app-status.png">
+  <img alt="Status: all 22 apps running, nothing that needs a look, what they replace as subscriptions, and each category folded into one line" src="images/app-status.png">
 </picture>
 
 Further down, the same screen shows the watchdog's checks, what CrowdSec blocked, recent alerts, **This week**'s summary, what each person and app keeps on disk, and a live line of what each busy app uses right now.

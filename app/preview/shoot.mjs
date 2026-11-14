@@ -10076,6 +10076,28 @@ if (process.argv.includes('--smoke')) {
   process.exit(failed ? 1 : 0);
 }
 
+// The docs' pictures show a homelab that is well: Mealie, stopped in the example
+// state for the checks above (which have exited by now), runs here, with a
+// fresh backup, so no screen opens on a red bar. A shot that sets its own
+// status or backups keeps them.
+{
+  const fine = status.apps.find((a) => a.id === 'vikunja');
+  mock.status = { ...status, apps: status.apps.map((a) => (a.id === 'mealie' ? { ...a, state: 'running', health: 'healthy', since: fine.since, updatedAt: fine.updatedAt } : a)) };
+  mock.backups = { ...backups, stale: 0, copies: backups.copies.map((c) => (c.id === 'mealie' ? { ...c, newest: hoursAgo(7.5), state: 'fresh' } : c)) };
+}
+// And the version a visitor sees on GitHub: the newest release runs in the
+// pictures, and the update line offers the one after it. VERSION is only the
+// floor builds count from (docs/Releasing.md), so 0.17.0 there would read as old.
+{
+  let latest = '';
+  try { latest = execFileSync('git', ['describe', '--tags', '--abbrev=0', '--match', 'v[0-9]*'], { cwd: root, stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim().replace(/^v/, ''); } catch { /* no tags here: VERSION stays */ }
+  if (/^\d+\.\d+\.\d+$/.test(latest)) {
+    const [major, minor, patch] = latest.split('.').map(Number);
+    host.version = latest;
+    for (const shot of shots) if (shot.mock?.host) shot.mock.host = { ...shot.mock.host, version: latest }; // made with the host before this
+    update.version = `${major}.${minor}.${patch + 1}`;
+  }
+}
 const out = join(root, 'docs', 'images');
 mkdirSync(out, { recursive: true });
 const only = process.argv.slice(2);

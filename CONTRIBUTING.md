@@ -23,6 +23,7 @@ Go 1.26 or newer for the CLI and the desktop app (Go fetches the version in `go.
 | Only docs | `make check` (it runs `homelab validate`: links, versions, generated blocks) |
 | The docs website's look or its sidebar (`tools/site`) | `pip install -r tools/site/requirements.txt` in a venv, then `python3 tools/site/assemble.py && mkdocs serve -f tools/site/mkdocs.yml` to browse it. A page added under `docs/` goes in `mkdocs.yml`'s `nav` too. CI builds it on every docs change, and puts main's on the `gh-pages` branch |
 | A screen the docs show | `make screenshots` (every picture in `docs/images`, light and dark), and `node app/preview/tour.mjs` and `node app/preview/tour.mjs dark` for the README's walkthrough (`docs/images/tour.gif`, `tour-dark.gif`; needs ffmpeg) |
+| A screen of the Homelab app (iPhone) the docs show | Nothing by hand: after a build of main that changes `apple-client/`, its CI puts the docs' ten iPhone pictures on the `iphone-screenshots` branch. Take them with `git fetch origin iphone-screenshots && git checkout FETCH_HEAD -- docs/images`, and commit |
 
 ## Layout
 
