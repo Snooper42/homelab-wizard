@@ -21,6 +21,8 @@ enum FinanceChange: Codable, Sendable, Equatable {
     case addAccount(name: String, kind: String, balance: Double, today: String)
     case addPayment(name: String, amount: Double, every: String, start: String, kind: String, from: String, estimate: Bool)
     case addGoal(name: String, target: Double, date: String?, account: String, percent: Double)
+    /// Add Payment with money in, twice a month, or with each paycheck (Nov 15); `addPayment` stays for changes kept before it.
+    case addNewPayment(NewPayment)
 
     /// `plan` with this change made, or nil when it can't be (what it changes is gone).
     func apply(to plan: JSONValue) -> JSONValue? {
@@ -44,6 +46,8 @@ enum FinanceChange: Codable, Sendable, Equatable {
                                           from: from, estimate: estimate, in: plan)
         case .addGoal(let name, let target, let date, let account, let percent):
             FinancePlanEdit.addingGoal(name: name, target: target, date: date, account: account, percent: percent, in: plan)
+        case .addNewPayment(let p):
+            FinancePlanEdit.addingPayment(p, in: plan)
         }
     }
 
