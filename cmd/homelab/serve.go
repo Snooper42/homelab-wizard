@@ -407,6 +407,38 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 			out, err := h.runSelf(ctx, "logs", id, "--tail", strconv.Itoa(lines))
 			return h.phoneLog(strings.Join(out, "\n")), err
 		}),
+		// What an app's last lines of log say, in plain words, from the Ollama the computer uses (Explain these
+		// logs, as on the computer, app.go's ExplainLogs): the log goes through phoneLog's redaction (every .env
+		// secret, then anything shaped like a password or token) and stays on the homelab. Not on a wall screen,
+		// which anyone walking past could set the model working with, nor a household member's phone (as Logs).
+		"ExplainLogs": {Call: func(ctx context.Context, args []json.RawMessage) (any, []string, error) {
+			var id string
+			if len(args) > 0 {
+				_ = json.Unmarshal(args[0], &id)
+			}
+			if d, ok := companion.Caller(ctx); ok && d.Kiosk {
+				return nil, nil, fmt.Errorf("%s was paired as a wall screen: explain an app's log from a phone", d.Name)
+			}
+			if err := h.containerApp(id); err != nil {
+				return nil, nil, err
+			}
+			ctx, cancel := context.WithTimeout(ctx, 2*time.Minute)
+			defer cancel()
+			model, err := explain.Model(ctx, h.envMap()["OLLAMA_MODEL"])
+			if err != nil {
+				return nil, nil, err
+			}
+			out, err := h.runSelf(ctx, "logs", id, "--tail", "200")
+			if err != nil {
+				return nil, nil, err
+			}
+			name := id
+			if a, ok := h.catalog.Get(id); ok {
+				name = a.Name()
+			}
+			text, err := explain.Explain(ctx, model, name, h.phoneLog(strings.Join(out, "\n")))
+			return map[string]string{"text": text, "model": model}, nil, err
+		}},
 		// A diagnostics report with every secret removed, for the phone to
 		// share with a helper (as Make a diagnostics report on the Mac).
 		"Report": {Call: func(ctx context.Context, _ []json.RawMessage) (any, []string, error) {

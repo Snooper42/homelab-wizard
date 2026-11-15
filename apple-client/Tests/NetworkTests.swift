@@ -97,6 +97,37 @@ struct NetworkRuleTests {
         #expect(seen.authorization == "Bearer \(Self.token)")
     }
 
+    @Test func explainingALogSendsOnlyTheAppAndReadsTheModelsWords() async throws {
+        StubProtocol.reset { _ in (200, [:], Self.json(#"{"result":{"text":"It started, then couldn't reach its database.","model":"llama3.2"}}"#), nil) }
+        let (api, _) = client()
+        let said = try await api.explainLogs(appID: "immich")
+        #expect(said.text == "It started, then couldn't reach its database.")
+        #expect(said.model == "llama3.2")
+        let seen = try #require(StubProtocol.requests.first)
+        #expect(seen.url.path == "/api/call/ExplainLogs")
+        #expect(try JSONDecoder().decode([JSONValue].self, from: seen.body) == [.string("immich")])
+
+        StubProtocol.reset { _ in (200, [:], Data(), nil) }
+        await #expect(throws: APIError.self) { try await api.explainLogs(appID: "../etc") }
+        #expect(StubProtocol.requests.isEmpty)
+    }
+
+    @Test @MainActor func explainThisLogShowsTheWordsOrWhyNot() async throws {
+        let app = try JSONDecoder.homelab().decode(AppStatus.self, from: Self.json(#"{"id":"immich","name":"Immich","state":"running"}"#))
+        let (api, _) = client()
+        let vm = LogsViewModel(app: app, api: api)
+        StubProtocol.reset { _ in (200, [:], Self.json(#"{"result":{"text":"All is well.","model":"llama3.2"}}"#), nil) }
+        await vm.explain()
+        #expect(vm.explanation == LogExplanation(text: "All is well.", model: "llama3.2"))
+        #expect(vm.explainError == nil && !vm.explaining)
+
+        vm.closeExplanation()
+        StubProtocol.reset { _ in (500, [:], Self.json(#"{"error":"Kitchen was paired as a wall screen: explain an app's log from a phone"}"#), nil) }
+        await vm.explain()
+        #expect(vm.explanation == nil)
+        #expect(vm.explainError?.contains("wall screen") == true)
+    }
+
     @Test func notPairedSendsNothing() async {
         StubProtocol.reset { _ in (200, [:], Data(), nil) }
         let (api, _) = client(paired: false)

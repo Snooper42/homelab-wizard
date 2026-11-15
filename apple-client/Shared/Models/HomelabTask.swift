@@ -102,3 +102,12 @@ struct DiagnosticsReport: Decodable, Sendable, Identifiable {
 
     var id: Int { text.hashValue }
 }
+
+/// What an app's last 200 log lines say, in plain words, from the Ollama
+/// model the computer uses (the `ExplainLogs` call, as Explain these logs
+/// on the computer). The log is redacted there and never leaves the homelab.
+struct LogExplanation: Decodable, Sendable, Equatable {
+    let text: String
+    /// The model that wrote it, shown with it.
+    let model: String
+}
