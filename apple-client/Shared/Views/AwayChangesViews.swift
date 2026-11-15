@@ -62,7 +62,7 @@ struct AwayBanner: View {
                 }
                 Spacer(minLength: 0)
                 if waiting > 0 {
-                    Image(systemName: "chevron.right")
+                    Image(systemName: "chevron.right").accessibilityHidden(true)
                         .font(.footnote.weight(.semibold))
                         .foregroundStyle(.tertiary)
                 }

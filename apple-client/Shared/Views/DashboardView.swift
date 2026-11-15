@@ -148,7 +148,8 @@ private struct PhoneDashboard: View {
     let computer: ComputerViewModel
     let finances: FinancesViewModel
     /// The tab, kept between launches as the computer keeps its screen: a name only.
-    @SceneStorage("tab") private var savedTab = "apps:all"
+    /// Under the sidebar's name, so a Stage Manager window that widens keeps its screen.
+    @SceneStorage(DashboardViewModel.placeKey) private var savedTab = "apps:all"
     @Environment(AppCoordinator.self) private var coordinator
 
     /// A household member's phone: their apps, their Finances, and this
@@ -301,7 +302,10 @@ private struct PhoneStatus: View {
     /// A link's action, waiting for its one tap.
     @State private var linkAsk: LinkAsk?
     /// The pages open on Status, so Siri can open one.
-    @State private var path = NavigationPath()
+    @State private var path: [AppStatus.ID] = []
+    /// The wide layout's app taken over once, when this layout appears (not
+    /// each time the list shows again, or Back would open it again).
+    @State private var tookWidePlace = false
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -359,6 +363,14 @@ private struct PhoneStatus: View {
                 AppDetailView(app: model.app(id: id))
                     .zoomTransition(id: id, in: zoom)
             }
+            // Stage Manager and Split View: the app open beside the list when the
+            // window was wide, and the one open here if it widens.
+            .onAppear {
+                guard !tookWidePlace else { return }
+                tookWidePlace = true
+                path = model.phoneStatusPath(keeping: path)
+            }
+            .onChange(of: path) { _, path in model.followPhoneStatus(path: path) }
             #if SCREENSHOTS
             // The screenshots: an app's page, opened as a tap opens it (its own title, no Status search over
             // it: an overlay on the list showed both, apple-loop.md item 1).
@@ -406,7 +418,7 @@ private struct PhoneStatus: View {
         case .search(let said):
             model.search = said
         case .open(let id, let then):
-            path = NavigationPath([id])
+            path = [id]
             if let then, let app = model.app(id: id) {
                 follow(then, on: app, model: model, actions: actions) { linkAsk = $0 }
             }
@@ -529,7 +541,7 @@ private struct SplitDashboard: View {
     @FocusedValue(\.transactions) private var transactionsFocus
     /// The sidebar's choice, kept across launches as the computer keeps each
     /// screen's place (#417). Only the choice is kept, never what it shows.
-    @SceneStorage("sidebar") private var savedSidebar = "apps:all"
+    @SceneStorage(DashboardViewModel.placeKey) private var savedSidebar = "apps:all"
     /// Which Status groups are open (StatusFolds), as on iPhone, and the
     /// computer's for every device (FoldSync).
     @SceneStorage("statusFolds") private var folds = ""
@@ -539,6 +551,8 @@ private struct SplitDashboard: View {
     let computer: ComputerViewModel
     let finances: FinancesViewModel
     @State private var columns: NavigationSplitViewVisibility = .all
+    /// The window's width, which Stage Manager and Split View change.
+    @State private var width: CGFloat = 1194
     @Environment(\.dynamicTypeSize) private var typeSize
     /// A link's action, waiting for its one tap.
     @State private var linkAsk: LinkAsk?
@@ -710,8 +724,12 @@ private struct SplitDashboard: View {
             }
             }
         }
-        // At the largest text, three columns leave each too narrow to read: the sidebar starts hidden.
-        .onChange(of: typeSize.isAccessibilitySize, initial: true) { _, large in columns = large ? .doubleColumn : .all }
+        // Three columns only where they fit: in a narrower window (Stage Manager, Split View, upright) or at the
+        // largest text, the sidebar starts hidden, a tap of its button away.
+        .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width = $0 }
+        .onChange(of: DashboardViewModel.startsWithSidebar(width: width, largeText: typeSize.isAccessibilitySize), initial: true) { _, shown in
+            columns = shown ? .all : .doubleColumn
+        }
         // ⌘2 to ⌘6, as the computer's: the View menu (ScreenCommands).
         .focusedSceneValue(\.screenChoice, ScreenChoice(canSeeFinances: finances.canSeePlan) { screen in
             model.sidebar = screen
@@ -1184,7 +1202,7 @@ struct GroupHeader: View {
         HStack(spacing: 6) {
             Button(action: toggle) {
                 HStack(spacing: 6) {
-                    Image(systemName: "chevron.right")
+                    Image(systemName: "chevron.right").accessibilityHidden(true)
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(.secondary)
                         .rotationEffect(.degrees(open ? 90 : 0))

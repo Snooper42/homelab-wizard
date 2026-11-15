@@ -424,7 +424,7 @@ private struct AlertsCard: View {
                     HStack {
                         Text("Every Alert")
                         Spacer()
-                        Image(systemName: "chevron.forward")
+                        Image(systemName: "chevron.forward").accessibilityHidden(true)
                             .font(.footnote.weight(.semibold))
                             .foregroundStyle(.tertiary)
                     }

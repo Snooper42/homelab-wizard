@@ -34,7 +34,7 @@ struct HoldingTradesSection: View {
                             }
                             Spacer(minLength: 8)
                             Money(value: t.total, currency: currency, finances: finances)
-                            Image(systemName: "chevron.right")
+                            Image(systemName: "chevron.right").accessibilityHidden(true)
                                 .font(.footnote.weight(.semibold))
                                 .foregroundStyle(.tertiary)
                         }

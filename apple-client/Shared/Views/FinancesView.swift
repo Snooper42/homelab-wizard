@@ -242,7 +242,7 @@ private struct SeeAll: View {
     var body: some View {
         HStack(spacing: 3) {
             Text("See All")
-            Image(systemName: "chevron.right").font(.caption.weight(.bold))
+            Image(systemName: "chevron.right").accessibilityHidden(true).font(.caption.weight(.bold))
         }
         .foregroundStyle(Theme.accent)
     }
@@ -317,7 +317,7 @@ private struct CheckingHero: View {
                             .font(.headline)
                             .foregroundStyle(pay.result < 0 ? Theme.danger : Theme.ink)
                             .contentTransition(.numericText())
-                        Image(systemName: "chevron.right")
+                        Image(systemName: "chevron.right").accessibilityHidden(true)
                             .font(.footnote.weight(.semibold))
                             .foregroundStyle(.tertiary)
                     }
@@ -365,7 +365,7 @@ private struct LeftUntilCard: View {
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(Theme.secondaryInk)
                     Spacer(minLength: 8)
-                    Image(systemName: "chevron.right")
+                    Image(systemName: "chevron.right").accessibilityHidden(true)
                         .font(.footnote.weight(.semibold))
                         .foregroundStyle(.tertiary)
                 }
@@ -445,7 +445,7 @@ private struct NetWorthCard: View {
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(Theme.secondaryInk)
                         Spacer()
-                        Image(systemName: "chevron.right")
+                        Image(systemName: "chevron.right").accessibilityHidden(true)
                             .font(.footnote.weight(.semibold))
                             .foregroundStyle(.tertiary)
                     }
@@ -621,7 +621,7 @@ private struct RecentTransactionsCard: View {
                     } label: {
                         HStack(spacing: 4) {
                             Text("\(finances.newTransactionCount) to review")
-                            Image(systemName: "chevron.right").font(.caption.weight(.bold))
+                            Image(systemName: "chevron.right").accessibilityHidden(true).font(.caption.weight(.bold))
                         }
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(.white)
@@ -803,7 +803,7 @@ private struct MoreFinancesCard: View {
         NavigationLink(destination: destination) {
             HStack(spacing: 8) {
                 label()
-                Image(systemName: "chevron.right")
+                Image(systemName: "chevron.right").accessibilityHidden(true)
                     .font(.footnote.weight(.semibold))
                     .foregroundStyle(.tertiary)
             }
@@ -1364,7 +1364,7 @@ private struct FinanceSpendingPage: View {
                                 BudgetBar(share: c.spent / max(spent.first?.spent ?? 1, 0.01), tint: color)
                             }
                         }
-                        Image(systemName: "chevron.right")
+                        Image(systemName: "chevron.right").accessibilityHidden(true)
                             .font(.footnote.weight(.semibold))
                             .foregroundStyle(.tertiary)
                     }
@@ -1936,7 +1936,7 @@ private struct HoldingsCard: View {
                 }
             }
             if line.holding != nil {
-                Image(systemName: "chevron.right")
+                Image(systemName: "chevron.right").accessibilityHidden(true)
                     .font(.footnote.weight(.semibold))
                     .foregroundStyle(.tertiary)
             }
@@ -2292,7 +2292,7 @@ private struct FinanceAccountsPage: View {
                     Text("None").foregroundStyle(Theme.secondaryInk)
                 }
                 if finances.canEditPlan {
-                    Image(systemName: "chevron.right")
+                    Image(systemName: "chevron.right").accessibilityHidden(true)
                         .font(.footnote.weight(.semibold))
                         .foregroundStyle(.tertiary)
                 }
@@ -3077,6 +3077,7 @@ struct TransactionsView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .background(.bar)
                     .onTapGesture { finances.dismissTogetherDone() }
+                    .accessibilityAction(named: Text("Dismiss")) { finances.dismissTogetherDone() }
             }
         }
         #endif

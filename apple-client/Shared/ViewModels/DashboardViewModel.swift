@@ -133,6 +133,31 @@ final class DashboardViewModel {
         selectedAppID = nil
         showsAlertLog = true
     }
+    /// The name the screen is kept under (`SceneStorage`), the same for the
+    /// iPhone's tabs and the iPad's sidebar, so a Stage Manager or Split View
+    /// window that crosses between them keeps its screen.
+    static let placeKey = "sidebar"
+
+    /// Whether the iPad's sidebar starts shown beside the list and the page:
+    /// only where three columns fit (an iPad's whole width in landscape) and
+    /// not at the largest text.
+    nonisolated static func startsWithSidebar(width: CGFloat, largeText: Bool) -> Bool {
+        !largeText && width >= 1000
+    }
+
+    /// What Status's stack on the iPhone's layout opens with: the app open
+    /// beside the list when the window was wide, unless the stack is already going.
+    func phoneStatusPath(keeping path: [AppStatus.ID]) -> [AppStatus.ID] {
+        guard path.isEmpty, sidebar?.row == .status(.all), let id = selectedAppID else { return path }
+        return [id]
+    }
+
+    /// Status's stack on the iPhone's layout changed: the app on top is the
+    /// one beside the list if the window widens.
+    func followPhoneStatus(path: [AppStatus.ID]) {
+        if selectedAppID != path.last { selectedAppID = path.last }
+    }
+
     /// The app whose log is open in a sheet.
     var logsApp: AppStatus?
     /// What's typed in the app list's search field. It goes with the

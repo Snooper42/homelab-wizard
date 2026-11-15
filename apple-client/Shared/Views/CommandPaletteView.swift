@@ -30,7 +30,7 @@ struct CommandPaletteView: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 10) {
-                Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
+                Image(systemName: "magnifyingglass").foregroundStyle(.secondary).accessibilityHidden(true)
                 TextField("Type a command or an app", text: $query)
                     .textFieldStyle(.plain)
                     .font(.title3)
@@ -55,6 +55,11 @@ struct CommandPaletteView: View {
                                     .id(c.id)
                                     .contentShape(Rectangle())
                                     .onTapGesture { press(c) }
+                                    // VoiceOver: one button a row, its name and where it's from, run with a double tap.
+                                    .accessibilityElement(children: .combine)
+                                    .accessibilityAddTraits(.isButton)
+                                    .accessibilityAddTraits(c.id == picked?.id ? .isSelected : [])
+                                    .accessibilityAction { press(c) }
                                     .listRowBackground(c.id == picked?.id ? Theme.accent.opacity(0.18) : Color.clear)
                             }
                         }
