@@ -50,10 +50,11 @@ struct AppResources: Sendable, Equatable {
     /// Docker's memory as it writes it ("312.4MiB", "1.2GiB", "800B", "12.5kB") in bytes.
     static func bytes(_ s: String) -> Int64? {
         let t = s.trimmingCharacters(in: .whitespaces)
-        let units: [(String, Double)] = [("TiB", 1 << 40), ("GiB", 1 << 30), ("MiB", 1 << 20), ("KiB", 1 << 10),
+        let units: [(String, Double)] = [("TiB", 1_099_511_627_776), ("GiB", 1_073_741_824), ("MiB", 1_048_576), ("KiB", 1024),
                                          ("TB", 1e12), ("GB", 1e9), ("MB", 1e6), ("kB", 1e3), ("KB", 1e3), ("B", 1)]
         for (unit, size) in units where t.hasSuffix(unit) {
-            guard let n = Double(t.dropLast(unit.count).trimmingCharacters(in: .whitespaces)), n.isFinite, n >= 0 else { return nil }
+            guard let n = Double(t.dropLast(unit.count).trimmingCharacters(in: .whitespaces)), n.isFinite, n >= 0,
+                  n * size < 9e18 else { return nil }
             return Int64((n * size).rounded())
         }
         return nil

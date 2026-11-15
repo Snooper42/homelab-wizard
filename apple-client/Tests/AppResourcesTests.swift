@@ -39,5 +39,7 @@ struct AppResourcesTests {
         #expect(AppResources.bytes("1GiB") == 1_073_741_824)
         #expect(AppResources.bytes("--") == nil)
         #expect(AppResources.bytes("") == nil)
+        // Too big for a byte count: nothing, rather than a crash.
+        #expect(AppResources.bytes("1e30TiB") == nil)
     }
 }
