@@ -3891,6 +3891,9 @@ private struct HoldingView: View {
             } header: {
                 Text("At Each Read")
             }
+            if finances.canEdit {
+                HoldingTradesSection(holding: holding, account: account, currency: currency, finances: finances)
+            }
         }
         .formStyle(.grouped)
         .themedCanvas()

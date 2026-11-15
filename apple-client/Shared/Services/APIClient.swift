@@ -372,6 +372,34 @@ actor APIClient {
         return try Self.investmentsRead(from: try await send(request, to: endpoint, using: actionSession))
     }
 
+    /// A holding's buys and sales, as Ghostfolio keeps them. It needs the edit level.
+    func financesInvestmentTrades(account: String, symbol: String) async throws -> [InvestmentTrade] {
+        let (request, endpoint) = try callRequest("FinancesInvestmentTrades", [.string(account), .string(symbol)])
+        Log.network.notice("FinancesInvestmentTrades")
+        let data = try await send(request, to: endpoint)
+        do {
+            return try JSONDecoder.homelab().decode(CallEnvelope<[InvestmentTrade]?>.self, from: data).result ?? []
+        } catch {
+            Log.network.error("The buys and sales couldn't be decoded")
+            throw APIError.decoding
+        }
+    }
+
+    /// Changes a buy or sale in Ghostfolio, then reads it again. It needs the edit level, and it's never retried.
+    func financesChangeInvestment(_ trade: InvestmentTrade) async throws -> InvestmentsReadResult {
+        let arg = try JSONDecoder().decode(JSONValue.self, from: JSONEncoder().encode(trade))
+        let (request, endpoint) = try callRequest("FinancesChangeInvestment", [arg])
+        Log.network.notice("FinancesChangeInvestment")
+        return try Self.investmentsRead(from: try await send(request, to: endpoint, using: actionSession))
+    }
+
+    /// Deletes a buy or sale in Ghostfolio, then reads it again. It needs the edit level, and it's never retried.
+    func financesDeleteInvestment(account: String, id: String) async throws -> InvestmentsReadResult {
+        let (request, endpoint) = try callRequest("FinancesDeleteInvestment", [.string(account), .string(id)])
+        Log.network.notice("FinancesDeleteInvestment")
+        return try Self.investmentsRead(from: try await send(request, to: endpoint, using: actionSession))
+    }
+
     private static func investmentsRead(from data: Data) throws -> InvestmentsReadResult {
         do {
             let decoder = JSONDecoder.homelab()

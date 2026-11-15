@@ -8,6 +8,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### New
 
+- **Change or delete a buy in the Homelab app:** a holding's page on Investments lists its **Buys and Sales**; tap one to put its shares, what was paid or its day right, or delete it (asked first). Ghostfolio is read again after.
 - **A running balance in the Homelab app:** in Transactions, with one account picked, what it held (or a card owed) after each day shows under that day's latest transaction, as on the computer.
 - **Select transactions together in the Homelab app:** **Select** on Transactions, pick several, then **Category…** for one category, **Move To…** another account, or **Delete** (asked first), on the iPhone and iPad, at home or away.
 - **Transactions away from home in the Homelab app:** with no signal, add a transaction, change one, set its category or delete it on the iPhone or iPad; it shows at once and waits with the rest (*3 changes wait for the Homelab*, each with Undo), then goes on the computer's newest ledger once it answers. A transaction added away is changed once home, when the computer has given it its id.
