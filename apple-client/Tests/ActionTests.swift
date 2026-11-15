@@ -283,6 +283,42 @@ struct PinnedTests {
 
 @Suite("The sidebar's place")
 struct SidebarPlaceTests {
+    /// Stage Manager and Split View: a window narrowed to the iPhone's tabs, or
+    /// widened to the sidebar, keeps its screen and the app that was open.
+    @Test @MainActor func aWindowCrossingBetweenLayoutsKeepsItsPlace() {
+        let live = LiveEventManager(api: APIClient(keychain: FakeCredentialStore(), protocolClasses: [StubProtocol.self]))
+        let model = DashboardViewModel(api: APIClient(keychain: FakeCredentialStore()), liveEvents: live)
+        // The tabs and the sidebar keep the screen under one name.
+        #expect(DashboardViewModel.placeKey == "sidebar")
+
+        // Wide, Immich open beside Status's list; narrowed, Status's stack opens on it.
+        model.selectedAppID = "immich"
+        #expect(model.phoneStatusPath(keeping: []) == ["immich"])
+        // A stack already going is left as it is.
+        #expect(model.phoneStatusPath(keeping: ["radarr"]) == ["radarr"])
+        // Narrow, back to the list: widened, nothing's beside it.
+        model.followPhoneStatus(path: [])
+        #expect(model.selectedAppID == nil)
+        #expect(model.phoneStatusPath(keeping: []).isEmpty)
+        // Narrow, Radarr opened: widened, Radarr beside the list.
+        model.followPhoneStatus(path: ["radarr"])
+        #expect(model.selectedAppID == "radarr")
+        // Another screen in the sidebar: the iPhone's Status opens on its list.
+        model.sidebar = .backups
+        #expect(model.phoneStatusPath(keeping: []).isEmpty)
+    }
+
+    /// Three columns need the whole width of an iPad in landscape: in a
+    /// narrower window (Stage Manager, Split View, upright) or at the largest
+    /// text, the sidebar starts hidden, a tap of its button away.
+    @Test func theSidebarStartsShownOnlyWhereThreeColumnsFit() {
+        #expect(DashboardViewModel.startsWithSidebar(width: 1194, largeText: false))
+        #expect(DashboardViewModel.startsWithSidebar(width: 1366, largeText: false))
+        #expect(!DashboardViewModel.startsWithSidebar(width: 1194, largeText: true))
+        #expect(!DashboardViewModel.startsWithSidebar(width: 834, largeText: false))
+        #expect(!DashboardViewModel.startsWithSidebar(width: 700, largeText: false))
+    }
+
     /// Every Alert beside the list on the Mac and iPad (#596's gap 4): it
     /// takes the app's place, and picking an app or another screen closes it.
     @Test @MainActor func everyAlertTakesTheAppsPlaceUntilAnotherIsPicked() {

@@ -157,6 +157,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **The iPad in Stage Manager and Split View:** in a narrower window, or upright, the Homelab app starts with its sidebar hidden (a tap of its button away) so the list and the page have room, and a window resized between the iPad's layout and the iPhone's tabs stays on the same screen, with the same app open.
 - **The iPad in landscape with the largest text:** the sidebar starts hidden so the list and the page have room to read (its button shows it), Homelab Wizard's name stays on one line, and Setup uses the whole width instead of half the screen.
 - **The iPad's pointer:** with a trackpad or mouse, Finances' and Backups' cards and an app's round actions light up under the pointer, as a list's rows do.
 - **The iPad uses its width:** beside Finances' home, Bills (or the page you tap) opens wide on the right, every setting opens beside Settings, and Backups uses the whole width in two columns, instead of the right side saying *No App Selected*.
