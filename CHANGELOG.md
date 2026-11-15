@@ -8,6 +8,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### New
 
+- **Import in the Homelab app fixes earlier imports:** a row brought in before as only CREDIT or DEBIT takes its real payee from the file, one with the bank's own words takes the clearer name, and one with no category takes the one the file's row is, rather than any of them coming in twice.
 - **Import in the Homelab app pays planned bills:** a row of a bank's file that plainly pays a planned payment is linked to it (*Looks like Electric, planned $95.00*; change it on the row), so the plan doesn't take it out again; each row's category is guessed as on the computer, and paying a card or moving to savings comes in as a move between your accounts.
 - **Import a bank file in the Homelab app:** Transactions' **⋯ › Import a File** reads a CSV or OFX/QFX from your bank on the iPhone or iPad (never sent anywhere), guesses its columns (change them if it's wrong), skips what's already in, and brings the rest in at once, each payee cleaned up with its last category, away from home too.
 - **Export from the Homelab app:** Finances' **⋯ › Export** shares the year ahead as a spreadsheet (every payday and payment, checking after each day) and the plan as JSON, as the computer's Export makes them, even on a phone that only looks, and away from home, while amounts show.

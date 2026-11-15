@@ -24,6 +24,8 @@ enum BankImport {
         var payment: String? = nil
         var notPlanned = false
         var isSplit = false
+        /// The payee's logo picked by hand.
+        var institution: String? = nil
     }
 
     /// A rule in the plan: for a payee (or, `prefix`, one starting with its words), its name and category.
@@ -36,7 +38,10 @@ enum BankImport {
 
     /// A row of the file, as it would come in.
     struct Found: Sendable, Equatable, Identifiable {
-        enum State: Sendable, Equatable { case comesIn, alreadyIn, noPayee }
+        /// It comes in; it's in already; it has no payee; or it gives a row brought
+        /// in before as only CREDIT or DEBIT its payee (`fixes`), or a clearer name
+        /// for one brought in with the bank's own words (`renames`), by the ledger's id.
+        enum State: Sendable, Equatable { case comesIn, alreadyIn, noPayee, fixes(String), renames(String) }
         let index: Int
         let date: String
         /// Signed as the account sees it.
@@ -86,6 +91,7 @@ enum BankImport {
             k.payment = str(t["payment"])
             if case .bool(true)? = t["notPlanned"] { k.notPlanned = true }
             if case .array(let parts)? = t["splits"], !parts.isEmpty { k.isSplit = true }
+            k.institution = str(t["institution"])
             return k
         }
     }
@@ -156,8 +162,7 @@ enum BankImport {
     /// The same transaction already in the ledger: the bank's own ID on the
     /// account (or a transfer's arriving half's), or else on the account, on
     /// the day, for the amount, to a payee alike (or none on either). A row
-    /// brought in before with only CREDIT or DEBIT as its payee counts too:
-    /// giving it this file's payee is the computer's for now.
+    /// row brought in before with only CREDIT or DEBIT as its payee is fixed instead (`wayOnlyFixes`).
     static func already(date: String, amount: Double, payee: String, bank: String?, account: String, in ledger: [Kept]) -> Bool {
         ledger.contains { q in
             if let bank, q.account == account, q.bank == bank { return true }
@@ -166,7 +171,7 @@ enum BankImport {
             guard q.account == account || arriving else { return false }
             guard q.date == date || (arriving && abs(dayNumber(q.date) - dayNumber(date)) <= pairDays) else { return false }
             guard abs((arriving ? -q.amount : q.amount) - amount) < 0.005 else { return false }
-            return q.payee.isEmpty || payee.isEmpty || BankFile.alike(q.payee, payee) || (arriving && q.toBank != nil) || BankFile.wayOnly(q.payee)
+            return q.payee.isEmpty || payee.isEmpty || BankFile.alike(q.payee, payee) || (arriving && q.toBank != nil)
         }
     }
 
@@ -188,16 +193,29 @@ enum BankImport {
         func lastCategory(_ payee: String) -> String? {
             ledger.last { !$0.payee.isEmpty && !$0.category.isEmpty && $0.payee.lowercased() == payee.lowercased() }?.category
         }
-        return rows.enumerated().map { i, t in
+        // Each payee as a person would write it; a rule's name, or the one the household renamed it to before.
+        let mapped: [(row: BankFile.Row, payee: String, raw: String?, rule: Rule?)] = rows.map { t in
             let said = t.payee.split(whereSeparator: \.isWhitespace).joined(separator: " ")
             let cleaned = clean(t.payee, t.town)
             let raw = !said.isEmpty && said.lowercased() != cleaned.lowercased() ? said : nil
             let rule = ruleFor(rules, cleaned)
-            let payee = rule?.payee ?? raw.flatMap { _ in memory[cleaned.lowercased()] } ?? cleaned
+            return (t, rule?.payee ?? raw.flatMap { _ in memory[cleaned.lowercased()] } ?? cleaned, raw, rule)
+        }
+        let rowsRead = mapped.map { (date: $0.row.date, amount: $0.row.amount, payee: $0.payee, raw: $0.raw) }
+        let fixes = wayOnlyFixes(rowsRead, account: account, ledger: ledger)
+        let renames = renameFixes(rowsRead, account: account, ledger: ledger, skip: fixes)
+        let fixed = Set(fixes.values)
+        let others = ledger.filter { !fixed.contains($0.id) }
+        return mapped.enumerated().map { i, m in
+            let t = m.row, payee = m.payee, raw = m.raw
             let state: Found.State
-            if already(date: t.date, amount: t.amount, payee: payee, bank: t.id, account: account, in: ledger)
-                || (raw.map { already(date: t.date, amount: t.amount, payee: $0, bank: t.id, account: account, in: ledger) } ?? false)
-                || noted(date: t.date, amount: t.amount, said: raw ?? payee, account: account, in: ledger) {
+            if let id = fixes[i] {
+                state = .fixes(id)
+            } else if let id = renames[i] {
+                state = .renames(id)
+            } else if already(date: t.date, amount: t.amount, payee: payee, bank: t.id, account: account, in: others)
+                || (raw.map { already(date: t.date, amount: t.amount, payee: $0, bank: t.id, account: account, in: others) } ?? false)
+                || noted(date: t.date, amount: t.amount, said: raw ?? payee, account: account, in: others) {
                 state = .alreadyIn
             } else if payee.trimmingCharacters(in: .whitespaces).isEmpty {
                 state = .noPayee
@@ -205,8 +223,109 @@ enum BankImport {
                 state = .comesIn
             }
             return Found(index: i, date: t.date, amount: t.amount, payee: payee, raw: raw, memo: t.memo, bank: t.id,
-                         category: rule?.category ?? (payee.isEmpty ? nil : lastCategory(payee)), state: state, kind: t.kind)
+                         category: m.rule?.category ?? (payee.isEmpty ? nil : lastCategory(payee)), state: state, kind: t.kind)
         }
+    }
+
+    // MARK: Rows brought in before (import 3 of 4)
+
+    /// Rows brought in before with only CREDIT or DEBIT as their payee, each
+    /// matched to the row of this file it was (on the account, the day, the
+    /// amount, with a real payee): by the file's row, the ledger's id. Each ledger row once.
+    static func wayOnlyFixes(_ rows: [(date: String, amount: Double, payee: String, raw: String?)], account: String,
+                             ledger: [Kept]) -> [Int: String] {
+        var out: [Int: String] = [:], used = Set<String>()
+        for (i, t) in rows.enumerated() where !t.payee.isEmpty && !BankFile.wayOnly(t.payee) {
+            if let q = ledger.first(where: { !used.contains($0.id) && $0.account == account && $0.to == nil && $0.date == t.date
+                && abs($0.amount - t.amount) < 0.005 && BankFile.wayOnly($0.payee) }) {
+                used.insert(q.id)
+                out[i] = q.id
+            }
+        }
+        return out
+    }
+
+    /// Rows brought in before whose payee is only the bank's own words, which
+    /// reads better now: only one on the account, the day and the amount, its
+    /// note holding this row's wording, every word of its payee among that
+    /// wording's (a payee typed in by hand is never touched). Rows in `skip` are left out.
+    static func renameFixes(_ rows: [(date: String, amount: Double, payee: String, raw: String?)], account: String,
+                            ledger: [Kept], skip: [Int: String]) -> [Int: String] {
+        var out: [Int: String] = [:], used = Set(skip.values)
+        for (i, t) in rows.enumerated() where skip[i] == nil && !t.payee.isEmpty {
+            guard let raw = t.raw else { continue }
+            let rawWords = Set(words(raw))
+            if let q = ledger.first(where: { !used.contains($0.id) && $0.account == account && $0.to == nil && $0.date == t.date
+                && abs($0.amount - t.amount) < 0.005 && !$0.payee.isEmpty && $0.payee.lowercased() != t.payee.lowercased()
+                && $0.note.contains(raw) && words($0.payee).allSatisfy { rawWords.contains($0) } }) {
+                used.insert(q.id)
+                out[i] = q.id
+            }
+        }
+        return out
+    }
+
+    /// Rows brought in before with no category that take one now: the one the
+    /// file's row is, matched by its wording or a payee alike. By the ledger's id.
+    static func recategorized(_ found: [Found], account: String, ledger: [Kept], plan: JSONValue?, view: JSONValue?,
+                              logos: PayeeLogos) -> [String: String] {
+        let payments = BankGuess.payments(in: plan).filter { $0.card == nil }
+        let accounts = BankGuess.accounts(in: plan)
+        let categories = BankGuess.categories(in: view)
+        guard !categories.isEmpty else { return [:] }
+        func lastCategory(_ payee: String) -> String? {
+            ledger.last { !$0.payee.isEmpty && !$0.category.isEmpty && $0.payee.lowercased() == payee.lowercased() }?.category
+        }
+        var out: [String: String] = [:]
+        for f in found {
+            switch f.state {
+            case .alreadyIn, .renames: break
+            default: continue
+            }
+            guard let q = ledger.first(where: { q in
+                out[q.id] == nil && q.account == account && q.to == nil && q.category.isEmpty && !q.isSplit && q.date == f.date
+                    && abs(q.amount - f.amount) < 0.005
+                    && ((f.raw.map { q.note.contains($0) } ?? false) || (!q.payee.isEmpty && !f.payee.isEmpty && BankFile.alike(q.payee, f.payee)))
+            }) else { continue }
+            var payee = q.payee
+            if case .renames = f.state { payee = f.payee }
+            let g = BankGuess.guessFor(payee: payee, amount: q.amount, raw: nil, kind: f.kind, into: account, accounts: accounts,
+                                       categories: categories, last: payee.isEmpty ? nil : lastCategory(payee),
+                                       pays: payments.first { $0.id == q.payment }, logos: logos)
+            if let c = g.category { out[q.id] = c }
+        }
+        return out
+    }
+
+    /// What's changed on the rows brought in before: a CREDIT or DEBIT row
+    /// takes its payee, the bank's wording as its note, the payee's last
+    /// category and logo where it has none, and the bank's ID; one with the
+    /// bank's own words the clearer name; one with no category the one guessed.
+    static func fixes(_ found: [Found], recategorized: [String: String], ledger: [Kept]) -> [(id: String, fix: LedgerFix)] {
+        func lastCategory(_ payee: String) -> String? {
+            ledger.last { !$0.payee.isEmpty && !$0.category.isEmpty && $0.payee.lowercased() == payee.lowercased() }?.category
+        }
+        func lastLogo(_ payee: String) -> String? {
+            ledger.last { !$0.payee.isEmpty && $0.institution != nil && $0.payee.lowercased() == payee.lowercased() }?.institution
+        }
+        var out: [(id: String, fix: LedgerFix)] = []
+        var done = Set<String>()
+        for f in found {
+            switch f.state {
+            case .fixes(let id):
+                out.append((id, LedgerFix(payee: f.payee.isEmpty ? nil : f.payee, note: f.note, category: lastCategory(f.payee),
+                                          institution: lastLogo(f.payee), bank: f.bank)))
+                done.insert(id)
+            case .renames(let id):
+                out.append((id, LedgerFix(payee: f.payee, category: recategorized[id])))
+                done.insert(id)
+            default: break
+            }
+        }
+        for (id, category) in recategorized.sorted(by: { $0.key < $1.key }) where !done.contains(id) {
+            out.append((id, LedgerFix(category: category)))
+        }
+        return out
     }
 
     /// Each row that comes in with what it plainly pays and what it's for

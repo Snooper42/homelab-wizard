@@ -115,3 +115,56 @@ struct BankGuessTests {
         #expect(again.map(\.state) == [.alreadyIn, .alreadyIn])
     }
 }
+
+/// Rows brought in before, fixed by a file read again (importData.ts's
+/// `wayOnlyFixes`, `renameFixes`, and the Import form's recategorized), with
+/// the web's own answers for the same made-up rows.
+@Suite("Rows brought in before")
+struct BankFixTests {
+    private let ledger: JSONValue = .object(["transactions": .array([
+        .object(["id": .string("x"), "account": .string("chk"), "date": .string("2026-09-01"), "amount": .number(-9),
+                 "payee": .string("Example Bakery"), "category": .string("Food"), "institution": .string("none")]),
+        .object(["id": .string("w1"), "account": .string("chk"), "date": .string("2026-10-04"), "amount": .number(-12.5),
+                 "payee": .string("DEBIT")]),
+        .object(["id": .string("r1"), "account": .string("chk"), "date": .string("2026-10-06"), "amount": .number(-250),
+                 "payee": .string("Royal Caribbean Ad_payment Ppd Id"), "note": .string("ROYAL CARIBBEAN AD_PAYMENT PPD ID: 99")]),
+        .object(["id": .string("c1"), "account": .string("chk"), "date": .string("2026-10-07"), "amount": .number(-80),
+                 "payee": .string("Costco")]),
+    ])])
+    private let plan: JSONValue = .object(["accounts": .array([.object(["id": .string("chk"), "name": .string("Checking"), "kind": .string("checking")])])])
+    private let view: JSONValue = .object(["categories": .array(["Groceries", "Travel", "Food"].map { .object(["name": .string($0)]) })])
+    private let rows = [
+        BankFile.Row(date: "2026-10-04", amount: -12.5, payee: "EXAMPLE BAKERY"),
+        BankFile.Row(date: "2026-10-06", amount: -250, payee: "ROYAL CARIBBEAN AD_PAYMENT PPD ID: 99"),
+        BankFile.Row(date: "2026-10-07", amount: -80, payee: "COSTCO"),
+    ]
+
+    @Test func eachMatchedToWhatItWas() throws {
+        let logos = PayeeLogos.shared
+        let kept = BankImport.kept(in: ledger)
+        let found = BankImport.found(rows, account: "chk", ledger: kept, rules: []) { logos.cleanPayee(logos.withoutTown($0, town: $1)) }
+        #expect(found.map(\.state) == [.fixes("w1"), .renames("r1"), .alreadyIn])
+        #expect(found[1].payee == "Royal Caribbean")
+        let recat = BankImport.recategorized(found, account: "chk", ledger: kept, plan: plan, view: view, logos: logos)
+        #expect(recat == ["c1": "Groceries"])
+        let fixes = BankImport.fixes(found, recategorized: recat, ledger: kept)
+        #expect(fixes.map(\.id) == ["w1", "r1", "c1"])
+        #expect(fixes[0].fix == LedgerFix(payee: "Example Bakery", category: "Food", institution: "none"))
+
+        var fixed = ledger
+        for (id, fix) in fixes { fixed = try #require(LedgerEdit.fixing(id: id, with: fix, in: fixed)) }
+        guard case .array(let all)? = fixed["transactions"] else { Issue.record("no transactions"); return }
+        #expect(all[1]["payee"] == .string("Example Bakery") && all[1]["category"] == .string("Food"))
+        #expect(all[2]["payee"] == .string("Royal Caribbean") && all[2]["note"] == .string("ROYAL CARIBBEAN AD_PAYMENT PPD ID: 99"))
+        #expect(all[3]["payee"] == .string("Costco") && all[3]["category"] == .string("Groceries"))
+        // A category it has is kept.
+        let kept2 = try #require(LedgerEdit.fixing(id: "x", with: LedgerFix(category: "Groceries"), in: ledger))
+        guard case .array(let all2)? = kept2["transactions"] else { return }
+        #expect(all2[0]["category"] == .string("Food"))
+        // Read again, nothing is left to fix.
+        let again = BankImport.found(rows, account: "chk", ledger: BankImport.kept(in: fixed), rules: []) {
+            logos.cleanPayee(logos.withoutTown($0, town: $1))
+        }
+        #expect(again.map(\.state) == [.alreadyIn, .alreadyIn, .alreadyIn])
+    }
+}

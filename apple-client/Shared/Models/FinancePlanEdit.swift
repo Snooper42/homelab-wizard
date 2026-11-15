@@ -323,6 +323,16 @@ struct NewTransaction: Sendable, Equatable, Codable {
     var toBank: String? = nil
 }
 
+/// What a bank's file gives a row brought in before (import 3 of 4): a
+/// payee in place of its own, and the rest only where it has none.
+struct LedgerFix: Sendable, Equatable, Codable {
+    var payee: String? = nil
+    var note: String? = nil
+    var category: String? = nil
+    var institution: String? = nil
+    var bank: String? = nil
+}
+
 /// Changes to the ledger, made on the ledger exactly as the computer sent
 /// it, for the same reason as `FinancePlanEdit`. The computer gives the
 /// new transaction its id and checks it against the plan.
@@ -338,6 +348,34 @@ enum LedgerEdit {
         if t.payee.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { return "Say who was paid, or who paid." }
         if t.payee.count > 200 || t.note.count > 1000 || t.category.count > 100 { return "That's too long." }
         return nil
+    }
+
+    /// `ledger` with the transaction `id` given what a bank's file says of
+    /// it: its payee (but a transfer's), and a note, category, logo and the
+    /// bank's ID only where it has none; everything else it has kept. Nil for
+    /// an unknown id, or a split one whose category is asked for.
+    static func fixing(id: String, with fix: LedgerFix, in ledger: JSONValue) -> JSONValue? {
+        guard !id.isEmpty, case .object(var root) = ledger, case .array(var all)? = root["transactions"],
+              let index = all.firstIndex(where: { $0["id"] == .string(id) }), case .object(var entry) = all[index] else { return nil }
+        func empty(_ key: String) -> Bool {
+            if case .string(let v)? = entry[key] { return v.trimmingCharacters(in: .whitespaces).isEmpty }
+            return true
+        }
+        func fill(_ key: String, _ value: String?, limit: Int) {
+            guard let v = value?.trimmingCharacters(in: .whitespacesAndNewlines), !v.isEmpty, empty(key) else { return }
+            entry[key] = .string(String(v.prefix(limit)))
+        }
+        if let payee = fix.payee?.trimmingCharacters(in: .whitespacesAndNewlines), !payee.isEmpty {
+            entry["payee"] = .string(String(payee.prefix(200)))
+        }
+        fill("note", fix.note, limit: 1000)
+        if fix.category != nil, case .array(let parts)? = entry["splits"], !parts.isEmpty { return nil }
+        if empty("to") { fill("category", fix.category, limit: 100) }
+        fill("institution", fix.institution, limit: 100)
+        fill("bank", fix.bank, limit: 200)
+        all[index] = .object(entry)
+        root["transactions"] = .array(all)
+        return .object(root)
     }
 
     /// `ledger` with the transaction `id` linked to the planned payment
