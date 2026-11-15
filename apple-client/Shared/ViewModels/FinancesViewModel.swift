@@ -704,6 +704,29 @@ final class FinancesViewModel {
         }
     }
 
+    // MARK: Export (Parity gap 5, the computer's F18)
+
+    /// The plan and the year ahead, as files, from what was last read (live
+    /// or kept for offline); none before Finances are read, while amounts are
+    /// hidden, or for private ones (those export on their own pages).
+    func exportFiles() -> [ExportFile] {
+        guard !isPrivate, FinanceExport.offered(amountsShown: amountsShown, hiddenByPlan: amountsHiddenByPlan),
+              let answer = answers.plan ?? kept?.plan.answer,
+              let envelope = try? JSONDecoder().decode(JSONValue.self, from: answer),
+              let view = envelope["result"], let plan = view["plan"]
+        else { return [] }
+        let today: String = { if case .string(let t)? = view["today"] { return t }; return FinancePlanEdit.todayString() }()
+        var out: [ExportFile] = []
+        out.append(ExportFile(title: "The Year Ahead (Spreadsheet)", name: FinanceExport.aheadName(today),
+                              data: Data(FinanceExport.aheadCSV(view: view).utf8)))
+        var bare = plan
+        if case .object(var o) = bare { o.removeValue(forKey: "rev"); bare = .object(o) }
+        if let json = FinanceExport.planJSON(bare) {
+            out.append(ExportFile(title: "The Plan (JSON)", name: FinanceExport.planName(today), data: json))
+        }
+        return out
+    }
+
     // MARK: A holding's buys and sales (Parity gap 5: Change or Delete a buy)
 
     /// The buys and sales of `symbol` in `account`, newest first, or why they couldn't be read.

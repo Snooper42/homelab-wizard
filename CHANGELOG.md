@@ -8,6 +8,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### New
 
+- **Export from the Homelab app:** Finances' **⋯ › Export** shares the year ahead as a spreadsheet (every payday and payment, checking after each day) and the plan as JSON, as the computer's Export makes them, even on a phone that only looks, and away from home, while amounts show.
 - **Change or delete a buy in the Homelab app:** a holding's page on Investments lists its **Buys and Sales**; tap one to put its shares, what was paid or its day right, or delete it (asked first). Ghostfolio is read again after.
 - **A running balance in the Homelab app:** in Transactions, with one account picked, what it held (or a card owed) after each day shows under that day's latest transaction, as on the computer.
 - **Select transactions together in the Homelab app:** **Select** on Transactions, pick several, then **Category…** for one category, **Move To…** another account, or **Delete** (asked first), on the iPhone and iPad, at home or away.
