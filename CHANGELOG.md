@@ -155,6 +155,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **The iPad in landscape with the largest text:** the sidebar starts hidden so the list and the page have room to read (its button shows it), Homelab Wizard's name stays on one line, and Setup uses the whole width instead of half the screen.
 - **The iPad's pointer:** with a trackpad or mouse, Finances' and Backups' cards and an app's round actions light up under the pointer, as a list's rows do.
 - **The iPad uses its width:** beside Finances' home, Bills (or the page you tap) opens wide on the right, every setting opens beside Settings, and Backups uses the whole width in two columns, instead of the right side saying *No App Selected*.
 - **Finances away from home in the Homelab app are today's:** with no signal, or the Homelab not answering, the iPhone and iPad work out what's due, what's left and each pay period from today, with the computer's own Finances code, instead of showing them as they were when last read.
