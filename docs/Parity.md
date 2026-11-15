@@ -119,7 +119,7 @@ Each phone sees Finances at the level it was paired with: none, the money card, 
 | Add a payment, an account, a goal; money that comes in from someone | yes | yes (Finances to change) | partly: an account, and a payment (**+** on Bills and Recurring: name, kind, amount and about this much, how often (not twice a month or with each paycheck), next on, the account it comes out of), and a goal (**+** on Goals: name, what it needs, by a day or whenever, a share of one account); not money from someone, or a goal over several accounts | partly, as the iPhone | `SaveFinances` |
 | Transactions: list, search, filters | yes | yes | yes | yes | `FinancesLedger` |
 | Add, change, delete a transaction | yes | yes | yes, Face ID | yes, ⌥⌘N adds one | `SaveFinancesLedger` |
-| Select transactions together (delete, one category, Move to…) | yes | yes | gap | gap | |
+| Select transactions together (delete, one category, Move to…) | yes | yes | yes: **Select** on Transactions, then Category…, Move To… or Delete for each that can take it (a transfer or split one is changed on the computer), offline too | yes, as the iPhone | `SaveFinancesLedger` |
 | A running balance for one account | yes | yes | gap | gap | |
 | Receipts: open one, add one | yes | yes; a look-only phone opens them | yes; a photo is stripped of its location | yes | `FinancesReceipt`, `SaveFinancesReceipt` |
 | Import a bank file, with its categories; Rules (**Always do this for "…"**) | yes | yes | gap | gap | |
@@ -212,7 +212,7 @@ The cells marked *gap*, gathered, each with what closing it takes (S a few hours
 2. ~~**iPad and Mac app: What was done.**~~ **Closed (#606):** an app's page beside Status's list has its own navigation stack, so More About, Recently Done and Everything That Was Done open in it.
 3. ~~**Every alert: Snooze… on an open alert**~~ **Closed:** on every device, for an alert whose watchdog check still fails (`snoozable`), with the Watchdog card's own Snooze….
 4. ~~**iPad and Mac app: Every alert from the split view's list.**~~ **Closed (#606):** **Every Alert** opens in the detail column, in the app's place (`DashboardViewModel.openAlertLog`), until an app or another screen is picked.
-5. **iPhone Finances: Select together, a running balance, Change or Delete a buy, Export, import and Rules** (a payment and a goal: done, Nov 14). Each its own piece; import and Rules are the largest. M each, L for import.
+5. **iPhone Finances: a running balance, Change or Delete a buy, Export, import and Rules** (a payment, a goal and Select together: done, Nov 14). Each its own piece; import and Rules are the largest. M each, L for import.
 6. ~~**The phone's page: Settings and Setup's facts**~~ **Closed:** Settings on the phone's page lists the settings a phone may change (`phoneSettings`), saved where it may make changes, with This machine's facts; none on a wall screen.
 7. **Memory and processor, disk per app, Explain these logs** on every phone: new phone calls first (`Usage`, `Storage`, `ExplainLogs`), each read-only. M.
 8. ~~**The Mac app's Dock badge and menu bar item.**~~ **Dropped:** the Mac version of the Homelab app was removed (Nov 12, 2026); on a Mac, Homelab Wizard is the way in, with its own menu bar item.

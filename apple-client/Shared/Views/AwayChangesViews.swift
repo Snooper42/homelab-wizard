@@ -91,6 +91,9 @@ func awayWords(_ change: LedgerChange, finances: FinancesViewModel) -> String {
     case .update(_, let t): return "Changed \(t.payee.trimmingCharacters(in: .whitespaces))"
     case .category(let id, let to): return to.isEmpty ? "\(payee(id)): no category" : "\(payee(id)): \(to)"
     case .delete(let id): return "Deleted \(payee(id))"
+    case .move(let id, let to):
+        let name = finances.plan?.plan.accounts.first { $0.id == to }?.name ?? "another account"
+        return "\(payee(id)): moved to \(name)"
     }
 }
 

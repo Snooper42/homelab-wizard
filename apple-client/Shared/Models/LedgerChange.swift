@@ -11,6 +11,7 @@ enum LedgerChange: Codable, Sendable, Equatable {
     case update(id: String, NewTransaction)
     case category(id: String, to: String)
     case delete(id: String)
+    case move(id: String, to: String)
 
     /// `ledger` with this change made, or nil when it can't be. `accounts`
     /// are the plan's, for a transaction's account.
@@ -20,6 +21,7 @@ enum LedgerChange: Codable, Sendable, Equatable {
         case .update(let id, let t): LedgerEdit.updating(id: id, with: t, accounts: accounts, in: ledger)
         case .category(let id, let to): LedgerEdit.settingCategory(id: id, to: to, in: ledger)
         case .delete(let id): LedgerEdit.removing(id: id, from: ledger)
+        case .move(let id, let to): LedgerEdit.moving(id: id, to: to, accounts: accounts, in: ledger)
         }
     }
 
@@ -27,7 +29,7 @@ enum LedgerChange: Codable, Sendable, Equatable {
     var transaction: String? {
         switch self {
         case .add: nil
-        case .update(let id, _), .category(let id, _), .delete(let id): id
+        case .update(let id, _), .category(let id, _), .delete(let id), .move(let id, _): id
         }
     }
 
@@ -44,6 +46,8 @@ enum LedgerChange: Codable, Sendable, Equatable {
             out.removeAll { if case .update(let other, _) = $0 { return other == id }; return false }
         case .category:
             out.removeAll { if case .category(let other, _) = $0 { return other == id }; return false }
+        case .move:
+            out.removeAll { if case .move(let other, _) = $0 { return other == id }; return false }
         case .add:
             break
         }
