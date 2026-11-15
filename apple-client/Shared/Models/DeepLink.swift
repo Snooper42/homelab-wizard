@@ -41,6 +41,26 @@ enum DeepLink: Equatable, Sendable {
     /// Finances' own pages a link may open.
     enum FinancePage: String, Sendable, CaseIterable {
         case transactions, budgets, bills, accounts, investments, goals, recurring, spending, inbox, cashflow, review
+
+        /// The Finances menu's pages, in order: ⌥⌘1 to ⌥⌘8 (iPad with a keyboard).
+        static let menuOrder: [FinancePage] = [.transactions, .bills, .budgets, .goals, .investments, .accounts, .spending, .cashflow]
+
+        /// Its name, as its page's title.
+        var title: String {
+            switch self {
+            case .transactions: "Transactions"
+            case .budgets: "Budgets"
+            case .bills: "Bills"
+            case .accounts: "Accounts"
+            case .investments: "Investments"
+            case .goals: "Goals"
+            case .recurring: "Recurring"
+            case .spending: "Spending"
+            case .inbox: "Inbox"
+            case .cashflow: "Cash Flow"
+            case .review: "Month in Review"
+            }
+        }
     }
 
     static let scheme = "homelab"

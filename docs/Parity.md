@@ -199,6 +199,7 @@ Each phone sees Finances at the level it was paired with: none, the money card, 
 | Feature | Computer | Phone's page | iPhone | iPad | Phone calls |
 |---|---|---|---|---|---|
 | A screen's key (⌘2 to ⌘6, Ctrl on Windows and Linux) | yes | on purpose: tabs at the bottom | on purpose: tabs | yes | |
+| Finances' pages and Import from the keyboard | no: its tabs and Import button, with no keys of their own | on purpose: no keyboard | on purpose | yes: the Finances menu, ⌥⌘1 to ⌥⌘8 for its pages (as a link opens them), ⇧⌘I for Import a File on Transactions | |
 | Type a command (⌘K) and the sheet of shortcuts (?) | yes | on purpose: no keyboard | on purpose | gap: a hardware keyboard has the menus' shortcuts, no palette | |
 | Back and Forward between screens and their tabs (⌘[ ⌘], mouse buttons, a swipe; Finances' and Tidy Up's tabs are steps too) | yes | on purpose: tabs at the bottom | yes, the system's Back | yes | |
 | Right-click the sidebar for a screen's own menu | yes ([Host](<Host.md>): the Mac's menus differ) | on purpose | on purpose | partly: a right-click menu on an app's row | |

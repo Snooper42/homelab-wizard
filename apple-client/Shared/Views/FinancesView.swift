@@ -3097,6 +3097,8 @@ struct TransactionsView: View {
         .sheet(isPresented: $importing) {
             ImportFileView(finances: finances)
         }
+        // ⇧⌘I in the Finances menu, while Transactions is in front.
+        .focusedSceneValue(\.transactions, finances.canAddTransactions ? TransactionsFocus { importing = true } : nil)
         .sheet(isPresented: $showingRules) {
             RulesView(finances: finances)
         }

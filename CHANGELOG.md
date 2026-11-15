@@ -8,6 +8,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### New
 
+- **A Finances menu on the iPad:** with a keyboard, ⌥⌘1 to ⌥⌘8 open Transactions, Bills, Budgets, Goals, Investments, Accounts, Spending and Cash Flow, and ⇧⌘I imports a bank's file on Transactions (hold ⌘ to see them).
 - **A month to print from the Homelab app:** Finances' **⋯ › Export** has **This Month** and **Next Month (to Print)**: each day's paydays and payments with checking after, and each paycheck's in, out, saved and left, as a PDF to print or keep.
 - **Rules in the Homelab app:** change a transaction's payee or category and turn on **Always do this for…** to make a rule every import follows (and change the ones already in); Transactions' **⋯ › Rules** lists them to change or swipe away.
 - **Import in the Homelab app fixes earlier imports:** a row brought in before as only CREDIT or DEBIT takes its real payee from the file, one with the bank's own words takes the clearer name, and one with no category takes the one the file's row is, rather than any of them coming in twice.
