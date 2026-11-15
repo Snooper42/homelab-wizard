@@ -71,7 +71,7 @@ As main adds phone-facing features to the companion, they're mirrored here (the 
 
 ## What it does
 
-It's laid out as Homelab Wizard is on the computer: the same screens, in the same order and with the same names (Status, Backups, Finances, Setup, Settings), in a sidebar on the iPad with Homelab Wizard's name atop it, and as tabs on iPhone. On the iPad, a screen's page opens wide on the right beside its list (the owner's pick, Nov 15): Status's app page, Finances' pages (Bills until another is tapped), every setting beside Settings, and what Backups' sections open. ⌘2 to ⌘6 pick them, the same numbers as the computer's. Choose apps and Tidy Up are on the computer only, since a phone can't reach them yet.
+It's laid out as Homelab Wizard is on the computer: the same screens, in the same order and with the same names (Status, Backups, Finances, Setup, Settings), in a sidebar on the iPad with Homelab Wizard's name atop it, and as tabs on iPhone. On the iPad, a screen's page opens wide on the right beside its list (the owner's pick, Nov 15): Status's app page, Finances' pages (Bills until another is tapped), and every setting beside Settings; Backups across the whole width beside the sidebar, its More pages opening over it. ⌘2 to ⌘6 pick them, the same numbers as the computer's. Choose apps and Tidy Up are on the computer only, since a phone can't reach them yet.
 
 | | iPhone | iPad |
 |---|---|---|
