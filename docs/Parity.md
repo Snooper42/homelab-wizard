@@ -62,7 +62,7 @@ What a phone may do also depends on how it was paired, on every phone (the phone
 | **Every alert…**: the 90 days the computer kept | yes | yes | yes | yes: **Every Alert** on Recent Alerts opens beside the list, in the app's place | `AlertLog` |
 | **Snooze…** on an open alert of Every alert (its watchdog check still fails) | yes | yes (allowed changes) | yes, Face ID | yes | `SnoozeCheck` |
 | Storage card (the disk and each app's share) | yes | on purpose for now: not a phone card | on purpose for now | on purpose for now | |
-| Memory and processor per app | yes | gap: `Usage` isn't a phone call | gap | gap | |
+| Memory and processor per app | yes | gap: the page doesn't show the card yet, though `StatusBoard` serves it (`usage`) | yes: on an app's page while it runs, Memory and Processor (`AppResources`, the `usage` card) | yes, as the iPhone | `StatusBoard` |
 | An app that keeps crashing (last crash) | yes | partly: the row says so, no crash card | partly: the same | partly | |
 | The last Status while the computer can't be reached | on purpose: it's the computer | yes, over HTTPS | on purpose: the app keeps nothing on the device | on purpose | |
 | Away mode (the apps on the internet, when nothing answers) | on purpose | on purpose | yes | yes | |
@@ -78,8 +78,8 @@ What a phone may do also depends on how it was paired, on every phone (the phone
 | Its week (uptime and outages) | yes | yes | yes | yes | |
 | Its backup (last run, the copy, restore test, Back up now) | yes | yes; Back up now with allowed changes | yes | yes | |
 | Its logs (filter, errors in colour, Follow) | yes | yes | yes | yes, with ⌥⌘L | `Logs` |
-| Explain these logs (the local AI) | yes | gap: `ExplainLogs` isn't a phone call | gap | gap | |
-| Memory and disk it uses; who in the household uses it | yes | gap: `Usage`, `Storage`, `People` aren't phone calls | gap | gap | |
+| Explain these logs (the local AI) | yes | gap: the page has no button for it yet | yes: the log's **⋯ › Explain This Log**, the last 200 lines redacted on the computer and read by its own Ollama; not on a wall screen or a member's phone | yes, as the iPhone | `ExplainLogs` |
+| Memory and disk it uses; who in the household uses it | yes | gap: `People` isn't a phone call | partly: Memory and Disk on its page (the `usage` and `storage` cards; a phone's storage card carries each app's folder, never whose photos take what: `phoneStorage`); not who uses it | partly, as the iPhone | `StatusBoard` |
 | Dozzle's live logs | yes | on purpose: kept to the computer (docs/Security.md, L1) | on purpose | on purpose | |
 | Its settings: nightly updates (and Only on Sundays), alerts, pin | yes | yes (allowed changes) | yes, Face ID | yes | `SetAppSetting` |
 | **Reach it away from home** (a public app) | yes | yes (allowed changes) | yes, Face ID | yes | `SetAppSetting` |
@@ -216,7 +216,7 @@ The cells marked *gap*, gathered, each with what closing it takes (S a few hours
 4. ~~**iPad and Mac app: Every alert from the split view's list.**~~ **Closed (#606):** **Every Alert** opens in the detail column, in the app's place (`DashboardViewModel.openAlertLog`), until an app or another screen is picked.
 5. ~~**iPhone Finances: what the computer's Finances does that the app didn't.**~~ **Closed, Nov 15:** a payment, a goal, Select together, a running balance, Change or Delete a buy, Export (with a month to print), importing a bank's file (links, guesses, fixes) and Rules.
 6. ~~**The phone's page: Settings and Setup's facts**~~ **Closed:** Settings on the phone's page lists the settings a phone may change (`phoneSettings`), saved where it may make changes, with This machine's facts; none on a wall screen.
-7. **Memory and processor, disk per app, Explain these logs** on every phone: new phone calls first (`Usage`, `Storage`, `ExplainLogs`), each read-only. M.
+7. ~~**Memory and processor, disk per app, Explain these logs** on every phone.~~ **Closed in the app, Nov 15:** the `usage` and `storage` cards come to the phone through `StatusBoard` (the storage card without whose photos take what), and `ExplainLogs` is a phone call. The phone's page shows none of them yet.
 8. ~~**The Mac app's Dock badge and menu bar item.**~~ **Dropped:** the Mac version of the Homelab app was removed (Nov 12, 2026); on a Mac, Homelab Wizard is the way in, with its own menu bar item.
 9. ~~**A command palette on the iPad.**~~ **Closed, Nov 15:** ⌘K, as the computer's. (With it, the iPad's wide layout: pages open on the right beside a screen's list, and Backups across the whole width in two columns.)
 

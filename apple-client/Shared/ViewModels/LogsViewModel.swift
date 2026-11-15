@@ -39,6 +39,12 @@ final class LogsViewModel {
     /// How often Follow reads the log again.
     static let followEvery: Duration = .seconds(4)
 
+    /// Explain This Log: what the computer's model made of the last 200
+    /// lines. Kept only here, like the log.
+    private(set) var explanation: LogExplanation?
+    private(set) var explaining = false
+    private(set) var explainError: String?
+
     @ObservationIgnored private let api: APIClient
     @ObservationIgnored private var generation = 0
 
@@ -105,6 +111,26 @@ final class LogsViewModel {
             Log.ui.error("Logs failed: \(apiError.logName, privacy: .public)")
             self.error = apiError.errorDescription
         }
+    }
+
+    /// Asks the computer's model what the last 200 lines say. One at a time.
+    func explain() async {
+        guard !explaining else { return }
+        explaining = true
+        explainError = nil
+        defer { explaining = false }
+        do {
+            explanation = try await api.explainLogs(appID: app.id)
+        } catch {
+            let apiError = APIError.from(error)
+            Log.ui.error("Explain failed: \(apiError.logName, privacy: .public)")
+            explainError = apiError.errorDescription
+        }
+    }
+
+    func closeExplanation() {
+        explanation = nil
+        explainError = nil
     }
 
     /// Splits the log into lines for display. Control characters are

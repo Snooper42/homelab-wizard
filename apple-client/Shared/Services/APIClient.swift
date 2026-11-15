@@ -210,6 +210,20 @@ actor APIClient {
         return try await call("Logs", [.string(appID), .number(Double(count))], as: String.self)
     }
 
+    /// What the app's last 200 lines say, in plain words, from the computer's
+    /// own Ollama. Writing it can take a couple of minutes, so it goes on the
+    /// long-timeout session. Not on a wall screen or a member's phone.
+    func explainLogs(appID: String) async throws -> LogExplanation {
+        guard AppStatus.isValidID(appID) else { throw APIError.invalidAppID }
+        let (request, endpoint) = try callRequest("ExplainLogs", [.string(appID)])
+        let data = try await send(request, to: endpoint, using: actionSession)
+        do {
+            return try JSONDecoder.homelab().decode(CallEnvelope<LogExplanation>.self, from: data).result
+        } catch {
+            throw APIError.decoding
+        }
+    }
+
     // MARK: The computer
 
     func host() async throws -> HostInfo {

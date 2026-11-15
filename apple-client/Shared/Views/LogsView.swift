@@ -5,6 +5,7 @@ import SwiftUI
 struct LogsView: View {
     @State private var model: LogsViewModel
     @Environment(\.dismiss) private var dismiss
+    @State private var explainShown = false
 
     init(app: AppStatus, api: APIClient) {
         _model = State(initialValue: LogsViewModel(app: app, api: api))
@@ -72,12 +73,23 @@ struct LogsView: View {
                         } label: {
                             Label("Read Again", systemImage: "arrow.clockwise")
                         }
+                        Divider()
+                        Button {
+                            explainShown = true
+                            Task { await model.explain() }
+                        } label: {
+                            Label("Explain This Log", systemImage: "sparkles")
+                        }
+                        .disabled(model.lines.isEmpty || model.explaining)
                     } label: {
                         Label("Options", systemImage: "ellipsis.circle")
                     }
                 }
             }
             .safeAreaInset(edge: .bottom) { footer }
+            .sheet(isPresented: $explainShown, onDismiss: { model.closeExplanation() }) {
+                LogExplanationView(model: model)
+            }
             .task { await model.load() }
             // Follow: ends when switched off or when the sheet goes (a lock closes it).
             .task(id: model.following) {
@@ -135,5 +147,66 @@ struct LogsView: View {
             .padding(.vertical, 6)
             .background(.bar)
         }
+    }
+}
+
+/// Explain This Log: what the computer's own model made of the app's last
+/// 200 lines (redacted there first). The words are the model's, so they're
+/// shown as plain text, never Markdown or links.
+struct LogExplanationView: View {
+    let model: LogsViewModel
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            Group {
+                if model.explaining {
+                    ProgressView("Reading the last 200 lines…")
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else if let error = model.explainError {
+                    ContentUnavailableView("Couldn't Explain the Log", systemImage: "sparkles",
+                                           description: Text(verbatim: error))
+                } else if let said = model.explanation {
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 14) {
+                            Text(verbatim: said.text)
+                                .textSelection(.enabled)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                            Label {
+                                Text("From \(said.model) on the computer. The log didn't leave the homelab; check what matters before acting on it.")
+                            } icon: {
+                                Image(systemName: "desktopcomputer")
+                            }
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                        }
+                        .padding()
+                    }
+                    .privacySensitive()
+                }
+            }
+            .navigationTitle("\(model.app.name) Log Explained")
+            #if os(iOS)
+            .navigationBarTitleDisplayMode(.inline)
+            #endif
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") { dismiss() }
+                }
+                if let said = model.explanation, !model.explaining {
+                    ToolbarItem(placement: .primaryAction) {
+                        Button {
+                            Clipboard.copy(said.text, sensitive: true)
+                        } label: {
+                            Label("Copy", systemImage: "doc.on.doc")
+                        }
+                    }
+                }
+            }
+        }
+        .presentationDetents([.medium, .large])
+        #if os(macOS)
+        .frame(minWidth: 480, minHeight: 320)
+        #endif
     }
 }

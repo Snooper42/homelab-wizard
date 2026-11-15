@@ -216,6 +216,17 @@ struct AppDetailView: View {
             if let restarts = app.restarts, restarts > 0 {
                 LabeledContent("Restarts", value: restarts.formatted())
             }
+            // What it takes on the computer (item 4): memory and processor while it runs, and its folder.
+            let uses = dashboard.cards.resources(of: app.id)
+            if app.isRunning, let memory = uses.memory {
+                LabeledContent("Memory", value: memory.formatted(.byteCount(style: .memory)))
+            }
+            if app.isRunning, let cpu = uses.processor {
+                LabeledContent("Processor", value: (cpu / 100).formatted(.percent.precision(.fractionLength(0...1))))
+            }
+            if let disk = uses.disk {
+                LabeledContent("Disk", value: disk.formatted(.byteCount(style: .file)))
+            }
             if let container = app.container, !container.isEmpty {
                 LabeledContent("Container") {
                     Text(container).textSelection(.enabled)

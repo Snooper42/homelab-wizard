@@ -143,7 +143,7 @@ func TestAMembersFinancesAreTheirOwn(t *testing.T) {
 			t.Errorf("%s isn't for a member's phone", name)
 		}
 	}
-	for _, name := range []string{"Backups", "Logs", "Settings", "SaveSettings", "Report", "FinancesReadInvestments", "Watchdog", "Alerts"} {
+	for _, name := range []string{"Backups", "Logs", "ExplainLogs", "Settings", "SaveSettings", "Report", "FinancesReadInvestments", "Watchdog", "Alerts"} {
 		if mm, ok := m[name]; ok && mm.Member {
 			t.Errorf("%s answers a member's phone", name)
 		}

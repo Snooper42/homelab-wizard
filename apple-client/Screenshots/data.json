@@ -10550,6 +10550,44 @@
     "date": "2026-11-08",
     "annual": 3292
    }
-  ]
+  ],
+  "usage": [
+   {
+    "name": "vikunja",
+    "cpu": 0.4,
+    "mem": "182MiB"
+   },
+   {
+    "name": "paperless",
+    "cpu": 6.1,
+    "mem": "610MiB"
+   },
+   {
+    "name": "vaultwarden",
+    "cpu": 0.2,
+    "mem": "38MiB"
+   }
+  ],
+  "storage": {
+   "when": "@ago:18000",
+   "apps": [
+    {
+     "app": "paperless",
+     "bytes": 18400000000
+    },
+    {
+     "app": "navidrome",
+     "bytes": 2100000000
+    },
+    {
+     "app": "vaultwarden",
+     "bytes": 41000000
+    },
+    {
+     "app": "vikunja",
+     "bytes": 64000000
+    }
+   ]
+  }
  }
 }

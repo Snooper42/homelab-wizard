@@ -269,14 +269,15 @@ func TestPhoneMethods(t *testing.T) {
 	// ones the phone does not show saying so.
 	var got []string
 	var st any
-	methods["StatusBoard"].Stream(ctx, []json.RawMessage{json.RawMessage(`4`), json.RawMessage(`["watchdog","savings","storage"]`)},
+	methods["StatusBoard"].Stream(ctx, []json.RawMessage{json.RawMessage(`4`), json.RawMessage(`["watchdog","savings","storage","crash"]`)},
 		func(v any, err error) { st = v; got = append(got, fmt.Sprint("result ", err)) },
 		func(name string, data any) {
 			c := data.(board.Card)
 			got = append(got, fmt.Sprint(name, " ", c.Board, " ", c.Name, " ", c.Error))
 		})
 	sort.Strings(got[1:])
-	if st == nil || strings.Join(got, "; ") != "result <nil>; status:card 4 savings ; status:card 4 storage not read here; status:card 4 watchdog " {
+	// What each app's folder takes reaches the phone now (item 4); a card it doesn't show still says so.
+	if st == nil || strings.Join(got, "; ") != "result <nil>; status:card 4 crash not read here; status:card 4 savings ; status:card 4 storage ; status:card 4 watchdog " {
 		t.Errorf("StatusBoard: %q", got)
 	}
 	// No agent serves this homelab: no last reading, and no error either.
