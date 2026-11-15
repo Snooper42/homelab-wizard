@@ -172,7 +172,8 @@ enum FinanceReplay {
         for (i, change) in changes.enumerated() {
             if let set = change.setting {
                 let now = change.current(in: newest)
-                let changedThere = !FinanceChange.same(now, set.was) && !FinanceChange.same(now, set.to)
+                // Gone there (deleted on another device) is no clash: it can't be made, and is left out below.
+                let changedThere = now != nil && !FinanceChange.same(now, set.was) && !FinanceChange.same(now, set.to)
                 if changedThere {
                     switch keepMine[i] {
                     case nil: clashes.append(FinanceClash(index: i, change: change, theirs: now)); continue
