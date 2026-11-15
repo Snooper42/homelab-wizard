@@ -148,7 +148,7 @@ struct FinancesView: View {
                     Menu {
                         ForEach(files) { file in
                             ShareLink(item: file, preview: SharePreview(file.title)) {
-                                Label(file.title, systemImage: file.name.hasSuffix(".csv") ? "tablecells" : "doc.text")
+                                Label(file.title, systemImage: file.printable ? "printer" : file.name.hasSuffix(".csv") ? "tablecells" : "doc.text")
                             }
                         }
                     } label: {

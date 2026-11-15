@@ -724,6 +724,12 @@ final class FinancesViewModel {
         if let json = FinanceExport.planJSON(bare) {
             out.append(ExportFile(title: "The Plan (JSON)", name: FinanceExport.planName(today), data: json))
         }
+        // This month and the next on paper: a PDF on the iPhone and iPad.
+        for (ahead, title) in [(0, "This Month (to Print)"), (1, "Next Month (to Print)")] {
+            let month = FinanceExport.month(today, ahead: ahead)
+            out.append(ExportFile(title: title, name: FinanceExport.monthName(month),
+                                  data: Data(FinanceExport.monthPage(view: view, month: month, title: "Finances").utf8), printable: true))
+        }
         return out
     }
 

@@ -132,7 +132,7 @@ Each phone sees Finances at the level it was paired with: none, the money card, 
 | The money flow (Sankey), the Dashboard's prompts (a subscription's new price, a bill's average, a bill not seen) | yes | yes | partly: Cash Flow and Month in Review, not the flow or the prompts | partly | |
 | The calendar (the days ahead and behind, a month in all, add on a day) | yes | yes | partly: Recurring as a calendar | partly | |
 | The calendar feed for a phone's calendar | yes | on purpose: it's made on the computer | on purpose | on purpose | |
-| Export (the plan, the year as a spreadsheet, a month to print) | yes | yes, shared or downloaded, even look-only | partly: **⋯ › Export**, the year ahead as a spreadsheet and the plan as JSON, to the share sheet, even look-only and offline (`FinanceExport`, as exportData.ts); not yet a month to print | partly, as the iPhone | `Finances` |
+| Export (the plan, the year as a spreadsheet, a month to print) | yes | yes, shared or downloaded, even look-only | yes: **⋯ › Export**, the year ahead as a spreadsheet, the plan as JSON, and this month or the next to print (a PDF of the computer's page), to the share sheet, even look-only and offline (`FinanceExport`, as exportData.ts; `PrintedPage`) | yes, as the iPhone | `Finances` |
 | A loan read from its papers | yes | yes | partly: Loans says what each owes and when it's paid off; not the ring of payments or their table | partly | |
 | The household's shared bills on a member's phone | — | yes | yes | yes | `FinancesShared` |
 
@@ -212,7 +212,7 @@ The cells marked *gap*, gathered, each with what closing it takes (S a few hours
 2. ~~**iPad and Mac app: What was done.**~~ **Closed (#606):** an app's page beside Status's list has its own navigation stack, so More About, Recently Done and Everything That Was Done open in it.
 3. ~~**Every alert: Snooze… on an open alert**~~ **Closed:** on every device, for an alert whose watchdog check still fails (`snoozable`), with the Watchdog card's own Snooze….
 4. ~~**iPad and Mac app: Every alert from the split view's list.**~~ **Closed (#606):** **Every Alert** opens in the detail column, in the app's place (`DashboardViewModel.openAlertLog`), until an app or another screen is picked.
-5. **iPhone Finances: Export's month to print** (a payment, a goal, Select together, a running balance and Change or Delete a buy, Export's plan and year ahead: done, Nov 14; reading a bank's file into the ledger, its links to planned payments and guessed categories, fixing rows brought in before, and Rules: done, Nov 15). M.
+5. ~~**iPhone Finances: what the computer's Finances does that the app didn't.**~~ **Closed, Nov 15:** a payment, a goal, Select together, a running balance, Change or Delete a buy, Export (with a month to print), importing a bank's file (links, guesses, fixes) and Rules.
 6. ~~**The phone's page: Settings and Setup's facts**~~ **Closed:** Settings on the phone's page lists the settings a phone may change (`phoneSettings`), saved where it may make changes, with This machine's facts; none on a wall screen.
 7. **Memory and processor, disk per app, Explain these logs** on every phone: new phone calls first (`Usage`, `Storage`, `ExplainLogs`), each read-only. M.
 8. ~~**The Mac app's Dock badge and menu bar item.**~~ **Dropped:** the Mac version of the Homelab app was removed (Nov 12, 2026); on a Mac, Homelab Wizard is the way in, with its own menu bar item.
