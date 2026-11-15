@@ -8,6 +8,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### New
 
+- **⌘K on the iPad:** with a keyboard, ⌘K opens the command palette, as on the computer: type an app, a screen or a command (Back Up Now, Import a File, a page of Finances), ↑↓ to pick, Return to run; Stop asks twice, and every change still asks for Face ID.
 - **A Finances menu on the iPad:** with a keyboard, ⌥⌘1 to ⌥⌘8 open Transactions, Bills, Budgets, Goals, Investments, Accounts, Spending and Cash Flow, and ⇧⌘I imports a bank's file on Transactions (hold ⌘ to see them).
 - **A month to print from the Homelab app:** Finances' **⋯ › Export** has **This Month** and **Next Month (to Print)**: each day's paydays and payments with checking after, and each paycheck's in, out, saved and left, as a PDF to print or keep.
 - **Rules in the Homelab app:** change a transaction's payee or category and turn on **Always do this for…** to make a rule every import follows (and change the ones already in); Transactions' **⋯ › Rules** lists them to change or swipe away.

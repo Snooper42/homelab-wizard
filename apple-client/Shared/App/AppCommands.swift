@@ -23,12 +23,19 @@ struct ScreenChoice {
 /// Transactions in the window in front, where this device may add them: Import a File opens there.
 struct TransactionsFocus {
     let importFile: @MainActor () -> Void
+    let addTransaction: @MainActor () -> Void
+}
+
+/// The ⌘K palette of the window in front (the iPad's split view).
+struct PaletteFocus {
+    let open: @MainActor () -> Void
 }
 
 extension FocusedValues {
     @Entry var selectedApp: SelectedAppFocus?
     @Entry var screenChoice: ScreenChoice?
     @Entry var transactions: TransactionsFocus?
+    @Entry var palette: PaletteFocus?
 }
 
 /// The Finances menu (iPad with a keyboard, item 3): each of its pages on
@@ -58,9 +65,15 @@ struct FinancesCommands: Commands {
 struct ScreenCommands: Commands {
     @FocusedValue(\.screenChoice) private var choice
 
+    @FocusedValue(\.palette) private var palette
+
     var body: some Commands {
         CommandGroup(after: .sidebar) {
             Divider()
+            // ⌘K, as on the computer (View › Command Palette on a Mac).
+            Button("Command Palette…") { palette?.open() }
+                .keyboardShortcut("k")
+                .disabled(palette == nil)
             button(.status(.all))
             button(.backups)
             button(.setup)
