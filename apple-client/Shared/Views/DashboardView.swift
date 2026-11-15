@@ -649,20 +649,17 @@ private struct SplitDashboard: View {
                 NavigationStack {
                     AlertLogView()
                 }
-            } else if let app = model.app(id: model.selectedAppID) {
+            } else if showsAppList, let app = model.app(id: model.selectedAppID) {
                 // Beside Status's list, the page has a stack of its own, so
                 // More About and Everything That Was Done open in it (a split
                 // view's last column has none); another app starts at its page.
-                // Beside another screen (Finances), that screen's links open here.
-                Group {
-                    if showsAppList {
-                        NavigationStack { AppDetailView(app: app) }
-                            .id(app.id)
-                    } else {
-                        AppDetailView(app: app)
-                    }
-                }
-                .focusedSceneValue(\.selectedApp, SelectedAppFocus(app: app, actions: actions, showLogs: { model.logsApp = app }))
+                NavigationStack { AppDetailView(app: app) }
+                    .id(app.id)
+                    .focusedSceneValue(\.selectedApp, SelectedAppFocus(app: app, actions: actions, showLogs: { model.logsApp = app }))
+            } else if !showsAppList {
+                // Beside another screen, its own page (the owner's pick, Nov 15:
+                // pages open on the right); that screen's links open here over it.
+                screenDetail
             } else {
                 ContentUnavailableView(
                     "No App Selected",
@@ -696,11 +693,48 @@ private struct SplitDashboard: View {
         #endif
     }
 
+    /// What's on the right beside a screen other than Status, before one of its
+    /// links is tapped: Finances' first page (Bills), every setting, or what opens there.
+    @ViewBuilder
+    private var screenDetail: some View {
+        switch model.sidebar {
+        case .finances?:
+            #if SCREENSHOTS
+            if ScreenshotMode.isFinancePage {
+                FinancesView.screenshotRoot(finances: finances)
+            } else {
+                FinancesView.linkedPage(.bills, finances: finances)
+            }
+            #else
+            FinancesView.linkedPage(.bills, finances: finances)
+            #endif
+        case .settings?:
+            if isMember {
+                ContentUnavailableView("Settings", systemImage: "gearshape", description: Text("This iPad's settings are beside this."))
+            } else {
+                SettingsFormView(computer: computer, section: nil)
+            }
+        case .backups?:
+            ContentUnavailableView("Backups", systemImage: "externaldrive",
+                                   description: Text("Duplicati’s jobs, the restore tests, where the backups go and the password export open here."))
+        case .setup?:
+            ContentUnavailableView("Setup", systemImage: "wrench.and.screwdriver",
+                                   description: Text("What still needs you, and how this machine is doing, are beside this."))
+        default:
+            ContentUnavailableView("No App Selected", systemImage: "server.rack", description: Text("Choose an app to see its details."))
+        }
+    }
+
     /// Finances in the content column (in the pictures, the page the shot names).
     @ViewBuilder
     private var financesColumn: some View {
         #if SCREENSHOTS
-        FinancesView.screenshotRoot(finances: finances)
+        // A page's picture shows it on the right, beside the home, as a tap opens it.
+        if ScreenshotMode.isFinancePage {
+            FinancesView(finances: finances)
+        } else {
+            FinancesView.screenshotRoot(finances: finances)
+        }
         #else
         FinancesView(finances: finances)
         #endif
@@ -709,15 +743,8 @@ private struct SplitDashboard: View {
     /// Settings in the content column (in the pictures, every setting for `settings-all`).
     @ViewBuilder
     private var settingsColumn: some View {
-        #if SCREENSHOTS
-        if ScreenshotMode.shot == "settings-all" {
-            SettingsFormView(computer: computer, section: nil)
-        } else {
-            ComputerView(computer: computer, page: .settings)
-        }
-        #else
+        // Every setting is on the right beside it (settings-all's picture too).
         ComputerView(computer: computer, page: .settings)
-        #endif
     }
 
     /// The screen a link asked for, where this device has it (else Status).
