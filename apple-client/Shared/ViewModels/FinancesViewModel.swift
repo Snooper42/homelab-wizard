@@ -52,6 +52,23 @@ final class FinancesViewModel {
     /// When the Finances shown were read, while they're the kept ones
     /// because the Homelab doesn't answer; nil when they're live.
     private(set) var offlineAsOf: Date?
+    // MARK: Changes made away (offline Finances 2 of 3, the owner, Nov 14)
+
+    /// The changes made while the Homelab didn't answer, kept sealed (`AwayChanges`).
+    @ObservationIgnored private let away: AwayChanges
+    @ObservationIgnored private var awayRead = false
+    /// What waits to be sent, in the order made.
+    private(set) var awayChanges: [FinanceChange] = []
+    /// The kept plan they build on: the computer's last, with its rev.
+    @ObservationIgnored private var awayBase: JSONValue?
+    /// Changes another device made differently meanwhile, for the person to decide.
+    private(set) var awayClashes: [FinanceClash] = []
+    @ObservationIgnored private var awayDecisions: [Int: Bool] = [:]
+    /// What the last send did: how many went, and how many couldn't (what they changed was gone).
+    private(set) var awaySent: (sent: Int, dropped: Int)?
+    /// Why the changes made away couldn't go yet; they still wait.
+    private(set) var awaySendError: String?
+
     /// The computer's latest answers, to keep.
     @ObservationIgnored private var answers: (plan: Data?, ledger: Data?, shared: Data?) = (nil, nil, nil)
     /// The last keep or forget, so each runs after the one before: a slow
@@ -64,7 +81,8 @@ final class FinancesViewModel {
         authorize: @escaping @MainActor (String) async -> Bool,
         offline: OfflineFinances = .onThisDevice,
         privateKey: PrivateFinancesKey = PrivateFinancesKey(),
-        privateOffline: PrivateOffline = .onThisDevice
+        privateOffline: PrivateOffline = .onThisDevice,
+        away: AwayChanges = .onThisDevice
     ) {
         self.api = api
         self.device = device
@@ -72,6 +90,7 @@ final class FinancesViewModel {
         self.offline = offline
         self.privateKey = privateKey
         self.privateOffline = privateOffline
+        self.away = away
         Task { _ = await readKept() }
     }
 
@@ -107,6 +126,11 @@ final class FinancesViewModel {
 
     /// Drops the kept Finances: Finances taken from this device.
     func forgetOffline() {
+        awayChanges = []
+        awayBase = nil
+        awayClashes = []
+        awayDecisions = [:]
+        away.forget()
         kept = nil
         keptRead = true
         keptLevel = .none
@@ -128,14 +152,23 @@ final class FinancesViewModel {
         guard let kept = await readKept() else { return false }
         ownLogos = OwnLogos(kept.plan.view.plan.logos)
         plan = kept.plan.view
+        // At the change level, changes can be made away: on the kept plan, with what already waits.
+        var current = kept.plan.rawPlan
+        let mayChangeAway = level >= .edit && !isPrivate && !kept.plan.view.readOnly && FinanceProjection.available
+        if mayChangeAway {
+            await readAway()
+            awayBase = kept.plan.rawPlan
+            current = awayChanges.reduce(current) { $1.apply(to: $0) ?? $0 }
+        }
         // Named apart from `rawPlan` and `rawLedger`, which this sets below.
-        let (keptPlan, keptLedger, readOnly) = (kept.plan.rawPlan, kept.ledger?.raw, kept.plan.view.readOnly)
+        let (keptLedger, readOnly) = (kept.ledger?.raw, kept.plan.view.readOnly)
+        let working = current
         let day = FinancePlanEdit.todayString()
         let worked = await Task.detached(priority: .userInitiated) {
-            try? HouseholdOffline.project(rawPlan: keptPlan, rawLedger: keptLedger, today: day, readOnly: readOnly)
+            try? HouseholdOffline.project(rawPlan: working, rawLedger: keptLedger, today: day, readOnly: readOnly)
         }.value
         if let worked { plan = worked.view }
-        rawPlan = nil
+        rawPlan = mayChangeAway && worked != nil ? current : nil
         planError = nil
         if ledger == nil, let kept = kept.ledger {
             ledger = kept.ledger
@@ -151,14 +184,125 @@ final class FinancesViewModel {
     /// live: never the kept one, which is only to look at.
     var canEdit: Bool { level >= .edit && plan?.readOnly == false && rawPlan != nil && offlineAsOf == nil }
 
+    /// Away from home: the plan's changes that wait and go once the Homelab
+    /// answers (a balance, the cushion, a budget, a goal's target, what a
+    /// payment costs, waiting marks, an account, a payment, a goal).
+    var canEditAway: Bool { offlineAsOf != nil && awayBase != nil && rawPlan != nil && level >= .edit && plan?.readOnly == false }
+
+    /// The plan's changes, home or away (`canEdit` is home only: transactions, Investments and the rest).
+    var canEditPlan: Bool { canEdit || canEditAway }
+
+    /// Makes one of the plan's changes: saved now when the Homelab answers,
+    /// else kept on this device to go once it does.
+    private func make(_ change: FinanceChange, edited: JSONValue, reason: String) async -> Bool {
+        if offlineAsOf == nil { return await savePlan(edited, reason: reason) }
+        return await keepAway(change, edited: edited, reason: reason)
+    }
+
+    /// Keeps a change made away (asked for with Face ID, as at home), and shows it at once.
+    private func keepAway(_ change: FinanceChange, edited: JSONValue, reason: String) async -> Bool {
+        isSaving = true
+        defer { isSaving = false }
+        guard await authorize(reason) else { return false }
+        let changes = FinanceChange.adding(change, to: awayChanges)
+        do {
+            try away.keep(changes)
+        } catch {
+            saveError = "This device couldn't keep the change. Try again once the Homelab answers."
+            return false
+        }
+        awayChanges = changes
+        rawPlan = edited
+        await showWorked(edited)
+        saveError = nil
+        savedCount += 1
+        return true
+    }
+
+    /// The plan worked out on this phone from `raw`, shown.
+    private func showWorked(_ raw: JSONValue) async {
+        let (keptLedger, readOnly, day) = (kept?.ledger?.raw, plan?.readOnly ?? false, FinancePlanEdit.todayString())
+        let worked = await Task.detached(priority: .userInitiated) {
+            try? HouseholdOffline.project(rawPlan: raw, rawLedger: keptLedger, today: day, readOnly: readOnly)
+        }.value
+        if let worked { plan = worked.view }
+    }
+
+    /// Takes back a change that waits.
+    func undoAway(at index: Int) async {
+        guard awayChanges.indices.contains(index), let base = awayBase else { return }
+        var changes = awayChanges
+        changes.remove(at: index)
+        do { try away.keep(changes) } catch { return }
+        awayChanges = changes
+        let raw = changes.reduce(base) { $1.apply(to: $0) ?? $0 }
+        rawPlan = raw
+        await showWorked(raw)
+    }
+
+    /// Reads what waits, once.
+    private func readAway() async {
+        guard !awayRead else { return }
+        let away = away
+        let read = await Task.detached(priority: .userInitiated) { away.load() }.value
+        if !awayRead {
+            awayRead = true
+            awayChanges = read
+        }
+    }
+
+    /// Once the Homelab answers: the changes made away, replayed on its
+    /// newest plan and saved once. Each was asked for with Face ID when it
+    /// was made, so this doesn't ask again. A clash waits for the person;
+    /// a failed save keeps them waiting.
+    private func sendAway(on newest: FinancesRead) async {
+        await readAway()
+        guard !awayChanges.isEmpty, level >= .edit, !isPrivate else { return }
+        let r = FinanceReplay.replay(awayChanges, on: newest.rawPlan, keepMine: awayDecisions)
+        guard r.clashes.isEmpty else {
+            awayClashes = r.clashes
+            return
+        }
+        isSaving = true
+        defer { isSaving = false }
+        do {
+            let read = try await api.saveFinances(r.plan)
+            ownLogos = OwnLogos(read.view.plan.logos)
+            plan = read.view
+            rawPlan = read.rawPlan
+            answers.plan = read.answer
+            keepAnswers()
+            awaySent = (sent: awayChanges.count - r.dropped.count, dropped: r.dropped.count)
+            awayChanges = []
+            awayDecisions = [:]
+            awayClashes = []
+            awaySendError = nil
+            away.forget()
+        } catch {
+            Log.ui.error("Sending the changes made away failed: \(APIError.from(error).logName, privacy: .public)")
+            awaySendError = Self.words(error)
+        }
+    }
+
+    /// The person's pick for a clash: this device's change, or the other device's.
+    func decide(_ clash: FinanceClash, keepMine: Bool) async {
+        awayDecisions[clash.index] = keepMine
+        awayClashes.removeAll { $0.id == clash.id }
+        if awayClashes.isEmpty { await loadPlan() }
+    }
+
+    /// Done with "Sent 2 changes".
+    func dismissAwaySent() { awaySent = nil }
+
     /// Marks a paycheck or payment as not in the balances yet, or back.
     func setWaiting(_ past: FinancePast, waiting: Bool) async -> Bool {
-        guard canEdit, !isSaving, let raw = rawPlan, let plan, past.waiting != waiting else { return false }
+        guard canEditPlan, !isSaving, let raw = rawPlan, let plan, past.waiting != waiting else { return false }
         guard let edited = FinancePlanEdit.settingWaiting(past.key, waiting: waiting, current: plan.waitingKeys, in: raw) else {
             saveError = "That can't be marked."
             return false
         }
-        return await savePlan(edited, reason: waiting ? "Mark it as not in the balances yet." : "Mark it as in the balances.")
+        return await make(.waiting(key: past.key, waiting: waiting), edited: edited,
+                          reason: waiting ? "Mark it as not in the balances yet." : "Mark it as in the balances.")
     }
 
     /// Turns Hide amounts on or off for every device. Returns whether it saved.
@@ -175,60 +319,65 @@ final class FinancesViewModel {
 
     /// Changes a goal's target. Returns whether it saved.
     func setGoal(_ goal: FinanceGoal, target: Double) async -> Bool {
-        guard canEdit, !isSaving, let raw = rawPlan else { return false }
+        guard canEditPlan, !isSaving, let raw = rawPlan else { return false }
         guard let edited = FinancePlanEdit.settingGoal(id: goal.id, target: target, in: raw) else {
             saveError = "A goal needs an amount more than nothing."
             return false
         }
-        return await savePlan(edited, reason: "Change the \(goal.name) goal.")
+        return await make(FinanceChange.goalTarget(id: goal.id, to: target, was: nil).noting(raw), edited: edited,
+                          reason: "Change the \(goal.name) goal.")
     }
 
     /// Changes what a planned payment costs each time. Returns whether it saved.
     func setPayment(_ payment: FinancePayment, to amount: Double) async -> Bool {
-        guard canEdit, !isSaving, let raw = rawPlan else { return false }
+        guard canEditPlan, !isSaving, let raw = rawPlan else { return false }
         guard payment.canChangeAmount,
               let edited = FinancePlanEdit.settingPayment(id: payment.id, to: amount, in: raw)
         else {
             saveError = payment.canChangeAmount ? "A payment needs an amount more than nothing." : "A card payoff is changed on the computer."
             return false
         }
-        return await savePlan(edited, reason: "Change what \(payment.name) costs.")
+        return await make(FinanceChange.paymentAmount(id: payment.id, to: amount, was: nil).noting(raw), edited: edited,
+                          reason: "Change what \(payment.name) costs.")
     }
 
     /// Changes the least checking should hold (0 turns the warning off). Returns whether it saved.
     func setCushion(_ amount: Double) async -> Bool {
-        guard canEdit, !isSaving, let raw = rawPlan else { return false }
+        guard canEditPlan, !isSaving, let raw = rawPlan else { return false }
         guard let edited = FinancePlanEdit.settingCushion(amount, in: raw) else {
             saveError = "The cushion is an amount, or nothing."
             return false
         }
-        return await savePlan(edited, reason: "Change the cushion.")
+        return await make(FinanceChange.cushion(to: amount, was: nil).noting(raw), edited: edited, reason: "Change the cushion.")
     }
 
     /// Adds an account to the plan: a member's own, or the household's.
     /// Returns whether it saved.
     func addAccount(name: String, kind: String, balance: Double) async -> Bool {
-        guard canEdit, !isSaving, let raw = rawPlan else { return false }
+        guard canEditPlan, !isSaving, let raw = rawPlan else { return false }
         let today = plan.map(\.todayText).flatMap { $0.isEmpty ? nil : $0 } ?? FinancePlanEdit.todayString()
         guard let edited = FinancePlanEdit.addingAccount(name: name, kind: kind, balance: balance, today: today, in: raw) else {
             saveError = "An account needs a name, and a balance that's an amount."
             return false
         }
-        return await savePlan(edited, reason: "Add \(name.trimmingCharacters(in: .whitespaces)) to Finances.")
+        return await make(.addAccount(name: name, kind: kind, balance: balance, today: today), edited: edited,
+                          reason: "Add \(name.trimmingCharacters(in: .whitespaces)) to Finances.")
     }
 
     /// Adds a payment to the plan, as the computer's Add a payment does
     /// (`FinancePlanEdit.addingPayment`). Returns whether it saved.
     func addPayment(name: String, amount: Double, every: String, start: Date, kind: String,
                     from: String, estimate: Bool) async -> Bool {
-        guard canEdit, !isSaving, let raw = rawPlan else { return false }
+        guard canEditPlan, !isSaving, let raw = rawPlan else { return false }
+        let day = FinancePlanEdit.todayString(start)
         guard let edited = FinancePlanEdit.addingPayment(name: name, amount: amount, every: every,
-                                                         start: FinancePlanEdit.todayString(start), kind: kind,
+                                                         start: day, kind: kind,
                                                          from: from, estimate: estimate, in: raw) else {
             saveError = "A payment needs a name, and what it costs: an amount more than nothing."
             return false
         }
-        return await savePlan(edited, reason: "Add \(name.trimmingCharacters(in: .whitespaces)) to Finances.")
+        return await make(.addPayment(name: name, amount: amount, every: every, start: day, kind: kind, from: from, estimate: estimate),
+                          edited: edited, reason: "Add \(name.trimmingCharacters(in: .whitespaces)) to Finances.")
     }
 
     /// How much of an account the plan's goals don't count yet, in percent.
@@ -240,23 +389,26 @@ final class FinancesViewModel {
     /// Adds a goal to the plan, as the computer's Add a goal does
     /// (`FinancePlanEdit.addingGoal`). Returns whether it saved.
     func addGoal(name: String, target: Double, by date: Date?, account: String, percent: Double) async -> Bool {
-        guard canEdit, !isSaving, let raw = rawPlan else { return false }
-        guard let edited = FinancePlanEdit.addingGoal(name: name, target: target, date: date.map { FinancePlanEdit.todayString($0) },
+        guard canEditPlan, !isSaving, let raw = rawPlan else { return false }
+        let day = date.map { FinancePlanEdit.todayString($0) }
+        guard let edited = FinancePlanEdit.addingGoal(name: name, target: target, date: day,
                                                       account: account, percent: percent, in: raw) else {
             saveError = "A goal needs a name, what it needs, and a share of an account that's still free."
             return false
         }
-        return await savePlan(edited, reason: "Add \(name.trimmingCharacters(in: .whitespaces)) to Finances.")
+        return await make(.addGoal(name: name, target: target, date: day, account: account, percent: percent),
+                          edited: edited, reason: "Add \(name.trimmingCharacters(in: .whitespaces)) to Finances.")
     }
 
     /// Changes a budget's amount. Returns whether it saved.
     func setBudget(_ budget: FinanceBudget, to amount: Double) async -> Bool {
-        guard canEdit, !isSaving, let raw = rawPlan else { return false }
+        guard canEditPlan, !isSaving, let raw = rawPlan else { return false }
         guard let edited = FinancePlanEdit.settingBudget(category: budget.category, to: amount, in: raw) else {
             saveError = "A budget is an amount more than nothing."
             return false
         }
-        return await savePlan(edited, reason: "Change the \(budget.category) budget.")
+        return await make(FinanceChange.budget(category: budget.category, to: amount, was: nil).noting(raw), edited: edited,
+                          reason: "Change the \(budget.category) budget.")
     }
 
     private func savePlan(_ edited: JSONValue, reason: String) async -> Bool {
@@ -806,12 +958,14 @@ final class FinancesViewModel {
 
     /// Types in an account's balance, as on the computer. Returns whether it saved.
     func setBalance(of account: FinanceAccount, to value: Double) async -> Bool {
-        guard canEdit, !isSaving, let raw = rawPlan else { return false }
-        guard let edited = FinancePlanEdit.settingBalance(of: account.id, to: value, today: FinancePlanEdit.todayString(), in: raw) else {
+        guard canEditPlan, !isSaving, let raw = rawPlan else { return false }
+        let today = FinancePlanEdit.todayString()
+        guard let edited = FinancePlanEdit.settingBalance(of: account.id, to: value, today: today, in: raw) else {
             saveError = "That isn't an amount the plan can take."
             return false
         }
-        return await savePlan(edited, reason: "Update \(account.name)'s balance.")
+        return await make(FinanceChange.balance(account: account.id, to: value, was: nil, today: today).noting(raw), edited: edited,
+                          reason: "Update \(account.name)'s balance.")
     }
 
     /// What the computer says this device may see; while it can't say, the
@@ -1064,8 +1218,10 @@ final class FinancesViewModel {
             rawPlan = read.rawPlan
             planError = nil
             offlineAsOf = nil
+            awayBase = nil
             answers.plan = read.answer
             keepAnswers()
+            await sendAway(on: read)
         } catch {
             let apiError = APIError.from(error)
             Log.ui.error("Finances failed: \(apiError.logName, privacy: .public)")

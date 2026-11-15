@@ -36,7 +36,7 @@ struct AccountDetailView: View {
         .refreshable { await finances.loadPlan(); await finances.loadLedger() }
         .task { if finances.ledger == nil { await finances.loadLedger() } }
         .toolbar {
-            if finances.canEdit {
+            if finances.canEditPlan {
                 ToolbarItem(placement: .primaryAction) {
                     Button("Update Balance") { updating = true }
                 }
