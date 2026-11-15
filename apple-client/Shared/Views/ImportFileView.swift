@@ -47,8 +47,10 @@ struct ImportFileView: View {
         flipped ? asRead.map { var t = $0; t.amount = -t.amount; return t } : asRead
     }
     /// What changes what comes in.
-    private struct Key: Hashable { let opened: Int; let columns: BankFile.Columns?; let account: String; let flipped: Bool }
-    private var key: Key { Key(opened: opened, columns: columns, account: account, flipped: flipped) }
+    /// Links to planned payments picked by hand, by row ("" for none).
+    @State private var picked: [Int: String] = [:]
+    private struct Key: Hashable { let opened: Int; let columns: BankFile.Columns?; let account: String; let flipped: Bool; let picked: [Int: String] }
+    private var key: Key { Key(opened: opened, columns: columns, account: account, flipped: flipped, picked: picked) }
 
     private var coming: [BankImport.Found] { found.filter { $0.state == .comesIn } }
     private var currency: String { finances.currency }
@@ -110,8 +112,8 @@ struct ImportFileView: View {
             .fileImporter(isPresented: $picking, allowedContentTypes: BankImport.fileTypes.compactMap { UTType(filenameExtension: $0) }) { result in
                 if case .success(let url) = result { open(url) }
             }
-            .task(id: key) { found = finances.importing(read, into: account) }
-            .onChange(of: account) { flip = nil }
+            .task(id: key) { found = finances.importing(read, into: account, picked: picked) }
+            .onChange(of: account) { flip = nil; picked = [:] }
             .onAppear {
                 finances.clearSaveError()
                 if account.isEmpty {
@@ -140,6 +142,7 @@ struct ImportFileView: View {
         fileName = url.lastPathComponent
         text = t
         flip = nil
+        picked = [:]
         isOFX = BankFile.isOFX(t)
         if isOFX {
             rows = []
@@ -211,7 +214,7 @@ struct ImportFileView: View {
                     .monospacedDigit()
             }
             ForEach(found.prefix(BankImport.shownRows)) { f in
-                ImportRow(found: f, finances: finances)
+                ImportRow(found: f, finances: finances) { picked[f.index] = $0 }
             }
             if found.count > BankImport.shownRows {
                 Text(verbatim: "And \(found.count - BankImport.shownRows) more.")
@@ -224,6 +227,8 @@ struct ImportFileView: View {
                 Text(verbatim: warning).foregroundStyle(Theme.danger)
             } else if let error = finances.saveError, !saving {
                 Text(verbatim: error).foregroundStyle(Theme.danger)
+            } else if found.contains(where: { $0.guessed != nil }) {
+                Text("A row that looks like a planned payment pays it, so the plan doesn't take it out again on its day. Change it on the row if it's wrong.")
             } else if !found.isEmpty {
                 Text("The bank's own words go in the note, and each payee takes its last category or its rule's.")
             }
@@ -249,6 +254,12 @@ struct ImportFileView: View {
 private struct ImportRow: View {
     let found: BankImport.Found
     let finances: FinancesViewModel
+    /// A link picked: a payment's id, or "" for none.
+    let pick: (String) -> Void
+
+    private var accounts: [FinanceAccount] { finances.plan?.plan.accounts ?? [] }
+    /// What a row can pay: the plan's payments, not a card's charges.
+    private var payments: [FinancePayment] { (finances.plan?.plan.payments ?? []).filter { ($0.card ?? "").isEmpty } }
 
     private var detail: String {
         let day = LocalDay.parse(found.date).map { TransactionsView.dayWords($0) } ?? found.date
@@ -256,9 +267,22 @@ private struct ImportRow: View {
         switch found.state {
         case .alreadyIn: parts.append("already in")
         case .noPayee: parts.append("no payee")
-        case .comesIn: if let c = found.category { parts.append(c) }
+        case .comesIn:
+            if let other = found.guess.account {
+                let name = accounts.first { $0.id == other }?.name ?? "another account"
+                parts.append(found.amount < 0 ? "moves to \(name)" : "moves from \(name)")
+            } else if let c = found.guess.category ?? found.category {
+                parts.append(c)
+            }
         }
         return parts.joined(separator: " · ")
+    }
+
+    /// What it pays, in words: "Looks like Electric, planned $95.00", "Pays Electric", or none.
+    private var linkWords: String {
+        guard let link = found.link, let x = payments.first(where: { $0.id == link }) else { return "Not a planned payment" }
+        guard found.guessed?.payment == link else { return "Pays \(x.name)" }
+        return "Looks like \(x.name), planned \(amountText(x.amount ?? 0, finances.currency, finances))"
     }
 
     var body: some View {
@@ -271,12 +295,27 @@ private struct ImportRow: View {
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .lineLimit(2)
+                // Only where a link was guessed, as on the computer; it can be changed or taken off.
+                if found.state == .comesIn, found.guessed != nil, found.guess.account == nil {
+                    Menu {
+                        Button("Nothing Planned") { pick("") }
+                        ForEach(payments) { x in
+                            Button(x.name) { pick(x.id) }
+                        }
+                    } label: {
+                        Text(verbatim: linkWords)
+                            .font(.footnote)
+                            .foregroundStyle(Theme.accent)
+                            .lineLimit(2)
+                            .multilineTextAlignment(.leading)
+                    }
+                    .accessibilityLabel("What \(found.payee) pays: \(linkWords)")
+                }
             }
             Spacer(minLength: 8)
             Money(value: found.amount, currency: finances.currency, finances: finances)
                 .foregroundStyle(found.amount > 0 ? Theme.success : .primary)
         }
         .opacity(found.state == .comesIn ? 1 : 0.5)
-        .accessibilityElement(children: .combine)
     }
 }
