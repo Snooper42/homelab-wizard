@@ -707,10 +707,11 @@ final class FinancesViewModel {
     // MARK: Export (Parity gap 5, the computer's F18)
 
     /// The plan and the year ahead, as files, from what was last read (live
-    /// or kept for offline); nil before Finances are read, or for private
-    /// ones (they're exported on her own devices' pages).
+    /// or kept for offline); none before Finances are read, while amounts are
+    /// hidden, or for private ones (those export on their own pages).
     func exportFiles() -> [ExportFile] {
-        guard !isPrivate, let answer = answers.plan ?? kept?.plan.answer,
+        guard !isPrivate, FinanceExport.offered(amountsShown: amountsShown, hiddenByPlan: amountsHiddenByPlan),
+              let answer = answers.plan ?? kept?.plan.answer,
               let envelope = try? JSONDecoder().decode(JSONValue.self, from: answer),
               let view = envelope["result"], let plan = view["plan"]
         else { return [] }

@@ -43,4 +43,11 @@ struct FinanceExportTests {
         #expect(FinanceExport.planName("2026-11-14") == "finances-plan-2026-11-14.json")
         #expect(FinanceExport.aheadName("2026-11-14") == "finances-ahead-2026-11-14.csv")
     }
+
+    /// Every amount is in them, so only while amounts show, never where the plan hides them here.
+    @Test func offeredOnlyWhileAmountsShow() {
+        #expect(FinanceExport.offered(amountsShown: true, hiddenByPlan: false))
+        #expect(!FinanceExport.offered(amountsShown: false, hiddenByPlan: false))
+        #expect(!FinanceExport.offered(amountsShown: true, hiddenByPlan: true))
+    }
 }

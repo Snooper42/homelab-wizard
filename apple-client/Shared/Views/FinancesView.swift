@@ -141,7 +141,7 @@ struct FinancesView: View {
                     .sensoryFeedback(.selection, trigger: finances.amountsShown)
                 }
             }
-            // Export, as the computer's (F18): the year ahead as a spreadsheet and the plan, even look-only.
+            // Export, as the computer's (F18): the year ahead as a spreadsheet and the plan, even look-only, while amounts show.
             ToolbarItem(placement: .secondaryAction) {
                 let files = finances.exportFiles()
                 if !files.isEmpty {

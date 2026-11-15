@@ -76,6 +76,10 @@ enum FinanceExport {
         }.joined(separator: "\r\n") + "\r\n"
     }
 
+    /// Every amount is in what's exported, so Export shows only while amounts
+    /// do, and never where the plan hides amounts on this device.
+    static func offered(amountsShown: Bool, hiddenByPlan: Bool) -> Bool { amountsShown && !hiddenByPlan }
+
     static func planName(_ today: String) -> String { "finances-plan-\(today).json" }
     static func aheadName(_ today: String) -> String { "finances-ahead-\(today).csv" }
 }
