@@ -704,6 +704,57 @@ final class FinancesViewModel {
         }
     }
 
+    // MARK: A holding's buys and sales (Parity gap 5: Change or Delete a buy)
+
+    /// The buys and sales of `symbol` in `account`, newest first, or why they couldn't be read.
+    func trades(of symbol: String, in account: String) async -> Result<[InvestmentTrade], TradeProblem> {
+        guard canEdit else { return .failure(TradeProblem(words: "This device can't change Finances.")) }
+        do {
+            return .success(try await api.financesInvestmentTrades(account: account, symbol: symbol))
+        } catch {
+            let apiError = APIError.from(error)
+            Log.ui.error("FinancesInvestmentTrades failed: \(apiError.logName, privacy: .public)")
+            return .failure(TradeProblem(words: apiError.errorDescription ?? "Ghostfolio didn't answer."))
+        }
+    }
+
+    /// Puts a buy or sale right in Ghostfolio (Face ID first); nil when it was, else why not.
+    func changeTrade(_ trade: InvestmentTrade) async -> String? {
+        if let problem = trade.problem() { return problem }
+        guard canEdit, !isSaving else { return "This device can't change Finances." }
+        isSaving = true
+        defer { isSaving = false }
+        guard await authorize(trade.isSale ? "Change the sale in Ghostfolio." : "Change the buy in Ghostfolio.") else { return "Not confirmed, so nothing was changed." }
+        do {
+            apply(try await api.financesChangeInvestment(trade))
+            savedCount += 1
+            return nil
+        } catch {
+            let apiError = APIError.from(error)
+            Log.ui.error("FinancesChangeInvestment failed: \(apiError.logName, privacy: .public)")
+            return apiError.errorDescription ?? "Ghostfolio didn't take it."
+        }
+    }
+
+    /// Deletes a buy or sale in Ghostfolio (Face ID first); nil when it was, else why not.
+    func deleteTrade(_ trade: InvestmentTrade) async -> String? {
+        guard canEdit, !isSaving else { return "This device can't change Finances." }
+        isSaving = true
+        defer { isSaving = false }
+        guard await authorize(trade.isSale ? "Delete the sale in Ghostfolio." : "Delete the buy in Ghostfolio.") else { return "Not confirmed, so nothing was deleted." }
+        do {
+            apply(try await api.financesDeleteInvestment(account: trade.account, id: trade.id))
+            savedCount += 1
+            return nil
+        } catch {
+            let apiError = APIError.from(error)
+            Log.ui.error("FinancesDeleteInvestment failed: \(apiError.logName, privacy: .public)")
+            return apiError.errorDescription ?? "Ghostfolio didn't take it."
+        }
+    }
+
+    struct TradeProblem: Error, Sendable { let words: String }
+
     private func apply(_ r: InvestmentsReadResult) {
         ownLogos = OwnLogos(r.read.view.plan.logos)
         plan = r.read.view
