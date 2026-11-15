@@ -19,6 +19,8 @@ struct ImportFileView: View {
     /// A card's file with its charges as plus amounts (American Express): read the other way round. Nil: as guessed.
     @State private var flip: Bool?
     @State private var found: [BankImport.Found] = []
+    /// What the file changes on rows brought in before (import 3 of 4).
+    @State private var fixing: [(id: String, fix: LedgerFix)] = []
     @State private var readError: String?
     /// The CSV's rows, read once as the file opens; the OFX's rows, there being no columns to pick.
     @State private var rows: [[String]] = []
@@ -98,7 +100,7 @@ struct ImportFileView: View {
                     Button("Cancel") { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button(coming.isEmpty ? "Bring In" : "Bring In \(coming.count)") {
+                    Button(!coming.isEmpty ? "Bring In \(coming.count)" : fixing.isEmpty ? "Bring In" : "Fix \(fixing.count)") {
                         saving = true
                         Task {
                             let n = await finances.bringIn(found, into: account)
@@ -106,13 +108,16 @@ struct ImportFileView: View {
                             if n != nil { dismiss() }
                         }
                     }
-                    .disabled(coming.isEmpty || saving)
+                    .disabled((coming.isEmpty && fixing.isEmpty) || saving)
                 }
             }
             .fileImporter(isPresented: $picking, allowedContentTypes: BankImport.fileTypes.compactMap { UTType(filenameExtension: $0) }) { result in
                 if case .success(let url) = result { open(url) }
             }
-            .task(id: key) { found = finances.importing(read, into: account, picked: picked) }
+            .task(id: key) {
+                found = finances.importing(read, into: account, picked: picked)
+                fixing = finances.importFixes(found, into: account)
+            }
             .onChange(of: account) { flip = nil; picked = [:] }
             .onAppear {
                 finances.clearSaveError()
@@ -198,9 +203,19 @@ struct ImportFileView: View {
         guard !found.isEmpty else { return "Nothing found yet" }
         let already = found.filter { $0.state == .alreadyIn }.count
         let none = found.filter { $0.state == .noPayee }.count
-        return (["\(coming.count) to bring in"]
-                + (already > 0 ? ["\(already) already in, skipped"] : [])
-                + (none > 0 ? ["\(none) with no payee, left out"] : [])).joined(separator: " · ")
+        var payees = Set<String>(), renamed = Set<String>()
+        for f in found {
+            if case .fixes(let id) = f.state { payees.insert(id) }
+            if case .renames(let id) = f.state { renamed.insert(id) }
+        }
+        let categorized = fixing.filter { $0.fix.category != nil && !payees.contains($0.id) }.count
+        var parts = ["\(coming.count) to bring in"]
+        if !payees.isEmpty { parts.append("\(payees.count) brought in before as CREDIT or DEBIT, given their payee") }
+        if !renamed.isEmpty { parts.append("\(renamed.count) brought in before, given clearer names") }
+        if categorized > 0 { parts.append("\(categorized) brought in before, given a category") }
+        if already > 0 { parts.append("\(already) already in, skipped") }
+        if none > 0 { parts.append("\(none) with no payee, left out") }
+        return parts.joined(separator: " · ")
     }
 
     private var rowsSection: some View {
@@ -267,6 +282,8 @@ private struct ImportRow: View {
         switch found.state {
         case .alreadyIn: parts.append("already in")
         case .noPayee: parts.append("no payee")
+        case .fixes: parts.append("gives the CREDIT or DEBIT row its payee")
+        case .renames: parts.append("gives the one brought in before this name")
         case .comesIn:
             if let other = found.guess.account {
                 let name = accounts.first { $0.id == other }?.name ?? "another account"
@@ -316,6 +333,6 @@ private struct ImportRow: View {
             Money(value: found.amount, currency: finances.currency, finances: finances)
                 .foregroundStyle(found.amount > 0 ? Theme.success : .primary)
         }
-        .opacity(found.state == .comesIn ? 1 : 0.5)
+        .opacity(found.state == .alreadyIn || found.state == .noPayee ? 0.5 : 1)
     }
 }

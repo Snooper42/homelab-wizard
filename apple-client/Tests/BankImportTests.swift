@@ -99,7 +99,8 @@ struct BankImportTests {
 
     @Test func theOnesInAlreadyAreSkipped() {
         let f = found()
-        #expect(f.map(\.state) == [.alreadyIn, .alreadyIn, .comesIn, .comesIn, .noPayee])
+        // The second was brought in before as DEBIT: it gives that row its payee rather than coming in again.
+        #expect(f.map(\.state) == [.alreadyIn, .fixes("t2"), .comesIn, .comesIn, .noPayee])
     }
 
     @Test func eachPayeeAsAPersonWritesIt() {

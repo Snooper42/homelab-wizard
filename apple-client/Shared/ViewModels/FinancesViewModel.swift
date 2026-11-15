@@ -1364,12 +1364,26 @@ final class FinancesViewModel {
         return envelope["result"]
     }
 
-    /// Brings in the rows of a bank's file that aren't in yet, in one save
-    /// (or, away, as changes that wait). Returns how many came in, or nil.
+    /// What a bank's file changes on rows brought in before (import 3 of 4):
+    /// payees for CREDIT or DEBIT ones, clearer names, and categories.
+    func importFixes(_ found: [BankImport.Found], into account: String) -> [(id: String, fix: LedgerFix)] {
+        let ledger = BankImport.kept(in: rawLedger)
+        let recat = BankImport.recategorized(found, account: account, ledger: ledger, plan: rawPlan, view: lastView(), logos: PayeeLogos.shared)
+        return BankImport.fixes(found, recategorized: recat, ledger: ledger)
+    }
+
+    /// Brings in the rows of a bank's file that aren't in yet, and fixes the
+    /// ones brought in before, in one save (or, away, as changes that wait).
+    /// Returns how many came in or were fixed, or nil.
     func bringIn(_ found: [BankImport.Found], into account: String) async -> Int? {
         guard canAddTransactions, !isSaving, var raw = rawLedger, let plan else { return nil }
         let accounts = Set(plan.plan.accounts.map(\.id))
         var made: [LedgerChange] = []
+        for (id, fix) in importFixes(found, into: account) {
+            guard let next = LedgerEdit.fixing(id: id, with: fix, in: raw) else { continue }
+            raw = next
+            made.append(.fix(id: id, fix))
+        }
         for t in BankImport.transactions(found, account: account) {
             guard let next = LedgerEdit.appending(t, accounts: accounts, to: raw) else { continue }
             raw = next
@@ -1380,7 +1394,7 @@ final class FinancesViewModel {
             return nil
         }
         let name = plan.plan.accounts.first { $0.id == account }?.name ?? "an account"
-        let saved = await makeLedger(made, edited: raw, reason: "Bring \(made.count) transactions from a bank's file into \(name).")
+        let saved = await makeLedger(made, edited: raw, reason: "Bring transactions from a bank's file into \(name).")
         return saved ? made.count : nil
     }
 
