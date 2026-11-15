@@ -9,6 +9,8 @@ import SwiftUI
 /// days, or with each paycheck. Its logo comes from its name, as on the computer.
 struct AddPaymentView: View {
     let finances: FinancesViewModel
+    /// The day it starts, from a day picked on the Calendar.
+    var startOn: Date? = nil
     @Environment(\.dismiss) private var dismiss
     @State private var comesIn = false
     @State private var name = ""
@@ -166,6 +168,7 @@ struct AddPaymentView: View {
             }
             .onAppear {
                 finances.clearSaveError()
+                if let startOn { start = startOn }
                 // The first checking account, as the computer reads a payment with none named.
                 let checking = finances.plan?.checking ?? ""
                 if from.isEmpty { from = accounts.first { $0.kind == "checking" }?.id ?? accounts.first?.id ?? "" }

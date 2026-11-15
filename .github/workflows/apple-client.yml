@@ -314,7 +314,7 @@ jobs:
           APP="$(ls -d "$RUNNER_TEMP"/shots/Build/Products/Debug-iphonesimulator/*.app | grep -v Widget | head -1)"
           BID="$(/usr/libexec/PlistBuddy -c 'Print CFBundleIdentifier' "$APP/Info.plist")"
           mkdir -p "$RUNNER_TEMP/pictures"
-          shots="status backups finances spending inbox loading transactions transaction budgets bills recurring cashflow review accounts investments goals setup settings settings-all lock app"
+          shots="status backups finances spending inbox loading transactions transaction budgets bills recurring cashflow calendar review accounts investments goals setup settings settings-all lock app"
           # take <simulator> <name prefix> <looks> <extras: the largest text and hidden amounts, yes or no>
           take() {
             local dev="$1" pre="$2" looks="$3" extras="$4"

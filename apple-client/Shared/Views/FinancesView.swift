@@ -747,6 +747,11 @@ private struct MoreFinancesCard: View {
                     IconTileLabel(title: "Bills", systemImage: "calendar", tint: Theme.danger)
                 }
             }
+            if !view.periods.isEmpty || !view.since.isEmpty {
+                row { FinanceCalendarView(finances: finances) } label: {
+                    IconTileLabel(title: "Calendar", systemImage: "calendar.day.timeline.left", tint: Color(light: 0x0E7490, dark: 0x22D3EE))
+                }
+            }
             if !view.recurring.isEmpty {
                 row { FinanceRecurringPage(finances: finances) } label: {
                     IconTileLabel(title: "Recurring", systemImage: "repeat", tint: Color(light: 0x7C3AED, dark: 0xA78BFA)) {
@@ -4055,6 +4060,7 @@ private struct LinkedFinancePage: View {
         case .inbox: ReviewInboxPage(finances: finances)
         case .cashflow: FinanceCashFlowPage(finances: finances)
         case .review: MonthReviewPage(finances: finances)
+        case .calendar: FinanceCalendarView(finances: finances)
         }
     }
 }
@@ -4100,6 +4106,7 @@ private struct ScreenshotPage: View {
         case "inbox": ReviewInboxPage(finances: finances)
         case "cashflow": FinanceCashFlowPage(finances: finances)
         case "review": MonthReviewPage(finances: finances)
+        case "calendar": FinanceCalendarView(finances: finances)
         case "loading": ScrollView { SkeletonCards().padding(.horizontal, 16) }.background(Theme.canvas).navigationTitle("Finances")
         default: FinancesView(finances: finances)
         }
