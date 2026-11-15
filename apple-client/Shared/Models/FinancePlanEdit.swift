@@ -312,6 +312,9 @@ struct NewTransaction: Sendable, Equatable, Codable {
     var note: String
     /// A receipt already kept on the computer (`SaveFinancesReceipt`), by name.
     var receipt: String? = nil
+    /// The bank's own ID for it (an OFX statement's FITID), from a bank's
+    /// file: the next import of that file knows it's in.
+    var bank: String? = nil
 }
 
 /// Changes to the ledger, made on the ledger exactly as the computer sent
@@ -469,6 +472,7 @@ enum LedgerEdit {
             guard ReceiptCodec.isValidName(receipt) else { return nil }
             entry["receipt"] = .string(receipt)
         }
+        if let bank = t.bank?.trimmingCharacters(in: .whitespacesAndNewlines), !bank.isEmpty { entry["bank"] = .string(bank) }
         transactions.append(.object(entry))
         root["transactions"] = .array(transactions)
         return .object(root)

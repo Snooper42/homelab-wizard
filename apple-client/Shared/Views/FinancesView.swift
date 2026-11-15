@@ -2804,6 +2804,8 @@ struct TransactionsView: View {
     @State private var selected = Set<String>()
     @State private var categorizingSelected = false
     @State private var confirmingDelete = false
+    /// Import a File (Parity gap 5): a bank's CSV or OFX, read here.
+    @State private var importing = false
     @Namespace private var zoom
     @Environment(\.dynamicTypeSize) private var typeSize
 
@@ -3067,8 +3069,22 @@ struct TransactionsView: View {
                 }
             }
         }
+        .toolbar {
+            if finances.canAddTransactions, !selecting {
+                ToolbarItem(placement: .secondaryAction) {
+                    Button {
+                        importing = true
+                    } label: {
+                        Label("Import a File…", systemImage: "square.and.arrow.down")
+                    }
+                }
+            }
+        }
         .sheet(isPresented: $adding) {
             AddTransactionView(finances: finances)
+        }
+        .sheet(isPresented: $importing) {
+            ImportFileView(finances: finances)
         }
         .sensoryFeedback(.selection, trigger: account)
         .sensoryFeedback(.success, trigger: finances.savedCount)

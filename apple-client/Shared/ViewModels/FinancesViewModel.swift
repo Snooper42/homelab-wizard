@@ -1342,6 +1342,37 @@ final class FinancesViewModel {
 
     func dismissTogetherDone() { togetherDone = nil }
 
+    // MARK: Import a bank's file (Parity gap 5, import 1 of 3)
+
+    /// What `rows` of a bank's file would bring into `account`, against the
+    /// ledger and the plan's rules as last read.
+    func importing(_ rows: [BankFile.Row], into account: String) -> [BankImport.Found] {
+        let logos = PayeeLogos.shared
+        return BankImport.found(rows, account: account, ledger: BankImport.kept(in: rawLedger), rules: BankImport.rules(in: rawPlan)) {
+            logos.cleanPayee(logos.withoutTown($0, town: $1))
+        }
+    }
+
+    /// Brings in the rows of a bank's file that aren't in yet, in one save
+    /// (or, away, as changes that wait). Returns how many came in, or nil.
+    func bringIn(_ found: [BankImport.Found], into account: String) async -> Int? {
+        guard canAddTransactions, !isSaving, var raw = rawLedger, let plan else { return nil }
+        let accounts = Set(plan.plan.accounts.map(\.id))
+        var made: [LedgerChange] = []
+        for t in BankImport.transactions(found, account: account) {
+            guard let next = LedgerEdit.appending(t, accounts: accounts, to: raw) else { continue }
+            raw = next
+            made.append(.add(t))
+        }
+        guard !made.isEmpty else {
+            saveError = "Nothing in this file can come in."
+            return nil
+        }
+        let name = plan.plan.accounts.first { $0.id == account }?.name ?? "an account"
+        let saved = await makeLedger(made, edited: raw, reason: "Bring \(made.count) transactions from a bank's file into \(name).")
+        return saved ? made.count : nil
+    }
+
     /// Removes a transaction. Returns whether it saved.
     func delete(_ t: FinanceTransaction) async -> Bool {
         guard canAddTransactions, !isSaving, let raw = rawLedger else { return false }

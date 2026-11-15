@@ -457,6 +457,21 @@ final class PayeeLogos: @unchecked Sendable {
         return ns.replacingCharacters(in: m.range, with: "")
     }
 
+    /// A bank's wording with the town its file names for it (a City/State
+    /// column: "SAN JOSE CA") taken off its end; the wording as it was when it
+    /// doesn't end with that town (payees.ts's `withoutTown`).
+    func withoutTown(_ raw: String, town: String?) -> String {
+        var words = (town ?? "").split(whereSeparator: \.isWhitespace).map(String.init)
+        if words.count > 1, let last = words.last, isState(last) { words.removeLast() }
+        guard !words.isEmpty else { return raw }
+        var parts = raw.split(whereSeparator: \.isWhitespace).map(String.init)
+        if parts.count > 1, let last = parts.last, isState(last) { parts.removeLast() }
+        let n = words.count
+        guard parts.count > n, parts.suffix(n).joined(separator: " ").lowercased() == words.joined(separator: " ").lowercased() else { return raw }
+        let left = parts.dropLast(n).joined(separator: " ")
+        return withoutLeading(left).contains { $0.isASCII && $0.isLetter } ? left : raw
+    }
+
     /// A state as a bank ends a line with it: two capitals.
     private func isState(_ w: String) -> Bool {
         w.count == 2 && w == w.uppercased() && states.contains(w.lowercased())
