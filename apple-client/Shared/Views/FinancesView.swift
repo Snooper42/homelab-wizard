@@ -2444,25 +2444,28 @@ private struct FinanceLoansPage: View {
             if let view = finances.plan {
                 Section {
                     ForEach(view.loans) { loan in
-                        VStack(alignment: .leading, spacing: 4) {
-                            HStack {
-                                Text(finances.accountName(loan.account) ?? "Loan")
-                                Spacer()
-                                Money(value: loan.balance, currency: view.plan.currency, finances: finances)
+                        // Its page: the papers' ring and every payment, where they're typed in.
+                        NavigationLink { LoanPage(loan: loan, finances: finances) } label: {
+                            VStack(alignment: .leading, spacing: 4) {
+                                HStack {
+                                    Text(finances.accountName(loan.account) ?? "Loan")
+                                    Spacer()
+                                    Money(value: loan.balance, currency: view.plan.currency, finances: finances)
+                                }
+                                if loan.never {
+                                    Label("The payment doesn't keep up with the interest. At this pace it's never paid off.", systemImage: "exclamationmark.triangle.fill")
+                                        .font(.caption)
+                                        .foregroundStyle(Theme.danger)
+                                } else if let paidOff = loan.paidOff {
+                                    Text("Paid off \(paidOff, format: .dateTime.month(.wide).year())\(loan.rate > 0 ? " · \(loan.rate.formatted(.number.precision(.fractionLength(0...2))))%" : "")")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                } else if loan.balance <= 0 {
+                                    Text("Paid off").font(.caption).foregroundStyle(Theme.success)
+                                }
                             }
-                            if loan.never {
-                                Label("The payment doesn't keep up with the interest. At this pace it's never paid off.", systemImage: "exclamationmark.triangle.fill")
-                                    .font(.caption)
-                                    .foregroundStyle(Theme.danger)
-                            } else if let paidOff = loan.paidOff {
-                                Text("Paid off \(paidOff, format: .dateTime.month(.wide).year())\(loan.rate > 0 ? " · \(loan.rate.formatted(.number.precision(.fractionLength(0...2))))%" : "")")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            } else if loan.balance <= 0 {
-                                Text("Paid off").font(.caption).foregroundStyle(Theme.success)
-                            }
+                            .accessibilityElement(children: .combine)
                         }
-                        .accessibilityElement(children: .combine)
                     }
                 }
             }
