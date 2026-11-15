@@ -44,6 +44,23 @@ struct FinanceExportTests {
         #expect(FinanceExport.aheadName("2026-11-14") == "finances-ahead-2026-11-14.csv")
     }
 
+    @Test func aMonthOnPaper() throws {
+        let view = try JSONDecoder().decode(JSONValue.self, from: Data(contentsOf: household.appendingPathComponent("view.json")))
+        let page = FinanceExport.monthPage(view: view, month: "2026-11", title: "Finances", locale: Locale(identifier: "en_US"))
+        #expect(page.hasPrefix("<!doctype html>"))
+        #expect(page.contains("<h1>Finances: November 2026</h1>"))
+        #expect(page.contains("Paydays and payments as planned on Fri, Nov 13"))
+        // Sam's pay on its day, and checking after it, as the spreadsheet has them.
+        #expect(page.contains("<tr><th scope=\"row\">Fri, Nov 13</th><td><div><span>Sam's pay</span><span class=\"n\">$1,400.00</span>"))
+        #expect(page.contains("$3,637.05"))
+        // Nothing from another month.
+        #expect(!page.contains("Dec 1<"))
+        #expect(FinanceExport.monthPage(view: view, month: "1999-01", title: "Finances").contains("Nothing is planned this month."))
+        #expect(FinanceExport.esc("<b>\"A&B\"</b>") == "&lt;b&gt;&quot;A&amp;B&quot;&lt;/b&gt;")
+        #expect(FinanceExport.month("2026-11-13", ahead: 1) == "2026-12" && FinanceExport.month("2026-12-03", ahead: 1) == "2027-01")
+        #expect(FinanceExport.monthName("2026-12") == "finances-2026-12.html")
+    }
+
     /// Every amount is in them, so only while amounts show, never where the plan hides them here.
     @Test func offeredOnlyWhileAmountsShow() {
         #expect(FinanceExport.offered(amountsShown: true, hiddenByPlan: false))
