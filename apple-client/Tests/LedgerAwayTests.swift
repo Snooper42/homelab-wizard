@@ -5,7 +5,7 @@ import Testing
 /// Transactions changed away from home (offline Finances 3 of 3), replayed
 /// on the computer's newest ledger.
 @Suite("Transactions changed away, replayed")
-struct LedgerChangeTests {
+struct LedgerAwayTests {
     private let kept = try! JSONDecoder().decode(JSONValue.self, from: Data(#"""
     {"rev":"r9","transactions":[
       {"id":"t1","date":"2026-11-01","account":"chk","amount":-5,"payee":"Example Café","category":"Food"},
