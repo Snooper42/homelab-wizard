@@ -2806,6 +2806,8 @@ struct TransactionsView: View {
     @State private var confirmingDelete = false
     /// Import a File (Parity gap 5): a bank's CSV or OFX, read here.
     @State private var importing = false
+    /// The rules imports follow (import 4 of 4).
+    @State private var showingRules = false
     @Namespace private var zoom
     @Environment(\.dynamicTypeSize) private var typeSize
 
@@ -3079,12 +3081,24 @@ struct TransactionsView: View {
                     }
                 }
             }
+            if finances.canChangeRules || !finances.rules.isEmpty, !selecting {
+                ToolbarItem(placement: .secondaryAction) {
+                    Button {
+                        showingRules = true
+                    } label: {
+                        Label(finances.rules.isEmpty ? "Rules" : "Rules (\(finances.rules.count))", systemImage: "list.bullet.rectangle")
+                    }
+                }
+            }
         }
         .sheet(isPresented: $adding) {
             AddTransactionView(finances: finances)
         }
         .sheet(isPresented: $importing) {
             ImportFileView(finances: finances)
+        }
+        .sheet(isPresented: $showingRules) {
+            RulesView(finances: finances)
         }
         .sensoryFeedback(.selection, trigger: account)
         .sensoryFeedback(.success, trigger: finances.savedCount)
@@ -3554,9 +3568,62 @@ private struct AddTransactionView: View {
     @State private var showingReceipt = false
     @State private var photo: PhotosPickerItem?
     @State private var attaching = false
+    /// Always do this for its old name (import 4 of 4): a rule every import follows.
+    @State private var always = false
+    /// For names starting with some words rather than that name only; nil: as its new name suggests.
+    @State private var startsWith: Bool?
+    @State private var startWords: String?
+    @State private var changeAlreadyIn = true
 
     private var accounts: [FinanceAccount] {
         (finances.plan?.plan.accounts ?? []).filter { ["checking", "savings", "card", "investment", "retirement", "loan", "other"].contains($0.kind) }
+    }
+
+    private var oldPayee: String { editing?.payee.trimmingCharacters(in: .whitespaces) ?? "" }
+
+    /// Offered once a transaction with a payee is renamed or given a category (not a transfer or a split one).
+    private var canAlways: Bool {
+        guard let editing, finances.canChangeRules, !oldPayee.isEmpty, editing.to == nil, !editing.isSplit else { return false }
+        return draft.payee.trimmingCharacters(in: .whitespaces).lowercased() != oldPayee.lowercased() || !draft.category.isEmpty
+    }
+    private var startingNow: Bool { startsWith ?? PayeeRules.startsOld(draft.payee, old: oldPayee) }
+    private var wordsNow: String {
+        startWords ?? (PayeeRules.startsOld(draft.payee, old: oldPayee) ? draft.payee.trimmingCharacters(in: .whitespaces) : oldPayee)
+    }
+    private var ruleNow: BankImport.Rule? {
+        PayeeRules.always(oldPayee: oldPayee, payee: draft.payee, category: draft.category, startingWith: startingNow ? wordsNow : nil)
+    }
+
+    /// Always do this for “its old name”, for that name or names starting so, and the ones already in.
+    @ViewBuilder
+    private var alwaysSection: some View {
+        if canAlways {
+            Section {
+                Toggle(isOn: $always) {
+                    Text(verbatim: "Always do this for \u{201C}\(oldPayee)\u{201D}")
+                }
+                if always {
+                    Picker("For", selection: Binding(get: { startingNow }, set: { startsWith = $0 })) {
+                        Text("That Name Only").tag(false)
+                        Text("Names Starting With…").tag(true)
+                    }
+                    if startingNow {
+                        TextField("Starting with", text: Binding(get: { wordsNow }, set: { startWords = $0 }))
+                            .autocorrectionDisabled()
+                    }
+                    let n = ruleNow.map { finances.alreadyIn(for: $0, except: editing?.id) } ?? 0
+                    if n > 0 {
+                        Toggle(n == 1 ? "Change the 1 already in" : "Change the \(n) already in", isOn: $changeAlreadyIn)
+                    }
+                }
+            } footer: {
+                if always, let rule = ruleNow {
+                    Text(verbatim: "Every import from now on comes in as \(PayeeRules.becomes(rule)).")
+                } else if always {
+                    Text("Type the words the names start with.")
+                }
+            }
+        }
     }
 
     private var categories: [FinanceCategory] {
@@ -3674,6 +3741,7 @@ private struct AddTransactionView: View {
             Form {
                 whatSection
                 whereSection
+                alwaysSection
                 receiptSection
                 if let error = finances.saveError {
                     Section {
@@ -3695,7 +3763,7 @@ private struct AddTransactionView: View {
                     if finances.isSaving {
                         ProgressView()
                     } else {
-                        Button("Save", action: save).disabled(problem != nil)
+                        Button("Save", action: save).disabled(problem != nil || (always && canAlways && ruleNow == nil))
                     }
                 }
             }
@@ -3744,7 +3812,9 @@ private struct AddTransactionView: View {
         t.amount = abs(amount)
         Task {
             let saved: Bool
-            if let editing {
+            if let editing, always, canAlways, let rule = ruleNow {
+                saved = await finances.update(editing, with: t, always: rule, changeAlreadyIn: changeAlreadyIn)
+            } else if let editing {
                 saved = await finances.update(editing, with: t)
             } else {
                 saved = await finances.add(t)

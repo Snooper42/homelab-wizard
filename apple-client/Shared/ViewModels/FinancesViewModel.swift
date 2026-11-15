@@ -1254,6 +1254,53 @@ final class FinancesViewModel {
         return await makeLedger(.update(id: original.id, t), edited: edited, reason: "Change a transaction in your Finances.")
     }
 
+    // MARK: Rules (Parity gap 5, import 4 of 4)
+
+    /// The household's rules, as the plan keeps them.
+    var rules: [BankImport.Rule] { BankImport.rules(in: rawPlan) }
+
+    /// Rules change the plan for every device: only while the Homelab answers, at the edit level.
+    var canChangeRules: Bool { canEdit && offlineAsOf == nil && rawPlan != nil && !isPrivate }
+
+    /// How many already in a rule is for, but `except`.
+    func alreadyIn(for rule: BankImport.Rule, except: String?) -> Int { PayeeRules.count(rule, in: rawLedger, except: except) }
+
+    /// Keeps the rules as given. Returns whether it saved.
+    func saveRules(_ rules: [BankImport.Rule]) async -> Bool {
+        guard canChangeRules, !isSaving, let raw = rawPlan else { return false }
+        if let problem = PayeeRules.problem(rules) {
+            saveError = problem
+            return false
+        }
+        guard let edited = PayeeRules.setting(rules, in: raw) else { return false }
+        return await savePlan(edited, reason: "Change the rules imports follow.")
+    }
+
+    /// Changes a transaction and makes the rule it asks for (Always do this
+    /// for its old name): the rule first, kept in the plan, then the
+    /// transaction, and the ones already in that it's for when `changeAlreadyIn`.
+    func update(_ original: FinanceTransaction, with t: NewTransaction, always rule: BankImport.Rule, changeAlreadyIn: Bool) async -> Bool {
+        guard canChangeRules, canAddTransactions, !isSaving, let rawPlan, let plan else { return false }
+        let accounts = Set(plan.plan.accounts.map(\.id))
+        if let problem = LedgerEdit.problem(with: t, accounts: accounts) {
+            saveError = problem
+            return false
+        }
+        let next = PayeeRules.adding(rule, to: rules)
+        if let problem = PayeeRules.problem(next) {
+            saveError = problem
+            return false
+        }
+        guard let editedPlan = PayeeRules.setting(next, in: rawPlan) else { return false }
+        guard await savePlan(editedPlan, reason: "Always do this for \u{201C}\(rule.match)\u{201D}.") else { return false }
+        guard let raw = rawLedger, var edited = LedgerEdit.updating(id: original.id, with: t, accounts: accounts, in: raw) else {
+            saveError = "The rule is kept, but this transaction is changed on the computer."
+            return false
+        }
+        if changeAlreadyIn, let applied = PayeeRules.applying(rule, except: original.id, in: edited) { edited = applied }
+        return await saveLedger(edited, reason: "Change transactions in your Finances.")
+    }
+
     /// Sets a transaction's category and marks it reviewed. Returns whether it saved.
     func setCategory(_ t: FinanceTransaction, to category: String) async -> Bool {
         guard canAddTransactions, !isSaving, let raw = rawLedger else { return false }
