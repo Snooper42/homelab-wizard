@@ -474,16 +474,23 @@ private struct LinkAskDialog: ViewModifier {
 
 /// Homelab Wizard's name and line, atop the sidebar as on the computer.
 private struct BrandHeader: View {
+    @Environment(\.dynamicTypeSize) private var typeSize
+
     var body: some View {
         HStack(spacing: 10) {
             AppMark(size: 30)
             VStack(alignment: .leading, spacing: 1) {
+                // On one line at every size (at the largest it broke as "Ho mel ab Wiz ard").
                 Text("Homelab Wizard")
                     .font(.headline)
                     .foregroundStyle(.primary)
-                Text("Your apps, at home")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
+                if !typeSize.isAccessibilitySize {
+                    Text("Your apps, at home")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             }
         }
         .textCase(nil)
@@ -532,6 +539,7 @@ private struct SplitDashboard: View {
     let computer: ComputerViewModel
     let finances: FinancesViewModel
     @State private var columns: NavigationSplitViewVisibility = .all
+    @Environment(\.dynamicTypeSize) private var typeSize
     /// A link's action, waiting for its one tap.
     @State private var linkAsk: LinkAsk?
 
@@ -600,7 +608,8 @@ private struct SplitDashboard: View {
             model.sidebar = .status(.all)
             model.selectedAppID = id
         }
-        .navigationSplitViewColumnWidth(min: 190, ideal: 220)
+        // Wider at the largest text, where it starts hidden (below) and is shown with its button.
+        .navigationSplitViewColumnWidth(min: 190, ideal: typeSize.isAccessibilitySize ? 320 : 220)
         // The folds are the computer's, the same on every device.
         .task(id: model.hasLoaded) { await FoldSync.pull(model: model, actions: actions, folds: $folds, computer: $computerFolds) }
         .onChange(of: folds) { _, new in FoldSync.push(new, model: model, actions: actions, computer: $computerFolds) }
@@ -611,21 +620,28 @@ private struct SplitDashboard: View {
         }
     }
 
-    /// Backups, beside the sidebar across the whole width: a household member's iPad has none.
-    private var wideBackups: Bool { model.sidebar == .backups && !isMember }
+    /// Backups and Setup, beside the sidebar across the whole width: a household member's iPad has neither.
+    /// (Setup opens nothing, so its right side would only ever be empty: landscape pictures, Nov 15.)
+    private var wideScreen: Bool { (model.sidebar == .backups || model.sidebar == .setup) && !isMember }
 
     var body: some View {
         Group {
-            if wideBackups {
+            if wideScreen {
                 // Backups across the whole width (the owner's pick, Nov 15): the sidebar and Backups, its More pages
                 // opening over it.
                 NavigationSplitView(columnVisibility: $columns) {
                     sidebar
                 } detail: {
                     NavigationStack {
-                        BackupsView(backups: model.backups, columns: 2)
-                            .modifier(HealthLineInset(model: model) { model.sidebar = .status(.attention) })
-                            .toolbar { toolbarItems }
+                        Group {
+                            if model.sidebar == .setup {
+                                ComputerView(computer: computer, page: .setup)
+                            } else {
+                                BackupsView(backups: model.backups, columns: 2)
+                            }
+                        }
+                        .modifier(HealthLineInset(model: model) { model.sidebar = .status(.attention) })
+                        .toolbar { toolbarItems }
                     }
                 }
             } else {
@@ -694,6 +710,8 @@ private struct SplitDashboard: View {
             }
             }
         }
+        // At the largest text, three columns leave each too narrow to read: the sidebar starts hidden.
+        .onChange(of: typeSize.isAccessibilitySize, initial: true) { _, large in columns = large ? .doubleColumn : .all }
         // ⌘2 to ⌘6, as the computer's: the View menu (ScreenCommands).
         .focusedSceneValue(\.screenChoice, ScreenChoice(canSeeFinances: finances.canSeePlan) { screen in
             model.sidebar = screen
