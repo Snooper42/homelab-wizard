@@ -20,6 +20,8 @@ struct FinanceCashFlowPage: View {
                 VStack(spacing: 18) {
                     if let shown { hero(shown, view) }
                     chart(months, picked: shown?.month, view)
+                    // Where the month's money went, as the computer's Money flow.
+                    MoneyFlowCard(finances: finances)
                     list(months, view)
                     Text("Money in is what went to an income category; money out is what Spending counts. Money moved between your own accounts isn’t either.")
                         .font(.footnote)
