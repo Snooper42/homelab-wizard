@@ -136,8 +136,10 @@ struct AwayChangesTests {
         let key = SymmetricKey(size: .bits256)
         let s = store(key)
         let changes: [FinanceChange] = [.cushion(to: 300, was: 250), .paymentAmount(id: "electric", to: 95, was: 90)]
-        try s.keep(changes)
-        #expect(s.load() == changes)
+        let ledger: [LedgerChange] = [.category(id: "t2", to: "Groceries")]
+        try s.keep(changes, ledger: ledger)
+        #expect(s.load().plan == changes)
+        #expect(s.load().ledger == ledger)
         // Sealed: the amounts aren't in the file as text.
         let bytes = try Data(contentsOf: s.file)
         #expect(String(decoding: bytes, as: UTF8.self).contains("electric") == false)
@@ -149,7 +151,7 @@ struct AwayChangesTests {
         let s = store(SymmetricKey(size: .bits256))
         try s.keep([.cushion(to: 300, was: 250)])
         let other = AwayChanges(file: s.file) { SymmetricKey(size: .bits256) }
-        #expect(other.load().isEmpty)
+        #expect(other.load().plan.isEmpty)
         #expect(FileManager.default.fileExists(atPath: s.file.path) == false)
     }
 

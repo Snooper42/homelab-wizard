@@ -33,7 +33,7 @@ struct FinancesView: View {
                     // Changes made away: sent once home, or why they still wait.
                     if let sent = finances.awaySent {
                         AwaySentCard(sent: sent.sent, dropped: sent.dropped) { finances.dismissAwaySent() }
-                    } else if finances.offlineAsOf == nil, !finances.awayChanges.isEmpty, let why = finances.awaySendError {
+                    } else if finances.offlineAsOf == nil, finances.awayCount > 0, let why = finances.awaySendError {
                         Label(why, systemImage: "exclamationmark.triangle.fill")
                             .font(.footnote)
                             .foregroundStyle(Theme.warning)

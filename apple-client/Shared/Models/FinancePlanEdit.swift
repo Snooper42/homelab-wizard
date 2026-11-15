@@ -300,7 +300,7 @@ enum FinancePlanEdit {
 
 /// A transaction a person types in on the phone: money in or out of one
 /// account. Transfers, splits and receipts are for the computer.
-struct NewTransaction: Sendable, Equatable {
+struct NewTransaction: Sendable, Equatable, Codable {
     var date: Date
     var account: String
     /// Money out of the account (most purchases), or money in.
