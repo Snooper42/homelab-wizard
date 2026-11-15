@@ -619,7 +619,7 @@ private struct SplitDashboard: View {
                     sidebar
                 } detail: {
                     NavigationStack {
-                        BackupsView(backups: model.backups)
+                        BackupsView(backups: model.backups, columns: 2)
                             .modifier(HealthLineInset(model: model) { model.sidebar = .status(.attention) })
                             .toolbar { toolbarItems }
                     }
