@@ -15,7 +15,7 @@ struct AppResourcesTests {
 
     @Test func anAppOfSeveralContainersCountsThemAll() {
         let r = AppResources.of("immich", usage: usage, storage: storage)
-        #expect(r.memory == 512 * 1_048_576 + 1_610_612_736)
+        #expect(r.memory == Int64(512 * 1_048_576 + 1_610_612_736))
         #expect(r.processor == 42.5)
         #expect(r.disk == 12_884_901_888)
         #expect(r.diskMeasured == ISO8601DateFormatter().date(from: "2026-11-15T03:00:00Z"))
