@@ -747,6 +747,11 @@ private struct MoreFinancesCard: View {
                     IconTileLabel(title: "Bills", systemImage: "calendar", tint: Theme.danger)
                 }
             }
+            if !view.periods.isEmpty || !view.since.isEmpty {
+                row { FinanceCalendarView(finances: finances) } label: {
+                    IconTileLabel(title: "Calendar", systemImage: "calendar.day.timeline.left", tint: Color(light: 0x0E7490, dark: 0x22D3EE))
+                }
+            }
             if !view.recurring.isEmpty {
                 row { FinanceRecurringPage(finances: finances) } label: {
                     IconTileLabel(title: "Recurring", systemImage: "repeat", tint: Color(light: 0x7C3AED, dark: 0xA78BFA)) {
@@ -2439,25 +2444,28 @@ private struct FinanceLoansPage: View {
             if let view = finances.plan {
                 Section {
                     ForEach(view.loans) { loan in
-                        VStack(alignment: .leading, spacing: 4) {
-                            HStack {
-                                Text(finances.accountName(loan.account) ?? "Loan")
-                                Spacer()
-                                Money(value: loan.balance, currency: view.plan.currency, finances: finances)
+                        // Its page: the papers' ring and every payment, where they're typed in.
+                        NavigationLink { LoanPage(loan: loan, finances: finances) } label: {
+                            VStack(alignment: .leading, spacing: 4) {
+                                HStack {
+                                    Text(finances.accountName(loan.account) ?? "Loan")
+                                    Spacer()
+                                    Money(value: loan.balance, currency: view.plan.currency, finances: finances)
+                                }
+                                if loan.never {
+                                    Label("The payment doesn't keep up with the interest. At this pace it's never paid off.", systemImage: "exclamationmark.triangle.fill")
+                                        .font(.caption)
+                                        .foregroundStyle(Theme.danger)
+                                } else if let paidOff = loan.paidOff {
+                                    Text("Paid off \(paidOff, format: .dateTime.month(.wide).year())\(loan.rate > 0 ? " · \(loan.rate.formatted(.number.precision(.fractionLength(0...2))))%" : "")")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                } else if loan.balance <= 0 {
+                                    Text("Paid off").font(.caption).foregroundStyle(Theme.success)
+                                }
                             }
-                            if loan.never {
-                                Label("The payment doesn't keep up with the interest. At this pace it's never paid off.", systemImage: "exclamationmark.triangle.fill")
-                                    .font(.caption)
-                                    .foregroundStyle(Theme.danger)
-                            } else if let paidOff = loan.paidOff {
-                                Text("Paid off \(paidOff, format: .dateTime.month(.wide).year())\(loan.rate > 0 ? " · \(loan.rate.formatted(.number.precision(.fractionLength(0...2))))%" : "")")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            } else if loan.balance <= 0 {
-                                Text("Paid off").font(.caption).foregroundStyle(Theme.success)
-                            }
+                            .accessibilityElement(children: .combine)
                         }
-                        .accessibilityElement(children: .combine)
                     }
                 }
             }
@@ -4055,6 +4063,7 @@ private struct LinkedFinancePage: View {
         case .inbox: ReviewInboxPage(finances: finances)
         case .cashflow: FinanceCashFlowPage(finances: finances)
         case .review: MonthReviewPage(finances: finances)
+        case .calendar: FinanceCalendarView(finances: finances)
         }
     }
 }
@@ -4100,6 +4109,7 @@ private struct ScreenshotPage: View {
         case "inbox": ReviewInboxPage(finances: finances)
         case "cashflow": FinanceCashFlowPage(finances: finances)
         case "review": MonthReviewPage(finances: finances)
+        case "calendar": FinanceCalendarView(finances: finances)
         case "loading": ScrollView { SkeletonCards().padding(.horizontal, 16) }.background(Theme.canvas).navigationTitle("Finances")
         default: FinancesView(finances: finances)
         }

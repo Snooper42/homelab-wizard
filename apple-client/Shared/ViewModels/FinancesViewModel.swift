@@ -25,7 +25,7 @@ final class FinancesViewModel {
     /// On a household member's phone: the household's money shared with them.
     private(set) var shared: HouseholdShared?
     private(set) var ledger: FinanceLedger?
-    @ObservationIgnored private var rawLedger: JSONValue?
+    @ObservationIgnored private var rawLedger: JSONValue? { didSet { wholeVersion &+= 1 } }
     private(set) var ledgerError: String?
     private(set) var isLoadingLedger = false
     /// Amounts show only after a tap, and hide again on lock.
@@ -75,6 +75,12 @@ final class FinancesViewModel {
 
     /// The computer's latest answers, to keep.
     @ObservationIgnored private var answers: (plan: Data?, ledger: Data?, shared: Data?) = (nil, nil, nil)
+    /// The answer behind what `plan` shows (the computer's, or worked out here
+    /// away), for what reads the whole view: the Calendar and a loan's papers.
+    @ObservationIgnored private var shownAnswer: Data? { didSet { wholeVersion &+= 1 } }
+    /// Goes up each time the whole view or the ledger behind what's shown
+    /// changes: the Calendar and a loan's papers work themselves out again.
+    private(set) var wholeVersion = 0
     /// The last keep or forget, so each runs after the one before: a slow
     /// keep can't bring back what a forget dropped.
     @ObservationIgnored private var keeping: Task<Void, Never>?
@@ -158,6 +164,7 @@ final class FinancesViewModel {
         guard let kept = await readKept() else { return false }
         ownLogos = OwnLogos(kept.plan.view.plan.logos)
         plan = kept.plan.view
+        shownAnswer = kept.plan.answer
         // At the change level, changes can be made away: on the kept plan, with what already waits.
         var current = kept.plan.rawPlan
         let mayChangeAway = level >= .edit && !isPrivate && !kept.plan.view.readOnly && FinanceProjection.available
@@ -178,7 +185,10 @@ final class FinancesViewModel {
         let worked = await Task.detached(priority: .userInitiated) {
             try? HouseholdOffline.project(rawPlan: working, rawLedger: workingLedger, today: day, readOnly: readOnly)
         }.value
-        if let worked { plan = worked.view }
+        if let worked {
+            plan = worked.view
+            shownAnswer = worked.answer
+        }
         rawPlan = mayChangeAway && worked != nil ? current : nil
         planError = nil
         if mayChangeAway, awayLedgerBase != nil, let currentLedger, let read = Self.ledgerRead(currentLedger) {
@@ -241,7 +251,10 @@ final class FinancesViewModel {
         let worked = await Task.detached(priority: .userInitiated) {
             try? HouseholdOffline.project(rawPlan: raw, rawLedger: keptLedger, today: day, readOnly: readOnly)
         }.value
-        if let worked { plan = worked.view }
+        if let worked {
+            plan = worked.view
+            shownAnswer = worked.answer
+        }
     }
 
     /// Takes back a change that waits.
@@ -289,6 +302,7 @@ final class FinancesViewModel {
                 let read = try await api.saveFinances(r.plan)
                 ownLogos = OwnLogos(read.view.plan.logos)
                 plan = read.view
+                shownAnswer = read.answer
                 rawPlan = read.rawPlan
                 planRaw = read.rawPlan
                 answers.plan = read.answer
@@ -518,6 +532,7 @@ final class FinancesViewModel {
             }
             ownLogos = OwnLogos(read.view.plan.logos)
             plan = read.view
+            shownAnswer = read.answer
             rawPlan = read.rawPlan
             answers.plan = read.answer
             keepAnswers()
@@ -666,6 +681,7 @@ final class FinancesViewModel {
             let read = try await api.financesFollow(symbol)
             ownLogos = OwnLogos(read.view.plan.logos)
             plan = read.view
+            shownAnswer = read.answer
             rawPlan = read.rawPlan
             savedCount += 1
             return nil
@@ -784,6 +800,7 @@ final class FinancesViewModel {
     private func apply(_ r: InvestmentsReadResult) {
         ownLogos = OwnLogos(r.read.view.plan.logos)
         plan = r.read.view
+        shownAnswer = r.read.answer
         rawPlan = r.read.rawPlan
         investmentsSaid = r.words()
         investmentsProblem = nil
@@ -860,6 +877,7 @@ final class FinancesViewModel {
         offlineAsOf = nil
         guard store.state == .open else {
             plan = nil
+            shownAnswer = nil
             rawPlan = nil
             ownLogos = OwnLogos()
             planError = nil
@@ -869,11 +887,13 @@ final class FinancesViewModel {
             let read = try store.finances()
             ownLogos = OwnLogos(read.view.plan.logos)
             plan = read.view
+            shownAnswer = read.answer
             rawPlan = read.rawPlan
             planError = nil
             touchPrivate()
         } catch {
             plan = nil
+            shownAnswer = nil
             rawPlan = nil
             planError = Self.words(error)
         }
@@ -988,6 +1008,7 @@ final class FinancesViewModel {
             }
         }
         plan = nil
+        shownAnswer = nil
         rawPlan = nil
         ledger = nil
         rawLedger = nil
@@ -1050,6 +1071,7 @@ final class FinancesViewModel {
         store.lock()
         syncPrivacy(store)
         plan = nil
+        shownAnswer = nil
         rawPlan = nil
         ownLogos = OwnLogos()
         ledger = nil
@@ -1407,6 +1429,28 @@ final class FinancesViewModel {
                                    checking: plan?.checking ?? "", picked: picked, logos: logos)
     }
 
+    /// The whole view behind what's shown, and the ledger, for the Calendar
+    /// and a loan's papers, which read more of it than `plan` keeps.
+    func wholeView() -> (view: Data, ledger: JSONValue?)? {
+        guard let answer = shownAnswer ?? answers.plan ?? kept?.plan.answer else { return nil }
+        return (answer, rawLedger ?? kept?.ledger?.raw)
+    }
+
+    /// Finances › Calendar, worked out away from the main thread.
+    nonisolated static func calendar(from whole: (view: Data, ledger: JSONValue?)) async -> FinanceCalendar? {
+        await Task.detached(priority: .userInitiated) {
+            guard let envelope = try? JSONDecoder().decode(JSONValue.self, from: whole.view), let view = envelope["result"] else { return nil }
+            return FinanceCalendar(view: view, ledger: whole.ledger)
+        }.value
+    }
+
+    /// A loan's papers, from the whole view (nil when none are typed in).
+    func loanPapers(for account: String) -> LoanPapers? {
+        guard let answer = wholeView()?.view,
+              let envelope = try? JSONDecoder().decode(JSONValue.self, from: answer), let view = envelope["result"] else { return nil }
+        return LoanPapers(view: view, account: account)
+    }
+
     /// The computer's view as last read (live or kept for offline): its dues and categories.
     private func lastView() -> JSONValue? {
         guard let answer = answers.plan ?? kept?.plan.answer,
@@ -1545,6 +1589,7 @@ final class FinancesViewModel {
             let read = try await api.financesPlan()
             ownLogos = OwnLogos(read.view.plan.logos)
             plan = read.view
+            shownAnswer = read.answer
             rawPlan = read.rawPlan
             planError = nil
             offlineAsOf = nil
@@ -1564,6 +1609,7 @@ final class FinancesViewModel {
             if OfflineFinances.showsKept(after: apiError), await showKept() { return }
             if case .forbidden = apiError {
                 plan = nil
+                shownAnswer = nil
                 ownLogos = OwnLogos()
                 rawPlan = nil
                 forgetOffline()

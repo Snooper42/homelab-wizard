@@ -8,6 +8,8 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### New
 
+- **A loan's papers in the Homelab app:** a loan on Finances › Loans opens its page: what's owed, its rate and what goes to it each month, and where its papers are typed in on the computer, a ring of the payments made, what's paid down of what was borrowed, the next payment split into what pays it down and its interest, who pays it each month, when it's half paid and paid off, and every payment in a list.
+- **A calendar in the Homelab app:** Finances › **Calendar** shows the money month by month, as on the computer: each day's paydays and bills, what's in checking at the end of the day (outlined in orange when it's under your cushion), and what was recorded on the days before today. Tap a day for what moves on it and to add a payment on it; under the month, what it comes to in all. On the iPad in landscape, the day sits beside the month (⌥⌘9 with a keyboard).
 - **More kinds of payment in the Homelab app:** Add Payment now takes money that comes in from someone outside the household (rent from a lodger, a share of the mortgage), payments twice a month on two days, and payments with each paycheck, anyone's or one person's.
 - **What each app takes, on the phone:** an app's page in the Homelab app shows its memory and processor while it runs, and how much disk its folder takes, as the computer reads them. Whose photos take what stays on the computer.
 - **Explain This Log in the Homelab app:** an app's log has **⋯ › Explain This Log**: the computer's own Ollama says in plain words what the last 200 lines mean. The log is cleaned of secrets first and never leaves the homelab.
