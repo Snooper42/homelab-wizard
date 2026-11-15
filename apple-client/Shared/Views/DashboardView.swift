@@ -1202,7 +1202,7 @@ struct GroupHeader: View {
         HStack(spacing: 6) {
             Button(action: toggle) {
                 HStack(spacing: 6) {
-                    Image(systemName: "chevron.right")
+                    Image(systemName: "chevron.right").accessibilityHidden(true)
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(.secondary)
                         .rotationEffect(.degrees(open ? 90 : 0))

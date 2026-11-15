@@ -124,7 +124,7 @@ struct BackupsView: View {
                     withAnimation(.snappy) { freshOpen.toggle() }
                 } label: {
                     HStack(spacing: 6) {
-                        Image(systemName: "chevron.right")
+                        Image(systemName: "chevron.right").accessibilityHidden(true)
                             .font(.caption.weight(.semibold))
                             .foregroundStyle(.secondary)
                             .rotationEffect(.degrees(freshOpen ? 90 : 0))
