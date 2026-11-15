@@ -315,6 +315,12 @@ struct NewTransaction: Sendable, Equatable, Codable {
     /// The bank's own ID for it (an OFX statement's FITID), from a bank's
     /// file: the next import of that file knows it's in.
     var bank: String? = nil
+    /// The planned payment it pays, by id (from a bank's file, import 2 of 3).
+    var payment: String? = nil
+    /// A move between the household's own accounts: the one the money went
+    /// into, and that bank's ID for its arriving half. It has no category.
+    var to: String? = nil
+    var toBank: String? = nil
 }
 
 /// Changes to the ledger, made on the ledger exactly as the computer sent
@@ -326,6 +332,7 @@ enum LedgerEdit {
     /// Why a transaction can't be saved yet, in words, or nil when it can.
     static func problem(with t: NewTransaction, accounts: Set<String>) -> String? {
         if !accounts.contains(t.account) { return "Choose an account." }
+        if let to = t.to, !accounts.contains(to) || to == t.account { return "Choose the account it moved to." }
         if !t.amount.isFinite || FinancePlanEdit.roundedToCents(t.amount) <= 0 { return "Type in an amount." }
         if t.amount > maxAmount { return "That amount is too large." }
         if t.payee.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { return "Say who was paid, or who paid." }
@@ -473,6 +480,12 @@ enum LedgerEdit {
             entry["receipt"] = .string(receipt)
         }
         if let bank = t.bank?.trimmingCharacters(in: .whitespacesAndNewlines), !bank.isEmpty { entry["bank"] = .string(bank) }
+        if let payment = t.payment, !payment.isEmpty, t.to == nil { entry["payment"] = .string(payment) }
+        if let to = t.to {
+            entry["to"] = .string(to)
+            entry.removeValue(forKey: "category")
+            if let toBank = t.toBank?.trimmingCharacters(in: .whitespacesAndNewlines), !toBank.isEmpty { entry["toBank"] = .string(toBank) }
+        }
         transactions.append(.object(entry))
         root["transactions"] = .array(transactions)
         return .object(root)

@@ -5,9 +5,8 @@ import Foundation
 /// as a person would write it, the bank's own words in its note; a rule for
 /// that payee ("Always do this for…") or the payee's last category; and
 /// every row already in the ledger skipped (by the bank's ID, or the day,
-/// the amount and a payee alike). Import 1 of 3 (the owner approved the
-/// sheet, Nov 15): links to planned payments and fixing rows brought in
-/// before come next, then Rules.
+/// the amount and a payee alike). Import 1 and 2 of 3 (the owner approved the
+/// sheet, Nov 15): fixing rows brought in before comes next, then Rules.
 enum BankImport {
     /// A transaction in the ledger, as the import compares with it (finance.Transaction's keys).
     struct Kept: Sendable, Equatable {
@@ -21,6 +20,10 @@ enum BankImport {
         var category = ""
         var bank: String? = nil
         var toBank: String? = nil
+        /// The planned payment it paid, by id.
+        var payment: String? = nil
+        var notPlanned = false
+        var isSplit = false
     }
 
     /// A rule in the plan: for a payee (or, `prefix`, one starting with its words), its name and category.
@@ -43,8 +46,17 @@ enum BankImport {
         let raw: String?
         let memo: String?
         let bank: String?
+        /// The category its rule or its payee's last gives it.
         let category: String?
         let state: State
+        /// What the file's Category column calls it.
+        var kind: String? = nil
+        /// The planned payment it looks like it pays (import 2 of 3).
+        var guessed: BankGuess.Planned? = nil
+        /// The planned payment it comes in paying: the one guessed, or the one picked; nil for none.
+        var link: String? = nil
+        /// Its category, or the household's own account it moved to or from.
+        var guess = BankGuess.Guess()
         var id: Int { index }
 
         /// The note it comes in with: the bank's wording, after a memo when it has one.
@@ -71,6 +83,9 @@ enum BankImport {
             k.category = str(t["category"]) ?? ""
             k.bank = str(t["bank"])
             k.toBank = str(t["toBank"])
+            k.payment = str(t["payment"])
+            if case .bool(true)? = t["notPlanned"] { k.notPlanned = true }
+            if case .array(let parts)? = t["splits"], !parts.isEmpty { k.isSplit = true }
             return k
         }
     }
@@ -190,17 +205,66 @@ enum BankImport {
                 state = .comesIn
             }
             return Found(index: i, date: t.date, amount: t.amount, payee: payee, raw: raw, memo: t.memo, bank: t.id,
-                         category: rule?.category ?? (payee.isEmpty ? nil : lastCategory(payee)), state: state)
+                         category: rule?.category ?? (payee.isEmpty ? nil : lastCategory(payee)), state: state, kind: t.kind)
         }
     }
 
-    /// The ones that come in, as transactions for the ledger.
+    /// Each row that comes in with what it plainly pays and what it's for
+    /// (import 2 of 3), in the file's order, no planned day paid twice. A
+    /// link picked by hand (`picked`, by row; "" for none) wins over the one
+    /// guessed, and its payment's category follows it.
+    static func guessing(_ found: [Found], account: String, ledger: [Kept], plan: JSONValue?, view: JSONValue?,
+                         checking: String, picked: [Int: String] = [:], logos: PayeeLogos) -> [Found] {
+        let payments = BankGuess.payments(in: plan).filter { $0.card == nil }
+        let accounts = BankGuess.accounts(in: plan)
+        let categories = BankGuess.categories(in: view)
+        let dues = BankGuess.dues(in: view)
+        var taken = BankGuess.paidDays(ledger, dues: dues)
+        let learned = BankGuess.learnedLinks(ledger, logos: logos)
+        let same = { (payee: String, x: BankGuess.Payment) in
+            BankGuess.paysBill(payee, x, logos: logos) || learned[BankGuess.payeeKey(payee, logos: logos)]?.contains(x.id) == true
+        }
+        return found.map { f in
+            guard f.state == .comesIn else { return f }
+            var g = f
+            g.guessed = BankGuess.plannedFor(date: f.date, amount: f.amount, payee: f.payee, account: account, payments: payments,
+                                             dues: dues, checking: checking, taken: taken, same: same)
+            if let at = g.guessed { taken.insert(at.key) }
+            let link = picked[f.index].map { $0.isEmpty ? nil : $0 } ?? g.guessed?.payment
+            g.link = link
+            g.guess = BankGuess.guessFor(payee: f.payee, amount: f.amount, raw: f.raw, kind: f.kind, into: account, accounts: accounts,
+                                         categories: categories, last: f.category, pays: payments.first { $0.id == link }, logos: logos)
+            // Before the computer's categories are read, the rule's or the last one stands.
+            if categories.isEmpty, g.guess.account == nil { g.guess.category = f.category }
+            return g
+        }
+    }
+
+    /// The ones that come in, as transactions for the ledger: each with its
+    /// category and the payment it pays; a move between the household's own
+    /// accounts out of this one to the other, or out of the other into this one.
     static func transactions(_ found: [Found], account: String) -> [NewTransaction] {
         found.filter { $0.state == .comesIn }.compactMap { f in
             guard let date = LocalDay.parse(f.date) else { return nil }
-            return NewTransaction(date: date, account: account, isMoneyIn: f.amount > 0, amount: abs(f.amount),
-                                  payee: String(f.payee.prefix(200)), category: String((f.category ?? "").prefix(100)),
-                                  note: String((f.note ?? "").prefix(1000)), bank: f.bank.map { String($0.prefix(200)) })
+            var t = NewTransaction(date: date, account: account, isMoneyIn: f.amount > 0, amount: abs(f.amount),
+                                   payee: String(f.payee.prefix(200)), category: String((f.guess.category ?? f.category ?? "").prefix(100)),
+                                   note: String((f.note ?? "").prefix(1000)), bank: f.bank.map { String($0.prefix(200)) })
+            t.payment = f.link
+            if let other = f.guess.account {
+                t.category = ""
+                t.payment = nil
+                if f.amount < 0 {
+                    t.to = other
+                } else {
+                    // Its leaving half kept: out of the other account into this one.
+                    t.account = other
+                    t.to = account
+                    t.isMoneyIn = false
+                    t.toBank = t.bank
+                    t.bank = nil
+                }
+            }
+            return t
         }
     }
 

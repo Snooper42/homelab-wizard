@@ -1346,11 +1346,22 @@ final class FinancesViewModel {
 
     /// What `rows` of a bank's file would bring into `account`, against the
     /// ledger and the plan's rules as last read.
-    func importing(_ rows: [BankFile.Row], into account: String) -> [BankImport.Found] {
+    /// `picked`: links chosen by hand, by row ("" for none).
+    func importing(_ rows: [BankFile.Row], into account: String, picked: [Int: String] = [:]) -> [BankImport.Found] {
         let logos = PayeeLogos.shared
-        return BankImport.found(rows, account: account, ledger: BankImport.kept(in: rawLedger), rules: BankImport.rules(in: rawPlan)) {
+        let ledger = BankImport.kept(in: rawLedger)
+        let found = BankImport.found(rows, account: account, ledger: ledger, rules: BankImport.rules(in: rawPlan)) {
             logos.cleanPayee(logos.withoutTown($0, town: $1))
         }
+        return BankImport.guessing(found, account: account, ledger: ledger, plan: rawPlan, view: lastView(),
+                                   checking: plan?.checking ?? "", picked: picked, logos: logos)
+    }
+
+    /// The computer's view as last read (live or kept for offline): its dues and categories.
+    private func lastView() -> JSONValue? {
+        guard let answer = answers.plan ?? kept?.plan.answer,
+              let envelope = try? JSONDecoder().decode(JSONValue.self, from: answer) else { return nil }
+        return envelope["result"]
     }
 
     /// Brings in the rows of a bank's file that aren't in yet, in one save
