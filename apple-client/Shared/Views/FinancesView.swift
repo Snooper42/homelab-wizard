@@ -2873,6 +2873,7 @@ struct TransactionsView: View {
     var body: some View {
         let newCount = finances.newTransactionCount
         let groups = months
+        let running = runningBalances(groups)
         List(selection: listSelection) {
             if search.isEmpty, let view = finances.plan, !view.plan.accounts.isEmpty {
                 Section {
@@ -2937,7 +2938,7 @@ struct TransactionsView: View {
                             TransactionDetailView(transaction: t, finances: finances)
                                 .zoomTransition(id: t.id, in: zoom)
                         } label: {
-                            WalletTransactionRow(transaction: t, finances: finances, isNew: isNew)
+                            WalletTransactionRow(transaction: t, finances: finances, isNew: isNew, balanceAfter: running[t.id])
                                 .zoomSource(id: t.id, in: zoom)
                         }
                         .swipeActions(edge: .leading) {
@@ -3056,6 +3057,15 @@ struct TransactionsView: View {
         }
         .sensoryFeedback(.selection, trigger: account)
         .sensoryFeedback(.success, trigger: finances.savedCount)
+    }
+
+    /// One account picked, the whole of it shown: what it held after each day,
+    /// on the day's latest transaction (`AccountBalance.daily`).
+    private func runningBalances(_ groups: [MonthGroup]) -> [String: Double] {
+        guard search.isEmpty, !onlyNew, !filter.isOn, let id = account,
+              let a = finances.plan?.plan.accounts.first(where: { $0.id == id }),
+              let all = finances.ledger?.transactions else { return [:] }
+        return AccountBalance.daily(a, all, shown: groups.flatMap(\.items))
     }
 
     /// Select's list binding: on iPhone and iPad (the Mac has its own computer app's).
@@ -3250,6 +3260,8 @@ struct WalletTransactionRow: View {
     let transaction: FinanceTransaction
     let finances: FinancesViewModel
     let isNew: Bool
+    /// Transactions' running balance, on the day's latest: what the account held after the day.
+    var balanceAfter: Double? = nil
 
     var body: some View {
         HStack(spacing: 12) {
@@ -3284,9 +3296,18 @@ struct WalletTransactionRow: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
             Spacer(minLength: 8)
-            Money(value: transaction.amount, currency: finances.currency, finances: finances)
-                .fontWeight(isNew ? .semibold : .regular)
-                .foregroundStyle(transaction.amount > 0 ? Theme.success : .primary)
+            VStack(alignment: .trailing, spacing: 1) {
+                Money(value: transaction.amount, currency: finances.currency, finances: finances)
+                    .fontWeight(isNew ? .semibold : .regular)
+                    .foregroundStyle(transaction.amount > 0 ? Theme.success : .primary)
+                if let balanceAfter {
+                    Text(verbatim: amountText(balanceAfter, finances.currency, finances))
+                        .font(.caption)
+                        .monospacedDigit()
+                        .foregroundStyle(Theme.secondaryInk)
+                        .accessibilityLabel(Text(verbatim: "\(amountText(balanceAfter, finances.currency, finances)) after the day"))
+                }
+            }
         }
         .accessibilityElement(children: .combine)
         .accessibilityValue(isNew ? "New" : "")
@@ -3937,7 +3958,10 @@ private struct ScreenshotPage: View {
 
     var body: some View {
         page
-            .task {
+            // Again once this device may see Finances: on the iPad the page opened before it could
+            // (ipad-light-bills empty, ipad-light-transactions still reading).
+            .task(id: finances.canSeePlan) {
+                guard finances.canSeePlan else { return }
                 if finances.plan == nil { await finances.loadPlan() }
                 if finances.ledger == nil { await finances.loadLedger() }
             }

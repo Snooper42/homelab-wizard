@@ -41,6 +41,30 @@ struct AccountBalanceTests {
         #expect(abs(series.last!.value - 2464.20) < 0.001)
     }
 
+    @Test func transactionsRunningBalanceOnceADay() throws {
+        let a: FinanceAccount = try decode(#"{"id":"chk","name":"Checking","kind":"checking","balance":2512.40,"updated":"2026-10-30"}"#)
+        var l: FinanceLedger = try decode(ledger)
+        // Two on Oct 31: only the newest shows the day's end.
+        l = try decode(#"""
+        {"transactions":[
+          {"id":"t1","date":"2026-10-24","account":"chk","amount":-63.75,"payee":"Corner Grocer"},
+          {"id":"t2","date":"2026-10-26","account":"chk","amount":2400,"payee":"Paycheck"},
+          {"id":"t4","date":"2026-10-31","account":"chk","amount":-48.2,"payee":"Fuel"},
+          {"id":"t6","date":"2026-10-31","account":"chk","amount":-10,"payee":"Parking"},
+          {"id":"t5","date":"2026-10-28","account":"card","amount":-40,"payee":"Cafe"}
+        ]}
+        """#)
+        let shown = AccountBalance.mine(a, l.transactions)
+        let daily = AccountBalance.daily(a, l.transactions, shown: shown)
+        #expect(Set(daily.keys) == [shown[0].id, "t2", "t1"])     // one of Oct 31's, Oct 26, Oct 24; not the card's
+        #expect(abs(daily[shown[0].id]! - 2454.20) < 0.001)         // 2512.40 − 48.20 − 10
+        #expect(abs(daily["t2"]! - 2512.40) < 0.001)
+        #expect(abs(daily["t1"]! - 112.40) < 0.001)
+        // A home has no running balance.
+        let home: FinanceAccount = try decode(#"{"id":"chk","name":"Home","kind":"home","balance":300000,"updated":"2026-10-30"}"#)
+        #expect(AccountBalance.daily(home, l.transactions, shown: shown).isEmpty)
+    }
+
     @Test func aCardOwesTheMoreForACharge() throws {
         let card: FinanceAccount = try decode(#"{"id":"card","name":"Card","kind":"card","balance":100,"updated":"2026-10-30"}"#)
         let l: FinanceLedger = try decode(ledger)
