@@ -2889,7 +2889,46 @@ struct TransactionsView: View {
         return Set(names.map { Spending.top($0, in: categories) }).sorted { $0.localizedLowercase < $1.localizedLowercase }
     }
 
+    // Split in two so the compiler checks each in reasonable time (the screenshots build gave up on one).
     var body: some View {
+        list
+            .toolbar {
+                if finances.canAddTransactions, !selecting {
+                    ToolbarItem(placement: .secondaryAction) {
+                        Button {
+                            importing = true
+                        } label: {
+                            Label("Import a File…", systemImage: "square.and.arrow.down")
+                        }
+                    }
+                }
+                if finances.canChangeRules || !finances.rules.isEmpty, !selecting {
+                    ToolbarItem(placement: .secondaryAction) {
+                        Button {
+                            showingRules = true
+                        } label: {
+                            Label(finances.rules.isEmpty ? "Rules" : "Rules (\(finances.rules.count))", systemImage: "list.bullet.rectangle")
+                        }
+                    }
+                }
+            }
+            .sheet(isPresented: $importing) {
+                ImportFileView(finances: finances)
+            }
+            .sheet(isPresented: $showingRules) {
+                RulesView(finances: finances)
+            }
+            // ⇧⌘I in the Finances menu, and the palette's commands, while Transactions is in front.
+            .focusedSceneValue(\.transactions, focus)
+    }
+
+    private var focus: TransactionsFocus? {
+        guard finances.canAddTransactions else { return nil }
+        return TransactionsFocus(importFile: { importing = true }, addTransaction: { finances.clearSaveError(); adding = true })
+    }
+
+    @ViewBuilder
+    private var list: some View {
         let newCount = finances.newTransactionCount
         let groups = months
         let running = runningBalances(groups)
@@ -3071,34 +3110,8 @@ struct TransactionsView: View {
                 }
             }
         }
-        .toolbar {
-            if finances.canAddTransactions, !selecting {
-                ToolbarItem(placement: .secondaryAction) {
-                    Button {
-                        importing = true
-                    } label: {
-                        Label("Import a File…", systemImage: "square.and.arrow.down")
-                    }
-                }
-            }
-            if finances.canChangeRules || !finances.rules.isEmpty, !selecting {
-                ToolbarItem(placement: .secondaryAction) {
-                    Button {
-                        showingRules = true
-                    } label: {
-                        Label(finances.rules.isEmpty ? "Rules" : "Rules (\(finances.rules.count))", systemImage: "list.bullet.rectangle")
-                    }
-                }
-            }
-        }
         .sheet(isPresented: $adding) {
             AddTransactionView(finances: finances)
-        }
-        .sheet(isPresented: $importing) {
-            ImportFileView(finances: finances)
-        }
-        .sheet(isPresented: $showingRules) {
-            RulesView(finances: finances)
         }
         .sensoryFeedback(.selection, trigger: account)
         .sensoryFeedback(.success, trigger: finances.savedCount)

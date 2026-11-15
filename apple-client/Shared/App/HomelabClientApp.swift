@@ -21,6 +21,7 @@ struct HomelabClientApp: App {
             HomelabCommands(coordinator: coordinator)
             AppMenuCommands()
             ScreenCommands()
+            FinancesCommands()
         }
     }
 }

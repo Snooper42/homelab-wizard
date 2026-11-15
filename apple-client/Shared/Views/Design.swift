@@ -114,6 +114,11 @@ struct PressableButtonStyle: ButtonStyle {
             .scaleEffect(configuration.isPressed ? 0.94 : 1)
             .opacity(configuration.isPressed ? 0.85 : 1)
             .animation(.spring(response: 0.25, dampingFraction: 0.7), value: configuration.isPressed)
+            #if os(iOS)
+            // Under the iPad's pointer, a card or a round action lights up, as a list's row does (item 3).
+            .contentShape(.hoverEffect, RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .hoverEffect(.highlight)
+            #endif
     }
 }
 

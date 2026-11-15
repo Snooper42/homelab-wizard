@@ -8,6 +8,8 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### New
 
+- **⌘K on the iPad:** with a keyboard, ⌘K opens the command palette, as on the computer: type an app, a screen or a command (Back Up Now, Import a File, a page of Finances), ↑↓ to pick, Return to run; Stop asks twice, and every change still asks for Face ID.
+- **A Finances menu on the iPad:** with a keyboard, ⌥⌘1 to ⌥⌘8 open Transactions, Bills, Budgets, Goals, Investments, Accounts, Spending and Cash Flow, and ⇧⌘I imports a bank's file on Transactions (hold ⌘ to see them).
 - **A month to print from the Homelab app:** Finances' **⋯ › Export** has **This Month** and **Next Month (to Print)**: each day's paydays and payments with checking after, and each paycheck's in, out, saved and left, as a PDF to print or keep.
 - **Rules in the Homelab app:** change a transaction's payee or category and turn on **Always do this for…** to make a rule every import follows (and change the ones already in); Transactions' **⋯ › Rules** lists them to change or swipe away.
 - **Import in the Homelab app fixes earlier imports:** a row brought in before as only CREDIT or DEBIT takes its real payee from the file, one with the bank's own words takes the clearer name, and one with no category takes the one the file's row is, rather than any of them coming in twice.
@@ -153,6 +155,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **The iPad's pointer:** with a trackpad or mouse, Finances' and Backups' cards and an app's round actions light up under the pointer, as a list's rows do.
 - **The iPad uses its width:** beside Finances' home, Bills (or the page you tap) opens wide on the right, every setting opens beside Settings, and Backups uses the whole width in two columns, instead of the right side saying *No App Selected*.
 - **Finances away from home in the Homelab app are today's:** with no signal, or the Homelab not answering, the iPhone and iPad work out what's due, what's left and each pay period from today, with the computer's own Finances code, instead of showing them as they were when last read.
 - **The iPad's screens show their titles:** in the Homelab app on an iPad, the line that says what needs a look sits under Backups, Finances, Setup and Settings instead of in the place of their titles.

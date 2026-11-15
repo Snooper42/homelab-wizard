@@ -516,6 +516,10 @@ private struct SplitDashboard: View {
     typealias Screen = DashboardViewModel.SidebarItem
     @Environment(AppActionsViewModel.self) private var actions
     @Environment(AppCoordinator.self) private var coordinator
+    @Environment(HomelabTasksViewModel.self) private var tasks
+    /// ⌘K (item 3): the palette, and Transactions' own commands while it's in front.
+    @State private var paletteOpen = false
+    @FocusedValue(\.transactions) private var transactionsFocus
     /// The sidebar's choice, kept across launches as the computer keeps each
     /// screen's place (#417). Only the choice is kept, never what it shows.
     @SceneStorage("sidebar") private var savedSidebar = "apps:all"
@@ -694,6 +698,10 @@ private struct SplitDashboard: View {
         .focusedSceneValue(\.screenChoice, ScreenChoice(canSeeFinances: finances.canSeePlan) { screen in
             model.sidebar = screen
         })
+        .focusedSceneValue(\.palette, PaletteFocus { paletteOpen = true })
+        .sheet(isPresented: $paletteOpen) {
+            CommandPaletteView(commands: paletteCommands, run: runPalette)
+        }
         .linkAskDialog($linkAsk)
         #if SCREENSHOTS
         // The iPad's pictures: the shot's screen (kept as the place, so the
@@ -744,6 +752,47 @@ private struct SplitDashboard: View {
                                    description: Text("What still needs you, and how this machine is doing, are beside this."))
         default:
             ContentUnavailableView("No App Selected", systemImage: "server.rack", description: Text("Choose an app to see its details."))
+        }
+    }
+
+    /// What the palette offers now, as this device may.
+    private var paletteCommands: [PaletteCommand] {
+        let can = Palette.Can(seeFinances: finances.canSeePlan, change: actions.canChangeApps,
+                              backUp: !isMember && tasks.canRun && tasks.running == nil,
+                              importFile: transactionsFocus != nil, addTransaction: transactionsFocus != nil,
+                              showAmounts: finances.canSeePlan && !finances.amountsHiddenByPlan, amountsShown: finances.amountsShown)
+        return Palette.commands(screens: screens, groups: model.groups, can: can, available: { actions.available(for: $0) })
+    }
+
+    /// Runs what a command's own button runs: Face ID for a change, as there.
+    private func runPalette(_ c: PaletteCommand) {
+        func app(_ id: AppStatus.ID) -> AppStatus? { model.app(id: id) }
+        switch c.action {
+        case .screen(let screen):
+            model.sidebar = screen
+        case .financePage(let page):
+            IntentInbox.shared.open(.finances(page: page))
+        case .openApp(let id):
+            model.search = ""
+            model.sidebar = .status(.all)
+            model.selectedAppID = id
+        case .app(let id, let action):
+            guard let a = app(id) else { return }
+            // Stop was asked twice in the palette, as the computer's: it runs now (Face ID first).
+            if action == .stop { Task { await actions.run(.stop, on: a) } } else { actions.request(action, on: a) }
+        case .logs(let id):
+            if let a = app(id) { model.logsApp = a }
+        case .group(let ids, let action):
+            let apps = ids.compactMap(app)
+            Task { await actions.runGroup(action, on: apps) }
+        case .backUpNow:
+            tasks.start(.backup)
+        case .amounts:
+            finances.amountsShown.toggle()
+        case .importFile:
+            transactionsFocus?.importFile()
+        case .addTransaction:
+            transactionsFocus?.addTransaction()
         }
     }
 

@@ -20,9 +20,44 @@ struct ScreenChoice {
     let pick: @MainActor (DashboardViewModel.SidebarItem) -> Void
 }
 
+/// Transactions in the window in front, where this device may add them: Import a File opens there.
+struct TransactionsFocus {
+    let importFile: @MainActor () -> Void
+    let addTransaction: @MainActor () -> Void
+}
+
+/// The ⌘K palette of the window in front (the iPad's split view).
+struct PaletteFocus {
+    let open: @MainActor () -> Void
+}
+
 extension FocusedValues {
     @Entry var selectedApp: SelectedAppFocus?
     @Entry var screenChoice: ScreenChoice?
+    @Entry var transactions: TransactionsFocus?
+    @Entry var palette: PaletteFocus?
+}
+
+/// The Finances menu (iPad with a keyboard, item 3): each of its pages on
+/// ⌥⌘1 to ⌥⌘8, opened as a link to it opens (IntentInbox), and Import a
+/// File… (⇧⌘I) on Transactions.
+struct FinancesCommands: Commands {
+    @FocusedValue(\.screenChoice) private var choice
+    @FocusedValue(\.transactions) private var transactions
+
+    var body: some Commands {
+        CommandMenu("Finances") {
+            ForEach(Array(DeepLink.FinancePage.menuOrder.enumerated()), id: \.offset) { i, page in
+                Button(page.title) { IntentInbox.shared.open(.finances(page: page)) }
+                    .keyboardShortcut(KeyEquivalent(Character(String(i + 1))), modifiers: [.command, .option])
+                    .disabled(!(choice?.canSeeFinances ?? false))
+            }
+            Divider()
+            Button("Import a File…") { transactions?.importFile() }
+                .keyboardShortcut("i", modifiers: [.command, .shift])
+                .disabled(transactions == nil)
+        }
+    }
 }
 
 /// ⌘2 to ⌘6 pick a screen, the same numbers as on the computer (Choose apps
@@ -30,9 +65,15 @@ extension FocusedValues {
 struct ScreenCommands: Commands {
     @FocusedValue(\.screenChoice) private var choice
 
+    @FocusedValue(\.palette) private var palette
+
     var body: some Commands {
         CommandGroup(after: .sidebar) {
             Divider()
+            // ⌘K, as on the computer (View › Command Palette on a Mac).
+            Button("Command Palette…") { palette?.open() }
+                .keyboardShortcut("k")
+                .disabled(palette == nil)
             button(.status(.all))
             button(.backups)
             button(.setup)

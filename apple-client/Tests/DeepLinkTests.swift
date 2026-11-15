@@ -137,4 +137,16 @@ struct DeepLinkTests {
         #expect(!DeepLink.isAppID("ïmmich"))
         #expect(!DeepLink.isAppID(String(repeating: "a", count: 65)))
     }
+
+    /// The Finances menu's pages: each once, at most nine (⌥⌘1 to ⌥⌘9),
+    /// each a page a link opens, named as its page is.
+    @Test func theFinancesMenusPages() {
+        let order = DeepLink.FinancePage.menuOrder
+        #expect(Set(order).count == order.count && order.count <= 9)
+        #expect(order.first == .transactions)
+        for page in order {
+            #expect(DeepLink.parse(URL(string: "homelab://finances/\(page.rawValue)")!) == .finances(page: page))
+        }
+        #expect(DeepLink.FinancePage.cashflow.title == "Cash Flow")
+    }
 }

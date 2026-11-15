@@ -199,7 +199,9 @@ Each phone sees Finances at the level it was paired with: none, the money card, 
 | Feature | Computer | Phone's page | iPhone | iPad | Phone calls |
 |---|---|---|---|---|---|
 | A screen's key (⌘2 to ⌘6, Ctrl on Windows and Linux) | yes | on purpose: tabs at the bottom | on purpose: tabs | yes | |
-| Type a command (⌘K) and the sheet of shortcuts (?) | yes | on purpose: no keyboard | on purpose | gap: a hardware keyboard has the menus' shortcuts, no palette | |
+| Finances' pages and Import from the keyboard | no: its tabs and Import button, with no keys of their own | on purpose: no keyboard | on purpose | yes: the Finances menu, ⌥⌘1 to ⌥⌘8 for its pages (as a link opens them), ⇧⌘I for Import a File on Transactions | |
+| Type a command (⌘K) and the sheet of shortcuts (?) | yes | on purpose: no keyboard | on purpose | partly: ⌘K opens the palette (`CommandPaletteView`, `Palette.commands` as commands.ts), with screens, Finances' pages, each app's Open, Restart, Start, Stop (asked twice) and Logs, each group's, Back Up Now, Show or Hide Amounts, Import a File and Add a Transaction; no sheet of shortcuts (holding ⌘ shows the menus' own) | |
+| Pointer hover on rows and cards | yes | on purpose: no pointer | on purpose | yes: a list's rows, and every card and round action (`PressableButtonStyle`) | |
 | Back and Forward between screens and their tabs (⌘[ ⌘], mouse buttons, a swipe; Finances' and Tidy Up's tabs are steps too) | yes | on purpose: tabs at the bottom | yes, the system's Back | yes | |
 | Right-click the sidebar for a screen's own menu | yes ([Host](<Host.md>): the Mac's menus differ) | on purpose | on purpose | partly: a right-click menu on an app's row | |
 | Remember where you were on each screen | yes | yes | yes | yes | |
@@ -216,6 +218,6 @@ The cells marked *gap*, gathered, each with what closing it takes (S a few hours
 6. ~~**The phone's page: Settings and Setup's facts**~~ **Closed:** Settings on the phone's page lists the settings a phone may change (`phoneSettings`), saved where it may make changes, with This machine's facts; none on a wall screen.
 7. **Memory and processor, disk per app, Explain these logs** on every phone: new phone calls first (`Usage`, `Storage`, `ExplainLogs`), each read-only. M.
 8. ~~**The Mac app's Dock badge and menu bar item.**~~ **Dropped:** the Mac version of the Homelab app was removed (Nov 12, 2026); on a Mac, Homelab Wizard is the way in, with its own menu bar item.
-9. **A command palette on the iPad.** M. (Its wide layout: pages open on the right beside a screen's list, and Backups across the whole width, Nov 15.)
+9. ~~**A command palette on the iPad.**~~ **Closed, Nov 15:** ⌘K, as the computer's. (With it, the iPad's wide layout: pages open on the right beside a screen's list, and Backups across the whole width in two columns.)
 
 Tidy Up and Choose apps stay on the computer for now, on purpose; Tidy Up's questions on the phone are `unison-handoff.md` item 9.
