@@ -8,6 +8,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### New
 
+- **What each app takes, on the phone:** an app's page in the Homelab app shows its memory and processor while it runs, and how much disk its folder takes, as the computer reads them. Whose photos take what stays on the computer.
 - **⌘K on the iPad:** with a keyboard, ⌘K opens the command palette, as on the computer: type an app, a screen or a command (Back Up Now, Import a File, a page of Finances), ↑↓ to pick, Return to run; Stop asks twice, and every change still asks for Face ID.
 - **A Finances menu on the iPad:** with a keyboard, ⌥⌘1 to ⌥⌘8 open Transactions, Bills, Budgets, Goals, Investments, Accounts, Spending and Cash Flow, and ⇧⌘I imports a bank's file on Transactions (hold ⌘ to see them).
 - **A month to print from the Homelab app:** Finances' **⋯ › Export** has **This Month** and **Next Month (to Print)**: each day's paydays and payments with checking after, and each paycheck's in, out, saved and left, as a PDF to print or keep.

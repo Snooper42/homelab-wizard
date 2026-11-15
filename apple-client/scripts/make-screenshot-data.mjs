@@ -21,7 +21,7 @@ const preview = join(root, 'app', 'preview');
 const shoot = readFileSync(join(preview, 'shoot.mjs'), 'utf8');
 const end = shoot.indexOf('\n', shoot.indexOf('\nconst mock = {') + 1);
 let prefix = shoot.slice(0, end).replace(/let chromium;\ntry \{[\s\S]*?\n\}\n/, '');
-prefix += '\nexport { mock, watchdog, protection, alerts, savingsHistory, ledgerMonths };\n';
+prefix += '\nexport { mock, watchdog, protection, alerts, savingsHistory, ledgerMonths, usage };\n';
 const tmp = join(preview, `.screenshot-data-${process.pid}.mjs`);
 writeFileSync(tmp, prefix);
 let state;
@@ -79,6 +79,11 @@ const cards = { watchdog, protection, alerts, savings: savingsHistory };
 for (const [name, fn] of Object.entries({ watchdog: 'Watchdog', protection: 'Protection', alerts: 'Alerts', savings: 'SavingsHistory' })) {
   if (App[fn]) cards[name] = await App[fn]();
 }
+// An app's page (StatusCard.appCards): each app's memory and processor, and its folder, without the
+// household's names and addresses (serve.go's phoneStorage), Vikunja's too, the app the pictures open.
+cards.usage = state.usage;
+const storage = await App.Storage();
+cards.storage = { when: storage.when, apps: [...storage.apps, { app: 'vikunja', bytes: 64e6 }] };
 
 // Times become "@ago:<seconds>".
 const now = Date.now();

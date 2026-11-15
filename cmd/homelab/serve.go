@@ -34,6 +34,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/savings"
 	"github.com/Snooper42/homelab-wizard/internal/settings"
 	"github.com/Snooper42/homelab-wizard/internal/statusfolds"
+	"github.com/Snooper42/homelab-wizard/internal/storage"
 	"github.com/Snooper42/homelab-wizard/web"
 )
 
@@ -302,10 +303,17 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 			// The phone's cards, from the agent when it serves them; the
 			// others say they are not read here.
 			all, phone := core.Cards(root), board.Readers{}
-			for _, name := range []string{"watchdog", "savings", "protection", "alerts"} {
+			// usage and storage: each app's memory, processor and folder (item 4 of apple-loop.md).
+			for _, name := range []string{"watchdog", "savings", "protection", "alerts", "usage", "storage"} {
 				phone[name] = all[name]
 			}
-			send := func(c board.Card) { event("status:card", c) }
+			send := func(c board.Card) {
+				// Read here or by the agent, the storage card goes without the household's names and addresses.
+				if c.Name == "storage" && c.Error == "" {
+					c.Data = phoneStorage(c.Data)
+				}
+				event("status:card", c)
+			}
 			var shown []string
 			for _, name := range want {
 				if _, ok := phone[name]; ok {
@@ -1189,4 +1197,23 @@ func investmentsRead(root string, r ghostfolio.Read) phoneInvestments {
 		l = finance.Ledger{}
 	}
 	return phoneInvestments{View: finance.ProjectWith(r.Plan, l, time.Now(), finance.Ahead), Unmatched: r.Unmatched, Accounts: r.Accounts, Holdings: r.Holdings}
+}
+
+// phoneStorage is what a phone sees of the storage card: when it was read and
+// what each app's folder takes, never whose photos take what (their names and
+// email addresses stay on the computer). data is the card as read here (a
+// storage.Record) or as the agent sent it (JSON); anything else is nil.
+func phoneStorage(data any) any {
+	raw, err := json.Marshal(data)
+	if err != nil {
+		return nil
+	}
+	var r storage.Record
+	if json.Unmarshal(raw, &r) != nil {
+		return nil
+	}
+	return struct {
+		When time.Time        `json:"when"`
+		Apps []storage.Folder `json:"apps"`
+	}{r.When, r.Apps}
 }

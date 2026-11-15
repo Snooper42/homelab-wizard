@@ -33,6 +33,15 @@ final class CardsViewModel {
         return nil
     }
 
+    /// What an app takes on the computer: memory and processor now, and its folder.
+    func resources(of id: AppStatus.ID) -> AppResources {
+        func json(_ name: String) -> JSONValue? {
+            if case .other(let v)? = cards[name]?.data { return v }
+            return nil
+        }
+        return AppResources.of(id, usage: json("usage"), storage: json("storage"))
+    }
+
     var protection: Protection? {
         if case .protection(let p)? = cards["protection"]?.data { return p }
         return nil
@@ -44,7 +53,7 @@ final class CardsViewModel {
         isLoading = true
         defer { if mine == board { isLoading = false } }
         do {
-            let stream = try await api.statusBoard(board: mine, cards: StatusCard.phoneCards)
+            let stream = try await api.statusBoard(board: mine, cards: StatusCard.phoneCards + StatusCard.appCards)
             for try await update in stream {
                 guard mine == board else { return }
                 switch update {
