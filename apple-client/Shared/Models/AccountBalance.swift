@@ -38,6 +38,25 @@ enum AccountBalance {
         }
     }
 
+    /// Transactions' running balance for one account (Parity gap 5): for
+    /// each day in `shown` (newest first), its latest transaction, by id,
+    /// with what the account held (a card or loan: owed) after the day, as
+    /// the computer's Transactions shows it once a day. Empty when it can't
+    /// be worked out (a home, a car, a collectible, no balance typed in).
+    static func daily(_ a: FinanceAccount, _ all: [FinanceTransaction], shown: [FinanceTransaction],
+                      calendar: Calendar = Calendar(identifier: .gregorian)) -> [String: Double] {
+        guard runs(a) else { return [:] }
+        var out: [String: Double] = [:]
+        var lastDay: Date?
+        for t in shown {
+            guard let d = t.date, t.account == a.id || t.to == a.id else { continue }
+            if let lastDay, calendar.isDate(lastDay, inSameDayAs: d) { continue }
+            lastDay = d
+            if let after = after(a, all, day: d) { out[t.id] = after }
+        }
+        return out
+    }
+
     /// Its transactions in or out, newest first.
     static func mine(_ a: FinanceAccount, _ all: [FinanceTransaction]) -> [FinanceTransaction] {
         all.filter { $0.account == a.id || $0.to == a.id }
