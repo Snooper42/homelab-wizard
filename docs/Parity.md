@@ -216,6 +216,6 @@ The cells marked *gap*, gathered, each with what closing it takes (S a few hours
 6. ~~**The phone's page: Settings and Setup's facts**~~ **Closed:** Settings on the phone's page lists the settings a phone may change (`phoneSettings`), saved where it may make changes, with This machine's facts; none on a wall screen.
 7. **Memory and processor, disk per app, Explain these logs** on every phone: new phone calls first (`Usage`, `Storage`, `ExplainLogs`), each read-only. M.
 8. ~~**The Mac app's Dock badge and menu bar item.**~~ **Dropped:** the Mac version of the Homelab app was removed (Nov 12, 2026); on a Mac, Homelab Wizard is the way in, with its own menu bar item.
-9. **A command palette on the iPad.** M.
+9. **A command palette on the iPad.** M. (Its wide layout: pages open on the right beside a screen's list, and Backups across the whole width, Nov 15.)
 
 Tidy Up and Choose apps stay on the computer for now, on purpose; Tidy Up's questions on the phone are `unison-handoff.md` item 9.

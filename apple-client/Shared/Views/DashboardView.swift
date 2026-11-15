@@ -551,124 +551,143 @@ private struct SplitDashboard: View {
         )
     }
 
+    /// The computer's screens, beside whatever is open (Backups' two columns and the rest's three share it).
+    private var sidebar: some View {
+        List(selection: row) {
+            Section {
+                ForEach(screens, id: \.self) { screen in
+                    Label(screen.title, systemImage: screen.systemImage)
+                        .badge(badge(for: screen))
+                        .tag(screen)
+                }
+            } header: {
+                BrandHeader()
+            }
+        }
+        .navigationTitle("Homelab Wizard")
+        // Where it was left, then what a link, Siri or a shortcut asked
+        // for while it was locked (after, so the place kept doesn't undo it).
+        .onAppear {
+            model.sidebar = Screen(storageKey: savedSidebar) ?? .status(.all)
+            takeScreen()
+            takeRequest()
+        }
+        // A link asked for a screen (homelab://backups): that row, where
+        // this device has it.
+        .onChange(of: IntentInbox.shared.screen) { takeScreen() }
+        // Siri, a shortcut or a link asked for an app: its page in the
+        // full list, once Status is read, and what waits on it.
+        .onChange(of: IntentInbox.shared.pending) { takeRequest() }
+        .onChange(of: model.hasLoaded) { takeRequest() }
+        .onChange(of: model.sidebar) { _, item in
+            if let item { savedSidebar = item.storageKey }
+            // Leaving Finances locks a member's private ones.
+            if item != .finances { finances.lockPrivate() }
+        }
+        // Finances gone from this device: back to Status.
+        .onChange(of: finances.canSeePlan) { _, can in
+            if !can, model.sidebar == .finances { model.sidebar = .status(.all) }
+        }
+        // An app asked for from the menu bar: show it in the full list.
+        .onChange(of: coordinator.requestedAppID, initial: true) { _, id in
+            guard let id else { return }
+            coordinator.requestedAppID = nil
+            model.search = ""
+            model.sidebar = .status(.all)
+            model.selectedAppID = id
+        }
+        .navigationSplitViewColumnWidth(min: 190, ideal: 220)
+        // The folds are the computer's, the same on every device.
+        .task(id: model.hasLoaded) { await FoldSync.pull(model: model, actions: actions, folds: $folds, computer: $computerFolds) }
+        .onChange(of: folds) { _, new in FoldSync.push(new, model: model, actions: actions, computer: $computerFolds) }
+        .safeAreaInset(edge: .bottom) {
+            ConnectionBadge(state: model.liveEvents.connection)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding()
+        }
+    }
+
+    /// Backups, beside the sidebar across the whole width: a household member's iPad has none.
+    private var wideBackups: Bool { model.sidebar == .backups && !isMember }
+
     var body: some View {
-        NavigationSplitView(columnVisibility: $columns) {
-            List(selection: row) {
-                Section {
-                    ForEach(screens, id: \.self) { screen in
-                        Label(screen.title, systemImage: screen.systemImage)
-                            .badge(badge(for: screen))
-                            .tag(screen)
-                    }
-                } header: {
-                    BrandHeader()
-                }
-            }
-            .navigationTitle("Homelab Wizard")
-            // Where it was left, then what a link, Siri or a shortcut asked
-            // for while it was locked (after, so the place kept doesn't undo it).
-            .onAppear {
-                model.sidebar = Screen(storageKey: savedSidebar) ?? .status(.all)
-                takeScreen()
-                takeRequest()
-            }
-            // A link asked for a screen (homelab://backups): that row, where
-            // this device has it.
-            .onChange(of: IntentInbox.shared.screen) { takeScreen() }
-            // Siri, a shortcut or a link asked for an app: its page in the
-            // full list, once Status is read, and what waits on it.
-            .onChange(of: IntentInbox.shared.pending) { takeRequest() }
-            .onChange(of: model.hasLoaded) { takeRequest() }
-            .onChange(of: model.sidebar) { _, item in
-                if let item { savedSidebar = item.storageKey }
-                // Leaving Finances locks a member's private ones.
-                if item != .finances { finances.lockPrivate() }
-            }
-            // Finances gone from this device: back to Status.
-            .onChange(of: finances.canSeePlan) { _, can in
-                if !can, model.sidebar == .finances { model.sidebar = .status(.all) }
-            }
-            // An app asked for from the menu bar: show it in the full list.
-            .onChange(of: coordinator.requestedAppID, initial: true) { _, id in
-                guard let id else { return }
-                coordinator.requestedAppID = nil
-                model.search = ""
-                model.sidebar = .status(.all)
-                model.selectedAppID = id
-            }
-            .navigationSplitViewColumnWidth(min: 190, ideal: 220)
-            // The folds are the computer's, the same on every device.
-            .task(id: model.hasLoaded) { await FoldSync.pull(model: model, actions: actions, folds: $folds, computer: $computerFolds) }
-            .onChange(of: folds) { _, new in FoldSync.push(new, model: model, actions: actions, computer: $computerFolds) }
-            .safeAreaInset(edge: .bottom) {
-                ConnectionBadge(state: model.liveEvents.connection)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding()
-            }
-        } content: {
-            switch model.sidebar {
-            // A household member's iPad has neither (a place kept from before).
-            case .backups? where isMember, .setup? where isMember:
-                appList
-            case .backups?:
-                BackupsView(backups: model.backups)
-                    .modifier(HealthLineInset(model: model) { model.sidebar = .status(.attention) })
-                    .navigationSplitViewColumnWidth(min: 320, ideal: 420)
-                    .toolbar { toolbarItems }
-            case .finances?:
-                financesColumn
-                    // A link to one of its pages (homelab://finances/budgets).
-                    .navigationDestination(item: Binding(
-                        get: { IntentInbox.shared.financePage },
-                        set: { IntentInbox.shared.financePage = $0 }
-                    )) { page in
-                        FinancesView.linkedPage(page, finances: finances)
-                    }
-                    .modifier(HealthLineInset(model: model) { model.sidebar = .status(.attention) })
-                    .navigationSplitViewColumnWidth(min: 320, ideal: 420)
-                    .toolbar { toolbarItems }
-            case .setup?:
-                ComputerView(computer: computer, page: .setup)
-                    .modifier(HealthLineInset(model: model) { model.sidebar = .status(.attention) })
-                    .navigationSplitViewColumnWidth(min: 320, ideal: 420)
-                    .toolbar { toolbarItems }
-            case .settings? where isMember:
-                MemberSettingsView()
-                    .navigationSplitViewColumnWidth(min: 320, ideal: 420)
-            case .settings?:
-                settingsColumn
-                    .modifier(HealthLineInset(model: model) { model.sidebar = .status(.attention) })
-                    .navigationSplitViewColumnWidth(min: 320, ideal: 420)
-                    .toolbar { toolbarItems }
-            default:
-                appList
-            }
-        } detail: {
-            if showsAppList, model.showsAlertLog {
-                // Every Alert, from Status's Recent Alerts card in the list.
-                NavigationStack {
-                    AlertLogView()
-                }
-            } else if let app = model.app(id: model.selectedAppID) {
-                // Beside Status's list, the page has a stack of its own, so
-                // More About and Everything That Was Done open in it (a split
-                // view's last column has none); another app starts at its page.
-                // Beside another screen (Finances), that screen's links open here.
-                Group {
-                    if showsAppList {
-                        NavigationStack { AppDetailView(app: app) }
-                            .id(app.id)
-                    } else {
-                        AppDetailView(app: app)
+        Group {
+            if wideBackups {
+                // Backups across the whole width (the owner's pick, Nov 15): the sidebar and Backups, its More pages
+                // opening over it.
+                NavigationSplitView(columnVisibility: $columns) {
+                    sidebar
+                } detail: {
+                    NavigationStack {
+                        BackupsView(backups: model.backups, columns: 2)
+                            .modifier(HealthLineInset(model: model) { model.sidebar = .status(.attention) })
+                            .toolbar { toolbarItems }
                     }
                 }
-                .focusedSceneValue(\.selectedApp, SelectedAppFocus(app: app, actions: actions, showLogs: { model.logsApp = app }))
             } else {
-                ContentUnavailableView(
-                    "No App Selected",
-                    systemImage: "server.rack",
-                    description: Text("Choose an app to see its details.")
-                )
+                NavigationSplitView(columnVisibility: $columns) {
+                    sidebar
+                } content: {
+                switch model.sidebar {
+                // A household member's iPad has neither (a place kept from before).
+                case .backups? where isMember, .setup? where isMember:
+                    appList
+                case .backups?:
+                    // Across the whole width beside the sidebar, in its own two columns (below); here only for a moment.
+                    BackupsView(backups: model.backups)
+                case .finances?:
+                    financesColumn
+                        // A link to one of its pages (homelab://finances/budgets).
+                        .navigationDestination(item: Binding(
+                            get: { IntentInbox.shared.financePage },
+                            set: { IntentInbox.shared.financePage = $0 }
+                        )) { page in
+                            FinancesView.linkedPage(page, finances: finances)
+                        }
+                        .modifier(HealthLineInset(model: model) { model.sidebar = .status(.attention) })
+                        .navigationSplitViewColumnWidth(min: 320, ideal: 420)
+                        .toolbar { toolbarItems }
+                case .setup?:
+                    ComputerView(computer: computer, page: .setup)
+                        .modifier(HealthLineInset(model: model) { model.sidebar = .status(.attention) })
+                        .navigationSplitViewColumnWidth(min: 320, ideal: 420)
+                        .toolbar { toolbarItems }
+                case .settings? where isMember:
+                    MemberSettingsView()
+                        .navigationSplitViewColumnWidth(min: 320, ideal: 420)
+                case .settings?:
+                    settingsColumn
+                        .modifier(HealthLineInset(model: model) { model.sidebar = .status(.attention) })
+                        .navigationSplitViewColumnWidth(min: 320, ideal: 420)
+                        .toolbar { toolbarItems }
+                default:
+                    appList
+                }
+            } detail: {
+                if showsAppList, model.showsAlertLog {
+                    // Every Alert, from Status's Recent Alerts card in the list.
+                    NavigationStack {
+                        AlertLogView()
+                    }
+                } else if showsAppList, let app = model.app(id: model.selectedAppID) {
+                    // Beside Status's list, the page has a stack of its own, so
+                    // More About and Everything That Was Done open in it (a split
+                    // view's last column has none); another app starts at its page.
+                    NavigationStack { AppDetailView(app: app) }
+                        .id(app.id)
+                        .focusedSceneValue(\.selectedApp, SelectedAppFocus(app: app, actions: actions, showLogs: { model.logsApp = app }))
+                } else if !showsAppList {
+                    // Beside another screen, its own page (the owner's pick, Nov 15:
+                    // pages open on the right); that screen's links open here over it.
+                    screenDetail
+                } else {
+                    ContentUnavailableView(
+                        "No App Selected",
+                        systemImage: "server.rack",
+                        description: Text("Choose an app to see its details.")
+                    )
+                }
+            }
             }
         }
         // ⌘2 to ⌘6, as the computer's: the View menu (ScreenCommands).
@@ -696,11 +715,48 @@ private struct SplitDashboard: View {
         #endif
     }
 
+    /// What's on the right beside a screen other than Status, before one of its
+    /// links is tapped: Finances' first page (Bills), every setting, or what opens there.
+    @ViewBuilder
+    private var screenDetail: some View {
+        switch model.sidebar {
+        case .finances?:
+            #if SCREENSHOTS
+            if ScreenshotMode.isFinancePage {
+                FinancesView.screenshotRoot(finances: finances)
+            } else {
+                FinancesView.linkedPage(.bills, finances: finances)
+            }
+            #else
+            FinancesView.linkedPage(.bills, finances: finances)
+            #endif
+        case .settings?:
+            if isMember {
+                ContentUnavailableView("Settings", systemImage: "gearshape", description: Text("This iPad's settings are beside this."))
+            } else {
+                SettingsFormView(computer: computer, section: nil)
+            }
+        case .backups?:
+            ContentUnavailableView("Backups", systemImage: "externaldrive",
+                                   description: Text("Duplicati’s jobs, the restore tests, where the backups go and the password export open here."))
+        case .setup?:
+            ContentUnavailableView("Setup", systemImage: "wrench.and.screwdriver",
+                                   description: Text("What still needs you, and how this machine is doing, are beside this."))
+        default:
+            ContentUnavailableView("No App Selected", systemImage: "server.rack", description: Text("Choose an app to see its details."))
+        }
+    }
+
     /// Finances in the content column (in the pictures, the page the shot names).
     @ViewBuilder
     private var financesColumn: some View {
         #if SCREENSHOTS
-        FinancesView.screenshotRoot(finances: finances)
+        // A page's picture shows it on the right, beside the home, as a tap opens it.
+        if ScreenshotMode.isFinancePage {
+            FinancesView(finances: finances)
+        } else {
+            FinancesView.screenshotRoot(finances: finances)
+        }
         #else
         FinancesView(finances: finances)
         #endif
@@ -709,15 +765,8 @@ private struct SplitDashboard: View {
     /// Settings in the content column (in the pictures, every setting for `settings-all`).
     @ViewBuilder
     private var settingsColumn: some View {
-        #if SCREENSHOTS
-        if ScreenshotMode.shot == "settings-all" {
-            SettingsFormView(computer: computer, section: nil)
-        } else {
-            ComputerView(computer: computer, page: .settings)
-        }
-        #else
+        // Every setting is on the right beside it (settings-all's picture too).
         ComputerView(computer: computer, page: .settings)
-        #endif
     }
 
     /// The screen a link asked for, where this device has it (else Status).

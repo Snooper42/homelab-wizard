@@ -221,8 +221,8 @@ jobs:
     needs: payee-logos
     if: ${{ !cancelled() && needs.payee-logos.outputs.app == 'true' }}
     runs-on: macos-latest
-    # On main, the iPhone and the iPad, each in light, dark and the largest text: about 45 minutes in all
-    # (Nov 14); a pull request, the iPhone's only.
+    # On main, the iPhone and the iPad (landscape in light, dark and the largest text, upright in light):
+    # about 45 minutes in all (Nov 15); a pull request, the iPhone's only.
     timeout-minutes: 80
     defaults:
       run:
@@ -306,24 +306,25 @@ jobs:
           xcrun simctl boot "$UDID" || true
           xcrun simctl bootstatus "$UDID" -b
 
-      # Every screen on the iPhone, then on main on the iPad (named ipad-…): light and dark, the largest
-      # text, and Finances with its amounts hidden.
+      # Every screen on the iPhone, then on main on the iPad: the iPhone in light and dark, the largest
+      # text, and Finances with its amounts hidden; the iPad the same in landscape (ipad-land-…, the way
+      # it's held nine times in ten, the owner, Nov 15), and upright in light only (ipad-…).
       - name: Take the pictures
         run: |
           APP="$(ls -d "$RUNNER_TEMP"/shots/Build/Products/Debug-iphonesimulator/*.app | grep -v Widget | head -1)"
           BID="$(/usr/libexec/PlistBuddy -c 'Print CFBundleIdentifier' "$APP/Info.plist")"
           mkdir -p "$RUNNER_TEMP/pictures"
           shots="status backups finances spending inbox loading transactions transaction budgets bills recurring cashflow review accounts investments goals setup settings settings-all lock app"
-          # take <simulator> <name prefix>
+          # take <simulator> <name prefix> <looks> <extras: the largest text and hidden amounts, yes or no>
           take() {
-            local dev="$1" pre="$2"
+            local dev="$1" pre="$2" looks="$3" extras="$4"
             xcrun simctl install "$dev" "$APP"
             local data
             data="$(xcrun simctl get_app_container "$dev" "$BID" data)"
             mkdir -p "$data/Documents"
             cp Screenshots/data.json "$data/Documents/screenshot-data.json"
             xcrun simctl status_bar "$dev" override --time 9:41 --dataNetwork wifi --wifiBars 3 --cellularBars 4 --batteryState charged --batteryLevel 100 || true
-            for look in light dark; do
+            for look in $looks; do
               xcrun simctl ui "$dev" appearance "$look"
               for shot in $shots; do
                 xcrun simctl launch --terminate-running-process "$dev" "$BID" -shot "$shot" > /dev/null || { echo "couldn't open $pre$shot"; continue; }
@@ -336,26 +337,50 @@ jobs:
                   sleep 6
                   xcrun simctl io "$dev" screenshot "$file" > /dev/null 2>&1 || true
                 fi
+                upright "$file"
                 echo "$pre$look-$shot"
               done
             done
+            [ "$extras" = yes ] || return 0
             # The largest accessibility text size, for what might cut off.
             xcrun simctl ui "$dev" appearance light
             xcrun simctl ui "$dev" content_size accessibility-extra-extra-extra-large || true
             for shot in status finances transactions spending; do
               xcrun simctl launch --terminate-running-process "$dev" "$BID" -shot "$shot" > /dev/null || continue
               sleep 8
-              xcrun simctl io "$dev" screenshot "$RUNNER_TEMP/pictures/${pre}large-$shot.png" > /dev/null 2>&1 && echo "${pre}large-$shot" || true
+              xcrun simctl io "$dev" screenshot "$RUNNER_TEMP/pictures/${pre}large-$shot.png" > /dev/null 2>&1 \
+                && upright "$RUNNER_TEMP/pictures/${pre}large-$shot.png" && echo "${pre}large-$shot" || true
             done
             xcrun simctl ui "$dev" content_size large || true
             # Finances as it opens, amounts hidden.
             xcrun simctl launch --terminate-running-process "$dev" "$BID" -shot finances -hidden > /dev/null && sleep 7 \
-              && xcrun simctl io "$dev" screenshot "$RUNNER_TEMP/pictures/${pre}light-finances-hidden.png" > /dev/null 2>&1 || true
+              && xcrun simctl io "$dev" screenshot "$RUNNER_TEMP/pictures/${pre}light-finances-hidden.png" > /dev/null 2>&1 \
+              && upright "$RUNNER_TEMP/pictures/${pre}light-finances-hidden.png" || true
           }
-          take "$UDID" ""
+          # In landscape a picture should be wider than tall: the simulator may give it in the device's own
+          # upright frame, turned on its side, so it's turned the right way up.
+          LAND=no
+          upright() {
+            [ "$LAND" = yes ] || return 0
+            local w h
+            w="$(sips -g pixelWidth "$1" | awk '/pixelWidth/{print $2}')"
+            h="$(sips -g pixelHeight "$1" | awk '/pixelHeight/{print $2}')"
+            if [ "$h" -gt "$w" ]; then sips --rotate 90 "$1" > /dev/null; fi
+          }
+          take "$UDID" "" "light dark" yes
           if [ -n "${IPAD:-}" ]; then
             xcrun simctl shutdown "$UDID" || true
-            take "$IPAD" "ipad-"
+            take "$IPAD" "ipad-" "light" no
+            # Turned on its side: the Simulator app shows it, and ⌘→ turns it (Device › Rotate Right).
+            open -a Simulator --args -CurrentDeviceUDID "$IPAD" || true
+            sleep 20
+            osascript -e 'tell application "Simulator" to activate' -e 'delay 2' \
+              -e 'tell application "System Events" to key code 124 using command down' || echo "couldn't turn the iPad"
+            sleep 5
+            LAND=yes
+            take "$IPAD" "ipad-land-" "light dark" yes
+            first="$RUNNER_TEMP/pictures/ipad-land-light-status.png"
+            [ -f "$first" ] && sips -g pixelWidth -g pixelHeight "$first" || true
           fi
 
       - name: Keep the pictures

@@ -10,80 +10,52 @@ struct BackupsView: View {
     /// The fresh copies, opened from their row of logos. Kept like Status's folds.
     @SceneStorage("backupsFreshOpen") private var freshOpen = false
 
+    /// Two columns across the iPad's width (the owner's pick, Nov 15): the summary and what needs
+    /// a look on the left, the fresh copies and More on the right. One column elsewhere.
+    var columns = 1
+
     var body: some View {
-        Form {
-            if let overview = backups.overview {
-                Section {
-                    BackupsHero(overview: overview)
-                        .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
-                        .listRowBackground(Color.clear)
-                    BackupTiles(tiles: overview.tiles())
-                        .listRowInsets(EdgeInsets(top: 6, leading: 0, bottom: 4, trailing: 0))
-                        .listRowBackground(Color.clear)
-                        .listRowSeparator(.hidden)
-                }
-                warnings(overview)
-                if !overview.needingALook.isEmpty {
-                    Section {
-                        ForEach(overview.needingALook) { copy in
-                            CopyRow(copy: copy)
-                        }
-                    } header: {
-                        CountHeader(title: "Needs a Look", count: overview.needingALook.count, tint: Theme.warning)
+        Group {
+            if columns == 2, let overview = backups.overview {
+                HStack(alignment: .top, spacing: 0) {
+                    Form {
+                        heading(overview)
+                        warnings(overview)
+                        needsALook(overview)
+                        waiting(overview)
                     }
-                }
-                ForEach(overview.waitingGroups) { group in
-                    Section {
-                        ForEach(group.copies) { copy in
-                            CopyRow(copy: copy)
-                        }
-                    } header: {
-                        Text(group.title)
-                    } footer: {
-                        if let note = group.note { Text(note) }
+                    .formStyle(.grouped)
+                    Form {
+                        fresh(overview)
+                        more(overview)
                     }
+                    .formStyle(.grouped)
                 }
-                if !overview.freshCopies.isEmpty {
-                    Section {
-                        if freshOpen {
-                            ForEach(overview.freshCopies) { copy in
-                                CopyRow(copy: copy)
-                            }
-                        } else {
-                            FoldedCopies(copies: overview.freshCopies) { freshOpen = true }
-                        }
-                    } header: {
-                        Button {
-                            withAnimation(.snappy) { freshOpen.toggle() }
-                        } label: {
-                            HStack(spacing: 6) {
-                                Image(systemName: "chevron.right")
-                                    .font(.caption.weight(.semibold))
-                                    .foregroundStyle(.secondary)
-                                    .rotationEffect(.degrees(freshOpen ? 90 : 0))
-                                CountHeader(title: "Up to Date", count: overview.freshCopies.count, tint: .secondary)
-                            }
-                            .contentShape(Rectangle())
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityValue(freshOpen ? "Open" : "Folded")
-                    }
-                }
-                more(overview)
             } else {
-                if let error = backups.overviewError {
-                    Section {
-                        Label(error, systemImage: "exclamationmark.triangle").foregroundStyle(Theme.warning)
+                Form {
+                    if let overview = backups.overview {
+                        heading(overview)
+                        warnings(overview)
+                        needsALook(overview)
+                        waiting(overview)
+                        fresh(overview)
+                        more(overview)
+                    } else {
+                        if let error = backups.overviewError {
+                            Section {
+                                Label(error, systemImage: "exclamationmark.triangle").foregroundStyle(Theme.warning)
+                            }
+                        }
+                        Section {
+                            TaskButton(task: .backup)
+                            TaskButton(task: .restoreTest)
+                        }
+                        jobs
                     }
                 }
-                Section {
-                    TaskButton(task: .backup)
-                    TaskButton(task: .restoreTest)
-                }
-                jobs
+                .formStyle(.grouped)
             }
         }
-        .formStyle(.grouped)
         .themedCanvas()
         .overlay {
             if backups.overview == nil, backups.overviewError == nil, backups.isLoading {
@@ -93,6 +65,77 @@ struct BackupsView: View {
         .task { await backups.load() }
         .refreshable { await backups.load() }
         .navigationTitle("Backups")
+    }
+
+    @ViewBuilder
+    private func heading(_ overview: BackupOverview) -> some View {
+        Section {
+            BackupsHero(overview: overview)
+                .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
+                .listRowBackground(Color.clear)
+            BackupTiles(tiles: overview.tiles())
+                .listRowInsets(EdgeInsets(top: 6, leading: 0, bottom: 4, trailing: 0))
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
+        }
+    }
+
+    @ViewBuilder
+    private func needsALook(_ overview: BackupOverview) -> some View {
+        if !overview.needingALook.isEmpty {
+            Section {
+                ForEach(overview.needingALook) { copy in
+                    CopyRow(copy: copy)
+                }
+            } header: {
+                CountHeader(title: "Needs a Look", count: overview.needingALook.count, tint: Theme.warning)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func waiting(_ overview: BackupOverview) -> some View {
+        ForEach(overview.waitingGroups) { group in
+            Section {
+                ForEach(group.copies) { copy in
+                    CopyRow(copy: copy)
+                }
+            } header: {
+                Text(group.title)
+            } footer: {
+                if let note = group.note { Text(note) }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func fresh(_ overview: BackupOverview) -> some View {
+        if !overview.freshCopies.isEmpty {
+            Section {
+                if freshOpen {
+                    ForEach(overview.freshCopies) { copy in
+                        CopyRow(copy: copy)
+                    }
+                } else {
+                    FoldedCopies(copies: overview.freshCopies) { freshOpen = true }
+                }
+            } header: {
+                Button {
+                    withAnimation(.snappy) { freshOpen.toggle() }
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "chevron.right")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                            .rotationEffect(.degrees(freshOpen ? 90 : 0))
+                        CountHeader(title: "Up to Date", count: overview.freshCopies.count, tint: .secondary)
+                    }
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityValue(freshOpen ? "Open" : "Folded")
+            }
+        }
     }
 
     /// What can't wait for More: unencrypted password exports lying around,

@@ -12,6 +12,11 @@ enum ScreenshotMode {
     /// A tab (status, backups, finances, setup, settings) or a page of
     /// Finances (transactions, transaction, budgets, bills, accounts, investments, goals).
     static let shot: String? = value(after: "-shot")
+    /// Whether the shot is a page of Finances: on the iPad, on the right beside its home.
+    static var isFinancePage: Bool {
+        ["transactions", "transaction", "budgets", "bills", "accounts", "investments", "goals", "recurring",
+         "spending", "inbox", "cashflow", "review"].contains(shot ?? "")
+    }
     /// Amounts kept hidden, as Finances opens.
     static let hidesAmounts = ProcessInfo.processInfo.arguments.contains("-hidden")
 

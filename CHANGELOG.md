@@ -153,6 +153,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **The iPad uses its width:** beside Finances' home, Bills (or the page you tap) opens wide on the right, every setting opens beside Settings, and Backups uses the whole width in two columns, instead of the right side saying *No App Selected*.
 - **Finances away from home in the Homelab app are today's:** with no signal, or the Homelab not answering, the iPhone and iPad work out what's due, what's left and each pay period from today, with the computer's own Finances code, instead of showing them as they were when last read.
 - **The iPad's screens show their titles:** in the Homelab app on an iPad, the line that says what needs a look sits under Backups, Finances, Setup and Settings instead of in the place of their titles.
 - **Status's groups in the Homelab app keep their names whole:** in the iPad's list, or at the largest text, the menu beside a group's name shows only **⋯** when its words don't fit, instead of breaking the name (*Docu-ments*).
