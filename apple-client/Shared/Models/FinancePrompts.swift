@@ -1,3 +1,4 @@
+import CryptoKit
 import Foundation
 
 /// The Dashboard's prompts, as the computer's: a subscription whose charge
@@ -145,5 +146,37 @@ enum FinancePrompts {
         var c = Calendar(identifier: .gregorian)
         c.timeZone = TimeZone(identifier: "UTC") ?? .gmt
         return c.date(from: DateComponents(year: parts[0], month: parts[1], day: parts[2]))
+    }
+}
+
+/// The prompts kept on this phone ("Keep $15.49"), as the computer keeps
+/// them in its browser: for that payment and amount, so a later change asks
+/// again. As TransactionsSeen does, it keeps nothing readable: only an HMAC
+/// of each kept key under this device's random key from the Keychain, and
+/// at most the last 200.
+struct PromptsKept: Equatable, Sendable {
+    static let storeKey = "financePromptsKept.v1"
+    static let most = 200
+
+    private(set) var hashes: [String]
+
+    static func load(_ defaults: UserDefaults = .standard) -> PromptsKept {
+        guard let data = defaults.data(forKey: storeKey),
+              let list = try? JSONDecoder().decode([String].self, from: data) else { return PromptsKept(hashes: []) }
+        return PromptsKept(hashes: list)
+    }
+
+    func save(to defaults: UserDefaults = .standard) {
+        guard let data = try? JSONEncoder().encode(hashes) else { return }
+        defaults.set(data, forKey: Self.storeKey)
+    }
+
+    func has(_ kept: String, key: SymmetricKey) -> Bool { hashes.contains(ChangeMemory.hash(kept, key: key)) }
+
+    mutating func keep(_ kept: String, key: SymmetricKey) {
+        let h = ChangeMemory.hash(kept, key: key)
+        guard !hashes.contains(h) else { return }
+        hashes.append(h)
+        if hashes.count > Self.most { hashes.removeFirst(hashes.count - Self.most) }
     }
 }

@@ -43,6 +43,8 @@ struct FinancesView: View {
                         FirstAccountCard(finances: finances)
                     }
                     if let now = view.checkingNow { CheckingHero(now: now, view: view, finances: finances) }
+                    // Worth a look: the Dashboard's prompts, only when one needs you (not on private Finances).
+                    if !finances.isPrivate { WorthALookCard(finances: finances) }
                     // A member's phone: what the owner shares of the household's, first.
                     if finances.isMember, let shared = finances.shared, !shared.isEmpty {
                         HouseholdCard(shared: shared, finances: finances)

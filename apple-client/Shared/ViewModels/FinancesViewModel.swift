@@ -1436,6 +1436,37 @@ final class FinancesViewModel {
         return (answer, rawLedger ?? kept?.ledger?.raw)
     }
 
+    /// The whole view behind what's shown, decoded away from the main thread
+    /// (the Dashboard's prompts, the money flow).
+    nonisolated static func wholeJSON(from whole: (view: Data, ledger: JSONValue?)) async -> JSONValue? {
+        await Task.detached(priority: .userInitiated) {
+            (try? JSONDecoder().decode(JSONValue.self, from: whole.view))?["result"]
+        }.value
+    }
+
+    // MARK: Worth a look (the Dashboard's prompts)
+
+    /// What Keep has kept on this phone (`PromptsKept`: HMACs only).
+    private(set) var promptsKept = PromptsKept.load()
+
+    func isKept(_ kept: String) -> Bool {
+        guard let seenKey else { return false }
+        return promptsKept.has(kept, key: seenKey)
+    }
+
+    /// Keep: the plan's amount stays, and this one isn't asked again here.
+    func keepPrompt(_ kept: String) {
+        guard let seenKey else { return }
+        promptsKept.keep(kept, key: seenKey)
+        promptsKept.save()
+    }
+
+    /// Update the Plan, or Use the average: the payment's amount becomes it (Face ID first, as any change).
+    func usePrompt(payment id: String, amount: Double) async -> Bool {
+        guard let payment = plan?.payment(id) else { return false }
+        return await setPayment(payment, to: amount)
+    }
+
     /// Finances › Calendar, worked out away from the main thread.
     nonisolated static func calendar(from whole: (view: Data, ledger: JSONValue?)) async -> FinanceCalendar? {
         await Task.detached(priority: .userInitiated) {

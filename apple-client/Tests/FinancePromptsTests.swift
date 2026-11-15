@@ -1,3 +1,4 @@
+import CryptoKit
 import Foundation
 import Testing
 @testable import HomelabClient
@@ -66,5 +67,24 @@ struct FinancePromptsTests {
         #expect(FinancePrompts.keptKey(average) == "homelab.finances.keptAverage.elec.152.17")
         // A whole number as JavaScript writes it: no ".0".
         #expect(FinancePrompts.keptKey(FinancePrompts.Average(payment: "gas", planned: 50, average: 80, months: 1, times: 3)) == "homelab.finances.keptAverage.gas.80")
+    }
+
+    /// Keep is remembered on this phone as only an HMAC under its own key:
+    /// no payment's name or amount is readable in what's stored.
+    @Test func keptIsAnHMACOnly() throws {
+        let defaults = try #require(UserDefaults(suiteName: "FinancePromptsTests.\(UUID().uuidString)"))
+        let key = SymmetricKey(size: .bits256)
+        var kept = PromptsKept.load(defaults)
+        let price = "homelab.finances.keptPrice.netflix.17.99"
+        #expect(!kept.has(price, key: key))
+        kept.keep(price, key: key)
+        kept.save(to: defaults)
+        let again = PromptsKept.load(defaults)
+        #expect(again.has(price, key: key))
+        #expect(!again.has("homelab.finances.keptPrice.netflix.18.99", key: key))
+        let stored = String(decoding: try #require(defaults.data(forKey: PromptsKept.storeKey)), as: UTF8.self)
+        #expect(!stored.contains("netflix") && !stored.contains("17.99"))
+        // Another phone's key reads nothing as kept.
+        #expect(!again.has(price, key: SymmetricKey(size: .bits256)))
     }
 }
