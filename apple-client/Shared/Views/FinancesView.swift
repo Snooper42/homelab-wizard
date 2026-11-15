@@ -141,6 +141,21 @@ struct FinancesView: View {
                     .sensoryFeedback(.selection, trigger: finances.amountsShown)
                 }
             }
+            // Export, as the computer's (F18): the year ahead as a spreadsheet and the plan, even look-only.
+            ToolbarItem(placement: .secondaryAction) {
+                let files = finances.exportFiles()
+                if !files.isEmpty {
+                    Menu {
+                        ForEach(files) { file in
+                            ShareLink(item: file, preview: SharePreview(file.title)) {
+                                Label(file.title, systemImage: file.name.hasSuffix(".csv") ? "tablecells" : "doc.text")
+                            }
+                        }
+                    } label: {
+                        Label("Export", systemImage: "square.and.arrow.up")
+                    }
+                }
+            }
             if finances.privacy == .open {
                 ToolbarItem(placement: .secondaryAction) {
                     Button {
