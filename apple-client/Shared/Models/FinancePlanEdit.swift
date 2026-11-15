@@ -354,6 +354,39 @@ enum LedgerEdit {
         return .object(root)
     }
 
+    /// `ledger` with the transaction `id` moved to `account` (a purchase put
+    /// on the wrong card, say). Everything else it has is kept. Nil for an
+    /// unknown id or account, or a transfer, whose two accounts are changed
+    /// on the computer.
+    static func moving(id: String, to account: String, accounts: Set<String>, in ledger: JSONValue) -> JSONValue? {
+        guard !id.isEmpty, accounts.contains(account),
+              case .object(var root) = ledger, case .array(var all)? = root["transactions"],
+              let index = all.firstIndex(where: { $0["id"] == .string(id) }),
+              case .object(var entry) = all[index]
+        else { return nil }
+        if case .string(let to)? = entry["to"], !to.isEmpty { return nil }
+        entry["account"] = .string(account)
+        all[index] = .object(entry)
+        root["transactions"] = .array(all)
+        return .object(root)
+    }
+
+    /// Selected together: `edit` made for each of `ids` that it can be, with
+    /// the ids it was made for (a transfer or split one is left as it is).
+    /// Nil when it couldn't be made for any.
+    static func each(_ ids: [String], in ledger: JSONValue,
+                     _ edit: (String, JSONValue) -> JSONValue?) -> (ledger: JSONValue, done: [String])? {
+        var out = ledger
+        var done: [String] = []
+        for id in ids {
+            if let next = edit(id, out) {
+                out = next
+                done.append(id)
+            }
+        }
+        return done.isEmpty ? nil : (out, done)
+    }
+
     /// `ledger` with the transaction `id`'s day, amount, payee, category
     /// and note set from `t`. Every other field it has (splits, tags, bank
     /// id, receipt, a transfer's other account, the planned payment it

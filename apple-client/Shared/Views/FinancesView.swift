@@ -1042,32 +1042,55 @@ private struct ReviewInboxPage: View {
 /// A transaction's category, picked from the plan's own as buttons; the
 /// transaction is marked reviewed when it's saved.
 private struct CategoryPicker: View {
-    let transaction: FinanceTransaction
+    /// One, or several selected together (one category for each).
+    let transactions: [FinanceTransaction]
     let finances: FinancesViewModel
     @Environment(\.dismiss) private var dismiss
+
+    init(transaction: FinanceTransaction, finances: FinancesViewModel) {
+        self.init(transactions: [transaction], finances: finances)
+    }
+
+    init(transactions: [FinanceTransaction], finances: FinancesViewModel) {
+        self.transactions = transactions
+        self.finances = finances
+    }
+
+    private var transaction: FinanceTransaction? { transactions.count == 1 ? transactions.first : nil }
 
     var body: some View {
         let categories = (finances.plan?.categories ?? []).filter { !($0.income ?? false) }
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
-                    HStack(spacing: 12) {
-                        LogoCircle(transaction: transaction, categories: finances.plan?.categories ?? [], size: 44)
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(verbatim: TransactionDetailView.title(of: transaction, finances: finances))
-                                .font(.headline)
-                            Money(value: transaction.amount, currency: finances.currency, finances: finances)
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
+                    if let transaction {
+                        HStack(spacing: 12) {
+                            LogoCircle(transaction: transaction, categories: finances.plan?.categories ?? [], size: 44)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(verbatim: TransactionDetailView.title(of: transaction, finances: finances))
+                                    .font(.headline)
+                                Money(value: transaction.amount, currency: finances.currency, finances: finances)
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                            }
                         }
+                    } else {
+                        Text(verbatim: "\(transactions.count) transactions")
+                            .font(.headline)
                     }
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 104), spacing: 8)], alignment: .leading, spacing: 8) {
                         ForEach(categories) { c in
-                            let picked = c.name.lowercased() == transaction.category.lowercased()
+                            let picked = transaction.map { c.name.lowercased() == $0.category.lowercased() } ?? false
                             let tint = Design.category(PayeeLogos.shared.categoryHue(c.name, in: finances.plan?.categories ?? []))
                             Button {
                                 Task {
-                                    if await finances.setCategory(transaction, to: c.name) { dismiss() }
+                                    var saved = false
+                                    if let transaction {
+                                        saved = await finances.setCategory(transaction, to: c.name)
+                                    } else {
+                                        saved = await finances.setCategory(transactions, to: c.name)
+                                    }
+                                    if saved { dismiss() }
                                 }
                             } label: {
                                 HStack(spacing: 6) {
@@ -2760,6 +2783,12 @@ struct TransactionsView: View {
     @State private var onlyNew = false
     /// Money in or out, a category, or the larger ones only.
     @State private var filter = TransactionFilter()
+    /// Select (iPhone and iPad): transactions picked together, for one
+    /// category, Move to…, or Delete (Parity gap 5).
+    @State private var selecting = false
+    @State private var selected = Set<String>()
+    @State private var categorizingSelected = false
+    @State private var confirmingDelete = false
     @Namespace private var zoom
     @Environment(\.dynamicTypeSize) private var typeSize
 
@@ -2844,7 +2873,7 @@ struct TransactionsView: View {
     var body: some View {
         let newCount = finances.newTransactionCount
         let groups = months
-        List {
+        List(selection: listSelection) {
             if search.isEmpty, let view = finances.plan, !view.plan.accounts.isEmpty {
                 Section {
                     AccountCard(account: view.plan.accounts.first { $0.id == account }, view: view, finances: finances)
@@ -2934,7 +2963,64 @@ struct TransactionsView: View {
             if finances.plan == nil { await finances.loadPlan() }
         }
         .refreshable { await finances.loadLedger() }
-        .navigationTitle("Transactions")
+        .navigationTitle(selecting ? (selected.isEmpty ? "Select" : "\(selected.count) Selected") : "Transactions")
+        #if os(iOS)
+        .environment(\.editMode, .constant(selecting ? .active : .inactive))
+        .toolbar {
+            if finances.canAddTransactions, !(finances.ledger?.transactions.isEmpty ?? true) {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button(selecting ? "Done" : "Select") {
+                        withAnimation(.snappy) {
+                            selecting.toggle()
+                            selected = []
+                        }
+                    }
+                }
+            }
+            if selecting {
+                ToolbarItemGroup(placement: .bottomBar) {
+                    Button("Category…") { categorizingSelected = true }
+                        .disabled(selected.isEmpty)
+                    Spacer()
+                    Menu("Move To…") {
+                        ForEach(finances.plan?.plan.accounts.filter { FinancePlanEdit.paymentFromKinds.contains($0.kind) } ?? []) { a in
+                            Button(a.name) { Task { if await finances.move(selectedTransactions, to: a.id) { endSelecting() } } }
+                        }
+                    }
+                    .disabled(selected.isEmpty)
+                    Spacer()
+                    Button("Delete", role: .destructive) { confirmingDelete = true }
+                        .disabled(selected.isEmpty)
+                }
+            }
+        }
+        .sheet(isPresented: $categorizingSelected, onDismiss: { if finances.togetherDone != nil { endSelecting() } }) {
+            CategoryPicker(transactions: selectedTransactions, finances: finances)
+                .presentationDetents([.medium])
+                .presentationDragIndicator(.visible)
+        }
+        .confirmationDialog(selected.count == 1 ? "Delete 1 transaction?" : "Delete \(selected.count) transactions?",
+                            isPresented: $confirmingDelete, titleVisibility: .visible) {
+            Button("Delete", role: .destructive) {
+                Task { if await finances.delete(selectedTransactions) { endSelecting() } }
+            }
+        } message: {
+            Text("They're taken out of your Finances on every device.")
+        }
+        .safeAreaInset(edge: .top) {
+            if let done = finances.togetherDone, done.done < done.of {
+                Label("\(done.of - done.done) of them are transfers or split, and are changed on the computer.",
+                      systemImage: "info.circle")
+                    .font(.footnote)
+                    .foregroundStyle(Theme.secondaryInk)
+                    .padding(.horizontal)
+                    .padding(.vertical, 6)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(.bar)
+                    .onTapGesture { finances.dismissTogetherDone() }
+            }
+        }
+        #endif
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 filterMenu
@@ -2970,6 +3056,27 @@ struct TransactionsView: View {
         }
         .sensoryFeedback(.selection, trigger: account)
         .sensoryFeedback(.success, trigger: finances.savedCount)
+    }
+
+    /// Select's list binding: on iPhone and iPad (the Mac has its own computer app's).
+    private var listSelection: Binding<Set<String>>? {
+        #if os(iOS)
+        $selected
+        #else
+        nil
+        #endif
+    }
+
+    /// The transactions picked, in the ledger's order.
+    private var selectedTransactions: [FinanceTransaction] {
+        (finances.ledger?.transactions ?? []).filter { selected.contains($0.id) }
+    }
+
+    private func endSelecting() {
+        withAnimation(.snappy) {
+            selecting = false
+            selected = []
+        }
     }
 
     /// While there's nothing to list: reading, couldn't read, or nothing found.

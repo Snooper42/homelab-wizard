@@ -343,11 +343,15 @@ final class FinancesViewModel {
 
     /// Makes one of the ledger's changes: saved now when the Homelab answers, else kept to go once it does.
     private func makeLedger(_ change: LedgerChange, edited: JSONValue, reason: String) async -> Bool {
+        await makeLedger([change], edited: edited, reason: reason)
+    }
+
+    private func makeLedger(_ made: [LedgerChange], edited: JSONValue, reason: String) async -> Bool {
         if offlineAsOf == nil { return await saveLedger(edited, reason: reason) }
         isSaving = true
         defer { isSaving = false }
         guard await authorize(reason) else { return false }
-        let changes = LedgerChange.adding(change, to: awayLedger)
+        let changes = made.reduce(awayLedger) { LedgerChange.adding($1, to: $0) }
         do {
             try away.keep(awayChanges, ledger: changes)
         } catch {
@@ -1209,6 +1213,60 @@ final class FinancesViewModel {
               let edited = LedgerEdit.settingLink(id: t.id, payment: payment, extra: true, in: raw) else { return false }
         return await saveLedger(edited, reason: "Count all of a payment towards your loan.")
     }
+
+    // MARK: Selected together (Parity gap 5)
+
+    /// How many of the transactions selected the last change was made for,
+    /// of how many: a transfer or split one is changed on the computer.
+    private(set) var togetherDone: (done: Int, of: Int)?
+
+    /// One category for each selected that can take one; each is marked reviewed.
+    func setCategory(_ ts: [FinanceTransaction], to category: String) async -> Bool {
+        guard canAddTransactions, !isSaving, let raw = rawLedger,
+              let r = LedgerEdit.each(ts.map(\.id), in: raw, { LedgerEdit.settingCategory(id: $0, to: category, in: $1) })
+        else {
+            saveError = "These are changed on the computer."
+            return false
+        }
+        let saved = await makeLedger(r.done.map { LedgerChange.category(id: $0, to: category) }, edited: r.ledger,
+                                     reason: "Change the category of \(r.done.count) transactions in your Finances.")
+        if saved {
+            togetherDone = (r.done.count, ts.count)
+            markReviewed(ts.filter { r.done.contains($0.id) })
+        }
+        return saved
+    }
+
+    /// Moves each selected to `account`, but a transfer.
+    func move(_ ts: [FinanceTransaction], to account: String) async -> Bool {
+        guard canAddTransactions, !isSaving, let raw = rawLedger, let plan else { return false }
+        let accounts = Set(plan.plan.accounts.map(\.id))
+        guard let r = LedgerEdit.each(ts.map(\.id), in: raw, { LedgerEdit.moving(id: $0, to: account, accounts: accounts, in: $1) }) else {
+            saveError = "These are changed on the computer."
+            return false
+        }
+        let name = plan.plan.accounts.first { $0.id == account }?.name ?? "another account"
+        let saved = await makeLedger(r.done.map { LedgerChange.move(id: $0, to: account) }, edited: r.ledger,
+                                     reason: "Move \(r.done.count) transactions to \(name).")
+        if saved { togetherDone = (r.done.count, ts.count) }
+        return saved
+    }
+
+    /// Deletes each selected.
+    func delete(_ ts: [FinanceTransaction]) async -> Bool {
+        guard canAddTransactions, !isSaving, let raw = rawLedger,
+              let r = LedgerEdit.each(ts.map(\.id), in: raw, { LedgerEdit.removing(id: $0, from: $1) })
+        else {
+            saveError = "Those transactions aren't in the ledger any more."
+            return false
+        }
+        let saved = await makeLedger(r.done.map { LedgerChange.delete(id: $0) }, edited: r.ledger,
+                                     reason: "Delete \(r.done.count) transactions from your Finances.")
+        if saved { togetherDone = (r.done.count, ts.count) }
+        return saved
+    }
+
+    func dismissTogetherDone() { togetherDone = nil }
 
     /// Removes a transaction. Returns whether it saved.
     func delete(_ t: FinanceTransaction) async -> Bool {
