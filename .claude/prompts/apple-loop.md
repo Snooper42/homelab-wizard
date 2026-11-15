@@ -76,7 +76,8 @@ The owner, Nov 14: "I want to iterate the shit out of the iphone and ipad app." 
   Home-only, with a plain line where they'd be: a bank file and Rules, Investments' Read Now. Receipts wait as other changes do. Rule 7: no new phone call (`SaveFinances` and `SaveLedger` as now).
 - **Offline Finances: done** (#707, #708, #709).
 - **Open: Select together** (item 2): **Select** on Transactions (iOS: `List(selection:)`, `editMode`), Category… (`CategoryPicker` for several), Move To… (`LedgerEdit.moving`, `LedgerChange.move`), Delete (asked first); `LedgerEdit.each` makes one for each that can take it, `SelectTogetherTests`. Not a new screen, so no mock.
-- **Then:** main's pictures (the iPad's titles from #705, the Finances shots), item 1's screen order on both devices, and item 2's rest (a running balance, a buy, Export, import and Rules).
+- **Main's pictures after #709 (8:56 PM):** the iPad's titles are back (the health line under each screen), Status's ⋯ fits, `dark-finances` read. Still: the iPad's Bills and Transactions pictured empty: `ScreenshotPage` read once, before the iPad could see Finances; now it reads again when `canSeePlan` turns true (screenshots only).
+- **Then:** item 1's screen order on both devices, and item 2's rest (a running balance, a buy, Export, import and Rules).
 - **Not yet tried on the owner's iPhone and iPad** (one cable re-install covers all): everything above, the private Finances work (#676, #678, #680, #683, #686, #688), and `handoff.md` section 4's list. Don't ask again until the owner has done it.
 
 ## 4. The order (the owner's, Nov 14)

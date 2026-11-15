@@ -3937,7 +3937,10 @@ private struct ScreenshotPage: View {
 
     var body: some View {
         page
-            .task {
+            // Again once this device may see Finances: on the iPad the page opened before it could
+            // (ipad-light-bills empty, ipad-light-transactions still reading).
+            .task(id: finances.canSeePlan) {
+                guard finances.canSeePlan else { return }
                 if finances.plan == nil { await finances.loadPlan() }
                 if finances.ledger == nil { await finances.loadLedger() }
             }
