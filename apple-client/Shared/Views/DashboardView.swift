@@ -538,7 +538,9 @@ private struct SplitDashboard: View {
     @Environment(HomelabTasksViewModel.self) private var tasks
     /// ⌘K (item 3): the palette, and Transactions' own commands while it's in front.
     @State private var paletteOpen = false
-    @FocusedValue(\.transactions) private var transactionsFocus
+    /// Transactions' own commands, when it was in front as ⌘K opened the palette
+    /// (passed in by the menu: this view reads no focused value, FocusedValueTests).
+    @State private var transactionsFocus: TransactionsFocus?
     /// The sidebar's choice, kept across launches as the computer keeps each
     /// screen's place (#417). Only the choice is kept, never what it shows.
     @SceneStorage(DashboardViewModel.placeKey) private var savedSidebar = "apps:all"
@@ -734,7 +736,10 @@ private struct SplitDashboard: View {
         .focusedSceneValue(\.screenChoice, ScreenChoice(canSeeFinances: finances.canSeePlan) { screen in
             model.sidebar = screen
         })
-        .focusedSceneValue(\.palette, PaletteFocus { paletteOpen = true })
+        .focusedSceneValue(\.palette, PaletteFocus { transactions in
+            transactionsFocus = transactions
+            paletteOpen = true
+        })
         .sheet(isPresented: $paletteOpen) {
             CommandPaletteView(commands: paletteCommands, run: runPalette)
         }

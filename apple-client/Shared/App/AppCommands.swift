@@ -26,9 +26,12 @@ struct TransactionsFocus {
     let addTransaction: @MainActor () -> Void
 }
 
-/// The ⌘K palette of the window in front (the iPad's split view).
+/// The ⌘K palette of the window in front (the iPad's split view). It's
+/// opened with Transactions' commands when Transactions is in front: read
+/// here in the menus and passed in, never by the split view itself (a view
+/// reading a focused value redraws itself forever, FocusedValueTests).
 struct PaletteFocus {
-    let open: @MainActor () -> Void
+    let open: @MainActor (TransactionsFocus?) -> Void
 }
 
 extension FocusedValues {
@@ -66,12 +69,13 @@ struct ScreenCommands: Commands {
     @FocusedValue(\.screenChoice) private var choice
 
     @FocusedValue(\.palette) private var palette
+    @FocusedValue(\.transactions) private var transactions
 
     var body: some Commands {
         CommandGroup(after: .sidebar) {
             Divider()
             // ⌘K, as on the computer (View › Command Palette on a Mac).
-            Button("Command Palette…") { palette?.open() }
+            Button("Command Palette…") { palette?.open(transactions) }
                 .keyboardShortcut("k")
                 .disabled(palette == nil)
             button(.status(.all))

@@ -315,6 +315,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- **The Homelab app on the iPad opens again:** since the keyboard menus came in, it stayed on its opening screen (the iPad's layout kept drawing itself again). The iPhone wasn't affected.
 - **The line atop Settings shows whole:** with an app stopped (or away from home, or an update waiting), Settings' heading bar no longer slides over the line above it, so *Mealie: Stopped* and its **Open Status** show in full and can be clicked, at any width.
 - **Settings in a narrow window with big text:** a person's row in People keeps their name in words, its buttons wrapping under it rather than running past the edge, and This Mac's values (the container runtime, the folder, the version) wrap between words rather than a letter a line.
 - **The tray icon is yours alone:** on a computer with other accounts, another account can no longer quit your Homelab icon in the menu bar or tray, or keep it from starting.
