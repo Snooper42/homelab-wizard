@@ -462,18 +462,15 @@ final class FinancesViewModel {
 
     /// Adds a payment to the plan, as the computer's Add a payment does
     /// (`FinancePlanEdit.addingPayment`). Returns whether it saved.
-    func addPayment(name: String, amount: Double, every: String, start: Date, kind: String,
-                    from: String, estimate: Bool) async -> Bool {
+    func addPayment(_ p: NewPayment) async -> Bool {
         guard canEditPlan, !isSaving, let raw = rawPlan else { return false }
-        let day = FinancePlanEdit.todayString(start)
-        guard let edited = FinancePlanEdit.addingPayment(name: name, amount: amount, every: every,
-                                                         start: day, kind: kind,
-                                                         from: from, estimate: estimate, in: raw) else {
-            saveError = "A payment needs a name, and what it costs: an amount more than nothing."
+        guard let edited = FinancePlanEdit.addingPayment(p, in: raw) else {
+            saveError = p.every == "twice a month"
+                ? "Twice a month needs a second day that isn't the first."
+                : "A payment needs a name, and what it costs: an amount more than nothing."
             return false
         }
-        return await make(.addPayment(name: name, amount: amount, every: every, start: day, kind: kind, from: from, estimate: estimate),
-                          edited: edited, reason: "Add \(name.trimmingCharacters(in: .whitespaces)) to Finances.")
+        return await make(.addNewPayment(p), edited: edited, reason: "Add \(p.name.trimmingCharacters(in: .whitespaces)) to Finances.")
     }
 
     /// How much of an account the plan's goals don't count yet, in percent.

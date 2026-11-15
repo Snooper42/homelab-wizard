@@ -60,7 +60,7 @@ struct AddPaymentTests {
         #expect(add(amount: -10) == nil)
         #expect(add(amount: .infinity) == nil)
         #expect(add(every: "fortnightly") == nil)
-        #expect(add(every: "twice a month") == nil)   // needs a second day: the computer's for now
+        #expect(add(every: "twice a month") == nil)   // needs its second day
         #expect(add(start: "2026-13-01") == nil)
         #expect(add(kind: "groceries") == nil)
         #expect(add(from: "nope") == nil)
@@ -68,8 +68,62 @@ struct AddPaymentTests {
     }
 
     @Test func everyChoiceIsOneTheComputerKnows() {
-        // internal/finance/schedule.go's everies, less twice a month and paycheck.
-        #expect(Set(FinancePlanEdit.paymentEveries.map(\.id)) == ["month", "2 weeks", "week", "3 months", "year", "once"])
+        // internal/finance/schedule.go's everies; paycheck is offered by person.
+        #expect(Set(FinancePlanEdit.paymentEveries.map(\.id)) == ["month", "2 weeks", "week", "twice a month", "3 months", "year", "once"])
         #expect(FinancePlanEdit.paymentKinds.map(\.id) == ["home", "utilities", "car", "subscriptions", "loans", "cards", "spending", "savings", "other"])
+    }
+
+    private let household = try! JSONDecoder().decode(JSONValue.self, from: Data(#"""
+    {"accounts":[
+      {"id":"chk","name":"Example Checking","kind":"checking","balance":1200},
+      {"id":"sav","name":"Example Savings","kind":"savings","balance":5000},
+      {"id":"visa","name":"Example Visa","kind":"card","balance":300}
+    ],"people":[{"id":"alex","name":"Alex"}],"payments":[]}
+    """#.utf8))
+
+    private func added(_ p: NewPayment) -> JSONValue? {
+        guard let edited = FinancePlanEdit.addingPayment(p, in: household), case .array(let all)? = edited["payments"] else { return nil }
+        return all.last
+    }
+
+    @Test func moneyInFromSomeoneOutsideTheHousehold() throws {
+        let p = NewPayment(name: "Rent from the lodger", amount: 450, every: "month", start: "2026-12-01", payer: " Example Lodger ", to: "sav")
+        let x = try #require(added(p))
+        #expect(x["payer"] == .string("Example Lodger"))
+        #expect(x["to"] == .string("sav"))
+        #expect(x["from"] == nil && x["estimate"] == nil)
+        // Into checking: no `to`, as the computer reads none.
+        let toChecking = try #require(added(NewPayment(name: "Share of the mortgage", amount: 600, every: "month", start: "2026-12-01", payer: "Jamie")))
+        #expect(toChecking["to"] == nil)
+        // From someone, so out of none of the household's accounts; into a card, never.
+        #expect(added(NewPayment(name: "X", amount: 1, every: "month", start: "2026-12-01", from: "chk", payer: "Jamie")) == nil)
+        #expect(added(NewPayment(name: "X", amount: 1, every: "month", start: "2026-12-01", payer: "Jamie", to: "visa")) == nil)
+    }
+
+    @Test func twiceAMonthOnTwoDays() throws {
+        let x = try #require(added(NewPayment(name: "Example Daycare", amount: 300, every: "twice a month", start: "2026-12-01", day2: 15)))
+        #expect(x["schedule"] == .object(["every": .string("twice a month"), "start": .string("2026-12-01"), "day2": .number(15)]))
+        // The second day is a day of the month, and not the first one.
+        #expect(added(NewPayment(name: "X", amount: 1, every: "twice a month", start: "2026-12-01", day2: 1)) == nil)
+        #expect(added(NewPayment(name: "X", amount: 1, every: "twice a month", start: "2026-12-01", day2: 32)) == nil)
+    }
+
+    @Test func withEachPaycheck() throws {
+        let anyone = try #require(added(NewPayment(name: "To savings", amount: 100, every: "paycheck", start: "2026-11-15", person: "", from: "chk")))
+        #expect(anyone["schedule"] == .object(["every": .string("paycheck"), "start": .string("2026-11-15")]))
+        let alex = try #require(added(NewPayment(name: "Alex's allowance", amount: 50, every: "paycheck", start: "2026-11-15", person: "alex")))
+        #expect(alex["schedule"]?["person"] == .string("alex"))
+        // Someone the plan doesn't have.
+        #expect(added(NewPayment(name: "X", amount: 1, every: "paycheck", start: "2026-11-15", person: "sam")) == nil)
+    }
+
+    @Test func keptAwayAndReplayed() throws {
+        // Made away from home, it waits as one change and is made the same way once home.
+        let p = NewPayment(name: "Rent from the lodger", amount: 450, every: "month", start: "2026-12-01", payer: "Example Lodger")
+        let change = FinanceChange.addNewPayment(p)
+        let data = try JSONEncoder().encode([change])
+        #expect(try JSONDecoder().decode([FinanceChange].self, from: data) == [change])
+        let made = try #require(change.apply(to: household))
+        #expect(made == FinancePlanEdit.addingPayment(p, in: household))
     }
 }

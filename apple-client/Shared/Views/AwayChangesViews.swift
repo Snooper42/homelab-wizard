@@ -32,6 +32,8 @@ func awayWords(_ change: FinanceChange, view: FinancesPlanView?, finances: Finan
         return "Added \(name), \(money(amount))"
     case .addGoal(let name, _, _, _, _):
         return "Added the goal \(name)"
+    case .addNewPayment(let p):
+        return "Added \(p.name), \(money(p.amount))"
     }
 }
 

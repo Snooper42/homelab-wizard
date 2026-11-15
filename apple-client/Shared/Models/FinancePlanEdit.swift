@@ -143,9 +143,12 @@ enum FinancePlanEdit {
     /// How often a new payment comes, in the order the computer's Add a payment
     /// offers them. Twice a month and With each paycheck are the computer's for now.
     static let paymentEveries: [(id: String, title: String)] = [
-        ("month", "Monthly"), ("2 weeks", "Every 2 weeks"), ("week", "Weekly"),
+        ("month", "Monthly"), ("2 weeks", "Every 2 weeks"), ("week", "Weekly"), ("twice a month", "Twice a month"),
         ("3 months", "Every 3 months"), ("year", "Yearly"), ("once", "Once"),
     ]
+
+    /// The accounts money from someone outside the household can go into.
+    static let paymentToKinds: Set<String> = ["checking", "savings"]
 
     /// What a payment is for, as the computer names them (`kindName`).
     static let paymentKinds: [(id: String, title: String)] = [
@@ -166,29 +169,67 @@ enum FinancePlanEdit {
     /// come out of.
     static func addingPayment(name: String, amount: Double, every: String, start: String, kind: String,
                               from: String, estimate: Bool, in plan: JSONValue) -> JSONValue? {
-        let name = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        let cents = roundedToCents(amount)
-        guard !name.isEmpty, name.count <= 80,
-              amount.isFinite, cents > 0, cents <= maxBalance,
-              paymentEveries.contains(where: { $0.id == every }),
-              paymentKinds.contains(where: { $0.id == kind }),
-              LocalDay.parse(start) != nil,
+        addingPayment(NewPayment(name: name, amount: amount, every: every, start: start, kind: kind, from: from, estimate: estimate), in: plan)
+    }
+
+    /// `plan` with a new payment, as the computer's Add a payment makes one
+    /// (finance.Payment, Schedule.check): out of an account, or (`payer`) money
+    /// in from someone outside the household into `to`; monthly and the rest
+    /// from `start`, twice a month on `start`'s day and `day2`, or with each
+    /// paycheck (`person`'s, or every one into checking). Nil when it can't be.
+    static func addingPayment(_ p: NewPayment, in plan: JSONValue) -> JSONValue? {
+        let name = p.name.trimmingCharacters(in: .whitespacesAndNewlines)
+        let payer = (p.payer ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        let cents = roundedToCents(p.amount)
+        guard !name.isEmpty, name.count <= 80, payer.count <= 80,
+              p.amount.isFinite, cents > 0, cents <= maxBalance,
+              p.every == "paycheck" || paymentEveries.contains(where: { $0.id == p.every }),
+              paymentKinds.contains(where: { $0.id == p.kind }),
               case .object(var root) = plan
         else { return nil }
-        if !from.isEmpty {
+        func account(_ id: String, in kinds: Set<String>) -> Bool {
             guard case .array(let accounts)? = root["accounts"],
-                  let account = accounts.first(where: { $0["id"] == .string(from) }),
-                  case .string(let accountKind)? = account["kind"], paymentFromKinds.contains(accountKind)
-            else { return nil }
+                  let a = accounts.first(where: { $0["id"] == .string(id) }),
+                  case .string(let kind)? = a["kind"] else { return false }
+            return kinds.contains(kind)
+        }
+        var schedule: [String: JSONValue] = ["every": .string(p.every)]
+        if p.every == "paycheck" {
+            if let person = p.person, !person.isEmpty {
+                guard case .array(let people)? = root["people"], people.contains(where: { $0["id"] == .string(person) }) else { return nil }
+                schedule["person"] = .string(person)
+            }
+            if LocalDay.parse(p.start) != nil { schedule["start"] = .string(p.start) }
+        } else {
+            guard let first = LocalDay.parse(p.start) else { return nil }
+            schedule["start"] = .string(p.start)
+            if p.every == "twice a month" {
+                let day = Calendar(identifier: .gregorian).component(.day, from: first)
+                guard let day2 = p.day2, (1...31).contains(day2), day2 != day else { return nil }
+                schedule["day2"] = .number(Double(day2))
+            }
         }
         var payment: [String: JSONValue] = [
             "name": .string(name),
             "amount": .number(cents),
-            "schedule": .object(["every": .string(every), "start": .string(start)]),
-            "kind": .string(kind),
+            "schedule": .object(schedule),
+            "kind": .string(p.kind),
         ]
-        if !from.isEmpty { payment["from"] = .string(from) }
-        if estimate { payment["estimate"] = .bool(true) }
+        if !payer.isEmpty {
+            // Money in: from someone, out of none of the household's accounts.
+            guard p.from.isEmpty else { return nil }
+            payment["payer"] = .string(payer)
+            if let to = p.to, !to.isEmpty {
+                guard account(to, in: paymentToKinds) else { return nil }
+                payment["to"] = .string(to)
+            }
+        } else {
+            if !p.from.isEmpty {
+                guard account(p.from, in: paymentFromKinds) else { return nil }
+                payment["from"] = .string(p.from)
+            }
+            if p.estimate { payment["estimate"] = .bool(true) }
+        }
         var payments: [JSONValue] = []
         if case .array(let have)? = root["payments"] { payments = have }
         payments.append(.object(payment))
@@ -528,4 +569,26 @@ enum LedgerEdit {
         root["transactions"] = .array(transactions)
         return .object(root)
     }
+}
+
+/// A payment typed on the phone's Add Payment (the owner's mock, Nov 15):
+/// out of an account, or money in from someone outside the household, on a
+/// schedule that may be twice a month or with each paycheck.
+struct NewPayment: Codable, Sendable, Equatable {
+    var name = ""
+    var amount = 0.0
+    var every = "month"
+    /// YYYY-MM-DD; for "paycheck", the day it was added (the computer needs none).
+    var start = ""
+    /// Twice a month: the second day of the month.
+    var day2: Int? = nil
+    /// With each paycheck: whose, by id; nil or "" for every one into checking.
+    var person: String? = nil
+    var kind = "other"
+    /// Out of: an account's id, "" for checking.
+    var from = ""
+    var estimate = false
+    /// Money in: who sends it, and the account it goes into ("" or nil for checking).
+    var payer: String? = nil
+    var to: String? = nil
 }
