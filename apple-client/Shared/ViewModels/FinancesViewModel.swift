@@ -466,6 +466,17 @@ final class FinancesViewModel {
         return await make(FinanceChange.cushion(to: amount, was: nil).noting(raw), edited: edited, reason: "Change the cushion.")
     }
 
+    /// Track from (YYYY-MM-DD): the day the charts and totals count from;
+    /// nil counts every transaction again. Returns whether it saved.
+    func setTrackFrom(_ day: String?) async -> Bool {
+        guard canEditPlan, !isSaving, let raw = rawPlan else { return false }
+        guard let edited = FinancePlanEdit.settingTrackFrom(day, in: raw) else {
+            saveError = "Track from is a day, or every transaction."
+            return false
+        }
+        return await make(.trackFrom(day), edited: edited, reason: day == nil ? "Count every transaction." : "Change the day Finances tracks from.")
+    }
+
     /// Adds an account to the plan: a member's own, or the household's.
     /// Returns whether it saved.
     func addAccount(name: String, kind: String, balance: Double) async -> Bool {

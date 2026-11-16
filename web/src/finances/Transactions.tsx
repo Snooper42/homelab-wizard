@@ -441,7 +441,10 @@ export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger, logo
             })}
           </div>}
           {!byDay && !!shown.length && <Rows kind="fx-rows fx-txflat">{list.slice(0, upTo).map((t) => rowOf(t, true))}</Rows>}
-          {byDay && days.map((d) => (
+          {byDay && days.map((d, i) => (<Fragment key={d.date}>
+            {/* Track from: the rows before it are kept and listed, never counted. */}
+            {!!v.plan.trackFrom && !sort.up && d.date < v.plan.trackFrom && (i === 0 || days[i - 1].date >= v.plan.trackFrom) &&
+              <p class="fx-sub fx-trackline">Before {dayLong(v.plan.trackFrom)}, where you track from: kept here, not counted in charts or totals.</p>}
             <section key={d.date} class="fx-txday" aria-label={dayLong(d.date)}>
               <h3><span>{dayLong(d.date)}{d.date === v.today ? ', today' : ''}</span>
                 {runs ? <span class="fx-txbal">{moneyIn(after(d.date), acct!.currency)}<span class="fx-hidden"> {owed(acct!.kind) ? 'owed' : 'in ' + acct!.name} after the day</span></span>
@@ -451,7 +454,7 @@ export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger, logo
                 {d.list.map((t) => rowOf(t, false))}
               </Rows>
             </section>
-          ))}
+          </Fragment>))}
           {!all.length && <Empty>{edit ? 'No transactions yet: add what you spend with Add a transaction, as it happens or from the receipt.' : 'No transactions yet.'}</Empty>}
           {list.length > upTo && <p class="fx-txmore"><button type="button" class="small" onClick={() => setDrawn({ key: filterKey, n: upTo + txPage })}>Show {Math.min(txPage, list.length - upTo)} more</button>
             <span class="fx-sub">{upTo} of {list.length} shown, {sort.by === 'date' ? (sort.up ? 'oldest first' : 'newest first') : `by ${sort.by}`}</span></p>}

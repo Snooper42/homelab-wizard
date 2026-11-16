@@ -2940,3 +2940,5 @@ button.fx-symbol small { color:var(--muted); }
 .fx-privateaway { flex-basis:100%; }
 .fx-privateon { flex-wrap:wrap; }
 .fx-privatesaid { max-width:640px; margin:0 0 10px; }
+/* Track from: where the rows that do not count begin, on Transactions. */
+.fx-trackline { margin: 18px 4px 6px; padding-top: 12px; border-top: 1px dashed var(--line, rgba(127,127,127,.35)); }
