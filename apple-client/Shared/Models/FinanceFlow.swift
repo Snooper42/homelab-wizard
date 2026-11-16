@@ -56,6 +56,15 @@ struct FinanceFlow: Sendable, Equatable {
     }
 
     /// The months the ledger has transactions in, newest first ("yyyy-MM").
+    /// The ledger as Track from counts it (`trackFrom`, YYYY-MM-DD): the
+    /// transactions dated before that day left out, so a month it starts in
+    /// is counted from it, not whole. Nil or "" leaves it as it is.
+    static func counted(_ ledger: JSONValue?, from day: String?) -> JSONValue? {
+        guard let day, !day.isEmpty, case .object(var root)? = ledger else { return ledger }
+        root["transactions"] = .array(list(ledger?["transactions"]).filter { (str($0["date"]) ?? "") >= day })
+        return .object(root)
+    }
+
     static func ledgerMonths(_ ledger: JSONValue?) -> [String] {
         Array(Set(list(ledger?["transactions"]).compactMap { str($0["date"]).map { String($0.prefix(7)) } })).sorted(by: >)
     }

@@ -162,6 +162,22 @@ struct FinanceFlowTests {
         #expect(Self.cents(f.expenses) == 3121.67 && Self.cents(f.saved) == 3811.67)
     }
 
+    /// Track from on a month's 15th: the flow counts that month from the
+    /// 15th, not whole, and no month before it (Nov 16).
+    @Test func countedFromTrackFromsDay() throws {
+        let ledger: JSONValue = .object(["transactions": .array([
+            .object(["id": .string("a"), "date": .string("2026-09-30"), "amount": .number(-10)]),
+            .object(["id": .string("b"), "date": .string("2026-10-14"), "amount": .number(-20)]),
+            .object(["id": .string("c"), "date": .string("2026-10-15"), "amount": .number(-30)]),
+        ])])
+        let counted = FinanceFlow.counted(ledger, from: "2026-10-15")
+        #expect(FinanceFlow.ledgerMonths(counted) == ["2026-10"])
+        guard case .array(let kept)? = counted?["transactions"] else { Issue.record("no transactions"); return }
+        #expect(kept.map { $0["id"] } == [.string("c")])
+        #expect(FinanceFlow.counted(ledger, from: nil) == ledger)
+        #expect(FinanceFlow.counted(nil, from: "2026-10-15") == nil)
+    }
+
     @Test func theMonthsTheLedgerHas() {
         #expect(FinanceFlow.ledgerMonths(Self.ledger) == ["2026-11", "2026-10"])
         #expect(FinanceFlow.taxing("Federal taxes") && FinanceFlow.taxing("Tax") && !FinanceFlow.taxing("Taxi"))
