@@ -94,15 +94,16 @@ struct MoneyFlowCard: View {
     }
 }
 
+/// A box's width and the room between boxes (file constants: a View's static is the main actor's, and `Layout` isn't).
+private let sankeyBar: CGFloat = 9
+private let sankeyGap: CGFloat = 10
+
 /// The boxes and the bands between them, a column each, heights by value.
 private struct SankeyDrawing: View {
     let flow: FinanceFlow
     /// 3 (an iPhone: the last column's listed under its box) or 4.
     let columns: Int
     let money: (Double) -> String
-
-    private static let bar: CGFloat = 9
-    private static let gap: CGFloat = 10
 
     var body: some View {
         GeometryReader { geo in
@@ -111,7 +112,7 @@ private struct SankeyDrawing: View {
                 Canvas { context, _ in
                     for band in layout.bands {
                         var path = Path()
-                        let (x0, x1) = (band.fromX + Self.bar, band.toX)
+                        let (x0, x1) = (band.fromX + sankeyBar, band.toX)
                         let mid = (x0 + x1) / 2
                         path.move(to: CGPoint(x: x0, y: band.fromY))
                         path.addCurve(to: CGPoint(x: x1, y: band.toY), control1: CGPoint(x: mid, y: band.fromY), control2: CGPoint(x: mid, y: band.toY))
@@ -173,11 +174,11 @@ private struct SankeyDrawing: View {
             let byCol = (0..<columns).map { c in shown.filter { $0.col == c } }
             let most = byCol.map { $0.reduce(0) { $0 + $1.value } }.max() ?? 1
             let crowded = CGFloat(max((byCol.map(\.count).max() ?? 1) - 1, 0))
-            let scale = max(size.height - crowded * SankeyDrawing.gap, 40) / CGFloat(max(most, 1))
+            let scale = max(size.height - crowded * sankeyGap, 40) / CGFloat(max(most, 1))
             // Where each column's bar stands: labels go right of the first columns and left of the last.
             let labelRoom: CGFloat = columns == 4 ? 110 : 96
             let xs: [CGFloat] = (0..<columns).map { c in
-                let usable = size.width - labelRoom - SankeyDrawing.bar
+                let usable = size.width - labelRoom - sankeyBar
                 return c == columns - 1 ? usable : CGFloat(c) * usable / CGFloat(columns - 1) * (columns == 4 ? 0.9 : 0.85)
             }
             var rects: [String: CGRect] = [:]
@@ -185,13 +186,13 @@ private struct SankeyDrawing: View {
                 var y: CGFloat = 0
                 for n in nodes {
                     let h = max(CGFloat(n.value) * scale, 2)
-                    let rect = CGRect(x: xs[c], y: y, width: SankeyDrawing.bar, height: h)
+                    let rect = CGRect(x: xs[c], y: y, width: sankeyBar, height: h)
                     rects[n.id] = rect
                     let last = c == columns - 1
                     boxes.append(Box(node: n, rect: rect, tint: Self.tint(n),
                                      labelX: last ? rect.maxX + 4 + labelRoom / 2 : rect.maxX + 4 + (labelRoom - 10) / 2,
                                      labelWidth: labelRoom - 10, leading: true))
-                    y += h + SankeyDrawing.gap
+                    y += h + sankeyGap
                 }
             }
             // Each link leaves its box below the one before, and comes into its box below the one before.
