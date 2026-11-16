@@ -10823,9 +10823,9 @@
           "'s paychecks"
         ] }, e3.id))
       ] }) }),
-      every !== "paycheck" && /* @__PURE__ */ u3(Field, { label: startLabel, children: /* @__PURE__ */ u3("input", { type: "date", value: start, onInput: input(setStart), required: true }) }),
+      every !== "paycheck" && /* @__PURE__ */ u3(Field, { label: startLabel, children: /* @__PURE__ */ u3("input", { type: "date", name: "start", value: start, onInput: input(setStart), required: true }) }),
       every === "twice a month" && /* @__PURE__ */ u3(Field, { label: "And on day", children: /* @__PURE__ */ u3("input", { type: "number", min: "1", max: "31", value: day22, onInput: input(setDay2) }) }),
-      setUntil && every !== "once" && /* @__PURE__ */ u3(Field, { label: "Ends (if it does)", children: /* @__PURE__ */ u3("input", { type: "date", value: until || "", min: every === "paycheck" ? void 0 : start, onInput: input(setUntil) }) })
+      setUntil && every !== "once" && /* @__PURE__ */ u3(Field, { label: "Ends (if it does)", children: /* @__PURE__ */ u3("input", { type: "date", name: "until", value: until || "", onInput: input(setUntil) }) })
     ] });
   }
   function PaymentForm(props) {

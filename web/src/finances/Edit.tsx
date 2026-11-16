@@ -338,10 +338,10 @@ function ScheduleFields({ every, setEvery, start, setStart, day2, setDay2, start
       {!!people?.length && <option value="paycheck:">With each paycheck, whoever is paid</option>}
       {(people || []).map((e) => <option key={e.id} value={'paycheck:' + e.id}>With each of {e.name}'s paychecks</option>)}
     </select></Field>
-    {every !== 'paycheck' && <Field label={startLabel}><input type="date" value={start} onInput={input(setStart)} required /></Field>}
+    {every !== 'paycheck' && <Field label={startLabel}><input type="date" name="start" value={start} onInput={input(setStart)} required /></Field>}
     {every === 'twice a month' && <Field label="And on day"><input type="number" min="1" max="31" value={day2} onInput={input(setDay2)} /></Field>}
     {/* One that ends (a lease, a loan's last payment): none after it. Empty, it goes on. */}
-    {setUntil && every !== 'once' && <Field label="Ends (if it does)"><input type="date" value={until || ''} min={every === 'paycheck' ? undefined : start} onInput={input(setUntil)} /></Field>}
+    {setUntil && every !== 'once' && <Field label="Ends (if it does)"><input type="date" name="until" value={until || ''} onInput={input(setUntil)} /></Field>}
   </>;
 }
 
