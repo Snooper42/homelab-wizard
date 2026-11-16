@@ -139,4 +139,28 @@ struct FinanceInsightsTests {
         #expect(days.first?.items.map(\.payment.id) == ["netflix", "rent"])
         #expect(days.last?.items.map(\.sort) == [.moneyIn])
     }
+
+    /// A month's days before today come from the computer's due days
+    /// (`dues`), so its earlier bills have their dots: not a one-off, not
+    /// a day ahead twice, nothing from another month (Nov 16).
+    @Test func recurringMarksTheMonthsEarlierBills() throws {
+        let view = try JSONDecoder.homelab().decode(FinancesPlanView.self, from: Data(#"""
+        {"today":"2026-11-20","checking":"chk","start":{"chk":2400},
+         "plan":{"people":[],"cushion":0,"accounts":[{"id":"chk","name":"Everyday","kind":"checking"}],
+           "payments":[
+             {"id":"netflix","name":"Netflix","kind":"subscriptions","amount":15.49,"schedule":{"every":"month"}},
+             {"id":"rent","name":"Rent","amount":1200,"schedule":{"every":"month"}},
+             {"id":"tv","name":"New TV","amount":900,"schedule":{"every":"once"}}]},
+         "periods":[
+           {"now":true,"start":"2026-11-20","last":"2026-11-30","carried":0,"in":0,"out":0,"saved":0,"left":0,
+            "rows":[{"date":"2026-11-24","payment":"netflix","amount":15.49}]}],
+         "dues":{"netflix":["2026-10-24","2026-11-03","2026-11-24"],"rent":["2026-11-03"],"tv":["2026-11-05"]}}
+        """#.utf8))
+        let today = try #require(view.today)
+        let days = view.recurringCalendar(in: today)
+        #expect(days.count == 2)
+        #expect(days.first?.items.map(\.payment.id) == ["netflix", "rent"])
+        #expect(days.first?.items.first?.amount == 15.49)
+        #expect(days.last?.items.map(\.payment.id) == ["netflix"])
+    }
 }

@@ -135,9 +135,12 @@ struct FinancesPlanView: Decodable, Sendable, Equatable {
     /// Net worth each day before the first balance kept, worked back from it
     /// through the transactions (Track from, `View.WorthEstimated`).
     let worthEstimated: [FinancePoint]
+    /// Each payment's due days (YYYY-MM-DD), from 120 days back (`View.Dues`):
+    /// Recurring's calendar marks a month's earlier bills with them.
+    let dues: [String: [String]]
 
     enum CodingKeys: String, CodingKey {
-        case today, checking, start, periods, plan, readOnly, budgets, goals, loans, categories, since, checkingNow, afterPay, worthEstimated
+        case today, checking, start, periods, plan, readOnly, budgets, goals, loans, categories, since, checkingNow, afterPay, worthEstimated, dues
     }
 
     init(from decoder: Decoder) throws {
@@ -158,6 +161,7 @@ struct FinancesPlanView: Decodable, Sendable, Equatable {
         checkingNow = (try? c.decodeIfPresent(FinanceWorking.self, forKey: .checkingNow)) ?? nil
         afterPay = (try? c.decodeIfPresent(FinanceWorking.self, forKey: .afterPay)) ?? nil
         worthEstimated = ((try? c.decodeIfPresent([FinancePoint].self, forKey: .worthEstimated)) ?? nil) ?? []
+        dues = ((try? c.decodeIfPresent([String: [String]].self, forKey: .dues)) ?? nil) ?? [:]
     }
 
     /// The keys waiting now: what `Plan.waiting` should hold, as the computer reads it.
