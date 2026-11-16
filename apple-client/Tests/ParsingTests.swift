@@ -498,6 +498,10 @@ struct BackupsTests {
         #expect(try tiles("{}") == ["restore: None yet warn", "vault: Never exported warn", "settingsFile: Not copied warn"])
         // The detail is in words, relative to now.
         #expect(try overview(#"{"restoreTest":{"lastTest":"2026-11-08T14:00:00Z"}}"#).tiles(now: now)[0].detail == "3 days ago")
+        // More › Restore tests says it in the same words as the tile (Nov 16: "last week" against "2 weeks ago").
+        let tested = Date(timeIntervalSince1970: 1_794_405_600 - 10 * 86_400)
+        let tile = try overview(#"{"restoreTest":{"lastTest":"2026-11-01T14:00:00Z"}}"#).tiles(now: now)[0].detail
+        #expect(tile == BackupOverview.ago(tested, now: now))
     }
 
     @Test func theVaultExportReadsAsTheComputerSaysIt() throws {

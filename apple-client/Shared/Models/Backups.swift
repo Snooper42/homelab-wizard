@@ -151,11 +151,18 @@ extension BackupOverview {
         var id: String { kind.rawValue }
     }
 
-    func tiles(now: Date = Date()) -> [Tile] {
+    /// How long ago, said one way everywhere on Backups ("yesterday", "last
+    /// week", "3 days ago"): the tiles and the rows under More once read the
+    /// same restore test as "last week" and "2 weeks ago" (Nov 16).
+    static func ago(_ date: Date, now: Date = Date()) -> String {
         let words = RelativeDateTimeFormatter()
         words.dateTimeStyle = .named
         words.unitsStyle = .full
-        func ago(_ date: Date) -> String { words.localizedString(for: date, relativeTo: now) }
+        return words.localizedString(for: date, relativeTo: now)
+    }
+
+    func tiles(now: Date = Date()) -> [Tile] {
+        func ago(_ date: Date) -> String { Self.ago(date, now: now) }
 
         let restore: Tile = if let failed = restoreTest.failedSince {
             Tile(kind: .restore, title: "Restore test", value: "Failed", detail: ago(failed.when), tone: .bad)
