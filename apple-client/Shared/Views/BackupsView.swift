@@ -13,10 +13,12 @@ struct BackupsView: View {
     /// Two columns across the iPad's width (the owner's pick, Nov 15): the summary and what needs
     /// a look on the left, the fresh copies and More on the right. One column elsewhere.
     var columns = 1
+    /// Its own width, for whether two columns fit (`BackupsLayout`).
+    @State private var width: CGFloat = 0
 
     var body: some View {
         Group {
-            if columns == 2, let overview = backups.overview {
+            if BackupsLayout.columns(asked: columns, width: width) == 2, let overview = backups.overview {
                 HStack(alignment: .top, spacing: 0) {
                     Form {
                         heading(overview)
@@ -56,6 +58,7 @@ struct BackupsView: View {
                 .formStyle(.grouped)
             }
         }
+        .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width = $0 }
         .themedCanvas()
         .overlay {
             if backups.overview == nil, backups.overviewError == nil, backups.isLoading {

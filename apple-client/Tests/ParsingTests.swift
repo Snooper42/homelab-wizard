@@ -504,6 +504,16 @@ struct BackupsTests {
         #expect(tile == BackupOverview.ago(tested, now: now))
     }
 
+    /// Backups in two columns only where each has room: the iPad in
+    /// landscape beside the sidebar, not upright (Nov 16).
+    @Test func backupsTakeTwoColumnsOnlyWhereTheyFit() {
+        #expect(BackupsLayout.columns(asked: 2, width: 960) == 2)
+        #expect(BackupsLayout.columns(asked: 2, width: 594) == 1)
+        #expect(BackupsLayout.columns(asked: 2, width: 834) == 1)
+        #expect(BackupsLayout.columns(asked: 1, width: 1200) == 1)
+        #expect(BackupsLayout.columns(asked: 2, width: 0) == 1)
+    }
+
     @Test func theVaultExportReadsAsTheComputerSaysIt() throws {
         func o(_ json: String) throws -> BackupOverview { try JSONDecoder.homelab().decode(BackupOverview.self, from: Data(json.utf8)) }
         #expect(try o(#"{"vaultExport":"0001-01-01T00:00:00Z"}"#).vaultState == .neverMade)
