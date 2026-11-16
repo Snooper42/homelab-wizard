@@ -94,6 +94,8 @@ struct DashboardView: View {
         .task { await model.loadForMorning() }
         // Alerts from this app (Settings › Alerts From), while it runs.
         .task { await LocalAlerts.watch(read: { try await model.alertLog() }, computerKeeps: { actions.computerAnswers("AlertLog") }) }
+        // When Homelab Wizard last stopped unexpectedly: Status's crash note (the owner's pick, Nov 16).
+        .task { if actions.computerAnswers("LastCrash") { await model.readCrash() } }
         // Kept as it arrives, so leaving (a lock clears the status first) still saves what was seen.
         .onChange(of: model.liveEvents.status) { _, status in
             guard let status else { return }
@@ -316,6 +318,11 @@ private struct PhoneStatus: View {
                 // looked has its dot on its row.
                 if !model.isSearching, model.hasLoaded {
                     Section {
+                        if let note = model.crashNote {
+                            CrashNoteCard(note: note, model: model)
+                                .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
+                                .listRowBackground(Color.clear)
+                        }
                         StatusTop(model: model) { id in path.append(id) }
                             // Room under a card for its shadow, which the row would otherwise cut.
                             .padding(.bottom, 6)
@@ -951,11 +958,18 @@ private struct SplitDashboard: View {
         // Again once the device's level is known: right after unlock it may not be yet.
         .task(id: finances.canSeeMoney) { await finances.load() }
         .safeAreaInset(edge: .top) {
-            if model.overnightLine != nil {
-                OvernightLine(model: model)
-                    .padding(.horizontal)
-                    .padding(.vertical, 8)
-                    .background(.bar)
+            VStack(spacing: 0) {
+                if let note = model.crashNote {
+                    CrashNoteCard(note: note, model: model)
+                        .padding(.horizontal)
+                        .padding(.top, 8)
+                }
+                if model.overnightLine != nil {
+                    OvernightLine(model: model)
+                        .padding(.horizontal)
+                        .padding(.vertical, 8)
+                        .background(.bar)
+                }
             }
         }
         .overlay {

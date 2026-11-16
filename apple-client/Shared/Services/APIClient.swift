@@ -204,6 +204,11 @@ actor APIClient {
         try await call("AlertLog", as: [KeptAlert].self)
     }
 
+    /// When Homelab Wizard last stopped unexpectedly: who and when, nil with none (or on a wall screen).
+    func lastCrash() async throws -> CrashNote? {
+        try await call("LastCrash", as: CrashNote?.self)
+    }
+
     func logs(appID: String, lines: Int) async throws -> String {
         guard AppStatus.isValidID(appID) else { throw APIError.invalidAppID }
         let count = min(max(lines, 1), 5000)

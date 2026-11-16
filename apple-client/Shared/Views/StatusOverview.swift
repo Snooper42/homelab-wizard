@@ -356,3 +356,72 @@ struct StatusAlertCard: View {
         .card(radius: 20)
     }
 }
+
+// MARK: - When Homelab Wizard stopped (the owner's pick, Nov 16)
+
+/// The computer's crash note at the top of Status: which part of Homelab
+/// Wizard stopped unexpectedly and when, Share the Report (shown in full
+/// first, as Settings' Get Help) and Hide (on this device). Once per crash;
+/// nothing on a computer that doesn't answer `LastCrash`.
+struct CrashNoteCard: View {
+    let note: CrashNote
+    let model: DashboardViewModel
+    @State private var report: DiagnosticsReport?
+    @State private var making = false
+    @State private var problem: String?
+
+    var body: some View {
+        card(note)
+            .sheet(item: $report) { ReportView(report: $0) }
+    }
+
+    private func card(_ note: CrashNote) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.title3)
+                .foregroundStyle(Theme.warning)
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 6) {
+                Text(verbatim: note.title())
+                    .font(.headline)
+                    .foregroundStyle(Theme.ink)
+                Text("It started again by itself. The diagnostics report carries what happened, with passwords and tokens taken out, for whoever helps you.")
+                    .font(.subheadline)
+                    .foregroundStyle(Theme.secondaryInk)
+                HStack(spacing: 8) {
+                    Button {
+                        Task { await share() }
+                    } label: {
+                        if making { ProgressView().controlSize(.small) } else { Text("Share the Report") }
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(making)
+                    Button("Hide") {
+                        withAnimation { model.hideCrash() }
+                    }
+                    .buttonStyle(.bordered)
+                }
+                .controlSize(.small)
+                .padding(.top, 2)
+                if let problem {
+                    Text(verbatim: problem).font(.footnote).foregroundStyle(Theme.danger)
+                }
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .card(radius: 20)
+    }
+
+    private func share() async {
+        making = true
+        defer { making = false }
+        do {
+            report = try await model.report()
+            problem = nil
+        } catch {
+            problem = "Couldn't make the report: \(error.localizedDescription)"
+        }
+    }
+}

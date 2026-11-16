@@ -207,6 +207,26 @@ final class DashboardViewModel {
         try await api.alertLog()
     }
 
+    /// When Homelab Wizard last stopped unexpectedly (Status's crash note),
+    /// unless it was hidden on this device; nil with none.
+    private(set) var crashNote: CrashNote?
+
+    func readCrash() async {
+        let read = (try? await api.lastCrash()) ?? nil
+        crashNote = read?.isHidden() == true ? nil : read
+    }
+
+    /// Hide: this crash isn't shown again on this device; the next one is.
+    func hideCrash() {
+        crashNote?.hide()
+        crashNote = nil
+    }
+
+    /// The diagnostics report, for the crash note's Share the Report.
+    func report() async throws -> DiagnosticsReport {
+        try await api.report()
+    }
+
     // MARK: Away mode (ADR-0023)
 
     /// The apps on the internet through the tunnel, as last kept, read

@@ -63,7 +63,7 @@ What a phone may do also depends on how it was paired, on every phone (the phone
 | **Snooze…** on an open alert of Every alert (its watchdog check still fails) | yes | yes (allowed changes) | yes, Face ID | yes | `SnoozeCheck` |
 | Storage card (the disk and each app's share) | yes | on purpose for now: not a phone card | on purpose for now | on purpose for now | |
 | Memory and processor per app | yes | gap: the page doesn't show the card yet, though `StatusBoard` serves it (`usage`) | yes: on an app's page while it runs, Memory and Processor (`AppResources`, the `usage` card) | yes, as the iPhone | `StatusBoard` |
-| An app that keeps crashing (last crash) | yes | partly: the row says so, no crash card | partly: the same | partly | |
+| An app that keeps crashing; and when Homelab Wizard itself stopped unexpectedly (its crash note) | yes | partly: the row says so, no crash card | yes: the row says so, and a note at the top of Status when Homelab Wizard stopped unexpectedly (which part, when), with Share the Report and Hide, once per crash (`CrashNote`; Hide kept on this device; not on a wall screen) | yes, as the iPhone | `LastCrash` |
 | The last Status while the computer can't be reached | on purpose: it's the computer | yes, over HTTPS | on purpose: the app keeps nothing on the device | on purpose | |
 | Away mode (the apps on the internet, when nothing answers) | on purpose | on purpose | yes | yes | |
 | A diagnostics report to share with a helper | yes | yes | yes, in Settings | yes | `Report` |
