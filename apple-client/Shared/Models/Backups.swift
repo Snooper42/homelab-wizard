@@ -472,3 +472,16 @@ extension DuplicatiJob {
     /// that found a damaged file.
     var needsALook: Bool { state != "ok" || checkProblem != nil }
 }
+
+/// How many columns Backups takes: the two the iPad asks for (the owner's
+/// pick, Nov 15) only where each still has room, else one. Upright, beside
+/// the sidebar, two squeezed Back Up Now onto three lines and the tiles to
+/// "Restore t…" and "Export-ed" (main's pictures, Nov 16).
+enum BackupsLayout {
+    /// The least width two columns need.
+    static let twoFrom: CGFloat = 900
+
+    static func columns(asked: Int, width: CGFloat) -> Int {
+        asked >= 2 && width >= twoFrom ? 2 : 1
+    }
+}
