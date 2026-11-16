@@ -45,6 +45,31 @@ struct FinanceInsightsTests {
         #expect(months.last?.net == 1988)
     }
 
+    /// As the computer's Cash Flow counts a month (reportData.ts's byMonth):
+    /// every transaction that brought money in, and every one that took it
+    /// out; only a move between the household's own accounts is neither. A
+    /// paycheck with no category, or one not marked as income, is money in
+    /// (the owner's Cash Flow, Nov 16, read $0 in every month).
+    @Test func cashFlowCountsAllMoneyInAsTheComputerDoes() throws {
+        let ledger = try JSONDecoder.homelab().decode(FinanceLedger.self, from: Data(#"""
+        {"transactions":[
+          {"id":"p1","date":"2026-10-01","account":"chk","amount":2000,"payee":"Employer"},
+          {"id":"p2","date":"2026-10-15","account":"chk","amount":1500,"payee":"Employer","category":"Paycheck"},
+          {"id":"r","date":"2026-10-04","account":"chk","amount":20,"payee":"Kroger","category":"Groceries"},
+          {"id":"o1","date":"2026-10-02","account":"chk","amount":-100,"payee":"Kroger","category":"Groceries"},
+          {"id":"o2","date":"2026-10-03","account":"chk","amount":-40,"payee":"Shell"},
+          {"id":"t","date":"2026-10-06","account":"chk","amount":-500,"payee":"Savings","to":"sav"},
+          {"id":"t2","date":"2026-10-07","account":"sav","amount":500,"payee":"Savings","to":"chk"}
+        ]}
+        """#.utf8))
+        let months = CashFlow.months(ledger.transactions, ending: try day(2026, 10, 15), count: 2, categories: categories, calendar: calendar)
+        #expect(months.map(\.income) == [0, 3520])
+        #expect(months.map(\.spent) == [0, 140])
+        #expect(months.last?.net == 3380)
+        // Month in Review's "came in" the same way (the computer's Reports, totals).
+        #expect(MonthReview.make(ledger.transactions, month: try day(2026, 10, 15), categories: categories, calendar: calendar).income == 3520)
+    }
+
     @Test func aMonthToldBack() throws {
         let review = MonthReview.make(try ledger().transactions, month: try day(2026, 10, 15), categories: categories, calendar: calendar)
         #expect(review.spent == 412)

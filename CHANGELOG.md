@@ -8,6 +8,8 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### New
 
+- **Worth a look in the Homelab app:** at the top of Finances, as on the computer's Dashboard: a subscription that now costs more (Update the Plan, or Keep), a bill whose six-month average is off the plan (Use it, or Keep), and a bill that hasn't shown up in your transactions (Find It in Transactions). Only what needs you shows.
+- **Money flow in the Homelab app:** Cash Flow shows where a month's money came from and went, as on the computer: in, then taxes, spending by kind, savings by account and what was left, for a month your transactions have or a typical month from the plan.
 - **A loan's papers in the Homelab app:** a loan on Finances › Loans opens its page: what's owed, its rate and what goes to it each month, and where its papers are typed in on the computer, a ring of the payments made, what's paid down of what was borrowed, the next payment split into what pays it down and its interest, who pays it each month, when it's half paid and paid off, and every payment in a list.
 - **A calendar in the Homelab app:** Finances › **Calendar** shows the money month by month, as on the computer: each day's paydays and bills, what's in checking at the end of the day (outlined in orange when it's under your cushion), and what was recorded on the days before today. Tap a day for what moves on it and to add a payment on it; under the month, what it comes to in all. On the iPad in landscape, the day sits beside the month (⌥⌘9 with a keyboard).
 - **More kinds of payment in the Homelab app:** Add Payment now takes money that comes in from someone outside the household (rent from a lodger, a share of the mortgage), payments twice a month on two days, and payments with each paycheck, anyone's or one person's.
@@ -160,6 +162,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **A job that didn't finish says why first:** in the Homelab app, Back Up Now, Test a Restore or Look for Problems that stops now has a title naming the job (not "exit status 1") and, at the top, what needs you in the computer's words (*mealie is not running: not backed up*), with "Everything else was backed up" when only stopped apps were left out. The whole log is still under it.
 - **One command for each new version of the Homelab app:** `apple-client/scripts/update-phone.sh` pulls the newest version and puts it on the iPhone (or iPad) plugged into the Mac, with the prefix you used before. Run it once with `--add-command` and it's `homelab-phone`, from any folder.
 - **VoiceOver in the Homelab app:** the ⌘K palette's rows are buttons VoiceOver can run (and says which is picked), and the arrows at the end of rows aren't read out as "Forward" any more.
 - **The iPad in Stage Manager and Split View:** in a narrower window, or upright, the Homelab app starts with its sidebar hidden (a tap of its button away) so the list and the page have room, and a window resized between the iPad's layout and the iPhone's tabs stays on the same screen, with the same app open.
@@ -316,6 +319,8 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- **A card paid off with each paycheck is named in the Homelab app:** Bills, Coming Up, the Calendar and Worth a Look showed it as "Payment" with no logo; it's the card's name and logo now, as on the computer.
+- **Cash Flow in the Homelab app counts all your money in:** it counted only what went to an income category, so a paycheck without one read as nothing coming in. It now counts as the computer does: everything that came in and everything that went out, moves between your own accounts left out. Month in Review's "came in" too.
 - **The Homelab app on the iPad opens again:** since the keyboard menus came in, it stayed on its opening screen (the iPad's layout kept drawing itself again). The iPhone wasn't affected.
 - **The line atop Settings shows whole:** with an app stopped (or away from home, or an update waiting), Settings' heading bar no longer slides over the line above it, so *Mealie: Stopped* and its **Open Status** show in full and can be clicked, at any width.
 - **Settings in a narrow window with big text:** a person's row in People keeps their name in words, its buttons wrapping under it rather than running past the edge, and This Mac's values (the container runtime, the folder, the version) wrap between words rather than a letter a line.

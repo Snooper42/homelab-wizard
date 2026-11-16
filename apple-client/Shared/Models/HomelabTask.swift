@@ -111,3 +111,41 @@ struct LogExplanation: Decodable, Sendable, Equatable {
     /// The model that wrote it, shown with it.
     let model: String
 }
+
+/// What a job that didn't finish says first: a title naming the job (not
+/// "exit status 1"), then the computer's own warning (!) and failure (✗)
+/// lines, in its words. For a backup whose only problems were apps skipped
+/// (stopped, or outside the homelab), the rest was backed up, and it says so.
+struct TaskOutcome: Equatable {
+    let title: String
+    let problems: [String]
+    let lead: String?
+
+    init(task: HomelabTask, message: String, lines: [String]) {
+        let said = message.trimmingCharacters(in: .whitespacesAndNewlines)
+        let bare = said.isEmpty || said.range(of: #"^exit status \d+$"#, options: .regularExpression) != nil
+        title = bare ? Self.failedTitle(task) : said
+        problems = lines.compactMap { line in
+            let t = line.trimmingCharacters(in: .whitespaces)
+            guard let first = t.first, first == "!" || first == "✗" else { return nil }
+            let rest = t.dropFirst().trimmingCharacters(in: .whitespaces)
+            return rest.isEmpty ? nil : rest
+        }
+        if problems.isEmpty {
+            lead = nil
+        } else if task == .backup, problems.allSatisfy({ $0.contains("not backed up") }) {
+            lead = problems.count == 1 ? "Everything else was backed up. This wasn't:" : "Everything else was backed up. These weren't:"
+        } else {
+            lead = problems.count == 1 ? "This went wrong:" : "These went wrong:"
+        }
+    }
+
+    static func failedTitle(_ task: HomelabTask) -> String {
+        switch task {
+        case .backup: "Backup Didn't Finish"
+        case .restoreTest: "The Restore Test Didn't Finish"
+        case .fix: "Look for Problems Didn't Finish"
+        }
+    }
+}
+
