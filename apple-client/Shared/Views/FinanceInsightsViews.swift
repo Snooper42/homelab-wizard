@@ -94,26 +94,27 @@ struct FinanceCashFlowPage: View {
             CardHeading("Each Month")
             Chart {
                 ForEach(months) { m in
-                    BarMark(x: .value("Month", m.month, unit: .month), y: .value("Amount", m.income), width: .ratio(0.36))
+                    BarMark(x: .value("Month", CashFlow.key(m.month)), y: .value("Amount", m.income), width: .ratio(0.36))
                         .position(by: .value("Kind", "In"))
                         .foregroundStyle(Theme.success.opacity(m.month == picked ? 1 : 0.45))
                         .cornerRadius(4)
-                    BarMark(x: .value("Month", m.month, unit: .month), y: .value("Amount", m.spent), width: .ratio(0.36))
+                    BarMark(x: .value("Month", CashFlow.key(m.month)), y: .value("Amount", m.spent), width: .ratio(0.36))
                         .position(by: .value("Kind", "Out"))
                         .foregroundStyle(Theme.danger.opacity(m.month == picked ? 1 : 0.45))
                         .cornerRadius(4)
                 }
             }
             .chartXAxis {
-                AxisMarks(values: months.map(\.month)) { _ in
-                    AxisValueLabel(format: .dateTime.month(.abbreviated), centered: true)
+                AxisMarks { value in
+                    AxisValueLabel {
+                        if let key = value.as(String.self) { Text(verbatim: CashFlow.label(key)) }
+                    }
                 }
             }
-            .chartXScale(domain: CashFlow.domain(months.map(\.month)) ?? Date()...Date())
             .chartYAxis(.hidden)
             .chartLegend(.hidden)
-            .chartXSelection(value: Binding(get: { picked }, set: { date in
-                if let date, let m = months.min(by: { abs($0.month.timeIntervalSince(date)) < abs($1.month.timeIntervalSince(date)) }) {
+            .chartXSelection(value: Binding<String?>(get: { picked.map { CashFlow.key($0) } }, set: { key in
+                if let key, let m = months.first(where: { CashFlow.key($0.month) == key }) {
                     self.picked = m.month
                 }
             }))

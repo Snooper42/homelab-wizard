@@ -145,16 +145,17 @@ struct FinancesPlanTests {
         #expect(odd.trackFrom == nil)
     }
 
-    /// Cash Flow's Each Month runs to the end of its last month, so that
-    /// month's name is drawn (main's pictures, Nov 16: October had none).
-    @Test func eachMonthRunsToTheEndOfTheLast() throws {
+    /// Cash Flow's Each Month draws its bars by month name, one category a
+    /// month, so every month, the last too, has its name (main's pictures,
+    /// Nov 16: October, the month shown, had none on a date axis).
+    @Test func eachMonthIsNamedByItsKey() throws {
         let calendar = Calendar(identifier: .gregorian)
-        let sep = try #require(calendar.date(from: DateComponents(year: 2026, month: 9, day: 1)))
-        let oct = try #require(calendar.date(from: DateComponents(year: 2026, month: 10, day: 1)))
-        let nov = try #require(calendar.date(from: DateComponents(year: 2026, month: 11, day: 1)))
-        #expect(CashFlow.domain([sep, oct], calendar: calendar) == sep...nov)
-        #expect(CashFlow.domain([oct], calendar: calendar) == oct...nov)
-        #expect(CashFlow.domain([], calendar: calendar) == nil)
+        let oct = try #require(calendar.date(from: DateComponents(year: 2026, month: 10, day: 1, hour: 12)))
+        let jan = try #require(calendar.date(from: DateComponents(year: 2027, month: 1, day: 1, hour: 12)))
+        #expect(CashFlow.key(oct, calendar: calendar) == "2026-10")
+        #expect(CashFlow.key(jan, calendar: calendar) == "2027-01")
+        #expect(CashFlow.label("2026-10") == "Oct")
+        #expect(CashFlow.label("soon") == "soon")
     }
 
     @Test func netWorthSubtractsWhatIsOwed() throws {

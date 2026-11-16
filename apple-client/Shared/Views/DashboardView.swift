@@ -1289,19 +1289,39 @@ struct FoldedGroupNames: View {
 /// The morning's line about the night, with Hide until tomorrow.
 struct OvernightLine: View {
     let model: DashboardViewModel
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     var body: some View {
         if let words = model.overnightLine {
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
-                Image(systemName: "moon.stars").foregroundStyle(.secondary).accessibilityHidden(true)
-                Text(words).font(.callout)
-                Spacer(minLength: 4)
-                Button("Hide Until Tomorrow") { model.hideOvernight() }
-                    .font(.caption)
-                    .buttonStyle(.borderless)
+            // At the largest sizes the button goes under the words: beside them, in the
+            // iPad's column, both broke a letter or two a line ("Over / nigh / t:", Nov 16).
+            if typeSize.isAccessibilitySize {
+                VStack(alignment: .leading, spacing: 6) {
+                    Label {
+                        Text(words).font(.callout)
+                    } icon: {
+                        Image(systemName: "moon.stars").foregroundStyle(.secondary).accessibilityHidden(true)
+                    }
+                    hide
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .accessibilityElement(children: .combine)
+            } else {
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                    Image(systemName: "moon.stars").foregroundStyle(.secondary).accessibilityHidden(true)
+                    Text(words).font(.callout)
+                    Spacer(minLength: 4)
+                    hide
+                }
+                .accessibilityElement(children: .combine)
             }
-            .accessibilityElement(children: .combine)
         }
+    }
+
+    private var hide: some View {
+        Button("Hide Until Tomorrow") { model.hideOvernight() }
+            .font(.caption)
+            .buttonStyle(.borderless)
     }
 }
 

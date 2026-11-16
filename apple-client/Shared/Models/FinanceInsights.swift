@@ -23,14 +23,17 @@ enum CashFlow {
     /// out, whatever its category; a move between the household's own
     /// accounts is neither. (Counting only income categories missed every
     /// paycheck without one: the owner's read $0 in, Nov 16.)
-    /// Each Month's x-axis: from the first month's first day to the day the
-    /// last one ends, so the last month's label (drawn in its middle) fits.
-    /// Ending on the last month's first day, the chart left it out: the
-    /// month shown had no name under it (main's pictures, Nov 16).
-    static func domain(_ months: [Date], calendar: Calendar = .current) -> ClosedRange<Date>? {
-        guard let first = months.first, let last = months.last,
-              let end = calendar.date(byAdding: .month, value: 1, to: last), first < end else { return nil }
-        return first...end
+    /// Each Month's bars by name ("2026-10"), one category a month: on a date
+    /// axis the chart left the last month's name out, the month shown (main's
+    /// pictures, Nov 16, even with the axis run to the month's end).
+    static func key(_ month: Date, calendar: Calendar = .current) -> String {
+        let c = calendar.dateComponents([.year, .month], from: month)
+        return String(format: "%04d-%02d", c.year ?? 0, c.month ?? 0)
+    }
+
+    /// The name under a month's bars: "Oct".
+    static func label(_ key: String) -> String {
+        LocalDay.parseMonth(key)?.formatted(.dateTime.month(.abbreviated)) ?? key
     }
 
     static func months(_ transactions: [FinanceTransaction], ending month: Date, count: Int, categories: [FinanceCategory],
