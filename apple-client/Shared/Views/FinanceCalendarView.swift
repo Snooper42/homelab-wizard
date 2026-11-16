@@ -414,7 +414,9 @@ struct FinanceCalendarView: View {
     }
 
     private func names(_ view: FinancesPlanView) -> [String: String] {
-        Dictionary(view.plan.payments.map { ($0.id, $0.name) }, uniquingKeysWith: { a, _ in a })
+        // The plan's payments, and each card paid off with each paycheck ("card:<id>"), named for the card.
+        Dictionary(view.plan.payments.map { ($0.id, $0.name) } + view.plan.accounts.filter { $0.kind == "card" }.map { ("card:" + $0.id, $0.name) },
+                   uniquingKeysWith: { a, _ in a })
     }
 
     private func compact(_ value: Double) -> String {

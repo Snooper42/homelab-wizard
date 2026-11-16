@@ -319,6 +319,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- **A card paid off with each paycheck is named in the Homelab app:** Bills, Coming Up, the Calendar and Worth a Look showed it as "Payment" with no logo; it's the card's name and logo now, as on the computer.
 - **Cash Flow in the Homelab app counts all your money in:** it counted only what went to an income category, so a paycheck without one read as nothing coming in. It now counts as the computer does: everything that came in and everything that went out, moves between your own accounts left out. Month in Review's "came in" too.
 - **The Homelab app on the iPad opens again:** since the keyboard menus came in, it stayed on its opening screen (the iPad's layout kept drawing itself again). The iPhone wasn't affected.
 - **The line atop Settings shows whole:** with an app stopped (or away from home, or an update waiting), Settings' heading bar no longer slides over the line above it, so *Mealie: Stopped* and its **Open Status** show in full and can be clicked, at any width.

@@ -159,7 +159,14 @@ struct FinancesPlanView: Decodable, Sendable, Equatable {
     /// The keys waiting now: what `Plan.waiting` should hold, as the computer reads it.
     var waitingKeys: [String] { since.filter(\.waiting).map(\.key) }
 
-    func payment(_ id: String) -> FinancePayment? { plan.payments.first { $0.id == id } }
+    /// A payment of the plan, or a card paid off with each paycheck
+    /// ("card:<its account>", made from the card as the computer's
+    /// allPayments does: named for it, with its logo).
+    func payment(_ id: String) -> FinancePayment? {
+        if let p = plan.payments.first(where: { $0.id == id }) { return p }
+        guard id.hasPrefix("card:"), let card = plan.accounts.first(where: { "card:" + $0.id == id && $0.kind == "card" }) else { return nil }
+        return FinancePayment(id: id, name: card.name, kind: "cards", institution: card.institution, card: card.id)
+    }
     func person(_ id: String) -> String? { plan.people.first { $0.id == id }?.name }
 
     /// A payment's name as rows show it: "Mortgage share, from Jamie" for
@@ -387,6 +394,13 @@ struct FinancePayment: Decodable, Sendable, Equatable, Identifiable {
     var to: String? = nil
 
     enum CodingKeys: String, CodingKey { case id, name, kind, institution, amount, estimate, card, payer, schedule, to }
+
+    /// One made here: a card paid off with each paycheck (`FinancesPlanView.payment`).
+    init(id: String, name: String, kind: String?, institution: String?, amount: Double? = nil, estimate: Bool? = nil,
+         card: String? = nil, payer: String? = nil) {
+        (self.id, self.name, self.kind, self.institution) = (id, name, kind, institution)
+        (self.amount, self.estimate, self.card, self.payer) = (amount, estimate, card, payer)
+    }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)

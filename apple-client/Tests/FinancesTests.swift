@@ -74,6 +74,20 @@ struct FinancesPlanTests {
         #expect(view.payment("rent")?.name == "Rent")
     }
 
+    /// A card paid off with each paycheck is a payment "card:<its account>" in
+    /// the computer's view, made from the card (money.ts's allPayments), not
+    /// one in the plan's list: named for the card, with its logo, as the
+    /// computer shows it (the owner's Bills read "Payment" with no logo, Nov 16).
+    @Test func aCardPaidOffIsNamedForTheCard() throws {
+        let view = try JSONDecoder.homelab().decode(FinancesPlanView.self, from: Data(json.utf8))
+        let payoff = try #require(view.payment("card:visa"))
+        #expect(payoff.name == "Visa" && payoff.card == "visa" && payoff.kind == "cards")
+        #expect(!payoff.canChangeAmount)
+        #expect(view.paymentTitle("card:visa") == "Visa")
+        // Only a card: not checking, not an account that isn't there.
+        #expect(view.payment("card:chk") == nil && view.payment("card:nope") == nil)
+    }
+
     @Test func netWorthSubtractsWhatIsOwed() throws {
         let view = try JSONDecoder.homelab().decode(FinancesPlanView.self, from: Data(json.utf8))
         // 2400 + 10000 − 350 (card) − 8000 (loan)
