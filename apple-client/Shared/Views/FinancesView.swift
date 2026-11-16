@@ -1935,10 +1935,12 @@ private struct HoldingsCard: View {
                 Text(verbatim: line.holding?.symbol ?? "Cash")
                     .font(.body.weight(.semibold))
                     .foregroundStyle(Theme.ink)
+                // Two lines, so a long fund's name doesn't cut off the account it's in
+                // ("Vanguard Total International Stock ETF · Fidelity 40…", Nov 16).
                 Text(verbatim: line.holding.map { "\($0.title) · \(line.account.name)" } ?? "Not in a holding · \(line.account.name)")
                     .font(.caption)
                     .foregroundStyle(Theme.secondaryInk)
-                    .lineLimit(1)
+                    .lineLimit(2)
             }
             Spacer(minLength: 8)
             VStack(alignment: .trailing, spacing: 3) {
