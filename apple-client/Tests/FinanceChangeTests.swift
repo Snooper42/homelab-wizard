@@ -159,3 +159,42 @@ struct AwayChangesTests {
         #expect(throws: AwayChanges.KeepError.self) { try store(nil).keep([.cushion(to: 300, was: 250)]) }
     }
 }
+
+/// Track from on the phone (the owner, Nov 16: Jan 1, 2026): set in the
+/// plan as the computer keeps it, or taken out to count everything; kept
+/// away as one change (a second takes the first's place) and replayed on
+/// the newest plan; the months before it marked on Transactions.
+@Suite("Track from")
+struct TrackFromTests {
+    private let plan: JSONValue = .object(["cushion": .number(500), "accounts": .array([])])
+
+    @Test func setInThePlan() throws {
+        let set = try #require(FinancePlanEdit.settingTrackFrom("2026-01-01", in: plan))
+        #expect(set["trackFrom"] == .string("2026-01-01"))
+        #expect(set["cushion"] == .number(500))
+        let cleared = try #require(FinancePlanEdit.settingTrackFrom(nil, in: set))
+        #expect(cleared["trackFrom"] == nil)
+        #expect(FinancePlanEdit.settingTrackFrom("", in: set)?["trackFrom"] == nil)
+        #expect(FinancePlanEdit.settingTrackFrom("soon", in: plan) == nil)
+        #expect(FinancePlanEdit.settingTrackFrom("2026-1-1", in: plan) == nil)
+    }
+
+    @Test func keptAwayAndReplayed() throws {
+        let changes = FinanceChange.adding(.trackFrom("2026-02-01"), to: FinanceChange.adding(.trackFrom("2026-01-01"), to: [.cushion(to: 300, was: 500)]))
+        #expect(changes == [.cushion(to: 300, was: 500), .trackFrom("2026-02-01")])
+        #expect(FinanceChange.trackFrom(nil).target == "trackFrom" && FinanceChange.trackFrom(nil).setting == nil)
+        let replayed = try #require(FinanceChange.trackFrom("2026-01-01").apply(to: plan))
+        #expect(replayed["trackFrom"] == .string("2026-01-01"))
+        // Kept sealed as JSON: it comes back as it was.
+        let data = try JSONEncoder().encode([FinanceChange.trackFrom("2026-01-01"), .trackFrom(nil)])
+        #expect(try JSONDecoder().decode([FinanceChange].self, from: data) == [.trackFrom("2026-01-01"), .trackFrom(nil)])
+    }
+
+    @Test func monthsBeforeItAreMarked() throws {
+        let december = try #require(LocalDay.parse("2025-12-01")), january = try #require(LocalDay.parse("2026-01-01"))
+        #expect(FinanceLedger.sectionTitle(december, trackFrom: "2026-01-01") == "December 2025 · Not counted")
+        #expect(FinanceLedger.sectionTitle(january, trackFrom: "2026-01-01") == "January 2026")
+        #expect(FinanceLedger.sectionTitle(december, trackFrom: nil) == "December 2025")
+        #expect(FinanceLedger.sectionTitle(.distantPast, trackFrom: "2026-01-01") == "No date")
+    }
+}

@@ -292,6 +292,20 @@ enum FinancePlanEdit {
         return .object(root)
     }
 
+    /// `plan` tracked from `day` (YYYY-MM-DD, `trackFrom`): no chart or total
+    /// counts a transaction before it. Nil or "" counts everything again (the
+    /// key taken out). Nil for a day that isn't one.
+    static func settingTrackFrom(_ day: String?, in plan: JSONValue) -> JSONValue? {
+        guard case .object(var root) = plan else { return nil }
+        guard let day, !day.isEmpty else {
+            root.removeValue(forKey: "trackFrom")
+            return .object(root)
+        }
+        guard LocalDay.parse(day) != nil, day.count == 10 else { return nil }
+        root["trackFrom"] = .string(day)
+        return .object(root)
+    }
+
     /// `plan` with the cushion, the least checking should hold, set to
     /// `amount`. A pay period that leaves less is flagged. Nothing (0)
     /// turns the warning off. Nil for a negative or nonsense amount.

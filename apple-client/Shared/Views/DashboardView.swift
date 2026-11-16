@@ -1166,28 +1166,34 @@ private struct HealthLineInset: ViewModifier {
 struct HealthLineBar: View {
     let model: DashboardViewModel
     var open: (@MainActor () -> Void)? = nil
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     var body: some View {
         if let line = model.healthLine {
-            HStack(spacing: 8) {
+            // Side by side; at the largest sizes one over the other, so the app's
+            // name isn't broken in a narrow column ("Mealie / : Sto…", Nov 16).
+            let stacked = typeSize.isAccessibilitySize
+            let layout = stacked ? AnyLayout(VStackLayout(alignment: .leading, spacing: 4)) : AnyLayout(HStackLayout(spacing: 8))
+            layout {
                 if line.isEmpty {
                     Label("All well", systemImage: "checkmark.circle.fill")
                         .foregroundStyle(Theme.success)
                 } else {
                     Label {
-                        Text(verbatim: line).lineLimit(2)
+                        Text(verbatim: line).lineLimit(stacked ? 3 : 2)
                     } icon: {
                         Image(systemName: "exclamationmark.triangle.fill")
                     }
                     .foregroundStyle(Theme.danger)
                 }
-                Spacer(minLength: 8)
+                if !stacked { Spacer(minLength: 8) }
                 if !line.isEmpty, let open {
                     Button("Open Status", action: open)
                         .buttonStyle(.borderless)
                 }
             }
             .font(.callout.weight(.medium))
+            .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal)
             .padding(.vertical, 8)
             .background(.bar)

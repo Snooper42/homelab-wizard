@@ -67,7 +67,10 @@ struct FinanceInsightsTests {
         #expect(months.map(\.spent) == [0, 140])
         #expect(months.last?.net == 3380)
         // Month in Review's "came in" the same way (the computer's Reports, totals).
-        #expect(MonthReview.make(ledger.transactions, month: try day(2026, 10, 15), categories: categories, calendar: calendar).income == 3520)
+        let review = MonthReview.make(ledger.transactions, month: try day(2026, 10, 15), categories: categories, calendar: calendar)
+        #expect(review.income == 3520)
+        // And its Left over as Cash Flow's, in less out (main's pictures, Nov 16: $5,536 there, $5,504 on Cash Flow).
+        #expect(review.saved == 3380 && review.moneyOut == 140)
     }
 
     @Test func aMonthToldBack() throws {

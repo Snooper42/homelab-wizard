@@ -145,6 +145,18 @@ struct FinancesPlanTests {
         #expect(odd.trackFrom == nil)
     }
 
+    /// Cash Flow's Each Month runs to the end of its last month, so that
+    /// month's name is drawn (main's pictures, Nov 16: October had none).
+    @Test func eachMonthRunsToTheEndOfTheLast() throws {
+        let calendar = Calendar(identifier: .gregorian)
+        let sep = try #require(calendar.date(from: DateComponents(year: 2026, month: 9, day: 1)))
+        let oct = try #require(calendar.date(from: DateComponents(year: 2026, month: 10, day: 1)))
+        let nov = try #require(calendar.date(from: DateComponents(year: 2026, month: 11, day: 1)))
+        #expect(CashFlow.domain([sep, oct], calendar: calendar) == sep...nov)
+        #expect(CashFlow.domain([oct], calendar: calendar) == oct...nov)
+        #expect(CashFlow.domain([], calendar: calendar) == nil)
+    }
+
     @Test func netWorthSubtractsWhatIsOwed() throws {
         let view = try JSONDecoder.homelab().decode(FinancesPlanView.self, from: Data(json.utf8))
         // 2400 + 10000 − 350 (card) − 8000 (loan)

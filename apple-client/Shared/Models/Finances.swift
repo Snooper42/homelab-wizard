@@ -726,6 +726,14 @@ struct FinanceLedger: Decodable, Sendable, Equatable {
         return month >= first
     }
 
+    /// A month's heading on Transactions: "No date", "March 2026", or, for a
+    /// month before Track from's, "December 2025 · Not counted".
+    static func sectionTitle(_ month: Date, trackFrom: String?, calendar: Calendar = .current) -> String {
+        if month == .distantPast { return "No date" }
+        let name = month.formatted(.dateTime.month(.wide).year())
+        return tracked(month, from: trackFrom, calendar: calendar) ? name : name + " · Not counted"
+    }
+
     /// Newest first, and by id when two share a day, so the order holds still.
     var newestFirst: [FinanceTransaction] {
         transactions.sorted { a, b in

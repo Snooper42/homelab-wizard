@@ -34,6 +34,9 @@ func awayWords(_ change: FinanceChange, view: FinancesPlanView?, finances: Finan
         return "Added the goal \(name)"
     case .addNewPayment(let p):
         return "Added \(p.name), \(money(p.amount))"
+    case .trackFrom(let day):
+        guard let day, let date = LocalDay.parse(day) else { return "Track from: every transaction" }
+        return "Track from: \(date.formatted(.dateTime.month(.abbreviated).day().year()))"
     }
 }
 

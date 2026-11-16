@@ -171,7 +171,7 @@ struct BackupsView: View {
                 page("Restore Tests") { restore(o) }
             } label: {
                 IconTileLabel(title: "Restore tests", systemImage: "arrow.counterclockwise", tint: TileColour.grey) {
-                    if let tested = o.restoreTest.lastTest { Text(tested, format: .relative(presentation: .named)) }
+                    if let tested = o.restoreTest.lastTest { Text(verbatim: BackupOverview.ago(tested)) }
                 }
             }
             NavigationLink {

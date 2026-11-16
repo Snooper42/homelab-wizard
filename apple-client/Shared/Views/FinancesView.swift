@@ -2156,10 +2156,78 @@ private struct AddHoldingView: View {
 }
 
 /// Accounts today, net worth and the cushion; tap an account to type in its balance.
+/// Track From's sheet: a day (today at the latest), or every transaction.
+private struct TrackFromSheet: View {
+    @Bindable var finances: FinancesViewModel
+    @Environment(\.dismiss) private var dismiss
+    @State private var date: Date
+    @State private var saving = false
+    private let was: String?
+
+    init(finances: FinancesViewModel, day: String?) {
+        self.finances = finances
+        was = day
+        // None yet: Jan 1 of this year, where a household usually starts.
+        _date = State(initialValue: LocalDay.parse(day) ?? LocalDay.parse(String(FinancePlanEdit.todayString().prefix(4)) + "-01-01") ?? Date())
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    DatePicker("Track from", selection: $date, in: ...Date(), displayedComponents: .date)
+                } footer: {
+                    Text("Spending, Cash Flow, Money Flow and Month in Review start here, on every device, and net worth goes back to it. Transactions before it stay in your list, under months marked Not counted.")
+                }
+                if was != nil {
+                    Section {
+                        Button("Count Every Transaction") { Task { await save(nil) } }
+                            .disabled(saving)
+                    }
+                }
+                if let error = finances.saveError {
+                    Section {
+                        Label {
+                            Text(verbatim: error)
+                        } icon: {
+                            Image(systemName: "exclamationmark.triangle")
+                        }
+                        .foregroundStyle(Theme.danger)
+                    }
+                }
+            }
+            .formStyle(.grouped)
+            .navigationTitle("Track From")
+            #if os(iOS)
+            .navigationBarTitleDisplayMode(.inline)
+            #endif
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    if saving {
+                        ProgressView()
+                    } else {
+                        Button("Save") { Task { await save(FinancePlanEdit.todayString(date)) } }
+                    }
+                }
+            }
+        }
+    }
+
+    private func save(_ day: String?) async {
+        saving = true
+        defer { saving = false }
+        if await finances.setTrackFrom(day) { dismiss() }
+    }
+}
+
 private struct FinanceAccountsPage: View {
     @State private var adding = false
     @Bindable var finances: FinancesViewModel
     @State private var editingCushion = false
+    @State private var trackingFrom = false
 
     var body: some View {
         ScrollView {
@@ -2170,6 +2238,7 @@ private struct FinanceAccountsPage: View {
                         groupCard(group, view)
                     }
                     if finances.canEditPlan || view.plan.cushion > 0 { cushionCard(view) }
+                    if finances.canEditPlan || view.plan.trackFrom != nil { trackFromCard(view) }
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Tap an account for its page: its balance day by day and its latest transactions.")
                         if view.plan.accounts.contains(where: { $0.currency != nil && $0.currency != "" }) {
@@ -2197,6 +2266,9 @@ private struct FinanceAccountsPage: View {
         }
         .sheet(isPresented: $adding) { AddAccountView(finances: finances) }
         .navigationTitle("Accounts")
+        .sheet(isPresented: $trackingFrom) {
+            TrackFromSheet(finances: finances, day: finances.plan?.plan.trackFrom)
+        }
         .sheet(isPresented: $editingCushion) {
             AmountEditor(
                 title: "Change Cushion", heading: "The least checking should hold",
@@ -2284,6 +2356,43 @@ private struct FinanceAccountsPage: View {
         }
         .padding(16)
         .card(radius: 24)
+    }
+
+    /// Track from: the day the charts and totals count from (the owner, Nov 16).
+    private func trackFromCard(_ view: FinancesPlanView) -> some View {
+        Button {
+            finances.clearSaveError()
+            trackingFrom = true
+        } label: {
+            HStack(spacing: 12) {
+                Image(systemName: "calendar.badge.clock")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .frame(width: 30, height: 30)
+                    .background(Theme.accent, in: RoundedRectangle(cornerRadius: 7, style: .continuous))
+                    .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("Track From").foregroundStyle(Theme.ink)
+                    Text("Where the charts and totals start")
+                        .font(.caption)
+                        .foregroundStyle(Theme.secondaryInk)
+                }
+                Spacer(minLength: 8)
+                Text(verbatim: LocalDay.parse(view.plan.trackFrom)?.formatted(.dateTime.month(.abbreviated).day().year()) ?? "Everything")
+                    .foregroundStyle(Theme.secondaryInk)
+                if finances.canEditPlan {
+                    Image(systemName: "chevron.right").accessibilityHidden(true)
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(.tertiary)
+                }
+            }
+            .padding(16)
+            .card(radius: 20)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(PressableButtonStyle())
+        .disabled(!finances.canEditPlan)
+        .accessibilityHint(finances.canEditPlan ? "Change the day the charts and totals start" : "")
     }
 
     private func cushionCard(_ view: FinancesPlanView) -> some View {
@@ -3012,7 +3121,7 @@ struct TransactionsView: View {
                 .textCase(nil)
             }
             ForEach(groups) { group in
-                Section(group.month == .distantPast ? "No date" : group.month.formatted(.dateTime.month(.wide).year())) {
+                Section(FinanceLedger.sectionTitle(group.month, trackFrom: finances.plan?.plan.trackFrom)) {
                     ForEach(group.items) { t in
                         let isNew = finances.isNew(t)
                         NavigationLink {

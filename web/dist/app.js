@@ -10484,25 +10484,32 @@
               ] }, by);
             }) }),
             !byDay2 && !!shown8.length && /* @__PURE__ */ u3(Rows, { kind: "fx-rows fx-txflat", children: list.slice(0, upTo).map((t3) => rowOf(t3, true)) }),
-            byDay2 && days.map((d3) => /* @__PURE__ */ u3("section", { class: "fx-txday", "aria-label": dayLong(d3.date), children: [
-              /* @__PURE__ */ u3("h3", { children: [
-                /* @__PURE__ */ u3("span", { children: [
-                  dayLong(d3.date),
-                  d3.date === v3.today ? ", today" : ""
-                ] }),
-                runs2 ? /* @__PURE__ */ u3("span", { class: "fx-txbal", children: [
-                  moneyIn(after2(d3.date), acct.currency),
-                  /* @__PURE__ */ u3("span", { class: "fx-hidden", children: [
-                    " ",
-                    owed(acct.kind) ? "owed" : "in " + acct.name,
-                    " after the day"
-                  ] })
-                ] }) : d3.list.filter((t3) => !t3.to).length > 1 && /* @__PURE__ */ u3("span", { class: "fx-txdaysum", children: [
-                  /* @__PURE__ */ u3(Amount, { value: d3.list.filter((t3) => !t3.to).reduce((n3, t3) => n3 + amt(t3), 0), sign: true, form: "full" }),
-                  /* @__PURE__ */ u3("span", { class: "fx-hidden", children: " in all that day" })
-                ] })
+            byDay2 && days.map((d3, i3) => /* @__PURE__ */ u3(S, { children: [
+              !!v3.plan.trackFrom && !sort.up && d3.date < v3.plan.trackFrom && (i3 === 0 || days[i3 - 1].date >= v3.plan.trackFrom) && /* @__PURE__ */ u3("p", { class: "fx-sub fx-trackline", children: [
+                "Before ",
+                dayLong(v3.plan.trackFrom),
+                ", where you track from: kept here, not counted in charts or totals."
               ] }),
-              /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: d3.list.map((t3) => rowOf(t3, false)) })
+              /* @__PURE__ */ u3("section", { class: "fx-txday", "aria-label": dayLong(d3.date), children: [
+                /* @__PURE__ */ u3("h3", { children: [
+                  /* @__PURE__ */ u3("span", { children: [
+                    dayLong(d3.date),
+                    d3.date === v3.today ? ", today" : ""
+                  ] }),
+                  runs2 ? /* @__PURE__ */ u3("span", { class: "fx-txbal", children: [
+                    moneyIn(after2(d3.date), acct.currency),
+                    /* @__PURE__ */ u3("span", { class: "fx-hidden", children: [
+                      " ",
+                      owed(acct.kind) ? "owed" : "in " + acct.name,
+                      " after the day"
+                    ] })
+                  ] }) : d3.list.filter((t3) => !t3.to).length > 1 && /* @__PURE__ */ u3("span", { class: "fx-txdaysum", children: [
+                    /* @__PURE__ */ u3(Amount, { value: d3.list.filter((t3) => !t3.to).reduce((n3, t3) => n3 + amt(t3), 0), sign: true, form: "full" }),
+                    /* @__PURE__ */ u3("span", { class: "fx-hidden", children: " in all that day" })
+                  ] })
+                ] }),
+                /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: d3.list.map((t3) => rowOf(t3, false)) })
+              ] }, d3.date)
             ] }, d3.date)),
             !all.length && /* @__PURE__ */ u3(Empty, { children: edit ? "No transactions yet: add what you spend with Add a transaction, as it happens or from the receipt." : "No transactions yet." }),
             list.length > upTo && /* @__PURE__ */ u3("p", { class: "fx-txmore", children: [
