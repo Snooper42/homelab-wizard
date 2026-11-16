@@ -23,6 +23,16 @@ enum CashFlow {
     /// out, whatever its category; a move between the household's own
     /// accounts is neither. (Counting only income categories missed every
     /// paycheck without one: the owner's read $0 in, Nov 16.)
+    /// Each Month's x-axis: from the first month's first day to the day the
+    /// last one ends, so the last month's label (drawn in its middle) fits.
+    /// Ending on the last month's first day, the chart left it out: the
+    /// month shown had no name under it (main's pictures, Nov 16).
+    static func domain(_ months: [Date], calendar: Calendar = .current) -> ClosedRange<Date>? {
+        guard let first = months.first, let last = months.last,
+              let end = calendar.date(byAdding: .month, value: 1, to: last), first < end else { return nil }
+        return first...end
+    }
+
     static func months(_ transactions: [FinanceTransaction], ending month: Date, count: Int, categories: [FinanceCategory],
                        calendar: Calendar = .current) -> [CashFlowMonth] {
         guard let last = calendar.dateInterval(of: .month, for: month)?.start else { return [] }

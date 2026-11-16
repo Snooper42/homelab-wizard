@@ -109,6 +109,7 @@ struct FinanceCashFlowPage: View {
                     AxisValueLabel(format: .dateTime.month(.abbreviated), centered: true)
                 }
             }
+            .chartXScale(domain: CashFlow.domain(months.map(\.month)) ?? Date()...Date())
             .chartYAxis(.hidden)
             .chartLegend(.hidden)
             .chartXSelection(value: Binding(get: { picked }, set: { date in
