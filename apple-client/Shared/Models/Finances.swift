@@ -133,7 +133,7 @@ struct FinancesPlanView: Decodable, Sendable, Equatable {
     let checkingNow: FinanceWorking?
     let afterPay: FinanceWorking?
     /// Net worth each day before the first balance kept, worked back from it
-    /// through the transactions (Show net worth from, `View.WorthEstimated`).
+    /// through the transactions (Track from, `View.WorthEstimated`).
     let worthEstimated: [FinancePoint]
 
     enum CodingKeys: String, CodingKey {
@@ -240,8 +240,12 @@ struct FinancePlan: Decodable, Sendable, Equatable {
     let watch: [FinanceWatched]
     /// The cards the household keeps (the Collection), each in a collectible account.
     let collection: [FinanceCollected]
+    /// The day the household tracks its money from (YYYY-MM-DD, "Track
+    /// from", set on the computer): no chart or total counts a transaction
+    /// dated before it, though Transactions lists them all. Nil: all count.
+    let trackFrom: String?
 
-    enum CodingKeys: String, CodingKey { case people, accounts, payments, cushion, currency, hideAmounts, holdingsRead, logos, watch, collection }
+    enum CodingKeys: String, CodingKey { case people, accounts, payments, cushion, currency, hideAmounts, holdingsRead, logos, watch, collection, trackFrom }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -255,6 +259,7 @@ struct FinancePlan: Decodable, Sendable, Equatable {
         logos = (try? c.decodeIfPresent([String: String].self, forKey: .logos)) ?? [:]
         watch = Array((((try? c.decodeIfPresent([FinanceWatched].self, forKey: .watch)) ?? nil) ?? []).prefix(50))
         collection = Array((((try? c.decodeIfPresent([FinanceCollected].self, forKey: .collection)) ?? nil) ?? []).prefix(2000))
+        trackFrom = ((try? c.decodeIfPresent(String.self, forKey: .trackFrom)) ?? nil).flatMap { LocalDay.parse($0) == nil ? nil : $0 }
     }
 }
 
@@ -707,6 +712,20 @@ struct FinanceLedger: Decodable, Sendable, Equatable {
         transactions = try c.decodeIfPresent([FinanceTransaction].self, forKey: .transactions) ?? []
     }
 
+    /// What a chart or total counts (Track from, `FinancePlan.trackFrom`): the
+    /// transactions on or after that day, and any with no day. The ledger
+    /// keeps every row; Transactions lists them all.
+    static func counted(_ transactions: [FinanceTransaction], from day: String?) -> [FinanceTransaction] {
+        guard let start = LocalDay.parse(day) else { return transactions }
+        return transactions.filter { t in t.date.map { $0 >= start } ?? true }
+    }
+
+    /// Whether a chart draws the month holding `month`: none before Track from's.
+    static func tracked(_ month: Date, from day: String?, calendar: Calendar = .current) -> Bool {
+        guard let start = LocalDay.parse(day), let first = calendar.dateInterval(of: .month, for: start)?.start else { return true }
+        return month >= first
+    }
+
     /// Newest first, and by id when two share a day, so the order holds still.
     var newestFirst: [FinanceTransaction] {
         transactions.sorted { a, b in
@@ -880,7 +899,7 @@ struct FinancePayoff: Decodable, Sendable, Equatable, Identifiable {
 struct NetWorthPoint: Hashable, Sendable {
     let date: Date
     let value: Double
-    /// Worked back before the first balance kept (Show net worth from), not kept: drawn dashed.
+    /// Worked back before the first balance kept (Track from), not kept: drawn dashed.
     var estimated = false
 }
 

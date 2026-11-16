@@ -25,6 +25,11 @@ final class FinancesViewModel {
     /// On a household member's phone: the household's money shared with them.
     private(set) var shared: HouseholdShared?
     private(set) var ledger: FinanceLedger?
+    /// What a chart or total counts: the ledger's transactions from Track
+    /// from on (`FinanceLedger.counted`). Transactions lists them all.
+    var countedTransactions: [FinanceTransaction] {
+        FinanceLedger.counted(ledger?.transactions ?? [], from: plan?.plan.trackFrom)
+    }
     @ObservationIgnored private var rawLedger: JSONValue? { didSet { wholeVersion &+= 1 } }
     private(set) var ledgerError: String?
     private(set) var isLoadingLedger = false

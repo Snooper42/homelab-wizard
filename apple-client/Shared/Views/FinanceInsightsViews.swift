@@ -13,9 +13,10 @@ struct FinanceCashFlowPage: View {
 
     var body: some View {
         ScrollView {
-            if let view = finances.plan, let ledger = finances.ledger {
+            if let view = finances.plan, finances.ledger != nil {
                 let thisMonth = Calendar.current.dateInterval(of: .month, for: view.today ?? Date())?.start ?? Date()
-                let months = CashFlow.months(ledger.transactions, ending: thisMonth, count: 6, categories: view.categories)
+                let months = CashFlow.months(finances.countedTransactions, ending: thisMonth, count: 6, categories: view.categories)
+                    .filter { FinanceLedger.tracked($0.month, from: view.plan.trackFrom) }
                 let shown = months.first { $0.month == (picked ?? thisMonth) } ?? months.last
                 VStack(spacing: 18) {
                     if let shown { hero(shown, view) }
@@ -175,9 +176,9 @@ struct MonthReviewPage: View {
 
     var body: some View {
         Group {
-            if let view = finances.plan, let ledger = finances.ledger {
+            if let view = finances.plan, finances.ledger != nil {
                 let latest = view.today ?? Date()
-                let months = Array(MonthReview.months(in: ledger.transactions, upTo: latest).suffix(12))
+                let months = Array(MonthReview.months(in: finances.countedTransactions, upTo: latest).suffix(12))
                 if months.isEmpty {
                     ContentUnavailableView("Nothing to Review Yet", systemImage: "calendar",
                                            description: Text("Once the computer has a month of transactions, it’s told back here."))
@@ -186,7 +187,7 @@ struct MonthReviewPage: View {
                         LazyHStack(spacing: 0) {
                             ForEach(months, id: \.self) { month in
                                 ScrollView {
-                                    MonthReviewCards(review: MonthReview.make(ledger.transactions, month: month, categories: view.categories),
+                                    MonthReviewCards(review: MonthReview.make(finances.countedTransactions, month: month, categories: view.categories),
                                                      view: view, finances: finances)
                                         .padding(.horizontal, 16)
                                         .padding(.bottom, 28)

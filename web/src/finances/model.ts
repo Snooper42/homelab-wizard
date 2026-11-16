@@ -103,7 +103,7 @@ export const netWorth = (v: finance.View): number => (v.plan.accounts || []).red
 
 /** An account's balance on a day, in the plan's currency: its last kept on or before it; before its first, that one; with none kept, today's. */
 function balanceOn(v: finance.View, a: finance.Account, day: string): number {
-  // Before the first balance typed in, worked back from it (Show net worth from): its month's end, in the plan's currency.
+  // Before the first balance typed in, worked back from it (Track from): its month's end, in the plan's currency.
   const back = v.worthBack?.find((b) => b.account === a.id)?.ends?.[day];
   if (back !== undefined) return owed(a.kind) ? -back : back;
   const h = a.history || [];
@@ -152,8 +152,11 @@ export const worthOn = (v: finance.View, a: finance.Account, day: string): numbe
 /** The first day any balance was kept, or today. */
 export const firstKept = (v: finance.View): string => (v.plan.accounts || []).flatMap((a) => (a.history || []).map((p) => p.date)).sort()[0] || v.today;
 
-/** How far back net worth goes: Show net worth from, when it is worked back that far, else the first balance kept. */
-export const worthStart = (v: finance.View): string => (v.worthEstimated?.length ? v.worthEstimated[0].date : firstKept(v));
+/** How far back net worth goes: Track from, worked back to it before the first balance kept, or after that balance, from it; else the first balance kept. */
+export const worthStart = (v: finance.View): string => {
+  const first = v.worthEstimated?.length ? v.worthEstimated[0].date : firstKept(v);
+  return v.plan.trackFrom && v.plan.trackFrom > first ? v.plan.trackFrom : first;
+};
 
 /** Net worth at a month's end, split into what is owned (by group) and what is owed. */
 export interface WorthMonth {
@@ -161,7 +164,7 @@ export interface WorthMonth {
   date: string;
   /** Read forward from the paychecks and bills, not typed in. */
   ahead: boolean;
-  /** Worked back before the first balance typed in (Show net worth from), not typed in. */
+  /** Worked back before the first balance typed in (Track from), not typed in. */
   estimated?: boolean;
   /** What is owned, by group key (cash, investments, property, other). */
   owned: Record<string, number>;
@@ -262,3 +265,16 @@ export function monthPeriods(v: finance.View): { months: MonthPeriod[]; now: num
   }
   return { months, now: monthsBack };
 }
+
+/**
+ * Track from (Plan.trackFrom; the owner, Nov 16: Jan 1, 2026): what a
+ * chart, total, average or report counts, the transactions on or after it.
+ * The ledger keeps every row, and Transactions lists them all.
+ */
+export function counted<T extends { date: string }>(v: finance.View, txs: T[]): T[] {
+  const from = v.plan.trackFrom;
+  return from ? txs.filter((t) => t.date >= from) : txs;
+}
+
+/** A month (YYYY-MM) a chart draws: none before Track from's. */
+export const tracked = (v: finance.View, month: string) => !v.plan.trackFrom || month >= v.plan.trackFrom.slice(0, 7);

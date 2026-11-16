@@ -1167,16 +1167,18 @@ private struct FinanceSpendingPage: View {
 
     var body: some View {
         ScrollView {
-            if let view = finances.plan, let ledger = finances.ledger {
+            if let view = finances.plan, finances.ledger != nil {
                 let calendar = Calendar.current
                 let thisMonth = calendar.dateInterval(of: .month, for: view.today ?? Date())?.start ?? Date()
                 let month = picked ?? thisMonth
                 let categories = view.categories
-                let spent = Spending.byCategory(ledger.transactions, in: month, categories: categories)
-                let months = Spending.months(ledger.transactions, ending: thisMonth, count: 6, categories: categories)
+                let counted = finances.countedTransactions
+                let spent = Spending.byCategory(counted, in: month, categories: categories)
+                let months = Spending.months(counted, ending: thisMonth, count: 6, categories: categories)
+                    .filter { FinanceLedger.tracked($0.month, from: view.plan.trackFrom) }
                 let total = spent.reduce(0) { $0 + $1.spent }
                 let before = calendar.date(byAdding: .month, value: -1, to: month).map {
-                    Spending.byCategory(ledger.transactions, in: $0, categories: categories).reduce(0) { $0 + $1.spent }
+                    Spending.byCategory(counted, in: $0, categories: categories).reduce(0) { $0 + $1.spent }
                 }
                 VStack(spacing: 18) {
                     ring(spent, total: total, before: before, month: month, view: view)
@@ -1396,7 +1398,7 @@ private struct SpendingCategoryPage: View {
 
     var body: some View {
         let categories = finances.plan?.categories ?? []
-        let items = Spending.transactions(finances.ledger?.transactions ?? [], in: name, month: month, categories: categories)
+        let items = Spending.transactions(finances.countedTransactions, in: name, month: month, categories: categories)
         List {
             Section {
                 ForEach(items) { t in
@@ -1737,7 +1739,7 @@ struct TrendChart: View {
         let tint = up ? Theme.accent : Theme.danger
         let point = TrendChart.point(in: series, at: picked)
         let kept = series.filter { !$0.estimated }
-        // Worked back before the first balance (Show net worth from): dashed, unfilled, meeting the kept line.
+        // Worked back before the first balance (Track from): dashed, unfilled, meeting the kept line.
         let back = series.filter(\.estimated) + (kept.first.map { [$0] } ?? [])
         Chart {
             ForEach(kept, id: \.date) { p in

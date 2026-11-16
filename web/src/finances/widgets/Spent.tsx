@@ -8,7 +8,7 @@ import { Amount, Stat } from '../ui/Amount';
 import { Donut } from '../ui/charts';
 import { Dot, type Hue } from '../ui/Legend';
 import { Widget } from '../ui/Widget';
-import { inHome } from '../model';
+import { counted, inHome } from '../model';
 import { categoryHue } from '../hues';
 import { byCategory, ranges } from '../reportData';
 import { dayShort, monthName, whole } from '../money';
@@ -23,7 +23,7 @@ export function SpentWidget({ v, ledger, open, days }: { v: finance.View; ledger
   const month = days ? { key: 'period', label: '', ...days } : ranges(v.today, v.today)[0];
   // A category opens its transactions of the month; for days within one month, of that month.
   const inMonth = !days || days.from.slice(0, 7) === days.to.slice(0, 7);
-  const groups = byCategory(inHome(v.plan, ledger.transactions), v.categories || [], month);
+  const groups = byCategory(inHome(v.plan, counted(v, ledger.transactions)), v.categories || [], month);
   const total = groups.reduce((t, g) => t + g.amount, 0);
   const rest = groups.slice(named).reduce((t, g) => t + g.amount, 0);
   const hueOf = (name: string): Hue => categoryHue(name, v.categories) || 'muted';
