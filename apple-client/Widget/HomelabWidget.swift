@@ -269,10 +269,122 @@ struct MoneyWidget: Widget {
     }
 }
 
+// The medium widget (the owner's pick, Nov 16, on the canvas): the
+// homelab's line and the money's words side by side, each half only if
+// that one is turned on; the left opens Status, the right Finances. No app
+// names, never an amount, as the small ones.
+
+struct BothEntry: TimelineEntry, Sendable {
+    let date: Date
+    let health: HealthEntry
+    let money: MoneyEntry
+}
+
+struct BothProvider: TimelineProvider {
+    func placeholder(in context: Context) -> BothEntry {
+        BothEntry(date: Date(), health: HealthProvider().placeholder(in: context), money: MoneyProvider().placeholder(in: context))
+    }
+
+    func getSnapshot(in context: Context, completion: @escaping (BothEntry) -> Void) {
+        completion(context.isPreview ? placeholder(in: context) : current())
+    }
+
+    func getTimeline(in context: Context, completion: @escaping (Timeline<BothEntry>) -> Void) {
+        completion(Timeline(entries: [current()], policy: .after(Date().addingTimeInterval(30 * 60))))
+    }
+
+    private func current() -> BothEntry {
+        let now = Date()
+        return BothEntry(date: now,
+                         health: HealthEntry(date: now, summary: WidgetSummaryStore.load(), enabled: WidgetSummaryStore.isEnabled),
+                         money: MoneyEntry(date: now, line: MoneyLineStore.load(), enabled: MoneyLineStore.isEnabled))
+    }
+}
+
+struct BothWidgetView: View {
+    let entry: BothEntry
+
+    var body: some View {
+        HStack(spacing: 0) {
+            Link(destination: URL(string: "homelab://status")!) { health }
+            Divider().padding(.vertical, 4)
+            Link(destination: URL(string: "homelab://finances")!) { money }
+        }
+        .containerBackground(for: .widget) { Theme.surface }
+    }
+
+    private func half<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title)
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(.secondary)
+            Spacer(minLength: 0)
+            content()
+        }
+        .padding(.horizontal, 8)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+    }
+
+    private var health: some View {
+        half("HOMELAB") {
+            if !entry.health.enabled {
+                Text("Turn on the widget in Homelab › Settings.").font(.caption).foregroundStyle(.secondary)
+            } else if let summary = entry.health.summary {
+                Group {
+                    Label(summary.words, systemImage: summary.needALook == 0 ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
+                        .font(.headline)
+                        .foregroundStyle(summary.needALook == 0 ? Theme.success : Theme.warning)
+                        .lineLimit(2)
+                    (Text("Read ") + Text(summary.at, style: .relative) + Text(" ago"))
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+                .privacySensitive()
+            } else {
+                Text("Open Homelab to read it.").font(.caption).foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    private var money: some View {
+        half("MONEY") {
+            if !entry.money.enabled {
+                Text("Turn on the money widget in Homelab › Settings.").font(.caption).foregroundStyle(.secondary)
+            } else if let line = entry.money.line {
+                Group {
+                    Text(verbatim: line.title)
+                        .font(.headline)
+                        .foregroundStyle(line.warns ? Theme.warning : Theme.ink)
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.85)
+                    if let next = line.next {
+                        Text(verbatim: next).font(.caption2).foregroundStyle(.secondary)
+                    }
+                }
+                .privacySensitive()
+            } else {
+                Text("Open Finances to read it.").font(.caption).foregroundStyle(.secondary)
+            }
+        }
+    }
+}
+
+struct BothWidget: Widget {
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: "HomelabBoth", provider: BothProvider()) { entry in
+            BothWidgetView(entry: entry)
+        }
+        .configurationDisplayName("Homelab and Money")
+        .description("The homelab's line and the money's words side by side. No app names, never an amount.")
+        .supportedFamilies([.systemMedium])
+    }
+}
+
 @main
 struct HomelabWidgetBundle: WidgetBundle {
     var body: some Widget {
         HealthWidget()
         MoneyWidget()
+        BothWidget()
     }
 }
