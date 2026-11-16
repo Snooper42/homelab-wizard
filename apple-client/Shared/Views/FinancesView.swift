@@ -304,10 +304,12 @@ private struct CheckingHero: View {
                             .foregroundStyle(.white, Theme.success)
                             .accessibilityHidden(true)
                         VStack(alignment: .leading, spacing: 2) {
+                            // Two lines at ordinary sizes: one cut it to "After Alex's paych…"
+                            // in the iPad's narrow column, upright (Nov 16).
                             Text(verbatim: title)
                                 .font(.subheadline.weight(.semibold))
                                 .foregroundStyle(Theme.ink)
-                                .lineLimit(typeSize.isAccessibilitySize ? 3 : 1)
+                                .lineLimit(typeSize.isAccessibilitySize ? 3 : 2)
                                 .minimumScaleFactor(typeSize.isAccessibilitySize ? 1 : 0.8)
                             // Before its bills: what's left after them is the card on top.
                             Text(verbatim: "\(Self.long(pay.date)), before its bills")
@@ -543,10 +545,11 @@ private struct GlanceTiles: View {
                                     LogoCircle(payment: payment, size: 30)
                                 }
                                 VStack(alignment: .leading, spacing: 1) {
+                                    // Two lines, so "Groceries and gas" isn't "Groceries a…" in a narrow tile.
                                     Text(verbatim: name)
                                         .font(.subheadline.weight(.semibold))
                                         .foregroundStyle(Theme.ink)
-                                        .lineLimit(1)
+                                        .lineLimit(2)
                                     Text(verbatim: Self.when(next, view))
                                         .font(.caption)
                                         .foregroundStyle(Theme.secondaryInk)
