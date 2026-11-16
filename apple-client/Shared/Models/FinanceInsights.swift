@@ -66,6 +66,9 @@ struct MonthReview: Sendable, Equatable {
     /// The month before's total; nil when it had nothing in the ledger.
     let spentBefore: Double?
     let income: Double
+    /// What went out, as Cash Flow counts it: every transaction that took
+    /// money out, not moves between your own accounts.
+    let moneyOut: Double
     /// How many purchases (money out, not transfers or income).
     let purchases: Int
     /// Largest first, at most five.
@@ -77,7 +80,9 @@ struct MonthReview: Sendable, Equatable {
     /// And the one that shrank the most.
     let shrankMost: Category?
 
-    var saved: Double { income - spent }
+    /// Left over: in less out, as Cash Flow and the computer's Reports say it
+    /// (`spent` takes refunds off, which Cash Flow counts as money in).
+    var saved: Double { income - moneyOut }
 
     /// Spending against the month before, as a share: +0.12 is 12% more.
     var change: Double? {
@@ -110,6 +115,7 @@ struct MonthReview: Sendable, Equatable {
             return !Spending.isIncome(Spending.top(t.category, in: categories), in: categories)
         }
         let biggest = outs.min { a, b in a.amount != b.amount ? a.amount < b.amount : a.id < b.id }
+        let flow = CashFlow.months(transactions, ending: start, count: 1, categories: categories, calendar: calendar).first
 
         return MonthReview(
             month: start,
@@ -117,7 +123,8 @@ struct MonthReview: Sendable, Equatable {
             spentBefore: spentBefore,
             // What came in, as the computer's Reports count it (reportData.ts's totals): every transaction
             // that brought money in, whatever its category, not moves between your own accounts.
-            income: CashFlow.months(transactions, ending: start, count: 1, categories: categories, calendar: calendar).first?.income ?? 0,
+            income: flow?.income ?? 0,
+            moneyOut: flow?.spent ?? 0,
             purchases: outs.count,
             categories: now.prefix(5).map { Category(name: $0.name, spent: $0.spent, before: thenOf[$0.name] ?? 0) },
             biggest: biggest,
