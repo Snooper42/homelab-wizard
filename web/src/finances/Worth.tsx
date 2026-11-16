@@ -21,7 +21,7 @@ import { FireWidget } from './widgets/Fire';
 import { GoalsWidget } from './widgets/Goals';
 import { LoansWidget } from './widgets/Loans';
 import { InvestmentsWidget, type InvestmentsProps } from './widgets/Investments';
-import { firstKept, grouped, groups, netWorth, rateOf, todayOf, type WorthMonth, worthByMonth, worthOf, worthOn } from './model';
+import { firstKept, grouped, groups, netWorth, rateOf, todayOf, type WorthMonth, worthByMonth, worthOf, worthOn, worthStart } from './model';
 import { compact, daysBetween, dayShort, type Lookup, money, moneyIn, monthName, owed, parseDay, tick, whole } from './money';
 
 export interface NetWorthProps {
@@ -73,7 +73,7 @@ export function NetWorth({ v, L, edit, open, sel, pick, update, keep, group, set
     );
   }
   // As far back as balances were kept, at most the range picked.
-  const kept = parseDay(firstKept(v)), today = parseDay(v.today);
+  const kept = parseDay(worthStart(v)), today = parseDay(v.today);
   const back = Math.max(1, Math.min(ranges.find(([k]) => k === range)?.[2] ?? 3, (today.getFullYear() - kept.getFullYear()) * 12 + today.getMonth() - kept.getMonth()));
   const months = worthByMonth(v, back, 3);
   const start = months[0];
@@ -146,11 +146,12 @@ export function NetWorth({ v, L, edit, open, sel, pick, update, keep, group, set
               down: [{ value: bars(m).down, color: 8 }],
               line: bars(m).net,
               ahead: m.ahead,
+              estimated: m.estimated,
             }))}
             tip={(i) => {
               const m = months[i], b = bars(m);
               return <>
-                <div class="fx-caption">{m.date === v.today ? 'Today' : `${dayShort(m.date)}${m.ahead ? ', ahead' : ''}`}</div>
+                <div class="fx-caption">{m.date === v.today ? 'Today' : `${dayShort(m.date)}${m.ahead ? ', ahead' : m.estimated ? ', worked back from your transactions' : ''}`}</div>
                 <div class="fx-tiphead fx-gap"><span>Owned</span><Amount value={b.up.reduce((t, p) => t + p.value, 0)} form="full" tone="in" /></div>
                 {keys.map((g, k) => <div key={g.key} class="fx-tiprow"><Dot color={g.color} /><span>{named(g)}</span><Amount value={b.up[k].value} form="full" /></div>)}
                 <div class="fx-tiphead fx-gap"><span>{owedName}</span><Amount value={-b.down} form="full" tone="out" /></div>
@@ -162,7 +163,9 @@ export function NetWorth({ v, L, edit, open, sel, pick, update, keep, group, set
             { label: owedName, color: 8 },
             { label: netName, color: 'muted', shape: 'line' },
             ...(months.some((m) => m.ahead) ? [{ label: 'Ahead, from your paychecks and bills', color: 'muted' as const, shape: 'dash' as const }] : []),
+            ...(months.some((m) => m.estimated) ? [{ label: 'Before your first balance, worked back from your transactions', color: 'muted' as const, shape: 'dash' as const }] : []),
           ]} />
+          {!focus && <GoesBack v={v} L={L} keep={keep} />}
         </Widget>
 
         {(!focus || focus.key === 'investments') && <InvestmentsWidget v={v} keep={keep} {...invest} />}
@@ -227,3 +230,49 @@ function GroupCard({ v, focus, months, range, setRange, clear }: {
     </Widget>
   );
 }
+
+/**
+ * Show net worth from (the owner, Nov 16: transactions from Jan 1, and net
+ * worth to go back to it without "getting all broken"): a day before the
+ * first balance typed in, from which net worth is worked back through the
+ * transactions, never saved (View.WorthEstimated); and, once it is, how each
+ * account went back: from its transactions, or held where it is with
+ * nothing to go on, and checking under nothing when the past is missing
+ * money in.
+ */
+function GoesBack({ v, L, keep }: { v: finance.View; L: Lookup; keep?: (plan: finance.Plan) => Promise<boolean> }) {
+  const [day, setDay] = useState(v.plan.worthFrom || '');
+  const [busy, setBusy] = useState(false);
+  const first = firstKept(v);
+  const save = async (to: string) => {
+    if (!keep || busy) return;
+    setBusy(true);
+    await keep({ ...v.plan, worthFrom: to || undefined });
+    setBusy(false);
+  };
+  const back = v.worthBack || [];
+  const short = back.filter((b) => b.how === 'transactions' && b.lowest < -0.005 && ['checking', 'savings'].includes(L.account[b.account]?.kind || ''));
+  return (
+    <div class="fx-goesback">
+      <p class="fx-sub">{v.worthEstimated?.length
+        ? <>Goes back to {dayShort(v.worthEstimated[0].date)}, {v.worthEstimated[0].date.slice(0, 4)}: before your first balance ({dayShort(first)}), worked back from your transactions.</>
+        : <>Net worth starts at your first balance, {dayShort(first)}{first.slice(0, 4) !== v.today.slice(0, 4) ? `, ${first.slice(0, 4)}` : ''}.</>}</p>
+      {keep && <div class="fx-goesbackform">
+        <label>Show net worth from <input type="date" value={day} max={first} onInput={(e) => setDay((e.target as HTMLInputElement).value)} /></label>
+        <button type="button" class="small" disabled={busy || day === (v.plan.worthFrom || '') || (!!day && day >= first)} onClick={() => save(day)}>Show it</button>
+        {v.plan.worthFrom && <button type="button" class="small" disabled={busy} onClick={() => { setDay(''); save(''); }}>From my first balance</button>}
+      </div>}
+      {!!back.length && !!v.worthEstimated?.length && <details class="fx-goesbackhow">
+        <summary>How each account went back</summary>
+        <Rows kind="fx-rows">{back.map((b) => {
+          const a = L.account[b.account];
+          return <Row key={b.account} lead={a && <AcctMark a={a} />} title={a?.name || b.account}
+            sub={b.how === 'transactions' ? 'From its transactions' : 'Nothing to go on: held where it is'}
+            when={<Amount value={b.start} form="whole" />} whenPlain />;
+        })}</Rows>
+      </details>}
+      {short.map((b) => <p key={b.account} class="fx-say fx-warn">{L.account[b.account]?.name || b.account} would be under nothing on {dayShort(b.lowestOn || '')}: the transactions before then are missing money that came in. Import that month's file, or type that day's balance.</p>)}
+    </div>
+  );
+}
+

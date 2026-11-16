@@ -56,6 +56,11 @@ type Plan struct {
 	Payments []Payment `json:"payments"`
 	// Cushion is the least checking should hold; a paycheck that leaves less is flagged.
 	Cushion float64 `json:"cushion"`
+	// WorthFrom is how far back net worth goes (YYYY-MM-DD, "Show net
+	// worth from"): before the first balance typed in, it is worked back
+	// from that balance through the ledger (View.WorthEstimated), never
+	// saved. None: net worth starts at the first balance, as before.
+	WorthFrom string `json:"worthFrom,omitempty"`
 	// Updated is the day the balances were last typed in (YYYY-MM-DD): an
 	// account's own Updated, when it has one, says when its balance was.
 	Updated string `json:"updated,omitempty"`
@@ -707,6 +712,9 @@ func Clean(p Plan) (Plan, error) {
 	p.Categories = cats
 	if p.Budgets, err = cleanBudgets(p.Budgets); err != nil {
 		return p, err
+	}
+	if _, err := day(p.WorthFrom, time.UTC); p.WorthFrom != "" && err != nil {
+		return p, fmt.Errorf("show net worth from: %q is not a day", p.WorthFrom)
 	}
 	if p.Holidays != "" && p.Holidays != US && p.Holidays != UK && p.Holidays != Weekends {
 		return p, fmt.Errorf("unknown bank holidays %q", p.Holidays)

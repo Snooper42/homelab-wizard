@@ -39,6 +39,8 @@ export interface AreaChartProps {
   threshold?: number;
   /** Steps from this one on are ahead, drawn dashed. */
   aheadFrom?: number;
+  /** Steps up to this one are worked back, not typed in (net worth before the first balance): drawn dashed, unfilled. */
+  behindTo?: number;
   /** A stretch shaded behind the line (the paycheck picked). */
   band?: { from: number; to: number };
   height?: number;
@@ -59,7 +61,7 @@ export interface AreaChartProps {
 }
 
 /** An area over steps, its line in the accent, with marks on it and a card for the step pointed at. */
-export function AreaChart({ values, xLabels, marks = [], threshold, aheadFrom, band, height = 200, format, tip, label, zero = true, axis: showAxis = true, fill, onPick }: AreaChartProps) {
+export function AreaChart({ values, xLabels, marks = [], threshold, aheadFrom, behindTo, band, height = 200, format, tip, label, zero = true, axis: showAxis = true, fill, onPick }: AreaChartProps) {
   const [at, setAt] = useState(-1);
   const n = values.length;
   // Filling, the plot is as tall as the room it is given, measured, so the line and the pin stay on its scale.
@@ -80,7 +82,8 @@ export function AreaChart({ values, xLabels, marks = [], threshold, aheadFrom, b
   const pct = (i: number) => (i / (n - 1)) * 100;
   const cut = aheadFrom === undefined ? n - 1 : Math.min(n - 1, aheadFrom);
   const path = (from: number, to: number) => values.slice(from, to + 1).map((v, k) => `${k ? 'L' : 'M'}${x(from + k).toFixed(1)} ${y(v).toFixed(1)}`).join(' ');
-  const solid = path(0, cut);
+  const behind = behindTo === undefined ? 0 : Math.max(0, Math.min(cut, behindTo));
+  const solid = path(behind, cut);
   const move = (e: PointerEvent) => {
     const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
     setAt(Math.max(0, Math.min(n - 1, Math.round(((e.clientX - r.left) / r.width) * (n - 1)))));
@@ -95,7 +98,8 @@ export function AreaChart({ values, xLabels, marks = [], threshold, aheadFrom, b
           {band && <span class="fx-band" style={{ left: `${pct(band.from)}%`, width: `${pct(band.to) - pct(band.from)}%` }} />}
           {threshold !== undefined && <span class="fx-threshold" style={{ top: `${y(threshold)}px` }} />}
           <svg viewBox={`0 0 1000 ${tall}`} preserveAspectRatio="none" aria-hidden="true">
-            <path class="fx-areafill" d={`${solid} L${x(cut).toFixed(1)} ${tall} L0 ${tall} Z`} />
+            <path class="fx-areafill" d={`${solid} L${x(cut).toFixed(1)} ${tall} L${x(behind).toFixed(1)} ${tall} Z`} />
+            {behind > 0 && <path class="fx-line ahead behind" d={path(0, behind)} vector-effect="non-scaling-stroke" />}
             <path class="fx-line" d={solid} vector-effect="non-scaling-stroke" />
             {cut < n - 1 && <path class="fx-line ahead" d={path(cut, n - 1)} vector-effect="non-scaling-stroke" />}
           </svg>
@@ -121,6 +125,8 @@ export interface Column {
   /** The line's value at this column (net worth). */
   line: number;
   ahead?: boolean;
+  /** Worked back before the first balance typed in, not typed: drawn as faint as ahead. */
+  estimated?: boolean;
 }
 
 /** Bars stacked above zero and below it, a line through their middles (none when lineless), and the column pointed at (or the last typed in) carded. */
@@ -154,7 +160,7 @@ export function StackedBars({ columns, height = 260, format, tip, label, lineles
           {columns.map((c, i) => {
             let up = 0, down = 0;
             return (
-              <div key={i} class={'fx-stackcol' + (c.ahead ? ' ahead' : '') + (i === shown ? ' on' : '') + (onPick ? ' pick' : '')} style={{ left: `${(i / n) * 100}%`, width: `${100 / n}%` }} onPointerEnter={() => setAt(i)} onClick={onPick && (() => onPick(i))}>
+              <div key={i} class={'fx-stackcol' + (c.ahead || c.estimated ? ' ahead' : '') + (i === shown ? ' on' : '') + (onPick ? ' pick' : '')} style={{ left: `${(i / n) * 100}%`, width: `${100 / n}%` }} onPointerEnter={() => setAt(i)} onClick={onPick && (() => onPick(i))}>
                 {c.up.map((p, k) => { const t = y(up + p.value), h = y(up) - t; up += p.value; return <span key={'u' + k} class={'fx-seg ' + hue(p.color) + (k === c.up.length - 1 ? ' cap' : '')} style={{ top: `${t}px`, height: `${Math.max(h, p.value > 0 ? 1 : 0)}px` }} />; })}
                 {c.down.map((p, k) => { const t = y(-down), h = y(-down - p.value) - t; down += p.value; return <span key={'d' + k} class={'fx-seg ' + hue(p.color) + (k === c.down.length - 1 ? ' foot' : '')} style={{ top: `${t}px`, height: `${Math.max(h, p.value > 0 ? 1 : 0)}px` }} />; })}
               </div>

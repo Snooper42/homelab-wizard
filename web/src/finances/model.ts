@@ -103,6 +103,9 @@ export const netWorth = (v: finance.View): number => (v.plan.accounts || []).red
 
 /** An account's balance on a day, in the plan's currency: its last kept on or before it; before its first, that one; with none kept, today's. */
 function balanceOn(v: finance.View, a: finance.Account, day: string): number {
+  // Before the first balance typed in, worked back from it (Show net worth from): its month's end, in the plan's currency.
+  const back = v.worthBack?.find((b) => b.account === a.id)?.ends?.[day];
+  if (back !== undefined) return owed(a.kind) ? -back : back;
   const h = a.history || [];
   let at: number | undefined;
   for (const p of h) if (p.date <= day) at = p.amount;
@@ -149,12 +152,17 @@ export const worthOn = (v: finance.View, a: finance.Account, day: string): numbe
 /** The first day any balance was kept, or today. */
 export const firstKept = (v: finance.View): string => (v.plan.accounts || []).flatMap((a) => (a.history || []).map((p) => p.date)).sort()[0] || v.today;
 
+/** How far back net worth goes: Show net worth from, when it is worked back that far, else the first balance kept. */
+export const worthStart = (v: finance.View): string => (v.worthEstimated?.length ? v.worthEstimated[0].date : firstKept(v));
+
 /** Net worth at a month's end, split into what is owned (by group) and what is owed. */
 export interface WorthMonth {
   /** The month's last day (YYYY-MM-DD), or today for this month. */
   date: string;
   /** Read forward from the paychecks and bills, not typed in. */
   ahead: boolean;
+  /** Worked back before the first balance typed in (Show net worth from), not typed in. */
+  estimated?: boolean;
   /** What is owned, by group key (cash, investments, property, other). */
   owned: Record<string, number>;
   owes: number;
@@ -187,7 +195,7 @@ export function worthByMonth(v: finance.View, back = 3, ahead = 3): WorthMonth[]
   const today = parseDay(v.today);
   for (let i = back; i >= 1; i--) {
     const end = isoDay(new Date(today.getFullYear(), today.getMonth() - i + 1, 0));
-    out.push({ date: end, ahead: false, ...split((a) => balanceOn(v, a, end)) });
+    out.push({ date: end, ahead: false, estimated: end < firstKept(v) && !!v.worthEstimated?.length, ...split((a) => balanceOn(v, a, end)) });
   }
   out.push({ date: v.today, ahead: false, ...split((a) => todayOf(v, a)) });
   for (let i = 1; i <= ahead; i++) {

@@ -47,6 +47,12 @@ type View struct {
 	// with none kept). Today's estimate is in Start, and what is ahead in
 	// Periods' Accounts.
 	Worth []Point `json:"worth"`
+	// WorthEstimated is net worth each day from Plan.WorthFrom to the day
+	// before Worth's first, worked back from the first balance typed in
+	// (worthBack); WorthBack says how each account went back. Neither is
+	// saved: both are read again from the plan and the ledger each time.
+	WorthEstimated []Point     `json:"worthEstimated,omitempty"`
+	WorthBack      []WorthBack `json:"worthBack,omitempty"`
 	// Next is each payment's next day from today (YYYY-MM-DD), by ID, read
 	// from its own schedule as far as two years ahead: a yearly one comes
 	// after the paychecks in Periods. One with no day ahead has none.
@@ -534,6 +540,7 @@ func ProjectWith(p Plan, l Ledger, today time.Time, periods int) View {
 	v.Budgets = budgetsNow(p, v.Categories, l, today)
 	v.Found = findRecurring(p, l, today)
 	v.Worth = worth(p, today)
+	v.WorthEstimated, v.WorthBack = worthBack(p, l, today)
 	v.Next = nextDays(p, today)
 	v.Last = lastDays(p, today)
 	v.Dues = dueDays(p, today)

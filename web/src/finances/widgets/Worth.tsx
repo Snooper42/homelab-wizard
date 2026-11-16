@@ -20,8 +20,10 @@ import { AcctMark } from '../Mark';
 export function NetWorthWidget({ v, open }: { v: finance.View; open: () => void }) {
   if (!(v.plan.accounts || []).length) return null;
   const now = netWorth(v);
-  // Each day kept, ending on today's estimate; and its change over the last month.
-  const kept = (v.worth || []).filter((p) => p.date < v.today);
+  // Each day kept, ending on today's estimate, after the days worked back before the first (Show net worth from,
+  // drawn dashed); and its change over the last month.
+  const est = (v.worthEstimated || []).filter((p) => p.date < v.today);
+  const kept = [...est, ...(v.worth || []).filter((p) => p.date < v.today)];
   const values = [...kept.map((p) => p.amount), now];
   const month = worthByMonth(v, 1, 0)[0];
   const each = (v.plan.accounts || []).map((a) => worthOf(v, a));
@@ -29,10 +31,11 @@ export function NetWorthWidget({ v, open }: { v: finance.View; open: () => void 
   return (
     <Widget title="Net worth" span="all" kind="fx-worthmini" open={open} openLabel="Open Net worth">
       <Stat value={<Amount value={now} />} caption="Today" aside={month && <Delta value={now - month.net} base={month.net} shareOnly />} />
-      {values.length > 2 && <AreaChart values={values} zero={false} axis={false} height={92} fill format={tick}
+      {values.length > 2 && <AreaChart values={values} zero={false} axis={false} height={92} fill format={tick} behindTo={est.length || undefined}
         xLabels={[{ i: 0, label: dayShort(kept[0]?.date || v.today) }, { i: values.length - 1, label: 'Today' }]}
         label={`Net worth from ${money(values[0])} on ${dayShort(kept[0]?.date || v.today)} to ${money(now)} today.`}
-        tip={(i) => <div class="fx-tiphead"><span>{i === values.length - 1 ? 'Today' : dayShort(kept[i].date)}</span><Amount value={values[i]} form="whole" /></div>} />}
+        tip={(i) => <><div class="fx-tiphead"><span>{i === values.length - 1 ? 'Today' : dayShort(kept[i].date)}</span><Amount value={values[i]} form="whole" /></div>
+          {i < est.length && <div class="fx-caption">Worked back from your transactions</div>}</>} />}
       <div class="fx-pair">
         <Stat size="sm" value={<Amount value={owned} form="whole" />} caption="Owned" />
         <Stat size="sm" value={<Amount value={owes} form="whole" />} caption="Owed" />

@@ -9552,6 +9552,8 @@
   }
   var netWorth = (v3) => (v3.plan.accounts || []).reduce((t3, a3) => t3 + worthOf(v3, a3), 0);
   function balanceOn(v3, a3, day3) {
+    const back3 = v3.worthBack?.find((b2) => b2.account === a3.id)?.ends?.[day3];
+    if (back3 !== void 0) return owed(a3.kind) ? -back3 : back3;
     const h3 = a3.history || [];
     let at2;
     for (const p3 of h3) if (p3.date <= day3) at2 = p3.amount;
@@ -9575,6 +9577,7 @@
   var runsFrom = (acct) => !!acct?.updated && !["home", "car", "collectible"].includes(acct.kind);
   var worthOn = (v3, a3, day3) => owed(a3.kind) ? -balanceOn(v3, a3, day3) : balanceOn(v3, a3, day3);
   var firstKept = (v3) => (v3.plan.accounts || []).flatMap((a3) => (a3.history || []).map((p3) => p3.date)).sort()[0] || v3.today;
+  var worthStart = (v3) => v3.worthEstimated?.length ? v3.worthEstimated[0].date : firstKept(v3);
   function worthByMonth(v3, back3 = 3, ahead2 = 3) {
     const accounts = v3.plan.accounts || [];
     const groupOf2 = (kind) => groups.find((g2) => g2.kinds.includes(kind))?.key || "other";
@@ -9596,7 +9599,7 @@
     const today2 = parseDay(v3.today);
     for (let i3 = back3; i3 >= 1; i3--) {
       const end = isoDay(new Date(today2.getFullYear(), today2.getMonth() - i3 + 1, 0));
-      out.push({ date: end, ahead: false, ...split2((a3) => balanceOn(v3, a3, end)) });
+      out.push({ date: end, ahead: false, estimated: end < firstKept(v3) && !!v3.worthEstimated?.length, ...split2((a3) => balanceOn(v3, a3, end)) });
     }
     out.push({ date: v3.today, ahead: false, ...split2((a3) => todayOf(v3, a3)) });
     for (let i3 = 1; i3 <= ahead2; i3++) {
@@ -12383,7 +12386,7 @@
   function Axis({ marks: marks2, y: y3, format: format2 }) {
     return /* @__PURE__ */ u3("div", { class: "fx-axis", "aria-hidden": "true", children: marks2.map((t3) => /* @__PURE__ */ u3("span", { class: t3 === 0 ? "zero" : "", style: { top: `${y3(t3)}px` }, children: format2(t3) }, t3)) });
   }
-  function AreaChart({ values, xLabels, marks: marks2 = [], threshold, aheadFrom, band, height = 200, format: format2, tip, label, zero = true, axis: showAxis = true, fill, onPick }) {
+  function AreaChart({ values, xLabels, marks: marks2 = [], threshold, aheadFrom, behindTo, band, height = 200, format: format2, tip, label, zero = true, axis: showAxis = true, fill, onPick }) {
     const [at2, setAt] = d2(-1);
     const n3 = values.length;
     const plot = A2(null);
@@ -12403,7 +12406,8 @@
     const pct = (i3) => i3 / (n3 - 1) * 100;
     const cut = aheadFrom === void 0 ? n3 - 1 : Math.min(n3 - 1, aheadFrom);
     const path = (from2, to) => values.slice(from2, to + 1).map((v3, k3) => `${k3 ? "L" : "M"}${x3(from2 + k3).toFixed(1)} ${y3(v3).toFixed(1)}`).join(" ");
-    const solid = path(0, cut);
+    const behind = behindTo === void 0 ? 0 : Math.max(0, Math.min(cut, behindTo));
+    const solid = path(behind, cut);
     const move = (e3) => {
       const r3 = e3.currentTarget.getBoundingClientRect();
       setAt(Math.max(0, Math.min(n3 - 1, Math.round((e3.clientX - r3.left) / r3.width * (n3 - 1)))));
@@ -12428,7 +12432,8 @@
               band && /* @__PURE__ */ u3("span", { class: "fx-band", style: { left: `${pct(band.from)}%`, width: `${pct(band.to) - pct(band.from)}%` } }),
               threshold !== void 0 && /* @__PURE__ */ u3("span", { class: "fx-threshold", style: { top: `${y3(threshold)}px` } }),
               /* @__PURE__ */ u3("svg", { viewBox: `0 0 1000 ${tall}`, preserveAspectRatio: "none", "aria-hidden": "true", children: [
-                /* @__PURE__ */ u3("path", { class: "fx-areafill", d: `${solid} L${x3(cut).toFixed(1)} ${tall} L0 ${tall} Z` }),
+                /* @__PURE__ */ u3("path", { class: "fx-areafill", d: `${solid} L${x3(cut).toFixed(1)} ${tall} L${x3(behind).toFixed(1)} ${tall} Z` }),
+                behind > 0 && /* @__PURE__ */ u3("path", { class: "fx-line ahead behind", d: path(0, behind), "vector-effect": "non-scaling-stroke" }),
                 /* @__PURE__ */ u3("path", { class: "fx-line", d: solid, "vector-effect": "non-scaling-stroke" }),
                 cut < n3 - 1 && /* @__PURE__ */ u3("path", { class: "fx-line ahead", d: path(cut, n3 - 1), "vector-effect": "non-scaling-stroke" })
               ] }),
@@ -12468,7 +12473,7 @@
           floor < 0 && /* @__PURE__ */ u3("span", { class: "fx-below", style: { top: `${y3(0)}px` } }),
           columns2.map((c4, i3) => {
             let up = 0, down = 0;
-            return /* @__PURE__ */ u3("div", { class: "fx-stackcol" + (c4.ahead ? " ahead" : "") + (i3 === shown8 ? " on" : "") + (onPick ? " pick" : ""), style: { left: `${i3 / n3 * 100}%`, width: `${100 / n3}%` }, onPointerEnter: () => setAt(i3), onClick: onPick && (() => onPick(i3)), children: [
+            return /* @__PURE__ */ u3("div", { class: "fx-stackcol" + (c4.ahead || c4.estimated ? " ahead" : "") + (i3 === shown8 ? " on" : "") + (onPick ? " pick" : ""), style: { left: `${i3 / n3 * 100}%`, width: `${100 / n3}%` }, onPointerEnter: () => setAt(i3), onClick: onPick && (() => onPick(i3)), children: [
               c4.up.map((p3, k3) => {
                 const t3 = y3(up + p3.value), h3 = y3(up) - t3;
                 up += p3.value;
@@ -14655,7 +14660,7 @@ ${pays}
         /* @__PURE__ */ u3(Row, { lead: /* @__PURE__ */ u3(Mark, { kind: "home", name: "Home" }), title: "A home or a car", sub: "What it is worth, and the loan against it: its equity", end: /* @__PURE__ */ u3("button", { class: "small", onClick: () => edit("account"), children: "Add property" }) })
       ] }) }) }) });
     }
-    const kept5 = parseDay(firstKept(v3)), today2 = parseDay(v3.today);
+    const kept5 = parseDay(worthStart(v3)), today2 = parseDay(v3.today);
     const back3 = Math.max(1, Math.min(ranges2.find(([k3]) => k3 === range)?.[2] ?? 3, (today2.getFullYear() - kept5.getFullYear()) * 12 + today2.getMonth() - kept5.getMonth()));
     const months = worthByMonth(v3, back3, 3);
     const start = months[0];
@@ -14753,12 +14758,13 @@ ${pays}
                   up: bars(m3).up.map(({ value, color }) => ({ value, color })),
                   down: [{ value: bars(m3).down, color: 8 }],
                   line: bars(m3).net,
-                  ahead: m3.ahead
+                  ahead: m3.ahead,
+                  estimated: m3.estimated
                 })),
                 tip: (i3) => {
                   const m3 = months[i3], b2 = bars(m3);
                   return /* @__PURE__ */ u3(S, { children: [
-                    /* @__PURE__ */ u3("div", { class: "fx-caption", children: m3.date === v3.today ? "Today" : `${dayShort(m3.date)}${m3.ahead ? ", ahead" : ""}` }),
+                    /* @__PURE__ */ u3("div", { class: "fx-caption", children: m3.date === v3.today ? "Today" : `${dayShort(m3.date)}${m3.ahead ? ", ahead" : m3.estimated ? ", worked back from your transactions" : ""}` }),
                     /* @__PURE__ */ u3("div", { class: "fx-tiphead fx-gap", children: [
                       /* @__PURE__ */ u3("span", { children: "Owned" }),
                       /* @__PURE__ */ u3(Amount, { value: b2.up.reduce((t3, p3) => t3 + p3.value, 0), form: "full", tone: "in" })
@@ -14784,8 +14790,10 @@ ${pays}
               ...keys2.map((g2) => ({ label: named6(g2), color: g2.color })),
               { label: owedName, color: 8 },
               { label: netName, color: "muted", shape: "line" },
-              ...months.some((m3) => m3.ahead) ? [{ label: "Ahead, from your paychecks and bills", color: "muted", shape: "dash" }] : []
-            ] })
+              ...months.some((m3) => m3.ahead) ? [{ label: "Ahead, from your paychecks and bills", color: "muted", shape: "dash" }] : [],
+              ...months.some((m3) => m3.estimated) ? [{ label: "Before your first balance, worked back from your transactions", color: "muted", shape: "dash" }] : []
+            ] }),
+            !focus && /* @__PURE__ */ u3(GoesBack, { v: v3, L: L2, keep: keep3 })
           ]
         }
       ),
@@ -14862,6 +14870,69 @@ ${pays}
         ]
       }
     );
+  }
+  function GoesBack({ v: v3, L: L2, keep: keep3 }) {
+    const [day3, setDay] = d2(v3.plan.worthFrom || "");
+    const [busy2, setBusy] = d2(false);
+    const first = firstKept(v3);
+    const save3 = async (to) => {
+      if (!keep3 || busy2) return;
+      setBusy(true);
+      await keep3({ ...v3.plan, worthFrom: to || void 0 });
+      setBusy(false);
+    };
+    const back3 = v3.worthBack || [];
+    const short = back3.filter((b2) => b2.how === "transactions" && b2.lowest < -5e-3 && ["checking", "savings"].includes(L2.account[b2.account]?.kind || ""));
+    return /* @__PURE__ */ u3("div", { class: "fx-goesback", children: [
+      /* @__PURE__ */ u3("p", { class: "fx-sub", children: v3.worthEstimated?.length ? /* @__PURE__ */ u3(S, { children: [
+        "Goes back to ",
+        dayShort(v3.worthEstimated[0].date),
+        ", ",
+        v3.worthEstimated[0].date.slice(0, 4),
+        ": before your first balance (",
+        dayShort(first),
+        "), worked back from your transactions."
+      ] }) : /* @__PURE__ */ u3(S, { children: [
+        "Net worth starts at your first balance, ",
+        dayShort(first),
+        first.slice(0, 4) !== v3.today.slice(0, 4) ? `, ${first.slice(0, 4)}` : "",
+        "."
+      ] }) }),
+      keep3 && /* @__PURE__ */ u3("div", { class: "fx-goesbackform", children: [
+        /* @__PURE__ */ u3("label", { children: [
+          "Show net worth from ",
+          /* @__PURE__ */ u3("input", { type: "date", value: day3, max: first, onInput: (e3) => setDay(e3.target.value) })
+        ] }),
+        /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy2 || day3 === (v3.plan.worthFrom || "") || !!day3 && day3 >= first, onClick: () => save3(day3), children: "Show it" }),
+        v3.plan.worthFrom && /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy2, onClick: () => {
+          setDay("");
+          save3("");
+        }, children: "From my first balance" })
+      ] }),
+      !!back3.length && !!v3.worthEstimated?.length && /* @__PURE__ */ u3("details", { class: "fx-goesbackhow", children: [
+        /* @__PURE__ */ u3("summary", { children: "How each account went back" }),
+        /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: back3.map((b2) => {
+          const a3 = L2.account[b2.account];
+          return /* @__PURE__ */ u3(
+            Row,
+            {
+              lead: a3 && /* @__PURE__ */ u3(AcctMark, { a: a3 }),
+              title: a3?.name || b2.account,
+              sub: b2.how === "transactions" ? "From its transactions" : "Nothing to go on: held where it is",
+              when: /* @__PURE__ */ u3(Amount, { value: b2.start, form: "whole" }),
+              whenPlain: true
+            },
+            b2.account
+          );
+        }) })
+      ] }),
+      short.map((b2) => /* @__PURE__ */ u3("p", { class: "fx-say fx-warn", children: [
+        L2.account[b2.account]?.name || b2.account,
+        " would be under nothing on ",
+        dayShort(b2.lowestOn || ""),
+        ": the transactions before then are missing money that came in. Import that month's file, or type that day's balance."
+      ] }, b2.account))
+    ] });
   }
 
   // web/src/finances/widgets/Latest.tsx
@@ -17175,7 +17246,8 @@ ${pays}
   function NetWorthWidget({ v: v3, open: open5 }) {
     if (!(v3.plan.accounts || []).length) return null;
     const now = netWorth(v3);
-    const kept5 = (v3.worth || []).filter((p3) => p3.date < v3.today);
+    const est = (v3.worthEstimated || []).filter((p3) => p3.date < v3.today);
+    const kept5 = [...est, ...(v3.worth || []).filter((p3) => p3.date < v3.today)];
     const values = [...kept5.map((p3) => p3.amount), now];
     const month3 = worthByMonth(v3, 1, 0)[0];
     const each = (v3.plan.accounts || []).map((a3) => worthOf(v3, a3));
@@ -17191,11 +17263,15 @@ ${pays}
           height: 92,
           fill: true,
           format: tick,
+          behindTo: est.length || void 0,
           xLabels: [{ i: 0, label: dayShort(kept5[0]?.date || v3.today) }, { i: values.length - 1, label: "Today" }],
           label: `Net worth from ${money(values[0])} on ${dayShort(kept5[0]?.date || v3.today)} to ${money(now)} today.`,
-          tip: (i3) => /* @__PURE__ */ u3("div", { class: "fx-tiphead", children: [
-            /* @__PURE__ */ u3("span", { children: i3 === values.length - 1 ? "Today" : dayShort(kept5[i3].date) }),
-            /* @__PURE__ */ u3(Amount, { value: values[i3], form: "whole" })
+          tip: (i3) => /* @__PURE__ */ u3(S, { children: [
+            /* @__PURE__ */ u3("div", { class: "fx-tiphead", children: [
+              /* @__PURE__ */ u3("span", { children: i3 === values.length - 1 ? "Today" : dayShort(kept5[i3].date) }),
+              /* @__PURE__ */ u3(Amount, { value: values[i3], form: "whole" })
+            ] }),
+            i3 < est.length && /* @__PURE__ */ u3("div", { class: "fx-caption", children: "Worked back from your transactions" })
           ] })
         }
       ),

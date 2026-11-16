@@ -132,9 +132,12 @@ struct FinancesPlanView: Decodable, Sendable, Equatable {
     /// #482). Nil without a checking account, or no paycheck ahead.
     let checkingNow: FinanceWorking?
     let afterPay: FinanceWorking?
+    /// Net worth each day before the first balance kept, worked back from it
+    /// through the transactions (Show net worth from, `View.WorthEstimated`).
+    let worthEstimated: [FinancePoint]
 
     enum CodingKeys: String, CodingKey {
-        case today, checking, start, periods, plan, readOnly, budgets, goals, loans, categories, since, checkingNow, afterPay
+        case today, checking, start, periods, plan, readOnly, budgets, goals, loans, categories, since, checkingNow, afterPay, worthEstimated
     }
 
     init(from decoder: Decoder) throws {
@@ -154,6 +157,7 @@ struct FinancesPlanView: Decodable, Sendable, Equatable {
         since = ((try? c.decodeIfPresent([FinancePast].self, forKey: .since)) ?? nil) ?? []
         checkingNow = (try? c.decodeIfPresent(FinanceWorking.self, forKey: .checkingNow)) ?? nil
         afterPay = (try? c.decodeIfPresent(FinanceWorking.self, forKey: .afterPay)) ?? nil
+        worthEstimated = ((try? c.decodeIfPresent([FinancePoint].self, forKey: .worthEstimated)) ?? nil) ?? []
     }
 
     /// The keys waiting now: what `Plan.waiting` should hold, as the computer reads it.
@@ -876,6 +880,8 @@ struct FinancePayoff: Decodable, Sendable, Equatable, Identifiable {
 struct NetWorthPoint: Hashable, Sendable {
     let date: Date
     let value: Double
+    /// Worked back before the first balance kept (Show net worth from), not kept: drawn dashed.
+    var estimated = false
 }
 
 extension FinancesPlanView {
@@ -902,6 +908,15 @@ extension FinancesPlanView {
             NetWorthPoint(date: pair.1, value: accounts.reduce(0) { $0 + worth(of: $1, on: pair.0) })
         }
         out.append(NetWorthPoint(date: today, value: accounts.reduce(0) { $0 + worth(of: $1) }))
+        // Every account's (net worth), the days worked back before the first kept come first, dashed.
+        if accounts.count == plan.accounts.count, !worthEstimated.isEmpty {
+            let firstKept = kept.first?.0 ?? todayText
+            let back = worthEstimated.compactMap { p -> NetWorthPoint? in
+                guard p.dateText < firstKept, let date = p.date, date >= from else { return nil }
+                return NetWorthPoint(date: date, value: p.amount, estimated: true)
+            }
+            out = back + out
+        }
         return out
     }
 
