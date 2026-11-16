@@ -725,6 +725,9 @@ func (p Plan) Dates(s Schedule, from, to time.Time) []time.Time {
 	if s.Every != Paycheck {
 		return s.Dates(from, to)
 	}
+	if until, ok := s.until(from.Location()); ok && until.Before(to) {
+		to = until
+	}
 	checking := ""
 	for _, a := range p.Accounts {
 		if a.Kind == Checking {

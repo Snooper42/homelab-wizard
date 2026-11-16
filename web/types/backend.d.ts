@@ -877,6 +877,7 @@ declare namespace finance {
     start: string;
     day2?: number;
     person?: string;
+    until?: string;
   }
   interface Split {
     category: string;

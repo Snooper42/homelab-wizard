@@ -88,6 +88,19 @@ struct FinancesPlanTests {
         #expect(view.payment("card:chk") == nil && view.payment("card:nope") == nil)
     }
 
+    /// A payment that ends (a lease, Jan 2024 to Jan 2027), as the computer's
+    /// Schedule.Until: said on Recurring, and nothing a month once it has.
+    @Test func aPaymentThatEnds() throws {
+        let lease = try JSONDecoder.homelab().decode(FinanceSchedule.self, from: Data(#"{"every":"month","start":"2024-01-15","until":"2027-01-15"}"#.utf8))
+        #expect(lease.until == "2027-01-15")
+        #expect(lease.endWords(today: "2026-11-16") == "until Jan 15, 2027")
+        #expect(lease.timesAMonth(today: "2026-11-16") == 1)
+        #expect(lease.endWords(today: "2027-02-01") == "ended Jan 15, 2027")
+        #expect(lease.timesAMonth(today: "2027-02-01") == 0)
+        let goesOn = FinanceSchedule(every: "month", start: "2024-01-15")
+        #expect(goesOn.endWords(today: "2026-11-16") == nil && goesOn.timesAMonth(today: "2026-11-16") == 1)
+    }
+
     @Test func netWorthSubtractsWhatIsOwed() throws {
         let view = try JSONDecoder.homelab().decode(FinancesPlanView.self, from: Data(json.utf8))
         // 2400 + 10000 − 350 (card) − 8000 (loan)

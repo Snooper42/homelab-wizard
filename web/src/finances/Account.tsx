@@ -39,9 +39,11 @@ export interface AccountProps {
   editTx?: (what: 'transaction', id: string) => void;
   /** Saves the ledger (a loan's links); none on a phone allowed only to look. */
   saveLedger?: (l: finance.Ledger) => Promise<boolean>;
+  /** Saves the plan (a loan: a payment that pays it); none on a phone allowed only to look. */
+  keep?: (plan: finance.Plan) => Promise<boolean>;
 }
 
-export function AccountPage({ v, L, ledger, id, done, edit, update, toTx, editTx, saveLedger }: AccountProps) {
+export function AccountPage({ v, L, ledger, id, done, edit, update, toTx, editTx, saveLedger, keep }: AccountProps) {
   const [span, setSpan] = useState('90');
   const a = (v.plan.accounts || []).find((x) => x.id === id);
   if (!a) return <Empty>This account isn't in the plan any more. <button class="small" onClick={done}>Net worth</button></Empty>;
@@ -75,7 +77,7 @@ export function AccountPage({ v, L, ledger, id, done, edit, update, toTx, editTx
             tip={(i) => <><strong>{dayShort(steps[i])}</strong><br />{money(values[i])}</>} />
           <p class="fx-sub">{runs ? `Lowest ${money(values[low])}, ${dayShort(steps[low])}. Worked from the balance typed in ${dayShort(a.updated!)} through its transactions.` : 'From the balances typed in over time.'}</p>
         </Widget>
-        {a.kind === 'loan' && <LoanSection v={v} L={L} ledger={ledger} a={a} saveLedger={saveLedger} />}
+        {a.kind === 'loan' && <LoanSection v={v} L={L} ledger={ledger} a={a} saveLedger={saveLedger} keepPlan={keep} />}
         {(a.kind !== 'loan' || !!mine.length) && <Widget title="Latest transactions" span="all" kind="fx-acctlatest" actions={mine.length ? <button class="small" onClick={() => toTx({ account: a.id })}>All of them in Transactions</button> : undefined}>
           {mine.length ? <Rows kind="fx-rows">{mine.slice(0, 8).map((t) => <TxRow key={t.id} t={t} v={v} L={L} edit={editTx} />)}</Rows>
             : <Empty>No transactions in or out of it yet. An import or one typed in shows here.</Empty>}

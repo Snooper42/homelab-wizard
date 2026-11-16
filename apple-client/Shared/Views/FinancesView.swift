@@ -1562,7 +1562,7 @@ private struct FinanceRecurringPage: View {
                     .font(.body.weight(.medium))
                     .foregroundStyle(Theme.ink)
                     .lineLimit(1)
-                Text(verbatim: [p.schedule?.words, item.next.map { "next \(Self.when($0, view))" }, into ? p.payer.map { "from \($0)" } : nil]
+                Text(verbatim: [p.schedule?.words, p.schedule?.endWords(today: view.todayText), item.next.map { "next \(Self.when($0, view))" }, into ? p.payer.map { "from \($0)" } : nil]
                     .compactMap { $0 }.joined(separator: " · "))
                     .font(.caption)
                     .foregroundStyle(Theme.secondaryInk)

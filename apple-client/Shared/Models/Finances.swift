@@ -1103,6 +1103,21 @@ struct FinanceSchedule: Decodable, Sendable, Equatable {
     /// once, week, 2 weeks, twice a month, month, 3 months, year, paycheck.
     let every: String
     let start: String?
+    /// Its last day, for one that ends (a lease): none after it (`Schedule.Until`).
+    var until: String? = nil
+
+    /// "until Jan 15, 2027", or "ended Jan 15, 2027" once it has; nil for one that goes on.
+    func endWords(today: String) -> String? {
+        guard let until, !until.isEmpty, every != "once", let day = LocalDay.parse(until) else { return nil }
+        let words = day.formatted(.dateTime.month(.abbreviated).day().year())
+        return (until < today ? "ended " : "until ") + words
+    }
+
+    /// How many times a month it comes now: none once it has ended.
+    func timesAMonth(today: String) -> Double? {
+        if let until, !until.isEmpty, until < today { return 0 }
+        return perMonth
+    }
 
     /// "Monthly", "Every 2 weeks", "Each paycheck".
     var words: String {
@@ -1179,7 +1194,7 @@ extension FinancesPlanView {
                 : !(p.to ?? "").isEmpty ? .savings
                 : (p.kind == "subscriptions" || p.kind == "subscription") ? .subscriptions
                 : .bills
-            let monthly: Double? = (p.card ?? "").isEmpty ? schedule.perMonth.flatMap { f in p.amount.map { $0 * f } } : nil
+            let monthly: Double? = (p.card ?? "").isEmpty ? schedule.timesAMonth(today: today).flatMap { f in p.amount.map { $0 * f } } : nil
             return RecurringItem(payment: p, sort: sort, next: nextOf[p.id], monthly: monthly)
         }
         return items.sorted {

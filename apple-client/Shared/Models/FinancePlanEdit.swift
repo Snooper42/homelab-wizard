@@ -209,6 +209,11 @@ enum FinancePlanEdit {
                 schedule["day2"] = .number(Double(day2))
             }
         }
+        // One that ends: a day, and not before it starts (Schedule.checkUntil); once has none.
+        if let until = p.until, !until.isEmpty, p.every != "once" {
+            guard LocalDay.parse(until) != nil, p.every == "paycheck" || until >= p.start else { return nil }
+            schedule["until"] = .string(until)
+        }
         var payment: [String: JSONValue] = [
             "name": .string(name),
             "amount": .number(cents),
@@ -591,4 +596,6 @@ struct NewPayment: Codable, Sendable, Equatable {
     /// Money in: who sends it, and the account it goes into ("" or nil for checking).
     var payer: String? = nil
     var to: String? = nil
+    /// Its last day (YYYY-MM-DD) for one that ends: a lease to Jan 2027 (`Schedule.Until`).
+    var until: String? = nil
 }

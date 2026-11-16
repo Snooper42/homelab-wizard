@@ -1280,6 +1280,12 @@
   var plural = (n3, word) => `${n3} ${word}${n3 === 1 ? "" : "s"}`;
   var ordinal = (n3) => n3 + (n3 % 10 === 1 && n3 !== 11 ? "st" : n3 % 10 === 2 && n3 !== 12 ? "nd" : n3 % 10 === 3 && n3 !== 13 ? "rd" : "th");
   function scheduleText(s3, L2) {
+    const base = scheduleBase(s3, L2);
+    if (!base || !s3?.until || s3.every === "once") return base;
+    const year = s3.until.slice(0, 4) !== todayISO().slice(0, 4) ? `, ${s3.until.slice(0, 4)}` : "";
+    return `${base} · ${s3.until < todayISO() ? "ended" : "until"} ${dayShort(s3.until)}${year}`;
+  }
+  function scheduleBase(s3, L2) {
     if (s3?.every === "paycheck") {
       const who = L2?.person[s3.person]?.name;
       return who ? `With each of ${who}'s paychecks` : "With each paycheck";
@@ -1306,6 +1312,7 @@
     return s3.every;
   }
   function perMonth(s3, people, checking) {
+    if (s3?.until && s3.until < todayISO()) return 0;
     if (s3?.every === "paycheck" && !s3.person) return (people || []).filter((e3) => !e3.account || e3.account === checking).reduce((t3, e3) => t3 + perMonth(e3.schedule), 0);
     if (s3?.every === "paycheck") return perMonth((people || []).find((e3) => e3.id === s3.person)?.schedule);
     return { week: 52 / 12, "2 weeks": 26 / 12, "twice a month": 2, month: 1, "3 months": 1 / 3, year: 1 / 12 }[s3?.every] || 0;
@@ -10799,7 +10806,7 @@
       accounts.map((a3) => /* @__PURE__ */ u3("option", { value: a3.id, children: a3.name }, a3.id))
     ] }) });
   }
-  function ScheduleFields({ every, setEvery, start, setStart, day2: day22, setDay2, startLabel, people, person, setPerson }) {
+  function ScheduleFields({ every, setEvery, start, setStart, day2: day22, setDay2, startLabel, people, person, setPerson, until, setUntil }) {
     const pick = (v3) => {
       if (v3.startsWith("paycheck:")) {
         setEvery("paycheck");
@@ -10817,7 +10824,8 @@
         ] }, e3.id))
       ] }) }),
       every !== "paycheck" && /* @__PURE__ */ u3(Field, { label: startLabel, children: /* @__PURE__ */ u3("input", { type: "date", value: start, onInput: input(setStart), required: true }) }),
-      every === "twice a month" && /* @__PURE__ */ u3(Field, { label: "And on day", children: /* @__PURE__ */ u3("input", { type: "number", min: "1", max: "31", value: day22, onInput: input(setDay2) }) })
+      every === "twice a month" && /* @__PURE__ */ u3(Field, { label: "And on day", children: /* @__PURE__ */ u3("input", { type: "number", min: "1", max: "31", value: day22, onInput: input(setDay2) }) }),
+      setUntil && every !== "once" && /* @__PURE__ */ u3(Field, { label: "Ends (if it does)", children: /* @__PURE__ */ u3("input", { type: "date", value: until || "", min: every === "paycheck" ? void 0 : start, onInput: input(setUntil) }) })
     ] });
   }
   function PaymentForm(props) {
@@ -10845,6 +10853,7 @@
     const [person, setPerson] = d2(x3?.schedule.person || "");
     const [start, setStart] = d2(() => x3?.schedule.start || takeDay() || todayISO());
     const [day22, setDay2] = d2(String(x3?.schedule.day2 || 15));
+    const [until, setUntil] = d2(x3?.schedule.until || "");
     const [kind, setKind] = d2(x3?.kind || "home");
     const [from2, setFrom] = d2(x3?.from || checking || "");
     const [to, setTo] = d2(x3?.to || "");
@@ -10862,7 +10871,7 @@
     const accounts = plan.accounts || [];
     const submit = (e3) => {
       e3.preventDefault();
-      const wrong = !name.trim() ? "Give it a name." : comesIn && !payer.trim() ? "Say who sends it." : (comesIn || !card) && num(amount) <= 0 ? "Type how much it is." : !comesIn && card && card === from2 ? "A card can't pay itself off: pick the account it comes out of." : every === "twice a month" && !(num(day22) >= 1 && num(day22) <= 31) ? "The second day is 1 to 31." : every === "twice a month" && num(day22) === parseDay(start).getDate() ? "The second day is the first one again: pick another." : "";
+      const wrong = !name.trim() ? "Give it a name." : comesIn && !payer.trim() ? "Say who sends it." : (comesIn || !card) && num(amount) <= 0 ? "Type how much it is." : !comesIn && card && card === from2 ? "A card can't pay itself off: pick the account it comes out of." : every === "twice a month" && !(num(day22) >= 1 && num(day22) <= 31) ? "The second day is 1 to 31." : every === "twice a month" && num(day22) === parseDay(start).getDate() ? "The second day is the first one again: pick another." : until && every !== "once" && every !== "paycheck" && until < start ? "It ends before it starts: pick a later end, or none." : "";
       setProblem(wrong);
       if (wrong) return;
       const p3 = {
@@ -10872,7 +10881,7 @@
         estimate,
         kind,
         institution: brand || void 0,
-        schedule: { every, start, day2: every === "twice a month" ? num(day22) : void 0, person: every === "paycheck" ? person : void 0 },
+        schedule: { every, start, day2: every === "twice a month" ? num(day22) : void 0, person: every === "paycheck" ? person : void 0, until: until && every !== "once" ? until : void 0 },
         // From someone outside: out of none of the household's accounts, into checking unless another is picked.
         ...comesIn ? { payer: payer.trim(), to: to && to !== checking ? to : void 0 } : { from: from2 === checking ? void 0 : from2 || void 0, to: to || void 0, card: card || void 0 },
         type: kind === "subscriptions" && type ? type : void 0
@@ -10911,7 +10920,7 @@
           /* @__PURE__ */ u3("option", { value: "", children: suggested2 ? `${subTypeName(suggested2)} (from its ${brand && brand !== "none" ? "logo" : "name"})` : "Other (pick one)" }),
           subTypes.map(([v3, t3]) => /* @__PURE__ */ u3("option", { value: v3, children: t3 }, v3))
         ] }) }),
-        /* @__PURE__ */ u3(ScheduleFields, { every, setEvery, start, setStart, day2: day22, setDay2, startLabel: x3 ? "Starting" : "Next on", people: plan.people, person, setPerson }),
+        /* @__PURE__ */ u3(ScheduleFields, { every, setEvery, start, setStart, day2: day22, setDay2, startLabel: x3 ? "Starting" : "Next on", people: plan.people, person, setPerson, until, setUntil }),
         comesIn ? /* @__PURE__ */ u3(AccountSelect, { label: "Comes into", value: to || checking, set: setTo, accounts: accounts.filter((a3) => !owed(a3.kind) && !held2(a3.kind)), none: accounts.length ? void 0 : "Checking" }) : /* @__PURE__ */ u3(S, { children: [
           /* @__PURE__ */ u3(AccountSelect, { label: "Comes out of, or is charged to", value: from2, set: setFrom, accounts: accounts.filter((a3) => (a3.kind === "card" || !owed(a3.kind)) && !held2(a3.kind)), none: accounts.length ? void 0 : "Checking" }),
           /* @__PURE__ */ u3(AccountSelect, { label: "Goes into", value: to, set: setTo, accounts: accounts.filter((a3) => a3.id !== from2 && !held2(a3.kind)), none: "Nowhere (a bill)" }),
@@ -14884,8 +14893,13 @@ ${pays}
   }
 
   // web/src/finances/Loan.tsx
+  function mayPay(plan, a3, ledger) {
+    const used = new Set((ledger?.transactions || []).map((t3) => t3.payment).filter(Boolean));
+    const name = a3.name.toLowerCase();
+    return (plan.payments || []).filter((x3) => !x3.to && !x3.payer && !x3.card && (["loans", "home", "car"].includes(x3.kind) || alike(x3.name, a3.name) || name.includes(x3.name.toLowerCase()) || x3.name.toLowerCase().includes(name))).sort((x3, y3) => Number(used.has(y3.id)) - Number(used.has(x3.id)) || x3.name.localeCompare(y3.name));
+  }
   var overOf = (t3, x3) => x3 ? Math.max(0, Math.round((Math.abs(t3.amount) - x3.amount) * 100) / 100) : 0;
-  function LoanSection({ v: v3, L: L2, ledger, a: a3, saveLedger: saveLedger2 }) {
+  function LoanSection({ v: v3, L: L2, ledger, a: a3, saveLedger: saveLedger2, keepPlan }) {
     const [busy2, setBusy] = d2(false);
     const [picking, setPicking] = d2(false);
     const p3 = (v3.loans || []).find((x3) => x3.account === a3.id);
@@ -14958,7 +14972,31 @@ ${pays}
           kind: "fx-loanlinked",
           actions: saveLedger2 && into2.length ? /* @__PURE__ */ u3("button", { class: "small", "aria-expanded": picking, onClick: () => setPicking(!picking), children: "Link a payment…" }) : void 0,
           children: [
-            /* @__PURE__ */ u3("p", { class: "fx-sub fx-lead", children: into2.length ? `Each one counts as paying ${into2[0].name}. Link one, and the same payee's next ones are offered here.` : "No payment in the plan goes to this loan: add one in Plan › Recurring, then link what pays it." }),
+            /* @__PURE__ */ u3("p", { class: "fx-sub fx-lead", children: into2.length ? `Each one counts as paying ${into2[0].name}. Link one, and the same payee's next ones are offered here.` : "No payment in the plan goes to this loan yet." }),
+            !into2.length && keepPlan && (() => {
+              const maybe = mayPay(v3.plan, a3, ledger);
+              const pays = async (id2) => {
+                if (busy2) return;
+                setBusy(true);
+                await keepPlan({ ...v3.plan, payments: (v3.plan.payments || []).map((x3) => x3.id === id2 ? { ...x3, to: a3.id } : x3) });
+                setBusy(false);
+              };
+              return maybe.length ? /* @__PURE__ */ u3("div", { class: "fx-loanoffer", children: [
+                /* @__PURE__ */ u3("p", { class: "fx-sub", children: [
+                  /* @__PURE__ */ u3("strong", { children: "Does one of these pay it?" }),
+                  " Then what's linked to it counts here, and Finances reads the loan down with it."
+                ] }),
+                /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: maybe.slice(0, 5).map((x3) => /* @__PURE__ */ u3(
+                  Row,
+                  {
+                    title: x3.name,
+                    sub: `${money(x3.amount)} · ${scheduleText(x3.schedule, L2)}`,
+                    end: /* @__PURE__ */ u3("button", { type: "button", class: "small fx-primary", disabled: busy2, onClick: () => pays(x3.id), children: "It pays this loan" })
+                  },
+                  x3.id
+                )) })
+              ] }) : /* @__PURE__ */ u3("p", { class: "fx-say", children: "Add the payment that pays it in Plan › Recurring, with this loan as where it goes, then link what pays it." });
+            })(),
             picking && /* @__PURE__ */ u3("div", { class: "fx-loanpick", children: [
               /* @__PURE__ */ u3("p", { class: "fx-sub", children: "Money out not linked to anything yet, newest first:" }),
               pick.length ? /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: pick.map((t3) => /* @__PURE__ */ u3(TxRow, { t: t3, v: v3, L: L2, end: /* @__PURE__ */ u3("button", { class: "small", disabled: busy2, onClick: () => link(t3.id), children: "Link" }) }, t3.id)) }) : /* @__PURE__ */ u3("p", { class: "fx-say", children: "Nothing to link." })
@@ -14997,7 +15035,7 @@ ${pays}
   // web/src/finances/Account.tsx
   var kindName2 = { checking: "Checking", savings: "Savings", card: "Credit card", investment: "Investments", retirement: "Retirement", loan: "Loan", home: "Home", car: "Car", collectible: "Collectible" };
   var spans = [["30", "30 days", 30], ["90", "90 days", 90], ["365", "A year", 365]];
-  function AccountPage({ v: v3, L: L2, ledger, id: id2, done, edit, update, toTx, editTx, saveLedger: saveLedger2 }) {
+  function AccountPage({ v: v3, L: L2, ledger, id: id2, done, edit, update, toTx, editTx, saveLedger: saveLedger2, keep: keep3 }) {
     const [span, setSpan] = d2("90");
     const a3 = (v3.plan.accounts || []).find((x3) => x3.id === id2);
     if (!a3) return /* @__PURE__ */ u3(Empty, { children: [
@@ -15075,7 +15113,7 @@ ${pays}
             ]
           }
         ),
-        a3.kind === "loan" && /* @__PURE__ */ u3(LoanSection, { v: v3, L: L2, ledger, a: a3, saveLedger: saveLedger2 }),
+        a3.kind === "loan" && /* @__PURE__ */ u3(LoanSection, { v: v3, L: L2, ledger, a: a3, saveLedger: saveLedger2, keepPlan: keep3 }),
         (a3.kind !== "loan" || !!mine.length) && /* @__PURE__ */ u3(Widget, { title: "Latest transactions", span: "all", kind: "fx-acctlatest", actions: mine.length ? /* @__PURE__ */ u3("button", { class: "small", onClick: () => toTx({ account: a3.id }), children: "All of them in Transactions" }) : void 0, children: mine.length ? /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: mine.slice(0, 8).map((t3) => /* @__PURE__ */ u3(TxRow, { t: t3, v: v3, L: L2, edit: editTx }, t3.id)) }) : /* @__PURE__ */ u3(Empty, { children: "No transactions in or out of it yet. An import or one typed in shows here." }) })
       ] })
     ] });
@@ -17773,7 +17811,7 @@ ${pays}
       }, openTransactions: () => toTx({}), showIn: toTx, openCalendar: (day3) => {
         if (day3) showDay(day3);
         setTab("calendar");
-      }, openPay: () => setTab("pay"), openAccount: (id2) => setTab(`account:${id2}`), group: group2, setGroup }) : tab3 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2, ledger, edit: (w3, id2) => edit(w3, id2) }) : tab3 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, edit: (w3, id2) => edit(w3, id2), saveLedger: saveLedger2, logos: !phone2, back: back3 }) : tab3 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger, exportFile: exportFile2, open: toTx }) : tab3 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, edit, keep: keep3, running: running5, fromWallos }) : tab3 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2, edit, saveSettings, keep: keep3, calendar }) : tab3.startsWith("account:") ? /* @__PURE__ */ u3(AccountPage, { v: v3, L: L2, ledger, id: tab3.slice(8), done: () => setTab("worth"), edit: () => edit("account", tab3.slice(8)), update: () => edit("balances"), toTx, editTx: (w3, id2) => edit(w3, id2), saveLedger: saveLedger2 }) : tab3 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, edit, open: (id2) => setTab("account:" + id2), sel: Math.max(0, sel2), pick, update: () => edit("balances"), keep: keep3, group: group2, setGroup, invest: investments }) : tab3 === "collection" ? /* @__PURE__ */ u3(CollectionPage, { v: v3, open: (id2) => setTab("card:" + id2), edit: (id2) => edit("card", id2), read: readCardPicture, update: updatePrices }) : tab3.startsWith("card:") ? /* @__PURE__ */ u3(CardPage, { v: v3, id: tab3.slice(5), done: () => setTab("collection"), edit: () => edit("card", tab3.slice(5)), read: readCardPicture, prices: readCardPrices }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, ledger, sel: sel2, pick, setSince: ro ? void 0 : setSince2, keep: ro ? void 0 : keep3, add: (w3, k3) => edit(w3, void 0, k3), edit: (w3, id2) => edit(w3, id2), openWorth: () => setTab("worth"), openSubscriptions: () => {
+      }, openPay: () => setTab("pay"), openAccount: (id2) => setTab(`account:${id2}`), group: group2, setGroup }) : tab3 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2, ledger, edit: (w3, id2) => edit(w3, id2) }) : tab3 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, edit: (w3, id2) => edit(w3, id2), saveLedger: saveLedger2, logos: !phone2, back: back3 }) : tab3 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger, exportFile: exportFile2, open: toTx }) : tab3 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, edit, keep: keep3, running: running5, fromWallos }) : tab3 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2, edit, saveSettings, keep: keep3, calendar }) : tab3.startsWith("account:") ? /* @__PURE__ */ u3(AccountPage, { v: v3, L: L2, ledger, id: tab3.slice(8), done: () => setTab("worth"), edit: () => edit("account", tab3.slice(8)), update: () => edit("balances"), toTx, editTx: (w3, id2) => edit(w3, id2), saveLedger: saveLedger2, keep: keep3 }) : tab3 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, edit, open: (id2) => setTab("account:" + id2), sel: Math.max(0, sel2), pick, update: () => edit("balances"), keep: keep3, group: group2, setGroup, invest: investments }) : tab3 === "collection" ? /* @__PURE__ */ u3(CollectionPage, { v: v3, open: (id2) => setTab("card:" + id2), edit: (id2) => edit("card", id2), read: readCardPicture, update: updatePrices }) : tab3.startsWith("card:") ? /* @__PURE__ */ u3(CardPage, { v: v3, id: tab3.slice(5), done: () => setTab("collection"), edit: () => edit("card", tab3.slice(5)), read: readCardPicture, prices: readCardPrices }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, ledger, sel: sel2, pick, setSince: ro ? void 0 : setSince2, keep: ro ? void 0 : keep3, add: (w3, k3) => edit(w3, void 0, k3), edit: (w3, id2) => edit(w3, id2), openWorth: () => setTab("worth"), openSubscriptions: () => {
         openOn("subscriptions");
         setTab("recurring");
       }, openRecurring: (f4) => {

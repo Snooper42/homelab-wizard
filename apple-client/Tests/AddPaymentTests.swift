@@ -108,6 +108,17 @@ struct AddPaymentTests {
         #expect(added(NewPayment(name: "X", amount: 1, every: "twice a month", start: "2026-12-01", day2: 32)) == nil)
     }
 
+    /// One that ends (a lease to Jan 2027), as the computer's Schedule.Until:
+    /// a day, not before it starts; once has none.
+    @Test func aPaymentThatEnds() throws {
+        let lease = try #require(added(NewPayment(name: "Example Car Lease", amount: 389, every: "month", start: "2024-01-15", until: "2027-01-15")))
+        #expect(lease["schedule"]?["until"] == .string("2027-01-15"))
+        #expect(added(NewPayment(name: "X", amount: 1, every: "month", start: "2026-12-01", until: "2026-11-01")) == nil)
+        #expect(added(NewPayment(name: "X", amount: 1, every: "month", start: "2026-12-01", until: "soon")) == nil)
+        let once = try #require(added(NewPayment(name: "X", amount: 1, every: "once", start: "2026-12-01", until: "2027-01-01")))
+        #expect(once["schedule"]?["until"] == nil)
+    }
+
     @Test func withEachPaycheck() throws {
         let anyone = try #require(added(NewPayment(name: "To savings", amount: 100, every: "paycheck", start: "2026-11-15", person: "", from: "chk")))
         #expect(anyone["schedule"] == .object(["every": .string("paycheck"), "start": .string("2026-11-15")]))
