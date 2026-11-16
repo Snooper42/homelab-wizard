@@ -165,6 +165,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **The Homelab app agrees with itself:** Month in Review's *Left over* is now in less out, as Cash Flow and the computer's Reports say it (a refund made the two differ); Backups says how long ago a restore test was the same way on its tile and under More (it read *last week* on one and *2 weeks ago* on the other); Cash Flow's *Each Month* names its last month, the one shown, which had no name under its bars; and on the iPad at the largest text, the line about what needs you sits over **Open Status** instead of breaking the app's name beside it.
 - **A job that didn't finish says why first:** in the Homelab app, Back Up Now, Test a Restore or Look for Problems that stops now has a title naming the job (not "exit status 1") and, at the top, what needs you in the computer's words (*mealie is not running: not backed up*), with "Everything else was backed up" when only stopped apps were left out. The whole log is still under it.
 - **One command for each new version of the Homelab app:** `apple-client/scripts/update-phone.sh` pulls the newest version and puts it on the iPhone (or iPad) plugged into the Mac, with the prefix you used before. Run it once with `--add-command` and it's `homelab-phone`, from any folder.
 - **VoiceOver in the Homelab app:** the ⌘K palette's rows are buttons VoiceOver can run (and says which is picked), and the arrows at the end of rows aren't read out as "Forward" any more.
