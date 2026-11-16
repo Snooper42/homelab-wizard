@@ -20,6 +20,8 @@ final class HomelabTasksViewModel {
         let failed: Bool
         /// A fix plan that hasn't been applied yet.
         let isFixPreview: Bool
+        /// Why a job didn't finish, first: the computer's own ! and ✗ lines.
+        var outcome: TaskOutcome? = nil
     }
 
     private(set) var running: HomelabTask?
@@ -77,7 +79,8 @@ final class HomelabTasksViewModel {
             failureCount += 1
             switch apiError {
             case .actionFailed(let message, let lines):
-                output = Output(task: task, title: message, lines: lines, failed: true, isFixPreview: false)
+                let outcome = TaskOutcome(task: task, message: message, lines: lines)
+                output = Output(task: task, title: outcome.title, lines: lines, failed: true, isFixPreview: false, outcome: outcome)
             case .transport(.timedOut):
                 errors[task] = "The computer is still working on it. Check again in a while."
             default:

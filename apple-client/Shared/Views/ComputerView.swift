@@ -497,8 +497,31 @@ struct TaskOutputView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 12) {
-                    if output.failed {
-                        Label("It didn't work", systemImage: "xmark.octagon.fill")
+                    if let outcome = output.outcome, !outcome.problems.isEmpty {
+                        // Why first, in the computer's words; the whole log under it.
+                        VStack(alignment: .leading, spacing: 8) {
+                            Label("What Needs You", systemImage: "exclamationmark.triangle.fill")
+                                .font(.headline)
+                                .foregroundStyle(Theme.warning)
+                            if let lead = outcome.lead {
+                                Text(verbatim: lead).font(.subheadline).foregroundStyle(Theme.secondaryInk)
+                            }
+                            ForEach(Array(outcome.problems.enumerated()), id: \.offset) { _, problem in
+                                Label {
+                                    Text(verbatim: problem)
+                                } icon: {
+                                    Image(systemName: "circle.fill").font(.system(size: 6)).foregroundStyle(Theme.warning)
+                                }
+                                .font(.callout)
+                            }
+                        }
+                        .padding(14)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(Theme.warning.opacity(0.10), in: RoundedRectangle(cornerRadius: 14))
+                        Text("Everything it did").font(.subheadline.weight(.semibold)).foregroundStyle(Theme.secondaryInk)
+                            .padding(.top, 4)
+                    } else if output.failed {
+                        Label("It didn't finish", systemImage: "xmark.octagon.fill")
                             .foregroundStyle(Theme.danger)
                             .font(.headline)
                     }

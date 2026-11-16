@@ -162,6 +162,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **A job that didn't finish says why first:** in the Homelab app, Back Up Now, Test a Restore or Look for Problems that stops now has a title naming the job (not "exit status 1") and, at the top, what needs you in the computer's words (*mealie is not running: not backed up*), with "Everything else was backed up" when only stopped apps were left out. The whole log is still under it.
 - **One command for each new version of the Homelab app:** `apple-client/scripts/update-phone.sh` pulls the newest version and puts it on the iPhone (or iPad) plugged into the Mac, with the prefix you used before. Run it once with `--add-command` and it's `homelab-phone`, from any folder.
 - **VoiceOver in the Homelab app:** the ⌘K palette's rows are buttons VoiceOver can run (and says which is picked), and the arrows at the end of rows aren't read out as "Forward" any more.
 - **The iPad in Stage Manager and Split View:** in a narrower window, or upright, the Homelab app starts with its sidebar hidden (a tap of its button away) so the list and the page have room, and a window resized between the iPad's layout and the iPhone's tabs stays on the same screen, with the same app open.
