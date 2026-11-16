@@ -47,7 +47,7 @@ type View struct {
 	// with none kept). Today's estimate is in Start, and what is ahead in
 	// Periods' Accounts.
 	Worth []Point `json:"worth"`
-	// WorthEstimated is net worth each day from Plan.WorthFrom to the day
+	// WorthEstimated is net worth each day from Plan.TrackFrom to the day
 	// before Worth's first, worked back from the first balance typed in
 	// (worthBack); WorthBack says how each account went back. Neither is
 	// saved: both are read again from the plan and the ledger each time.
@@ -298,7 +298,7 @@ func ProjectWith(p Plan, l Ledger, today time.Time, periods int) View {
 	// transactions too; a card paid off with each paycheck is read as a
 	// payment of its own. The plan the screen keeps (v.Plan) stays as saved.
 	p = p.carsNow(today)
-	l = l.inHome(p)
+	l = l.from(p.TrackFrom).inHome(p)
 	p = p.inHome()
 	p.Payments = p.WithCards()
 	for _, a := range p.Accounts {

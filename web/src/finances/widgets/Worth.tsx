@@ -20,7 +20,7 @@ import { AcctMark } from '../Mark';
 export function NetWorthWidget({ v, open }: { v: finance.View; open: () => void }) {
   if (!(v.plan.accounts || []).length) return null;
   const now = netWorth(v);
-  // Each day kept, ending on today's estimate, after the days worked back before the first (Show net worth from,
+  // Each day kept, ending on today's estimate, after the days worked back before the first (Track from,
   // drawn dashed); and its change over the last month.
   const est = (v.worthEstimated || []).filter((p) => p.date < v.today);
   const kept = [...est, ...(v.worth || []).filter((p) => p.date < v.today)];

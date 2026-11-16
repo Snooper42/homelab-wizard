@@ -9,7 +9,7 @@ import { Donut } from '../ui/charts';
 import { Sankey } from '../ui/sankey';
 import { Dot, Legend, SplitBar } from '../ui/Legend';
 import { IconButton, Widget } from '../ui/Widget';
-import { inHome, kindName, month, surplus } from '../model';
+import { counted, inHome, kindName, month, surplus, tracked } from '../model';
 import { byMonth } from '../reportData';
 import type { showTransactions } from '../Transactions';
 import { kindHueOf, ledgerMonths, monthFlow, savedHue, typicalFlow } from '../flowData';
@@ -26,7 +26,7 @@ function LastMonths({ v, ledger, open }: { v: finance.View; ledger?: finance.Led
   const t = new Date(+v.today.slice(0, 4), +v.today.slice(5, 7) - 1, 1);
   const from = new Date(t.getFullYear(), t.getMonth() - 5, 1);
   const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`;
-  const months = byMonth(inHome(v.plan, ledger.transactions), { key: 'six', label: '', from: iso(from), to: v.today.slice(0, 7) + '-31' });
+  const months = byMonth(inHome(v.plan, counted(v, ledger.transactions)), { key: 'six', label: '', from: iso(from), to: v.today.slice(0, 7) + '-31' }).filter((m) => tracked(v, m.month));
   if (months.filter((x) => x.in > 0.005 || x.out > 0.005).length < 2) return null;
   const most = Math.max(...months.map((x) => Math.max(x.in, x.out)), 1);
   const bar = (n: number) => ({ height: `${Math.max(n > 0.005 ? 2 : 0, (n / most) * 100)}%` });
@@ -104,7 +104,7 @@ const typical = 'typical';
  * screen reader.
  */
 export function MoneyFlowWidget({ v, L, ledger, edit, title = 'Money flow' }: { v: finance.View; L: Lookup; ledger?: finance.Ledger | null; edit?: (what: 'transaction' | 'payment', id: string) => void; title?: string }) {
-  const months = ledgerMonths(ledger || null);
+  const months = ledgerMonths(ledger || null).filter((m) => tracked(v, m));
   const periods = [typical, ...[...months].reverse()];
   // This month once the ledger has it (it is read after the plan), until one is picked.
   const [period, setPeriod] = useState('');

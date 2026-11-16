@@ -20,7 +20,7 @@ import { Widget } from './ui/Widget';
 import { Mark, payeeBrand } from './Mark';
 import { iconOf } from './Transactions';
 import type { showTransactions } from './Transactions';
-import { inHome } from './model';
+import { counted, inHome, tracked } from './model';
 import { currencyCode, dayShort, money, monthName, parseDay, plural, tick } from './money';
 import { byCategory, byMonth, byTag, categoryTrend, csvName, ranges, tagsOf, toCsv, topPayees, totals, twelveMonths, yearOnYear } from './reportData';
 import { categoryHue } from './hues';
@@ -35,16 +35,18 @@ export function Reports({ v, ledger, exportFile, open }: { v: finance.View; ledg
   // Every payee, not the five largest (Show all); back to five with Show fewer.
   const [allPayees, setAllPayees] = useState(false);
   if (!ledger) return <div class="fin"><Empty>Reading…</Empty></div>;
-  const tags = tagsOf(ledger.transactions);
+  // From Track from on (the rest stay in Transactions), so no month shows spending with nothing in.
+  const kept = counted(v, ledger.transactions);
+  const tags = tagsOf(kept);
   const picked = tags.includes(tag) ? tag : '';
-  const typed = picked ? ledger.transactions.filter((t) => t.tags?.includes(picked)) : ledger.transactions;
+  const typed = picked ? kept.filter((t) => t.tags?.includes(picked)) : kept;
   // Read in the plan's currency, so an account kept in another adds up; the export keeps each as typed.
   const txs = inHome(v.plan, typed);
   const all = ranges(v.today, txs[0]?.date || v.today);
   const r = all.find((x) => x.key === key) || all[0];
   const sum = totals(txs, r);
   const groups = byCategory(txs, v.categories || [], r);
-  const months = byMonth(txs, r);
+  const months = byMonth(txs, r).filter((m) => tracked(v, m.month));
   const everyPayee = topPayees(txs, r, Infinity);
   const payees = allPayees ? everyPayee : everyPayee.slice(0, 5);
   const tagged = picked ? [] : byTag(txs, v.categories || [], r);
@@ -133,7 +135,7 @@ export function Reports({ v, ledger, exportFile, open }: { v: finance.View; ledg
 function Trend({ v, txs, groups, group, pick, open }: { v: finance.View; txs: finance.Transaction[]; groups: { name: string }[]; group: string; pick: (name: string) => void; open?: (f: Parameters<typeof showTransactions>[0]) => void }) {
   const cats = v.categories || [];
   const g = groups.find((x) => x.name === group) || groups[0];
-  const trend = categoryTrend(txs, cats, g.name, v.today);
+  const trend = categoryTrend(txs, cats, g.name, v.today).filter((m) => tracked(v, m.month));
   const yoy = yearOnYear(txs, cats, g.name, v.today);
   const d = parseDay(v.today);
   const lastYear = `${monthName(v.today)} ${d.getFullYear() - 1}`;

@@ -253,3 +253,20 @@ func ledgerID(have string, used map[string]bool) string {
 		}
 	}
 }
+
+// from is the ledger counting from day on (Plan.TrackFrom, YYYY-MM-DD):
+// the transactions dated before it left out, as no chart or total counts
+// them. Only ever read: the ledger saved keeps them all. None: all of it.
+func (l Ledger) from(day string) Ledger {
+	if day == "" {
+		return l
+	}
+	kept := make([]Transaction, 0, len(l.Transactions))
+	for _, t := range l.Transactions {
+		if t.Date >= day {
+			kept = append(kept, t)
+		}
+	}
+	l.Transactions = kept
+	return l
+}

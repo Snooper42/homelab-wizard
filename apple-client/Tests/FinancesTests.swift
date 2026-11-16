@@ -101,7 +101,7 @@ struct FinancesPlanTests {
         #expect(goesOn.endWords(today: "2026-11-16") == nil && goesOn.timesAMonth(today: "2026-11-16") == 1)
     }
 
-    /// Show net worth from (the owner, Nov 16): the days the computer worked
+    /// Track from (the owner, Nov 16): the days the computer worked
     /// back before the first balance kept (View.WorthEstimated) come first
     /// in net worth's line, marked so the chart draws them dashed.
     @Test func netWorthWorkedBackComesFirst() throws {
@@ -118,6 +118,31 @@ struct FinancesPlanTests {
         #expect(line.map(\.estimated) == [true, true, false, false])
         // Before the range picked: none.
         #expect(view.netWorthSeries(days: 12).allSatisfy { !$0.estimated })
+    }
+
+    /// Track from (the owner, Nov 16: Jan 1, 2026): the charts count no
+    /// transaction dated before it, and draw no month before its, though
+    /// the ledger keeps every row. Made-up figures.
+    @Test func trackFromLeavesOutWhatCameBefore() throws {
+        let plan = try JSONDecoder.homelab().decode(FinancePlan.self, from: Data(#"{"accounts":[],"payments":[],"people":[],"trackFrom":"2026-01-01"}"#.utf8))
+        #expect(plan.trackFrom == "2026-01-01")
+        let ledger = try JSONDecoder.homelab().decode(FinanceLedger.self, from: Data(#"""
+        {"transactions":[{"id":"a","date":"2025-12-31","account":"card","amount":-80,"payee":"Groceries"},
+                         {"id":"b","date":"2026-01-01","account":"card","amount":-20,"payee":"Coffee"},
+                         {"id":"c","date":"2026-01-15","account":"chk","amount":2000,"payee":"Paycheck"}]}
+        """#.utf8))
+        #expect(FinanceLedger.counted(ledger.transactions, from: plan.trackFrom).map(\.id) == ["b", "c"])
+        #expect(FinanceLedger.counted(ledger.transactions, from: nil).count == 3)
+        #expect(ledger.transactions.count == 3)
+        let december = try #require(LocalDay.parse("2025-12-01")), january = try #require(LocalDay.parse("2026-01-01"))
+        #expect(!FinanceLedger.tracked(december, from: plan.trackFrom) && FinanceLedger.tracked(january, from: plan.trackFrom))
+        #expect(FinanceLedger.tracked(december, from: nil))
+        // Cash Flow from it: January only has money in and out; December none.
+        let months = CashFlow.months(FinanceLedger.counted(ledger.transactions, from: plan.trackFrom), ending: january, count: 2, categories: [])
+        #expect(months.map(\.spent) == [0, 20] && months.map(\.income) == [0, 2000])
+        // A day that isn't one counts everything.
+        let odd = try JSONDecoder.homelab().decode(FinancePlan.self, from: Data(#"{"trackFrom":"soon"}"#.utf8))
+        #expect(odd.trackFrom == nil)
     }
 
     @Test func netWorthSubtractsWhatIsOwed() throws {

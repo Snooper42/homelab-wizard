@@ -165,7 +165,7 @@ export function NetWorth({ v, L, edit, open, sel, pick, update, keep, group, set
             ...(months.some((m) => m.ahead) ? [{ label: 'Ahead, from your paychecks and bills', color: 'muted' as const, shape: 'dash' as const }] : []),
             ...(months.some((m) => m.estimated) ? [{ label: 'Before your first balance, worked back from your transactions', color: 'muted' as const, shape: 'dash' as const }] : []),
           ]} />
-          {!focus && <GoesBack v={v} L={L} keep={keep} />}
+          {!focus && <TrackFrom v={v} L={L} keep={keep} />}
         </Widget>
 
         {(!focus || focus.key === 'investments') && <InvestmentsWidget v={v} keep={keep} {...invest} />}
@@ -232,35 +232,35 @@ function GroupCard({ v, focus, months, range, setRange, clear }: {
 }
 
 /**
- * Show net worth from (the owner, Nov 16: transactions from Jan 1, and net
- * worth to go back to it without "getting all broken"): a day before the
- * first balance typed in, from which net worth is worked back through the
- * transactions, never saved (View.WorthEstimated); and, once it is, how each
- * account went back: from its transactions, or held where it is with
- * nothing to go on, and checking under nothing when the past is missing
- * money in.
+ * Track from (the owner, Nov 16: "standardize everything going back to Jan
+ * 1st 2026"): one day the household's money is tracked from. Spending,
+ * Cash Flow, Money flow, Reports and what's found recurring count nothing
+ * dated before it (Transactions still lists it all, and nothing is
+ * deleted); net worth goes back to it, worked back from the first balance
+ * through the transactions, never saved (View.WorthEstimated), saying how
+ * each account went back and when checking would be under nothing.
  */
-function GoesBack({ v, L, keep }: { v: finance.View; L: Lookup; keep?: (plan: finance.Plan) => Promise<boolean> }) {
-  const [day, setDay] = useState(v.plan.worthFrom || '');
+function TrackFrom({ v, L, keep }: { v: finance.View; L: Lookup; keep?: (plan: finance.Plan) => Promise<boolean> }) {
+  const [day, setDay] = useState(v.plan.trackFrom || '');
   const [busy, setBusy] = useState(false);
   const first = firstKept(v);
   const save = async (to: string) => {
     if (!keep || busy) return;
     setBusy(true);
-    await keep({ ...v.plan, worthFrom: to || undefined });
+    await keep({ ...v.plan, trackFrom: to || undefined });
     setBusy(false);
   };
   const back = v.worthBack || [];
   const short = back.filter((b) => b.how === 'transactions' && b.lowest < -0.005 && ['checking', 'savings'].includes(L.account[b.account]?.kind || ''));
   return (
     <div class="fx-goesback">
-      <p class="fx-sub">{v.worthEstimated?.length
-        ? <>Goes back to {dayShort(v.worthEstimated[0].date)}, {v.worthEstimated[0].date.slice(0, 4)}: before your first balance ({dayShort(first)}), worked back from your transactions.</>
-        : <>Net worth starts at your first balance, {dayShort(first)}{first.slice(0, 4) !== v.today.slice(0, 4) ? `, ${first.slice(0, 4)}` : ''}.</>}</p>
+      <p class="fx-sub">{v.plan.trackFrom
+        ? <>Tracked from {dayShort(v.plan.trackFrom)}, {v.plan.trackFrom.slice(0, 4)}: the charts, reports and net worth start there, and transactions before it stay in your list without counting.{v.worthEstimated?.length ? <> Net worth before your first balance ({dayShort(first)}) is worked back from your transactions.</> : null}</>
+        : <>Net worth starts at your first balance, {dayShort(first)}{first.slice(0, 4) !== v.today.slice(0, 4) ? `, ${first.slice(0, 4)}` : ''}, and the charts count every transaction.</>}</p>
       {keep && <div class="fx-goesbackform">
-        <label>Show net worth from <input type="date" value={day} max={first} onInput={(e) => setDay((e.target as HTMLInputElement).value)} /></label>
-        <button type="button" class="small" disabled={busy || day === (v.plan.worthFrom || '') || (!!day && day >= first)} onClick={() => save(day)}>Show it</button>
-        {v.plan.worthFrom && <button type="button" class="small" disabled={busy} onClick={() => { setDay(''); save(''); }}>From my first balance</button>}
+        <label>Track from <input type="date" name="trackFrom" value={day} max={v.today} onInput={(e) => setDay((e.target as HTMLInputElement).value)} /></label>
+        <button type="button" class="small" disabled={busy || day === (v.plan.trackFrom || '') || (!!day && day > v.today)} onClick={() => save(day)}>Track From Then</button>
+        {v.plan.trackFrom && <button type="button" class="small" disabled={busy} onClick={() => { setDay(''); save(''); }}>Count Everything</button>}
       </div>}
       {!!back.length && !!v.worthEstimated?.length && <details class="fx-goesbackhow">
         <summary>How each account went back</summary>

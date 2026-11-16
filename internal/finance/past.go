@@ -3,7 +3,7 @@ package finance
 import "time"
 
 // WorthBack is how one account went back before the first balance typed
-// in: what it is read to have been on Plan.WorthFrom (what is there, or a
+// in: what it is read to have been on Plan.TrackFrom (what is there, or a
 // card's or loan's owed as a minus, as in net worth), how ("transactions":
 // the ledger's, undone day by day; "flat": nothing to go on, held where it
 // is, so it cannot make the line jump), and the lowest it got on the way
@@ -20,7 +20,7 @@ type WorthBack struct {
 	Ends map[string]float64 `json:"ends,omitempty"`
 }
 
-// worthBack is net worth each day from Plan.WorthFrom to the day before
+// worthBack is net worth each day from Plan.TrackFrom to the day before
 // worth's first (the first balance typed in, or today with none), worked
 // back from that day: each account as the real line has it there, less
 // each day's transactions on it (txSides: a move's other side too), a
@@ -28,8 +28,8 @@ type WorthBack struct {
 // or it starts on or after the real line. Plan amounts are the plan's
 // currency (Plan.inHome), the ledger's too (Ledger.inHome).
 func worthBack(p Plan, l Ledger, today time.Time) ([]Point, []WorthBack) {
-	from, err := day(p.WorthFrom, today.Location())
-	if p.WorthFrom == "" || err != nil {
+	from, err := day(p.TrackFrom, today.Location())
+	if p.TrackFrom == "" || err != nil {
 		return nil, nil
 	}
 	first := today

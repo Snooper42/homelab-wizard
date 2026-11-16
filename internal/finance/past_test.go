@@ -11,7 +11,7 @@ import (
 // held where it is. Made-up accounts.
 func TestWorthBack(t *testing.T) {
 	p := Plan{
-		WorthFrom: "2026-01-01",
+		TrackFrom: "2026-01-01",
 		Accounts: []Account{
 			{ID: "chk", Name: "Checking", Kind: Checking, Balance: 1000, Updated: "2026-03-01", History: []Point{{"2026-03-01", 1000}}},
 			{ID: "sav", Name: "Savings", Kind: Savings, Balance: 5000, Updated: "2026-03-01", History: []Point{{"2026-03-01", 5000}}},
@@ -78,18 +78,47 @@ func TestWorthBackOnlyWhenAsked(t *testing.T) {
 	if est, back := worthBack(p, Ledger{}, date("2026-06-01")); est != nil || back != nil {
 		t.Fatalf("none asked: %v %v", est, back)
 	}
-	p.WorthFrom = "2026-03-01"
+	p.TrackFrom = "2026-03-01"
 	if est, _ := worthBack(p, Ledger{}, date("2026-06-01")); est != nil {
 		t.Fatalf("from the first balance itself: %v", est)
 	}
 	// No balance kept at all: worked back from today's.
-	p = Plan{WorthFrom: "2026-05-30", Accounts: []Account{{ID: "chk", Name: "Checking", Kind: Checking, Balance: 1000}}}
+	p = Plan{TrackFrom: "2026-05-30", Accounts: []Account{{ID: "chk", Name: "Checking", Kind: Checking, Balance: 1000}}}
 	est, _ := worthBack(p, Ledger{Transactions: []Transaction{{ID: "a", Date: "2026-05-31", Account: "chk", Amount: 100}}}, date("2026-06-01"))
 	if len(est) != 2 || est[0] != (Point{"2026-05-30", 900}) || est[1] != (Point{"2026-05-31", 1000}) {
 		t.Fatalf("from today's balances: %v", est)
 	}
 	// Clean keeps a day, and refuses what isn't one.
-	if _, err := Clean(Plan{WorthFrom: "Jan"}); err == nil {
-		t.Fatal("a Show net worth from that isn't a day")
+	if _, err := Clean(Plan{TrackFrom: "Jan"}); err == nil {
+		t.Fatal("a Track from that isn't a day")
+	}
+}
+
+// Track from (the owner, Nov 16: Jan 1, 2026): nothing dated before it
+// counts in what Finances reads from the ledger (here, a payment found
+// recurring), though the ledger keeps every row. Made-up figures.
+func TestTrackFrom(t *testing.T) {
+	l := Ledger{Transactions: []Transaction{
+		{ID: "a", Date: "2025-10-05", Account: "chk", Amount: -30, Payee: "Gym"},
+		{ID: "b", Date: "2025-11-05", Account: "chk", Amount: -30, Payee: "Gym"},
+		{ID: "c", Date: "2025-12-05", Account: "chk", Amount: -30, Payee: "Gym"},
+		{ID: "d", Date: "2026-01-05", Account: "chk", Amount: -30, Payee: "Gym"},
+	}}
+	if got := l.from("2026-01-01").Transactions; len(got) != 1 || got[0].ID != "d" || len(l.Transactions) != 4 {
+		t.Fatalf("from Jan 1: %v (the ledger itself: %d)", got, len(l.Transactions))
+	}
+	if got := l.from(""); len(got.Transactions) != 4 {
+		t.Fatalf("none: %v", got.Transactions)
+	}
+	p := Plan{Accounts: []Account{{ID: "chk", Name: "Checking", Kind: Checking, Balance: 1000, Updated: "2026-01-20"}}}
+	if v := ProjectWith(p, l, date("2026-01-20"), 1); len(v.Found) != 1 {
+		t.Fatalf("every row counted: the gym found monthly: %+v", v.Found)
+	}
+	p.TrackFrom = "2026-01-01"
+	if v := ProjectWith(p, l, date("2026-01-20"), 1); len(v.Found) != 0 {
+		t.Fatalf("from Jan 1: one gym payment is nothing found yet: %+v", v.Found)
+	}
+	if _, err := Clean(Plan{TrackFrom: "soon"}); err == nil {
+		t.Fatal("a Track from that isn't a day")
 	}
 }

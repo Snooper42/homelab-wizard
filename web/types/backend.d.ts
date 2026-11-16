@@ -826,7 +826,7 @@ declare namespace finance {
     accounts: finance.Account[];
     payments: finance.Payment[];
     cushion: number;
-    worthFrom?: string;
+    trackFrom?: string;
     updated?: string;
     currency?: string;
     rates?: Record<string, number>;

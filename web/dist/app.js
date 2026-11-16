@@ -618,9 +618,9 @@
   }
   var waits = (s3) => !!s3.later && s3.state !== "done";
   function progress(steps) {
-    const counted = steps.filter((s3) => !waits(s3));
-    const done = counted.filter((s3) => s3.state === "done").length;
-    return { done, total: counted.length, left: counted.length - done, wait: steps.length - counted.length };
+    const counted2 = steps.filter((s3) => !waits(s3));
+    const done = counted2.filter((s3) => s3.state === "done").length;
+    return { done, total: counted2.length, left: counted2.length - done, wait: steps.length - counted2.length };
   }
   function Fold({ id: id2, cls, title, names: names5, shown: shown8, toggle }) {
     return /* @__PURE__ */ u3("li", { class: "fold " + cls, children: [
@@ -936,7 +936,7 @@
       ] });
     }
     const running5 = st.apps.filter((a3) => a3.state === "running");
-    const counted = st.apps.filter((a3) => !awaitingJobs(a3)).length;
+    const counted2 = st.apps.filter((a3) => !awaitingJobs(a3)).length;
     const trouble2 = st.apps.filter((a3) => troubled(a3, st.stopped));
     const u4 = st.updates;
     return /* @__PURE__ */ u3(S, { children: [
@@ -948,7 +948,7 @@
             running5.length,
             /* @__PURE__ */ u3("small", { children: [
               " of ",
-              counted
+              counted2
             ] })
           ] }),
           sub: st.missing ? /* @__PURE__ */ u3("span", { class: "bad", children: st.missing === 1 ? "1 of the homelab's own apps is down" : `${st.missing} of the homelab's own apps are down` }) : "The homelab's own apps are all up"
@@ -3332,7 +3332,7 @@
   }
   function GroupHead({ g: g2, open: open5, toggle, p: p3 }) {
     const running5 = g2.apps.filter((a3) => a3.state === "running").length;
-    const counted = g2.apps.filter((a3) => !awaitingJobs(a3)).length;
+    const counted2 = g2.apps.filter((a3) => !awaitingJobs(a3)).length;
     return (
       // A right-click on the heading, Shift+F10, or the context-menu key opens the group's menu, as a click on its count does.
       /* @__PURE__ */ u3(
@@ -3362,7 +3362,7 @@
               g2.label
             ] }),
             /* @__PURE__ */ u3("span", { class: "kiosklabel", children: g2.label }),
-            /* @__PURE__ */ u3(GroupMenu, { g: g2, p: p3, count: g2.alert ? String(g2.apps.length) : running5 >= counted ? `${running5} running ✓` : `${running5} of ${counted} running` }),
+            /* @__PURE__ */ u3(GroupMenu, { g: g2, p: p3, count: g2.alert ? String(g2.apps.length) : running5 >= counted2 ? `${running5} running ✓` : `${running5} of ${counted2} running` }),
             /* @__PURE__ */ u3(StartAll, { g: g2, p: p3 }),
             !open5 && /* @__PURE__ */ u3("span", { class: "names", children: g2.apps.map((a3) => a3.name).join(" · ") })
           ] })
@@ -9577,7 +9577,10 @@
   var runsFrom = (acct) => !!acct?.updated && !["home", "car", "collectible"].includes(acct.kind);
   var worthOn = (v3, a3, day3) => owed(a3.kind) ? -balanceOn(v3, a3, day3) : balanceOn(v3, a3, day3);
   var firstKept = (v3) => (v3.plan.accounts || []).flatMap((a3) => (a3.history || []).map((p3) => p3.date)).sort()[0] || v3.today;
-  var worthStart = (v3) => v3.worthEstimated?.length ? v3.worthEstimated[0].date : firstKept(v3);
+  var worthStart = (v3) => {
+    const first = v3.worthEstimated?.length ? v3.worthEstimated[0].date : firstKept(v3);
+    return v3.plan.trackFrom && v3.plan.trackFrom > first ? v3.plan.trackFrom : first;
+  };
   function worthByMonth(v3, back3 = 3, ahead2 = 3) {
     const accounts = v3.plan.accounts || [];
     const groupOf2 = (kind) => groups.find((g2) => g2.kinds.includes(kind))?.key || "other";
@@ -9646,6 +9649,11 @@
     }
     return { months, now: monthsBack };
   }
+  function counted(v3, txs) {
+    const from2 = v3.plan.trackFrom;
+    return from2 ? txs.filter((t3) => t3.date >= from2) : txs;
+  }
+  var tracked = (v3, month3) => !v3.plan.trackFrom || month3 >= v3.plan.trackFrom.slice(0, 7);
 
   // web/src/finances/ui/Legend.tsx
   var hue = (h3) => typeof h3 === "number" ? `fx-h${h3}` : `fx-h-${h3}`;
@@ -14651,7 +14659,7 @@ ${pays}
   var month2 = (day3) => monthName(day3).slice(0, 3);
   function NetWorth({ v: v3, L: L2, edit, open: open5, sel: sel2, pick, update, keep: keep3, group: group2, setGroup, invest: invest2 }) {
     const [range, setRange] = d2("3");
-    const [counted, setCounted] = d2("all");
+    const [counted2, setCounted] = d2("all");
     const accounts = v3.plan.accounts || [];
     if (!accounts.length && !edit) return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3(Card, { kind: "finstart", children: /* @__PURE__ */ u3(Empty, { children: "No accounts typed in yet." }) }) });
     if (!accounts.length) {
@@ -14676,7 +14684,7 @@ ${pays}
     const ownedKeys = groups.filter((g2) => g2.key !== "cards" && g2.key !== "loans" && months.some((m3) => (m3.owned[g2.key] || 0) > 0));
     const netted = months.some((m3) => m3.secured > 0);
     const hasHome = ownedKeys.some((g2) => g2.key === "property");
-    const homeToo = counted === "all" || !hasHome;
+    const homeToo = counted2 === "all" || !hasHome;
     const keys2 = ownedKeys.filter((g2) => homeToo || g2.key !== "property");
     const named6 = (g2) => netted && g2.key === "property" ? `${g2.name}, less their loans` : g2.name;
     const bars = (m3) => {
@@ -14743,7 +14751,7 @@ ${pays}
           span: "all",
           kind: "fx-worthchart",
           actions: /* @__PURE__ */ u3(S, { children: [
-            hasHome && /* @__PURE__ */ u3(Segmented, { label: "What it counts", value: counted, pick: setCounted, options: [["all", "Everything"], ["liquid", "Without Home & Car"]] }),
+            hasHome && /* @__PURE__ */ u3(Segmented, { label: "What it counts", value: counted2, pick: setCounted, options: [["all", "Everything"], ["liquid", "Without Home & Car"]] }),
             /* @__PURE__ */ u3(Segmented, { label: "How far back", value: range, pick: setRange, options: ranges2.map(([k3, t3]) => [k3, t3]) })
           ] }),
           children: [
@@ -14793,7 +14801,7 @@ ${pays}
               ...months.some((m3) => m3.ahead) ? [{ label: "Ahead, from your paychecks and bills", color: "muted", shape: "dash" }] : [],
               ...months.some((m3) => m3.estimated) ? [{ label: "Before your first balance, worked back from your transactions", color: "muted", shape: "dash" }] : []
             ] }),
-            !focus && /* @__PURE__ */ u3(GoesBack, { v: v3, L: L2, keep: keep3 })
+            !focus && /* @__PURE__ */ u3(TrackFrom, { v: v3, L: L2, keep: keep3 })
           ]
         }
       ),
@@ -14871,43 +14879,46 @@ ${pays}
       }
     );
   }
-  function GoesBack({ v: v3, L: L2, keep: keep3 }) {
-    const [day3, setDay] = d2(v3.plan.worthFrom || "");
+  function TrackFrom({ v: v3, L: L2, keep: keep3 }) {
+    const [day3, setDay] = d2(v3.plan.trackFrom || "");
     const [busy2, setBusy] = d2(false);
     const first = firstKept(v3);
     const save3 = async (to) => {
       if (!keep3 || busy2) return;
       setBusy(true);
-      await keep3({ ...v3.plan, worthFrom: to || void 0 });
+      await keep3({ ...v3.plan, trackFrom: to || void 0 });
       setBusy(false);
     };
     const back3 = v3.worthBack || [];
     const short = back3.filter((b2) => b2.how === "transactions" && b2.lowest < -5e-3 && ["checking", "savings"].includes(L2.account[b2.account]?.kind || ""));
     return /* @__PURE__ */ u3("div", { class: "fx-goesback", children: [
-      /* @__PURE__ */ u3("p", { class: "fx-sub", children: v3.worthEstimated?.length ? /* @__PURE__ */ u3(S, { children: [
-        "Goes back to ",
-        dayShort(v3.worthEstimated[0].date),
+      /* @__PURE__ */ u3("p", { class: "fx-sub", children: v3.plan.trackFrom ? /* @__PURE__ */ u3(S, { children: [
+        "Tracked from ",
+        dayShort(v3.plan.trackFrom),
         ", ",
-        v3.worthEstimated[0].date.slice(0, 4),
-        ": before your first balance (",
-        dayShort(first),
-        "), worked back from your transactions."
+        v3.plan.trackFrom.slice(0, 4),
+        ": the charts, reports and net worth start there, and transactions before it stay in your list without counting.",
+        v3.worthEstimated?.length ? /* @__PURE__ */ u3(S, { children: [
+          " Net worth before your first balance (",
+          dayShort(first),
+          ") is worked back from your transactions."
+        ] }) : null
       ] }) : /* @__PURE__ */ u3(S, { children: [
         "Net worth starts at your first balance, ",
         dayShort(first),
         first.slice(0, 4) !== v3.today.slice(0, 4) ? `, ${first.slice(0, 4)}` : "",
-        "."
+        ", and the charts count every transaction."
       ] }) }),
       keep3 && /* @__PURE__ */ u3("div", { class: "fx-goesbackform", children: [
         /* @__PURE__ */ u3("label", { children: [
-          "Show net worth from ",
-          /* @__PURE__ */ u3("input", { type: "date", value: day3, max: first, onInput: (e3) => setDay(e3.target.value) })
+          "Track from ",
+          /* @__PURE__ */ u3("input", { type: "date", name: "trackFrom", value: day3, max: v3.today, onInput: (e3) => setDay(e3.target.value) })
         ] }),
-        /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy2 || day3 === (v3.plan.worthFrom || "") || !!day3 && day3 >= first, onClick: () => save3(day3), children: "Show it" }),
-        v3.plan.worthFrom && /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy2, onClick: () => {
+        /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy2 || day3 === (v3.plan.trackFrom || "") || !!day3 && day3 > v3.today, onClick: () => save3(day3), children: "Track From Then" }),
+        v3.plan.trackFrom && /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy2, onClick: () => {
           setDay("");
           save3("");
-        }, children: "From my first balance" })
+        }, children: "Count Everything" })
       ] }),
       !!back3.length && !!v3.worthEstimated?.length && /* @__PURE__ */ u3("details", { class: "fx-goesbackhow", children: [
         /* @__PURE__ */ u3("summary", { children: "How each account went back" }),
@@ -15198,15 +15209,16 @@ ${pays}
     const [trendOf, setTrendOf] = d2("");
     const [allPayees, setAllPayees] = d2(false);
     if (!ledger) return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3(Empty, { children: "Reading…" }) });
-    const tags = tagsOf(ledger.transactions);
+    const kept5 = counted(v3, ledger.transactions);
+    const tags = tagsOf(kept5);
     const picked = tags.includes(tag) ? tag : "";
-    const typed = picked ? ledger.transactions.filter((t3) => t3.tags?.includes(picked)) : ledger.transactions;
+    const typed = picked ? kept5.filter((t3) => t3.tags?.includes(picked)) : kept5;
     const txs = inHome(v3.plan, typed);
     const all = ranges(v3.today, txs[0]?.date || v3.today);
     const r3 = all.find((x3) => x3.key === key7) || all[0];
     const sum = totals(txs, r3);
     const groups4 = byCategory(txs, v3.categories || [], r3);
-    const months = byMonth(txs, r3);
+    const months = byMonth(txs, r3).filter((m3) => tracked(v3, m3.month));
     const everyPayee = topPayees(txs, r3, Infinity);
     const payees = allPayees ? everyPayee : everyPayee.slice(0, 5);
     const tagged = picked ? [] : byTag(txs, v3.categories || [], r3);
@@ -15341,7 +15353,7 @@ ${pays}
   function Trend({ v: v3, txs, groups: groups4, group: group2, pick, open: open5 }) {
     const cats = v3.categories || [];
     const g2 = groups4.find((x3) => x3.name === group2) || groups4[0];
-    const trend = categoryTrend(txs, cats, g2.name, v3.today);
+    const trend = categoryTrend(txs, cats, g2.name, v3.today).filter((m3) => tracked(v3, m3.month));
     const yoy = yearOnYear(txs, cats, g2.name, v3.today);
     const d3 = parseDay(v3.today);
     const lastYear = `${monthName(v3.today)} ${d3.getFullYear() - 1}`;
@@ -15918,7 +15930,7 @@ ${pays}
     const t3 = new Date(+v3.today.slice(0, 4), +v3.today.slice(5, 7) - 1, 1);
     const from2 = new Date(t3.getFullYear(), t3.getMonth() - 5, 1);
     const iso2 = (d3) => `${d3.getFullYear()}-${String(d3.getMonth() + 1).padStart(2, "0")}-01`;
-    const months = byMonth(inHome(v3.plan, ledger.transactions), { key: "six", label: "", from: iso2(from2), to: v3.today.slice(0, 7) + "-31" });
+    const months = byMonth(inHome(v3.plan, counted(v3, ledger.transactions)), { key: "six", label: "", from: iso2(from2), to: v3.today.slice(0, 7) + "-31" }).filter((m3) => tracked(v3, m3.month));
     if (months.filter((x3) => x3.in > 5e-3 || x3.out > 5e-3).length < 2) return null;
     const most = Math.max(...months.map((x3) => Math.max(x3.in, x3.out)), 1);
     const bar = (n3) => ({ height: `${Math.max(n3 > 5e-3 ? 2 : 0, n3 / most * 100)}%` });
@@ -15982,7 +15994,7 @@ ${pays}
   var periodName = (p3) => p3 === typical ? "A typical month" : `${monthName(p3 + "-01").slice(0, 3)} ${p3.slice(0, 4)}`;
   var typical = "typical";
   function MoneyFlowWidget({ v: v3, L: L2, ledger, edit, title = "Money flow" }) {
-    const months = ledgerMonths(ledger || null);
+    const months = ledgerMonths(ledger || null).filter((m3) => tracked(v3, m3));
     const periods = [typical, ...[...months].reverse()];
     const [period, setPeriod] = d2("");
     const [top, setTop] = d2("8");
@@ -17459,7 +17471,7 @@ ${pays}
     if (!ledger?.transactions.length) return null;
     const month3 = days ? { key: "period", label: "", ...days } : ranges(v3.today, v3.today)[0];
     const inMonth = !days || days.from.slice(0, 7) === days.to.slice(0, 7);
-    const groups4 = byCategory(inHome(v3.plan, ledger.transactions), v3.categories || [], month3);
+    const groups4 = byCategory(inHome(v3.plan, counted(v3, ledger.transactions)), v3.categories || [], month3);
     const total = groups4.reduce((t3, g2) => t3 + g2.amount, 0);
     const rest = groups4.slice(named5).reduce((t3, g2) => t3 + g2.amount, 0);
     const hueOf = (name) => categoryHue(name, v3.categories) || "muted";

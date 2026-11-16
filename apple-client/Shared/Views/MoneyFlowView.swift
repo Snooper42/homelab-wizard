@@ -14,7 +14,11 @@ struct MoneyFlowCard: View {
     @State private var month: String?
     @State private var width: CGFloat = 360
 
-    private var months: [String] { FinanceFlow.ledgerMonths(ledger) }
+    /// The ledger's months, none before Track from's.
+    private var months: [String] {
+        let from = finances.plan?.plan.trackFrom.map { String($0.prefix(7)) } ?? ""
+        return FinanceFlow.ledgerMonths(ledger).filter { $0 >= from }
+    }
     private var shownMonth: String {
         if let month { return month }
         var today = ""
