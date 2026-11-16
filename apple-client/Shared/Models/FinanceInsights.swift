@@ -176,6 +176,19 @@ extension FinancesPlanView {
                 byDay[day, default: []].append(.init(payment: item.payment, sort: item.sort, amount: row.amount, estimate: row.estimate))
             }
         }
+        // The month's days before today, from the computer's due days: its earlier
+        // bills have their dots too, not only the days ahead (main's pictures, Nov 16).
+        let todayStart = calendar.startOfDay(for: today ?? Date())
+        for (id, days) in dues {
+            guard let item = sortOf[id] else { continue }
+            for text in days {
+                guard let date = LocalDay.parse(text), range.contains(date), calendar.startOfDay(for: date) < todayStart else { continue }
+                let day = calendar.startOfDay(for: date)
+                guard seen.insert("\(id)|\(day.timeIntervalSince1970)").inserted else { continue }
+                byDay[day, default: []].append(.init(payment: item.payment, sort: item.sort,
+                                                     amount: item.payment.amount ?? 0, estimate: item.payment.estimate ?? false))
+            }
+        }
         return byDay.keys.sorted().map { day in
             RecurringDay(day: day, items: byDay[day, default: []].sorted {
                 $0.sort.rawValue != $1.sort.rawValue ? $0.sort.rawValue < $1.sort.rawValue : $0.payment.name < $1.payment.name
