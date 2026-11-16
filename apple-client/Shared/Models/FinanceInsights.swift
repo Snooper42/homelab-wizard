@@ -8,40 +8,33 @@ import Foundation
 struct CashFlowMonth: Identifiable, Sendable, Equatable {
     /// The month's first day.
     let month: Date
-    /// Money in: what went to an income category.
+    /// Money in: every transaction that brought money in (a paycheck, a refund).
     let income: Double
-    /// Money out: what Spending counts.
+    /// Money out: every transaction that took money out.
     let spent: Double
     var net: Double { income - spent }
     var id: Date { month }
 }
 
 enum CashFlow {
-    /// What came in during the month holding `month`: every part that went to
-    /// an income category, net of anything taken back. Money moved between
-    /// the household's own accounts isn't counted.
-    static func income(_ transactions: [FinanceTransaction], in month: Date, categories: [FinanceCategory],
-                       calendar: Calendar = .current) -> Double {
-        guard let range = calendar.dateInterval(of: .month, for: month) else { return 0 }
-        var total = 0.0
-        for t in transactions where (t.to ?? "").isEmpty {
-            guard let date = t.date, range.contains(date) else { continue }
-            let parts = t.splits.isEmpty ? [FinanceSplit(category: t.category, amount: t.amount)] : t.splits
-            for part in parts where Spending.isIncome(Spending.top(part.category, in: categories), in: categories) {
-                total += part.amount
-            }
-        }
-        return max(total, 0)
-    }
-
-    /// The `count` months up to the one holding `month`, oldest first.
+    /// The `count` months up to the one holding `month`, oldest first, as
+    /// the computer's Cash Flow counts them (reportData.ts's byMonth): in is
+    /// every transaction that brought money in, out every one that took it
+    /// out, whatever its category; a move between the household's own
+    /// accounts is neither. (Counting only income categories missed every
+    /// paycheck without one: the owner's read $0 in, Nov 16.)
     static func months(_ transactions: [FinanceTransaction], ending month: Date, count: Int, categories: [FinanceCategory],
                        calendar: Calendar = .current) -> [CashFlowMonth] {
         guard let last = calendar.dateInterval(of: .month, for: month)?.start else { return [] }
         return (0..<max(count, 0)).reversed().compactMap { back in
-            guard let start = calendar.date(byAdding: .month, value: -back, to: last) else { return nil }
-            let spent = Spending.byCategory(transactions, in: start, categories: categories, calendar: calendar).reduce(0) { $0 + $1.spent }
-            return CashFlowMonth(month: start, income: income(transactions, in: start, categories: categories, calendar: calendar), spent: spent)
+            guard let start = calendar.date(byAdding: .month, value: -back, to: last),
+                  let range = calendar.dateInterval(of: .month, for: start) else { return nil }
+            var moneyIn = 0.0, moneyOut = 0.0
+            for t in transactions where (t.to ?? "").isEmpty {
+                guard let date = t.date, range.contains(date) else { continue }
+                if t.amount > 0 { moneyIn += t.amount } else { moneyOut -= t.amount }
+            }
+            return CashFlowMonth(month: start, income: moneyIn, spent: moneyOut)
         }
     }
 }
@@ -112,7 +105,9 @@ struct MonthReview: Sendable, Equatable {
             month: start,
             spent: spent,
             spentBefore: spentBefore,
-            income: CashFlow.income(transactions, in: start, categories: categories, calendar: calendar),
+            // What came in, as the computer's Reports count it (reportData.ts's totals): every transaction
+            // that brought money in, whatever its category, not moves between your own accounts.
+            income: CashFlow.months(transactions, ending: start, count: 1, categories: categories, calendar: calendar).first?.income ?? 0,
             purchases: outs.count,
             categories: now.prefix(5).map { Category(name: $0.name, spent: $0.spent, before: thenOf[$0.name] ?? 0) },
             biggest: biggest,
