@@ -87,6 +87,8 @@ struct LoanPapers: Sendable, Equatable {
     static func perMonth(_ s: JSONValue?, people: [JSONValue], checking: String) -> Double {
         func str(_ x: JSONValue?) -> String? { if case .string(let s)? = x { return s }; return nil }
         let every = str(s?["every"]) ?? ""
+        // One that has ended comes no more (Schedule.Until, money.ts's perMonth).
+        if let until = str(s?["until"]), !until.isEmpty, until < FinancePlanEdit.todayString() { return 0 }
         if every == "paycheck" {
             if let person = str(s?["person"]), !person.isEmpty {
                 return perMonth(people.first { str($0["id"]) == person }?["schedule"], people: [], checking: "")

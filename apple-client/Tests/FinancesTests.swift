@@ -88,6 +88,38 @@ struct FinancesPlanTests {
         #expect(view.payment("card:chk") == nil && view.payment("card:nope") == nil)
     }
 
+    /// A payment that ends (a lease, Jan 2024 to Jan 2027), as the computer's
+    /// Schedule.Until: said on Recurring, and nothing a month once it has.
+    @Test func aPaymentThatEnds() throws {
+        let lease = try JSONDecoder.homelab().decode(FinanceSchedule.self, from: Data(#"{"every":"month","start":"2024-01-15","until":"2027-01-15"}"#.utf8))
+        #expect(lease.until == "2027-01-15")
+        #expect(lease.endWords(today: "2026-11-16") == "until Jan 15, 2027")
+        #expect(lease.timesAMonth(today: "2026-11-16") == 1)
+        #expect(lease.endWords(today: "2027-02-01") == "ended Jan 15, 2027")
+        #expect(lease.timesAMonth(today: "2027-02-01") == 0)
+        let goesOn = FinanceSchedule(every: "month", start: "2024-01-15")
+        #expect(goesOn.endWords(today: "2026-11-16") == nil && goesOn.timesAMonth(today: "2026-11-16") == 1)
+    }
+
+    /// Show net worth from (the owner, Nov 16): the days the computer worked
+    /// back before the first balance kept (View.WorthEstimated) come first
+    /// in net worth's line, marked so the chart draws them dashed.
+    @Test func netWorthWorkedBackComesFirst() throws {
+        let json = #"""
+        {"today":"2026-06-01","checking":"chk","start":{"chk":1200},"periods":[],
+         "plan":{"accounts":[{"id":"chk","name":"Checking","kind":"checking","balance":1200,
+                              "history":[{"date":"2026-05-20","amount":1100}]}],"payments":[],"people":[]},
+         "worthEstimated":[{"date":"2026-05-18","amount":900},{"date":"2026-05-19","amount":1000},{"date":"2026-05-21","amount":5}]}
+        """#
+        let view = try JSONDecoder.homelab().decode(FinancesPlanView.self, from: Data(json.utf8))
+        let line = view.netWorthSeries(days: 30)
+        // Worked back on the 18th and 19th; the kept balance on the 20th; today. One dated after the first kept isn't.
+        #expect(line.map(\.value) == [900, 1000, 1100, 1200])
+        #expect(line.map(\.estimated) == [true, true, false, false])
+        // Before the range picked: none.
+        #expect(view.netWorthSeries(days: 12).allSatisfy { !$0.estimated })
+    }
+
     @Test func netWorthSubtractsWhatIsOwed() throws {
         let view = try JSONDecoder.homelab().decode(FinancesPlanView.self, from: Data(json.utf8))
         // 2400 + 10000 − 350 (card) − 8000 (loan)

@@ -423,6 +423,12 @@ func TestSchedule(t *testing.T) {
 		{Schedule{Every: Biweekly, Start: "2026-11-06"}, "2026-10-01", "2026-12-05", "2026-11-06 2026-11-20 2026-12-04"},
 		{Schedule{Every: Biweekly, Start: "2026-01-02"}, "2026-11-01", "2026-11-30", "2026-11-06 2026-11-20"},
 		{Schedule{Every: Monthly, Start: "bad"}, "2026-01-01", "2026-12-31", ""},
+		// A lease from Jan 2024 to Jan 2027: its last payment on Until's day, none after.
+		{Schedule{Every: Monthly, Start: "2024-01-15", Until: "2027-01-15"}, "2026-12-01", "2027-03-31", "2026-12-15 2027-01-15"},
+		{Schedule{Every: Weekly, Start: "2026-11-02", Until: "2026-11-20"}, "2026-11-01", "2026-12-31", "2026-11-02 2026-11-09 2026-11-16"},
+		{Schedule{Every: TwiceMonth, Start: "2026-01-01", Day2: 15, Until: "2026-02-10"}, "2026-01-01", "2026-03-31", "2026-01-01 2026-01-15 2026-02-01"},
+		// An end that is no day is no end.
+		{Schedule{Every: Yearly, Start: "2024-03-03", Until: "soon"}, "2026-01-01", "2027-12-31", "2026-03-03 2027-03-03"},
 	}
 	for _, c := range cases {
 		var got []string
@@ -489,6 +495,8 @@ func TestClean(t *testing.T) {
 		"no start date":      {Payments: []Payment{{Name: "A", Schedule: Schedule{Every: Monthly}}}},
 		"second day":         {Payments: []Payment{{Name: "A", Schedule: Schedule{Every: TwiceMonth, Start: "2026-01-01"}}}},
 		"not the first":      {Payments: []Payment{{Name: "A", Schedule: Schedule{Every: TwiceMonth, Start: "2026-01-15", Day2: 15}}}},
+		"ends before it":     {Payments: []Payment{{Name: "A", Schedule: Schedule{Every: Monthly, Start: "2026-03-01", Until: "2026-02-01"}}}},
+		"no end date":        {Payments: []Payment{{Name: "A", Schedule: Schedule{Every: Monthly, Start: "2026-03-01", Until: "March"}}}},
 		"cannot pay itself":  {Accounts: []Account{{ID: "c", Name: "C", Kind: Card}}, Payments: []Payment{{Name: "A", Schedule: ok, From: "c", Card: "c"}}},
 		"a payment has no":   {Payments: []Payment{{Schedule: ok}}},
 		`no account "x"`:     {Payments: []Payment{{Name: "A", Schedule: ok, To: "x"}}},
@@ -1204,5 +1212,18 @@ func TestRulesStartingWith(t *testing.T) {
 	}
 	if len(got.Rules) != 2 || got.Rules[0] != (Rule{Match: "Pine Pest", Payee: "Pine"}) || got.Rules[1] != (Rule{Match: "pine pest", Prefix: true, Category: "Repairs"}) {
 		t.Errorf("rules: %+v", got.Rules)
+	}
+}
+
+// A payment with each paycheck that ends (a share paid until a loan is paid
+// off) comes on the paydays up to Until, and none after.
+func TestPaycheckPaymentEnds(t *testing.T) {
+	p := Plan{People: []Earner{{ID: "a", Name: "A", Schedule: Schedule{Every: Biweekly, Start: "2026-11-06"}}}}
+	var got []string
+	for _, d := range p.Dates(Schedule{Every: Paycheck, Person: "a", Until: "2026-12-01"}, date("2026-11-01"), date("2026-12-31")) {
+		got = append(got, dateOf(d))
+	}
+	if strings.Join(got, " ") != "2026-11-06 2026-11-20" {
+		t.Fatalf("paydays up to Until: %v", got)
 	}
 }

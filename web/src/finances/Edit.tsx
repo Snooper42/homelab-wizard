@@ -330,7 +330,7 @@ function AccountSelect({ label, value, set, accounts, none }: { label: string; v
 }
 
 /** How often, from when; a payment can also come with each of someone's paychecks (people), on their paydays. */
-function ScheduleFields({ every, setEvery, start, setStart, day2, setDay2, startLabel, people, person, setPerson }: { every: string; setEvery: (s: string) => void; start: string; setStart: (s: string) => void; day2: string; setDay2: (s: string) => void; startLabel: string; people?: finance.Earner[]; person?: string; setPerson?: (s: string) => void }) {
+function ScheduleFields({ every, setEvery, start, setStart, day2, setDay2, startLabel, people, person, setPerson, until, setUntil }: { every: string; setEvery: (s: string) => void; start: string; setStart: (s: string) => void; day2: string; setDay2: (s: string) => void; startLabel: string; people?: finance.Earner[]; person?: string; setPerson?: (s: string) => void; until?: string; setUntil?: (s: string) => void }) {
   const pick = (v: string) => { if (v.startsWith('paycheck:')) { setEvery('paycheck'); setPerson?.(v.slice(9)); } else setEvery(v); };
   return <>
     <Field label="How often"><select value={every === 'paycheck' ? 'paycheck:' + person : every} onChange={input(pick)}>
@@ -338,8 +338,10 @@ function ScheduleFields({ every, setEvery, start, setStart, day2, setDay2, start
       {!!people?.length && <option value="paycheck:">With each paycheck, whoever is paid</option>}
       {(people || []).map((e) => <option key={e.id} value={'paycheck:' + e.id}>With each of {e.name}'s paychecks</option>)}
     </select></Field>
-    {every !== 'paycheck' && <Field label={startLabel}><input type="date" value={start} onInput={input(setStart)} required /></Field>}
+    {every !== 'paycheck' && <Field label={startLabel}><input type="date" name="start" value={start} onInput={input(setStart)} required /></Field>}
     {every === 'twice a month' && <Field label="And on day"><input type="number" min="1" max="31" value={day2} onInput={input(setDay2)} /></Field>}
+    {/* One that ends (a lease, a loan's last payment): none after it. Empty, it goes on. */}
+    {setUntil && every !== 'once' && <Field label="Ends (if it does)"><input type="date" name="until" value={until || ''} onInput={input(setUntil)} /></Field>}
   </>;
 }
 
@@ -360,6 +362,7 @@ function PaymentForm(props: EditProps) {
   const [person, setPerson] = useState(x?.schedule.person || '');
   const [start, setStart] = useState(() => x?.schedule.start || takeDay() || todayISO());
   const [day2, setDay2] = useState(String(x?.schedule.day2 || 15));
+  const [until, setUntil] = useState(x?.schedule.until || '');
   const [kind, setKind] = useState(x?.kind || 'home');
   const [from, setFrom] = useState(x?.from || checking || '');
   const [to, setTo] = useState(x?.to || '');
@@ -380,11 +383,12 @@ function PaymentForm(props: EditProps) {
   const accounts = plan.accounts || [];
   const submit = (e: Event) => {
     e.preventDefault();
-    const wrong = !name.trim() ? 'Give it a name.' : comesIn && !payer.trim() ? 'Say who sends it.' : (comesIn || !card) && num(amount) <= 0 ? 'Type how much it is.' : !comesIn && card && card === from ? 'A card can\'t pay itself off: pick the account it comes out of.' : every === 'twice a month' && !(num(day2) >= 1 && num(day2) <= 31) ? 'The second day is 1 to 31.' : every === 'twice a month' && num(day2) === parseDay(start).getDate() ? 'The second day is the first one again: pick another.' : '';
+    const wrong = !name.trim() ? 'Give it a name.' : comesIn && !payer.trim() ? 'Say who sends it.' : (comesIn || !card) && num(amount) <= 0 ? 'Type how much it is.' : !comesIn && card && card === from ? 'A card can\'t pay itself off: pick the account it comes out of.' : every === 'twice a month' && !(num(day2) >= 1 && num(day2) <= 31) ? 'The second day is 1 to 31.' : every === 'twice a month' && num(day2) === parseDay(start).getDate() ? 'The second day is the first one again: pick another.'
+      : until && every !== 'once' && every !== 'paycheck' && until < start ? 'It ends before it starts: pick a later end, or none.' : '';
     setProblem(wrong);
     if (wrong) return;
     const p: finance.Payment = { id: x?.id || '', name: name.trim(), amount: num(amount), estimate, kind, institution: brand || undefined,
-      schedule: { every, start, day2: every === 'twice a month' ? num(day2) : undefined, person: every === 'paycheck' ? person : undefined },
+      schedule: { every, start, day2: every === 'twice a month' ? num(day2) : undefined, person: every === 'paycheck' ? person : undefined, until: until && every !== 'once' ? until : undefined },
       // From someone outside: out of none of the household's accounts, into checking unless another is picked.
       ...(comesIn ? { payer: payer.trim(), to: to && to !== checking ? to : undefined } : { from: from === checking ? undefined : from || undefined, to: to || undefined, card: card || undefined }),
       type: kind === 'subscriptions' && type ? type : undefined };
@@ -412,7 +416,7 @@ function PaymentForm(props: EditProps) {
           <option value="">{suggested ? `${subTypeName(suggested)} (from its ${brand && brand !== 'none' ? 'logo' : 'name'})` : 'Other (pick one)'}</option>
           {subTypes.map(([v, t]) => <option key={v} value={v}>{t}</option>)}
         </select></Field>}
-        <ScheduleFields every={every} setEvery={setEvery} start={start} setStart={setStart} day2={day2} setDay2={setDay2} startLabel={x ? 'Starting' : 'Next on'} people={plan.people} person={person} setPerson={setPerson} />
+        <ScheduleFields every={every} setEvery={setEvery} start={start} setStart={setStart} day2={day2} setDay2={setDay2} startLabel={x ? 'Starting' : 'Next on'} people={plan.people} person={person} setPerson={setPerson} until={until} setUntil={setUntil} />
         {comesIn
           ? <AccountSelect label="Comes into" value={to || checking} set={setTo} accounts={accounts.filter((a) => !owed(a.kind) && !held(a.kind))} none={accounts.length ? undefined : 'Checking'} />
           : <>

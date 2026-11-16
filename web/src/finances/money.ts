@@ -146,6 +146,14 @@ export const ordinal = (n: number): string => n + (n % 10 === 1 && n !== 11 ? 's
 
 /** How often, in words: "Monthly on the 1st", "Every other Friday", "With each of Alex's paychecks". */
 export function scheduleText(s: finance.Schedule, L?: Lookup): string {
+  const base = scheduleBase(s, L);
+  if (!base || !s?.until || s.every === 'once') return base;
+  // One that ends: until its last day, or that it has.
+  const year = s.until.slice(0, 4) !== todayISO().slice(0, 4) ? `, ${s.until.slice(0, 4)}` : '';
+  return `${base} · ${s.until < todayISO() ? 'ended' : 'until'} ${dayShort(s.until)}${year}`;
+}
+
+function scheduleBase(s: finance.Schedule, L?: Lookup): string {
   if (s?.every === 'paycheck') {
     const who = L?.person[s.person]?.name;
     return who ? `With each of ${who}'s paychecks` : 'With each paycheck';
@@ -171,6 +179,8 @@ export function scheduleText(s: finance.Schedule, L?: Lookup): string {
  * anyone's lands in checking (two on a day count twice here, a little high).
  */
 export function perMonth(s: finance.Schedule, people?: finance.Earner[], checking?: string): number {
+  // One that has ended comes no more: nothing a month.
+  if (s?.until && s.until < todayISO()) return 0;
   if (s?.every === 'paycheck' && !s.person) return (people || []).filter((e) => !e.account || e.account === checking).reduce((t, e) => t + perMonth(e.schedule), 0);
   if (s?.every === 'paycheck') return perMonth((people || []).find((e) => e.id === s.person)?.schedule);
   return ({ week: 52 / 12, '2 weeks': 26 / 12, 'twice a month': 2, month: 1, '3 months': 1 / 3, year: 1 / 12 })[s?.every] || 0;

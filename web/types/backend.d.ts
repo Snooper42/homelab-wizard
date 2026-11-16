@@ -826,6 +826,7 @@ declare namespace finance {
     accounts: finance.Account[];
     payments: finance.Payment[];
     cushion: number;
+    worthFrom?: string;
     updated?: string;
     currency?: string;
     rates?: Record<string, number>;
@@ -877,6 +878,7 @@ declare namespace finance {
     start: string;
     day2?: number;
     person?: string;
+    until?: string;
   }
   interface Split {
     category: string;
@@ -926,6 +928,8 @@ declare namespace finance {
     days: finance.Day[];
     later?: finance.Day[];
     worth: finance.Point[];
+    worthEstimated?: finance.Point[];
+    worthBack?: finance.WorthBack[];
     next: Record<string, string>;
     last?: Record<string, string>;
     dues?: Record<string, string[]>;
@@ -970,6 +974,14 @@ declare namespace finance {
     start: number;
     steps: finance.Step[];
     result: number;
+  }
+  interface WorthBack {
+    account: string;
+    start: number;
+    how: string;
+    lowest: number;
+    lowestOn?: string;
+    ends?: Record<string, number>;
   }
 }
 

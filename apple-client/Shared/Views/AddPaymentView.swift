@@ -22,6 +22,9 @@ struct AddPaymentView: View {
     @State private var often = "month"
     @State private var start = Date()
     @State private var day2 = 15
+    /// It ends (a lease), on endDate: none after it.
+    @State private var ends = false
+    @State private var endDate = Date()
     @State private var from = ""
     @State private var into = ""
     @State private var saving = false
@@ -44,6 +47,7 @@ struct AddPaymentView: View {
         var p = NewPayment(name: name, amount: amount ?? 0, every: withPaychecks ? "paycheck" : often,
                            start: FinancePlanEdit.todayString(start), kind: kind)
         if often == "twice a month" { p.day2 = day2 }
+        if ends, often != "once" { p.until = FinancePlanEdit.todayString(endDate) }
         if withPaychecks { p.person = String(often.dropFirst("paycheck:".count)) }
         if comesIn {
             p.payer = payer
@@ -112,6 +116,13 @@ struct AddPaymentView: View {
                     if often == "twice a month" {
                         Stepper(value: $day2, in: 1...31) {
                             LabeledContent("And on day") { Text("\(day2)").monospacedDigit() }
+                        }
+                    }
+                    // One that ends (a lease, a loan's last payment): none after it.
+                    if often != "once" {
+                        Toggle("It Ends", isOn: $ends)
+                        if ends {
+                            DatePicker("Ends", selection: $endDate, in: (withPaychecks ? Date.distantPast : start)..., displayedComponents: .date)
                         }
                     }
                 } header: {

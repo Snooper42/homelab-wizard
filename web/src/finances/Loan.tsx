@@ -8,13 +8,13 @@
 // one takes it off), the same payee's next ones offered to link by
 // themselves, and Link a payment… for any other.
 import { useState } from 'preact/hooks';
-import { Rows } from '../parts/Row';
+import { Row, Rows } from '../parts/Row';
 import { Amount } from './ui/Amount';
 import { Widget } from './ui/Widget';
 import { TxRow } from './widgets/Latest';
 import { payoffWords } from './widgets/Loans';
 import { alike } from './importData';
-import { allPayments, dayShort, type Lookup, money, monthName } from './money';
+import { allPayments, dayShort, type Lookup, money, monthName, scheduleText } from './money';
 
 export interface LoanProps {
   v: finance.View;
@@ -23,12 +23,29 @@ export interface LoanProps {
   a: finance.Account;
   /** Saves the ledger with a change; none on a phone allowed only to look. */
   saveLedger?: (l: finance.Ledger) => Promise<boolean>;
+  /** Saves the plan (a payment that pays this loan); none on a phone allowed only to look. */
+  keepPlan?: (plan: finance.Plan) => Promise<boolean>;
+}
+
+/**
+ * The plan's payments that may well pay this loan though none says so
+ * (the owner's Mortgage, Nov 16: its transactions linked to it, the loan's
+ * page saying nothing pays it): no account they go into, not money in or a
+ * card's payoff, and a home, car or loan payment, or named like the loan;
+ * the ones with transactions linked to them first.
+ */
+export function mayPay(plan: finance.Plan, a: finance.Account, ledger: finance.Ledger | null): finance.Payment[] {
+  const used = new Set((ledger?.transactions || []).map((t) => t.payment).filter(Boolean));
+  const name = a.name.toLowerCase();
+  return (plan.payments || [])
+    .filter((x) => !x.to && !x.payer && !x.card && (['loans', 'home', 'car'].includes(x.kind) || alike(x.name, a.name) || name.includes(x.name.toLowerCase()) || x.name.toLowerCase().includes(name)))
+    .sort((x, y) => Number(used.has(y.id)) - Number(used.has(x.id)) || x.name.localeCompare(y.name));
 }
 
 /** What a linked transaction paid over its planned payment, when it's more than a cent. */
 const overOf = (t: finance.Transaction, x: finance.Payment | undefined) => (x ? Math.max(0, Math.round((Math.abs(t.amount) - x.amount) * 100) / 100) : 0);
 
-export function LoanSection({ v, L, ledger, a, saveLedger }: LoanProps) {
+export function LoanSection({ v, L, ledger, a, saveLedger, keepPlan }: LoanProps) {
   const [busy, setBusy] = useState(false);
   const [picking, setPicking] = useState(false);
   const p = (v.loans || []).find((x) => x.account === a.id);
@@ -68,7 +85,21 @@ export function LoanSection({ v, L, ledger, a, saveLedger }: LoanProps) {
       </Widget>
       <Widget title="Payments linked to this loan" span="all" kind="fx-loanlinked"
         actions={saveLedger && into.length ? <button class="small" aria-expanded={picking} onClick={() => setPicking(!picking)}>Link a payment…</button> : undefined}>
-        <p class="fx-sub fx-lead">{into.length ? `Each one counts as paying ${into[0].name}. Link one, and the same payee's next ones are offered here.` : 'No payment in the plan goes to this loan: add one in Plan › Recurring, then link what pays it.'}</p>
+        <p class="fx-sub fx-lead">{into.length ? `Each one counts as paying ${into[0].name}. Link one, and the same payee's next ones are offered here.` : 'No payment in the plan goes to this loan yet.'}</p>
+        {!into.length && keepPlan && (() => {
+          const maybe = mayPay(v.plan, a, ledger);
+          const pays = async (id: string) => {
+            if (busy) return;
+            setBusy(true);
+            await keepPlan({ ...v.plan, payments: (v.plan.payments || []).map((x) => (x.id === id ? { ...x, to: a.id } : x)) });
+            setBusy(false);
+          };
+          return maybe.length
+            ? <div class="fx-loanoffer"><p class="fx-sub"><strong>Does one of these pay it?</strong> Then what's linked to it counts here, and Finances reads the loan down with it.</p>
+              <Rows kind="fx-rows">{maybe.slice(0, 5).map((x) => <Row key={x.id} title={x.name} sub={`${money(x.amount)} · ${scheduleText(x.schedule, L)}`}
+                end={<button type="button" class="small fx-primary" disabled={busy} onClick={() => pays(x.id)}>It pays this loan</button>} />)}</Rows></div>
+            : <p class="fx-say">Add the payment that pays it in Plan › Recurring, with this loan as where it goes, then link what pays it.</p>;
+        })()}
         {picking && <div class="fx-loanpick">
           <p class="fx-sub">Money out not linked to anything yet, newest first:</p>
           {pick.length ? <Rows kind="fx-rows">{pick.map((t) => <TxRow key={t.id} t={t} v={v} L={L} end={<button class="small" disabled={busy} onClick={() => link(t.id)}>Link</button>} />)}</Rows> : <p class="fx-say">Nothing to link.</p>}

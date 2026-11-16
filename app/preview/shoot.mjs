@@ -7297,7 +7297,8 @@ const smokes = [
     await page.fill('#finSheet label:has-text("Name") input', 'To savings');
     await page.fill('#finSheet label:has-text("Amount") input', '500');
     await page.selectOption('#finSheet label:has-text("How often") select', 'paycheck:alex');
-    if (await page.isVisible('#finSheet input[type=date]')) throw new Error('asks for a start date with each paycheck');
+    // Its start: none with each paycheck (an end, "Ends (if it does)", may be).
+    if (await page.isVisible('#finSheet input[type=date][name=start]')) throw new Error('asks for a start date with each paycheck');
     await page.selectOption('#finSheet label:has-text("Goes into") select', 'sav');
     await page.click('#finSheet button:text-is("Save")');
     await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
@@ -10016,11 +10017,26 @@ const smokes = [
     await page.fill('#finSheet label:has-text("Name") input', 'Rent');
     await page.fill('#finSheet label:has-text("Amount") input', '900');
     await page.selectOption('#finSheet label:has-text("How often") select', 'twice a month');
-    await page.fill('#finSheet input[type=date]', '2026-11-15');
+    await page.fill('#finSheet input[type=date][name=start]', '2026-11-15');
     await page.fill('#finSheet label:has-text("And on day") input', '15');
     await page.click('#finSheet button:text-is("Save")');
     await page.waitForSelector('#finSheet .formerr:has-text("the first one again")', { timeout: 5000 });
     if (await page.evaluate(() => window.__MOCK.financesSaved)) throw new Error('saved the 15th and the 15th');
+  } },
+  { name: 'Finances: a payment that ends: before it starts says so and is not saved, then on its day it is', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .toolbar button:text-is("Add a payment")', { timeout: 5000 });
+    await page.fill('#finSheet label:has-text("Name") input', 'Car lease');
+    await page.fill('#finSheet label:has-text("Amount") input', '389');
+    await page.fill('#finSheet input[type=date][name=start]', '2026-12-15');
+    await page.fill('#finSheet input[type=date][name=until]', '2026-11-15');
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet .formerr:has-text("It ends before it starts")', { timeout: 5000 });
+    if (await page.evaluate(() => window.__MOCK.financesSaved)) throw new Error('saved one that ends before it starts');
+    await page.fill('#finSheet input[type=date][name=until]', '2027-01-15');
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForFunction(() => window.__MOCK.financesSaved?.length === 1, null, { timeout: 5000 });
+    const saved = await page.evaluate(() => window.__MOCK.financesSaved[0].payments.find((x) => x.name === 'Car lease'));
+    if (saved?.schedule?.until !== '2027-01-15') throw new Error('the end not saved: ' + JSON.stringify(saved?.schedule));
   } },
   { name: 'Finances: what is taken as done since the balances were typed in can be marked Not yet', screen: 'finances', mock: { finances: since }, run: async (page) => {
     await page.waitForSelector('.fx-since li:has-text("Jordan\'s paycheck"):has-text("since the balance") [role=radio][aria-checked=true]:text-is("In")', { timeout: 5000 });

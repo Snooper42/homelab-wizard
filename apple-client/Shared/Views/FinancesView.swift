@@ -1562,7 +1562,7 @@ private struct FinanceRecurringPage: View {
                     .font(.body.weight(.medium))
                     .foregroundStyle(Theme.ink)
                     .lineLimit(1)
-                Text(verbatim: [p.schedule?.words, item.next.map { "next \(Self.when($0, view))" }, into ? p.payer.map { "from \($0)" } : nil]
+                Text(verbatim: [p.schedule?.words, p.schedule?.endWords(today: view.todayText), item.next.map { "next \(Self.when($0, view))" }, into ? p.payer.map { "from \($0)" } : nil]
                     .compactMap { $0 }.joined(separator: " · "))
                     .font(.caption)
                     .foregroundStyle(Theme.secondaryInk)
@@ -1736,15 +1736,26 @@ struct TrendChart: View {
         let up = (series.last?.value ?? 0) >= (series.first?.value ?? 0)
         let tint = up ? Theme.accent : Theme.danger
         let point = TrendChart.point(in: series, at: picked)
+        let kept = series.filter { !$0.estimated }
+        // Worked back before the first balance (Show net worth from): dashed, unfilled, meeting the kept line.
+        let back = series.filter(\.estimated) + (kept.first.map { [$0] } ?? [])
         Chart {
-            ForEach(series, id: \.date) { p in
+            ForEach(kept, id: \.date) { p in
                 AreaMark(x: .value("Day", p.date), yStart: .value("Low", low), yEnd: .value("Value", p.value))
                     .foregroundStyle(LinearGradient(colors: [tint.opacity(0.22), tint.opacity(0)], startPoint: .top, endPoint: .bottom))
                     .interpolationMethod(.monotone)
-                LineMark(x: .value("Day", p.date), y: .value("Value", p.value))
+                LineMark(x: .value("Day", p.date), y: .value("Value", p.value), series: .value("Part", "kept"))
                     .foregroundStyle(tint)
                     .lineStyle(StrokeStyle(lineWidth: 2.4, lineCap: .round, lineJoin: .round))
                     .interpolationMethod(.monotone)
+            }
+            if back.count > 1 {
+                ForEach(back, id: \.date) { p in
+                    LineMark(x: .value("Day", p.date), y: .value("Value", p.value), series: .value("Part", "worked back"))
+                        .foregroundStyle(tint.opacity(0.7))
+                        .lineStyle(StrokeStyle(lineWidth: 2, lineCap: .round, dash: [4, 4]))
+                        .interpolationMethod(.monotone)
+                }
             }
             if let point {
                 RuleMark(x: .value("Day", point.date))

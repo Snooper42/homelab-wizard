@@ -1849,6 +1849,11 @@ button.fx-monthbar:focus-visible { outline:2px solid var(--fin-accent); outline-
 .fx-areafill { fill:var(--fin-area); }
 .fx-line { fill:none; stroke:var(--fin-accent); stroke-width:2.5; stroke-linejoin:round; stroke-linecap:round; }
 .fx-line.ahead { stroke-dasharray:5 5; stroke-width:2; }
+.fx-line.behind { stroke-dasharray:3 4; opacity:.7; } /* net worth worked back before the first balance */
+.fx-goesback { margin-top:12px; display:grid; gap:6px; }
+.fx-goesbackform { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+.fx-goesbackform input { margin-left:6px; }
+.fx-goesbackhow summary { cursor:pointer; color:var(--muted); font-size:13px; }
 .fx-mark { position:absolute; width:11px; height:11px; margin:-5.5px 0 0 -5.5px; border-radius:50%; background:var(--fx-hue); box-shadow:0 0 0 2.5px var(--panel); pointer-events:none; }
 .fx-cross { position:absolute; top:0; bottom:0; border-left:1px dashed var(--line-strong); pointer-events:none; }
 .fx-pin { position:absolute; width:12px; height:12px; margin:-6px 0 0 -6px; border-radius:50%; background:var(--panel); border:2.5px solid var(--fin-accent); pointer-events:none; }

@@ -32,6 +32,15 @@ type Schedule struct {
 	Start  string `json:"start"` // YYYY-MM-DD
 	Day2   int    `json:"day2,omitempty"`
 	Person string `json:"person,omitempty"`
+	// Until is its last day (YYYY-MM-DD), for one that ends: a lease from
+	// Jan 2024 to Jan 2027 comes up to it and never after. None: it goes on.
+	Until string `json:"until,omitempty"`
+}
+
+// until is the last day it may come, and whether it has one.
+func (s Schedule) until(loc *time.Location) (time.Time, bool) {
+	d, err := day(s.Until, loc)
+	return d, err == nil
 }
 
 func (s Schedule) check(what string) error {
@@ -40,7 +49,7 @@ func (s Schedule) check(what string) error {
 	}
 	if s.Every == Paycheck {
 		// No one named: with each paycheck into checking, whoever is paid.
-		return nil
+		return s.checkUntil(what)
 	}
 	if _, err := day(s.Start, time.UTC); err != nil {
 		return fmt.Errorf("%s: no start date", what)
@@ -50,6 +59,21 @@ func (s Schedule) check(what string) error {
 	}
 	if start, _ := day(s.Start, time.UTC); s.Every == TwiceMonth && s.Day2 == start.Day() {
 		return fmt.Errorf("%s: twice a month needs a second day that is not the first", what)
+	}
+	return s.checkUntil(what)
+}
+
+// checkUntil: an end is a day, and not before the start.
+func (s Schedule) checkUntil(what string) error {
+	if s.Until == "" {
+		return nil
+	}
+	until, ok := s.until(time.UTC)
+	if !ok {
+		return fmt.Errorf("%s: no end date %q", what, s.Until)
+	}
+	if start, err := day(s.Start, time.UTC); err == nil && until.Before(start) {
+		return fmt.Errorf("%s: ends before it starts", what)
 	}
 	return nil
 }
@@ -84,9 +108,13 @@ func (s Schedule) Back(from time.Time) Schedule {
 }
 
 // Dates are the days it comes from from through to, both included, never
-// before Start. With each paycheck it has none of its own: Plan.Dates has them.
+// before Start nor after Until. With each paycheck it has none of its own:
+// Plan.Dates has them.
 func (s Schedule) Dates(from, to time.Time) []time.Time {
 	start, err := day(s.Start, from.Location())
+	if until, ok := s.until(from.Location()); ok && until.Before(to) {
+		to = until
+	}
 	if err != nil || to.Before(from) {
 		return nil
 	}

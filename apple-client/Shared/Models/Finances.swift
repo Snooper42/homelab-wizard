@@ -132,9 +132,12 @@ struct FinancesPlanView: Decodable, Sendable, Equatable {
     /// #482). Nil without a checking account, or no paycheck ahead.
     let checkingNow: FinanceWorking?
     let afterPay: FinanceWorking?
+    /// Net worth each day before the first balance kept, worked back from it
+    /// through the transactions (Show net worth from, `View.WorthEstimated`).
+    let worthEstimated: [FinancePoint]
 
     enum CodingKeys: String, CodingKey {
-        case today, checking, start, periods, plan, readOnly, budgets, goals, loans, categories, since, checkingNow, afterPay
+        case today, checking, start, periods, plan, readOnly, budgets, goals, loans, categories, since, checkingNow, afterPay, worthEstimated
     }
 
     init(from decoder: Decoder) throws {
@@ -154,6 +157,7 @@ struct FinancesPlanView: Decodable, Sendable, Equatable {
         since = ((try? c.decodeIfPresent([FinancePast].self, forKey: .since)) ?? nil) ?? []
         checkingNow = (try? c.decodeIfPresent(FinanceWorking.self, forKey: .checkingNow)) ?? nil
         afterPay = (try? c.decodeIfPresent(FinanceWorking.self, forKey: .afterPay)) ?? nil
+        worthEstimated = ((try? c.decodeIfPresent([FinancePoint].self, forKey: .worthEstimated)) ?? nil) ?? []
     }
 
     /// The keys waiting now: what `Plan.waiting` should hold, as the computer reads it.
@@ -876,6 +880,8 @@ struct FinancePayoff: Decodable, Sendable, Equatable, Identifiable {
 struct NetWorthPoint: Hashable, Sendable {
     let date: Date
     let value: Double
+    /// Worked back before the first balance kept (Show net worth from), not kept: drawn dashed.
+    var estimated = false
 }
 
 extension FinancesPlanView {
@@ -902,6 +908,15 @@ extension FinancesPlanView {
             NetWorthPoint(date: pair.1, value: accounts.reduce(0) { $0 + worth(of: $1, on: pair.0) })
         }
         out.append(NetWorthPoint(date: today, value: accounts.reduce(0) { $0 + worth(of: $1) }))
+        // Every account's (net worth), the days worked back before the first kept come first, dashed.
+        if accounts.count == plan.accounts.count, !worthEstimated.isEmpty {
+            let firstKept = kept.first?.0 ?? todayText
+            let back = worthEstimated.compactMap { p -> NetWorthPoint? in
+                guard p.dateText < firstKept, let date = p.date, date >= from else { return nil }
+                return NetWorthPoint(date: date, value: p.amount, estimated: true)
+            }
+            out = back + out
+        }
         return out
     }
 
@@ -1103,6 +1118,21 @@ struct FinanceSchedule: Decodable, Sendable, Equatable {
     /// once, week, 2 weeks, twice a month, month, 3 months, year, paycheck.
     let every: String
     let start: String?
+    /// Its last day, for one that ends (a lease): none after it (`Schedule.Until`).
+    var until: String? = nil
+
+    /// "until Jan 15, 2027", or "ended Jan 15, 2027" once it has; nil for one that goes on.
+    func endWords(today: String) -> String? {
+        guard let until, !until.isEmpty, every != "once", let day = LocalDay.parse(until) else { return nil }
+        let words = day.formatted(.dateTime.month(.abbreviated).day().year())
+        return (until < today ? "ended " : "until ") + words
+    }
+
+    /// How many times a month it comes now: none once it has ended.
+    func timesAMonth(today: String) -> Double? {
+        if let until, !until.isEmpty, until < today { return 0 }
+        return perMonth
+    }
 
     /// "Monthly", "Every 2 weeks", "Each paycheck".
     var words: String {
@@ -1179,7 +1209,7 @@ extension FinancesPlanView {
                 : !(p.to ?? "").isEmpty ? .savings
                 : (p.kind == "subscriptions" || p.kind == "subscription") ? .subscriptions
                 : .bills
-            let monthly: Double? = (p.card ?? "").isEmpty ? schedule.perMonth.flatMap { f in p.amount.map { $0 * f } } : nil
+            let monthly: Double? = (p.card ?? "").isEmpty ? schedule.timesAMonth(today: today).flatMap { f in p.amount.map { $0 * f } } : nil
             return RecurringItem(payment: p, sort: sort, next: nextOf[p.id], monthly: monthly)
         }
         return items.sorted {
