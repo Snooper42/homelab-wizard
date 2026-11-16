@@ -54,4 +54,32 @@ import Testing
         let empty = try view("[]")
         #expect(LeftUntil(empty) == nil)
     }
+
+    /// The money widget's words (the owner's pick, Nov 16: words only): on
+    /// track until the day, or under the cushion or short on a weekday, and
+    /// the next bill's day, never an amount. Made-up figures.
+    @Test func theMoneyWidgetSaysItInWordsOnly() throws {
+        let calendar = Calendar(identifier: .gregorian)
+        let today = try #require(LocalDay.parse("2026-10-30"))
+        let tomorrow = try #require(LocalDay.parse("2026-10-31"))
+        // No cushion to dip under: on track until the paycheck's period ends.
+        let fine = MoneyLine.words(LeftUntil(try view("[\(now),\(next)]", cushion: 0)), nextBill: tomorrow, today: today, calendar: calendar, locale: us)
+        #expect(fine?.title == "On track until Nov 19" && fine?.warns == false && fine?.next == "Next bill tomorrow")
+        // Under the $500 cushion on Thu, Nov 5.
+        let low = MoneyLine.words(LeftUntil(try view("[\(now),\(next)]")), nextBill: today, today: today, calendar: calendar, locale: us)
+        #expect(low?.title == "Under your cushion Thu" && low?.warns == true && low?.next == "Next bill today")
+        // Short: says so, and when.
+        let short = now.replacingOccurrences(of: "\"left\":407.91", with: "\"left\":-120")
+        let shortLine = MoneyLine.words(LeftUntil(try view("[\(short),\(next)]")), nextBill: LocalDay.parse("2026-11-03"), today: today, calendar: calendar, locale: us)
+        #expect(shortLine?.title == "Short on Thu" && shortLine?.next == "Next bill Tue")
+        // Far off: the date; none ahead: no line about it; no periods: no words at all.
+        let far = MoneyLine.words(LeftUntil(try view("[\(now),\(next)]", cushion: 0)), nextBill: LocalDay.parse("2026-11-20"), today: today, calendar: calendar, locale: us)
+        #expect(far?.next == "Next bill Nov 20")
+        #expect(MoneyLine.words(LeftUntil(try view("[\(now),\(next)]", cushion: 0)), nextBill: nil, today: today, calendar: calendar, locale: us)?.next == nil)
+        #expect(MoneyLine.words(LeftUntil(try view("[]")), nextBill: tomorrow, today: today) == nil)
+        // Never a figure in it.
+        for line in [fine, low, shortLine, far].compactMap({ $0 }) {
+            #expect(!(line.title + (line.next ?? "")).contains("$"))
+        }
+    }
 }

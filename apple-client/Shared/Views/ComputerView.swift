@@ -20,6 +20,7 @@ struct ComputerView: View {
     @Environment(AppActionsViewModel.self) private var actions
     /// The widget, on this device (WidgetSummaryStore).
     @State private var widgetOn = WidgetSummaryStore.isEnabled
+    @State private var moneyWidgetOn = MoneyLineStore.isEnabled
     /// Who notifies this device of alerts (AlertNotifications).
     @State private var alertSource = AlertNotifications().source
     @State private var alertSourceProblem: String?
@@ -232,6 +233,10 @@ struct ComputerView: View {
                 Toggle(isOn: Binding(get: { widgetOn }, set: { on in Task { await setWidget(on) } })) {
                     IconTileLabel(title: widgetName, systemImage: "square.grid.2x2", tint: TileColour.blue)
                 }
+                // Words only, never an amount (the owner's pick, Nov 16).
+                Toggle(isOn: Binding(get: { moneyWidgetOn }, set: { on in Task { await setMoneyWidget(on) } })) {
+                    IconTileLabel(title: "Money widget", systemImage: "dollarsign.square", tint: TileColour.green)
+                }
             }
             if actions.computerAnswers("AlertLog") {
                 Picker(selection: Binding(get: { alertSource }, set: { source in Task { await setAlertSource(source) } })) {
@@ -252,6 +257,9 @@ struct ComputerView: View {
                 #if os(iOS)
                 Text(verbatim: coordinator.lockAfter.words)
                 #endif
+                if WidgetSummaryStore.isAvailable {
+                    Text("The money widget says how Finances stands in words, such as On track until Nov 19 and Next bill tomorrow, never an amount. Like the other widget it shows without Face ID; it fills in the next time Finances is read.")
+                }
                 if actions.computerAnswers("AlertLog") {
                     switch alertSource {
                     case .ntfy:
@@ -313,6 +321,20 @@ struct ComputerView: View {
         }
         AlertNotifications().source = source
         alertSource = source
+    }
+
+    /// The money widget shows words without unlocking ("On track until Nov 19",
+    /// "Next bill tomorrow", never an amount), so turning it on asks first;
+    /// off clears them at once. Its words are written the next time Finances is read.
+    private func setMoneyWidget(_ on: Bool) async {
+        if on {
+            guard await coordinator.authorizeChange(reason: "Show how Finances stands, in words, on the money widget.") else { return }
+            MoneyLineStore.isEnabled = true
+        } else {
+            MoneyLineStore.isEnabled = false
+        }
+        moneyWidgetOn = MoneyLineStore.isEnabled
+        WidgetSummaryStore.reloadWidget()
     }
 
     /// Turning the widget on lets a line show without unlocking, so it asks

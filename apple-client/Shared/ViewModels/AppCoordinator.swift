@@ -352,6 +352,7 @@ final class AppCoordinator {
         serverName = nil
         // The widget's line goes too, and the widget is off until turned on again.
         WidgetSummaryStore.isEnabled = false
+        MoneyLineStore.isEnabled = false
         WidgetSummaryStore.reloadWidget()
         route = .pairing
     }

@@ -118,6 +118,14 @@ struct FinancesView: View {
                 await finances.privateComeHome()
             }
         }
+        // The money widget's words, in words only, each time Finances is read (only once it's turned on).
+        .onChange(of: finances.plan, initial: true) { _, view in
+            guard let view, MoneyLineStore.isEnabled,
+                  let line = MoneyLine.words(LeftUntil(view), nextBill: Self.upcomingBills(view, limit: 1).first?.date,
+                                             today: view.today ?? Date())
+            else { return }
+            if MoneyLineStore.save(line) { WidgetSummaryStore.reloadWidget() }
+        }
         // The latest transactions, once there's a plan to show them with.
         .task(id: finances.plan == nil) {
             if finances.plan != nil, finances.ledger == nil { await finances.loadLedger() }

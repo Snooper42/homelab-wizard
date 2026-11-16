@@ -62,3 +62,30 @@ struct LeftUntil: Sendable, Equatable {
         date.formatted(Date.FormatStyle(locale: locale).month(.abbreviated).day())
     }
 }
+
+extension MoneyLine {
+    /// The words for the money widget from what's left until payday and the
+    /// next bill's day: never an amount (`LeftUntil`'s own words carry them).
+    static func words(_ left: LeftUntil?, nextBill: Date?, today: Date, at: Date = Date(),
+                      calendar: Calendar = .current, locale: Locale = .current) -> MoneyLine? {
+        guard let left else { return nil }
+        let weekday = { (d: Date) in d.formatted(Date.FormatStyle(locale: locale).weekday(.abbreviated)) }
+        let monthDay = { (d: Date) in d.formatted(Date.FormatStyle(locale: locale).month(.abbreviated).day()) }
+        let title: String
+        if let low = left.low {
+            let on = low.day.map { " " + weekday($0) } ?? ""
+            title = low.short ? "Short on\(on.isEmpty ? " payday" : on)" : "Under your cushion\(on)"
+        } else if let day = left.day {
+            title = "On track until \(monthDay(day))"
+        } else {
+            title = "On track"
+        }
+        var next: String?
+        if let bill = nextBill {
+            let start = calendar.startOfDay(for: today)
+            let days = calendar.dateComponents([.day], from: start, to: calendar.startOfDay(for: bill)).day ?? 0
+            next = "Next bill " + (days <= 0 ? "today" : days == 1 ? "tomorrow" : days < 7 ? weekday(bill) : monthDay(bill))
+        }
+        return MoneyLine(title: title, warns: left.low != nil, next: next, at: at)
+    }
+}
