@@ -42,6 +42,19 @@ struct IntentsTests {
         #expect(!CheckHomelabIntent.answer(WidgetSummary(needALook: 3, at: now), enabled: true, available: true).contains("Jellyfin"))
     }
 
+    /// "Am I on track?" says the money widget's words, never an amount (Nov 16).
+    @Test func whatSiriSaysAboutMoney() {
+        let now = Date()
+        #expect(CheckMoneyIntent.answer(nil, enabled: false, available: false) == "Open Finances in Homelab to see how you stand.")
+        #expect(CheckMoneyIntent.answer(nil, enabled: false, available: true).contains("turn on the money widget"))
+        let line = MoneyLine(title: "On track until Nov 19", warns: false, next: "Next bill tomorrow", at: now)
+        let said = CheckMoneyIntent.answer(line, enabled: true, available: true)
+        #expect(said.hasPrefix("On track until Nov 19, as of ") && said.hasSuffix(" Next bill tomorrow."))
+        #expect(!said.contains("$"))
+        let none = MoneyLine(title: "Under your cushion Thu", warns: true, next: nil, at: now)
+        #expect(CheckMoneyIntent.answer(none, enabled: true, available: true).hasSuffix("."))
+    }
+
     @Test func theActionsSiriOffers() {
         #expect(IntentAppAction.allCases.map(\.action) == [.restart, .start, .stop])
     }
