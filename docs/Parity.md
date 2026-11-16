@@ -193,7 +193,7 @@ Each phone sees Finances at the level it was paired with: none, the money card, 
 |---|---|---|---|---|---|
 | Links into the app (`homelab://app/<id>`, `homelab://finances/<page>`, `?do=restart`) | — | on purpose: a web page has its own address | yes; a link never changes anything by itself | yes: the split view follows them as the iPhone's tabs do (`IntentInbox.outcome`, `landing`) | |
 | A widget | the menu bar or tray | on purpose: add it to the Home Screen as a web app | yes, the Home Screen and the Lock Screen (with `HOMELAB_WIDGET`): health, and a money widget in words only (*On track until Nov 19*, *Next bill tomorrow*, never an amount: `MoneyLine`), each off until turned on | yes | |
-| Siri and Shortcuts (is everything running, start, stop, restart, open an app) | — | on purpose | yes | yes | |
+| Siri and Shortcuts (is everything running, am I on track, start, stop, restart, open an app) | — | on purpose | yes (*Am I on track?* says the money widget's words, never an amount, `CheckMoneyIntent`) | yes | |
 
 ## Keyboard and moving around
 

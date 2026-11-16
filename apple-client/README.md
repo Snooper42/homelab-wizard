@@ -52,7 +52,7 @@ under Settings › This Device. It needs an App Group, which a free Apple ID
 may not be able to sign; if the build stops there, run the script again
 without it.
 
-**The money widget** (optional, beside it; the owner's pick, Nov 16: words only): how Finances stands until the next payday and when the next bill comes, *On track until Nov 19*, *Under your cushion Thu*, *Next bill tomorrow*, never an amount, a payee or anything from a transaction (`MoneyLine`, `MoneyLineStore`). Off until turned on in Settings › This iPhone (Face ID first); written by the unlocked app each time Finances is read, in the same App Group, and gone when it's turned off or the phone is unpaired. On the Home Screen (small) and the Lock Screen (a line or two, or above the clock).
+**The money widget** (optional, beside it; the owner's pick, Nov 16: words only): how Finances stands until the next payday and when the next bill comes, *On track until Nov 19*, *Under your cushion Thu*, *Next bill tomorrow*, never an amount, a payee or anything from a transaction (`MoneyLine`, `MoneyLineStore`). Off until turned on in Settings › This iPhone (Face ID first); written by the unlocked app each time Finances is read, in the same App Group, and gone when it's turned off or the phone is unpaired. On the Home Screen (small) and the Lock Screen (a line or two, or above the clock). Siri's **Am I on track?** (and Shortcuts') says the same words once the phone is unlocked (`CheckMoneyIntent`).
 
 Each script says what's wrong and what to do when something isn't ready.
 The rest of this README is the detail.

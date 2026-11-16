@@ -206,6 +206,35 @@ struct AppActionIntent: AppIntent {
     }
 }
 
+/// "Am I on track?": the money widget's words (the owner's pick, Nov 16:
+/// words only), said by Siri once the device is unlocked. Never an amount.
+struct CheckMoneyIntent: AppIntent {
+    static var title: LocalizedStringResource { "Am I On Track?" }
+    static var description: IntentDescription {
+        IntentDescription("Says how Finances stands until payday and when the next bill comes, in words, as Homelab last read it. Never an amount.")
+    }
+    static var authenticationPolicy: IntentAuthenticationPolicy { .requiresAuthentication }
+
+    @MainActor
+    func perform() async throws -> some IntentResult & ProvidesDialog {
+        let answer = Self.answer(MoneyLineStore.load(),
+                                 enabled: MoneyLineStore.isEnabled,
+                                 available: WidgetSummaryStore.isAvailable)
+        return .result(dialog: "\(answer)")
+    }
+
+    /// The words Siri says: the money widget's, and when they were read.
+    static func answer(_ line: MoneyLine?, enabled: Bool, available: Bool) -> String {
+        guard available else { return "Open Finances in Homelab to see how you stand." }
+        guard enabled, let line else {
+            return "Open Finances in Homelab to see how you stand. To have me answer this without opening it, turn on the money widget in Homelab's Settings, under This Device."
+        }
+        let ago = line.at.formatted(.relative(presentation: .named, unitsStyle: .wide))
+        let next = line.next.map { " \($0)." } ?? ""
+        return "\(line.title), as of \(ago).\(next)"
+    }
+}
+
 struct HomelabShortcuts: AppShortcutsProvider {
     static var appShortcuts: [AppShortcut] {
         AppShortcut(
@@ -216,6 +245,15 @@ struct HomelabShortcuts: AppShortcutsProvider {
             ],
             shortTitle: "Is Everything Running?",
             systemImageName: "checkmark.circle"
+        )
+        AppShortcut(
+            intent: CheckMoneyIntent(),
+            phrases: [
+                "Am I on track in \(.applicationName)?",
+                "Check my money in \(.applicationName)",
+            ],
+            shortTitle: "Am I On Track?",
+            systemImageName: "dollarsign.circle"
         )
         AppShortcut(
             intent: AppActionIntent(),
