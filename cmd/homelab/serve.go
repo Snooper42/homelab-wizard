@@ -219,6 +219,12 @@ func watchdogHas(root, check string) bool {
 	return ok
 }
 
+// phoneCrash is what a phone hears of a crash: which part stopped and when.
+type phoneCrash struct {
+	Who  string    `json:"who"`
+	When time.Time `json:"when"`
+}
+
 // phoneMethods are the desktop app's methods a phone may call: reading
 // for every paired phone; starting, stopping, restarting, and backing up
 // for one allowed to make changes.
@@ -411,6 +417,21 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 		// logs, as on the computer, app.go's ExplainLogs): the log goes through phoneLog's redaction (every .env
 		// secret, then anything shaped like a password or token) and stays on the homelab. Not on a wall screen,
 		// which anyone walking past could set the model working with, nor a household member's phone (as Logs).
+		// When Homelab Wizard itself last stopped unexpectedly (the crash note
+		// on Status): who and when, nothing from the log. Not a member's phone
+		// (the homelab's, not their apps'), and nothing to a wall screen,
+		// where Share the Report isn't offered. Nil when there's none, or the
+		// computer's Status was told to leave it.
+		"LastCrash": read(func(ctx context.Context, _ []json.RawMessage) (any, error) {
+			if d, ok := companion.Caller(ctx); ok && d.Kiosk {
+				return nil, nil
+			}
+			c := core.LastCrash(root)
+			if c == nil {
+				return nil, nil
+			}
+			return phoneCrash{Who: c.Who, When: c.When}, nil
+		}),
 		"ExplainLogs": {Call: func(ctx context.Context, args []json.RawMessage) (any, []string, error) {
 			var id string
 			if len(args) > 0 {
