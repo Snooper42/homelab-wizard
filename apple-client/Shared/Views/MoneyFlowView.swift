@@ -14,11 +14,8 @@ struct MoneyFlowCard: View {
     @State private var month: String?
     @State private var width: CGFloat = 360
 
-    /// The ledger's months, none before Track from's.
-    private var months: [String] {
-        let from = finances.plan?.plan.trackFrom.map { String($0.prefix(7)) } ?? ""
-        return FinanceFlow.ledgerMonths(ledger).filter { $0 >= from }
-    }
+    /// The ledger's months from Track from on (`ledger` is counted from it as it's read).
+    private var months: [String] { FinanceFlow.ledgerMonths(ledger) }
     private var shownMonth: String {
         if let month { return month }
         var today = ""
@@ -69,7 +66,8 @@ struct MoneyFlowCard: View {
         .task(id: finances.wholeVersion) {
             guard let whole = finances.wholeView() else { return }
             view = await FinancesViewModel.wholeJSON(from: whole)
-            ledger = whole.ledger
+            // From Track from's day, not its whole month (a mid-month day).
+            ledger = FinanceFlow.counted(whole.ledger, from: finances.plan?.plan.trackFrom)
         }
     }
 
