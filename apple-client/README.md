@@ -28,6 +28,17 @@ working:
 ./apple-client/scripts/run-on-iphone.sh com.yourname
 ```
 
+**Each new version afterwards**: one command pulls main into this checkout and
+puts it on the phone, with the prefix used before (remembered, or read from
+the Xcode project the first run made). It pulls only a clean checkout of
+main, forward only. `--add-command` adds `homelab-phone`, the same from any
+folder; `HOMELAB_DEVICE="My iPad"` picks the iPad:
+
+```bash
+./apple-client/scripts/update-phone.sh
+./apple-client/scripts/update-phone.sh --add-command   # once; then: homelab-phone
+```
+
 **Paired devices**: list them, or remove ones that were never used:
 
 ```bash
@@ -56,7 +67,7 @@ apple-client/
 │   ├── Services/       APIClient, LiveEventManager, SSEParser, APIError, JSONCoding
 │   └── Security/       KeychainManager, BiometricAuthManager, SecureLog
 ├── Tests/              Swift Testing unit tests: parsing, validation, lossless edits, and the lock state machine (with fake keychain and authentication)
-└── scripts/            make-xcode-project.sh (the Xcode project, iPhone and iPad), run-on-iphone.sh, phone-address.sh (checks the phone's https address), phones.sh (list or remove paired devices), test-scripts.sh (runs them all against stand-ins for Xcode, the iPhone and the homelab; CI runs it)
+└── scripts/            make-xcode-project.sh (the Xcode project, iPhone and iPad), run-on-iphone.sh, update-phone.sh (each new version: pulls main, then run-on-iphone.sh with the prefix remembered), phone-address.sh (checks the phone's https address), phones.sh (list or remove paired devices), test-scripts.sh (runs them all against stand-ins for Xcode, the iPhone and the homelab; CI runs it)
 ```
 
 ## Where it fits

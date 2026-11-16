@@ -182,5 +182,43 @@ expect "Developer Mode off, found only by the build: says where to turn it on" b
 FAKE_BUILD_FAIL=1 run "$HERE/run-on-iphone.sh" com.example
 expect "a failed build shows the compiler's error" bash -c '[ "$0" = 1 ] && grep -q "cannot find x in scope" <<<"$1"' "$RC" "$OUT"
 
+echo "update-phone.sh"
+# A checkout of a stand-in origin's main, one commit behind it; run-on-iphone.sh a stand-in that says what it got.
+export GIT_AUTHOR_NAME=Test GIT_AUTHOR_EMAIL=test@example.invalid GIT_COMMITTER_NAME=Test GIT_COMMITTER_EMAIL=test@example.invalid
+ORIGIN="$WORK/origin.git" CO="$WORK/checkout" SEED="$WORK/seed"
+git init -q --bare -b main "$ORIGIN"
+git init -q -b main "$SEED" && echo one >"$SEED/f" && git -C "$SEED" add f && git -C "$SEED" commit -qm one && git -C "$SEED" push -q "$ORIGIN" main
+git clone -q "$ORIGIN" "$CO"
+echo two >"$SEED/f" && git -C "$SEED" commit -qam "two, the newest" && git -C "$SEED" push -q "$ORIGIN" main
+cat >"$WORK/run-stand-in" <<'EOF2'
+#!/bin/bash
+echo "run-on-iphone $*" >>"$CALLS"
+EOF2
+chmod +x "$WORK/run-stand-in"
+up() { HOMELAB_CHECKOUT="$CO" HOMELAB_RUN_SCRIPT="$WORK/run-stand-in" HOMELAB_SHELL_RC="$WORK/home/.zshrc" run "$HERE/update-phone.sh" "$@"; }
+up
+expect "no prefix given, saved or in a project: asks for it" bash -c '[ "$0" = 2 ] && grep -q "com.yourname" <<<"$1" && ! grep -q run-on-iphone "$2"' "$RC" "$OUT" "$CALLS"
+mkdir -p "$WORK/xcode/HomelabClient.xcodeproj"
+printf '\t\tPRODUCT_BUNDLE_IDENTIFIER = com.found.HomelabClient.Widget;\n\t\tPRODUCT_BUNDLE_IDENTIFIER = com.found.HomelabClient;\n' >"$WORK/xcode/HomelabClient.xcodeproj/project.pbxproj"
+up
+expect "the prefix from the Xcode project the first run made, after pulling main" bash -c '[ "$0" = 0 ] && grep -q "run-on-iphone com.found" "$1" && [ "$(cat "$2/f")" = two ] && grep -q "two, the newest" <<<"$3"' "$RC" "$CALLS" "$CO" "$OUT"
+expect "the prefix remembered" bash -c '[ "$(cat "$0/.config/homelab/phone-prefix")" = com.found ]' "$WORK/home"
+up com.given
+expect "a prefix given: used, and remembered for next time" bash -c 'grep -q "run-on-iphone com.given" "$0" && [ "$(cat "$1/.config/homelab/phone-prefix")" = com.given ]' "$CALLS" "$WORK/home"
+up
+expect "no prefix given: the one remembered" called "run-on-iphone com.given"
+up 'com.bad;rm -rf'
+expect "a prefix that isn't one is refused" bash -c '[ "$0" = 2 ] && ! grep -q run-on-iphone "$1"' "$RC" "$CALLS"
+echo mine >"$CO/f"
+up
+expect "changes of its own: nothing pulled, nothing run" bash -c '[ "$0" = 1 ] && grep -q "changes of its own" <<<"$1" && ! grep -q run-on-iphone "$2"' "$RC" "$OUT" "$CALLS"
+git -C "$CO" checkout -q -- f && git -C "$CO" checkout -q -b elsewhere
+up
+expect "another branch: says to switch, nothing run" bash -c '[ "$0" = 1 ] && grep -q "checkout main" <<<"$1" && ! grep -q run-on-iphone "$2"' "$RC" "$OUT" "$CALLS"
+git -C "$CO" checkout -q main
+up --add-command
+up --add-command
+expect "--add-command adds homelab-phone once" bash -c '[ "$(grep -c "alias homelab-phone=" "$0")" = 1 ] && grep -q "update-phone.sh" "$0"' "$WORK/home/.zshrc"
+
 echo
 if [ "$failures" = 0 ]; then echo "All script checks passed."; else echo "$failures script check(s) failed."; exit 1; fi
