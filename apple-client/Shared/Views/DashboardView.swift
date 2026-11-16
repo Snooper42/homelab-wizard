@@ -1217,8 +1217,11 @@ struct GroupHeader: View {
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(.secondary)
                         .rotationEffect(.degrees(open ? 90 : 0))
+                    // Shrunk to fit rather than cut: at the largest text the iPad's
+                    // column read "Net…" and "Sec…" (Nov 16).
                     Text(verbatim: group.label)
                         .lineLimit(1)
+                        .minimumScaleFactor(0.55)
                     Text("\(group.apps.count)")
                         .pill(group.alert ? Theme.danger : .secondary)
                 }
@@ -1246,6 +1249,7 @@ struct FoldedGroupNames: View {
     let group: AppGroup
     let open: @MainActor () -> Void
     @ScaledMetric(relativeTo: .body) private var logo: CGFloat = 30
+    @Environment(\.dynamicTypeSize) private var typeSize
     /// How many logos fit before "+3".
     private let shown = 6
 
@@ -1269,7 +1273,7 @@ struct FoldedGroupNames: View {
                 Text(verbatim: group.apps.map(\.name).joined(separator: ", "))
                     .font(.footnote)
                     .foregroundStyle(.secondary)
-                    .lineLimit(1)
+                    .lineLimit(typeSize.isAccessibilitySize ? 3 : 1)
             }
             .padding(.vertical, 4)
             .frame(maxWidth: .infinity, alignment: .leading)
