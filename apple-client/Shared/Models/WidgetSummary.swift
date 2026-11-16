@@ -89,3 +89,57 @@ enum WidgetSummaryStore {
         #endif
     }
 }
+
+/// The money widget's words (the owner's pick, Nov 16: words only, no
+/// amounts): "On track until Nov 19" or "Under your cushion Thu", and
+/// "Next bill tomorrow". No amount, no payee, nothing from a transaction:
+/// a widget shows without Face ID. Written by the unlocked app each time
+/// Finances is read, only once the person turned it on, into the same App
+/// Group as the health line; cleared when it's turned off or the device is
+/// unpaired.
+struct MoneyLine: Codable, Sendable, Equatable {
+    /// "On track until Nov 19", "Under your cushion Thu", "Short on Thu".
+    let title: String
+    /// Under the cushion or short before the payday: drawn as a warning.
+    let warns: Bool
+    /// "Next bill today", "Next bill tomorrow", "Next bill Thu", "Next bill Nov 30"; nil with none ahead.
+    let next: String?
+    /// When the app read Finances.
+    let at: Date
+}
+
+/// Where the money widget's words are kept, beside the health line.
+enum MoneyLineStore {
+    static let enabledKey = "moneyWidgetEnabled"
+    private static let lineKey = "moneyWidgetLine"
+
+    private static var shared: UserDefaults? { WidgetSummaryStore.appGroup.flatMap(UserDefaults.init(suiteName:)) }
+
+    static var isEnabled: Bool {
+        get { shared?.bool(forKey: enabledKey) ?? false }
+        set {
+            shared?.set(newValue, forKey: enabledKey)
+            if !newValue { clear() }
+        }
+    }
+
+    /// Saves the words, if the money widget is on. Returns whether they changed.
+    @discardableResult
+    static func save(_ line: MoneyLine) -> Bool {
+        guard let shared, isEnabled else { return false }
+        if let old = load(), old.title == line.title, old.warns == line.warns, old.next == line.next,
+           line.at.timeIntervalSince(old.at) < 300 { return false }
+        guard let data = try? JSONEncoder().encode(line) else { return false }
+        shared.set(data, forKey: lineKey)
+        return true
+    }
+
+    static func load() -> MoneyLine? {
+        guard let data = shared?.data(forKey: lineKey) else { return nil }
+        return try? JSONDecoder().decode(MoneyLine.self, from: data)
+    }
+
+    static func clear() {
+        shared?.removeObject(forKey: lineKey)
+    }
+}

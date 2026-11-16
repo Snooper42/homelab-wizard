@@ -150,9 +150,129 @@ struct HealthWidget: Widget {
     }
 }
 
+// The money widget (the owner's pick, Nov 16: words only): how Finances
+// stands until the next payday and when the next bill comes, never an
+// amount. It reads only the words the unlocked app left (MoneyLineStore).
+
+struct MoneyEntry: TimelineEntry, Sendable {
+    let date: Date
+    let line: MoneyLine?
+    let enabled: Bool
+}
+
+struct MoneyProvider: TimelineProvider {
+    func placeholder(in context: Context) -> MoneyEntry {
+        MoneyEntry(date: Date(), line: MoneyLine(title: "On track until Nov 19", warns: false, next: "Next bill tomorrow", at: Date()), enabled: true)
+    }
+
+    func getSnapshot(in context: Context, completion: @escaping (MoneyEntry) -> Void) {
+        completion(context.isPreview ? placeholder(in: context) : current())
+    }
+
+    func getTimeline(in context: Context, completion: @escaping (Timeline<MoneyEntry>) -> Void) {
+        completion(Timeline(entries: [current()], policy: .after(Date().addingTimeInterval(30 * 60))))
+    }
+
+    private func current() -> MoneyEntry {
+        MoneyEntry(date: Date(), line: MoneyLineStore.load(), enabled: MoneyLineStore.isEnabled)
+    }
+}
+
+struct MoneyWidgetView: View {
+    let entry: MoneyEntry
+    @Environment(\.widgetFamily) private var family
+
+    private var line: MoneyLine? { entry.enabled ? entry.line : nil }
+
+    var body: some View {
+        switch family {
+        case .accessoryRectangular: rectangular
+        case .accessoryInline: inline
+        default: tile
+        }
+    }
+
+    private var symbol: String { line?.warns == true ? "exclamationmark.triangle.fill" : "dollarsign.circle" }
+
+    private var rectangular: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Label("Money", systemImage: symbol)
+                .font(.caption2.weight(.semibold))
+                .widgetAccentable()
+            if let line {
+                Group {
+                    Text(verbatim: line.title).font(.headline).lineLimit(2)
+                    if let next = line.next { Text(verbatim: next).font(.caption2) }
+                }
+                .privacySensitive()
+            } else {
+                Text(entry.enabled ? "Open Finances" : "Turn on in Homelab").font(.caption)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .containerBackground(for: .widget) { Color.clear }
+    }
+
+    private var inline: some View {
+        Label(line?.title ?? "Homelab money", systemImage: symbol)
+            .privacySensitive()
+            .containerBackground(for: .widget) { Color.clear }
+    }
+
+    private var tile: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("MONEY")
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(.secondary)
+            Spacer(minLength: 0)
+            if !entry.enabled {
+                Text("Turn on in Homelab › Settings › This Device.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            } else if let line {
+                Group {
+                    Text(verbatim: line.title)
+                        .font(.headline)
+                        .foregroundStyle(line.warns ? Theme.warning : Theme.ink)
+                        .lineLimit(3)
+                        .minimumScaleFactor(0.8)
+                    if let next = line.next {
+                        Text(verbatim: next)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .privacySensitive()
+            } else {
+                Text("Open Finances to read it.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+        .containerBackground(for: .widget) { Theme.surface }
+    }
+}
+
+struct MoneyWidget: Widget {
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: "HomelabMoney", provider: MoneyProvider()) { entry in
+            MoneyWidgetView(entry: entry)
+        }
+        .configurationDisplayName("Homelab Money")
+        .description("How Finances stands until payday, and when the next bill comes. In words, never an amount.")
+        #if os(iOS)
+        .supportedFamilies([.systemSmall, .accessoryRectangular, .accessoryInline])
+        #else
+        .supportedFamilies([.systemSmall])
+        #endif
+    }
+}
+
 @main
 struct HomelabWidgetBundle: WidgetBundle {
     var body: some Widget {
         HealthWidget()
+        MoneyWidget()
     }
 }
