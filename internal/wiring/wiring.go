@@ -131,6 +131,9 @@ func (w *Wirer) steps() []step {
 	if w.has("prowlarr", "flaresolverr") {
 		out = append(out, step{"FlareSolverr is set up in Prowlarr", w.flareSolverr})
 	}
+	if w.has("qbittorrent") {
+		out = append(out, step{"qBittorrent stops sharing once a download is finished", w.qbitSharing})
+	}
 	for _, c := range clients {
 		c := c
 		if w.has("qbittorrent", c.id) {
@@ -479,7 +482,7 @@ func (w *Wirer) downloadClient(ctx context.Context, client string) (string, stri
 	}
 	password := w.Env["QBITTORRENT_PASSWORD"]
 	if password == "" {
-		return "manual", "in qBittorrent set a permanent Web UI password (Tools > Options > Web UI; the temporary one in its log changes on every restart), put it in QBITTORRENT_PASSWORD (and QBITTORRENT_USER if it is not admin), then connect again", nil
+		return "manual", qbitSignInHelp, nil
 	}
 	user := w.Env["QBITTORRENT_USER"]
 	if user == "" {

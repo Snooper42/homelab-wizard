@@ -58,7 +58,7 @@ Sonarr, Radarr, Lidarr, and LazyLibrarian mount the same folder at the same `/do
 - The sidebar filters by status (Downloading, Seeding, Stalled) and by category (`tv`, `movies`, `music`, and so on).
 - Right-click a torrent to pause or resume it, force a recheck, change its category, or delete it with or without its files.
 - The speed icons at the bottom switch to the alternative speed limits, for example while you are on a video call.
-- Tools › Options › Speed and Options › BitTorrent: global speed limits and seeding limits.
+- Tools › Options › Speed and Options › BitTorrent: global speed limits. The seeding limit is `./homelab wire`'s: a change to it is put back on the next run.
 - View › Log: the execution log, with connection and listening-port messages.
 - On Android, nzb360 works with qBittorrent's Web API.
 
@@ -66,15 +66,13 @@ Sonarr, Radarr, Lidarr, and LazyLibrarian mount the same folder at the same `/do
 
 - [Gluetun](<Gluetun.md>) is its only way out; when Gluetun is recreated, restart qBittorrent.
 - [Sonarr](<Sonarr.md>), [Radarr](<Radarr.md>), [Lidarr](<Lidarr.md>), and [LazyLibrarian](<LazyLibrarian.md>) use it as their download client with host `gluetun`, port `8082`, and the Web UI login. [Prowlarr](<Prowlarr.md>) can too.
-- `./homelab wire` adds it to Sonarr, Radarr, and Lidarr. It needs the permanent Web UI password: add `QBITTORRENT_PASSWORD` (and `QBITTORRENT_USER` if it is not `admin`) to `.env`, then run `./homelab wire --apply`. See [Prowlarr](<Prowlarr.md#connects-to>).
+- `./homelab wire` adds it to Sonarr, Radarr, and Lidarr, and sets it to stop sharing a download once it is finished (so Tidy Up can file it once, with no second copy), with unfinished downloads in `/downloads/incomplete` named `.!qB`. It needs the permanent Web UI password: add `QBITTORRENT_PASSWORD` (and `QBITTORRENT_USER` if it is not `admin`) to `.env`, then run `./homelab wire --apply`. See [Prowlarr](<Prowlarr.md#connects-to>).
 - [Nginx Proxy Manager](<../network/Nginx Proxy Manager.md>) proxies https://qbittorrent.example.com to `gluetun:8082`.
 - `.env`: `QBITTORRENT_PORT` (published on Gluetun), `DOWNLOADS_ROOT`, `PUID`, `PGID`, `TZ`, and `QBITTORRENT_USER` and `QBITTORRENT_PASSWORD` for `./homelab wire`.
 
 ## Tinkering ideas
 
-- Options › BitTorrent: seeding limits (a ratio or a time) that stop the torrent when reached, so the *arr apps' Remove Completed option can clean up the downloads.
 - Options › Downloads: set Default Torrent Management Mode to Automatic, so each category gets its own folder under `/downloads`.
-- Options › Downloads: Keep incomplete torrents in `/downloads/incomplete`, so half-finished files never sit next to finished ones.
 - Options › Speed: schedule the alternative speed limits for the hours the household needs the bandwidth.
 - Options › Web UI: turn on Use alternative WebUI, or add the VueTorrent mod to the LinuxServer image (`DOCKER_MODS`, a compose change), for a friendlier, phone-sized UI.
 

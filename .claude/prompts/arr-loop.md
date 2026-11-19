@@ -67,6 +67,7 @@ Afterwards, a request that can't be found or downloaded sits at "Requested" in S
   2. **No daily merge cap** for lane 5 (rule 6, `lanes.md` Rule 5).
   3. **Disk space comes first:** storage is expensive. Never two copies of a download; item 7's default is *save space*; no hard links (item 9 dropped them).
 - **Nov 19, round 1:** this file and `lanes.md` updated with the answers, item 0 and the CasaOS-style items (a)–(d). Item 0's check done from the code (below); next round starts item 0's fix.
+- **Nov 19, round 2:** item 0, part 1: `wire` sets qBittorrent to stop sharing once a download is finished and keep unfinished ones in `incomplete/` with `.!qB` (`internal/wiring/qbit.go`, against a fake qBittorrent). Next: part 2, the inbox waits for qBittorrent (a torrent an indexer keeps seeding is still listed), and Setup turns Hand over on.
 
 ## 4. The work, in order
 
