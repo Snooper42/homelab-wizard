@@ -9,6 +9,8 @@ this repository with:
 
     /loop Read .claude/prompts/audit-loop.md and do the next round as the security team.
 
+**Paused:** yes (the owner, Nov 19, 2026: no account runs either team now; see `lanes.md`, *Who's working now*). Change this to **no** to start them again. A round that reads yes opens nothing, merges nothing, says it is paused, and waits.
+
 With no interval, /loop paces itself. Each round re-reads this file, so to
 steer a team, edit its section, commit and push it to main, and the next
 round follows.

@@ -22,7 +22,7 @@ The owner, Nov 14: "I want to iterate the shit out of the iphone and ipad app." 
 ## Start here (every session)
 
 1. `git fetch origin main` and look at section 3: land the open PR if it's green. If it's red, fix it first.
-2. Read `complaints.md` under **The phone**, and every **For Account 4** section in the other loop files (`audit-loop.md`, `features-loop.md`, `maintenance-loop.md`). Those come first, ahead of section 4's order.
+2. Read `complaints.md` under **The phone**, and every **For Account 4** section in the other loop files (`arr-loop.md`, the one active beside this lane; `audit-loop.md`, `features-loop.md` and `maintenance-loop.md` are parked, so look there only for what is left). Those come first, ahead of section 4's order.
 3. Fetch the newest pictures (section 2, step 6), look at them all, and take the next item from section 4.
 
 ## 1. What you're working with (facts, checked Nov 14)

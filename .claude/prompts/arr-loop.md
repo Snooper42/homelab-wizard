@@ -41,7 +41,7 @@ A household member touches two things: **Seerr to ask for a film or show, Jellyf
 - **How it's tested:** fake APIs in `wiring_test.go` and `more_test.go`. The nightly workflow's `wire` job runs `wire --apply` against real Prowlarr, Sonarr, Radarr, Lidarr and FlareSolverr. **qBittorrent can't be tested for real in CI:** it waits for Gluetun, which needs a real VPN key (`docs/Known Issues.md`). Keep qBittorrent's side against fakes, and say so in the PR.
 - **The VPN:** Gluetun with ProtonVPN WireGuard, port forwarding on (`PORT_FORWARD_ONLY`, `VPN_PORT_FORWARDING`). It needs a **paid** Proton plan (`.env.example:424`). The forwarded port is copied into qBittorrent by hand today (Gluetun's page, Setup step 5), and it changes when the VPN reconnects.
 - **The layout copies rather than hard-links:** `/downloads` and `/tv` are separate mounts (`Sonarr.md:68`), so every import is a full copy and takes double the space while the torrent seeds.
-- **Tidy Up is involved, and it's Account 1's:** it puts the \*arr apps to rest while nothing is pending (`cmd/homelab/media_arr_rest.go`, `docs/Tidy Up.md` line ~97), and **Hand over** turns off the \*arrs' own filing so Tidy Up files downloads instead (`homelab media arr --apply`). Don't change either; ask under **For Account 1**.
+- **Tidy Up is involved, and it's lane 1's (parked):** it puts the \*arr apps to rest while nothing is pending (`cmd/homelab/media_arr_rest.go`, `docs/Tidy Up.md` line ~97), and **Hand over** turns off the \*arrs' own filing so Tidy Up files downloads instead (`homelab media arr --apply`). Leave both alone unless an item needs a change and the owner agrees (section 6).
 - **Jellyfin is native** (ADR-0010) at `host.docker.internal:8096`, with `JELLYFIN_API_KEY` in `.env` when set (Settings › People uses it).
 - **ntfy is already set up with tokens** (`internal/notify`, Setup's alert step).
 
@@ -88,7 +88,7 @@ Each item is one small PR unless it says otherwise. Before writing code, **check
    - A Setup item: "No search sites yet". Its button opens Prowlarr's page for adding an indexer. A live tick appears when Prowlarr lists at least one that passes its own test.
    - The item explains what a search site is in one sentence, with no names.
 6. **The Downloads card** (the "why isn't anything happening?" fix; may be two PRs).
-   - One card on Status, in plain words, e.g. *Getting 2 · 1 stuck: no search site has it · Drive 82% full*. It's built from the \*arr queues, qBittorrent, Seerr's requests, and the drive's free space. The resting logic already reads most of this; reuse it, don't copy it (ask Account 1 if it needs a shared function).
+   - One card on Status, in plain words, e.g. *Getting 2 · 1 stuck: no search site has it · Drive 82% full*. It's built from the \*arr queues, qBittorrent, Seerr's requests, and the drive's free space. The resting logic already reads most of this; reuse it, don't copy it (a shared function in lane 1's code is fine; note it under **For Account 1** in `tidy-loop.md`).
    - The same messages go to the phone through ntfy.
    - Then write a **For Account 4** note in this file: the companion call that serves the card, so lane 4 can show it on the phone.
 7. **One plain question instead of quality profiles** (step 8).
@@ -102,23 +102,22 @@ Each item is one small PR unless it says otherwise. Before writing code, **check
 ## 5. Ask the owner first (in the first round, in one pop-up)
 
 1. **Who files downloads by default: Tidy Up (one place, with Undo) or the \*arrs (the standard setup, what guides online assume)?** Recommend one. The answer shapes items 4, 6 and 7, and decides which mode Setup turns on by itself.
-2. **May lane 5 change the Setup, Choose and Status code it needs** (items 3, 5, 6, 8), or should it write each need under **For Account 2** and wait? Recommend the first, limited to the media automation parts and still bound by Rule 2.
-3. Is the account's 3-merges-a-day cap fine, or waived as for lanes 1 and 4?
+2. Is the account's 3-merges-a-day cap fine, or waived as for lanes 1 and 4?
 
 ## 6. Where lane 5's work meets other lanes
 
+Today only lane 4 has an account (`lanes.md`, *Who's working now*). Lanes 1, 2 and 3 are parked, so nothing here waits on them.
+
 | Need | Whose | How |
 |---|---|---|
-| `compose/media-automation.yaml`, `internal/wiring`, `services/media automation/*`, the bundle in `compose.yaml` | **Lane 5** | Yours |
-| Setup steps, the install plan, Status, Settings › Copy | Account 2 (`maintenance-loop.md`) | Per the owner's answer to section 5, question 2 |
-| Resting the \*arrs, **Hand over**, Tidy Up's filing | Account 1 (`tidy-loop.md`, `features-loop.md`) | **For Account 1** below |
-| The phone showing the Downloads card | Account 4 (`apple-loop.md`) | **For Account 4** below, once the companion call exists |
-| A security question (secrets, what's exposed) | Account 3 (`audit-loop.md`) | Say so in the PR. The owner looks before merging |
-
-## For Account 1
-
-## For Account 2
+| `compose/media-automation.yaml`, `internal/wiring`, `services/media automation/*`, the bundle in `compose.yaml`, and the media automation parts of Setup, the install plan and Status | **Lane 5** | Yours (`lanes.md`, row 5) |
+| Other Setup, Status and Settings code an item needs (Settings › Copy, the Status card's frame, `internal/statusfolds`) | Lane 2, parked | Change it yourself in a small PR, then note what you changed under **For Account 2** in `maintenance-loop.md` |
+| Resting the \*arrs (`cmd/homelab/media_arr_rest.go`), **Hand over**, Tidy Up's filing | Lane 1, parked | Change it only if an item needs it and the owner agreed (section 5), then note it under **For Account 1** in `tidy-loop.md` |
+| The phone showing the Downloads card | Lane 4, **active** (`apple-loop.md`) | Don't touch `apple-client/`. Once the computer's call exists, write what it serves under **For Account 4** below; lane 4 builds the phone's side |
+| A security question (secrets, what's exposed) | Lane 3, parked | Write it up in the PR. The owner looks before it merges |
 
 ## For Account 4
+
+Lane 5's notes for the iPhone and iPad app. Lane 4 reads this section at the start of each round.
 
 ## Done
