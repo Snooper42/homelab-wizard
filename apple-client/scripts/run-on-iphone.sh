@@ -59,8 +59,9 @@ for d in devices:
     name = dp.get("name", "")
     if want and name != want:
         continue
-    # Connected now: on a cable or the network, not one Xcode only remembers.
-    near = "yes" if cp.get("transportType") or cp.get("tunnelState", "") not in ("", "unavailable") else ""
+    # Connected now: "wired" on a cable, "yes" on the network, "" one Xcode only remembers.
+    how = cp.get("transportType", "")
+    near = "wired" if how == "wired" else ("yes" if how or cp.get("tunnelState", "") not in ("", "unavailable") else "")
     print("\t".join([d.get("identifier", ""), hw.get("udid", ""), name,
                      dp.get("developerModeStatus", ""), cp.get("pairingState", ""),
                      cp.get("tunnelState", ""), near]))
@@ -93,8 +94,10 @@ if [ "$COUNT" != 1 ] && [ -n "${HOMELAB_DEVICE:-}" ]; then
   exit 1
 fi
 if [ "$COUNT" != 1 ]; then
-  # Several known: the ones connected now, each in turn (the iPhone and the iPad).
-  awk -F'\t' '$7 == "yes"' "$TMP/device.tsv" >"$TMP/near.tsv"
+  # Several known: the ones on a cable, each in turn (the iPhone and the iPad);
+  # with none on a cable, the ones Xcode reaches on the network.
+  awk -F'\t' '$7 == "wired"' "$TMP/device.tsv" >"$TMP/near.tsv"
+  grep -q . "$TMP/near.tsv" || awk -F'\t' '$7 != ""' "$TMP/device.tsv" >"$TMP/near.tsv"
   NEAR="$(grep -c . "$TMP/near.tsv" || true)"
   if [ "$NEAR" = 0 ]; then
     echo "Xcode knows these, but none is connected now:" >&2
