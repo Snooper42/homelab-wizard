@@ -221,7 +221,11 @@ func swapWindows(in Installed, pid, staged, reopen string) error {
 // from its folder (the tray item, and the background agent with the jobs
 // it started), puts the new build in place, then starts the agent again
 // from the sign-in entry and opens the app, or the tray item if it was
-// running. The portable zip is unpacked over the folder: as this account
+// running. The portable zip is unpacked over the folder (by .NET's own
+// zip reader, not Expand-Archive: a newer Archive module on Windows
+// PowerShell calls an overload .NET Framework lacks, as GitHub's Windows
+// image of Nov 16, 2026 showed; a file that would land outside the folder
+// stops it): as this account
 // where it may write there, else by Windows's own PowerShell run as an
 // administrator (Program Files), which asks for approval once. A release
 // with only the installer runs it silently instead. Each step goes in the
@@ -230,6 +234,21 @@ func swapWindows(in Installed, pid, staged, reopen string) error {
 // #nosec G101 -- a PowerShell script, no credentials
 const swapWindowsScript = `param([int]$AppPid, [string]$Dir, [string]$Exe, [string]$Staged, [string]$Kind, [int]$Reopen, [string]$Log)
 $ErrorActionPreference = 'Continue'
+function Unpack {
+  param([string]$Zip, [string]$To)
+  Add-Type -AssemblyName System.IO.Compression.FileSystem
+  $root = [IO.Path]::GetFullPath($To).TrimEnd('\') + '\'
+  $z = [IO.Compression.ZipFile]::OpenRead($Zip)
+  try {
+    foreach ($e in $z.Entries) {
+      $path = [IO.Path]::GetFullPath([IO.Path]::Combine($root, $e.FullName))
+      if (-not $path.StartsWith($root, [StringComparison]::OrdinalIgnoreCase)) { throw ('the update has a file outside its folder: ' + $e.FullName) }
+      if ($e.Name -eq '') { [void][IO.Directory]::CreateDirectory($path); continue }
+      [void][IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($path))
+      [IO.Compression.ZipFileExtensions]::ExtractToFile($e, $path, $true)
+    }
+  } finally { $z.Dispose() }
+}
 function Note([string]$m) { if ($Log) { Add-Content -LiteralPath $Log -Value ((Get-Date -Format s) + ' ' + $m) -ErrorAction SilentlyContinue } }
 if ($Log) { New-Item -ItemType Directory -Force -Path (Split-Path -Parent $Log) -ErrorAction SilentlyContinue | Out-Null; Set-Content -LiteralPath $Log -Value ((Get-Date -Format s) + ' update: ' + $Staged + ' into ' + $Dir) -ErrorAction SilentlyContinue }
 $waiting = Get-Process -Id $AppPid -ErrorAction SilentlyContinue
@@ -253,11 +272,11 @@ try {
     try { [IO.File]::WriteAllText($probe, ''); Remove-Item -LiteralPath $probe -Force } catch { $writable = $false }
     if ($writable) {
       Note 'unpacking'
-      Expand-Archive -LiteralPath $Staged -DestinationPath $Dir -Force -ErrorAction Stop
+      Unpack $Staged $Dir
     } else {
       Note 'unpacking as an administrator'
       $q = { param($s) "'" + ($s -replace "'", "''") + "'" }
-      $cmd = 'Expand-Archive -LiteralPath ' + (& $q $Staged) + ' -DestinationPath ' + (& $q $Dir) + ' -Force -ErrorAction Stop'
+      $cmd = 'function Unpack {' + ${function:Unpack}.ToString() + '}; Unpack ' + (& $q $Staged) + ' ' + (& $q $Dir)
       $enc = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($cmd))
       $p = Start-Process -FilePath 'powershell.exe' -ArgumentList '-NoProfile', '-ExecutionPolicy', 'Bypass', '-WindowStyle', 'Hidden', '-EncodedCommand', $enc -Verb RunAs -Wait -PassThru -ErrorAction Stop
       if ($p.ExitCode -ne 0) { throw "unpacking as an administrator ended with $($p.ExitCode)" }
