@@ -4,7 +4,7 @@ The owner, Nov 14: "I want to iterate the shit out of the iphone and ipad app." 
 
 ## Launcher (paste into a new session)
 
-> Read `.claude/prompts/apple-loop.md` and follow it from "Start here". Work only on the iPhone and iPad app. Merge each PR as soon as it's green, and update section 3 of that file before you stop.
+> Read `.claude/prompts/apple-loop.md`: first "Now (read this first)" at the top of section 3, then follow it from "Start here". The owner wants the iPhone and iPad app iterated on, and lets you fix anything you find across the repo (Nov 19: "you're my full stack engineer"). Merge each PR as soon as it's green, and update "Now" before you stop.
 
 ## 0. Rules (they never bend)
 
@@ -65,6 +65,17 @@ The owner, Nov 14: "I want to iterate the shit out of the iphone and ipad app." 
    Check that `git log -1 --format=%cd FETCH_HEAD` is after your merge, then Read the PNGs in `$d/review` (never under the repo: the pictures stay out of commits). Compare each with what you meant. Anything still off goes first in the next round.
 
 ## 3. Where it stands
+
+### Now (read this first; Nov 19, rewritten at each handoff)
+
+- **Done:** item 1's look pass (rounds 19 to 26, #749 to #756, nothing left to fix in a full pass); the owner's three Nov 19 ideas: Add Goal over several accounts (#759), Settings › Phones and iPads (#760, with the `Phones` and `LowerPhone` calls), Setup's checklist with Do the N I Can Do for You (#761, with `Setup` and `RunSetupStep`). #760 also fixed the Windows update helper's wait (`internal/selfupdate`), which made the Windows runner's two selfupdate tests time out.
+- **The owner's standing words, Nov 18–19:** keep going round after round; merge each PR when it's green; "fix any issues you find here. you're my full stack engineer" (anything in the repo, not only lane 4); don't make them babysit (use a `send_later` check-in that survives a container restart; ask with the pop-up only for a new feature's look, and not while they're away).
+- **Open, or next:** this PR: the new screens in the pictures (the sample computer in `Screenshots/data.json` answers the contract's calls, made-up `Phones` and `Setup`, a `phones` shot) and Month in Review adding up (`MonthReview.cameIn`). After it merges, fetch main's pictures and look at `*-phones`, `*-setup` and `*-review`.
+- **The canvas** (https://claude.ai/artifact/FfHtMyrrVYTp9TnCDfidwQ) was reset Nov 19 at the owner's ask: one board, *Waiting on you* (nothing waits); every earlier board is in its version 37. Put a new idea beside it; when it's built, take its board off again.
+- **Lessons that cost time:** never `go build` inside `cmd/homelab` (it writes a 29 MB `cmd/homelab/homelab` binary, and `git add -A` commits it: build with `-o /dev/null`); Go and Node run here (`go test ./cmd/homelab` about a minute; the contract regenerates with `-update-contract`, and `TestParityNamesEveryPhoneCall` wants each new call in Parity's row); Swift doesn't (build-and-test is the first compile); merging an app PR before main's picture run for the last one has finished cancels that run; a blank or mid-unlock picture is the simulator's timing, not the app (the job retakes plain ones up to three times).
+- **Ideas the owner hasn't seen:** a Lock Screen widget for the next bill only; who in the household uses an app (needs a phone call for `People`, without names to a wall screen).
+
+### History
 
 - **Merged Nov 14** (each green on its first Mac compile): #694 (this file, item 0), #695 to #702 (item 1, rounds 1 to 7: the phone's clock words, `TransferWords`, `LeftUntil` and Finances' first card, the iPad's pictures and Status's group menu, Mark Reviewed, the largest text on Status, Finances, Spending and Transactions, dark mode's `accent` and `accentFill`), #698 (**Lock After**: the owner's pop-up, 5 minutes, a setting; changes still ask, the screen lock locks, private Finances lock on leaving), #703 (**Add a Payment**, mock approved), #704 (round 8: Status's group names whole, ⋯ when the menu's words don't fit), #705 (round 9: the iPad's health line under its screens instead of over their titles; the Finances pictures wait 11 seconds).
 - **Merged Nov 14, 6:49 PM: #706, Add a Goal** (mock approved with the pop-up, Nov 14: **+** on Goals; a share of one account, never past what other goals leave, `FinancePlanEdit.addingGoal`, `AddGoalTests`), with round 10 (Spending's *Each Month* average under its heading at the largest text).
