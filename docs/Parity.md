@@ -160,7 +160,7 @@ Each phone sees Finances at the level it was paired with: none, the money card, 
 |---|---|---|---|---|---|
 | The homelab's settings (`.env`), by section, searchable | yes | yes: the everyday ones a phone may change (its clock, quiet hours, alerts, updates, Tidy Up's choices; never a secret, an app's folders, image or sign-in, or what it connects through: N52), saved with allowed changes; none on a wall screen | yes; the everyday ones change with allowed changes, behind Face ID | yes | `Settings`, `SaveSettings` |
 | Secrets and the settings a phone connects through | yes | on purpose: changed on the computer only | on purpose | on purpose | |
-| Phones: pair, look only or changes, Finances level, For a day/week/month, remove | yes | on purpose: a phone can't give itself more | partly: This Device (how it paired, Unpair here) | partly | |
+| Phones: pair, look only or changes, Finances level, For a day/week/month, remove | yes | on purpose: a phone can't give itself more | partly: This Device (how it paired, Unpair here), and Settings › Phones (the owner's yes, Nov 19): every other paired phone and iPad, whose, what it may do now and when it was last seen, and only less from there (Looks Only from Now, less of Finances, Remove This Phone, each after Face ID; on a phone that can make changes, not a member's or a wall screen); pairing a phone or giving one more stays on the computer's, on purpose | partly, as the iPhone | `Phones`, `LowerPhone` |
 | People in the household, and what's shared with them | yes | on purpose | on purpose | on purpose | |
 | Devices on your tailnet | yes | on purpose | on purpose | on purpose | |
 | Quiet hours | yes | yes, as a setting | yes, as a setting | yes | |

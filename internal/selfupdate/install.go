@@ -215,7 +215,9 @@ func swapWindows(in Installed, pid, staged, reopen string) error {
 	return StartHelper(c)
 }
 
-// swapWindowsScript waits for the app to quit, stops everything running
+// swapWindowsScript waits for the app to quit (only while that process id
+// is still the app's: Windows soon gives a quit process's id to another,
+// and waiting on that held every update a minute), stops everything running
 // from its folder (the tray item, and the background agent with the jobs
 // it started), puts the new build in place, then starts the agent again
 // from the sign-in entry and opens the app, or the tray item if it was
@@ -230,7 +232,9 @@ const swapWindowsScript = `param([int]$AppPid, [string]$Dir, [string]$Exe, [stri
 $ErrorActionPreference = 'Continue'
 function Note([string]$m) { if ($Log) { Add-Content -LiteralPath $Log -Value ((Get-Date -Format s) + ' ' + $m) -ErrorAction SilentlyContinue } }
 if ($Log) { New-Item -ItemType Directory -Force -Path (Split-Path -Parent $Log) -ErrorAction SilentlyContinue | Out-Null; Set-Content -LiteralPath $Log -Value ((Get-Date -Format s) + ' update: ' + $Staged + ' into ' + $Dir) -ErrorAction SilentlyContinue }
-Wait-Process -Id $AppPid -Timeout 60 -ErrorAction SilentlyContinue
+$waiting = Get-Process -Id $AppPid -ErrorAction SilentlyContinue
+if ($waiting -and ($waiting.ProcessName + '.exe') -ieq $Exe) { Wait-Process -Id $AppPid -Timeout 60 -ErrorAction SilentlyContinue }
+elseif ($waiting) { Note ('process ' + $AppPid + ' is ' + $waiting.ProcessName + ' now, not the app: it has quit') }
 $tray = @(Get-CimInstance Win32_Process -Filter "Name = '$Exe'" -ErrorAction SilentlyContinue | Where-Object { $_.CommandLine -like '*--tray*' }).Count -gt 0
 Get-Process | Where-Object { $_.Path -and $_.Path.StartsWith($Dir + '\', [StringComparison]::OrdinalIgnoreCase) } | Stop-Process -Force -ErrorAction SilentlyContinue
 Start-Sleep -Milliseconds 500

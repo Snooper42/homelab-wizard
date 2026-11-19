@@ -272,6 +272,24 @@ actor APIClient {
         }
     }
 
+    /// The paired phones and iPads (Settings › Phones), for a phone that can make changes.
+    func phones() async throws -> [PairedPhone] {
+        try await call("Phones", as: [PairedPhone].self)
+    }
+
+    /// Gives another phone less, never more (`LowerPhone`): looks only, less
+    /// of Finances, or removed. A change, never retried. The list as it is after.
+    func lowerPhone(_ id: String, _ what: PhoneLowering) async throws -> [PairedPhone] {
+        let (request, endpoint) = try callRequest("LowerPhone", [.string(id), .string(what.argument)])
+        Log.network.notice("LowerPhone \(what.argument, privacy: .public)")
+        let data = try await send(request, to: endpoint, using: actionSession)
+        do {
+            return try JSONDecoder.homelab().decode(CallEnvelope<[PairedPhone]>.self, from: data).result
+        } catch {
+            throw APIError.decoding
+        }
+    }
+
     /// Pauses or resumes the nightly image updates. This is a change.
     func setUpdatesPaused(_ paused: Bool) async throws -> UpdatesState {
         let (request, endpoint) = try callRequest("SetUpdatesPaused", [.bool(paused)])

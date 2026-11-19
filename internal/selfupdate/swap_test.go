@@ -311,6 +311,41 @@ func TestSwapScriptPutsTheMacAppInPlace(t *testing.T) {
 	}
 }
 
+// The app's process id, once it has quit, soon belongs to another process
+// on Windows: the update doesn't wait for that one (it waited its whole
+// minute, and the Windows runner's tests timed out at 60 seconds, Nov 19).
+func TestSwapWindowsWaitsOnlyForTheApp(t *testing.T) {
+	if runtime.GOOS != "windows" {
+		t.Skip("the Windows helper runs in PowerShell; the Windows runner runs this")
+	}
+	other := exec.Command("powershell.exe", "-NoProfile", "-Command", "Start-Sleep -Seconds 120")
+	if err := other.Start(); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = other.Process.Kill(); _ = other.Wait() })
+	dir := t.TempDir()
+	app := filepath.Join(dir, "Homelab")
+	os.MkdirAll(app, 0o755)
+	os.WriteFile(filepath.Join(app, "homelab-wizard.exe"), []byte("old"), 0o644)
+	staged := filepath.Join(dir, "update", portable())
+	os.MkdirAll(filepath.Dir(staged), 0o755)
+	f, _ := os.Create(staged)
+	z := zip.NewWriter(f)
+	w, _ := z.Create("homelab-wizard.exe")
+	w.Write([]byte("new"))
+	z.Close()
+	f.Close()
+	if err := swapWindows(Installed{Kind: KindWindowsPortable, Path: app}, strconv.Itoa(other.Process.Pid), staged, "0"); err != nil {
+		t.Fatal(err)
+	}
+	for end := time.Now().Add(40 * time.Second); time.Now().Before(end); time.Sleep(100 * time.Millisecond) {
+		if read(filepath.Join(app, "homelab-wizard.exe")) == "new" {
+			return
+		}
+	}
+	t.Fatal("the update waited for a process that isn't the app")
+}
+
 func TestSwapWindowsScriptUnpacksThePortableBuild(t *testing.T) {
 	if runtime.GOOS != "windows" {
 		t.Skip("the Windows helper runs in PowerShell; the Windows runner runs this")

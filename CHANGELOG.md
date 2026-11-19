@@ -9,6 +9,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 ### New
 
 - **A goal over several accounts in the Homelab app:** Add Goal takes a share of each account that counts toward it, as the computer's goals do: **Add an Account** for another, swipe one off, each share no more than other goals leave of that account, and what they hold together today under them.
+- **Phones and iPads in the Homelab app:** Settings › Phones and iPads lists every other paired phone and iPad: whose it is, what it may do and when it was last seen. From there one can only be given less, never more: looks only from now, less of Finances, or removed, each after Face ID. Pairing a phone, or giving one more, stays on the computer.
 - **Homelab and Money, a medium widget:** the homelab's line and the money's words side by side on the iPad's and iPhone's Home Screen; tap the left for Status, the right for Finances. No app names, never an amount.
 - **"Am I on track?" in Siri and Shortcuts:** the Homelab app answers with the money widget's words, *On track until Nov 19, as of 2 hours ago. Next bill tomorrow.*, never an amount, once the phone is unlocked. It needs the money widget turned on.
 - **When Homelab Wizard stopped, in the Homelab app:** as on the computer's Status, a note at the top of Status says when Homelab Wizard (or its menu bar item or background agent) stopped unexpectedly, with **Share the Report** and **Hide**, once per crash. The computer tells the phone only which part and when (`LastCrash`, a new phone call), nothing from the log.
