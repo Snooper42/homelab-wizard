@@ -5,10 +5,15 @@ import SwiftUI
 /// computer, the ring of payments made, what's paid down of what was
 /// borrowed, the next payment split, who pays it each month, when it's half
 /// paid and paid off, and every payment (`LoanPapers`, as the computer's Loans).
+/// Where Finances may change, Type In Its Papers… (or Change Its Papers…)
+/// opens `LoanPapersEditor` (the owner's yes, Nov 19).
 struct LoanPage: View {
     let loan: FinancePayoff
     @Bindable var finances: FinancesViewModel
     @State private var papers: LoanPapers?
+    @State private var typing = false
+
+    private var account: FinanceAccount? { finances.plan?.plan.accounts.first { $0.id == loan.account } }
 
     var body: some View {
         Form {
@@ -61,12 +66,25 @@ struct LoanPage: View {
                     }
                 } else {
                     Section {
-                        Text("Type in its papers on the computer (Finances › the loan's account) to see each payment, what's paid down, and when it's half paid.")
+                        Text(finances.canEditPlan
+                             ? "Type in its papers to see each payment, what's paid down, and when it's half paid. What it owes is then read from them: no balance to type."
+                             : "Its papers, typed in on a device that may change Finances, show each payment, what's paid down, and when it's half paid.")
                             .font(.footnote)
                             .foregroundStyle(Theme.secondaryInk)
                     }
                 }
+                if finances.canEditPlan, account != nil {
+                    Section {
+                        Button(papers == nil ? "Type In Its Papers…" : "Change Its Papers…") {
+                            finances.clearSaveError()
+                            typing = true
+                        }
+                    }
+                }
             }
+        }
+        .sheet(isPresented: $typing) {
+            if let account { LoanPapersEditor(account: account, finances: finances) }
         }
         .formStyle(.grouped)
         .themedCanvas()

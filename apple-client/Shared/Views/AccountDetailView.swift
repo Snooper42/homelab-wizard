@@ -12,6 +12,7 @@ struct AccountDetailView: View {
     @State private var days = 90
     @State private var picked: Date?
     @State private var updating = false
+    @State private var typingPapers = false
 
     var body: some View {
         ScrollView {
@@ -37,12 +38,25 @@ struct AccountDetailView: View {
         .task { if finances.ledger == nil { await finances.loadLedger() } }
         .toolbar {
             if finances.canEditPlan {
-                ToolbarItem(placement: .primaryAction) {
-                    Button("Update Balance") { updating = true }
+                // A loan read from its papers owes what they say: they change, not its balance.
+                let papered = account.kind == "loan" && finances.typedPapers(of: account) != nil
+                if !papered {
+                    ToolbarItem(placement: .primaryAction) {
+                        Button("Update Balance") { updating = true }
+                    }
+                }
+                if account.kind == "loan" {
+                    ToolbarItem(placement: papered ? .primaryAction : .secondaryAction) {
+                        Button(papered ? "Change Its Papers…" : "Type In Its Papers…") {
+                            finances.clearSaveError()
+                            typingPapers = true
+                        }
+                    }
                 }
             }
         }
         .sheet(isPresented: $updating) { BalanceEditor(account: account, finances: finances) }
+        .sheet(isPresented: $typingPapers) { LoanPapersEditor(account: account, finances: finances) }
     }
 
     private var header: some View {
