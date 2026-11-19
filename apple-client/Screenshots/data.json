@@ -3,7 +3,74 @@
   "id": "screenshots",
   "name": "iPhone",
   "canChange": true,
-  "finances": "edit"
+  "finances": "edit",
+  "computer": {
+   "version": "1.2.3",
+   "methods": [
+    "AlertLog",
+    "Alerts",
+    "AppAction",
+    "AppIcon",
+    "Backups",
+    "Catalog",
+    "DuplicatiJobs",
+    "ExplainLogs",
+    "Finances",
+    "FinancesAddInvestment",
+    "FinancesCardPicture",
+    "FinancesCardPrices",
+    "FinancesChangeInvestment",
+    "FinancesDeleteInvestment",
+    "FinancesFindSymbol",
+    "FinancesFollow",
+    "FinancesInvestmentTrades",
+    "FinancesLedger",
+    "FinancesReadInvestments",
+    "FinancesReceipt",
+    "FinancesSealed",
+    "FinancesSealedReceipt",
+    "FinancesShared",
+    "FinancesUpdatePrices",
+    "FinancesWall",
+    "History",
+    "Homelab",
+    "Host",
+    "LastCrash",
+    "LastStatus",
+    "Logs",
+    "LowerPhone",
+    "OpenOnComputer",
+    "Phones",
+    "Protection",
+    "Report",
+    "RunSetupStep",
+    "SaveFinances",
+    "SaveFinancesCardPicture",
+    "SaveFinancesLedger",
+    "SaveFinancesReceipt",
+    "SaveFinancesSealed",
+    "SaveFinancesSealedReceipt",
+    "SaveSettings",
+    "SavingsHistory",
+    "Screen",
+    "SetAppSetting",
+    "SetStatusFolds",
+    "SetUpdatesPaused",
+    "Settings",
+    "Setup",
+    "SnoozeCheck",
+    "Status",
+    "StatusBoard",
+    "StatusFolds",
+    "StopUntil",
+    "UnsealFinances",
+    "Watchdog"
+   ],
+   "features": [
+    "tunnel",
+    "away"
+   ]
+  }
  },
  "answers": {
   "Status": {
@@ -119,7 +186,8 @@
      "health": "healthy",
      "url": "http://localhost:8010",
      "address": "docs.example.com",
-     "since": "@ago:345601"
+     "since": "@ago:345601",
+     "reach": "away"
     },
     {
      "id": "moneymatter-frontend",
@@ -398,6 +466,7 @@
      ],
      "public": false,
      "warning": "heavy: detection runs on the processor unless a Coral or graphics chip is passed through (not possible on a Mac); plan on about one processor core for each camera",
+     "next": "Next: add your camera. In Frigate, open Settings › Configuration editor, put your camera's address (rtsp://…) where the example camera is, turn it on, and Save & Restart.",
      "replaces": [
       "Google Home Premium Standard (formerly Nest Aware)"
      ]
@@ -1038,7 +1107,7 @@
       "PAPERLESS_AI_PAPERLESS_TOKEN"
      ],
      "public": false,
-     "warning": "a 4.6 GB download; needs an AI model: Ollama running on this machine (homelab doctor shows how to install it here), or an OpenAI-compatible service"
+     "warning": "needs an AI model: Ollama running on this machine (homelab doctor shows how to install it here), or an OpenAI-compatible service"
     },
     {
      "id": "wallos",
@@ -1769,20 +1838,20 @@
    "staleAfterHours": 26,
    "restoreTest": {
     "lastTest": "@ago:1036801",
-    "lastSummary": "12 of 12 sampled files identical",
+    "lastSummary": "12 files checked, all the same as now",
     "history": [
      {
       "when": "@ago:3715201",
       "seconds": 212,
       "passed": true,
-      "summary": "12 of 12 sampled files identical",
+      "summary": "12 files checked, all the same as now",
       "job": "Homelab AppData"
      },
      {
       "when": "@ago:1036801",
       "seconds": 187,
       "passed": true,
-      "summary": "12 of 12 sampled files identical",
+      "summary": "12 files checked, all the same as now",
       "job": "Homelab AppData"
      }
     ]
@@ -2194,6 +2263,46 @@
      "value": ""
     },
     {
+     "key": "COMPANION_ACCESS_TEAM",
+     "section": "Domain",
+     "help": "The iPhone app away from home through the Cloudflare tunnel (docs/Decisions.md, ADR-0023), made by Setup's Reach Finances away from home (homelab phone away): the Cloudflare Access team and application, the household's service token (its secret given to a phone only when it pairs at home), and the companion's hostname through the tunnel. Empty, the companion answers only at home and on the tailnet.",
+     "secret": false,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "COMPANION_ACCESS_AUD",
+     "section": "Domain",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "COMPANION_ACCESS_CLIENT_ID",
+     "section": "Domain",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "COMPANION_ACCESS_CLIENT_SECRET",
+     "section": "Domain",
+     "help": "",
+     "secret": true,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "COMPANION_AWAY_HOST",
+     "section": "Domain",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": ""
+    },
+    {
      "key": "AUTO_DOMAIN",
      "section": "Domain",
      "help": "Give each app its https://<name>.<domain> address in Nginx Proxy Manager (and the tunnel, for public apps) as soon as it is installed, once Set up the domain has run. false: only when you run Set up the domain.",
@@ -2428,7 +2537,7 @@
     {
      "key": "UPDATE_CHANNEL",
      "section": "Notifications",
-     "help": "Which homelab updates homelab upgrade gets: stable (tagged releases) or testing (every change on main, the default until the first release).",
+     "help": "Which homelab updates homelab upgrade gets: stable (a new minor or major release only) or testing (every release of main, the default).",
      "secret": false,
      "set": true,
      "value": "testing"
@@ -2498,9 +2607,33 @@
      "value": ""
     },
     {
+     "key": "TIDY_INBOX_WHEN",
+     "section": "Tidy Up",
+     "help": "When Tidy Up files what's in those folders: arrive (as things arrive, checked every minute), daily (once a day, after 03:00), or manual (only on Tidy up now).",
+     "secret": false,
+     "set": true,
+     "value": "arrive"
+    },
+    {
      "key": "TIDY_SCRUB",
      "section": "Tidy Up",
      "help": "Every night at 03:00, put leftovers whose film, song, or book is gone (posters, .nfo and subtitle files, empty folders) in the Trash.",
+     "secret": false,
+     "set": true,
+     "value": "true"
+    },
+    {
+     "key": "TIDY_TDARR_REST",
+     "section": "Tidy Up",
+     "help": "Tdarr rests (stopped) while it has no video to shrink, and starts again when Tidy Up has one for it: it frees its memory. false keeps it running.",
+     "secret": false,
+     "set": true,
+     "value": "true"
+    },
+    {
+     "key": "TIDY_ARR_REST",
+     "section": "Tidy Up",
+     "help": "Sonarr, Radarr, Lidarr, Prowlarr, Bazarr, FlareSolverr, qBittorrent and Gluetun rest (stopped) while nothing is downloading or requested, waking every 12 hours to look for new releases, at once for a Seerr request, and for Tidy Up's hand-over. A torrent seeding keeps qBittorrent and Gluetun up. false keeps them all running.",
      "secret": false,
      "set": true,
      "value": "true"
@@ -3258,6 +3391,14 @@
      "value": ""
     },
     {
+     "key": "FRIGATE_RECORDINGS",
+     "section": "App settings and secrets",
+     "help": "Where Frigate keeps its recordings (empty: a frigate folder on the media drive). Each camera adds to it every day, so pick a drive with room.",
+     "secret": false,
+     "set": true,
+     "value": ""
+    },
+    {
      "key": "NEXTCLOUD_ADMIN_USER",
      "section": "App settings and secrets",
      "help": "Nextcloud's administrator (made on its first start) and its database.",
@@ -3660,7 +3801,7 @@
     {
      "key": "PROTONVPN_WIREGUARD_PRIVATE_KEY",
      "section": "App settings and secrets",
-     "help": "Optional qBittorrent VPN (ProtonVPN account > Downloads > WireGuard).",
+     "help": "Needed for qBittorrent: it only downloads through your ProtonVPN, on a paid plan (its free servers don't carry torrents). Make a key at account.protonvpn.com › Downloads › WireGuard configuration, then paste its PrivateKey here.",
      "secret": true,
      "set": true,
      "value": ""
@@ -5082,7 +5223,7 @@
       ]
      }
     ],
-    "holdingsRead": "@ago:822480"
+    "holdingsRead": "@ago:1759081"
    },
    "today": "2026-10-30",
    "checking": "chk",
@@ -6227,6 +6368,119 @@
      ],
      "amount": 4550,
      "total": 4550
+    }
+   ],
+   "before": [
+    {
+     "date": "2026-10-26",
+     "people": [
+      "jordan"
+     ],
+     "amount": 2400,
+     "total": 2400
+    },
+    {
+     "date": "2026-10-23",
+     "people": [
+      "alex"
+     ],
+     "amount": 2150,
+     "total": 2150
+    },
+    {
+     "date": "2026-10-09",
+     "people": [
+      "alex"
+     ],
+     "amount": 2150,
+     "total": 2150
+    },
+    {
+     "date": "2026-09-25",
+     "people": [
+      "alex",
+      "jordan"
+     ],
+     "amount": 4550,
+     "total": 4550,
+     "moved": [
+      {
+       "person": "jordan",
+       "from": "2026-09-26",
+       "why": "the weekend"
+      }
+     ]
+    },
+    {
+     "date": "2026-09-11",
+     "people": [
+      "alex"
+     ],
+     "amount": 2150,
+     "total": 2150
+    },
+    {
+     "date": "2026-08-28",
+     "people": [
+      "alex"
+     ],
+     "amount": 2150,
+     "total": 2150
+    },
+    {
+     "date": "2026-08-26",
+     "people": [
+      "jordan"
+     ],
+     "amount": 2400,
+     "total": 2400
+    },
+    {
+     "date": "2026-08-14",
+     "people": [
+      "alex"
+     ],
+     "amount": 2150,
+     "total": 2150
+    },
+    {
+     "date": "2026-07-31",
+     "people": [
+      "alex"
+     ],
+     "amount": 2150,
+     "total": 2150
+    },
+    {
+     "date": "2026-07-24",
+     "people": [
+      "jordan"
+     ],
+     "amount": 2400,
+     "total": 2400,
+     "moved": [
+      {
+       "person": "jordan",
+       "from": "2026-07-26",
+       "why": "the weekend"
+      }
+     ]
+    },
+    {
+     "date": "2026-07-17",
+     "people": [
+      "alex"
+     ],
+     "amount": 2150,
+     "total": 2150
+    },
+    {
+     "date": "2026-07-03",
+     "people": [
+      "alex"
+     ],
+     "amount": 2150,
+     "total": 2150
     }
    ],
    "days": [
@@ -9321,6 +9575,23 @@
      "2026-10-18"
     ],
     "food": [
+     "2026-07-04",
+     "2026-07-11",
+     "2026-07-18",
+     "2026-07-25",
+     "2026-08-01",
+     "2026-08-08",
+     "2026-08-15",
+     "2026-08-22",
+     "2026-08-29",
+     "2026-09-05",
+     "2026-09-12",
+     "2026-09-19",
+     "2026-09-26",
+     "2026-10-03",
+     "2026-10-10",
+     "2026-10-17",
+     "2026-10-24",
      "2026-10-31",
      "2026-11-07",
      "2026-11-14"
@@ -9378,6 +9649,15 @@
      "2026-10-27"
     ],
     "save": [
+     "2026-07-03",
+     "2026-07-17",
+     "2026-07-31",
+     "2026-08-14",
+     "2026-08-28",
+     "2026-09-11",
+     "2026-09-25",
+     "2026-10-09",
+     "2026-10-23",
      "2026-11-06"
     ],
     "spotify": [
@@ -10186,7 +10466,90 @@
      "amount": 70
     }
    ]
-  }
+  },
+  "Phones": [
+   {
+    "id": "a1b2c3",
+    "name": "Alex's iPhone",
+    "canChange": true,
+    "finances": "edit",
+    "paired": "@ago:3456000",
+    "lastSeen": "@ago:60",
+    "this": true
+   },
+   {
+    "id": "k4i5t6",
+    "name": "Kitchen iPad",
+    "canChange": false,
+    "finances": "card",
+    "kiosk": true,
+    "paired": "@ago:2592000",
+    "lastSeen": "@ago:120"
+   },
+   {
+    "id": "j7o8r9",
+    "name": "Jordan's iPhone",
+    "canChange": false,
+    "personName": "Jordan",
+    "paired": "@ago:2160000",
+    "lastSeen": "@ago:86400"
+   },
+   {
+    "id": "g1u2e3",
+    "name": "Guest iPhone",
+    "canChange": true,
+    "paired": "@ago:259200",
+    "lastSeen": "@ago:259200",
+    "until": "@ago:-21600"
+   }
+  ],
+  "Setup": [
+   {
+    "id": "started",
+    "title": "The homelab is started",
+    "why": "Your homelab's own apps start (updates, backups, alerts), each with a strong password made for it.",
+    "state": "done"
+   },
+   {
+    "id": "address",
+    "title": "This machine keeps its address",
+    "why": "Your phones find the apps at this address; if the router hands out a new one, the apps seem to vanish.",
+    "state": "done"
+   },
+   {
+    "id": "jobs",
+    "title": "Scheduled jobs",
+    "why": "The homelab looks after itself: it starts again after a restart, backs up every night, and checks every app every 15 minutes.",
+    "state": "todo",
+    "forYou": true
+   },
+   {
+    "id": "adguard",
+    "title": "Home DNS answers (AdGuard Home)",
+    "why": "Makes the example.com names point at this machine at home, and blocks ads.",
+    "state": "todo",
+    "forYou": true
+   },
+   {
+    "id": "backups",
+    "title": "Backups leave this machine",
+    "why": "A cloud drive keeps them safe from fire and theft; an external drive is quicker to restore from.",
+    "state": "todo"
+   },
+   {
+    "id": "twofactor",
+    "title": "Two-step sign-in",
+    "why": "A stolen password alone then opens neither your password vault nor the homelab's settings.",
+    "state": "todo"
+   },
+   {
+    "id": "heartbeat",
+    "title": "Alerts when this machine is down",
+    "why": "If this machine loses power or crashes, an outside service notices the silence and tells you.",
+    "state": "todo",
+    "later": true
+   }
+  ]
  },
  "cards": {
   "watchdog": {
@@ -10199,31 +10562,31 @@
    },
    "days": {
     "vikunja": {
-     "2026-11-02": [
+     "2026-11-13": [
       96,
       96
      ],
-     "2026-11-03": [
+     "2026-11-14": [
       96,
       96
      ],
-     "2026-11-04": [
+     "2026-11-15": [
       96,
       96
      ],
-     "2026-11-05": [
+     "2026-11-16": [
       93,
       96
      ],
-     "2026-11-06": [
+     "2026-11-17": [
       96,
       96
      ],
-     "2026-11-07": [
+     "2026-11-18": [
       96,
       96
      ],
-     "2026-11-08": [
+     "2026-11-19": [
       40,
       40
      ]
@@ -10296,7 +10659,7 @@
     "time": "@ago:3961",
     "topic": "tunnel-watchdog",
     "title": "Homelab: restarted an app that hung",
-    "message": "vikunja\nUnwell on two checks in a row, so the watchdog restarted it (once in 6 hours at most; AUTO_HEAL=false turns this off).",
+    "message": "vikunja\nUnwell on two checks in a row, so the watchdog restarted it (once in 6 hours at most; Settings › Notifications › Restart an app that stops answering turns this off).",
     "tags": [
      "arrows_counterclockwise"
     ]
@@ -10311,96 +10674,52 @@
   ],
   "savings": [
    {
-    "date": "2026-09-10",
-    "annual": 2991
-   },
-   {
-    "date": "2026-09-11",
-    "annual": 2991
-   },
-   {
-    "date": "2026-09-12",
-    "annual": 2991
-   },
-   {
-    "date": "2026-09-13",
-    "annual": 2991
-   },
-   {
-    "date": "2026-09-14",
-    "annual": 2991
-   },
-   {
-    "date": "2026-09-15",
-    "annual": 2991
-   },
-   {
-    "date": "2026-09-16",
-    "annual": 2991
-   },
-   {
-    "date": "2026-09-17",
-    "annual": 2991
-   },
-   {
-    "date": "2026-09-18",
-    "annual": 2991
-   },
-   {
-    "date": "2026-09-19",
-    "annual": 2991
-   },
-   {
-    "date": "2026-09-20",
-    "annual": 2991
-   },
-   {
     "date": "2026-09-21",
     "annual": 2991
    },
    {
     "date": "2026-09-22",
-    "annual": 3112
+    "annual": 2991
    },
    {
     "date": "2026-09-23",
-    "annual": 3112
+    "annual": 2991
    },
    {
     "date": "2026-09-24",
-    "annual": 3112
+    "annual": 2991
    },
    {
     "date": "2026-09-25",
-    "annual": 3112
+    "annual": 2991
    },
    {
     "date": "2026-09-26",
-    "annual": 3112
+    "annual": 2991
    },
    {
     "date": "2026-09-27",
-    "annual": 3112
+    "annual": 2991
    },
    {
     "date": "2026-09-28",
-    "annual": 3112
+    "annual": 2991
    },
    {
     "date": "2026-09-29",
-    "annual": 3112
+    "annual": 2991
    },
    {
     "date": "2026-09-30",
-    "annual": 3112
+    "annual": 2991
    },
    {
     "date": "2026-10-01",
-    "annual": 3112
+    "annual": 2991
    },
    {
     "date": "2026-10-02",
-    "annual": 3112
+    "annual": 2991
    },
    {
     "date": "2026-10-03",
@@ -10432,47 +10751,47 @@
    },
    {
     "date": "2026-10-10",
-    "annual": 3232
+    "annual": 3112
    },
    {
     "date": "2026-10-11",
-    "annual": 3232
+    "annual": 3112
    },
    {
     "date": "2026-10-12",
-    "annual": 3232
+    "annual": 3112
    },
    {
     "date": "2026-10-13",
-    "annual": 3232
+    "annual": 3112
    },
    {
     "date": "2026-10-14",
-    "annual": 3232
+    "annual": 3112
    },
    {
     "date": "2026-10-15",
-    "annual": 3232
+    "annual": 3112
    },
    {
     "date": "2026-10-16",
-    "annual": 3232
+    "annual": 3112
    },
    {
     "date": "2026-10-17",
-    "annual": 3232
+    "annual": 3112
    },
    {
     "date": "2026-10-18",
-    "annual": 3232
+    "annual": 3112
    },
    {
     "date": "2026-10-19",
-    "annual": 3232
+    "annual": 3112
    },
    {
     "date": "2026-10-20",
-    "annual": 3232
+    "annual": 3112
    },
    {
     "date": "2026-10-21",
@@ -10500,47 +10819,47 @@
    },
    {
     "date": "2026-10-27",
-    "annual": 3292
+    "annual": 3232
    },
    {
     "date": "2026-10-28",
-    "annual": 3292
+    "annual": 3232
    },
    {
     "date": "2026-10-29",
-    "annual": 3292
+    "annual": 3232
    },
    {
     "date": "2026-10-30",
-    "annual": 3292
+    "annual": 3232
    },
    {
     "date": "2026-10-31",
-    "annual": 3292
+    "annual": 3232
    },
    {
     "date": "2026-11-01",
-    "annual": 3292
+    "annual": 3232
    },
    {
     "date": "2026-11-02",
-    "annual": 3292
+    "annual": 3232
    },
    {
     "date": "2026-11-03",
-    "annual": 3292
+    "annual": 3232
    },
    {
     "date": "2026-11-04",
-    "annual": 3292
+    "annual": 3232
    },
    {
     "date": "2026-11-05",
-    "annual": 3292
+    "annual": 3232
    },
    {
     "date": "2026-11-06",
-    "annual": 3292
+    "annual": 3232
    },
    {
     "date": "2026-11-07",
@@ -10548,6 +10867,50 @@
    },
    {
     "date": "2026-11-08",
+    "annual": 3292
+   },
+   {
+    "date": "2026-11-09",
+    "annual": 3292
+   },
+   {
+    "date": "2026-11-10",
+    "annual": 3292
+   },
+   {
+    "date": "2026-11-11",
+    "annual": 3292
+   },
+   {
+    "date": "2026-11-12",
+    "annual": 3292
+   },
+   {
+    "date": "2026-11-13",
+    "annual": 3292
+   },
+   {
+    "date": "2026-11-14",
+    "annual": 3292
+   },
+   {
+    "date": "2026-11-15",
+    "annual": 3292
+   },
+   {
+    "date": "2026-11-16",
+    "annual": 3292
+   },
+   {
+    "date": "2026-11-17",
+    "annual": 3292
+   },
+   {
+    "date": "2026-11-18",
+    "annual": 3292
+   },
+   {
+    "date": "2026-11-19",
     "annual": 3292
    }
   ],

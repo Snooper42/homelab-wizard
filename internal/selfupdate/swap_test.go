@@ -94,7 +94,9 @@ func waitFor(t *testing.T, what string, ok func() bool) {
 			return
 		}
 	}
-	t.Fatalf("timed out waiting for %s", what)
+	// The helper's log has a line, with its time, for each step it got to,
+	// so a slow runner's failure says which step held it.
+	t.Fatalf("timed out waiting for %s; the helper's log:\n%s", what, read(LogPath()))
 }
 
 func read(path string) string {
@@ -343,7 +345,7 @@ func TestSwapWindowsWaitsOnlyForTheApp(t *testing.T) {
 			return
 		}
 	}
-	t.Fatal("the update waited for a process that isn't the app")
+	t.Fatalf("the update waited for a process that isn't the app; the helper's log:\n%s", read(LogPath()))
 }
 
 func TestSwapWindowsScriptUnpacksThePortableBuild(t *testing.T) {

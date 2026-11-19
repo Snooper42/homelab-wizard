@@ -1,0 +1,123 @@
+# Media automation made easy: the loop (lane 5)
+
+The owner, Nov 19, 2026: improve the \*arr stack that's already there, so someone who isn't technical can use it. **Remove friction**: no new apps for their own sake, no debrid or streaming add-ons (looked at and dropped on Nov 19). This file is the whole job for the account that runs it. The iPhone and iPad app stays with lane 4 (`apple-loop.md`) on another account. Don't touch `apple-client/`.
+
+## Launcher (paste into a new session)
+
+    /loop Read .claude/prompts/arr-loop.md and do the next round.
+
+With no interval, /loop paces itself. Each round re-reads this file, so to steer the loop, edit it on main.
+
+**Paused:** no. (Change this to **yes** and push to pause the loop: a round that reads yes opens nothing, merges nothing, says it's paused, and waits.)
+
+## The goal in one line
+
+A household member touches two things: **Seerr to ask for a film or show, Jellyfin to watch it.** Everything in between is the wizard's job. A round that person wouldn't notice is a round wasted, unless it fixes a failure, lost data, or a security hole (`lanes.md`, *The goal*).
+
+## 0. Rules (they never bend)
+
+1. **`lanes.md` first, every round.** Where it and this file disagree, it wins. Rule 2 (a file claimed by another lane's open PR) applies before every branch and every push.
+2. **The wizard never picks search sites.** It may say none are set up yet, open Prowlarr's page for adding one, and tick when one works. It never names, suggests, ships, or preconfigures an indexer, a tracker, or a scraper. Words stay neutral: "find and download what you ask for", never "free movies" or "replace Netflix". The bundle stays opt-in, as now.
+3. **Secrets stay secret.** VPN keys, API keys and the passwords the wizard makes go in `.env` (0600, ADR-0011) and nowhere else on the computer: never in a log, a link, an alert, a PR, or this file. A new secret goes in `.env.example` with a comment saying where it comes from, and must be covered by the redaction phones, alerts and reports get (`docs/Security.md` N15).
+4. **A failing test first, then the fix.** The Go tests next to the code, against the fake APIs `internal/wiring` already uses. A screen change gets a smoke case and before/after pictures (`app/preview/shoot.mjs`).
+5. **Running `wire` twice changes nothing the second time.** Every link it makes must be found and left alone on the next run, and a key or address that changed must be corrected, never duplicated (`wiring_test.go` checks this for today's links; keep it true for new ones).
+6. **One open PR at a time**, on `claude/arr-*` branches only. Merge per `lanes.md` Rule 5: squash, `expectedHeadSha` pinned, every check green on that head. At most 3 merges a day.
+7. **While a PR waits:** call `subscribe_pr_activity` and end the turn. Don't poll.
+8. **Every PR ends with "Try this tonight"**: 3 to 5 clicks the owner can do in one evening, with what each should show. Say if it needs the VPN key, or an app started again.
+9. **Ask the owner only with the AskUserQuestion pop-up**, every question at once, and only when the decision is genuinely theirs. Recommend one option.
+10. **Never without the owner's yes:** weaken a security choice, delete a branch or data, move files on the media drive, loosen CI, or open a second PR. No model name in commits or PRs.
+
+## Start here (every round)
+
+1. `git fetch origin main`. Land your open PR if it's green; fix it first if it's red.
+2. Read `complaints.md` under **Media automation (Account 5)**, and every **For Account 5** section in the other loop files. Those come first.
+3. Take the next item from section 4 that isn't done. Before starting, list every other open PR's files (Rule 2).
+4. Before you stop: update section 3 (where it stands) and push it with your PR, or on its own to main if no PR is open.
+
+## 1. What you're working with (facts, checked Nov 19)
+
+- **The bundle:** `x-homelab-bundles.arr` in `compose.yaml`: Prowlarr, Sonarr, Radarr, Lidarr, Bazarr, FlareSolverr, qBittorrent, and Seerr. Gluetun comes with qBittorrent. All are in `compose/media-automation.yaml`.
+- **What `homelab wire` already connects** (`internal/wiring/wiring.go`, `steps()`): Prowlarr to Sonarr, Radarr and Lidarr; FlareSolverr in Prowlarr; qBittorrent as each app's download client (categories `tv`, `movies`, …); each app's root folder; Bazarr to Sonarr and Radarr; Seerr to Sonarr and Radarr. **Seerr's Jellyfin sign-in is printed as a step for the person to do** (`seerrSignIn`, `more.go:228`).
+- **How it's tested:** fake APIs in `wiring_test.go` and `more_test.go`. The nightly workflow's `wire` job runs `wire --apply` against real Prowlarr, Sonarr, Radarr, Lidarr and FlareSolverr. **qBittorrent can't be tested for real in CI:** it waits for Gluetun, which needs a real VPN key (`docs/Known Issues.md`). Keep qBittorrent's side against fakes, and say so in the PR.
+- **The VPN:** Gluetun with ProtonVPN WireGuard, port forwarding on (`PORT_FORWARD_ONLY`, `VPN_PORT_FORWARDING`). It needs a **paid** Proton plan (`.env.example:424`). The forwarded port is copied into qBittorrent by hand today (Gluetun's page, Setup step 5), and it changes when the VPN reconnects.
+- **The layout copies rather than hard-links:** `/downloads` and `/tv` are separate mounts (`Sonarr.md:68`), so every import is a full copy and takes double the space while the torrent seeds.
+- **Tidy Up is involved, and it's lane 1's (parked):** it puts the \*arr apps to rest while nothing is pending (`cmd/homelab/media_arr_rest.go`, `docs/Tidy Up.md` line ~97), and **Hand over** turns off the \*arrs' own filing so Tidy Up files downloads instead (`homelab media arr --apply`). Leave both alone unless an item needs a change and the owner agrees (section 6).
+- **Jellyfin is native** (ADR-0010) at `host.docker.internal:8096`, with `JELLYFIN_API_KEY` in `.env` when set (Settings › People uses it).
+- **ntfy is already set up with tokens** (`internal/notify`, Setup's alert step).
+
+## 2. The friction today (walked through Nov 19)
+
+From ticking **Media automation** to watching something, a person goes through about eight steps in five apps:
+
+1. Gets a ProtonVPN WireGuard key (paid plan, port forwarding on) and pastes it into the plan.
+2. Copies the forwarded port from Gluetun's log into qBittorrent, which goes stale on every reconnect.
+3. Sets a login in each \*arr on first open ("Authentication required").
+4. Finds qBittorrent's temporary password in its log, then saves a permanent one as `QBITTORRENT_PASSWORD`.
+5. Runs **Connect apps**.
+6. Signs into Seerr with a Jellyfin admin, then runs **Connect apps** again.
+7. Adds search sites in Prowlarr. Nothing downloads until they do, and nothing says so.
+8. Chooses quality profiles (jargon) and whether to **Hand over** to Tidy Up (a choice they can't judge).
+
+Afterwards, a request that can't be found or downloaded sits at "Requested" in Seerr with no explanation.
+
+## 3. Where it stands
+
+- **Nov 19:** lane 5 started. No PR yet. Section 5's questions not asked yet.
+
+## 4. The work, in order
+
+Each item is one small PR unless it says otherwise. Before writing code, **check the app's current API** (each app's own docs or source) for every call named here; these were planned from memory and are not yet verified.
+
+1. **Logins made for them** (removes steps 3–4).
+   - At install, the wizard generates a password for the \*arrs and qBittorrent, saves it in `.env` and sets it in each app, so "Authentication required" never appears. Check whether each \*arr's `/api/v3/config/host` (`/api/v1` for Prowlarr and Lidarr) takes the method, username and password, and how qBittorrent's password is set before first start.
+   - Settings › Copy shows it, like the other generated secrets. Setup says once to keep it in Vaultwarden.
+   - Test: a fresh install has a login on each app, and a second `wire` run changes nothing.
+2. **The VPN looks after itself** (removes step 2, softens step 1).
+   - Gluetun puts its forwarded port into qBittorrent by itself on every change. Check Gluetun's wiki for its port-forwarding "up" command and what qBittorrent needs to accept it from `127.0.0.1` (they share a network).
+   - The wizard checks the downloads leave through the VPN, not the home connection, and shows a green **Downloads are private** tick (in Setup and on qBittorrent's page). Today that check is a command typed by hand (Gluetun step 4).
+   - The plan's VPN-key field gets a plain three-step walkthrough of where to find the key, and says up front that it needs a paid Proton plan.
+3. **Seerr signs into Jellyfin for them** (removes step 6).
+   - The wizard asks for the Jellyfin admin password once, uses it for Seerr's first-run sign-in through Seerr's own API, and doesn't keep it.
+   - `wire` then links Seerr to Sonarr and Radarr in the same run. `seerrSignIn` becomes a fallback when the password is wrong.
+   - This touches Setup or the plan (Account 2's screens): see section 6.
+4. **Sensible defaults `wire` sets** (one PR; each one a step that is found next time).
+   - Sonarr and Radarr tell Jellyfin to refresh after each import (Settings › Connect › Emby / Jellyfin, with `JELLYFIN_API_KEY`, and the path mapped from `/tv` to the media drive's path). Skipped, with a line saying why, when there's no key.
+   - Sonarr, Radarr and Lidarr send health and failed-grab alerts to ntfy, in plain words, through the alert token `notify setup` made.
+   - qBittorrent: Automatic torrent management, so each category gets its own folder, plus a seeding limit, so the \*arrs' Remove Completed can clear the downloads and the drive doesn't fill.
+5. **Search sites: guided, never chosen** (step 7; Rule 2).
+   - A Setup item: "No search sites yet". Its button opens Prowlarr's page for adding an indexer. A live tick appears when Prowlarr lists at least one that passes its own test.
+   - The item explains what a search site is in one sentence, with no names.
+6. **The Downloads card** (the "why isn't anything happening?" fix; may be two PRs).
+   - One card on Status, in plain words, e.g. *Getting 2 · 1 stuck: no search site has it · Drive 82% full*. It's built from the \*arr queues, qBittorrent, Seerr's requests, and the drive's free space. The resting logic already reads most of this; reuse it, don't copy it (a shared function in lane 1's code is fine; note it under **For Account 1** in `tidy-loop.md`).
+   - The same messages go to the phone through ntfy.
+   - Then write a **For Account 4** note in this file: the companion call that serves the card, so lane 4 can show it on the phone.
+7. **One plain question instead of quality profiles** (step 8).
+   - "What do you mostly watch on?": *a 4K TV* / *an HD TV or phones* / *save space*. The answer maps to a profile in Sonarr and Radarr, and Seerr's default profile follows it.
+   - Keep the mapping in one place, with a test for each answer.
+8. **The \*arr apps folded away.** On Status, the \*arr apps sit under one "Media automation" line, open on a click; the card from item 6 is what people see. This uses `internal/statusfolds` and is Account 2's screen: see section 6.
+9. **Later, once 1–8 are done** (ask the owner before starting either):
+   - **Hard links:** one `/data` mount across qBittorrent and the \*arrs, so imports are instant and take no extra space. Existing installs need their root folders and stored paths moved. Ship it with a dry run that lists what would change, and an undo. Never move media files without the owner's yes (rule 10).
+   - **Recyclarr** for tested quality profiles behind item 7's three answers.
+
+## 5. Ask the owner first (in the first round, in one pop-up)
+
+1. **Who files downloads by default: Tidy Up (one place, with Undo) or the \*arrs (the standard setup, what guides online assume)?** Recommend one. The answer shapes items 4, 6 and 7, and decides which mode Setup turns on by itself.
+2. Is the account's 3-merges-a-day cap fine, or waived as for lanes 1 and 4?
+
+## 6. Where lane 5's work meets other lanes
+
+Today only lane 4 has an account (`lanes.md`, *Who's working now*). Lanes 1, 2 and 3 are parked, so nothing here waits on them.
+
+| Need | Whose | How |
+|---|---|---|
+| `compose/media-automation.yaml`, `internal/wiring`, `services/media automation/*`, the bundle in `compose.yaml`, and the media automation parts of Setup, the install plan and Status | **Lane 5** | Yours (`lanes.md`, row 5) |
+| Other Setup, Status and Settings code an item needs (Settings › Copy, the Status card's frame, `internal/statusfolds`) | Lane 2, parked | Change it yourself in a small PR, then note what you changed under **For Account 2** in `maintenance-loop.md` |
+| Resting the \*arrs (`cmd/homelab/media_arr_rest.go`), **Hand over**, Tidy Up's filing | Lane 1, parked | Change it only if an item needs it and the owner agreed (section 5), then note it under **For Account 1** in `tidy-loop.md` |
+| The phone showing the Downloads card | Lane 4, **active** (`apple-loop.md`) | Don't touch `apple-client/`. Once the computer's call exists, write what it serves under **For Account 4** below; lane 4 builds the phone's side |
+| A security question (secrets, what's exposed) | Lane 3, parked | Write it up in the PR. The owner looks before it merges |
+
+## For Account 4
+
+Lane 5's notes for the iPhone and iPad app. Lane 4 reads this section at the start of each round.
+
+## Done

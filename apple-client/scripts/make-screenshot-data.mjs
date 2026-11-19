@@ -85,6 +85,28 @@ cards.usage = state.usage;
 const storage = await App.Storage();
 cards.storage = { when: storage.when, apps: [...storage.apps, { app: 'vikunja', bytes: 64e6 }] };
 
+// Settings › Phones and iPads and Setup's checklist (serve.go's phonePhone and phoneSetupStep):
+// made-up phones and steps, never anyone's real ones.
+const hour = 3600e3, day = 24 * hour;
+const ago = (ms) => new Date(Date.now() - ms).toISOString();
+answers.Phones = [
+  { id: 'a1b2c3', name: "Alex's iPhone", canChange: true, finances: 'edit', paired: ago(40 * day), lastSeen: ago(60e3), this: true },
+  { id: 'k4i5t6', name: 'Kitchen iPad', canChange: false, finances: 'card', kiosk: true, paired: ago(30 * day), lastSeen: ago(2 * 60e3) },
+  { id: 'j7o8r9', name: "Jordan's iPhone", canChange: false, personName: 'Jordan', paired: ago(25 * day), lastSeen: ago(day) },
+  { id: 'g1u2e3', name: 'Guest iPhone', canChange: true, paired: ago(3 * day), lastSeen: ago(3 * day), until: new Date(Date.now() + 6 * hour).toISOString() },
+];
+answers.Setup = [
+  { id: 'started', title: 'The homelab is started', why: "Your homelab's own apps start (updates, backups, alerts), each with a strong password made for it.", state: 'done' },
+  { id: 'address', title: 'This machine keeps its address', why: 'Your phones find the apps at this address; if the router hands out a new one, the apps seem to vanish.', state: 'done' },
+  { id: 'jobs', title: 'Scheduled jobs', why: 'The homelab looks after itself: it starts again after a restart, backs up every night, and checks every app every 15 minutes.', state: 'todo', forYou: true },
+  { id: 'adguard', title: 'Home DNS answers (AdGuard Home)', why: 'Makes the example.com names point at this machine at home, and blocks ads.', state: 'todo', forYou: true },
+  { id: 'backups', title: 'Backups leave this machine', why: 'A cloud drive keeps them safe from fire and theft; an external drive is quicker to restore from.', state: 'todo' },
+  { id: 'twofactor', title: 'Two-step sign-in', why: 'A stolen password alone then opens neither your password vault nor the homelab\'s settings.', state: 'todo' },
+  { id: 'heartbeat', title: 'Alerts when this machine is down', why: 'If this machine loses power or crashes, an outside service notices the silence and tells you.', state: 'todo', later: true },
+];
+// What the computer answers (the contract the iPhone's tests read): every call, Phones and Setup with them.
+const contract = JSON.parse(readFileSync(join(root, 'apple-client', 'Tests', 'Resources', 'CompanionContract.json'), 'utf8'));
+
 // Times become "@ago:<seconds>".
 const now = Date.now();
 const iso = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z$/;
@@ -95,7 +117,7 @@ const relative = (v) => {
   return v;
 };
 const data = relative({
-  me: { id: 'screenshots', name: 'iPhone', canChange: true, finances: 'edit' },
+  me: { id: 'screenshots', name: 'iPhone', canChange: true, finances: 'edit', computer: contract.me.computer },
   answers,
   cards,
 });

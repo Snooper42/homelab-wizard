@@ -116,6 +116,38 @@ mkdir -p "$WORK/HomelabFinance.xcframework"
 run env HOMELAB_NO_OPEN=1 HOMELAB_FINANCE_XCFRAMEWORK="$WORK/HomelabFinance.xcframework" HOMELAB_WIDGET=1 "$HERE/make-xcode-project.sh" com.example ABCDE12345
 expect "the Finances code made: linked, not embedded, beside the widget" bash -c '[ "$0" = 0 ] && grep -q "framework: \"$2\"" "$1" && grep -q "embed: false" "$1" && grep -q "target: HomelabWidget-iOS" "$1" && [ "$(grep -c "dependencies:" "$1")" = 1 ]' "$RC" "$yml" "$WORK/HomelabFinance.xcframework"
 expect "the project with the Finances code is valid YAML" yaml_ok
+run env HOMELAB_NO_OPEN=1 HOMELAB_WIDGET=1 "$HERE/make-xcode-project.sh" com.example ABCDE12345
+v="$("$HERE/app-version.sh")"
+expect "the project carries the app's version and build (app-version.sh)" bash -c 'grep -q "MARKETING_VERSION: \"${0%% *}\"" "$1" && grep -q "CURRENT_PROJECT_VERSION: \"${0#* }\"" "$1"' "$v" "$yml"
+expect "the app and its widget show the same version, so Xcode doesn't warn" bash -c '[ "$(grep -c "CFBundleShortVersionString: \$(MARKETING_VERSION)" "$0")" = 2 ] && [ "$(grep -c "CFBundleVersion: \$(CURRENT_PROJECT_VERSION)" "$0")" = 2 ]' "$yml"
+expect "it says which version it made" says "The Homelab app ${v%% *} (build ${v#* })"
+
+echo "app-version.sh"
+# A history of its own: VERSION, then changes to the app and to other files.
+repo="$WORK/version-repo"
+mkdir -p "$repo/apple-client/scripts" "$repo/apple-client/Shared" "$repo/apple-client/Widget"
+cp "$HERE/app-version.sh" "$repo/apple-client/scripts/"
+g() { git -C "$repo" -c user.name=t -c user.email=t@example.com "$@" >/dev/null 2>&1; }
+commit() { echo "$RANDOM" >>"$repo/apple-client/$1"; g add -A; g commit -m "$1"; }
+g init -q
+commit Shared/a.swift
+printf '0.4\n' >"$repo/apple-client/VERSION"; commit Shared/b.swift
+av() { OUT="$("$repo/apple-client/scripts/app-version.sh" 2>&1)"; RC=$?; }
+av; expect "the change that sets VERSION is .0, and the build counts every change to the app" test "$OUT" = "0.4.0 2"
+commit Shared/a.swift; commit Widget/w.swift
+av; expect "each change to the app after it is one more" test "$OUT" = "0.4.2 4"
+commit README.md; commit scripts/x.sh
+av; expect "a change to the README or a script isn't a new version" test "$OUT" = "0.4.2 4"
+printf '0.5\n' >"$repo/apple-client/VERSION"; g add -A; g commit -m "0.5"
+av; expect "raising VERSION starts its count again; the build doesn't go back" test "$OUT" = "0.5.0 4"
+commit Shared/a.swift
+av; expect "and goes on from there" test "$OUT" = "0.5.1 5"
+cp -r "$repo/apple-client" "$WORK/no-history"
+OUT="$("$WORK/no-history/scripts/app-version.sh" 2>&1)"
+expect "without the history: VERSION with .0, build 0" test "$OUT" = "0.5.0 0"
+printf 'version 0.4\n' >"$WORK/no-history/VERSION"
+OUT="$("$WORK/no-history/scripts/app-version.sh" 2>&1)"; RC=$?
+expect "a VERSION that isn't two numbers stops it, saying why" bash -c '[ "$0" != 0 ] && grep -q "should be two numbers" <<<"$1"' "$RC" "$OUT"
 
 echo "phones.sh"
 run "$HERE/phones.sh"

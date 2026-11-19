@@ -8,7 +8,7 @@ With no interval, /loop paces itself. Each round re-reads this file, so to steer
 
 It has two tracks, taken in turn: **fixes** (*The queue*: bugs and the promises below) and **the look** (*The look*: Tidy Up made to look and feel like the Finances screen, and like the finance app in the owner's reference screenshots).
 
-**Paused:** no. (Change this to **yes** and push to pause the loop: a round that reads yes merges nothing new, opens nothing new, says it is paused, and waits for the next round.)
+**Paused:** yes (the owner, Nov 19, 2026: no account runs this loop now; see `lanes.md`, *Who's working now*). Change this to **no** and push to start it again. (A round that reads yes merges nothing new, opens nothing new, says it is paused, and waits for the next round.)
 
 **Alongside `features-loop.md`:** both are Account 1. While this loop runs, it owns Tidy Up; the features loop's *Tidy Up focus* defers to it and goes on to Finances. The two share Account 1's limits: **one open PR**, between them. The owner waived the 3-a-day cap for Account 1 on Nov 8 ("Remember always merge everything"): merge each PR as soon as it is green and mergeable, without asking, still pinned to `expectedHeadSha` and still checking what main gained (Rule 5). Before opening a PR, list Account 1's open PRs; if one is open, wait (subscribe to it, as **Waiting on CI** says) or take an item that needs no push (an audit pass).
 

@@ -2,6 +2,17 @@
 
 Every loop reads this file at the start of every round. Where it and a loop's own file disagree, this file wins. Only the owner changes it.
 
+## Who's working now (the owner, Nov 19, 2026)
+
+- **Lane 4 (the iPhone and iPad app, `apple-loop.md`)** is the only lane an account runs today. Every commit on main since Nov 14 is its.
+- **Lane 5 (media automation, `arr-loop.md`)** starts next, on a second account.
+- **Lanes 1, 2 and 3 have no account.** Their loop files read **Paused: yes**, and nothing waits on them. Their tables and rules below stay for the day the owner starts one again.
+- **While a lane is parked:**
+  - An active lane may change that lane's code and screens where its own item needs it, as long as its PR stays small and says so.
+  - It writes what it changed under **For Account N** in that lane's loop file, so the lane can pick it up when it restarts.
+  - Rule 2 still applies.
+  - Security work (lane 3's) is written up in the PR, and the owner looks at it before it merges.
+
 ## The goal (Nov 6, 2026)
 
 The app is to become clearly easier to use. A round that a household member would not notice is a round wasted, unless it fixes a failure, lost data, or a security hole. The owner's complaints are in `.claude/prompts/complaints.md`; every lane reads it at the start of every round and takes the ones in its area first.
@@ -12,6 +23,7 @@ The app is to become clearly easier to use. A round that a household member woul
 | 2 | `maintenance-loop.md` | `claude/fix-*` | Every other screen and what is under it: Setup, Status, Choose and install, an app's page, Updates, Backups, Settings, the menu bar and tray, the phone's screens other than Finances; failure issues; how records are stored, and the SQLite base (ADR-0022) |
 | 3 | `audit-loop.md` | `claude/audit-security-*`, `claude/security-*` | Usability testing of the whole app (findings go to the owning lane); security findings and their fixes; `docs/Security.md`, `docs/Usability.md` |
 | 4 | `apple-loop.md` | its own | `apple-client/` (the SwiftUI app). No other lane touches it |
+| 5 | `arr-loop.md` | `claude/arr-*` | Media automation, end to end: `compose/media-automation.yaml`, the bundle in `compose.yaml`, `internal/wiring`, `services/media automation/`, and the media automation parts of Setup, the install plan and Status |
 
 A `claude/*` branch that matches no row is no loop's: leave it alone and list it for the owner.
 
@@ -46,4 +58,4 @@ Only these may be changed by two open PRs at once, each lane adding its own line
 
 ## Rule 6: issues
 
-Only Account 2 closes failure issues, from the PR that fixes them (`Fixes #N`).
+Only Account 2 closes failure issues, from the PR that fixes them (`Fixes #N`). While lane 2 is parked, the active lane whose PR fixes one closes it the same way.

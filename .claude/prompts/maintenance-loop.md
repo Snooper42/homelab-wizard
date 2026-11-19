@@ -6,7 +6,7 @@ The master prompt for Account 2, a session that makes Homelab Wizard easier to u
 
 With no interval, /loop paces itself. Each round re-reads this file, so to steer the loop, edit it, commit and push it to main, and the next round follows. The standing rules and the queue live here too, so the command stays one plain line (the app will not send a slash command followed by formatted text).
 
-**Paused:** no. (Change this to **yes** and push to pause the loop: a round that reads yes merges nothing new, opens nothing new, says it is paused, and waits for the next round.)
+**Paused:** yes (the owner, Nov 19, 2026: no account runs this loop now; see `lanes.md`, *Who's working now*). Change this to **no** and push to start it again. (A round that reads yes merges nothing new, opens nothing new, says it is paused, and waits for the next round.)
 
 ---
 

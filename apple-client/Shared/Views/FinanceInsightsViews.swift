@@ -236,7 +236,7 @@ private struct MonthReviewCards: View {
             hero
             if !review.categories.isEmpty { whereItWent }
             HStack(spacing: 12) {
-                tile("Came in", review.income, Theme.success)
+                tile("Came in", review.cameIn, Theme.success)
                 tile(review.saved >= 0 ? "Left over" : "Over by", abs(review.saved), review.saved >= 0 ? Theme.accent : Theme.danger)
             }
             if review.grewMost != nil || review.shrankMost != nil { changes }

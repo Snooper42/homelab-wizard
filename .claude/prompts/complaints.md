@@ -22,7 +22,9 @@ Add a complaint from the phone by editing this file on GitHub (github.com/Snoope
 
 ## Settings, People, Phones (Account 2)
 
-## The phone (Account 2; Finances on the phone: Account 1)
+## The phone (Account 4)
+
+## Media automation (Account 5)
 
 ## Anything else
 
