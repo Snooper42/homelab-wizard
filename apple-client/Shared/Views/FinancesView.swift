@@ -3493,7 +3493,7 @@ struct WalletTransactionRow: View {
                 }
                 // What it was and the day: one line, as Wallet's, or two when it needs them
                 // (a transfer's other account and the day cut off as "From Chase Checki…").
-                Text(verbatim: [subtitle, TransactionsView.dayWords(transaction.date)].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · "))
+                Text(verbatim: RowWords.line([subtitle, TransactionsView.dayWords(transaction.date)]))
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .lineLimit(2)
