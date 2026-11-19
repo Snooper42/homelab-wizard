@@ -12,8 +12,9 @@
 #   - the homelab's https address works: apple-client/scripts/phone-address.sh
 #
 # With a free Apple ID the app works for 7 days; run this again to renew it.
-# The pairing is kept across runs. HOMELAB_DEVICE="Name" picks a phone when
-# more than one is connected; HOMELAB_PAIR_AGAIN=1 makes a new pairing code anyway.
+# The pairing is kept across runs. With more than one iPhone or iPad connected
+# (a cable, or Xcode's Wi-Fi), it puts the app on each in turn; HOMELAB_DEVICE="Name"
+# picks one. HOMELAB_PAIR_AGAIN=1 makes a new pairing code anyway.
 set -euo pipefail
 
 PREFIX="${1:-}"
@@ -58,9 +59,11 @@ for d in devices:
     name = dp.get("name", "")
     if want and name != want:
         continue
+    # Connected now: on a cable or the network, not one Xcode only remembers.
+    near = "yes" if cp.get("transportType") or cp.get("tunnelState", "") not in ("", "unavailable") else ""
     print("\t".join([d.get("identifier", ""), hw.get("udid", ""), name,
                      dp.get("developerModeStatus", ""), cp.get("pairingState", ""),
-                     cp.get("tunnelState", "")]))
+                     cp.get("tunnelState", ""), near]))
 PY
 COUNT="$(grep -c . "$TMP/device.tsv" || true)"
 if [ "$COUNT" = 0 ]; then
@@ -85,12 +88,39 @@ MSG
   fi
   exit 1
 fi
-if [ "$COUNT" != 1 ]; then
-  echo "More than one iPhone is connected. Pick one by its name:" >&2
-  cut -f3 "$TMP/device.tsv" | while IFS= read -r N; do printf '  HOMELAB_DEVICE="%s" %s %s\n' "$N" "$0" "$PREFIX"; done >&2
+if [ "$COUNT" != 1 ] && [ -n "${HOMELAB_DEVICE:-}" ]; then
+  echo "More than one iPhone is named \"$HOMELAB_DEVICE\". Give one another name (Settings › General › About › Name) and run this again." >&2
   exit 1
 fi
-IFS=$'\t' read -r DEVICE UDID NAME DEVMODE PAIRING TUNNEL <"$TMP/device.tsv"
+if [ "$COUNT" != 1 ]; then
+  # Several known: the ones connected now, each in turn (the iPhone and the iPad).
+  awk -F'\t' '$7 == "yes"' "$TMP/device.tsv" >"$TMP/near.tsv"
+  NEAR="$(grep -c . "$TMP/near.tsv" || true)"
+  if [ "$NEAR" = 0 ]; then
+    echo "Xcode knows these, but none is connected now:" >&2
+    cut -f3 "$TMP/device.tsv" | sed 's/^/  /' >&2
+    echo "Plug the iPhone or iPad in with a cable, unlock it, and run this again." >&2
+    exit 1
+  fi
+  if [ "$NEAR" != 1 ]; then
+    echo "Found $NEAR connected: $(cut -f3 "$TMP/near.tsv" | paste -sd, - | sed 's/,/, /g'). Putting the app on each in turn."
+    DONE="" FAILED=""
+    while IFS=$'\t' read -r -u 3 _ _ N _; do
+      echo
+      echo "── $N ──"
+      if HOMELAB_DEVICE="$N" "$HERE/$(basename "$0")" "$PREFIX" "${2:-}"; then DONE="$DONE${DONE:+, }$N"; else FAILED="$FAILED${FAILED:+, }$N"; fi
+    done 3<"$TMP/near.tsv"
+    echo
+    [ -n "$DONE" ] && echo "✓ Up to date: $DONE."
+    if [ -n "$FAILED" ]; then
+      echo "✗ Not updated: $FAILED (what went wrong is above). Run this again once it's fixed." >&2
+      exit 1
+    fi
+    exit 0
+  fi
+  cp "$TMP/near.tsv" "$TMP/device.tsv"
+fi
+IFS=$'\t' read -r DEVICE UDID NAME DEVMODE PAIRING TUNNEL _ <"$TMP/device.tsv"
 echo "Found $NAME."
 if [ -n "$PAIRING" ] && [ "$PAIRING" != "paired" ]; then
   # The phone asks "Trust This Computer?" only when the Mac asks it to.

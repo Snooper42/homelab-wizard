@@ -31,8 +31,18 @@ working:
 **Each new version afterwards**: one command pulls main into this checkout and
 puts it on the phone, with the prefix used before (remembered, or read from
 the Xcode project the first run made). It pulls only a clean checkout of
-main, forward only. `--add-command` adds `homelab-phone`, the same from any
-folder; `HOMELAB_DEVICE="My iPad"` picks the iPad:
+main, forward only. With the iPhone and the iPad both connected (two cables,
+or Xcode's Wi-Fi), it puts the app on each in turn and says which are up to
+date; `HOMELAB_DEVICE="My iPad"` picks only one. `--add-command` adds
+`homelab-phone`, the same from any folder (run it again after moving the
+checkout: it points the command at the new place). Not sure where the checkout
+is? This finds it and adds the command:
+
+```bash
+"$(mdfind -name update-phone.sh | grep '/apple-client/scripts/update-phone.sh$' | head -1)" --add-command
+```
+
+Then:
 
 ```bash
 ./apple-client/scripts/update-phone.sh

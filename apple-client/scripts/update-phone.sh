@@ -1,11 +1,11 @@
 #!/bin/bash
-# Puts the newest Homelab app on the iPhone (or iPad) plugged into this Mac:
-# goes to this checkout, pulls main, and runs run-on-iphone.sh with the
-# prefix used before. The one command for every new version.
+# Puts the newest Homelab app on the iPhone and iPad connected to this Mac
+# (each in turn, when both are): goes to this checkout, pulls main, and runs
+# run-on-iphone.sh with the prefix used before. The one command for every new version.
 #
 #   apple-client/scripts/update-phone.sh                 # the prefix used last time
 #   apple-client/scripts/update-phone.sh com.yourname    # a prefix, remembered from now on
-#   HOMELAB_DEVICE="My iPad" apple-client/scripts/update-phone.sh
+#   HOMELAB_DEVICE="My iPad" apple-client/scripts/update-phone.sh   # only that one
 #   apple-client/scripts/update-phone.sh --add-command   # then `homelab-phone` from any folder
 #
 # The prefix comes from the command line, else the one this script saved
@@ -26,10 +26,15 @@ main() {
   if [ "${1:-}" = --add-command ]; then
     RC_FILE="${HOMELAB_SHELL_RC:-$HOME/.zshrc}"
     LINE="alias homelab-phone='$HERE/update-phone.sh'"
-    if [ -f "$RC_FILE" ] && grep -qF "alias homelab-phone=" "$RC_FILE"; then
+    if [ -f "$RC_FILE" ] && grep -qxF "$LINE" "$RC_FILE"; then
       echo "homelab-phone is already in $RC_FILE."
+    elif [ -f "$RC_FILE" ] && grep -qF "alias homelab-phone=" "$RC_FILE"; then
+      # One from a checkout that moved: pointed here now.
+      grep -vF "alias homelab-phone=" "$RC_FILE" >"$RC_FILE.homelab-new" && printf '%s\n' "$LINE" >>"$RC_FILE.homelab-new" \
+        && cat "$RC_FILE.homelab-new" >"$RC_FILE" && rm -f "$RC_FILE.homelab-new"
+      echo "homelab-phone now runs this checkout's ($ROOT). Open a new Terminal window, then run: homelab-phone"
     else
-      printf '\n# The newest Homelab app on the iPhone plugged into this Mac (homelab-wizard)\n%s\n' "$LINE" >>"$RC_FILE"
+      printf '\n# The newest Homelab app on the iPhone and iPad connected to this Mac (homelab-wizard)\n%s\n' "$LINE" >>"$RC_FILE"
       echo "Added homelab-phone to $RC_FILE. Open a new Terminal window, then run: homelab-phone"
     fi
     exit 0
