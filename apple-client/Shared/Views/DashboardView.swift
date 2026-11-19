@@ -1207,6 +1207,10 @@ struct HealthLineBar: View {
                 }
             }
             .font(.callout.weight(.medium))
+            // A bar under every screen grows no further than the first accessibility size, as
+            // Open Its Page: at the largest it took a quarter of the iPad's Finances column on
+            // three lines (ipad-land-large-finances, Nov 19). Still one over the other there.
+            .dynamicTypeSize(...DynamicTypeSize.accessibility1)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal)
             .padding(.vertical, 8)
