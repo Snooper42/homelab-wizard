@@ -8,6 +8,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### New
 
+- **Add a transaction on a past day from the Homelab app's Calendar:** a day before today, or today, offers **Add a Transaction on This Day** (later days still Add a Payment), as the computer's Calendar does, and each transaction recorded on a day opens its page.
 - **The Homelab app has a version of its own, on Settings › About** (such as *Homelab app 0.4.2 (115)*): it starts at 0.4.0 and goes up by one with each change to the app; 0.5 comes with the next milestone, and 1.0 the day the app is signed and on TestFlight. A build number beside it only ever goes up. The computer's Homelab Wizard keeps its own numbers (0.36.10 and on). `apple-client/scripts/app-version.sh` works it out, and the Xcode project gives it to the app and its widget alike.
 - **A goal over several accounts in the Homelab app:** Add Goal takes a share of each account that counts toward it, as the computer's goals do: **Add an Account** for another, swipe one off, each share no more than other goals leave of that account, and what they hold together today under them.
 - **Setup's checklist in the Homelab app:** Setup shows how far along the homelab is, what's left and what can wait, each step with its why, and **Do the N I Can Do for You** for the steps the homelab does by itself (starting it, the scheduled jobs, the backup jobs, AdGuard), after Face ID. A step that needs typing, a sign-in, a drive or a password says it's the computer's.
