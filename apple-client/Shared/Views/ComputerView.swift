@@ -42,6 +42,7 @@ struct ComputerView: View {
                 homelabCard
                 homelabFirstSection
                 thisDeviceSection
+                if computer.canListPhones { phonesSection }
                 everythingElseSection
                 // What used to be Status's Saved tile, one line here now.
                 if let savings = dashboard.yearlySavings {
@@ -207,6 +208,17 @@ struct ComputerView: View {
                 Text("Apps keep their versions until this is back on.")
             } else if computer.canChange {
                 Text("A change asks for \(lockName.replacingOccurrences(of: " lock", with: "")) first.")
+            }
+        }
+    }
+
+    /// Settings › Phones: the other paired phones and iPads (the owner's yes, Nov 19).
+    private var phonesSection: some View {
+        Section {
+            NavigationLink {
+                PhonesPage(computer: computer)
+            } label: {
+                IconTileLabel(title: "Phones and iPads", systemImage: "iphone", tint: TileColour.indigo)
             }
         }
     }

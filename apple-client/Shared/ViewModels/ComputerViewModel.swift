@@ -75,6 +75,48 @@ final class ComputerViewModel {
         }
     }
 
+    // Settings › Phones (the owner's yes, Nov 19).
+    private(set) var phones: [PairedPhone]?
+    private(set) var phonesError: String?
+    private(set) var isChangingPhone = false
+
+    /// The other phones are listed on the owner's own phone that can make
+    /// changes, from a computer that answers it; never on a member's.
+    var canListPhones: Bool {
+        guard let device = device(), device.canChange, !device.isMember else { return false }
+        return device.computer?.answers("Phones") ?? false
+    }
+
+    func loadPhones() async {
+        guard canListPhones else { return }
+        do {
+            phones = try await api.phones()
+            phonesError = nil
+        } catch {
+            let apiError = APIError.from(error)
+            Log.ui.error("Phones failed: \(apiError.logName, privacy: .public)")
+            phonesError = apiError.errorDescription
+        }
+    }
+
+    /// Gives `phone` less, after Face ID. Returns whether it was done.
+    func lower(_ phone: PairedPhone, _ what: PhoneLowering) async -> Bool {
+        guard canListPhones, !isChangingPhone, PhoneLowering.offered(for: phone).contains(what) else { return false }
+        isChangingPhone = true
+        defer { isChangingPhone = false }
+        guard await authorize("\(what.title): \(phone.name).") else { return false }
+        do {
+            phones = try await api.lowerPhone(phone.id, what)
+            phonesError = nil
+            return true
+        } catch {
+            let apiError = APIError.from(error)
+            Log.ui.error("LowerPhone failed: \(apiError.logName, privacy: .public)")
+            phonesError = apiError.errorDescription
+            return false
+        }
+    }
+
     /// Reads the Settings form again.
     func loadForm() async {
         guard !isLoadingForm else { return }
