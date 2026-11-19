@@ -511,15 +511,17 @@ private struct BrandHeader: View {
             AppMark(size: 30)
             VStack(alignment: .leading, spacing: 1) {
                 // On one line at every size (at the largest it broke as "Ho mel ab Wiz ard").
+                // The theme's own inks: in the sidebar's header `.primary` read grey (4.0:1) and
+                // `.secondary` fainter still, 1.7:1 in light and 2.4:1 in dark (ipad-land-*-status, Nov 19).
                 Text("Homelab Wizard")
                     .font(.headline)
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(Theme.ink)
                     .lineLimit(1)
                     .minimumScaleFactor(0.6)
                 if !typeSize.isAccessibilitySize {
                     Text("Your apps, at home")
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Theme.secondaryInk)
                 }
             }
         }
