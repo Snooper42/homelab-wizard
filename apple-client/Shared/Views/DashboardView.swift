@@ -1010,7 +1010,7 @@ private struct SplitDashboard: View {
                 .help("Which apps Status shows")
             }
             ToolbarItem(placement: .automatic) {
-                GroupActionsMenu(apps: apps)
+                GroupActionsMenu(apps: apps, icon: "playpause.circle")
             }
             if !model.changedApps.isEmpty {
                 ToolbarItem(placement: .automatic) {

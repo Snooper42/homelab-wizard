@@ -319,8 +319,12 @@ struct StatusAlertCard: View {
         // largest text sizes (beside them it squeezed Start to "Star / t").
         let buttons = typeSize.isAccessibilitySize
             ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8)) : AnyLayout(HStackLayout(spacing: 8))
+        // The logo over its words there too: beside them it took a column of its own, and
+        // "Needs a look" broke onto two lines beside it (large-status).
+        let heading = typeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8)) : AnyLayout(HStackLayout(spacing: 11))
         VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 11) {
+            heading {
                 if let app {
                     AppIconView(app: app, size: 40, stateBadge: false)
                 }
