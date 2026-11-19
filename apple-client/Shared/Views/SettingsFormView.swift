@@ -114,6 +114,8 @@ struct SettingsFormView: View {
         let value = setting.value.trimmingCharacters(in: .whitespaces)
         // Quiet hours in the phone's own clock ("10 PM to 7 AM", not "22-7"); not set is the computer's 22-7.
         if setting.key == "QUIET_HOURS" { return ClockWords.quietHours(value) }
+        // The time zone by its city ("New York", not "America/New_York"); its page keeps what's typed.
+        if setting.key == "TZ", !value.isEmpty { return ClockWords.timeZone(value) }
         return value.isEmpty ? "None" : value
     }
 }

@@ -38,9 +38,11 @@ struct ScreenLead: View {
         Section {
             EmptyView()
         } header: {
+            // The calm grey at 4.5:1: `.secondary` in a header, already grey, dimmed it twice
+            // (1.9:1 in light-setup, 2.8:1 in dark-setup; main's pictures after #745).
             Text(verbatim: text)
                 .font(.callout)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Theme.secondaryInk)
                 .textCase(nil)
         }
     }
