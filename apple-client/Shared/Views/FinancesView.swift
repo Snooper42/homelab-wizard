@@ -3720,6 +3720,9 @@ private struct AddTransactionView: View {
     let finances: FinancesViewModel
     /// The transaction being changed, or nil for a new one.
     var editing: FinanceTransaction? = nil
+    /// The day a new one starts on (Finances › Calendar's day), or today.
+    var startOn: Date? = nil
+    @State private var tookDay = false
     @Environment(\.dismiss) private var dismiss
     @State private var draft = NewTransaction(date: Date(), account: "", isMoneyIn: false, amount: 0, payee: "", category: "", note: "")
     @State private var amountText = ""
@@ -3958,6 +3961,10 @@ private struct AddTransactionView: View {
                     amountText = abs(editing.amount).formatted(.number.precision(.fractionLength(0...2)).grouping(.never))
                 }
             }
+            if editing == nil, !tookDay, let startOn {
+                draft.date = startOn
+                tookDay = true
+            }
             if draft.account.isEmpty {
                 let checking = finances.plan?.checking ?? ""
                 draft.account = accounts.contains(where: { $0.id == checking }) ? checking : (accounts.first?.id ?? "")
@@ -4171,6 +4178,16 @@ extension FinancesView {
     /// read as the home would have.
     static func linkedPage(_ page: DeepLink.FinancePage, finances: FinancesViewModel) -> some View {
         LinkedFinancePage(page: page, finances: finances)
+    }
+
+    /// A transaction's page, as Transactions opens it (Finances › Calendar's recorded rows).
+    static func transactionPage(_ t: FinanceTransaction, finances: FinancesViewModel) -> some View {
+        TransactionDetailView(transaction: t, finances: finances)
+    }
+
+    /// Add a Transaction, starting on a day (Finances › Calendar).
+    static func addTransaction(on day: Date, finances: FinancesViewModel) -> some View {
+        AddTransactionView(finances: finances, startOn: day)
     }
 }
 

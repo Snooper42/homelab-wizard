@@ -278,6 +278,14 @@ struct FinanceCalendar: Sendable {
 
     static func month(of day: String) -> String { String(day.prefix(7)) }
 
+    /// What a day offers to add, as the computer's Calendar (Calendar.tsx's
+    /// DayCard): a transaction on today or a day before it, a payment after.
+    enum Adding: Sendable, Equatable { case transaction, payment }
+
+    static func adding(on day: String, today: String) -> Adding {
+        day <= today ? .transaction : .payment
+    }
+
     static func addMonths(_ month: String, _ n: Int) -> String? {
         date(month + "-01").flatMap { calendar().date(byAdding: .month, value: n, to: $0) }.map { String(string($0).prefix(7)) }
     }

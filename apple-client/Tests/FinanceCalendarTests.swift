@@ -113,6 +113,15 @@ struct FinanceCalendarTests {
         #expect(cal.opening == "2026-12-15")
     }
 
+    /// Today and the days before it add a transaction, as the computer's day card; later days a payment.
+    @Test func aDayAddsWhatTheComputersDoes() {
+        #expect(FinanceCalendar.adding(on: "2025-12-01", today: "2026-12-15") == .transaction)
+        #expect(FinanceCalendar.adding(on: "2026-12-14", today: "2026-12-15") == .transaction)
+        #expect(FinanceCalendar.adding(on: "2026-12-15", today: "2026-12-15") == .transaction)
+        #expect(FinanceCalendar.adding(on: "2026-12-16", today: "2026-12-15") == .payment)
+        #expect(FinanceCalendar.adding(on: "2027-01-05", today: "2026-12-15") == .payment)
+    }
+
     @Test func nothingYet() {
         let empty = FinanceCalendar(view: .object(["today": .string("2026-12-15"), "plan": .object([:])]), ledger: nil)
         #expect(empty.days.isEmpty && empty.opening == "2026-12-15")

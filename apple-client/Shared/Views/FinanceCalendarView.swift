@@ -4,7 +4,9 @@ import SwiftUI
 /// money month by month, as the computer's Calendar. Each day shows its
 /// paydays and payments as logos and checking at its end, outlined in
 /// orange under the cushion; days before today what was recorded. Tap a day
-/// for what moves on it and, where Finances may change, Add a Payment on it.
+/// for what moves on it and, where Finances may change, Add a Transaction on
+/// it (today or before) or Add a Payment (after), as the computer's day card;
+/// a recorded transaction opens its page, as on Transactions.
 /// Wide (an iPad), the day and the month in all sit beside the month.
 struct FinanceCalendarView: View {
     @Bindable var finances: FinancesViewModel
@@ -13,6 +15,7 @@ struct FinanceCalendarView: View {
     @State private var picked = ""
     @State private var width: CGFloat = 390
     @State private var addingOn: Date?
+    @State private var recordingOn: Date?
 
     private var wide: Bool { width >= 720 }
 
@@ -68,6 +71,9 @@ struct FinanceCalendarView: View {
         }
         .sheet(item: Binding(get: { addingOn.map(AddingOn.init) }, set: { addingOn = $0?.date })) { on in
             AddPaymentView(finances: finances, startOn: on.date)
+        }
+        .sheet(item: Binding(get: { recordingOn.map(AddingOn.init) }, set: { recordingOn = $0?.date })) { on in
+            FinancesView.addTransaction(on: on.date, finances: finances)
         }
     }
 
@@ -253,29 +259,59 @@ struct FinanceCalendarView: View {
                         Text("Recorded today").font(.subheadline.weight(.semibold)).foregroundStyle(Theme.secondaryInk)
                     }
                     ForEach(day.spent) { t in
-                        HStack(spacing: 10) {
-                            LogoCircle(payee: t.payee.isEmpty ? "?" : t.payee, size: 28)
-                            Text(verbatim: t.payee.isEmpty ? "No payee" : t.payee).lineLimit(1)
-                            Spacer(minLength: 8)
-                            if t.to != nil {
-                                Text("Moved").font(.caption).foregroundStyle(Theme.secondaryInk)
+                        if let found = finances.ledger?.transactions.first(where: { $0.id == t.id }) {
+                            NavigationLink {
+                                FinancesView.transactionPage(found, finances: finances)
+                            } label: {
+                                recordedRow(t, view, opens: true)
                             }
-                            Money(value: t.amount, currency: view.plan.currency, finances: finances, signed: true)
+                            .buttonStyle(.plain)
+                        } else {
+                            recordedRow(t, view, opens: false)
                         }
-                        .accessibilityElement(children: .combine)
                     }
                 } else if day.past {
                     Text("Nothing was recorded.").font(.subheadline).foregroundStyle(Theme.secondaryInk)
                 }
-                if finances.canEditPlan, !day.past, let date = FinanceCalendar.shown(day.date) {
-                    Button("Add a Payment on This Day") { addingOn = date }
+                if let date = FinanceCalendar.shown(day.date) {
+                    let adding = FinanceCalendar.adding(on: day.date, today: cal.today)
+                    if adding == .transaction, finances.canAddTransactions {
+                        Button("Add a Transaction on This Day") {
+                            finances.clearSaveError()
+                            recordingOn = date
+                        }
                         .buttonStyle(.borderless)
+                    } else if adding == .payment, finances.canEditPlan {
+                        Button("Add a Payment on This Day") { addingOn = date }
+                            .buttonStyle(.borderless)
+                    }
                 }
             }
             .padding(16)
             .frame(maxWidth: .infinity, alignment: .leading)
             .card(radius: 24)
         }
+    }
+
+    /// One recorded transaction: its logo, payee and amount; a chevron when it opens.
+    private func recordedRow(_ t: FinanceCalendar.Recorded, _ view: FinancesPlanView, opens: Bool) -> some View {
+        HStack(spacing: 10) {
+            LogoCircle(payee: t.payee.isEmpty ? "?" : t.payee, size: 28)
+            Text(verbatim: t.payee.isEmpty ? "No payee" : t.payee).lineLimit(1)
+            Spacer(minLength: 8)
+            if t.to != nil {
+                Text("Moved").font(.caption).foregroundStyle(Theme.secondaryInk)
+            }
+            Money(value: t.amount, currency: view.plan.currency, finances: finances, signed: true)
+            if opens {
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(Theme.secondaryInk)
+                    .accessibilityHidden(true)
+            }
+        }
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
     }
 
     private func figure(_ value: Double, signed: Bool, tint: Color, caption: String) -> some View {

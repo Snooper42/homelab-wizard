@@ -65,6 +65,9 @@ stub dig 'echo "${FAKE_WIFI_IP:-}"'
 stub xcrun 'if [ "$1 $2 $3" = "devicectl list devices" ]; then
 [ -n "${FAKE_NO_PHONE:-}" ] && { echo '"'"'{"result":{"devices":[{"identifier":"SIM","deviceProperties":{"name":"Sim"},"hardwareProperties":{"platform":"iOS","reality":"virtual"},"connectionProperties":{}}]}}'"'"' >"$5"; exit 0; }
 [ -n "${FAKE_UNPAIRED:-}" ] && { echo '"'"'{"result":{"devices":[{"identifier":"CORE-1","deviceProperties":{"name":"iPhone","developerModeStatus":"enabled"},"hardwareProperties":{"platform":"iOS","udid":"00008110-ABC"},"connectionProperties":{"pairingState":"unpaired","transportType":"wired"}}]}}'"'"' >"$5"; exit 0; }
+[ -n "${FAKE_TWO:-}" ] && { echo '"'"'{"result":{"devices":[{"identifier":"CORE-1","deviceProperties":{"name":"Test iPhone 2","developerModeStatus":"enabled"},"hardwareProperties":{"platform":"iOS","udid":"00008110-ABC"},"connectionProperties":{"pairingState":"paired","transportType":"wired"}},{"identifier":"CORE-2","deviceProperties":{"name":"Test iPad","developerModeStatus":"enabled"},"hardwareProperties":{"platform":"iOS","udid":"00008120-DEF"},"connectionProperties":{"pairingState":"paired","transportType":"wired"}},{"identifier":"CORE-3","deviceProperties":{"name":"Old iPhone"},"hardwareProperties":{"platform":"iOS","udid":"00008030-OLD"},"connectionProperties":{"pairingState":"paired","tunnelState":"unavailable"}}]}}'"'"' >"$5"; exit 0; }
+[ -n "${FAKE_ONE_WIRED:-}" ] && { echo '"'"'{"result":{"devices":[{"identifier":"CORE-2","deviceProperties":{"name":"iPad","developerModeStatus":"enabled"},"hardwareProperties":{"platform":"iOS","udid":"00008120-DEF"},"connectionProperties":{"pairingState":"paired","transportType":"localNetwork","tunnelState":"disconnected"}},{"identifier":"CORE-1","deviceProperties":{"name":"iPhone","developerModeStatus":"enabled"},"hardwareProperties":{"platform":"iOS","udid":"00008110-ABC"},"connectionProperties":{"pairingState":"paired","transportType":"wired"}}]}}'"'"' >"$5"; exit 0; }
+[ -n "${FAKE_NONE_NEAR:-}" ] && { echo '"'"'{"result":{"devices":[{"identifier":"CORE-3","deviceProperties":{"name":"Old iPhone"},"hardwareProperties":{"platform":"iOS","udid":"00008030-OLD"},"connectionProperties":{"tunnelState":"unavailable"}},{"identifier":"CORE-4","deviceProperties":{"name":"Old iPad"},"hardwareProperties":{"platform":"iOS","udid":"00008030-OLD2"},"connectionProperties":{"tunnelState":"unavailable"}}]}}'"'"' >"$5"; exit 0; }
 [ -n "${FAKE_NO_REALITY:-}" ] && { echo '"'"'{"result":{"devices":[{"identifier":"CORE-1","deviceProperties":{"name":"iPhone"},"hardwareProperties":{"platform":"iOS","udid":"00008110-ABC"},"connectionProperties":{"transportType":"wired"}}]}}'"'"' >"$5"; exit 0; }
 cat >"$5" <<J
 {"result":{"devices":[{"identifier":"CORE-1","deviceProperties":{"name":"Test iPhone 2","developerModeStatus":"${FAKE_DEVMODE:-enabled}"},"hardwareProperties":{"platform":"iOS","udid":"00008110-ABC","reality":"physical"},"connectionProperties":{"pairingState":"paired","tunnelState":"connected"}},{"identifier":"SIM","deviceProperties":{"name":"Sim"},"hardwareProperties":{"platform":"iOS","reality":"virtual"},"connectionProperties":{}}]}}
@@ -203,6 +206,14 @@ FAKE_UNPAIRED=1 run "$HERE/run-on-iphone.sh" com.example ABCDE12345
 expect "not trusted yet: the Mac asks the phone, then goes on" bash -c 'grep -q "devicectl manage pair --device CORE-1" "$CALLS" && grep -q "trusts this Mac" <<<"$0" && grep -q "id=00008110-ABC" "$CALLS"' "$OUT"
 FAKE_NO_REALITY=1 run "$HERE/run-on-iphone.sh" com.example ABCDE12345
 expect "a real iPhone that Xcode doesn't mark physical is still found" called "-destination id=00008110-ABC"
+FAKE_TWO=1 run "$HERE/run-on-iphone.sh" com.example ABCDE12345
+expect "an iPhone and an iPad connected: the app on each in turn, not the one Xcode only remembers" bash -c 'grep -q "install app --device CORE-1" "$0" && grep -q "install app --device CORE-2" "$0" && ! grep -q "CORE-3\|00008030" "$0" && grep -q "Up to date: Test iPhone 2, Test iPad" <<<"$1" && [ "$2" = 0 ]' "$CALLS" "$OUT" "$RC"
+FAKE_ONE_WIRED=1 run "$HERE/run-on-iphone.sh" com.example ABCDE12345
+expect "the iPhone on a cable, the iPad only on the Wi-Fi: just the iPhone, no names asked" bash -c '[ "$2" = 0 ] && grep -q "install app --device CORE-1" "$0" && ! grep -q "CORE-2" "$0" && grep -q "Found iPhone" <<<"$1"' "$CALLS" "$OUT" "$RC"
+FAKE_TWO=1 HOMELAB_DEVICE="Test iPad" run "$HERE/run-on-iphone.sh" com.example ABCDE12345
+expect "HOMELAB_DEVICE: only that one" bash -c 'grep -q "install app --device CORE-2" "$0" && ! grep -q "install app --device CORE-1" "$0"' "$CALLS"
+FAKE_NONE_NEAR=1 run "$HERE/run-on-iphone.sh" com.example
+expect "two known, none connected: says to plug one in" bash -c '[ "$0" = 1 ] && grep -q "none is connected now" <<<"$1" && ! grep -q "install app" "$2"' "$RC" "$OUT" "$CALLS"
 FAKE_NO_PHONE=1 run "$HERE/run-on-iphone.sh" com.example
 expect "no iPhone, none on USB: says to check the cable" bash -c '[ "$0" = 1 ] && grep -q "many only charge" <<<"$1"' "$RC" "$OUT"
 FAKE_NO_PHONE=1 FAKE_USB="iPhone:" run "$HERE/run-on-iphone.sh" com.example
@@ -251,6 +262,9 @@ git -C "$CO" checkout -q main
 up --add-command
 up --add-command
 expect "--add-command adds homelab-phone once" bash -c '[ "$(grep -c "alias homelab-phone=" "$0")" = 1 ] && grep -q "update-phone.sh" "$0"' "$WORK/home/.zshrc"
+printf "export KEEP=1\nalias homelab-phone='/moved/away/update-phone.sh'\n" >"$WORK/home/.zshrc"
+up --add-command
+expect "--add-command points an old homelab-phone here, keeping the rest" bash -c '[ "$(grep -c "alias homelab-phone=" "$0")" = 1 ] && ! grep -q /moved/away "$0" && grep -q "$1/update-phone.sh" "$0" && grep -q "export KEEP=1" "$0"' "$WORK/home/.zshrc" "$HERE"
 
 echo
 if [ "$failures" = 0 ]; then echo "All script checks passed."; else echo "$failures script check(s) failed."; exit 1; fi
