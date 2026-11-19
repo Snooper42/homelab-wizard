@@ -98,17 +98,18 @@ func TestWiring(t *testing.T) {
 	sonarrURL, sonarr := fakeArr(t, "skey", map[string][]resource{
 		"downloadclient": {template("QBittorrent", "host", "port", "username", "password", "tvCategory")},
 	})
+	qbitURL, _, _ := fakeQbit(t, "pw")
 	w := &Wirer{
 		Apps: map[string]App{
 			"prowlarr":     {ID: "prowlarr", Name: "Prowlarr", URL: prowlarrURL, Internal: "http://prowlarr:9696", ConfigDir: configDir(t, "pkey")},
 			"sonarr":       {ID: "sonarr", Name: "Sonarr", URL: sonarrURL, Internal: "http://sonarr:8989", ConfigDir: configDir(t, "skey")},
-			"qbittorrent":  {ID: "qbittorrent", Name: "qBittorrent", Internal: "http://gluetun:8082"},
+			"qbittorrent":  {ID: "qbittorrent", Name: "qBittorrent", URL: qbitURL, Internal: "http://gluetun:8082"},
 			"flaresolverr": {ID: "flaresolverr", Name: "FlareSolverr"},
 		},
 		Env:  map[string]string{},
 		Wait: time.Second,
 	}
-	if got := len(w.Plan()); got != 4 {
+	if got := len(w.Plan()); got != 5 {
 		t.Fatalf("plan has %d links: %+v", got, w.Plan())
 	}
 	links := w.Apply(context.Background(), nil)
@@ -161,25 +162,26 @@ func TestRetriesARefusedSaveAndCorrectsAWrongAddress(t *testing.T) {
 	sonarrURL, sonarr := fakeArrRefusing(t, "skey", map[string][]resource{
 		"downloadclient": {template("QBittorrent", "host", "port", "username", "password")},
 	}, map[string]int{"downloadclient": 2})
+	qbitURL, _, _ := fakeQbit(t, "pw")
 	w := &Wirer{
 		Apps: map[string]App{
 			"sonarr":      {ID: "sonarr", Name: "Sonarr", URL: sonarrURL, Internal: "http://sonarr:8989", ConfigDir: configDir(t, "skey")},
-			"qbittorrent": {ID: "qbittorrent", Name: "qBittorrent", Internal: "http://gluetun:8082"},
+			"qbittorrent": {ID: "qbittorrent", Name: "qBittorrent", URL: qbitURL, Internal: "http://gluetun:8082"},
 		},
 		Env:     map[string]string{"QBITTORRENT_PASSWORD": "pw"},
 		Wait:    time.Second,
 		retryIn: time.Millisecond,
 	}
-	if l := w.Apply(context.Background(), nil)[0]; l.State != "done" || len(sonarr["downloadclient"]) != 1 {
+	if l := w.Apply(context.Background(), nil)[1]; l.State != "done" || len(sonarr["downloadclient"]) != 1 {
 		t.Fatalf("a save refused while qBittorrent starts should be retried: %+v %v", l, sonarr["downloadclient"])
 	}
 	// Someone pointed it at the wrong host; the next run corrects it.
 	setField(sonarr["downloadclient"][0], "host", "localhost")
-	l := w.Apply(context.Background(), nil)[0]
+	l := w.Apply(context.Background(), nil)[1]
 	if l.State != "done" || !strings.Contains(l.Detail, "corrected host") || field(sonarr["downloadclient"][0], "host") != "gluetun" {
 		t.Fatalf("wrong host not corrected: %+v %v", l, sonarr["downloadclient"][0])
 	}
-	if l := w.Apply(context.Background(), nil)[0]; l.State != "already" {
+	if l := w.Apply(context.Background(), nil)[1]; l.State != "already" {
 		t.Fatalf("third run: %+v", l)
 	}
 }
