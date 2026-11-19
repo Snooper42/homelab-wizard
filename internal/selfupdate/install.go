@@ -235,8 +235,11 @@ if ($Log) { New-Item -ItemType Directory -Force -Path (Split-Path -Parent $Log) 
 $waiting = Get-Process -Id $AppPid -ErrorAction SilentlyContinue
 if ($waiting -and ($waiting.ProcessName + '.exe') -ieq $Exe) { Wait-Process -Id $AppPid -Timeout 60 -ErrorAction SilentlyContinue }
 elseif ($waiting) { Note ('process ' + $AppPid + ' is ' + $waiting.ProcessName + ' now, not the app: it has quit') }
+Note 'the app has quit'
 $tray = @(Get-CimInstance Win32_Process -Filter "Name = '$Exe'" -ErrorAction SilentlyContinue | Where-Object { $_.CommandLine -like '*--tray*' }).Count -gt 0
+Note ('the tray item was ' + $(if ($tray) { 'running' } else { 'not running' }))
 Get-Process | Where-Object { $_.Path -and $_.Path.StartsWith($Dir + '\', [StringComparison]::OrdinalIgnoreCase) } | Stop-Process -Force -ErrorAction SilentlyContinue
+Note ('stopped what ran from ' + $Dir)
 Start-Sleep -Milliseconds 500
 $app = Join-Path $Dir $Exe
 $before = (Get-Item -LiteralPath $app -ErrorAction SilentlyContinue).LastWriteTimeUtc
