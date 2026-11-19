@@ -160,3 +160,93 @@ struct PairedPhonePage: View {
         .onChange(of: phone == nil) { _, gone in if gone, computer.phones != nil { dismiss() } }
     }
 }
+
+/// Setup's checklist on the owner's phone (the owner's yes, Nov 19, from the
+/// mocks canvas): how far along it is, Do the N I Can Do for You for the
+/// steps the homelab does by itself, then what's left and what can wait,
+/// each with its why. Anything else says it's the computer's.
+struct SetupChecklistSections: View {
+    let computer: ComputerViewModel
+
+    var body: some View {
+        Group {
+            if let steps = computer.setupSteps, !steps.isEmpty {
+                let progress = SetupChecklist.progress(steps)
+                Section {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(verbatim: SetupChecklist.title(steps)).font(.headline)
+                        if !progress.allDone {
+                            Text(verbatim: SetupChecklist.count(steps))
+                                .font(.subheadline)
+                                .foregroundStyle(Theme.secondaryInk)
+                            ProgressView(value: Double(progress.done), total: Double(max(progress.total, 1)))
+                                .tint(Theme.accent)
+                                .accessibilityHidden(true)
+                        }
+                    }
+                    .padding(.vertical, 4)
+                    .accessibilityElement(children: .combine)
+                    if computer.canDoSetup, let title = SetupChecklist.buttonTitle(steps) {
+                        Button {
+                            Task { await computer.doSetupForYou() }
+                        } label: {
+                            if let doing = computer.doingSetupStep {
+                                HStack(spacing: 8) {
+                                    ProgressView()
+                                    Text(verbatim: doing + "…")
+                                }
+                            } else {
+                                Text(verbatim: title).fontWeight(.semibold)
+                            }
+                        }
+                        .disabled(computer.doingSetupStep != nil)
+                    }
+                } footer: {
+                    if let error = computer.setupError {
+                        Text(verbatim: error).foregroundStyle(Theme.danger)
+                    } else if computer.canDoSetup, SetupChecklist.buttonTitle(steps) != nil {
+                        Text("Asks Face ID first. Only steps the homelab does by itself; anything that needs typing, a sign-in, a drive or a password is the computer's.")
+                    }
+                }
+                let left = steps.filter { !$0.isDone && !$0.waits }
+                if !left.isEmpty {
+                    Section("Left to Do") {
+                        ForEach(left) { SetupStepRow(step: $0) }
+                    }
+                }
+                let wait = steps.filter(\.waits)
+                if !wait.isEmpty {
+                    Section("Can Wait") {
+                        ForEach(wait) { SetupStepRow(step: $0) }
+                    }
+                }
+            } else if let error = computer.setupError {
+                Section { Text(verbatim: error).foregroundStyle(Theme.secondaryInk) }
+            }
+        }
+        .task { await computer.loadSetup() }
+    }
+}
+
+/// A step's row: its title and why, and whether the phone can do it.
+private struct SetupStepRow: View {
+    let step: SetupStepInfo
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 10) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(verbatim: step.title)
+                Text(verbatim: step.why)
+                    .font(.footnote)
+                    .foregroundStyle(Theme.secondaryInk)
+                    .lineLimit(3)
+            }
+            Spacer(minLength: 8)
+            Text(step.forYou ? "I can do it" : "On the computer")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(step.forYou ? Theme.accent : Theme.secondaryInk)
+                .multilineTextAlignment(.trailing)
+        }
+        .accessibilityElement(children: .combine)
+    }
+}

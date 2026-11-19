@@ -151,7 +151,7 @@ Each phone sees Finances at the level it was paired with: none, the money card, 
 | Feature | Computer | Phone's page | iPhone | iPad | Phone calls |
 |---|---|---|---|---|---|
 | What the machine runs (system, runtime, version) | yes | yes, on Settings' This machine card | yes | yes | `Host` |
-| The checklist, **Do the N I can do for you** | yes ([Host](<Host.md#setting-up>)) | on purpose: setup is the computer's | partly: Look for problems → Fix these | partly | `Homelab` |
+| The checklist, **Do the N I can do for you** | yes ([Host](<Host.md#setting-up>)) | on purpose: setup is the computer's | partly: Look for problems → Fix these, and the checklist (the owner's yes, Nov 19): how many are done, what's left and what can wait, each step's why, and **Do the N I Can Do for You** for the steps the homelab does by itself (starting it, the scheduled jobs, Duplicati's jobs, AdGuard), after Face ID; a step that needs typing, a sign-in, a drive, a password or opens something to the outside says *On the computer* | partly, as the iPhone | `Homelab`, `Setup`, `RunSetupStep` |
 | Reach Finances away from home; the runtime, Ollama, Kopia's drive | yes | on purpose: the computer's | on purpose | on purpose | |
 
 ## Settings
