@@ -8,7 +8,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### New
 
-- **The Homelab app has a version of its own:** Settings › About shows it, *Homelab app 0.4.0 (103)*, so it's plain which version is on the iPhone or iPad. It starts at 0.4.0 and goes up by one with each change to the app; 0.5 comes with the next milestone, and 1.0 the day the app is signed and on TestFlight. The bracketed build only ever goes up. The computer's Homelab Wizard keeps its own numbers (0.36.10 and on).
+- **The Homelab app has a version of its own:** Settings › About shows it, *Homelab app 0.4.0 (104)*, so it's plain which version is on the iPhone or iPad. It starts at 0.4.0 and goes up by one with each change to the app; 0.5 comes with the next milestone, and 1.0 the day the app is signed and on TestFlight. The bracketed build only ever goes up. The computer's Homelab Wizard keeps its own numbers (0.36.10 and on).
 - **Homelab and Money, a medium widget:** the homelab's line and the money's words side by side on the iPad's and iPhone's Home Screen; tap the left for Status, the right for Finances. No app names, never an amount.
 - **"Am I on track?" in Siri and Shortcuts:** the Homelab app answers with the money widget's words, *On track until Nov 19, as of 2 hours ago. Next bill tomorrow.*, never an amount, once the phone is unlocked. It needs the money widget turned on.
 - **When Homelab Wizard stopped, in the Homelab app:** as on the computer's Status, a note at the top of Status says when Homelab Wizard (or its menu bar item or background agent) stopped unexpectedly, with **Share the Report** and **Hide**, once per crash. The computer tells the phone only which part and when (`LastCrash`, a new phone call), nothing from the log.
