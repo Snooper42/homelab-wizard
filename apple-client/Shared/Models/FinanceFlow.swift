@@ -11,6 +11,18 @@ struct FinanceFlow: Sendable, Equatable {
         case source, accounts, total, taxes, expenses, spending, saved, savedInto, cash
     }
 
+    /// What's behind a box (flowData.ts's FlowItem): a transaction, a planned payment, or a paycheck.
+    struct Item: Sendable, Equatable {
+        let label: String
+        let amount: Double
+        var date: String? = nil
+        var tx: String? = nil
+        var payment: String? = nil
+        var person: String? = nil
+        /// The account a transaction was on.
+        var note: String? = nil
+    }
+
     struct Node: Sendable, Equatable, Identifiable {
         let id: String
         let label: String
@@ -18,6 +30,20 @@ struct FinanceFlow: Sendable, Equatable {
         /// 0 where it comes from, 1 all of it, 2 taxes, spending and saved, 3 each kind and where it was saved.
         let col: Int
         let role: Role
+        var items: [Item] = []
+    }
+
+    /// What's behind a box, the largest first (the same size in the order they came), as the computer lists them.
+    func behind(_ id: String) -> [Item] {
+        guard let node = nodes.first(where: { $0.id == id }) else { return [] }
+        return node.items.enumerated().sorted { a, b in
+            abs(a.element.amount) != abs(b.element.amount) ? abs(a.element.amount) > abs(b.element.amount) : a.offset < b.offset
+        }.map(\.element)
+    }
+
+    /// The boxes a box leads on to (Expenses to each kind), for picking one where the last column isn't drawn.
+    func next(_ id: String) -> [Node] {
+        links.filter { $0.from == id }.compactMap { l in nodes.first { $0.id == l.to } }
     }
 
     struct Link: Sendable, Equatable {
@@ -79,7 +105,8 @@ struct FinanceFlow: Sendable, Equatable {
         let sorted = sortedByValue(nodes)
         guard top > 0, sorted.count > top else { return sorted }
         let kept = Array(sorted.prefix(top - 1)), rest = Array(sorted.dropFirst(top - 1))
-        return kept + [Node(id: id, label: "Other (\(rest.count))", value: rest.reduce(0) { $0 + $1.value }, col: rest[0].col, role: role)]
+        return kept + [Node(id: id, label: "Other (\(rest.count))", value: rest.reduce(0) { $0 + $1.value }, col: rest[0].col, role: role,
+                            items: rest.flatMap(\.items))]
     }
 
     /// The flow from its pieces: sources into all of it, it out to taxes, spending and saved, those on to their own.
@@ -95,7 +122,7 @@ struct FinanceFlow: Sendable, Equatable {
         var srcs = Self.topOf(sources.filter { $0.value > 0.005 }, top: top, id: "src:other", role: .source)
         if short > 0.005 { srcs.append(Node(id: "src:accounts", label: "From your accounts", value: short, col: 0, role: .accounts)) }
         nodes += srcs
-        nodes.append(Node(id: "total", label: "Total income", value: sum(srcs), col: 1, role: .total))
+        nodes.append(Node(id: "total", label: "Total income", value: sum(srcs), col: 1, role: .total, items: sources.flatMap(\.items)))
         links += srcs.map { Link(from: $0.id, to: "total", value: $0.value) }
         if let taxes, tax > 0.005 {
             nodes.append(taxes)
@@ -103,7 +130,7 @@ struct FinanceFlow: Sendable, Equatable {
         }
         let kinds = Self.topOf(spend.filter { $0.value > 0.005 }, top: top, id: "cat:other", role: .spending)
         if expenses > 0.005 {
-            nodes.append(Node(id: "expenses", label: "Expenses", value: expenses, col: 2, role: .expenses))
+            nodes.append(Node(id: "expenses", label: "Expenses", value: expenses, col: 2, role: .expenses, items: kinds.flatMap(\.items)))
             links.append(Link(from: "total", to: "expenses", value: expenses))
             for k in kinds {
                 nodes.append(k)
@@ -115,7 +142,7 @@ struct FinanceFlow: Sendable, Equatable {
         let outs = into + (stays > 0.005 ? [Node(id: "kept:cash", label: "Kept as cash", value: stays, col: 3, role: .cash)] : [])
         let savings = sum(outs)
         if savings > 0.005 {
-            nodes.append(Node(id: "saved", label: "Savings", value: savings, col: 2, role: .saved))
+            nodes.append(Node(id: "saved", label: "Savings", value: savings, col: 2, role: .saved, items: outs.flatMap(\.items)))
             links.append(Link(from: "total", to: "saved", value: savings))
             for o in outs {
                 nodes.append(o)
@@ -133,9 +160,12 @@ struct FinanceFlow: Sendable, Equatable {
     /// Adds to a node by id, keeping the order they first came in (a JavaScript Map's).
     private struct Ordered {
         var nodes: [Node] = []
-        mutating func add(_ id: String, _ label: String, col: Int, role: Role, _ value: Double) {
-            if let i = nodes.firstIndex(where: { $0.id == id }) { nodes[i].value += value } else {
-                nodes.append(Node(id: id, label: label, value: value, col: col, role: role))
+        mutating func add(_ id: String, _ label: String, col: Int, role: Role, _ value: Double, _ item: Item) {
+            if let i = nodes.firstIndex(where: { $0.id == id }) {
+                nodes[i].value += value
+                nodes[i].items.append(item)
+            } else {
+                nodes.append(Node(id: id, label: label, value: value, col: col, role: role, items: [item]))
             }
         }
     }
@@ -177,12 +207,18 @@ struct FinanceFlow: Sendable, Equatable {
         for t in list(ledger?["transactions"]) where str(t["date"])?.hasPrefix(month) == true {
             let account = str(t["account"]) ?? ""
             let amount = home(num(t["amount"]) ?? 0, account)
+            let payee = str(t["payee"]) ?? "", moveTo = str(t["to"]) ?? ""
+            // What's behind a box: the transaction, its payee and its account (flowData.ts's item).
+            func item(_ n: Double) -> Item {
+                Item(label: !payee.isEmpty ? payee : (!moveTo.isEmpty ? "To \(names[moveTo] ?? "another account")" : "No payee"),
+                     amount: n, date: str(t["date"]), tx: str(t["id"]), note: names[account])
+            }
             if let to = str(t["to"]), !to.isEmpty {
                 // Moved into savings: saved there; moved back out of it, less so.
                 let toSaving = saving(kinds[to]), fromSaving = saving(kinds[account])
                 if toSaving != fromSaving {
                     let acct = toSaving ? to : account
-                    into.add("kept:" + acct, names[acct] ?? acct, col: 3, role: .savedInto, toSaving ? -amount : amount)
+                    into.add("kept:" + acct, names[acct] ?? acct, col: 3, role: .savedInto, toSaving ? -amount : amount, item(-amount))
                 }
                 continue
             }
@@ -194,19 +230,19 @@ struct FinanceFlow: Sendable, Equatable {
                 if p.amount > 0, p.category.isEmpty || incomeCat(p.category) {
                     // Money in: by its own category under Income, else who paid it.
                     let underIncome = !p.category.isEmpty && (str(byName[p.category.lowercased()]?["parent"]).map { !$0.isEmpty } ?? false)
-                    let payee = str(t["payee"]) ?? ""
                     let name = underIncome ? p.category : (!payee.isEmpty ? payee : (!p.category.isEmpty ? p.category : "Money in"))
-                    src.add("src:" + name.lowercased(), name, col: 0, role: .source, p.amount)
+                    src.add("src:" + name.lowercased(), name, col: 0, role: .source, p.amount, item(p.amount))
                     continue
                 }
                 let g = groupOf(p.category)
                 if taxing(g) || taxing(p.category) {
                     var n = tax ?? Node(id: "taxes", label: "Taxes", value: 0, col: 2, role: .taxes)
                     n.value -= p.amount
+                    n.items.append(item(p.amount))
                     tax = n
                     continue
                 }
-                spend.add("cat:" + g.lowercased(), g, col: 3, role: .spending, -p.amount)
+                spend.add("cat:" + g.lowercased(), g, col: 3, role: .spending, -p.amount, item(p.amount))
             }
         }
         if let t = tax, t.value < 0 { tax = nil }
@@ -229,7 +265,7 @@ struct FinanceFlow: Sendable, Equatable {
         }
         func kept(_ id: String?) -> Bool { saving(kinds[id ?? ""]) }
         var src: [Node] = [], spend = Ordered(), into = Ordered()
-        var taxes = 0.0
+        var taxes = 0.0, taxItems: [Item] = []
         for e in people {
             let id = str(e["id"]) ?? "", name = str(e["name"]) ?? id
             let each = LoanPapers.perMonth(e["schedule"], people: [], checking: "")
@@ -237,15 +273,20 @@ struct FinanceFlow: Sendable, Equatable {
             let fromPay = ded.reduce(0) { $0 + (num($1["amount"]) ?? 0) }
             let net = num(e["net"]) ?? 0
             let gross = num(e["gross"]).flatMap { $0 >= net + fromPay ? $0 : nil } ?? net + fromPay
-            src.append(Node(id: "src:" + id, label: "\(name)'s pay", value: gross * each, col: 0, role: .source))
+            src.append(Node(id: "src:" + id, label: "\(name)'s pay", value: gross * each, col: 0, role: .source,
+                            items: [Item(label: "\(name)'s pay\(gross > net ? ", before taxes" : "")", amount: gross * each, person: id)]))
             let tax = (gross - net - fromPay) * each
-            if tax > 0.005 { taxes += tax }
+            if tax > 0.005 {
+                taxes += tax
+                taxItems.append(Item(label: "\(name)'s taxes", amount: -tax, person: id))
+            }
             for d in ded {
                 let amount = (num(d["amount"]) ?? 0) * each
+                let what = "\(str(d["name"]) ?? ""), from \(name)'s pay"
                 if let account = str(d["account"]), kept(account) {
-                    into.add("kept:" + account, names[account] ?? account, col: 3, role: .savedInto, amount)
+                    into.add("kept:" + account, names[account] ?? account, col: 3, role: .savedInto, amount, Item(label: what, amount: amount, person: id))
                 } else {
-                    spend.add("cat:frompay", "Taken from pay", col: 3, role: .spending, amount)
+                    spend.add("cat:frompay", "Taken from pay", col: 3, role: .spending, amount, Item(label: what, amount: -amount, person: id))
                 }
             }
         }
@@ -260,20 +301,21 @@ struct FinanceFlow: Sendable, Equatable {
             let each = (num(x["amount"]) ?? 0) * LoanPapers.perMonth(x["schedule"], people: people, checking: checking)
             let pid = str(x["id"]) ?? "", pname = str(x["name"]) ?? pid
             if let payer = str(x["payer"]), !payer.isEmpty {
-                src.append(Node(id: "src:pay:" + pid, label: "\(pname), from \(payer)", value: each, col: 0, role: .source))
+                src.append(Node(id: "src:pay:" + pid, label: "\(pname), from \(payer)", value: each, col: 0, role: .source,
+                                items: [Item(label: "\(pname), from \(payer)", amount: each, payment: pid)]))
                 continue
             }
             let from = str(x["from"]) ?? "", to = str(x["to"]) ?? ""
             let onCard = kinds[from] == "card"
             if !(from.isEmpty || from == checking || onCard) || (!to.isEmpty && to == checking) { continue }
             if kept(to) {
-                into.add("kept:" + to, names[to] ?? to, col: 3, role: .savedInto, each)
+                into.add("kept:" + to, names[to] ?? to, col: 3, role: .savedInto, each, Item(label: pname, amount: each, payment: pid))
             } else {
                 let kind = str(x["kind"]).flatMap { $0.isEmpty ? nil : $0 } ?? "other"
-                spend.add("kind:" + kind, kindName(kind), col: 3, role: .spending, each)
+                spend.add("kind:" + kind, kindName(kind), col: 3, role: .spending, each, Item(label: pname, amount: -each, payment: pid))
             }
         }
-        let taxNode = taxes > 0.005 ? Node(id: "taxes", label: "Taxes", value: taxes, col: 2, role: .taxes) : nil
+        let taxNode = taxes > 0.005 ? Node(id: "taxes", label: "Taxes", value: taxes, col: 2, role: .taxes, items: taxItems) : nil
         return FinanceFlow(sources: src, taxes: taxNode, spend: spend.nodes, kept: into.nodes, top: top)
     }
 }

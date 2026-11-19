@@ -178,6 +178,39 @@ struct FinanceFlowTests {
         #expect(FinanceFlow.counted(nil, from: "2026-10-15") == nil)
     }
 
+    /// What's behind each box, as the computer lists it under the chart (flowData.ts's items, the
+    /// largest first): a month's transactions with their account, a typical month's pay and payments.
+    @Test func whatsBehindABox() {
+        func said(_ f: FinanceFlow, _ id: String) -> [String] {
+            f.behind(id).map { "\($0.label) \(Self.cents($0.amount)) \($0.tx ?? $0.payment ?? $0.person ?? "") \($0.note ?? "")" }
+        }
+        let october = FinanceFlow.month(view: Self.view, ledger: Self.ledger, month: "2026-10")
+        #expect(said(october, "total") == ["Employer 2000.0 a Checking", "Friend 300.0 b Checking"])
+        #expect(said(october, "cat:food") == ["Grocer -120.0 c Checking", "Cafe -60.0 d Checking", "Split -50.0 k Checking", "Grocer 20.0 i Checking"])
+        #expect(said(october, "taxes") == ["IRS -400.0 f Checking"])
+        #expect(october.behind("taxes").first?.date == "2026-10-06")
+        #expect(said(october, "kept:sav") == ["Move 500.0 g Checking", "Back 100.0 h Savings"])
+        #expect(said(october, "saved") == said(october, "kept:sav"))
+        #expect(said(october, "cat:fun") == ["Split -40.0 k Checking", "Museum -11.0 j Euro"])
+        #expect(said(october, "expenses") == ["Landlord -1800.0 e Checking", "Grocer -120.0 c Checking", "Cafe -60.0 d Checking",
+                                              "Split -50.0 k Checking", "Split -40.0 k Checking", "No cat -30.0 l Checking",
+                                              "Grocer 20.0 i Checking", "Museum -11.0 j Euro"])
+        #expect(said(october, "kept:cash").isEmpty && said(october, "nothing").isEmpty)
+        #expect(october.next("expenses").map(\.id).contains("cat:food") && october.next("total").map(\.id).contains("expenses"))
+        // Top 3: Other holds what the boxes it stands for held.
+        let three = FinanceFlow.month(view: Self.view, ledger: Self.ledger, month: "2026-10", top: 3)
+        #expect(said(three, "cat:other") == ["Split -40.0 k Checking", "No cat -30.0 l Checking", "Museum -11.0 j Euro"])
+
+        let typical = FinanceFlow.typical(view: Self.view)
+        #expect(said(typical, "total") == ["Alex's pay, before taxes 5633.33 alex ", "Sam's pay 1500.0 sam ", "Room, from Lodger 450.0 lodger "])
+        #expect(said(typical, "taxes") == ["Alex's taxes -650.0 alex "])
+        #expect(said(typical, "kept:ira") == ["401k, from Alex's pay 433.33 alex "])
+        #expect(said(typical, "cat:frompay") == ["Health, from Alex's pay -216.67 alex "])
+        #expect(said(typical, "kind:home") == ["Rent -1800.0 rent "])
+        #expect(said(typical, "saved") == ["401k, from Alex's pay 433.33 alex ", "To savings 250.0 save "])
+        #expect(said(typical, "kind:cards") == ["Visa -950.0 card:visa "])
+    }
+
     @Test func theMonthsTheLedgerHas() {
         #expect(FinanceFlow.ledgerMonths(Self.ledger) == ["2026-11", "2026-10"])
         #expect(FinanceFlow.taxing("Federal taxes") && FinanceFlow.taxing("Tax") && !FinanceFlow.taxing("Taxi"))
