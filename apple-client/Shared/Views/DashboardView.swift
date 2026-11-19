@@ -247,6 +247,8 @@ private struct PhoneDashboard: View {
         #if SCREENSHOTS
         if ScreenshotMode.shot == "settings-all" {
             SettingsFormView(computer: computer, section: nil)
+        } else if ScreenshotMode.shot == "phones" {
+            PhonesPage(computer: computer)
         } else {
             ComputerView(computer: computer, page: .settings)
         }
@@ -290,7 +292,7 @@ extension ScreenshotMode {
         case "status", "app": .status(.all)
         case "backups": .backups
         case "setup": .setup
-        case "settings", "settings-all": .settings
+        case "settings", "settings-all", "phones": .settings
         default: .finances
         }
     }
