@@ -8,6 +8,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### New
 
+- **Tap a box in the Homelab app's Money Flow** to see what's behind it under the chart, as on the computer: a month's transactions, each opening its page, or a typical month's pay and planned payments. On an iPhone, Expenses and Savings list their kinds and accounts to tap in turn.
 - **Add a transaction on a past day from the Homelab app's Calendar:** a day before today, or today, offers **Add a Transaction on This Day** (later days still Add a Payment), as the computer's Calendar does, and each transaction recorded on a day opens its page.
 - **The Homelab app has a version of its own, on Settings › About** (such as *Homelab app 0.4.2 (115)*): it starts at 0.4.0 and goes up by one with each change to the app; 0.5 comes with the next milestone, and 1.0 the day the app is signed and on TestFlight. A build number beside it only ever goes up. The computer's Homelab Wizard keeps its own numbers (0.36.10 and on). `apple-client/scripts/app-version.sh` works it out, and the Xcode project gives it to the app and its widget alike.
 - **A goal over several accounts in the Homelab app:** Add Goal takes a share of each account that counts toward it, as the computer's goals do: **Add an Account** for another, swipe one off, each share no more than other goals leave of that account, and what they hold together today under them.
@@ -335,6 +336,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- **Updating on Windows no longer fails at "unpacking"** on a PC whose PowerShell has a newer Archive module (*Cannot find an overload for "ExtractToDirectory"*): the update helper unpacks the new build with Windows's own zip reader, and stops if a file in it would land outside the app's folder.
 - **A card paid off with each paycheck is named in the Homelab app:** Bills, Coming Up, the Calendar and Worth a Look showed it as "Payment" with no logo; it's the card's name and logo now, as on the computer.
 - **Cash Flow in the Homelab app counts all your money in:** it counted only what went to an income category, so a paycheck without one read as nothing coming in. It now counts as the computer does: everything that came in and everything that went out, moves between your own accounts left out. Month in Review's "came in" too.
 - **The Homelab app on the iPad opens again:** since the keyboard menus came in, it stayed on its opening screen (the iPad's layout kept drawing itself again). The iPhone wasn't affected.

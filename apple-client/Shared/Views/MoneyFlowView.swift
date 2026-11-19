@@ -5,7 +5,9 @@ import SwiftUI
 /// then taxes, spending and saved, and on to each kind of spending and each
 /// account it was saved in (`FinanceFlow`). A month the ledger has, or a
 /// typical month from the plan. On an iPhone the last column is listed
-/// under its box; wide, all four are drawn.
+/// under its box; wide, all four are drawn. Tapping a box shows what's behind
+/// it under the chart, as the computer's: its transactions (each opening its
+/// page), or the planned payments and pay.
 struct MoneyFlowCard: View {
     @Bindable var finances: FinancesViewModel
     @State private var view: JSONValue?
@@ -13,6 +15,8 @@ struct MoneyFlowCard: View {
     /// "" for a typical month, else "yyyy-MM".
     @State private var month: String?
     @State private var width: CGFloat = 360
+    /// The box tapped, to show what's behind it.
+    @State private var picked: String?
 
     /// The ledger's months from Track from on (`ledger` is counted from it as it's read).
     private var months: [String] { FinanceFlow.ledgerMonths(ledger) }
@@ -52,10 +56,20 @@ struct MoneyFlowCard: View {
                     Text(verbatim: lead(flow))
                         .font(.footnote)
                         .foregroundStyle(Theme.secondaryInk)
-                    SankeyDrawing(flow: flow, columns: wide ? 4 : 3, money: money)
-                        .frame(height: wide ? 380 : 340)
-                        .accessibilityElement(children: .ignore)
-                        .accessibilityLabel(Text(verbatim: said(flow)))
+                    SankeyDrawing(flow: flow, columns: wide ? 4 : 3, money: money, picked: picked) { id in
+                        picked = picked == id ? nil : id
+                    }
+                    .frame(height: wide ? 380 : 340)
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel(Text(verbatim: said(flow)))
+                    .accessibilityActions {
+                        ForEach(flow.nodes) { n in
+                            Button { picked = n.id } label: { Text(verbatim: "What's behind \(n.label)") }
+                        }
+                    }
+                    if let id = picked, let node = flow.nodes.first(where: { $0.id == id }) {
+                        behindSection(node, flow)
+                    }
                 }
                 .padding(16)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -63,6 +77,7 @@ struct MoneyFlowCard: View {
             }
         }
         .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width = $0 }
+        .onChange(of: shownMonth) { _, _ in picked = nil }
         .task(id: finances.wholeVersion) {
             guard let whole = finances.wholeView() else { return }
             view = await FinancesViewModel.wholeJSON(from: whole)
@@ -74,6 +89,97 @@ struct MoneyFlowCard: View {
     private func money(_ n: Double) -> String {
         guard let view = finances.plan else { return "" }
         return amountText(n, view.plan.currency, finances, whole: true)
+    }
+
+    // MARK: What's behind a box
+
+    /// The computer's limit on the rows shown under the chart.
+    private var shownAtMost: Int { 40 }
+
+    private var periodName: String { shownMonth.isEmpty ? "A typical month" : Self.monthWords(shownMonth) }
+
+    private func behindSection(_ node: FinanceFlow.Node, _ flow: FinanceFlow) -> some View {
+        let items = flow.behind(node.id)
+        // On an iPhone the last column isn't drawn: the boxes this one leads on to, to pick.
+        let next = wide ? [] : flow.next(node.id)
+        return VStack(alignment: .leading, spacing: 10) {
+            Divider()
+            HStack(alignment: .firstTextBaseline) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(verbatim: node.label).font(.headline).foregroundStyle(Theme.ink)
+                    Text(verbatim: "\(periodName) · \(money(node.value))").font(.footnote).foregroundStyle(Theme.secondaryInk)
+                }
+                Spacer(minLength: 8)
+                Button("Close") { picked = nil }
+                    .buttonStyle(.borderless)
+            }
+            if node.id == "kept:cash" {
+                Text("What was left after taxes, spending, and what went into savings accounts: it stayed where it came in.")
+                    .font(.footnote).foregroundStyle(Theme.secondaryInk)
+            } else if node.id == "src:accounts" {
+                Text("More went out than came in: the rest came out of what the accounts held.")
+                    .font(.footnote).foregroundStyle(Theme.secondaryInk)
+            } else {
+                ForEach(next) { child in
+                    Button { picked = child.id } label: {
+                        HStack(spacing: 10) {
+                            Text(verbatim: child.label).foregroundStyle(Theme.ink).lineLimit(1)
+                            Spacer(minLength: 8)
+                            Text(verbatim: money(child.value)).monospacedDigit().foregroundStyle(Theme.secondaryInk)
+                            Image(systemName: "chevron.right").font(.caption.weight(.semibold)).foregroundStyle(Theme.secondaryInk)
+                                .accessibilityHidden(true)
+                        }
+                        .font(.subheadline)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                }
+                ForEach(Array(items.prefix(shownAtMost).enumerated()), id: \.offset) { _, item in
+                    if let tx = item.tx, let t = finances.ledger?.transactions.first(where: { $0.id == tx }) {
+                        NavigationLink {
+                            FinancesView.transactionPage(t, finances: finances)
+                        } label: {
+                            itemRow(item, opens: true)
+                        }
+                        .buttonStyle(.plain)
+                    } else {
+                        itemRow(item, opens: false)
+                    }
+                }
+                if items.isEmpty && next.isEmpty {
+                    Text("Nothing behind it.").font(.subheadline).foregroundStyle(Theme.secondaryInk)
+                }
+                if items.count > shownAtMost {
+                    Text(verbatim: "And \(items.count - shownAtMost) more.").font(.footnote).foregroundStyle(Theme.secondaryInk)
+                }
+            }
+        }
+    }
+
+    /// A transaction, a planned payment or a paycheck: what it was, when and where, and how much.
+    @ViewBuilder
+    private func itemRow(_ item: FinanceFlow.Item, opens: Bool) -> some View {
+        let day = item.date.flatMap { FinanceCalendar.shown($0) }.map { $0.formatted(.dateTime.month(.abbreviated).day()) }
+        let sub = [day, item.note].compactMap { $0 }.joined(separator: " · ")
+        HStack(spacing: 10) {
+            VStack(alignment: .leading, spacing: 1) {
+                Text(verbatim: item.label).font(.subheadline).foregroundStyle(Theme.ink).lineLimit(1)
+                Text(verbatim: !sub.isEmpty ? sub : item.payment != nil ? "Planned, a month" : item.person != nil ? "Pay, a month" : "")
+                    .font(.caption).foregroundStyle(Theme.secondaryInk).lineLimit(1)
+            }
+            Spacer(minLength: 8)
+            if let view = finances.plan {
+                Money(value: item.amount, currency: view.plan.currency, finances: finances, signed: item.amount > 0)
+                    .font(.subheadline)
+                    .foregroundStyle(item.amount > 0 ? Theme.success : Theme.ink)
+            }
+            if opens {
+                Image(systemName: "chevron.right").font(.caption.weight(.semibold)).foregroundStyle(Theme.secondaryInk)
+                    .accessibilityHidden(true)
+            }
+        }
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
     }
 
     private func lead(_ f: FinanceFlow) -> String {
@@ -106,6 +212,9 @@ private struct SankeyDrawing: View {
     /// 3 (an iPhone: the last column's listed under its box) or 4.
     let columns: Int
     let money: (Double) -> String
+    /// The box tapped, its name in the accent.
+    let picked: String?
+    let pick: (String) -> Void
 
     var body: some View {
         GeometryReader { geo in
@@ -129,8 +238,11 @@ private struct SankeyDrawing: View {
                     }
                 }
                 ForEach(layout.boxes) { box in
-                    label(box, layout)
-                        .position(x: box.labelX, y: box.rect.midY)
+                    Button { pick(box.node.id) } label: {
+                        label(box, layout).contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .position(x: box.labelX, y: box.rect.midY)
                 }
             }
         }
@@ -140,7 +252,7 @@ private struct SankeyDrawing: View {
     private func label(_ box: Layout.Box, _ layout: Layout) -> some View {
         let lines = columns == 3 && box.node.col == 2 ? layout.children(of: box.node.id) : []
         VStack(alignment: box.leading ? .leading : .trailing, spacing: 1) {
-            Text(verbatim: box.node.label).font(.caption2.weight(.semibold)).foregroundStyle(Theme.ink)
+            Text(verbatim: box.node.label).font(.caption2.weight(.semibold)).foregroundStyle(picked == box.node.id ? Theme.accent : Theme.ink)
             Text(verbatim: money(box.node.value)).font(.caption2).monospacedDigit().foregroundStyle(Theme.secondaryInk)
             ForEach(lines.prefix(5)) { child in
                 Text(verbatim: "\(child.label) \(money(child.value))").font(.system(size: 9)).foregroundStyle(Theme.secondaryInk)

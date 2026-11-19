@@ -189,7 +189,7 @@ func TestInstall(t *testing.T) {
 			t.Errorf("helper %q has no %q", args, want)
 		}
 	}
-	if read(staged) != "zip" || !strings.Contains(read(filepath.Join(StageDir(), "swap.ps1")), "Expand-Archive") {
+	if read(staged) != "zip" || !strings.Contains(read(filepath.Join(StageDir(), "swap.ps1")), "ZipFileExtensions]::ExtractToFile") {
 		t.Error("the download or the helper's script is not beside it")
 	}
 }
@@ -402,6 +402,24 @@ func TestSwapWindowsScriptUnpacksThePortableBuild(t *testing.T) {
 	})
 	if why := Failure(); why != "" {
 		t.Errorf("the log says %q", why)
+	}
+
+	// A folder inside the build is made; a file that would land outside the
+	// app's folder stops the unpacking, and nothing is written there.
+	f, _ = os.Create(staged)
+	z = zip.NewWriter(f)
+	for name, body := range map[string]string{"resources/notes.txt": "inside", "../escaped.txt": "outside"} {
+		w, _ := z.Create(name)
+		w.Write([]byte(body))
+	}
+	z.Close()
+	f.Close()
+	if err := swapWindows(Installed{Kind: KindWindowsPortable, Path: app}, gone(t), staged, "0"); err != nil {
+		t.Fatal(err)
+	}
+	waitFor(t, "the log's refusal", func() bool { return strings.Contains(read(LogPath()), "outside its folder") })
+	if _, err := os.Stat(filepath.Join(dir, "escaped.txt")); !os.IsNotExist(err) {
+		t.Error("a file was written outside the app's folder")
 	}
 }
 
