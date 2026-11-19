@@ -33,6 +33,20 @@ import Testing
         #expect(ClockWords.schedule("daily at 04:00", locale: uk) == "Every night at 04:00")
     }
 
+    /// Settings showed the computer's "America/New_York" (main's pictures after #745, `light-settings-all`).
+    @Test func aTimeZoneByItsCity() throws {
+        #expect(ClockWords.timeZone("America/New_York") == "New York")
+        #expect(ClockWords.timeZone(" America/Argentina/Buenos_Aires ") == "Buenos Aires")
+        #expect(ClockWords.timeZone("Etc/UTC") == "UTC")
+        #expect(ClockWords.timeZone("Mars/Olympus_Mons") == "Mars/Olympus_Mons")
+        #expect(ClockWords.timeZone("") == "")
+
+        let tz = try JSONDecoder().decode(HomelabSetting.self, from: Data(#"{"key":"TZ","secret":false,"set":true,"value":"America/Los_Angeles"}"#.utf8))
+        #expect(SettingsFormView.shownValue(tz) == "Los Angeles")
+        let unset = try JSONDecoder().decode(HomelabSetting.self, from: Data(#"{"key":"TZ","secret":false,"value":""}"#.utf8))
+        #expect(SettingsFormView.shownValue(unset) == "None")
+    }
+
     @Test func aScheduleItCantReadIsShownAsItIs() {
         #expect(ClockWords.schedule("", locale: us) == "")
         #expect(ClockWords.schedule("weekly", locale: us) == "Weekly")
