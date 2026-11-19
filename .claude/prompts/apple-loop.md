@@ -4,7 +4,9 @@ The owner, Nov 14: "I want to iterate the shit out of the iphone and ipad app." 
 
 ## Launcher (paste into a new session)
 
-> Read `.claude/prompts/apple-loop.md`: first "Now (read this first)" at the top of section 3, then follow it from "Start here". The owner wants the iPhone and iPad app iterated on, and lets you fix anything you find across the repo (Nov 19: "you're my full stack engineer"). Merge each PR as soon as it's green, and update "Now" before you stop.
+    /loop Read .claude/prompts/apple-loop.md and do the next round.
+
+With no interval, /loop paces itself; each round re-reads this file, so to steer the loop, edit it on main. Lane 5 (`arr-loop.md`) runs the same way on the owner's other account.
 
 ## 0. Rules (they never bend)
 
@@ -12,7 +14,7 @@ The owner, Nov 14: "I want to iterate the shit out of the iphone and ipad app." 
 2. **A failing test first, then the fix.** Use a Swift Testing case in `apple-client/Tests/`, or a picture that shows the problem (section 2, step 6). Logic gets a test. A pure layout fix gets its before and after pictures named in the PR.
 3. **One open PR at a time**, on the branch your session is given (never another branch, and never another lane's PR or `audit-loop.md`/`docs/Security.md`). **Lane 5** (media automation, `arr-loop.md`, another account, `claude/arr-*` branches) owns `compose/media-automation.yaml`, `internal/wiring`, `services/media automation/` and the media automation parts of Setup, the plan and Status: never change those. Before every push, list the open PRs' files (`lanes.md` Rule 2) and leave a file another PR changes alone.
 4. **Merge as soon as every check is green.** Squash-merge with `expectedHeadSha` pinned, after checking that main's new commits touch none of the PR's files. Never merge red. **No daily cap for this lane** (the owner, Nov 14: lanes.md Rule 5's 3 a day doesn't apply here).
-5. **While a PR waits:** call `subscribe_pr_activity`, set one `send_later` about 50 minutes out, and don't poll. Write the next change locally meanwhile (a local branch, not pushed).
+5. **While a PR waits:** call `subscribe_pr_activity` and end the turn; don't poll (/loop and the PR's events wake you). Write the next change locally meanwhile (a local branch, not pushed).
 6. **Every PR ends with "Try this tonight":** two to four taps to try, and whether it needs **the cable re-install** (`homelab-phone`, or `./apple-client/scripts/update-phone.sh`: it pulls main and runs `run-on-iphone.sh` with the owner's remembered prefix; `HOMELAB_DEVICE="<iPad's name>"` for the iPad. The owner asked for one repeatable command, Nov 16). Any change in `apple-client/` needs it. Say so plainly.
 7. **Every new phone call checks the device's permission** (look-only, changes, Finances level) on the computer, with a Go test, and is added to `phoneMethods` (`cmd/homelab/serve.go`) and to `docs/Parity.md`.
 8. **The app's version** (`apple-client/README.md`, *Its version*): every merged change to `Shared/` or `Widget/` is one more (0.4.0, 0.4.1…) by itself; don't edit numbers by hand. Say in **Try this tonight** what Settings › About should read once it's on the phone (`apple-client/scripts/app-version.sh` on main after the merge gives it). Raise `apple-client/VERSION` (0.5, 0.6…) only with the owner's yes, when a milestone lands; 1.0 is the day the app is signed.
@@ -57,7 +59,7 @@ The owner, Nov 14: "I want to iterate the shit out of the iphone and ipad app." 
 4. **Change**, then read your diff once more as the compiler would: missing `import`, `Sendable`, actor isolation, `#if os(iOS)`, a name used before it exists, an unused variable (a warning, so red).
 5. **Push and open the PR:**
    - Template headings: Summary, Safety impact, Validation, Notes, with "Try this tonight".
-   - Run `subscribe_pr_activity`, then one `send_later` at 50 minutes.
+   - Run `subscribe_pr_activity` and end the turn.
    - If it goes red, read the log (section 1) and fix. One re-run at most for anything that looks like GitHub's fault.
 6. **Green: merge.** Then wait for main's Apple client run (it photographs after build-and-test), and fetch:
    ```bash
@@ -69,13 +71,14 @@ The owner, Nov 14: "I want to iterate the shit out of the iphone and ipad app." 
 
 ### Now (read this first; Nov 19, rewritten at each handoff)
 
-- **Done:** item 1's look pass (rounds 19 to 26, #749 to #756, nothing left to fix in a full pass); the owner's three Nov 19 ideas: Add Goal over several accounts (#759), Settings › Phones and iPads (#760, with the `Phones` and `LowerPhone` calls), Setup's checklist with Do the N I Can Do for You (#761, with `Setup` and `RunSetupStep`). #762 (from the owner's other session, landed here) gave the app a version of its own (`apple-client/VERSION`, `scripts/app-version.sh`, `AppVersion`: rule 8) and made `lanes.md` say lane 4 runs now and lane 5 (media automation) next; lanes 1–3 are paused. #760 also fixed the Windows update helper's wait (`internal/selfupdate`), which made the Windows runner's two selfupdate tests time out.
-- **The owner's standing words, Nov 18–19:** keep going round after round; merge each PR when it's green; "fix any issues you find here. you're my full stack engineer" (anything in the repo, not only lane 4); don't make them babysit (use a `send_later` check-in that survives a container restart; ask with the pop-up only for a new feature's look, and not while they're away).
-- **Open, or next:** this PR: Settings › About's *Homelab app* row with the version, the README's *Its version* (and raising `VERSION` to 1.0 as the first step of *The day you sign*), rule 8, lane 5's files in rule 3, the new screens in the pictures (the sample computer in `Screenshots/data.json` answers the contract's calls, made-up `Phones` and `Setup`, a `phones` shot) and Month in Review adding up (`MonthReview.cameIn`). After it merges, fetch main's pictures and look at `*-phones`, `*-setup` and `*-review`.
-- **Lane 5** (media automation) runs on the owner's other account from `arr-loop.md`, on `claude/arr-*` branches: its files are off limits (rule 3), and its **For Account 4** section is read every round (Start here, step 2). Every **Try this tonight** says what Settings › About should read (rule 8).
-- **The canvas** (https://claude.ai/artifact/FfHtMyrrVYTp9TnCDfidwQ) was reset Nov 19 at the owner's ask: one board, *Waiting on you* (nothing waits); every earlier board is in its version 37. Put a new idea beside it; when it's built, take its board off again.
-- **Lessons that cost time:** never `go build` inside `cmd/homelab` (it writes a 29 MB `cmd/homelab/homelab` binary, and `git add -A` commits it: build with `-o /dev/null`); Go and Node run here (`go test ./cmd/homelab` about a minute; the contract regenerates with `-update-contract`, and `TestParityNamesEveryPhoneCall` wants each new call in Parity's row); Swift doesn't (build-and-test is the first compile); merging an app PR before main's picture run for the last one has finished cancels that run; a blank or mid-unlock picture is the simulator's timing, not the app (the job retakes plain ones up to three times).
-- **Ideas the owner hasn't seen:** a Lock Screen widget for the next bill only; who in the household uses an app (needs a phone call for `People`, without names to a wall screen).
+- **The aim (the owner, Nov 19):** the iPhone app as the homelab's admin, as close to the computer as it can be, so nothing feels limited on the phone. Keep refining Finances. Section 4's **The aim** says how to pick each round.
+- **Be brief:** short PRs, short notes, short messages to the owner. Ask the owner only for a new screen's look (rule 10), never while they're away.
+- **Done up to #762:** the look pass (#749–#756); Add Goal over several accounts (#759); Settings › Phones and iPads (#760: `Phones`, `LowerPhone`); Setup's checklist with Do the N (#761: `Setup`, `RunSetupStep`); the app's own version on Settings › About (#762, rule 8); the Windows update helper logs each step.
+- **Next round:** fetch main's pictures and look at `*-phones`, `*-setup`, `*-review` (new in #762), then section 4's **The aim**.
+- **Lane 5** (media automation, the owner's other account, `arr-loop.md`, `claude/arr-*`): its files are off limits (rule 3); read its **For Account 4** every round, and build the phone's side of what it lists there. Before every push, list the open PRs' files (`lanes.md` Rule 2).
+- **The canvas** (https://claude.ai/artifact/FfHtMyrrVYTp9TnCDfidwQ): one board, *Waiting on you*; earlier boards are in its version 37. Put a new idea beside it; take its board off once built.
+- **Lessons:** never `go build` inside `cmd/homelab` (it writes `cmd/homelab/homelab`, 29 MB; use `-o /dev/null`); Go and Node run here, Swift doesn't (build-and-test is the first compile); a new phone call needs `-update-contract` and its name in Parity's row; merging an app PR before main's last picture run ends cancels it; GitHub's new Windows image (20261116) timed out the update helper's tests on #762: if they fail again, its log (now printed) says which step.
+- **Ideas the owner hasn't seen:** a Lock Screen widget for the next bill; who in the household uses an app (`People` as a phone call, no names to a wall screen).
 
 ### History
 
@@ -160,7 +163,12 @@ The owner, Nov 14: "I want to iterate the shit out of the iphone and ipad app." 
 - **The owner tried it (Nov 16, 8:35 AM): "everything's working really really well. i want you to just focus hard on iterating and improving the ipad and iphone apps. i really like the work that's been done the last few days."** So: keep going round after round on the iPhone and iPad (looks first from the pictures, then features from the "partly" rows), merging each as it's green, mocks on the canvas for anything new. Not yet confirmed on their devices: the private Finances work (#676, #678, #680, #683, #686, #688), which needs a member's own phone.
 - **A feature candidate, not started:** the computer's crash card (`web/src/status/CrashNote.tsx`: *Homelab Wizard stopped unexpectedly yesterday*, Send the Report, Hide; `LastCrash`, `CrashSeen`) isn't on the phone: it needs a phone call (rule 7: the device's permission, a Go test, `phoneMethods`, Parity's row 66) and a mock first.
 
-## 4. The order (the owner's, Nov 14)
+## 4. The order
+
+**The aim (the owner, Nov 19), ahead of everything below, which is done:** "I want the app to be able to get by being the admin as much as possible … as close to the computer … I don't want to feel limited." Each round, take the next row of `docs/Parity.md` whose iPhone column says *gap*, *partly* or *on purpose for now*, Finances first, then smallest first, and make it *yes* (a phone call per rule 7, a mock first for a new screen per rule 10). Keep an *on purpose* that guards security (Dozzle's logs, a phone giving itself more, moving files on the computer's drives) unless the owner says yes (rule 11). After every two features, one look round (section 2) over the pictures.
+
+**Done (Nov 14–19), kept for reference:**
+
 
 **0. The picture loop first (one PR, CI only, no app change). Written Nov 14 (the screenshots job's `Pick an iPad simulator` and `take()`, and `review/` in the docs step).** It lets each round see every screen on both devices:
 - In the **screenshots** job, after the iPhone set, boot an iPad simulator. Pick the newest available `iPad Air 11-inch` or `iPad Pro 11-inch`, the same way as "Pick an iPhone simulator". Take the same `shots` in light and dark, plus `large-*`, named `ipad-<look>-<shot>.png`.
