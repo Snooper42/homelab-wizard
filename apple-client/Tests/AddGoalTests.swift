@@ -39,6 +39,38 @@ struct AddGoalTests {
         #expect(goals[1]["date"] == nil)
     }
 
+    /// Over several accounts, as the computer's goals hold (the owner's yes, Nov 19).
+    @Test func addsOverSeveralAccounts() throws {
+        let edited = try #require(FinancePlanEdit.addingGoal(
+            name: "House", target: 40000, date: "2028-06-30",
+            shares: [GoalShare(account: "sav", percent: 40), GoalShare(account: "chk", percent: 25)], in: plan))
+        guard case .array(let goals)? = edited["goals"] else { Issue.record("no goals"); return }
+        #expect(goals[1]["shares"] == .array([
+            .object(["account": .string("sav"), "percent": .number(40)]),
+            .object(["account": .string("chk"), "percent": .number(25)]),
+        ]))
+        // Each share is checked against what's left of its own account.
+        #expect(FinancePlanEdit.addingGoal(name: "House", target: 40000, date: nil,
+            shares: [GoalShare(account: "sav", percent: 41), GoalShare(account: "chk", percent: 25)], in: plan) == nil)
+        // The same account twice, none at all, or one that holds no money to put by.
+        #expect(FinancePlanEdit.addingGoal(name: "House", target: 40000, date: nil,
+            shares: [GoalShare(account: "chk", percent: 10), GoalShare(account: "chk", percent: 10)], in: plan) == nil)
+        #expect(FinancePlanEdit.addingGoal(name: "House", target: 40000, date: nil, shares: [], in: plan) == nil)
+        #expect(FinancePlanEdit.addingGoal(name: "House", target: 40000, date: nil,
+            shares: [GoalShare(account: "chk", percent: 10), GoalShare(account: "visa", percent: 10)], in: plan) == nil)
+    }
+
+    /// Made away from home, it waits as a change and is made the same way on the newest plan.
+    @Test func severalAccountsWaitAsOneChange() throws {
+        let change = FinanceChange.addGoalShares(name: "House", target: 40000, date: nil,
+            shares: [GoalShare(account: "sav", percent: 40), GoalShare(account: "chk", percent: 25)])
+        let kept = try JSONDecoder().decode(FinanceChange.self, from: JSONEncoder().encode(change))
+        #expect(kept == change)
+        let made = try #require(kept.apply(to: plan))
+        guard case .array(let goals)? = made["goals"] else { Issue.record("no goals"); return }
+        #expect(goals.count == 2 && goals[1]["name"] == .string("House"))
+    }
+
     @Test func refusesWhatTheComputerWould() {
         func add(name: String = "Car", target: Double = 5000, date: String? = nil,
                  account: String = "chk", percent: Double = 50) -> JSONValue? {
