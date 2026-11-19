@@ -258,31 +258,44 @@ enum FinancePlanEdit {
         return given
     }
 
+    /// `plan` with a new goal counting a share of one account
+    /// (`addingGoal(name:target:date:shares:in:)` with one share).
+    static func addingGoal(name: String, target: Double, date: String?, account: String, percent: Double,
+                           in plan: JSONValue) -> JSONValue? {
+        addingGoal(name: name, target: target, date: date, shares: [GoalShare(account: account, percent: percent)], in: plan)
+    }
+
     /// `plan` with a new goal, as the computer's Add a goal makes one: its
     /// name, what it needs, the day it's wanted by (or none: whenever), and a
-    /// share of one account's balance that counts toward it. The computer
-    /// gives it its id. Nil for no name, a target that isn't more than
-    /// nothing, a day that isn't one, an account the plan doesn't have or that
-    /// holds no money to put by, or a share past what's left of the account
-    /// once the other goals have theirs.
-    static func addingGoal(name: String, target: Double, date: String?, account: String, percent: Double,
+    /// share of each account's balance that counts toward it (one or several,
+    /// as the computer's goals hold, Nov 19). The computer gives it its id.
+    /// Nil for no name, a target that isn't more than nothing, a day that
+    /// isn't one, no share, the same account twice, an account the plan
+    /// doesn't have or that holds no money to put by, or a share past what's
+    /// left of its account once the other goals have theirs.
+    static func addingGoal(name: String, target: Double, date: String?, shares: [GoalShare],
                            in plan: JSONValue) -> JSONValue? {
         let name = name.trimmingCharacters(in: .whitespacesAndNewlines)
         let cents = roundedToCents(target)
         guard !name.isEmpty, name.count <= 80,
               target.isFinite, cents > 0, cents <= maxBalance,
               date.map({ $0.count == 10 && LocalDay.parse($0) != nil }) ?? true,
-              percent.isFinite, percent > 0, percent <= 100,
-              goalShareGiven(of: account, in: plan) + percent <= 100 + 1e-9,
+              !shares.isEmpty, shares.count <= 20,
+              Set(shares.map(\.account)).count == shares.count,
               case .object(var root) = plan,
-              case .array(let accounts)? = root["accounts"],
-              let held = accounts.first(where: { $0["id"] == .string(account) }),
-              case .string(let kind)? = held["kind"], goalFromKinds.contains(kind)
+              case .array(let accounts)? = root["accounts"]
         else { return nil }
+        for share in shares {
+            guard share.percent.isFinite, share.percent > 0, share.percent <= 100,
+                  goalShareGiven(of: share.account, in: plan) + share.percent <= 100 + 1e-9,
+                  let held = accounts.first(where: { $0["id"] == .string(share.account) }),
+                  case .string(let kind)? = held["kind"], goalFromKinds.contains(kind)
+            else { return nil }
+        }
         var goal: [String: JSONValue] = [
             "name": .string(name),
             "target": .number(cents),
-            "shares": .array([.object(["account": .string(account), "percent": .number(percent)])]),
+            "shares": .array(shares.map { .object(["account": .string($0.account), "percent": .number($0.percent)]) }),
         ]
         if let date { goal["date"] = .string(date) }
         var goals: [JSONValue] = []
@@ -588,6 +601,14 @@ enum LedgerEdit {
         root["transactions"] = .array(transactions)
         return .object(root)
     }
+}
+
+/// The share of one account's balance that counts toward a goal, in percent
+/// (the computer's `GoalShare`).
+struct GoalShare: Codable, Sendable, Equatable, Identifiable {
+    var account: String
+    var percent: Double
+    var id: String { account }
 }
 
 /// A payment typed on the phone's Add Payment (the owner's mock, Nov 15):

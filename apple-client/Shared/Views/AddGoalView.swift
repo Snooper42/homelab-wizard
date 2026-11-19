@@ -2,8 +2,8 @@ import SwiftUI
 
 /// A new goal, as the computer's Add a goal makes one (the owner's pick,
 /// Nov 14): its name and what it needs, the day it's wanted by (or none:
-/// whenever), and the share of one account that counts toward it. A goal over
-/// several accounts is the computer's for now.
+/// whenever), and the share of each account that counts toward it: one or
+/// several (the owner's yes, Nov 19), each no more than other goals leave.
 struct AddGoalView: View {
     let finances: FinancesViewModel
     @Environment(\.dismiss) private var dismiss
@@ -11,20 +11,36 @@ struct AddGoalView: View {
     @State private var targetText = ""
     @State private var byADay = false
     @State private var date = Calendar.current.date(byAdding: .year, value: 1, to: Date()) ?? Date()
-    @State private var account = ""
-    @State private var percent = 100.0
+    @State private var shares: [GoalShare] = []
     @State private var saving = false
     @FocusState private var focused: Bool
 
     private var target: Double? { FinancePlanEdit.parseAmount(targetText) }
+    private var currency: String { finances.plan?.plan.currency ?? "USD" }
 
     /// What can count toward it: accounts that hold money to put by.
     private var accounts: [FinanceAccount] {
         (finances.plan?.plan.accounts ?? []).filter { FinancePlanEdit.goalFromKinds.contains($0.kind) }
     }
 
-    private var left: Double { account.isEmpty ? 0 : finances.goalShareLeft(of: account) }
-    private var accountName: String { accounts.first { $0.id == account }?.name ?? "the account" }
+    /// The accounts not counted yet that other goals leave something of.
+    private var addable: [FinanceAccount] {
+        accounts.filter { a in !shares.contains { $0.account == a.id } && finances.goalShareLeft(of: a.id) >= 5 }
+    }
+
+    private func accountName(_ account: String) -> String { accounts.first { $0.id == account }?.name ?? "the account" }
+
+    /// The most of `account` this goal can count, in steps of 5%.
+    private func most(of account: String) -> Double { min(100, (finances.goalShareLeft(of: account) / 5).rounded(.down) * 5) }
+
+    /// What the shares hold together today.
+    private var together: Double {
+        shares.reduce(0) { sum, share in
+            sum + (accounts.first { $0.id == share.account }?.balance ?? 0) * share.percent / 100
+        }
+    }
+
+    private func adding(_ account: String) -> GoalShare { GoalShare(account: account, percent: max(5, most(of: account))) }
 
     var body: some View {
         NavigationStack {
@@ -52,17 +68,27 @@ struct AddGoalView: View {
                     Text("Off: whenever. On: what it needs a month shows on Goals.")
                 }
                 Section {
-                    if !accounts.isEmpty {
-                        Picker("Account", selection: $account) {
-                            ForEach(accounts) { a in
-                                Text(verbatim: a.name).tag(a.id)
+                    ForEach($shares) { $share in
+                        Stepper(value: $share.percent, in: 5...max(5, most(of: share.account)), step: 5) {
+                            LabeledContent {
+                                Text(share.percent / 100, format: .percent.precision(.fractionLength(0)))
+                                    .monospacedDigit()
+                            } label: {
+                                Text(verbatim: accountName(share.account))
                             }
                         }
-                        Stepper(value: $percent, in: 5...100, step: 5) {
-                            LabeledContent("Share") {
-                                Text(percent / 100, format: .percent.precision(.fractionLength(0)))
-                                    .monospacedDigit()
+                    }
+                    .onDelete { at in
+                        // One account stays: a goal counts something.
+                        if shares.count > 1 { shares.remove(atOffsets: at) }
+                    }
+                    if !addable.isEmpty {
+                        Menu {
+                            ForEach(addable) { a in
+                                Button { shares.append(adding(a.id)) } label: { Text(verbatim: a.name) }
                             }
+                        } label: {
+                            Label("Add an Account", systemImage: "plus")
                         }
                     }
                 } header: {
@@ -70,12 +96,12 @@ struct AddGoalView: View {
                 } footer: {
                     if let error = finances.saveError, !saving {
                         Text(verbatim: error).foregroundStyle(Theme.danger)
-                    } else if left < 100 {
-                        Text(verbatim: left > 0
-                             ? "\(Int(left.rounded()))% of \(accountName) is left: other goals count the rest."
-                             : "Other goals count all of \(accountName): pick another account.")
+                    } else if shares.isEmpty {
+                        Text("No account here holds money to put by, or other goals count all of it.")
+                    } else if let target, target > 0 {
+                        Text(verbatim: "Together that's \(amountText(together, currency, finances)) of \(amountText(target, currency, finances)) today. Each share is of what other goals leave of that account.")
                     } else {
-                        Text(verbatim: "That share of what \(accountName) holds counts toward it.")
+                        Text("Each share is of what other goals leave of that account. Swipe one to take it off.")
                     }
                 }
             }
@@ -93,23 +119,23 @@ struct AddGoalView: View {
                         saving = true
                         Task {
                             let ok = await finances.addGoal(name: name, target: target, by: byADay ? date : nil,
-                                                            account: account, percent: percent)
+                                                            shares: shares)
                             saving = false
                             if ok { dismiss() }
                         }
                     }
                     .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty || (target ?? 0) <= 0
-                              || account.isEmpty || percent > left + 1e-9 || saving)
+                              || shares.isEmpty || saving)
                 }
             }
             .onAppear {
                 finances.clearSaveError()
                 // Savings first, as goals usually are; then whatever holds money to put by.
-                if account.isEmpty { account = accounts.first { $0.kind == "savings" }?.id ?? accounts.first?.id ?? "" }
-                percent = min(100, max(5, (left / 5).rounded(.down) * 5))
+                if shares.isEmpty, let first = addable.first(where: { $0.kind == "savings" }) ?? addable.first {
+                    shares = [adding(first.id)]
+                }
                 focused = true
             }
-            .onChange(of: account) { percent = min(100, max(5, (left / 5).rounded(.down) * 5)) }
         }
         .presentationDetents([.large])
     }
