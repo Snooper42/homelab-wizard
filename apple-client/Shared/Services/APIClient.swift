@@ -272,6 +272,25 @@ actor APIClient {
         }
     }
 
+    /// Setup's checklist (the computer's `Setup`): each step's title, why and state, and which the phone may do.
+    func setupSteps() async throws -> [SetupStepInfo] {
+        try await call("Setup", as: [SetupStepInfo]?.self) ?? []
+    }
+
+    /// Does one setup step the phone may do (`RunSetupStep`), with the
+    /// computer's own commands for it. A change, never retried. The
+    /// checklist as it is after.
+    func runSetupStep(_ id: String) async throws -> [SetupStepInfo] {
+        let (request, endpoint) = try callRequest("RunSetupStep", [.string(id)])
+        Log.network.notice("RunSetupStep \(id, privacy: .public)")
+        let data = try await send(request, to: endpoint, using: actionSession)
+        do {
+            return try JSONDecoder.homelab().decode(CallEnvelope<[SetupStepInfo]>.self, from: data).result
+        } catch {
+            throw APIError.decoding
+        }
+    }
+
     /// The paired phones and iPads (Settings › Phones), for a phone that can make changes.
     func phones() async throws -> [PairedPhone] {
         try await call("Phones", as: [PairedPhone].self)
