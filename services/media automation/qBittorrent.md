@@ -66,7 +66,7 @@ Sonarr, Radarr, Lidarr, and LazyLibrarian mount the same folder at the same `/do
 
 - [Gluetun](<Gluetun.md>) is its only way out; when Gluetun is recreated, restart qBittorrent.
 - [Sonarr](<Sonarr.md>), [Radarr](<Radarr.md>), [Lidarr](<Lidarr.md>), and [LazyLibrarian](<LazyLibrarian.md>) use it as their download client with host `gluetun`, port `8082`, and the Web UI login. [Prowlarr](<Prowlarr.md>) can too.
-- `./homelab wire` adds it to Sonarr, Radarr, and Lidarr, and sets it to stop sharing a download once it is finished (so Tidy Up can file it once, with no second copy), with unfinished downloads in `/downloads/incomplete` named `.!qB`. It needs the permanent Web UI password: add `QBITTORRENT_PASSWORD` (and `QBITTORRENT_USER` if it is not `admin`) to `.env`, then run `./homelab wire --apply`. See [Prowlarr](<Prowlarr.md#connects-to>).
+- `./homelab wire` adds it to Sonarr, Radarr, and Lidarr, and sets it to stop sharing a download once it is finished (so Tidy Up can file it once, with no second copy), with unfinished downloads in `/downloads/incomplete` named `.!qB`. Tidy Up's inbox files a download from here only once qBittorrent has finished it and stopped sharing it, asking qBittorrent with the same password before each sweep. It needs the permanent Web UI password: add `QBITTORRENT_PASSWORD` (and `QBITTORRENT_USER` if it is not `admin`) to `.env`, then run `./homelab wire --apply`. See [Prowlarr](<Prowlarr.md#connects-to>).
 - [Nginx Proxy Manager](<../network/Nginx Proxy Manager.md>) proxies https://qbittorrent.example.com to `gluetun:8082`.
 - `.env`: `QBITTORRENT_PORT` (published on Gluetun), `DOWNLOADS_ROOT`, `PUID`, `PGID`, `TZ`, and `QBITTORRENT_USER` and `QBITTORRENT_PASSWORD` for `./homelab wire`.
 

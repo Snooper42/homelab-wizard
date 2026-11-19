@@ -14,7 +14,9 @@ The inbox: watches Downloads, and files every finished download into the right l
   python3 inbox.py leave <path>      Needs a look's Leave it: the sweep never touches it again
 
 A download is ready once nothing in it has changed for 5 minutes and no partial file (.part,
-.crdownload, .!qB...) is left; macOS's ._ files are ignored. A .zip is unpacked into a hidden
+.crdownload, .!qB...) is left; macOS's ._ files are ignored. In qBittorrent's downloads folder it
+also waits until qBittorrent has finished the torrent and stopped sharing it (or it's gone), so the
+file is moved once and qBittorrent never loses files it is still using. A .zip is unpacked into a hidden
 temporary folder, filed from there, and the temporary folder removed.
 
 Where things go:
@@ -82,6 +84,48 @@ def settled(item, minutes):
     if age < minutes * 60:
         return False, "waiting (%d min without changes needed)" % minutes
     return True, ""
+
+
+def torrent_holds():
+    """What qBittorrent still has in hand, as the homelab read it just before this sweep
+    (HOMELAB_MEDIA_TORRENTS): each torrent still downloading or sharing ("held", its folder or file
+    here), and, when qBittorrent couldn't be read, its whole downloads folder ("unread"). No file: no
+    qBittorrent running, nothing held."""
+    p = os.environ.get("HOMELAB_MEDIA_TORRENTS")
+    if not p:
+        return [], None
+    try:
+        data = json.loads(Path(p).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return [], None
+    held = [(Path(h["path"]), h.get("why") or "qBittorrent still has it") for h in data.get("held") or [] if h.get("path")]
+    unread = data.get("unread")
+    if unread and unread.get("root"):
+        unread = (Path(unread["root"]), unread.get("why") or "waiting: qBittorrent couldn't be read")
+    else:
+        unread = None
+    return held, unread
+
+
+def _within(p, root):
+    try:
+        p.relative_to(root)
+        return True
+    except ValueError:
+        return False
+
+
+def held_by_torrent(item, holds):
+    """Why qBittorrent keeps an item for now, or "": a torrent still downloading or sharing is the item,
+    sits inside it (a category folder such as tv/), or holds it. Filed now, qBittorrent would lose its
+    files (Missing files), or the item would be filed half-done."""
+    held, unread = holds
+    if unread and _within(item, unread[0]):
+        return unread[1]
+    for path, why in held:
+        if _within(item, path) or _within(path, item):
+            return why
+    return ""
 
 
 def pdf_pages(p):
@@ -565,7 +609,7 @@ def skip(p):
             or n.endswith("_tidy_log.txt") or n == "desktop.ini" or n == "thumbs.db")
 
 
-def stragglers(folder, minutes):
+def stragglers(folder, minutes, holds=([], None)):
     """Loose books anywhere in an inbox folder, however deep (a manual download, LazyLibrarian's
     leftovers), that aren't inside a download still being written."""
     out = []
@@ -573,7 +617,7 @@ def stragglers(folder, minutes):
         if any(skip(Path(part)) for part in p.relative_to(folder).parts[:-1]):
             continue
         top = folder / p.relative_to(folder).parts[0]
-        if p.parent != folder and settled(top, minutes)[0] and is_book(p):
+        if p.parent != folder and settled(top, minutes)[0] and not held_by_torrent(top, holds) and is_book(p):
             out.append(p)
     return out
 
@@ -588,12 +632,16 @@ def sweep(apply):
     filed, waiting, failed, trashed, waiting_on_you = {}, [], [], [], []
     # A download that failed once waits until it changes, rather than failing every minute.
     tried = mc.load_state("inbox", {"failed": {}})
+    holds = torrent_holds()
     for folder in inbox_folders():
         temp_root = folder / ".tidy-unzip"
         for item in sorted(folder.iterdir()):
             if skip(item):
                 continue
             ok, why = settled(item, minutes)
+            if ok:
+                why = held_by_torrent(item, holds)
+                ok = not why
             if not ok:
                 waiting.append({"path": str(item), "why": why})
                 continue
@@ -660,7 +708,7 @@ def sweep(apply):
                 trashed.append(str(item))
         if apply and temp_root.is_dir():
             shutil.rmtree(str(temp_root), ignore_errors=True)
-        loose = stragglers(folder, minutes)
+        loose = stragglers(folder, minutes, holds)
         if loose:
             added, _ = add_books(loose, apply)
             filed.setdefault("books", []).extend(added)

@@ -175,6 +175,13 @@ L8. (to offer the owner; not built) **The books review's rows lead with a dot** 
 
 (None yet.)
 
+## For Account 1 (from lane 5)
+
+Lane 5 (`arr-loop.md`) changed Tidy Up's code where its item 0 needed it, with the owner's yes (Nov 19). Pick these up when this lane restarts.
+
+- **The inbox waits for qBittorrent** (Nov 19, `claude/arr-inbox-waits-for-qbittorrent`). Before an inbox sweep (`mediaEngine`, inbox scan), `cmd/homelab/media_inbox_qbit.go` asks qBittorrent (if it's running) for its torrents and writes `data/media-torrents.json` (`HOMELAB_MEDIA_TORRENTS`): each torrent still downloading or still sharing, at its path on this machine, or, when qBittorrent is up but can't be read, its whole downloads folder. `inbox.py` (`torrent_holds`, `held_by_torrent`) leaves those waiting with the reason. `qbitTorrents` in `media_arr_rest.go` now counts from a shared `qbitList`. Tests: `Inbox.test_a_torrent_qbittorrent_still_shares_*` and neighbours, `TestInboxTorrentHolds`. Known limit: a category folder (`downloads/tv`) is one inbox item, so it waits while any torrent in it is held.
+- **Coming:** Setup turns **Hand over** on by itself (the owner's answer 1), so the \*arrs never import a second copy.
+
 ## For Account 2
 
 (Problems in shared parts or other screens that this loop finds: what you saw, the screenshot path, the smoke case that would fail. Never fix them here.)

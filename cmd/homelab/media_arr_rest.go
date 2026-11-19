@@ -204,12 +204,45 @@ func qbitURL(a wiring.App, env map[string]string) string {
 	return "http://localhost:" + port
 }
 
+// qbitTorrent is one torrent as qBittorrent's Web API lists it.
+type qbitTorrent struct {
+	State       string  `json:"state"`
+	Progress    float64 `json:"progress"`
+	ContentPath string  `json:"content_path"` // inside its container, under /downloads
+}
+
+// stopped is whether qBittorrent is doing nothing with it: paused or
+// stopped (qBittorrent 4 says paused, 5 stopped), or broken.
+func (t qbitTorrent) stopped() bool {
+	return strings.HasPrefix(t.State, "paused") || strings.HasPrefix(t.State, "stopped") || t.State == "error" || t.State == "missingFiles"
+}
+
 // qbitTorrents counts qBittorrent's torrents still downloading (or waiting
 // to: anything not finished and not paused) and those seeding.
 func qbitTorrents(ctx context.Context, client *http.Client, base string, env map[string]string) (downloading, seeding int, err error) {
+	torrents, err := qbitList(ctx, client, base, env)
+	if err != nil {
+		return 0, 0, err
+	}
+	for _, t := range torrents {
+		switch {
+		case t.Progress < 1 && !t.stopped():
+			downloading++
+		case t.Progress >= 1 && !t.stopped():
+			seeding++
+		}
+	}
+	return downloading, seeding, nil
+}
+
+// errNoQbitPassword: qBittorrent can't be read without its Web UI password.
+var errNoQbitPassword = fmt.Errorf("no QBITTORRENT_PASSWORD")
+
+// qbitList signs in to qBittorrent's Web API and lists its torrents.
+func qbitList(ctx context.Context, client *http.Client, base string, env map[string]string) ([]qbitTorrent, error) {
 	password := env["QBITTORRENT_PASSWORD"]
 	if password == "" {
-		return 0, 0, fmt.Errorf("no QBITTORRENT_PASSWORD")
+		return nil, errNoQbitPassword
 	}
 	user := env["QBITTORRENT_USER"]
 	if user == "" {
@@ -219,13 +252,13 @@ func qbitTorrents(ctx context.Context, client *http.Client, base string, env map
 	form := url.Values{"username": {user}, "password": {password}}
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, base+"/api/v2/auth/login", strings.NewReader(form.Encode()))
 	if err != nil {
-		return 0, 0, err
+		return nil, err
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("Referer", base)
 	resp, err := client.Do(req)
 	if err != nil {
-		return 0, 0, err
+		return nil, err
 	}
 	body, _ := io.ReadAll(io.LimitReader(resp.Body, 512))
 	resp.Body.Close()
@@ -236,39 +269,27 @@ func qbitTorrents(ctx context.Context, client *http.Client, base string, env map
 		}
 	}
 	if resp.StatusCode != http.StatusOK || sid == nil {
-		return 0, 0, fmt.Errorf("qBittorrent's sign-in answered %d %s", resp.StatusCode, strings.TrimSpace(string(body)))
+		return nil, fmt.Errorf("qBittorrent's sign-in answered %d %s", resp.StatusCode, strings.TrimSpace(string(body)))
 	}
 	req, err = http.NewRequestWithContext(ctx, http.MethodGet, base+"/api/v2/torrents/info", nil)
 	if err != nil {
-		return 0, 0, err
+		return nil, err
 	}
 	req.AddCookie(sid)
 	req.Header.Set("Referer", base)
 	resp, err = client.Do(req)
 	if err != nil {
-		return 0, 0, err
+		return nil, err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return 0, 0, fmt.Errorf("qBittorrent's torrents answered %d", resp.StatusCode)
+		return nil, fmt.Errorf("qBittorrent's torrents answered %d", resp.StatusCode)
 	}
-	var torrents []struct {
-		State    string  `json:"state"`
-		Progress float64 `json:"progress"`
-	}
+	var torrents []qbitTorrent
 	if err := json.NewDecoder(io.LimitReader(resp.Body, 16<<20)).Decode(&torrents); err != nil {
-		return 0, 0, err
+		return nil, err
 	}
-	for _, t := range torrents {
-		paused := strings.HasPrefix(t.State, "paused") || strings.HasPrefix(t.State, "stopped") || t.State == "error" || t.State == "missingFiles"
-		switch {
-		case t.Progress < 1 && !paused:
-			downloading++
-		case t.Progress >= 1 && !paused:
-			seeding++
-		}
-	}
-	return downloading, seeding, nil
+	return torrents, nil
 }
 
 // arrRunning is wiring's view of the catalog apps running now, and the

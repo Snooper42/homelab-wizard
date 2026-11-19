@@ -176,6 +176,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **Tidy Up waits for qBittorrent before filing a download:** a download in qBittorrent's folder is filed only once qBittorrent has finished it and stopped sharing it (or it's gone), so qBittorrent never shows *Missing files* and nothing is filed half-done. Until then the inbox lists it as waiting, saying why (*qBittorrent is still sharing it*, *still downloading in qBittorrent*); a qBittorrent that is running but can't be read (no `QBITTORRENT_PASSWORD`, say) holds its whole folder and says so, rather than guess. With qBittorrent stopped, the inbox files as before.
 - **Downloads stop sharing once they're finished, so they take room once:** Connect apps (`homelab wire`) sets qBittorrent to stop a download as soon as it's done, and to keep unfinished ones in `downloads/incomplete` with `.!qB` names, where Tidy Up never takes them for finished. Needs `QBITTORRENT_PASSWORD`; a second run changes nothing, and puts back a setting changed by hand.
 
 - **`homelab-phone` updates the iPhone and the iPad together:** with both connected, it puts the newest Homelab app on each in turn, with no names to type, and says which are up to date; one Xcode only remembers is left out. Run with `--add-command` again after moving the checkout, and the command follows it.
