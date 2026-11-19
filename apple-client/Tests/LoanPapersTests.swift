@@ -61,4 +61,34 @@ struct LoanPapersTests {
         #expect(LoanPapers.perMonth(every("paycheck"), people: people, checking: "chk") == 52.0 / 12)
         #expect(LoanPapers.perMonth(every("paycheck", person: "b"), people: people, checking: "chk") == 1)
     }
+
+    /// Read as they're typed in, the computer's account form's reading (payoffPlan.ts's `papers`):
+    /// the expected rows are the computer's own for the same papers (run through esbuild).
+    @Test func readFromItsPapersAsTyped() throws {
+        typealias R = LoanPapers.Row
+        // A car loan with its finance charge: the first payment carries the days before it (7.94).
+        #expect(LoanPapers.oddDays(first: "2025-02-15", original: 12000, rate: 6.5, monthly: 367.79, charge: 1250) == 7.94)
+        let car = try #require(LoanPapers.reading(original: 12000, rate: 6.5, firstDue: "2025-02-15", term: 36, charge: 1250, monthly: 367.79, today: "2026-11-19"))
+        #expect(car.rows.count == 37 && car.made == 22 && car.owed == 4954.61)
+        #expect(car.rows[0] == R(date: "2025-02-15", payment: 367.79, principal: 294.85, interest: 72.94, after: 11705.15))
+        #expect(car.rows[2] == R(date: "2025-04-15", payment: 367.79, principal: 306.04, interest: 61.75, after: 11094.72))
+        #expect(car.rows.last == R(date: "2028-02-15", payment: 9.56, principal: 9.51, interest: 0.05, after: 0))
+        // Without the charge, no odd days.
+        let plain = try #require(LoanPapers.reading(original: 12000, rate: 6.5, firstDue: "2025-02-15", term: 0, charge: 0, monthly: 367.79, today: "2026-11-19"))
+        #expect(plain.rows.count == 36 && plain.made == 22 && plain.owed == 4945.71)
+        #expect(plain.rows[0] == R(date: "2025-02-15", payment: 367.79, principal: 302.79, interest: 65, after: 11697.21))
+        #expect(plain.rows.last == R(date: "2028-01-15", payment: 367.71, principal: 365.73, interest: 1.98, after: 0))
+        // No interest, due on the 31st: each month's last day where it has no 31st.
+        let zero = try #require(LoanPapers.reading(original: 1200, rate: 0, firstDue: "2026-01-31", term: 0, charge: 0, monthly: 100, today: "2026-11-19"))
+        #expect(zero.rows.count == 12 && zero.made == 10 && zero.owed == 200)
+        #expect(zero.rows[2] == R(date: "2026-03-31", payment: 100, principal: 100, interest: 0, after: 900))
+        #expect(LoanPapers.dueOn("2026-01-31", 1) == "2026-02-28" && LoanPapers.dueOn("2026-01-31", 13) == "2027-02-28" && LoanPapers.dueOn("2025-12-15", 2) == "2026-02-15")
+        // Not started yet: it owes what was borrowed.
+        let later = try #require(LoanPapers.reading(original: 5000, rate: 4, firstDue: "2027-01-10", term: 0, charge: 0, monthly: 500, today: "2026-11-19"))
+        #expect(later.rows.count == 11 && later.made == 0 && later.owed == 5000)
+        #expect(later.rows.last == R(date: "2027-11-10", payment: 93.85, principal: 93.54, interest: 0.31, after: 0))
+        // A payment that never pays it off, or papers not typed in yet: no reading.
+        #expect(LoanPapers.reading(original: 10000, rate: 12, firstDue: "2026-01-01", term: 0, charge: 0, monthly: 90, today: "2026-11-19") == nil)
+        #expect(LoanPapers.reading(original: 10000, rate: 5, firstDue: "", term: 0, charge: 0, monthly: 300, today: "2026-11-19") == nil)
+    }
 }
