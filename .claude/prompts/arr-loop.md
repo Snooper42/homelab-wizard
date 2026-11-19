@@ -67,7 +67,8 @@ Afterwards, a request that can't be found or downloaded sits at "Requested" in S
   2. **No daily merge cap** for lane 5 (rule 6, `lanes.md` Rule 5).
   3. **Disk space comes first:** storage is expensive. Never two copies of a download; item 7's default is *save space*; no hard links (item 9 dropped them).
 - **Nov 19, round 1:** this file and `lanes.md` updated with the answers, item 0 and the CasaOS-style items (a)–(d). Item 0's check done from the code (below); next round starts item 0's fix.
-- **Nov 19, round 2:** item 0, part 1: `wire` sets qBittorrent to stop sharing once a download is finished and keep unfinished ones in `incomplete/` with `.!qB` (`internal/wiring/qbit.go`, against a fake qBittorrent). Next: part 2, the inbox waits for qBittorrent (a torrent an indexer keeps seeding is still listed), and Setup turns Hand over on.
+- **Nov 19, round 2:** item 0, part 1: `wire` sets qBittorrent to stop sharing once a download is finished and keep unfinished ones in `incomplete/` with `.!qB` (`internal/wiring/qbit.go`, against a fake qBittorrent). Next: part 2, the inbox waits for qBittorrent (a torrent an indexer keeps seeding is still listed), and Setup turns Hand over on. **#767 merged.**
+- **Nov 19, the owner's ask:** Sign-in details to copy into Proton Pass, with the copy shown on the button (item 1's first PR, after item 0's part 2).
 
 ## 4. The work, in order
 
@@ -78,9 +79,12 @@ Each item is one small PR unless it says otherwise. Before writing code, **check
    - **The fix:** `wire` sets qBittorrent to stop seeding once a download is finished (share limit reached at once, action *Stop*, or remove the torrent and keep its files), and to keep unfinished files in `incomplete/` with `.!qB` on. The inbox files a download from qBittorrent's folders only once qBittorrent says it's finished and stopped (or gone); can't read qBittorrent means wait, said on the card. The file is moved once, never copied and kept twice.
    - Setup turns **Hand over** on by itself (answer 1), so the \*arrs never import a second copy. Lane 1's code: note it under **For Account 1** in `tidy-loop.md`.
    - Test: a fake qBittorrent with one torrent seeding and one stopped; the inbox files only the stopped one, and a second `wire` changes nothing.
-1. **Logins made for them** (removes steps 3–4).
+1. **Logins made for them, and Sign-in details to copy them** (removes steps 3–4; two PRs, the card first).
+   - **First PR, the card (the owner, Nov 19: every password and token goes into their Proton Pass, not just the app):** each media app's page has **Sign-in details**: user name, password and API key, each hidden (••••) with its own **Copy**. The value goes straight to the clipboard, never to the page, and the clipboard clears after 90 seconds. **A copy shows on the button itself:** a highlight around it and a small bounce (no bounce with Reduce Motion), *Copied*, and *Paste it into Proton Pass*. Settings' copy note says Proton Pass too (it says Vaultwarden today).
+     - Build on what exists: `showSignIn` (`screens/status.ts`), `SignIns` (`sheets/Sheet.tsx`), `CopySetting` (`app/app.go`), and the catalog's `login` keys. qBittorrent gets `login: [QBITTORRENT_USER, QBITTORRENT_PASSWORD]`. The \*arr apps' API keys live in their `config.xml` (Seerr's in its `settings.json`), not `.env`: a copy call reads the key there (as `wiring.apiKey` does) and puts it on the clipboard the same way.
+     - Lane 2's screens (parked): note it under **For Account 2** in `maintenance-loop.md`. A smoke case for the bounce and *Copied*, and before/after pictures.
    - At install, the wizard generates a password for the \*arrs and qBittorrent, saves it in `.env` and sets it in each app, so "Authentication required" never appears. Check whether each \*arr's `/api/v3/config/host` (`/api/v1` for Prowlarr and Lidarr) takes the method, username and password, and how qBittorrent's password is set before first start.
-   - Settings › Copy shows it, like the other generated secrets. Setup says once to keep it in Vaultwarden.
+   - The card above shows it. Setup says once to keep it in Proton Pass.
    - Test: a fresh install has a login on each app, and a second `wire` run changes nothing.
 2. **The VPN looks after itself** (removes step 2, softens step 1).
    - Gluetun puts its forwarded port into qBittorrent by itself on every change. Check Gluetun's wiki for its port-forwarding "up" command and what qBittorrent needs to accept it from `127.0.0.1` (they share a network).
