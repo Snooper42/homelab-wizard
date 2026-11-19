@@ -209,6 +209,9 @@ private extension AppActionsViewModel.UndoOffer {
 struct GroupActionsMenu: View {
     @Environment(AppActionsViewModel.self) private var actions
     let apps: [AppStatus]
+    /// ⋯ beside a group's name; the toolbar's menu for every app shown takes its own, as ⋯
+    /// beside the toolbar's own ••• read as two of the same (ipad-land-large-status).
+    var icon = "ellipsis.circle"
 
     var body: some View {
         let start = AppAction.groupTargets(.start, in: apps)
@@ -244,9 +247,9 @@ struct GroupActionsMenu: View {
                     // Its words where there's room, else only ⋯: in the iPad's list column, or at
                     // the largest text, the words squeezed the group's name ("Docu-ments", "Ne…").
                     ViewThatFits(in: .horizontal) {
-                        Label(AppAction.groupMenuTitle(starting: start.count, running: running.count), systemImage: "ellipsis.circle")
+                        Label(AppAction.groupMenuTitle(starting: start.count, running: running.count), systemImage: icon)
                             .lineLimit(1)
-                        Image(systemName: "ellipsis.circle")
+                        Image(systemName: icon)
                     }
                 }
             }

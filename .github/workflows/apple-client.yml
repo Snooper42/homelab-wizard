@@ -315,6 +315,17 @@ jobs:
           BID="$(/usr/libexec/PlistBuddy -c 'Print CFBundleIdentifier' "$APP/Info.plist")"
           mkdir -p "$RUNNER_TEMP/pictures"
           shots="status backups finances spending inbox loading transactions transaction budgets bills recurring cashflow calendar review accounts investments goals setup settings settings-all lock app"
+          # shoot <simulator> <file>: the picture, and again up to three times, six seconds apart, while it's a
+          # plain white or black screen (the app still opening is a small file). Every picture goes through it:
+          # the largest text had no retake, and ipad-land-large-transactions was plain white (Nov 19).
+          shoot() {
+            xcrun simctl io "$1" screenshot "$2" > /dev/null 2>&1 || return 1
+            for again in 1 2 3; do
+              [ "$(stat -f %z "$2")" -lt 120000 ] || break
+              sleep 6
+              xcrun simctl io "$1" screenshot "$2" > /dev/null 2>&1 || true
+            done
+          }
           # take <simulator> <name prefix> <looks> <extras: the largest text and hidden amounts, yes or no>
           take() {
             local dev="$1" pre="$2" looks="$3" extras="$4"
@@ -331,12 +342,7 @@ jobs:
                 # Finances' pages read the plan and the ledger first: longer, or they're pictured still reading.
                 case "$shot" in status|backups|setup|settings|settings-all|lock|app|loading) sleep 7 ;; *) sleep 11 ;; esac
                 file="$RUNNER_TEMP/pictures/$pre$look-$shot.png"
-                xcrun simctl io "$dev" screenshot "$file" > /dev/null 2>&1 || { echo "no picture of $pre$look-$shot"; continue; }
-                # A plain white or black screen (the app still opening) is a small file: wait, and take it again.
-                if [ "$(stat -f %z "$file")" -lt 120000 ]; then
-                  sleep 6
-                  xcrun simctl io "$dev" screenshot "$file" > /dev/null 2>&1 || true
-                fi
+                shoot "$dev" "$file" || { echo "no picture of $pre$look-$shot"; continue; }
                 upright "$file"
                 echo "$pre$look-$shot"
               done
@@ -348,13 +354,13 @@ jobs:
             for shot in status finances transactions spending; do
               xcrun simctl launch --terminate-running-process "$dev" "$BID" -shot "$shot" > /dev/null || continue
               sleep 8
-              xcrun simctl io "$dev" screenshot "$RUNNER_TEMP/pictures/${pre}large-$shot.png" > /dev/null 2>&1 \
+              shoot "$dev" "$RUNNER_TEMP/pictures/${pre}large-$shot.png" \
                 && upright "$RUNNER_TEMP/pictures/${pre}large-$shot.png" && echo "${pre}large-$shot" || true
             done
             xcrun simctl ui "$dev" content_size large || true
             # Finances as it opens, amounts hidden.
             xcrun simctl launch --terminate-running-process "$dev" "$BID" -shot finances -hidden > /dev/null && sleep 7 \
-              && xcrun simctl io "$dev" screenshot "$RUNNER_TEMP/pictures/${pre}light-finances-hidden.png" > /dev/null 2>&1 \
+              && shoot "$dev" "$RUNNER_TEMP/pictures/${pre}light-finances-hidden.png" \
               && upright "$RUNNER_TEMP/pictures/${pre}light-finances-hidden.png" || true
           }
           # In landscape a picture should be wider than tall: the simulator may give it in the device's own

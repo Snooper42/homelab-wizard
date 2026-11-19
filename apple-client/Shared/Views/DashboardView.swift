@@ -258,7 +258,18 @@ private struct PhoneDashboard: View {
     @ViewBuilder
     private var financesRoot: some View {
         #if SCREENSHOTS
-        FinancesView.screenshotRoot(finances: finances)
+        // A page's picture opens it over Finances' home as a link does, so it has its back button
+        // (as the tab's root, light-budgets and the rest had none); the transaction and the
+        // skeleton as before.
+        if let page = DeepLink.FinancePage(rawValue: ScreenshotMode.shot ?? "") {
+            FinancesView(finances: finances)
+                .task(id: finances.canSeePlan) {
+                    guard finances.canSeePlan, IntentInbox.shared.financePage == nil else { return }
+                    IntentInbox.shared.financePage = page
+                }
+        } else {
+            FinancesView.screenshotRoot(finances: finances)
+        }
         #else
         FinancesView(finances: finances)
         #endif
@@ -500,15 +511,17 @@ private struct BrandHeader: View {
             AppMark(size: 30)
             VStack(alignment: .leading, spacing: 1) {
                 // On one line at every size (at the largest it broke as "Ho mel ab Wiz ard").
+                // The theme's own inks: in the sidebar's header `.primary` read grey (4.0:1) and
+                // `.secondary` fainter still, 1.7:1 in light and 2.4:1 in dark (ipad-land-*-status, Nov 19).
                 Text("Homelab Wizard")
                     .font(.headline)
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(Theme.ink)
                     .lineLimit(1)
                     .minimumScaleFactor(0.6)
                 if !typeSize.isAccessibilitySize {
                     Text("Your apps, at home")
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Theme.secondaryInk)
                 }
             }
         }
@@ -1010,7 +1023,7 @@ private struct SplitDashboard: View {
                 .help("Which apps Status shows")
             }
             ToolbarItem(placement: .automatic) {
-                GroupActionsMenu(apps: apps)
+                GroupActionsMenu(apps: apps, icon: "playpause.circle")
             }
             if !model.changedApps.isEmpty {
                 ToolbarItem(placement: .automatic) {
@@ -1207,6 +1220,10 @@ struct HealthLineBar: View {
                 }
             }
             .font(.callout.weight(.medium))
+            // A bar under every screen grows no further than the first accessibility size, as
+            // Open Its Page: at the largest it took a quarter of the iPad's Finances column on
+            // three lines (ipad-land-large-finances, Nov 19). Still one over the other there.
+            .dynamicTypeSize(...DynamicTypeSize.accessibility1)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal)
             .padding(.vertical, 8)

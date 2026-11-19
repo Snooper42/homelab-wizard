@@ -510,16 +510,16 @@ final class FinancesViewModel {
     }
 
     /// Adds a goal to the plan, as the computer's Add a goal does
-    /// (`FinancePlanEdit.addingGoal`). Returns whether it saved.
-    func addGoal(name: String, target: Double, by date: Date?, account: String, percent: Double) async -> Bool {
+    /// (`FinancePlanEdit.addingGoal`), counting a share of each account in
+    /// `shares`. Returns whether it saved.
+    func addGoal(name: String, target: Double, by date: Date?, shares: [GoalShare]) async -> Bool {
         guard canEditPlan, !isSaving, let raw = rawPlan else { return false }
         let day = date.map { FinancePlanEdit.todayString($0) }
-        guard let edited = FinancePlanEdit.addingGoal(name: name, target: target, date: day,
-                                                      account: account, percent: percent, in: raw) else {
+        guard let edited = FinancePlanEdit.addingGoal(name: name, target: target, date: day, shares: shares, in: raw) else {
             saveError = "A goal needs a name, what it needs, and a share of an account that's still free."
             return false
         }
-        return await make(.addGoal(name: name, target: target, date: day, account: account, percent: percent),
+        return await make(.addGoalShares(name: name, target: target, date: day, shares: shares),
                           edited: edited, reason: "Add \(name.trimmingCharacters(in: .whitespaces)) to Finances.")
     }
 

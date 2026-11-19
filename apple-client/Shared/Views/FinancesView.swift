@@ -3493,7 +3493,7 @@ struct WalletTransactionRow: View {
                 }
                 // What it was and the day: one line, as Wallet's, or two when it needs them
                 // (a transfer's other account and the day cut off as "From Chase Checki…").
-                Text(verbatim: [subtitle, TransactionsView.dayWords(transaction.date)].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · "))
+                Text(verbatim: RowWords.line([subtitle, TransactionsView.dayWords(transaction.date)]))
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .lineLimit(2)
@@ -4253,13 +4253,38 @@ private struct ScreenshotPage: View {
     }
 }
 
-/// A transaction's page, for the newest spending with a payee's logo.
+/// A transaction's page, for the newest spending with a payee's logo. On the
+/// iPhone it opens over Transactions as a tap does, with its back button (on
+/// its own, light-transaction had none); on the iPad, beside Finances' home.
 private struct ScreenshotTransaction: View {
     let finances: FinancesViewModel
+    #if os(iOS)
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    #endif
+    @State private var opened = false
+
+    private var shown: FinanceTransaction? {
+        finances.ledger?.newestFirst.first(where: { $0.to == nil && $0.amount < 0 && !$0.payee.isEmpty })
+    }
+
+    private var overTransactions: Bool {
+        #if os(iOS)
+        return sizeClass == .compact
+        #else
+        return false
+        #endif
+    }
 
     var body: some View {
         Group {
-            if let t = finances.ledger?.newestFirst.first(where: { $0.to == nil && $0.amount < 0 && !$0.payee.isEmpty }) {
+            if overTransactions {
+                TransactionsView(finances: finances)
+                    .navigationDestination(isPresented: $opened) {
+                        if let t = shown {
+                            TransactionDetailView(transaction: t, finances: finances)
+                        }
+                    }
+            } else if let t = shown {
                 TransactionDetailView(transaction: t, finances: finances)
             } else {
                 ProgressView()
@@ -4268,6 +4293,7 @@ private struct ScreenshotTransaction: View {
         .task {
             if finances.plan == nil { await finances.loadPlan() }
             await finances.loadLedger()
+            opened = shown != nil
         }
     }
 }

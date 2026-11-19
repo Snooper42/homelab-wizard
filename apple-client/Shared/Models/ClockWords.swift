@@ -38,6 +38,17 @@ enum ClockWords {
         return "\(capitalised(when)) at \(said)"
     }
 
+    /// "America/New_York" → "New York": a time zone by its city, as iPhone
+    /// Settings › Date & Time names it ("Etc/UTC" → "UTC"). Anything that
+    /// isn't a time zone the phone knows is shown as the computer sent it.
+    static func timeZone(_ value: String) -> String {
+        let v = value.trimmingCharacters(in: .whitespaces)
+        guard !v.isEmpty, TimeZone(identifier: v) != nil,
+              let city = v.split(separator: "/").last, !city.isEmpty
+        else { return v }
+        return city.replacingOccurrences(of: "_", with: " ")
+    }
+
     /// An hour and minute in the locale's own clock: "4 AM", "1:30 PM", "04:00".
     static func time(hour: Int, minute: Int, locale: Locale) -> String {
         var calendar = Calendar(identifier: .gregorian)

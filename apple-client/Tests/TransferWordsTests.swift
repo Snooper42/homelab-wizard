@@ -15,4 +15,12 @@ import Testing
     @Test func aPayeeThatIsNeitherKeepsBothEnds() {
         #expect(TransferWords.line(payee: "Move to savings", from: "Main Checking", to: "Savings") == "Main Checking → Savings")
     }
+
+    /// The dot stays with what's before it: "From Chase Checking" over "· Oct 27" (light-inbox, Nov 19).
+    @Test func aRowsLineNeverStartsWithItsDot() {
+        #expect(RowWords.line(["From Chase Checking", "Oct 27"]) == "From Chase Checking\u{00A0}· Oct 27")
+        #expect(RowWords.line(["Groceries", nil, " ", "Oct 30"]) == "Groceries\u{00A0}· Oct 30")
+        #expect(RowWords.line([nil, "Oct 30"]) == "Oct 30")
+        #expect(RowWords.line([]) == "")
+    }
 }

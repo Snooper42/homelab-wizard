@@ -25,6 +25,8 @@ enum FinanceChange: Codable, Sendable, Equatable {
     case addNewPayment(NewPayment)
     /// Track from (Nov 16): the day the charts count from, nil for every day.
     case trackFrom(String?)
+    /// Add Goal over several accounts (the owner's yes, Nov 19); `addGoal` stays for changes kept before it.
+    case addGoalShares(name: String, target: Double, date: String?, shares: [GoalShare])
 
     /// `plan` with this change made, or nil when it can't be (what it changes is gone).
     func apply(to plan: JSONValue) -> JSONValue? {
@@ -52,6 +54,8 @@ enum FinanceChange: Codable, Sendable, Equatable {
             FinancePlanEdit.addingPayment(p, in: plan)
         case .trackFrom(let day):
             FinancePlanEdit.settingTrackFrom(day, in: plan)
+        case .addGoalShares(let name, let target, let date, let shares):
+            FinancePlanEdit.addingGoal(name: name, target: target, date: date, shares: shares, in: plan)
         }
     }
 

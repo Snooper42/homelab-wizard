@@ -219,6 +219,95 @@ func watchdogHas(root, check string) bool {
 	return ok
 }
 
+// phonePhone is a paired phone as Settings › Phones on the owner's phone
+// shows it (the owner's yes, Nov 19): who it is and what it may do now,
+// never its token or tunnel key. CanChange and Finances are what it may do
+// today (a For a day that has ended counts as ended).
+type phonePhone struct {
+	ID         string    `json:"id"`
+	Name       string    `json:"name"`
+	CanChange  bool      `json:"canChange"`
+	Finances   string    `json:"finances,omitempty"`
+	Kiosk      bool      `json:"kiosk,omitempty"`
+	PersonName string    `json:"personName,omitempty"`
+	Paired     time.Time `json:"paired"`
+	LastSeen   time.Time `json:"lastSeen,omitzero"`
+	Until      time.Time `json:"until,omitzero"`
+	// This: the phone asking.
+	This bool `json:"this,omitempty"`
+}
+
+// phonePhones lists the paired phones for the phone `self`, newest first as
+// the store keeps them.
+func phonePhones(store *companion.Store, self string, now time.Time) []phonePhone {
+	out := []phonePhone{}
+	for _, d := range store.Devices() {
+		live := d.Until.IsZero() || now.Before(d.Until)
+		p := phonePhone{ID: d.ID, Name: d.Name, Kiosk: d.Kiosk, PersonName: d.PersonName, Paired: d.Paired, LastSeen: d.LastSeen, This: d.ID == self}
+		p.CanChange = d.CanChange && live && !d.Kiosk && !d.Unencrypted
+		p.Finances = d.Finances
+		if !live && p.Finances != companion.FinancesCard {
+			p.Finances = ""
+		}
+		if live {
+			p.Until = d.Until
+		}
+		out = append(out, p)
+	}
+	return out
+}
+
+// financesRank orders the Finances levels, nothing to changing them; -1 for
+// one that isn't a level.
+func financesRank(level string) int {
+	switch level {
+	case "":
+		return 0
+	case companion.FinancesCard:
+		return 1
+	case companion.FinancesView:
+		return 2
+	case companion.FinancesEdit:
+		return 3
+	}
+	return -1
+}
+
+// lowerPhone gives the phone `id` less, as `what` says: "looksOnly" (no
+// changes from now), "finances:<level>" (a lower Finances level), or
+// "remove". Never more, and never the phone asking (`self`, This Device's).
+func lowerPhone(store *companion.Store, self, id, what string) error {
+	if id == "" || id == self {
+		return errors.New("this phone is changed on its own This Device")
+	}
+	var target *companion.Device
+	for _, d := range store.Devices() {
+		if d.ID == id {
+			target = &d
+			break
+		}
+	}
+	if target == nil {
+		return errors.New("no such paired phone")
+	}
+	switch {
+	case what == "looksOnly":
+		_, err := store.SetCanChange(target.ID, false)
+		return err
+	case strings.HasPrefix(what, "finances:"):
+		level := strings.TrimPrefix(what, "finances:")
+		if r := financesRank(level); r < 0 || r >= financesRank(target.Finances) {
+			return errors.New("a phone can only be given less Finances here: more is on the computer's Settings › Phones")
+		}
+		_, err := store.SetFinances(target.ID, level)
+		return err
+	case what == "remove":
+		_, err := store.Remove(target.ID)
+		return err
+	}
+	return errors.New("a phone can only be given less here: looks only, less of Finances, or removed")
+}
+
 // phoneCrash is what a phone hears of a crash: which part stopped and when.
 type phoneCrash struct {
 	Who  string    `json:"who"`
@@ -432,6 +521,26 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 			}
 			return phoneCrash{Who: c.Who, When: c.When}, nil
 		}),
+		// The paired phones, for Settings › Phones on the owner's phone (the owner's yes, Nov 19):
+		// only a phone that can make changes (Change), never a household member's (not Member) or a
+		// wall screen (it can't make changes), over an encrypted connection only (Private: phone names).
+		"Phones": {Change: true, Private: true, Call: func(ctx context.Context, _ []json.RawMessage) (any, []string, error) {
+			d, _ := companion.Caller(ctx)
+			return phonePhones(companion.NewStore(companion.StorePath(root)), d.ID, time.Now()), nil, nil
+		}},
+		// A phone given less from Settings › Phones: looks only from now, less of Finances, or
+		// removed. Never more: pairing a phone or giving one more stays on the computer, as a phone
+		// can't give itself more. Not the phone asking: its own This Device unpairs it.
+		"LowerPhone": {Change: true, Private: true, Call: func(ctx context.Context, args []json.RawMessage) (any, []string, error) {
+			var id, what string
+			if len(args) < 2 || json.Unmarshal(args[0], &id) != nil || json.Unmarshal(args[1], &what) != nil {
+				return nil, nil, errors.New("which phone, and what to take away")
+			}
+			d, _ := companion.Caller(ctx)
+			store := companion.NewStore(companion.StorePath(root))
+			err := lowerPhone(store, d.ID, id, what)
+			return phonePhones(store, d.ID, time.Now()), nil, err
+		}},
 		"ExplainLogs": {Call: func(ctx context.Context, args []json.RawMessage) (any, []string, error) {
 			var id string
 			if len(args) > 0 {
