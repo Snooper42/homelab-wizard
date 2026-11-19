@@ -33,6 +33,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/procattr"
 	"github.com/Snooper42/homelab-wizard/internal/savings"
 	"github.com/Snooper42/homelab-wizard/internal/settings"
+	"github.com/Snooper42/homelab-wizard/internal/setup"
 	"github.com/Snooper42/homelab-wizard/internal/statusfolds"
 	"github.com/Snooper42/homelab-wizard/internal/storage"
 	"github.com/Snooper42/homelab-wizard/web"
@@ -308,6 +309,34 @@ func lowerPhone(store *companion.Store, self, id, what string) error {
 	return errors.New("a phone can only be given less here: looks only, less of Finances, or removed")
 }
 
+// phoneSetupStep is a setup step as Setup on the owner's phone lists it
+// (the owner's yes, Nov 19): what it is and why, whether it's done, and
+// whether the phone may do it (ForYou). Never its commands or details.
+type phoneSetupStep struct {
+	ID     string `json:"id"`
+	Title  string `json:"title"`
+	Why    string `json:"why"`
+	State  string `json:"state"`
+	Later  bool   `json:"later,omitempty"`
+	ForYou bool   `json:"forYou,omitempty"`
+}
+
+// phoneSetupRuns are the steps a phone may run: ones the homelab does by
+// itself, with nothing to type, sign in to, pick or allow with a password,
+// and nothing opened to the outside (Vaultwarden's sign-ups, the tunnel)
+// or installed on the machine (the runtime, Tailscale).
+var phoneSetupRuns = map[string]bool{"started": true, "jobs": true, "duplicati": true, "adguard": true}
+
+// phoneSetup is the checklist for a phone.
+func phoneSetup(steps []setup.Step) []phoneSetupStep {
+	out := []phoneSetupStep{}
+	for _, s := range steps {
+		out = append(out, phoneSetupStep{ID: s.ID, Title: s.Title, Why: s.Why, State: s.State, Later: s.Later,
+			ForYou: phoneSetupRuns[s.ID] && s.State == "todo" && len(s.Run) > 0})
+	}
+	return out
+}
+
 // phoneCrash is what a phone hears of a crash: which part stopped and when.
 type phoneCrash struct {
 	Who  string    `json:"who"`
@@ -540,6 +569,44 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 			store := companion.NewStore(companion.StorePath(root))
 			err := lowerPhone(store, d.ID, id, what)
 			return phonePhones(store, d.ID, time.Now()), nil, err
+		}},
+		// Setup's checklist on the owner's phone (the owner's yes, Nov 19): each step's title, why and
+		// state, and which the phone may do. Not a member's phone (the homelab's), nothing to a wall
+		// screen, over an encrypted connection only (a step can name this machine).
+		"Setup": {Private: true, Call: func(ctx context.Context, _ []json.RawMessage) (any, []string, error) {
+			if d, ok := companion.Caller(ctx); ok && d.Kiosk {
+				return nil, nil, nil
+			}
+			ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+			defer cancel()
+			return phoneSetup(core.Setup(ctx, root)), nil, nil
+		}},
+		// Do one of the steps a phone may (phoneSetupRuns) with its own commands, as the computer's
+		// Setup does it; the phone sends only which step. Each command waits its turn (run).
+		"RunSetupStep": {Change: true, Call: func(ctx context.Context, args []json.RawMessage) (any, []string, error) {
+			var id string
+			if len(args) > 0 {
+				_ = json.Unmarshal(args[0], &id)
+			}
+			var step *setup.Step
+			for _, s := range core.Setup(ctx, root) {
+				if s.ID == id {
+					step = &s
+					break
+				}
+			}
+			if step == nil || !phoneSetupRuns[id] || step.State != "todo" || len(step.Run) == 0 {
+				return nil, nil, fmt.Errorf("%s is not a step the phone can do: use Setup on the computer", id)
+			}
+			var log []string
+			for _, cmd := range step.Run {
+				lines, err := run(ctx, cmd...)
+				log = append(log, lines...)
+				if err != nil {
+					return phoneSetup(core.Setup(ctx, root)), log, err
+				}
+			}
+			return phoneSetup(core.Setup(ctx, root)), log, nil
 		}},
 		"ExplainLogs": {Call: func(ctx context.Context, args []json.RawMessage) (any, []string, error) {
 			var id string

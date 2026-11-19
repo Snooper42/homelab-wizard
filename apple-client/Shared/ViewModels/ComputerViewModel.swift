@@ -75,6 +75,56 @@ final class ComputerViewModel {
         }
     }
 
+    // Setup's checklist (the owner's yes, Nov 19).
+    private(set) var setupSteps: [SetupStepInfo]?
+    private(set) var setupError: String?
+    /// The step being done for the person now.
+    private(set) var doingSetupStep: String?
+
+    /// The checklist shows on the owner's phone, from a computer that answers it.
+    var canSeeSetup: Bool {
+        guard let device = device(), !device.isMember else { return false }
+        return device.computer?.answers("Setup") ?? false
+    }
+
+    var canDoSetup: Bool { canChange && (device()?.computer?.answers("RunSetupStep") ?? false) }
+
+    func loadSetup() async {
+        guard canSeeSetup, doingSetupStep == nil else { return }
+        do {
+            setupSteps = try await api.setupSteps()
+            setupError = nil
+        } catch {
+            let apiError = APIError.from(error)
+            Log.ui.error("Setup failed: \(apiError.logName, privacy: .public)")
+            setupError = apiError.errorDescription
+        }
+    }
+
+    /// Does each step the phone may, in turn, after one Face ID, re-reading
+    /// the checklist after each, until none is left or one fails.
+    func doSetupForYou() async {
+        guard canDoSetup, doingSetupStep == nil, let steps = setupSteps else { return }
+        let ready = SetupChecklist.forYou(steps)
+        guard !ready.isEmpty else { return }
+        guard await authorize(ready.count == 1 ? "\(ready[0].title)." : "Do \(ready.count) setup steps.") else { return }
+        setupError = nil
+        defer { doingSetupStep = nil }
+        var tried = Set<String>()
+        while let next = SetupChecklist.forYou(setupSteps ?? []).first(where: { !tried.contains($0.id) }) {
+            tried.insert(next.id)
+            doingSetupStep = next.title
+            do {
+                setupSteps = try await api.runSetupStep(next.id)
+            } catch {
+                let apiError = APIError.from(error)
+                Log.ui.error("RunSetupStep failed: \(apiError.logName, privacy: .public)")
+                setupError = "\(next.title): \(apiError.errorDescription ?? "it didn't work.")"
+                return
+            }
+        }
+    }
+
     // Settings › Phones (the owner's yes, Nov 19).
     private(set) var phones: [PairedPhone]?
     private(set) var phonesError: String?

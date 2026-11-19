@@ -33,6 +33,7 @@ struct ComputerView: View {
             switch page {
             case .setup:
                 ScreenLead(text: "What still needs you, and how this machine is doing.")
+                if computer.canSeeSetup { SetupChecklistSections(computer: computer) }
                 hostSection
                 fixSection
             case .settings:
@@ -69,6 +70,7 @@ struct ComputerView: View {
         .refreshable {
             await computer.load()
             if page == .settings { await computer.loadForm() }
+            if page == .setup { await computer.loadSetup() }
         }
         .sheet(item: $computer.report) { report in
             ReportView(report: report)
