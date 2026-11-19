@@ -37,6 +37,9 @@ func awayWords(_ change: FinanceChange, view: FinancesPlanView?, finances: Finan
     case .trackFrom(let day):
         guard let day, let date = LocalDay.parse(day) else { return "Track from: every transaction" }
         return "Track from: \(date.formatted(.dateTime.month(.abbreviated).day().year()))"
+    case .loanPapers(let account, _, _, _):
+        let name = view?.plan.accounts.first { $0.id == account }?.name ?? "A loan"
+        return "\(name)'s papers"
     }
 }
 

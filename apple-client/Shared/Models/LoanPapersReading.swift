@@ -84,3 +84,101 @@ extension LoanPapers {
         return Reading(rows: rows, made: made, owed: made > 0 ? rows[made - 1].after : cents(original))
     }
 }
+
+/// What a loan's papers say, as typed on its page (the account's `original`,
+/// `rate`, `firstDue`, `payment`, `term` and `charge`, as the computer's
+/// account form keeps them). With them, what it owes is read from the papers
+/// each day: no balance to type.
+struct LoanPapersTyped: Codable, Sendable, Equatable {
+    var original: Double
+    /// Interest (APR), % a year.
+    var rate: Double
+    /// YYYY-MM-DD.
+    var firstDue: String
+    /// Each payment; nil for what the plan pays into it a month.
+    var payment: Double?
+    /// The number of payments, if the papers say.
+    var term: Int?
+    /// The finance charge, if the papers say.
+    var charge: Double?
+
+    /// The papers an account holds, or nil when it has none typed in.
+    static func of(account id: String, in plan: JSONValue) -> LoanPapersTyped? {
+        func num(_ x: JSONValue?) -> Double? { if case .number(let n)? = x { return n }; return nil }
+        guard case .array(let accounts)? = plan["accounts"],
+              let a = accounts.first(where: { $0["id"] == .string(id) }),
+              case .string(let first)? = a["firstDue"], !first.isEmpty, let original = num(a["original"]), original > 0
+        else { return nil }
+        return LoanPapersTyped(original: original, rate: num(a["rate"]) ?? 0, firstDue: first, payment: num(a["payment"]),
+                               term: num(a["term"]).map { Int($0) }, charge: num(a["charge"]))
+    }
+
+    /// What the payments it reads with come to: its own, else the plan's into it.
+    func monthly(planMonthly: Double) -> Double {
+        if let payment, payment > 0 { return payment }
+        return planMonthly
+    }
+
+    /// Why they can't be saved, in the computer's form's words; nil when they can.
+    func problem(planMonthly: Double, today: String) -> String? {
+        if !(original > 0) { return "Type what was borrowed." }
+        if LocalDay.parse(firstDue) == nil { return "Pick the day its first payment was due." }
+        if (payment ?? 0) < 0 || (charge ?? 0) < 0 { return "Type the payment and the charge without a minus." }
+        if !(rate >= 0 && rate <= 100) { return "Type the interest as a percent a year, as 6.5." }
+        if (term ?? 0) < 0 { return "The number of payments is a whole number, as 36." }
+        if !(monthly(planMonthly: planMonthly) > 0) { return "Type each payment." }
+        if reading(planMonthly: planMonthly, today: today) == nil { return "At that payment it is never paid off: check the payment and the rate." }
+        return nil
+    }
+
+    func reading(planMonthly: Double, today: String) -> LoanPapers.Reading? {
+        LoanPapers.reading(original: original, rate: rate, firstDue: firstDue, term: term ?? 0, charge: charge ?? 0,
+                           monthly: monthly(planMonthly: planMonthly), today: today)
+    }
+}
+
+extension LoanPapers {
+    /// What the plan pays into an account a month (the computer's form's `planMonthly`), to the cent.
+    static func planMonthly(into id: String, plan: JSONValue, checking: String) -> Double {
+        guard case .array(let payments)? = plan["payments"] else { return 0 }
+        var people: [JSONValue] = []
+        if case .array(let p)? = plan["people"] { people = p }
+        let sum = payments.filter { $0["to"] == .string(id) }.reduce(0.0) { t, x in
+            guard case .number(let amount)? = x["amount"] else { return t }
+            return t + amount * perMonth(x["schedule"], people: people, checking: checking)
+        }
+        return cents(sum)
+    }
+}
+
+extension FinancePlanEdit {
+    /// `plan` with a loan's papers typed in, as the computer's account form
+    /// saves them: its papers, and what it owes today from them as its
+    /// balance (that day its `updated`, when it changed). Nil when it isn't a
+    /// loan in the plan, or the papers can't be read.
+    static func settingPapers(of accountID: String, _ p: LoanPapersTyped, planMonthly: Double, today: String, in plan: JSONValue) -> JSONValue? {
+        guard p.problem(planMonthly: planMonthly, today: today) == nil, let read = p.reading(planMonthly: planMonthly, today: today),
+              case .object(var root) = plan, case .array(var accounts)? = root["accounts"],
+              let index = accounts.firstIndex(where: { $0["id"] == .string(accountID) }),
+              case .object(var account) = accounts[index], account["kind"] == .string("loan")
+        else { return nil }
+        func put(_ key: String, _ value: Double?) {
+            if let value, value > 0 { account[key] = .number(roundedToCents(value)) } else { account.removeValue(forKey: key) }
+        }
+        put("original", p.original)
+        put("rate", p.rate)
+        account["firstDue"] = .string(p.firstDue)
+        put("payment", p.payment)
+        if let term = p.term, term > 0 { account["term"] = .number(Double(term)) } else { account.removeValue(forKey: "term") }
+        put("charge", p.charge)
+        let owed = roundedToCents(read.owed)
+        if account["balance"] != .number(owed) {
+            account["balance"] = .number(owed)
+            account["updated"] = .string(today)
+        }
+        accounts[index] = .object(account)
+        root["accounts"] = .array(accounts)
+        root["updated"] = .string(today)
+        return .object(root)
+    }
+}

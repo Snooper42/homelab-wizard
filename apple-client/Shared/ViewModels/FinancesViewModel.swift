@@ -466,6 +466,34 @@ final class FinancesViewModel {
         return await make(FinanceChange.cushion(to: amount, was: nil).noting(raw), edited: edited, reason: "Change the cushion.")
     }
 
+    /// A loan's papers as the plan holds them, or nil when none are typed in.
+    func typedPapers(of account: FinanceAccount) -> LoanPapersTyped? {
+        rawPlan.flatMap { LoanPapersTyped.of(account: account.id, in: $0) }
+    }
+
+    /// What the plan pays into an account a month, for a loan's papers with no payment of their own.
+    func planMonthly(into account: FinanceAccount) -> Double {
+        guard let rawPlan else { return 0 }
+        return LoanPapers.planMonthly(into: account.id, plan: rawPlan, checking: plan?.checking ?? "")
+    }
+
+    /// Types in a loan's papers, as on the computer: what it owes is read
+    /// from them from now on. Returns whether it saved.
+    func setPapers(of account: FinanceAccount, _ papers: LoanPapersTyped) async -> Bool {
+        guard canEditPlan, !isSaving, let raw = rawPlan else { return false }
+        let today = FinancePlanEdit.todayString(), monthly = planMonthly(into: account)
+        if let problem = papers.problem(planMonthly: monthly, today: today) {
+            saveError = problem
+            return false
+        }
+        guard let edited = FinancePlanEdit.settingPapers(of: account.id, papers, planMonthly: monthly, today: today, in: raw) else {
+            saveError = "The plan has no loan by that name any more."
+            return false
+        }
+        return await make(.loanPapers(account: account.id, papers: papers, planMonthly: monthly, today: today), edited: edited,
+                          reason: "Save \(account.name)'s papers.")
+    }
+
     /// Track from (YYYY-MM-DD): the day the charts and totals count from;
     /// nil counts every transaction again. Returns whether it saved.
     func setTrackFrom(_ day: String?) async -> Bool {
