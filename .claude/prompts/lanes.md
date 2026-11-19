@@ -54,7 +54,7 @@ Only these may be changed by two open PRs at once, each lane adding its own line
 - **A PR merges** when every check is green on its current head, and every commit main gained since that run touches none of its files (a newer `CHANGELOG.md` line on main does not count, provided main merges in with no conflict). Otherwise merge main in and let CI run again. Never merge with a red check.
 - Always squash-merge with `expectedHeadSha` pinned to the head CI passed on.
 - **At most 3 merges a day per lane.** Batch related fixes into one PR.
-- **Lane 4 (the iPhone and iPad app) has no daily cap** (the owner, Nov 14, 2026: CI's Mac runners are the only compiler and camera, and the pictures come only from main, so each look-and-fix round is a merge). Its loop file is `apple-loop.md`.
+- **Lanes 4 and 5 have no daily cap.** Lane 4, the iPhone and iPad app (the owner, Nov 14, 2026: CI's Mac runners are the only compiler and camera, and the pictures come only from main, so each look-and-fix round is a merge; loop file `apple-loop.md`). Lane 5, media automation (the owner, Nov 19, 2026: each PR merges as soon as every check is green, by the rules above; loop file `arr-loop.md`).
 
 ## Rule 6: issues
 

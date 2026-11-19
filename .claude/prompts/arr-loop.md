@@ -21,7 +21,7 @@ A household member touches two things: **Seerr to ask for a film or show, Jellyf
 3. **Secrets stay secret.** VPN keys, API keys and the passwords the wizard makes go in `.env` (0600, ADR-0011) and nowhere else on the computer: never in a log, a link, an alert, a PR, or this file. A new secret goes in `.env.example` with a comment saying where it comes from, and must be covered by the redaction phones, alerts and reports get (`docs/Security.md` N15).
 4. **A failing test first, then the fix.** The Go tests next to the code, against the fake APIs `internal/wiring` already uses. A screen change gets a smoke case and before/after pictures (`app/preview/shoot.mjs`).
 5. **Running `wire` twice changes nothing the second time.** Every link it makes must be found and left alone on the next run, and a key or address that changed must be corrected, never duplicated (`wiring_test.go` checks this for today's links; keep it true for new ones).
-6. **One open PR at a time**, on `claude/arr-*` branches only. Merge per `lanes.md` Rule 5: squash, `expectedHeadSha` pinned, every check green on that head. At most 3 merges a day.
+6. **One open PR at a time**, on `claude/arr-*` branches only. Merge per `lanes.md` Rule 5: squash, `expectedHeadSha` pinned, every check green on that head, and main's new commits touch none of its files. **No daily cap** (the owner, Nov 19): merge as soon as that holds.
 7. **While a PR waits:** call `subscribe_pr_activity` and end the turn. Don't poll.
 8. **Every PR ends with "Try this tonight"**: 3 to 5 clicks the owner can do in one evening, with what each should show. Say if it needs the VPN key, or an app started again.
 9. **Ask the owner only with the AskUserQuestion pop-up**, every question at once, and only when the decision is genuinely theirs. Recommend one option.
@@ -40,8 +40,8 @@ A household member touches two things: **Seerr to ask for a film or show, Jellyf
 - **What `homelab wire` already connects** (`internal/wiring/wiring.go`, `steps()`): Prowlarr to Sonarr, Radarr and Lidarr; FlareSolverr in Prowlarr; qBittorrent as each app's download client (categories `tv`, `movies`, …); each app's root folder; Bazarr to Sonarr and Radarr; Seerr to Sonarr and Radarr. **Seerr's Jellyfin sign-in is printed as a step for the person to do** (`seerrSignIn`, `more.go:228`).
 - **How it's tested:** fake APIs in `wiring_test.go` and `more_test.go`. The nightly workflow's `wire` job runs `wire --apply` against real Prowlarr, Sonarr, Radarr, Lidarr and FlareSolverr. **qBittorrent can't be tested for real in CI:** it waits for Gluetun, which needs a real VPN key (`docs/Known Issues.md`). Keep qBittorrent's side against fakes, and say so in the PR.
 - **The VPN:** Gluetun with ProtonVPN WireGuard, port forwarding on (`PORT_FORWARD_ONLY`, `VPN_PORT_FORWARDING`). It needs a **paid** Proton plan (`.env.example:424`). The forwarded port is copied into qBittorrent by hand today (Gluetun's page, Setup step 5), and it changes when the VPN reconnects.
-- **The layout copies rather than hard-links:** `/downloads` and `/tv` are separate mounts (`Sonarr.md:68`), so every import is a full copy and takes double the space while the torrent seeds.
-- **Tidy Up is involved, and it's lane 1's (parked):** it puts the \*arr apps to rest while nothing is pending (`cmd/homelab/media_arr_rest.go`, `docs/Tidy Up.md` line ~97), and **Hand over** turns off the \*arrs' own filing so Tidy Up files downloads instead (`homelab media arr --apply`). Leave both alone unless an item needs a change and the owner agrees (section 6).
+- **The layout copies rather than hard-links:** `/downloads` and `/tv` are separate mounts (`Sonarr.md:68`), so every import is a full copy and takes double the space while the torrent seeds. Not to be changed (Nov 19): item 0 stops the seeding and moves the file once instead.
+- **Tidy Up is involved, and it's lane 1's (parked):** it puts the \*arr apps to rest while nothing is pending (`cmd/homelab/media_arr_rest.go`, `docs/Tidy Up.md` line ~97), and **Hand over** turns off the \*arrs' own filing so Tidy Up files downloads instead (`homelab media arr --apply`). The owner agreed (Nov 19) to the changes item 0 needs; note them under **For Account 1** in `tidy-loop.md`.
 - **Jellyfin is native** (ADR-0010) at `host.docker.internal:8096`, with `JELLYFIN_API_KEY` in `.env` when set (Settings › People uses it).
 - **ntfy is already set up with tokens** (`internal/notify`, Setup's alert step).
 
@@ -62,12 +62,21 @@ Afterwards, a request that can't be found or downloaded sits at "Requested" in S
 
 ## 3. Where it stands
 
-- **Nov 19:** lane 5 started. No PR yet. Section 5's questions not asked yet.
+- **The owner's answers (Nov 19; don't ask again):**
+  1. **Tidy Up files every download.** Setup turns **Hand over** on by itself.
+  2. **No daily merge cap** for lane 5 (rule 6, `lanes.md` Rule 5).
+  3. **Disk space comes first:** storage is expensive. Never two copies of a download; item 7's default is *save space*; no hard links (item 9 dropped them).
+- **Nov 19, round 1:** this file and `lanes.md` updated with the answers, item 0 and the CasaOS-style items (a)–(d). Item 0's check done from the code (below); next round starts item 0's fix.
 
 ## 4. The work, in order
 
 Each item is one small PR unless it says otherwise. Before writing code, **check the app's current API** (each app's own docs or source) for every call named here; these were planned from memory and are not yet verified.
 
+0. **Tidy Up and qBittorrent agree** (the owner, Nov 19; disk space first).
+   - **Today (checked Nov 19, from the code; not yet seen on a real qBittorrent):** the inbox calls a download finished when it has no partial file (`.!qB`, …) and nothing in it changed for 5 minutes (`inbox.py` `settled()`). It never asks qBittorrent. So a torrent that's still seeding is filed after 5 minutes: a rename on the same drive, else a copy then delete (`media_common.move_file`). Only one copy stays, but qBittorrent loses its files and the torrent shows *Missing files*. Worse, a stalled download with no `.!qB` names (qBittorrent's default) and outside `incomplete/` (set by hand today, qBittorrent.md:77) looks finished too, and is filed half-done. `wire` sets no seeding limit.
+   - **The fix:** `wire` sets qBittorrent to stop seeding once a download is finished (share limit reached at once, action *Stop*, or remove the torrent and keep its files), and to keep unfinished files in `incomplete/` with `.!qB` on. The inbox files a download from qBittorrent's folders only once qBittorrent says it's finished and stopped (or gone); can't read qBittorrent means wait, said on the card. The file is moved once, never copied and kept twice.
+   - Setup turns **Hand over** on by itself (answer 1), so the \*arrs never import a second copy. Lane 1's code: note it under **For Account 1** in `tidy-loop.md`.
+   - Test: a fake qBittorrent with one torrent seeding and one stopped; the inbox files only the stopped one, and a second `wire` changes nothing.
 1. **Logins made for them** (removes steps 3–4).
    - At install, the wizard generates a password for the \*arrs and qBittorrent, saves it in `.env` and sets it in each app, so "Authentication required" never appears. Check whether each \*arr's `/api/v3/config/host` (`/api/v1` for Prowlarr and Lidarr) takes the method, username and password, and how qBittorrent's password is set before first start.
    - Settings › Copy shows it, like the other generated secrets. Setup says once to keep it in Vaultwarden.
@@ -83,26 +92,31 @@ Each item is one small PR unless it says otherwise. Before writing code, **check
 4. **Sensible defaults `wire` sets** (one PR; each one a step that is found next time).
    - Sonarr and Radarr tell Jellyfin to refresh after each import (Settings › Connect › Emby / Jellyfin, with `JELLYFIN_API_KEY`, and the path mapped from `/tv` to the media drive's path). Skipped, with a line saying why, when there's no key.
    - Sonarr, Radarr and Lidarr send health and failed-grab alerts to ntfy, in plain words, through the alert token `notify setup` made.
-   - qBittorrent: Automatic torrent management, so each category gets its own folder, plus a seeding limit, so the \*arrs' Remove Completed can clear the downloads and the drive doesn't fill.
+   - qBittorrent: Automatic torrent management, so each category gets its own folder (the seeding stop is item 0's).
 5. **Search sites: guided, never chosen** (step 7; Rule 2).
    - A Setup item: "No search sites yet". Its button opens Prowlarr's page for adding an indexer. A live tick appears when Prowlarr lists at least one that passes its own test.
    - The item explains what a search site is in one sentence, with no names.
 6. **The Downloads card** (the "why isn't anything happening?" fix; may be two PRs).
    - One card on Status, in plain words, e.g. *Getting 2 · 1 stuck: no search site has it · Drive 82% full*. It's built from the \*arr queues, qBittorrent, Seerr's requests, and the drive's free space. The resting logic already reads most of this; reuse it, don't copy it (a shared function in lane 1's code is fine; note it under **For Account 1** in `tidy-loop.md`).
+   - **It warns before the drive is full:** at 85% it says so in plain words (and roughly how many more films fit), and at 95% it's the card's first line; the same warning goes through ntfy once, not every hour. (d) below reuses this check for every drive.
    - The same messages go to the phone through ntfy.
    - Then write a **For Account 4** note in this file: the companion call that serves the card, so lane 4 can show it on the phone.
 7. **One plain question instead of quality profiles** (step 8).
-   - "What do you mostly watch on?": *a 4K TV* / *an HD TV or phones* / *save space*. The answer maps to a profile in Sonarr and Radarr, and Seerr's default profile follows it.
+   - "What do you mostly watch on?": *a 4K TV* / *an HD TV or phones* / *save space*. **Save space is the default** (answer 3). The answer maps to a profile in Sonarr and Radarr, and Seerr's default profile follows it.
    - Keep the mapping in one place, with a test for each answer.
 8. **The \*arr apps folded away.** On Status, the \*arr apps sit under one "Media automation" line, open on a click; the card from item 6 is what people see. This uses `internal/statusfolds` and is Account 2's screen: see section 6.
-9. **Later, once 1–8 are done** (ask the owner before starting either):
-   - **Hard links:** one `/data` mount across qBittorrent and the \*arrs, so imports are instant and take no extra space. Existing installs need their root folders and stored paths moved. Ship it with a dry run that lists what would change, and an undo. Never move media files without the owner's yes (rule 10).
-   - **Recyclarr** for tested quality profiles behind item 7's three answers.
+9. **Later, once 0–8 are done** (ask the owner before starting): **Recyclarr** for tested quality profiles behind item 7's three answers. (Hard links dropped Nov 19: item 0 already keeps one copy.)
 
-## 5. Ask the owner first (in the first round, in one pop-up)
+**Lane 5's next work, CasaOS-style (the owner, Nov 19): the computer side only.** Once the computer's call for (b), (c) or (d) exists, write it under **For Account 4** below, so lane 4 builds the phone side. (a) stays on the computer. Choose and install and an app's page are lane 2's (parked): change them in small PRs and note it under **For Account 2** in `maintenance-loop.md`.
 
-1. **Who files downloads by default: Tidy Up (one place, with Undo) or the \*arrs (the standard setup, what guides online assume)?** Recommend one. The answer shapes items 4, 6 and 7, and decides which mode Setup turns on by itself.
-2. Is the account's 3-merges-a-day cap fine, or waived as for lanes 1 and 4?
+- **(a) Add your own app** by pasting a compose file. The wizard checks it (it parses, no clash with a port or name already used, no secret pasted in plain text: offer to move it to `.env`), shows in words what it will run, and installs it like a catalog app, with its own page.
+- **(b) Change Settings on an app's page:** its address (port), its folders, and the settings its catalog entry lists. A copy of the app's settings is kept first, and **Undo** puts it back; a change that stops the app from starting is undone by itself.
+- **(c) Share a folder on the home network** with one switch: read-only by default, home network only (never reachable from the internet). A security choice: write it up in the PR for the owner (lane 3 is parked).
+- **(d) Drives:** warn before any drive fills (item 6's check), and put new films on a second drive without moving the old ones (a second Radarr root folder that new films go to; Tidy Up files there too: lane 1's code, so **For Account 1**). Never move files already on a drive (rule 10).
+
+## 5. Ask the owner first
+
+**Answered Nov 19** (section 3): Tidy Up files every download; no daily cap. Nothing open.
 
 ## 6. Where lane 5's work meets other lanes
 
@@ -119,5 +133,7 @@ Today only lane 4 has an account (`lanes.md`, *Who's working now*). Lanes 1, 2 a
 ## For Account 4
 
 Lane 5's notes for the iPhone and iPad app. Lane 4 reads this section at the start of each round.
+
+- Nothing yet. Coming, in this order: the Downloads card (item 6), then (b), (c) and (d).
 
 ## Done
