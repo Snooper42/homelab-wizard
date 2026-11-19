@@ -89,6 +89,8 @@ if [ -n "${HOMELAB_WIDGET:-}" ]; then
       path: Widget-iOS.plist
       properties:
         CFBundleDisplayName: Homelab
+        CFBundleShortVersionString: \$(MARKETING_VERSION)
+        CFBundleVersion: \$(CURRENT_PROJECT_VERSION)
 $IOS_GROUP_INFO
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
@@ -99,6 +101,13 @@ $IOS_GROUP_ENT"
 fi
 
 mkdir -p "$OUT"
+
+# The app's version (scripts/app-version.sh): VERSION's two numbers and one
+# more for each change to the app since, with a build that only goes up.
+# Settings › About shows it, so it's plain which version is on the phone.
+APP_VERSION="$("$HERE/scripts/app-version.sh")"
+APP_BUILD="${APP_VERSION#* }" APP_VERSION="${APP_VERSION%% *}"
+echo "The Homelab app $APP_VERSION (build $APP_BUILD)"
 
 # The computer's own Finances code for the phone (mobile/finance, built with
 # gomobile by `make phone-finance-framework`): a household member's private
@@ -142,6 +151,9 @@ options:
 settings:
   base:
     SWIFT_VERSION: "6.0"
+    # The app's version and build (scripts/app-version.sh); the widget has the same.
+    MARKETING_VERSION: "$APP_VERSION"
+    CURRENT_PROJECT_VERSION: "$APP_BUILD"
     # The sources mark @MainActor where they mean it.
     SWIFT_DEFAULT_ACTOR_ISOLATION: nonisolated
     SWIFT_APPROACHABLE_CONCURRENCY: NO
@@ -171,6 +183,8 @@ $SIGNED_FLAG
       path: Info-iOS.plist
       properties:
         CFBundleDisplayName: Homelab
+        CFBundleShortVersionString: \$(MARKETING_VERSION)
+        CFBundleVersion: \$(CURRENT_PROJECT_VERSION)
 $IOS_GROUP_INFO
         NSFaceIDUsageDescription: Face ID unlocks Homelab, which controls your servers.
         NSCameraUsageDescription: The camera scans the pairing QR code your computer shows, and takes a photo of a card for your Collection when you ask.

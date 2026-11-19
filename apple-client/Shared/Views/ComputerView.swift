@@ -464,6 +464,12 @@ private struct AboutPage: View {
                 .padding(.vertical, 8)
                 .listRowBackground(Color.clear)
             }
+            // This app's own version (scripts/app-version.sh); the computer's is under This Machine.
+            if let version = AppVersion.current {
+                Section {
+                    LabeledContent("Homelab app", value: version.text)
+                }
+            }
             Section("Logos") {
                 Text("App logos from dashboard-icons by homarr-labs, under the Apache License 2.0. Payee logos from simple-icons, under CC0. Product names and logos belong to their owners, and are here only to tell the apps and payees apart.")
                     .font(.footnote)
