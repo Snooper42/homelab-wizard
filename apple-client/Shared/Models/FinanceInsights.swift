@@ -87,6 +87,12 @@ struct MonthReview: Sendable, Equatable {
     /// (`spent` takes refunds off, which Cash Flow counts as money in).
     var saved: Double { income - moneyOut }
 
+    /// What came in as Money Flow says it: a refund taken off what was spent
+    /// rather than counted as money in, so Came in less You spent is Left over
+    /// (Month in Review showed $6,732 in and $1,196 spent but $5,504 left over,
+    /// a refund counted on both sides; Money Flow says $6,700 in).
+    var cameIn: Double { saved + spent }
+
     /// Spending against the month before, as a share: +0.12 is 12% more.
     var change: Double? {
         guard let spentBefore, spentBefore > 0 else { return nil }

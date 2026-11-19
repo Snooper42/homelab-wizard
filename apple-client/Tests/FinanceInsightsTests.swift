@@ -73,6 +73,23 @@ struct FinanceInsightsTests {
         #expect(review.saved == 3380 && review.moneyOut == 140)
     }
 
+    /// Came in, You spent and Left over add up, a refund taken off what was spent
+    /// as Money Flow takes it, not counted as money in too.
+    @Test func aMonthsThreeNumbersAddUp() throws {
+        let refunded = try JSONDecoder.homelab().decode(FinanceLedger.self, from: Data(#"""
+        {"transactions":[
+          {"id":"p","date":"2026-10-05","account":"chk","amount":2000,"payee":"Paycheck","category":"Income"},
+          {"id":"a","date":"2026-10-06","account":"chk","amount":-100,"payee":"Target","category":"Shopping"},
+          {"id":"r","date":"2026-10-09","account":"chk","amount":30,"payee":"Target","category":"Shopping"}
+        ]}
+        """#.utf8))
+        let review = MonthReview.make(refunded.transactions, month: try day(2026, 10, 15), categories: categories, calendar: calendar)
+        #expect(review.spent == 70)
+        #expect(review.saved == 1930)
+        #expect(review.cameIn == 2000)
+        #expect(review.cameIn - review.spent == review.saved)
+    }
+
     @Test func aMonthToldBack() throws {
         let review = MonthReview.make(try ledger().transactions, month: try day(2026, 10, 15), categories: categories, calendar: calendar)
         #expect(review.spent == 412)
