@@ -332,11 +332,14 @@ jobs:
                 case "$shot" in status|backups|setup|settings|settings-all|lock|app|loading) sleep 7 ;; *) sleep 11 ;; esac
                 file="$RUNNER_TEMP/pictures/$pre$look-$shot.png"
                 xcrun simctl io "$dev" screenshot "$file" > /dev/null 2>&1 || { echo "no picture of $pre$look-$shot"; continue; }
-                # A plain white or black screen (the app still opening) is a small file: wait, and take it again.
-                if [ "$(stat -f %z "$file")" -lt 120000 ]; then
+                # A plain white or black screen (the app still opening) is a small file: wait, and take it
+                # again, up to three times (once wasn't enough: four light Finances pictures were plain white
+                # after #751, Nov 19).
+                for again in 1 2 3; do
+                  [ "$(stat -f %z "$file")" -lt 120000 ] || break
                   sleep 6
                   xcrun simctl io "$dev" screenshot "$file" > /dev/null 2>&1 || true
-                fi
+                done
                 upright "$file"
                 echo "$pre$look-$shot"
               done

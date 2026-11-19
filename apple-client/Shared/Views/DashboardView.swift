@@ -258,7 +258,18 @@ private struct PhoneDashboard: View {
     @ViewBuilder
     private var financesRoot: some View {
         #if SCREENSHOTS
-        FinancesView.screenshotRoot(finances: finances)
+        // A page's picture opens it over Finances' home as a link does, so it has its back button
+        // (as the tab's root, light-budgets and the rest had none); the transaction and the
+        // skeleton as before.
+        if let page = DeepLink.FinancePage(rawValue: ScreenshotMode.shot ?? "") {
+            FinancesView(finances: finances)
+                .task(id: finances.canSeePlan) {
+                    guard finances.canSeePlan, IntentInbox.shared.financePage == nil else { return }
+                    IntentInbox.shared.financePage = page
+                }
+        } else {
+            FinancesView.screenshotRoot(finances: finances)
+        }
         #else
         FinancesView(finances: finances)
         #endif
