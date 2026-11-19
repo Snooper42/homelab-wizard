@@ -2,7 +2,7 @@ import Foundation
 
 /// The Homelab app's own version, as `scripts/app-version.sh` worked it out
 /// when the Xcode project was made: "0.4.3", and the build, "118".
-/// Settings › About shows it, so it's plain which version is on the phone.
+/// Settings › About is to show it, so it's plain which version is on the phone.
 struct AppVersion: Sendable, Equatable {
     let version: String
     let build: String
