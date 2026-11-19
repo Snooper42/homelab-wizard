@@ -27,14 +27,14 @@ var qbitPrefs = map[string]any{
 	"incomplete_files_ext": true,
 }
 
-const qbitNoPassword = "in qBittorrent set a permanent Web UI password (Tools > Options > Web UI; the temporary one in its log changes on every restart), put it in QBITTORRENT_PASSWORD (and QBITTORRENT_USER if it is not admin), then connect again"
+const qbitSignInHelp = "in qBittorrent set a permanent Web UI password (Tools > Options > Web UI; the temporary one in its log changes on every restart), put it in QBITTORRENT_PASSWORD (and QBITTORRENT_USER if it is not admin), then connect again"
 
 var errQbitSignIn = errors.New("qBittorrent refused the sign-in: check QBITTORRENT_PASSWORD (and QBITTORRENT_USER) in .env")
 
 // qbitSharing sets qbitPrefs in qBittorrent, changing only those that differ.
 func (w *Wirer) qbitSharing(ctx context.Context) (string, string, error) {
 	if w.Env["QBITTORRENT_PASSWORD"] == "" {
-		return "manual", qbitNoPassword, nil
+		return "manual", qbitSignInHelp, nil
 	}
 	sid, err := w.qbitSignIn(ctx)
 	if err != nil {

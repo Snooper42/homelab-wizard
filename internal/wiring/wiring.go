@@ -482,7 +482,7 @@ func (w *Wirer) downloadClient(ctx context.Context, client string) (string, stri
 	}
 	password := w.Env["QBITTORRENT_PASSWORD"]
 	if password == "" {
-		return "manual", qbitNoPassword, nil
+		return "manual", qbitSignInHelp, nil
 	}
 	user := w.Env["QBITTORRENT_USER"]
 	if user == "" {
