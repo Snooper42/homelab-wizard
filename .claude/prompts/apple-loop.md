@@ -75,7 +75,7 @@ With no interval, /loop paces itself; each round re-reads this file, so to steer
 - **Be brief:** short PRs, short notes, short messages to the owner. Ask the owner only for a new screen's look (rule 10), never while they're away.
 - **Done up to #762:** the look pass (#749–#756); Add Goal over several accounts (#759); Settings › Phones and iPads (#760: `Phones`, `LowerPhone`); Setup's checklist with Do the N (#761: `Setup`, `RunSetupStep`); the app's own version on Settings › About (#762, rule 8); the Windows update helper logs each step.
 - **Next round:** fetch main's pictures and look at `*-phones`, `*-setup`, `*-review` (new in #762), then section 4's **The aim**.
-- **Lane 5** (media automation, the owner's other account, `arr-loop.md`, `claude/arr-*`): its files are off limits (rule 3); read its **For Account 4** every round, and build the phone's side of what it lists there. Before every push, list the open PRs' files (`lanes.md` Rule 2).
+- **Lane 5** (media automation, the owner's other account, `arr-loop.md`, `claude/arr-*`): its files are off limits (rule 3); read its **For Account 4** every round, and build the phone's side of what it lists there. Before every push, list the open PRs' files (`lanes.md` Rule 2). Lane 5 also builds the computer side of four CasaOS-style ideas (section 4, *Lane 5's ideas*).
 - **The canvas** (https://claude.ai/artifact/FfHtMyrrVYTp9TnCDfidwQ): one board, *Waiting on you*; earlier boards are in its version 37. Put a new idea beside it; take its board off once built.
 - **Lessons:** never `go build` inside `cmd/homelab` (it writes `cmd/homelab/homelab`, 29 MB; use `-o /dev/null`); Go and Node run here, Swift doesn't (build-and-test is the first compile); a new phone call needs `-update-contract` and its name in Parity's row; merging an app PR before main's last picture run ends cancels it; GitHub's new Windows image (20261116) timed out the update helper's tests on #762: if they fail again, its log (now printed) says which step.
 - **Ideas the owner hasn't seen:** a Lock Screen widget for the next bill; who in the household uses an app (`People` as a phone call, no names to a wall screen).
@@ -167,6 +167,8 @@ With no interval, /loop paces itself; each round re-reads this file, so to steer
 
 **The aim (the owner, Nov 19), ahead of everything below, which is done:** "I want the app to be able to get by being the admin as much as possible … as close to the computer … I don't want to feel limited." Each round, take the next row of `docs/Parity.md` whose iPhone column says *gap*, *partly* or *on purpose for now*, Finances first, then smallest first, and make it *yes* (a phone call per rule 7, a mock first for a new screen per rule 10). Keep an *on purpose* that guards security (Dozzle's logs, a phone giving itself more, moving files on the computer's drives) unless the owner says yes (rule 11). After every two features, one look round (section 2) over the pictures.
 
+**Lane 5's ideas (the owner, Nov 19):** lane 5 builds the computer side of (a) adding your own app from a pasted compose file, (b) Change Settings on an app's page (address, folders, the settings it lists) with a copy first and Undo, (c) sharing a folder on the home network with one switch (read-only by default, home network only), and (d) a warning before a drive fills and new films on a second drive. Lane 4 builds the phone side of (b), (c), (d) and the Downloads card, each **only once lane 5 writes under *For Account 4* in `arr-loop.md` that the computer's call exists**; then as usual: the phone call with its permission check and a Go test (rule 7), Face ID for a change, Parity's row. (a) stays on the computer (nobody types YAML on a phone). Never build the computer side of these, and never touch lane 5's files (`lanes.md`'s row 5, `claude/arr-*` PRs). If the phone needs something lane 5 hasn't planned, write it under *For Account 5* at the end of this file: lane 5 reads it every round.
+
 **Done (Nov 14–19), kept for reference:**
 
 
@@ -224,3 +226,9 @@ Mock the palette and any new layout for the owner first (a private canvas, made-
 | No `review/` on `iphone-screenshots`, main's **screenshots** *cancelled* mid-*Take the pictures* | another app PR merged meanwhile: `apple-client.yml`'s `concurrency` (`cancel-in-progress: true` on `github.ref`) cancels main's older run (Nov 14: #695's merge cancelled #694's pictures, #696's #695's) | Only the newest merge's run photographs. Still merge as rule 4 says; fetch the pictures once the last merge's run is done (about 45 minutes). A PR that touches only this file doesn't start that workflow, so it cancels nothing |
 | A picture is plain white or black | the app was still opening | Re-take it in the next run; the job already waits once |
 | Every iPad picture is the opening screen (the logo and a spinner, *Homelab is Locked* fading), the iPhone's fine | the split view is drawing itself forever: a view there reads a focused value (`@FocusedValue`) while publishing others (closures, never equal), as #720 did with `\.transactions` (found Nov 15, after #725) | Only the menus in `Shared/App` read focused values; pass what a view needs into the command (`PaletteFocus.open(_:)`). `FocusedValueTests` guards it. PRs don't picture the iPad, so look at main's iPad pictures after every merge that touches `DashboardView` |
+
+## For Account 5
+
+Lane 4's asks for lane 5 (the computer's side of something the phone needs). Lane 5 reads this every round; lane 4 adds to it, lane 5 notes here when one is done.
+
+- Nothing yet.
