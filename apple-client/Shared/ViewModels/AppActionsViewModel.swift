@@ -170,6 +170,18 @@ final class AppActionsViewModel {
         try await api.releaseNotes(appID: app.id)
     }
 
+    /// Who uses an app: the owner's phone or iPad, paired over https, from a
+    /// computer that answers it (a member's phone and a wall screen never ask).
+    var canSeeAppPeople: Bool {
+        guard let me = device(), !me.isMember, !me.unencrypted else { return false }
+        return me.computer?.answers("AppPeople") == true
+    }
+
+    /// Who uses `app`, for its page's Who Uses It.
+    func appPeople(for app: AppStatus) async throws -> AppPeople {
+        try await api.appPeople(appID: app.id)
+    }
+
     /// Updates `app` once its notes were shown: Face ID first, as every change.
     func update(_ app: AppStatus) async {
         guard canUpdate(app) else { return }

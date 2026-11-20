@@ -236,6 +236,13 @@ actor APIClient {
         return try await call("ReleaseNotes", [.string(appID)], as: ReleasePreview.self)
     }
 
+    /// Who uses an app, by name only (`AppPeople`): the owner's phones over
+    /// https, never a member's or a wall screen.
+    func appPeople(appID: String) async throws -> AppPeople {
+        guard AppStatus.isValidID(appID) else { throw APIError.invalidAppID }
+        return try await call("AppPeople", [.string(appID)], as: AppPeople.self)
+    }
+
     // MARK: The computer
 
     func host() async throws -> HostInfo {
