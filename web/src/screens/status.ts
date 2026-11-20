@@ -13,7 +13,7 @@ import { store } from '../store';
 import { ReleaseNotes } from '../status/ReleaseNotes';
 import { h as vnode } from 'preact';
 import { mountStatusNote } from '../parts/Notes';
-import { Buttons, mountSheet, mountSheets, PhoneCode, type SheetButton, SignIns } from '../sheets/Sheet';
+import { Buttons, mountSheet, mountSheets, PhoneCode, type SheetButton, type SignInGroup, type SignInRow, SignIns } from '../sheets/Sheet';
 import { bgEnd, bgHide, bgProgress, bgStart, waitForBg } from '../job/Background';
 import { inTurn, waitWords } from '../job/queue';
 import { mountCrashNote } from '../status/CrashNote';
@@ -423,6 +423,7 @@ const appListActions: AppListActions = {
   startAll: (apps, progress) => groupAct(apps, 'start', progress),
   groupAct: (apps, action, progress, until) => groupAct(apps, action, progress, until),
   details: (a) => showDetails(a),
+  signIn: (a) => showSignIn(a),
   // A row's own menu: what the app's page offers, from Status.
   menu: {
     open: (url) => go().Open(url),
@@ -566,28 +567,45 @@ const runInSheet = (title: string) => bgStart(title, () => { $('cliPanel').hidde
 // running one's): it says to wait instead.
 const sheetBusy = waitForBg;
 
-// Sign in: the user name the homelab set up the app with, and the password
-// copied (it never reaches the page), from .env.
-async function showSignIn(a, keys) {
+// Sign-in details (the ⚙ on its row and its page): its address, then
+// what the homelab knows to sign in to it, to paste into another app, and
+// to keep safe, each with Copy. A secret is copied straight to the
+// clipboard (CopySetting, CopyAppKey), never to the page, and the
+// clipboard clears after 90 seconds. Internal secrets (database
+// passwords, signing keys) aren't listed: they stay in Settings.
+async function showSignIn(a: api.AppStatus) {
   if (sheetBusy()) return;
   const panel = $('cliPanel');
   if (cliStop) cliStop();
-  let list = [];
-  try { list = await go().Settings(); } catch (e) { return showError(e); }
+  const entry = catalog?.apps.find((x) => x.id === a.id);
+  const wanted = [...(entry?.login || []), ...(entry?.keys || []), ...(entry?.recovery || [])];
+  let list: settings.Setting[] = [];
+  if (wanted.length) { try { list = await go().Settings(); } catch (e) { return showError(e); } }
   const byKey = Object.fromEntries(list.map((s) => [s.key, s]));
-  const label = (k) => (/PASSWORD$/.test(k) ? 'Password' : /EMAIL$/.test(k) ? 'Email' : /USER$/.test(k) ? 'User name' : settingLabel(k));
+  const plain = async (text: string) => { if (window.runtime.ClipboardSetText) await window.runtime.ClipboardSetText(text); else await navigator.clipboard.writeText(text); };
+  const label = (k: string) => (/PASSWORD$/.test(k) ? 'Password' : /EMAIL$/.test(k) ? 'Email' : /USER$/.test(k) ? 'User name' : settingLabel(k));
+  const row = (k: string): SignInRow => {
+    const s = byKey[k] || ({} as settings.Setting);
+    return { label: label(k), shown: s.secret ? (s.set ? '••••••••' : 'not set') : (s.value || 'not set'),
+      copy: s.set ? (s.secret ? () => go().CopySetting(k) : () => plain(s.value)) : undefined };
+  };
+  const groups: SignInGroup[] = [];
+  if (entry?.login?.length) groups.push({ title: 'Sign in', rows: entry.login.map(row) });
+  const paste = (entry?.keys || []).map(row);
+  if (entry?.keyFile) paste.unshift({ label: 'API key', shown: '••••••••', copy: () => go().CopyAppKey(a.id) });
+  if (paste.length) groups.push({ title: 'Paste into another app', rows: paste });
+  if (entry?.recovery?.length) groups.push({ title: 'Keep safe', note: 'Without this the backups can’t be opened.', rows: entry.recovery.map(row) });
+  const url = a.address ? 'https://' + a.address : a.url || '';
   panel.hidden = false;
-  $('cliTitle').textContent = `Sign in to ${a.name}`;
+  $('cliTitle').textContent = `${a.name}: sign-in details`;
   $('cliLog').textContent = '';
   $('cliLog').hidden = true;
-  const rows = keys.map((k) => {
-    const s = byKey[k] || ({} as any);
-    const copy = s.secret
-      ? () => go().CopySetting(k).then(() => '✓ Password copied; the clipboard clears in 90 seconds.', (e) => { showError(e); throw e; })
-      : async () => { window.runtime.ClipboardSetText?.(s.value || ''); return `✓ ${label(k)} copied.`; };
-    return { label: label(k), shown: s.secret ? (s.set ? '••••••••' : 'not set') : (s.value || 'not set'), copy: s.set ? copy : undefined };
-  });
-  mountSheet($('cliActions'), vnode(SignIns, { rows, close: closeCli }));
+  mountSheet($('cliActions'), vnode(SignIns, {
+    address: url ? { label: 'Address', shown: url.replace(/^https?:\/\//, ''), copy: () => plain(url) } : undefined,
+    groups,
+    empty: groups.length ? undefined : 'Nothing to sign in with here: the app asks you to make a login the first time you open it, or needs none.',
+    close: closeCli,
+  }));
   panel.scrollIntoView({ block: 'nearest' });
 }
 

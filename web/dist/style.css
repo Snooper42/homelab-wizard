@@ -303,6 +303,17 @@ dl { margin:0; }
 .bglist ul { margin:0; }
 .signins { display:grid; gap:6px; width:100%; max-width:480px; }
 .signin { display:grid; grid-template-columns:90px 1fr auto; align-items:center; gap:10px; }
+/* Sign-in details: grouped by what a person does with each; a copy shows on
+   its own button (a ring and a small bounce; no bounce with Reduce Motion). */
+.signingroup { display:grid; gap:6px; margin-top:6px; }
+.signingroup h4 { margin:4px 0 0; font-size:12px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); }
+.signingroup p { margin:0; }
+.signinwhy { grid-column:1 / -1; }
+.signinempty { margin:6px 0 0; }
+/* Over each system's button look (html.os-mac button.small has its own shadow). */
+html button.small.copybtn.copied { box-shadow:0 0 0 2px var(--accent); border-color:transparent; background:var(--accent-soft); color:var(--link); animation:copybounce .35s ease-out; }
+@keyframes copybounce { 0% { transform:scale(1); } 40% { transform:scale(1.08); } 100% { transform:scale(1); } }
+@media (prefers-reduced-motion: reduce) { html button.small.copybtn.copied { animation:none; } }
 .foot .update { display:block; margin-top:6px; color:var(--link); cursor:pointer; font-weight:600; }
 /* A desktop app, not a web page: the arrow on buttons (as everywhere on a
    desktop; links keep the hand), labels that do not select, nothing to drag

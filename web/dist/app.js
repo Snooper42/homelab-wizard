@@ -583,6 +583,7 @@
     check: '<polyline points="20 6 9 17 4 12"/>',
     clock: '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
     phone: '<rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/>',
+    gear: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
     key: '<path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>',
     photos: '<rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>',
     lock: '<rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
@@ -3164,6 +3165,7 @@
             /* @__PURE__ */ u3("td", { title: a3.address && a3.url ? "On this machine: " + a3.url : "", children: a3.address ? /* @__PURE__ */ u3(Link, { url: "https://" + a3.address, text: a3.address, open: p3.on.open, copy, os: p3.os }) : a3.url ? /* @__PURE__ */ u3(Link, { url: a3.url, text: a3.url.replace(/^http:\/\//, ""), open: p3.on.open, copy, os: p3.os }) : /* @__PURE__ */ u3("span", { class: "muted", children: "—" }) }),
             /* @__PURE__ */ u3("td", { class: "rowActions", children: [
               /* @__PURE__ */ u3(Actions2, { a: a3, entry, busy: p3.busy || !!pend && !pend.failed, os: p3.os, on: p3.on }),
+              a3.state !== "missing" && !p3.companion && /* @__PURE__ */ u3("button", { class: "iconbtn gear", title: `${a3.name}: sign-in details`, "aria-label": `${a3.name}: sign-in details`, onClick: () => p3.on.signIn(a3), children: /* @__PURE__ */ u3(Icon, { name: "gear" }) }),
               a3.state !== "missing" && /* @__PURE__ */ u3("button", { class: "iconbtn topage", title: `${a3.name}: its page`, "aria-label": `${a3.name}: its page`, onClick: () => p3.on.page(a3), children: /* @__PURE__ */ u3(Icon, { name: "chevron" }) }),
               menu?.id === a3.id && /* @__PURE__ */ u3(RowMenu, { a: a3, x: menu.x, y: menu.y, native: entry?.kind === "native", busy: p3.busy, companion: p3.companion, on: p3.on.menu, close: close3, said: (w3) => say(a3.id, w3) })
             ] })
@@ -3801,23 +3803,51 @@
       ] })
     ] });
   }
-  function SignIns({ rows, close: close3 }) {
-    const [note, setNote] = d2("");
+  function SignIns({ address, groups: groups4, empty, close: close3 }) {
+    const [copied, setCopied] = d2("");
+    const [why, setWhy] = d2({});
+    h2(() => {
+      if (!copied) return;
+      const t3 = setTimeout(() => setCopied(""), 4e3);
+      return () => clearTimeout(t3);
+    }, [copied]);
+    const row = (r3, id2) => /* @__PURE__ */ u3("div", { class: "signin", children: [
+      /* @__PURE__ */ u3("span", { class: "muted", children: r3.label }),
+      /* @__PURE__ */ u3("strong", { children: r3.shown }),
+      r3.copy && /* @__PURE__ */ u3(
+        "button",
+        {
+          class: "small copybtn" + (copied === id2 ? " copied" : ""),
+          "aria-live": "polite",
+          onClick: async () => {
+            try {
+              await r3.copy();
+              setWhy((w3) => ({ ...w3, [id2]: "" }));
+              setCopied(id2);
+            } catch (e3) {
+              setWhy((w3) => ({ ...w3, [id2]: errorWords(e3) }));
+            }
+          },
+          children: copied === id2 ? "Copied. Paste it into Proton Pass" : "Copy"
+        }
+      ),
+      why[id2] && /* @__PURE__ */ u3("span", { class: "signinwhy muted", role: "status", children: why[id2] })
+    ] }, id2);
     return /* @__PURE__ */ u3(S, { children: [
-      /* @__PURE__ */ u3("div", { class: "signins", children: rows.map((r3) => /* @__PURE__ */ u3("div", { class: "signin", children: [
-        /* @__PURE__ */ u3("span", { class: "muted", children: r3.label }),
-        /* @__PURE__ */ u3("strong", { children: r3.shown }),
-        r3.copy && /* @__PURE__ */ u3("button", { class: "small", onClick: async () => {
-          try {
-            setNote(await r3.copy());
-          } catch {
-          }
-        }, children: "Copy" })
-      ] }, r3.label)) }),
-      /* @__PURE__ */ u3("span", { class: "muted", children: note }),
+      /* @__PURE__ */ u3("div", { class: "signins", children: [
+        address && row(address, "address"),
+        groups4.map((g2) => /* @__PURE__ */ u3("div", { class: "signingroup", children: [
+          /* @__PURE__ */ u3("h4", { children: g2.title }),
+          g2.note && /* @__PURE__ */ u3("p", { class: "muted", children: g2.note }),
+          g2.rows.map((r3) => row(r3, g2.title + "/" + r3.label))
+        ] }, g2.title)),
+        empty && /* @__PURE__ */ u3("p", { class: "muted signinempty", children: empty })
+      ] }),
+      copied && copied !== "address" && /* @__PURE__ */ u3("span", { class: "muted", children: "The clipboard clears in 90 seconds." }),
       /* @__PURE__ */ u3("button", { class: "small", onClick: close3, children: "Close" })
     ] });
   }
+  var errorWords = (e3) => String(e3?.message ?? e3).replace(/^Error: /, "");
   function mountSheet(el3, node) {
     R(/* @__PURE__ */ u3(S, { children: node }), el3);
   }
@@ -6730,7 +6760,7 @@
     copy: async (key7) => {
       try {
         await go().CopySetting(key7);
-        return { tone: "ok", text: "✓ Copied. Paste it into Vaultwarden; the clipboard clears in 90 seconds." };
+        return { tone: "ok", text: "✓ Copied. Paste it into Proton Pass; the clipboard clears in 90 seconds." };
       } catch (e3) {
         return { tone: "bad", text: errorText(e3) };
       }
@@ -7935,6 +7965,7 @@
     startAll: (apps2, progress2) => groupAct(apps2, "start", progress2),
     groupAct: (apps2, action, progress2, until) => groupAct(apps2, action, progress2, until),
     details: (a3) => showDetails(a3),
+    signIn: (a3) => showSignIn(a3),
     // A row's own menu: what the app's page offers, from Status.
     menu: {
       open: (url) => go().Open(url),
@@ -8081,34 +8112,51 @@
     $("cliPanel").hidden = false;
   });
   var sheetBusy = waitForBg;
-  async function showSignIn(a3, keys2) {
+  async function showSignIn(a3) {
     if (sheetBusy()) return;
     const panel = $("cliPanel");
     if (cliStop) cliStop();
+    const entry = catalog?.apps.find((x3) => x3.id === a3.id);
+    const wanted = [...entry?.login || [], ...entry?.keys || [], ...entry?.recovery || []];
     let list = [];
-    try {
-      list = await go().Settings();
-    } catch (e3) {
-      return showError(e3);
+    if (wanted.length) {
+      try {
+        list = await go().Settings();
+      } catch (e3) {
+        return showError(e3);
+      }
     }
     const byKey2 = Object.fromEntries(list.map((s3) => [s3.key, s3]));
+    const plain2 = async (text2) => {
+      if (window.runtime.ClipboardSetText) await window.runtime.ClipboardSetText(text2);
+      else await navigator.clipboard.writeText(text2);
+    };
     const label = (k3) => /PASSWORD$/.test(k3) ? "Password" : /EMAIL$/.test(k3) ? "Email" : /USER$/.test(k3) ? "User name" : settingLabel(k3);
+    const row = (k3) => {
+      const s3 = byKey2[k3] || {};
+      return {
+        label: label(k3),
+        shown: s3.secret ? s3.set ? "••••••••" : "not set" : s3.value || "not set",
+        copy: s3.set ? s3.secret ? () => go().CopySetting(k3) : () => plain2(s3.value) : void 0
+      };
+    };
+    const groups4 = [];
+    if (entry?.login?.length) groups4.push({ title: "Sign in", rows: entry.login.map(row) });
+    const paste = (entry?.keys || []).map(row);
+    if (entry?.keyFile) paste.unshift({ label: "API key", shown: "••••••••", copy: () => go().CopyAppKey(a3.id) });
+    if (paste.length) groups4.push({ title: "Paste into another app", rows: paste });
+    if (entry?.recovery?.length) groups4.push({ title: "Keep safe", note: "Without this the backups can’t be opened.", rows: entry.recovery.map(row) });
+    const url = a3.address ? "https://" + a3.address : a3.url || "";
     panel.hidden = false;
-    $("cliTitle").textContent = `Sign in to ${a3.name}`;
+    $("cliTitle").textContent = `${a3.name}: sign-in details`;
     $("cliLog").textContent = "";
     $("cliLog").hidden = true;
-    const rows = keys2.map((k3) => {
-      const s3 = byKey2[k3] || {};
-      const copy = s3.secret ? () => go().CopySetting(k3).then(() => "✓ Password copied; the clipboard clears in 90 seconds.", (e3) => {
-        showError(e3);
-        throw e3;
-      }) : async () => {
-        window.runtime.ClipboardSetText?.(s3.value || "");
-        return `✓ ${label(k3)} copied.`;
-      };
-      return { label: label(k3), shown: s3.secret ? s3.set ? "••••••••" : "not set" : s3.value || "not set", copy: s3.set ? copy : void 0 };
-    });
-    mountSheet($("cliActions"), k(SignIns, { rows, close: closeCli }));
+    mountSheet($("cliActions"), k(SignIns, {
+      address: url ? { label: "Address", shown: url.replace(/^https?:\/\//, ""), copy: () => plain2(url) } : void 0,
+      groups: groups4,
+      empty: groups4.length ? void 0 : "Nothing to sign in with here: the app asks you to make a login the first time you open it, or needs none.",
+      close: closeCli
+    }));
     panel.scrollIntoView({ block: "nearest" });
   }
   var actionTitle = { start: "Starting", stop: "Stopping", restart: "Restarting", update: "Updating", rollback: "Rolling back" };
@@ -8724,7 +8772,8 @@
           /* @__PURE__ */ u3(Icon, { name: "phone" }),
           "Open on a phone"
         ] }),
-        a3.state === "running" && url && /* @__PURE__ */ u3("button", { class: "primary small", onClick: () => on2.open(url), children: "Open" })
+        a3.state === "running" && url && /* @__PURE__ */ u3("button", { class: "primary small", onClick: () => on2.open(url), children: "Open" }),
+        !p3.companion && /* @__PURE__ */ u3("button", { class: "iconbtn gear", title: "Sign-in details", "aria-label": `${a3.name}: sign-in details`, onClick: on2.signIn, children: /* @__PURE__ */ u3(Icon, { name: "gear" }) })
       ] })
     ] });
   }
@@ -8882,7 +8931,7 @@
     const { entry, people, on: on2 } = p3;
     if (!people && !entry?.login?.length) return null;
     return /* @__PURE__ */ u3(Card, { kind: "alerts pagecard", id: "appPeople", children: [
-      /* @__PURE__ */ u3(CardHead, { title: people ? "Who uses it" : "Signing in", children: !!entry?.login?.length && /* @__PURE__ */ u3("button", { class: "small", onClick: () => on2.signIn(entry.login), children: [
+      /* @__PURE__ */ u3(CardHead, { title: people ? "Who uses it" : "Signing in", children: !!entry?.login?.length && /* @__PURE__ */ u3("button", { class: "small", onClick: () => on2.signIn(), children: [
         /* @__PURE__ */ u3(Icon, { name: "key" }),
         "Sign-in details"
       ] }) }),
@@ -9152,7 +9201,7 @@
         update: () => appActions.update(a3),
         open: (url) => go().Open(url),
         phone: () => appActions.phone(a3),
-        signIn: (keys2) => appActions.signIn(a3, keys2),
+        signIn: () => appActions.signIn(a3),
         // The app's clipboard, or the browser's on a phone.
         copy: async (text2) => {
           if (window.runtime.ClipboardSetText) await window.runtime.ClipboardSetText(text2);

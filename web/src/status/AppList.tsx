@@ -46,6 +46,8 @@ export interface AppListActions {
   menu: RowMenuActions;
   /** The output of its last command (Start, Stop, Restart), in a sheet: after a failure. */
   details: (a: api.AppStatus) => void;
+  /** Its sign-in details (the ⚙): address, logins, keys, what opens the backups, each to copy. */
+  signIn: (a: api.AppStatus) => void;
 }
 
 /** A row's action the runtime has not confirmed yet, or why it failed. */
@@ -331,7 +333,9 @@ function Row({ a, p, menu, setMenu, said, say }: { a: api.AppStatus; p: AppListP
           : a.url ? <Link url={a.url} text={a.url.replace(/^http:\/\//, '')} open={p.on.open} copy={copy} os={p.os} />
           : <span class="muted">—</span>}
       </td>
-      <td class="rowActions"><Actions a={a} entry={entry} busy={p.busy || (!!pend && !pend.failed)} os={p.os} on={p.on} />{a.state !== 'missing' && <button class="iconbtn topage" title={`${a.name}: its page`} aria-label={`${a.name}: its page`} onClick={() => p.on.page(a)}><Icon name="chevron" /></button>}
+      <td class="rowActions"><Actions a={a} entry={entry} busy={p.busy || (!!pend && !pend.failed)} os={p.os} on={p.on} />
+        {a.state !== 'missing' && !p.companion && <button class="iconbtn gear" title={`${a.name}: sign-in details`} aria-label={`${a.name}: sign-in details`} onClick={() => p.on.signIn(a)}><Icon name="gear" /></button>}
+        {a.state !== 'missing' && <button class="iconbtn topage" title={`${a.name}: its page`} aria-label={`${a.name}: its page`} onClick={() => p.on.page(a)}><Icon name="chevron" /></button>}
         {menu?.id === a.id && <RowMenu a={a} x={menu.x} y={menu.y} native={entry?.kind === 'native'} busy={p.busy} companion={p.companion} on={p.on.menu} close={close} said={(w) => say(a.id, w)} />}</td>
     </tr>
   );

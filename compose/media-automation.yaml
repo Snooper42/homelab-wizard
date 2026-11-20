@@ -37,6 +37,7 @@ services:
         radarr: "Gives Radarr its search sites in one place, shared with Sonarr."
       memory: 200
       name: Prowlarr
+      keyfile: config.xml
       category: media-automation
       description: Indexer manager for the *arr apps
       subdomain: prowlarr
@@ -64,6 +65,7 @@ services:
     x-homelab:
       memory: 250
       name: Sonarr
+      keyfile: config.xml
       category: media-automation
       description: TV show automation
       subdomain: sonarr
@@ -91,6 +93,7 @@ services:
     x-homelab:
       memory: 250
       name: Radarr
+      keyfile: config.xml
       category: media-automation
       description: Movie automation
       subdomain: radarr
@@ -118,6 +121,7 @@ services:
     x-homelab:
       memory: 250
       name: Lidarr
+      keyfile: config.xml
       category: media-automation
       description: Music automation
       subdomain: lidarr
@@ -148,6 +152,7 @@ services:
         radarr: "Fetches subtitles for the films Radarr brings in."
       memory: 200
       name: Bazarr
+      keyfile: config/config.yaml
       category: media-automation
       description: Subtitles for Sonarr and Radarr
       subdomain: bazarr
@@ -241,6 +246,7 @@ services:
       memory: 250
       dump: sqlite:/app/config/db/db.sqlite3
       name: Seerr
+      keyfile: settings.json
       category: media-automation
       description: Media requests for Jellyfin (successor to Overseerr and Jellyseerr)
       subdomain: seerr
@@ -301,6 +307,7 @@ services:
     x-homelab:
       memory: 200
       name: qBittorrent
+      login: [QBITTORRENT_USER, QBITTORRENT_PASSWORD]
       category: media-automation
       description: Torrent client; it has no network except the ProtonVPN tunnel
       subdomain: qbittorrent
