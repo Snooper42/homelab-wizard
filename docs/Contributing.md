@@ -20,7 +20,7 @@ How to change the homelab safely, and how to slot in a new service.
 3. Plan the rollback.
 4. Change the compose file or settings; run `./homelab plan` or the command without `--apply`.
 5. Apply, then verify the app actually works (open it, check `./homelab status`).
-6. Run `./homelab docs`, update the hand-written parts of the affected notes, and add a line to `CHANGELOG.md`.
+6. Run `./homelab docs`, update the hand-written parts of the affected notes, and add a line to `CHANGELOG.md`. Put it directly below your lane's marker at the top of its `[Unreleased]` section (*The iPhone and iPad app (lane 4)* for `apple-client/` work, *Everything else* for the rest): the lanes then never add at the same spot, so their pull requests don't conflict on it. Never move or delete a marker.
 7. Run `make check` and commit.
 
 ## Slotting in a new service

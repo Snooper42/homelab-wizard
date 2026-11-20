@@ -14,7 +14,7 @@ Every build of main is a release of its own, numbered one more than the newest r
 
 Each minor after its `.10` starts by itself; set one by hand only to jump ahead (a big change, or `1.0.0`).
 
-1. Set `VERSION` (`0.12.0`, `1.0.0`), the `version:` front matter of every note to match (`./homelab validate` checks it), and move the `[Unreleased]` notes in `CHANGELOG.md` under a new `## [0.12.0] - <date>` heading, with a bold one-line summary of the version.
+1. Set `VERSION` (`0.12.0`, `1.0.0`), the `version:` front matter of every note to match (`./homelab validate` checks it), and move the `[Unreleased]` notes in `CHANGELOG.md` under a new `## [0.12.0] - <date>` heading (leave the two marker comments at the top of each `[Unreleased]` section, where each lane adds its next line), with a bold one-line summary of the version.
 2. Push to main. That build is `v0.12.0`, which the stable channel moves to, and its release notes are that version's section of the CHANGELOG; the builds after it are `v0.12.1` to `v0.12.10`, then `v0.13.0`.
 3. If this version changed the shape of a file the homelab folder keeps (`.env`, `data/*.json`, `scripts/logs/*.json`), add its folder to the upgrade set once it is tagged: `testdata/upgrades/make.sh v0.12.0`, then commit `testdata/upgrades/v0.12.0`. `TestEachReleasesFolderUpgrades` then opens it with every later build.
 
