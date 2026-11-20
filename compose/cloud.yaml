@@ -125,7 +125,7 @@ services:
     x-homelab:
       releases: psi-4ward/psitransfer
       name: PsiTransfer
-      login: [PSITRANSFER_ADMIN_PASSWORD]
+      login: [PSITRANSFER_ADMIN_PASSWORD, PSITRANSFER_UPLOAD_PASSWORD]
       category: cloud
       description: Send large files to anyone with a link that expires
       subdomain: send

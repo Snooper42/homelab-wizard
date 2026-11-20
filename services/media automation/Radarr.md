@@ -25,7 +25,7 @@ Wanted movies arrive in `/Volumes/Media/movies`, named and organised for Jellyfi
 
 ## Setup
 
-1. Open `https://<TAILSCALE_HOST>:7878` in Home mode, or `https://radarr.example.com` with a domain, and set up authentication.
+1. Open `https://<TAILSCALE_HOST>:7878` in Home mode, or `https://radarr.example.com` with a domain, and sign in with the login in its ⚙ Sign-in details (`ARR_USER`, `ARR_PASSWORD`, made at install; Connect apps sets it, so Radarr never asks you to make one).
 2. Settings › Media Management: root folder `/movies`.
 3. Settings › Download Clients: qBittorrent, host `gluetun`, port `8082`. Category `movies`.
 4. Indexers come from Prowlarr.

@@ -36,6 +36,10 @@ services:
       PAPERLESS_DBNAME: paperless
       PAPERLESS_SECRET_KEY: ${PAPERLESS_SECRET_KEY}
       PAPERLESS_URL: ${PAPERLESS_URL:-https://docs.${HOMELAB_DOMAIN:-example.com}}
+      # Paperless-ngx 3.5 answers only the host of PAPERLESS_URL and localhost once
+      # PAPERLESS_URL is set: also its name on the homelab's networks (Paperless-AI,
+      # the dashboards) and 127.0.0.1 (its port on this machine). Never "*".
+      PAPERLESS_ALLOWED_HOSTS: paperless,127.0.0.1
       PAPERLESS_TIME_ZONE: ${TZ:-UTC}
       PAPERLESS_OCR_LANGUAGE: ${PAPERLESS_OCR_LANGUAGE:-eng}
       USERMAP_UID: ${PUID:-501}
@@ -60,6 +64,7 @@ services:
       memory: 700
       url: PAPERLESS_URL
       name: Paperless-ngx
+      keys: [PAPERLESS_AI_PAPERLESS_TOKEN]
       category: documents
       description: Scanned documents with OCR and full-text search
       subdomain: docs

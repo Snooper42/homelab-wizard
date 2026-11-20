@@ -312,13 +312,28 @@ extension NetworkRuleTests {
         let seen = try #require(StubProtocol.requests.first)
         #expect(seen.url.path == "/api/call/Homelab")
         #expect(try Self.homelabArgs(seen) == [.string("fix"), .string(""), .bool(false)])
-        #expect(vm.output?.isFixPreview == true)
+        #expect(vm.output?.isPreview == true)
 
         // Only Fix These applies, and only then.
         StubProtocol.reset { _ in (200, [:], Self.json(#"{"result":null,"log":["Restarted immich"]}"#), nil) }
         await vm.run(.fix, apply: true)
         #expect(try Self.homelabArgs(try #require(StubProtocol.requests.first)) == [.string("fix"), .string(""), .bool(true)])
-        #expect(vm.output?.isFixPreview == false)
+        #expect(vm.output?.isPreview == false)
+    }
+
+    @Test @MainActor func updateAllListsFirst() async throws {
+        StubProtocol.reset { _ in (200, [:], Self.json(#"{"result":null,"log":["$ homelab update --all","These 2 apps have updates: Photos, Movies."]}"#), nil) }
+        let (vm, _) = tasks(canChange: true)
+        await vm.run(.updateAll)
+        #expect(try Self.homelabArgs(try #require(StubProtocol.requests.first)) == [.string("update-all"), .string(""), .bool(false)])
+        #expect(vm.output?.isPreview == true && vm.output?.title == "What Would Be Updated")
+        #expect(HomelabTask.updateAll.applyTitle == "Update Them")
+
+        // Only Update Them applies.
+        StubProtocol.reset { _ in (200, [:], Self.json(#"{"result":null,"log":["Updated: Photos, Movies."]}"#), nil) }
+        await vm.run(.updateAll, apply: true)
+        #expect(try Self.homelabArgs(try #require(StubProtocol.requests.first)) == [.string("update-all"), .string(""), .bool(true)])
+        #expect(vm.output?.isPreview == false && vm.output?.title == "Updated")
     }
 
     @Test @MainActor func aLookOnlyDeviceOrARefusedPromptSendsNothing() async {

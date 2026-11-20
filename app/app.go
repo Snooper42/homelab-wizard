@@ -41,6 +41,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/history"
 	"github.com/Snooper42/homelab-wizard/internal/host"
 	"github.com/Snooper42/homelab-wizard/internal/install"
+	"github.com/Snooper42/homelab-wizard/internal/kept"
 	"github.com/Snooper42/homelab-wizard/internal/kit"
 	"github.com/Snooper42/homelab-wizard/internal/notify"
 	"github.com/Snooper42/homelab-wizard/internal/people"
@@ -710,18 +711,69 @@ func (a *App) CopySetting(key string) error {
 		if !s.Secret || v == "" {
 			return fmt.Errorf("%s is not a saved secret", key)
 		}
-		if err := clipboardSet(a.ctx, v); err != nil {
-			return err
-		}
-		go func() {
-			time.Sleep(copyClearAfter)
-			if now, err := clipboardGet(a.ctx); err == nil && now == v {
-				_ = clipboardSet(a.ctx, "")
-			}
-		}()
-		return nil
+		return a.copySecret(v)
 	}
 	return fmt.Errorf("unknown setting %q", key)
+}
+
+// CopyAppKey puts the API key an app keeps itself (its catalog keyfile: an
+// *arr app's config.xml, Seerr's settings.json) on the clipboard, as
+// CopySetting does a saved one: it never reaches the page.
+func (a *App) CopyAppKey(id string) error {
+	c, err := a.catalog()
+	if err != nil {
+		return err
+	}
+	app, ok := c.Get(id)
+	if !ok || app.Meta.KeyFile == "" {
+		return fmt.Errorf("%s keeps no API key of its own", id)
+	}
+	env := core.Env(a.root)
+	home, _ := os.UserHomeDir()
+	dir := wiring.AppsFrom(c, func(x string) bool { return x == id }, env, home)[id].ConfigDir
+	key, err := wiring.KeptKey(dir, app.Meta.KeyFile)
+	if err != nil {
+		return fmt.Errorf("%s: %w", app.Name(), err)
+	}
+	return a.copySecret(key)
+}
+
+// Kept are the passwords and keys ticked Saved in Sign-in details, by
+// setting name (app:<id> for an app's own key), never the value.
+func (a *App) Kept() map[string]bool { return kept.Load(a.root) }
+
+// MarkKept ticks (or unticks) one as saved in the password manager.
+func (a *App) MarkKept(key string, saved bool) error { return kept.Mark(a.root, key, saved) }
+
+// Unkept counts, by app, the passwords and keys not ticked Saved yet: the
+// dot on its ⚙.
+func (a *App) Unkept() (map[string]int, error) {
+	c, err := a.catalog()
+	if err != nil {
+		return nil, err
+	}
+	ctx, cancel := a.timed()
+	defer cancel()
+	st, err := core.StatusNow(ctx, a.root)
+	if err != nil {
+		return nil, err
+	}
+	return kept.ByApp(kept.Unsaved(core.Secrets(a.root, c, &st), kept.Load(a.root))), nil
+}
+
+// copySecret puts v on the clipboard and clears it after copyClearAfter,
+// unless something else was copied since.
+func (a *App) copySecret(v string) error {
+	if err := clipboardSet(a.ctx, v); err != nil {
+		return err
+	}
+	go func() {
+		time.Sleep(copyClearAfter)
+		if now, err := clipboardGet(a.ctx); err == nil && now == v {
+			_ = clipboardSet(a.ctx, "")
+		}
+	}()
+	return nil
 }
 
 // copyClearAfter is how long a copied secret stays on the clipboard.
@@ -732,6 +784,12 @@ func (a *App) SaveSettings(values map[string]string) ([]settings.Setting, error)
 	if err := settings.Save(a.root, values); err != nil {
 		return nil, err
 	}
+	// A new value: the one saved in the password manager opens nothing now.
+	changed := make([]string, 0, len(values))
+	for k := range values {
+		changed = append(changed, k)
+	}
+	_ = kept.Forget(a.root, changed)
 	if len(values) > 0 {
 		history.Record(a.root, history.Entry{Kind: "settings", Who: history.ThisComputer, Text: history.SettingsChanged(values)})
 	}
@@ -797,6 +855,14 @@ func (a *App) Protection() (crowdsec.Protection, error) {
 	ctx, cancel := a.timed()
 	defer cancel()
 	return core.Protection(ctx, a.root)
+}
+
+// DownloadsPrivate is whether qBittorrent's downloads leave only through
+// the VPN, for qBittorrent's page (wiring.Privacy).
+func (a *App) DownloadsPrivate() (wiring.Privacy, error) {
+	ctx, cancel := a.timed()
+	defer cancel()
+	return core.DownloadsPrivate(ctx, a.root)
 }
 
 // RevealReport shows the newest diagnostics report (scripts/logs/report-*)

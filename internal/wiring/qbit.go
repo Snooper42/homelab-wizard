@@ -8,7 +8,10 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"os"
+	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -27,7 +30,7 @@ var qbitPrefs = map[string]any{
 	"incomplete_files_ext": true,
 }
 
-const qbitSignInHelp = "in qBittorrent set a permanent Web UI password (Tools > Options > Web UI; the temporary one in its log changes on every restart), put it in QBITTORRENT_PASSWORD (and QBITTORRENT_USER if it is not admin), then connect again"
+const qbitSignInHelp = "put qBittorrent's Web UI password in QBITTORRENT_PASSWORD in Settings (and QBITTORRENT_USER if it is not admin), then connect again; a qBittorrent the homelab installs gets one made for it, and one set up earlier keeps its own (Tools > Options > Web UI)"
 
 var errQbitSignIn = errors.New("qBittorrent refused the sign-in: check QBITTORRENT_PASSWORD (and QBITTORRENT_USER) in .env")
 
@@ -36,34 +39,109 @@ func (w *Wirer) qbitSharing(ctx context.Context) (string, string, error) {
 	if w.Env["QBITTORRENT_PASSWORD"] == "" {
 		return "manual", qbitSignInHelp, nil
 	}
-	sid, err := w.qbitSignIn(ctx)
+	wrong, err := w.qbitSet(ctx, qbitPrefs)
+	if err != nil || len(wrong) == 0 {
+		return "already", "", err
+	}
+	if len(wrong) == len(qbitPrefs) {
+		return "done", "", nil
+	}
+	return "done", "corrected " + strings.Join(wrong, ", "), nil
+}
+
+// gluetunPortFile is where Gluetun writes the port ProtonVPN forwards
+// (VPN_PORT_FORWARDING_STATUS_FILE, in its /gluetun folder so this computer
+// can read it).
+const gluetunPortFile = "forwarded_port"
+
+// qbitVPNPort lets Gluetun put the forwarded port into qBittorrent by itself
+// (arr-loop item 2): its VPN_PORT_FORWARDING_UP_COMMAND calls qBittorrent's
+// Web API on the loopback they share, which qBittorrent lets in without its
+// login (bypass_local_auth; only Gluetun and qBittorrent share that
+// loopback). While wire is here it also sets the port Gluetun has now, so a
+// homelab from before this doesn't wait for the VPN's next connect.
+func (w *Wirer) qbitVPNPort(ctx context.Context) (string, string, error) {
+	if w.Env["QBITTORRENT_PASSWORD"] == "" {
+		return "manual", qbitSignInHelp, nil
+	}
+	want := map[string]any{"bypass_local_auth": true}
+	port := w.forwardedPort()
+	if port > 0 {
+		// Connected: the port, and the tunnel as qBittorrent's only network,
+		// as Gluetun's up command sets them.
+		want["listen_port"] = port
+		want["current_network_interface"] = vpnInterface
+	}
+	wrong, err := w.qbitSet(ctx, want)
 	if err != nil {
 		return "", "", err
 	}
+	var said []string
+	for _, k := range wrong {
+		switch k {
+		case "current_network_interface":
+			said = append(said, "tied to the VPN's tunnel, its only network")
+		case "listen_port":
+			said = append(said, fmt.Sprintf("listening port set to %d, the one the VPN forwards", port))
+		}
+	}
+	if port == 0 {
+		said = append(said, "the VPN has no forwarded port yet: Gluetun gives it to qBittorrent once it connects")
+	}
+	state := "already"
+	if len(wrong) > 0 {
+		state = "done"
+	}
+	return state, strings.Join(said, "; "), nil
+}
+
+// forwardedPort is the port Gluetun last wrote, or 0 when there's none.
+func (w *Wirer) forwardedPort() int {
+	dir := w.Apps["gluetun"].ConfigDir
+	if dir == "" {
+		return 0
+	}
+	data, err := os.ReadFile(filepath.Join(dir, gluetunPortFile))
+	if err != nil {
+		return 0
+	}
+	first, _, _ := strings.Cut(strings.TrimSpace(string(data)), "\n")
+	first, _, _ = strings.Cut(first, ",")
+	p, err := strconv.Atoi(strings.TrimSpace(first))
+	if err != nil || p < 1 || p > 65535 {
+		return 0
+	}
+	return p
+}
+
+// qbitSet signs in and sets want in qBittorrent's preferences, changing
+// only those that differ, and returns their names, sorted.
+func (w *Wirer) qbitSet(ctx context.Context, want map[string]any) ([]string, error) {
+	sid, err := w.qbitSignIn(ctx)
+	if err != nil {
+		return nil, err
+	}
 	var cur map[string]any
 	if err := w.qbitCall(ctx, sid, "app/preferences", nil, &cur); err != nil {
-		return "", "", err
+		return nil, err
 	}
 	change := map[string]any{}
 	var wrong []string
-	for k, v := range qbitPrefs {
+	for k, v := range want {
 		if fmt.Sprint(cur[k]) != fmt.Sprint(v) {
 			change[k] = v
 			wrong = append(wrong, k)
 		}
 	}
 	if len(wrong) == 0 {
-		return "already", "", nil
+		return nil, nil
 	}
 	data, _ := json.Marshal(change)
 	if err := w.qbitCall(ctx, sid, "app/setPreferences", url.Values{"json": {string(data)}}, nil); err != nil {
-		return "", "", err
-	}
-	if len(wrong) == len(qbitPrefs) {
-		return "done", "", nil
+		return nil, err
 	}
 	sort.Strings(wrong)
-	return "done", "corrected " + strings.Join(wrong, ", "), nil
+	return wrong, nil
 }
 
 func (w *Wirer) qbitClient() *http.Client {

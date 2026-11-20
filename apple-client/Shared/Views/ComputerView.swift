@@ -36,6 +36,7 @@ struct ComputerView: View {
                 if computer.canSeeSetup { SetupChecklistSections(computer: computer) }
                 hostSection
                 fixSection
+                updateAllSection
             case .settings:
                 // As the owner picked it (Nov 12): the homelab's everyday
                 // settings first, in plain words; then this device's; then
@@ -53,6 +54,20 @@ struct ComputerView: View {
                                 .monospacedDigit()
                         } label: {
                             IconTileLabel(title: "Subscriptions you don’t pay", systemImage: "dollarsign.circle", tint: TileColour.green)
+                        }
+                    }
+                }
+                // Status's Storage card on the iPad; here, a row that opens it (the owner's pick, Nov 20).
+                if let storage = dashboard.cards.storage {
+                    Section {
+                        NavigationLink {
+                            StoragePage(storage: storage, nameOf: { dashboard.app(id: $0)?.name ?? $0 })
+                        } label: {
+                            LabeledContent {
+                                Text(storage.total.formatted(.byteCount(style: .file))).monospacedDigit()
+                            } label: {
+                                IconTileLabel(title: "What the apps keep", systemImage: "internaldrive", tint: TileColour.blue)
+                            }
                         }
                     }
                 }
@@ -117,6 +132,17 @@ struct ComputerView: View {
         } footer: {
             // The steps by their buttons' names: the footnote named only Fix These, under Look for Problems.
             Text("Look for Problems lists what it would fix first. Nothing changes until you tap Fix These under that list.")
+        }
+    }
+
+    /// Update all apps, beside Look for Problems, as the computer's Status button.
+    private var updateAllSection: some View {
+        Section {
+            TaskButton(task: .updateAll)
+        } header: {
+            Text("Updates")
+        } footer: {
+            Text("Lists which apps have an update and which wait for their own days or are held. Nothing changes until you tap Update Them under that list; then it updates them one at a time, to the end, even if you close this app.")
         }
     }
 
@@ -576,12 +602,12 @@ struct TaskOutputView: View {
                 .padding()
             }
             .safeAreaInset(edge: .bottom) {
-                if output.isFixPreview {
+                if output.isPreview {
                     VStack(spacing: 6) {
                         Button(role: .destructive) {
-                            tasks.start(.fix, apply: true)
+                            tasks.start(output.task, apply: true)
                         } label: {
-                            Text("Fix These").fontWeight(.semibold).frame(maxWidth: .infinity)
+                            Text(output.task.applyTitle).fontWeight(.semibold).frame(maxWidth: .infinity)
                         }
                         .buttonStyle(.borderedProminent)
                         .tint(Theme.accentFill)

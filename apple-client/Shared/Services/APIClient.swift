@@ -229,6 +229,47 @@ actor APIClient {
         }
     }
 
+    /// What updating an app brings: its project's releases newer than the
+    /// version it runs (`ReleaseNotes`). Not on a wall screen or a member's phone.
+    func releaseNotes(appID: String) async throws -> ReleasePreview {
+        guard AppStatus.isValidID(appID) else { throw APIError.invalidAppID }
+        return try await call("ReleaseNotes", [.string(appID)], as: ReleasePreview.self)
+    }
+
+    /// Who uses an app, by name only (`AppPeople`): the owner's phones over
+    /// https, never a member's or a wall screen.
+    func appPeople(appID: String) async throws -> AppPeople {
+        guard AppStatus.isValidID(appID) else { throw APIError.invalidAppID }
+        return try await call("AppPeople", [.string(appID)], as: AppPeople.self)
+    }
+
+    /// An app's Sign-in details, labels only, never a value (`SignInDetails`).
+    func signInDetails(appID: String) async throws -> [SignInDetail] {
+        guard AppStatus.isValidID(appID) else { throw APIError.invalidAppID }
+        return try await call("SignInDetails", [.string(appID)], as: [SignInDetail].self)
+    }
+
+    /// One of them, to go straight onto the clipboard: never shown, logged or
+    /// kept (`CopySignIn`, a change; the computer keeps the copy in its history).
+    func copySignIn(appID: String, key: String) async throws -> String {
+        guard AppStatus.isValidID(appID), !key.isEmpty, key.count <= 100 else { throw APIError.invalidAppID }
+        let (request, endpoint) = try callRequest("CopySignIn", [.string(appID), .string(key)])
+        Log.network.notice("CopySignIn for \(appID, privacy: .public)")
+        let data = try await send(request, to: endpoint, using: actionSession)
+        guard let value = try? JSONDecoder.homelab().decode(CallEnvelope<String>.self, from: data).result, !value.isEmpty else {
+            throw APIError.decoding
+        }
+        return value
+    }
+
+    /// The Saved tick (`MarkSignInSaved`).
+    func markSignInSaved(appID: String, key: String, saved: Bool) async throws {
+        guard AppStatus.isValidID(appID), !key.isEmpty, key.count <= 100 else { throw APIError.invalidAppID }
+        let (request, endpoint) = try callRequest("MarkSignInSaved", [.string(appID), .string(key), .bool(saved)])
+        Log.network.notice("MarkSignInSaved \(saved, privacy: .public)")
+        _ = try await send(request, to: endpoint, using: actionSession)
+    }
+
     // MARK: The computer
 
     func host() async throws -> HostInfo {

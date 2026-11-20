@@ -583,6 +583,7 @@
     check: '<polyline points="20 6 9 17 4 12"/>',
     clock: '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
     phone: '<rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/>',
+    gear: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
     key: '<path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>',
     photos: '<rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>',
     lock: '<rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
@@ -3164,6 +3165,7 @@
             /* @__PURE__ */ u3("td", { title: a3.address && a3.url ? "On this machine: " + a3.url : "", children: a3.address ? /* @__PURE__ */ u3(Link, { url: "https://" + a3.address, text: a3.address, open: p3.on.open, copy, os: p3.os }) : a3.url ? /* @__PURE__ */ u3(Link, { url: a3.url, text: a3.url.replace(/^http:\/\//, ""), open: p3.on.open, copy, os: p3.os }) : /* @__PURE__ */ u3("span", { class: "muted", children: "—" }) }),
             /* @__PURE__ */ u3("td", { class: "rowActions", children: [
               /* @__PURE__ */ u3(Actions2, { a: a3, entry, busy: p3.busy || !!pend && !pend.failed, os: p3.os, on: p3.on }),
+              a3.state !== "missing" && !p3.companion && /* @__PURE__ */ u3(GearButton, { name: a3.name, unsaved: p3.unkept?.[a3.id] || 0, open: () => p3.on.signIn(a3) }),
               a3.state !== "missing" && /* @__PURE__ */ u3("button", { class: "iconbtn topage", title: `${a3.name}: its page`, "aria-label": `${a3.name}: its page`, onClick: () => p3.on.page(a3), children: /* @__PURE__ */ u3(Icon, { name: "chevron" }) }),
               menu?.id === a3.id && /* @__PURE__ */ u3(RowMenu, { a: a3, x: menu.x, y: menu.y, native: entry?.kind === "native", busy: p3.busy, companion: p3.companion, on: p3.on.menu, close: close3, said: (w3) => say(a3.id, w3) })
             ] })
@@ -3601,6 +3603,13 @@
   function clearAppList(el3) {
     R(null, el3);
   }
+  function GearButton({ name, unsaved, open: open5 }) {
+    const said2 = unsaved ? `${name}: sign-in details, ${unsaved === 1 ? "1 not" : unsaved + " not"} in your password manager yet` : `${name}: sign-in details`;
+    return /* @__PURE__ */ u3("button", { class: "iconbtn gear" + (unsaved ? " unsaved" : ""), title: said2, "aria-label": said2, onClick: open5, children: [
+      /* @__PURE__ */ u3(Icon, { name: "gear" }),
+      unsaved > 0 && /* @__PURE__ */ u3("span", { class: "gearDot", "aria-hidden": "true" })
+    ] });
+  }
 
   // web/src/store.ts
   function store(read) {
@@ -3801,23 +3810,74 @@
       ] })
     ] });
   }
-  function SignIns({ rows, close: close3 }) {
-    const [note, setNote] = d2("");
-    return /* @__PURE__ */ u3(S, { children: [
-      /* @__PURE__ */ u3("div", { class: "signins", children: rows.map((r3) => /* @__PURE__ */ u3("div", { class: "signin", children: [
-        /* @__PURE__ */ u3("span", { class: "muted", children: r3.label }),
-        /* @__PURE__ */ u3("strong", { children: r3.shown }),
-        r3.copy && /* @__PURE__ */ u3("button", { class: "small", onClick: async () => {
-          try {
-            setNote(await r3.copy());
-          } catch {
+  function SignIns({ address, groups: groups4, empty, close: close3 }) {
+    const [copied, setCopied] = d2("");
+    const [why, setWhy] = d2({});
+    const [done, setDone] = d2(/* @__PURE__ */ new Set());
+    const [ticked, setTicked] = d2({});
+    h2(() => {
+      if (!copied) return;
+      const t3 = setTimeout(() => setCopied(""), 4e3);
+      return () => clearTimeout(t3);
+    }, [copied]);
+    const row = (r3, id2) => /* @__PURE__ */ u3("div", { class: "signin", children: [
+      /* @__PURE__ */ u3("span", { class: "muted", children: r3.label }),
+      /* @__PURE__ */ u3("strong", { children: r3.shown }),
+      r3.copy && /* @__PURE__ */ u3(
+        "button",
+        {
+          class: "small copybtn" + (copied === id2 ? " copied" : ""),
+          "aria-live": "polite",
+          onClick: async () => {
+            try {
+              await r3.copy();
+              setWhy((w3) => ({ ...w3, [id2]: "" }));
+              setCopied(id2);
+              setDone((d3) => new Set(d3).add(id2));
+            } catch (e3) {
+              setWhy((w3) => ({ ...w3, [id2]: errorWords(e3) }));
+            }
+          },
+          children: copied === id2 ? "Copied. Paste it into Proton Pass" : "Copy"
+        }
+      ),
+      why[id2] && /* @__PURE__ */ u3("span", { class: "signinwhy muted", role: "status", children: why[id2] }),
+      r3.keep && (r3.kept || done.has(id2) || ticked[id2] !== void 0) && /* @__PURE__ */ u3("label", { class: "signinkept muted", children: [
+        /* @__PURE__ */ u3(
+          "input",
+          {
+            type: "checkbox",
+            checked: ticked[id2] ?? !!r3.kept,
+            onChange: async (e3) => {
+              const on2 = e3.currentTarget.checked;
+              setTicked((t3) => ({ ...t3, [id2]: on2 }));
+              try {
+                await r3.keep(on2);
+              } catch (err) {
+                setTicked((t3) => ({ ...t3, [id2]: !on2 }));
+                setWhy((w3) => ({ ...w3, [id2]: errorWords(err) }));
+              }
+            }
           }
-        }, children: "Copy" })
-      ] }, r3.label)) }),
-      /* @__PURE__ */ u3("span", { class: "muted", children: note }),
+        ),
+        "Saved in Proton Pass"
+      ] })
+    ] }, id2);
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3("div", { class: "signins", children: [
+        address && row(address, "address"),
+        groups4.map((g2) => /* @__PURE__ */ u3("div", { class: "signingroup", children: [
+          /* @__PURE__ */ u3("h4", { children: g2.title }),
+          g2.note && /* @__PURE__ */ u3("p", { class: "muted", children: g2.note }),
+          g2.rows.map((r3) => row(r3, g2.title + "/" + r3.label))
+        ] }, g2.title)),
+        empty && /* @__PURE__ */ u3("p", { class: "muted signinempty", children: empty })
+      ] }),
+      copied && copied !== "address" && /* @__PURE__ */ u3("span", { class: "muted", children: "The clipboard clears in 90 seconds." }),
       /* @__PURE__ */ u3("button", { class: "small", onClick: close3, children: "Close" })
     ] });
   }
+  var errorWords = (e3) => String(e3?.message ?? e3).replace(/^Error: /, "");
   function mountSheet(el3, node) {
     R(/* @__PURE__ */ u3(S, { children: node }), el3);
   }
@@ -5123,6 +5183,21 @@
     return /* @__PURE__ */ u3("p", { id: id2, class: "muted empty", children });
   }
 
+  // web/src/choose/walkthroughs.ts
+  var walkthroughs = {
+    // Proton's manual port-forwarding page: a P2P server, NAT-PMP on. Gluetun
+    // picks the server itself, so any P2P one does: only the key is kept.
+    PROTONVPN_WIREGUARD_PRIVATE_KEY: {
+      lead: "Needed for qBittorrent, and only on a paid Proton VPN plan: the free plan doesn’t allow downloads like these.",
+      steps: [
+        "Sign in at account.protonvpn.com and open Downloads, then WireGuard configuration.",
+        "Choose Router as the platform, turn on NAT-PMP (Port Forwarding), and press Create next to any server marked P2P (⇄).",
+        "In the file it shows, copy the long text after PrivateKey = and paste it here. Only that line: the rest isn’t needed."
+      ],
+      link: { url: "https://account.protonvpn.com/downloads", label: "Open Proton’s WireGuard page" }
+    }
+  };
+
   // web/src/choose/Choose.tsx
   var starterLooks = { photos: ["photos", "var(--tint-orange)"], passwords: ["lock", "var(--tint-green)"], movies: ["film", "var(--tint-red)"], music: ["music", "var(--tint-pink)"], files: ["folder", "var(--tint-blue)"] };
   var lit = (p3, selected2) => !!p3.apps.length && p3.apps.every((id2) => selected2.has(id2));
@@ -5291,28 +5366,39 @@
       !p3.start.length && /* @__PURE__ */ u3("p", { id: "nothingToInstall", class: "muted", children: needs.length ? "Fill in the settings below to install the rest." : "Nothing left to install: everything you picked is already running." })
     ] });
   }
-  function Inputs({ keys: keys2, meta, values, label, input: input2 }) {
+  function Inputs({ keys: keys2, meta, values, label, input: input2, open: open5 }) {
     return /* @__PURE__ */ u3(S, { children: [
       !!keys2.length && /* @__PURE__ */ u3("h2", { children: "Settings they need" }),
       keys2.map((k3) => {
         const m3 = meta[k3] || {};
         const secret = m3.secret ?? /KEY|TOKEN|PASS|SECRET/.test(k3);
-        return /* @__PURE__ */ u3("label", { class: "field", children: [
-          /* @__PURE__ */ u3("span", { class: "fieldName", children: label(k3) }),
-          /* @__PURE__ */ u3(
-            "input",
-            {
-              type: secret ? "password" : "text",
-              value: values[k3] || "",
-              autocomplete: "off",
-              spellcheck: false,
-              placeholder: m3.set ? "set already · leave empty to keep it" : "not set yet",
-              onInput: (e3) => input2(k3, e3.currentTarget.value)
-            }
-          ),
-          m3.help && /* @__PURE__ */ u3("span", { class: "help", children: m3.help })
+        const walk = walkthroughs[k3];
+        return /* @__PURE__ */ u3(S, { children: [
+          /* @__PURE__ */ u3("label", { class: "field", children: [
+            /* @__PURE__ */ u3("span", { class: "fieldName", children: label(k3) }),
+            /* @__PURE__ */ u3(
+              "input",
+              {
+                type: secret ? "password" : "text",
+                value: values[k3] || "",
+                autocomplete: "off",
+                spellcheck: false,
+                placeholder: m3.set ? "set already · leave empty to keep it" : "not set yet",
+                onInput: (e3) => input2(k3, e3.currentTarget.value)
+              }
+            ),
+            !walk && m3.help && /* @__PURE__ */ u3("span", { class: "help", children: m3.help })
+          ] }),
+          walk && /* @__PURE__ */ u3(Walk, { w: walk, open: open5 })
         ] }, k3);
       })
+    ] });
+  }
+  function Walk({ w: w3, open: open5 }) {
+    return /* @__PURE__ */ u3("div", { class: "help walk", children: [
+      /* @__PURE__ */ u3("p", { class: "walkLead", children: w3.lead }),
+      /* @__PURE__ */ u3("ol", { children: w3.steps.map((s3) => /* @__PURE__ */ u3("li", { children: s3 }, s3)) }),
+      w3.link && open5 && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => open5(w3.link.url), children: w3.link.label })
     ] });
   }
   var mountStarters = (el3, props) => R(/* @__PURE__ */ u3(Starters, { ...props }), el3);
@@ -5675,7 +5761,7 @@
     mountInputs($("inputs"), { keys: keys2, meta: settingHelp || {}, values: settings, label: settingLabel, input: (k3, v3) => {
       settings[k3] = v3;
       replan();
-    } });
+    }, open: (url) => go().Open(url) });
   }
   var installing = false;
   $("installBtn").onclick = async () => {
@@ -6730,7 +6816,7 @@
     copy: async (key7) => {
       try {
         await go().CopySetting(key7);
-        return { tone: "ok", text: "✓ Copied. Paste it into Vaultwarden; the clipboard clears in 90 seconds." };
+        return { tone: "ok", text: "✓ Copied. Paste it into Proton Pass; the clipboard clears in 90 seconds." };
       } catch (e3) {
         return { tone: "bad", text: errorText(e3) };
       }
@@ -7576,9 +7662,21 @@
       ...(catalog?.categories || []).map((c4) => ({ label: c4.label, apps: st.apps.filter((a3) => rest(a3) && catOf[a3.id] === c4.id) })),
       { label: "Other", apps: st.apps.filter((a3) => rest(a3) && !(catalog?.categories || []).some((c4) => c4.id === catOf[a3.id])) }
     ].filter((g2) => g2.apps.length);
-    appList = { groups: groups4, pending, catalog, weekUp, outages, seen, batteryPaused, held, busy: appsBusy, companion: document.documentElement.classList.contains("companion"), os: osName, on: appListActions, memory };
+    appList = { groups: groups4, pending, catalog, weekUp, outages, seen, batteryPaused, held, busy: appsBusy, companion: document.documentElement.classList.contains("companion"), os: osName, on: appListActions, memory, unkept };
     mountAppList($("statusRows"), appList);
+    if (!unkept && !appList.companion) refreshUnkept();
   }
+  var unkept;
+  async function refreshUnkept() {
+    try {
+      unkept = await go().Unkept() || {};
+    } catch {
+      unkept = {};
+    }
+    if (appList) mountAppList($("statusRows"), appList = { ...appList, unkept });
+    unkeptChanged.forEach((f4) => f4());
+  }
+  var unkeptChanged = /* @__PURE__ */ new Set();
   async function answerPages(st) {
     let why;
     try {
@@ -7935,6 +8033,7 @@
     startAll: (apps2, progress2) => groupAct(apps2, "start", progress2),
     groupAct: (apps2, action, progress2, until) => groupAct(apps2, action, progress2, until),
     details: (a3) => showDetails(a3),
+    signIn: (a3) => showSignIn(a3),
     // A row's own menu: what the app's page offers, from Status.
     menu: {
       open: (url) => go().Open(url),
@@ -8081,34 +8180,63 @@
     $("cliPanel").hidden = false;
   });
   var sheetBusy = waitForBg;
-  async function showSignIn(a3, keys2) {
+  async function showSignIn(a3) {
     if (sheetBusy()) return;
     const panel = $("cliPanel");
     if (cliStop) cliStop();
+    const entry = catalog?.apps.find((x3) => x3.id === a3.id);
+    const wanted = [...entry?.login || [], ...entry?.keys || [], ...entry?.recovery || []];
     let list = [];
-    try {
-      list = await go().Settings();
-    } catch (e3) {
-      return showError(e3);
+    if (wanted.length) {
+      try {
+        list = await go().Settings();
+      } catch (e3) {
+        return showError(e3);
+      }
     }
+    let keptNow = {};
+    try {
+      keptNow = await go().Kept() || {};
+    } catch {
+    }
+    const keep3 = (name) => async (on2) => {
+      await go().MarkKept(name, on2);
+      keptNow[name] = on2;
+      refreshUnkept();
+    };
     const byKey2 = Object.fromEntries(list.map((s3) => [s3.key, s3]));
+    const plain2 = async (text2) => {
+      if (window.runtime.ClipboardSetText) await window.runtime.ClipboardSetText(text2);
+      else await navigator.clipboard.writeText(text2);
+    };
     const label = (k3) => /PASSWORD$/.test(k3) ? "Password" : /EMAIL$/.test(k3) ? "Email" : /USER$/.test(k3) ? "User name" : settingLabel(k3);
+    const row = (k3, _3, group2) => {
+      const s3 = byKey2[k3] || {};
+      const shared = group2.filter((o3) => label(o3) === label(k3)).length > 1;
+      return {
+        label: shared ? settingLabel(k3) : label(k3),
+        shown: s3.secret ? s3.set ? "••••••••" : "not set" : s3.value || "not set",
+        copy: s3.set ? s3.secret ? () => go().CopySetting(k3) : () => plain2(s3.value) : void 0,
+        ...s3.secret && s3.set ? { kept: !!keptNow[k3], keep: keep3(k3) } : {}
+      };
+    };
+    const groups4 = [];
+    if (entry?.login?.length) groups4.push({ title: "Sign in", rows: entry.login.map(row) });
+    const paste = (entry?.keys || []).map(row);
+    if (entry?.keyFile) paste.unshift({ label: "API key", shown: "••••••••", copy: () => go().CopyAppKey(a3.id), kept: !!keptNow["app:" + a3.id], keep: keep3("app:" + a3.id) });
+    if (paste.length) groups4.push({ title: "Paste into another app", rows: paste });
+    if (entry?.recovery?.length) groups4.push({ title: "Keep safe", note: "Without this the backups can’t be opened.", rows: entry.recovery.map(row) });
+    const url = a3.address ? "https://" + a3.address : a3.url || "";
     panel.hidden = false;
-    $("cliTitle").textContent = `Sign in to ${a3.name}`;
+    $("cliTitle").textContent = `${a3.name}: sign-in details`;
     $("cliLog").textContent = "";
     $("cliLog").hidden = true;
-    const rows = keys2.map((k3) => {
-      const s3 = byKey2[k3] || {};
-      const copy = s3.secret ? () => go().CopySetting(k3).then(() => "✓ Password copied; the clipboard clears in 90 seconds.", (e3) => {
-        showError(e3);
-        throw e3;
-      }) : async () => {
-        window.runtime.ClipboardSetText?.(s3.value || "");
-        return `✓ ${label(k3)} copied.`;
-      };
-      return { label: label(k3), shown: s3.secret ? s3.set ? "••••••••" : "not set" : s3.value || "not set", copy: s3.set ? copy : void 0 };
-    });
-    mountSheet($("cliActions"), k(SignIns, { rows, close: closeCli }));
+    mountSheet($("cliActions"), k(SignIns, {
+      address: url ? { label: "Address", shown: url.replace(/^https?:\/\//, ""), copy: () => plain2(url) } : void 0,
+      groups: groups4,
+      empty: groups4.length ? void 0 : "Nothing to sign in with here: the app asks you to make a login the first time you open it, or needs none.",
+      close: closeCli
+    }));
     panel.scrollIntoView({ block: "nearest" });
   }
   var actionTitle = { start: "Starting", stop: "Stopping", restart: "Restarting", update: "Updating", rollback: "Rolling back" };
@@ -8724,7 +8852,8 @@
           /* @__PURE__ */ u3(Icon, { name: "phone" }),
           "Open on a phone"
         ] }),
-        a3.state === "running" && url && /* @__PURE__ */ u3("button", { class: "primary small", onClick: () => on2.open(url), children: "Open" })
+        a3.state === "running" && url && /* @__PURE__ */ u3("button", { class: "primary small", onClick: () => on2.open(url), children: "Open" }),
+        !p3.companion && /* @__PURE__ */ u3(GearButton, { name: a3.name, unsaved: p3.unkept || 0, open: on2.signIn })
       ] })
     ] });
   }
@@ -8878,11 +9007,28 @@
       ] }) : /* @__PURE__ */ u3(Empty, { children: quiet2 }))
     ] });
   }
+  function Private({ privacy: privacy2, connect, busy: busy2 }) {
+    const reading2 = privacy2 === "reading", v3 = reading2 ? null : privacy2;
+    return /* @__PURE__ */ u3(Card, { kind: "alerts pagecard", id: "appPrivate", children: [
+      /* @__PURE__ */ u3(CardHead, { title: "Downloads are private", children: null }),
+      reading2 && /* @__PURE__ */ u3(Empty, { children: "Asking qBittorrent and the VPN…" }),
+      !v3 && !reading2 && /* @__PURE__ */ u3(Empty, { children: "Can't check right now." }),
+      v3 && /* @__PURE__ */ u3(Rows, { children: /* @__PURE__ */ u3(
+        Row,
+        {
+          dot: v3.private ? "ok" : "bad",
+          title: v3.private ? "Yes: only through the VPN" : "Not yet",
+          sub: v3.said,
+          end: v3.fix === "wire" && /* @__PURE__ */ u3("button", { class: "small change", disabled: busy2, onClick: connect, children: "Connect apps" })
+        }
+      ) })
+    ] });
+  }
   function People2({ p: p3 }) {
     const { entry, people, on: on2 } = p3;
     if (!people && !entry?.login?.length) return null;
     return /* @__PURE__ */ u3(Card, { kind: "alerts pagecard", id: "appPeople", children: [
-      /* @__PURE__ */ u3(CardHead, { title: people ? "Who uses it" : "Signing in", children: !!entry?.login?.length && /* @__PURE__ */ u3("button", { class: "small", onClick: () => on2.signIn(entry.login), children: [
+      /* @__PURE__ */ u3(CardHead, { title: people ? "Who uses it" : "Signing in", children: !!entry?.login?.length && /* @__PURE__ */ u3("button", { class: "small", onClick: () => on2.signIn(), children: [
         /* @__PURE__ */ u3(Icon, { name: "key" }),
         "Sign-in details"
       ] }) }),
@@ -8990,6 +9136,7 @@
         /* @__PURE__ */ u3("div", { class: "pagecol", children: [
           p3.entry?.kind !== "native" && p3.a.state !== "missing" && p3.a.state !== "elsewhere" && /* @__PURE__ */ u3(Log, { explainer: p3.explainer, machine: p3.machine, dozzle: p3.dozzle, on: p3.on }),
           p3.stopped !== void 0 && /* @__PURE__ */ u3(Stopped, { stopped: p3.stopped }),
+          p3.privacy !== void 0 && /* @__PURE__ */ u3(Private, { privacy: p3.privacy, connect: p3.on.connect, busy: p3.busy }),
           /* @__PURE__ */ u3(Updates, { p: p3 }),
           /* @__PURE__ */ u3(Done, { on: p3.on })
         ] }),
@@ -9019,6 +9166,8 @@
   var explainer = "";
   var guards = /* @__PURE__ */ new Set(["nginx-proxy-manager", "crowdsec"]);
   var stopped = "reading";
+  var privacy = "reading";
+  var privateApp = "qbittorrent";
   var switching = {};
   async function setSetting(appId, setting, on2) {
     switching[appId] = { ...switching[appId], [setting]: on2 };
@@ -9043,6 +9192,7 @@
       disk = void 0;
       household = null;
       stopped = "reading";
+      privacy = "reading";
     }
     id = appId;
     navigate("app");
@@ -9100,9 +9250,18 @@
   }
   async function readRest() {
     const at2 = id;
-    const [w3, st, ppl, ex, pr] = await Promise.allSettled([go().Watchdog(), go().Storage(), go().People(), go().Explainer(), guards.has(at2) ? go().Protection() : Promise.resolve(null)]);
+    const companion2 = document.documentElement.classList.contains("companion");
+    const [w3, st, ppl, ex, pr, pv] = await Promise.allSettled([
+      go().Watchdog(),
+      go().Storage(),
+      go().People(),
+      go().Explainer(),
+      guards.has(at2) ? go().Protection() : Promise.resolve(null),
+      at2 === privateApp && !companion2 ? go().DownloadsPrivate() : Promise.resolve(null)
+    ]);
     if (at2 !== id) return;
     stopped = pr.status === "fulfilled" ? pr.value : null;
+    privacy = pv.status === "fulfilled" ? pv.value : null;
     watch = w3.status === "fulfilled" ? w3.value : null;
     disk = st.status === "fulfilled" ? st.value?.apps?.find((x3) => x3.app === id)?.bytes : void 0;
     household = ppl.status === "fulfilled" ? (ppl.value || []).filter((p3) => never2(p3.removed) && (!p3.apps?.length || p3.apps.includes(id))) : null;
@@ -9110,6 +9269,7 @@
     draw3();
   }
   var never2 = (t3) => !t3 || t3.startsWith("0001-");
+  unkeptChanged.add(() => draw3());
   function draw3() {
     if (!id) return;
     const a3 = statusById[id];
@@ -9125,6 +9285,7 @@
     mountAppPage($("appPage"), {
       a: a3,
       entry,
+      unkept: unkept?.[id] || 0,
       state: stateOf(a3, new Set(statusData.value?.batteryPaused || []), statusData.value?.stopped || {}),
       pending: pendingOf(id),
       busy: appsBusyNow(),
@@ -9144,6 +9305,7 @@
       machine: thisMachine.replace(/^This/, "this"),
       companion: companion2,
       stopped: guards.has(id) ? stopped : void 0,
+      privacy: id === privateApp && !companion2 ? privacy : void 0,
       on: {
         back: () => navigate("status"),
         act: (action) => appActions.act(a3, action),
@@ -9152,7 +9314,7 @@
         update: () => appActions.update(a3),
         open: (url) => go().Open(url),
         phone: () => appActions.phone(a3),
-        signIn: (keys2) => appActions.signIn(a3, keys2),
+        signIn: () => appActions.signIn(a3),
         // The app's clipboard, or the browser's on a phone.
         copy: async (text2) => {
           if (window.runtime.ClipboardSetText) await window.runtime.ClipboardSetText(text2);
@@ -9171,6 +9333,15 @@
         openBackups: () => navigate("backups"),
         setting: (setting, on2) => setSetting(a3.id, setting, on2),
         remove: () => cliFlow(`Remove ${a3.name}: a backup of its data first, then its container goes`, "remove", a3.id, "Back up and remove"),
+        // Connect apps ties qBittorrent to the VPN's tunnel; then the page asks again.
+        connect: async () => {
+          try {
+            await inTurn("Connect apps", () => go().Wire());
+          } catch (e3) {
+            showError(e3);
+          }
+          readRest();
+        },
         openPeople: () => {
           navigate("settings");
           $("peopleCard")?.scrollIntoView({ block: "start" });

@@ -608,6 +608,40 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 			}
 			return phoneSetup(core.Setup(ctx, root)), log, nil
 		}},
+		// Who uses an app (its page's card): the household members who sign in
+		// to it, by name only. Private: the owner's phones, over https, never a
+		// wall screen; not a member's phone.
+		"AppPeople": {Private: true, Call: func(ctx context.Context, args []json.RawMessage) (any, []string, error) {
+			var id string
+			if len(args) == 0 || json.Unmarshal(args[0], &id) != nil || id == "" {
+				return nil, nil, errors.New("AppPeople takes an app")
+			}
+			p, err := h.appPeople(id)
+			if err != nil {
+				return nil, nil, err
+			}
+			return p, nil, nil
+		}},
+		// What updating an app brings, before a phone updates it (AppAction "update"): its
+		// project's releases newer than the version it runs, as the computer's Update shows
+		// them first (core.ReleaseNotes). Not on a wall screen, not a member's phone, and only
+		// for an app the homelab runs in a container; each is refused before anything is read.
+		"ReleaseNotes": {Call: func(ctx context.Context, args []json.RawMessage) (any, []string, error) {
+			var id string
+			if len(args) > 0 {
+				_ = json.Unmarshal(args[0], &id)
+			}
+			if d, ok := companion.Caller(ctx); ok && d.Kiosk {
+				return nil, nil, fmt.Errorf("%s was paired as a wall screen: read what an update brings from a phone", d.Name)
+			}
+			if err := h.containerApp(id); err != nil {
+				return nil, nil, err
+			}
+			ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+			defer cancel()
+			p, err := core.ReleaseNotes(ctx, root, id)
+			return p, nil, err
+		}},
 		"ExplainLogs": {Call: func(ctx context.Context, args []json.RawMessage) (any, []string, error) {
 			var id string
 			if len(args) > 0 {
@@ -1111,6 +1145,36 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 			}
 			return nil, nil, companion.Ask(root, companion.Asked{Link: link, From: whoAsked(ctx)})
 		}},
+		// Sign-in details (arr-loop.md 1c): the rows, labels only, for any
+		// of the owner's phones over https; one value, for a phone allowed
+		// to change things (Face ID first, on the phone), kept in history.
+		"SignInDetails": {Private: true, Call: func(ctx context.Context, args []json.RawMessage) (any, []string, error) {
+			var app string
+			if len(args) > 0 && json.Unmarshal(args[0], &app) != nil {
+				return nil, nil, errors.New("SignInDetails takes an app, or none for every app")
+			}
+			rows, err := h.signInRows(ctx, app)
+			return rows, nil, err
+		}},
+		"CopySignIn": {Change: true, Private: true, Call: func(ctx context.Context, args []json.RawMessage) (any, []string, error) {
+			a, err := signInArgs(args, 2)
+			if err != nil {
+				return nil, nil, fmt.Errorf("CopySignIn %w: an app and one of its Sign-in details", err)
+			}
+			v, err := h.copySignIn(ctx, a[0], a[1])
+			if err != nil {
+				return nil, nil, err
+			}
+			return v, nil, nil
+		}},
+		"MarkSignInSaved": {Change: true, Private: true, Call: func(ctx context.Context, args []json.RawMessage) (any, []string, error) {
+			a, err := signInArgs(args, 2)
+			var saved bool
+			if err != nil || len(args) < 3 || json.Unmarshal(args[2], &saved) != nil {
+				return nil, nil, errors.New("MarkSignInSaved takes an app, one of its Sign-in details, and true or false")
+			}
+			return nil, nil, h.markSignIn(ctx, a[0], a[1], saved)
+		}},
 		"SnoozeCheck": {Change: true, Call: func(ctx context.Context, args []json.RawMessage) (any, []string, error) {
 			var check string
 			var hours int
@@ -1182,6 +1246,18 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 				if apply {
 					cmd = append(cmd, "--apply")
 				}
+			case "update-all":
+				// Update all apps (the owner's yes, Nov 20, on the canvas's *Idea:
+				// Update all*): the list first, as the computer's; with apply, every
+				// app the nightly update would take, one at a time. Once started it
+				// runs to the end on the computer, even if the phone closes or loses
+				// the link, so no app is left half updated.
+				if !apply {
+					cmd = []string{"update", "--all"}
+					break
+				}
+				lines, err := h.runSelfFor(context.WithoutCancel(ctx), updateAllFor, "update", "--all", "--apply")
+				return nil, append([]string{"$ homelab update --all --apply"}, lines...), err
 			default:
 				return nil, nil, fmt.Errorf("%s is not on the phone: use Homelab Wizard on the computer", action)
 			}
@@ -1190,6 +1266,10 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 		}},
 	}
 }
+
+// updateAllFor is how long Update all from a phone may take: every app,
+// one at a time, each waiting for a backup or an install.
+const updateAllFor = 3 * time.Hour
 
 // phoneLog is an app's log as a phone gets it: without .env's secrets or
 // anything shaped like a password or token, since every paired device may
@@ -1213,11 +1293,16 @@ func (h *homelab) containerApp(id string) error {
 // runSelf runs a homelab command with this binary, as a separate process,
 // and returns what it printed, line by line.
 func (h *homelab) runSelf(ctx context.Context, args ...string) ([]string, error) {
+	return h.runSelfFor(ctx, 30*time.Minute, args...)
+}
+
+// runSelfFor is runSelf, stopped after limit.
+func (h *homelab) runSelfFor(ctx context.Context, limit time.Duration, args ...string) ([]string, error) {
 	exe, err := os.Executable()
 	if err != nil {
 		return nil, err
 	}
-	ctx, cancel := context.WithTimeout(ctx, 30*time.Minute)
+	ctx, cancel := context.WithTimeout(ctx, limit)
 	defer cancel()
 	c := procattr.Hide(exec.CommandContext(ctx, exe, append([]string{"--root", h.root, "--no-color"}, args...)...))
 	c.Dir = h.root

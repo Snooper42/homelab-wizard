@@ -26,7 +26,7 @@ One place to manage indexers, their credentials, and their health.
 ## Setup
 
 1. `./homelab install @arr` (Choose apps › **Media automation**) installs Prowlarr with Sonarr, Radarr, Lidarr, Bazarr, FlareSolverr, qBittorrent with [Gluetun](<Gluetun.md>) (once `PROTONVPN_WIREGUARD_PRIVATE_KEY` is set), and Seerr.
-2. Open `https://<TAILSCALE_HOST>:9696` in Home mode, or `https://prowlarr.example.com` with a domain, and set up authentication (Forms, with a username and password).
+2. Open `https://<TAILSCALE_HOST>:9696` in Home mode, or `https://prowlarr.example.com` with a domain, and sign in with the login in its ⚙ Sign-in details (`ARR_USER`, `ARR_PASSWORD`, made at install; Connect apps sets it in Prowlarr, Sonarr, Radarr and Lidarr as their Forms login, so none asks you to make one).
 3. Settings › Apps: add each app by service name and its API key (from the app's Settings › General):
    - Sonarr `http://sonarr:8989`, Radarr `http://radarr:7878`, Lidarr `http://lidarr:8686`, LazyLibrarian `http://lazylibrarian:5299`
    - Prowlarr server: `http://prowlarr:9696`
@@ -75,6 +75,7 @@ Prowlarr has no media or download folders.
 `./homelab wire` (or Connect apps in the desktop app) makes these links through the apps' APIs. It lists the links for the apps that are running and asks before making them (without a terminal it only previews); `./homelab wire --apply` makes them without asking:
 
 - It reads each *arr's API key from `data/appdata/<app>/config.xml` and waits up to three minutes for the app's API to answer.
+- It sets the login in `.env` (`ARR_USER`, default `admin`, and `ARR_PASSWORD`) as Prowlarr's, Sonarr's, Radarr's and Lidarr's sign-in (Settings › General › Authentication: Forms, required). Next time it checks the password with one sign-in (a failed sign-in counts toward the app's lockout, so never more), and sets it again only when it no longer matches. A login someone made in the app is replaced, and it says so. With `ARR_PASSWORD` cleared, each app keeps its own.
 - In Prowlarr › Settings › Apps it adds Sonarr, Radarr, and Lidarr, each with Prowlarr server `http://prowlarr:9696`, the app's address (`http://sonarr:8989`, `http://radarr:7878`, `http://lidarr:8686`), its API key, and Full Sync. LazyLibrarian is not added; add it by hand.
 - When FlareSolverr runs, it creates the `flaresolverr` tag and adds the FlareSolverr indexer proxy at `http://flaresolverr:8191/` with that tag. You still tag the indexers yourself.
 - When qBittorrent runs, it adds qBittorrent as the download client in Sonarr, Radarr, and Lidarr: host `gluetun`, port `8082`, user `QBITTORRENT_USER` (default `admin`), password `QBITTORRENT_PASSWORD`. Without that password in `.env` it stops with a next step instead. It files each app's downloads under its own category: `tv`, `movies`, and `music`. A download client that already exists keeps its category.

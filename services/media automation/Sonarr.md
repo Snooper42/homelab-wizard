@@ -25,7 +25,7 @@ New episodes of followed shows arrive in `/Volumes/Media/tv`, named and organise
 
 ## Setup
 
-1. Open `https://<TAILSCALE_HOST>:8989` in Home mode, or `https://sonarr.example.com` with a domain, and set up authentication.
+1. Open `https://<TAILSCALE_HOST>:8989` in Home mode, or `https://sonarr.example.com` with a domain, and sign in with the login in its ⚙ Sign-in details (`ARR_USER`, `ARR_PASSWORD`, made at install; Connect apps sets it, so Sonarr never asks you to make one).
 2. Settings › Media Management: root folder `/tv`.
 3. Settings › Download Clients: qBittorrent, host `gluetun`, port `8082`, with qBittorrent's login. Category `tv`.
 4. Indexers come from Prowlarr.
@@ -83,7 +83,7 @@ The layout is not hardlink-friendly. `/downloads` and `/tv` are two separate bin
 - [qBittorrent](<qBittorrent.md>) is the download client: host `gluetun`, port `8082`, with qBittorrent's Web UI login. qBittorrent shares [Gluetun](<Gluetun.md>)'s network, so `qbittorrent` is not a valid host.
 - [Bazarr](<Bazarr.md>) and [Seerr](<Seerr.md>) use Sonarr's API key (Settings › General › Security) with the address `http://sonarr:8989`.
 - [Jellyfin](<../media/Jellyfin.md>) reads the same library at `/Volumes/Media/tv`.
-- `./homelab wire` adds Sonarr to Prowlarr and qBittorrent to Sonarr, reading Sonarr's key from `data/appdata/sonarr/config.xml`. The download client gets the category `tv`. See [Prowlarr](<Prowlarr.md#connects-to>) for everything it does.
+- `./homelab wire` adds Sonarr to Prowlarr and qBittorrent to Sonarr, reading Sonarr's key from `data/appdata/sonarr/config.xml`. The download client gets the category `tv`. It also turns Sonarr's renaming and Completed Download Handling off, so Tidy Up files each download once, unless Tidy Up's inbox isn't filing the downloads folder (it says why). See [Prowlarr](<Prowlarr.md#connects-to>) for everything it does.
 - `.env`: `SONARR_PORT`, `MEDIA_ROOT`, `DOWNLOADS_ROOT`, `PUID` and `PGID` (owner of the files it writes), `TZ`.
 
 ## Tinkering ideas

@@ -174,7 +174,7 @@ async function renderInputs(p: api.Plan) {
   if (keys.length && !settingHelp) {
     try { settingHelp = Object.fromEntries((await go().Settings()).map((s) => [s.key, s])); } catch { settingHelp = {}; }
   }
-  mountInputs($('inputs'), { keys, meta: settingHelp || {}, values: settings, label: settingLabel, input: (k, v) => { settings[k] = v; replan(); } });
+  mountInputs($('inputs'), { keys, meta: settingHelp || {}, values: settings, label: settingLabel, input: (k, v) => { settings[k] = v; replan(); }, open: (url) => go().Open(url) });
 }
 
 let installing = false;

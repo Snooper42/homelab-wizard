@@ -259,6 +259,12 @@ func (h *homelab) mediaEngine(ctx context.Context, kind, action string, args []s
 	if err := h.mediaSettings(ctx, py); err != nil {
 		return err
 	}
+	// The inbox files nothing qBittorrent still downloads or shares.
+	if kind == "inbox" && action == "scan" {
+		if err := h.inboxTorrents(ctx, env); err != nil {
+			return fmt.Errorf("what qBittorrent still has couldn't be noted for the inbox: %w", err)
+		}
+	}
 	// The inbox's sweep and the scrubber only preview without --apply: no
 	// lock then. The inbox's Undo, name, and leave act at once.
 	preview := kind == "inbox" && action == "scan" || kind == "scrubber" || kind == "tdarr"

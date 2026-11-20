@@ -15,11 +15,15 @@ import AppKit
 enum Clipboard {
     static let lifetime: TimeInterval = 600
 
-    @MainActor static func copy(_ text: String, sensitive: Bool = false) {
+    /// A password or key from an app's Sign-in details: 90 seconds, then gone.
+    static let secretLifetime: TimeInterval = 90
+
+    /// `lifetime`: how long it stays (ten minutes when nil); given, the Mac clears it then too.
+    @MainActor static func copy(_ text: String, sensitive: Bool = false, for lifetime: TimeInterval? = nil) {
         #if canImport(UIKit)
         UIPasteboard.general.setItems(
             [[UTType.utf8PlainText.identifier: text]],
-            options: [.localOnly: true, .expirationDate: Date().addingTimeInterval(lifetime)]
+            options: [.localOnly: true, .expirationDate: Date().addingTimeInterval(lifetime ?? Self.lifetime)]
         )
         #elseif canImport(AppKit)
         let board = NSPasteboard.general
@@ -27,6 +31,14 @@ enum Clipboard {
         board.setString(text, forType: .string)
         if sensitive {
             board.setString("", forType: NSPasteboard.PasteboardType("org.nspasteboard.ConcealedType"))
+        }
+        if let lifetime {
+            // The Mac's clipboard has no expiry: clear it then, unless something else was copied since.
+            let copied = board.changeCount
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(lifetime))
+                if NSPasteboard.general.changeCount == copied { NSPasteboard.general.clearContents() }
+            }
         }
         #endif
     }
@@ -132,6 +144,7 @@ extension AppAction {
         case .stop: Theme.danger
         case .restart: Theme.info
         case .rollback: Theme.warning
+        case .update: Theme.accent
         }
     }
 }

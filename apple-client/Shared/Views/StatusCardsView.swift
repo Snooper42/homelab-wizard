@@ -8,13 +8,18 @@ import SwiftUI
 struct StatusCards: View {
     let cards: CardsViewModel
     let finances: FinancesViewModel
+    /// An app's name by its id, for the Storage card.
+    var nameOf: @MainActor (String) -> String = { $0 }
 
     var body: some View {
         if finances.canSeeMoney {
             MoneySection(finances: finances)
         }
-        ForEach(cards.shown) { card in
-            CardSection(card: card)
+        ForEach(cards.slots) { slot in
+            switch slot {
+            case .card(let card): CardSection(card: card)
+            case .storage(let storage): StorageSection(storage: storage, nameOf: nameOf)
+            }
         }
         if let error = cards.error {
             Section {
@@ -542,6 +547,90 @@ private struct SavingsCard: View {
         } else {
             Text("The nightly backup records this. Check back tomorrow.")
                 .foregroundStyle(.secondary)
+        }
+    }
+}
+
+// MARK: - Storage
+
+/// What the apps keep, as the computer's Storage card: the six largest
+/// folders with a bar each, the rest counted, and when they were measured.
+/// Under Status's list on the iPad; on its own page from Settings (`StoragePage`).
+struct StorageSection: View {
+    let storage: StorageCard
+    let nameOf: @MainActor (String) -> String
+    /// Off on its own page, whose title already says Storage (light-storage said it twice).
+    var showsHeader = true
+
+    var body: some View {
+        Section {
+            VStack(alignment: .leading, spacing: 2) {
+                LabeledContent {
+                    Text(storage.total.formatted(.byteCount(style: .file))).fontWeight(.semibold).monospacedDigit()
+                } label: {
+                    Text("What the apps keep").fontWeight(.semibold)
+                }
+                Text(lead)
+                    .font(.footnote)
+                    .foregroundStyle(Theme.secondaryInk)
+            }
+            ForEach(storage.rows) { row in
+                VStack(alignment: .leading, spacing: 6) {
+                    LabeledContent(nameOf(row.app)) {
+                        Text(row.bytes.formatted(.byteCount(style: .file))).monospacedDigit()
+                    }
+                    StorageBar(share: Double(row.bytes) / Double(max(storage.rows.first?.bytes ?? 1, 1)))
+                        .frame(height: 6)
+                        .accessibilityHidden(true)
+                }
+                .accessibilityElement(children: .combine)
+            }
+            if storage.more > 0 {
+                LabeledContent {
+                    Text(storage.moreBytes.formatted(.byteCount(style: .file))).monospacedDigit()
+                } label: {
+                    Text(verbatim: storage.more == 1 ? "And 1 more" : "And \(storage.more) more")
+                }
+                .foregroundStyle(Theme.secondaryInk)
+            }
+        } header: {
+            if showsHeader { Label("Storage", systemImage: "internaldrive") }
+        }
+    }
+
+    private var lead: String {
+        let when = storage.measured.map { " (\($0.formatted(.relative(presentation: .named))))" } ?? ""
+        return "Each app's folder, as the nightly backup measured it\(when). Photos and films on their own drive aren't counted."
+    }
+}
+
+/// What the apps keep, on a page of its own: Settings' row opens it (the
+/// owner's pick, Nov 20: the iPhone's Status stays as trimmed on Nov 9, with
+/// no cards under the apps).
+struct StoragePage: View {
+    let storage: StorageCard
+    let nameOf: @MainActor (String) -> String
+
+    var body: some View {
+        Form {
+            StorageSection(storage: storage, nameOf: nameOf, showsHeader: false)
+        }
+        .formStyle(.grouped)
+        .themedCanvas()
+        .navigationTitle("Storage")
+    }
+}
+
+/// A row's share of the largest folder.
+private struct StorageBar: View {
+    let share: Double
+
+    var body: some View {
+        GeometryReader { geo in
+            ZStack(alignment: .leading) {
+                Capsule().fill(Theme.secondaryInk.opacity(0.15))
+                Capsule().fill(Theme.accent).frame(width: max(4, geo.size.width * min(max(share, 0), 1)))
+            }
         }
     }
 }

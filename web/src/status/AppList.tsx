@@ -46,6 +46,8 @@ export interface AppListActions {
   menu: RowMenuActions;
   /** The output of its last command (Start, Stop, Restart), in a sheet: after a failure. */
   details: (a: api.AppStatus) => void;
+  /** Its sign-in details (the ⚙): address, logins, keys, what opens the backups, each to copy. */
+  signIn: (a: api.AppStatus) => void;
 }
 
 /** A row's action the runtime has not confirmed yet, or why it failed. */
@@ -80,6 +82,8 @@ export interface AppListProps {
   companion: boolean;
   /** What each app holds in memory now, in bytes by app ID (its helpers with it); none until Status has sampled it. */
   memory?: Record<string, number>;
+  /** The passwords and keys of each app not ticked Saved yet (Sign-in details): a dot on its ⚙. */
+  unkept?: Record<string, number>;
   os: 'mac' | 'windows' | 'linux';
   on: AppListActions;
 }
@@ -331,7 +335,9 @@ function Row({ a, p, menu, setMenu, said, say }: { a: api.AppStatus; p: AppListP
           : a.url ? <Link url={a.url} text={a.url.replace(/^http:\/\//, '')} open={p.on.open} copy={copy} os={p.os} />
           : <span class="muted">—</span>}
       </td>
-      <td class="rowActions"><Actions a={a} entry={entry} busy={p.busy || (!!pend && !pend.failed)} os={p.os} on={p.on} />{a.state !== 'missing' && <button class="iconbtn topage" title={`${a.name}: its page`} aria-label={`${a.name}: its page`} onClick={() => p.on.page(a)}><Icon name="chevron" /></button>}
+      <td class="rowActions"><Actions a={a} entry={entry} busy={p.busy || (!!pend && !pend.failed)} os={p.os} on={p.on} />
+        {a.state !== 'missing' && !p.companion && <GearButton name={a.name} unsaved={p.unkept?.[a.id] || 0} open={() => p.on.signIn(a)} />}
+        {a.state !== 'missing' && <button class="iconbtn topage" title={`${a.name}: its page`} aria-label={`${a.name}: its page`} onClick={() => p.on.page(a)}><Icon name="chevron" /></button>}
         {menu?.id === a.id && <RowMenu a={a} x={menu.x} y={menu.y} native={entry?.kind === 'native'} busy={p.busy} companion={p.companion} on={p.on.menu} close={close} said={(w) => say(a.id, w)} />}</td>
     </tr>
   );
@@ -734,3 +740,9 @@ export function mountShowAll(el: Element) { render(<ShowAll />, el); }
 
 /** Empties el, so the next mount starts afresh. */
 export function clearAppList(el: Element) { render(null, el); }
+
+/** The ⚙ for an app's sign-in details, with a dot while a password or key of its isn't ticked Saved. */
+export function GearButton({ name, unsaved, open }: { name: string; unsaved: number; open: () => void }) {
+  const said = unsaved ? `${name}: sign-in details, ${unsaved === 1 ? '1 not' : unsaved + ' not'} in your password manager yet` : `${name}: sign-in details`;
+  return <button class={'iconbtn gear' + (unsaved ? ' unsaved' : '')} title={said} aria-label={said} onClick={open}><Icon name="gear" />{unsaved > 0 && <span class="gearDot" aria-hidden="true" />}</button>;
+}

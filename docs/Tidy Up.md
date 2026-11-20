@@ -114,7 +114,7 @@ With Jellyfin set up here (its address and `JELLYFIN_API_KEY`), the films' and T
 
 ## The download apps
 
-`homelab media arr --apply` (or **Hand over** on the screen) turns Sonarr's, Radarr's, and Lidarr's renaming off, and their Completed Download Handling, which is what moves finished downloads into the libraries. They keep finding and downloading; the downloads stay in their folder, where the inbox files them. LazyLibrarian is told how by hand: turn its post-processing off.
+**Connect apps** (`homelab wire --apply`) does this by itself whenever Tidy Up's inbox files what lands in `DOWNLOADS_ROOT` (Tidy Up and its inbox on, the inbox not set to `manual`, and `DOWNLOADS_ROOT` among its folders); otherwise it leaves the apps filing and says why. `homelab media arr --apply` (or **Hand over** on the screen) turns Sonarr's, Radarr's, and Lidarr's renaming off, and their Completed Download Handling, which is what moves finished downloads into the libraries. They keep finding and downloading; the downloads stay in their folder, where the inbox files them. LazyLibrarian is told how by hand: turn its post-processing off.
 
 ## Commands
 

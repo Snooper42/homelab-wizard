@@ -765,6 +765,11 @@ private struct MoreFinancesCard: View {
                     IconTileLabel(title: "Calendar", systemImage: "calendar.day.timeline.left", tint: Color(light: 0x0E7490, dark: 0x22D3EE))
                 }
             }
+            if !view.plan.people.isEmpty {
+                row { FinancePaychecksPage(finances: finances) } label: {
+                    IconTileLabel(title: "Paychecks", systemImage: "banknote.fill", tint: Theme.success)
+                }
+            }
             if !view.recurring.isEmpty {
                 row { FinanceRecurringPage(finances: finances) } label: {
                     IconTileLabel(title: "Recurring", systemImage: "repeat", tint: Color(light: 0x7C3AED, dark: 0xA78BFA)) {
@@ -4218,6 +4223,7 @@ private struct LinkedFinancePage: View {
         case .cashflow: FinanceCashFlowPage(finances: finances)
         case .review: MonthReviewPage(finances: finances)
         case .calendar: FinanceCalendarView(finances: finances)
+        case .paychecks: FinancePaychecksPage(finances: finances)
         }
     }
 }
@@ -4264,6 +4270,7 @@ private struct ScreenshotPage: View {
         case "cashflow": FinanceCashFlowPage(finances: finances)
         case "review": MonthReviewPage(finances: finances)
         case "calendar": FinanceCalendarView(finances: finances)
+        case "paychecks": FinancePaychecksPage(finances: finances)
         case "loading": ScrollView { SkeletonCards().padding(.horizontal, 16) }.background(Theme.canvas).navigationTitle("Finances")
         default: FinancesView(finances: finances)
         }

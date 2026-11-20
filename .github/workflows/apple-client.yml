@@ -314,7 +314,7 @@ jobs:
           APP="$(ls -d "$RUNNER_TEMP"/shots/Build/Products/Debug-iphonesimulator/*.app | grep -v Widget | head -1)"
           BID="$(/usr/libexec/PlistBuddy -c 'Print CFBundleIdentifier' "$APP/Info.plist")"
           mkdir -p "$RUNNER_TEMP/pictures"
-          shots="status backups finances spending inbox loading transactions transaction budgets bills recurring cashflow calendar review accounts investments goals setup settings settings-all phones lock app"
+          shots="status backups finances spending inbox loading transactions transaction budgets bills recurring cashflow calendar paychecks review accounts investments goals setup settings settings-all phones storage lock app"
           # shoot <simulator> <file>: the picture, and again up to three times, six seconds apart, while it's a
           # plain white or black screen (the app still opening is a small file). Every picture goes through it:
           # the largest text had no retake, and ipad-land-large-transactions was plain white (Nov 19).
@@ -339,8 +339,9 @@ jobs:
               xcrun simctl ui "$dev" appearance "$look"
               for shot in $shots; do
                 xcrun simctl launch --terminate-running-process "$dev" "$BID" -shot "$shot" > /dev/null || { echo "couldn't open $pre$shot"; continue; }
-                # Finances' pages read the plan and the ledger first: longer, or they're pictured still reading.
-                case "$shot" in status|backups|setup|settings|settings-all|lock|app|loading) sleep 7 ;; *) sleep 11 ;; esac
+                # Finances' pages read the plan and the ledger first, and Setup its checklist once the device is known:
+                # longer, or they're pictured still reading.
+                case "$shot" in status|backups|settings|settings-all|lock|app|loading) sleep 7 ;; *) sleep 11 ;; esac
                 file="$RUNNER_TEMP/pictures/$pre$look-$shot.png"
                 shoot "$dev" "$file" || { echo "no picture of $pre$look-$shot"; continue; }
                 upright "$file"

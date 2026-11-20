@@ -95,8 +95,9 @@ func AppsFrom(c *catalog.Catalog, running func(id string) bool, env map[string]s
 			app.Internal = "http://" + host + ":" + strconv.Itoa(p)
 		}
 		for _, v := range a.Volumes {
-			// Seerr keeps its settings in /app/config, the *arr apps and Bazarr in /config.
-			if r, err := v.Resolve(lookup, a.File.Dir, home); err == nil && r.Bind && (v.Target == "/config" || v.Target == "/app/config") {
+			// Seerr keeps its settings in /app/config, the *arr apps and Bazarr
+			// in /config, Gluetun (its forwarded port) in /gluetun.
+			if r, err := v.Resolve(lookup, a.File.Dir, home); err == nil && r.Bind && (v.Target == "/config" || v.Target == "/app/config" || v.Target == "/gluetun") {
 				app.ConfigDir = r.Source
 			}
 		}
@@ -124,6 +125,17 @@ type step struct {
 
 func (w *Wirer) steps() []step {
 	var out []step
+	// With no ARR_PASSWORD (cleared by hand), each app keeps the login made in it.
+	if w.Env["ARR_PASSWORD"] != "" {
+		for _, id := range arrLoginApps {
+			id := id
+			if w.has(id) {
+				out = append(out, step{w.name(id) + " signs in with the login in Sign-in details", func(ctx context.Context) (string, string, error) {
+					return w.arrLogin(ctx, id)
+				}})
+			}
+		}
+	}
 	for _, c := range clients {
 		c := c
 		if w.has("prowlarr", c.id) {
@@ -137,6 +149,7 @@ func (w *Wirer) steps() []step {
 	}
 	if w.has("qbittorrent") {
 		out = append(out, step{"qBittorrent stops sharing once a download is finished", w.qbitSharing})
+		out = append(out, step{"qBittorrent takes the VPN's forwarded port by itself", w.qbitVPNPort})
 	}
 	for _, c := range clients {
 		c := c
@@ -154,6 +167,7 @@ func (w *Wirer) steps() []step {
 			}})
 		}
 	}
+	out = append(out, w.tidyFilingSteps()...)
 	for _, l := range libraries[:2] { // Sonarr and Radarr
 		l := l
 		if w.has("bazarr", l.id) {

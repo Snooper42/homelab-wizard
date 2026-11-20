@@ -47,7 +47,7 @@ struct DashboardView: View {
                 // Read again what the job changed.
                 switch task {
                 case .backup, .restoreTest: await dashboard?.backups.load()
-                case .fix: await dashboard?.refresh()
+                case .fix, .updateAll: await dashboard?.refresh()
                 }
             }
         ))
@@ -249,6 +249,8 @@ private struct PhoneDashboard: View {
             SettingsFormView(computer: computer, section: nil)
         } else if ScreenshotMode.shot == "phones" {
             PhonesPage(computer: computer)
+        } else if ScreenshotMode.shot == "storage", let storage = model.cards.storage {
+            StoragePage(storage: storage, nameOf: { model.app(id: $0)?.name ?? $0 })
         } else {
             ComputerView(computer: computer, page: .settings)
         }
@@ -292,7 +294,7 @@ extension ScreenshotMode {
         case "status", "app": .status(.all)
         case "backups": .backups
         case "setup": .setup
-        case "settings", "settings-all", "phones": .settings
+        case "settings", "settings-all", "phones", "storage": .settings
         default: .finances
         }
     }
@@ -607,6 +609,10 @@ private struct SplitDashboard: View {
             Section {
                 ForEach(screens, id: \.self) { screen in
                     Label(screen.title, systemImage: screen.systemImage)
+                        // Whole at the largest text: the column broke them ("Backu ps", "Fi- nances",
+                        // ipad-land-large-status, Nov 20); smaller instead, as Status's group names.
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.5)
                         .badge(badge(for: screen))
                         .tag(screen)
                 }
@@ -965,7 +971,7 @@ private struct SplitDashboard: View {
             if filter == .all, !model.isSearching, model.hasLoaded {
                 // Not rows to select: the selection is an app. Every Alert
                 // opens beside the list, in the app's place.
-                StatusCards(cards: model.cards, finances: finances)
+                StatusCards(cards: model.cards, finances: finances, nameOf: { model.app(id: $0)?.name ?? $0 })
                     .selectionDisabled()
                     .environment(\.openAlertLog, { model.openAlertLog() })
             }
@@ -1329,12 +1335,10 @@ struct OvernightLine: View {
             // At the largest sizes the button goes under the words: beside them, in the
             // iPad's column, both broke a letter or two a line ("Over / nigh / t:", Nov 16).
             if typeSize.isAccessibilitySize {
+                // The words the whole width, without the moon beside them: in the iPad's column the
+                // colon still went to a line of its own ("Overnight / : 2 apps", Nov 20).
                 VStack(alignment: .leading, spacing: 6) {
-                    Label {
-                        Text(words).font(.callout)
-                    } icon: {
-                        Image(systemName: "moon.stars").foregroundStyle(.secondary).accessibilityHidden(true)
-                    }
+                    Text(words).font(.callout)
                     hide
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)

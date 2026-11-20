@@ -68,6 +68,8 @@ const apps = catalog.apps
   }));
 // A week with long lines, as a homelab that needs looking after gets.
 const longWeek = { title: 'Homelab this week: 4 things to look at', problems: 4, body: '\u2022 20 of 21 apps well; needs a look: Cloudflare Tunnel (not running)\n\u2022 Watchdog: failing: crowdsec bouncer\n\u2022 Backups: 5 stale (Navidrome, Audiobookshelf, Calibre-Web, Komga, Kavita)\n\u2022 Off-site jobs: Duplicati is not reachable: connection refused\n\u25e6 No restore test yet (Backups \u203a Test a restore)\n\u25e6 Vault export due (Backups \u203a Password export)\n\u2713 Disk space: 73 GB free of 460 GB (15%)\nReplacing $2,656 a year in subscriptions' };
+// qBittorrent, running in the VPN's network (media automation is opt-in, so it's added where a check needs it).
+const qbit = { id: 'qbittorrent', name: 'qBittorrent', state: 'running', health: 'healthy', url: 'http://localhost:8082' };
 const status = { apps, missing: 0, unmatched: 0, savings: 3292, updates: { paused: false, schedule: 'daily at 04:00' } };
 // What docker stats says over a minute: Immich indexing photos, Jellyfin
 // streaming, Paperless reading a scan.
@@ -2322,14 +2324,99 @@ const smokes = [
     await page.waitForSelector('#appUpdates', { timeout: 5000 });
     if (await page.locator('#appStopped').count()) throw new Error('Vikunja\'s page shows what CrowdSec stopped');
   } },
+  // Downloads are private (arr item 2): qBittorrent's page says whether its downloads leave only through the VPN,
+  // why not in words, and offers Connect apps when that ties it to the tunnel; then it asks again.
+  { name: 'qBittorrent’s page: downloads are private', screen: 'app:qbittorrent', mock: { status: { ...status, apps: [...status.apps, qbit] }, privacy: { private: true, said: "qBittorrent's downloads leave only through ProtonVPN, never your home connection." } }, run: async (page) => {
+    const card = page.locator('#appPrivate');
+    await card.locator('h2:has-text("Downloads are private")').waitFor({ timeout: 5000 });
+    await card.locator('li:has(.dot.ok):has-text("Yes: only through the VPN")').waitFor({ timeout: 3000 });
+    await card.getByText('never your home connection').waitFor({ timeout: 3000 });
+    if (await card.getByRole('button', { name: 'Connect apps' }).count()) throw new Error('Connect apps offered while private');
+  } },
+  { name: 'qBittorrent’s page: not tied to the VPN yet, Connect apps ties it', screen: 'app:qbittorrent', mock: { status: { ...status, apps: [...status.apps, qbit] }, privacy: { private: false, said: "The VPN is connected, but qBittorrent isn't tied to the VPN's tunnel yet. Connect apps ties it.", fix: 'wire' } }, run: async (page) => {
+    const card = page.locator('#appPrivate');
+    await card.locator('li:has(.dot.bad):has-text("Not yet")').waitFor({ timeout: 5000 });
+    await card.getByText("isn't tied to the VPN's tunnel yet").waitFor({ timeout: 3000 });
+    await page.evaluate(() => { window.__MOCK.privacy = { private: true, said: "qBittorrent's downloads leave only through ProtonVPN, never your home connection." }; });
+    await card.getByRole('button', { name: 'Connect apps' }).click();
+    await card.locator('li:has(.dot.ok):has-text("Yes: only through the VPN")').waitFor({ timeout: 5000 });
+  } },
+  { name: 'qBittorrent’s page when the check can’t be read', screen: 'app:qbittorrent', mock: { status: { ...status, apps: [...status.apps, qbit] } }, run: async (page) => {
+    await page.locator('#appPrivate').getByText("Can't check right now.").waitFor({ timeout: 5000 });
+  } },
+  { name: 'Other apps’ pages have no Downloads are private card', screen: 'app:vikunja', run: async (page) => {
+    await page.waitForSelector('#appUpdates', { timeout: 5000 });
+    if (await page.locator('#appPrivate').count()) throw new Error('Vikunja\'s page shows Downloads are private');
+  } },
   { name: 'Sign-in details for the proxy, from its page', screen: 'app:nginx-proxy-manager', run: async (page) => {
     await page.click('#appPeople button:has-text("Sign-in details")', { timeout: 5000 });
-    await page.waitForSelector('#cliTitle:has-text("Sign in to Nginx Proxy Manager")');
-    await page.waitForSelector('#cliActions .signin:has-text("homelab@example.com")');
+    await page.waitForSelector('#cliTitle:has-text("Nginx Proxy Manager: sign-in details")');
+    await page.waitForSelector('#cliActions .signingroup:has(h4:text-is("Sign in")) .signin:has-text("homelab@example.com")');
     await page.click('#cliActions .signin:has-text("Email") button');
     if ((await page.evaluate(() => window.__MOCK.clipboard)) !== 'homelab@example.com') throw new Error('the email was not copied');
     await page.click('#cliActions .signin:has-text("Password") button');
-    await page.waitForSelector('#cliActions:has-text("Password copied")');
+    // The copy shows on the button itself, saying where to paste it; the password went to the clipboard, not the page.
+    await page.waitForSelector('#cliActions .signin:has-text("Password") button.copied:has-text("Copied. Paste it into Proton Pass")');
+    if (!(await page.evaluate(() => window.__MOCK.copiedSettings || [])).includes('NPM_API_PASSWORD')) throw new Error('the password was not copied by the computer');
+    if (await page.locator('#cliActions .signin:has-text("Email") button.copied').count()) throw new Error('only the last copy is highlighted');
+  } },
+  // The ⚙ on every Status row (the owner, Nov 19): Sonarr's own API key, from its config.xml, to paste into another app;
+  // the bounce goes with Reduce Motion, the highlight stays.
+  { name: 'Status: the gear on Sonarr’s row copies its API key', screen: 'status',
+    mock: { status: { ...status, apps: [...status.apps, { id: 'sonarr', name: 'Sonarr', state: 'running', health: 'healthy', url: 'http://localhost:8989' }] } }, run: async (page) => {
+    await page.click('#statusRows tr:has(strong:text-is("Sonarr")) button.gear', { timeout: 5000 });
+    await page.waitForSelector('#cliTitle:has-text("Sonarr: sign-in details")');
+    await page.waitForSelector('#cliActions .signin:has-text("Address"):has-text("localhost:8989")');
+    const key = '#cliActions .signingroup:has(h4:text-is("Paste into another app")) .signin:has-text("API key")';
+    if ((await page.textContent(key + ' strong')) !== '••••••••') throw new Error('the key shows as dots');
+    await page.click(key + ' button');
+    await page.waitForSelector(key + ' button.copied:has-text("Copied. Paste it into Proton Pass")');
+    if ((await page.evaluate(() => window.__MOCK.copiedKeys || [])).join() !== 'sonarr') throw new Error('Sonarr’s key was not copied by the computer');
+    if ((await page.$eval(key + ' button', (b) => getComputedStyle(b).animationName)) !== 'copybounce') throw new Error('no bounce');
+    // The ring around it shows, over each system's own button look.
+    if (!/\b2px\b/.test(await page.$eval(key + ' button', (b) => getComputedStyle(b).boxShadow))) throw new Error('no highlight around the button');
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    if ((await page.$eval(key + ' button', (b) => getComputedStyle(b).animationName)) !== 'none') throw new Error('it bounces with Reduce Motion');
+  } },
+  // 1b (the owner, Nov 19): after a copy, a quiet Saved tick, kept by name; the ⚙'s dot goes once nothing is left.
+  { name: 'Sign-in details: Saved in Proton Pass clears the dot on the gear', screen: 'status',
+    mock: { unkeptApps: { sonarr: 1 }, status: { ...status, apps: [...status.apps, { id: 'sonarr', name: 'Sonarr', state: 'running', health: 'healthy', url: 'http://localhost:8989' }] } }, run: async (page) => {
+    const gear = '#statusRows tr:has(strong:text-is("Sonarr")) button.gear';
+    await page.waitForSelector(`${gear} .gearDot`, { timeout: 5000 });
+    await page.click(gear);
+    const key = '#cliActions .signin:has-text("API key")';
+    await page.waitForSelector(key + ' button');
+    if (await page.locator(key + ' .signinkept').count()) throw new Error('the tick shows before a copy');
+    await page.click(key + ' button');
+    await page.click(key + ' .signinkept input');
+    if (JSON.stringify(await page.evaluate(() => window.__MOCK.markedKept)) !== '[["app:sonarr",true]]') throw new Error('not ticked by name');
+    await page.waitForSelector(`${gear}:not(:has(.gearDot))`, { timeout: 5000 });
+  } },
+  { name: 'Sign-in details: Duplicati’s passphrases are under Keep safe', screen: 'app:duplicati', run: async (page) => {
+    await page.click('.pagehead button.gear', { timeout: 5000 });
+    const keep = '#cliActions .signingroup:has(h4:text-is("Keep safe"))';
+    await page.waitForSelector(`${keep}:has-text("Without this the backups can’t be opened")`);
+    if ((await page.locator(`${keep} .signin`).count()) !== 2) throw new Error('both passphrases are listed');
+    if (await page.locator('#cliActions .signin:has-text("Settings key")').count()) throw new Error('an internal secret is listed');
+  } },
+  // Two passwords in one group are told apart by name, not both called "Password".
+  { name: 'Sign-in details: PsiTransfer’s two passwords are named', screen: 'status',
+    mock: { status: { ...status, apps: [...status.apps, { id: 'psitransfer', name: 'PsiTransfer', state: 'running', health: 'healthy', url: 'http://localhost:3030' }] } }, run: async (page) => {
+    await page.click('#statusRows tr:has(strong:text-is("PsiTransfer")) button.gear', { timeout: 5000 });
+    await page.waitForSelector('#cliActions .signingroup:has(h4:text-is("Sign in")) .signin');
+    const labels = await page.$$eval('#cliActions .signingroup:has(h4:text-is("Sign in")) .signin > span.muted:first-child', (s) => s.map((e) => e.textContent));
+    if (labels.length !== 2 || new Set(labels).size !== 2 || !labels.some((l) => /upload/i.test(l))) throw new Error('labels: ' + labels.join(' | '));
+  } },
+  { name: 'Sign-in details: Tdarr’s login and the key Tidy Up uses', screen: 'status',
+    mock: { status: { ...status, apps: [...status.apps, { id: 'tdarr', name: 'Tdarr', state: 'running', health: 'healthy', url: 'http://localhost:8265' }] } }, run: async (page) => {
+    await page.click('#statusRows tr:has(strong:text-is("Tdarr")) button.gear', { timeout: 5000 });
+    await page.waitForSelector('#cliActions .signingroup:has(h4:text-is("Sign in")) .signin:has-text("User name")');
+    await page.waitForSelector('#cliActions .signingroup:has(h4:text-is("Paste into another app")) .signin');
+  } },
+  { name: 'Sign-in details: an app with nothing to copy says so', screen: 'app:vikunja', run: async (page) => {
+    await page.click('.pagehead button.gear', { timeout: 5000 });
+    await page.waitForSelector('#cliActions .signinempty:has-text("Nothing to sign in with here")');
+    await page.waitForSelector('#cliActions .signin:has-text("Address")');
   } },
   // Shapes as well as colours: on Status a running app's dot is a circle, one that needs a look a triangle, one that is
   // down a cross, so the state reads without telling green from red, and still in forced colours (Windows' contrast
@@ -3210,8 +3297,16 @@ const smokes = [
     await page.click('#more > summary');
     for (const p of ['Media automation', 'Household']) await page.click(`#presets .chip >> text=${p}`, { timeout: 5000 });
     await page.waitForSelector('#plan .planLead', { timeout: 5000 });
-    await page.locator('#installBtn').scrollIntoViewIfNeeded();
-    const box = await page.locator('#installBtn').boundingBox();
+    // The plan can still be growing after its first line shows (a slow runner): scroll to Install again until it
+    // stops moving, then it must be within the window.
+    let box = null, last = '';
+    for (let i = 0; i < 20; i++) {
+      await page.locator('#installBtn').scrollIntoViewIfNeeded();
+      box = await page.locator('#installBtn').boundingBox();
+      if (JSON.stringify(box) === last) break;
+      last = JSON.stringify(box);
+      await page.waitForTimeout(150);
+    }
     if (!box || box.y + box.height > 720) throw new Error(`Install is out of reach: ${JSON.stringify(box)}`);
   } },
   { name: 'After a new app opens, its homelab files follow by themselves', screen: 'status', mock: { update: { state: 'ready', files: 1, app: false, finish: true, version: '0.15.0', notes: ['A change'] } }, run: async (page) => {
@@ -4363,6 +4458,24 @@ const smokes = [
     await page.fill('#inputs input', 'wg-key-test');
     await page.waitForSelector('#plan .planLead:has-text("Installs 1 app")', { timeout: 5000 });
     if (await page.isVisible('#presets .chip:has-text("Immich")')) throw new Error("a stack's own preset is still a chip");
+  } },
+  // Arr item 2: the VPN key's field walks through where to find it, in three steps, and says first that it
+  // needs a paid Proton plan; a button opens Proton's page for it.
+  { name: 'The VPN key: a paid plan first, three steps, and Proton’s page a click away', screen: 'choose', run: async (page) => {
+    await page.click('#more > summary');
+    await page.fill('#search', 'qbittorrent');
+    await page.click('#groups label.app:has(strong:text-is("qBittorrent")) input');
+    const walk = page.locator('#inputs .walk');
+    await walk.waitFor({ timeout: 5000 });
+    const lead = await walk.locator('.walkLead').textContent();
+    if (!/paid Proton VPN plan/.test(lead) || !/free/.test(lead)) throw new Error(`the walkthrough doesn't start with the paid plan: ${lead}`);
+    const steps = await walk.locator('ol > li').allTextContents();
+    if (steps.length !== 3) throw new Error(`${steps.length} steps, not 3`);
+    if (!/NAT-PMP/.test(steps[1]) || !/PrivateKey/.test(steps[2])) throw new Error(`the steps: ${steps.join(' | ')}`);
+    if (/PROTONVPN_|WIREGUARD_/.test(steps.join(' '))) throw new Error('a step names the setting by its code');
+    await walk.locator('button:has-text("Open Proton’s WireGuard page")').click();
+    const opened = await page.evaluate(() => window.__MOCK.opened);
+    if (opened !== 'https://account.protonvpn.com/downloads') throw new Error(`opened ${opened}`);
   } },
   // Usability task 3, item 21: Tab from an app's checkbox in Choose apps reaches its own links (Open, Settings).
   { name: 'Choose apps: Tab reaches each app’s Open and Settings', screen: 'choose', run: async (page) => {
@@ -5792,11 +5905,13 @@ const smokes = [
       await mark(name, want);
     }
   } },
+  // Besides its one button, a row has the ⚙ for its sign-in details (the owner, Nov 19) and the arrow to its page.
   { name: "A row keeps one button: Open, or Start when stopped; a click on the row opens its page", screen: 'status', run: async (page) => {
     const row = (name) => `#statusRows tr:has(strong:text-is("${name}"))`;
     await page.waitForSelector(`${row('Vikunja')} button.rowmain:text-is("Open")`, { timeout: 5000 });
     await page.waitForSelector(`${row('Mealie')} button.rowmain:text-is("Start")`);
-    const extra = await page.evaluate(() => [...document.querySelectorAll('#statusRows .rowActions button')].filter((b) => !b.classList.contains('rowmain') && !b.classList.contains('topage') && !/^(Install|Open|Start)$/.test(b.textContent.trim())).map((b) => b.title || b.textContent));
+    const extra = await page.evaluate(() => [...document.querySelectorAll('#statusRows .rowActions button')].filter((b) => !b.classList.contains('rowmain') && !b.classList.contains('topage') && !b.classList.contains('gear') && !/^(Install|Open|Start)$/.test(b.textContent.trim())).map((b) => b.title || b.textContent));
+    if (await page.locator(`${row('Vikunja')} .rowActions button.gear`).count() !== 1) throw new Error('no single gear on the row');
     if (extra.length) throw new Error('more buttons on the rows: ' + [...new Set(extra)].slice(0, 5).join(', '));
     await page.click(`${row('Vikunja')} button.rowmain`);
     if (!/todo\.|vikunja|localhost/.test((await page.evaluate(() => window.__MOCK.opened)) || '')) throw new Error('Open did not open the app');

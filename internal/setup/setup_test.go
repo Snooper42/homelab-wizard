@@ -14,6 +14,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/docker"
 	"github.com/Snooper42/homelab-wizard/internal/duplicati"
 	"github.com/Snooper42/homelab-wizard/internal/host"
+	"github.com/Snooper42/homelab-wizard/internal/kept"
 )
 
 type fakeProbe struct{ dns, adguard, cf, cert error }
@@ -564,5 +565,93 @@ func TestPhoneAwayStep(t *testing.T) {
 	env["COMPANION_ACCESS_AUD"], env["COMPANION_AWAY_HOST"] = "aud-1", "homelab-away.example.com"
 	if s, _ := find(env, running); s.State != "done" {
 		t.Fatalf("set up: %+v", s)
+	}
+}
+
+// TestPasswordManagerStep: one item, "N passwords aren't in your password
+// manager yet", the ones that open the backups named first; done once each
+// is ticked Saved, and absent with nothing to keep.
+func TestPasswordManagerStep(t *testing.T) {
+	env := map[string]string{}
+	st := &api.Status{Apps: []api.AppStatus{{ID: "duplicati", State: "running"}}}
+	find := func(in Inputs) *Step {
+		for _, s := range Steps(context.Background(), in) {
+			if s.ID == "password-manager" {
+				return &s
+			}
+		}
+		return nil
+	}
+	in := Inputs{Env: env, Host: host.For("darwin"), Status: st, Probe: fakeProbe{}}
+	if find(in) != nil {
+		t.Fatal("nothing to keep: no step")
+	}
+	in.Secrets = []kept.Secret{
+		{App: "duplicati", Key: "DUPLICATI_PASSWORD", Label: "Duplicati: duplicati password"},
+		{App: "duplicati", Key: "DUPLICATI_PASSPHRASE", Label: "Duplicati: duplicati passphrase", Recovery: true},
+	}
+	s := find(in)
+	if s == nil || s.State != "todo" || s.Title != "2 passwords aren't in your password manager yet" {
+		t.Fatalf("step: %+v", s)
+	}
+	if i, j := strings.Index(s.Detail, "duplicati passphrase"), strings.Index(s.Detail, "duplicati password"); i < 0 || j < 0 || i > j || !strings.Contains(s.Detail, "backups can't be opened") {
+		t.Fatalf("Keep safe first, said why: %q", s.Detail)
+	}
+	in.Kept = map[string]bool{"DUPLICATI_PASSPHRASE": true}
+	if s = find(in); s.Title != "1 password isn't in your password manager yet" || strings.Contains(s.Detail, "backups can't") {
+		t.Fatalf("one left: %+v", s)
+	}
+	in.Kept["DUPLICATI_PASSWORD"] = true
+	if s = find(in); s.State != "done" || s.Title != "Your passwords are in your password manager" {
+		t.Fatalf("all ticked: %+v", s)
+	}
+
+	// One password on four apps (ARR_PASSWORD, arr-loop item 1d) is one to save.
+	in.Kept = nil
+	in.Secrets = []kept.Secret{
+		{App: "sonarr", Key: "ARR_PASSWORD", Label: "Sonarr: arr password"},
+		{App: "radarr", Key: "ARR_PASSWORD", Label: "Radarr: arr password"},
+		{App: "prowlarr", Key: "ARR_PASSWORD", Label: "Prowlarr: arr password"},
+	}
+	if s = find(in); s.Title != "1 password isn't in your password manager yet" || !strings.Contains(s.Detail, "Sonarr, Radarr and Prowlarr: arr password") {
+		t.Fatalf("a shared password: %+v", s)
+	}
+}
+
+// TestDownloadsPrivateStep: with qBittorrent, Setup checks the downloads
+// leave only through the VPN (arr-loop item 2), says why not in words, and
+// offers Connect apps when it puts it right; without it, no step.
+func TestDownloadsPrivateStep(t *testing.T) {
+	find := func(in Inputs) *Step {
+		for _, s := range Steps(context.Background(), in) {
+			if s.ID == "downloads-private" {
+				return &s
+			}
+		}
+		return nil
+	}
+	private, said, wire := false, "The VPN is connected, but qBittorrent isn't tied to the VPN's tunnel yet.", true
+	in := Inputs{Env: map[string]string{}, Host: host.For("darwin"), Probe: fakeProbe{},
+		Status:  &api.Status{Apps: []api.AppStatus{{ID: "sonarr", State: "running"}}},
+		Private: func() (bool, string, bool) { return private, said, wire }}
+	if find(in) != nil {
+		t.Fatal("no qBittorrent: no step")
+	}
+	in.Status.Apps = append(in.Status.Apps, api.AppStatus{ID: "qbittorrent", State: "running"})
+	s := find(in)
+	if s == nil || s.State != "todo" || s.Title != "Downloads are private" || s.Detail != said || s.RunLabel != "Connect apps" || len(s.Run) != 1 || strings.Join(s.Run[0], " ") != "wire --apply" {
+		t.Fatalf("not tied: %+v", s)
+	}
+	wire, said = false, "The VPN hasn't connected yet."
+	if s := find(in); s.State != "todo" || s.Run != nil || s.Detail != said {
+		t.Fatalf("not connected: %+v", s)
+	}
+	private, said = true, "qBittorrent's downloads leave only through ProtonVPN."
+	if s := find(in); s.State != "done" || s.Detail != "" {
+		t.Fatalf("private: %+v", s)
+	}
+	in.Private = nil
+	if find(in) != nil {
+		t.Fatal("no check: no step")
 	}
 }

@@ -34,6 +34,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/explain"
 	"github.com/Snooper42/homelab-wizard/internal/health"
 	"github.com/Snooper42/homelab-wizard/internal/host"
+	"github.com/Snooper42/homelab-wizard/internal/kept"
 	"github.com/Snooper42/homelab-wizard/internal/kit"
 	"github.com/Snooper42/homelab-wizard/internal/notify"
 	"github.com/Snooper42/homelab-wizard/internal/procattr"
@@ -43,6 +44,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/stopped"
 	"github.com/Snooper42/homelab-wizard/internal/tailnet"
 	"github.com/Snooper42/homelab-wizard/internal/updates"
+	"github.com/Snooper42/homelab-wizard/internal/wiring"
 )
 
 // config is what the app remembers between launches.
@@ -168,6 +170,16 @@ func Setup(ctx context.Context, root string) []setup.Step {
 	}
 	if st, err := Status(ctx, root); err == nil {
 		in.Status = &st
+		if c, err := Catalog(root); err == nil {
+			in.Secrets, in.Kept = Secrets(root, c, &st), kept.Load(root)
+		}
+		in.Private = func() (bool, string, bool) {
+			p, err := DownloadsPrivate(ctx, root)
+			if err != nil {
+				return false, "Can't check: " + err.Error(), false
+			}
+			return p.Private, p.Said, p.Fix == "wire"
+		}
 	} else {
 		in.RuntimeErr = err
 		// Before the homelab folder exists, the runtime is checked on its own.
@@ -575,4 +587,19 @@ func CrashSeen(root string) error {
 		return nil
 	}
 	return os.WriteFile(crashSeen(root), []byte(c.When.Format(time.RFC3339)+"\n"), 0o644)
+}
+
+// DownloadsPrivate is whether qBittorrent's downloads leave only through
+// the VPN (wiring.Privacy), for Setup and qBittorrent's page.
+func DownloadsPrivate(ctx context.Context, root string) (wiring.Privacy, error) {
+	c, err := Catalog(root)
+	if err != nil {
+		return wiring.Privacy{}, err
+	}
+	_, containers, err := Containers(ctx)
+	if err != nil {
+		return wiring.Privacy{}, err
+	}
+	home, _ := os.UserHomeDir()
+	return wiring.New(c, containers, Env(root), home).Privacy(ctx), nil
 }

@@ -1,9 +1,10 @@
 // Choose apps: the starter picks, the bundles, every app by category with
 // a box to tick, and the plan of what installing the ticked ones does,
 // with the settings they need. app.ts keeps the selection and plans.
-import { render } from 'preact';
+import { Fragment, render } from 'preact';
 import { Icon } from '../Icon';
 import { Empty } from '../parts/Empty';
+import { type Walkthrough, walkthroughs } from './walkthroughs';
 
 /** A starter's symbol and tint, as an app's icon in System Settings. */
 const starterLooks: Record<string, [string, string]> = { photos: ['photos', 'var(--tint-orange)'], passwords: ['lock', 'var(--tint-green)'], movies: ['film', 'var(--tint-red)'], music: ['music', 'var(--tint-pink)'], files: ['folder', 'var(--tint-blue)'] };
@@ -210,29 +211,46 @@ export interface InputsProps {
   values: Record<string, string>;
   label: (key: string) => string;
   input: (key: string, value: string) => void;
+  /** Opens a walkthrough's page in the browser. */
+  open?: (url: string) => void;
 }
 
 /**
  * The settings the chosen apps need, by their names for people and with
  * their help (where to find a key, what it is for).
  */
-export function Inputs({ keys, meta, values, label, input }: InputsProps) {
+export function Inputs({ keys, meta, values, label, input, open }: InputsProps) {
   return (
     <>
       {!!keys.length && <h2>Settings they need</h2>}
       {keys.map((k) => {
         const m: Partial<settings.Setting> = meta[k] || {};
         const secret = m.secret ?? /KEY|TOKEN|PASS|SECRET/.test(k);
+        const walk = walkthroughs[k];
         return (
-          <label class="field" key={k}>
+          <Fragment key={k}>
+          <label class="field">
             <span class="fieldName">{label(k)}</span>
             <input type={secret ? 'password' : 'text'} value={values[k] || ''} autocomplete="off" spellcheck={false}
               placeholder={m.set ? 'set already · leave empty to keep it' : 'not set yet'} onInput={(e) => input(k, e.currentTarget.value)} />
-            {m.help && <span class="help">{m.help}</span>}
+            {!walk && m.help && <span class="help">{m.help}</span>}
           </label>
+          {walk && <Walk w={walk} open={open} />}
+          </Fragment>
         );
       })}
     </>
+  );
+}
+
+/** A hard-to-find key's steps: what's needed first, then where to find it. */
+function Walk({ w, open }: { w: Walkthrough; open?: (url: string) => void }) {
+  return (
+    <div class="help walk">
+      <p class="walkLead">{w.lead}</p>
+      <ol>{w.steps.map((s) => <li key={s}>{s}</li>)}</ol>
+      {w.link && open && <button type="button" class="small" onClick={() => open(w.link.url)}>{w.link.label}</button>}
+    </div>
   );
 }
 

@@ -460,7 +460,7 @@ func (h *homelab) showPlan(title string, p *install.Plan) {
 			u.Info("create .env from .env.example")
 		}
 		if secrets > 0 {
-			u.Info("generate %d secret(s) in .env (copy them into Vaultwarden)", secrets)
+			u.Info("generate %d secret(s) in .env (save the passwords in your password manager: each app's ⚙ on Status)", secrets)
 		}
 		added := 0
 		for _, c := range other {

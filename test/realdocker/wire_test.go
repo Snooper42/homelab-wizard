@@ -18,7 +18,8 @@ import (
 // Sonarr, Radarr, Lidarr, and FlareSolverr (ISSUE-0015), on a homelab of
 // its own: Prowlarr gets each of the three as an application and
 // FlareSolverr as its indexer proxy, which Prowlarr's own API then lists,
-// each app gets its library's root folder, and a second run finds every
+// each app gets its library's root folder and the login made at install
+// (ARR_PASSWORD), and a second run finds every
 // link already made. qBittorrent waits for Gluetun's VPN key, and Seerr
 // waits for a Jellyfin sign-in, so they are not in it (internal/wiring's
 // tests cover them, and Bazarr, against their APIs as their sources show). REALDOCKER_WIRE=1 runs it (the nightly workflow's wire job).
@@ -52,7 +53,11 @@ func TestTheMediaAppsConnect(t *testing.T) {
 	l.up(as)
 
 	links := wireLinks(t, l.run("--json", "wire", "--apply"))
-	want := []string{"Prowlarr sends indexers to Sonarr", "Prowlarr sends indexers to Radarr", "Prowlarr sends indexers to Lidarr", "FlareSolverr is set up in Prowlarr"}
+	want := []string{"Prowlarr sends indexers to Sonarr", "Prowlarr sends indexers to Radarr", "Prowlarr sends indexers to Lidarr", "FlareSolverr is set up in Prowlarr",
+		// The login made at install (ARR_PASSWORD), set through each app's
+		// config/host and found next time with one sign-in.
+		"Prowlarr signs in with the login in Sign-in details", "Sonarr signs in with the login in Sign-in details",
+		"Radarr signs in with the login in Sign-in details", "Lidarr signs in with the login in Sign-in details"}
 	for _, w := range want {
 		if s := links[w]; s != "done" {
 			t.Errorf("%s: %q, want done (%v)", w, s, links)

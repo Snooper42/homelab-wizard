@@ -62,6 +62,7 @@ services:
       memory: 250
       name: Duplicati
       login: [DUPLICATI_PASSWORD]
+      recovery: [DUPLICATI_SECRETS_PASSPHRASE, DUPLICATI_PASSPHRASE]
       category: system
       description: Encrypted, versioned backups to Proton Drive
       subdomain: backups
@@ -114,6 +115,7 @@ services:
       memory: 300
       name: Kopia
       login: [KOPIA_SERVER_PASSWORD]
+      recovery: [KOPIA_PASSWORD]
       category: system
       description: A second, independent backup beside Duplicati, to another drive
       subdomain: kopia

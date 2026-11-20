@@ -8,6 +8,7 @@ import { useEffect, useState } from 'preact/hooks';
 import { ActionLink } from '../ActionLink';
 import { ago, bytes, clockText, dayText, never } from '../format';
 import { Icon } from '../Icon';
+import { GearButton } from '../status/AppList';
 import { Address } from '../parts/Address';
 import { Card, CardHead } from '../parts/Card';
 import { Empty } from '../parts/Empty';
@@ -32,7 +33,8 @@ export interface AppPageActions {
   update: () => void;
   open: (url: string) => void;
   phone: () => void;
-  signIn: (keys: string[]) => void;
+  /** Its sign-in details (the ⚙): address, logins, keys, what opens the backups, each to copy. */
+  signIn: () => void;
   /** Copies text and says what was copied. */
   copy: (text: string) => Promise<string>;
   /** The end of its log: its last lines. */
@@ -52,6 +54,8 @@ export interface AppPageActions {
   /** Remove: a backup of it first, then its container goes; its data stays. */
   remove: () => void;
   openPeople: () => void;
+  /** Connect apps (qBittorrent's page, when it ties qBittorrent to the VPN's tunnel), then asks again. */
+  connect: () => void;
 }
 
 /** One day of the week's bars: the watchdog's passing and total runs. */
@@ -69,6 +73,8 @@ export interface Day {
 
 export interface AppPageProps {
   a: api.AppStatus;
+  /** Its passwords and keys not ticked Saved yet: a dot on its ⚙. */
+  unkept?: number;
   entry?: api.App;
   /** The dot's class and the words for its state (AppList's stateOf). */
   state: [string, string];
@@ -104,6 +110,8 @@ export interface AppPageProps {
   companion: boolean;
   /** The proxy's and CrowdSec's pages: what CrowdSec stopped ('reading' until it answers, null when it could not be read). Left out on other apps' pages. */
   stopped?: crowdsec.Protection | null | 'reading';
+  /** qBittorrent's page, on this computer: whether its downloads leave only through the VPN ('reading' until it answers, null when it could not be read). Left out elsewhere. */
+  privacy?: wiring.Privacy | null | 'reading';
   on: AppPageActions;
 }
 
@@ -329,6 +337,7 @@ function Header({ p }: { p: AppPageProps }) {
           : run('start', 'Start', 'Start it'))}
         {a.state === 'running' && a.address && !p.companion && <button class="btn" disabled={busy} onClick={on.phone}><Icon name="phone" />Open on a phone</button>}
         {a.state === 'running' && url && <button class="primary small" onClick={() => on.open(url)}>Open</button>}
+        {!p.companion && <GearButton name={a.name} unsaved={p.unkept || 0} open={on.signIn} />}
       </div>
     </div>
   );
@@ -452,13 +461,31 @@ function Stopped({ stopped }: { stopped: crowdsec.Protection | null | 'reading' 
   );
 }
 
+/** qBittorrent's page: whether its downloads leave only through the VPN, as Setup checks it. */
+function Private({ privacy, connect, busy }: { privacy: wiring.Privacy | null | 'reading'; connect: () => void; busy: boolean }) {
+  const reading = privacy === 'reading', v = reading ? null : privacy;
+  return (
+    <Card kind="alerts pagecard" id="appPrivate">
+      <CardHead title="Downloads are private">{null}</CardHead>
+      {reading && <Empty>Asking qBittorrent and the VPN…</Empty>}
+      {!v && !reading && <Empty>Can't check right now.</Empty>}
+      {v && (
+        <Rows>
+          <Row dot={v.private ? 'ok' : 'bad'} title={v.private ? 'Yes: only through the VPN' : 'Not yet'} sub={v.said}
+            end={v.fix === 'wire' && <button class="small change" disabled={busy} onClick={connect}>Connect apps</button>} />
+        </Rows>
+      )}
+    </Card>
+  );
+}
+
 function People({ p }: { p: AppPageProps }) {
   const { entry, people, on } = p;
   if (!people && !entry?.login?.length) return null;
   return (
     <Card kind="alerts pagecard" id="appPeople">
       <CardHead title={people ? 'Who uses it' : 'Signing in'}>
-        {!!entry?.login?.length && <button class="small" onClick={() => on.signIn(entry.login!)}><Icon name="key" />Sign-in details</button>}
+        {!!entry?.login?.length && <button class="small" onClick={() => on.signIn()}><Icon name="key" />Sign-in details</button>}
       </CardHead>
       {people && (people.length
         ? <Rows>{people.map((x) => <Row key={x.username} title={<><span class="initial" aria-hidden="true">{(x.name || x.username).slice(0, 1)}</span>{x.name || x.username}</>} sub={x.email} />)}</Rows>
@@ -541,6 +568,7 @@ export function AppPage(p: AppPageProps) {
         <div class="pagecol">
           {p.entry?.kind !== 'native' && p.a.state !== 'missing' && p.a.state !== 'elsewhere' && <Log explainer={p.explainer} machine={p.machine} dozzle={p.dozzle} on={p.on} />}
           {p.stopped !== undefined && <Stopped stopped={p.stopped} />}
+          {p.privacy !== undefined && <Private privacy={p.privacy} connect={p.on.connect} busy={p.busy} />}
           <Updates p={p} />
           <Done on={p.on} />
         </div>

@@ -88,6 +88,10 @@ type Need struct {
 // HOMELAB_MEDIA_NEEDS; the inbox rewrites it each time it saves.
 func NeedsPath(root string) string { return filepath.Join(root, "data", "media-needs.json") }
 
+// TorrentsPath is what qBittorrent still has in hand, written just before
+// the inbox sweeps (HOMELAB_MEDIA_TORRENTS): the inbox leaves those alone.
+func TorrentsPath(root string) string { return filepath.Join(root, "data", "media-torrents.json") }
+
 // NeedsLook is what's waiting for a person, without what has gone since
 // (moved or deleted by hand).
 func NeedsLook(root string) []Need {

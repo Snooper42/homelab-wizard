@@ -27,10 +27,9 @@ Downloads for Sonarr, Radarr, Lidarr, and LazyLibrarian, only ever through the V
 ## Setup
 
 1. Set `PROTONVPN_WIREGUARD_PRIVATE_KEY` ([Gluetun](<Gluetun.md>)), then `./homelab install qbittorrent` (it also comes with the Media automation bundle, `./homelab install @arr`); with a domain, also `./homelab domain setup`.
-2. The first start prints a temporary password: `./homelab logs qbittorrent`. Sign in at the address Status shows (`https://<TAILSCALE_HOST>:8082` in Home mode, https://qbittorrent.example.com with a domain) as `admin` and set a permanent password (Tools › Options › Web UI).
+2. Sign in at the address Status shows (`https://<TAILSCALE_HOST>:8082` in Home mode, https://qbittorrent.example.com with a domain) with the login on qBittorrent's ⚙ (Status). The install makes it (`QBITTORRENT_USER`, `QBITTORRENT_PASSWORD`) and writes it into qBittorrent's settings before its first start, so there's no temporary password to find. A qBittorrent set up before this keeps its own: put its password in `QBITTORRENT_PASSWORD`.
 3. Options › Downloads: default save path `/downloads`.
-4. Options › Connection: listening port = Gluetun's forwarded port.
-5. Options › Advanced: network interface `tun0`, so it cannot use any other route even by mistake.
+4. Nothing for the listening port: [Gluetun](<Gluetun.md>) sets it to the VPN's forwarded port, and the network interface to `tun0`, each time the VPN connects. **Connect apps** turns on *Bypass authentication for clients on localhost* for that (only Gluetun shares qBittorrent's loopback) and sets the port Gluetun has now.
 
 The *arr apps reach it at host `gluetun`, port `8082`.
 
@@ -66,7 +65,7 @@ Sonarr, Radarr, Lidarr, and LazyLibrarian mount the same folder at the same `/do
 
 - [Gluetun](<Gluetun.md>) is its only way out; when Gluetun is recreated, restart qBittorrent.
 - [Sonarr](<Sonarr.md>), [Radarr](<Radarr.md>), [Lidarr](<Lidarr.md>), and [LazyLibrarian](<LazyLibrarian.md>) use it as their download client with host `gluetun`, port `8082`, and the Web UI login. [Prowlarr](<Prowlarr.md>) can too.
-- `./homelab wire` adds it to Sonarr, Radarr, and Lidarr, and sets it to stop sharing a download once it is finished (so Tidy Up can file it once, with no second copy), with unfinished downloads in `/downloads/incomplete` named `.!qB`. It needs the permanent Web UI password: add `QBITTORRENT_PASSWORD` (and `QBITTORRENT_USER` if it is not `admin`) to `.env`, then run `./homelab wire --apply`. See [Prowlarr](<Prowlarr.md#connects-to>).
+- `./homelab wire` adds it to Sonarr, Radarr, and Lidarr, and sets it to stop sharing a download once it is finished (so Tidy Up can file it once, with no second copy), with unfinished downloads in `/downloads/incomplete` named `.!qB`. Tidy Up's inbox files a download from here only once qBittorrent has finished it and stopped sharing it, asking qBittorrent with the same password before each sweep. It needs the permanent Web UI password: add `QBITTORRENT_PASSWORD` (and `QBITTORRENT_USER` if it is not `admin`) to `.env`, then run `./homelab wire --apply`. See [Prowlarr](<Prowlarr.md#connects-to>).
 - [Nginx Proxy Manager](<../network/Nginx Proxy Manager.md>) proxies https://qbittorrent.example.com to `gluetun:8082`.
 - `.env`: `QBITTORRENT_PORT` (published on Gluetun), `DOWNLOADS_ROOT`, `PUID`, `PGID`, `TZ`, and `QBITTORRENT_USER` and `QBITTORRENT_PASSWORD` for `./homelab wire`.
 
@@ -78,7 +77,7 @@ Sonarr, Radarr, Lidarr, and LazyLibrarian mount the same folder at the same `/do
 
 ## Useful commands
 
-Follow the log, check that qBittorrent's own traffic leaves through ProtonVPN, look at the downloads folder, and restart it after Gluetun.
+Follow the log, check by hand that qBittorrent's own traffic leaves through ProtonVPN (Setup's **Downloads are private** and qBittorrent's page check it for you, without asking an outside service; this asks one), look at the downloads folder, and restart it after Gluetun.
 
 ```zsh
 ./homelab logs qbittorrent -f
@@ -114,4 +113,4 @@ The Web API reference is linked from the [qBittorrent wiki](https://github.com/q
 |---|---|
 | Web UI unreachable | Gluetun is down or was recreated. `./homelab restart gluetun qbittorrent` |
 | "Unauthorized" through the proxy | Options › Web UI: turn off Host header validation, or add `qbittorrent.example.com` to the allowed domains |
-| Slow or no peers | The listening port does not match Gluetun's forwarded port |
+| Slow or no peers | The listening port does not match Gluetun's forwarded port (`data/appdata/gluetun/forwarded_port`). Run **Connect apps** |

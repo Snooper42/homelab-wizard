@@ -17,6 +17,9 @@ declare namespace api {
     sameJob?: Record<string, string>;
     inputs?: string[];
     login?: string[];
+    keys?: string[];
+    recovery?: string[];
+    keyFile?: boolean;
     public: boolean;
     warning?: string;
     next?: string;
@@ -1328,6 +1331,11 @@ declare namespace wiring {
     state: string;
     detail?: string;
   }
+  interface Privacy {
+    private: boolean;
+    said: string;
+    fix?: string;
+  }
 }
 
 /** The Go methods the frontend calls: window.go.main.App. */
@@ -1345,9 +1353,11 @@ interface Backend {
     ChooseFolder(arg1: string): Promise<string>;
     ChooseRoot(): Promise<app.HostInfo>;
     ClearUpdated(): Promise<void>;
+    CopyAppKey(arg1: string): Promise<void>;
     CopySetting(arg1: string): Promise<void>;
     CrashSeen(): Promise<void>;
     CreateHomelab(): Promise<app.HostInfo>;
+    DownloadsPrivate(): Promise<wiring.Privacy>;
     DuplicatiJobs(): Promise<duplicati.Job[]>;
     EmailReport(): Promise<void>;
     ExplainLogs(arg1: string): Promise<string>;
@@ -1378,10 +1388,12 @@ interface Backend {
     Host(): Promise<app.HostInfo>;
     Install(arg1: string[], arg2: Record<string, string>): Promise<api.Started[]>;
     InstallAppUpdate(): Promise<void>;
+    Kept(): Promise<Record<string, boolean>>;
     LastCrash(): Promise<crash.Crash | null>;
     LastStatus(): Promise<api.Reading | null>;
     Logs(arg1: string, arg2: number): Promise<string>;
     LookForUpdates(arg1: boolean): Promise<app.UpdateState>;
+    MarkKept(arg1: string, arg2: boolean): Promise<void>;
     MarkSetupDone(arg1: string, arg2: boolean): Promise<setup.Step[]>;
     MenuEntry(): Promise<app.MenuEntry>;
     Move(arg1: string): Promise<string>;
@@ -1457,6 +1469,7 @@ interface Backend {
     TrayAtLogin(): Promise<boolean>;
     Uninstall(arg1: app.UninstallOptions): Promise<void>;
     UninstallPlan(arg1: app.UninstallOptions): Promise<string>;
+    Unkept(): Promise<Record<string, number>>;
     UpdateNow(): Promise<void>;
     UpdateState(): Promise<app.UpdateState>;
     UpgradeCheck(arg1: boolean): Promise<app.UpgradeInfo>;

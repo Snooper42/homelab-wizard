@@ -159,6 +159,70 @@ final class AppActionsViewModel {
         return computerHas("away") ? all : all.filter { $0 != .away }
     }
 
+    /// Update, behind what it brings: a running container app, on a device
+    /// allowed changes whose computer answers both calls.
+    func canUpdate(_ app: AppStatus) -> Bool {
+        canChangeApps && computerAnswers("ReleaseNotes") && !app.isNative && app.isRunning && AppStatus.isValidID(app.id)
+    }
+
+    /// What updating `app` brings, for `UpdateNotesSheet`.
+    func releaseNotes(for app: AppStatus) async throws -> ReleasePreview {
+        try await api.releaseNotes(appID: app.id)
+    }
+
+    // MARK: Sign-in details
+
+    /// An app's Sign-in details, to look at: the owner's phone or iPad, paired
+    /// over https, from a computer that answers it (never a member's phone or a wall screen).
+    var canSeeSignIns: Bool {
+        guard let me = device(), !me.isMember, !me.unencrypted else { return false }
+        return me.computer?.answers("SignInDetails") == true
+    }
+
+    /// Copy and the Saved tick: one that may also make changes.
+    var canCopySignIns: Bool {
+        canSeeSignIns && canChange && device()?.computer?.answers("CopySignIn") == true
+            && device()?.computer?.answers("MarkSignInSaved") == true
+    }
+
+    func signIns(for app: AppStatus) async throws -> [SignInDetail] {
+        try await api.signInDetails(appID: app.id)
+    }
+
+    /// Face ID first, then the value straight onto this device's clipboard
+    /// (not Universal Clipboard), gone after 90 seconds; never shown or kept
+    /// here. False when Face ID was cancelled; throws when the computer refused.
+    func copySignIn(_ row: SignInDetail, appName: String) async throws -> Bool {
+        guard canCopySignIns else { return false }
+        guard await authorize("Copy one of \(appName)'s sign-in details") else { return false }
+        let value = try await api.copySignIn(appID: row.app, key: row.key)
+        Clipboard.copy(value, sensitive: true, for: Clipboard.secretLifetime)
+        return true
+    }
+
+    func markSignIn(_ row: SignInDetail, saved: Bool) async throws {
+        guard canCopySignIns else { return }
+        try await api.markSignInSaved(appID: row.app, key: row.key, saved: saved)
+    }
+
+    /// Who uses an app: the owner's phone or iPad, paired over https, from a
+    /// computer that answers it (a member's phone and a wall screen never ask).
+    var canSeeAppPeople: Bool {
+        guard let me = device(), !me.isMember, !me.unencrypted else { return false }
+        return me.computer?.answers("AppPeople") == true
+    }
+
+    /// Who uses `app`, for its page's Who Uses It.
+    func appPeople(for app: AppStatus) async throws -> AppPeople {
+        try await api.appPeople(appID: app.id)
+    }
+
+    /// Updates `app` once its notes were shown: Face ID first, as every change.
+    func update(_ app: AppStatus) async {
+        guard canUpdate(app) else { return }
+        await run(.update, on: app, checkAvailability: false)
+    }
+
     /// For a device allowed changes whose computer can't make them yet:
     /// update it. Nil otherwise.
     func updateHint(for app: AppStatus) -> String? {
