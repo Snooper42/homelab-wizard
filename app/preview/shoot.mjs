@@ -5825,11 +5825,13 @@ const smokes = [
       await mark(name, want);
     }
   } },
+  // Besides its one button, a row has the ⚙ for its sign-in details (the owner, Nov 19) and the arrow to its page.
   { name: "A row keeps one button: Open, or Start when stopped; a click on the row opens its page", screen: 'status', run: async (page) => {
     const row = (name) => `#statusRows tr:has(strong:text-is("${name}"))`;
     await page.waitForSelector(`${row('Vikunja')} button.rowmain:text-is("Open")`, { timeout: 5000 });
     await page.waitForSelector(`${row('Mealie')} button.rowmain:text-is("Start")`);
-    const extra = await page.evaluate(() => [...document.querySelectorAll('#statusRows .rowActions button')].filter((b) => !b.classList.contains('rowmain') && !b.classList.contains('topage') && !/^(Install|Open|Start)$/.test(b.textContent.trim())).map((b) => b.title || b.textContent));
+    const extra = await page.evaluate(() => [...document.querySelectorAll('#statusRows .rowActions button')].filter((b) => !b.classList.contains('rowmain') && !b.classList.contains('topage') && !b.classList.contains('gear') && !/^(Install|Open|Start)$/.test(b.textContent.trim())).map((b) => b.title || b.textContent));
+    if (await page.locator(`${row('Vikunja')} .rowActions button.gear`).count() !== 1) throw new Error('no single gear on the row');
     if (extra.length) throw new Error('more buttons on the rows: ' + [...new Set(extra)].slice(0, 5).join(', '));
     await page.click(`${row('Vikunja')} button.rowmain`);
     if (!/todo\.|vikunja|localhost/.test((await page.evaluate(() => window.__MOCK.opened)) || '')) throw new Error('Open did not open the app');
