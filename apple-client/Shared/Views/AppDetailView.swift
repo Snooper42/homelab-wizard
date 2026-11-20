@@ -6,6 +6,8 @@ struct AppDetailView: View {
     @Environment(AppActionsViewModel.self) private var actions
     @Environment(DashboardViewModel.self) private var dashboard
     @Environment(HomelabTasksViewModel.self) private var tasks
+    /// Update…: what it brings first (`UpdateNotesSheet`).
+    @State private var updating: AppStatus?
     /// Nil when the app left the status (uninstalled meanwhile).
     let app: AppStatus?
     /// The page itself, kept to what's worth a glance (the owner's mockup,
@@ -155,6 +157,7 @@ struct AppDetailView: View {
         #endif
         // The Backup line, read once if nothing has yet.
         .task { if dashboard.backups.overview == nil, !dashboard.backups.isLoading { await dashboard.backups.load() } }
+        .sheet(item: $updating) { UpdateNotesSheet(app: $0) }
     }
 
     /// What it's for in a line, its last backup (and only a problem with it),
@@ -271,13 +274,23 @@ struct AppDetailView: View {
         let pending = actions.pending[app.id]
         let hint = actions.lookOnlyHint(for: app) ?? actions.updateHint(for: app)
         let rest = available.filter { !Self.roundActions.contains($0) }
-        if !rest.isEmpty || available.contains(.stop) || pending != nil || hint != nil {
+        let canUpdate = actions.canUpdate(app)
+        if !rest.isEmpty || canUpdate || available.contains(.stop) || pending != nil || hint != nil {
             Section {
                 if let pending {
                     PendingActionLine(app: app, pending: pending)
                     if pending.failure != nil {
                         Button("Dismiss") { actions.dismissFailure(for: app) }
                     }
+                }
+                // Update, behind what it brings (the computer's Update shows them first).
+                if canUpdate {
+                    Button {
+                        updating = app
+                    } label: {
+                        Label("Update…", systemImage: AppAction.update.systemImage)
+                    }
+                    .disabled(actions.isBusy)
                 }
                 // Start, Stop and Restart are the round buttons up top; the rest here.
                 ForEach(available.filter { !Self.roundActions.contains($0) }) { action in
@@ -292,7 +305,7 @@ struct AppDetailView: View {
                     StopForAWhileMenu(app: app)
                 }
             } header: {
-                if !rest.isEmpty || pending != nil { Text("Actions") }
+                if !rest.isEmpty || canUpdate || pending != nil { Text("Actions") }
             } footer: {
                 if let hint {
                     Text(hint)

@@ -229,6 +229,13 @@ actor APIClient {
         }
     }
 
+    /// What updating an app brings: its project's releases newer than the
+    /// version it runs (`ReleaseNotes`). Not on a wall screen or a member's phone.
+    func releaseNotes(appID: String) async throws -> ReleasePreview {
+        guard AppStatus.isValidID(appID) else { throw APIError.invalidAppID }
+        return try await call("ReleaseNotes", [.string(appID)], as: ReleasePreview.self)
+    }
+
     // MARK: The computer
 
     func host() async throws -> HostInfo {
