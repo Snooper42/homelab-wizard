@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -339,6 +340,17 @@ func TestPhoneMethods(t *testing.T) {
 	}
 	if _, log, _ := call("Homelab", "fix"); len(log) == 0 || log[0] != "$ homelab fix" {
 		t.Fatalf("fix: %q", log)
+	}
+	// Update all: the list first; applied, it runs to the end even when the
+	// phone has gone (its call's context is cancelled).
+	if _, log, _ := call("Homelab", "update-all"); len(log) < 2 || log[0] != "$ homelab update --all" {
+		t.Fatalf("update all, the list: %q", log)
+	}
+	gone, cancel := context.WithCancel(ctx)
+	cancel()
+	raw := []json.RawMessage{json.RawMessage(`"update-all"`), json.RawMessage(`""`), json.RawMessage(`true`)}
+	if _, log, err := methods["Homelab"].Call(gone, raw); errors.Is(err, context.Canceled) || len(log) < 2 || log[0] != "$ homelab update --all --apply" {
+		t.Fatalf("update all, applied after the phone went: %v %q", err, log)
 	}
 	if _, log, _ := call("SetAppSetting", "ntfy", "alerts", false); len(log) == 0 || log[0] != "$ homelab notify off ntfy" {
 		t.Fatalf("alerts off: %q", log)

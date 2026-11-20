@@ -1246,6 +1246,18 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 				if apply {
 					cmd = append(cmd, "--apply")
 				}
+			case "update-all":
+				// Update all apps (the owner's yes, Nov 20, on the canvas's *Idea:
+				// Update all*): the list first, as the computer's; with apply, every
+				// app the nightly update would take, one at a time. Once started it
+				// runs to the end on the computer, even if the phone closes or loses
+				// the link, so no app is left half updated.
+				if !apply {
+					cmd = []string{"update", "--all"}
+					break
+				}
+				lines, err := h.runSelfFor(context.WithoutCancel(ctx), updateAllFor, "update", "--all", "--apply")
+				return nil, append([]string{"$ homelab update --all --apply"}, lines...), err
 			default:
 				return nil, nil, fmt.Errorf("%s is not on the phone: use Homelab Wizard on the computer", action)
 			}
@@ -1254,6 +1266,10 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 		}},
 	}
 }
+
+// updateAllFor is how long Update all from a phone may take: every app,
+// one at a time, each waiting for a backup or an install.
+const updateAllFor = 3 * time.Hour
 
 // phoneLog is an app's log as a phone gets it: without .env's secrets or
 // anything shaped like a password or token, since every paired device may
@@ -1277,11 +1293,16 @@ func (h *homelab) containerApp(id string) error {
 // runSelf runs a homelab command with this binary, as a separate process,
 // and returns what it printed, line by line.
 func (h *homelab) runSelf(ctx context.Context, args ...string) ([]string, error) {
+	return h.runSelfFor(ctx, 30*time.Minute, args...)
+}
+
+// runSelfFor is runSelf, stopped after limit.
+func (h *homelab) runSelfFor(ctx context.Context, limit time.Duration, args ...string) ([]string, error) {
 	exe, err := os.Executable()
 	if err != nil {
 		return nil, err
 	}
-	ctx, cancel := context.WithTimeout(ctx, 30*time.Minute)
+	ctx, cancel := context.WithTimeout(ctx, limit)
 	defer cancel()
 	c := procattr.Hide(exec.CommandContext(ctx, exe, append([]string{"--root", h.root, "--no-color"}, args...)...))
 	c.Dir = h.root
