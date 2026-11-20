@@ -79,7 +79,7 @@ What a phone may do also depends on how it was paired, on every phone (the phone
 | Its backup (last run, the copy, restore test, Back up now) | yes | yes; Back up now with allowed changes | yes | yes | |
 | Its logs (filter, errors in colour, Follow) | yes | yes | yes | yes, with ⌥⌘L | `Logs` |
 | Explain these logs (the local AI) | yes | gap: the page has no button for it yet | yes: the log's **⋯ › Explain This Log**, the last 200 lines redacted on the computer and read by its own Ollama; not on a wall screen or a member's phone | yes, as the iPhone | `ExplainLogs` |
-| Memory and disk it uses; who in the household uses it | yes | gap: `People` isn't a phone call | partly: Memory and Disk on its page (the `usage` and `storage` cards; a phone's storage card carries each app's folder, never whose photos take what: `phoneStorage`); not who uses it | partly, as the iPhone | `StatusBoard` |
+| Memory and disk it uses; who in the household uses it | yes | gap: `People` isn't a phone call | yes: Memory and Disk on its page (the `usage` and `storage` cards; a phone's storage card carries each app's folder, never whose photos take what: `phoneStorage`), and Who Uses It, by name only (never an email or a sign-in; the owner's phones over https, never a member's or a wall screen) | yes, as the iPhone | `StatusBoard`, `AppPeople` |
 | Dozzle's live logs | yes | on purpose: kept to the computer (docs/Security.md, L1) | on purpose | on purpose | |
 | Its settings: nightly updates (and Only on Sundays), alerts, pin | yes | yes (allowed changes) | yes, Face ID | yes | `SetAppSetting` |
 | **Reach it away from home** (a public app) | yes | yes (allowed changes) | yes, Face ID | yes | `SetAppSetting` |

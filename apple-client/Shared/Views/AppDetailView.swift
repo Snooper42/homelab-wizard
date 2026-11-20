@@ -141,6 +141,11 @@ struct AppDetailView: View {
             // the rest behind More.
             glanceSection(for: app)
 
+            // Who uses it, by name, as the computer's page (only on the owner's devices).
+            if actions.canSeeAppPeople {
+                WhoUsesItSection(app: app)
+            }
+
             Section {
                 NavigationLink {
                     AppDetailView(app: app, page: .more)

@@ -11,8 +11,10 @@
     "Alerts",
     "AppAction",
     "AppIcon",
+    "AppPeople",
     "Backups",
     "Catalog",
+    "CopySignIn",
     "DuplicatiJobs",
     "ExplainLogs",
     "Finances",
@@ -39,6 +41,7 @@
     "LastStatus",
     "Logs",
     "LowerPhone",
+    "MarkSignInSaved",
     "OpenOnComputer",
     "Phones",
     "Protection",
@@ -59,6 +62,7 @@
     "SetUpdatesPaused",
     "Settings",
     "Setup",
+    "SignInDetails",
     "SnoozeCheck",
     "Status",
     "StatusBoard",
@@ -3903,7 +3907,7 @@
     {
      "key": "QBITTORRENT_USER",
      "section": "App settings and secrets",
-     "help": "qBittorrent's Web UI login, for Connect apps (homelab wire) and Tidy Up. Set a permanent password in qBittorrent › Tools › Options › Web UI (the temporary one in its log changes on every restart) and put it here; the user is admin unless changed.",
+     "help": "qBittorrent's Web UI login, also for Connect apps (homelab wire) and Tidy Up. Generated, and given to qBittorrent before it first starts. A qBittorrent set up earlier keeps its own: put its password here (Tools › Options › Web UI).",
      "secret": false,
      "set": true,
      "value": "admin"
@@ -5325,7 +5329,7 @@
       ]
      }
     ],
-    "holdingsRead": "@ago:1809502"
+    "holdingsRead": "@ago:1842904"
    },
    "today": "2026-10-30",
    "checking": "chk",
@@ -10651,7 +10655,21 @@
     "state": "todo",
     "later": true
    }
-  ]
+  ],
+  "AppPeople": {
+   "household": true,
+   "people": [
+    {
+     "name": "Alex"
+    },
+    {
+     "name": "Sam"
+    },
+    {
+     "name": "Jordan"
+    }
+   ]
+  }
  },
  "cards": {
   "watchdog": {

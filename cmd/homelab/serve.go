@@ -608,6 +608,20 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 			}
 			return phoneSetup(core.Setup(ctx, root)), log, nil
 		}},
+		// Who uses an app (its page's card): the household members who sign in
+		// to it, by name only. Private: the owner's phones, over https, never a
+		// wall screen; not a member's phone.
+		"AppPeople": {Private: true, Call: func(ctx context.Context, args []json.RawMessage) (any, []string, error) {
+			var id string
+			if len(args) == 0 || json.Unmarshal(args[0], &id) != nil || id == "" {
+				return nil, nil, errors.New("AppPeople takes an app")
+			}
+			p, err := h.appPeople(id)
+			if err != nil {
+				return nil, nil, err
+			}
+			return p, nil, nil
+		}},
 		// What updating an app brings, before a phone updates it (AppAction "update"): its
 		// project's releases newer than the version it runs, as the computer's Update shows
 		// them first (core.ReleaseNotes). Not on a wall screen, not a member's phone, and only
