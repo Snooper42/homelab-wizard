@@ -158,6 +158,8 @@ td.state .rowerr { display:block; white-space:normal; font-size:12px; color:var(
 #inputs .field { display:flex; flex-direction:column; gap:4px; margin:8px 0 12px; }
 #inputs .fieldName { font-weight:600; color:var(--text); }
 #inputs .help { font-size:12.5px; color:var(--muted); line-height:1.4; }
+/* A hard-to-find key's steps, under its field (choose/walkthroughs.ts). */
+#inputs .walk { margin:-6px 0 14px; } #inputs .walk .walkLead { margin:0 0 4px; color:var(--text); } #inputs .walk ol { margin:0 0 8px; padding-left:20px; } #inputs .walk li { margin:2px 0; }
 .chips { display:flex; flex-wrap:wrap; gap:8px; }
 .chip { border:1px solid var(--line-strong); background:var(--panel); border-radius:999px; padding:5px 14px; color:var(--text); }
 .chip:hover { border-color:var(--accent); color:var(--link); }
