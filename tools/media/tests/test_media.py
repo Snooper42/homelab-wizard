@@ -1193,6 +1193,55 @@ class Inbox(Base):
         waiting = sorted(Path(w["path"]).name for w in self.results()[-1]["waiting"])
         self.assertEqual(waiting, ["Heat.1995.mkv", "Heat.1995.mkv.part", "Ronin.1998.mkv", "Ronin.1998.mkv.aria2"])
 
+    def torrents(self, held=(), unread=None):
+        """What the homelab read from qBittorrent before the sweep (HOMELAB_MEDIA_TORRENTS)."""
+        p = self.tmp / "media-torrents.json"
+        p.write_text(json.dumps({"held": [{"path": str(h), "why": why} for h, why in held], "unread": unread}))
+        mock.patch.dict(os.environ, {"HOMELAB_MEDIA_TORRENTS": str(p)}).start()
+
+    def test_a_torrent_qbittorrent_still_shares_waits_and_a_stopped_one_is_filed(self):
+        # Both look finished on disk (no .!qB, unchanged for 10 minutes); only qBittorrent knows the
+        # first is still being shared. Filing it would leave qBittorrent with Missing files.
+        d = self.tmp / "Downloads"
+        self.touch(d / "Heat.1995.mkv", age=600)
+        self.touch(d / "Ronin.1998" / "Ronin.1998.mkv", age=600)
+        self.torrents(held=[(d / "Ronin.1998", "qBittorrent is still sharing it")])
+        calls = []
+        mock.patch.object(inbox, "engine", side_effect=lambda k, p, a: (calls.append([x.name for x in p]), (True, {"filed": ["x"]}))[1]).start()
+        inbox.sweep(apply=True)
+        self.assertEqual(calls, [["Heat.1995.mkv"]])
+        waiting = self.results()[-1]["waiting"]
+        self.assertEqual(waiting, [{"path": str(d / "Ronin.1998"), "why": "qBittorrent is still sharing it"}])
+
+    def test_a_category_folder_waits_while_a_torrent_in_it_is_held(self):
+        d = self.tmp / "Downloads"
+        self.touch(d / "tv" / "Show.S01E01.mkv", age=600)
+        self.touch(d / "tv" / "Show.S01E02.mkv", age=600)
+        self.torrents(held=[(d / "tv" / "Show.S01E02.mkv", "still downloading in qBittorrent")])
+        calls = []
+        mock.patch.object(inbox, "engine", side_effect=lambda k, p, a: (calls.append(k), (True, {"filed": ["x"]}))[1]).start()
+        inbox.sweep(apply=True)
+        self.assertEqual(calls, [])
+        self.assertEqual(self.results()[-1]["waiting"][0]["why"], "still downloading in qBittorrent")
+
+    def test_qbittorrent_unread_holds_its_folder_and_says_why(self):
+        d = self.tmp / "Downloads"
+        self.touch(d / "Heat.1995.mkv", age=600)
+        why = "waiting: qBittorrent couldn't be read (sign-in refused), so its downloads stay put"
+        self.torrents(unread={"root": str(d), "why": why})
+        mock.patch.object(inbox, "engine", side_effect=AssertionError("nothing is filed")).start()
+        inbox.sweep(apply=True)
+        self.assertEqual(self.results()[-1]["waiting"], [{"path": str(d / "Heat.1995.mkv"), "why": why}])
+
+    def test_without_a_torrents_file_the_inbox_files_as_before(self):
+        d = self.tmp / "Downloads"
+        self.touch(d / "Heat.1995.mkv", age=600)
+        mock.patch.dict(os.environ, {"HOMELAB_MEDIA_TORRENTS": str(self.tmp / "absent.json")}).start()
+        calls = []
+        mock.patch.object(inbox, "engine", side_effect=lambda k, p, a: (calls.append(k), (True, {"filed": ["x"]}))[1]).start()
+        inbox.sweep(apply=True)
+        self.assertEqual(calls, ["movies"])
+
     def test_zip_is_unpacked_filed_and_removed(self):
         d = self.tmp / "Downloads"
         zp = d / "Heat.1995.zip"
