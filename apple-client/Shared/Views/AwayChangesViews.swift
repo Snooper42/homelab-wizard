@@ -104,6 +104,15 @@ func awayWords(_ change: LedgerChange, finances: FinancesViewModel) -> String {
         return "\(payee(id)): moved to \(name)"
     case .fix(let id, let fix):
         return fix.payee.map { "\(payee(id)): now \($0)" } ?? "\(payee(id)): \(fix.category ?? "fixed")"
+    case .link(let id, let payment):
+        let name = payment.flatMap { p in finances.plan?.plan.payments.first { $0.id == p }?.name }
+        return payment == nil ? "\(payee(id)): pays no planned payment" : "\(payee(id)): linked to \(name ?? "a planned payment")"
+    case .unlink(let id): return "\(payee(id)): link taken back"
+    case .join(let id, _): return "\(payee(id)): joined as one transfer"
+    case .unjoin(let out, _):
+        if case .string(let id)? = out["id"] { return "\(payee(id)): two rows again" }
+        return "Two rows again"
+    case .apart(let ids, let on): return "\(payee(ids.first ?? "")): \(on ? "not one transfer" : "might be one transfer")"
     }
 }
 

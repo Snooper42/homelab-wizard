@@ -23,6 +23,8 @@ enum BankImport {
         /// The planned payment it paid, by id.
         var payment: String? = nil
         var notPlanned = false
+        /// Said not to be one transfer with another row (Not One Transfer).
+        var apart = false
         var isSplit = false
         /// The payee's logo picked by hand.
         var institution: String? = nil
@@ -90,6 +92,7 @@ enum BankImport {
             k.toBank = str(t["toBank"])
             k.payment = str(t["payment"])
             if case .bool(true)? = t["notPlanned"] { k.notPlanned = true }
+            if case .bool(true)? = t["apart"] { k.apart = true }
             if case .array(let parts)? = t["splits"], !parts.isEmpty { k.isSplit = true }
             k.institution = str(t["institution"])
             return k

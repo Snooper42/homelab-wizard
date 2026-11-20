@@ -3101,6 +3101,10 @@ struct TransactionsView: View {
                         .listRowSeparator(.hidden)
                 }
             }
+            // What looks like a planned payment or a transfer, to sort (as the computer's top of Transactions).
+            if search.isEmpty, !filter.isOn, finances.canAddTransactions {
+                TransactionReviewSections(finances: finances)
+            }
             Section {
                 // Under the heading, not over it.
                 if finances.ledger == nil || groups.isEmpty {
