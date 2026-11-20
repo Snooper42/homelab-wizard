@@ -351,6 +351,10 @@ services:
         /bin/sh -c 'wget -q -O /dev/null --post-data "json={\"listen_port\":0,\"current_network_interface\":\"lo\"}" http://127.0.0.1:8082/api/v2/app/setPreferences'
       # Kept in its folder so Connect apps can read the port too.
       VPN_PORT_FORWARDING_STATUS_FILE: /gluetun/forwarded_port
+      # The address it reached the internet from, asked through the tunnel on
+      # each connect and emptied when it stops: Setup's "Downloads are
+      # private" reads it, so the homelab asks no outside service itself.
+      PUBLICIP_FILE: /gluetun/ip
     ports:
       # qBittorrent shares this container's network, so its UI is published here.
       - ${BIND_IP:-127.0.0.1}:${QBITTORRENT_PORT:-8082}:8082

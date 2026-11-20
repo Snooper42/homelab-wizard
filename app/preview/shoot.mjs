@@ -68,6 +68,8 @@ const apps = catalog.apps
   }));
 // A week with long lines, as a homelab that needs looking after gets.
 const longWeek = { title: 'Homelab this week: 4 things to look at', problems: 4, body: '\u2022 20 of 21 apps well; needs a look: Cloudflare Tunnel (not running)\n\u2022 Watchdog: failing: crowdsec bouncer\n\u2022 Backups: 5 stale (Navidrome, Audiobookshelf, Calibre-Web, Komga, Kavita)\n\u2022 Off-site jobs: Duplicati is not reachable: connection refused\n\u25e6 No restore test yet (Backups \u203a Test a restore)\n\u25e6 Vault export due (Backups \u203a Password export)\n\u2713 Disk space: 73 GB free of 460 GB (15%)\nReplacing $2,656 a year in subscriptions' };
+// qBittorrent, running in the VPN's network (media automation is opt-in, so it's added where a check needs it).
+const qbit = { id: 'qbittorrent', name: 'qBittorrent', state: 'running', health: 'healthy', url: 'http://localhost:8082' };
 const status = { apps, missing: 0, unmatched: 0, savings: 3292, updates: { paused: false, schedule: 'daily at 04:00' } };
 // What docker stats says over a minute: Immich indexing photos, Jellyfin
 // streaming, Paperless reading a scan.
@@ -2321,6 +2323,30 @@ const smokes = [
   { name: 'Other apps’ pages have no CrowdSec card', screen: 'app:vikunja', run: async (page) => {
     await page.waitForSelector('#appUpdates', { timeout: 5000 });
     if (await page.locator('#appStopped').count()) throw new Error('Vikunja\'s page shows what CrowdSec stopped');
+  } },
+  // Downloads are private (arr item 2): qBittorrent's page says whether its downloads leave only through the VPN,
+  // why not in words, and offers Connect apps when that ties it to the tunnel; then it asks again.
+  { name: 'qBittorrent’s page: downloads are private', screen: 'app:qbittorrent', mock: { status: { ...status, apps: [...status.apps, qbit] }, privacy: { private: true, said: "qBittorrent's downloads leave only through ProtonVPN, never your home connection." } }, run: async (page) => {
+    const card = page.locator('#appPrivate');
+    await card.locator('h2:has-text("Downloads are private")').waitFor({ timeout: 5000 });
+    await card.locator('li:has(.dot.ok):has-text("Yes: only through the VPN")').waitFor({ timeout: 3000 });
+    await card.getByText('never your home connection').waitFor({ timeout: 3000 });
+    if (await card.getByRole('button', { name: 'Connect apps' }).count()) throw new Error('Connect apps offered while private');
+  } },
+  { name: 'qBittorrent’s page: not tied to the VPN yet, Connect apps ties it', screen: 'app:qbittorrent', mock: { status: { ...status, apps: [...status.apps, qbit] }, privacy: { private: false, said: "The VPN is connected, but qBittorrent isn't tied to the VPN's tunnel yet. Connect apps ties it.", fix: 'wire' } }, run: async (page) => {
+    const card = page.locator('#appPrivate');
+    await card.locator('li:has(.dot.bad):has-text("Not yet")').waitFor({ timeout: 5000 });
+    await card.getByText("isn't tied to the VPN's tunnel yet").waitFor({ timeout: 3000 });
+    await page.evaluate(() => { window.__MOCK.privacy = { private: true, said: "qBittorrent's downloads leave only through ProtonVPN, never your home connection." }; });
+    await card.getByRole('button', { name: 'Connect apps' }).click();
+    await card.locator('li:has(.dot.ok):has-text("Yes: only through the VPN")').waitFor({ timeout: 5000 });
+  } },
+  { name: 'qBittorrent’s page when the check can’t be read', screen: 'app:qbittorrent', mock: { status: { ...status, apps: [...status.apps, qbit] } }, run: async (page) => {
+    await page.locator('#appPrivate').getByText("Can't check right now.").waitFor({ timeout: 5000 });
+  } },
+  { name: 'Other apps’ pages have no Downloads are private card', screen: 'app:vikunja', run: async (page) => {
+    await page.waitForSelector('#appUpdates', { timeout: 5000 });
+    if (await page.locator('#appPrivate').count()) throw new Error('Vikunja\'s page shows Downloads are private');
   } },
   { name: 'Sign-in details for the proxy, from its page', screen: 'app:nginx-proxy-manager', run: async (page) => {
     await page.click('#appPeople button:has-text("Sign-in details")', { timeout: 5000 });

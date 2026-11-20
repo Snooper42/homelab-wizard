@@ -77,7 +77,7 @@ Sonarr, Radarr, Lidarr, and LazyLibrarian mount the same folder at the same `/do
 
 ## Useful commands
 
-Follow the log, check that qBittorrent's own traffic leaves through ProtonVPN, look at the downloads folder, and restart it after Gluetun.
+Follow the log, check by hand that qBittorrent's own traffic leaves through ProtonVPN (Setup's **Downloads are private** and qBittorrent's page check it for you, without asking an outside service; this asks one), look at the downloads folder, and restart it after Gluetun.
 
 ```zsh
 ./homelab logs qbittorrent -f
