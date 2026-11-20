@@ -5183,6 +5183,21 @@
     return /* @__PURE__ */ u3("p", { id: id2, class: "muted empty", children });
   }
 
+  // web/src/choose/walkthroughs.ts
+  var walkthroughs = {
+    // Proton's manual port-forwarding page: a P2P server, NAT-PMP on. Gluetun
+    // picks the server itself, so any P2P one does: only the key is kept.
+    PROTONVPN_WIREGUARD_PRIVATE_KEY: {
+      lead: "Needed for qBittorrent, and only on a paid Proton VPN plan: the free plan doesn’t allow downloads like these.",
+      steps: [
+        "Sign in at account.protonvpn.com and open Downloads, then WireGuard configuration.",
+        "Choose Router as the platform, turn on NAT-PMP (Port Forwarding), and press Create next to any server marked P2P (⇄).",
+        "In the file it shows, copy the long text after PrivateKey = and paste it here. Only that line: the rest isn’t needed."
+      ],
+      link: { url: "https://account.protonvpn.com/downloads", label: "Open Proton’s WireGuard page" }
+    }
+  };
+
   // web/src/choose/Choose.tsx
   var starterLooks = { photos: ["photos", "var(--tint-orange)"], passwords: ["lock", "var(--tint-green)"], movies: ["film", "var(--tint-red)"], music: ["music", "var(--tint-pink)"], files: ["folder", "var(--tint-blue)"] };
   var lit = (p3, selected2) => !!p3.apps.length && p3.apps.every((id2) => selected2.has(id2));
@@ -5351,28 +5366,39 @@
       !p3.start.length && /* @__PURE__ */ u3("p", { id: "nothingToInstall", class: "muted", children: needs.length ? "Fill in the settings below to install the rest." : "Nothing left to install: everything you picked is already running." })
     ] });
   }
-  function Inputs({ keys: keys2, meta, values, label, input: input2 }) {
+  function Inputs({ keys: keys2, meta, values, label, input: input2, open: open5 }) {
     return /* @__PURE__ */ u3(S, { children: [
       !!keys2.length && /* @__PURE__ */ u3("h2", { children: "Settings they need" }),
       keys2.map((k3) => {
         const m3 = meta[k3] || {};
         const secret = m3.secret ?? /KEY|TOKEN|PASS|SECRET/.test(k3);
-        return /* @__PURE__ */ u3("label", { class: "field", children: [
-          /* @__PURE__ */ u3("span", { class: "fieldName", children: label(k3) }),
-          /* @__PURE__ */ u3(
-            "input",
-            {
-              type: secret ? "password" : "text",
-              value: values[k3] || "",
-              autocomplete: "off",
-              spellcheck: false,
-              placeholder: m3.set ? "set already · leave empty to keep it" : "not set yet",
-              onInput: (e3) => input2(k3, e3.currentTarget.value)
-            }
-          ),
-          m3.help && /* @__PURE__ */ u3("span", { class: "help", children: m3.help })
+        const walk = walkthroughs[k3];
+        return /* @__PURE__ */ u3(S, { children: [
+          /* @__PURE__ */ u3("label", { class: "field", children: [
+            /* @__PURE__ */ u3("span", { class: "fieldName", children: label(k3) }),
+            /* @__PURE__ */ u3(
+              "input",
+              {
+                type: secret ? "password" : "text",
+                value: values[k3] || "",
+                autocomplete: "off",
+                spellcheck: false,
+                placeholder: m3.set ? "set already · leave empty to keep it" : "not set yet",
+                onInput: (e3) => input2(k3, e3.currentTarget.value)
+              }
+            ),
+            !walk && m3.help && /* @__PURE__ */ u3("span", { class: "help", children: m3.help })
+          ] }),
+          walk && /* @__PURE__ */ u3(Walk, { w: walk, open: open5 })
         ] }, k3);
       })
+    ] });
+  }
+  function Walk({ w: w3, open: open5 }) {
+    return /* @__PURE__ */ u3("div", { class: "help walk", children: [
+      /* @__PURE__ */ u3("p", { class: "walkLead", children: w3.lead }),
+      /* @__PURE__ */ u3("ol", { children: w3.steps.map((s3) => /* @__PURE__ */ u3("li", { children: s3 }, s3)) }),
+      w3.link && open5 && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => open5(w3.link.url), children: w3.link.label })
     ] });
   }
   var mountStarters = (el3, props) => R(/* @__PURE__ */ u3(Starters, { ...props }), el3);
@@ -5735,7 +5761,7 @@
     mountInputs($("inputs"), { keys: keys2, meta: settingHelp || {}, values: settings, label: settingLabel, input: (k3, v3) => {
       settings[k3] = v3;
       replan();
-    } });
+    }, open: (url) => go().Open(url) });
   }
   var installing = false;
   $("installBtn").onclick = async () => {
