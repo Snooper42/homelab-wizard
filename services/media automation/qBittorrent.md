@@ -27,7 +27,7 @@ Downloads for Sonarr, Radarr, Lidarr, and LazyLibrarian, only ever through the V
 ## Setup
 
 1. Set `PROTONVPN_WIREGUARD_PRIVATE_KEY` ([Gluetun](<Gluetun.md>)), then `./homelab install qbittorrent` (it also comes with the Media automation bundle, `./homelab install @arr`); with a domain, also `./homelab domain setup`.
-2. The first start prints a temporary password: `./homelab logs qbittorrent`. Sign in at the address Status shows (`https://<TAILSCALE_HOST>:8082` in Home mode, https://qbittorrent.example.com with a domain) as `admin` and set a permanent password (Tools › Options › Web UI).
+2. Sign in at the address Status shows (`https://<TAILSCALE_HOST>:8082` in Home mode, https://qbittorrent.example.com with a domain) with the login on qBittorrent's ⚙ (Status). The install makes it (`QBITTORRENT_USER`, `QBITTORRENT_PASSWORD`) and writes it into qBittorrent's settings before its first start, so there's no temporary password to find. A qBittorrent set up before this keeps its own: put its password in `QBITTORRENT_PASSWORD`.
 3. Options › Downloads: default save path `/downloads`.
 4. Options › Connection: listening port = Gluetun's forwarded port.
 5. Options › Advanced: network interface `tun0`, so it cannot use any other route even by mistake.

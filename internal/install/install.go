@@ -21,6 +21,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/docker"
 	"github.com/Snooper42/homelab-wizard/internal/envfile"
 	"github.com/Snooper42/homelab-wizard/internal/host"
+	"github.com/Snooper42/homelab-wizard/internal/kept"
 	"github.com/Snooper42/homelab-wizard/internal/ports"
 	"github.com/Snooper42/homelab-wizard/internal/selector"
 	"github.com/Snooper42/homelab-wizard/internal/sysmem"
@@ -41,6 +42,7 @@ type Plan struct {
 	EnvChanges []envfile.Change
 	Dirs       []string // folders to create for bind mounts
 	Seeds      []Seed   // starter files to copy into new data folders
+	Logins     []Login  // settings files that give a new app its login before it first starts
 	Networks   []string // external networks the projects need
 	Warnings   []string
 	Problems   []string
@@ -63,6 +65,15 @@ type Seed struct {
 	App      string
 	From, To string
 	Files    []string // only those not in To yet
+}
+
+// Login is a settings file written before an app first starts, so its
+// login is the one in .env from the start (arr-loop item 1d). Data holds
+// a password hash, so it's never shown or sent anywhere.
+type Login struct {
+	App  string `json:"app"`
+	Path string `json:"path"`
+	Data []byte `json:"-"`
 }
 
 // Options control planning.
@@ -212,6 +223,9 @@ func Build(in Inputs, sel *selector.Selection) (*Plan, error) {
 		if s, ok := seedFor(a, root, lookup, in.Home); ok {
 			plan.Seeds = append(plan.Seeds, s)
 		}
+	}
+	if err := planLogins(plan, root, lookup, in.Home); err != nil {
+		return nil, err
 	}
 	plan.Networks = in.Catalog.ExternalNetworks(plan.Start)
 	plan.Memory = memoryCheck(in, report, plan)
@@ -499,6 +513,21 @@ func ApplyWithProgress(ctx context.Context, p *Plan, client *docker.Client, c *c
 			if err := p.Env.Save(); err != nil {
 				return fmt.Errorf("writing .env: %w", err)
 			}
+			// A password made anew isn't the one saved in the password
+			// manager, so its Saved tick goes (arr-loop item 1b).
+			if c.Root != "" {
+				var made []string
+				for _, ch := range p.EnvChanges {
+					if ch.Secret && ch.Reason == "generated secret" {
+						made = append(made, ch.Key)
+					}
+				}
+				if len(made) > 0 {
+					if err := kept.Forget(c.Root, made); err != nil {
+						return fmt.Errorf("clearing the Saved ticks: %w", err)
+					}
+				}
+			}
 			// A public app new here starts home only: it goes on the
 			// internet only once someone turns Reach it away from home on.
 			if c.Root != "" {
@@ -526,6 +555,11 @@ func ApplyWithProgress(ctx context.Context, p *Plan, client *docker.Client, c *c
 					if err := os.WriteFile(filepath.Join(sd.To, f), data, 0o644); err != nil {
 						return err
 					}
+				}
+			}
+			for _, l := range p.Logins {
+				if err := writeLogin(l); err != nil {
+					return fmt.Errorf("giving %s its login: %w", l.App, err)
 				}
 			}
 		case "networks":

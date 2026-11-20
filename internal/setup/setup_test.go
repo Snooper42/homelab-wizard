@@ -605,4 +605,15 @@ func TestPasswordManagerStep(t *testing.T) {
 	if s = find(in); s.State != "done" || s.Title != "Your passwords are in your password manager" {
 		t.Fatalf("all ticked: %+v", s)
 	}
+
+	// One password on four apps (ARR_PASSWORD, arr-loop item 1d) is one to save.
+	in.Kept = nil
+	in.Secrets = []kept.Secret{
+		{App: "sonarr", Key: "ARR_PASSWORD", Label: "Sonarr: arr password"},
+		{App: "radarr", Key: "ARR_PASSWORD", Label: "Radarr: arr password"},
+		{App: "prowlarr", Key: "ARR_PASSWORD", Label: "Prowlarr: arr password"},
+	}
+	if s = find(in); s.Title != "1 password isn't in your password manager yet" || !strings.Contains(s.Detail, "Sonarr, Radarr and Prowlarr: arr password") {
+		t.Fatalf("a shared password: %+v", s)
+	}
 }
