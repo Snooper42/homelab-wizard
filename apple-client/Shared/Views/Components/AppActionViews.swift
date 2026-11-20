@@ -132,6 +132,7 @@ extension AppAction {
         case .stop: Theme.danger
         case .restart: Theme.info
         case .rollback: Theme.warning
+        case .update: Theme.accent
         }
     }
 }

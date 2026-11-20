@@ -1,12 +1,13 @@
 import Foundation
 
 /// A change to one app, run on the computer by the `AppAction` method
-/// (`homelab start|stop|restart <id>`, `homelab rollback <id> --apply`).
+/// (`homelab start|stop|restart|update <id>`, `homelab rollback <id> --apply`).
 ///
-/// Update isn't here. The computer offers it only behind the release notes,
-/// and there's no phone method for those (or for whether an update exists).
+/// Update is offered only behind what it brings (`ReleaseNotes`, the
+/// computer's Update shows them first), never on a row's swipe, a menu or a
+/// group: `available(for:)` leaves it out, and `UpdateNotesSheet` runs it.
 enum AppAction: String, Sendable, CaseIterable, Identifiable {
-    case start, stop, restart, rollback
+    case start, stop, restart, rollback, update
 
     var id: Self { self }
 
@@ -16,6 +17,7 @@ enum AppAction: String, Sendable, CaseIterable, Identifiable {
         case .stop: "Stop"
         case .restart: "Restart"
         case .rollback: "Roll Back"
+        case .update: "Update"
         }
     }
 
@@ -26,6 +28,7 @@ enum AppAction: String, Sendable, CaseIterable, Identifiable {
         case .stop: "Stopping…"
         case .restart: "Restarting…"
         case .rollback: "Rolling back…"
+        case .update: "Updating…"
         }
     }
 
@@ -35,6 +38,7 @@ enum AppAction: String, Sendable, CaseIterable, Identifiable {
         case .stop: "Stopped"
         case .restart: "Restarted"
         case .rollback: "Rolled back"
+        case .update: "Updated"
         }
     }
 
@@ -44,6 +48,7 @@ enum AppAction: String, Sendable, CaseIterable, Identifiable {
         case .stop: "stop.fill"
         case .restart: "arrow.clockwise"
         case .rollback: "clock.arrow.circlepath"
+        case .update: "arrow.down.circle"
         }
     }
 
@@ -53,7 +58,7 @@ enum AppAction: String, Sendable, CaseIterable, Identifiable {
 
     /// The everyday ones, which a row swipe offers. Roll back is only on
     /// the app's page and in its menu.
-    var isEveryday: Bool { self != .rollback }
+    var isEveryday: Bool { self != .rollback && self != .update }
 
     /// The apps a group action covers, as the computer's group menu picks
     /// them (`startable` in web/src/status/AppList.tsx): Start covers the
@@ -69,7 +74,7 @@ enum AppAction: String, Sendable, CaseIterable, Identifiable {
                 return app.state == "stopped" && app.stoppedOnPurpose == nil && !app.pausedOnBattery
                     && (app.waitingFor ?? "").isEmpty
             case .restart, .stop: return app.isRunning
-            case .rollback: return false
+            case .rollback, .update: return false
             }
         }
     }
@@ -90,6 +95,7 @@ enum AppAction: String, Sendable, CaseIterable, Identifiable {
         case .restart: "Restart the \(count) Running"
         case .stop: "Stop the \(count) Running"
         case .rollback: "Roll Back"
+        case .update: "Update"
         }
     }
 

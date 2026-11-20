@@ -159,6 +159,23 @@ final class AppActionsViewModel {
         return computerHas("away") ? all : all.filter { $0 != .away }
     }
 
+    /// Update, behind what it brings: a running container app, on a device
+    /// allowed changes whose computer answers both calls.
+    func canUpdate(_ app: AppStatus) -> Bool {
+        canChangeApps && computerAnswers("ReleaseNotes") && !app.isNative && app.isRunning && AppStatus.isValidID(app.id)
+    }
+
+    /// What updating `app` brings, for `UpdateNotesSheet`.
+    func releaseNotes(for app: AppStatus) async throws -> ReleasePreview {
+        try await api.releaseNotes(appID: app.id)
+    }
+
+    /// Updates `app` once its notes were shown: Face ID first, as every change.
+    func update(_ app: AppStatus) async {
+        guard canUpdate(app) else { return }
+        await run(.update, on: app, checkAvailability: false)
+    }
+
     /// For a device allowed changes whose computer can't make them yet:
     /// update it. Nil otherwise.
     func updateHint(for app: AppStatus) -> String? {

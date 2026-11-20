@@ -608,6 +608,26 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 			}
 			return phoneSetup(core.Setup(ctx, root)), log, nil
 		}},
+		// What updating an app brings, before a phone updates it (AppAction "update"): its
+		// project's releases newer than the version it runs, as the computer's Update shows
+		// them first (core.ReleaseNotes). Not on a wall screen, not a member's phone, and only
+		// for an app the homelab runs in a container; each is refused before anything is read.
+		"ReleaseNotes": {Call: func(ctx context.Context, args []json.RawMessage) (any, []string, error) {
+			var id string
+			if len(args) > 0 {
+				_ = json.Unmarshal(args[0], &id)
+			}
+			if d, ok := companion.Caller(ctx); ok && d.Kiosk {
+				return nil, nil, fmt.Errorf("%s was paired as a wall screen: read what an update brings from a phone", d.Name)
+			}
+			if err := h.containerApp(id); err != nil {
+				return nil, nil, err
+			}
+			ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+			defer cancel()
+			p, err := core.ReleaseNotes(ctx, root, id)
+			return p, nil, err
+		}},
 		"ExplainLogs": {Call: func(ctx context.Context, args []json.RawMessage) (any, []string, error) {
 			var id string
 			if len(args) > 0 {
