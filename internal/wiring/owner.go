@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"path"
+	"strings"
 )
 
 // Tidy Up owns the media libraries: the *arr apps find and download, and
@@ -88,4 +90,60 @@ func (w *Wirer) setConfig(ctx context.Context, id, path, field string, value any
 		return "", "", err
 	}
 	return "done", "", nil
+}
+
+// tidyFilingSteps are Connect apps' part of the hand-over (the owner, Nov
+// 19, 2026: Tidy Up files every download, so the *arr apps never import a
+// second copy): HandOver's steps, found and left alone on the next run. When
+// Tidy Up's inbox won't file what qBittorrent downloads, handing over would
+// strand the downloads, so each app keeps filing and the step says why.
+func (w *Wirer) tidyFilingSteps() []step {
+	why := w.tidyNotFiling()
+	if why == "" {
+		return w.handOverSteps()
+	}
+	var steps []step
+	for _, h := range handOver {
+		if w.has(h.id) {
+			steps = append(steps, step{w.name(h.id) + " keeps filing what it downloads", func(context.Context) (string, string, error) {
+				return "manual", why, nil
+			}})
+		}
+	}
+	return steps
+}
+
+// tidyNotFiling is why Tidy Up's inbox won't file what lands in
+// DOWNLOADS_ROOT, as the agent reads TIDY_UP, TIDY_INBOX, TIDY_INBOX_WHEN
+// and TIDY_INBOX_FOLDERS (internal/media InboxFolders); "" when it will.
+func (w *Wirer) tidyNotFiling() string {
+	const then = ", so Sonarr, Radarr and Lidarr keep filing what they download themselves"
+	off := func(k string) bool {
+		v := strings.ToLower(strings.TrimSpace(w.Env[k]))
+		return v == "false" || v == "0" || v == "no" || v == "off"
+	}
+	dl := strings.TrimSpace(w.Env["DOWNLOADS_ROOT"])
+	switch {
+	case off("TIDY_UP"):
+		return "Tidy Up is turned off (TIDY_UP)" + then
+	case off("TIDY_INBOX"):
+		return "Tidy Up's inbox is turned off (TIDY_INBOX)" + then
+	case strings.EqualFold(strings.TrimSpace(w.Env["TIDY_INBOX_WHEN"]), "manual"):
+		return "Tidy Up's inbox runs only when you press Tidy up now (TIDY_INBOX_WHEN=manual)" + then
+	case dl == "":
+		return "no downloads folder is set (DOWNLOADS_ROOT)" + then
+	}
+	folders := strings.TrimSpace(w.Env["TIDY_INBOX_FOLDERS"])
+	if folders == "" {
+		return "" // Downloads and DOWNLOADS_ROOT
+	}
+	clean := func(p string) string {
+		return strings.ToLower(path.Clean(strings.ReplaceAll(strings.TrimSpace(p), "\\", "/")))
+	}
+	for _, f := range strings.Split(folders, ";") {
+		if clean(f) == clean(dl) {
+			return ""
+		}
+	}
+	return "Tidy Up's inbox doesn't watch the downloads folder (" + dl + " isn't in TIDY_INBOX_FOLDERS)" + then
 }

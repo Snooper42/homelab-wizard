@@ -150,6 +150,7 @@ func (w *Wirer) steps() []step {
 			}})
 		}
 	}
+	out = append(out, w.tidyFilingSteps()...)
 	for _, l := range libraries[:2] { // Sonarr and Radarr
 		l := l
 		if w.has("bazarr", l.id) {

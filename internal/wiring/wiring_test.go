@@ -109,7 +109,8 @@ func TestWiring(t *testing.T) {
 		Env:  map[string]string{},
 		Wait: time.Second,
 	}
-	if got := len(w.Plan()); got != 5 {
+	// The sixth: with no DOWNLOADS_ROOT, Sonarr keeps filing (TestConnectHandsOver).
+	if got := len(w.Plan()); got != 6 {
 		t.Fatalf("plan has %d links: %+v", got, w.Plan())
 	}
 	links := w.Apply(context.Background(), nil)
@@ -128,8 +129,11 @@ func TestWiring(t *testing.T) {
 	w.Env["QBITTORRENT_PASSWORD"] = "pw"
 	for _, l := range w.Apply(context.Background(), nil) {
 		want := "already"
-		if strings.HasPrefix(l.Text, "qBittorrent") {
+		switch {
+		case strings.HasPrefix(l.Text, "qBittorrent"):
 			want = "done"
+		case l.Text == "Sonarr keeps filing what it downloads":
+			want = "manual"
 		}
 		if l.State != want {
 			t.Fatalf("second run: %+v", l)
