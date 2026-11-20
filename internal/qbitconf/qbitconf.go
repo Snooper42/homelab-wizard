@@ -66,7 +66,10 @@ func First(user, password string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	return []byte(defaults + `WebUI\Username=` + user + "\n" + `WebUI\Password_PBKDF2="@ByteArray(` + h + `)"` + "\n"), nil
+	// LocalHostAuth=false lets Gluetun hand qBittorrent the VPN's forwarded
+	// port from the loopback the two share, from the very first connect
+	// (compose/media-automation.yaml, VPN_PORT_FORWARDING_UP_COMMAND).
+	return []byte(defaults + `WebUI\LocalHostAuth=false` + "\n" + `WebUI\Username=` + user + "\n" + `WebUI\Password_PBKDF2="@ByteArray(` + h + `)"` + "\n"), nil
 }
 
 var storedRe = regexp.MustCompile(`(?m)^WebUI\\Password_PBKDF2="@ByteArray\(([^)]+)\)"\r?$`)

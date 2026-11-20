@@ -109,8 +109,8 @@ func TestWiring(t *testing.T) {
 		Env:  map[string]string{},
 		Wait: time.Second,
 	}
-	// The sixth: with no DOWNLOADS_ROOT, Sonarr keeps filing (TestConnectHandsOver).
-	if got := len(w.Plan()); got != 6 {
+	// The seventh: with no DOWNLOADS_ROOT, Sonarr keeps filing (TestConnectHandsOver).
+	if got := len(w.Plan()); got != 7 {
 		t.Fatalf("plan has %d links: %+v", got, w.Plan())
 	}
 	links := w.Apply(context.Background(), nil)
@@ -176,16 +176,16 @@ func TestRetriesARefusedSaveAndCorrectsAWrongAddress(t *testing.T) {
 		Wait:    time.Second,
 		retryIn: time.Millisecond,
 	}
-	if l := w.Apply(context.Background(), nil)[1]; l.State != "done" || len(sonarr["downloadclient"]) != 1 {
+	if l := w.Apply(context.Background(), nil)[2]; l.State != "done" || len(sonarr["downloadclient"]) != 1 {
 		t.Fatalf("a save refused while qBittorrent starts should be retried: %+v %v", l, sonarr["downloadclient"])
 	}
 	// Someone pointed it at the wrong host; the next run corrects it.
 	setField(sonarr["downloadclient"][0], "host", "localhost")
-	l := w.Apply(context.Background(), nil)[1]
+	l := w.Apply(context.Background(), nil)[2]
 	if l.State != "done" || !strings.Contains(l.Detail, "corrected host") || field(sonarr["downloadclient"][0], "host") != "gluetun" {
 		t.Fatalf("wrong host not corrected: %+v %v", l, sonarr["downloadclient"][0])
 	}
-	if l := w.Apply(context.Background(), nil)[1]; l.State != "already" {
+	if l := w.Apply(context.Background(), nil)[2]; l.State != "already" {
 		t.Fatalf("third run: %+v", l)
 	}
 }
