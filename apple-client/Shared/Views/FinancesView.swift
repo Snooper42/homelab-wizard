@@ -4223,6 +4223,7 @@ private struct LinkedFinancePage: View {
         case .cashflow: FinanceCashFlowPage(finances: finances)
         case .review: MonthReviewPage(finances: finances)
         case .calendar: FinanceCalendarView(finances: finances)
+        case .paychecks: FinancePaychecksPage(finances: finances)
         }
     }
 }

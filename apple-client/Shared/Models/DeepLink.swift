@@ -40,7 +40,7 @@ enum DeepLink: Equatable, Sendable {
 
     /// Finances' own pages a link may open.
     enum FinancePage: String, Sendable, CaseIterable {
-        case transactions, budgets, bills, accounts, investments, goals, recurring, spending, inbox, cashflow, review, calendar
+        case transactions, budgets, bills, accounts, investments, goals, recurring, spending, inbox, cashflow, review, calendar, paychecks
 
         /// The Finances menu's pages, in order: ⌥⌘1 to ⌥⌘9 (iPad with a keyboard).
         static let menuOrder: [FinancePage] = [.transactions, .bills, .budgets, .goals, .investments, .accounts, .spending, .cashflow, .calendar]
@@ -60,6 +60,7 @@ enum DeepLink: Equatable, Sendable {
             case .cashflow: "Cash Flow"
             case .review: "Month in Review"
             case .calendar: "Calendar"
+            case .paychecks: "Paychecks"
             }
         }
     }

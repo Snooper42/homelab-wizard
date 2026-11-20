@@ -60,17 +60,30 @@ struct FinancePaychecksPage: View {
         }
     }
 
-    /// Someone with only a take-home typed in: one line.
+    /// Someone with only a take-home typed in: one line, or the amount under
+    /// the name where the line doesn't fit (it wrapped "into Chase Checking"
+    /// beside the amount on the iPhone, light-paychecks, Nov 20).
     private func simpleCard(_ p: Paychecks.Person) -> some View {
-        HStack(spacing: 12) {
-            header(p)
-            Money(value: p.net, currency: currency, finances: finances)
-                .font(.headline)
-                .monospacedDigit()
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 12) {
+                header(p).fixedSize(horizontal: true, vertical: false)
+                Spacer(minLength: 8)
+                takeHome(p)
+            }
+            VStack(alignment: .leading, spacing: 8) {
+                header(p)
+                takeHome(p).padding(.leading, 48)
+            }
         }
         .padding(16)
         .card(radius: 24)
         .accessibilityElement(children: .combine)
+    }
+
+    private func takeHome(_ p: Paychecks.Person) -> some View {
+        Money(value: p.net, currency: currency, finances: finances)
+            .font(.headline)
+            .monospacedDigit()
     }
 
     private func personCard(_ p: Paychecks.Person) -> some View {
