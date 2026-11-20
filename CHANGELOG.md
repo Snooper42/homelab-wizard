@@ -8,6 +8,8 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### New
 
+<!-- The iPhone and iPad app (lane 4): add a line just below this one. -->
+<!-- Everything else (the other lanes): add a line just below this one. -->
 - **Downloads are private, checked for you:** Setup and qBittorrent's page now say whether qBittorrent's downloads leave only through ProtonVPN, with a green tick, instead of a command to type. It checks that qBittorrent lives in the VPN's network, that the VPN is connected, and that qBittorrent is tied to the VPN's tunnel, from what Gluetun and qBittorrent say, without asking any outside service. When qBittorrent isn't tied to the tunnel yet, **Connect apps** ties it; Gluetun ties it again on every reconnect.
 - **Update all apps from the Homelab app:** Setup on the iPhone and iPad has **Update All Apps**, beside Look for Problems. It first lists which apps have an update and which wait for their own days or are held, as the computer's Update all does. Then **Update Them**, after Face ID, updates them one at a time and keeps going on the computer to the end, even if you close the app.
 - **Sign-in details on the Homelab app:** an app's page on the iPhone and iPad has **Sign-in Details**, as the computer's ⚙: its passwords and keys by name, never shown, with a dot until each is ticked *Saved in Proton Pass*. On a phone allowed to make changes, **Copy** asks for Face ID first, puts it on that phone's clipboard only (not your other devices') for 90 seconds, and the computer keeps the copy in the app's history.
@@ -189,6 +191,8 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+<!-- The iPhone and iPad app (lane 4): add a line just below this one. -->
+<!-- Everything else (the other lanes): add a line just below this one. -->
 - **Where to find the VPN key, step by step:** picking qBittorrent, the ProtonVPN key's field now says first that it needs a paid Proton VPN plan, then walks through finding the key in three steps (Downloads › WireGuard configuration, Router with NAT-PMP on, copy only the PrivateKey line), with a button that opens Proton's page.
 - **Sign-in details for more apps:** the ⚙ now has the logins the homelab knows for ntfy (the phone's), Tdarr, Beszel, Nextcloud, PsiTransfer (both passwords, each by name), Ghostfolio (its security token) and Navidrome, and the keys you paste elsewhere for ntfy, Tdarr, Audiobookshelf, Paperless-ngx, Firefly III, Wallos and Pocket ID.
 - **Connect apps hands the downloads to Tidy Up by itself:** Sonarr, Radarr and Lidarr stop renaming and importing, so each download is filed once by Tidy Up and never kept twice. If Tidy Up's inbox isn't filing the downloads folder (Tidy Up or its inbox off, the inbox set to run only by hand, or the folder not among those it watches), they keep filing and Connect apps says why. A second run changes nothing.
@@ -356,6 +360,8 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+<!-- The iPhone and iPad app (lane 4): add a line just below this one. -->
+<!-- Everything else (the other lanes): add a line just below this one. -->
 - **Setup's checklist in the Homelab app shows when you open Setup,** not only after pulling to refresh; *Reading the checklist…* while it loads. And on the iPad at the largest text, the sidebar's names stay whole and the Overnight line keeps its colon with its word.
 - **Settings › Phones and iPads and Setup's checklist in the Homelab app load even when opened right after the app starts:** they asked once, before the app knew what this phone may see, and stayed on their spinner. And the Storage page no longer says *Storage* twice.
 - **Paperless-AI can reach Paperless-ngx again:** Paperless-ngx 3.5 answers only its own web address and localhost once that address is set, so Paperless-AI's setup (and anything else on the homelab's network calling it by name) got *400 Bad Request*. Paperless-ngx now also answers its name on the homelab's network and 127.0.0.1, and nothing else.
