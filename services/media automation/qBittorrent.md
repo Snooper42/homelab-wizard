@@ -29,8 +29,7 @@ Downloads for Sonarr, Radarr, Lidarr, and LazyLibrarian, only ever through the V
 1. Set `PROTONVPN_WIREGUARD_PRIVATE_KEY` ([Gluetun](<Gluetun.md>)), then `./homelab install qbittorrent` (it also comes with the Media automation bundle, `./homelab install @arr`); with a domain, also `./homelab domain setup`.
 2. Sign in at the address Status shows (`https://<TAILSCALE_HOST>:8082` in Home mode, https://qbittorrent.example.com with a domain) with the login on qBittorrent's ⚙ (Status). The install makes it (`QBITTORRENT_USER`, `QBITTORRENT_PASSWORD`) and writes it into qBittorrent's settings before its first start, so there's no temporary password to find. A qBittorrent set up before this keeps its own: put its password in `QBITTORRENT_PASSWORD`.
 3. Options › Downloads: default save path `/downloads`.
-4. Options › Connection: listening port = Gluetun's forwarded port.
-5. Options › Advanced: network interface `tun0`, so it cannot use any other route even by mistake.
+4. Nothing for the listening port: [Gluetun](<Gluetun.md>) sets it to the VPN's forwarded port, and the network interface to `tun0`, each time the VPN connects. **Connect apps** turns on *Bypass authentication for clients on localhost* for that (only Gluetun shares qBittorrent's loopback) and sets the port Gluetun has now.
 
 The *arr apps reach it at host `gluetun`, port `8082`.
 
@@ -114,4 +113,4 @@ The Web API reference is linked from the [qBittorrent wiki](https://github.com/q
 |---|---|
 | Web UI unreachable | Gluetun is down or was recreated. `./homelab restart gluetun qbittorrent` |
 | "Unauthorized" through the proxy | Options › Web UI: turn off Host header validation, or add `qbittorrent.example.com` to the allowed domains |
-| Slow or no peers | The listening port does not match Gluetun's forwarded port |
+| Slow or no peers | The listening port does not match Gluetun's forwarded port (`data/appdata/gluetun/forwarded_port`). Run **Connect apps** |

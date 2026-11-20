@@ -337,6 +337,20 @@ services:
       # Its control server stops the VPN and gives its address: on its own
       # loopback, which qBittorrent shares, never the shared network.
       HTTP_CONTROL_SERVER_ADDRESS: 127.0.0.1:8000
+      # The forwarded port goes into qBittorrent by itself each time the VPN
+      # connects (it changes on every reconnect). The call stays on this
+      # loopback, which only qBittorrent shares, and qBittorrent lets it in
+      # without its login (bypass_local_auth, which Connect apps sets). It
+      # may still be starting, so the call is tried for up to five minutes.
+      # When the VPN drops, qBittorrent is put on no port and no network
+      # until it's back (Gluetun's wiki: qBittorrent misses a reconnect
+      # otherwise). 8082 is qBittorrent's own WEBUI_PORT, not QBITTORRENT_PORT.
+      VPN_PORT_FORWARDING_UP_COMMAND: >-
+        /bin/sh -c 'i=0; until wget -q -O /dev/null --post-data "json={\"listen_port\":{{PORT}},\"current_network_interface\":\"{{VPN_INTERFACE}}\",\"random_port\":false,\"upnp\":false}" http://127.0.0.1:8082/api/v2/app/setPreferences; do i=$$((i+1)); [ $$i -ge 60 ] && exit 1; sleep 5; done'
+      VPN_PORT_FORWARDING_DOWN_COMMAND: >-
+        /bin/sh -c 'wget -q -O /dev/null --post-data "json={\"listen_port\":0,\"current_network_interface\":\"lo\"}" http://127.0.0.1:8082/api/v2/app/setPreferences'
+      # Kept in its folder so Connect apps can read the port too.
+      VPN_PORT_FORWARDING_STATUS_FILE: /gluetun/forwarded_port
     ports:
       # qBittorrent shares this container's network, so its UI is published here.
       - ${BIND_IP:-127.0.0.1}:${QBITTORRENT_PORT:-8082}:8082
