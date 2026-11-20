@@ -965,7 +965,7 @@ private struct SplitDashboard: View {
             if filter == .all, !model.isSearching, model.hasLoaded {
                 // Not rows to select: the selection is an app. Every Alert
                 // opens beside the list, in the app's place.
-                StatusCards(cards: model.cards, finances: finances)
+                StatusCards(cards: model.cards, finances: finances, nameOf: { model.app(id: $0)?.name ?? $0 })
                     .selectionDisabled()
                     .environment(\.openAlertLog, { model.openAlertLog() })
             }
