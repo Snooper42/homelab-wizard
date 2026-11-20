@@ -37,6 +37,7 @@ services:
         radarr: "Gives Radarr its search sites in one place, shared with Sonarr."
       memory: 200
       name: Prowlarr
+      login: [ARR_USER, ARR_PASSWORD]
       keyfile: config.xml
       category: media-automation
       description: Indexer manager for the *arr apps
@@ -65,6 +66,7 @@ services:
     x-homelab:
       memory: 250
       name: Sonarr
+      login: [ARR_USER, ARR_PASSWORD]
       keyfile: config.xml
       category: media-automation
       description: TV show automation
@@ -93,6 +95,7 @@ services:
     x-homelab:
       memory: 250
       name: Radarr
+      login: [ARR_USER, ARR_PASSWORD]
       keyfile: config.xml
       category: media-automation
       description: Movie automation
@@ -121,6 +124,7 @@ services:
     x-homelab:
       memory: 250
       name: Lidarr
+      login: [ARR_USER, ARR_PASSWORD]
       keyfile: config.xml
       category: media-automation
       description: Music automation
