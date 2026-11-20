@@ -198,5 +198,6 @@ Kept from the earlier queue (Nov 6): only the items where a household can lose d
 
 ## For Account 2
 
+- **From lane 5 (Nov 19, ET): logins made for the \*arrs** (`claude/arr-logins`): no screen code changed. Prowlarr, Sonarr, Radarr and Lidarr now have `login: [ARR_USER, ARR_PASSWORD]` in the catalog, so the ⚙ sheet and Setup's `password-manager` count show them.
 - **From lane 5 (Nov 19, ET): Saved in Proton Pass** (`claude/arr-saved-tick`): the ⚙ (`GearButton` in `status/AppList.tsx`, also on an app's page) has a dot while an app's password or key isn't ticked Saved (`Unkept`); the sheet's rows offer the tick after a copy (`SignIns`, `Kept`/`MarkKept`); Setup has a `password-manager` step (`internal/setup`). `SaveSettings` clears a changed key's tick.
 - **From lane 5 (Nov 20): the ⚙ on every app** (`claude/arr-signin-gear`): a gear on each Status row (`web/src/status/AppList.tsx`, `AppListActions.signIn`) and in an app page's toolbar (`AppPage.tsx`) opens the reworked sign-in sheet (`showSignIn` in `screens/status.ts`, `SignIns` in `sheets/Sheet.tsx`): address, then *Sign in*, *Paste into another app*, *Keep safe*. A new `gear` icon; Settings' copy note says Proton Pass. Smoke cases: *Status: the gear on Sonarr’s row…*, *Sign-in details: …*.

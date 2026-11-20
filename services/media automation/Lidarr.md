@@ -25,7 +25,7 @@ New albums by followed artists arrive in `/Volumes/Media/music`.
 
 ## Setup
 
-1. Open `https://<TAILSCALE_HOST>:8686` in Home mode, or `https://lidarr.example.com` with a domain, and set up authentication.
+1. Open `https://<TAILSCALE_HOST>:8686` in Home mode, or `https://lidarr.example.com` with a domain, and sign in with the login in its ⚙ Sign-in details (`ARR_USER`, `ARR_PASSWORD`, made at install; Connect apps sets it, so Lidarr never asks you to make one).
 2. Settings › Media Management: root folder `/music`.
 3. Settings › Download Clients: qBittorrent, host `gluetun`, port `8082`. Category `music`.
 4. Indexers come from Prowlarr.
