@@ -609,6 +609,10 @@ private struct SplitDashboard: View {
             Section {
                 ForEach(screens, id: \.self) { screen in
                     Label(screen.title, systemImage: screen.systemImage)
+                        // Whole at the largest text: the column broke them ("Backu ps", "Fi- nances",
+                        // ipad-land-large-status, Nov 20); smaller instead, as Status's group names.
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.5)
                         .badge(badge(for: screen))
                         .tag(screen)
                 }
@@ -1331,12 +1335,10 @@ struct OvernightLine: View {
             // At the largest sizes the button goes under the words: beside them, in the
             // iPad's column, both broke a letter or two a line ("Over / nigh / t:", Nov 16).
             if typeSize.isAccessibilitySize {
+                // The words the whole width, without the moon beside them: in the iPad's column the
+                // colon still went to a line of its own ("Overnight / : 2 apps", Nov 20).
                 VStack(alignment: .leading, spacing: 6) {
-                    Label {
-                        Text(words).font(.callout)
-                    } icon: {
-                        Image(systemName: "moon.stars").foregroundStyle(.secondary).accessibilityHidden(true)
-                    }
+                    Text(words).font(.callout)
                     hide
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)

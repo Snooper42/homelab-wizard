@@ -349,6 +349,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- **Setup's checklist in the Homelab app shows when you open Setup,** not only after pulling to refresh; *Reading the checklist…* while it loads. And on the iPad at the largest text, the sidebar's names stay whole and the Overnight line keeps its colon with its word.
 - **Settings › Phones and iPads and Setup's checklist in the Homelab app load even when opened right after the app starts:** they asked once, before the app knew what this phone may see, and stayed on their spinner. And the Storage page no longer says *Storage* twice.
 - **Paperless-AI can reach Paperless-ngx again:** Paperless-ngx 3.5 answers only its own web address and localhost once that address is set, so Paperless-AI's setup (and anything else on the homelab's network calling it by name) got *400 Bad Request*. Paperless-ngx now also answers its name on the homelab's network and 127.0.0.1, and nothing else.
 - **Updating on Windows no longer fails at "unpacking"** on a PC whose PowerShell has a newer Archive module (*Cannot find an overload for "ExtractToDirectory"*): the update helper unpacks the new build with Windows's own zip reader, and stops if a file in it would land outside the app's folder.

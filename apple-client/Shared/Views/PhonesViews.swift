@@ -224,6 +224,15 @@ struct SetupChecklistSections: View {
                 }
             } else if let error = computer.setupError {
                 Section { Text(verbatim: error).foregroundStyle(Theme.secondaryInk) }
+            } else if computer.setupSteps == nil {
+                // Something for the task below to run on: with nothing drawn yet, a group's
+                // .task never ran, so the checklist showed only after a pull to refresh (light-setup, Nov 20).
+                Section {
+                    HStack(spacing: 8) {
+                        ProgressView()
+                        Text("Reading the checklist…").foregroundStyle(Theme.secondaryInk)
+                    }
+                }
             }
         }
         .task(id: computer.canSeeSetup) { await computer.loadSetup() }
