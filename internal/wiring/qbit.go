@@ -27,7 +27,7 @@ var qbitPrefs = map[string]any{
 	"incomplete_files_ext": true,
 }
 
-const qbitSignInHelp = "in qBittorrent set a permanent Web UI password (Tools > Options > Web UI; the temporary one in its log changes on every restart), put it in QBITTORRENT_PASSWORD (and QBITTORRENT_USER if it is not admin), then connect again"
+const qbitSignInHelp = "put qBittorrent's Web UI password in QBITTORRENT_PASSWORD in Settings (and QBITTORRENT_USER if it is not admin), then connect again; a qBittorrent the homelab installs gets one made for it, and one set up earlier keeps its own (Tools > Options > Web UI)"
 
 var errQbitSignIn = errors.New("qBittorrent refused the sign-in: check QBITTORRENT_PASSWORD (and QBITTORRENT_USER) in .env")
 

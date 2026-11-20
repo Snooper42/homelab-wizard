@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/Snooper42/homelab-wizard/internal/lockedfile"
@@ -108,6 +109,42 @@ func Unsaved(secrets []Secret, saved map[string]bool) []Secret {
 	}
 	sort.SliceStable(out, func(i, j int) bool { return out[i].Recovery && !out[j].Recovery })
 	return out
+}
+
+// Distinct keeps one secret per setting: a password several apps share
+// (ARR_PASSWORD) is saved once, under one label naming them all
+// ("Sonarr, Radarr and Prowlarr: arr password").
+func Distinct(secrets []Secret) []Secret {
+	var out []Secret
+	at := map[string]int{}
+	apps := map[string][]string{}
+	for _, s := range secrets {
+		name, what, ok := strings.Cut(s.Label, ": ")
+		if !ok {
+			name, what = "", s.Label
+		}
+		if i, seen := at[s.Key]; seen {
+			out[i].Recovery = out[i].Recovery || s.Recovery
+			if name != "" {
+				apps[s.Key] = append(apps[s.Key], name)
+				out[i].Label = joinNames(apps[s.Key]) + ": " + what
+			}
+			continue
+		}
+		at[s.Key] = len(out)
+		if name != "" {
+			apps[s.Key] = []string{name}
+		}
+		out = append(out, s)
+	}
+	return out
+}
+
+func joinNames(n []string) string {
+	if len(n) < 2 {
+		return strings.Join(n, "")
+	}
+	return strings.Join(n[:len(n)-1], ", ") + " and " + n[len(n)-1]
 }
 
 // ByApp counts the unsaved secrets of each app, for the dot on its gear.

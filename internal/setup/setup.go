@@ -407,7 +407,7 @@ func Steps(ctx context.Context, in Inputs) []Step {
 	// password manager (Proton Pass), copied one at a time from an app's ⚙
 	// and ticked Saved there. The ones that open the backups come first.
 	if len(in.Secrets) > 0 {
-		left := kept.Unsaved(in.Secrets, in.Kept)
+		left := kept.Distinct(kept.Unsaved(in.Secrets, in.Kept))
 		pm := Step{ID: "password-manager", Title: "Your passwords are in your password manager",
 			Why: "Each password the homelab made for an app, and each key, kept in your password manager (Proton Pass), so losing this machine loses none of them."}
 		if n := len(left); n > 0 {
