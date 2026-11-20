@@ -139,7 +139,7 @@ type Meta struct {
 	// KeyFile is where an app keeps its own API key, in its /config (an
 	// *arr app's config.xml, Seerr's settings.json): Sign-in details copies
 	// it from there.
-	KeyFile string `yaml:"keyfile"`
+	KeyFile string   `yaml:"keyfile"`
 	Dump    string   `yaml:"dump"`
 	Archive []string `yaml:"archive"` // named volumes `homelab backup` tars up
 	Doc     string   `yaml:"doc"`

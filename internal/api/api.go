@@ -63,7 +63,7 @@ type App struct {
 	Recovery []string `json:"recovery,omitempty"`
 	KeyFile  bool     `json:"keyFile,omitempty"`
 	Public   bool     `json:"public"`
-	Warning string   `json:"warning,omitempty"`
+	Warning  string   `json:"warning,omitempty"`
 	// Next is what to do once it is installed (x-homelab next), for Done.
 	Next string `json:"next,omitempty"`
 	// MacApp: a native app installed as a Mac app, which Status can open
