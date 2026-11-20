@@ -5329,7 +5329,7 @@
       ]
      }
     ],
-    "holdingsRead": "@ago:1842904"
+    "holdingsRead": "@ago:1850817"
    },
    "today": "2026-10-30",
    "checking": "chk",
@@ -10669,7 +10669,23 @@
      "name": "Jordan"
     }
    ]
-  }
+  },
+  "SignInDetails": [
+   {
+    "app": "vikunja",
+    "key": "VIKUNJA_PASSWORD",
+    "label": "Vikunja: password",
+    "section": "sign-in",
+    "saved": true
+   },
+   {
+    "app": "vikunja",
+    "key": "app:vikunja",
+    "label": "Vikunja: its API key",
+    "section": "paste",
+    "saved": false
+   }
+  ]
  },
  "cards": {
   "watchdog": {

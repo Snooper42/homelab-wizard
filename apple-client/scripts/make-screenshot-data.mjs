@@ -106,6 +106,11 @@ answers.Setup = [
 ];
 // An app's page › Who Uses It (serve.go's AppPeople): made-up names only.
 answers.AppPeople = { household: true, people: [{ name: 'Alex' }, { name: 'Sam' }, { name: 'Jordan' }] };
+// An app's page › Sign-in Details (signinphone.go's SignInDetails): made-up rows, labels only (never a value).
+answers.SignInDetails = [
+  { app: 'vikunja', key: 'VIKUNJA_PASSWORD', label: 'Vikunja: password', section: 'sign-in', saved: true },
+  { app: 'vikunja', key: 'app:vikunja', label: 'Vikunja: its API key', section: 'paste', saved: false },
+];
 // What the computer answers (the contract the iPhone's tests read): every call, Phones and Setup with them.
 const contract = JSON.parse(readFileSync(join(root, 'apple-client', 'Tests', 'Resources', 'CompanionContract.json'), 'utf8'));
 
