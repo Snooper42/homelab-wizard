@@ -342,6 +342,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- **Paperless-AI can reach Paperless-ngx again:** Paperless-ngx 3.5 answers only its own web address and localhost once that address is set, so Paperless-AI's setup (and anything else on the homelab's network calling it by name) got *400 Bad Request*. Paperless-ngx now also answers its name on the homelab's network and 127.0.0.1, and nothing else.
 - **Updating on Windows no longer fails at "unpacking"** on a PC whose PowerShell has a newer Archive module (*Cannot find an overload for "ExtractToDirectory"*): the update helper unpacks the new build with Windows's own zip reader, and stops if a file in it would land outside the app's folder.
 - **A card paid off with each paycheck is named in the Homelab app:** Bills, Coming Up, the Calendar and Worth a Look showed it as "Payment" with no logo; it's the card's name and logo now, as on the computer.
 - **Cash Flow in the Homelab app counts all your money in:** it counted only what went to an income category, so a paycheck without one read as nothing coming in. It now counts as the computer does: everything that came in and everything that went out, moves between your own accounts left out. Month in Review's "came in" too.
