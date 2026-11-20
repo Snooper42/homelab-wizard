@@ -559,6 +559,8 @@ private struct SavingsCard: View {
 struct StorageSection: View {
     let storage: StorageCard
     let nameOf: @MainActor (String) -> String
+    /// Off on its own page, whose title already says Storage (light-storage said it twice).
+    var showsHeader = true
 
     var body: some View {
         Section {
@@ -592,7 +594,7 @@ struct StorageSection: View {
                 .foregroundStyle(Theme.secondaryInk)
             }
         } header: {
-            Label("Storage", systemImage: "internaldrive")
+            if showsHeader { Label("Storage", systemImage: "internaldrive") }
         }
     }
 
@@ -611,7 +613,7 @@ struct StoragePage: View {
 
     var body: some View {
         Form {
-            StorageSection(storage: storage, nameOf: nameOf)
+            StorageSection(storage: storage, nameOf: nameOf, showsHeader: false)
         }
         .formStyle(.grouped)
         .themedCanvas()

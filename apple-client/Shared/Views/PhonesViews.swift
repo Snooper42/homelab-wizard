@@ -46,7 +46,9 @@ struct PhonesPage: View {
         .formStyle(.grouped)
         .themedCanvas()
         .navigationTitle("Phones")
-        .task { await computer.loadPhones() }
+        // Again once this device's own answer is in: opened before it (as the pictures
+        // do, light-phones read forever), the list was never asked for.
+        .task(id: computer.canListPhones) { await computer.loadPhones() }
         .refreshable { await computer.loadPhones() }
     }
 }
@@ -224,7 +226,7 @@ struct SetupChecklistSections: View {
                 Section { Text(verbatim: error).foregroundStyle(Theme.secondaryInk) }
             }
         }
-        .task { await computer.loadSetup() }
+        .task(id: computer.canSeeSetup) { await computer.loadSetup() }
     }
 }
 
