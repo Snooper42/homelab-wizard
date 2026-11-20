@@ -28,6 +28,32 @@ final class CardsViewModel {
         StatusCard.phoneCards.compactMap { cards[$0] }.filter { !$0.isNotHere }
     }
 
+    /// Status's Storage card: what each app keeps (`StorageCard`), nil while there's nothing to show.
+    var storage: StorageCard? {
+        if case .other(let v)? = cards["storage"]?.data { return StorageCard.from(v) }
+        return nil
+    }
+
+    /// The cards in the screens' order, Storage among them where the computer has it.
+    enum Slot: Identifiable {
+        case card(StatusCard)
+        case storage(StorageCard)
+        var id: String {
+            switch self {
+            case .card(let c): c.name
+            case .storage: "storage"
+            }
+        }
+    }
+
+    var slots: [Slot] {
+        var out = shown.map(Slot.card)
+        if let storage {
+            out.insert(.storage(storage), at: StorageCard.place(among: shown.map(\.name)))
+        }
+        return out
+    }
+
     var watchdog: WatchdogSummary? {
         if case .watchdog(let w)? = cards["watchdog"]?.data { return w }
         return nil
