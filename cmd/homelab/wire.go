@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 
@@ -12,7 +13,13 @@ import (
 func (h *homelab) wire(ctx context.Context, args []string) error {
 	fs := newFlags("wire")
 	apply := applyFlag(fs)
+	jfUser := fs.String("jellyfin-user", "", "")
 	if _, err := parseFlags(fs, args); err != nil {
+		return err
+	}
+	// Asked before anything else, so a missing terminal fails at once.
+	admin, err := h.jellyfinAdmin(*jfUser)
+	if err != nil {
 		return err
 	}
 	client, err := h.docker(ctx)
@@ -25,6 +32,7 @@ func (h *homelab) wire(ctx context.Context, args []string) error {
 	}
 	home, _ := os.UserHomeDir()
 	w := wiring.New(h.catalog, containers, h.envMap(), home)
+	w.JellyfinAdmin = admin
 	u := h.ui
 	plan := w.Plan()
 	if u.JSON {
@@ -74,4 +82,31 @@ func (h *homelab) wire(ctx context.Context, args []string) error {
 		return fmt.Errorf("%d link(s) failed", failed)
 	}
 	return nil
+}
+
+// jellyfinAdmin asks for the Jellyfin password of user, for Seerr's first
+// sign-in: in a terminal, hidden where it can be, never from a flag or the
+// environment (shell history, process lists). Wiring uses it once and keeps
+// it nowhere. No user, nothing asked.
+func (h *homelab) jellyfinAdmin(user string) (*wiring.JellyfinAdmin, error) {
+	if user == "" {
+		return nil, nil
+	}
+	if !h.ui.Interactive {
+		return nil, errors.New("--jellyfin-user asks for the password: run homelab wire in a terminal")
+	}
+	hidden := echo(false)
+	prompt := "Jellyfin password for " + user + " (used once to set up Seerr, not kept):"
+	if !hidden {
+		prompt += " (it shows as you type)"
+	}
+	p, err := h.ui.Ask(prompt)
+	if hidden {
+		echo(true)
+		h.ui.Printf("\n")
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &wiring.JellyfinAdmin{User: user, Password: p}, nil
 }

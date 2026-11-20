@@ -51,6 +51,10 @@ type Wirer struct {
 	HTTP *http.Client
 	Wait time.Duration // how long to wait for an app's API to answer
 
+	// JellyfinAdmin, when given, makes Seerr's first sign-in (seerrsetup.go);
+	// the run forgets it.
+	JellyfinAdmin *JellyfinAdmin
+
 	// One Apply waits for each app once: its key, or why it never answered.
 	keys    map[string]string
 	notUp   map[string]error
@@ -158,6 +162,9 @@ func (w *Wirer) steps() []step {
 			}})
 		}
 	}
+	if w.has("seerr") {
+		out = append(out, step{"Seerr signs in to Jellyfin", w.seerrSetup})
+	}
 	for _, l := range libraries[:2] {
 		l := l
 		if w.has("seerr", l.id) {
@@ -165,11 +172,6 @@ func (w *Wirer) steps() []step {
 				return w.seerr(ctx, l.id, l.path)
 			}})
 		}
-	}
-	if w.has("seerr") && !w.has("sonarr") && !w.has("radarr") {
-		out = append(out, step{"Seerr is linked to Jellyfin", func(context.Context) (string, string, error) {
-			return "manual", seerrSignIn, nil
-		}})
 	}
 	return out
 }

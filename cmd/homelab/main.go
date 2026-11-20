@@ -64,7 +64,8 @@ Apps:
   homelab updates notes <app>          what updating it brings: its newer releases' notes
   homelab wire                         connect running apps: Prowlarr, FlareSolverr,
                                        qBittorrent (QBITTORRENT_PASSWORD), the libraries'
-                                       root folders, Bazarr, and Seerr (after its sign-in)
+                                       root folders, Bazarr, and Seerr; --jellyfin-user NAME
+                                       makes Seerr's first sign-in (asks the password once)
 
 Domain:
   homelab domain setup [domain]        proxy hosts, LAN DNS, certificate, public hostnames
