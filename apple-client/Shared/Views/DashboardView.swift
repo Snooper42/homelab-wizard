@@ -249,6 +249,8 @@ private struct PhoneDashboard: View {
             SettingsFormView(computer: computer, section: nil)
         } else if ScreenshotMode.shot == "phones" {
             PhonesPage(computer: computer)
+        } else if ScreenshotMode.shot == "storage", let storage = model.cards.storage {
+            StoragePage(storage: storage, nameOf: { model.app(id: $0)?.name ?? $0 })
         } else {
             ComputerView(computer: computer, page: .settings)
         }
@@ -292,7 +294,7 @@ extension ScreenshotMode {
         case "status", "app": .status(.all)
         case "backups": .backups
         case "setup": .setup
-        case "settings", "settings-all", "phones": .settings
+        case "settings", "settings-all", "phones", "storage": .settings
         default: .finances
         }
     }

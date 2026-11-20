@@ -42,6 +42,7 @@
     "OpenOnComputer",
     "Phones",
     "Protection",
+    "ReleaseNotes",
     "Report",
     "RunSetupStep",
     "SaveFinances",
@@ -82,7 +83,7 @@
      "health": "healthy",
      "url": "http://localhost:8181",
      "address": "npm.example.com",
-     "since": "@ago:345601"
+     "since": "@ago:345604"
     },
     {
      "id": "adguard-home",
@@ -91,7 +92,7 @@
      "health": "healthy",
      "url": "http://localhost:3003",
      "address": "ads.example.com",
-     "since": "@ago:345601"
+     "since": "@ago:345604"
     },
     {
      "id": "speedtest-tracker",
@@ -100,22 +101,22 @@
      "health": "healthy",
      "url": "http://localhost:8765",
      "address": "speedtest.example.com",
-     "since": "@ago:27361",
-     "updatedAt": "@ago:27361"
+     "since": "@ago:27364",
+     "updatedAt": "@ago:27364"
     },
     {
      "id": "cloudflared",
      "name": "Cloudflare Tunnel",
      "state": "running",
      "health": "healthy",
-     "since": "@ago:345601"
+     "since": "@ago:345604"
     },
     {
      "id": "crowdsec",
      "name": "CrowdSec",
      "state": "running",
      "health": "healthy",
-     "since": "@ago:345601"
+     "since": "@ago:345604"
     },
     {
      "id": "vaultwarden",
@@ -124,7 +125,7 @@
      "health": "healthy",
      "url": "http://localhost:8087",
      "address": "passwords.example.com",
-     "since": "@ago:345601"
+     "since": "@ago:345604"
     },
     {
      "id": "uptime-kuma",
@@ -133,7 +134,7 @@
      "health": "healthy",
      "url": "http://localhost:3001",
      "address": "uptime.example.com",
-     "since": "@ago:345601"
+     "since": "@ago:345604"
     },
     {
      "id": "ntfy",
@@ -142,7 +143,7 @@
      "health": "healthy",
      "url": "http://localhost:9293",
      "address": "ntfy.example.com",
-     "since": "@ago:345601"
+     "since": "@ago:345604"
     },
     {
      "id": "duplicati",
@@ -151,7 +152,7 @@
      "health": "healthy",
      "url": "http://localhost:8200",
      "address": "backups.example.com",
-     "since": "@ago:345601"
+     "since": "@ago:345604"
     },
     {
      "id": "dozzle",
@@ -159,7 +160,7 @@
      "state": "running",
      "health": "healthy",
      "url": "http://localhost:9998",
-     "since": "@ago:345601",
+     "since": "@ago:345604",
      "held": true
     },
     {
@@ -177,7 +178,7 @@
      "health": "healthy",
      "url": "http://localhost:8013",
      "address": "photos.example.com",
-     "since": "@ago:345601"
+     "since": "@ago:345604"
     },
     {
      "id": "paperless",
@@ -186,7 +187,7 @@
      "health": "healthy",
      "url": "http://localhost:8010",
      "address": "docs.example.com",
-     "since": "@ago:345601",
+     "since": "@ago:345604",
      "reach": "away"
     },
     {
@@ -196,7 +197,7 @@
      "health": "healthy",
      "url": "http://localhost:13480",
      "address": "money.example.com",
-     "since": "@ago:345601"
+     "since": "@ago:345604"
     },
     {
      "id": "navidrome",
@@ -205,7 +206,7 @@
      "health": "healthy",
      "url": "http://localhost:4533",
      "address": "navidrome.example.com",
-     "since": "@ago:345601"
+     "since": "@ago:345604"
     },
     {
      "id": "feishin",
@@ -214,7 +215,7 @@
      "health": "healthy",
      "url": "http://localhost:9180",
      "address": "music.example.com",
-     "since": "@ago:345601"
+     "since": "@ago:345604"
     },
     {
      "id": "audiobookshelf",
@@ -223,7 +224,7 @@
      "health": "healthy",
      "url": "http://localhost:13378",
      "address": "audiobooks.example.com",
-     "since": "@ago:345601",
+     "since": "@ago:345604",
      "restarts": 3
     },
     {
@@ -233,7 +234,7 @@
      "health": "healthy",
      "url": "http://localhost:8083",
      "address": "books.example.com",
-     "since": "@ago:345601"
+     "since": "@ago:345604"
     },
     {
      "id": "komga",
@@ -242,7 +243,7 @@
      "health": "healthy",
      "url": "http://localhost:25600",
      "address": "comics.example.com",
-     "since": "@ago:345601"
+     "since": "@ago:345604"
     },
     {
      "id": "jellyfin",
@@ -267,8 +268,8 @@
      "health": "healthy",
      "url": "http://localhost:3456",
      "address": "todo.example.com",
-     "since": "@ago:27361",
-     "updatedAt": "@ago:27361"
+     "since": "@ago:27364",
+     "updatedAt": "@ago:27364"
     }
    ],
    "missing": 0,
@@ -436,6 +437,12 @@
      "category": "security",
      "description": "Push notifications for alerts from every other service",
      "kind": "baseline",
+     "login": [
+      "NTFY_PHONE_PASSWORD"
+     ],
+     "keys": [
+      "NTFY_PUBLISH_TOKEN"
+     ],
      "public": true,
      "replaces": [
       "Pushbullet Pro"
@@ -451,6 +458,9 @@
       "sso",
       "oidc",
       "passkeys"
+     ],
+     "keys": [
+      "POCKET_ID_API_KEY"
      ],
      "public": false
     },
@@ -483,6 +493,10 @@
      "login": [
       "DUPLICATI_PASSWORD"
      ],
+     "recovery": [
+      "DUPLICATI_SECRETS_PASSPHRASE",
+      "DUPLICATI_PASSPHRASE"
+     ],
      "public": false,
      "replaces": [
       "Backblaze Personal Backup"
@@ -496,6 +510,9 @@
      "kind": "optional",
      "login": [
       "KOPIA_SERVER_PASSWORD"
+     ],
+     "recovery": [
+      "KOPIA_PASSWORD"
      ],
      "public": false
     },
@@ -873,7 +890,8 @@
       "wetransfer"
      ],
      "login": [
-      "PSITRANSFER_ADMIN_PASSWORD"
+      "PSITRANSFER_ADMIN_PASSWORD",
+      "PSITRANSFER_UPLOAD_PASSWORD"
      ],
      "public": false,
      "replaces": [
@@ -1085,6 +1103,9 @@
       "paperless-db",
       "paperless-broker"
      ],
+     "keys": [
+      "PAPERLESS_AI_PAPERLESS_TOKEN"
+     ],
      "public": true,
      "replaces": [
       "Evernote Advanced"
@@ -1117,6 +1138,9 @@
      "kind": "optional",
      "aliases": [
       "subscriptions"
+     ],
+     "keys": [
+      "WALLOS_API_KEY"
      ],
      "public": false
     },
@@ -1185,6 +1209,9 @@
       "firefly-iii-db",
       "firefly-iii-cron"
      ],
+     "keys": [
+      "FIREFLY_IMPORTER_TOKEN"
+     ],
      "public": false,
      "replaces": [
       "Monarch Money Core"
@@ -1221,6 +1248,9 @@
       "ghostfolio-db",
       "ghostfolio-redis"
      ],
+     "login": [
+      "GHOSTFOLIO_SECURITY_TOKEN"
+     ],
      "public": false,
      "replaces": [
       "Ghostfolio Premium"
@@ -1236,6 +1266,10 @@
       "jellyfin": "Jellyfin plays music too; Navidrome is made for it, with the Subsonic phone apps. Keep both if you like either app's players.",
       "jellyfin-container": "Jellyfin plays music too; Navidrome is made for it, with the Subsonic phone apps. Keep both if you like either app's players."
      },
+     "login": [
+      "NAVIDROME_ADMIN_USER",
+      "NAVIDROME_ADMIN_PASSWORD"
+     ],
      "public": true,
      "phone": "Amperfy or play:Sub on iPhone, Symfonium on Android",
      "replaces": [
@@ -1273,6 +1307,9 @@
      "category": "media",
      "description": "Audiobooks and podcasts",
      "kind": "baseline",
+     "keys": [
+      "AUDIOBOOKSHELF_API_KEY"
+     ],
      "public": true,
      "phone": "Audiobookshelf",
      "replaces": [
@@ -1379,6 +1416,7 @@
       "radarr": "Gives Radarr its search sites in one place, shared with Sonarr.",
       "sonarr": "Gives Sonarr its search sites in one place, shared with Radarr."
      },
+     "keyFile": true,
      "public": false
     },
     {
@@ -1387,6 +1425,7 @@
      "category": "media-automation",
      "description": "TV show automation",
      "kind": "optional",
+     "keyFile": true,
      "public": false,
      "replaces": [
       "Trakt VIP"
@@ -1398,6 +1437,7 @@
      "category": "media-automation",
      "description": "Movie automation",
      "kind": "optional",
+     "keyFile": true,
      "public": false,
      "replaces": [
       "Trakt VIP"
@@ -1409,6 +1449,7 @@
      "category": "media-automation",
      "description": "Music automation",
      "kind": "optional",
+     "keyFile": true,
      "public": false
     },
     {
@@ -1421,6 +1462,7 @@
       "radarr": "Fetches subtitles for the films Radarr brings in.",
       "sonarr": "Fetches subtitles for the shows Sonarr brings in."
      },
+     "keyFile": true,
      "public": false
     },
     {
@@ -1433,6 +1475,13 @@
       "jellyfin": "Shrinks the films and shows Jellyfin plays, so the drive holds more.",
       "jellyfin-container": "Shrinks the films and shows Jellyfin plays, so the drive holds more."
      },
+     "login": [
+      "TDARR_USER",
+      "TDARR_PASSWORD"
+     ],
+     "keys": [
+      "TDARR_API_KEY"
+     ],
      "public": false,
      "warning": "heavy: converting a film keeps the processor busy for as long as the film runs or longer; it does nothing until you add a library and give its node workers, and it is best kept to the night (its note says how)"
     },
@@ -1458,6 +1507,7 @@
       "jellyfin": "Lets the household ask for films and shows, which Sonarr and Radarr then fetch.",
       "jellyfin-container": "Lets the household ask for films and shows, which Sonarr and Radarr then fetch."
      },
+     "keyFile": true,
      "public": false,
      "replaces": [
       "Trakt VIP"
@@ -1482,6 +1532,10 @@
      "kind": "optional",
      "dependsOn": [
       "gluetun"
+     ],
+     "login": [
+      "QBITTORRENT_USER",
+      "QBITTORRENT_PASSWORD"
      ],
      "public": false
     },
@@ -3815,6 +3869,22 @@
      "value": ""
     },
     {
+     "key": "QBITTORRENT_USER",
+     "section": "App settings and secrets",
+     "help": "qBittorrent's Web UI login, for Connect apps (homelab wire) and Tidy Up. Set a permanent password in qBittorrent › Tools › Options › Web UI (the temporary one in its log changes on every restart) and put it here; the user is admin unless changed.",
+     "secret": false,
+     "set": true,
+     "value": "admin"
+    },
+    {
+     "key": "QBITTORRENT_PASSWORD",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": true,
+     "set": true,
+     "value": ""
+    },
+    {
      "key": "TAILSCALE_AUTHKEY",
      "section": "App settings and secrets",
      "help": "Tailscale: a reusable auth key from login.tailscale.com > Settings > Keys, and the home network it makes reachable (set from this machine's network; approve the route in the admin).",
@@ -5223,7 +5293,7 @@
       ]
      }
     ],
-    "holdingsRead": "@ago:1759081"
+    "holdingsRead": "@ago:1807061"
    },
    "today": "2026-10-30",
    "checking": "chk",
@@ -10562,10 +10632,6 @@
    },
    "days": {
     "vikunja": {
-     "2026-11-13": [
-      96,
-      96
-     ],
      "2026-11-14": [
       96,
       96
@@ -10575,11 +10641,11 @@
       96
      ],
      "2026-11-16": [
-      93,
+      96,
       96
      ],
      "2026-11-17": [
-      96,
+      93,
       96
      ],
      "2026-11-18": [
@@ -10587,6 +10653,10 @@
       96
      ],
      "2026-11-19": [
+      96,
+      96
+     ],
+     "2026-11-20": [
       40,
       40
      ]
@@ -10674,10 +10744,6 @@
   ],
   "savings": [
    {
-    "date": "2026-09-21",
-    "annual": 2991
-   },
-   {
     "date": "2026-09-22",
     "annual": 2991
    },
@@ -10723,7 +10789,7 @@
    },
    {
     "date": "2026-10-03",
-    "annual": 3112
+    "annual": 2991
    },
    {
     "date": "2026-10-04",
@@ -10795,7 +10861,7 @@
    },
    {
     "date": "2026-10-21",
-    "annual": 3232
+    "annual": 3112
    },
    {
     "date": "2026-10-22",
@@ -10863,7 +10929,7 @@
    },
    {
     "date": "2026-11-07",
-    "annual": 3292
+    "annual": 3232
    },
    {
     "date": "2026-11-08",
@@ -10911,6 +10977,10 @@
    },
    {
     "date": "2026-11-19",
+    "annual": 3292
+   },
+   {
+    "date": "2026-11-20",
     "annual": 3292
    }
   ],

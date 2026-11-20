@@ -56,6 +56,20 @@ struct ComputerView: View {
                         }
                     }
                 }
+                // Status's Storage card on the iPad; here, a row that opens it (the owner's pick, Nov 20).
+                if let storage = dashboard.cards.storage {
+                    Section {
+                        NavigationLink {
+                            StoragePage(storage: storage, nameOf: { dashboard.app(id: $0)?.name ?? $0 })
+                        } label: {
+                            LabeledContent {
+                                Text(storage.total.formatted(.byteCount(style: .file))).monospacedDigit()
+                            } label: {
+                                IconTileLabel(title: "What the apps keep", systemImage: "internaldrive", tint: TileColour.blue)
+                            }
+                        }
+                    }
+                }
             }
         }
         .formStyle(.grouped)

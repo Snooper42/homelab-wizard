@@ -555,7 +555,8 @@ private struct SavingsCard: View {
 
 /// What the apps keep, as the computer's Storage card: the six largest
 /// folders with a bar each, the rest counted, and when they were measured.
-private struct StorageSection: View {
+/// Under Status's list on the iPad; on its own page from Settings (`StoragePage`).
+struct StorageSection: View {
     let storage: StorageCard
     let nameOf: @MainActor (String) -> String
 
@@ -598,6 +599,23 @@ private struct StorageSection: View {
     private var lead: String {
         let when = storage.measured.map { " (\($0.formatted(.relative(presentation: .named))))" } ?? ""
         return "Each app's folder, as the nightly backup measured it\(when). Photos and films on their own drive aren't counted."
+    }
+}
+
+/// What the apps keep, on a page of its own: Settings' row opens it (the
+/// owner's pick, Nov 20: the iPhone's Status stays as trimmed on Nov 9, with
+/// no cards under the apps).
+struct StoragePage: View {
+    let storage: StorageCard
+    let nameOf: @MainActor (String) -> String
+
+    var body: some View {
+        Form {
+            StorageSection(storage: storage, nameOf: nameOf)
+        }
+        .formStyle(.grouped)
+        .themedCanvas()
+        .navigationTitle("Storage")
     }
 }
 
