@@ -48,7 +48,7 @@ What a phone may do also depends on how it was paired, on every phone (the phone
 | Open on the Computer: the computer's window goes to the page the phone is on (an app's page, Status, Backups, Finances) | yes, follows it | on purpose: the computer's own page is a click away there | yes, a phone allowed to change things (no Face ID: it changes no data) | yes, as the iPhone | `OpenOnComputer` |
 | A native app (Jellyfin) started from Status | yes ([Host](<Host.md#running>)) | on purpose: it runs on the computer | on purpose | on purpose | |
 | Pin to the top | yes | yes, from the app's page | yes, from the app's page | yes | `SetAppSetting` |
-| Update all, and an update's notes | yes | on purpose: no notes for a phone yet (`ReleaseNotes` isn't a phone call), so no blind update | on purpose: the same | on purpose | |
+| Update all, and an update's notes | yes | on purpose: no notes for the page yet, so no blind update | partly: **Update…** in an app's Actions shows what it brings first, as the computer's (one line, the newest five releases with the start of each one's notes and Full Notes, then Update after Face ID, through `AppAction`'s `update`); not on a wall screen or a member's phone; Update all, every app at once, stays the computer's | partly, as the iPhone | `ReleaseNotes`, `AppAction` |
 | Updates held, and holding them | yes | yes, from the app's page | yes, from the app's page | yes | `SetUpdatesPaused` |
 | Check again, Fix it (Look for problems) | yes | yes (allowed changes) | yes, in Setup (allowed changes) | yes | `Homelab` |
 | Health in one line atop each screen | yes | yes | yes | yes | |
