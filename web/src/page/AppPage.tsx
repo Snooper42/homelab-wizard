@@ -32,7 +32,8 @@ export interface AppPageActions {
   update: () => void;
   open: (url: string) => void;
   phone: () => void;
-  signIn: (keys: string[]) => void;
+  /** Its sign-in details (the ⚙): address, logins, keys, what opens the backups, each to copy. */
+  signIn: () => void;
   /** Copies text and says what was copied. */
   copy: (text: string) => Promise<string>;
   /** The end of its log: its last lines. */
@@ -329,6 +330,7 @@ function Header({ p }: { p: AppPageProps }) {
           : run('start', 'Start', 'Start it'))}
         {a.state === 'running' && a.address && !p.companion && <button class="btn" disabled={busy} onClick={on.phone}><Icon name="phone" />Open on a phone</button>}
         {a.state === 'running' && url && <button class="primary small" onClick={() => on.open(url)}>Open</button>}
+        {!p.companion && <button class="iconbtn gear" title="Sign-in details" aria-label={`${a.name}: sign-in details`} onClick={on.signIn}><Icon name="gear" /></button>}
       </div>
     </div>
   );
@@ -458,7 +460,7 @@ function People({ p }: { p: AppPageProps }) {
   return (
     <Card kind="alerts pagecard" id="appPeople">
       <CardHead title={people ? 'Who uses it' : 'Signing in'}>
-        {!!entry?.login?.length && <button class="small" onClick={() => on.signIn(entry.login!)}><Icon name="key" />Sign-in details</button>}
+        {!!entry?.login?.length && <button class="small" onClick={() => on.signIn()}><Icon name="key" />Sign-in details</button>}
       </CardHead>
       {people && (people.length
         ? <Rows>{people.map((x) => <Row key={x.username} title={<><span class="initial" aria-hidden="true">{(x.name || x.username).slice(0, 1)}</span>{x.name || x.username}</>} sub={x.email} />)}</Rows>

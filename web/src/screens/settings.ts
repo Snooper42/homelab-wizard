@@ -222,7 +222,7 @@ const formActions: FormActions = {
   copy: async (key) => {
     try {
       await go().CopySetting(key);
-      return { tone: 'ok', text: '✓ Copied. Paste it into Vaultwarden; the clipboard clears in 90 seconds.' };
+      return { tone: 'ok', text: '✓ Copied. Paste it into Proton Pass; the clipboard clears in 90 seconds.' };
     } catch (e) {
       return { tone: 'bad', text: errorText(e) };
     }

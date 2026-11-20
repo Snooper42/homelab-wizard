@@ -2324,12 +2324,45 @@ const smokes = [
   } },
   { name: 'Sign-in details for the proxy, from its page', screen: 'app:nginx-proxy-manager', run: async (page) => {
     await page.click('#appPeople button:has-text("Sign-in details")', { timeout: 5000 });
-    await page.waitForSelector('#cliTitle:has-text("Sign in to Nginx Proxy Manager")');
-    await page.waitForSelector('#cliActions .signin:has-text("homelab@example.com")');
+    await page.waitForSelector('#cliTitle:has-text("Nginx Proxy Manager: sign-in details")');
+    await page.waitForSelector('#cliActions .signingroup:has(h4:text-is("Sign in")) .signin:has-text("homelab@example.com")');
     await page.click('#cliActions .signin:has-text("Email") button');
     if ((await page.evaluate(() => window.__MOCK.clipboard)) !== 'homelab@example.com') throw new Error('the email was not copied');
     await page.click('#cliActions .signin:has-text("Password") button');
-    await page.waitForSelector('#cliActions:has-text("Password copied")');
+    // The copy shows on the button itself, saying where to paste it; the password went to the clipboard, not the page.
+    await page.waitForSelector('#cliActions .signin:has-text("Password") button.copied:has-text("Copied. Paste it into Proton Pass")');
+    if (!(await page.evaluate(() => window.__MOCK.copiedSettings || [])).includes('NPM_API_PASSWORD')) throw new Error('the password was not copied by the computer');
+    if (await page.locator('#cliActions .signin:has-text("Email") button.copied').count()) throw new Error('only the last copy is highlighted');
+  } },
+  // The ⚙ on every Status row (the owner, Nov 19): Sonarr's own API key, from its config.xml, to paste into another app;
+  // the bounce goes with Reduce Motion, the highlight stays.
+  { name: 'Status: the gear on Sonarr’s row copies its API key', screen: 'status',
+    mock: { status: { ...status, apps: [...status.apps, { id: 'sonarr', name: 'Sonarr', state: 'running', health: 'healthy', url: 'http://localhost:8989' }] } }, run: async (page) => {
+    await page.click('#statusRows tr:has(strong:text-is("Sonarr")) button.gear', { timeout: 5000 });
+    await page.waitForSelector('#cliTitle:has-text("Sonarr: sign-in details")');
+    await page.waitForSelector('#cliActions .signin:has-text("Address"):has-text("localhost:8989")');
+    const key = '#cliActions .signingroup:has(h4:text-is("Paste into another app")) .signin:has-text("API key")';
+    if ((await page.textContent(key + ' strong')) !== '••••••••') throw new Error('the key shows as dots');
+    await page.click(key + ' button');
+    await page.waitForSelector(key + ' button.copied:has-text("Copied. Paste it into Proton Pass")');
+    if ((await page.evaluate(() => window.__MOCK.copiedKeys || [])).join() !== 'sonarr') throw new Error('Sonarr’s key was not copied by the computer');
+    if ((await page.$eval(key + ' button', (b) => getComputedStyle(b).animationName)) !== 'copybounce') throw new Error('no bounce');
+    // The ring around it shows, over each system's own button look.
+    if (!/\b2px\b/.test(await page.$eval(key + ' button', (b) => getComputedStyle(b).boxShadow))) throw new Error('no highlight around the button');
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    if ((await page.$eval(key + ' button', (b) => getComputedStyle(b).animationName)) !== 'none') throw new Error('it bounces with Reduce Motion');
+  } },
+  { name: 'Sign-in details: Duplicati’s passphrases are under Keep safe', screen: 'app:duplicati', run: async (page) => {
+    await page.click('.pagehead button.gear', { timeout: 5000 });
+    const keep = '#cliActions .signingroup:has(h4:text-is("Keep safe"))';
+    await page.waitForSelector(`${keep}:has-text("Without this the backups can’t be opened")`);
+    if ((await page.locator(`${keep} .signin`).count()) !== 2) throw new Error('both passphrases are listed');
+    if (await page.locator('#cliActions .signin:has-text("Settings key")').count()) throw new Error('an internal secret is listed');
+  } },
+  { name: 'Sign-in details: an app with nothing to copy says so', screen: 'app:vikunja', run: async (page) => {
+    await page.click('.pagehead button.gear', { timeout: 5000 });
+    await page.waitForSelector('#cliActions .signinempty:has-text("Nothing to sign in with here")');
+    await page.waitForSelector('#cliActions .signin:has-text("Address")');
   } },
   // Shapes as well as colours: on Status a running app's dot is a circle, one that needs a look a triangle, one that is
   // down a cross, so the state reads without telling green from red, and still in forced colours (Windows' contrast
@@ -5792,11 +5825,13 @@ const smokes = [
       await mark(name, want);
     }
   } },
+  // Besides its one button, a row has the ⚙ for its sign-in details (the owner, Nov 19) and the arrow to its page.
   { name: "A row keeps one button: Open, or Start when stopped; a click on the row opens its page", screen: 'status', run: async (page) => {
     const row = (name) => `#statusRows tr:has(strong:text-is("${name}"))`;
     await page.waitForSelector(`${row('Vikunja')} button.rowmain:text-is("Open")`, { timeout: 5000 });
     await page.waitForSelector(`${row('Mealie')} button.rowmain:text-is("Start")`);
-    const extra = await page.evaluate(() => [...document.querySelectorAll('#statusRows .rowActions button')].filter((b) => !b.classList.contains('rowmain') && !b.classList.contains('topage') && !/^(Install|Open|Start)$/.test(b.textContent.trim())).map((b) => b.title || b.textContent));
+    const extra = await page.evaluate(() => [...document.querySelectorAll('#statusRows .rowActions button')].filter((b) => !b.classList.contains('rowmain') && !b.classList.contains('topage') && !b.classList.contains('gear') && !/^(Install|Open|Start)$/.test(b.textContent.trim())).map((b) => b.title || b.textContent));
+    if (await page.locator(`${row('Vikunja')} .rowActions button.gear`).count() !== 1) throw new Error('no single gear on the row');
     if (extra.length) throw new Error('more buttons on the rows: ' + [...new Set(extra)].slice(0, 5).join(', '));
     await page.click(`${row('Vikunja')} button.rowmain`);
     if (!/todo\.|vikunja|localhost/.test((await page.evaluate(() => window.__MOCK.opened)) || '')) throw new Error('Open did not open the app');

@@ -141,7 +141,7 @@ function draw() {
       update: () => appActions.update(a),
       open: (url) => go().Open(url),
       phone: () => appActions.phone(a),
-      signIn: (keys) => appActions.signIn(a, keys),
+      signIn: () => appActions.signIn(a),
       // The app's clipboard, or the browser's on a phone.
       copy: async (text) => {
         if (window.runtime.ClipboardSetText) await window.runtime.ClipboardSetText(text); else await navigator.clipboard.writeText(text);
