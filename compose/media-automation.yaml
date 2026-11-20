@@ -241,6 +241,9 @@ services:
     user: ${PUID:-501}:${PGID:-20}
     environment:
       TZ: ${TZ:-UTC}
+    # Jellyfin runs on this machine (ADR-0010): Seerr signs in to it there.
+    extra_hosts:
+      - host.docker.internal:${HOST_GATEWAY:-host-gateway}
     ports:
       - ${BIND_IP:-127.0.0.1}:${SEERR_PORT:-5055}:5055
     volumes:

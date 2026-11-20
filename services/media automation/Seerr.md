@@ -32,7 +32,7 @@ A friendly request page, so nobody has to use the *arr apps directly.
 3. Services: Radarr `radarr:7878` and Sonarr `sonarr:8989` with their API keys, quality profiles, and root folders (`/movies`, `/tv`).
 4. Import Jellyfin users; set who may request and who must be approved.
 
-Step 2 is yours: Seerr has no administrator until someone signs in with Jellyfin. After it, `./homelab wire --apply` (or Status › More… › **Connect apps**) does step 3: Radarr and Sonarr as the default servers, by service name, with their keys, the HD-1080p profile (or the first), and `/movies` and `/tv`. Running it again corrects an address or key that changed and adds nothing twice.
+`./homelab wire --apply --jellyfin-user <name>` does step 2 for you: it asks for that Jellyfin administrator's password in the terminal, signs Seerr in with it through Seerr's own setup (`/api/v1/auth/jellyfin`), ticks the film and TV libraries, and finishes Seerr's setup. The password is used once and kept nowhere. Seerr makes that person its administrator and takes a Jellyfin API key of its own. A wrong password, or a user who isn't a Jellyfin administrator, is said in words, and step 2 by hand still works. In the same run, `wire` (or Status › More… › **Connect apps**) does step 3: Radarr and Sonarr as the default servers, by service name, with their keys, the HD-1080p profile (or the first), and `/movies` and `/tv`. Running it again corrects an address or key that changed and adds nothing twice.
 
 ## How it works
 
@@ -64,7 +64,7 @@ Step 2 is yours: Seerr has no administrator until someone signs in with Jellyfin
 
 - [Jellyfin](<../media/Jellyfin.md>) at `host.docker.internal`, port `8096`: sign-in, users, and library scans.
 - [Radarr](<Radarr.md>) at `radarr:7878` and [Sonarr](<Sonarr.md>) at `sonarr:8989`, each with its API key (Settings › General › Security in that app).
-- `./homelab wire` does not connect Seerr, because it needs your Jellyfin sign-in; it prints the steps instead.
+- `./homelab wire --jellyfin-user <name>` makes Seerr's first Jellyfin sign-in; without it, `wire` says how, and links Seerr to Radarr and Sonarr once it's signed in.
 - `.env`: `SEERR_PORT`, `TZ`.
 
 ## Tinkering ideas

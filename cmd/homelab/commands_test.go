@@ -208,6 +208,31 @@ func TestWire(t *testing.T) {
 	}
 }
 
+// --jellyfin-user asks for the password in a terminal and nowhere else: not
+// a flag (shell history), not the environment; and never prints it.
+func TestWireAsksForJellyfinPassword(t *testing.T) {
+	fakeDocker(t, nil)
+	root, _ := repoCopy(t)
+	if out, code := homelabCmd(t, root, "", "wire", "--apply", "--jellyfin-user", "alex"); code == 0 || !strings.Contains(out, "in a terminal") {
+		t.Fatalf("no terminal (exit %d):\n%s", code, out)
+	}
+	var buf strings.Builder
+	h, err := newHomelab(&ui.UI{Out: &buf, In: bufio.NewReader(strings.NewReader("s3cret\n")), Interactive: true}, root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	admin, err := h.jellyfinAdmin("alex")
+	if err != nil || admin == nil || admin.User != "alex" || admin.Password != "s3cret" {
+		t.Fatalf("%+v %v", admin, err)
+	}
+	if !strings.Contains(buf.String(), "Jellyfin password for alex") || strings.Contains(buf.String(), "s3cret") {
+		t.Fatalf("the prompt:\n%s", buf.String())
+	}
+	if admin, err := h.jellyfinAdmin(""); admin != nil || err != nil {
+		t.Fatalf("no user: %+v %v", admin, err)
+	}
+}
+
 // Docker in the home folder is set up only on Linux, as the user; where
 // Docker already answers there is nothing to do.
 func TestRuntimeInstall(t *testing.T) {

@@ -197,15 +197,17 @@ func TestSaysWhyAnAppDidNotAnswer(t *testing.T) {
 			"sonarr":   {ID: "sonarr", Name: "Sonarr", URL: "http://127.0.0.1:1", ConfigDir: t.TempDir()},
 			"radarr":   {ID: "radarr", Name: "Radarr", URL: "http://127.0.0.1:1", ConfigDir: t.TempDir()},
 		},
-		Wait: 50 * time.Millisecond,
+		Wait: 300 * time.Millisecond,
 	}
 	start := time.Now()
 	links := w.Apply(context.Background(), nil)
 	if !strings.Contains(links[0].Detail, "no API key in") {
 		t.Fatalf("the reason is missing: %+v", links[0])
 	}
-	// Each app is waited for once (Prowlarr, Sonarr, Radarr), not once per link.
-	if took := time.Since(start); took > 240*time.Millisecond {
+	// Each app is waited for once (Prowlarr, Sonarr, Radarr: 0.9s), not once
+	// per link (6 links: 1.8s or more). The bound leaves 0.6s for a slow
+	// runner: Windows' refused connections took 230ms more on CI (Nov 20).
+	if took := time.Since(start); took > 1500*time.Millisecond {
 		t.Fatalf("took %s for %d links", took, len(links))
 	}
 }
