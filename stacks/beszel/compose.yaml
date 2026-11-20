@@ -41,9 +41,9 @@ services:
     networks: [default, homelab]
     x-homelab:
       url: BESZEL_URL
-      login: [BESZEL_EMAIL, BESZEL_PASSWORD]
       dump: sqlite:/beszel_data/data.db
       name: Beszel
+      login: [BESZEL_EMAIL, BESZEL_PASSWORD]
       category: system
       description: How this machine and its apps are doing over time, with alerts
       subdomain: monitor

@@ -35,6 +35,7 @@ services:
       releases: ellite/Wallos
       dump: sqlite:/var/www/html/db/wallos.db
       name: Wallos
+      keys: [WALLOS_API_KEY]
       category: finance
       description: Every subscription you still pay for, with renewal dates and the yearly total
       subdomain: subscriptions

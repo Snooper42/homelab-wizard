@@ -53,6 +53,7 @@ services:
       url: NAVIDROME_URL
       dump: sqlite:/data/navidrome.db
       name: Navidrome
+      login: [NAVIDROME_ADMIN_USER, NAVIDROME_ADMIN_PASSWORD]
       category: media
       description: Music server for the Subsonic apps and Feishin
       subdomain: navidrome
@@ -144,6 +145,7 @@ services:
       phone: Audiobookshelf
       dump: sqlite:/config/absdatabase.sqlite
       name: Audiobookshelf
+      keys: [AUDIOBOOKSHELF_API_KEY]
       category: media
       description: Audiobooks and podcasts
       subdomain: audiobooks

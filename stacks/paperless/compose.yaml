@@ -64,6 +64,7 @@ services:
       memory: 700
       url: PAPERLESS_URL
       name: Paperless-ngx
+      keys: [PAPERLESS_AI_PAPERLESS_TOKEN]
       category: documents
       description: Scanned documents with OCR and full-text search
       subdomain: docs

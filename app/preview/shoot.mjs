@@ -2359,6 +2359,20 @@ const smokes = [
     if ((await page.locator(`${keep} .signin`).count()) !== 2) throw new Error('both passphrases are listed');
     if (await page.locator('#cliActions .signin:has-text("Settings key")').count()) throw new Error('an internal secret is listed');
   } },
+  // Two passwords in one group are told apart by name, not both called "Password".
+  { name: 'Sign-in details: PsiTransfer’s two passwords are named', screen: 'status',
+    mock: { status: { ...status, apps: [...status.apps, { id: 'psitransfer', name: 'PsiTransfer', state: 'running', health: 'healthy', url: 'http://localhost:3030' }] } }, run: async (page) => {
+    await page.click('#statusRows tr:has(strong:text-is("PsiTransfer")) button.gear', { timeout: 5000 });
+    await page.waitForSelector('#cliActions .signingroup:has(h4:text-is("Sign in")) .signin');
+    const labels = await page.$$eval('#cliActions .signingroup:has(h4:text-is("Sign in")) .signin > span.muted:first-child', (s) => s.map((e) => e.textContent));
+    if (labels.length !== 2 || new Set(labels).size !== 2 || !labels.some((l) => /upload/i.test(l))) throw new Error('labels: ' + labels.join(' | '));
+  } },
+  { name: 'Sign-in details: Tdarr’s login and the key Tidy Up uses', screen: 'status',
+    mock: { status: { ...status, apps: [...status.apps, { id: 'tdarr', name: 'Tdarr', state: 'running', health: 'healthy', url: 'http://localhost:8265' }] } }, run: async (page) => {
+    await page.click('#statusRows tr:has(strong:text-is("Tdarr")) button.gear', { timeout: 5000 });
+    await page.waitForSelector('#cliActions .signingroup:has(h4:text-is("Sign in")) .signin:has-text("User name")');
+    await page.waitForSelector('#cliActions .signingroup:has(h4:text-is("Paste into another app")) .signin');
+  } },
   { name: 'Sign-in details: an app with nothing to copy says so', screen: 'app:vikunja', run: async (page) => {
     await page.click('.pagehead button.gear', { timeout: 5000 });
     await page.waitForSelector('#cliActions .signinempty:has-text("Nothing to sign in with here")');
@@ -3243,8 +3257,16 @@ const smokes = [
     await page.click('#more > summary');
     for (const p of ['Media automation', 'Household']) await page.click(`#presets .chip >> text=${p}`, { timeout: 5000 });
     await page.waitForSelector('#plan .planLead', { timeout: 5000 });
-    await page.locator('#installBtn').scrollIntoViewIfNeeded();
-    const box = await page.locator('#installBtn').boundingBox();
+    // The plan can still be growing after its first line shows (a slow runner): scroll to Install again until it
+    // stops moving, then it must be within the window.
+    let box = null, last = '';
+    for (let i = 0; i < 20; i++) {
+      await page.locator('#installBtn').scrollIntoViewIfNeeded();
+      box = await page.locator('#installBtn').boundingBox();
+      if (JSON.stringify(box) === last) break;
+      last = JSON.stringify(box);
+      await page.waitForTimeout(150);
+    }
     if (!box || box.y + box.height > 720) throw new Error(`Install is out of reach: ${JSON.stringify(box)}`);
   } },
   { name: 'After a new app opens, its homelab files follow by themselves', screen: 'status', mock: { update: { state: 'ready', files: 1, app: false, finish: true, version: '0.15.0', notes: ['A change'] } }, run: async (page) => {

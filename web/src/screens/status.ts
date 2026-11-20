@@ -584,9 +584,11 @@ async function showSignIn(a: api.AppStatus) {
   const byKey = Object.fromEntries(list.map((s) => [s.key, s]));
   const plain = async (text: string) => { if (window.runtime.ClipboardSetText) await window.runtime.ClipboardSetText(text); else await navigator.clipboard.writeText(text); };
   const label = (k: string) => (/PASSWORD$/.test(k) ? 'Password' : /EMAIL$/.test(k) ? 'Email' : /USER$/.test(k) ? 'User name' : settingLabel(k));
-  const row = (k: string): SignInRow => {
+  // A label two keys in one group would share ("Password" twice) gives way to each key's own name.
+  const row = (k: string, _: number, group: string[]): SignInRow => {
     const s = byKey[k] || ({} as settings.Setting);
-    return { label: label(k), shown: s.secret ? (s.set ? '••••••••' : 'not set') : (s.value || 'not set'),
+    const shared = group.filter((o) => label(o) === label(k)).length > 1;
+    return { label: shared ? settingLabel(k) : label(k), shown: s.secret ? (s.set ? '••••••••' : 'not set') : (s.value || 'not set'),
       copy: s.set ? (s.secret ? () => go().CopySetting(k) : () => plain(s.value)) : undefined };
   };
   const groups: SignInGroup[] = [];
