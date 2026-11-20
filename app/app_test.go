@@ -971,3 +971,28 @@ func TestCopyAppKey(t *testing.T) {
 		t.Fatalf("an app with none: %v", err)
 	}
 }
+
+// TestKept: Saved is ticked by name, and a new value saved in Settings
+// clears it (the one in the password manager opens nothing now).
+func TestKept(t *testing.T) {
+	a, _ := testApp(t)
+	if err := a.MarkKept("DUPLICATI_PASSWORD", true); err != nil {
+		t.Fatal(err)
+	}
+	if err := a.MarkKept("app:sonarr", true); err != nil {
+		t.Fatal(err)
+	}
+	if k := a.Kept(); !k["DUPLICATI_PASSWORD"] || !k["app:sonarr"] {
+		t.Fatalf("ticked: %v", k)
+	}
+	if _, err := a.SaveSettings(map[string]string{"DUPLICATI_PASSWORD": "a-new-one-123"}); err != nil {
+		t.Fatal(err)
+	}
+	if k := a.Kept(); k["DUPLICATI_PASSWORD"] || !k["app:sonarr"] {
+		t.Fatalf("a new value clears its tick only: %v", k)
+	}
+	data, _ := os.ReadFile(filepath.Join(a.root, "data", "kept.json"))
+	if strings.Contains(string(data), "a-new-one-123") {
+		t.Fatal("never the value")
+	}
+}

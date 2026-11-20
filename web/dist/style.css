@@ -314,6 +314,10 @@ dl { margin:0; }
 html button.small.copybtn.copied { box-shadow:0 0 0 2px var(--accent); border-color:transparent; background:var(--accent-soft); color:var(--link); animation:copybounce .35s ease-out; }
 @keyframes copybounce { 0% { transform:scale(1); } 40% { transform:scale(1.08); } 100% { transform:scale(1); } }
 @media (prefers-reduced-motion: reduce) { html button.small.copybtn.copied { animation:none; } }
+/* Saved in the password manager: a quiet tick on the row; a dot on the ⚙ until each one is. */
+.signinkept { grid-column:2 / -1; display:flex; align-items:center; gap:6px; font-size:12px; }
+.iconbtn.gear { position:relative; }
+.gearDot { position:absolute; top:4px; right:4px; width:7px; height:7px; border-radius:50%; background:var(--accent); box-shadow:0 0 0 1.5px var(--panel, var(--bg)); }
 .foot .update { display:block; margin-top:6px; color:var(--link); cursor:pointer; font-weight:600; }
 /* A desktop app, not a web page: the arrow on buttons (as everywhere on a
    desktop; links keep the hand), labels that do not select, nothing to drag

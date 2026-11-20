@@ -103,9 +103,21 @@ function renderAppList(st: api.Status) {
     { label: 'Pinned', apps: pinned, pinned: true },
     ...(catalog?.categories || []).map((c) => ({ label: c.label, apps: st.apps.filter((a) => rest(a) && catOf[a.id] === c.id) })),
     { label: 'Other', apps: st.apps.filter((a) => rest(a) && !(catalog?.categories || []).some((c) => c.id === catOf[a.id])) }].filter((g) => g.apps.length);
-  appList = { groups, pending, catalog, weekUp, outages, seen, batteryPaused, held, busy: appsBusy, companion: document.documentElement.classList.contains('companion'), os: osName, on: appListActions, memory };
+  appList = { groups, pending, catalog, weekUp, outages, seen, batteryPaused, held, busy: appsBusy, companion: document.documentElement.classList.contains('companion'), os: osName, on: appListActions, memory, unkept };
   mountAppList($('statusRows'), appList);
+  if (!unkept && !appList.companion) refreshUnkept();
 }
+
+// The passwords and keys of each app not ticked Saved yet: a dot on its ⚙
+// (Sign-in details), read once Status shows and again after each tick.
+export let unkept: Record<string, number> | undefined;
+async function refreshUnkept() {
+  try { unkept = (await go().Unkept()) || {}; } catch { unkept = {}; }
+  if (appList) mountAppList($('statusRows'), (appList = { ...appList, unkept }));
+  unkeptChanged.forEach((f) => f());
+}
+/** Called when the dots change (an app's page redraws its own). */
+export const unkeptChanged = new Set<() => void>();
 
 // Status comes without waiting for the apps' pages (up to 3 seconds when
 // one hangs); the answers fill in after, on the same status if no newer one
@@ -581,6 +593,10 @@ async function showSignIn(a: api.AppStatus) {
   const wanted = [...(entry?.login || []), ...(entry?.keys || []), ...(entry?.recovery || [])];
   let list: settings.Setting[] = [];
   if (wanted.length) { try { list = await go().Settings(); } catch (e) { return showError(e); } }
+  let keptNow: Record<string, boolean> = {};
+  try { keptNow = (await go().Kept()) || {}; } catch { /* no ticks shown */ }
+  // Saved in the password manager, by name: the dot on its ⚙ follows.
+  const keep = (name: string) => async (on: boolean) => { await go().MarkKept(name, on); keptNow[name] = on; refreshUnkept(); };
   const byKey = Object.fromEntries(list.map((s) => [s.key, s]));
   const plain = async (text: string) => { if (window.runtime.ClipboardSetText) await window.runtime.ClipboardSetText(text); else await navigator.clipboard.writeText(text); };
   const label = (k: string) => (/PASSWORD$/.test(k) ? 'Password' : /EMAIL$/.test(k) ? 'Email' : /USER$/.test(k) ? 'User name' : settingLabel(k));
@@ -589,12 +605,13 @@ async function showSignIn(a: api.AppStatus) {
     const s = byKey[k] || ({} as settings.Setting);
     const shared = group.filter((o) => label(o) === label(k)).length > 1;
     return { label: shared ? settingLabel(k) : label(k), shown: s.secret ? (s.set ? '••••••••' : 'not set') : (s.value || 'not set'),
-      copy: s.set ? (s.secret ? () => go().CopySetting(k) : () => plain(s.value)) : undefined };
+      copy: s.set ? (s.secret ? () => go().CopySetting(k) : () => plain(s.value)) : undefined,
+      ...(s.secret && s.set ? { kept: !!keptNow[k], keep: keep(k) } : {}) };
   };
   const groups: SignInGroup[] = [];
   if (entry?.login?.length) groups.push({ title: 'Sign in', rows: entry.login.map(row) });
   const paste = (entry?.keys || []).map(row);
-  if (entry?.keyFile) paste.unshift({ label: 'API key', shown: '••••••••', copy: () => go().CopyAppKey(a.id) });
+  if (entry?.keyFile) paste.unshift({ label: 'API key', shown: '••••••••', copy: () => go().CopyAppKey(a.id), kept: !!keptNow['app:' + a.id], keep: keep('app:' + a.id) });
   if (paste.length) groups.push({ title: 'Paste into another app', rows: paste });
   if (entry?.recovery?.length) groups.push({ title: 'Keep safe', note: 'Without this the backups can’t be opened.', rows: entry.recovery.map(row) });
   const url = a.address ? 'https://' + a.address : a.url || '';

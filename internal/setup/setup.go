@@ -25,6 +25,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/domain"
 	"github.com/Snooper42/homelab-wizard/internal/duplicati"
 	"github.com/Snooper42/homelab-wizard/internal/host"
+	"github.com/Snooper42/homelab-wizard/internal/kept"
 	"github.com/Snooper42/homelab-wizard/internal/lockedfile"
 )
 
@@ -130,6 +131,10 @@ type Inputs struct {
 	// Restore is the restore-test log (backup.LoadRestoreLog); nil leaves
 	// it out of the Kopia step.
 	Restore *backup.RestoreLog
+	// Secrets are the installed apps' passwords and keys to keep in the
+	// password manager (core.Secrets), Kept those ticked Saved (kept.Load).
+	Secrets []kept.Secret
+	Kept    map[string]bool
 }
 
 // kopiaTested says how Kopia's restore test went, for its Setup step: a copy
@@ -397,6 +402,26 @@ func Steps(ctx context.Context, in Inputs) []Step {
 	// its steps wait until it is installed.
 	if has(st, "vaultwarden") {
 		manual(vw, addresses)
+	}
+	// The owner, Nov 19, 2026: every password and key goes into the
+	// password manager (Proton Pass), copied one at a time from an app's ⚙
+	// and ticked Saved there. The ones that open the backups come first.
+	if len(in.Secrets) > 0 {
+		left := kept.Unsaved(in.Secrets, in.Kept)
+		pm := Step{ID: "password-manager", Title: "Your passwords are in your password manager",
+			Why: "Each password the homelab made for an app, and each key, kept in your password manager (Proton Pass), so losing this machine loses none of them."}
+		if n := len(left); n > 0 {
+			pm.Title = plural(n, "password isn't", "passwords aren't") + " in your password manager yet"
+			var names []string
+			for _, s := range left {
+				names = append(names, s.Label)
+			}
+			pm.Detail = "Copy each from the ⚙ on its app, paste it into your password manager, then tick Saved: " + strings.Join(names, "; ") + "."
+			if left[0].Recovery {
+				pm.Detail = "First the ones that open the backups: without them the backups can't be opened. " + pm.Detail
+			}
+		}
+		add(pm, len(left) == 0)
 	}
 	if has(st, "vaultwarden") || has(st, "nginx-proxy-manager") {
 		manual(Step{ID: "twofactor", Title: "Two-step sign-in", Why: "A stolen password alone then opens neither your password vault nor the homelab's settings.",
