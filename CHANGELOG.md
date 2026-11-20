@@ -8,6 +8,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### New
 
+- **Paychecks in the Homelab app:** Finances › Paychecks shows each person's pay, as the computer's Plan › Paychecks does: take-home each paycheck and about a year, how often and which account it goes into, and where the gross goes (what's taken out, and taxes and the rest), then the next paychecks month by month with what each month brings in.
 - **Type a loan's papers in from the Homelab app:** **Type In Its Papers…** on a loan's page (or **Change Its Papers…**) takes what was borrowed, the rate, the day the first payment was due and each payment, and the number of payments and finance charge if the papers say. What it owes today shows as you type, worked out as the computer's form does, and from then on it's read from the papers, with no balance to type. Save asks Face ID, and away from home it waits like other changes.
 - **Tap a box in the Homelab app's Money Flow** to see what's behind it under the chart, as on the computer: a month's transactions, each opening its page, or a typical month's pay and planned payments. On an iPhone, Expenses and Savings list their kinds and accounts to tap in turn.
 - **Add a transaction on a past day from the Homelab app's Calendar:** a day before today, or today, offers **Add a Transaction on This Day** (later days still Add a Payment), as the computer's Calendar does, and each transaction recorded on a day opens its page.
