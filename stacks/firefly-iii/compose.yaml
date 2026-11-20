@@ -59,6 +59,7 @@ services:
       archive: [firefly-iii-upload]
       url: FIREFLY_URL
       name: Firefly III
+      keys: [FIREFLY_IMPORTER_TOKEN]
       category: finance
       description: A full household ledger, with budgets, bills, rules, and reports
       subdomain: firefly

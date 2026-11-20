@@ -76,8 +76,8 @@ services:
     x-homelab:
       memory: 800
       url: NEXTCLOUD_URL
-      login: [NEXTCLOUD_ADMIN_USER, NEXTCLOUD_ADMIN_PASSWORD]
       name: Nextcloud
+      login: [NEXTCLOUD_ADMIN_USER, NEXTCLOUD_ADMIN_PASSWORD]
       category: cloud
       description: The family's shared files, synced to every phone and computer
       subdomain: cloud

@@ -131,6 +131,8 @@ services:
       url: NTFY_URL
       dump: sqlite:/var/lib/ntfy/user.db
       name: ntfy
+      login: [NTFY_PHONE_PASSWORD]
+      keys: [NTFY_PUBLISH_TOKEN]
       category: security
       description: Push notifications for alerts from every other service
       subdomain: ntfy
@@ -161,6 +163,7 @@ services:
     x-homelab:
       url: POCKET_ID_URL
       name: Pocket ID
+      keys: [POCKET_ID_API_KEY]
       # A new release waits 3 days before the nightly update takes it (item 87).
       hold: 3
       category: security

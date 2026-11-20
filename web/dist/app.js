@@ -8132,10 +8132,11 @@
       else await navigator.clipboard.writeText(text2);
     };
     const label = (k3) => /PASSWORD$/.test(k3) ? "Password" : /EMAIL$/.test(k3) ? "Email" : /USER$/.test(k3) ? "User name" : settingLabel(k3);
-    const row = (k3) => {
+    const row = (k3, _3, group2) => {
       const s3 = byKey2[k3] || {};
+      const shared = group2.filter((o3) => label(o3) === label(k3)).length > 1;
       return {
-        label: label(k3),
+        label: shared ? settingLabel(k3) : label(k3),
         shown: s3.secret ? s3.set ? "••••••••" : "not set" : s3.value || "not set",
         copy: s3.set ? s3.secret ? () => go().CopySetting(k3) : () => plain2(s3.value) : void 0
       };

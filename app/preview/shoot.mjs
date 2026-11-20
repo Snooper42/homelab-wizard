@@ -2359,6 +2359,20 @@ const smokes = [
     if ((await page.locator(`${keep} .signin`).count()) !== 2) throw new Error('both passphrases are listed');
     if (await page.locator('#cliActions .signin:has-text("Settings key")').count()) throw new Error('an internal secret is listed');
   } },
+  // Two passwords in one group are told apart by name, not both called "Password".
+  { name: 'Sign-in details: PsiTransfer’s two passwords are named', screen: 'status',
+    mock: { status: { ...status, apps: [...status.apps, { id: 'psitransfer', name: 'PsiTransfer', state: 'running', health: 'healthy', url: 'http://localhost:3030' }] } }, run: async (page) => {
+    await page.click('#statusRows tr:has(strong:text-is("PsiTransfer")) button.gear', { timeout: 5000 });
+    await page.waitForSelector('#cliActions .signingroup:has(h4:text-is("Sign in")) .signin');
+    const labels = await page.$$eval('#cliActions .signingroup:has(h4:text-is("Sign in")) .signin > span.muted:first-child', (s) => s.map((e) => e.textContent));
+    if (labels.length !== 2 || new Set(labels).size !== 2 || !labels.some((l) => /upload/i.test(l))) throw new Error('labels: ' + labels.join(' | '));
+  } },
+  { name: 'Sign-in details: Tdarr’s login and the key Tidy Up uses', screen: 'status',
+    mock: { status: { ...status, apps: [...status.apps, { id: 'tdarr', name: 'Tdarr', state: 'running', health: 'healthy', url: 'http://localhost:8265' }] } }, run: async (page) => {
+    await page.click('#statusRows tr:has(strong:text-is("Tdarr")) button.gear', { timeout: 5000 });
+    await page.waitForSelector('#cliActions .signingroup:has(h4:text-is("Sign in")) .signin:has-text("User name")');
+    await page.waitForSelector('#cliActions .signingroup:has(h4:text-is("Paste into another app")) .signin');
+  } },
   { name: 'Sign-in details: an app with nothing to copy says so', screen: 'app:vikunja', run: async (page) => {
     await page.click('.pagehead button.gear', { timeout: 5000 });
     await page.waitForSelector('#cliActions .signinempty:has-text("Nothing to sign in with here")');

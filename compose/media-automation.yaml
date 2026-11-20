@@ -204,6 +204,8 @@ services:
       memory: 1000
       dump: sqlite:/app/server/Tdarr/DB2/SQL/database.db
       name: Tdarr
+      login: [TDARR_USER, TDARR_PASSWORD]
+      keys: [TDARR_API_KEY]
       category: media-automation
       description: Shrinks the media library by converting films and shows to a smaller format
       subdomain: tdarr
