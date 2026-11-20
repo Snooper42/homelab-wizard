@@ -120,6 +120,17 @@ type step struct {
 
 func (w *Wirer) steps() []step {
 	var out []step
+	// With no ARR_PASSWORD (cleared by hand), each app keeps the login made in it.
+	if w.Env["ARR_PASSWORD"] != "" {
+		for _, id := range arrLoginApps {
+			id := id
+			if w.has(id) {
+				out = append(out, step{w.name(id) + " signs in with the login in Sign-in details", func(ctx context.Context) (string, string, error) {
+					return w.arrLogin(ctx, id)
+				}})
+			}
+		}
+	}
 	for _, c := range clients {
 		c := c
 		if w.has("prowlarr", c.id) {
