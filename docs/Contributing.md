@@ -97,7 +97,10 @@ Use `../../appdata/<name>/...` for bind mounts so data sits next to the other st
 | `stores` | The `.env` folder settings it fills, each with what it keeps there (`{ FRIGATE_RECORDINGS: recordings }`): the install plan says where that folder is and how much room its drive has |
 | `next` | What to do once it's installed, shown under *Ready to open* (Frigate: add a camera) |
 | `seed` | A repository folder of starter files copied into its data folder on install, never over existing files |
-| `login` | `.env` variables the homelab set the app's sign-in up with, user then password; the app's page on Status shows them behind **Sign-in details** (the password is only copied) |
+| `login` | `.env` variables the homelab set the app's sign-in up with, user then password; the ⚙ on its Status row and page shows them under **Sign in** in its sign-in details (the password is only copied) |
+| `keys` | `.env` API keys and tokens one pastes into another app: **Paste into another app** in its sign-in details. Not internal secrets (database passwords, signing keys), which stay in Settings |
+| `recovery` | `.env` passwords that open the backups: **Keep safe** in its sign-in details, with *Without this the backups can't be opened* |
+| `keyfile` | Where the app keeps its own API key in its `/config` (`config.xml`, `settings.json`, `config/config.yaml`): its sign-in details copies it from there |
 | `dump: postgres` | `homelab backup` dumps this database daily |
 | `archive` | Named volumes `homelab backup` tars daily |
 | `phone` | The phone app people use the app with, shown on each person's welcome page (`homelab person add`) |

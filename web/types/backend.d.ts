@@ -17,6 +17,9 @@ declare namespace api {
     sameJob?: Record<string, string>;
     inputs?: string[];
     login?: string[];
+    keys?: string[];
+    recovery?: string[];
+    keyFile?: boolean;
     public: boolean;
     warning?: string;
     next?: string;
@@ -1345,6 +1348,7 @@ interface Backend {
     ChooseFolder(arg1: string): Promise<string>;
     ChooseRoot(): Promise<app.HostInfo>;
     ClearUpdated(): Promise<void>;
+    CopyAppKey(arg1: string): Promise<void>;
     CopySetting(arg1: string): Promise<void>;
     CrashSeen(): Promise<void>;
     CreateHomelab(): Promise<app.HostInfo>;

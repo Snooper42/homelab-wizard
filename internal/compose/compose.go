@@ -129,7 +129,17 @@ type Meta struct {
 	Requires []string          `yaml:"requires"`
 	// Login names the .env settings the homelab signs in to the app with
 	// (the user or email, then the password), for Status's Sign in.
-	Login   []string `yaml:"login"`
+	Login []string `yaml:"login"`
+	// Keys are the .env API keys and tokens one pastes into another app
+	// (Sign-in details' "Paste into another app"); Recovery the passwords
+	// that open the backups ("Keep safe"). Internal secrets (database
+	// passwords, signing keys) are in neither: they stay in Settings.
+	Keys     []string `yaml:"keys"`
+	Recovery []string `yaml:"recovery"`
+	// KeyFile is where an app keeps its own API key, in its /config (an
+	// *arr app's config.xml, Seerr's settings.json): Sign-in details copies
+	// it from there.
+	KeyFile string   `yaml:"keyfile"`
 	Dump    string   `yaml:"dump"`
 	Archive []string `yaml:"archive"` // named volumes `homelab backup` tars up
 	Doc     string   `yaml:"doc"`

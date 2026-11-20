@@ -54,9 +54,16 @@ type App struct {
 	// form collects them and passes them back with --set.
 	Inputs []string `json:"inputs,omitempty"`
 	// Login is the .env settings that sign in to it (user, then password).
-	Login   []string `json:"login,omitempty"`
-	Public  bool     `json:"public"`
-	Warning string   `json:"warning,omitempty"`
+	Login []string `json:"login,omitempty"`
+	// Keys are the API keys and tokens it gives other apps, Recovery the
+	// passwords that open the backups: Sign-in details' "Paste into another
+	// app" and "Keep safe". KeyFile says it keeps an API key of its own,
+	// which CopyAppKey copies.
+	Keys     []string `json:"keys,omitempty"`
+	Recovery []string `json:"recovery,omitempty"`
+	KeyFile  bool     `json:"keyFile,omitempty"`
+	Public   bool     `json:"public"`
+	Warning  string   `json:"warning,omitempty"`
 	// Next is what to do once it is installed (x-homelab next), for Done.
 	Next string `json:"next,omitempty"`
 	// MacApp: a native app installed as a Mac app, which Status can open
@@ -134,7 +141,7 @@ func appOf(c *catalog.Catalog, a *catalog.App) App {
 	out := App{
 		ID: a.ID, Name: a.Name(), Category: a.Category(), Description: a.Meta.Description, Kind: kind,
 		Aliases: a.Meta.Aliases, DependsOn: a.DependsOn, Conflicts: a.Meta.Conflicts, GoesWith: a.Meta.GoesWith, SameJob: a.Meta.SameJob,
-		Inputs: a.Meta.Requires, Login: a.Meta.Login, Phone: a.Phone(), Public: a.Public(), Warning: a.Meta.Warning, Next: a.Meta.Next,
+		Inputs: a.Meta.Requires, Login: a.Meta.Login, Keys: a.Meta.Keys, Recovery: a.Meta.Recovery, KeyFile: a.Meta.KeyFile != "", Phone: a.Phone(), Public: a.Public(), Warning: a.Meta.Warning, Next: a.Meta.Next,
 	}
 	out.Stack = a.Stack()
 	if n := a.Native(); n != nil {

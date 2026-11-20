@@ -950,3 +950,24 @@ func TestStartingANativeAppSaysWhyPlainly(t *testing.T) {
 		})
 	}
 }
+
+// TestCopyAppKey: Sign-in details copies the API key an app keeps itself
+// (Sonarr's, in its config.xml) to the clipboard, never to the page; an
+// app that keeps none, or hasn't made it yet, says so.
+func TestCopyAppKey(t *testing.T) {
+	a, w := testApp(t)
+	dir := filepath.Join(a.root, "data", "appdata", "sonarr")
+	if err := a.CopyAppKey("sonarr"); err == nil || !strings.Contains(err.Error(), "open it once") {
+		t.Fatalf("not made yet: %v", err)
+	}
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	os.WriteFile(filepath.Join(dir, "config.xml"), []byte("<Config><ApiKey>sonarr-own-key</ApiKey></Config>"), 0o600)
+	if err := a.CopyAppKey("sonarr"); err != nil || w.clip != "sonarr-own-key" {
+		t.Fatalf("copy: %v, clipboard %q", err, w.clip)
+	}
+	if err := a.CopyAppKey("duplicati"); err == nil || !strings.Contains(err.Error(), "keeps no API key") {
+		t.Fatalf("an app with none: %v", err)
+	}
+}

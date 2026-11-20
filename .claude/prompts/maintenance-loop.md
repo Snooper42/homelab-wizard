@@ -195,3 +195,7 @@ Kept from the earlier queue (Nov 6): only the items where a household can lose d
 5. **The house style**: UI words, CHANGELOG lines, and commit titles are short, plain English about what the household gets (`app/preview/words.mjs` checks, and no Mac word outside a Mac branch). Colours are tokens in `style.css`; shared markup comes from `web/src/parts`.
 6. **Every screen stays accessible**: no serious axe finding, every control named, everything reachable by keyboard.
 7. **Never touch `VERSION` or cut a release.**
+
+## For Account 2
+
+- **From lane 5 (Nov 20): the ⚙ on every app** (`claude/arr-signin-gear`): a gear on each Status row (`web/src/status/AppList.tsx`, `AppListActions.signIn`) and in an app page's toolbar (`AppPage.tsx`) opens the reworked sign-in sheet (`showSignIn` in `screens/status.ts`, `SignIns` in `sheets/Sheet.tsx`): address, then *Sign in*, *Paste into another app*, *Keep safe*. A new `gear` icon; Settings' copy note says Proton Pass. Smoke cases: *Status: the gear on Sonarr’s row…*, *Sign-in details: …*.

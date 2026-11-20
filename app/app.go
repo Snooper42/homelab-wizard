@@ -710,18 +710,46 @@ func (a *App) CopySetting(key string) error {
 		if !s.Secret || v == "" {
 			return fmt.Errorf("%s is not a saved secret", key)
 		}
-		if err := clipboardSet(a.ctx, v); err != nil {
-			return err
-		}
-		go func() {
-			time.Sleep(copyClearAfter)
-			if now, err := clipboardGet(a.ctx); err == nil && now == v {
-				_ = clipboardSet(a.ctx, "")
-			}
-		}()
-		return nil
+		return a.copySecret(v)
 	}
 	return fmt.Errorf("unknown setting %q", key)
+}
+
+// CopyAppKey puts the API key an app keeps itself (its catalog keyfile: an
+// *arr app's config.xml, Seerr's settings.json) on the clipboard, as
+// CopySetting does a saved one: it never reaches the page.
+func (a *App) CopyAppKey(id string) error {
+	c, err := a.catalog()
+	if err != nil {
+		return err
+	}
+	app, ok := c.Get(id)
+	if !ok || app.Meta.KeyFile == "" {
+		return fmt.Errorf("%s keeps no API key of its own", id)
+	}
+	env := core.Env(a.root)
+	home, _ := os.UserHomeDir()
+	dir := wiring.AppsFrom(c, func(x string) bool { return x == id }, env, home)[id].ConfigDir
+	key, err := wiring.KeptKey(dir, app.Meta.KeyFile)
+	if err != nil {
+		return fmt.Errorf("%s: %w", app.Name(), err)
+	}
+	return a.copySecret(key)
+}
+
+// copySecret puts v on the clipboard and clears it after copyClearAfter,
+// unless something else was copied since.
+func (a *App) copySecret(v string) error {
+	if err := clipboardSet(a.ctx, v); err != nil {
+		return err
+	}
+	go func() {
+		time.Sleep(copyClearAfter)
+		if now, err := clipboardGet(a.ctx); err == nil && now == v {
+			_ = clipboardSet(a.ctx, "")
+		}
+	}()
+	return nil
 }
 
 // copyClearAfter is how long a copied secret stays on the clipboard.
