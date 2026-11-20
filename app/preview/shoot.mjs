@@ -4459,6 +4459,24 @@ const smokes = [
     await page.waitForSelector('#plan .planLead:has-text("Installs 1 app")', { timeout: 5000 });
     if (await page.isVisible('#presets .chip:has-text("Immich")')) throw new Error("a stack's own preset is still a chip");
   } },
+  // Arr item 2: the VPN key's field walks through where to find it, in three steps, and says first that it
+  // needs a paid Proton plan; a button opens Proton's page for it.
+  { name: 'The VPN key: a paid plan first, three steps, and Proton’s page a click away', screen: 'choose', run: async (page) => {
+    await page.click('#more > summary');
+    await page.fill('#search', 'qbittorrent');
+    await page.click('#groups label.app:has(strong:text-is("qBittorrent")) input');
+    const walk = page.locator('#inputs .walk');
+    await walk.waitFor({ timeout: 5000 });
+    const lead = await walk.locator('.walkLead').textContent();
+    if (!/paid Proton VPN plan/.test(lead) || !/free/.test(lead)) throw new Error(`the walkthrough doesn't start with the paid plan: ${lead}`);
+    const steps = await walk.locator('ol > li').allTextContents();
+    if (steps.length !== 3) throw new Error(`${steps.length} steps, not 3`);
+    if (!/NAT-PMP/.test(steps[1]) || !/PrivateKey/.test(steps[2])) throw new Error(`the steps: ${steps.join(' | ')}`);
+    if (/PROTONVPN_|WIREGUARD_/.test(steps.join(' '))) throw new Error('a step names the setting by its code');
+    await walk.locator('button:has-text("Open Proton’s WireGuard page")').click();
+    const opened = await page.evaluate(() => window.__MOCK.opened);
+    if (opened !== 'https://account.protonvpn.com/downloads') throw new Error(`opened ${opened}`);
+  } },
   // Usability task 3, item 21: Tab from an app's checkbox in Choose apps reaches its own links (Open, Settings).
   { name: 'Choose apps: Tab reaches each app’s Open and Settings', screen: 'choose', run: async (page) => {
     await page.click('#more > summary');
