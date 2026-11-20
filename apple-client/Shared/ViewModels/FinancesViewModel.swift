@@ -1404,6 +1404,95 @@ final class FinancesViewModel {
         return await saveLedger(edited, reason: "Count all of a payment towards your loan.")
     }
 
+    // MARK: Sorting on Transactions (TransactionReview)
+
+    /// What was just sorted, to take back with Undo.
+    struct ReviewUndo: Sendable, Equatable {
+        let words: String
+        let changes: [LedgerChange]
+    }
+
+    private(set) var reviewUndo: ReviewUndo?
+    @ObservationIgnored private var reviewCache: (version: Int, links: [TransactionReview.Link], pairs: [TransactionReview.Pair])?
+
+    /// The rows that look like a planned payment, and the pairs that look like
+    /// a transfer, as last read (worked out once for each ledger and plan read).
+    func transactionReview() -> (links: [TransactionReview.Link], pairs: [TransactionReview.Pair]) {
+        if let c = reviewCache, c.version == wholeVersion { return (c.links, c.pairs) }
+        let ledger = BankImport.kept(in: rawLedger)
+        let links = TransactionReview.links(ledger, plan: rawPlan, view: lastView(), checking: plan?.checking ?? "", logos: PayeeLogos.shared)
+        let pairs = TransactionReview.pairs(ledger)
+        reviewCache = (wholeVersion, links, pairs)
+        return (links, pairs)
+    }
+
+    /// The ledger's row `id` as kept, for Join's Undo.
+    private func rawRow(_ id: String) -> JSONValue? {
+        guard case .array(let all)? = rawLedger?["transactions"] else { return nil }
+        return all.first { $0["id"] == .string(id) }
+    }
+
+    /// Each link made (Link, Link All). Returns whether it saved.
+    func linkSuggested(_ links: [TransactionReview.Link]) async -> Bool {
+        let words = links.count == 1 ? "Linked \(transactionPayee(links[0].id))." : "Linked \(links.count)."
+        return await review(links.map { .link(id: $0.id, payment: $0.payment) }, undo: links.map { .unlink(id: $0.id) },
+                            words: words, reason: links.count == 1 ? "Link a payment in your Finances." : "Link \(links.count) payments in your Finances.")
+    }
+
+    /// Not It: the row pays no planned payment.
+    func notIt(_ link: TransactionReview.Link) async -> Bool {
+        await review([.link(id: link.id, payment: nil)], undo: [.unlink(id: link.id)],
+                     words: "\(transactionPayee(link.id)) pays no planned payment.", reason: "Say a transaction pays no planned payment.")
+    }
+
+    /// Each pair joined as one transfer (Join, Join All).
+    func join(_ pairs: [TransactionReview.Pair]) async -> Bool {
+        var undo: [LedgerChange] = []
+        for p in pairs {
+            guard let out = rawRow(p.out), let into = rawRow(p.into) else { return false }
+            undo.append(.unjoin(out: out, into: into))
+        }
+        let words = pairs.count == 1 ? "Joined as one transfer." : "Joined \(pairs.count) transfers."
+        return await review(pairs.map { .join(out: $0.out, into: $0.into) }, undo: undo, words: words,
+                            reason: pairs.count == 1 ? "Join two transactions as one transfer." : "Join \(pairs.count) transfers in your Finances.")
+    }
+
+    /// Not One Transfer: the two stay apart, and aren't offered again.
+    func notOneTransfer(_ pair: TransactionReview.Pair) async -> Bool {
+        await review([.apart(ids: [pair.out, pair.into], true)], undo: [.apart(ids: [pair.out, pair.into], false)],
+                     words: "Kept as two.", reason: "Keep two transactions apart.")
+    }
+
+    /// Takes back what was just sorted.
+    func undoReview() async {
+        guard let u = reviewUndo else { return }
+        if await review(u.changes, undo: [], words: "", reason: "Take back what you just sorted.") { reviewUndo = nil }
+    }
+
+    func dismissReviewUndo() { reviewUndo = nil }
+
+    private func transactionPayee(_ id: String) -> String {
+        let p = ledger?.newestFirst.first { $0.id == id }?.payee ?? ""
+        return p.isEmpty ? "It" : p
+    }
+
+    /// Makes `changes` on the ledger, at home or kept until it answers, each after Face ID.
+    private func review(_ changes: [LedgerChange], undo: [LedgerChange], words: String, reason: String) async -> Bool {
+        guard canAddTransactions, !isSaving, !changes.isEmpty, let raw = rawLedger, let plan else { return false }
+        let accounts = Set(plan.plan.accounts.map(\.id))
+        var edited = raw
+        for change in changes {
+            guard let next = change.apply(to: edited, accounts: accounts) else {
+                saveError = "This is changed on the computer."
+                return false
+            }
+            edited = next
+        }
+        let saved = await makeLedger(changes, edited: edited, reason: reason)
+        if saved { reviewUndo = undo.isEmpty ? nil : ReviewUndo(words: words, changes: undo) }
+        return saved
+    }
+
     // MARK: Selected together (Parity gap 5)
 
     /// How many of the transactions selected the last change was made for,

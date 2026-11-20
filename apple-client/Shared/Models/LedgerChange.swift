@@ -14,6 +14,15 @@ enum LedgerChange: Codable, Sendable, Equatable {
     case move(id: String, to: String)
     /// What a bank's file gave a row brought in before (import 3 of 4).
     case fix(id: String, LedgerFix)
+    /// Transactions' sorting (`TransactionReview`): linked to a planned
+    /// payment, or said to pay none (nil, Not It); `unlink` is their Undo.
+    case link(id: String, payment: String?)
+    case unlink(id: String)
+    /// Two rows joined as one transfer; `unjoin` puts them back as they were.
+    case join(out: String, into: String)
+    case unjoin(out: JSONValue, into: JSONValue)
+    /// Said not one transfer, or not any more (its Undo).
+    case apart(ids: [String], Bool)
 
     /// `ledger` with this change made, or nil when it can't be. `accounts`
     /// are the plan's, for a transaction's account.
@@ -25,6 +34,11 @@ enum LedgerChange: Codable, Sendable, Equatable {
         case .delete(let id): LedgerEdit.removing(id: id, from: ledger)
         case .move(let id, let to): LedgerEdit.moving(id: id, to: to, accounts: accounts, in: ledger)
         case .fix(let id, let fix): LedgerEdit.fixing(id: id, with: fix, in: ledger)
+        case .link(let id, let payment): LedgerEdit.settingLink(id: id, payment: payment, in: ledger)
+        case .unlink(let id): LedgerEdit.clearingLink(id: id, in: ledger)
+        case .join(let out, let into): LedgerEdit.joining(out: out, into: into, in: ledger)
+        case .unjoin(let out, let into): LedgerEdit.unjoining(out: out, into: into, in: ledger)
+        case .apart(let ids, let on): LedgerEdit.settingApart(ids, on, in: ledger)
         }
     }
 
@@ -32,8 +46,16 @@ enum LedgerChange: Codable, Sendable, Equatable {
     var transaction: String? {
         switch self {
         case .add: nil
-        case .update(let id, _), .category(let id, _), .delete(let id), .move(let id, _), .fix(let id, _): id
+        case .update(let id, _), .category(let id, _), .delete(let id), .move(let id, _), .fix(let id, _),
+             .link(let id, _), .unlink(let id), .join(let id, _): id
+        case .unjoin(let out, _): Self.id(of: out)
+        case .apart(let ids, _): ids.first
         }
+    }
+
+    private static func id(of row: JSONValue) -> String? {
+        if case .string(let id)? = row["id"] { return id }
+        return nil
     }
 
     /// `changes` with `change` made after them: a later change to the same
@@ -51,7 +73,7 @@ enum LedgerChange: Codable, Sendable, Equatable {
             out.removeAll { if case .category(let other, _) = $0 { return other == id }; return false }
         case .move:
             out.removeAll { if case .move(let other, _) = $0 { return other == id }; return false }
-        case .add, .fix:
+        case .add, .fix, .link, .unlink, .join, .unjoin, .apart:
             break
         }
         out.append(change)

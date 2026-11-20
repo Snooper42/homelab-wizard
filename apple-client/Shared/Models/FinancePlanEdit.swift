@@ -466,6 +466,74 @@ enum LedgerEdit {
         return .object(root)
     }
 
+    /// `ledger` with the transaction `id` linked to no planned payment and
+    /// not said to pay none: Link's or Not It's Undo. Nil for an unknown id.
+    static func clearingLink(id: String, in ledger: JSONValue) -> JSONValue? {
+        guard !id.isEmpty, case .object(var root) = ledger, case .array(var all)? = root["transactions"],
+              let index = all.firstIndex(where: { $0["id"] == .string(id) }), case .object(var entry) = all[index] else { return nil }
+        entry["payment"] = nil
+        entry["extra"] = nil
+        entry["notPlanned"] = nil
+        all[index] = .object(entry)
+        root["transactions"] = .array(all)
+        return .object(root)
+    }
+
+    /// `ledger` with money out (`out`) and the same into another account
+    /// (`into`) as one transfer (importData.ts's `joined`): the leaving
+    /// half's day and payee, into the other's account, its bank id kept,
+    /// with no category; the arriving half is gone. Nil unless both are
+    /// there, on different accounts, for the same amount out and in, and
+    /// neither is a transfer already.
+    static func joining(out: String, into: String, in ledger: JSONValue) -> JSONValue? {
+        guard !out.isEmpty, !into.isEmpty, out != into, case .object(var root) = ledger, case .array(var all)? = root["transactions"],
+              let o = all.firstIndex(where: { $0["id"] == .string(out) }), let i = all.firstIndex(where: { $0["id"] == .string(into) }),
+              case .object(var leaving) = all[o], case .object(let arriving) = all[i],
+              case .number(let a)? = leaving["amount"], case .number(let b)? = arriving["amount"], a < 0, abs(a + b) < 0.005,
+              case .string(let account)? = arriving["account"], leaving["account"] != arriving["account"],
+              leaving["to"] == nil, arriving["to"] == nil else { return nil }
+        func text(_ v: JSONValue?) -> String? { if case .string(let s)? = v, !s.isEmpty { return s }; return nil }
+        leaving["to"] = .string(account)
+        if let bank = text(arriving["bank"]) { leaving["toBank"] = .string(bank) }
+        if text(leaving["payee"]) == nil, let payee = text(arriving["payee"]) { leaving["payee"] = .string(payee) }
+        if text(leaving["note"]) == nil, let note = text(arriving["note"]) { leaving["note"] = .string(note) }
+        leaving["category"] = nil
+        leaving["institution"] = nil
+        leaving["notPlanned"] = nil
+        all[o] = .object(leaving)
+        all.remove(at: i)
+        root["transactions"] = .array(all)
+        return .object(root)
+    }
+
+    /// Join's Undo: the two rows back as they were before (`out` in its
+    /// place, `into` after it again). Nil when the joined row is gone.
+    static func unjoining(out: JSONValue, into: JSONValue, in ledger: JSONValue) -> JSONValue? {
+        guard case .string(let outID)? = out["id"], case .string(let intoID)? = into["id"],
+              case .object(var root) = ledger, case .array(var all)? = root["transactions"],
+              let o = all.firstIndex(where: { $0["id"] == .string(outID) }) else { return nil }
+        all[o] = out
+        if !all.contains(where: { $0["id"] == .string(intoID) }) { all.insert(into, at: o + 1) }
+        root["transactions"] = .array(all)
+        return .object(root)
+    }
+
+    /// `ledger` with each of `ids` said apart (Not One Transfer), or not
+    /// (its Undo). Nil when none of them is there.
+    static func settingApart(_ ids: [String], _ apart: Bool, in ledger: JSONValue) -> JSONValue? {
+        guard !ids.isEmpty, case .object(var root) = ledger, case .array(var all)? = root["transactions"] else { return nil }
+        var changed = false
+        for (n, t) in all.enumerated() {
+            guard case .string(let id)? = t["id"], ids.contains(id), case .object(var entry) = t else { continue }
+            entry["apart"] = apart ? .bool(true) : nil
+            all[n] = .object(entry)
+            changed = true
+        }
+        guard changed else { return nil }
+        root["transactions"] = .array(all)
+        return .object(root)
+    }
+
     /// `ledger` without the transaction `id`, or nil when it has none by that id.
     static func removing(id: String, from ledger: JSONValue) -> JSONValue? {
         guard !id.isEmpty, case .object(var root) = ledger, case .array(let all)? = root["transactions"] else { return nil }
