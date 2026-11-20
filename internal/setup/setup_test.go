@@ -14,6 +14,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/docker"
 	"github.com/Snooper42/homelab-wizard/internal/duplicati"
 	"github.com/Snooper42/homelab-wizard/internal/host"
+	"github.com/Snooper42/homelab-wizard/internal/kept"
 )
 
 type fakeProbe struct{ dns, adguard, cf, cert error }
@@ -564,5 +565,44 @@ func TestPhoneAwayStep(t *testing.T) {
 	env["COMPANION_ACCESS_AUD"], env["COMPANION_AWAY_HOST"] = "aud-1", "homelab-away.example.com"
 	if s, _ := find(env, running); s.State != "done" {
 		t.Fatalf("set up: %+v", s)
+	}
+}
+
+// TestPasswordManagerStep: one item, "N passwords aren't in your password
+// manager yet", the ones that open the backups named first; done once each
+// is ticked Saved, and absent with nothing to keep.
+func TestPasswordManagerStep(t *testing.T) {
+	env := map[string]string{}
+	st := &api.Status{Apps: []api.AppStatus{{ID: "duplicati", State: "running"}}}
+	find := func(in Inputs) *Step {
+		for _, s := range Steps(context.Background(), in) {
+			if s.ID == "password-manager" {
+				return &s
+			}
+		}
+		return nil
+	}
+	in := Inputs{Env: env, Host: host.For("darwin"), Status: st, Probe: fakeProbe{}}
+	if find(in) != nil {
+		t.Fatal("nothing to keep: no step")
+	}
+	in.Secrets = []kept.Secret{
+		{App: "duplicati", Key: "DUPLICATI_PASSWORD", Label: "Duplicati: duplicati password"},
+		{App: "duplicati", Key: "DUPLICATI_PASSPHRASE", Label: "Duplicati: duplicati passphrase", Recovery: true},
+	}
+	s := find(in)
+	if s == nil || s.State != "todo" || s.Title != "2 passwords aren't in your password manager yet" {
+		t.Fatalf("step: %+v", s)
+	}
+	if i, j := strings.Index(s.Detail, "duplicati passphrase"), strings.Index(s.Detail, "duplicati password"); i < 0 || j < 0 || i > j || !strings.Contains(s.Detail, "backups can't be opened") {
+		t.Fatalf("Keep safe first, said why: %q", s.Detail)
+	}
+	in.Kept = map[string]bool{"DUPLICATI_PASSPHRASE": true}
+	if s = find(in); s.Title != "1 password isn't in your password manager yet" || strings.Contains(s.Detail, "backups can't") {
+		t.Fatalf("one left: %+v", s)
+	}
+	in.Kept["DUPLICATI_PASSWORD"] = true
+	if s = find(in); s.State != "done" || s.Title != "Your passwords are in your password manager" {
+		t.Fatalf("all ticked: %+v", s)
 	}
 }

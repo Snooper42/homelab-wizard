@@ -77,6 +77,9 @@ export interface SignInRow {
   shown: string;
   /** Copies it (a secret straight to the clipboard, never the page); none when it is not set. Rejects with why. */
   copy?: () => Promise<void>;
+  /** A password or key: ticked Saved once it is in the password manager (by its name, never its value). */
+  kept?: boolean;
+  keep?: (saved: boolean) => Promise<void>;
 }
 
 /** One kind of detail, by what a person does with it. */
@@ -93,6 +96,8 @@ export interface SignInGroup {
 export function SignIns({ address, groups, empty, close }: { address?: SignInRow; groups: SignInGroup[]; empty?: string; close: () => void }) {
   const [copied, setCopied] = useState('');
   const [why, setWhy] = useState<Record<string, string>>({});
+  const [done, setDone] = useState<Set<string>>(new Set());
+  const [ticked, setTicked] = useState<Record<string, boolean>>({});
   useEffect(() => {
     if (!copied) return;
     const t = setTimeout(() => setCopied(''), 4000);
@@ -103,9 +108,17 @@ export function SignIns({ address, groups, empty, close }: { address?: SignInRow
       <span class="muted">{r.label}</span>
       <strong>{r.shown}</strong>
       {r.copy && <button class={'small copybtn' + (copied === id ? ' copied' : '')} aria-live="polite"
-        onClick={async () => { try { await r.copy!(); setWhy((w) => ({ ...w, [id]: '' })); setCopied(id); } catch (e) { setWhy((w) => ({ ...w, [id]: errorWords(e) })); } }}>
+        onClick={async () => { try { await r.copy!(); setWhy((w) => ({ ...w, [id]: '' })); setCopied(id); setDone((d) => new Set(d).add(id)); } catch (e) { setWhy((w) => ({ ...w, [id]: errorWords(e) })); } }}>
         {copied === id ? 'Copied. Paste it into Proton Pass' : 'Copy'}</button>}
       {why[id] && <span class="signinwhy muted" role="status">{why[id]}</span>}
+      {/* Offered once it is copied, or already ticked: a quiet tick, kept by name. */}
+      {r.keep && (r.kept || done.has(id) || ticked[id] !== undefined) && (
+        <label class="signinkept muted">
+          <input type="checkbox" checked={ticked[id] ?? !!r.kept}
+            onChange={async (e) => { const on = e.currentTarget.checked; setTicked((t) => ({ ...t, [id]: on })); try { await r.keep!(on); } catch (err) { setTicked((t) => ({ ...t, [id]: !on })); setWhy((w) => ({ ...w, [id]: errorWords(err) })); } }} />
+          Saved in Proton Pass
+        </label>
+      )}
     </div>
   );
   return (

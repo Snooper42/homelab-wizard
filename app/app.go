@@ -41,6 +41,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/history"
 	"github.com/Snooper42/homelab-wizard/internal/host"
 	"github.com/Snooper42/homelab-wizard/internal/install"
+	"github.com/Snooper42/homelab-wizard/internal/kept"
 	"github.com/Snooper42/homelab-wizard/internal/kit"
 	"github.com/Snooper42/homelab-wizard/internal/notify"
 	"github.com/Snooper42/homelab-wizard/internal/people"
@@ -737,6 +738,29 @@ func (a *App) CopyAppKey(id string) error {
 	return a.copySecret(key)
 }
 
+// Kept are the passwords and keys ticked Saved in Sign-in details, by
+// setting name (app:<id> for an app's own key), never the value.
+func (a *App) Kept() map[string]bool { return kept.Load(a.root) }
+
+// MarkKept ticks (or unticks) one as saved in the password manager.
+func (a *App) MarkKept(key string, saved bool) error { return kept.Mark(a.root, key, saved) }
+
+// Unkept counts, by app, the passwords and keys not ticked Saved yet: the
+// dot on its ⚙.
+func (a *App) Unkept() (map[string]int, error) {
+	c, err := a.catalog()
+	if err != nil {
+		return nil, err
+	}
+	ctx, cancel := a.timed()
+	defer cancel()
+	st, err := core.StatusNow(ctx, a.root)
+	if err != nil {
+		return nil, err
+	}
+	return kept.ByApp(kept.Unsaved(core.Secrets(a.root, c, &st), kept.Load(a.root))), nil
+}
+
 // copySecret puts v on the clipboard and clears it after copyClearAfter,
 // unless something else was copied since.
 func (a *App) copySecret(v string) error {
@@ -760,6 +784,12 @@ func (a *App) SaveSettings(values map[string]string) ([]settings.Setting, error)
 	if err := settings.Save(a.root, values); err != nil {
 		return nil, err
 	}
+	// A new value: the one saved in the password manager opens nothing now.
+	changed := make([]string, 0, len(values))
+	for k := range values {
+		changed = append(changed, k)
+	}
+	_ = kept.Forget(a.root, changed)
 	if len(values) > 0 {
 		history.Record(a.root, history.Entry{Kind: "settings", Who: history.ThisComputer, Text: history.SettingsChanged(values)})
 	}

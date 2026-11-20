@@ -8,6 +8,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### New
 
+- **Saved in Proton Pass?** After you copy a password or key from an app's ⚙, its row offers a **Saved in Proton Pass** tick. The ⚙ keeps a dot until every one of that app's is ticked, and Setup counts what's left (*3 passwords aren't in your password manager yet*), the ones that open the backups first. A tick is kept by the setting's name, never its value, in `data/kept.json`, and saving a new value for it in Settings clears it.
 - **Update an app from the Homelab app, notes first:** **Update…** on an app's page shows what the update brings, as the computer does before it updates: which version it runs and how many releases are newer, the start of each one's notes and a link to the rest. Then **Update**, after Face ID. Roll Back stays on the page.
 - **Storage on the Homelab app's Status:** a card between Protection and Recent Alerts says what each app keeps, the six largest with a bar and the rest counted, as the computer's Storage card does from the nightly backup. Whose photos take what stays on the computer.
 - **Paychecks in the Homelab app:** Finances › Paychecks shows each person's pay, as the computer's Plan › Paychecks does: take-home each paycheck and about a year, how often and which account it goes into, and where the gross goes (what's taken out, and taxes and the rest), then the next paychecks month by month with what each month brings in.

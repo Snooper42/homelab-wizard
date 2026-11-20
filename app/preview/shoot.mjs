@@ -2352,6 +2352,20 @@ const smokes = [
     await page.emulateMedia({ reducedMotion: 'reduce' });
     if ((await page.$eval(key + ' button', (b) => getComputedStyle(b).animationName)) !== 'none') throw new Error('it bounces with Reduce Motion');
   } },
+  // 1b (the owner, Nov 19): after a copy, a quiet Saved tick, kept by name; the ⚙'s dot goes once nothing is left.
+  { name: 'Sign-in details: Saved in Proton Pass clears the dot on the gear', screen: 'status',
+    mock: { unkeptApps: { sonarr: 1 }, status: { ...status, apps: [...status.apps, { id: 'sonarr', name: 'Sonarr', state: 'running', health: 'healthy', url: 'http://localhost:8989' }] } }, run: async (page) => {
+    const gear = '#statusRows tr:has(strong:text-is("Sonarr")) button.gear';
+    await page.waitForSelector(`${gear} .gearDot`, { timeout: 5000 });
+    await page.click(gear);
+    const key = '#cliActions .signin:has-text("API key")';
+    await page.waitForSelector(key + ' button');
+    if (await page.locator(key + ' .signinkept').count()) throw new Error('the tick shows before a copy');
+    await page.click(key + ' button');
+    await page.click(key + ' .signinkept input');
+    if (JSON.stringify(await page.evaluate(() => window.__MOCK.markedKept)) !== '[["app:sonarr",true]]') throw new Error('not ticked by name');
+    await page.waitForSelector(`${gear}:not(:has(.gearDot))`, { timeout: 5000 });
+  } },
   { name: 'Sign-in details: Duplicati’s passphrases are under Keep safe', screen: 'app:duplicati', run: async (page) => {
     await page.click('.pagehead button.gear', { timeout: 5000 });
     const keep = '#cliActions .signingroup:has(h4:text-is("Keep safe"))';

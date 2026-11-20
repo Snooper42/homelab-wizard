@@ -8,6 +8,7 @@ import { useEffect, useState } from 'preact/hooks';
 import { ActionLink } from '../ActionLink';
 import { ago, bytes, clockText, dayText, never } from '../format';
 import { Icon } from '../Icon';
+import { GearButton } from '../status/AppList';
 import { Address } from '../parts/Address';
 import { Card, CardHead } from '../parts/Card';
 import { Empty } from '../parts/Empty';
@@ -70,6 +71,8 @@ export interface Day {
 
 export interface AppPageProps {
   a: api.AppStatus;
+  /** Its passwords and keys not ticked Saved yet: a dot on its ⚙. */
+  unkept?: number;
   entry?: api.App;
   /** The dot's class and the words for its state (AppList's stateOf). */
   state: [string, string];
@@ -330,7 +333,7 @@ function Header({ p }: { p: AppPageProps }) {
           : run('start', 'Start', 'Start it'))}
         {a.state === 'running' && a.address && !p.companion && <button class="btn" disabled={busy} onClick={on.phone}><Icon name="phone" />Open on a phone</button>}
         {a.state === 'running' && url && <button class="primary small" onClick={() => on.open(url)}>Open</button>}
-        {!p.companion && <button class="iconbtn gear" title="Sign-in details" aria-label={`${a.name}: sign-in details`} onClick={on.signIn}><Icon name="gear" /></button>}
+        {!p.companion && <GearButton name={a.name} unsaved={p.unkept || 0} open={on.signIn} />}
       </div>
     </div>
   );

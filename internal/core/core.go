@@ -34,6 +34,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/explain"
 	"github.com/Snooper42/homelab-wizard/internal/health"
 	"github.com/Snooper42/homelab-wizard/internal/host"
+	"github.com/Snooper42/homelab-wizard/internal/kept"
 	"github.com/Snooper42/homelab-wizard/internal/kit"
 	"github.com/Snooper42/homelab-wizard/internal/notify"
 	"github.com/Snooper42/homelab-wizard/internal/procattr"
@@ -168,6 +169,9 @@ func Setup(ctx context.Context, root string) []setup.Step {
 	}
 	if st, err := Status(ctx, root); err == nil {
 		in.Status = &st
+		if c, err := Catalog(root); err == nil {
+			in.Secrets, in.Kept = Secrets(root, c, &st), kept.Load(root)
+		}
 	} else {
 		in.RuntimeErr = err
 		// Before the homelab folder exists, the runtime is checked on its own.

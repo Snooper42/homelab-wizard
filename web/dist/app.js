@@ -3165,7 +3165,7 @@
             /* @__PURE__ */ u3("td", { title: a3.address && a3.url ? "On this machine: " + a3.url : "", children: a3.address ? /* @__PURE__ */ u3(Link, { url: "https://" + a3.address, text: a3.address, open: p3.on.open, copy, os: p3.os }) : a3.url ? /* @__PURE__ */ u3(Link, { url: a3.url, text: a3.url.replace(/^http:\/\//, ""), open: p3.on.open, copy, os: p3.os }) : /* @__PURE__ */ u3("span", { class: "muted", children: "—" }) }),
             /* @__PURE__ */ u3("td", { class: "rowActions", children: [
               /* @__PURE__ */ u3(Actions2, { a: a3, entry, busy: p3.busy || !!pend && !pend.failed, os: p3.os, on: p3.on }),
-              a3.state !== "missing" && !p3.companion && /* @__PURE__ */ u3("button", { class: "iconbtn gear", title: `${a3.name}: sign-in details`, "aria-label": `${a3.name}: sign-in details`, onClick: () => p3.on.signIn(a3), children: /* @__PURE__ */ u3(Icon, { name: "gear" }) }),
+              a3.state !== "missing" && !p3.companion && /* @__PURE__ */ u3(GearButton, { name: a3.name, unsaved: p3.unkept?.[a3.id] || 0, open: () => p3.on.signIn(a3) }),
               a3.state !== "missing" && /* @__PURE__ */ u3("button", { class: "iconbtn topage", title: `${a3.name}: its page`, "aria-label": `${a3.name}: its page`, onClick: () => p3.on.page(a3), children: /* @__PURE__ */ u3(Icon, { name: "chevron" }) }),
               menu?.id === a3.id && /* @__PURE__ */ u3(RowMenu, { a: a3, x: menu.x, y: menu.y, native: entry?.kind === "native", busy: p3.busy, companion: p3.companion, on: p3.on.menu, close: close3, said: (w3) => say(a3.id, w3) })
             ] })
@@ -3603,6 +3603,13 @@
   function clearAppList(el3) {
     R(null, el3);
   }
+  function GearButton({ name, unsaved, open: open5 }) {
+    const said2 = unsaved ? `${name}: sign-in details, ${unsaved === 1 ? "1 not" : unsaved + " not"} in your password manager yet` : `${name}: sign-in details`;
+    return /* @__PURE__ */ u3("button", { class: "iconbtn gear" + (unsaved ? " unsaved" : ""), title: said2, "aria-label": said2, onClick: open5, children: [
+      /* @__PURE__ */ u3(Icon, { name: "gear" }),
+      unsaved > 0 && /* @__PURE__ */ u3("span", { class: "gearDot", "aria-hidden": "true" })
+    ] });
+  }
 
   // web/src/store.ts
   function store(read) {
@@ -3806,6 +3813,8 @@
   function SignIns({ address, groups: groups4, empty, close: close3 }) {
     const [copied, setCopied] = d2("");
     const [why, setWhy] = d2({});
+    const [done, setDone] = d2(/* @__PURE__ */ new Set());
+    const [ticked, setTicked] = d2({});
     h2(() => {
       if (!copied) return;
       const t3 = setTimeout(() => setCopied(""), 4e3);
@@ -3824,6 +3833,7 @@
               await r3.copy();
               setWhy((w3) => ({ ...w3, [id2]: "" }));
               setCopied(id2);
+              setDone((d3) => new Set(d3).add(id2));
             } catch (e3) {
               setWhy((w3) => ({ ...w3, [id2]: errorWords(e3) }));
             }
@@ -3831,7 +3841,27 @@
           children: copied === id2 ? "Copied. Paste it into Proton Pass" : "Copy"
         }
       ),
-      why[id2] && /* @__PURE__ */ u3("span", { class: "signinwhy muted", role: "status", children: why[id2] })
+      why[id2] && /* @__PURE__ */ u3("span", { class: "signinwhy muted", role: "status", children: why[id2] }),
+      r3.keep && (r3.kept || done.has(id2) || ticked[id2] !== void 0) && /* @__PURE__ */ u3("label", { class: "signinkept muted", children: [
+        /* @__PURE__ */ u3(
+          "input",
+          {
+            type: "checkbox",
+            checked: ticked[id2] ?? !!r3.kept,
+            onChange: async (e3) => {
+              const on2 = e3.currentTarget.checked;
+              setTicked((t3) => ({ ...t3, [id2]: on2 }));
+              try {
+                await r3.keep(on2);
+              } catch (err) {
+                setTicked((t3) => ({ ...t3, [id2]: !on2 }));
+                setWhy((w3) => ({ ...w3, [id2]: errorWords(err) }));
+              }
+            }
+          }
+        ),
+        "Saved in Proton Pass"
+      ] })
     ] }, id2);
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3("div", { class: "signins", children: [
@@ -7606,9 +7636,21 @@
       ...(catalog?.categories || []).map((c4) => ({ label: c4.label, apps: st.apps.filter((a3) => rest(a3) && catOf[a3.id] === c4.id) })),
       { label: "Other", apps: st.apps.filter((a3) => rest(a3) && !(catalog?.categories || []).some((c4) => c4.id === catOf[a3.id])) }
     ].filter((g2) => g2.apps.length);
-    appList = { groups: groups4, pending, catalog, weekUp, outages, seen, batteryPaused, held, busy: appsBusy, companion: document.documentElement.classList.contains("companion"), os: osName, on: appListActions, memory };
+    appList = { groups: groups4, pending, catalog, weekUp, outages, seen, batteryPaused, held, busy: appsBusy, companion: document.documentElement.classList.contains("companion"), os: osName, on: appListActions, memory, unkept };
     mountAppList($("statusRows"), appList);
+    if (!unkept && !appList.companion) refreshUnkept();
   }
+  var unkept;
+  async function refreshUnkept() {
+    try {
+      unkept = await go().Unkept() || {};
+    } catch {
+      unkept = {};
+    }
+    if (appList) mountAppList($("statusRows"), appList = { ...appList, unkept });
+    unkeptChanged.forEach((f4) => f4());
+  }
+  var unkeptChanged = /* @__PURE__ */ new Set();
   async function answerPages(st) {
     let why;
     try {
@@ -8126,6 +8168,16 @@
         return showError(e3);
       }
     }
+    let keptNow = {};
+    try {
+      keptNow = await go().Kept() || {};
+    } catch {
+    }
+    const keep3 = (name) => async (on2) => {
+      await go().MarkKept(name, on2);
+      keptNow[name] = on2;
+      refreshUnkept();
+    };
     const byKey2 = Object.fromEntries(list.map((s3) => [s3.key, s3]));
     const plain2 = async (text2) => {
       if (window.runtime.ClipboardSetText) await window.runtime.ClipboardSetText(text2);
@@ -8138,13 +8190,14 @@
       return {
         label: shared ? settingLabel(k3) : label(k3),
         shown: s3.secret ? s3.set ? "••••••••" : "not set" : s3.value || "not set",
-        copy: s3.set ? s3.secret ? () => go().CopySetting(k3) : () => plain2(s3.value) : void 0
+        copy: s3.set ? s3.secret ? () => go().CopySetting(k3) : () => plain2(s3.value) : void 0,
+        ...s3.secret && s3.set ? { kept: !!keptNow[k3], keep: keep3(k3) } : {}
       };
     };
     const groups4 = [];
     if (entry?.login?.length) groups4.push({ title: "Sign in", rows: entry.login.map(row) });
     const paste = (entry?.keys || []).map(row);
-    if (entry?.keyFile) paste.unshift({ label: "API key", shown: "••••••••", copy: () => go().CopyAppKey(a3.id) });
+    if (entry?.keyFile) paste.unshift({ label: "API key", shown: "••••••••", copy: () => go().CopyAppKey(a3.id), kept: !!keptNow["app:" + a3.id], keep: keep3("app:" + a3.id) });
     if (paste.length) groups4.push({ title: "Paste into another app", rows: paste });
     if (entry?.recovery?.length) groups4.push({ title: "Keep safe", note: "Without this the backups can’t be opened.", rows: entry.recovery.map(row) });
     const url = a3.address ? "https://" + a3.address : a3.url || "";
@@ -8774,7 +8827,7 @@
           "Open on a phone"
         ] }),
         a3.state === "running" && url && /* @__PURE__ */ u3("button", { class: "primary small", onClick: () => on2.open(url), children: "Open" }),
-        !p3.companion && /* @__PURE__ */ u3("button", { class: "iconbtn gear", title: "Sign-in details", "aria-label": `${a3.name}: sign-in details`, onClick: on2.signIn, children: /* @__PURE__ */ u3(Icon, { name: "gear" }) })
+        !p3.companion && /* @__PURE__ */ u3(GearButton, { name: a3.name, unsaved: p3.unkept || 0, open: on2.signIn })
       ] })
     ] });
   }
@@ -9160,6 +9213,7 @@
     draw3();
   }
   var never2 = (t3) => !t3 || t3.startsWith("0001-");
+  unkeptChanged.add(() => draw3());
   function draw3() {
     if (!id) return;
     const a3 = statusById[id];
@@ -9175,6 +9229,7 @@
     mountAppPage($("appPage"), {
       a: a3,
       entry,
+      unkept: unkept?.[id] || 0,
       state: stateOf(a3, new Set(statusData.value?.batteryPaused || []), statusData.value?.stopped || {}),
       pending: pendingOf(id),
       busy: appsBusyNow(),

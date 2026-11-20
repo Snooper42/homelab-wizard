@@ -6,7 +6,7 @@ import { inTurn } from '../job/queue';
 import { type Day, mountAppPage } from '../page/AppPage';
 import { stateOf } from '../status/AppList';
 import { stoppedNext } from '../status/stopFor';
-import { appActions, appsBusyNow, cliFlow, pageOpener, pendingOf, statusById, statusData, watchRows } from './status';
+import { appActions, appsBusyNow, cliFlow, pageOpener, pendingOf, statusById, statusData, unkept, unkeptChanged, watchRows } from './status';
 import { backupsData } from './backups';
 import { catalog } from './choose';
 import { usedByPeople } from './settings';
@@ -111,6 +111,8 @@ async function readRest() {
   draw();
 }
 const never = (t?: string) => !t || t.startsWith('0001-');
+// The dot on its ⚙ follows a Saved tick in its sign-in details.
+unkeptChanged.add(() => draw());
 
 function draw() {
   if (!id) return;
@@ -123,7 +125,7 @@ function draw() {
   const entry = catalog?.apps.find((c) => c.id === id);
   const companion = document.documentElement.classList.contains('companion');
   mountAppPage($('appPage'), {
-    a, entry, state: stateOf(a, new Set(statusData.value?.batteryPaused || []), statusData.value?.stopped || {}), pending: pendingOf(id), busy: appsBusyNow(),
+    a, entry, unkept: unkept?.[id] || 0, state: stateOf(a, new Set(statusData.value?.batteryPaused || []), statusData.value?.stopped || {}), pending: pendingOf(id), busy: appsBusyNow(),
     next: stoppedNext(a, statusData.value?.stopped?.[id], (statusData.value?.batteryPaused || []).includes(id)),
     usage: a.state === 'running' ? usage : undefined, disk, days: week(), watching: !!watch && !never(watch.lastRun), outages: watch ? (watch.outages ? watch.outages[id] || [] : undefined) : undefined, switching: switching[id] || {},
     backup: backupsData.value || null,
