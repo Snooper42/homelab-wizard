@@ -3257,8 +3257,16 @@ const smokes = [
     await page.click('#more > summary');
     for (const p of ['Media automation', 'Household']) await page.click(`#presets .chip >> text=${p}`, { timeout: 5000 });
     await page.waitForSelector('#plan .planLead', { timeout: 5000 });
-    await page.locator('#installBtn').scrollIntoViewIfNeeded();
-    const box = await page.locator('#installBtn').boundingBox();
+    // The plan can still be growing after its first line shows (a slow runner): scroll to Install again until it
+    // stops moving, then it must be within the window.
+    let box = null, last = '';
+    for (let i = 0; i < 20; i++) {
+      await page.locator('#installBtn').scrollIntoViewIfNeeded();
+      box = await page.locator('#installBtn').boundingBox();
+      if (JSON.stringify(box) === last) break;
+      last = JSON.stringify(box);
+      await page.waitForTimeout(150);
+    }
     if (!box || box.y + box.height > 720) throw new Error(`Install is out of reach: ${JSON.stringify(box)}`);
   } },
   { name: 'After a new app opens, its homelab files follow by themselves', screen: 'status', mock: { update: { state: 'ready', files: 1, app: false, finish: true, version: '0.15.0', notes: ['A change'] } }, run: async (page) => {
