@@ -29,10 +29,10 @@ A ProtonVPN WireGuard tunnel. qBittorrent shares Gluetun's network, so its traff
 1. ProtonVPN account › Downloads › WireGuard configuration: create a configuration with NAT-PMP (port forwarding) on.
 2. Copy only the `PrivateKey` value into `PROTONVPN_WIREGUARD_PRIVATE_KEY` in `.env`. Optionally set `PROTONVPN_SERVER_COUNTRIES`.
 3. `./homelab install qbittorrent` (starts Gluetun first and waits until it is healthy).
-4. Check the exit address is ProtonVPN's, not your home's:
+4. Nothing to type: Setup's **Downloads are private** turns green once qBittorrent lives in Gluetun's network, the VPN is connected, and qBittorrent is tied to the tunnel (qBittorrent's page shows the same). To see the exit address yourself:
 
    ```bash
-   ./homelab compose gluetun exec gluetun wget -qO- https://ipinfo.io/ip
+   cat data/appdata/gluetun/ip
    ```
 
 5. Nothing to copy: Gluetun gives qBittorrent the forwarded port each time the VPN connects, and **Connect apps** checks it (*qBittorrent takes the VPN's forwarded port by itself*).
@@ -45,6 +45,7 @@ A ProtonVPN WireGuard tunnel. qBittorrent shares Gluetun's network, so its traff
 - DNS queries are answered by its own resolver, which forwards them over an encrypted connection, so they do not leak to your home router.
 - With `VPN_PORT_FORWARDING: "on"` it asks ProtonVPN for a forwarded port (NAT-PMP) and keeps renewing it, so peers can connect in to qBittorrent.
 - Each time it has a port, `VPN_PORT_FORWARDING_UP_COMMAND` posts it to qBittorrent's Web API on the loopback the two share (`127.0.0.1:8082`, `listen_port` and the network interface `tun0`), trying for up to five minutes while qBittorrent starts. qBittorrent lets that one address in without its login (*Bypass authentication for clients on localhost*, `bypass_local_auth`), which only Gluetun and qBittorrent can use: everything else, the proxy and this computer included, reaches qBittorrent from another address and still signs in. When the VPN drops, `VPN_PORT_FORWARDING_DOWN_COMMAND` puts qBittorrent on no port and the loopback until it's back. The port is also written to `data/appdata/gluetun/forwarded_port` (`VPN_PORT_FORWARDING_STATUS_FILE`), where **Connect apps** reads it and sets it if qBittorrent missed it.
+- Each time it connects it asks, through the tunnel, which address it reached the internet from, and writes it to `data/appdata/gluetun/ip` (`PUBLICIP_FILE`); when it stops it empties the file. **Downloads are private** reads that file, so the homelab asks no outside service itself.
 - It checks the tunnel all the time and reconnects when it fails. Docker's health check reads that state; qBittorrent waits for it (`depends_on: service_healthy`).
 - [qBittorrent](<qBittorrent.md>) runs with `network_mode: service:gluetun`: it has no network of its own and uses Gluetun's. That is why qBittorrent's Web UI port (`QBITTORRENT_PORT`, default `8082`) is published on Gluetun, and why other containers reach qBittorrent at `gluetun:8082`.
 
@@ -54,6 +55,7 @@ A ProtonVPN WireGuard tunnel. qBittorrent shares Gluetun's network, so its traff
 |---|---|
 | ProtonVPN server list | `data/appdata/gluetun/servers.json` (`/gluetun/servers.json`) |
 | Forwarded port | `data/appdata/gluetun/forwarded_port` (rewritten on each connect) |
+| Exit address | `data/appdata/gluetun/ip` (written on each connect, emptied when it stops) |
 | WireGuard private key | `.env` → `PROTONVPN_WIREGUARD_PRIVATE_KEY` (passed in as `WIREGUARD_PRIVATE_KEY`) |
 | Server countries | `.env` → `PROTONVPN_SERVER_COUNTRIES` (passed in as `SERVER_COUNTRIES`) |
 | Logs | `./homelab logs gluetun` (no log file) |
@@ -62,7 +64,7 @@ A ProtonVPN WireGuard tunnel. qBittorrent shares Gluetun's network, so its traff
 
 There is nothing to click: Gluetun has no web UI. The things you do with it:
 
-- Check the exit address after a change (Setup step 4).
+- After a change, look at Setup's **Downloads are private** (Setup step 4).
 - Change the country: set `PROTONVPN_SERVER_COUNTRIES` (comma-separated, for example `Netherlands,Switzerland`), then `./homelab update gluetun qbittorrent` to recreate both.
 
 ## Connects to
@@ -87,7 +89,7 @@ Follow the log, find the forwarded port, check the exit address, and restart bot
 ./homelab logs gluetun -f
 cat data/appdata/gluetun/forwarded_port
 ./homelab logs gluetun | grep -i "port forward"
-./homelab compose gluetun exec gluetun wget -qO- https://ipinfo.io/ip
+cat data/appdata/gluetun/ip
 ./homelab compose gluetun ps
 ./homelab compose gluetun restart gluetun qbittorrent
 ```

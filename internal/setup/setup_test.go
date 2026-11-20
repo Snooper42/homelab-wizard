@@ -617,3 +617,41 @@ func TestPasswordManagerStep(t *testing.T) {
 		t.Fatalf("a shared password: %+v", s)
 	}
 }
+
+// TestDownloadsPrivateStep: with qBittorrent, Setup checks the downloads
+// leave only through the VPN (arr-loop item 2), says why not in words, and
+// offers Connect apps when it puts it right; without it, no step.
+func TestDownloadsPrivateStep(t *testing.T) {
+	find := func(in Inputs) *Step {
+		for _, s := range Steps(context.Background(), in) {
+			if s.ID == "downloads-private" {
+				return &s
+			}
+		}
+		return nil
+	}
+	private, said, wire := false, "The VPN is connected, but qBittorrent isn't tied to the VPN's tunnel yet.", true
+	in := Inputs{Env: map[string]string{}, Host: host.For("darwin"), Probe: fakeProbe{},
+		Status:  &api.Status{Apps: []api.AppStatus{{ID: "sonarr", State: "running"}}},
+		Private: func() (bool, string, bool) { return private, said, wire }}
+	if find(in) != nil {
+		t.Fatal("no qBittorrent: no step")
+	}
+	in.Status.Apps = append(in.Status.Apps, api.AppStatus{ID: "qbittorrent", State: "running"})
+	s := find(in)
+	if s == nil || s.State != "todo" || s.Title != "Downloads are private" || s.Detail != said || s.RunLabel != "Connect apps" || len(s.Run) != 1 || strings.Join(s.Run[0], " ") != "wire --apply" {
+		t.Fatalf("not tied: %+v", s)
+	}
+	wire, said = false, "The VPN hasn't connected yet."
+	if s := find(in); s.State != "todo" || s.Run != nil || s.Detail != said {
+		t.Fatalf("not connected: %+v", s)
+	}
+	private, said = true, "qBittorrent's downloads leave only through ProtonVPN."
+	if s := find(in); s.State != "done" || s.Detail != "" {
+		t.Fatalf("private: %+v", s)
+	}
+	in.Private = nil
+	if find(in) != nil {
+		t.Fatal("no check: no step")
+	}
+}

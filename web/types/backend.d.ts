@@ -1331,6 +1331,11 @@ declare namespace wiring {
     state: string;
     detail?: string;
   }
+  interface Privacy {
+    private: boolean;
+    said: string;
+    fix?: string;
+  }
 }
 
 /** The Go methods the frontend calls: window.go.main.App. */
@@ -1352,6 +1357,7 @@ interface Backend {
     CopySetting(arg1: string): Promise<void>;
     CrashSeen(): Promise<void>;
     CreateHomelab(): Promise<app.HostInfo>;
+    DownloadsPrivate(): Promise<wiring.Privacy>;
     DuplicatiJobs(): Promise<duplicati.Job[]>;
     EmailReport(): Promise<void>;
     ExplainLogs(arg1: string): Promise<string>;

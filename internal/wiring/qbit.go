@@ -67,7 +67,10 @@ func (w *Wirer) qbitVPNPort(ctx context.Context) (string, string, error) {
 	want := map[string]any{"bypass_local_auth": true}
 	port := w.forwardedPort()
 	if port > 0 {
+		// Connected: the port, and the tunnel as qBittorrent's only network,
+		// as Gluetun's up command sets them.
 		want["listen_port"] = port
+		want["current_network_interface"] = vpnInterface
 	}
 	wrong, err := w.qbitSet(ctx, want)
 	if err != nil {
@@ -75,7 +78,10 @@ func (w *Wirer) qbitVPNPort(ctx context.Context) (string, string, error) {
 	}
 	var said []string
 	for _, k := range wrong {
-		if k == "listen_port" {
+		switch k {
+		case "current_network_interface":
+			said = append(said, "tied to the VPN's tunnel, its only network")
+		case "listen_port":
 			said = append(said, fmt.Sprintf("listening port set to %d, the one the VPN forwards", port))
 		}
 	}

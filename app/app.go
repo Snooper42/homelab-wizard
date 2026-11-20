@@ -857,6 +857,14 @@ func (a *App) Protection() (crowdsec.Protection, error) {
 	return core.Protection(ctx, a.root)
 }
 
+// DownloadsPrivate is whether qBittorrent's downloads leave only through
+// the VPN, for qBittorrent's page (wiring.Privacy).
+func (a *App) DownloadsPrivate() (wiring.Privacy, error) {
+	ctx, cancel := a.timed()
+	defer cancel()
+	return core.DownloadsPrivate(ctx, a.root)
+}
+
 // RevealReport shows the newest diagnostics report (scripts/logs/report-*)
 // in Finder, Explorer, or the file manager, so it can be shared.
 func (a *App) RevealReport() error {

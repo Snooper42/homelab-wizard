@@ -24,6 +24,10 @@ let explainer = '';
 // The proxy's and CrowdSec's pages say what CrowdSec stopped today.
 const guards = new Set(['nginx-proxy-manager', 'crowdsec']);
 let stopped: crowdsec.Protection | null | 'reading' = 'reading';
+// qBittorrent's page says whether its downloads leave only through the VPN
+// (on this computer: the phone has no such call).
+let privacy: wiring.Privacy | null | 'reading' = 'reading';
+const privateApp = 'qbittorrent';
 // Its settings switched since the click, by app, until Status says so.
 const switching: Record<string, Record<string, boolean>> = {};
 async function setSetting(appId: string, setting: string, on: boolean) {
@@ -46,7 +50,7 @@ export const openedApp = () => id;
 
 /** Opens an app's page, from its row or the app's --screen app:<id>. */
 export function openApp(appId: string) {
-  if (appId !== id) { usage = undefined; disk = undefined; household = null; stopped = 'reading'; }
+  if (appId !== id) { usage = undefined; disk = undefined; household = null; stopped = 'reading'; privacy = 'reading'; }
   id = appId;
   navigate('app');
   const h1 = $1('#app h1');
@@ -101,9 +105,12 @@ async function readIcon(of: string) {
 
 async function readRest() {
   const at = id;
-  const [w, st, ppl, ex, pr] = await Promise.allSettled([go().Watchdog(), go().Storage(), go().People(), go().Explainer(), guards.has(at) ? go().Protection() : Promise.resolve(null)]);
+  const companion = document.documentElement.classList.contains('companion');
+  const [w, st, ppl, ex, pr, pv] = await Promise.allSettled([go().Watchdog(), go().Storage(), go().People(), go().Explainer(), guards.has(at) ? go().Protection() : Promise.resolve(null),
+    at === privateApp && !companion ? go().DownloadsPrivate() : Promise.resolve(null)]);
   if (at !== id) return;
   stopped = pr.status === 'fulfilled' ? pr.value : null;
+  privacy = pv.status === 'fulfilled' ? pv.value : null;
   watch = w.status === 'fulfilled' ? w.value : null;
   disk = st.status === 'fulfilled' ? st.value?.apps?.find((x) => x.app === id)?.bytes : undefined;
   household = ppl.status === 'fulfilled' ? (ppl.value || []).filter((p) => never(p.removed) && (!p.apps?.length || p.apps.includes(id))) : null;
@@ -135,6 +142,7 @@ function draw() {
     dozzle: !companion && statusById.dozzle?.state === 'running' ? statusById.dozzle.url || '' : '',
     machine: thisMachine.replace(/^This/, 'this'), companion,
     stopped: guards.has(id) ? stopped : undefined,
+    privacy: id === privateApp && !companion ? privacy : undefined,
     on: {
       back: () => navigate('status'),
       act: (action) => appActions.act(a, action),
@@ -158,6 +166,11 @@ function draw() {
       openBackups: () => navigate('backups'),
       setting: (setting, on) => setSetting(a.id, setting, on),
       remove: () => cliFlow(`Remove ${a.name}: a backup of its data first, then its container goes`, 'remove', a.id, 'Back up and remove'),
+      // Connect apps ties qBittorrent to the VPN's tunnel; then the page asks again.
+      connect: async () => {
+        try { await inTurn('Connect apps', () => go().Wire()); } catch (e) { showError(e); }
+        readRest();
+      },
       openPeople: () => { navigate('settings'); $('peopleCard')?.scrollIntoView({ block: 'start' }); },
     },
   });

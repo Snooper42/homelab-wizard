@@ -135,6 +135,10 @@ type Inputs struct {
 	// password manager (core.Secrets), Kept those ticked Saved (kept.Load).
 	Secrets []kept.Secret
 	Kept    map[string]bool
+	// Private reports whether qBittorrent's downloads leave only through the
+	// VPN (wiring.Privacy), in words, and whether Connect apps puts it
+	// right; nil skips the step, as without qBittorrent.
+	Private func() (private bool, said string, wire bool)
 }
 
 // kopiaTested says how Kopia's restore test went, for its Setup step: a copy
@@ -529,6 +533,19 @@ func Steps(ctx context.Context, in Inputs) []Step {
 		}
 		kp.Later = later
 		add(kp, kpOK)
+	}
+	// Media automation (arr-loop item 2): checked, never typed by hand.
+	if in.Private != nil && st != nil && has(st, "qbittorrent") {
+		private, said, wire := in.Private()
+		dp := Step{ID: "downloads-private", Title: "Downloads are private", Why: "qBittorrent's downloads go out only through ProtonVPN, so your home connection never carries them.",
+			Detail: said}
+		if private {
+			dp.Detail = ""
+		}
+		if wire {
+			dp.Run, dp.RunLabel = [][]string{{"wire", "--apply"}}, "Connect apps"
+		}
+		add(dp, private, "started")
 	}
 	manual(Step{ID: "alerts", Title: "Alerts on the phone", Why: "Your phone hears about it when an app, a backup, or the connection from outside fails, instead of you finding out later.",
 		Detail: "Gives the alert sources their token (Duplicati included) and makes the phone's login. Then, if you use Uptime Kuma, add it there; in the phone's ntfy app sign in as phone with Settings › ntfy phone password › Copy and subscribe to the topics (docs/Monitoring.md).", Run: [][]string{{"notify", "setup", "--apply"}}, RunLabel: "Set up the alert token"}, "started")

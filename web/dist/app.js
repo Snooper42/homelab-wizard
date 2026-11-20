@@ -8981,6 +8981,23 @@
       ] }) : /* @__PURE__ */ u3(Empty, { children: quiet2 }))
     ] });
   }
+  function Private({ privacy: privacy2, connect, busy: busy2 }) {
+    const reading2 = privacy2 === "reading", v3 = reading2 ? null : privacy2;
+    return /* @__PURE__ */ u3(Card, { kind: "alerts pagecard", id: "appPrivate", children: [
+      /* @__PURE__ */ u3(CardHead, { title: "Downloads are private", children: null }),
+      reading2 && /* @__PURE__ */ u3(Empty, { children: "Asking qBittorrent and the VPN…" }),
+      !v3 && !reading2 && /* @__PURE__ */ u3(Empty, { children: "Can't check right now." }),
+      v3 && /* @__PURE__ */ u3(Rows, { children: /* @__PURE__ */ u3(
+        Row,
+        {
+          dot: v3.private ? "ok" : "bad",
+          title: v3.private ? "Yes: only through the VPN" : "Not yet",
+          sub: v3.said,
+          end: v3.fix === "wire" && /* @__PURE__ */ u3("button", { class: "small change", disabled: busy2, onClick: connect, children: "Connect apps" })
+        }
+      ) })
+    ] });
+  }
   function People2({ p: p3 }) {
     const { entry, people, on: on2 } = p3;
     if (!people && !entry?.login?.length) return null;
@@ -9093,6 +9110,7 @@
         /* @__PURE__ */ u3("div", { class: "pagecol", children: [
           p3.entry?.kind !== "native" && p3.a.state !== "missing" && p3.a.state !== "elsewhere" && /* @__PURE__ */ u3(Log, { explainer: p3.explainer, machine: p3.machine, dozzle: p3.dozzle, on: p3.on }),
           p3.stopped !== void 0 && /* @__PURE__ */ u3(Stopped, { stopped: p3.stopped }),
+          p3.privacy !== void 0 && /* @__PURE__ */ u3(Private, { privacy: p3.privacy, connect: p3.on.connect, busy: p3.busy }),
           /* @__PURE__ */ u3(Updates, { p: p3 }),
           /* @__PURE__ */ u3(Done, { on: p3.on })
         ] }),
@@ -9122,6 +9140,8 @@
   var explainer = "";
   var guards = /* @__PURE__ */ new Set(["nginx-proxy-manager", "crowdsec"]);
   var stopped = "reading";
+  var privacy = "reading";
+  var privateApp = "qbittorrent";
   var switching = {};
   async function setSetting(appId, setting, on2) {
     switching[appId] = { ...switching[appId], [setting]: on2 };
@@ -9146,6 +9166,7 @@
       disk = void 0;
       household = null;
       stopped = "reading";
+      privacy = "reading";
     }
     id = appId;
     navigate("app");
@@ -9203,9 +9224,18 @@
   }
   async function readRest() {
     const at2 = id;
-    const [w3, st, ppl, ex, pr] = await Promise.allSettled([go().Watchdog(), go().Storage(), go().People(), go().Explainer(), guards.has(at2) ? go().Protection() : Promise.resolve(null)]);
+    const companion2 = document.documentElement.classList.contains("companion");
+    const [w3, st, ppl, ex, pr, pv] = await Promise.allSettled([
+      go().Watchdog(),
+      go().Storage(),
+      go().People(),
+      go().Explainer(),
+      guards.has(at2) ? go().Protection() : Promise.resolve(null),
+      at2 === privateApp && !companion2 ? go().DownloadsPrivate() : Promise.resolve(null)
+    ]);
     if (at2 !== id) return;
     stopped = pr.status === "fulfilled" ? pr.value : null;
+    privacy = pv.status === "fulfilled" ? pv.value : null;
     watch = w3.status === "fulfilled" ? w3.value : null;
     disk = st.status === "fulfilled" ? st.value?.apps?.find((x3) => x3.app === id)?.bytes : void 0;
     household = ppl.status === "fulfilled" ? (ppl.value || []).filter((p3) => never2(p3.removed) && (!p3.apps?.length || p3.apps.includes(id))) : null;
@@ -9249,6 +9279,7 @@
       machine: thisMachine.replace(/^This/, "this"),
       companion: companion2,
       stopped: guards.has(id) ? stopped : void 0,
+      privacy: id === privateApp && !companion2 ? privacy : void 0,
       on: {
         back: () => navigate("status"),
         act: (action) => appActions.act(a3, action),
@@ -9276,6 +9307,15 @@
         openBackups: () => navigate("backups"),
         setting: (setting, on2) => setSetting(a3.id, setting, on2),
         remove: () => cliFlow(`Remove ${a3.name}: a backup of its data first, then its container goes`, "remove", a3.id, "Back up and remove"),
+        // Connect apps ties qBittorrent to the VPN's tunnel; then the page asks again.
+        connect: async () => {
+          try {
+            await inTurn("Connect apps", () => go().Wire());
+          } catch (e3) {
+            showError(e3);
+          }
+          readRest();
+        },
         openPeople: () => {
           navigate("settings");
           $("peopleCard")?.scrollIntoView({ block: "start" });

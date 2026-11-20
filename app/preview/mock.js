@@ -156,6 +156,8 @@ try { if ((window.__MOCK || {}).tidyTab) localStorage.setItem('homelab.tidyTab',
     DuplicatiJobs: () => (M.duplicatiError ? Promise.reject(new Error(M.duplicatiError)) : later(M.duplicatiJobs || [])),
     Alerts: () => later(M.alerts || []),
     AlertLog: () => later(M.alertLog || []),
+    // privacy: qBittorrent's page's Downloads are private (wiring.Privacy); none: it can't be read.
+    DownloadsPrivate: () => (M.privacy ? later(M.privacy) : Promise.reject(new Error('qBittorrent is not installed'))),
     Protection: () => (M.protection ? later(M.protection) : Promise.reject(new Error('CrowdSec and the proxy are not both running'))),
     TrayAtLogin: () => later(!!M.trayAtLogin),
     SetTrayAtLogin: (on) => { M.trayAtLogin = on; return later(null); },
