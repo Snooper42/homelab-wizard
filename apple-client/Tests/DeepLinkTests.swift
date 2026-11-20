@@ -151,5 +151,8 @@ struct DeepLinkTests {
         // The Calendar (Nov 15) is the ninth, ⌥⌘9, and a link opens it.
         #expect(order.last == .calendar && DeepLink.FinancePage.calendar.title == "Calendar")
         #expect(DeepLink.parse(URL(string: "homelab://finances/calendar")!) == .finances(page: .calendar))
+        // Paychecks (Nov 20) is a page a link opens, beyond the menu's nine.
+        #expect(DeepLink.parse(URL(string: "homelab://finances/paychecks")!) == .finances(page: .paychecks))
+        #expect(DeepLink.FinancePage.paychecks.title == "Paychecks" && !order.contains(.paychecks))
     }
 }
