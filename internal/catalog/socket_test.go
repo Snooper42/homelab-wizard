@@ -1,6 +1,7 @@
 package catalog
 
 import (
+	"fmt"
 	"os"
 	"slices"
 	"strings"
@@ -161,6 +162,53 @@ func TestGluetunsControlServerIsItsOwn(t *testing.T) {
 	addr := f.Services["gluetun"].Environment["HTTP_CONTROL_SERVER_ADDRESS"]
 	if !strings.HasPrefix(addr, "127.0.0.1:") {
 		t.Errorf("Gluetun's control server listens on %q: every app on the shared network can stop the VPN or read its address; set HTTP_CONTROL_SERVER_ADDRESS to 127.0.0.1:8000", addr)
+	}
+}
+
+// Gluetun hands qBittorrent the VPN's forwarded port each time it connects
+// (arr-loop item 2): on the loopback the two share, at qBittorrent's own Web
+// UI port, and the port is also written where Connect apps can read it.
+func TestGluetunGivesQbittorrentItsPort(t *testing.T) {
+	g, ok := load(t).Get("gluetun")
+	if !ok {
+		t.Fatal("no gluetun in the catalog")
+	}
+	raw, err := os.ReadFile(g.Source)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var f struct {
+		Services map[string]struct {
+			Environment map[string]string `yaml:"environment"`
+			Volumes     []any             `yaml:"volumes"`
+		} `yaml:"services"`
+	}
+	if err := yaml.Unmarshal(raw, &f); err != nil {
+		t.Fatal(err)
+	}
+	env := f.Services["gluetun"].Environment
+	webui := f.Services["qbittorrent"].Environment["WEBUI_PORT"]
+	target := "http://127.0.0.1:" + webui + "/api/v2/app/setPreferences"
+	up, down := env["VPN_PORT_FORWARDING_UP_COMMAND"], env["VPN_PORT_FORWARDING_DOWN_COMMAND"]
+	if webui == "" || !strings.Contains(up, target) || !strings.Contains(up, `\"listen_port\":{{PORT}}`) {
+		t.Errorf("Gluetun's up command doesn't give qBittorrent the port at %s: %q", target, up)
+	}
+	if !strings.Contains(down, target) {
+		t.Errorf("Gluetun's down command doesn't reach qBittorrent at %s: %q", target, down)
+	}
+	// A lone $ would be read by compose as one of its own variables.
+	if strings.Count(up, "$") != 2*strings.Count(up, "$$") {
+		t.Errorf("the up command has a $ compose would expand: %q", up)
+	}
+	file := env["VPN_PORT_FORWARDING_STATUS_FILE"]
+	mounted := false
+	for _, v := range f.Services["gluetun"].Volumes {
+		if parts := strings.Split(fmt.Sprint(v), ":"); len(parts) >= 2 && parts[1] == "/gluetun" && strings.HasPrefix(file, "/gluetun/") {
+			mounted = true
+		}
+	}
+	if !mounted {
+		t.Errorf("Gluetun writes its port to %q, outside the /gluetun folder Connect apps reads", file)
 	}
 }
 

@@ -47,7 +47,7 @@ func TestFirstConfigSignsInWithThePassword(t *testing.T) {
 		t.Fatal("Verify disagrees")
 	}
 	// The image's own defaults stay (it copies them only when there's no file).
-	for _, want := range []string{`WebUI\Username=admin`, "[LegalNotice]\nAccepted=true", `Downloads\SavePath=/downloads/`, `Downloads\TempPath=/downloads/incomplete/`, `WebUI\ServerDomains=*`} {
+	for _, want := range []string{`WebUI\Username=admin`, "[LegalNotice]\nAccepted=true", `Downloads\SavePath=/downloads/`, `Downloads\TempPath=/downloads/incomplete/`, `WebUI\ServerDomains=*`, `WebUI\LocalHostAuth=false`} {
 		if !strings.Contains(conf, want) {
 			t.Errorf("missing %q in:\n%s", want, conf)
 		}
