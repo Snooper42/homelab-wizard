@@ -374,6 +374,9 @@ func TestSwapWindowsScriptUnpacksThePortableBuild(t *testing.T) {
 		return read(filepath.Join(app, "homelab-wizard.exe")) == "new" && read(filepath.Join(app, "homelab.exe")) == "new cli" && os.IsNotExist(err)
 	})
 	waitFor(t, "the log's done", func() bool { return strings.Contains(read(LogPath()), " done") })
+	// The script removes the staged file after it says done: wait for that
+	// before staging the next one under the same name, or it takes the new one.
+	waitFor(t, "the staged build cleared", func() bool { _, err := os.Stat(staged); return os.IsNotExist(err) })
 	if why := Failure(); why != "" {
 		t.Errorf("the log says %q", why)
 	}
@@ -403,6 +406,7 @@ func TestSwapWindowsScriptUnpacksThePortableBuild(t *testing.T) {
 	if why := Failure(); why != "" {
 		t.Errorf("the log says %q", why)
 	}
+	waitFor(t, "the staged build cleared", func() bool { _, err := os.Stat(staged); return os.IsNotExist(err) })
 
 	// A folder inside the build is made; a file that would land outside the
 	// app's folder stops the unpacking, and nothing is written there.
