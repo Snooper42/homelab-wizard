@@ -83,7 +83,7 @@
      "health": "healthy",
      "url": "http://localhost:8181",
      "address": "npm.example.com",
-     "since": "@ago:345604"
+     "since": "@ago:345601"
     },
     {
      "id": "adguard-home",
@@ -92,7 +92,7 @@
      "health": "healthy",
      "url": "http://localhost:3003",
      "address": "ads.example.com",
-     "since": "@ago:345604"
+     "since": "@ago:345601"
     },
     {
      "id": "speedtest-tracker",
@@ -101,22 +101,22 @@
      "health": "healthy",
      "url": "http://localhost:8765",
      "address": "speedtest.example.com",
-     "since": "@ago:27364",
-     "updatedAt": "@ago:27364"
+     "since": "@ago:27361",
+     "updatedAt": "@ago:27361"
     },
     {
      "id": "cloudflared",
      "name": "Cloudflare Tunnel",
      "state": "running",
      "health": "healthy",
-     "since": "@ago:345604"
+     "since": "@ago:345601"
     },
     {
      "id": "crowdsec",
      "name": "CrowdSec",
      "state": "running",
      "health": "healthy",
-     "since": "@ago:345604"
+     "since": "@ago:345601"
     },
     {
      "id": "vaultwarden",
@@ -125,7 +125,7 @@
      "health": "healthy",
      "url": "http://localhost:8087",
      "address": "passwords.example.com",
-     "since": "@ago:345604"
+     "since": "@ago:345601"
     },
     {
      "id": "uptime-kuma",
@@ -134,7 +134,7 @@
      "health": "healthy",
      "url": "http://localhost:3001",
      "address": "uptime.example.com",
-     "since": "@ago:345604"
+     "since": "@ago:345601"
     },
     {
      "id": "ntfy",
@@ -143,7 +143,7 @@
      "health": "healthy",
      "url": "http://localhost:9293",
      "address": "ntfy.example.com",
-     "since": "@ago:345604"
+     "since": "@ago:345601"
     },
     {
      "id": "duplicati",
@@ -152,7 +152,7 @@
      "health": "healthy",
      "url": "http://localhost:8200",
      "address": "backups.example.com",
-     "since": "@ago:345604"
+     "since": "@ago:345601"
     },
     {
      "id": "dozzle",
@@ -160,7 +160,7 @@
      "state": "running",
      "health": "healthy",
      "url": "http://localhost:9998",
-     "since": "@ago:345604",
+     "since": "@ago:345601",
      "held": true
     },
     {
@@ -178,7 +178,7 @@
      "health": "healthy",
      "url": "http://localhost:8013",
      "address": "photos.example.com",
-     "since": "@ago:345604"
+     "since": "@ago:345601"
     },
     {
      "id": "paperless",
@@ -187,7 +187,7 @@
      "health": "healthy",
      "url": "http://localhost:8010",
      "address": "docs.example.com",
-     "since": "@ago:345604",
+     "since": "@ago:345601",
      "reach": "away"
     },
     {
@@ -197,7 +197,7 @@
      "health": "healthy",
      "url": "http://localhost:13480",
      "address": "money.example.com",
-     "since": "@ago:345604"
+     "since": "@ago:345601"
     },
     {
      "id": "navidrome",
@@ -206,7 +206,7 @@
      "health": "healthy",
      "url": "http://localhost:4533",
      "address": "navidrome.example.com",
-     "since": "@ago:345604"
+     "since": "@ago:345601"
     },
     {
      "id": "feishin",
@@ -215,7 +215,7 @@
      "health": "healthy",
      "url": "http://localhost:9180",
      "address": "music.example.com",
-     "since": "@ago:345604"
+     "since": "@ago:345601"
     },
     {
      "id": "audiobookshelf",
@@ -224,7 +224,7 @@
      "health": "healthy",
      "url": "http://localhost:13378",
      "address": "audiobooks.example.com",
-     "since": "@ago:345604",
+     "since": "@ago:345601",
      "restarts": 3
     },
     {
@@ -234,7 +234,7 @@
      "health": "healthy",
      "url": "http://localhost:8083",
      "address": "books.example.com",
-     "since": "@ago:345604"
+     "since": "@ago:345601"
     },
     {
      "id": "komga",
@@ -243,7 +243,7 @@
      "health": "healthy",
      "url": "http://localhost:25600",
      "address": "comics.example.com",
-     "since": "@ago:345604"
+     "since": "@ago:345601"
     },
     {
      "id": "jellyfin",
@@ -268,8 +268,8 @@
      "health": "healthy",
      "url": "http://localhost:3456",
      "address": "todo.example.com",
-     "since": "@ago:27364",
-     "updatedAt": "@ago:27364"
+     "since": "@ago:27361",
+     "updatedAt": "@ago:27361"
     }
    ],
    "missing": 0,
@@ -1416,6 +1416,10 @@
       "radarr": "Gives Radarr its search sites in one place, shared with Sonarr.",
       "sonarr": "Gives Sonarr its search sites in one place, shared with Radarr."
      },
+     "login": [
+      "ARR_USER",
+      "ARR_PASSWORD"
+     ],
      "keyFile": true,
      "public": false
     },
@@ -1425,6 +1429,10 @@
      "category": "media-automation",
      "description": "TV show automation",
      "kind": "optional",
+     "login": [
+      "ARR_USER",
+      "ARR_PASSWORD"
+     ],
      "keyFile": true,
      "public": false,
      "replaces": [
@@ -1437,6 +1445,10 @@
      "category": "media-automation",
      "description": "Movie automation",
      "kind": "optional",
+     "login": [
+      "ARR_USER",
+      "ARR_PASSWORD"
+     ],
      "keyFile": true,
      "public": false,
      "replaces": [
@@ -1449,6 +1461,10 @@
      "category": "media-automation",
      "description": "Music automation",
      "kind": "optional",
+     "login": [
+      "ARR_USER",
+      "ARR_PASSWORD"
+     ],
      "keyFile": true,
      "public": false
     },
@@ -3853,6 +3869,22 @@
      "value": ""
     },
     {
+     "key": "ARR_USER",
+     "section": "App settings and secrets",
+     "help": "The login for Prowlarr, Sonarr, Radarr and Lidarr, made at install. Connect apps (homelab wire) sets it in each app, so none asks you to make one; each app's ⚙ Sign-in details shows it, to copy into your password manager.",
+     "secret": false,
+     "set": true,
+     "value": "admin"
+    },
+    {
+     "key": "ARR_PASSWORD",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": true,
+     "set": true,
+     "value": ""
+    },
+    {
      "key": "PROTONVPN_WIREGUARD_PRIVATE_KEY",
      "section": "App settings and secrets",
      "help": "Needed for qBittorrent: it only downloads through your ProtonVPN, on a paid plan (its free servers don't carry torrents). Make a key at account.protonvpn.com › Downloads › WireGuard configuration, then paste its PrivateKey here.",
@@ -5293,7 +5325,7 @@
       ]
      }
     ],
-    "holdingsRead": "@ago:1807061"
+    "holdingsRead": "@ago:1809502"
    },
    "today": "2026-10-30",
    "checking": "chk",
