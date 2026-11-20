@@ -1131,6 +1131,36 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 			}
 			return nil, nil, companion.Ask(root, companion.Asked{Link: link, From: whoAsked(ctx)})
 		}},
+		// Sign-in details (arr-loop.md 1c): the rows, labels only, for any
+		// of the owner's phones over https; one value, for a phone allowed
+		// to change things (Face ID first, on the phone), kept in history.
+		"SignInDetails": {Private: true, Call: func(ctx context.Context, args []json.RawMessage) (any, []string, error) {
+			var app string
+			if len(args) > 0 && json.Unmarshal(args[0], &app) != nil {
+				return nil, nil, errors.New("SignInDetails takes an app, or none for every app")
+			}
+			rows, err := h.signInRows(ctx, app)
+			return rows, nil, err
+		}},
+		"CopySignIn": {Change: true, Private: true, Call: func(ctx context.Context, args []json.RawMessage) (any, []string, error) {
+			a, err := signInArgs(args, 2)
+			if err != nil {
+				return nil, nil, fmt.Errorf("CopySignIn %w: an app and one of its Sign-in details", err)
+			}
+			v, err := h.copySignIn(ctx, a[0], a[1])
+			if err != nil {
+				return nil, nil, err
+			}
+			return v, nil, nil
+		}},
+		"MarkSignInSaved": {Change: true, Private: true, Call: func(ctx context.Context, args []json.RawMessage) (any, []string, error) {
+			a, err := signInArgs(args, 2)
+			var saved bool
+			if err != nil || len(args) < 3 || json.Unmarshal(args[2], &saved) != nil {
+				return nil, nil, errors.New("MarkSignInSaved takes an app, one of its Sign-in details, and true or false")
+			}
+			return nil, nil, h.markSignIn(ctx, a[0], a[1], saved)
+		}},
 		"SnoozeCheck": {Change: true, Call: func(ctx context.Context, args []json.RawMessage) (any, []string, error) {
 			var check string
 			var hours int
