@@ -47,7 +47,7 @@ struct DashboardView: View {
                 // Read again what the job changed.
                 switch task {
                 case .backup, .restoreTest: await dashboard?.backups.load()
-                case .fix: await dashboard?.refresh()
+                case .fix, .updateAll: await dashboard?.refresh()
                 }
             }
         ))

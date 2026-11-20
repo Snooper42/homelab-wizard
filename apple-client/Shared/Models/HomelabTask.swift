@@ -12,14 +12,27 @@ enum HomelabTask: String, Sendable, CaseIterable, Identifiable {
     /// `homelab fix`: what's wrong and what would be done about it. With
     /// apply, `homelab fix --apply` does it.
     case fix
+    /// `homelab update --all`: which apps have an update and which wait. With
+    /// apply, `homelab update --all --apply` updates them, one at a time, and
+    /// runs to the end on the computer even if the phone goes (the owner's
+    /// yes, Nov 20, on the canvas's *Idea: Update all*).
+    case updateAll = "update-all"
 
     var id: Self { self }
+
+    /// It shows its plan first; nothing changes until its apply button.
+    var previews: Bool { self == .fix || self == .updateAll }
+
+    /// The plan's title, and the button under it that applies it.
+    var previewTitle: String { self == .updateAll ? "What Would Be Updated" : "What Fix Would Do" }
+    var applyTitle: String { self == .updateAll ? "Update Them" : "Fix These" }
 
     var title: String {
         switch self {
         case .backup: "Back Up Now"
         case .restoreTest: "Test a Restore"
         case .fix: "Look for Problems"
+        case .updateAll: "Update All Apps"
         }
     }
 
@@ -28,6 +41,7 @@ enum HomelabTask: String, Sendable, CaseIterable, Identifiable {
         case .backup: "Backing up…"
         case .restoreTest: "Testing a restore…"
         case .fix: "Looking for problems…"
+        case .updateAll: "Working…"
         }
     }
 
@@ -36,6 +50,7 @@ enum HomelabTask: String, Sendable, CaseIterable, Identifiable {
         case .backup: "externaldrive.badge.plus"
         case .restoreTest: "arrow.counterclockwise.circle"
         case .fix: "wrench.and.screwdriver"
+        case .updateAll: "arrow.down.circle"
         }
     }
 
@@ -45,6 +60,7 @@ enum HomelabTask: String, Sendable, CaseIterable, Identifiable {
         case .backup: "Back up your homelab now."
         case .restoreTest: "Test restoring your homelab's backup."
         case .fix: apply ? "Fix the problems found on your homelab." : "Look for problems on your homelab."
+        case .updateAll: apply ? "Update every app that has an update." : "See which apps have an update."
         }
     }
 }
@@ -145,6 +161,7 @@ struct TaskOutcome: Equatable {
         case .backup: "Backup Didn't Finish"
         case .restoreTest: "The Restore Test Didn't Finish"
         case .fix: "Look for Problems Didn't Finish"
+        case .updateAll: "Update All Didn't Finish"
         }
     }
 }
