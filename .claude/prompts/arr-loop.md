@@ -26,7 +26,7 @@ A household member touches two things: **Seerr to ask for a film or show, Jellyf
 8. **Every PR ends with "Try this tonight"**: 3 to 5 clicks the owner can do in one evening, with what each should show. Say if it needs the VPN key, or an app started again.
 9. **Ask the owner only with the AskUserQuestion pop-up**, every question at once, and only when the decision is genuinely theirs. Recommend one option.
 10. **Never without the owner's yes:** weaken a security choice, delete a branch or data, move files on the media drive, loosen CI, or open a second PR. No model name in commits or PRs.
-11. **CHANGELOG lines go below the *Everything else (the other lanes)* marker** at the top of each `[Unreleased]` section (New, Improved, Fixed), never at the top of the list; never move or delete a marker (the owner's pick, Nov 20, lane 4's #793). Check a PR for a conflict right after each push.
+11. **CHANGELOG lines go directly below the *Everything else (the other lanes)* marker** at the top of each `[Unreleased]` section (New, Improved, Fixed): never at the top of the list, never below lane 4's marker, and never move or delete a marker. Cutting a version moves the notes under its heading and leaves both markers in `[Unreleased]`. Only `- ` lines are read (release notes, *What's new*, the docs site), so the markers never show. Also in `docs/Contributing.md` and `docs/Releasing.md` (the owner's pick, Nov 20, lane 4's #793). Check a PR for a conflict right after each push.
 
 ## Start here (every round)
 
