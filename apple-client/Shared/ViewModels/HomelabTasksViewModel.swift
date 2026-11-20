@@ -18,8 +18,8 @@ final class HomelabTasksViewModel {
         let title: String
         let lines: [String]
         let failed: Bool
-        /// A fix plan that hasn't been applied yet.
-        let isFixPreview: Bool
+        /// A plan (Fix, Update all) that hasn't been applied yet.
+        let isPreview: Bool
         /// Why a job didn't finish, first: the computer's own ! and ✗ lines.
         var outcome: TaskOutcome? = nil
     }
@@ -64,13 +64,13 @@ final class HomelabTasksViewModel {
 
         do {
             let lines = try await api.run(task, apply: apply)
-            let preview = task == .fix && !apply
+            let preview = task.previews && !apply
             output = Output(
                 task: task,
-                title: preview ? "What Fix Would Do" : Self.doneTitle(task, apply: apply),
+                title: preview ? task.previewTitle : Self.doneTitle(task, apply: apply),
                 lines: lines.isEmpty ? ["Done. The computer printed nothing."] : lines,
                 failed: false,
-                isFixPreview: preview
+                isPreview: preview
             )
             successCount += 1
         } catch {
@@ -80,7 +80,9 @@ final class HomelabTasksViewModel {
             switch apiError {
             case .actionFailed(let message, let lines):
                 let outcome = TaskOutcome(task: task, message: message, lines: lines)
-                output = Output(task: task, title: outcome.title, lines: lines, failed: true, isFixPreview: false, outcome: outcome)
+                output = Output(task: task, title: outcome.title, lines: lines, failed: true, isPreview: false, outcome: outcome)
+            case .transport(.timedOut) where task == .updateAll && apply:
+                errors[task] = "The computer is still updating, one app at a time. It finishes on its own: Status shows each app as it comes back."
             case .transport(.timedOut):
                 errors[task] = "The computer is still working on it. Check again in a while."
             default:
@@ -95,6 +97,7 @@ final class HomelabTasksViewModel {
         case .backup: "Backed Up"
         case .restoreTest: "Restore Test"
         case .fix: "Fixed"
+        case .updateAll: "Updated"
         }
     }
 }

@@ -615,7 +615,7 @@ struct ComputerTests {
 
     @Test func tasksAreWhatTheComputerTakes() {
         // The Homelab method's switch: backup, restore-test, fix.
-        #expect(HomelabTask.allCases.map(\.rawValue) == ["backup", "restore-test", "fix"])
+        #expect(HomelabTask.allCases.map(\.rawValue) == ["backup", "restore-test", "fix", "update-all"])
     }
 }
 
