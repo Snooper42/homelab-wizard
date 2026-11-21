@@ -68,6 +68,7 @@ Afterwards, a request that can't be found or downloaded sits at "Requested" in S
   2. **No daily merge cap** for lane 5 (rule 6, `lanes.md` Rule 5).
   3. **Disk space comes first:** storage is expensive. Never two copies of a download; item 7's default is *save space*; no hard links (item 9 dropped them).
   4. **Searching goes through the VPN too** (the owner, Nov 20): an option, **on by default**. Item 2b, **first in the queue** (after #796).
+  6. **Quality (the owner, Nov 21, pop-up): save space.** They watch on an Apple TV with Infuse, which plays nearly any file directly, so no format is avoided: item 7's default is 1080p preferring the smaller HEVC (x265) releases, about 2–4 GB a film. 4K and *best 1080p* stay as the other two answers.
   5. **Stalled requests (the owner, Nov 20, pop-ups):** yes to *stall rescue* (item 2c, next after 2b), then **yes to Usenet** (item 2d, after 2c; the owner has no private trackers). Not now: a search-site health card in Setup.
 - **Nov 19, round 1:** this file and `lanes.md` updated with the answers, item 0 and the CasaOS-style items (a)–(d). Item 0's check done from the code (below); next round starts item 0's fix.
 - **Nov 19, round 2:** item 0, part 1: `wire` sets qBittorrent to stop sharing once a download is finished and keep unfinished ones in `incomplete/` with `.!qB` (`internal/wiring/qbit.go`, against a fake qBittorrent). Next: part 2, the inbox waits for qBittorrent (a torrent an indexer keeps seeding is still listed), and Setup turns Hand over on. **#767 merged.**
