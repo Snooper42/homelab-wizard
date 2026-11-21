@@ -69,6 +69,7 @@ Every app, where it lives, and how to reach it. The tables are generated from th
 | [Seerr](<../services/media automation/Seerr.md>) | https://seerr.example.com | http://localhost:5055 | `./homelab install seerr` |
 | [LazyLibrarian](<../services/media automation/LazyLibrarian.md>) | https://lazylibrarian.example.com | http://localhost:5299 | `./homelab install lazylibrarian` |
 | [qBittorrent](<../services/media automation/qBittorrent.md>) | https://qbittorrent.example.com | http://localhost:8082 | `./homelab install qbittorrent` |
+| [SABnzbd](<../services/media automation/SABnzbd.md>) | https://sabnzbd.example.com | http://localhost:8091 | `./homelab install sabnzbd` |
 | [Gluetun](<../services/media automation/Gluetun.md>) |  |  | `./homelab install gluetun` |
 | [Mealie](<../services/household/Mealie.md>) | https://mealie.example.com | http://localhost:9000 | `./homelab install mealie` |
 | [Vikunja](<../services/household/Vikunja.md>) | https://todo.example.com | http://localhost:3456 | `./homelab install vikunja` |
