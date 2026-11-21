@@ -238,6 +238,14 @@ func (w *Wirer) steps() []step {
 			}})
 		}
 	}
+	for _, l := range libraries[:2] { // Sonarr and Radarr: before Seerr, which asks for the profile
+		l := l
+		if w.has(l.id) {
+			out = append(out, step{w.name(l.id) + " downloads " + QualityFor(w.Env).Words, func(ctx context.Context) (string, string, error) {
+				return w.quality(ctx, l.id)
+			}})
+		}
+	}
 	out = append(out, w.tidyFilingSteps()...)
 	for _, l := range libraries[:2] { // Sonarr and Radarr
 		l := l

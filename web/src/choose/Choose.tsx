@@ -5,6 +5,7 @@ import { Fragment, render } from 'preact';
 import { Icon } from '../Icon';
 import { Empty } from '../parts/Empty';
 import { type Walkthrough, walkthroughs } from './walkthroughs';
+import { questions } from './questions';
 
 /** A starter's symbol and tint, as an app's icon in System Settings. */
 const starterLooks: Record<string, [string, string]> = { photos: ['photos', 'var(--tint-orange)'], passwords: ['lock', 'var(--tint-green)'], movies: ['film', 'var(--tint-red)'], music: ['music', 'var(--tint-pink)'], files: ['folder', 'var(--tint-blue)'] };
@@ -227,6 +228,22 @@ export function Inputs({ keys, meta, values, label, input, open }: InputsProps) 
         const m: Partial<settings.Setting> = meta[k] || {};
         const secret = m.secret ?? /KEY|TOKEN|PASS|SECRET/.test(k);
         const walk = walkthroughs[k];
+        const q = questions[k];
+        if (q) {
+          const current = values[k] || m.value || q.answers[0].value;
+          const picked = q.answers.find((a) => a.value === current) || q.answers[0];
+          return (
+            <div class="field question" key={k} role="group" aria-label={q.ask}>
+              <span class="fieldName">{q.ask}</span>
+              <span class="answers">
+                {q.answers.map((a) => (
+                  <button type="button" key={a.value} class={a === picked ? 'small tint' : 'small'} aria-pressed={a === picked} onClick={() => input(k, a.value)}>{a.label}</button>
+                ))}
+              </span>
+              <span class="help">{picked.detail}</span>
+            </div>
+          );
+        }
         return (
           <Fragment key={k}>
           <label class="field">

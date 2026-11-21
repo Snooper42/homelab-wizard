@@ -37,6 +37,8 @@ func fakeArrRefusing(t *testing.T, key string, schemas map[string][]resource, re
 		switch {
 		case kind == "system":
 			w.Write([]byte(`{}`))
+		case kind == "qualityprofile" && len(parts) > 4 && parts[4] == "schema":
+			json.NewEncoder(w).Encode(fakeProfileSchema())
 		case len(parts) > 4 && parts[4] == "schema":
 			json.NewEncoder(w).Encode(schemas[kind])
 		case r.Method == http.MethodPost && refuse[kind] > 0:
@@ -47,7 +49,7 @@ func fakeArrRefusing(t *testing.T, key string, schemas map[string][]resource, re
 			json.NewDecoder(r.Body).Decode(&body)
 			body["id"] = float64(len(saved[kind]) + 1)
 			saved[kind] = append(saved[kind], body)
-			w.Write([]byte(`{"id":7}`))
+			json.NewEncoder(w).Encode(body) // as the apps do: what was saved, with its id
 		case r.Method == http.MethodPut:
 			var body resource
 			json.NewDecoder(r.Body).Decode(&body)
@@ -63,6 +65,31 @@ func fakeArrRefusing(t *testing.T, key string, schemas map[string][]resource, re
 	}))
 	t.Cleanup(srv.Close)
 	return srv.URL, saved
+}
+
+// fakeProfileSchema is Sonarr's GET qualityprofile/schema, shortened: every
+// quality listed and none allowed, the WEB ones grouped by resolution
+// (QualityProfileService.GetDefaultProfile), and the custom formats.
+func fakeProfileSchema() resource {
+	q := func(id int, name string, res int) map[string]any {
+		return map[string]any{"quality": map[string]any{"id": float64(id), "name": name, "resolution": float64(res)}, "items": []any{}, "allowed": false}
+	}
+	group := func(id int, name string, members ...map[string]any) map[string]any {
+		items := []any{}
+		for _, m := range members {
+			items = append(items, m)
+		}
+		return map[string]any{"id": float64(id), "name": name, "items": items, "allowed": false}
+	}
+	return resource{"name": "", "upgradeAllowed": false, "cutoff": float64(0), "minFormatScore": float64(0), "cutoffFormatScore": float64(0), "minUpgradeFormatScore": float64(1),
+		"formatItems": []any{},
+		"items": []any{
+			q(0, "Unknown", 0), q(1, "SDTV", 480), q(4, "HDTV-720p", 720),
+			group(1001, "WEB 720p", q(14, "WEBRip-720p", 720), q(5, "WEBDL-720p", 720)), q(6, "Bluray-720p", 720),
+			q(9, "HDTV-1080p", 1080), q(10, "Raw-HD", 1080),
+			group(1002, "WEB 1080p", q(15, "WEBRip-1080p", 1080), q(3, "WEBDL-1080p", 1080)), q(7, "Bluray-1080p", 1080), q(20, "Bluray-1080p Remux", 1080),
+			q(16, "HDTV-2160p", 2160), group(1003, "WEB 2160p", q(17, "WEBRip-2160p", 2160), q(18, "WEBDL-2160p", 2160)), q(19, "Bluray-2160p", 2160), q(21, "Bluray-2160p Remux", 2160),
+		}}
 }
 
 func template(impl string, fields ...string) resource {
@@ -109,8 +136,9 @@ func TestWiring(t *testing.T) {
 		Env:  map[string]string{},
 		Wait: time.Second,
 	}
-	// The seventh: with no DOWNLOADS_ROOT, Sonarr keeps filing (TestConnectHandsOver).
-	if got := len(w.Plan()); got != 7 {
+	// The seventh: Sonarr's quality (TestQualityProfile); the eighth: with no
+	// DOWNLOADS_ROOT, Sonarr keeps filing (TestConnectHandsOver).
+	if got := len(w.Plan()); got != 8 {
 		t.Fatalf("plan has %d links: %+v", got, w.Plan())
 	}
 	links := w.Apply(context.Background(), nil)
