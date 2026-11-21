@@ -70,6 +70,7 @@ There is nothing to click: Gluetun has no web UI. The things you do with it:
 ## Connects to
 
 - [qBittorrent](<qBittorrent.md>) lives in its network; restart qBittorrent whenever Gluetun is recreated.
+- [Prowlarr](<Prowlarr.md>) lives in its network too while searching goes through the VPN (`SEARCH_THROUGH_VPN`, on by default), and reaches Sonarr, Radarr, Lidarr and FlareSolverr by name from there (Gluetun v3.41 and later). Gluetun's firewall drops everything but the tunnel, IPv6 included (its `ip6tables` policies are DROP whenever the container has IPv6 at all; Docker's default networks give it none), so neither app can leave through the home connection by IPv6 either.
 - [Sonarr](<Sonarr.md>), [Radarr](<Radarr.md>), [Lidarr](<Lidarr.md>), and [LazyLibrarian](<LazyLibrarian.md>) reach qBittorrent through it at `gluetun:8082`. `./homelab wire` derives that address from qBittorrent's `network_mode`.
 - [Nginx Proxy Manager](<../network/Nginx Proxy Manager.md>) sends https://qbittorrent.example.com to `gluetun:8082` (the `proxy_host` in qBittorrent's `x-homelab`).
 - `./homelab install qbittorrent` skips both apps until `PROTONVPN_WIREGUARD_PRIVATE_KEY` is set.

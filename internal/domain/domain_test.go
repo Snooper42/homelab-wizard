@@ -610,3 +610,14 @@ func TestUnpublishSaysWhenAWildcardStillCarriesIt(t *testing.T) {
 		})
 	}
 }
+
+// Searching through the VPN puts Prowlarr in Gluetun's network: the proxy
+// forwards its name to Gluetun, as for qBittorrent.
+func TestRoutesProwlarrThroughTheVPN(t *testing.T) {
+	for env, want := range map[string]string{"": "prowlarr", "k": "gluetun"} {
+		routes := Routes(apps(t, "prowlarr"), "example.com", compose.MapLookup(map[string]string{"PROTONVPN_WIREGUARD_PRIVATE_KEY": env}))
+		if len(routes) != 1 || routes[0].ForwardHost != want || routes[0].ForwardPort != 9696 {
+			t.Errorf("key %q: %+v", env, routes)
+		}
+	}
+}

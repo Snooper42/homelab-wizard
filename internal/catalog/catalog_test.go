@@ -379,3 +379,32 @@ func TestLibraryFoldersAreNotMadeByDocker(t *testing.T) {
 		t.Errorf("only %d library binds found: the test no longer sees the compose files' volumes", n)
 	}
 }
+
+// Searching through the VPN (SEARCH_THROUGH_VPN, on unless off): while
+// ProtonVPN's key is set, Prowlarr lives in Gluetun's network, so the proxy
+// and the tailnet reach it there; off, or with no key, it is where it was.
+func TestSearchThroughVPN(t *testing.T) {
+	c := load(t)
+	p, _ := c.Get("prowlarr")
+	son, _ := c.Get("sonarr")
+	for _, tc := range []struct {
+		name string
+		env  map[string]string
+		vpn  bool
+	}{
+		{"key set, on by default", map[string]string{"PROTONVPN_WIREGUARD_PRIVATE_KEY": "k"}, true},
+		{"key set, on", map[string]string{"PROTONVPN_WIREGUARD_PRIVATE_KEY": "k", "SEARCH_THROUGH_VPN": "on"}, true},
+		{"turned off", map[string]string{"PROTONVPN_WIREGUARD_PRIVATE_KEY": "k", "SEARCH_THROUGH_VPN": "off"}, false},
+		{"no key", map[string]string{}, false},
+		{"key not filled in", map[string]string{"PROTONVPN_WIREGUARD_PRIVATE_KEY": "__REPLACE_ME__"}, false},
+	} {
+		lookup := compose.MapLookup(tc.env)
+		want := map[bool]string{true: "gluetun", false: "prowlarr"}[tc.vpn]
+		if SearchThroughVPN(lookup) != tc.vpn || p.ProxyTargetFor(lookup) != want || son.ProxyTargetFor(lookup) != "sonarr" {
+			t.Errorf("%s: vpn %v, prowlarr at %q", tc.name, SearchThroughVPN(lookup), p.ProxyTargetFor(lookup))
+		}
+	}
+	if SearchThroughVPN(nil) || p.ProxyTargetFor(nil) != "prowlarr" {
+		t.Error("no settings at all: searching from home, as before")
+	}
+}

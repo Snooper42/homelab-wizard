@@ -26,6 +26,9 @@ type Privacy struct {
 	Said    string `json:"said"`
 	// Fix is "wire" when Connect apps puts it right.
 	Fix string `json:"fix,omitempty"`
+	// Search says where Prowlarr's searches leave from (searching through
+	// the VPN, catalog.SearchThroughVPN); "" while Prowlarr isn't running.
+	Search string `json:"search,omitempty"`
 }
 
 // Privacy checks that the downloads are private (arr-loop item 2), from
@@ -35,6 +38,26 @@ type Privacy struct {
 // it uses no other network even if the firewall were open. It changes
 // nothing, and tries qBittorrent once rather than waiting for it.
 func (w *Wirer) Privacy(ctx context.Context) Privacy {
+	p := w.downloadsPrivate(ctx)
+	p.Search = w.searchPrivate()
+	return p
+}
+
+// searchPrivate says where the searches leave from: Prowlarr in Gluetun's
+// network goes through the tunnel, as qBittorrent does.
+func (w *Wirer) searchPrivate() string {
+	p, ok := w.Apps["prowlarr"]
+	switch {
+	case !ok:
+		return ""
+	case strings.Contains(p.Internal, "//gluetun:"):
+		return "Searching goes through ProtonVPN too: the search sites see its address, not yours."
+	}
+	return "Searching leaves through your home connection: the search sites see your address. Turn on Search through the VPN in Settings to change that (it needs the ProtonVPN key)."
+}
+
+// downloadsPrivate is the downloads' half of Privacy.
+func (w *Wirer) downloadsPrivate(ctx context.Context) Privacy {
 	q, ok := w.Apps["qbittorrent"]
 	switch {
 	case !ok:

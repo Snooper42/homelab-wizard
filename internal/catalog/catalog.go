@@ -142,6 +142,42 @@ func (a *App) ProxyTarget() string {
 	return a.ID
 }
 
+// SearchApp is the app that searches the sites for the *arr apps; with
+// searching through the VPN it lives in VPNApp's network, as qBittorrent
+// always does.
+const (
+	SearchApp = "prowlarr"
+	VPNApp    = "gluetun"
+)
+
+// SearchThroughVPN reports whether Prowlarr's searches go through ProtonVPN
+// (the owner, Nov 20: an option, on by default): SEARCH_THROUGH_VPN isn't
+// turned off and ProtonVPN's key is set, so Gluetun can start. Then the
+// media automation project loads compose/overlays/search-through-vpn.yaml
+// (install.ProjectFor), which puts Prowlarr in Gluetun's network; without
+// the key, Prowlarr searches from the home connection as before.
+func SearchThroughVPN(lookup compose.Lookup) bool {
+	if lookup == nil {
+		return false
+	}
+	switch v, _ := lookup("SEARCH_THROUGH_VPN"); strings.ToLower(strings.TrimSpace(v)) {
+	case "off", "false", "0", "no":
+		return false
+	}
+	key, _ := lookup("PROTONVPN_WIREGUARD_PRIVATE_KEY")
+	key = strings.TrimSpace(key)
+	return key != "" && !envfile.Placeholder.MatchString(key)
+}
+
+// ProxyTargetFor is ProxyTarget with the settings: Prowlarr is reached at
+// Gluetun while searching goes through the VPN.
+func (a *App) ProxyTargetFor(lookup compose.Lookup) string {
+	if a.ID == SearchApp && SearchThroughVPN(lookup) {
+		return VPNApp
+	}
+	return a.ProxyTarget()
+}
+
 // Subdomain is the default hostname label for this app.
 func (a *App) Subdomain() string {
 	if a.Meta.Subdomain != "" {

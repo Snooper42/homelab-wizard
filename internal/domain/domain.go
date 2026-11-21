@@ -49,7 +49,7 @@ func Routes(apps []*catalog.App, domainName string, lookup compose.Lookup) []Rou
 		if port == 0 {
 			continue
 		}
-		out = append(out, Route{App: a, Host: a.Subdomain() + "." + domainName, ForwardHost: a.ProxyTarget(), ForwardPort: port})
+		out = append(out, Route{App: a, Host: a.Subdomain() + "." + domainName, ForwardHost: a.ProxyTargetFor(lookup), ForwardPort: port})
 	}
 	return out
 }

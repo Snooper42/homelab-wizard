@@ -1336,6 +1336,7 @@ declare namespace wiring {
     private: boolean;
     said: string;
     fix?: string;
+    search?: string;
   }
 }
 

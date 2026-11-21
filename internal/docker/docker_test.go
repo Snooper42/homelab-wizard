@@ -168,3 +168,12 @@ func TestImageIDAndMounts(t *testing.T) {
 		t.Errorf("mounts: %+v, binds %v", m, cs[0].Binds)
 	}
 }
+
+// An overlay file goes after the project's own, so its services win.
+func TestComposeArgsOverlays(t *testing.T) {
+	p := Project{Dir: "/h", ComposeFile: "/h/compose/a.yaml", Name: "homelab_a", Overlays: []string{"/h/compose/overlays/x.yaml"}}
+	got := strings.Join(p.ComposeArgs([]string{"optional"}), " ")
+	if got != "compose --project-directory /h -f /h/compose/a.yaml -f /h/compose/overlays/x.yaml -p homelab_a --profile optional" {
+		t.Fatal(got)
+	}
+}
