@@ -164,7 +164,7 @@ func statusOf(ctx context.Context, c *catalog.Catalog, containers []docker.Conta
 		if domainName == "" && tailHost != "" {
 			s.Address = tailAddress[a.ID] // Home mode: on the tailnet
 		}
-		s.URL = ports.WebURL(a, ports.AppBindings(a, lookup), lookup)
+		s.URL = ports.AppWebURL(c, a, lookup)
 		if r := hist.Apps[a.ID]; r != nil && r.Previous != "" {
 			s.UpdatedAt = r.Updated.UTC().Format(time.RFC3339)
 		}
