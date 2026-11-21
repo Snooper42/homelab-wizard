@@ -3008,17 +3008,20 @@ struct TransactionsView: View {
         // A search looks in every account (the switcher is hidden while searching).
         let shown = search.isEmpty ? account : nil
         let categories = finances.plan?.categories ?? []
+        let finding = TransactionSearch(search)
+        // Each account's name once, not looked up row by row.
+        let names = Dictionary((finances.plan?.plan.accounts ?? []).map { ($0.id, $0.name) }, uniquingKeysWith: { first, _ in first })
         let kept = ledger.newestFirst.filter { t in
-            guard t.matches(search) else { return false }
             if let shown, t.account != shown, t.to != shown { return false }
             if onlyNew, !finances.isNew(t) { return false }
             if filter.isOn, !filter.keeps(t, categories: categories) { return false }
-            return true
+            // Last: it works out each row's words.
+            return finding.finds(t, accountName: { names[$0] })
         }
         guard !sort.isNewestFirst else { return kept }
         return sort.sorted(kept,
                            payee: { TransactionDetailView.title(of: $0, finances: finances) },
-                           accountName: { finances.accountName($0) ?? "Account" })
+                           accountName: { names[$0] ?? "Account" })
     }
 
     /// By date, the rows drawn in their months.
@@ -3234,7 +3237,7 @@ struct TransactionsView: View {
         }
         .themedCanvas()
         .compactSections()
-        .searchable(text: $search, prompt: "Payee, category, note or tag")
+        .searchable(text: $search, prompt: "Payee, category, amount, day")
         .task {
             await finances.loadLedger()
             // Accounts and categories for a new one come from the plan.
