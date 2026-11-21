@@ -237,7 +237,15 @@ $('installBtn').onclick = async () => {
 async function wire(box) {
   const done: WireLink[] = [];
   let note = 'Connecting… this can take a minute while new apps start.';
-  const draw = () => mountWiring(box, { links: [...done], note });
+  // A link's one-click fix, then connect again: the inbox filing as things
+  // arrive lets the next run hand the downloads over to Tidy Up.
+  const fix = async (name: string) => {
+    if (name !== 'inbox-arrive') return;
+    try { await go().SaveSettings({ TIDY_INBOX_WHEN: 'arrive' }); } catch (e) { showError(e); return; }
+    settingsData.stale();
+    await wire(box);
+  };
+  const draw = () => mountWiring(box, { links: [...done], note, fix });
   draw();
   const off = window.runtime.EventsOn('link', (l) => { done.push(l); draw(); });
   try {

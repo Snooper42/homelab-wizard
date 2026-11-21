@@ -5190,9 +5190,10 @@
     PROTONVPN_WIREGUARD_PRIVATE_KEY: {
       lead: "Needed for qBittorrent, and only on a paid Proton VPN plan: the free plan doesn’t allow downloads like these.",
       steps: [
-        "Sign in at account.protonvpn.com and open Downloads, then WireGuard configuration.",
-        "Choose Router as the platform, turn on NAT-PMP (Port Forwarding), and press Create next to any server marked P2P (⇄).",
-        "In the file it shows, copy the long text after PrivateKey = and paste it here. Only that line: the rest isn’t needed."
+        "Sign in at account.protonvpn.com and click Downloads in the menu on the left. Scroll down past the apps to WireGuard configuration.",
+        "Fill in its parts 1 to 3: any name (homelab, say), Router as the platform, and under VPN options turn on NAT-PMP (Port Forwarding). Leave the other options as they are.",
+        "In part 4, Select a server to connect to, press Create next to any server marked P2P (⇄).",
+        "A window shows the new file. Copy only the long text after PrivateKey = (it ends with =) and paste it here. Leave the rest."
       ],
       link: { url: "https://account.protonvpn.com/downloads", label: "Open Proton’s WireGuard page" }
     }
@@ -5479,8 +5480,9 @@
       /* @__PURE__ */ u3("button", { type: "button", id: "installClose", class: "small", onClick: close3, children: "Close" })
     ] });
   }
+  var fixes = { "inbox-arrive": "Let Tidy Up file downloads as they arrive" };
   var marks = { done: ["✓", "ok"], already: ["✓", "ok"], manual: ["!", "warn"], failed: ["✗", "bad"] };
-  function Wiring({ links, note }) {
+  function Wiring({ links, note, fix }) {
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3(CardHead, { title: "Connected for you" }),
       /* @__PURE__ */ u3("p", { class: "muted", children: note }),
@@ -5492,7 +5494,8 @@
             " "
           ] }),
           l3.text,
-          l3.detail && /* @__PURE__ */ u3("span", { class: "detail", children: l3.detail })
+          l3.detail && /* @__PURE__ */ u3("span", { class: "detail", children: l3.detail }),
+          l3.fix && fixes[l3.fix] && fix && /* @__PURE__ */ u3("span", { class: "detail", children: /* @__PURE__ */ u3("button", { type: "button", class: "small tint", onClick: () => fix(l3.fix), children: fixes[l3.fix] }) })
         ] }, i3);
       }) })
     ] });
@@ -5821,7 +5824,18 @@
   async function wire(box) {
     const done = [];
     let note = "Connecting… this can take a minute while new apps start.";
-    const draw6 = () => mountWiring(box, { links: [...done], note });
+    const fix = async (name) => {
+      if (name !== "inbox-arrive") return;
+      try {
+        await go().SaveSettings({ TIDY_INBOX_WHEN: "arrive" });
+      } catch (e3) {
+        showError(e3);
+        return;
+      }
+      settingsData.stale();
+      await wire(box);
+    };
+    const draw6 = () => mountWiring(box, { links: [...done], note, fix });
     draw6();
     const off2 = window.runtime.EventsOn("link", (l3) => {
       done.push(l3);
@@ -12191,10 +12205,10 @@
       const rule = ruleFor(plan.rules, payee);
       return { ...t3, payee: rule?.payee || raw && memory3.get(payee.toLowerCase()) || payee, raw, ruled: rule?.category };
     });
-    const fixes = wayOnlyFixes(found2, account, have);
-    const renames = renameFixes(found2, account, have, fixes);
-    const fixed = new Set(fixes.values()), others2 = have.filter((q2) => !fixed.has(q2.id));
-    const fresh = found2.filter((t3, i3) => !fixes.has(i3) && !renames.has(i3) && !already(t3, account, others2) && !(t3.raw && already({ ...t3, payee: t3.raw }, account, others2)) && !noted(t3, account, others2));
+    const fixes2 = wayOnlyFixes(found2, account, have);
+    const renames = renameFixes(found2, account, have, fixes2);
+    const fixed = new Set(fixes2.values()), others2 = have.filter((q2) => !fixed.has(q2.id));
+    const fresh = found2.filter((t3, i3) => !fixes2.has(i3) && !renames.has(i3) && !already(t3, account, others2) && !(t3.raw && already({ ...t3, payee: t3.raw }, account, others2)) && !noted(t3, account, others2));
     const lastCat = (payee) => [...have].reverse().find((q2) => q2.payee && q2.category && q2.payee.toLowerCase() === payee.toLowerCase())?.category;
     const lastLogo = (payee) => [...have].reverse().find((q2) => q2.payee && q2.institution && q2.payee.toLowerCase() === payee.toLowerCase())?.institution;
     const payments = (plan.payments || []).filter((x3) => !x3.card);
@@ -12213,7 +12227,7 @@
     const named6 = (i3) => renames.has(i3) ? found2[i3].payee : void 0;
     const recat = /* @__PURE__ */ new Map();
     found2.forEach((t3, i3) => {
-      if (fresh.includes(t3) || fixes.has(i3)) return;
+      if (fresh.includes(t3) || fixes2.has(i3)) return;
       const q2 = have.find((q3) => !recat.has(q3.id) && q3.account === account && !q3.to && !q3.category && !q3.splits?.length && q3.date === t3.date && Math.abs(q3.amount - t3.amount) < 5e-3 && (t3.raw && (q3.note || "").includes(t3.raw) || !!q3.payee && !!t3.payee && alike(q3.payee, t3.payee)));
       if (!q2) return;
       const g2 = guessFor({ payee: named6(i3) || q2.payee, amount: q2.amount, kind: t3.kind }, account, plan, cats, named6(i3) || q2.payee ? lastCat(named6(i3) || q2.payee) : void 0, payments.find((x3) => x3.id === q2.payment));
@@ -12222,11 +12236,11 @@
     const nameOf = (id2) => (plan.accounts || []).find((a3) => a3.id === id2)?.name || "another account";
     const bring = async (e3) => {
       e3.preventDefault();
-      if (!fresh.length && !fixes.size && !renames.size && !recat.size) {
+      if (!fresh.length && !fixes2.size && !renames.size && !recat.size) {
         setProblem(found2.length ? "All of them are in already." : "Nothing in this file reads as a transaction: check the columns.");
         return;
       }
-      const fix = new Map([...fixes].map(([i3, id2]) => [id2, found2[i3]]));
+      const fix = new Map([...fixes2].map(([i3, id2]) => [id2, found2[i3]]));
       const rename = new Map([...renames].map(([i3, id2]) => [id2, found2[i3].payee]));
       const kept5 = have.map((q2) => {
         if (rename.has(q2.id) || recat.has(q2.id)) return { ...q2, payee: rename.get(q2.id) || q2.payee, category: q2.category || recat.get(q2.id) };
@@ -12279,7 +12293,7 @@
         /* @__PURE__ */ u3("h3", { class: "formsub", children: [
           found2.length ? `${fresh.length} to bring in` : "Nothing found yet",
           " ",
-          /* @__PURE__ */ u3("span", { class: "muted", children: [fixes.size ? `${fixes.size} brought in before as CREDIT or DEBIT, given their payee` : "", renames.size ? `${renames.size} brought in before, given clearer names` : "", recat.size ? `${recat.size} brought in before, given a category` : "", found2.length - fresh.length - fixes.size - renames.size ? `${found2.length - fresh.length - fixes.size - renames.size} already in, skipped` : ""].filter(Boolean).join(" · ") })
+          /* @__PURE__ */ u3("span", { class: "muted", children: [fixes2.size ? `${fixes2.size} brought in before as CREDIT or DEBIT, given their payee` : "", renames.size ? `${renames.size} brought in before, given clearer names` : "", recat.size ? `${recat.size} brought in before, given a category` : "", found2.length - fresh.length - fixes2.size - renames.size ? `${found2.length - fresh.length - fixes2.size - renames.size} already in, skipped` : ""].filter(Boolean).join(" · ") })
         ] }),
         !ofx && found2.length > 1 && found2.every((t3) => !t3.payee || wayOnly(t3.payee)) && /* @__PURE__ */ u3("p", { class: "formerr bad importnote", role: "alert", children: [
           "No payee here is a name, only ",
@@ -12320,7 +12334,7 @@
         })(),
         guessed.some(Boolean) && /* @__PURE__ */ u3("p", { class: "muted importnote", children: "A row that looks like a planned payment pays it, so the plan doesn't take it out again on its day. Change it below if it's wrong." }),
         /* @__PURE__ */ u3("ul", { class: "importlist", children: found2.slice(0, 60).map((t3, i3) => {
-          const k3 = fresh.indexOf(t3), fixing = fixes.has(i3), renaming = renames.has(i3), dup = k3 < 0 && !fixing && !renaming;
+          const k3 = fresh.indexOf(t3), fixing = fixes2.has(i3), renaming = renames.has(i3), dup = k3 < 0 && !fixing && !renaming;
           const g2 = k3 < 0 ? void 0 : guessed[k3], link = k3 < 0 ? "" : linkOf(k3), x3 = payments.find((q2) => q2.id === link);
           return /* @__PURE__ */ u3("li", { class: dup ? "dup" : "", children: [
             /* @__PURE__ */ u3(Mark, { brand: payeeBrand(t3.payee ? lastLogo(t3.payee) : void 0, t3.payee), name: t3.payee || "?", size: "sm", auto: !!t3.payee }),
@@ -12352,7 +12366,7 @@
       /* @__PURE__ */ u3("div", { class: "actions finactions", children: [
         /* @__PURE__ */ u3("span", { class: "grow" }),
         /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: props.close, disabled: busy2, children: "Cancel" }),
-        /* @__PURE__ */ u3("button", { type: "submit", class: "primary small", disabled: busy2 || !fresh.length && !fixes.size && !renames.size && !recat.size, children: [fresh.length ? `Bring in ${fresh.length}` : "", fixes.size + (/* @__PURE__ */ new Set([...renames.values(), ...recat.keys()])).size ? `${fresh.length ? "fix" : "Fix"} ${fixes.size + (/* @__PURE__ */ new Set([...renames.values(), ...recat.keys()])).size}` : ""].filter(Boolean).join(", ") || "Bring in" })
+        /* @__PURE__ */ u3("button", { type: "submit", class: "primary small", disabled: busy2 || !fresh.length && !fixes2.size && !renames.size && !recat.size, children: [fresh.length ? `Bring in ${fresh.length}` : "", fixes2.size + (/* @__PURE__ */ new Set([...renames.values(), ...recat.keys()])).size ? `${fresh.length ? "fix" : "Fix"} ${fixes2.size + (/* @__PURE__ */ new Set([...renames.values(), ...recat.keys()])).size}` : ""].filter(Boolean).join(", ") || "Bring in" })
       ] })
     ] });
   }

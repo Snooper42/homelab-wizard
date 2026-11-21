@@ -56,28 +56,49 @@ func (h *homelab) wire(ctx context.Context, args []string) error {
 		u.Println()
 	}
 	failed := 0
-	w.Apply(ctx, func(l wiring.Link) {
-		if l.State == "failed" {
-			failed++
+	fix := ""
+	show := func(again bool) func(wiring.Link) {
+		return func(l wiring.Link) {
+			if l.State == "failed" {
+				failed++
+			}
+			if l.Fix != "" {
+				fix = l.Fix
+			}
+			if u.JSON {
+				emit(u, "link", l)
+				return
+			}
+			if again && l.State == "already" {
+				return // the second run shows only what it changed
+			}
+			switch l.State {
+			case "done", "already":
+				u.OK("%s%s", l.Text, u.Dim(map[string]string{"done": "", "already": " (already)"}[l.State]))
+			case "manual":
+				u.Warn("%s", l.Text)
+			default:
+				u.Fail("%s: %s", l.Text, l.Detail)
+				return
+			}
+			if l.Detail != "" {
+				u.Printf("    %s\n", u.Dim(l.Detail))
+			}
 		}
-		if u.JSON {
-			emit(u, "link", l)
-			return
+	}
+	w.Apply(ctx, show(false))
+	if fix != "" && !u.JSON {
+		ok, err := h.offerWireFix(fix)
+		if err != nil {
+			return err
 		}
-		switch l.State {
-		case "done", "already":
-			u.OK("%s%s", l.Text, u.Dim(map[string]string{"done": "", "already": " (already)"}[l.State]))
-		case "manual":
-			u.Warn("%s: %s", l.Text, l.Detail)
-			return
-		default:
-			u.Fail("%s: %s", l.Text, l.Detail)
-			return
+		if ok {
+			w.Env = h.envMap()
+			u.Println()
+			fix = ""
+			w.Apply(ctx, show(true))
 		}
-		if l.Detail != "" {
-			u.Printf("    %s\n", u.Dim(l.Detail))
-		}
-	})
+	}
 	if failed > 0 {
 		return fmt.Errorf("%d link(s) failed", failed)
 	}
@@ -109,4 +130,27 @@ func (h *homelab) jellyfinAdmin(user string) (*wiring.JellyfinAdmin, error) {
 		return nil, err
 	}
 	return &wiring.JellyfinAdmin{User: user, Password: p}, nil
+}
+
+// offerWireFix offers a link's one-click fix in a terminal (wiring.Link.Fix)
+// and makes it on a yes, saying whether it did. Without a terminal it says
+// where the fix is instead.
+func (h *homelab) offerWireFix(fix string) (bool, error) {
+	if fix != wiring.FixInboxArrive {
+		return false, nil
+	}
+	u := h.ui
+	if !u.Interactive {
+		u.Printf("\n%s\n", u.Dim("To hand them over, let Tidy Up file downloads as they arrive (Tidy Up › Inbox), then connect again."))
+		return false, nil
+	}
+	u.Println()
+	if !u.Confirm("Let Tidy Up file downloads as they arrive, and hand them over to it?", true) {
+		return false, nil
+	}
+	if err := h.setEnv("TIDY_INBOX_WHEN", "arrive"); err != nil {
+		return false, err
+	}
+	u.OK("Tidy Up files downloads as they arrive")
+	return true, nil
 }

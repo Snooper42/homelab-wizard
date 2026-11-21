@@ -34,6 +34,9 @@ type Link struct {
 	Text   string `json:"text"`
 	State  string `json:"state"` // planned, done, already, manual, or failed
 	Detail string `json:"detail,omitempty"`
+	// Fix names a one-click fix the screen or the terminal can offer for a
+	// manual link (FixInboxArrive); "" when there is none.
+	Fix string `json:"fix,omitempty"`
 }
 
 // App is a running app as wiring sees it.
@@ -58,7 +61,8 @@ type Wirer struct {
 	// One Apply waits for each app once: its key, or why it never answered.
 	keys    map[string]string
 	notUp   map[string]error
-	retryIn time.Duration // pause between attempts to save; 5s unless a test sets it
+	retryIn time.Duration     // pause between attempts to save; 5s unless a test sets it
+	fixes   map[string]string // a step's one-click fix, by its text (Link.Fix)
 }
 
 // Wireable are the apps wiring connects (or explains how to connect).
@@ -209,6 +213,9 @@ func (w *Wirer) Apply(ctx context.Context, progress func(Link)) []Link {
 			state, detail = "failed", err.Error()
 		}
 		l := Link{Text: s.text, State: state, Detail: detail}
+		if state == "manual" {
+			l.Fix = w.fixes[s.text]
+		}
 		if progress != nil {
 			progress(l)
 		}
