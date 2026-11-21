@@ -178,3 +178,18 @@ func TestProwlarrThroughTheVPN(t *testing.T) {
 		}
 	}
 }
+
+// qBittorrent (and Prowlarr, searching through the VPN) live in Gluetun's
+// network, so their page is published on Gluetun's ports: wire reaches
+// qBittorrent's Web API there, not at no address.
+func TestAppInGluetunsNetworkHasItsAddress(t *testing.T) {
+	c, err := catalog.Load(filepath.Join("..", ".."))
+	if err != nil {
+		t.Fatal(err)
+	}
+	running := func(id string) bool { return id == "qbittorrent" || id == "gluetun" }
+	env := map[string]string{"PROTONVPN_WIREGUARD_PRIVATE_KEY": "k", "QBITTORRENT_PORT": "8182"}
+	if got := AppsFrom(c, running, env, t.TempDir())["qbittorrent"].URL; got != "http://localhost:8182" {
+		t.Errorf("qBittorrent at %q, want http://localhost:8182", got)
+	}
+}
