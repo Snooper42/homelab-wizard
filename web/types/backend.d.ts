@@ -1330,6 +1330,7 @@ declare namespace wiring {
     text: string;
     state: string;
     detail?: string;
+    fix?: string;
   }
   interface Privacy {
     private: boolean;
