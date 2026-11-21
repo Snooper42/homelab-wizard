@@ -25,6 +25,15 @@ func TestKeptKey(t *testing.T) {
 			t.Errorf("%s: %q %v, want %q", file, got, err, want)
 		}
 	}
+	// SABnzbd's sabnzbd.ini: the key under [misc], not another section's.
+	write("sabnzbd.ini", "__version__ = 19\n[misc]\nport = 8080\napi_key = sab-key\nnzb_key = not-this\n[servers]\n[[news]]\napi_key = nor-this\n")
+	if got, err := KeptKey(dir, "sabnzbd.ini"); err != nil || got != "sab-key" {
+		t.Errorf("sabnzbd.ini: %q %v, want sab-key", got, err)
+	}
+	write("other.ini", "[servers]\napi_key = nor-this\n")
+	if _, err := KeptKey(dir, "other.ini"); err == nil {
+		t.Error("an .ini with no key under [misc] says so")
+	}
 	if _, err := KeptKey(dir, "missing.xml"); err == nil {
 		t.Error("a file the app hasn't made yet says so")
 	}

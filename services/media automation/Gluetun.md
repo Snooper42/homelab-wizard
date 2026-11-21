@@ -4,7 +4,7 @@ version: 0.17.0
 
 # Gluetun
 
-A ProtonVPN WireGuard tunnel. qBittorrent shares Gluetun's network, so its traffic can only leave through the VPN; if the tunnel drops, qBittorrent has no network at all.
+A ProtonVPN WireGuard tunnel. qBittorrent and [SABnzbd](<SABnzbd.md>) share Gluetun's network, so their traffic can only leave through the VPN; if the tunnel drops, they have no network at all.
 
 <!-- BEGIN homelab:generated (./homelab docs rewrites this block) -->
 | | |
@@ -22,7 +22,7 @@ A ProtonVPN WireGuard tunnel. qBittorrent shares Gluetun's network, so its traff
 
 - Kill switch for downloads: qBittorrent has no route except the VPN.
 - ProtonVPN port forwarding (P2P servers only) for better connectivity.
-- Publishes qBittorrent's web UI, because qBittorrent has no network of its own.
+- Publishes qBittorrent's and SABnzbd's web UIs (`QBITTORRENT_PORT`, `SABNZBD_PORT`), because they have no network of their own.
 
 ## Setup
 

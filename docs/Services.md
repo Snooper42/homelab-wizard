@@ -113,6 +113,7 @@ Databases and caches are not listed separately: they appear as Helpers in the no
 | [Seerr](<../services/media automation/Seerr.md>) | https://seerr.example.com | Optional |
 | [LazyLibrarian](<../services/media automation/LazyLibrarian.md>) | https://lazylibrarian.example.com | Optional |
 | [qBittorrent](<../services/media automation/qBittorrent.md>) | https://qbittorrent.example.com | Optional |
+| [SABnzbd](<../services/media automation/SABnzbd.md>) | https://sabnzbd.example.com | Optional |
 | [Gluetun](<../services/media automation/Gluetun.md>) |  | Optional |
 
 ### Household

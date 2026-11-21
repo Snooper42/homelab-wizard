@@ -41,7 +41,7 @@ Check the agent with `./homelab schedule status` (installed, last exit code). Ea
 Every container falls into one of three groups, generated from the compose files: rebuilt (a locally built image), by hand (an `x-homelab` `pin` saying why, or a database or cache), or nightly (every other app). Each service note's table says the same for its app.
 
 <!-- BEGIN homelab:generated (./homelab docs rewrites this block) -->
-### Nightly (69)
+### Nightly (70)
 
 The background agent runs `./homelab update --all` at 4 AM (`WATCHTOWER_SCHEDULE`): for each app with a newer image it dumps its databases, copies its data, then pulls the image and recreates the container. Vaultwarden, Pocket ID, and CrowdSec (`hold: 3`) take a new image only once it has been out 3 days, counted from when the homelab first saw it, or once they have waited 14 days; `./homelab update <app>` takes it at once.
 
@@ -91,6 +91,7 @@ The background agent runs `./homelab update --all` at 4 AM (`WATCHTOWER_SCHEDULE
 | [Seerr](<../services/media automation/Seerr.md>) | `ghcr.io/seerr-team/seerr:latest` |
 | [LazyLibrarian](<../services/media automation/LazyLibrarian.md>) | `lscr.io/linuxserver/lazylibrarian:latest` |
 | [qBittorrent](<../services/media automation/qBittorrent.md>) | `lscr.io/linuxserver/qbittorrent:latest` |
+| [SABnzbd](<../services/media automation/SABnzbd.md>) | `lscr.io/linuxserver/sabnzbd:latest` |
 | [Gluetun](<../services/media automation/Gluetun.md>) | `qmcgaw/gluetun:latest` |
 | [Mealie](<../services/household/Mealie.md>) | `ghcr.io/mealie-recipes/mealie:latest` |
 | [Vikunja](<../services/household/Vikunja.md>) | `vikunja/vikunja:latest` |
