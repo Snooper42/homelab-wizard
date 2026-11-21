@@ -59,6 +59,9 @@ type FakeContainer struct {
 	ExitCode  int
 	OOMKilled bool
 	Error     string
+	// NetworkMode is HostConfig.NetworkMode ("container:id1" for one in
+	// the second container's network, its ids being id0, id1, …).
+	NetworkMode string
 }
 
 // Output implements Runner.
@@ -190,6 +193,7 @@ func (f *FakeRunner) inspect() ([]byte, error) {
 			"Config":          map[string]any{"Image": c.Image, "Labels": labels},
 			"State":           state,
 			"NetworkSettings": map[string]any{"Ports": ports},
+			"HostConfig":      map[string]any{"NetworkMode": c.NetworkMode},
 		})
 	}
 	return json.Marshal(out)

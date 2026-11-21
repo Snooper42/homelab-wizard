@@ -11,6 +11,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -45,6 +46,9 @@ type App struct {
 	URL       string // from this machine, e.g. http://localhost:8989
 	Internal  string // from other containers, e.g. http://sonarr:8989
 	ConfigDir string // the folder mounted at /config
+	// Stale, when set, says why other apps can't reach it: it lives in the
+	// network of a Gluetun that has since been made again (followContainers).
+	Stale string
 }
 
 // Wirer connects the running apps.
@@ -72,7 +76,42 @@ var Wireable = []string{"prowlarr", "sonarr", "radarr", "lidarr", "bazarr", "see
 func New(c *catalog.Catalog, containers []docker.Container, env map[string]string, home string) *Wirer {
 	report := detect.Analyze(c, containers)
 	running := func(id string) bool { st, _ := report.State(id); return st == detect.Running }
-	return &Wirer{Apps: AppsFrom(c, running, env, home), Env: env, Wait: 3 * time.Minute}
+	apps := AppsFrom(c, running, env, home)
+	followContainers(apps, report)
+	return &Wirer{Apps: apps, Env: env, Wait: 3 * time.Minute}
+}
+
+// followContainers corrects where Prowlarr is reached from where its
+// container runs, when the engine says (HostConfig.NetworkMode). The
+// setting (catalog.SearchThroughVPN) says where it should be, but a
+// Prowlarr made before searching went through the VPN keeps its own
+// network until it is made again: the other apps reach it at prowlarr, and
+// its searches still leave from home. One left in the network of a Gluetun
+// made again since has no network at all (Stale).
+func followContainers(apps map[string]App, report *detect.Report) {
+	p, ok := apps[catalog.SearchApp]
+	if !ok {
+		return
+	}
+	_, m := report.State(catalog.SearchApp)
+	if m == nil || m.Container.NetworkMode == "" {
+		return
+	}
+	if p.Internal == "" {
+		return
+	}
+	port := p.Internal[strings.LastIndex(p.Internal, ":")+1:]
+	mode := m.Container.NetworkMode
+	if !strings.HasPrefix(mode, "container:") {
+		p.Internal = "http://" + catalog.SearchApp + ":" + port
+		apps[catalog.SearchApp] = p
+		return
+	}
+	p.Internal = "http://" + catalog.VPNApp + ":" + port
+	if _, g := report.State(catalog.VPNApp); g != nil && g.Container.ID != "" && !strings.HasPrefix(g.Container.ID, strings.TrimPrefix(mode, "container:")) {
+		p.Stale = "Prowlarr is still on the network of a VPN container that has since been replaced, so nothing can reach it. Start media automation again (homelab up, or Fix it on Status), then Connect apps."
+	}
+	apps[catalog.SearchApp] = p
 }
 
 // apiVersion is the API path of each *arr app.
@@ -275,6 +314,9 @@ func (w *Wirer) ready(ctx context.Context, id string) (string, error) {
 	}
 	if err, ok := w.notUp[id]; ok {
 		return "", err
+	}
+	if why := w.Apps[id].Stale; why != "" {
+		return "", errors.New(why) // waiting wouldn't help
 	}
 	deadline := time.Now().Add(w.Wait)
 	last := fmt.Errorf("no API key in %s yet", filepath.Join(w.Apps[id].ConfigDir, "config.xml"))
