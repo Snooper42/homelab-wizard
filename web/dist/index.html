@@ -120,7 +120,7 @@
       <div class="toolbar"><button id="recoveryKit" class="btn" title="A page to print and keep with your papers: where the backups and passphrases are, and how to restore (no passwords in it)">Recovery kit</button> <button id="openDuplicati" class="btn" title="Every backup and its files, in the backup app (Duplicati)" hidden>Browse the backups</button> <button id="backupNow" class="primary small">Back up now</button></div>
     </div>
     <div id="backupTiles" class="tiles facts"></div>
-    <div id="backupPanel" class="panel" hidden><h2 id="backupTitle" aria-live="polite"></h2><div id="backupProgress" class="progress" hidden><div class="track"><span class="fill"></span></div><p class="step" aria-live="polite"></p></div><div id="backupApps" aria-live="polite"></div><details id="backupDetails" class="jobdetails" open><summary>Show details</summary><pre id="backupLog" role="log"></pre></details></div>
+    <div id="backupPanel" class="panel" hidden><div class="row"><h2 id="backupTitle" aria-live="polite"></h2><button id="backupDone" class="btn" hidden title="Takes the finished job off this screen">Done</button></div><div id="backupProgress" class="progress" hidden><div class="track"><span class="fill"></span></div><p class="step" aria-live="polite"></p></div><div id="backupApps" aria-live="polite"></div><details id="backupDetails" class="jobdetails" open><summary>Show details</summary><pre id="backupLog" role="log"></pre></details></div>
     <div id="copiesCard" class="card">
       <div class="row"><h2>Each app's database</h2><span class="muted">Copied every night at 03:30</span></div>
       <table class="grouped copies"><tbody id="backupRows"></tbody></table>
@@ -154,7 +154,7 @@
     <div id="setupProgress" class="progress" hidden><div class="track"><span class="fill"></span></div><p class="step" aria-live="polite"></p></div>
     <div id="setupApps" aria-live="polite"></div>
     <details id="setupDetails" class="jobdetails" open><summary>Show details</summary><pre id="setupLog" role="log" hidden></pre></details>
-    <p class="jobclear"><button id="setupClear" class="btn" hidden title="Takes the finished job's bar, apps, and log off this screen">Clear</button></p>
+    <p class="jobclear"><button id="setupClear" class="btn" hidden title="Takes the finished job's bar, apps, and log off this screen">Done</button></p>
     <p id="checkWait" class="muted" hidden>The rest of setting up shows here once your homelab is made.</p>
     <p id="firstApps" hidden>Next, pick your first apps on <button id="firstAppsGo" class="linkbtn">Choose apps</button>. Each app's own steps join this list once it is installed.</p>
     <div id="checkHead" class="row finishhead"><h2 id="checkTitle">Finish setting up</h2><span id="checkCount" class="muted"></span>

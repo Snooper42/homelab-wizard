@@ -2007,6 +2007,10 @@ const smokes = [
     await page.waitForSelector('#backupTitle:has-text("Backup done")', { timeout: 5000 });
     await page.waitForSelector('#backupProgress:not([hidden]) .step:text-is("Done")', { timeout: 5000 });
     if (await page.isVisible('#cliProgress')) throw new Error('the command sheet took the backup steps');
+    // The owner, Nov 20: a finished job doesn't just sit there. Its log folds away, and Done takes the panel off.
+    if (await page.evaluate(() => document.querySelector('#backupDetails').open)) throw new Error('the log of a backup that went fine stays open');
+    await page.click('#backupDone');
+    await page.waitForSelector('#backupPanel', { state: 'hidden', timeout: 2000 });
   } },
   { name: 'Do the steps I can', screen: 'setup', mock: { runMarksDone: true, setup: [
     { id: 'a', title: 'Step A', why: 'x', state: 'todo', run: [['a']] },
@@ -2014,9 +2018,12 @@ const smokes = [
     { id: 'c', title: 'Step C', why: 'x', state: 'waiting', run: [['c']] },
     { id: 'd', title: 'Step D', why: 'x', state: 'todo', settings: ['X'] }] }, run: async (page) => {
     await page.click('#runAll:has-text("Do the 2 I can do for you")', { timeout: 5000 });
-    await page.waitForSelector('#setupLog:has-text("What is left needs you")', { timeout: 8000 });
+    await page.waitForSelector('#setupLog:has-text("What is left needs you")', { state: 'attached', timeout: 8000 });
     const ran = await page.evaluate(() => window.__MOCK.ran);
     if (ran.join() !== 'a,b') throw new Error(`ran ${ran}`);
+    // The owner, Nov 20: finished, its log folds away and Done takes the job off the screen.
+    await page.waitForSelector('#setupClear:not([hidden]):text-is("Done")', { timeout: 5000 });
+    if (await page.evaluate(() => document.querySelector('#setupDetails').open)) throw new Error('the log of steps that went fine stays open');
     if (await page.isVisible('#runAll')) throw new Error('nothing is left to run');
   } },
   // Setup is in the sidebar while something needs you; once every step is

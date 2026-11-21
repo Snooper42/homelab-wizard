@@ -1,6 +1,7 @@
 // Backups: the copies and Duplicati's jobs as last read, and the backup
 // screen's commands.
 import { mountBackupTiles, mountCopyRows, mountJobs, mountKopia, mountVault, placeName } from '../backups/Backups';
+import { jobFinished, jobStarted } from '../job/done';
 import { store } from '../store';
 import { statusById, statusData } from './status';
 import { cliProgress, endJob, startJob } from '../jobs';
@@ -63,6 +64,7 @@ async function backupTask(action, busy, done, failed) {
   const panel = $('backupPanel'), log = $('backupLog');
   const btns = () => [$('backupNow'), document.getElementById('restoreTest')].filter(Boolean) as HTMLButtonElement[];
   panel.hidden = false;
+  jobStarted($('backupDetails') as HTMLDetailsElement, $('backupDone'));
   $('backupTitle').textContent = busy;
   log.textContent = '';
   btns().forEach((b) => { b.disabled = true; });
@@ -79,6 +81,7 @@ async function backupTask(action, busy, done, failed) {
     }
   }, (behind) => { $('backupTitle').textContent = `${waitWords(behind)}, then: ${busy}`; });
   $('backupTitle').textContent = ok ? done : failed;
+  jobFinished($('backupDetails') as HTMLDetailsElement, $('backupDone'), ok);
   btns().forEach((b) => { b.disabled = false; });
   loadBackups();
 }
@@ -92,6 +95,7 @@ async function moveTask(direction, button) {
   const panel = $('backupPanel'), log = $('backupLog');
   button.disabled = true;
   panel.hidden = false;
+  jobStarted($('backupDetails') as HTMLDetailsElement, $('backupDone'));
   $('backupTitle').textContent = direction === 'out' ? 'Moving out (a backup first, then packing)…' : 'Moving in…';
   log.textContent = '';
   const busy = $('backupTitle').textContent;
@@ -105,9 +109,11 @@ async function moveTask(direction, button) {
   delete button.dataset.sure;
   button.textContent = direction === 'out' ? 'Move out…' : 'Move in…';
   if (ok && !file) { panel.hidden = true; return; }
+  jobFinished($('backupDetails') as HTMLDetailsElement, $('backupDone'), ok);
   $('backupTitle').textContent = !ok ? 'The move stopped: the log says why'
     : direction === 'out' ? 'Packed. This machine is stopped: take the file and the media drive to the new one' : 'Moved in: the apps that ran before are starting';
 }
+$('backupDone').onclick = () => { $('backupPanel').hidden = true; };
 $('moveOut').onclick = (e) => moveTask('out', e.target);
 $('moveIn').onclick = (e) => moveTask('in', e.target);
 $('backupNow').onclick = () => backupTask('backup', 'Backing up…', 'Backup done', 'The backup failed: the log says which step');
