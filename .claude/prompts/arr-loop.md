@@ -8,7 +8,7 @@ The owner, Nov 19, 2026: improve the \*arr stack that's already there, so someon
 
 With no interval, /loop paces itself. Each round re-reads this file, so to steer the loop, edit it on main.
 
-**Paused:** no. (Change this to **yes** and push to pause the loop: a round that reads yes opens nothing, merges nothing, says it's paused, and waits.)
+**Paused:** yes (the owner, Nov 21: weekly usage nearly spent; pick back up Tuesday). (Change this to **yes** and push to pause the loop: a round that reads yes opens nothing, merges nothing, says it's paused, and waits.)
 
 ## The goal in one line
 
