@@ -1,6 +1,7 @@
 // Choose apps: the catalog, the picks, the plan, the install, and wiring
 // the apps together.
 import { catalogProblem, mountBundles, mountGroups, mountInputs, mountPlan, mountStarters } from '../choose/Choose';
+import { questions } from '../choose/questions';
 import { appNote, systemOf } from '../differs';
 import { mountJobApps } from '../job/Apps';
 import { mountCategories, mountStarted, mountWiring, type WireLink } from '../choose/Started';
@@ -172,6 +173,8 @@ let settingHelp: Record<string, settings.Setting> | null = null;
 async function renderInputs(p: api.Plan) {
   const ids = new Set([...selected, ...p.start, ...p.skips.map((s) => s.app)]);
   const keys = [...new Set(catalog.apps.filter((a) => ids.has(a.id)).flatMap((a) => a.inputs || []))];
+  // The plain questions for the chosen apps (questions.ts), after what they need.
+  for (const [k, q] of Object.entries(questions)) if (q.apps.some((id) => ids.has(id)) && !keys.includes(k)) keys.push(k);
   if (keys.length && !settingHelp) {
     try { settingHelp = Object.fromEntries((await go().Settings()).map((s) => [s.key, s])); } catch { settingHelp = {}; }
   }

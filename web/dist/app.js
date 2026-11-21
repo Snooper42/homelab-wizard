@@ -5223,6 +5223,19 @@
     }
   };
 
+  // web/src/choose/questions.ts
+  var questions = {
+    MEDIA_QUALITY: {
+      ask: "What do you mostly watch on?",
+      apps: ["sonarr", "radarr"],
+      answers: [
+        { value: "save-space", label: "Save space", detail: "1080p, the smaller files first: about 2–4 GB a film. Infuse, an Apple TV and most TVs play them." },
+        { value: "hd", label: "An HD TV or phones", detail: "The best 1080p: about 8–15 GB a film." },
+        { value: "4k", label: "A 4K TV", detail: "4K when there is one, else 1080p: about 15–25 GB a film." }
+      ]
+    }
+  };
+
   // web/src/choose/Choose.tsx
   var starterLooks = { photos: ["photos", "var(--tint-orange)"], passwords: ["lock", "var(--tint-green)"], movies: ["film", "var(--tint-red)"], music: ["music", "var(--tint-pink)"], files: ["folder", "var(--tint-blue)"] };
   var lit = (p3, selected2) => !!p3.apps.length && p3.apps.every((id2) => selected2.has(id2));
@@ -5398,6 +5411,16 @@
         const m3 = meta[k3] || {};
         const secret = m3.secret ?? /KEY|TOKEN|PASS|SECRET/.test(k3);
         const walk = walkthroughs[k3];
+        const q2 = questions[k3];
+        if (q2) {
+          const current2 = values[k3] || m3.value || q2.answers[0].value;
+          const picked = q2.answers.find((a3) => a3.value === current2) || q2.answers[0];
+          return /* @__PURE__ */ u3("div", { class: "field question", role: "group", "aria-label": q2.ask, children: [
+            /* @__PURE__ */ u3("span", { class: "fieldName", children: q2.ask }),
+            /* @__PURE__ */ u3("span", { class: "answers", children: q2.answers.map((a3) => /* @__PURE__ */ u3("button", { type: "button", class: a3 === picked ? "small tint" : "small", "aria-pressed": a3 === picked, onClick: () => input2(k3, a3.value), children: a3.label }, a3.value)) }),
+            /* @__PURE__ */ u3("span", { class: "help", children: picked.detail })
+          ] }, k3);
+        }
         return /* @__PURE__ */ u3(S, { children: [
           /* @__PURE__ */ u3("label", { class: "field", children: [
             /* @__PURE__ */ u3("span", { class: "fieldName", children: label(k3) }),
@@ -5815,6 +5838,7 @@
   async function renderInputs(p3) {
     const ids = /* @__PURE__ */ new Set([...selected, ...p3.start, ...p3.skips.map((s3) => s3.app)]);
     const keys2 = [...new Set(catalog.apps.filter((a3) => ids.has(a3.id)).flatMap((a3) => a3.inputs || []))];
+    for (const [k3, q2] of Object.entries(questions)) if (q2.apps.some((id2) => ids.has(id2)) && !keys2.includes(k3)) keys2.push(k3);
     if (keys2.length && !settingHelp) {
       try {
         settingHelp = Object.fromEntries((await go().Settings()).map((s3) => [s3.key, s3]));
@@ -7045,6 +7069,7 @@
     "PROTONVPN_WIREGUARD_PRIVATE_KEY",
     "PROTONVPN_SERVER_COUNTRIES",
     "SEARCH_THROUGH_VPN",
+    "MEDIA_QUALITY",
     "STALL_RESCUE_HOURS",
     "QBITTORRENT_PASSWORD",
     "USENET_HOST",
@@ -7098,6 +7123,7 @@
     PROTONVPN_WIREGUARD_PRIVATE_KEY: "ProtonVPN WireGuard key",
     PROTONVPN_SERVER_COUNTRIES: "ProtonVPN server countries",
     SEARCH_THROUGH_VPN: "Search through the VPN",
+    MEDIA_QUALITY: "What you mostly watch on (save-space, hd or 4k)",
     STALL_RESCUE_HOURS: "Try another after a stuck download (hours)",
     USENET_HOST: "Usenet server",
     USENET_PORT: "Usenet server port (SSL; empty: 563)",

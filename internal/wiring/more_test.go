@@ -180,15 +180,15 @@ func TestSeerrSendsRequestsToSonarrAndRadarr(t *testing.T) {
 
 	apps["seerr"] = App{ID: "seerr", Name: "Seerr", URL: seerrURL, ConfigDir: seerrDir(t, "jkey", true)}
 	got = linkStates(w.Apply(context.Background(), nil))
-	if l := got["Seerr sends requests to Sonarr"]; l.State != "done" || l.Detail != "requests use HD-1080p, into /tv" {
+	if l := got["Seerr sends requests to Sonarr"]; l.State != "done" || l.Detail != "requests use Homelab, into /tv" {
 		t.Fatalf("sonarr: %+v", l)
 	}
 	s := seerr["sonarr"][0]
-	if s["hostname"] != "sonarr" || s["port"] != float64(8989) || s["apiKey"] != "skey" || s["activeProfileId"] != float64(4) || s["activeDirectory"] != "/tv" || s["isDefault"] != true || s["seriesType"] != "standard" {
+	if s["hostname"] != "sonarr" || s["port"] != float64(8989) || s["apiKey"] != "skey" || s["activeProfileName"] != "Homelab" || s["activeAnimeProfileName"] != "Homelab" || s["activeDirectory"] != "/tv" || s["isDefault"] != true || s["seriesType"] != "standard" {
 		t.Fatalf("sonarr in seerr: %+v", s)
 	}
 	r := seerr["radarr"][0]
-	if r["hostname"] != "radarr" || r["activeProfileName"] != "Any" || r["activeDirectory"] != "/movies" || r["minimumAvailability"] != "released" {
+	if r["hostname"] != "radarr" || r["activeProfileName"] != "Homelab" || r["activeDirectory"] != "/movies" || r["minimumAvailability"] != "released" {
 		t.Fatalf("radarr in seerr: %+v", r)
 	}
 

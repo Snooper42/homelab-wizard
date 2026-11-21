@@ -4502,6 +4502,22 @@ const smokes = [
     const opened = await page.evaluate(() => window.__MOCK.opened);
     if (opened !== 'https://account.protonvpn.com/downloads') throw new Error(`opened ${opened}`);
   } },
+  // Arr item 7: one plain question instead of quality profiles. Picking Sonarr asks "What do you mostly watch on?", with
+  // Save space chosen at first (the owner's answer, Nov 21) and its size said; another answer is a click, and no code shows.
+  { name: 'Choosing Sonarr asks what you mostly watch on, Save space first', screen: 'choose', run: async (page) => {
+    await page.click('#more > summary');
+    await page.fill('#search', 'sonarr');
+    await page.click('#groups label.app:has(strong:text-is("Sonarr")) input');
+    const q = page.locator('#inputs .question');
+    await q.waitFor({ timeout: 5000 });
+    if (!/What do you mostly watch on\?/.test(await q.textContent())) throw new Error('no question');
+    const pressed = async () => (await q.locator('button[aria-pressed="true"]').allTextContents()).join();
+    if (await pressed() !== 'Save space' || !/2–4 GB a film/.test(await q.locator('.help').textContent())) throw new Error(`at first: ${await pressed()}`);
+    await q.locator('button:has-text("A 4K TV")').click();
+    await page.waitForFunction(() => document.querySelector('#inputs .question button[aria-pressed="true"]')?.textContent === 'A 4K TV', null, { timeout: 3000 });
+    if (!/15–25 GB/.test(await q.locator('.help').textContent())) throw new Error('the 4K answer says no size');
+    if (/MEDIA_QUALITY|save-space/.test(await q.textContent())) throw new Error('the question shows its code');
+  } },
   // Usability task 3, item 21: Tab from an app's checkbox in Choose apps reaches its own links (Open, Settings).
   { name: 'Choose apps: Tab reaches each app’s Open and Settings', screen: 'choose', run: async (page) => {
     await page.click('#more > summary');
