@@ -2958,6 +2958,10 @@ struct TransactionsView: View {
     @State private var importing = false
     /// The rules imports follow (import 4 of 4).
     @State private var showingRules = false
+    /// The column it's sorted by, kept on this device (the computer's column headers).
+    @State private var sort = TransactionSort.kept()
+    /// How many rows are drawn: 200, and 200 more with each Show More.
+    @State private var drawn = TransactionSort.page
     @Namespace private var zoom
     @Environment(\.dynamicTypeSize) private var typeSize
 
@@ -2986,16 +2990,42 @@ struct TransactionsView: View {
             .sorted { ($0.kindOrder, $0.name.localizedLowercase) < ($1.kindOrder, $1.name.localizedLowercase) }
     }
 
-    private var months: [MonthGroup] {
+    /// What a new search, filter or account starts Show More again from.
+    private struct DrawnFor: Equatable {
+        let search: String
+        let account: String?
+        let onlyNew: Bool
+        let filter: TransactionFilter
+    }
+
+    private var drawnFor: DrawnFor {
+        DrawnFor(search: search, account: account, onlyNew: onlyNew, filter: filter)
+    }
+
+    /// Every transaction the search, account and filter keep, in the order picked.
+    private var ordered: [FinanceTransaction] {
         guard let ledger = finances.ledger else { return [] }
-        let calendar = Calendar.current
         // A search looks in every account (the switcher is hidden while searching).
         let shown = search.isEmpty ? account : nil
+        let categories = finances.plan?.categories ?? []
+        let kept = ledger.newestFirst.filter { t in
+            guard t.matches(search) else { return false }
+            if let shown, t.account != shown, t.to != shown { return false }
+            if onlyNew, !finances.isNew(t) { return false }
+            if filter.isOn, !filter.keeps(t, categories: categories) { return false }
+            return true
+        }
+        guard !sort.isNewestFirst else { return kept }
+        return sort.sorted(kept,
+                           payee: { TransactionDetailView.title(of: $0, finances: finances) },
+                           accountName: { finances.accountName($0) ?? "Account" })
+    }
+
+    /// By date, the rows drawn in their months.
+    private func months(_ items: [FinanceTransaction]) -> [MonthGroup] {
+        let calendar = Calendar.current
         var out: [MonthGroup] = []
-        for t in ledger.newestFirst where t.matches(search) {
-            if let shown, t.account != shown, t.to != shown { continue }
-            if onlyNew, !finances.isNew(t) { continue }
-            if filter.isOn, !filter.keeps(t, categories: finances.plan?.categories ?? []) { continue }
+        for t in items {
             let month = t.date.flatMap { calendar.dateInterval(of: .month, for: $0)?.start } ?? .distantPast
             if out.last?.month == month {
                 out[out.count - 1].items.append(t)
@@ -3004,6 +3034,39 @@ struct TransactionsView: View {
             }
         }
         return out
+    }
+
+    /// Date, payee, category, account or amount, and which way: the
+    /// computer's column headers, kept on this device.
+    private var sortMenu: some View {
+        Menu {
+            Section("Sort By") {
+                Picker("Sort By", selection: Binding(get: { sort.by }, set: { setSort(sort.picking($0)) })) {
+                    ForEach(TransactionSort.Column.allCases, id: \.self) { column in
+                        Text(verbatim: column.title).tag(column)
+                    }
+                }
+                .pickerStyle(.inline)
+                .labelsHidden()
+            }
+            Section {
+                Picker("Order", selection: Binding(get: { sort.up }, set: { setSort(TransactionSort(by: sort.by, up: $0)) })) {
+                    ForEach([sort.by.firstUp, !sort.by.firstUp], id: \.self) { up in
+                        Text(verbatim: sort.by.way(up: up)).tag(up)
+                    }
+                }
+                .pickerStyle(.inline)
+                .labelsHidden()
+            }
+        } label: {
+            Label("Sort", systemImage: sort.isNewestFirst ? "arrow.up.arrow.down.circle" : "arrow.up.arrow.down.circle.fill")
+        }
+        .sensoryFeedback(.selection, trigger: sort)
+    }
+
+    private func setSort(_ next: TransactionSort) {
+        next.keep()
+        withAnimation(.snappy) { sort = next }
     }
 
     /// Money in or out, one category, or only $100 or more.
@@ -3080,8 +3143,10 @@ struct TransactionsView: View {
     @ViewBuilder
     private var list: some View {
         let newCount = finances.newTransactionCount
-        let groups = months
-        let running = runningBalances(groups)
+        let all = ordered
+        let rows = Array(all.prefix(drawn))
+        let groups = sort.byDay ? months(rows) : []
+        let running = sort.isNewestFirst ? runningBalances(groups) : [:]
         List(selection: listSelection) {
             if search.isEmpty, let view = finances.plan, !view.plan.accounts.isEmpty {
                 Section {
@@ -3107,7 +3172,7 @@ struct TransactionsView: View {
             }
             Section {
                 // Under the heading, not over it.
-                if finances.ledger == nil || groups.isEmpty {
+                if finances.ledger == nil || all.isEmpty {
                     emptyState
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 24)
@@ -3119,7 +3184,7 @@ struct TransactionsView: View {
                 // "Latest Transactions" broke mid-word ("Trans- actions", large-transactions).
                 (typeSize.isAccessibilitySize ? AnyLayout(VStackLayout(alignment: .leading, spacing: 6))
                                               : AnyLayout(HStackLayout(alignment: .firstTextBaseline))) {
-                    Text("Latest Transactions")
+                    Text(verbatim: sort.heading)
                         .font(.title2.weight(.bold))
                         .foregroundStyle(Theme.ink)
                     if !typeSize.isAccessibilitySize { Spacer() }
@@ -3130,6 +3195,12 @@ struct TransactionsView: View {
                         .buttonStyle(.bordered)
                         .buttonBorderShape(.capsule)
                         .controlSize(.small)
+                    } else if !sort.isNewestFirst {
+                        Button("Newest First") { setSort(.newestFirst) }
+                            .buttonStyle(.bordered)
+                            .buttonBorderShape(.capsule)
+                            .controlSize(.small)
+                            .dynamicTypeSize(...DynamicTypeSize.accessibility1)
                     } else if newCount > 0 || onlyNew {
                         Button(onlyNew ? "Show All" : "\(newCount) New") {
                             withAnimation(.snappy) { onlyNew.toggle() }
@@ -3145,26 +3216,20 @@ struct TransactionsView: View {
             ForEach(groups) { group in
                 Section(FinanceLedger.sectionTitle(group.month, trackFrom: finances.plan?.plan.trackFrom)) {
                     ForEach(group.items) { t in
-                        let isNew = finances.isNew(t)
-                        NavigationLink {
-                            TransactionDetailView(transaction: t, finances: finances)
-                                .zoomTransition(id: t.id, in: zoom)
-                        } label: {
-                            WalletTransactionRow(transaction: t, finances: finances, isNew: isNew, balanceAfter: running[t.id])
-                                .zoomSource(id: t.id, in: zoom)
-                        }
-                        .swipeActions(edge: .leading) {
-                            if isNew {
-                                Button {
-                                    finances.markReviewed([t])
-                                } label: {
-                                    Label("Reviewed", systemImage: "checkmark")
-                                }
-                                .tint(Theme.accent)
-                            }
-                        }
+                        row(t, balanceAfter: running[t.id], withYear: false)
                     }
                 }
+            }
+            // By anything but the date: one list, each row with its day.
+            if !sort.byDay, !rows.isEmpty {
+                Section {
+                    ForEach(rows) { t in
+                        row(t, balanceAfter: nil, withYear: true)
+                    }
+                }
+            }
+            if all.count > rows.count {
+                showMore(total: all.count)
             }
         }
         .themedCanvas()
@@ -3176,6 +3241,8 @@ struct TransactionsView: View {
             if finances.plan == nil { await finances.loadPlan() }
         }
         .refreshable { await finances.loadLedger() }
+        // A new search, filter or account starts again from the first 200.
+        .onChange(of: drawnFor) { drawn = TransactionSort.page }
         .navigationTitle(selecting ? (selected.isEmpty ? "Select" : "\(selected.count) Selected") : "Transactions")
         #if os(iOS)
         .environment(\.editMode, .constant(selecting ? .active : .inactive))
@@ -3237,6 +3304,9 @@ struct TransactionsView: View {
         #endif
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
+                sortMenu
+            }
+            ToolbarItem(placement: .primaryAction) {
                 filterMenu
             }
             if newCount > 0 {
@@ -3270,6 +3340,41 @@ struct TransactionsView: View {
         }
         .sensoryFeedback(.selection, trigger: account)
         .sensoryFeedback(.success, trigger: finances.savedCount)
+    }
+
+    /// A transaction's row, opening its page; swiped, Reviewed while it's new.
+    private func row(_ t: FinanceTransaction, balanceAfter: Double?, withYear: Bool) -> some View {
+        let isNew = finances.isNew(t)
+        return NavigationLink {
+            TransactionDetailView(transaction: t, finances: finances)
+                .zoomTransition(id: t.id, in: zoom)
+        } label: {
+            WalletTransactionRow(transaction: t, finances: finances, isNew: isNew, balanceAfter: balanceAfter, withYear: withYear)
+                .zoomSource(id: t.id, in: zoom)
+        }
+        .swipeActions(edge: .leading) {
+            if isNew {
+                Button {
+                    finances.markReviewed([t])
+                } label: {
+                    Label("Reviewed", systemImage: "checkmark")
+                }
+                .tint(Theme.accent)
+            }
+        }
+    }
+
+    /// Show 200 More under a long list, and how many of how many are shown.
+    private func showMore(total: Int) -> some View {
+        Section {
+            Button("Show \(TransactionSort.nextPage(drawn: drawn, of: total)) More") {
+                withAnimation(.snappy) { drawn += TransactionSort.page }
+            }
+            .frame(maxWidth: .infinity)
+        } footer: {
+            Text(verbatim: sort.moreWords(drawn: drawn, of: total))
+                .frame(maxWidth: .infinity)
+        }
     }
 
     /// One account picked, the whole of it shown: what it held after each day,
@@ -3475,6 +3580,9 @@ struct WalletTransactionRow: View {
     let isNew: Bool
     /// Transactions' running balance, on the day's latest: what the account held after the day.
     var balanceAfter: Double? = nil
+    /// In one list (sorted by other than the date): the day with its year
+    /// when it isn't this year's.
+    var withYear = false
 
     var body: some View {
         HStack(spacing: 12) {
@@ -3502,7 +3610,7 @@ struct WalletTransactionRow: View {
                 }
                 // What it was and the day: one line, as Wallet's, or two when it needs them
                 // (a transfer's other account and the day cut off as "From Chase Checki…").
-                Text(verbatim: RowWords.line([subtitle, TransactionsView.dayWords(transaction.date)]))
+                Text(verbatim: RowWords.line([subtitle, withYear ? TransactionSort.dayWords(transaction.date) : TransactionsView.dayWords(transaction.date)]))
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .lineLimit(2)

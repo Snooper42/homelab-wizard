@@ -9,6 +9,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 ### New
 
 <!-- The iPhone and iPad app (lane 4): add a line just below this one. -->
+- **Sort Transactions on the Homelab app:** on the iPhone and iPad, **Sort** beside Filter sorts Transactions by the date, payee, category, account or amount, either way, as the computer's column headers do, and each device remembers its choice. By anything but the date it's one list, each row with its day, and **Newest First** goes back. A long list shows 200 rows at a time, with **Show 200 More**.
 - **Sort these on the Homelab app's Transactions:** as on the computer, the top of Transactions on the iPhone and iPad lists what looks like a planned payment, to **Link** or say **Not It**, and money out of one of your accounts with the same into another, to **Join** as one transfer or say **Not One Transfer**. Each has Undo, and works away from home too.
 <!-- Everything else (the other lanes): add a line just below this one. -->
 - **Seerr signs in to Jellyfin for you:** `homelab wire --apply --jellyfin-user NAME` asks once for that Jellyfin administrator's password, does Seerr's first sign-in with it, ticks the film and TV libraries, and links Seerr to Sonarr and Radarr in the same run, so there's no Seerr setup page to go through and no second Connect apps. The password is used once and saved nowhere. A wrong password or a user who isn't an administrator is said in words, and signing in by hand still works. Seerr now reaches the Jellyfin on this computer on Linux too.
