@@ -371,6 +371,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 ### Fixed
 
 <!-- The iPhone and iPad app (lane 4): add a line just below this one. -->
+- **A card paid off with each paycheck pays what you really spend on it:** on Bills, on the computer and the Homelab app, each payoff after the next one counted the card's typed *Spending on it between paychecks* guess, so a later payday could show a small card payment where the usual is a few hundred. Now it's worked out from the last three months of the card's own charges, less refunds, leaving out its planned payments. The card's form says what it worked out, and an amount you type still wins: clear the box to use the worked-out one.
 <!-- Everything else (the other lanes): add a line just below this one. -->
 - **Setup's checklist in the Homelab app shows when you open Setup,** not only after pulling to refresh; *Reading the checklist…* while it loads. And on the iPad at the largest text, the sidebar's names stay whole and the Overnight line keeps its colon with its word.
 - **Settings › Phones and iPads and Setup's checklist in the Homelab app load even when opened right after the app starts:** they asked once, before the app knew what this phone may see, and stayed on their spinner. And the Storage page no longer says *Storage* twice.

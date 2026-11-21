@@ -53,6 +53,12 @@ type View struct {
 	// saved: both are read again from the plan and the ledger each time.
 	WorthEstimated []Point     `json:"worthEstimated,omitempty"`
 	WorthBack      []WorthBack `json:"worthBack,omitempty"`
+	// CardSpend is, for each card paid off in full with each paycheck, what
+	// goes on it between paychecks as the ledger says (cardSpend), by
+	// account ID. Its payoff after the first payday pays it when no
+	// Account.Spend is typed in; a typed one wins. A card with too little
+	// to go on has none.
+	CardSpend map[string]float64 `json:"cardSpend,omitempty"`
 	// Next is each payment's next day from today (YYYY-MM-DD), by ID, read
 	// from its own schedule as far as two years ahead: a yearly one comes
 	// after the paychecks in Periods. One with no day ahead has none.
@@ -300,6 +306,10 @@ func ProjectWith(p Plan, l Ledger, today time.Time, periods int) View {
 	p = p.carsNow(today)
 	l = l.from(p.TrackFrom).inHome(p)
 	p = p.inHome()
+	// A card paid off with each paycheck with no spending typed in pays,
+	// after its first payday, what the ledger says goes on it.
+	v.CardSpend = p.cardSpend(l, today)
+	p = p.withCardSpend(v.CardSpend)
 	p.Payments = p.WithCards()
 	for _, a := range p.Accounts {
 		if a.Kind == Checking {
@@ -1114,4 +1124,80 @@ func txSides(t Transaction) []side {
 		out = append(out, side{t.To, -t.Amount})
 	}
 	return out
+}
+
+// cardSpendDays is how far back a card's spending is read: about three
+// months.
+const cardSpendDays = 91
+
+// cardSpend reads, for each card paid off in full with each paycheck, what
+// goes on it between paychecks from the ledger (already from Track from):
+// its charges less its refunds over the last cardSpendDays to today, a day
+// at a time, times the days between paychecks. Neither a planned payment's
+// transaction (that payment is its own row) nor a move into or out of it
+// counts. The days start at its first transaction when that is later. A
+// card with under two weeks of its own transactions, or nothing spent, has
+// none.
+func (p Plan) cardSpend(l Ledger, today time.Time) map[string]float64 {
+	out := map[string]float64{}
+	loc := today.Location()
+	pays := p.Dates(Schedule{Every: Paycheck}, today, today.AddDate(1, 0, 0))
+	if len(pays) < 2 {
+		return out
+	}
+	between := pays[len(pays)-1].Sub(pays[0]).Hours() / 24 / float64(len(pays)-1)
+	from := today.AddDate(0, 0, -cardSpendDays+1)
+	for _, a := range p.Accounts {
+		if a.Kind != Card || !a.PaidEach {
+			continue
+		}
+		var first time.Time
+		spent := 0.0
+		for _, t := range l.Transactions {
+			if t.Account != a.ID {
+				continue
+			}
+			d, err := day(t.Date, loc)
+			if err != nil || d.After(today) {
+				continue
+			}
+			if first.IsZero() || d.Before(first) {
+				first = d
+			}
+			if d.Before(from) || t.To != "" || t.Payment != "" {
+				continue
+			}
+			spent -= t.Amount
+		}
+		if first.IsZero() || spent < 0.005 {
+			continue
+		}
+		start := from
+		if first.After(start) {
+			start = first
+		}
+		days := today.Sub(start).Hours()/24 + 1
+		if days < 14 {
+			continue
+		}
+		out[a.ID] = cents(spent / days * between)
+	}
+	return out
+}
+
+// withCardSpend is p with each card paid off with each paycheck that has
+// no spending typed in given what the ledger says goes on it (cardSpend).
+// The accounts are copied: p's own are left as they are.
+func (p Plan) withCardSpend(spend map[string]float64) Plan {
+	if len(spend) == 0 {
+		return p
+	}
+	accounts := append([]Account{}, p.Accounts...)
+	for i, a := range accounts {
+		if a.Kind == Card && a.PaidEach && a.Spend <= 0 && spend[a.ID] > 0 {
+			accounts[i].Spend = spend[a.ID]
+		}
+	}
+	p.Accounts = accounts
+	return p
 }

@@ -36,6 +36,8 @@ export interface EditProps {
   start?: Record<string, number>;
   /** Each payment's days near today (View.Dues): what a bank's file's rows are matched to. */
   dues?: Record<string, string[]>;
+  /** Each card paid off with each paycheck: what goes on it between paychecks, as the ledger says (View.CardSpend). */
+  cardSpend?: Record<string, number>;
   /** Keeps the plan; false when it failed (the screen says why). */
   save: (plan: finance.Plan) => Promise<boolean>;
   /** The categories a transaction is offered (the plan's, or the defaults). */
@@ -535,6 +537,7 @@ function AccountForm(props: EditProps) {
   const [detail, setDetail] = useState(a?.detail || '');
   const [paidEach, setPaidEach] = useState(!!a?.paidEach);
   const [spend, setSpend] = useState(text(a?.spend));
+  const worked = (a && props.cardSpend?.[a.id]) || 0;
   // A car's purchase: what it cost, when, and how it holds its value; Finances reads its worth from them.
   const [bought, setBought] = useState(text(a?.bought));
   const [boughtOn, setBoughtOn] = useState(a?.boughtOn || '');
@@ -642,7 +645,9 @@ function AccountForm(props: EditProps) {
         {!read && <MoneyField label={owes ? 'Owed' : held(kind) ? 'Worth' : 'Balance'} value={balance} set={setBalance} sign={sign} />}
         {kind === 'card' && <MoneyField label="Pending" value={pending} set={setPending} sign={sign} />}
         {kind === 'card' && <label class="fcheckbox wide"><input type="checkbox" checked={paidEach} onClick={tick(setPaidEach)} /> I pay it off in full with each paycheck</label>}
-        {kind === 'card' && paidEach && <MoneyField label="Spending on it between paychecks, about" value={spend} set={setSpend} hint="400.00" sign={sign} />}
+        {kind === 'card' && paidEach && <MoneyField label="Spending on it between paychecks, about" value={spend} set={setSpend} hint={worked ? cents(worked) : '400.00'} sign={sign} />}
+        {/* What the ledger says goes on it: each payoff after the first pays that while nothing is typed in. */}
+        {kind === 'card' && paidEach && !!worked && <p class="formsub muted wide">From the last 3 months of its transactions, about {moneyIn(worked, sign ? code : undefined)} goes on it between paychecks.{num(spend) > 0 ? ' Clear the box to use that.' : ' Each payoff after the next one counts that, unless you type an amount.'}</p>}
         {kind === 'savings' && <Field label="Interest, % a year"><input inputmode="decimal" value={rate} onInput={input(setRate)} placeholder="3.2" /></Field>}
         {(kind === 'loan' || kind === 'card') && <Field label={kind === 'card' ? 'Interest (APR), % a year, if it carries a balance' : 'Interest (APR), % a year'}><input inputmode="decimal" value={rate} onInput={input(setRate)} placeholder={kind === 'card' ? '24.99' : '6.5'} /></Field>}
         {kind === 'loan' && <MoneyField label="Borrowed at the start" value={original} set={setOriginal} sign={sign} />}

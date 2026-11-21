@@ -29,7 +29,7 @@ export interface Month {
 export function month(v: finance.View, L: Lookup): Month {
   const people = v.plan.people || [];
   // A card paid off with each paycheck is a payment here, its spending counted once: there, not as each bill on it.
-  const payments = allPayments(v.plan);
+  const payments = allPayments(v.plan, v.cardSpend);
   const income = people.reduce((t, e) => t + e.net * perMonth(e.schedule), 0);
   const kept = (id?: string) => saving(L.account[id || '']?.kind);
   const onCard = (x: finance.Payment) => L.account[x.from || '']?.kind === 'card';
