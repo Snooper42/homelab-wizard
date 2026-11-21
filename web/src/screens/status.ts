@@ -90,18 +90,28 @@ mountShowAll($('statusAllBox'));
 // The app list from the status last loaded; opening or folding a category
 // is the list's own (AppList.tsx), so it never asks the runtime.
 let lastStatus: api.Status | null = null;
+/** The catalog's category of the apps between Seerr and Jellyfin, and what its folded line says. */
+const automation = 'media-automation';
+const automationSummary = 'Finds and downloads what you ask for in Seerr';
 function renderAppList(st: api.Status) {
   // Grouped by category, as on Choose apps; what needs a look comes
   // first, in a group of its own.
   // The apps pinned to the top come next, in the order pinned, and in no other group.
   const trouble = (a) => a.health === 'unhealthy' || a.health === 'restarting' || a.state === 'missing';
   const catOf = Object.fromEntries((catalog?.apps || []).map((x) => [x.id, x.category]));
+  // Media automation folded away (arr item 8): a household asks in Seerr and
+  // watches in Jellyfin, so Seerr shows beside Jellyfin in Media; the apps
+  // in between sit last, under one line that says what they do, and open
+  // only when one needs a look or on a click. The Downloads card says what
+  // they're getting. Choose apps keeps the catalog's own categories.
+  if (catOf.seerr === automation) catOf.seerr = 'media';
   const byId = Object.fromEntries(st.apps.map((a) => [a.id, a]));
   const pinned = (st.pinned || []).map((id) => byId[id]).filter((a) => a && !trouble(a));
   const rest = (a: api.AppStatus) => !trouble(a) && !pinned.includes(a);
-  const groups: { label: string; apps: api.AppStatus[]; alert?: boolean; pinned?: boolean }[] = [{ label: 'Needs a look', apps: st.apps.filter(trouble), alert: true },
+  const groups: { label: string; apps: api.AppStatus[]; alert?: boolean; pinned?: boolean; summary?: string }[] = [{ label: 'Needs a look', apps: st.apps.filter(trouble), alert: true },
     { label: 'Pinned', apps: pinned, pinned: true },
-    ...(catalog?.categories || []).map((c) => ({ label: c.label, apps: st.apps.filter((a) => rest(a) && catOf[a.id] === c.id) })),
+    ...[...(catalog?.categories || [])].sort((x, y) => Number(x.id === automation) - Number(y.id === automation))
+      .map((c) => ({ label: c.id === automation ? 'Media automation' : c.label, apps: st.apps.filter((a) => rest(a) && catOf[a.id] === c.id), summary: c.id === automation ? automationSummary : undefined })),
     { label: 'Other', apps: st.apps.filter((a) => rest(a) && !(catalog?.categories || []).some((c) => c.id === catOf[a.id])) }].filter((g) => g.apps.length);
   appList = { groups, pending, catalog, weekUp, outages, seen, batteryPaused, held, busy: appsBusy, companion: document.documentElement.classList.contains('companion'), os: osName, on: appListActions, memory, unkept };
   mountAppList($('statusRows'), appList);

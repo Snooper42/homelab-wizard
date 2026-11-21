@@ -3380,7 +3380,7 @@
             /* @__PURE__ */ u3("span", { class: "kiosklabel", children: g2.label }),
             /* @__PURE__ */ u3(GroupMenu, { g: g2, p: p3, count: g2.alert ? String(g2.apps.length) : running5 >= counted2 ? `${running5} running ✓` : `${running5} of ${counted2} running` }),
             /* @__PURE__ */ u3(StartAll, { g: g2, p: p3 }),
-            !open5 && /* @__PURE__ */ u3("span", { class: "names", children: g2.apps.map((a3) => a3.name).join(" · ") })
+            !open5 && /* @__PURE__ */ u3("span", { class: "names", title: g2.summary ? g2.apps.map((a3) => a3.name).join(" · ") : void 0, children: g2.summary || g2.apps.map((a3) => a3.name).join(" · ") })
           ] })
         }
       )
@@ -7795,16 +7795,19 @@
   }
   mountShowAll($("statusAllBox"));
   var lastStatus = null;
+  var automation = "media-automation";
+  var automationSummary = "Finds and downloads what you ask for in Seerr";
   function renderAppList(st) {
     const trouble2 = (a3) => a3.health === "unhealthy" || a3.health === "restarting" || a3.state === "missing";
     const catOf = Object.fromEntries((catalog?.apps || []).map((x3) => [x3.id, x3.category]));
+    if (catOf.seerr === automation) catOf.seerr = "media";
     const byId = Object.fromEntries(st.apps.map((a3) => [a3.id, a3]));
     const pinned = (st.pinned || []).map((id2) => byId[id2]).filter((a3) => a3 && !trouble2(a3));
     const rest = (a3) => !trouble2(a3) && !pinned.includes(a3);
     const groups4 = [
       { label: "Needs a look", apps: st.apps.filter(trouble2), alert: true },
       { label: "Pinned", apps: pinned, pinned: true },
-      ...(catalog?.categories || []).map((c4) => ({ label: c4.label, apps: st.apps.filter((a3) => rest(a3) && catOf[a3.id] === c4.id) })),
+      ...[...catalog?.categories || []].sort((x3, y3) => Number(x3.id === automation) - Number(y3.id === automation)).map((c4) => ({ label: c4.id === automation ? "Media automation" : c4.label, apps: st.apps.filter((a3) => rest(a3) && catOf[a3.id] === c4.id), summary: c4.id === automation ? automationSummary : void 0 })),
       { label: "Other", apps: st.apps.filter((a3) => rest(a3) && !(catalog?.categories || []).some((c4) => c4.id === catOf[a3.id])) }
     ].filter((g2) => g2.apps.length);
     appList = { groups: groups4, pending, catalog, weekUp, outages, seen, batteryPaused, held, busy: appsBusy, companion: document.documentElement.classList.contains("companion"), os: osName, on: appListActions, memory, unkept };
