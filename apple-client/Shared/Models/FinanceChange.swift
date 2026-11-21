@@ -32,6 +32,9 @@ enum FinanceChange: Codable, Sendable, Equatable {
     /// Add a Budget and its removal (the owner's yes, Nov 21).
     case addBudget(category: String, amount: Double, perPaycheck: Bool, rollover: Bool)
     case removeBudget(category: String)
+    /// Edit a Payment and its Delete (the owner's yes, Nov 21).
+    case editPayment(id: String, NewPayment)
+    case removePayment(id: String)
 
     /// `plan` with this change made, or nil when it can't be (what it changes is gone).
     func apply(to plan: JSONValue) -> JSONValue? {
@@ -67,6 +70,10 @@ enum FinanceChange: Codable, Sendable, Equatable {
             FinancePlanEdit.addingBudget(category: category, amount: amount, perPaycheck: perPaycheck, rollover: rollover, in: plan)
         case .removeBudget(let category):
             FinancePlanEdit.removingBudget(category: category, in: plan)
+        case .editPayment(let id, let p):
+            FinancePlanEdit.updatingPayment(id: id, with: p, in: plan)
+        case .removePayment(let id):
+            FinancePlanEdit.removingPayment(id: id, in: plan)
         }
     }
 
@@ -121,6 +128,8 @@ enum FinanceChange: Codable, Sendable, Equatable {
         case .loanPapers(let account, _, _, _): "papers:\(account)"
         // A removal takes the place of a change to the same budget's amount.
         case .removeBudget(let category): "budget:\(category.trimmingCharacters(in: .whitespaces).lowercased())"
+        // An edit or a delete takes the place of a change to the same payment's amount.
+        case .editPayment(let id, _), .removePayment(let id): "payment:\(id)"
         default: nil
         }
     }

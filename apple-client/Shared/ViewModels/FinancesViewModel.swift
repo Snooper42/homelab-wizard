@@ -576,6 +576,28 @@ final class FinancesViewModel {
                           edited: edited, reason: "Add a \(category) budget.")
     }
 
+    /// Edit a Payment (the owner's yes, Nov 21): all of it, as the
+    /// computer's form changes one. Away from home it waits.
+    func updatePayment(_ payment: FinancePayment, with p: NewPayment) async -> Bool {
+        guard canEditPlan, !isSaving, let raw = rawPlan else { return false }
+        guard let edited = FinancePlanEdit.updatingPayment(id: payment.id, with: p, in: raw) else {
+            saveError = p.name.trimmingCharacters(in: .whitespaces).isEmpty ? "Give it a name."
+                : FinancePlanEdit.roundedToCents(p.amount) <= 0 && (payment.card ?? "").isEmpty ? "Type how much it is."
+                : "Check its days: it can't end before it starts, and twice a month needs two different days."
+            return false
+        }
+        var kept = p
+        kept.amount = FinancePlanEdit.roundedToCents(p.amount)
+        return await make(.editPayment(id: payment.id, kept), edited: edited, reason: "Change \(payment.name).")
+    }
+
+    /// Deletes the payment, as the computer's Delete; its transactions keep their link.
+    func removePayment(_ payment: FinancePayment) async -> Bool {
+        guard canEditPlan, !isSaving, let raw = rawPlan,
+              let edited = FinancePlanEdit.removingPayment(id: payment.id, in: raw) else { return false }
+        return await make(.removePayment(id: payment.id), edited: edited, reason: "Delete \(payment.name).")
+    }
+
     /// Takes the budget off, as Remove on the computer's Edit budgets.
     func removeBudget(_ budget: FinanceBudget) async -> Bool {
         guard canEditPlan, !isSaving, let raw = rawPlan,
