@@ -504,3 +504,37 @@ func TestTailnetDevices(t *testing.T) {
 		t.Error("without a homelab")
 	}
 }
+
+// TestMediaChecks: Setup's two media automation checks (arr-loop items 2
+// and 5) need a homelab folder, say nothing about apps that aren't
+// running, and speak for the ones that are.
+func TestMediaChecks(t *testing.T) {
+	away(t)
+	ctx := context.Background()
+	none := filepath.Join(t.TempDir(), "Homelab")
+	if _, err := SearchSites(ctx, none); err == nil {
+		t.Fatal("search sites without a homelab folder")
+	}
+	if _, err := DownloadsPrivate(ctx, none); err == nil {
+		t.Fatal("privacy without a homelab folder")
+	}
+	root := homelab(t, "")
+	withDocker(t, &runner{FakeRunner: &docker.FakeRunner{}})
+	if s, err := SearchSites(ctx, root); err != nil || s.Said != "" || s.Open != "" {
+		t.Fatalf("no Prowlarr: %+v %v", s, err)
+	}
+	if p, err := DownloadsPrivate(ctx, root); err != nil || p.Private || !strings.Contains(p.Said, "isn't running") {
+		t.Fatalf("no qBittorrent: %+v %v", p, err)
+	}
+	withDocker(t, &runner{FakeRunner: &docker.FakeRunner{Containers: []docker.FakeContainer{
+		running("homelab_media_automation", "prowlarr"), running("homelab_media_automation", "qbittorrent")}}})
+	if s, err := SearchSites(ctx, root); err != nil || s.Working != 0 || !strings.Contains(s.Said, "hasn't finished starting") || s.Open == "" {
+		t.Fatalf("Prowlarr with no key yet: %+v %v", s, err)
+	}
+	if p, err := DownloadsPrivate(ctx, root); err != nil || p.Private || p.Said == "" {
+		t.Fatalf("qBittorrent: %+v %v", p, err)
+	}
+	if steps := Setup(ctx, root); len(steps) == 0 {
+		t.Fatal("no steps with media automation running")
+	}
+}

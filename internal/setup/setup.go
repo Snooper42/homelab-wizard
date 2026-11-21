@@ -139,6 +139,10 @@ type Inputs struct {
 	// VPN (wiring.Privacy), in words, and whether Connect apps puts it
 	// right; nil skips the step, as without qBittorrent.
 	Private func() (private bool, said string, wire bool)
+	// Sites reports how many of Prowlarr's search sites work
+	// (wiring.SearchSites), in words, and Prowlarr's page for adding one;
+	// nil skips the step, as without Prowlarr.
+	Sites func() (working int, said, open string)
 }
 
 // kopiaTested says how Kopia's restore test went, for its Setup step: a copy
@@ -546,6 +550,17 @@ func Steps(ctx context.Context, in Inputs) []Step {
 			dp.Run, dp.RunLabel = [][]string{{"wire", "--apply"}}, "Connect apps"
 		}
 		add(dp, private, "started")
+	}
+	// Nothing downloads until a search site works (arr-loop item 5). The
+	// wizard opens Prowlarr's page; it never names or adds a site.
+	if in.Sites != nil && st != nil && has(st, "prowlarr") {
+		working, said, open := in.Sites()
+		ss := Step{ID: "search-sites", Title: "No search sites yet", Why: "Prowlarr finds what you ask for in Seerr on the search sites you add to it. Until one works, every request waits at Requested.",
+			Detail: said, Open: open}
+		if working > 0 {
+			ss.Title = "A search site works"
+		}
+		add(ss, working > 0, "started")
 	}
 	manual(Step{ID: "alerts", Title: "Alerts on the phone", Why: "Your phone hears about it when an app, a backup, or the connection from outside fails, instead of you finding out later.",
 		Detail: "Gives the alert sources their token (Duplicati included) and makes the phone's login. Then, if you use Uptime Kuma, add it there; in the phone's ntfy app sign in as phone with Settings › ntfy phone password › Copy and subscribe to the topics (docs/Monitoring.md).", Run: [][]string{{"notify", "setup", "--apply"}}, RunLabel: "Set up the alert token"}, "started")
