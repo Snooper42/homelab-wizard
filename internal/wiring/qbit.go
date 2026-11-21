@@ -10,10 +10,13 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/Snooper42/homelab-wizard/internal/qbitconf"
 )
 
 // qbitPrefs are the qBittorrent settings wire owns (the owner, Nov 19, 2026:
@@ -33,6 +36,45 @@ var qbitPrefs = map[string]any{
 const qbitSignInHelp = "put qBittorrent's Web UI password in QBITTORRENT_PASSWORD in Settings (and QBITTORRENT_USER if it is not admin), then connect again; a qBittorrent the homelab installs gets one made for it, and one set up earlier keeps its own (Tools > Options > Web UI)"
 
 var errQbitSignIn = errors.New("qBittorrent refused the sign-in: check QBITTORRENT_PASSWORD (and QBITTORRENT_USER) in .env")
+
+// FixQbitPassword is the fix for a qBittorrent whose own Web UI login isn't
+// the one in Settings (made before the homelab made one): stop it, put the
+// login from Settings in its settings file, start it (qbitconf.SetLogin).
+const FixQbitPassword = "qbit-password"
+
+// qbitRefused is why qBittorrent refused the sign-in, in words, with the
+// fix when one click makes it (the owner, Nov 21: "refused the sign-in"
+// said nothing they could act on).
+type qbitRefused struct{ why, fix string }
+
+func (e *qbitRefused) Error() string        { return e.why }
+func (e *qbitRefused) Is(target error) bool { return target == errQbitSignIn }
+
+var qbitUserRe = regexp.MustCompile(`(?m)^WebUI\\Username=(.*?)\r?$`)
+
+// qbitWhyRefused tells apart a login that differs from Settings (read in
+// qBittorrent's own settings file, checked as qBittorrent checks it) and a
+// computer locked out after wrong passwords (403: qBittorrent's ban, an
+// hour by default, cleared when it starts again).
+func (w *Wirer) qbitWhyRefused(status int) error {
+	user := w.Env["QBITTORRENT_USER"]
+	if user == "" {
+		user = "admin"
+	}
+	if conf, err := os.ReadFile(filepath.Join(w.Apps["qbittorrent"].ConfigDir, qbitconf.Path)); err == nil {
+		saved := "admin" // qBittorrent's own default
+		if m := qbitUserRe.FindSubmatch(conf); m != nil {
+			saved = string(m[1])
+		}
+		if saved != user || !qbitconf.Verify(conf, w.Env["QBITTORRENT_PASSWORD"]) {
+			return &qbitRefused{"qBittorrent keeps its own password, set before the homelab made one, so the one in Settings doesn't open it. Give it the one in Settings: qBittorrent stops for a moment, then connect again.", FixQbitPassword}
+		}
+	}
+	if status == http.StatusForbidden {
+		return &qbitRefused{why: "qBittorrent has locked this computer out after too many wrong passwords. It lets it in again within an hour, or at once when it starts again (Restart on Status), then connect again."}
+	}
+	return errQbitSignIn
+}
 
 // qbitSharing sets qbitPrefs in qBittorrent, changing only those that differ.
 func (w *Wirer) qbitSharing(ctx context.Context) (string, string, error) {
@@ -184,7 +226,7 @@ func (w *Wirer) qbitSignIn(ctx context.Context) (*http.Cookie, error) {
 					return c, nil
 				}
 			}
-			return nil, errQbitSignIn
+			return nil, w.qbitWhyRefused(resp.StatusCode)
 		}
 		left := time.Until(deadline)
 		if left <= 0 {

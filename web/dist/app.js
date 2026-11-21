@@ -5504,7 +5504,7 @@
       /* @__PURE__ */ u3("button", { type: "button", id: "installClose", class: "small", onClick: close3, children: "Close" })
     ] });
   }
-  var fixes = { "inbox-arrive": "Let Tidy Up file downloads as they arrive", "seerr-signin": "Sign Seerr in" };
+  var fixes = { "inbox-arrive": "Let Tidy Up file downloads as they arrive", "seerr-signin": "Sign Seerr in", "qbit-password": "Give qBittorrent the password in Settings" };
   function SeerrSignIn({ send }) {
     const [user, setUser] = d2("");
     const [password, setPassword] = d2("");
@@ -5543,7 +5543,7 @@
         l3.text,
         l3.detail && /* @__PURE__ */ u3("span", { class: "detail", children: l3.detail }),
         l3.fix === "seerr-signin" && fix && /* @__PURE__ */ u3(SeerrSignIn, { send: (u4, p3) => fix(l3.fix, u4, p3) }),
-        l3.fix && l3.fix !== "seerr-signin" && fixes[l3.fix] && fix && /* @__PURE__ */ u3("span", { class: "detail", children: /* @__PURE__ */ u3("button", { type: "button", class: "small tint", onClick: () => fix(l3.fix), children: fixes[l3.fix] }) })
+        l3.fix && l3.fix !== "seerr-signin" && fixes[l3.fix] && fix && links.find((x3) => x3.fix === l3.fix) === l3 && /* @__PURE__ */ u3("span", { class: "detail", children: /* @__PURE__ */ u3("button", { type: "button", class: "small tint", onClick: () => fix(l3.fix), children: fixes[l3.fix] }) })
       ] }, i3);
     };
     return /* @__PURE__ */ u3(S, { children: [
@@ -5894,6 +5894,14 @@
           return;
         }
         settingsData.stale();
+        await wire(box);
+      } else if (name === "qbit-password") {
+        try {
+          await go().FixQbitPassword();
+        } catch (e3) {
+          showError(e3);
+          return;
+        }
         await wire(box);
       } else if (name === "seerr-signin" && user) {
         await wire(box, () => go().WireSeerr(user, password || ""));

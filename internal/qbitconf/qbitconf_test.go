@@ -69,3 +69,34 @@ func TestFirstConfigNeedsAPassword(t *testing.T) {
 		t.Fatal("no error for a user name that would break the file")
 	}
 }
+
+// A qBittorrent made before the wizard keeps its own password; SetLogin puts
+// the homelab's in its settings file (while it's stopped), changing nothing
+// else, and adds the lines when the file has none.
+func TestSetLogin(t *testing.T) {
+	old := []byte("[BitTorrent]\nSession\\Port=6881\n\n[Preferences]\nDownloads\\SavePath=/downloads/\nWebUI\\Password_PBKDF2=\"@ByteArray(c2FsdA==:a2V5)\"\nWebUI\\Port=8082\nWebUI\\Username=someone\n")
+	got, err := SetLogin(old, "admin", "new-pass")
+	if err != nil {
+		t.Fatal(err)
+	}
+	s := string(got)
+	if !Verify(got, "new-pass") || Verify(got, "old") {
+		t.Errorf("password not set:\n%s", s)
+	}
+	for _, keep := range []string{"Session\\Port=6881", "Downloads\\SavePath=/downloads/", "WebUI\\Port=8082", "WebUI\\Username=admin\n"} {
+		if !strings.Contains(s, keep) {
+			t.Errorf("lost or wrong %q:\n%s", keep, s)
+		}
+	}
+	if strings.Count(s, "Password_PBKDF2") != 1 || strings.Contains(s, "someone") {
+		t.Errorf("old login left:\n%s", s)
+	}
+	// No login lines yet (the image's defaults): added under [Preferences].
+	got, err = SetLogin([]byte("[LegalNotice]\nAccepted=true\n\n[Preferences]\nWebUI\\Address=*\n"), "admin", "p")
+	if err != nil || !Verify(got, "p") || !strings.Contains(string(got), "[Preferences]\nWebUI\\Address=*\nWebUI\\Username=admin\nWebUI\\Password_PBKDF2=") {
+		t.Errorf("added: %v\n%s", err, got)
+	}
+	if _, err := SetLogin(old, "admin", ""); err == nil {
+		t.Error("an empty password was set")
+	}
+}

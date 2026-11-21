@@ -25,7 +25,7 @@ export function Started({ started, also = [], open, close }: { started: api.Star
 /** One link the wiring made (internal/wiring), as it reports it. */
 export interface WireLink { state: string; text: string; detail?: string; fix?: string }
 /** A link's one-click fix (wiring.Link.Fix), by its name: the button's words. */
-const fixes: Record<string, string> = { 'inbox-arrive': 'Let Tidy Up file downloads as they arrive', 'seerr-signin': 'Sign Seerr in' };
+const fixes: Record<string, string> = { 'inbox-arrive': 'Let Tidy Up file downloads as they arrive', 'seerr-signin': 'Sign Seerr in', 'qbit-password': 'Give qBittorrent the password in Settings' };
 
 /**
  * Seerr's first sign-in: a Jellyfin administrator's name and password, sent
@@ -60,7 +60,7 @@ export function Wiring({ links, note, fix, close }: { links: WireLink[]; note: s
       <li key={i}>
         <span class={cls}>{mark} </span>{l.text}{l.detail && <span class="detail">{l.detail}</span>}
         {l.fix === 'seerr-signin' && fix && <SeerrSignIn send={(u, p) => fix(l.fix, u, p)} />}
-        {l.fix && l.fix !== 'seerr-signin' && fixes[l.fix] && fix && <span class="detail"><button type="button" class="small tint" onClick={() => fix(l.fix)}>{fixes[l.fix]}</button></span>}
+        {l.fix && l.fix !== 'seerr-signin' && fixes[l.fix] && fix && links.find((x) => x.fix === l.fix) === l && <span class="detail"><button type="button" class="small tint" onClick={() => fix(l.fix)}>{fixes[l.fix]}</button></span>}
       </li>
     );
   };

@@ -93,3 +93,42 @@ func Verify(conf []byte, password string) bool {
 	got, err := pbkdf2.Key(sha512.New, password, salt, 100000, len(key))
 	return err == nil && subtle.ConstantTimeCompare(got, key) == 1
 }
+
+// SetLogin is a settings file with its Web UI login made user and password
+// (only the hash is written), every other line kept: for a qBittorrent made
+// before the wizard, whose own password isn't the homelab's. qBittorrent
+// writes its settings back when it stops, so it must be stopped first.
+func SetLogin(conf []byte, user, password string) ([]byte, error) {
+	if password == "" {
+		return nil, errors.New("no password for qBittorrent")
+	}
+	if user == "" || strings.ContainsAny(user, "\r\n") {
+		return nil, errors.New("qBittorrent's user name must be one line")
+	}
+	h, err := hash(password)
+	if err != nil {
+		return nil, err
+	}
+	login := []string{`WebUI\Username=` + user, `WebUI\Password_PBKDF2="@ByteArray(` + h + `)"`}
+	var out []string
+	section, at := "", -1
+	for _, line := range strings.Split(strings.TrimRight(string(conf), "\n"), "\n") {
+		t := strings.TrimRight(line, "\r")
+		if strings.HasPrefix(t, "[") {
+			section = t
+		}
+		if section == "[Preferences]" && (strings.HasPrefix(t, `WebUI\Username=`) || strings.HasPrefix(t, `WebUI\Password_PBKDF2=`)) {
+			continue
+		}
+		out = append(out, line)
+		if section == "[Preferences]" && strings.TrimSpace(t) != "" {
+			at = len(out) // after the section's last line
+		}
+	}
+	if at < 0 {
+		out = append(out, "", "[Preferences]")
+		at = len(out)
+	}
+	out = append(out[:at], append(login, out[at:]...)...)
+	return []byte(strings.Join(out, "\n") + "\n"), nil
+}

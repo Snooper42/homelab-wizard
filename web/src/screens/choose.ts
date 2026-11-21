@@ -246,6 +246,9 @@ async function wire(box, run: () => Promise<WireLink[]> = () => go().Wire()) {
       try { await go().SaveSettings({ TIDY_INBOX_WHEN: 'arrive' }); } catch (e) { showError(e); return; }
       settingsData.stale();
       await wire(box);
+    } else if (name === 'qbit-password') {
+      try { await go().FixQbitPassword(); } catch (e) { showError(e); return; }
+      await wire(box);
     } else if (name === 'seerr-signin' && user) {
       await wire(box, () => go().WireSeerr(user, password || ''));
     }

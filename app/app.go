@@ -2131,6 +2131,19 @@ func (a *App) Wire() ([]wiring.Link, error) {
 	return w.Apply(a.ctx, func(l wiring.Link) { emitEvent(a.ctx, "link", l) }), nil
 }
 
+// FixQbitPassword gives a qBittorrent made before the homelab made its
+// login the one in Settings (Connect apps' "Give qBittorrent the password
+// in Settings", homelab wire --qbit-password): it stops for a moment. Sends
+// its output as "cli:log"; the screen connects again afterwards.
+func (a *App) FixQbitPassword() error {
+	if !a.install.TryLock() {
+		return errors.New("another install or setup step is running")
+	}
+	defer a.install.Unlock()
+	emitEvent(a.ctx, "cli:log", "$ homelab wire --qbit-password")
+	return a.stream(core.CLI(a.root, "wire", "--qbit-password"), "cli:log")
+}
+
 // WireSeerr connects the apps as Wire does, making Seerr's first sign-in
 // with a Jellyfin administrator's name and password (Connect apps' Sign
 // Seerr in). They go to Seerr on this computer for that one run and are

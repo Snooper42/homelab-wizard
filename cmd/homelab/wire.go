@@ -15,8 +15,14 @@ func (h *homelab) wire(ctx context.Context, args []string) error {
 	fs := newFlags("wire")
 	apply := applyFlag(fs)
 	jfUser := fs.String("jellyfin-user", "", "")
+	qbitPw := fs.Bool("qbit-password", false, "")
 	if _, err := parseFlags(fs, args); err != nil {
 		return err
+	}
+	// Only the fix (Connect apps' "Give qBittorrent the password in
+	// Settings"): the app connects again on its own afterwards.
+	if *qbitPw {
+		return h.qbitPassword(ctx)
 	}
 	// Asked before anything else, so a missing terminal fails at once.
 	admin, err := h.jellyfinAdmin(*jfUser)
@@ -160,6 +166,16 @@ func (h *homelab) offerWireFix(fix string) (bool, *wiring.JellyfinAdmin, error) 
 		}
 		u.OK("Tidy Up files downloads as they arrive")
 		return true, nil, nil
+	case wiring.FixQbitPassword:
+		if !u.Interactive {
+			u.Printf("\n%s\n", u.Dim("To give qBittorrent the password in Settings, run homelab wire --qbit-password, then connect again."))
+			return false, nil, nil
+		}
+		u.Println()
+		if !u.Confirm("Give qBittorrent the password in Settings? It stops for a moment.", true) {
+			return false, nil, nil
+		}
+		return true, nil, h.qbitPassword(context.Background())
 	case wiring.FixSeerrSignIn:
 		if !u.Interactive {
 			u.Printf("\n%s\n", u.Dim("To set Seerr up, run homelab wire --jellyfin-user NAME in a terminal, or use Connect apps in the app."))

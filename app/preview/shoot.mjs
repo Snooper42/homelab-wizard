@@ -5756,6 +5756,18 @@ const smokes = [
     await page.waitForFunction(() => (window.__MOCK.saved || {}).TIDY_INBOX_WHEN === 'arrive', null, { timeout: 3000 });
     await page.waitForFunction(() => window.__MOCK.calls.Wire === 2, null, { timeout: 3000 });
   } },
+  // The owner, Nov 21: "qBittorrent refused the sign-in" on both qBittorrent links. A qBittorrent whose own password isn't
+  // the one in Settings says so, with one button (shown once for both links) that gives it Settings' password and connects again.
+  { name: "Connect apps gives qBittorrent the password in Settings with one button", screen: 'status', mock: { wireLinks: [{ state: 'failed', text: 'qBittorrent stops sharing once a download is finished', detail: "qBittorrent keeps its own password, set before the homelab made one, so the one in Settings doesn't open it.", fix: 'qbit-password' }, { state: 'failed', text: "qBittorrent takes the VPN's forwarded port by itself", detail: "qBittorrent keeps its own password, set before the homelab made one, so the one in Settings doesn't open it.", fix: 'qbit-password' }], wireAfterQbitPassword: [{ state: 'done', text: 'qBittorrent stops sharing once a download is finished' }, { state: 'done', text: "qBittorrent takes the VPN's forwarded port by itself" }] }, run: async (page) => {
+    await page.click('#statusMore');
+    await page.click('#connect');
+    const btn = page.locator('#statusWiring button:has-text("Give qBittorrent the password in Settings")');
+    await btn.first().waitFor({ timeout: 3000 });
+    if (await btn.count() !== 1) throw new Error(`${await btn.count()} buttons for one fix`);
+    await btn.click();
+    await page.waitForFunction(() => window.__MOCK.qbitPasswordGiven && window.__MOCK.calls.Wire === 2, null, { timeout: 3000 });
+    await page.waitForSelector('#statusWiring :text("2 connected")', { timeout: 3000 });
+  } },
   // Arr item 3: Seerr waiting for its first sign-in asks a Jellyfin administrator's name and password in Connect apps,
   // sends them with one run (WireSeerr), empties the password field, and shows that run's links.
   { name: 'Connect apps signs Seerr in to Jellyfin from a name and password', screen: 'status', mock: { wireLinks: [{ state: 'manual', text: 'Seerr signs in to Jellyfin', detail: "it needs a Jellyfin administrator's name and password once", fix: 'seerr-signin' }], wireAfterSignIn: [{ state: 'done', text: 'Seerr signs in to Jellyfin', detail: 'as alex; Seerr sees Films and Shows' }, { state: 'done', text: 'Seerr sends requests to Sonarr' }] }, run: async (page) => {
