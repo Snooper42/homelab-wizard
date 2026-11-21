@@ -49,7 +49,9 @@ struct BudgetsPageTests {
         #expect(abs(b.paceShare - 420.0 / 650) < 0.0001)
 
         let over = try budget(#"{"category":"Shopping","per":"paycheck","start":"2026-11-20","last":"2026-12-03","amount":150,"spent":190.1,"left":-40.1,"pace":82}"#)
-        #expect(over.isOver && over.perDay(today: try day(2026, 11, 21), calendar: calendar) == nil)
+        // Worked out first: a try inside && in #expect needs one over the whole of it.
+        let nov21 = try day(2026, 11, 21)
+        #expect(over.isOver && over.perDay(today: nov21, calendar: calendar) == nil)
         #expect(over.periodWords.hasPrefix("This pay period, to "))
         #expect(over.rolled == 0)
     }
