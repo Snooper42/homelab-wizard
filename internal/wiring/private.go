@@ -2,7 +2,10 @@ package wiring
 
 import (
 	"context"
+
 	"errors"
+	"github.com/Snooper42/homelab-wizard/internal/catalog"
+	"github.com/Snooper42/homelab-wizard/internal/compose"
 	"os"
 	"path/filepath"
 	"strings"
@@ -50,8 +53,13 @@ func (w *Wirer) searchPrivate() string {
 	switch {
 	case !ok:
 		return ""
+	case p.Stale != "":
+		return p.Stale
 	case strings.Contains(p.Internal, "//gluetun:"):
 		return "Searching goes through ProtonVPN too: the search sites see its address, not yours."
+	case w.searchMeant():
+		// The setting is on, but this Prowlarr was made before it.
+		return "Searching still leaves through your home connection: Prowlarr hasn't moved behind the VPN yet. Fix it on Status (or homelab fix) starts it again on its new settings."
 	}
 	return "Searching leaves through your home connection: the search sites see your address. Turn on Search through the VPN in Settings to change that (it needs the ProtonVPN key)."
 }
@@ -103,4 +111,10 @@ func (w *Wirer) vpnConnected() bool {
 	}
 	data, err := os.ReadFile(filepath.Join(dir, gluetunIPFile))
 	return err == nil && strings.TrimSpace(string(data)) != ""
+}
+
+// searchMeant is whether the settings put Prowlarr behind the VPN
+// (catalog.SearchThroughVPN), whatever its container does today.
+func (w *Wirer) searchMeant() bool {
+	return catalog.SearchThroughVPN(compose.MapLookup(w.Env))
 }

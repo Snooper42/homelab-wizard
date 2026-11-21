@@ -514,6 +514,10 @@ type Container struct {
 	FinishedAt time.Time
 	// RestartPolicy is "unless-stopped", "always", "no", or "on-failure".
 	RestartPolicy string
+	// NetworkMode is its network: a network's name ("homelab", "bridge"),
+	// or "container:<id>" when it lives in another container's network
+	// (network_mode: service:gluetun); "" when the engine didn't say.
+	NetworkMode string
 	// Binds are the folders on this machine mounted into it.
 	Binds []string
 	// Mounts are its folders and named volumes, with where they appear
@@ -568,6 +572,7 @@ func ParseInspect(data []byte) ([]Container, error) {
 			RestartPolicy struct {
 				Name string `json:"Name"`
 			} `json:"RestartPolicy"`
+			NetworkMode string `json:"NetworkMode"`
 		} `json:"HostConfig"`
 		Mounts []struct {
 			Type        string `json:"Type"`
@@ -618,6 +623,7 @@ func ParseInspect(data []byte) ([]Container, error) {
 			OOMKilled: r.State.OOMKilled,
 
 			RestartPolicy: r.HostConfig.RestartPolicy.Name,
+			NetworkMode:   r.HostConfig.NetworkMode,
 		}
 		for _, m := range r.Mounts {
 			if m.Type == "bind" && m.Source != "" {
