@@ -49,9 +49,10 @@ import (
 // arrCore rest together, in the order they stop; they start in the other.
 var arrCore = []string{"sonarr", "radarr", "lidarr", "bazarr", "prowlarr", "flaresolverr"}
 
-// arrTorrent are qBittorrent and the tunnel it runs through, stopped in
-// this order (qBittorrent first) and started the other way round.
-var arrTorrent = []string{"qbittorrent", "gluetun"}
+// arrTorrent are the downloaders and the tunnel they run through, stopped
+// in this order (SABnzbd and qBittorrent first) and started the other way
+// round. A Usenet download in SABnzbd is in an app's queue, read below.
+var arrTorrent = []string{"sabnzbd", "qbittorrent", "gluetun"}
 
 var (
 	arrRestAfter = 15 * time.Minute

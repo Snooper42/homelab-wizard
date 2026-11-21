@@ -66,7 +66,7 @@ type Wirer struct {
 }
 
 // Wireable are the apps wiring connects (or explains how to connect).
-var Wireable = []string{"prowlarr", "sonarr", "radarr", "lidarr", "bazarr", "seerr", "qbittorrent", "flaresolverr"}
+var Wireable = []string{"prowlarr", "sonarr", "radarr", "lidarr", "bazarr", "seerr", "qbittorrent", "sabnzbd", "flaresolverr"}
 
 // New is a Wirer for the catalog apps running among containers.
 func New(c *catalog.Catalog, containers []docker.Container, env map[string]string, home string) *Wirer {
@@ -163,6 +163,21 @@ func (w *Wirer) steps() []step {
 		if w.has("qbittorrent", c.id) {
 			out = append(out, step{"qBittorrent is the download client for " + w.name(c.id), func(ctx context.Context) (string, string, error) {
 				return w.downloadClient(ctx, c.id)
+			}})
+		}
+	}
+	if w.has("sabnzbd") {
+		if w.Env["ARR_PASSWORD"] != "" {
+			out = append(out, step{"SABnzbd signs in with the login in Sign-in details", w.sabLogin})
+		}
+		out = append(out, step{"SABnzbd keeps downloads in /downloads, by app", w.sabSetUp})
+		out = append(out, step{"SABnzbd downloads from your Usenet server", w.sabServer})
+	}
+	for _, c := range clients {
+		c := c
+		if w.has("sabnzbd", c.id) {
+			out = append(out, step{"SABnzbd is the download client for " + w.name(c.id), func(ctx context.Context) (string, string, error) {
+				return w.sabClient(ctx, c.id)
 			}})
 		}
 	}
