@@ -361,3 +361,60 @@ func (w *Wirer) sabClient(ctx context.Context, client string) (string, string, e
 		return r, err
 	})
 }
+
+// torrentDelay is how long Sonarr and Radarr wait for a Usenet release
+// before taking a torrent (the owner, Nov 21: "Wait 1 hour"), in minutes:
+// TORRENT_DELAY_MINUTES, 60 by default; 0 leaves the delay profile to you.
+func (w *Wirer) torrentDelay() int {
+	v := strings.TrimSpace(w.Env["TORRENT_DELAY_MINUTES"])
+	if v == "" {
+		return 60
+	}
+	n, err := strconv.Atoi(v)
+	if err != nil || n < 0 {
+		return 60
+	}
+	return n
+}
+
+// delayApps are the apps whose delay profile has one torrent delay
+// (Lidarr's keeps a list of protocols instead, and is left as it is).
+var delayApps = []string{"sonarr", "radarr"}
+
+// usenetFirst sets the app's default delay profile (id 1, the one with no
+// tags) to prefer Usenet and wait torrentDelay minutes before a torrent.
+// Profiles of your own, with tags, are left alone.
+func (w *Wirer) usenetFirst(ctx context.Context, id string) (string, string, error) {
+	key, err := w.ready(ctx, id)
+	if err != nil {
+		return "", "", err
+	}
+	var list []resource
+	if err := w.call(ctx, id, key, http.MethodGet, "delayprofile", nil, &list); err != nil {
+		return "", "", err
+	}
+	var def resource
+	for _, p := range list {
+		if fmt.Sprint(p["id"]) == "1" {
+			def = p
+		}
+	}
+	if def == nil {
+		return "", "", fmt.Errorf("%s has no default delay profile", w.name(id))
+	}
+	want := map[string]any{"enableUsenet": true, "preferredProtocol": "usenet", "torrentDelay": w.torrentDelay()}
+	var wrong []string
+	for k, v := range want {
+		if fmt.Sprint(def[k]) != fmt.Sprint(v) {
+			wrong = append(wrong, k)
+			def[k] = v
+		}
+	}
+	if len(wrong) == 0 {
+		return "already", "", nil
+	}
+	if err := w.call(ctx, id, key, http.MethodPut, "delayprofile/1", def, nil); err != nil {
+		return "", "", err
+	}
+	return "done", "", nil
+}

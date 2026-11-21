@@ -22,7 +22,7 @@ Usenet downloader, preferred over torrents. It has no network except the ProtonV
 
 ## Purpose
 
-Downloads from Usenet for Sonarr, Radarr and Lidarr. A Usenet server keeps a release whole for years whether or not anyone else shares it, so a request doesn't sit at 0% waiting for people to share a torrent (the usual reason requests used to stall). Sonarr, Radarr and Lidarr prefer it: their default delay profile (Settings › Profiles) picks a Usenet release over a torrent of the same quality, and they use torrents (qBittorrent) when no Usenet release is found.
+Downloads from Usenet for Sonarr, Radarr and Lidarr. A Usenet server keeps a release whole for years whether or not anyone else shares it, so a request doesn't sit at 0% waiting for people to share a torrent (the usual reason requests used to stall). Usenet goes first: **Connect apps** sets Sonarr's and Radarr's default delay profile (Settings › Profiles) to prefer Usenet and to wait an hour (`TORRENT_DELAY_MINUTES`, 60) before taking a torrent, so a torrent (qBittorrent) is used only when no Usenet release turns up within the hour. Lidarr keeps its own delay profile, which prefers a Usenet release over a torrent of the same quality. A delay profile of your own, with tags, is left alone; `TORRENT_DELAY_MINUTES=0` leaves the default one to you too.
 
 It runs inside [Gluetun](<Gluetun.md>)'s network, like qBittorrent: the Usenet server sees ProtonVPN's address, not yours, and nothing leaves if the VPN is down.
 
@@ -37,6 +37,7 @@ You need two things, both paid and both your choice (the homelab names none): a 
    - keeps unfinished downloads in `/downloads/incomplete/usenet` and finished ones in `/downloads/tv`, `/downloads/movies` and `/downloads/music`, the same folders qBittorrent uses, with a category for each app;
    - adds your Usenet server;
    - makes SABnzbd the Usenet download client of Sonarr, Radarr and Lidarr, at `gluetun:8080` with its API key.
+   - has Sonarr and Radarr wait an hour for Usenet before taking a torrent.
    Running it again changes nothing, and puts back a setting changed by hand.
 4. Add your Usenet search site in Prowlarr (Indexers › Add Indexer). Prowlarr sends it to the apps.
 
