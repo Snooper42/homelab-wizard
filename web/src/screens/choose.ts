@@ -234,22 +234,26 @@ $('installBtn').onclick = async () => {
 };
 
 // Wiring: connect the running apps, showing each link as it finishes.
-async function wire(box) {
+async function wire(box, run: () => Promise<WireLink[]> = () => go().Wire()) {
   const done: WireLink[] = [];
   let note = 'Connecting… this can take a minute while new apps start.';
-  // A link's one-click fix, then connect again: the inbox filing as things
-  // arrive lets the next run hand the downloads over to Tidy Up.
-  const fix = async (name: string) => {
-    if (name !== 'inbox-arrive') return;
-    try { await go().SaveSettings({ TIDY_INBOX_WHEN: 'arrive' }); } catch (e) { showError(e); return; }
-    settingsData.stale();
-    await wire(box);
+  // A link's fix, then connect again: the inbox filing as things arrive lets
+  // the next run hand the downloads over to Tidy Up; Seerr's sign-in goes
+  // with that run only (WireSeerr), never kept here.
+  const fix = async (name: string, user?: string, password?: string) => {
+    if (name === 'inbox-arrive') {
+      try { await go().SaveSettings({ TIDY_INBOX_WHEN: 'arrive' }); } catch (e) { showError(e); return; }
+      settingsData.stale();
+      await wire(box);
+    } else if (name === 'seerr-signin' && user) {
+      await wire(box, () => go().WireSeerr(user, password || ''));
+    }
   };
   const draw = () => mountWiring(box, { links: [...done], note, fix });
   draw();
   const off = window.runtime.EventsOn('link', (l) => { done.push(l); draw(); });
   try {
-    const links = await go().Wire();
+    const links = await run();
     note = links.length ? '' : 'Nothing to connect: none of the apps it links is running.';
     draw();
   } catch (e) {

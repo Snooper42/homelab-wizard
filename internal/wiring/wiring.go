@@ -209,7 +209,7 @@ func (w *Wirer) steps() []step {
 		}
 	}
 	if w.has("seerr") {
-		out = append(out, step{"Seerr signs in to Jellyfin", w.seerrSetup})
+		out = append(out, step{seerrStep, w.seerrSetup})
 	}
 	for _, l := range libraries[:2] {
 		l := l

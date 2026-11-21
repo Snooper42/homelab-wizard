@@ -1480,6 +1480,7 @@ interface Backend {
     Watchdog(): Promise<health.Summary>;
     Weekly(): Promise<app.Weekly>;
     Wire(): Promise<wiring.Link[]>;
+    WireSeerr(arg1: string, arg2: string): Promise<wiring.Link[]>;
 }
 
 /** Each event the Go side sends, and what it carries. */

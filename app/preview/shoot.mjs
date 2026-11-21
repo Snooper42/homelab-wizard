@@ -5724,6 +5724,23 @@ const smokes = [
     await page.waitForFunction(() => (window.__MOCK.saved || {}).TIDY_INBOX_WHEN === 'arrive', null, { timeout: 3000 });
     await page.waitForFunction(() => window.__MOCK.calls.Wire === 2, null, { timeout: 3000 });
   } },
+  // Arr item 3: Seerr waiting for its first sign-in asks a Jellyfin administrator's name and password in Connect apps,
+  // sends them with one run (WireSeerr), empties the password field, and shows that run's links.
+  { name: 'Connect apps signs Seerr in to Jellyfin from a name and password', screen: 'status', mock: { wireLinks: [{ state: 'manual', text: 'Seerr signs in to Jellyfin', detail: "it needs a Jellyfin administrator's name and password once", fix: 'seerr-signin' }], wireAfterSignIn: [{ state: 'done', text: 'Seerr signs in to Jellyfin', detail: 'as alex; Seerr sees Films and Shows' }, { state: 'done', text: 'Seerr sends requests to Sonarr' }] }, run: async (page) => {
+    await page.click('#statusMore');
+    await page.click('#connect');
+    const form = page.locator('#statusWiring form.wireForm');
+    await form.waitFor({ timeout: 3000 });
+    if (!(await form.locator('button').isDisabled())) throw new Error('Sign Seerr in works with no name');
+    await form.locator('input[type=text]').fill('alex');
+    await form.locator('input[type=password]').fill('s3cret');
+    await form.locator('button:has-text("Sign Seerr in")').click();
+    await page.waitForSelector('#statusWiring li:has-text("Seerr sends requests to Sonarr")', { timeout: 3000 });
+    const m = await page.evaluate(() => ({ user: window.__MOCK.seerrUser, given: window.__MOCK.seerrPasswordGiven }));
+    if (m.user !== 'alex' || !m.given) throw new Error(`sent ${JSON.stringify(m)}`);
+    if (await page.locator('#statusWiring input[type=password]').count()) throw new Error('the password field stays after the sign-in');
+    if (/s3cret/.test(await page.textContent('#statusWiring'))) throw new Error('the password shows');
+  } },
   { name: 'Connect apps lists each link as it finishes', screen: 'status', mock: { wireLinks: [{ state: 'done', text: 'Sonarr → Prowlarr' }, { state: 'manual', text: 'Bazarr → Sonarr', detail: 'set its API key in Bazarr' }] }, run: async (page) => {
     await page.click('#statusMore');
     await page.click('#connect');

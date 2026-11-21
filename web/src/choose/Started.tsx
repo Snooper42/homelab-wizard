@@ -1,6 +1,7 @@
 // After an install on Choose apps: the apps ready to open, and the links
 // the wiring made between them; and the categories a custom app can take.
 import { render } from 'preact';
+import { useState } from 'preact/hooks';
 import { ActionLink } from '../ActionLink';
 import { CardHead } from '../parts/Card';
 
@@ -24,11 +25,28 @@ export function Started({ started, also = [], open, close }: { started: api.Star
 /** One link the wiring made (internal/wiring), as it reports it. */
 export interface WireLink { state: string; text: string; detail?: string; fix?: string }
 /** A link's one-click fix (wiring.Link.Fix), by its name: the button's words. */
-const fixes: Record<string, string> = { 'inbox-arrive': 'Let Tidy Up file downloads as they arrive' };
+const fixes: Record<string, string> = { 'inbox-arrive': 'Let Tidy Up file downloads as they arrive', 'seerr-signin': 'Sign Seerr in' };
+
+/**
+ * Seerr's first sign-in: a Jellyfin administrator's name and password, sent
+ * once with Connect apps and kept nowhere (the field empties on send).
+ */
+function SeerrSignIn({ send }: { send: (user: string, password: string) => void }) {
+  const [user, setUser] = useState('');
+  const [password, setPassword] = useState('');
+  return (
+    <form class="detail wireForm" onSubmit={(e) => { e.preventDefault(); if (!user.trim()) return; const p = password; setPassword(''); send(user.trim(), p); }}>
+      <label>A Jellyfin administrator <input type="text" autocomplete="username" spellcheck={false} value={user} onInput={(e) => setUser(e.currentTarget.value)} /></label>
+      <label>Password <input type="password" autocomplete="current-password" value={password} onInput={(e) => setPassword(e.currentTarget.value)} /></label>
+      <button type="submit" class="small tint" disabled={!user.trim()}>{fixes['seerr-signin']}</button>
+      <span class="muted small">Used once to set Seerr up, never saved.</span>
+    </form>
+  );
+}
 const marks: Record<string, [string, string]> = { done: ['✓', 'ok'], already: ['✓', 'ok'], manual: ['!', 'warn'], failed: ['✗', 'bad'] };
 
 /** Connected for you: each link as it finishes, with what is still going on. */
-export function Wiring({ links, note, fix }: { links: WireLink[]; note: string; fix?: (name: string) => void }) {
+export function Wiring({ links, note, fix }: { links: WireLink[]; note: string; fix?: (name: string, user?: string, password?: string) => void }) {
   return (
     <>
       <CardHead title="Connected for you" />
@@ -39,7 +57,8 @@ export function Wiring({ links, note, fix }: { links: WireLink[]; note: string; 
           return (
             <li key={i}>
               <span class={cls}>{mark} </span>{l.text}{l.detail && <span class="detail">{l.detail}</span>}
-              {l.fix && fixes[l.fix] && fix && <span class="detail"><button type="button" class="small tint" onClick={() => fix(l.fix)}>{fixes[l.fix]}</button></span>}
+              {l.fix === 'seerr-signin' && fix && <SeerrSignIn send={(u, p) => fix(l.fix, u, p)} />}
+              {l.fix && l.fix !== 'seerr-signin' && fixes[l.fix] && fix && <span class="detail"><button type="button" class="small tint" onClick={() => fix(l.fix)}>{fixes[l.fix]}</button></span>}
             </li>
           );
         })}
@@ -49,6 +68,6 @@ export function Wiring({ links, note, fix }: { links: WireLink[]; note: string; 
 }
 
 export function mountStarted(el: Element, props: { started: api.Started[]; also?: AlsoStarted[]; open: (url: string) => void; close: () => void } | null) { render(props && <Started {...props} />, el); }
-export function mountWiring(el: Element, props: { links: WireLink[]; note: string; fix?: (name: string) => void } | null) { render(props && <Wiring {...props} />, el); }
+export function mountWiring(el: Element, props: { links: WireLink[]; note: string; fix?: (name: string, user?: string, password?: string) => void } | null) { render(props && <Wiring {...props} />, el); }
 /** The categories, as the custom app form's options. */
 export function mountCategories(el: Element, categories: api.Category[]) { render(<>{categories.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}</>, el); }

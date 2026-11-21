@@ -159,6 +159,8 @@ td.state .rowerr { display:block; white-space:normal; font-size:12px; color:var(
 #inputs .fieldName { font-weight:600; color:var(--text); }
 #inputs .help { font-size:12.5px; color:var(--muted); line-height:1.4; }
 /* A hard-to-find key's steps, under its field (choose/walkthroughs.ts). */
+/* Connect apps' Sign Seerr in (choose/Started.tsx). */
+.links form.wireForm { display:flex; flex-wrap:wrap; align-items:flex-end; gap:8px 12px; margin-top:6px; } .wireForm label { display:flex; flex-direction:column; gap:3px; font-size:12.5px; } .wireForm input { width:200px; max-width:100%; padding:5px 8px; border:1px solid var(--line-strong); border-radius:7px; background:var(--sunken); color:var(--text); font:inherit; }
 #inputs .walk { margin:-6px 0 14px; } #inputs .walk .walkLead { margin:0 0 4px; color:var(--text); } #inputs .walk ol { margin:0 0 8px; padding-left:20px; } #inputs .walk li { margin:2px 0; }
 .chips { display:flex; flex-wrap:wrap; gap:8px; }
 .chip { border:1px solid var(--line-strong); background:var(--panel); border-radius:999px; padding:5px 14px; color:var(--text); }
