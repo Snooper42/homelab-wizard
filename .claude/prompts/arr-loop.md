@@ -67,6 +67,7 @@ Afterwards, a request that can't be found or downloaded sits at "Requested" in S
   1. **Tidy Up files every download.** Setup turns **Hand over** on by itself.
   2. **No daily merge cap** for lane 5 (rule 6, `lanes.md` Rule 5).
   3. **Disk space comes first:** storage is expensive. Never two copies of a download; item 7's default is *save space*; no hard links (item 9 dropped them).
+  4. **Searching goes through the VPN too** (the owner, Nov 20): an option, **on by default**. Item 2b.
 - **Nov 19, round 1:** this file and `lanes.md` updated with the answers, item 0 and the CasaOS-style items (a)–(d). Item 0's check done from the code (below); next round starts item 0's fix.
 - **Nov 19, round 2:** item 0, part 1: `wire` sets qBittorrent to stop sharing once a download is finished and keep unfinished ones in `incomplete/` with `.!qB` (`internal/wiring/qbit.go`, against a fake qBittorrent). Next: part 2, the inbox waits for qBittorrent (a torrent an indexer keeps seeding is still listed), and Setup turns Hand over on. **#767 merged.**
 - **Nov 19, round 3:** item 0, part 2a: the inbox files a download from qBittorrent's folder only once qBittorrent says it's finished and stopped (or gone); running but unreadable holds the whole folder, said on the card (`cmd/homelab/media_inbox_qbit.go`, `inbox.py` `held_by_torrent`; noted under **For Account 1** in `tidy-loop.md`). Next: part 2b, Setup turns Hand over on.
@@ -110,6 +111,11 @@ Each item is one small PR unless it says otherwise. Before writing code, **check
    - Gluetun puts its forwarded port into qBittorrent by itself on every change. Check Gluetun's wiki for its port-forwarding "up" command and what qBittorrent needs to accept it from `127.0.0.1` (they share a network).
    - The wizard checks the downloads leave through the VPN, not the home connection, and shows a green **Downloads are private** tick (in Setup and on qBittorrent's page). Today that check is a command typed by hand (Gluetun step 4).
    - The plan's VPN-key field gets a plain three-step walkthrough of where to find the key, and says up front that it needs a paid Proton plan.
+2b. **Searching through the VPN too** (the owner, Nov 20: an option, on by default; answer 4). Today only qBittorrent is in Gluetun's network, so Prowlarr's searches (and Sonarr's and Radarr's `.torrent` fetches) leave from the home connection: search sites and the internet provider see the home address. Put Prowlarr in Gluetun's network the way qBittorrent is (`network_mode: service:gluetun`), behind one setting (on unless the person turns it off; off means today's layout).
+   - **Check before building:** Sonarr and Radarr then reach Prowlarr at `gluetun:9696`, and Prowlarr reaches them and FlareSolverr by name from inside Gluetun: Gluetun's DNS and firewall must let the homelab's own network through (`FIREWALL_OUTBOUND_SUBNETS` for the Docker network; whether its DNS answers container names). `wire` must find and correct the Prowlarr address both ways (rule 5). Prowlarr's web page is published on Gluetun's ports, like qBittorrent's.
+   - **Say the trade-off in plain words** where it's turned on or off: some search sites block VPN addresses or ask for more captchas, and when the VPN is down searching stops too.
+   - **Downloads are private** grows a second line for searching (Prowlarr in Gluetun's network). A security choice: write it up in the PR for the owner (rule 1c's way).
+   - Also check how Gluetun handles IPv6 here (the owner asked, Nov 20, whether anything leaks): say what's blocked, from Gluetun's source or wiki.
 3. **Seerr signs into Jellyfin for them** (removes step 6).
    - The wizard asks for the Jellyfin admin password once, uses it for Seerr's first-run sign-in through Seerr's own API, and doesn't keep it.
    - `wire` then links Seerr to Sonarr and Radarr in the same run. `seerrSignIn` becomes a fallback when the password is wrong.
