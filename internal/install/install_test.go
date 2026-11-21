@@ -518,3 +518,30 @@ func TestPlanSaysWhereAnAppFillsAFolder(t *testing.T) {
 		t.Errorf("the plan doesn't say where Frigate's recordings go, and the room there:\n%s", said)
 	}
 }
+
+// The media automation project loads the search overlay while searching
+// goes through the VPN (catalog.SearchThroughVPN), and only then.
+func TestProjectForSearchThroughVPN(t *testing.T) {
+	root := t.TempDir()
+	env := filepath.Join(root, ".env")
+	media := &compose.File{Dir: root, Path: filepath.Join(root, "compose", "media-automation.yaml"), Name: "homelab_media_automation"}
+	other := &compose.File{Dir: root, Path: filepath.Join(root, "compose", "media.yaml"), Name: "homelab_media"}
+	overlay := filepath.Join(root, "compose", "overlays", "search-through-vpn.yaml")
+	for _, c := range []struct {
+		env  string
+		file *compose.File
+		want []string
+	}{
+		{"PROTONVPN_WIREGUARD_PRIVATE_KEY=k\n", media, []string{overlay}},
+		{"PROTONVPN_WIREGUARD_PRIVATE_KEY=k\nSEARCH_THROUGH_VPN=off\n", media, nil},
+		{"PROTONVPN_WIREGUARD_PRIVATE_KEY=\n", media, nil},
+		{"PROTONVPN_WIREGUARD_PRIVATE_KEY=k\n", other, nil},
+	} {
+		if err := os.WriteFile(env, []byte(c.env), 0o600); err != nil {
+			t.Fatal(err)
+		}
+		if got := ProjectFor(c.file, env).Overlays; !slices.Equal(got, c.want) {
+			t.Errorf("%q, %s: overlays %v, want %v", c.env, c.file.Name, got, c.want)
+		}
+	}
+}

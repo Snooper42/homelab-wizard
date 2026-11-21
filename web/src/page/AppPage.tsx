@@ -473,6 +473,8 @@ function Private({ privacy, connect, busy }: { privacy: wiring.Privacy | null | 
         <Rows>
           <Row dot={v.private ? 'ok' : 'bad'} title={v.private ? 'Yes: only through the VPN' : 'Not yet'} sub={v.said}
             end={v.fix === 'wire' && <button class="small change" disabled={busy} onClick={connect}>Connect apps</button>} />
+          {/* Searching (Prowlarr) too: through the VPN when it lives in Gluetun's network (SEARCH_THROUGH_VPN). */}
+          {v.search && <Row dot={/through ProtonVPN/.test(v.search) ? 'ok' : 'warn'} title={/through ProtonVPN/.test(v.search) ? 'Searching: through the VPN too' : 'Searching: from your home connection'} sub={v.search} />}
         </Rows>
       )}
     </Card>

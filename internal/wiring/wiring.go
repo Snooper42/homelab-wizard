@@ -95,6 +95,9 @@ func AppsFrom(c *catalog.Catalog, running func(id string) bool, env map[string]s
 		if strings.HasPrefix(a.NetworkMode, "service:") {
 			host = strings.TrimPrefix(a.NetworkMode, "service:")
 		}
+		if a.ID == catalog.SearchApp && catalog.SearchThroughVPN(lookup) {
+			host = catalog.VPNApp // compose/overlays/search-through-vpn.yaml
+		}
 		if p := a.WebContainerPort(lookup); p > 0 {
 			app.Internal = "http://" + host + ":" + strconv.Itoa(p)
 		}
