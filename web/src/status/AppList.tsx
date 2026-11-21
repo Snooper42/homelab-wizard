@@ -24,6 +24,8 @@ export interface Group {
   alert?: boolean;
   /** The apps pinned to the top: open by default, as the point of them is a glance. */
   pinned?: boolean;
+  /** What a folded group's line says in place of its apps' names (Media automation's, arr item 8). */
+  summary?: string;
 }
 
 /** What the rows do; app.ts runs each. */
@@ -506,7 +508,7 @@ function GroupHead({ g, open, toggle, p }: { g: Group; open: boolean; toggle: ()
         <span class="kiosklabel">{g.label}</span>
         <GroupMenu g={g} p={p} count={g.alert ? String(g.apps.length) : running >= counted ? `${running} running ✓` : `${running} of ${counted} running`} />
         <StartAll g={g} p={p} />
-        {!open && <span class="names">{g.apps.map((a) => a.name).join(' · ')}</span>}
+        {!open && <span class="names" title={g.summary ? g.apps.map((a) => a.name).join(' · ') : undefined}>{g.summary || g.apps.map((a) => a.name).join(' · ')}</span>}
       </th>
     </tr>
   );

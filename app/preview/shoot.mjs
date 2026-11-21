@@ -2384,6 +2384,48 @@ const smokes = [
     if (!(await page.evaluate(() => window.__MOCK.copiedSettings || [])).includes('NPM_API_PASSWORD')) throw new Error('the password was not copied by the computer');
     if (await page.locator('#cliActions .signin:has-text("Email") button.copied').count()) throw new Error('only the last copy is highlighted');
   } },
+  // Arr item 8: media automation folded away. Seerr, where the household asks, shows beside Jellyfin in Media; the apps
+  // in between sit last on Status, folded under one line saying what they do (their names on hover), and open on a click.
+  { name: 'Status: media automation sits last under one line, Seerr beside Jellyfin', screen: 'status',
+    mock: { statusOpen: '', status: { ...status, apps: [...status.apps,
+      { id: 'jellyfin', name: 'Jellyfin', state: 'running', health: 'healthy', url: 'http://localhost:8096' },
+      { id: 'seerr', name: 'Seerr', state: 'running', health: 'healthy', url: 'http://localhost:5055' },
+      { id: 'prowlarr', name: 'Prowlarr', state: 'running', health: 'healthy', url: 'http://localhost:9696' },
+      { id: 'sonarr', name: 'Sonarr', state: 'running', health: 'healthy', url: 'http://localhost:8989' },
+      { id: 'radarr', name: 'Radarr', state: 'running', health: 'healthy', url: 'http://localhost:7878' }] } }, run: async (page) => {
+    const heads = '#statusRows tr.grouphead';
+    await page.waitForSelector(`${heads}:has-text("Media automation")`, { timeout: 5000 });
+    const order = await page.$$eval(heads, (hs) => hs.map((h) => h.querySelector('.foldbtn')?.textContent?.replace(/^[▸▾]/, '').trim()));
+    const last = order.filter((l) => l !== 'Other').pop();
+    if (last !== 'Media automation') throw new Error(`groups: ${order.join(', ')}`);
+    const auto = page.locator(`${heads}:has-text("Media automation")`);
+    if ((await auto.locator('.foldbtn').getAttribute('aria-expanded')) !== 'false') throw new Error('media automation opens by itself');
+    const line = auto.locator('.names');
+    if ((await line.textContent()) !== 'Finds and downloads what you ask for in Seerr' || !/Sonarr/.test(await line.getAttribute('title'))) throw new Error(`folded line: ${await line.textContent()}`);
+    // Seerr is in Media with Jellyfin, not under the fold.
+    const inMedia = await page.evaluate(() => {
+      let group = '';
+      const of = {};
+      for (const tr of document.querySelectorAll('#statusRows tr')) {
+        if (tr.classList.contains('grouphead')) group = tr.querySelector('.foldbtn')?.textContent?.replace(/^[▸▾]/, '').trim() || '';
+        else { const n = tr.querySelector('strong')?.textContent; if (n) of[n] = group; }
+      }
+      return of;
+    });
+    await page.locator(heads).filter({ has: page.locator('.foldbtn', { hasText: /^.Media$/ }) }).locator('.foldbtn').click();
+    await auto.locator('.foldbtn').click();
+    await page.waitForSelector('#statusRows tr:has(strong:text-is("Sonarr"))', { timeout: 3000 });
+    const after = await page.evaluate(() => {
+      let group = '';
+      const of = {};
+      for (const tr of document.querySelectorAll('#statusRows tr')) {
+        if (tr.classList.contains('grouphead')) group = tr.querySelector('.foldbtn')?.textContent?.replace(/^[▸▾]/, '').trim() || '';
+        else { const n = tr.querySelector('strong')?.textContent; if (n) of[n] = group; }
+      }
+      return of;
+    });
+    if (after.Sonarr !== 'Media automation' || after.Seerr !== 'Media' || inMedia.Sonarr) throw new Error(`groups of: ${JSON.stringify(after)}`);
+  } },
   // The ⚙ on every Status row (the owner, Nov 19): Sonarr's own API key, from its config.xml, to paste into another app;
   // the bounce goes with Reduce Motion, the highlight stays.
   { name: 'Status: the gear on Sonarr’s row copies its API key', screen: 'status',
