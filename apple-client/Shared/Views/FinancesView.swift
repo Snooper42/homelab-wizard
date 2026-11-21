@@ -1145,14 +1145,9 @@ private struct FinanceBillsPage: View {
         .sensoryFeedback(.success, trigger: finances.savedCount)
         .navigationTitle("Bills")
         .modifier(AddPaymentButton(finances: finances))
+        // All of it, as the computer's form (the owner's yes, Nov 21): not only what it costs.
         .sheet(item: $editingPayment) { payment in
-            AmountEditor(
-                title: "Change Payment", heading: payment.name,
-                footer: payment.estimate == true
-                    ? "About what it costs each time. Every one still to come changes."
-                    : "What it costs each time. Every one still to come changes.",
-                finances: finances
-            ) { amount in await finances.setPayment(payment, to: amount) }
+            EditPaymentView(payment: payment, finances: finances)
         }
     }
 }
@@ -1645,13 +1640,7 @@ private struct FinanceRecurringPage: View {
         .navigationTitle("Recurring")
         .modifier(AddPaymentButton(finances: finances))
         .sheet(item: $editing) { payment in
-            AmountEditor(
-                title: "Change Payment", heading: payment.name,
-                footer: payment.estimate == true
-                    ? "About what it costs each time. Every one still to come changes."
-                    : "What it costs each time. Every one still to come changes.",
-                finances: finances
-            ) { amount in await finances.setPayment(payment, to: amount) }
+            EditPaymentView(payment: payment, finances: finances)
         }
     }
 
@@ -1712,7 +1701,8 @@ private struct FinanceRecurringPage: View {
             .padding(.bottom, 6)
             ForEach(Array(rows.enumerated()), id: \.element.id) { i, item in
                 if i > 0 { Divider().padding(.leading, 54) }
-                if finances.canEditPlan, item.payment.canChangeAmount {
+                // One of the plan's own payments; a card's payoff is changed on its account.
+                if finances.canEditPlan, view.plan.payments.contains(where: { $0.id == item.payment.id }) {
                     Button {
                         finances.clearSaveError()
                         editing = item.payment
@@ -1720,7 +1710,7 @@ private struct FinanceRecurringPage: View {
                         row(item, view)
                     }
                     .buttonStyle(PressableButtonStyle())
-                    .accessibilityHint("Change what it costs")
+                    .accessibilityHint("Change it")
                 } else {
                     row(item, view)
                 }
@@ -2895,7 +2885,8 @@ private struct PeriodSection: View {
             // By position: the same payment can come twice on one day.
             ForEach(period.rows.indices, id: \.self) { i in
                 let row = period.rows[i]
-                if finances.canEditPlan, let payment = view.payment(row.payment), payment.canChangeAmount {
+                // One of the plan's own payments (a card's payoff is the card's, changed on its account).
+                if finances.canEditPlan, let payment = view.payment(row.payment), view.plan.payments.contains(where: { $0.id == payment.id }) {
                     Button {
                         edit(payment)
                     } label: {
@@ -2903,7 +2894,7 @@ private struct PeriodSection: View {
                             .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
-                    .accessibilityHint("Change what it costs")
+                    .accessibilityHint("Change it")
                 } else {
                     RowLine(row: row, view: view, finances: finances)
                 }

@@ -1221,6 +1221,10 @@ struct FinanceSchedule: Decodable, Sendable, Equatable {
     let start: String?
     /// Its last day, for one that ends (a lease): none after it (`Schedule.Until`).
     var until: String? = nil
+    /// Twice a month: its second day of the month.
+    var day2: Int? = nil
+    /// With each paycheck: whose (an earner's id); none for every one into checking.
+    var person: String? = nil
 
     /// "until Jan 15, 2027", or "ended Jan 15, 2027" once it has; nil for one that goes on.
     func endWords(today: String) -> String? {

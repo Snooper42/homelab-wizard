@@ -44,6 +44,10 @@ func awayWords(_ change: FinanceChange, view: FinancesPlanView?, finances: Finan
         return "Added the \(category) budget, \(money(amount)) \(perPaycheck ? "each pay period" : "a month")"
     case .removeBudget(let category):
         return "Removed the \(category) budget"
+    case .editPayment(_, let p):
+        return "Changed \(p.name.trimmingCharacters(in: .whitespaces)), \(money(p.amount))"
+    case .removePayment(let id):
+        return "Deleted \(view?.paymentTitle(id) ?? "a payment")"
     }
 }
 

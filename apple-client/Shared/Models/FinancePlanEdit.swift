@@ -225,33 +225,8 @@ enum FinancePlanEdit {
               paymentKinds.contains(where: { $0.id == p.kind }),
               case .object(var root) = plan
         else { return nil }
-        func account(_ id: String, in kinds: Set<String>) -> Bool {
-            guard case .array(let accounts)? = root["accounts"],
-                  let a = accounts.first(where: { $0["id"] == .string(id) }),
-                  case .string(let kind)? = a["kind"] else { return false }
-            return kinds.contains(kind)
-        }
-        var schedule: [String: JSONValue] = ["every": .string(p.every)]
-        if p.every == "paycheck" {
-            if let person = p.person, !person.isEmpty {
-                guard case .array(let people)? = root["people"], people.contains(where: { $0["id"] == .string(person) }) else { return nil }
-                schedule["person"] = .string(person)
-            }
-            if LocalDay.parse(p.start) != nil { schedule["start"] = .string(p.start) }
-        } else {
-            guard let first = LocalDay.parse(p.start) else { return nil }
-            schedule["start"] = .string(p.start)
-            if p.every == "twice a month" {
-                let day = Calendar(identifier: .gregorian).component(.day, from: first)
-                guard let day2 = p.day2, (1...31).contains(day2), day2 != day else { return nil }
-                schedule["day2"] = .number(Double(day2))
-            }
-        }
-        // One that ends: a day, and not before it starts (Schedule.checkUntil); once has none.
-        if let until = p.until, !until.isEmpty, p.every != "once" {
-            guard LocalDay.parse(until) != nil, p.every == "paycheck" || until >= p.start else { return nil }
-            schedule["until"] = .string(until)
-        }
+        func account(_ id: String, in kinds: Set<String>) -> Bool { accountKind(id, in: root).map(kinds.contains) ?? false }
+        guard let schedule = scheduleObject(p, root: root) else { return nil }
         var payment: [String: JSONValue] = [
             "name": .string(name),
             "amount": .number(cents),
@@ -276,6 +251,94 @@ enum FinancePlanEdit {
         var payments: [JSONValue] = []
         if case .array(let have)? = root["payments"] { payments = have }
         payments.append(.object(payment))
+        root["payments"] = .array(payments)
+        return .object(root)
+    }
+
+    /// An account's kind in the plan, by id.
+    private static func accountKind(_ id: String, in root: [String: JSONValue]) -> String? {
+        guard case .array(let accounts)? = root["accounts"],
+              let a = accounts.first(where: { $0["id"] == .string(id) }),
+              case .string(let kind)? = a["kind"] else { return nil }
+        return kind
+    }
+
+    /// A payment's schedule as the computer's form writes it (Edit.tsx's
+    /// ScheduleFields): how often from its day, a second day twice a month,
+    /// with each paycheck (anyone's or one person's), and its last day for
+    /// one that ends, not before it starts. Nil when any of it isn't right.
+    private static func scheduleObject(_ p: NewPayment, root: [String: JSONValue]) -> [String: JSONValue]? {
+        guard p.every == "paycheck" || paymentEveries.contains(where: { $0.id == p.every }) else { return nil }
+        var schedule: [String: JSONValue] = ["every": .string(p.every)]
+        if p.every == "paycheck" {
+            if let person = p.person, !person.isEmpty {
+                guard case .array(let people)? = root["people"], people.contains(where: { $0["id"] == .string(person) }) else { return nil }
+                schedule["person"] = .string(person)
+            }
+            if LocalDay.parse(p.start) != nil { schedule["start"] = .string(p.start) }
+        } else {
+            guard let first = LocalDay.parse(p.start) else { return nil }
+            schedule["start"] = .string(p.start)
+            if p.every == "twice a month" {
+                let day = Calendar(identifier: .gregorian).component(.day, from: first)
+                guard let day2 = p.day2, (1...31).contains(day2), day2 != day else { return nil }
+                schedule["day2"] = .number(Double(day2))
+            }
+        }
+        // One that ends: a day, and not before it starts (Schedule.checkUntil); once has none.
+        if let until = p.until, !until.isEmpty, p.every != "once" {
+            guard LocalDay.parse(until) != nil, p.every == "paycheck" || until >= p.start else { return nil }
+            schedule["until"] = .string(until)
+        }
+        return schedule
+    }
+
+    /// `plan` with the payment `id` changed as the computer's Edit a payment
+    /// changes one (the owner's yes, Nov 21, on the canvas's *Idea: Bills*):
+    /// its name, kind, what it costs and whether that's about, its schedule,
+    /// and the account it comes out of. What the sheet doesn't show is kept
+    /// as it was: who sends money in and where it goes, the account it moves
+    /// money into, the card it pays off, its logo. Nil for an unknown
+    /// payment, a name left empty, an amount that isn't more than nothing
+    /// (a card's payoff may have none: it pays the balance), a schedule that
+    /// isn't right, or an account it can't come out of (a card paying itself).
+    static func updatingPayment(id: String, with p: NewPayment, in plan: JSONValue) -> JSONValue? {
+        let name = p.name.trimmingCharacters(in: .whitespacesAndNewlines)
+        let cents = roundedToCents(p.amount)
+        guard !name.isEmpty, name.count <= 80, p.amount.isFinite, cents >= 0, cents <= maxBalance,
+              paymentKinds.contains(where: { $0.id == p.kind }),
+              case .object(var root) = plan, case .array(var payments)? = root["payments"],
+              let index = payments.firstIndex(where: { $0["id"] == .string(id) }),
+              case .object(var payment) = payments[index],
+              let schedule = scheduleObject(p, root: root)
+        else { return nil }
+        let card: String? = { if case .string(let c)? = payment["card"], !c.isEmpty { return c }; return nil }()
+        let fromSomeone: Bool = { if case .string(let who)? = payment["payer"] { return !who.isEmpty }; return false }()
+        guard cents > 0 || card != nil else { return nil }
+        payment["name"] = .string(name)
+        payment["amount"] = .number(cents)
+        payment["kind"] = .string(p.kind)
+        payment["schedule"] = .object(schedule)
+        payment["estimate"] = p.estimate ? .bool(true) : nil
+        if !fromSomeone {
+            if p.from.isEmpty {
+                payment["from"] = nil
+            } else {
+                guard accountKind(p.from, in: root).map(paymentFromKinds.contains) == true, p.from != card else { return nil }
+                payment["from"] = .string(p.from)
+            }
+        }
+        payments[index] = .object(payment)
+        root["payments"] = .array(payments)
+        return .object(root)
+    }
+
+    /// `plan` without the payment `id`, as the computer's Delete: its
+    /// transactions keep their link, as there. Nil when it has none.
+    static func removingPayment(id: String, in plan: JSONValue) -> JSONValue? {
+        guard case .object(var root) = plan, case .array(var payments)? = root["payments"],
+              let index = payments.firstIndex(where: { $0["id"] == .string(id) }) else { return nil }
+        payments.remove(at: index)
         root["payments"] = .array(payments)
         return .object(root)
     }
