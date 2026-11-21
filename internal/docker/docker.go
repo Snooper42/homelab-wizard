@@ -848,11 +848,18 @@ type Project struct {
 	ComposeFile string
 	EnvFile     string
 	Name        string
+	// Overlays are compose files loaded after ComposeFile, whose services
+	// change its (install.ProjectFor: searching through the VPN).
+	Overlays []string
 }
 
 // ComposeArgs returns the global arguments for `docker compose`.
 func (p Project) ComposeArgs(profiles []string) []string {
-	args := []string{"compose", "--project-directory", p.Dir, "-f", p.ComposeFile, "-p", p.Name}
+	args := []string{"compose", "--project-directory", p.Dir, "-f", p.ComposeFile}
+	for _, o := range p.Overlays {
+		args = append(args, "-f", o)
+	}
+	args = append(args, "-p", p.Name)
 	if _, err := os.Stat(p.EnvFile); err == nil {
 		args = append(args, "--env-file", p.EnvFile)
 	}

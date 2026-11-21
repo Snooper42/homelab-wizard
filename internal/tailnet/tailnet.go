@@ -50,7 +50,7 @@ func Routes(apps []*catalog.App, lookup compose.Lookup) []Route {
 					port = b.HostPort
 				}
 			}
-			target = fmt.Sprintf("http://%s:%d", a.ProxyTarget(), a.WebContainerPort(lookup))
+			target = fmt.Sprintf("http://%s:%d", a.ProxyTargetFor(lookup), a.WebContainerPort(lookup))
 		}
 		if port <= 0 || seen[port] {
 			continue

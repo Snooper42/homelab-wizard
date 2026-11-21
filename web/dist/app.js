@@ -6962,6 +6962,7 @@
     "TAILSCALE_AUTHKEY",
     "PROTONVPN_WIREGUARD_PRIVATE_KEY",
     "PROTONVPN_SERVER_COUNTRIES",
+    "SEARCH_THROUGH_VPN",
     "QBITTORRENT_PASSWORD",
     "CROWDSEC_ENROLL_KEY",
     "ROMM_IGDB_CLIENT_ID",
@@ -7007,6 +7008,7 @@
     TAILNET_ADMIN_APPS: "Admin apps on the tailnet",
     PROTONVPN_WIREGUARD_PRIVATE_KEY: "ProtonVPN WireGuard key",
     PROTONVPN_SERVER_COUNTRIES: "ProtonVPN server countries",
+    SEARCH_THROUGH_VPN: "Search through the VPN",
     ADGUARD_DNS_BIND_IP: "AdGuard Home DNS listens on",
     HOST_GATEWAY: "Apps reach this machine's own apps at",
     SSO_HOST: "Pocket ID address for the apps",
@@ -9027,15 +9029,18 @@
       /* @__PURE__ */ u3(CardHead, { title: "Downloads are private", children: null }),
       reading2 && /* @__PURE__ */ u3(Empty, { children: "Asking qBittorrent and the VPN…" }),
       !v3 && !reading2 && /* @__PURE__ */ u3(Empty, { children: "Can't check right now." }),
-      v3 && /* @__PURE__ */ u3(Rows, { children: /* @__PURE__ */ u3(
-        Row,
-        {
-          dot: v3.private ? "ok" : "bad",
-          title: v3.private ? "Yes: only through the VPN" : "Not yet",
-          sub: v3.said,
-          end: v3.fix === "wire" && /* @__PURE__ */ u3("button", { class: "small change", disabled: busy2, onClick: connect, children: "Connect apps" })
-        }
-      ) })
+      v3 && /* @__PURE__ */ u3(Rows, { children: [
+        /* @__PURE__ */ u3(
+          Row,
+          {
+            dot: v3.private ? "ok" : "bad",
+            title: v3.private ? "Yes: only through the VPN" : "Not yet",
+            sub: v3.said,
+            end: v3.fix === "wire" && /* @__PURE__ */ u3("button", { class: "small change", disabled: busy2, onClick: connect, children: "Connect apps" })
+          }
+        ),
+        v3.search && /* @__PURE__ */ u3(Row, { dot: /through ProtonVPN/.test(v3.search) ? "ok" : "warn", title: /through ProtonVPN/.test(v3.search) ? "Searching: through the VPN too" : "Searching: from your home connection", sub: v3.search })
+      ] })
     ] });
   }
   function People2({ p: p3 }) {

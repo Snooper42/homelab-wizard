@@ -3,6 +3,7 @@ package wiring
 import (
 	"context"
 	"encoding/json"
+	"github.com/Snooper42/homelab-wizard/internal/catalog"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -158,5 +159,22 @@ func TestSeerrSignInFallsBackToAPerson(t *testing.T) {
 				t.Fatalf("detail %q, initialize %d", l.Detail, st.initCalls)
 			}
 		})
+	}
+}
+
+// Searching through the VPN: Prowlarr lives in Gluetun's network, so the
+// other apps reach it at gluetun:9696 (Prowlarr's own address in its links
+// to Sonarr, Radarr and Lidarr follows, corrected by ensure on the next run).
+func TestProwlarrThroughTheVPN(t *testing.T) {
+	c, err := catalog.Load(filepath.Join("..", ".."))
+	if err != nil {
+		t.Fatal(err)
+	}
+	running := func(id string) bool { return id == "prowlarr" || id == "gluetun" }
+	for key, want := range map[string]string{"": "http://prowlarr:9696", "k": "http://gluetun:9696"} {
+		apps := AppsFrom(c, running, map[string]string{"PROTONVPN_WIREGUARD_PRIVATE_KEY": key}, t.TempDir())
+		if got := apps["prowlarr"].Internal; got != want {
+			t.Errorf("key %q: prowlarr at %s, want %s", key, got, want)
+		}
 	}
 }

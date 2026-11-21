@@ -104,9 +104,27 @@ type Inputs struct {
 
 // ProjectFor is how the CLI runs Compose for one file: its own directory and
 // project name, with the shared .env for interpolation.
+//
+// The media automation project also loads overlays/search-through-vpn.yaml
+// while searching goes through the VPN (catalog.SearchThroughVPN, read from
+// that .env), which puts Prowlarr in Gluetun's network.
 func ProjectFor(f *compose.File, envFile string) docker.Project {
-	return docker.Project{Dir: f.Dir, ComposeFile: f.Path, EnvFile: envFile, Name: f.Name}
+	p := docker.Project{Dir: f.Dir, ComposeFile: f.Path, EnvFile: envFile, Name: f.Name}
+	if filepath.Base(f.Path) == "media-automation.yaml" {
+		env := map[string]string{}
+		if e, err := envfile.Load(envFile); err == nil {
+			env = e.Map()
+		}
+		if catalog.SearchThroughVPN(compose.MapLookup(env)) {
+			p.Overlays = []string{filepath.Join(filepath.Dir(f.Path), "overlays", SearchOverlay)}
+		}
+	}
+	return p
 }
+
+// SearchOverlay is the compose overlay that puts Prowlarr in Gluetun's
+// network (compose/overlays).
+const SearchOverlay = "search-through-vpn.yaml"
 
 // Build creates a plan for a selection.
 func Build(in Inputs, sel *selector.Selection) (*Plan, error) {

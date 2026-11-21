@@ -1,0 +1,16 @@
+# Searching through the VPN (SEARCH_THROUGH_VPN, on unless turned off):
+# loaded over media-automation.yaml while ProtonVPN's key is set, it puts
+# Prowlarr in Gluetun's network the way qBittorrent is, so the search sites
+# see a ProtonVPN address, not the home's. Prowlarr's page moves to
+# Gluetun's ports (the same address on this computer); Sonarr and Radarr
+# reach it at gluetun:9696, and it reaches them and FlareSolverr by name
+# (Gluetun v3.41 and later).
+services:
+  prowlarr:
+    network_mode: service:gluetun
+    ports: !reset []
+    depends_on:
+      gluetun: { condition: service_healthy }
+  gluetun:
+    ports:
+      - ${BIND_IP:-127.0.0.1}:${PROWLARR_PORT:-9696}:9696

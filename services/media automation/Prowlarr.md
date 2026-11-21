@@ -43,6 +43,7 @@ One place to manage indexers, their credentials, and their health.
 - With sync level Full Sync, adding, changing, or removing an indexer here does the same in every app.
 - Indexers tagged `flaresolverr` send their requests through [FlareSolverr](<FlareSolverr.md>) at `http://flaresolverr:8191`, which opens the page in a headless browser.
 - It checks each indexer's health, backs off from failing ones for a while, and records every query and grab under History.
+- **Searching through the VPN** (`SEARCH_THROUGH_VPN`, on by default once `PROTONVPN_WIREGUARD_PRIVATE_KEY` is set): the media automation project also loads `compose/overlays/search-through-vpn.yaml`, which puts Prowlarr in [Gluetun](<Gluetun.md>)'s network the way qBittorrent is. The search sites then see a ProtonVPN address, not your home's. Its page stays at the same address on this computer (Gluetun publishes its port); Sonarr, Radarr and Lidarr reach it at `gluetun:9696`, and Connect apps corrects the address in each app's link on its next run. Some search sites block VPN addresses or ask for more captchas, and searching stops while the VPN is down: turn it off with `SEARCH_THROUGH_VPN=off`, then `./homelab update prowlarr`. qBittorrent's page says where searching leaves from.
 
 ## Where things live
 

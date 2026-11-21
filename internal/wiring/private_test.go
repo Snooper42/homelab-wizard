@@ -104,3 +104,24 @@ func TestQbittorrentTiedToTheTunnel(t *testing.T) {
 		t.Fatalf("second run: %s, %d saves", state, *saves-before)
 	}
 }
+
+// The privacy check says where searching leaves from too: through ProtonVPN
+// while Prowlarr lives in Gluetun's network, else the home connection, and
+// nothing when Prowlarr isn't running. It never shows an address.
+func TestSearchingIsPrivate(t *testing.T) {
+	for internal, want := range map[string]string{
+		"http://gluetun:9696":  "through ProtonVPN",
+		"http://prowlarr:9696": "your home connection",
+		"":                     "",
+	} {
+		apps := map[string]App{}
+		if internal != "" {
+			apps["prowlarr"] = App{ID: "prowlarr", Internal: internal}
+		}
+		w := &Wirer{Apps: apps}
+		got := w.Privacy(context.Background()).Search
+		if (want == "" && got != "") || !strings.Contains(got, want) {
+			t.Errorf("%q: %q", internal, got)
+		}
+	}
+}

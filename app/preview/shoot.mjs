@@ -2333,6 +2333,16 @@ const smokes = [
     await card.getByText('never your home connection').waitFor({ timeout: 3000 });
     if (await card.getByRole('button', { name: 'Connect apps' }).count()) throw new Error('Connect apps offered while private');
   } },
+  // Arr item 2b: the card says where searching leaves from too, through the VPN or from home.
+  { name: 'qBittorrent’s page: searching through the VPN too', screen: 'app:qbittorrent', mock: { status: { ...status, apps: [...status.apps, qbit] }, privacy: { private: true, said: "qBittorrent's downloads leave only through ProtonVPN, never your home connection.", search: 'Searching goes through ProtonVPN too: the search sites see its address, not yours.' } }, run: async (page) => {
+    const card = page.locator('#appPrivate');
+    await card.locator('li:has(.dot.ok):has-text("Searching: through the VPN too")').waitFor({ timeout: 5000 });
+  } },
+  { name: 'qBittorrent’s page: searching from home says so', screen: 'app:qbittorrent', mock: { status: { ...status, apps: [...status.apps, qbit] }, privacy: { private: true, said: "qBittorrent's downloads leave only through ProtonVPN, never your home connection.", search: 'Searching leaves through your home connection: the search sites see your address. Turn on Search through the VPN in Settings to change that (it needs the ProtonVPN key).' } }, run: async (page) => {
+    const card = page.locator('#appPrivate');
+    await card.locator('li:has(.dot.warn):has-text("Searching: from your home connection")').waitFor({ timeout: 5000 });
+    await card.getByText('Search through the VPN in Settings').waitFor({ timeout: 3000 });
+  } },
   { name: 'qBittorrent’s page: not tied to the VPN yet, Connect apps ties it', screen: 'app:qbittorrent', mock: { status: { ...status, apps: [...status.apps, qbit] }, privacy: { private: false, said: "The VPN is connected, but qBittorrent isn't tied to the VPN's tunnel yet. Connect apps ties it.", fix: 'wire' } }, run: async (page) => {
     const card = page.locator('#appPrivate');
     await card.locator('li:has(.dot.bad):has-text("Not yet")').waitFor({ timeout: 5000 });
