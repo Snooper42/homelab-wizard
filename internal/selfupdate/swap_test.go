@@ -18,6 +18,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/Snooper42/homelab-wizard/internal/schedule"
 )
 
 // serve serves files at /dl/<name> and returns a release that lists
@@ -292,7 +294,7 @@ func TestSwapScriptPutsTheMacAppInPlace(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("the Mac helper is a shell script")
 	}
-	stubs(t, "pgrep", "pkill", "xattr", "open")
+	stubs(t, "pgrep", "pkill", "xattr", "open", "launchctl")
 	dir := t.TempDir()
 	app, staged := filepath.Join(dir, "Homelab Wizard.app"), filepath.Join(dir, "update", "Homelab Wizard.app")
 	for path, body := range map[string]string{app: "old", staged: "new"} {
@@ -596,7 +598,7 @@ func TestHelpersSayWhyTheBuildDidNotGoInPlace(t *testing.T) {
 	if err := os.MkdirAll(filepath.Dir(LogPath()), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	stubs(t, "pgrep", "pkill", "xattr", "open")
+	stubs(t, "pgrep", "pkill", "xattr", "open", "launchctl")
 	run := func(script string, args ...string) {
 		t.Helper()
 		c := exec.Command("/bin/sh", append([]string{"-c", script, "sh", gone(t)}, args...)...)
@@ -669,7 +671,7 @@ func TestSwapScriptWaitsForTheAppToQuit(t *testing.T) {
 	t.Setenv("HOME", home)
 	t.Setenv("XDG_CACHE_HOME", filepath.Join(home, ".cache"))
 	t.Setenv("HW_SWAP_WAIT", "1")
-	stubs(t, "pgrep", "pkill", "xattr", "open")
+	stubs(t, "pgrep", "pkill", "xattr", "open", "launchctl")
 	mk := func() (string, string) {
 		dir := t.TempDir()
 		app, staged := filepath.Join(dir, "Homelab Wizard.app"), filepath.Join(dir, "update", "Homelab Wizard.app")
@@ -710,5 +712,49 @@ func TestSwapScriptWaitsForTheAppToQuit(t *testing.T) {
 		if c.want == "new" && why != "" {
 			t.Errorf("%s: an error after it went in place: %q", c.name, why)
 		}
+	}
+}
+
+// Once the new Mac app is in place, the background agent is restarted
+// (launchctl kickstart -k): it runs from inside the app and serves the
+// phones, and left running it answered them with the old build until the
+// next login (the owner's Bills, Nov 20: the phone's paydays read ahead by
+// the old Finances code, the window's by the new). A new app that didn't
+// go in place restarts nothing.
+func TestSwapScriptRestartsTheAgent(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("the Mac helper is a shell script")
+	}
+	stubs(t, "pgrep", "pkill", "xattr", "open")
+	bin := t.TempDir()
+	calls := filepath.Join(bin, "calls")
+	os.WriteFile(filepath.Join(bin, "launchctl"), []byte("#!/bin/sh\necho \"$*\" >>'"+calls+"'\n"), 0o755)
+	t.Setenv("PATH", bin+string(os.PathListSeparator)+os.Getenv("PATH"))
+	dir := t.TempDir()
+	app, staged := filepath.Join(dir, "Homelab Wizard.app"), filepath.Join(dir, "update", "Homelab Wizard.app")
+	for path, body := range map[string]string{app: "old", staged: "new"} {
+		os.MkdirAll(filepath.Join(path, "Contents", "MacOS"), 0o755)
+		os.WriteFile(filepath.Join(path, "Contents", "MacOS", "homelab-wizard"), []byte(body), 0o755)
+	}
+	log := filepath.Join(dir, "update.log")
+	if out, err := exec.Command("/bin/sh", "-c", swapScript, "sh", gone(t), app, staged, "0", log).CombinedOutput(); err != nil {
+		t.Fatalf("%v: %s", err, out)
+	}
+	want := "kickstart -k gui/" + strconv.Itoa(os.Getuid()) + "/" + AgentJob
+	if got := strings.TrimSpace(read(calls)); got != want {
+		t.Fatalf("launchctl ran %q, want %q", got, want)
+	}
+	if !strings.Contains(read(log), "restarted the agent") {
+		t.Errorf("log:\n%s", read(log))
+	}
+	if AgentJob != schedule.Jobs()[0].Label {
+		t.Errorf("AgentJob %q isn't the agent's job %q", AgentJob, schedule.Jobs()[0].Label)
+	}
+
+	// Nothing to put in place: the agent keeps running.
+	os.Remove(calls)
+	exec.Command("/bin/sh", "-c", swapScript, "sh", gone(t), filepath.Join(dir, "Missing.app"), filepath.Join(dir, "New.app"), "0", log).Run()
+	if _, err := os.Stat(calls); err == nil {
+		t.Errorf("restarted the agent with no new app in place: %q", read(calls))
 	}
 }

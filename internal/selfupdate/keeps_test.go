@@ -25,7 +25,7 @@ import (
 // core.JobsCLIBehind is how the app then notices and copies it again.
 func TestAnUpdateKeepsTheWindowThePhonesAndTheJobs(t *testing.T) {
 	if runtime.GOOS != "windows" {
-		stubs(t, "pgrep", "pkill", "xattr", "open")
+		stubs(t, "pgrep", "pkill", "xattr", "open", "launchctl")
 	}
 	home := t.TempDir()
 	t.Setenv("HOME", home)
