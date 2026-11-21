@@ -209,6 +209,12 @@ type qbitTorrent struct {
 	State       string  `json:"state"`
 	Progress    float64 `json:"progress"`
 	ContentPath string  `json:"content_path"` // inside its container, under /downloads
+	// For stall rescue (media_stalled.go): the torrent's hash (the *arr
+	// apps' downloadId), its name, and when it last moved or was added.
+	Hash         string `json:"hash"`
+	Name         string `json:"name"`
+	LastActivity int64  `json:"last_activity"`
+	AddedOn      int64  `json:"added_on"`
 }
 
 // stopped is whether qBittorrent is doing nothing with it: paused or

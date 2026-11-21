@@ -647,6 +647,7 @@ func (h *homelab) mediaTick(ctx context.Context) error {
 		}
 	}
 	h.restTdarr(ctx, env, home, now)
+	h.rescueStalled(ctx, env, now) // before the rest: a rescued download is no longer pending
 	h.restArr(ctx, env, now)
 	if !off(env["TIDY_SCRUB"]) && scrubDue(now, rec.LastScrub) {
 		if err := h.mediaEngine(ctx, "scrubber", "scan", []string{"--apply"}); err != nil && !errors.Is(err, media.ErrBusy) {

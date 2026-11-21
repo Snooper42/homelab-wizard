@@ -693,7 +693,7 @@ function DoneWidget({ d, job, act, kind, span = 'all' }: { d: app.TidyUp; job: T
         <Rows kind="fx-rows tidydone">
           {items.map(({ a, i }) => {
             const u = undo(i);
-            return <Row key={i} lead={<LibIcon kind={a.kind === 'inbox' || a.kind === 'scrubber' ? 'inbox' : a.kind} />} title={a.text} sub={a.sub} subTone={worrying(a.text) ? 'warn' : undefined}
+            return <Row key={i} lead={<LibIcon kind={a.kind === 'inbox' || a.kind === 'scrubber' || a.kind === 'downloads' ? 'inbox' : a.kind} />} title={a.text} sub={a.sub} subTone={worrying(a.text) ? 'warn' : undefined}
               end={<>{!!a.freed && <><span class="fx-amount fx-in tidygain">{size(a.freed)}</span><span class="sr"> freed</span></>}<span class="muted tidywhen">{ago(a.at)}</span>{u && <Go label="Undo" job={job} onClick={u} />}</>} />;
           })}
         </Rows>

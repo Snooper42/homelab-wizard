@@ -6963,6 +6963,7 @@
     "PROTONVPN_WIREGUARD_PRIVATE_KEY",
     "PROTONVPN_SERVER_COUNTRIES",
     "SEARCH_THROUGH_VPN",
+    "STALL_RESCUE_HOURS",
     "QBITTORRENT_PASSWORD",
     "CROWDSEC_ENROLL_KEY",
     "ROMM_IGDB_CLIENT_ID",
@@ -7009,6 +7010,7 @@
     PROTONVPN_WIREGUARD_PRIVATE_KEY: "ProtonVPN WireGuard key",
     PROTONVPN_SERVER_COUNTRIES: "ProtonVPN server countries",
     SEARCH_THROUGH_VPN: "Search through the VPN",
+    STALL_RESCUE_HOURS: "Try another after a stuck download (hours)",
     ADGUARD_DNS_BIND_IP: "AdGuard Home DNS listens on",
     HOST_GATEWAY: "Apps reach this machine's own apps at",
     SSO_HOST: "Pocket ID address for the apps",
@@ -20101,7 +20103,7 @@ ${pays}
       return /* @__PURE__ */ u3(
         Row,
         {
-          lead: /* @__PURE__ */ u3(LibIcon, { kind: a3.kind === "inbox" || a3.kind === "scrubber" ? "inbox" : a3.kind }),
+          lead: /* @__PURE__ */ u3(LibIcon, { kind: a3.kind === "inbox" || a3.kind === "scrubber" || a3.kind === "downloads" ? "inbox" : a3.kind }),
           title: a3.text,
           sub: a3.sub,
           subTone: worrying(a3.text) ? "warn" : void 0,
