@@ -159,6 +159,8 @@ try { if ((window.__MOCK || {}).tidyTab) localStorage.setItem('homelab.tidyTab',
     // privacy: qBittorrent's page's Downloads are private (wiring.Privacy); none: it can't be read.
     DownloadsPrivate: () => (M.privacy ? later(M.privacy) : Promise.reject(new Error('qBittorrent is not installed'))),
     Protection: () => (M.protection ? later(M.protection) : Promise.reject(new Error('CrowdSec and the proxy are not both running'))),
+    // Status's Downloads card (arr item 6): none unless a check gives one (M.downloads).
+    Downloads: () => later(M.downloads || { apps: false, line: '' }),
     TrayAtLogin: () => later(!!M.trayAtLogin),
     SetTrayAtLogin: (on) => { M.trayAtLogin = on; return later(null); },
     Answers: () => later(M.answers || {}),
@@ -507,7 +509,7 @@ try { if ((window.__MOCK || {}).tidyTab) localStorage.setItem('homelab.tidyTab',
   // once it is read, and the pages' answers while it still checks them.
   // M.cardDelay holds a card back so many milliseconds more.
   const own = { ...app };
-  const cardOf = { watchdog: 'Watchdog', crash: 'LastCrash', savings: 'SavingsHistory', storage: 'Storage', alerts: 'Alerts', usage: 'Usage', week: 'Weekly', protection: 'Protection', answers: 'Answers' };
+  const cardOf = { watchdog: 'Watchdog', crash: 'LastCrash', savings: 'SavingsHistory', storage: 'Storage', alerts: 'Alerts', usage: 'Usage', week: 'Weekly', protection: 'Protection', downloads: 'Downloads', answers: 'Answers' };
   const files = ['watchdog', 'crash', 'savings', 'storage'];
   app.StatusBoard = (n, want) => {
     const card = (name) => later(null, M.cardDelay?.[name] || 0).then(() => own[cardOf[name]]()).then(

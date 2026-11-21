@@ -7,7 +7,7 @@ import { mountTiles, troubled } from '../status/Tiles';
 import { mountUndoNote } from '../status/UndoNote';
 import { stoppedWords } from '../status/stopFor';
 import { mountWallCard } from '../status/WallCard';
-import { mountAlerts, mountProtection, mountStorage, mountWatchdog, mountWeek, storageShown } from '../status/Cards';
+import { mountAlerts, mountDownloads, mountProtection, mountStorage, mountWatchdog, mountWeek, storageShown } from '../status/Cards';
 import { type AppListActions, type AppListProps, clearAppList, foldsFromComputer, mountAppList, mountShowAll, onFoldsPicked, type Pending, stateOf } from '../status/AppList';
 import { store } from '../store';
 import { ReleaseNotes } from '../status/ReleaseNotes';
@@ -192,6 +192,7 @@ async function readStatus() {
   const want = ['watchdog', 'crash', 'alerts', 'storage'];
   if (!savingsHistory.length) want.push('savings');
   if (Date.now() - protectionAt > 60000) { protectionAt = Date.now(); want.push('protection'); }
+  if (Date.now() - downloadsAt > 30000) { downloadsAt = Date.now(); want.push('downloads'); }
   if (Date.now() - usageAt >= 9000) { usageAt = Date.now(); want.push('usage'); }
   if (Date.now() - weekAt >= 600000) { weekAt = Date.now(); want.push('week'); }
   const n = ++boardNo;
@@ -211,6 +212,7 @@ async function readStatus() {
     if (n === boardNo) boardFailed = true;
     // The cards that ask the runtime were not read: due again next time.
     if (want.includes('protection')) protectionAt = 0;
+    if (want.includes('downloads')) downloadsAt = 0;
     if (want.includes('usage')) usageAt = 0;
     if (want.includes('week')) weekAt = 0;
     throw e;
@@ -244,6 +246,7 @@ function showCard(c) {
       if (lastStatus) renderTiles(lastStatus);
       break;
     case 'protection': showProtection(data, err); break;
+    case 'downloads': showDownloads(err ? null : data); break;
     case 'alerts': showAlerts(data, err); break;
     case 'storage': showStorage(err ? null : data); break;
     case 'usage': showUsage((!err && data) || []); break;
@@ -271,6 +274,8 @@ function drawStatus() {
     $('watchCard').hidden = true;
     $('protectCard').hidden = true;
     protectionAt = 0;
+    $('downloadsCard').hidden = true;
+    downloadsAt = 0;
     const e: any = statusData.error;
     mountStatusNote($('statusNote'), { text: '', down: String((e && e.message) || e) });
     return;
@@ -361,6 +366,16 @@ function showProtection(p: crowdsec.Protection, err: Error | null) {
   if (err) { card.hidden = true; return; }
   card.hidden = false;
   mountProtection(card, { p, fix: () => cliFlow('Fix it', 'fix', '', 'Fix these') });
+}
+
+// Downloads (arr item 6): what the media apps have on the way, in words,
+// and the media drive's room. Read every 30 seconds at most (it asks each
+// media app); hidden without the media apps, or when it can't be read.
+let downloadsAt = 0;
+function showDownloads(c: downloads.Card | null) {
+  const card = $('downloadsCard');
+  card.hidden = !c || !c.apps || !c.line;
+  if (!card.hidden) mountDownloads(card, { c: c! });
 }
 
 // Photos per person: what each person keeps in Immich, as the nightly

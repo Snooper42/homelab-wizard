@@ -1,6 +1,6 @@
 // Status's smaller cards: the watchdog's last run, protection, recent
-// alerts, storage, and this week. app.ts reads each and mounts it into its
-// card; these only draw.
+// alerts, storage, this week, and downloads. app.ts reads each and mounts
+// it into its card; these only draw.
 import { render } from 'preact';
 import { useState } from 'preact/hooks';
 import { ActionLink } from '../ActionLink';
@@ -138,6 +138,33 @@ export function Protection({ p, fix }: { p: crowdsec.Protection; fix: () => void
           ))}
         </Rows>
       )}
+    </>
+  );
+}
+
+/** How each thing on the way is shown: stuck needs a look, the rest are on their way. */
+const stateDot: Record<string, Tone> = { stuck: 'warn', getting: 'ok', waiting: '', filing: 'ok' };
+
+/**
+ * Downloads (arr item 6): what the media apps have on the way, in plain
+ * words (Getting 2 · 1 stuck: no search site has it · Drive 82% full),
+ * stuck first, and a warning before the media drive fills.
+ */
+export function Downloads({ c }: { c: downloads.Card }) {
+  const items = c.items || [];
+  const full = !!c.drive && c.drive.used >= 95;
+  const tone = full ? 'bad' : items.some((i) => i.state === 'stuck') || c.warning ? 'warn' : 'muted';
+  const shown = items.slice(0, 6);
+  return (
+    <>
+      <Head title="Downloads"><span id="downloadsLine" class={tone}>{c.line}</span></Head>
+      {c.warning && <p id="downloadsWarning" class={full ? 'bad' : 'warn'}>{c.warning}</p>}
+      {!!shown.length && (
+        <Rows>
+          {shown.map((i, n) => <Row key={n} dot={stateDot[i.state] ?? ''} title={i.name} sub={i.words} subTone={i.state === 'stuck' ? 'warn' : ''} when={i.app} />)}
+        </Rows>
+      )}
+      {items.length > shown.length && <p class="muted">{`And ${items.length - shown.length} more: each app's own page lists them all.`}</p>}
     </>
   );
 }
@@ -344,6 +371,7 @@ export function Week({ w }: { w: app.Weekly }) {
 
 export const mountWatchdog = (el: Element, props: WatchdogProps) => render(<Watchdog {...props} />, el);
 export const mountProtection = (el: Element, props: { p: crowdsec.Protection; fix: () => void }) => render(<Protection {...props} />, el);
+export const mountDownloads = (el: Element, props: { c: downloads.Card }) => render(<Downloads {...props} />, el);
 export const mountAlerts = (el: Element, props: AlertsProps) => render(<Alerts {...props} />, el);
 export const mountStorage = (el: Element, props: { rec: storage.Record; nameOf: (id: string) => string }) => render(<Storage {...props} />, el);
 export const mountWeek = (el: Element, props: { w: app.Weekly }) => render(<Week {...props} />, el);

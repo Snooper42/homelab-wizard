@@ -560,6 +560,32 @@ declare namespace docker {
   }
 }
 
+declare namespace downloads {
+  interface Card {
+    line: string;
+    items?: downloads.Item[];
+    drive?: downloads.Drive | null;
+    warning?: string;
+    unread?: string[];
+    apps: boolean;
+  }
+  interface Drive {
+    name: string;
+    used: number;
+    free: number;
+    total: number;
+    filmsFit: number;
+  }
+  interface Item {
+    name: string;
+    app: string;
+    state: string;
+    words: string;
+    percent: number;
+    request?: boolean;
+  }
+}
+
 declare namespace duplicati {
   interface Job {
     id: string;
@@ -1360,6 +1386,7 @@ interface Backend {
     CopySetting(arg1: string): Promise<void>;
     CrashSeen(): Promise<void>;
     CreateHomelab(): Promise<app.HostInfo>;
+    Downloads(): Promise<downloads.Card>;
     DownloadsPrivate(): Promise<wiring.Privacy>;
     DuplicatiJobs(): Promise<duplicati.Job[]>;
     EmailReport(): Promise<void>;

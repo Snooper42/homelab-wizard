@@ -33,6 +33,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/diskspace"
 	"github.com/Snooper42/homelab-wizard/internal/docker"
 	"github.com/Snooper42/homelab-wizard/internal/domain"
+	"github.com/Snooper42/homelab-wizard/internal/downloads"
 	"github.com/Snooper42/homelab-wizard/internal/duplicati"
 	"github.com/Snooper42/homelab-wizard/internal/engine"
 	"github.com/Snooper42/homelab-wizard/internal/explain"
@@ -633,7 +634,8 @@ func (a *App) Answers() map[string]string {
 
 // StatusBoard is Status with the cards beside it, in one request: Status
 // comes back as Status reads it, and each card in want ("watchdog",
-// "crash", "savings", "storage", "alerts", "usage", "week", "protection")
+// "crash", "savings", "storage", "alerts", "usage", "week", "protection",
+// "downloads")
 // comes as a "status:card" event (board.Card, carrying n) as soon as it is
 // read, from the agent when it serves them (core.ReadCards). While Status
 // still checks the apps' pages, their answers come too, as the "answers"
@@ -855,6 +857,15 @@ func (a *App) Protection() (crowdsec.Protection, error) {
 	ctx, cancel := a.timed()
 	defer cancel()
 	return core.Protection(ctx, a.root)
+}
+
+// Downloads is Status's Downloads card: what the media apps have on the
+// way, in plain words, and how full the media drive is (arr item 6); the
+// zero card when no media app is installed.
+func (a *App) Downloads() (downloads.Card, error) {
+	ctx, cancel := a.timed()
+	defer cancel()
+	return core.Downloads(ctx, a.root)
 }
 
 // DownloadsPrivate is whether qBittorrent's downloads leave only through

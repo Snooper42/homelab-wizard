@@ -39,16 +39,6 @@ func stallAfter(env map[string]string) time.Duration {
 	return time.Duration(h * float64(time.Hour))
 }
 
-// stuck is whether qBittorrent can't get anywhere with t and it hasn't
-// moved for after.
-func (t qbitTorrent) stuck(now time.Time, after time.Duration) bool {
-	if t.Progress >= 1 || (t.State != "stalledDL" && t.State != "metaDL") {
-		return false
-	}
-	last := max(t.LastActivity, t.AddedOn)
-	return last > 0 && now.Sub(time.Unix(last, 0)) >= after
-}
-
 // rescueStalledIn hands each stuck torrent back to the app that asked for
 // it, saying in words what it did; nothing when it is off or qBittorrent
 // can't be read.
@@ -65,7 +55,7 @@ func rescueStalledIn(ctx context.Context, apps map[string]wiring.App, env map[st
 	}
 	stuck := map[string]qbitTorrent{}
 	for _, t := range torrents {
-		if t.Hash != "" && t.stuck(now, after) {
+		if t.Hash != "" && t.Stuck(now, after) {
 			stuck[strings.ToLower(t.Hash)] = t
 		}
 	}
@@ -74,7 +64,7 @@ func rescueStalledIn(ctx context.Context, apps map[string]wiring.App, env map[st
 	}
 	var said []string
 	for _, aq := range arrQueues {
-		a, ok := apps[aq.id]
+		a, ok := apps[aq.ID]
 		if !ok {
 			continue
 		}
@@ -89,7 +79,7 @@ func rescueStalledIn(ctx context.Context, apps map[string]wiring.App, env map[st
 				Title      string `json:"title"`
 			} `json:"records"`
 		}
-		if err := arrGet(ctx, client, a.URL, "/api/"+aq.api+"/queue?pageSize=500", key, &page); err != nil {
+		if err := arrGet(ctx, client, a.URL, "/api/"+aq.API+"/queue?pageSize=500", key, &page); err != nil {
 			continue
 		}
 		for _, r := range page.Records {
@@ -97,7 +87,7 @@ func rescueStalledIn(ctx context.Context, apps map[string]wiring.App, env map[st
 			if !ok {
 				continue
 			}
-			path := fmt.Sprintf("/api/%s/queue/%d?removeFromClient=true&blocklist=true&skipRedownload=false", aq.api, r.ID)
+			path := fmt.Sprintf("/api/%s/queue/%d?removeFromClient=true&blocklist=true&skipRedownload=false", aq.API, r.ID)
 			if err := arrDo(ctx, client, http.MethodDelete, a.URL, path, key); err != nil {
 				continue
 			}
