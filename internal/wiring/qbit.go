@@ -151,6 +151,12 @@ func (w *Wirer) qbitClient() *http.Client {
 	return &http.Client{Timeout: 30 * time.Second}
 }
 
+// QbitSession is whether c is qBittorrent's session cookie: SID up to
+// 5.1, QBT_SID_<its Web UI port> from 5.2 (webapplication.cpp).
+func QbitSession(c *http.Cookie) bool {
+	return c.Name == "SID" || strings.HasPrefix(c.Name, "QBT_SID_")
+}
+
 // qbitSignIn signs in to qBittorrent's Web API and returns the session
 // cookie. qBittorrent starts only once Gluetun's tunnel is up, so a refused
 // connection is tried again until w.Wait runs out.
@@ -174,7 +180,7 @@ func (w *Wirer) qbitSignIn(ctx context.Context) (*http.Cookie, error) {
 			io.Copy(io.Discard, io.LimitReader(resp.Body, 512))
 			resp.Body.Close()
 			for _, c := range resp.Cookies() {
-				if c.Name == "SID" && resp.StatusCode == http.StatusOK {
+				if QbitSession(c) && resp.StatusCode == http.StatusOK {
 					return c, nil
 				}
 			}

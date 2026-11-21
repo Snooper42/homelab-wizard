@@ -15,6 +15,10 @@ import (
 
 // fakeQbit serves qBittorrent's sign-in and preferences, starting from its
 // defaults, and counts the saves.
+// fakeQbitCookie is the session cookie's name: SID up to qBittorrent 5.1,
+// QBT_SID_<its Web UI port> from 5.2 (webapplication.cpp).
+var fakeQbitCookie = "SID"
+
 func fakeQbit(t *testing.T, password string) (url string, prefs map[string]any, saves *int) {
 	t.Helper()
 	prefs = map[string]any{
@@ -34,11 +38,11 @@ func fakeQbit(t *testing.T, password string) (url string, prefs map[string]any, 
 				w.Write([]byte("Fails."))
 				return
 			}
-			http.SetCookie(w, &http.Cookie{Name: "SID", Value: "s"})
+			http.SetCookie(w, &http.Cookie{Name: fakeQbitCookie, Value: "s"})
 			w.Write([]byte("Ok."))
 			return
 		}
-		if c, err := r.Cookie("SID"); err != nil || c.Value != "s" {
+		if c, err := r.Cookie(fakeQbitCookie); err != nil || c.Value != "s" {
 			http.Error(w, "Forbidden", http.StatusForbidden)
 			return
 		}
@@ -178,5 +182,19 @@ func TestQbittorrentTakesTheVPNsPort(t *testing.T) {
 	os.WriteFile(filepath.Join(gluetun, "forwarded_port"), []byte("1234,5678\n"), 0o644)
 	if got := w.forwardedPort(); got != 1234 {
 		t.Errorf("two ports read as %d, want the first", got)
+	}
+}
+
+// qBittorrent 5.2 names its session cookie QBT_SID_<port>: the sign-in
+// works with it (the owner, Nov 21: "refused the sign-in" with the right
+// password).
+func TestQbittorrent52SessionCookie(t *testing.T) {
+	fakeQbitCookie = "QBT_SID_8082"
+	t.Cleanup(func() { fakeQbitCookie = "SID" })
+	url, prefs, _ := fakeQbit(t, "pw")
+	w := &Wirer{Apps: map[string]App{"qbittorrent": {ID: "qbittorrent", Name: "qBittorrent", URL: url}}, Env: map[string]string{"QBITTORRENT_PASSWORD": "pw"}, Wait: time.Second}
+	state, _, err := w.qbitSharing(context.Background())
+	if err != nil || state != "done" || prefs["max_ratio_enabled"] != true {
+		t.Fatalf("qBittorrent 5.2: %s %v %v", state, err, prefs)
 	}
 }

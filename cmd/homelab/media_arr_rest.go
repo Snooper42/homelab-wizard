@@ -270,7 +270,7 @@ func qbitList(ctx context.Context, client *http.Client, base string, env map[str
 	resp.Body.Close()
 	var sid *http.Cookie
 	for _, c := range resp.Cookies() {
-		if c.Name == "SID" {
+		if wiring.QbitSession(c) {
 			sid = c
 		}
 	}
