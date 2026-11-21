@@ -833,12 +833,65 @@ struct FinanceBudget: Decodable, Sendable, Equatable, Identifiable {
     let left: Double
     /// What would be spent by today at an even pace.
     let pace: Double
+    /// Its first and last day.
+    let start: Date?
+    let last: Date?
+    /// What rolled over from last time, in the amount: plus what was left,
+    /// minus how far over; 0 for a budget that doesn't roll over.
+    let rolled: Double
+
+    enum CodingKeys: String, CodingKey { case category, per, amount, spent, left, pace, start, last, rolled }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        category = try c.decode(String.self, forKey: .category)
+        per = try c.decodeIfPresent(String.self, forKey: .per) ?? "month"
+        amount = try c.decodeIfPresent(Double.self, forKey: .amount) ?? 0
+        spent = try c.decodeIfPresent(Double.self, forKey: .spent) ?? 0
+        left = try c.decodeIfPresent(Double.self, forKey: .left) ?? 0
+        pace = try c.decodeIfPresent(Double.self, forKey: .pace) ?? 0
+        start = LocalDay.parse(try c.decodeIfPresent(String.self, forKey: .start))
+        last = LocalDay.parse(try c.decodeIfPresent(String.self, forKey: .last))
+        rolled = try c.decodeIfPresent(Double.self, forKey: .rolled) ?? 0
+    }
 
     var id: String { category }
     var isOver: Bool { spent > amount }
     var isAhead: Bool { spent > pace && !isOver }
     /// Spent, as a share of the budget, 0 to 1.
     var share: Double { amount > 0 ? min(max(spent / amount, 0), 1) : 0 }
+    /// Where an even pace would be by today, as a share of the budget, 0 to 1
+    /// (the line on its bar).
+    var paceShare: Double { amount > 0 ? min(max(pace / amount, 0), 1) : 0 }
+
+    /// "This month, to Nov 30", "This pay period, to Dec 3" (Budgets.tsx's line under the name).
+    var periodWords: String {
+        let period = per == "paycheck" ? "This pay period" : "This month"
+        guard let last else { return period }
+        return "\(period), to \(last.formatted(.dateTime.month(.abbreviated).day()))"
+    }
+
+    /// The transactions it counts, for Transactions: its category (or, for a
+    /// group, its own categories), in its month; a pay period's in every
+    /// month, as the computer's `show`.
+    func transactionsFilter(calendar: Calendar = .current) -> TransactionFilter {
+        var f = TransactionFilter()
+        f.category = category
+        if per != "paycheck", let start {
+            f.month = calendar.dateInterval(of: .month, for: start)?.start
+        }
+        return f
+    }
+
+    /// What's left spread over its days to the end, today's included, and
+    /// how many days that is (Budgets.tsx's `daily`); nil when nothing's
+    /// left or it has ended.
+    func perDay(today: Date?, calendar: Calendar = .current) -> (amount: Double, days: Int)? {
+        guard left > 0.005, let today, let last else { return nil }
+        let days = (calendar.dateComponents([.day], from: calendar.startOfDay(for: today), to: calendar.startOfDay(for: last)).day ?? -1) + 1
+        guard days >= 1 else { return nil }
+        return (left / Double(days), days)
+    }
 }
 
 /// One goal today (`finance.GoalNow`).

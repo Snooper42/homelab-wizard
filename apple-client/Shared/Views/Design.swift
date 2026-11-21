@@ -367,6 +367,14 @@ extension LogoCircle {
                   ownKey: PayeeLogos.shared.ownKey(for: transaction))
     }
 
+    /// A category's mark: its own icon, or its group's, in its colour (a budget's row, as Budgets.tsx's `Mark`).
+    init(category: String, categories: [FinanceCategory], size: CGFloat = Design.logoInList) {
+        let logos = PayeeLogos.shared
+        let icon = PayeeLogos.iconOf(category, in: categories)
+        self.init(content: logos.mark(brand: nil, kind: icon, name: category, type: icon, hue: logos.categoryHue(category, in: categories)),
+                  size: size)
+    }
+
     /// A payee's logo, as a bank writes it or a person does: its brand, else its initials.
     init(payee: String, institution: String? = nil, size: CGFloat = Design.logoInList) {
         let logos = PayeeLogos.shared

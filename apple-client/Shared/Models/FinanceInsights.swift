@@ -232,7 +232,8 @@ struct TransactionFilter: Equatable, Sendable {
         }
         if let category {
             let names = t.splits.isEmpty ? [t.category] : t.splits.map(\.category)
-            if !names.contains(where: { Spending.top($0, in: categories) == category }) { return false }
+            // The category itself, or its group (a budget on Groceries, inside Food, finds Groceries).
+            if !names.contains(where: { $0 == category || Spending.top($0, in: categories) == category }) { return false }
         }
         if let atLeast, abs(t.amount) < atLeast { return false }
         if let month {
