@@ -604,10 +604,29 @@ func TestWireOffersInboxFix(t *testing.T) {
 	} {
 		var out strings.Builder
 		h := &homelab{ui: &ui.UI{Out: &out, In: bufio.NewReader(strings.NewReader(c.in)), Interactive: c.interactive}, envFile: env}
-		ok, err := h.offerWireFix(wiring.FixInboxArrive)
+		ok, _, err := h.offerWireFix(wiring.FixInboxArrive)
 		data, _ := os.ReadFile(env)
 		if err != nil || ok != c.want || strings.Contains(string(data), "TIDY_INBOX_WHEN=arrive") != c.want || !strings.Contains(out.String(), c.says) {
 			t.Fatalf("%s: ok %v err %v, .env %q, said:\n%s", c.name, ok, err, data, out.String())
 		}
+	}
+}
+
+// Seerr waiting for its first sign-in: a yes asks a Jellyfin administrator's
+// name, then the password (never echoed), and hands them to the next run.
+func TestWireOffersSeerrSignIn(t *testing.T) {
+	var out strings.Builder
+	h := &homelab{ui: &ui.UI{Out: &out, In: bufio.NewReader(strings.NewReader("\nalex\ns3cret\n")), Interactive: true}}
+	ok, admin, err := h.offerWireFix(wiring.FixSeerrSignIn)
+	if err != nil || !ok || admin == nil || admin.User != "alex" || admin.Password != "s3cret" {
+		t.Fatalf("%v %+v %v", ok, admin, err)
+	}
+	if strings.Contains(out.String(), "s3cret") || !strings.Contains(out.String(), "Jellyfin password for alex") {
+		t.Fatalf("said:\n%s", out.String())
+	}
+	out.Reset()
+	h.ui = &ui.UI{Out: &out, In: bufio.NewReader(strings.NewReader(""))}
+	if ok, admin, _ := h.offerWireFix(wiring.FixSeerrSignIn); ok || admin != nil || !strings.Contains(out.String(), "--jellyfin-user") {
+		t.Fatalf("no terminal: %v %+v\n%s", ok, admin, out.String())
 	}
 }

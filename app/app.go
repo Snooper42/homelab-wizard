@@ -2120,6 +2120,27 @@ func (a *App) Wire() ([]wiring.Link, error) {
 	return w.Apply(a.ctx, func(l wiring.Link) { emitEvent(a.ctx, "link", l) }), nil
 }
 
+// WireSeerr connects the apps as Wire does, making Seerr's first sign-in
+// with a Jellyfin administrator's name and password (Connect apps' Sign
+// Seerr in). They go to Seerr on this computer for that one run and are
+// kept nowhere: not in .env, a log or a link.
+func (a *App) WireSeerr(user, password string) ([]wiring.Link, error) {
+	c, err := a.catalog()
+	if err != nil {
+		return nil, err
+	}
+	_, containers, err := core.Containers(a.ctx)
+	if err != nil {
+		return nil, err
+	}
+	home, _ := os.UserHomeDir()
+	w := wiring.New(c, containers, core.Env(a.root), home)
+	if user = strings.TrimSpace(user); user != "" {
+		w.JellyfinAdmin = &wiring.JellyfinAdmin{User: user, Password: password}
+	}
+	return w.Apply(a.ctx, func(l wiring.Link) { emitEvent(a.ctx, "link", l) }), nil
+}
+
 // SetAttention shows how many apps need a look on the app's icon (the
 // Mac's Dock, a Linux taskbar or dock), as the sidebar's Status count does;
 // 0 clears it.

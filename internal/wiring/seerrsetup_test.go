@@ -143,7 +143,7 @@ func TestSeerrSignInFallsBackToAPerson(t *testing.T) {
 		isAdm bool
 		want  string
 	}{
-		{"no password given", nil, true, "--jellyfin-user"},
+		{"no password given", nil, true, "a Jellyfin administrator"},
 		{"wrong password", &JellyfinAdmin{User: "alex", Password: "nope"}, true, "Jellyfin didn't accept that name and password"},
 		{"not an administrator", &JellyfinAdmin{User: "alex", Password: "pw"}, false, "alex isn't a Jellyfin administrator"},
 	} {
@@ -157,6 +157,11 @@ func TestSeerrSignInFallsBackToAPerson(t *testing.T) {
 			}
 			if strings.Contains(l.Detail, "nope") || st.initCalls != 0 {
 				t.Fatalf("detail %q, initialize %d", l.Detail, st.initCalls)
+			}
+			// The screen and the terminal can ask for the name and password
+			// (again) from here; the detail names no command-line flag.
+			if l.Fix != FixSeerrSignIn || strings.Contains(l.Detail, "--jellyfin-user") {
+				t.Fatalf("fix %q, detail %q", l.Fix, l.Detail)
 			}
 		})
 	}

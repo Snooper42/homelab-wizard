@@ -20,7 +20,24 @@ type JellyfinAdmin struct {
 
 // seerrAsk is what Connect apps says while Seerr waits for a Jellyfin
 // administrator and none was given.
-const seerrAsk = "it needs a Jellyfin administrator once: run homelab wire --jellyfin-user NAME (the password is asked for, used once and not kept), or " + seerrSignIn
+const seerrAsk = "it needs a Jellyfin administrator's name and password once, to set itself up (used once, not kept); or " + seerrSignIn
+
+// FixSeerrSignIn is the fix for a Seerr waiting for its first sign-in: ask
+// a Jellyfin administrator's name and password (the app's form, or the
+// terminal) and connect again with them (Wirer.JellyfinAdmin).
+const FixSeerrSignIn = "seerr-signin"
+
+const seerrStep = "Seerr signs in to Jellyfin"
+
+// askAgain is a Seerr sign-in a name and password could still make: its
+// step offers FixSeerrSignIn.
+func (w *Wirer) askAgain(detail string) (string, string, error) {
+	if w.fixes == nil {
+		w.fixes = map[string]string{}
+	}
+	w.fixes[seerrStep] = FixSeerrSignIn
+	return "manual", detail, nil
+}
 
 // jellyfinFromSeerr is Jellyfin's address from inside Seerr's container:
 // the native Jellyfin on this computer (ADR-0010), on JELLYFIN_PORT.
@@ -47,7 +64,7 @@ func (w *Wirer) seerrSetup(ctx context.Context) (string, string, error) {
 	admin := w.JellyfinAdmin
 	w.JellyfinAdmin = nil
 	if admin == nil || admin.User == "" {
-		return "manual", seerrAsk, nil
+		return w.askAgain(seerrAsk)
 	}
 	if key == "" {
 		return "", "", errSeerrNotSetUp
@@ -62,9 +79,9 @@ func (w *Wirer) seerrSetup(ctx context.Context) (string, string, error) {
 		if errors.As(err, &se) {
 			switch {
 			case strings.Contains(se.msg, "INVALID_CREDENTIALS"):
-				return "manual", "Jellyfin didn't accept that name and password; try again, or " + seerrSignIn, nil
+				return w.askAgain("Jellyfin didn't accept that name and password; try again, or " + seerrSignIn)
 			case strings.Contains(se.msg, "NOT_ADMIN"):
-				return "manual", admin.User + " isn't a Jellyfin administrator; use one who is, or " + seerrSignIn, nil
+				return w.askAgain(admin.User + " isn't a Jellyfin administrator; use one who is, or " + seerrSignIn)
 			case strings.Contains(se.msg, "INVALID_URL"), strings.Contains(se.msg, "CONNECTION_ERROR"):
 				return "manual", "Seerr couldn't reach Jellyfin at " + host + ":" + strconv.Itoa(port) + " (is Jellyfin running?); then " + seerrSignIn, nil
 			}

@@ -392,6 +392,8 @@ try { if ((window.__MOCK || {}).tidyTab) localStorage.setItem('homelab.tidyTab',
     RunSetupChoice(id, i) { M.setup = M.setup.map((s) => (s.id === id ? { ...s, state: 'done', chosen: s.choices[i].label } : s)); return later(M.setup, 300); },
     // wireLinks: what the wiring reports, one link at a time.
     async Wire() { for (const l of M.wireLinks || []) { await later(null, 80); emit('link', l); } return later(M.wireLinks || []); },
+    // WireSeerr: Connect apps with Seerr's first sign-in; keeps the name only (never the password) to check.
+    async WireSeerr(user, password) { M.seerrUser = user; M.seerrPasswordGiven = !!password; const links = M.wireAfterSignIn || M.wireLinks || []; for (const l of links) { await later(null, 80); emit('link', l); } return later(links); },
     Phones: () => later(M.phones || []),
     People: () => later(M.people || []),
     // Who keeps their Finances private, and when they last saved them (only that).

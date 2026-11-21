@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"slices"
 
 	"github.com/Snooper42/homelab-wizard/internal/wiring"
 )
@@ -56,14 +57,14 @@ func (h *homelab) wire(ctx context.Context, args []string) error {
 		u.Println()
 	}
 	failed := 0
-	fix := ""
+	var fixes []string
 	show := func(again bool) func(wiring.Link) {
 		return func(l wiring.Link) {
 			if l.State == "failed" {
 				failed++
 			}
-			if l.Fix != "" {
-				fix = l.Fix
+			if l.Fix != "" && !slices.Contains(fixes, l.Fix) {
+				fixes = append(fixes, l.Fix)
 			}
 			if u.JSON {
 				emit(u, "link", l)
@@ -87,15 +88,21 @@ func (h *homelab) wire(ctx context.Context, args []string) error {
 		}
 	}
 	w.Apply(ctx, show(false))
-	if fix != "" && !u.JSON {
-		ok, err := h.offerWireFix(fix)
-		if err != nil {
-			return err
+	if len(fixes) > 0 && !u.JSON {
+		again := false
+		for _, fix := range fixes {
+			ok, admin, err := h.offerWireFix(fix)
+			if err != nil {
+				return err
+			}
+			if admin != nil {
+				w.JellyfinAdmin = admin
+			}
+			again = again || ok
 		}
-		if ok {
+		if again {
 			w.Env = h.envMap()
 			u.Println()
-			fix = ""
 			w.Apply(ctx, show(true))
 		}
 	}
@@ -133,24 +140,41 @@ func (h *homelab) jellyfinAdmin(user string) (*wiring.JellyfinAdmin, error) {
 }
 
 // offerWireFix offers a link's one-click fix in a terminal (wiring.Link.Fix)
-// and makes it on a yes, saying whether it did. Without a terminal it says
+// and makes it on a yes, saying whether to connect again (and, for Seerr's
+// sign-in, with which Jellyfin administrator). Without a terminal it says
 // where the fix is instead.
-func (h *homelab) offerWireFix(fix string) (bool, error) {
-	if fix != wiring.FixInboxArrive {
-		return false, nil
-	}
+func (h *homelab) offerWireFix(fix string) (bool, *wiring.JellyfinAdmin, error) {
 	u := h.ui
-	if !u.Interactive {
-		u.Printf("\n%s\n", u.Dim("To hand them over, let Tidy Up file downloads as they arrive (Tidy Up › Inbox), then connect again."))
-		return false, nil
+	switch fix {
+	case wiring.FixInboxArrive:
+		if !u.Interactive {
+			u.Printf("\n%s\n", u.Dim("To hand them over, let Tidy Up file downloads as they arrive (Tidy Up › Inbox), then connect again."))
+			return false, nil, nil
+		}
+		u.Println()
+		if !u.Confirm("Let Tidy Up file downloads as they arrive, and hand them over to it?", true) {
+			return false, nil, nil
+		}
+		if err := h.setEnv("TIDY_INBOX_WHEN", "arrive"); err != nil {
+			return false, nil, err
+		}
+		u.OK("Tidy Up files downloads as they arrive")
+		return true, nil, nil
+	case wiring.FixSeerrSignIn:
+		if !u.Interactive {
+			u.Printf("\n%s\n", u.Dim("To set Seerr up, run homelab wire --jellyfin-user NAME in a terminal, or use Connect apps in the app."))
+			return false, nil, nil
+		}
+		u.Println()
+		if !u.Confirm("Sign Seerr in to Jellyfin now?", true) {
+			return false, nil, nil
+		}
+		name, err := u.Ask("A Jellyfin administrator's name:")
+		if err != nil || name == "" {
+			return false, nil, err
+		}
+		admin, err := h.jellyfinAdmin(name)
+		return admin != nil, admin, err
 	}
-	u.Println()
-	if !u.Confirm("Let Tidy Up file downloads as they arrive, and hand them over to it?", true) {
-		return false, nil
-	}
-	if err := h.setEnv("TIDY_INBOX_WHEN", "arrive"); err != nil {
-		return false, err
-	}
-	u.OK("Tidy Up files downloads as they arrive")
-	return true, nil
+	return false, nil, nil
 }
