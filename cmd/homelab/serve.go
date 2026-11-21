@@ -21,6 +21,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/companion"
 	"github.com/Snooper42/homelab-wizard/internal/core"
 	"github.com/Snooper42/homelab-wizard/internal/domain"
+	"github.com/Snooper42/homelab-wizard/internal/downloads"
 	"github.com/Snooper42/homelab-wizard/internal/engine"
 	"github.com/Snooper42/homelab-wizard/internal/explain"
 	"github.com/Snooper42/homelab-wizard/internal/finance"
@@ -428,13 +429,18 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 			// others say they are not read here.
 			all, phone := core.Cards(root), board.Readers{}
 			// usage and storage: each app's memory, processor and folder (item 4 of apple-loop.md).
-			for _, name := range []string{"watchdog", "savings", "protection", "alerts", "usage", "storage"} {
+			// downloads: the Downloads card in the computer's words (arr item 6).
+			for _, name := range []string{"watchdog", "savings", "protection", "alerts", "usage", "storage", "downloads"} {
 				phone[name] = all[name]
 			}
 			send := func(c board.Card) {
 				// Read here or by the agent, the storage card goes without the household's names and addresses.
 				if c.Name == "storage" && c.Error == "" {
 					c.Data = phoneStorage(c.Data)
+				}
+				// On a wall screen, the Downloads card goes without what's being downloaded.
+				if c.Name == "downloads" && c.Error == "" && kiosk(ctx) {
+					c.Data = phoneDownloads(c.Data)
 				}
 				event("status:card", c)
 			}
@@ -448,6 +454,16 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 			}
 			core.ReadCards(ctx, root, n, shown, phone, send)
 		}},
+		// Status's Downloads card on its own (arr item 6): its lines in the
+		// computer's words and the drive's warning. The owner's phones and a
+		// wall screen, which gets it without what's being downloaded.
+		"Downloads": read(func(ctx context.Context, _ []json.RawMessage) (any, error) {
+			c, err := core.Downloads(ctx, root)
+			if kiosk(ctx) {
+				c = c.WithoutNames()
+			}
+			return c, err
+		}),
 		"Backups":       read(func(ctx context.Context, _ []json.RawMessage) (any, error) { return core.Backups(ctx, root) }),
 		"DuplicatiJobs": read(func(ctx context.Context, _ []json.RawMessage) (any, error) { return core.DuplicatiJobs(ctx, root) }),
 		"Alerts":        read(func(ctx context.Context, _ []json.RawMessage) (any, error) { return core.RecentAlerts(ctx, root) }),
@@ -1530,4 +1546,25 @@ func phoneStorage(data any) any {
 		When time.Time        `json:"when"`
 		Apps []storage.Folder `json:"apps"`
 	}{r.When, r.Apps}
+}
+
+// kiosk is whether the phone calling is a wall screen, which anyone walking
+// past can read.
+func kiosk(ctx context.Context) bool {
+	d, ok := companion.Caller(ctx)
+	return ok && d.Kiosk
+}
+
+// phoneDownloads is the Downloads card as a wall screen gets it: without
+// what's being downloaded (downloads.Card.WithoutNames).
+func phoneDownloads(data any) any {
+	raw, err := json.Marshal(data)
+	if err != nil {
+		return nil
+	}
+	var c downloads.Card
+	if json.Unmarshal(raw, &c) != nil {
+		return nil
+	}
+	return c.WithoutNames()
 }

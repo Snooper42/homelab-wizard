@@ -11,6 +11,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Snooper42/homelab-wizard/internal/core"
+	"github.com/Snooper42/homelab-wizard/internal/diskspace"
+	"github.com/Snooper42/homelab-wizard/internal/downloads"
 	"github.com/Snooper42/homelab-wizard/internal/lockedfile"
 	"github.com/Snooper42/homelab-wizard/internal/media"
 	"github.com/Snooper42/homelab-wizard/internal/notify"
@@ -65,6 +68,8 @@ func plainHealth(app, name, source, kind, message string) string {
 type mediaHealthState struct {
 	First map[string]time.Time `json:"first,omitempty"`
 	Told  map[string]bool      `json:"told,omitempty"`
+	// Drive is the media drive's warning last sent: 0, 85 or 95 (% full).
+	Drive int `json:"drive,omitempty"`
 }
 
 func mediaHealthPath(root string) string { return filepath.Join(root, "data", "media-health.json") }
@@ -173,4 +178,35 @@ func (h *homelab) mediaHealth(ctx context.Context, env map[string]string, now ti
 		title = fmt.Sprintf("Media: %d things need a look", len(said))
 	}
 	h.alert(ctx, "tunnel-watchdog", notify.Message{Title: title, Body: strings.Join(said, "\n"), Tags: []string{"clapper"}})
+}
+
+// mediaDriveIn is the media drive's warning to send now ("" for none), at
+// 85% and 95% full, once each (downloads.DriveAlert), updating st.
+func mediaDriveIn(vols []diskspace.Volume, st *mediaHealthState) string {
+	said, told := downloads.DriveAlert(vols, st.Drive)
+	st.Drive = told
+	return said
+}
+
+// mediaDrive is the drive check in Tidy Up's pass: the Downloads card's
+// warning, said on the phone once, not every hour (arr item 6).
+func (h *homelab) mediaDrive(ctx context.Context, env map[string]string, now time.Time) {
+	drives := core.MediaDrives(h.root, homeDir(), env)
+	if len(drives) == 0 {
+		return
+	}
+	st := loadMediaHealth(h.root)
+	said := mediaDriveIn(checkDisks(drives), st)
+	_ = st.save(h.root)
+	if said == "" {
+		return
+	}
+	rec := media.LoadRecord(h.root)
+	rec.Did("downloads", said, "", now)
+	_ = rec.Save(h.root)
+	title := "Media: the drive is filling up"
+	if strings.Contains(said, "almost full") {
+		title = "Media: the drive is almost full"
+	}
+	h.alert(ctx, "tunnel-watchdog", notify.Message{Title: title, Body: said, Tags: []string{"floppy_disk"}})
 }

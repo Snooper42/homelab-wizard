@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Snooper42/homelab-wizard/internal/diskspace"
 	"github.com/Snooper42/homelab-wizard/internal/wiring"
 )
 
@@ -141,5 +142,37 @@ func TestMediaHealthStateKept(t *testing.T) {
 	back := loadMediaHealth(root)
 	if !back.Told["sonarr:DownloadClientCheck"] || !back.First["sonarr:DownloadClientCheck"].Equal(time.Unix(100, 0)) {
 		t.Fatalf("kept %+v", back)
+	}
+}
+
+// The media drive's warning is said once per threshold across Tidy Up's
+// passes: what was said is kept with the health checks' state.
+func TestMediaDriveSaidOnceAcrossPasses(t *testing.T) {
+	root := t.TempDir()
+	vol := func(used uint64) []diskspace.Volume {
+		return []diskspace.Volume{{Names: []string{"media"}, Free: (100 - used) << 30, Total: 100 << 30}}
+	}
+	pass := func(used uint64) string {
+		st := loadMediaHealth(root)
+		said := mediaDriveIn(vol(used), st)
+		if err := st.save(root); err != nil {
+			t.Fatal(err)
+		}
+		return said
+	}
+	if s := pass(50); s != "" {
+		t.Errorf("50%%: %q", s)
+	}
+	if s := pass(90); !strings.Contains(s, "90% full") {
+		t.Errorf("90%%: %q", s)
+	}
+	if s := pass(90); s != "" {
+		t.Errorf("90%% on the next pass: said again %q", s)
+	}
+	if s := pass(96); !strings.Contains(s, "almost full") {
+		t.Errorf("96%%: %q", s)
+	}
+	if loadMediaHealth(root).Drive != 95 {
+		t.Errorf("kept %+v", loadMediaHealth(root))
 	}
 }
