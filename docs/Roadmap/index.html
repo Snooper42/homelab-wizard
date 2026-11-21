@@ -1,0 +1,2787 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Your household's photos, passwords, documents, money, music, and books, on a computer you own.">
+      
+      
+      
+        <link rel="canonical" href="https://snooper42.github.io/homelab-wizard/docs/Roadmap/">
+      
+      
+        <link rel="prev" href="../Service%20Organization/">
+      
+      
+        <link rel="next" href="../Feature%20Roadmap/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/logo.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+    
+    
+      
+        <title>Roadmap - Homelab Wizard</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.57a0d79d.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.fb2fffe2.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#roadmap" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Homelab Wizard" class="md-header__button md-logo" aria-label="Homelab Wizard" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Homelab Wizard
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Roadmap
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue"  aria-label="Dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="blue"  aria-label="Light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Snooper42/homelab-wizard" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Snooper42/homelab-wizard
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Homelab Wizard" class="md-nav__button md-logo" aria-label="Homelab Wizard" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    Homelab Wizard
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Snooper42/homelab-wizard" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Snooper42/homelab-wizard
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Start here
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Start here
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Tour/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    A tour of the app
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Getting%20Started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Everyday%20Tasks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Everyday tasks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing a new build
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Upgrading/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Upgrading
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Commands/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Run it
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Run it
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Runbooks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Runbooks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Automation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Automation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Monitoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Monitoring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Backups/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backups
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Tidy%20Up/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tidy Up
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Private%20Finances/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Private Finances
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Disaster%20Recovery/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Disaster Recovery
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Known%20Issues/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Known Issues
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How it works
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    How it works
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Networking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Networking
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Usability/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Usability
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Storage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Storage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Docker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docker
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Parity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What each device can do
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../apple-client/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The iPhone and iPad app
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Host/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Host
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Environment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Environment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The apps
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    The apps
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Services/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Services
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Inventory/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Inventory
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Savings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Savings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Service%20Organization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Service Organization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The project
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    The project
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#the-two-goals" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The two goals
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#where-it-stands-november-2026" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where it stands (November 2026)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Where it stands (November 2026)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-it-is-tested-today" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How it is tested today
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#still-open-from-the-first-months" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Still open from the first months
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#011-proven-against-real-docker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.11: proven against real Docker
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.11: proven against real Docker">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#a-real-homelab-every-night" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A real homelab, every night
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#each-system-not-only-ubuntu" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Each system, not only Ubuntu
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-app-clicked-through" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The app clicked through
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tests-where-a-mistake-costs-most" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tests where a mistake costs most
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#upgrades-from-every-release" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Upgrades from every release
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-happens-on-the-machine-kept" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What happens on the machine, kept
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#015-the-docker-api-in-the-agent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.15: the Docker API, in the agent
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-stable" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.0: stable
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#after-the-two-goals" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        After the two goals
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="After the two goals">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-library-in-order" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The library, in order
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-dashboard" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The dashboard
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#later" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Later
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#history-the-versions-finished" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        History: the versions finished
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Feature%20Roadmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Feature Roadmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Decisions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Decisions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../CHANGELOG/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What's new
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../CONTRIBUTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing (services)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Standards/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Standards
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Releasing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Releasing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../SECURITY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security policy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Homelab%20Manifest/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Homelab Manifest
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Homelab%20Context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Homelab Context
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Maintainer%20Guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Maintainer Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../To-do/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    To-do
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Knowledge base index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#the-two-goals" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The two goals
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#where-it-stands-november-2026" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where it stands (November 2026)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Where it stands (November 2026)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-it-is-tested-today" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How it is tested today
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#still-open-from-the-first-months" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Still open from the first months
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#011-proven-against-real-docker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.11: proven against real Docker
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.11: proven against real Docker">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#a-real-homelab-every-night" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A real homelab, every night
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#each-system-not-only-ubuntu" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Each system, not only Ubuntu
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-app-clicked-through" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The app clicked through
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tests-where-a-mistake-costs-most" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tests where a mistake costs most
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#upgrades-from-every-release" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Upgrades from every release
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-happens-on-the-machine-kept" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What happens on the machine, kept
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#015-the-docker-api-in-the-agent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.15: the Docker API, in the agent
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-stable" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.0: stable
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#after-the-two-goals" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        After the two goals
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="After the two goals">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-library-in-order" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The library, in order
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-dashboard" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The dashboard
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#later" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Later
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#history-the-versions-finished" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        History: the versions finished
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="roadmap">Roadmap<a class="headerlink" href="#roadmap" title="Permanent link">&para;</a></h1>
+<p>Where the app is, and what comes next. Every build of main has its own number (0.9.1, 0.9.2, …; <a href="../Releasing/#version-numbers">Releasing</a>); each heading below is the next minor version, and 1.0 is the stable release once the 0.x work has proven itself. Open problems live in <a href="../Known%20Issues/">Known Issues</a>; what changed, and when, in the <a href="../../CHANGELOG/">CHANGELOG</a>.</p>
+<p>Each version says what it is for, then its items. An item is done when its <strong>Done when</strong> holds, not when the code is merged: a check that runs in CI, a number measured on a real machine, or a person doing it without help. Items marked ✓ are in the builds already; what they left open is listed under them.</p>
+<h2 id="the-two-goals">The two goals<a class="headerlink" href="#the-two-goals" title="Permanent link">&para;</a></h2>
+<p>Since October 2026 the work is organised around two goals. 0.11 (real Docker in CI) is how both are proven; 0.12 and 0.13 are the goals themselves, and they run side by side.</p>
+<ol>
+<li><strong>The same on every system.</strong> Every feature works the same way on macOS, Windows, and Linux (GNOME, KDE Plasma, and SteamOS), and CI proves it on each. Where something truly cannot be done on a system, <a href="../Host/#the-same-on-every-system">Host</a> says why, in place of a missing feature. Today's state is the table there, one row per feature.</li>
+<li><strong>More apps in the catalog.</strong> Ten new apps and a second backup engine (0.13), each one held to the bar below.</li>
+</ol>
+<p><strong>New apps no longer wait for 1.0.</strong> The earlier rule kept the catalog as it was until the stable release, so that 1.0 had less to prove. It is replaced by a bar each app passes on its own, so a new app adds its own proof instead of adding to what is unproven:</p>
+<ul>
+<li>its compose service with an <code>x-homelab</code> block (category, description, what it replaces), and its own stack with a database when it needs one</li>
+<li>its note under <code>services/</code>, generated with <code>./homelab docs</code> and written by hand after the block</li>
+<li>a row in <a href="../Savings/">Savings</a> with a real, current price and its source (or a line under <em>Not counted</em> saying why not)</li>
+<li>an end-to-end test against the fake docker: it installs, its data is backed up, and it gets its address</li>
+<li>a place in 0.11's nightly run against real Docker, where it starts and answers on its own page</li>
+<li>its image pinned the way the catalog already does (<code>latest</code>, which the nightly updates keep current, or an exact version with <code>pin:</code> saying why)</li>
+<li>a line in the CHANGELOG</li>
+</ul>
+<p>A heavy app (Nextcloud, Frigate, Tdarr) is optional and in no starter or preset a newcomer picks by default.</p>
+<h2 id="where-it-stands-november-2026">Where it stands (November 2026)<a class="headerlink" href="#where-it-stands-november-2026" title="Permanent link">&para;</a></h2>
+<p>A desktop app (macOS, Windows, Linux) and the <code>homelab</code> CLI that install, connect, back up, update, and watch over 72 self-hosted apps on one computer (the count in the README's generated table).</p>
+<ul>
+<li><strong>Setting up:</strong> Choose apps (starters, presets, every app by category, your own apps), a Setup checklist that runs the ready steps for you and leaves the sidebar once they are done, Home mode on the tailnet by default, and a domain with the proxy, AdGuard Home, Cloudflare Tunnel, and CrowdSec when wanted</li>
+<li><strong>Running:</strong> Status follows the container runtime live through Docker's own API (one engine, served by the background agent, which sends each change with the Status read after it and reads Status's cards once for every window and phone), says why an app failed to start or stopped answering, starts apps waiting for a drive, pauses heavy apps on battery, and gives background work a smaller CPU share</li>
+<li><strong>Healing:</strong> the watchdog every 15 minutes restarts an app that hangs, makes one whose container is gone again, rolls back an update that leaves an app unwell (with its data from before when it never came up well), and alerts through ntfy and an outside heartbeat</li>
+<li><strong>Backups:</strong> nightly database dumps and volume archives, Duplicati jobs off-site, a monthly restore test the app runs and times, moving the homelab to another machine, and rebuilding a lost one from the backups in one command (<code>homelab rebuild</code>), each app on the version that wrote its data (<code>&lt;APP&gt;_DIGEST</code> in <code>.env</code>)</li>
+<li><strong>Updates:</strong> the agent updates the apps nightly (each copied first; every app unless pinned, a database, or built here; held or paused from the app), the homelab files and the app itself found by themselves and put in place with one <strong>Update now</strong>, each app's release notes before it updates</li>
+<li><strong>The household:</strong> People with one sign-in (Pocket ID), <strong>Finances</strong> (the household's money, paycheck by paycheck, and net worth over time, typed in by hand and kept on this machine), a phone companion with Status, Backups, and Finances for the phones allowed them (in the browser, or the native iPhone and iPad app in <code>apple-client/</code>), kiosk mode for a wall screen, open-format export</li>
+<li><strong>The media libraries:</strong> <strong>Tidy Up</strong> files each download into its library (music, films, TV, books, audiobooks), cleans the music with beets, shrinks video with Tdarr, merges audiobooks, and tidies the books in Calibre, with Undo and the Trash behind every change (<a href="../Tidy%20Up/">Tidy Up</a>)</li>
+<li><strong>The app:</strong> a typed Preact frontend, native look per system (accent, Mica, translucent sidebar, high contrast, VoiceOver landmarks), Settings › <strong>Appearance</strong> (theme, accent, contrast, Islands, motion, transparency, tray icon colour), every screen fitting big text in a small window, and an AI that explains a log on this machine only</li>
+<li><strong>Safety:</strong> a threat review of the app's own code, govulncheck, gosec, and npm audit in CI, pinned Actions, and checksummed self-updates</li>
+</ul>
+<h3 id="how-it-is-tested-today">How it is tested today<a class="headerlink" href="#how-it-is-tested-today" title="Permanent link">&para;</a></h3>
+<p>An audit in October 2026 (a tester's read of the code, CI, and Known Issues) found the code well covered by unit tests, and almost nothing proven against the real thing:</p>
+<ul>
+<li><strong>What CI runs:</strong> formatting, vet, and the Go tests (all pass; most packages 75–95% covered), the catalog and docs checks, every Compose file's syntax, the frontend's type check, cross-builds for macOS and Windows, and the security scans. All of it on Ubuntu.</li>
+<li><strong>What it does not:</strong> no container is ever started; the Go tests never run on macOS or Windows, only build for them; the Playwright click-through (<code>make app-smoke</code>) exists but is not in CI; and no test opens a homelab folder made by an older release.</li>
+<li><strong>Thin where a mistake costs most:</strong> single sign-on (<code>sso</code>, 11%), the Docker client (28%), the host checks (44%), self-update (49%), alerts (<code>notify</code>, 54%), the domain setup (56%); <code>people</code> and the recovery kit (<code>recovery</code>) have no tests.</li>
+<li><strong>A restore can come back on newer apps than the backup:</strong> 47 images follow <code>:latest</code> (Paperless, Vaultwarden, Ghostfolio, Docmost, Dawarich, Mealie, and others that change their own data on start). A backup records the data, not which version wrote it, and the image an update replaced is kept for a week on this machine only. A restore on a new machine starts the newest versions on older data. The PostgreSQL major versions are already pinned in <code>.env</code>; the apps above them are not. Fixed in October 2026: each backup records every app's image by its digest, <code>.env</code> keeps the version each app runs (<code>&lt;APP&gt;_DIGEST</code>), and a restore, a move, or a rebuild starts those versions.</li>
+<li><strong>The jobs' own logs grow forever:</strong> the agent appends to each job's file in <code>scripts/logs</code> (the watchdog every 15 minutes) and nothing trims them. The containers' logs are already capped (10 MB × 3).</li>
+</ul>
+<p>Since then, the Go tests run on macOS and Windows as well as Ubuntu, the click-through and its accessibility checks run on every pull request, the jobs' logs are trimmed, and every package has a coverage floor in CI, with the thin ones above now at 83–100% (0.11, ticked below). What is left of the list, 0.11 and the 1.0 bar below answer.</p>
+<h2 id="still-open-from-the-first-months">Still open from the first months<a class="headerlink" href="#still-open-from-the-first-months" title="Permanent link">&para;</a></h2>
+<p>These need the real machines, accounts, or money, not code. 0.11 proves in CI what can be proven without them, so each of these becomes a confirmation on the machine, not a first try.</p>
+<ul>
+<li>[ ] The first real install, finished on the Mac: Vaultwarden accounts then sign-ups off, the tunnel, Duplicati jobs on Proton Drive and each run once, alerts on the phone, the jobs, and the first restore test</li>
+<li><strong>Done when:</strong> <a href="../Testing/">Testing</a> steps 1–6 pass on the Mac, and ISSUE-0001, ISSUE-0003, ISSUE-0005, ISSUE-0015, ISSUE-0016, and ISSUE-0017 are closed or accepted with a reason</li>
+<li>Progress in November 2026: steps 1–6 passed on the owner's Mac (M1, Nov 3, 2026), as did the update from the app (M8). Left: each of the six issues closed or accepted against its own <em>Verify</em> list in <a href="../Known%20Issues/">Known Issues</a></li>
+<li>[ ] Tailscale verified from the phone on mobile data, two-factor sign-in for Vaultwarden and the proxy admin, CrowdSec console enrollment</li>
+<li><strong>Done when:</strong> an app and an ntfy alert open on the phone with Wi-Fi off (closes ISSUE-0011), and both admin sign-ins ask for a second factor</li>
+<li>[ ] The Windows PC and the Steam Machine through their checklists (ISSUE-0012, ISSUE-0013, ISSUE-0014, ISSUE-0021)</li>
+<li><strong>Done when:</strong> each machine runs <code>doctor</code> clean, <code>up</code>, the jobs after a reboot, and the release build's own installer, with each issue's "Also check" list ticked</li>
+<li>[ ] Apple Developer ID (certificate, notarization) and Windows code signing, with the secrets in GitHub (<a href="../Releasing/#secrets">Releasing</a>)</li>
+<li><strong>Done when:</strong> the DMG opens on a fresh Mac with no Gatekeeper warning, and the Windows installer shows a publisher in SmartScreen</li>
+<li>[ ] A second machine (or a NAS) as a cold standby, and a practice takeover (<a href="../Disaster%20Recovery/#scenario-another-machine-takes-over">the runbook</a>)</li>
+<li><strong>Done when:</strong> the standby runs the household's three most important apps (Vaultwarden, Immich, Paperless) from last night's backup, and the time it took is written in the runbook</li>
+<li>[ ] Hand it to someone who is not technical and watch without helping; each place they stop becomes the next fix</li>
+<li><strong>Done when:</strong> the session is written up in <a href="../Testing/#a-newcomers-first-run">Testing</a>, and each stop is either fixed or in Known Issues</li>
+</ul>
+<h2 id="011-proven-against-real-docker">0.11: proven against real Docker<a class="headerlink" href="#011-proven-against-real-docker" title="Permanent link">&para;</a></h2>
+<p>New in the October 2026 audit. Most of the "To verify" in <a href="../Known%20Issues/">Known Issues</a> wait for a real runtime, not for the Mac: CI can start real containers, run the tests on each system, and click through the app. This version moves as much of that proof as it can from "try it on the machine" to "CI shows it every night", before more features are built on top.</p>
+<h3 id="a-real-homelab-every-night">A real homelab, every night<a class="headerlink" href="#a-real-homelab-every-night" title="Permanent link">&para;</a></h3>
+<ul>
+<li>[ ] A nightly CI run on a Linux runner with Docker Engine that installs a small preset and takes it through a homelab's life:</li>
+<li><code>homelab install</code> of ntfy, Vaultwarden, Paperless (with its PostgreSQL), and Nginx Proxy Manager, then <code>doctor</code> and <code>status</code> with every app answering</li>
+<li>Some data in each (a vault entry, a document, a proxy host), through each app's own API</li>
+<li>The nightly backup (dumps and volume archives), then the homelab wiped, then restored from the backup, and the same data read back</li>
+<li><code>restore-test --auto</code> against a real Duplicati, with a local folder as the destination (ISSUE-0016)</li>
+<li>An update to a newer image, then a rollback to the one before, with the app answering after each</li>
+<li>The watchdog: a container stopped, another removed, a third made to hang; the next run brings each one back and sends the alert to ntfy</li>
+<li>Each app 0.13 adds joins the run as it lands: installed, started, and its page answering (the bar in <a href="#the-two-goals">The two goals</a>)</li>
+<li><strong>Done when:</strong> the run is green for a week in a row, and a failure opens an issue with the run's <code>homelab report</code> attached</li>
+<li>[x] The proxy image built and run in that job (ISSUE-0001): the CrowdSec bouncer registered and pulling, and a banned address gets 403</li>
+<li><strong>Done when:</strong> the nightly run builds <code>dockerfiles/npm-crowdsec</code>, <code>cscli bouncers list</code> shows the bouncer with a recent pull, and a request from a banned address gets 403</li>
+<li>Done in October 2026: <code>TestTheProxyBlocksABannedAddress</code>, the nightly workflow's <code>proxy</code> job, on a homelab of its own with ntfy, the proxy (built from <code>dockerfiles/npm-crowdsec</code>), and CrowdSec: <code>cscli bouncers list</code> shows <code>nginx_proxy_manager</code> with a last pull and the watchdog's bouncer check passes; a ban on the address the proxy sees (Docker's gateway) gets 403 through the proxy, and lifting it lets ntfy through again</li>
+<li>[x] <code>domain setup</code> against the real Nginx Proxy Manager and AdGuard Home (ISSUE-0004, all but Cloudflare, which stays a fake: it needs a real account)</li>
+<li><strong>Done when:</strong> the nightly run makes each proxy host and AdGuard rewrite, and an app answers through the proxy by its name</li>
+<li>Done in October 2026: <code>TestTheDomainThroughTheProxy</code>, the nightly workflow's <code>domain</code> job, on a homelab of its own with ntfy, the proxy, and AdGuard Home: <code>domain setup example.test --dns adguard --ip 127.0.0.1 --no-tunnel</code> makes a proxy host for each running app (five) and AdGuard's <code>*.example.test</code> rewrite; both read back through their APIs, ntfy's name resolves through AdGuard's DNS, and ntfy answers through the proxy on port 80 by its name</li>
+<li>[x] The same run in Home mode, with Tailscale replaced by a fake tailnet, so Setup's checklist is walked from top to bottom by the CLI</li>
+<li><strong>Done when:</strong> every step of <code>homelab setup</code> the CLI can do ends done in the nightly run, and the ones left name the person's step</li>
+<li>Done in October 2026: <code>TestHomeModeSetupWalked</code>, the nightly workflow's <code>home</code> job. A Headscale server on the homelab's network is the tailnet; <code>TAILSCALE_EXTRA_ARGS=--login-server=…</code> and its key sign the homelab's own Tailscale container in. A new folder with the small baseline is walked as <strong>Do the steps I can</strong> walks it: started, Tailscale installed and its addresses set up, the alert token, the scheduled jobs (systemd user units); Vaultwarden added brings its own steps. Every step the CLI ran ends done, and each left (the boxes only a person ticks, the backup folder, the outside check's address) names the person's part. Then the test plays that part and every step ends done. It found Setup's tailnet step failing when Tailscale had just started (<code>tailnet setup</code> now waits up to a minute for the sign-in link or the auth key's sign-in), and <code>signups open</code> naming <code>https://passwords.</code> with no domain in Home mode (it now names the tailnet address)</li>
+</ul>
+<h3 id="each-system-not-only-ubuntu">Each system, not only Ubuntu<a class="headerlink" href="#each-system-not-only-ubuntu" title="Permanent link">&para;</a></h3>
+<ul>
+<li>[x] The Go tests (<code>cmd</code>, <code>internal</code>, and the <code>app</code> module) on <code>macos-latest</code> and <code>windows-latest</code> as well as Ubuntu, on every pull request</li>
+<li><strong>Done when:</strong> the files for one system (<code>*_darwin.go</code>, <code>*_windows.go</code>) run their tests on that system, and a test that only passes on Linux is fixed, not skipped</li>
+<li>[x] The jobs installed for real on each runner: launchd on macOS (ISSUE-0005), the Run key and <code>homelab-run.exe</code> on Windows (ISSUE-0013), systemd user units on Linux; then <code>schedule status</code> reads them back and <code>schedule uninstall</code> leaves nothing behind</li>
+<li><strong>Done when:</strong> a CI job on each of the three runners installs, reads back, runs the agent once, and uninstalls, and fails on anything left behind</li>
+<li>Done in October 2026: <code>TestJobsInstalledForReal</code> (<code>go test -tags forreal</code>, a CI step on Ubuntu, macOS, and Windows) builds the CLI, runs <code>schedule install</code>, <code>status</code>, waits for the agent to start (on Windows by running the Run key's own command, as at sign-in), then <code>schedule remove</code>, and fails on a file, a registration, or a process left. On Windows, removing the jobs now stops the running agent too, as launchd and systemd do</li>
+<li>[x] The release builds opened on each runner: the DMG mounted and the app started, the Windows installer run silently and <code>homelab.exe</code> found beside the app, the AppImage already started on its own (ISSUE-0014, ISSUE-0021)</li>
+<li><strong>Done when:</strong> <code>release.yml</code> does each of these on every run and keeps a screenshot of each window</li>
+<li>Done in October 2026: <code>app/packaging/dmg-smoke.sh</code> mounts the DMG, drags the app to <code>~/Applications</code> as a person does, checks its signature, the CLI inside (<code>homelab version</code>), the menu bar helper, and the homelab files, then opens it and finds it still running 20 seconds on. <code>app/packaging/windows-smoke.ps1</code> runs the installer silently (<code>/S</code>, as <code>install.ps1</code> does), finds <code>Homelab Wizard.exe</code> in Program Files with <code>homelab.exe</code>, <code>homelab-run.exe</code>, and the homelab files beside it, starts it, and waits for its window titled Homelab Wizard. Each keeps a screenshot (<code>macos-dmg-screenshot</code>, <code>windows-installer-screenshot</code>), as the AppImage's step already did (<code>linux-appimage-screenshot</code>)</li>
+</ul>
+<h3 id="the-app-clicked-through">The app clicked through<a class="headerlink" href="#the-app-clicked-through" title="Permanent link">&para;</a></h3>
+<ul>
+<li>[x] <code>make app-smoke</code> on every pull request: each screen, light and dark, as each system's look, against the fake backend</li>
+<li><strong>Done when:</strong> CI fails on a script error, a missing element, or a broken layout, and keeps the screenshots of a failing run</li>
+<li>[x] An accessibility check in the same run (axe): every screen with no serious finding, each control named, contrast held in both themes and with more contrast on</li>
+<li>[x] The app against the real homelab of the nightly run (not the fake backend) at least once a night: Status shows the preset, a job's window runs to the end, Backups shows last night's backup (ISSUE-0015)</li>
+<li><strong>Done when:</strong> the nightly run serves the app's frontend from <code>homelab serve</code> against its real containers and the click-through passes there</li>
+<li>Done in October 2026: after the nightly backup, the real-Docker run starts <code>homelab serve</code>, makes a pairing code (<code>phone pair --can-change</code>), and <code>app/preview/real.mjs</code> pairs with it in Chromium at phone width, then checks that Status lists every app the run installed, Backups shows each copy fresh, and <strong>Back up now</strong> runs to "Backup done" in its window. A failed step's screenshot goes with the run's report</li>
+</ul>
+<h3 id="tests-where-a-mistake-costs-most">Tests where a mistake costs most<a class="headerlink" href="#tests-where-a-mistake-costs-most" title="Permanent link">&para;</a></h3>
+<ul>
+<li>[x] A coverage floor per package, checked in CI, raised as tests are added and never lowered without a reason in the pull request</li>
+<li>First floors: <code>selfupdate</code> 80%, <code>recovery</code> 80%, <code>sso</code> 70%, <code>notify</code> 75%, <code>docker</code> 60%, <code>host</code> 60%, <code>domain</code> 70%, <code>people</code> 70%</li>
+<li><strong>Done when:</strong> each of those packages meets its floor, and the floors are in the Makefile</li>
+<li>Done in October 2026: <code>coverage-floors.txt</code> holds a floor for every package, a point under what each measures, and <code>make coverage</code> checks them in CI. The eight measure <code>selfupdate</code> 85%, <code>recovery</code> 100%, <code>sso</code> 89%, <code>notify</code> 99%, <code>docker</code> 83%, <code>host</code> 93%, <code>domain</code> 85%, <code>people</code> 93%. The system-specific steps (sudo, pkexec, the Mac's password window, Windows' approval prompt, the swap helpers) are checked on every runner through a stand-in for the system, and run for real where a runner can: the shell scripts on Ubuntu and macOS, the Windows ones under PowerShell</li>
+<li>[x] Every package at 70% or more: the ones under it raised, <code>core</code> and <code>pgexec</code> tested (they had no tests), and the desktop app's own Go module (<code>app/</code>, <code>app/tray</code>) measured by <code>make coverage</code> with floors</li>
+<li><strong>Done when:</strong> <code>make coverage</code> lists every package of both modules at 70% or more, each floor in <code>coverage-floors.txt</code> a point under what it measures</li>
+<li>October 2026: <code>ports</code> 60→84%, <code>ui</code> 51→96%, <code>sysmem</code> 50→91%, <code>kit</code> 70→85%, <code>diskhealth</code> 69→90%, <code>battery</code> 66→87%, <code>core</code> 0→85%, <code>pgexec</code> 0→100%; <code>cmd/homelab</code> 62→71% and <code>cmd/homelab-run</code> 60→81% (its Windows script now runs on the Windows runner); the app module measured in <code>make coverage</code> too: <code>app</code> 20→75% and <code>app/tray</code> 41→81%. The App's methods run against the docker package's fake, with a stand-in for the Wails window (its events, dialogs, and clipboard) and a homelab launcher that says what it was asked; the tray's menu is built and clicked on Linux, where it needs no running tray</li>
+<li>[x] Self-update tested end to end: a fake release with a good download, a bad checksum, a cut-off download, and a full disk; the app is replaced only in the first case and reopens on the old version in the others</li>
+<li><strong>Done when:</strong> the four cases are tests that run on each of the three systems' runners</li>
+<li>Done in October 2026: <code>TestTheFourCases</code> in <code>internal/selfupdate</code> stages only the good download and leaves nothing behind in the other three, so the app carries on as it is; the helpers that put a build in place run for real (<code>TestSwapLinuxScriptPutsTheAppImageInPlace</code>, <code>TestSwapScriptPutsTheMacAppInPlace</code>, <code>TestSwapWindowsScriptUnpacksThePortableBuild</code>), and the Mac's disk image is opened with <code>hdiutil</code> on the macOS runner</li>
+<li>[x] The recovery kit tested: the printed kit holds no secret, so it is safe to print, and names everything a restore reads: the backup folder, each backup job and what it holds, and the line where the Secrets passphrase is written by hand</li>
+<li><strong>Done when:</strong> a test gives every secret in <code>.env</code> a value of its own and finds none on the kit, and finds the backup folder, each job, and the passphrase's line on it</li>
+<li>Reworded in October 2026 (the owner's call): the kit was secret-free by design, and the old wording asked for the secrets on it. Done in October 2026: <code>TestRecoveryKitHoldsNoSecretAndNamesWhatARestoreNeeds</code> fills every placeholder in <code>.env.example</code> (each generated value and passphrase) and checks none is on the kit, and that the backup folder, all the Homelab jobs, and <code>DUPLICATI_SECRETS_PASSPHRASE</code>'s line are. A whole homelab rebuilt from Duplicati onto a clean machine is 1.0's (<em>A restore brings back the versions that wrote the data</em>)</li>
+</ul>
+<h3 id="upgrades-from-every-release">Upgrades from every release<a class="headerlink" href="#upgrades-from-every-release" title="Permanent link">&para;</a></h3>
+<ul>
+<li>[x] A homelab folder kept from each release from 0.2.0 to 0.9.0-beta (<code>.env</code>, update history, paired phones, settings, the jobs' state; made from each tag) under <code>testdata</code>, and a test that opens each with the current build</li>
+<li><strong>Done when:</strong> each one upgrades with no question asked and no setting lost, and a release that changes a file's shape adds its folder to the set</li>
+<li>Done in October 2026: <code>testdata/upgrades/&lt;tag&gt;</code> for 0.2.0 to 0.8.0, 0.9.0-beta, and 0.9.56-beta, each made by <code>testdata/upgrades/make.sh</code> from that tag. Its CLI installs ntfy against a stand-in Docker (making <code>.env</code> as that release did) and holds ntfy's updates, two settings are changed as in Settings, and <code>make/main.go</code>, built inside the tag, writes the phones, the update history, Setup's steps, a restore test, the watchdog's state, a week of savings, and the household. <code>TestEachReleasesFolderUpgrades</code> opens each with this build (install, Setup, Status with no input) and checks every setting kept, each new one from <code>.env.example</code> added, and each file read back. Releasing says when a version adds its folder</li>
+<li>[x] The same, for the app's own update: the previous release's app replaced by this one keeps the window's settings, the paired phones, and the jobs</li>
+<li><strong>Done when:</strong> a test replaces the previous release's build with this one in a scratch folder and reads each setting back</li>
+<li>Done in October 2026: <code>TestAnUpdateKeepsTheWindowThePhonesAndTheJobs</code> (<code>internal/selfupdate</code>, on the Ubuntu, macOS, and Windows runners) runs each system's real update helper (the Mac's bundle swap, the AppImage's, the portable Windows build's) on stand-in builds in a scratch folder, with the window's place and size, the phones the newest release in <code>testdata/upgrades</code> paired, and the agent's job (its plist, systemd unit, or Run value) pointing at the CLI. Each reads back the same after, and the job's program is there. It showed that an AppImage's jobs run a copy of the CLI in the homelab folder that the update left on the previous release; the app now copies it again at its next start (<code>core.JobsCLIBehind</code>)</li>
+</ul>
+<h3 id="what-happens-on-the-machine-kept">What happens on the machine, kept<a class="headerlink" href="#what-happens-on-the-machine-kept" title="Permanent link">&para;</a></h3>
+<ul>
+<li>[x] A crash in the app or the agent written to <code>scripts/logs/crash-&lt;date&gt;.log</code> (what it was doing, the version, the stack), <code>homelab report</code> including the newest, and Status saying "The app stopped unexpectedly yesterday" with <strong>Send the report</strong></li>
+<li><strong>Done when:</strong> a test crashes a real process and reads its log back, and the click-through shows the note, sends the report, and hides it</li>
+<li>[x] The jobs' logs trimmed: each file kept under 5 MB, with the older half moved to <code>&lt;job&gt;.1.log</code> (one kept); <code>homelab report</code> reads both</li>
+<li><strong>Done when:</strong> a test runs the watchdog's logging for a simulated year and the folder stays under 30 MB</li>
+</ul>
+<h2 id="015-the-docker-api-in-the-agent">0.15: the Docker API, in the agent<a class="headerlink" href="#015-the-docker-api-in-the-agent" title="Permanent link">&para;</a></h2>
+<p>ADR-0018 left the Go SDK out while the CLI's output was enough; on Windows its cost is now measured in 0.10. The agent becomes the one place that reads the runtime.</p>
+<ul>
+<li>[ ] The timings measured on each real machine, with a number to hold (from 0.10)</li>
+<li><code>homelab status --timing</code> run on the Mac, the Windows PC, and the Steam Machine, cold (just after sign-in) and warm, and the results written here</li>
+<li><strong>Done when:</strong> Status draws its list in under 1 second warm on each machine, or the slowest part is named with a plan (often this version's Engine API)</li>
+<li>[ ] The real-machine steps (Testing › Waiting for real hardware: M, W, and S) and the steps a person follows (a newcomer sending an album with Immich's share links), moved here from 0.11 to 0.13 in October 2026 (the owner's call): those versions count them as done, and they are walked on the Mac, the Windows PC, and the Steam Machine here</li>
+<li>[ ] A small client for the Engine API over the socket (the Windows pipe included), found the way the CLI finds it (<code>DOCKER_HOST</code>, the current context, OrbStack): containers, inspect, events, stats as a stream, and exec with its output and exit code</li>
+<li><strong>Done when:</strong> 0.11's nightly run passes with the client on, on each system's runner, and Status is faster than the CLI on the Windows PC by the 0.10 timings</li>
+<li>Progress in October 2026: <code>internal/dockerapi</code> over a unix socket, or a named pipe on Windows (<code>github.com/Microsoft/go-winio</code>, the owner's go-ahead), found as the CLI finds it (<code>DOCKER_HOST</code>, the current context's meta.json, OrbStack, Docker Desktop, <code>XDG_RUNTIME_DIR</code>, <code>/var/run/docker.sock</code>): the containers (list, then inspect, as one <code>docker inspect</code> array), the engine's info, events (filtered as the CLI's), and stats (processor and memory as <code>docker stats</code> computes them). <code>internal/docker</code> uses it for those reads, the CLI after any error (resting the API 10 minutes, kept in <code>scripts/logs/docker-api.json</code> for doctor). The nightly run reads the homelab both ways on the real engine and compares them, and follows a restart through the API's events. Exec too (<code>dockerapi.Exec</code>: the command's stdout and stderr split from the engine's stream, its exit code), for <code>docker exec</code> and its <code>-e</code> and streamed forms (the database dumps, cscli), failing in the CLI's words (the command's stderr or <em>exit status N</em>, <em>Error response from daemon: …</em>), and run by the CLI only when the engine could not start it, so a command never runs twice; the nightly run runs a command both ways on the real engine and requires the same output and the same words, and the same for a container that is not there (on Docker 29.9 here: the same in seven cases, a missing command and a stopped container among them, 69 ms an exec against the CLI's 106). <code>docker exec -i</code> (a restore's input) stays the CLI. Still to do: the timings on each machine</li>
+<li>[ ] Compose stays the CLI: starting, stopping, updating, and recreating from the compose files</li>
+<li>[ ] The CLI's <code>docker</code> stays as the fallback while the client proves itself on each system</li>
+<li>A setting (and <code>homelab doctor</code>) says which one is in use, and the client falls back by itself after an error it does not know, saying so in the report</li>
+<li>Progress in October 2026: <code>DOCKER_API</code> (auto, off), doctor's <em>reads the containers through …</em> and the last fallback, which the report carries with doctor's output</li>
+<li>[ ] The new ADR in <a href="../Decisions/">Decisions</a> that replaces ADR-0018's Docker part, with the 0.10 measurements behind it</li>
+<li>[ ] The agent follows the runtime's events and tells the window and the menu bar item of each change, so no screen asks the runtime when it is opened or switched to</li>
+<li>A container started, stopped, or unhealthy reaches Status within a second, without a refresh; the window asks again only after it was asleep or the agent restarted</li>
+<li><strong>Done when:</strong> the nightly run stops a container behind the app's back and the agent's Status stream has it stopped within 2 seconds, with no Status request made</li>
+<li>Progress in October 2026: each change on the agent's <code>/v1/events</code> carries the Status it read after it (the quick reading, shared with any request then, kept as the last reading); the window draws it on any screen without asking (<code>refreshStatus(change)</code>), and the menu bar item uses it for its next refresh. The nightly run serves the agent's engine for its homelab, stops ntfy behind it, and checks the stream carries ntfy stopped, then running, within 2 seconds each, with no <code>/v1/status</code> request; the click-through checks a change with Status is drawn on returning to Status with nothing asked. Following the agent again after it restarted, or the runtime here after the agent went away, starts with a change marked <code>again</code>, so the window and the menu bar item read Status at once rather than on their minute's poll (<code>TestFollowSaysWhenItFollowsAgain</code>); a Mac that slept keeps its stream, and the agent's events after it wakes come through it</li>
+<li>[x] One request per screen: Status's cards (the watchdog, alerts, storage, usage, the week, protection) come back from the agent in one answer, each filled in as it is ready, instead of about eight requests</li>
+<li><strong>Done when:</strong> the click-through counts one backend request when Status opens, and the cards still fill in one by one</li>
+<li>Progress in October 2026: <code>StatusBoard</code> answers with Status and sends each card asked for as a <code>status:card</code> event as soon as it is read (<code>internal/board</code>; the ones read from files alongside Status, so a crash still shows when Status fails, and the pages' answers among them while Status checks them); the page asks only for the cards that are due (protection once a minute, the week every 10 minutes). The phone companion answers the same request in lines of JSON as they come (a <code>Stream</code> method), which its bridge reads as events, checked by <code>make frontend-check</code>. The click-through opens Status with the week held back 1.5 seconds and counts one <code>StatusBoard</code> and nothing else while the watchdog, the alerts, and the pages' answers show before the week. Done in October 2026: the agent serves the cards (<code>GET /v1/cards</code>, a line of JSON each as it is read, shared with any request for the same card within 5 seconds, its weekly summary read in its own process), and the window and the phone read them from it, each card it does not serve (the pages' answers, which are the window's own) or all of them when no agent answers read in their own process as before (<code>core.ReadCards</code>)</li>
+</ul>
+<h2 id="10-stable">1.0: stable<a class="headerlink" href="#10-stable" title="Permanent link">&para;</a></h2>
+<p>Not more features: the bar for calling it stable. Each line is checked by CI, a number on record, or a person; none is "it should work".</p>
+<ul>
+<li>[ ] Every Known Issue verified or accepted with a reason</li>
+<li>[ ] The same on every system: the parity table in <a href="../Host/#the-same-on-every-system">Host</a> has no <em>missing</em> cell, and every <em>works</em> is shown by CI</li>
+<li>[ ] Every app in the catalog started and answered in the nightly run against real Docker at least once a week</li>
+<li>Progress in October 2026: the nightly workflow's <code>catalog</code> job starts a seventh of the apps the life run does not cover each night, by the day of the week (<code>TestTheCatalogStarts</code>, <code>REALDOCKER_CATALOG=&lt;n&gt;/7</code>), each alone on a homelab of its own; run by hand it takes all seven. The four that need a setting from the person's own account are skipped with that reason: cloudflared (its tunnel token), Gluetun (its VPN key) and qBittorrent (which waits for Gluetun), and the Beszel agent (its key). Its first run by hand found Ghostfolio stopping at every start (TLS to its own database) and File Browser, Seerr, and Homebox unable to write their folders under a uid other than 1000, then Homebox refusing to start without its new API key pepper; all are fixed</li>
+<li>[ ] Signed releases for macOS, Windows, and Linux (moved here from 0.12's parity table: a Developer ID for the Mac and a code-signing certificate for Windows, docs/Releasing.md)</li>
+<li>[ ] Upgrade notes between versions, and a timed restore drill on record</li>
+<li>Every release's folder from 0.11's set upgrades to 1.0 in CI</li>
+<li>Progress in October 2026: every release's folder from 0.2.0 to 0.15.0 is in the upgrade set (<code>testdata/upgrades</code>), opened by each build. The nightly run times its restore drill: from a wiped machine and the backup (<code>homelab move in</code>) to every app running and answering with its data, checked app by app. The time goes on the run's summary page beside Status's and is kept with it for the next run, which fails at more than twice the last good one and a minute more. Upgrading has what each batch since October asks of an existing homelab, the Docker API's included. The same drill from Duplicati's off-site copy onto a clean machine runs every night too (the <code>rebuild</code> job, <code>homelab rebuild</code>), with its time on the run's summary page, held to the last good run's as the move's is (more than twice it, and a minute more, fails)</li>
+<li>[x] A restore brings back the versions that wrote the data</li>
+<li>Each nightly backup records every app's image by its digest (not <code>:latest</code>) next to the dumps; a restore or a move starts those images first, then offers the updates</li>
+<li>The apps that change their own data on start (Paperless, Vaultwarden, Ghostfolio, Docmost, Dawarich, Mealie, and the others 0.11's run lists) follow a pinned version in <code>.env</code>, updated by <code>homelab update</code> and kept by a backup, like the PostgreSQL versions already are</li>
+<li><strong>Done when:</strong> 0.11's nightly run restores onto a clean runner with images newer than the backup available, and the apps come up on the backup's versions</li>
+<li>Progress in October 2026: the nightly backup notes each running app's image and its registry digest in <code>recovery-staging/databases/images</code> (newest 7 kept, off-site with the dumps, and in a move's bundle). <code>homelab move in</code> pulls each by its digest and puts it under the name its compose file uses before anything starts, then lists those apps for <code>homelab update</code>. The nightly run moves in a homelab whose ntfy runs an older version than <code>:latest</code> and checks ntfy comes back on that one. Done in October 2026: <code>homelab rebuild &lt;backup folder&gt;</code> restores a lost machine from Duplicati's backups alone (the Secrets job with <code>DUPLICATI_SECRETS_PASSPHRASE</code>, then the rest with the passphrase it holds, each with Duplicati's own command line in a throwaway container), then starts each app on the version the backup recorded, as a move in does; the nightly <code>rebuild</code> job does it on a wiped machine and checks every app's data. Done in October 2026 (the owner's call: the digests above and the pins both): every app the nightly update moves forward has its version in <code>.env</code> (<code>&lt;APP&gt;_DIGEST</code>, its image's digest), written by <code>homelab update</code>, a rollback, and the watchdog when what runs changes, and kept off site in Homelab Secrets; <code>homelab up</code>, <code>install</code>, a move, and a rebuild put that version back under the compose file's name before anything starts. The nightly <code>rebuild</code> job checks each app comes back on the digest <code>.env</code> kept, its images deleted with the machine.</li>
+<li>[x] A rollback brings back the data from before the update, not only the image (ISSUE-0022)</li>
+<li>As <a href="../Decisions/#adr-0020-a-rollback-puts-back-the-apps-data-with-its-image">ADR-0020</a> decided in October 2026: the agent runs the nightly updates and copies each app's data first (2 GB a folder, databases always), and the watchdog puts data back by itself only when the app never came up healthy after the update</li>
+<li><strong>Done when:</strong> the nightly run updates an app across a change of its database schema, rolls it back, and the app answers with its data from before the update</li>
+<li>Progress in October 2026: <code>homelab update</code> copies the data of each app whose image changed (stopped, each folder and named volume up to <code>UPDATE_COPY_LIMIT</code>, its dumps), and <code>homelab rollback</code> puts it back, setting today's aside in <code>recovery-staging/rolled-back</code> (<code>--image-only</code> keeps it, <code>--data</code> restores it later). The nightly run shows a file written after the update set aside by the rollback. The watchdog puts the data back by itself only when the app was never well after the update (<code>healthyAfter</code> in <code>data/updates.json</code>), and otherwise offers <code>--data</code>; the nightly run makes ntfy hang right after an update and checks the watchdog puts back its image and data, setting aside a file written while it hung. Done: the agent runs the nightly updates (<code>homelab update --all --nightly</code>), copying each app first, and Watchtower is gone. Done in October 2026: the nightly run starts on ntfy v2.25.0, whose databases (the cache at schema 15, the users at 8) the update to the newest migrates (17 and 9) and v2.25.0 then refuses; both the rollback and the watchdog's put it back on v2.25.0, and its tokens from before the update still publish and read</li>
+<li>[ ] Hands-off setup proven: someone who is not technical sets it up on their own computer without help</li>
+<li>[ ] A month with no unexplained alert, a monthly restore test passed each time, and a rollback of a bad update exercised</li>
+<li>[ ] Security review of the app's own code with no open high findings (<a href="../Security/#threat-review-of-the-app-october-2026">threat review</a>)</li>
+<li>[ ] The tests at the 1.0 bar: 0.11's nightly run green for a month, the Go tests on all three systems, the click-through and accessibility checks on every pull request, and every coverage floor met</li>
+<li>[ ] Every screen and every page of the docs checked against the 1.0 behaviour; no step that needs Terminal for the common path</li>
+</ul>
+<h2 id="after-the-two-goals">After the two goals<a class="headerlink" href="#after-the-two-goals" title="Permanent link">&para;</a></h2>
+<p>Not held for 1.0 by rule: these start once 0.12 and 0.13 leave room, in this order.</p>
+<h3 id="the-library-in-order">The library, in order<a class="headerlink" href="#the-library-in-order" title="Permanent link">&para;</a></h3>
+<p>Music and books arrive messy; the homelab tidies them, the same way on every system, with nothing installed beside it.</p>
+<ul>
+<li>[ ] Import music: beets as an app, one job with two sources (new downloads, or an archive folder), albums then loose tracks, into the folder Navidrome reads; what moved and what did not, in the app and through ntfy</li>
+<li><strong>Done when:</strong> an import of a messy test folder (tagged and untagged albums, loose tracks, duplicates) puts each album in Navidrome once, and leaves what it could not match in a folder named in the result</li>
+<li>[ ] Books: Calibre-Web Automated's ingest folder (convert, fetch metadata, add), genres put into the household's own list, publishers' blurbs cleaned, with a preview before it touches the library</li>
+<li>[ ] Both from a button and on a schedule; neither needs PowerShell, Calibre, or Python on the computer</li>
+<li>[ ] Both covered by the backups: the library's folders before an import, so one bad import can be undone</li>
+</ul>
+<h3 id="the-dashboard">The dashboard<a class="headerlink" href="#the-dashboard" title="Permanent link">&para;</a></h3>
+<ul>
+<li>[ ] A home screen: the apps as tiles with live state, what needs a look, and the week at a glance</li>
+<li>On hold (the owner, October 2026): two mockups were tried and neither fit; Status stays as it is until this is picked up again</li>
+<li>Built from 0.14's building blocks and stores, with 0.14's app page behind each tile, and fed by 0.15's live event and stats streams from the agent</li>
+</ul>
+<h3 id="later">Later<a class="headerlink" href="#later" title="Permanent link">&para;</a></h3>
+<ul>
+<li>[ ] A native iOS app with widgets and Lock Screen status in the App Store, once signing is in place (the app itself is in <code>apple-client/</code>, built with Xcode on your own Mac)</li>
+<li>[ ] The taskbar and Dock icon in the colour picked in Appearance</li>
+<li>[ ] A router that can hand out the AdGuard DNS server (ISSUE-0008)</li>
+<li>[ ] MoneyMatter on native arm64 images when upstream publishes them (ISSUE-0009)</li>
+<li>Left out, with reasons (<a href="../Decisions/#adr-0018-not-now-docker-go-sdk-tsnet-several-machines">Decisions</a>): Tailscale built into the binary (tsnet), several machines as one, and GitOps</li>
+</ul>
+<h2 id="history-the-versions-finished">History: the versions finished<a class="headerlink" href="#history-the-versions-finished" title="Permanent link">&para;</a></h2>
+<p>Versions whose every item is done, kept for what they did and the measurements in them. What is still open is above.</p>
+<details>
+<summary><strong>0.10, 0.12, 0.13, and 0.14</strong></summary>
+
+### 0.10: fast, everywhere
+
+The app should answer at once on every system, the Windows PC included, where each `docker` command costs more. The work so far removed the waits that could be found from here; what is left is measuring on the real machines.
+
+- [x] Opening a category on Status redraws the list instead of loading Status again
+  - Opening or folding a category is a local change; nothing is asked of Docker or the agent
+- [x] A Status load timed in parts (`homelab status --timing`, and in the diagnostics report), so what is slow is measured, not guessed
+  - Each part (the runtime, the catalog, the pages' checks, the power card) has its own time, and `homelab report` carries the same table
+- [x] The window and the menu bar item read Status through the agent, which reads the runtime once for requests that arrive together (both are told of the same change)
+  - Two screens open at once cost one look at Docker, not two
+- [x] Page checks fill in after the list instead of holding it (one app not answering cost 3 seconds); the power card reads `docker stats` only while Status is open
+  - The list draws from the runtime alone; each app's "is it answering" fills in as it comes back
+- [x] Each screen loads its cards side by side, not one after another (Status, Backups, Settings)
+- [x] The timings measured on each real machine, with a number to hold: moved to 0.15 (October 2026, the owner's call), where the real machines are tested and where the Engine API needs these numbers
+- [x] A timing check in CI, so a change that makes Status slower is seen before it ships
+  - The 0.11 integration run records `status --timing` against its real containers and fails when the list takes more than twice the last good run
+  - Done in October 2026: with every app running and holding data, the real-Docker run times `status --json` (the middle of three warm runs) and logs `status --timing`; the time is kept in an Actions cache when the run passes, and a run taking more than twice the last good one (and a second more) fails, with both runs' parts in the failure
+
+### 0.12: the same on every system
+
+Goal 1. The parity audit of October 2026 ([Host](Host.md#the-same-on-every-system)) lists each feature on macOS, Windows, Linux, and SteamOS as *works*, *works differently*, *missing*, or *can't*. This version turns every *missing* into one of the others, and every *works* into something CI shows.
+
+#### Know where it differs
+
+- [x] The parity table in Host: one row per feature (Setup, Status, the jobs, alerts, the tray, self-update, installers, drives, sleep and battery, the hosts file and names, the administrator prompt, the app's look), one column per system
+  - **Done when:** every cell says *works*, *works differently (how)*, *missing*, or *can't (why)*, and each *works* names the test or CI job that shows it
+  - Done in October 2026: the last *works* cells without a test got one: `TestNativeAppOpensForReal` and `TestNativeAppsOpenAfterARestartForReal` (`go test -tags forreal`, CI's macOS runner, with the Jellyfin cask installed) open Jellyfin as Status's button and the startup after a restart do, and wait for its server. Frigate's detector on Linux is *works differently*: added by hand, as Frigate's note says, and the homelab does none of it
+- [x] No Mac-only words on other systems: "menu bar", "Finder", "this Mac", and OrbStack only where the app runs on a Mac, and the system's own words elsewhere ("tray", "File Explorer", "this PC")
+  - **Done when:** a check in `make frontend-check` and a Go test over the CLI's and the engine's messages fail on a Mac-only word outside a Mac branch, and both pass
+  - Done in October 2026: the Go test (`internal/host`, every string literal in `cmd`, `internal`, and `app`), and `app/preview/words.mjs` in `make frontend-check` (every string, template, and JSX text in `web/src` through TypeScript's parser, and `index.html`). The click-through also reads each screen as Windows, GNOME, KDE, and SteamOS, its text and what a screen reader says, for the same words. The Go test also catches the Mac's `open -e .env` and "to the Trash" (two CLI messages had them on every system)
+
+#### Close the gaps
+
+- [x] Each *missing* cell in the table either built, with a test on that system's runner, or turned into *can't* with the reason written in Host
+  - **Done when:** the table has no *missing* cell
+  - Signed builds moved to 1.0 in October 2026 (the owner's call; 1.0 already has *Signed releases*): the Mac's build is signed ad hoc and Windows' is unsigned until the certificates are in place, which the table now says as *works differently*
+  - Progress in October 2026: Jellyfin on SteamOS, both cells, is *works differently*: SteamOS takes no native install, so there `homelab install jellyfin` and the **Movies and TV** pick install Jellyfin in a container (`jellyfin-container`, `catalog.ForSteamOS`), with its library in `JELLYFIN_DATA_DIR` as the native app's is (`TestOnSteamOSJellyfinIsTheContainer`; the nightly catalog job starts the container on Ubuntu). Left: signed builds on macOS and Windows, which wait for the certificates
+- [x] Each *works differently* cell that a person would notice (a step that asks for more, a screen that says less) brought level, or its difference said in plain words on the screen where it shows
+  - **Done when:** each such row in the table names the screen that explains it, and the click-through shows that text as that system
+  - Done in October 2026 (the screens' hold lifted for it): `web/src/differs.ts` holds each system's words. Choose apps says under Beszel what it sees on a Mac and Windows, and under Frigate how each system detects; Setup's machine card says under Tray icon how *needs a look* shows on Windows and GNOME, and that GNOME needs the AppIndicator extension; Appearance says why there is no system accent on a Linux desktop without one; Status's **Start** for Jellyfin says what Windows and Linux ask for. Each is a click-through check drawn as that system, and each row in Host names its screen. Host lists the cells no one sees on a screen, and Getting Started says how to answer the unsigned build's question on Windows, as it did on the Mac
+
+#### Progress everywhere
+
+The job window already shows a bar and a row per app for an install, Fix it, Update apps, the backups, and Setup's steps (`internal/progress` reads Compose's JSON progress). Four places still say only "busy":
+
+- [x] A bar wherever something waits on a download or a row of apps: the app's own update (now "Downloading…"), Setup's **Set up Docker for me** on SteamOS (one "Downloading …" line per file), the tray's **Update apps now** ("updating…", then "done"), and the CLI in a terminal (Docker's raw lines)
+  - **Done when:** the app's update shows how much of its download is in; Docker's setup moves its bar through each file's download; the tray's item names the app it is at and how far along; `homelab up`, `install`, and `update` in a terminal print a line per app as its stage changes instead of Compose's own; and smoke checks (or unit tests, for the tray and the terminal) see each
+  - Done in October 2026: `internal/transfer` counts both downloads; the update banner and Setup's **Update now** show the app's (`app:download`), and a step can carry a percent (`ui.StepPercent`), which moves the window's bar within the step and draws a terminal's line again in place. The tray's two jobs follow the CLI's steps and Compose's rows into their title. In a terminal, Compose's output goes through `internal/progress` too (`cmd/homelab/rows.go`). Smoke checks for the banner, Update now, and Docker's setup; unit tests for the tray and the terminal rows, and the rows were run against a real Docker in a pseudo-terminal
+
+#### Proven on each runner
+
+- [x] The jobs installed and read back on each system's runner (0.11's *The jobs installed for real*), as the parity table's proof for the jobs row
+- [x] The awake job's hold on sleep, on each runner: held while the job runs, and gone when it stops
+  - **Done when:** each system's runner sees the hold in the system's own list of what keeps it awake
+  - Done in October 2026: `TestKeepAwakeForReal` (`cmd/homelab`, `go test -tags forreal`) starts `keepAwake` as the job does, finds caffeinate's PreventSystemSleep in `pmset -g assertions`, the test's program under SYSTEM in `powercfg /requests`, or homelab's block in `systemd-inhibit --list`, then stops it and sees the hold gone. On Ubuntu it first found polkit refusing the hold to a job outside a login session, as the agent is: Setup's step **This machine stays awake while plugged in** (`homelab awake allow`) now writes a rule letting this account block sleep, the test grants it that way, and `doctor` checks the hold is really there. Letting go on battery stays with M2 and W2: a runner has no battery
+- [x] The tray started at login, on each runner: turned on as Settings does, run the way login runs it, and turned off with nothing left
+  - **Done when:** each system's runner turns it on, has the system start what it wrote, and sees it gone when turned off
+  - Done in October 2026: `TestTrayAtLoginForReal` (`app`, `go test -tags forreal`) writes the LaunchAgent, the Run value, or the autostart entry with a stand-in program; `launchctl bootstrap` runs it on macOS, the Run value's own command line runs on Windows, and `gio launch` starts the entry on Linux, its path with a space
+- [x] The tray item started on each runner: on macOS and Windows its menu read back, on Linux it registers with the desktop's status notifier (a test watcher on D-Bus)
+  - **Done when:** CI starts `homelab-tray` on each system and reads its items, and the job fails when it does not come up
+  - Linux is in (October 2026): `TestTrayRegistersForReal` (`app/tray`, `go test -tags forreal`, in CI's `app` job) starts `homelab-tray` on a session bus of its own, sees it register with a watcher the test plays, reads its menu over dbusmenu, and clicks Quit. The Mac is in too: the same test on the macOS runner starts the helper, clicks its menu bar item and reads its menu through System Events (the Accessibility API, which the runner allows), then clicks Quit and sees it end. On Windows the test starts it, finds its icon in `HKCU\Control Panel\NotifyIconSettings` (Windows' own record of the notification area's icons), sends its window the message the taskbar sends on a right click on the icon, reads the menu Windows shows (`MN_GETHMENU`, `GetMenuStringW`), and chooses Quit
+- [x] The "needs a look" mark on each runner: the Dock count on macOS, the tray icon's dot on Windows, the taskbar count over D-Bus on Linux
+  - **Done when:** each system's runner sets the mark and reads it back from where the system shows it
+  - Linux is in (October 2026): `TestBadgeArrivesForReal` (`app`, `go test -tags forreal`, in CI's `app` job) sends the count through `setBadge` on a session bus of its own and hears the Unity launcher update Plasma's taskbar and Ubuntu's dock read, then the count cleared
+  - The Mac is in too: `TestDockBadgeForReal` (`app/dock`, on the macOS runner) runs an app of its own in the Dock, sets its badge to 3 through `dock.SetBadge` (the app's own call) and then clears it, and reads each from the Dock's own record (`lsappinfo`'s `StatusLabel`)
+  - Windows' dot cannot be read back on a runner: Windows has no way for one program to read another's notification-area icon. The dot is drawn by the tray's icon code (unit tests) whenever the menu's reading needs a look, which the Windows runner's tray test reads; seeing it on the PC is W13, which the owner moved with the other real-machine steps to 0.15
+- [x] An alert from each system's own path: the tray's notification on macOS and Windows, `notify-send` on Linux, and ntfy everywhere
+  - **Done when:** a test on each runner sends one through the code path the watchdog uses and sees it arrive (a fake notification daemon on Linux)
+  - Linux and Windows are in (October 2026): `TestDesktopAlertArrivesForReal` sends one through `notify.Desktop` and `notify-send` to a notification server the test plays on D-Bus, and `TestToastArrivesForReal` sends one through the same call on the Windows runner and finds it in Windows' toast history (`ToastNotificationManager.History`) under Homelab.Wizard. The Mac's is in too: `TestDesktopAlertArrivesForReal` (`internal/notify`) sends one through `notify.Desktop` (`osascript`) on the macOS runner and finds its title in Notification Center's own record (usernoted's database, `~/Library/Group Containers/group.com.apple.usernoted/db2`)
+- [x] The names with a domain written and removed on each runner: `/etc/resolver` on macOS, the NRPT rule on Windows, the systemd-resolved drop-in on Linux; and the hosts-file entries the same
+  - **Done when:** `domain resolver --apply` then its undo run on each runner with the administrator step automated, and leave the system as it was
+  - Done in October 2026: `domain resolver --undo` removes what homelab wrote (and its lines in the hosts file). CI's `ChangedForReal` tests (`go test -tags forreal`) set the resolver and take it back on the Ubuntu, macOS, and Windows runners through sudo or the approval, checking the system's own DNS each time (`resolvectl status`, `scutil --dns`, the NRPT policy), and write the hosts file, look the name up, and put the file back byte for byte
+- [x] Drives, sleep, and battery read on each runner the way the machine would: an external drive (a disk image on macOS, a VHD on Windows, a loop device on Linux) found and its free space read; the sleep setting and the power state read
+  - **Done when:** each system's runner has a test for each, not only a fake
+  - Done in October 2026: `go test -tags forreal` on each runner. `TestExternalDriveForReal` makes a 32 MB drive (hdiutil, diskpart, a loop mount under `/mnt`), finds it with `ExternalDrive`, reads its space, takes it away, and sees it missing. `TestSleepSettingForReal` changes the sleep on power with `pmset` or `powercfg` and reads it back (then puts it back), and on Linux reads GNOME's keys through `gsettings` and Plasma's `powerdevilrc`. `TestPowerStateForReal` reads each system's own source and finds the runner on mains power, with no battery.
+- [x] What Setup reads from the system, changed and read back on each runner: the time zone a new `.env` gets, the Machine row's system and model, and the system's accent colour
+  - **Done when:** each system's runner has a test for each that goes through the system's own tool or store, and puts it back as it was
+  - Done in October 2026: `TestTimeZoneForReal` (`internal/envfile`) sets two zones with `systemsetup`, `tzutil`, or `timedatectl`, reads each back, and makes a new `.env` with it; `TestMachineReadForReal` (`app`) reads the system and model; `TestAccentReadForReal` sets the accent with `defaults` on macOS and in the registry on Windows, and on Ubuntu through `gsettings` and a `kdeglobals` of its own
+- [x] The click-through as SteamOS too (Plasma in desktop mode, its Breeze look and font), beside Mac, Windows, GNOME, and KDE
+  - **Done when:** `make app-smoke` checks every screen as SteamOS with axe, light and dark
+  - Done in October 2026: SteamOS is a system of its own in the sweep (the Steam Machine, Docker run as you, `/home/deck`), and KDE is now a Fedora KDE machine. Each system carries what its Go side reports (runtime, scheduler, folder, the runtime's hint), so a screen as Windows no longer shows the Mac's OrbStack
+
+#### What only the real machines show
+
+Some of Goal 1 cannot be proven by a runner: a signed app opening without a warning, the tray on a real Plasma session in Game Mode, a real external drive, real sleep. Each of these is a step in [Testing › Waiting for real hardware](Testing.md#waiting-for-real-hardware), so the first session on each machine is a checklist.
+
+- [x] Every row of the parity table that CI cannot prove has a numbered step there for the machine that can
+  - **Done when:** the list covers the Mac, the Windows PC, and the Steam Machine, each step with what to do and what you should see
+  - Progress in October 2026: steps added for a native app started from Status (M12, W12), the "needs a look" mark on the icon (M13, W13, S11), each system's look (M14, W14, S12), and the tray at login (M15, W15; S2 on the Steam Machine)
+  - Done in October 2026: each row of the parity table in Host now ends its *Proven by* with *on the machine* and the steps that show it there; the rows CI cannot show on every system that had none got M16 to M18 (battery saver, the hosts file, Beszel's view), W16 to W20 (the same, Jellyfin's service at boot, Kopia on a drive letter), and S14 to S16 (Docker started from Setup, the hosts file across an update, Kopia on `/run/media/deck`). Rows without one are shown by CI on each system already, or have nothing to show yet (signed builds)
+
+### 0.13: more apps
+
+Goal 2. Each item is done when the app passes the bar in [The two goals](#the-two-goals); the **Done when** lines say what is particular to it. In the order they are planned: the light, self-contained apps first, then the ones that lean on another app, then the heavy ones.
+
+- [x] **Actual Budget:** an envelope budget, lighter than MoneyMatter (one container, no database server)
+  - **Done when:** the nightly run creates a budget through its API and reads it back after a restore
+  - Done in October 2026: the run sets the server's password through its API, then makes a budget with an account and a transaction through Actual's own API package (`@actual-app/api`, which syncs it to the server as the app does); after the move a fresh client downloads it from the server and reads the transaction back
+- [x] **Linkwarden:** bookmarks saved permanently (a copy of each page, a screenshot, and a PDF), with its own PostgreSQL
+  - **Done when:** the nightly run saves a link and finds its archived copy after a restore; its note says how it differs from Karakeep
+- [x] **Tandoor:** recipes with meal planning and nutrition, with its own PostgreSQL
+  - **Done when:** the nightly run adds a recipe through its API and reads it back after a restore; its note says how it differs from Mealie
+- [x] **Kiwix:** offline Wikipedia and reference sites, read from a folder of `.zim` files
+  - **Done when:** the nightly run serves a small `.zim` file and finds a page in it; its note says where to get the files and how big they are
+- [x] **Firefly III:** where the money went, from bank imports (with its data importer and its own database)
+  - **Done when:** the nightly run imports a sample CSV through the importer and Firefly's API lists the transactions
+  - Done in October 2026: the run sets the importer up as its note says (the token in `.env`, then installed), sends a two-line bank CSV through the importer's own `importer:import`, and finds both transactions through Firefly's API, before and after the move
+- [x] **Beszel:** CPU, memory, and disk history per container (its hub, and its agent with the runtime's socket)
+  - **Done when:** the nightly run sees the agent connected to the hub and a container's history in the hub's API; the parity table says what the agent sees on each runtime (OrbStack, Docker Desktop, rootless Docker)
+- [x] **Paperless-AI:** automatic titles and tags for Paperless, using Ollama on this machine
+  - **Done when:** it installs only beside Paperless (it `requires` Paperless's API token), the nightly run starts it against the real Paperless and a fake Ollama, and Setup says when Ollama is missing, on each system
+- [x] **Tdarr:** shrinks the media library (its server, with a node of its own); heavy, optional
+  - **Done when:** the nightly run starts it, its web page answers, and its note says how much CPU a library takes and how to keep it to the night
+- [x] **Frigate:** cameras with local person and car detection, paired with Home Assistant; heavy, optional
+  - **Done when:** the nightly run starts it with a test video as its camera and its API answers; its note covers adding it to Home Assistant, and the parity table says which systems can pass a detector (Coral, GPU) through (no USB or GPU in containers on macOS)
+  - Done in October 2026 (#204): FFmpeg's test pattern is its camera (the runner has none), saved through Frigate's own API; the run sees frames arrive in its stats and Frigate online on its broker, before and after the move
+- [x] **Nextcloud:** shared family files with phone sync; heavy, optional, in no starter
+  - **Done when:** the nightly run installs it with its PostgreSQL and Redis, signs in, uploads a file over WebDAV, and reads it back after a restore
+  - Done in October 2026 (#208): installed by itself on its first start with the administrator from `.env`, a file uploaded over WebDAV, and read back after the move
+- [x] **Immich share links for the family:** a guided step (Setup, or the note) for sending an album to someone without an account, such as grandparents: the shared-link address that works away from home, how long it lasts, and turning it off
+  - **Done when:** the step is in Immich's note and, where the address can be made by the homelab, on Setup; a newcomer can follow it without help
+  - Done in October 2026: Immich's note has *Sending an album to family without an account* (the address that works away from home, with a domain or in Home mode; how long a link lasts, a password, what they may do; and turning a link off), and with a domain Setup shows *Photo links that open anywhere* with your own address once the tunnel is up (`TestSteps`, `internal/setup`). The newcomer following it is a real-person step, which the owner moved to 0.15 with the real machines
+- [x] **Kopia, a second backup engine beside Duplicati:** proposed first as an ADR in [Decisions](Decisions.md) (now [ADR-0019](Decisions.md#adr-0019-kopia-as-an-optional-second-backup-engine-beside-duplicati), accepted in October 2026: beside Duplicati, Kopia rather than restic, offered by Setup with a second drive by default, and a nightly restore test of both engines)
+  - **Done when:** the ADR is accepted, and then Kopia passes the same restore test Duplicati does in the nightly run
+  - Progress in October 2026: Kopia is an optional app (Choose apps › System), pinned, with its repository at `KOPIA_REPOSITORY` made or reconnected at each start and every source scheduled for 3:45. The nightly run snapshots a file through Kopia's API, restores its folder into `recovery-staging` and reads it, then after the move finds it in the repository again. Setup's step *A second copy with Kopia* offers each drive plugged in (then the cloud drives), never the one with Duplicati's backups or the media, through `homelab kopia repository`, which checks you can write there and starts Kopia again on it; start.sh then connects to the repository in the new folder, or makes one, instead of writing into a folder with no repository file (tried against the real image, and on an exFAT drive mounted as you). `homelab restore-test --auto --engine kopia` restores a sample of settled files from Kopia's newest snapshot and compares them, on record as Kopia's with its own monthly reminder, and the real-Docker run runs it after the folder restore. The nightly run also tests Duplicati's own restore: Setup's two backup steps (a folder beside the homelab, then the jobs), and once Homelab AppData has run, `homelab restore-test --auto` restoring a sample of settled files and comparing them. The Backups screen has a line for each engine: Duplicati's jobs, and, with Kopia installed, *Second copy (Kopia)*: where its repository is, its own last restore test (or the failure, or that one is due), and **Test Kopia's restore** (`homelab restore-test --auto --engine kopia`); `TestKopiaLine` and three click-through checks
+
+### 0.14: a frontend that grows
+
+Make each screen cheap to change and hard to break. 0.11's click-through is the safety net for this work: each step below must leave it green.
+
+- [x] One store per screen's data, written by the engine's changes; components keep their own small state (which categories are open), so a click never reloads a screen
+  - **Done when:** no screen calls the backend from a click handler except for an action, and the smoke test counts zero reloads while opening and folding every category
+  - `web/src/store.ts` keeps each screen's data; picking a screen draws it and reads it again only when the engine said it changed or it is over a minute old. The click-through counts the fake backend's calls: none while opening and folding every category, and none when going back to screens already read
+- [x] The last screens built by hand (the command and log sheets, Settings' page list) as components; `app.ts` down to loading data and choosing screens
+  - **Done when:** `app.ts` is under 400 lines (1,713 in October 2026), and no screen builds elements with `document.createElement`
+  - Done in three steps: the sheets' contents (#260), the rest of what was built by hand (#261), then each screen's code in `web/src/screens` with `core.ts` and `jobs.ts` beside it; `app.ts` is 141 lines, and `app/preview/lint.mjs` (in `make frontend-check`) fails if it reaches 400 or anything in `web/src` calls `document.createElement`
+- [x] Shared building blocks (card, sheet, row, segmented control, empty state) used everywhere, with the colours as tokens only
+  - **Done when:** a check in `frontend-check` fails on a colour written outside the tokens, or on a block's markup written outside the blocks
+  - Every colour a rule uses is a token in `style.css`'s `:root`; the blocks are components in `web/src/parts` (Card, CardHead, Rows and Row, Segmented, Empty, Sheet) that every screen draws with; `app/preview/lint.mjs` fails on a colour written in a rule or a component, and on a block's markup written anywhere else. A preview page per block was dropped (October 2026): the click-through already draws every screen, and so every block, on each system
+- [x] A job's window: a row per app in plain words with its own bar, the whole job's bar, Docker's lines under Show details (installing, Fix it, Update apps, Backups, Setup)
+  - Every long job shows the same window: what each app is doing ("Downloading · 54%", "Starting"), and Docker's own output only when asked for
+- [x] An app page: one app's state, address, logs, usage, week, settings, and actions in one place, instead of a row of icons
+  - Its log with **Explain this** (the AI on this machine), its last backup and its last restore test, its update history with **Roll back**, and the people who can sign in to it
+  - **Done when:** every action on a Status row is also on the app's page, and the row keeps only Open and the page
+  - Done in October 2026 in two steps, to the owner's mockup: the page with the app's own icon (#279), then its settings (Nightly updates and Tell me if it stops as switches, what the nightly backup keeps), Remove with a backup first, and rows with one button (Open, or Start) whose click opens the page. The click-through runs every action from the page, on each system and on the phone
+- [x] The window draws the last Status at once when it opens, then refreshes it
+  - The agent keeps the last Status it read; the window draws it marked with its age ("a few seconds ago") and replaces it when the fresh one arrives, instead of an empty list while Docker answers
+  - **Done when:** the click-through opens the app against a slow fake engine and the list is drawn before the engine answers, then updated once it does
+  - The engine keeps its last good reading (`GET /v1/status/last`; `/v1/status` itself still always reads the runtime); the window and the phone companion ask for it with `LastStatus` and draw it under "As it was a few seconds ago; checking now…". The click-through's *Status draws the last reading at once, then the fresh one* opens against an engine that takes 3 seconds
+- [x] A click answers at once: Start, Stop, Restart, and Update change their row straight away ("Starting…"), then the runtime confirms it or the row goes back with the error
+  - **Done when:** the click-through sees the row change before the fake backend answers, and a failed action puts the row back and says why
+  - Roll back and a category's Start them do the same. The row keeps "Restarting…" until Status has read the result, so it never flickers back to the old state; a failure stays under the row ("Could not stop: …") until the next action on that app
+- [x] Motion and transparency in Settings › Appearance, beside Theme and Contrast: **Motion** (Like the system, Less, None) and **Transparency** (Like the system, Off)
+  - Every animation and transition follows them, the ones that ignore the system's "reduce motion" today included (the meter, the row buttons' fade, the switch); Off drops the blur behind the save bar and the phone companion's bar
+  - Each system's default may differ (less blur on SteamOS, if 0.10's timings or the Steam Machine show it costs there)
+  - **Done when:** the click-through draws each screen with Motion at None and finds no animation or transition running, and with Transparency Off finds no `backdrop-filter`
+  - `tray.Appearance` keeps Motion and Transparency; appearance.ts sets `motion-less`, `motion-none`, and `no-blur` on the page from them, or from the system's reduce motion and reduce transparency while they are Like the system (followed live), the phone included; style.css's own reduced-motion blocks went into those classes. Less stops what slides, spins, or grows and keeps colour fades; Off also draws Windows' Mica and the Mac's see-through side panel solid
+
+</details>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../Service%20Organization/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Service Organization">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Service Organization
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../Feature%20Roadmap/" class="md-footer__link md-footer__link--next" aria-label="Next: Feature Roadmap">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Feature Roadmap
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.top", "navigation.footer", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.a5f9d56c.min.js"></script>
+      
+    
+  </body>
+</html>

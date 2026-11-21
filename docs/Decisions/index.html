@@ -1,0 +1,2781 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Your household's photos, passwords, documents, money, music, and books, on a computer you own.">
+      
+      
+      
+        <link rel="canonical" href="https://snooper42.github.io/homelab-wizard/docs/Decisions/">
+      
+      
+        <link rel="prev" href="../Feature%20Roadmap/">
+      
+      
+        <link rel="next" href="../../CHANGELOG/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/logo.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+    
+    
+      
+        <title>Decisions - Homelab Wizard</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.57a0d79d.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.fb2fffe2.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#decisions" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Homelab Wizard" class="md-header__button md-logo" aria-label="Homelab Wizard" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Homelab Wizard
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Decisions
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue"  aria-label="Dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="blue"  aria-label="Light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Snooper42/homelab-wizard" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Snooper42/homelab-wizard
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Homelab Wizard" class="md-nav__button md-logo" aria-label="Homelab Wizard" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    Homelab Wizard
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Snooper42/homelab-wizard" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Snooper42/homelab-wizard
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Start here
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Start here
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Tour/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    A tour of the app
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Getting%20Started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Everyday%20Tasks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Everyday tasks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing a new build
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Upgrading/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Upgrading
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Commands/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Run it
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Run it
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Runbooks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Runbooks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Automation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Automation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Monitoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Monitoring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Backups/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backups
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Tidy%20Up/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tidy Up
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Private%20Finances/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Private Finances
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Disaster%20Recovery/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Disaster Recovery
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Known%20Issues/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Known Issues
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How it works
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    How it works
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Networking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Networking
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Usability/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Usability
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Storage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Storage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Docker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docker
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Parity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What each device can do
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../apple-client/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The iPhone and iPad app
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Host/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Host
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Environment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Environment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The apps
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    The apps
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Services/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Services
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Inventory/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Inventory
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Savings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Savings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Service%20Organization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Service Organization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The project
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    The project
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Roadmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Feature%20Roadmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Feature Roadmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Decisions
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Decisions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#adr-0001-a-mac-as-the-only-host" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-0001: A Mac as the only host
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adr-0002-orbstack-as-the-container-runtime" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-0002: OrbStack as the container runtime
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adr-0003-cloudflare-tunnel-for-public-access-through-the-proxy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-0003: Cloudflare Tunnel for public access, through the proxy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adr-0004-custom-nginx-proxy-manager-image-with-the-crowdsec-bouncer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-0004: Custom Nginx Proxy Manager image with the CrowdSec bouncer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adr-0005-no-cloudflare-access-or-warp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-0005: No Cloudflare Access or WARP
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adr-0006-watchtower-opt-in-by-label" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-0006: Watchtower opt-in by label
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adr-0007-database-dumps-scheduled-by-launchd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-0007: Database dumps scheduled by launchd
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adr-0008-compose-files-are-the-catalog-one-cli-in-go" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-0008: compose files are the catalog; one CLI in Go
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adr-0009-one-shared-docker-network" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-0009: One shared Docker network
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adr-0010-native-jellyfin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-0010: Native Jellyfin
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adr-0011-one-env-for-every-project" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-0011: One .env for every project
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adr-0012-home-mode-no-domain-is-the-default" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-0012: Home mode (no domain) is the default
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adr-0013-the-app-updates-itself-from-a-numbered-build-of-main" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-0013: The app updates itself from a numbered build of main
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adr-0014-one-engine-followed-live-through-a-local-socket" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-0014: One engine, followed live through a local socket
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adr-0015-a-typed-preact-frontend-compiled-and-committed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-0015: A typed Preact frontend, compiled and committed
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adr-0016-the-watchdog-heals-once-then-leaves-it-to-a-person" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-0016: The watchdog heals once, then leaves it to a person
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adr-0017-cpu-weights-for-background-work-not-throttling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-0017: CPU weights for background work, not throttling
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adr-0018-not-now-docker-go-sdk-tsnet-several-machines" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-0018: Not now: Docker Go SDK, tsnet, several machines
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adr-0019-kopia-as-an-optional-second-backup-engine-beside-duplicati" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-0019: Kopia as an optional second backup engine beside Duplicati
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adr-0020-a-rollback-puts-back-the-apps-data-with-its-image" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-0020: A rollback puts back the app's data with its image
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adr-0021-finances-as-a-screen-of-the-app-typed-in-by-hand-and-kept-on-this-machine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-0021: Finances as a screen of the app, typed in by hand and kept on this machine
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adr-0022-sqlite-only-for-records-that-grow-and-are-searched-small-state-stays-in-json" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-0022: SQLite only for records that grow and are searched; small state stays in JSON
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adr-0023-the-iphone-app-away-from-home-the-companion-through-the-tunnel-behind-access-and-sealed-end-to-end" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-0023: The iPhone app away from home: the companion through the tunnel, behind Access and sealed end to end
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../CHANGELOG/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What's new
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../CONTRIBUTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing (services)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Standards/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Standards
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Releasing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Releasing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../SECURITY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security policy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Homelab%20Manifest/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Homelab Manifest
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Homelab%20Context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Homelab Context
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Maintainer%20Guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Maintainer Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../To-do/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    To-do
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Knowledge base index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#adr-0001-a-mac-as-the-only-host" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-0001: A Mac as the only host
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adr-0002-orbstack-as-the-container-runtime" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-0002: OrbStack as the container runtime
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adr-0003-cloudflare-tunnel-for-public-access-through-the-proxy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-0003: Cloudflare Tunnel for public access, through the proxy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adr-0004-custom-nginx-proxy-manager-image-with-the-crowdsec-bouncer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-0004: Custom Nginx Proxy Manager image with the CrowdSec bouncer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adr-0005-no-cloudflare-access-or-warp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-0005: No Cloudflare Access or WARP
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adr-0006-watchtower-opt-in-by-label" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-0006: Watchtower opt-in by label
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adr-0007-database-dumps-scheduled-by-launchd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-0007: Database dumps scheduled by launchd
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adr-0008-compose-files-are-the-catalog-one-cli-in-go" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-0008: compose files are the catalog; one CLI in Go
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adr-0009-one-shared-docker-network" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-0009: One shared Docker network
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adr-0010-native-jellyfin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-0010: Native Jellyfin
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adr-0011-one-env-for-every-project" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-0011: One .env for every project
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adr-0012-home-mode-no-domain-is-the-default" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-0012: Home mode (no domain) is the default
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adr-0013-the-app-updates-itself-from-a-numbered-build-of-main" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-0013: The app updates itself from a numbered build of main
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adr-0014-one-engine-followed-live-through-a-local-socket" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-0014: One engine, followed live through a local socket
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adr-0015-a-typed-preact-frontend-compiled-and-committed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-0015: A typed Preact frontend, compiled and committed
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adr-0016-the-watchdog-heals-once-then-leaves-it-to-a-person" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-0016: The watchdog heals once, then leaves it to a person
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adr-0017-cpu-weights-for-background-work-not-throttling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-0017: CPU weights for background work, not throttling
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adr-0018-not-now-docker-go-sdk-tsnet-several-machines" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-0018: Not now: Docker Go SDK, tsnet, several machines
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adr-0019-kopia-as-an-optional-second-backup-engine-beside-duplicati" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-0019: Kopia as an optional second backup engine beside Duplicati
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adr-0020-a-rollback-puts-back-the-apps-data-with-its-image" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-0020: A rollback puts back the app's data with its image
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adr-0021-finances-as-a-screen-of-the-app-typed-in-by-hand-and-kept-on-this-machine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-0021: Finances as a screen of the app, typed in by hand and kept on this machine
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adr-0022-sqlite-only-for-records-that-grow-and-are-searched-small-state-stays-in-json" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-0022: SQLite only for records that grow and are searched; small state stays in JSON
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adr-0023-the-iphone-app-away-from-home-the-companion-through-the-tunnel-behind-access-and-sealed-end-to-end" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-0023: The iPhone app away from home: the companion through the tunnel, behind Access and sealed end to end
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="decisions">Decisions<a class="headerlink" href="#decisions" title="Permanent link">&para;</a></h1>
+<p>Architecture decisions and why they were made.</p>
+<table>
+<thead>
+<tr>
+<th>ADR</th>
+<th>Title</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ADR-0001</td>
+<td>A Mac as the only host</td>
+<td>Accepted</td>
+</tr>
+<tr>
+<td>ADR-0002</td>
+<td>OrbStack as the container runtime</td>
+<td>Accepted</td>
+</tr>
+<tr>
+<td>ADR-0003</td>
+<td>Cloudflare Tunnel for public access, through the proxy</td>
+<td>Accepted</td>
+</tr>
+<tr>
+<td>ADR-0004</td>
+<td>Custom Nginx Proxy Manager image with the CrowdSec bouncer</td>
+<td>Accepted</td>
+</tr>
+<tr>
+<td>ADR-0005</td>
+<td>No Cloudflare Access or WARP</td>
+<td>Accepted; narrowed by ADR-0023 for the phone companion's own hostname</td>
+</tr>
+<tr>
+<td>ADR-0006</td>
+<td>Watchtower opt-in by label</td>
+<td>Superseded by ADR-0020</td>
+</tr>
+<tr>
+<td>ADR-0007</td>
+<td>Database dumps scheduled by launchd, not Duplicati scripts</td>
+<td>Accepted</td>
+</tr>
+<tr>
+<td>ADR-0008</td>
+<td>compose files are the catalog; one CLI in Go</td>
+<td>Accepted</td>
+</tr>
+<tr>
+<td>ADR-0009</td>
+<td>One shared Docker network; apps reached by name</td>
+<td>Accepted</td>
+</tr>
+<tr>
+<td>ADR-0010</td>
+<td>Native Jellyfin</td>
+<td>Accepted</td>
+</tr>
+<tr>
+<td>ADR-0011</td>
+<td>One .env for every project</td>
+<td>Accepted</td>
+</tr>
+<tr>
+<td>ADR-0012</td>
+<td>Home mode (no domain) is the default</td>
+<td>Accepted</td>
+</tr>
+<tr>
+<td>ADR-0013</td>
+<td>The app updates itself from a numbered build of main</td>
+<td>Accepted</td>
+</tr>
+<tr>
+<td>ADR-0014</td>
+<td>One engine, followed live through a local socket</td>
+<td>Accepted</td>
+</tr>
+<tr>
+<td>ADR-0015</td>
+<td>A typed Preact frontend, compiled and committed</td>
+<td>Accepted</td>
+</tr>
+<tr>
+<td>ADR-0016</td>
+<td>The watchdog heals once, then leaves it to a person</td>
+<td>Accepted</td>
+</tr>
+<tr>
+<td>ADR-0017</td>
+<td>CPU weights for background work, not throttling</td>
+<td>Accepted</td>
+</tr>
+<tr>
+<td>ADR-0018</td>
+<td>Not now: Docker Go SDK, tsnet, several machines</td>
+<td>Accepted</td>
+</tr>
+<tr>
+<td>ADR-0019</td>
+<td>Kopia as an optional second backup engine beside Duplicati</td>
+<td>Accepted</td>
+</tr>
+<tr>
+<td>ADR-0020</td>
+<td>A rollback puts back the app's data with its image</td>
+<td>Accepted</td>
+</tr>
+<tr>
+<td>ADR-0021</td>
+<td>Finances as a screen of the app, typed in by hand and kept on this machine</td>
+<td>Accepted</td>
+</tr>
+<tr>
+<td>ADR-0022</td>
+<td>SQLite only for records that grow and are searched; small state stays in JSON</td>
+<td>Accepted</td>
+</tr>
+<tr>
+<td>ADR-0023</td>
+<td>The iPhone app away from home: the companion through the tunnel, behind Access and sealed end to end</td>
+<td>Accepted</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="adr-0001-a-mac-as-the-only-host">ADR-0001: A Mac as the only host<a class="headerlink" href="#adr-0001-a-mac-as-the-only-host" title="Permanent link">&para;</a></h2>
+<p><strong>Context:</strong> The homelab needs one always-on machine at home.
+<strong>Decision:</strong> Run everything on one Mac with Apple Silicon (a Mac mini, or a MacBook kept plugged in), kept awake by the homelab's awake job.
+<strong>Trade-offs:</strong> One machine is a single point of failure, and with FileVault nothing starts after a reboot until someone logs in. Apple Silicon is quiet and efficient, and native Jellyfin can use its media engine.</p>
+<h2 id="adr-0002-orbstack-as-the-container-runtime">ADR-0002: OrbStack as the container runtime<a class="headerlink" href="#adr-0002-orbstack-as-the-container-runtime" title="Permanent link">&para;</a></h2>
+<p><strong>Context:</strong> Docker on macOS always runs in a Linux VM.
+<strong>Decision:</strong> OrbStack, with Start at login enabled.
+<strong>Rationale:</strong> Lighter and faster than Docker Desktop, fast bind mounts, Rosetta for the few Intel-only images. The CLI uses the plain <code>docker</code> CLI, so Docker Desktop still works.</p>
+<h2 id="adr-0003-cloudflare-tunnel-for-public-access-through-the-proxy">ADR-0003: Cloudflare Tunnel for public access, through the proxy<a class="headerlink" href="#adr-0003-cloudflare-tunnel-for-public-access-through-the-proxy" title="Permanent link">&para;</a></h2>
+<p><strong>Context:</strong> Family members use some apps from outside the home without extra software. The router must not open ports.
+<strong>Decision:</strong> One remotely managed tunnel. Each public hostname points at <code>http://nginx-proxy-manager:80</code>, not at the app.
+<strong>Rationale:</strong> No inbound ports. Routing through the proxy means CrowdSec reads and blocks tunnel traffic exactly like LAN traffic, which removes the need for a separate edge bouncer and its Workers KV limits. The visitor's real address arrives in <code>CF-Connecting-IP</code>; proxy hosts trust <code>X-Forwarded-Proto</code>, so there is no redirect loop.
+<strong>Trade-offs:</strong> The proxy becomes a dependency of public access. The watchdog checks it every 15 minutes.</p>
+<h2 id="adr-0004-custom-nginx-proxy-manager-image-with-the-crowdsec-bouncer">ADR-0004: Custom Nginx Proxy Manager image with the CrowdSec bouncer<a class="headerlink" href="#adr-0004-custom-nginx-proxy-manager-image-with-the-crowdsec-bouncer" title="Permanent link">&para;</a></h2>
+<p><strong>Context:</strong> CrowdSec detects attacks but needs an enforcement point.
+<strong>Decision:</strong> Build <code>dockerfiles/npm-crowdsec</code> from <code>jc21/nginx-proxy-manager</code> plus CrowdSec's Lua bouncer (<code>lua-cs-bouncer</code>) and <code>lua-resty-http</code>, following CrowdSec's own OpenResty reference build. The bouncer configuration comes from environment variables at start.
+<strong>Consequences:</strong> Never update it by pulling the upstream image (that silently drops the bouncer). Left out of the nightly updates; <code>./homelab update nginx-proxy-manager</code> rebuilds it. With no bouncer key the bouncer turns itself off instead of stopping the proxy.</p>
+<h2 id="adr-0005-no-cloudflare-access-or-warp">ADR-0005: No Cloudflare Access or WARP<a class="headerlink" href="#adr-0005-no-cloudflare-access-or-warp" title="Permanent link">&para;</a></h2>
+<p><strong>Status:</strong> Narrowed by <a href="#adr-0023-the-iphone-app-away-from-home-the-companion-through-the-tunnel-behind-access-and-sealed-end-to-end">ADR-0023</a> (November 2026): the phone companion's own hostname is behind Access with a service token, which the Homelab app sends itself. Every other app stays without Access, for the reasons below.</p>
+<p><strong>Context:</strong> Cloudflare Access could gate the public apps behind a login.
+<strong>Decision:</strong> Do not use Access or WARP.
+<strong>Rationale:</strong> The public apps are used through native apps (Bitwarden, Immich, Subsonic players, Audiobookshelf) that talk to APIs and cannot complete an Access login. WARP would mean installing software on every family device.
+<strong>Mitigation:</strong> Strong unique passwords, 2FA where offered, CrowdSec, Cloudflare's managed rules.</p>
+<h2 id="adr-0006-watchtower-opt-in-by-label">ADR-0006: Watchtower opt-in by label<a class="headerlink" href="#adr-0006-watchtower-opt-in-by-label" title="Permanent link">&para;</a></h2>
+<p><strong>Status:</strong> Superseded by <a href="#adr-0020-a-rollback-puts-back-the-apps-data-with-its-image">ADR-0020</a> (October 2026): Watchtower is gone; the agent runs the nightly updates, every app updates unless its <code>x-homelab</code> has a <code>pin</code> or it is a database or built locally.</p>
+<p><strong>Decision:</strong> <code>WATCHTOWER_LABEL_ENABLE=true</code>; every service states <code>com.centurylinklabs.watchtower.enable</code> explicitly.
+<strong>Rationale:</strong> Updates happen where they are safe. The proxy (built locally), databases (major versions are pinned), and MoneyMatter (pinned build) are excluded and updated deliberately. The maintained <code>nickfedor/watchtower</code> fork is used because it negotiates the Docker API version.</p>
+<h2 id="adr-0007-database-dumps-scheduled-by-launchd">ADR-0007: Database dumps scheduled by launchd<a class="headerlink" href="#adr-0007-database-dumps-scheduled-by-launchd" title="Permanent link">&para;</a></h2>
+<p><strong>Context:</strong> Duplicati runs in a container and cannot run host commands before a job.
+<strong>Decision:</strong> <code>./homelab backup</code> dumps every database at 03:30 into <code>recovery-staging</code>, and the Duplicati jobs run afterwards.
+<strong>Rationale:</strong> LaunchAgents run as the user, in the session where OrbStack lives, and the same command works by hand. The Linux and Windows profiles do the same with a systemd user unit and the user's Run key (all three now start one background agent, <code>homelab agent</code>, which runs the backup at 03:30).</p>
+<h2 id="adr-0008-compose-files-are-the-catalog-one-cli-in-go">ADR-0008: compose files are the catalog; one CLI in Go<a class="headerlink" href="#adr-0008-compose-files-are-the-catalog-one-cli-in-go" title="Permanent link">&para;</a></h2>
+<p><strong>Context:</strong> Describing apps in several places (scripts, JSON, docs) let them drift apart.
+<strong>Decision:</strong> Every app is a service with an <code>x-homelab</code> block in <code>compose/&lt;category&gt;.yaml</code> (included by <code>compose.yaml</code>) or <code>stacks/*/compose.yaml</code>. One Go binary (<code>./homelab</code>) installs, proxies, publishes, backs up, monitors, and documents from that metadata. Facts in the notes are generated from it.
+<strong>Rationale:</strong> A single source cannot drift. Go builds a single small binary with no runtime to install, starts instantly, and has testing built in.</p>
+<h2 id="adr-0009-one-shared-docker-network">ADR-0009: One shared Docker network<a class="headerlink" href="#adr-0009-one-shared-docker-network" title="Permanent link">&para;</a></h2>
+<p><strong>Decision:</strong> Every project joins the external <code>homelab</code> network. Web services are reached by service name; databases stay on their stack's private network.
+<strong>Rationale:</strong> No hairpin through <code>host.docker.internal</code>, no published ports needed for the proxy or the tunnel, and a database can never be reached from another stack. Service names must therefore be unique across stacks; <code>homelab validate</code> enforces it.</p>
+<h2 id="adr-0010-native-jellyfin">ADR-0010: Native Jellyfin<a class="headerlink" href="#adr-0010-native-jellyfin" title="Permanent link">&para;</a></h2>
+<p><strong>Decision:</strong> Jellyfin runs as the macOS app, not a container.
+<strong>Rationale:</strong> Containers on macOS have no access to Apple's hardware video encoder; the native app does. The CLI still proxies it (<code>host.docker.internal:8096</code>), and Duplicati backs up its data folder.</p>
+<h2 id="adr-0011-one-env-for-every-project">ADR-0011: One .env for every project<a class="headerlink" href="#adr-0011-one-env-for-every-project" title="Permanent link">&para;</a></h2>
+<p><strong>Decision:</strong> All projects read <code>~/Homelab/.env</code> (the CLI passes <code>--env-file</code>).
+<strong>Rationale:</strong> One file to protect (mode 0600), one file in the Secrets backup job, and secrets generated in one place. <code>COMPOSE_PROJECT_NAME</code> must never be set in it, or it would override each stack's project name.</p>
+<h2 id="adr-0012-home-mode-no-domain-is-the-default">ADR-0012: Home mode (no domain) is the default<a class="headerlink" href="#adr-0012-home-mode-no-domain-is-the-default" title="Permanent link">&para;</a></h2>
+<p><strong>Context:</strong> A domain means a Cloudflare account, an API token, AdGuard on every device, and a certificate: the steps where a new household got stuck.
+<strong>Decision:</strong> <code>HOMELAB_DOMAIN</code> is empty in <code>.env.example</code>, so every new homelab, git clones included, starts in Home mode: Tailscale Serve gives each app <code>https://homelab.&lt;tailnet&gt;.ts.net:&lt;port&gt;</code>, and <code>homelab tailnet setup</code> reruns after every install. An existing <code>.env</code> keeps its domain; setting one later switches to the proxy, AdGuard, and the tunnel.
+<strong>Trade-offs:</strong> Each device needs Tailscale, nothing is published to the internet, and single sign-on with Pocket ID needs a domain.</p>
+<h2 id="adr-0013-the-app-updates-itself-from-a-numbered-build-of-main">ADR-0013: The app updates itself from a numbered build of main<a class="headerlink" href="#adr-0013-the-app-updates-itself-from-a-numbered-build-of-main" title="Permanent link">&para;</a></h2>
+<p><strong>Context:</strong> Downloading a build, dragging it to Applications, and clearing the download flag is too much to ask for every change.
+<strong>Decision:</strong> Every push to main that touches the app or the engine publishes the builds as a numbered release, the repository's Latest: <code>VERSION</code> with the patch raised by the commits since <code>VERSION</code> changed (<code>v0.9.4-beta</code>), so each build has a version people can read without a commit to bump it. Builds carry their version, commit, and repository (<code>-X main.version</code>, <code>main.commit</code>, <code>main.repo</code>); <code>internal/selfupdate</code> compares the commit with the newest build (the Latest release, or the newest <code>vX.Y.0</code> on the stable channel), checks the download against GitHub's SHA-256 digest, replaces the app, and reopens it. See <a href="../Releasing/#the-latest-build">Releasing</a>.
+<strong>Trade-offs:</strong> Until the builds are signed, the update trusts GitHub's release and digest. A release for every build fills the releases page; the stable channel takes only <code>vX.Y.0</code>.
+<strong>Since then (October 2026):</strong> on Windows the update unpacks the portable zip with Windows' own PowerShell (as an administrator only in Program Files) instead of running the installer, which SmartScreen and Smart App Control blocked as an unsigned program; an update that does not go in place says why, from <code>update.log</code>, instead of being offered again.
+<strong>Since then (November 2026, the owner's call):</strong> each release is one more than the newest, not the commits since <code>VERSION</code> changed: 0.17.0, 0.17.1, … 0.17.10, then 0.18.0 by itself (<code>internal/tools/nextversion</code>). Numbers like 0.16.41 said nothing a person could use; one number per release reads as a count of releases, and a new minor every eleven gives the stable channel something to move to. <code>VERSION</code> is the floor, raised by hand for a bigger step.</p>
+<h2 id="adr-0014-one-engine-followed-live-through-a-local-socket">ADR-0014: One engine, followed live through a local socket<a class="headerlink" href="#adr-0014-one-engine-followed-live-through-a-local-socket" title="Permanent link">&para;</a></h2>
+<p><strong>Context:</strong> The app, the menu bar item, and the phone each polled the container runtime every 10 to 60 seconds, so a stopped app showed late and each asked the runtime on its own.
+<strong>Decision:</strong> The engine follows <code>docker events</code> (<code>internal/engine</code>), gathering a burst into one change. The agent serves it on a socket only your account can open (<code>/v1/status</code>, <code>/v1/events</code> as Server-Sent Events); the app and the menu bar item follow it, and <code>homelab serve</code> passes the changes on to paired phones. Without the agent, each follows the runtime itself.
+<strong>Trade-offs:</strong> One more long-running process to keep healthy; a client falls back to its own follower, so nothing depends on it.
+<strong>Since then (0.15):</strong> the events, the containers, and the commands run in them go through the engine's own API (<code>internal/dockerapi</code>), with the <code>docker</code> CLI behind it; each change on <code>/v1/events</code> carries the Status read after it, and <code>/v1/cards</code> serves Status's cards once for every window and phone.</p>
+<h2 id="adr-0015-a-typed-preact-frontend-compiled-and-committed">ADR-0015: A typed Preact frontend, compiled and committed<a class="headerlink" href="#adr-0015-a-typed-preact-frontend-compiled-and-committed" title="Permanent link">&para;</a></h2>
+<p><strong>Context:</strong> The frontend was one 2,000-line script building the page by hand: no types against the Go side, and every live change rebuilt whole screens (losing focus and typed values).
+<strong>Decision:</strong> TypeScript checked against types generated from the methods the app binds, and Preact components per screen, compiled by esbuild into <code>web/dist/app.js</code>. The built file is committed, so <code>go build</code> needs no Node; CI fails while it is out of date. Preact rather than React or a framework with its own build: 10 KB, the same model, and no runtime beyond the bundle.
+<strong>Trade-offs:</strong> A contributor changing the frontend needs Node for <code>make frontend</code>; Go-only work does not.</p>
+<h2 id="adr-0016-the-watchdog-heals-once-then-leaves-it-to-a-person">ADR-0016: The watchdog heals once, then leaves it to a person<a class="headerlink" href="#adr-0016-the-watchdog-heals-once-then-leaves-it-to-a-person" title="Permanent link">&para;</a></h2>
+<p><strong>Context:</strong> Docker restarts a container that stops, not one that hangs (running, but unhealthy or not answering), and those stayed down until someone clicked <strong>Fix it</strong>.
+<strong>Decision:</strong> The watchdog restarts an app whose check failed on two runs in a row, at most once in 6 hours (<code>AUTO_HEAL</code>), and says so. An app updated in the last 6 hours is left to the rollback, which now also counts a page that stopped answering; a crash loop is left to Docker. Settings that changed under a running container are shown, not applied by themselves: recreating is the user's call (<strong>Fix it</strong>).
+<strong>Trade-offs:</strong> A restart can hide a slow leak until the next one; the alert on every restart keeps it visible.</p>
+<h2 id="adr-0017-cpu-weights-for-background-work-not-throttling">ADR-0017: CPU weights for background work, not throttling<a class="headerlink" href="#adr-0017-cpu-weights-for-background-work-not-throttling" title="Permanent link">&para;</a></h2>
+<p><strong>Context:</strong> Backups, photo indexing, and downloads could slow the apps people were using.
+<strong>Decision:</strong> Background services and the backup's own containers run with <code>cpu_shares: 256</code> (a quarter of Docker's default). Weights only count while the CPU is busy, so idle machines still give background work all of it.
+<strong>Trade-offs:</strong> Only between containers: native apps such as Jellyfin are outside it. Watching load and changing limits on the fly was left out as more moving parts for the same result.</p>
+<h2 id="adr-0018-not-now-docker-go-sdk-tsnet-several-machines">ADR-0018: Not now: Docker Go SDK, tsnet, several machines<a class="headerlink" href="#adr-0018-not-now-docker-go-sdk-tsnet-several-machines" title="Permanent link">&para;</a></h2>
+<p><strong>Decision:</strong> Left out for now: the Docker Go SDK in place of the <code>docker</code> CLI (its JSON is already typed, and the CLI resolves each system's socket, context, and Windows pipe, which could not be tested here); Tailscale built into the binary with tsnet (Tailscale Serve already gives every app its address); several machines as one, and moving apps between them by power (a different product, for a household with one computer); GitOps (a homelab folder that is a git checkout already updates with <code>homelab upgrade</code>).
+<strong>Revisit when:</strong> the CLI's output stops being enough, or a household runs the homelab on more than one machine.
+<strong>Since then (0.15):</strong> the Docker part is being revisited, as the 0.10 timings on Windows asked: a small client of the engine's API of the homelab's own (not the SDK) reads the containers and runs commands in them, found as the CLI finds the socket, with the CLI as its fallback (<code>DOCKER_API</code>). A new ADR replaces this part once the timings on each machine are in (<a href="../Roadmap/#015-the-docker-api-in-the-agent">Roadmap</a>).</p>
+<h2 id="adr-0019-kopia-as-an-optional-second-backup-engine-beside-duplicati">ADR-0019: Kopia as an optional second backup engine beside Duplicati<a class="headerlink" href="#adr-0019-kopia-as-an-optional-second-backup-engine-beside-duplicati" title="Permanent link">&para;</a></h2>
+<p><strong>Status:</strong> Accepted in October 2026, with the owner's answers below (Roadmap 0.13).</p>
+<p><strong>Context:</strong> Duplicati is the only engine. One engine is one way to fail: its local database can need a repair before a restore, a restore of a large job is slow, and a bug or a corrupted destination loses every copy at once. The 3-2-1 rule (three copies, two kinds of storage, one off-site) is easier to meet with a second, independent copy.</p>
+<p><strong>Proposal:</strong></p>
+<ul>
+<li><strong>What it backs up:</strong> the same read-only sources as Duplicati (<code>/source/appdata</code>, <code>/source/homelab-appdata</code>, <code>/source/stacks</code>, <code>/source/immich</code>, <code>/source/jellyfin</code>, <code>/source/calibre</code>) and <code>recovery-staging</code> (the dumps and the secrets copy), as Kopia snapshots, one per source, so a restore can pick one app's folder.</li>
+<li><strong>Where:</strong> its own destination, never Duplicati's folder: <code>KOPIA_REPOSITORY</code>, a folder (a second drive, or a cloud drive's folder) or an S3-compatible bucket (Backblaze B2, Wasabi). The repository is encrypted with <code>KOPIA_PASSWORD</code>, kept with the recovery kit like <code>DUPLICATI_SECRETS_PASSPHRASE</code>.</li>
+<li><strong>How it runs:</strong> <code>kopia/kopia</code> (Docker Hub) as an optional app in <code>compose/system.yaml</code>, in server mode with its web page (admin only), on the same read-only mounts as Duplicati. Its own schedule runs after the nightly dumps (03:30), with <code>cpu_shares</code> like the other background work. Failures go to ntfy's <code>duplicati-alerts</code> topic through Kopia's webhook notifications, so one topic covers backups.</li>
+<li><strong>Restore test:</strong> <code>homelab restore-test --auto</code> gains <code>--engine kopia</code>. It picks the same sample of unchanged files from <code>/source/appdata</code>, restores them from the newest snapshot with <code>kopia restore</code> into <code>recovery-staging/restore-test</code>, and hashes them against the live files, exactly as for Duplicati. <code>restore-test.json</code> records the engine with each drill, and the 30-day reminder counts each engine. The nightly real-Docker run tests both.</li>
+<li><strong>The Backups screen:</strong> the off-site tile lists each engine with its last run and its last passed restore test; <strong>Test a restore</strong> asks which engine when both are set up. With Kopia not installed, nothing changes.</li>
+<li><strong>How someone chooses:</strong> Duplicati stays the default, set up by Setup. Kopia is in Choose apps › System as optional, described as "a second, independent copy somewhere else". Setup's backup step gains a line once it is installed: where its repository is, and whether its first snapshot and restore test passed.</li>
+</ul>
+<p><strong>Trade-offs:</strong> two engines are two passwords, two destinations, and two schedules to explain; the disk is read twice each night; Kopia's web page is plainer than Duplicati's.</p>
+<p><strong>Alternatives:</strong></p>
+<ul>
+<li>A second Duplicati job to another destination: no new engine, but the same software, so not independent of Duplicati's bugs or its database.</li>
+<li>Restic with Backrest's web page instead of Kopia: similar design (content-addressed, encrypted, deduplicated); Kopia has its own web page and server mode in one image, Backrest is a separate project wrapping restic.</li>
+<li>Kopia instead of Duplicati: fewer moving parts in the end, but it replaces a working, tested engine and every household's existing backups.</li>
+</ul>
+<p><strong>Decision (the owner, October 2026):</strong> the safest and simplest choice for a household, each time.</p>
+<ol>
+<li>Beside Duplicati, not replacing it: Duplicati stays the default and the off-site copy; Kopia is the second, independent one.</li>
+<li>Kopia, not restic with Backrest: one app with its own web page, so fewer moving parts.</li>
+<li>Setup offers it as an optional step once it is installed, defaulting to a second drive; it never writes into Duplicati's destination.</li>
+<li>Yes: the nightly run tests a restore from both engines.</li>
+</ol>
+<h2 id="adr-0020-a-rollback-puts-back-the-apps-data-with-its-image">ADR-0020: A rollback puts back the app's data with its image<a class="headerlink" href="#adr-0020-a-rollback-puts-back-the-apps-data-with-its-image" title="Permanent link">&para;</a></h2>
+<p><strong>Status:</strong> Accepted in October 2026, with the owner's answers below (<a href="../Known%20Issues/#issue-0022-a-rollback-brings-back-the-image-not-the-data-the-newer-version-changed">ISSUE-0022</a>). Done after 0.14.0: the agent runs the nightly updates, and the owner chose to remove Watchtower altogether rather than keep it to pull and recreate, so no container holds Docker's socket to write to it.</p>
+<p><strong>Context:</strong> A rollback starts the earlier image on today's data. An app whose newer version migrated its data (ntfy 2.11 after 2.34: "version 17 is higher than current version 13") then refuses to start. <code>homelab update</code> dumps databases first, but Watchtower's nightly updates are not preceded by anything, the rollback restores nothing, and files outside a dump (ntfy's message cache, SQLite apps' side files, settings folders) are not kept at all.</p>
+<p><strong>Proposal:</strong></p>
+<ul>
+<li><strong>A copy before every update.</strong> Watchtower stops updating by itself: the nightly updates are run by the agent as <code>homelab update --all --nightly</code> at the same hour, using Watchtower only to pull and recreate (its <code>--run-once</code> mode, for the apps that have a newer image). Before each app is updated, the homelab:</li>
+<li>dumps its databases, as <code>homelab update</code> does today;</li>
+<li>stops it and copies its own data: the bind-mounted folders inside the homelab folder and its named volumes (tarred, as <code>archive:</code> does), into <code>recovery-staging/before-update/&lt;app&gt;/&lt;time&gt;/</code>;</li>
+<li>starts the update.</li>
+<li><strong>What is left out:</strong> folders outside the homelab folder (<code>MEDIA_ROOT</code>, <code>IMMICH_UPLOAD_LOCATION</code>, Jellyfin's data), and any folder over a size limit (<code>UPDATE_COPY_LIMIT</code>, 2 GB by default). Those apps' schemas live in their databases, which the dump covers. The update says which folders it did not copy.</li>
+<li><strong>The rollback</strong> (by hand, or the watchdog's after a failed update) stops the app; moves today's data aside to <code>recovery-staging/rolled-back/&lt;app&gt;/&lt;time&gt;/</code> (never deleted by the rollback); puts the copy back; restores the dump into its database (PostgreSQL through <code>pgexec</code>, SQLite as a file); then starts the earlier image. It says what was put back and that changes made since the update are in the rolled-back folder.</li>
+<li><strong>Keeping copies:</strong> the newest copy per app, until the rollback window closes (a week, as for the earlier image); the backup's clean-up removes older ones.</li>
+</ul>
+<p><strong>Trade-offs:</strong> each update stops the app for the copy (seconds for most, a minute for a large settings folder); disk for one copy per updated app; and anything written between the update and the rollback is set aside, not merged.</p>
+<p><strong>Alternatives:</strong></p>
+<ul>
+<li>Keep Watchtower as it is and copy every app's data in the nightly backup before 4 AM: no change to how updates run, but a copy of every app every night, and up to a few hours of changes lost on rollback.</li>
+<li>Restore only the dumps (no folder copies): smaller, but leaves ntfy's case, and every SQLite app's side files, unsolved.</li>
+<li>Offer "restore the dump from before the update" as a separate step after a rollback: least work, but a person must know to do it, and the watchdog's automatic rollback still loops.</li>
+</ul>
+<p><strong>Decision (the owner, October 2026):</strong> the safest and simplest choice for a household, each time.</p>
+<ol>
+<li>The agent runs the nightly updates (this proposal): only the job that updates knows the moment before, and it copies just the apps it is about to update.</li>
+<li>2 GB per folder by default (<code>UPDATE_COPY_LIMIT</code>), and the databases are always dumped whatever their size; a folder left out is named in the update's result.</li>
+<li>The watchdog puts the data back by itself only when nothing new can have been written since the update: the app never came up healthy after it. Otherwise it rolls back the image, alerts, and offers <strong>Restore data</strong> as one step, so photos or documents added since the update are never set aside without a person choosing it.</li>
+</ol>
+<h2 id="adr-0021-finances-as-a-screen-of-the-app-typed-in-by-hand-and-kept-on-this-machine">ADR-0021: Finances as a screen of the app, typed in by hand and kept on this machine<a class="headerlink" href="#adr-0021-finances-as-a-screen-of-the-app-typed-in-by-hand-and-kept-on-this-machine" title="Permanent link">&para;</a></h2>
+<p><strong>Status:</strong> Accepted; built in October 2026 (#311, #323) and recorded afterwards from the code and the patch notes. The reasons below are what the design shows, not the owner's words: correct them here if they differ.</p>
+<p><strong>Context:</strong> The household wanted to see, paycheck by paycheck, what checking holds once the bills are paid, which paycheck covers each bill, and net worth with the home's and car's equity. The catalog's budget apps (MoneyMatter, Actual Budget, Firefly III) keep what was spent; none reads pay and bills forward, and each is a separate app with its own sign-in, database, and update.</p>
+<p><strong>Decision:</strong></p>
+<ul>
+<li><strong>A screen of Homelab Wizard, not a catalog app.</strong> Finances is in the sidebar beside Status and Backups, drawn by the same frontend on the computer and the phone companion; <code>internal/finance</code> reads the plan forward (paydays moved before weekends and bank holidays, interest a day at a time, cards paying what is charged to them).</li>
+<li><strong>Typed in by hand, no bank connection.</strong> Nothing about the household's money leaves the machine, and no bank credentials or aggregator are involved.</li>
+<li><strong>One file in the homelab folder:</strong> <code>data/finance.json</code>, written 0600 and whole (a failed write leaves the last one), each balance kept by the day it was typed in for net worth over time. The nightly backup copies it with the household's other records into the encrypted Homelab Secrets job.</li>
+<li><strong>Phones by permission:</strong> off for every phone until picked (<strong>Sees Finances</strong> or <strong>Changes Finances</strong>, apart from <em>Can make changes</em>), only over an encrypted connection, never to a kiosk screen.</li>
+<li><strong>No lost saves:</strong> each read carries the file's version, and a save made after another device's is refused with the latest shown and the form kept.</li>
+</ul>
+<p><strong>Trade-offs:</strong> balances go stale unless someone types them in (the heading says when they are a week old, and <strong>Update balances</strong> starts each at what is expected); no transaction history, categories, or imports, which stay the budget apps' job; and one more screen the app itself must keep working, outside the catalog's per-app proof (its checks are in the click-through and <code>internal/finance</code>'s tests).</p>
+<h2 id="adr-0022-sqlite-only-for-records-that-grow-and-are-searched-small-state-stays-in-json">ADR-0022: SQLite only for records that grow and are searched; small state stays in JSON<a class="headerlink" href="#adr-0022-sqlite-only-for-records-that-grow-and-are-searched-small-state-stays-in-json" title="Permanent link">&para;</a></h2>
+<p><strong>Status:</strong> Accepted, November 2026, from the maintenance order (the owner's call). First used by the record of what was done (<code>internal/history</code>, November 2026), then the alerts the homelab sent (<code>internal/history</code>'s <code>alerts</code> table: 90 days, at most 5,000, Nov 11).</p>
+<p><strong>Context:</strong> The homelab keeps its own records as small JSON files in <code>data/</code> (what is stopped, pinned, held, the watchdog's state, Setup's ticks), each changed whole under a lock beside it (<code>internal/lockedfile</code>, <code>internal/applist</code>) and copied by the nightly Secrets backup. That suits a record of a few kilobytes that is read whole. Two planned features are different: the Memory screen needs a day of samples taken every minute or so, and a record of what the homelab did needs months of entries that a screen filters and searches. As JSON, each would be read and rewritten whole on every change, and a search would read everything.</p>
+<p><strong>Decision:</strong></p>
+<ul>
+<li><strong>SQLite, in pure Go:</strong> <code>modernc.org/sqlite</code>, no cgo, so the same build works on a Mac, Windows, and Linux without a C toolchain, as every other part of the CLI does.</li>
+<li><strong>One database file in <code>data/</code></strong> (<code>data/homelab.db</code>), this account's alone (0600), opened in WAL mode so the app, the agent, and a phone's requests read while one writes. The nightly backup copies it through SQLite's own backup, as it already does for the apps' SQLite databases, never as a file copied mid-write.</li>
+<li><strong>Only for data that grows and is searched:</strong> the Memory screen's samples, the action record and the alert record. Each table keeps a limit (by age or by count) from the day it is added, so nothing in it only grows (see the maintenance order's <em>Memory and growth</em>).</li>
+<li><strong>Small state stays in JSON files:</strong> a record read whole and changed a few times a day keeps its file, its lock, and its whole write. Nothing moves into the database for being a record alone.</li>
+</ul>
+<p><strong>Trade-offs:</strong> a dependency of some size (the pure-Go SQLite is a translation of SQLite's C, and grows the binary), a schema to migrate between versions, and a file that, unlike the JSON records, a person cannot read or fix in a text editor. In return the two growing records stay fast and bounded, and the rest of <code>data/</code> stays as simple as it is.</p>
+<p><strong>Alternatives:</strong> JSON lines files with rotation (simple, but every search reads them all, and a day of samples is rewritten to trim it); bbolt or another key-value store (pure Go too, but no queries, so each screen would grow its own index); the cgo SQLite driver (the original C, but a C toolchain on every build machine and harder cross-builds).</p>
+<h2 id="adr-0023-the-iphone-app-away-from-home-the-companion-through-the-tunnel-behind-access-and-sealed-end-to-end">ADR-0023: The iPhone app away from home: the companion through the tunnel, behind Access and sealed end to end<a class="headerlink" href="#adr-0023-the-iphone-app-away-from-home-the-companion-through-the-tunnel-behind-access-and-sealed-end-to-end" title="Permanent link">&para;</a></h2>
+<p><strong>Status:</strong> Accepted, November 2026 (the owner's call, Nov 9). The computer's side is built; the Setup step that makes the Access application and the iPhone's side follow.</p>
+<p><strong>Context:</strong> The phone companion (<code>homelab serve</code>) answered only at home and on the tailnet, and refused anything with Cloudflare's headers, so on cellular the iPhone app showed nothing. The owner doesn't use Tailscale and won't add an app to every device; they use the Cloudflare tunnel, with Proton VPN's DNS. The companion holds Finances, so putting it on the internet as the other apps are (ADR-0005: their own sign-in, CrowdSec, Cloudflare's rules) is not enough.</p>
+<p><strong>Decision:</strong> the companion gets one address through the tunnel, <code>/api/tunnel</code>, behind four locks, any one of which stops someone who got past the rest:</p>
+<ol>
+<li><strong>Cloudflare Access with a service token</strong> on the companion's own hostname only. A request without the household's token is stopped at Cloudflare and never reaches the house. This narrows ADR-0005: the Homelab app sends the token itself (<code>CF-Access-Client-Id</code> and <code>-Secret</code>), so nobody completes a login, and no other app goes behind Access. The token reaches a phone only when it pairs at home, kept in its Keychain.</li>
+<li><strong>Access's signed pass, checked by the companion</strong> (<code>Cf-Access-Jwt-Assertion</code>): RS256 by one of the team's keys (fetched from <code>https://&lt;team&gt;.cloudflareaccess.com/cdn-cgi/access/certs</code>, the team's name checked as one DNS label, cached an hour), for this application's audience, by the team's issuer, for the household's service token (<code>common_name</code>), and not expired. Anything else with Cloudflare's headers is refused, as before.</li>
+<li><strong>The phone's own pairing:</strong> its device token, inside the sealed message, so a phone unpaired on the computer is cut off at once.</li>
+<li><strong>Sealed end to end:</strong> at pairing, at home over an encrypted link, the phone and the computer agree a key (X25519, HKDF-SHA256 with the phone's ID), and every request and answer through the tunnel is sealed with it (AES-256-GCM; a request bound to its phone, an answer to its request). Cloudflare opens the tunnel's TLS, so without this it could read Finances; with it, it sees which phone, and nothing more. A request carries its time (within 2 minutes) and is taken once.</li>
+</ol>
+<p>Through the tunnel the phone <strong>only looks</strong>: a method that changes anything (Finances' edits included), the household's settings, a stream, pairing, and the frontend are never served there. Ten wrong attempts lock an address, or a phone, out for 10 minutes. A wall screen, and a phone paired over plain home Wi-Fi, get no key, so never go out.</p>
+<p><strong>Trade-offs:</strong> the companion is reachable from the internet at all, where it wasn't; the locks are why that is acceptable, and each is tested (<code>internal/companion/tunnel_test.go</code>). The key lives in <code>data/phones.json</code> (0600) beside the hashed tokens, since a sealing key can't be kept as a hash; whoever can read that file can already read <code>data/finance.json</code>. Phones paired before this pair again once, at home. Cloudflare outages leave the phone with only what it last saw.</p>
+<p><strong>Alternatives:</strong> Tailscale (encrypted, no Access needed, but the owner won't install it); Access with a person's login (the app can't complete one, as ADR-0005 says); Access alone without sealing (Cloudflare could read every answer); a VPN server at home (another app on every device, and a port to open).</p>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../Feature%20Roadmap/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Feature Roadmap">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Feature Roadmap
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../../CHANGELOG/" class="md-footer__link md-footer__link--next" aria-label="Next: What&#39;s new">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                What's new
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.top", "navigation.footer", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.a5f9d56c.min.js"></script>
+      
+    
+  </body>
+</html>
