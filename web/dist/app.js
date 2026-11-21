@@ -4777,6 +4777,16 @@
     R(/* @__PURE__ */ u3(Appearance, { ...props }), el3);
   }
 
+  // web/src/job/done.ts
+  function jobStarted(details, done) {
+    if (details) details.open = true;
+    done.hidden = true;
+  }
+  function jobFinished(details, done, ok) {
+    if (details) details.open = !ok;
+    done.hidden = false;
+  }
+
   // web/src/differs.ts
   var systemOf = (osName2, hostOS2) => osName2 === "mac" ? "mac" : osName2 === "windows" ? "windows" : hostOS2.includes("SteamOS") ? "steamos" : "linux";
   var systemOfHost = (os) => os.startsWith("macOS") ? "mac" : os.startsWith("Windows") ? "windows" : os.includes("SteamOS") ? "steamos" : "linux";
@@ -5691,6 +5701,7 @@
         replan();
       }
       for (const id2 of ["cName", "cImage", "cPort", "cDesc", "cVolumes"]) $(id2).value = "";
+      log2.hidden = true;
     } catch (e3) {
       showError(e3);
     } finally {
@@ -6220,11 +6231,11 @@
   }
   function setupJob() {
     startJob("setup");
-    $("setupClear").hidden = true;
+    jobStarted($("setupDetails"), $("setupClear"));
   }
-  function setupJobEnded() {
+  function setupJobEnded(ok = true) {
     endJob();
-    $("setupClear").hidden = false;
+    jobFinished($("setupDetails"), $("setupClear"), ok);
   }
   $("setupClear").onclick = () => {
     $("setupProgress").hidden = true;
@@ -6284,11 +6295,13 @@
             log2.textContent += line + "\n";
             log2.scrollTop = log2.scrollHeight;
           });
+          let ok = false;
           try {
             await go().Homelab("upgrade-back", "", true);
+            ok = true;
           } finally {
             if (typeof off2 === "function") off2();
-            setupJobEnded();
+            setupJobEnded(ok);
           }
         }, (behind) => {
           log2.textContent = `${waitWords(behind)}, then: going back…
@@ -6389,6 +6402,7 @@
     });
     btn.disabled = false;
     if (ok) {
+      log2.hidden = true;
       const reveal = hostOS.startsWith("macOS") ? "Show in Finder" : hostOS.startsWith("Windows") ? "Show in Explorer" : "Show the file";
       mountReportActions($("reportActions"), { reveal, show: () => go().RevealReport().catch(showError), email: () => go().EmailReport().catch(showError) });
     }
@@ -6454,13 +6468,17 @@
       log2.hidden = false;
       try {
         await inTurn("Closing sign-ups", async () => {
+          setupJob();
           const off2 = window.runtime.EventsOn("cli:log", (line) => {
             log2.textContent += line + "\n";
           });
+          let ok = false;
           try {
             await go().Homelab("signups-close", "", true);
+            ok = true;
           } finally {
             if (typeof off2 === "function") off2();
+            setupJobEnded(ok);
           }
         }, (behind) => {
           log2.textContent += `${waitWords(behind)}, then: closing sign-ups…
@@ -6538,13 +6556,14 @@
           stepsData.set(await go().RunSetup(next.id));
         }
         log2.textContent += "\nDone. What is left needs you: a setting to fill in, a choice, or a step only a person can do.\n";
+        failing = null;
       } catch (e3) {
         if (failing) failStep(failing, e3);
         showError(e3);
         log2.textContent += "\nStopped at a step that failed: the log above says why.\n";
       } finally {
         if (typeof off2 === "function") off2();
-        setupJobEnded();
+        setupJobEnded(!failing);
       }
     }, (behind) => {
       log2.textContent = `${waitWords(behind)}, then: the steps I can do…
@@ -6568,8 +6587,10 @@
         log2.textContent += line + "\n";
         log2.scrollTop = log2.scrollHeight;
       });
+      let ok = false;
       try {
         const steps = await (choice === void 0 ? go().RunSetup(step2.id) : go().RunSetupChoice(step2.id, choice));
+        ok = true;
         runningStep = null;
         stepsData.set(steps);
       } catch (e3) {
@@ -6580,7 +6601,7 @@
       } finally {
         runningStep = null;
         if (typeof off2 === "function") off2();
-        setupJobEnded();
+        setupJobEnded(ok);
       }
     }, (behind) => {
       log2.textContent = `${waitWords(behind)}, then: ${step2.title}…
@@ -7585,6 +7606,7 @@
     const panel = $("backupPanel"), log2 = $("backupLog");
     const btns = () => [$("backupNow"), document.getElementById("restoreTest")].filter(Boolean);
     panel.hidden = false;
+    jobStarted($("backupDetails"), $("backupDone"));
     $("backupTitle").textContent = busy2;
     log2.textContent = "";
     btns().forEach((b2) => {
@@ -7612,6 +7634,7 @@
       $("backupTitle").textContent = `${waitWords(behind)}, then: ${busy2}`;
     });
     $("backupTitle").textContent = ok ? done : failed;
+    jobFinished($("backupDetails"), $("backupDone"), ok);
     btns().forEach((b2) => {
       b2.disabled = false;
     });
@@ -7626,6 +7649,7 @@
     const panel = $("backupPanel"), log2 = $("backupLog");
     button.disabled = true;
     panel.hidden = false;
+    jobStarted($("backupDetails"), $("backupDone"));
     $("backupTitle").textContent = direction === "out" ? "Moving out (a backup first, then packing)…" : "Moving in…";
     log2.textContent = "";
     const busy2 = $("backupTitle").textContent;
@@ -7654,8 +7678,12 @@
       panel.hidden = true;
       return;
     }
+    jobFinished($("backupDetails"), $("backupDone"), ok);
     $("backupTitle").textContent = !ok ? "The move stopped: the log says why" : direction === "out" ? "Packed. This machine is stopped: take the file and the media drive to the new one" : "Moved in: the apps that ran before are starting";
   }
+  $("backupDone").onclick = () => {
+    $("backupPanel").hidden = true;
+  };
   $("moveOut").onclick = (e3) => moveTask("out", e3.target);
   $("moveIn").onclick = (e3) => moveTask("in", e3.target);
   $("backupNow").onclick = () => backupTask("backup", "Backing up…", "Backup done", "The backup failed: the log says which step");

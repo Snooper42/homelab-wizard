@@ -3,6 +3,7 @@
 // leaves the sidebar; the machine's details and the report live in
 // Settings › This Mac, and Status keeps the machine's line.
 import { mountAppearance } from '../settings/Appearance';
+import { jobFinished, jobStarted } from '../job/done';
 import { noAccentNote, systemOf } from '../differs';
 import { applyAppearance, applyMotion } from '../appearance';
 import { type HostActions, type HostProps, mountHost, mountNewHomelab, mountRuntime } from '../setup/Host';
@@ -107,15 +108,16 @@ function drawHost() {
 }
 
 // A job on this screen (Update, Go back, a step, the report): its bar, a
-// row per app, and its log, which stay once it ends, to be read, until
-// Clear takes them off.
+// row per app, and its log. Once it ends the log folds away if it went fine,
+// and Done takes them all off.
 function setupJob() {
   startJob('setup');
-  $('setupClear').hidden = true;
+  jobStarted($('setupDetails') as HTMLDetailsElement, $('setupClear'));
 }
-function setupJobEnded() {
+// Its log folds away when it went fine; Done (setupClear) takes it all off.
+function setupJobEnded(ok = true) {
   endJob();
-  $('setupClear').hidden = false;
+  jobFinished($('setupDetails') as HTMLDetailsElement, $('setupClear'), ok);
 }
 $('setupClear').onclick = () => {
   $('setupProgress').hidden = true;
@@ -148,7 +150,8 @@ const hostActions: HostActions = {
         setupJob();
         log.textContent = 'Going back…\n';
         const off = window.runtime.EventsOn('cli:log', (line) => { log.textContent += line + '\n'; log.scrollTop = log.scrollHeight; });
-        try { await go().Homelab('upgrade-back', '', true); } finally { if (typeof off === 'function') off(); setupJobEnded(); }
+        let ok = false;
+        try { await go().Homelab('upgrade-back', '', true); ok = true; } finally { if (typeof off === 'function') off(); setupJobEnded(ok); }
       }, (behind) => { log.textContent = `${waitWords(behind)}, then: going back…\n`; });
     } catch (e) { showError(e); }
     loadUpgrade(true);
@@ -216,6 +219,7 @@ $('report').onclick = async () => {
   }, (behind) => { log.textContent = `${waitWords(behind)}, then: making the report…\n`; });
   btn.disabled = false;
   if (ok) {
+    log.hidden = true; // went fine: the actions below say what's next
     const reveal = hostOS.startsWith('macOS') ? 'Show in Finder' : hostOS.startsWith('Windows') ? 'Show in Explorer' : 'Show the file';
     mountReportActions($('reportActions'), { reveal, show: () => go().RevealReport().catch(showError), email: () => go().EmailReport().catch(showError) });
   }
@@ -292,8 +296,10 @@ const checklistActions: ChecklistActions = {
     log.hidden = false;
     try {
       await inTurn('Closing sign-ups', async () => {
+        setupJob();
         const off = window.runtime.EventsOn('cli:log', (line) => { log.textContent += line + '\n'; });
-        try { await go().Homelab('signups-close', '', true); } finally { if (typeof off === 'function') off(); }
+        let ok = false;
+        try { await go().Homelab('signups-close', '', true); ok = true; } finally { if (typeof off === 'function') off(); setupJobEnded(ok); }
       }, (behind) => { log.textContent += `${waitWords(behind)}, then: closing sign-ups…\n`; });
     } catch (e) { showError(e); }
   },
@@ -353,13 +359,14 @@ $('runAll').onclick = async () => {
         stepsData.set(await go().RunSetup(next.id));
       }
       log.textContent += '\nDone. What is left needs you: a setting to fill in, a choice, or a step only a person can do.\n';
+      failing = null;
     } catch (e) {
       if (failing) failStep(failing, e);
       showError(e);
       log.textContent += '\nStopped at a step that failed: the log above says why.\n';
     } finally {
       if (typeof off === 'function') off();
-      setupJobEnded();
+      setupJobEnded(!failing);
     }
   }, (behind) => { log.textContent = `${waitWords(behind)}, then: the steps I can do…\n`; });
   runningAll = false;
@@ -379,8 +386,10 @@ async function runStep(step: setup.Step, choice?: number) {
     setupJob();
     log.textContent = '';
     const off = window.runtime.EventsOn('setup:log', (line) => { log.textContent += line + '\n'; log.scrollTop = log.scrollHeight; });
+    let ok = false;
     try {
       const steps = await (choice === undefined ? go().RunSetup(step.id) : go().RunSetupChoice(step.id, choice));
+      ok = true;
       runningStep = null;
       stepsData.set(steps);
     } catch (e) {
@@ -391,7 +400,7 @@ async function runStep(step: setup.Step, choice?: number) {
     } finally {
       runningStep = null;
       if (typeof off === 'function') off();
-      setupJobEnded();
+      setupJobEnded(ok);
     }
   }, (behind) => { log.textContent = `${waitWords(behind)}, then: ${step.title}…\n`; });
 }

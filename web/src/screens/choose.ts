@@ -74,6 +74,7 @@ $('cAdd').onclick = async () => {
     renderApps();
     if (added) { selected.add(added.id); renderApps(); replan(); }
     for (const id of ['cName', 'cImage', 'cPort', 'cDesc', 'cVolumes']) $(id).value = '';
+    log.hidden = true; // added and ticked: the log has done its job
   } catch (e) {
     showError(e);
   } finally {
