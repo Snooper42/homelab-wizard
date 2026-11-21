@@ -5480,24 +5480,60 @@
       /* @__PURE__ */ u3("button", { type: "button", id: "installClose", class: "small", onClick: close3, children: "Close" })
     ] });
   }
-  var fixes = { "inbox-arrive": "Let Tidy Up file downloads as they arrive" };
+  var fixes = { "inbox-arrive": "Let Tidy Up file downloads as they arrive", "seerr-signin": "Sign Seerr in" };
+  function SeerrSignIn({ send }) {
+    const [user, setUser] = d2("");
+    const [password, setPassword] = d2("");
+    return /* @__PURE__ */ u3("form", { class: "detail wireForm", onSubmit: (e3) => {
+      e3.preventDefault();
+      if (!user.trim()) return;
+      const p3 = password;
+      setPassword("");
+      send(user.trim(), p3);
+    }, children: [
+      /* @__PURE__ */ u3("label", { children: [
+        "A Jellyfin administrator ",
+        /* @__PURE__ */ u3("input", { type: "text", autocomplete: "username", spellcheck: false, value: user, onInput: (e3) => setUser(e3.currentTarget.value) })
+      ] }),
+      /* @__PURE__ */ u3("label", { children: [
+        "Password ",
+        /* @__PURE__ */ u3("input", { type: "password", autocomplete: "current-password", value: password, onInput: (e3) => setPassword(e3.currentTarget.value) })
+      ] }),
+      /* @__PURE__ */ u3("button", { type: "submit", class: "small tint", disabled: !user.trim(), children: fixes["seerr-signin"] }),
+      /* @__PURE__ */ u3("span", { class: "muted small", children: "Used once to set Seerr up, never saved." })
+    ] });
+  }
   var marks = { done: ["✓", "ok"], already: ["✓", "ok"], manual: ["!", "warn"], failed: ["✗", "bad"] };
-  function Wiring({ links, note, fix }) {
+  function Wiring({ links, note, fix, close: close3 }) {
+    const finished = !note;
+    const fine = links.filter((l3) => l3.state === "done" || l3.state === "already");
+    const fold2 = finished && fine.length > 0;
+    const shown8 = fold2 ? links.filter((l3) => !fine.includes(l3)) : links;
+    const item = (l3, i3) => {
+      const [mark, cls] = marks[l3.state] || ["•", "muted"];
+      return /* @__PURE__ */ u3("li", { children: [
+        /* @__PURE__ */ u3("span", { class: cls, children: [
+          mark,
+          " "
+        ] }),
+        l3.text,
+        l3.detail && /* @__PURE__ */ u3("span", { class: "detail", children: l3.detail }),
+        l3.fix === "seerr-signin" && fix && /* @__PURE__ */ u3(SeerrSignIn, { send: (u4, p3) => fix(l3.fix, u4, p3) }),
+        l3.fix && l3.fix !== "seerr-signin" && fixes[l3.fix] && fix && /* @__PURE__ */ u3("span", { class: "detail", children: /* @__PURE__ */ u3("button", { type: "button", class: "small tint", onClick: () => fix(l3.fix), children: fixes[l3.fix] }) })
+      ] }, i3);
+    };
     return /* @__PURE__ */ u3(S, { children: [
-      /* @__PURE__ */ u3(CardHead, { title: "Connected for you" }),
+      /* @__PURE__ */ u3(CardHead, { title: "Connected for you", children: finished && close3 ? /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: close3, children: "Done" }) : void 0 }),
       /* @__PURE__ */ u3("p", { class: "muted", children: note }),
-      /* @__PURE__ */ u3("ul", { class: "links", children: links.map((l3, i3) => {
-        const [mark, cls] = marks[l3.state] || ["•", "muted"];
-        return /* @__PURE__ */ u3("li", { children: [
-          /* @__PURE__ */ u3("span", { class: cls, children: [
-            mark,
-            " "
-          ] }),
-          l3.text,
-          l3.detail && /* @__PURE__ */ u3("span", { class: "detail", children: l3.detail }),
-          l3.fix && fixes[l3.fix] && fix && /* @__PURE__ */ u3("span", { class: "detail", children: /* @__PURE__ */ u3("button", { type: "button", class: "small tint", onClick: () => fix(l3.fix), children: fixes[l3.fix] }) })
-        ] }, i3);
-      }) })
+      fold2 && /* @__PURE__ */ u3("details", { class: "okLinks", children: [
+        /* @__PURE__ */ u3("summary", { children: [
+          /* @__PURE__ */ u3("span", { class: "ok", children: "✓ " }),
+          fine.length,
+          " connected"
+        ] }),
+        /* @__PURE__ */ u3("ul", { class: "links", children: fine.map(item) })
+      ] }),
+      !!shown8.length && /* @__PURE__ */ u3("ul", { class: "links", children: shown8.map(item) })
     ] });
   }
   function mountStarted(el3, props) {
@@ -5821,28 +5857,31 @@
     installing = false;
     replan();
   };
-  async function wire(box) {
+  async function wire(box, run2 = () => go().Wire()) {
     const done = [];
     let note = "Connecting… this can take a minute while new apps start.";
-    const fix = async (name) => {
-      if (name !== "inbox-arrive") return;
-      try {
-        await go().SaveSettings({ TIDY_INBOX_WHEN: "arrive" });
-      } catch (e3) {
-        showError(e3);
-        return;
+    const fix = async (name, user, password) => {
+      if (name === "inbox-arrive") {
+        try {
+          await go().SaveSettings({ TIDY_INBOX_WHEN: "arrive" });
+        } catch (e3) {
+          showError(e3);
+          return;
+        }
+        settingsData.stale();
+        await wire(box);
+      } else if (name === "seerr-signin" && user) {
+        await wire(box, () => go().WireSeerr(user, password || ""));
       }
-      settingsData.stale();
-      await wire(box);
     };
-    const draw6 = () => mountWiring(box, { links: [...done], note, fix });
+    const draw6 = () => mountWiring(box, { links: [...done], note, fix, close: () => mountWiring(box, null) });
     draw6();
     const off2 = window.runtime.EventsOn("link", (l3) => {
       done.push(l3);
       draw6();
     });
     try {
-      const links = await go().Wire();
+      const links = await run2();
       note = links.length ? "" : "Nothing to connect: none of the apps it links is running.";
       draw6();
     } catch (e3) {
