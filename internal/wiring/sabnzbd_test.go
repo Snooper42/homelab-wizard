@@ -279,3 +279,54 @@ func TestSabnzbdWithNoServer(t *testing.T) {
 		t.Errorf("%+v %v", links, sab.servers)
 	}
 }
+
+// Usenet first, outright (the owner, Nov 21: "Wait 1 hour"): with SABnzbd
+// there, Sonarr's and Radarr's default delay profile waits TORRENT_DELAY_MINUTES
+// (60) before taking a torrent, preferring Usenet. Set once, then left.
+func TestTorrentDelay(t *testing.T) {
+	sab, sabURL := newFakeSab(t, "sabkey")
+	sonarrURL, sonarr := fakeArr(t, "skey", map[string][]resource{})
+	sonarr["delayprofile"] = []resource{{"id": float64(1), "enableUsenet": true, "enableTorrent": true, "preferredProtocol": "usenet", "usenetDelay": float64(0), "torrentDelay": float64(0), "order": float64(2147483647), "tags": []any{}},
+		{"id": float64(2), "enableUsenet": true, "enableTorrent": true, "preferredProtocol": "torrent", "usenetDelay": float64(0), "torrentDelay": float64(0), "order": float64(1), "tags": []any{float64(3)}}}
+	w := &Wirer{
+		Apps: map[string]App{
+			"sabnzbd": {ID: "sabnzbd", Name: "SABnzbd", URL: sabURL, Internal: "http://gluetun:8080", ConfigDir: sab.dir},
+			"sonarr":  {ID: "sonarr", Name: "Sonarr", URL: sonarrURL, Internal: "http://sonarr:8989", ConfigDir: configDir(t, "skey")},
+		},
+		Env:  map[string]string{},
+		Wait: time.Second,
+	}
+	text := "Sonarr waits 60 minutes for Usenet before taking a torrent"
+	state := func() string {
+		for _, l := range w.Apply(context.Background(), nil) {
+			if l.Text == text {
+				return l.State + " " + l.Detail
+			}
+		}
+		return "missing"
+	}
+	if got := state(); got != "done " {
+		t.Fatalf("first run: %q", got)
+	}
+	p := sonarr["delayprofile"][0]
+	if p["torrentDelay"] != float64(60) || p["preferredProtocol"] != "usenet" || p["usenetDelay"] != float64(0) || p["enableTorrent"] != true {
+		t.Errorf("default profile: %v", p)
+	}
+	if other := sonarr["delayprofile"][1]; other["torrentDelay"] != float64(0) || other["preferredProtocol"] != "torrent" {
+		t.Errorf("a tagged profile of your own is left alone: %v", other)
+	}
+	if got := state(); got != "already " {
+		t.Errorf("second run: %q", got)
+	}
+	w.Env["TORRENT_DELAY_MINUTES"] = "0"
+	if got := w.Plan(); func() bool {
+		for _, l := range got {
+			if strings.Contains(l.Text, "waits") {
+				return true
+			}
+		}
+		return false
+	}() {
+		t.Errorf("TORRENT_DELAY_MINUTES=0 leaves the delay to you: %+v", got)
+	}
+}

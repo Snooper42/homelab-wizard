@@ -181,6 +181,16 @@ func (w *Wirer) steps() []step {
 			}})
 		}
 	}
+	if d := w.torrentDelay(); d > 0 {
+		for _, id := range delayApps {
+			id := id
+			if w.has("sabnzbd", id) {
+				out = append(out, step{fmt.Sprintf("%s waits %d minutes for Usenet before taking a torrent", w.name(id), d), func(ctx context.Context) (string, string, error) {
+					return w.usenetFirst(ctx, id)
+				}})
+			}
+		}
+	}
 	for _, l := range libraries {
 		l := l
 		if w.has(l.id) {
