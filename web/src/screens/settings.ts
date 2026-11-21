@@ -335,7 +335,8 @@ const everyday = new Set(['TZ', 'HOMELAB_DOMAIN', 'MEDIA_ROOT', 'DOWNLOADS_ROOT'
   'JELLYFIN_DATA_DIR', 'SYNC_ROOT', 'KEEP_AWAKE', 'BATTERY_SAVER', 'PHONE_COMPANION', 'AUTO_DOMAIN', 'CLOUDFLARE_API_TOKEN', 'TUNNEL_TOKEN',
   'ADGUARD_USER', 'ADGUARD_PASSWORD', 'HELPER_EMAIL', 'HEARTBEAT_URL', 'DESKTOP_ALERTS', 'QUIET_HOURS', 'UPDATES_PAUSED', 'AUTO_ROLLBACK', 'AUTO_HEAL',
   'UPDATE_CHANNEL', 'VAULTWARDEN_SIGNUPS_ALLOWED', 'DUPLICATI_SECRETS_PASSPHRASE', 'NTFY_PHONE_PASSWORD', 'TAILSCALE_AUTHKEY',
-  'PROTONVPN_WIREGUARD_PRIVATE_KEY', 'PROTONVPN_SERVER_COUNTRIES', 'SEARCH_THROUGH_VPN', 'STALL_RESCUE_HOURS', 'QBITTORRENT_PASSWORD', 'CROWDSEC_ENROLL_KEY',
+  'PROTONVPN_WIREGUARD_PRIVATE_KEY', 'PROTONVPN_SERVER_COUNTRIES', 'SEARCH_THROUGH_VPN', 'STALL_RESCUE_HOURS', 'QBITTORRENT_PASSWORD',
+  'USENET_HOST', 'USENET_PORT', 'USENET_USER', 'USENET_PASSWORD', 'USENET_CONNECTIONS', 'CROWDSEC_ENROLL_KEY',
   'ROMM_IGDB_CLIENT_ID', 'ROMM_IGDB_CLIENT_SECRET', 'ROMM_SCREENSCRAPER_USER', 'ROMM_SCREENSCRAPER_PASSWORD']);
 let everydayCount = 0;
 let moreCount = 0;
@@ -352,6 +353,8 @@ const settingLabels = {
   HELPER_EMAIL: "Your helper's email", HEARTBEAT_URL: 'Heartbeat ping URL', UPDATES_PAUSED: 'Pause nightly updates',
   VAULTWARDEN_SIGNUPS_ALLOWED: 'Vaultwarden sign-ups open', TAILSCALE_AUTHKEY: 'Tailscale auth key (optional)', TAILSCALE_HOST: 'This machine on the tailnet', TAILNET_ADMIN_APPS: 'Admin apps on the tailnet',
   PROTONVPN_WIREGUARD_PRIVATE_KEY: 'ProtonVPN WireGuard key', PROTONVPN_SERVER_COUNTRIES: 'ProtonVPN server countries', SEARCH_THROUGH_VPN: 'Search through the VPN', STALL_RESCUE_HOURS: 'Try another after a stuck download (hours)',
+  USENET_HOST: 'Usenet server', USENET_PORT: 'Usenet server port (SSL; empty: 563)', USENET_USER: 'Usenet user name', USENET_PASSWORD: 'Usenet password',
+  USENET_CONNECTIONS: 'Usenet connections at once (empty: 8)',
   ADGUARD_DNS_BIND_IP: 'AdGuard Home DNS listens on', HOST_GATEWAY: "Apps reach this machine's own apps at", SSO_HOST: 'Pocket ID address for the apps', HOMEBOX_ALLOW_REGISTRATION: 'Homebox sign-ups open',
   AUTO_ROLLBACK: 'Undo an update that breaks an app', AUTO_HEAL: 'Restart an app that stops answering', UPDATE_CHANNEL: 'Homelab update channel',
   WATCHTOWER_SCHEDULE: 'When apps update', SPEEDTEST_SCHEDULE: 'When the speed test runs', OLLAMA_MODEL: 'Model that explains logs',

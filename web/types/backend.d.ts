@@ -933,6 +933,7 @@ declare namespace finance {
     worth: finance.Point[];
     worthEstimated?: finance.Point[];
     worthBack?: finance.WorthBack[];
+    cardSpend?: Record<string, number>;
     next: Record<string, string>;
     last?: Record<string, string>;
     dues?: Record<string, string[]>;

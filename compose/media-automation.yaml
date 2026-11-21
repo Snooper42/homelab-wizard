@@ -323,6 +323,40 @@ services:
       web: 8082
       proxy_host: gluetun
 
+  sabnzbd:
+    <<: *service
+    image: lscr.io/linuxserver/sabnzbd:latest
+    # Background work, like qBittorrent: unpacking yields the CPU.
+    cpu_shares: 256
+    profiles: [optional]
+    # Inside the VPN like qBittorrent (the owner, Nov 20: "just to be extra
+    # secure"): the Usenet server sees ProtonVPN's address, and nothing leaves
+    # if the VPN is down. The apps reach it at gluetun:8080.
+    network_mode: service:gluetun
+    environment: *linuxserver
+    volumes:
+      - ./data/appdata/sabnzbd:/config
+      - type: bind
+        source: ${DOWNLOADS_ROOT:-/Volumes/Media/downloads}
+        target: /downloads
+        bind:
+          create_host_path: false
+    depends_on:
+      gluetun: { condition: service_healthy }
+    x-homelab:
+      goes_with:
+        sonarr: "Downloads from Usenet, preferred over torrents, so a release nobody shares doesn't hold things up."
+        radarr: "Downloads from Usenet, preferred over torrents, so a release nobody shares doesn't hold things up."
+      memory: 250
+      name: SABnzbd
+      login: [ARR_USER, ARR_PASSWORD]
+      keyfile: sabnzbd.ini
+      category: media-automation
+      description: Usenet downloader, preferred over torrents; it has no network except the ProtonVPN tunnel
+      subdomain: sabnzbd
+      web: 8080
+      proxy_host: gluetun
+
   gluetun:
     <<: *service
     image: qmcgaw/gluetun:latest
@@ -361,12 +395,14 @@ services:
     ports:
       # qBittorrent shares this container's network, so its UI is published here.
       - ${BIND_IP:-127.0.0.1}:${QBITTORRENT_PORT:-8082}:8082
+      # SABnzbd's too (it listens on 8080 inside).
+      - ${BIND_IP:-127.0.0.1}:${SABNZBD_PORT:-8091}:8080
     volumes:
       - ./data/appdata/gluetun:/gluetun
     x-homelab:
       releases: qdm12/gluetun
       name: Gluetun
       category: media-automation
-      description: ProtonVPN tunnel that qBittorrent's traffic is forced through
+      description: ProtonVPN tunnel that qBittorrent's and SABnzbd's traffic is forced through
       web: false
       requires: [PROTONVPN_WIREGUARD_PRIVATE_KEY]

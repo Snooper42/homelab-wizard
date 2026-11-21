@@ -211,6 +211,22 @@ struct FinanceFlowTests {
         #expect(said(typical, "kind:cards") == ["Visa -950.0 card:visa "])
     }
 
+    /// A card paid off with each paycheck and nothing typed in goes on it what the computer read from
+    /// its transactions (View.CardSpend), as money.ts's allPayments; one typed in wins.
+    @Test func aCardsSpendingFromTheComputer() throws {
+        func cards(_ visa: String) throws -> Double? {
+            let view = try JSONDecoder().decode(JSONValue.self, from: Data("""
+            {"today":"2026-11-15","checking":"chk","cardSpend":{"visa":300},
+             "plan":{"currency":"USD","accounts":[{"id":"chk","name":"Checking","kind":"checking"},\(visa)],
+              "people":[{"id":"alex","name":"Alex","net":2000,"schedule":{"every":"2 weeks"}}],"payments":[]}}
+            """.utf8))
+            return Self.nodes(FinanceFlow.typical(view: view)).first { $0.id == "kind:cards" }?.value
+        }
+        // 300 each of 26 paychecks a year: 650 a month.
+        #expect(try cards(#"{"id":"visa","name":"Visa","kind":"card","paidEach":true}"#) == Double(650))
+        #expect(try cards(#"{"id":"visa","name":"Visa","kind":"card","paidEach":true,"spend":120}"#) == Double(260))
+    }
+
     @Test func theMonthsTheLedgerHas() {
         #expect(FinanceFlow.ledgerMonths(Self.ledger) == ["2026-11", "2026-10"])
         #expect(FinanceFlow.taxing("Federal taxes") && FinanceFlow.taxing("Tax") && !FinanceFlow.taxing("Taxi"))

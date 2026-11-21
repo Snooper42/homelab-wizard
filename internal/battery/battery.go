@@ -20,7 +20,7 @@ import (
 // for power (downloads, indexing, machine learning, scheduled scans).
 var Heavy = []string{
 	"immich-machine-learning",
-	"qbittorrent", "gluetun",
+	"sabnzbd", "qbittorrent", "gluetun",
 	"prowlarr", "sonarr", "radarr", "lidarr", "bazarr", "flaresolverr", "lazylibrarian", "tdarr",
 	"speedtest-tracker", "changedetection", "open-webui", "paperless-ai",
 }

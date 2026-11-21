@@ -389,7 +389,8 @@ Over 70 apps in nine categories: the baseline ones start with the homelab, the r
 | [Seerr](<services/media automation/Seerr.md>) | Media requests for Jellyfin (successor to Overseerr and Jellyseerr) | Optional: `./homelab install seerr` | https://seerr.example.com | Trakt VIP |
 | [LazyLibrarian](<services/media automation/LazyLibrarian.md>) | E-book and audiobook automation | Optional: `./homelab install lazylibrarian` | https://lazylibrarian.example.com |  |
 | [qBittorrent](<services/media automation/qBittorrent.md>) | Torrent client; it has no network except the ProtonVPN tunnel | Optional: `./homelab install qbittorrent` | https://qbittorrent.example.com |  |
-| [Gluetun](<services/media automation/Gluetun.md>) | ProtonVPN tunnel that qBittorrent's traffic is forced through | Optional: `./homelab install gluetun` |  |  |
+| [SABnzbd](<services/media automation/SABnzbd.md>) | Usenet downloader, preferred over torrents; it has no network except the ProtonVPN tunnel | Optional: `./homelab install sabnzbd` | https://sabnzbd.example.com |  |
+| [Gluetun](<services/media automation/Gluetun.md>) | ProtonVPN tunnel that qBittorrent's and SABnzbd's traffic is forced through | Optional: `./homelab install gluetun` |  |  |
 
 ### Household
 
@@ -402,7 +403,7 @@ Over 70 apps in nine categories: the baseline ones start with the homelab, the r
 | [Homebox](<services/household/Homebox.md>) | What you own, where it is, and its receipts, serial numbers, and warranties | Optional: `./homelab install homebox` | https://inventory.example.com |  |
 | [Tandoor](<services/household/Tandoor.md>) | Recipes with meal planning, shopping lists, and nutrition | Optional: `./homelab install tandoor` | https://recipes.example.com | Plan to Eat |
 
-72 apps: 16 baseline (started by `./homelab up`), 54 optional, 2 native. Databases and caches that apps need start with them and are not listed.
+73 apps: 16 baseline (started by `./homelab up`), 55 optional, 2 native. Databases and caches that apps need start with them and are not listed.
 <!-- END homelab:generated -->
 
 </details>

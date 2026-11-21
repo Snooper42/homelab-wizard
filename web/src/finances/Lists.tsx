@@ -189,7 +189,7 @@ export function Recurring({ v, L, edit, keep, running, fromWallos }: ListProps &
   const [filter, setFilter] = useState(() => { const f = opening || 'all'; opening = ''; return f; });
   // Soonest first (by the next day each comes), or what each costs a month, largest first.
   const [order, setOrder] = useState<'next' | 'size'>('next');
-  const payments = allPayments(v.plan);
+  const payments = allPayments(v.plan, v.cardSpend);
   const next = nextOf(v);
   const m = month(v, L);
   const share = (n: number) => (m.in ? `${Math.round((n / m.in) * 100)}% of pay` : '');
