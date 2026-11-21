@@ -90,6 +90,44 @@ enum FinancePlanEdit {
         return .object(root)
     }
 
+    /// `plan` with a budget for `category` added, as the computer's Edit
+    /// budgets keeps one: `amount` a month, or each pay period with
+    /// `perPaycheck`, and with `rollover` what's left (or over) goes on to the
+    /// next one. Nil for a category left empty, one that has a budget already
+    /// (whatever its case: the computer keeps one a category), or an amount
+    /// that isn't more than nothing.
+    static func addingBudget(category: String, amount: Double, perPaycheck: Bool, rollover: Bool, in plan: JSONValue) -> JSONValue? {
+        let name = category.trimmingCharacters(in: .whitespaces)
+        let cents = roundedToCents(amount)
+        guard !name.isEmpty, amount.isFinite, cents > 0, cents <= maxBalance, case .object(var root) = plan else { return nil }
+        var budgets: [JSONValue] = []
+        if case .array(let have)? = root["budgets"] { budgets = have }
+        guard !budgets.contains(where: { budgetKey($0) == name.lowercased() }) else { return nil }
+        var budget: [String: JSONValue] = ["category": .string(name), "amount": .number(cents)]
+        if perPaycheck { budget["per"] = .string("paycheck") }
+        if rollover { budget["rollover"] = .bool(true) }
+        budgets.append(.object(budget))
+        root["budgets"] = .array(budgets)
+        return .object(root)
+    }
+
+    /// `plan` without the budget for `category` (whatever its case). Nil
+    /// when it has none.
+    static func removingBudget(category: String, in plan: JSONValue) -> JSONValue? {
+        guard case .object(var root) = plan, case .array(var budgets)? = root["budgets"] else { return nil }
+        let wanted = category.trimmingCharacters(in: .whitespaces).lowercased()
+        guard let index = budgets.firstIndex(where: { budgetKey($0) == wanted }) else { return nil }
+        budgets.remove(at: index)
+        root["budgets"] = budgets.isEmpty ? nil : .array(budgets)
+        return .object(root)
+    }
+
+    /// A budget's category as the computer matches it: trimmed, lower case.
+    private static func budgetKey(_ budget: JSONValue) -> String? {
+        if case .string(let c)? = budget["category"] { return c.trimmingCharacters(in: .whitespaces).lowercased() }
+        return nil
+    }
+
     /// `plan` with `key` marked as not in the balances yet (it comes today),
     /// or back as in them, as the computer's Taken as done does it: the
     /// plan's `waiting` becomes the keys waiting now, with this one added

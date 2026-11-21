@@ -29,6 +29,9 @@ enum FinanceChange: Codable, Sendable, Equatable {
     case addGoalShares(name: String, target: Double, date: String?, shares: [GoalShare])
     /// A loan's papers typed in (the owner's yes, Nov 19): what it owes is read from them.
     case loanPapers(account: String, papers: LoanPapersTyped, planMonthly: Double, today: String)
+    /// Add a Budget and its removal (the owner's yes, Nov 21).
+    case addBudget(category: String, amount: Double, perPaycheck: Bool, rollover: Bool)
+    case removeBudget(category: String)
 
     /// `plan` with this change made, or nil when it can't be (what it changes is gone).
     func apply(to plan: JSONValue) -> JSONValue? {
@@ -60,6 +63,10 @@ enum FinanceChange: Codable, Sendable, Equatable {
             FinancePlanEdit.addingGoal(name: name, target: target, date: date, shares: shares, in: plan)
         case .loanPapers(let account, let papers, let planMonthly, let today):
             FinancePlanEdit.settingPapers(of: account, papers, planMonthly: planMonthly, today: today, in: plan)
+        case .addBudget(let category, let amount, let perPaycheck, let rollover):
+            FinancePlanEdit.addingBudget(category: category, amount: amount, perPaycheck: perPaycheck, rollover: rollover, in: plan)
+        case .removeBudget(let category):
+            FinancePlanEdit.removingBudget(category: category, in: plan)
         }
     }
 
@@ -112,6 +119,8 @@ enum FinanceChange: Codable, Sendable, Equatable {
         case .waiting(let key, _): "waiting:\(key)"
         case .trackFrom: "trackFrom"
         case .loanPapers(let account, _, _, _): "papers:\(account)"
+        // A removal takes the place of a change to the same budget's amount.
+        case .removeBudget(let category): "budget:\(category.trimmingCharacters(in: .whitespaces).lowercased())"
         default: nil
         }
     }

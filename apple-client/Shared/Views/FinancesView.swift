@@ -844,55 +844,78 @@ private struct MoreFinancesCard: View {
 private struct FinanceBudgetsPage: View {
     @Bindable var finances: FinancesViewModel
     @State private var editingBudget: FinanceBudget?
+    @State private var removing: FinanceBudget?
+    @State private var adding = false
 
     var body: some View {
         Form {
             if let view = finances.plan {
                 let total = BudgetsTotal(view.budgets, today: view.today)
-                Section {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text(total.isOver ? "Over budget by" : "Left to spend")
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(total.isOver ? Theme.danger : .secondary)
-                        Money(value: abs(total.left), currency: view.plan.currency, finances: finances)
-                            .font(.largeTitle.weight(.bold))
-                        BudgetBar(share: total.share, tint: total.isOver ? Theme.danger : Theme.accent)
-                            .padding(.vertical, 2)
-                        HStack(spacing: 4) {
-                            Money(value: total.spent, currency: view.plan.currency, finances: finances)
-                            Text("of")
-                            Money(value: total.amount, currency: view.plan.currency, finances: finances)
-                            Text("spent")
-                            Spacer(minLength: 8)
-                            if let perDay = total.perDay {
-                                Text("About")
-                                Money(value: perDay, currency: view.plan.currency, finances: finances)
-                                Text("a day")
+                if !view.budgets.isEmpty {
+                    Section {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text(total.isOver ? "Over budget by" : "Left to spend")
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(total.isOver ? Theme.danger : .secondary)
+                            Money(value: abs(total.left), currency: view.plan.currency, finances: finances)
+                                .font(.largeTitle.weight(.bold))
+                            BudgetBar(share: total.share, tint: total.isOver ? Theme.danger : Theme.accent)
+                                .padding(.vertical, 2)
+                            HStack(spacing: 4) {
+                                Money(value: total.spent, currency: view.plan.currency, finances: finances)
+                                Text("of")
+                                Money(value: total.amount, currency: view.plan.currency, finances: finances)
+                                Text("spent")
+                                Spacer(minLength: 8)
+                                if let perDay = total.perDay {
+                                    Text("About")
+                                    Money(value: perDay, currency: view.plan.currency, finances: finances)
+                                    Text("a day")
+                                }
                             }
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
                         }
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
+                        .padding(.vertical, 6)
+                        .accessibilityElement(children: .combine)
                     }
-                    .padding(.vertical, 6)
-                    .accessibilityElement(children: .combine)
                 }
                 Section {
                     ForEach(view.budgets) { budget in
-                        if finances.canEditPlan {
-                            Button {
-                                finances.clearSaveError()
-                                editingBudget = budget
-                            } label: {
-                                budgetRow(budget, view)
+                        // As the computer's row: its transactions this month (a pay period's, every month).
+                        NavigationLink {
+                            TransactionsView(finances: finances, filter: budget.transactionsFilter(), allAccounts: true)
+                        } label: {
+                            BudgetRow(budget: budget, view: view, finances: finances)
+                        }
+                        .swipeActions(edge: .trailing) {
+                            if finances.canEditPlan {
+                                Button(role: .destructive) { removing = budget } label: { Label("Remove", systemImage: "trash") }
+                                Button {
+                                    finances.clearSaveError()
+                                    editingBudget = budget
+                                } label: { Label("Change", systemImage: "pencil") }
+                                    .tint(Theme.accent)
                             }
-                            .buttonStyle(.plain)
-                            .accessibilityHint("Change its amount")
-                        } else {
-                            budgetRow(budget, view)
+                        }
+                        .contextMenu {
+                            if finances.canEditPlan {
+                                Button { finances.clearSaveError(); editingBudget = budget } label: { Label("Change Amount…", systemImage: "pencil") }
+                                Button(role: .destructive) { removing = budget } label: { Label("Remove", systemImage: "trash") }
+                            }
                         }
                     }
+                    if view.budgets.isEmpty {
+                        Text(finances.canEditPlan ? "No budgets yet: set how much a category may take a month or a pay period, and see what's left as you go."
+                                                  : "No budgets yet.")
+                            .foregroundStyle(Theme.secondaryInk)
+                    }
                 } footer: {
-                    if finances.canEditPlan { Text("Tap a budget to change its amount.") }
+                    if !view.budgets.isEmpty {
+                        Text(finances.canEditPlan
+                             ? "The line on each bar is where an even pace would be today. Tap a budget for its transactions; swipe it to change the amount or remove it."
+                             : "The line on each bar is where an even pace would be today. Tap a budget for its transactions.")
+                    }
                 }
             }
         }
@@ -901,6 +924,16 @@ private struct FinanceBudgetsPage: View {
         .refreshable { await finances.loadPlan() }
         .sensoryFeedback(.success, trigger: finances.savedCount)
         .navigationTitle("Budgets")
+        .toolbar {
+            if finances.canEditPlan {
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        finances.clearSaveError()
+                        adding = true
+                    } label: { Label("Add a Budget", systemImage: "plus") }
+                }
+            }
+        }
         .sheet(item: $editingBudget) { budget in
             AmountEditor(
                 title: "Change Budget", heading: budget.category,
@@ -908,44 +941,165 @@ private struct FinanceBudgetsPage: View {
                 finances: finances
             ) { amount in await finances.setBudget(budget, to: amount) }
         }
+        .sheet(isPresented: $adding) {
+            AddBudgetView(finances: finances)
+        }
+        .confirmationDialog(removing.map { "Remove the \($0.category) budget?" } ?? "", isPresented: Binding(
+            get: { removing != nil }, set: { if !$0 { removing = nil } }
+        ), titleVisibility: .visible, presenting: removing) { budget in
+            Button("Remove", role: .destructive) { Task { _ = await finances.removeBudget(budget) } }
+        } message: { _ in
+            Text("Its transactions stay as they are; only the budget goes, on every device.")
+        }
     }
 
-    private func budgetRow(_ budget: FinanceBudget, _ view: FinancesPlanView) -> some View {
+}
+
+/// One budget, as the computer's row: its category's mark, what's left (or
+/// how far over) and what that allows a day, its period and what's spent of
+/// it with what rolled over, and its bar with the line where an even pace is.
+private struct BudgetRow: View {
+    let budget: FinanceBudget
+    let view: FinancesPlanView
+    let finances: FinancesViewModel
+
+    var body: some View {
         let tint = budget.isOver ? Theme.danger : budget.isAhead ? Theme.warning : Theme.success
-        return VStack(alignment: .leading, spacing: 8) {
-            HStack(alignment: .firstTextBaseline) {
-                Text(verbatim: budget.category)
-                    .font(.body.weight(.medium))
-                Spacer(minLength: 8)
-                HStack(spacing: 3) {
-                    Money(value: abs(budget.left), currency: view.plan.currency, finances: finances)
-                        .fontWeight(.semibold)
-                    Text(budget.isOver ? "over" : "left")
-                        .foregroundStyle(.secondary)
+        let currency = view.plan.currency
+        HStack(alignment: .top, spacing: 12) {
+            LogoCircle(category: budget.category, categories: view.categories, size: 36)
+                .padding(.top, 2)
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(alignment: .firstTextBaseline) {
+                    Text(verbatim: budget.category)
+                        .font(.body.weight(.medium))
+                    Spacer(minLength: 8)
+                    VStack(alignment: .trailing, spacing: 1) {
+                        HStack(spacing: 3) {
+                            Money(value: abs(budget.left), currency: currency, finances: finances)
+                                .fontWeight(.semibold)
+                            Text(budget.isOver ? "over" : "left")
+                        }
+                        .foregroundStyle(budget.isOver ? Theme.danger : budget.isAhead ? Theme.warning : Theme.ink)
+                        if let day = budget.perDay(today: view.today) {
+                            Text(verbatim: "\(amountText(day.amount, currency, finances)) \(day.days > 1 ? "a day" : "today")")
+                                .font(.caption)
+                                .foregroundStyle(Theme.secondaryInk)
+                        }
+                    }
                 }
-                .foregroundStyle(budget.isOver ? Theme.danger : Color.primary)
+                Text(verbatim: line(currency))
+                    .font(.caption)
+                    .foregroundStyle(Theme.secondaryInk)
+                    .fixedSize(horizontal: false, vertical: true)
+                BudgetBar(share: budget.share, tint: tint, pace: budget.paceShare)
             }
-            BudgetBar(share: budget.share, tint: tint)
-            HStack(spacing: 3) {
-                Money(value: budget.spent, currency: view.plan.currency, finances: finances)
-                Text("of")
-                Money(value: budget.amount, currency: view.plan.currency, finances: finances)
-                Spacer(minLength: 8)
-                Text(budget.isOver ? "Over budget" : budget.isAhead ? "Ahead of an even pace" : (budget.per == "paycheck" ? "This pay period" : "This month"))
-            }
-            .font(.caption)
-            .foregroundStyle(budget.isOver ? Theme.danger : .secondary)
         }
         .padding(.vertical, 4)
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
+        .accessibilityValue(budget.isOver ? "Over budget" : budget.isAhead ? "Ahead of an even pace" : "")
+    }
+
+    /// "This month, to Nov 30 · $412.00 of $600.00 (with $50.00 from last time)".
+    private func line(_ currency: String) -> String {
+        var words = "\(budget.periodWords) · \(amountText(budget.spent, currency, finances)) of \(amountText(budget.amount, currency, finances))"
+        if abs(budget.rolled) >= 0.005 {
+            words += " (\(budget.rolled > 0 ? "with" : "less") \(amountText(abs(budget.rolled), currency, finances)) from last time)"
+        }
+        return words
     }
 }
 
-/// A budget's bar: what's spent of it, rounded, on a soft track of its colour.
+/// Add a Budget (the owner's yes, Nov 21, on the canvas's *Idea: Budgets*):
+/// a category or a group, an amount, each month or each pay period, and
+/// whether it rolls over, as the computer's Edit budgets adds one.
+private struct AddBudgetView: View {
+    let finances: FinancesViewModel
+    @State private var category = ""
+    @State private var text = ""
+    @State private var perPaycheck = false
+    @State private var rollover = false
+    @Environment(\.dismiss) private var dismiss
+
+    /// The plan's categories without a budget yet, A to Z.
+    private var choices: [String] {
+        let taken = Set((finances.plan?.budgets ?? []).map { $0.category.lowercased() })
+        return (finances.plan?.categories ?? []).map(\.name)
+            .filter { !taken.contains($0.lowercased()) }
+            .sorted { $0.localizedLowercase < $1.localizedLowercase }
+    }
+
+    private var amount: Double? {
+        guard let v = FinancePlanEdit.parseAmount(text), FinancePlanEdit.roundedToCents(v) > 0 else { return nil }
+        return v
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    Picker("Category", selection: $category) {
+                        Text("Pick One").tag("")
+                        ForEach(choices, id: \.self) { Text(verbatim: $0).tag($0) }
+                    }
+                } footer: {
+                    Text("A budget for a group counts its own categories too (Food counts Groceries and Eating out).")
+                }
+                Section("Amount") {
+                    TextField("Amount", text: $text)
+                        #if os(iOS)
+                        .keyboardType(.numbersAndPunctuation)
+                        #endif
+                        .font(.title2.monospacedDigit())
+                        .privacySensitive()
+                }
+                Section {
+                    Picker("Each", selection: $perPaycheck) {
+                        Text("Month").tag(false)
+                        Text("Pay Period").tag(true)
+                    }
+                    .pickerStyle(.segmented)
+                    Toggle("Rolls Over", isOn: $rollover)
+                } footer: {
+                    Text(perPaycheck
+                         ? "What's left at the end of a pay period goes on to the next one; spent over, the next one has less."
+                         : "What's left at the end of a month goes on to the next one; spent over, the next one has less.")
+                }
+                if let error = finances.saveError {
+                    Section { Label(error, systemImage: "exclamationmark.triangle").foregroundStyle(Theme.danger) }
+                }
+            }
+            .formStyle(.grouped)
+            .themedCanvas()
+            .navigationTitle("Add a Budget")
+            #if os(iOS)
+            .navigationBarTitleDisplayMode(.inline)
+            #endif
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
+                ToolbarItem(placement: .confirmationAction) {
+                    if finances.isSaving { ProgressView() } else { Button("Add", action: submit).disabled(category.isEmpty || amount == nil) }
+                }
+            }
+        }
+        #if os(macOS)
+        .frame(minWidth: 380, minHeight: 360)
+        #endif
+    }
+
+    private func submit() {
+        guard let amount, !category.isEmpty else { return }
+        Task { if await finances.addBudget(category: category, amount: amount, perPaycheck: perPaycheck, rollover: rollover) { dismiss() } }
+    }
+}
+
+/// A budget's bar: what's spent of it, rounded, on a soft track of its
+/// colour; with `pace`, the line where an even pace would be today.
 private struct BudgetBar: View {
     let share: Double
     let tint: Color
+    var pace: Double? = nil
 
     var body: some View {
         GeometryReader { geo in
@@ -953,6 +1107,12 @@ private struct BudgetBar: View {
                 Capsule().fill(tint.opacity(0.16))
                 Capsule().fill(tint)
                     .frame(width: max(8, geo.size.width * (share.isFinite ? min(max(share, 0), 1) : 0)))
+                if let pace, pace.isFinite, pace > 0 {
+                    Capsule()
+                        .fill(Theme.ink)
+                        .frame(width: 2, height: 14)
+                        .offset(x: min(max(geo.size.width * pace - 1, 0), geo.size.width - 2))
+                }
             }
         }
         .frame(height: 8)
@@ -2963,6 +3123,14 @@ struct TransactionsView: View {
     /// How many rows are drawn: 200, and 200 more with each Show More.
     @State private var drawn = TransactionSort.page
     @Namespace private var zoom
+
+    /// Opened from a budget (its category and month) on every account, or
+    /// as Finances' own Transactions page, on checking.
+    init(finances: FinancesViewModel, filter: TransactionFilter = TransactionFilter(), allAccounts: Bool = false) {
+        _finances = Bindable(finances)
+        _filter = State(initialValue: filter)
+        _picked = State(initialValue: allAccounts ? .some(nil) : nil)
+    }
     @Environment(\.dynamicTypeSize) private var typeSize
 
     private struct MonthGroup: Identifiable {
@@ -3129,7 +3297,9 @@ struct TransactionsView: View {
         guard let ledger = finances.ledger else { return [] }
         let categories = finances.plan?.categories ?? []
         let names = ledger.transactions.flatMap { t in t.splits.isEmpty ? [t.category] : t.splits.map(\.category) }
-        return Set(names.map { Spending.top($0, in: categories) }).sorted { $0.localizedLowercase < $1.localizedLowercase }
+        // With the one picked, which a budget can set to a category inside a group.
+        return Set(names.map { Spending.top($0, in: categories) } + [filter.category].compactMap { $0 })
+            .sorted { $0.localizedLowercase < $1.localizedLowercase }
     }
 
     // Split in two so the compiler checks each in reasonable time (the screenshots build gave up on one).
