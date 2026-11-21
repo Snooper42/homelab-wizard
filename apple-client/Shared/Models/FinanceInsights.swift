@@ -203,31 +203,118 @@ extension FinancesPlanView {
     }
 }
 
-/// What Transactions shows: everything, money in or out only, or one
-/// category or account; with the search as before.
+/// What Transactions shows, as the computer's filters: everything, money in
+/// or out only (moves between the household's own accounts left out, as the
+/// computer's), or only those moves; one category, month or tag; or the
+/// larger ones only; with the search as before.
 struct TransactionFilter: Equatable, Sendable {
-    enum Flow: String, CaseIterable, Sendable { case all, moneyOut, moneyIn }
+    enum Flow: String, CaseIterable, Sendable { case all, moneyOut, moneyIn, betweenAccounts }
 
     var flow: Flow = .all
     /// A category's name (its top, as Spending counts it); nil for all.
     var category: String?
     /// Only transactions of at least this much, either way; nil for any.
     var atLeast: Double?
+    /// A month, by its first day; nil for every month.
+    var month: Date?
+    /// One tag; nil for every tag.
+    var tag: String?
 
-    var isOn: Bool { flow != .all || category != nil || atLeast != nil }
+    var isOn: Bool { flow != .all || category != nil || atLeast != nil || month != nil || tag != nil }
 
-    func keeps(_ t: FinanceTransaction, categories: [FinanceCategory]) -> Bool {
+    func keeps(_ t: FinanceTransaction, categories: [FinanceCategory], calendar: Calendar = .current) -> Bool {
+        let move = !(t.to ?? "").isEmpty
         switch flow {
         case .all: break
-        case .moneyOut: if t.amount >= 0 { return false }
-        case .moneyIn: if t.amount <= 0 { return false }
+        case .moneyOut: if move || t.amount >= 0 { return false }
+        case .moneyIn: if move || t.amount <= 0 { return false }
+        case .betweenAccounts: if !move { return false }
         }
         if let category {
             let names = t.splits.isEmpty ? [t.category] : t.splits.map(\.category)
             if !names.contains(where: { Spending.top($0, in: categories) == category }) { return false }
         }
         if let atLeast, abs(t.amount) < atLeast { return false }
+        if let month {
+            guard let date = t.date, calendar.isDate(date, equalTo: month, toGranularity: .month) else { return false }
+        }
+        if let tag, !t.tags.contains(tag) { return false }
         return true
+    }
+
+    /// The months the transactions fall in, newest first, by their first day:
+    /// the Month filter's choices.
+    static func months(in transactions: [FinanceTransaction], calendar: Calendar = .current) -> [Date] {
+        let firsts = Set(transactions.compactMap { t in t.date.flatMap { calendar.dateInterval(of: .month, for: $0)?.start } })
+        return firsts.sorted(by: >)
+    }
+
+    /// Every tag on a transaction, A to Z: the Tag filter's choices.
+    static func tags(in transactions: [FinanceTransaction]) -> [String] {
+        Set(transactions.flatMap(\.tags)).sorted { $0.localizedLowercase < $1.localizedLowercase }
+    }
+
+    /// What a filtered list comes to together, as the computer's: a move
+    /// between the household's own accounts counts only with one account
+    /// picked (out of it, or into it), else it's left out.
+    static func together(_ shown: [FinanceTransaction], account: String?) -> Double {
+        shown.reduce(0.0) { sum, t in
+            guard let to = t.to, !to.isEmpty else { return sum + t.amount }
+            guard let account else { return sum }
+            return sum + (to == account ? -t.amount : t.amount)
+        }
+    }
+
+    /// "6 transactions", "1 transaction".
+    static func count(_ n: Int) -> String {
+        n == 1 ? "1 transaction" : "\(n.formatted()) transactions"
+    }
+}
+
+/// This month on Transactions, as the computer's *This month* card: what came
+/// in, went out and was kept, every account, moves between them left out; and
+/// what had gone out by the same day last month (its last, in a shorter month).
+struct ThisMonth: Equatable, Sendable {
+    let moneyIn: Double
+    let moneyOut: Double
+    let kept: Double
+    let count: Int
+    /// The day last month it's set against.
+    let lastMonthDay: Date?
+    /// What had gone out by `lastMonthDay`; nil when nothing had (no
+    /// transactions there to compare with).
+    let outBefore: Double?
+
+    static func make(_ all: [FinanceTransaction], today: Date, calendar: Calendar = .current) -> ThisMonth {
+        let spent = all.filter { ($0.to ?? "").isEmpty }
+        let now = spent.filter { t in t.date.map { calendar.isDate($0, equalTo: today, toGranularity: .month) } ?? false }
+        let moneyIn = now.filter { $0.amount > 0 }.reduce(0.0) { $0 + $1.amount }
+        let moneyOut = -now.filter { $0.amount < 0 }.reduce(0.0) { $0 + $1.amount }
+        var lastDay: Date?
+        var outBefore: Double?
+        if let lastMonth = calendar.date(byAdding: .month, value: -1, to: today),
+           let days = calendar.range(of: .day, in: .month, for: lastMonth),
+           let first = calendar.dateInterval(of: .month, for: lastMonth)?.start {
+            let day = min(days.count, calendar.component(.day, from: today))
+            if let d = calendar.date(byAdding: .day, value: day - 1, to: first), let end = calendar.dateInterval(of: .day, for: d)?.end {
+                lastDay = d
+                let before = spent.filter { t in
+                    guard let date = t.date else { return false }
+                    return date >= first && date < end
+                }
+                if !before.isEmpty { outBefore = -before.filter { $0.amount < 0 }.reduce(0.0) { $0 + $1.amount } }
+            }
+        }
+        return ThisMonth(moneyIn: moneyIn, moneyOut: moneyOut, kept: moneyIn - moneyOut, count: now.count,
+                         lastMonthDay: lastDay, outBefore: outBefore)
+    }
+
+    /// How this month's money out compares: nil with nothing to compare;
+    /// zero the same (within half a cent); more is plus.
+    var outChange: Double? {
+        guard let outBefore else { return nil }
+        let change = moneyOut - outBefore
+        return abs(change) < 0.005 ? 0 : change
     }
 }
 

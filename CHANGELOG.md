@@ -9,6 +9,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 ### New
 
 <!-- The iPhone and iPad app (lane 4): add a line just below this one. -->
+- **This month and more filters on the Homelab app's Transactions:** on the iPhone and iPad, Transactions opens with **This Month, Every Account**, as the computer's first card: money in, money out, what's kept and how many, and how this month's money out compares with last month's by the same day. Filter gains **Between My Accounts**, a **Month** and a **Tag**, and a search or filter says how many it found and what they come to together. Money In and Money Out now leave out moves between your own accounts, as on the computer.
 - **Sort Transactions on the Homelab app:** on the iPhone and iPad, **Sort** beside Filter sorts Transactions by the date, payee, category, account or amount, either way, as the computer's column headers do, and each device remembers its choice. By anything but the date it's one list, each row with its day, and **Newest First** goes back. A long list shows 200 rows at a time, with **Show 200 More**.
 - **Sort these on the Homelab app's Transactions:** as on the computer, the top of Transactions on the iPhone and iPad lists what looks like a planned payment, to **Link** or say **Not It**, and money out of one of your accounts with the same into another, to **Join** as one transfer or say **Not One Transfer**. Each has Undo, and works away from home too.
 <!-- Everything else (the other lanes): add a line just below this one. -->
