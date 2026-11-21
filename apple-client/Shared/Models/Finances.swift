@@ -138,9 +138,17 @@ struct FinancesPlanView: Decodable, Sendable, Equatable {
     /// Each payment's due days (YYYY-MM-DD), from 120 days back (`View.Dues`):
     /// Recurring's calendar marks a month's earlier bills with them.
     let dues: [String: [String]]
+    /// Checking at the end of each day read ahead, by day (YYYY-MM-DD, `View.Days`):
+    /// Bills' *On payday, once its own payments are out*.
+    var dayBalances: [String: Double] = [:]
+
+    private struct DayBalance: Decodable {
+        let date: String
+        let balance: Double
+    }
 
     enum CodingKeys: String, CodingKey {
-        case today, checking, start, periods, plan, readOnly, budgets, goals, loans, categories, since, checkingNow, afterPay, worthEstimated, dues
+        case today, checking, start, periods, plan, readOnly, budgets, goals, loans, categories, since, checkingNow, afterPay, worthEstimated, dues, days
     }
 
     init(from decoder: Decoder) throws {
@@ -162,6 +170,8 @@ struct FinancesPlanView: Decodable, Sendable, Equatable {
         afterPay = (try? c.decodeIfPresent(FinanceWorking.self, forKey: .afterPay)) ?? nil
         worthEstimated = ((try? c.decodeIfPresent([FinancePoint].self, forKey: .worthEstimated)) ?? nil) ?? []
         dues = ((try? c.decodeIfPresent([String: [String]].self, forKey: .dues)) ?? nil) ?? [:]
+        let days = ((try? c.decodeIfPresent([DayBalance].self, forKey: .days)) ?? nil) ?? []
+        dayBalances = Dictionary(days.map { ($0.date, $0.balance) }, uniquingKeysWith: { first, _ in first })
     }
 
     /// The keys waiting now: what `Plan.waiting` should hold, as the computer reads it.
@@ -405,8 +415,10 @@ struct FinancePayment: Decodable, Sendable, Equatable, Identifiable {
     var schedule: FinanceSchedule? = nil
     /// The household's own account it moves money into (savings, a Roth IRA).
     var to: String? = nil
+    /// The account it comes out of, when not checking (a card it's charged to, savings).
+    var from: String? = nil
 
-    enum CodingKeys: String, CodingKey { case id, name, kind, institution, amount, estimate, card, payer, schedule, to }
+    enum CodingKeys: String, CodingKey { case id, name, kind, institution, amount, estimate, card, payer, schedule, to, from }
 
     /// One made here: a card paid off with each paycheck (`FinancesPlanView.payment`).
     init(id: String, name: String, kind: String?, institution: String?, amount: Double? = nil, estimate: Bool? = nil,
@@ -428,6 +440,7 @@ struct FinancePayment: Decodable, Sendable, Equatable, Identifiable {
         // Extras: one that doesn't read costs only itself, never the payment.
         schedule = (try? c.decodeIfPresent(FinanceSchedule.self, forKey: .schedule)) ?? nil
         to = (try? c.decodeIfPresent(String.self, forKey: .to)) ?? nil
+        from = (try? c.decodeIfPresent(String.self, forKey: .from)) ?? nil
     }
 
     /// Whether the phone can change its amount. A card payoff's amount
@@ -451,11 +464,14 @@ struct FinancePeriod: Decodable, Sendable, Equatable, Identifiable {
     /// Checking on the last day.
     let left: Double
     let rows: [FinanceRow]
+    /// Each account on the last day, by id (what a card or loan owes):
+    /// Bills' accounts after the period, as the computer's Accounts, paycheck by paycheck.
+    var accounts: [String: Double] = [:]
 
     var id: String { "\(start?.timeIntervalSince1970 ?? 0)|\(now)" }
 
     enum CodingKeys: String, CodingKey {
-        case now, start, last, pay, carried, out, saved, left, rows
+        case now, start, last, pay, carried, out, saved, left, rows, accounts
         case moneyIn = "in"
     }
 
@@ -471,6 +487,7 @@ struct FinancePeriod: Decodable, Sendable, Equatable, Identifiable {
         saved = try c.decodeIfPresent(Double.self, forKey: .saved) ?? 0
         left = try c.decodeIfPresent(Double.self, forKey: .left) ?? 0
         rows = try c.decodeIfPresent([FinanceRow].self, forKey: .rows) ?? []
+        accounts = ((try? c.decodeIfPresent([String: Double].self, forKey: .accounts)) ?? nil) ?? [:]
     }
 }
 

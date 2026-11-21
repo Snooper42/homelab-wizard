@@ -209,6 +209,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 ### Improved
 
 <!-- The iPhone and iPad app (lane 4): add a line just below this one. -->
+- **Bills on the Homelab app shows a pay period as the computer does:** on the iPhone and iPad, each pay period starts with whose paycheck it is, says what checking holds on payday once its own payments are out and what the period itself comes to, lists every account after it with what changed, and says under each bill how it's paid: its kind, on a card, from another account, or from someone else.
 - **The Homelab app's Transactions search finds what the computer's finds:** on the iPhone and iPad, search by what a charge came to (86.10 or 1,240.55), its day (Oct 28) or its account, as well as the payee, category, note or tag. Each word you type can be anywhere in the row, so *corner work* finds Corner Café tagged work.
 <!-- Everything else (the other lanes): add a line just below this one. -->
 - **Media automation tucked away on Status:** Seerr, where you ask for a film or show, now sits beside Jellyfin under Media. Prowlarr, Sonarr, Radarr and the other apps that find and download what you ask for sit last, folded under one line, *Media automation: finds and downloads what you ask for in Seerr*, and open with a click or when one needs a look. The Downloads card above says what they're getting.
