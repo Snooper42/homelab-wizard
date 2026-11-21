@@ -132,7 +132,7 @@ func TestWiring(t *testing.T) {
 		switch {
 		case strings.HasPrefix(l.Text, "qBittorrent"):
 			want = "done"
-		case l.Text == "Sonarr keeps filing what it downloads":
+		case l.Text == "Sonarr files its own downloads":
 			want = "manual"
 		}
 		if l.State != want {

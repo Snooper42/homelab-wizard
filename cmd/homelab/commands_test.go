@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/Snooper42/homelab-wizard/internal/wiring"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -581,4 +582,32 @@ func mustReal(t *testing.T, p string) string {
 		t.Fatal(err)
 	}
 	return r
+}
+
+// The inbox that files only on Tidy up now: a yes lets it file downloads as
+// they arrive (TIDY_INBOX_WHEN=arrive); a no, or no terminal, changes nothing.
+func TestWireOffersInboxFix(t *testing.T) {
+	root := t.TempDir()
+	env := filepath.Join(root, ".env")
+	if err := os.WriteFile(env, []byte("TIDY_INBOX_WHEN=manual\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	for _, c := range []struct {
+		name, in    string
+		interactive bool
+		want        bool
+		says        string
+	}{
+		{"no terminal", "", false, false, "Tidy Up › Inbox"},
+		{"no", "n\n", true, false, "as they arrive"},
+		{"yes", "\n", true, true, "Tidy Up files downloads as they arrive"},
+	} {
+		var out strings.Builder
+		h := &homelab{ui: &ui.UI{Out: &out, In: bufio.NewReader(strings.NewReader(c.in)), Interactive: c.interactive}, envFile: env}
+		ok, err := h.offerWireFix(wiring.FixInboxArrive)
+		data, _ := os.ReadFile(env)
+		if err != nil || ok != c.want || strings.Contains(string(data), "TIDY_INBOX_WHEN=arrive") != c.want || !strings.Contains(out.String(), c.says) {
+			t.Fatalf("%s: ok %v err %v, .env %q, said:\n%s", c.name, ok, err, data, out.String())
+		}
+	}
 }

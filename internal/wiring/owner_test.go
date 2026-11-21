@@ -11,6 +11,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 )
 
 func TestHandOver(t *testing.T) {
@@ -141,12 +142,20 @@ func TestConnectHandsOver(t *testing.T) {
 	} {
 		plan := newWirer(env).Plan()
 		got := texts(plan)
-		if strings.Contains(got, "renaming") || !strings.Contains(got, "Sonarr keeps filing what it downloads=planned") {
+		if strings.Contains(got, "renaming") || !strings.Contains(got, "Sonarr files its own downloads=planned") {
 			t.Errorf("%s: %s", name, got)
 		}
 		for _, l := range newWirer(env).Apply(context.Background(), nil) {
-			if l.Text == "Sonarr keeps filing what it downloads" && (l.State != "manual" || l.Detail == "") {
+			if l.Text != "Sonarr files its own downloads" {
+				continue
+			}
+			// Said in words, without a setting's code name.
+			if l.State != "manual" || l.Detail == "" || strings.Contains(l.Detail, "TIDY_") || strings.Contains(l.Detail, "DOWNLOADS_ROOT") {
 				t.Errorf("%s: says why: %+v", name, l)
+			}
+			// Only the inbox that waits for Tidy up now has a one-click fix.
+			if want := map[bool]string{true: FixInboxArrive}[name == "inbox by hand only"]; l.Fix != want {
+				t.Errorf("%s: fix %q, want %q", name, l.Fix, want)
 			}
 		}
 	}
@@ -154,5 +163,27 @@ func TestConnectHandsOver(t *testing.T) {
 	env = map[string]string{"DOWNLOADS_ROOT": "/d/", "TIDY_INBOX_FOLDERS": "~/Downloads; /d"}
 	if got := texts(newWirer(env).Plan()); !strings.Contains(got, "Sonarr stops renaming files") {
 		t.Errorf("watched among others: %s", got)
+	}
+}
+
+// Three apps that keep filing are one line, not three of the same.
+func TestKeepsFilingIsOneLine(t *testing.T) {
+	apps := map[string]App{}
+	for _, id := range []string{"sonarr", "radarr", "lidarr"} {
+		apps[id] = App{ID: id, Name: strings.ToUpper(id[:1]) + id[1:], URL: "http://127.0.0.1:1", ConfigDir: t.TempDir()}
+	}
+	w := &Wirer{Apps: apps, Env: map[string]string{"DOWNLOADS_ROOT": "/d", "TIDY_INBOX_WHEN": "manual"}, Wait: time.Millisecond}
+	var lines []Link
+	for _, l := range w.Apply(context.Background(), nil) {
+		if strings.Contains(l.Text, "own downloads") || strings.Contains(l.Text, "keeps filing") {
+			lines = append(lines, l)
+		}
+	}
+	if len(lines) != 1 {
+		t.Fatalf("%d lines: %+v", len(lines), lines)
+	}
+	l := lines[0]
+	if l.Text != "Sonarr, Radarr and Lidarr file their own downloads" || l.Fix != FixInboxArrive || !strings.Contains(l.Detail, "Tidy up now") {
+		t.Fatalf("%+v", l)
 	}
 }

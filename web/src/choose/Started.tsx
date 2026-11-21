@@ -22,11 +22,13 @@ export function Started({ started, also = [], open, close }: { started: api.Star
 }
 
 /** One link the wiring made (internal/wiring), as it reports it. */
-export interface WireLink { state: string; text: string; detail?: string }
+export interface WireLink { state: string; text: string; detail?: string; fix?: string }
+/** A link's one-click fix (wiring.Link.Fix), by its name: the button's words. */
+const fixes: Record<string, string> = { 'inbox-arrive': 'Let Tidy Up file downloads as they arrive' };
 const marks: Record<string, [string, string]> = { done: ['✓', 'ok'], already: ['✓', 'ok'], manual: ['!', 'warn'], failed: ['✗', 'bad'] };
 
 /** Connected for you: each link as it finishes, with what is still going on. */
-export function Wiring({ links, note }: { links: WireLink[]; note: string }) {
+export function Wiring({ links, note, fix }: { links: WireLink[]; note: string; fix?: (name: string) => void }) {
   return (
     <>
       <CardHead title="Connected for you" />
@@ -34,7 +36,12 @@ export function Wiring({ links, note }: { links: WireLink[]; note: string }) {
       <ul class="links">
         {links.map((l, i) => {
           const [mark, cls] = marks[l.state] || ['•', 'muted'];
-          return <li key={i}><span class={cls}>{mark} </span>{l.text}{l.detail && <span class="detail">{l.detail}</span>}</li>;
+          return (
+            <li key={i}>
+              <span class={cls}>{mark} </span>{l.text}{l.detail && <span class="detail">{l.detail}</span>}
+              {l.fix && fixes[l.fix] && fix && <span class="detail"><button type="button" class="small tint" onClick={() => fix(l.fix)}>{fixes[l.fix]}</button></span>}
+            </li>
+          );
         })}
       </ul>
     </>
@@ -42,6 +49,6 @@ export function Wiring({ links, note }: { links: WireLink[]; note: string }) {
 }
 
 export function mountStarted(el: Element, props: { started: api.Started[]; also?: AlsoStarted[]; open: (url: string) => void; close: () => void } | null) { render(props && <Started {...props} />, el); }
-export function mountWiring(el: Element, props: { links: WireLink[]; note: string } | null) { render(props && <Wiring {...props} />, el); }
+export function mountWiring(el: Element, props: { links: WireLink[]; note: string; fix?: (name: string) => void } | null) { render(props && <Wiring {...props} />, el); }
 /** The categories, as the custom app form's options. */
 export function mountCategories(el: Element, categories: api.Category[]) { render(<>{categories.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}</>, el); }

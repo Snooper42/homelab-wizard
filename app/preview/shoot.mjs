@@ -4459,9 +4459,9 @@ const smokes = [
     await page.waitForSelector('#plan .planLead:has-text("Installs 1 app")', { timeout: 5000 });
     if (await page.isVisible('#presets .chip:has-text("Immich")')) throw new Error("a stack's own preset is still a chip");
   } },
-  // Arr item 2: the VPN key's field walks through where to find it, in three steps, and says first that it
+  // Arr item 2: the VPN key's field walks through where to find it, step by step, and says first that it
   // needs a paid Proton plan; a button opens Proton's page for it.
-  { name: 'The VPN key: a paid plan first, three steps, and Proton’s page a click away', screen: 'choose', run: async (page) => {
+  { name: 'The VPN key: a paid plan first, the steps, and Proton’s page a click away', screen: 'choose', run: async (page) => {
     await page.click('#more > summary');
     await page.fill('#search', 'qbittorrent');
     await page.click('#groups label.app:has(strong:text-is("qBittorrent")) input');
@@ -4470,8 +4470,9 @@ const smokes = [
     const lead = await walk.locator('.walkLead').textContent();
     if (!/paid Proton VPN plan/.test(lead) || !/free/.test(lead)) throw new Error(`the walkthrough doesn't start with the paid plan: ${lead}`);
     const steps = await walk.locator('ol > li').allTextContents();
-    if (steps.length !== 3) throw new Error(`${steps.length} steps, not 3`);
-    if (!/NAT-PMP/.test(steps[1]) || !/PrivateKey/.test(steps[2])) throw new Error(`the steps: ${steps.join(' | ')}`);
+    if (steps.length !== 4) throw new Error(`${steps.length} steps, not 4`);
+    // In Proton's own order: Downloads in the left menu, the WireGuard form's parts 1 to 3, then part 4 (the server), the key.
+    if (!/menu on the left/.test(steps[0]) || !/Router/.test(steps[1]) || !/NAT-PMP/.test(steps[1]) || !/part 4/.test(steps[2]) || !/PrivateKey/.test(steps[3])) throw new Error(`the steps: ${steps.join(' | ')}`);
     if (/PROTONVPN_|WIREGUARD_/.test(steps.join(' '))) throw new Error('a step names the setting by its code');
     await walk.locator('button:has-text("Open Proton’s WireGuard page")').click();
     const opened = await page.evaluate(() => window.__MOCK.opened);
@@ -5693,6 +5694,18 @@ const smokes = [
     // come with the first Status that is, not minutes later.
     await page.waitForSelector('#weekCard:not([hidden])', { timeout: 3000 });
     await page.waitForSelector('#protectCard:not([hidden])', { timeout: 3000 });
+  } },
+  // Arr: when Tidy Up's inbox waits for Tidy up now, the apps that keep filing are one line, and its button lets Tidy Up
+  // file downloads as they arrive, then connects again.
+  { name: 'Connect apps: one line for the apps that file their own downloads, and a button to hand them over', screen: 'status', mock: { wireLinks: [{ state: 'manual', text: 'Sonarr, Radarr and Lidarr file their own downloads', detail: 'Tidy Up files downloads only when you press Tidy up now, so they file what they download themselves', fix: 'inbox-arrive' }] }, run: async (page) => {
+    await page.click('#statusMore');
+    await page.click('#connect');
+    const btn = page.locator('#statusWiring button:has-text("Let Tidy Up file downloads as they arrive")');
+    await btn.waitFor({ timeout: 3000 });
+    if (await page.locator('#statusWiring li').count() !== 1) throw new Error('more than one line');
+    await btn.click();
+    await page.waitForFunction(() => (window.__MOCK.saved || {}).TIDY_INBOX_WHEN === 'arrive', null, { timeout: 3000 });
+    await page.waitForFunction(() => window.__MOCK.calls.Wire === 2, null, { timeout: 3000 });
   } },
   { name: 'Connect apps lists each link as it finishes', screen: 'status', mock: { wireLinks: [{ state: 'done', text: 'Sonarr → Prowlarr' }, { state: 'manual', text: 'Bazarr → Sonarr', detail: 'set its API key in Bazarr' }] }, run: async (page) => {
     await page.click('#statusMore');
