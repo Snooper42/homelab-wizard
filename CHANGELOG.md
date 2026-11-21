@@ -195,6 +195,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 ### Improved
 
 <!-- The iPhone and iPad app (lane 4): add a line just below this one. -->
+- **The Homelab app's Transactions search finds what the computer's finds:** on the iPhone and iPad, search by what a charge came to (86.10 or 1,240.55), its day (Oct 28) or its account, as well as the payee, category, note or tag. Each word you type can be anywhere in the row, so *corner work* finds Corner Café tagged work.
 <!-- Everything else (the other lanes): add a line just below this one. -->
 - **Connect apps says once, in plain words, when Sonarr, Radarr and Lidarr keep their own filing:** one line instead of the same warning three times, and no settings' code names. When it's because Tidy Up files downloads only when you press Tidy up now, a button (or, in the terminal, a yes) lets Tidy Up file them as they arrive and connects again, which hands them over to Tidy Up.
 - **Clearer steps to the ProtonVPN key:** the key's field now follows Proton's own page: Downloads in the menu on the left, down to WireGuard configuration, its parts 1 to 3 (a name, Router, NAT-PMP on), part 4 (Create on a P2P server), then only the text after PrivateKey =.
