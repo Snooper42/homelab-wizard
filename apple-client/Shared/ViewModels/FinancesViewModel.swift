@@ -562,6 +562,27 @@ final class FinancesViewModel {
                           reason: "Change the \(budget.category) budget.")
     }
 
+    /// Add a Budget (the owner's yes, Nov 21): a category, an amount a month
+    /// or each pay period, and whether it rolls over, as the computer's Edit
+    /// budgets adds one. Away from home it waits, as other changes do.
+    func addBudget(category: String, amount: Double, perPaycheck: Bool, rollover: Bool) async -> Bool {
+        guard canEditPlan, !isSaving, let raw = rawPlan else { return false }
+        guard let edited = FinancePlanEdit.addingBudget(category: category, amount: amount, perPaycheck: perPaycheck, rollover: rollover, in: raw) else {
+            saveError = category.trimmingCharacters(in: .whitespaces).isEmpty ? "Pick its category."
+                : FinancePlanEdit.roundedToCents(amount) > 0 ? "\(category) has a budget already." : "A budget is an amount more than nothing."
+            return false
+        }
+        return await make(.addBudget(category: category, amount: FinancePlanEdit.roundedToCents(amount), perPaycheck: perPaycheck, rollover: rollover),
+                          edited: edited, reason: "Add a \(category) budget.")
+    }
+
+    /// Takes the budget off, as Remove on the computer's Edit budgets.
+    func removeBudget(_ budget: FinanceBudget) async -> Bool {
+        guard canEditPlan, !isSaving, let raw = rawPlan,
+              let edited = FinancePlanEdit.removingBudget(category: budget.category, in: raw) else { return false }
+        return await make(.removeBudget(category: budget.category), edited: edited, reason: "Remove the \(budget.category) budget.")
+    }
+
     private func savePlan(_ edited: JSONValue, reason: String) async -> Bool {
         isSaving = true
         defer { isSaving = false }

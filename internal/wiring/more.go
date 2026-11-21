@@ -248,8 +248,9 @@ func (w *Wirer) seerrKey() (string, bool) {
 	return s.Main.APIKey, s.Public.Initialized
 }
 
-// profile is the quality profile Seerr asks for: HD-1080p when the app
-// has it (Sonarr and Radarr make it on first start), else the first.
+// profile is the quality profile Seerr asks for: Connect apps' own
+// (QualityProfile, arr item 7), else HD-1080p when the app has it (Sonarr
+// and Radarr make it on first start), else the first.
 func (w *Wirer) profile(ctx context.Context, id, key string) (int, string, error) {
 	var list []resource
 	if err := w.call(ctx, id, key, http.MethodGet, "qualityprofile", nil, &list); err != nil {
@@ -260,7 +261,10 @@ func (w *Wirer) profile(ctx context.Context, id, key string) (int, string, error
 	}
 	pick := list[0]
 	for _, p := range list {
-		if p["name"] == "HD-1080p" {
+		if p["name"] == "HD-1080p" && pick["name"] != QualityProfile {
+			pick = p
+		}
+		if p["name"] == QualityProfile {
 			pick = p
 		}
 	}
@@ -290,12 +294,23 @@ func (w *Wirer) seerr(ctx context.Context, arr, folder string) (string, string, 
 		return "", "", err
 	}
 	host, port := hostPort(w.Apps[arr].Internal)
+	pid, pname, err := w.profile(ctx, arr, akey)
+	if err != nil {
+		return "", "", err
+	}
 	for _, cur := range have {
 		if cur["is4k"] == true {
 			continue
 		}
 		var wrong []string
-		for k, v := range map[string]any{"hostname": host, "port": port, "apiKey": akey} {
+		want := map[string]any{"hostname": host, "port": port, "apiKey": akey}
+		if pname == QualityProfile { // the answer to "What do you mostly watch on?" decides
+			want["activeProfileId"], want["activeProfileName"] = pid, pname
+			if arr == "sonarr" {
+				want["activeAnimeProfileId"], want["activeAnimeProfileName"] = pid, pname
+			}
+		}
+		for k, v := range want {
 			if fmt.Sprint(cur[k]) != fmt.Sprint(v) {
 				wrong = append(wrong, k)
 				cur[k] = v
@@ -310,10 +325,6 @@ func (w *Wirer) seerr(ctx context.Context, arr, folder string) (string, string, 
 		}
 		sort.Strings(wrong)
 		return "done", "corrected " + strings.Join(wrong, ", "), nil
-	}
-	pid, pname, err := w.profile(ctx, arr, akey)
-	if err != nil {
-		return "", "", err
 	}
 	server := resource{
 		"name": w.name(arr), "hostname": host, "port": port, "apiKey": akey, "useSsl": false, "baseUrl": "",

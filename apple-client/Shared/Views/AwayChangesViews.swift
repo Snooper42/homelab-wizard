@@ -40,6 +40,10 @@ func awayWords(_ change: FinanceChange, view: FinancesPlanView?, finances: Finan
     case .loanPapers(let account, _, _, _):
         let name = view?.plan.accounts.first { $0.id == account }?.name ?? "A loan"
         return "\(name)'s papers"
+    case .addBudget(let category, let amount, let perPaycheck, _):
+        return "Added the \(category) budget, \(money(amount)) \(perPaycheck ? "each pay period" : "a month")"
+    case .removeBudget(let category):
+        return "Removed the \(category) budget"
     }
 }
 
