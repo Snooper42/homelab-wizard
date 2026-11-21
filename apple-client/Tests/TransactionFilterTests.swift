@@ -82,5 +82,7 @@ struct TransactionFilterTests {
         // Nothing last month: nothing to compare with.
         #expect(month.outBefore == nil && month.outChange == nil)
         #expect(month.count == 0 && month.kept == 0)
+        // Nothing out is 0, never -0 (which reads "-$0").
+        #expect(month.moneyOut.sign == .plus && month.kept.sign == .plus)
     }
 }

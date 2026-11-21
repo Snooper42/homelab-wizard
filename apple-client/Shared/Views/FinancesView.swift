@@ -3180,8 +3180,13 @@ struct TransactionsView: View {
         List(selection: listSelection) {
             // As the computer's first card: every account, moves between them left out.
             if search.isEmpty, let ledger = finances.ledger, !ledger.transactions.isEmpty {
-                Section("This Month, Every Account") {
-                    ThisMonthCard(month: ThisMonth.make(ledger.transactions, today: Date()), finances: finances)
+                // The computer's today, as the rest of Finances (and its own card) reads it.
+                Section {
+                    ThisMonthCard(month: ThisMonth.make(ledger.transactions, today: finances.plan?.today ?? Date()), finances: finances)
+                } header: {
+                    // At the largest text it took the screen in grey (large-transactions, after #800).
+                    Text("This Month, Every Account")
+                        .dynamicTypeSize(...DynamicTypeSize.accessibility1)
                 }
             }
             if search.isEmpty, let view = finances.plan, !view.plan.accounts.isEmpty {
@@ -3704,9 +3709,16 @@ private struct ThisMonthCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            ViewThatFits(in: .horizontal) {
-                HStack(alignment: .top, spacing: 12) { stats }
-                VStack(alignment: .leading, spacing: 8) { stats }
+            // Nothing yet this month: said, not three zeros.
+            if month.count == 0 {
+                Text("Nothing yet this month.")
+                    .font(.headline)
+                    .foregroundStyle(Theme.ink)
+            } else {
+                ViewThatFits(in: .horizontal) {
+                    HStack(alignment: .top, spacing: 12) { stats }
+                    VStack(alignment: .leading, spacing: 8) { stats }
+                }
             }
             if let comparison {
                 comparison
