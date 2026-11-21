@@ -36,11 +36,17 @@ func Downloads(ctx context.Context, root string) (downloads.Card, error) {
 	home, _ := os.UserHomeDir()
 	running := func(id string) bool { st, _ := report.State(id); return st == detect.Running }
 	apps := wiring.AppsFrom(c, running, env, home)
+	return downloads.Read(ctx, apps, env, true, diskspace.Check(MediaDrives(root, home, env)), time.Now()), nil
+}
+
+// MediaDrives are the drives the Downloads card watches: the media and
+// downloads folders' (the same drive is read once by diskspace.Check).
+func MediaDrives(root, home string, env map[string]string) []diskspace.Location {
 	var drives []diskspace.Location
 	for _, l := range diskspace.Locations(root, home, env) {
 		if l.Name == "media" || l.Name == "downloads" {
 			drives = append(drives, l)
 		}
 	}
-	return downloads.Read(ctx, apps, env, true, diskspace.Check(drives), time.Now()), nil
+	return drives
 }
