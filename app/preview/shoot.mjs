@@ -5741,13 +5741,29 @@ const smokes = [
     if (await page.locator('#statusWiring input[type=password]').count()) throw new Error('the password field stays after the sign-in');
     if (/s3cret/.test(await page.textContent('#statusWiring'))) throw new Error('the password shows');
   } },
+  // The owner, Nov 20: finished results stay on the page. Once Connect apps ends, the links that went fine fold into one
+  // line (open to see them), what needs you stays out, and Done takes the card away.
+  { name: 'Connect apps folds what went fine, keeps what needs you, and Done closes it', screen: 'status', mock: { wireLinks: [{ state: 'done', text: 'Prowlarr sends indexers to Sonarr' }, { state: 'already', text: 'Sonarr keeps its library in /tv' }, { state: 'already', text: 'Radarr keeps its library in /movies' }, { state: 'manual', text: 'Bazarr → Sonarr', detail: 'set its API key in Bazarr' }] }, run: async (page) => {
+    await page.click('#statusMore');
+    await page.click('#connect');
+    const sum = page.locator('#statusWiring details.okLinks > summary');
+    await sum.waitFor({ timeout: 4000 });
+    if (!/3 connected/.test(await sum.textContent())) throw new Error(`summary: ${await sum.textContent()}`);
+    if (await page.isVisible('#statusWiring li:has-text("Sonarr keeps its library")')) throw new Error('a link that went fine is still listed');
+    await page.waitForSelector('#statusWiring li:has-text("Bazarr → Sonarr")', { timeout: 1000 });
+    await sum.click();
+    await page.waitForSelector('#statusWiring li:has-text("Sonarr keeps its library")', { timeout: 1000 });
+    await page.click('#statusWiring button:has-text("Done")');
+    await page.waitForFunction(() => !document.querySelector('#statusWiring').textContent.trim(), null, { timeout: 2000 });
+  } },
   { name: 'Connect apps lists each link as it finishes', screen: 'status', mock: { wireLinks: [{ state: 'done', text: 'Sonarr → Prowlarr' }, { state: 'manual', text: 'Bazarr → Sonarr', detail: 'set its API key in Bazarr' }] }, run: async (page) => {
     await page.click('#statusMore');
     await page.click('#connect');
     await page.waitForSelector('#statusWiring h2:text-is("Connected for you")', { timeout: 2000 });
-    await page.waitForSelector('#statusWiring li:has(.ok:has-text("✓")):has-text("Sonarr → Prowlarr")', { timeout: 3000 });
     await page.waitForSelector('#statusWiring li:has(.warn:has-text("!")):has-text("Bazarr → Sonarr") .detail:has-text("set its API key")', { timeout: 3000 });
     await page.waitForSelector('#statusWiring p.muted:empty', { state: 'attached', timeout: 3000 });
+    await page.click('#statusWiring details.okLinks > summary');
+    await page.waitForSelector('#statusWiring li:has(.ok:has-text("✓")):has-text("Sonarr → Prowlarr")', { timeout: 3000 });
   } },
   { name: 'Connect apps with nothing to connect says so', screen: 'status', run: async (page) => {
     await page.click('#statusMore');

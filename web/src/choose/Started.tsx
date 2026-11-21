@@ -46,28 +46,40 @@ function SeerrSignIn({ send }: { send: (user: string, password: string) => void 
 const marks: Record<string, [string, string]> = { done: ['✓', 'ok'], already: ['✓', 'ok'], manual: ['!', 'warn'], failed: ['✗', 'bad'] };
 
 /** Connected for you: each link as it finishes, with what is still going on. */
-export function Wiring({ links, note, fix }: { links: WireLink[]; note: string; fix?: (name: string, user?: string, password?: string) => void }) {
+export function Wiring({ links, note, fix, close }: { links: WireLink[]; note: string; fix?: (name: string, user?: string, password?: string) => void; close?: () => void }) {
+  // While it runs, every link as it comes; once it ends (no note), what went
+  // fine folds into one line and only what needs you stays out (the owner,
+  // Nov 20: results shouldn't just sit there), with Done to take it away.
+  const finished = !note;
+  const fine = links.filter((l) => l.state === 'done' || l.state === 'already');
+  const fold = finished && fine.length > 0;
+  const shown = fold ? links.filter((l) => !fine.includes(l)) : links;
+  const item = (l: WireLink, i: number) => {
+    const [mark, cls] = marks[l.state] || ['•', 'muted'];
+    return (
+      <li key={i}>
+        <span class={cls}>{mark} </span>{l.text}{l.detail && <span class="detail">{l.detail}</span>}
+        {l.fix === 'seerr-signin' && fix && <SeerrSignIn send={(u, p) => fix(l.fix, u, p)} />}
+        {l.fix && l.fix !== 'seerr-signin' && fixes[l.fix] && fix && <span class="detail"><button type="button" class="small tint" onClick={() => fix(l.fix)}>{fixes[l.fix]}</button></span>}
+      </li>
+    );
+  };
   return (
     <>
-      <CardHead title="Connected for you" />
+      <CardHead title="Connected for you">{finished && close ? <button type="button" class="small" onClick={close}>Done</button> : undefined}</CardHead>
       <p class="muted">{note}</p>
-      <ul class="links">
-        {links.map((l, i) => {
-          const [mark, cls] = marks[l.state] || ['•', 'muted'];
-          return (
-            <li key={i}>
-              <span class={cls}>{mark} </span>{l.text}{l.detail && <span class="detail">{l.detail}</span>}
-              {l.fix === 'seerr-signin' && fix && <SeerrSignIn send={(u, p) => fix(l.fix, u, p)} />}
-              {l.fix && l.fix !== 'seerr-signin' && fixes[l.fix] && fix && <span class="detail"><button type="button" class="small tint" onClick={() => fix(l.fix)}>{fixes[l.fix]}</button></span>}
-            </li>
-          );
-        })}
-      </ul>
+      {fold && (
+        <details class="okLinks">
+          <summary><span class="ok">✓ </span>{fine.length} connected</summary>
+          <ul class="links">{fine.map(item)}</ul>
+        </details>
+      )}
+      {!!shown.length && <ul class="links">{shown.map(item)}</ul>}
     </>
   );
 }
 
 export function mountStarted(el: Element, props: { started: api.Started[]; also?: AlsoStarted[]; open: (url: string) => void; close: () => void } | null) { render(props && <Started {...props} />, el); }
-export function mountWiring(el: Element, props: { links: WireLink[]; note: string; fix?: (name: string, user?: string, password?: string) => void } | null) { render(props && <Wiring {...props} />, el); }
+export function mountWiring(el: Element, props: { links: WireLink[]; note: string; fix?: (name: string, user?: string, password?: string) => void; close?: () => void } | null) { render(props && <Wiring {...props} />, el); }
 /** The categories, as the custom app form's options. */
 export function mountCategories(el: Element, categories: api.Category[]) { render(<>{categories.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}</>, el); }

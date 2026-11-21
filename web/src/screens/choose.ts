@@ -249,7 +249,7 @@ async function wire(box, run: () => Promise<WireLink[]> = () => go().Wire()) {
       await wire(box, () => go().WireSeerr(user, password || ''));
     }
   };
-  const draw = () => mountWiring(box, { links: [...done], note, fix });
+  const draw = () => mountWiring(box, { links: [...done], note, fix, close: () => mountWiring(box, null) });
   draw();
   const off = window.runtime.EventsOn('link', (l) => { done.push(l); draw(); });
   try {
