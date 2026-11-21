@@ -118,6 +118,15 @@ func (r Record) Save(root string) error {
 	return lockedfile.Write(path, append(data, '\n'), 0o644)
 }
 
+// Did adds one line to Recent activity for something done outside a run
+// (stall rescue, cmd/homelab/media_stalled.go), keeping the last 40.
+func (r *Record) Did(kind, text, sub string, at time.Time) {
+	r.Activity = append(r.Activity, Activity{At: at, Kind: kind, Text: text, Sub: sub})
+	if len(r.Activity) > 40 {
+		r.Activity = r.Activity[len(r.Activity)-40:]
+	}
+}
+
 // Note keeps a run's outcome, the activity it amounts to, and what it freed.
 func (r *Record) Note(kind string, run Run) {
 	if r.Last == nil {
