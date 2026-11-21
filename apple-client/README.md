@@ -265,7 +265,7 @@ hash. The client receives the token itself, once.
   - the money card (`FinancesWall`) in Overview, for any Finances level;
   - the plan (`Finances`) for view and edit: accounts today, net worth, and each pay period with its payments;
   - budgets, goals and loans from the same view;
-  - transactions (`FinancesLedger`), newest first by month, searchable as the computer's (payee, category, note, tag, account, amount or day, `TransactionSearch`);
+  - transactions (`FinancesLedger`), newest first by month, searchable as the computer's (payee, category, note, tag, account, amount or day, `TransactionSearch`), filtered as its (in, out, between your accounts, a category, month or tag, $100 or more) with how many and what they come to together, under **This Month, Every Account** (in, out, kept, and money out against last month by the same day);
   - adding a transaction (`SaveFinancesLedger`, edit level): money in or out of one account, with payee, category, day and note. It's appended to the raw ledger and sent back with its `rev`. The computer gives it its id and checks it;
   - changing or deleting a transaction (by its id; transfers and splits stay on the computer). Everything else it holds, such as tags, bank id and receipt, is kept;
   - receipts: a kept one opens from its transaction (`FinancesReceipt`; pictures through a capped thumbnail, PDFs in PDFKit), and a photo can be attached to a new one (`SaveFinancesReceipt`). It's shrunk and re-encoded as JPEG with no metadata, so no location leaves the device.
