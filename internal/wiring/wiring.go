@@ -90,7 +90,7 @@ func AppsFrom(c *catalog.Catalog, running func(id string) bool, env map[string]s
 		if !running(a.ID) {
 			continue
 		}
-		app := App{ID: a.ID, Name: a.Name(), URL: ports.WebURL(a, ports.AppBindings(a, lookup), lookup)}
+		app := App{ID: a.ID, Name: a.Name(), URL: ports.AppWebURL(c, a, lookup)}
 		host := a.ID
 		if strings.HasPrefix(a.NetworkMode, "service:") {
 			host = strings.TrimPrefix(a.NetworkMode, "service:")

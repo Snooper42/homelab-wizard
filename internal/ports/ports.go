@@ -283,6 +283,19 @@ func WebURL(a *catalog.App, bindings []Binding, lookup compose.Lookup) string {
 	return ""
 }
 
+// AppWebURL is a's page on this computer. An app in another's network
+// (qBittorrent in Gluetun's) has no ports of its own: its page is published
+// on that app's, so those are read too.
+func AppWebURL(c *catalog.Catalog, a *catalog.App, lookup compose.Lookup) string {
+	bindings := AppBindings(a, lookup)
+	if host, ok := strings.CutPrefix(a.NetworkMode, "service:"); ok && c != nil {
+		if h, ok := c.Get(host); ok {
+			bindings = append(bindings, AppBindings(h, lookup)...)
+		}
+	}
+	return WebURL(a, bindings, lookup)
+}
+
 // AppBindings resolves an app's ports without planning (for status output).
 func AppBindings(a *catalog.App, lookup compose.Lookup) []Binding {
 	var out []Binding
