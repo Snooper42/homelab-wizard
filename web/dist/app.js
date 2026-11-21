@@ -1323,8 +1323,8 @@
     return { person: by(p3.people), order: Object.fromEntries((p3.people || []).map((e3, i3) => [e3.id, i3 % 4])), account: by(p3.accounts), payment: by(allPayments(p3)) };
   }
   var cardOf = (paymentId) => paymentId?.startsWith("card:") ? paymentId.slice(5) : "";
-  function allPayments(p3) {
-    const cards = (p3.accounts || []).filter((a3) => a3.kind === "card" && a3.paidEach).map((a3) => ({ id: "card:" + a3.id, name: a3.name, amount: a3.spend || 0, kind: "cards", institution: a3.institution, card: a3.id, schedule: { every: "paycheck", start: "" } }));
+  function allPayments(p3, worked) {
+    const cards = (p3.accounts || []).filter((a3) => a3.kind === "card" && a3.paidEach).map((a3) => ({ id: "card:" + a3.id, name: a3.name, amount: a3.spend || worked?.[a3.id] || 0, kind: "cards", institution: a3.institution, card: a3.id, schedule: { every: "paycheck", start: "" } }));
     return [...p3.payments || [], ...cards];
   }
   var saving = (kind) => kind === "savings" || kind === "investment" || kind === "retirement";
@@ -9691,7 +9691,7 @@
   // web/src/finances/model.ts
   function month(v3, L2) {
     const people = v3.plan.people || [];
-    const payments = allPayments(v3.plan);
+    const payments = allPayments(v3.plan, v3.cardSpend);
     const income = people.reduce((t3, e3) => t3 + e3.net * perMonth(e3.schedule), 0);
     const kept5 = (id2) => saving(L2.account[id2 || ""]?.kind);
     const onCard2 = (x3) => L2.account[x3.from || ""]?.kind === "card";
@@ -11244,6 +11244,7 @@
     const [detail, setDetail] = d2(a3?.detail || "");
     const [paidEach, setPaidEach] = d2(!!a3?.paidEach);
     const [spend, setSpend] = d2(text(a3?.spend));
+    const worked = a3 && props.cardSpend?.[a3.id] || 0;
     const [bought, setBought] = d2(text(a3?.bought));
     const [boughtOn, setBoughtOn] = d2(a3?.boughtOn || "");
     const [holds, setHolds] = d2(a3?.holds || "");
@@ -11364,7 +11365,13 @@
           /* @__PURE__ */ u3("input", { type: "checkbox", checked: paidEach, onClick: tick2(setPaidEach) }),
           " I pay it off in full with each paycheck"
         ] }),
-        kind === "card" && paidEach && /* @__PURE__ */ u3(MoneyField, { label: "Spending on it between paychecks, about", value: spend, set: setSpend, hint: "400.00", sign }),
+        kind === "card" && paidEach && /* @__PURE__ */ u3(MoneyField, { label: "Spending on it between paychecks, about", value: spend, set: setSpend, hint: worked ? cents(worked) : "400.00", sign }),
+        kind === "card" && paidEach && !!worked && /* @__PURE__ */ u3("p", { class: "formsub muted wide", children: [
+          "From the last 3 months of its transactions, about ",
+          moneyIn(worked, sign ? code2 : void 0),
+          " goes on it between paychecks.",
+          num(spend) > 0 ? " Clear the box to use that." : " Each payoff after the next one counts that, unless you type an amount."
+        ] }),
         kind === "savings" && /* @__PURE__ */ u3(Field, { label: "Interest, % a year", children: /* @__PURE__ */ u3("input", { inputmode: "decimal", value: rate, onInput: input(setRate), placeholder: "3.2" }) }),
         (kind === "loan" || kind === "card") && /* @__PURE__ */ u3(Field, { label: kind === "card" ? "Interest (APR), % a year, if it carries a balance" : "Interest (APR), % a year", children: /* @__PURE__ */ u3("input", { inputmode: "decimal", value: rate, onInput: input(setRate), placeholder: kind === "card" ? "24.99" : "6.5" }) }),
         kind === "loan" && /* @__PURE__ */ u3(MoneyField, { label: "Borrowed at the start", value: original, set: setOriginal, sign }),
@@ -16108,7 +16115,7 @@ ${pays}
         else add(spend, "cat:frompay", "Taken from pay", 6, d3.amount * each2, { label: `${d3.name}, from ${e3.name}'s pay`, amount: -d3.amount * each2, person: e3.id });
       }
     }
-    const payments = allPayments(v3.plan);
+    const payments = allPayments(v3.plan, v3.cardSpend);
     const each = (x3) => x3.amount * perMonth(x3.schedule, people, v3.checking);
     for (const x3 of payments) {
       if (x3.payer) {
@@ -16599,7 +16606,7 @@ ${pays}
       return f4;
     });
     const [order2, setOrder] = d2("next");
-    const payments = allPayments(v3.plan);
+    const payments = allPayments(v3.plan, v3.cardSpend);
     const next = nextOf(v3);
     const m3 = month(v3, L2);
     const share3 = (n3) => m3.in ? `${Math.round(n3 / m3.in * 100)}% of pay` : "";
@@ -19396,7 +19403,7 @@ ${pays}
       } }
     });
     if (v3) readEachMorning(v3);
-    if (editing && v3 && !v3.readOnly) mountFinanceSheet($("finSheetBox"), { ...editing, plan: v3.plan, checking: v3.checking, start: v3.start, dues: v3.dues, categories: v3.categories, ledger: ledgerData.value, save: save2, saveLedger, receipts, cardPictures, fetchLogo, fromApps: fromApps(), close: close2 });
+    if (editing && v3 && !v3.readOnly) mountFinanceSheet($("finSheetBox"), { ...editing, plan: v3.plan, checking: v3.checking, start: v3.start, dues: v3.dues, cardSpend: v3.cardSpend, categories: v3.categories, ledger: ledgerData.value, save: save2, saveLedger, receipts, cardPictures, fetchLogo, fromApps: fromApps(), close: close2 });
     mountBalances($("finNav"), v3, (g2) => {
       tab = "worth";
       group = g2;
@@ -19480,7 +19487,7 @@ ${pays}
     const v3 = financesData.value;
     if (!v3 || v3.readOnly) return;
     editing = { what: what2, id: id2, kind, n: ++opened2 };
-    mountFinanceSheet($("finSheetBox"), { ...editing, plan: v3.plan, checking: v3.checking, start: v3.start, dues: v3.dues, categories: v3.categories, ledger: ledgerData.value, save: save2, saveLedger, receipts, cardPictures, fetchLogo, fromApps: fromApps(), close: close2 });
+    mountFinanceSheet($("finSheetBox"), { ...editing, plan: v3.plan, checking: v3.checking, start: v3.start, dues: v3.dues, cardSpend: v3.cardSpend, categories: v3.categories, ledger: ledgerData.value, save: save2, saveLedger, receipts, cardPictures, fetchLogo, fromApps: fromApps(), close: close2 });
     $("finSheet").hidden = false;
   }
   function close2() {

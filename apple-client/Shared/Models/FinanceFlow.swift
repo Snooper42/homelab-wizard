@@ -290,11 +290,14 @@ struct FinanceFlow: Sendable, Equatable {
                 }
             }
         }
-        // The plan's payments, and each card paid off with each paycheck (money.ts's allPayments).
+        // The plan's payments, and each card paid off with each paycheck (money.ts's allPayments): what's
+        // typed in goes on it between paychecks, else what the computer read from its transactions (cardSpend).
         var payments = list(plan["payments"])
         for a in list(plan["accounts"]) where str(a["kind"]) == "card" && bool(a["paidEach"]) {
             guard let id = str(a["id"]) else { continue }
-            payments.append(.object(["id": .string("card:" + id), "name": a["name"] ?? .string(id), "amount": a["spend"] ?? .number(0),
+            let typed = num(a["spend"]) ?? 0
+            let spend = typed > 0 ? typed : (num(v["cardSpend"]?[id]) ?? 0)
+            payments.append(.object(["id": .string("card:" + id), "name": a["name"] ?? .string(id), "amount": .number(spend),
                                      "kind": .string("cards"), "card": .string(id), "schedule": .object(["every": .string("paycheck")])]))
         }
         for x in payments {

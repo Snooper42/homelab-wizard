@@ -163,7 +163,7 @@ export function typicalFlow(v: finance.View, L: Lookup, top: number): Flow {
       else add(spend, 'cat:frompay', 'Taken from pay', 6, d.amount * each, { label: `${d.name}, from ${e.name}'s pay`, amount: -d.amount * each, person: e.id });
     }
   }
-  const payments = allPayments(v.plan);
+  const payments = allPayments(v.plan, v.cardSpend);
   const each = (x: finance.Payment) => x.amount * perMonth(x.schedule, people, v.checking);
   for (const x of payments) {
     if (x.payer) { src.push({ id: 'src:pay:' + x.id, label: `${x.name}, from ${x.payer}`, value: each(x), col: 0, hue: 4, items: [{ label: `${x.name}, from ${x.payer}`, amount: each(x), payment: x.id }] }); continue; }

@@ -206,11 +206,12 @@ export const cardOf = (paymentId: string | undefined): string => (paymentId?.sta
 /**
  * The payments and, for each card paid off in full with each paycheck,
  * its payoff, as the Go side reads it (finance.Plan.WithCards): never
- * saved in the plan.
+ * saved in the plan. What goes on a card between paychecks is its typed
+ * spend, else worked (View.CardSpend: what the ledger says).
  */
-export function allPayments(p: finance.Plan): finance.Payment[] {
+export function allPayments(p: finance.Plan, worked?: Record<string, number>): finance.Payment[] {
   const cards = (p.accounts || []).filter((a) => a.kind === 'card' && a.paidEach)
-    .map((a): finance.Payment => ({ id: 'card:' + a.id, name: a.name, amount: a.spend || 0, kind: 'cards', institution: a.institution, card: a.id, schedule: { every: 'paycheck', start: '' } }));
+    .map((a): finance.Payment => ({ id: 'card:' + a.id, name: a.name, amount: a.spend || worked?.[a.id] || 0, kind: 'cards', institution: a.institution, card: a.id, schedule: { every: 'paycheck', start: '' } }));
   return [...(p.payments || []), ...cards];
 }
 
