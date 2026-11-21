@@ -180,6 +180,13 @@ func Setup(ctx context.Context, root string) []setup.Step {
 			}
 			return p.Private, p.Said, p.Fix == "wire"
 		}
+		in.Sites = func() (int, string, string) {
+			s, err := SearchSites(ctx, root)
+			if err != nil {
+				return 0, "Can't check: " + err.Error(), ""
+			}
+			return s.Working, s.Said, s.Open
+		}
 	} else {
 		in.RuntimeErr = err
 		// Before the homelab folder exists, the runtime is checked on its own.
@@ -602,4 +609,19 @@ func DownloadsPrivate(ctx context.Context, root string) (wiring.Privacy, error) 
 	}
 	home, _ := os.UserHomeDir()
 	return wiring.New(c, containers, Env(root), home).Privacy(ctx), nil
+}
+
+// SearchSites is whether Prowlarr has a search site that works (arr-loop
+// item 5), for Setup.
+func SearchSites(ctx context.Context, root string) (wiring.SearchSites, error) {
+	c, err := Catalog(root)
+	if err != nil {
+		return wiring.SearchSites{}, err
+	}
+	_, containers, err := Containers(ctx)
+	if err != nil {
+		return wiring.SearchSites{}, err
+	}
+	home, _ := os.UserHomeDir()
+	return wiring.New(c, containers, Env(root), home).SearchSites(ctx), nil
 }

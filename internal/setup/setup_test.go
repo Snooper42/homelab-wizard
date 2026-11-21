@@ -655,3 +655,37 @@ func TestDownloadsPrivateStep(t *testing.T) {
 		t.Fatal("no check: no step")
 	}
 }
+
+// TestSearchSitesStep: with Prowlarr, Setup says when there are no search
+// sites yet (arr-loop item 5), opens Prowlarr's page for adding one, and
+// ticks once one works; without Prowlarr, no step.
+func TestSearchSitesStep(t *testing.T) {
+	find := func(in Inputs) *Step {
+		for _, s := range Steps(context.Background(), in) {
+			if s.ID == "search-sites" {
+				return &s
+			}
+		}
+		return nil
+	}
+	working, said := 0, "No search sites yet, so nothing you ask for is found."
+	in := Inputs{Env: map[string]string{}, Host: host.For("darwin"), Probe: fakeProbe{},
+		Status: &api.Status{Apps: []api.AppStatus{{ID: "sonarr", State: "running"}}},
+		Sites:  func() (int, string, string) { return working, said, "http://localhost:9696/" }}
+	if find(in) != nil {
+		t.Fatal("no Prowlarr: no step")
+	}
+	in.Status.Apps = append(in.Status.Apps, api.AppStatus{ID: "prowlarr", State: "running"})
+	s := find(in)
+	if s == nil || s.State != "todo" || s.Title != "No search sites yet" || s.Detail != said || s.Open != "http://localhost:9696/" || s.Run != nil {
+		t.Fatalf("none yet: %+v", s)
+	}
+	working, said = 1, "1 search site works in Prowlarr."
+	if s := find(in); s.State != "done" || s.Title != "A search site works" || s.Detail != said {
+		t.Fatalf("one works: %+v", s)
+	}
+	in.Sites = nil
+	if find(in) != nil {
+		t.Fatal("no check: no step")
+	}
+}
