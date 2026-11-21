@@ -46,6 +46,8 @@ func Cards(root string) board.Readers {
 		"protection": timed(func(ctx context.Context) (any, error) { return Protection(ctx, root) }),
 		"alerts":     timed(func(ctx context.Context) (any, error) { return RecentAlerts(ctx, root) }),
 		"usage":      timed(func(ctx context.Context) (any, error) { return Usage(ctx) }),
+		// What the media apps have on the way, and the media drive's room.
+		"downloads": timed(func(ctx context.Context) (any, error) { return Downloads(ctx, root) }),
 	}
 }
 

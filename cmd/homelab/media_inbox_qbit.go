@@ -90,7 +90,7 @@ func inboxTorrentHolds(ctx context.Context, a wiring.App, env map[string]string,
 		switch {
 		case t.Progress < 1:
 			why = "still downloading in qBittorrent"
-		case !t.stopped():
+		case !t.Stopped():
 			why = "qBittorrent is still sharing it"
 		default:
 			continue // finished and stopped: the inbox's to file

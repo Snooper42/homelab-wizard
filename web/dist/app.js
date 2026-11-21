@@ -2522,6 +2522,19 @@
       )) })
     ] });
   }
+  var stateDot = { stuck: "warn", getting: "ok", waiting: "", filing: "ok" };
+  function Downloads({ c: c4 }) {
+    const items = c4.items || [];
+    const full = !!c4.drive && c4.drive.used >= 95;
+    const tone = full ? "bad" : items.some((i3) => i3.state === "stuck") || c4.warning ? "warn" : "muted";
+    const shown8 = items.slice(0, 6);
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3(CardHead, { title: "Downloads", children: /* @__PURE__ */ u3("span", { id: "downloadsLine", class: tone, children: c4.line }) }),
+      c4.warning && /* @__PURE__ */ u3("p", { id: "downloadsWarning", class: full ? "bad" : "warn", children: c4.warning }),
+      !!shown8.length && /* @__PURE__ */ u3(Rows, { children: shown8.map((i3, n3) => /* @__PURE__ */ u3(Row, { dot: stateDot[i3.state] ?? "", title: i3.name, sub: i3.words, subTone: i3.state === "stuck" ? "warn" : "", when: i3.app }, n3)) }),
+      items.length > shown8.length && /* @__PURE__ */ u3("p", { class: "muted", children: `And ${items.length - shown8.length} more: each app's own page lists them all.` })
+    ] });
+  }
   var topicName = { watchtower: "Updates", "duplicati-alerts": "Backups", "uptime-kuma": "Uptime Kuma", "tunnel-watchdog": "Watchdog" };
   function Lines({ text: text2 }) {
     const [all, setAll] = d2(false);
@@ -2703,6 +2716,7 @@
   }
   var mountWatchdog = (el3, props) => R(/* @__PURE__ */ u3(Watchdog, { ...props }), el3);
   var mountProtection = (el3, props) => R(/* @__PURE__ */ u3(Protection, { ...props }), el3);
+  var mountDownloads = (el3, props) => R(/* @__PURE__ */ u3(Downloads, { ...props }), el3);
   var mountAlerts = (el3, props) => R(/* @__PURE__ */ u3(Alerts, { ...props }), el3);
   var mountStorage = (el3, props) => R(/* @__PURE__ */ u3(Storage, { ...props }), el3);
   var mountWeek = (el3, props) => R(/* @__PURE__ */ u3(Week, { ...props }), el3);
@@ -7861,6 +7875,10 @@
       protectionAt = Date.now();
       want.push("protection");
     }
+    if (Date.now() - downloadsAt > 3e4) {
+      downloadsAt = Date.now();
+      want.push("downloads");
+    }
     if (Date.now() - usageAt >= 9e3) {
       usageAt = Date.now();
       want.push("usage");
@@ -7883,6 +7901,7 @@
     } catch (e3) {
       if (n3 === boardNo) boardFailed = true;
       if (want.includes("protection")) protectionAt = 0;
+      if (want.includes("downloads")) downloadsAt = 0;
       if (want.includes("usage")) usageAt = 0;
       if (want.includes("week")) weekAt = 0;
       throw e3;
@@ -7915,6 +7934,9 @@
         break;
       case "protection":
         showProtection(data2, err);
+        break;
+      case "downloads":
+        showDownloads(err ? null : data2);
         break;
       case "alerts":
         showAlerts(data2, err);
@@ -7949,6 +7971,8 @@
       $("watchCard").hidden = true;
       $("protectCard").hidden = true;
       protectionAt = 0;
+      $("downloadsCard").hidden = true;
+      downloadsAt = 0;
       const e3 = statusData.error;
       mountStatusNote($("statusNote"), { text: "", down: String(e3 && e3.message || e3) });
       return;
@@ -8052,6 +8076,12 @@
     }
     card.hidden = false;
     mountProtection(card, { p: p3, fix: () => cliFlow("Fix it", "fix", "", "Fix these") });
+  }
+  var downloadsAt = 0;
+  function showDownloads(c4) {
+    const card = $("downloadsCard");
+    card.hidden = !c4 || !c4.apps || !c4.line;
+    if (!card.hidden) mountDownloads(card, { c: c4 });
   }
   function showStorage(rec) {
     const card = $("storageCard");

@@ -4559,6 +4559,31 @@ const smokes = [
     await page.waitForSelector('#started li:has-text("Frigate")', { timeout: 10000 });
     if (!/Next: add your camera/.test(await page.textContent('#started'))) throw new Error(`Done says nothing to do next: ${await page.textContent('#started')}`);
   } },
+  // Arr item 6: the Downloads card says in words what's on the way, stuck first with why, and warns before the
+  // media drive fills; a homelab without the media apps shows no card.
+  { name: 'Downloads on Status: what’s on the way in words, stuck first, and the drive’s warning', screen: 'status', mock: { downloads: {
+    apps: true, line: 'Getting 2 · 1 stuck: no search site has it · Drive 88% full',
+    warning: 'The media drive is 88% full: room for about 30 more films.',
+    drive: { name: 'media', used: 88, free: 128849018880, total: 1073741824000, filmsFit: 30 },
+    items: [
+      { name: 'Arrival (2016)', app: 'Radarr', state: 'stuck', words: 'No search site has it yet', percent: 0, request: true },
+      { name: 'Dune: Part Two (2024)', app: 'Radarr', state: 'getting', words: '42% · about 20 minutes left', percent: 42 },
+      { name: 'Slow Horses (3 episodes)', app: 'Sonarr', state: 'getting', words: '90% · almost done', percent: 90 },
+      { name: 'The Bear S4 E1', app: 'Sonarr', state: 'filing', words: 'Finished: being put in the library', percent: 0 },
+    ],
+  } }, run: async (page) => {
+    await page.waitForSelector('#downloadsCard:not([hidden]) #downloadsLine:text-is("Getting 2 · 1 stuck: no search site has it · Drive 88% full")', { timeout: 5000 });
+    if (await page.textContent('#downloadsWarning') !== 'The media drive is 88% full: room for about 30 more films.') throw new Error(`the warning: ${await page.textContent('#downloadsWarning')}`);
+    const first = await page.textContent('#downloadsCard li:first-child');
+    if (!/Arrival \(2016\)/.test(first) || !/No search site has it yet/.test(first) || !/Radarr/.test(first)) throw new Error(`stuck isn't first: ${first}`);
+    if (await page.locator('#downloadsCard li').count() !== 4) throw new Error('not one row per thing on the way');
+    await page.evaluate(() => document.getElementById('downloadsCard').scrollIntoView({ block: 'start' }));
+  } },
+  { name: 'No Downloads card without the media apps', screen: 'status', run: async (page) => {
+    await page.waitForSelector('#statusRows tr', { timeout: 5000 });
+    await page.waitForTimeout(800);
+    if (await page.isVisible('#downloadsCard')) throw new Error('the Downloads card shows without the media apps');
+  } },
   { name: 'Photos per person on Status', screen: 'status', run: async (page) => {
     await page.waitForSelector('#storageCard:not([hidden]) li:has-text("Anna Smith") .when:has-text("412 GB")', { timeout: 5000 });
     await page.waitForSelector('#storageCard .muted:has-text("580 GB in Immich")');

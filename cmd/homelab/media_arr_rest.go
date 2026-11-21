@@ -2,20 +2,15 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
-	"net/url"
-	"os"
-	"path/filepath"
-	"regexp"
 	"slices"
 	"strings"
 	"time"
 
 	"github.com/Snooper42/homelab-wizard/internal/battery"
 	"github.com/Snooper42/homelab-wizard/internal/detect"
+	"github.com/Snooper42/homelab-wizard/internal/downloads"
 	"github.com/Snooper42/homelab-wizard/internal/media"
 	"github.com/Snooper42/homelab-wizard/internal/stopped"
 	"github.com/Snooper42/homelab-wizard/internal/wiring"
@@ -61,7 +56,7 @@ var (
 )
 
 // arrQueues are the apps with a download queue, with their API version.
-var arrQueues = []struct{ id, api string }{{"sonarr", "v3"}, {"radarr", "v3"}, {"lidarr", "v1"}}
+var arrQueues = downloads.Queues
 
 // arrSearch is what each app is asked on a wake: an RSS sync, and a search
 // of what's missing.
@@ -83,55 +78,17 @@ type arrNow struct {
 	Requests bool
 }
 
-var arrKeyRe = regexp.MustCompile(`<ApiKey>([^<]+)</ApiKey>`)
+// The readers, shared with Status's Downloads card (internal/downloads).
+var (
+	arrKey            = downloads.Key
+	seerrKey          = downloads.SeerrKey
+	arrGet            = downloads.Get
+	qbitURL           = downloads.QbitURL
+	qbitList          = downloads.QbitList
+	errNoQbitPassword = downloads.ErrNoQbitPassword
+)
 
-// arrKey is an *arr app's API key, from its config.xml; "" when it has none
-// yet (not set up, so nothing is in its queue).
-func arrKey(dir string) string {
-	data, err := os.ReadFile(filepath.Join(dir, "config.xml"))
-	if err != nil {
-		return ""
-	}
-	if m := arrKeyRe.FindSubmatch(data); m != nil {
-		return string(m[1])
-	}
-	return ""
-}
-
-// seerrKey is Seerr's API key, from its settings.json; "" when it has none.
-func seerrKey(dir string) string {
-	data, err := os.ReadFile(filepath.Join(dir, "settings.json"))
-	if err != nil {
-		return ""
-	}
-	var s struct {
-		Main struct {
-			APIKey string `json:"apiKey"`
-		} `json:"main"`
-	}
-	if json.Unmarshal(data, &s) != nil {
-		return ""
-	}
-	return s.Main.APIKey
-}
-
-// arrGet asks base+path with the key, and decodes the answer into out.
-func arrGet(ctx context.Context, client *http.Client, base, path, key string, out any) error {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, strings.TrimRight(base, "/")+path, nil)
-	if err != nil {
-		return err
-	}
-	req.Header.Set("X-Api-Key", key)
-	resp, err := client.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode/100 != 2 {
-		return fmt.Errorf("answered %d", resp.StatusCode)
-	}
-	return json.NewDecoder(io.LimitReader(resp.Body, 4<<20)).Decode(out)
-}
+type qbitTorrent = downloads.Torrent
 
 // arrPending is what's on the way, asked of each app that is up (apps is
 // wiring's view of the running ones). Seerr is asked even while the rest
@@ -145,7 +102,7 @@ func arrPending(ctx context.Context, apps map[string]wiring.App, env map[string]
 		}
 	}
 	for _, q := range arrQueues {
-		a, ok := apps[q.id]
+		a, ok := apps[q.ID]
 		if !ok {
 			continue
 		}
@@ -156,7 +113,7 @@ func arrPending(ctx context.Context, apps map[string]wiring.App, env map[string]
 		var page struct {
 			TotalRecords int `json:"totalRecords"`
 		}
-		if err := arrGet(ctx, client, a.URL, "/api/"+q.api+"/queue?pageSize=1", key, &page); err != nil {
+		if err := arrGet(ctx, client, a.URL, "/api/"+q.API+"/queue?pageSize=1", key, &page); err != nil {
 			pending(fmt.Sprintf("%s's queue couldn't be read (%v)", a.Name, err))
 		} else if page.TotalRecords > 0 {
 			pending(fmt.Sprintf("%s has %d in its queue", a.Name, page.TotalRecords))
@@ -193,37 +150,6 @@ func arrPending(ctx context.Context, apps map[string]wiring.App, env map[string]
 	return now
 }
 
-// qbitURL is qBittorrent's Web UI from this machine.
-func qbitURL(a wiring.App, env map[string]string) string {
-	if a.URL != "" {
-		return a.URL
-	}
-	port := env["QBITTORRENT_PORT"]
-	if port == "" {
-		port = "8082"
-	}
-	return "http://localhost:" + port
-}
-
-// qbitTorrent is one torrent as qBittorrent's Web API lists it.
-type qbitTorrent struct {
-	State       string  `json:"state"`
-	Progress    float64 `json:"progress"`
-	ContentPath string  `json:"content_path"` // inside its container, under /downloads
-	// For stall rescue (media_stalled.go): the torrent's hash (the *arr
-	// apps' downloadId), its name, and when it last moved or was added.
-	Hash         string `json:"hash"`
-	Name         string `json:"name"`
-	LastActivity int64  `json:"last_activity"`
-	AddedOn      int64  `json:"added_on"`
-}
-
-// stopped is whether qBittorrent is doing nothing with it: paused or
-// stopped (qBittorrent 4 says paused, 5 stopped), or broken.
-func (t qbitTorrent) stopped() bool {
-	return strings.HasPrefix(t.State, "paused") || strings.HasPrefix(t.State, "stopped") || t.State == "error" || t.State == "missingFiles"
-}
-
 // qbitTorrents counts qBittorrent's torrents still downloading (or waiting
 // to: anything not finished and not paused) and those seeding.
 func qbitTorrents(ctx context.Context, client *http.Client, base string, env map[string]string) (downloading, seeding int, err error) {
@@ -233,70 +159,13 @@ func qbitTorrents(ctx context.Context, client *http.Client, base string, env map
 	}
 	for _, t := range torrents {
 		switch {
-		case t.Progress < 1 && !t.stopped():
+		case t.Progress < 1 && !t.Stopped():
 			downloading++
-		case t.Progress >= 1 && !t.stopped():
+		case t.Progress >= 1 && !t.Stopped():
 			seeding++
 		}
 	}
 	return downloading, seeding, nil
-}
-
-// errNoQbitPassword: qBittorrent can't be read without its Web UI password.
-var errNoQbitPassword = fmt.Errorf("no QBITTORRENT_PASSWORD")
-
-// qbitList signs in to qBittorrent's Web API and lists its torrents.
-func qbitList(ctx context.Context, client *http.Client, base string, env map[string]string) ([]qbitTorrent, error) {
-	password := env["QBITTORRENT_PASSWORD"]
-	if password == "" {
-		return nil, errNoQbitPassword
-	}
-	user := env["QBITTORRENT_USER"]
-	if user == "" {
-		user = "admin"
-	}
-	base = strings.TrimRight(base, "/")
-	form := url.Values{"username": {user}, "password": {password}}
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, base+"/api/v2/auth/login", strings.NewReader(form.Encode()))
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	req.Header.Set("Referer", base)
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	body, _ := io.ReadAll(io.LimitReader(resp.Body, 512))
-	resp.Body.Close()
-	var sid *http.Cookie
-	for _, c := range resp.Cookies() {
-		if wiring.QbitSession(c) {
-			sid = c
-		}
-	}
-	if resp.StatusCode != http.StatusOK || sid == nil {
-		return nil, fmt.Errorf("qBittorrent's sign-in answered %d %s", resp.StatusCode, strings.TrimSpace(string(body)))
-	}
-	req, err = http.NewRequestWithContext(ctx, http.MethodGet, base+"/api/v2/torrents/info", nil)
-	if err != nil {
-		return nil, err
-	}
-	req.AddCookie(sid)
-	req.Header.Set("Referer", base)
-	resp, err = client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("qBittorrent's torrents answered %d", resp.StatusCode)
-	}
-	var torrents []qbitTorrent
-	if err := json.NewDecoder(io.LimitReader(resp.Body, 16<<20)).Decode(&torrents); err != nil {
-		return nil, err
-	}
-	return torrents, nil
 }
 
 // arrRunning is wiring's view of the catalog apps running now, and the
@@ -547,8 +416,8 @@ func (h *homelab) arrSearch(ctx context.Context, woke []string) {
 	}
 	client := &http.Client{Timeout: 10 * time.Second}
 	for _, q := range arrQueues {
-		a, ok := apps[q.id]
-		if !ok || !slices.Contains(woke, q.id) {
+		a, ok := apps[q.ID]
+		if !ok || !slices.Contains(woke, q.ID) {
 			continue
 		}
 		key := arrKey(a.ConfigDir)
@@ -557,13 +426,13 @@ func (h *homelab) arrSearch(ctx context.Context, woke []string) {
 		}
 		for deadline := time.Now().Add(arrStartWait); ctx.Err() == nil && time.Now().Before(deadline); time.Sleep(2 * time.Second) {
 			var status map[string]any
-			if arrGet(ctx, client, a.URL, "/api/"+q.api+"/system/status", key, &status) == nil {
+			if arrGet(ctx, client, a.URL, "/api/"+q.API+"/system/status", key, &status) == nil {
 				break
 			}
 		}
-		for _, name := range arrSearch[q.id] {
+		for _, name := range arrSearch[q.ID] {
 			body := strings.NewReader(`{"name":"` + name + `"}`)
-			req, err := http.NewRequestWithContext(ctx, http.MethodPost, strings.TrimRight(a.URL, "/")+"/api/"+q.api+"/command", body)
+			req, err := http.NewRequestWithContext(ctx, http.MethodPost, strings.TrimRight(a.URL, "/")+"/api/"+q.API+"/command", body)
 			if err != nil {
 				continue
 			}

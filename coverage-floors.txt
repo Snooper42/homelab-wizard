@@ -33,6 +33,7 @@ internal/docker 84  # target 60
 internal/dockerapi 82
 internal/docs 92
 internal/domain 83  # target 70
+internal/downloads 68
 internal/duplicati 86
 internal/engine 79
 internal/envfile 79
