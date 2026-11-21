@@ -1131,8 +1131,8 @@ private struct FinanceBillsPage: View {
         Form {
             if let view = finances.plan {
                 if !view.since.isEmpty { SinceSection(view: view, finances: finances) }
-                ForEach(view.periods.prefix(8)) { period in
-                    PeriodSection(period: period, view: view, finances: finances) { payment in
+                ForEach(Array(view.periods.prefix(8).enumerated()), id: \.element.id) { index, period in
+                    PeriodSection(period: period, index: index, view: view, finances: finances) { payment in
                         finances.clearSaveError()
                         editingPayment = payment
                     }
@@ -2841,6 +2841,8 @@ private struct SinceSection: View {
 
 private struct PeriodSection: View {
     let period: FinancePeriod
+    /// Its place among the periods: the accounts after it are set against the one before.
+    let index: Int
     let view: FinancesPlanView
     let finances: FinancesViewModel
     let edit: (FinancePayment) -> Void
@@ -2853,13 +2855,42 @@ private struct PeriodSection: View {
                 figure("Comes in", period.moneyIn, tint: Theme.success)
                 figure("Goes out", period.out, tint: Color.primary,
                        note: period.saved > 0 ? amountText(period.saved, view.plan.currency, finances, whole: true) + " saved" : nil)
-                figure("Left", period.left, tint: period.left < 0 ? Theme.danger : low ? Theme.warning : Color.primary, bold: true)
+                figure("Left", period.left, tint: period.left < 0 ? Theme.danger : low ? Theme.warning : Color.primary, bold: true,
+                       // What the period itself came to, as the computer's Delta beside its title.
+                       note: period.now ? nil : signedWhole(period.moneyIn - period.out) + " this period")
             }
             .padding(.vertical, 4)
             .accessibilityElement(children: .combine)
             if low {
                 Label("Below the cushion you set", systemImage: "exclamationmark.triangle.fill")
                     .foregroundStyle(Theme.warning)
+            }
+            if let payday = BillsPeriod.onPayday(period, in: view) {
+                Text("On payday, once its own payments are out: \(Text(verbatim: amountText(payday, view.plan.currency, finances)).fontWeight(.semibold).foregroundStyle(payday < 0 ? Theme.danger : Theme.ink))")
+                    .font(.footnote)
+                    .foregroundStyle(Theme.secondaryInk)
+            }
+            let tiles = BillsPeriod.tiles(index, in: view)
+            if !tiles.isEmpty {
+                AccountsAfter(tiles: tiles, currency: view.plan.currency, finances: finances)
+                    .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
+            }
+            // Whose paycheck starts it, as the computer's first row.
+            if !period.now, let pay = period.pay {
+                HStack(spacing: 12) {
+                    LogoCircle(payee: BillsPeriod.payWords(pay, people: view.plan.people), size: 36)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(verbatim: BillsPeriod.payWords(pay, people: view.plan.people))
+                        if let date = pay.date {
+                            Text(date, format: .dateTime.weekday(.abbreviated).month().day())
+                                .font(.caption).foregroundStyle(.secondary)
+                        }
+                    }
+                    Spacer(minLength: 8)
+                    Money(value: pay.amount, currency: view.plan.currency, finances: finances, signed: true)
+                        .foregroundStyle(Theme.success)
+                }
+                .accessibilityElement(children: .combine)
             }
             // By position: the same payment can come twice on one day.
             ForEach(period.rows.indices, id: \.self) { i in
@@ -2880,6 +2911,13 @@ private struct PeriodSection: View {
         } header: {
             Text(title)
         }
+    }
+
+    /// "+$1,685" or "-$40", whole, for the period's own change.
+    private func signedWhole(_ value: Double) -> String {
+        let text = amountText(abs(value), view.plan.currency, finances, whole: true)
+        guard text != "••••" else { return text }
+        return (value < 0 ? "-" : "+") + text
     }
 
     private func figure(_ title: LocalizedStringKey, _ value: Double, tint: Color, bold: Bool = false, note: String? = nil) -> some View {
@@ -2916,6 +2954,53 @@ private struct PeriodSection: View {
     }
 }
 
+/// Every account after a pay period, side by side, with what changed (the
+/// computer's Accounts, paycheck by paycheck); it scrolls sideways.
+private struct AccountsAfter: View {
+    let tiles: [BillsPeriod.Tile]
+    let currency: String
+    let finances: FinancesViewModel
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("After This Pay Period")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(Theme.secondaryInk)
+                .padding(.horizontal, 16)
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    ForEach(tiles) { tile in
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(verbatim: tile.name)
+                                .font(.caption)
+                                .foregroundStyle(Theme.secondaryInk)
+                                .lineLimit(1)
+                            Text(verbatim: amountText(tile.after, currency, finances, whole: true) + (tile.owes ? " owed" : ""))
+                                .font(.subheadline.weight(.semibold))
+                                .monospacedDigit()
+                                .foregroundStyle(Theme.ink)
+                                .lineLimit(1)
+                            if abs(tile.change) >= 0.5 {
+                                // A card owing more is the bad way; any other account holding less is.
+                                let worse = tile.owes ? tile.change > 0 : tile.change < 0
+                                Text(verbatim: (tile.change < 0 ? "-" : "+") + amountText(abs(tile.change), currency, finances, whole: true))
+                                    .font(.caption2)
+                                    .foregroundStyle(worse ? Theme.danger : Theme.success)
+                            }
+                        }
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 8)
+                        .frame(minWidth: 104, alignment: .leading)
+                        .background(Theme.canvas, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                        .accessibilityElement(children: .combine)
+                    }
+                }
+                .padding(.horizontal, 16)
+            }
+        }
+    }
+}
+
 private struct RowLine: View {
     let row: FinanceRow
     let view: FinancesPlanView
@@ -2941,9 +3026,11 @@ private struct RowLine: View {
                             .accessibilityLabel("Saved")
                     }
                 }
+                // Its day, and how it's paid: its kind, on a card, from another account or someone else.
                 if let date = row.date {
-                    Text(date, format: .dateTime.weekday(.abbreviated).month().day())
+                    Text(verbatim: "\(date.formatted(.dateTime.weekday(.abbreviated).month().day())) · \(BillsPeriod.via(row, in: view))")
                         .font(.caption).foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
             if !large { Spacer() }
