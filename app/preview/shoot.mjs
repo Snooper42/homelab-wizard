@@ -805,6 +805,13 @@ const smokes = [
     const finLook = await look();
     if (JSON.stringify(tidyLook) !== JSON.stringify(finLook)) throw new Error(`Tidy Up ${JSON.stringify(tidyLook)}, Finances ${JSON.stringify(finLook)}`);
   } },
+  // Arr item 2c: stall rescue's line in Recently done, in words, with the inbox's mark (not the computer's).
+  { name: 'Tidy Up: Recently done says when a stuck download was swapped for another', screen: 'tidy', mock: { tidy: { ...tidy, activity: [...tidy.activity,
+    { at: tidyAt(0.2), kind: 'downloads', text: 'Nobody was sharing “A Film (2024)” for 6 hours, so Radarr is looking for another.' }] } }, run: async (page) => {
+    const row = page.locator('#tidy .tidydone .fx-rows li:has-text("Nobody was sharing")');
+    await row.waitFor({ timeout: 5000 });
+    if (!(await row.textContent()).includes('Radarr is looking for another')) throw new Error('the words');
+  } },
   // Rows as Finances lists them (L5): what a job freed is on the right of its line in Recently done, where Finances puts an
   // amount, and its words no longer repeat it; a line from before, its size in its words, reads as it did.
   { name: 'Tidy Up: Recently done puts what a job freed on the right, as Finances does an amount', screen: 'tidy', mock: { tidy: { ...tidy, activity: [...tidy.activity,
