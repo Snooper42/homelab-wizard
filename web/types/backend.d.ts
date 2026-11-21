@@ -1412,6 +1412,7 @@ interface Backend {
     FinancesReceipt(arg1: string): Promise<string>;
     FinancesUpdatePrices(): Promise<cardprice.Result>;
     FinancesWall(): Promise<finance.Wall>;
+    FixQbitPassword(): Promise<void>;
     Health(): Promise<app.HealthInfo>;
     History(arg1: string, arg2: string, arg3: number): Promise<history.Entry[]>;
     Homelab(arg1: string, arg2: string, arg3: boolean): Promise<void>;

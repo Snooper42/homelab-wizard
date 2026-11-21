@@ -276,11 +276,14 @@ func (w *Wirer) Apply(ctx context.Context, progress func(Link)) []Link {
 	links := []Link{}
 	for _, s := range w.steps() {
 		state, detail, err := s.do(ctx)
-		if err != nil {
-			state, detail = "failed", err.Error()
-		}
 		l := Link{Text: s.text, State: state, Detail: detail}
-		if state == "manual" {
+		var refused *qbitRefused
+		switch {
+		case errors.As(err, &refused):
+			l.State, l.Detail, l.Fix = "failed", refused.why, refused.fix
+		case err != nil:
+			l.State, l.Detail = "failed", err.Error()
+		case state == "manual":
 			l.Fix = w.fixes[s.text]
 		}
 		if progress != nil {
