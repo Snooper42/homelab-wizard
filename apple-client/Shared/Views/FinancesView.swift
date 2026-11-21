@@ -3079,6 +3079,7 @@ struct TransactionsView: View {
                 Text("Everything").tag(TransactionFilter.Flow.all)
                 Text("Money Out").tag(TransactionFilter.Flow.moneyOut)
                 Text("Money In").tag(TransactionFilter.Flow.moneyIn)
+                Text("Between My Accounts").tag(TransactionFilter.Flow.betweenAccounts)
             }
             Picker("Category", selection: $filter.category.animation(.snappy)) {
                 Text("Every Category").tag(String?.none)
@@ -3087,6 +3088,22 @@ struct TransactionsView: View {
                 }
             }
             .pickerStyle(.menu)
+            Picker("Month", selection: $filter.month.animation(.snappy)) {
+                Text("Every Month").tag(Date?.none)
+                ForEach(filterMonths, id: \.self) { month in
+                    Text(verbatim: month.formatted(.dateTime.month(.wide).year())).tag(Date?.some(month))
+                }
+            }
+            .pickerStyle(.menu)
+            if !filterTags.isEmpty {
+                Picker("Tag", selection: $filter.tag.animation(.snappy)) {
+                    Text("Every Tag").tag(String?.none)
+                    ForEach(filterTags, id: \.self) { tag in
+                        Text(verbatim: tag).tag(String?.some(tag))
+                    }
+                }
+                .pickerStyle(.menu)
+            }
             Toggle("$100 or More", isOn: Binding(
                 get: { filter.atLeast != nil },
                 set: { on in withAnimation(.snappy) { filter.atLeast = on ? 100 : nil } }
@@ -3095,6 +3112,16 @@ struct TransactionsView: View {
             Label("Filter", systemImage: filter.isOn ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle")
         }
         .sensoryFeedback(.selection, trigger: filter)
+    }
+
+    /// The months the transactions fall in, newest first.
+    private var filterMonths: [Date] {
+        TransactionFilter.months(in: finances.ledger?.transactions ?? [])
+    }
+
+    /// Every tag on a transaction.
+    private var filterTags: [String] {
+        TransactionFilter.tags(in: finances.ledger?.transactions ?? [])
     }
 
     /// The categories the transactions have, by their top, as Spending counts them.
@@ -3151,6 +3178,12 @@ struct TransactionsView: View {
         let groups = sort.byDay ? months(rows) : []
         let running = sort.isNewestFirst ? runningBalances(groups) : [:]
         List(selection: listSelection) {
+            // As the computer's first card: every account, moves between them left out.
+            if search.isEmpty, let ledger = finances.ledger, !ledger.transactions.isEmpty {
+                Section("This Month, Every Account") {
+                    ThisMonthCard(month: ThisMonth.make(ledger.transactions, today: Date()), finances: finances)
+                }
+            }
             if search.isEmpty, let view = finances.plan, !view.plan.accounts.isEmpty {
                 Section {
                     AccountCard(account: view.plan.accounts.first { $0.id == account }, view: view, finances: finances)
@@ -3183,38 +3216,8 @@ struct TransactionsView: View {
                         .listRowSeparator(.hidden)
                 }
             } header: {
-                // At the largest text sizes the button goes under the heading: beside it,
-                // "Latest Transactions" broke mid-word ("Trans- actions", large-transactions).
-                (typeSize.isAccessibilitySize ? AnyLayout(VStackLayout(alignment: .leading, spacing: 6))
-                                              : AnyLayout(HStackLayout(alignment: .firstTextBaseline))) {
-                    Text(verbatim: sort.heading)
-                        .font(.title2.weight(.bold))
-                        .foregroundStyle(Theme.ink)
-                    if !typeSize.isAccessibilitySize { Spacer() }
-                    if filter.isOn {
-                        Button("Clear Filter") {
-                            withAnimation(.snappy) { filter = TransactionFilter() }
-                        }
-                        .buttonStyle(.bordered)
-                        .buttonBorderShape(.capsule)
-                        .controlSize(.small)
-                    } else if !sort.isNewestFirst {
-                        Button("Newest First") { setSort(.newestFirst) }
-                            .buttonStyle(.bordered)
-                            .buttonBorderShape(.capsule)
-                            .controlSize(.small)
-                            .dynamicTypeSize(...DynamicTypeSize.accessibility1)
-                    } else if newCount > 0 || onlyNew {
-                        Button(onlyNew ? "Show All" : "\(newCount) New") {
-                            withAnimation(.snappy) { onlyNew.toggle() }
-                        }
-                        .buttonStyle(.bordered)
-                        .buttonBorderShape(.capsule)
-                        .controlSize(.small)
-                        .dynamicTypeSize(...DynamicTypeSize.accessibility1)
-                    }
-                }
-                .textCase(nil)
+                latestHeader(newCount: newCount, all: all)
+                    .textCase(nil)
             }
             ForEach(groups) { group in
                 Section(FinanceLedger.sectionTitle(group.month, trackFrom: finances.plan?.plan.trackFrom)) {
@@ -3343,6 +3346,52 @@ struct TransactionsView: View {
         }
         .sensoryFeedback(.selection, trigger: account)
         .sensoryFeedback(.success, trigger: finances.savedCount)
+    }
+
+    /// Transactions' heading: the order it's in, a button beside it (Clear
+    /// Filter, Newest First, or what's new), and under it, with a search or
+    /// a filter, how many and what they come to together.
+    private func latestHeader(newCount: Int, all: [FinanceTransaction]) -> some View {
+        // At the largest text sizes the button goes under the heading: beside it,
+        // "Latest Transactions" broke mid-word ("Trans- actions", large-transactions).
+        VStack(alignment: .leading, spacing: 4) {
+            (typeSize.isAccessibilitySize ? AnyLayout(VStackLayout(alignment: .leading, spacing: 6))
+                                          : AnyLayout(HStackLayout(alignment: .firstTextBaseline))) {
+                Text(verbatim: sort.heading)
+                    .font(.title2.weight(.bold))
+                    .foregroundStyle(Theme.ink)
+                if !typeSize.isAccessibilitySize { Spacer() }
+                if filter.isOn {
+                    Button("Clear Filter") {
+                        withAnimation(.snappy) { filter = TransactionFilter() }
+                    }
+                    .buttonStyle(.bordered)
+                    .buttonBorderShape(.capsule)
+                    .controlSize(.small)
+                } else if !sort.isNewestFirst {
+                    Button("Newest First") { setSort(.newestFirst) }
+                        .buttonStyle(.bordered)
+                        .buttonBorderShape(.capsule)
+                        .controlSize(.small)
+                        .dynamicTypeSize(...DynamicTypeSize.accessibility1)
+                } else if newCount > 0 || onlyNew {
+                    Button(onlyNew ? "Show All" : "\(newCount) New") {
+                        withAnimation(.snappy) { onlyNew.toggle() }
+                    }
+                    .buttonStyle(.bordered)
+                    .buttonBorderShape(.capsule)
+                    .controlSize(.small)
+                    .dynamicTypeSize(...DynamicTypeSize.accessibility1)
+                }
+            }
+            // A search or a filter: how many, and what they come to together (the computer's Together).
+            if !search.isEmpty || filter.isOn, !all.isEmpty {
+                let together = TransactionFilter.together(all, account: search.isEmpty ? account : nil)
+                Text(verbatim: "\(TransactionFilter.count(all.count)) · together \(amountText(together, finances.currency, finances))")
+                    .font(.subheadline)
+                    .foregroundStyle(Theme.secondaryInk)
+            }
+        }
     }
 
     /// A transaction's row, opening its page; swiped, Reviewed while it's new.
@@ -3643,6 +3692,69 @@ struct WalletTransactionRow: View {
         }
         if transaction.isSplit { return "Split" }
         return transaction.category.isEmpty ? nil : transaction.category
+    }
+}
+
+/// This month at the top of Transactions, as the computer's first card:
+/// what came in, went out and was kept, and money out against last month's
+/// by the same day.
+private struct ThisMonthCard: View {
+    let month: ThisMonth
+    let finances: FinancesViewModel
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            ViewThatFits(in: .horizontal) {
+                HStack(alignment: .top, spacing: 12) { stats }
+                VStack(alignment: .leading, spacing: 8) { stats }
+            }
+            if let comparison {
+                comparison
+                    .font(.subheadline)
+                    .foregroundStyle(Theme.secondaryInk)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(.vertical, 4)
+    }
+
+    @ViewBuilder
+    private var stats: some View {
+        stat(month.moneyIn, caption: "Money in", tint: Theme.success, signed: false)
+        stat(month.moneyOut, caption: "Money out", tint: Theme.ink, signed: false)
+        stat(month.kept, caption: "Kept · \(TransactionFilter.count(month.count))", tint: Theme.ink, signed: true)
+    }
+
+    private func stat(_ value: Double, caption: String, tint: Color, signed: Bool) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(verbatim: whole(value, signed: signed))
+                .font(.title3.weight(.semibold))
+                .monospacedDigit()
+                .foregroundStyle(tint)
+                .privacySensitive()
+            Text(verbatim: caption)
+                .font(.footnote)
+                .foregroundStyle(Theme.secondaryInk)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityElement(children: .combine)
+    }
+
+    /// In whole units, as the computer's card; "+" before what's kept.
+    private func whole(_ value: Double, signed: Bool) -> String {
+        let text = amountText(value, finances.currency, finances, whole: true)
+        return signed && value > 0 && text != "••••" ? "+" + text : text
+    }
+
+    /// "$212 less out than by Oct 21 last month ($3,427)."
+    private var comparison: Text? {
+        guard let change = month.outChange, let before = month.outBefore, let day = month.lastMonthDay else { return nil }
+        let dayText = day.formatted(.dateTime.month(.abbreviated).day())
+        if change == 0 { return Text(verbatim: "The same out as by \(dayText) last month.") }
+        let lead = Text(verbatim: "\(whole(abs(change), signed: false)) \(change > 0 ? "more" : "less")")
+            .fontWeight(.semibold)
+            .foregroundStyle(change > 0 ? Theme.danger : Theme.success)
+        return Text("\(lead) out than by \(dayText) last month (\(whole(before, signed: false))).")
     }
 }
 

@@ -127,7 +127,9 @@ struct FinanceInsightsTests {
         #expect(!TransactionFilter().isOn)
         #expect(ids(TransactionFilter(flow: .moneyIn)) == ["d", "j"])
         #expect(ids(TransactionFilter(category: "Food")) == ["k"])
-        #expect(ids(TransactionFilter(flow: .moneyOut, atLeast: 100)) == ["a", "e", "g", "i"])
+        // Money out leaves out a move between the household's own accounts, as the computer's.
+        #expect(ids(TransactionFilter(flow: .moneyOut, atLeast: 100)) == ["a", "g", "i"])
+        #expect(ids(TransactionFilter(flow: .betweenAccounts)) == ["e"])
         #expect(TransactionFilter(atLeast: 100).isOn)
     }
 
