@@ -1,6 +1,6 @@
 # For the owner
 
-The one file you need. The three loops read it at the start of every session.
+The one file you need. The loops read it at the start of every session.
 
 **To tell them something:** add a line under **Doesn't work or bugs me** and commit it. On GitHub from your phone: `github.com/Snooper42/homelab-wizard`, this file, the pencil, then *Commit changes* to main.
 
@@ -11,7 +11,7 @@ The one file you need. The three loops read it at the start of every session.
 On each account, open Claude Code on the web, start a session on this repository, and paste its line:
 
 - **Now, the fresh account (until Tue Nov 24, 9 PM ET):**
-  `/loop Run: git fetch origin main claude/vibrant-mayer-jiim8w. Then read .claude/prompts/setup-loop.md from main if it's there, else from the branch (git show FETCH_HEAD:.claude/prompts/setup-loop.md), and follow it.`
+  `/loop Run: git fetch origin main && git fetch origin claude/vibrant-mayer-jiim8w:refs/remotes/origin/plan. Read .claude/prompts/setup-loop.md from origin/main if it's there, else from origin/plan (git show origin/plan:.claude/prompts/setup-loop.md), and follow it.`
 - **Tue Nov 24, 9 PM ET, the second account (Redesign):**
   `Read .claude/prompts/lanes.md and .claude/prompts/redesign-loop.md, and follow them.`
 - **Wed Nov 25, 9 PM ET, the third account (Money):**

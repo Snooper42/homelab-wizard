@@ -2,13 +2,13 @@
 
 **Launcher** (the owner pastes this into the fresh account's first session):
 
-    /loop Run: git fetch origin main claude/vibrant-mayer-jiim8w. Then read .claude/prompts/setup-loop.md from main if it's there, else from the branch (git show FETCH_HEAD:.claude/prompts/setup-loop.md), and follow it.
+    /loop Run: git fetch origin main && git fetch origin claude/vibrant-mayer-jiim8w:refs/remotes/origin/plan. Read .claude/prompts/setup-loop.md from origin/main if it's there, else from origin/plan (git show origin/plan:.claude/prompts/setup-loop.md), and follow it.
 
 **Paused:** no
 
 ## The job
 
-Get the other two loops ready to start, and make the first change the owner can see, before lane R's account opens on Tue Nov 24 at 9 PM ET. Follow `lanes.md` (every session's steps and its rules) as lane **S**, with these differences:
+Get the other two loops ready to start, and make the first change the owner can see, before lane R's account opens on Tue Nov 24 at 9 PM ET. Follow `lanes.md` (every session's steps and its rules) as lane **S**. **Until S1 is merged,** read `lanes.md` and the other loop files from `origin/plan`, the same way you read this one. These are the differences:
 
 - Your title is `Loop S: Set up`, and your branches are `claude/setup-*`.
 - **Make no scheduled task:** `/loop` paces you.
