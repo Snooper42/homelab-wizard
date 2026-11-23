@@ -1,5 +1,7 @@
 # A household member's own Finances, sealed so only she can read them
 
+> **Archived (the owner, Nov 23, 2026): history only.** No loop reads this file; the loops are in `lanes.md`, and the owner's notes and questions are in `owner.md`. A loop file may point at one named section here: read only that.
+
 **The owner's ask** (Nov 13, 2026, chosen by multiple choice): his wife checks in on her **own** finances from her phone, and **only she** can read them, **even he**, who runs the homelab computer, cannot.
 - **Where:** in the Homelab iPhone app and on the phone's web page.
 - **What:** her own accounts and bills, what he already shares with her, and her own bank files.

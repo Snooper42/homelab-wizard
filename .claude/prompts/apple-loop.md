@@ -1,5 +1,7 @@
 # The iPhone and iPad app: the loop (lane 4)
 
+> **Archived (the owner, Nov 23, 2026): history only.** No loop reads this file; the loops are in `lanes.md`, and the owner's notes and questions are in `owner.md`. A loop file may point at one named section here: read only that.
+
 The owner, Nov 14: "I want to iterate the shit out of the iphone and ipad app." This file is the whole job for a session that runs it. Do only what is here: `apple-client/` (lane 4, `lanes.md`) and what the app needs on the computer's side (a new phone call, its Go test, `docs/Parity.md`). Everything else in `handoff.md` (task 15, 2G item 22, 2H, 2I) is parked for another session. Don't start any of it.
 
 ## Launcher (paste into a new session)

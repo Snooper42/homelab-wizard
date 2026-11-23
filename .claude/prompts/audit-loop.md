@@ -1,5 +1,7 @@
 # Audit: the UX and security loops
 
+> **Archived (the owner, Nov 23, 2026): history only.** No loop reads this file; the loops are in `lanes.md`, and the owner's notes and questions are in `owner.md`. A loop file may point at one named section here: read only that.
+
 The master prompt for two sessions that audit homelab-wizard and fix what
 they find, one finished fix per round, for as long as their loops run. One
 session is the **UX team**, the other the **security team**. Start each on
