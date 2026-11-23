@@ -78,6 +78,7 @@ nav:
       - Networking: docs/Networking.md
       - Security: docs/Security.md
       - Usability: docs/Usability.md
+      - Redesign: docs/Redesign.md
       - Storage: docs/Storage.md
       - Docker: docs/Docker.md
       - What each device can do: docs/Parity.md

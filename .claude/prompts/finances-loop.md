@@ -1,5 +1,7 @@
 # Finances: the build-out loop
 
+> **Archived (the owner, Nov 23, 2026): history only.** No loop reads this file; the loops are in `lanes.md`, and the owner's notes and questions are in `owner.md`. A loop file may point at one named section here: read only that.
+
 The master prompt for a session that keeps improving the Finances screen on
 its own. Start a new session on this repository and send:
 

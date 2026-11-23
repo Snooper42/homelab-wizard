@@ -1,5 +1,7 @@
 # One session for everything: Tidy Up, Finances, and the iPhone app (Nov 12, 2026, evening)
 
+> **Archived (the owner, Nov 23, 2026): history only.** No loop reads this file; the loops are in `lanes.md`, and the owner's notes and questions are in `owner.md`. A loop file may point at one named section here: read only that.
+
 The owner has one Claude account for this repository. This file is the hub: where the work stands, what to do first, and how to hand on. It sits above the files it points to (section 5); each keeps its detail and its own rules.
 
 You are working on homelab-wizard (github.com/Snooper42/homelab-wizard) with its owner. They are not a designer or a developer, and they work on this in the evening, at home with their Mac and phones. Explain choices in plain words, recommend one option rather than listing many, and show what changed. Keep reports plain and short, and say what you need from them. **Give every time in New York time (Eastern, America/New_York), never UTC** (the owner, Nov 11); convert what tools report in UTC, and schedule check-ins with the zone in brackets (`2026-11-11T20:00:00[America/New_York]`).

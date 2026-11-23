@@ -1,5 +1,7 @@
 # Features: the build-out loop
 
+> **Archived (the owner, Nov 23, 2026): history only.** No loop reads this file; the loops are in `lanes.md`, and the owner's notes and questions are in `owner.md`. A loop file may point at one named section here: read only that.
+
 The master prompt for a session that keeps building the [Feature Roadmap](<../../docs/Feature Roadmap.md>) on its own, one finished feature per round, each in its own pull request that it merges once CI is green. Start it from a Claude Code session of your own on this repository (a session another session started cannot run /loop), and send:
 
     /loop Read .claude/prompts/features-loop.md and do the next round.
