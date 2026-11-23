@@ -15,7 +15,7 @@ Get accounts A and B ready to start, and make the first change the owner can see
 ## The work, in order
 
 - [ ] **S0. Check the machinery.** Your scheduled task is made (lanes.md step 5). You can open, check and merge a pull request with the GitHub tools (S1 proves it), and send a push notification. Anything that asks the owner for a permission, or can't be done, goes in `owner.md` at once: it would stop accounts A and B too.
-- [ ] **S1. Put the plan on main.** Open a pull request from `claude/vibrant-mayer-jiim8w` to main, with this title: *The redesign's target and three loops that ship by themselves*. It holds:
+- [x] **S1. Put the plan on main.** Open a pull request from `claude/vibrant-mayer-jiim8w` to main, with this title: *The redesign's target and three loops that ship by themselves*. It holds:
   - `docs/Redesign.md` and its pictures
   - the mocks' source (`app/preview/redesign`)
   - these loop files

@@ -28,6 +28,11 @@ Rough is fine: one line each, worst first, naming the screen.
 
 The loops add questions here: the question, the options, the one they recommend, and what they're doing meanwhile. Write your answer under it.
 
+- **From account C's set-up (Nov 23, 6 PM ET):** account C couldn't make its scheduled task, *Homelab loop, account C* (every 5 hours, a fresh session, account C's start line): Claude Code's permission check blocked it. Without it, account C only runs when you start a session. Pick one:
+  1. **Recommended:** make it yourself on claude.ai/code, *Scheduled tasks*: every 5 hours, a new session on this repository, account C's start line as its prompt. Do the same for accounts A and B when they start (every 3 hours for A, every 5 for B).
+  2. Allow `mcp__claude-code-remote__create_trigger` in the account's Claude Code permission settings, and the next session makes it.
+
+  Meanwhile account C carries on with the set-up in this session.
 - **From the redesign (Nov 23):** show your wife the *Finances on a partner's phone* picture (`docs/Redesign.md`, *On the iPhone*). Is that what she'd want?
 - **From the redesign (Nov 23):** Setup off the phone's tab bar, with its unfinished steps shown on Status: OK?
 - **From the redesign (Nov 23):** the phone's accounts as small cards to swipe, or as a list?
