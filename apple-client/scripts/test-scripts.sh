@@ -126,31 +126,34 @@ expect "the app and its widget show the same version, so Xcode doesn't warn" bas
 expect "it says which version it made" says "The Homelab app ${v%% *} (build ${v#* })"
 
 echo "app-version.sh"
-# A history of its own: VERSION, then changes to the app and to other files.
+# A history of its own: the computer's VERSION and its release tags, then
+# changes to the app and to other files.
 repo="$WORK/version-repo"
 mkdir -p "$repo/apple-client/scripts" "$repo/apple-client/Shared" "$repo/apple-client/Widget"
 cp "$HERE/app-version.sh" "$repo/apple-client/scripts/"
 g() { git -C "$repo" -c user.name=t -c user.email=t@example.com "$@" >/dev/null 2>&1; }
-commit() { echo "$RANDOM" >>"$repo/apple-client/$1"; g add -A; g commit -m "$1"; }
+commit() { echo "$RANDOM" >>"$repo/$1"; g add -A; g commit -m "$1"; }
 g init -q
-commit Shared/a.swift
-printf '0.4\n' >"$repo/apple-client/VERSION"; commit Shared/b.swift
+printf '0.17.0\n' >"$repo/VERSION"
+commit apple-client/Shared/a.swift
 av() { OUT="$("$repo/apple-client/scripts/app-version.sh" 2>&1)"; RC=$?; }
-av; expect "the change that sets VERSION is .0, and the build counts every change to the app" test "$OUT" = "0.4.0 2"
-commit Shared/a.swift; commit Widget/w.swift
-av; expect "each change to the app after it is one more" test "$OUT" = "0.4.2 4"
-commit README.md; commit scripts/x.sh
-av; expect "a change to the README or a script isn't a new version" test "$OUT" = "0.4.2 4"
-printf '0.5\n' >"$repo/apple-client/VERSION"; g add -A; g commit -m "0.5"
-av; expect "raising VERSION starts its count again; the build doesn't go back" test "$OUT" = "0.5.0 4"
-commit Shared/a.swift
-av; expect "and goes on from there" test "$OUT" = "0.5.1 5"
-cp -r "$repo/apple-client" "$WORK/no-history"
+av; expect "before the computer's first release: its VERSION, and the build counts every change to the app" test "$OUT" = "0.17.0 1"
+commit internal/x.go; g tag v0.40.2
+commit apple-client/Shared/a.swift; commit apple-client/Widget/w.swift
+av; expect "the computer's newest release, so both show the same number" test "$OUT" = "0.40.2 3"
+commit internal/x.go; g tag v0.40.10; g tag v0.40.9 HEAD~1; g tag nightly; g tag v0.41.0-beta
+av; expect "the newest by number (0.40.10 after 0.40.9), never nightly or a test tag" test "$OUT" = "0.40.10 3"
+commit apple-client/README.md; commit apple-client/scripts/x.sh
+av; expect "a change to the README or a script isn't a new build" test "$OUT" = "0.40.10 3"
+g checkout -q -b side HEAD~3; commit apple-client/Shared/b.swift; g tag v0.50.0
+g checkout -q -
+av; expect "only a release this copy has: not one on another branch" test "$OUT" = "0.40.10 3"
+cp -r "$repo/apple-client" "$WORK/no-history"; cp "$repo/VERSION" "$WORK/VERSION"
 OUT="$("$WORK/no-history/scripts/app-version.sh" 2>&1)"
-expect "without the history: VERSION with .0, build 0" test "$OUT" = "0.5.0 0"
-printf 'version 0.4\n' >"$WORK/no-history/VERSION"
+expect "without the history: the computer's VERSION, build 0" test "$OUT" = "0.17.0 0"
+printf 'version 0.4\n' >"$WORK/VERSION"
 OUT="$("$WORK/no-history/scripts/app-version.sh" 2>&1)"; RC=$?
-expect "a VERSION that isn't two numbers stops it, saying why" bash -c '[ "$0" != 0 ] && grep -q "should be two numbers" <<<"$1"' "$RC" "$OUT"
+expect "a VERSION that isn't three numbers stops it, saying why" bash -c '[ "$0" != 0 ] && grep -q "should be three numbers" <<<"$1"' "$RC" "$OUT"
 
 echo "phones.sh"
 run "$HERE/phones.sh"

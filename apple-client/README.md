@@ -171,13 +171,12 @@ The same checks run on every change on GitHub's Mac runner (`.github/workflows/a
 
 ## Its version
 
-The Homelab app has a version of its own, apart from the computer's Homelab Wizard (which counts its releases, 0.36.10 and on). **Settings › About** shows it, such as *Homelab app 0.4.2 (115)*, so it's plain which version is on a phone after `homelab-phone`.
+The Homelab app has the same version as the computer's Homelab Wizard (the owner, Nov 23, 2026). **Settings › About** shows it, such as *Homelab app 0.40.3 (118)*, and Settings › This Mac on the computer shows *0.40.3* for the same release, so it's plain the two match.
 
-- **The first two numbers** (`0.4`) are in `apple-client/VERSION`. They go up by hand when a milestone lands, as the owner decides: `0.5` next, and **`1.0` is kept for the day the app is signed and on TestFlight** (*The day you sign*, below).
-- **The last number** goes up by one with each change to the app merged to main (`Shared/` and `Widget/`): 0.4.0, 0.4.1, 0.4.2… A change only to the README, the tests or the scripts isn't a new version. Raising `VERSION` starts it at 0 again.
-- **The build**, in brackets, counts every change to the app ever, so it only goes up, even when `VERSION` does, as TestFlight needs.
+- **The version** is the newest Homelab Wizard release the checkout you build from has: its `v0.40.3` tag, which the release workflow makes for each build of main. A `git pull` brings the tags with it. Before the first release, or in a copy without them, it's the computer's `VERSION` file. The day the app is signed and on TestFlight (*The day you sign*, below), raising that file to `1.0.0` moves both together.
+- **The build**, in brackets, counts every change to the app ever (`Shared/` and `Widget/`), so it only goes up, as TestFlight needs. Two builds of the phone made between the same two computer releases have the same version and different builds. A change only to the README, the tests or the scripts isn't a new build.
 
-`scripts/app-version.sh` works it out from `VERSION` and this checkout's history, and `make-xcode-project.sh` puts it in the project, the widget's too. A copy without the history (a downloaded zip, a shallow clone) shows just the first two numbers with .0. `scripts/test-scripts.sh` checks each of these.
+`scripts/app-version.sh` works it out from the tags and this checkout's history, and `make-xcode-project.sh` puts it in the project, the widget's too. A copy without the whole history (a downloaded zip, a shallow clone) shows build 0. `scripts/test-scripts.sh` checks each of these.
 
 ## The day you sign
 

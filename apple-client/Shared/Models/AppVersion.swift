@@ -1,7 +1,7 @@
 import Foundation
 
-/// The Homelab app's own version, as `scripts/app-version.sh` worked it out
-/// when the Xcode project was made: "0.4.3", and the build, "118".
+/// The Homelab app's version, the computer's (`scripts/app-version.sh`), as worked out
+/// when the Xcode project was made: "0.40.3", and the build, "118".
 /// Settings › About is to show it, so it's plain which version is on the phone.
 struct AppVersion: Sendable, Equatable {
     let version: String
@@ -19,7 +19,7 @@ struct AppVersion: Sendable, Equatable {
     /// This copy of the app's.
     nonisolated static var current: AppVersion? { from(Bundle.main.infoDictionary) }
 
-    /// "0.4.3 (118)"; just "0.4.3" when the project was made without the
+    /// "0.40.3 (118)"; just "0.40.3" when the project was made without the
     /// history to count builds from (build 0), or with none at all.
     var text: String {
         build.isEmpty || build == "0" ? version : "\(version) (\(build))"
