@@ -28,11 +28,13 @@ Rough is fine: one line each, worst first, naming the screen.
 
 The loops add questions here: the question, the options, the one they recommend, and what they're doing meanwhile. Write your answer under it.
 
-- **From account C's set-up (Nov 23, 6 PM ET):** account C couldn't make its scheduled task, *Homelab loop, account C* (every 5 hours, a fresh session, account C's start line): Claude Code's permission check blocked it. Without it, account C only runs when you start a session. Pick one:
-  1. **Recommended:** make it yourself on claude.ai/code, *Scheduled tasks*: every 5 hours, a new session on this repository, account C's start line as its prompt. Do the same for accounts A and B when they start (every 3 hours for A, every 5 for B).
-  2. Allow `mcp__claude-code-remote__create_trigger` in the account's Claude Code permission settings, and the next session makes it.
+- **Why you see nothing change (account C, Nov 23):** what I found, and two questions only you can answer.
+  - **The computer's app:** every change to main that touches it is published as a numbered release, with the Mac, Windows and Linux files: the newest is **0.40.3, Sat Nov 21, 1:52 PM ET**. The two changes merged after it were the iPhone app's only, so the computer's app hasn't changed since Saturday afternoon. Your Mac looks for a new build every 15 minutes and downloads it, but puts it in place only when you click **Update** or quit the app (with *install when the app quits* on): an app left open all the time keeps the old one. Its update tests pass, and each build's Mac download count suggests your Mac fetches them.
+  - **The iPhone app:** most of the last days' work (Bills, Edit payment, Budgets, Sort, This month) was the iPhone app's, and it reaches you only when you build it in Xcode; a build lasts 7 days with a free Apple ID. From this change on, the phone shows the computer's version number (Settings › About), so the two can be compared at a glance.
+  - **Question 1:** what version does Settings › This Mac show on the computer? (0.40.3 is the newest.)
+  - **Question 2:** when did you last build the iPhone app in Xcode?
 
-  Meanwhile account C carries on with the set-up in this session.
+  Meanwhile the loops carry on with the redesign's card (S3).
 - **From the redesign (Nov 23):** show your wife the *Finances on a partner's phone* picture (`docs/Redesign.md`, *On the iPhone*). Is that what she'd want?
 - **From the redesign (Nov 23):** Setup off the phone's tab bar, with its unfinished steps shown on Status: OK?
 - **From the redesign (Nov 23):** the phone's accounts as small cards to swipe, or as a list?
@@ -41,4 +43,4 @@ The loops add questions here: the question, the options, the one they recommend,
 
 The loops move a question here once they've read your answer.
 
--
+- **Account C's scheduled task (Nov 23):** a session isn't allowed to make one, so you made *Homelab loop, account C* by hand (every 5 hours at 4 past, a custom cron). **Do the same for A and B** when they start, named exactly *Homelab loop, account A* (every 3 hours: `4 */3 * * *`) and *Homelab loop, account B* (every 5 hours: `4 */5 * * *`), each with its start line as the instructions: a session looks for that exact name.

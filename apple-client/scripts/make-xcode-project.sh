@@ -102,8 +102,9 @@ fi
 
 mkdir -p "$OUT"
 
-# The app's version (scripts/app-version.sh): VERSION's two numbers and one
-# more for each change to the app since, with a build that only goes up.
+# The app's version (scripts/app-version.sh): the computer's newest release
+# in this checkout, so both show the same number, with a build that only
+# goes up.
 # Settings › About shows it, so it's plain which version is on the phone.
 APP_VERSION="$("$HERE/scripts/app-version.sh")"
 APP_BUILD="${APP_VERSION#* }" APP_VERSION="${APP_VERSION%% *}"

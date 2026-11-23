@@ -14,14 +14,14 @@ Get accounts A and B ready to start, and make the first change the owner can see
 
 ## The work, in order
 
-- [ ] **S0. Check the machinery.** Your scheduled task is made (lanes.md step 5). You can open, check and merge a pull request with the GitHub tools (S1 proves it), and send a push notification. Anything that asks the owner for a permission, or can't be done, goes in `owner.md` at once: it would stop accounts A and B too.
+- [x] **S0. Check the machinery.** Your scheduled task is made (lanes.md step 5). You can open, check and merge a pull request with the GitHub tools (S1 proves it), and send a push notification. Anything that asks the owner for a permission, or can't be done, goes in `owner.md` at once: it would stop accounts A and B too.
 - [x] **S1. Put the plan on main.** Open a pull request from `claude/vibrant-mayer-jiim8w` to main, with this title: *The redesign's target and three loops that ship by themselves*. It holds:
   - `docs/Redesign.md` and its pictures
   - the mocks' source (`app/preview/redesign`)
   - these loop files
 
   It changes no code the app runs. Merge it when it's green (lanes.md rule 5); fix what's red on that branch. From then on, read every file from main.
-- [ ] **S2. Why the owner sees nothing change:** `quality-loop.md`'s **Q0**, in full. It ends with the owner's two questions in `owner.md`.
+- [x] **S2. Why the owner sees nothing change:** `quality-loop.md`'s **Q0**, in full. It ends with the owner's two questions in `owner.md`.
 - [ ] **S3. The card:** `redesign-loop.md`'s **R1**.
 - [ ] **S4. Finances' frame:** `redesign-loop.md`'s **R2**, split as it says if it's big.
 - [ ] **S5. If there's time:** `redesign-loop.md`'s **R3**, the Dashboard.

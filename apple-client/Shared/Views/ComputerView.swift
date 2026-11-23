@@ -504,7 +504,7 @@ private struct AboutPage: View {
                 .padding(.vertical, 8)
                 .listRowBackground(Color.clear)
             }
-            // This app's own version (scripts/app-version.sh); the computer's is under This Machine.
+            // This app's version (scripts/app-version.sh): the computer's release it was built with, as under This Machine.
             if let version = AppVersion.current {
                 Section {
                     LabeledContent("Homelab app", value: version.text)

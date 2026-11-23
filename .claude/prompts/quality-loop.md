@@ -30,7 +30,7 @@ For a pull request that needs Q's review, check every one of these, and say whic
 
 ## The work, in order
 
-- [ ] **Q0. Find out why "nothing works."** One session, before anything else.
+- [x] **Q0. Find out why "nothing works."** One session, before anything else.
   - **Does the owner get the new builds?**
     - The release workflow publishes every build of main: check the latest releases exist, with their files.
     - The app updates itself (`app/autoupdate.go`, `app/updates.go`): its tests pass, and nothing obvious stops it on a Mac.
