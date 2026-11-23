@@ -1,5 +1,7 @@
 # The owner's complaints
 
+> **Archived (the owner, Nov 23, 2026):** complaints now go in `owner.md`, under *Doesn't work or bugs me*.
+
 What gets in the way, in the owner's own words. Rough is fine: one bullet per complaint, under the screen it is about, worst first. Every lane reads this at the start of every round and takes the ones in its area first (`lanes.md`). When a complaint is fixed, the lane that fixed it moves it under **Done** with its PR number; only the owner deletes a complaint.
 
 Add a complaint from the phone by editing this file on GitHub (github.com/Snooper42/homelab-wizard, `.claude/prompts/complaints.md`, the pencil, then "Commit changes" to main).

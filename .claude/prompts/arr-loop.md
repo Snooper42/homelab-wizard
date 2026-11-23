@@ -1,5 +1,7 @@
 # Media automation made easy: the loop (lane 5)
 
+> **Archived (the owner, Nov 23, 2026): history only.** No loop reads this file; the loops are in `lanes.md`, and the owner's notes and questions are in `owner.md`. A loop file may point at one named section here: read only that.
+
 The owner, Nov 19, 2026: improve the \*arr stack that's already there, so someone who isn't technical can use it. **Remove friction**: no new apps for their own sake, no debrid or streaming add-ons (looked at and dropped on Nov 19). This file is the whole job for the account that runs it. The iPhone and iPad app stays with lane 4 (`apple-loop.md`) on another account. Don't touch `apple-client/`.
 
 ## Launcher (paste into a new session)

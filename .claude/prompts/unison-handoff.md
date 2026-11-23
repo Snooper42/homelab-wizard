@@ -1,5 +1,7 @@
 # iPhone and desktop in unison: build everything that works unsigned (handoff, Nov 9, 2026)
 
+> **Archived (the owner, Nov 23, 2026): history only.** No loop reads this file; the loops are in `lanes.md`, and the owner's notes and questions are in `owner.md`. A loop file may point at one named section here: read only that.
+
 Paste the launcher line from the bottom of this file into a new session, or point the session at this file. It starts the work the owner agreed on Nov 9, 2026: making the iPhone app and the desktop app work together, as far as possible without the paid Apple Developer Program. It sits beside, and does not replace, the other files in `.claude/prompts/`.
 
 You are working on homelab-wizard (github.com/Snooper42/homelab-wizard) with its owner. They are not a designer or a developer. Explain choices in plain words, recommend one option rather than listing many, and show what changed (the simulator screenshots CI makes, before and after, light and dark). The owner works on this **in the evening after work**, at home with their Mac and phones: make every PR something they can install and try in one evening, and end it with a short **Try this tonight** list (3 to 5 taps, with what each should show).

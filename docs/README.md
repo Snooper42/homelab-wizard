@@ -66,6 +66,7 @@ The full app list with addresses and ports is in [Inventory](<Inventory.md>). It
 | [Networking](<Networking.md>) | The LAN, DNS, the Docker network, and Cloudflare |
 | [Security](<Security.md>) | The security posture, its standards, and the review of what is reachable from outside |
 | [Usability](<Usability.md>) | The household's tasks, tried end to end, and whether each is getting easier |
+| [Redesign](<Redesign.md>) | What every screen is being rebuilt toward, on the computer and the iPhone: the mocks, the pattern, and the new work behind them |
 | [Storage](<Storage.md>) | Folders, volumes, and the paths Duplicati sees |
 | [Docker](<Docker.md>) | The container runtime, Compose projects, and container standards |
 | [What each device can do](<Parity.md>) | Every feature on the computer, the phone's page, the iPhone and the iPad, and why one isn't somewhere |

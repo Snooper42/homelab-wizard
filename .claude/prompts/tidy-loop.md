@@ -1,5 +1,7 @@
 # Tidy Up: the refinement loop
 
+> **Archived (the owner, Nov 23, 2026): history only.** No loop reads this file; the loops are in `lanes.md`, and the owner's notes and questions are in `owner.md`. A loop file may point at one named section here: read only that.
+
 The master prompt for a session that makes Tidy Up solid, one finished fix per round, each in its own pull request that it merges once CI is green. It is **Account 1's** work (`lanes.md`: Tidy Up is Account 1's lane), written by Account 3 at the owner's ask (Nov 7, 2026). Start it from a Claude Code session of your own on this repository and send:
 
     /loop Read .claude/prompts/tidy-loop.md and do the next round.

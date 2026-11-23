@@ -1,5 +1,7 @@
 # Finances: where the last session left off (Nov 7, 2026)
 
+> **Archived (the owner, Nov 23, 2026): history only.** No loop reads this file; the loops are in `lanes.md`, and the owner's notes and questions are in `owner.md`. A loop file may point at one named section here: read only that.
+
 Paste this into a new session, or point the session at this file. It carries on the Finances work of Account 1 exactly where it stopped. It sits beside, and does not replace, the files below.
 
 ## Read this first: where it stands on Nov 9, 2026

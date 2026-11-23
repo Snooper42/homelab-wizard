@@ -21,6 +21,8 @@ __pycache__/
 /bin/
 /app/app
 /app/app.exe
+# The redesign mocks' pages, drawn by make redesign (only their pictures are kept)
+/app/preview/redesign/html/
 # The page's Finances projection, built with the CLI (make phone-finance-page)
 /web/dist/finance.wasm
 /web/dist/wasm_exec.js
