@@ -58,10 +58,12 @@ export interface AreaChartProps {
   fill?: boolean;
   /** A click on the plot opens its step (the calendar on that day); what is there is in the tip, and reachable elsewhere by keyboard. */
   onPick?: (i: number) => void;
+  /** Drawn as stairs, flat through each step and straight up or down at the next: a balance that moves only when money does. */
+  stepped?: boolean;
 }
 
 /** An area over steps, its line in the accent, with marks on it and a card for the step pointed at. */
-export function AreaChart({ values, xLabels, marks = [], threshold, aheadFrom, behindTo, band, height = 200, format, tip, label, zero = true, axis: showAxis = true, fill, onPick }: AreaChartProps) {
+export function AreaChart({ values, xLabels, marks = [], threshold, aheadFrom, behindTo, band, height = 200, format, tip, label, zero = true, axis: showAxis = true, fill, onPick, stepped }: AreaChartProps) {
   const [at, setAt] = useState(-1);
   const n = values.length;
   // Filling, the plot is as tall as the room it is given, measured, so the line and the pin stay on its scale.
@@ -75,13 +77,16 @@ export function AreaChart({ values, xLabels, marks = [], threshold, aheadFrom, b
   }, [fill, n >= 2]);
   if (n < 2) return null;
   const tall = fill ? Math.max(height, room) : height;
-  const lo = zero ? Math.min(0, ...values, threshold ?? 0) : Math.min(...values), hi = zero ? Math.max(...values, threshold ?? 0, 1) : Math.max(...values);
+  // Fitted to the values (zero off), a dashed level stays in sight too: the cushion under a balance.
+  const lo = zero ? Math.min(0, ...values, threshold ?? 0) : Math.min(...values, threshold ?? Infinity), hi = zero ? Math.max(...values, threshold ?? 0, 1) : Math.max(...values, threshold ?? -Infinity);
   const axis = zero ? ticks(lo, hi * 1.08) : ticks(lo - (hi - lo) * 0.1, hi + (hi - lo) * 0.1);
   const y = (v: number) => ((axis.top - v) / (axis.top - axis.bottom || 1)) * tall;
   const x = (i: number) => (i / (n - 1)) * 1000;
   const pct = (i: number) => (i / (n - 1)) * 100;
   const cut = aheadFrom === undefined ? n - 1 : Math.min(n - 1, aheadFrom);
-  const path = (from: number, to: number) => values.slice(from, to + 1).map((v, k) => `${k ? 'L' : 'M'}${x(from + k).toFixed(1)} ${y(v).toFixed(1)}`).join(' ');
+  const path = (from: number, to: number) => values.slice(from, to + 1).map((v, k) => (k
+    ? stepped ? `H${x(from + k).toFixed(1)} V${y(v).toFixed(1)}` : `L${x(from + k).toFixed(1)} ${y(v).toFixed(1)}`
+    : `M${x(from).toFixed(1)} ${y(v).toFixed(1)}`)).join(' ');
   const behind = behindTo === undefined ? 0 : Math.max(0, Math.min(cut, behindTo));
   const solid = path(behind, cut);
   const move = (e: PointerEvent) => {

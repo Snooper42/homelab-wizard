@@ -6235,7 +6235,8 @@ const smokes = [
     await page.waitForSelector('#finances.active .fx-clear #finAfterPay', { timeout: 5000 });
     const now = await page.textContent('#finNow .fx-figure'), after = await page.textContent('#finAfterPay .fx-figure');
     if (!now.includes('2,512') || !after.includes('2,557')) throw new Error(`checking now ${now}, after the paycheck ${after}`);
-    if (!(await page.textContent('#finAfterPay .fx-caption')).includes("Alex's paycheck")) throw new Error('the figure does not say whose paycheck');
+    // The redesign's lead card (docs/Redesign.md): "After payday, Nov 6" under the chart; whose paycheck is in its working.
+    if (!(await page.textContent('#finAfterPay .fx-caption')).includes('After payday')) throw new Error('the figure does not say after payday');
     await page.hover('#finAfterPay');
     const card = '.fx-clear .hovercard:has(.fx-working):visible';
     await page.waitForSelector(card, { timeout: 5000 });
