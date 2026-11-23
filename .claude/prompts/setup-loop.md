@@ -6,7 +6,7 @@
 
 ## The job
 
-Get accounts A and B ready to start, and make the first change the owner can see, before account A opens on Tue Nov 24 at 9 PM ET. You're the lead: you'll run lane Q after this, and lane R once account A's trial ends, so read `docs/Redesign.md` in full once. Follow `lanes.md` (every session's steps and its rules) as lane **S**. **Until S1 is merged,** read `lanes.md` and the other loop files from `origin/plan`, the same way you read this one. These are the differences:
+Get accounts A and B ready to start, and make the first change the owner can see, before account A opens on Tue Nov 24 at 9 PM ET. You're the lead until account B takes everything over on Mon Nov 30: you'll run lane Q after this, and lane R once account A's trial ends, so read `docs/Redesign.md` in full once. Follow `lanes.md` (every session's steps and its rules) as lane **S**. **Until S1 is merged,** read `lanes.md` and the other loop files from `origin/plan`, the same way you read this one. These are the differences:
 
 - Your branches are `claude/setup-*`.
 - You do the items below, which are other lanes' items. Tick each in **its own** loop file, in the pull request that finishes it.

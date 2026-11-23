@@ -12,9 +12,9 @@ Once per account: open Claude Code on the web, start a session on this repositor
 
     Run: git fetch origin main && git fetch origin claude/vibrant-mayer-jiim8w:refs/remotes/origin/plan. Read .claude/prompts/lanes.md from origin/main if it has the section "Which account runs what", else from origin/plan (git show origin/plan:.claude/prompts/lanes.md), and follow it as account C.
 
-- **Account C (the fresh one): now.** It sets things up until Tue 9 PM, then runs Quality lightly, then takes over the redesign on Thursday afternoon.
-- **Account A (the trial): Tue Nov 24, 9 PM ET,** with `A` at the end. Redesign, flat out, until Thursday noon.
-- **Account B (this one): Wed Nov 25, 9 PM ET,** with `B` at the end. Money, for the week.
+- **Account C (the fresh one, ends after a week): now.** It sets things up until Tue 9 PM, then runs Quality, then takes over the redesign from Thursday afternoon until it ends (assumed Mon Nov 30, noon: correct that in `lanes.md` if it's different).
+- **Account A (the trial, ends Thursday): Tue Nov 24, 9 PM ET,** with `A` at the end. Redesign, flat out, until Thursday noon.
+- **Account B (yours, the one that lasts): Wed Nov 25, 9 PM ET,** with `B` at the end. Money until Monday; then everything, alone: anything broken, then Money and Redesign by turns.
 
 **To pause a lane:** change **Paused: no** to **Paused: yes** at the top of its loop file and commit.
 

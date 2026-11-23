@@ -12,11 +12,12 @@ Three accounts, each with its own usage and lifetime (the owner, Nov 23). **Ever
 
 | Account | Its usage | From, to (ET) | Lane | Pace |
 |---|---|---|---|---|
-| **C, the fresh one** (the lead, lasts) | a full week from Mon Nov 23 | now, to Tue Nov 24, 9 PM | **S**, `setup-loop.md` | Steady: it has to last the week |
-| | | Tue Nov 24, 9 PM, to Thu Nov 26, 2 PM | **Q**, `quality-loop.md`, light: reviews first, then at most one item per session | Light |
-| | | from Thu Nov 26, 2 PM | **R**, taking over from account A, with Q's reviews first in every session | Steady |
-| **A, the trial** (ends Thu afternoon) | resets Tue Nov 24, 9 PM | Tue Nov 24, 9 PM, to Thu Nov 26, noon | **R**, `redesign-loop.md` | Flat out: unused usage is lost. Start nothing new after Thu 10 AM; leave the open pull request with a clear **Next** for account C |
-| **B, the owner's** (lasts) | resets Wed Nov 25, 9 PM | from Wed Nov 25, 9 PM | **M**, `money-loop.md` | Steady |
+| **C, the fresh one** (ends after a week: assumed Mon Nov 30, noon; the owner corrects it here if not) | a week from Mon Nov 23 | now, to Tue Nov 24, 9 PM | **S**, `setup-loop.md` | Steady |
+| | | Tue Nov 24, 9 PM, to Thu Nov 26, 2 PM | **Q**, `quality-loop.md`: reviews first in every session | Steady |
+| | | Thu Nov 26, 2 PM, to Mon Nov 30, 10 AM | **R**, taking over from account A, with Q's reviews first in every session | Flat out from Sat Nov 28 (what's left is lost). Start nothing new after Mon 10 AM; leave the open pull request with a clear **Next** for account B |
+| **A, the trial** (ends Thu Nov 26, afternoon) | resets Tue Nov 24, 9 PM | Tue Nov 24, 9 PM, to Thu Nov 26, noon | **R**, `redesign-loop.md` | Flat out (what's left is lost). Start nothing new after Thu 10 AM; leave the open pull request with a clear **Next** for account C |
+| **B, the owner's own** (the only one that lasts) | resets Wed Nov 25, 9 PM, and weekly after | Wed Nov 25, 9 PM, to Mon Nov 30, 10 AM | **M**, `money-loop.md` | Steady |
+| | | from Mon Nov 30, 10 AM | **All, alone:** in each session, anything broken first, then the reviews it would have asked Q for (go through *A review, step by step* yourself and ask the owner, rule 6), then alternately the next item of `money-loop.md` and of `redesign-loop.md`, then `quality-loop.md`'s list when both are done | Steady |
 
 **Start lines** (the owner pastes one once per account; it's also each account's scheduled task's prompt). Account C's is:
 
@@ -24,7 +25,7 @@ Three accounts, each with its own usage and lifetime (the owner, Nov 23). **Ever
 
 Accounts A and B use the same line, with `A` or `B` at the end.
 
-**Pace:** *Flat out* means take the next item straight away, until usage runs out. *Steady* means the same, but stop for the session after three merged pull requests. *Light* means reviews, anything broken, then one item, then stop. A session can't see its usage meter, so the pace is what keeps an account going all week.
+**Pace:** *Flat out* means take the next item straight away, until usage runs out. *Steady* means the same, but stop for the session after three merged pull requests. A session can't see its usage meter, so the pace is what keeps an account going all week.
 
 | Lane | Loop file | Branches | Owns |
 |---|---|---|---|
