@@ -1,0 +1,162 @@
+---
+version: 0.17.0
+---
+
+# Redesign
+
+What the screens are being rebuilt toward, on the computer and on the iPhone, agreed with the owner on Nov 23, 2026 from the mocks below. **Nothing here is built yet.** The pictures are mocks drawn from `app/preview/redesign` (`make redesign`) with the screenshots' example household, not the app. Each screen is rebuilt to match its picture, one screen at a time, and this page says what "matching" means.
+
+## Why
+
+Finances had fallen well behind [MoneyMatter's live demo](https://moneymatter.app), the owner's reference for how a money app should feel. Compared at the same window size, MoneyMatter's first screen showed five answers (balance trend, latest transactions, cash flow, where the money went, progress to retiring early). Ours showed controls: a stopped-app banner, a title and subtitle, four header buttons, two rows of tabs, the period bar, a row holding only "Arrange the Dashboard", and then two numbers. Transactions showed no transactions on its first screen.
+
+The reasons, so they don't come back:
+
+- **Nobody owned the whole screen.** Each pull request added one feature and was judged by a picture of that one feature, so every feature became another card further down.
+- **Every card was built differently.** No shared shape, no comparison to the period before, so no figure said whether it was good or bad.
+- **Browser controls.** Native dropdowns where a designed one belongs.
+- **Sentences as labels.** "Now, as typed in today" where a product says "Checking now" and explains on hover.
+- **The homelab leaked into the money,** and the money into the homelab: a stopped app's banner on Finances, and every bank balance in the sidebar of every screen.
+
+The other screens had the same habits: Status trying to be everything, Backups a list of twelve identical rows, Settings opening on Cloudflare token fields, Tidy Up opening on its own settings.
+
+## What the owner decided
+
+- **Finances: separate, with shared bills.** Each person has their own Finances; a shared bill (the mortgage, power, internet) is typed once with its split, and each person's Finances counts their share. The split varies by bill: 50/50, a fixed amount, or one person pays it all.
+- **All of it:** transactions, categories, budgets and reports, as well as the paycheck plan.
+- **SimpleFIN, opt-in for everyone.** Off until that person turns it on with their own SimpleFIN setup code; one person's connection never sees another's banks. Without it: bank files dropped in a watched folder. This changes the "no bank connection" decision (`Decisions.md`), which is rewritten when SimpleFIN is built.
+- **As close to MoneyMatter as possible,** inside our own Finances, which keeps the paycheck plan MoneyMatter doesn't have.
+- **A partner's Finances are "just separate",** not locked from the owner (`Private Finances.md` stays for whoever wants it, not the default).
+- **A partner without the iPhone app** (no paid Apple Developer account yet) uses the phone's page, built to the same design as the app.
+- **Tidy Up stays on the computer.** No Tidy Up on the phone.
+
+## The pattern
+
+Every screen is built from the same few parts. A screen that matches its picture but breaks one of these doesn't match.
+
+### Cards
+
+- **One shape:** a title (with at most two small icon buttons on its right), one big figure, a small capitalised label under it, and on the right a green or red chip comparing it with the period before ("↗ +$331.86 vs last paycheck"). Cents smaller than dollars.
+- **A grid,** three columns on the computer, one on the phone. The first screen holds four or five cards, never a row of buttons.
+- **Rows inside a card** have a logo or icon on the left, a name with a short line under it, and the amount or the action on the right.
+- **Every card opens what it summarises** (its ↗).
+- **Nothing empty:** a card's height comes from what it holds; no tall card beside a short one leaving a hole.
+
+### The computer's sidebar
+
+- **Finances and Tidy Up take the sidebar over** while you're in them: the homelab's screens shrink to a strip of five icons at the top, then that screen's own menu (Finances: Dashboard, Transactions, Budgets, Bills & paychecks, Calendar, Shared with …, Net worth, Reports; Tidy Up: Overview and each library), then its lists (accounts; drives).
+- **Everywhere else, the plain homelab menu:** Status, Backups, Tidy Up, Finances, Choose apps, and Settings at the foot, with one line on the computer (free space, power).
+- **Bank accounts appear only in Finances.**
+- Finances' sidebar ends with whose Finances these are, and when the banks were last read.
+
+### The top bar
+
+One row: the main action (Add transaction, Back up now, Tidy up now) and, in Finances, the period ("‹ Alex's paycheck, Nov 6 – 19 ›" with Paycheck or Month) and three icon buttons (hide amounts, read banks now, customise). No subtitle, no second row of tabs.
+
+### The phone
+
+- **Four tabs:** Status, Backups, Finances, Settings. Setup leaves the tab bar (unfinished steps show on Status). A partner's phone has three: Finances, Apps (her homelab apps, one tap each), Settings.
+- **One problem, one badge.** A stopped app badges Status, not Status and Backups.
+- **The same cards as the computer,** one column, the same figures and words.
+- A detail page has a back button and its own title, and no search bar from the screen before.
+
+### Words
+
+Short labels, the explanation one tap or hover away; sentence case on both systems ("Open its page", not "Open Its Page"); one unit style (GB and MB, a space before the unit). The plain-words rules still hold: no code names, no jargon without its meaning.
+
+### Colours and type
+
+The app's own tokens (`--fin-accent`, `--fin-in`, `--fin-out`, the category hues in `hues.ts`), the near-black dark theme with cards a step lighter, the logos in `web/src/finances/logos.ts` and `apple-client/Shared/Assets.xcassets/AppLogos`. Every picture below has a dark twin (`-dark.png`).
+
+## Each screen
+
+Light pictures; the dark ones sit beside them in `images/redesign/`, and `-full` ones show the whole page scrolled.
+
+### Finances on the computer
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="images/redesign/computer-finances-dark.png">
+  <img alt="Finances' Dashboard redesigned: one top bar, Finances' own sidebar, and a grid of cards led by what's left after this paycheck's bills" src="images/redesign/computer-finances.png">
+</picture>
+
+Leads with **Left after this paycheck's bills**: the figure, a step chart of checking through the period (each bill a dot, the cushion a dashed line), and Checking now, After payday and Bills left under it. Then Latest transactions, Net worth, Cash flow, Where the money went, Coming up, Shared with …, Budgets and Investments ([the whole page](<images/redesign/computer-finances-full.png>)).
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="images/redesign/computer-transactions-dark.png">
+  <img alt="Transactions redesigned: one row of filters, what the banks brought in this morning, and the table grouped by day" src="images/redesign/computer-transactions.png">
+</picture>
+
+**Transactions** starts with the table: filters in one row of designed dropdowns, a strip for what the banks brought in ("3 new … 1 needs a category", Review), then the rows grouped by day with each day's total, the payee's logo, the category's coloured tag, the account, and what planned bill or paycheck the row paid. Budgets and This month move to their own pages.
+
+### Backups on the computer
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="images/redesign/computer-backups-dark.png">
+  <img alt="Backups redesigned: last night with fourteen nights at a glance, what needs you, the restore test, off-site, what isn't in any backup, and getting something back" src="images/redesign/computer-backups.png">
+</picture>
+
+Last night ("11 of 12 copied", what was skipped, fourteen nights as squares, the next run), Needs you (with Start), Restore test, Off-site, **Not in any backup**, **Get something back** (an app, a night, one file or the whole app), and each app compactly, with its last seven nights as dots ([the whole page](<images/redesign/computer-backups-full.png>)).
+
+### Settings on the computer
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="images/redesign/computer-settings-dark.png">
+  <img alt="Settings redesigned: people, phones, automatic care, alerts, bank connections, reaching the apps, and this Mac, with each app's own settings under Advanced" src="images/redesign/computer-settings.png">
+</picture>
+
+Grouped by what a household does: People, Phones, Automatic care, Alerts and quiet hours, **Bank connections** (each person's SimpleFIN, on or off), Reaching the apps (home only, or your own domain), This Mac. Each app's own keys and tokens, today's first screen, move under **Advanced**.
+
+### Tidy Up on the computer
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="images/redesign/computer-tidy-dark.png">
+  <img alt="Tidy Up redesigned: what was filed today with Undo, what needs a look, what needs your OK with the next step first, the drive, and the libraries" src="images/redesign/computer-tidy.png">
+</picture>
+
+Leads with what happened and what needs you: Today (each download filed, with Undo; one still downloading), Needs a look (the downloads it couldn't place, each with its button), Needs your OK (the next step first, largest; a step that throws things away never gets the main button), the drive, Your libraries, Recently done, Genres ([the whole page](<images/redesign/computer-tidy-full.png>)). Watched folders and when to tidy move behind the settings button. A library's own step-by-step clean-up moves into its page.
+
+### On the iPhone
+
+<p>
+<picture><source media="(prefers-color-scheme: dark)" srcset="images/redesign/phone-finances-dark.png"><img alt="Finances on the iPhone: whose Finances, the period, the same lead card, accounts to swipe, net worth and cash flow" src="images/redesign/phone-finances.png" width="200"></picture>
+<picture><source media="(prefers-color-scheme: dark)" srcset="images/redesign/phone-transactions-dark.png"><img alt="Transactions on the iPhone: search, filter chips, what the banks brought in, and rows by day" src="images/redesign/phone-transactions.png" width="200"></picture>
+<picture><source media="(prefers-color-scheme: dark)" srcset="images/redesign/phone-status-dark.png"><img alt="Status on the iPhone: one app needs you with Start, backups and this Mac, and each category as one row" src="images/redesign/phone-status.png" width="200"></picture>
+</p>
+<p>
+<picture><source media="(prefers-color-scheme: dark)" srcset="images/redesign/phone-partner-dark.png"><img alt="Finances on a partner's phone: her own paycheck, her side of the shared bills with Mark sent, and SimpleFIN offered" src="images/redesign/phone-partner.png" width="200"></picture>
+<picture><source media="(prefers-color-scheme: dark)" srcset="images/redesign/phone-backups-dark.png"><img alt="Backups on the iPhone: last night with fourteen nights, what needs you, the restore test and off-site" src="images/redesign/phone-backups.png" width="200"></picture>
+<picture><source media="(prefers-color-scheme: dark)" srcset="images/redesign/phone-settings-dark.png"><img alt="Settings on the iPhone: household, automatic care, Finances' bank connection, and this iPhone" src="images/redesign/phone-settings.png" width="200"></picture>
+</p>
+
+- **Finances:** whose Finances at the top left, the period as one pill, the same lead card, the accounts as small cards to swipe (in place of one card the width of the screen), then Net worth and Cash flow side by side, Coming up, Shared with …, Latest transactions, Budgets ([whole](<images/redesign/phone-finances-full.png>)).
+- **Transactions:** no account card above them; search, filter chips, the banks' strip, rows by day ([whole](<images/redesign/phone-transactions-full.png>)).
+- **Status:** "1 app needs you" with Start, Logs and Its page; Backups and This Mac; each category one row with a few names and "4 running" ([whole](<images/redesign/phone-status-full.png>)).
+- **A partner's Finances:** her own paycheck, **Shared with …** from her side (what to send, Mark sent, what she pays herself), and SimpleFIN offered as hers to turn on ([whole](<images/redesign/phone-partner-full.png>)).
+- **Backups** and **Settings:** the computer's, in one column ([Backups whole](<images/redesign/phone-backups-full.png>), [Settings whole](<images/redesign/phone-settings-full.png>)).
+
+## New work behind the pictures
+
+Most of the redesign is the same data laid out again. These pieces need something the app doesn't do yet, and each is its own item, not part of "the layout":
+
+| Piece | Where it shows | What it needs |
+|---|---|---|
+| **SimpleFIN, per person** | Finances (banks read, Review), Settings › Bank connections, a partner's phone | Claiming a person's setup code, reading accounts, balances and transactions each morning and on Read now, through the import's path (duplicates, rules, planned bills); off by default; the new host reviewed for security; `Decisions.md` rewritten |
+| **Balances from the bank** | Finances, Update balances | A balance from SimpleFIN or a bank file's balance line (OFX `LEDGERBAL`) sets the account; today an import never changes a balance |
+| **The watched folder** | Transactions | Bank files dropped in a folder, imported and moved aside, for whoever doesn't use SimpleFIN |
+| **Shared bills with splits** | Shared with … (both people's Finances), Coming up | A bill marked shared with its split (50/50, an amount, or one person), each person's share counted in their own plan, what's been paid; replacing `homelab person share`, today a terminal command |
+| **Who's Finances, and a partner's own tabs** | Finances' sidebar foot, the phone | Switching between your Finances and the shared view; a partner's phone with Finances, Apps and Settings only |
+| **Get something back** | Backups | One file or a whole app from a chosen night, through the backup engine, saved as a copy or put back |
+| **Not in any backup** | Backups | Working out what's left out (Syncthing's folder today), and adding it |
+| **Each app's last nights** | Backups | Each night's result per app kept, if it isn't already |
+| **Comparison chips** | Every Finances card | The same figure for the period before |
+
+## Still to decide
+
+- A partner's Finances as drawn: the owner shows it to her.
+- Setup off the phone's tab bar, with its unfinished steps on Status.
+- The phone's accounts as small cards to swipe, or a list.
+- Choose apps, an app's page and Setup aren't mocked: they follow the pattern above.
+
+## Redrawing the mocks
+
+`make redesign` (or `node app/preview/redesign/build.mjs`) draws every mock from `app/preview/redesign/` into `docs/images/redesign/`, in light and dark, and leaves its pages in `app/preview/redesign/html/` to open in a browser. The accounts, bills, paychecks and net worth are the screenshots' example household (`app/preview/finance.json`); November's transactions, a partner's figures and Tidy Up's day are made up to fill the screens. Change a mock there, redraw it, and change this page with it: the pictures are the target the screens are built to.

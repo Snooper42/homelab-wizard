@@ -3,7 +3,7 @@ COMPOSE_FILES := compose.yaml $(wildcard stacks/*/compose.yaml)
 # One project per category, run from the homelab folder.
 CATEGORY_FILES := $(wildcard compose/*.yaml)
 
-.PHONY: build test lint check coverage music-pins music-pins-check security compose-config app app-check screenshots frontend frontend-check app-smoke phone-finance-wasm phone-finance-page phone-finance-framework help
+.PHONY: build test lint check coverage music-pins music-pins-check security compose-config app app-check screenshots frontend frontend-check app-smoke redesign phone-finance-wasm phone-finance-page phone-finance-framework help
 
 build: phone-finance-page
 	go build -trimpath -ldflags "-s -w -X main.version=$(VERSION)" -o bin/homelab ./cmd/homelab
@@ -145,6 +145,12 @@ app:
 screenshots:
 	node app/preview/shoot.mjs
 
+# The redesign mocks (docs/Redesign.md): what the screens are being rebuilt
+# toward, drawn from app/preview/redesign into docs/images/redesign. Mocks
+# only, not the app; needs Node and Playwright.
+redesign:
+	node app/preview/redesign/build.mjs
+
 # Clicks through the buttons that run commands against the fake backend,
 # in light and dark, then checks each screen as each system with axe
 # (accessibility) and for a broken layout; CI runs it on every pull
@@ -188,3 +194,4 @@ help:
 	@echo "make frontend-check  the frontend's scripts parse, its IDs exist, it type-checks, and web/dist is built"
 	@echo "make app-smoke       click through the app and check each screen with axe (Playwright)"
 	@echo "make screenshots     redraw docs/images (Playwright)"
+	@echo "make redesign        redraw the redesign mocks in docs/images/redesign (Playwright)"
