@@ -6,9 +6,15 @@ The owner's, Nov 23, 2026. Every session of every loop reads this file first, th
 
 The owner, Nov 23: *"Lately it feels like you just work and work for super long yet nothing happens or works in the app."* So a merged pull request must change something the owner sees or uses on their own machine, or fix a failure, lost data, or a security hole. No rounds of word polish. No bookkeeping commits. The target for how the app looks is `docs/Redesign.md` and its pictures.
 
-## Who's working (from Wed Nov 25, 9 PM ET)
+## Who's working
 
-Three accounts, one loop each, each running by itself (below):
+The owner, Nov 23:
+- **Now to Tue Nov 24, 9 PM ET: lane S**, `setup-loop.md`, on a fresh account. It puts this plan on main, works out why the owner sees nothing change, and starts the redesign.
+- **From Tue Nov 24, 9 PM ET: lane R**, on the second account.
+- **From Wed Nov 25, 9 PM ET: lane M**, on the third.
+- **Lane Q is paused** (no account). Its list waits in `quality-loop.md`, and rule 6's reviews go to the owner while it is.
+
+The lanes, each running by itself (below):
 
 | Lane | Loop file | Branches | Owns |
 |---|---|---|---|
@@ -16,7 +22,7 @@ Three accounts, one loop each, each running by itself (below):
 | **M, Money** | `money-loop.md` | `claude/money-*` | What Finances does: `internal/finance`, `internal/sitelogo`, `internal/cardprice`, `app/finance*.go`, `cmd/homelab`'s finance and person commands, `mobile/finance`, and in `web/src/finances` the data side: `model.ts`, `importData.ts`, `payees.ts`, `guessCategory.ts`, `logos.ts`, `sites.ts`, `money.ts`, `privacy.ts`, `seal.ts`, the preview data (`app/preview/finance.json`, `ledger.json`), and the Swift ports the phone's import is tested against |
 | **Q, Quality** | `quality-loop.md` | `claude/quality-*` | Security and privacy, reviews of the other lanes' risky pull requests, what's broken on the owner's real machine, CI and the nightly run, media automation (`compose/media-automation.yaml`, `internal/wiring`, `internal/downloads`, `services/media automation/`), the backups' engine for R's new Backups parts, and every other Go package |
 
-**Paused:** the iPhone app's own loop (`apple-loop.md`), until lane R reaches its item P1. Tidy Up's, Finances' and the old lanes 1 to 5 loops are history.
+**Paused:** lane Q (above), and the iPhone app's own loop (`apple-loop.md`), until lane R reaches its item P1. Tidy Up's, Finances' and the old lanes 1 to 5 loops are history.
 
 **Where R and M meet (`web/src/finances`):** R changes layout, styling and which component goes where; M changes data, the model, the import, new fields and the Go bindings. A change that needs both: M ships the data first (with the plainest UI that works, or none), and adds a line under **From the other lanes** in `redesign-loop.md` saying what R can now lay out. R never invents a number the data doesn't have: it leaves that part out and adds a line under **From the other lanes** in `money-loop.md`.
 
@@ -46,7 +52,7 @@ Where you stopped needs no separate note: it's your open pull request (its branc
    - A line under **From the other lanes** in another lane's loop file, and a question in `owner.md`.
 4. **Asking the owner, without stopping.** Only for a choice that's genuinely theirs: money or data leaving the house, a security choice, deleting anything, spending money, or a screen that departs from its picture in `docs/Redesign.md`. Write the question in `owner.md` under **Waiting on you** (the question, two to four options, the one you recommend, and what you're doing meanwhile), in your open pull request. Send it with `PushNotification` if you have it, in one or two lines. Then carry on with your next item. Read the answer in `owner.md` when it's there; never ask the same thing twice.
 5. **Merging.** Squash-merge with `expectedHeadSha` pinned to the head CI passed on, when every check on that head is green and every commit main gained since then touches none of its files (a newer `CHANGELOG.md` line doesn't count if main merges in cleanly). Otherwise merge main in and let CI run again. **No daily cap.** Several green at once: Q's first, then M's, then R's. Never merge on red; never skip, weaken or delete a test or a check to get green; change an expected value only after proving the new one is right. A check that fails for a reason outside your change (a flaky Windows test): run that job once more, and if it fails again, say so in `owner.md` and in `quality-loop.md`'s **From the other lanes**.
-6. **Q reviews the risky ones first.** A pull request that adds a host the homelab calls, stores a new secret, opens a port or a listener, changes what a phone may call (`cmd/homelab/serve.go`'s `phoneMethods`), touches pairing, sign-in or the private Finances' seal, or sends anything off the machine says so in the first line of its description: **Needs Q's review: yes**, and why. It doesn't merge until lane Q has commented **Q review: OK** on its current head. Meanwhile its lane works on something else (step 7).
+6. **Q reviews the risky ones first.** A pull request that adds a host the homelab calls, stores a new secret, opens a port or a listener, changes what a phone may call (`cmd/homelab/serve.go`'s `phoneMethods`), touches pairing, sign-in or the private Finances' seal, or sends anything off the machine says so in the first line of its description: **Needs Q's review: yes**, and why. It doesn't merge until lane Q has commented **Q review: OK** on its current head. **While lane Q is paused,** go through `quality-loop.md`'s *A review, step by step* yourself. Write what you found in the description, ask the owner in `owner.md` (rule 4), and merge only on their yes. Meanwhile its lane works on something else (step 7).
 7. **The checks, for what you changed:** Go: `make check` and `make coverage` (keep `coverage-floors.txt`), and `cd app && go test ./...` when the app's bindings change. Frontend: `make frontend` (commit `web/dist`), `make frontend-check`, `make app-smoke`. Docs: `go run ./cmd/homelab --root . validate`. The iPhone app: its own CI on the pull request. While you work, run only the narrow tests; run the full set once before you push.
 8. **A pull request.** One item. Its title is a plain sentence about what the household gets (see `git log`). Its description: what changed and why; **Try this tonight**, three to five clicks the owner can do on their own machine with what each should show; before and after pictures for a screen; the checks you ran; **Next**. In the same pull request: tick the item in your loop file, a line in `CHANGELOG.md` (rule 3), and the docs the change touches. End the description with the attribution lines the session gives you.
 9. **Secrets stay secret.** Keys, tokens and passwords go in `.env` (0600, ADR-0011) and nowhere else: never in a log, a link, an alert, a page, a pull request, a test fixture or a loop file. A new one goes in `.env.example` with a comment saying where it comes from, and in the redaction phones, alerts and reports get.

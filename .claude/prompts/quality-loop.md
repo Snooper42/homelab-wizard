@@ -4,7 +4,7 @@
 
     Read .claude/prompts/lanes.md and .claude/prompts/quality-loop.md, and follow them.
 
-**Paused:** no
+**Paused:** yes (the owner, Nov 23: no account for lane Q yet; lane S does Q0)
 
 ## The job
 
