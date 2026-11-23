@@ -29,6 +29,7 @@ The other screens had the same habits: Status trying to be everything, Backups a
 - **A partner's Finances are "just separate",** not locked from the owner (`Private Finances.md` stays for whoever wants it, not the default).
 - **A partner without the iPhone app** (no paid Apple Developer account yet) uses the phone's page, built to the same design as the app.
 - **Tidy Up stays on the computer.** No Tidy Up on the phone.
+- **A logo for every payee, from a logo service, opt-in** (the owner's pick, Nov 23): as MoneyMatter does, below.
 
 ## The pattern
 
@@ -134,6 +135,29 @@ Leads with what happened and what needs you: Today (each download filed, with Un
 - **A partner's Finances:** her own paycheck, **Shared with …** from her side (what to send, Mark sent, what she pays herself), and SimpleFIN offered as hers to turn on ([whole](<images/redesign/phone-partner-full.png>)).
 - **Backups** and **Settings:** the computer's, in one column ([Backups whole](<images/redesign/phone-backups-full.png>), [Settings whole](<images/redesign/phone-settings-full.png>)).
 
+## Logos for every payee
+
+Every row in the pictures has its payee's logo; in the app today most imported payees are a letter. How the others do it:
+
+- **MoneyMatter** keeps a website for each payee and shows that website's logo from a logo service (`img.logo.dev/nike.com`, seen in its live demo), with a logo search to pick the brand when a payee has none, and its first letter while nothing has loaded.
+- **Monarch Money** gets a cleaned merchant name, website and logo with each transaction from the bank-data companies it reads banks through (Plaid, MX and others), with its own merchant list on top.
+- **SimpleFIN gives none of that:** only the bank's own text ("SQ *BLUE BOTTLE 0423 OAKLAND CA"). The logos are this app's job either way.
+
+A logo takes three steps, and the app is good only at the last:
+
+1. **The bank's text to a merchant** ("SQ *BLUE BOTTLE 0423 OAKLAND CA" to Blue Bottle Coffee): `cleanPayee` and `shopOf` in `payees.ts` (and their Swift port), extended to the card processors' prefixes and a merchant list's spellings.
+2. **The merchant to its website** (bluebottlecoffee.com): today 337 brands and a guess of the name plus .com (`sites.ts`).
+3. **The website to its logo:** today **Get the real logo** (`internal/sitelogo`), only when clicked.
+
+What the owner picked:
+
+- **Built in, always:** every brand in the simple-icons package (about 3,300, not 337), and a list of common merchants with how banks spell them and their websites. Nothing leaves the computer for these.
+- **A logo service, off until turned on** (logo.dev, which MoneyMatter uses, or Brandfetch: picked when it's built). When on, a payee the app doesn't know is looked up by name for its website and logo, **once**, and the logo kept in the plan from then on. One plain line before it's on: the service sees which shops you use, never an amount. Its key is kept like the other secrets and asked for by the computer, never by a page or the phone, so the key stays home. Per person, like SimpleFIN: a partner's Finances use it only if she turns it on. The security session reviews the new host.
+- **Fix one by hand:** a payee's website, and a logo search ("blue bottle", then pick), as MoneyMatter's.
+- **Nothing found** (a person, an HOA, a loan): the category's icon or a monogram in the category's colour, never a grey letter.
+
+**Done when** the owner's last month of transactions shows a real logo on at least nine rows in ten with the service on, and every other row its category's mark.
+
 ## New work behind the pictures
 
 Most of the redesign is the same data laid out again. These pieces need something the app doesn't do yet, and each is its own item, not part of "the layout":
@@ -149,6 +173,7 @@ Most of the redesign is the same data laid out again. These pieces need somethin
 | **Not in any backup** | Backups | Working out what's left out (Syncthing's folder today), and adding it |
 | **Each app's last nights** | Backups | Each night's result per app kept, if it isn't already |
 | **Comparison chips** | Every Finances card | The same figure for the period before |
+| **Logos for every payee** | Every row with a payee, on both systems | All of simple-icons and a merchant list built in; the opt-in logo service (above); a payee's website and a logo search; the category's mark when nothing is found |
 
 ## Still to decide
 
