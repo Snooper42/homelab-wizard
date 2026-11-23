@@ -1,10 +1,8 @@
 # Loop Q: Quality
 
-**Launcher** (the scheduled task's prompt, and what the owner pastes into the first session):
+**Started by** the accounts' start lines in `lanes.md`: the table *Which account runs what* says which account runs lane Q when.
 
-    Read .claude/prompts/lanes.md and .claude/prompts/quality-loop.md, and follow them.
-
-**Paused:** yes (the owner, Nov 23: no account for lane Q yet; lane S does Q0)
+**Paused:** no (account C runs it lightly from Tue Nov 24, 9 PM; lane S does Q0 before then)
 
 ## The job
 

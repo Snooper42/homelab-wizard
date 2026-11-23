@@ -1,8 +1,6 @@
 # Loop R: Redesign
 
-**Launcher** (the scheduled task's prompt, and what the owner pastes into the first session):
-
-    Read .claude/prompts/lanes.md and .claude/prompts/redesign-loop.md, and follow them.
+**Started by** the accounts' start lines in `lanes.md`: the table *Which account runs what* says which account runs lane R when.
 
 **Paused:** no
 

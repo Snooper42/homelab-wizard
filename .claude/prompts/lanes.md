@@ -6,15 +6,25 @@ The owner's, Nov 23, 2026. Every session of every loop reads this file first, th
 
 The owner, Nov 23: *"Lately it feels like you just work and work for super long yet nothing happens or works in the app."* So a merged pull request must change something the owner sees or uses on their own machine, or fix a failure, lost data, or a security hole. No rounds of word polish. No bookkeeping commits. The target for how the app looks is `docs/Redesign.md` and its pictures.
 
-## Who's working
+## Which account runs what
 
-The owner, Nov 23:
-- **Now to Tue Nov 24, 9 PM ET: lane S**, `setup-loop.md`, on a fresh account. It puts this plan on main, works out why the owner sees nothing change, and starts the redesign.
-- **From Tue Nov 24, 9 PM ET: lane R**, on the second account.
-- **From Wed Nov 25, 9 PM ET: lane M**, on the third.
-- **Lane Q is paused** (no account). Its list waits in `quality-loop.md`, and rule 6's reviews go to the owner while it is.
+Three accounts, each with its own usage and lifetime (the owner, Nov 23). **Every session works out its lane from this table and the time now, in ET.** Its start line says which account it is. A lane change at a time below happens by itself: the next session starts the new lane.
 
-The lanes, each running by itself (below):
+| Account | Its usage | From, to (ET) | Lane | Pace |
+|---|---|---|---|---|
+| **C, the fresh one** (the lead, lasts) | a full week from Mon Nov 23 | now, to Tue Nov 24, 9 PM | **S**, `setup-loop.md` | Steady: it has to last the week |
+| | | Tue Nov 24, 9 PM, to Thu Nov 26, 2 PM | **Q**, `quality-loop.md`, light: reviews first, then at most one item per session | Light |
+| | | from Thu Nov 26, 2 PM | **R**, taking over from account A, with Q's reviews first in every session | Steady |
+| **A, the trial** (ends Thu afternoon) | resets Tue Nov 24, 9 PM | Tue Nov 24, 9 PM, to Thu Nov 26, noon | **R**, `redesign-loop.md` | Flat out: unused usage is lost. Start nothing new after Thu 10 AM; leave the open pull request with a clear **Next** for account C |
+| **B, the owner's** (lasts) | resets Wed Nov 25, 9 PM | from Wed Nov 25, 9 PM | **M**, `money-loop.md` | Steady |
+
+**Start lines** (the owner pastes one once per account; it's also each account's scheduled task's prompt). Account C's is:
+
+    Run: git fetch origin main && git fetch origin claude/vibrant-mayer-jiim8w:refs/remotes/origin/plan. Read .claude/prompts/lanes.md from origin/main if it has the section "Which account runs what", else from origin/plan (git show origin/plan:.claude/prompts/lanes.md), and follow it as account C.
+
+Accounts A and B use the same line, with `A` or `B` at the end.
+
+**Pace:** *Flat out* means take the next item straight away, until usage runs out. *Steady* means the same, but stop for the session after three merged pull requests. *Light* means reviews, anything broken, then one item, then stop. A session can't see its usage meter, so the pace is what keeps an account going all week.
 
 | Lane | Loop file | Branches | Owns |
 |---|---|---|---|
@@ -28,11 +38,11 @@ The lanes, each running by itself (below):
 
 ## Every session, step by step
 
-1. **Name yourself.** `get_session` for your ID, then `set_session_title` to `Loop R: Redesign`, `Loop M: Money` or `Loop Q: Quality`.
-2. **One at a time.** `list_sessions` (`mine: true`): if another session with your title is `working` and was updated in the last 30 minutes, end now; it's still going. A session woken later by a pull request's event does this check first too, and ends without acting if a newer session of its lane exists.
+1. **Your lane, and your name.** Find your account's row in *Which account runs what* for the time now, and read that lane's loop file. `get_session` for your ID, then `set_session_title` to `Account <X>: <lane>` (for example `Account A: Redesign`). Outside every row of your account, end, saying so.
+2. **One at a time.** `list_sessions` (`mine: true`): if another session of your account is `working` and was updated in the last 30 minutes, end now; it's still going. A session woken later by a pull request's event does this check first too, and ends without acting if a newer session of its account exists.
 3. **Paused?** If your loop file says **Paused: yes**, end, saying so.
 4. **The repository.** If it isn't in this session, `add_repo` (`Snooper42`, `homelab-wizard`, access `push`), clone it, and `register_repo_root`.
-5. **Keep yourself running.** `list_triggers`: if none is named after your lane (`Homelab loop R`, `M` or `Q`), `create_trigger` one: `cron_expression` `0 */5 * * *`, `create_new_session_on_fire: true`, `initiation: human_request` (the owner asked for it, Nov 23), `notifications: {push: true}`, and as its prompt your loop file's launcher line. Say in your first report that you made it.
+5. **Keep yourself running.** `list_triggers`: if none is named `Homelab loop, account <X>`, `create_trigger` one: `cron_expression` `0 */3 * * *` for account A and `0 */5 * * *` for B and C; `create_new_session_on_fire: true`; `initiation: human_request` (the owner asked for it, Nov 23); `notifications: {push: true}`; and your account's start line as its prompt. Say in your first report that you made it.
 6. **Catch up.** `git fetch origin main`. Read `owner.md`: an answer to one of your questions, or a line under **Doesn't work or bugs me** in your area, comes before your list.
 7. **Your open pull request first.** You have at most one, and two only while one waits for Q's review (rule 6) and the second touches none of its files. Green: merge it (rule 5). Red: fix it before anything else. CI still running: `subscribe_pr_activity` and end your turn; its result wakes you.
 8. **The next item.** The first unticked item in your loop file whose files no other lane's open pull request touches (rule 2). Too big for one pull request: split it, and write the split into the loop file.
@@ -52,7 +62,7 @@ Where you stopped needs no separate note: it's your open pull request (its branc
    - A line under **From the other lanes** in another lane's loop file, and a question in `owner.md`.
 4. **Asking the owner, without stopping.** Only for a choice that's genuinely theirs: money or data leaving the house, a security choice, deleting anything, spending money, or a screen that departs from its picture in `docs/Redesign.md`. Write the question in `owner.md` under **Waiting on you** (the question, two to four options, the one you recommend, and what you're doing meanwhile), in your open pull request. Send it with `PushNotification` if you have it, in one or two lines. Then carry on with your next item. Read the answer in `owner.md` when it's there; never ask the same thing twice.
 5. **Merging.** Squash-merge with `expectedHeadSha` pinned to the head CI passed on, when every check on that head is green and every commit main gained since then touches none of its files (a newer `CHANGELOG.md` line doesn't count if main merges in cleanly). Otherwise merge main in and let CI run again. **No daily cap.** Several green at once: Q's first, then M's, then R's. Never merge on red; never skip, weaken or delete a test or a check to get green; change an expected value only after proving the new one is right. A check that fails for a reason outside your change (a flaky Windows test): run that job once more, and if it fails again, say so in `owner.md` and in `quality-loop.md`'s **From the other lanes**.
-6. **Q reviews the risky ones first.** A pull request that adds a host the homelab calls, stores a new secret, opens a port or a listener, changes what a phone may call (`cmd/homelab/serve.go`'s `phoneMethods`), touches pairing, sign-in or the private Finances' seal, or sends anything off the machine says so in the first line of its description: **Needs Q's review: yes**, and why. It doesn't merge until lane Q has commented **Q review: OK** on its current head. **While lane Q is paused,** go through `quality-loop.md`'s *A review, step by step* yourself. Write what you found in the description, ask the owner in `owner.md` (rule 4), and merge only on their yes. Meanwhile its lane works on something else (step 7).
+6. **Q reviews the risky ones first.** A pull request that adds a host the homelab calls, stores a new secret, opens a port or a listener, changes what a phone may call (`cmd/homelab/serve.go`'s `phoneMethods`), touches pairing, sign-in or the private Finances' seal, or sends anything off the machine says so in the first line of its description: **Needs Q's review: yes**, and why. It doesn't merge until lane Q has commented **Q review: OK** on its current head. **When no account runs lane Q,** go through `quality-loop.md`'s *A review, step by step* yourself. Write what you found in the description, ask the owner in `owner.md` (rule 4), and merge only on their yes. Meanwhile its lane works on something else (step 7).
 7. **The checks, for what you changed:** Go: `make check` and `make coverage` (keep `coverage-floors.txt`), and `cd app && go test ./...` when the app's bindings change. Frontend: `make frontend` (commit `web/dist`), `make frontend-check`, `make app-smoke`. Docs: `go run ./cmd/homelab --root . validate`. The iPhone app: its own CI on the pull request. While you work, run only the narrow tests; run the full set once before you push.
 8. **A pull request.** One item. Its title is a plain sentence about what the household gets (see `git log`). Its description: what changed and why; **Try this tonight**, three to five clicks the owner can do on their own machine with what each should show; before and after pictures for a screen; the checks you ran; **Next**. In the same pull request: tick the item in your loop file, a line in `CHANGELOG.md` (rule 3), and the docs the change touches. End the description with the attribution lines the session gives you.
 9. **Secrets stay secret.** Keys, tokens and passwords go in `.env` (0600, ADR-0011) and nowhere else: never in a log, a link, an alert, a page, a pull request, a test fixture or a loop file. A new one goes in `.env.example` with a comment saying where it comes from, and in the redaction phones, alerts and reports get.

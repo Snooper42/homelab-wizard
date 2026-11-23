@@ -8,16 +8,15 @@ The one file you need. The loops read it at the start of every session.
 
 ## Starting the loops
 
-On each account, open Claude Code on the web, start a session on this repository, and paste its line:
+Once per account: open Claude Code on the web, start a session on this repository, and paste this line, with the account's letter at the end. Each account's first session sets up a scheduled task that keeps it going; `.claude/prompts/lanes.md`, *Which account runs what*, says what each one does and when.
 
-- **Now, the fresh account (until Tue Nov 24, 9 PM ET):**
-  `/loop Run: git fetch origin main && git fetch origin claude/vibrant-mayer-jiim8w:refs/remotes/origin/plan. Read .claude/prompts/setup-loop.md from origin/main if it's there, else from origin/plan (git show origin/plan:.claude/prompts/setup-loop.md), and follow it.`
-- **Tue Nov 24, 9 PM ET, the second account (Redesign):**
-  `Read .claude/prompts/lanes.md and .claude/prompts/redesign-loop.md, and follow them.`
-- **Wed Nov 25, 9 PM ET, the third account (Money):**
-  `Read .claude/prompts/lanes.md and .claude/prompts/money-loop.md, and follow them.`
+    Run: git fetch origin main && git fetch origin claude/vibrant-mayer-jiim8w:refs/remotes/origin/plan. Read .claude/prompts/lanes.md from origin/main if it has the section "Which account runs what", else from origin/plan (git show origin/plan:.claude/prompts/lanes.md), and follow it as account C.
 
-Redesign's and Money's first sessions each set up a scheduled task on their account that starts a fresh session every 5 hours, picking up where the last one stopped. **To pause a loop:** change **Paused: no** to **Paused: yes** at the top of its loop file and commit.
+- **Account C (the fresh one): now.** It sets things up until Tue 9 PM, then runs Quality lightly, then takes over the redesign on Thursday afternoon.
+- **Account A (the trial): Tue Nov 24, 9 PM ET,** with `A` at the end. Redesign, flat out, until Thursday noon.
+- **Account B (this one): Wed Nov 25, 9 PM ET,** with `B` at the end. Money, for the week.
+
+**To pause a lane:** change **Paused: no** to **Paused: yes** at the top of its loop file and commit.
 
 ## Doesn't work or bugs me
 

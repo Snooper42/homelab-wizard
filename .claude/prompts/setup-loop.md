@@ -1,22 +1,20 @@
-# Loop S: Set up (one account, Nov 23 to Tue Nov 24, 9 PM ET)
+# Loop S: Set up (account C, now to Tue Nov 24, 9 PM ET)
 
-**Launcher** (the owner pastes this into the fresh account's first session):
-
-    /loop Run: git fetch origin main && git fetch origin claude/vibrant-mayer-jiim8w:refs/remotes/origin/plan. Read .claude/prompts/setup-loop.md from origin/main if it's there, else from origin/plan (git show origin/plan:.claude/prompts/setup-loop.md), and follow it.
+**Started by** the accounts' start lines in `lanes.md`: the table *Which account runs what* says which account runs lane S when.
 
 **Paused:** no
 
 ## The job
 
-Get the other two loops ready to start, and make the first change the owner can see, before lane R's account opens on Tue Nov 24 at 9 PM ET. Follow `lanes.md` (every session's steps and its rules) as lane **S**. **Until S1 is merged,** read `lanes.md` and the other loop files from `origin/plan`, the same way you read this one. These are the differences:
+Get accounts A and B ready to start, and make the first change the owner can see, before account A opens on Tue Nov 24 at 9 PM ET. You're the lead: you'll run lane Q after this, and lane R once account A's trial ends, so read `docs/Redesign.md` in full once. Follow `lanes.md` (every session's steps and its rules) as lane **S**. **Until S1 is merged,** read `lanes.md` and the other loop files from `origin/plan`, the same way you read this one. These are the differences:
 
-- Your title is `Loop S: Set up`, and your branches are `claude/setup-*`.
-- **Make no scheduled task:** `/loop` paces you.
+- Your branches are `claude/setup-*`.
 - You do the items below, which are other lanes' items. Tick each in **its own** loop file, in the pull request that finishes it.
 - **From Tue Nov 24, 8:30 PM ET, start nothing new.** Merge what's green. Leave an unfinished pull request with a clear **Next** in its description for lane R, and set **Paused: yes** here.
 
 ## The work, in order
 
+- [ ] **S0. Check the machinery.** Your scheduled task is made (lanes.md step 5). You can open, check and merge a pull request with the GitHub tools (S1 proves it), and send a push notification. Anything that asks the owner for a permission, or can't be done, goes in `owner.md` at once: it would stop accounts A and B too.
 - [ ] **S1. Put the plan on main.** Open a pull request from `claude/vibrant-mayer-jiim8w` to main, with this title: *The redesign's target and three loops that ship by themselves*. It holds:
   - `docs/Redesign.md` and its pictures
   - the mocks' source (`app/preview/redesign`)
