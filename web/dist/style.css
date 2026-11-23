@@ -1866,7 +1866,7 @@ button.fx-monthbar:focus-visible { outline:2px solid var(--fin-accent); outline-
 .fx-grid { position:absolute; left:0; right:0; border-top:1px solid var(--line); opacity:.7; }
 .fx-grid.zero { opacity:1; border-top-color:var(--line-strong); }
 .fx-band { position:absolute; top:0; bottom:0; background:var(--fin-band); border-radius:6px; }
-.fx-threshold { position:absolute; left:0; right:0; border-top:1.5px dashed var(--fin-out); opacity:.45; }
+.fx-threshold { position:absolute; left:0; right:0; border-top:1.5px dashed var(--fin-out); opacity:.45; z-index:1; pointer-events:none; }
 .fx-areafill { fill:var(--fin-area); }
 .fx-line { fill:none; stroke:var(--fin-accent); stroke-width:2.5; stroke-linejoin:round; stroke-linecap:round; }
 .fx-line.ahead { stroke-dasharray:5 5; stroke-width:2; }
