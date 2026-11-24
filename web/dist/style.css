@@ -86,7 +86,7 @@ nav .count:empty { display:none; }
    Choose apps, and Settings at its foot, over the line about the computer. */
 html:not(.companion) nav > button[data-screen="settings"] { margin-top:auto; }
 html:not(.companion) nav:has(> button[data-screen="settings"]) .foot { margin-top:6px; }
-html:not(.companion) nav:has(> button[data-screen="finances"].active) .foot { margin-top:auto; }
+html:not(.companion) nav:has(> button:is([data-screen="finances"], [data-screen="tidy"]).active) .foot { margin-top:auto; }
 
 /* Layout */
 main { flex:1; overflow:auto; padding:26px 30px 40px; position:relative; }
@@ -1953,13 +1953,13 @@ html.companion .fx-navbalances { display:none !important; }
 /* Finances takes the sidebar over while it shows (docs/Redesign.md, The computer's sidebar): the homelab's five screens
    shrink to a strip of icons at the top, then Finances' own menu (Finances.tsx FinMenu), then the accounts. Everywhere
    else the sidebar is the homelab's, without the bank balances. */
-html:not(.companion) nav:has(> button[data-screen="finances"].active) { display:grid; grid-template-columns:repeat(5, minmax(0, 1fr)); align-content:start; column-gap:2px; }
-html:not(.companion) nav:has(> button[data-screen="finances"].active) > * { grid-column:1 / -1; }
-html:not(.companion) nav:has(> button[data-screen="finances"].active) > button:is([data-screen="choose"], [data-screen="status"], [data-screen="backups"], [data-screen="tidy"], [data-screen="finances"]) { grid-column:auto; justify-content:center; padding:8px 0; margin-bottom:10px; }
-html:not(.companion) nav:has(> button[data-screen="finances"].active) > button:is([data-screen="choose"], [data-screen="status"], [data-screen="backups"], [data-screen="tidy"], [data-screen="finances"]) > span:not(.count) { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
-html:not(.companion) nav:has(> button[data-screen="finances"].active) > button .count { position:absolute; top:0; right:2px; min-width:0; padding:0 5px; font-size:10px; line-height:15px; }
-html:not(.companion) nav:has(> button[data-screen="finances"].active) > button.active::before { display:none; }
-html:not(.companion) nav:has(> button[data-screen="finances"].active) > button:is([data-screen="setup"], [data-screen="settings"]) { display:none; }
+html:not(.companion) nav:has(> button:is([data-screen="finances"], [data-screen="tidy"]).active) { display:grid; grid-template-columns:repeat(5, minmax(0, 1fr)); align-content:start; column-gap:2px; }
+html:not(.companion) nav:has(> button:is([data-screen="finances"], [data-screen="tidy"]).active) > * { grid-column:1 / -1; }
+html:not(.companion) nav:has(> button:is([data-screen="finances"], [data-screen="tidy"]).active) > button:is([data-screen="choose"], [data-screen="status"], [data-screen="backups"], [data-screen="tidy"], [data-screen="finances"]) { grid-column:auto; justify-content:center; padding:8px 0; margin-bottom:10px; }
+html:not(.companion) nav:has(> button:is([data-screen="finances"], [data-screen="tidy"]).active) > button:is([data-screen="choose"], [data-screen="status"], [data-screen="backups"], [data-screen="tidy"], [data-screen="finances"]) > span:not(.count) { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+html:not(.companion) nav:has(> button:is([data-screen="finances"], [data-screen="tidy"]).active) > button .count { position:absolute; top:0; right:2px; min-width:0; padding:0 5px; font-size:10px; line-height:15px; }
+html:not(.companion) nav:has(> button:is([data-screen="finances"], [data-screen="tidy"]).active) > button.active::before { display:none; }
+html:not(.companion) nav:has(> button:is([data-screen="finances"], [data-screen="tidy"]).active) > button:is([data-screen="setup"], [data-screen="settings"]) { display:none; }
 nav:not(:has(> button[data-screen="finances"].active)) :is(#finMenu, #finNav), html.companion #finMenu { display:none !important; }
 .finmenu, .finsubmenu { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:2px; }
 .finmenu { margin-bottom:14px; }
@@ -3216,3 +3216,37 @@ html.companion .groupmarks { margin-right:8px; }
 .statuscard .tileaction, .statuscard .statusupdates button { width:auto; margin:0; }
 .tiles.savingsrow { margin-top:14px; }
 .tiles.savingsrow:empty { display:none; }
+/* Tidy Up's header (redesign-loop R9): the folders and when behind their button, and Tidy up now as the main one. */
+.tidytools { display:flex; align-items:center; gap:8px; }
+.tidytools .primary.small { width:auto; margin:0; padding:7px 14px; }
+.tidyfoldersbtn.on { background:var(--sunken); }
+/* Today two-thirds wide and Needs a look beside it (R9), in three columns whatever the board's own fill; one under the
+   other in a narrower window. Needs a look's buttons go under each thing's name and why, as in the picture. */
+/* The same two columns as Needs your OK and the drive under them, so their edges line up. */
+.fx-board.tidynow { grid-template-columns:minmax(0, 2fr) minmax(0, 1fr); }
+@container (max-width: 1040px) { .fx-board.tidynow { grid-template-columns:minmax(0, 1fr); } .fx-board.tidynow > .fx-widget { grid-column:auto; } }
+.tidyneedslook .fx-rows > li { flex-wrap:wrap; }
+.tidyneedslook .fx-rows > li > .grow { flex:1 1 calc(100% - 60px); min-width:0; }
+.tidyneedslook .tidyneedsgo { flex:1 1 100%; padding-left:44px; }
+.tidycount { display:inline-block; min-width:20px; padding:0 7px; border-radius:999px; background:var(--warn-soft); color:var(--warn); font-size:12px; font-weight:600; text-align:center; }
+.tidyneedslead { margin:0 0 6px; font-size:13px; }
+
+/* Tidy Up takes the sidebar over as Finances does (redesign-loop R9): the strip of icons, its menu (Tidy.tsx TidyMenu),
+   then the drive with its free space. Its tabs go on the computer; the menu has them. */
+nav:not(:has(> button[data-screen="tidy"].active)) #tidyMenu, html.companion #tidyMenu { display:none !important; }
+html:not(.companion) #tidy .tidytabs { display:none; }
+nav .tidymenuitem { position:relative; }
+.tidynavdrives { margin:4px 0 10px; padding:10px 0 0; border-top:1px solid var(--nav-line); }
+.tidynavdrives > .fx-caption { color:var(--nav-muted); padding:0 10px 6px; margin:0; }
+.tidydriveline { display:flex; flex-direction:column; gap:6px; padding:4px 10px; font-size:13px; }
+.tidydrivename { display:flex; justify-content:space-between; gap:8px; }
+.tidydrivename > span:first-child { font-weight:600; }
+.tidydrivebar { display:block; height:5px; border-radius:3px; background:var(--nav-line); overflow:hidden; }
+.tidydrivebar > span { display:block; height:100%; background:var(--accent); border-radius:3px; }
+@container window (max-width: 700px) { html:not(.companion) .tidynavdrives { display:none; } }
+html:is(.os-mac, .os-windows, .os-linux) .tidynavdrives > .fx-caption { color:var(--muted); }
+#tidyMenu { min-width:0; }
+.tidydriveline, .tidydrivename { min-width:0; }
+.tidydrivename > span { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.tidydrivename > span:first-child { flex:0 1 auto; }
+html:is(.os-mac, .os-windows, .os-linux) .tidynavdrives .tidydrivebar { background:var(--line-strong); }

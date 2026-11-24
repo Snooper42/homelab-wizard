@@ -452,11 +452,17 @@ async function makePrivate(page, passphrase) {
   return words;
 }
 
-/** Finances' main action, or one of the rest in the ▾ beside it (the computer's top bar); the phone's header has them as buttons. */
+// Tidy Up's sections are its menu in the sidebar on the computer (redesign-loop R9); Inbox is Overview there.
+const tidyKeys = { Inbox: 'overview', Overview: 'overview', Music: 'music', Movies: 'movies', TV: 'tv', Books: 'books', Audiobooks: 'audiobooks' };
+const tidyItem = (label) => `#tidyMenu .tidymenuitem[data-tab="${tidyKeys[label] || label}"]`;
+async function tidyTab(page, label) {
+  await page.click(tidyItem(label), { timeout: 5000 });
+}
 // Settings opens on General (redesign-loop R8): This Mac (This PC on Windows) is a click in its list.
 async function thisMachinePage(page) {
   await page.click('#settingsNav .pagebtn[data-page^="This "]', { timeout: 5000 });
 }
+/** Finances' main action, or one of the rest in the ▾ beside it (the computer's top bar); the phone's header has them as buttons. */
 async function finAdd(page, name, opts = {}) {
   await page.waitForSelector('#finRoot .toolbar', { timeout: opts.timeout || 30000 });
   const direct = page.locator(`#finRoot .toolbar > button:text-is("${name}")`);
@@ -531,10 +537,10 @@ const shots = [
   // Tidy Up: what to do next beside the drive, the shelf of libraries, and Music's own tab with its steps.
   { name: 'tidy', screen: 'tidy' },
   // Movies' tab: its Space card beside Genres, the two-up row Tidy Up's look lines up with Finances' (L4).
-  { name: 'tidy-movies', screen: 'tidy', before: async (page) => { await page.click('#tidy .seg button:text-is("Movies")', { timeout: 5000 }); await page.waitForSelector('#tidy .tidyspace', { timeout: 5000 }); await page.evaluate(() => document.querySelector('#tidy .tidygenres').scrollIntoView({ block: 'center' })); } },
+  { name: 'tidy-movies', screen: 'tidy', before: async (page) => { await tidyTab(page, 'Movies'); await page.waitForSelector('#tidy .tidyspace', { timeout: 5000 }); await page.evaluate(() => document.querySelector('#tidy .tidygenres').scrollIntoView({ block: 'center' })); } },
   // Overview's Genres, its library picked with Finances' switch (L4).
-  { name: 'tidy-genres', screen: 'tidy', before: async (page) => { await page.click('#tidy .seg button:text-is("Inbox")', { timeout: 5000 }); await page.waitForSelector('#tidy .tidybottom .tidygenres', { timeout: 5000 }); await page.evaluate(() => document.querySelector('#tidy .tidygenres').scrollIntoView({ block: 'center' })); } },
-  { name: 'tidy-music', screen: 'tidy', before: async (page) => { await page.click('#tidy .seg button:text-is("Music")', { timeout: 5000 }); await page.waitForSelector('#tidy .tidytrack', { timeout: 5000 }); } },
+  { name: 'tidy-genres', screen: 'tidy', before: async (page) => { await tidyTab(page, 'Inbox'); await page.waitForSelector('#tidy .tidybottom .tidygenres', { timeout: 5000 }); await page.evaluate(() => document.querySelector('#tidy .tidygenres').scrollIntoView({ block: 'center' })); } },
+  { name: 'tidy-music', screen: 'tidy', before: async (page) => { await tidyTab(page, 'Music'); await page.waitForSelector('#tidy .tidytrack', { timeout: 5000 }); } },
 ];
 
 // Clicks through the buttons that run commands, against the fake backend
@@ -587,7 +593,7 @@ const smokes = [
       return out;
     }, where)));
     for (const tab of ['Inbox', 'Music', 'Movies', 'TV', 'Books', 'Audiobooks']) {
-      await page.click(`#tidy .seg button:text-is("${tab}")`, { timeout: 5000 });
+      await tidyTab(page, tab);
       await page.waitForTimeout(120);
       await look(tab);
     }
@@ -602,7 +608,7 @@ const smokes = [
     await page.waitForSelector('#tidy .fx-board', { timeout: 5000 });
     const bad = [];
     for (const tab of ['Inbox', 'Music', 'Movies', 'TV', 'Books', 'Audiobooks']) {
-      await page.click(`#tidy .seg button:text-is("${tab}")`, { timeout: 5000 });
+      await tidyTab(page, tab);
       await page.waitForTimeout(120);
       bad.push(...(await page.evaluate((tab) => [...document.querySelectorAll('#tidy .card:not(.notice)')].filter((c) => c.checkVisibility()).flatMap((c) => {
         const h = c.querySelector('h2');
@@ -616,7 +622,7 @@ const smokes = [
   // Overview's list is what each library waits on, in order, each with the button that does it; the heading counts
   // the same things the card does, and a drive that is away is said, not counted.
   { name: 'Tidy Up: Overview lists what needs your OK, each with its button, and the counts agree', screen: 'tidy', run: async (page) => {
-    await page.click('#tidy .seg button:text-is("Inbox")', { timeout: 5000 });
+    await tidyTab(page, 'Inbox');
     await page.waitForSelector('#tidy .tidyneeds li', { timeout: 5000 });
     const rows = await page.$$eval('#tidy .tidyneeds li', (ls) => ls.map((l) => [l.querySelector('strong')?.textContent.trim(), l.querySelector('button')?.textContent.trim() || '']));
     const want = [['Free the old music library', 'Free it…'], ['2,402 songs could get lyrics', 'Add lyrics'], ['Shrink 42 films', 'Shrink'], ['Tdarr is shrinking 4 films', 'Collect'], ['2 books could look tidier', 'Look…'], ['Look at your TV first', 'Scan'], ['Audiobooks: its drive isn\'t plugged in', '']];
@@ -639,7 +645,7 @@ const smokes = [
       tidyEvents: { 'install ffmpeg': [{ type: 'step', n: 1, total: 2, text: 'Downloading ffmpeg 7.1' }, { type: 'progress', label: 'MB', done: 52, total: 52 }, { type: 'ok', text: 'ffmpeg 7.1 is ready: Tidy Up uses it from now on' }] },
       tidyAfter: { 'install ffmpeg': { tidy, tidyFails: {} } } };
   })(), run: async (page) => {
-    await page.click('#tidy .seg button:text-is("Inbox")', { timeout: 5000 });
+    await tidyTab(page, 'Inbox');
     const row = '#tidy .tidyneeds li:has-text("Install ffmpeg")';
     await page.waitForSelector(`${row} button:text-is("Install")`, { timeout: 5000 });
     if (!(await page.textContent(row)).includes('from ffmpeg.martin-riedl.de')) throw new Error('the row does not say where it comes from');
@@ -656,7 +662,7 @@ const smokes = [
   } },
   // Calibre missing: its row opens Calibre's download page (it's a whole app, so the app doesn't fetch it).
   { name: 'Tidy Up: Calibre missing: its row opens Calibre’s download page', screen: 'tidy', mock: { tidy: { ...tidy, checks: tidy.checks.map((c) => (c.id === 'calibredb' ? { ...c, ok: false, note: 'Not installed', fix: "Install the Calibre app (Calibre-Web doesn't include its tools)" } : c)) } }, run: async (page) => {
-    await page.click('#tidy .seg button:text-is("Inbox")', { timeout: 5000 });
+    await tidyTab(page, 'Inbox');
     await page.click('#tidy .tidyneeds li:has-text("Calibre’s tools") button:text-is("Get Calibre"), #tidy .tidyneeds li:has-text("Calibre\'s tools") button:text-is("Get Calibre")', { timeout: 5000 });
     await page.waitForFunction(() => window.__MOCK.opened === 'https://calibre-ebook.com/download', null, { timeout: 3000 })
       .catch(async () => { throw new Error('opened ' + (await page.evaluate(() => window.__MOCK.opened))); });
@@ -666,7 +672,7 @@ const smokes = [
   { name: 'Tidy Up: a genre count with nothing to read says why', screen: 'tidy', mock: {
     tidy: { ...tidy, libraries: tidy.libraries.map((l) => (l.kind === 'movies' ? { ...l, last: { ...l.last, 'genre-counts': tidyRun('genre-counts', 1, { items: 4, genres: {}, unplaced: 4, source: 'nowhere yet',
       why: "Jellyfin's API key isn't set: make one in Jellyfin › Dashboard › API Keys, and put it in Settings › Jellyfin (Jellyfin API key); and none has an .nfo file beside it" }) } } : l)) } }, run: async (page) => {
-    await page.click('#tidy .seg button:text-is("Movies")', { timeout: 5000 });
+    await tidyTab(page, 'Movies');
     const box = '#tidy .tidygenres';
     await page.waitForSelector(`${box} button:text-is("Count again")`, { timeout: 5000 });
     const text = await page.textContent(box);
@@ -685,7 +691,7 @@ const smokes = [
     tidy: { ...tidy, libraries: tidy.libraries.map((l) => (l.kind === 'music' ? { ...l, last: { ...l.last, lyrics: tidyRun('lyrics', 5, { synced: 9120, plain: 2210, none: 40, not_found: 2362, instrumental: 200 }) } } : l)) },
     tidyEvents: { 'music lyrics': [{ type: 'ok', text: 'Lyrics added to 3,348 songs; 1,181 plain ones replaced by time-synced' }, { type: 'note', text: '2,362 aren’t on LRCLIB yet: asked again in a month' },
       { type: 'note', text: '200 are instrumentals' }, { type: 'result', action: 'lyrics', ok: true }] } }, run: async (page) => {
-    await page.click('#tidy .seg button:text-is("Inbox")', { timeout: 5000 });
+    await tidyTab(page, 'Inbox');
     const row = '#tidy .tidyneeds li:has-text("could get lyrics")';
     await page.waitForSelector(row, { timeout: 5000 });
     const text = await page.textContent(row);
@@ -703,7 +709,7 @@ const smokes = [
     tidy: { ...tidy, libraries: tidy.libraries.map((l) => (l.kind === 'music' ? { ...l, last: { ...l.last, lyrics: tidyRun('lyrics', 5, { check: true, synced: 13932, none: 0, to_clean: 12 }) } } : l)) },
     tidyEvents: { 'music lyrics': [{ type: 'ok', text: 'Lyrics added to 0 songs; 0 plain ones replaced by time-synced' },
       { type: 'note', text: '12 had a translation after a caret on each line: each is on its own line under its original now' }, { type: 'result', action: 'lyrics', ok: true }] } }, run: async (page) => {
-    await page.click('#tidy .seg button:text-is("Inbox")', { timeout: 5000 });
+    await tidyTab(page, 'Inbox');
     const row = '#tidy .tidyneeds li:has-text("two languages on one line")';
     await page.waitForSelector(row, { timeout: 5000 });
     const text = await page.textContent(row);
@@ -718,7 +724,7 @@ const smokes = [
   // apart is offered on its own, not only inside Add lyrics, which asks LRCLIB about every song first.
   { name: 'Tidy Up: two languages on one line are tidied even with songs still to ask LRCLIB about', screen: 'tidy', mock: {
     tidy: { ...tidy, libraries: tidy.libraries.map((l) => (l.kind === 'music' ? { ...l, last: { ...l.last, lyrics: tidyRun('lyrics', 5, { check: true, synced: 9120, none: 2402, to_clean: 3150 }) } } : l)) } }, run: async (page) => {
-    await page.click('#tidy .seg button:text-is("Inbox")', { timeout: 5000 });
+    await tidyTab(page, 'Inbox');
     const tidyRow = '#tidy .tidyneeds li:has-text("two languages on one line")';
     await page.waitForSelector(tidyRow, { timeout: 5000 });
     if (!(await page.textContent(tidyRow)).includes('3,150 songs show two languages on one line')) throw new Error('the row says ' + (await page.textContent(tidyRow)));
@@ -732,7 +738,7 @@ const smokes = [
   { name: 'Tidy Up: an older lyrics check is offered again on Overview', screen: 'tidy', mock: {
     tidy: { ...tidy, libraries: tidy.libraries.map((l) => (l.kind === 'music' ? { ...l, last: { ...l.last, lyrics: tidyRun('lyrics', 5, { synced: 13932, none: 0, cleaned: 0 }) } } : l)) },
     tidyEvents: { 'music lyrics': [{ type: 'result', action: 'lyrics', ok: true, check: true, to_clean: 12 }] } }, run: async (page) => {
-    await page.click('#tidy .seg button:text-is("Inbox")', { timeout: 5000 });
+    await tidyTab(page, 'Inbox');
     const row = '#tidy .tidyneeds li:has-text("Look over the lyrics again")';
     await page.waitForSelector(row, { timeout: 5000 });
     await page.click(`${row} button:text-is("Check lyrics")`);
@@ -746,7 +752,7 @@ const smokes = [
     { ...tidy.libraries[3], last: { scan: tidyRun('scan', 3, { files: 800, bloated: 0 }) } },
     { ...tidy.libraries[4], found: true, last: { scan: tidyRun('scan', 3, { files: 40, books: 0 }) } },
   ] }, tidyReview: [] }, run: async (page) => {
-    await page.click('#tidy .seg button:text-is("Inbox")', { timeout: 5000 });
+    await tidyTab(page, 'Inbox');
     await page.waitForSelector('#tidy .tidyneeds .tidyclear:has-text("Everything\'s tidy")', { timeout: 5000 });
     if (await page.$('#tidy .tidyneeds li')) throw new Error('a row waits with nothing to do');
     const head = (await page.textContent('#tidy .header .lead')).trim();
@@ -754,28 +760,28 @@ const smokes = [
   } },
   // Overview's books row opens the Books tab, with its review.
   { name: 'Tidy Up: Overview’s books row opens Books and its review', screen: 'tidy', run: async (page) => {
-    await page.click('#tidy .seg button:text-is("Inbox")', { timeout: 5000 });
+    await tidyTab(page, 'Inbox');
     await page.click('#tidy .tidyneeds li:has-text("could look tidier") button:text-is("Look…")');
     await page.waitForSelector('#tidyReview li:has-text("Project Hail Mary")', { timeout: 5000 });
-    if ((await page.textContent('#tidy .seg [aria-checked="true"]')).trim() !== 'Books') throw new Error('the Books tab is not the one picked');
+    if (!(await page.$(tidyItem('Books') + '.on'))) throw new Error('the Books tab is not the one picked');
   } },
   // A tab kept from before the tabs changed opens where its things are now.
   { name: 'Tidy Up: a tab kept from before opens where its things are now', screen: 'tidy', mock: { tidyTab: 'inbox' }, run: async (page) => {
     await page.waitForSelector('#tidy .tidyneeds', { timeout: 5000 });
-    if ((await page.textContent('#tidy .seg [aria-checked="true"]')).trim() !== 'Inbox') throw new Error('New downloads did not open on Inbox');
+    if (!(await page.$(tidyItem('Overview') + '.on'))) throw new Error('New downloads did not open on Inbox');
   } },
   // One genre chart: the music library's genres by share; with none counted yet, a button counts them.
   { name: 'Tidy Up: the genre chart shows music’s genres by share', screen: 'tidy', run: async (page) => {
-    await page.click('#tidy .seg button:text-is("Inbox")', { timeout: 5000 });
+    await tidyTab(page, 'Inbox');
     await page.waitForSelector('#tidy .tidygenres svg', { timeout: 5000 });
     const legend = await page.textContent('#tidy .tidygenres');
     for (const w of ['13,932', 'Rock', '22%', '8 more']) if (!legend.includes(w)) throw new Error(`the chart has no “${w}”: ${legend}`);
   } },
   { name: 'Tidy Up: with no genres counted, the chart’s button counts them', screen: 'tidy', mock: { tidy: { ...tidy, libraries: tidy.libraries.map((l) => (l.kind === 'music' ? { ...l, last: Object.fromEntries(Object.entries(l.last).filter(([k]) => k !== 'genre-counts')) } : l)) } }, run: async (page) => {
     // Overview shows what is counted (the films); Music offers its own count.
-    await page.click('#tidy .seg button:text-is("Inbox")', { timeout: 5000 });
+    await tidyTab(page, 'Inbox');
     await page.waitForSelector('#tidy .tidygenres:has-text("Drama")', { timeout: 3000 });
-    await page.click('#tidy .seg button:text-is("Music")');
+    await tidyTab(page, 'Music');
     await page.click('#tidy .tidygenres button:text-is("Count genres")', { timeout: 5000 });
     await page.waitForFunction(() => (window.__MOCK.tidyRuns || []).length === 1, null, { timeout: 5000 });
     const runs = await page.evaluate(() => window.__MOCK.tidyRuns);
@@ -784,7 +790,7 @@ const smokes = [
   // With more than one library counted, a switch picks whose genres the chart shows, as Finances' cards switch
   // (Tidy Up's look, L4: not a system select box).
   { name: 'Tidy Up: the genre chart’s switch picks the library', screen: 'tidy', run: async (page) => {
-    await page.click('#tidy .seg button:text-is("Inbox")', { timeout: 5000 });
+    await tidyTab(page, 'Inbox');
     const pick = '#tidy .tidygenres [role="radiogroup"][aria-label="Genres of"]';
     await page.waitForSelector(pick, { timeout: 5000 });
     if (await page.$('#tidy .tidygenres select')) throw new Error('a system select box');
@@ -799,7 +805,7 @@ const smokes = [
   // Two cards in a row line up as Finances' do (L4): the same height, the same padding, the figure on the same line.
   { name: 'Tidy Up: Movies’ Genres and Space line up, as Finances’ cards do', screen: 'tidy', run: async (page) => {
     await page.setViewportSize({ width: 1280, height: 900 });
-    await page.click('#tidy .seg button:text-is("Movies")', { timeout: 5000 });
+    await tidyTab(page, 'Movies');
     await page.waitForSelector('#tidy .tidyspace', { timeout: 5000 });
     const [a, b] = await page.$$eval('#tidy .tidygenres, #tidy .tidyspace', (els) => els.map((e) => {
       const r = e.getBoundingClientRect(), cs = getComputedStyle(e), f = e.querySelector('.fx-stat');
@@ -815,7 +821,7 @@ const smokes = [
     await page.setViewportSize({ width: 860, height: 900 });
     const wraps = [];
     for (const [tab, rows] of [['Music', ['could get lyrics', 'Lyrics']], ['Movies', ['Tdarr is shrinking', 'what Radarr downloads']], ['TV', ['what Sonarr downloads']]]) {
-      await page.click(`#tidy .seg button:text-is("${tab}")`, { timeout: 5000 });
+      await tidyTab(page, tab);
       for (const r of rows) {
         const li = page.locator(`#tidy .tidyneeds li:has(strong:text-is("${r}")), #tidy .tidyneeds li:has(strong:has-text("${r}"))`).first();
         await li.waitFor({ timeout: 5000 });
@@ -869,13 +875,13 @@ const smokes = [
     await page.waitForSelector('#tidy .tidyneeds li:has-text("Merge 4 audiobooks")', { timeout: 5000 });
     const said = await page.textContent('#tidy .tidyneeds .muted');
     if (!said.includes('387 GB to win back')) throw new Error(`Needs your OK: ${said} (380 GB from Shrink and 7 GB from Merge)`);
-    await page.click('#tidy .seg button:text-is("Audiobooks")');
+    await tidyTab(page, 'Audiobooks');
     const row = page.locator('#tidy .tidyneeds li:has-text("Merge 4 audiobooks")');
     if ((await row.locator('.tidygain').textContent({ timeout: 5000 })) !== '7 GB') throw new Error(`Merge: ${await row.textContent()}`);
   } },
   // A library not counted yet offers it on its own tab, and runs its own count.
   { name: 'Tidy Up: TV’s genres are counted from its tab', screen: 'tidy', run: async (page) => {
-    await page.click('#tidy .seg button:text-is("TV")', { timeout: 5000 });
+    await tidyTab(page, 'TV');
     await page.waitForSelector('#tidy .tidygenres:has-text("how your shows split")', { timeout: 3000 });
     await page.click('#tidy .tidygenres button:text-is("Count genres")');
     await page.waitForFunction(() => (window.__MOCK.tidyRuns || []).length === 1, null, { timeout: 5000 });
@@ -885,7 +891,7 @@ const smokes = [
   // The same film twice: a row with what the extra copies take, a sheet that names them, and the run only after the yes.
   { name: 'Tidy Up: a film in the library twice asks, then removes the extra copy', screen: 'tidy', mock: { tidy: { ...tidy, libraries: tidy.libraries.map((l) => (l.kind === 'movies' ? { ...l, last: { ...l.last, scan: { ...l.last.scan, result: { ...l.last.scan.result, duplicates: 2, duplicate_bytes: 13e9,
     duplicate_list: [{ keep: '/Volumes/Hobbies/movies/Heat (1995)/Heat (1995).mkv', extra: ['/Volumes/Hobbies/movies/Heat (1995)/Heat.1995.1080p.x264.mkv'], bytes: 9e9 }, { keep: '/Volumes/Hobbies/movies/Ronin (1998)/Ronin.1998.2160p.mkv', extra: ['/Volumes/Hobbies/movies/Ronin (1998)/Ronin (1998).mkv'], bytes: 4e9 }] } } } } : l)) } }, run: async (page) => {
-    await page.click('#tidy .seg button:text-is("Inbox")', { timeout: 5000 });
+    await tidyTab(page, 'Inbox');
     const row = '#tidy .tidyneeds li:has-text("2 films are in the library twice")';
     if ((await page.textContent(`${row} .tidygain`, { timeout: 3000 })).trim() !== '13 GB') throw new Error('the row does not say what the copies take: ' + (await page.textContent(row)));
     await page.click(`${row} button:text-is("Remove extras…")`);
@@ -898,13 +904,13 @@ const smokes = [
     if (JSON.stringify(runs[0]) !== JSON.stringify(['movies', 'dedupe', [], true])) throw new Error(JSON.stringify(runs));
   } },
   { name: 'Tidy Up: once the extra copies are gone, the row is too', screen: 'tidy', mock: { tidy: { ...tidy, libraries: tidy.libraries.map((l) => (l.kind === 'movies' ? { ...l, last: { ...l.last, scan: { ...l.last.scan, result: { ...l.last.scan.result, duplicates: 2, duplicate_bytes: 13e9 } }, dedupe: tidyRun('dedupe', 1, { removed: 2, freed: 13e9 }) } } : l)) } }, run: async (page) => {
-    await page.click('#tidy .seg button:text-is("Movies")', { timeout: 5000 });
+    await tidyTab(page, 'Movies');
     await page.waitForSelector('#tidy .tidyneeds li:has-text("Shrink 42 films")', { timeout: 3000 });
     if (await page.$('#tidy .tidyneeds li:has-text("in the library twice")')) throw new Error('the row stayed after the extras went');
   } },
   // Episodes missing from a season, said on TV's tab with where, and nothing to press.
   { name: 'Tidy Up: TV says which episodes are missing', screen: 'tidy', mock: { tidy: { ...tidy, libraries: tidy.libraries.map((l) => (l.kind === 'tv' ? { ...l, stage: 'scanned', last: { scan: tidyRun('scan', 2, { files: 800, bloated: 0, missing: 3, missing_list: [{ show: 'Frieren', season: null, episodes: [2] }, { show: 'The Office (US)', season: 2, episodes: [3, 4] }] }) } } : l)) } }, run: async (page) => {
-    await page.click('#tidy .seg button:text-is("TV")', { timeout: 5000 });
+    await tidyTab(page, 'TV');
     const row = '#tidy .tidyneeds li:has-text("3 episodes are missing from 2 shows")';
     const t = await page.textContent(row, { timeout: 3000 });
     if (!t.includes('Frieren: 2 · The Office (US) season 2: 3, 4')) throw new Error('the row says ' + t);
@@ -912,7 +918,7 @@ const smokes = [
   } },
   // What Jellyfin shows with no poster: named, and one button asks it to look again.
   { name: 'Tidy Up: shows with no poster in Jellyfin can fetch them', screen: 'tidy', mock: { tidy: { ...tidy, libraries: tidy.libraries.map((l) => (l.kind === 'tv' ? { ...l, stage: 'scanned', last: { scan: tidyRun('scan', 2, { files: 800, bloated: 0, posterless: 2, posterless_list: ['Frieren', 'Severance'] }) } } : l)) } }, run: async (page) => {
-    await page.click('#tidy .seg button:text-is("TV")', { timeout: 5000 });
+    await tidyTab(page, 'TV');
     const row = '#tidy .tidyneeds li:has-text("2 shows have no poster in Jellyfin")';
     if (!(await page.textContent(row, { timeout: 3000 })).includes('Frieren, Severance')) throw new Error('the row does not name them');
     await page.click(`${row} button:text-is("Fetch posters")`);
@@ -922,7 +928,7 @@ const smokes = [
   } },
   // Whatever a run put in the Trash, its line can put back: it asks, then runs the restore with that run.
   { name: 'Tidy Up: Undo on a sweep puts it back, after asking', screen: 'tidy', mock: { tidy: { ...tidy, activity: [...tidy.activity, { at: tidyAt(0.5), kind: 'scrubber', text: 'Leftovers swept', sub: '14 leftovers and 3 empty folders in the Trash', undo: 'scrubber-scan-1793' }] } }, run: async (page) => {
-    await page.click('#tidy .seg button:text-is("Inbox")', { timeout: 5000 });
+    await tidyTab(page, 'Inbox');
     await page.click('#tidy .tidydone li:has-text("Leftovers swept") button:text-is("Undo")', { timeout: 3000 });
     await page.waitForSelector('#tidySheet:not([hidden]) h2:text-is("Put it all back?")', { timeout: 5000 });
     if ((await page.evaluate(() => window.__MOCK.tidyRuns || [])).length) throw new Error('it ran before the yes');
@@ -933,13 +939,13 @@ const smokes = [
   } },
   // The drive: its name, what is free, and each library's size.
   { name: 'Tidy Up: the drive card names the drive and what each library takes', screen: 'tidy', run: async (page) => {
-    await page.click('#tidy .seg button:text-is("Inbox")', { timeout: 5000 });
+    await tidyTab(page, 'Inbox');
     const t = await page.textContent('#tidy .tidydrive', { timeout: 5000 });
     for (const w of ['On the Hobbies drive', '1.2 TB free', 'Of 4 TB', 'Movies1.4 TB', 'Music520 GB', 'Free1.2 TB']) if (!t.includes(w)) throw new Error(`the drive card has no “${w}”: ${t}`);
   } },
   // Undo on the swap asks first, then puts the old library back.
   { name: 'Tidy Up: Undo on the swap asks first, then puts the old library back', screen: 'tidy', run: async (page) => {
-    await page.click('#tidy .seg button:text-is("Inbox")', { timeout: 5000 });
+    await tidyTab(page, 'Inbox');
     await page.click('#tidy .tidydone li:has-text("Cleaned library swapped in") button:text-is("Undo")');
     await page.waitForSelector('#tidySheet:not([hidden]) h2:text-is("Put the old library back?")', { timeout: 5000 });
     if ((await page.evaluate(() => window.__MOCK.tidyRuns || [])).length) throw new Error('it ran before the yes');
@@ -958,7 +964,7 @@ const smokes = [
       'Undo the last apply?', 'Undo', ['books', 'undo', [], true]],
   ].map(([what, line, lib, title, yes, runs]) => ({ name: `Tidy Up: Undo is offered on ${what} whose line is worded differently`, screen: 'tidy',
     mock: { tidy: lib({ ...tidy, activity: [{ at: tidyAt(0.5), sub: '', ...line }] }) }, run: async (page) => {
-    await page.click('#tidy .seg button:text-is("Inbox")', { timeout: 5000 });
+    await tidyTab(page, 'Inbox');
     await page.click(`#tidy .tidydone li:has-text("${line.text}") button:text-is("Undo")`, { timeout: 5000 });
     await page.waitForSelector(`#tidySheet:not([hidden]) h2:text-is("${title}")`, { timeout: 5000 });
     await page.click(`#tidySheet button:text-is("${yes}")`);
@@ -968,20 +974,20 @@ const smokes = [
   } })),
   // A library whose folder is not there (the fixture's audiobooks) says so on its tab, and runs nothing until it is back.
   { name: 'Tidy Up: a library whose folder is gone says so, and runs nothing', screen: 'tidy', run: async (page) => {
-    await page.click('#tidy .seg button:text-is("Audiobooks")', { timeout: 5000 });
+    await tidyTab(page, 'Audiobooks');
     await page.waitForSelector('#tidy .notice:has-text("Audiobooks: its folder isn\'t there")', { timeout: 3000 });
     if (await page.$('#tidy .fx-board button:enabled')) throw new Error('something can run on a folder that is not there');
-    await page.click('#tidy .seg button:text-is("Movies")');
+    await tidyTab(page, 'Movies');
     await page.waitForSelector('#tidy .tidyneeds', { timeout: 3000 });
     if (await page.$('#tidy .notice:has-text("folder isn\'t there")')) throw new Error('a library that is there says it is not');
     if (await page.isDisabled('#tidy .tidyneeds button:text-is("Scan again")')) throw new Error('Movies cannot scan');
   } },
   // The words: good news never reads as a warning, one download as one, a language by its name, and H.264 written one way.
   { name: 'Tidy Up: good news is not a warning, one download, languages by name', screen: 'tidy', mock: { tidy: { ...tidy, libraries: tidy.libraries.map((l) => (l.kind === 'movies' ? { ...l, counts: { ...l.counts, queued: 0 } } : l)) } }, run: async (page) => {
-    await page.click('#tidy .seg button:text-is("Inbox")', { timeout: 5000 });
+    await tidyTab(page, 'Inbox');
     await page.waitForSelector('#tidy .tidydone li:has-text("Nothing went missing")', { timeout: 3000 });
     if (await page.$('#tidy .tidydone li:has-text("Nothing went missing") .warn')) throw new Error('Nothing went missing reads as a warning');
-    await page.click('#tidy .seg button:text-is("Movies")');
+    await tidyTab(page, 'Movies');
     await page.waitForSelector('#tidy .tidyneeds li:has-text("Tdarr is shrinking 1 film")', { timeout: 3000 });
     if (!(await page.textContent('#tidy .tidyspace')).includes('Tdarr: HEVC, English only')) throw new Error('the language is not named: ' + (await page.textContent('#tidy .tidyspace')));
     if (!(await page.textContent('#tidy .tidyneeds')).includes('H.264')) throw new Error('the reason is not given');
@@ -989,7 +995,7 @@ const smokes = [
   } },
   { name: 'Tidy Up: Swap in asks first, then runs with its yes, and the job shows its step and bar', screen: 'tidy', mock: { tidy: { ...tidy, libraries: tidy.libraries.map((l) => (l.kind === 'music' ? { ...l, stage: 'built' } : l)) },
     tidyEvents: { 'music finalize': [{ type: 'step', n: 1, total: 2, text: 'Swapping the folders' }, { type: 'progress', label: 'Folders', done: 3, total: 4, note: 'Navidrome' }, { type: 'ok', text: 'Swapped' }, { type: 'result', action: 'finalize', ok: true }] } }, run: async (page) => {
-    await page.click('#tidy .seg button:text-is("Music")', { timeout: 5000 });
+    await tidyTab(page, 'Music');
     await page.click('#tidy button:text-is("Swap in…")');
     await page.waitForSelector('#tidySheet:not([hidden]) h2:text-is("Swap in your tidy library?")', { timeout: 5000 });
     if ((await page.evaluate(() => window.__MOCK.tidyRuns || [])).length) throw new Error('it ran before the yes');
@@ -1001,7 +1007,7 @@ const smokes = [
     if (!(await page.isHidden('#tidySheet'))) throw new Error('the sheet stayed open');
   } },
   { name: 'Tidy Up: Free the space takes a second click, and Escape asks nothing', screen: 'tidy', run: async (page) => {
-    await page.click('#tidy .seg button:text-is("Music")', { timeout: 5000 });
+    await tidyTab(page, 'Music');
     await page.click('#tidy button:text-is("Free it…")');
     await page.waitForSelector('#tidySheet:not([hidden]) li:has-text("The Navidrome backup from the swap")', { timeout: 5000 });
     await page.click('#tidySheet button:text-is("Free the space")');
@@ -1017,7 +1023,7 @@ const smokes = [
     if (runs[0][0] !== 'music' || runs[0][1] !== 'free-space') throw new Error(JSON.stringify(runs));
   } },
   { name: 'Tidy Up: a book left alone in the review goes to apply as --skip', screen: 'tidy', run: async (page) => {
-    await page.click('#tidy .seg button:text-is("Books")', { timeout: 5000 });
+    await tidyTab(page, 'Books');
     await page.waitForSelector('#tidyReview li:has-text("Project Hail Mary")', { timeout: 5000 });
     if (!(await page.isVisible('#tidyReview li:has-text("Untitled scan"):has-text("Looks misfiled")'))) throw new Error('the held book says why');
     await page.click('#tidy button:text-is("Apply to 2 books…")');
@@ -1030,13 +1036,13 @@ const smokes = [
     if (JSON.stringify(runs[0]) !== JSON.stringify(['books', 'apply', ['--skip', '12'], true])) throw new Error(JSON.stringify(runs));
   } },
   { name: 'Tidy Up: a running job shows its step, bar, and what it is on; Stop asks the engine to stop, and every button waits meanwhile', screen: 'tidy', mock: { tidyHold: true, tidy: { ...tidy, libraries: tidy.libraries.map((l) => (l.kind === 'audiobooks' ? { ...l, found: true } : l)) }, tidyEvents: { 'audiobooks scan': [{ type: 'step', n: 1, total: 2, text: 'Reading' }, { type: 'progress', label: 'Books', done: 5, total: 20, note: 'Dune' }] } }, run: async (page) => {
-    await page.click('#tidy .seg button:text-is("Audiobooks")', { timeout: 5000 });
+    await tidyTab(page, 'Audiobooks');
     await page.click('#tidy .tidyneeds button:text-is("Scan")');
     await page.waitForSelector('#tidyJob .tidystep:text-is("Step 1 of 2 · Reading")', { timeout: 5000 });
     await page.waitForSelector('#tidyJob [role=progressbar][aria-valuenow="25"]', { timeout: 5000 });
     await page.waitForSelector('#tidyJob .tidynow:text-is("Now: Dune")', { timeout: 5000 });
     if (!(await page.isDisabled('#tidy .tidyneeds button:text-is("Scan")'))) throw new Error('a second job could start');
-    await page.click('#tidy .seg button:text-is("Inbox")');
+    await tidyTab(page, 'Inbox');
     // Every button that does something waits; a switch's choices (Genres' library) only pick what a card shows.
     if (await page.$('#tidy .fx-board button:enabled:not([role="radio"])')) throw new Error('a button on Overview could start a second job');
     await page.click('#tidyJob button:text-is("Stop")');
@@ -1044,7 +1050,7 @@ const smokes = [
     await page.waitForSelector('#tidyJob button:text-is("Close")', { timeout: 5000 });
   } },
   { name: 'Tidy Up: a job that fails says why', screen: 'tidy', mock: { tidyFails: { 'movies run': 'Tdarr isn\'t answering at http://localhost:8265.' }, tidyEvents: { 'movies run': [{ type: 'step', n: 1, total: 2, text: 'Handing 42 videos to Tdarr' }] } }, run: async (page) => {
-    await page.click('#tidy .seg button:text-is("Movies")', { timeout: 5000 });
+    await tidyTab(page, 'Movies');
     await page.click('#tidy .tidyneeds button:text-is("Shrink")');
     await page.waitForSelector('#tidyJob .bad:has-text("Tdarr isn\'t answering")', { timeout: 5000 });
     await page.click('#tidyJob button:text-is("Close")');
@@ -1053,7 +1059,7 @@ const smokes = [
   // A job that ends on its own without finishing isn't "stopped" (that's what Stop does): it says so and why, with Try again;
   // the keyboard's place stays in the panel the whole time, and its log isn't called Docker's.
   { name: 'Tidy Up: a job that didn’t finish says so, with Try again, and the keyboard stays with it', screen: 'tidy', mock: { tidyFails: { 'movies collect': 'Tdarr isn\'t answering at http://localhost:8265.' }, tidyEvents: { 'movies collect': [{ type: 'step', n: 1, total: 2, text: 'Asking Tdarr what it finished' }] } }, run: async (page) => {
-    await page.click('#tidy .seg button:text-is("Movies")', { timeout: 5000 });
+    await tidyTab(page, 'Movies');
     await page.focus('#tidy .tidyneeds button:text-is("Collect")');
     await page.keyboard.press('Enter');
     await page.waitForSelector('#tidyJob h2:text-is("Collecting Tdarr\'s work: didn\'t finish")', { timeout: 5000 });
@@ -1090,7 +1096,7 @@ const smokes = [
   } },
   // A review that can't be read says so, with Try again; it never says every book looks tidy.
   { name: 'Tidy Up: a books review that can’t be read says why, with Try again', screen: 'tidy', mock: { tidyReviewFails: 1 }, run: async (page) => {
-    await page.click('#tidy .seg button:text-is("Books")', { timeout: 5000 });
+    await tidyTab(page, 'Books');
     await page.waitForSelector('#tidyReviewError [role=alert]:text-is("Couldn\'t read the last review: Calibre\'s database is locked")', { timeout: 5000 });
     if (await page.locator('#tidy :text("Every book already looks tidy"), #tidy :text("Your books are tidy")').count()) throw new Error('it says the books are tidy');
     const lead = await page.textContent('#tidy .header .lead');
@@ -1100,7 +1106,7 @@ const smokes = [
   } },
   // Look… on the Books tab used to open the tab it was on: it shows the review and takes the keyboard there.
   { name: 'Tidy Up: Look… on Books shows the review and moves the keyboard to it', screen: 'tidy', run: async (page) => {
-    await page.click('#tidy .seg button:text-is("Books")', { timeout: 5000 });
+    await tidyTab(page, 'Books');
     await page.waitForSelector('#tidyReview', { timeout: 5000 });
     await page.focus('#tidy .tidyneeds button:text-is("Look…")');
     await page.keyboard.press('Enter');
@@ -1123,13 +1129,13 @@ const smokes = [
   // Genres takes the whole row rather than leave half of it empty. Tdarr's row says what it holds, not that it has
   // finished it.
   { name: 'Tidy Up: Music’s space is in its header, Genres takes the row, and Tdarr’s row says what it is shrinking', screen: 'tidy', run: async (page) => {
-    await page.click('#tidy .seg button:text-is("Music")', { timeout: 5000 });
+    await tidyTab(page, 'Music');
     await page.waitForSelector('#tidy .tidyhero .tidyfacts div:has(dt:text-is("On the drive")) dd:text-is("520 GB")', { timeout: 5000 });
     await page.waitForSelector('#tidy .tidygenres', { timeout: 5000 });
     if (await page.$('#tidy .tidyspace')) throw new Error('a Space card repeats the header\'s figure');
     const widths = await page.$eval('#tidy .tidygenres', (g) => [g.getBoundingClientRect().width, g.parentElement.getBoundingClientRect().width]);
     if (widths[0] < widths[1] - 2) throw new Error(`Genres leaves part of its row empty: ${widths}`);
-    await page.click('#tidy .seg button:text-is("Movies")');
+    await tidyTab(page, 'Movies');
     await page.waitForSelector('#tidy .tidyneeds strong:text-is("Tdarr is shrinking 4 films")', { timeout: 5000 });
     // The Space card's notes sit at the card's own gap.
     const gaps = await page.$$eval('#tidy .tidyspace > p.fx-sub', (ps) => ps.map((p) => parseFloat(getComputedStyle(p).marginTop) + parseFloat(getComputedStyle(p).marginBottom)));
@@ -1138,7 +1144,7 @@ const smokes = [
   // Nov 8, the owner: Books said "isn't a Calibre library": a folder of books with no metadata.db. Books offers Make a
   // Calibre library (and no review, which can't read them yet), asks first, then runs it with its yes.
   { name: 'Tidy Up: books with no Calibre library offer to make one, after asking', screen: 'tidy', mock: { tidy: { ...tidy, libraries: tidy.libraries.map((l) => (l.kind === 'books' ? { ...l, last: {}, noCalibre: true, loose: 301 } : l)) } }, run: async (page) => {
-    await page.click('#tidy .seg button:text-is("Books")', { timeout: 5000 });
+    await tidyTab(page, 'Books');
     const row = '#tidy .tidyneeds li:has-text("Make a Calibre library from your 301 books")';
     await page.waitForSelector(row, { timeout: 5000 });
     if (await page.$('#tidy .tidyneeds li:has-text("Look over your books")')) throw new Error('a review is offered with no library to read');
@@ -1155,22 +1161,25 @@ const smokes = [
   } },
   // Audiobooks that are one file each already: said with how many, not a bare nought.
   { name: 'Tidy Up: audiobooks that are one file each say there is nothing to merge', screen: 'tidy', mock: { tidy: { ...tidy, libraries: tidy.libraries.map((l) => (l.kind === 'audiobooks' ? { ...l, found: true, last: { scan: tidyRun('scan', 1, { books: 0, files: 0, bytes: 0, whole: 177 }) } } : l)) } }, run: async (page) => {
-    await page.click('#tidy .seg button:text-is("Audiobooks")', { timeout: 5000 });
+    await tidyTab(page, 'Audiobooks');
     await page.waitForSelector('#tidy .tidyneeds strong:text-is("All 177 audiobooks are one file each")', { timeout: 5000 });
     if (await page.$('#tidy .tidyneeds button:text-is("Merge")')) throw new Error('Merge offered with nothing to merge');
   } },
   // Tdarr paused on battery: the shrinking row says it isn't answering, in amber, and Recent has no "collect stopped" lines.
   { name: 'Tidy Up: Tdarr not answering is said on its row', screen: 'tidy', mock: { tidy: { ...tidy, libraries: tidy.libraries.map((l) => (l.kind === 'movies' ? { ...l, last: { ...l.last, collect: { ...tidyRun('collect', 0.1, {}, false), why: "Tdarr isn't answering at http://localhost:8265: start it from Status (Tdarr), then try again. What's with it stays in its queue" } } } : l)) } }, run: async (page) => {
-    await page.click('#tidy .seg button:text-is("Movies")', { timeout: 5000 });
+    await tidyTab(page, 'Movies');
     const row = '#tidy .tidyneeds li:has(strong:text-is("Tdarr is shrinking 4 films"))';
     await page.waitForSelector(`${row}:has-text("Tdarr isn't answering, so nothing is shrinking")`, { timeout: 5000 });
   } },
   // Nov 8, the owner: "drop a bunch of files … and this app will be able to pick that up … once a day maybe, or maybe even
-  // manually". The Inbox tab opens on Drop anything here: the folders watched (one gone with its drive said), Add… from the
-  // folder picker, Remove while another is left, when it tidies (kept at once), and Tidy up now.
+  // manually". Drop anything here, behind Folders and when… in the header since the redesign (redesign-loop R9): the folders
+  // watched (one gone with its drive said), Add… from the folder picker, Remove while another is left, when it tidies (kept
+  // at once); and the header's Tidy up now.
   { name: 'Tidy Up: the Inbox card keeps its folders and when, and Tidy up now files what is waiting', screen: 'tidy', mock: { pickFolder: '/Volumes/Hobbies/Inbox', tidy: { ...tidy, inbox: { ...tidy.inbox, folders: ['/Users/you/Downloads'], gone: [] } } }, run: async (page) => {
-    await page.click('#tidy .seg button:text-is("Inbox")', { timeout: 5000 });
+    await tidyTab(page, 'Inbox');
     const card = '#tidy .tidyinbox';
+    if (await page.$(card)) throw new Error('the folders show before Folders and when… is pressed');
+    await page.click('#tidy .tidyfoldersbtn');
     await page.waitForSelector(`${card} h2:text-is("Drop anything here")`, { timeout: 5000 });
     await page.waitForSelector(`${card} li:has(strong:text-is("Downloads")):has-text("Watched: tidied as things arrive")`, { timeout: 2000 });
     if (await page.$(`${card} li:has(strong:text-is("Downloads")) button:text-is("Remove")`)) throw new Error('the only folder can be removed');
@@ -1183,13 +1192,14 @@ const smokes = [
     const kept = await page.evaluate(() => window.__MOCK.tidyInbox);
     const want = [{ folders: ['/Users/you/Downloads', '/Volumes/Hobbies/Inbox'], when: 'arrive' }, { folders: ['/Users/you/Downloads', '/Volumes/Hobbies/Inbox'], when: 'daily' }, { folders: ['/Volumes/Hobbies/Inbox'], when: 'daily' }];
     if (JSON.stringify(kept) !== JSON.stringify(want)) throw new Error(JSON.stringify(kept));
-    await page.click(`${card} button:text-is("Tidy up now")`);
+    await page.click('#tidy .tidytools button:text-is("Tidy up now")');
     await page.waitForFunction(() => (window.__MOCK.tidyRuns || []).length === 1, null, { timeout: 5000 });
     const runs = await page.evaluate(() => window.__MOCK.tidyRuns);
     if (JSON.stringify(runs[0].slice(0, 3)) !== JSON.stringify(['inbox', 'scan', ['--apply']])) throw new Error(JSON.stringify(runs));
   } },
   { name: 'Tidy Up: a watched folder on a drive that is unplugged says so', screen: 'tidy', mock: { tidy: { ...tidy, inbox: { ...tidy.inbox, gone: ['/Volumes/Hobbies/downloads'] } } }, run: async (page) => {
-    await page.click('#tidy .seg button:text-is("Inbox")', { timeout: 5000 });
+    await tidyTab(page, 'Inbox');
+    await page.click('#tidy .tidyfoldersbtn');
     await page.waitForSelector('#tidy .tidyinbox li:has(strong:text-is("downloads")) .warn:has-text("Not there now: plug in its drive")', { timeout: 5000 });
   } },
   // What I did today: each download the inbox filed, newest first, in plain words; Undo puts one back (one already put back
@@ -1199,7 +1209,7 @@ const smokes = [
     { id: 'b2', kind: 'music', title: 'Album · Artist', where: 'Music › Artist › Album', did: ['12 songs, tags cleaned', 'lyrics added where found'], from: '/Users/you/Downloads/Album', undo: true, at: tidyAt(1), undone: true },
     { id: 'a1', kind: 'movies', title: 'Heat (1995)', where: 'Movies › Heat (1995)', did: ['too big, so Tdarr is shrinking it first'], from: '/Users/you/Downloads/Heat.1995.mkv', undo: true, at: tidyAt(2) },
   ] } }, run: async (page) => {
-    await page.click('#tidy .seg button:text-is("Inbox")', { timeout: 5000 });
+    await tidyTab(page, 'Inbox');
     const card = '#tidy .tidytoday';
     await page.waitForSelector(`${card} h2:text-is("What I did today")`, { timeout: 5000 });
     const titles = await page.$$eval(`${card} li strong`, (e) => e.map((x) => x.textContent));
@@ -1214,10 +1224,10 @@ const smokes = [
     if (JSON.stringify(runs[0].slice(0, 3)) !== JSON.stringify(['inbox', 'undo', ['a1']])) throw new Error(JSON.stringify(runs));
   } },
   { name: 'Tidy Up: What I did today with nothing yet says how to start', screen: 'tidy', mock: { tidy: { ...tidy, today: [] } }, run: async (page) => {
-    await page.click('#tidy .seg button:text-is("Inbox")', { timeout: 5000 });
+    await tidyTab(page, 'Inbox');
     await page.waitForSelector('#tidy .tidytoday:has-text("Nothing yet today. Drop something in a watched folder, or press Tidy up now.")', { timeout: 5000 });
   } },
-  // Nov 8, the owner's mockup: Needs a look, between Drop anything here and What I did today: what Tidy Up couldn't place,
+  // Needs a look (the owner's Nov 8 mockup; beside What I did today since the redesign, R9): what Tidy Up couldn't place,
   // with why. A video can be named a film or an episode in a sheet (File it waits for what it needs; a number box takes
   // digits only), anything can be shown in the file manager or left be; with nothing waiting, the card isn't there.
   { name: 'Tidy Up: Needs a look names a film or an episode, shows one, and leaves one be', screen: 'tidy', mock: { tidy: { ...tidy, needs: [
@@ -1225,11 +1235,11 @@ const smokes = [
     { path: '/Users/you/Downloads/stuff', name: 'stuff', kind: 'tv', why: 'You put it back. Say what it is, or leave it.' },
     { path: '/Users/you/Downloads/track01.mp3', name: 'track01.mp3', kind: 'music', why: "Couldn't file it." },
   ] } }, run: async (page) => {
-    await page.click('#tidy .seg button:text-is("Inbox")', { timeout: 5000 });
+    await tidyTab(page, 'Inbox');
     const card = '#tidy .tidyneedslook';
     await page.waitForSelector(`${card} h2:text-is("Needs a look")`, { timeout: 5000 });
     const order = await page.$$eval('#tidy .tidybody .fx-board:first-child > .fx-widget h2', (e) => e.map((x) => x.firstChild.textContent.trim()));
-    if (JSON.stringify(order) !== JSON.stringify(['Drop anything here', 'Needs a look', 'What I did today'])) throw new Error(JSON.stringify(order));
+    if (JSON.stringify(order) !== JSON.stringify(['What I did today', 'Needs a look'])) throw new Error(JSON.stringify(order));
     await page.waitForSelector(`${card} li:has(strong:text-is("IMG_2041.mov")) .warn:has-text("Couldn't tell which film it is from its name.")`, { timeout: 2000 });
     const song = `${card} li:has(strong:text-is("track01.mp3"))`;
     if (await page.$(`${song} button:text-is("It's a film…")`)) throw new Error('a song offered as a film');
@@ -1284,7 +1294,7 @@ const smokes = [
     { id: '2e7f9bd8-ae28-3d16-8c3e-5b0c0c8e5a3d', title: 'Rumours', artist: 'Fleetwood Mac', year: '2013', songs: 38, format: '3×CD' },
     { id: '3e7f9bd8-ae28-3d16-8c3e-5b0c0c8e5a3d', title: 'Rumours Live', artist: 'Lindsey Buckingham & Christine McVie', songs: 18 },
   ] }, run: async (page) => {
-    await page.click('#tidy .seg button:text-is("Inbox")', { timeout: 5000 });
+    await tidyTab(page, 'Inbox');
     const card = '#tidy .tidyneedslook';
     const songs = `${card} li:has(strong:text-is("new stuff"))`;
     await page.waitForSelector(`${songs} .warn:has-text("These songs don't say which artist or album they are.")`, { timeout: 5000 });
@@ -1344,7 +1354,7 @@ const smokes = [
     movie: [{ name: 'The Big Lebowski', year: 1998, from: 'Radarr' }, { name: 'The Making of The Big Lebowski', year: 1998, from: 'Radarr' }],
     show: [{ name: 'Severance', year: 2022, from: 'Sonarr' }],
   } }, run: async (page) => {
-    await page.click('#tidy .seg button:text-is("Inbox")', { timeout: 5000 });
+    await tidyTab(page, 'Inbox');
     const card = '#tidy .tidyneedslook';
     const sheet = '#tidySheet:not([hidden])';
     // The sheet puts the cursor in its first box a frame after it shows (parts/Sheet.tsx): type once it has.
@@ -1394,7 +1404,7 @@ const smokes = [
     if (JSON.stringify(run) !== JSON.stringify(['inbox', 'name', ['/Users/you/Downloads/IMG_2041.mov', 'movie', 'Heat', '1995']])) throw new Error(JSON.stringify(run));
   } },
   { name: 'Tidy Up: with nothing to look at, Needs a look is not there', screen: 'tidy', mock: { tidy: { ...tidy, needs: [] } }, run: async (page) => {
-    await page.click('#tidy .seg button:text-is("Inbox")', { timeout: 5000 });
+    await tidyTab(page, 'Inbox');
     await page.waitForSelector('#tidy .tidytoday', { timeout: 5000 });
     if (await page.$('#tidy .tidyneedslook')) throw new Error('an empty Needs a look');
   } },
@@ -1416,7 +1426,8 @@ const smokes = [
     const none = { ...tidy, libraries: tidy.libraries.map((l) => ({ ...l, found: false })), checks: tidy.checks.map((c) => (c.id === 'drive' ? { ...c, ok: true } : c)) };
     return [
       { name: 'Tidy Up: Change where your libraries live picks a drive, and restarts the apps after asking', screen: 'tidy', mock: { tidyDrives: drives, tidyPlaces }, run: async (page) => {
-        await page.click('#tidy .seg button:text-is("Inbox")', { timeout: 5000 });
+        await tidyTab(page, 'Inbox');
+        await page.click('#tidy .tidyfoldersbtn');
         await page.waitForSelector('#tidy .tidyinbox:has-text("Your libraries live in /Volumes/Hobbies.")', { timeout: 5000 });
         await page.click('#tidy .tidyinbox button:text-is("Change where your libraries live…")');
         const card = '#tidy .tidyplaces';
@@ -1444,20 +1455,21 @@ const smokes = [
       } },
     ];
   })(),
-  // On a phone, the six tabs in two even rows of three.
-  { name: 'Tidy Up: on a phone the tabs sit in two rows of three', screen: 'tidy', run: async (page) => {
+  // A window as narrow as a phone: the six sections are the sidebar's strip of icons, one under another (the tabs were
+  // two rows of three before the menu, redesign-loop R9).
+  { name: 'Tidy Up: in a window as narrow as a phone, the six sections sit in the sidebar strip', screen: 'tidy', run: async (page) => {
     await page.setViewportSize({ width: 390, height: 800 });
-    await page.waitForSelector('#tidy .seg button:text-is("Audiobooks")', { timeout: 5000 });
-    // The tabs alone: the Inbox card's when choice is a row of its own.
-    const rows = await page.$$eval('#tidyRoot > .seg button', (b) => b.reduce((m, x) => { const t = Math.round(x.getBoundingClientRect().top); m[t] = (m[t] || 0) + 1; return m; }, {}));
-    if (JSON.stringify(Object.values(rows)) !== '[3,3]') throw new Error(`tabs per row: ${JSON.stringify(rows)}`);
+    await page.waitForSelector(tidyItem('Audiobooks'), { timeout: 5000 });
+    const at = await page.$$eval('#tidyMenu .tidymenuitem', (b) => b.map((x) => { const r = x.getBoundingClientRect(); return [Math.round(r.left), Math.round(r.top), r.width > 0 && r.height > 0]; }));
+    if (at.length !== 6 || at.some(([, , seen]) => !seen)) throw new Error(`the sections: ${JSON.stringify(at)}`);
+    if (new Set(at.map(([l]) => l)).size !== 1 || at.some(([, t], i) => i && t <= at[i - 1][1])) throw new Error(`not one under another: ${JSON.stringify(at)}`);
     // Needs your OK's count reads as its subtitle, from the heading's left edge, not alone at the right.
     const [h, c] = await page.$$eval('#tidy .tidyneeds > .row h2, #tidy .tidyneeds > .row .fx-actions > *', (e) => e.map((x) => Math.round(x.getBoundingClientRect().left)));
     if (h !== c) throw new Error(`the heading starts at ${h}, its count at ${c}`);
   } },
   // VoiceOver: a running job is read when its step changes and when it ends, not on every file; a line's dot has words.
   { name: 'Tidy Up: VoiceOver hears each step and the end, not every tick, and what each line’s dot means', screen: 'tidy', mock: { tidyFails: { 'movies collect': 'Tdarr isn\'t answering at http://localhost:8265.' }, tidyEvents: { 'movies collect': [{ type: 'step', n: 1, total: 2, text: 'Asking Tdarr what it finished' }, { type: 'progress', label: 'Films', done: 1, total: 4 }, { type: 'fail', text: 'Tdarr isn\'t answering' }] } }, run: async (page) => {
-    await page.click('#tidy .seg button:text-is("Movies")', { timeout: 5000 });
+    await tidyTab(page, 'Movies');
     await page.click('#tidy .tidyneeds button:text-is("Collect")');
     await page.waitForSelector('#tidyJob h2:has-text("didn\'t finish")', { timeout: 5000 });
     const live = await page.$$eval('#tidyJob [role=status], #tidyJob [aria-live], #tidyJob[role]', (e) => e.map((x) => `${x.className}: ${x.textContent}`));
@@ -1484,7 +1496,7 @@ const smokes = [
   { name: 'Tidy Up: once a books review is applied, it isn’t offered again', screen: 'tidy', mock: { tidy: { ...tidy, libraries: tidy.libraries.map((l) => (l.kind === 'books' ? { ...l, stage: 'applied', last: { ...l.last, apply: tidyRun('apply', 0.5, { changed: 2 }) } } : l)) } }, run: async (page) => {
     await page.waitForSelector('#tidy .tidyneeds', { timeout: 5000 });
     if (await page.locator('#tidy .tidyneeds li:has-text("could look tidier")').count()) throw new Error('Overview offers the applied review again');
-    await page.click('#tidy .seg button:text-is("Books")');
+    await tidyTab(page, 'Books');
     // "Applied … ago": how long ago grows while the suite runs (the fixture's times are set once, at its start).
     await page.waitForSelector('#tidyReview :text-matches("^Applied .+ ago: the books in it were changed")', { timeout: 5000 });
     if (await page.locator('#tidyReview button:has-text("Apply to")').count()) throw new Error('it offers to apply the same changes again');
@@ -1492,7 +1504,7 @@ const smokes = [
   } },
   { name: 'Tidy Up: after an apply is undone, the review is offered again', screen: 'tidy', mock: { tidy: { ...tidy, libraries: tidy.libraries.map((l) => (l.kind === 'books' ? { ...l, last: { ...l.last, apply: tidyRun('apply', 0.5, { changed: 2 }), undo: tidyRun('undo', 0.2, {}) } } : l)) } }, run: async (page) => {
     await page.waitForSelector('#tidy .tidyneeds li:has-text("2 books could look tidier")', { timeout: 5000 });
-    await page.click('#tidy .seg button:text-is("Books")');
+    await tidyTab(page, 'Books');
     await page.waitForSelector('#tidyReview button:text-is("Apply to 2 books…")', { timeout: 5000 });
   } },
   // Stop on a job started elsewhere (tidy-loop.md's queue, item 3): it asks the computer to stop that job (the one shown:
@@ -1501,7 +1513,7 @@ const smokes = [
     const lock = { pid: 4242, kind: 'movies', action: 'collect', start: tidyAt(0.1), flags: [] };
     return { tidy: { ...tidy, lock }, tidyStopSlow: 4000 };
   })(), run: async (page) => {
-    await page.click('#tidy .seg button:text-is("Movies")', { timeout: 5000 });
+    await tidyTab(page, 'Movies');
     await page.click('#tidyRunning button:text-is("Stop")', { timeout: 5000 });
     await page.waitForSelector('#tidyRunning button:text-is("Stopping…"):disabled', { timeout: 2000 });
     const asked = await page.evaluate(() => window.__MOCK.tidyStoppedElsewhere);
@@ -1515,7 +1527,7 @@ const smokes = [
     const lock = { pid: 4242, kind: 'movies', action: 'collect', start: tidyAt(0.1), flags: [] };
     return { tidy: { ...tidy, lock }, tidyLockFails: 1, tidyLocks: [{ now: {} }] };
   })(), run: async (page) => {
-    await page.click('#tidy .seg button:text-is("Movies")', { timeout: 5000 });
+    await tidyTab(page, 'Movies');
     await page.waitForSelector('#tidyRunning', { timeout: 5000 });
     // The first ask (3 s in) fails; the next (3 s later) finds it done.
     await page.waitForSelector('#tidyRunning', { state: 'detached', timeout: 12000 });
@@ -1528,7 +1540,7 @@ const smokes = [
       { now: {} },
     ] };
   })(), run: async (page) => {
-    await page.click('#tidy .seg button:text-is("Movies")', { timeout: 5000 });
+    await tidyTab(page, 'Movies');
     await page.waitForSelector('#tidyRunning h2:text-is("Collecting Tdarr\'s work")', { timeout: 5000 });
     const shrink = '#tidy .tidyneeds button:text-is("Shrink")';
     if (!(await page.isDisabled(shrink))) throw new Error('Shrink could start while another job holds the lock');
@@ -1548,7 +1560,7 @@ const smokes = [
     ['a job started elsewhere yesterday says yesterday', { lock: { pid: 4242, kind: 'movies', action: 'collect', start: tidyYesterday(), flags: [] } }, '#tidyRunning', 'Movies'],
     ['a job that stopped part-way says when it started', { stale: { pid: 4242, kind: 'music', action: 'finalize', start: tidyYesterday() } }, '#tidyStale', ''],
   ].map(([what, extra, card, tab]) => ({ name: `Tidy Up: ${what}`, screen: 'tidy', mock: { tidy: { ...tidy, ...extra } }, run: async (page) => {
-    if (tab) await page.click(`#tidy .seg button:text-is("${tab}")`, { timeout: 5000 });
+    if (tab) await tidyTab(page, tab);
     await page.waitForSelector(card, { timeout: 5000 });
     const text = await page.textContent(card);
     if (!/Started yesterday at 3:04(\s| )?AM/i.test(text) && !/Started yesterday at 03:04/.test(text)) throw new Error(`it says: ${text}`);
@@ -1589,14 +1601,14 @@ const smokes = [
   { name: 'Tidy Up: a books apply that stopped part-way opens the review, and applies nothing by itself', screen: 'tidy', mock: { tidy: { ...tidy, stale: { pid: 4242, kind: 'books', action: 'apply', start: tidyAt(3) } } }, run: async (page) => {
     await page.waitForSelector('#tidyStale strong:text-is("Tidying your books: stopped part-way")', { timeout: 5000 });
     await page.click('#tidyStale button:text-is("Open the review")');
-    await page.waitForSelector('#tidy .seg button[aria-checked="true"]:text-is("Books")', { timeout: 5000 });
+    await page.waitForSelector(tidyItem('Books') + '.on', { timeout: 5000 });
     await page.waitForSelector('#tidyReview', { timeout: 5000 });
     const ran = await page.evaluate(() => window.__MOCK.tidyRuns || []);
     if (ran.length) throw new Error(`ran: ${JSON.stringify(ran)}`);
   } },
   // Stop waits for a safe point, which can take minutes: until then, the panel says it's stopping and Stop can't be pressed again.
   { name: 'Tidy Up: Stop says it is stopping until the job reaches a safe point', screen: 'tidy', mock: { tidyHold: true, tidyStopSlow: 1500, tidyEvents: { 'tv scan': [{ type: 'step', n: 1, total: 2, text: 'Reading' }, { type: 'progress', label: 'Episodes', done: 5, total: 800, note: 'Frieren S01E05' }] } }, run: async (page) => {
-    await page.click('#tidy .seg button:text-is("TV")', { timeout: 5000 });
+    await tidyTab(page, 'TV');
     await page.click('#tidy .tidyneeds button:text-is("Scan")');
     await page.waitForSelector('#tidyJob .tidynow:text-is("Now: Frieren S01E05")', { timeout: 5000 });
     await page.click('#tidyJob button:text-is("Stop")');
@@ -1617,11 +1629,11 @@ const smokes = [
     if (tiles.length !== 5 || want.some((w, i) => !tiles[i].startsWith(w))) throw new Error(`the shelf: ${JSON.stringify(tiles)}`);
     if (!tiles[0].includes('2,402 songs could get lyrics') || !tiles[1].includes('Shrink 42 films')) throw new Error(`the tiles don't say what waits: ${JSON.stringify(tiles)}`);
     await page.click('#tidy .tidyshelf .tidytile:has-text("Movies")');
-    await page.waitForSelector('#tidy .seg button[aria-checked="true"]:text-is("Movies")', { timeout: 3000 });
+    await page.waitForSelector(tidyItem('Movies') + '.on', { timeout: 3000 });
     await page.waitForSelector('#tidy .tidyhero h2:has-text("Movies")', { timeout: 3000 });
   } },
   { name: 'Tidy Up: Music opens on its steps, each done one with when, and freeing the space next', screen: 'tidy', run: async (page) => {
-    await page.click('#tidy .seg button:text-is("Music")', { timeout: 5000 });
+    await tidyTab(page, 'Music');
     await page.waitForSelector('#tidy .tidyhero .tidytrack', { timeout: 3000 });
     const steps = await page.$$eval('#tidy .tidytrack li', (ls) => ls.map((l) => `${l.className}:${l.querySelector('strong').textContent}`));
     if (JSON.stringify(steps) !== JSON.stringify(['done:Scanned', 'done:Tidy copy built', 'done:Swapped in', 'done:Every song checked', 'now:Old library freed'])) throw new Error(`steps: ${JSON.stringify(steps)}`);
@@ -3396,10 +3408,11 @@ const smokes = [
     if ((await on()) !== 'finances' || (await finAt(page)) !== 'Recurring') throw new Error(`Forward three times: ${await on()}: ${await finAt(page)}`);
     // Tidy Up's tabs too.
     await page.click('nav button[data-screen="tidy"]');
-    await page.click('#tidy .seg button:text-is("Music")', { timeout: 5000 });
-    await page.click('#tidy .seg button:text-is("Books")');
+    await tidyTab(page, 'Music');
+    await tidyTab(page, 'Books');
     await page.keyboard.press('Meta+BracketLeft');
-    await page.waitForSelector('#tidy.active .seg button[aria-pressed="true"]:text-is("Music"), #tidy.active .seg button.on:text-is("Music"), #tidy.active .seg button[aria-checked="true"]:text-is("Music")', { timeout: 3000 });
+    await page.waitForSelector('#tidy.active', { timeout: 3000 });
+    await page.waitForSelector(tidyItem('Music') + '.on', { timeout: 3000 });
   } },
   { name: 'Healthy categories fold into their headings', screen: 'status', mock: { statusOpen: '' }, run: async (page) => {
     await page.waitForSelector('#statusRows tr.grouphead.fold:has-text("Security"):has-text("✓ 4 running")', { timeout: 5000 });
@@ -3723,7 +3736,7 @@ const smokes = [
         await page.waitForSelector('.tidyneeds li', { timeout: 5000 });
         const got = await rows(page);
         if (got[0] !== "Install Python 3, ffmpeg and Calibre's tools" || got.some((t) => /drive/.test(t))) throw new Error(`Needs your OK lists: ${JSON.stringify(got)}`);
-        await page.click('#tidy .seg button:text-is("Books")', { timeout: 5000 });
+        await tidyTab(page, 'Books');
         await page.waitForSelector(".tidyneeds li:has-text(\"Install Python 3 and Calibre's tools\")", { timeout: 3000 });
       } },
     ];
@@ -3736,13 +3749,13 @@ const smokes = [
       : { ...l, last: Object.fromEntries(Object.entries(l.last).filter(([k]) => k !== 'lyrics').concat(result ? [['lyrics', tidyRun('lyrics', 5, result)]] : [])) })) });
     return [
       { name: 'Lyrics never checked: Overview offers the check', screen: 'tidy', mock: { tidy: withLyrics(null) }, run: async (page) => {
-        await page.click('#tidy .seg button:text-is("Inbox")', { timeout: 5000 });
+        await tidyTab(page, 'Inbox');
         await page.waitForSelector('#tidy .tidyneeds li:has-text("See how many songs have lyrics") button:text-is("Check lyrics")', { timeout: 5000 });
         await page.click('#tidy .tidyneeds li:has-text("See how many songs have lyrics") button:text-is("Check lyrics")');
         await page.waitForFunction(() => window.__MOCK.tidyRuns.some((r) => r.slice(0, 3).join(' ') === 'music lyrics --check'), null, { timeout: 5000 });
       } },
       { name: 'Lyrics checked, nothing to do: Music still has a Lyrics row and Check again', screen: 'tidy', mock: { tidy: withLyrics({ check: true, synced: 13700, plain: 228, none: 0, to_clean: 0, instrumental: 4 }) }, run: async (page) => {
-        await page.click('#tidy .seg button:text-is("Music")', { timeout: 5000 });
+        await tidyTab(page, 'Music');
         const row = '#tidy .tidyneeds li:has-text("Lyrics"):has-text("13,700 songs time-synced")';
         await page.waitForSelector(`${row}:has-text("none with two languages on one line") button:text-is("Check again")`, { timeout: 5000 });
       } },
@@ -10779,9 +10792,9 @@ const screens = [
   { name: 'Tidy Up', screen: 'tidy' },
   // Music has every part the other tabs share (its list, the genre chart, what was done), so it goes through every
   // system and accent; the other tabs through each platform's look (Mac, Windows, Linux).
-  ...['Music', 'Movies', 'TV', 'Books', 'Audiobooks'].map((tab) => ({ name: `Tidy Up, ${tab}`, screen: 'tidy', ...(tab === 'Music' ? {} : { systems: ['Mac', 'Windows', 'Linux'] }), before: async (page) => { await page.click(`#tidy .seg button:text-is("${tab}")`, { timeout: 5000 }); await page.waitForTimeout(150); } })),
+  ...['Music', 'Movies', 'TV', 'Books', 'Audiobooks'].map((tab) => ({ name: `Tidy Up, ${tab}`, screen: 'tidy', ...(tab === 'Music' ? {} : { systems: ['Mac', 'Windows', 'Linux'] }), before: async (page) => { await tidyTab(page, tab); await page.waitForTimeout(150); } })),
   { name: 'Tidy Up, a job running', screen: 'tidy', mock: { tidyEvents: { 'music run': [{ type: 'step', n: 2, total: 5, text: 'Matching albums with MusicBrainz' }, { type: 'progress', label: 'Albums', done: 4812, total: 7233, note: "Taylor Swift — Fearless (Taylor's Version)", eta: 3900 }, { type: 'ok', text: 'Read 13,990 songs' }] }, tidy: { ...tidy, libraries: tidy.libraries.map((l) => (l.kind === 'music' ? { ...l, stage: 'scanned' } : l)) } },
-    before: async (page) => { await page.evaluate(() => { window.__MOCK.tidyHold = true; }); await page.click('#tidy .seg button:text-is("Music")', { timeout: 5000 }); await page.click('#tidy .tidyneeds button:text-is("Build")'); await page.waitForSelector('#tidyJob .tidynow', { timeout: 5000 }); } },
+    before: async (page) => { await page.evaluate(() => { window.__MOCK.tidyHold = true; }); await tidyTab(page, 'Music'); await page.click('#tidy .tidyneeds button:text-is("Build")'); await page.waitForSelector('#tidyJob .tidynow', { timeout: 5000 }); } },
   { name: 'An app’s page', screen: 'app:vikunja', mock: { ...pageMock, explainer: 'llama3.2:latest' } },
   { name: 'The phone', screen: 'status', phone: ['companion'] },
   { name: 'The phone, an app’s page', screen: 'app:vikunja', mock: pageMock, phone: ['companion'] },

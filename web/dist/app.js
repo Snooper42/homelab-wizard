@@ -18776,7 +18776,7 @@ ${pays}
       setFrom(tab3);
       setTab("transactions");
     };
-    const pickTab = (t3) => {
+    const pickTab2 = (t3) => {
       setFrom("");
       setTab(t3);
     };
@@ -18784,7 +18784,7 @@ ${pays}
       if (tab3 !== "transactions") setFrom("");
     }, [tab3]);
     if (groupOf(tab3)[2].includes(tab3)) leftOn[groupOf(tab3)[0]] = tab3;
-    const back3 = from2 && from2 !== "transactions" ? { label: tabs.find(([k3]) => k3 === from2)?.[1] || from2, go: () => pickTab(from2) } : void 0;
+    const back3 = from2 && from2 !== "transactions" ? { label: tabs.find(([k3]) => k3 === from2)?.[1] || from2, go: () => pickTab2(from2) } : void 0;
     const ro = !!v3?.readOnly;
     const age = v3?.typed ? daysBetween(v3.typed, v3.today) : -1;
     const lead2 = (age < 0 ? phone2 ? "Typed in by you, kept on your homelab" : "Typed in by you, kept on this machine" : age === 0 ? "Balances from today" : `Balances from ${dayShort(v3.typed)}, with what's happened since` + (age >= 7 ? `: ${age} days ago${ro ? "" : ", bring them up to date with Update balances"}` : "")) + (ro ? " · view only" : "");
@@ -18849,8 +18849,8 @@ ${pays}
         ] }),
         age >= 7 && /* @__PURE__ */ u3("p", { class: "lead warn fx-stale", children: lead2 })
       ] }),
-      phone2 && /* @__PURE__ */ u3(Segmented, { label: "View", value: groupOf(tab3)[0], pick: (g2) => pickTab(pageOf(g2)), options: groups3.map(([k3, label2]) => [k3, label2]) }),
-      phone2 && groupOf(tab3)[2].length > 1 && /* @__PURE__ */ u3("div", { class: "fx-subtabs", children: /* @__PURE__ */ u3(Segmented, { label: groupOf(tab3)[1], value: pageFor(tab3), pick: pickTab, options: tabs.filter(([k3]) => groupOf(tab3)[2].includes(k3)) }) }),
+      phone2 && /* @__PURE__ */ u3(Segmented, { label: "View", value: groupOf(tab3)[0], pick: (g2) => pickTab2(pageOf(g2)), options: groups3.map(([k3, label2]) => [k3, label2]) }),
+      phone2 && groupOf(tab3)[2].length > 1 && /* @__PURE__ */ u3("div", { class: "fx-subtabs", children: /* @__PURE__ */ u3(Segmented, { label: groupOf(tab3)[1], value: pageFor(tab3), pick: pickTab2, options: tabs.filter(([k3]) => groupOf(tab3)[2].includes(k3)) }) }),
       /* @__PURE__ */ u3("div", { class: "finbody", children: !v3 && error ? /* @__PURE__ */ u3(Empty, { children: [
         "The finances file could not be read: ",
         error,
@@ -21018,17 +21018,17 @@ ${pays}
     const machine = d3.checks.filter((c4) => !c4.ok && c4.needs && c4.id !== "drive" && !TOOLS.has(c4.id)).map((c4) => ({ kind: "machine", title: c4.name, sub: `${c4.note}. ${c4.fix}`, warn: true }));
     return [...plug, ...tools, ...machine, ...LIBRARIES.flatMap((k3) => todosFor(lib(d3, k3), d3, act, review2, pick)), ...gone];
   }
-  function Overview2({ d: d3, job: job2, act, review: review2, pick, placing: placing2 }) {
+  function Overview2({ d: d3, job: job2, act, review: review2, pick, placing: placing2, folders }) {
     const first = d3.libraries.every((l3) => !l3.found) && !d3.checks.some((c4) => c4.id === "drive" && !c4.ok);
     if (first || placing2) return /* @__PURE__ */ u3("div", { class: "fx-board", children: /* @__PURE__ */ u3(PlacesWidget, { d: d3, job: job2, act, first: first && !placing2 }) });
     const todos = needsFor(d3, act, review2, pick);
     const waiting2 = todos.filter((t3) => t3.go).length;
     const gain = todos.reduce((t3, x3) => t3 + (x3.gain || 0), 0);
     return /* @__PURE__ */ u3(S, { children: [
-      /* @__PURE__ */ u3("div", { class: "fx-board", children: [
-        /* @__PURE__ */ u3(InboxWidget, { d: d3, job: job2, act }),
-        /* @__PURE__ */ u3(NeedsLookWidget, { d: d3, job: job2, act }),
-        /* @__PURE__ */ u3(TodayWidget, { d: d3, job: job2, act })
+      folders && /* @__PURE__ */ u3("div", { class: "fx-board", children: /* @__PURE__ */ u3(InboxWidget, { d: d3, job: job2, act }) }),
+      /* @__PURE__ */ u3("div", { class: "fx-board tidynow", children: [
+        /* @__PURE__ */ u3(TodayWidget, { d: d3, job: job2, act, wide: !(d3.needs || []).length }),
+        /* @__PURE__ */ u3(NeedsLookWidget, { d: d3, job: job2, act })
       ] }),
       /* @__PURE__ */ u3("div", { class: "fx-board tidytop", children: [
         /* @__PURE__ */ u3(Widget, { title: "Needs your OK", kind: "fx-paycheck tidyneeds", actions: waiting2 ? /* @__PURE__ */ u3("span", { class: "muted", children: [
@@ -21086,7 +21086,7 @@ ${pays}
           /* @__PURE__ */ u3(Segmented, { label: "When Tidy Up files what's in these folders", value: when3, pick: (v3) => act.inbox(folders, v3), options: WHENS })
         ] })
       ] }),
-      /* @__PURE__ */ u3("div", { class: "tidyinboxgo", children: /* @__PURE__ */ u3(Go, { primary: true, label: "Tidy up now", job: job2, onClick: () => act.run("inbox", "scan", ["--apply"]) }) }),
+      /* @__PURE__ */ u3("div", { class: "tidyinboxgo", children: /* @__PURE__ */ u3("button", { class: "small", onClick: () => act.settings(), children: "More in Settings…" }) }),
       /* @__PURE__ */ u3("p", { class: "tidyinboxwhere muted", children: [
         "Your libraries live in ",
         d3.mediaRoot,
@@ -21242,45 +21242,54 @@ ${pays}
       },
       go: (v3) => act.run("inbox", "name", [x3.path, "episode", picked(v3)?.[0] || v3.show, v3.season, ...opt(v3.episode)])
     });
-    return /* @__PURE__ */ u3(Widget, { title: "Needs a look", span: "all", kind: "tidyneedslook", actions: /* @__PURE__ */ u3("span", { class: "muted", children: [
-      count(needs.length, "thing"),
-      " Tidy Up couldn't place · nothing else waits on ",
-      needs.length === 1 ? "it" : "them"
-    ] }), children: /* @__PURE__ */ u3(Rows, { kind: "fx-rows tidytodo", children: needs.map((x3) => /* @__PURE__ */ u3(
-      Row,
-      {
-        lead: /* @__PURE__ */ u3(LibIcon, { kind: x3.kind || "inbox" }),
-        title: x3.name,
-        sub: x3.why,
-        subTone: "warn",
-        end: /* @__PURE__ */ u3("span", { class: "tidyneedsgo", children: [
-          x3.kind === "music" && /* @__PURE__ */ u3(Go, { label: "Name these songs…", job: job2, onClick: () => album(x3) }),
-          (x3.kind === "movies" || x3.kind === "tv") && /* @__PURE__ */ u3(S, { children: [
-            /* @__PURE__ */ u3(Go, { label: "It's a film…", job: job2, onClick: () => film(x3) }),
-            /* @__PURE__ */ u3(Go, { label: "It's an episode…", job: job2, onClick: () => episode(x3) })
-          ] }),
-          /* @__PURE__ */ u3("button", { class: "small", onClick: () => act.reveal(x3.path), children: showIn }),
-          /* @__PURE__ */ u3(Go, { label: "Leave it", job: job2, title: `Leave ${x3.name} where it is: Tidy Up won't file it`, onClick: () => act.run("inbox", "leave", [x3.path]) })
-        ] })
-      },
-      x3.path
-    )) }) });
+    return /* @__PURE__ */ u3(Widget, { title: "Needs a look", kind: "tidyneedslook", actions: /* @__PURE__ */ u3("span", { class: "tidycount", title: count(needs.length, "thing"), children: needs.length }), children: [
+      /* @__PURE__ */ u3("p", { class: "muted tidyneedslead", children: needs.length === 1 ? "Tidy Up couldn't place it; nothing else waits on it." : "Tidy Up couldn't place these; nothing else waits on them." }),
+      /* @__PURE__ */ u3(Rows, { kind: "fx-rows tidytodo", children: needs.map((x3) => /* @__PURE__ */ u3(
+        Row,
+        {
+          lead: /* @__PURE__ */ u3(LibIcon, { kind: x3.kind || "inbox" }),
+          title: x3.name,
+          sub: x3.why,
+          subTone: "warn",
+          end: /* @__PURE__ */ u3("span", { class: "tidyneedsgo", children: [
+            x3.kind === "music" && /* @__PURE__ */ u3(Go, { label: "Name these songs…", job: job2, onClick: () => album(x3) }),
+            (x3.kind === "movies" || x3.kind === "tv") && /* @__PURE__ */ u3(S, { children: [
+              /* @__PURE__ */ u3(Go, { label: "It's a film…", job: job2, onClick: () => film(x3) }),
+              /* @__PURE__ */ u3(Go, { label: "It's an episode…", job: job2, onClick: () => episode(x3) })
+            ] }),
+            /* @__PURE__ */ u3("button", { class: "small", onClick: () => act.reveal(x3.path), children: showIn }),
+            /* @__PURE__ */ u3(Go, { label: "Leave it", job: job2, title: `Leave ${x3.name} where it is: Tidy Up won't file it`, onClick: () => act.run("inbox", "leave", [x3.path]) })
+          ] })
+        },
+        x3.path
+      )) })
+    ] });
   }
-  function TodayWidget({ d: d3, job: job2, act }) {
+  function TodayWidget({ d: d3, job: job2, act, wide }) {
     const today2 = d3.today || [];
-    return /* @__PURE__ */ u3(Widget, { title: "What I did today", span: "all", kind: "tidytoday", children: today2.length ? /* @__PURE__ */ u3(Rows, { kind: "fx-rows tidytoday", children: today2.map((f4) => /* @__PURE__ */ u3(
-      Row,
-      {
-        lead: /* @__PURE__ */ u3(LibIcon, { kind: f4.kind }),
-        title: f4.title,
-        sub: f4.undone ? "Put back where it came from" : `${f4.where} · ${(f4.did || []).join(" · ")}`,
-        end: /* @__PURE__ */ u3(S, { children: [
-          f4.undo && !f4.undone && /* @__PURE__ */ u3(Go, { label: "Undo", job: job2, title: `Put ${f4.title} back where it came from`, onClick: () => act.run("inbox", "undo", [f4.id]) }),
-          /* @__PURE__ */ u3("span", { class: "muted tidywhen", children: clock2(f4.at) })
+    return /* @__PURE__ */ u3(Widget, { title: "What I did today", span: wide ? "all" : 1, kind: "tidytoday", children: [
+      !!today2.length && /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3("span", { class: "fx-amount", children: [
+        today2.filter((f4) => !f4.undone).length,
+        /* @__PURE__ */ u3("small", { children: [
+          " ",
+          today2.filter((f4) => !f4.undone).length === 1 ? "download" : "downloads",
+          " filed"
         ] })
-      },
-      f4.id
-    )) }) : /* @__PURE__ */ u3(Empty, { children: "Nothing yet today. Drop something in a watched folder, or press Tidy up now." }) });
+      ] }), caption: "Since midnight" }),
+      today2.length ? /* @__PURE__ */ u3(Rows, { kind: "fx-rows tidytoday", children: today2.map((f4) => /* @__PURE__ */ u3(
+        Row,
+        {
+          lead: /* @__PURE__ */ u3(LibIcon, { kind: f4.kind }),
+          title: f4.title,
+          sub: f4.undone ? "Put back where it came from" : `${f4.where} · ${(f4.did || []).join(" · ")}`,
+          end: /* @__PURE__ */ u3(S, { children: [
+            f4.undo && !f4.undone && /* @__PURE__ */ u3(Go, { label: "Undo", job: job2, title: `Put ${f4.title} back where it came from`, onClick: () => act.run("inbox", "undo", [f4.id]) }),
+            /* @__PURE__ */ u3("span", { class: "muted tidywhen", children: clock2(f4.at) })
+          ] })
+        },
+        f4.id
+      )) }) : /* @__PURE__ */ u3(Empty, { children: "Nothing yet today. Drop something in a watched folder, or press Tidy up now." })
+    ] });
   }
   function meterOf(l3) {
     if (l3.kind === "music") {
@@ -21441,6 +21450,7 @@ ${pays}
   var tabNow = (t3) => t3 === "inbox" ? "overview" : t3 === "lyrics" ? "music" : ["overview", ...LIBRARIES].includes(t3) ? t3 : "overview";
   function TidyScreen(p3) {
     const { d: d3, job: job2, act } = p3;
+    const [folders, setFolders] = d2(false);
     const tab3 = tabNow(p3.tab);
     const waiting2 = d3 ? needsFor(d3, act, p3.review, p3.pick).filter((t3) => t3.go).length : 0;
     const other = job2 && !job2.ended ? null : (p3.running ? p3.running.lock : d3?.lock) || null;
@@ -21451,9 +21461,12 @@ ${pays}
           /* @__PURE__ */ u3("h1", { children: "Tidy Up" }),
           /* @__PURE__ */ u3("p", { class: "lead", children: say || "Your music, films, TV, books, and audiobooks: sorted, tagged, and lean" })
         ] }),
-        /* @__PURE__ */ u3("div", { class: "toolbar", children: /* @__PURE__ */ u3("button", { class: "btn", onClick: () => act.settings(), children: "Settings…" }) })
+        /* @__PURE__ */ u3("div", { class: "toolbar tidytools", children: [
+          /* @__PURE__ */ u3("button", { type: "button", class: "btn tidyfoldersbtn" + (folders ? " on" : ""), "aria-expanded": folders, title: "The folders Tidy Up watches, and when it tidies", onClick: () => setFolders(!folders), children: "Folders and when…" }),
+          d3 && /* @__PURE__ */ u3(Elsewhere.Provider, { value: other ? jobTitle(other.kind, other.action, other.flags || []) : "", children: /* @__PURE__ */ u3(Go, { primary: true, label: "Tidy up now", job: job2, onClick: () => act.run("inbox", "scan", ["--apply"]) }) })
+        ] })
       ] }),
-      /* @__PURE__ */ u3(Segmented, { label: "Tidy Up sections", value: tab3, pick: (v3) => p3.pick(v3), options: [["overview", "Inbox"], ...LIBRARIES.map((k3) => [k3, names3[k3]])] }),
+      /* @__PURE__ */ u3("div", { class: "tidytabs", children: /* @__PURE__ */ u3(Segmented, { label: "Tidy Up sections", value: tab3, pick: (v3) => p3.pick(v3), options: [["overview", "Inbox"], ...LIBRARIES.map((k3) => [k3, names3[k3]])] }) }),
       other && /* @__PURE__ */ u3(RunningCard, { lock: other, now: p3.running?.lock ? p3.running.now : void 0, stop: () => p3.act.stopElsewhere(other), stopping: p3.stoppingElsewhere === other.start }),
       d3?.stale && !other && !job2 && (() => {
         const c4 = carryOn(d3.stale, d3, act, p3.pick);
@@ -21493,8 +21506,39 @@ ${pays}
           /* @__PURE__ */ u3("button", { class: "small", onClick: p3.reload, children: "Try again" })
         ] })
       ] }),
-      !d3 ? !p3.error && /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : /* @__PURE__ */ u3(Elsewhere.Provider, { value: other ? jobTitle(other.kind, other.action, other.flags || []) : "", children: /* @__PURE__ */ u3("div", { class: "finbody tidybody", children: tab3 === "overview" ? /* @__PURE__ */ u3(Overview2, { d: d3, job: job2, act, review: p3.review, pick: p3.pick, placing: p3.placing }) : /* @__PURE__ */ u3(LibraryTab, { kind: tab3, d: d3, job: job2, act, review: p3.review, reviewError: p3.reviewError, reloadReview: p3.reloadReview, skip: p3.skip, toggle: p3.toggle, pick: p3.pick }) }) })
+      !d3 ? !p3.error && /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : /* @__PURE__ */ u3(Elsewhere.Provider, { value: other ? jobTitle(other.kind, other.action, other.flags || []) : "", children: /* @__PURE__ */ u3("div", { class: "finbody tidybody", children: tab3 === "overview" ? /* @__PURE__ */ u3(Overview2, { d: d3, job: job2, act, review: p3.review, pick: p3.pick, placing: p3.placing, folders }) : /* @__PURE__ */ u3(LibraryTab, { kind: tab3, d: d3, job: job2, act, review: p3.review, reviewError: p3.reviewError, reloadReview: p3.reloadReview, skip: p3.skip, toggle: p3.toggle, pick: p3.pick }) }) })
     ] });
+  }
+  function TidyMenu({ tab: tab3, pick, d: d3 }) {
+    const here3 = tabNow(tab3);
+    const dr = d3?.drive;
+    const item = (key7, label, icon, n3) => /* @__PURE__ */ u3("li", { children: /* @__PURE__ */ u3("button", { type: "button", class: "finmenuitem tidymenuitem" + (here3 === key7 ? " on" : ""), "data-tab": key7, "aria-current": here3 === key7 ? "page" : void 0, onClick: () => pick(key7), children: [
+      /* @__PURE__ */ u3("svg", { class: "icon", viewBox: "0 0 24 24", "aria-hidden": "true", children: /* @__PURE__ */ u3("path", { d: icon }) }),
+      /* @__PURE__ */ u3("span", { children: label }),
+      !!n3 && /* @__PURE__ */ u3("span", { class: "count", children: n3 })
+    ] }) }, key7);
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3("ul", { class: "finmenu tidymenu", "aria-label": "Tidy Up", children: [
+        item("overview", "Overview", "M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z", (d3?.needs || []).length || void 0),
+        LIBRARIES.map((k3) => item(k3, names3[k3], looks[k3].icon))
+      ] }),
+      dr && /* @__PURE__ */ u3("div", { class: "tidynavdrives", children: [
+        /* @__PURE__ */ u3("p", { class: "fx-caption", children: "Drives" }),
+        /* @__PURE__ */ u3("div", { class: "tidydriveline", title: `${size(dr.free)} free of ${size(dr.total)}`, children: [
+          /* @__PURE__ */ u3("span", { class: "tidydrivename", children: [
+            /* @__PURE__ */ u3("span", { children: dr.name || thisMachine }),
+            /* @__PURE__ */ u3("span", { class: "muted", children: [
+              size(dr.free),
+              " free"
+            ] })
+          ] }),
+          /* @__PURE__ */ u3("span", { class: "tidydrivebar", "aria-hidden": "true", children: /* @__PURE__ */ u3("span", { style: { width: `${dr.total ? Math.round((1 - dr.free / dr.total) * 100) : 0}%` } }) })
+        ] })
+      ] })
+    ] });
+  }
+  function mountTidyMenu(el3, props) {
+    R(/* @__PURE__ */ u3(TidyMenu, { ...props }), el3);
   }
   function mountTidy(el3, props) {
     R(/* @__PURE__ */ u3(TidyScreen, { ...props }), el3);
@@ -21530,8 +21574,19 @@ ${pays}
   var following;
   var stoppingElsewhere = "";
   var FOLLOW_MS = 3e3;
+  function pickTab(t3) {
+    tab2 = t3;
+    try {
+      localStorage.setItem("homelab.tidyTab", t3);
+    } catch {
+    }
+    if (t3 === "books" && !review) loadReview();
+    draw5();
+    tabChanged();
+  }
   function draw5() {
     const d3 = tidyData.value || null;
+    mountTidyMenu($("tidyMenu"), { tab: tab2, d: d3, pick: (t3) => pickTab(t3) });
     mountTidy($("tidyRoot"), {
       d: d3,
       error: tidyData.error ? errorText(tidyData.error) : void 0,
@@ -21549,21 +21604,12 @@ ${pays}
       reloadReview: () => {
         loadReview();
       },
-      pick: (t3) => {
-        tab2 = t3;
-        try {
-          localStorage.setItem("homelab.tidyTab", t3);
-        } catch {
-        }
-        if (t3 === "books" && !review) loadReview();
-        draw5();
-        tabChanged();
-      },
+      pick: (t3) => pickTab(t3),
       // Closed from the keyboard, its place goes back to the tabs rather than the top of the window.
       closeJob: () => {
         job = null;
         draw5();
-        document.querySelector('#tidy .seg button[aria-checked="true"]')?.focus();
+        document.querySelector('#tidyMenu .tidymenuitem.on, #tidy .seg button[aria-checked="true"]')?.focus();
       },
       toggle: (id2) => {
         if (skip.has(id2)) skip.delete(id2);
