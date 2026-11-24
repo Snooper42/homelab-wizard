@@ -970,10 +970,10 @@
             counted2,
             " running"
           ] }),
-          /* @__PURE__ */ u3("div", { class: "sub", children: [
-            st.missing ? /* @__PURE__ */ u3("span", { class: "bad", children: st.missing === 1 ? "1 of the homelab's own apps is down" : `${st.missing} of the homelab's own apps are down` }) : "The homelab's own apps are all up",
-            !trouble2.length && /* @__PURE__ */ u3("span", { children: "· Nothing unhealthy or stopped" })
-          ] })
+          /* @__PURE__ */ u3("div", { class: "sub", children: /* @__PURE__ */ u3("span", { children: [
+            st.missing ? /* @__PURE__ */ u3("span", { class: "bad", children: st.missing === 1 ? "1 of the homelab's own apps is down." : `${st.missing} of the homelab's own apps are down.` }) : "The homelab's own apps are all up.",
+            !trouble2.length && " Nothing unhealthy or stopped."
+          ] }) })
         ] }),
         !!trouble2.length && /* @__PURE__ */ u3("ul", { class: "headlineapps", children: [
           trouble2.slice(0, 3).map((a3) => /* @__PURE__ */ u3("li", { children: [
