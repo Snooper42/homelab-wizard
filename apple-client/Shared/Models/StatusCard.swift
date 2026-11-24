@@ -9,9 +9,10 @@ import Foundation
 struct StatusCard: Decodable, Sendable, Identifiable, Equatable {
     /// The cards the companion reads for a phone, in the order the screens show them.
     static let phoneCards = ["watchdog", "protection", "alerts", "savings"]
-    /// Read with them for an app's page, never shown as cards: each app's memory and
-    /// processor, and its folder (item 4). An older computer says it doesn't read them.
-    static let appCards = ["usage", "storage"]
+    /// Read with them, never shown as cards of their own: each app's memory and processor,
+    /// and its folder (item 4), for an app's page; the computer's free space and power,
+    /// for Status's This Machine card. An older computer says it doesn't read them.
+    static let appCards = ["usage", "storage", "machine"]
     /// `board.NotHere`.
     static let notHere = "not read here"
 

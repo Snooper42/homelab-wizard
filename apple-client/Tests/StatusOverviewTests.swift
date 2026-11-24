@@ -95,4 +95,34 @@ struct StatusOverviewTests {
         #expect(StatusTop.line(try status(#"{"apps":[{"id":"a","name":"A","state":"running"}]}"#)) == "Your app is running")
         #expect(StatusTop.line(try status(#"{"apps":[{"id":"a","name":"A","state":"running"},{"id":"b","name":"B","state":"stopped"}],"stopped":{"b":{"since":"2026-11-05T14:00:00Z"}}}"#)) == "1 running, 1 stopped by you")
     }
+
+    // Backups and This Machine under the headline (the redesign's phone picture): the words each card says.
+    @Test func theBackupsCardSaysWhatWasCopiedAndSkipped() throws {
+        func o(_ json: String) throws -> BackupOverview { try JSONDecoder.homelab().decode(BackupOverview.self, from: Data(json.utf8)) }
+        let run = ISO8601DateFormatter().date(from: "2026-11-24T08:30:00Z")!
+        let night = try o(#"{"lastRun":"2026-11-24T08:30:00Z","copies":[{"id":"a","name":"Immich","state":"fresh"},{"id":"b","name":"Mealie","state":"stale"},{"id":"c","name":"Navidrome","state":"fresh"}],"stale":1}"#)
+        let words = StatusPair.backups(night, now: run.addingTimeInterval(3600))
+        #expect(words.figure == "2" && words.unit == "of 3" && words.alert)
+        #expect(words.lines.count == 2 && words.lines[0].hasPrefix("Last night at ") && words.lines[1] == "Mealie skipped")
+        let old = StatusPair.backups(night, now: run.addingTimeInterval(4 * 86400))
+        #expect(old.lines[0].hasPrefix("Last run "))
+        let waiting = StatusPair.backups(try o(#"{"copies":[{"id":"a","name":"A","state":"fresh"},{"id":"k","name":"Komga","state":"paused"},{"id":"v","name":"Kavita","state":"paused"}]}"#))
+        #expect(waiting.figure == "1" && waiting.lines == ["2 waiting for their drive"] && !waiting.alert)
+        #expect(StatusPair.backups(try o(#"{"copies":[]}"#)).lines == ["No copies yet"])
+    }
+
+    @Test func theMachineCardSaysItsRoomPowerAndUpdates() {
+        let facts = MachineFacts.from(.object(["free": .number(412e9), "total": .number(994e9), "low": .bool(false), "power": .string("plugged"), "keptAwake": .bool(true)]))
+        #expect(facts?.powerWords == "Plugged in" && facts?.needsALook == false)
+        let words = StatusPair.machine(facts, updates: UpdatesState(paused: false, schedule: "daily at 04:00"))
+        #expect(words.unit == "free" && !words.alert && words.figure.contains("412"))
+        #expect(words.lines.count == 2 && words.lines[0] == "Plugged in" && words.lines[1].hasPrefix("Updates every night at "))
+        #expect(StatusPair.machine(facts, updates: UpdatesState(paused: true, schedule: "daily at 04:00")).lines.last == "Updates paused")
+        // On battery, or plugged in but free to sleep, is worth a look; a computer that doesn't send it shows the updates alone.
+        #expect(MachineFacts.from(.object(["free": .number(1e9), "total": .number(2e9), "power": .string("battery")]))?.needsALook == true)
+        #expect(MachineFacts.from(.object(["free": .number(1e9), "total": .number(2e9), "power": .string("plugged")]))?.powerWords == "Plugged in, may sleep")
+        #expect(MachineFacts.from(.object(["total": .number(0)])) == nil)
+        let none = StatusPair.machine(nil, updates: UpdatesState(paused: true, schedule: ""))
+        #expect(none.figure == "—" && none.lines == ["Updates paused"])
+    }
 }

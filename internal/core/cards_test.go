@@ -2,6 +2,8 @@ package core
 
 import (
 	"context"
+	"os"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"testing"
@@ -21,8 +23,8 @@ func TestCards(t *testing.T) {
 	root := homelab(t, "")
 	withDocker(t, &runner{FakeRunner: &docker.FakeRunner{Containers: []docker.FakeContainer{running("homelab_security", "ntfy")}}})
 	got := map[string]board.Card{}
-	board.Read(context.Background(), Cards(root), 1, []string{"watchdog", "savings", "crash", "storage", "protection", "alerts", "usage"}, func(c board.Card) { got[c.Name] = c })
-	for _, name := range []string{"watchdog", "savings", "crash", "storage", "usage"} {
+	board.Read(context.Background(), Cards(root), 1, []string{"watchdog", "savings", "crash", "storage", "protection", "alerts", "usage", "machine"}, func(c board.Card) { got[c.Name] = c })
+	for _, name := range []string{"watchdog", "savings", "crash", "storage", "usage", "machine"} {
 		if c, ok := got[name]; !ok || c.Error != "" {
 			t.Errorf("%s: %+v", name, c)
 		}
@@ -75,4 +77,27 @@ func TestReadCardsFromTheAgent(t *testing.T) {
 	}
 	cancel()
 	<-served
+}
+
+// The phone's This Mac card: the room on the homelab folder's disk, read as
+// the computer's own card reads it, KEEP_AWAKE on unless it says false, and
+// the power only where it can be told.
+func TestMachine(t *testing.T) {
+	root := homelab(t, "")
+	m := Machine(root)
+	if m.Total == 0 || m.Free > m.Total {
+		t.Fatalf("the disk: %+v", m)
+	}
+	if !m.KeptAwake {
+		t.Errorf("KEEP_AWAKE unset reads as off: %+v", m)
+	}
+	if m.Power != "" && m.Power != "plugged" && m.Power != "battery" {
+		t.Errorf("power %q", m.Power)
+	}
+	if err := os.WriteFile(filepath.Join(root, ".env"), []byte("KEEP_AWAKE=false\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if Machine(root).KeptAwake {
+		t.Error("KEEP_AWAKE=false reads as on")
+	}
 }

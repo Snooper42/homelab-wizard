@@ -488,3 +488,121 @@ struct CrashNoteCard: View {
         }
     }
 }
+
+// MARK: - Backups and This Mac (the redesign, Nov 24)
+
+/// Under the headline, two cards side by side as the redesign's phone
+/// picture (`phone-status.png`) and the computer's Status: **Backups**, how
+/// many of last night's copies were made and what was skipped, opening
+/// Backups; and **This Mac**, its free space, its power and the nightly
+/// updates. One above the other at the largest text sizes. Not on a
+/// household member's phone, whose homelab isn't theirs to look after.
+struct StatusPair: View {
+    @Environment(\.dynamicTypeSize) private var typeSize
+    let model: DashboardViewModel
+
+    var body: some View {
+        let overview = model.backups.overview
+        let machine = model.cards.machine
+        let updates = model.liveEvents.status?.updates
+        if overview != nil || machine != nil || updates != nil {
+            let columns = typeSize.isAccessibilitySize
+                ? [GridItem(.flexible())]
+                : [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)]
+            LazyVGrid(columns: columns, alignment: .leading, spacing: 12) {
+                if let overview {
+                    let words = Self.backups(overview)
+                    Button { IntentInbox.shared.screen = .backups } label: {
+                        PairCard(title: "Backups", figure: words.figure, unit: words.unit, lines: words.lines, alert: words.alert)
+                    }
+                    .buttonStyle(PressableButtonStyle())
+                    .accessibilityHint("Opens Backups")
+                }
+                if machine != nil || updates != nil {
+                    let words = Self.machine(machine, updates: updates)
+                    PairCard(title: "This Machine", figure: words.figure, unit: words.unit, lines: words.lines, alert: words.alert)
+                }
+            }
+        }
+    }
+
+    /// The Backups card's words: "11" "of 12", then when it ran and what was skipped.
+    nonisolated static func backups(_ o: BackupOverview, now: Date = .now) -> (figure: String, unit: String, lines: [String], alert: Bool) {
+        let copies = o.copies
+        guard !copies.isEmpty else { return ("—", "", ["No copies yet"], false) }
+        let fresh = copies.filter { $0.state == "fresh" }.count
+        var lines: [String] = []
+        if let run = o.lastRun {
+            lines.append(now.timeIntervalSince(run) < 30 * 3600
+                ? "Last night at " + run.formatted(date: .omitted, time: .shortened)
+                : "Last run " + run.formatted(.relative(presentation: .named)))
+        }
+        let skipped = copies.filter { $0.state == "stale" }
+        let waiting = copies.filter { $0.state == "paused" }
+        if skipped.count == 1 {
+            lines.append("\(skipped[0].name) skipped")
+        } else if skipped.count > 1 {
+            lines.append("\(skipped.count) skipped")
+        } else if !waiting.isEmpty {
+            lines.append(waiting.count == 1 ? "1 waiting for its drive" : "\(waiting.count) waiting for their drive")
+        }
+        return ("\(fresh)", "of \(copies.count)", lines, !skipped.isEmpty || o.shrank > 0)
+    }
+
+    /// The This Mac card's words: "412 GB" "free", then the power and the nightly updates.
+    nonisolated static func machine(_ m: MachineFacts?, updates: UpdatesState?) -> (figure: String, unit: String, lines: [String], alert: Bool) {
+        var lines: [String] = []
+        if let words = m?.powerWords { lines.append(words) }
+        if let updates {
+            if updates.paused {
+                lines.append("Updates paused")
+            } else if !updates.schedule.isEmpty {
+                let when = ClockWords.schedule(updates.schedule)
+                lines.append("Updates " + when.prefix(1).lowercased() + when.dropFirst())
+            }
+        }
+        guard let m else { return ("—", "", lines, false) }
+        return (m.freeFigure, "free", lines, m.needsALook)
+    }
+}
+
+/// One of the two: its name, a big figure with a smaller word beside it,
+/// and a line or two under it, as the computer's Backups and This Mac cards.
+private struct PairCard: View {
+    let title: String
+    let figure: String
+    let unit: String
+    let lines: [String]
+    var alert = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(verbatim: title)
+                .font(.headline)
+                .foregroundStyle(Theme.ink)
+            HStack(alignment: .firstTextBaseline, spacing: 4) {
+                Text(verbatim: figure)
+                    .font(.title.weight(.bold))
+                    .foregroundStyle(alert ? Theme.warning : Theme.ink)
+                    .monospacedDigit()
+                if !unit.isEmpty {
+                    Text(verbatim: unit)
+                        .font(.title3.weight(.semibold))
+                        .foregroundStyle(Theme.secondaryInk)
+                }
+            }
+            .lineLimit(1)
+            .minimumScaleFactor(0.7)
+            ForEach(lines, id: \.self) { line in
+                Text(verbatim: line)
+                    .font(.subheadline)
+                    .foregroundStyle(Theme.secondaryInk)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .frame(maxWidth: .infinity, minHeight: 96, alignment: .topLeading)
+        .padding(16)
+        .card(radius: 24)
+        .accessibilityElement(children: .combine)
+    }
+}

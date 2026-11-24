@@ -343,6 +343,13 @@ private struct PhoneStatus: View {
                             .padding(.bottom, 6)
                             .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 0, trailing: 0))
                             .listRowBackground(Color.clear)
+                        // Backups and This Machine beside each other, as the redesign's picture (not a member's).
+                        if !isMember {
+                            StatusPair(model: model)
+                                .padding(.bottom, 6)
+                                .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 0, trailing: 0))
+                                .listRowBackground(Color.clear)
+                        }
                     }
                 }
                 // By category, as the computer's Status: what needs a look
