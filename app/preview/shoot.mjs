@@ -453,6 +453,10 @@ async function makePrivate(page, passphrase) {
 }
 
 /** Finances' main action, or one of the rest in the ▾ beside it (the computer's top bar); the phone's header has them as buttons. */
+// Settings opens on General (redesign-loop R8): This Mac (This PC on Windows) is a click in its list.
+async function thisMachinePage(page) {
+  await page.click('#settingsNav .pagebtn[data-page^="This "]', { timeout: 5000 });
+}
 async function finAdd(page, name, opts = {}) {
   await page.waitForSelector('#finRoot .toolbar', { timeout: opts.timeout || 30000 });
   const direct = page.locator(`#finRoot .toolbar > button:text-is("${name}")`);
@@ -2110,7 +2114,22 @@ const smokes = [
     await page.click('#toggleDone');
     await page.waitForSelector('#checklist li.done:has(.title:text-is("Step C"))');
   } },
+  // Settings opens on General (redesign-loop R8): a card for each part. Automatic care's switches save at once, Update
+  // apps every night pausing through the same call as Status' Pause; a card's › opens its page.
+  { name: 'Settings opens on General: its switches save at once, and a card opens its page', screen: 'settings', run: async (page) => {
+    await page.waitForSelector('#generalCard #genCare', { timeout: 5000 });
+    if (await page.isVisible('#thisMacCard')) throw new Error('This Mac shows under General');
+    await page.waitForSelector('#settingsNav .pagebtn[data-page="General"][aria-current="page"], #settingsNav .pagebtn[data-page="General"].on, #settingsNav .pagebtn[data-page="General"].active', { timeout: 5000 });
+    await page.click('#genCare input[aria-label="Restart an app that stops answering"]');
+    await page.waitForFunction(() => window.__MOCK.saved?.AUTO_HEAL === 'false', null, { timeout: 5000 });
+    await page.click('#genCare input[aria-label="Update apps every night"]');
+    await page.waitForFunction(() => window.__MOCK.calls.SetUpdatesPaused >= 1, null, { timeout: 5000 });
+    await page.click('#genPhones button:text-is("Pair a phone")');
+    await page.waitForSelector('#phonesCard:not(.offpage)', { timeout: 5000 });
+    if (await page.isVisible('#generalCard #genCare')) throw new Error('General stayed beside Phones');
+  } },
   { name: 'The diagnostics report, from Settings › This Mac', screen: 'settings', run: async (page) => {
+    await thisMachinePage(page);
     await page.waitForSelector('#thisMacCard #hostInfo:has-text("Homelab folder")', { timeout: 5000 });
     await page.click('#report');
     await page.waitForSelector('#reportLog:not([hidden])', { timeout: 5000 });
@@ -2654,6 +2673,7 @@ const smokes = [
     await page.waitForSelector('#hostInfo:has-text("in the app menu")', { timeout: 5000 });
   } },
   { name: 'A low disk in Settings › This machine', screen: 'settings', mock: { host: { ...host, disks: [{ ...host.disks[0], space: '6.0 GB free of 994 GB (0%)', free: 6e9, low: true, hint: 'Under 49 GB: unused images (docker image prune -a), finished downloads, and Immich\'s trash are the usual places to free some' }, host.disks[1]] } }, run: async (page) => {
+    await thisMachinePage(page);
     await page.waitForSelector('#diskSpace .bad:has-text("6.0 GB free")', { timeout: 5000 });
     await page.waitForSelector('#diskSpace:has-text("docker image prune")', { timeout: 5000 });
     await page.waitForSelector('#diskSpace .disk.low .storagebar span[style*="99%"]');
@@ -2726,7 +2746,7 @@ const smokes = [
     await page.click('nav button[data-screen="settings"]', { timeout: 5000 });
     // At a phone's width the pages are a list to pick from.
     await page.selectOption('#settingsNav select', 'Notifications', { timeout: 5000 });
-    if ((await page.$$eval('#settingsNav option', (o) => o.map((x) => x.value))).some((v) => ['Appearance', 'People', 'Phones'].includes(v))) throw new Error("the computer's own pages on the phone");
+    if ((await page.$$eval('#settingsNav option', (o) => o.map((x) => x.value))).some((v) => ['General', 'Appearance', 'People', 'Phones'].includes(v))) throw new Error("the computer's own pages on the phone");
     await page.fill('#setting-QUIET_HOURS input', '23-6');
     await page.click('#saveSettings:text-is("Save 1 change")', { timeout: 3000 });
     await page.waitForSelector('#saveSettings', { state: 'hidden', timeout: 5000 });
@@ -2922,6 +2942,7 @@ const smokes = [
     if (cursor !== 'default' || select !== 'none' || field !== 'text') throw new Error(`cursor ${cursor}, h1 ${select}, pre ${field}`);
   } },
   { name: "Settings: plain names, the .env name on hover and while searching, no true/false in a switch's help", screen: 'settings', run: async (page) => {
+    await thisMachinePage(page);
     await page.waitForSelector('#setting-TZ .label:text-is("Time zone")', { timeout: 5000 });
     if (await page.isVisible('#setting-TZ .key code')) throw new Error('the .env name shows beside every setting');
     if ((await page.getAttribute('#setting-TZ .key', 'title')) !== 'TZ') throw new Error('no .env name on hover');
@@ -3612,6 +3633,7 @@ const smokes = [
   } })),
   // "This Mac" in a sentence keeps its capital: "Take the homelab off this Mac", not "this mac"; "this PC" on Windows.
   ...[['MacIntel', 'this Mac'], ['Win32', 'this PC']].map(([platform, words]) => ({ name: `Settings says ${words} in a sentence`, screen: 'settings', mock: { platform }, run: async (page) => {
+    await thisMachinePage(page);
     await page.waitForSelector(`h3.subhead:text-is("Take the homelab off ${words}")`, { timeout: 5000 });
     await page.waitForSelector(`label:has-text("Delete the backups on ${words}")`);
   } })),
@@ -5636,6 +5658,7 @@ const smokes = [
     await page.waitForSelector('#cliTitle:has-text("Vikunja")', { timeout: 5000 });
   } },
   { name: 'Going back, from Settings › This Mac', screen: 'settings', mock: { upgrade: { ...upgrade, previous: { commit: 'abc1234', version: '0.13.0', when: new Date(Date.now() - 864e5).toISOString() } } }, run: async (page) => {
+    await thisMachinePage(page);
     await page.click('#upgradeBack', { timeout: 5000 });
     await page.waitForSelector('#upgradeBack:has-text("click again")');
     await page.click('#upgradeBack');
