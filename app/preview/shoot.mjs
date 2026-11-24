@@ -2137,6 +2137,19 @@ const smokes = [
     await page.click(`${card} button:text-is("Continue")`);
     await page.waitForSelector('#setup.active', { timeout: 5000 });
   } },
+  // The phone's Status beside Backups: This machine from the computer's machine card (core.Machine), as the iPhone app's,
+  // in place of the Nightly updates tile; the updates and Pause under it. On battery is amber; little room is red.
+  { name: "The phone's Status: This machine beside Backups, its free space and power", screen: 'status', phone: ['companion', 'can-change'], run: async (page) => {
+    await page.waitForSelector('#statusMachine .value:has-text("412 GB")', { timeout: 5000 });
+    if ((await page.textContent('#statusMachine .label')).trim() !== 'This machine') throw new Error('not named This machine');
+    await page.waitForSelector('#statusMachine .sub:has-text("Plugged in")');
+    await page.waitForSelector('#statusMachine .statusupdates button');
+    if (await page.locator('#tiles .tile:has(.label:text-is("Nightly updates"))').count()) throw new Error('the Nightly updates tile is still there');
+  } },
+  { name: "The phone's Status: This machine says when the computer is on battery or short of room", screen: 'status', phone: ['companion'], mock: { machine: { free: 3 * 2 ** 30, total: 994 * 2 ** 30, low: true, power: 'battery', keptAwake: true } }, run: async (page) => {
+    await page.waitForSelector('#statusMachine .value.bad:has-text("3.0 GB")', { timeout: 5000 });
+    await page.waitForSelector('#statusMachine .sub.warn:has-text("On battery")');
+  } },
   { name: "The computer's Status doesn't repeat Setup's steps", screen: 'status', run: async (page) => {
     await page.waitForSelector('#statusHeadline', { timeout: 5000 });
     if (await page.isVisible('#setupOnStatus')) throw new Error("Setup's steps on the computer's Status");
