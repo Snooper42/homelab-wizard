@@ -4908,7 +4908,9 @@ const smokes = [
         return { width: n.getBoundingClientRect().width / z, label: label.getBoundingClientRect().width, countIn: c.left >= r.left - 1 && c.right <= r.right + 1 && c.top >= r.top - 1 && c.width > 0, cut: n.scrollHeight > n.clientHeight + 1 && getComputedStyle(n).overflowY === 'hidden' };
       });
       const wide = await nav();
-      if (wide.width < 180 || wide.label < 20) throw new Error(`at text size 1 the sidebar is ${Math.round(wide.width)}px with its names hidden`);
+      // At text size 1 the screens are the strip's icons (each named for a screen reader) and the open screen's menu has its names.
+      const menuLabel = await page.evaluate(() => document.querySelector('#statusSide .finmenuitem span')?.getBoundingClientRect().width || 0);
+      if (wide.width < 180 || menuLabel < 20) throw new Error(`at text size 1 the sidebar is ${Math.round(wide.width)}px with its menu's names hidden`);
       for (const zoom of ['1.5', '2']) {
         await page.evaluate((z) => document.documentElement.style.setProperty('--zoom', z), zoom);
         await page.waitForTimeout(100);

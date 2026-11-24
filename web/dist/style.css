@@ -3276,9 +3276,13 @@ html:is(.os-mac, .os-windows, .os-linux) .tidynavdrives .tidydrivebar { backgrou
    On the Mac in place of the coloured tiles; Windows and Linux keep their own pill and bar, with the same icons and
    count. The phone's tab bar is its own. */
 html:not(.companion) .brand small { display:none; }
-html.os-mac:not(.companion) nav { width:232px; padding-left:12px; padding-right:12px; padding-bottom:8px; }
-html.os-mac:not(.companion) .brand { font-size:14px; margin:0 8px 18px; }
-html.os-mac:not(.companion) nav button { padding:7px 10px; gap:10px; font-size:14px; border-radius:9px; border:1px solid transparent; }
+html.os-mac:not(.companion) nav button { border-radius:9px; border:1px solid transparent; }
+/* Its sizes in a full window only: a small window's rail (the 700px container query above) keeps its own. The width
+   stays the Mac's 212px, so no screen's toolbar loses room. */
+@container window (min-width: 701px) {
+  html.os-mac:not(.companion) .brand { font-size:14px; margin:0 8px 18px; }
+  html.os-mac:not(.companion) nav button { padding:7px 10px; gap:10px; font-size:14px; }
+}
 html.os-mac:not(.companion) nav button .icon { width:18px; height:18px; padding:0; border-radius:0; background:none; box-shadow:none; color:inherit; stroke-width:1.8; }
 html.os-mac:not(.companion) nav button:hover { background:var(--shade-05); }
 html.os-mac:not(.companion) nav button.active, html.os-mac:not(.companion) nav .finmenuitem.on { background:var(--panel); border-color:var(--line); box-shadow:0 1px 2px var(--shade-06); font-weight:500; }
@@ -3310,6 +3314,12 @@ html.os-mac:not(.companion) .foot { border-top:1px solid var(--shade-1); padding
   html:not(.companion) nav > button:is([data-screen="choose"], [data-screen="status"], [data-screen="backups"], [data-screen="tidy"], [data-screen="finances"], [data-screen="setup"]) .count { position:absolute; top:0; right:2px; min-width:0; padding:0 5px; font-size:10px; line-height:15px; }
   html:not(.companion) nav > button:is([data-screen="choose"], [data-screen="status"], [data-screen="backups"], [data-screen="tidy"], [data-screen="finances"], [data-screen="setup"]).active::before { display:none; }
   html:not(.companion) nav > .navbody { align-self:start; }
+}
+/* In a contrast theme the strip's open screen keeps its bar, along the icon's foot. */
+@media (forced-colors: active) {
+  @container window (min-width: 701px) {
+    html:not(.companion) nav > button:is([data-screen="choose"], [data-screen="status"], [data-screen="backups"], [data-screen="tidy"], [data-screen="finances"], [data-screen="setup"]).active::before { display:block; top:auto; bottom:0; left:25%; right:25%; width:auto; height:3px; }
+  }
 }
 html.companion nav .navbody { display:contents; }
 .sidemenu:empty { display:none; }
