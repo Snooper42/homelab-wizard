@@ -8933,7 +8933,7 @@ const smokes = [
   // One pay period card: whose paycheck and its days, each account after its bills with money in lit, ‹ › and Today;
   // the grid of every account by paycheck is Net worth's, not the dashboard's.
   { name: 'Finances: one pay period card steps through the paychecks, its accounts side by side', screen: 'finances', run: async (page) => {
-    await page.waitForSelector('#finPeriod h2:text-is("Alex\'s paycheck · Fri, Nov 6")', { timeout: 5000 });
+    await page.waitForSelector('#finPeriod:has(h2:text-is("Alex\'s paycheck")):has(.fx-dates:text-matches("^Fri, Nov 6 "))', { timeout: 5000 });
     // The paycheck's row (a person) and its payments' rows (logos) start their titles at one place.
     const lefts = await page.$$eval('.fx-paycheck .fx-rows > li .grow', (gs) => [...new Set(gs.map((g) => Math.round(g.getBoundingClientRect().left)))]);
     if (lefts.length !== 1) throw new Error(`titles start at ${lefts}`);
@@ -8949,10 +8949,10 @@ const smokes = [
     if (await page.$(`${tile('Mortgage')}, ${tile('Home')}`)) throw new Error('a loan or the home is in the row');
     await page.click('#finPeriod button[aria-label="The pay period after"]');
     await page.click('#finPeriod button[aria-label="The pay period after"]');
-    await page.waitForSelector('#finPeriod h2:text-is("Jordan\'s paycheck · Wed, Nov 25")', { timeout: 5000 });
+    await page.waitForSelector('#finPeriod:has(h2:text-is("Jordan\'s paycheck")):has(.fx-dates:text-matches("^Wed, Nov 25 "))', { timeout: 5000 });
     await page.waitForSelector(`${tile('Roth IRA')}.fx-gets .fx-gotin:text-is("$250 in")`, { timeout: 5000 });
     await page.click('#finPeriod button:text-is("Today")');
-    await page.waitForSelector('#finPeriod h2:text-is("Now · until Thu, Nov 5")', { timeout: 5000 });
+    await page.waitForSelector('#finPeriod:has(h2:text-is("Now")):has(.fx-dates:text-matches("Thu, Nov 5, from today$"))', { timeout: 5000 });
     // Before now are the paychecks that happened (View.before): ‹ steps back into them.
     if (await page.isDisabled('#finPeriod button[aria-label="The pay period before"]')) throw new Error('no period before now can be picked');
     await finTab(page, 'Net worth');
