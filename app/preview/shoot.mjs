@@ -453,6 +453,10 @@ async function makePrivate(page, passphrase) {
 }
 
 /** Finances' main action, or one of the rest in the ▾ beside it (the computer's top bar); the phone's header has them as buttons. */
+// Settings opens on General (redesign-loop R8): This Mac (This PC on Windows) is a click in its list.
+async function thisMachinePage(page) {
+  await page.click('#settingsNav .pagebtn[data-page^="This "]', { timeout: 5000 });
+}
 async function finAdd(page, name, opts = {}) {
   await page.waitForSelector('#finRoot .toolbar', { timeout: opts.timeout || 30000 });
   const direct = page.locator(`#finRoot .toolbar > button:text-is("${name}")`);
@@ -509,7 +513,7 @@ const shots = [
   { name: 'setup', screen: 'setup' },
   { name: 'firstrun', screen: 'setup', mock: { host: { ...host, runtimeOK: false, runtimeInstalled: true, runtimeHint: 'open OrbStack (open -a OrbStack) and turn on Settings > General > Start at login', rootOK: false, root: '', disks: [], kit: true, newRoot: '/Users/you/Homelab' } } },
   { name: 'update', screen: 'status', mock: { update } },
-  { name: 'settings', screen: 'settings', before: async (page) => { await page.click('#settingsNav .pagebtn[data-page="Domain"]', { timeout: 5000 }); await page.click('#setting-CLOUDFLARE_API_TOKEN button:has-text("Test")'); await page.waitForTimeout(500); } },
+  { name: 'settings', screen: 'settings', before: async (page) => { await page.click('#settingsNav .pagebtn[data-page="Reaching the apps"]', { timeout: 5000 }); await page.click('#setting-CLOUDFLARE_API_TOKEN button:has-text("Test")'); await page.waitForTimeout(500); } },
   // The phone companion (homelab serve): the same screens at phone width.
   { name: 'phone', screen: 'status', phone: ['companion'] },
   { name: 'phone-backups', screen: 'backups', phone: ['companion', 'can-change'] },
@@ -1876,12 +1880,15 @@ const smokes = [
     await page.waitForSelector('label.app:has-text("Frigate") .sysnote:has-text("AMD graphics")', { timeout: 5000 });
   } },
   { name: 'Setup on Windows: the tray icon\'s dot', screen: 'settings', mock: { platform: 'Win32', host: { ...host, os: 'Windows 11 24H2', machine: 'this PC' } }, run: async (page) => {
+    await thisMachinePage(page);
     await page.waitForSelector('#trayNote:has-text("orange dot on the tray icon")', { timeout: 5000 });
   } },
   { name: 'Setup on GNOME: the tray icon needs AppIndicator', screen: 'settings', mock: { platform: 'Linux x86_64', host: { ...host, os: 'Ubuntu 24.04', machine: 'this machine', desktop: 'gnome' } }, run: async (page) => {
+    await thisMachinePage(page);
     await page.waitForSelector('#trayNote:has-text("AppIndicator extension")', { timeout: 5000 });
   } },
   { name: 'Setup on KDE: no tray note', screen: 'settings', mock: { platform: 'Linux x86_64', host: { ...host, os: 'Linux (SteamOS 3.7)', machine: 'Steam Machine', desktop: 'kde' } }, run: async (page) => {
+    await thisMachinePage(page);
     await page.waitForSelector('#trayAtLogin', { timeout: 5000 });
     if (await page.locator('#trayNote').count()) throw new Error('a tray note on KDE, where the tray works as on the others');
   } },
@@ -2125,12 +2132,28 @@ const smokes = [
     await page.click('#toggleDone');
     await page.waitForSelector('#checklist li.done:has(.title:text-is("Step C"))');
   } },
+  // Settings opens on General (redesign-loop R8): a card for each part. Automatic care's switches save at once, Update
+  // apps every night pausing through the same call as Status' Pause; a card's › opens its page.
+  { name: 'Settings opens on General: its switches save at once, and a card opens its page', screen: 'settings', run: async (page) => {
+    await page.waitForSelector('#generalCard #genCare', { timeout: 5000 });
+    if (await page.isVisible('#thisMacCard')) throw new Error('This Mac shows under General');
+    await page.waitForSelector('#settingsNav .pagebtn[data-page="General"][aria-current="page"], #settingsNav .pagebtn[data-page="General"].on, #settingsNav .pagebtn[data-page="General"].active', { timeout: 5000 });
+    await page.click('#genCare input[aria-label="Restart an app that stops answering"]');
+    await page.waitForFunction(() => window.__MOCK.saved?.AUTO_HEAL === 'false', null, { timeout: 5000 });
+    await page.click('#genCare input[aria-label="Update apps every night"]');
+    await page.waitForFunction(() => window.__MOCK.calls.SetUpdatesPaused >= 1, null, { timeout: 5000 });
+    await page.click('#genPhones button:text-is("Pair a phone")');
+    await page.waitForSelector('#phonesCard:not(.offpage)', { timeout: 5000 });
+    if (await page.isVisible('#generalCard #genCare')) throw new Error('General stayed beside Phones');
+  } },
   { name: 'The diagnostics report, from Settings › This Mac', screen: 'settings', run: async (page) => {
+    await thisMachinePage(page);
     await page.waitForSelector('#thisMacCard #hostInfo:has-text("Homelab folder")', { timeout: 5000 });
     await page.click('#report');
     await page.waitForSelector('#reportLog:not([hidden])', { timeout: 5000 });
   } },
   { name: 'Take the homelab off this machine: the plan, typed out, then the run', screen: 'settings', run: async (page) => {
+    await thisMachinePage(page);
     await page.waitForSelector('#thisMacCard #uninstall', { timeout: 5000 });
     await page.check('#uninstall-folder');
     if (!(await page.isChecked('#uninstall-data')) || !(await page.isDisabled('#uninstall-data'))) throw new Error('the folder does not take the data with it');
@@ -2146,6 +2169,7 @@ const smokes = [
     if (!(await page.textContent('#uninstallLog')).includes('removed the scheduled jobs')) throw new Error('no log');
   } },
   { name: 'Everything else in the runtime asks for delete everything', screen: 'settings', run: async (page) => {
+    await thisMachinePage(page);
     await page.waitForSelector('#thisMacCard #uninstall', { timeout: 5000 });
     await page.check('#uninstall-everythingElse');
     await page.click('#uninstallReview');
@@ -2177,6 +2201,7 @@ const smokes = [
     await page.waitForSelector('#updateLine', { state: 'hidden' });
   } },
   { name: 'A finished Go back stays on Setup until Clear', screen: 'settings', mock: { upgrade: { ...upgrade, previous: { commit: 'abc1234', version: '0.13.0', when: new Date(Date.now() - 864e5).toISOString() } }, jobApps: { 'upgrade-back': ['navidrome', 'vikunja', 'mealie'] } }, run: async (page) => {
+    await thisMachinePage(page);
     await page.click('#upgradeBack', { timeout: 5000 });
     await page.click('#upgradeBack');
     // The rows fold Show details away: the log is there, not shown.
@@ -2640,6 +2665,7 @@ const smokes = [
     await page.waitForSelector('#updateLine .head:text-is("Homelab Wizard 0.15.0 is ready")', { timeout: 5000 });
   } },
   { name: 'Install on quit is on until turned off, and not offered where installing asks for a password', screen: 'settings', mock: { update: { ...update, canInstallOnQuit: true } }, run: async (page) => {
+    await thisMachinePage(page);
     await page.waitForSelector('#updatesSettings #installOnQuit:checked', { timeout: 5000 });
     await page.click('#updatesSettings #installOnQuit');
     await page.waitForFunction(() => window.__MOCK.installOnQuit === false);
@@ -2648,10 +2674,12 @@ const smokes = [
     await page.waitForFunction(() => window.__MOCK.looksNow === 1);
   } },
   { name: 'No install on quit where installing asks for a password', screen: 'settings', mock: { platform: 'Linux x86_64', host: { ...host, os: 'Ubuntu 24.04', machine: 'this machine' }, update: { ...update, canInstallOnQuit: false } }, run: async (page) => {
+    await thisMachinePage(page);
     await page.waitForSelector('#updatesSettings:has-text("Look for updates")', { timeout: 5000 });
     if (await page.$('#installOnQuit')) throw new Error('install on quit offered where installing asks for a password');
   } },
   { name: 'Version says up to date once', screen: 'settings', run: async (page) => {
+    await thisMachinePage(page);
     await page.waitForSelector('#versionInfo:has-text("up to date")', { timeout: 5000 });
     // Check again (on Setup) reads the machine and the update again.
     await page.evaluate(() => document.getElementById('recheck').click());
@@ -2660,26 +2688,31 @@ const smokes = [
     if (text.split('up to date').length !== 2) throw new Error(`version line: ${text}`);
   } },
   { name: 'No app menu row outside the AppImage', screen: 'settings', run: async (page) => {
+    await thisMachinePage(page);
     await page.waitForSelector('#hostInfo:has-text("Homelab folder")', { timeout: 5000 });
     if (await page.$('#menuEntry')) throw new Error('the app menu row shows outside the AppImage');
   } },
   { name: 'AppImage: add to the app menu', screen: 'settings', mock: { menuEntry: { added: false }, host: { ...host, os: 'Linux (SteamOS 3.7)', machine: 'Steam Machine' } }, run: async (page) => {
+    await thisMachinePage(page);
     await page.waitForSelector('#hostInfo:has-text("opened from its file")', { timeout: 5000 });
     await page.click('#menuEntry');
     await page.waitForSelector('#hostInfo:has-text("in the app menu")', { timeout: 5000 });
   } },
   { name: 'A low disk in Settings › This machine', screen: 'settings', mock: { host: { ...host, disks: [{ ...host.disks[0], space: '6.0 GB free of 994 GB (0%)', free: 6e9, low: true, hint: 'Under 49 GB: unused images (docker image prune -a), finished downloads, and Immich\'s trash are the usual places to free some' }, host.disks[1]] } }, run: async (page) => {
+    await thisMachinePage(page);
     await page.waitForSelector('#diskSpace .bad:has-text("6.0 GB free")', { timeout: 5000 });
     await page.waitForSelector('#diskSpace:has-text("docker image prune")', { timeout: 5000 });
     await page.waitForSelector('#diskSpace .disk.low .storagebar span[style*="99%"]');
     await page.waitForSelector('#diskSpace .disk:has(strong:text-is("Hobbies")) .storagebar');
   } },
   { name: 'Tray at login', screen: 'settings', run: async (page) => {
+    await thisMachinePage(page);
     await page.waitForSelector('#hostInfo:has-text("only while the app is open")', { timeout: 5000 });
     await page.click('#trayAtLogin');
     await page.waitForSelector('#hostInfo:has-text("starts at login")', { timeout: 5000 });
   } },
   { name: 'Tray at sign-in, in Windows\' word', screen: 'settings', mock: { platform: 'Win32', host: { ...host, os: 'Windows 11' } }, run: async (page) => {
+    await thisMachinePage(page);
     await page.click('#trayAtLogin:has-text("Start at sign-in")', { timeout: 5000 });
     await page.waitForSelector('#hostInfo:has-text("starts at sign-in")', { timeout: 5000 });
   } },
@@ -2701,16 +2734,16 @@ const smokes = [
     await page.waitForSelector('#setting-ADGUARD_PASSWORD .test.ok', { timeout: 5000 });
     if (await page.evaluate(() => window.__MOCK.saved?.ADGUARD_PASSWORD) !== 'typed-not-saved') throw new Error('Test did not save the typed value first');
   } },
-  // Quiet hours: an everyday setting on the Notifications page, named for people, the night it ships with.
+  // Quiet hours: an everyday setting on the Alerts page (Notifications before R8), named for people, the night it ships with.
   { name: 'Settings: quiet hours among the everyday ones', screen: 'settings', run: async (page) => {
-    await page.click('#settingsNav .pagebtn[data-page="Notifications"]', { timeout: 5000 });
+    await page.click('#settingsNav .pagebtn[data-page="Alerts"]', { timeout: 5000 });
     const row = page.locator('#setting-QUIET_HOURS');
     await row.waitFor({ state: 'visible', timeout: 5000 });
     if (!(await row.textContent()).includes('Quiet hours (no sound at night)')) throw new Error(`its name: ${await row.textContent()}`);
     if ((await row.locator('input').inputValue()) !== '22-7') throw new Error(`its value: ${await row.locator('input').inputValue()}`);
   } },
   { name: 'Testing the Cloudflare token saves the Domain typed above it', screen: 'settings', run: async (page) => {
-    await page.click('#settingsNav .pagebtn[data-page="Domain"]', { timeout: 5000 });
+    await page.click('#settingsNav .pagebtn[data-page="Reaching the apps"]', { timeout: 5000 });
     await page.fill('#setting-HOMELAB_DOMAIN input', 'snooper42.com');
     await page.click('#setting-CLOUDFLARE_API_TOKEN button:has-text("Test")');
     await page.waitForSelector('#setting-CLOUDFLARE_API_TOKEN .test.ok', { timeout: 5000 });
@@ -2740,8 +2773,8 @@ const smokes = [
   { name: 'Settings on a phone that may change things: the everyday ones, saved', screen: 'status', phone: ['companion', 'can-change'], run: async (page) => {
     await page.click('nav button[data-screen="settings"]', { timeout: 5000 });
     // At a phone's width the pages are a list to pick from.
-    await page.selectOption('#settingsNav select', 'Notifications', { timeout: 5000 });
-    if ((await page.$$eval('#settingsNav option', (o) => o.map((x) => x.value))).some((v) => ['Appearance', 'People', 'Phones'].includes(v))) throw new Error("the computer's own pages on the phone");
+    await page.selectOption('#settingsNav select', 'Alerts', { timeout: 5000 });
+    if ((await page.$$eval('#settingsNav option', (o) => o.map((x) => x.value))).some((v) => ['General', 'Appearance', 'People', 'Phones'].includes(v))) throw new Error("the computer's own pages on the phone");
     await page.fill('#setting-QUIET_HOURS input', '23-6');
     await page.click('#saveSettings:text-is("Save 1 change")', { timeout: 3000 });
     await page.waitForSelector('#saveSettings', { state: 'hidden', timeout: 5000 });
@@ -2755,7 +2788,7 @@ const smokes = [
   } },
   { name: 'Settings on a phone that only looks: read, no Save', screen: 'status', phone: ['companion'], run: async (page) => {
     await page.click('nav button[data-screen="settings"]', { timeout: 5000 });
-    await page.selectOption('#settingsNav select', 'Notifications', { timeout: 5000 });
+    await page.selectOption('#settingsNav select', 'Alerts', { timeout: 5000 });
     await page.waitForSelector('#setting-QUIET_HOURS', { timeout: 3000 });
     if (await page.isEnabled('#setting-QUIET_HOURS input')) throw new Error('a field to type in, on a phone that only looks');
     if (await page.isVisible('#saveSettings')) throw new Error('Save on a phone that only looks');
@@ -2937,6 +2970,7 @@ const smokes = [
     if (cursor !== 'default' || select !== 'none' || field !== 'text') throw new Error(`cursor ${cursor}, h1 ${select}, pre ${field}`);
   } },
   { name: "Settings: plain names, the .env name on hover and while searching, no true/false in a switch's help", screen: 'settings', run: async (page) => {
+    await thisMachinePage(page);
     await page.waitForSelector('#setting-TZ .label:text-is("Time zone")', { timeout: 5000 });
     if (await page.isVisible('#setting-TZ .key code')) throw new Error('the .env name shows beside every setting');
     if ((await page.getAttribute('#setting-TZ .key', 'title')) !== 'TZ') throw new Error('no .env name on hover');
@@ -2945,8 +2979,22 @@ const smokes = [
     await page.fill('#settingsSearch', 'TZ');
     await page.waitForSelector('#setting-TZ .key code', { state: 'visible', timeout: 5000 });
   } },
+  // The redesign's list (redesign-loop R8): the everyday pages first, then this machine's, then each app's under
+  // Advanced; Automatic care has the updates' and self-repair's settings, Alerts what Notifications had.
+  { name: 'Settings: the list as the redesign, with Automatic care and Alerts as pages', screen: 'settings', run: async (page) => {
+    await page.waitForSelector('#settingsNav .pagebtn[data-page="General"]', { timeout: 5000 });
+    const order = await page.$$eval('#settingsNav > .pagebtn', (b) => b.map((x) => x.dataset.page).slice(0, 6));
+    if (order.join() !== 'General,People,Phones,Automatic care,Alerts,Reaching the apps') throw new Error(`the list: ${order}`);
+    await page.click('#settingsNav .pagebtn[data-page="Automatic care"]');
+    await page.waitForSelector('#setting-AUTO_HEAL', { timeout: 5000 });
+    await page.waitForSelector('#setting-AUTO_ROLLBACK');
+    await page.click('#settingsNav .pagebtn[data-page="Alerts"]');
+    await page.waitForSelector('#setting-QUIET_HOURS', { timeout: 5000 });
+    if (await page.isVisible('#setting-AUTO_HEAL')) throw new Error('Automatic care shows on Alerts');
+  } },
   { name: 'Settings: a page per app, with its port', screen: 'settings', run: async (page) => {
-    await page.waitForSelector('#settingsNav .navhead:text-is("Apps")', { timeout: 5000 });
+    // Each app's own settings under Advanced (redesign-loop R8).
+    await page.waitForSelector('#settingsNav .navhead:text-is("Advanced")', { timeout: 5000 });
     // Folded by category, as on Status; a search opens the folds with matches.
     if (await page.isVisible('#settingsNav .pagebtn[data-page="Immich"]')) throw new Error('the apps are not folded');
     await page.click('#settingsNav .navfold:has-text("Cloud & Files")');
@@ -2958,7 +3006,7 @@ const smokes = [
     await page.waitForSelector('#settingsNav .pagebtn[data-page="Immich"] .n:not(:empty)');
   } },
   { name: 'Copy a secret', screen: 'settings', run: async (page) => {
-    await page.click('#settingsNav .pagebtn[data-page="Domain"]', { timeout: 5000 }); 
+    await page.click('#settingsNav .pagebtn[data-page="Reaching the apps"]', { timeout: 5000 }); 
     await page.click('#setting-CLOUDFLARE_API_TOKEN button:has-text("Copy")');
     await page.waitForSelector('#setting-CLOUDFLARE_API_TOKEN .test:has-text("Copied")', { timeout: 5000 });
   } },
@@ -3470,6 +3518,7 @@ const smokes = [
     if (await page.isVisible('#updateDownload') || await page.isVisible('#updateLine:has-text("drag")')) throw new Error('a self-updating app is told to download');
   } },
   { name: 'What runs in the background', screen: 'settings', run: async (page) => {
+    await thisMachinePage(page);
     await page.click('#bgToggle', { timeout: 5000 });
     await page.waitForSelector('#bgList li:has-text("Nightly backup"):has-text("daily at 03:30")');
     await page.waitForSelector('#bgList li:has-text("Menu bar icon"):has-text("not installed")');
@@ -3627,6 +3676,7 @@ const smokes = [
   } })),
   // "This Mac" in a sentence keeps its capital: "Take the homelab off this Mac", not "this mac"; "this PC" on Windows.
   ...[['MacIntel', 'this Mac'], ['Win32', 'this PC']].map(([platform, words]) => ({ name: `Settings says ${words} in a sentence`, screen: 'settings', mock: { platform }, run: async (page) => {
+    await thisMachinePage(page);
     await page.waitForSelector(`h3.subhead:text-is("Take the homelab off ${words}")`, { timeout: 5000 });
     await page.waitForSelector(`label:has-text("Delete the backups on ${words}")`);
   } })),
@@ -4547,7 +4597,7 @@ const smokes = [
     await page.waitForFunction((was) => window.__MOCK.calls.StatusBoard > was, n, { timeout: 3000 });
   } },
   { name: 'Settings kept: what was typed stays after another screen', screen: 'settings', run: async (page) => {
-    await page.click('#settingsNav .pagebtn[data-page="Domain"]', { timeout: 5000 });
+    await page.click('#settingsNav .pagebtn[data-page="Reaching the apps"]', { timeout: 5000 });
     await page.fill('#setting-HOMELAB_DOMAIN input', 'home.example.org');
     await page.waitForSelector('#saveSettings:not([hidden])', { timeout: 2000 });
     await page.click('nav button[data-screen="status"]');
@@ -5651,6 +5701,7 @@ const smokes = [
     await page.waitForSelector('#cliTitle:has-text("Vikunja")', { timeout: 5000 });
   } },
   { name: 'Going back, from Settings › This Mac', screen: 'settings', mock: { upgrade: { ...upgrade, previous: { commit: 'abc1234', version: '0.13.0', when: new Date(Date.now() - 864e5).toISOString() } } }, run: async (page) => {
+    await thisMachinePage(page);
     await page.click('#upgradeBack', { timeout: 5000 });
     await page.waitForSelector('#upgradeBack:has-text("click again")');
     await page.click('#upgradeBack');
@@ -6069,7 +6120,7 @@ const smokes = [
     await page.waitForFunction(() => document.documentElement.classList.contains('no-blur') && window.__MOCK.look?.transparency === 'off', null, { timeout: 2000 });
   } },
   { name: 'Transparency Off: no blur on any screen, the save bar, the phone bar, and the error included', screen: 'settings', mock: { look: { transparency: 'off' } }, run: async (page) => {
-    await page.click('#settingsNav .pagebtn[data-page="Domain"]', { timeout: 5000 });
+    await page.click('#settingsNav .pagebtn[data-page="Reaching the apps"]', { timeout: 5000 });
     await page.fill('#setting-HOMELAB_DOMAIN input', 'home.example.org');
     await page.waitForSelector('#saveSettings:not([hidden])', { timeout: 2000 });
     await page.evaluate(() => { const e = document.getElementById('error'); e.textContent = 'Something went wrong'; e.hidden = false; });
@@ -6086,7 +6137,7 @@ const smokes = [
     }
   } },
   { name: 'Transparency Like the system keeps the save bar\'s blur', screen: 'settings', run: async (page) => {
-    await page.click('#settingsNav .pagebtn[data-page="Domain"]', { timeout: 5000 });
+    await page.click('#settingsNav .pagebtn[data-page="Reaching the apps"]', { timeout: 5000 });
     await page.fill('#setting-HOMELAB_DOMAIN input', 'home.example.org');
     await page.waitForSelector('#saveSettings:not([hidden])', { timeout: 2000 });
     const blur = await page.evaluate(() => getComputedStyle(document.querySelector('.savebar')).backdropFilter);

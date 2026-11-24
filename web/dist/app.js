@@ -4288,6 +4288,102 @@
     R(/* @__PURE__ */ u3("p", { class: "bad", children: problem }), el3);
   }
 
+  // web/src/settings/General.tsx
+  var onUnlessFalse = (v3) => !/^false$/i.test(v3 || "");
+  function quietWords(v3) {
+    const m3 = /^(\d{1,2})-(\d{1,2})$/.exec((v3 || "").trim());
+    if (!m3) return v3?.trim() ? v3.trim() : "Off";
+    const h3 = (n3) => (n3 % 12 || 12) + (n3 < 12 ? " AM" : " PM");
+    return `${h3(+m3[1])} – ${h3(+m3[2])}`;
+  }
+  function Switch({ label, on: on2, set: set2 }) {
+    return /* @__PURE__ */ u3("input", { type: "checkbox", class: "switch", role: "switch", "aria-label": label, checked: on2, onChange: (e3) => set2(e3.currentTarget.checked) });
+  }
+  var Letter = ({ name }) => /* @__PURE__ */ u3("span", { class: "genletter", "aria-hidden": "true", children: name.slice(0, 1).toUpperCase() });
+  function General(p3) {
+    const v3 = p3.values;
+    const people = (p3.people || []).filter((x3) => never(x3.removed));
+    const phones = p3.phones || [];
+    const domain = (v3.HOMELAB_DOMAIN || "").trim();
+    return /* @__PURE__ */ u3("div", { class: "genboard", children: [
+      /* @__PURE__ */ u3(Card, { kind: "gencard", id: "genPeople", children: [
+        /* @__PURE__ */ u3(CardHead, { title: "People", children: /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => p3.open("People"), children: "Add a person" }) }),
+        people.length ? /* @__PURE__ */ u3(Rows, { kind: "genrows", children: people.slice(0, 4).map((x3) => /* @__PURE__ */ u3(
+          Row,
+          {
+            lead: /* @__PURE__ */ u3(Letter, { name: x3.name }),
+            title: x3.name,
+            sub: x3.apps?.length ? `${x3.apps.length} ${x3.apps.length === 1 ? "app" : "apps"}` : "Signs in with Pocket ID",
+            onOpen: () => p3.open("People"),
+            openLabel: "open"
+          },
+          x3.username
+        )) }) : /* @__PURE__ */ u3("p", { class: "gensub", children: "Nobody added yet: each person gets a sign-in and a page of their apps." })
+      ] }),
+      /* @__PURE__ */ u3(Card, { kind: "gencard", id: "genPhones", children: [
+        /* @__PURE__ */ u3(CardHead, { title: "Phones", children: /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => p3.open("Phones"), children: "Pair a phone" }) }),
+        phones.length ? /* @__PURE__ */ u3(Rows, { kind: "genrows", children: phones.slice(0, 4).map((x3) => /* @__PURE__ */ u3(
+          Row,
+          {
+            lead: /* @__PURE__ */ u3(Letter, { name: x3.name }),
+            title: x3.name,
+            sub: [x3.canChange ? "Can make changes" : "Looks only", x3.personName ? `${x3.personName}'s` : "", never(x3.lastSeen) ? "not seen yet" : `seen ${ago(x3.lastSeen)}`].filter(Boolean).join(" · "),
+            onOpen: () => p3.open("Phones"),
+            openLabel: "open"
+          },
+          x3.id
+        )) }) : /* @__PURE__ */ u3("p", { class: "gensub", children: "No phone paired yet: the Homelab app sees Status and Finances from anywhere." })
+      ] }),
+      /* @__PURE__ */ u3(Card, { kind: "gencard", id: "genCare", children: [
+        /* @__PURE__ */ u3(CardHead, { title: "Automatic care" }),
+        /* @__PURE__ */ u3(Rows, { kind: "genrows", children: [
+          /* @__PURE__ */ u3(Row, { title: "Update apps every night", sub: "At 4:00 AM, each app backed up first", end: /* @__PURE__ */ u3(Switch, { label: "Update apps every night", on: !/^true$/i.test(v3.UPDATES_PAUSED || ""), set: (on2) => p3.pauseUpdates(!on2) }) }),
+          /* @__PURE__ */ u3(Row, { title: "Restart an app that stops answering", sub: "Checked every 15 minutes", end: /* @__PURE__ */ u3(Switch, { label: "Restart an app that stops answering", on: onUnlessFalse(v3.AUTO_HEAL), set: (on2) => p3.set("AUTO_HEAL", on2 ? "true" : "false") }) }),
+          /* @__PURE__ */ u3(Row, { title: "Undo an update that breaks an app", sub: "Puts the version before back by itself", end: /* @__PURE__ */ u3(Switch, { label: "Undo an update that breaks an app", on: onUnlessFalse(v3.AUTO_ROLLBACK), set: (on2) => p3.set("AUTO_ROLLBACK", on2 ? "true" : "false") }) })
+        ] })
+      ] }),
+      /* @__PURE__ */ u3(Card, { kind: "gencard", id: "genAlerts", children: [
+        /* @__PURE__ */ u3(CardHead, { title: "Alerts" }),
+        /* @__PURE__ */ u3(Rows, { kind: "genrows", children: [
+          /* @__PURE__ */ u3(Row, { title: `On ${p3.machine}'s screen`, sub: "A notification in the corner, as well as on your phones", end: /* @__PURE__ */ u3(Switch, { label: `Alerts on ${p3.machine}'s screen`, on: onUnlessFalse(v3.DESKTOP_ALERTS), set: (on2) => p3.set("DESKTOP_ALERTS", on2 ? "true" : "false") }) }),
+          /* @__PURE__ */ u3(Row, { title: "Quiet hours", sub: "Alerts arrive without a sound", end: /* @__PURE__ */ u3("span", { class: "muted", children: quietWords(v3.QUIET_HOURS) }), onOpen: () => p3.open("Alerts"), openLabel: "open" })
+        ] })
+      ] }),
+      /* @__PURE__ */ u3(Card, { kind: "gencard", id: "genReach", children: [
+        /* @__PURE__ */ u3(CardHead, { title: "Reaching the apps" }),
+        /* @__PURE__ */ u3(Rows, { kind: "genrows", children: [
+          domain ? /* @__PURE__ */ u3(Row, { title: "Your own domain", sub: `Addresses like photos.${domain}`, onOpen: () => p3.open("Reaching the apps"), openLabel: "open" }) : /* @__PURE__ */ u3(Row, { title: "Home only", sub: "Your phones and computers reach the apps through Tailscale, at home and away. Nothing is on the internet." }),
+          !domain && /* @__PURE__ */ u3(Row, { title: "Use your own domain", sub: "Addresses like photos.yourname.com", end: /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => p3.open("Reaching the apps"), children: "Set it up…" }) })
+        ] })
+      ] }),
+      /* @__PURE__ */ u3(Card, { kind: "gencard genmac", id: "genMac", children: [
+        /* @__PURE__ */ u3(CardHead, { title: p3.machine }),
+        /* @__PURE__ */ u3("div", { class: "gentiles", children: [
+          /* @__PURE__ */ u3("button", { type: "button", class: "gentile", onClick: () => p3.open(p3.machine), children: [
+            /* @__PURE__ */ u3("strong", { children: "Storage" }),
+            /* @__PURE__ */ u3("span", { children: p3.storage || "Its disks and drives" })
+          ] }),
+          /* @__PURE__ */ u3("button", { type: "button", class: "gentile", onClick: () => p3.open(p3.machine), children: [
+            /* @__PURE__ */ u3("strong", { children: "Power" }),
+            /* @__PURE__ */ u3("span", { children: p3.power || "Keep awake, battery saver" })
+          ] }),
+          /* @__PURE__ */ u3("button", { type: "button", class: "gentile", onClick: () => p3.open("Appearance"), children: [
+            /* @__PURE__ */ u3("strong", { children: "Appearance" }),
+            /* @__PURE__ */ u3("span", { children: [
+              "Light, dark, or as ",
+              p3.machine
+            ] })
+          ] }),
+          /* @__PURE__ */ u3("button", { type: "button", class: "gentile", onClick: () => p3.open(p3.machine), children: [
+            /* @__PURE__ */ u3("strong", { children: "Advanced" }),
+            /* @__PURE__ */ u3("span", { children: "Each app's own settings, keys and tokens" })
+          ] })
+        ] })
+      ] })
+    ] });
+  }
+  var mountGeneral = (el3, props) => R(props && /* @__PURE__ */ u3(General, { ...props }), el3);
+
   // web/src/settings/People.tsx
   var active = (p3) => !p3.removed || p3.removed.startsWith("0001");
   function privately(at2) {
@@ -4737,7 +4833,7 @@
           const pages = g2.items.filter((i3) => typeof i3 === "string");
           const folds = g2.items.filter((i3) => typeof i3 !== "string");
           return [
-            ...pages.length ? [/* @__PURE__ */ u3("optgroup", { label: g2.head, children: pages.map(option) }, "h:" + g2.head)] : [],
+            ...pages.length ? [/* @__PURE__ */ u3("optgroup", { label: g2.head || "Settings", children: pages.map(option) }, "h:" + g2.head)] : [],
             ...folds.map((f4) => /* @__PURE__ */ u3("optgroup", { label: pages.length ? f4.label : `${g2.head} › ${f4.label}`, children: f4.pages.map(option) }, "f:" + f4.label))
           ];
         })
@@ -4751,7 +4847,7 @@
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3(PagePicker, { groups: groups4, active: active2, counts, pick }),
       groups4.filter((g2) => g2.items.length).map((g2) => [
-        /* @__PURE__ */ u3("div", { class: "navhead", children: g2.head }, "h:" + g2.head),
+        g2.head && /* @__PURE__ */ u3("div", { class: "navhead", children: g2.head }, "h:" + g2.head),
         ...g2.items.map((item) => {
           if (typeof item === "string") return /* @__PURE__ */ u3(PageButton, { name: item, active: active2, counts, pick }, item);
           const f4 = item, open5 = isOpen2(f4);
@@ -6749,6 +6845,43 @@
   // web/src/screens/settings.ts
   var changed = {};
   var testable = null;
+  var lastPhones = null;
+  var lastPeople = null;
+  function renderGeneral() {
+    const el3 = document.getElementById("generalCard");
+    if (!el3) return;
+    const searching = !!$("settingsSearch").value.trim();
+    const showing = !onPhone() && !searching && settingsPage === "General";
+    el3.classList.toggle("offpage", !showing);
+    const values = Object.fromEntries((settingsData.value || []).map((x3) => [x3.key, x3.value]));
+    mountGeneral(el3, showing ? {
+      people: lastPeople,
+      phones: lastPhones,
+      values,
+      machine: thisMachine,
+      open: (page) => {
+        const apps2 = navGroups.find((g2) => g2.head === "Advanced")?.items || [];
+        const first = (x3) => !x3 ? thisMachine : typeof x3 === "string" ? x3 : x3.pages[0] || thisMachine;
+        pickSettingsPage(page === "Advanced" ? first(apps2[0]) : page);
+      },
+      set: async (key7, value) => {
+        try {
+          await go().SaveSettings({ [key7]: value });
+        } catch (e3) {
+          showError(e3);
+        }
+        settingsData.load();
+      },
+      pauseUpdates: async (paused) => {
+        try {
+          await go().SetUpdatesPaused(paused);
+        } catch (e3) {
+          showError(e3);
+        }
+        settingsData.load();
+      }
+    } : null);
+  }
   async function loadPhones() {
     const card = $("phonesCard");
     let phones;
@@ -6758,6 +6891,8 @@
       card.hidden = true;
       return;
     }
+    lastPhones = phones || [];
+    renderGeneral();
     card.hidden = false;
     mountPhones(card, { phones: phones || [], on: phonesActions });
   }
@@ -6834,6 +6969,8 @@
       card.hidden = true;
       return;
     }
+    lastPeople = list || [];
+    renderGeneral();
     const privateFinances = await go().PrivateFinances().catch(() => ({}));
     card.hidden = false;
     const catOf = Object.fromEntries((catalog?.apps || []).map((x3) => [x3.id, x3]));
@@ -6965,6 +7102,7 @@
     everydayCount = list.filter((s3) => wanted.has(s3.key)).length;
     moreCount = list.length - everydayCount;
     if (focus.length) settingsPage = pages.find((pg) => pg.items.some((s3) => s3.key === focus[0]))?.name || settingsPage;
+    if (!settingsPage && !onPhone()) settingsPage = "General";
     if (!pages.some((pg) => pg.name === settingsPage) && !extraPages.includes(settingsPage)) settingsPage = pages[0]?.name || "";
     form = {
       pages,
@@ -7042,7 +7180,9 @@
     }
   };
   var settingsPage = "";
-  var extraPages = ["Appearance", "People", "Phones"];
+  var extraPages = ["General", "Appearance", "People", "Phones"];
+  var keyPage = Object.fromEntries(["UPDATES_PAUSED", "WATCHTOWER_SCHEDULE", "AUTO_ROLLBACK", "AUTO_HEAL", "UPDATE_CHANNEL", "UPDATE_COPY_LIMIT", "UPDATES_HELD"].map((k3) => [k3, "Automatic care"]));
+  var renamedSections = { Notifications: "Alerts", Domain: "Reaching the apps" };
   function settingsPages(list) {
     const norm = (t3) => t3.toUpperCase().replace(/[^A-Z0-9]+/g, "_") + "_";
     const apps2 = (catalog?.apps || []).map((a3) => ({
@@ -7084,7 +7224,7 @@
     for (const s3 of list) {
       if (!perApp(s3.section)) {
         const isApp = apps2.some((a4) => s3.section === a4.name || s3.section.startsWith(a4.name + " "));
-        page(s3.section === "This Mac" ? thisMachine : s3.section, isApp ? "app" : "general").items.push(s3);
+        page(keyPage[s3.key] || renamedSections[s3.section] || (s3.section === "This Mac" ? thisMachine : s3.section), isApp ? "app" : "general").items.push(s3);
         continue;
       }
       const a3 = appOf(s3.key);
@@ -7094,9 +7234,8 @@
     return [...general, ...appPages];
   }
   var pageGroups = [
-    [thisMachine, [thisMachine, "Storage", "Appearance"]],
-    ["Household", ["People", "Phones"]],
-    ["Reaching the apps", ["Domain", "Notifications"]]
+    ["", ["General", "People", "Phones", "Automatic care", "Alerts", "Reaching the apps"]],
+    [thisMachine, [thisMachine, "Storage", "Appearance", "Tidy Up"]]
   ];
   var navGroups = [];
   function renderSettingsNav(pages) {
@@ -7108,7 +7247,7 @@
     const others2 = known3 ? apps2.filter((p3) => !mine.includes(p3)) : [];
     const groups4 = pageGroups.map(([head, names5]) => ({ head, items: names5.filter((n3) => general.includes(n3)) }));
     const named6 = new Set(pageGroups.flatMap(([, names5]) => names5));
-    groups4[0].items.push(...general.filter((n3) => !named6.has(n3)));
+    groups4[1].items.push(...general.filter((n3) => !named6.has(n3)));
     const cats = catalog?.categories || [];
     const catOf = (name) => (catalog?.apps || []).find((a3) => a3.kind !== "helper" && (name === a3.name || name.startsWith(a3.name + " ")))?.category || "";
     const folds = cats.map((c4) => ({ label: c4.label, pages: mine.filter((p3) => p3.name !== "Other apps" && catOf(p3.name) === c4.id).map((p3) => p3.name) })).filter((f4) => f4.pages.length);
@@ -7116,7 +7255,7 @@
     const other = mine.some((p3) => p3.name === "Other apps") ? ["Other apps"] : [];
     navGroups = [
       ...groups4,
-      { head: "Apps", items: [...loose2, ...folds, ...other, ...others2.length ? [{ label: "Apps you don't have", pages: others2.map((p3) => p3.name) }] : []] }
+      { head: "Advanced", items: [...loose2, ...folds, ...other, ...others2.length ? [{ label: "Apps you don't have", pages: others2.map((p3) => p3.name) }] : []] }
     ];
   }
   function pickSettingsPage(name) {
@@ -7280,6 +7419,7 @@
     const sh = shown2(form.pages, form.view, form.wanted, form.label, form.checks);
     for (const [id2, name] of [["thisMacCard", thisMachine], ["appearanceCard", "Appearance"], ["peopleCard", "People"], ["phonesCard", "Phones"], ["tailnetCard", "Phones"]]) $(id2).classList.toggle("offpage", searching || settingsPage !== name);
     mountNav($("settingsNav"), { groups: navGroups, active: settingsPage, counts: searching ? sh.counts : null, pick: pickSettingsPage });
+    renderGeneral();
     $("settingsForm").classList.toggle("searching", searching);
     $("settingsNone").hidden = sh.keys.size > 0 || !searching;
     $("settingsAll").hidden = searching || !sh.pageMore;
@@ -9347,7 +9487,7 @@
       people && /* @__PURE__ */ u3("p", { class: "muted foot", children: /* @__PURE__ */ u3(ActionLink, { onClick: on2.openPeople, children: "Add someone in Settings › People" }) })
     ] });
   }
-  function Switch({ label, sub, on: on2, disabled, set: set2 }) {
+  function Switch2({ label, sub, on: on2, disabled, set: set2 }) {
     return /* @__PURE__ */ u3(
       Row,
       {
@@ -9374,7 +9514,7 @@
       /* @__PURE__ */ u3(CardHead, { title: "Settings", children: null }),
       /* @__PURE__ */ u3(Rows, { children: [
         container && /* @__PURE__ */ u3(
-          Switch,
+          Switch2,
           {
             label: "Nightly updates",
             disabled: busy2 || "updates" in switching2,
@@ -9384,7 +9524,7 @@
           }
         ),
         container && updates && /* @__PURE__ */ u3(
-          Switch,
+          Switch2,
           {
             label: `Only on ${daysText}`,
             disabled: busy2 || "sundays" in switching2,
@@ -9394,7 +9534,7 @@
           }
         ),
         /* @__PURE__ */ u3(
-          Switch,
+          Switch2,
           {
             label: "Tell me if it stops",
             disabled: busy2 || "alerts" in switching2,
@@ -9404,7 +9544,7 @@
           }
         ),
         a3.reach && /* @__PURE__ */ u3(
-          Switch,
+          Switch2,
           {
             label: "Reach it away from home",
             disabled: busy2 || "away" in switching2,
