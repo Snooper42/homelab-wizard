@@ -29,6 +29,14 @@ struct StatusHeadline: Equatable {
 
     /// 0 to 1, for the ring.
     var share: Double { total == 0 ? 0 : Double(running) / Double(total) }
+
+    /// The headline when something needs you, as the redesign's Status
+    /// (docs/images/redesign/phone-status.png): "1 app needs you",
+    /// "3 apps need you".
+    var title: String { attentionCount == 1 ? "1 app needs you" : "\(attentionCount) apps need you" }
+
+    /// Under it: "21 of 22 running".
+    var runningLine: String { "\(running) of \(total) running" }
 }
 
 /// The ring and the one thing that needs a look, or that all is well.
@@ -265,7 +273,7 @@ struct StatusTop: View {
     var body: some View {
         let headline = StatusHeadline(status: model.liveEvents.status)
         if let app = model.app(id: headline.attentionID) {
-            StatusAlertCard(app: app, others: headline.attentionCount - 1) { open(app.id) }
+            StatusAlertCard(app: app, others: headline.attentionCount - 1, headline: headline) { open(app.id) }
         } else if let health = model.healthLine, !health.isEmpty {
             StatusAlertCard(app: nil, others: 0, words: health)
         } else {
@@ -310,6 +318,9 @@ struct StatusAlertCard: View {
     let others: Int
     /// For a problem that's no app's (the health line): its words.
     var words: String? = nil
+    /// The whole homelab's count, for the redesign's headline over the app
+    /// ("1 app needs you", "21 of 22 running").
+    var headline: StatusHeadline? = nil
     /// Opens the app's page.
     var open: @MainActor () -> Void = {}
     @Environment(\.dynamicTypeSize) private var typeSize
@@ -323,6 +334,54 @@ struct StatusAlertCard: View {
         // "Needs a look" broke onto two lines beside it (large-status).
         let heading = typeSize.isAccessibilitySize
             ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8)) : AnyLayout(HStackLayout(spacing: 11))
+        if let app, let headline {
+            // The redesign's card (phone-status.png): the headline and the count
+            // over a rule, then the app with what's wrong, then its buttons.
+            VStack(alignment: .leading, spacing: 10) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(verbatim: headline.title)
+                        .font(.title2.weight(.bold))
+                        .foregroundStyle(Theme.warning)
+                    Text(verbatim: headline.runningLine)
+                        .font(.caption.weight(.semibold))
+                        .textCase(.uppercase)
+                        .foregroundStyle(Theme.secondaryInk)
+                }
+                Divider()
+                heading {
+                    AppIconView(app: app, size: 40, stateBadge: false)
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(verbatim: app.name)
+                            .font(.headline)
+                            .foregroundStyle(Theme.ink)
+                            .lineLimit(1)
+                        Text(verbatim: app.detailLine)
+                            .font(.subheadline)
+                            .foregroundStyle(Theme.secondaryInk)
+                            .lineLimit(2)
+                    }
+                }
+                buttons {
+                    HeroButtons(app: app)
+                    Button("Its Page") { open() }
+                    .buttonStyle(.bordered)
+                    .buttonBorderShape(.capsule)
+                    .controlSize(.small)
+                    .font(.subheadline.weight(.semibold))
+                    .dynamicTypeSize(...DynamicTypeSize.accessibility1)
+                }
+            }
+            .padding(14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .card(radius: 20)
+        } else {
+            legacy(buttons: buttons, heading: heading)
+        }
+    }
+
+    /// A problem that's no app's (the health line), or an app without the
+    /// homelab's count: "Needs a look" over its words, as before.
+    private func legacy(buttons: AnyLayout, heading: AnyLayout) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             heading {
                 if let app {
