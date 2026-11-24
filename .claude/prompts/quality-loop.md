@@ -39,6 +39,11 @@ For a pull request that needs Q's review, check every one of these, and say whic
     - What version does Settings › This Mac show?
     - When did you last build the iPhone app in Xcode?
   - **Fix anything you find in the update path** in a pull request.
+- **High priority, before Q1 (the owner, Nov 23): how the apps' data is kept.** Today: each app's files in `data/appdata/<app>`, databases in Docker volumes dumped nightly, uploads in volumes archived nightly, caches not backed up, the app's own records in JSON saved whole under a lock (`docs/Storage.md`). Three gaps, in this order:
+  - [ ] **D1. The Syncthing folder in the backups.** `SYNC_ROOT`, what the household syncs between devices, is in no backup today. Q4 (b) moved up to here: a *Not in any backup* card on Backups listing what's left out, with **Add**, and Syncthing's folder the first one in. Then a line for R under **From the other lanes** in `redesign-loop.md` (R7 lays it out).
+  - [ ] **D2. No app's data goes unbacked without anyone saying so.** A catalog check (`go run ./cmd/homelab --root . validate`): every named Docker volume is a database marked `dump`, listed under `archive`, or marked as rebuilding itself (a new `x-homelab` field, such as `rebuilds: [linkwarden-meilisearch]`). The table in `docs/Storage.md` gets the ones it lacks: Firefly III's uploads (archived), Linkwarden's search index and Tandoor's static files (rebuilt).
+  - [ ] **D3. Choose where the apps' data lives.** A setting for the folder that's `data/appdata` today, as CasaOS has its data folder, so it can sit on a bigger or faster drive; every compose file reads it; changing it moves the data with Undo, and a restore test passes after. Moving the household's files needs the owner's yes (lanes.md rule 13): the pull request asks in `owner.md` and merges on their yes. Pairs with Q7 (d), a second drive.
+  - **Decided, leave as they are (the owner, Nov 23):** one database per app, not one shared PostgreSQL (one app's upgrade can't break another, and Immich needs its own image); Finances in JSON, not a database, until bank imports (M1, M2) make it slow.
 - [ ] **Q1. The open security list.**
   - **Make the list.** From `audit-loop.md`'s *Security backlog, in order* (only that section, and only its items not marked done) and the open items in its *For Account 2* usability findings, write the ones still open into this file, one line each and worst first, under **The security list** below.
   - **Archive the history.** Say at the top of `audit-loop.md` that it's archived, then work the list from here.
@@ -55,7 +60,7 @@ For a pull request that needs Q's review, check every one of these, and say whic
   - **What's in `homelab report` and the logs:** checked to carry no amount, payee or key.
 - [ ] **Q4. The backups' engine, for R's Backups** (`docs/Redesign.md`, *New work behind the pictures*).
   - **(a) Each app's result each night,** kept for fourteen nights.
-  - **(b) Not in any backup:** what's left out (Syncthing's folder, `SYNC_ROOT`, today), with **Add**.
+  - **(b) Not in any backup:** done as D1, above.
   - **(c) Get something back:** one file or a whole app from a chosen night, through the backup engine, saved as a copy or put back, with a test against a real Duplicati and Kopia (`test/realdocker`).
 
   Each part is one pull request, then a line for R under **From the other lanes** in `redesign-loop.md`.
