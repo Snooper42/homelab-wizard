@@ -2126,6 +2126,21 @@ const smokes = [
     await page.waitForSelector('#health-agent:has-text("Running")', { timeout: 5000 });
     if (!(await page.evaluate(() => window.__MOCK.agentStarted))) throw new Error('Start it did not start the agent');
   } },
+  // The phone's Status shows Setup's unfinished steps (Setup isn't one of its tabs; redesign-loop R10): how many are done,
+  // the next few by name, and Continue to Setup. Not on the computer, whose sidebar has Setup.
+  { name: "The owner's phone: Status shows Setup's unfinished steps, and Continue opens Setup", screen: 'status', phone: ['companion', 'can-change'], run: async (page) => {
+    const card = '#setupOnStatus .setuponstatus';
+    await page.waitForSelector(`${card}:has-text("Finish setting up")`, { timeout: 5000 });
+    const said = await page.textContent(`${card} p`);
+    if (!/^\d+ of \d+ done · \d+ left$/.test(said.trim())) throw new Error(said);
+    if (!(await page.locator(`${card} .setupnext li`).count())) throw new Error('no step named');
+    await page.click(`${card} button:text-is("Continue")`);
+    await page.waitForSelector('#setup.active', { timeout: 5000 });
+  } },
+  { name: "The computer's Status doesn't repeat Setup's steps", screen: 'status', run: async (page) => {
+    await page.waitForSelector('#statusHeadline', { timeout: 5000 });
+    if (await page.isVisible('#setupOnStatus')) throw new Error("Setup's steps on the computer's Status");
+  } },
   { name: "Status keeps this machine's line", screen: 'status', mock: { health: { agent: 'running', lastCheck: new Date().toISOString(), power: 'battery', keptAwake: true } }, run: async (page) => {
     await page.waitForSelector('#healthLine .item.warn:has-text("On battery")', { timeout: 5000 });
     await page.waitForSelector('#healthLine .item.ok:has-text("Backups and checks on")');
