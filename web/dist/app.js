@@ -18545,7 +18545,7 @@ ${pays}
       setFrom(tab3);
       setTab("transactions");
     };
-    const pickTab = (t3) => {
+    const pickTab2 = (t3) => {
       setFrom("");
       setTab(t3);
     };
@@ -18553,7 +18553,7 @@ ${pays}
       if (tab3 !== "transactions") setFrom("");
     }, [tab3]);
     if (groupOf(tab3)[2].includes(tab3)) leftOn[groupOf(tab3)[0]] = tab3;
-    const back3 = from2 && from2 !== "transactions" ? { label: tabs.find(([k3]) => k3 === from2)?.[1] || from2, go: () => pickTab(from2) } : void 0;
+    const back3 = from2 && from2 !== "transactions" ? { label: tabs.find(([k3]) => k3 === from2)?.[1] || from2, go: () => pickTab2(from2) } : void 0;
     const ro = !!v3?.readOnly;
     const age = v3?.typed ? daysBetween(v3.typed, v3.today) : -1;
     const lead2 = (age < 0 ? phone2 ? "Typed in by you, kept on your homelab" : "Typed in by you, kept on this machine" : age === 0 ? "Balances from today" : `Balances from ${dayShort(v3.typed)}, with what's happened since` + (age >= 7 ? `: ${age} days ago${ro ? "" : ", bring them up to date with Update balances"}` : "")) + (ro ? " · view only" : "");
@@ -18618,8 +18618,8 @@ ${pays}
         ] }),
         age >= 7 && /* @__PURE__ */ u3("p", { class: "lead warn fx-stale", children: lead2 })
       ] }),
-      phone2 && /* @__PURE__ */ u3(Segmented, { label: "View", value: groupOf(tab3)[0], pick: (g2) => pickTab(pageOf(g2)), options: groups3.map(([k3, label2]) => [k3, label2]) }),
-      phone2 && groupOf(tab3)[2].length > 1 && /* @__PURE__ */ u3("div", { class: "fx-subtabs", children: /* @__PURE__ */ u3(Segmented, { label: groupOf(tab3)[1], value: pageFor(tab3), pick: pickTab, options: tabs.filter(([k3]) => groupOf(tab3)[2].includes(k3)) }) }),
+      phone2 && /* @__PURE__ */ u3(Segmented, { label: "View", value: groupOf(tab3)[0], pick: (g2) => pickTab2(pageOf(g2)), options: groups3.map(([k3, label2]) => [k3, label2]) }),
+      phone2 && groupOf(tab3)[2].length > 1 && /* @__PURE__ */ u3("div", { class: "fx-subtabs", children: /* @__PURE__ */ u3(Segmented, { label: groupOf(tab3)[1], value: pageFor(tab3), pick: pickTab2, options: tabs.filter(([k3]) => groupOf(tab3)[2].includes(k3)) }) }),
       /* @__PURE__ */ u3("div", { class: "finbody", children: !v3 && error ? /* @__PURE__ */ u3(Empty, { children: [
         "The finances file could not be read: ",
         error,
@@ -21225,7 +21225,7 @@ ${pays}
           d3 && /* @__PURE__ */ u3(Elsewhere.Provider, { value: other ? jobTitle(other.kind, other.action, other.flags || []) : "", children: /* @__PURE__ */ u3(Go, { primary: true, label: "Tidy up now", job: job2, onClick: () => act.run("inbox", "scan", ["--apply"]) }) })
         ] })
       ] }),
-      /* @__PURE__ */ u3(Segmented, { label: "Tidy Up sections", value: tab3, pick: (v3) => p3.pick(v3), options: [["overview", "Inbox"], ...LIBRARIES.map((k3) => [k3, names3[k3]])] }),
+      /* @__PURE__ */ u3("div", { class: "tidytabs", children: /* @__PURE__ */ u3(Segmented, { label: "Tidy Up sections", value: tab3, pick: (v3) => p3.pick(v3), options: [["overview", "Inbox"], ...LIBRARIES.map((k3) => [k3, names3[k3]])] }) }),
       other && /* @__PURE__ */ u3(RunningCard, { lock: other, now: p3.running?.lock ? p3.running.now : void 0, stop: () => p3.act.stopElsewhere(other), stopping: p3.stoppingElsewhere === other.start }),
       d3?.stale && !other && !job2 && (() => {
         const c4 = carryOn(d3.stale, d3, act, p3.pick);
@@ -21268,6 +21268,37 @@ ${pays}
       !d3 ? !p3.error && /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : /* @__PURE__ */ u3(Elsewhere.Provider, { value: other ? jobTitle(other.kind, other.action, other.flags || []) : "", children: /* @__PURE__ */ u3("div", { class: "finbody tidybody", children: tab3 === "overview" ? /* @__PURE__ */ u3(Overview2, { d: d3, job: job2, act, review: p3.review, pick: p3.pick, placing: p3.placing, folders }) : /* @__PURE__ */ u3(LibraryTab, { kind: tab3, d: d3, job: job2, act, review: p3.review, reviewError: p3.reviewError, reloadReview: p3.reloadReview, skip: p3.skip, toggle: p3.toggle, pick: p3.pick }) }) })
     ] });
   }
+  function TidyMenu({ tab: tab3, pick, d: d3 }) {
+    const here3 = tabNow(tab3);
+    const dr = d3?.drive;
+    const item = (key7, label, icon, n3) => /* @__PURE__ */ u3("li", { children: /* @__PURE__ */ u3("button", { type: "button", class: "finmenuitem tidymenuitem" + (here3 === key7 ? " on" : ""), "data-tab": key7, "aria-current": here3 === key7 ? "page" : void 0, onClick: () => pick(key7), children: [
+      /* @__PURE__ */ u3("svg", { class: "icon", viewBox: "0 0 24 24", "aria-hidden": "true", children: /* @__PURE__ */ u3("path", { d: icon }) }),
+      /* @__PURE__ */ u3("span", { children: label }),
+      !!n3 && /* @__PURE__ */ u3("span", { class: "count", children: n3 })
+    ] }) }, key7);
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3("ul", { class: "finmenu tidymenu", "aria-label": "Tidy Up", children: [
+        item("overview", "Overview", "M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z", (d3?.needs || []).length || void 0),
+        LIBRARIES.map((k3) => item(k3, names3[k3], looks[k3].icon))
+      ] }),
+      dr && /* @__PURE__ */ u3("div", { class: "tidynavdrives", children: [
+        /* @__PURE__ */ u3("p", { class: "fx-caption", children: "Drives" }),
+        /* @__PURE__ */ u3("div", { class: "tidydriveline", title: `${size(dr.free)} free of ${size(dr.total)}`, children: [
+          /* @__PURE__ */ u3("span", { class: "tidydrivename", children: [
+            /* @__PURE__ */ u3("span", { children: dr.name || thisMachine }),
+            /* @__PURE__ */ u3("span", { class: "muted", children: [
+              size(dr.free),
+              " free"
+            ] })
+          ] }),
+          /* @__PURE__ */ u3("span", { class: "tidydrivebar", "aria-hidden": "true", children: /* @__PURE__ */ u3("span", { style: { width: `${dr.total ? Math.round((1 - dr.free / dr.total) * 100) : 0}%` } }) })
+        ] })
+      ] })
+    ] });
+  }
+  function mountTidyMenu(el3, props) {
+    R(/* @__PURE__ */ u3(TidyMenu, { ...props }), el3);
+  }
   function mountTidy(el3, props) {
     R(/* @__PURE__ */ u3(TidyScreen, { ...props }), el3);
   }
@@ -21302,8 +21333,19 @@ ${pays}
   var following;
   var stoppingElsewhere = "";
   var FOLLOW_MS = 3e3;
+  function pickTab(t3) {
+    tab2 = t3;
+    try {
+      localStorage.setItem("homelab.tidyTab", t3);
+    } catch {
+    }
+    if (t3 === "books" && !review) loadReview();
+    draw5();
+    tabChanged();
+  }
   function draw5() {
     const d3 = tidyData.value || null;
+    mountTidyMenu($("tidyMenu"), { tab: tab2, d: d3, pick: (t3) => pickTab(t3) });
     mountTidy($("tidyRoot"), {
       d: d3,
       error: tidyData.error ? errorText(tidyData.error) : void 0,
@@ -21321,21 +21363,12 @@ ${pays}
       reloadReview: () => {
         loadReview();
       },
-      pick: (t3) => {
-        tab2 = t3;
-        try {
-          localStorage.setItem("homelab.tidyTab", t3);
-        } catch {
-        }
-        if (t3 === "books" && !review) loadReview();
-        draw5();
-        tabChanged();
-      },
+      pick: (t3) => pickTab(t3),
       // Closed from the keyboard, its place goes back to the tabs rather than the top of the window.
       closeJob: () => {
         job = null;
         draw5();
-        document.querySelector('#tidy .seg button[aria-checked="true"]')?.focus();
+        document.querySelector('#tidyMenu .tidymenuitem.on, #tidy .seg button[aria-checked="true"]')?.focus();
       },
       toggle: (id2) => {
         if (skip.has(id2)) skip.delete(id2);

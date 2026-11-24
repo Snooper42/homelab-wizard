@@ -1235,7 +1235,8 @@ export function TidyScreen(p: TidyProps) {
           {d && <Elsewhere.Provider value={other ? jobTitle(other.kind, other.action, other.flags || []) : ''}><Go primary label="Tidy up now" job={job} onClick={() => act.run('inbox', 'scan', ['--apply'])} /></Elsewhere.Provider>}
         </div>
       </div>
-      <Segmented label="Tidy Up sections" value={tab} pick={(v) => p.pick(v as TidyTab)} options={[['overview', 'Inbox'], ...LIBRARIES.map((k): [string, string] => [k, names[k]])]} />
+      {/* The sidebar's menu has these on the computer (TidyMenu, redesign-loop R9); the tabs stay for a screen without it. */}
+      <div class="tidytabs"><Segmented label="Tidy Up sections" value={tab} pick={(v) => p.pick(v as TidyTab)} options={[['overview', 'Inbox'], ...LIBRARIES.map((k): [string, string] => [k, names[k]])]} /></div>
       {other && <RunningCard lock={other} now={p.running?.lock ? p.running.now : undefined} stop={() => p.act.stopElsewhere(other)} stopping={p.stoppingElsewhere === other.start} />}
       {d?.stale && !other && !job && (() => {
         const c = carryOn(d.stale, d, act, p.pick);
@@ -1256,6 +1257,40 @@ export function TidyScreen(p: TidyProps) {
     </>
   );
 }
+
+/**
+ * Tidy Up's menu, in the sidebar while it shows (redesign-loop R9, as Finances' FinMenu): Overview with how many things
+ * wait on you, each library, then the drive and its free space.
+ */
+function TidyMenu({ tab, pick, d }: { tab: TidyTab; pick: (t: TidyTab) => void; d: app.TidyUp | null }) {
+  const here = tabNow(tab);
+  const dr = d?.drive;
+  const item = (key: TidyTab, label: string, icon: string, n?: number) => (
+    <li key={key}>
+      <button type="button" class={'finmenuitem tidymenuitem' + (here === key ? ' on' : '')} data-tab={key} aria-current={here === key ? 'page' : undefined} onClick={() => pick(key)}>
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d={icon} /></svg><span>{label}</span>{!!n && <span class="count">{n}</span>}
+      </button>
+    </li>
+  );
+  return (
+    <>
+      <ul class="finmenu tidymenu" aria-label="Tidy Up">
+        {item('overview', 'Overview', 'M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z', (d?.needs || []).length || undefined)}
+        {LIBRARIES.map((k) => item(k, names[k], looks[k].icon))}
+      </ul>
+      {dr && <div class="tidynavdrives">
+        <p class="fx-caption">Drives</p>
+        <div class="tidydriveline" title={`${size(dr.free)} free of ${size(dr.total)}`}>
+          <span class="tidydrivename"><span>{dr.name || thisMachine}</span><span class="muted">{size(dr.free)} free</span></span>
+          <span class="tidydrivebar" aria-hidden="true"><span style={{ width: `${dr.total ? Math.round((1 - dr.free / dr.total) * 100) : 0}%` }} /></span>
+        </div>
+      </div>}
+    </>
+  );
+}
+
+/** Tidy Up's menu, into the sidebar (index.html's #tidyMenu); the sidebar shows it only while Tidy Up does. */
+export function mountTidyMenu(el: Element, props: { tab: TidyTab; pick: (t: TidyTab) => void; d: app.TidyUp | null }) { render(<TidyMenu {...props} />, el); }
 
 /** Draws the screen into its box. */
 export function mountTidy(el: Element, props: TidyProps) { render(<TidyScreen {...props} />, el); }

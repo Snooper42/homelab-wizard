@@ -1,6 +1,6 @@
 // Tidy Up: reads TidyUp, runs the screen's jobs through TidyRun, and keeps
 // the running job's events (media:event) for the job panel.
-import { jobTitle, mountTidy, mountTidySheet, tabNow, type TidyConfirm, type TidyJob, type TidyTab } from '../tidy/Tidy';
+import { jobTitle, mountTidy, mountTidyMenu, mountTidySheet, tabNow, type TidyConfirm, type TidyJob, type TidyTab } from '../tidy/Tidy';
 import { store } from '../store';
 import { navigate } from '../app';
 import { keepsTabs, tabChanged } from '../tabs';
@@ -32,15 +32,17 @@ let stoppingElsewhere = '';
 const FOLLOW_MS = 3000;
 
 
+function pickTab(t: TidyTab) { tab = t; try { localStorage.setItem('homelab.tidyTab', t); } catch { /* none */ } if (t === 'books' && !review) loadReview(); draw(); tabChanged(); }
 function draw() {
   const d = tidyData.value || null;
+  mountTidyMenu($('tidyMenu'), { tab, d, pick: (t) => pickTab(t) });
   mountTidy($('tidyRoot'), {
     d, error: tidyData.error ? errorText(tidyData.error) : undefined, tab, job, review, reviewError, skip, running, placing, stoppingElsewhere,
     reload: () => { tidyData.load(); },
     reloadReview: () => { loadReview(); },
-    pick: (t) => { tab = t; try { localStorage.setItem('homelab.tidyTab', t); } catch { /* none */ } if (t === 'books' && !review) loadReview(); draw(); tabChanged(); },
+    pick: (t) => pickTab(t),
     // Closed from the keyboard, its place goes back to the tabs rather than the top of the window.
-    closeJob: () => { job = null; draw(); (document.querySelector('#tidy .seg button[aria-checked="true"]') as HTMLElement | null)?.focus(); },
+    closeJob: () => { job = null; draw(); (document.querySelector('#tidyMenu .tidymenuitem.on, #tidy .seg button[aria-checked="true"]') as HTMLElement | null)?.focus(); },
     toggle: (id) => { if (skip.has(id)) skip.delete(id); else skip.add(id); draw(); },
     act: {
       run, stop: () => { if (job && !job.ended) { job.stopping = true; draw(); } go().TidyStop(); },
