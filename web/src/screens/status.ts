@@ -69,6 +69,10 @@ function renderTiles(st: api.Status) {
       await loadStatus();
     },
     onChoose: () => navigate('choose'),
+    words: (a) => stateOf(a, batteryPaused, held)[1],
+    start: (a) => appActions.act(a, 'start'),
+    logs: (a) => { pageOpener.open(a.id); requestAnimationFrame(() => document.getElementById('appLog')?.scrollIntoView({ block: 'start' })); },
+    open: (a) => pageOpener.open(a.id),
   });
   const n = trouble.length;
   $('statusCount').textContent = n ? String(n) : '';

@@ -93,6 +93,12 @@ export const troubled = (a: api.AppStatus, held: Record<string, stopped.Stop> = 
 
 export interface TilesProps {
   status: api.Status;
+  /** Each app's state in a few words, as its row says it (AppList's stateOf). */
+  words?: (a: api.AppStatus) => string;
+  /** Start an app that needs you; Logs and Its page open its page (at its log). */
+  start?: (a: api.AppStatus) => void;
+  logs?: (a: api.AppStatus) => void;
+  open?: (a: api.AppStatus) => void;
   history: savings.Point[];
   /** Pauses (true) or resumes the nightly updates. */
   onPause: (paused: boolean) => Promise<void>;
@@ -100,7 +106,7 @@ export interface TilesProps {
   onChoose: () => void;
 }
 
-export function Tiles({ status: st, history, onPause, onChoose }: TilesProps) {
+export function Tiles({ status: st, history, onPause, onChoose, words, start, logs, open }: TilesProps) {
   // No app yet: no 0-of-0 tiles, but what to do first (the empty list hides with it).
   if (!st.apps.length) {
     return (
@@ -117,10 +123,27 @@ export function Tiles({ status: st, history, onPause, onChoose }: TilesProps) {
   const u = st.updates;
   return (
     <>
-      <Tile label="Running" value={<>{running.length}<small> of {counted}</small></>}
-        sub={st.missing ? <span class="bad">{st.missing === 1 ? "1 of the homelab's own apps is down" : `${st.missing} of the homelab's own apps are down`}</span> : "The homelab's own apps are all up"} />
-      <Tile label="Needs a look" value={String(trouble.length)} tone={trouble.length ? 'warn' : ''}
-        sub={trouble.length ? trouble.slice(0, 3).map((a) => a.name).join(', ') + (trouble.length > 3 ? '…' : '') : 'Nothing unhealthy or stopped'} />
+      {/* The headline (docs/Redesign.md, Status; redesign-loop R6): All good, or how many apps need you, each with its fix. */}
+      <Card kind={'tile headline' + (trouble.length ? ' warn' : ' good')} id="statusHeadline">
+        <div class="headlinemain">
+          <div class="value">{trouble.length ? (trouble.length === 1 ? '1 app needs you' : `${trouble.length} apps need you`) : 'All good'}</div>
+          <div class="label">{running.length} of {counted} running</div>
+          <div class="sub">{st.missing ? <span class="bad">{st.missing === 1 ? "1 of the homelab's own apps is down" : `${st.missing} of the homelab's own apps are down`}</span> : "The homelab's own apps are all up"}{!trouble.length && <span>· Nothing unhealthy or stopped</span>}</div>
+        </div>
+        {!!trouble.length && <ul class="headlineapps">
+          {trouble.slice(0, 3).map((a) => (
+            <li key={a.id}>
+              <span class="grow"><strong>{a.name}</strong><span class="muted">{words ? words(a) : a.state}</span></span>
+              <span class="headlineacts">
+                {start && a.state !== 'running' && <button type="button" class="btn primary small" onClick={() => start(a)}>Start</button>}
+                {logs && a.state !== 'missing' && <button type="button" class="btn small" onClick={() => logs(a)}>Logs</button>}
+                {open && <button type="button" class="btn small" onClick={() => open(a)}>Its page</button>}
+              </span>
+            </li>
+          ))}
+          {trouble.length > 3 && <li class="muted">and {trouble.length - 3} more, in the list below</li>}
+        </ul>}
+      </Card>
       <Tile label="Instead of subscriptions" value={<><SavedHover value={st.savings > 0 ? dollars(st.savings) : '$0'} history={history} /><small> a year</small></>} sub={<SavingsTrend history={history} />} />
       <Tile label="Nightly updates" value={u?.paused ? 'Paused' : 'On'}
         sub={<>{u?.paused ? 'Until you resume them' : `Run ${u?.schedule}`}<PauseButton paused={!!u?.paused} onPause={onPause} /></>} />

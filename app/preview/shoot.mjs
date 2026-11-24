@@ -3366,7 +3366,7 @@ const smokes = [
     // Not counted yet: its group says all running, and the tile's total leaves it out.
     const group = await page.textContent('tr.grouphead:has-text("System") .n');
     if (!group.includes('running ✓')) throw new Error(`System group: ${group}`);
-    const tile = await page.textContent('#tiles .tile:has-text("Running")');
+    const tile = await page.textContent('#statusHeadline .label');
     const of = (tile.match(/of\s*(\d+)/) || [])[1];
     if (Number(of) !== status.apps.length - 1) throw new Error(`Running tile: ${tile}`);
   } },
@@ -3463,7 +3463,7 @@ const smokes = [
     await page.waitForSelector('tr.grouphead:has(.names:has-text("Mealie"))', { timeout: 5000 });
     const label = (await page.locator('tr.grouphead:has(.names:has-text("Mealie")) .kiosklabel').textContent()).trim();
     const head = page.locator(`tr.grouphead:has(.kiosklabel:text-is("${label}"))`);
-    await page.waitForSelector('#tiles .tile:has-text("Needs a look"):has-text("Nothing unhealthy or stopped")');
+    await page.waitForSelector('#statusHeadline.good:has-text("All good"):has-text("Nothing unhealthy or stopped")');
     if ((await head.locator('.foldbtn').getAttribute('aria-expanded')) !== 'false') throw new Error('a group with only an app stopped on purpose opened by itself');
     if (await head.locator('.startall').count()) throw new Error(`Start them offers an app stopped on purpose: ${await head.locator('.startall').textContent()}`);
     await page.click('#statusAll');
@@ -3480,11 +3480,11 @@ const smokes = [
     await page.waitForSelector('tr:has(strong:text-is("Mealie")) td.state:has-text("Running")', { timeout: 5000 });
   } },
   // A restart that keeps failing: the watchdog stopped it, and unlike one stopped by you it needs a look: its row
-  // says why with a red dot, Needs a look counts it, its group opens, and the group menu does not call it yours.
+  // says why with a red dot, the headline names it, its group opens, and the group menu does not call it yours.
   { name: 'Stopped for restarting over and over: its row says so, and it needs a look', screen: 'status', mock: { statusOpen: '', status: { ...status, stopped: { mealie: { since: new Date().toISOString(), why: 'restarting', restarts: 5 } } } }, run: async (page) => {
     await page.waitForSelector('tr:has(strong:text-is("Mealie")) td.state:has-text("Stopped: it restarted 5 times in an hour")', { timeout: 5000 });
     if (!(await page.$('tr:has(strong:text-is("Mealie")) td.state .dot.bad'))) throw new Error('stopped by the watchdog has no red dot');
-    await page.waitForSelector('#tiles .tile:has-text("Needs a look"):has-text("Mealie")', { timeout: 3000 });
+    await page.waitForSelector('#statusHeadline.warn li:has-text("Mealie")', { timeout: 3000 });
     const head = page.locator('#statusRows tr:has(strong:text-is("Mealie"))').locator('xpath=preceding-sibling::tr[contains(concat(" ", @class, " "), " grouphead ")][1]');
     if ((await head.locator('.foldbtn').getAttribute('aria-expanded')) !== 'true') throw new Error('its group stayed folded');
     if (await head.locator('.startall').count()) throw new Error('Start them offers it, which would only restart the loop');
@@ -3495,15 +3495,32 @@ const smokes = [
     await page.waitForSelector('tr:has(strong:text-is("Mealie")) button.rowmain:text-is("Start")');
   } },
   // An app that stopped by itself, not from the app: its row says when, and why when Docker knows (out of memory, an
-  // error, a port taken), with a red dot, and Needs a look counts it; one Docker gave no reason for says only when.
+  // error, a port taken), with a red dot, and the headline names it; one Docker gave no reason for says only when.
   // Its own row still offers Start.
   { name: 'Stopped by itself: its row says when and why, and it needs a look', screen: 'status', mock: stoppedByItself(), run: async (page) => {
     await page.click('#statusAll');
     await page.waitForSelector('tr:has(strong:text-is("Mealie")) td.state:has-text("Stopped at 3:12 AM: it ran out of memory")', { timeout: 5000 });
     if (!(await page.$('tr:has(strong:text-is("Mealie")) td.state .dot.bad'))) throw new Error('an app that ran out of memory has no red dot');
-    await page.waitForSelector('#tiles .tile:has-text("Needs a look"):has-text("Mealie")', { timeout: 3000 });
+    await page.waitForSelector('#statusHeadline.warn li:has-text("Mealie")', { timeout: 3000 });
     await page.waitForFunction(([n, t]) => [...document.querySelectorAll('tr')].some((r) => r.querySelector('strong')?.textContent === n && r.querySelector('td.state')?.textContent.replace(/\s+/g, ' ').trim() === t), ['Vikunja', 'Stopped yesterday, 9:40 PM']);
     await page.waitForSelector('tr:has(strong:text-is("Mealie")) button.rowmain:text-is("Start")');
+  } },
+  // Status's headline (redesign-loop R6b): the app that needs you, with its fix right there. Start starts it; Logs
+  // opens its page at its log; Its page opens its page.
+  { name: 'Status headline: the app that needs you, with Start, Logs and Its page', screen: 'status', mock: stoppedByItself(), run: async (page) => {
+    const item = '#statusHeadline.warn li:has-text("Mealie")';
+    await page.waitForSelector('#statusHeadline .value:text-matches("apps? needs? you")', { timeout: 5000 });
+    await page.waitForSelector(`${item}:has-text("out of memory")`);
+    await page.click(`${item} button:text-is("Start")`);
+    await page.waitForFunction(() => window.__MOCK.calls.AppAction >= 1, null, { timeout: 5000 });
+    await page.click(`${item} button:text-is("Logs")`);
+    await page.waitForSelector('#app.active #appLog', { timeout: 5000 });
+  } },
+  { name: 'Status headline: All good when nothing needs you', screen: 'status', mock: { status: { ...status, apps: status.apps.map((a) => ({ ...a, state: 'running', health: a.health === 'unhealthy' ? 'healthy' : a.health })) } }, run: async (page) => {
+    await page.waitForSelector('#statusHeadline.good .value:text-is("All good")', { timeout: 5000 });
+    const label = await page.textContent('#statusHeadline .label');
+    if (!/^\d+ of \d+ running$/.test(label.trim())) throw new Error(label);
+    if (await page.$('#statusHeadline .headlineapps')) throw new Error('All good lists apps');
   } },
   // On the phone, 320px wide and with big text (213px is 320 at 1.5×): the why is all there, on a line of its own if
   // need be, and nothing slides sideways.
@@ -3561,7 +3578,7 @@ const smokes = [
   // Account 3's tester, task 2, finding 4: Status in a household's words. Apps, not stacks; the homelab's own apps, not
   // baseline ones; what the savings are instead of; what CrowdSec caught, not its scenario's name and an address.
   ...[[], ['companion']].map((phone) => ({ name: `Status in a household's words${phone.length ? ', on the phone' : ''}`, screen: 'status', phone, mock: { protection }, run: async (page) => {
-    await page.waitForSelector('#tiles .tile:has-text("Running"):has-text("The homelab\'s own apps are all up")', { timeout: 5000 });
+    await page.waitForSelector('#statusHeadline:has-text("running"):has-text("The homelab\'s own apps are all up")', { timeout: 5000 });
     await page.waitForSelector('#tiles .tile:has-text("Instead of subscriptions"):has-text("a year")');
     await page.waitForSelector('#protectCard li:has-text("Probing for a known security hole"):has-text("Netherlands · Example Hosting B.V.")', { timeout: 5000 });
     const said = await page.evaluate(() => document.body.innerText);
@@ -4308,7 +4325,7 @@ const smokes = [
   } },
   { name: 'A running app that does not answer needs a look', screen: 'status', mock: { status: { ...status, apps: status.apps.map((a) => (a.id === 'vikunja' ? { ...a, notAnswering: 'HTTP 502' } : a)) } }, run: async (page) => {
     await page.waitForSelector('tr:has(strong:text-is("Vikunja")) td.state:has-text("Not answering: HTTP 502")', { timeout: 5000 });
-    await page.waitForSelector('#tiles .tile.warn:has-text("Vikunja")');
+    await page.waitForSelector('#statusHeadline.warn li:has-text("Vikunja"):has-text("Not answering")');
     await page.waitForSelector('#fixIt:not([hidden])');
   } },
   { name: 'Status follows the engine', screen: 'status', run: async (page) => {

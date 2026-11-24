@@ -948,7 +948,7 @@
   }
   var awaitingJobs = (a3) => a3.id === "homelab-companion" && a3.state === "not running";
   var troubled = (a3, held3 = {}) => a3.health === "unhealthy" || a3.health === "restarting" || !!a3.notAnswering || a3.state === "missing" || a3.state === "stopped" && (!held3[a3.id] || keptRestarting(held3[a3.id]));
-  function Tiles({ status: st, history, onPause, onChoose }) {
+  function Tiles({ status: st, history, onPause, onChoose, words: words5, start, logs, open: open5 }) {
     if (!st.apps.length) {
       return /* @__PURE__ */ u3(Card, { kind: "emptystate", id: "statusEmpty", children: [
         /* @__PURE__ */ u3("h2", { children: "No apps yet" }),
@@ -961,29 +961,39 @@
     const trouble2 = st.apps.filter((a3) => troubled(a3, st.stopped));
     const u4 = st.updates;
     return /* @__PURE__ */ u3(S, { children: [
-      /* @__PURE__ */ u3(
-        Tile,
-        {
-          label: "Running",
-          value: /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3(Card, { kind: "tile headline" + (trouble2.length ? " warn" : " good"), id: "statusHeadline", children: [
+        /* @__PURE__ */ u3("div", { class: "headlinemain", children: [
+          /* @__PURE__ */ u3("div", { class: "value", children: trouble2.length ? trouble2.length === 1 ? "1 app needs you" : `${trouble2.length} apps need you` : "All good" }),
+          /* @__PURE__ */ u3("div", { class: "label", children: [
             running5.length,
-            /* @__PURE__ */ u3("small", { children: [
-              " of ",
-              counted2
-            ] })
+            " of ",
+            counted2,
+            " running"
           ] }),
-          sub: st.missing ? /* @__PURE__ */ u3("span", { class: "bad", children: st.missing === 1 ? "1 of the homelab's own apps is down" : `${st.missing} of the homelab's own apps are down` }) : "The homelab's own apps are all up"
-        }
-      ),
-      /* @__PURE__ */ u3(
-        Tile,
-        {
-          label: "Needs a look",
-          value: String(trouble2.length),
-          tone: trouble2.length ? "warn" : "",
-          sub: trouble2.length ? trouble2.slice(0, 3).map((a3) => a3.name).join(", ") + (trouble2.length > 3 ? "…" : "") : "Nothing unhealthy or stopped"
-        }
-      ),
+          /* @__PURE__ */ u3("div", { class: "sub", children: [
+            st.missing ? /* @__PURE__ */ u3("span", { class: "bad", children: st.missing === 1 ? "1 of the homelab's own apps is down" : `${st.missing} of the homelab's own apps are down` }) : "The homelab's own apps are all up",
+            !trouble2.length && /* @__PURE__ */ u3("span", { children: "· Nothing unhealthy or stopped" })
+          ] })
+        ] }),
+        !!trouble2.length && /* @__PURE__ */ u3("ul", { class: "headlineapps", children: [
+          trouble2.slice(0, 3).map((a3) => /* @__PURE__ */ u3("li", { children: [
+            /* @__PURE__ */ u3("span", { class: "grow", children: [
+              /* @__PURE__ */ u3("strong", { children: a3.name }),
+              /* @__PURE__ */ u3("span", { class: "muted", children: words5 ? words5(a3) : a3.state })
+            ] }),
+            /* @__PURE__ */ u3("span", { class: "headlineacts", children: [
+              start && a3.state !== "running" && /* @__PURE__ */ u3("button", { type: "button", class: "btn primary small", onClick: () => start(a3), children: "Start" }),
+              logs && a3.state !== "missing" && /* @__PURE__ */ u3("button", { type: "button", class: "btn small", onClick: () => logs(a3), children: "Logs" }),
+              open5 && /* @__PURE__ */ u3("button", { type: "button", class: "btn small", onClick: () => open5(a3), children: "Its page" })
+            ] })
+          ] }, a3.id)),
+          trouble2.length > 3 && /* @__PURE__ */ u3("li", { class: "muted", children: [
+            "and ",
+            trouble2.length - 3,
+            " more, in the list below"
+          ] })
+        ] })
+      ] }),
       /* @__PURE__ */ u3(Tile, { label: "Instead of subscriptions", value: /* @__PURE__ */ u3(S, { children: [
         /* @__PURE__ */ u3(SavedHover, { value: st.savings > 0 ? dollars(st.savings) : "$0", history }),
         /* @__PURE__ */ u3("small", { children: " a year" })
@@ -7801,7 +7811,14 @@
         }
         await loadStatus();
       },
-      onChoose: () => navigate("choose")
+      onChoose: () => navigate("choose"),
+      words: (a3) => stateOf(a3, batteryPaused, held)[1],
+      start: (a3) => appActions.act(a3, "start"),
+      logs: (a3) => {
+        pageOpener.open(a3.id);
+        requestAnimationFrame(() => document.getElementById("appLog")?.scrollIntoView({ block: "start" }));
+      },
+      open: (a3) => pageOpener.open(a3.id)
     });
     const n3 = trouble2.length;
     $("statusCount").textContent = n3 ? String(n3) : "";
