@@ -452,6 +452,14 @@ async function makePrivate(page, passphrase) {
   return words;
 }
 
+/** Finances' main action, or one of the rest in the ▾ beside it (the computer's top bar); the phone's header has them as buttons. */
+async function finAdd(page, name, opts = {}) {
+  await page.waitForSelector('#finRoot .toolbar', { timeout: opts.timeout || 30000 });
+  const direct = page.locator(`#finRoot .toolbar > button:text-is("${name}")`);
+  if (await direct.isVisible()) return direct.click(opts);
+  await page.click('#finRoot .fx-addsplit .fx-addmore', opts);
+  return page.click(`#finRoot .fx-addsplit [role=menuitem]:text-is("${name}")`, opts);
+}
 async function finTab(page, name, opts = {}) {
   // On the computer, Finances' menu in the sidebar (redesign-loop R2); a phone keeps the tabs.
   if (await page.locator('#finMenu .finmenu').isVisible()) {
@@ -486,7 +494,7 @@ const shots = [
   { name: 'finances', screen: 'finances' },
   { name: 'finances-worth', screen: 'finances', before: async (page) => { await finTab(page, 'Net worth'); await page.waitForTimeout(300); } },
   { name: 'finances-pay', screen: 'finances', before: async (page) => { await finTab(page, 'Pay'); await page.waitForTimeout(300); } },
-  { name: 'finances-car', screen: 'finances', before: async (page) => { await finTab(page, 'Net worth'); await page.click('#finRoot .toolbar button:text-is("Add an account")'); await page.click('#finSheet button.kindrow:has(strong:text-is("Car"))'); await page.click('#finSheet .brandgrid button:has-text("Toyota")'); await page.waitForTimeout(400); } },
+  { name: 'finances-car', screen: 'finances', before: async (page) => { await finTab(page, 'Net worth'); await finAdd(page, 'Add an account'); await page.click('#finSheet button.kindrow:has(strong:text-is("Car"))'); await page.click('#finSheet .brandgrid button:has-text("Toyota")'); await page.waitForTimeout(400); } },
   { name: 'setup', screen: 'setup' },
   { name: 'firstrun', screen: 'setup', mock: { host: { ...host, runtimeOK: false, runtimeInstalled: true, runtimeHint: 'open OrbStack (open -a OrbStack) and turn on Settings > General > Start at login', rootOK: false, root: '', disks: [], kit: true, newRoot: '/Users/you/Homelab' } } },
   { name: 'update', screen: 'status', mock: { update } },
@@ -5790,7 +5798,7 @@ const smokes = [
     const ran = await page.evaluate(() => (window.__MOCK.homelabRan || []).length);
     if (ran !== 1) throw new Error(`expected one preview and no run, the CLI ran ${ran} times`);
     await page.click('nav button[data-screen="finances"]');
-    await page.click('#finRoot .toolbar button:text-is("Add a payment")', { timeout: 5000 });
+    await finAdd(page, 'Add a payment', { timeout: 5000 });
     await page.fill('#finSheet label:has-text("Name") input', 'Gym');
     await page.mouse.click(8, 600);
     await page.waitForSelector('#finSheet .formerr:has-text("Nothing here is saved")', { timeout: 5000 });
@@ -6416,7 +6424,7 @@ const smokes = [
   { name: 'Finances: an account in euros in Update balances, Net worth, and the rates', screen: 'finances', mock: {
     finances: { ...finances, start: { ...finances.start, sav: 7150 }, plan: { ...finances.plan, rates: { EUR: 1.1 }, accounts: finances.plan.accounts.map((a) => (a.id === 'sav' ? { ...a, currency: 'EUR' } : a)) } },
   }, run: async (page) => {
-    await page.click('#finRoot .toolbar button:text-is("Update balances")', { timeout: 5000 });
+    await finAdd(page, 'Update balances', { timeout: 5000 });
     if ((await page.inputValue('#bal-sav')) !== '6500') throw new Error(`BofA Savings starts at ${await page.inputValue('#bal-sav')}`);
     await page.waitForSelector('#finSheet li:has(#bal-sav) .moneyfield > span:text-is("€")', { timeout: 5000 });
     await page.waitForSelector('#finSheet li:has(#bal-sav) small:has-text("expected €6,500.00")', { timeout: 5000 });
@@ -6478,7 +6486,7 @@ const smokes = [
     await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
     let car = await page.evaluate(() => window.__MOCK.financesSaved.at(-1).accounts.find((a) => a.id === 'rav4'));
     if (car.bought !== 32000 || car.boughtOn !== '2022-03-15' || car.holds !== 'fast' || car.balance !== 18500) throw new Error(`saved ${JSON.stringify(car)}`);
-    await page.click('#finRoot .toolbar button:text-is("Add an account")');
+    await finAdd(page, 'Add an account');
     await page.click('#finSheet button.kindrow:has(strong:text-is("Car"))');
     await page.fill('#finSheet label:has-text("Name") input', 'Civic');
     await page.fill('#finSheet label:has-text("Bought for") input', '25000');
@@ -6751,7 +6759,7 @@ const smokes = [
   } },
   // From Firefly III: each account found by its name fills its box (the difference shown), one not matched said; then saved.
   { name: 'Finances: balances read from Firefly III into Update balances', screen: 'finances', mock: { status: runningToo('firefly-iii'), firefly: [{ name: 'Chase Checking', balance: 2600, currency: 'USD' }, { name: 'BofA Savings', balance: 6550, currency: 'USD' }, { name: 'Ally Savings', balance: 100, currency: 'USD' }] }, run: async (page) => {
-    await page.click('#finRoot .toolbar button:text-is("Update balances")', { timeout: 5000 });
+    await finAdd(page, 'Update balances', { timeout: 5000 });
     await page.click('#finSheet button:text-is("From Firefly III")');
     await page.waitForSelector('#finSheet .fromapp [role=status]:text-is("Filled from Firefly III: Chase Checking, BofA Savings. Not matched: Ally Savings. Check them, then Save.")', { timeout: 5000 });
     if ((await page.inputValue('#bal-chk')) !== '2600' || (await page.inputValue('#bal-sav')) !== '6550') throw new Error('the boxes were not filled');
@@ -6762,7 +6770,7 @@ const smokes = [
     if (plan.accounts.find((a) => a.id === 'chk').balance !== 2600 || plan.accounts.find((a) => a.id === 'sav').balance !== 6550) throw new Error('not saved');
   } },
   { name: 'Finances: Firefly III not read says why', screen: 'finances', mock: { status: runningToo('firefly-iii'), fireflyProblem: "Firefly III's token is not set: make one in Firefly III (Profile › OAuth › Personal access tokens) and put it in Settings › FIREFLY_IMPORTER_TOKEN" }, run: async (page) => {
-    await page.click('#finRoot .toolbar button:text-is("Update balances")', { timeout: 5000 });
+    await finAdd(page, 'Update balances', { timeout: 5000 });
     await page.click('#finSheet button:text-is("From Firefly III")');
     await page.waitForSelector('#finSheet .fromapp .formerr:has-text("token is not set")', { timeout: 5000 });
   } },
@@ -6818,7 +6826,7 @@ const smokes = [
   // From Ghostfolio: each account's worth (cash and holdings) fills the box of the account with its name and currency;
   // one in another currency, or with no account of its name, said not matched; then saved.
   { name: 'Finances: balances read from Ghostfolio into Update balances', screen: 'finances', mock: { status: runningToo('ghostfolio'), ghostfolio: [{ name: 'Robinhood', balance: 8420.5, currency: 'USD' }, { name: 'Fidelity 401(k)', balance: 39120, currency: 'USD' }, { name: 'Trading 212', balance: 2100, currency: 'EUR' }] }, run: async (page) => {
-    await page.click('#finRoot .toolbar button:text-is("Update balances")', { timeout: 5000 });
+    await finAdd(page, 'Update balances', { timeout: 5000 });
     if (await page.$('#finSheet button:text-is("From Firefly III")')) throw new Error('From Firefly III with Firefly III not running');
     await page.click('#finSheet button:text-is("From Ghostfolio")');
     await page.waitForSelector('#finSheet .fromapp [role=status]:text-is("Filled from Ghostfolio: Robinhood, Fidelity 401(k). Not matched: Trading 212. Check them, then Save.")', { timeout: 5000 });
@@ -6829,7 +6837,7 @@ const smokes = [
     if (plan.accounts.find((a) => a.id === 'brk').balance !== 8420.5 || plan.accounts.find((a) => a.id === 'k401').balance !== 39120) throw new Error('not saved');
   } },
   { name: 'Finances: Ghostfolio not read says why', screen: 'finances', mock: { status: runningToo('ghostfolio'), ghostfolioProblem: "Ghostfolio refused the security token: put the one you sign in with in Settings › GHOSTFOLIO_SECURITY_TOKEN" }, run: async (page) => {
-    await page.click('#finRoot .toolbar button:text-is("Update balances")', { timeout: 5000 });
+    await finAdd(page, 'Update balances', { timeout: 5000 });
     await page.click('#finSheet button:text-is("From Ghostfolio")');
     await page.waitForSelector('#finSheet .fromapp .formerr:has-text("refused the security token")', { timeout: 5000 });
   } },
@@ -7447,23 +7455,23 @@ const smokes = [
   { name: 'Finances: a Ghostfolio that runs elsewhere is read as Finances opens, and offered in Update balances', screen: 'finances', mock: { status: { ...status, apps: [...status.apps, { id: 'ghostfolio', name: 'Ghostfolio', state: 'elsewhere', container: 'my-ghostfolio' }] } }, run: async (page) => {
     await finTab(page, 'Net worth', { timeout: 5000 });
     await page.waitForFunction(() => window.__MOCK.investReads === 1, null, { timeout: 5000 });
-    await page.click('#finRoot .toolbar button:text-is("Update balances")');
+    await finAdd(page, 'Update balances');
     await page.waitForSelector('#finSheet button:text-is("From Ghostfolio")', { timeout: 5000 });
   } },
   { name: 'Finances: Update balances reads from no app that is not running, nor on a phone', screen: 'finances', run: async (page) => {
-    await page.click('#finRoot .toolbar button:text-is("Update balances")', { timeout: 5000 });
+    await finAdd(page, 'Update balances', { timeout: 5000 });
     await page.waitForSelector('#finSheet input#bal-chk', { timeout: 5000 });
     if (await page.$('#finSheet .fromapp')) throw new Error('reading from an app that is not running');
   } },
   { name: 'The phone: Update balances reads from no app', screen: 'finances', phone: ['companion', 'finances'], mock: { status: runningToo('firefly-iii', 'ghostfolio') }, run: async (page) => {
-    await page.click('#finRoot .toolbar button:text-is("Update balances")', { timeout: 5000 });
+    await finAdd(page, 'Update balances', { timeout: 5000 });
     await page.waitForSelector('#finSheet input#bal-chk', { timeout: 5000 });
     if (await page.$('#finSheet .fromapp')) throw new Error('reading from an app on a phone');
   } },
   // Update balances: one panel with every account, each box at what is expected today, the difference as it is typed;
   // Enter keeps them all, each as today's, and the cushion with them.
   { name: 'Finances: Update balances keeps the balances typed in', screen: 'finances', run: async (page) => {
-    await page.click('#finRoot .toolbar button:text-is("Update balances")', { timeout: 5000 });
+    await finAdd(page, 'Update balances', { timeout: 5000 });
     await page.waitForSelector('#finSheet input#bal-chk:focus', { timeout: 5000 });
     for (const [id, want] of [['chk', '2512.40'], ['sav', '6500'], ['roth', '14600'], ['visa', '1240.55'], ['mortgage', '287400'], ['home', '410000']]) {
       const got = await page.inputValue(`#finSheet input#bal-${id}`);
@@ -7495,7 +7503,7 @@ const smokes = [
     await page.waitForSelector('#finSheet:not([hidden]) h2:text-is("Update balances")', { timeout: 5000 });
   } },
   { name: 'Finances: add a payment', screen: 'finances', run: async (page) => {
-    await page.click('#finRoot .toolbar button:text-is("Add a payment")', { timeout: 5000 });
+    await finAdd(page, 'Add a payment', { timeout: 5000 });
     await page.waitForSelector('#finSheet:not([hidden])', { timeout: 5000 });
     await page.fill('#finSheet label:has-text("Name") input', 'Gym');
     await page.fill('#finSheet label:has-text("Amount") input', '40');
@@ -7507,7 +7515,7 @@ const smokes = [
   } },
   // Usability task 15, item 3: the logo grid is one Tab stop (arrows inside), after Name and Amount, so Tab reaches Name at once.
   { name: 'Finances: from opening Add a payment, Tab reaches Name in 5 presses or fewer, and the logos by arrow keys', screen: 'finances', run: async (page) => {
-    await page.click('#finRoot .toolbar button:text-is("Add a payment")', { timeout: 5000 });
+    await finAdd(page, 'Add a payment', { timeout: 5000 });
     await page.waitForSelector('#finSheet:not([hidden])', { timeout: 5000 });
     const onName = () => page.evaluate(() => { const a = document.activeElement; return !!a && a.matches('#finSheet input') && !!a.closest('label')?.textContent?.startsWith('Name'); });
     let presses = 0;
@@ -7531,7 +7539,7 @@ const smokes = [
   } },
   // Money in from someone outside the household: Comes in from someone asks who sends it, and keeps no account it comes out of.
   { name: 'Finances: add money that comes in from someone', screen: 'finances', run: async (page) => {
-    await page.click('#finRoot .toolbar button:text-is("Add a payment")', { timeout: 5000 });
+    await finAdd(page, 'Add a payment', { timeout: 5000 });
     await page.waitForSelector('#finSheet:not([hidden])', { timeout: 5000 });
     await page.click('#finSheet .finway [role=radio]:text-is("Comes in from someone")');
     if (await page.$('#finSheet label:has-text("Comes out of")') || await page.$('#finSheet label:has-text("Pays off a card")')) throw new Error('money in asks what it comes out of');
@@ -7571,7 +7579,7 @@ const smokes = [
   // latest is read, and the form stays open with what was typed, so Save
   // again keeps both changes.
   { name: 'Finances: a save after another device’s reads the latest and keeps the form', screen: 'finances', mock: { financesConflict: true }, run: async (page) => {
-    await page.click('#finRoot .toolbar button:text-is("Add a payment")', { timeout: 5000 });
+    await finAdd(page, 'Add a payment', { timeout: 5000 });
     await page.fill('#finSheet label:has-text("Name") input', 'Gym');
     await page.fill('#finSheet label:has-text("Amount") input', '40');
     await page.click('#finSheet button:text-is("Save")');
@@ -7597,7 +7605,7 @@ const smokes = [
     await page.waitForSelector('#finPeriod h2:has-text("Nov 20")', { timeout: 5000 });
   } },
   { name: 'Finances: a payment with each of someone\'s paychecks', screen: 'finances', run: async (page) => {
-    await page.click('#finRoot .toolbar button:text-is("Add a payment")', { timeout: 5000 });
+    await finAdd(page, 'Add a payment', { timeout: 5000 });
     await page.fill('#finSheet label:has-text("Name") input', 'To savings');
     await page.fill('#finSheet label:has-text("Amount") input', '500');
     await page.selectOption('#finSheet label:has-text("How often") select', 'paycheck:alex');
@@ -7697,7 +7705,7 @@ const smokes = [
     if (bad.length) throw new Error(bad.join('; '));
   } })),
   { name: 'Finances: a bill charged to a card', screen: 'finances', run: async (page) => {
-    await page.click('#finRoot .toolbar button:text-is("Add a payment")', { timeout: 5000 });
+    await finAdd(page, 'Add a payment', { timeout: 5000 });
     await page.fill('#finSheet label:has-text("Name") input', 'Hulu');
     await page.fill('#finSheet label:has-text("Amount") input', '18');
     await page.selectOption('#finSheet label:has-text("charged to") select', 'visa');
@@ -7771,7 +7779,7 @@ const smokes = [
   // Adding an account: what kind first, in groups with what each is for; then its bank or broker by its mark.
   { name: 'Finances: adding an account starts with what kind, and Change goes back', screen: 'finances', run: async (page) => {
     await finTab(page, 'Net worth', { timeout: 5000 });
-    await page.click('#finRoot .toolbar button:text-is("Add an account")');
+    await finAdd(page, 'Add an account');
     const groups = await page.$$eval('#finSheet .kindgroup h3', (hs) => hs.map((h) => h.textContent));
     if (groups.join() !== 'Cash,Credit,Investing,What you own') throw new Error(`the groups: ${groups}`);
     await page.waitForSelector('#finSheet button.kindrow:has(strong:text-is("Retirement")):has-text("A 401(k), an IRA")', { timeout: 5000 });
@@ -7790,7 +7798,7 @@ const smokes = [
   // An account kept in another currency: its code, the rate typed in (asked for when missing), its amounts in its own sign.
   { name: 'Finances: an account kept in another currency, at a rate typed in', screen: 'finances', run: async (page) => {
     await finTab(page, 'Net worth', { timeout: 5000 });
-    await page.click('#finRoot .toolbar button:text-is("Add an account")');
+    await finAdd(page, 'Add an account');
     await page.click('#finSheet button.kindrow:has(strong:text-is("Retirement"))');
     await page.fill('#finSheet label:has-text("Name") input', 'UK pension');
     await page.fill('#finSheet label:has-text("Worth") input, #finSheet label:has-text("Balance") input', '20000');
@@ -7829,14 +7837,14 @@ const smokes = [
   } },
   { name: 'Finances: a bank found by search names the account, and a search alone is not typing', screen: 'finances', run: async (page) => {
     await finTab(page, 'Net worth', { timeout: 5000 });
-    await page.click('#finRoot .toolbar button:text-is("Add an account")');
+    await finAdd(page, 'Add an account');
     await page.click('#finSheet button.kindrow:has(strong:text-is("Checking"))');
     await page.fill('#finSheet .brandsearch', 'fid');
     const found = await page.$$eval('#finSheet .brandgrid button > span:not(.fmark)', (bs) => bs.map((b) => b.textContent));
     if (found.join() !== 'Fidelity,Another bank') throw new Error(`found ${found}`);
     await page.click('#finSheet button:text-is("Cancel")');
     await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
-    await page.click('#finRoot .toolbar button:text-is("Add an account")');
+    await finAdd(page, 'Add an account');
     await page.click('#finSheet button.kindrow:has(strong:text-is("Checking"))');
     await page.fill('#finSheet .brandsearch', 'fid');
     await page.click('#finSheet .brandgrid button:has-text("Fidelity")');
@@ -7856,7 +7864,7 @@ const smokes = [
     if (!seen) throw new Error('Wells Fargo, picked, is scrolled out of sight');
     // With none picked, the grid starts at its top, not at "None" at its end.
     await page.keyboard.press('Escape');
-    await page.click('#finRoot .toolbar button:text-is("Add an account")');
+    await finAdd(page, 'Add an account');
     await page.click('#finSheet button.kindrow:has(strong:text-is("Checking"))');
     await page.waitForTimeout(300);
     if (await page.$eval('#finSheet .brandgrid', (g) => g.scrollTop) > 0) throw new Error('a new account opens its banks scrolled down');
@@ -7866,7 +7874,7 @@ const smokes = [
     await finTab(page, 'Net worth', { timeout: 5000 });
     const fid = await page.$eval('.fx-ownlist li:has-text("Fidelity 401(k)") .fmark.logo.mono', (e) => [e.textContent, getComputedStyle(e).backgroundColor]);
     if (fid[0] !== 'F' || fid[1] !== 'rgb(54, 135, 39)') throw new Error(`Fidelity is ${fid}`);
-    await page.click('#finRoot .toolbar button:text-is("Add an account")');
+    await finAdd(page, 'Add an account');
     await page.click('#finSheet button.kindrow:has(strong:text-is("Checking"))');
     await page.fill('#finSheet .brandsearch', 'ally');
     await page.waitForSelector('#finSheet .brandgrid button:has-text("Ally") .fmark.mono:text-is("A")', { timeout: 5000 });
@@ -7874,7 +7882,7 @@ const smokes = [
   // Collectibles (cards, jewelry): owned, worth what is typed in, a group of their own.
   { name: 'Finances: add collectibles', screen: 'finances', run: async (page) => {
     await finTab(page, 'Net worth', { timeout: 5000 });
-    await page.click('#finRoot .toolbar button:text-is("Add an account")');
+    await finAdd(page, 'Add an account');
     await page.click('#finSheet button.kindrow:has(strong:text-is("Collectibles"))');
     if (await page.isVisible('#finSheet .brandpick')) throw new Error('collectibles ask for a bank');
     await page.fill('#finSheet label:has-text("Name") input', 'Pokémon cards');
@@ -7893,7 +7901,7 @@ const smokes = [
     await page.waitForSelector('.fx-worthchart .fx-legend li:has-text("Collectibles")', { timeout: 5000 });
     // A payment neither comes out of collectibles nor goes into them.
     await finTab(page, 'Recurring');
-    await page.click('#finRoot .toolbar button:text-is("Add a payment")');
+    await finAdd(page, 'Add a payment');
     const options = await page.$$eval('#finSheet select option', (os) => os.map((o) => o.textContent));
     if (options.includes('Pokémon cards')) throw new Error('a payment can use collectibles');
   } },
@@ -7911,7 +7919,7 @@ const smokes = [
   } },
   { name: 'Finances: add a car by its make', screen: 'finances', run: async (page) => {
     await finTab(page, 'Net worth', { timeout: 5000 });
-    await page.click('#finRoot .toolbar button:text-is("Add an account")');
+    await finAdd(page, 'Add an account');
     await page.click('#finSheet button.kindrow:has(strong:text-is("Car"))');
     await page.click('#finSheet .brandgrid button:has-text("Honda")');
     await page.fill('#finSheet label:has-text("Name") input', '2021 CR-V');
@@ -7937,7 +7945,7 @@ const smokes = [
     await page.click('#finRoot .empty button:text-is("Try again")');
   } },
   { name: 'Finances: a payment without an amount says so and is not saved', screen: 'finances', run: async (page) => {
-    await page.click('#finRoot .toolbar button:text-is("Add a payment")', { timeout: 5000 });
+    await finAdd(page, 'Add a payment', { timeout: 5000 });
     await page.fill('#finSheet label:has-text("Name") input', 'Gym');
     await page.click('#finSheet button:text-is("Save")');
     await page.waitForSelector('#finSheet .formerr:has-text("how much")', { timeout: 5000 });
@@ -7949,7 +7957,7 @@ const smokes = [
     await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
   } },
   { name: 'Finances: a balance box left empty keeps the balance', screen: 'finances', run: async (page) => {
-    await page.click('#finRoot .toolbar button:text-is("Update balances")', { timeout: 5000 });
+    await finAdd(page, 'Update balances', { timeout: 5000 });
     await page.waitForSelector('#finSheet input#bal-chk:focus', { timeout: 5000 });
     await page.fill('#finSheet input#bal-chk', '');
     await page.fill('#finSheet input#bal-sav', '$7,000.50');
@@ -8475,7 +8483,7 @@ const smokes = [
     await page.waitForSelector('#finSheet:not([hidden]) h2:text-is("Add a payment")', { timeout: 5000 });
     if ((await page.inputValue('#finSheet label:has-text("Next on") input')) !== '2026-11-12') throw new Error(`starts ${await page.inputValue('#finSheet label:has-text("Next on") input')}`);
     await page.click('#finSheet button:text-is("Cancel")');
-    await page.click('#finRoot .toolbar button:has-text("Add a payment")');
+    await finAdd(page, 'Add a payment');
     await page.waitForSelector('#finSheet:not([hidden]) h2:text-is("Add a payment")', { timeout: 5000 });
     // Today by this machine's clock, as the form's own default (todayISO): on Nov 12 itself the day picked and today are one.
     const today = await page.evaluate(() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; });
@@ -8796,7 +8804,7 @@ const smokes = [
   } },
   // Update balances lists the accounts under their groups, each heading in its colour, the cursor in the first box shown.
   { name: 'Finances: Update balances lists the accounts by group', screen: 'finances', run: async (page) => {
-    await page.click('#finRoot .toolbar button:text-is("Update balances")', { timeout: 5000 });
+    await finAdd(page, 'Update balances', { timeout: 5000 });
     const heads = await page.$$eval('#finSheet .balgrouphead', (h) => h.map((x) => x.textContent.trim()), { timeout: 5000 });
     if (JSON.stringify(heads) !== JSON.stringify(['Cash', 'Credit cards', 'Investments', 'Home & Car', 'Loans'])) throw new Error(`groups: ${heads}`);
     const cards = await page.$$eval('#finSheet .balgroup:has(.balgrouphead:text-is("Credit cards")) li strong', (s) => s.map((x) => x.textContent));
@@ -8907,7 +8915,7 @@ const smokes = [
     // Netflix, AMC, and Spotify are streaming ($689 a year), Peloton fitness ($528), Claude software ($200), Questlog gaming ($48).
     for (const [type, year] of [['Streaming and music', '$689'], ['Fitness', '$528'], ['Software and apps', '$200'], ['Gaming', '$48']]) await page.waitForSelector(`.fx-subtypes li:has-text("${type}"):has-text("${year}")`, { timeout: 5000 });
     await page.waitForSelector('.fx-subs li:has-text("Claude Pro"):has-text("Software and apps · Yearly")', { timeout: 5000 });
-    await page.click('#finRoot .toolbar button:text-is("Add a payment")');
+    await finAdd(page, 'Add a payment');
     await page.selectOption('#finSheet label:has-text("Category") select', 'subscriptions');
     await page.fill('#finSheet label:has-text("Name") input', 'Hetzner Cloud');
     await page.waitForSelector('#finSheet label:has-text("Type") option[value=""]:text-is("Cloud and homelab (from its logo)")', { state: 'attached', timeout: 5000 });
@@ -8978,7 +8986,7 @@ const smokes = [
   } },
   // A box ticked by a real click stays ticked: the form drawn again between its input and change events once undid it.
   { name: 'Finances: a box ticked with the mouse stays ticked and is saved', screen: 'finances', run: async (page) => {
-    await page.click('#finRoot .toolbar button:text-is("Add a payment")', { timeout: 5000 });
+    await finAdd(page, 'Add a payment', { timeout: 5000 });
     await page.fill('#finSheet label:has-text("Name") input', 'Electric');
     await page.fill('#finSheet label:has-text("Amount") input', '140');
     await page.click('#finSheet label:has-text("The amount changes each time") input');
@@ -8994,7 +9002,7 @@ const smokes = [
     await page.waitForSelector('.fx-payments li:has(.grow > strong:text-is("Savings")) .fx-kept:text-is("BofA Savings: $6,500.00 today, $6,712.22 after Nov 19")', { timeout: 5000 });
     await page.waitForSelector('.fx-payments li:has(.grow > strong:text-is("Roth IRA")) .fx-kept:text-is("Roth IRA: $14,600.00 today, $14,850.00 after Dec 3")', { timeout: 5000 });
     if (await page.$('.fx-payments li:has(.grow > strong:text-is("Netflix")) .fx-kept')) throw new Error('a bill shows an account it goes into');
-    await page.click('#finRoot .toolbar button:text-is("Add a payment")');
+    await finAdd(page, 'Add a payment');
     await page.fill('#finSheet label:has-text("Name") input', 'Emergency fund');
     await page.fill('#finSheet label:has-text("Amount") input', '500');
     await page.selectOption('#finSheet label:has-text("Category") select', 'savings');
@@ -9012,7 +9020,7 @@ const smokes = [
     if (await page.$('.fx-ownlist li:has-text("Model 3 fund") .fmark.logo')) throw new Error('a savings account took a car make from a model name');
     const picked = () => page.textContent('#finSheet .brandgrid button[aria-checked=true] > span:not(.fmark)');
     for (const [kind, name, want] of [['Checking', 'Chase Checking', 'Chase'], ['Credit card', 'Amex Platinum', 'American Express'], ['Retirement', 'Fidelity 401(k)', 'Fidelity'], ['Savings', 'BofA Savings', 'Bank of America'], ['Car', 'Ford F-150', 'Ford'], ['Car', 'My CX-5', 'Mazda']]) {
-      await page.click('#finRoot .toolbar button:text-is("Add an account")');
+      await finAdd(page, 'Add an account');
       await page.click(`#finSheet button.kindrow:has(strong:text-is("${kind}"))`);
       await page.fill('#finSheet label:has-text("Name") input', name);
       if ((await picked()).trim() !== want) throw new Error(`${name} picked ${await picked()}, not ${want}`);
@@ -9021,7 +9029,7 @@ const smokes = [
       await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
     }
     // None by hand stays None while the name goes on being typed, and is kept.
-    await page.click('#finRoot .toolbar button:text-is("Add an account")');
+    await finAdd(page, 'Add an account');
     await page.click('#finSheet button.kindrow:has(strong:text-is("Checking"))');
     await page.fill('#finSheet label:has-text("Name") input', 'Chase');
     await page.click('#finSheet .brandgrid button:has-text("Another bank")');
@@ -9237,7 +9245,7 @@ const smokes = [
   // The logo picker as the name is typed: the logo it picks comes into view, and a new payment's category follows the
   // logo (Netflix a subscription, Toyota the car, Verizon a utility) until one is picked by hand.
   { name: 'Finances: typing a payee picks its logo in view, and its category', screen: 'finances', run: async (page) => {
-    await page.click('#finRoot .toolbar button:text-is("Add a payment")', { timeout: 5000 });
+    await finAdd(page, 'Add a payment', { timeout: 5000 });
     const category = () => page.inputValue('#finSheet label:has-text("Category") select');
     const inView = () => page.$eval('#finSheet .brandgrid', (g) => { const on = g.querySelector('.on'); if (!on) return false; const a = g.getBoundingClientRect(), b = on.getBoundingClientRect(); return b.top >= a.top - 1 && b.bottom <= a.bottom + 1; });
     for (const [name, want] of [['Netflix', 'subscriptions'], ['Toyota payment', 'car'], ['Verizon', 'utilities'], ['Costco run', 'spending']]) {
@@ -9378,17 +9386,18 @@ const smokes = [
   // Export (F18): the plan as JSON (finance.json's own shape), the year ahead as a CSV (each payday and payment with
   // checking after), and this month or the next on a page that prints itself; each says where it went.
   { name: 'Finances: Export the plan, the year ahead, and a month to print', screen: 'finances', run: async (page) => {
+    // In the ▾ beside the main action (Finances' top bar, redesign-loop R2).
     const menu = async (item) => {
-      await page.click('#finances .header .fx-export button[aria-haspopup=menu]:has-text("Export")', { timeout: 5000 });
-      await page.click(`#finances .header [role=menuitem]:has-text("${item}")`, { timeout: 3000 });
+      await page.click('#finRoot .fx-addsplit .fx-addmore', { timeout: 5000 });
+      await page.click(`#finRoot .fx-addsplit [role=menuitem]:has-text("${item}")`, { timeout: 3000 });
     };
-    await menu('The plan, as JSON');
+    await menu('Export the plan, as JSON');
     await page.waitForSelector('.fx-exportsaid:has-text("Saved to /Users/alex/Downloads/finances-plan-")', { timeout: 5000 });
     let x = await page.evaluate(() => window.__MOCK.exported.at(-1));
     if (!/^finances-plan-\d{4}-\d\d-\d\d\.json$/.test(x.name)) throw new Error('named ' + x.name);
     const plan = JSON.parse(x.text);
     if (!plan.accounts?.length || !plan.payments?.length || !plan.people?.length) throw new Error('the plan exported: ' + Object.keys(plan).join(', '));
-    await menu('The year ahead');
+    await menu('Export the year ahead');
     await page.waitForFunction(() => /^finances-ahead-.*\.csv$/.test(window.__MOCK.exported.at(-1).name), null, { timeout: 5000 });
     x = await page.evaluate(() => window.__MOCK.exported.at(-1));
     const lines = x.text.split('\r\n');
@@ -9398,25 +9407,24 @@ const smokes = [
     if (dates.join() !== [...dates].sort().join()) throw new Error('not oldest first');
     const months = new Set(dates.map((d) => d.slice(0, 7)));
     if (months.size < 12) throw new Error(`only ${months.size} months ahead`);
-    await page.click('#finances .header .fx-export button[aria-haspopup=menu]:has-text("Export")');
-    const printItems = await page.$$eval('#finances .header [role=menuitem]', (b) => b.map((x) => x.textContent).filter((t) => t.endsWith(', to print')));
+    await page.click('#finRoot .fx-addsplit .fx-addmore');
+    const printItems = await page.$$eval('#finRoot .fx-addsplit [role=menuitem]', (b) => b.map((x) => x.textContent).filter((t) => t.startsWith('Print ')));
     if (printItems.length !== 2) throw new Error('print items: ' + printItems.join(', '));
-    await page.click(`#finances .header [role=menuitem]:text-is("${printItems[0]}")`);
+    await page.click(`#finRoot .fx-addsplit [role=menuitem]:text-is("${printItems[0]}")`);
     await page.waitForSelector('.fx-exportsaid:has-text("Opened /Users/alex/Homelab/reports/finances/finances-")', { timeout: 5000 });
     const p = await page.evaluate(() => window.__MOCK.printed.at(-1));
     if (!/^finances-\d{4}-\d\d\.html$/.test(p.name) || !p.html.includes('<body onload="print()">') || !p.html.includes('<h1>Finances: ')) throw new Error('the page: ' + p.name);
     if (/<script|https?:\/\//.test(p.html)) throw new Error('the printed page loads something from elsewhere');
   } },
-  // Export stands level with the toolbar beside it on each system: the same middle as the capsule's buttons
-  // (the capsule keeps to the header's top, so a centred Export once sat a few pixels lower).
+  // Finances' top bar on each system (redesign-loop R2): the main action, its ▾, the eye and the customise button sit
+  // level, their middles within half a pixel, on one row.
   ...[['Mac', 'MacIntel', 'macOS 26.0'], ['Windows', 'Win32', 'Windows 11'], ['Linux', 'Linux x86_64', 'Ubuntu 24.04']].map(([sys, platform, os]) => ({
-    name: `Finances: Export sits level with the toolbar on ${sys}`, screen: 'finances', mock: { platform, host: { ...host, os } }, run: async (page) => {
-      await page.waitForSelector('#finances .header .fx-export button[aria-haspopup=menu]', { timeout: 5000 });
-      const at = await page.evaluate(() => {
-        const mid = (e) => { const r = e.getBoundingClientRect(); return { mid: r.top + r.height / 2, top: r.top, bottom: r.bottom }; };
-        return { exp: mid(document.querySelector('#finances .header .fx-export button[aria-haspopup=menu]')), btn: mid(document.querySelector('#finances .header .toolbar .btn')) };
-      });
-      if (Math.abs(at.exp.mid - at.btn.mid) > 0.5) throw new Error(`Export's middle is at ${at.exp.mid.toFixed(1)}px, the toolbar's buttons' at ${at.btn.mid.toFixed(1)}px`);
+    name: `Finances: the top bar's buttons sit level on ${sys}`, screen: 'finances', mock: { platform, host: { ...host, os } }, run: async (page) => {
+      await page.waitForSelector('#finRoot .fx-topbar .fx-addmore', { timeout: 5000 });
+      const mids = await page.evaluate(() => ['.fx-addsplit > .btn', '.fx-addmore', '.fx-topicons .fx-eye', '.fx-arrangebtn'].map((q) => {
+        const r = document.querySelector('#finRoot .fx-topbar ' + q).getBoundingClientRect(); return r.top + r.height / 2;
+      }));
+      if (Math.max(...mids) - Math.min(...mids) > 0.5) throw new Error(`the buttons' middles: ${mids.map((m) => m.toFixed(1)).join(', ')}`);
     } })),
   // A phone allowed only to look exports too (it changes nothing): the plan downloads.
   { name: 'The phone, view only: Export downloads the plan', screen: 'finances', phone: ['companion', 'finances'], mock: { finances: { ...finances, readOnly: true } }, run: async (page) => {
@@ -9458,7 +9466,7 @@ const smokes = [
   // A PDF is kept as it is and shown in a frame; one over 2 MB, or a file that is no picture, is refused with why.
   { name: 'Finances: a PDF receipt, and one refused', screen: 'finances', run: async (page) => {
     await finTab(page, 'Transactions', { timeout: 5000 });
-    await page.click('#finRoot .toolbar button:text-is("Add a transaction")');
+    await finAdd(page, 'Add a transaction');
     await page.setInputFiles('#finSheet .receipt input[type=file]', { name: 'big.pdf', mimeType: 'application/pdf', buffer: Buffer.alloc((2 << 20) + 1, 'x') });
     await page.waitForSelector('#finSheet .receipt .formerr:has-text("That PDF is over 2 MB")', { timeout: 5000 });
     await page.setInputFiles('#finSheet .receipt input[type=file]', { name: 'notes.txt', mimeType: 'text/plain', buffer: Buffer.from('not a picture') });
@@ -9488,7 +9496,7 @@ const smokes = [
     // A payee with no brand shows its category's icon (Corner Market, Groceries).
     if ((await icon('Corner Market')) !== 'spending') throw new Error(`Corner Market shows ${await icon('Corner Market')}`);
     if ((await icon("Jordan's paycheck")) !== 'savings') throw new Error(`the paycheck shows ${await icon("Jordan's paycheck")}`);
-    await page.click('#finRoot .toolbar button:text-is("Add a transaction")');
+    await finAdd(page, 'Add a transaction');
     await page.fill('#finSheet label:has-text("Paid to") input', 'Corner Market');
     if ((await page.inputValue('#finSheet label:has-text("Category") input')) !== 'Groceries') throw new Error('the payee did not bring its category');
     await page.waitForSelector('#finSheet .formhead .fmark.icon[data-icon="spending"]', { timeout: 5000 });
@@ -10137,7 +10145,7 @@ const smokes = [
   // A transaction typed in links itself to what it plainly pays, saying so; picking None keeps it from being offered again.
   { name: 'Finances: a typed transaction links itself to the planned payment it pays', screen: 'finances', run: async (page) => {
     await finTab(page, 'Transactions', { timeout: 5000 });
-    await page.click('#finRoot .toolbar button:text-is("Add a transaction")');
+    await finAdd(page, 'Add a transaction');
     await page.waitForSelector('#finSheet:not([hidden])', { timeout: 5000 });
     await page.fill('#finSheet label:has-text("Paid to") input', 'Netflix');
     await page.fill('#finSheet label:has-text("Amount") input', '15.49');
@@ -10149,7 +10157,7 @@ const smokes = [
     let t = await page.evaluate(() => window.__MOCK.ledgerSaved.at(-1).transactions.find((q) => q.payee === 'Netflix'));
     if (t.payment !== 'netflix' || t.notPlanned) throw new Error(`saved ${JSON.stringify(t)}`);
     // Peloton, with None picked: it pays nothing planned, and says so.
-    await page.click('#finRoot .toolbar button:text-is("Add a transaction")');
+    await finAdd(page, 'Add a transaction');
     await page.fill('#finSheet label:has-text("Paid to") input', 'Peloton');
     await page.fill('#finSheet label:has-text("Amount") input', '44');
     await page.fill('#finSheet label:has-text("Day") input', '2026-11-04');
@@ -10190,7 +10198,7 @@ const smokes = [
     await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
     let txs = await page.evaluate(() => window.__MOCK.ledgerSaved.at(-1).transactions.filter((t) => t.payee === 'Blue Bottle').map((t) => t.institution));
     if (txs.join() !== 'kroger,kroger') throw new Error(`Blue Bottle took ${txs}`);
-    await page.click('#finRoot .toolbar button:text-is("Add a transaction")');
+    await finAdd(page, 'Add a transaction');
     await page.fill('#finSheet label:has-text("Paid to") input', 'Blue Bottle');
     await page.waitForSelector('#finSheet .formhead .fmark.logo:not(.auto)', { timeout: 5000 });
     await page.fill('#finSheet label:has-text("Amount") input', '12');
@@ -10289,7 +10297,7 @@ const smokes = [
   } },
   { name: 'Finances: add, change, and delete a transaction', screen: 'finances', run: async (page) => {
     await finTab(page, 'Transactions', { timeout: 5000 });
-    await page.click('#finRoot .toolbar button:text-is("Add a transaction")');
+    await finAdd(page, 'Add a transaction');
     await page.waitForSelector('#finSheet:not([hidden]) h2:text-is("Add a transaction")', { timeout: 5000 });
     // A planned payment fills in what is still empty.
     await page.selectOption('#finSheet label:has-text("Pays a planned payment") select', 'netflix');
@@ -10321,7 +10329,7 @@ const smokes = [
     saved = await page.evaluate(() => window.__MOCK.ledgerSaved?.at(-1)?.transactions);
     if (saved.some((t) => t.payee === 'Shell') || saved.length !== 7) throw new Error(`after delete: ${saved.map((t) => t.payee)}`);
     // Between my accounts needs the account it went into.
-    await page.click('#finRoot .toolbar button:text-is("Add a transaction")');
+    await finAdd(page, 'Add a transaction');
     await page.click('#finSheet .kindswap [role=radio]:text-is("Between my accounts")');
     await page.fill('#finSheet label:has-text("Amount") input', '100');
     await page.click('#finSheet button:text-is("Save")');
@@ -10329,7 +10337,7 @@ const smokes = [
   } },
   { name: 'Finances: a save of transactions after another device\'s reads the latest and keeps the form', screen: 'finances', mock: { ledgerConflict: true }, run: async (page) => {
     await finTab(page, 'Transactions', { timeout: 5000 });
-    await page.click('#finRoot .toolbar button:text-is("Add a transaction")');
+    await finAdd(page, 'Add a transaction');
     await page.fill('#finSheet label:has-text("Paid to") input', 'Bakery');
     await page.fill('#finSheet label:has-text("Amount") input', '7');
     await page.click('#finSheet button:text-is("Save")');
@@ -10352,7 +10360,7 @@ const smokes = [
     await page.waitForSelector('.fx-transactions :text("No transactions yet: add what you spend")', { timeout: 5000 });
   } },
   { name: 'Finances: twice a month on the same day twice says so and is not saved', screen: 'finances', run: async (page) => {
-    await page.click('#finRoot .toolbar button:text-is("Add a payment")', { timeout: 5000 });
+    await finAdd(page, 'Add a payment', { timeout: 5000 });
     await page.fill('#finSheet label:has-text("Name") input', 'Rent');
     await page.fill('#finSheet label:has-text("Amount") input', '900');
     await page.selectOption('#finSheet label:has-text("How often") select', 'twice a month');
@@ -10363,7 +10371,7 @@ const smokes = [
     if (await page.evaluate(() => window.__MOCK.financesSaved)) throw new Error('saved the 15th and the 15th');
   } },
   { name: 'Finances: a payment that ends: before it starts says so and is not saved, then on its day it is', screen: 'finances', run: async (page) => {
-    await page.click('#finRoot .toolbar button:text-is("Add a payment")', { timeout: 5000 });
+    await finAdd(page, 'Add a payment', { timeout: 5000 });
     await page.fill('#finSheet label:has-text("Name") input', 'Car lease');
     await page.fill('#finSheet label:has-text("Amount") input', '389');
     await page.fill('#finSheet input[type=date][name=start]', '2026-12-15');
@@ -10403,7 +10411,7 @@ const smokes = [
     if (await page.$('.fx-since [role=radio]')) throw new Error('a phone that may only look can mark what is taken as done');
   } },
   { name: 'Finances: typed changes are not dropped by one Cancel or Escape', screen: 'finances', run: async (page) => {
-    await page.click('#finRoot .toolbar button:text-is("Add a payment")', { timeout: 5000 });
+    await finAdd(page, 'Add a payment', { timeout: 5000 });
     await page.fill('#finSheet label:has-text("Name") input', 'Gym');
     await page.keyboard.press('Escape');
     await page.waitForSelector('#finSheet:not([hidden]) .formerr:has-text("Nothing here is saved")', { timeout: 5000 });
@@ -10411,13 +10419,13 @@ const smokes = [
     await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
     if (await page.evaluate(() => window.__MOCK.financesSaved)) throw new Error('saved on Cancel');
     // Nothing typed: one Cancel closes.
-    await page.click('#finRoot .toolbar button:text-is("Add a payment")');
+    await finAdd(page, 'Add a payment');
     await page.click('#finSheet button:text-is("Cancel")');
     await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
   } },
   // Cancel asked about, then Save: what stops the save is what shows, not the Cancel's question.
   { name: 'Finances: a Save after Cancel says what stops it', screen: 'finances', run: async (page) => {
-    await page.click('#finRoot .toolbar button:text-is("Add a payment")', { timeout: 5000 });
+    await finAdd(page, 'Add a payment', { timeout: 5000 });
     await page.fill('#finSheet label:has-text("Name") input', 'Gym');
     await page.click('#finSheet button:text-is("Cancel")');
     await page.waitForSelector('#finSheet .formerr:has-text("Nothing here is saved")', { timeout: 5000 });
@@ -10442,7 +10450,7 @@ const smokes = [
   } },
   { name: 'Finances: amounts in euros, typed the European way', screen: 'finances', mock: { finances: { ...finances, plan: { ...finances.plan, currency: 'EUR' } } }, run: async (page) => {
     await page.waitForSelector('.fx-paycheck .fx-figure:has-text("€")', { timeout: 5000 });
-    await page.click('#finRoot .toolbar button:text-is("Update balances")', { timeout: 5000 });
+    await finAdd(page, 'Update balances', { timeout: 5000 });
     await page.waitForSelector('#finSheet input#bal-chk:focus', { timeout: 5000 });
     await page.fill('#finSheet input#bal-sav', '7.000,50');
     await page.click('#finSheet button:text-is("Save")');
@@ -10511,7 +10519,7 @@ const screens = [
     await page.click('.fx-txday li:has-text("Costco") button');
     await page.waitForSelector('.fx-receiptshown img.receiptview', { timeout: 5000 });
   } },
-  { name: 'Finances, an account in another currency', screen: 'finances', before: async (page) => { await finTab(page, 'Net worth', { timeout: 5000 }); await page.click('#finRoot .toolbar button:text-is("Add an account")'); await page.click('#finSheet button.kindrow:has(strong:text-is("Retirement"))'); await page.fill('#finSheet label:has-text("Name") input', 'UK pension'); await page.fill('#finSheet label:has-text("Worth") input, #finSheet label:has-text("Balance") input', '20000'); await page.fill('#finSheet label:has-text("Currency, if not USD") input', 'GBP'); await page.fill('#finSheet label:has-text("1 GBP is, in USD") input', '1.27'); await page.waitForSelector('#finSheet .formsub:has-text("is about")', { timeout: 5000 }); } },
+  { name: 'Finances, an account in another currency', screen: 'finances', before: async (page) => { await finTab(page, 'Net worth', { timeout: 5000 }); await finAdd(page, 'Add an account'); await page.click('#finSheet button.kindrow:has(strong:text-is("Retirement"))'); await page.fill('#finSheet label:has-text("Name") input', 'UK pension'); await page.fill('#finSheet label:has-text("Worth") input, #finSheet label:has-text("Balance") input', '20000'); await page.fill('#finSheet label:has-text("Currency, if not USD") input', 'GBP'); await page.fill('#finSheet label:has-text("1 GBP is, in USD") input', '1.27'); await page.waitForSelector('#finSheet .formsub:has-text("is about")', { timeout: 5000 }); } },
   { name: 'Finances, Pay, a rate for euros', screen: 'finances', mock: { finances: { ...finances, start: { ...finances.start, sav: 7150 }, plan: { ...finances.plan, rates: { EUR: 1.1 }, accounts: finances.plan.accounts.map((a) => (a.id === 'sav' ? { ...a, currency: 'EUR' } : a)) } } }, before: async (page) => { await finTab(page, 'Pay', { timeout: 5000 }); await page.waitForSelector('.finrates', { timeout: 5000 }); } },
   { name: 'Finances, a goal', screen: 'finances', before: async (page) => { await finTab(page, 'Net worth', { timeout: 5000 }); await page.click('.fx-goals li:has-text("Japan trip") button'); await page.waitForSelector('#finSheet h2:text-is("Japan trip")', { timeout: 5000 }); } },
   { name: 'Finances, goals, what if', screen: 'finances', before: async (page) => { await finTab(page, 'Net worth', { timeout: 5000 }); await page.selectOption('.fx-whatif select[aria-label="Which goal"]', 'japan'); await page.fill('.fx-whatif input[aria-label="Put by a paycheck"]', '300'); await page.waitForSelector('.fx-whatif [role=status]:has-text("gets there by")', { timeout: 5000 }); } },
@@ -10524,7 +10532,7 @@ const screens = [
   { name: "Finances, a transaction's logo picked", screen: 'finances', before: async (page) => { await finTab(page, 'Transactions', { timeout: 5000 }); await page.click('.fx-txday li:has-text("Trader Joe\'s") button'); await page.click('#finSheet button:text-is("Change logo")'); await page.fill('#finSheet .txlogo .brandsearch', 'kroger'); await page.click('#finSheet .txlogo .brandgrid button:has-text("Kroger")'); await page.waitForSelector('#finSheet .formhead .fmark.logo', { timeout: 5000 }); } },
   { name: 'Finances, everyday chains', screen: 'finances', mock: { ledger: { ...ledger, transactions: ['Google', 'IKEA', 'Taco Bell', 'Burger King', 'KFC', 'Uniqlo', 'H&M', 'Zara', 'Lidl', 'Tesco', 'Booking.com', 'Hotels.com', 'JetBlue', 'Shopify', 'Waze', "Trader Joe's", 'Whole Foods', 'Chick-fil-A', "Dunkin'", 'Subway', "Wendy's", 'Publix', 'Aldi', '7-Eleven', "Domino's", 'Pizza Hut', 'Safeway', 'Panera Bread', 'Dollar General', 'Gap', 'Old Navy', 'Nordstrom', 'Sephora', 'Petco', 'PetSmart', 'GameStop', 'Barnes & Noble', 'Wayfair', 'Dollar Tree'].map((payee, i) => ({ id: 'ch' + i, date: '2026-10-29', account: 'chk', amount: -10 - i, payee })) } }, before: async (page) => { await finTab(page, 'Transactions', { timeout: 5000 }); await page.waitForSelector('.fx-txday li:has-text("Dollar Tree")', { timeout: 5000 }); } },
   { name: 'Finances, subscriptions from Wallos', screen: 'finances', mock: { status: withWallos, wallos: wallosSubs }, before: async (page) => { await finTab(page, 'Recurring', { timeout: 5000 }); await page.click('.fx-wallos button:text-is("From Wallos")', { timeout: 5000 }); await page.waitForSelector('.fx-wallos [role=status]', { timeout: 5000 }); await page.$eval('.fx-wallos', (e) => e.scrollIntoView()); } },
-  { name: 'Finances, Update balances from Firefly III and Ghostfolio', screen: 'finances', mock: { status: runningToo('firefly-iii', 'ghostfolio'), firefly: [{ name: 'Chase Checking', balance: 2600, currency: 'USD' }, { name: 'BofA Savings', balance: 6550, currency: 'USD' }] }, before: async (page) => { await page.click('#finRoot .toolbar button:text-is("Update balances")', { timeout: 5000 }); await page.click('#finSheet button:text-is("From Firefly III")'); await page.waitForSelector('#finSheet .fromapp [role=status]', { timeout: 5000 }); } },
+  { name: 'Finances, Update balances from Firefly III and Ghostfolio', screen: 'finances', mock: { status: runningToo('firefly-iii', 'ghostfolio'), firefly: [{ name: 'Chase Checking', balance: 2600, currency: 'USD' }, { name: 'BofA Savings', balance: 6550, currency: 'USD' }] }, before: async (page) => { await finAdd(page, 'Update balances', { timeout: 5000 }); await page.click('#finSheet button:text-is("From Firefly III")'); await page.waitForSelector('#finSheet .fromapp [role=status]', { timeout: 5000 }); } },
   { name: 'Finances, Subscriptions', screen: 'finances', before: async (page) => { await finTab(page, 'Recurring', { timeout: 5000 }); await page.click('#finRoot .fx-payments .seg button:has-text("Subscriptions")'); } },
   { name: 'Finances, Transactions', screen: 'finances', before: async (page) => { await finTab(page, 'Transactions', { timeout: 5000 }); await page.waitForSelector('.fx-txday'); } },
   { name: 'Finances, Logos, got', screen: 'finances', mock: { noLogo: ['traderjoes.com'] }, before: async (page) => { await finTab(page, 'Transactions', { timeout: 5000 }); await page.click('.fx-transactions button:text-is("Logos")'); await page.click('#finSheet button:has-text("Get them all")'); await page.waitForSelector('#finSheet .logolist li:has-text("Costco") :text("From costco.com")'); await page.waitForSelector('#finSheet .logolist .bad'); } },

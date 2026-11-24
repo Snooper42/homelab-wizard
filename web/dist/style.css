@@ -2231,10 +2231,23 @@ html .fx-month td { padding:0; vertical-align:top; height:92px; border-radius:va
 .fx-topperiod { flex:1 1 320px; display:flex; justify-content:center; min-width:0; }
 .fx-topperiod:empty { display:none; }
 .fx-topicons { display:flex; align-items:center; gap:8px; margin-left:auto; }
-#finRoot .fx-topperiod .card.fx-periodbar { background:none; border:0; box-shadow:none; padding:0; gap:12px; flex-wrap:nowrap; }
+#finRoot .fx-topperiod .fx-periodbar { display:flex; align-items:center; gap:12px; flex-wrap:nowrap; }
+#finRoot .fx-topperiod .fx-periodbar .fx-periodstep { display:flex; align-items:center; gap:8px; }
+#finRoot .fx-topperiod .fx-periodbar .fx-periodname { text-align:center; padding:0 6px; }
+#finRoot .fx-topperiod .fx-periodbar h2 { margin:0; font-size:16px; font-weight:600; letter-spacing:-.01em; }
+#finRoot .fx-topperiod .fx-periodbar .fx-dates { margin:2px 0 0; }
 #finRoot .fx-topperiod .fx-periodbar > .seg { order:2; margin:0 0 0 6px; }
 #finRoot .fx-topperiod .fx-periodbar > button.small { order:3; margin-left:0; }
 #finRoot .fx-topperiod .fx-periodbar :is(h2, .seg button) { white-space:nowrap; }
+/* Today only once the bar has stepped away from now (the picture has none). */
+#finRoot .fx-topperiod .fx-periodbar > button.small:disabled { display:none; }
+/* The main action and its ▾, joined as one button. */
+#finRoot .fx-topbar .toolbar.fx-addsplit { display:inline-flex; flex-wrap:nowrap; gap:0; }
+#finRoot .fx-addsplit .menuwrap { display:inline-flex; }
+#finRoot .fx-addsplit > .btn.fx-primary { border-top-right-radius:0; border-bottom-right-radius:0; }
+#finRoot .fx-addsplit .btn.fx-addmore { border-top-left-radius:0; border-bottom-left-radius:0; border-left:1px solid var(--fin-accent-ink); padding-left:10px; padding-right:10px; height:100%; }
+#finRoot .fx-addsplit .btn.fx-addmore .drop { margin:0; font-size:11px; }
+.fx-topicons .fx-exportsaid { font-size:12px; max-width:28ch; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .fx-topicons .iconbtn { width:36px; height:36px; border-color:var(--line); background:var(--panel); }
 .fx-stale { margin:-4px 0 var(--fin-gap); }
 /* The line at the top (a stopped app, All well) is the homelab's: Finances leaves it to Status (docs/Redesign.md, Why). */

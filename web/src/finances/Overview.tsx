@@ -23,7 +23,7 @@ import { keepBy, PeriodBar, type PeriodBarProps, type PeriodBy, pickedOf, readBy
 import { PastWidget } from './widgets/Past';
 import { PlannedWidget } from './widgets/Planned';
 import { monthPeriods, pastPeriods } from './model';
-import { dayShort, isoDay, parseDay } from './money';
+import { dayLong, dayShort, isoDay, parseDay } from './money';
 import { dayText } from '../format';
 import { useEffect, useState } from 'preact/hooks';
 import { render } from 'preact';
@@ -104,6 +104,9 @@ function StartThree({ v, add }: { v: finance.View; add: NonNullable<OverviewProp
  */
 const startedThree = (v: finance.View) => !!v.plan.people?.length && !!v.plan.payments?.length;
 
+/** Whose paycheck: "Alex", "Alex and Jordan". */
+const paidWhom = (ids: string[], L: Lookup) => ids.map((id) => L.person[id]?.name || id).join(' and ');
+
 /**
  * The period, in the top bar on the computer (docs/Redesign.md, The top bar): drawn into Finances' #finTopPeriod, which
  * the screen draws before this, so the bar stays one row; emptied when the Dashboard isn't showing.
@@ -111,7 +114,7 @@ const startedThree = (v: finance.View) => !!v.plan.people?.length && !!v.plan.pa
 function TopPeriod({ bar }: { bar: PeriodBarProps | null }) {
   useEffect(() => {
     const slot = document.getElementById('finTopPeriod');
-    if (slot) render(bar ? <PeriodBar {...bar} /> : null, slot);
+    if (slot) render(bar ? <PeriodBar {...bar} bare /> : null, slot);
   });
   useEffect(() => () => { const slot = document.getElementById('finTopPeriod'); if (slot) render(null, slot); }, []);
   return null;
@@ -134,8 +137,10 @@ export function Overview({ v, L, sel, pick, add, edit, setSince, keep, ledger, o
       dates: `${dayShort(month.start)} – ${dayShort(month.last)}, ${month.when === 'past' ? 'what happened' : month.when === 'now' ? 'so far, then the plan' : 'the plan'}`,
       step: (d) => setMonthAt(Math.max(0, Math.min(months.length - 1, monthAt + d))), canBack: monthAt > 0, canOn: monthAt < months.length - 1,
       today: () => setMonthAt(thisMonth), atToday: monthAt === thisMonth }
-    : p || was ? { by, setBy, title: p ? periodTitle(p, L) : paydayTitle(was!.pay, L),
-      dates: p ? `${dayShort(p.start)} – ${dayShort(p.last)}${p.now ? ', from today' : ''}` : `${dayShort(was!.start)} – ${dayShort(was!.last)}, what happened`,
+    // On the computer the top bar's words (docs/images/redesign/computer-finances.png): whose paycheck over its days in full.
+    : p || was ? { by, setBy, title: phone ? (p ? periodTitle(p, L) : paydayTitle(was!.pay, L)) : p?.now ? 'Until the next paycheck' : `${paidWhom((p ? p.pay! : was!.pay).people, L)}'s paycheck`,
+      dates: phone ? (p ? `${dayShort(p.start)} – ${dayShort(p.last)}${p.now ? ', from today' : ''}` : `${dayShort(was!.start)} – ${dayShort(was!.last)}, what happened`)
+        : `${dayLong(p ? p.start : was!.start)} – ${dayLong(p ? p.last : was!.last)}${p?.now ? ', from today' : was ? ', what happened' : ''}`,
       step: (d) => pick(picked + d), canBack: picked > -past.length, canOn: picked < v.periods.length - 1, today: () => pick(0), atToday: picked === 0 }
     : null;
   // The cards the period picked puts in the paycheck card's place, and the days the spending ring reads.

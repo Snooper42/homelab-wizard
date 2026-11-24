@@ -6,7 +6,7 @@ import { CardPage, CollectionPage } from './Collection';
 import { render } from 'preact';
 import { HideAmounts } from './ui/HideAmounts';
 import { useEffect, useState } from 'preact/hooks';
-import { MenuButton } from '../parts/MenuButton';
+import { MenuButton, type MenuItem } from '../parts/MenuButton';
 import { aheadCsv, aheadName, monthName, monthPage, planJson, planName } from './exportData';
 import { Segmented } from '../parts/Segmented';
 import { Empty } from '../parts/Empty';
@@ -88,15 +88,19 @@ const groupOf = (tab: string) => groups.find(([, , pages]) => pages.includes(pag
 /** The page each tab was left on, so it opens there again (Plan on Paychecks); its first until one is. */
 const leftOn: Record<string, string> = {};
 const pageOf = (group: string) => leftOn[group] || groups.find(([k]) => k === group)![2][0];
-const adds: Record<string, [What, string]> = { overview: ['payment', 'Add a payment'], calendar: ['payment', 'Add a payment'], transactions: ['transaction', 'Add a transaction'], reports: ['transaction', 'Add a transaction'], recurring: ['payment', 'Add a payment'], pay: ['person', 'Add a paycheck'], worth: ['account', 'Add an account'], collection: ['card', 'Add a card'] };
+/** Everything the ▾ beside the main action can add, in this order (the page's own main action left out). */
+const addAll: [What, string][] = [['transaction', 'Add a transaction'], ['payment', 'Add a payment'], ['person', 'Add a paycheck'], ['account', 'Add an account'], ['card', 'Add a card']];
+const adds: Record<string, [What, string]> = { overview: ['transaction', 'Add a transaction'], calendar: ['payment', 'Add a payment'], transactions: ['transaction', 'Add a transaction'], reports: ['transaction', 'Add a transaction'], recurring: ['payment', 'Add a payment'], pay: ['person', 'Add a paycheck'], worth: ['account', 'Add an account'], collection: ['card', 'Add a card'] };
 
 /**
  * Export (F18): the plan as JSON, what's ahead as CSV, and this month or the
  * next on paper. Each says where it went beside the menu; nothing changes,
  * so a phone allowed only to look has it too.
  */
-function ExportMenu({ v, exportFile, printMonth }: { v: finance.View; exportFile: FinancesProps['exportFile']; printMonth: FinancesProps['printMonth'] }) {
+/** The export choices and what the last one said ("Saved to …"), for the phone's Export menu and the computer's ▾. */
+function useExport(v: finance.View | null, exportFile: FinancesProps['exportFile'], printMonth: FinancesProps['printMonth']) {
   const [said, setSaid] = useState('');
+  if (!v) return { said, items: [] as MenuItem[] };
   const run = (go: () => Promise<string>) => async () => {
     setSaid('Saving…');
     try { setSaid(await go()); } catch (e) { setSaid(`Not saved: ${(e as Error)?.message || e}`); }
@@ -105,16 +109,19 @@ function ExportMenu({ v, exportFile, printMonth }: { v: finance.View; exportFile
   const month = (k: number) => { const d = new Date(v.today + 'T12:00:00'); d.setDate(1); d.setMonth(d.getMonth() + k); return isoDay(d).slice(0, 7); };
   const label = (m: string) => new Date(m + '-01T12:00:00').toLocaleDateString('en-US', { month: 'long' });
   const print = (k: number) => run(() => printMonth(monthName(month(k)), monthPage(v, month(k), 'Finances')));
+  return { said, items: [
+    { label: 'The plan, as JSON', onClick: run(() => exportFile(planName(v.today), planJson(v.plan))) },
+    { label: 'The year ahead, as a spreadsheet (CSV)', onClick: run(() => exportFile(aheadName(v.today), aheadCsv(v))) },
+    { label: `${label(month(0))}, to print`, onClick: print(0) },
+    { label: `${label(month(1))}, to print`, onClick: print(1) },
+  ] as MenuItem[] };
+}
+
+function ExportMenu({ exp }: { exp: ReturnType<typeof useExport> }) {
   return (
     <span class="fx-export">
-      {said && <span class="muted fx-exportsaid" role="status">{said}</span>}
-      <MenuButton label="Export" menuLabel="Export" title="Your plan and what's ahead, to keep, open in a spreadsheet, or print"
-        items={[
-          { label: 'The plan, as JSON', onClick: run(() => exportFile(planName(v.today), planJson(v.plan))) },
-          { label: 'The year ahead, as a spreadsheet (CSV)', onClick: run(() => exportFile(aheadName(v.today), aheadCsv(v))) },
-          { label: `${label(month(0))}, to print`, onClick: print(0) },
-          { label: `${label(month(1))}, to print`, onClick: print(1) },
-        ]} />
+      {exp.said && <span class="muted fx-exportsaid" role="status">{exp.said}</span>}
+      <MenuButton label="Export" menuLabel="Export" title="Your plan and what's ahead, to keep, open in a spreadsheet, or print" items={exp.items} />
     </span>
   );
 }
@@ -128,6 +135,7 @@ function FinancesScreen({ v, ledger, error, retry, tab, setTab, sel, pick, setSi
   setCategories(v?.categories);
   // An account's own page is under Net worth: its button adds an account too.
   const [what, label] = adds[pageFor(tab)] || adds.overview;
+  const exp = useExport(v, exportFile, printMonth);
   // Where Transactions was opened from, filtered (a report's row, a Dashboard card), for its Back; a tab picked forgets it.
   const [from, setFrom] = useState('');
   const toTx = (f: Parameters<typeof showTransactions>[0]) => { showTransactions(f); setFrom(tab); setTab('transactions'); };
@@ -153,7 +161,7 @@ function FinancesScreen({ v, ledger, error, retry, tab, setTab, sel, pick, setSi
         {/* Export on its own, before the toolbar's capsule: it wraps by itself on a narrow screen, and the capsule keeps to what fits.
             The two share a box at the header's top, level by their middles. */}
         <div class="fx-headtools">
-          {v && <ExportMenu v={v} exportFile={exportFile} printMonth={printMonth} />}
+          {v && <ExportMenu exp={exp} />}
           {ro && v?.plan.hideAmounts && <div class="toolbar"><span class="pill">Amounts hidden</span></div>}
           {!ro && <div class="toolbar">{eye}{updateBtn}{addBtn}</div>}
         </div>
@@ -164,10 +172,17 @@ function FinancesScreen({ v, ledger, error, retry, tab, setTab, sel, pick, setSi
         : <>
           <h1 class="sr">Finances</h1>
           <div class="fx-topbar">
-            <div class="toolbar">{addBtn}{updateBtn}</div>
+            {/* The main action, and the ▾ with the rest (docs/images/redesign/computer-finances.png): the other things to add,
+                Update balances, and Export. */}
+            <div class="toolbar fx-addsplit">{addBtn}<MenuButton cls="btn fx-primary fx-addmore" disabled={!v} menuLabel="Add and more"
+              title="Add something else, update balances, or export"
+              label={null}
+              items={[...addAll.filter(([w]) => w !== what).map(([w, l]) => ({ label: l, onClick: () => edit(w) })),
+                ...(v?.plan.accounts?.length ? [{ label: 'Update balances', onClick: () => edit('balances') }] : []),
+                ...exp.items.map((x) => ({ ...x, label: x.label.startsWith('The ') ? `Export the${x.label.slice(3)}` : `Print ${x.label.replace(', to print', '')}` }))]} /></div>
             <div id="finTopPeriod" class="fx-topperiod" />
             <div class="fx-topicons">
-              {v && <ExportMenu v={v} exportFile={exportFile} printMonth={printMonth} />}
+              {exp.said && <span class="muted fx-exportsaid" role="status">{exp.said}</span>}
               {eye}
               {pageFor(tab) === 'overview' && <button type="button" class="iconbtn fx-arrangebtn" aria-label="Arrange the Dashboard" title="Arrange the Dashboard: move, resize or hide its cards"
                 onClick={() => dispatchEvent(new Event('homelab:arrange'))}>
