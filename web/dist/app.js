@@ -948,7 +948,7 @@
   }
   var awaitingJobs = (a3) => a3.id === "homelab-companion" && a3.state === "not running";
   var troubled = (a3, held3 = {}) => a3.health === "unhealthy" || a3.health === "restarting" || !!a3.notAnswering || a3.state === "missing" || a3.state === "stopped" && (!held3[a3.id] || keptRestarting(held3[a3.id]));
-  function Tiles({ status: st, history, onPause, onChoose }) {
+  function Tiles({ status: st, history, onPause, onChoose, words: words5, start, logs, open: open5 }) {
     if (!st.apps.length) {
       return /* @__PURE__ */ u3(Card, { kind: "emptystate", id: "statusEmpty", children: [
         /* @__PURE__ */ u3("h2", { children: "No apps yet" }),
@@ -961,29 +961,39 @@
     const trouble2 = st.apps.filter((a3) => troubled(a3, st.stopped));
     const u4 = st.updates;
     return /* @__PURE__ */ u3(S, { children: [
-      /* @__PURE__ */ u3(
-        Tile,
-        {
-          label: "Running",
-          value: /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3(Card, { kind: "tile headline" + (trouble2.length ? " warn" : " good"), id: "statusHeadline", children: [
+        /* @__PURE__ */ u3("div", { class: "headlinemain", children: [
+          /* @__PURE__ */ u3("div", { class: "value", children: trouble2.length ? trouble2.length === 1 ? "1 app needs you" : `${trouble2.length} apps need you` : "All good" }),
+          /* @__PURE__ */ u3("div", { class: "label", children: [
             running5.length,
-            /* @__PURE__ */ u3("small", { children: [
-              " of ",
-              counted2
-            ] })
+            " of ",
+            counted2,
+            " running"
           ] }),
-          sub: st.missing ? /* @__PURE__ */ u3("span", { class: "bad", children: st.missing === 1 ? "1 of the homelab's own apps is down" : `${st.missing} of the homelab's own apps are down` }) : "The homelab's own apps are all up"
-        }
-      ),
-      /* @__PURE__ */ u3(
-        Tile,
-        {
-          label: "Needs a look",
-          value: String(trouble2.length),
-          tone: trouble2.length ? "warn" : "",
-          sub: trouble2.length ? trouble2.slice(0, 3).map((a3) => a3.name).join(", ") + (trouble2.length > 3 ? "…" : "") : "Nothing unhealthy or stopped"
-        }
-      ),
+          /* @__PURE__ */ u3("div", { class: "sub", children: /* @__PURE__ */ u3("span", { children: [
+            st.missing ? /* @__PURE__ */ u3("span", { class: "bad", children: st.missing === 1 ? "1 of the homelab's own apps is down." : `${st.missing} of the homelab's own apps are down.` }) : "The homelab's own apps are all up.",
+            !trouble2.length && " Nothing unhealthy or stopped."
+          ] }) })
+        ] }),
+        !!trouble2.length && /* @__PURE__ */ u3("ul", { class: "headlineapps", children: [
+          trouble2.slice(0, 3).map((a3) => /* @__PURE__ */ u3("li", { children: [
+            /* @__PURE__ */ u3("span", { class: "grow", children: [
+              /* @__PURE__ */ u3("strong", { children: a3.name }),
+              /* @__PURE__ */ u3("span", { class: "muted", children: words5 ? words5(a3) : a3.state })
+            ] }),
+            /* @__PURE__ */ u3("span", { class: "headlineacts", children: [
+              start && a3.state !== "running" && /* @__PURE__ */ u3("button", { type: "button", class: "btn primary small", onClick: () => start(a3), children: "Start" }),
+              logs && a3.state !== "missing" && /* @__PURE__ */ u3("button", { type: "button", class: "btn small", onClick: () => logs(a3), children: "Logs" }),
+              open5 && /* @__PURE__ */ u3("button", { type: "button", class: "btn small", onClick: () => open5(a3), children: "Its page" })
+            ] })
+          ] }, a3.id)),
+          trouble2.length > 3 && /* @__PURE__ */ u3("li", { class: "muted", children: [
+            "and ",
+            trouble2.length - 3,
+            " more, in the list below"
+          ] })
+        ] })
+      ] }),
       /* @__PURE__ */ u3(Tile, { label: "Instead of subscriptions", value: /* @__PURE__ */ u3(S, { children: [
         /* @__PURE__ */ u3(SavedHover, { value: st.savings > 0 ? dollars(st.savings) : "$0", history }),
         /* @__PURE__ */ u3("small", { children: " a year" })
@@ -2749,6 +2759,25 @@
     ] })) });
   }
 
+  // web/src/parts/AppMark.tsx
+  function AppMark({ name, icon, small }) {
+    const [broken, setBroken] = d2("");
+    const [drawn, setDrawn] = d2({ of: "", size: "" });
+    if (!icon || broken === icon) return /* @__PURE__ */ u3("span", { class: "appmark" + (small ? " mini" : ""), "aria-hidden": "true", children: name.slice(0, 1) });
+    const picture = /^data:image\/(png|jpeg|webp)/.test(icon), size2 = drawn.of === icon ? drawn.size : "";
+    const measure = (w3) => setDrawn({ of: icon, size: w3 > 0 && w3 <= 24 && !icon.startsWith("data:image/svg") ? "small" : picture && w3 >= 120 ? "fill" : "" });
+    return /* @__PURE__ */ u3("span", { class: "appmark icon" + (size2 === "fill" ? " fill" : "") + (small ? " mini" : ""), "aria-hidden": "true", children: /* @__PURE__ */ u3(
+      "img",
+      {
+        src: icon,
+        alt: "",
+        class: size2 === "small" ? "small" : "",
+        onError: () => setBroken(icon),
+        onLoad: (e3) => measure(e3.currentTarget.naturalWidth)
+      }
+    ) });
+  }
+
   // web/src/status/memory.ts
   var units = { b: 1, kb: 1e3, mb: 1e6, gb: 1e9, tb: 1e12, kib: 1024, mib: 1024 ** 2, gib: 1024 ** 3, tib: 1024 ** 4 };
   function parseMem(s3) {
@@ -3221,7 +3250,7 @@
     return /* @__PURE__ */ u3("button", { class: "small startall", title: "Start " + stopped2.map((a3) => a3.name).join(", "), disabled: at2 >= 0, onClick: go3, children: at2 >= 0 ? `Starting ${at2 + 1} of ${stopped2.length}…` : stopped2.length === 1 ? "Start it" : `Start the ${stopped2.length} stopped` });
   }
   var isNative = (p3, a3) => p3.catalog?.apps.find((c4) => c4.id === a3.id)?.kind === "native";
-  function GroupMenu({ g: g2, p: p3, count: count2 }) {
+  function GroupMenu({ g: g2, p: p3, count: count2, tone }) {
     const [open5, setOpen] = d2(false);
     const [sure, setSure] = d2(false);
     const [later2, setLater] = d2(false);
@@ -3266,7 +3295,7 @@
       const m3 = menu2.getBoundingClientRect(), b2 = box.getBoundingClientRect(), a3 = at2.getBoundingClientRect();
       setUp(m3.bottom > b2.bottom && a3.top - b2.top > m3.height);
     }, [open5]);
-    if (p3.companion || g2.alert) return /* @__PURE__ */ u3("span", { class: "n", children: count2 });
+    if (p3.companion || g2.alert) return /* @__PURE__ */ u3("span", { class: "n" + (tone ? " countpill " + tone : ""), children: count2 });
     const run2 = (action, apps2, until) => {
       if (action === "stop" && !sure && !until) {
         setSure(true);
@@ -3308,7 +3337,7 @@
             {
               type: "button",
               ref: btn,
-              class: "n groupcount",
+              class: "n groupcount" + (tone ? " countpill " + tone : ""),
               "aria-haspopup": "menu",
               "aria-expanded": open5,
               disabled: !!doing3,
@@ -3390,6 +3419,7 @@
             if (c4.getAttribute("aria-expanded") !== "true") c4.click();
           },
           children: /* @__PURE__ */ u3("th", { colSpan: 4, children: [
+            /* @__PURE__ */ u3("span", { class: "groupmarks", "aria-hidden": "true", children: g2.apps.slice(0, 3).map((a3) => /* @__PURE__ */ u3(AppMark, { name: a3.name, icon: p3.icons?.[a3.id] || "", small: true }, a3.id)) }),
             /* @__PURE__ */ u3("button", { type: "button", class: "foldbtn", "aria-expanded": open5, onClick: (e3) => {
               e3.stopPropagation();
               toggle();
@@ -3398,7 +3428,15 @@
               g2.label
             ] }),
             /* @__PURE__ */ u3("span", { class: "kiosklabel", children: g2.label }),
-            /* @__PURE__ */ u3(GroupMenu, { g: g2, p: p3, count: g2.alert ? String(g2.apps.length) : running5 >= counted2 ? `${running5} running ✓` : `${running5} of ${counted2} running` }),
+            /* @__PURE__ */ u3(
+              GroupMenu,
+              {
+                g: g2,
+                p: p3,
+                count: g2.alert ? String(g2.apps.length) : running5 >= counted2 ? `✓ ${running5} running` : `${running5} of ${counted2} running`,
+                tone: g2.alert ? "" : running5 >= counted2 ? "ok" : "warn"
+              }
+            ),
             /* @__PURE__ */ u3(StartAll, { g: g2, p: p3 }),
             !open5 && /* @__PURE__ */ u3("span", { class: "names", title: g2.summary ? g2.apps.map((a3) => a3.name).join(" · ") : void 0, children: g2.summary || g2.apps.map((a3) => a3.name).join(" · ") })
           ] })
@@ -3697,6 +3735,39 @@
       }
     };
     return s3;
+  }
+
+  // web/src/status/appIcons.ts
+  var icons2 = {};
+  var asked = /* @__PURE__ */ new Set();
+  var listeners = [];
+  function onIcon(f4) {
+    listeners.push(f4);
+  }
+  async function readIcon(id2) {
+    asked.add(id2);
+    let icon = "";
+    try {
+      icon = await go().AppIcon(id2) || "";
+    } catch {
+    }
+    if (icon === (icons2[id2] || "")) return false;
+    icons2[id2] = icon;
+    listeners.forEach((f4) => f4());
+    return true;
+  }
+  var queue = [];
+  var reading2 = false;
+  async function wantIcons(ids) {
+    queue.push(...ids.filter((id2) => !asked.has(id2) && !queue.includes(id2)));
+    if (reading2) return;
+    reading2 = true;
+    try {
+      while (queue.length) await readIcon(queue.shift());
+    } finally {
+      reading2 = false;
+      queue = [];
+    }
   }
 
   // web/src/status/ReleaseNotes.tsx
@@ -4385,12 +4456,12 @@
     const d3 = new Date(t3);
     return `${dayText(d3, { weekday: "short", month: "short", day: "numeric" })}, ${clockText(d3)}`;
   };
-  function Pairing({ p: p3, wall, asked, done }) {
+  function Pairing({ p: p3, wall, asked: asked2, done }) {
     const links = p3.links || [];
     const secure = links.find((l3) => l3.startsWith("https:"));
     const wifi = links.find((l3) => l3.startsWith("http:"));
     const use = links[0] ? links[0] + (wall ? "&kiosk" : "") : "";
-    const onlyLooks = !wall && !!links.length && !secure && (asked.canChange || !!asked.finances);
+    const onlyLooks = !wall && !!links.length && !secure && (asked2.canChange || !!asked2.finances);
     const qr = wall ? p3.wallQR : p3.qr;
     return /* @__PURE__ */ u3("div", { id: "pairing", "data-kind": wall ? "wall" : "phone", children: /* @__PURE__ */ u3("div", { class: "pairing", children: [
       qr && /* @__PURE__ */ u3("img", { src: qr, alt: wall ? "QR code for pairing a wall screen" : "QR code for pairing a phone", width: 180, height: 180 }),
@@ -7651,7 +7722,8 @@
     mountVault($("vaultCard"), { o: o3 });
     $("kopiaCard").hidden = !o3.kopia;
     mountKopia($("kopiaCard"), o3.kopia ? { k: o3.kopia, test: () => backupTask("restore-test-kopia", "Testing Kopia's restore (a few minutes)…", "Kopia's restore test passed", "Kopia's restore test failed: the log says why") } : null);
-    const problems = (o3.copies || []).filter((c4) => c4.state === "stale").length + (o3.plainExports || []).length + (o3.kopia?.failed ? 1 : 0);
+    const appDown = (c4) => !!c4.app && !!statusById[c4.app] && statusById[c4.app].state !== "running";
+    const problems = (o3.copies || []).filter((c4) => c4.state === "stale" && !appDown(c4)).length + (o3.plainExports || []).length + (o3.kopia?.failed ? 1 : 0);
     $("backupsCount").textContent = problems ? String(problems) : "";
     const dup = statusById.duplicati;
     $("openDuplicati").hidden = !(dup?.state === "running" && dup.url);
@@ -7801,7 +7873,14 @@
         }
         await loadStatus();
       },
-      onChoose: () => navigate("choose")
+      onChoose: () => navigate("choose"),
+      words: (a3) => stateOf(a3, batteryPaused, held)[1],
+      start: (a3) => appActions.act(a3, "start"),
+      logs: (a3) => {
+        pageOpener.open(a3.id);
+        requestAnimationFrame(() => document.getElementById("appLog")?.scrollIntoView({ block: "start" }));
+      },
+      open: (a3) => pageOpener.open(a3.id)
     });
     const n3 = trouble2.length;
     $("statusCount").textContent = n3 ? String(n3) : "";
@@ -7830,10 +7909,14 @@
       ...[...catalog?.categories || []].sort((x3, y3) => Number(x3.id === automation) - Number(y3.id === automation)).map((c4) => ({ label: c4.id === automation ? "Media automation" : c4.label, apps: st.apps.filter((a3) => rest(a3) && catOf[a3.id] === c4.id), summary: c4.id === automation ? automationSummary : void 0 })),
       { label: "Other", apps: st.apps.filter((a3) => rest(a3) && !(catalog?.categories || []).some((c4) => c4.id === catOf[a3.id])) }
     ].filter((g2) => g2.apps.length);
-    appList = { groups: groups4, pending, catalog, weekUp, outages, seen, batteryPaused, held, busy: appsBusy, companion: document.documentElement.classList.contains("companion"), os: osName, on: appListActions, memory, unkept };
+    appList = { groups: groups4, pending, catalog, weekUp, outages, seen, batteryPaused, held, busy: appsBusy, companion: document.documentElement.classList.contains("companion"), os: osName, on: appListActions, memory, unkept, icons: icons2 };
+    wantIcons(groups4.flatMap((g2) => g2.apps.slice(0, 3).filter((x3) => x3.state !== "missing").map((x3) => x3.id)));
     mountAppList($("statusRows"), appList);
     if (!unkept && !appList.companion) refreshUnkept();
   }
+  onIcon(() => {
+    if (appList) mountAppList($("statusRows"), appList = { ...appList, icons: { ...icons2 } });
+  });
   var unkept;
   async function refreshUnkept() {
     try {
@@ -8953,23 +9036,6 @@
       "Copied"
     ] }) : "Copy" });
   }
-  function AppMark({ name, icon }) {
-    const [broken, setBroken] = d2("");
-    const [drawn, setDrawn] = d2({ of: "", size: "" });
-    if (!icon || broken === icon) return /* @__PURE__ */ u3("span", { class: "appmark", "aria-hidden": "true", children: name.slice(0, 1) });
-    const picture = /^data:image\/(png|jpeg|webp)/.test(icon), size2 = drawn.of === icon ? drawn.size : "";
-    const measure = (w3) => setDrawn({ of: icon, size: w3 > 0 && w3 <= 24 && !icon.startsWith("data:image/svg") ? "small" : picture && w3 >= 120 ? "fill" : "" });
-    return /* @__PURE__ */ u3("span", { class: "appmark icon" + (size2 === "fill" ? " fill" : ""), "aria-hidden": "true", children: /* @__PURE__ */ u3(
-      "img",
-      {
-        src: icon,
-        alt: "",
-        class: size2 === "small" ? "small" : "",
-        onError: () => setBroken(icon),
-        onLoad: (e3) => measure(e3.currentTarget.naturalWidth)
-      }
-    ) });
-  }
   function Header({ p: p3 }) {
     const { a: a3, entry, pending: pending2, busy: busy2, on: on2 } = p3;
     const [tone, words5] = pending2 && !pending2.failed ? ["warn", pending2.note || doing2[pending2.action] || "Working…"] : p3.state;
@@ -9185,15 +9251,15 @@
     ] });
   }
   function Stopped({ stopped: stopped2 }) {
-    const reading2 = stopped2 === "reading", s3 = reading2 ? null : stopped2;
+    const reading3 = stopped2 === "reading", s3 = reading3 ? null : stopped2;
     const today2 = s3?.today || [];
     const more2 = (s3?.todayCount || 0) - today2.length;
     const head = s3 && (s3.todayCount === 1 ? "1 today" : `${s3.todayCount} today`) + (s3.bannedNow ? ` · ${s3.bannedNow} banned now` : "");
     const quiet2 = !s3 ? "" : s3.week ? `Nothing yet today; ${s3.week === 1 ? "1" : s3.week} this week${s3.recent?.[0] ? `, the last ${ago(s3.recent[0].when)}` : ""}.` : "Nothing this week.";
     return /* @__PURE__ */ u3(Card, { kind: "alerts pagecard", id: "appStopped", children: [
       /* @__PURE__ */ u3(CardHead, { title: "What CrowdSec stopped today", children: head && /* @__PURE__ */ u3("span", { class: "muted", children: head }) }),
-      reading2 && /* @__PURE__ */ u3(Empty, { children: "Asking CrowdSec…" }),
-      !s3 && !reading2 && /* @__PURE__ */ u3(Empty, { children: "CrowdSec can't be read right now: it and the proxy both need to be running." }),
+      reading3 && /* @__PURE__ */ u3(Empty, { children: "Asking CrowdSec…" }),
+      !s3 && !reading3 && /* @__PURE__ */ u3(Empty, { children: "CrowdSec can't be read right now: it and the proxy both need to be running." }),
       s3 && !s3.enforced && /* @__PURE__ */ u3(Rows, { children: /* @__PURE__ */ u3(Row, { dot: "bad", title: "Bans aren't reaching the proxy", sub: `${s3.bouncer}. Status › Protection › Fix reconnects them.` }) }),
       s3 && (today2.length ? /* @__PURE__ */ u3(Rows, { children: [
         today2.map((a3, i3) => /* @__PURE__ */ u3(
@@ -9213,11 +9279,11 @@
     ] });
   }
   function Private({ privacy: privacy2, connect, busy: busy2 }) {
-    const reading2 = privacy2 === "reading", v3 = reading2 ? null : privacy2;
+    const reading3 = privacy2 === "reading", v3 = reading3 ? null : privacy2;
     return /* @__PURE__ */ u3(Card, { kind: "alerts pagecard", id: "appPrivate", children: [
       /* @__PURE__ */ u3(CardHead, { title: "Downloads are private", children: null }),
-      reading2 && /* @__PURE__ */ u3(Empty, { children: "Asking qBittorrent and the VPN…" }),
-      !v3 && !reading2 && /* @__PURE__ */ u3(Empty, { children: "Can't check right now." }),
+      reading3 && /* @__PURE__ */ u3(Empty, { children: "Asking qBittorrent and the VPN…" }),
+      !v3 && !reading3 && /* @__PURE__ */ u3(Empty, { children: "Can't check right now." }),
       v3 && /* @__PURE__ */ u3(Rows, { children: [
         /* @__PURE__ */ u3(
           Row,
@@ -9391,7 +9457,6 @@
     switching[appId] = rest;
     draw3();
   }
-  var icons2 = {};
   var shown3 = () => !!id && $("app").classList.contains("active");
   var openedApp = () => id;
   function openApp(appId) {
@@ -9415,7 +9480,7 @@
   function refreshApp() {
     if (!id) return show3("status");
     draw3();
-    readIcon(id);
+    readIconOf(id);
     readUsage();
     readRest();
     backupsData.fresh(minute);
@@ -9446,15 +9511,8 @@
   setInterval(() => {
     if (!document.hidden && shown3()) readUsage();
   }, 1e4);
-  async function readIcon(of) {
-    let icon = "";
-    try {
-      icon = await go().AppIcon(of) || "";
-    } catch {
-    }
-    if (icon === (icons2[of] || "")) return;
-    icons2[of] = icon;
-    if (of === id) draw3();
+  async function readIconOf(of) {
+    if (await readIcon(of) && of === id) draw3();
   }
   async function readRest() {
     const at2 = id;
@@ -12685,7 +12743,7 @@
     const [account, setAccount] = d2(c4?.account || holding[0]?.id || "");
     const [picture, setPicture] = d2(c4?.picture || "");
     const [shown8, setShown] = d2("");
-    const [reading2, setReading] = d2("");
+    const [reading3, setReading] = d2("");
     const { busy: busy2, keep: keep3, touched: touched2, watch: watch2 } = useSaving(props);
     const [problem, setProblem] = d2("");
     h2(() => {
@@ -12772,7 +12830,7 @@
           /* @__PURE__ */ u3("input", { type: "file", accept: "image/*", class: "sr", onChange: pickPhoto })
         ] }),
         picture && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => setPicture(""), children: "No photo" }),
-        reading2 && /* @__PURE__ */ u3("span", { class: "muted", role: "status", children: reading2 })
+        reading3 && /* @__PURE__ */ u3("span", { class: "muted", role: "status", children: reading3 })
       ] }),
       /* @__PURE__ */ u3(Actions3, { busy: busy2, exists: !!c4, remove, close: props.close, problem, touched: touched2 })
     ] });
@@ -15010,7 +15068,7 @@
     const [busy2, setBusy] = d2(false);
     const [problem, setProblem] = d2("");
     const timer = A2(0);
-    const asked = A2(0);
+    const asked2 = A2(0);
     const why = (e3) => String(e3?.message || e3);
     const type = (q2) => {
       setQuery(q2);
@@ -15021,18 +15079,18 @@
         return;
       }
       timer.current = window.setTimeout(async () => {
-        const n3 = ++asked.current;
+        const n3 = ++asked2.current;
         setLooking(true);
         try {
           const r3 = await find2(q2);
-          if (n3 === asked.current) {
+          if (n3 === asked2.current) {
             setFound2(r3);
             setProblem("");
           }
         } catch (e3) {
-          if (n3 === asked.current) setProblem(why(e3));
+          if (n3 === asked2.current) setProblem(why(e3));
         } finally {
-          if (n3 === asked.current) setLooking(false);
+          if (n3 === asked2.current) setLooking(false);
         }
       }, 350);
     };
@@ -20254,11 +20312,11 @@ ${pays}
     const canFind = !!c4?.find && (c4.find.needs ? !!(typed[c4.find.needs] || "").trim() : ready2);
     const find2 = () => {
       if (!c4?.find || !canFind || look2?.busy) return;
-      const asked = c4;
-      setFound2({ c: asked, busy: true });
+      const asked2 = c4;
+      setFound2({ c: asked2, busy: true });
       c4.find.run(values()).then(
-        (list) => setFound2((f4) => f4?.c === asked && f4.busy ? { c: asked, list, picked: list.length === 1 ? list[0].id : void 0 } : f4),
-        (e3) => setFound2((f4) => f4?.c === asked && f4.busy ? { c: asked, error: errorText(e3) } : f4)
+        (list) => setFound2((f4) => f4?.c === asked2 && f4.busy ? { c: asked2, list, picked: list.length === 1 ? list[0].id : void 0 } : f4),
+        (e3) => setFound2((f4) => f4?.c === asked2 && f4.busy ? { c: asked2, error: errorText(e3) } : f4)
       );
     };
     const typeAndForget = (key7, v3) => {
@@ -20443,8 +20501,8 @@ ${pays}
           }) }
         });
       }
-      const bare = n2(scan?.posterless), asked = last(l3, "posters");
-      if (bare && !(asked?.ok && scanned && asked.at > scanned.at)) {
+      const bare = n2(scan?.posterless), asked2 = last(l3, "posters");
+      if (bare && !(asked2?.ok && scanned && asked2.at > scanned.at)) {
         const names5 = scan?.posterless_list || [];
         out.push({
           kind: k3,

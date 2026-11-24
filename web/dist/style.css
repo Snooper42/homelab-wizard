@@ -82,6 +82,11 @@ nav button.active::before, nav .finmenuitem.on::before { content:""; position:ab
 nav .count { margin-left:auto; font-size:11px; font-weight:700; min-width:20px; padding:1px 7px; border-radius:999px; background:var(--amber); color:var(--amber-ink); text-align:center; }
 nav .count:empty { display:none; }
 .foot { margin-top:auto; font-size:12px; color:var(--nav-muted); padding:10px 8px 0; border-top:1px solid var(--nav-line); }
+/* The homelab's sidebar (docs/Redesign.md, The computer's sidebar; redesign-loop R6): Status, Backups, Tidy Up, Finances,
+   Choose apps, and Settings at its foot, over the line about the computer. */
+html:not(.companion) nav > button[data-screen="settings"] { margin-top:auto; }
+html:not(.companion) nav:has(> button[data-screen="settings"]) .foot { margin-top:6px; }
+html:not(.companion) nav:has(> button[data-screen="finances"].active) .foot { margin-top:auto; }
 
 /* Layout */
 main { flex:1; overflow:auto; padding:26px 30px 40px; position:relative; }
@@ -3095,3 +3100,33 @@ html.companion .crumbs .backlabel { display:inline; }
 .fx-privatesaid { max-width:640px; margin:0 0 10px; }
 /* Track from: where the rows that do not count begin, on Transactions. */
 .fx-trackline { margin: 18px 4px 6px; padding-top: 12px; border-top: 1px dashed var(--line); }
+
+/* Status's headline (redesign-loop R6b): All good, or the apps that need you with their fix; two tiles wide. */
+#statusHeadline { grid-column:span 2; display:flex; flex-wrap:wrap; gap:10px 16px; align-items:flex-start; min-width:0; border-left:3px solid var(--ok); }
+#statusHeadline.warn { border-left-color:var(--warn); }
+#statusHeadline .headlinemain { flex:1 1 180px; min-width:0; overflow-wrap:anywhere; }
+#statusHeadline .headlineapps { flex:1 1 220px; min-width:0; list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:6px; }
+#statusHeadline .headlineapps li { display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:13px; }
+#statusHeadline .headlineapps .grow { flex:1 1 100px; min-width:0; display:flex; flex-direction:column; overflow-wrap:anywhere; }
+#statusHeadline .headlineapps strong { color:var(--text); }
+#statusHeadline .headlineapps .muted { font-size:12px; color:var(--muted); }
+#statusHeadline .headlineacts { display:flex; flex-wrap:wrap; gap:6px; }
+#statusHeadline .headlineacts .btn { width:auto; margin:0; padding:4px 10px; font-size:12px; }
+/* Two tiles wide only beside two others; a whole row once the tiles go two by two or one under another (a span 2 in one column would add a second). */
+@container (max-width: 824px) { #statusHeadline { grid-column:1 / -1; } }
+
+/* Status's categories as the redesign's rows (R6c): their first apps' icons overlapping, and the count a pill, green with
+   a tick when all of them run, amber when one doesn't. */
+.groupmarks { display:inline-flex; vertical-align:middle; width:66px; margin:0 8px 0 2px; }
+.appmark.mini { width:26px; height:26px; border-radius:8px; font-size:12px; padding:3px; box-shadow:0 0 0 2px var(--panel); }
+.appmark.mini:not(.icon) { padding:0; background:var(--panel); border:1px solid var(--line); color:var(--muted); box-sizing:border-box; }
+.appmark.mini + .appmark.mini { margin-left:-6px; }
+table.grouped tr.grouphead .countpill { border-radius:999px; padding:2px 10px; font-weight:600; }
+table.grouped tr.grouphead .countpill.ok { background:var(--ok-soft); color:var(--ok); }
+table.grouped tr.grouphead .countpill.warn { background:var(--warn-soft); color:var(--warn); }
+table.grouped tr.grouphead .countpill:hover { filter:brightness(.95); }
+html.companion .groupmarks { margin-right:8px; }
+/* A narrow window: a category's heading wraps (its pill under its name if need be), and its icons, only decoration, go
+   once the window is narrower than a phone's. */
+@container (max-width: 760px) { html:not(.companion) #status table.grouped tr.grouphead th { white-space:normal; } }
+@container (max-width: 520px) { html:not(.companion) #status .groupmarks { display:none; } }
