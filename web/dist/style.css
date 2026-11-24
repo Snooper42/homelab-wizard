@@ -3160,3 +3160,18 @@ html.companion .groupmarks { margin-right:8px; }
 @container (max-width: 520px) { .bkfacts { grid-template-columns:minmax(0, 1fr); } }
 .bkcount { margin-left:8px; padding:0 7px; border-radius:999px; background:var(--warn-soft); color:var(--warn); font-size:12px; font-weight:600; }
 .bkneeds .bkneedlist .btn, .bkneeds .bkneedlist button.small { width:auto; margin:0; }
+
+/* Each app's copy as the redesign's picture (R7): two to a line on a wide window, each one line (its name, when, its size,
+   how many kept); a copy with a note (stale, shrank) and the groups' headings take the whole line. One column below 760px. */
+@container (min-width: 761px) {
+  #copiesCard table.copies, #copiesCard table.copies > tbody { display:block; }
+  #copiesCard #backupRows { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); column-gap:32px; }
+  #copiesCard #backupRows > tr { display:grid; min-width:0; }
+  #copiesCard #backupRows > tr:is(.copygroup, .stale, .shrank), #copiesCard #backupRows > tr:only-child { grid-column:1 / -1; }
+  #copiesCard #backupRows > tr.copy { grid-template-columns:minmax(0, 1fr) 7.5em 5em 4.5em; align-items:baseline; border-top:1px solid var(--line); }
+  #copiesCard #backupRows > tr.copy > td:is(.when, .size, .kept) { text-align:right; }
+  #copiesCard #backupRows > tr.copy > td { border:0; display:block; }
+  #copiesCard #backupRows > tr.copy > td.name { padding-left:14px; overflow:hidden; text-overflow:ellipsis; }
+  #copiesCard #backupRows > tr.copy:is(.stale, .shrank) > td.name { white-space:normal; }
+  #copiesCard #backupRows > tr.copy:not(.stale):not(.shrank) > td.name { white-space:nowrap; }
+}
