@@ -878,6 +878,108 @@
     return ["It was stopped outside the homelab (by Docker, or a shutdown).", "Start starts it again."];
   }
 
+  // web/src/status/appLogos.ts
+  var appLogos = /* @__PURE__ */ new Set([
+    "actual-budget",
+    "adguard-home",
+    "audiobookshelf",
+    "baikal",
+    "bazarr",
+    "beets",
+    "beszel-agent",
+    "beszel",
+    "calibre-web",
+    "changedetection",
+    "cloudflared",
+    "crowdsec",
+    "dawarich",
+    "docmost",
+    "dozzle",
+    "duplicati",
+    "feishin",
+    "filebrowser",
+    "firefly-iii-importer",
+    "firefly-iii",
+    "flaresolverr",
+    "freshrss",
+    "frigate",
+    "ghostfolio",
+    "gluetun",
+    "grocy",
+    "homarr",
+    "home-assistant",
+    "homebox",
+    "homelab-companion",
+    "homepage",
+    "immich-server",
+    "jellyfin-container",
+    "jellyfin",
+    "karakeep",
+    "kavita",
+    "kiwix",
+    "komga",
+    "kopia",
+    "lazylibrarian",
+    "lidarr",
+    "linkwarden",
+    "mealie",
+    "memos",
+    "moneymatter-frontend",
+    "navidrome",
+    "nextcloud",
+    "nginx-proxy-manager",
+    "ntfy",
+    "open-webui",
+    "pairdrop",
+    "paperless-ai",
+    "paperless",
+    "pocket-id",
+    "prowlarr",
+    "psitransfer",
+    "qbittorrent",
+    "radarr",
+    "romm",
+    "seerr",
+    "sonarr",
+    "speedtest-tracker",
+    "stirling-pdf",
+    "syncthing",
+    "tailnet-dns",
+    "tailscale",
+    "tandoor",
+    "tdarr",
+    "uptime-kuma",
+    "vaultwarden",
+    "vikunja",
+    "wallos"
+  ]);
+
+  // web/src/parts/AppMark.tsx
+  var shippedLogo = (id2) => id2 && appLogos.has(id2) ? `applogos/${id2}.png` : "";
+  function AppMark({ name, icon: own2, small, id: id2, quiet: quiet2 }) {
+    const shipped = shippedLogo(id2), icon = shipped || own2;
+    const [broken, setBroken] = d2("");
+    const [drawn, setDrawn] = d2({ of: "", size: "" });
+    if (!icon || broken === icon) {
+      return quiet2 ? /* @__PURE__ */ u3("span", { class: "appmark quiet" + (small ? " mini" : ""), "aria-hidden": "true", "data-letter": name.slice(0, 1) }) : /* @__PURE__ */ u3("span", { class: "appmark" + (small ? " mini" : ""), "aria-hidden": "true", children: name.slice(0, 1) });
+    }
+    const picture = /^data:image\/(png|jpeg|webp)/.test(icon), size2 = drawn.of === icon ? drawn.size : "";
+    const measure = (w3) => setDrawn({ of: icon, size: w3 > 0 && w3 <= 24 && !icon.startsWith("data:image/svg") ? "small" : picture && w3 >= 120 ? "fill" : "" });
+    return (
+      // A shipped logo is a whole rounded tile already (as the iPhone's): it fills the mark.
+      /* @__PURE__ */ u3("span", { class: "appmark icon" + (size2 === "fill" || shipped && icon === shipped ? " fill" : "") + (small ? " mini" : ""), "aria-hidden": "true", children: /* @__PURE__ */ u3(
+        "img",
+        {
+          src: icon,
+          alt: "",
+          class: size2 === "small" ? "small" : "",
+          onError: () => setBroken(icon),
+          onLoad: (e3) => measure(e3.currentTarget.naturalWidth)
+        }
+      ) })
+    );
+  }
+
   // web/src/setup/Health.tsx
   function facts({ h: h3, i: i3, machine }) {
     const checked = never(h3.lastCheck) ? "no check yet" : `last check ${ago(h3.lastCheck)}`;
@@ -1046,6 +1148,7 @@
         ] }),
         !!trouble2.length && /* @__PURE__ */ u3("ul", { class: "headlineapps", children: [
           trouble2.slice(0, 3).map((a3) => /* @__PURE__ */ u3("li", { children: [
+            /* @__PURE__ */ u3(AppMark, { id: a3.id, name: a3.name, icon: "", small: true }),
             /* @__PURE__ */ u3("span", { class: "grow", children: [
               /* @__PURE__ */ u3("strong", { children: a3.name }),
               /* @__PURE__ */ u3("span", { class: "muted", children: words5 ? words5(a3) : a3.state })
@@ -2891,25 +2994,6 @@
     ] })) });
   }
 
-  // web/src/parts/AppMark.tsx
-  function AppMark({ name, icon, small }) {
-    const [broken, setBroken] = d2("");
-    const [drawn, setDrawn] = d2({ of: "", size: "" });
-    if (!icon || broken === icon) return /* @__PURE__ */ u3("span", { class: "appmark" + (small ? " mini" : ""), "aria-hidden": "true", children: name.slice(0, 1) });
-    const picture = /^data:image\/(png|jpeg|webp)/.test(icon), size2 = drawn.of === icon ? drawn.size : "";
-    const measure = (w3) => setDrawn({ of: icon, size: w3 > 0 && w3 <= 24 && !icon.startsWith("data:image/svg") ? "small" : picture && w3 >= 120 ? "fill" : "" });
-    return /* @__PURE__ */ u3("span", { class: "appmark icon" + (size2 === "fill" ? " fill" : "") + (small ? " mini" : ""), "aria-hidden": "true", children: /* @__PURE__ */ u3(
-      "img",
-      {
-        src: icon,
-        alt: "",
-        class: size2 === "small" ? "small" : "",
-        onError: () => setBroken(icon),
-        onLoad: (e3) => measure(e3.currentTarget.naturalWidth)
-      }
-    ) });
-  }
-
   // web/src/status/memory.ts
   var units = { b: 1, kb: 1e3, mb: 1e6, gb: 1e9, tb: 1e12, kib: 1024, mib: 1024 ** 2, gib: 1024 ** 3, tib: 1024 ** 4 };
   function parseMem(s3) {
@@ -3329,6 +3413,7 @@
           } : void 0,
           children: [
             /* @__PURE__ */ u3("td", { children: [
+              /* @__PURE__ */ u3(AppMark, { id: a3.id, name: a3.name, icon: p3.icons?.[a3.id] || "", small: true, quiet: true }),
               /* @__PURE__ */ u3("strong", { children: a3.name }),
               changed4 && /* @__PURE__ */ u3("span", { class: "changedot", role: "img", "aria-label": changed4, title: changed4 })
             ] }),
@@ -3551,7 +3636,7 @@
             if (c4.getAttribute("aria-expanded") !== "true") c4.click();
           },
           children: /* @__PURE__ */ u3("th", { colSpan: 4, children: [
-            /* @__PURE__ */ u3("span", { class: "groupmarks", "aria-hidden": "true", children: g2.apps.slice(0, 3).map((a3) => /* @__PURE__ */ u3(AppMark, { name: a3.name, icon: p3.icons?.[a3.id] || "", small: true }, a3.id)) }),
+            /* @__PURE__ */ u3("span", { class: "groupmarks", "aria-hidden": "true", children: g2.apps.slice(0, 3).map((a3) => /* @__PURE__ */ u3(AppMark, { id: a3.id, name: a3.name, icon: p3.icons?.[a3.id] || "", small: true }, a3.id)) }),
             /* @__PURE__ */ u3("button", { type: "button", class: "foldbtn", "aria-expanded": open5, onClick: (e3) => {
               e3.stopPropagation();
               toggle();
@@ -8178,7 +8263,7 @@
       { label: "Other", apps: st.apps.filter((a3) => rest(a3) && !(catalog?.categories || []).some((c4) => c4.id === catOf[a3.id])) }
     ].filter((g2) => g2.apps.length);
     appList = { groups: groups4, pending, catalog, weekUp, outages, seen, batteryPaused, held, busy: appsBusy, companion: document.documentElement.classList.contains("companion"), os: osName, on: appListActions, memory, unkept, icons: icons2 };
-    wantIcons(groups4.flatMap((g2) => g2.apps.slice(0, 3).filter((x3) => x3.state !== "missing").map((x3) => x3.id)));
+    wantIcons(groups4.flatMap((g2) => g2.apps.slice(0, 3).filter((x3) => x3.state !== "missing" && !shippedLogo(x3.id)).map((x3) => x3.id)));
     mountAppList($("statusRows"), appList);
     if (!unkept && !appList.companion) refreshUnkept();
   }
@@ -9337,7 +9422,7 @@
     );
     return /* @__PURE__ */ u3("div", { class: "pagehead", children: [
       /* @__PURE__ */ u3("div", { class: "who", children: [
-        /* @__PURE__ */ u3(AppMark, { name: a3.name, icon: p3.icon }),
+        /* @__PURE__ */ u3(AppMark, { id: a3.id, name: a3.name, icon: p3.icon }),
         /* @__PURE__ */ u3("div", { children: [
           /* @__PURE__ */ u3("div", { class: "titlerow", children: [
             /* @__PURE__ */ u3("h1", { children: a3.name }),

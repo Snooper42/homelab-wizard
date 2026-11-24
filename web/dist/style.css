@@ -3250,3 +3250,10 @@ html:is(.os-mac, .os-windows, .os-linux) .tidynavdrives > .fx-caption { color:va
 .tidydrivename > span { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .tidydrivename > span:first-child { flex:0 1 auto; }
 html:is(.os-mac, .os-windows, .os-linux) .tidynavdrives .tidydrivebar { background:var(--line-strong); }
+/* The shipped logos (redesign-loop R6, the owner Nov 24: logos, not letters): a whole tile, no ring of padding. */
+.appmark.icon.fill.mini { padding:0; }
+#statusHeadline .headlineapps .appmark.mini { margin-right:2px; }
+/* Each app's row on Status with its logo before its name (the owner, Nov 24); a letter, when it has none, from the stylesheet. */
+.appmark.quiet::before { content:attr(data-letter); }
+#statusRows tr:not(.grouphead) > td:first-child > .appmark.mini { vertical-align:middle; margin-right:10px; }
+#statusHeadline .headlinemain { flex:1 1 300px; }

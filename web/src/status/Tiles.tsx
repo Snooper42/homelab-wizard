@@ -7,6 +7,7 @@ import { Card } from '../parts/Card';
 import { Hover } from '../parts/Hover';
 import { Spark } from '../Spark';
 import { keptRestarting } from './stopFor';
+import { AppMark } from '../parts/AppMark';
 import { facts, type HealthProps, StartAgent } from '../setup/Health';
 
 export function Tile({ label, value, sub, tone, id, title }: { label: string; value: ComponentChildren; sub: ComponentChildren; tone?: string; id?: string; title?: string }) {
@@ -139,6 +140,7 @@ export function Tiles({ status: st, history, onPause, onChoose, words, start, lo
         {!!trouble.length && <ul class="headlineapps">
           {trouble.slice(0, 3).map((a) => (
             <li key={a.id}>
+              <AppMark id={a.id} name={a.name} icon="" small />
               <span class="grow"><strong>{a.name}</strong><span class="muted">{words ? words(a) : a.state}</span></span>
               <span class="headlineacts">
                 {start && a.state !== 'running' && <button type="button" class="btn primary small" onClick={() => start(a)}>Start</button>}

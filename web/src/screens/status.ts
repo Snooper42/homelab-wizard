@@ -12,6 +12,7 @@ import { mountAlerts, mountDownloads, mountProtection, mountStorage, mountWatchd
 import { type AppListActions, type AppListProps, clearAppList, foldsFromComputer, mountAppList, mountShowAll, onFoldsPicked, type Pending, stateOf } from '../status/AppList';
 import { store } from '../store';
 import { icons, onIcon, wantIcons } from '../status/appIcons';
+import { shippedLogo } from '../parts/AppMark';
 import { ReleaseNotes } from '../status/ReleaseNotes';
 import { h as vnode } from 'preact';
 import { mountStatusNote } from '../parts/Notes';
@@ -143,7 +144,7 @@ function renderAppList(st: api.Status) {
     { label: 'Other', apps: st.apps.filter((a) => rest(a) && !(catalog?.categories || []).some((c) => c.id === catOf[a.id])) }].filter((g) => g.apps.length);
   appList = { groups, pending, catalog, weekUp, outages, seen, batteryPaused, held, busy: appsBusy, companion: document.documentElement.classList.contains('companion'), os: osName, on: appListActions, memory, unkept, icons };
   // The first three of each category's icons, each read once while the app is open (the list redraws as they arrive).
-  wantIcons(groups.flatMap((g) => g.apps.slice(0, 3).filter((x) => x.state !== 'missing').map((x) => x.id)));
+  wantIcons(groups.flatMap((g) => g.apps.slice(0, 3).filter((x) => x.state !== 'missing' && !shippedLogo(x.id)).map((x) => x.id)));
   mountAppList($('statusRows'), appList);
   if (!unkept && !appList.companion) refreshUnkept();
 }
