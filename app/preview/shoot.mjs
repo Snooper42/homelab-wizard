@@ -2933,9 +2933,18 @@ const smokes = [
     const tabTo = async (sel) => { for (let i = 0; i < 40 && !(await page.evaluate((s) => document.activeElement.matches(s), sel)); i++) await page.keyboard.press('Tab'); await page.waitForTimeout(250); };
     // The screen's own button (a direct child of the sidebar): Settings' pages, in the sidebar too, have their own .active.
     // In view first: with every account listed under its group, the sidebar can run past the window, and scrolls.
-    const once = async () => { const r = await page.$eval('nav > button.active', (e) => { e.scrollIntoView({ block: 'nearest' }); const b = e.getBoundingClientRect(); return { x: b.left - 4, y: b.top - 4, width: b.width + 8, height: b.height + 8 }; }); return page.screenshot({ clip: r }); };
-    // Settled: the same picture twice in a row, so a sidebar still drawing (a count, a menu, the foot's line) isn't taken for a change.
-    const shot = async () => { let last = await once(); for (let i = 0; i < 10; i++) { await page.waitForTimeout(150); const now = await once(); if (now.equals(last)) return now; last = now; } return last; };
+    const shot = async () => { const r = await page.$eval('nav > button.active', (e) => { e.scrollIntoView({ block: 'nearest' }); const b = e.getBoundingClientRect(); return { x: b.left - 4, y: b.top - 4, width: b.width + 8, height: b.height + 8 }; }); return page.screenshot({ clip: r }); };
+    // The same to the eye: each pixel within a few levels. A rounded border's anti-aliased corners shade a level apart
+    // as the sidebar scrolls (13 pixels by one level on CI's dark Mac run, Nov 24); the focus's outline is far more.
+    const same = (x, y) => page.evaluate(async ([a, b]) => {
+      const load = (s) => new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = no; i.src = 'data:image/png;base64,' + s; });
+      const [i, j] = await Promise.all([load(a), load(b)]);
+      if (i.width !== j.width || i.height !== j.height) return false;
+      const px = (img) => { const c = document.createElement('canvas'); c.width = img.width; c.height = img.height; const g = c.getContext('2d'); g.drawImage(img, 0, 0); return g.getImageData(0, 0, c.width, c.height).data; };
+      const p = px(i), q = px(j);
+      for (let k = 0; k < p.length; k++) if (Math.abs(p[k] - q[k]) > 4) return false;
+      return true;
+    }, [x.toString('base64'), y.toString('base64')]);
     // Settings drawn first: its page list moves into the sidebar once Settings is read, and the sidebar grows with it.
     await page.waitForSelector('nav #settingsNav .pagebtn', { timeout: 5000 });
     await page.waitForTimeout(300);
@@ -2944,8 +2953,8 @@ const smokes = [
     const elsewhere = await shot();
     await tabTo('nav > button.active');
     const focused = await shot();
-    if (focused.equals(elsewhere)) throw new Error('Settings looks the same with the focus on it and on Backups');
-    if (!plain.equals(elsewhere)) throw new Error('Settings changes when the focus is on Backups (TEMPORARY, to read the pictures: plain ' + plain.toString('base64') + ' elsewhere ' + elsewhere.toString('base64') + ' focus ' + await page.evaluate(() => document.activeElement.tagName + ' ' + (document.activeElement.textContent || '').trim().slice(0, 20) + ' scroll ' + document.querySelector('nav').scrollTop) + ')');
+    if (await same(focused, elsewhere)) throw new Error('Settings looks the same with the focus on it and on Backups');
+    if (!(await same(plain, elsewhere))) throw new Error('Settings changes when the focus is on Backups');
     const mark = await page.$eval('nav > button.active', (e) => { const a = getComputedStyle(e, '::before'); return a.display !== 'none' && parseFloat(a.width) >= 3 && a.forcedColorAdjust === 'none'; });
     if (!mark) throw new Error('the current screen has no bar of its own');
   } })),
