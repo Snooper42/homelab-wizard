@@ -3205,3 +3205,14 @@ html.companion .groupmarks { margin-right:8px; }
   #copiesCard #backupRows > tr.copy:is(.stale, .shrank) > td.name { white-space:normal; }
   #copiesCard #backupRows > tr.copy:not(.stale):not(.shrank) > td.name { white-space:nowrap; }
 }
+
+/* Status' Backups and This Mac beside the headline (redesign-loop R6, the picture's); Instead of subscriptions below the apps. */
+.statuscard .label { display:flex; justify-content:space-between; align-items:baseline; gap:8px; }
+.statuscard .statusmore { font-size:12px; font-weight:500; text-transform:none; letter-spacing:0; padding:0; margin:0; line-height:inherit; min-height:0; }
+.statuscard .sub.warn, .statuscard .sub .warn { color:var(--warn); }
+.statuscard .sub.bad { color:var(--bad); }
+.statuscard .value.bad { color:var(--bad); }
+.statuscard .statusupdates { justify-content:space-between; }
+.statuscard .tileaction, .statuscard .statusupdates button { width:auto; margin:0; }
+.tiles.savingsrow { margin-top:14px; }
+.tiles.savingsrow:empty { display:none; }

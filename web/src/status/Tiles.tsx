@@ -7,6 +7,7 @@ import { Card } from '../parts/Card';
 import { Hover } from '../parts/Hover';
 import { Spark } from '../Spark';
 import { keptRestarting } from './stopFor';
+import { facts, type HealthProps, StartAgent } from '../setup/Health';
 
 export function Tile({ label, value, sub, tone, id, title }: { label: string; value: ComponentChildren; sub: ComponentChildren; tone?: string; id?: string; title?: string }) {
   return (
@@ -104,9 +105,14 @@ export interface TilesProps {
   onPause: (paused: boolean) => Promise<void>;
   /** Opens Choose apps, from a homelab with no apps yet. */
   onChoose: () => void;
+  /** Last night's copies as Backups read them (null until read): the Backups card (redesign-loop R6, the picture's). */
+  backups?: { copied: number; of: number; skipped: string[]; at: string } | null;
+  openBackups?: () => void;
+  /** This machine's facts as Setup read them (none on a phone): the This Mac card. */
+  mac?: HealthProps | null;
 }
 
-export function Tiles({ status: st, history, onPause, onChoose, words, start, logs, open }: TilesProps) {
+export function Tiles({ status: st, history, onPause, onChoose, words, start, logs, open, backups, openBackups, mac }: TilesProps) {
   // No app yet: no 0-of-0 tiles, but what to do first (the empty list hides with it).
   if (!st.apps.length) {
     return (
@@ -144,12 +150,47 @@ export function Tiles({ status: st, history, onPause, onChoose, words, start, lo
           {trouble.length > 3 && <li class="muted">and {trouble.length - 3} more, in the list below</li>}
         </ul>}
       </Card>
-      <Tile label="Instead of subscriptions" value={<><SavedHover value={st.savings > 0 ? dollars(st.savings) : '$0'} history={history} /><small> a year</small></>} sub={<SavingsTrend history={history} />} />
-      <Tile label="Nightly updates" value={u?.paused ? 'Paused' : 'On'}
-        sub={<>{u?.paused ? 'Until you resume them' : `Run ${u?.schedule}`}<PauseButton paused={!!u?.paused} onPause={onPause} /></>} />
+      {/* The picture's Backups and This Mac beside the headline (redesign-loop R6); Instead of subscriptions is lower (Savings). */}
+      <Card kind="tile statuscard" id="statusBackups">
+        <div class="label">Backups{openBackups && <button type="button" class="linkbtn statusmore" onClick={openBackups}>Backups ›</button>}</div>
+        <div class="value">{backups ? <>{backups.copied}<small> of {backups.of}</small></> : '…'}</div>
+        <div class="sub">{!backups ? 'Reading last night…' : <span>{backups.at}{backups.skipped.length ? <>{' · '}<span class="warn">{backups.skipped.join(', ')} skipped</span></> : ''}</span>}</div>
+      </Card>
+      {mac ? <MacCard mac={mac} updates={u} onPause={onPause} /> : (
+        <Tile label="Nightly updates" value={u?.paused ? 'Paused' : 'On'}
+          sub={<>{u?.paused ? 'Until you resume them' : `Run ${u?.schedule}`}<PauseButton paused={!!u?.paused} onPause={onPause} /></>} />
+      )}
     </>
   );
 }
+
+/** This Mac (redesign-loop R6, the picture's): its free space as the figure, power and what runs the apps under it, the
+ * nightly updates with Pause, and anything wrong with the machine said here too (Start for a stopped agent). */
+function MacCard({ mac, updates: u, onPause }: { mac: HealthProps; updates: api.Status['updates']; onPause: (paused: boolean) => Promise<void> }) {
+  const all = facts(mac);
+  const of = (k: string) => all.find((f) => f.key === k);
+  const disk = of('disk'), power = of('power'), runtime = of('runtime');
+  const wrong = all.filter((f) => f.tone !== 'ok' && f.key !== 'disk');
+  const stopped = mac.h.agent === 'stopped' || mac.h.agent === 'quit';
+  const name = mac.machine.charAt(0).toUpperCase() + mac.machine.slice(1);
+  return (
+    <Card kind="tile statuscard" id="statusMac">
+      <div class="label">{name}</div>
+      <div class={'value' + (disk && disk.tone !== 'ok' ? ' bad' : '')}>{disk ? disk.value.replace(/ free$/, '') : '—'}<small>{disk ? ' free' : ''}</small></div>
+      <div class="sub"><span>{[power?.short, runtime?.short].filter(Boolean).join(' · ')}</span></div>
+      {wrong.map((f) => <div key={f.key} class={'sub ' + f.tone}><span>{f.short}</span></div>)}
+      {stopped && <StartAgent id="startAgentMac" start={mac.startAgent} />}
+      <div class="sub statusupdates"><span>{u?.paused ? 'Updates paused' : `Updates ${u?.schedule ? 'run ' + u.schedule : 'nightly'}`}</span><PauseButton paused={!!u?.paused} onPause={onPause} /></div>
+    </Card>
+  );
+}
+
+/** Instead of subscriptions, below the apps (it was beside the headline before the picture's Backups and This Mac). */
+export function Savings({ status: st, history }: { status: api.Status; history: savings.Point[] }) {
+  if (!st.apps.length) return null;
+  return <Tile label="Instead of subscriptions" value={<><SavedHover value={st.savings > 0 ? dollars(st.savings) : '$0'} history={history} /><small> a year</small></>} sub={<SavingsTrend history={history} />} />;
+}
+export function mountSavings(el: Element, props: { status: api.Status; history: savings.Point[] }) { render(<Savings {...props} />, el); }
 
 /** Draws the tiles into el, updating what changed since the last time. */
 export function mountTiles(el: Element, props: TilesProps) {

@@ -56,7 +56,7 @@ export function facts({ h, i, machine }: Pick<HealthProps, 'h' | 'i' | 'machine'
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 /** The agent's Start it: says why when it could not. */
-function StartAgent({ id, start }: { id: string; start: () => Promise<void> }) {
+export function StartAgent({ id, start }: { id: string; start: () => Promise<void> }) {
   const [busy, setBusy] = useState(false);
   const go = async () => { setBusy(true); try { await start(); } finally { setBusy(false); } };
   return <button id={id} class="small" disabled={busy} onClick={go}>{busy ? 'Starting…' : 'Start it'}</button>;

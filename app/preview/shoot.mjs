@@ -1907,7 +1907,7 @@ const smokes = [
   // Savings over time: the year's figure on Status, hovered (or reached with Tab), says what has been saved since the
   // first record, month by month, newest first, and the card is not cut off.
   { name: 'Status: hover what the apps replace for what they have saved so far', screen: 'status', run: async (page) => {
-    const tile = '#tiles .tile:has-text("Instead of subscriptions") .savedso';
+    const tile = '#savingsCard .tile:has-text("Instead of subscriptions") .savedso';
     await page.waitForSelector(tile, { timeout: 5000 });
     await page.hover(tile);
     const card = await page.waitForSelector(`${tile} [role=tooltip]`, { state: 'visible', timeout: 3000 });
@@ -3653,7 +3653,7 @@ const smokes = [
   // baseline ones; what the savings are instead of; what CrowdSec caught, not its scenario's name and an address.
   ...[[], ['companion']].map((phone) => ({ name: `Status in a household's words${phone.length ? ', on the phone' : ''}`, screen: 'status', phone, mock: { protection }, run: async (page) => {
     await page.waitForSelector('#statusHeadline:has-text("running"):has-text("The homelab\'s own apps are all up")', { timeout: 5000 });
-    await page.waitForSelector('#tiles .tile:has-text("Instead of subscriptions"):has-text("a year")');
+    await page.waitForSelector('#savingsCard .tile:has-text("Instead of subscriptions"):has-text("a year")');
     await page.waitForSelector('#protectCard li:has-text("Probing for a known security hole"):has-text("Netherlands · Example Hosting B.V.")', { timeout: 5000 });
     const said = await page.evaluate(() => document.body.innerText);
     for (const w of ['stacks', 'baseline', 'Replaces a year', 'vpatch-', 'http-probing', '203.0.113.7']) if (said.includes(w)) throw new Error(`Status says "${w}"`);

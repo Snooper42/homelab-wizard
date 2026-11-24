@@ -9,6 +9,7 @@ import { applyAppearance, applyMotion } from '../appearance';
 import { type HostActions, type HostProps, mountHost, mountNewHomelab, mountRuntime } from '../setup/Host';
 import { type ChecklistActions, mountChecklist, progress } from '../setup/Checklist';
 import { mountHealthLine, mountHealthTiles } from '../setup/Health';
+import { setMachine } from '../status/machine';
 import { store } from '../store';
 import { type FootProps, mountFoot } from '../parts/Foot';
 import { mountReportActions } from '../parts/Notes';
@@ -76,6 +77,7 @@ function drawHealth() {
   $('healthLine').hidden = !props || !i!.rootOK;
   mountHealthTiles($('healthTiles'), props);
   mountHealthLine($('healthLine'), props);
+  setMachine(props);
 }
 // Reads the machine; a failed read throws, for the caller to say why.
 export async function loadHost() {

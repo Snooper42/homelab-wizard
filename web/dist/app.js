@@ -501,12 +501,12 @@
     const el3 = document.getElementById("undoNote");
     if (!el3) return;
     const close3 = () => mountUndoNote(el3, null);
-    const now = () => {
+    const now2 = () => {
       close3();
       undo();
     };
-    mountUndoNote(el3, { words: words5, undo: now, close: close3 });
-    shown = now;
+    mountUndoNote(el3, { words: words5, undo: now2, close: close3 });
+    shown = now2;
   }
   function undoShown() {
     if (!shown) return false;
@@ -636,7 +636,7 @@
   function Checklist({ steps, showDone, showLater, running: running5, failed = {}, on: on2 }) {
     const [opened3, setOpened] = d2({});
     const toggle = (id2) => setOpened({ ...opened3, [id2]: !opened3[id2] });
-    const now = steps.filter((s3) => !waits(s3) && s3.state !== "done");
+    const now2 = steps.filter((s3) => !waits(s3) && s3.state !== "done");
     const later2 = steps.filter(waits);
     const done = steps.filter((s3) => s3.state === "done");
     const row = (s3, n3) => {
@@ -658,7 +658,7 @@
         ] }, s3.id)
       );
     };
-    if (!now.length && !later2.length) {
+    if (!now2.length && !later2.length) {
       return /* @__PURE__ */ u3(S, { children: [
         /* @__PURE__ */ u3("li", { class: "alldone", children: [
           /* @__PURE__ */ u3("span", { class: "mark", children: /* @__PURE__ */ u3(Icon, { name: "check" }) }),
@@ -672,10 +672,10 @@
       ] });
     }
     return /* @__PURE__ */ u3(S, { children: [
-      !!now.length && /* @__PURE__ */ u3("li", { class: "grouphead", children: `Needs you · ${now.length}` }),
-      now.map((s3, i3) => row(s3, i3 + 1)),
+      !!now2.length && /* @__PURE__ */ u3("li", { class: "grouphead", children: `Needs you · ${now2.length}` }),
+      now2.map((s3, i3) => row(s3, i3 + 1)),
       !!later2.length && /* @__PURE__ */ u3(Fold, { id: "toggleLater", cls: "later", title: `Can wait · ${later2.length}`, names: later2.map((s3) => s3.title).join(", "), shown: showLater, toggle: on2.toggleLater }),
-      showLater && later2.map((s3, i3) => row(s3, now.length + i3 + 1)),
+      showLater && later2.map((s3, i3) => row(s3, now2.length + i3 + 1)),
       !!done.length && /* @__PURE__ */ u3(Fold, { id: "toggleDone", cls: "done", title: `Done · ${done.length}`, shown: showDone, toggle: on2.toggleDone }),
       showDone && done.map((s3, i3) => row(s3, i3 + 1))
     ] });
@@ -828,40 +828,40 @@
 
   // web/src/status/stopFor.ts
   var iso = (d3) => d3.toISOString().replace(/\.\d{3}Z$/, "Z");
-  var at = (now, days, hour) => new Date(now.getFullYear(), now.getMonth(), now.getDate() + days, hour);
-  function stopChoices(now = /* @__PURE__ */ new Date()) {
-    const hour = new Date(now.getTime() + 36e5);
+  var at = (now2, days, hour) => new Date(now2.getFullYear(), now2.getMonth(), now2.getDate() + days, hour);
+  function stopChoices(now2 = /* @__PURE__ */ new Date()) {
+    const hour = new Date(now2.getTime() + 36e5);
     hour.setSeconds(0, 0);
     const out = [{ label: "For an hour", until: iso(hour) }];
-    const tonight = at(now, 0, 21);
-    if (tonight.getTime() - now.getTime() > 36e5) out.push({ label: `Until ${clockText(tonight)} tonight`, until: iso(tonight) });
-    const early = now.getHours() < 6;
-    const morning = at(now, early ? 0 : 1, 8);
+    const tonight = at(now2, 0, 21);
+    if (tonight.getTime() - now2.getTime() > 36e5) out.push({ label: `Until ${clockText(tonight)} tonight`, until: iso(tonight) });
+    const early = now2.getHours() < 6;
+    const morning = at(now2, early ? 0 : 1, 8);
     out.push({ label: `Until ${clockText(morning)}${early ? "" : " tomorrow"}`, until: iso(morning) });
     return out;
   }
   var keptRestarting = (s3) => s3?.why === "restarting";
-  function stoppedWords(s3, now = /* @__PURE__ */ new Date()) {
+  function stoppedWords(s3, now2 = /* @__PURE__ */ new Date()) {
     if (keptRestarting(s3)) return `Stopped: it restarted ${s3.restarts || "many"} times in an hour`;
     if (!s3.until) return "Stopped by you";
     const t3 = new Date(s3.until);
-    const days = Math.round((at(t3, 0, 0).getTime() - at(now, 0, 0).getTime()) / 864e5);
+    const days = Math.round((at(t3, 0, 0).getTime() - at(now2, 0, 0).getTime()) / 864e5);
     const day3 = days <= 0 ? "" : days === 1 ? "tomorrow, " : dayText(t3, { weekday: "short" }) + ", ";
     return `Stopped until ${day3}${clockText(t3)}`;
   }
-  function stoppedByItself(a3, now = /* @__PURE__ */ new Date()) {
+  function stoppedByItself(a3, now2 = /* @__PURE__ */ new Date()) {
     let when3 = "";
     if (a3.stoppedAt) {
       const t3 = new Date(a3.stoppedAt);
-      const days = Math.round((at(now, 0, 0).getTime() - at(t3, 0, 0).getTime()) / 864e5);
+      const days = Math.round((at(now2, 0, 0).getTime() - at(t3, 0, 0).getTime()) / 864e5);
       when3 = days <= 0 ? ` at ${clockText(t3)}` : days === 1 ? ` yesterday, ${clockText(t3)}` : days < 7 ? ` ${dayText(t3, { weekday: "short" })}, ${clockText(t3)}` : ` ${dayText(t3, { month: "short", day: "numeric" })}`;
     }
     return `Stopped${when3}${a3.stoppedWhy ? ": " + a3.stoppedWhy : ""}`;
   }
-  function stoppedNext(a3, held3, paused = false, now = /* @__PURE__ */ new Date()) {
+  function stoppedNext(a3, held3, paused = false, now2 = /* @__PURE__ */ new Date()) {
     if (a3.state !== "stopped") return ["", ""];
     if (held3 && keptRestarting(held3)) return ["The watchdog stopped it after Docker restarted it again and again; its log below says why.", "Once that is put right, Start tries again."];
-    if (held3?.until) return [`You stopped it until ${stoppedWords(held3, now).replace(/^Stopped until /, "")}: it starts again by itself then.`, "Or Start it now."];
+    if (held3?.until) return [`You stopped it until ${stoppedWords(held3, now2).replace(/^Stopped until /, "")}: it starts again by itself then.`, "Or Start it now."];
     if (held3) return ["You stopped it, so nothing starts it by itself.", "Start starts it again."];
     if (paused) return ["Paused while this computer is on battery: it starts again by itself once it is plugged in.", ""];
     if (a3.waitingFor) return [`Its folders are on the ${a3.waitingFor.replace(/^\/Volumes\//, "")} drive: plug it in and it starts by itself.`, ""];
@@ -877,6 +877,75 @@
     }
     return ["It was stopped outside the homelab (by Docker, or a shutdown).", "Start starts it again."];
   }
+
+  // web/src/setup/Health.tsx
+  function facts({ h: h3, i: i3, machine }) {
+    const checked = never(h3.lastCheck) ? "no check yet" : `last check ${ago(h3.lastCheck)}`;
+    const agent = h3.agent === "running" ? { key: "agent", label: "Looks after the homelab", value: "Running", tone: "ok", sub: `Backs up every night at 03:30 and checks every app every 15 minutes; ${checked}`, short: "Backups and checks on" } : h3.agent === "quit" ? { key: "agent", label: "Looks after the homelab", value: "Stopped by Quit", tone: "warn", sub: "No backup or check runs until it starts again", short: "Backups and checks stopped by Quit" } : h3.agent === "stopped" ? { key: "agent", label: "Looks after the homelab", value: "Stopped", tone: "bad", sub: "No nightly backup, check, or update runs until it starts again", short: "Backups and checks stopped" } : { key: "agent", label: "Looks after the homelab", value: "Not set up", tone: "warn", sub: "Finish setting up adds it (Scheduled jobs)", short: "Backups and checks not set up" };
+    const name = (i3.runtimeFound || i3.runtime || "The runtime").split(",")[0];
+    const runtime = i3.runtimeOK ? { key: "runtime", label: "Runs the apps", value: name, tone: "ok", sub: (i3.runtimeFound || "").split(",").slice(1).join(",").trim() || "Running", short: name } : { key: "runtime", label: "Runs the apps", value: `${i3.runtime} is not running`, tone: "bad", sub: i3.runtimeHint || "", short: `${i3.runtime} is not running` };
+    const power = h3.power === "battery" ? { key: "power", label: "Power", value: "On battery", tone: "warn", sub: `The apps sleep when ${machine} does: plug it in`, short: "On battery" } : h3.power === "plugged" ? h3.keptAwake ? { key: "power", label: "Power", value: "Plugged in", tone: "ok", sub: "Kept awake while plugged in; the screen still sleeps", short: "Plugged in" } : { key: "power", label: "Power", value: "Plugged in", tone: "warn", sub: `${cap(machine)} may sleep: keeping it awake is off in Settings`, short: "Plugged in, may sleep" } : h3.keptAwake ? { key: "power", label: "Sleep", value: "Kept awake", tone: "ok", sub: "The screen still sleeps", short: "Kept awake" } : { key: "power", label: "Sleep", value: "May sleep", tone: "warn", sub: "Keeping it awake is off in Settings; the apps go away while it sleeps", short: "May sleep" };
+    const d3 = (i3.disks || [])[0];
+    const free = d3 ? d3.space.replace(/\s*\(\d+%\)$/, "") : "";
+    const [freeWords, ofWords] = free.includes(" free of ") ? free.split(" free of ") : [free, ""];
+    const disk2 = d3 ? {
+      key: "disk",
+      label: `Room on ${machine}`,
+      value: `${freeWords} free`,
+      tone: d3.low ? "bad" : "ok",
+      sub: d3.low ? d3.hint || "" : ofWords ? `of ${ofWords}` : "",
+      short: `${freeWords} free`,
+      used: d3.total ? Math.min(100, Math.max(1, Math.round(100 * (1 - d3.free / d3.total)))) : void 0
+    } : null;
+    return [agent, runtime, power, ...disk2 ? [disk2] : []];
+  }
+  var cap = (s3) => s3.charAt(0).toUpperCase() + s3.slice(1);
+  function StartAgent({ id: id2, start }) {
+    const [busy2, setBusy] = d2(false);
+    const go3 = async () => {
+      setBusy(true);
+      try {
+        await start();
+      } finally {
+        setBusy(false);
+      }
+    };
+    return /* @__PURE__ */ u3("button", { id: id2, class: "small", disabled: busy2, onClick: go3, children: busy2 ? "Starting…" : "Start it" });
+  }
+  function HealthTiles(p3) {
+    return /* @__PURE__ */ u3(S, { children: facts(p3).map((f4) => /* @__PURE__ */ u3(
+      Tile,
+      {
+        id: "health-" + f4.key,
+        label: f4.label,
+        tone: f4.tone === "ok" ? "" : f4.tone,
+        value: /* @__PURE__ */ u3(S, { children: [
+          /* @__PURE__ */ u3("span", { class: "dot " + f4.tone }),
+          f4.value
+        ] }),
+        sub: /* @__PURE__ */ u3(S, { children: [
+          f4.used !== void 0 && /* @__PURE__ */ u3("span", { class: "storagebar", role: "meter", "aria-valuenow": f4.used, "aria-valuemin": 0, "aria-valuemax": 100, "aria-label": `${f4.used}% used`, children: /* @__PURE__ */ u3("span", { style: `width:${f4.used}%` }) }),
+          /* @__PURE__ */ u3("span", { children: f4.sub }),
+          f4.key === "agent" && (p3.h.agent === "stopped" || p3.h.agent === "quit") && /* @__PURE__ */ u3(StartAgent, { id: "startAgent", start: p3.startAgent })
+        ] })
+      },
+      f4.key
+    )) });
+  }
+  function HealthLine(p3) {
+    const all = facts(p3);
+    const stopped2 = p3.h.agent === "stopped" || p3.h.agent === "quit";
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3("span", { class: "label", children: p3.machine.charAt(0).toUpperCase() + p3.machine.slice(1) }),
+      all.map((f4) => /* @__PURE__ */ u3("span", { class: "item " + f4.tone, title: f4.sub, children: [
+        /* @__PURE__ */ u3("span", { class: "dot " + f4.tone }),
+        f4.short
+      ] }, f4.key)),
+      stopped2 && /* @__PURE__ */ u3(StartAgent, { id: "startAgentLine", start: p3.startAgent })
+    ] });
+  }
+  var mountHealthTiles = (el3, props) => R(props && /* @__PURE__ */ u3(HealthTiles, { ...props }), el3);
+  var mountHealthLine = (el3, props) => R(props && /* @__PURE__ */ u3(HealthLine, { ...props }), el3);
 
   // web/src/status/Tiles.tsx
   function Tile({ label, value, sub, tone, id: id2, title }) {
@@ -948,7 +1017,7 @@
   }
   var awaitingJobs = (a3) => a3.id === "homelab-companion" && a3.state === "not running";
   var troubled = (a3, held3 = {}) => a3.health === "unhealthy" || a3.health === "restarting" || !!a3.notAnswering || a3.state === "missing" || a3.state === "stopped" && (!held3[a3.id] || keptRestarting(held3[a3.id]));
-  function Tiles({ status: st, history, onPause, onChoose, words: words5, start, logs, open: open5 }) {
+  function Tiles({ status: st, history, onPause, onChoose, words: words5, start, logs, open: open5, backups, openBackups, mac }) {
     if (!st.apps.length) {
       return /* @__PURE__ */ u3(Card, { kind: "emptystate", id: "statusEmpty", children: [
         /* @__PURE__ */ u3("h2", { children: "No apps yet" }),
@@ -994,11 +1063,30 @@
           ] })
         ] })
       ] }),
-      /* @__PURE__ */ u3(Tile, { label: "Instead of subscriptions", value: /* @__PURE__ */ u3(S, { children: [
-        /* @__PURE__ */ u3(SavedHover, { value: st.savings > 0 ? dollars(st.savings) : "$0", history }),
-        /* @__PURE__ */ u3("small", { children: " a year" })
-      ] }), sub: /* @__PURE__ */ u3(SavingsTrend, { history }) }),
-      /* @__PURE__ */ u3(
+      /* @__PURE__ */ u3(Card, { kind: "tile statuscard", id: "statusBackups", children: [
+        /* @__PURE__ */ u3("div", { class: "label", children: [
+          "Backups",
+          openBackups && /* @__PURE__ */ u3("button", { type: "button", class: "linkbtn statusmore", onClick: openBackups, children: "Backups ›" })
+        ] }),
+        /* @__PURE__ */ u3("div", { class: "value", children: backups ? /* @__PURE__ */ u3(S, { children: [
+          backups.copied,
+          /* @__PURE__ */ u3("small", { children: [
+            " of ",
+            backups.of
+          ] })
+        ] }) : "…" }),
+        /* @__PURE__ */ u3("div", { class: "sub", children: !backups ? "Reading last night…" : /* @__PURE__ */ u3("span", { children: [
+          backups.at,
+          backups.skipped.length ? /* @__PURE__ */ u3(S, { children: [
+            " · ",
+            /* @__PURE__ */ u3("span", { class: "warn", children: [
+              backups.skipped.join(", "),
+              " skipped"
+            ] })
+          ] }) : ""
+        ] }) })
+      ] }),
+      mac ? /* @__PURE__ */ u3(MacCard, { mac, updates: u4, onPause }) : /* @__PURE__ */ u3(
         Tile,
         {
           label: "Nightly updates",
@@ -1011,9 +1099,53 @@
       )
     ] });
   }
+  function MacCard({ mac, updates: u4, onPause }) {
+    const all = facts(mac);
+    const of = (k3) => all.find((f4) => f4.key === k3);
+    const disk2 = of("disk"), power = of("power"), runtime = of("runtime");
+    const wrong = all.filter((f4) => f4.tone !== "ok" && f4.key !== "disk");
+    const stopped2 = mac.h.agent === "stopped" || mac.h.agent === "quit";
+    const name = mac.machine.charAt(0).toUpperCase() + mac.machine.slice(1);
+    return /* @__PURE__ */ u3(Card, { kind: "tile statuscard", id: "statusMac", children: [
+      /* @__PURE__ */ u3("div", { class: "label", children: name }),
+      /* @__PURE__ */ u3("div", { class: "value" + (disk2 && disk2.tone !== "ok" ? " bad" : ""), children: [
+        disk2 ? disk2.value.replace(/ free$/, "") : "—",
+        /* @__PURE__ */ u3("small", { children: disk2 ? " free" : "" })
+      ] }),
+      /* @__PURE__ */ u3("div", { class: "sub", children: /* @__PURE__ */ u3("span", { children: [power?.short, runtime?.short].filter(Boolean).join(" · ") }) }),
+      wrong.map((f4) => /* @__PURE__ */ u3("div", { class: "sub " + f4.tone, children: /* @__PURE__ */ u3("span", { children: f4.short }) }, f4.key)),
+      stopped2 && /* @__PURE__ */ u3(StartAgent, { id: "startAgentMac", start: mac.startAgent }),
+      /* @__PURE__ */ u3("div", { class: "sub statusupdates", children: [
+        /* @__PURE__ */ u3("span", { children: u4?.paused ? "Updates paused" : `Updates ${u4?.schedule ? "run " + u4.schedule : "nightly"}` }),
+        /* @__PURE__ */ u3(PauseButton, { paused: !!u4?.paused, onPause })
+      ] })
+    ] });
+  }
+  function Savings({ status: st, history }) {
+    if (!st.apps.length) return null;
+    return /* @__PURE__ */ u3(Tile, { label: "Instead of subscriptions", value: /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3(SavedHover, { value: st.savings > 0 ? dollars(st.savings) : "$0", history }),
+      /* @__PURE__ */ u3("small", { children: " a year" })
+    ] }), sub: /* @__PURE__ */ u3(SavingsTrend, { history }) });
+  }
+  function mountSavings(el3, props) {
+    R(/* @__PURE__ */ u3(Savings, { ...props }), el3);
+  }
   function mountTiles(el3, props) {
     R(/* @__PURE__ */ u3(Tiles, { ...props }), el3);
   }
+
+  // web/src/status/machine.ts
+  var now = null;
+  var listeners = /* @__PURE__ */ new Set();
+  function setMachine(p3) {
+    now = p3;
+    listeners.forEach((f4) => f4());
+  }
+  var machineNow = () => now;
+  var onMachine = (f4) => {
+    listeners.add(f4);
+  };
 
   // web/src/finances/payees.ts
   var processors = /* @__PURE__ */ new Set(["sq", "tst", "sp", "pp", "py", "paypal", "in", "ggl", "google", "gglpay", "clover", "toast", "zettle", "izettle", "pmt", "chk", "lsp", "cke", "wwp", "wl"]);
@@ -2349,8 +2481,8 @@
         if (!panel.hidden) {
           if (!panel.contains(document.activeElement)) before3 = document.activeElement;
           requestAnimationFrame(() => {
-            const now = document.activeElement;
-            if (panel.hidden || now && now !== panel && panel.contains(now)) return;
+            const now2 = document.activeElement;
+            if (panel.hidden || now2 && now2 !== panel && panel.contains(now2)) return;
             panel.scrollTop = 0;
             (panel.querySelector(field) || panel.querySelector("button:not([disabled])") || panel).focus();
           });
@@ -2633,9 +2765,9 @@
       ] })
     ] });
   }
-  function alertFate(a3, now = Date.now()) {
+  function alertFate(a3, now2 = Date.now()) {
     if (a3.clearedAt) return `Cleared at ${wakeText(a3.clearedAt)}`;
-    if (a3.snoozedUntil && new Date(a3.snoozedUntil).getTime() > now) return a3.snoozedBy ? `Snoozed by ${a3.snoozedBy} until ${wakeText(a3.snoozedUntil)}` : `Snoozed until ${wakeText(a3.snoozedUntil)}`;
+    if (a3.snoozedUntil && new Date(a3.snoozedUntil).getTime() > now2) return a3.snoozedBy ? `Snoozed by ${a3.snoozedBy} until ${wakeText(a3.snoozedUntil)}` : `Snoozed until ${wakeText(a3.snoozedUntil)}`;
     return a3.checks?.length ? "Not cleared yet" : "";
   }
   function snoozable(a3, w3) {
@@ -2994,24 +3126,24 @@
     const mins = Math.max(1, Math.round(ms / 6e4)), hours = Math.round(mins / 60);
     return mins < 60 ? mins === 1 ? "a minute" : `${mins} minutes` : hours < 48 ? hours === 1 ? "an hour" : `${hours} hours` : `${Math.round(hours / 24)} days`;
   }
-  function outageWords(o3, now = Date.now()) {
+  function outageWords(o3, now2 = Date.now()) {
     const from2 = new Date(o3.from), to = o3.to ? new Date(o3.to).getTime() : 0;
-    return `${weekday(from2)} ${clock(from2)}, ${to ? lasted(to - from2.getTime()) : `down for ${lasted(now - from2.getTime())} now`}: ${o3.problem}`;
+    return `${weekday(from2)} ${clock(from2)}, ${to ? lasted(to - from2.getTime()) : `down for ${lasted(now2 - from2.getTime())} now`}: ${o3.problem}`;
   }
-  function WeekOutages({ outages: outages2 = [], now = Date.now() }) {
-    const end = new Date(now), first = new Date(end.getFullYear(), end.getMonth(), end.getDate() - 6);
-    const t0 = first.getTime(), span = now - t0;
+  function WeekOutages({ outages: outages2 = [], now: now2 = Date.now() }) {
+    const end = new Date(now2), first = new Date(end.getFullYear(), end.getMonth(), end.getDate() - 6);
+    const t0 = first.getTime(), span = now2 - t0;
     const days = Array.from({ length: 7 }, (_3, i3) => new Date(first.getFullYear(), first.getMonth(), first.getDate() + i3));
-    const shown8 = outages2.filter((o3) => (o3.to ? new Date(o3.to).getTime() : now) > t0);
+    const shown8 = outages2.filter((o3) => (o3.to ? new Date(o3.to).getTime() : now2) > t0);
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3("span", { class: "outstrip", "aria-hidden": "true", children: [
         days.map((d3, i3) => /* @__PURE__ */ u3("span", { class: "outday", style: { left: `${(d3.getTime() - t0) / span * 100}%` }, children: weekday(d3).slice(0, 1) }, i3)),
         shown8.map((o3, i3) => {
-          const from2 = Math.max(t0, new Date(o3.from).getTime()), to = o3.to ? new Date(o3.to).getTime() : now;
+          const from2 = Math.max(t0, new Date(o3.from).getTime()), to = o3.to ? new Date(o3.to).getTime() : now2;
           return /* @__PURE__ */ u3("span", { class: "out" + (o3.to ? "" : " now"), style: { left: `${(from2 - t0) / span * 100}%`, width: `max(3px, ${(to - from2) / span * 100}%)` } }, i3);
         })
       ] }),
-      shown8.length ? /* @__PURE__ */ u3("span", { class: "outlist", children: shown8.map((o3, i3) => /* @__PURE__ */ u3("span", { class: "outline", children: outageWords(o3, now) }, i3)) }) : /* @__PURE__ */ u3("span", { class: "outline", children: "No outage: each check it missed passed the next time" }),
+      shown8.length ? /* @__PURE__ */ u3("span", { class: "outlist", children: shown8.map((o3, i3) => /* @__PURE__ */ u3("span", { class: "outline", children: outageWords(o3, now2) }, i3)) }) : /* @__PURE__ */ u3("span", { class: "outline", children: "No outage: each check it missed passed the next time" }),
       /* @__PURE__ */ u3("span", { class: "outfoot", children: "The watchdog checks it every 15 minutes" })
     ] });
   }
@@ -3604,15 +3736,15 @@
   var heardOnce = false;
   var listed = (names5) => names5.length <= 5 ? names5.slice(0, -1).join(", ") + (names5.length > 1 ? " and " : "") + names5[names5.length - 1] : `${names5.slice(0, 4).join(", ")} and ${names5.length - 4} more`;
   function sayChanges(p3) {
-    const now = /* @__PURE__ */ new Map();
-    for (const g2 of p3.groups) for (const a3 of g2.apps) now.set(a3.id, [a3.name, rowWords(a3, p3)[1]]);
+    const now2 = /* @__PURE__ */ new Map();
+    for (const g2 of p3.groups) for (const a3 of g2.apps) now2.set(a3.id, [a3.name, rowWords(a3, p3)[1]]);
     const changed4 = /* @__PURE__ */ new Map();
-    if (heardOnce) for (const [id2, [name, words5]] of now) {
+    if (heardOnce) for (const [id2, [name, words5]] of now2) {
       const was = heard.get(id2);
       if (was !== void 0 && was !== words5) changed4.set(words5, [...changed4.get(words5) || [], name]);
     }
     heard.clear();
-    for (const [id2, [, words5]] of now) heard.set(id2, words5);
+    for (const [id2, [, words5]] of now2) heard.set(id2, words5);
     heardOnce = true;
     const el3 = document.getElementById("statusAloud");
     if (!changed4.size || !el3 || !document.getElementById("status")?.classList.contains("active")) return;
@@ -3740,9 +3872,9 @@
   // web/src/status/appIcons.ts
   var icons2 = {};
   var asked = /* @__PURE__ */ new Set();
-  var listeners = [];
+  var listeners2 = [];
   function onIcon(f4) {
-    listeners.push(f4);
+    listeners2.push(f4);
   }
   async function readIcon(id2) {
     asked.add(id2);
@@ -3753,7 +3885,7 @@
     }
     if (icon === (icons2[id2] || "")) return false;
     icons2[id2] = icon;
-    listeners.forEach((f4) => f4());
+    listeners2.forEach((f4) => f4());
     return true;
   }
   var queue = [];
@@ -4094,10 +4226,10 @@
   }
 
   // web/src/status/CrashNote.tsx
-  function day2(when3, now = /* @__PURE__ */ new Date()) {
+  function day2(when3, now2 = /* @__PURE__ */ new Date()) {
     const d3 = new Date(when3);
     const start = (x3) => new Date(x3.getFullYear(), x3.getMonth(), x3.getDate()).getTime();
-    const days = Math.round((start(now) - start(d3)) / 864e5);
+    const days = Math.round((start(now2) - start(d3)) / 864e5);
     if (days <= 0) return "today";
     if (days === 1) return "yesterday";
     if (days < 7) return "on " + dayText(d3, { weekday: "long" });
@@ -4131,8 +4263,8 @@
   // web/src/status/Usage.tsx
   var keep2 = 30;
   function record(history, stats) {
-    const now = new Set(stats.map((s3) => s3.name));
-    for (const name of history.keys()) if (!now.has(name)) history.delete(name);
+    const now2 = new Set(stats.map((s3) => s3.name));
+    for (const name of history.keys()) if (!now2.has(name)) history.delete(name);
     for (const s3 of stats) {
       const h3 = history.get(s3.name) || [];
       h3.push(s3.cpu);
@@ -5032,10 +5164,10 @@
     for (const r3 of mediaRules()) {
       if (!written.has(r3)) written.set(r3, r3.media.mediaText);
       const was = written.get(r3);
-      let now = was;
-      if (/prefers-color-scheme:\s*dark/.test(was) && theme !== "system") now = theme === "dark" ? "all" : "not all";
-      if (/prefers-contrast:\s*more/.test(was) && contrast2 === "more") now = "all";
-      if (r3.media.mediaText !== now) r3.media.mediaText = now;
+      let now2 = was;
+      if (/prefers-color-scheme:\s*dark/.test(was) && theme !== "system") now2 = theme === "dark" ? "all" : "not all";
+      if (/prefers-contrast:\s*more/.test(was) && contrast2 === "more") now2 = "all";
+      if (r3.media.mediaText !== now2) r3.media.mediaText = now2;
     }
   }
   var rgb = (hex) => [1, 3, 5].map((i3) => parseInt(hex.slice(i3, i3 + 2), 16));
@@ -5304,75 +5436,6 @@
   var mountHost = (el3, props) => R(/* @__PURE__ */ u3(Host, { ...props }), el3);
   var mountRuntime = (el3, props) => R(/* @__PURE__ */ u3(Runtime, { ...props }), el3);
   var mountNewHomelab = (el3, props) => R(/* @__PURE__ */ u3(NewHomelab, { ...props }), el3);
-
-  // web/src/setup/Health.tsx
-  function facts({ h: h3, i: i3, machine }) {
-    const checked = never(h3.lastCheck) ? "no check yet" : `last check ${ago(h3.lastCheck)}`;
-    const agent = h3.agent === "running" ? { key: "agent", label: "Looks after the homelab", value: "Running", tone: "ok", sub: `Backs up every night at 03:30 and checks every app every 15 minutes; ${checked}`, short: "Backups and checks on" } : h3.agent === "quit" ? { key: "agent", label: "Looks after the homelab", value: "Stopped by Quit", tone: "warn", sub: "No backup or check runs until it starts again", short: "Backups and checks stopped by Quit" } : h3.agent === "stopped" ? { key: "agent", label: "Looks after the homelab", value: "Stopped", tone: "bad", sub: "No nightly backup, check, or update runs until it starts again", short: "Backups and checks stopped" } : { key: "agent", label: "Looks after the homelab", value: "Not set up", tone: "warn", sub: "Finish setting up adds it (Scheduled jobs)", short: "Backups and checks not set up" };
-    const name = (i3.runtimeFound || i3.runtime || "The runtime").split(",")[0];
-    const runtime = i3.runtimeOK ? { key: "runtime", label: "Runs the apps", value: name, tone: "ok", sub: (i3.runtimeFound || "").split(",").slice(1).join(",").trim() || "Running", short: name } : { key: "runtime", label: "Runs the apps", value: `${i3.runtime} is not running`, tone: "bad", sub: i3.runtimeHint || "", short: `${i3.runtime} is not running` };
-    const power = h3.power === "battery" ? { key: "power", label: "Power", value: "On battery", tone: "warn", sub: `The apps sleep when ${machine} does: plug it in`, short: "On battery" } : h3.power === "plugged" ? h3.keptAwake ? { key: "power", label: "Power", value: "Plugged in", tone: "ok", sub: "Kept awake while plugged in; the screen still sleeps", short: "Plugged in" } : { key: "power", label: "Power", value: "Plugged in", tone: "warn", sub: `${cap(machine)} may sleep: keeping it awake is off in Settings`, short: "Plugged in, may sleep" } : h3.keptAwake ? { key: "power", label: "Sleep", value: "Kept awake", tone: "ok", sub: "The screen still sleeps", short: "Kept awake" } : { key: "power", label: "Sleep", value: "May sleep", tone: "warn", sub: "Keeping it awake is off in Settings; the apps go away while it sleeps", short: "May sleep" };
-    const d3 = (i3.disks || [])[0];
-    const free = d3 ? d3.space.replace(/\s*\(\d+%\)$/, "") : "";
-    const [freeWords, ofWords] = free.includes(" free of ") ? free.split(" free of ") : [free, ""];
-    const disk2 = d3 ? {
-      key: "disk",
-      label: `Room on ${machine}`,
-      value: `${freeWords} free`,
-      tone: d3.low ? "bad" : "ok",
-      sub: d3.low ? d3.hint || "" : ofWords ? `of ${ofWords}` : "",
-      short: `${freeWords} free`,
-      used: d3.total ? Math.min(100, Math.max(1, Math.round(100 * (1 - d3.free / d3.total)))) : void 0
-    } : null;
-    return [agent, runtime, power, ...disk2 ? [disk2] : []];
-  }
-  var cap = (s3) => s3.charAt(0).toUpperCase() + s3.slice(1);
-  function StartAgent({ id: id2, start }) {
-    const [busy2, setBusy] = d2(false);
-    const go3 = async () => {
-      setBusy(true);
-      try {
-        await start();
-      } finally {
-        setBusy(false);
-      }
-    };
-    return /* @__PURE__ */ u3("button", { id: id2, class: "small", disabled: busy2, onClick: go3, children: busy2 ? "Starting…" : "Start it" });
-  }
-  function HealthTiles(p3) {
-    return /* @__PURE__ */ u3(S, { children: facts(p3).map((f4) => /* @__PURE__ */ u3(
-      Tile,
-      {
-        id: "health-" + f4.key,
-        label: f4.label,
-        tone: f4.tone === "ok" ? "" : f4.tone,
-        value: /* @__PURE__ */ u3(S, { children: [
-          /* @__PURE__ */ u3("span", { class: "dot " + f4.tone }),
-          f4.value
-        ] }),
-        sub: /* @__PURE__ */ u3(S, { children: [
-          f4.used !== void 0 && /* @__PURE__ */ u3("span", { class: "storagebar", role: "meter", "aria-valuenow": f4.used, "aria-valuemin": 0, "aria-valuemax": 100, "aria-label": `${f4.used}% used`, children: /* @__PURE__ */ u3("span", { style: `width:${f4.used}%` }) }),
-          /* @__PURE__ */ u3("span", { children: f4.sub }),
-          f4.key === "agent" && (p3.h.agent === "stopped" || p3.h.agent === "quit") && /* @__PURE__ */ u3(StartAgent, { id: "startAgent", start: p3.startAgent })
-        ] })
-      },
-      f4.key
-    )) });
-  }
-  function HealthLine(p3) {
-    const all = facts(p3);
-    const stopped2 = p3.h.agent === "stopped" || p3.h.agent === "quit";
-    return /* @__PURE__ */ u3(S, { children: [
-      /* @__PURE__ */ u3("span", { class: "label", children: p3.machine.charAt(0).toUpperCase() + p3.machine.slice(1) }),
-      all.map((f4) => /* @__PURE__ */ u3("span", { class: "item " + f4.tone, title: f4.sub, children: [
-        /* @__PURE__ */ u3("span", { class: "dot " + f4.tone }),
-        f4.short
-      ] }, f4.key)),
-      stopped2 && /* @__PURE__ */ u3(StartAgent, { id: "startAgentLine", start: p3.startAgent })
-    ] });
-  }
-  var mountHealthTiles = (el3, props) => R(props && /* @__PURE__ */ u3(HealthTiles, { ...props }), el3);
-  var mountHealthLine = (el3, props) => R(props && /* @__PURE__ */ u3(HealthLine, { ...props }), el3);
 
   // web/src/parts/Foot.tsx
   function Foot({ system, version, update, openSetup }) {
@@ -6437,6 +6500,7 @@
     $("healthLine").hidden = !props || !i3.rootOK;
     mountHealthTiles($("healthTiles"), props);
     mountHealthLine($("healthLine"), props);
+    setMachine(props);
   }
   async function loadHost() {
     await hostData.load();
@@ -6553,8 +6617,8 @@
     clearInterval(runtimeWatch);
     if (card.hidden) return;
     runtimeWatch = setInterval(async () => {
-      const now = await go().Host().catch(() => null);
-      if (now && now.runtimeOK) {
+      const now2 = await go().Host().catch(() => null);
+      if (now2 && now2.runtimeOK) {
         clearInterval(runtimeWatch);
         await loadHost();
         loadSetup();
@@ -7448,11 +7512,11 @@
   };
 
   // web/src/status/Overnight.tsx
-  function nightOf(now) {
-    const d3 = new Date(now);
+  function nightOf(now2) {
+    const d3 = new Date(now2);
     if (d3.getHours() < 5 || d3.getHours() >= 12) return null;
     const from2 = new Date(d3.getFullYear(), d3.getMonth(), d3.getDate() - 1, 20).getTime();
-    return [from2, now];
+    return [from2, now2];
   }
   function overnightWords(n3) {
     const night = nightOf(n3.now);
@@ -7485,12 +7549,12 @@
     return parts3.length ? "Overnight: " + parts3.join(", ") + "." : null;
   }
   var key3 = "homelab.overnightHidden";
-  var today = (now) => new Date(now).toDateString();
+  var today = (now2) => new Date(now2).toDateString();
   var hiddenOn = "";
-  var hiddenToday = (now) => {
-    if (hiddenOn === today(now)) return true;
+  var hiddenToday = (now2) => {
+    if (hiddenOn === today(now2)) return true;
     try {
-      return localStorage.getItem(key3) === today(now);
+      return localStorage.getItem(key3) === today(now2);
     } catch {
       return false;
     }
@@ -7615,11 +7679,11 @@
     const paused = copies.filter((c4) => c4.state === "paused");
     const kept5 = Math.max(0, ...copies.map((c4) => c4.count));
     const size2 = fresh.reduce((t3, c4) => t3 + c4.size, 0);
-    const lastNight = !never(o3.lastRun) && Date.now() - new Date(o3.lastRun).getTime() < 30 * 36e5;
+    const lastNight2 = !never(o3.lastRun) && Date.now() - new Date(o3.lastRun).getTime() < 30 * 36e5;
     const needs = [...stale, ...paused];
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3(Card, { kind: "bkcard bklast", id: "copiesTile", children: [
-        /* @__PURE__ */ u3(CardHead, { title: lastNight || never(o3.lastRun) ? "Last night" : "Last backup", children: /* @__PURE__ */ u3("span", { class: "muted", children: "Every night at 03:30" }) }),
+        /* @__PURE__ */ u3(CardHead, { title: lastNight2 || never(o3.lastRun) ? "Last night" : "Last backup", children: /* @__PURE__ */ u3("span", { class: "muted", children: "Every night at 03:30" }) }),
         /* @__PURE__ */ u3(
           CardFigure,
           {
@@ -7631,7 +7695,7 @@
                 " copied"
               ] })
             ] }) : "None yet" }),
-            label: never(o3.lastRun) ? void 0 : [lastNight ? `Finished ${clockText(new Date(o3.lastRun))}` : ago(o3.lastRun), size2 ? bytes(size2) : "", o3.destinationOK ? `Encrypted to ${placeName(o3.destination)}` : ""].filter(Boolean).join(" · "),
+            label: never(o3.lastRun) ? void 0 : [lastNight2 ? `Finished ${clockText(new Date(o3.lastRun))}` : ago(o3.lastRun), size2 ? bytes(size2) : "", o3.destinationOK ? `Encrypted to ${placeName(o3.destination)}` : ""].filter(Boolean).join(" · "),
             chip: stale.length ? /* @__PURE__ */ u3("span", { class: "bkskipped", children: stale.length === 1 ? `${stale[0].name} skipped` : `${stale.length} skipped` }) : void 0
           }
         ),
@@ -7654,7 +7718,7 @@
             /* @__PURE__ */ u3("dd", { children: "Tonight, 03:30" })
           ] }),
           /* @__PURE__ */ u3("div", { children: [
-            /* @__PURE__ */ u3("dt", { children: lastNight ? "Last night's size" : "Its size" }),
+            /* @__PURE__ */ u3("dt", { children: lastNight2 ? "Last night's size" : "Its size" }),
             /* @__PURE__ */ u3("dd", { children: size2 ? bytes(size2) : "—" })
           ] }),
           /* @__PURE__ */ u3("div", { children: [
@@ -8026,14 +8090,33 @@
   var backupsAsked = 0;
   function drawOvernight() {
     if (!lastStatus) return;
-    const now = Date.now();
-    if (nightOf(now) && !backupsData.value && now - backupsAsked > 6e4) {
-      backupsAsked = now;
+    const now2 = Date.now();
+    if (nightOf(now2) && !backupsData.value && now2 - backupsAsked > 6e4) {
+      backupsAsked = now2;
       backupsData.fresh(10 * 6e4);
     }
-    mountOvernight($("overnightLine"), { now, apps: lastStatus.apps, events: lastEvents, outages, copies: backupsData.value?.copies || null, watched });
+    mountOvernight($("overnightLine"), { now: now2, apps: lastStatus.apps, events: lastEvents, outages, copies: backupsData.value?.copies || null, watched });
   }
   backupsData.watch(drawOvernight);
+  backupsData.watch(() => {
+    if (lastStatus) renderTiles(lastStatus);
+  });
+  onMachine(() => {
+    if (lastStatus) renderTiles(lastStatus);
+  });
+  function lastNight() {
+    const o3 = backupsData.value;
+    if (!o3) return null;
+    const copies = o3.copies || [];
+    const counted2 = copies.filter((c4) => c4.state !== "paused");
+    const at2 = o3.lastRun && !o3.lastRun.startsWith("0001") ? new Date(o3.lastRun) : null;
+    return {
+      copied: counted2.filter((c4) => c4.state === "fresh").length,
+      of: counted2.length,
+      skipped: counted2.filter((c4) => c4.state === "stale").map((c4) => c4.name),
+      at: at2 ? `Last run ${at2.toLocaleDateString("en-US", { weekday: "short" })} ${at2.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}` : "Not run yet"
+    };
+  }
   var seen = loadSeen();
   var savingsHistory = [];
   var lastAttention = -1;
@@ -8057,8 +8140,16 @@
         pageOpener.open(a3.id);
         requestAnimationFrame(() => document.getElementById("appLog")?.scrollIntoView({ block: "start" }));
       },
-      open: (a3) => pageOpener.open(a3.id)
+      open: (a3) => pageOpener.open(a3.id),
+      backups: lastNight(),
+      openBackups: () => navigate("backups"),
+      mac: machineNow()
     });
+    mountSavings($("savingsCard"), { status: st, history: savingsHistory });
+    if (!backupsData.value && Date.now() - backupsAsked > 6e4) {
+      backupsAsked = Date.now();
+      backupsData.fresh(10 * 6e4);
+    }
     const n3 = trouble2.length;
     $("statusCount").textContent = n3 ? String(n3) : "";
     setHealthApps(trouble2.map((a3) => ({ id: a3.id, name: a3.name, words: stateOf(a3, batteryPaused, held)[1] })), () => navigate("status"));
@@ -9091,11 +9182,11 @@
     if (!m3) return mem;
     return bytes(Number(m3[1]) * 1024 ** " KMGT".indexOf((m3[2] || " ").toUpperCase()));
   }
-  function when(t3, now = /* @__PURE__ */ new Date()) {
+  function when(t3, now2 = /* @__PURE__ */ new Date()) {
     const d3 = new Date(t3);
     const clock3 = clockText(d3);
     const day3 = (x3) => new Date(x3.getFullYear(), x3.getMonth(), x3.getDate()).getTime();
-    const days = Math.round((day3(now) - day3(d3)) / 864e5);
+    const days = Math.round((day3(now2) - day3(d3)) / 864e5);
     if (days === 0) return `Today, ${clock3}`;
     if (days === 1) return `Yesterday, ${clock3}`;
     return dayText(d3, { weekday: "short", day: "numeric", month: "short" });
@@ -9105,15 +9196,15 @@
     const ok = days.reduce((n3, d3) => n3 + d3.ok, 0), all = days.reduce((n3, d3) => n3 + d3.all, 0);
     return all ? ok / all : 1;
   }
-  function lastDown(outages2, weekFrom, now = Date.now()) {
-    const shown8 = outages2.filter((o4) => (o4.to ? new Date(o4.to).getTime() : now) > weekFrom);
+  function lastDown(outages2, weekFrom, now2 = Date.now()) {
+    const shown8 = outages2.filter((o4) => (o4.to ? new Date(o4.to).getTime() : now2) > weekFrom);
     if (!shown8.length) return "";
     const o3 = shown8.reduce((a3, b2) => new Date(b2.from) > new Date(a3.from) ? b2 : a3);
     const from2 = new Date(o3.from), at2 = `${dayText(from2, { weekday: "short" })} at ${clockText(from2)}`;
     const line = o3.to ? `Last down ${at2} for ${lasted(new Date(o3.to).getTime() - from2.getTime())}: ${o3.problem}` : `Down since ${at2}: ${o3.problem}`;
     return shown8.length > 1 ? `${line} · ${shown8.length} outages` : line;
   }
-  function weekWords(days, outages2, now = Date.now(), seen2 = {}) {
+  function weekWords(days, outages2, now2 = Date.now(), seen2 = {}) {
     const ok = days.reduce((n4, d3) => n4 + d3.ok, 0), all = days.reduce((n4, d3) => n4 + d3.all, 0);
     if (!all) {
       if (seen2.watching && seen2.stopped) return ["Not checked", "The watchdog doesn't check it while it's stopped"];
@@ -9123,9 +9214,9 @@
     const missed2 = days.filter((d3) => d3.all && d3.ok < d3.all);
     if (!missed2.length) return ["Up all week", "Every check passed, every 15 minutes"];
     const share4 = Math.floor(ok / all * 1e3) / 10;
-    const first = new Date(now);
+    const first = new Date(now2);
     const weekFrom = new Date(first.getFullYear(), first.getMonth(), first.getDate() - 6).getTime();
-    if (outages2) return [`Up ${share4}%`, lastDown(outages2, weekFrom, now) || "Each check it missed passed the next time"];
+    if (outages2) return [`Up ${share4}%`, lastDown(outages2, weekFrom, now2) || "Each check it missed passed the next time"];
     const n3 = missed2.reduce((k3, d3) => k3 + d3.all - d3.ok, 0);
     return [`Up ${share4}%`, `It didn't answer ${n3} of its checks on ${missed2.map((d3) => d3.weekday).join(", ")}`];
   }
@@ -10466,8 +10557,8 @@
     const all = ledger.transactions;
     const home2 = new Map(inHome(v3.plan, all).map((t3) => [t3.id, t3.amount]));
     const amt = (t3) => home2.get(t3.id) ?? t3.amount;
-    const now = v3.today.slice(0, 7);
-    const thisMonth = all.filter((t3) => t3.date.startsWith(now) && !t3.to);
+    const now2 = v3.today.slice(0, 7);
+    const thisMonth = all.filter((t3) => t3.date.startsWith(now2) && !t3.to);
     const sum = (f4) => thisMonth.filter(f4).reduce((s3, t3) => s3 + amt(t3), 0);
     const lastMonthDay = (() => {
       const d3 = new Date(+v3.today.slice(0, 4), +v3.today.slice(5, 7) - 2, 1);
@@ -10780,7 +10871,7 @@
         return;
       }
       setSeen({ id: t3.id });
-      const still = (next) => setSeen((now) => now?.id === t3.id ? next : now);
+      const still = (next) => setSeen((now2) => now2?.id === t3.id ? next : now2);
       try {
         still({ id: t3.id, url: await readReceipt(t3.receipt) });
       } catch (e3) {
@@ -10888,10 +10979,10 @@
     const undoable = async (words5, was, txs) => {
       if (!await change(txs)) return;
       showUndo(words5, () => {
-        const now = latest2.current;
-        if (!now || !saveLedger2) return;
-        const back4 = new Map(was.map((t3) => [t3.id, t3])), there = new Set(now.transactions.map((t3) => t3.id));
-        saveLedger2({ ...now, transactions: [...now.transactions.map((t3) => back4.get(t3.id) || t3), ...was.filter((t3) => !there.has(t3.id))] });
+        const now2 = latest2.current;
+        if (!now2 || !saveLedger2) return;
+        const back4 = new Map(was.map((t3) => [t3.id, t3])), there = new Set(now2.transactions.map((t3) => t3.id));
+        saveLedger2({ ...now2, transactions: [...now2.transactions.map((t3) => back4.get(t3.id) || t3), ...was.filter((t3) => !there.has(t3.id))] });
       });
     };
     const removePicked = () => {
@@ -11984,8 +12075,8 @@
   function BalancesForm(props) {
     const { plan, start } = props;
     const accounts = plan.accounts || [];
-    const now = (a3) => start?.[a3.id] !== void 0 ? Math.round(start[a3.id] / rateOf(plan, a3) * 100) / 100 : void 0;
-    const est = (a3) => owed(a3.kind) ? Math.max(0, Math.round(((now(a3) ?? a3.balance + (a3.pending || 0)) - (a3.pending || 0)) * 100) / 100) : now(a3) ?? a3.balance;
+    const now2 = (a3) => start?.[a3.id] !== void 0 ? Math.round(start[a3.id] / rateOf(plan, a3) * 100) / 100 : void 0;
+    const est = (a3) => owed(a3.kind) ? Math.max(0, Math.round(((now2(a3) ?? a3.balance + (a3.pending || 0)) - (a3.pending || 0)) * 100) / 100) : now2(a3) ?? a3.balance;
     const [typed, setTyped] = d2(() => ({ cushion: String(plan.cushion || 0), ...Object.fromEntries(accounts.flatMap((a3) => [[a3.id, cents(est(a3))], ...a3.kind === "card" ? [[a3.id + ":p", cents(a3.pending || 0)]] : []])) }));
     const { busy: busy2, keep: keep3, touched: touched2, watch: watch2 } = useSaving(props);
     const [problem, setProblem] = d2("");
@@ -12511,17 +12602,17 @@
       setProblem(wrong);
       if (wrong) return;
       const renamed = new Map(rows.filter((r3) => r3.was).map((r3) => [r3.was, r3.name.trim()]));
-      const now = (old) => {
+      const now2 = (old) => {
         if (!old) return old;
         if (renamed.has(old)) return renamed.get(old);
         const gone = (props.categories || []).find((c4) => c4.name === old);
         if (!gone) return old;
-        return gone.parent ? now(gone.parent) : void 0;
+        return gone.parent ? now2(gone.parent) : void 0;
       };
       const categories2 = rows.map((r3) => ({ name: r3.name.trim(), parent: r3.parent && renamed.get(r3.parent) || r3.parent || void 0, icon: r3.icon || void 0, income: r3.income || void 0 }));
       let changed4 = false;
       const transactions = (ledger?.transactions || []).map((t3) => {
-        const cat = now(t3.category), splits = t3.splits?.map((sp) => ({ ...sp, category: now(sp.category) || "Other" }));
+        const cat = now2(t3.category), splits = t3.splits?.map((sp) => ({ ...sp, category: now2(sp.category) || "Other" }));
         if (cat === t3.category && JSON.stringify(splits) === JSON.stringify(t3.splits)) return t3;
         changed4 = true;
         return { ...t3, category: cat, splits };
@@ -13179,7 +13270,7 @@
     const cushion = v3.plan.cushion || 0;
     const values = days.map((d3) => d3.balance);
     const low = values.indexOf(Math.min(...values));
-    const now = L2.account[v3.checking] ? todayOf(v3, L2.account[v3.checking]) : values[0];
+    const now2 = L2.account[v3.checking] ? todayOf(v3, L2.account[v3.checking]) : values[0];
     const marks2 = days.flatMap((d3, i3) => (d3.events || []).filter((e3) => e3.people || Math.abs(e3.amount) >= bigBill).map((e3) => ({ i: i3, tone: e3.amount > 0 ? "in" : "out" })));
     const p3 = v3.periods[sel2];
     const from2 = days.findIndex((d3) => d3.date >= (p3?.start || "")), to = days.map((d3) => d3.date <= (p3?.last || "")).lastIndexOf(true);
@@ -13204,7 +13295,7 @@
           /* @__PURE__ */ u3(
             Stat,
             {
-              value: /* @__PURE__ */ u3(Amount, { value: now }),
+              value: /* @__PURE__ */ u3(Amount, { value: now2 }),
               caption: "Today",
               aside: /* @__PURE__ */ u3("div", { class: "fx-right", children: [
                 /* @__PURE__ */ u3(Amount, { value: values[low], form: "full", tone: values[low] < cushion ? "out" : "" }),
@@ -13227,7 +13318,7 @@
               format: tick,
               onPick: openDay && ((i3) => openDay(days[i3].date)),
               band: from2 >= 0 && to > from2 ? { from: from2, to } : void 0,
-              label: `Checking each day from ${dayShort(days[0].date)} to ${dayShort(days[days.length - 1].date)}: ${money(now)} today, lowest ${money(values[low])} on ${dayShort(days[low].date)}. The paycheck's payments list every number.${openDay ? " A day clicked opens it on the calendar." : ""}`,
+              label: `Checking each day from ${dayShort(days[0].date)} to ${dayShort(days[days.length - 1].date)}: ${money(now2)} today, lowest ${money(values[low])} on ${dayShort(days[low].date)}. The paycheck's payments list every number.${openDay ? " A day clicked opens it on the calendar." : ""}`,
               tip: (i3) => /* @__PURE__ */ u3(S, { children: [
                 /* @__PURE__ */ u3("div", { class: "fx-tiphead", children: [
                   /* @__PURE__ */ u3("span", { children: dayLong(days[i3].date) }),
@@ -14088,10 +14179,10 @@
             ] }) }),
             /* @__PURE__ */ u3("td", { class: "today", children: /* @__PURE__ */ u3("span", { class: "num", children: money(today2(a3)) }) }),
             cols.map((p3, i3) => {
-              const was = i3 ? at2(a3, cols[i3 - 1]) : today2(a3), now = at2(a3, p3);
+              const was = i3 ? at2(a3, cols[i3 - 1]) : today2(a3), now2 = at2(a3, p3);
               return /* @__PURE__ */ u3("td", { class: i3 === sel2 ? "on" : "", children: [
-                /* @__PURE__ */ u3("span", { class: "num" + (a3.id === v3.checking && p3.left < (v3.plan.cushion || 0) ? p3.left < 0 ? " bad" : " warn" : ""), children: money(now) }),
-                change(now - was)
+                /* @__PURE__ */ u3("span", { class: "num" + (a3.id === v3.checking && p3.left < (v3.plan.cushion || 0) ? p3.left < 0 ? " bad" : " warn" : ""), children: money(now2) }),
+                change(now2 - was)
               ] }, p3.start);
             })
           ] }, a3.id)) }),
@@ -15374,7 +15465,7 @@
     const back3 = Math.max(1, Math.min(ranges2.find(([k3]) => k3 === range)?.[2] ?? 3, (today2.getFullYear() - kept5.getFullYear()) * 12 + today2.getMonth() - kept5.getMonth()));
     const months = worthByMonth(v3, back3, 3);
     const start = months[0];
-    const now = netWorth(v3);
+    const now2 = netWorth(v3);
     const focus = group2 ? grouped(v3).find((g2) => g2.key === group2) : void 0;
     const inFocus = (a3) => !focus || focus.accounts.includes(a3);
     const owned = accounts.filter((a3) => !owed(a3.kind));
@@ -15430,8 +15521,8 @@
     };
     return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3("div", { class: "fx-board", children: [
       /* @__PURE__ */ u3("div", { class: "fx-figurerow", children: [
-        /* @__PURE__ */ u3(Widget, { title: "Net worth", kind: "fx-figurecard", children: /* @__PURE__ */ u3(Stat, { size: "lg", value: /* @__PURE__ */ u3(Amount, { value: now }) }) }),
-        /* @__PURE__ */ u3(Widget, { title: `Since ${dayShort(start.date)}`, kind: "fx-figurecard", children: /* @__PURE__ */ u3(Stat, { size: "lg", value: /* @__PURE__ */ u3(Amount, { value: now - start.net, sign: true, tone: "auto" }), aside: /* @__PURE__ */ u3(Delta, { value: now - start.net, base: start.net, shareOnly: true }) }) }),
+        /* @__PURE__ */ u3(Widget, { title: "Net worth", kind: "fx-figurecard", children: /* @__PURE__ */ u3(Stat, { size: "lg", value: /* @__PURE__ */ u3(Amount, { value: now2 }) }) }),
+        /* @__PURE__ */ u3(Widget, { title: `Since ${dayShort(start.date)}`, kind: "fx-figurecard", children: /* @__PURE__ */ u3(Stat, { size: "lg", value: /* @__PURE__ */ u3(Amount, { value: now2 - start.net, sign: true, tone: "auto" }), aside: /* @__PURE__ */ u3(Delta, { value: now2 - start.net, base: start.net, shareOnly: true }) }) }),
         /* @__PURE__ */ u3(Widget, { title: "What's owed", kind: "fx-figurecard", children: owes < 5e-3 && !loans.length ? /* @__PURE__ */ u3("p", { class: "fx-say", children: "Nothing owed: no card balance, no loan." }) : /* @__PURE__ */ u3("p", { class: "fx-say", children: [
           "You owe ",
           /* @__PURE__ */ u3(Amount, { value: owes, form: "full", tone: "out" }),
@@ -17622,7 +17713,7 @@ ${pays}
 
   // web/src/finances/widgets/InvestSummary.tsx
   var kinds2 = ["investment", "retirement"];
-  var share3 = (was, now) => Math.abs(was) < 5e-3 ? "" : `${now >= was ? "+" : "−"}${Math.abs((now - was) / Math.abs(was) * 100).toFixed(1)}%`;
+  var share3 = (was, now2) => Math.abs(was) < 5e-3 ? "" : `${now2 >= was ? "+" : "−"}${Math.abs((now2 - was) / Math.abs(was) * 100).toFixed(1)}%`;
   function InvestSummaryWidget({ v: v3, open: open5, openAccount }) {
     const first = v3.today.slice(0, 8) + "01";
     const accounts = (v3.plan.accounts || []).filter((a3) => kinds2.includes(a3.kind)).map((a3) => ({ a: a3, now: todayOf(v3, a3), was: worthOn(v3, a3, first) })).sort((x3, y3) => y3.now - x3.now);
@@ -17640,14 +17731,14 @@ ${pays}
         figure: /* @__PURE__ */ u3(Amount, { value: total }),
         label: accounts.length === 1 ? "One account" : `${accounts.length} accounts`,
         chip: chip || void 0,
-        children: /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: accounts.map(({ a: a3, now, was }) => /* @__PURE__ */ u3(
+        children: /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: accounts.map(({ a: a3, now: now2, was }) => /* @__PURE__ */ u3(
           Row,
           {
             lead: /* @__PURE__ */ u3(AcctMark, { a: a3, size: "sm" }),
             title: a3.name,
             when: /* @__PURE__ */ u3("span", { class: "fx-whenstack", children: [
-              /* @__PURE__ */ u3(Amount, { value: now, form: "full" }),
-              share3(was, now) && !amountsHidden() && /* @__PURE__ */ u3("span", { class: "fx-sub " + (now >= was ? "fx-in" : "fx-out"), children: share3(was, now) })
+              /* @__PURE__ */ u3(Amount, { value: now2, form: "full" }),
+              share3(was, now2) && !amountsHidden() && /* @__PURE__ */ u3("span", { class: "fx-sub " + (now2 >= was ? "fx-in" : "fx-out"), children: share3(was, now2) })
             ] }),
             whenPlain: true,
             onOpen: openAccount && (() => openAccount(a3.id)),
@@ -17707,11 +17798,11 @@ ${pays}
   }
   var billsOf = (p3) => p3.rows.filter((r3) => !r3.outside && !r3.into);
   function LeadWidget({ v: v3, L: L2, sel: sel2, open: open5 }) {
-    const now = v3.checkingNow, pay = v3.afterPay;
+    const now2 = v3.checkingNow, pay = v3.afterPay;
     const i3 = Math.max(0, Math.min(sel2, v3.periods.length - 1));
     const p3 = v3.periods[i3];
-    if (!now && !p3) return null;
-    const typedToday = now && now.from === now.date;
+    if (!now2 && !p3) return null;
+    const typedToday = now2 && now2.from === now2.date;
     const who = pay && v3.periods.find((q2) => q2.pay?.date === pay.date)?.pay;
     const whose = who ? names2(who.people, L2) : "";
     const sameDay = pay ? v3.periods.find((q2) => q2.pay?.date === pay.date)?.rows.filter((r3) => r3.date === pay.date && !r3.outside && !r3.into).length || 0 : 0;
@@ -17720,20 +17811,20 @@ ${pays}
     const cushion = v3.plan.cushion || 0;
     const before3 = i3 > 0 ? v3.periods[i3 - 1] : void 0;
     const figures = /* @__PURE__ */ u3("div", { class: "fx-clearrow", children: [
-      now && /* @__PURE__ */ u3(
+      now2 && /* @__PURE__ */ u3(
         Figure,
         {
           id: "finNow",
-          value: now.result,
+          value: now2.result,
           caption: "Checking now",
           tip: /* @__PURE__ */ u3(
             Working,
             {
-              w: now,
+              w: now2,
               L: L2,
-              start: `Checking, typed in ${dayLong(now.from)}`,
+              start: `Checking, typed in ${dayLong(now2.from)}`,
               end: "Checking now",
-              note: typedToday ? "As typed in today." : `Typed in ${dayShort(now.from)}, with what has happened since.`
+              note: typedToday ? "As typed in today." : `Typed in ${dayShort(now2.from)}, with what has happened since.`
             }
           )
         }
@@ -18117,15 +18208,15 @@ ${pays}
   // web/src/finances/widgets/Worth.tsx
   function NetWorthWidget({ v: v3, open: open5 }) {
     if (!(v3.plan.accounts || []).length) return null;
-    const now = netWorth(v3);
+    const now2 = netWorth(v3);
     const est = (v3.worthEstimated || []).filter((p3) => p3.date < v3.today);
     const kept5 = [...est, ...(v3.worth || []).filter((p3) => p3.date < v3.today)];
-    const values = [...kept5.map((p3) => p3.amount), now];
+    const values = [...kept5.map((p3) => p3.amount), now2];
     const month3 = worthByMonth(v3, 1, 0)[0];
     const each = (v3.plan.accounts || []).map((a3) => worthOf(v3, a3));
     const owned = each.filter((n3) => n3 > 0).reduce((t3, n3) => t3 + n3, 0), owes = -each.filter((n3) => n3 < 0).reduce((t3, n3) => t3 + n3, 0);
     return /* @__PURE__ */ u3(Widget, { title: "Net worth", span: "all", kind: "fx-worthmini", open: open5, openLabel: "Open Net worth", children: [
-      /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: now }), caption: "Today", aside: month3 && /* @__PURE__ */ u3(Delta, { value: now - month3.net, base: month3.net, shareOnly: true }) }),
+      /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: now2 }), caption: "Today", aside: month3 && /* @__PURE__ */ u3(Delta, { value: now2 - month3.net, base: month3.net, shareOnly: true }) }),
       values.length > 2 && /* @__PURE__ */ u3(
         AreaChart,
         {
@@ -18137,7 +18228,7 @@ ${pays}
           format: tick,
           behindTo: est.length || void 0,
           xLabels: [{ i: 0, label: dayShort(kept5[0]?.date || v3.today) }, { i: values.length - 1, label: "Today" }],
-          label: `Net worth from ${money(values[0])} on ${dayShort(kept5[0]?.date || v3.today)} to ${money(now)} today.`,
+          label: `Net worth from ${money(values[0])} on ${dayShort(kept5[0]?.date || v3.today)} to ${money(now2)} today.`,
           tip: (i3) => /* @__PURE__ */ u3(S, { children: [
             /* @__PURE__ */ u3("div", { class: "fx-tiphead", children: [
               /* @__PURE__ */ u3("span", { children: i3 === values.length - 1 ? "Today" : dayShort(kept5[i3].date) }),
@@ -18879,8 +18970,8 @@ ${pays}
   var tabbed = {};
   var changed3 = () => {
   };
-  function keepsTabs(screen, now, put) {
-    tabbed[screen] = { now, put };
+  function keepsTabs(screen, now2, put) {
+    tabbed[screen] = { now: now2, put };
   }
   function tabChanged() {
     changed3();
@@ -20402,23 +20493,23 @@ ${pays}
       ] })
     ] });
   }
-  function RunningCard({ lock: lock2, now, stop: stop2, stopping }) {
+  function RunningCard({ lock: lock2, now: now2, stop: stop2, stopping }) {
     const title = jobTitle(lock2.kind, lock2.action, lock2.flags || []);
-    const p3 = now?.progress && now.progress.total ? { done: now.progress.done || 0, total: now.progress.total, label: now.progress.label || "", note: now.progress.note, eta: now.progress.eta } : void 0;
+    const p3 = now2?.progress && now2.progress.total ? { done: now2.progress.done || 0, total: now2.progress.total, label: now2.progress.label || "", note: now2.progress.note, eta: now2.progress.eta } : void 0;
     return /* @__PURE__ */ u3(Card, { kind: "tidyjob", id: "tidyRunning", children: [
       /* @__PURE__ */ u3("p", { class: "sr", role: "status", children: [
         title,
         ": ",
-        stopping ? "stopping" : now?.step ? `step ${now.step.n} of ${now.step.total}, ${now.step.text}` : "running"
+        stopping ? "stopping" : now2?.step ? `step ${now2.step.n} of ${now2.step.total}, ${now2.step.text}` : "running"
       ] }),
       /* @__PURE__ */ u3(CardHead, { title: stopping ? `${title}: stopping` : title, children: stopping ? /* @__PURE__ */ u3("button", { class: "small", disabled: true, title: "It stops at its next safe point, so nothing is left half done", children: "Stopping…" }) : stop2 && /* @__PURE__ */ u3("button", { class: "small", onClick: stop2, title: "It stops at a safe point; run it again to carry on where it left off", children: "Stop" }) }),
-      now?.step && /* @__PURE__ */ u3("p", { class: "tidystep", children: [
+      now2?.step && /* @__PURE__ */ u3("p", { class: "tidystep", children: [
         "Step ",
-        now.step.n,
+        now2.step.n,
         " of ",
-        now.step.total,
+        now2.step.total,
         " · ",
-        now.step.text
+        now2.step.text
       ] }),
       /* @__PURE__ */ u3(Bar, { title, p: p3, idle: "Working…" }),
       stopping ? /* @__PURE__ */ u3("p", { class: "muted tidynow", children: "Stopping at the next safe point, so nothing is left half done. Run it again to carry on from there." }) : p3?.note && /* @__PURE__ */ u3("p", { class: "muted tidynow", children: [
@@ -21243,12 +21334,12 @@ ${pays}
   function MusicSteps({ l: l3 }) {
     const at2 = Math.max(0, STAGES.indexOf(l3.stage));
     return /* @__PURE__ */ u3("ol", { class: "tidysteps tidytrack", "aria-label": "The clean-up, step by step", children: MUSIC_STEPS.map(([, action, label], i3) => {
-      const done = at2 > i3, now = at2 === i3, r3 = last(l3, action);
-      return /* @__PURE__ */ u3("li", { class: done ? "done" : now ? "now" : "", children: [
+      const done = at2 > i3, now2 = at2 === i3, r3 = last(l3, action);
+      return /* @__PURE__ */ u3("li", { class: done ? "done" : now2 ? "now" : "", children: [
         /* @__PURE__ */ u3("span", { class: "num", "aria-hidden": "true", children: done ? /* @__PURE__ */ u3("svg", { viewBox: "0 0 24 24", children: /* @__PURE__ */ u3("path", { d: "M20 6 9 17l-5-5" }) }) : i3 + 1 }),
         /* @__PURE__ */ u3("span", { class: "grow", children: [
           /* @__PURE__ */ u3("strong", { children: label }),
-          /* @__PURE__ */ u3("span", { class: "muted", children: done ? r3 ? ago(r3.at) : "Done" : now ? "Next" : "Later" })
+          /* @__PURE__ */ u3("span", { class: "muted", children: done ? r3 ? ago(r3.at) : "Done" : now2 ? "Next" : "Later" })
         ] })
       ] }, label);
     }) });
@@ -22415,12 +22506,12 @@ ${pays}
   }
   addEventListener("wheel", (e3) => {
     if (onPhone() || e3.ctrlKey || Math.abs(e3.deltaX) <= Math.abs(e3.deltaY)) return;
-    const now = performance.now();
-    if (now - swipeAt > 300) {
+    const now2 = performance.now();
+    if (now2 - swipeAt > 300) {
       swipeSum = 0;
       swiped = false;
     }
-    swipeAt = now;
+    swipeAt = now2;
     if (swiped || scrollsSideways(e3.target, e3.deltaX)) return;
     swipeSum += e3.deltaX;
     if (Math.abs(swipeSum) > 150) {
