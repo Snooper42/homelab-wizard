@@ -6217,9 +6217,7 @@ const smokes = [
     if (await page.$('#finRoot .fx-amount.fx-out, #finRoot .fx-amount.fx-in')) throw new Error('a hidden amount still says which way it went');
     const saved = await page.evaluate(() => window.__MOCK.financesSaved || []);
     if (!saved.length || !saved[saved.length - 1].hideAmounts) throw new Error('hidden amounts were not kept in the plan');
-    // The sidebar's eye, from another screen, shows them again.
-    await page.click('button[data-screen="status"]');
-    await page.waitForSelector('#status.active', { timeout: 3000 });
+    // The sidebar's eye by the accounts (on Finances only, redesign-loop R2) shows them again.
     await page.click('#finNav .fx-eye');
     await page.waitForFunction(() => !(window.__MOCK.financesSaved.at(-1).hideAmounts), null, { timeout: 3000 });
     if (!(await page.textContent('#finNav')).match(/\$\d/)) throw new Error('the sidebar did not show its amounts again');
