@@ -60,7 +60,7 @@ For a pull request that needs Q's review, check every one of these, and say whic
   - **What's in `homelab report` and the logs:** checked to carry no amount, payee or key.
 - [ ] **Q4. The backups' engine, for R's Backups** (`docs/Redesign.md`, *New work behind the pictures*).
   - **(a) Each app's result each night,** kept for fourteen nights.
-  - **(b) Not in any backup:** done as D1, above.
+  - **(b) Not in any backup:** moved up, as D1.
   - **(c) Get something back:** one file or a whole app from a chosen night, through the backup engine, saved as a copy or put back, with a test against a real Duplicati and Kopia (`test/realdocker`).
 
   Each part is one pull request, then a line for R under **From the other lanes** in `redesign-loop.md`.
