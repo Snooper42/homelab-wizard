@@ -2361,13 +2361,13 @@
     return /* @__PURE__ */ u3("ul", { class: "alertlist" + (kind ? " " + kind : ""), children });
   }
   function Row({ dot, lead: lead2, title, sub, subTone, children, end, when: when3, whenTitle, whenPlain, onOpen, openLabel, pressed }) {
-    const Box = onOpen ? "span" : "div";
+    const Box2 = onOpen ? "span" : "div";
     const body = /* @__PURE__ */ u3(S, { children: [
       dot !== void 0 && /* @__PURE__ */ u3("span", { class: "dot " + dot }),
       lead2,
-      /* @__PURE__ */ u3(Box, { class: "grow", children: [
+      /* @__PURE__ */ u3(Box2, { class: "grow", children: [
         title !== void 0 && /* @__PURE__ */ u3("strong", { children: title }),
-        !!sub && /* @__PURE__ */ u3(Box, { class: (subTone || "muted") + (onOpen ? " line" : ""), children: sub }),
+        !!sub && /* @__PURE__ */ u3(Box2, { class: (subTone || "muted") + (onOpen ? " line" : ""), children: sub }),
         children
       ] }),
       end,
@@ -17654,10 +17654,13 @@ ${pays}
     }
   };
   var pickedOf = (v3, past, sel2) => Math.max(-past.length, Math.min(sel2, v3.periods.length - 1));
-  function PeriodBar({ by, setBy, title, dates, step: step2, canBack, canOn, today: today2, atToday }) {
+  function Box({ bare, children }) {
+    return bare ? /* @__PURE__ */ u3("div", { class: "fx-periodbar", id: "finPeriod", children }) : /* @__PURE__ */ u3(Card, { kind: "fx-periodbar", id: "finPeriod", children });
+  }
+  function PeriodBar({ by, setBy, title, dates, step: step2, canBack, canOn, today: today2, atToday, bare }) {
     const unit2 = by === "month" ? "month" : "pay period";
-    return /* @__PURE__ */ u3(Card, { kind: "fx-periodbar", id: "finPeriod", children: [
-      /* @__PURE__ */ u3(Segmented, { label: "Show the Dashboard by", value: by, pick: (b2) => setBy(b2), options: [["pay", "By paycheck"], ["month", "By month"]] }),
+    return /* @__PURE__ */ u3(Box, { bare, children: [
+      /* @__PURE__ */ u3(Segmented, { label: "Show the Dashboard by", value: by, pick: (b2) => setBy(b2), options: [["pay", "Paycheck"], ["month", "Month"]] }),
       /* @__PURE__ */ u3("div", { class: "fx-periodstep", children: [
         /* @__PURE__ */ u3(IconButton, { icon: "prev", label: `The ${unit2} before`, disabled: !canBack, onClick: () => step2(-1) }),
         /* @__PURE__ */ u3("div", { class: "fx-periodname", "aria-live": "polite", children: [
@@ -18091,6 +18094,11 @@ ${pays}
     const [layout, setLayout] = d2(readLayout);
     const [editing2, setEditing] = d2(false);
     const [dragged, setDragged] = d2("");
+    h2(() => {
+      const start = () => setEditing(true);
+      addEventListener("homelab:arrange", start);
+      return () => removeEventListener("homelab:arrange", start);
+    }, []);
     const present = slots.filter((s3) => !!s3.node);
     if (phone2) return /* @__PURE__ */ u3("div", { class: "fx-board", children: present.map((s3) => s3.node) });
     const button = /* @__PURE__ */ u3("div", { class: "fx-arrange", children: editing2 ? /* @__PURE__ */ u3(S, { children: [
@@ -18100,11 +18108,8 @@ ${pays}
         setLayout(null);
       }, children: "Reset to the usual" }),
       /* @__PURE__ */ u3("button", { type: "button", class: "btn fx-primary", onClick: () => setEditing(false), children: "Done" })
-    ] }) : /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => setEditing(true), children: "Arrange the Dashboard" }) });
-    if (!layout && !editing2) return /* @__PURE__ */ u3(S, { children: [
-      button,
-      /* @__PURE__ */ u3("div", { class: "fx-board", children: present.map((s3) => s3.node) })
-    ] });
+    ] }) : null });
+    if (!layout && !editing2) return /* @__PURE__ */ u3("div", { class: "fx-board", children: present.map((s3) => s3.node) });
     const all = ordered(present, layout);
     const hidden3 = new Set(layout?.hidden || []);
     const shown8 = all.filter((s3) => !hidden3.has(s3.id));
@@ -18141,7 +18146,7 @@ ${pays}
       save3({ ...l3, hidden: off2 ? [...l3.hidden, id2] : l3.hidden.filter((x3) => x3 !== id2) });
     };
     return /* @__PURE__ */ u3(S, { children: [
-      button,
+      editing2 && button,
       /* @__PURE__ */ u3("div", { class: "fx-board arranged" + (editing2 ? " editing" : ""), children: shown8.map((s3, i3) => /* @__PURE__ */ u3(
         "div",
         {
@@ -18201,6 +18206,18 @@ ${pays}
     ] }) });
   }
   var startedThree = (v3) => !!v3.plan.people?.length && !!v3.plan.payments?.length;
+  var paidWhom = (ids, L2) => ids.map((id2) => L2.person[id2]?.name || id2).join(" and ");
+  function TopPeriod({ bar }) {
+    h2(() => {
+      const slot = document.getElementById("finTopPeriod");
+      if (slot) R(bar ? /* @__PURE__ */ u3(PeriodBar, { ...bar, bare: true }) : null, slot);
+    });
+    h2(() => () => {
+      const slot = document.getElementById("finTopPeriod");
+      if (slot) R(null, slot);
+    }, []);
+    return null;
+  }
   function Overview({ v: v3, L: L2, sel: sel2, pick, add, edit, setSince: setSince2, keep: keep3, ledger, openWorth, openSubscriptions, openRecurring, openTransactions, openCalendar, openPay, openAccount, showIn: showIn2, phone: phone2 }) {
     const [by, setByState] = d2(readBy);
     const { months, now: thisMonth } = monthPeriods(v3);
@@ -18227,8 +18244,8 @@ ${pays}
     } : p3 || was ? {
       by,
       setBy,
-      title: p3 ? periodTitle(p3, L2) : paydayTitle(was.pay, L2),
-      dates: p3 ? `${dayShort(p3.start)} – ${dayShort(p3.last)}${p3.now ? ", from today" : ""}` : `${dayShort(was.start)} – ${dayShort(was.last)}, what happened`,
+      title: phone2 ? p3 ? periodTitle(p3, L2) : paydayTitle(was.pay, L2) : p3?.now ? "Now" : `${paidWhom((p3 ? p3.pay : was.pay).people, L2)}'s paycheck`,
+      dates: phone2 ? p3 ? `${dayShort(p3.start)} – ${dayShort(p3.last)}${p3.now ? ", from today" : ""}` : `${dayShort(was.start)} – ${dayShort(was.last)}, what happened` : `${dayLong(p3 ? p3.start : was.start)} – ${dayLong(p3 ? p3.last : was.last)}${p3?.now ? ", from today" : was ? ", what happened" : ""}`,
       step: (d3) => pick(picked + d3),
       canBack: picked > -past.length,
       canOn: picked < v3.periods.length - 1,
@@ -18251,7 +18268,8 @@ ${pays}
         ] }),
         add && /* @__PURE__ */ u3("button", { class: "small", onClick: () => add("account", "checking"), children: "Add your checking account" })
       ] }),
-      bar && /* @__PURE__ */ u3(PeriodBar, { ...bar }),
+      bar && phone2 && /* @__PURE__ */ u3(PeriodBar, { ...bar }),
+      !phone2 && /* @__PURE__ */ u3(TopPeriod, { bar }),
       /* @__PURE__ */ u3(ArrangedBoard, { phone: phone2, slots: [
         { id: "now", title: "Left after this paycheck's bills", width: "full", node: !phone2 && /* @__PURE__ */ u3(LeadWidget, { v: v3, L: L2, sel: p3 ? picked : 0, open: openPay }) },
         { id: "since", title: "Since the balances", width: "full", node: !!v3.since?.length && /* @__PURE__ */ u3(SinceWidget, { v: v3, L: L2, set: setSince2 }) },
@@ -18293,9 +18311,11 @@ ${pays}
   var groupOf = (tab3) => groups3.find(([, , pages]) => pages.includes(pageFor(tab3))) || groups3[0];
   var leftOn = {};
   var pageOf = (group2) => leftOn[group2] || groups3.find(([k3]) => k3 === group2)[2][0];
-  var adds = { overview: ["payment", "Add a payment"], calendar: ["payment", "Add a payment"], transactions: ["transaction", "Add a transaction"], reports: ["transaction", "Add a transaction"], recurring: ["payment", "Add a payment"], pay: ["person", "Add a paycheck"], worth: ["account", "Add an account"], collection: ["card", "Add a card"] };
-  function ExportMenu({ v: v3, exportFile: exportFile2, printMonth }) {
+  var addAll = [["transaction", "Add a transaction"], ["payment", "Add a payment"], ["person", "Add a paycheck"], ["account", "Add an account"], ["card", "Add a card"]];
+  var adds = { overview: ["transaction", "Add a transaction"], calendar: ["payment", "Add a payment"], transactions: ["transaction", "Add a transaction"], reports: ["transaction", "Add a transaction"], recurring: ["payment", "Add a payment"], pay: ["person", "Add a paycheck"], worth: ["account", "Add an account"], collection: ["card", "Add a card"] };
+  function useExport(v3, exportFile2, printMonth) {
     const [said2, setSaid] = d2("");
+    if (!v3) return { said: said2, items: [] };
     const run2 = (go3) => async () => {
       setSaid("Saving…");
       try {
@@ -18312,22 +18332,17 @@ ${pays}
     };
     const label = (m3) => (/* @__PURE__ */ new Date(m3 + "-01T12:00:00")).toLocaleDateString("en-US", { month: "long" });
     const print = (k3) => run2(() => printMonth(monthName2(month3(k3)), monthPage(v3, month3(k3), "Finances")));
+    return { said: said2, items: [
+      { label: "The plan, as JSON", onClick: run2(() => exportFile2(planName(v3.today), planJson(v3.plan))) },
+      { label: "The year ahead, as a spreadsheet (CSV)", onClick: run2(() => exportFile2(aheadName(v3.today), aheadCsv(v3))) },
+      { label: `${label(month3(0))}, to print`, onClick: print(0) },
+      { label: `${label(month3(1))}, to print`, onClick: print(1) }
+    ] };
+  }
+  function ExportMenu({ exp }) {
     return /* @__PURE__ */ u3("span", { class: "fx-export", children: [
-      said2 && /* @__PURE__ */ u3("span", { class: "muted fx-exportsaid", role: "status", children: said2 }),
-      /* @__PURE__ */ u3(
-        MenuButton,
-        {
-          label: "Export",
-          menuLabel: "Export",
-          title: "Your plan and what's ahead, to keep, open in a spreadsheet, or print",
-          items: [
-            { label: "The plan, as JSON", onClick: run2(() => exportFile2(planName(v3.today), planJson(v3.plan))) },
-            { label: "The year ahead, as a spreadsheet (CSV)", onClick: run2(() => exportFile2(aheadName(v3.today), aheadCsv(v3))) },
-            { label: `${label(month3(0))}, to print`, onClick: print(0) },
-            { label: `${label(month3(1))}, to print`, onClick: print(1) }
-          ]
-        }
-      )
+      exp.said && /* @__PURE__ */ u3("span", { class: "muted fx-exportsaid", role: "status", children: exp.said }),
+      /* @__PURE__ */ u3(MenuButton, { label: "Export", menuLabel: "Export", title: "Your plan and what's ahead, to keep, open in a spreadsheet, or print", items: exp.items })
     ] });
   }
   function FinancesScreen({ v: v3, ledger, error, retry, tab: tab3, setTab, sel: sel2, pick, setSince: setSince2, saveSettings, keep: keep3, edit: open5, exportFile: exportFile2, printMonth, readReceipt, readCardPicture, readCardPrices, updatePrices, saveLedger: saveLedger2, running: running5, calendar, fromWallos, phone: phone2, toggleHidden, group: group2, setGroup, investments }) {
@@ -18337,6 +18352,7 @@ ${pays}
     setOwnLogos(v3?.plan.logos);
     setCategories(v3?.categories);
     const [what2, label] = adds[pageFor(tab3)] || adds.overview;
+    const exp = useExport(v3, exportFile2, printMonth);
     const [from2, setFrom] = d2("");
     const toTx = (f4) => {
       showTransactions(f4);
@@ -18355,24 +18371,66 @@ ${pays}
     const ro = !!v3?.readOnly;
     const age = v3?.typed ? daysBetween(v3.typed, v3.today) : -1;
     const lead2 = (age < 0 ? phone2 ? "Typed in by you, kept on your homelab" : "Typed in by you, kept on this machine" : age === 0 ? "Balances from today" : `Balances from ${dayShort(v3.typed)}, with what's happened since` + (age >= 7 ? `: ${age} days ago${ro ? "" : ", bring them up to date with Update balances"}` : "")) + (ro ? " · view only" : "");
+    const addBtn = /* @__PURE__ */ u3("button", { class: "btn fx-primary", onClick: () => edit(what2), disabled: !v3, children: [
+      /* @__PURE__ */ u3("svg", { viewBox: "0 0 24 24", "aria-hidden": "true", children: /* @__PURE__ */ u3("path", { d: "M12 5v14M5 12h14" }) }),
+      label
+    ] });
+    const updateBtn = !!v3?.plan.accounts?.length && /* @__PURE__ */ u3("button", { class: "btn", onClick: () => edit("balances"), children: "Update balances" });
+    const eye = toggleHidden && v3 && /* @__PURE__ */ u3(HideAmounts, { hidden: !!v3.plan.hideAmounts, toggle: toggleHidden, small: !phone2 });
     return /* @__PURE__ */ u3(S, { children: [
-      /* @__PURE__ */ u3("div", { class: "row header", children: [
+      phone2 ? /* @__PURE__ */ u3("div", { class: "row header", children: [
         /* @__PURE__ */ u3("div", { children: [
           /* @__PURE__ */ u3("h1", { children: "Finances" }),
           /* @__PURE__ */ u3("p", { class: "lead" + (age >= 7 ? " warn" : ""), children: lead2 })
         ] }),
         /* @__PURE__ */ u3("div", { class: "fx-headtools", children: [
-          v3 && /* @__PURE__ */ u3(ExportMenu, { v: v3, exportFile: exportFile2, printMonth }),
+          v3 && /* @__PURE__ */ u3(ExportMenu, { exp }),
           ro && v3?.plan.hideAmounts && /* @__PURE__ */ u3("div", { class: "toolbar", children: /* @__PURE__ */ u3("span", { class: "pill", children: "Amounts hidden" }) }),
           !ro && /* @__PURE__ */ u3("div", { class: "toolbar", children: [
-            toggleHidden && v3 && /* @__PURE__ */ u3(HideAmounts, { hidden: !!v3.plan.hideAmounts, toggle: toggleHidden }),
-            !!v3?.plan.accounts?.length && /* @__PURE__ */ u3("button", { class: "btn", onClick: () => edit("balances"), children: "Update balances" }),
-            /* @__PURE__ */ u3("button", { class: "btn fx-primary", onClick: () => edit(what2), disabled: !v3, children: [
-              /* @__PURE__ */ u3("svg", { viewBox: "0 0 24 24", "aria-hidden": "true", children: /* @__PURE__ */ u3("path", { d: "M12 5v14M5 12h14" }) }),
-              label
-            ] })
+            eye,
+            updateBtn,
+            addBtn
           ] })
         ] })
+      ] }) : /* @__PURE__ */ u3(S, { children: [
+        /* @__PURE__ */ u3("h1", { class: "sr", children: "Finances" }),
+        /* @__PURE__ */ u3("div", { class: "fx-topbar", children: [
+          /* @__PURE__ */ u3("div", { class: "toolbar fx-addsplit", children: [
+            addBtn,
+            /* @__PURE__ */ u3(
+              MenuButton,
+              {
+                cls: "btn fx-primary fx-addmore",
+                disabled: !v3,
+                menuLabel: "Add and more",
+                title: "Add something else, update balances, or export",
+                label: null,
+                items: [
+                  ...addAll.filter(([w3]) => w3 !== what2).map(([w3, l3]) => ({ label: l3, onClick: () => edit(w3) })),
+                  ...v3?.plan.accounts?.length ? [{ label: "Update balances", onClick: () => edit("balances") }] : [],
+                  ...exp.items.map((x3) => ({ ...x3, label: x3.label.startsWith("The ") ? `Export the${x3.label.slice(3)}` : `Print ${x3.label.replace(", to print", "")}` }))
+                ]
+              }
+            )
+          ] }),
+          /* @__PURE__ */ u3("div", { id: "finTopPeriod", class: "fx-topperiod" }),
+          /* @__PURE__ */ u3("div", { class: "fx-topicons", children: [
+            exp.said && /* @__PURE__ */ u3("span", { class: "muted fx-exportsaid", role: "status", children: exp.said }),
+            eye,
+            pageFor(tab3) === "overview" && /* @__PURE__ */ u3(
+              "button",
+              {
+                type: "button",
+                class: "iconbtn fx-arrangebtn",
+                "aria-label": "Arrange the Dashboard",
+                title: "Arrange the Dashboard: move, resize or hide its cards",
+                onClick: () => dispatchEvent(new Event("homelab:arrange")),
+                children: /* @__PURE__ */ u3("svg", { class: "icon", viewBox: "0 0 24 24", "aria-hidden": "true", children: /* @__PURE__ */ u3("path", { d: "M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0M14 4v4M8 10v4M16 16v4" }) })
+              }
+            )
+          ] })
+        ] }),
+        age >= 7 && /* @__PURE__ */ u3("p", { class: "lead warn fx-stale", children: lead2 })
       ] }),
       phone2 && /* @__PURE__ */ u3(Segmented, { label: "View", value: groupOf(tab3)[0], pick: (g2) => pickTab(pageOf(g2)), options: groups3.map(([k3, label2]) => [k3, label2]) }),
       phone2 && groupOf(tab3)[2].length > 1 && /* @__PURE__ */ u3("div", { class: "fx-subtabs", children: /* @__PURE__ */ u3(Segmented, { label: groupOf(tab3)[1], value: pageFor(tab3), pick: pickTab, options: tabs.filter(([k3]) => groupOf(tab3)[2].includes(k3)) }) }),

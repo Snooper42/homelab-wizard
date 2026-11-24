@@ -6,7 +6,7 @@
 // device's storage only, in try: none kept is the usual board, drawn as it
 // always was. Not on a phone, where the cards stack anyway.
 import type { ComponentChildren } from 'preact';
-import { useState } from 'preact/hooks';
+import { useEffect, useState } from 'preact/hooks';
 
 export type Width = 'third' | 'half' | 'full';
 
@@ -48,6 +48,8 @@ export function ArrangedBoard({ slots, phone }: { slots: Slot[]; phone?: boolean
   const [layout, setLayout] = useState<Layout | null>(readLayout);
   const [editing, setEditing] = useState(false);
   const [dragged, setDragged] = useState('');
+  // The top bar's customise button (Finances.tsx) starts arranging; the Done here ends it.
+  useEffect(() => { const start = () => setEditing(true); addEventListener('homelab:arrange', start); return () => removeEventListener('homelab:arrange', start); }, []);
   const present = slots.filter((s) => !!s.node);
   // On a phone, or never arranged: the usual board, exactly as it was drawn before.
   if (phone) return <div class="fx-board">{present.map((s) => s.node)}</div>;
@@ -55,8 +57,8 @@ export function ArrangedBoard({ slots, phone }: { slots: Slot[]; phone?: boolean
     ? <><span class="fx-arrangehint">Drag a card by its handle, or use ▲ ▼. Pick its width; Hide what you don't use. Kept on this device.</span>
       <button type="button" class="btn" onClick={() => { keepLayout(null); setLayout(null); }}>Reset to the usual</button>
       <button type="button" class="btn fx-primary" onClick={() => setEditing(false)}>Done</button></>
-    : <button type="button" class="small" onClick={() => setEditing(true)}>Arrange the Dashboard</button>}</div>;
-  if (!layout && !editing) return <>{button}<div class="fx-board">{present.map((s) => s.node)}</div></>;
+    : null}</div>;
+  if (!layout && !editing) return <div class="fx-board">{present.map((s) => s.node)}</div>;
   const all = ordered(present, layout);
   const hidden = new Set(layout?.hidden || []);
   const shown = all.filter((s) => !hidden.has(s.id));
@@ -85,7 +87,7 @@ export function ArrangedBoard({ slots, phone }: { slots: Slot[]; phone?: boolean
   const hide = (id: string, off: boolean) => { const l = base(); save({ ...l, hidden: off ? [...l.hidden, id] : l.hidden.filter((x) => x !== id) }); };
   return (
     <>
-      {button}
+      {editing && button}
       <div class={'fx-board arranged' + (editing ? ' editing' : '')}>
         {shown.map((s, i) => (
           <div key={s.id} class={'fx-slot w-' + widthOf(s) + (dragged === s.id ? ' dragging' : '')} data-card={s.id}
