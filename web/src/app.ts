@@ -35,7 +35,7 @@ export function show(name) {
   if (placed && was !== name) leavePlace(was);
   // Leaving Status (an app's page is part of it): what changed there is seen.
   if ((was === 'status' || was === 'app') && picked !== 'status') leftStatus();
-  $$('nav button').forEach((b) => {
+  $$('nav button[data-screen]').forEach((b) => {
     b.classList.toggle('active', b.dataset.screen === picked);
     if (b.dataset.screen === picked) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
   });
@@ -59,8 +59,8 @@ function freshen(name) {
   if (name === 'settings') { hostData.fresh(minute); if (!Object.keys(changed).length) settingsData.fresh(minute); }
   if (name === 'tidy') tidyData.fresh(minute);
   if (name === 'finances') { financesData.fresh(minute); ledgerData.fresh(minute); if (onPhone()) sharedData.fresh(5 * minute); }
-  // The sidebar's balances show on every screen (not on a phone): the plan
-  // is read for them too, at most every five minutes off Finances.
+  // The sidebar's Finances count shows on every screen (not on a phone): the
+  // plan is read for it too, at most every five minutes off Finances.
   else if (!onPhone()) financesData.fresh(5 * minute);
 }
 // Checking the screen again (⌘R, F5, the engine's refresh): its data read now.
@@ -192,7 +192,7 @@ addEventListener('pagehide', () => leavePlace(document.querySelector('.screen.ac
 remember();
 // Closing the app on Status: what it showed is what was seen.
 addEventListener('pagehide', () => { const on = document.querySelector('.screen.active')?.id; if (on === 'status' || on === 'app') leftStatus(); });
-$$('nav button').forEach((b) => {
+$$('nav button[data-screen]').forEach((b) => {
   b.onclick = () => { navigate(b.dataset.screen); focusScreen(b.dataset.screen); };
   b.title = `${b.querySelector('span').textContent.trim()} (${mod}${screens.indexOf(b.dataset.screen) + 1})`;
 });

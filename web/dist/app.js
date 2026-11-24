@@ -3084,7 +3084,7 @@
     const local = a3.address && a3.url ? a3.url : "";
     return url ? /* @__PURE__ */ u3("button", { class: "small rowmain", title: local ? `Open ${a3.name} (${shift(os)}click: on this machine, ${local.replace(/^http:\/\//, "")})` : `Open ${a3.name}`, onClick: (e3) => on2.open(local && e3.shiftKey ? local : url), children: "Open" }) : null;
   }
-  function Row2({ a: a3, p: p3, menu, setMenu, said: said2, say }) {
+  function Row2({ a: a3, p: p3, menu: menu2, setMenu, said: said2, say }) {
     const pend = p3.pending[a3.id];
     const phoneMay = () => {
       const c4 = document.documentElement.classList;
@@ -3136,7 +3136,7 @@
       p3.on.menu.copy(url).then(() => say(a3.id, "Address copied"), () => say(a3.id, "Could not copy the address"));
     };
     const close3 = (refocus) => {
-      const from2 = menu?.from;
+      const from2 = menu2?.from;
       setMenu(null);
       if (refocus && from2?.isConnected && from2 !== document.body) from2.focus();
     };
@@ -3151,7 +3151,7 @@
         {
           ref: rowRef,
           "aria-busy": pend && !pend.failed ? true : void 0,
-          class: (a3.state !== "missing" ? "topage" : "") + (menu?.id === a3.id ? " menued" : "") || void 0,
+          class: (a3.state !== "missing" ? "topage" : "") + (menu2?.id === a3.id ? " menued" : "") || void 0,
           onClick: a3.state !== "missing" ? (e3) => {
             if (!e3.target.closest("a, button, .rowmenu, .hovers")) p3.on.page(a3);
           } : void 0,
@@ -3201,7 +3201,7 @@
               /* @__PURE__ */ u3(Actions2, { a: a3, entry, busy: p3.busy || !!pend && !pend.failed, os: p3.os, on: p3.on }),
               a3.state !== "missing" && !p3.companion && /* @__PURE__ */ u3(GearButton, { name: a3.name, unsaved: p3.unkept?.[a3.id] || 0, open: () => p3.on.signIn(a3) }),
               a3.state !== "missing" && /* @__PURE__ */ u3("button", { class: "iconbtn topage", title: `${a3.name}: its page`, "aria-label": `${a3.name}: its page`, onClick: () => p3.on.page(a3), children: /* @__PURE__ */ u3(Icon, { name: "chevron" }) }),
-              menu?.id === a3.id && /* @__PURE__ */ u3(RowMenu, { a: a3, x: menu.x, y: menu.y, native: entry?.kind === "native", busy: p3.busy, companion: p3.companion, on: p3.on.menu, close: close3, said: (w3) => say(a3.id, w3) })
+              menu2?.id === a3.id && /* @__PURE__ */ u3(RowMenu, { a: a3, x: menu2.x, y: menu2.y, native: entry?.kind === "native", busy: p3.busy, companion: p3.companion, on: p3.on.menu, close: close3, said: (w3) => say(a3.id, w3) })
             ] })
           ]
         }
@@ -3261,9 +3261,9 @@
         setUp(false);
         return;
       }
-      const menu = list.current, box = wrap.current?.closest("main"), at2 = btn.current;
-      if (!menu || !box || !at2) return;
-      const m3 = menu.getBoundingClientRect(), b2 = box.getBoundingClientRect(), a3 = at2.getBoundingClientRect();
+      const menu2 = list.current, box = wrap.current?.closest("main"), at2 = btn.current;
+      if (!menu2 || !box || !at2) return;
+      const m3 = menu2.getBoundingClientRect(), b2 = box.getBoundingClientRect(), a3 = at2.getBoundingClientRect();
       setUp(m3.bottom > b2.bottom && a3.top - b2.top > m3.height);
     }, [open5]);
     if (p3.companion || g2.alert) return /* @__PURE__ */ u3("span", { class: "n", children: count2 });
@@ -3586,7 +3586,7 @@
   }
   function AppList(p3) {
     const f4 = useFold();
-    const [menu, setMenu] = d2(null);
+    const [menu2, setMenu] = d2(null);
     const [said2, setSaid] = d2(null);
     h2(() => {
       if (!said2) return;
@@ -3616,7 +3616,7 @@
         /* @__PURE__ */ u3("button", { type: "button", class: "linkbtn", onClick: clearFilter, children: "Show every app" })
       ] }) });
     }
-    const row = (a3) => /* @__PURE__ */ u3(Row2, { a: a3, p: p3, menu, setMenu, said: said2?.id === a3.id ? said2.words : void 0, say }, a3.id);
+    const row = (a3) => /* @__PURE__ */ u3(Row2, { a: a3, p: p3, menu: menu2, setMenu, said: said2?.id === a3.id ? said2.words : void 0, say }, a3.id);
     return /* @__PURE__ */ u3(S, { children: kept5 ? kept5.flatMap(({ g: g2, apps: apps2 }) => [/* @__PURE__ */ u3(GroupHead, { g: g2, open: true, toggle: () => {
     }, p: p3 }, "g:" + g2.label), ...apps2.map(row)]) : p3.groups.flatMap((g2) => [
       /* @__PURE__ */ u3(GroupHead, { g: g2, open: open5[g2.label], toggle: () => toggle(g2.label), p: p3 }, "g:" + g2.label),
@@ -5030,7 +5030,7 @@
       ] })
     ] });
   }
-  function Host({ i: i3, atLogin, menu, upgrade, on: on2 }) {
+  function Host({ i: i3, atLogin, menu: menu2, upgrade, on: on2 }) {
     const disks = i3.disks || [];
     const tray = trayNote(systemOfHost(i3.os || ""), i3.desktop || "");
     return /* @__PURE__ */ u3(S, { children: [
@@ -5047,7 +5047,7 @@
         /* @__PURE__ */ u3(Flip, { id: "trayAtLogin", on: atLogin, yes: `✓ starts at ${signIn(i3.os)}`, no: "only while the app is open", turnOn: `Start at ${signIn(i3.os)}`, turnOff: "Turn off", set: on2.setTrayAtLogin }),
         !!tray && /* @__PURE__ */ u3("div", { id: "trayNote", class: "muted", children: tray })
       ] }),
-      menu?.available && /* @__PURE__ */ u3(Fact, { k: "App menu", children: /* @__PURE__ */ u3(Flip, { id: "menuEntry", on: menu.added, yes: "✓ in the app menu", no: "opened from its file", turnOn: "Add to the app menu", turnOff: "Remove", set: on2.setMenuEntry }) }),
+      menu2?.available && /* @__PURE__ */ u3(Fact, { k: "App menu", children: /* @__PURE__ */ u3(Flip, { id: "menuEntry", on: menu2.added, yes: "✓ in the app menu", no: "opened from its file", turnOn: "Add to the app menu", turnOff: "Remove", set: on2.setMenuEntry }) }),
       /* @__PURE__ */ u3(Fact, { k: "Homelab folder", children: [
         i3.rootOK ? i3.root : /* @__PURE__ */ u3("span", { class: "bad", children: i3.kit ? "not set up yet" : "not found" }),
         " ",
@@ -6242,8 +6242,8 @@
   var renderAppearance = () => mountAppearance($("appearanceCard"), { look, system: systemAccent, noAccent: noAccentNote(systemOf(osName, hostOS)), set: setAppearance });
   var hostData = store(async () => {
     const i3 = await go().Host();
-    const [atLogin, menu] = onPhone() ? [null, null] : await Promise.all([go().TrayAtLogin().catch(() => null), go().MenuEntry().catch(() => null)]);
-    return { i: i3, atLogin, menu };
+    const [atLogin, menu2] = onPhone() ? [null, null] : await Promise.all([go().TrayAtLogin().catch(() => null), go().MenuEntry().catch(() => null)]);
+    return { i: i3, atLogin, menu: menu2 };
   });
   hostData.watch(drawHost);
   hostData.watch(drawHealth);
@@ -6278,7 +6278,7 @@
   }
   function drawHost() {
     if (hostData.error) return;
-    const { i: i3, atLogin, menu } = hostData.value;
+    const { i: i3, atLogin, menu: menu2 } = hostData.value;
     hostOS = i3.os || "";
     document.documentElement.classList.toggle("backdrop", !!i3.backdrop);
     const root = document.documentElement;
@@ -6286,7 +6286,7 @@
     systemAccent = i3.accent;
     applyAppearance(look, systemAccent);
     renderAppearance();
-    host = { i: i3, atLogin, menu, upgrade: host?.upgrade || null, on: hostActions };
+    host = { i: i3, atLogin, menu: menu2, upgrade: host?.upgrade || null, on: hostActions };
     renderHost();
     if (lastSteps.length) renderSetup(lastSteps);
     $("thisMacTitle").textContent = thisMachine;
@@ -18328,6 +18328,9 @@ ${pays}
       setFrom("");
       setTab(t3);
     };
+    h2(() => {
+      if (tab3 !== "transactions") setFrom("");
+    }, [tab3]);
     if (groupOf(tab3)[2].includes(tab3)) leftOn[groupOf(tab3)[0]] = tab3;
     const back3 = from2 && from2 !== "transactions" ? { label: tabs.find(([k3]) => k3 === from2)?.[1] || from2, go: () => pickTab(from2) } : void 0;
     const ro = !!v3?.readOnly;
@@ -18352,8 +18355,8 @@ ${pays}
           ] })
         ] })
       ] }),
-      /* @__PURE__ */ u3(Segmented, { label: "View", value: groupOf(tab3)[0], pick: (g2) => pickTab(pageOf(g2)), options: groups3.map(([k3, label2]) => [k3, label2]) }),
-      groupOf(tab3)[2].length > 1 && /* @__PURE__ */ u3("div", { class: "fx-subtabs", children: /* @__PURE__ */ u3(Segmented, { label: groupOf(tab3)[1], value: pageFor(tab3), pick: pickTab, options: tabs.filter(([k3]) => groupOf(tab3)[2].includes(k3)) }) }),
+      phone2 && /* @__PURE__ */ u3(Segmented, { label: "View", value: groupOf(tab3)[0], pick: (g2) => pickTab(pageOf(g2)), options: groups3.map(([k3, label2]) => [k3, label2]) }),
+      phone2 && groupOf(tab3)[2].length > 1 && /* @__PURE__ */ u3("div", { class: "fx-subtabs", children: /* @__PURE__ */ u3(Segmented, { label: groupOf(tab3)[1], value: pageFor(tab3), pick: pickTab, options: tabs.filter(([k3]) => groupOf(tab3)[2].includes(k3)) }) }),
       /* @__PURE__ */ u3("div", { class: "finbody", children: !v3 && error ? /* @__PURE__ */ u3(Empty, { children: [
         "The finances file could not be read: ",
         error,
@@ -18385,6 +18388,50 @@ ${pays}
   }
   function mountFinances(el3, props) {
     R(/* @__PURE__ */ u3(FinancesScreen, { ...props }), el3);
+  }
+  var menuIcons = {
+    overview: "M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z",
+    transactions: "M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01",
+    bills: "M6 3h12v18l-3-2-3 2-3-2-3 2zM12 7v8M14.5 8.5H10.8a1.6 1.6 0 0 0 0 3.2h2.4a1.6 1.6 0 0 1 0 3.2H9.5",
+    calendar: "M4 6h16v14H4zM4 10h16M8 3v4M16 3v4",
+    worth: "M3 17l6-6 4 4 8-8M15 7h6v6",
+    collection: "M7 3h10v18H7zM10 7h4",
+    reports: "M12 3a9 9 0 1 0 9 9h-9zM15 3.5A9 9 0 0 1 20.5 9H15z"
+  };
+  var menu = [
+    { key: "overview", label: "Dashboard", pages: ["overview"] },
+    { key: "transactions", label: "Transactions", pages: ["transactions"] },
+    { key: "bills", label: "Bills & paychecks", pages: ["recurring", "pay"], sub: [["recurring", "Recurring"], ["pay", "Paychecks"]] },
+    { key: "calendar", label: "Calendar", pages: ["calendar"] },
+    { key: "worth", label: "Net worth", pages: ["worth"] },
+    { key: "collection", label: "Collection", pages: ["collection"] },
+    { key: "reports", label: "Reports", pages: ["reports"] }
+  ];
+  var lastOf = (pages) => pages.find((t3) => Object.values(leftOn).includes(t3)) || pages[0];
+  function FinMenu({ tab: tab3, setTab }) {
+    const here3 = pageFor(tab3);
+    return /* @__PURE__ */ u3("ul", { class: "finmenu", "aria-label": "Finances", children: menu.map((m3) => {
+      const open5 = m3.pages.includes(here3);
+      return /* @__PURE__ */ u3("li", { children: [
+        /* @__PURE__ */ u3(
+          "button",
+          {
+            type: "button",
+            class: "finmenuitem" + (open5 ? " on" : ""),
+            "aria-current": open5 && !m3.sub ? "page" : void 0,
+            onClick: () => setTab(m3.sub ? lastOf(m3.pages) : m3.pages[0]),
+            children: [
+              /* @__PURE__ */ u3("svg", { class: "icon", viewBox: "0 0 24 24", "aria-hidden": "true", children: /* @__PURE__ */ u3("path", { d: menuIcons[m3.key] }) }),
+              /* @__PURE__ */ u3("span", { children: m3.label })
+            ]
+          }
+        ),
+        open5 && m3.sub && /* @__PURE__ */ u3("ul", { class: "finsubmenu", children: m3.sub.map(([t3, label]) => /* @__PURE__ */ u3("li", { children: /* @__PURE__ */ u3("button", { type: "button", class: "finmenuitem sub" + (here3 === t3 ? " on" : ""), "aria-current": here3 === t3 ? "page" : void 0, onClick: () => setTab(t3), children: label }) }, t3)) })
+      ] }, m3.key);
+    }) });
+  }
+  function mountFinMenu(el3, props) {
+    R(/* @__PURE__ */ u3(FinMenu, { ...props }), el3);
   }
 
   // web/src/tabs.ts
@@ -19667,6 +19714,13 @@ ${pays}
     });
     if (v3) readEachMorning(v3);
     if (editing && v3 && !v3.readOnly) mountFinanceSheet($("finSheetBox"), { ...editing, plan: v3.plan, checking: v3.checking, start: v3.start, dues: v3.dues, cardSpend: v3.cardSpend, categories: v3.categories, ledger: ledgerData.value, save: save2, saveLedger, receipts, cardPictures, fetchLogo, fromApps: fromApps(), close: close2 });
+    if (!phone) mountFinMenu($("finMenu"), { tab, setTab: (t3) => {
+      tab = t3;
+      group = "";
+      navigate("finances");
+      draw4();
+      tabChanged();
+    } });
     mountBalances($("finNav"), v3, (g2) => {
       tab = "worth";
       group = g2;
@@ -21760,7 +21814,7 @@ ${pays}
     const was = document.querySelector(".screen.active")?.id;
     if (placed && was !== name) leavePlace(was);
     if ((was === "status" || was === "app") && picked !== "status") leftStatus();
-    $$("nav button").forEach((b2) => {
+    $$("nav button[data-screen]").forEach((b2) => {
       b2.classList.toggle("active", b2.dataset.screen === picked);
       if (b2.dataset.screen === picked) b2.setAttribute("aria-current", "page");
       else b2.removeAttribute("aria-current");
@@ -21952,7 +22006,7 @@ ${pays}
     const on2 = document.querySelector(".screen.active")?.id;
     if (on2 === "status" || on2 === "app") leftStatus();
   });
-  $$("nav button").forEach((b2) => {
+  $$("nav button[data-screen]").forEach((b2) => {
     b2.onclick = () => {
       navigate(b2.dataset.screen);
       focusScreen(b2.dataset.screen);

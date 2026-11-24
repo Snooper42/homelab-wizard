@@ -77,8 +77,8 @@ nav { width:216px; flex:none; padding:18px 12px 14px; background:var(--nav); col
 .brand small { display:block; font-weight:500; font-size:11px; color:var(--nav-muted); letter-spacing:0; }
 nav button { display:flex; align-items:center; gap:10px; text-align:left; background:none; border:0; padding:9px 10px; border-radius:8px; color:var(--nav-text); position:relative; }
 nav button:hover { background:var(--nav-active); color:var(--white); }
-nav button.active { background:var(--nav-active); color:var(--white); font-weight:600; }
-nav button.active::before { content:""; position:absolute; left:-12px; top:8px; bottom:8px; width:3px; border-radius:0 3px 3px 0; background:var(--sky); }
+nav button.active, nav .finmenuitem.on { background:var(--nav-active); color:var(--white); font-weight:600; }
+nav button.active::before, nav .finmenuitem.on::before { content:""; position:absolute; left:-12px; top:8px; bottom:8px; width:3px; border-radius:0 3px 3px 0; background:var(--sky); }
 nav .count { margin-left:auto; font-size:11px; font-weight:700; min-width:20px; padding:1px 7px; border-radius:999px; background:var(--amber); color:var(--amber-ink); text-align:center; }
 nav .count:empty { display:none; }
 .foot { margin-top:auto; font-size:12px; color:var(--nav-muted); padding:10px 8px 0; border-top:1px solid var(--nav-line); }
@@ -349,8 +349,8 @@ html.os-mac .brand small { color:var(--muted); }
 html.os-mac nav button { color:var(--text); padding:5px 8px; gap:8px; border-radius:6px; }
 html.os-mac nav button .icon { color:var(--link); }
 html.os-mac nav button:hover { background:transparent; color:var(--text); }
-html.os-mac nav button.active { background:var(--shade-09); color:var(--text); font-weight:500; }
-html.os-mac nav button.active::before { display:none; }
+html.os-mac nav button.active, html.os-mac nav .finmenuitem.on { background:var(--shade-09); color:var(--text); font-weight:500; }
+html.os-mac nav button.active::before, html.os-mac nav .finmenuitem.on::before { display:none; }
 html.os-mac nav .count { background:var(--shade-08); color:var(--muted); font-weight:600; }
 html.os-mac .foot { color:var(--muted); border-top:0; }
 html.os-mac main { background:var(--bg); box-shadow:inset 1px 0 0 var(--line); padding-top:34px; --wails-draggable:drag; }
@@ -360,7 +360,7 @@ html.os-mac select.finpick, html.os-mac select.untilpick, html.os-mac select.sno
 html.os-mac button.primary { border-radius:6px; }
 @media (prefers-color-scheme: dark) {
   html.os-mac.preview body { background:var(--mac-desktop-dark); }
-  html.os-mac nav button.active { background:var(--glow-12); }
+  html.os-mac nav button.active, html.os-mac nav .finmenuitem.on { background:var(--glow-12); }
   html.os-mac nav .count { background:var(--glow-12); }
   html.os-mac .btn:not(.primary), html.os-mac button.small:not(.primary) { border-color:var(--glow-14); background:var(--glow-08); }
 }
@@ -379,8 +379,8 @@ html.os-windows .brand { color:var(--text); font-weight:600; }
 html.os-windows .brand small { color:var(--muted); }
 html.os-windows nav button { color:var(--text); border-radius:4px; padding:8px 10px; }
 html.os-windows nav button:hover { background:var(--shade-04); color:var(--text); }
-html.os-windows nav button.active { background:var(--shade-06); color:var(--text); font-weight:400; }
-html.os-windows nav button.active::before { left:0; top:50%; bottom:auto; height:16px; margin-top:-8px; width:3px; border-radius:2px; background:var(--accent); }
+html.os-windows nav button.active, html.os-windows nav .finmenuitem.on { background:var(--shade-06); color:var(--text); font-weight:400; }
+html.os-windows nav button.active::before, html.os-windows nav .finmenuitem.on::before { left:0; top:50%; bottom:auto; height:16px; margin-top:-8px; width:3px; border-radius:2px; background:var(--accent); }
 html.os-windows nav .count { background:var(--primary); color:var(--primary-text); }
 html.os-windows .foot { color:var(--muted); border-top-color:var(--line); }
 html.os-windows main { background:var(--bg); border-top-left-radius:8px; box-shadow:inset 1px 1px 0 var(--line); }
@@ -392,7 +392,7 @@ html.os-windows ::-webkit-scrollbar-thumb { background:var(--shade-3); border:3p
 @media (prefers-color-scheme: dark) {
   html.os-windows { --win-pane:#202020; }
   html.os-windows nav button:hover { background:var(--glow-06); }
-  html.os-windows nav button.active { background:var(--glow-08); }
+  html.os-windows nav button.active, html.os-windows nav .finmenuitem.on { background:var(--glow-08); }
   html.os-windows .btn:not(.primary), html.os-windows button.small:not(.primary) { border-color:var(--glow-07); border-bottom-color:var(--glow-04); background:var(--glow-06); }
   html.os-windows ::-webkit-scrollbar-thumb { background:var(--glow-35); border:3px solid transparent; background-clip:padding-box; }
 }
@@ -406,8 +406,8 @@ html.os-linux .brand { color:var(--text); }
 html.os-linux .brand small { color:var(--muted); }
 html.os-linux nav button { color:var(--text); border-radius:6px; }
 html.os-linux nav button:hover { background:var(--shade-05); color:var(--text); }
-html.os-linux nav button.active { background:var(--shade-1); color:var(--text); }
-html.os-linux nav button.active::before { display:none; }
+html.os-linux nav button.active, html.os-linux nav .finmenuitem.on { background:var(--shade-1); color:var(--text); }
+html.os-linux nav button.active::before, html.os-linux nav .finmenuitem.on::before { display:none; }
 html.os-linux nav .count { background:var(--shade-1); color:var(--text); }
 html.os-linux .foot { color:var(--muted); border-top-color:var(--line); }
 html.os-linux main { box-shadow:inset 1px 0 0 var(--line); }
@@ -415,7 +415,7 @@ html.os-linux .btn:not(.primary), html.os-linux button.small:not(.primary) { bor
 @media (prefers-color-scheme: dark) {
   html.os-linux { --linux-pane:#2e2e32; }
   html.os-linux nav button:hover { background:var(--glow-07); }
-  html.os-linux nav button.active, html.os-linux nav .count { background:var(--glow-1); }
+  html.os-linux nav button.active, html.os-linux nav .count, html.os-linux nav .finmenuitem.on { background:var(--glow-1); }
   html.os-linux .btn:not(.primary), html.os-linux button.small:not(.primary) { background:var(--glow-1); }
 }
 
@@ -643,7 +643,7 @@ html.kiosk:not(.unpaired) #kioskClock { display:block; position:fixed; top:18px;
   html.companion nav { width:auto; flex-direction:row; justify-content:space-around; gap:4px; padding:6px 8px calc(6px + env(safe-area-inset-bottom)); }
   html.companion nav .brand, html.companion nav .foot { display:none; }
   html.companion nav button { flex-direction:column; gap:2px; padding:6px 14px; font-size:11px; }
-  html.companion nav button.active::before { display:none; }
+  html.companion nav button.active::before, html.companion nav .finmenuitem.on::before { display:none; }
   html.companion nav .count { position:absolute; top:0; right:4px; margin:0; }
   html.companion main { padding:16px 14px 24px; padding-top:calc(16px + env(safe-area-inset-top)); }
   html.companion h1 { font-size:22px; }
@@ -727,7 +727,7 @@ html.os-mac nav button[data-screen="finances"] { --tint:#30b0c7; }
 html.os-mac nav button[data-screen="tidy"] { --tint:#af52de; }
 html.os-mac nav button[data-screen="setup"] { --tint:#5856d6; }
 html.os-mac nav button[data-screen="settings"] { --tint:#8e8e93; }
-html.os-mac nav button.active { background:var(--shade-08); }
+html.os-mac nav button.active, html.os-mac nav .finmenuitem.on { background:var(--shade-08); }
 html.os-mac nav .count { font-size:11px; padding:0 6px; min-width:18px; }
 /* Push buttons and the default button. */
 html.os-mac .btn, html.os-mac button.small { font-size:13px; }
@@ -764,7 +764,7 @@ html.os-mac ::-webkit-scrollbar-thumb { background:var(--shade-25); border:3px s
 @media (prefers-color-scheme: dark) {
   html.os-mac { --shadow:0 0 0 .5px rgba(255,255,255,.1), 0 1px 2px rgba(0,0,0,.3); }
   html:is(.os-mac, .os-windows, .os-linux) tbody tr:hover td, html:is(.os-mac, .os-windows, .os-linux) table.grouped tr.grouphead.fold:hover th { background:var(--glow-04); }
-  html.os-mac nav button.active { background:var(--glow-1); }
+  html.os-mac nav button.active, html.os-mac nav .finmenuitem.on { background:var(--glow-1); }
   html.os-mac .btn:not(.primary):hover, html.os-mac button.small:not(.primary):hover { border-color:var(--glow-22); }
   html.os-mac .starter:hover { box-shadow:0 0 0 .5px var(--glow-16), 0 2px 8px var(--shade-3); }
   html.os-mac input[type="checkbox"]:not(.switch) { background:var(--glow-08); box-shadow:inset 0 0 0 .5px var(--glow-3); }
@@ -934,8 +934,8 @@ html:is(.os-mac, .os-windows, .os-linux) .card.howto.fold { padding:12px 16px; }
   html.companion .alertlist li .grow { flex-basis:calc(100% - 30px); }
   html.companion .alertlist li .size, html.companion .alertlist li .when { margin-left:22px; }
   html.companion .alertlist li .size + .when { margin-left:8px; }
-  html.companion nav button, html.companion nav button.active, html.companion nav button:hover { background:none !important; color:var(--muted); font-weight:500; }
-  html.companion nav button.active { color:var(--link); }
+  html.companion nav button, html.companion nav button.active, html.companion nav button:hover, html.companion nav .finmenuitem.on { background:none !important; color:var(--muted); font-weight:500; }
+  html.companion nav button.active, html.companion nav .finmenuitem.on { color:var(--link); }
   html.companion nav button .icon { width:24px; height:24px; padding:0; background:none !important; box-shadow:none !important; color:inherit; stroke-width:2; }
   html.companion nav { border-top:.5px solid var(--line); background:color-mix(in srgb, var(--bg) 85%, transparent); -webkit-backdrop-filter:saturate(180%) blur(20px); backdrop-filter:saturate(180%) blur(20px); }
 }
@@ -1015,7 +1015,7 @@ html.os-linux.de-kde { --bg:#eff0f1; --panel:#fff; --sunken:#f7f7f8; --text:#232
 html.os-linux.de-kde body { font-family:"Noto Sans", "Oxygen-Sans", "DejaVu Sans", sans-serif; }
 html.os-linux.de-kde nav button { border-radius:4px; }
 html.os-linux.de-kde nav button:hover { background:color-mix(in srgb, var(--accent) 12%, transparent); }
-html.os-linux.de-kde nav button.active { background:color-mix(in srgb, var(--accent) 22%, transparent); box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--accent) 70%, transparent); }
+html.os-linux.de-kde nav button.active, html.os-linux.de-kde nav .finmenuitem.on { background:color-mix(in srgb, var(--accent) 22%, transparent); box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--accent) 70%, transparent); }
 html.os-linux.de-kde nav .count { background:var(--primary); color:var(--primary-text); }
 html.os-linux.de-kde .btn:not(.primary), html.os-linux.de-kde button.small:not(.primary), html.os-linux.de-kde .header .toolbar:not(:has(input)) .btn:not(.primary) { background:var(--kde-button); border:1px solid var(--line-strong); border-radius:4px; font-weight:400; }
 html.os-linux.de-kde .btn:not(.primary):hover, html.os-linux.de-kde button.small:not(.primary):hover, html.os-linux.de-kde .header .toolbar:not(:has(input)) .btn:not(.primary):hover { border-color:var(--accent); color:var(--text); background:var(--kde-button); }
@@ -1248,7 +1248,7 @@ html.companion #tiles > .emptystate button { display:none; }
      are see-through in the full sidebar, and would sink into the icon). */
   html:not(.companion) nav .count { position:absolute; z-index:1; top:0; right:0; margin:0; min-width:18px; padding:0 5px; font-size:10px; line-height:16px; border:1px solid var(--line-strong); }
   html:is(.os-mac, .os-linux):not(.companion):not(.de-kde) nav .count { background:var(--panel); color:var(--text); }
-  html:not(.companion) nav button.active::before { left:-8px; }
+  html:not(.companion) nav button.active::before, html:not(.companion) nav .finmenuitem.on::before { left:-8px; }
   html:not(.companion) nav .foot { display:none; }
 }
 /* The phone zoomed in (the browser's page zoom, 150% and more, lays a
@@ -1304,11 +1304,11 @@ html:is(.os-mac, .os-windows) .header .toolbar:not(:has(input)) { flex-wrap:nowr
    its left edge (along the bottom of the phone's tab), so the outline means
    only the keyboard's focus, in the theme's text colour. */
 @media (forced-colors: active) {
-  html nav button.active::before, html:is(.os-mac, .os-windows, .os-linux) nav button.active::before { display:block; forced-color-adjust:none; content:""; position:absolute; left:2px; top:7px; bottom:7px; height:auto; margin:0; width:4px; border-radius:2px; background:Highlight; }
+  html nav button.active::before, html:is(.os-mac, .os-windows, .os-linux) nav button.active::before, html nav .finmenuitem.on::before, html:is(.os-mac, .os-windows, .os-linux) nav .finmenuitem.on::before { display:block; forced-color-adjust:none; content:""; position:absolute; left:2px; top:7px; bottom:7px; height:auto; margin:0; width:4px; border-radius:2px; background:Highlight; }
   html nav button:focus-visible { outline:2px solid CanvasText; outline-offset:-2px; }
 }
 @media (forced-colors: active) and (max-width: 700px) {
-  html.companion nav button.active::before { top:auto; bottom:1px; left:25%; right:25%; width:auto; height:3px; }
+  html.companion nav button.active::before, html.companion nav .finmenuitem.on::before { top:auto; bottom:1px; left:25%; right:25%; width:auto; height:3px; }
 }
 @media (forced-colors: active) {
   nav .count { border:1px solid CanvasText; }
@@ -1350,7 +1350,7 @@ html.islands body { padding:8px; gap:8px; }
 html.islands nav { border-radius:14px; }
 html.islands main { border-radius:14px; box-shadow:0 0 0 1px var(--line), var(--shadow); }
 html.islands:is(.os-windows, .os-linux) nav { background:var(--panel); box-shadow:0 0 0 1px var(--line); }
-html.islands:is(.os-windows, .os-linux) nav button.active::before { left:2px; }
+html.islands:is(.os-windows, .os-linux) nav button.active::before, .os-linux) nav .finmenuitem.on::before { left:2px; }
 html.islands.os-mac main { padding-top:26px; }
 
 /* Settings › Appearance. */
@@ -1925,6 +1925,23 @@ button.fx-monthbar:focus-visible { outline:2px solid var(--fin-accent); outline-
 /* The sidebar's balances show on every screen, the way a glance answers "how are we doing". */
 .fx-navbalances { display:block; }
 html.companion .fx-navbalances { display:none !important; }
+/* Finances takes the sidebar over while it shows (docs/Redesign.md, The computer's sidebar): the homelab's five screens
+   shrink to a strip of icons at the top, then Finances' own menu (Finances.tsx FinMenu), then the accounts. Everywhere
+   else the sidebar is the homelab's, without the bank balances. */
+html:not(.companion) nav:has(> button[data-screen="finances"].active) { display:grid; grid-template-columns:repeat(5, minmax(0, 1fr)); align-content:start; column-gap:2px; }
+html:not(.companion) nav:has(> button[data-screen="finances"].active) > * { grid-column:1 / -1; }
+html:not(.companion) nav:has(> button[data-screen="finances"].active) > button:is([data-screen="choose"], [data-screen="status"], [data-screen="backups"], [data-screen="tidy"], [data-screen="finances"]) { grid-column:auto; justify-content:center; padding:8px 0; margin-bottom:10px; }
+html:not(.companion) nav:has(> button[data-screen="finances"].active) > button:is([data-screen="choose"], [data-screen="status"], [data-screen="backups"], [data-screen="tidy"], [data-screen="finances"]) > span:not(.count) { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+html:not(.companion) nav:has(> button[data-screen="finances"].active) > button .count { position:absolute; top:0; right:2px; min-width:0; padding:0 5px; font-size:10px; line-height:15px; }
+html:not(.companion) nav:has(> button[data-screen="finances"].active) > button.active::before { display:none; }
+html:not(.companion) nav:has(> button[data-screen="finances"].active) > button:is([data-screen="setup"], [data-screen="settings"]) { display:none; }
+nav:not(:has(> button[data-screen="finances"].active)) :is(#finMenu, #finNav), html.companion #finMenu { display:none !important; }
+.finmenu, .finsubmenu { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:2px; }
+.finmenu { margin-bottom:14px; }
+.finsubmenu { margin:2px 0 4px 28px; }
+nav .finmenuitem { width:100%; }
+html nav button.finmenuitem .icon { background:none; box-shadow:none; color:inherit; padding:0; width:18px; height:18px; stroke-width:1.8; }
+nav .finmenuitem.sub { padding-top:6px; padding-bottom:6px; font-size:13px; }
 @container window (max-width: 700px) { html:not(.companion) .fx-navbalances { display:none !important; } }
 .fx-balances { display:flex; flex-direction:column; gap:1px; margin:6px 0 10px; padding:10px 0 8px; border-top:1px solid var(--nav-line); border-bottom:1px solid var(--nav-line); }
 .fx-balances > .fx-caption { color:var(--nav-muted); padding:0 10px 6px; margin:0; }

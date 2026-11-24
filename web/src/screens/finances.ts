@@ -6,7 +6,7 @@
 // another device between reading and saving: such a save is refused, and
 // the latest is read with the form kept open over it.
 import { mountFinanceSheet, type What } from '../finances/Edit';
-import { mountFinances } from '../finances/Finances';
+import { mountFinMenu, mountFinances } from '../finances/Finances';
 import { isoDay, setHidden, todayISO } from '../finances/money';
 import { mountBalances } from '../finances/widgets/Worth';
 import type { SinceState } from '../finances/widgets/Ledger';
@@ -186,7 +186,9 @@ function draw() {
   if (v) readEachMorning(v);
   // A form left open keeps what is typed in; its Save then builds on this plan.
   if (editing && v && !v.readOnly) mountFinanceSheet($('finSheetBox'), { ...editing, plan: v.plan, checking: v.checking, start: v.start, dues: v.dues, cardSpend: v.cardSpend, categories: v.categories, ledger: ledgerData.value, save, saveLedger, receipts, cardPictures, fetchLogo, fromApps: fromApps(), close });
-  // The sidebar's balances, on every screen: a group opens Finances › Net worth.
+  // Finances' own menu in the sidebar, while Finances shows (the phone keeps its tabs).
+  if (!phone) mountFinMenu($('finMenu'), { tab, setTab: (t) => { tab = t; group = ''; navigate('finances'); draw(); tabChanged(); } });
+  // The sidebar's balances, while Finances shows: a group opens Net worth.
   mountBalances($('finNav'), v, (g) => { tab = 'worth'; group = g; navigate('finances'); draw(); $('finRoot').querySelector('.fx-groupcard')?.scrollIntoView({ block: 'start' }); }, v && !v.readOnly ? toggleHideAmounts : undefined);
   // The sidebar counts the paychecks that leave checking under the cushion.
   const low = v ? v.periods.filter((p) => p.left < (v.plan.cushion || 0)).length : 0;
