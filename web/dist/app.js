@@ -2434,14 +2434,14 @@
   }
   var memText = (n3) => n3 >= 2 ** 30 ? `${(n3 / 2 ** 30).toFixed(1)} GB` : `${Math.round(n3 / 2 ** 20)} MB`;
   function MemoryPressure({ m: m3, stop: stop2 }) {
-    const share3 = m3.total ? Math.round(m3.used / m3.total * 100) : 0;
+    const share4 = m3.total ? Math.round(m3.used / m3.total * 100) : 0;
     return /* @__PURE__ */ u3("div", { id: "memoryPressure", children: [
       /* @__PURE__ */ u3("div", { class: "row more", children: /* @__PURE__ */ u3("span", { children: [
         /* @__PURE__ */ u3("span", { class: "bad", children: "Memory nearly full:" }),
         " ",
         /* @__PURE__ */ u3("span", { class: "muted", children: [
           "the apps use ",
-          share3,
+          share4,
           "% of the ",
           memText(m3.total),
           " Docker has, high since ",
@@ -4873,7 +4873,7 @@
   }
   var rgb = (hex) => [1, 3, 5].map((i3) => parseInt(hex.slice(i3, i3 + 2), 16));
   var toHex = (c4) => "#" + c4.map((v3) => Math.round(v3).toString(16).padStart(2, "0")).join("");
-  var mix = (a3, b2, share3) => toHex(rgb(a3).map((v3, i3) => v3 + (rgb(b2)[i3] - v3) * share3));
+  var mix = (a3, b2, share4) => toHex(rgb(a3).map((v3, i3) => v3 + (rgb(b2)[i3] - v3) * share4));
   function luminance(hex) {
     const [r3, g2, b2] = rgb(hex).map((v3) => {
       const c4 = v3 / 255;
@@ -8862,12 +8862,12 @@
     }
     const missed2 = days.filter((d3) => d3.all && d3.ok < d3.all);
     if (!missed2.length) return ["Up all week", "Every check passed, every 15 minutes"];
-    const share3 = Math.floor(ok / all * 1e3) / 10;
+    const share4 = Math.floor(ok / all * 1e3) / 10;
     const first = new Date(now);
     const weekFrom = new Date(first.getFullYear(), first.getMonth(), first.getDate() - 6).getTime();
-    if (outages2) return [`Up ${share3}%`, lastDown(outages2, weekFrom, now) || "Each check it missed passed the next time"];
+    if (outages2) return [`Up ${share4}%`, lastDown(outages2, weekFrom, now) || "Each check it missed passed the next time"];
     const n3 = missed2.reduce((k3, d3) => k3 + d3.all - d3.ok, 0);
-    return [`Up ${share3}%`, `It didn't answer ${n3} of its checks on ${missed2.map((d3) => d3.weekday).join(", ")}`];
+    return [`Up ${share4}%`, `It didn't answer ${n3} of its checks on ${missed2.map((d3) => d3.weekday).join(", ")}`];
   }
   function Week2({ days, outages: outages2, seen: seen2 }) {
     const [, line] = weekWords(days, outages2, Date.now(), seen2);
@@ -9890,9 +9890,9 @@
     const spent = spentList.reduce((t3, x3) => t3 + each(x3), 0);
     const saved = [...fromPay, ...fromOthers].filter((x3) => kept5(x3.to)).reduce((t3, x3) => t3 + each(x3), 0);
     const viaPay = people.reduce((t3, e3) => t3 + (e3.deductions || []).filter((d3) => kept5(d3.account)).reduce((u4, d3) => u4 + d3.amount, 0) * perMonth(e3.schedule), 0);
-    const kinds2 = {};
-    for (const x3 of spentList) kinds2[x3.kind || "other"] = (kinds2[x3.kind || "other"] || 0) + each(x3);
-    const byKind = Object.entries(kinds2).map(([kind, amount]) => ({ kind, amount })).filter((k3) => k3.amount > 5e-3).sort((a3, b2) => b2.amount - a3.amount);
+    const kinds3 = {};
+    for (const x3 of spentList) kinds3[x3.kind || "other"] = (kinds3[x3.kind || "other"] || 0) + each(x3);
+    const byKind = Object.entries(kinds3).map(([kind, amount]) => ({ kind, amount })).filter((k3) => k3.amount > 5e-3).sort((a3, b2) => b2.amount - a3.amount);
     const all = income + others2.reduce((t3, o3) => t3 + o3.amount, 0);
     return { in: all, spent, saved, left: all - spent - saved, viaPay, byKind, others: others2 };
   }
@@ -10170,7 +10170,7 @@
         ] }),
         children: list.length ? /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: list.map((b2) => {
           const tone = budgetTone(b2);
-          const share3 = b2.amount > 0 ? Math.min(100, b2.spent / b2.amount * 100) : 100;
+          const share4 = b2.amount > 0 ? Math.min(100, b2.spent / b2.amount * 100) : 100;
           const pace = b2.amount > 0 ? Math.min(100, b2.pace / b2.amount * 100) : 0;
           const icon = iconOf(v3.categories, b2.category);
           const hue2 = categoryHue(b2.category, v3.categories);
@@ -10218,7 +10218,7 @@
               onOpen: show4 && (() => show4(b2.category, b2.per === "paycheck" ? void 0 : b2.start.slice(0, 7))),
               openLabel: show4 ? "see its transactions" : void 0,
               children: /* @__PURE__ */ u3("span", { class: "fx-budgetbar" + (tone ? " " + tone : ""), role: "img", "aria-label": `${b2.category}: ${money(b2.spent)} spent of ${money(b2.amount)}${tone === "warn" ? ", ahead of an even pace" : ""}`, children: [
-                /* @__PURE__ */ u3("span", { style: { width: `${share3}%` } }),
+                /* @__PURE__ */ u3("span", { style: { width: `${share4}%` } }),
                 /* @__PURE__ */ u3("i", { style: { left: `${pace}%` } })
               ] })
             },
@@ -13188,11 +13188,11 @@
       nodes.push(taxes);
       links.push({ from: "total", to: taxes.id, value: tax });
     }
-    const kinds2 = topOf(spend.filter((n3) => n3.value > 5e-3), top, "cat:other", 6);
+    const kinds3 = topOf(spend.filter((n3) => n3.value > 5e-3), top, "cat:other", 6);
     if (expenses > 5e-3) {
-      nodes.push({ id: "expenses", label: "Expenses", value: expenses, col: 2, hue: "out", items: kinds2.flatMap((n3) => n3.items) });
+      nodes.push({ id: "expenses", label: "Expenses", value: expenses, col: 2, hue: "out", items: kinds3.flatMap((n3) => n3.items) });
       links.push({ from: "total", to: "expenses", value: expenses });
-      for (const k3 of kinds2) {
+      for (const k3 of kinds3) {
         nodes.push(k3);
         links.push({ from: "expenses", to: k3.id, value: k3.value });
       }
@@ -13385,7 +13385,7 @@
       if (p3 === typical && !months.length) return null;
     }
     const node = f4.nodes.find((n3) => n3.id === picked);
-    const share3 = (n3) => f4.income > 5e-3 ? `${Math.round(n3 / f4.income * 100)}%` : "";
+    const share4 = (n3) => f4.income > 5e-3 ? `${Math.round(n3 / f4.income * 100)}%` : "";
     const go3 = (i3) => {
       setPeriod(periods[i3]);
       setPicked("");
@@ -13412,9 +13412,9 @@
         children: [
           /* @__PURE__ */ u3("div", { class: "fx-flowstrip", children: [
             { label: "Income", hue: "in", value: f4.income, sub: p3 === typical ? "a month, before taxes" : "this month" },
-            { label: "Taxes", hue: 7, value: f4.taxes, sub: `${share3(f4.taxes)} of income` },
-            { label: "Expenses", hue: "out", value: f4.expenses, sub: `${share3(f4.expenses)} of income` },
-            { label: f4.saved < 0 ? "Short" : "Saved", hue: savedHue, value: Math.abs(f4.saved), sub: f4.saved < 0 ? "more out than in" : `${share3(f4.saved)} savings rate` }
+            { label: "Taxes", hue: 7, value: f4.taxes, sub: `${share4(f4.taxes)} of income` },
+            { label: "Expenses", hue: "out", value: f4.expenses, sub: `${share4(f4.expenses)} of income` },
+            { label: f4.saved < 0 ? "Short" : "Saved", hue: savedHue, value: Math.abs(f4.saved), sub: f4.saved < 0 ? "more out than in" : `${share4(f4.saved)} savings rate` }
           ].map((t3) => /* @__PURE__ */ u3("div", { class: "fx-flowtile", children: [
             /* @__PURE__ */ u3("span", { class: "fx-caption", children: [
               /* @__PURE__ */ u3(Dot, { color: t3.hue, shape: "square" }),
@@ -13894,7 +13894,7 @@
     const monthly = m3.saved + m3.viaPay;
     if (m3.spent <= 0) return null;
     const f4 = fire(m3.spent * 12, have, monthly, withdraw, growth);
-    const share3 = Math.min(100, have / f4.target * 100);
+    const share4 = Math.min(100, have / f4.target * 100);
     const set2 = (key7, text2, lo, hi) => {
       const n3 = parseAmount(text2);
       if (isNaN(n3) || n3 < lo || n3 > hi || key7 === "withdraw" && n3 === 0) {
@@ -13918,10 +13918,10 @@
         "The investment and retirement accounts hold ",
         whole(have),
         ", ",
-        Math.round(share3),
+        Math.round(share4),
         "% of it."
       ] }),
-      /* @__PURE__ */ u3("span", { class: "fx-budgetbar", role: "img", "aria-label": `${money(have)} of ${money(f4.target)}`, children: /* @__PURE__ */ u3("span", { style: { width: `${Math.max(share3, have > 0 ? 1 : 0)}%` } }) }),
+      /* @__PURE__ */ u3("span", { class: "fx-budgetbar", role: "img", "aria-label": `${money(have)} of ${money(f4.target)}`, children: /* @__PURE__ */ u3("span", { style: { width: `${Math.max(share4, have > 0 ? 1 : 0)}%` } }) }),
       /* @__PURE__ */ u3("p", { class: "fx-firewhen", role: "status", children: f4.months === 0 ? "There already, at this estimate." : f4.months === null ? `Not within a hundred years at ${whole(monthly)} a month put by and ${growth}% growth a year.` : /* @__PURE__ */ u3(S, { children: [
         "At ",
         whole(monthly),
@@ -14050,7 +14050,7 @@
         " short."
       ] }),
       goals.length ? /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: goals.map((g2) => {
-        const share3 = g2.target > 0 ? Math.min(100, g2.saved / g2.target * 100) : 0;
+        const share4 = g2.target > 0 ? Math.min(100, g2.saved / g2.target * 100) : 0;
         const tone = g2.left <= 0 ? "done" : g2.behind ? "warn" : "";
         return /* @__PURE__ */ u3(
           Row,
@@ -14068,7 +14068,7 @@
             onOpen: edit ? () => edit("goal", g2.id) : void 0,
             openLabel: edit ? "edit" : void 0,
             children: [
-              /* @__PURE__ */ u3("span", { class: "fx-budgetbar" + (tone === "warn" ? " warn" : ""), role: "img", "aria-label": `${g2.name}: ${money(g2.saved)} of ${money(g2.target)}`, children: /* @__PURE__ */ u3("span", { style: { width: `${Math.max(share3, g2.saved > 0 ? 1 : 0)}%` } }) }),
+              /* @__PURE__ */ u3("span", { class: "fx-budgetbar" + (tone === "warn" ? " warn" : ""), role: "img", "aria-label": `${g2.name}: ${money(g2.saved)} of ${money(g2.target)}`, children: /* @__PURE__ */ u3("span", { style: { width: `${Math.max(share4, g2.saved > 0 ? 1 : 0)}%` } }) }),
               /* @__PURE__ */ u3("span", { class: "fx-sub fx-goalsaved", children: [
                 money(g2.saved),
                 " of ",
@@ -14120,7 +14120,7 @@
   function Papers({ v: v3, L: L2, p: p3 }) {
     const a3 = L2.account[p3.account], rows = p3.rows, made2 = p3.made || 0;
     const original = rows.reduce((t3, x3) => t3 + x3.principal, 0);
-    const down = Math.max(0, original - p3.balance), share3 = original ? down / original : 0;
+    const down = Math.max(0, original - p3.balance), share4 = original ? down / original : 0;
     const next = rows[made2];
     const half = rows.findIndex((x3) => x3.after <= original / 2 + 5e-3);
     const last2 = rows[rows.length - 1];
@@ -14135,10 +14135,10 @@
           " of ",
           money(original),
           " paid down, ",
-          Math.round(share3 * 100),
+          Math.round(share4 * 100),
           "%"
         ] }),
-        /* @__PURE__ */ u3("div", { class: "fx-papersbar", "aria-hidden": "true", children: /* @__PURE__ */ u3("span", { style: { width: `${(share3 * 100).toFixed(1)}%` } }) }),
+        /* @__PURE__ */ u3("div", { class: "fx-papersbar", "aria-hidden": "true", children: /* @__PURE__ */ u3("span", { style: { width: `${(share4 * 100).toFixed(1)}%` } }) }),
         next && /* @__PURE__ */ u3("p", { children: [
           /* @__PURE__ */ u3("strong", { children: [
             "Next, ",
@@ -17140,7 +17140,7 @@ ${pays}
     const payments = allPayments(v3.plan, v3.cardSpend);
     const next = nextOf(v3);
     const m3 = month(v3, L2);
-    const share3 = (n3) => m3.in ? `${Math.round(n3 / m3.in * 100)}% of pay` : "";
+    const share4 = (n3) => m3.in ? `${Math.round(n3 / m3.in * 100)}% of pay` : "";
     const onCard2 = (x3) => L2.account[x3.from || ""]?.kind === "card";
     const monthly = (x3) => x3.amount * perMonth(x3.schedule, v3.plan.people || [], v3.checking);
     const list = payments.filter((x3) => groups2[filter2](x3.kind)).sort((a3, b2) => (order2 === "size" ? monthly(b2) - monthly(a3) : 0) || (next[a3.id]?.date || "9").localeCompare(next[b2.id]?.date || "9"));
@@ -17191,9 +17191,9 @@ ${pays}
       /* @__PURE__ */ u3(Widget, { title: "A typical month", span: "all", kind: "fx-monthsum", children: [
         /* @__PURE__ */ u3("div", { class: "fx-stats", children: [
           /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: m3.in, form: "whole", tone: "in" }), caption: `In · ${(v3.plan.people || []).length === 1 ? "1 paycheck" : (v3.plan.people || []).length ? `${(v3.plan.people || []).length} paychecks` : "no paychecks yet"}${m3.others.length ? ` and ${m3.others.map((o3) => o3.payer).filter((p3, i3, a3) => a3.indexOf(p3) === i3).join(" and ")}` : ""}` }),
-          /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: m3.spent, form: "whole", tone: "out" }), caption: ["Spent", share3(m3.spent)].filter(Boolean).join(" · ") }),
+          /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: m3.spent, form: "whole", tone: "out" }), caption: ["Spent", share4(m3.spent)].filter(Boolean).join(" · ") }),
           /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: m3.saved, form: "whole", tone: "save" }), caption: /* @__PURE__ */ u3(S, { children: [
-            ["Saved", share3(m3.saved)].filter(Boolean).join(" · "),
+            ["Saved", share4(m3.saved)].filter(Boolean).join(" · "),
             !!m3.viaPay && /* @__PURE__ */ u3("span", { class: "fx-capnote", children: [
               "plus ",
               whole(m3.viaPay),
@@ -17374,6 +17374,45 @@ ${pays}
       /* @__PURE__ */ u3(SetAsideWidget, { v: v3, keep: keep3 }),
       saveSettings && /* @__PURE__ */ u3(Settings2, { v: v3, save: saveSettings, calendar })
     ] }) });
+  }
+
+  // web/src/finances/widgets/InvestSummary.tsx
+  var kinds2 = ["investment", "retirement"];
+  var share3 = (was, now) => Math.abs(was) < 5e-3 ? "" : `${now >= was ? "+" : "−"}${Math.abs((now - was) / Math.abs(was) * 100).toFixed(1)}%`;
+  function InvestSummaryWidget({ v: v3, open: open5, openAccount }) {
+    const first = v3.today.slice(0, 8) + "01";
+    const accounts = (v3.plan.accounts || []).filter((a3) => kinds2.includes(a3.kind)).map((a3) => ({ a: a3, now: todayOf(v3, a3), was: worthOn(v3, a3, first) })).sort((x3, y3) => y3.now - x3.now);
+    if (!accounts.length) return null;
+    const total = accounts.reduce((t3, x3) => t3 + x3.now, 0), before3 = accounts.reduce((t3, x3) => t3 + x3.was, 0);
+    const month3 = share3(before3, total);
+    const chip = month3 && !amountsHidden() && /* @__PURE__ */ u3(Chip, { dir: total > before3 + 5e-3 ? "up" : total < before3 - 5e-3 ? "down" : "flat", good: Math.abs(total - before3) < 5e-3 ? null : total > before3, value: month3, words: "this month" });
+    return /* @__PURE__ */ u3(
+      Widget,
+      {
+        title: "Investments",
+        kind: "fx-investsum",
+        open: open5,
+        openLabel: "Open Net worth's investments",
+        figure: /* @__PURE__ */ u3(Amount, { value: total }),
+        label: accounts.length === 1 ? "One account" : `${accounts.length} accounts`,
+        chip: chip || void 0,
+        children: /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: accounts.map(({ a: a3, now, was }) => /* @__PURE__ */ u3(
+          Row,
+          {
+            lead: /* @__PURE__ */ u3(AcctMark, { a: a3, size: "sm" }),
+            title: a3.name,
+            when: /* @__PURE__ */ u3("span", { class: "fx-whenstack", children: [
+              /* @__PURE__ */ u3(Amount, { value: now, form: "full" }),
+              share3(was, now) && !amountsHidden() && /* @__PURE__ */ u3("span", { class: "fx-sub " + (now >= was ? "fx-in" : "fx-out"), children: share3(was, now) })
+            ] }),
+            whenPlain: true,
+            onOpen: openAccount && (() => openAccount(a3.id)),
+            openLabel: openAccount ? "open" : void 0
+          },
+          a3.id
+        )) })
+      }
+    );
   }
 
   // web/src/finances/widgets/Now.tsx
@@ -18334,7 +18373,8 @@ ${pays}
         { id: "cashflow", title: "Cash flow", width: "third", node: /* @__PURE__ */ u3(CashFlowWidget, { v: v3, L: L2, open: openRecurring && (() => openRecurring()), ledger, showIn: showIn2 }) },
         { id: "spent", title: "Where the money went", width: "third", node: !(month3?.when === "ahead") && /* @__PURE__ */ u3(SpentWidget, { v: v3, ledger, open: showIn2, days: spentDays, title: spentDays ? void 0 : "Where the money went" }) },
         { id: "comingup", title: "Coming up", width: "third", node: /* @__PURE__ */ u3(ComingUpWidget, { v: v3, L: L2, calendar: openCalendar }) },
-        { id: "budgets", title: "Budgets to watch", width: "third", node: /* @__PURE__ */ u3(BudgetsWidget, { v: v3, only: toWatch, title: "Budgets to watch", span: 1, open: openTransactions, show: showIn2 && ((category, month4) => showIn2({ category, month: month4 })) }) }
+        { id: "budgets", title: "Budgets to watch", width: "half", node: /* @__PURE__ */ u3(BudgetsWidget, { v: v3, only: toWatch, title: "Budgets to watch", span: 1, open: openTransactions, show: showIn2 && ((category, month4) => showIn2({ category, month: month4 })) }) },
+        { id: "investments", title: "Investments", width: "third", node: /* @__PURE__ */ u3(InvestSummaryWidget, { v: v3, open: openWorth, openAccount }) }
       ] })
     ] });
   }
@@ -20461,14 +20501,14 @@ ${pays}
   var hues2 = [7, 1, 8, 2, 3, 5, 6, 4];
   function GenresWidget({ d: d3, job: job2, act, only, span = 1 }) {
     const all = genresOf(d3);
-    const kinds2 = only ? [only] : GENRED.filter((k4) => all[k4]);
-    const [picked, setPicked] = d2(kinds2[0] || "music");
-    const k3 = kinds2.includes(picked) ? picked : kinds2[0] || "music";
+    const kinds3 = only ? [only] : GENRED.filter((k4) => all[k4]);
+    const [picked, setPicked] = d2(kinds3[0] || "music");
+    const k3 = kinds3.includes(picked) ? picked : kinds3[0] || "music";
     const g2 = all[k3];
     const top = g2 ? g2.genres.slice(0, 6) : [];
     const rest = g2 ? g2.genres.slice(6).reduce((t3, [, v3]) => t3 + v3, 0) : 0;
     const slices = [...top.map(([label, value], i3) => ({ label, value, color: hues2[i3] })), ...rest ? [{ label: `${g2.genres.length - 6} more`, value: rest, color: "muted" }] : []];
-    const picker = kinds2.length > 1 && /* @__PURE__ */ u3(Segmented, { label: "Genres of", value: k3, pick: setPicked, options: kinds2.map((x3) => [x3, names3[x3]]) });
+    const picker = kinds3.length > 1 && /* @__PURE__ */ u3(Segmented, { label: "Genres of", value: k3, pick: setPicked, options: kinds3.map((x3) => [x3, names3[x3]]) });
     if (!g2) {
       const ask = only || GENRED.find((x3) => lib(d3, x3)?.found);
       if (!ask || !genreAsk[ask] || !lib(d3, ask)?.found) return null;

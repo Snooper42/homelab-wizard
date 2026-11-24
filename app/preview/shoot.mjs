@@ -8308,6 +8308,25 @@ const smokes = [
   } },
   // The Dashboard's latest transactions: the five newest (today's Costco first, Claude Pro on Oct 23 left out), each opening its form; See all opens
   // Transactions. With no ledger, no card; on a phone allowed only to look, the rows open nothing.
+  // The Dashboard's Investments card (redesign-loop R3, the owner's ask of Nov 23 for its "+3.1% this month"): what the
+  // brokerage, the IRA and the 401(k) hold together, the change since the 1st as a chip, and each account largest first
+  // with its own change; the card opens Net worth.
+  { name: "Finances: the Dashboard's Investments, with this month's change", screen: 'finances', run: async (page) => {
+    const card = page.locator('#finRoot .fx-investsum');
+    await card.waitFor({ timeout: 5000 });
+    await card.scrollIntoViewIfNeeded();
+    if ((await card.locator('.card-figurelabel').textContent()) !== '3 accounts') throw new Error(`label: ${await card.locator('.card-figurelabel').textContent()}`);
+    const chip = (await card.locator('.chip-cmp').textContent()).replace(/\s+/g, ' ').trim();
+    if (!/^[+−]\d+\.\d% ?this month$/.test(chip)) throw new Error(`the chip: ${chip}`);
+    if (process.env.SMOKE_SHOTS) {
+      mkdirSync(process.env.SMOKE_SHOTS, { recursive: true });
+      await card.screenshot({ path: join(process.env.SMOKE_SHOTS, `investments-card-${await page.evaluate(() => document.documentElement.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'))}.png`) });
+    }
+    const names = await card.locator('.fx-rows li .grow').allTextContents();
+    if (names.map((n) => n.trim()).join() !== 'Fidelity 401(k),Roth IRA,Robinhood') throw new Error(`rows: ${names}`);
+    await card.locator('button[aria-label="Open Net worth\'s investments"]').click();
+    await page.waitForSelector('#finMenu [aria-current="page"]:has-text("Net worth")', { timeout: 5000 });
+  } },
   { name: 'Finances: the Dashboard lists the latest transactions', screen: 'finances', run: async (page) => {
     await page.waitForSelector('.fx-latest li', { timeout: 5000 });
     const rows = await page.$$eval('.fx-latest li .grow', (l) => l.map((x) => x.textContent.replace(/\s+/g, ' ').trim()));
