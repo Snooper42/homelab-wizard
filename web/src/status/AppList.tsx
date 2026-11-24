@@ -20,6 +20,8 @@ import { changedSince, type Seen } from './changed';
 
 export interface Group {
   label: string;
+  /** Its category's id (or attention, pinned, other), for the sidebar's menu to find its row. */
+  id?: string;
   apps: api.AppStatus[];
   /** What needs a look: its count in red, never folded by default. */
   alert?: boolean;
@@ -494,7 +496,7 @@ function GroupHead({ g, open, toggle, p }: { g: Group; open: boolean; toggle: ()
   // and a screen reader use, since a table row cannot say it is expanded.
   return (
     // A right-click on the heading, Shift+F10, or the context-menu key opens the group's menu, as a click on its count does.
-    <tr class={'grouphead fold' + (g.alert ? ' bad' : '') + (open ? ' open' : '')} onClick={toggle}
+    <tr class={'grouphead fold' + (g.alert ? ' bad' : '') + (open ? ' open' : '')} data-group={g.id || g.label} onClick={toggle}
       onContextMenu={(e) => { const c = (e.currentTarget as Element).querySelector<HTMLButtonElement>('button.groupcount'); if (!c || (e.target as Element).closest('.groupmenulist')) return; e.preventDefault(); if (c.getAttribute('aria-expanded') !== 'true') c.click(); }}
       onKeyDown={(e) => {
         if (!(e.key === 'ContextMenu' || (e.key === 'F10' && e.shiftKey)) || (e.target as Element).closest('.groupmenulist')) return;

@@ -173,13 +173,15 @@ function MacCard({ mac, updates: u, onPause }: { mac: HealthProps; updates: api.
   const of = (k: string) => all.find((f) => f.key === k);
   const disk = of('disk'), power = of('power'), runtime = of('runtime');
   const wrong = all.filter((f) => f.tone !== 'ok' && f.key !== 'disk');
+  // Power and the runtime in a line when they're fine; what isn't has a line of its own, in its tone.
+  const fine = [power, runtime].filter((f) => f && f.tone === 'ok').map((f) => f!.short).join(' · ');
   const stopped = mac.h.agent === 'stopped' || mac.h.agent === 'quit';
   const name = mac.machine.charAt(0).toUpperCase() + mac.machine.slice(1);
   return (
     <Card kind="tile statuscard" id="statusMac">
       <div class="label">{name}</div>
       <div class={'value' + (disk && disk.tone !== 'ok' ? ' bad' : '')}>{disk ? disk.value.replace(/ free$/, '') : '—'}<small>{disk ? ' free' : ''}</small></div>
-      <div class="sub"><span>{[power?.short, runtime?.short].filter(Boolean).join(' · ')}</span></div>
+      {fine && <div class="sub"><span>{fine}</span></div>}
       {wrong.map((f) => <div key={f.key} class={'sub ' + f.tone}><span>{f.short}</span></div>)}
       {stopped && <StartAgent id="startAgentMac" start={mac.startAgent} />}
       <div class="sub statusupdates"><span>{u?.paused ? 'Updates paused' : `Updates ${u?.schedule ? 'run ' + u.schedule : 'nightly'}`}</span><PauseButton paused={!!u?.paused} onPause={onPause} /></div>

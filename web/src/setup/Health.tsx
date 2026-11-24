@@ -1,7 +1,7 @@
 // How this machine looks after the homelab: the background agent, the
 // container runtime, the power, and the room on its disk. Setup shows them
-// as four tiles while there is setting up to do; Status keeps them as one
-// line at its top, so they stay in sight once Setup leaves the sidebar.
+// as four tiles while there is setting up to do; Status' This Mac card and
+// the sidebar's foot keep them in sight once Setup is done.
 import { render } from 'preact';
 import { useState } from 'preact/hooks';
 import { ago, never } from '../format';
@@ -55,6 +55,19 @@ export function facts({ h, i, machine }: Pick<HealthProps, 'h' | 'i' | 'machine'
 }
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
+/** The sidebar's line about the computer, as the redesign's ("412 GB free · plugged in"): its free space and power,
+ *  or the first thing that's wrong when something is; its dot the worst of the four. */
+export function machineLine(p: Pick<HealthProps, 'h' | 'i' | 'machine'>): { words: string; tone: 'ok' | 'warn' | 'bad' } {
+  const all = facts(p);
+  const tone = all.some((f) => f.tone === 'bad') ? 'bad' : all.some((f) => f.tone === 'warn') ? 'warn' : 'ok';
+  const bad = all.find((f) => f.tone === 'bad');
+  if (bad) return { words: bad.short, tone };
+  const of = (k: string) => all.find((f) => f.key === k)?.short;
+  const disk = of('disk'), power = of('power');
+  const words = disk ? [disk, power && power.charAt(0).toLowerCase() + power.slice(1)].filter(Boolean).join(' · ') : power || '';
+  return { words, tone };
+}
+
 /** The agent's Start it: says why when it could not. */
 export function StartAgent({ id, start }: { id: string; start: () => Promise<void> }) {
   const [busy, setBusy] = useState(false);
@@ -79,18 +92,4 @@ export function HealthTiles(p: HealthProps) {
   );
 }
 
-/** Status' line: each fact in a few words, what needs a look in its tone. */
-export function HealthLine(p: HealthProps) {
-  const all = facts(p);
-  const stopped = p.h.agent === 'stopped' || p.h.agent === 'quit';
-  return (
-    <>
-      <span class="label">{p.machine.charAt(0).toUpperCase() + p.machine.slice(1)}</span>
-      {all.map((f) => <span key={f.key} class={'item ' + f.tone} title={f.sub}><span class={'dot ' + f.tone} />{f.short}</span>)}
-      {stopped && <StartAgent id="startAgentLine" start={p.startAgent} />}
-    </>
-  );
-}
-
 export const mountHealthTiles = (el: Element, props: HealthProps | null) => render(props && <HealthTiles {...props} />, el);
-export const mountHealthLine = (el: Element, props: HealthProps | null) => render(props && <HealthLine {...props} />, el);
