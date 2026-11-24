@@ -43,7 +43,7 @@ function PagePicker({ groups, active, counts, pick }: NavProps) {
           const pages = g.items.filter((i): i is string => typeof i === 'string');
           const folds = g.items.filter((i): i is NavFold => typeof i !== 'string');
           return [
-            ...(pages.length ? [<optgroup key={'h:' + g.head} label={g.head}>{pages.map(option)}</optgroup>] : []),
+            ...(pages.length ? [<optgroup key={'h:' + g.head} label={g.head || 'Settings'}>{pages.map(option)}</optgroup>] : []),
             ...folds.map((f) => <optgroup key={'f:' + f.label} label={pages.length ? f.label : `${g.head} › ${f.label}`}>{f.pages.map(option)}</optgroup>),
           ];
         })}
@@ -61,7 +61,7 @@ export function Nav({ groups, active, counts, pick }: NavProps) {
     <>
       <PagePicker groups={groups} active={active} counts={counts} pick={pick} />
       {groups.filter((g) => g.items.length).map((g) => [
-        <div class="navhead" key={'h:' + g.head}>{g.head}</div>,
+        g.head && <div class="navhead" key={'h:' + g.head}>{g.head}</div>,
         ...g.items.map((item) => {
           if (typeof item === 'string') return <PageButton key={item} name={item} active={active} counts={counts} pick={pick} />;
           const f = item, open = isOpen(f);

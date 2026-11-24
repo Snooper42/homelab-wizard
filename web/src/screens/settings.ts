@@ -2,6 +2,7 @@
 // beside it.
 import { inTurn, waitWords } from '../job/queue';
 import { type FormActions, formProblem, type FormProps, mountForm, type Page as FormPage, shown as shownSettings, type View as FormView } from '../settings/Form';
+import { mountGeneral } from '../settings/General';
 import { mountPeople, type PeopleActions, type PeopleProps } from '../settings/People';
 import { mountPhones, type PhonesActions } from '../settings/Phones';
 import { mountTailnetDevices } from '../settings/TailnetDevices';
@@ -20,12 +21,38 @@ import { $, $1, errorText, go, onPhone, showError, thisMachine } from '../core';
 export const changed: Record<string, string> = {};
 let testable: Set<string> | null = null;
 
+// The General page's lists (settings/General.tsx), as Phones and People last read them.
+let lastPhones: companion.Phone[] | null = null;
+let lastPeople: people.Person[] | null = null;
+/** The General page (redesign-loop R8): the computer's first page of Settings, a card for each part with its › to the page. */
+function renderGeneral() {
+  const el = document.getElementById('generalCard');
+  if (!el) return;
+  const searching = !!($('settingsSearch') as HTMLInputElement).value.trim();
+  const showing = !onPhone() && !searching && settingsPage === 'General';
+  el.classList.toggle('offpage', !showing);
+  const values = Object.fromEntries((settingsData.value || []).map((x) => [x.key, x.value]));
+  mountGeneral(el, showing ? {
+    people: lastPeople, phones: lastPhones, values, machine: thisMachine,
+    open: (page) => {
+      // Advanced: each app's own settings, the first of them in the list on the left.
+      const apps = navGroups.find((g) => g.head === 'Advanced')?.items || [];
+      const first = (x: (typeof apps)[number] | undefined): string => (!x ? thisMachine : typeof x === 'string' ? x : x.pages[0] || thisMachine);
+      pickSettingsPage(page === 'Advanced' ? first(apps[0]) : page);
+    },
+    set: async (key, value) => { try { await go().SaveSettings({ [key]: value }); } catch (e) { showError(e); } settingsData.load(); },
+    pauseUpdates: async (paused) => { try { await go().SetUpdatesPaused(paused); } catch (e) { showError(e); } settingsData.load(); },
+  } : null);
+}
+
 // Phones: the ones paired with the phone companion (homelab serve), and a
 // one-time code with its QR code to pair another.
 async function loadPhones() {
   const card = $('phonesCard');
   let phones: companion.Phone[];
   try { phones = await go().Phones(); } catch { card.hidden = true; return; }
+  lastPhones = phones || [];
+  renderGeneral();
   card.hidden = false;
   mountPhones(card, { phones: phones || [], on: phonesActions });
 }
@@ -63,6 +90,8 @@ async function loadPeople() {
   const card = $('peopleCard');
   let list: people.Person[], st: api.Status;
   try { [list, st] = await Promise.all([go().People(), go().Status()]); } catch { card.hidden = true; return; }
+  lastPeople = list || [];
+  renderGeneral();
   // Who keeps their Finances private: the fact and the day, nothing more (a computer from before: none).
   const privateFinances = await go().PrivateFinances().catch(() => ({}));
   card.hidden = false;
@@ -172,6 +201,8 @@ export function drawSettings(afresh: boolean, scroll: boolean) {
   everydayCount = list.filter((s) => wanted.has(s.key)).length;
   moreCount = list.length - everydayCount;
   if (focus.length) settingsPage = pages.find((pg) => pg.items.some((s) => s.key === focus[0]))?.name || settingsPage;
+  // The computer opens on General (redesign-loop R8); a phone on its first page.
+  if (!settingsPage && !onPhone()) settingsPage = 'General';
   if (!pages.some((pg) => pg.name === settingsPage) && !extraPages.includes(settingsPage)) settingsPage = pages[0]?.name || '';
   form = { pages, wanted, focus, checks, testable: testable!, label: settingLabel, view: settingsView(), on: formActions,
     phone: onPhone(), readOnly: onPhone() && !document.documentElement.classList.contains('can-change') };
@@ -232,7 +263,13 @@ const formActions: FormActions = {
 
 // The page Settings shows; People and Phones are pages of their own.
 let settingsPage = '';
-const extraPages = ['Appearance', 'People', 'Phones'];
+const extraPages = ['General', 'Appearance', 'People', 'Phones'];
+
+// The redesign's pages (redesign-loop R8), from the .env's sections without changing them (a household's file keeps
+// its own): the updates and self-repair settings are Automatic care; Notifications is Alerts; Domain is Reaching the apps.
+const keyPage: Record<string, string> = Object.fromEntries(['UPDATES_PAUSED', 'WATCHTOWER_SCHEDULE', 'AUTO_ROLLBACK', 'AUTO_HEAL', 'UPDATE_CHANNEL', 'UPDATE_COPY_LIMIT', 'UPDATES_HELD']
+  .map((k) => [k, 'Automatic care']));
+const renamedSections: Record<string, string> = { Notifications: 'Alerts', Domain: 'Reaching the apps' };
 
 // settingsPages groups the settings into pages: each .env section, except
 // the two that hold every app's ports and settings, which are split by app
@@ -275,7 +312,7 @@ function settingsPages(list) {
   for (const s of list) {
     if (!perApp(s.section)) {
       const isApp = apps.some((a) => s.section === a.name || s.section.startsWith(a.name + ' '));
-      page(s.section === 'This Mac' ? thisMachine : s.section, isApp ? 'app' : 'general').items.push(s);
+      page(keyPage[s.key] || renamedSections[s.section] || (s.section === 'This Mac' ? thisMachine : s.section), isApp ? 'app' : 'general').items.push(s);
       continue;
     }
     const a = appOf(s.key);
@@ -289,10 +326,11 @@ function settingsPages(list) {
 // the household, and reaching the apps; then the installed apps folded by
 // their category on Status; then the apps not installed, folded as one.
 // A page not named in the groups joins the first.
+// The redesign's list (redesign-loop R8): the everyday pages first, without a heading; then this machine's; then each
+// app's own settings, folded by category, under Advanced.
 const pageGroups: [string, string[]][] = [
-  [thisMachine, [thisMachine, 'Storage', 'Appearance']],
-  ['Household', ['People', 'Phones']],
-  ['Reaching the apps', ['Domain', 'Notifications']],
+  ['', ['General', 'People', 'Phones', 'Automatic care', 'Alerts', 'Reaching the apps']],
+  [thisMachine, [thisMachine, 'Storage', 'Appearance', 'Tidy Up']],
 ];
 let navGroups: NavGroup[] = [];
 function renderSettingsNav(pages) {
@@ -305,7 +343,7 @@ function renderSettingsNav(pages) {
   const others = known ? apps.filter((p) => !mine.includes(p)) : [];
   const groups: NavGroup[] = pageGroups.map(([head, names]) => ({ head, items: names.filter((n) => general.includes(n)) }));
   const named = new Set(pageGroups.flatMap(([, names]) => names));
-  groups[0].items.push(...general.filter((n) => !named.has(n)));
+  groups[1].items.push(...general.filter((n) => !named.has(n)));
   // An app page's category: its app's (a page named for an app, or for an
   // app and its helpers, as "Nginx Proxy Manager and CrowdSec").
   const cats = catalog?.categories || [];
@@ -315,7 +353,7 @@ function renderSettingsNav(pages) {
   const loose = mine.filter((p) => p.name !== 'Other apps' && !cats.some((c) => c.id === catOf(p.name))).map((p) => p.name);
   const other = mine.some((p) => p.name === 'Other apps') ? ['Other apps'] : [];
   navGroups = [...groups,
-    { head: 'Apps', items: [...loose, ...folds, ...other, ...(others.length ? [{ label: "Apps you don't have", pages: others.map((p) => p.name) }] : [])] }];
+    { head: 'Advanced', items: [...loose, ...folds, ...other, ...(others.length ? [{ label: "Apps you don't have", pages: others.map((p) => p.name) }] : [])] }];
 }
 function pickSettingsPage(name) {
   settingsPage = name;
@@ -409,6 +447,7 @@ function filterSettings() {
   const sh = shownSettings(form.pages, form.view, form.wanted, form.label, form.checks);
   for (const [id, name] of [['thisMacCard', thisMachine], ['appearanceCard', 'Appearance'], ['peopleCard', 'People'], ['phonesCard', 'Phones'], ['tailnetCard', 'Phones']]) $(id).classList.toggle('offpage', searching || settingsPage !== name);
   mountNav($('settingsNav'), { groups: navGroups, active: settingsPage, counts: searching ? sh.counts : null, pick: pickSettingsPage });
+  renderGeneral();
   $('settingsForm').classList.toggle('searching', searching);
   $('settingsNone').hidden = sh.keys.size > 0 || !searching;
   $('settingsAll').hidden = searching || !sh.pageMore;

@@ -3140,6 +3140,27 @@ html.companion .groupmarks { margin-right:8px; }
 @container (max-width: 760px) { html:not(.companion) #status table.grouped tr.grouphead th { white-space:normal; } }
 @container (max-width: 520px) { html:not(.companion) #status .groupmarks { display:none; } }
 
+/* Settings' General page (redesign-loop R8): a card for each part, two to a row; This Mac across the bottom with its four. */
+.genboard { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:14px; margin-bottom:14px; }
+.genboard > .genmac { grid-column:1 / -1; }
+/* Reaching the apps the whole row until Bank connections (M1) sits beside it. */
+.genboard > #genReach { grid-column:1 / -1; }
+@container (max-width: 700px) { .genboard { grid-template-columns:minmax(0, 1fr); } }
+.gencard { padding:18px 20px; min-width:0; }
+#generalCard .gencard > h2, #generalCard .gencard > .row h2 { margin:0; font-size:15px; text-transform:none; letter-spacing:0; color:var(--text); }
+#generalCard .gencard > .row { display:flex; align-items:center; justify-content:space-between; gap:12px; margin:0 0 8px; }
+#generalCard .gencard > h2 { margin-bottom:8px; }
+#generalCard .gencard > .row .small { width:auto; margin:0; }
+.gensub { margin:0; font-size:13px; color:var(--muted); }
+.genletter { display:inline-flex; align-items:center; justify-content:center; width:30px; height:30px; border-radius:50%; background:var(--accent-soft); color:var(--accent); font-weight:700; font-size:13px; }
+.genrows .switch { flex:none; }
+.gentiles { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:10px; }
+@container (max-width: 520px) { .gentiles { grid-template-columns:minmax(0, 1fr); } }
+.gentile { all:unset; box-sizing:border-box; display:flex; flex-direction:column; gap:2px; padding:12px 14px; border:1px solid var(--line); border-radius:10px; cursor:default; min-width:0; }
+.gentile:hover { background:var(--sunken); }
+.gentile:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+.gentile strong { font-size:14px; }
+.gentile span { font-size:12.5px; color:var(--muted); overflow-wrap:anywhere; }
 /* Backups' top as the redesign's picture (R7): Last night two-thirds wide with Needs you beside it, then the restore test
    and off-site; two columns once narrower, one on a phone. */
 .bkboard { display:grid; grid-template-columns:repeat(6, minmax(0, 1fr)); gap:14px; margin:4px 0 18px; }
