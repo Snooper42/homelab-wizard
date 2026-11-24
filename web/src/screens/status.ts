@@ -3,7 +3,7 @@
 // and the phone's report.
 import { sendTo, targetsFor } from '../phone/send';
 import { ago } from '../format';
-import { mountSavings, mountTiles, troubled } from '../status/Tiles';
+import { mountSavings, mountTiles, troubled, type MachineFacts } from '../status/Tiles';
 import { machineNow, onMachine } from '../status/machine';
 import { mountUndoNote } from '../status/UndoNote';
 import { stoppedWords } from '../status/stopFor';
@@ -96,6 +96,7 @@ function renderTiles(st: api.Status) {
     backups: lastNight(),
     openBackups: () => navigate('backups'),
     mac: machineNow(),
+    machine: onPhone() ? phoneMachine : null,
   });
   mountSavings($('savingsCard'), { status: st, history: savingsHistory });
   // The Backups card's numbers: Backups' own read, asked from here at most once a minute (and kept ten minutes).
@@ -249,11 +250,15 @@ export function loadStatus() { return statusData.load(); }
 // so the quick ones show while the slow ones are still being read. The
 // cards read at most every so often are asked for only when due.
 let boardNo = 0; // the latest board asked for
+/** The computer's free space and power, on a phone (the machine card), for This machine; null until read, or from a computer that doesn't send it. */
+let phoneMachine: MachineFacts | null = null;
 let boardStatus: api.Status | null = null; // its Status, once in
 let boardFailed = false; // its Status could not be read
 let boardAnswers: Record<string, string> | null = null; // its pages' answers, once in
 async function readStatus() {
   const want = ['watchdog', 'crash', 'alerts', 'storage'];
+  // A phone can't read the machine as Setup does: the computer sends its free space and power (core.Machine) for This machine.
+  if (onPhone()) want.push('machine');
   if (!savingsHistory.length) want.push('savings');
   if (Date.now() - protectionAt > 60000) { protectionAt = Date.now(); want.push('protection'); }
   if (Date.now() - downloadsAt > 30000) { downloadsAt = Date.now(); want.push('downloads'); }
@@ -313,6 +318,10 @@ function showCard(c) {
     case 'downloads': showDownloads(err ? null : data); break;
     case 'alerts': showAlerts(data, err); break;
     case 'storage': showStorage(err ? null : data); break;
+    case 'machine':
+      phoneMachine = err ? null : data;
+      if (lastStatus) renderTiles(lastStatus);
+      break;
     case 'usage': showUsage((!err && data) || []); break;
     case 'week': showWeek(err ? null : data); break;
     case 'answers':

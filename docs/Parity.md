@@ -38,7 +38,7 @@ What a phone may do also depends on how it was paired, on every phone (the phone
 | Status's headline: how many apps need you over how many run ("1 app needs you", "21 of 22 running"), the first one's fix beside it | yes | yes | yes | yes | `Status` |
 | A category's pill: "✓ 4 running", or "1 of 2 running" when one is down | yes | yes | yes | yes | `Status` |
 | The categories as one card, a row each: the first apps' logos, the name over its apps' names, the pill, a tap to open | yes | yes | yes | gap: the iPad's Status list keeps a heading a category | `Status` |
-| Backups and This Machine beside the headline: last night's copies ("11 of 12", what was skipped), the free space, the power and the nightly updates | yes | partly: Backups and the nightly updates; gap: the page doesn't read the `machine` card yet | yes | gap: the iPad's Status list doesn't show them yet | `StatusBoard` (`machine`) |
+| Backups and This Machine beside the headline: last night's copies ("11 of 12", what was skipped), the free space, the power and the nightly updates | yes | yes | yes | gap: the iPad's Status list doesn't show them yet | `StatusBoard` (`machine`) |
 | The list of apps, live, grouped as Needs a look, Pinned, then each category | yes | yes | yes | yes | `Status`, `StatusBoard`, `LastStatus`, `Catalog`, `Screen` |
 | Each app's logo | yes | yes | yes | yes | `AppIcon` |
 | Type to find an app | yes | yes | yes (search) | yes | |
@@ -178,6 +178,7 @@ Each phone sees Finances at the level it was paired with: none, the money card, 
 | People in the household, and what's shared with them | yes | on purpose | on purpose | on purpose | |
 | Devices on your tailnet | yes | on purpose | on purpose | on purpose | |
 | Quiet hours | yes | yes, as a setting | yes, as a setting | yes | |
+| Settings in the redesign's order: Household (phones), then Automatic Care (nightly updates, restart, undo, quiet hours, alerts) | yes: Settings › General | partly: the everyday settings in the page's list | yes | yes | `SaveSettings`, `SetUpdatesPaused` |
 | The lock (Face ID), the widget's switch, **Alerts From** | — | — | yes | yes | |
 | **Lock After**: how long the app may be away before Face ID again (Right Away, 1, 5 or 15 minutes) | — | — | yes, 5 minutes unless changed (a change still asks; the screen locking locks it) | yes | |
 | Appearance, start at login, the menu bar or tray | yes ([Host](<Host.md>)) | on purpose: the phone's own | on purpose | on purpose | |

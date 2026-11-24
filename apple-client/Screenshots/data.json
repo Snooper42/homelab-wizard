@@ -11089,8 +11089,8 @@
    ]
   },
   "machine": {
-   "free": 412000000000,
-   "total": 994000000000,
+   "free": 442381631488,
+   "total": 1067299373056,
    "low": false,
    "power": "plugged",
    "keptAwake": true

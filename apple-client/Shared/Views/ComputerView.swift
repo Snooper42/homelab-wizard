@@ -38,13 +38,13 @@ struct ComputerView: View {
                 fixSection
                 updateAllSection
             case .settings:
-                // As the owner picked it (Nov 12): the homelab's everyday
-                // settings first, in plain words; then this device's; then
-                // the rest a tap down.
+                // As the redesign's phone picture (phone-settings.png, Nov 24): the homelab, then the
+                // household (its phones), then Automatic Care (the everyday ones, in plain words), then
+                // this device's; the rest a tap down.
                 homelabCard
+                if computer.canListPhones { phonesSection }
                 homelabFirstSection
                 thisDeviceSection
-                if computer.canListPhones { phonesSection }
                 everythingElseSection
                 // What used to be Status's Saved tile, one line here now.
                 if let savings = dashboard.yearlySavings {
@@ -203,8 +203,9 @@ struct ComputerView: View {
         #endif
     }
 
-    /// The homelab's everyday settings: nightly updates, then quiet hours,
-    /// healing, rolling back and alerts on the computer's screen, where the
+    /// Automatic Care, as the computer's Settings › General: nightly updates,
+    /// restarting an app that stops answering, undoing an update that breaks
+    /// one, then quiet hours and alerts on the computer's screen, where the
     /// computer has them (`firstSettings`). The rest are under Everything Else.
     private var homelabFirstSection: some View {
         Section {
@@ -228,7 +229,7 @@ struct ComputerView: View {
                 }
             }
         } header: {
-            Text("The Homelab")
+            Text("Automatic Care")
         } footer: {
             if computer.updates != nil, !computer.canChange {
                 Text("This device can only look.")
@@ -248,6 +249,8 @@ struct ComputerView: View {
             } label: {
                 IconTileLabel(title: "Phones and iPads", systemImage: "iphone", tint: TileColour.indigo)
             }
+        } header: {
+            Text("Household")
         }
     }
 

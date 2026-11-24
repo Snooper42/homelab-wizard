@@ -112,9 +112,10 @@ struct StatusOverviewTests {
     }
 
     @Test func theMachineCardSaysItsRoomPowerAndUpdates() {
-        let facts = MachineFacts.from(.object(["free": .number(412e9), "total": .number(994e9), "low": .bool(false), "power": .string("plugged"), "keptAwake": .bool(true)]))
+        let facts = MachineFacts.from(.object(["free": .number(412 * 1_073_741_824), "total": .number(994 * 1_073_741_824), "low": .bool(false), "power": .string("plugged"), "keptAwake": .bool(true)]))
         #expect(facts?.powerWords == "Plugged in" && facts?.needsALook == false)
         let words = StatusPair.machine(facts, updates: UpdatesState(paused: false, schedule: "daily at 04:00"))
+        // In 1024s, as the computer says it (412 GB free of 994 GB).
         #expect(words.unit == "free" && !words.alert && words.figure.contains("412"))
         #expect(words.lines.count == 2 && words.lines[0] == "Plugged in" && words.lines[1].hasPrefix("Updates every night at "))
         #expect(StatusPair.machine(facts, updates: UpdatesState(paused: true, schedule: "daily at 04:00")).lines.last == "Updates paused")

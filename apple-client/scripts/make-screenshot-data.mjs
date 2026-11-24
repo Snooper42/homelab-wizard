@@ -85,7 +85,7 @@ cards.usage = state.usage;
 const storage = await App.Storage();
 cards.storage = { when: storage.when, apps: [...storage.apps, { app: 'vikunja', bytes: 64e6 }] };
 // The computer's free space and power, for Status's This Machine card (core.MachineFacts).
-cards.machine = { free: 412e9, total: 994e9, low: false, power: 'plugged', keptAwake: true };
+cards.machine = { free: 412 * 2 ** 30, total: 994 * 2 ** 30, low: false, power: 'plugged', keptAwake: true };
 
 // Settings › Phones and iPads and Setup's checklist (serve.go's phonePhone and phoneSetupStep):
 // made-up phones and steps, never anyone's real ones.

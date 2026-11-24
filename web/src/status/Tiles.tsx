@@ -2,7 +2,7 @@
 // the homelab saves a year, and the nightly updates (with Pause/Resume).
 import { render, type ComponentChildren } from 'preact';
 import { useState } from 'preact/hooks';
-import { dayText, dollars } from '../format';
+import { bytes, dayText, dollars } from '../format';
 import { Card } from '../parts/Card';
 import { Hover } from '../parts/Hover';
 import { Spark } from '../Spark';
@@ -111,9 +111,14 @@ export interface TilesProps {
   openBackups?: () => void;
   /** This machine's facts as Setup read them (none on a phone): the This Mac card. */
   mac?: HealthProps | null;
+  /** On a phone: the computer's free space and power as it sends them (the machine card), for This machine. */
+  machine?: MachineFacts | null;
 }
 
-export function Tiles({ status: st, history, onPause, onChoose, words, start, logs, open, backups, openBackups, mac }: TilesProps) {
+/** The computer's free space and power, as `core.MachineFacts` sends them to a phone. */
+export interface MachineFacts { free: number; total: number; low: boolean; power?: string; keptAwake: boolean }
+
+export function Tiles({ status: st, history, onPause, onChoose, words, start, logs, open, backups, openBackups, mac, machine }: TilesProps) {
   // No app yet: no 0-of-0 tiles, but what to do first (the empty list hides with it).
   if (!st.apps.length) {
     return (
@@ -158,11 +163,25 @@ export function Tiles({ status: st, history, onPause, onChoose, words, start, lo
         <div class="value">{backups ? <>{backups.copied}<small> of {backups.of}</small></> : '…'}</div>
         <div class="sub">{!backups ? 'Reading last night…' : <span>{backups.at}{backups.skipped.length ? <>{' · '}<span class="warn">{backups.skipped.join(', ')} skipped</span></> : ''}</span>}</div>
       </Card>
-      {mac ? <MacCard mac={mac} updates={u} onPause={onPause} /> : (
+      {mac ? <MacCard mac={mac} updates={u} onPause={onPause} /> : machine?.total ? <MachineCard m={machine} updates={u} onPause={onPause} /> : (
         <Tile label="Nightly updates" value={u?.paused ? 'Paused' : 'On'}
           sub={<>{u?.paused ? 'Until you resume them' : `Run ${u?.schedule}`}<PauseButton paused={!!u?.paused} onPause={onPause} /></>} />
       )}
     </>
+  );
+}
+
+/** This machine on a phone (the redesign's phone picture, as the iPhone app's): the computer's free space as the figure,
+ * its power under it (amber when it's on battery or may sleep), and the nightly updates with Pause. */
+function MachineCard({ m, updates: u, onPause }: { m: MachineFacts; updates: api.Status['updates']; onPause: (paused: boolean) => Promise<void> }) {
+  const power = m.power === 'battery' ? { words: 'On battery', tone: 'warn' } : m.power === 'plugged' ? (m.keptAwake ? { words: 'Plugged in', tone: '' } : { words: 'Plugged in, may sleep', tone: 'warn' }) : null;
+  return (
+    <Card kind="tile statuscard" id="statusMachine">
+      <div class="label">This machine</div>
+      <div class={'value' + (m.low ? ' bad' : '')}>{bytes(m.free)}<small> free</small></div>
+      {power && <div class={'sub ' + power.tone}><span>{power.words}</span></div>}
+      <div class="sub statusupdates"><span>{u?.paused ? 'Updates paused' : `Updates ${u?.schedule ? 'run ' + u.schedule : 'nightly'}`}</span><PauseButton paused={!!u?.paused} onPause={onPause} /></div>
+    </Card>
   );
 }
 

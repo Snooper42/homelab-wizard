@@ -1116,7 +1116,7 @@
   }
   var awaitingJobs = (a3) => a3.id === "homelab-companion" && a3.state === "not running";
   var troubled = (a3, held3 = {}) => a3.health === "unhealthy" || a3.health === "restarting" || !!a3.notAnswering || a3.state === "missing" || a3.state === "stopped" && (!held3[a3.id] || keptRestarting(held3[a3.id]));
-  function Tiles({ status: st, history, onPause, onChoose, words: words5, start, logs, open: open5, backups, openBackups, mac }) {
+  function Tiles({ status: st, history, onPause, onChoose, words: words5, start, logs, open: open5, backups, openBackups, mac, machine }) {
     if (!st.apps.length) {
       return /* @__PURE__ */ u3(Card, { kind: "emptystate", id: "statusEmpty", children: [
         /* @__PURE__ */ u3("h2", { children: "No apps yet" }),
@@ -1186,7 +1186,7 @@
           ] }) : ""
         ] }) })
       ] }),
-      mac ? /* @__PURE__ */ u3(MacCard, { mac, updates: u4, onPause }) : /* @__PURE__ */ u3(
+      mac ? /* @__PURE__ */ u3(MacCard, { mac, updates: u4, onPause }) : machine?.total ? /* @__PURE__ */ u3(MachineCard, { m: machine, updates: u4, onPause }) : /* @__PURE__ */ u3(
         Tile,
         {
           label: "Nightly updates",
@@ -1197,6 +1197,21 @@
           ] })
         }
       )
+    ] });
+  }
+  function MachineCard({ m: m3, updates: u4, onPause }) {
+    const power = m3.power === "battery" ? { words: "On battery", tone: "warn" } : m3.power === "plugged" ? m3.keptAwake ? { words: "Plugged in", tone: "" } : { words: "Plugged in, may sleep", tone: "warn" } : null;
+    return /* @__PURE__ */ u3(Card, { kind: "tile statuscard", id: "statusMachine", children: [
+      /* @__PURE__ */ u3("div", { class: "label", children: "This machine" }),
+      /* @__PURE__ */ u3("div", { class: "value" + (m3.low ? " bad" : ""), children: [
+        bytes(m3.free),
+        /* @__PURE__ */ u3("small", { children: " free" })
+      ] }),
+      power && /* @__PURE__ */ u3("div", { class: "sub " + power.tone, children: /* @__PURE__ */ u3("span", { children: power.words }) }),
+      /* @__PURE__ */ u3("div", { class: "sub statusupdates", children: [
+        /* @__PURE__ */ u3("span", { children: u4?.paused ? "Updates paused" : `Updates ${u4?.schedule ? "run " + u4.schedule : "nightly"}` }),
+        /* @__PURE__ */ u3(PauseButton, { paused: !!u4?.paused, onPause })
+      ] })
     ] });
   }
   function MacCard({ mac, updates: u4, onPause }) {
@@ -8374,7 +8389,8 @@
       open: (a3) => pageOpener.open(a3.id),
       backups: lastNight(),
       openBackups: () => navigate("backups"),
-      mac: machineNow()
+      mac: machineNow(),
+      machine: onPhone() ? phoneMachine : null
     });
     mountSavings($("savingsCard"), { status: st, history: savingsHistory });
     if (!backupsData.value && Date.now() - backupsAsked > 6e4) {
@@ -8524,11 +8540,13 @@
     return statusData.load();
   }
   var boardNo = 0;
+  var phoneMachine = null;
   var boardStatus = null;
   var boardFailed = false;
   var boardAnswers = null;
   async function readStatus() {
     const want = ["watchdog", "crash", "alerts", "storage"];
+    if (onPhone()) want.push("machine");
     if (!savingsHistory.length) want.push("savings");
     if (Date.now() - protectionAt > 6e4) {
       protectionAt = Date.now();
@@ -8602,6 +8620,10 @@
         break;
       case "storage":
         showStorage(err ? null : data2);
+        break;
+      case "machine":
+        phoneMachine = err ? null : data2;
+        if (lastStatus) renderTiles(lastStatus);
         break;
       case "usage":
         showUsage(!err && data2 || []);
