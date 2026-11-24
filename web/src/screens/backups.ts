@@ -35,8 +35,10 @@ function drawBackups() {
   mountVault($('vaultCard'), { o });
   $('kopiaCard').hidden = !o.kopia;
   mountKopia($('kopiaCard'), o.kopia ? { k: o.kopia, test: () => backupTask('restore-test-kopia', "Testing Kopia's restore (a few minutes)…", "Kopia's restore test passed", "Kopia's restore test failed: the log says why") } : null);
-  // A copy paused while its app waits for a drive is not a problem.
-  const problems = (o.copies || []).filter((c) => c.state === 'stale').length + (o.plainExports || []).length + (o.kopia?.failed ? 1 : 0);
+  // A copy paused while its app waits for a drive is not a problem. One problem, one badge (docs/Redesign.md): a copy
+  // stale only because its app isn't running is that app's, and Status counts it; Backups counts the rest.
+  const appDown = (c: backup.Copy) => !!c.app && !!statusById[c.app] && statusById[c.app].state !== 'running';
+  const problems = (o.copies || []).filter((c) => c.state === 'stale' && !appDown(c)).length + (o.plainExports || []).length + (o.kopia?.failed ? 1 : 0);
   $('backupsCount').textContent = problems ? String(problems) : '';
   const dup = statusById.duplicati;
   $('openDuplicati').hidden = !(dup?.state === 'running' && dup.url);
