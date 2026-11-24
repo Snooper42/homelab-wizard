@@ -8297,7 +8297,7 @@ const smokes = [
     await page.waitForSelector('#finSheet:not([hidden]) h2:has-text("Shell")', { timeout: 5000 });
     await page.click('#finSheet button:text-is("Cancel")');
     await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
-    await page.click('.fx-latest button:text-is("See all")');
+    await page.click('.fx-latest button[aria-label="Open Transactions"]');
     await page.waitForSelector('.fx-transactions', { timeout: 5000 });
   } },
   { name: 'The phone, view only: the latest transactions open nothing', screen: 'finances', phone: ['companion', 'finances'], mock: { finances: { ...finances, readOnly: true } }, run: async (page) => {
@@ -8535,7 +8535,7 @@ const smokes = [
     await page.click('#finRoot .crumbs button[aria-label="Back to Reports"]', { timeout: 5000 });
     await page.waitForSelector('.fx-reportsum', { timeout: 5000 });
     await finTab(page, 'Dashboard');
-    await page.click('.fx-latest button:text-is("See all")');
+    await page.click('.fx-latest button[aria-label="Open Transactions"]');
     await page.click('#finRoot .crumbs button[aria-label="Back to Dashboard"]', { timeout: 5000 });
     await page.waitForSelector('.fx-latest', { timeout: 5000 });
     await finTab(page, 'Transactions');

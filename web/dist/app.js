@@ -15412,9 +15412,32 @@
   function latest(txs, n3 = latestCount) {
     return txs.map((t3, i3) => ({ t: t3, i: i3 })).sort((a3, b2) => b2.t.date.localeCompare(a3.t.date) || b2.i - a3.i).slice(0, n3).map((x3) => x3.t);
   }
-  function TxRow({ t: t3, v: v3, L: L2, edit, end }) {
+  function TxRow({ t: t3, v: v3, L: L2, edit, end, compact: compact2 }) {
     const a3 = L2.account[t3.account];
     const what2 = t3.splits?.length ? t3.splits.map((sp) => sp.category).join(", ") : t3.category || (t3.to ? "Transfer" : "No category");
+    const day3 = t3.date === v3.today ? "Today" : dayShort(t3.date);
+    const amount = /* @__PURE__ */ u3(Amount, { value: t3.amount, sign: t3.amount > 0, tone: t3.amount > 0 && !t3.to ? "in" : "", form: "full", currency: a3?.currency });
+    if (compact2) {
+      return /* @__PURE__ */ u3(
+        Row,
+        {
+          lead: /* @__PURE__ */ u3(TxMark, { t: t3, categories: v3.categories }),
+          title: txTitle(t3, L2),
+          sub: /* @__PURE__ */ u3("span", { class: "fx-txcat", children: [
+            (t3.splits?.length || t3.category) && /* @__PURE__ */ u3(Dot, { color: categoryHue(t3.splits?.length ? t3.splits[0].category : t3.category, v3.categories) }),
+            what2
+          ] }),
+          end,
+          when: /* @__PURE__ */ u3("span", { class: "fx-whenstack", children: [
+            amount,
+            /* @__PURE__ */ u3("span", { class: "fx-sub", children: day3 })
+          ] }),
+          whenPlain: true,
+          onOpen: edit ? () => edit("transaction", t3.id) : void 0,
+          openLabel: edit ? "edit" : void 0
+        }
+      );
+    }
     return /* @__PURE__ */ u3(
       Row,
       {
@@ -15429,10 +15452,10 @@
       }
     );
   }
-  function LatestWidget({ v: v3, L: L2, ledger, edit, all }) {
-    const list = latest(ledger?.transactions || []);
+  function LatestWidget({ v: v3, L: L2, ledger, edit, all, count: count2 = latestCount }) {
+    const list = latest(ledger?.transactions || [], count2);
     if (!list.length) return null;
-    return /* @__PURE__ */ u3(Widget, { title: "Latest transactions", kind: "fx-latest", open: all, seeAll: true, openLabel: "Open Transactions", actions: all && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: all, children: "See all" }), children: /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: list.map((t3) => /* @__PURE__ */ u3(TxRow, { t: t3, v: v3, L: L2, edit }, t3.id)) }) });
+    return /* @__PURE__ */ u3(Widget, { title: "Latest transactions", kind: "fx-latest", open: all, openLabel: "Open Transactions", children: /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: list.map((t3) => /* @__PURE__ */ u3(TxRow, { t: t3, v: v3, L: L2, edit, compact: true }, t3.id)) }) });
   }
 
   // web/src/finances/Loan.tsx
@@ -18301,7 +18324,7 @@ ${pays}
         { id: "prices", title: "New prices", width: "full", node: /* @__PURE__ */ u3(PricesWidget, { v: v3, L: L2, keep: keep3 }) },
         { id: "averages", title: "Bills' averages", width: "full", node: /* @__PURE__ */ u3(AveragesWidget, { v: v3, L: L2, keep: keep3 }) },
         { id: "now", title: "Left after this paycheck's bills", width: "full", node: /* @__PURE__ */ u3(LeadWidget, { v: v3, L: L2, sel: p3 ? picked : 0, open: openPay }) },
-        { id: "latest", title: "Latest transactions", width: "third", node: !read && /* @__PURE__ */ u3(LatestWidget, { v: v3, L: L2, ledger, edit, all: openTransactions }) },
+        { id: "latest", title: "Latest transactions", width: "third", node: !read && /* @__PURE__ */ u3(LatestWidget, { v: v3, L: L2, ledger, edit, all: openTransactions, count: 9 }) },
         { id: "past", title: "What happened", width: "full", node: read && /* @__PURE__ */ u3(PastWidget, { v: v3, L: L2, past: read, title: month3?.when === "now" ? "So far this month" : void 0, ledger, edit }) },
         { id: "planned", title: "The plan", width: "full", node: month3 && month3.when !== "past" && (() => {
           const from2 = month3.when === "now" ? isoDay(new Date(parseDay(v3.today).getTime() + 864e5)) : month3.start;

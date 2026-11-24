@@ -1798,6 +1798,9 @@ button.kindrow:focus-visible { outline:2px solid var(--accent); outline-offset:-
   .fx-board.fx-dash > .fx-latest { grid-row:auto; }
 }
 @container (max-width: 600px) { .fx-board.fx-dash { grid-template-columns:minmax(0, 1fr); } .fx-board.fx-dash > .fx-widget { grid-column:auto; } }
+/* Latest transactions' one-line rows (Latest.tsx TxRow compact): the category's dot and name, the day under the amount. */
+.fx-txcat { display:inline-flex; align-items:center; gap:6px; min-width:0; }
+.fx-whenstack { display:flex; flex-direction:column; align-items:flex-end; gap:2px; white-space:nowrap; }
 /* The cards a page took from the Dashboard, above its own (Finances.tsx PageCards). */
 .fx-pagecards { margin-bottom:var(--fin-gap); }
 @container (max-width: 760px) { .fx-widget.span2 { grid-column:auto; } }

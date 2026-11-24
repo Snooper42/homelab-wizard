@@ -200,7 +200,7 @@ export function Overview({ v, L, sel, pick, add, edit, setSince, keep, ledger, o
         { id: 'prices', title: 'New prices', width: 'full', node: <PricesWidget v={v} L={L} keep={keep} /> },
         { id: 'averages', title: "Bills' averages", width: 'full', node: <AveragesWidget v={v} L={L} keep={keep} /> },
         { id: 'now', title: "Left after this paycheck's bills", width: 'full', node: <LeadWidget v={v} L={L} sel={p ? picked : 0} open={openPay} /> },
-        { id: 'latest', title: 'Latest transactions', width: 'third', node: !read && <LatestWidget v={v} L={L} ledger={ledger} edit={edit} all={openTransactions} /> },
+        { id: 'latest', title: 'Latest transactions', width: 'third', node: !read && <LatestWidget v={v} L={L} ledger={ledger} edit={edit} all={openTransactions} count={9} /> },
         { id: 'past', title: 'What happened', width: 'full', node: read && <PastWidget v={v} L={L} past={read} title={month?.when === 'now' ? 'So far this month' : undefined} ledger={ledger} edit={edit} /> },
         { id: 'planned', title: 'The plan', width: 'full', node: month && month.when !== 'past' && (() => {
           const from = month.when === 'now' ? isoDay(new Date(parseDay(v.today).getTime() + 864e5)) : month.start;
