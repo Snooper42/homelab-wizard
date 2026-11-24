@@ -27,7 +27,7 @@ import { joined, type Pair, pairs, suggestLinks, withLearned } from './importDat
 import { categoryHue } from './hues';
 import { BudgetsWidget } from './widgets/Budgets';
 import { ThisMonthWidget } from './widgets/ThisMonth';
-import { balanceAfter, inHome, runsFrom } from './model';
+import { balanceAfter, inHome, pastPeriods, runsFrom } from './model';
 import { allPayments, dayLong, dayShort, type Lookup, money, moneyIn, monthName, owed, plural } from './money';
 import { tagsOf } from './reportData';
 import { showUndo } from '../status/UndoNote';
@@ -256,12 +256,19 @@ export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger, logo
   // nothing: its menu would show Every … while the list stayed empty.
   const account = accounts.some((a) => a.id === accountPick) ? accountPick : '';
   const category = cats.includes(categoryPick) ? categoryPick : '';
-  const month = months.includes(monthPick) ? monthPick : '';
+  // The pay periods the top bar steps through, as dates to pick (redesign-loop R4, the picture's Nov 6 – Nov 19): this
+  // paycheck's (from its payday, through today) and the one before.
+  const nowPay = v.periods[0], lastPay = pastPeriods(v)[0];
+  const spans: Record<string, { start: string; last: string; label: string }> = {};
+  if (nowPay) spans['pay:0'] = { start: nowPay.start, last: nowPay.last, label: `This paycheck · ${dayShort(nowPay.start)} – ${dayShort(nowPay.last)}` };
+  if (lastPay) spans['pay:-1'] = { start: lastPay.start, last: lastPay.last, label: `Last paycheck · ${dayShort(lastPay.start)} – ${dayShort(lastPay.last)}` };
+  const span = spans[monthPick];
+  const month = months.includes(monthPick) || span ? monthPick : '';
   const tag = tags.includes(tagPick) ? tagPick : '';
   const want = q.trim().toLowerCase().split(/\s+/).filter(Boolean);
   const shown = all.filter((t) => (!account || t.account === account || t.to === account)
     && (!category || inCategory(t, category))
-    && (!month || t.date.startsWith(month))
+    && (!month || (span ? t.date >= span.start && t.date <= span.last : t.date.startsWith(month)))
     && (!tag || !!t.tags?.includes(tag))
     && (!way || (way === 'move' ? !!t.to : !t.to && (way === 'in' ? t.amount > 0 : t.amount < 0)))
     && want.every((w) => wordsOf(t, L).includes(w)));
@@ -391,6 +398,7 @@ export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger, logo
             </select>}
             <select aria-label="Month" value={month} onChange={(e) => setMonthPick((e.target as HTMLSelectElement).value)}>
               <option value="">Every month</option>
+              {Object.entries(spans).map(([k, x]) => <option key={k} value={k}>{x.label}</option>)}
               {months.map((m) => <option key={m} value={m}>{monthName(m + '-01')} {m.slice(0, 4)}</option>)}
             </select>
             <select aria-label="In or out" value={way} onChange={(e) => setWay((e.target as HTMLSelectElement).value)}>
@@ -421,7 +429,12 @@ export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger, logo
             <datalist id="fxPickCategories">{[...new Set([...(v.categories || []).map((c) => c.name), ...cats])].map((c) => <option key={c} value={c} />)}</datalist>
           </div>}
           {runs && !!shown.length && <p class="fx-sub fx-txrunning">After each day, what {acct!.name} {owed(acct!.kind) ? 'owed' : 'held'}: worked from the {moneyIn(acct!.balance, acct!.currency)} typed in on {dayShort(acct!.updated!)} through these transactions.</p>}
-          {filtered && !!shown.length && <p class="fx-sub fx-txtotal">Together <Amount value={shown.filter((t) => !t.to || account).reduce((s, t) => s + (account && t.to === account ? -amt(t) : amt(t)), 0)} form="full" sign /></p>}
+          {/* As the picture's line over the table (redesign-loop R4): how many are shown, what came in and went out (moves
+              between your own accounts left out), and with a filter on, what they come to together. */}
+          {!!shown.length && <p class="fx-sub fx-txsummary"><span><strong>{shown.length.toLocaleString('en-US')}</strong> {shown.length === 1 ? 'transaction' : 'transactions'}</span>
+            <span>In <Amount value={shown.filter((t) => !t.to && amt(t) > 0).reduce((s, t) => s + amt(t), 0)} form="full" tone="in" /></span>
+            <span>Out <Amount value={shown.filter((t) => !t.to && amt(t) < 0).reduce((s, t) => s + amt(t), 0)} form="full" /></span>
+            {filtered && <span class="fx-txtotal">Together <Amount value={shown.filter((t) => !t.to || account).reduce((s, t) => s + (account && t.to === account ? -amt(t) : amt(t)), 0)} form="full" sign /></span>}</p>}
           {!!shown.length && <div class="fx-txhead" role="group" aria-label="Sort the transactions by">
             {columns.map(([by, label, up]) => {
               const on = sort.by === by;

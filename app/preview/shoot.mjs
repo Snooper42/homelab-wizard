@@ -8497,6 +8497,19 @@ const smokes = [
     if (await page.locator(`${row} .fx-dot`).count()) throw new Error('income has a dot on the Dashboard');
     if (!(await page.locator('.fx-latest li:has-text("Costco") .fx-txcat .fx-dot').count())) throw new Error('Groceries lost its dot on the Dashboard');
   } },
+  // The picture's line over the table, and its dates as pay periods (redesign-loop R4): how many are shown with what came
+  // in and went out; This paycheck and Last paycheck in the date picker, each with its days, filtering to them.
+  { name: "Finances: Transactions says how many with in and out, and picks this paycheck's days", screen: 'finances', run: async (page) => {
+    await finTab(page, 'Transactions', { timeout: 5000 });
+    const line = '.fx-transactions .fx-txsummary';
+    await page.waitForSelector(`${line}:has-text("transactions"):has-text("In"):has-text("Out")`, { timeout: 5000 });
+    const all = Number((await page.textContent(`${line} strong`)).replace(/,/g, ''));
+    const pay = await page.$$eval('.fx-txfilters select[aria-label="Month"] option', (o) => o.map((x) => [x.value, x.textContent]).find(([v]) => v === 'pay:0'));
+    if (!pay || !/^This paycheck · \w{3} \d+ – \w{3} \d+$/.test(pay[1])) throw new Error(`no This paycheck: ${JSON.stringify(pay)}`);
+    await page.selectOption('.fx-txfilters select[aria-label="Month"]', 'pay:0');
+    await page.waitForFunction((n) => { const s = document.querySelector('.fx-transactions .fx-txsummary strong'); return s && Number(s.textContent.replace(/,/g, '')) < n; }, all, { timeout: 5000 });
+    await page.waitForSelector(`${line} .fx-txtotal:has-text("Together")`);
+  } },
   // Transactions' table as the picture (redesign-loop R4): the category a tag in its colour, the account with its mark,
   // Linked to the planned bill or paycheck a row paid, and each day's total, one row or more.
   { name: "Finances: Transactions' table has the category's tag, the account's mark, Linked to, and each day's total", screen: 'finances', run: async (page) => {
