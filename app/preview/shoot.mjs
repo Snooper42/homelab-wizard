@@ -1963,6 +1963,13 @@ const smokes = [
     const said = (await (await page.waitForSelector(`${when} [role=tooltip]`, { state: 'visible', timeout: 3000 })).innerText()).replace(/\s+/g, ' ');
     if (!/Checked .+: a sample of its files matched/.test(said)) throw new Error(`AppData's hover: ${said}`);
   } },
+  // One problem, one badge (docs/Redesign.md): a stale copy of a running app is Backups' to badge; of a stopped app,
+  // Status's alone.
+  { name: 'One problem, one badge: a running app\'s stale copy badges Backups, a stopped one\'s only Status', screen: 'backups', mock: { status: { ...status, apps: status.apps.map((a) => (a.id === 'mealie' ? { ...a, state: 'running' } : a)) } }, run: async (page) => {
+    await page.waitForSelector('tr.copy.stale:has-text("Mealie")', { timeout: 5000 });
+    await page.waitForFunction(() => document.getElementById('backupsCount').textContent.trim() === '1', null, { timeout: 5000 });
+    if ((await page.textContent('#statusCount')).trim() !== '') throw new Error(`Status badges a running app: ${await page.textContent('#statusCount')}`);
+  } },
   { name: 'Backups: copies paused while their apps wait for a drive, the place named, one line a copy', screen: 'backups', run: async (page) => {
     await page.waitForSelector('#copiesTile:has-text("2 more paused: their apps wait for the Hobbies drive")', { timeout: 5000 });
     const value = await page.textContent('#copiesTile .value');
@@ -1976,7 +1983,10 @@ const smokes = [
     await page.click('tr.copygroup.paused .foldbtn');
     await page.waitForSelector('tr.copy.paused:has-text("Komga")');
     if (await page.isVisible('tr.copy:has-text("Komga") .dot.bad')) throw new Error('a paused copy shows red');
-    if ((await page.textContent('#backupsCount')).trim() !== '1') throw new Error('a paused copy counted as a problem');
+    // Mealie's copy is stale because Mealie is stopped: Status's badge, not Backups' (one problem, one badge); and the
+    // paused copies are no problem at all.
+    await page.waitForFunction(() => document.getElementById('statusCount').textContent.trim() === '1', null, { timeout: 5000 });
+    if ((await page.textContent('#backupsCount')).trim() !== '') throw new Error(`Backups' badge: ${await page.textContent('#backupsCount')} (a paused copy, or a stopped app's, counted)`);
     // One line a copy: no cell wraps, nor says "database" under the name. A copy with a note under its name (why it is
     // stale, or that it shrank) is that one line and the note: its other cells stay on one line each.
     const tall = await page.$$eval('tr.copy', (rows) => rows.filter((r) => (r.querySelector('.note')
@@ -5879,7 +5889,12 @@ const smokes = [
     await form.locator('input[type=text]').fill('alex');
     await form.locator('input[type=password]').fill('s3cret');
     await form.locator('button:has-text("Sign Seerr in")').click();
-    await page.waitForSelector('#statusWiring li:has-text("Seerr sends requests to Sonarr")', { timeout: 3000 });
+    // The run's links: once it ends, the ones that went fine fold into "2 connected" (the owner, Nov 20), so the link is
+    // looked for in the page, not on screen, and the fold must say both.
+    await page.waitForSelector('#statusWiring li:has-text("Seerr sends requests to Sonarr")', { state: 'attached', timeout: 3000 });
+    await page.waitForSelector('#statusWiring li:has-text("Seerr signs in to Jellyfin"):has-text("as alex")', { state: 'attached', timeout: 3000 });
+    const fold = page.locator('#statusWiring details.okLinks > summary');
+    if ((await fold.count()) && !/2 connected/.test(await fold.textContent())) throw new Error(`the fold: ${await fold.textContent()}`);
     const m = await page.evaluate(() => ({ user: window.__MOCK.seerrUser, given: window.__MOCK.seerrPasswordGiven }));
     if (m.user !== 'alex' || !m.given) throw new Error(`sent ${JSON.stringify(m)}`);
     if (await page.locator('#statusWiring input[type=password]').count()) throw new Error('the password field stays after the sign-in');

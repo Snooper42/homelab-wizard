@@ -3122,7 +3122,11 @@ html.companion .crumbs .backlabel { display:inline; }
 .appmark.mini:not(.icon) { padding:0; background:var(--panel); border:1px solid var(--line); color:var(--muted); box-sizing:border-box; }
 .appmark.mini + .appmark.mini { margin-left:-6px; }
 table.grouped tr.grouphead .countpill { border-radius:999px; padding:2px 10px; font-weight:600; }
-table.grouped tr.grouphead .countpill.ok { background:color-mix(in srgb, var(--ok) 14%, transparent); color:var(--ok); }
-table.grouped tr.grouphead .countpill.warn { background:color-mix(in srgb, var(--warn) 16%, transparent); color:var(--warn); }
+table.grouped tr.grouphead .countpill.ok { background:var(--ok-soft); color:var(--ok); }
+table.grouped tr.grouphead .countpill.warn { background:var(--warn-soft); color:var(--warn); }
 table.grouped tr.grouphead .countpill:hover { filter:brightness(.95); }
 html.companion .groupmarks { margin-right:8px; }
+/* A narrow window: a category's heading wraps (its pill under its name if need be), and its icons, only decoration, go
+   once the window is narrower than a phone's. */
+@container (max-width: 760px) { html:not(.companion) #status table.grouped tr.grouphead th { white-space:normal; } }
+@container (max-width: 520px) { html:not(.companion) #status .groupmarks { display:none; } }

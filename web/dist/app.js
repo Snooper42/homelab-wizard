@@ -7722,7 +7722,8 @@
     mountVault($("vaultCard"), { o: o3 });
     $("kopiaCard").hidden = !o3.kopia;
     mountKopia($("kopiaCard"), o3.kopia ? { k: o3.kopia, test: () => backupTask("restore-test-kopia", "Testing Kopia's restore (a few minutes)…", "Kopia's restore test passed", "Kopia's restore test failed: the log says why") } : null);
-    const problems = (o3.copies || []).filter((c4) => c4.state === "stale").length + (o3.plainExports || []).length + (o3.kopia?.failed ? 1 : 0);
+    const appDown = (c4) => !!c4.app && !!statusById[c4.app] && statusById[c4.app].state !== "running";
+    const problems = (o3.copies || []).filter((c4) => c4.state === "stale" && !appDown(c4)).length + (o3.plainExports || []).length + (o3.kopia?.failed ? 1 : 0);
     $("backupsCount").textContent = problems ? String(problems) : "";
     const dup = statusById.duplicati;
     $("openDuplicati").hidden = !(dup?.state === "running" && dup.url);
