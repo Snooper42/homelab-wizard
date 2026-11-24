@@ -3184,3 +3184,17 @@ html.companion .groupmarks { margin-right:8px; }
   #copiesCard #backupRows > tr.copy:is(.stale, .shrank) > td.name { white-space:normal; }
   #copiesCard #backupRows > tr.copy:not(.stale):not(.shrank) > td.name { white-space:nowrap; }
 }
+
+/* Backups on the phone (redesign-loop R10, phone-backups.png): Next, the size and what's kept stay three small tiles in a
+   row, and the restore test and off-site sit side by side. */
+html.companion .bkfacts { display:flex; flex-wrap:wrap; gap:4px 14px; margin-top:8px; }
+html.companion .bkfacts > div { display:flex; align-items:baseline; gap:5px; padding:0; background:none; }
+html.companion .bkfacts dt { font-size:10px; }
+html.companion .bkfacts dd { margin:0; font-size:13px; white-space:nowrap; }
+html.companion .bkcard { padding:14px 16px; }
+html.companion .bkboard { grid-template-columns:repeat(2, minmax(0, 1fr)) !important; }
+html.companion .bkboard > :is(.bklast, .bkneeds) { grid-column:1 / -1 !important; }
+html.companion .bkboard > :is(#restoreTile, #offsiteTile) { grid-column:auto !important; }
+html.companion .bkcard .value { font-size:21px; }
+html.companion .bkboard > :is(#restoreTile, #offsiteTile) .value { font-size:19px; }
+@container (max-width: 300px) { html.companion .bkboard { grid-template-columns:minmax(0, 1fr) !important; } html.companion .bkboard > * { grid-column:auto !important; } }
