@@ -2934,6 +2934,9 @@ const smokes = [
     // The screen's own button (a direct child of the sidebar): Settings' pages, in the sidebar too, have their own .active.
     // In view first: with every account listed under its group, the sidebar can run past the window, and scrolls.
     const shot = async () => { const r = await page.$eval('nav > button.active', (e) => { e.scrollIntoView({ block: 'nearest' }); const b = e.getBoundingClientRect(); return { x: b.left - 4, y: b.top - 4, width: b.width + 8, height: b.height + 8 }; }); return page.screenshot({ clip: r }); };
+    // Settings drawn first: its page list moves into the sidebar once Settings is read, and the sidebar grows with it.
+    await page.waitForSelector('nav #settingsNav .pagebtn', { timeout: 5000 });
+    await page.waitForTimeout(300);
     const plain = await shot();
     await tabTo('nav button[data-screen="backups"]');
     const elsewhere = await shot();
