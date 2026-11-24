@@ -3274,3 +3274,11 @@ html:is(.os-mac, .os-windows, .os-linux) .tidynavdrives .tidydrivebar { backgrou
 .appmark.quiet::before { content:attr(data-letter); }
 #statusRows tr:not(.grouphead) > td:first-child > .appmark.mini { vertical-align:middle; margin-right:10px; }
 #statusHeadline .headlinemain { flex:1 1 300px; }
+
+/* The phone's Status: Setup's unfinished steps (redesign-loop R10), its Setup off the tab bar. */
+#setupOnStatus .setuponstatus { padding:14px 16px; margin:0 0 14px; }
+#setupOnStatus .setuponstatus > .row { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+#setupOnStatus .setuponstatus h2 { margin:0; font-size:15px; text-transform:none; letter-spacing:0; color:var(--text); }
+#setupOnStatus .setuponstatus .primary { width:auto; margin:0; }
+#setupOnStatus .setuponstatus p { margin:4px 0 6px; font-size:13px; }
+.setupnext { margin:0; padding-left:18px; font-size:14px; display:flex; flex-direction:column; gap:3px; }
