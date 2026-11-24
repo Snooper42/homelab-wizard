@@ -465,7 +465,7 @@ async function finAdd(page, name, opts = {}) {
  * Where it goes and Renewing soon to Recurring, Checking ahead to Calendar, Looking back and Money flow to Reports. The
  * phone's page keeps them on its Dashboard, so there this opens nothing.
  */
-const movedTo = { '.fx-paycheck': 'Paychecks', '.fx-spend': 'Recurring', '.fx-renewing': 'Recurring', '.fx-checking': 'Calendar', '.fx-trend': 'Reports', '.fx-moneyflow': 'Reports' };
+const movedTo = { '.fx-paycheck': 'Paychecks', '.fx-spend': 'Recurring', '.fx-renewing': 'Recurring', '.fx-checking': 'Calendar', '.fx-trend': 'Reports', '.fx-lookback': 'Reports', '.fx-moneyflow': 'Reports' };
 async function finCardPage(page, card, opts = {}) {
   await page.waitForSelector('#finances.active #finRoot .finbody', { timeout: opts.timeout || 30000 });
   if (await page.locator('#finMenu .finmenu').isVisible()) await finTab(page, movedTo[card], opts);
@@ -6648,6 +6648,7 @@ const smokes = [
   // Car; the Roth IRA's transfer is saved). Picking a box lists what is behind it, each opening its transaction; ‹ goes to a
   // typical month from the plan, where Top 5 makes the rest Other; the keyboard picks a box too.
   { name: 'Finances: the money flow opens what is behind each box, month by month', screen: 'finances', run: async (page) => {
+    await finCardPage(page, '.fx-moneyflow');
     await page.waitForSelector('#finances.active .fx-moneyflow .fx-periodname:text-is("Oct 2026")', { timeout: 5000 });
     const rows = await page.$$eval('.fx-moneyflow .sr table tbody tr', (rs) => rs.map((r) => [...r.cells].map((c) => c.textContent).join('|')));
     for (const want of ["Jordan's paycheck|Total income|$2,400.00", 'Expenses|Food|$149.85', 'Expenses|Car|$48.20', 'Savings|Roth IRA|$250.00']) {
@@ -8721,28 +8722,28 @@ const smokes = [
   // typed in through its transactions (the same line as the account's own page): 30 days or a year instead, another
   // account picked, and a day clicked opens it on the calendar. The title opens the account's page.
   { name: 'Finances: Reports looks back at an account, and a day opens on the calendar', screen: 'finances', run: async (page) => {
-    await finCardPage(page, '.fx-trend');
-    await page.waitForSelector('#finRoot .fx-trend h2:text-is("Chase Checking, last 90 days")', { timeout: 5000 });
+    await finCardPage(page, '.fx-lookback');
+    await page.waitForSelector('#finRoot .fx-lookback h2:text-is("Chase Checking, last 90 days")', { timeout: 5000 });
     // Its last point is today's end, as the account's own page has it.
-    const said = await page.getAttribute('#finRoot .fx-trend figure', 'aria-label');
-    await page.click('#finRoot .fx-trend .seg button:text-is("A year")');
-    await page.waitForSelector('#finRoot .fx-trend h2:text-is("Chase Checking, last year")', { timeout: 5000 });
-    await page.selectOption('#finRoot .fx-trend select[aria-label="Account"]', { label: 'BofA Savings' });
-    await page.waitForSelector('#finRoot .fx-trend h2:text-is("BofA Savings, last year")', { timeout: 5000 });
-    await page.selectOption('#finRoot .fx-trend select[aria-label="Account"]', { label: 'Chase Checking' });
-    await page.click('#finRoot .fx-trend .seg button:text-is("90 days")');
-    await page.click('#finRoot .fx-trend button.fx-titleopen');
+    const said = await page.getAttribute('#finRoot .fx-lookback figure', 'aria-label');
+    await page.click('#finRoot .fx-lookback .seg button:text-is("A year")');
+    await page.waitForSelector('#finRoot .fx-lookback h2:text-is("Chase Checking, last year")', { timeout: 5000 });
+    await page.selectOption('#finRoot .fx-lookback select[aria-label="Account"]', { label: 'BofA Savings' });
+    await page.waitForSelector('#finRoot .fx-lookback h2:text-is("BofA Savings, last year")', { timeout: 5000 });
+    await page.selectOption('#finRoot .fx-lookback select[aria-label="Account"]', { label: 'Chase Checking' });
+    await page.click('#finRoot .fx-lookback .seg button:text-is("90 days")');
+    await page.click('#finRoot .fx-lookback button.fx-titleopen');
     await page.waitForSelector('#finRoot .fx-account h2:text-is("Chase Checking")', { timeout: 5000 });
     const own = await page.getAttribute('#finRoot .fx-acctbalance figure', 'aria-label');
     const today = (x) => x?.match(/(\S+) today$/)?.[1];
     if (!today(said) || today(said) !== today(own)) throw new Error(`Looking back ends at ${today(said)}, the account's page at ${today(own)}`);
     await finTab(page, 'Reports');
     // A day near the end (in October, which the calendar holds from the 1st): the one its tip names opens there.
-    const plot = page.locator('#finRoot .fx-trend .fx-plot');
+    const plot = page.locator('#finRoot .fx-lookback .fx-plot');
     await plot.scrollIntoViewIfNeeded();
     const box = await plot.boundingBox();
     await page.mouse.move(box.x + box.width * 0.86, box.y + box.height / 2);
-    const day = await page.textContent('#finRoot .fx-trend .fx-tip strong', { timeout: 5000 });
+    const day = await page.textContent('#finRoot .fx-lookback .fx-tip strong', { timeout: 5000 });
     await page.mouse.click(box.x + box.width * 0.86, box.y + box.height / 2);
     await page.waitForSelector('#finMenu [aria-current="page"]:has-text("Calendar")', { timeout: 5000 });
     const opened = await page.textContent('#finRoot .fx-dayone h2', { timeout: 5000 });

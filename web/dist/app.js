@@ -15703,7 +15703,7 @@
       {
         title: `${a3.name}, ${when3}`,
         span: "all",
-        kind: "fx-trend",
+        kind: "fx-trend fx-lookback",
         open: openAccount && (() => openAccount(a3.id)),
         openLabel: `Open ${a3.name}'s page`,
         actions: /* @__PURE__ */ u3(S, { children: [
@@ -18434,6 +18434,8 @@ ${pays}
     const [what2, label] = adds[pageFor(tab3)] || adds.overview;
     const exp = useExport(v3, exportFile2, printMonth);
     const [from2, setFrom] = d2("");
+    const [freshAt, setFreshAt] = d2(0);
+    const fresh = () => setFreshAt((n3) => n3 + 1);
     const toTx = (f4) => {
       showTransactions(f4);
       setFrom(tab3);
@@ -18531,9 +18533,9 @@ ${pays}
       }, openPay: () => setTab("pay"), openAccount: (id2) => setTab(`account:${id2}`), group: group2, setGroup }) : tab3 === "calendar" ? /* @__PURE__ */ u3(S, { children: [
         !phone2 && /* @__PURE__ */ u3(PageCards, { children: /* @__PURE__ */ u3(CheckingWidget, { v: v3, L: L2, sel: Math.max(0, sel2), openDay: (day3) => {
           showDay(day3);
-          setTab("calendar");
+          fresh();
         } }) }),
-        /* @__PURE__ */ u3(Calendar, { v: v3, L: L2, ledger, edit: (w3, id2) => edit(w3, id2) })
+        /* @__PURE__ */ u3(Calendar, { v: v3, L: L2, ledger, edit: (w3, id2) => edit(w3, id2) }, freshAt)
       ] }) : tab3 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, edit: (w3, id2) => edit(w3, id2), saveLedger: saveLedger2, logos: !phone2, back: back3 }) : tab3 === "reports" ? /* @__PURE__ */ u3(S, { children: [
         !phone2 && /* @__PURE__ */ u3(PageCards, { children: [
           /* @__PURE__ */ u3(TrendWidget, { v: v3, ledger, openDay: (day3) => {
@@ -18545,10 +18547,16 @@ ${pays}
         /* @__PURE__ */ u3(Reports, { v: v3, ledger, exportFile: exportFile2, open: toTx })
       ] }) : tab3 === "recurring" ? /* @__PURE__ */ u3(S, { children: [
         !phone2 && /* @__PURE__ */ u3(PageCards, { children: [
-          /* @__PURE__ */ u3(RenewingWidget, { v: v3, L: L2, edit: (w3, id2) => edit(w3, id2) }),
-          /* @__PURE__ */ u3(SpendingWidget, { v: v3, L: L2 })
+          /* @__PURE__ */ u3(RenewingWidget, { v: v3, L: L2, edit: (w3, id2) => edit(w3, id2), all: () => {
+            openOn("subscriptions");
+            fresh();
+          } }),
+          /* @__PURE__ */ u3(SpendingWidget, { v: v3, L: L2, openKind: (f4) => {
+            openOn(f4);
+            fresh();
+          } })
         ] }),
-        /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, edit, keep: keep3, running: running5, fromWallos })
+        /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, edit, keep: keep3, running: running5, fromWallos }, freshAt)
       ] }) : tab3 === "pay" ? /* @__PURE__ */ u3(S, { children: [
         !phone2 && /* @__PURE__ */ u3(PageCards, { children: /* @__PURE__ */ u3(PaycheckWidget, { v: v3, L: L2, sel: Math.max(0, sel2), edit: (w3, id2) => edit(w3, id2) }) }),
         /* @__PURE__ */ u3(Pay, { v: v3, L: L2, edit, saveSettings, keep: keep3, calendar })

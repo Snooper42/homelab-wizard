@@ -144,6 +144,10 @@ function FinancesScreen({ v, ledger, error, retry, tab, setTab, sel, pick, setSi
   const exp = useExport(v, exportFile, printMonth);
   // Where Transactions was opened from, filtered (a report's row, a Dashboard card), for its Back; a tab picked forgets it.
   const [from, setFrom] = useState('');
+  // A card on a page opening something on that same page (Checking ahead a day on Calendar, Renewing soon or Where it goes a
+  // list on Recurring): the page drawn afresh, since each reads what to open when it's first drawn.
+  const [freshAt, setFreshAt] = useState(0);
+  const fresh = () => setFreshAt((n) => n + 1);
   const toTx = (f: Parameters<typeof showTransactions>[0]) => { showTransactions(f); setFrom(tab); setTab('transactions'); };
   const pickTab = (t: string) => { setFrom(''); setTab(t); };
   // A page picked anywhere else (Finances' menu in the sidebar, Back and Forward) forgets where Transactions came from.
@@ -205,10 +209,10 @@ function FinancesScreen({ v, ledger, error, retry, tab, setTab, sel, pick, setSi
         {!v && error ? <Empty>The finances file could not be read: {error} <button class="small" onClick={retry}>Try again</button></Empty>
           : !v ? <Empty>Reading…</Empty>
           : ro ? <View v={v} L={L} phone={phone} ledger={ledger} setTab={setTab} toTx={toTx} back={back} exportFile={exportFile} readReceipt={readReceipt} readCardPicture={readCardPicture} readCardPrices={readCardPrices} running={running} tab={tab} sel={sel} pick={pick} openWorth={() => setTab('worth')} openSubscriptions={() => { openOn('subscriptions'); setTab('recurring'); }} openRecurring={(f?: string) => { if (f) openOn(f); setTab('recurring'); }} openTransactions={() => toTx({})} showIn={toTx} openCalendar={(day?: string) => { if (day) showDay(day); setTab('calendar'); }} openPay={() => setTab('pay')} openAccount={(id: string) => setTab(`account:${id}`)} group={group} setGroup={setGroup} />
-          : tab === 'calendar' ? <>{!phone && <PageCards><CheckingWidget v={v} L={L!} sel={Math.max(0, sel)} openDay={(day) => { showDay(day); setTab('calendar'); }} /></PageCards>}<Calendar v={v} L={L} ledger={ledger} edit={(w, id) => edit(w, id)} /></>
+          : tab === 'calendar' ? <>{!phone && <PageCards><CheckingWidget v={v} L={L!} sel={Math.max(0, sel)} openDay={(day) => { showDay(day); fresh(); }} /></PageCards>}<Calendar key={freshAt} v={v} L={L} ledger={ledger} edit={(w, id) => edit(w, id)} /></>
           : tab === 'transactions' ? <Transactions v={v} L={L} ledger={ledger} edit={(w, id) => edit(w, id)} saveLedger={saveLedger} logos={!phone} back={back} />
           : tab === 'reports' ? <>{!phone && <PageCards><TrendWidget v={v} ledger={ledger} openDay={(day) => { showDay(day); setTab('calendar'); }} openAccount={(id) => setTab(`account:${id}`)} /><MoneyFlowWidget v={v} L={L!} ledger={ledger} edit={(w, id) => edit(w, id)} /></PageCards>}<Reports v={v} ledger={ledger} exportFile={exportFile} open={toTx} /></>
-          : tab === 'recurring' ? <>{!phone && <PageCards><RenewingWidget v={v} L={L!} edit={(w, id) => edit(w, id)} /><SpendingWidget v={v} L={L!} /></PageCards>}<Recurring v={v} L={L} edit={edit} keep={keep} running={running} fromWallos={fromWallos} /></>
+          : tab === 'recurring' ? <>{!phone && <PageCards><RenewingWidget v={v} L={L!} edit={(w, id) => edit(w, id)} all={() => { openOn('subscriptions'); fresh(); }} /><SpendingWidget v={v} L={L!} openKind={(f) => { openOn(f); fresh(); }} /></PageCards>}<Recurring key={freshAt} v={v} L={L} edit={edit} keep={keep} running={running} fromWallos={fromWallos} /></>
           : tab === 'pay' ? <>{!phone && <PageCards><PaycheckWidget v={v} L={L!} sel={Math.max(0, sel)} edit={(w, id) => edit(w, id)} /></PageCards>}<Pay v={v} L={L} edit={edit} saveSettings={saveSettings} keep={keep} calendar={calendar} /></>
           : tab.startsWith('account:') ? <AccountPage v={v} L={L} ledger={ledger} id={tab.slice(8)} done={() => setTab('worth')} edit={() => edit('account', tab.slice(8))} update={() => edit('balances')} toTx={toTx} editTx={(w, id) => edit(w, id)} saveLedger={saveLedger} keep={keep} />
           : tab === 'worth' ? <NetWorth v={v} L={L} edit={edit} open={(id) => setTab('account:' + id)} sel={Math.max(0, sel)} pick={pick} update={() => edit('balances')} keep={keep} group={group} setGroup={setGroup} invest={investments} />

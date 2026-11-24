@@ -2074,6 +2074,9 @@ html.os-mac .fx-balance { padding:4px 8px; }
    since the start, which the Since card above sums up, steps aside rather than squeezing the name to a word a line. */
 #finRoot .fx-ownlist > ul.fx-rows, #finRoot .fx-owelist > ul.fx-rows { container:acctrows / inline-size; }
 @container acctrows (max-width: 380px) { .fx-change { display:none; } }
+/* Renewing soon on a narrow card (big text, a small window): its day is under each name, so the "In 4 days" badge goes. */
+#finRoot .fx-renewing > ul.fx-rows { container:renewrows / inline-size; }
+@container renewrows (max-width: 380px) { .fx-renewing .fx-due { display:none; } }
 :is(#finRoot, #tidyRoot) .card.fx-widget > .row { flex-wrap:nowrap; align-items:center; gap:12px; }
 /* Narrow (a phone, a small window at a large text size), a heading's controls go under it when they
    don't fit beside it, and a long pick scrolls sideways in the card rather than past its edge. */
