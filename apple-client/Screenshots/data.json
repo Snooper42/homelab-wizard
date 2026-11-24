@@ -11087,6 +11087,13 @@
      "bytes": 64000000
     }
    ]
+  },
+  "machine": {
+   "free": 412000000000,
+   "total": 994000000000,
+   "low": false,
+   "power": "plugged",
+   "keptAwake": true
   }
  }
 }

@@ -54,6 +54,13 @@ final class CardsViewModel {
         return out
     }
 
+    /// The computer's free space and power, for Status's This Machine card; nil before it's
+    /// read, or from a computer that doesn't send it.
+    var machine: MachineFacts? {
+        if case .other(let v)? = cards["machine"]?.data { return MachineFacts.from(v) }
+        return nil
+    }
+
     var watchdog: WatchdogSummary? {
         if case .watchdog(let w)? = cards["watchdog"]?.data { return w }
         return nil

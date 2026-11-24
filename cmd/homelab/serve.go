@@ -430,7 +430,8 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 			all, phone := core.Cards(root), board.Readers{}
 			// usage and storage: each app's memory, processor and folder (item 4 of apple-loop.md).
 			// downloads: the Downloads card in the computer's words (arr item 6).
-			for _, name := range []string{"watchdog", "savings", "protection", "alerts", "usage", "storage", "downloads"} {
+			// machine: the room on the homelab folder's disk and the power, for Status' This Mac card.
+			for _, name := range []string{"watchdog", "savings", "protection", "alerts", "usage", "storage", "downloads", "machine"} {
 				phone[name] = all[name]
 			}
 			send := func(c board.Card) {
