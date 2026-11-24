@@ -1,6 +1,6 @@
 // Latest transactions: the five newest from the ledger on the Dashboard,
 // each opening its own form (or nothing, on a phone allowed only to look),
-// and See all for Transactions. None yet, no card: the Dashboard reads the
+// and its ↗ to Transactions. None yet, no card: the Dashboard reads the
 // plan first, and a household that keeps no ledger has nothing to see here.
 import type { ComponentChildren } from 'preact';
 import { Row, Rows } from '../../parts/Row';
@@ -28,8 +28,10 @@ export function TxRow({ t, v, L, edit, end, compact }: { t: finance.Transaction;
   const day = t.date === v.today ? 'Today' : dayShort(t.date);
   const amount = <Amount value={t.amount} sign={t.amount > 0} tone={t.amount > 0 && !t.to ? 'in' : ''} form="full" currency={a?.currency} />;
   if (compact) {
+    // Its category's colour; 0 is none (income): no dot then, and no room kept for one beside the word.
+    const catHue = t.splits?.length || t.category ? categoryHue(t.splits?.length ? t.splits[0].category : t.category, v.categories) : 0;
     return <Row lead={<TxMark t={t} categories={v.categories} />} title={txTitle(t, L)}
-      sub={<span class="fx-txcat">{(t.splits?.length || t.category) && <Dot color={categoryHue(t.splits?.length ? t.splits[0].category : t.category, v.categories)} />}{what}</span>}
+      sub={<span class="fx-txcat">{!!catHue && <Dot color={catHue} />}{what}</span>}
       end={end} when={<span class="fx-whenstack">{amount}<span class="fx-sub">{day}</span></span>} whenPlain
       onOpen={edit ? () => edit('transaction', t.id) : undefined} openLabel={edit ? 'edit' : undefined} />;
   }
