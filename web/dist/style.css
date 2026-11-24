@@ -3184,3 +3184,8 @@ html.companion .groupmarks { margin-right:8px; }
   #copiesCard #backupRows > tr.copy:is(.stale, .shrank) > td.name { white-space:normal; }
   #copiesCard #backupRows > tr.copy:not(.stale):not(.shrank) > td.name { white-space:nowrap; }
 }
+
+/* An app's page, Who uses it (redesign-loop R11): each person's letter a round mark in the row's lead; the card's foot
+   link from its left edge (not the sidebar's foot, whose padding and line it had). */
+.pagecard .initial { flex:none; display:inline-flex; align-items:center; justify-content:center; width:30px; height:30px; border-radius:50%; background:var(--accent-soft); color:var(--accent); font-weight:700; font-size:13px; }
+.pagecard p.foot { padding:0; border-top:0; color:var(--muted); }

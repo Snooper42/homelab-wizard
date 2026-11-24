@@ -9343,10 +9343,7 @@
         /* @__PURE__ */ u3(Icon, { name: "key" }),
         "Sign-in details"
       ] }) }),
-      people && (people.length ? /* @__PURE__ */ u3(Rows, { children: people.map((x3) => /* @__PURE__ */ u3(Row, { title: /* @__PURE__ */ u3(S, { children: [
-        /* @__PURE__ */ u3("span", { class: "initial", "aria-hidden": "true", children: (x3.name || x3.username).slice(0, 1) }),
-        x3.name || x3.username
-      ] }), sub: x3.email }, x3.username)) }) : /* @__PURE__ */ u3(Empty, { children: "Nobody in the household uses it yet." })),
+      people && (people.length ? /* @__PURE__ */ u3(Rows, { children: people.map((x3) => /* @__PURE__ */ u3(Row, { lead: /* @__PURE__ */ u3("span", { class: "initial", "aria-hidden": "true", children: (x3.name || x3.username).slice(0, 1) }), title: x3.name || x3.username, sub: x3.email }, x3.username)) }) : /* @__PURE__ */ u3(Empty, { children: "Nobody in the household uses it yet." })),
       people && /* @__PURE__ */ u3("p", { class: "muted foot", children: /* @__PURE__ */ u3(ActionLink, { onClick: on2.openPeople, children: "Add someone in Settings › People" }) })
     ] });
   }
