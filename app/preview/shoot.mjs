@@ -2945,7 +2945,7 @@ const smokes = [
     await tabTo('nav > button.active');
     const focused = await shot();
     if (focused.equals(elsewhere)) throw new Error('Settings looks the same with the focus on it and on Backups');
-    if (!plain.equals(elsewhere)) throw new Error('Settings changes when the focus is on Backups');
+    if (!plain.equals(elsewhere)) throw new Error('Settings changes when the focus is on Backups (TEMPORARY, to read the pictures: plain ' + plain.toString('base64') + ' elsewhere ' + elsewhere.toString('base64') + ' focus ' + await page.evaluate(() => document.activeElement.tagName + ' ' + (document.activeElement.textContent || '').trim().slice(0, 20) + ' scroll ' + document.querySelector('nav').scrollTop) + ')');
     const mark = await page.$eval('nav > button.active', (e) => { const a = getComputedStyle(e, '::before'); return a.display !== 'none' && parseFloat(a.width) >= 3 && a.forcedColorAdjust === 'none'; });
     if (!mark) throw new Error('the current screen has no bar of its own');
   } })),
