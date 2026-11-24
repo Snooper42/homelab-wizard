@@ -557,6 +557,17 @@ struct AppGroup: Identifiable, Equatable, Sendable {
 
     var id: String { label }
 
+    /// The redesign's pill on a category (phone-status.png), as the
+    /// computer's Status: "✓ 4 running" when every app that counts runs,
+    /// "1 of 2 running" when one doesn't. None on Needs a look or Pinned,
+    /// which keep their count.
+    var runningPill: (words: String, fine: Bool)? {
+        guard !alert && !pinned else { return nil }
+        let counted = apps.filter { !$0.awaitingJobs }
+        let running = counted.filter(\.isRunning).count
+        return running >= counted.count ? ("✓ \(running) running", true) : ("\(running) of \(counted.count) running", false)
+    }
+
     /// Folded until opened, as on the computer: everything in it runs,
     /// waits for the scheduled jobs, or was stopped on purpose.
     var isFine: Bool {
