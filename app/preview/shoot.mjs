@@ -1162,11 +1162,14 @@ const smokes = [
     await page.waitForSelector(`${row}:has-text("Tdarr isn't answering, so nothing is shrinking")`, { timeout: 5000 });
   } },
   // Nov 8, the owner: "drop a bunch of files … and this app will be able to pick that up … once a day maybe, or maybe even
-  // manually". The Inbox tab opens on Drop anything here: the folders watched (one gone with its drive said), Add… from the
-  // folder picker, Remove while another is left, when it tidies (kept at once), and Tidy up now.
+  // manually". Drop anything here, behind Folders and when… in the header since the redesign (redesign-loop R9): the folders
+  // watched (one gone with its drive said), Add… from the folder picker, Remove while another is left, when it tidies (kept
+  // at once); and the header's Tidy up now.
   { name: 'Tidy Up: the Inbox card keeps its folders and when, and Tidy up now files what is waiting', screen: 'tidy', mock: { pickFolder: '/Volumes/Hobbies/Inbox', tidy: { ...tidy, inbox: { ...tidy.inbox, folders: ['/Users/you/Downloads'], gone: [] } } }, run: async (page) => {
     await page.click('#tidy .seg button:text-is("Inbox")', { timeout: 5000 });
     const card = '#tidy .tidyinbox';
+    if (await page.$(card)) throw new Error('the folders show before Folders and when… is pressed');
+    await page.click('#tidy .tidyfoldersbtn');
     await page.waitForSelector(`${card} h2:text-is("Drop anything here")`, { timeout: 5000 });
     await page.waitForSelector(`${card} li:has(strong:text-is("Downloads")):has-text("Watched: tidied as things arrive")`, { timeout: 2000 });
     if (await page.$(`${card} li:has(strong:text-is("Downloads")) button:text-is("Remove")`)) throw new Error('the only folder can be removed');
@@ -1179,13 +1182,14 @@ const smokes = [
     const kept = await page.evaluate(() => window.__MOCK.tidyInbox);
     const want = [{ folders: ['/Users/you/Downloads', '/Volumes/Hobbies/Inbox'], when: 'arrive' }, { folders: ['/Users/you/Downloads', '/Volumes/Hobbies/Inbox'], when: 'daily' }, { folders: ['/Volumes/Hobbies/Inbox'], when: 'daily' }];
     if (JSON.stringify(kept) !== JSON.stringify(want)) throw new Error(JSON.stringify(kept));
-    await page.click(`${card} button:text-is("Tidy up now")`);
+    await page.click('#tidy .tidytools button:text-is("Tidy up now")');
     await page.waitForFunction(() => (window.__MOCK.tidyRuns || []).length === 1, null, { timeout: 5000 });
     const runs = await page.evaluate(() => window.__MOCK.tidyRuns);
     if (JSON.stringify(runs[0].slice(0, 3)) !== JSON.stringify(['inbox', 'scan', ['--apply']])) throw new Error(JSON.stringify(runs));
   } },
   { name: 'Tidy Up: a watched folder on a drive that is unplugged says so', screen: 'tidy', mock: { tidy: { ...tidy, inbox: { ...tidy.inbox, gone: ['/Volumes/Hobbies/downloads'] } } }, run: async (page) => {
     await page.click('#tidy .seg button:text-is("Inbox")', { timeout: 5000 });
+    await page.click('#tidy .tidyfoldersbtn');
     await page.waitForSelector('#tidy .tidyinbox li:has(strong:text-is("downloads")) .warn:has-text("Not there now: plug in its drive")', { timeout: 5000 });
   } },
   // What I did today: each download the inbox filed, newest first, in plain words; Undo puts one back (one already put back
@@ -1213,7 +1217,7 @@ const smokes = [
     await page.click('#tidy .seg button:text-is("Inbox")', { timeout: 5000 });
     await page.waitForSelector('#tidy .tidytoday:has-text("Nothing yet today. Drop something in a watched folder, or press Tidy up now.")', { timeout: 5000 });
   } },
-  // Nov 8, the owner's mockup: Needs a look, between Drop anything here and What I did today: what Tidy Up couldn't place,
+  // Needs a look (the owner's Nov 8 mockup; beside What I did today since the redesign, R9): what Tidy Up couldn't place,
   // with why. A video can be named a film or an episode in a sheet (File it waits for what it needs; a number box takes
   // digits only), anything can be shown in the file manager or left be; with nothing waiting, the card isn't there.
   { name: 'Tidy Up: Needs a look names a film or an episode, shows one, and leaves one be', screen: 'tidy', mock: { tidy: { ...tidy, needs: [
@@ -1225,7 +1229,7 @@ const smokes = [
     const card = '#tidy .tidyneedslook';
     await page.waitForSelector(`${card} h2:text-is("Needs a look")`, { timeout: 5000 });
     const order = await page.$$eval('#tidy .tidybody .fx-board:first-child > .fx-widget h2', (e) => e.map((x) => x.firstChild.textContent.trim()));
-    if (JSON.stringify(order) !== JSON.stringify(['Drop anything here', 'Needs a look', 'What I did today'])) throw new Error(JSON.stringify(order));
+    if (JSON.stringify(order) !== JSON.stringify(['What I did today', 'Needs a look'])) throw new Error(JSON.stringify(order));
     await page.waitForSelector(`${card} li:has(strong:text-is("IMG_2041.mov")) .warn:has-text("Couldn't tell which film it is from its name.")`, { timeout: 2000 });
     const song = `${card} li:has(strong:text-is("track01.mp3"))`;
     if (await page.$(`${song} button:text-is("It's a film…")`)) throw new Error('a song offered as a film');
@@ -1413,6 +1417,7 @@ const smokes = [
     return [
       { name: 'Tidy Up: Change where your libraries live picks a drive, and restarts the apps after asking', screen: 'tidy', mock: { tidyDrives: drives, tidyPlaces }, run: async (page) => {
         await page.click('#tidy .seg button:text-is("Inbox")', { timeout: 5000 });
+        await page.click('#tidy .tidyfoldersbtn');
         await page.waitForSelector('#tidy .tidyinbox:has-text("Your libraries live in /Volumes/Hobbies.")', { timeout: 5000 });
         await page.click('#tidy .tidyinbox button:text-is("Change where your libraries live…")');
         const card = '#tidy .tidyplaces';
