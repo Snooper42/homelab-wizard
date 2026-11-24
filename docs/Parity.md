@@ -37,6 +37,7 @@ What a phone may do also depends on how it was paired, on every phone (the phone
 |---|---|---|---|---|---|
 | Status's headline: how many apps need you over how many run ("1 app needs you", "21 of 22 running"), the first one's fix beside it | yes | yes | yes | yes | `Status` |
 | A category's pill: "✓ 4 running", or "1 of 2 running" when one is down | yes | yes | yes | yes | `Status` |
+| The categories as one card, a row each: the first apps' logos, the name over its apps' names, the pill, a tap to open | yes | yes | yes | gap: the iPad's Status list keeps a heading a category | `Status` |
 | Backups and This Machine beside the headline: last night's copies ("11 of 12", what was skipped), the free space, the power and the nightly updates | yes | partly: Backups and the nightly updates; gap: the page doesn't read the `machine` card yet | yes | gap: the iPad's Status list doesn't show them yet | `StatusBoard` (`machine`) |
 | The list of apps, live, grouped as Needs a look, Pinned, then each category | yes | yes | yes | yes | `Status`, `StatusBoard`, `LastStatus`, `Catalog`, `Screen` |
 | Each app's logo | yes | yes | yes | yes | `AppIcon` |
