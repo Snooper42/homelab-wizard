@@ -1792,6 +1792,7 @@ button.kindrow:focus-visible { outline:2px solid var(--accent); outline-offset:-
 .fx-board.fx-dash > :is(.fx-since, .fx-missing, .fx-prices, .fx-averages, .fx-past, .fx-planned) { grid-column:1 / -1; }
 .fx-board.fx-dash > .fx-lead { grid-column:span 2; }
 .fx-board.fx-dash > .fx-latest { grid-row:span 2; align-self:stretch; }
+.fx-board.fx-dash > .fx-budgets { grid-column:span 2; }
 @container (max-width: 860px) {
   .fx-board.fx-dash { grid-template-columns:repeat(2, minmax(0, 1fr)); }
   .fx-board.fx-dash > .fx-lead { grid-column:1 / -1; }

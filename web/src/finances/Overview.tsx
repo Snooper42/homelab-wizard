@@ -13,6 +13,7 @@ import { Mark } from './Mark';
 import { Widget } from './ui/Widget';
 import type { Lookup } from './money';
 import { CheckingWidget } from './widgets/Checking';
+import { InvestSummaryWidget } from './widgets/InvestSummary';
 import { LeadWidget } from './widgets/Now';
 import { PricesWidget } from './widgets/Prices';
 import { MissingWidget } from './widgets/Missing';
@@ -210,7 +211,8 @@ export function Overview({ v, L, sel, pick, add, edit, setSince, keep, ledger, o
         { id: 'cashflow', title: 'Cash flow', width: 'third', node: <CashFlowWidget v={v} L={L} open={openRecurring && (() => openRecurring())} ledger={ledger} showIn={showIn} /> },
         { id: 'spent', title: 'Where the money went', width: 'third', node: !(month?.when === 'ahead') && <SpentWidget v={v} ledger={ledger} open={showIn} days={spentDays} title={spentDays ? undefined : 'Where the money went'} /> },
         { id: 'comingup', title: 'Coming up', width: 'third', node: <ComingUpWidget v={v} L={L} calendar={openCalendar} /> },
-        { id: 'budgets', title: 'Budgets to watch', width: 'third', node: <BudgetsWidget v={v} only={toWatch} title="Budgets to watch" span={1} open={openTransactions} show={showIn && ((category, month) => showIn({ category, month }))} /> },
+        { id: 'budgets', title: 'Budgets to watch', width: 'half', node: <BudgetsWidget v={v} only={toWatch} title="Budgets to watch" span={1} open={openTransactions} show={showIn && ((category, month) => showIn({ category, month }))} /> },
+        { id: 'investments', title: 'Investments', width: 'third', node: <InvestSummaryWidget v={v} open={openWorth} openAccount={openAccount} /> },
       ]} />}
     </div>
   );
