@@ -7439,27 +7439,21 @@
     const runs2 = t3.history || [];
     const newest2 = runs2[runs2.length - 1];
     const timed = runs2.slice().reverse().find((r3) => r3.passed && r3.seconds);
-    const sub = newest2 && !newest2.passed ? /* @__PURE__ */ u3("span", { class: "bad", children: [
+    const failed = !!newest2 && !newest2.passed;
+    const sub = failed ? /* @__PURE__ */ u3("span", { class: "bad", children: [
       "Failed ",
       ago(newest2.when),
       ": ",
       newest2.summary
     ] }) : due ? /* @__PURE__ */ u3("span", { class: "warn", children: "Prove the backups open, once a month" }) : (t3.lastSummary || (never(t3.lastTest) ? "Once there is a backup to test" : "Proven in the last 30 days")) + (timed ? ` · in ${tookText(timed.seconds)}` : "");
     const record2 = runs2.slice(-6).reverse().map((r3) => `${dayText(new Date(r3.when), { day: "numeric", month: "short" })}: ${r3.passed ? "passed" : "failed"}${r3.seconds ? " in " + tookText(r3.seconds) : ""}`);
-    return /* @__PURE__ */ u3(
-      Tile,
-      {
-        id: "restoreTile",
-        title: record2.length ? `Restore drills on record (${runs2.length}):
-` + record2.join("\n") : void 0,
-        label: "Restore test",
-        value: never(t3.lastTest) ? "Never" : ago(t3.lastTest),
-        sub: /* @__PURE__ */ u3(S, { children: [
-          sub,
-          test && /* @__PURE__ */ u3("span", { class: "tileaction", children: /* @__PURE__ */ u3("button", { id: "restoreTest", class: "small", title: "Duplicati restores a dozen files from last night's Homelab AppData backup, and each is compared with the live file", onClick: test, children: "Test a restore" }) })
-        ] })
-      }
-    );
+    return /* @__PURE__ */ u3(Card, { kind: "bkcard", id: "restoreTile", title: record2.length ? `Restore drills on record (${runs2.length}):
+` + record2.join("\n") : void 0, children: [
+      /* @__PURE__ */ u3(CardHead, { title: "Restore test" }),
+      /* @__PURE__ */ u3(CardFigure, { figure: /* @__PURE__ */ u3("span", { class: "value" + (failed ? " bad" : ""), children: never(t3.lastTest) ? "Never" : failed ? "Failed" : "Passed" }), label: never(t3.lastTest) ? void 0 : ago(t3.lastTest) }),
+      /* @__PURE__ */ u3("p", { class: "bksub", children: sub }),
+      test && /* @__PURE__ */ u3("div", { class: "bkactions", children: /* @__PURE__ */ u3("button", { id: "restoreTest", class: "small", title: "Duplicati restores a dozen files from last night's Homelab AppData backup, and each is compared with the live file", onClick: test, children: "Test a restore" }) })
+    ] });
   }
   var sourceNames = (sources) => sources.map((s3) => s3.split("/").filter(Boolean).pop() || s3).join(", ");
   function JobRun({ j: j3 }) {
@@ -7474,47 +7468,90 @@
     ] });
   }
   var drivesOf = (copies) => [...new Set(copies.map((c4) => driveName(c4.waitingFor || "")))].join(" and ");
-  function BackupTiles({ o: o3, os, test }) {
+  function BackupTiles({ o: o3, os, test, apps: apps2, start }) {
     const copies = sortedCopies(o3);
-    const fresh = copies.filter((c4) => c4.state === "fresh").length;
+    const fresh = copies.filter((c4) => c4.state === "fresh");
     const stale = copies.filter((c4) => c4.state === "stale");
     const paused = copies.filter((c4) => c4.state === "paused");
+    const kept5 = Math.max(0, ...copies.map((c4) => c4.count));
+    const size2 = fresh.reduce((t3, c4) => t3 + c4.size, 0);
+    const lastNight = !never(o3.lastRun) && Date.now() - new Date(o3.lastRun).getTime() < 30 * 36e5;
+    const needs = [...stale, ...paused];
     return /* @__PURE__ */ u3(S, { children: [
-      /* @__PURE__ */ u3(Tile, { label: "Last backup", value: never(o3.lastRun) ? "Never" : ago(o3.lastRun), sub: never(o3.envCopied) ? "Settings file not copied yet" : "Every night at 03:30; the settings file too" }),
-      /* @__PURE__ */ u3(
-        Tile,
-        {
-          id: "copiesTile",
-          label: "Copies up to date",
-          value: copies.length ? /* @__PURE__ */ u3(S, { children: [
-            String(fresh),
-            /* @__PURE__ */ u3("small", { children: [
-              " of ",
-              copies.length - paused.length
-            ] })
-          ] }) : "None yet",
-          sub: !copies.length ? "The first are made the night after an app with a database starts" : stale.length || paused.length ? /* @__PURE__ */ u3(S, { children: [
-            !!stale.length && /* @__PURE__ */ u3("span", { class: "bad", children: [
-              "Out of date: ",
-              stale.map((c4) => `${c4.name}, last copied ${ago(c4.newest)}`).join("; ")
-            ] }),
-            !!paused.length && /* @__PURE__ */ u3("span", { children: `${paused.length} more paused: ${paused.length === 1 ? "its app waits" : "their apps wait"} for ${drivesOf(paused)}` })
-          ] }) : `Each under ${o3.staleAfterHours} hours old`
-        }
-      ),
-      /* @__PURE__ */ u3(
-        Tile,
-        {
-          id: "offsiteTile",
-          label: "Off-site",
-          value: o3.destinationOK ? placeName(o3.destination) : /* @__PURE__ */ u3("span", { class: "warn", children: "Not set" }),
-          sub: o3.destinationOK ? /* @__PURE__ */ u3("span", { title: o3.destination, children: [
-            "Encrypted, in ",
-            lastFolder(o3.destination)
-          ] }) : os === "linux" ? "Put a backup drive or a synced folder in Settings › Backups go to" : "Put a Proton Drive folder in Settings › Backups go to"
-        }
-      ),
-      /* @__PURE__ */ u3(RestoreTile, { t: o3.restoreTest || {}, due: o3.restoreDue, test })
+      /* @__PURE__ */ u3(Card, { kind: "bkcard bklast", id: "copiesTile", children: [
+        /* @__PURE__ */ u3(CardHead, { title: lastNight || never(o3.lastRun) ? "Last night" : "Last backup", children: /* @__PURE__ */ u3("span", { class: "muted", children: "Every night at 03:30" }) }),
+        /* @__PURE__ */ u3(
+          CardFigure,
+          {
+            figure: /* @__PURE__ */ u3("span", { class: "value", children: copies.length ? /* @__PURE__ */ u3(S, { children: [
+              fresh.length,
+              /* @__PURE__ */ u3("small", { children: [
+                " of ",
+                copies.length - paused.length,
+                " copied"
+              ] })
+            ] }) : "None yet" }),
+            label: never(o3.lastRun) ? void 0 : [lastNight ? `Finished ${clockText(new Date(o3.lastRun))}` : ago(o3.lastRun), size2 ? bytes(size2) : "", o3.destinationOK ? `Encrypted to ${placeName(o3.destination)}` : ""].filter(Boolean).join(" · "),
+            chip: stale.length ? /* @__PURE__ */ u3("span", { class: "bkskipped", children: stale.length === 1 ? `${stale[0].name} skipped` : `${stale.length} skipped` }) : void 0
+          }
+        ),
+        /* @__PURE__ */ u3("p", { class: "bksub", children: !copies.length ? "The first are made the night after an app with a database starts" : /* @__PURE__ */ u3(S, { children: [
+          !!stale.length && /* @__PURE__ */ u3("span", { class: "bad", children: [
+            "Out of date: ",
+            stale.map((c4) => `${c4.name}, last copied ${ago(c4.newest)}`).join("; "),
+            ". "
+          ] }),
+          !!paused.length && /* @__PURE__ */ u3("span", { children: [
+            `${paused.length} more paused: ${paused.length === 1 ? "its app waits" : "their apps wait"} for ${drivesOf(paused)}`,
+            ". "
+          ] }),
+          !stale.length && !paused.length && `Each under ${o3.staleAfterHours} hours old.`,
+          never(o3.envCopied) ? " Settings file not copied yet." : " The settings file too."
+        ] }) }),
+        /* @__PURE__ */ u3("dl", { class: "bkfacts", children: [
+          /* @__PURE__ */ u3("div", { children: [
+            /* @__PURE__ */ u3("dt", { children: "Next" }),
+            /* @__PURE__ */ u3("dd", { children: "Tonight, 03:30" })
+          ] }),
+          /* @__PURE__ */ u3("div", { children: [
+            /* @__PURE__ */ u3("dt", { children: lastNight ? "Last night's size" : "Its size" }),
+            /* @__PURE__ */ u3("dd", { children: size2 ? bytes(size2) : "—" })
+          ] }),
+          /* @__PURE__ */ u3("div", { children: [
+            /* @__PURE__ */ u3("dt", { children: "Kept" }),
+            /* @__PURE__ */ u3("dd", { children: kept5 ? `${kept5} ${kept5 === 1 ? "night" : "nights"}` : "—" })
+          ] })
+        ] })
+      ] }),
+      /* @__PURE__ */ u3(Card, { kind: "bkcard bkneeds", id: "needsYou", children: [
+        /* @__PURE__ */ u3(CardHead, { title: /* @__PURE__ */ u3(S, { children: [
+          "Needs you",
+          !!stale.length && /* @__PURE__ */ u3("span", { class: "bkcount", children: stale.length })
+        ] }) }),
+        needs.length ? /* @__PURE__ */ u3(Rows, { kind: "bkneedlist", children: needs.map((c4) => {
+          const a3 = c4.app ? apps2?.[c4.app] : void 0;
+          return /* @__PURE__ */ u3(
+            Row,
+            {
+              dot: c4.state === "stale" ? "bad" : "warn",
+              title: c4.name,
+              sub: c4.state === "paused" ? `Waiting for ${driveName(c4.waitingFor || "")}` : staleWhy(c4, apps2) || `Last copied ${ago(c4.newest)}`,
+              end: c4.state === "stale" && a3 && a3.state !== "running" && start ? /* @__PURE__ */ u3("button", { type: "button", class: "small primary", onClick: () => start(a3), children: "Start" }) : void 0
+            },
+            c4.id
+          );
+        }) }) : /* @__PURE__ */ u3("p", { class: "bksub ok", children: "✓ Nothing needs you: every copy is up to date." })
+      ] }),
+      /* @__PURE__ */ u3(RestoreTile, { t: o3.restoreTest || {}, due: o3.restoreDue, test }),
+      /* @__PURE__ */ u3(Card, { kind: "bkcard", id: "offsiteTile", children: [
+        /* @__PURE__ */ u3(CardHead, { title: "Off-site" }),
+        /* @__PURE__ */ u3(CardFigure, { figure: /* @__PURE__ */ u3("span", { class: "value", children: o3.destinationOK ? placeName(o3.destination) : /* @__PURE__ */ u3("span", { class: "warn", children: "Not set" }) }), label: o3.destinationOK ? "Encrypted before it leaves" : void 0 }),
+        /* @__PURE__ */ u3("p", { class: "bksub", children: o3.destinationOK ? /* @__PURE__ */ u3("span", { title: o3.destination, children: [
+          "Encrypted, in ",
+          lastFolder(o3.destination),
+          ". Only your recovery kit can open it."
+        ] }) : os === "linux" ? "Put a backup drive or a synced folder in Settings › Backups go to" : "Put a Proton Drive folder in Settings › Backups go to" })
+      ] })
     ] });
   }
   function copyGroups(o3) {
@@ -7717,7 +7754,7 @@
     const o3 = backupsData.value;
     const testable2 = (jobsData.value || []).some((j3) => j3.name.toLowerCase() === "homelab appdata" && j3.state !== "never");
     const test = () => backupTask("restore-test", "Testing a restore (a few minutes)…", "Restore test passed", "The restore test failed: the log says why");
-    mountBackupTiles($("backupTiles"), { o: o3, os: osName, test: testable2 ? test : void 0 });
+    mountBackupTiles($("backupTiles"), { o: o3, os: osName, test: testable2 ? test : void 0, apps: statusData.value ? statusById : void 0, start: (a3) => appActions.act(a3, "start") });
     mountCopyRows($("backupRows"), { o: o3, apps: statusData.value ? statusById : void 0 });
     mountVault($("vaultCard"), { o: o3 });
     $("kopiaCard").hidden = !o3.kopia;

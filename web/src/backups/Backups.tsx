@@ -4,11 +4,10 @@
 // data and runs the buttons; these only draw.
 import { render } from 'preact';
 import { useState } from 'preact/hooks';
-import { ago, bytes, dateTimeText, dayText, never, untilText } from '../format';
-import { CardHead } from '../parts/Card';
+import { ago, bytes, clockText, dateTimeText, dayText, never, untilText } from '../format';
+import { Card, CardFigure, CardHead } from '../parts/Card';
 import { Hover } from '../parts/Hover';
 import { Row, Rows, type Tone } from '../parts/Row';
-import { Tile } from '../status/Tiles';
 
 /** "45 seconds", "3 minutes". */
 const tookText = (s: number) => (s < 120 ? `${s} seconds` : `${Math.round(s / 60)} minutes`);
@@ -48,16 +47,20 @@ function RestoreTile({ t, due, test }: { t: backup.RestoreLog; due: boolean; tes
   const runs = t.history || [];
   const newest = runs[runs.length - 1];
   const timed = runs.slice().reverse().find((r) => r.passed && r.seconds);
-  const sub = newest && !newest.passed ? <span class="bad">Failed {ago(newest.when)}: {newest.summary}</span>
+  const failed = !!newest && !newest.passed;
+  const sub = failed ? <span class="bad">Failed {ago(newest.when)}: {newest.summary}</span>
     : due ? <span class="warn">Prove the backups open, once a month</span>
     : (t.lastSummary || (never(t.lastTest) ? 'Once there is a backup to test' : 'Proven in the last 30 days')) + (timed ? ` · in ${tookText(timed.seconds!)}` : '');
   const record = runs.slice(-6).reverse().map((r) => `${dayText(new Date(r.when), { day: 'numeric', month: 'short' })}: ${r.passed ? 'passed' : 'failed'}${r.seconds ? ' in ' + tookText(r.seconds) : ''}`);
-  return <Tile id="restoreTile" title={record.length ? `Restore drills on record (${runs.length}):\n` + record.join('\n') : undefined}
-    label="Restore test" value={never(t.lastTest) ? 'Never' : ago(t.lastTest)}
-    sub={<>
-      {sub}
-      {test && <span class="tileaction"><button id="restoreTest" class="small" title="Duplicati restores a dozen files from last night's Homelab AppData backup, and each is compared with the live file" onClick={test}>Test a restore</button></span>}
-    </>} />;
+  // The redesign's card (R7): Passed, Failed or Never in big, how long ago under it, then what was checked and Test a restore.
+  return (
+    <Card kind="bkcard" id="restoreTile" title={record.length ? `Restore drills on record (${runs.length}):\n` + record.join('\n') : undefined}>
+      <CardHead title="Restore test" />
+      <CardFigure figure={<span class={'value' + (failed ? ' bad' : '')}>{never(t.lastTest) ? 'Never' : failed ? 'Failed' : 'Passed'}</span>} label={never(t.lastTest) ? undefined : ago(t.lastTest)} />
+      <p class="bksub">{sub}</p>
+      {test && <div class="bkactions"><button id="restoreTest" class="small" title="Duplicati restores a dozen files from last night's Homelab AppData backup, and each is compared with the live file" onClick={test}>Test a restore</button></div>}
+    </Card>
+  );
 }
 
 /** A job's folders, by name: /source/appdata/immich/ is "immich". */
@@ -81,23 +84,61 @@ export function JobRun({ j }: { j: duplicati.Job }) {
 /** The drives the paused copies' apps wait for, in words. */
 const drivesOf = (copies: backup.Copy[]) => [...new Set(copies.map((c) => driveName(c.waitingFor || '')))].join(' and ');
 
-export function BackupTiles({ o, os, test }: { o: backup.Overview; os: string; test?: () => void }) {
+export interface BackupTilesProps {
+  o: backup.Overview; os: string; test?: () => void;
+  /** Each app's state by its ID (Status'), to say why a copy is stale and offer Start. */
+  apps?: Record<string, api.AppStatus>;
+  start?: (a: api.AppStatus) => void;
+}
+
+/**
+ * The top of Backups as the redesign's picture (R7): Last night, with how many copied, when it finished, what it came
+ * to and where it went, then Next, its size and what's kept; Needs you beside it; the restore test and off-site under.
+ * The fourteen nights and each app's nights join when the engine keeps them (quality-loop Q4 (a)).
+ */
+export function BackupTiles({ o, os, test, apps, start }: BackupTilesProps) {
   const copies = sortedCopies(o);
-  const fresh = copies.filter((c) => c.state === 'fresh').length;
+  const fresh = copies.filter((c) => c.state === 'fresh');
   const stale = copies.filter((c) => c.state === 'stale');
   const paused = copies.filter((c) => c.state === 'paused');
+  const kept = Math.max(0, ...copies.map((c) => c.count));
+  const size = fresh.reduce((t, c) => t + c.size, 0);
+  const lastNight = !never(o.lastRun) && Date.now() - new Date(o.lastRun).getTime() < 30 * 3600e3;
+  const needs = [...stale, ...paused];
   return (
     <>
-      <Tile label="Last backup" value={never(o.lastRun) ? 'Never' : ago(o.lastRun)} sub={never(o.envCopied) ? 'Settings file not copied yet' : 'Every night at 03:30; the settings file too'} />
-      <Tile id="copiesTile" label="Copies up to date" value={copies.length ? <>{String(fresh)}<small> of {copies.length - paused.length}</small></> : 'None yet'}
-        sub={!copies.length ? 'The first are made the night after an app with a database starts' : stale.length || paused.length ? <>
-          {!!stale.length && <span class="bad">Out of date: {stale.map((c) => `${c.name}, last copied ${ago(c.newest)}`).join('; ')}</span>}
-          {!!paused.length && <span>{`${paused.length} more paused: ${paused.length === 1 ? 'its app waits' : 'their apps wait'} for ${drivesOf(paused)}`}</span>}
-        </> : `Each under ${o.staleAfterHours} hours old`} />
-      <Tile id="offsiteTile" label="Off-site" value={o.destinationOK ? placeName(o.destination) : <span class="warn">Not set</span>}
-        sub={o.destinationOK ? <span title={o.destination}>Encrypted, in {lastFolder(o.destination)}</span>
-          : os === 'linux' ? 'Put a backup drive or a synced folder in Settings › Backups go to' : 'Put a Proton Drive folder in Settings › Backups go to'} />
+      <Card kind="bkcard bklast" id="copiesTile">
+        <CardHead title={lastNight || never(o.lastRun) ? 'Last night' : 'Last backup'}><span class="muted">Every night at 03:30</span></CardHead>
+        <CardFigure
+          figure={<span class="value">{copies.length ? <>{fresh.length}<small> of {copies.length - paused.length} copied</small></> : 'None yet'}</span>}
+          label={never(o.lastRun) ? undefined : [lastNight ? `Finished ${clockText(new Date(o.lastRun))}` : ago(o.lastRun), size ? bytes(size) : '', o.destinationOK ? `Encrypted to ${placeName(o.destination)}` : ''].filter(Boolean).join(' · ')}
+          chip={stale.length ? <span class="bkskipped">{stale.length === 1 ? `${stale[0].name} skipped` : `${stale.length} skipped`}</span> : undefined} />
+        <p class="bksub">{!copies.length ? 'The first are made the night after an app with a database starts'
+          : <>{!!stale.length && <span class="bad">Out of date: {stale.map((c) => `${c.name}, last copied ${ago(c.newest)}`).join('; ')}. </span>}
+            {!!paused.length && <span>{`${paused.length} more paused: ${paused.length === 1 ? 'its app waits' : 'their apps wait'} for ${drivesOf(paused)}`}. </span>}
+            {!stale.length && !paused.length && `Each under ${o.staleAfterHours} hours old.`}{never(o.envCopied) ? ' Settings file not copied yet.' : ' The settings file too.'}</>}</p>
+        <dl class="bkfacts">
+          <div><dt>Next</dt><dd>Tonight, 03:30</dd></div>
+          <div><dt>{lastNight ? "Last night's size" : 'Its size'}</dt><dd>{size ? bytes(size) : '—'}</dd></div>
+          <div><dt>Kept</dt><dd>{kept ? `${kept} ${kept === 1 ? 'night' : 'nights'}` : '—'}</dd></div>
+        </dl>
+      </Card>
+      <Card kind="bkcard bkneeds" id="needsYou">
+        <CardHead title={<>Needs you{!!stale.length && <span class="bkcount">{stale.length}</span>}</>} />
+        {needs.length ? <Rows kind="bkneedlist">{needs.map((c) => {
+          const a = c.app ? apps?.[c.app] : undefined;
+          return <Row key={c.id} dot={c.state === 'stale' ? 'bad' : 'warn'} title={c.name}
+            sub={c.state === 'paused' ? `Waiting for ${driveName(c.waitingFor || '')}` : staleWhy(c, apps) || `Last copied ${ago(c.newest)}`}
+            end={c.state === 'stale' && a && a.state !== 'running' && start ? <button type="button" class="small primary" onClick={() => start(a)}>Start</button> : undefined} />;
+        })}</Rows> : <p class="bksub ok">✓ Nothing needs you: every copy is up to date.</p>}
+      </Card>
       <RestoreTile t={o.restoreTest || ({} as backup.RestoreLog)} due={o.restoreDue} test={test} />
+      <Card kind="bkcard" id="offsiteTile">
+        <CardHead title="Off-site" />
+        <CardFigure figure={<span class="value">{o.destinationOK ? placeName(o.destination) : <span class="warn">Not set</span>}</span>} label={o.destinationOK ? 'Encrypted before it leaves' : undefined} />
+        <p class="bksub">{o.destinationOK ? <span title={o.destination}>Encrypted, in {lastFolder(o.destination)}. Only your recovery kit can open it.</span>
+          : os === 'linux' ? 'Put a backup drive or a synced folder in Settings › Backups go to' : 'Put a Proton Drive folder in Settings › Backups go to'}</p>
+      </Card>
     </>
   );
 }
@@ -267,7 +308,7 @@ export function KopiaLine({ k, test }: { k: backup.Engine; test: () => void }) {
 }
 
 export const mountKopia = (el: Element, props: { k: backup.Engine; test: () => void } | null) => render(props && <KopiaLine {...props} />, el);
-export const mountBackupTiles = (el: Element, props: { o: backup.Overview; os: string; test?: () => void }) => render(<BackupTiles {...props} />, el);
+export const mountBackupTiles = (el: Element, props: BackupTilesProps) => render(<BackupTiles {...props} />, el);
 export const mountCopyRows = (el: Element, props: { o: backup.Overview; apps?: Record<string, api.AppStatus> } | null) => render(props && <CopyRows {...props} />, el);
 export const mountVault = (el: Element, props: { o: backup.Overview }) => render(<Vault {...props} />, el);
 export const mountJobs = (el: Element, props: JobsProps) => render(<Jobs {...props} />, el);
