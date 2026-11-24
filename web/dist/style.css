@@ -82,6 +82,11 @@ nav button.active::before, nav .finmenuitem.on::before { content:""; position:ab
 nav .count { margin-left:auto; font-size:11px; font-weight:700; min-width:20px; padding:1px 7px; border-radius:999px; background:var(--amber); color:var(--amber-ink); text-align:center; }
 nav .count:empty { display:none; }
 .foot { margin-top:auto; font-size:12px; color:var(--nav-muted); padding:10px 8px 0; border-top:1px solid var(--nav-line); }
+/* The homelab's sidebar (docs/Redesign.md, The computer's sidebar; redesign-loop R6): Status, Backups, Tidy Up, Finances,
+   Choose apps, and Settings at its foot, over the line about the computer. */
+html:not(.companion) nav > button[data-screen="settings"] { margin-top:auto; }
+html:not(.companion) nav:has(> button[data-screen="settings"]) .foot { margin-top:6px; }
+html:not(.companion) nav:has(> button[data-screen="finances"].active) .foot { margin-top:auto; }
 
 /* Layout */
 main { flex:1; overflow:auto; padding:26px 30px 40px; position:relative; }
