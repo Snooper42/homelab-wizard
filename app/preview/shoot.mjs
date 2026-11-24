@@ -7839,7 +7839,7 @@ const smokes = [
     await page.waitForSelector('.fx-txday li:has-text("Boulangerie") .when:has-text("−€100.00")', { timeout: 5000 });
     await finCardPage(page, '.fx-txsum');
     for (const [stat, want] of [['Money out', '$603'], ['7 transactions', '+$1,797']]) {
-      const text = (await page.textContent(`.fx-txsum .fx-stat:has(.fx-caption:has-text("${stat}"))`, { timeout: 5000 })).replace(/\s+/g, '');
+      const text = (await page.textContent(`.fx-txsum .card-figure:has(.card-figurelabel:has-text("${stat}")) .card-figurevalue`, { timeout: 5000 })).replace(/\s+/g, '');
       if (!text.includes(want)) throw new Error(`${stat}: ${text}`);
     }
     await finTab(page, 'Reports');
@@ -8267,12 +8267,13 @@ const smokes = [
   { name: 'Finances: this month\'s money out against last month to the same day', screen: 'finances', mock: { ledger: ledgerMonths }, run: async (page) => {
     await finCardPage(page, '.fx-txsum');
     const said = (await page.textContent('.fx-txsum .fx-txvs', { timeout: 5000 })).replace(/\s+/g, ' ').trim();
-    if (said !== '$293.05 more out than by Sep 30 last month ($200.00).') throw new Error(said);
-    await page.waitForSelector('.fx-txvs .fx-out', { timeout: 5000 });
+    if (said !== '+$293.05vs Sep 30 last month ($200.00)' && said !== '+$293.05 vs Sep 30 last month ($200.00)') throw new Error(said);
+    // More out than last month: the red chip, its arrow up, beside Money out.
+    await page.waitForSelector('.fx-txsum .card-figure:has(.card-figurelabel:text-is("Money out")) .fx-txvs .chip-pill.bad', { timeout: 5000 });
   } },
   { name: 'Finances: no last month, no comparison', screen: 'finances', run: async (page) => {
     await finCardPage(page, '.fx-txsum');
-    await page.waitForSelector('.fx-txsum .fx-stat', { timeout: 5000 });
+    await page.waitForSelector('.fx-txsum .card-figure', { timeout: 5000 });
     if (await page.$('.fx-txvs')) throw new Error('it compares with a month that has no transactions');
   } },
   // A plan with only a checking account and no cushion: nothing owed said plainly, A typical month with no dangling dots,
@@ -8337,7 +8338,7 @@ const smokes = [
     if (await page.$('#finRoot .fx-txsum, #finRoot .fx-budgets')) throw new Error('This month or the budgets still sit over the table');
     await finTab(page, 'Budgets');
     await page.waitForSelector('#finMenu [aria-current="page"]:has-text("Budgets")', { timeout: 5000 });
-    await page.waitForSelector('#finRoot .fx-txsum .fx-stat:has-text("Money in")', { timeout: 5000 });
+    await page.waitForSelector('#finRoot .fx-txsum .card-figure:has-text("Money in")', { timeout: 5000 });
     await page.click('#finRoot .fx-budgets li:has-text("Food") button', { timeout: 5000 });
     await page.waitForSelector('#finMenu [aria-current="page"]:has-text("Transactions")', { timeout: 5000 });
     if ((await page.inputValue('.fx-txfilters select[aria-label="Category"]')) !== 'Food') throw new Error('not filtered to Food');
@@ -9377,7 +9378,7 @@ const smokes = [
   { name: 'Finances: transactions, newest first, with this month in and out', screen: 'finances', run: async (page) => {
     await finCardPage(page, '.fx-txsum');
     for (const [stat, want] of [['Money in', '$2,400'], ['Money out', '$493'], ['Kept · 6 transactions', '+$1,907']]) {
-      const text = (await page.textContent(`.fx-txsum .fx-stat:has(.fx-caption:has-text("${stat}"))`, { timeout: 5000 })).replace(/\s+/g, '');
+      const text = (await page.textContent(`.fx-txsum .card-figure:has(.card-figurelabel:has-text("${stat}")) .card-figurevalue`, { timeout: 5000 })).replace(/\s+/g, '');
       if (!text.includes(want)) throw new Error(`${stat}: ${text}`);
     }
     await finTab(page, 'Transactions', { timeout: 5000 });

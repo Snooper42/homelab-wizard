@@ -3095,3 +3095,11 @@ html.companion .crumbs .backlabel { display:inline; }
 .fx-privatesaid { max-width:640px; margin:0 0 10px; }
 /* Track from: where the rows that do not count begin, on Transactions. */
 .fx-trackline { margin: 18px 4px 6px; padding-top: 12px; border-top: 1px dashed var(--line); }
+
+/* Net worth's three figures in one row across the board (R5); two and then one as the page narrows. */
+.fx-board > .fx-figurerow { grid-column:1 / -1; display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:var(--fin-gap); }
+@container (max-width: 900px) { .fx-board > .fx-figurerow { grid-template-columns:repeat(2, minmax(0, 1fr)); } .fx-board > .fx-figurerow > :last-child { grid-column:1 / -1; } }
+@container (max-width: 600px) { .fx-board > .fx-figurerow { grid-template-columns:minmax(0, 1fr); } }
+/* This month's three figures (R5): each chip beside its own figure, not at the column's far edge against the next one. */
+.fx-txsum .fx-stats { grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:16px 32px; }
+.fx-txsum .card-figure { justify-content:flex-start; gap:8px 16px; flex-wrap:wrap; }

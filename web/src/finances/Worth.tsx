@@ -122,6 +122,8 @@ export function NetWorth({ v, L, edit, open, sel, pick, update, keep, group, set
   return (
     <div class="fin">
       <div class="fx-board">
+        {/* The three figures, one row of three (R5): three cards on the board's two columns left one alone, a hole beside it. */}
+        <div class="fx-figurerow">
         <Widget title="Net worth" kind="fx-figurecard">
           <Stat size="lg" value={<Amount value={now} />} />
         </Widget>
@@ -131,6 +133,7 @@ export function NetWorth({ v, L, edit, open, sel, pick, update, keep, group, set
         <Widget title="What's owed" kind="fx-figurecard">
           {owes < 0.005 && !loans.length ? <p class="fx-say">Nothing owed: no card balance, no loan.</p> : <p class="fx-say">You owe <Amount value={owes} form="full" tone="out" />{loans.length ? <>{onLoans > owes / 2 ? ', most of it on loans. They are' : '. Your loans are'} <Amount value={Math.abs(loanDrop)} form="whole" /> {loanDrop >= 0 ? 'smaller' : 'larger'} than on {dayShort(start.date)}.</> : '.'}</p>}
         </Widget>
+        </div>
 
         {focus && <GroupCard v={v} focus={focus} months={months} range={range} setRange={setRange} clear={() => setGroup?.('')} />}
         <Widget title="Net worth by month" span="all" kind="fx-worthchart"

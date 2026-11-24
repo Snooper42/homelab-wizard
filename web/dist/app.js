@@ -10246,29 +10246,27 @@
     const before3 = all.filter((t3) => !t3.to && t3.date.startsWith(lastMonthDay.slice(0, 7)) && t3.date <= lastMonthDay);
     const outBefore = -before3.filter((t3) => t3.amount < 0).reduce((s3, t3) => s3 + amt(t3), 0);
     const outNow = -sum((t3) => t3.amount < 0);
-    return /* @__PURE__ */ u3(Widget, { title: "This month", span: "all", kind: "fx-txsum", children: [
-      /* @__PURE__ */ u3("div", { class: "fx-stats", children: [
-        /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: sum((t3) => t3.amount > 0), form: "whole", tone: "in" }), caption: "Money in" }),
-        /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: -sum((t3) => t3.amount < 0), form: "whole", tone: "out" }), caption: "Money out" }),
-        /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: sum(() => true), form: "whole", sign: true, tone: "auto" }), caption: `Kept · ${plural(thisMonth.length, "transaction")}` })
-      ] }),
-      !!before3.length && /* @__PURE__ */ u3("p", { class: "fx-sub fx-txvs", children: Math.abs(outNow - outBefore) < 5e-3 ? /* @__PURE__ */ u3(S, { children: [
-        "The same out as by ",
-        dayShort(lastMonthDay),
-        " last month."
-      ] }) : /* @__PURE__ */ u3(S, { children: [
-        /* @__PURE__ */ u3("span", { class: outNow > outBefore ? "fx-out" : "fx-in", children: [
-          money(Math.abs(outNow - outBefore)),
-          " ",
-          outNow > outBefore ? "more" : "less"
-        ] }),
-        " out than by ",
-        dayShort(lastMonthDay),
-        " last month (",
-        money(outBefore),
-        ")."
-      ] }) })
-    ] });
+    const same2 = Math.abs(outNow - outBefore) < 5e-3;
+    return /* @__PURE__ */ u3(Widget, { title: "This month", span: "all", kind: "fx-txsum", children: /* @__PURE__ */ u3("div", { class: "fx-stats", children: [
+      /* @__PURE__ */ u3(CardFigure, { figure: /* @__PURE__ */ u3(Amount, { value: sum((t3) => t3.amount > 0), form: "whole", tone: "in" }), label: "Money in" }),
+      /* @__PURE__ */ u3(
+        CardFigure,
+        {
+          figure: /* @__PURE__ */ u3(Amount, { value: outNow, form: "whole", tone: "out" }),
+          label: "Money out",
+          chip: before3.length ? /* @__PURE__ */ u3("span", { class: "fx-txvs", children: /* @__PURE__ */ u3(
+            Chip,
+            {
+              dir: same2 ? "flat" : outNow > outBefore ? "up" : "down",
+              good: same2 ? null : outNow < outBefore,
+              value: same2 ? "the same" : `${outNow > outBefore ? "+" : "−"}${money(Math.abs(outNow - outBefore))}`,
+              words: `vs ${dayShort(lastMonthDay)} last month (${money(outBefore)})`
+            }
+          ) }) : void 0
+        }
+      ),
+      /* @__PURE__ */ u3(CardFigure, { figure: /* @__PURE__ */ u3(Amount, { value: sum(() => true), form: "whole", sign: true, tone: "auto" }), label: `Kept · ${plural(thisMonth.length, "transaction")}` })
+    ] }) });
   }
 
   // web/src/finances/reportData.ts
@@ -15210,22 +15208,24 @@
       );
     };
     return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3("div", { class: "fx-board", children: [
-      /* @__PURE__ */ u3(Widget, { title: "Net worth", kind: "fx-figurecard", children: /* @__PURE__ */ u3(Stat, { size: "lg", value: /* @__PURE__ */ u3(Amount, { value: now }) }) }),
-      /* @__PURE__ */ u3(Widget, { title: `Since ${dayShort(start.date)}`, kind: "fx-figurecard", children: /* @__PURE__ */ u3(Stat, { size: "lg", value: /* @__PURE__ */ u3(Amount, { value: now - start.net, sign: true, tone: "auto" }), aside: /* @__PURE__ */ u3(Delta, { value: now - start.net, base: start.net, shareOnly: true }) }) }),
-      /* @__PURE__ */ u3(Widget, { title: "What's owed", kind: "fx-figurecard", children: owes < 5e-3 && !loans.length ? /* @__PURE__ */ u3("p", { class: "fx-say", children: "Nothing owed: no card balance, no loan." }) : /* @__PURE__ */ u3("p", { class: "fx-say", children: [
-        "You owe ",
-        /* @__PURE__ */ u3(Amount, { value: owes, form: "full", tone: "out" }),
-        loans.length ? /* @__PURE__ */ u3(S, { children: [
-          onLoans > owes / 2 ? ", most of it on loans. They are" : ". Your loans are",
-          " ",
-          /* @__PURE__ */ u3(Amount, { value: Math.abs(loanDrop), form: "whole" }),
-          " ",
-          loanDrop >= 0 ? "smaller" : "larger",
-          " than on ",
-          dayShort(start.date),
-          "."
-        ] }) : "."
-      ] }) }),
+      /* @__PURE__ */ u3("div", { class: "fx-figurerow", children: [
+        /* @__PURE__ */ u3(Widget, { title: "Net worth", kind: "fx-figurecard", children: /* @__PURE__ */ u3(Stat, { size: "lg", value: /* @__PURE__ */ u3(Amount, { value: now }) }) }),
+        /* @__PURE__ */ u3(Widget, { title: `Since ${dayShort(start.date)}`, kind: "fx-figurecard", children: /* @__PURE__ */ u3(Stat, { size: "lg", value: /* @__PURE__ */ u3(Amount, { value: now - start.net, sign: true, tone: "auto" }), aside: /* @__PURE__ */ u3(Delta, { value: now - start.net, base: start.net, shareOnly: true }) }) }),
+        /* @__PURE__ */ u3(Widget, { title: "What's owed", kind: "fx-figurecard", children: owes < 5e-3 && !loans.length ? /* @__PURE__ */ u3("p", { class: "fx-say", children: "Nothing owed: no card balance, no loan." }) : /* @__PURE__ */ u3("p", { class: "fx-say", children: [
+          "You owe ",
+          /* @__PURE__ */ u3(Amount, { value: owes, form: "full", tone: "out" }),
+          loans.length ? /* @__PURE__ */ u3(S, { children: [
+            onLoans > owes / 2 ? ", most of it on loans. They are" : ". Your loans are",
+            " ",
+            /* @__PURE__ */ u3(Amount, { value: Math.abs(loanDrop), form: "whole" }),
+            " ",
+            loanDrop >= 0 ? "smaller" : "larger",
+            " than on ",
+            dayShort(start.date),
+            "."
+          ] }) : "."
+        ] }) })
+      ] }),
       focus && /* @__PURE__ */ u3(GroupCard, { v: v3, focus, months, range, setRange, clear: () => setGroup?.("") }),
       /* @__PURE__ */ u3(
         Widget,
