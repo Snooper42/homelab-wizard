@@ -477,6 +477,26 @@ struct BackupsTests {
         #expect(o.waitingGroups.map(\.state) == ["paused", "none"])
     }
 
+    /// Backups as the redesign's phone picture (Nov 24): what needs you in one list, and the Last night card's words.
+    @Test func lastNightSaysWhatWasCopiedAndSkipped() throws {
+        let o = try JSONDecoder.homelab().decode(BackupOverview.self, from: Data(#"""
+        {"lastRun":"2026-11-24T08:41:00Z","destination":"/Users/me/Library/CloudStorage/ProtonDrive-me/homelab-backups","destinationOK":true,
+         "copies":[{"id":"a","name":"Immich","state":"fresh"},{"id":"b","name":"Komga","state":"paused","waitingFor":"/Volumes/Hobbies"},
+                   {"id":"c","name":"Mealie","state":"stale","app":"mealie"},{"id":"d","name":"Navidrome","state":"fresh"}]}
+        """#.utf8))
+        #expect(o.needingYou.map(\.name) == ["Mealie", "Komga"])
+        let run = ISO8601DateFormatter().date(from: "2026-11-24T08:41:00Z")!
+        let night = o.lastNight(now: run.addingTimeInterval(3600))
+        #expect(night.figure == "2" && night.unit == "of 3 copied" && night.chip == "Mealie skipped")
+        #expect(night.caption == run.formatted(date: .omitted, time: .shortened) + " · Encrypted to Proton Drive")
+        // Older than a night: when, in words, in place of the time.
+        let older = o.lastNight(now: run.addingTimeInterval(4 * 86400)).caption
+        #expect(older != night.caption && older.hasSuffix(" · Encrypted to Proton Drive"))
+        let two = try JSONDecoder.homelab().decode(BackupOverview.self, from: Data(#"{"copies":[{"id":"a","name":"A","state":"stale"},{"id":"b","name":"B","state":"stale"}]}"#.utf8))
+        #expect(two.lastNight().chip == "2 skipped" && two.lastNight().caption.isEmpty)
+        #expect(try JSONDecoder.homelab().decode(BackupOverview.self, from: Data(#"{"copies":[{"id":"a","name":"A","state":"fresh"}]}"#.utf8)).lastNight().chip == nil)
+    }
+
     @Test func backupsTilesSayHowEachIs() throws {
         let now = Date(timeIntervalSince1970: 1_794_405_600) // 2026-11-11 14:00 UTC
         func overview(_ json: String) throws -> BackupOverview {
