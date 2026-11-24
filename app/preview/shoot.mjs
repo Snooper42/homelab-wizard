@@ -400,6 +400,8 @@ const alertLog = [
 const mock = { platform: 'MacIntel', tidy, tidyReview, cliSteps, upgrade: { ...upgrade, behind: 0, changes: [], appChanged: false, appCommit: '7d9be080888433f921c9fa860a38b329ac368c88', appBehind: 0 }, catalog, status, setup, settings, host, logs, actionLog, urls, envFor, tests, backups, cliLog, cliPreview, alerts, watchdog, protection, savingsHistory, duplicatiJobs, phones, finances, ledger, history, alertLog, screen: 'status' };
 // Finances' tabs are four: Spending holds Transactions and Reports, Plan holds Calendar, Recurring and Paychecks (Pay),
 // each in a second row under it. A page by its name, its tab first.
+/** The Finances page open, as the sidebar's menu marks it on the computer ("Recurring", "Net worth"). */
+const finAt = (page) => page.evaluate(() => document.querySelector('#finMenu [aria-current="page"]')?.textContent.trim() || '');
 const finGroups = { Transactions: 'Spending', Reports: 'Spending', Calendar: 'Plan', Recurring: 'Plan', Pay: 'Plan', Paychecks: 'Plan', Collection: 'Net worth' };
 // What the household shares with a member (serve.go's memberShared), made up.
 const householdShared = { currency: 'USD', shares: ['bills', 'subscriptions', 'budgets'], bills: [{ name: 'Made-up Power', kind: 'utility', amount: 120, date: '2026-11-20', every: 'month' }], subscriptions: [{ name: 'Made-up Stream', amount: 15.99, every: 'month' }], budgets: [{ category: 'Groceries', amount: 600, spent: 200, left: 400 }] };
@@ -451,6 +453,15 @@ async function makePrivate(page, passphrase) {
 }
 
 async function finTab(page, name, opts = {}) {
+  // On the computer, Finances' menu in the sidebar (redesign-loop R2); a phone keeps the tabs.
+  if (await page.locator('#finMenu .finmenu').isVisible()) {
+    const to = name === 'Pay' ? 'Paychecks' : name;
+    if (to === 'Recurring' || to === 'Paychecks') {
+      if (!(await page.locator(`#finMenu .finsubmenu button:text-is("${to}")`).isVisible())) await page.click('#finMenu .finmenu > li > button:has(span:text-is("Bills & paychecks"))', opts);
+      return page.click(`#finMenu .finsubmenu button:text-is("${to}")`, opts);
+    }
+    return page.click(`#finMenu .finmenu > li > button:has(span:text-is("${to}"))`, opts);
+  }
   const group = finGroups[name];
   if (!group) return page.click(`#finRoot > .seg button:text-is("${name}")`, opts);
   await page.click(`#finRoot > .seg button:text-is("${group}")`, opts);
@@ -3182,8 +3193,8 @@ const smokes = [
     const acct = page.locator('#finRoot .fx-account');
     await acct.locator('h2:text-is("Chase Checking")').waitFor({ timeout: 5000 });
     if (await page.locator('#finSheet:not([hidden])').count()) throw new Error('the balance form opened instead of the page');
-    const seg = await page.textContent('#finRoot > .seg button[aria-checked="true"]');
-    if (seg !== 'Net worth') throw new Error(`the tab shown is ${seg}`);
+    const seg = await finAt(page);
+    if (seg !== 'Net worth') throw new Error(`the page marked is ${seg}`);
     for (const b of ['Update balance', 'Edit']) if (!(await acct.locator(`button:text-is("${b}")`).count())) throw new Error(`no ${b}`);
     if (!(await acct.locator('figure.fx-area[aria-label*="Chase Checking"]').count())) throw new Error('no chart of its balance');
     const rows = await acct.locator('.fx-acctlatest li').count();
@@ -3194,7 +3205,7 @@ const smokes = [
     await page.keyboard.press('Escape');
     // All of them: Transactions, that account picked.
     await acct.locator('button:has-text("All of them")').click();
-    await page.waitForSelector('#finRoot .fx-subtabs .seg button[aria-checked="true"]:text-is("Transactions")', { timeout: 5000 });
+    await page.waitForSelector('#finMenu [aria-current="page"]:has-text("Transactions")', { timeout: 5000 });
     const picked = await page.evaluate(() => [...document.querySelectorAll('#finRoot select')].map((s) => s.selectedOptions[0]?.textContent || '').join('|'));
     if (!picked.includes('Chase Checking')) throw new Error(`Transactions opened on ${picked}`);
     // Back: the account's page, then Net worth.
@@ -3277,26 +3288,20 @@ const smokes = [
   // screen was on (Finances' and Tidy Up's), then to the screen before it; Forward steps back through them again.
   { name: 'Back and Forward step through a screen’s tabs before leaving it', screen: 'status', run: async (page) => {
     const on = () => page.evaluate(() => document.querySelector('.screen.active')?.id);
-    const finOn = () => page.evaluate(() => [...document.querySelectorAll('#finRoot .seg button[aria-pressed="true"], #finRoot .seg button.on, #finRoot .seg button[aria-checked="true"]')].map((b) => b.textContent.trim()).join(' › '));
     await page.click('nav button[data-screen="finances"]');
-    await page.waitForSelector('#finRoot > .seg', { timeout: 5000 });
+    await page.waitForSelector('#finMenu .finmenu', { timeout: 5000 });
     await finTab(page, 'Transactions');
     await finTab(page, 'Recurring');
-    const where = await finOn();
+    // Each page is a step of its own, as a browser has it, and Finances' menu follows.
     await page.keyboard.press('Meta+BracketLeft');
     if ((await on()) !== 'finances') throw new Error(`Back from Recurring left Finances for ${await on()}`);
-    // Plan opened on its first page, Calendar: a step of its own, as a browser has it.
-    const back0 = await finOn();
-    if (!back0.includes('Calendar')) throw new Error(`Back from Recurring (${where}) went to ${back0}`);
+    if ((await finAt(page)) !== 'Transactions') throw new Error(`Back from Recurring went to ${await finAt(page)}`);
     await page.keyboard.press('Meta+BracketLeft');
-    const back1 = await finOn();
-    if (!back1.includes('Spending') || !back1.includes('Transactions')) throw new Error(`Back from Calendar went to ${back1}`);
-    await page.keyboard.press('Meta+BracketLeft');
-    if ((await on()) !== 'finances' || !(await finOn()).includes('Dashboard')) throw new Error(`Back again went to ${await on()}: ${await finOn()}`);
+    if ((await on()) !== 'finances' || (await finAt(page)) !== 'Dashboard') throw new Error(`Back again went to ${await on()}: ${await finAt(page)}`);
     await page.keyboard.press('Meta+BracketLeft');
     if ((await on()) !== 'status') throw new Error(`Back a third time went to ${await on()}`);
-    for (let i = 0; i < 4; i++) await page.keyboard.press('Meta+BracketRight');
-    if ((await on()) !== 'finances' || !(await finOn()).includes('Recurring')) throw new Error(`Forward four times: ${await on()}: ${await finOn()}`);
+    for (let i = 0; i < 3; i++) await page.keyboard.press('Meta+BracketRight');
+    if ((await on()) !== 'finances' || (await finAt(page)) !== 'Recurring') throw new Error(`Forward three times: ${await on()}: ${await finAt(page)}`);
     // Tidy Up's tabs too.
     await page.click('nav button[data-screen="tidy"]');
     await page.click('#tidy .seg button:text-is("Music")', { timeout: 5000 });
@@ -3806,7 +3811,8 @@ const smokes = [
   // Open on the computer: a page a phone asked for, the window goes to it; anything but the app's own pages, nothing.
   { name: 'Open on the computer: the window goes to the page a phone asked for', screen: 'status', run: async (page) => {
     await page.evaluate(() => window.__emit('open:link', { link: 'homelab://finances/recurring', from: "Sam's iPhone" }));
-    await page.waitForSelector('#finances.active #finRoot .seg button[aria-checked="true"]:text-is("Recurring")', { timeout: 5000 });
+    await page.waitForSelector('#finances.active', { timeout: 5000 });
+    await page.waitForSelector('#finMenu [aria-current="page"]:has-text("Recurring")', { timeout: 5000 });
     await page.evaluate(() => window.__emit('open:link', { link: 'homelab://app/vikunja', from: "Sam's iPhone" }));
     await page.waitForSelector('#app.active h1:has-text("Vikunja")', { timeout: 5000 });
     await page.evaluate(() => window.__emit('open:link', { link: 'https://example.com', from: "Sam's iPhone" }));
@@ -5204,7 +5210,7 @@ const smokes = [
   ...[['Dashboard', 1280, 1], ['Net worth', 1280, 1], ['Net worth', 1440, 1], ['Dashboard', 1280, 1.5], ['Net worth', 1280, 1.5], ['Recurring', 860, 2], ['Pay', 860, 2], ['Net worth', 860, 2]].map(([view, w, zoom]) => ({ name: `Finances, ${view}, ${w}px at text size ${zoom}: nothing crushed or sliding sideways`, screen: 'finances', run: async (page) => {
     await page.setViewportSize({ width: w, height: 800 });
     await page.evaluate((z) => document.documentElement.style.setProperty('--zoom', z), String(zoom));
-    await page.waitForSelector('#finRoot .seg button', { timeout: 5000 });
+    await page.waitForSelector('#finMenu .finmenu', { timeout: 5000 });
     await finTab(page, view);
     await page.waitForTimeout(400);
     const out = await page.evaluate(() => {
@@ -6260,6 +6266,35 @@ const smokes = [
     const box = await page.$eval('.fx-clear .hovercard:has(.fx-working)', (e) => { const r = e.getBoundingClientRect(); return { l: r.left, r: r.right, w: innerWidth }; });
     if (box.l < 0 || box.r > box.w) throw new Error(`the card leaves the screen: ${JSON.stringify(box)}`);
   } },
+  // Finances takes the sidebar over (docs/Redesign.md, The computer's sidebar; redesign-loop R2): the homelab's five screens
+  // as icons, Finances' own menu in place of its tabs, then the accounts, which no other screen's sidebar shows.
+  { name: "Finances: its own menu in the sidebar, the homelab's screens as icons, and the accounts only here", screen: 'finances', run: async (page) => {
+    await page.waitForSelector('#finMenu .finmenu', { timeout: 5000 });
+    const current = async () => (await page.textContent('#finMenu [aria-current="page"]'))?.trim();
+    if ((await current()) !== 'Dashboard') throw new Error(`the menu opens on ${await current()}`);
+    if (await page.locator('#finances .seg').filter({ hasText: 'Spending' }).count()) throw new Error("the tabs are still on Finances' page");
+    for (const s of ['choose', 'status', 'backups', 'tidy', 'finances']) {
+      const b = page.locator(`nav > button[data-screen="${s}"]`);
+      if (!(await b.isVisible())) throw new Error(`the ${s} icon is not in the strip`);
+      if ((await b.boundingBox()).width > 60) throw new Error(`the ${s} button is a whole line, not an icon`);
+    }
+    if (!(await page.isVisible('#finNav'))) throw new Error('the accounts are not in the sidebar');
+    await page.click('#finMenu button:has-text("Transactions")');
+    await page.waitForSelector('#finRoot .fx-transactions', { timeout: 5000 });
+    if ((await current()) !== 'Transactions') throw new Error(`Transactions picked, the menu marks ${await current()}`);
+    await page.click('#finMenu button:has-text("Bills & paychecks")');
+    await page.waitForSelector('#finMenu .finsubmenu button:has-text("Paychecks")', { timeout: 5000 });
+    await page.click('#finMenu .finsubmenu button:has-text("Paychecks")');
+    if ((await current()) !== 'Paychecks') throw new Error(`Paychecks picked, the menu marks ${await current()}`);
+    // Back goes to the page before, and the menu follows.
+    await page.keyboard.press((await page.evaluate(() => /Mac/.test(navigator.platform))) ? 'Meta+BracketLeft' : 'Alt+ArrowLeft');
+    await page.waitForFunction(() => document.querySelector('#finMenu [aria-current="page"]')?.textContent.trim() === 'Recurring', null, { timeout: 5000 });
+    // Another screen: the homelab's sidebar, without the bank balances or Finances' menu.
+    await page.click('nav > button[data-screen="status"]');
+    await page.waitForSelector('#status.active', { timeout: 5000 });
+    if (await page.isVisible('#finNav') || await page.isVisible('#finMenu')) throw new Error("Status's sidebar shows Finances' menu or the balances");
+    if (!(await page.isVisible('nav > button[data-screen="settings"]'))) throw new Error('Settings left the sidebar off Finances');
+  } },
   // Usability task 15, item 4: on the phone (390px, and 320px with text at 1.5×, which is 213px), back, the period's name
   // and forward on one line, the name wrapping between them.
   ...[390, 213].map((w) => ({ name: `Finances: the period bar's arrows on one line with its name, on the phone at ${w}px`, screen: 'finances', phone: ['companion', 'finances'], run: async (page) => {
@@ -7248,7 +7283,7 @@ const smokes = [
   // writes its charges as. The sheet says so before anything comes in, and moves it to the American Express card in one
   // tap, read as charges; a line says what comes in, out and in, before Bring in.
   { name: 'Finances: an American Express file left on checking says so, and moves to the card in one tap', screen: 'finances', run: async (page) => {
-    await page.click('#finRoot > .seg button:text-is("Spending")', { timeout: 5000 });
+    await finTab(page, 'Transactions', { timeout: 5000 });
     await page.click('.fx-transactions button:text-is("Import a file")');
     const csv = 'Date,Description,Amount\n'
       + '11/05/2026,AMAZON.COM AMZN.COM/BILL WA,56.61\n'
@@ -7266,7 +7301,7 @@ const smokes = [
   } },
   // The card picked, but Charges are plus amounts unticked: the same warning, with Read them as charges.
   { name: 'Finances: an American Express file read as money in on the card says so, and reads them as charges in one tap', screen: 'finances', run: async (page) => {
-    await page.click('#finRoot > .seg button:text-is("Spending")', { timeout: 5000 });
+    await finTab(page, 'Transactions', { timeout: 5000 });
     await page.click('.fx-transactions button:text-is("Import a file")');
     const csv = 'Date,Description,Amount\n11/05/2026,AMAZON.COM AMZN.COM/BILL WA,56.61\n11/04/2026,BLUE BOTTLE COFFEE  OAKLAND   CA,30.34\n11/02/2026,SUNNY DAYS SCHOOL  MIAMI   FL,402.00\n';
     await page.setInputFiles('#finSheet .importfile input[type=file]', { name: 'activity.csv', mimeType: 'text/csv', buffer: Buffer.from(csv) });
@@ -7280,7 +7315,7 @@ const smokes = [
   // American Express's own cuts: a padded file whose town runs into a store number, its spelling of the marketplace, and a
   // name cut at its column with the town run into it. Each reads as the shop.
   { name: "Finances: an American Express name cut short or run into its town reads as the shop", screen: 'finances', run: async (page) => {
-    await page.click('#finRoot > .seg button:text-is("Spending")', { timeout: 5000 });
+    await finTab(page, 'Transactions', { timeout: 5000 });
     await page.click('.fx-transactions button:text-is("Import a file")');
     const csv = 'Date,Description,Amount\n'
       + '11/04/2026,PET SUPERMARKET #100SUNRISE           FL,30.34\n'
@@ -7346,36 +7381,26 @@ const smokes = [
   // Imported rows take what they are plainly for: a known company's category, a planned payment's, a payroll deposit a
   // Paycheck; paying the household's own card, and money in from its own savings account, are moves, not spending; a Zelle
   // payment to someone is left for the household to pick. The preview says each before it comes in.
-  // Four tabs, as the owner picked (Nov 10): Dashboard, Spending (Transactions, Reports), Plan (Calendar, Recurring,
-  // Paychecks), Net worth (Net worth, Collection). A tab with pages opens its first and shows them in a second row, and again on the page it was
-  // left on; a way into a page (a Dashboard card) picks its tab and page.
-  { name: 'Finances: four tabs, Spending, Plan and Net worth with their pages in a second row', screen: 'finances', run: async (page) => {
-    const top = await page.$$eval('#finRoot > .seg button', (bs) => bs.map((b) => b.textContent));
-    if (top.join('|') !== 'Dashboard|Spending|Plan|Net worth') throw new Error(`tabs ${top.join('|')}`);
-    if (await page.isVisible('#finRoot .fx-subtabs')) throw new Error('a second row on the Dashboard');
-    const second = () => page.$$eval('#finRoot .fx-subtabs .seg button', (bs) => bs.map((b) => `${b.textContent}${b.getAttribute('aria-checked') === 'true' ? '*' : ''}`).join('|'));
-    await page.click('#finRoot > .seg button:text-is("Spending")');
-    await page.waitForSelector('#finRoot .fx-transactions', { timeout: 5000 });
-    if ((await second()) !== 'Transactions*|Reports') throw new Error(`Spending's pages ${await second()}`);
-    await page.click('#finRoot .fx-subtabs .seg button:text-is("Reports")');
-    if ((await second()) !== 'Transactions|Reports*') throw new Error(`after Reports ${await second()}`);
-    await page.click('#finRoot > .seg button:text-is("Plan")');
-    if ((await second()) !== 'Calendar*|Recurring|Paychecks') throw new Error(`Plan's pages ${await second()}`);
-    await page.click('#finRoot .fx-subtabs .seg button:text-is("Paychecks")');
-    await page.waitForSelector('#finRoot > .seg button[aria-checked=true]:text-is("Plan")', { timeout: 2000 });
-    // Net worth has its Collection beside it (Nov 13), so its pages are a second row too, Net worth first.
-    await page.click('#finRoot > .seg button:text-is("Net worth")');
-    if ((await second()) !== 'Net worth*|Collection') throw new Error(`Net worth's pages ${await second()}`);
-    // Each tab opens again on the page it was left on.
-    await page.click('#finRoot > .seg button:text-is("Spending")');
-    if ((await second()) !== 'Transactions|Reports*') throw new Error(`Spending again ${await second()}`);
-    await page.click('#finRoot > .seg button:text-is("Plan")');
-    if ((await second()) !== 'Calendar|Recurring|Paychecks*') throw new Error(`Plan again ${await second()}`);
-    // Back on the Dashboard, a card that opens Recurring picks Plan and Recurring.
-    await page.click('#finRoot > .seg button:text-is("Dashboard")');
+  // Finances' menu in the sidebar (redesign-loop R2; it was four tabs with a second row, the owner's of Nov 10): Dashboard,
+  // Transactions, Bills & paychecks (Recurring and Paychecks under it while it's open), Calendar, Net worth, Collection,
+  // Reports. A part with pages opens again on the page it was left on; a way into a page (a Dashboard card) marks it.
+  { name: "Finances: its menu in the sidebar, Bills & paychecks with its pages under it", screen: 'finances', run: async (page) => {
+    const top = await page.$$eval('#finMenu .finmenu > li > button', (bs) => bs.map((b) => b.textContent.trim()));
+    if (top.join('|') !== 'Dashboard|Transactions|Bills & paychecks|Calendar|Net worth|Collection|Reports') throw new Error(`the menu: ${top.join('|')}`);
+    if (await page.isVisible('#finMenu .finsubmenu')) throw new Error("Bills & paychecks' pages show on the Dashboard");
+    const sub = () => page.$$eval('#finMenu .finsubmenu button', (bs) => bs.map((b) => `${b.textContent.trim()}${b.getAttribute('aria-current') === 'page' ? '*' : ''}`).join('|'));
+    await finTab(page, 'Paychecks');
+    if ((await sub()) !== 'Recurring|Paychecks*') throw new Error(`Bills & paychecks' pages ${await sub()}`);
+    await finTab(page, 'Reports');
+    if (await page.isVisible('#finMenu .finsubmenu')) throw new Error("Bills & paychecks' pages stay open on Reports");
+    // It opens again on the page it was left on.
+    await page.click('#finMenu .finmenu > li > button:has(span:text-is("Bills & paychecks"))');
+    if ((await sub()) !== 'Recurring|Paychecks*') throw new Error(`Bills & paychecks again ${await sub()}`);
+    // From the Dashboard, a card that opens Recurring marks it.
+    await finTab(page, 'Dashboard');
     await page.click('.fx-flow button[aria-label^="Open Recurring"]', { timeout: 5000 });
-    await page.waitForSelector('#finRoot > .seg button[aria-checked=true]:text-is("Plan")', { timeout: 5000 });
-    if ((await second()) !== 'Calendar|Recurring*|Paychecks') throw new Error(`from the Dashboard ${await second()}`);
+    await page.waitForSelector('#finMenu [aria-current="page"]:has-text("Recurring")', { timeout: 5000 });
+    if ((await sub()) !== 'Recurring*|Paychecks') throw new Error(`from the Dashboard ${await sub()}`);
   } },
   { name: 'Finances: an import fills in what each row is plainly for, and money between your own accounts moves', screen: 'finances', mock: { finances: { ...finances, plan: { ...finances.plan, accounts: [...finances.plan.accounts, { id: 'apple', name: 'Apple Savings', kind: 'savings', balance: 1000 }] } } }, run: async (page) => {
     await finTab(page, 'Transactions', { timeout: 5000 });
@@ -8162,7 +8187,7 @@ const smokes = [
     for (const card of ['.fx-flow', '.fx-spend']) {
       await finTab(page, 'Dashboard', { timeout: 5000 });
       await page.click(`${card} button[aria-label^="Open Recurring"]`, { timeout: 5000 });
-      await page.waitForSelector('#finRoot .seg button:text-is("Recurring")[aria-checked=true], #finRoot .seg button:text-is("Recurring")[aria-pressed=true]', { timeout: 5000 });
+      await page.waitForSelector('#finMenu [aria-current="page"]:has-text("Recurring")', { timeout: 5000 });
       await page.waitForSelector('.fx-monthsum h2:text-is("A typical month")', { timeout: 5000 });
     }
   } },
@@ -8511,7 +8536,7 @@ const smokes = [
         await page.waitForSelector('#finRoot .fx-card h2:text-is("Ember Fox")', { timeout: 5000 });
         const card = await page.textContent('#finRoot .fx-card');
         if (!card.includes('$182') || !card.includes('You paid $45.00') || !card.includes('Set A · 4/102 · Near mint')) throw new Error(`the card's page: ${card.replace(/\s+/g, ' ').slice(0, 300)}`);
-        if (!(await page.isVisible('#finRoot .fx-subtabs button[aria-checked="true"]:text-is("Collection")'))) throw new Error('a card is not under the Collection');
+        if ((await finAt(page)) !== 'Collection') throw new Error('a card is not under the Collection');
         await page.click('#finRoot .fx-card button:text-is("‹ Collection")');
         await page.waitForSelector('#finRoot .fx-cards', { timeout: 5000 });
       } },
@@ -8631,7 +8656,7 @@ const smokes = [
     await page.mouse.move(box.x + box.width * 0.86, box.y + box.height / 2);
     const day = await page.textContent('#finRoot .fx-trend .fx-tip strong', { timeout: 5000 });
     await page.mouse.click(box.x + box.width * 0.86, box.y + box.height / 2);
-    await page.waitForSelector('#finRoot .seg button[aria-checked="true"]:text-is("Calendar")', { timeout: 5000 });
+    await page.waitForSelector('#finMenu [aria-current="page"]:has-text("Calendar")', { timeout: 5000 });
     const opened = await page.textContent('#finRoot .fx-dayone h2', { timeout: 5000 });
     if (!opened.includes(day.replace(/^\w+, /, ''))) throw new Error(`the tip said ${day}, the calendar opened ${opened}`);
   } },
@@ -8640,7 +8665,7 @@ const smokes = [
   // Renewing soon the subscriptions, Budgets to watch and Latest transactions Transactions, Checking ahead the calendar,
   // This paycheck Paychecks, Net worth its tab. On the phone's page too, a phone allowed only to look included.
   ...[['the computer', undefined, {}], ['a phone allowed only to look', ['companion', 'finances'], { finances: { ...finances, readOnly: true } }]].map(([where, phone, mock]) => ({ name: `Finances: a Dashboard card's title opens what it sums up, ${where}`, screen: 'finances', phone, mock, run: async (page) => {
-    const page2 = (name) => `#finRoot .seg button[aria-checked="true"]:text-is("${name}")`;
+    const page2 = (name) => `#finMenu [aria-current="page"]:has-text("${name}"), #finRoot .seg button[aria-checked="true"]:text-is("${name}")`;
     const cards = [
       ['.fx-spentmonth', page2('Transactions'), async () => { if ((await page.inputValue('.fx-txfilters select[aria-label="Month"]')) !== '2026-10') throw new Error('Spent this month: not October'); }],
       ['.fx-flow', page2('Recurring')],
@@ -9073,16 +9098,21 @@ const smokes = [
     if (!groups.some((g) => g.includes('Investments') && g.includes('$61.3k')) || groups.some((g) => g.includes('Retirement'))) throw new Error(`the groups: ${groups}`);
     if (!groups.some((g) => g.includes('Home & Car'))) throw new Error(`the groups: ${groups}`);
   } },
-  // The sidebar's balances show on every screen, not only on Finances; a group opens Finances › Net worth.
-  { name: 'The sidebar shows the balances on every screen, and a group opens Net worth', screen: 'status', run: async (page) => {
+  // The sidebar's balances show on Finances only (docs/Redesign.md: bank accounts appear only in Finances); a group opens
+  // Net worth.
+  { name: "The sidebar shows the balances on Finances, not on another screen, and a group opens Net worth", screen: 'status', run: async (page) => {
+    await page.waitForSelector('#status.active', { timeout: 5000 });
+    await page.waitForTimeout(300);
+    if (await page.isVisible('#finNav')) throw new Error("Status's sidebar shows the balances");
+    await page.click('nav button[data-screen="finances"]');
     await page.waitForSelector('#finNav .fx-balance:has-text("Investments")', { state: 'visible', timeout: 5000 });
     if (!(await page.textContent('#finNav')).includes('Net worth')) throw new Error(`the sidebar: ${await page.textContent('#finNav')}`);
     await page.click('#finNav .fx-balance:has-text("Investments")');
-    await page.waitForSelector('#finances.active #finRoot .seg button.on:text-is("Net worth")', { timeout: 5000 });
+    await page.waitForSelector('#finMenu [aria-current="page"]:has-text("Net worth")', { timeout: 5000 });
   } },
   // Resting on a group in the sidebar (or Tab to it) shows its accounts beside it: each balance, how long since it was
   // updated, and a dot on one older than a month; the click still opens Net worth, and hidden amounts stay hidden there.
-  { name: 'A sidebar balance shows its accounts on hover, and how long since each was updated', screen: 'status',
+  { name: 'A sidebar balance shows its accounts on hover, and how long since each was updated', screen: 'finances',
     mock: { finances: { ...finances, plan: { ...finances.plan, accounts: finances.plan.accounts.map((a) => (a.id === 'k401' ? { ...a, updated: '2026-09-10' } : a)) } } }, run: async (page) => {
     const inv = '#finNav .fx-balance:has-text("Investments")';
     await page.waitForSelector(inv, { state: 'visible', timeout: 5000 });
@@ -9116,9 +9146,9 @@ const smokes = [
     await card.waitFor({ state: 'hidden', timeout: 2000 });
     // The click still opens Net worth.
     await page.click(inv);
-    await page.waitForSelector('#finances.active #finRoot .seg button.on:text-is("Net worth")', { timeout: 5000 });
+    await page.waitForSelector('#finMenu [aria-current="page"]:has-text("Net worth")', { timeout: 5000 });
   } },
-  { name: 'With amounts hidden, a balance’s hover hides them too', screen: 'status', mock: { finances: { ...finances, plan: { ...finances.plan, hideAmounts: true } } }, run: async (page) => {
+  { name: 'With amounts hidden, a balance’s hover hides them too', screen: 'finances', mock: { finances: { ...finances, plan: { ...finances.plan, hideAmounts: true } } }, run: async (page) => {
     const cash = '#finNav .fx-balance:has-text("Cash")';
     await page.waitForSelector(cash, { state: 'visible', timeout: 5000 });
     await page.hover(cash);
@@ -9129,7 +9159,7 @@ const smokes = [
   } },
   // A balance opens its own group: Net worth on Investments alone, each of its accounts a band of its own month by month
   // (its history), only its accounts listed, and Show everything back to all of them; another view forgets it.
-  { name: 'A sidebar balance opens Net worth on its own group, each account month by month', screen: 'status', run: async (page) => {
+  { name: 'A sidebar balance opens Net worth on its own group, each account month by month', screen: 'finances', run: async (page) => {
     await page.click('#finNav .fx-balance:has-text("Investments")', { timeout: 5000 });
     const card = page.locator('#finRoot .fx-groupcard');
     await card.waitFor({ timeout: 5000 });
@@ -9502,7 +9532,7 @@ const smokes = [
     const cats = await page.$$eval('.fx-budgets li .grow > strong', (ss) => ss.map((s) => s.textContent).join());
     if (cats !== 'Subscriptions') throw new Error(`to watch: ${cats}`);
     await page.click('.fx-budgets button:text-is("See all")');
-    await page.waitForSelector('#finRoot .fx-subtabs .seg button[aria-checked=true]:text-is("Transactions")', { timeout: 5000 });
+    await page.waitForSelector('#finMenu [aria-current="page"]:has-text("Transactions")', { timeout: 5000 });
     await page.waitForSelector('.fx-budgets h2:text-is("Budgets")', { timeout: 5000 });
   } },
   { name: 'Finances: no budget to watch, no card', screen: 'finances', mock: { finances: { ...finances, budgets: finances.budgets.filter((b) => b.category !== 'Subscriptions') } }, run: async (page) => {
@@ -9897,7 +9927,7 @@ const smokes = [
   } })),
   // The sidebar lists each group's accounts under it, each with its round logo and balance; a group's arrow folds them away,
   // and they stay folded when the app opens again; an account opens Net worth on its group.
-  { name: 'The sidebar lists each account under its group, and a group folds away', screen: 'status', run: async (page) => {
+  { name: 'The sidebar lists each account under its group, and a group folds away', screen: 'finances', run: async (page) => {
     await page.waitForSelector('.fx-balances .fx-balgroup:has-text("Cash") .fx-balacct:has-text("Chase Checking") .fmark', { timeout: 5000 });
     if (!(await page.$eval('.fx-balances .fx-balacct:has-text("Chase Checking") .fmark', (e) => getComputedStyle(e).borderRadius === '50%'))) throw new Error('an account\'s logo in the sidebar is not round');
     const arrow = '.fx-balances .fx-balgroup:has-text("Cash") .fx-balfold';

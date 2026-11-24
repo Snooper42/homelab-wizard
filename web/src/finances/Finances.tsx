@@ -5,7 +5,7 @@
 import { CardPage, CollectionPage } from './Collection';
 import { render } from 'preact';
 import { HideAmounts } from './ui/HideAmounts';
-import { useState } from 'preact/hooks';
+import { useEffect, useState } from 'preact/hooks';
 import { MenuButton } from '../parts/MenuButton';
 import { aheadCsv, aheadName, monthName, monthPage, planJson, planName } from './exportData';
 import { Segmented } from '../parts/Segmented';
@@ -132,6 +132,8 @@ function FinancesScreen({ v, ledger, error, retry, tab, setTab, sel, pick, setSi
   const [from, setFrom] = useState('');
   const toTx = (f: Parameters<typeof showTransactions>[0]) => { showTransactions(f); setFrom(tab); setTab('transactions'); };
   const pickTab = (t: string) => { setFrom(''); setTab(t); };
+  // A page picked anywhere else (Finances' menu in the sidebar, Back and Forward) forgets where Transactions came from.
+  useEffect(() => { if (tab !== 'transactions') setFrom(''); }, [tab]);
   if (groupOf(tab)[2].includes(tab)) leftOn[groupOf(tab)[0]] = tab;
   const back = from && from !== 'transactions' ? { label: tabs.find(([k]) => k === from)?.[1] || from, go: () => pickTab(from) } : undefined;
   const ro = !!v?.readOnly;
@@ -153,8 +155,9 @@ function FinancesScreen({ v, ledger, error, retry, tab, setTab, sel, pick, setSi
           {!ro && <div class="toolbar">{toggleHidden && v && <HideAmounts hidden={!!v.plan.hideAmounts} toggle={toggleHidden} />}{!!v?.plan.accounts?.length && <button class="btn" onClick={() => edit('balances')}>Update balances</button>}<button class="btn fx-primary" onClick={() => edit(what)} disabled={!v}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>{label}</button></div>}
         </div>
       </div>
-      <Segmented label="View" value={groupOf(tab)[0]} pick={(g) => pickTab(pageOf(g))} options={groups.map(([k, label]) => [k, label] as [string, string])} />
-      {groupOf(tab)[2].length > 1 && <div class="fx-subtabs"><Segmented label={groupOf(tab)[1]} value={pageFor(tab)} pick={pickTab} options={tabs.filter(([k]) => groupOf(tab)[2].includes(k))} /></div>}
+      {/* On the computer, Finances' menu in the sidebar picks the page (FinMenu); the phone keeps its tabs. */}
+      {phone && <Segmented label="View" value={groupOf(tab)[0]} pick={(g) => pickTab(pageOf(g))} options={groups.map(([k, label]) => [k, label] as [string, string])} />}
+      {phone && groupOf(tab)[2].length > 1 && <div class="fx-subtabs"><Segmented label={groupOf(tab)[1]} value={pageFor(tab)} pick={pickTab} options={tabs.filter(([k]) => groupOf(tab)[2].includes(k))} /></div>}
       <div class="finbody">
         {!v && error ? <Empty>The finances file could not be read: {error} <button class="small" onClick={retry}>Try again</button></Empty>
           : !v ? <Empty>Reading…</Empty>
@@ -189,3 +192,59 @@ function View({ v, L, phone, ledger, setTab, toTx, back, tab, sel, pick, openWor
 }
 
 export function mountFinances(el: Element, props: FinancesProps) { render(<FinancesScreen {...props} />, el); }
+
+/** A menu line's icon, drawn in the sidebar's stroke. */
+const menuIcons: Record<string, string> = {
+  overview: 'M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z',
+  transactions: 'M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01',
+  bills: 'M6 3h12v18l-3-2-3 2-3-2-3 2zM12 7v8M14.5 8.5H10.8a1.6 1.6 0 0 0 0 3.2h2.4a1.6 1.6 0 0 1 0 3.2H9.5',
+  calendar: 'M4 6h16v14H4zM4 10h16M8 3v4M16 3v4',
+  worth: 'M3 17l6-6 4 4 8-8M15 7h6v6',
+  collection: 'M7 3h10v18H7zM10 7h4',
+  reports: 'M12 3a9 9 0 1 0 9 9h-9zM15 3.5A9 9 0 0 1 20.5 9H15z',
+};
+
+/**
+ * Finances' own menu (docs/Redesign.md, The computer's sidebar): while
+ * Finances shows, the sidebar holds its pages in place of the tabs, then
+ * the accounts (widgets/Worth's Balances). A part with more than one page
+ * (Bills & paychecks: Recurring and Paychecks) shows them under it while
+ * it's open; each opens where it was left. Budgets joins once it is a page
+ * of its own (redesign-loop R4).
+ */
+const menu: { key: string; label: string; pages: string[]; sub?: [string, string][] }[] = [
+  { key: 'overview', label: 'Dashboard', pages: ['overview'] },
+  { key: 'transactions', label: 'Transactions', pages: ['transactions'] },
+  { key: 'bills', label: 'Bills & paychecks', pages: ['recurring', 'pay'], sub: [['recurring', 'Recurring'], ['pay', 'Paychecks']] },
+  { key: 'calendar', label: 'Calendar', pages: ['calendar'] },
+  { key: 'worth', label: 'Net worth', pages: ['worth'] },
+  { key: 'collection', label: 'Collection', pages: ['collection'] },
+  { key: 'reports', label: 'Reports', pages: ['reports'] },
+];
+/** The page a part opens on: the one it was left on, else its first. */
+const lastOf = (pages: string[]) => pages.find((t) => Object.values(leftOn).includes(t)) || pages[0];
+
+function FinMenu({ tab, setTab }: { tab: string; setTab: (t: string) => void }) {
+  const here = pageFor(tab);
+  return (
+    <ul class="finmenu" aria-label="Finances">
+      {menu.map((m) => {
+        const open = m.pages.includes(here);
+        return (
+          <li key={m.key}>
+            <button type="button" class={'finmenuitem' + (open ? ' on' : '')} aria-current={open && !m.sub ? 'page' : undefined}
+              onClick={() => setTab(m.sub ? lastOf(m.pages) : m.pages[0])}>
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d={menuIcons[m.key]} /></svg><span>{m.label}</span>
+            </button>
+            {open && m.sub && <ul class="finsubmenu">{m.sub.map(([t, label]) => (
+              <li key={t}><button type="button" class={'finmenuitem sub' + (here === t ? ' on' : '')} aria-current={here === t ? 'page' : undefined} onClick={() => setTab(t)}>{label}</button></li>
+            ))}</ul>}
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+/** Finances' menu, into the sidebar (index.html's #finMenu); the sidebar shows it only while Finances does, on the computer. */
+export function mountFinMenu(el: Element, props: { tab: string; setTab: (t: string) => void }) { render(<FinMenu {...props} />, el); }
