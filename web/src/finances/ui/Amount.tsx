@@ -2,6 +2,7 @@
 // its caption. They take numbers and words only, never the plan; colours
 // come from the tone classes (fx-in, fx-out, …) in style.css.
 import type { ComponentChildren } from 'preact';
+import { Chip } from '../../parts/Card';
 import { amountsHidden, compact, money, moneyIn, signed, split, whole } from '../money';
 
 /** What an amount means: money in, money out, kept, a warning, or nothing to say ("auto": in when above zero, out below). */
@@ -91,4 +92,11 @@ export function Tiles({ items }: { items: { label: string; value: ComponentChild
       {items.map((t) => <div key={t.label} class="fx-tile"><div class="fx-caption">{t.label}</div><div class={'fx-tilevalue' + toneClass(t.tone, 0)}>{t.value}</div></div>)}
     </div>
   );
+}
+
+/** A card's comparison chip in money: "↗ +$331.86 vs last paycheck", green when it went the good way. None while amounts are hidden. */
+export function MoneyChip({ value, words, downIsGood }: { value: number; words: string; downIsGood?: boolean }) {
+  if (amountsHidden()) return null;
+  const flat = Math.abs(value) < 0.005;
+  return <Chip dir={flat ? 'flat' : value > 0 ? 'up' : 'down'} good={flat ? null : (value > 0) !== !!downIsGood} value={flat ? 'No change' : signed(value)} words={words} />;
 }

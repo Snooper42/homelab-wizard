@@ -3,7 +3,7 @@
 // it reads as one with the other screens; how wide it is in the grid is
 // its span, never the screen's business.
 import type { ComponentChildren } from 'preact';
-import { Card, CardHead } from '../../parts/Card';
+import { Card, CardFigure, CardHead } from '../../parts/Card';
 
 export interface WidgetProps {
   title: ComponentChildren;
@@ -24,16 +24,23 @@ export interface WidgetProps {
   seeAll?: boolean;
   /** Where open goes, for the ↗ and a screen reader: "Open Recurring: a typical month, payment by payment". */
   openLabel?: string;
+  /** The card's one figure, under its title (docs/Redesign.md, Cards): an Amount, its cents smaller. */
+  figure?: ComponentChildren;
+  /** The small capitalised words under the figure: "In checking on Nov 19, after 10 bills". */
+  label?: ComponentChildren;
+  /** The comparison with the period before, on the figure's right: a MoneyChip, only where the View has that period. */
+  chip?: ComponentChildren;
   children?: ComponentChildren;
 }
 
-export function Widget({ title, id, actions, span = 1, kind, open, openLabel = 'Open what it sums up', seeAll, children }: WidgetProps) {
+export function Widget({ title, id, actions, span = 1, kind, open, openLabel = 'Open what it sums up', seeAll, figure, label, chip, children }: WidgetProps) {
   // Laid over the title, which stays its heading's own words: the ↗ is the button a keyboard and a screen reader have.
   const head = open ? <>{title}<button type="button" class="fx-titleopen" tabIndex={-1} aria-hidden="true" title={openLabel} onClick={open} /></> : title;
   const all = open && !seeAll ? <>{actions}<IconButton icon="open" label={openLabel} onClick={open} /></> : actions;
   return (
     <Card id={id} kind={'fx-widget' + (span === 1 ? '' : span === 2 ? ' span2' : ' spanall') + (kind ? ' ' + kind : '')}>
       <CardHead title={head}>{all ? <span class="fx-actions">{all}</span> : undefined}</CardHead>
+      {figure !== undefined && <CardFigure figure={figure} label={label} chip={chip} />}
       {children}
     </Card>
   );

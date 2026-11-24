@@ -13,7 +13,7 @@ import { Mark } from './Mark';
 import { Widget } from './ui/Widget';
 import type { Lookup } from './money';
 import { CheckingWidget } from './widgets/Checking';
-import { NowWidget } from './widgets/Now';
+import { LeadWidget } from './widgets/Now';
 import { PricesWidget } from './widgets/Prices';
 import { MissingWidget } from './widgets/Missing';
 import { AveragesWidget } from './widgets/Averages';
@@ -144,14 +144,14 @@ export function Overview({ v, L, sel, pick, add, edit, setSince, keep, ledger, o
       )}
       {bar && <PeriodBar {...bar} />}
       <ArrangedBoard phone={phone} slots={[
-        { id: 'now', title: 'Checking now', width: 'full', node: !phone && <NowWidget v={v} L={L} /> },
+        { id: 'now', title: "Left after this paycheck's bills", width: 'full', node: !phone && <LeadWidget v={v} L={L} sel={p ? picked : 0} open={openPay} /> },
         { id: 'since', title: 'Since the balances', width: 'full', node: !!v.since?.length && <SinceWidget v={v} L={L} set={setSince} /> },
         { id: 'missing', title: 'Bills not seen', width: 'full', node: <MissingWidget v={v} L={L} open={openTransactions} /> },
         { id: 'prices', title: 'New prices', width: 'full', node: <PricesWidget v={v} L={L} keep={keep} /> },
         { id: 'averages', title: "Bills' averages", width: 'full', node: <AveragesWidget v={v} L={L} keep={keep} /> },
         { id: 'comingup', title: 'Coming up', width: 'full', node: phone && <ComingUpWidget v={v} L={L} calendar={openCalendar} /> },
         { id: 'goals', title: 'Goals', width: 'full', node: phone && <GoalsWidget v={v} L={L} edit={edit && ((w, id) => edit(w, id!))} all={openWorth} /> },
-        { id: 'nowphone', title: 'Checking now', width: 'full', node: phone && <NowWidget v={v} L={L} /> },
+        { id: 'nowphone', title: "Left after this paycheck's bills", width: 'full', node: phone && <LeadWidget v={v} L={L} sel={p ? picked : 0} open={openPay} /> },
         { id: 'past', title: 'What happened', width: 'full', node: read && <PastWidget v={v} L={L} past={read} title={month?.when === 'now' ? 'So far this month' : undefined} ledger={ledger} edit={edit} /> },
         { id: 'planned', title: 'The plan', width: 'full', node: month && month.when !== 'past' && (() => {
           // The plan's days, from tomorrow for this month (today's are in So far), or the whole month after it.

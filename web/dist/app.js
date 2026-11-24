@@ -740,6 +740,26 @@
   function Card({ kind, id: id2, title, role, children }) {
     return /* @__PURE__ */ u3("div", { id: id2, title, role, class: "card" + (kind ? " " + kind : ""), children });
   }
+  function Chip({ dir, good, value, words: words5 }) {
+    const tone = good === null ? "flat" : good ? "good" : "bad";
+    const arrow = dir === "up" ? "M7 17 17 7M8 7h9v9" : dir === "down" ? "M7 7l10 10M17 8v9H8" : "M5 12h14";
+    return /* @__PURE__ */ u3("span", { class: "chip-cmp", children: [
+      /* @__PURE__ */ u3("span", { class: "chip-pill " + tone, children: [
+        /* @__PURE__ */ u3("svg", { viewBox: "0 0 24 24", "aria-hidden": "true", children: /* @__PURE__ */ u3("path", { d: arrow }) }),
+        value
+      ] }),
+      words5 && /* @__PURE__ */ u3("span", { class: "chip-words", children: words5 })
+    ] });
+  }
+  function CardFigure({ figure, label, chip }) {
+    return /* @__PURE__ */ u3("div", { class: "card-figure", children: [
+      /* @__PURE__ */ u3("div", { class: "card-figuremain", children: [
+        /* @__PURE__ */ u3("div", { class: "card-figurevalue", children: figure }),
+        label && /* @__PURE__ */ u3("div", { class: "card-figurelabel", children: label })
+      ] }),
+      chip && /* @__PURE__ */ u3("div", { class: "card-figurechip", children: chip })
+    ] });
+  }
 
   // web/src/parts/Hover.tsx
   var made = 0;
@@ -3977,7 +3997,7 @@
     hidden2 = false;
     draw();
   }
-  function Chip({ b: b2 }) {
+  function Chip2({ b: b2 }) {
     const next = jobsWaiting();
     const words5 = b2.state === "done" ? "Done" : b2.state === "failed" ? "Stopped with a problem" : b2.step || "Working…";
     return /* @__PURE__ */ u3("div", { class: "bgjob " + b2.state, children: [
@@ -3999,7 +4019,7 @@
   });
   function draw() {
     const el3 = $("bgJob");
-    if (el3) R(hidden2 && bg ? /* @__PURE__ */ u3(Chip, { b: bg }) : null, el3);
+    if (el3) R(hidden2 && bg ? /* @__PURE__ */ u3(Chip2, { b: bg }) : null, el3);
   }
 
   // web/src/status/CrashNote.tsx
@@ -10074,9 +10094,14 @@
       /* @__PURE__ */ u3("div", { class: "fx-tilevalue" + toneClass(t3.tone, 0), children: t3.value })
     ] }, t3.label)) });
   }
+  function MoneyChip({ value, words: words5, downIsGood }) {
+    if (amountsHidden()) return null;
+    const flat4 = Math.abs(value) < 5e-3;
+    return /* @__PURE__ */ u3(Chip, { dir: flat4 ? "flat" : value > 0 ? "up" : "down", good: flat4 ? null : value > 0 !== !!downIsGood, value: flat4 ? "No change" : signed(value), words: words5 });
+  }
 
   // web/src/finances/ui/Widget.tsx
-  function Widget({ title, id: id2, actions, span = 1, kind, open: open5, openLabel = "Open what it sums up", seeAll, children }) {
+  function Widget({ title, id: id2, actions, span = 1, kind, open: open5, openLabel = "Open what it sums up", seeAll, figure, label, chip, children }) {
     const head = open5 ? /* @__PURE__ */ u3(S, { children: [
       title,
       /* @__PURE__ */ u3("button", { type: "button", class: "fx-titleopen", tabIndex: -1, "aria-hidden": "true", title: openLabel, onClick: open5 })
@@ -10087,6 +10112,7 @@
     ] }) : actions;
     return /* @__PURE__ */ u3(Card, { id: id2, kind: "fx-widget" + (span === 1 ? "" : span === 2 ? " span2" : " spanall") + (kind ? " " + kind : ""), children: [
       /* @__PURE__ */ u3(CardHead, { title: head, children: all ? /* @__PURE__ */ u3("span", { class: "fx-actions", children: all }) : void 0 }),
+      figure !== void 0 && /* @__PURE__ */ u3(CardFigure, { figure, label, chip }),
       children
     ] });
   }
@@ -12746,7 +12772,7 @@
   function Axis({ marks: marks2, y: y3, format: format2 }) {
     return /* @__PURE__ */ u3("div", { class: "fx-axis", "aria-hidden": "true", children: marks2.map((t3) => /* @__PURE__ */ u3("span", { class: t3 === 0 ? "zero" : "", style: { top: `${y3(t3)}px` }, children: format2(t3) }, t3)) });
   }
-  function AreaChart({ values, xLabels, marks: marks2 = [], threshold, aheadFrom, behindTo, band, height = 200, format: format2, tip, label, zero = true, axis: showAxis = true, fill, onPick }) {
+  function AreaChart({ values, xLabels, marks: marks2 = [], threshold, aheadFrom, behindTo, band, height = 200, format: format2, tip, label, zero = true, axis: showAxis = true, fill, onPick, stepped }) {
     const [at2, setAt] = d2(-1);
     const n3 = values.length;
     const plot = A2(null);
@@ -12759,13 +12785,13 @@
     }, [fill, n3 >= 2]);
     if (n3 < 2) return null;
     const tall = fill ? Math.max(height, room) : height;
-    const lo = zero ? Math.min(0, ...values, threshold ?? 0) : Math.min(...values), hi = zero ? Math.max(...values, threshold ?? 0, 1) : Math.max(...values);
+    const lo = zero ? Math.min(0, ...values, threshold ?? 0) : Math.min(...values, threshold ?? Infinity), hi = zero ? Math.max(...values, threshold ?? 0, 1) : Math.max(...values, threshold ?? -Infinity);
     const axis = zero ? ticks(lo, hi * 1.08) : ticks(lo - (hi - lo) * 0.1, hi + (hi - lo) * 0.1);
     const y3 = (v3) => (axis.top - v3) / (axis.top - axis.bottom || 1) * tall;
     const x3 = (i3) => i3 / (n3 - 1) * 1e3;
     const pct = (i3) => i3 / (n3 - 1) * 100;
     const cut = aheadFrom === void 0 ? n3 - 1 : Math.min(n3 - 1, aheadFrom);
-    const path = (from2, to) => values.slice(from2, to + 1).map((v3, k3) => `${k3 ? "L" : "M"}${x3(from2 + k3).toFixed(1)} ${y3(v3).toFixed(1)}`).join(" ");
+    const path = (from2, to) => values.slice(from2, to + 1).map((v3, k3) => k3 ? stepped ? `H${x3(from2 + k3).toFixed(1)} V${y3(v3).toFixed(1)}` : `L${x3(from2 + k3).toFixed(1)} ${y3(v3).toFixed(1)}` : `M${x3(from2).toFixed(1)} ${y3(v3).toFixed(1)}`).join(" ");
     const behind = behindTo === void 0 ? 0 : Math.max(0, Math.min(cut, behindTo));
     const solid = path(behind, cut);
     const move = (e3) => {
@@ -17132,27 +17158,44 @@ ${pays}
     const { on: on2, card, show: show4 } = useHoverCard(tip, { wide: true });
     return /* @__PURE__ */ u3("div", { class: "fx-clearfig", children: [
       /* @__PURE__ */ u3("button", { type: "button", class: "fx-clearbtn", id: id2, ...on2, onClick: () => show4(true), children: [
-        /* @__PURE__ */ u3(Stat, { size: "lg", value: /* @__PURE__ */ u3(Amount, { value, tone: value < 0 ? "out" : "" }), caption }),
-        /* @__PURE__ */ u3("span", { class: "fx-sub fx-clearhow", children: "How it adds up" })
+        /* @__PURE__ */ u3("span", { class: "fx-caption", children: caption }),
+        /* @__PURE__ */ u3("span", { class: "fx-figure", children: /* @__PURE__ */ u3(Amount, { value, form: "full", tone: value < 0 ? "out" : "" }) }),
+        /* @__PURE__ */ u3("span", { class: "sr", children: "How it adds up" })
       ] }),
       card
     ] });
   }
-  function NowWidget({ v: v3, L: L2 }) {
+  var billsOf = (p3) => p3.rows.filter((r3) => !r3.outside && !r3.into);
+  function LeadWidget({ v: v3, L: L2, sel: sel2, open: open5 }) {
     const now = v3.checkingNow, pay = v3.afterPay;
-    if (!now) return null;
-    const typedToday = now.from === now.date;
-    const who = pay && v3.periods.find((p3) => p3.pay?.date === pay.date)?.pay;
+    const i3 = Math.max(0, Math.min(sel2, v3.periods.length - 1));
+    const p3 = v3.periods[i3];
+    if (!now && !p3) return null;
+    const typedToday = now && now.from === now.date;
+    const who = pay && v3.periods.find((q2) => q2.pay?.date === pay.date)?.pay;
     const whose = who ? names(who.people, L2) : "";
-    const sameDay = pay ? v3.periods.find((p3) => p3.pay?.date === pay.date)?.rows.filter((r3) => r3.date === pay.date && !r3.outside && !r3.into).length || 0 : 0;
-    return /* @__PURE__ */ u3(Widget, { title: "Checking", span: "all", kind: "fx-clear", children: /* @__PURE__ */ u3("div", { class: "fx-clearrow", children: [
-      /* @__PURE__ */ u3(
+    const sameDay = pay ? v3.periods.find((q2) => q2.pay?.date === pay.date)?.rows.filter((r3) => r3.date === pay.date && !r3.outside && !r3.into).length || 0 : 0;
+    const bills = p3 ? billsOf(p3) : [];
+    const owed2 = bills.reduce((t3, r3) => t3 + r3.amount, 0);
+    const cushion = v3.plan.cushion || 0;
+    const before3 = i3 > 0 ? v3.periods[i3 - 1] : void 0;
+    const figures = /* @__PURE__ */ u3("div", { class: "fx-clearrow", children: [
+      now && /* @__PURE__ */ u3(
         Figure,
         {
           id: "finNow",
           value: now.result,
-          caption: typedToday ? "Now, as typed in today" : `Now, typed in ${dayShort(now.from)}`,
-          tip: /* @__PURE__ */ u3(Working, { w: now, L: L2, start: `Checking, typed in ${dayLong(now.from)}`, end: "Checking now" })
+          caption: "Checking now",
+          tip: /* @__PURE__ */ u3(
+            Working,
+            {
+              w: now,
+              L: L2,
+              start: `Checking, typed in ${dayLong(now.from)}`,
+              end: "Checking now",
+              note: typedToday ? "As typed in today." : `Typed in ${dayShort(now.from)}, with what has happened since.`
+            }
+          )
         }
       ),
       pay && /* @__PURE__ */ u3(
@@ -17160,7 +17203,7 @@ ${pays}
         {
           id: "finAfterPay",
           value: pay.result,
-          caption: `After ${whose ? whose + "'s" : "the next"} paycheck, ${dayShort(pay.date)}`,
+          caption: `After payday, ${dayShort(pay.date)}`,
           tip: /* @__PURE__ */ u3(
             Working,
             {
@@ -17172,8 +17215,82 @@ ${pays}
             }
           )
         }
-      )
-    ] }) });
+      ),
+      p3 && /* @__PURE__ */ u3("div", { class: "fx-clearfig", children: /* @__PURE__ */ u3("div", { class: "fx-cleartile", children: [
+        /* @__PURE__ */ u3("span", { class: "fx-caption", children: [
+          "Bills left · ",
+          bills.length
+        ] }),
+        /* @__PURE__ */ u3("span", { class: "fx-figure", children: /* @__PURE__ */ u3(Amount, { value: -owed2, form: "full", tone: owed2 > 5e-3 ? "out" : "" }) })
+      ] }) })
+    ] });
+    if (!p3) return /* @__PURE__ */ u3(Widget, { title: "Checking now", span: "all", kind: "fx-clear fx-lead", children: figures });
+    const days = (v3.days || []).filter((d3) => d3.date >= p3.start && d3.date <= p3.last);
+    const values = days.map((d3) => d3.balance);
+    const marks2 = days.flatMap((d3, k3) => (d3.events || []).filter((e3) => e3.people?.length || e3.amount < 0).map(() => ({ i: k3, tone: d3.events.some((e3) => e3.people?.length) ? "in" : "out" }))).filter((m3, k3, all) => all.findIndex((n3) => n3.i === m3.i) === k3);
+    const step2 = Math.max(1, Math.round(days.length / 5));
+    const xLabels = days.map((d3, k3) => ({ i: k3, label: dayShort(d3.date) })).filter((_3, k3) => k3 % step2 === 0);
+    const said2 = (e3) => e3.people?.length ? names(e3.people, L2) + "'s paycheck" : L2.payment[e3.payment || ""]?.name || e3.payment || "A payment";
+    return /* @__PURE__ */ u3(
+      Widget,
+      {
+        title: "Left after this paycheck's bills",
+        span: "all",
+        kind: "fx-clear fx-lead",
+        open: open5,
+        openLabel: "Open Paychecks",
+        figure: /* @__PURE__ */ u3(Amount, { value: p3.left, tone: p3.left < 0 ? "out" : p3.left < cushion ? "warn" : "" }),
+        label: /* @__PURE__ */ u3(S, { children: [
+          "In checking on ",
+          dayShort(p3.last),
+          ", after ",
+          bills.length === 1 ? "one bill" : `${bills.length} bills`,
+          p3.left < 0 ? /* @__PURE__ */ u3("span", { class: "fx-out", children: [
+            ", short ",
+            money(-p3.left)
+          ] }) : p3.left < cushion ? /* @__PURE__ */ u3("span", { children: [
+            ", under your ",
+            compact(cushion),
+            " cushion"
+          ] }) : ""
+        ] }),
+        chip: before3 && /* @__PURE__ */ u3(MoneyChip, { value: p3.left - before3.left, words: "vs last paycheck" }),
+        children: [
+          days.length >= 2 && /* @__PURE__ */ u3(
+            AreaChart,
+            {
+              values,
+              xLabels,
+              marks: marks2,
+              height: 170,
+              axis: false,
+              zero: false,
+              stepped: true,
+              threshold: cushion || void 0,
+              format: tick,
+              label: `Checking each day from ${dayShort(days[0].date)} to ${dayShort(days[days.length - 1].date)}, ${money(values[0])} at the start and ${money(p3.left)} at the end${cushion ? `, against your ${compact(cushion)} cushion` : ""}. The figures under it say how they add up.`,
+              tip: (k3) => /* @__PURE__ */ u3(S, { children: [
+                /* @__PURE__ */ u3("div", { class: "fx-tiphead", children: [
+                  /* @__PURE__ */ u3("span", { children: dayLong(days[k3].date) }),
+                  /* @__PURE__ */ u3(Amount, { value: days[k3].balance, form: "full" })
+                ] }),
+                (days[k3].events || []).slice(0, 6).map((e3, n3) => /* @__PURE__ */ u3("div", { class: "fx-tiprow", children: [
+                  /* @__PURE__ */ u3("span", { children: said2(e3) }),
+                  /* @__PURE__ */ u3("span", { class: e3.amount > 0 ? "fx-in" : "", children: signed(e3.amount) })
+                ] }, n3)),
+                !(days[k3].events || []).length && /* @__PURE__ */ u3("div", { class: "fx-sub", style: { marginTop: "4px" }, children: "Nothing comes or goes" })
+              ] })
+            }
+          ),
+          !!cushion && days.length >= 2 && /* @__PURE__ */ u3("p", { class: "fx-sub fx-leadcushion", "aria-hidden": "true", children: [
+            /* @__PURE__ */ u3("span", { class: "fx-leaddash" }),
+            "Cushion ",
+            compact(cushion)
+          ] }),
+          figures
+        ]
+      }
+    );
   }
 
   // web/src/finances/widgets/Prices.tsx
@@ -18117,14 +18234,14 @@ ${pays}
       ] }),
       bar && /* @__PURE__ */ u3(PeriodBar, { ...bar }),
       /* @__PURE__ */ u3(ArrangedBoard, { phone: phone2, slots: [
-        { id: "now", title: "Checking now", width: "full", node: !phone2 && /* @__PURE__ */ u3(NowWidget, { v: v3, L: L2 }) },
+        { id: "now", title: "Left after this paycheck's bills", width: "full", node: !phone2 && /* @__PURE__ */ u3(LeadWidget, { v: v3, L: L2, sel: p3 ? picked : 0, open: openPay }) },
         { id: "since", title: "Since the balances", width: "full", node: !!v3.since?.length && /* @__PURE__ */ u3(SinceWidget, { v: v3, L: L2, set: setSince2 }) },
         { id: "missing", title: "Bills not seen", width: "full", node: /* @__PURE__ */ u3(MissingWidget, { v: v3, L: L2, open: openTransactions }) },
         { id: "prices", title: "New prices", width: "full", node: /* @__PURE__ */ u3(PricesWidget, { v: v3, L: L2, keep: keep3 }) },
         { id: "averages", title: "Bills' averages", width: "full", node: /* @__PURE__ */ u3(AveragesWidget, { v: v3, L: L2, keep: keep3 }) },
         { id: "comingup", title: "Coming up", width: "full", node: phone2 && /* @__PURE__ */ u3(ComingUpWidget, { v: v3, L: L2, calendar: openCalendar }) },
         { id: "goals", title: "Goals", width: "full", node: phone2 && /* @__PURE__ */ u3(GoalsWidget, { v: v3, L: L2, edit: edit && ((w3, id2) => edit(w3, id2)), all: openWorth }) },
-        { id: "nowphone", title: "Checking now", width: "full", node: phone2 && /* @__PURE__ */ u3(NowWidget, { v: v3, L: L2 }) },
+        { id: "nowphone", title: "Left after this paycheck's bills", width: "full", node: phone2 && /* @__PURE__ */ u3(LeadWidget, { v: v3, L: L2, sel: p3 ? picked : 0, open: openPay }) },
         { id: "past", title: "What happened", width: "full", node: read && /* @__PURE__ */ u3(PastWidget, { v: v3, L: L2, past: read, title: month3?.when === "now" ? "So far this month" : void 0, ledger, edit }) },
         { id: "planned", title: "The plan", width: "full", node: month3 && month3.when !== "past" && (() => {
           const from2 = month3.when === "now" ? isoDay(new Date(parseDay(v3.today).getTime() + 864e5)) : month3.start;
