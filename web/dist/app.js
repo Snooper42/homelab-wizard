@@ -5069,9 +5069,25 @@
   var mountUninstall = (el3, props) => R(/* @__PURE__ */ u3(Uninstall, { ...props }), el3);
 
   // web/src/settings/Nav.tsx
+  var pageIcons = {
+    General: "M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z",
+    People: "M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 3a4 4 0 1 0 0 8 4 4 0 1 0 0-8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75",
+    Phones: "M7 2h10a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zM12 18h.01",
+    "Automatic care": "M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15",
+    Alerts: "M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0",
+    "Reaching the apps": "M12 2a10 10 0 1 0 0 20 10 10 0 1 0 0-20zM2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z",
+    Storage: "M22 12H2M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11zM6 16h.01M10 16h.01",
+    Appearance: "M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42M12 7a5 5 0 1 0 0 10 5 5 0 1 0 0-10z",
+    "Tidy Up": "M3 6h18M7 12h10M10 18h4"
+  };
+  var machineIcon = "M2 3h20v14H2zM8 21h8M12 17v4";
   function PageButton({ name, active: active2, counts, pick, inFold }) {
+    const icon = inFold ? "" : pageIcons[name] || (/^This /.test(name) ? machineIcon : "");
     return /* @__PURE__ */ u3("button", { class: "pagebtn" + (inFold ? " infold" : "") + (!counts && name === active2 ? " active" : "") + (counts && !counts[name] ? " nomatch" : ""), "data-page": name, onClick: () => pick(name), children: [
-      /* @__PURE__ */ u3("span", { children: name }),
+      /* @__PURE__ */ u3("span", { class: "pagename", children: [
+        icon && /* @__PURE__ */ u3("svg", { class: "icon", viewBox: "0 0 24 24", "aria-hidden": "true", children: /* @__PURE__ */ u3("path", { d: icon }) }),
+        /* @__PURE__ */ u3("span", { children: name })
+      ] }),
       /* @__PURE__ */ u3("span", { class: "n", children: counts && counts[name] ? String(counts[name]) : "" })
     ] }, name);
   }
@@ -5129,6 +5145,9 @@
   }
   function mountNav(el3, props) {
     R(/* @__PURE__ */ u3(Nav, { ...props }), el3);
+  }
+  function mountPagePicker(el3, props) {
+    R(/* @__PURE__ */ u3(PagePicker, { ...props }), el3);
   }
 
   // web/src/parts/Segmented.tsx
@@ -7668,7 +7687,10 @@
     const searching = !!form.view.query.trim();
     const sh = shown2(form.pages, form.view, form.wanted, form.label, form.checks);
     for (const [id2, name] of [["thisMacCard", thisMachine], ["appearanceCard", "Appearance"], ["peopleCard", "People"], ["phonesCard", "Phones"], ["tailnetCard", "Phones"]]) $(id2).classList.toggle("offpage", searching || settingsPage !== name);
-    mountNav($("settingsNav"), { groups: navGroups, active: settingsPage, counts: searching ? sh.counts : null, pick: pickSettingsPage });
+    if (!onPhone() && $("settingsNav").parentElement !== $("settingsSide")) $("settingsSide").appendChild($("settingsNav"));
+    const nav = { groups: navGroups, active: settingsPage, counts: searching ? sh.counts : null, pick: pickSettingsPage };
+    mountNav($("settingsNav"), nav);
+    if (!onPhone()) mountPagePicker($("settingsPick"), nav);
     renderGeneral();
     $("settingsForm").classList.toggle("searching", searching);
     $("settingsNone").hidden = sh.keys.size > 0 || !searching;

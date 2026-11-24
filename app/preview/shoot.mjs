@@ -2931,16 +2931,31 @@ const smokes = [
   ...[['Windows', 'Win32'], ['Mac', 'MacIntel']].map(([os, platform]) => ({ name: `${os} high contrast: the current screen and the focus look different in the sidebar`, screen: 'settings', mock: { platform }, run: async (page) => {
     await page.emulateMedia({ forcedColors: 'active' });
     const tabTo = async (sel) => { for (let i = 0; i < 40 && !(await page.evaluate((s) => document.activeElement.matches(s), sel)); i++) await page.keyboard.press('Tab'); await page.waitForTimeout(250); };
+    // The screen's own button (a direct child of the sidebar): Settings' pages, in the sidebar too, have their own .active.
     // In view first: with every account listed under its group, the sidebar can run past the window, and scrolls.
-    const shot = async () => { const r = await page.$eval('nav button.active', (e) => { e.scrollIntoView({ block: 'nearest' }); const b = e.getBoundingClientRect(); return { x: b.left - 4, y: b.top - 4, width: b.width + 8, height: b.height + 8 }; }); return page.screenshot({ clip: r }); };
+    const shot = async () => { const r = await page.$eval('nav > button.active', (e) => { e.scrollIntoView({ block: 'nearest' }); const b = e.getBoundingClientRect(); return { x: b.left - 4, y: b.top - 4, width: b.width + 8, height: b.height + 8 }; }); return page.screenshot({ clip: r }); };
+    // The same to the eye: each pixel within a few levels. A rounded border's anti-aliased corners shade a level apart
+    // as the sidebar scrolls (13 pixels by one level on CI's dark Mac run, Nov 24); the focus's outline is far more.
+    const same = (x, y) => page.evaluate(async ([a, b]) => {
+      const load = (s) => new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = no; i.src = 'data:image/png;base64,' + s; });
+      const [i, j] = await Promise.all([load(a), load(b)]);
+      if (i.width !== j.width || i.height !== j.height) return false;
+      const px = (img) => { const c = document.createElement('canvas'); c.width = img.width; c.height = img.height; const g = c.getContext('2d'); g.drawImage(img, 0, 0); return g.getImageData(0, 0, c.width, c.height).data; };
+      const p = px(i), q = px(j);
+      for (let k = 0; k < p.length; k++) if (Math.abs(p[k] - q[k]) > 4) return false;
+      return true;
+    }, [x.toString('base64'), y.toString('base64')]);
+    // Settings drawn first: its page list moves into the sidebar once Settings is read, and the sidebar grows with it.
+    await page.waitForSelector('nav #settingsNav .pagebtn', { timeout: 5000 });
+    await page.waitForTimeout(300);
     const plain = await shot();
     await tabTo('nav button[data-screen="backups"]');
     const elsewhere = await shot();
-    await tabTo('nav button.active');
+    await tabTo('nav > button.active');
     const focused = await shot();
-    if (focused.equals(elsewhere)) throw new Error('Settings looks the same with the focus on it and on Backups');
-    if (!plain.equals(elsewhere)) throw new Error('Settings changes when the focus is on Backups');
-    const mark = await page.$eval('nav button.active', (e) => { const a = getComputedStyle(e, '::before'); return a.display !== 'none' && parseFloat(a.width) >= 3 && a.forcedColorAdjust === 'none'; });
+    if (await same(focused, elsewhere)) throw new Error('Settings looks the same with the focus on it and on Backups');
+    if (!(await same(plain, elsewhere))) throw new Error('Settings changes when the focus is on Backups');
+    const mark = await page.$eval('nav > button.active', (e) => { const a = getComputedStyle(e, '::before'); return a.display !== 'none' && parseFloat(a.width) >= 3 && a.forcedColorAdjust === 'none'; });
     if (!mark) throw new Error('the current screen has no bar of its own');
   } })),
   { name: 'Keyboard: Ctrl+2 opens Status on Windows', screen: 'setup', mock: { platform: 'Win32' }, run: async (page) => {
@@ -5100,14 +5115,15 @@ const smokes = [
   } },
   { name: 'Settings: one Page drop-down in place of the list when the screen is narrow', screen: 'settings', run: async (page) => {
     await page.setViewportSize({ width: 860, height: 560 });
-    await page.waitForSelector('#settingsNav .pagebtn', { timeout: 5000 });
-    if (await page.isVisible('#settingsNav select')) throw new Error('the drop-down shows in a window with room for the list');
+    // On the computer the list is Settings' menu in the sidebar; the drop-down is over the page, for a small window's rail.
+    await page.waitForSelector('nav #settingsNav .pagebtn', { timeout: 5000 });
+    if (await page.isVisible('#settingsPick select')) throw new Error('the drop-down shows in a window with room for the list');
     await page.evaluate(() => document.documentElement.style.setProperty('--zoom', '2'));
-    await page.waitForSelector('#settingsNav select', { state: 'visible', timeout: 5000 });
+    await page.waitForSelector('#settingsPick select', { state: 'visible', timeout: 5000 });
     if (await page.isVisible('#settingsNav .pagebtn')) throw new Error('the list still shows beside the drop-down');
-    await page.selectOption('#settingsNav select', 'Appearance');
+    await page.selectOption('#settingsPick select', 'Appearance');
     await page.waitForSelector('#settingsNav .pagebtn.active[data-page="Appearance"]', { state: 'attached', timeout: 5000 });
-    if (await page.$eval('#settingsNav select', (e) => e.value) !== 'Appearance') throw new Error('the drop-down does not say the page shown');
+    if (await page.$eval('#settingsPick select', (e) => e.value) !== 'Appearance') throw new Error('the drop-down does not say the page shown');
   } },
   // A computer set to another language: the app's dates stay in English words, in that computer's order and clock.
   ...[['German', 'de-DE', /Montag|Dienstag|Mittwoch|Donnerstag|Freitag|Samstag|Sonntag|\d+\. (Jan|Feb|März|Apr|Mai|Juni|Juli|Aug|Sept|Okt|Nov|Dez)/], ['Japanese', 'ja-JP', /[月火水木金土日]曜日|\d+月\d+日/]].map(([lang, locale, foreign]) => ({ name: `A computer set to ${lang}: an app's dates in English, in its own order`, screen: 'app:vikunja', locale, mock: pageMock, run: async (page) => {

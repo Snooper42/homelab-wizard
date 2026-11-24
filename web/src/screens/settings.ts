@@ -8,7 +8,7 @@ import { mountPhones, type PhonesActions } from '../settings/Phones';
 import { mountTailnetDevices } from '../settings/TailnetDevices';
 import { mountUninstall, type UninstallActions } from '../settings/Uninstall';
 import { store } from '../store';
-import { mountNav, type NavGroup } from '../settings/Nav';
+import { mountNav, mountPagePicker, type NavGroup } from '../settings/Nav';
 import { lastSteps, renderAppearance, stepsData } from './setup';
 import { catalog, renderApps, replan, selected } from './choose';
 import { statusById } from './status';
@@ -446,7 +446,12 @@ function filterSettings() {
   const searching = !!form.view.query.trim();
   const sh = shownSettings(form.pages, form.view, form.wanted, form.label, form.checks);
   for (const [id, name] of [['thisMacCard', thisMachine], ['appearanceCard', 'Appearance'], ['peopleCard', 'People'], ['phonesCard', 'Phones'], ['tailnetCard', 'Phones']]) $(id).classList.toggle('offpage', searching || settingsPage !== name);
-  mountNav($('settingsNav'), { groups: navGroups, active: settingsPage, counts: searching ? sh.counts : null, pick: pickSettingsPage });
+  // On the computer the page list is Settings' menu in the sidebar, under the screens' icons as every screen's is (the
+  // owner, Nov 24); the drop-down stays over the page for a small window's rail. A phone keeps both in the page.
+  if (!onPhone() && $('settingsNav').parentElement !== $('settingsSide')) $('settingsSide').appendChild($('settingsNav'));
+  const nav = { groups: navGroups, active: settingsPage, counts: searching ? sh.counts : null, pick: pickSettingsPage };
+  mountNav($('settingsNav'), nav);
+  if (!onPhone()) mountPagePicker($('settingsPick'), nav);
   renderGeneral();
   $('settingsForm').classList.toggle('searching', searching);
   $('settingsNone').hidden = sh.keys.size > 0 || !searching;
