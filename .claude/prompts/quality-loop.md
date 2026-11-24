@@ -85,4 +85,4 @@ Q1 fills this in, one line each, worst first; Q5 works it.
 
 Lanes R and M add a line here: a check that failed for a reason outside their change, a security worry, or something the backups' engine must do.
 
-- (none yet)
+- **Nov 24 (account C, lane S):** *Connect apps signs Seerr in to Jellyfin from a name and password* failed once on #828's smoke (dark), passed on its re-run, and fails about 1 in 3 locally while the machine is busy: it waits 3 s for *Seerr sends requests to Sonarr*, though the mock answers in under half a second. Likely Status drawing Connect apps' list afresh while the sign-in's lines come in. For Q6.
