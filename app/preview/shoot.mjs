@@ -6511,12 +6511,14 @@ const smokes = [
     if (!first) throw new Error('the period bar is not above the cards');
     // The lead card follows the bar (redesign-loop R3): checking on the period's last day, after its bills.
     const label = () => page.textContent('.fx-lead .card-figurelabel');
-    const dates = await label();
+    const dates = await label(), days = await page.textContent('#finPeriod .fx-dates');
     await page.click('#finPeriod button[aria-label="The pay period after"]');
-    await page.waitForFunction((d) => document.querySelector('.fx-lead .card-figurelabel')?.textContent !== d, dates, { timeout: 5000 });
+    // The bar and the card both moved on (a slow runner read the bar before it had, Nov 24), then the card says the bar's last day.
+    await page.waitForFunction(([d, b]) => document.querySelector('.fx-lead .card-figurelabel')?.textContent !== d && document.querySelector('#finPeriod .fx-dates')?.textContent !== b, [dates, days], { timeout: 5000 });
     const bar = await page.textContent('#finPeriod .fx-dates');
     const last = bar.split(' – ')[1].replace(/^\w+, /, '');
-    if (!(await label()).includes(`on ${last},`)) throw new Error(`the bar says ${bar}, the lead card ${await label()}`);
+    await page.waitForFunction((l) => document.querySelector('.fx-lead .card-figurelabel')?.textContent.includes(`on ${l},`), last, { timeout: 5000 })
+      .catch(async () => { throw new Error(`the bar says ${bar}, the lead card ${await label()}`); });
     await page.click('#finPeriod button[aria-label="The pay period before"]');
     await page.waitForFunction((d) => document.querySelector('.fx-lead .card-figurelabel')?.textContent === d, dates, { timeout: 5000 });
     // Today: now, until the next paycheck, and then Today waits.
