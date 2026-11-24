@@ -5100,14 +5100,15 @@ const smokes = [
   } },
   { name: 'Settings: one Page drop-down in place of the list when the screen is narrow', screen: 'settings', run: async (page) => {
     await page.setViewportSize({ width: 860, height: 560 });
-    await page.waitForSelector('#settingsNav .pagebtn', { timeout: 5000 });
-    if (await page.isVisible('#settingsNav select')) throw new Error('the drop-down shows in a window with room for the list');
+    // On the computer the list is Settings' menu in the sidebar; the drop-down is over the page, for a small window's rail.
+    await page.waitForSelector('nav #settingsNav .pagebtn', { timeout: 5000 });
+    if (await page.isVisible('#settingsPick select')) throw new Error('the drop-down shows in a window with room for the list');
     await page.evaluate(() => document.documentElement.style.setProperty('--zoom', '2'));
-    await page.waitForSelector('#settingsNav select', { state: 'visible', timeout: 5000 });
+    await page.waitForSelector('#settingsPick select', { state: 'visible', timeout: 5000 });
     if (await page.isVisible('#settingsNav .pagebtn')) throw new Error('the list still shows beside the drop-down');
-    await page.selectOption('#settingsNav select', 'Appearance');
+    await page.selectOption('#settingsPick select', 'Appearance');
     await page.waitForSelector('#settingsNav .pagebtn.active[data-page="Appearance"]', { state: 'attached', timeout: 5000 });
-    if (await page.$eval('#settingsNav select', (e) => e.value) !== 'Appearance') throw new Error('the drop-down does not say the page shown');
+    if (await page.$eval('#settingsPick select', (e) => e.value) !== 'Appearance') throw new Error('the drop-down does not say the page shown');
   } },
   // A computer set to another language: the app's dates stay in English words, in that computer's order and clock.
   ...[['German', 'de-DE', /Montag|Dienstag|Mittwoch|Donnerstag|Freitag|Samstag|Sonntag|\d+\. (Jan|Feb|März|Apr|Mai|Juni|Juli|Aug|Sept|Okt|Nov|Dez)/], ['Japanese', 'ja-JP', /[月火水木金土日]曜日|\d+月\d+日/]].map(([lang, locale, foreign]) => ({ name: `A computer set to ${lang}: an app's dates in English, in its own order`, screen: 'app:vikunja', locale, mock: pageMock, run: async (page) => {

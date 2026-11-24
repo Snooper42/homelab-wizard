@@ -3332,3 +3332,30 @@ nav:not(:has(> button[data-screen="status"].active)) #statusSide, nav:not(:has(>
 nav:not(:has(> button[data-screen="choose"].active)) #chooseSide, nav:not(:has(> button[data-screen="setup"].active)) #setupSide,
 html.companion .sidemenu { display:none !important; }
 html:not(.companion) nav, html:not(.companion) nav * { transition:none !important; animation:none !important; }
+/* Settings' page list is its menu in the sidebar on the computer (screens/settings.ts moves #settingsNav into
+   #settingsSide), under the screens' icons as every screen's menu is; the page takes the whole width. A small window's
+   rail has no room for it, so the Page drop-down shows over the page there. A phone keeps both in the page. */
+nav:not(:has(> button[data-screen="settings"].active)) #settingsSide { display:none !important; }
+html:not(.companion) nav #settingsNav { position:static; max-height:none; overflow:visible; padding-bottom:0; gap:2px; margin-bottom:14px; }
+html:not(.companion) nav #settingsNav .pagepick { display:none; }
+html:not(.companion) nav #settingsNav :is(.pagebtn, .navfold) { width:100%; justify-content:space-between; }
+html:not(.companion) nav #settingsNav .navfold .icon { width:11px; height:11px; padding:0; color:var(--muted); }
+html:not(.companion) nav #settingsNav .navhead { margin:12px 10px 4px; }
+html:not(.companion) nav #settingsNav .pagebtn.infold { padding-left:28px; }
+html.os-mac:not(.companion) nav #settingsNav .pagebtn.active { background:var(--panel); border-color:var(--line); box-shadow:0 1px 2px var(--shade-06); color:var(--text); font-weight:500; }
+html:not(.companion) #settings .settingscols { grid-template-columns:minmax(0,1fr); }
+.settingspick { display:none; }
+@container window (max-width: 700px) {
+  html:not(.companion) #settingsSide { display:none !important; }
+  html:not(.companion) #settingsPick { display:block; margin:0 0 12px; }
+  #settingsPick .pagepick { display:flex; align-items:center; gap:10px; font-size:13px; font-weight:600; color:var(--muted); }
+  #settingsPick .pagepick select { flex:1; min-width:0; font:inherit; font-size:14px; font-weight:400; color:var(--text); padding:6px 10px; border:1px solid var(--line-strong); border-radius:8px; background:var(--panel); }
+}
+@media (prefers-color-scheme: dark) {
+  html.os-mac:not(.companion) nav #settingsNav .pagebtn.active { background:var(--glow-1); box-shadow:none; }
+}
+/* Settings' pages with their icons, in the sidebar as every menu there; the phone's list in the page has none. */
+.settingsnav .pagebtn .pagename { display:inline-flex; align-items:center; gap:10px; min-width:0; }
+.settingsnav .pagebtn .pagename > .icon { display:none; }
+html:not(.companion) nav #settingsNav .pagebtn .pagename > .icon { display:block; width:18px; height:18px; padding:0; background:none; box-shadow:none; color:inherit; stroke-width:1.8; flex:none; }
+html.os-mac:not(.companion) nav #settingsNav .pagebtn.active .icon { color:var(--fin-accent); }
