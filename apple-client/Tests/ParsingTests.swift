@@ -953,7 +953,8 @@ struct HomelabSettingsTests {
     """#
 
     /// The iPhone's Settings leads with the everyday ones, in plain words,
-    /// in their order, where the computer has them (the owner's redesign, Nov 12).
+    /// in their order, where the computer has them (the owner's redesign, Nov 12;
+    /// Automatic Care's order, Nov 24).
     @Test func theEverydaySettingsComeFirst() throws {
         let form = try JSONDecoder.homelab().decode(HomelabSettingsForm.self, from: Data(#"""
         {"settings":[
@@ -962,9 +963,10 @@ struct HomelabSettingsTests {
           {"key":"QUIET_HOURS","section":"Notifications","secret":false,"set":true,"value":"22-7"},
           {"key":"AUTO_HEAL","section":"Updates","secret":false,"set":true,"value":"true"}]}
         """#.utf8))
-        #expect(form.firstSettings.map(\.key) == ["QUIET_HOURS", "AUTO_HEAL", "DESKTOP_ALERTS"])
+        // Automatic Care's order (Nov 24): restarting, then quiet hours and alerts.
+        #expect(form.firstSettings.map(\.key) == ["AUTO_HEAL", "QUIET_HOURS", "DESKTOP_ALERTS"])
         #expect(form.firstSettings.map { SettingWords.label($0.key, apps: []) }
-            == ["Quiet hours (no sound at night)", "Restart an app that stops answering", "Alerts on the computer's screen"])
+            == ["Restart an app that stops answering", "Quiet hours (no sound at night)", "Alerts on the computer's screen"])
     }
 
     @Test func readsTheFormAndNeverKeepsASecretsValue() throws {

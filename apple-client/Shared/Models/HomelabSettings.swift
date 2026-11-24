@@ -69,7 +69,8 @@ struct HomelabSettingsForm: Decodable, Sendable, Equatable {
     /// The homelab's settings people change most, atop the iPhone's
     /// Settings in plain words (the owner's redesign, Nov 12), in this
     /// order, where the computer has them; the rest are a tap down.
-    static let firstKeys = ["QUIET_HOURS", "AUTO_HEAL", "AUTO_ROLLBACK", "DESKTOP_ALERTS"]
+    /// Automatic Care's order, as the computer's Settings › General and the redesign's phone picture.
+    static let firstKeys = ["AUTO_HEAL", "AUTO_ROLLBACK", "QUIET_HOURS", "DESKTOP_ALERTS"]
 
     var firstSettings: [HomelabSetting] {
         Self.firstKeys.compactMap { key in settings.first { $0.key == key } }
