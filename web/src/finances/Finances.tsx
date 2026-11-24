@@ -2,6 +2,8 @@
 // Transactions, Reports, Recurring, Pay, Net worth), and the one shown. screens/finances.ts reads the plan,
 // keeps it, and opens the sheet; this only draws. On a phone allowed only
 // to look (v.readOnly) it draws no Edit or Add.
+import { BudgetsWidget } from './widgets/Budgets';
+import { ThisMonthWidget } from './widgets/ThisMonth';
 import type { ComponentChildren } from 'preact';
 import { CheckingWidget } from './widgets/Checking';
 import { MoneyFlowWidget, SpendingWidget } from './widgets/Flow';
@@ -78,7 +80,7 @@ export interface FinancesProps {
   investments?: NetWorthProps['invest'];
 }
 
-const tabs: [string, string][] = [['overview', 'Dashboard'], ['calendar', 'Calendar'], ['transactions', 'Transactions'], ['reports', 'Reports'], ['recurring', 'Recurring'], ['pay', 'Paychecks'], ['worth', 'Net worth'], ['collection', 'Collection']];
+const tabs: [string, string][] = [['overview', 'Dashboard'], ['calendar', 'Calendar'], ['transactions', 'Transactions'], ['budgets', 'Budgets'], ['reports', 'Reports'], ['recurring', 'Recurring'], ['pay', 'Paychecks'], ['worth', 'Net worth'], ['collection', 'Collection']];
 
 /**
  * The tabs in four: what happened (Spending: Transactions, Reports) and what
@@ -96,7 +98,7 @@ const leftOn: Record<string, string> = {};
 const pageOf = (group: string) => leftOn[group] || groups.find(([k]) => k === group)![2][0];
 /** Everything the ▾ beside the main action can add, in this order (the page's own main action left out). */
 const addAll: [What, string][] = [['transaction', 'Add a transaction'], ['payment', 'Add a payment'], ['person', 'Add a paycheck'], ['account', 'Add an account'], ['card', 'Add a card']];
-const adds: Record<string, [What, string]> = { overview: ['transaction', 'Add a transaction'], calendar: ['payment', 'Add a payment'], transactions: ['transaction', 'Add a transaction'], reports: ['transaction', 'Add a transaction'], recurring: ['payment', 'Add a payment'], pay: ['person', 'Add a paycheck'], worth: ['account', 'Add an account'], collection: ['card', 'Add a card'] };
+const adds: Record<string, [What, string]> = { overview: ['transaction', 'Add a transaction'], calendar: ['payment', 'Add a payment'], transactions: ['transaction', 'Add a transaction'], budgets: ['transaction', 'Add a transaction'], reports: ['transaction', 'Add a transaction'], recurring: ['payment', 'Add a payment'], pay: ['person', 'Add a paycheck'], worth: ['account', 'Add an account'], collection: ['card', 'Add a card'] };
 
 /**
  * Export (F18): the plan as JSON, what's ahead as CSV, and this month or the
@@ -210,7 +212,8 @@ function FinancesScreen({ v, ledger, error, retry, tab, setTab, sel, pick, setSi
           : !v ? <Empty>Reading…</Empty>
           : ro ? <View v={v} L={L} phone={phone} ledger={ledger} setTab={setTab} toTx={toTx} back={back} exportFile={exportFile} readReceipt={readReceipt} readCardPicture={readCardPicture} readCardPrices={readCardPrices} running={running} tab={tab} sel={sel} pick={pick} openWorth={() => setTab('worth')} openSubscriptions={() => { openOn('subscriptions'); setTab('recurring'); }} openRecurring={(f?: string) => { if (f) openOn(f); setTab('recurring'); }} openTransactions={() => toTx({})} showIn={toTx} openCalendar={(day?: string) => { if (day) showDay(day); setTab('calendar'); }} openPay={() => setTab('pay')} openAccount={(id: string) => setTab(`account:${id}`)} group={group} setGroup={setGroup} />
           : tab === 'calendar' ? <>{!phone && <PageCards><CheckingWidget v={v} L={L!} sel={Math.max(0, sel)} openDay={(day) => { showDay(day); fresh(); }} /></PageCards>}<Calendar key={freshAt} v={v} L={L} ledger={ledger} edit={(w, id) => edit(w, id)} /></>
-          : tab === 'transactions' ? <Transactions v={v} L={L} ledger={ledger} edit={(w, id) => edit(w, id)} saveLedger={saveLedger} logos={!phone} back={back} />
+          : tab === 'transactions' ? <Transactions v={v} L={L} ledger={ledger} edit={(w, id) => edit(w, id)} saveLedger={saveLedger} logos={!phone} back={back} summary={phone} />
+          : tab === 'budgets' ? <div class="fin"><div class="fx-board"><ThisMonthWidget v={v} ledger={ledger} /><BudgetsWidget v={v} edit={() => edit('budgets')} show={(category, month) => toTx({ category, month })} /></div></div>
           : tab === 'reports' ? <>{!phone && <PageCards><TrendWidget v={v} ledger={ledger} openDay={(day) => { showDay(day); setTab('calendar'); }} openAccount={(id) => setTab(`account:${id}`)} /><MoneyFlowWidget v={v} L={L!} ledger={ledger} edit={(w, id) => edit(w, id)} /></PageCards>}<Reports v={v} ledger={ledger} exportFile={exportFile} open={toTx} /></>
           : tab === 'recurring' ? <>{!phone && <PageCards><RenewingWidget v={v} L={L!} edit={(w, id) => edit(w, id)} all={() => { openOn('subscriptions'); fresh(); }} /><SpendingWidget v={v} L={L!} openKind={(f) => { openOn(f); fresh(); }} /></PageCards>}<Recurring key={freshAt} v={v} L={L} edit={edit} keep={keep} running={running} fromWallos={fromWallos} /></>
           : tab === 'pay' ? <>{!phone && <PageCards><PaycheckWidget v={v} L={L!} sel={Math.max(0, sel)} edit={(w, id) => edit(w, id)} /></PageCards>}<Pay v={v} L={L} edit={edit} saveSettings={saveSettings} keep={keep} calendar={calendar} /></>
@@ -218,7 +221,7 @@ function FinancesScreen({ v, ledger, error, retry, tab, setTab, sel, pick, setSi
           : tab === 'worth' ? <NetWorth v={v} L={L} edit={edit} open={(id) => setTab('account:' + id)} sel={Math.max(0, sel)} pick={pick} update={() => edit('balances')} keep={keep} group={group} setGroup={setGroup} invest={investments} />
           : tab === 'collection' ? <CollectionPage v={v} open={(id) => setTab('card:' + id)} edit={(id) => edit('card', id)} read={readCardPicture} update={updatePrices} />
           : tab.startsWith('card:') ? <CardPage v={v} id={tab.slice(5)} done={() => setTab('collection')} edit={() => edit('card', tab.slice(5))} read={readCardPicture} prices={readCardPrices} />
-          : <Overview v={v} L={L} ledger={ledger} sel={sel} pick={pick} setSince={ro ? undefined : setSince} keep={ro ? undefined : keep} add={(w, k) => edit(w, undefined, k)} edit={(w, id) => edit(w, id)} openWorth={() => setTab('worth')} openSubscriptions={() => { openOn('subscriptions'); setTab('recurring'); }} openRecurring={(f?: string) => { if (f) openOn(f); setTab('recurring'); }} openTransactions={() => toTx({})} showIn={toTx} openCalendar={(day?: string) => { if (day) showDay(day); setTab('calendar'); }} openPay={() => setTab('pay')} openAccount={(id: string) => setTab(`account:${id}`)} phone={phone} />}
+          : <Overview v={v} L={L} ledger={ledger} sel={sel} pick={pick} setSince={ro ? undefined : setSince} keep={ro ? undefined : keep} add={(w, k) => edit(w, undefined, k)} edit={(w, id) => edit(w, id)} openWorth={() => setTab('worth')} openSubscriptions={() => { openOn('subscriptions'); setTab('recurring'); }} openRecurring={(f?: string) => { if (f) openOn(f); setTab('recurring'); }} openTransactions={() => toTx({})} openBudgets={phone ? undefined : () => setTab('budgets')} showIn={toTx} openCalendar={(day?: string) => { if (day) showDay(day); setTab('calendar'); }} openPay={() => setTab('pay')} openAccount={(id: string) => setTab(`account:${id}`)} phone={phone} />}
       </div>
     </>
   );
@@ -253,6 +256,7 @@ export function mountFinances(el: Element, props: FinancesProps) { render(<Finan
 const menuIcons: Record<string, string> = {
   overview: 'M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z',
   transactions: 'M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01',
+  budgets: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10zM12 11a1 1 0 1 0 0 2 1 1 0 0 0 0-2z',
   bills: 'M6 3h12v18l-3-2-3 2-3-2-3 2zM12 7v8M14.5 8.5H10.8a1.6 1.6 0 0 0 0 3.2h2.4a1.6 1.6 0 0 1 0 3.2H9.5',
   calendar: 'M4 6h16v14H4zM4 10h16M8 3v4M16 3v4',
   worth: 'M3 17l6-6 4 4 8-8M15 7h6v6',
@@ -265,12 +269,13 @@ const menuIcons: Record<string, string> = {
  * Finances shows, the sidebar holds its pages in place of the tabs, then
  * the accounts (widgets/Worth's Balances). A part with more than one page
  * (Bills & paychecks: Recurring and Paychecks) shows them under it while
- * it's open; each opens where it was left. Budgets joins once it is a page
- * of its own (redesign-loop R4).
+ * it's open; each opens where it was left. Budgets is a page of its own
+ * on the computer (redesign-loop R4): This month and the budgets.
  */
 const menu: { key: string; label: string; pages: string[]; sub?: [string, string][] }[] = [
   { key: 'overview', label: 'Dashboard', pages: ['overview'] },
   { key: 'transactions', label: 'Transactions', pages: ['transactions'] },
+  { key: 'budgets', label: 'Budgets', pages: ['budgets'] },
   { key: 'bills', label: 'Bills & paychecks', pages: ['recurring', 'pay'], sub: [['recurring', 'Recurring'], ['pay', 'Paychecks']] },
   { key: 'calendar', label: 'Calendar', pages: ['calendar'] },
   { key: 'worth', label: 'Net worth', pages: ['worth'] },

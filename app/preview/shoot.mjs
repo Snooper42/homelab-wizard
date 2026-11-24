@@ -8328,6 +8328,24 @@ const smokes = [
     await card.locator('button[aria-label="Open Net worth\'s investments"]').click();
     await page.waitForSelector('#finMenu [aria-current="page"]:has-text("Net worth")', { timeout: 5000 });
   } },
+  // Budgets, a page of its own on the computer (redesign-loop R4, as the picture's menu): This month and the budgets, a
+  // category opening its transactions; Transactions opens on its table. The phone keeps them over its Transactions.
+  { name: 'Finances: Budgets is a page of its own, and Transactions opens on its table', screen: 'finances', run: async (page) => {
+    await finTab(page, 'Transactions', { timeout: 5000 });
+    await page.waitForSelector('#finRoot .fx-transactions', { timeout: 5000 });
+    if (await page.$('#finRoot .fx-txsum, #finRoot .fx-budgets')) throw new Error('This month or the budgets still sit over the table');
+    await finTab(page, 'Budgets');
+    await page.waitForSelector('#finMenu [aria-current="page"]:has-text("Budgets")', { timeout: 5000 });
+    await page.waitForSelector('#finRoot .fx-txsum .fx-stat:has-text("Money in")', { timeout: 5000 });
+    await page.click('#finRoot .fx-budgets li:has-text("Food") button', { timeout: 5000 });
+    await page.waitForSelector('#finMenu [aria-current="page"]:has-text("Transactions")', { timeout: 5000 });
+    if ((await page.inputValue('.fx-txfilters select[aria-label="Category"]')) !== 'Food') throw new Error('not filtered to Food');
+    await page.waitForSelector('#finRoot .crumbs button[aria-label="Back to Budgets"]', { timeout: 5000 });
+    // The Dashboard's Budgets to watch opens it.
+    await finTab(page, 'Dashboard');
+    await page.click('#finRoot .fx-budgets button:text-is("See all")', { timeout: 5000 });
+    await page.waitForSelector('#finMenu [aria-current="page"]:has-text("Budgets")', { timeout: 5000 });
+  } },
   { name: 'Finances: the Dashboard lists the latest transactions', screen: 'finances', run: async (page) => {
     await page.waitForSelector('.fx-latest li', { timeout: 5000 });
     const rows = await page.$$eval('.fx-latest li .grow', (l) => l.map((x) => x.textContent.replace(/\s+/g, ' ').trim()));
