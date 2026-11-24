@@ -8346,6 +8346,20 @@ const smokes = [
     await page.click('#finRoot .fx-budgets button:text-is("See all")', { timeout: 5000 });
     await page.waitForSelector('#finMenu [aria-current="page"]:has-text("Budgets")', { timeout: 5000 });
   } },
+  // Transactions' table as the picture (redesign-loop R4): the category a tag in its colour, the account with its mark,
+  // Linked to the planned bill or paycheck a row paid, and each day's total, one row or more.
+  { name: "Finances: Transactions' table has the category's tag, the account's mark, Linked to, and each day's total", screen: 'finances', run: async (page) => {
+    await finTab(page, 'Transactions', { timeout: 5000 });
+    const row = (payee) => page.locator(`.fx-transactions .fx-txday li:has(.grow > strong:text-is("${payee}"))`);
+    await row('Costco').waitFor({ timeout: 5000 });
+    if ((await row('Costco').locator('.fx-cattag').textContent()) !== 'Groceries') throw new Error('Costco has no Groceries tag');
+    if (!/\bfx-h\d\b/.test(await row('Costco').locator('.fx-cattag').getAttribute('class'))) throw new Error("the tag isn't in its category's colour");
+    if (!(await row('Costco').locator('.fx-txacct .fmark').count())) throw new Error("the account has no mark");
+    if (!(await page.isVisible('.fx-txhead .fx-txcol-link'))) throw new Error('no Linked to heading');
+    if ((await row('Roth IRA').locator('.fx-txlinked').textContent()).trim() !== 'Roth IRA') throw new Error(`Roth IRA links to ${await row('Roth IRA').locator('.fx-txlinked').textContent()}`);
+    const band = (await page.textContent('.fx-txday:has(li:has-text("Costco")) h3 .fx-txdaysum')).replace(/\s+/g, ' ');
+    if (!band.startsWith('−$86.10')) throw new Error(`the day's total: ${band}`);
+  } },
   { name: 'Finances: the Dashboard lists the latest transactions', screen: 'finances', run: async (page) => {
     await page.waitForSelector('.fx-latest li', { timeout: 5000 });
     const rows = await page.$$eval('.fx-latest li .grow', (l) => l.map((x) => x.textContent.replace(/\s+/g, ' ').trim()));
