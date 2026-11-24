@@ -473,7 +473,8 @@ function People({ p }: { p: AppPageProps }) {
         {!!entry?.login?.length && <button class="small" onClick={() => on.signIn()}><Icon name="key" />Sign-in details</button>}
       </CardHead>
       {people && (people.length
-        ? <Rows>{people.map((x) => <Row key={x.username} title={<><span class="initial" aria-hidden="true">{(x.name || x.username).slice(0, 1)}</span>{x.name || x.username}</>} sub={x.email} />)}</Rows>
+        // Each person's letter in the row's lead, so the name and the email under it start at the same edge (redesign-loop R11).
+        ? <Rows>{people.map((x) => <Row key={x.username} lead={<span class="initial" aria-hidden="true">{(x.name || x.username).slice(0, 1)}</span>} title={x.name || x.username} sub={x.email} />)}</Rows>
         : <Empty>Nobody in the household uses it yet.</Empty>)}
       {people && <p class="muted foot"><ActionLink onClick={on.openPeople}>Add someone in Settings › People</ActionLink></p>}
     </Card>
