@@ -1,6 +1,6 @@
 // Latest transactions: the five newest from the ledger on the Dashboard,
 // each opening its own form (or nothing, on a phone allowed only to look),
-// and See all for Transactions. None yet, no card: the Dashboard reads the
+// and its ↗ to Transactions. None yet, no card: the Dashboard reads the
 // plan first, and a household that keeps no ledger has nothing to see here.
 import type { ComponentChildren } from 'preact';
 import { Row, Rows } from '../../parts/Row';

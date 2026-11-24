@@ -10162,12 +10162,8 @@
         span,
         kind: "fx-budgets",
         open: open5,
-        seeAll: true,
-        openLabel: "Open Transactions and every budget",
-        actions: /* @__PURE__ */ u3(S, { children: [
-          open5 && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: open5, children: "See all" }),
-          edit && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: edit, children: v3.budgets?.length ? "Edit budgets" : "Set budgets" })
-        ] }),
+        openLabel: "Open Budgets",
+        actions: edit && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: edit, children: v3.budgets?.length ? "Edit budgets" : "Set budgets" }),
         children: list.length ? /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: list.map((b2) => {
           const tone = budgetTone(b2);
           const share4 = b2.amount > 0 ? Math.min(100, b2.spent / b2.amount * 100) : 100;
@@ -13745,34 +13741,23 @@
     const due = (v3.plan.payments || []).filter((x3) => x3.kind === "subscriptions").map((x3) => ({ x: x3, due: dueOf(v3, x3.id) })).filter((s3) => s3.due.days >= 0 && s3.due.days <= soonDays).sort((a3, b2) => a3.due.days - b2.due.days || b2.x.amount - a3.x.amount);
     if (!due.length) return null;
     const total = due.reduce((t3, s3) => t3 + s3.x.amount, 0);
-    return /* @__PURE__ */ u3(
-      Widget,
-      {
-        title: "Renewing soon",
-        kind: "fx-renewing",
-        open: all,
-        seeAll: true,
-        openLabel: "Open Recurring's subscriptions",
-        actions: all && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: all, children: "See all" }),
-        children: [
-          /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: total, form: "full" }), caption: `${plural(due.length, "subscription")} in the next ${soonDays} days` }),
-          /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: due.map(({ x: x3, due: d3 }) => /* @__PURE__ */ u3(
-            Row,
-            {
-              lead: /* @__PURE__ */ u3(PayMark, { x: x3 }),
-              title: x3.name,
-              sub: `${dayLong(v3.next[x3.id])} · ${subTypeName(typeOf(x3))}`,
-              end: /* @__PURE__ */ u3("span", { class: "fx-badge fx-due" + (d3.tone ? " fx-" + d3.tone : ""), children: d3.text }),
-              when: /* @__PURE__ */ u3(Amount, { value: x3.amount, form: "full" }),
-              whenPlain: true,
-              onOpen: edit ? () => edit("payment", x3.id) : void 0,
-              openLabel: edit ? "edit" : void 0
-            },
-            x3.id
-          )) })
-        ]
-      }
-    );
+    return /* @__PURE__ */ u3(Widget, { title: "Renewing soon", kind: "fx-renewing", open: all, openLabel: "Open Recurring's subscriptions", children: [
+      /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: total, form: "full" }), caption: `${plural(due.length, "subscription")} in the next ${soonDays} days` }),
+      /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: due.map(({ x: x3, due: d3 }) => /* @__PURE__ */ u3(
+        Row,
+        {
+          lead: /* @__PURE__ */ u3(PayMark, { x: x3 }),
+          title: x3.name,
+          sub: `${dayLong(v3.next[x3.id])} · ${subTypeName(typeOf(x3))}`,
+          end: /* @__PURE__ */ u3("span", { class: "fx-badge fx-due" + (d3.tone ? " fx-" + d3.tone : ""), children: d3.text }),
+          when: /* @__PURE__ */ u3(Amount, { value: x3.amount, form: "full" }),
+          whenPlain: true,
+          onOpen: edit ? () => edit("payment", x3.id) : void 0,
+          openLabel: edit ? "edit" : void 0
+        },
+        x3.id
+      )) })
+    ] });
   }
 
   // web/src/finances/widgets/Ledger.tsx
@@ -14059,7 +14044,7 @@
     if (all && !goals.length) return null;
     const need = goals.reduce((t3, g2) => t3 + (g2.needsMonth || 0), 0);
     const saved = goals.length ? month(v3, L2).saved : 0;
-    return /* @__PURE__ */ u3(Widget, { title: "Goals", span: "all", kind: "fx-goals", actions: all ? /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: all, children: "See all" }) : edit && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => edit("goal"), children: "Add a goal" }), children: [
+    return /* @__PURE__ */ u3(Widget, { title: "Goals", span: "all", kind: "fx-goals", open: all, openLabel: "Open Net worth's goals", actions: !all && edit && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => edit("goal"), children: "Add a goal" }), children: [
       !all && need > saved + 5e-3 && /* @__PURE__ */ u3("p", { class: "fx-goalsshort fx-warn", role: "note", children: [
         "Together the goals need ",
         money(need),

@@ -6764,7 +6764,7 @@ const smokes = [
     if (plan.goals.some((g) => g.id === 'japan')) throw new Error('the trip was not deleted');
   } },
   { name: 'The phone, view only: goals shown, none added or opened', screen: 'finances', phone: ['companion', 'finances'], mock: { finances: { ...finances, readOnly: true } }, run: async (page) => {
-    // The Dashboard's goals: none opened, only See all.
+    // The Dashboard's goals: none opened, only the ↗ to Net worth.
     await page.waitForSelector('.fx-board > .fx-goals li:has-text("Emergency fund")', { timeout: 5000 });
     if (await page.$('.fx-goals li button, .fx-goals input, .fx-goals select')) throw new Error('a phone allowed only to look can open or type into a goal on the Dashboard');
     await finTab(page, 'Net worth', { timeout: 5000 });
@@ -8345,7 +8345,7 @@ const smokes = [
     await page.waitForSelector('#finRoot .crumbs button[aria-label="Back to Budgets"]', { timeout: 5000 });
     // The Dashboard's Budgets to watch opens it.
     await finTab(page, 'Dashboard');
-    await page.click('#finRoot .fx-budgets button:text-is("See all")', { timeout: 5000 });
+    await page.click('#finRoot .fx-budgets button.fx-icon[aria-label="Open Budgets"]', { timeout: 5000 });
     await page.waitForSelector('#finMenu [aria-current="page"]:has-text("Budgets")', { timeout: 5000 });
   } },
   // Transactions' table as the picture (redesign-loop R4): the category a tag in its colour, the account with its mark,
@@ -8974,7 +8974,7 @@ const smokes = [
     if (!stat.includes('$2,958.64') || !stat.includes('1 charge on cards')) throw new Error('the total reads ' + stat);
     if (await page.$('.fx-board > .fx-goals .fx-whatif, .fx-board > .fx-goals .fx-goalsshort, .fx-board > .fx-goals button:text-is("Add a goal")')) throw new Error('the Dashboard’s goals ask What if, or add');
     if (!(await page.textContent('.fx-goals li:has-text("Emergency fund")')).includes('$90.16 a paycheck, by Jun 30, 2028')) throw new Error('the goal does not say what it needs a paycheck');
-    await page.click('.fx-goals button:text-is("See all")');
+    await page.click('.fx-goals button.fx-icon[aria-label="Open Net worth\'s goals"]');
     await page.waitForSelector('.fx-whatif', { timeout: 3000 });
     await finTab(page, 'Dashboard');
     await page.click('.fx-comingup button:text-is("Calendar")');
@@ -9343,7 +9343,7 @@ const smokes = [
     await page.waitForSelector('.fx-renewing .fx-figure:has-text("$59.49")', { timeout: 5000 });
     const rows = await page.$$eval('.fx-renewing .fx-rows > li', (ls) => ls.map((l) => `${l.querySelector('.grow > strong').textContent} ${l.querySelector('.fx-due').textContent}`));
     if (rows.join() !== 'Netflix In 4 days,Peloton In 6 days') throw new Error(`renewing: ${rows}`);
-    await page.click('.fx-renewing button:text-is("See all")');
+    await page.click('.fx-renewing button.fx-icon[aria-label="Open Recurring\'s subscriptions"]');
     await page.waitForSelector('#finRoot .fx-payments .seg button[aria-checked=true]:has-text("Subscriptions")', { timeout: 5000 });
     await page.waitForSelector('.fx-subs', { timeout: 5000 });
     // Back on the Dashboard and to Recurring by its tab, it opens on All again.
@@ -9683,7 +9683,7 @@ const smokes = [
     await page.waitForSelector('.fx-budgets h2:text-is("Budgets to watch")', { timeout: 5000 });
     const cats = await page.$$eval('.fx-budgets li .grow > strong', (ss) => ss.map((s) => s.textContent).join());
     if (cats !== 'Subscriptions') throw new Error(`to watch: ${cats}`);
-    await page.click('.fx-budgets button:text-is("See all")');
+    await page.click('.fx-budgets button.fx-icon[aria-label="Open Budgets"]');
     await page.waitForSelector('#finMenu [aria-current="page"]:has-text("Budgets")', { timeout: 5000 });
     await page.waitForSelector('.fx-budgets h2:text-is("Budgets")', { timeout: 5000 });
   } },
