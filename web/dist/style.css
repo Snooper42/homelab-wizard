@@ -3130,3 +3130,33 @@ html.companion .groupmarks { margin-right:8px; }
    once the window is narrower than a phone's. */
 @container (max-width: 760px) { html:not(.companion) #status table.grouped tr.grouphead th { white-space:normal; } }
 @container (max-width: 520px) { html:not(.companion) #status .groupmarks { display:none; } }
+
+/* Backups' top as the redesign's picture (R7): Last night two-thirds wide with Needs you beside it, then the restore test
+   and off-site; two columns once narrower, one on a phone. */
+.bkboard { display:grid; grid-template-columns:repeat(6, minmax(0, 1fr)); gap:14px; margin:4px 0 18px; }
+.bkboard > .bklast { grid-column:span 4; }
+.bkboard > .bkneeds { grid-column:span 2; }
+.bkboard > #restoreTile, .bkboard > #offsiteTile { grid-column:span 3; }
+@container (max-width: 824px) { .bkboard { grid-template-columns:repeat(2, minmax(0, 1fr)); } .bkboard > :is(.bklast, .bkneeds) { grid-column:1 / -1; } .bkboard > :is(#restoreTile, #offsiteTile) { grid-column:auto; } }
+@container (max-width: 520px) { .bkboard { grid-template-columns:minmax(0, 1fr); } .bkboard > * { grid-column:auto !important; } }
+.bkcard { display:flex; flex-direction:column; min-width:0; padding:18px 20px; }
+.bkcard > h2, .bkcard > .row h2 { margin:0; font-size:15px; text-transform:none; letter-spacing:0; color:var(--text); }
+.bkcard > .row { display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin:0 0 6px; }
+#backupTiles .bkcard > h2 { margin:0 0 6px; }
+#backupTiles .bkcard > .row h2 { margin:0; }
+.bkcard > .row .muted { font-size:13px; }
+.bkcard .value { font-size:30px; font-weight:700; letter-spacing:-.02em; }
+.bkcard .value small { font-size:16px; font-weight:500; color:var(--muted); }
+.bkcard .value.bad { color:var(--bad); }
+.bksub { margin:0; font-size:13px; color:var(--muted); }
+.bksub.ok { color:var(--ok); }
+.bkactions { margin-top:auto; padding-top:10px; }
+.bkactions .small { width:auto; margin:0; }
+.bkskipped { display:inline-block; padding:3px 10px; border-radius:999px; background:var(--warn-soft); color:var(--warn); font-size:12px; font-weight:600; white-space:nowrap; }
+.bkfacts { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:10px; margin:12px 0 0; }
+.bkfacts > div { padding:10px 12px; border-radius:10px; background:var(--sunken); min-width:0; }
+.bkfacts dt { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); }
+.bkfacts dd { margin:2px 0 0; font-size:15px; font-weight:700; overflow-wrap:anywhere; }
+@container (max-width: 520px) { .bkfacts { grid-template-columns:minmax(0, 1fr); } }
+.bkcount { margin-left:8px; padding:0 7px; border-radius:999px; background:var(--warn-soft); color:var(--warn); font-size:12px; font-weight:600; }
+.bkneeds .bkneedlist .btn, .bkneeds .bkneedlist button.small { width:auto; margin:0; }

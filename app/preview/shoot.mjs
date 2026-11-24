@@ -1970,10 +1970,25 @@ const smokes = [
     await page.waitForFunction(() => document.getElementById('backupsCount').textContent.trim() === '1', null, { timeout: 5000 });
     if ((await page.textContent('#statusCount')).trim() !== '') throw new Error(`Status badges a running app: ${await page.textContent('#statusCount')}`);
   } },
+  // Backups as the redesign's picture (redesign-loop R7): Last night says what was skipped, and Needs you lists it with its
+  // fix: Mealie's copy is out of date because Mealie is stopped, so Start, which starts it; the paused ones wait for their drive.
+  { name: 'Backups: Needs you lists a skipped copy with Start, and the paused ones waiting for their drive', screen: 'backups', mock: { backups: { ...backups, copies: backups.copies.map((c) => (c.id === 'mealie' ? { ...c, state: 'stale', newest: new Date(Date.now() - 80 * 3600e3).toISOString() } : c)) } }, run: async (page) => {
+    await page.waitForSelector('#copiesTile .bkskipped:text-is("Mealie skipped")', { timeout: 5000 });
+    await page.waitForSelector('#needsYou li:has-text("Mealie"):has-text("stopped")', { timeout: 5000 });
+    await page.waitForSelector('#needsYou li:has-text("Komga"):has-text("Waiting for the Hobbies drive")');
+    if (await page.locator('#needsYou li:has-text("Komga") button').count()) throw new Error('a paused copy offers a button');
+    await page.click('#needsYou li:has-text("Mealie") button:text-is("Start")');
+    await page.waitForFunction(() => window.__MOCK.calls.AppAction >= 1, null, { timeout: 5000 });
+  } },
+  { name: 'Backups: nothing to do, Needs you says so', screen: 'backups', mock: { backups: { ...backups, copies: backups.copies.filter((c) => c.state === 'fresh') } }, run: async (page) => {
+    await page.waitForSelector('#needsYou:has-text("Nothing needs you")', { timeout: 5000 });
+    const v = (await page.textContent('#copiesTile .value')).replace(/\s+/g, ' ').trim();
+    if (!/^(\d+) of \1 copied$/.test(v)) throw new Error(`Last night: ${v}`);
+  } },
   { name: 'Backups: copies paused while their apps wait for a drive, the place named, one line a copy', screen: 'backups', run: async (page) => {
     await page.waitForSelector('#copiesTile:has-text("2 more paused: their apps wait for the Hobbies drive")', { timeout: 5000 });
     const value = await page.textContent('#copiesTile .value');
-    if (value.replace(/\s+/g, ' ').trim() !== '11 of 12') throw new Error(`copies up to date: ${value}`);
+    if (value.replace(/\s+/g, ' ').trim() !== '11 of 12 copied') throw new Error(`copies up to date: ${value}`);
     await page.waitForSelector('#offsiteTile .value:text-is("Proton Drive")', { timeout: 5000 });
     await page.waitForSelector('#offsiteTile:has-text("Encrypted, in homelab-backups")');
     // Paused is folded, with its names and why; stale and up to date are open.

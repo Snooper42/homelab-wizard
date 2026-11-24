@@ -3,7 +3,7 @@
 import { mountBackupTiles, mountCopyRows, mountJobs, mountKopia, mountVault, placeName } from '../backups/Backups';
 import { jobFinished, jobStarted } from '../job/done';
 import { store } from '../store';
-import { statusById, statusData } from './status';
+import { appActions, statusById, statusData } from './status';
 import { cliProgress, endJob, startJob } from '../jobs';
 import { inTurn, waitWords } from '../job/queue';
 import { $, go, osName, showError } from '../core';
@@ -30,7 +30,7 @@ function drawBackups() {
   // The restore test needs the Homelab AppData job to have run once.
   const testable = (jobsData.value || []).some((j) => j.name.toLowerCase() === 'homelab appdata' && j.state !== 'never');
   const test = () => backupTask('restore-test', 'Testing a restore (a few minutes)…', 'Restore test passed', 'The restore test failed: the log says why');
-  mountBackupTiles($('backupTiles'), { o, os: osName, test: testable ? test : undefined });
+  mountBackupTiles($('backupTiles'), { o, os: osName, test: testable ? test : undefined, apps: statusData.value ? statusById : undefined, start: (a) => appActions.act(a, 'start') });
   mountCopyRows($('backupRows'), { o, apps: statusData.value ? statusById : undefined });
   mountVault($('vaultCard'), { o });
   $('kopiaCard').hidden = !o.kopia;
