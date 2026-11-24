@@ -13,6 +13,7 @@
 // takes every one shown, so a filter then Select all is a whole import or
 // month; Shift+click a range) to delete together, give one category, or
 // move to another account, each with Undo after.
+import { Crumbs } from '../parts/Crumbs';
 import { Fragment } from 'preact';
 import { useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { Empty } from '../parts/Empty';
@@ -362,6 +363,8 @@ export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger, logo
   };
   return (
     <div class="fin">
+      {/* Opened from another page (a report's row, a Dashboard card): the way back to it. */}
+      {back && <Crumbs trail={[{ label: back.label, go: back.go }]} here="Transactions" />}
       <div class="fx-board">
         <Widget title="This month" span="all" kind="fx-txsum">
           <div class="fx-stats">
@@ -409,7 +412,6 @@ export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger, logo
               <option value="move">Between my accounts</option>
             </select>
             {filtered && <button type="button" class="small" onClick={() => { setQ(''); setAccount(''); setCategory(''); setMonthPick(''); setWay(''); setTag(''); }}>Show all</button>}
-            {back && <button type="button" class="small" onClick={back.go}><span aria-hidden="true">← </span>Back to {back.label}</button>}
           </div>}
           {picking && <div class="fx-txpick" role="group" aria-label="The selected transactions">
             <span class="fx-txpicked" role="status">{chosen.length ? `${plural(chosen.length, 'transaction')} selected` : 'None selected: click a row to select it'}</span>

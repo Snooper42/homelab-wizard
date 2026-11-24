@@ -4,6 +4,7 @@
 // transactions, and Update balance and Edit as buttons, not the page itself.
 // A card or a loan says what it owes. A home, a car or a collectible, whose
 // worth no transaction moves, charts what was typed in over time.
+import { Crumbs } from '../parts/Crumbs';
 import { useState } from 'preact/hooks';
 import { Empty } from '../parts/Empty';
 import { Rows } from '../parts/Row';
@@ -60,7 +61,7 @@ export function AccountPage({ v, L, ledger, id, done, edit, update, toTx, editTx
   return (
     <div class="fin fx-account">
       <div class="fx-accthead">
-        <button type="button" class="link" onClick={done}>‹ Net worth</button>
+        <Crumbs trail={[{ label: 'Net worth', go: done }]} here={a.name} />
         <div class="fx-accttitle">
           <AcctMark a={a} size="lg" />
           <div class="grow"><h2>{a.name}</h2><p class="muted">{sub}</p></div>

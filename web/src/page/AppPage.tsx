@@ -3,6 +3,7 @@
 // uses, its week, and its last backup as four tiles; then its log (with
 // Explain this), its updates, who uses it, and the actions needed now and
 // then. screens/apppage.ts reads what it shows and runs what it does.
+import { Crumbs } from '../parts/Crumbs';
 import { render, type ComponentChildren } from 'preact';
 import { useEffect, useState } from 'preact/hooks';
 import { ActionLink } from '../ActionLink';
@@ -563,7 +564,7 @@ function More({ p }: { p: AppPageProps }) {
 export function AppPage(p: AppPageProps) {
   return (
     <div class="apppage">
-      <ActionLink cls="back" onClick={p.on.back}>‹ Status</ActionLink>
+      <Crumbs trail={[{ label: 'Status', go: p.on.back }]} here={p.a.name} />
       <Header p={p} />
       <Facts p={p} />
       <div class="pagecols">

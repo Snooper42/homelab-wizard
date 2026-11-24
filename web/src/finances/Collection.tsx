@@ -6,6 +6,7 @@
 // collectible account worth what they are (internal/finance/collection.go),
 // so Net worth counts them. A picture is the computer's own file; until a
 // card has one it shows a plain placeholder, never one fetched.
+import { Crumbs } from '../parts/Crumbs';
 import { useEffect, useState } from 'preact/hooks';
 import { Empty } from '../parts/Empty';
 import { Row, Rows } from '../parts/Row';
@@ -153,7 +154,7 @@ export function CardPage({ v, id, done, edit, read, prices }: CardPageProps) {
   return (
     <div class="fin fx-card">
       <div class="fx-accthead">
-        <button type="button" class="link" onClick={done}>‹ Collection</button>
+        <Crumbs trail={[{ label: 'Collection', go: done }]} here={c.name} />
       </div>
       <div class="fx-cardpage">
         <div class="fx-cardside">
