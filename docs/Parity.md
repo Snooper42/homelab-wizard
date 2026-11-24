@@ -35,6 +35,7 @@ What a phone may do also depends on how it was paired, on every phone (the phone
 
 | Feature | Computer | Phone's page | iPhone | iPad | Phone calls |
 |---|---|---|---|---|---|
+| Status's headline: how many apps need you over how many run ("1 app needs you", "21 of 22 running"), the first one's fix beside it | yes | yes | yes | yes | `Status` |
 | The list of apps, live, grouped as Needs a look, Pinned, then each category | yes | yes | yes | yes | `Status`, `StatusBoard`, `LastStatus`, `Catalog`, `Screen` |
 | Each app's logo | yes | yes | yes | yes | `AppIcon` |
 | Type to find an app | yes | yes | yes (search) | yes | |
