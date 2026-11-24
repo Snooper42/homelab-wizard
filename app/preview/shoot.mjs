@@ -3232,8 +3232,8 @@ const smokes = [
     await acct.locator('button:text-is("Edit")').click();
     await page.waitForSelector('#finSheet:not([hidden])', { timeout: 5000 });
     await page.keyboard.press('Escape');
-    // All of them: Transactions, that account picked.
-    await acct.locator('button:has-text("All of them")').click();
+    // All of them, its ↗ (as the Dashboard's Latest transactions): Transactions, that account picked.
+    await acct.locator('.fx-acctlatest button.fx-icon[aria-label="Open Chase Checking\'s transactions"]').click();
     await page.waitForSelector('#finMenu [aria-current="page"]:has-text("Transactions")', { timeout: 5000 });
     const picked = await page.evaluate(() => [...document.querySelectorAll('#finRoot select')].map((s) => s.selectedOptions[0]?.textContent || '').join('|'));
     if (!picked.includes('Chase Checking')) throw new Error(`Transactions opened on ${picked}`);
