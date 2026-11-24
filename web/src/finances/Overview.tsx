@@ -163,7 +163,7 @@ export function Overview({ v, L, sel, pick, add, edit, setSince, keep, ledger, o
       )}
       {bar && phone && <PeriodBar {...bar} />}
       {!phone && <TopPeriod bar={bar} />}
-      <ArrangedBoard phone={phone} slots={[
+      {phone ? <ArrangedBoard phone slots={[
         { id: 'now', title: "Left after this paycheck's bills", width: 'full', node: !phone && <LeadWidget v={v} L={L} sel={p ? picked : 0} open={openPay} /> },
         { id: 'since', title: 'Since the balances', width: 'full', node: !!v.since?.length && <SinceWidget v={v} L={L} set={setSince} /> },
         { id: 'missing', title: 'Bills not seen', width: 'full', node: <MissingWidget v={v} L={L} open={openTransactions} /> },
@@ -190,6 +190,28 @@ export function Overview({ v, L, sel, pick, add, edit, setSince, keep, ledger, o
         { id: 'moneyflow', title: 'Money flow', width: 'full', node: <MoneyFlowWidget v={v} L={L} ledger={ledger} edit={edit} /> },
         { id: 'networth', title: 'Net worth', width: 'full', node: <NetWorthWidget v={v} open={openWorth} /> },
       ]} />
+        /* The computer's Dashboard, as docs/images/redesign/computer-finances.png (redesign-loop R3): what needs you first,
+           only when something does; then the lead card with Latest transactions beside it, Net worth, Cash flow, Where the
+           money went, Coming up and the budgets to watch. The cards the picture doesn't have live on their own pages now
+           (the owner, Nov 23): Bills & paychecks, Calendar and Reports. */
+        : <ArrangedBoard kind="fx-dash" slots={[
+        { id: 'since', title: 'Since the balances', width: 'full', node: !!v.since?.length && <SinceWidget v={v} L={L} set={setSince} /> },
+        { id: 'missing', title: 'Bills not seen', width: 'full', node: <MissingWidget v={v} L={L} open={openTransactions} /> },
+        { id: 'prices', title: 'New prices', width: 'full', node: <PricesWidget v={v} L={L} keep={keep} /> },
+        { id: 'averages', title: "Bills' averages", width: 'full', node: <AveragesWidget v={v} L={L} keep={keep} /> },
+        { id: 'now', title: "Left after this paycheck's bills", width: 'full', node: <LeadWidget v={v} L={L} sel={p ? picked : 0} open={openPay} /> },
+        { id: 'latest', title: 'Latest transactions', width: 'third', node: !read && <LatestWidget v={v} L={L} ledger={ledger} edit={edit} all={openTransactions} /> },
+        { id: 'past', title: 'What happened', width: 'full', node: read && <PastWidget v={v} L={L} past={read} title={month?.when === 'now' ? 'So far this month' : undefined} ledger={ledger} edit={edit} /> },
+        { id: 'planned', title: 'The plan', width: 'full', node: month && month.when !== 'past' && (() => {
+          const from = month.when === 'now' ? isoDay(new Date(parseDay(v.today).getTime() + 864e5)) : month.start;
+          return from <= month.last && <PlannedWidget v={v} L={L} title={month.when === 'now' ? 'Still to come' : 'The plan'} start={from} last={month.last} edit={edit} />;
+        })() },
+        { id: 'networth', title: 'Net worth', width: 'third', node: <NetWorthWidget v={v} open={openWorth} /> },
+        { id: 'cashflow', title: 'Cash flow', width: 'third', node: <CashFlowWidget v={v} L={L} open={openRecurring && (() => openRecurring())} ledger={ledger} showIn={showIn} /> },
+        { id: 'spent', title: 'Where the money went', width: 'third', node: !(month?.when === 'ahead') && <SpentWidget v={v} ledger={ledger} open={showIn} days={spentDays} title={spentDays ? undefined : 'Where the money went'} /> },
+        { id: 'comingup', title: 'Coming up', width: 'third', node: <ComingUpWidget v={v} L={L} calendar={openCalendar} /> },
+        { id: 'budgets', title: 'Budgets to watch', width: 'third', node: <BudgetsWidget v={v} only={toWatch} title="Budgets to watch" span={1} open={openTransactions} show={showIn && ((category, month) => showIn({ category, month }))} /> },
+      ]} />}
     </div>
   );
 }

@@ -18,7 +18,7 @@ import type { showTransactions } from '../Transactions';
 const named = 5;
 
 /** Spent this month, or in the days given (a pay period before now, picked by the Dashboard's period bar). */
-export function SpentWidget({ v, ledger, open, days }: { v: finance.View; ledger?: finance.Ledger | null; open?: (f: Parameters<typeof showTransactions>[0]) => void; days?: { from: string; to: string } }) {
+export function SpentWidget({ v, ledger, open, days, title }: { v: finance.View; ledger?: finance.Ledger | null; open?: (f: Parameters<typeof showTransactions>[0]) => void; days?: { from: string; to: string }; /** Its title in place of Spent this month (the computer's Dashboard: Where the money went). */ title?: string }) {
   if (!ledger?.transactions.length) return null;
   const month = days ? { key: 'period', label: '', ...days } : ranges(v.today, v.today)[0];
   // A category opens its transactions of the month; for days within one month, of that month.
@@ -29,7 +29,7 @@ export function SpentWidget({ v, ledger, open, days }: { v: finance.View; ledger
   const hueOf = (name: string): Hue => categoryHue(name, v.categories) || 'muted';
   const slices = [...groups.slice(0, named).map((g) => ({ label: g.name, value: g.amount, color: hueOf(g.name) })), ...(rest > 0.005 ? [{ label: 'Everything else', value: rest, color: 'muted' as Hue }] : [])];
   return (
-    <Widget title={days ? 'Where it went' : 'Spent this month'} kind="fx-spentmonth"
+    <Widget title={days ? 'Where it went' : title || 'Spent this month'} kind="fx-spentmonth"
       open={open && (() => open(inMonth ? { month: month.from.slice(0, 7) } : {}))} openLabel={inMonth ? `Open ${monthName(month.from)}'s transactions` : 'Open Transactions'}>
       <Stat value={<Amount value={total} />} caption={days ? `From your transactions, ${dayShort(days.from)} – ${dayShort(days.to)}` : `From your transactions, to ${dayShort(v.today)}`} />
       {groups.length ? <div class="fx-donutrow">

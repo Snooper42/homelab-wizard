@@ -44,7 +44,7 @@ export function ordered(slots: Slot[], l: Layout | null): Slot[] {
   return [...named, ...slots.filter((s) => at(s.id) < 0)];
 }
 
-export function ArrangedBoard({ slots, phone }: { slots: Slot[]; phone?: boolean }) {
+export function ArrangedBoard({ slots, phone, kind }: { slots: Slot[]; phone?: boolean; /** A look of its own for the usual board (fx-dash: the Dashboard's grid). */ kind?: string }) {
   const [layout, setLayout] = useState<Layout | null>(readLayout);
   const [editing, setEditing] = useState(false);
   const [dragged, setDragged] = useState('');
@@ -58,7 +58,7 @@ export function ArrangedBoard({ slots, phone }: { slots: Slot[]; phone?: boolean
       <button type="button" class="btn" onClick={() => { keepLayout(null); setLayout(null); }}>Reset to the usual</button>
       <button type="button" class="btn fx-primary" onClick={() => setEditing(false)}>Done</button></>
     : null}</div>;
-  if (!layout && !editing) return <div class="fx-board">{present.map((s) => s.node)}</div>;
+  if (!layout && !editing) return <div class={'fx-board' + (kind ? ' ' + kind : '')}>{present.map((s) => s.node)}</div>;
   const all = ordered(present, layout);
   const hidden = new Set(layout?.hidden || []);
   const shown = all.filter((s) => !hidden.has(s.id));
