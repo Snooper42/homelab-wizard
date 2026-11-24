@@ -27,7 +27,7 @@ export function TrendWidget({ v, ledger, openDay, openAccount }: { v: finance.Vi
   const change = last - values[0];
   const when = days === 365 ? 'last year' : `last ${words}`;
   return (
-    <Widget title={`${a.name}, ${when}`} span="all" kind="fx-trend" open={openAccount && (() => openAccount(a.id))} openLabel={`Open ${a.name}'s page`}
+    <Widget title={`${a.name}, ${when}`} span="all" kind="fx-trend fx-lookback" open={openAccount && (() => openAccount(a.id))} openLabel={`Open ${a.name}'s page`}
       actions={<>
         {accounts.length > 1 && <select class="finpick" aria-label="Account" value={a.id} onChange={(e) => setPicked((e.target as HTMLSelectElement).value)}>{accounts.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select>}
         <Segmented label="How far back" value={span} pick={setSpan} options={spans.map(([k, t]) => [k, t] as [string, string])} />

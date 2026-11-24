@@ -1784,6 +1784,26 @@ button.kindrow:focus-visible { outline:2px solid var(--accent); outline-offset:-
 :is(#finRoot, #tidyRoot) .card.fx-widget > .row h2, :is(#finRoot, #tidyRoot) .card.fx-widget > h2 { font-size:16px; font-weight:600; letter-spacing:-.01em; margin:0; }
 .fx-widget.span2 { grid-column:span 2; }
 .fx-widget.spanall { grid-column:1 / -1; }
+/* The computer's Dashboard (docs/images/redesign/computer-finances.png; redesign-loop R3): three columns, the lead card two
+   wide with Latest transactions beside it down two rows, what needs you across the top; two columns, then one, as the
+   window narrows. A card's own width elsewhere (span2, spanall) doesn't apply here. */
+.fx-board.fx-dash { grid-template-columns:repeat(3, minmax(0, 1fr)); grid-auto-flow:row dense; align-items:start; }
+.fx-board.fx-dash > .fx-widget { grid-column:auto; }
+.fx-board.fx-dash > :is(.fx-since, .fx-missing, .fx-prices, .fx-averages, .fx-past, .fx-planned) { grid-column:1 / -1; }
+.fx-board.fx-dash > .fx-lead { grid-column:span 2; }
+.fx-board.fx-dash > .fx-latest { grid-row:span 2; align-self:stretch; }
+.fx-board.fx-dash > .fx-budgets { grid-column:span 2; }
+@container (max-width: 860px) {
+  .fx-board.fx-dash { grid-template-columns:repeat(2, minmax(0, 1fr)); }
+  .fx-board.fx-dash > .fx-lead { grid-column:1 / -1; }
+  .fx-board.fx-dash > .fx-latest { grid-row:auto; }
+}
+@container (max-width: 600px) { .fx-board.fx-dash { grid-template-columns:minmax(0, 1fr); } .fx-board.fx-dash > .fx-widget { grid-column:auto; } }
+/* Latest transactions' one-line rows (Latest.tsx TxRow compact): the category's dot and name, the day under the amount. */
+.fx-txcat { display:inline-flex; align-items:center; gap:6px; min-width:0; }
+.fx-whenstack { display:flex; flex-direction:column; align-items:flex-end; gap:2px; white-space:nowrap; }
+/* The cards a page took from the Dashboard, above its own (Finances.tsx PageCards). */
+.fx-pagecards { margin-bottom:var(--fin-gap); }
 @container (max-width: 760px) { .fx-widget.span2 { grid-column:auto; } }
 /* The board is two columns under 1052px (three cards of 340px and their gaps), three from it: a card laid out for three
    would sit alone at two, half the row empty. At two, What you own and What you owe sit side by side, and By tag
@@ -2054,6 +2074,9 @@ html.os-mac .fx-balance { padding:4px 8px; }
    since the start, which the Since card above sums up, steps aside rather than squeezing the name to a word a line. */
 #finRoot .fx-ownlist > ul.fx-rows, #finRoot .fx-owelist > ul.fx-rows { container:acctrows / inline-size; }
 @container acctrows (max-width: 380px) { .fx-change { display:none; } }
+/* Renewing soon on a narrow card (big text, a small window): its day is under each name, so the "In 4 days" badge goes. */
+#finRoot .fx-renewing > ul.fx-rows { container:renewrows / inline-size; }
+@container renewrows (max-width: 380px) { .fx-renewing .fx-due { display:none; } }
 :is(#finRoot, #tidyRoot) .card.fx-widget > .row { flex-wrap:nowrap; align-items:center; gap:12px; }
 /* Narrow (a phone, a small window at a large text size), a heading's controls go under it when they
    don't fit beside it, and a long pick scrolls sideways in the card rather than past its edge. */

@@ -99,7 +99,7 @@ More: [Backups](<Backups.md>), [Disaster Recovery](<Disaster Recovery.md>).
 
 ## Finances
 
-A screen of the app itself, not a separate app: the household's money, typed in by hand and kept on this computer, with no bank connection. The Dashboard takes one paycheck at a time. It leads with what's left in checking after that paycheck's bills, against the paycheck before, with checking through the paycheck as a chart and, under it, checking now, after payday, and the bills left; then every account after that paycheck's bills.
+A screen of the app itself, not a separate app: the household's money, typed in by hand and kept on this computer, with no bank connection. The Dashboard takes one paycheck at a time. It leads with what's left in checking after that paycheck's bills, against the paycheck before, with checking through the paycheck as a chart and, under it, checking now, after payday, and the bills left; beside it the latest transactions; then net worth, cash flow, where the money went, what's coming up, the budgets to watch, and the investments with this month's change. Each paycheck's accounts and bills are on Paychecks.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="images/app-finances-dark.png">

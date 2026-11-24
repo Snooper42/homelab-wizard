@@ -113,7 +113,7 @@ export function LeadWidget({ v, L, sel, open }: LeadProps) {
       label={<>In checking on {dayShort(p.last)}, after {bills.length === 1 ? 'one bill' : `${bills.length} bills`}
         {p.left < 0 ? <span class="fx-out">, short {money(-p.left)}</span> : p.left < cushion ? <span>, under your {compact(cushion)} cushion</span> : ''}</>}
       chip={before && <MoneyChip value={p.left - before.left} words="vs last paycheck" />}>
-      {days.length >= 2 && <AreaChart values={values} xLabels={xLabels} marks={marks} height={170} axis={false} zero={false} stepped threshold={cushion || undefined} format={tick}
+      {days.length >= 2 && <AreaChart values={values} xLabels={xLabels} marks={marks} height={120} axis={false} zero={false} stepped threshold={cushion || undefined} format={tick}
         label={`Checking each day from ${dayShort(days[0].date)} to ${dayShort(days[days.length - 1].date)}, ${money(values[0])} at the start and ${money(p.left)} at the end${cushion ? `, against your ${compact(cushion)} cushion` : ''}. The figures under it say how they add up.`}
         tip={(k) => <>
           <div class="fx-tiphead"><span>{dayLong(days[k].date)}</span><Amount value={days[k].balance} form="full" /></div>
