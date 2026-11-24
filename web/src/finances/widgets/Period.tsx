@@ -40,7 +40,7 @@ export function PeriodBar({ by, setBy, title, dates, step, canBack, canOn, today
   const unit = by === 'month' ? 'month' : 'pay period';
   return (
     <Card kind="fx-periodbar" id="finPeriod">
-      <Segmented label="Show the Dashboard by" value={by} pick={(b) => setBy(b as PeriodBy)} options={[['pay', 'By paycheck'], ['month', 'By month']]} />
+      <Segmented label="Show the Dashboard by" value={by} pick={(b) => setBy(b as PeriodBy)} options={[['pay', 'Paycheck'], ['month', 'Month']]} />
       {/* Back, the name and forward kept on one line, the name wrapping between them (usability task 15, item 4). */}
       <div class="fx-periodstep">
         <IconButton icon="prev" label={`The ${unit} before`} disabled={!canBack} onClick={() => step(-1)} />

@@ -143,18 +143,40 @@ function FinancesScreen({ v, ledger, error, retry, tab, setTab, sel, pick, setSi
   const lead = (age < 0 ? (phone ? 'Typed in by you, kept on your homelab' : 'Typed in by you, kept on this machine')
     : age === 0 ? 'Balances from today' : `Balances from ${dayShort(v.typed)}, with what's happened since` + (age >= 7 ? `: ${age} days ago${ro ? '' : ', bring them up to date with Update balances'}` : ''))
     + (ro ? ' · view only' : '');
+  const addBtn = <button class="btn fx-primary" onClick={() => edit(what)} disabled={!v}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>{label}</button>;
+  const updateBtn = !!v?.plan.accounts?.length && <button class="btn" onClick={() => edit('balances')}>Update balances</button>;
+  const eye = toggleHidden && v && <HideAmounts hidden={!!v.plan.hideAmounts} toggle={toggleHidden} small={!phone} />;
   return (
     <>
-      <div class="row header">
+      {phone ? <div class="row header">
         <div><h1>Finances</h1><p class={'lead' + (age >= 7 ? ' warn' : '')}>{lead}</p></div>
         {/* Export on its own, before the toolbar's capsule: it wraps by itself on a narrow screen, and the capsule keeps to what fits.
             The two share a box at the header's top, level by their middles. */}
         <div class="fx-headtools">
           {v && <ExportMenu v={v} exportFile={exportFile} printMonth={printMonth} />}
           {ro && v?.plan.hideAmounts && <div class="toolbar"><span class="pill">Amounts hidden</span></div>}
-          {!ro && <div class="toolbar">{toggleHidden && v && <HideAmounts hidden={!!v.plan.hideAmounts} toggle={toggleHidden} />}{!!v?.plan.accounts?.length && <button class="btn" onClick={() => edit('balances')}>Update balances</button>}<button class="btn fx-primary" onClick={() => edit(what)} disabled={!v}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>{label}</button></div>}
+          {!ro && <div class="toolbar">{eye}{updateBtn}{addBtn}</div>}
         </div>
       </div>
+      /* On the computer, one top bar (docs/Redesign.md, The top bar; redesign-loop R2): the main action, the period the
+         Dashboard picked (drawn into #finTopPeriod by Overview), and the small buttons. No title or subtitle: the sidebar
+         says it's Finances, and the balances' age is said only once it's a week old. */
+        : <>
+          <h1 class="sr">Finances</h1>
+          <div class="fx-topbar">
+            <div class="toolbar">{addBtn}{updateBtn}</div>
+            <div id="finTopPeriod" class="fx-topperiod" />
+            <div class="fx-topicons">
+              {v && <ExportMenu v={v} exportFile={exportFile} printMonth={printMonth} />}
+              {eye}
+              {pageFor(tab) === 'overview' && <button type="button" class="iconbtn fx-arrangebtn" aria-label="Arrange the Dashboard" title="Arrange the Dashboard: move, resize or hide its cards"
+                onClick={() => dispatchEvent(new Event('homelab:arrange'))}>
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0M14 4v4M8 10v4M16 16v4" /></svg>
+              </button>}
+            </div>
+          </div>
+          {age >= 7 && <p class="lead warn fx-stale">{lead}</p>}
+        </>}
       {/* On the computer, Finances' menu in the sidebar picks the page (FinMenu); the phone keeps its tabs. */}
       {phone && <Segmented label="View" value={groupOf(tab)[0]} pick={(g) => pickTab(pageOf(g))} options={groups.map(([k, label]) => [k, label] as [string, string])} />}
       {phone && groupOf(tab)[2].length > 1 && <div class="fx-subtabs"><Segmented label={groupOf(tab)[1]} value={pageFor(tab)} pick={pickTab} options={tabs.filter(([k]) => groupOf(tab)[2].includes(k))} /></div>}

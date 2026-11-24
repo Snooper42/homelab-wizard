@@ -25,7 +25,8 @@ import { PlannedWidget } from './widgets/Planned';
 import { monthPeriods, pastPeriods } from './model';
 import { dayShort, isoDay, parseDay } from './money';
 import { dayText } from '../format';
-import { useState } from 'preact/hooks';
+import { useEffect, useState } from 'preact/hooks';
+import { render } from 'preact';
 import { RenewingWidget } from './widgets/Subscriptions';
 import { BudgetsWidget, toWatch } from './widgets/Budgets';
 import { NetWorthWidget } from './widgets/Worth';
@@ -103,6 +104,19 @@ function StartThree({ v, add }: { v: finance.View; add: NonNullable<OverviewProp
  */
 const startedThree = (v: finance.View) => !!v.plan.people?.length && !!v.plan.payments?.length;
 
+/**
+ * The period, in the top bar on the computer (docs/Redesign.md, The top bar): drawn into Finances' #finTopPeriod, which
+ * the screen draws before this, so the bar stays one row; emptied when the Dashboard isn't showing.
+ */
+function TopPeriod({ bar }: { bar: PeriodBarProps | null }) {
+  useEffect(() => {
+    const slot = document.getElementById('finTopPeriod');
+    if (slot) render(bar ? <PeriodBar {...bar} /> : null, slot);
+  });
+  useEffect(() => () => { const slot = document.getElementById('finTopPeriod'); if (slot) render(null, slot); }, []);
+  return null;
+}
+
 export function Overview({ v, L, sel, pick, add, edit, setSince, keep, ledger, openWorth, openSubscriptions, openRecurring, openTransactions, openCalendar, openPay, openAccount, showIn, phone }: OverviewProps) {
   // The period bar: by paycheck (now and the paychecks ahead, the plan's; before now, what happened, from the ledger)
   // or by month (before this one from the ledger, this one so far and then the plan, after it the plan).
@@ -142,7 +156,8 @@ export function Overview({ v, L, sel, pick, add, edit, setSince, keep, ledger, o
           {add && <button class="small" onClick={() => add('account', 'checking')}>Add your checking account</button>}
         </Card>
       )}
-      {bar && <PeriodBar {...bar} />}
+      {bar && phone && <PeriodBar {...bar} />}
+      {!phone && <TopPeriod bar={bar} />}
       <ArrangedBoard phone={phone} slots={[
         { id: 'now', title: "Left after this paycheck's bills", width: 'full', node: !phone && <LeadWidget v={v} L={L} sel={p ? picked : 0} open={openPay} /> },
         { id: 'since', title: 'Since the balances', width: 'full', node: !!v.since?.length && <SinceWidget v={v} L={L} set={setSince} /> },

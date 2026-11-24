@@ -2992,7 +2992,7 @@ const smokes = [
   // reload; Reset puts the usual board back.
   { name: 'Finances: the Dashboard is arranged, kept on this device, and Reset', screen: 'finances', run: async (page) => {
     const ids = () => page.$$eval('#finRoot .fx-board.arranged > .fx-slot', (l) => l.filter((x) => x.querySelector('.card')).map((x) => x.dataset.card));
-    await page.click('#finRoot button:text-is("Arrange the Dashboard")', { timeout: 5000 });
+    await page.click('#finRoot button[aria-label="Arrange the Dashboard"]', { timeout: 5000 });
     await page.waitForSelector('#finRoot .fx-board.arranged.editing .fx-slot[data-card="networth"] .fx-slotbar', { timeout: 5000 });
     const before = await ids();
     await page.click('#finRoot .fx-slot[data-card="networth"] button[aria-label="Move Net worth up"]');
@@ -3016,7 +3016,7 @@ const smokes = [
     await page.waitForSelector('#finRoot .fx-board.arranged .fx-slot[data-card="networth"] .card', { timeout: 5000 });
     const kept = await ids();
     if (kept.includes('spent') || kept.join(' ') !== moved.filter((id) => id !== 'spent').join(' ')) throw new Error(`not kept: ${kept.join(' ')}, was ${moved.join(' ')}`);
-    await page.click('#finRoot button:text-is("Arrange the Dashboard")');
+    await page.click('#finRoot button[aria-label="Arrange the Dashboard"]');
     await page.click('#finRoot button:text-is("Reset to the usual")');
     await page.click('#finRoot button:text-is("Done")');
     await page.waitForSelector('#finRoot .fx-board:not(.arranged) .fx-widget', { timeout: 3000 });
@@ -3024,7 +3024,7 @@ const smokes = [
   } },
   { name: 'The phone: the Dashboard has no Arrange, and stacks as before', screen: 'finances', phone: ['companion', 'finances'], run: async (page) => {
     await page.waitForSelector('#finances.active .fx-board .fx-widget', { timeout: 5000 });
-    if (await page.locator('#finRoot button:text-is("Arrange the Dashboard"), #finRoot .fx-board.arranged').count()) throw new Error('the phone offers Arrange');
+    if (await page.locator('#finRoot button[aria-label="Arrange the Dashboard"], #finRoot .fx-board.arranged').count()) throw new Error('the phone offers Arrange');
   } },
   // A household member's private Finances on her phone's page (private-finances.md, step 3; mock.js's M.person):
   // turned on with Face ID's passkey, her recovery code shown once and two of its words typed back; then the
@@ -6298,7 +6298,7 @@ const smokes = [
   ...[390, 213].map((w) => ({ name: `Finances: the period bar's arrows on one line with its name, on the phone at ${w}px`, screen: 'finances', phone: ['companion', 'finances'], run: async (page) => {
     await page.setViewportSize({ width: w, height: 700 });
     await page.waitForSelector('#finances.active #finPeriod h2', { timeout: 5000 });
-    for (const by of ['By paycheck', 'By month']) {
+    for (const by of ['Paycheck', 'Month']) {
       await page.click(`#finPeriod [role=radio]:text-is("${by}")`);
       const box = await page.$eval('#finPeriod', (bar) => {
         const r = (q) => bar.querySelector(q).getBoundingClientRect();
@@ -6368,7 +6368,7 @@ const smokes = [
   // Back to By paycheck, the paycheck card again.
   { name: 'Finances: By month steps months, and the cards follow', screen: 'finances', run: async (page) => {
     await page.waitForSelector('#finances.active #finPeriod h2', { timeout: 5000 });
-    await page.click('#finPeriod .seg button:text-is("By month")');
+    await page.click('#finPeriod .seg button:text-is("Month")');
     await page.waitForSelector('#finPeriod h2:text-is("October 2026")', { timeout: 5000 });
     if ((await page.textContent('#finPeriod .fx-dates')) !== 'Oct 1 – Oct 31, so far, then the plan') throw new Error(`the days: ${await page.textContent('#finPeriod .fx-dates')}`);
     if (await page.$('.fx-paycheck')) throw new Error('the paycheck card shows by month');
@@ -6393,7 +6393,7 @@ const smokes = [
     await page.waitForSelector('.fx-past :text("No transactions kept for these days.")', { timeout: 5000 });
     if (await page.$('.fx-planned')) throw new Error('the plan shows for a month before now');
     // By paycheck again: the paycheck card, and the bar's paycheck.
-    await page.click('#finPeriod .seg button:text-is("By paycheck")');
+    await page.click('#finPeriod .seg button:text-is("Paycheck")');
     await page.waitForSelector('.fx-paycheck', { timeout: 5000 });
     await page.waitForSelector('#finPeriod h2:text-matches("paycheck|^Now")', { timeout: 5000 });
   } },
