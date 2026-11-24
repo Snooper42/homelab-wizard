@@ -3329,7 +3329,7 @@ const smokes = [
     await page.waitForSelector('#tidy.active .seg button[aria-pressed="true"]:text-is("Music"), #tidy.active .seg button.on:text-is("Music"), #tidy.active .seg button[aria-checked="true"]:text-is("Music")', { timeout: 3000 });
   } },
   { name: 'Healthy categories fold into their headings', screen: 'status', mock: { statusOpen: '' }, run: async (page) => {
-    await page.waitForSelector('#statusRows tr.grouphead.fold:has-text("Security"):has-text("running ✓")', { timeout: 5000 });
+    await page.waitForSelector('#statusRows tr.grouphead.fold:has-text("Security"):has-text("✓ 4 running")', { timeout: 5000 });
     if (await page.isVisible('#statusRows tr:has(strong:text-is("Vaultwarden"))')) throw new Error('a healthy category is open');
     await page.click('#statusRows tr.grouphead.fold:has-text("Security")');
     await page.waitForSelector('#statusRows tr:has(strong:text-is("Vaultwarden"))', { timeout: 5000 });
@@ -3365,7 +3365,7 @@ const smokes = [
     if (await page.isVisible('tr:has(strong:text-is("Phone companion")) .dot.warn')) throw new Error('marked as a warning');
     // Not counted yet: its group says all running, and the tile's total leaves it out.
     const group = await page.textContent('tr.grouphead:has-text("System") .n');
-    if (!group.includes('running ✓')) throw new Error(`System group: ${group}`);
+    if (!/✓ \d+ running/.test(group)) throw new Error(`System group: ${group}`);
     const tile = await page.textContent('#statusHeadline .label');
     const of = (tile.match(/of\s*(\d+)/) || [])[1];
     if (Number(of) !== status.apps.length - 1) throw new Error(`Running tile: ${tile}`);

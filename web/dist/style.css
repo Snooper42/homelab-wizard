@@ -3114,3 +3114,15 @@ html.companion .crumbs .backlabel { display:inline; }
 #statusHeadline .headlineacts .btn { width:auto; margin:0; padding:4px 10px; font-size:12px; }
 /* Two tiles wide only beside two others; a whole row once the tiles go two by two or one under another (a span 2 in one column would add a second). */
 @container (max-width: 824px) { #statusHeadline { grid-column:1 / -1; } }
+
+/* Status's categories as the redesign's rows (R6c): their first apps' icons overlapping, and the count a pill, green with
+   a tick when all of them run, amber when one doesn't. */
+.groupmarks { display:inline-flex; vertical-align:middle; width:66px; margin:0 8px 0 2px; }
+.appmark.mini { width:26px; height:26px; border-radius:8px; font-size:12px; padding:3px; box-shadow:0 0 0 2px var(--panel); }
+.appmark.mini:not(.icon) { padding:0; background:var(--panel); border:1px solid var(--line); color:var(--muted); box-sizing:border-box; }
+.appmark.mini + .appmark.mini { margin-left:-6px; }
+table.grouped tr.grouphead .countpill { border-radius:999px; padding:2px 10px; font-weight:600; }
+table.grouped tr.grouphead .countpill.ok { background:color-mix(in srgb, var(--ok) 14%, transparent); color:var(--ok); }
+table.grouped tr.grouphead .countpill.warn { background:color-mix(in srgb, var(--warn) 16%, transparent); color:var(--warn); }
+table.grouped tr.grouphead .countpill:hover { filter:brightness(.95); }
+html.companion .groupmarks { margin-right:8px; }

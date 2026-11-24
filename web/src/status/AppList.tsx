@@ -10,6 +10,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { ActionLink } from '../ActionLink';
 import { Icon } from '../Icon';
 import { Address } from '../parts/Address';
+import { AppMark } from '../parts/AppMark';
 import { Hover } from '../parts/Hover';
 import { awaitingJobs } from './Tiles';
 import { formatMem } from './memory';
@@ -66,6 +67,8 @@ export interface Pending {
 
 export interface AppListProps {
   groups: Group[];
+  /** Each app's own icon as far as it has arrived (status/appIcons.ts), for its category's row. */
+  icons?: Record<string, string>;
   /** Each app's action since its click, by app ID. */
   pending: Record<string, Pending>;
   catalog: api.Catalog | null;
@@ -376,7 +379,7 @@ const isNative = (p: AppListProps, a: api.AppStatus) => p.catalog?.apps.find((c)
  * move through it, Escape closes it back on the count, and a click
  * elsewhere closes it. On the phone the count is plain text.
  */
-function GroupMenu({ g, p, count }: { g: Group; p: AppListProps; count: string }) {
+function GroupMenu({ g, p, count, tone }: { g: Group; p: AppListProps; count: string; tone: '' | 'ok' | 'warn' }) {
   const [open, setOpen] = useState(false);
   const [sure, setSure] = useState(false);
   // Stop for a while: the menu shows the times to choose from instead.
@@ -418,7 +421,7 @@ function GroupMenu({ g, p, count }: { g: Group; p: AppListProps; count: string }
     const m = menu.getBoundingClientRect(), b = box.getBoundingClientRect(), a = at.getBoundingClientRect();
     setUp(m.bottom > b.bottom && a.top - b.top > m.height);
   }, [open]);
-  if (p.companion || g.alert) return <span class="n">{count}</span>;
+  if (p.companion || g.alert) return <span class={'n' + (tone ? ' countpill ' + tone : '')}>{count}</span>;
   // Stop asks for a second click; Stop for a while has had it (the time).
   const run = (action: 'start' | 'stop' | 'restart', apps: api.AppStatus[], until?: string) => {
     if (action === 'stop' && !sure && !until) { setSure(true); return; }
@@ -441,7 +444,7 @@ function GroupMenu({ g, p, count }: { g: Group; p: AppListProps; count: string }
         all[(to + all.length) % all.length].focus();
       }}
       onFocusOut={() => setTimeout(() => { if (open && document.hasFocus() && !wrap.current?.contains(document.activeElement)) close(); })}>
-      <button type="button" ref={btn} class="n groupcount" aria-haspopup="menu" aria-expanded={open} disabled={!!doing}
+      <button type="button" ref={btn} class={'n groupcount' + (tone ? ' countpill ' + tone : '')} aria-haspopup="menu" aria-expanded={open} disabled={!!doing}
         title={`${g.label}: start, stop, or restart them all, and what they hold in memory`}
         onClick={(e) => {
           if (open) { close(); return; }
@@ -501,12 +504,17 @@ function GroupHead({ g, open, toggle, p }: { g: Group; open: boolean; toggle: ()
         if (c.getAttribute('aria-expanded') !== 'true') c.click();
       }}>
       <th colSpan={4}>
+        {/* Its first three apps' own icons, overlapping, as the redesign's rows (letters until they arrive). */}
+        <span class="groupmarks" aria-hidden="true">{g.apps.slice(0, 3).map((a) => <AppMark key={a.id} name={a.name} icon={p.icons?.[a.id] || ''} small />)}</span>
         <button type="button" class="foldbtn" aria-expanded={open} onClick={(e) => { e.stopPropagation(); toggle(); }}>
-          <span class="chev" aria-hidden="true">{open ? '▾' : '▸'}</span>{g.label}
+          <span class="chev" aria-hidden="true">{open ? '▾' : '▸'}</span>
+          {g.label}
         </button>
         {/* A wall screen hides every button, this one too: its name as plain text there. */}
         <span class="kiosklabel">{g.label}</span>
-        <GroupMenu g={g} p={p} count={g.alert ? String(g.apps.length) : running >= counted ? `${running} running ✓` : `${running} of ${counted} running`} />
+        {/* The redesign's pill: green with a tick when all of them run, amber when one doesn't. */}
+        <GroupMenu g={g} p={p} count={g.alert ? String(g.apps.length) : running >= counted ? `✓ ${running} running` : `${running} of ${counted} running`}
+          tone={g.alert ? '' : running >= counted ? 'ok' : 'warn'} />
         <StartAll g={g} p={p} />
         {!open && <span class="names" title={g.summary ? g.apps.map((a) => a.name).join(' · ') : undefined}>{g.summary || g.apps.map((a) => a.name).join(' · ')}</span>}
       </th>

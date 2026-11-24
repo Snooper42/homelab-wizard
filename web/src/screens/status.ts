@@ -10,6 +10,7 @@ import { mountWallCard } from '../status/WallCard';
 import { mountAlerts, mountDownloads, mountProtection, mountStorage, mountWatchdog, mountWeek, storageShown } from '../status/Cards';
 import { type AppListActions, type AppListProps, clearAppList, foldsFromComputer, mountAppList, mountShowAll, onFoldsPicked, type Pending, stateOf } from '../status/AppList';
 import { store } from '../store';
+import { icons, onIcon, wantIcons } from '../status/appIcons';
 import { ReleaseNotes } from '../status/ReleaseNotes';
 import { h as vnode } from 'preact';
 import { mountStatusNote } from '../parts/Notes';
@@ -117,13 +118,16 @@ function renderAppList(st: api.Status) {
     ...[...(catalog?.categories || [])].sort((x, y) => Number(x.id === automation) - Number(y.id === automation))
       .map((c) => ({ label: c.id === automation ? 'Media automation' : c.label, apps: st.apps.filter((a) => rest(a) && catOf[a.id] === c.id), summary: c.id === automation ? automationSummary : undefined })),
     { label: 'Other', apps: st.apps.filter((a) => rest(a) && !(catalog?.categories || []).some((c) => c.id === catOf[a.id])) }].filter((g) => g.apps.length);
-  appList = { groups, pending, catalog, weekUp, outages, seen, batteryPaused, held, busy: appsBusy, companion: document.documentElement.classList.contains('companion'), os: osName, on: appListActions, memory, unkept };
+  appList = { groups, pending, catalog, weekUp, outages, seen, batteryPaused, held, busy: appsBusy, companion: document.documentElement.classList.contains('companion'), os: osName, on: appListActions, memory, unkept, icons };
+  // The first three of each category's icons, each read once while the app is open (the list redraws as they arrive).
+  wantIcons(groups.flatMap((g) => g.apps.slice(0, 3).filter((x) => x.state !== 'missing').map((x) => x.id)));
   mountAppList($('statusRows'), appList);
   if (!unkept && !appList.companion) refreshUnkept();
 }
 
 // The passwords and keys of each app not ticked Saved yet: a dot on its ⚙
 // (Sign-in details), read once Status shows and again after each tick.
+onIcon(() => { if (appList) mountAppList($('statusRows'), (appList = { ...appList, icons: { ...icons } })); });
 export let unkept: Record<string, number> | undefined;
 async function refreshUnkept() {
   try { unkept = (await go().Unkept()) || {}; } catch { unkept = {}; }

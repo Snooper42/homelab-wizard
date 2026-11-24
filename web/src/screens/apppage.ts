@@ -5,6 +5,7 @@
 import { inTurn } from '../job/queue';
 import { type Day, mountAppPage } from '../page/AppPage';
 import { stateOf } from '../status/AppList';
+import { icons, readIcon } from '../status/appIcons';
 import { stoppedNext } from '../status/stopFor';
 import { appActions, appsBusyNow, cliFlow, pageOpener, pendingOf, statusById, statusData, unkept, unkeptChanged, watchRows } from './status';
 import { backupsData } from './backups';
@@ -41,7 +42,6 @@ async function setSetting(appId: string, setting: string, on: boolean) {
 }
 
 // Each app's icon as last read; the Go side keeps them and asks the app once a week.
-const icons: Record<string, string> = {};
 
 const shown = () => !!id && $('app').classList.contains('active');
 
@@ -63,7 +63,7 @@ pageOpener.open = openApp;
 export function refreshApp() {
   if (!id) return show('status');
   draw();
-  readIcon(id);
+  readIconOf(id);
   readUsage();
   readRest();
   backupsData.fresh(minute);
@@ -95,12 +95,8 @@ async function readUsage() {
 // docker stats measures over a second or two: every 10 seconds while the page shows.
 setInterval(() => { if (!document.hidden && shown()) readUsage(); }, 10000);
 
-async function readIcon(of: string) {
-  let icon = '';
-  try { icon = (await go().AppIcon(of)) || ''; } catch { /* none: the letter */ }
-  if (icon === (icons[of] || '')) return;
-  icons[of] = icon;
-  if (of === id) draw();
+async function readIconOf(of: string) {
+  if ((await readIcon(of)) && of === id) draw();
 }
 
 async function readRest() {

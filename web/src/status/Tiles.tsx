@@ -128,7 +128,7 @@ export function Tiles({ status: st, history, onPause, onChoose, words, start, lo
         <div class="headlinemain">
           <div class="value">{trouble.length ? (trouble.length === 1 ? '1 app needs you' : `${trouble.length} apps need you`) : 'All good'}</div>
           <div class="label">{running.length} of {counted} running</div>
-          <div class="sub">{st.missing ? <span class="bad">{st.missing === 1 ? "1 of the homelab's own apps is down" : `${st.missing} of the homelab's own apps are down`}</span> : "The homelab's own apps are all up"}{!trouble.length && <span>· Nothing unhealthy or stopped</span>}</div>
+          <div class="sub"><span>{st.missing ? <span class="bad">{st.missing === 1 ? "1 of the homelab's own apps is down." : `${st.missing} of the homelab's own apps are down.`}</span> : "The homelab's own apps are all up."}{!trouble.length && ' Nothing unhealthy or stopped.'}</span></div>
         </div>
         {!!trouble.length && <ul class="headlineapps">
           {trouble.slice(0, 3).map((a) => (
