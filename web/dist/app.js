@@ -1002,6 +1002,16 @@
     return [agent, runtime, power, ...disk2 ? [disk2] : []];
   }
   var cap = (s3) => s3.charAt(0).toUpperCase() + s3.slice(1);
+  function machineLine(p3) {
+    const all = facts(p3);
+    const tone = all.some((f4) => f4.tone === "bad") ? "bad" : all.some((f4) => f4.tone === "warn") ? "warn" : "ok";
+    const bad = all.find((f4) => f4.tone === "bad");
+    if (bad) return { words: bad.short, tone };
+    const of = (k3) => all.find((f4) => f4.key === k3)?.short;
+    const disk2 = of("disk"), power = of("power");
+    const words5 = disk2 ? [disk2, power && power.charAt(0).toLowerCase() + power.slice(1)].filter(Boolean).join(" · ") : power || "";
+    return { words: words5, tone };
+  }
   function StartAgent({ id: id2, start }) {
     const [busy2, setBusy] = d2(false);
     const go3 = async () => {
@@ -1034,20 +1044,7 @@
       f4.key
     )) });
   }
-  function HealthLine(p3) {
-    const all = facts(p3);
-    const stopped2 = p3.h.agent === "stopped" || p3.h.agent === "quit";
-    return /* @__PURE__ */ u3(S, { children: [
-      /* @__PURE__ */ u3("span", { class: "label", children: p3.machine.charAt(0).toUpperCase() + p3.machine.slice(1) }),
-      all.map((f4) => /* @__PURE__ */ u3("span", { class: "item " + f4.tone, title: f4.sub, children: [
-        /* @__PURE__ */ u3("span", { class: "dot " + f4.tone }),
-        f4.short
-      ] }, f4.key)),
-      stopped2 && /* @__PURE__ */ u3(StartAgent, { id: "startAgentLine", start: p3.startAgent })
-    ] });
-  }
   var mountHealthTiles = (el3, props) => R(props && /* @__PURE__ */ u3(HealthTiles, { ...props }), el3);
-  var mountHealthLine = (el3, props) => R(props && /* @__PURE__ */ u3(HealthLine, { ...props }), el3);
 
   // web/src/status/Tiles.tsx
   function Tile({ label, value, sub, tone, id: id2, title }) {
@@ -1207,6 +1204,7 @@
     const of = (k3) => all.find((f4) => f4.key === k3);
     const disk2 = of("disk"), power = of("power"), runtime = of("runtime");
     const wrong = all.filter((f4) => f4.tone !== "ok" && f4.key !== "disk");
+    const fine = [power, runtime].filter((f4) => f4 && f4.tone === "ok").map((f4) => f4.short).join(" · ");
     const stopped2 = mac.h.agent === "stopped" || mac.h.agent === "quit";
     const name = mac.machine.charAt(0).toUpperCase() + mac.machine.slice(1);
     return /* @__PURE__ */ u3(Card, { kind: "tile statuscard", id: "statusMac", children: [
@@ -1215,7 +1213,7 @@
         disk2 ? disk2.value.replace(/ free$/, "") : "—",
         /* @__PURE__ */ u3("small", { children: disk2 ? " free" : "" })
       ] }),
-      /* @__PURE__ */ u3("div", { class: "sub", children: /* @__PURE__ */ u3("span", { children: [power?.short, runtime?.short].filter(Boolean).join(" · ") }) }),
+      fine && /* @__PURE__ */ u3("div", { class: "sub", children: /* @__PURE__ */ u3("span", { children: fine }) }),
       wrong.map((f4) => /* @__PURE__ */ u3("div", { class: "sub " + f4.tone, children: /* @__PURE__ */ u3("span", { children: f4.short }) }, f4.key)),
       stopped2 && /* @__PURE__ */ u3(StartAgent, { id: "startAgentMac", start: mac.startAgent }),
       /* @__PURE__ */ u3("div", { class: "sub statusupdates", children: [
@@ -3621,6 +3619,7 @@
         "tr",
         {
           class: "grouphead fold" + (g2.alert ? " bad" : "") + (open5 ? " open" : ""),
+          "data-group": g2.id || g2.label,
           onClick: toggle,
           onContextMenu: (e3) => {
             const c4 = e3.currentTarget.querySelector("button.groupcount");
@@ -3985,6 +3984,42 @@
       reading2 = false;
       queue = [];
     }
+  }
+
+  // web/src/parts/SideMenu.tsx
+  var sideIcons = {
+    overview: "M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z",
+    attention: "M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0zM12 9v4M12 17h.01",
+    pinned: "M12 17v5M5 17h14l-2-6V4h1V2H6v2h1v7z",
+    network: "M12 2a10 10 0 1 0 0 20 10 10 0 1 0 0-20zM2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z",
+    security: "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z",
+    system: "M2 2h20v8H2zM2 14h20v8H2zM6 6h.01M6 18h.01",
+    cloud: "M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z",
+    documents: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M16 13H8M16 17H8M10 9H8",
+    finance: "M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6",
+    media: "M2 2h20v20H2zM7 2v20M17 2v20M2 12h20M2 7h5M2 17h5M17 17h5M17 7h5",
+    "media-automation": "M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15",
+    household: "M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM9 22V12h6v10",
+    other: "M12 2a10 10 0 1 0 0 20 10 10 0 1 0 0-20zM8 12h.01M12 12h.01M16 12h.01",
+    night: "M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z",
+    restore: "M1 4v6h6M3.51 15a9 9 0 1 0 2.13-9.36L1 10",
+    offsite: "M3 11h18v11H3zM7 11V7a5 5 0 0 1 10 0v4",
+    apps: "M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01",
+    start: "M12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2z",
+    steps: "M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11",
+    add: "M12 5v14M5 12h14"
+  };
+  function SideMenu({ label, items, here: here3, pick }) {
+    return /* @__PURE__ */ u3("ul", { class: "finmenu sidemenulist", "aria-label": label, children: items.map((it) => /* @__PURE__ */ u3("li", { children: /* @__PURE__ */ u3("button", { type: "button", class: "finmenuitem" + (here3 === it.key ? " on" : ""), "data-key": it.key, "aria-current": here3 === it.key ? "page" : void 0, onClick: () => pick(it.key), children: [
+      /* @__PURE__ */ u3("svg", { class: "icon", viewBox: "0 0 24 24", "aria-hidden": "true", children: /* @__PURE__ */ u3("path", { d: it.icon }) }),
+      /* @__PURE__ */ u3("span", { children: it.label }),
+      !!it.count && /* @__PURE__ */ u3("span", { class: "count", children: it.count })
+    ] }) }, it.key)) });
+  }
+  var mountSideMenu = (el3, props) => R(props && /* @__PURE__ */ u3(SideMenu, { ...props }), el3);
+  function goToPart(screen, el3) {
+    if (el3) el3.scrollIntoView({ block: "start" });
+    else document.getElementById(screen)?.closest("main")?.scrollTo({ top: 0 });
   }
 
   // web/src/status/ReleaseNotes.tsx
@@ -5543,9 +5578,13 @@
   var mountSetupOnStatus = (el3, props) => R(props.steps?.length ? /* @__PURE__ */ u3(SetupOnStatus, { steps: props.steps, open: props.open }) : null, el3);
 
   // web/src/parts/Foot.tsx
-  function Foot({ system, version, update, openSetup }) {
+  function Foot({ system, version, machine, update, openSetup }) {
+    const about = [system, version].filter(Boolean).join(" · ");
     return /* @__PURE__ */ u3(S, { children: [
-      (system || version) && /* @__PURE__ */ u3(S, { children: [
+      machine?.words ? /* @__PURE__ */ u3("span", { class: "machine", title: about || void 0, children: [
+        /* @__PURE__ */ u3("span", { class: "dot " + machine.tone, "aria-hidden": "true" }),
+        /* @__PURE__ */ u3("span", { class: "part", children: machine.words })
+      ] }) : (system || version) && /* @__PURE__ */ u3(S, { children: [
         /* @__PURE__ */ u3("span", { class: "part", children: system }),
         " · ",
         /* @__PURE__ */ u3("span", { class: "part", children: version })
@@ -5694,7 +5733,7 @@
       p3.catalog.categories.filter((c4) => byCategory2[c4.id]).map((c4) => {
         const apps2 = byCategory2[c4.id];
         const running5 = apps2.filter((a3) => p3.status[a3.id]?.state === "running").length;
-        return /* @__PURE__ */ u3("div", { class: "group", children: [
+        return /* @__PURE__ */ u3("div", { class: "group", "data-cat": c4.id, children: [
           /* @__PURE__ */ u3("h2", { children: [
             c4.label,
             /* @__PURE__ */ u3("span", { class: "n", children: [
@@ -6128,6 +6167,31 @@
       open: (url) => go().Open(url),
       settings: (keys2) => showSettings(keys2),
       note: (id2) => appNote(id2, systemOf(osName, hostOS))
+    });
+    drawChooseSide();
+  }
+  var chooseHere = "start";
+  function drawChooseSide() {
+    const cats = (catalog?.categories || []).filter((c4) => catalog.apps.some((a3) => a3.kind !== "helper" && a3.category === c4.id));
+    mountSideMenu($("chooseSide"), onPhone() ? null : {
+      label: "Choose apps",
+      here: chooseHere,
+      pick: (key7) => {
+        chooseHere = key7;
+        drawChooseSide();
+        if (key7 === "start") {
+          goToPart("choose", null);
+          return;
+        }
+        $("more").open = true;
+        if (key7 === "own") $("customCard").open = true;
+        goToPart("choose", key7 === "own" ? $("customCard") : document.querySelector(`#groups .group[data-cat="${CSS.escape(key7)}"]`));
+      },
+      items: [
+        { key: "start", label: "Start here", icon: sideIcons.start },
+        ...cats.map((c4) => ({ key: c4.id, label: c4.label, icon: sideIcons[c4.id] || sideIcons.other })),
+        { key: "own", label: "Add your own app", icon: sideIcons.add }
+      ]
     });
   }
   var planSeq = 0;
@@ -6602,10 +6666,9 @@
       openSetup: () => navigate("setup")
     } : null;
     $("healthTiles").hidden = !props || !i3.rootOK;
-    $("healthLine").hidden = !props || !i3.rootOK;
     mountHealthTiles($("healthTiles"), props);
-    mountHealthLine($("healthLine"), props);
     setMachine(props);
+    drawFoot({ machine: props && i3.rootOK ? machineLine(props) : null });
   }
   async function loadHost() {
     await hostData.load();
@@ -6860,6 +6923,23 @@
     const i3 = hostData.value?.i;
     const needed = !p3 || p3.left > 0 || p3.wait > 0 || !i3?.rootOK || !i3?.runtimeOK || !$("setupClear").hidden || runningAll || !!runningStep || $("setup").classList.contains("active");
     btn.hidden = !needed;
+    drawSetupSide(p3?.left);
+  }
+  var setupHere = "steps";
+  function drawSetupSide(left) {
+    mountSideMenu($("setupSide"), onPhone() ? null : {
+      label: "Setup",
+      here: setupHere,
+      pick: (key7) => {
+        setupHere = key7;
+        drawSetupSide(left);
+        goToPart("setup", key7 === "steps" ? null : $("healthTiles"));
+      },
+      items: [
+        { key: "steps", label: "Steps", icon: sideIcons.steps, count: left || void 0 },
+        { key: "machine", label: thisMachine, icon: sideIcons.system }
+      ]
+    });
   }
   var checklistActions = {
     fill: (keys2) => showSettings(keys2),
@@ -8066,6 +8146,8 @@
     const test = () => backupTask("restore-test", "Testing a restore (a few minutes)…", "Restore test passed", "The restore test failed: the log says why");
     mountBackupTiles($("backupTiles"), { o: o3, os: osName, test: testable2 ? test : void 0, apps: statusData.value ? statusById : void 0, start: (a3) => appActions.act(a3, "start") });
     mountCopyRows($("backupRows"), { o: o3, apps: statusData.value ? statusById : void 0 });
+    backupsNeed = (o3.copies || []).filter((c4) => c4.state === "stale" || c4.state === "paused").length;
+    drawBackupsSide();
     mountVault($("vaultCard"), { o: o3 });
     $("kopiaCard").hidden = !o3.kopia;
     mountKopia($("kopiaCard"), o3.kopia ? { k: o3.kopia, test: () => backupTask("restore-test-kopia", "Testing Kopia's restore (a few minutes)…", "Kopia's restore test passed", "Kopia's restore test failed: the log says why") } : null);
@@ -8184,6 +8266,27 @@
     }
     btn.disabled = false;
   };
+  var backupsNeed = 0;
+  var backupsHere = "night";
+  var backupParts = [
+    ["night", "Last night", sideIcons.night, "copiesTile"],
+    ["needs", "Needs you", sideIcons.attention, "needsYou"],
+    ["restore", "Restore test", sideIcons.restore, "restoreTile"],
+    ["offsite", "Off-site", sideIcons.offsite, "offsiteTile"],
+    ["apps", "Each app", sideIcons.apps, "copiesCard"]
+  ];
+  function drawBackupsSide() {
+    mountSideMenu($("backupsSide"), onPhone() ? null : {
+      label: "Backups",
+      here: backupsHere,
+      pick: (key7) => {
+        backupsHere = key7;
+        drawBackupsSide();
+        goToPart("backups", key7 === "night" ? null : document.getElementById(backupParts.find((p3) => p3[0] === key7)[3]));
+      },
+      items: backupParts.filter((p3) => !!document.getElementById(p3[3])).map(([key7, label, icon]) => ({ key: key7, label, icon, count: key7 === "needs" ? backupsNeed : void 0 }))
+    });
+  }
 
   // web/src/screens/status.ts
   var statusById = {};
@@ -8278,15 +8381,35 @@
     const pinned = (st.pinned || []).map((id2) => byId[id2]).filter((a3) => a3 && !trouble2(a3));
     const rest = (a3) => !trouble2(a3) && !pinned.includes(a3);
     const groups4 = [
-      { label: "Needs a look", apps: st.apps.filter(trouble2), alert: true },
-      { label: "Pinned", apps: pinned, pinned: true },
-      ...[...catalog?.categories || []].sort((x3, y3) => Number(x3.id === automation) - Number(y3.id === automation)).map((c4) => ({ label: c4.id === automation ? "Media automation" : c4.label, apps: st.apps.filter((a3) => rest(a3) && catOf[a3.id] === c4.id), summary: c4.id === automation ? automationSummary : void 0 })),
-      { label: "Other", apps: st.apps.filter((a3) => rest(a3) && !(catalog?.categories || []).some((c4) => c4.id === catOf[a3.id])) }
+      { label: "Needs a look", id: "attention", apps: st.apps.filter(trouble2), alert: true },
+      { label: "Pinned", id: "pinned", apps: pinned, pinned: true },
+      ...[...catalog?.categories || []].sort((x3, y3) => Number(x3.id === automation) - Number(y3.id === automation)).map((c4) => ({ label: c4.id === automation ? "Media automation" : c4.label, id: c4.id, apps: st.apps.filter((a3) => rest(a3) && catOf[a3.id] === c4.id), summary: c4.id === automation ? automationSummary : void 0 })),
+      { label: "Other", id: "other", apps: st.apps.filter((a3) => rest(a3) && !(catalog?.categories || []).some((c4) => c4.id === catOf[a3.id])) }
     ].filter((g2) => g2.apps.length);
     appList = { groups: groups4, pending, catalog, weekUp, outages, seen, batteryPaused, held, busy: appsBusy, companion: document.documentElement.classList.contains("companion"), os: osName, on: appListActions, memory, unkept, icons: icons2 };
     wantIcons(groups4.flatMap((g2) => g2.apps.slice(0, 3).filter((x3) => x3.state !== "missing" && !shippedLogo(x3.id)).map((x3) => x3.id)));
     mountAppList($("statusRows"), appList);
     if (!unkept && !appList.companion) refreshUnkept();
+    statusSide = groups4.map((g2) => ({ key: g2.id, label: g2.label, icon: sideIcons[g2.id] || sideIcons.other, count: g2.alert ? g2.apps.length : void 0 }));
+    drawStatusSide();
+  }
+  var statusSide = [];
+  var statusHere = "overview";
+  function drawStatusSide() {
+    mountSideMenu($("statusSide"), onPhone() ? null : {
+      label: "Status",
+      here: statusHere,
+      pick: pickStatusPart,
+      items: [{ key: "overview", label: "Overview", icon: sideIcons.overview }, ...statusSide]
+    });
+  }
+  function pickStatusPart(key7) {
+    statusHere = key7;
+    drawStatusSide();
+    const row = () => key7 === "overview" ? null : document.querySelector(`#statusRows tr.grouphead[data-group="${CSS.escape(key7)}"]`);
+    const r3 = row();
+    if (r3 && !r3.classList.contains("open")) r3.click();
+    goToPart("status", row());
   }
   onIcon(() => {
     if (appList) mountAppList($("statusRows"), appList = { ...appList, icons: { ...icons2 } });
@@ -22538,6 +22661,7 @@ ${pays}
       ledgerData.fresh(minute);
       if (onPhone()) sharedData.fresh(5 * minute);
     } else if (!onPhone()) financesData.fresh(5 * minute);
+    if (!onPhone()) healthData.fresh(5 * minute);
   }
   function reloadScreen() {
     const current2 = document.querySelector(".screen.active")?.id;

@@ -138,7 +138,7 @@ export function Groups(p: GroupsProps) {
         const apps = byCategory[c.id];
         const running = apps.filter((a) => p.status[a.id]?.state === 'running').length;
         return (
-          <div class="group" key={c.id}>
+          <div class="group" key={c.id} data-cat={c.id}>
             <h2>{c.label}<span class="n">{running} of {apps.length} running</span></h2>
             {apps.map((a) => <AppRow key={a.id} a={a} p={p} />)}
           </div>

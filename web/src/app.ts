@@ -64,6 +64,8 @@ function freshen(name) {
   // The sidebar's Finances count shows on every screen (not on a phone): the
   // plan is read for it too, at most every five minutes off Finances.
   else if (!onPhone()) financesData.fresh(5 * minute);
+  // The sidebar's foot says how the computer is on every screen: the machine read for it too, at most every five minutes.
+  if (!onPhone()) healthData.fresh(5 * minute);
 }
 // Checking the screen again (⌘R, F5, the engine's refresh): its data read now.
 /** Checks the screen that shows again (the palette's Check again). */

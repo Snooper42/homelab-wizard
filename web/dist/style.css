@@ -1133,14 +1133,9 @@ html.companion .panel.sheet:not([hidden]) { width:calc(100vw - 24px); max-height
 .tiles.health .sub { display:block; min-height:0; font-size:12.5px; line-height:1.4; }
 .tiles.health .sub .storagebar { display:block; height:5px; margin:3px 0 5px; }
 .tiles.health .sub button { display:block; margin-top:8px; }
-.healthline { display:flex; flex-wrap:wrap; align-items:center; gap:4px 16px; margin:-4px 0 14px; font-size:13px; }
-/* What happened overnight (status/Overnight.tsx): the morning's first line, above the machine's. */
+/* What happened overnight (status/Overnight.tsx): the morning's first line, under the heading. */
 .overnight { display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 12px; margin:-6px 0 12px; font-size:14px; font-weight:500; }
 .overnight .linkbtn { font-size:12px; font-weight:400; }
-.healthline .label { color:var(--muted); font-weight:600; }
-.healthline .item { display:inline-flex; align-items:center; color:var(--muted); }
-.healthline .item.warn { color:var(--warn); } .healthline .item.bad { color:var(--bad); }
-.healthline .dot { margin-right:6px; }
 .finishhead { display:flex; flex-wrap:wrap; align-items:center; gap:8px 14px; margin:18px 0 10px; }
 #setup .finishhead h2 { margin:0; font-size:15px; }
 .finishhead .meter { flex:1 1 120px; min-width:80px; margin:0; }
@@ -1953,13 +1948,6 @@ html.companion .fx-navbalances { display:none !important; }
 /* Finances takes the sidebar over while it shows (docs/Redesign.md, The computer's sidebar): the homelab's five screens
    shrink to a strip of icons at the top, then Finances' own menu (Finances.tsx FinMenu), then the accounts. Everywhere
    else the sidebar is the homelab's, without the bank balances. */
-html:not(.companion) nav:has(> button:is([data-screen="finances"], [data-screen="tidy"]).active) { display:grid; grid-template-columns:repeat(5, minmax(0, 1fr)); align-content:start; column-gap:2px; }
-html:not(.companion) nav:has(> button:is([data-screen="finances"], [data-screen="tidy"]).active) > * { grid-column:1 / -1; }
-html:not(.companion) nav:has(> button:is([data-screen="finances"], [data-screen="tidy"]).active) > button:is([data-screen="choose"], [data-screen="status"], [data-screen="backups"], [data-screen="tidy"], [data-screen="finances"]) { grid-column:auto; justify-content:center; padding:8px 0; margin-bottom:10px; }
-html:not(.companion) nav:has(> button:is([data-screen="finances"], [data-screen="tidy"]).active) > button:is([data-screen="choose"], [data-screen="status"], [data-screen="backups"], [data-screen="tidy"], [data-screen="finances"]) > span:not(.count) { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
-html:not(.companion) nav:has(> button:is([data-screen="finances"], [data-screen="tidy"]).active) > button .count { position:absolute; top:0; right:2px; min-width:0; padding:0 5px; font-size:10px; line-height:15px; }
-html:not(.companion) nav:has(> button:is([data-screen="finances"], [data-screen="tidy"]).active) > button.active::before { display:none; }
-html:not(.companion) nav:has(> button:is([data-screen="finances"], [data-screen="tidy"]).active) > button:is([data-screen="setup"], [data-screen="settings"]) { display:none; }
 nav:not(:has(> button[data-screen="finances"].active)) :is(#finMenu, #finNav), html.companion #finMenu { display:none !important; }
 .finmenu, .finsubmenu { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:2px; }
 .finmenu { margin-bottom:14px; }
@@ -3282,3 +3270,50 @@ html:is(.os-mac, .os-windows, .os-linux) .tidynavdrives .tidydrivebar { backgrou
 #setupOnStatus .setuponstatus .primary { width:auto; margin:0; }
 #setupOnStatus .setuponstatus p { margin:4px 0 6px; font-size:13px; }
 .setupnext { margin:0; padding-left:18px; font-size:14px; display:flex; flex-direction:column; gap:3px; }
+/* The sidebar as the redesign's pictures (docs/images/redesign/computer-*.png, redesign-loop R6): the brand on one
+   line, each screen a plain line icon in the text's colour, the screen open on a white pill with a hairline edge and
+   its icon in the accent, a count as a soft amber dot, and one line on the computer at the foot (free space, power).
+   On the Mac in place of the coloured tiles; Windows and Linux keep their own pill and bar, with the same icons and
+   count. The phone's tab bar is its own. */
+html:not(.companion) .brand small { display:none; }
+html.os-mac:not(.companion) nav { width:232px; padding-left:12px; padding-right:12px; padding-bottom:8px; }
+html.os-mac:not(.companion) .brand { font-size:14px; margin:0 8px 18px; }
+html.os-mac:not(.companion) nav button { padding:7px 10px; gap:10px; font-size:14px; border-radius:9px; border:1px solid transparent; }
+html.os-mac:not(.companion) nav button .icon { width:18px; height:18px; padding:0; border-radius:0; background:none; box-shadow:none; color:inherit; stroke-width:1.8; }
+html.os-mac:not(.companion) nav button:hover { background:var(--shade-05); }
+html.os-mac:not(.companion) nav button.active, html.os-mac:not(.companion) nav .finmenuitem.on { background:var(--panel); border-color:var(--line); box-shadow:0 1px 2px var(--shade-06); font-weight:500; }
+html.os-mac:not(.companion) nav :is(button.active, .finmenuitem.on) .icon { color:var(--fin-accent); }
+html:not(.companion) nav .count { background:var(--warn-soft); color:var(--warn); font-weight:700; box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--warn) 18%, transparent); }
+html:not(.companion) .foot .machine { display:flex; align-items:center; gap:7px; }
+html:not(.companion) .foot .machine .dot { width:7px; height:7px; border-radius:50%; flex:none; background:var(--ok); }
+html:not(.companion) .foot .machine .dot.warn { background:var(--warn); }
+html:not(.companion) .foot .machine .dot.bad { background:var(--bad); }
+html.os-mac:not(.companion) .foot { border-top:1px solid var(--shade-1); padding-top:9px; margin-left:4px; margin-right:4px; }
+@media (prefers-color-scheme: dark) {
+  html.os-mac:not(.companion) nav button:hover { background:var(--glow-06); }
+  html.os-mac:not(.companion) nav button.active, html.os-mac:not(.companion) nav .finmenuitem.on { background:var(--glow-1); box-shadow:none; }
+  html.os-mac:not(.companion) .foot { border-top-color:var(--glow-1); }
+}
+/* Status has no subtitle (the redesign's top bar): its line only says how old a remembered reading is, when it is. */
+.statuslead:has(> #statusAge[hidden]) { display:none; }
+/* Every screen's sidebar is laid out as Finances' (the owner, Nov 24: "both of these the same", and no switching back and
+   forth): the brand, the homelab's screens as a strip of icons (Setup the sixth while it shows), then the open screen's
+   own menu (.navbody: Finances', Tidy Up's, or a .sidemenu from parts/SideMenu), then Settings and the line about the
+   computer at the foot. Moving between screens changes only the menu's items and the mark; nothing in the sidebar
+   moves, slides or animates. A window under 700px keeps its rail. */
+@container window (min-width: 701px) {
+  html:not(.companion) nav { display:grid; grid-template-columns:repeat(5, minmax(0, 1fr)); grid-template-rows:auto auto 1fr auto auto auto; grid-auto-flow:row dense; column-gap:2px; }
+  html:not(.companion) nav:has(> button[data-screen="setup"]:not([hidden])) { grid-template-columns:repeat(6, minmax(0, 1fr)); }
+  html:not(.companion) nav > * { grid-column:1 / -1; }
+  html:not(.companion) nav > button:is([data-screen="choose"], [data-screen="status"], [data-screen="backups"], [data-screen="tidy"], [data-screen="finances"], [data-screen="setup"]) { grid-column:auto; grid-row:2; justify-content:center; padding:8px 0; margin-bottom:10px; }
+  html:not(.companion) nav > button:is([data-screen="choose"], [data-screen="status"], [data-screen="backups"], [data-screen="tidy"], [data-screen="finances"], [data-screen="setup"]) > span:not(.count) { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+  html:not(.companion) nav > button:is([data-screen="choose"], [data-screen="status"], [data-screen="backups"], [data-screen="tidy"], [data-screen="finances"], [data-screen="setup"]) .count { position:absolute; top:0; right:2px; min-width:0; padding:0 5px; font-size:10px; line-height:15px; }
+  html:not(.companion) nav > button:is([data-screen="choose"], [data-screen="status"], [data-screen="backups"], [data-screen="tidy"], [data-screen="finances"], [data-screen="setup"]).active::before { display:none; }
+  html:not(.companion) nav > .navbody { align-self:start; }
+}
+html.companion nav .navbody { display:contents; }
+.sidemenu:empty { display:none; }
+nav:not(:has(> button[data-screen="status"].active)) #statusSide, nav:not(:has(> button[data-screen="backups"].active)) #backupsSide,
+nav:not(:has(> button[data-screen="choose"].active)) #chooseSide, nav:not(:has(> button[data-screen="setup"].active)) #setupSide,
+html.companion .sidemenu { display:none !important; }
+html:not(.companion) nav, html:not(.companion) nav * { transition:none !important; animation:none !important; }

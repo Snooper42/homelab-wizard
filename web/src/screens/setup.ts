@@ -9,7 +9,7 @@ import { applyAppearance, applyMotion } from '../appearance';
 import { type HostActions, type HostProps, mountHost, mountNewHomelab, mountRuntime } from '../setup/Host';
 import { type ChecklistActions, mountChecklist, progress } from '../setup/Checklist';
 import { mountSetupOnStatus } from '../setup/OnStatus';
-import { mountHealthLine, mountHealthTiles } from '../setup/Health';
+import { machineLine, mountHealthTiles } from '../setup/Health';
 import { setMachine } from '../status/machine';
 import { store } from '../store';
 import { type FootProps, mountFoot } from '../parts/Foot';
@@ -23,6 +23,7 @@ import { mountJobApps } from '../job/Apps';
 import { navigate, show } from '../app';
 import { lookForUpdates } from './updates';
 import { $, $1, errorText, go, notOnPhone, onPhone, osName, showError, thisMachine } from '../core';
+import { goToPart, mountSideMenu, sideIcons } from '../parts/SideMenu';
 
 // Setup
 export let hostOS = '';
@@ -63,7 +64,7 @@ hostData.watch(drawHost);
 hostData.watch(drawHealth);
 
 // How this machine looks after the homelab (Health.tsx): Setup's tiles and
-// Status' line. The phone has none, and does not ask.
+// Status' This Mac card and the sidebar's foot. The phone has neither, and does not ask.
 export const healthData = store(() => (onPhone() ? Promise.resolve(null) : go().Health()));
 healthData.watch(drawHealth);
 const machineWords = () => thisMachine.charAt(0).toLowerCase() + thisMachine.slice(1);
@@ -75,10 +76,9 @@ function drawHealth() {
     openSetup: () => navigate('setup'),
   } : null;
   $('healthTiles').hidden = !props || !i!.rootOK;
-  $('healthLine').hidden = !props || !i!.rootOK;
   mountHealthTiles($('healthTiles'), props);
-  mountHealthLine($('healthLine'), props);
   setMachine(props);
+  drawFoot({ machine: props && i!.rootOK ? machineLine(props) : null });
 }
 // Reads the machine; a failed read throws, for the caller to say why.
 export async function loadHost() {
@@ -287,6 +287,21 @@ export function setupNav() {
   const needed = !p || p.left > 0 || p.wait > 0 || !i?.rootOK || !i?.runtimeOK
     || !$('setupClear').hidden || runningAll || !!runningStep || $('setup').classList.contains('active');
   btn.hidden = !needed;
+  drawSetupSide(p?.left);
+}
+
+// Setup's menu in the sidebar (parts/SideMenu): its steps, with how many are left, and this machine.
+let setupHere = 'steps';
+function drawSetupSide(left?: number) {
+  mountSideMenu($('setupSide'), onPhone() ? null : {
+    label: 'Setup', here: setupHere, pick: (key) => {
+      setupHere = key;
+      drawSetupSide(left);
+      goToPart('setup', key === 'steps' ? null : $('healthTiles'));
+    },
+    items: [{ key: 'steps', label: 'Steps', icon: sideIcons.steps, count: left || undefined },
+      { key: 'machine', label: thisMachine, icon: sideIcons.system }],
+  });
 }
 
 // What the checklist's buttons do.

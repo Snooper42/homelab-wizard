@@ -13,6 +13,7 @@ import { type AppListActions, type AppListProps, clearAppList, foldsFromComputer
 import { store } from '../store';
 import { icons, onIcon, wantIcons } from '../status/appIcons';
 import { shippedLogo } from '../parts/AppMark';
+import { goToPart, mountSideMenu, type SideItem, sideIcons } from '../parts/SideMenu';
 import { ReleaseNotes } from '../status/ReleaseNotes';
 import { h as vnode } from 'preact';
 import { mountStatusNote } from '../parts/Notes';
@@ -30,7 +31,7 @@ import { mountOvernight, nightOf } from '../status/Overnight';
 import { setHealthApps, setHealthChecks } from '../status/healthLine';
 import { backupsData, redrawBackups } from './backups';
 import { loadSeen, saveSeen } from '../status/changed';
-import { $, errorText, go, notOnPhone, osName, showError, thisMachine } from '../core';
+import { $, errorText, go, notOnPhone, onPhone, osName, showError, thisMachine } from '../core';
 
 // Status
 export let statusById: Record<string, api.AppStatus> = {}; // the latest status, best effort: empty while the runtime is down
@@ -137,16 +138,37 @@ function renderAppList(st: api.Status) {
   const byId = Object.fromEntries(st.apps.map((a) => [a.id, a]));
   const pinned = (st.pinned || []).map((id) => byId[id]).filter((a) => a && !trouble(a));
   const rest = (a: api.AppStatus) => !trouble(a) && !pinned.includes(a);
-  const groups: { label: string; apps: api.AppStatus[]; alert?: boolean; pinned?: boolean; summary?: string }[] = [{ label: 'Needs a look', apps: st.apps.filter(trouble), alert: true },
-    { label: 'Pinned', apps: pinned, pinned: true },
+  const groups: { label: string; id: string; apps: api.AppStatus[]; alert?: boolean; pinned?: boolean; summary?: string }[] = [{ label: 'Needs a look', id: 'attention', apps: st.apps.filter(trouble), alert: true },
+    { label: 'Pinned', id: 'pinned', apps: pinned, pinned: true },
     ...[...(catalog?.categories || [])].sort((x, y) => Number(x.id === automation) - Number(y.id === automation))
-      .map((c) => ({ label: c.id === automation ? 'Media automation' : c.label, apps: st.apps.filter((a) => rest(a) && catOf[a.id] === c.id), summary: c.id === automation ? automationSummary : undefined })),
-    { label: 'Other', apps: st.apps.filter((a) => rest(a) && !(catalog?.categories || []).some((c) => c.id === catOf[a.id])) }].filter((g) => g.apps.length);
+      .map((c) => ({ label: c.id === automation ? 'Media automation' : c.label, id: c.id, apps: st.apps.filter((a) => rest(a) && catOf[a.id] === c.id), summary: c.id === automation ? automationSummary : undefined })),
+    { label: 'Other', id: 'other', apps: st.apps.filter((a) => rest(a) && !(catalog?.categories || []).some((c) => c.id === catOf[a.id])) }].filter((g) => g.apps.length);
   appList = { groups, pending, catalog, weekUp, outages, seen, batteryPaused, held, busy: appsBusy, companion: document.documentElement.classList.contains('companion'), os: osName, on: appListActions, memory, unkept, icons };
   // The first three of each category's icons, each read once while the app is open (the list redraws as they arrive).
   wantIcons(groups.flatMap((g) => g.apps.slice(0, 3).filter((x) => x.state !== 'missing' && !shippedLogo(x.id)).map((x) => x.id)));
   mountAppList($('statusRows'), appList);
   if (!unkept && !appList.companion) refreshUnkept();
+  statusSide = groups.map((g) => ({ key: g.id, label: g.label, icon: sideIcons[g.id] || sideIcons.other, count: g.alert ? g.apps.length : undefined }));
+  drawStatusSide();
+}
+
+// Status's menu in the sidebar (parts/SideMenu): Overview, then each group as the list has it; a pick goes to its row,
+// opening it when folded.
+let statusSide: SideItem[] = [];
+let statusHere = 'overview';
+function drawStatusSide() {
+  mountSideMenu($('statusSide'), onPhone() ? null : {
+    label: 'Status', here: statusHere, pick: pickStatusPart,
+    items: [{ key: 'overview', label: 'Overview', icon: sideIcons.overview }, ...statusSide],
+  });
+}
+function pickStatusPart(key: string) {
+  statusHere = key;
+  drawStatusSide();
+  const row = () => key === 'overview' ? null : document.querySelector<HTMLElement>(`#statusRows tr.grouphead[data-group="${CSS.escape(key)}"]`);
+  const r = row();
+  if (r && !r.classList.contains('open')) r.click();
+  goToPart('status', row());
 }
 
 // The passwords and keys of each app not ticked Saved yet: a dot on its ⚙

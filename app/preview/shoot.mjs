@@ -2141,9 +2141,16 @@ const smokes = [
     await page.waitForSelector('#statusHeadline', { timeout: 5000 });
     if (await page.isVisible('#setupOnStatus')) throw new Error("Setup's steps on the computer's Status");
   } },
-  { name: "Status keeps this machine's line", screen: 'status', mock: { health: { agent: 'running', lastCheck: new Date().toISOString(), power: 'battery', keptAwake: true } }, run: async (page) => {
-    await page.waitForSelector('#healthLine .item.warn:has-text("On battery")', { timeout: 5000 });
-    await page.waitForSelector('#healthLine .item.ok:has-text("Backups and checks on")');
+  // The machine's line moved into Status' This Mac card and the sidebar's foot (the redesign): what's wrong in its tone,
+  // once, and the foot's dot as the worst; the system and version in the foot's tooltip.
+  { name: "Status' This Mac card and the sidebar's foot say how the machine is", screen: 'status', mock: { health: { agent: 'running', lastCheck: new Date().toISOString(), power: 'battery', keptAwake: true } }, run: async (page) => {
+    await page.waitForSelector('#statusMac .sub.warn:has-text("On battery")', { timeout: 5000 });
+    if (await page.locator('#statusMac :text-is("On battery")').count() !== 1) throw new Error('On battery said twice');
+    await page.waitForSelector('#foot .machine .dot.warn', { timeout: 5000 });
+    const said = (await page.textContent('#foot .machine')).trim();
+    if (!/^\d[\d.,]* [KMGT]B free · on battery$/.test(said)) throw new Error('the foot says: ' + said);
+    if (!/\S · \S/.test(await page.getAttribute('#foot .machine', 'title') || '')) throw new Error('no system and version in its tooltip');
+    if (await page.locator('#healthLine').count()) throw new Error('the old line is back');
   } },
   { name: 'Finish setting up: what can wait folds, and a step opens for the rest', screen: 'setup', mock: { setup: [
     { id: 'a', title: 'Step A', why: 'Why A matters, at some length so that it would not fit on one line beside its buttons at all.', detail: 'Right now: something to know about A.', state: 'todo', run: [['a']] },
@@ -2646,8 +2653,9 @@ const smokes = [
     await page.click('nav button[data-screen="settings"]');
     await page.waitForSelector('#versionInfo:has-text("build 0123456")');
   } },
+  // The foot says the machine's free space and power; the system and version are its tooltip, whole.
   { name: 'The footer keeps the version whole on Windows', screen: 'setup', mock: { host: { ...host, os: 'Windows 11 Pro 24H2' } }, run: async (page) => {
-    await page.waitForSelector('#foot .part:has-text("Windows 11 Pro 24H2")', { timeout: 5000 });
+    await page.waitForSelector('#foot .machine[title*="Windows 11 Pro 24H2 · "]', { timeout: 5000 });
     const lines = await page.evaluate(() => [...document.querySelectorAll('#foot .part')].map((e) => e.getClientRects().length));
     if (lines.some((n) => n !== 1)) throw new Error(`a footer part wraps: ${lines}`);
   } },
@@ -5187,7 +5195,7 @@ const smokes = [
         const said = (await page.textContent(`${line} > span`)).trim();
         if (said !== 'Overnight: 2 apps updated, 1 rolled back, a backup of 2.1 GB, nothing needed you.') throw new Error('it says: ' + said);
         // Above the machine's line, under the heading.
-        if (!(await page.evaluate(() => document.getElementById('overnightLine').nextElementSibling?.id === 'healthLine'))) throw new Error('not above the machine’s line');
+        if (!(await page.evaluate(() => document.getElementById('overnightLine').previousElementSibling?.classList.contains('header')))) throw new Error('not under the heading');
         await page.click(`${line} button:text-is("Hide until tomorrow")`);
         await page.waitForSelector('#overnightLine', { state: 'hidden', timeout: 2000 });
         await page.evaluate(() => window.__emit('status:changed'));
@@ -6446,6 +6454,35 @@ const smokes = [
     await page.waitForSelector('#status.active', { timeout: 5000 });
     if (await page.isVisible('#finNav') || await page.isVisible('#finMenu')) throw new Error("Status's sidebar shows Finances' menu or the balances");
     if (!(await page.isVisible('nav > button[data-screen="settings"]'))) throw new Error('Settings left the sidebar off Finances');
+  } },
+  // Every screen's sidebar as Finances' (the owner, Nov 24): the homelab's screens a strip of icons, then the screen's own
+  // menu (parts/SideMenu), then Settings and the computer's line at the foot; a pick in the menu goes to its part.
+  { name: "Every screen's sidebar is laid out as Finances': the icons in a strip, then its own menu", screen: 'status', run: async (page) => {
+    for (const [screen, menu, first] of [['status', '#statusSide', 'Overview'], ['backups', '#backupsSide', 'Last night'], ['choose', '#chooseSide', 'Start here'], ['setup', '#setupSide', 'Steps'], ['finances', '#finMenu', 'Dashboard'], ['tidy', '#tidyMenu', 'Overview']]) {
+      await page.click(`nav > button[data-screen="${screen}"]`);
+      await page.waitForSelector(`#${screen}.active`, { timeout: 5000 });
+      await page.waitForSelector(`${menu} [aria-current="page"]:has-text("${first}")`, { timeout: 5000 });
+      const tops = [];
+      for (const s of ['status', 'backups', 'tidy', 'finances', 'choose']) {
+        const box = await page.locator(`nav > button[data-screen="${s}"]`).boundingBox();
+        if (!box || box.width > 60) throw new Error(`on ${screen}, the ${s} button is a whole line, not an icon`);
+        tops.push(Math.round(box.y));
+      }
+      if (new Set(tops).size !== 1) throw new Error(`on ${screen}, the icons are not one row: ${tops}`);
+      const shown = await page.$$eval('.sidemenu, #finMenu, #tidyMenu', (els) => els.filter((e) => e.getClientRects().length && e.textContent.trim()).map((e) => e.id));
+      if (shown.length !== 1 || `#${shown[0]}` !== menu) throw new Error(`on ${screen}, the menus shown: ${shown}`);
+      const menuBox = await page.locator(menu).boundingBox(), settings = await page.locator('nav > button[data-screen="settings"]').boundingBox();
+      if (menuBox.y <= tops[0] || (screen !== 'finances' && settings.y < menuBox.y + menuBox.height)) throw new Error(`on ${screen}, the menu is not between the icons and Settings`);
+    }
+    // Status's menu opens a folded category and goes to it.
+    await page.click('nav > button[data-screen="status"]');
+    await page.click('#statusSide button:has-text("Media")');
+    await page.waitForSelector('#statusRows tr.grouphead.open[data-group="media"]', { timeout: 5000 });
+    await page.waitForSelector('#statusSide [aria-current="page"]:has-text("Media")');
+    // Backups' Needs you says how many wait, and goes to its card.
+    await page.click('nav > button[data-screen="backups"]');
+    await page.click('#backupsSide button:has-text("Each app")');
+    await page.waitForFunction(() => { const r = document.getElementById('copiesCard').getBoundingClientRect(); return r.top >= 0 && r.top < innerHeight / 2; }, null, { timeout: 5000 });
   } },
   // Usability task 15, item 4: on the phone (390px, and 320px with text at 1.5×, which is 213px), back, the period's name
   // and forward on one line, the name wrapping between them.

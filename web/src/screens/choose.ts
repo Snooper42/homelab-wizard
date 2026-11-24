@@ -10,7 +10,8 @@ import { hostOS } from './setup';
 import { settingLabel, settingsData, showSettings } from './settings';
 import { cliProgress, startJob } from '../jobs';
 import { inTurn, waitWords } from '../job/queue';
-import { $, go, minute, osName, showError } from '../core';
+import { $, go, minute, onPhone, osName, showError } from '../core';
+import { goToPart, mountSideMenu, sideIcons } from '../parts/SideMenu';
 
 // Choose apps
 export let catalog: api.Catalog | null = null;
@@ -109,6 +110,26 @@ export function renderApps() {
     open: (url) => go().Open(url),
     settings: (keys) => showSettings(keys),
     note: (id) => appNote(id, systemOf(osName, hostOS)),
+  });
+  drawChooseSide();
+}
+
+// Choose apps' menu in the sidebar (parts/SideMenu): Start here, each category (opening Add more), and Add your own app.
+let chooseHere = 'start';
+function drawChooseSide() {
+  const cats = (catalog?.categories || []).filter((c) => catalog.apps.some((a) => a.kind !== 'helper' && a.category === c.id));
+  mountSideMenu($('chooseSide'), onPhone() ? null : {
+    label: 'Choose apps', here: chooseHere, pick: (key) => {
+      chooseHere = key;
+      drawChooseSide();
+      if (key === 'start') { goToPart('choose', null); return; }
+      ($('more') as HTMLDetailsElement).open = true;
+      if (key === 'own') ($('customCard') as HTMLDetailsElement).open = true;
+      goToPart('choose', key === 'own' ? $('customCard') : document.querySelector(`#groups .group[data-cat="${CSS.escape(key)}"]`));
+    },
+    items: [{ key: 'start', label: 'Start here', icon: sideIcons.start },
+      ...cats.map((c) => ({ key: c.id, label: c.label, icon: sideIcons[c.id] || sideIcons.other })),
+      { key: 'own', label: 'Add your own app', icon: sideIcons.add }],
   });
 }
 

@@ -45,8 +45,7 @@ Every screen is built from the same few parts. A screen that matches its picture
 
 ### The computer's sidebar
 
-- **Finances and Tidy Up take the sidebar over** while you're in them: the homelab's screens shrink to a strip of five icons at the top, then that screen's own menu (Finances: Dashboard, Transactions, Budgets, Bills & paychecks, Calendar, Shared with …, Net worth, Reports; Tidy Up: Overview and each library), then its lists (accounts; drives).
-- **Everywhere else, the plain homelab menu:** Status, Backups, Tidy Up, Finances, Choose apps, and Settings at the foot, with one line on the computer (free space, power).
+- **Every screen's sidebar is laid out as Finances'** (the owner, Nov 24, changing the pictures' plain menu: "making sure both of these are the same"): the homelab's screens as a strip of icons at the top, then that screen's own menu (Finances: Dashboard, Transactions, Budgets, Bills & paychecks, Calendar, Shared with …, Net worth, Reports; Tidy Up: Overview and each library; Status: Overview and each category; Backups: Last night, Needs you, Restore test, Off-site, Each app; Choose apps: its categories; Setup: its steps), then its lists (accounts; drives), and Settings at the foot, with one line on the computer (free space, power).
 - **Bank accounts appear only in Finances.**
 - Finances' sidebar ends with whose Finances these are, and when the banks were last read.
 
