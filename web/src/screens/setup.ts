@@ -8,6 +8,7 @@ import { noAccentNote, systemOf } from '../differs';
 import { applyAppearance, applyMotion } from '../appearance';
 import { type HostActions, type HostProps, mountHost, mountNewHomelab, mountRuntime } from '../setup/Host';
 import { type ChecklistActions, mountChecklist, progress } from '../setup/Checklist';
+import { mountSetupOnStatus } from '../setup/OnStatus';
 import { mountHealthLine, mountHealthTiles } from '../setup/Health';
 import { setMachine } from '../status/machine';
 import { store } from '../store';
@@ -319,6 +320,8 @@ function setupBadge(left) {
 export const stepsData = store(() => go().Setup());
 stepsData.watch(() => {
   if (stepsData.error) return notOnPhone(stepsData.error) ? undefined : showError(stepsData.error);
+  // The phone has no Setup tab: its unfinished steps show on Status (redesign-loop R10).
+  if (onPhone()) mountSetupOnStatus($('setupOnStatus'), { steps: stepsData.value || null, open: () => navigate('setup') });
   renderSetup(stepsData.value!);
   if (form) drawSettings(false, false); // each setting's step, marked under it
 });

@@ -53,6 +53,8 @@ export function show(name) {
 function freshen(name) {
   if (name === 'status') { statusData.fresh(minute); healthData.fresh(minute); }
   if (name === 'app') { statusData.fresh(minute); refreshApp(); }
+  // A phone's Status shows Setup's unfinished steps (no Setup tab there): read them at most every ten minutes.
+  if (name === 'status' && onPhone()) stepsData.fresh(10 * minute);
   // Status too: a stale copy says why from its app's state.
   if (name === 'backups') { backupsData.fresh(minute); jobsData.fresh(minute); statusData.fresh(minute); }
   if (name === 'setup') { hostData.fresh(minute); stepsData.fresh(minute); healthData.fresh(minute); statusData.fresh(minute); }

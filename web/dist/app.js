@@ -5522,6 +5522,26 @@
   var mountRuntime = (el3, props) => R(/* @__PURE__ */ u3(Runtime, { ...props }), el3);
   var mountNewHomelab = (el3, props) => R(/* @__PURE__ */ u3(NewHomelab, { ...props }), el3);
 
+  // web/src/setup/OnStatus.tsx
+  function SetupOnStatus({ steps, open: open5 }) {
+    const p3 = progress(steps);
+    if (!p3.left) return null;
+    const next = steps.filter((s3) => s3.state !== "done" && !waits(s3)).slice(0, 3);
+    return /* @__PURE__ */ u3(Card, { kind: "setuponstatus", id: "setupOnStatusCard", children: [
+      /* @__PURE__ */ u3(CardHead, { title: "Finish setting up", children: /* @__PURE__ */ u3("button", { type: "button", class: "small primary", onClick: open5, children: "Continue" }) }),
+      /* @__PURE__ */ u3("p", { class: "muted", children: [
+        p3.done,
+        " of ",
+        p3.total,
+        " done · ",
+        p3.left,
+        " left"
+      ] }),
+      /* @__PURE__ */ u3("ul", { class: "setupnext", children: next.map((s3) => /* @__PURE__ */ u3("li", { children: s3.title }, s3.id)) })
+    ] });
+  }
+  var mountSetupOnStatus = (el3, props) => R(props.steps?.length ? /* @__PURE__ */ u3(SetupOnStatus, { steps: props.steps, open: props.open }) : null, el3);
+
   // web/src/parts/Foot.tsx
   function Foot({ system, version, update, openSetup }) {
     return /* @__PURE__ */ u3(S, { children: [
@@ -6892,6 +6912,7 @@
   var stepsData = store(() => go().Setup());
   stepsData.watch(() => {
     if (stepsData.error) return notOnPhone(stepsData.error) ? void 0 : showError(stepsData.error);
+    if (onPhone()) mountSetupOnStatus($("setupOnStatus"), { steps: stepsData.value || null, open: () => navigate("setup") });
     renderSetup(stepsData.value);
     if (form) drawSettings(false, false);
   });
@@ -22495,6 +22516,7 @@ ${pays}
       statusData.fresh(minute);
       refreshApp();
     }
+    if (name === "status" && onPhone()) stepsData.fresh(10 * minute);
     if (name === "backups") {
       backupsData.fresh(minute);
       jobsData.fresh(minute);
