@@ -3191,8 +3191,9 @@ html.companion .groupmarks { margin-right:8px; }
 .tidyfoldersbtn.on { background:var(--sunken); }
 /* Today two-thirds wide and Needs a look beside it (R9), in three columns whatever the board's own fill; one under the
    other in a narrower window. Needs a look's buttons go under each thing's name and why, as in the picture. */
-.fx-board.tidynow { grid-template-columns:repeat(3, minmax(0, 1fr)); }
-@container (max-width: 900px) { .fx-board.tidynow { grid-template-columns:minmax(0, 1fr); } .fx-board.tidynow > .fx-widget { grid-column:auto; } }
+/* The same two columns as Needs your OK and the drive under them, so their edges line up. */
+.fx-board.tidynow { grid-template-columns:minmax(0, 2fr) minmax(0, 1fr); }
+@container (max-width: 1040px) { .fx-board.tidynow { grid-template-columns:minmax(0, 1fr); } .fx-board.tidynow > .fx-widget { grid-column:auto; } }
 .tidyneedslook .fx-rows > li { flex-wrap:wrap; }
 .tidyneedslook .fx-rows > li > .grow { flex:1 1 calc(100% - 60px); min-width:0; }
 .tidyneedslook .tidyneedsgo { flex:1 1 100%; padding-left:44px; }

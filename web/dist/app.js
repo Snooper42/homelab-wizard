@@ -21036,19 +21036,29 @@ ${pays}
   }
   function TodayWidget({ d: d3, job: job2, act, wide }) {
     const today2 = d3.today || [];
-    return /* @__PURE__ */ u3(Widget, { title: "What I did today", span: wide ? "all" : 2, kind: "tidytoday", children: today2.length ? /* @__PURE__ */ u3(Rows, { kind: "fx-rows tidytoday", children: today2.map((f4) => /* @__PURE__ */ u3(
-      Row,
-      {
-        lead: /* @__PURE__ */ u3(LibIcon, { kind: f4.kind }),
-        title: f4.title,
-        sub: f4.undone ? "Put back where it came from" : `${f4.where} · ${(f4.did || []).join(" · ")}`,
-        end: /* @__PURE__ */ u3(S, { children: [
-          f4.undo && !f4.undone && /* @__PURE__ */ u3(Go, { label: "Undo", job: job2, title: `Put ${f4.title} back where it came from`, onClick: () => act.run("inbox", "undo", [f4.id]) }),
-          /* @__PURE__ */ u3("span", { class: "muted tidywhen", children: clock2(f4.at) })
+    return /* @__PURE__ */ u3(Widget, { title: "What I did today", span: wide ? "all" : 1, kind: "tidytoday", children: [
+      !!today2.length && /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3("span", { class: "fx-amount", children: [
+        today2.filter((f4) => !f4.undone).length,
+        /* @__PURE__ */ u3("small", { children: [
+          " ",
+          today2.filter((f4) => !f4.undone).length === 1 ? "download" : "downloads",
+          " filed"
         ] })
-      },
-      f4.id
-    )) }) : /* @__PURE__ */ u3(Empty, { children: "Nothing yet today. Drop something in a watched folder, or press Tidy up now." }) });
+      ] }), caption: "Since midnight" }),
+      today2.length ? /* @__PURE__ */ u3(Rows, { kind: "fx-rows tidytoday", children: today2.map((f4) => /* @__PURE__ */ u3(
+        Row,
+        {
+          lead: /* @__PURE__ */ u3(LibIcon, { kind: f4.kind }),
+          title: f4.title,
+          sub: f4.undone ? "Put back where it came from" : `${f4.where} · ${(f4.did || []).join(" · ")}`,
+          end: /* @__PURE__ */ u3(S, { children: [
+            f4.undo && !f4.undone && /* @__PURE__ */ u3(Go, { label: "Undo", job: job2, title: `Put ${f4.title} back where it came from`, onClick: () => act.run("inbox", "undo", [f4.id]) }),
+            /* @__PURE__ */ u3("span", { class: "muted tidywhen", children: clock2(f4.at) })
+          ] })
+        },
+        f4.id
+      )) }) : /* @__PURE__ */ u3(Empty, { children: "Nothing yet today. Drop something in a watched folder, or press Tidy up now." })
+    ] });
   }
   function meterOf(l3) {
     if (l3.kind === "music") {

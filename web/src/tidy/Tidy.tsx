@@ -988,7 +988,9 @@ function NeedsLookWidget({ d, job, act }: { d: app.TidyUp; job: TidyJob | null; 
 function TodayWidget({ d, job, act, wide }: { d: app.TidyUp; job: TidyJob | null; act: TidyActions; wide?: boolean }) {
   const today = d.today || [];
   return (
-    <Widget title="What I did today" span={wide ? 'all' : 2} kind="tidytoday">
+    <Widget title="What I did today" span={wide ? 'all' : 1} kind="tidytoday">
+      {/* As the redesign's Today (R9): how many it filed, as a figure, over the list. */}
+      {!!today.length && <Stat value={<span class="fx-amount">{today.filter((f) => !f.undone).length}<small> {today.filter((f) => !f.undone).length === 1 ? 'download' : 'downloads'} filed</small></span>} caption="Since midnight" />}
       {today.length ? (
         <Rows kind="fx-rows tidytoday">
           {today.map((f) => (
