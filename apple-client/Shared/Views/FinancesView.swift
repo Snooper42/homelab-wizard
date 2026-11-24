@@ -274,9 +274,10 @@ private struct CheckingHero: View {
         let brand = account.flatMap { logos.brandOf(institution: $0.institution, name: $0.name, kind: $0.kind) }
         let caption = now.typedSameDay ? "Now, as typed in today" : "Now, typed in \(Self.short(now.from))"
         VStack(spacing: 10) {
-            // What's left first, in words: the number people open Finances for (apple-loop.md item 1).
-            if let left = LeftUntil(view) {
-                LeftUntilCard(left: left, view: view, finances: finances)
+            // What's left first: the number people open Finances for (apple-loop.md item 1), as the redesign's
+            // card (phone-finances.png): the figure, its chart through the period, and Now, Payday and Bills under it.
+            if let lead = FinanceLead(view), let left = LeftUntil(view) {
+                FinanceLeadCard(lead: lead, left: left, now: now, view: view, finances: finances)
                     .padding(.bottom, 8)
             }
             NavigationLink {
@@ -293,53 +294,6 @@ private struct CheckingHero: View {
             }
             .buttonStyle(PressableButtonStyle())
             .accessibilityHint("How it adds up")
-            if let pay = view.afterPay {
-                let whose = view.nextPay.map { view.names($0.people) } ?? ""
-                let count = view.paydayPayments
-                let title = "After \(whose.isEmpty ? "the next" : whose + "'s") paycheck"
-                NavigationLink {
-                    CheckingWorkingView(working: pay, view: view, finances: finances, title: "\(title), \(Self.short(pay.date))",
-                                        start: "Checking now", end: "Once the paycheck is in, \(Self.long(pay.date))",
-                                        note: count == 0 ? nil
-                                            : count == 1
-                                            ? "One payment due \(Self.short(pay.date)) comes out of this paycheck after it lands, so it isn't in this number."
-                                            : "\(count) payments due \(Self.short(pay.date)) come out of this paycheck after it lands, so they aren't in this number.")
-                } label: {
-                    (typeSize.isAccessibilitySize ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8)) : AnyLayout(HStackLayout(spacing: 12))) {
-                        Image(systemName: "arrow.down.to.line.circle.fill")
-                            .font(.system(size: 28))
-                            .symbolRenderingMode(.palette)
-                            .foregroundStyle(.white, Theme.success)
-                            .accessibilityHidden(true)
-                        VStack(alignment: .leading, spacing: 2) {
-                            // Two lines at ordinary sizes: one cut it to "After Alex's paych…"
-                            // in the iPad's narrow column, upright (Nov 16).
-                            Text(verbatim: title)
-                                .font(.subheadline.weight(.semibold))
-                                .foregroundStyle(Theme.ink)
-                                .lineLimit(typeSize.isAccessibilitySize ? 3 : 2)
-                                .minimumScaleFactor(typeSize.isAccessibilitySize ? 1 : 0.8)
-                            // Before its bills: what's left after them is the card on top.
-                            Text(verbatim: "\(Self.long(pay.date)), before its bills")
-                                .font(.caption)
-                                .foregroundStyle(Theme.secondaryInk)
-                        }
-                        Spacer(minLength: 8)
-                        Money(value: pay.result, currency: view.plan.currency, finances: finances)
-                            .font(.headline)
-                            .foregroundStyle(pay.result < 0 ? Theme.danger : Theme.ink)
-                            .contentTransition(.numericText())
-                        Image(systemName: "chevron.right").accessibilityHidden(true)
-                            .font(.footnote.weight(.semibold))
-                            .foregroundStyle(.tertiary)
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 14)
-                    .card()
-                }
-                .buttonStyle(PressableButtonStyle())
-            }
         }
     }
 
@@ -354,59 +308,161 @@ private struct CheckingHero: View {
     }
 }
 
-/// What's left until the paycheck after next, once the next one is in and
-/// its bills are paid, with the cushion's warning: Finances' first card (the
-/// web's Dashboard says it the same way). It opens Bills, paycheck by paycheck.
-private struct LeftUntilCard: View {
+/// Finances' first card as the redesign's phone picture (phone-finances.png) and the computer's Dashboard: Left after
+/// this paycheck's bills, the figure with its cents smaller, in checking on the period's last day after its bills, a chip
+/// against the period before, checking each day as steps with a dot at each bill and the cushion dashed, then Now,
+/// Payday and Bills. The card opens Bills, paycheck by paycheck; Now and Payday open how each adds up.
+private struct FinanceLeadCard: View {
+    let lead: FinanceLead
     let left: LeftUntil
+    let now: FinanceWorking
     let view: FinancesPlanView
     let finances: FinancesViewModel
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     private var shown: Bool { finances.amountsShown && !finances.amountsHiddenByPlan }
 
     var body: some View {
         let currency = view.plan.currency
-        let warning = left.warning(cushion: amountText(view.plan.cushion, currency, finances, whole: true),
+        let cushion = view.plan.cushion
+        let figure = FinanceLead.splitCents(amountText(lead.left, currency, finances))
+        let warning = left.warning(cushion: amountText(cushion, currency, finances, whole: true),
                                    short: amountText(abs(left.low?.amount ?? 0), currency, finances, whole: true))
-        NavigationLink {
-            FinanceBillsPage(finances: finances)
-        } label: {
-            VStack(alignment: .leading, spacing: 6) {
-                HStack(alignment: .firstTextBaseline) {
-                    Text(verbatim: left.title())
-                        .font(.subheadline.weight(.semibold))
+        VStack(alignment: .leading, spacing: 12) {
+            NavigationLink {
+                FinanceBillsPage(finances: finances)
+            } label: {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Left after this paycheck's bills")
+                        .font(.headline)
+                        .foregroundStyle(Theme.ink)
+                    HStack(alignment: .firstTextBaseline) {
+                        (Text(verbatim: figure.whole).font(.system(.largeTitle, design: .rounded).weight(.bold))
+                            + Text(verbatim: figure.cents).font(.title2.weight(.semibold)).foregroundColor(Theme.secondaryInk))
+                            .monospacedDigit()
+                            .foregroundStyle(!shown ? Theme.secondaryInk : lead.left < 0 ? Theme.danger : Theme.ink)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.6)
+                        Spacer(minLength: 8)
+                        if let change = lead.change, shown, abs(change) >= 0.005 {
+                            chip(change, currency)
+                        }
+                    }
+                    Text(verbatim: lead.label())
+                        .font(.caption.weight(.semibold))
+                        .textCase(.uppercase)
+                        .tracking(0.6)
                         .foregroundStyle(Theme.secondaryInk)
-                    Spacer(minLength: 8)
-                    Image(systemName: "chevron.right").accessibilityHidden(true)
-                        .font(.footnote.weight(.semibold))
-                        .foregroundStyle(.tertiary)
+                    if let warning {
+                        Label(warning, systemImage: "exclamationmark.triangle.fill")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(left.low?.short == true ? Theme.danger : Theme.warning)
+                    }
+                    if lead.days.count >= 2 {
+                        chart(cushion: cushion)
+                            .frame(height: 120)
+                            .padding(.top, 4)
+                    }
                 }
-                Text(verbatim: amountText(left.amount, currency, finances))
-                    .font(.largeTitle.weight(.heavy))
-                    .monospacedDigit()
-                    .foregroundStyle(!shown ? Theme.secondaryInk : left.amount < 0 ? Theme.danger : Theme.ink)
-                    .contentTransition(.numericText())
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.6)
-                if let detail = left.detail(view) {
-                    Text(verbatim: detail)
-                        .font(.subheadline)
-                        .foregroundStyle(Theme.secondaryInk)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityHint("Bills, paycheck by paycheck")
+            let layout = typeSize.isAccessibilitySize
+                ? AnyLayout(VStackLayout(spacing: 8))
+                : AnyLayout(HStackLayout(spacing: 8))
+            layout {
+                NavigationLink {
+                    CheckingWorkingView(working: now, view: view, finances: finances, title: "Checking now",
+                                        start: "Checking, typed in \(CheckingHero.long(now.from))", end: "Checking now", note: nil)
+                } label: {
+                    tile("Now", amountText(now.result, currency, finances, whole: true), tone: now.result < 0 ? Theme.danger : Theme.ink)
                 }
-                if let warning {
-                    Label(warning, systemImage: "exclamationmark.triangle.fill")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(left.low?.short == true ? Theme.danger : Theme.warning)
-                        .padding(.top, 2)
+                .buttonStyle(PressableButtonStyle())
+                if let pay = view.afterPay {
+                    NavigationLink {
+                        CheckingWorkingView(working: pay, view: view, finances: finances, title: "On payday, \(CheckingHero.short(pay.date))",
+                                            start: "Checking now", end: "Once the paycheck is in, \(CheckingHero.long(pay.date))", note: nil)
+                    } label: {
+                        tile("Payday", amountText(pay.result, currency, finances, whole: true), tone: pay.result < 0 ? Theme.danger : Theme.ink)
+                    }
+                    .buttonStyle(PressableButtonStyle())
+                }
+                tile(lead.bills == 0 ? "Bills" : "Bills · \(lead.bills)", amountText(-lead.owed, currency, finances, whole: true),
+                     tone: lead.owed > 0.005 && shown ? Theme.danger : Theme.ink)
+            }
+        }
+        .padding(18)
+        .card(radius: 24)
+    }
+
+    @ViewBuilder
+    private func chart(cushion: Double) -> some View {
+        Chart {
+            ForEach(lead.days) { day in
+                AreaMark(x: .value("Day", day.date), y: .value("Checking", day.balance))
+                    .interpolationMethod(.stepEnd)
+                    .foregroundStyle(Theme.accent.opacity(0.12))
+                LineMark(x: .value("Day", day.date), y: .value("Checking", day.balance))
+                    .interpolationMethod(.stepEnd)
+                    .foregroundStyle(Theme.accent)
+                if day.bill {
+                    PointMark(x: .value("Day", day.date), y: .value("Checking", day.balance))
+                        .foregroundStyle(Theme.warning)
+                        .symbolSize(30)
                 }
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(18)
-            .contentShape(Rectangle())
-            .card(radius: 24)
+            if cushion > 0 {
+                RuleMark(y: .value("Cushion", cushion))
+                    .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 3]))
+                    .foregroundStyle(Theme.danger.opacity(0.6))
+            }
         }
-        .buttonStyle(PressableButtonStyle())
-        .accessibilityHint("Bills, paycheck by paycheck")
+        .chartYAxis(.hidden)
+        .chartXAxis {
+            AxisMarks(values: .stride(by: .day, count: max(1, lead.days.count / 3))) { _ in
+                AxisValueLabel(format: .dateTime.month(.abbreviated).day(), centered: false)
+            }
+        }
+        .accessibilityElement()
+        .accessibilityLabel("Checking each day of the period, a step at each bill")
+    }
+
+    private func chip(_ change: Double, _ currency: String) -> some View {
+        let up = change >= 0
+        return VStack(alignment: .trailing, spacing: 2) {
+            Label((up ? "+" : "−") + amountText(abs(change), currency, finances), systemImage: up ? "arrow.up.right" : "arrow.down.right")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(up ? Theme.success : Theme.danger)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 4)
+                .background((up ? Theme.success : Theme.danger).opacity(0.12), in: Capsule())
+            Text("vs last paycheck")
+                .font(.caption)
+                .foregroundStyle(Theme.secondaryInk)
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    private func tile(_ title: String, _ value: String, tone: Color) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(verbatim: title)
+                .font(.caption2.weight(.semibold))
+                .textCase(.uppercase)
+                .tracking(0.5)
+                .foregroundStyle(Theme.secondaryInk)
+            Text(verbatim: value)
+                .font(.headline)
+                .monospacedDigit()
+                .foregroundStyle(tone)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(12)
+        .background(Theme.canvas, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .accessibilityElement(children: .combine)
     }
 }
 
