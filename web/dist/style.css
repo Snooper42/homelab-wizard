@@ -2283,6 +2283,8 @@ html:not(.companion) body:has(#finances.active) #oneLine { display:none !importa
 .fx-gotin { padding:1px 6px; border-radius:6px; background:var(--fin-accent-soft); }
 .fx-acctname { display:flex; align-items:center; gap:8px; min-width:0; font-size:13px; font-weight:600; }
 .fx-acctname > span:last-child { min-width:0; overflow-wrap:anywhere; line-height:1.25; }
+/* Room for a name of two lines in every tile ("Chase Checking" wraps in a narrow one), so each tile's figures stay level with the rest (R5). */
+.fx-acctrow .fx-acctname { min-height:calc(2 * 1.25em); }
 .fx-accttile > .fx-amount { font-size:17px; font-weight:700; font-variant-numeric:tabular-nums; }
 .fx-acctnote { display:flex; flex-wrap:wrap; align-items:center; gap:4px 8px; font-size:12px; font-weight:600; font-variant-numeric:tabular-nums; }
 .fx-gotin { color:var(--fin-accent-ink); }
