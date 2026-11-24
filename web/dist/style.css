@@ -2288,6 +2288,8 @@ html:not(.companion) body:has(#finances.active) #oneLine { display:none !importa
 .fx-gotin { padding:1px 6px; border-radius:6px; background:var(--fin-accent-soft); }
 .fx-acctname { display:flex; align-items:center; gap:8px; min-width:0; font-size:13px; font-weight:600; }
 .fx-acctname > span:last-child { min-width:0; overflow-wrap:anywhere; line-height:1.25; }
+/* Room for a name of two lines in every tile ("Chase Checking" wraps in a narrow one), so each tile's figures stay level with the rest (R5). */
+.fx-acctrow .fx-acctname { min-height:calc(2 * 1.25em); }
 .fx-accttile > .fx-amount { font-size:17px; font-weight:700; font-variant-numeric:tabular-nums; }
 .fx-acctnote { display:flex; flex-wrap:wrap; align-items:center; gap:4px 8px; font-size:12px; font-weight:600; font-variant-numeric:tabular-nums; }
 .fx-gotin { color:var(--fin-accent-ink); }
@@ -2451,8 +2453,8 @@ img.fx-cardpic { object-fit:cover; padding:0; }
 .fx-txfilters .fx-txsearch { flex:1 1 220px; min-width:0; }
 .fx-txfilters select { flex:0 1 auto; max-width:100%; }
 .fx-txtotal { margin:-4px 0 12px; font-size:13px; }
-.fx-txfilters input, .fx-txfilters select, .fx-reporttag { font:inherit; font-size:13px; min-height:32px; padding:5px 10px; border:1px solid var(--line-strong); border-radius:8px; background:var(--panel); color:var(--text); }
-.fx-txfilters input:focus, .fx-txfilters select:focus, .fx-reporttag:focus { outline:2px solid var(--fin-accent); outline-offset:0; border-color:var(--fin-accent); }
+.fx-txfilters input, .fx-txfilters select, .fx-reporttag, .fx-top { font:inherit; font-size:13px; min-height:32px; padding:5px 10px; border:1px solid var(--line-strong); border-radius:8px; background:var(--panel); color:var(--text); }
+.fx-txfilters input:focus, .fx-txfilters select:focus, .fx-reporttag:focus, .fx-top:focus { outline:2px solid var(--fin-accent); outline-offset:0; border-color:var(--fin-accent); }
 @media (max-width: 560px) { .fx-txfilters select { flex:1 1 calc(50% - 4px); } }
 /* Transactions picked to change together: what is picked and what to do with them, over the rows; each row's box before its mark. */
 .fx-txpick { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:0 0 12px; padding:8px 10px; border-radius:10px; background:var(--sunken); }
@@ -2606,7 +2608,7 @@ html.os-linux #finances button.small:not(.primary):hover { color:var(--text); }
 .fx-moneyflow .fx-actions { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
 .fx-period { display:inline-flex; align-items:center; gap:2px; padding:2px; border:1px solid var(--line); border-radius:10px; }
 .fx-periodname { min-width:8.5em; text-align:center; font-size:13px; font-weight:600; }
-.fx-top { font-size:13px; }
+.fx-top { font-size:13px; min-height:36px; border-radius:10px; }  /* Money flow's Top 8: drawn as Transactions' filters (R5) */
 .fx-flowstrip { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); margin:4px 0 18px; border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
 .fx-flowtile { display:flex; flex-direction:column; gap:4px; padding:12px 14px; min-width:0; }
 .fx-flowtile + .fx-flowtile { border-left:1px solid var(--line); }
@@ -3101,6 +3103,13 @@ html.companion .crumbs .backlabel { display:inline; }
 /* Track from: where the rows that do not count begin, on Transactions. */
 .fx-trackline { margin: 18px 4px 6px; padding-top: 12px; border-top: 1px dashed var(--line); }
 
+/* Net worth's three figures in one row across the board (R5); two and then one as the page narrows. */
+.fx-board > .fx-figurerow { grid-column:1 / -1; display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:var(--fin-gap); }
+@container (max-width: 900px) { .fx-board > .fx-figurerow { grid-template-columns:repeat(2, minmax(0, 1fr)); } .fx-board > .fx-figurerow > :last-child { grid-column:1 / -1; } }
+@container (max-width: 600px) { .fx-board > .fx-figurerow { grid-template-columns:minmax(0, 1fr); } }
+/* This month's three figures (R5): each chip beside its own figure, not at the column's far edge against the next one. */
+.fx-txsum .fx-stats { grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:16px 32px; }
+.fx-txsum .card-figure { justify-content:flex-start; gap:8px 16px; flex-wrap:wrap; }
 /* Status's headline (redesign-loop R6b): All good, or the apps that need you with their fix; two tiles wide. */
 #statusHeadline { grid-column:span 2; display:flex; flex-wrap:wrap; gap:10px 16px; align-items:flex-start; min-width:0; border-left:3px solid var(--ok); }
 #statusHeadline.warn { border-left-color:var(--warn); }
