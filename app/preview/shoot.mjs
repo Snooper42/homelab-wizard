@@ -5181,7 +5181,7 @@ const smokes = [
   // A form opens at its top with the cursor in its first field; a command's sheet keeps the focus on its first button.
   { name: 'Keyboard: a Finances form opens at its top, the cursor in its first field', screen: 'finances', run: async (page) => {
     await page.setViewportSize({ width: 860, height: 560 });
-    await page.click('#finances button:text-is("Add a payment")', { timeout: 5000 });
+    await finAdd(page, 'Add a payment', { timeout: 5000 });
     await page.waitForTimeout(500);
     const s = await page.evaluate(() => {
       const p = document.querySelector('.panel.sheet:not([hidden])'), f = document.activeElement, t = p.querySelector('h2');
@@ -6329,7 +6329,8 @@ const smokes = [
     await page.click('#finPeriod button[aria-label="The pay period after"]');
     await page.waitForFunction((d) => document.querySelector('.fx-paycheck .fx-dates')?.textContent !== d, dates, { timeout: 5000 });
     const bar = await page.textContent('#finPeriod .fx-dates');
-    if (bar !== (await page.textContent('.fx-paycheck .fx-dates'))) throw new Error(`the bar says ${bar}, the card ${await page.textContent('.fx-paycheck .fx-dates')}`);
+    // The top bar writes each day in full (Fri, Nov 20); the card, the short way.
+    if (bar.replace(/\b(Mon|Tue|Wed|Thu|Fri|Sat|Sun), /g, '') !== (await page.textContent('.fx-paycheck .fx-dates'))) throw new Error(`the bar says ${bar}, the card ${await page.textContent('.fx-paycheck .fx-dates')}`);
     await page.click('#finPeriod button[aria-label="The pay period before"]');
     await page.waitForFunction((d) => document.querySelector('.fx-paycheck .fx-dates')?.textContent === d, dates, { timeout: 5000 });
     // Today: now, until the next paycheck, and then Today waits.
@@ -6346,8 +6347,8 @@ const smokes = [
     await page.click('#finPeriod button:text-is("Today")');
     await page.waitForSelector('#finPeriod h2:text-matches("^Now")', { timeout: 5000 });
     await page.click('#finPeriod button[aria-label="The pay period before"]');
-    await page.waitForSelector('#finPeriod h2:text-is("Jordan\'s paycheck · Mon, Oct 26")', { timeout: 5000 });
-    if ((await page.textContent('#finPeriod .fx-dates')) !== 'Oct 26 – Oct 29, what happened') throw new Error(`the days: ${await page.textContent('#finPeriod .fx-dates')}`);
+    await page.waitForSelector('#finPeriod h2:text-is("Jordan\'s paycheck")', { timeout: 5000 });
+    if ((await page.textContent('#finPeriod .fx-dates')) !== 'Mon, Oct 26 – Thu, Oct 29, what happened') throw new Error(`the days: ${await page.textContent('#finPeriod .fx-dates')}`);
     await page.waitForSelector('.fx-past', { timeout: 5000 });
     if (await page.$('.fx-paycheck, .fx-latest')) throw new Error('the plan\'s paycheck card, or Latest transactions, shows for a period before now');
     const sum = async (caption) => (await page.textContent(`.fx-past .fx-stat:has(.fx-caption:text-is("${caption}")) .fx-figure`)).replace(/\s+/g, '');
@@ -6358,7 +6359,7 @@ const smokes = [
     await page.waitForSelector('.fx-spentmonth h2:text-is("Where it went")', { timeout: 5000 });
     // A paycheck further back: Alex's, Oct 23 to 25.
     await page.click('#finPeriod button[aria-label="The pay period before"]');
-    await page.waitForSelector('#finPeriod h2:text-is("Alex\'s paycheck · Fri, Oct 23")', { timeout: 5000 });
+    await page.waitForSelector('#finPeriod:has(h2:text-is("Alex\'s paycheck")):has(.fx-dates:text-matches("^Fri, Oct 23 "))', { timeout: 5000 });
     await page.waitForSelector('.fx-past li:has-text("Trader Joe")', { timeout: 5000 });
     await page.waitForSelector('.fx-past li:has-text("Claude Pro")', { timeout: 5000 });
     if (!(await sum('Went out')).startsWith('$263')) throw new Error(`went out: ${await sum('Went out')}`);
@@ -7602,7 +7603,7 @@ const smokes = [
     await page.click('.finpost thead button:has-text("Nov 20")');
     await page.waitForSelector('.finpost thead button[aria-pressed=true]:has-text("Nov 20")', { timeout: 5000 });
     await finTab(page, 'Dashboard');
-    await page.waitForSelector('#finPeriod h2:has-text("Nov 20")', { timeout: 5000 });
+    await page.waitForSelector('#finPeriod:has-text("Nov 20")', { timeout: 5000 });
   } },
   { name: 'Finances: a payment with each of someone\'s paychecks', screen: 'finances', run: async (page) => {
     await finAdd(page, 'Add a payment', { timeout: 5000 });

@@ -2231,7 +2231,7 @@ html .fx-month td { padding:0; vertical-align:top; height:92px; border-radius:va
 .fx-topperiod { flex:1 1 320px; display:flex; justify-content:center; min-width:0; }
 .fx-topperiod:empty { display:none; }
 .fx-topicons { display:flex; align-items:center; gap:8px; margin-left:auto; }
-#finRoot .fx-topperiod .fx-periodbar { display:flex; align-items:center; gap:12px; flex-wrap:nowrap; }
+#finRoot .fx-topperiod .fx-periodbar { display:flex; align-items:center; justify-content:center; gap:8px 12px; flex-wrap:wrap; min-width:0; }
 #finRoot .fx-topperiod .fx-periodbar .fx-periodstep { display:flex; align-items:center; gap:8px; }
 #finRoot .fx-topperiod .fx-periodbar .fx-periodname { text-align:center; padding:0 6px; }
 #finRoot .fx-topperiod .fx-periodbar h2 { margin:0; font-size:16px; font-weight:600; letter-spacing:-.01em; }

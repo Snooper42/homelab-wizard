@@ -18244,7 +18244,7 @@ ${pays}
     } : p3 || was ? {
       by,
       setBy,
-      title: phone2 ? p3 ? periodTitle(p3, L2) : paydayTitle(was.pay, L2) : p3?.now ? "Until the next paycheck" : `${paidWhom((p3 ? p3.pay : was.pay).people, L2)}'s paycheck`,
+      title: phone2 ? p3 ? periodTitle(p3, L2) : paydayTitle(was.pay, L2) : p3?.now ? "Now" : `${paidWhom((p3 ? p3.pay : was.pay).people, L2)}'s paycheck`,
       dates: phone2 ? p3 ? `${dayShort(p3.start)} – ${dayShort(p3.last)}${p3.now ? ", from today" : ""}` : `${dayShort(was.start)} – ${dayShort(was.last)}, what happened` : `${dayLong(p3 ? p3.start : was.start)} – ${dayLong(p3 ? p3.last : was.last)}${p3?.now ? ", from today" : was ? ", what happened" : ""}`,
       step: (d3) => pick(picked + d3),
       canBack: picked > -past.length,
