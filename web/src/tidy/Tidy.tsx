@@ -750,7 +750,7 @@ function needsFor(d: app.TidyUp, act: TidyActions, review: app.TidyBook[] | null
   return [...plug, ...tools, ...machine, ...LIBRARIES.flatMap((k) => todosFor(lib(d, k), d, act, review, pick)), ...gone];
 }
 
-function Overview({ d, job, act, review, pick, placing }: { d: app.TidyUp; job: TidyJob | null; act: TidyActions; review: app.TidyBook[] | null; pick: (t: TidyTab) => void; placing?: boolean }) {
+function Overview({ d, job, act, review, pick, placing, folders }: { d: app.TidyUp; job: TidyJob | null; act: TidyActions; review: app.TidyBook[] | null; pick: (t: TidyTab) => void; placing?: boolean; folders?: boolean }) {
   // The first time (no library anywhere, and no drive Tidy Up waits for), or when asked: where the libraries live, first.
   const first = d.libraries.every((l) => !l.found) && !d.checks.some((c) => c.id === 'drive' && !c.ok);
   if (first || placing) return <div class="fx-board"><PlacesWidget d={d} job={job} act={act} first={first && !placing} /></div>;
@@ -762,7 +762,10 @@ function Overview({ d, job, act, review, pick, placing }: { d: app.TidyUp; job: 
   // doing (the shelf), and what was done (beside the genres).
   return (
     <>
-      <div class="fx-board"><InboxWidget d={d} job={job} act={act} /><NeedsLookWidget d={d} job={job} act={act} /><TodayWidget d={d} job={job} act={act} /></div>
+      {/* The redesign (redesign-loop R9): the watched folders and when to tidy behind the header's button; then Today,
+          two-thirds wide, with Needs a look beside it (Today the whole row when nothing needs a look). */}
+      {folders && <div class="fx-board"><InboxWidget d={d} job={job} act={act} /></div>}
+      <div class="fx-board tidynow"><TodayWidget d={d} job={job} act={act} wide={!(d.needs || []).length} /><NeedsLookWidget d={d} job={job} act={act} /></div>
       <div class="fx-board tidytop">
         <Widget title="Needs your OK" kind="fx-paycheck tidyneeds" actions={waiting ? <span class="muted">{count(waiting, 'thing')}{gain ? ' · ' + size(gain) + ' to win back' : ''}</span> : undefined}>
           {todos.length ? <TodoRows todos={todos} job={job} /> : (
@@ -820,7 +823,7 @@ function InboxWidget({ d, job, act }: { d: app.TidyUp; job: TidyJob | null; act:
         <Segmented label="When Tidy Up files what's in these folders" value={when} pick={(v) => act.inbox(folders, v)} options={WHENS} />
       </div>
       </fieldset>
-      <div class="tidyinboxgo"><Go primary label="Tidy up now" job={job} onClick={() => act.run('inbox', 'scan', ['--apply'])} /></div>
+      <div class="tidyinboxgo"><button class="small" onClick={() => act.settings()}>More in Settings…</button></div>
       <p class="tidyinboxwhere muted">Your libraries live in {d.mediaRoot}. <button type="button" class="linkbtn" disabled={waits} title={waits ? "Waits for the job to finish" : undefined} onClick={() => act.places(true)}>Change where your libraries live…</button></p>
     </Widget>
   );
@@ -962,7 +965,8 @@ function NeedsLookWidget({ d, job, act }: { d: app.TidyUp; job: TidyJob | null; 
     go: (v) => act.run('inbox', 'name', [x.path, 'episode', picked(v)?.[0] || v.show, v.season, ...opt(v.episode)]),
   });
   return (
-    <Widget title="Needs a look" span="all" kind="tidyneedslook" actions={<span class="muted">{count(needs.length, 'thing')} Tidy Up couldn't place · nothing else waits on {needs.length === 1 ? 'it' : 'them'}</span>}>
+    <Widget title="Needs a look" kind="tidyneedslook" actions={<span class="tidycount" title={count(needs.length, 'thing')}>{needs.length}</span>}>
+      <p class="muted tidyneedslead">{needs.length === 1 ? "Tidy Up couldn't place it; nothing else waits on it." : "Tidy Up couldn't place these; nothing else waits on them."}</p>
       <Rows kind="fx-rows tidytodo">
         {needs.map((x) => (
           <Row key={x.path} lead={<LibIcon kind={x.kind || 'inbox'} />} title={x.name} sub={x.why} subTone="warn"
@@ -981,10 +985,12 @@ function NeedsLookWidget({ d, job, act }: { d: app.TidyUp; job: TidyJob | null; 
   );
 }
 
-function TodayWidget({ d, job, act }: { d: app.TidyUp; job: TidyJob | null; act: TidyActions }) {
+function TodayWidget({ d, job, act, wide }: { d: app.TidyUp; job: TidyJob | null; act: TidyActions; wide?: boolean }) {
   const today = d.today || [];
   return (
-    <Widget title="What I did today" span="all" kind="tidytoday">
+    <Widget title="What I did today" span={wide ? 'all' : 1} kind="tidytoday">
+      {/* As the redesign's Today (R9): how many it filed, as a figure, over the list. */}
+      {!!today.length && <Stat value={<span class="fx-amount">{today.filter((f) => !f.undone).length}<small> {today.filter((f) => !f.undone).length === 1 ? 'download' : 'downloads'} filed</small></span>} caption="Since midnight" />}
       {today.length ? (
         <Rows kind="fx-rows tidytoday">
           {today.map((f) => (
@@ -1215,6 +1221,8 @@ export const tabNow = (t: string): TidyTab => (t === 'inbox' ? 'overview' : t ==
 
 export function TidyScreen(p: TidyProps) {
   const { d, job, act } = p;
+  // The watched folders and when to tidy (Drop anything here), behind the header's button (redesign-loop R9).
+  const [folders, setFolders] = useState(false);
   const tab = tabNow(p.tab);
   const waiting = d ? needsFor(d, act, p.review, p.pick).filter((t) => t.go).length : 0;
   // A job this window didn't start holds the lock: followed as it goes (screens/tidy.ts asks every few seconds).
@@ -1224,9 +1232,13 @@ export function TidyScreen(p: TidyProps) {
     <>
       <div class="row header">
         <div><h1>Tidy Up</h1><p class="lead">{say || 'Your music, films, TV, books, and audiobooks: sorted, tagged, and lean'}</p></div>
-        <div class="toolbar"><button class="btn" onClick={() => act.settings()}>Settings…</button></div>
+        <div class="toolbar tidytools">
+          <button type="button" class={'btn tidyfoldersbtn' + (folders ? ' on' : '')} aria-expanded={folders} title="The folders Tidy Up watches, and when it tidies" onClick={() => setFolders(!folders)}>Folders and when…</button>
+          {d && <Elsewhere.Provider value={other ? jobTitle(other.kind, other.action, other.flags || []) : ''}><Go primary label="Tidy up now" job={job} onClick={() => act.run('inbox', 'scan', ['--apply'])} /></Elsewhere.Provider>}
+        </div>
       </div>
-      <Segmented label="Tidy Up sections" value={tab} pick={(v) => p.pick(v as TidyTab)} options={[['overview', 'Inbox'], ...LIBRARIES.map((k): [string, string] => [k, names[k]])]} />
+      {/* The sidebar's menu has these on the computer (TidyMenu, redesign-loop R9); the tabs stay for a screen without it. */}
+      <div class="tidytabs"><Segmented label="Tidy Up sections" value={tab} pick={(v) => p.pick(v as TidyTab)} options={[['overview', 'Inbox'], ...LIBRARIES.map((k): [string, string] => [k, names[k]])]} /></div>
       {other && <RunningCard lock={other} now={p.running?.lock ? p.running.now : undefined} stop={() => p.act.stopElsewhere(other)} stopping={p.stoppingElsewhere === other.start} />}
       {d?.stale && !other && !job && (() => {
         const c = carryOn(d.stale, d, act, p.pick);
@@ -1239,7 +1251,7 @@ export function TidyScreen(p: TidyProps) {
       {!d ? (!p.error && <Empty>Reading…</Empty>) : (
         <Elsewhere.Provider value={other ? jobTitle(other.kind, other.action, other.flags || []) : ''}>
           <div class="finbody tidybody">
-            {tab === 'overview' ? <Overview d={d} job={job} act={act} review={p.review} pick={p.pick} placing={p.placing} />
+            {tab === 'overview' ? <Overview d={d} job={job} act={act} review={p.review} pick={p.pick} placing={p.placing} folders={folders} />
               : <LibraryTab kind={tab} d={d} job={job} act={act} review={p.review} reviewError={p.reviewError} reloadReview={p.reloadReview} skip={p.skip} toggle={p.toggle} pick={p.pick} />}
           </div>
         </Elsewhere.Provider>
@@ -1247,6 +1259,40 @@ export function TidyScreen(p: TidyProps) {
     </>
   );
 }
+
+/**
+ * Tidy Up's menu, in the sidebar while it shows (redesign-loop R9, as Finances' FinMenu): Overview with how many things
+ * wait on you, each library, then the drive and its free space.
+ */
+function TidyMenu({ tab, pick, d }: { tab: TidyTab; pick: (t: TidyTab) => void; d: app.TidyUp | null }) {
+  const here = tabNow(tab);
+  const dr = d?.drive;
+  const item = (key: TidyTab, label: string, icon: string, n?: number) => (
+    <li key={key}>
+      <button type="button" class={'finmenuitem tidymenuitem' + (here === key ? ' on' : '')} data-tab={key} aria-current={here === key ? 'page' : undefined} onClick={() => pick(key)}>
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d={icon} /></svg><span>{label}</span>{!!n && <span class="count">{n}</span>}
+      </button>
+    </li>
+  );
+  return (
+    <>
+      <ul class="finmenu tidymenu" aria-label="Tidy Up">
+        {item('overview', 'Overview', 'M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z', (d?.needs || []).length || undefined)}
+        {LIBRARIES.map((k) => item(k, names[k], looks[k].icon))}
+      </ul>
+      {dr && <div class="tidynavdrives">
+        <p class="fx-caption">Drives</p>
+        <div class="tidydriveline" title={`${size(dr.free)} free of ${size(dr.total)}`}>
+          <span class="tidydrivename"><span>{dr.name || thisMachine}</span><span class="muted">{size(dr.free)} free</span></span>
+          <span class="tidydrivebar" aria-hidden="true"><span style={{ width: `${dr.total ? Math.round((1 - dr.free / dr.total) * 100) : 0}%` }} /></span>
+        </div>
+      </div>}
+    </>
+  );
+}
+
+/** Tidy Up's menu, into the sidebar (index.html's #tidyMenu); the sidebar shows it only while Tidy Up does. */
+export function mountTidyMenu(el: Element, props: { tab: TidyTab; pick: (t: TidyTab) => void; d: app.TidyUp | null }) { render(<TidyMenu {...props} />, el); }
 
 /** Draws the screen into its box. */
 export function mountTidy(el: Element, props: TidyProps) { render(<TidyScreen {...props} />, el); }
