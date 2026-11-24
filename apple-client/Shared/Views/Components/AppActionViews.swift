@@ -231,28 +231,7 @@ struct GroupActionsMenu: View {
         let running = AppAction.groupTargets(.restart, in: apps)
         if actions.canChangeApps, !start.isEmpty || !running.isEmpty {
             Menu {
-                if !start.isEmpty {
-                    Button { actions.requestGroup(.start, on: start) } label: {
-                        Label(start.count == 1 ? "Start \(start[0].name)" : AppAction.start.groupTitle(count: start.count), systemImage: AppAction.start.systemImage)
-                    }
-                }
-                if !running.isEmpty {
-                    Button { actions.requestGroup(.restart, on: running) } label: {
-                        Label(running.count == 1 ? "Restart \(running[0].name)" : AppAction.restart.groupTitle(count: running.count), systemImage: AppAction.restart.systemImage)
-                    }
-                    Button(role: .destructive) { actions.requestGroup(.stop, on: running) } label: {
-                        Label(running.count == 1 ? "Stop \(running[0].name)" : AppAction.stop.groupTitle(count: running.count), systemImage: AppAction.stop.systemImage)
-                    }
-                    if actions.canStopForAWhile {
-                        Menu {
-                            ForEach(StopChoice.choices()) { choice in
-                                Button(choice.label) { actions.requestGroup(.stop, on: running, until: choice) }
-                            }
-                        } label: {
-                            Label("Stop for a While", systemImage: "timer")
-                        }
-                    }
-                }
+                GroupActionItems(apps: apps)
             } label: {
                 if let group = actions.group {
                     Text(group.label).font(.caption.monospacedDigit())
@@ -268,6 +247,42 @@ struct GroupActionsMenu: View {
             }
             .disabled(actions.isBusy)
             .accessibilityLabel(actions.group?.label ?? "Start, restart or stop them all")
+        }
+    }
+}
+
+/// The group's Start, Restart, Stop and Stop for a While, for its menu
+/// (GroupActionsMenu) and a category row's long press on Status.
+struct GroupActionItems: View {
+    @Environment(AppActionsViewModel.self) private var actions
+    let apps: [AppStatus]
+
+    var body: some View {
+        let start = AppAction.groupTargets(.start, in: apps)
+        let running = AppAction.groupTargets(.restart, in: apps)
+        if actions.canChangeApps {
+            if !start.isEmpty {
+                Button { actions.requestGroup(.start, on: start) } label: {
+                    Label(start.count == 1 ? "Start \(start[0].name)" : AppAction.start.groupTitle(count: start.count), systemImage: AppAction.start.systemImage)
+                }
+            }
+            if !running.isEmpty {
+                Button { actions.requestGroup(.restart, on: running) } label: {
+                    Label(running.count == 1 ? "Restart \(running[0].name)" : AppAction.restart.groupTitle(count: running.count), systemImage: AppAction.restart.systemImage)
+                }
+                Button(role: .destructive) { actions.requestGroup(.stop, on: running) } label: {
+                    Label(running.count == 1 ? "Stop \(running[0].name)" : AppAction.stop.groupTitle(count: running.count), systemImage: AppAction.stop.systemImage)
+                }
+                if actions.canStopForAWhile {
+                    Menu {
+                        ForEach(StopChoice.choices()) { choice in
+                            Button(choice.label) { actions.requestGroup(.stop, on: running, until: choice) }
+                        }
+                    } label: {
+                        Label("Stop for a While", systemImage: "timer")
+                    }
+                }
+            }
         }
     }
 }

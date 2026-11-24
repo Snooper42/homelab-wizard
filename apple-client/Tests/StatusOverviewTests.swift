@@ -125,4 +125,15 @@ struct StatusOverviewTests {
         let none = StatusPair.machine(nil, updates: UpdatesState(paused: true, schedule: ""))
         #expect(none.figure == "—" && none.lines == ["Updates paused"])
     }
+
+    // A category's row in the one Apps card: its apps' names under its name, and what VoiceOver says.
+    @Test func aCategoryRowSaysItsAppsAndHowManyRun() throws {
+        let s = try JSONDecoder.homelab().decode(HomelabStatus.self, from: Data(#"{"apps":[{"id":"a","name":"AdGuard Home","state":"running"},{"id":"b","name":"Cloudflare Tunnel","state":"running"},{"id":"c","name":"Speedtest Tracker","state":"stopped"}]}"#.utf8))
+        let network = AppGroup(label: "Network", apps: s.apps)
+        #expect(GroupRow.names(network) == "AdGuard Home, Cloudflare Tunnel, Speedtest Tracker")
+        #expect(GroupRow.spoken(network) == "Network, 2 of 3 running: AdGuard Home, Cloudflare Tunnel, Speedtest Tracker")
+        let fine = AppGroup(label: "Network", apps: Array(s.apps.prefix(2)))
+        #expect(GroupRow.spoken(fine) == "Network, 2 running: AdGuard Home, Cloudflare Tunnel")
+        #expect(GroupRow.spoken(AppGroup(label: "Pinned", apps: Array(s.apps.prefix(1)), pinned: true)) == "Pinned, 1 app: AdGuard Home")
+    }
 }

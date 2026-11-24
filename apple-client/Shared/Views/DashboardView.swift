@@ -354,7 +354,8 @@ private struct PhoneStatus: View {
                 }
                 // By category, as the computer's Status: what needs a look
                 // first, then the pinned apps. While searching, every match shows.
-                ForEach(model.isSearching ? model.groups(matching: model.search) : model.groups) { group in
+                let shownGroups = model.isSearching ? model.groups(matching: model.search) : model.groups
+                ForEach(shownGroups.filter { $0.alert || $0.pinned }) { group in
                     let open = model.isSearching || StatusFolds.isOpen(group, in: folds)
                     Section {
                         if open {
@@ -371,6 +372,34 @@ private struct PhoneStatus: View {
                     } header: {
                         GroupHeader(group: group, open: open) {
                             folds = StatusFolds.setting(group, open: !open, in: folds)
+                        }
+                    }
+                }
+                // The categories in one card, a row each, as the redesign's phone picture (phone-status.png): the
+                // first apps' logos, the name over its apps', how many run; a tap opens the apps under it.
+                let categories = shownGroups.filter { !$0.alert && !$0.pinned }
+                if !categories.isEmpty {
+                    Section {
+                        ForEach(categories) { group in
+                            let open = model.isSearching || StatusFolds.isOpen(group, in: folds)
+                            GroupRow(group: group, open: open) {
+                                folds = StatusFolds.setting(group, open: !open, in: folds)
+                            }
+                            if open {
+                                ForEach(group.apps) { app in
+                                    NavigationLink(value: app.id) {
+                                        AppRowView(app: app)
+                                    }
+                                    .zoomSource(id: app.id, in: zoom)
+                                    .appActionControls(for: app)
+                                }
+                            }
+                        }
+                    } header: {
+                        HStack {
+                            Text("Apps")
+                            Spacer()
+                            Text(verbatim: "\(categories.reduce(0) { $0 + $1.apps.count })").monospacedDigit()
                         }
                     }
                 }
@@ -1291,6 +1320,78 @@ struct GroupHeader: View {
                 .dynamicTypeSize(...DynamicTypeSize.accessibility1)
         }
         .textCase(nil)
+    }
+}
+
+/// A category on Status, as the redesign's phone picture: its first three
+/// apps' logos overlapping, its name over its apps' names, its pill (how
+/// many run) and a chevron that turns as it opens. A tap opens or folds it,
+/// as the computer's row does; a long press has the group's Start, Restart
+/// and Stop. At the largest text sizes the logos sit over the words.
+struct GroupRow: View {
+    let group: AppGroup
+    let open: Bool
+    let toggle: @MainActor () -> Void
+    @ScaledMetric(relativeTo: .body) private var logo: CGFloat = 32
+    @Environment(\.dynamicTypeSize) private var typeSize
+
+    var body: some View {
+        let size = min(logo, 44)
+        let layout = typeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8))
+            : AnyLayout(HStackLayout(spacing: 12))
+        Button(action: toggle) {
+            layout {
+                HStack(spacing: -size * 0.3) {
+                    ForEach(group.apps.prefix(3)) { app in
+                        AppIconView(app: app, size: size, stateBadge: !app.isPlainlyFine)
+                    }
+                }
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(verbatim: group.label)
+                        .font(.headline)
+                        .foregroundStyle(Theme.ink)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                    Text(verbatim: Self.names(group))
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(typeSize.isAccessibilitySize ? 3 : 1)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                HStack(spacing: 8) {
+                    if let pill = group.runningPill {
+                        Text(verbatim: pill.words)
+                            .pill(pill.fine ? Theme.success : Theme.warning)
+                    }
+                    Image(systemName: "chevron.right")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                        .rotationEffect(.degrees(open ? 90 : 0))
+                        .accessibilityHidden(true)
+                }
+            }
+            .padding(.vertical, 4)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .contextMenu { GroupActionItems(apps: group.apps) }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(verbatim: Self.spoken(group)))
+        .accessibilityValue(open ? "Open" : "Folded")
+        .accessibilityHint(open ? "Folds the group" : "Opens the group")
+    }
+
+    /// The line under the name: its apps, in the list's order.
+    nonisolated static func names(_ group: AppGroup) -> String {
+        group.apps.map(\.name).joined(separator: ", ")
+    }
+
+    /// What VoiceOver says: the name, how many run, and the apps.
+    nonisolated static func spoken(_ group: AppGroup) -> String {
+        let count = group.runningPill.map { $0.words.replacingOccurrences(of: "✓ ", with: "") }
+            ?? "\(group.apps.count) \(group.apps.count == 1 ? "app" : "apps")"
+        return "\(group.label), \(count): \(names(group))"
     }
 }
 
