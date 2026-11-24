@@ -3274,3 +3274,9 @@ html:is(.os-mac, .os-windows, .os-linux) .tidynavdrives .tidydrivebar { backgrou
 .appmark.quiet::before { content:attr(data-letter); }
 #statusRows tr:not(.grouphead) > td:first-child > .appmark.mini { vertical-align:middle; margin-right:10px; }
 #statusHeadline .headlinemain { flex:1 1 300px; }
+
+/* Transactions' line over the table (redesign-loop R4, the picture's "18 transactions · In · Out"). */
+.fx-txsummary { display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 18px; margin:10px 0 6px; font-size:14px; }
+.fx-txsummary strong { color:var(--text); }
+.fx-txsummary .fx-amount { font-weight:600; color:var(--text); }
+.fx-txsummary .fx-amount.fx-in { color:var(--ok); }

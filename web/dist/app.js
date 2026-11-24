@@ -11013,10 +11013,15 @@
     const accounts = (v3.plan.accounts || []).filter((a3) => all.some((t3) => t3.account === a3.id || t3.to === a3.id));
     const account = accounts.some((a3) => a3.id === accountPick) ? accountPick : "";
     const category = cats.includes(categoryPick) ? categoryPick : "";
-    const month3 = months.includes(monthPick) ? monthPick : "";
+    const nowPay = v3.periods[0], lastPay = pastPeriods(v3)[0];
+    const spans2 = {};
+    if (nowPay) spans2["pay:0"] = { start: nowPay.start, last: nowPay.last, label: `This paycheck · ${dayShort(nowPay.start)} – ${dayShort(nowPay.last)}` };
+    if (lastPay) spans2["pay:-1"] = { start: lastPay.start, last: lastPay.last, label: `Last paycheck · ${dayShort(lastPay.start)} – ${dayShort(lastPay.last)}` };
+    const span = spans2[monthPick];
+    const month3 = months.includes(monthPick) || span ? monthPick : "";
     const tag = tags.includes(tagPick) ? tagPick : "";
     const want = q2.trim().toLowerCase().split(/\s+/).filter(Boolean);
-    const shown8 = all.filter((t3) => (!account || t3.account === account || t3.to === account) && (!category || inCategory(t3, category)) && (!month3 || t3.date.startsWith(month3)) && (!tag || !!t3.tags?.includes(tag)) && (!way || (way === "move" ? !!t3.to : !t3.to && (way === "in" ? t3.amount > 0 : t3.amount < 0))) && want.every((w3) => wordsOf(t3, L2).includes(w3)));
+    const shown8 = all.filter((t3) => (!account || t3.account === account || t3.to === account) && (!category || inCategory(t3, category)) && (!month3 || (span ? t3.date >= span.start && t3.date <= span.last : t3.date.startsWith(month3))) && (!tag || !!t3.tags?.includes(tag)) && (!way || (way === "move" ? !!t3.to : !t3.to && (way === "in" ? t3.amount > 0 : t3.amount < 0))) && want.every((w3) => wordsOf(t3, L2).includes(w3)));
     const filtered = shown8.length !== all.length;
     const catOf = (t3) => t3.splits?.length ? t3.splits.map((x3) => x3.category).join(", ") : t3.category || (t3.to ? "Transfer" : "No category");
     const acctOf = (t3) => t3.to ? `${L2.account[t3.account]?.name || t3.account} → ${L2.account[t3.to]?.name || t3.to}` : L2.account[t3.account]?.name || t3.account;
@@ -11215,6 +11220,7 @@
                 ] }),
                 /* @__PURE__ */ u3("select", { "aria-label": "Month", value: month3, onChange: (e3) => setMonthPick(e3.target.value), children: [
                   /* @__PURE__ */ u3("option", { value: "", children: "Every month" }),
+                  Object.entries(spans2).map(([k3, x3]) => /* @__PURE__ */ u3("option", { value: k3, children: x3.label }, k3)),
                   months.map((m3) => /* @__PURE__ */ u3("option", { value: m3, children: [
                     monthName(m3 + "-01"),
                     " ",
@@ -11270,9 +11276,24 @@
                 dayShort(acct.updated),
                 " through these transactions."
               ] }),
-              filtered && !!shown8.length && /* @__PURE__ */ u3("p", { class: "fx-sub fx-txtotal", children: [
-                "Together ",
-                /* @__PURE__ */ u3(Amount, { value: shown8.filter((t3) => !t3.to || account).reduce((s3, t3) => s3 + (account && t3.to === account ? -amt(t3) : amt(t3)), 0), form: "full", sign: true })
+              !!shown8.length && /* @__PURE__ */ u3("p", { class: "fx-sub fx-txsummary", children: [
+                /* @__PURE__ */ u3("span", { children: [
+                  /* @__PURE__ */ u3("strong", { children: shown8.length.toLocaleString("en-US") }),
+                  " ",
+                  shown8.length === 1 ? "transaction" : "transactions"
+                ] }),
+                /* @__PURE__ */ u3("span", { children: [
+                  "In ",
+                  /* @__PURE__ */ u3(Amount, { value: shown8.filter((t3) => !t3.to && amt(t3) > 0).reduce((s3, t3) => s3 + amt(t3), 0), form: "full", tone: "in" })
+                ] }),
+                /* @__PURE__ */ u3("span", { children: [
+                  "Out ",
+                  /* @__PURE__ */ u3(Amount, { value: shown8.filter((t3) => !t3.to && amt(t3) < 0).reduce((s3, t3) => s3 + amt(t3), 0), form: "full" })
+                ] }),
+                filtered && /* @__PURE__ */ u3("span", { class: "fx-txtotal", children: [
+                  "Together ",
+                  /* @__PURE__ */ u3(Amount, { value: shown8.filter((t3) => !t3.to || account).reduce((s3, t3) => s3 + (account && t3.to === account ? -amt(t3) : amt(t3)), 0), form: "full", sign: true })
+                ] })
               ] }),
               !!shown8.length && /* @__PURE__ */ u3("div", { class: "fx-txhead", role: "group", "aria-label": "Sort the transactions by", children: [
                 columns.map(([by, label, up]) => {
