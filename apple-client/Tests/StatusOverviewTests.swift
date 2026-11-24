@@ -21,6 +21,32 @@ struct StatusOverviewTests {
         #expect(headline.attentionID == "c" && headline.attentionCount == 1)
     }
 
+    // The redesign's headline (phone-status.png): how many need you, and the
+    // homelab's count under it.
+    @Test func theHeadlineSaysHowManyNeedYou() throws {
+        func status(_ json: String) throws -> HomelabStatus {
+            try JSONDecoder.homelab().decode(HomelabStatus.self, from: Data(json.utf8))
+        }
+        let one = StatusHeadline(status: try status(#"{"apps":[{"id":"a","name":"A","state":"running"},{"id":"c","name":"C","state":"missing"}]}"#))
+        #expect(one.title == "1 app needs you")
+        #expect(one.runningLine == "1 of 2 running")
+        let two = StatusHeadline(status: try status(#"{"apps":[{"id":"a","name":"A","state":"running"},{"id":"c","name":"C","state":"missing"},{"id":"d","name":"D","state":"missing"}]}"#))
+        #expect(two.title == "2 apps need you")
+        #expect(two.runningLine == "1 of 3 running")
+    }
+
+    // A category's pill, as the redesign's and the computer's Status: how many run.
+    @Test func aCategorySaysHowManyRun() throws {
+        let s = try JSONDecoder.homelab().decode(HomelabStatus.self, from: Data(#"{"apps":[{"id":"a","name":"A","state":"running"},{"id":"b","name":"B","state":"running"},{"id":"c","name":"C","state":"stopped"}]}"#.utf8))
+        let all = AppGroup(label: "Media", apps: Array(s.apps.prefix(2)))
+        #expect(all.runningPill?.words == "✓ 2 running")
+        #expect(all.runningPill?.fine == true)
+        let one = AppGroup(label: "Media", apps: s.apps)
+        #expect(one.runningPill?.words == "2 of 3 running")
+        #expect(one.runningPill?.fine == false)
+        #expect(AppGroup(label: "Needs a look", apps: s.apps, alert: true).runningPill == nil)
+    }
+
     @Test func nothingYet() {
         let headline = StatusHeadline(status: nil)
         #expect(headline.running == 0 && headline.total == 0 && headline.share == 0)

@@ -3263,6 +3263,11 @@ html:is(.os-mac, .os-windows, .os-linux) .tidynavdrives .tidydrivebar { backgrou
 #statusRows tr:not(.grouphead) > td:first-child > .appmark.mini { vertical-align:middle; margin-right:10px; }
 #statusHeadline .headlinemain { flex:1 1 300px; }
 
+/* Transactions' line over the table (redesign-loop R4, the picture's "18 transactions · In · Out"). */
+.fx-txsummary { display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 18px; margin:10px 0 6px; font-size:14px; }
+.fx-txsummary strong { color:var(--text); }
+.fx-txsummary .fx-amount { font-weight:600; color:var(--text); }
+.fx-txsummary .fx-amount.fx-in { color:var(--ok); }
 /* The phone's Status: Setup's unfinished steps (redesign-loop R10), its Setup off the tab bar. */
 #setupOnStatus .setuponstatus { padding:14px 16px; margin:0 0 14px; }
 #setupOnStatus .setuponstatus > .row { display:flex; align-items:center; justify-content:space-between; gap:10px; }
