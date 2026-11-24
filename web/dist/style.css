@@ -1940,7 +1940,7 @@ nav:not(:has(> button[data-screen="finances"].active)) :is(#finMenu, #finNav), h
 .finmenu { margin-bottom:14px; }
 .finsubmenu { margin:2px 0 4px 28px; }
 nav .finmenuitem { width:100%; }
-html nav .finmenuitem .icon { background:none; box-shadow:none; color:inherit; padding:0; width:18px; height:18px; stroke-width:1.8; }
+html nav button.finmenuitem .icon { background:none; box-shadow:none; color:inherit; padding:0; width:18px; height:18px; stroke-width:1.8; }
 nav .finmenuitem.sub { padding-top:6px; padding-bottom:6px; font-size:13px; }
 @container window (max-width: 700px) { html:not(.companion) .fx-navbalances { display:none !important; } }
 .fx-balances { display:flex; flex-direction:column; gap:1px; margin:6px 0 10px; padding:10px 0 8px; border-top:1px solid var(--nav-line); border-bottom:1px solid var(--nav-line); }
