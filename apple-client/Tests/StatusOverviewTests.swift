@@ -35,6 +35,18 @@ struct StatusOverviewTests {
         #expect(two.runningLine == "1 of 3 running")
     }
 
+    // A category's pill, as the redesign's and the computer's Status: how many run.
+    @Test func aCategorySaysHowManyRun() throws {
+        let s = try JSONDecoder.homelab().decode(HomelabStatus.self, from: Data(#"{"apps":[{"id":"a","name":"A","state":"running"},{"id":"b","name":"B","state":"running"},{"id":"c","name":"C","state":"stopped"}]}"#.utf8))
+        let all = AppGroup(label: "Media", apps: Array(s.apps.prefix(2)))
+        #expect(all.runningPill?.words == "✓ 2 running")
+        #expect(all.runningPill?.fine == true)
+        let one = AppGroup(label: "Media", apps: s.apps)
+        #expect(one.runningPill?.words == "2 of 3 running")
+        #expect(one.runningPill?.fine == false)
+        #expect(AppGroup(label: "Needs a look", apps: s.apps, alert: true).runningPill == nil)
+    }
+
     @Test func nothingYet() {
         let headline = StatusHeadline(status: nil)
         #expect(headline.running == 0 && headline.total == 0 && headline.share == 0)

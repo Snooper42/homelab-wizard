@@ -1261,8 +1261,14 @@ struct GroupHeader: View {
                     Text(verbatim: group.label)
                         .lineLimit(1)
                         .minimumScaleFactor(0.55)
-                    Text("\(group.apps.count)")
-                        .pill(group.alert ? Theme.danger : .secondary)
+                    // A category's pill says how many run (the redesign's); Needs a look and Pinned keep their count.
+                    if let pill = group.runningPill {
+                        Text(verbatim: pill.words)
+                            .pill(pill.fine ? Theme.success : Theme.warning)
+                    } else {
+                        Text("\(group.apps.count)")
+                            .pill(group.alert ? Theme.danger : .secondary)
+                    }
                 }
                 .contentShape(Rectangle())
             }
