@@ -10758,6 +10758,7 @@
       const a3 = L2.account[t3.account];
       const where = acctOf(t3);
       const what2 = catOf(t3);
+      const catHue = t3.category || t3.splits?.length ? categoryHue(t3.splits?.length ? t3.splits[0].category : t3.category, v3.categories) : 0;
       const on2 = picking && picked.has(t3.id);
       const opens = picking ? (e3) => toggle(t3.id, e3.shiftKey) : edit ? () => edit("transaction", t3.id) : t3.receipt && readReceipt ? () => look2(t3) : void 0;
       const open5 = !picking && seen2?.id === t3.id ? seen2 : null;
@@ -10775,8 +10776,8 @@
                 dayShort(t3.date),
                 /* @__PURE__ */ u3("span", { class: "fx-txsep", children: " · " })
               ] }),
-              /* @__PURE__ */ u3("span", { class: "fx-txcat", title: what2, children: /* @__PURE__ */ u3("span", { class: "fx-cattag" + (t3.to || !t3.category && !t3.splits?.length ? " plain" : " " + hue(categoryHue(t3.splits?.length ? t3.splits[0].category : t3.category, v3.categories))), children: [
-                !t3.to && (t3.category || !!t3.splits?.length) && /* @__PURE__ */ u3("span", { class: "fx-cattagdot", "aria-hidden": "true" }),
+              /* @__PURE__ */ u3("span", { class: "fx-txcat", title: what2, children: /* @__PURE__ */ u3("span", { class: "fx-cattag" + (t3.to || !catHue ? " plain" : " " + hue(catHue)), children: [
+                !t3.to && !!catHue && /* @__PURE__ */ u3("span", { class: "fx-cattagdot", "aria-hidden": "true" }),
                 what2
               ] }) }),
               /* @__PURE__ */ u3("span", { class: "fx-txsep", children: " · " }),
@@ -15483,13 +15484,14 @@
     const day3 = t3.date === v3.today ? "Today" : dayShort(t3.date);
     const amount = /* @__PURE__ */ u3(Amount, { value: t3.amount, sign: t3.amount > 0, tone: t3.amount > 0 && !t3.to ? "in" : "", form: "full", currency: a3?.currency });
     if (compact2) {
+      const catHue = t3.splits?.length || t3.category ? categoryHue(t3.splits?.length ? t3.splits[0].category : t3.category, v3.categories) : 0;
       return /* @__PURE__ */ u3(
         Row,
         {
           lead: /* @__PURE__ */ u3(TxMark, { t: t3, categories: v3.categories }),
           title: txTitle(t3, L2),
           sub: /* @__PURE__ */ u3("span", { class: "fx-txcat", children: [
-            (t3.splits?.length || t3.category) && /* @__PURE__ */ u3(Dot, { color: categoryHue(t3.splits?.length ? t3.splits[0].category : t3.category, v3.categories) }),
+            !!catHue && /* @__PURE__ */ u3(Dot, { color: catHue }),
             what2
           ] }),
           end,

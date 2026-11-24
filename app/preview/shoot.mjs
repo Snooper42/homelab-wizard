@@ -8380,6 +8380,20 @@ const smokes = [
     await page.click('#finRoot .fx-budgets button.fx-icon[aria-label="Open Budgets"]', { timeout: 5000 });
     await page.waitForSelector('#finMenu [aria-current="page"]:has-text("Budgets")', { timeout: 5000 });
   } },
+  // A category with no colour (income) has no dot, and no room kept for one: its word starts where the others' dots do,
+  // in Transactions' table and in the Dashboard's and an account's one-line rows (the owner, Nov 24: off-centre names).
+  { name: 'Finances: income has no dot and no gap where one would be, in the table and the one-line rows', screen: 'finances', run: async (page) => {
+    await finTab(page, 'Transactions', { timeout: 5000 });
+    const pay = '.fx-transactions li:has-text("Jordan\'s paycheck") .fx-cattag';
+    await page.waitForSelector(pay, { timeout: 5000 });
+    if (await page.locator(`${pay} .fx-cattagdot`).count()) throw new Error('income has a dot');
+    if (!(await page.locator('.fx-transactions li:has-text("Costco") .fx-cattag .fx-cattagdot').count())) throw new Error('Groceries lost its dot');
+    await finTab(page, 'Dashboard');
+    const row = '.fx-latest li:has-text("Jordan\'s paycheck") .fx-txcat';
+    await page.waitForSelector(row, { timeout: 5000 });
+    if (await page.locator(`${row} .fx-dot`).count()) throw new Error('income has a dot on the Dashboard');
+    if (!(await page.locator('.fx-latest li:has-text("Costco") .fx-txcat .fx-dot').count())) throw new Error('Groceries lost its dot on the Dashboard');
+  } },
   // Transactions' table as the picture (redesign-loop R4): the category a tag in its colour, the account with its mark,
   // Linked to the planned bill or paycheck a row paid, and each day's total, one row or more.
   { name: "Finances: Transactions' table has the category's tag, the account's mark, Linked to, and each day's total", screen: 'finances', run: async (page) => {
