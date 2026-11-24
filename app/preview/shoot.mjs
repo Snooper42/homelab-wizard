@@ -3518,6 +3518,7 @@ const smokes = [
     if (await page.isVisible('#updateDownload') || await page.isVisible('#updateLine:has-text("drag")')) throw new Error('a self-updating app is told to download');
   } },
   { name: 'What runs in the background', screen: 'settings', run: async (page) => {
+    await thisMachinePage(page);
     await page.click('#bgToggle', { timeout: 5000 });
     await page.waitForSelector('#bgList li:has-text("Nightly backup"):has-text("daily at 03:30")');
     await page.waitForSelector('#bgList li:has-text("Menu bar icon"):has-text("not installed")');
