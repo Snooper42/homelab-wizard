@@ -2446,8 +2446,8 @@ img.fx-cardpic { object-fit:cover; padding:0; }
 .fx-txfilters .fx-txsearch { flex:1 1 220px; min-width:0; }
 .fx-txfilters select { flex:0 1 auto; max-width:100%; }
 .fx-txtotal { margin:-4px 0 12px; font-size:13px; }
-.fx-txfilters input, .fx-txfilters select, .fx-reporttag { font:inherit; font-size:13px; min-height:32px; padding:5px 10px; border:1px solid var(--line-strong); border-radius:8px; background:var(--panel); color:var(--text); }
-.fx-txfilters input:focus, .fx-txfilters select:focus, .fx-reporttag:focus { outline:2px solid var(--fin-accent); outline-offset:0; border-color:var(--fin-accent); }
+.fx-txfilters input, .fx-txfilters select, .fx-reporttag, .fx-top { font:inherit; font-size:13px; min-height:32px; padding:5px 10px; border:1px solid var(--line-strong); border-radius:8px; background:var(--panel); color:var(--text); }
+.fx-txfilters input:focus, .fx-txfilters select:focus, .fx-reporttag:focus, .fx-top:focus { outline:2px solid var(--fin-accent); outline-offset:0; border-color:var(--fin-accent); }
 @media (max-width: 560px) { .fx-txfilters select { flex:1 1 calc(50% - 4px); } }
 /* Transactions picked to change together: what is picked and what to do with them, over the rows; each row's box before its mark. */
 .fx-txpick { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:0 0 12px; padding:8px 10px; border-radius:10px; background:var(--sunken); }
@@ -2601,7 +2601,7 @@ html.os-linux #finances button.small:not(.primary):hover { color:var(--text); }
 .fx-moneyflow .fx-actions { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
 .fx-period { display:inline-flex; align-items:center; gap:2px; padding:2px; border:1px solid var(--line); border-radius:10px; }
 .fx-periodname { min-width:8.5em; text-align:center; font-size:13px; font-weight:600; }
-.fx-top { font-size:13px; }
+.fx-top { font-size:13px; min-height:36px; border-radius:10px; }  /* Money flow's Top 8: drawn as Transactions' filters (R5) */
 .fx-flowstrip { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); margin:4px 0 18px; border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
 .fx-flowtile { display:flex; flex-direction:column; gap:4px; padding:12px 14px; min-width:0; }
 .fx-flowtile + .fx-flowtile { border-left:1px solid var(--line); }
