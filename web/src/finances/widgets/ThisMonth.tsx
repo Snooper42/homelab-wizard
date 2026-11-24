@@ -2,7 +2,8 @@
 // how this month's money out compares with last month's by the same day.
 // It was Transactions' first card; on the computer it leads the Budgets
 // page now (redesign-loop R4), so Transactions opens on its table.
-import { Amount, Stat } from '../ui/Amount';
+import { CardFigure, Chip } from '../../parts/Card';
+import { Amount } from '../ui/Amount';
 import { Widget } from '../ui/Widget';
 import { inHome } from '../model';
 import { dayShort, money, plural } from '../money';
@@ -22,16 +23,20 @@ export function ThisMonthWidget({ v, ledger }: { v: finance.View; ledger: financ
   const before = all.filter((t) => !t.to && t.date.startsWith(lastMonthDay.slice(0, 7)) && t.date <= lastMonthDay);
   const outBefore = -before.filter((t) => t.amount < 0).reduce((s, t) => s + amt(t), 0);
   const outNow = -sum((t) => t.amount < 0);
+  const same = Math.abs(outNow - outBefore) < 0.005;
   return (
     <Widget title="This month" span="all" kind="fx-txsum">
+      {/* As the Dashboard's figures (redesign-loop R5): each figure with its label under it, and money out's change on
+          last month to the same day in a chip beside it (more out is the red one). */}
       <div class="fx-stats">
-        <Stat value={<Amount value={sum((t) => t.amount > 0)} form="whole" tone="in" />} caption="Money in" />
-        <Stat value={<Amount value={-sum((t) => t.amount < 0)} form="whole" tone="out" />} caption="Money out" />
+        <CardFigure figure={<Amount value={sum((t) => t.amount > 0)} form="whole" tone="in" />} label="Money in" />
+        <CardFigure figure={<Amount value={outNow} form="whole" tone="out" />} label="Money out"
+          chip={before.length ? <span class="fx-txvs"><Chip dir={same ? 'flat' : outNow > outBefore ? 'up' : 'down'} good={same ? null : outNow < outBefore}
+            value={same ? 'the same' : `${outNow > outBefore ? '+' : '−'}${money(Math.abs(outNow - outBefore))}`}
+            words={`vs ${dayShort(lastMonthDay)} last month (${money(outBefore)})`} /></span> : undefined} />
         {/* What's kept, as Reports says it, with how many transactions it is. */}
-        <Stat value={<Amount value={sum(() => true)} form="whole" sign tone="auto" />} caption={`Kept · ${plural(thisMonth.length, 'transaction')}`} />
+        <CardFigure figure={<Amount value={sum(() => true)} form="whole" sign tone="auto" />} label={`Kept · ${plural(thisMonth.length, 'transaction')}`} />
       </div>
-      {!!before.length && <p class="fx-sub fx-txvs">{Math.abs(outNow - outBefore) < 0.005 ? <>The same out as by {dayShort(lastMonthDay)} last month.</>
-        : <><span class={outNow > outBefore ? 'fx-out' : 'fx-in'}>{money(Math.abs(outNow - outBefore))} {outNow > outBefore ? 'more' : 'less'}</span> out than by {dayShort(lastMonthDay)} last month ({money(outBefore)}).</>}</p>}
     </Widget>
   );
 }

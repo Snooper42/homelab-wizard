@@ -25,11 +25,8 @@ export function BudgetsWidget({ v, edit, only, open, title = 'Budgets', span = '
   const list = (v.budgets || []).filter(only || (() => true));
   if (only && !list.length) return null;
   return (
-    <Widget title={title} span={span} kind="fx-budgets" open={open} seeAll openLabel="Open Transactions and every budget"
-      actions={<>
-        {open && <button type="button" class="small" onClick={open}>See all</button>}
-        {edit && <button type="button" class="small" onClick={edit}>{v.budgets?.length ? 'Edit budgets' : 'Set budgets'}</button>}
-      </>}>
+    <Widget title={title} span={span} kind="fx-budgets" open={open} openLabel="Open Budgets"
+      actions={edit && <button type="button" class="small" onClick={edit}>{v.budgets?.length ? 'Edit budgets' : 'Set budgets'}</button>}>
       {list.length ? <Rows kind="fx-rows">
         {list.map((b) => {
           const tone = budgetTone(b);

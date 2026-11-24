@@ -2288,6 +2288,8 @@ html:not(.companion) body:has(#finances.active) #oneLine { display:none !importa
 .fx-gotin { padding:1px 6px; border-radius:6px; background:var(--fin-accent-soft); }
 .fx-acctname { display:flex; align-items:center; gap:8px; min-width:0; font-size:13px; font-weight:600; }
 .fx-acctname > span:last-child { min-width:0; overflow-wrap:anywhere; line-height:1.25; }
+/* Room for a name of two lines in every tile ("Chase Checking" wraps in a narrow one), so each tile's figures stay level with the rest (R5). */
+.fx-acctrow .fx-acctname { min-height:calc(2 * 1.25em); }
 .fx-accttile > .fx-amount { font-size:17px; font-weight:700; font-variant-numeric:tabular-nums; }
 .fx-acctnote { display:flex; flex-wrap:wrap; align-items:center; gap:4px 8px; font-size:12px; font-weight:600; font-variant-numeric:tabular-nums; }
 .fx-gotin { color:var(--fin-accent-ink); }
@@ -2451,8 +2453,8 @@ img.fx-cardpic { object-fit:cover; padding:0; }
 .fx-txfilters .fx-txsearch { flex:1 1 220px; min-width:0; }
 .fx-txfilters select { flex:0 1 auto; max-width:100%; }
 .fx-txtotal { margin:-4px 0 12px; font-size:13px; }
-.fx-txfilters input, .fx-txfilters select, .fx-reporttag { font:inherit; font-size:13px; min-height:32px; padding:5px 10px; border:1px solid var(--line-strong); border-radius:8px; background:var(--panel); color:var(--text); }
-.fx-txfilters input:focus, .fx-txfilters select:focus, .fx-reporttag:focus { outline:2px solid var(--fin-accent); outline-offset:0; border-color:var(--fin-accent); }
+.fx-txfilters input, .fx-txfilters select, .fx-reporttag, .fx-top { font:inherit; font-size:13px; min-height:32px; padding:5px 10px; border:1px solid var(--line-strong); border-radius:8px; background:var(--panel); color:var(--text); }
+.fx-txfilters input:focus, .fx-txfilters select:focus, .fx-reporttag:focus, .fx-top:focus { outline:2px solid var(--fin-accent); outline-offset:0; border-color:var(--fin-accent); }
 @media (max-width: 560px) { .fx-txfilters select { flex:1 1 calc(50% - 4px); } }
 /* Transactions picked to change together: what is picked and what to do with them, over the rows; each row's box before its mark. */
 .fx-txpick { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:0 0 12px; padding:8px 10px; border-radius:10px; background:var(--sunken); }
@@ -2606,7 +2608,7 @@ html.os-linux #finances button.small:not(.primary):hover { color:var(--text); }
 .fx-moneyflow .fx-actions { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
 .fx-period { display:inline-flex; align-items:center; gap:2px; padding:2px; border:1px solid var(--line); border-radius:10px; }
 .fx-periodname { min-width:8.5em; text-align:center; font-size:13px; font-weight:600; }
-.fx-top { font-size:13px; }
+.fx-top { font-size:13px; min-height:36px; border-radius:10px; }  /* Money flow's Top 8: drawn as Transactions' filters (R5) */
 .fx-flowstrip { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); margin:4px 0 18px; border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
 .fx-flowtile { display:flex; flex-direction:column; gap:4px; padding:12px 14px; min-width:0; }
 .fx-flowtile + .fx-flowtile { border-left:1px solid var(--line); }
@@ -3101,6 +3103,13 @@ html.companion .crumbs .backlabel { display:inline; }
 /* Track from: where the rows that do not count begin, on Transactions. */
 .fx-trackline { margin: 18px 4px 6px; padding-top: 12px; border-top: 1px dashed var(--line); }
 
+/* Net worth's three figures in one row across the board (R5); two and then one as the page narrows. */
+.fx-board > .fx-figurerow { grid-column:1 / -1; display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:var(--fin-gap); }
+@container (max-width: 900px) { .fx-board > .fx-figurerow { grid-template-columns:repeat(2, minmax(0, 1fr)); } .fx-board > .fx-figurerow > :last-child { grid-column:1 / -1; } }
+@container (max-width: 600px) { .fx-board > .fx-figurerow { grid-template-columns:minmax(0, 1fr); } }
+/* This month's three figures (R5): each chip beside its own figure, not at the column's far edge against the next one. */
+.fx-txsum .fx-stats { grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:16px 32px; }
+.fx-txsum .card-figure { justify-content:flex-start; gap:8px 16px; flex-wrap:wrap; }
 /* Status's headline (redesign-loop R6b): All good, or the apps that need you with their fix; two tiles wide. */
 #statusHeadline { grid-column:span 2; display:flex; flex-wrap:wrap; gap:10px 16px; align-items:flex-start; min-width:0; border-left:3px solid var(--ok); }
 #statusHeadline.warn { border-left-color:var(--warn); }
@@ -3152,3 +3161,47 @@ html.companion .groupmarks { margin-right:8px; }
 .gentile:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
 .gentile strong { font-size:14px; }
 .gentile span { font-size:12.5px; color:var(--muted); overflow-wrap:anywhere; }
+/* Backups' top as the redesign's picture (R7): Last night two-thirds wide with Needs you beside it, then the restore test
+   and off-site; two columns once narrower, one on a phone. */
+.bkboard { display:grid; grid-template-columns:repeat(6, minmax(0, 1fr)); gap:14px; margin:4px 0 18px; }
+.bkboard > .bklast { grid-column:span 4; }
+.bkboard > .bkneeds { grid-column:span 2; }
+.bkboard > #restoreTile, .bkboard > #offsiteTile { grid-column:span 3; }
+@container (max-width: 824px) { .bkboard { grid-template-columns:repeat(2, minmax(0, 1fr)); } .bkboard > :is(.bklast, .bkneeds) { grid-column:1 / -1; } .bkboard > :is(#restoreTile, #offsiteTile) { grid-column:auto; } }
+@container (max-width: 520px) { .bkboard { grid-template-columns:minmax(0, 1fr); } .bkboard > * { grid-column:auto !important; } }
+.bkcard { display:flex; flex-direction:column; min-width:0; padding:18px 20px; }
+.bkcard > h2, .bkcard > .row h2 { margin:0; font-size:15px; text-transform:none; letter-spacing:0; color:var(--text); }
+.bkcard > .row { display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin:0 0 6px; }
+#backupTiles .bkcard > h2 { margin:0 0 6px; }
+#backupTiles .bkcard > .row h2 { margin:0; }
+.bkcard > .row .muted { font-size:13px; }
+.bkcard .value { font-size:30px; font-weight:700; letter-spacing:-.02em; }
+.bkcard .value small { font-size:16px; font-weight:500; color:var(--muted); }
+.bkcard .value.bad { color:var(--bad); }
+.bksub { margin:0; font-size:13px; color:var(--muted); }
+.bksub.ok { color:var(--ok); }
+.bkactions { margin-top:auto; padding-top:10px; }
+.bkactions .small { width:auto; margin:0; }
+.bkskipped { display:inline-block; padding:3px 10px; border-radius:999px; background:var(--warn-soft); color:var(--warn); font-size:12px; font-weight:600; white-space:nowrap; }
+.bkfacts { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:10px; margin:12px 0 0; }
+.bkfacts > div { padding:10px 12px; border-radius:10px; background:var(--sunken); min-width:0; }
+.bkfacts dt { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); }
+.bkfacts dd { margin:2px 0 0; font-size:15px; font-weight:700; overflow-wrap:anywhere; }
+@container (max-width: 520px) { .bkfacts { grid-template-columns:minmax(0, 1fr); } }
+.bkcount { margin-left:8px; padding:0 7px; border-radius:999px; background:var(--warn-soft); color:var(--warn); font-size:12px; font-weight:600; }
+.bkneeds .bkneedlist .btn, .bkneeds .bkneedlist button.small { width:auto; margin:0; }
+
+/* Each app's copy as the redesign's picture (R7): two to a line on a wide window, each one line (its name, when, its size,
+   how many kept); a copy with a note (stale, shrank) and the groups' headings take the whole line. One column below 760px. */
+@container (min-width: 761px) {
+  #copiesCard table.copies, #copiesCard table.copies > tbody { display:block; }
+  #copiesCard #backupRows { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); column-gap:32px; }
+  #copiesCard #backupRows > tr { display:grid; min-width:0; }
+  #copiesCard #backupRows > tr:is(.copygroup, .stale, .shrank), #copiesCard #backupRows > tr:only-child { grid-column:1 / -1; }
+  #copiesCard #backupRows > tr.copy { grid-template-columns:minmax(0, 1fr) 7.5em 5em 4.5em; align-items:baseline; border-top:1px solid var(--line); }
+  #copiesCard #backupRows > tr.copy > td:is(.when, .size, .kept) { text-align:right; }
+  #copiesCard #backupRows > tr.copy > td { border:0; display:block; }
+  #copiesCard #backupRows > tr.copy > td.name { padding-left:14px; overflow:hidden; text-overflow:ellipsis; }
+  #copiesCard #backupRows > tr.copy:is(.stale, .shrank) > td.name { white-space:normal; }
+  #copiesCard #backupRows > tr.copy:not(.stale):not(.shrank) > td.name { white-space:nowrap; }
+}

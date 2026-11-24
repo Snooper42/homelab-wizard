@@ -93,7 +93,7 @@ function WhatIf({ v, goals }: { v: finance.View; goals: finance.GoalNow[] }) {
 
 /**
  * The goals; with all (the phone's Dashboard), only how each stands, and
- * See all for Net worth, where goals are added and What if is asked.
+ * its ↗ to Net worth, where goals are added and What if is asked.
  */
 export function GoalsWidget({ v, L, edit, all }: { v: finance.View; L: Lookup; edit?: (what: 'goal', id?: string) => void; all?: () => void }) {
   const goals = v.goals || [];
@@ -102,7 +102,7 @@ export function GoalsWidget({ v, L, edit, all }: { v: finance.View; L: Lookup; e
   const need = goals.reduce((t, g) => t + (g.needsMonth || 0), 0);
   const saved = goals.length ? month(v, L).saved : 0;
   return (
-    <Widget title="Goals" span="all" kind="fx-goals" actions={all ? <button type="button" class="small" onClick={all}>See all</button> : edit && <button type="button" class="small" onClick={() => edit('goal')}>Add a goal</button>}>
+    <Widget title="Goals" span="all" kind="fx-goals" open={all} openLabel="Open Net worth's goals" actions={!all && edit && <button type="button" class="small" onClick={() => edit('goal')}>Add a goal</button>}>
       {!all && need > saved + 0.005 && <p class="fx-goalsshort fx-warn" role="note">Together the goals need {money(need)} a month to be there in time; the plan puts by {money(saved)} a month, {money(need - saved)} short.</p>}
       {goals.length ? <Rows kind="fx-rows">
         {goals.map((g) => {
