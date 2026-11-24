@@ -30,6 +30,16 @@ What changed on the night of Nov 23, to try on the real thing. Write what's wron
 5. **Back buttons:** an app's page from Status (*‹ Status › its name*), an account's page from Net worth, Transactions opened from a Dashboard card.
 6. **Your real numbers:** does *Left after this paycheck's bills* match your own sums? Does *+x% this month* on Investments look right?
 
+**Added Nov 24** (merged through the day; each arrives as a new version, as above):
+7. **Transactions:** a table: date, payee with its logo, the category as a coloured tag, the account, *Linked to*, the amount; each day's total in its band. Are the names level with their logos now?
+8. **Budgets:** its own page in Finances' menu, with This month at the top (*vs last month* as a chip beside Money out).
+9. **Status:** one headline, *All good* or *1 app needs you* with Start, Logs and Its page; Backups and This Mac beside it; each category one row with its apps' icons and a green *✓ 4 running* pill; Instead of subscriptions below the apps. A stopped app badges Status only, not Backups as well.
+10. **Backups:** *Last night* (how many copied, what was skipped) with *Needs you* beside it; the restore test and off-site as cards; each app's copy one line, two to a line.
+11. **Settings:** opens on *General*: People, Phones, Automatic care's three switches (they save at once), Alerts, Reaching the apps, This Mac. The list on the left in the same order, each app's own settings under *Advanced*.
+12. **Tidy Up:** *What I did today* first with *Needs a look* beside it; the folders and when to tidy behind **Folders and when…**, **Tidy up now** beside it; its own menu in the sidebar (Overview, each library, the drive).
+13. **The rest of Finances:** Net worth's three figures in one row; ↗ in place of *See all*; Paychecks' tiles level; *Income* without a gap before it.
+14. **On your phone in the browser** (the companion): Backups' night in one line, the restore test and off-site side by side.
+
 **The iPhone:** build it in Xcode as usual; Settings › About should now show the same version as the computer's Settings › This Mac. (Its screens aren't redesigned yet.)
 
 ## Doesn't work or bugs me

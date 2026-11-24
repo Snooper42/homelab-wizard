@@ -324,7 +324,7 @@ function Row({ a, p, menu, setMenu, said, say }: { a: api.AppStatus; p: AppListP
         const r = (e.currentTarget as HTMLElement).querySelector('strong')!.getBoundingClientRect();
         openMenu(r.left, r.bottom + 4);
       } : undefined}>
-      <td><strong>{a.name}</strong>{changed && <span class="changedot" role="img" aria-label={changed} title={changed} />}</td>
+      <td><AppMark id={a.id} name={a.name} icon={p.icons?.[a.id] || ''} small quiet /><strong>{a.name}</strong>{changed && <span class="changedot" role="img" aria-label={changed} title={changed} />}</td>
       <td class="state">
         {/* The dot kept on its first word's line (usability task 2, item 17): the rest wraps as it must. */}
         <span class="statehead"><span class={'dot ' + cls} />{words.split(' ')[0]}</span>{words.includes(' ') ? words.slice(words.indexOf(' ')) : ''}
@@ -505,7 +505,7 @@ function GroupHead({ g, open, toggle, p }: { g: Group; open: boolean; toggle: ()
       }}>
       <th colSpan={4}>
         {/* Its first three apps' own icons, overlapping, as the redesign's rows (letters until they arrive). */}
-        <span class="groupmarks" aria-hidden="true">{g.apps.slice(0, 3).map((a) => <AppMark key={a.id} name={a.name} icon={p.icons?.[a.id] || ''} small />)}</span>
+        <span class="groupmarks" aria-hidden="true">{g.apps.slice(0, 3).map((a) => <AppMark key={a.id} id={a.id} name={a.name} icon={p.icons?.[a.id] || ''} small />)}</span>
         <button type="button" class="foldbtn" aria-expanded={open} onClick={(e) => { e.stopPropagation(); toggle(); }}>
           <span class="chev" aria-hidden="true">{open ? '▾' : '▸'}</span>
           {g.label}

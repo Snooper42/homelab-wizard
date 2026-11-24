@@ -296,7 +296,7 @@ function Header({ p }: { p: AppPageProps }) {
   return (
     <div class="pagehead">
       <div class="who">
-        <AppMark name={a.name} icon={p.icon} />
+        <AppMark id={a.id} name={a.name} icon={p.icon} />
         <div>
           <div class="titlerow">
             <h1>{a.name}</h1>

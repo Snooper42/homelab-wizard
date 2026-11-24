@@ -3,7 +3,8 @@
 // and the phone's report.
 import { sendTo, targetsFor } from '../phone/send';
 import { ago } from '../format';
-import { mountTiles, troubled } from '../status/Tiles';
+import { mountSavings, mountTiles, troubled } from '../status/Tiles';
+import { machineNow, onMachine } from '../status/machine';
 import { mountUndoNote } from '../status/UndoNote';
 import { stoppedWords } from '../status/stopFor';
 import { mountWallCard } from '../status/WallCard';
@@ -11,6 +12,7 @@ import { mountAlerts, mountDownloads, mountProtection, mountStorage, mountWatchd
 import { type AppListActions, type AppListProps, clearAppList, foldsFromComputer, mountAppList, mountShowAll, onFoldsPicked, type Pending, stateOf } from '../status/AppList';
 import { store } from '../store';
 import { icons, onIcon, wantIcons } from '../status/appIcons';
+import { shippedLogo } from '../parts/AppMark';
 import { ReleaseNotes } from '../status/ReleaseNotes';
 import { h as vnode } from 'preact';
 import { mountStatusNote } from '../parts/Notes';
@@ -53,6 +55,22 @@ function drawOvernight() {
   mountOvernight($('overnightLine'), { now, apps: lastStatus.apps, events: lastEvents, outages, copies: backupsData.value?.copies || null, watched });
 }
 backupsData.watch(drawOvernight);
+// The Backups and This Mac cards redraw as their reads come in.
+backupsData.watch(() => { if (lastStatus) renderTiles(lastStatus); });
+onMachine(() => { if (lastStatus) renderTiles(lastStatus); });
+/** Last night's copies for the Backups card: how many are fresh of those not waiting for a drive, when, and which were skipped. */
+function lastNight() {
+  const o = backupsData.value;
+  if (!o) return null;
+  const copies = o.copies || [];
+  const counted = copies.filter((c) => c.state !== 'paused');
+  const at = o.lastRun && !o.lastRun.startsWith('0001') ? new Date(o.lastRun) : null;
+  return {
+    copied: counted.filter((c) => c.state === 'fresh').length, of: counted.length,
+    skipped: counted.filter((c) => c.state === 'stale').map((c) => c.name),
+    at: at ? `Last run ${at.toLocaleDateString('en-US', { weekday: 'short' })} ${at.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}` : 'Not run yet',
+  };
+}
 // Each app as you last saw it on Status, for the dots on what changed since (status/changed.ts).
 let seen = loadSeen();
 
@@ -74,7 +92,13 @@ function renderTiles(st: api.Status) {
     start: (a) => appActions.act(a, 'start'),
     logs: (a) => { pageOpener.open(a.id); requestAnimationFrame(() => document.getElementById('appLog')?.scrollIntoView({ block: 'start' })); },
     open: (a) => pageOpener.open(a.id),
+    backups: lastNight(),
+    openBackups: () => navigate('backups'),
+    mac: machineNow(),
   });
+  mountSavings($('savingsCard'), { status: st, history: savingsHistory });
+  // The Backups card's numbers: Backups' own read, asked from here at most once a minute (and kept ten minutes).
+  if (!backupsData.value && Date.now() - backupsAsked > 60000) { backupsAsked = Date.now(); backupsData.fresh(10 * 60000); }
   const n = trouble.length;
   $('statusCount').textContent = n ? String(n) : '';
   // Health in one line, at the top of the other screens: these, in their rows' words.
@@ -120,7 +144,7 @@ function renderAppList(st: api.Status) {
     { label: 'Other', apps: st.apps.filter((a) => rest(a) && !(catalog?.categories || []).some((c) => c.id === catOf[a.id])) }].filter((g) => g.apps.length);
   appList = { groups, pending, catalog, weekUp, outages, seen, batteryPaused, held, busy: appsBusy, companion: document.documentElement.classList.contains('companion'), os: osName, on: appListActions, memory, unkept, icons };
   // The first three of each category's icons, each read once while the app is open (the list redraws as they arrive).
-  wantIcons(groups.flatMap((g) => g.apps.slice(0, 3).filter((x) => x.state !== 'missing').map((x) => x.id)));
+  wantIcons(groups.flatMap((g) => g.apps.slice(0, 3).filter((x) => x.state !== 'missing' && !shippedLogo(x.id)).map((x) => x.id)));
   mountAppList($('statusRows'), appList);
   if (!unkept && !appList.companion) refreshUnkept();
 }

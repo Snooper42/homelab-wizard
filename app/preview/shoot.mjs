@@ -1919,7 +1919,7 @@ const smokes = [
   // Savings over time: the year's figure on Status, hovered (or reached with Tab), says what has been saved since the
   // first record, month by month, newest first, and the card is not cut off.
   { name: 'Status: hover what the apps replace for what they have saved so far', screen: 'status', run: async (page) => {
-    const tile = '#tiles .tile:has-text("Instead of subscriptions") .savedso';
+    const tile = '#savingsCard .tile:has-text("Instead of subscriptions") .savedso';
     await page.waitForSelector(tile, { timeout: 5000 });
     await page.hover(tile);
     const card = await page.waitForSelector(`${tile} [role=tooltip]`, { state: 'visible', timeout: 3000 });
@@ -3666,7 +3666,7 @@ const smokes = [
   // baseline ones; what the savings are instead of; what CrowdSec caught, not its scenario's name and an address.
   ...[[], ['companion']].map((phone) => ({ name: `Status in a household's words${phone.length ? ', on the phone' : ''}`, screen: 'status', phone, mock: { protection }, run: async (page) => {
     await page.waitForSelector('#statusHeadline:has-text("running"):has-text("The homelab\'s own apps are all up")', { timeout: 5000 });
-    await page.waitForSelector('#tiles .tile:has-text("Instead of subscriptions"):has-text("a year")');
+    await page.waitForSelector('#savingsCard .tile:has-text("Instead of subscriptions"):has-text("a year")');
     await page.waitForSelector('#protectCard li:has-text("Probing for a known security hole"):has-text("Netherlands · Example Hosting B.V.")', { timeout: 5000 });
     const said = await page.evaluate(() => document.body.innerText);
     for (const w of ['stacks', 'baseline', 'Replaces a year', 'vpatch-', 'http-probing', '203.0.113.7']) if (said.includes(w)) throw new Error(`Status says "${w}"`);
@@ -4903,10 +4903,10 @@ const smokes = [
     for (const [w, zoom] of [[1280, '1.5'], [1100, '1.25'], [860, '1.2']]) {
       await page.setViewportSize({ width: w, height: 800 });
       await page.evaluate((z) => document.documentElement.style.setProperty('--zoom', z), zoom);
-      await page.waitForSelector('#tiles .trend', { timeout: 5000 });
+      await page.waitForSelector('#savingsCard .trend', { timeout: 5000 });
       await page.waitForTimeout(100);
-      const cut = await page.$eval('#tiles .trend', (e) => e.scrollWidth > e.clientWidth + 1);
-      if (cut) throw new Error(`in a ${w}px window at text size ${zoom}, “${await page.textContent('#tiles .trend')}” is cut off`);
+      const cut = await page.$eval('#savingsCard .trend', (e) => e.scrollWidth > e.clientWidth + 1);
+      if (cut) throw new Error(`in a ${w}px window at text size ${zoom}, “${await page.textContent('#savingsCard .trend')}” is cut off`);
     }
   } },
   // A long name and a long address (a deep subdomain on your own domain): the page wraps them, in a wide window and a narrow one.
@@ -6189,18 +6189,27 @@ const smokes = [
     await page.click('#appLog .explained a:has-text("Hide")');
     await page.waitForSelector('#appLog .explained', { state: 'detached', timeout: 2000 });
   } },
-  { name: "An app's page shows the app's own icon, else its first letter", screen: 'app:vikunja', mock: { icons: { vikunja: sampleIcon, paperless: tinyIcon, vaultwarden: 'data:image/png;base64,bm90IGEgcGljdHVyZQ==' } }, run: async (page) => {
+  // An app's mark: the logo shipped for it first (the iPhone app's set, the owner Nov 24: logos, not letters), else the icon
+  // the computer kept from the app (a tiny favicon drawn larger, sharp), else its first letter (no icon, or a broken one).
+  // The made-up apps have no shipped logo.
+  { name: "An app's page shows the app's shipped logo, else its own icon, else its first letter", screen: 'app:vikunja', mock: {
+    icons: { vikunja: sampleIcon, 'tiny-app': tinyIcon, 'broken-app': 'data:image/png;base64,bm90IGEgcGljdHVyZQ==' },
+    status: { ...status, apps: [...status.apps,
+      { id: 'tiny-app', name: 'Tiny App', state: 'running', health: 'healthy', url: 'http://localhost:9901' },
+      { id: 'broken-app', name: 'Broken App', state: 'running', health: 'healthy', url: 'http://localhost:9902' },
+      { id: 'plain-app', name: 'Plain App', state: 'running', health: 'healthy', url: 'http://localhost:9903' }] } }, run: async (page) => {
     const mark = async (name, want) => {
       await page.waitForSelector(`#app h1:text-is("${name}")`, { timeout: 5000 });
       await page.waitForFunction((w) => {
         const m = document.querySelector('#app .appmark');
         const img = m?.querySelector('img');
         if (w === 'letter') return !!m && !img && m.textContent.length === 1;
-        return !!img && img.complete && img.naturalWidth > 0 && (w === 'small' ? img.classList.contains('small') : !img.classList.contains('small'));
+        if (w === 'shipped') return !!img && img.complete && img.naturalWidth > 0 && img.getAttribute('src').startsWith('applogos/');
+        return !!img && img.complete && img.naturalWidth > 0 && !img.getAttribute('src').startsWith('applogos/') && (w === 'small' ? img.classList.contains('small') : !img.classList.contains('small'));
       }, want, { timeout: 5000 }).catch(() => { throw new Error(`${name}'s mark is not ${want}`); });
     };
-    await mark('Vikunja', 'icon');
-    for (const [name, want] of [['Paperless-ngx', 'small'], ['Vaultwarden', 'letter'], ['Mealie', 'letter']]) {
+    await mark('Vikunja', 'shipped');
+    for (const [name, want] of [['Tiny App', 'small'], ['Broken App', 'letter'], ['Plain App', 'letter'], ['Vaultwarden', 'shipped']]) {
       await page.click('#app .crumbs .back');
       await page.click(`#statusRows tr:has(strong:text-is("${name}")) button.topage`, { timeout: 5000 });
       await mark(name, want);
