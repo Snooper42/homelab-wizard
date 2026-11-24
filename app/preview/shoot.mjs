@@ -5285,7 +5285,7 @@ const smokes = [
     }
     await page.click('#statusRows tr:has(strong:text-is("Vikunja")) td.state');
     await page.waitForSelector('#app input.switch', { timeout: 5000 });
-    for (const [sel, w, h] of [['#app a.back', 0, 40], ['#app input.switch', 51, 31]]) {
+    for (const [sel, w, h] of [['#app .crumbs .back', 0, 40], ['#app input.switch', 51, 31]]) {
       const [sw, sh] = await size(sel);
       if (sw < w || sh < h) small.push(`${sel} is ${sw}×${sh}`);
     }
@@ -5584,7 +5584,7 @@ const smokes = [
     await page.click('#statusRows tr:has(strong:text-is("Navidrome")) button.topage');
     await page.waitForSelector('#app h1:text-is("Navidrome")', { timeout: 5000 });
     if (await page.isVisible('#app button:text-is("Roll back")')) throw new Error('Roll back without an update');
-    await page.click('#app a.back');
+    await page.click('#app .crumbs .back');
     await page.click('#statusRows tr:has(strong:text-is("Vikunja")) button.topage');
     await page.click('#appUpdates button:text-is("Roll back")', { timeout: 5000 });
     await page.waitForSelector('#cliTitle:has-text("Vikunja")', { timeout: 5000 });
@@ -5690,7 +5690,7 @@ const smokes = [
     await page.waitForSelector('#cliTitle:has-text("Vikunja: update done")', { timeout: 5000 });
     await page.click('#cliActions button:has-text("Close")');
     // Notes that cannot be read leave Update there.
-    await page.click('#app a.back');
+    await page.click('#app .crumbs .back');
     await page.click('#statusRows tr:has(strong:text-is("Navidrome")) button.topage');
     await page.click('#appUpdates button:has-text("Check for an update")', { timeout: 5000 });
     await page.waitForSelector('#cliActions .notes p:has-text("could not be read")', { timeout: 5000 });
@@ -5709,7 +5709,7 @@ const smokes = [
   { name: 'An answer about one log never shows under another app\'s', screen: 'app:vikunja', mock: { explainer: 'llama3.2:latest', explained: { vikunja: 'Something is wrong: Vikunja cannot reach its database.' } }, run: async (page) => {
     await page.click('#appLog button:has-text("Explain this")', { timeout: 5000 });
     await page.waitForSelector('#appLog .explained .answer', { timeout: 5000 });
-    await page.click('#app a.back');
+    await page.click('#app .crumbs .back');
     // Watched from the click on, so even one frame of it counts.
     await page.evaluate(() => {
       window.__leaked = false;
@@ -6039,7 +6039,7 @@ const smokes = [
     await page.waitForSelector('#appLog .applog .line:has-text("Starting server")', { timeout: 5000 });
     await page.waitForSelector('#appPeople li:has-text("Anna Smith")', { timeout: 5000 });
     if (await page.isVisible('#appPeople li:has-text("Cleo Smith")')) throw new Error('someone who does not use Vikunja is listed');
-    await page.click('#app a.back');
+    await page.click('#app .crumbs .back');
     await page.waitForSelector('#status.screen.active', { timeout: 5000 });
   } },
   { name: "Restart from an app's page, which says so at once", screen: 'app:vikunja', mock: { actionDelay: 600 }, run: async (page) => {
@@ -6071,7 +6071,7 @@ const smokes = [
     };
     await mark('Vikunja', 'icon');
     for (const [name, want] of [['Paperless-ngx', 'small'], ['Vaultwarden', 'letter'], ['Mealie', 'letter']]) {
-      await page.click('#app a.back');
+      await page.click('#app .crumbs .back');
       await page.click(`#statusRows tr:has(strong:text-is("${name}")) button.topage`, { timeout: 5000 });
       await mark(name, want);
     }
@@ -8490,20 +8490,50 @@ const smokes = [
     await page.waitForSelector('#finSheet:not([hidden]) h2:text-is("Add a transaction")', { timeout: 5000 });
     if ((await page.inputValue('#finSheet label:has-text("Day") input')) !== '2026-10-28') throw new Error(`on ${await page.inputValue('#finSheet label:has-text("Day") input')}`);
   } },
+  // Proper breadcrumbs and back buttons (the owner, Nov 23): a page under another leads with where it sits, each step a
+  // link, and a round back button to the step above, named for a screen reader; on the phone's page, the back button
+  // with the step above's name.
+  { name: "Breadcrumbs: an app's page, an account's and a card's say where they sit, and go back up", screen: 'status', mock: { statusOpen: '' }, run: async (page) => {
+    await page.click('#statusRows tr:has(strong:text-is("Vikunja")) td.state', { timeout: 5000 });
+    await page.waitForSelector('#app.active .crumbs', { timeout: 5000 });
+    const trail = async (root) => (await page.textContent(`${root} .crumbs ol`)).replace(/\s*›\s*/g, ' › ').trim();
+    if ((await trail('#app')) !== 'Status › Vikunja') throw new Error(`the app's page: ${await trail('#app')}`);
+    if ((await page.getAttribute('#app .crumbs .back', 'aria-label')) !== 'Back to Status') throw new Error('the back button is not named');
+    if ((await page.getAttribute('#app .crumbs [aria-current="page"]', 'aria-current')) !== 'page') throw new Error('the page itself is not marked');
+    await page.click('#app .crumbs button.crumb:text-is("Status")');
+    await page.waitForSelector('#status.active', { timeout: 5000 });
+    // An account's page, under Net worth: the step's link goes up, as the back button does.
+    await page.click('nav button[data-screen="finances"]');
+    await finTab(page, 'Net worth', { timeout: 5000 });
+    await page.click('#finRoot .finbody li:has(strong:text-is("Chase Checking")) .rowopen', { timeout: 5000 });
+    await page.waitForSelector('#finRoot .fx-account .crumbs', { timeout: 5000 });
+    if ((await trail('#finRoot .fx-account')) !== 'Net worth › Chase Checking') throw new Error(`the account's page: ${await trail('#finRoot .fx-account')}`);
+    await page.keyboard.press('Tab');
+    await page.focus('#finRoot .crumbs .back');
+    await page.keyboard.press('Enter');
+    await page.waitForSelector('#finMenu [aria-current="page"]:has-text("Net worth")', { timeout: 5000 });
+    if (await page.isVisible('#finRoot .fx-account')) throw new Error('the back button did not leave the account');
+  } },
+  { name: "Breadcrumbs on the phone: the back button says where it goes", screen: 'status', phone: ['companion', 'finances'], mock: { statusOpen: '' }, run: async (page) => {
+    await page.click('#statusRows tr:has(strong:text-is("Vikunja")) td.state', { timeout: 5000 });
+    await page.waitForSelector('#app.active .crumbs .back', { timeout: 5000 });
+    if ((await page.textContent('#app .crumbs .back')).trim() !== 'Status') throw new Error(`the phone's back: ${await page.textContent('#app .crumbs .back')}`);
+    if (await page.isVisible('#app .crumbs ol')) throw new Error('the trail shows on the phone');
+  } },
   // Transactions opened from another view has Back to it: from Reports (a payee), and from the Dashboard (See all); picked
   // from its own tab, none.
   { name: 'Finances: Transactions opened from a report or a card goes back to it', screen: 'finances', run: async (page) => {
     await finTab(page, 'Reports', { timeout: 5000 });
     await page.click('.fx-payees li:has-text("Shell") button');
-    await page.click('.fx-txfilters button:has-text("Back to Reports")', { timeout: 5000 });
+    await page.click('#finRoot .crumbs button[aria-label="Back to Reports"]', { timeout: 5000 });
     await page.waitForSelector('.fx-reportsum', { timeout: 5000 });
     await finTab(page, 'Dashboard');
     await page.click('.fx-latest button:text-is("See all")');
-    await page.click('.fx-txfilters button:has-text("Back to Dashboard")', { timeout: 5000 });
+    await page.click('#finRoot .crumbs button[aria-label="Back to Dashboard"]', { timeout: 5000 });
     await page.waitForSelector('.fx-latest', { timeout: 5000 });
     await finTab(page, 'Transactions');
     await page.waitForSelector('.fx-txfilters', { timeout: 5000 });
-    if (await page.$('.fx-txfilters button:has-text("Back to")')) throw new Error('Back from its own tab');
+    if (await page.$('#finRoot .crumbs')) throw new Error('Back from its own page');
   } },
   // On a phone, a budget's figures take only the room they need: each bar keeps most of the row, the same as the others.
   { name: 'The phone: budgets keep their bars wide', screen: 'finances', phone: ['companion', 'finances'], run: async (page) => {
@@ -8537,7 +8567,7 @@ const smokes = [
         const card = await page.textContent('#finRoot .fx-card');
         if (!card.includes('$182') || !card.includes('You paid $45.00') || !card.includes('Set A · 4/102 · Near mint')) throw new Error(`the card's page: ${card.replace(/\s+/g, ' ').slice(0, 300)}`);
         if ((await finAt(page)) !== 'Collection') throw new Error('a card is not under the Collection');
-        await page.click('#finRoot .fx-card button:text-is("‹ Collection")');
+        await page.click('#finRoot .fx-card .crumbs button[aria-label="Back to Collection"]');
         await page.waitForSelector('#finRoot .fx-cards', { timeout: 5000 });
       } },
       { name: 'Finances: Add a card keeps it in a new Pokémon cards account', screen: 'finances', run: async (page) => {

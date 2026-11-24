@@ -24,7 +24,7 @@
   var minute = 6e4;
   var errorText = (e3) => String(e3 && e3.message || e3);
 
-  // node_modules/preact/dist/preact.module.js
+  // ../../../../../../home/user/homelab-wizard/node_modules/preact/dist/preact.module.js
   var n;
   var l;
   var u;
@@ -304,7 +304,7 @@
     return n3.__v.__b - l3.__v.__b;
   }, H.__r = 0, f = Math.random().toString(8), c = "__d" + f, a = "__a" + f, s = /(PointerCapture)$|Capture$/i, h = 0, p = V(false), v = V(true), y = 0;
 
-  // node_modules/preact/hooks/dist/hooks.module.js
+  // ../../../../../../home/user/homelab-wizard/node_modules/preact/hooks/dist/hooks.module.js
   var t2;
   var r2;
   var u2;
@@ -453,7 +453,7 @@
     return "function" == typeof t3 ? t3(n3) : t3;
   }
 
-  // node_modules/preact/jsx-runtime/dist/jsxRuntime.module.js
+  // ../../../../../../home/user/homelab-wizard/node_modules/preact/jsx-runtime/dist/jsxRuntime.module.js
   var f3 = 0;
   function u3(e3, t3, n3, o3, i3, u4) {
     t3 || (t3 = {});
@@ -8715,6 +8715,24 @@
     btn.textContent = "Send a report";
   };
 
+  // web/src/parts/Crumbs.tsx
+  function Crumbs({ trail, here: here3 }) {
+    const up = [...trail].reverse().find((c4) => c4.go);
+    return /* @__PURE__ */ u3("nav", { class: "crumbs", "aria-label": "Where you are", children: [
+      up && /* @__PURE__ */ u3("button", { type: "button", class: "back", title: `Back to ${up.label}`, "aria-label": `Back to ${up.label}`, onClick: up.go, children: [
+        /* @__PURE__ */ u3("svg", { viewBox: "0 0 24 24", "aria-hidden": "true", children: /* @__PURE__ */ u3("path", { d: "M15 18l-6-6 6-6" }) }),
+        /* @__PURE__ */ u3("span", { class: "backlabel", "aria-hidden": "true", children: up.label })
+      ] }),
+      /* @__PURE__ */ u3("ol", { children: [
+        trail.map((c4) => /* @__PURE__ */ u3("li", { children: [
+          c4.go ? /* @__PURE__ */ u3("button", { type: "button", class: "crumb", onClick: c4.go, children: c4.label }) : /* @__PURE__ */ u3("span", { class: "crumb", children: c4.label }),
+          /* @__PURE__ */ u3("span", { class: "crumbsep", "aria-hidden": "true", children: "›" })
+        ] }, c4.label)),
+        /* @__PURE__ */ u3("li", { "aria-current": "page", children: /* @__PURE__ */ u3("span", { class: "crumb here", children: here3 }) })
+      ] })
+    ] });
+  }
+
   // web/src/parts/MenuButton.tsx
   function MenuButton({ label, title, menuLabel, items, foot: foot2, disabled, cls = "btn" }) {
     const [open5, setOpen] = d2(false);
@@ -9316,7 +9334,7 @@
   }
   function AppPage(p3) {
     return /* @__PURE__ */ u3("div", { class: "apppage", children: [
-      /* @__PURE__ */ u3(ActionLink, { cls: "back", onClick: p3.on.back, children: "‹ Status" }),
+      /* @__PURE__ */ u3(Crumbs, { trail: [{ label: "Status", go: p3.on.back }], here: p3.a.name }),
       /* @__PURE__ */ u3(Header, { p: p3 }),
       /* @__PURE__ */ u3(Facts, { p: p3 }),
       /* @__PURE__ */ u3("div", { class: "pagecols", children: [
@@ -10701,200 +10719,198 @@
         open5 && /* @__PURE__ */ u3("li", { class: "fx-receiptshown", children: open5.url ? /* @__PURE__ */ u3(ReceiptView, { url: open5.url }) : open5.problem ? /* @__PURE__ */ u3("span", { class: "formerr bad", role: "alert", children: open5.problem }) : /* @__PURE__ */ u3("span", { class: "muted", role: "status", children: "Reading the receipt…" }) })
       ] }, t3.id);
     };
-    return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3("div", { class: "fx-board", children: [
-      /* @__PURE__ */ u3(Widget, { title: "This month", span: "all", kind: "fx-txsum", children: [
-        /* @__PURE__ */ u3("div", { class: "fx-stats", children: [
-          /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: sum((t3) => t3.amount > 0), form: "whole", tone: "in" }), caption: "Money in" }),
-          /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: -sum((t3) => t3.amount < 0), form: "whole", tone: "out" }), caption: "Money out" }),
-          /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: sum(() => true), form: "whole", sign: true, tone: "auto" }), caption: `Kept · ${plural(thisMonth.length, "transaction")}` })
-        ] }),
-        !!before3.length && /* @__PURE__ */ u3("p", { class: "fx-sub fx-txvs", children: Math.abs(outNow - outBefore) < 5e-3 ? /* @__PURE__ */ u3(S, { children: [
-          "The same out as by ",
-          dayShort(lastMonthDay),
-          " last month."
-        ] }) : /* @__PURE__ */ u3(S, { children: [
-          /* @__PURE__ */ u3("span", { class: outNow > outBefore ? "fx-out" : "fx-in", children: [
-            money(Math.abs(outNow - outBefore)),
-            " ",
-            outNow > outBefore ? "more" : "less"
+    return /* @__PURE__ */ u3("div", { class: "fin", children: [
+      back3 && /* @__PURE__ */ u3(Crumbs, { trail: [{ label: back3.label, go: back3.go }], here: "Transactions" }),
+      /* @__PURE__ */ u3("div", { class: "fx-board", children: [
+        /* @__PURE__ */ u3(Widget, { title: "This month", span: "all", kind: "fx-txsum", children: [
+          /* @__PURE__ */ u3("div", { class: "fx-stats", children: [
+            /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: sum((t3) => t3.amount > 0), form: "whole", tone: "in" }), caption: "Money in" }),
+            /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: -sum((t3) => t3.amount < 0), form: "whole", tone: "out" }), caption: "Money out" }),
+            /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: sum(() => true), form: "whole", sign: true, tone: "auto" }), caption: `Kept · ${plural(thisMonth.length, "transaction")}` })
           ] }),
-          " out than by ",
-          dayShort(lastMonthDay),
-          " last month (",
-          money(outBefore),
-          ")."
-        ] }) })
-      ] }),
-      saveLedger2 && /* @__PURE__ */ u3(PairsWidget, { L: L2, ledger, save: saveLedger2 }),
-      saveLedger2 && /* @__PURE__ */ u3(LinksWidget, { v: v3, L: L2, ledger, save: saveLedger2 }),
-      /* @__PURE__ */ u3(BudgetsWidget, { v: v3, edit: edit ? () => edit("budgets") : void 0, show: (c4, m3) => {
-        setCategory(c4);
-        setMonthPick(m3 || "");
-        setQ("");
-        setAccount("");
-        setWay("");
-        setTag("");
-        document.querySelector(".fx-transactions")?.scrollIntoView({ block: "start", behavior: "smooth" });
-      } }),
-      /* @__PURE__ */ u3(
-        Widget,
-        {
-          title: filtered ? `${plural(shown8.length, "transaction")} of ${all.length}` : "Transactions",
-          span: "all",
-          kind: "fx-transactions" + (picking ? " fx-txpicking" : ""),
-          actions: edit && /* @__PURE__ */ u3(S, { children: [
-            saveLedger2 && !!all.length && /* @__PURE__ */ u3("button", { type: "button", class: "small", "aria-pressed": picking, onClick: () => picking ? stopPicking() : setPicking(true), children: picking ? "Done" : "Select" }),
-            /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => edit("import"), children: "Import a file" }),
-            !!v3.plan.rules?.length && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => edit("rules"), children: [
-              "Rules (",
-              v3.plan.rules.length,
-              ")"
-            ] }),
-            logos && !!all.length && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => edit("logos"), children: "Logos" }),
-            /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => edit("categories"), children: "Categories" })
-          ] }),
-          children: [
-            !!all.length && /* @__PURE__ */ u3("div", { class: "fx-txfilters", role: "search", "aria-label": "Find transactions", children: [
-              /* @__PURE__ */ u3("input", { type: "search", class: "fx-txsearch", value: q2, onInput: (e3) => setQ(e3.target.value), placeholder: "Search payee, category, amount, day", "aria-label": "Search transactions" }),
-              /* @__PURE__ */ u3("select", { "aria-label": "Account", value: account, onChange: (e3) => setAccount(e3.target.value), children: [
-                /* @__PURE__ */ u3("option", { value: "", children: "Every account" }),
-                accounts.map((a3) => /* @__PURE__ */ u3("option", { value: a3.id, children: a3.name }, a3.id))
-              ] }),
-              /* @__PURE__ */ u3("select", { "aria-label": "Category", value: category, onChange: (e3) => setCategory(e3.target.value), children: [
-                /* @__PURE__ */ u3("option", { value: "", children: "Every category" }),
-                cats.map((c4) => /* @__PURE__ */ u3("option", { value: c4, children: c4 }, c4))
-              ] }),
-              !!tags.length && /* @__PURE__ */ u3("select", { "aria-label": "Tag", value: tag, onChange: (e3) => setTag(e3.target.value), children: [
-                /* @__PURE__ */ u3("option", { value: "", children: "Every tag" }),
-                tags.map((x3) => /* @__PURE__ */ u3("option", { value: x3, children: x3 }, x3))
-              ] }),
-              /* @__PURE__ */ u3("select", { "aria-label": "Month", value: month3, onChange: (e3) => setMonthPick(e3.target.value), children: [
-                /* @__PURE__ */ u3("option", { value: "", children: "Every month" }),
-                months.map((m3) => /* @__PURE__ */ u3("option", { value: m3, children: [
-                  monthName(m3 + "-01"),
-                  " ",
-                  m3.slice(0, 4)
-                ] }, m3))
-              ] }),
-              /* @__PURE__ */ u3("select", { "aria-label": "In or out", value: way, onChange: (e3) => setWay(e3.target.value), children: [
-                /* @__PURE__ */ u3("option", { value: "", children: "In and out" }),
-                /* @__PURE__ */ u3("option", { value: "out", children: "Money out" }),
-                /* @__PURE__ */ u3("option", { value: "in", children: "Money in" }),
-                /* @__PURE__ */ u3("option", { value: "move", children: "Between my accounts" })
-              ] }),
-              filtered && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => {
-                setQ("");
-                setAccount("");
-                setCategory("");
-                setMonthPick("");
-                setWay("");
-                setTag("");
-              }, children: "Show all" }),
-              back3 && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: back3.go, children: [
-                /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: "← " }),
-                "Back to ",
-                back3.label
-              ] })
-            ] }),
-            picking && /* @__PURE__ */ u3("div", { class: "fx-txpick", role: "group", "aria-label": "The selected transactions", children: [
-              /* @__PURE__ */ u3("span", { class: "fx-txpicked", role: "status", children: chosen.length ? `${plural(chosen.length, "transaction")} selected` : "None selected: click a row to select it" }),
-              chosen.length < shown8.length ? /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy2, onClick: pickAll, children: [
-                "Select all ",
-                shown8.length
-              ] }) : /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy2, onClick: () => pick(/* @__PURE__ */ new Set()), children: "Select none" }),
-              !!chosen.length && /* @__PURE__ */ u3(S, { children: [
-                /* @__PURE__ */ u3("span", { class: "fx-txpickcat", children: [
-                  /* @__PURE__ */ u3("input", { value: catFor, onInput: (e3) => setCatFor(e3.target.value), list: "fxPickCategories", placeholder: "Category", "aria-label": "Category for the selected" }),
-                  /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy2, onClick: categorize, children: catFor.trim() ? "Set category" : "Clear category" })
-                ] }),
-                into2.length > 1 && /* @__PURE__ */ u3("select", { class: "fx-txpickmove", "aria-label": "Move the selected to an account", value: "", disabled: busy2, onChange: (e3) => {
-                  const a3 = e3.target.value;
-                  if (a3) moveTo(a3);
-                }, children: [
-                  /* @__PURE__ */ u3("option", { value: "", children: "Move to…" }),
-                  into2.map((a3) => /* @__PURE__ */ u3("option", { value: a3.id, children: a3.name }, a3.id))
-                ] }),
-                /* @__PURE__ */ u3("button", { type: "button", class: "small danger", disabled: busy2, onClick: removePicked, children: sure ? `Click again to delete ${plural(chosen.length, "transaction")}` : `Delete ${chosen.length}` })
-              ] }),
-              problem && /* @__PURE__ */ u3("span", { class: "formerr bad", role: "alert", children: problem }),
-              /* @__PURE__ */ u3("datalist", { id: "fxPickCategories", children: [.../* @__PURE__ */ new Set([...(v3.categories || []).map((c4) => c4.name), ...cats])].map((c4) => /* @__PURE__ */ u3("option", { value: c4 }, c4)) })
-            ] }),
-            runs2 && !!shown8.length && /* @__PURE__ */ u3("p", { class: "fx-sub fx-txrunning", children: [
-              "After each day, what ",
-              acct.name,
+          !!before3.length && /* @__PURE__ */ u3("p", { class: "fx-sub fx-txvs", children: Math.abs(outNow - outBefore) < 5e-3 ? /* @__PURE__ */ u3(S, { children: [
+            "The same out as by ",
+            dayShort(lastMonthDay),
+            " last month."
+          ] }) : /* @__PURE__ */ u3(S, { children: [
+            /* @__PURE__ */ u3("span", { class: outNow > outBefore ? "fx-out" : "fx-in", children: [
+              money(Math.abs(outNow - outBefore)),
               " ",
-              owed(acct.kind) ? "owed" : "held",
-              ": worked from the ",
-              moneyIn(acct.balance, acct.currency),
-              " typed in on ",
-              dayShort(acct.updated),
-              " through these transactions."
+              outNow > outBefore ? "more" : "less"
             ] }),
-            filtered && !!shown8.length && /* @__PURE__ */ u3("p", { class: "fx-sub fx-txtotal", children: [
-              "Together ",
-              /* @__PURE__ */ u3(Amount, { value: shown8.filter((t3) => !t3.to || account).reduce((s3, t3) => s3 + (account && t3.to === account ? -amt(t3) : amt(t3)), 0), form: "full", sign: true })
-            ] }),
-            !!shown8.length && /* @__PURE__ */ u3("div", { class: "fx-txhead", role: "group", "aria-label": "Sort the transactions by", children: columns.map(([by, label, up]) => {
-              const on2 = sort.by === by;
-              const next = on2 ? { by, up: !sort.up } : { by, up };
-              const way2 = (x3) => x3.by === "date" ? x3.up ? "oldest first" : "newest first" : x3.by === "amount" ? x3.up ? "most out first" : "most in first" : x3.up ? "A to Z" : "Z to A";
-              return /* @__PURE__ */ u3("button", { type: "button", class: "fx-txcol fx-txcol-" + by, "aria-pressed": on2, title: `Sort by ${label.toLowerCase()}, ${way2(next)}`, onClick: () => setSort(next), children: [
-                label,
-                on2 && /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: sort.up ? " ↑" : " ↓" }),
-                on2 && /* @__PURE__ */ u3("span", { class: "fx-hidden", children: [
-                  ", ",
-                  way2(sort)
-                ] })
-              ] }, by);
-            }) }),
-            !byDay2 && !!shown8.length && /* @__PURE__ */ u3(Rows, { kind: "fx-rows fx-txflat", children: list.slice(0, upTo).map((t3) => rowOf(t3, true)) }),
-            byDay2 && days.map((d3, i3) => /* @__PURE__ */ u3(S, { children: [
-              !!v3.plan.trackFrom && !sort.up && d3.date < v3.plan.trackFrom && (i3 === 0 || days[i3 - 1].date >= v3.plan.trackFrom) && /* @__PURE__ */ u3("p", { class: "fx-sub fx-trackline", children: [
-                "Before ",
-                dayLong(v3.plan.trackFrom),
-                ", where you track from: kept here, not counted in charts or totals."
+            " out than by ",
+            dayShort(lastMonthDay),
+            " last month (",
+            money(outBefore),
+            ")."
+          ] }) })
+        ] }),
+        saveLedger2 && /* @__PURE__ */ u3(PairsWidget, { L: L2, ledger, save: saveLedger2 }),
+        saveLedger2 && /* @__PURE__ */ u3(LinksWidget, { v: v3, L: L2, ledger, save: saveLedger2 }),
+        /* @__PURE__ */ u3(BudgetsWidget, { v: v3, edit: edit ? () => edit("budgets") : void 0, show: (c4, m3) => {
+          setCategory(c4);
+          setMonthPick(m3 || "");
+          setQ("");
+          setAccount("");
+          setWay("");
+          setTag("");
+          document.querySelector(".fx-transactions")?.scrollIntoView({ block: "start", behavior: "smooth" });
+        } }),
+        /* @__PURE__ */ u3(
+          Widget,
+          {
+            title: filtered ? `${plural(shown8.length, "transaction")} of ${all.length}` : "Transactions",
+            span: "all",
+            kind: "fx-transactions" + (picking ? " fx-txpicking" : ""),
+            actions: edit && /* @__PURE__ */ u3(S, { children: [
+              saveLedger2 && !!all.length && /* @__PURE__ */ u3("button", { type: "button", class: "small", "aria-pressed": picking, onClick: () => picking ? stopPicking() : setPicking(true), children: picking ? "Done" : "Select" }),
+              /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => edit("import"), children: "Import a file" }),
+              !!v3.plan.rules?.length && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => edit("rules"), children: [
+                "Rules (",
+                v3.plan.rules.length,
+                ")"
               ] }),
-              /* @__PURE__ */ u3("section", { class: "fx-txday", "aria-label": dayLong(d3.date), children: [
-                /* @__PURE__ */ u3("h3", { children: [
-                  /* @__PURE__ */ u3("span", { children: [
-                    dayLong(d3.date),
-                    d3.date === v3.today ? ", today" : ""
-                  ] }),
-                  runs2 ? /* @__PURE__ */ u3("span", { class: "fx-txbal", children: [
-                    moneyIn(after2(d3.date), acct.currency),
-                    /* @__PURE__ */ u3("span", { class: "fx-hidden", children: [
-                      " ",
-                      owed(acct.kind) ? "owed" : "in " + acct.name,
-                      " after the day"
-                    ] })
-                  ] }) : d3.list.filter((t3) => !t3.to).length > 1 && /* @__PURE__ */ u3("span", { class: "fx-txdaysum", children: [
-                    /* @__PURE__ */ u3(Amount, { value: d3.list.filter((t3) => !t3.to).reduce((n3, t3) => n3 + amt(t3), 0), sign: true, form: "full" }),
-                    /* @__PURE__ */ u3("span", { class: "fx-hidden", children: " in all that day" })
-                  ] })
+              logos && !!all.length && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => edit("logos"), children: "Logos" }),
+              /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => edit("categories"), children: "Categories" })
+            ] }),
+            children: [
+              !!all.length && /* @__PURE__ */ u3("div", { class: "fx-txfilters", role: "search", "aria-label": "Find transactions", children: [
+                /* @__PURE__ */ u3("input", { type: "search", class: "fx-txsearch", value: q2, onInput: (e3) => setQ(e3.target.value), placeholder: "Search payee, category, amount, day", "aria-label": "Search transactions" }),
+                /* @__PURE__ */ u3("select", { "aria-label": "Account", value: account, onChange: (e3) => setAccount(e3.target.value), children: [
+                  /* @__PURE__ */ u3("option", { value: "", children: "Every account" }),
+                  accounts.map((a3) => /* @__PURE__ */ u3("option", { value: a3.id, children: a3.name }, a3.id))
                 ] }),
-                /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: d3.list.map((t3) => rowOf(t3, false)) })
-              ] }, d3.date)
-            ] }, d3.date)),
-            !all.length && /* @__PURE__ */ u3(Empty, { children: edit ? "No transactions yet: add what you spend with Add a transaction, as it happens or from the receipt." : "No transactions yet." }),
-            list.length > upTo && /* @__PURE__ */ u3("p", { class: "fx-txmore", children: [
-              /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => setDrawn({ key: filterKey, n: upTo + txPage }), children: [
-                "Show ",
-                Math.min(txPage, list.length - upTo),
-                " more"
+                /* @__PURE__ */ u3("select", { "aria-label": "Category", value: category, onChange: (e3) => setCategory(e3.target.value), children: [
+                  /* @__PURE__ */ u3("option", { value: "", children: "Every category" }),
+                  cats.map((c4) => /* @__PURE__ */ u3("option", { value: c4, children: c4 }, c4))
+                ] }),
+                !!tags.length && /* @__PURE__ */ u3("select", { "aria-label": "Tag", value: tag, onChange: (e3) => setTag(e3.target.value), children: [
+                  /* @__PURE__ */ u3("option", { value: "", children: "Every tag" }),
+                  tags.map((x3) => /* @__PURE__ */ u3("option", { value: x3, children: x3 }, x3))
+                ] }),
+                /* @__PURE__ */ u3("select", { "aria-label": "Month", value: month3, onChange: (e3) => setMonthPick(e3.target.value), children: [
+                  /* @__PURE__ */ u3("option", { value: "", children: "Every month" }),
+                  months.map((m3) => /* @__PURE__ */ u3("option", { value: m3, children: [
+                    monthName(m3 + "-01"),
+                    " ",
+                    m3.slice(0, 4)
+                  ] }, m3))
+                ] }),
+                /* @__PURE__ */ u3("select", { "aria-label": "In or out", value: way, onChange: (e3) => setWay(e3.target.value), children: [
+                  /* @__PURE__ */ u3("option", { value: "", children: "In and out" }),
+                  /* @__PURE__ */ u3("option", { value: "out", children: "Money out" }),
+                  /* @__PURE__ */ u3("option", { value: "in", children: "Money in" }),
+                  /* @__PURE__ */ u3("option", { value: "move", children: "Between my accounts" })
+                ] }),
+                filtered && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => {
+                  setQ("");
+                  setAccount("");
+                  setCategory("");
+                  setMonthPick("");
+                  setWay("");
+                  setTag("");
+                }, children: "Show all" })
               ] }),
-              /* @__PURE__ */ u3("span", { class: "fx-sub", children: [
-                upTo,
-                " of ",
-                list.length,
-                " shown, ",
-                sort.by === "date" ? sort.up ? "oldest first" : "newest first" : `by ${sort.by}`
-              ] })
-            ] }),
-            !!all.length && !shown8.length && /* @__PURE__ */ u3(Empty, { children: "None match: try fewer words, or Show all." })
-          ]
-        }
-      )
-    ] }) });
+              picking && /* @__PURE__ */ u3("div", { class: "fx-txpick", role: "group", "aria-label": "The selected transactions", children: [
+                /* @__PURE__ */ u3("span", { class: "fx-txpicked", role: "status", children: chosen.length ? `${plural(chosen.length, "transaction")} selected` : "None selected: click a row to select it" }),
+                chosen.length < shown8.length ? /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy2, onClick: pickAll, children: [
+                  "Select all ",
+                  shown8.length
+                ] }) : /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy2, onClick: () => pick(/* @__PURE__ */ new Set()), children: "Select none" }),
+                !!chosen.length && /* @__PURE__ */ u3(S, { children: [
+                  /* @__PURE__ */ u3("span", { class: "fx-txpickcat", children: [
+                    /* @__PURE__ */ u3("input", { value: catFor, onInput: (e3) => setCatFor(e3.target.value), list: "fxPickCategories", placeholder: "Category", "aria-label": "Category for the selected" }),
+                    /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy2, onClick: categorize, children: catFor.trim() ? "Set category" : "Clear category" })
+                  ] }),
+                  into2.length > 1 && /* @__PURE__ */ u3("select", { class: "fx-txpickmove", "aria-label": "Move the selected to an account", value: "", disabled: busy2, onChange: (e3) => {
+                    const a3 = e3.target.value;
+                    if (a3) moveTo(a3);
+                  }, children: [
+                    /* @__PURE__ */ u3("option", { value: "", children: "Move to…" }),
+                    into2.map((a3) => /* @__PURE__ */ u3("option", { value: a3.id, children: a3.name }, a3.id))
+                  ] }),
+                  /* @__PURE__ */ u3("button", { type: "button", class: "small danger", disabled: busy2, onClick: removePicked, children: sure ? `Click again to delete ${plural(chosen.length, "transaction")}` : `Delete ${chosen.length}` })
+                ] }),
+                problem && /* @__PURE__ */ u3("span", { class: "formerr bad", role: "alert", children: problem }),
+                /* @__PURE__ */ u3("datalist", { id: "fxPickCategories", children: [.../* @__PURE__ */ new Set([...(v3.categories || []).map((c4) => c4.name), ...cats])].map((c4) => /* @__PURE__ */ u3("option", { value: c4 }, c4)) })
+              ] }),
+              runs2 && !!shown8.length && /* @__PURE__ */ u3("p", { class: "fx-sub fx-txrunning", children: [
+                "After each day, what ",
+                acct.name,
+                " ",
+                owed(acct.kind) ? "owed" : "held",
+                ": worked from the ",
+                moneyIn(acct.balance, acct.currency),
+                " typed in on ",
+                dayShort(acct.updated),
+                " through these transactions."
+              ] }),
+              filtered && !!shown8.length && /* @__PURE__ */ u3("p", { class: "fx-sub fx-txtotal", children: [
+                "Together ",
+                /* @__PURE__ */ u3(Amount, { value: shown8.filter((t3) => !t3.to || account).reduce((s3, t3) => s3 + (account && t3.to === account ? -amt(t3) : amt(t3)), 0), form: "full", sign: true })
+              ] }),
+              !!shown8.length && /* @__PURE__ */ u3("div", { class: "fx-txhead", role: "group", "aria-label": "Sort the transactions by", children: columns.map(([by, label, up]) => {
+                const on2 = sort.by === by;
+                const next = on2 ? { by, up: !sort.up } : { by, up };
+                const way2 = (x3) => x3.by === "date" ? x3.up ? "oldest first" : "newest first" : x3.by === "amount" ? x3.up ? "most out first" : "most in first" : x3.up ? "A to Z" : "Z to A";
+                return /* @__PURE__ */ u3("button", { type: "button", class: "fx-txcol fx-txcol-" + by, "aria-pressed": on2, title: `Sort by ${label.toLowerCase()}, ${way2(next)}`, onClick: () => setSort(next), children: [
+                  label,
+                  on2 && /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: sort.up ? " ↑" : " ↓" }),
+                  on2 && /* @__PURE__ */ u3("span", { class: "fx-hidden", children: [
+                    ", ",
+                    way2(sort)
+                  ] })
+                ] }, by);
+              }) }),
+              !byDay2 && !!shown8.length && /* @__PURE__ */ u3(Rows, { kind: "fx-rows fx-txflat", children: list.slice(0, upTo).map((t3) => rowOf(t3, true)) }),
+              byDay2 && days.map((d3, i3) => /* @__PURE__ */ u3(S, { children: [
+                !!v3.plan.trackFrom && !sort.up && d3.date < v3.plan.trackFrom && (i3 === 0 || days[i3 - 1].date >= v3.plan.trackFrom) && /* @__PURE__ */ u3("p", { class: "fx-sub fx-trackline", children: [
+                  "Before ",
+                  dayLong(v3.plan.trackFrom),
+                  ", where you track from: kept here, not counted in charts or totals."
+                ] }),
+                /* @__PURE__ */ u3("section", { class: "fx-txday", "aria-label": dayLong(d3.date), children: [
+                  /* @__PURE__ */ u3("h3", { children: [
+                    /* @__PURE__ */ u3("span", { children: [
+                      dayLong(d3.date),
+                      d3.date === v3.today ? ", today" : ""
+                    ] }),
+                    runs2 ? /* @__PURE__ */ u3("span", { class: "fx-txbal", children: [
+                      moneyIn(after2(d3.date), acct.currency),
+                      /* @__PURE__ */ u3("span", { class: "fx-hidden", children: [
+                        " ",
+                        owed(acct.kind) ? "owed" : "in " + acct.name,
+                        " after the day"
+                      ] })
+                    ] }) : d3.list.filter((t3) => !t3.to).length > 1 && /* @__PURE__ */ u3("span", { class: "fx-txdaysum", children: [
+                      /* @__PURE__ */ u3(Amount, { value: d3.list.filter((t3) => !t3.to).reduce((n3, t3) => n3 + amt(t3), 0), sign: true, form: "full" }),
+                      /* @__PURE__ */ u3("span", { class: "fx-hidden", children: " in all that day" })
+                    ] })
+                  ] }),
+                  /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: d3.list.map((t3) => rowOf(t3, false)) })
+                ] }, d3.date)
+              ] }, d3.date)),
+              !all.length && /* @__PURE__ */ u3(Empty, { children: edit ? "No transactions yet: add what you spend with Add a transaction, as it happens or from the receipt." : "No transactions yet." }),
+              list.length > upTo && /* @__PURE__ */ u3("p", { class: "fx-txmore", children: [
+                /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => setDrawn({ key: filterKey, n: upTo + txPage }), children: [
+                  "Show ",
+                  Math.min(txPage, list.length - upTo),
+                  " more"
+                ] }),
+                /* @__PURE__ */ u3("span", { class: "fx-sub", children: [
+                  upTo,
+                  " of ",
+                  list.length,
+                  " shown, ",
+                  sort.by === "date" ? sort.up ? "oldest first" : "newest first" : `by ${sort.by}`
+                ] })
+              ] }),
+              !!all.length && !shown8.length && /* @__PURE__ */ u3(Empty, { children: "None match: try fewer words, or Show all." })
+            ]
+          }
+        )
+      ] })
+    ] });
   }
 
   // web/src/finances/Edit.tsx
@@ -13080,7 +13096,7 @@
     ] });
     const account = (v3.plan.accounts || []).find((a3) => a3.id === c4.account);
     return /* @__PURE__ */ u3("div", { class: "fin fx-card", children: [
-      /* @__PURE__ */ u3("div", { class: "fx-accthead", children: /* @__PURE__ */ u3("button", { type: "button", class: "link", onClick: done, children: "‹ Collection" }) }),
+      /* @__PURE__ */ u3("div", { class: "fx-accthead", children: /* @__PURE__ */ u3(Crumbs, { trail: [{ label: "Collection", go: done }], here: c4.name }) }),
       /* @__PURE__ */ u3("div", { class: "fx-cardpage", children: [
         /* @__PURE__ */ u3("div", { class: "fx-cardside", children: [
           /* @__PURE__ */ u3(CardPicture, { c: c4, large: true, read }),
@@ -15514,7 +15530,7 @@ ${pays}
     const sub = [kindName2[a3.kind] || a3.kind, ago2(a3.updated, v3.today)].join(" · ");
     return /* @__PURE__ */ u3("div", { class: "fin fx-account", children: [
       /* @__PURE__ */ u3("div", { class: "fx-accthead", children: [
-        /* @__PURE__ */ u3("button", { type: "button", class: "link", onClick: done, children: "‹ Net worth" }),
+        /* @__PURE__ */ u3(Crumbs, { trail: [{ label: "Net worth", go: done }], here: a3.name }),
         /* @__PURE__ */ u3("div", { class: "fx-accttitle", children: [
           /* @__PURE__ */ u3(AcctMark, { a: a3, size: "lg" }),
           /* @__PURE__ */ u3("div", { class: "grow", children: [
