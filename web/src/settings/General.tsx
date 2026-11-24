@@ -76,16 +76,16 @@ export function General(p: GeneralProps) {
         <CardHead title="Alerts" />
         <Rows kind="genrows">
           <Row title={`On ${p.machine}'s screen`} sub="A notification in the corner, as well as on your phones" end={<Switch label={`Alerts on ${p.machine}'s screen`} on={onUnlessFalse(v.DESKTOP_ALERTS)} set={(on) => p.set('DESKTOP_ALERTS', on ? 'true' : 'false')} />} />
-          <Row title="Quiet hours" sub="Alerts arrive without a sound" end={<span class="muted">{quietWords(v.QUIET_HOURS)}</span>} onOpen={() => p.open('Notifications')} openLabel="open" />
+          <Row title="Quiet hours" sub="Alerts arrive without a sound" end={<span class="muted">{quietWords(v.QUIET_HOURS)}</span>} onOpen={() => p.open('Alerts')} openLabel="open" />
         </Rows>
       </Card>
       <Card kind="gencard" id="genReach">
         <CardHead title="Reaching the apps" />
         <Rows kind="genrows">
           {domain
-            ? <Row title="Your own domain" sub={`Addresses like photos.${domain}`} onOpen={() => p.open('Domain')} openLabel="open" />
+            ? <Row title="Your own domain" sub={`Addresses like photos.${domain}`} onOpen={() => p.open('Reaching the apps')} openLabel="open" />
             : <Row title="Home only" sub="Your phones and computers reach the apps through Tailscale, at home and away. Nothing is on the internet." />}
-          {!domain && <Row title="Use your own domain" sub="Addresses like photos.yourname.com" end={<button type="button" class="small" onClick={() => p.open('Domain')}>Set it up…</button>} />}
+          {!domain && <Row title="Use your own domain" sub="Addresses like photos.yourname.com" end={<button type="button" class="small" onClick={() => p.open('Reaching the apps')}>Set it up…</button>} />}
         </Rows>
       </Card>
       <Card kind="gencard genmac" id="genMac">

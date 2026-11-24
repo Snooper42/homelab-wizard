@@ -36,7 +36,7 @@ function renderGeneral() {
     people: lastPeople, phones: lastPhones, values, machine: thisMachine,
     open: (page) => {
       // Advanced: each app's own settings, the first of them in the list on the left.
-      const apps = navGroups.find((g) => g.head === 'Apps')?.items || [];
+      const apps = navGroups.find((g) => g.head === 'Advanced')?.items || [];
       const first = (x: (typeof apps)[number] | undefined): string => (!x ? thisMachine : typeof x === 'string' ? x : x.pages[0] || thisMachine);
       pickSettingsPage(page === 'Advanced' ? first(apps[0]) : page);
     },
@@ -265,6 +265,12 @@ const formActions: FormActions = {
 let settingsPage = '';
 const extraPages = ['General', 'Appearance', 'People', 'Phones'];
 
+// The redesign's pages (redesign-loop R8), from the .env's sections without changing them (a household's file keeps
+// its own): the updates and self-repair settings are Automatic care; Notifications is Alerts; Domain is Reaching the apps.
+const keyPage: Record<string, string> = Object.fromEntries(['UPDATES_PAUSED', 'WATCHTOWER_SCHEDULE', 'AUTO_ROLLBACK', 'AUTO_HEAL', 'UPDATE_CHANNEL', 'UPDATE_COPY_LIMIT', 'UPDATES_HELD']
+  .map((k) => [k, 'Automatic care']));
+const renamedSections: Record<string, string> = { Notifications: 'Alerts', Domain: 'Reaching the apps' };
+
 // settingsPages groups the settings into pages: each .env section, except
 // the two that hold every app's ports and settings, which are split by app
 // (by the app's inputs, else its ID as the key's prefix: IMMICH_PORT is
@@ -306,7 +312,7 @@ function settingsPages(list) {
   for (const s of list) {
     if (!perApp(s.section)) {
       const isApp = apps.some((a) => s.section === a.name || s.section.startsWith(a.name + ' '));
-      page(s.section === 'This Mac' ? thisMachine : s.section, isApp ? 'app' : 'general').items.push(s);
+      page(keyPage[s.key] || renamedSections[s.section] || (s.section === 'This Mac' ? thisMachine : s.section), isApp ? 'app' : 'general').items.push(s);
       continue;
     }
     const a = appOf(s.key);
@@ -320,10 +326,11 @@ function settingsPages(list) {
 // the household, and reaching the apps; then the installed apps folded by
 // their category on Status; then the apps not installed, folded as one.
 // A page not named in the groups joins the first.
+// The redesign's list (redesign-loop R8): the everyday pages first, without a heading; then this machine's; then each
+// app's own settings, folded by category, under Advanced.
 const pageGroups: [string, string[]][] = [
-  [thisMachine, ['General', thisMachine, 'Storage', 'Appearance']],
-  ['Household', ['People', 'Phones']],
-  ['Reaching the apps', ['Domain', 'Notifications']],
+  ['', ['General', 'People', 'Phones', 'Automatic care', 'Alerts', 'Reaching the apps']],
+  [thisMachine, [thisMachine, 'Storage', 'Appearance', 'Tidy Up']],
 ];
 let navGroups: NavGroup[] = [];
 function renderSettingsNav(pages) {
@@ -336,7 +343,7 @@ function renderSettingsNav(pages) {
   const others = known ? apps.filter((p) => !mine.includes(p)) : [];
   const groups: NavGroup[] = pageGroups.map(([head, names]) => ({ head, items: names.filter((n) => general.includes(n)) }));
   const named = new Set(pageGroups.flatMap(([, names]) => names));
-  groups[0].items.push(...general.filter((n) => !named.has(n)));
+  groups[1].items.push(...general.filter((n) => !named.has(n)));
   // An app page's category: its app's (a page named for an app, or for an
   // app and its helpers, as "Nginx Proxy Manager and CrowdSec").
   const cats = catalog?.categories || [];
@@ -346,7 +353,7 @@ function renderSettingsNav(pages) {
   const loose = mine.filter((p) => p.name !== 'Other apps' && !cats.some((c) => c.id === catOf(p.name))).map((p) => p.name);
   const other = mine.some((p) => p.name === 'Other apps') ? ['Other apps'] : [];
   navGroups = [...groups,
-    { head: 'Apps', items: [...loose, ...folds, ...other, ...(others.length ? [{ label: "Apps you don't have", pages: others.map((p) => p.name) }] : [])] }];
+    { head: 'Advanced', items: [...loose, ...folds, ...other, ...(others.length ? [{ label: "Apps you don't have", pages: others.map((p) => p.name) }] : [])] }];
 }
 function pickSettingsPage(name) {
   settingsPage = name;

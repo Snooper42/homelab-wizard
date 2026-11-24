@@ -513,7 +513,7 @@ const shots = [
   { name: 'setup', screen: 'setup' },
   { name: 'firstrun', screen: 'setup', mock: { host: { ...host, runtimeOK: false, runtimeInstalled: true, runtimeHint: 'open OrbStack (open -a OrbStack) and turn on Settings > General > Start at login', rootOK: false, root: '', disks: [], kit: true, newRoot: '/Users/you/Homelab' } } },
   { name: 'update', screen: 'status', mock: { update } },
-  { name: 'settings', screen: 'settings', before: async (page) => { await page.click('#settingsNav .pagebtn[data-page="Domain"]', { timeout: 5000 }); await page.click('#setting-CLOUDFLARE_API_TOKEN button:has-text("Test")'); await page.waitForTimeout(500); } },
+  { name: 'settings', screen: 'settings', before: async (page) => { await page.click('#settingsNav .pagebtn[data-page="Reaching the apps"]', { timeout: 5000 }); await page.click('#setting-CLOUDFLARE_API_TOKEN button:has-text("Test")'); await page.waitForTimeout(500); } },
   // The phone companion (homelab serve): the same screens at phone width.
   { name: 'phone', screen: 'status', phone: ['companion'] },
   { name: 'phone-backups', screen: 'backups', phone: ['companion', 'can-change'] },
@@ -2706,16 +2706,16 @@ const smokes = [
     await page.waitForSelector('#setting-ADGUARD_PASSWORD .test.ok', { timeout: 5000 });
     if (await page.evaluate(() => window.__MOCK.saved?.ADGUARD_PASSWORD) !== 'typed-not-saved') throw new Error('Test did not save the typed value first');
   } },
-  // Quiet hours: an everyday setting on the Notifications page, named for people, the night it ships with.
+  // Quiet hours: an everyday setting on the Alerts page (Notifications before R8), named for people, the night it ships with.
   { name: 'Settings: quiet hours among the everyday ones', screen: 'settings', run: async (page) => {
-    await page.click('#settingsNav .pagebtn[data-page="Notifications"]', { timeout: 5000 });
+    await page.click('#settingsNav .pagebtn[data-page="Alerts"]', { timeout: 5000 });
     const row = page.locator('#setting-QUIET_HOURS');
     await row.waitFor({ state: 'visible', timeout: 5000 });
     if (!(await row.textContent()).includes('Quiet hours (no sound at night)')) throw new Error(`its name: ${await row.textContent()}`);
     if ((await row.locator('input').inputValue()) !== '22-7') throw new Error(`its value: ${await row.locator('input').inputValue()}`);
   } },
   { name: 'Testing the Cloudflare token saves the Domain typed above it', screen: 'settings', run: async (page) => {
-    await page.click('#settingsNav .pagebtn[data-page="Domain"]', { timeout: 5000 });
+    await page.click('#settingsNav .pagebtn[data-page="Reaching the apps"]', { timeout: 5000 });
     await page.fill('#setting-HOMELAB_DOMAIN input', 'snooper42.com');
     await page.click('#setting-CLOUDFLARE_API_TOKEN button:has-text("Test")');
     await page.waitForSelector('#setting-CLOUDFLARE_API_TOKEN .test.ok', { timeout: 5000 });
@@ -2745,7 +2745,7 @@ const smokes = [
   { name: 'Settings on a phone that may change things: the everyday ones, saved', screen: 'status', phone: ['companion', 'can-change'], run: async (page) => {
     await page.click('nav button[data-screen="settings"]', { timeout: 5000 });
     // At a phone's width the pages are a list to pick from.
-    await page.selectOption('#settingsNav select', 'Notifications', { timeout: 5000 });
+    await page.selectOption('#settingsNav select', 'Alerts', { timeout: 5000 });
     if ((await page.$$eval('#settingsNav option', (o) => o.map((x) => x.value))).some((v) => ['General', 'Appearance', 'People', 'Phones'].includes(v))) throw new Error("the computer's own pages on the phone");
     await page.fill('#setting-QUIET_HOURS input', '23-6');
     await page.click('#saveSettings:text-is("Save 1 change")', { timeout: 3000 });
@@ -2760,7 +2760,7 @@ const smokes = [
   } },
   { name: 'Settings on a phone that only looks: read, no Save', screen: 'status', phone: ['companion'], run: async (page) => {
     await page.click('nav button[data-screen="settings"]', { timeout: 5000 });
-    await page.selectOption('#settingsNav select', 'Notifications', { timeout: 5000 });
+    await page.selectOption('#settingsNav select', 'Alerts', { timeout: 5000 });
     await page.waitForSelector('#setting-QUIET_HOURS', { timeout: 3000 });
     if (await page.isEnabled('#setting-QUIET_HOURS input')) throw new Error('a field to type in, on a phone that only looks');
     if (await page.isVisible('#saveSettings')) throw new Error('Save on a phone that only looks');
@@ -2951,8 +2951,22 @@ const smokes = [
     await page.fill('#settingsSearch', 'TZ');
     await page.waitForSelector('#setting-TZ .key code', { state: 'visible', timeout: 5000 });
   } },
+  // The redesign's list (redesign-loop R8): the everyday pages first, then this machine's, then each app's under
+  // Advanced; Automatic care has the updates' and self-repair's settings, Alerts what Notifications had.
+  { name: 'Settings: the list as the redesign, with Automatic care and Alerts as pages', screen: 'settings', run: async (page) => {
+    await page.waitForSelector('#settingsNav .pagebtn[data-page="General"]', { timeout: 5000 });
+    const order = await page.$$eval('#settingsNav > .pagebtn', (b) => b.map((x) => x.dataset.page).slice(0, 6));
+    if (order.join() !== 'General,People,Phones,Automatic care,Alerts,Reaching the apps') throw new Error(`the list: ${order}`);
+    await page.click('#settingsNav .pagebtn[data-page="Automatic care"]');
+    await page.waitForSelector('#setting-AUTO_HEAL', { timeout: 5000 });
+    await page.waitForSelector('#setting-AUTO_ROLLBACK');
+    await page.click('#settingsNav .pagebtn[data-page="Alerts"]');
+    await page.waitForSelector('#setting-QUIET_HOURS', { timeout: 5000 });
+    if (await page.isVisible('#setting-AUTO_HEAL')) throw new Error('Automatic care shows on Alerts');
+  } },
   { name: 'Settings: a page per app, with its port', screen: 'settings', run: async (page) => {
-    await page.waitForSelector('#settingsNav .navhead:text-is("Apps")', { timeout: 5000 });
+    // Each app's own settings under Advanced (redesign-loop R8).
+    await page.waitForSelector('#settingsNav .navhead:text-is("Advanced")', { timeout: 5000 });
     // Folded by category, as on Status; a search opens the folds with matches.
     if (await page.isVisible('#settingsNav .pagebtn[data-page="Immich"]')) throw new Error('the apps are not folded');
     await page.click('#settingsNav .navfold:has-text("Cloud & Files")');
@@ -2964,7 +2978,7 @@ const smokes = [
     await page.waitForSelector('#settingsNav .pagebtn[data-page="Immich"] .n:not(:empty)');
   } },
   { name: 'Copy a secret', screen: 'settings', run: async (page) => {
-    await page.click('#settingsNav .pagebtn[data-page="Domain"]', { timeout: 5000 }); 
+    await page.click('#settingsNav .pagebtn[data-page="Reaching the apps"]', { timeout: 5000 }); 
     await page.click('#setting-CLOUDFLARE_API_TOKEN button:has-text("Copy")');
     await page.waitForSelector('#setting-CLOUDFLARE_API_TOKEN .test:has-text("Copied")', { timeout: 5000 });
   } },
@@ -4554,7 +4568,7 @@ const smokes = [
     await page.waitForFunction((was) => window.__MOCK.calls.StatusBoard > was, n, { timeout: 3000 });
   } },
   { name: 'Settings kept: what was typed stays after another screen', screen: 'settings', run: async (page) => {
-    await page.click('#settingsNav .pagebtn[data-page="Domain"]', { timeout: 5000 });
+    await page.click('#settingsNav .pagebtn[data-page="Reaching the apps"]', { timeout: 5000 });
     await page.fill('#setting-HOMELAB_DOMAIN input', 'home.example.org');
     await page.waitForSelector('#saveSettings:not([hidden])', { timeout: 2000 });
     await page.click('nav button[data-screen="status"]');
@@ -6077,7 +6091,7 @@ const smokes = [
     await page.waitForFunction(() => document.documentElement.classList.contains('no-blur') && window.__MOCK.look?.transparency === 'off', null, { timeout: 2000 });
   } },
   { name: 'Transparency Off: no blur on any screen, the save bar, the phone bar, and the error included', screen: 'settings', mock: { look: { transparency: 'off' } }, run: async (page) => {
-    await page.click('#settingsNav .pagebtn[data-page="Domain"]', { timeout: 5000 });
+    await page.click('#settingsNav .pagebtn[data-page="Reaching the apps"]', { timeout: 5000 });
     await page.fill('#setting-HOMELAB_DOMAIN input', 'home.example.org');
     await page.waitForSelector('#saveSettings:not([hidden])', { timeout: 2000 });
     await page.evaluate(() => { const e = document.getElementById('error'); e.textContent = 'Something went wrong'; e.hidden = false; });
@@ -6094,7 +6108,7 @@ const smokes = [
     }
   } },
   { name: 'Transparency Like the system keeps the save bar\'s blur', screen: 'settings', run: async (page) => {
-    await page.click('#settingsNav .pagebtn[data-page="Domain"]', { timeout: 5000 });
+    await page.click('#settingsNav .pagebtn[data-page="Reaching the apps"]', { timeout: 5000 });
     await page.fill('#setting-HOMELAB_DOMAIN input', 'home.example.org');
     await page.waitForSelector('#saveSettings:not([hidden])', { timeout: 2000 });
     const blur = await page.evaluate(() => getComputedStyle(document.querySelector('.savebar')).backdropFilter);

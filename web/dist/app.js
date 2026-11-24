@@ -4346,14 +4346,14 @@
         /* @__PURE__ */ u3(CardHead, { title: "Alerts" }),
         /* @__PURE__ */ u3(Rows, { kind: "genrows", children: [
           /* @__PURE__ */ u3(Row, { title: `On ${p3.machine}'s screen`, sub: "A notification in the corner, as well as on your phones", end: /* @__PURE__ */ u3(Switch, { label: `Alerts on ${p3.machine}'s screen`, on: onUnlessFalse(v3.DESKTOP_ALERTS), set: (on2) => p3.set("DESKTOP_ALERTS", on2 ? "true" : "false") }) }),
-          /* @__PURE__ */ u3(Row, { title: "Quiet hours", sub: "Alerts arrive without a sound", end: /* @__PURE__ */ u3("span", { class: "muted", children: quietWords(v3.QUIET_HOURS) }), onOpen: () => p3.open("Notifications"), openLabel: "open" })
+          /* @__PURE__ */ u3(Row, { title: "Quiet hours", sub: "Alerts arrive without a sound", end: /* @__PURE__ */ u3("span", { class: "muted", children: quietWords(v3.QUIET_HOURS) }), onOpen: () => p3.open("Alerts"), openLabel: "open" })
         ] })
       ] }),
       /* @__PURE__ */ u3(Card, { kind: "gencard", id: "genReach", children: [
         /* @__PURE__ */ u3(CardHead, { title: "Reaching the apps" }),
         /* @__PURE__ */ u3(Rows, { kind: "genrows", children: [
-          domain ? /* @__PURE__ */ u3(Row, { title: "Your own domain", sub: `Addresses like photos.${domain}`, onOpen: () => p3.open("Domain"), openLabel: "open" }) : /* @__PURE__ */ u3(Row, { title: "Home only", sub: "Your phones and computers reach the apps through Tailscale, at home and away. Nothing is on the internet." }),
-          !domain && /* @__PURE__ */ u3(Row, { title: "Use your own domain", sub: "Addresses like photos.yourname.com", end: /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => p3.open("Domain"), children: "Set it up…" }) })
+          domain ? /* @__PURE__ */ u3(Row, { title: "Your own domain", sub: `Addresses like photos.${domain}`, onOpen: () => p3.open("Reaching the apps"), openLabel: "open" }) : /* @__PURE__ */ u3(Row, { title: "Home only", sub: "Your phones and computers reach the apps through Tailscale, at home and away. Nothing is on the internet." }),
+          !domain && /* @__PURE__ */ u3(Row, { title: "Use your own domain", sub: "Addresses like photos.yourname.com", end: /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => p3.open("Reaching the apps"), children: "Set it up…" }) })
         ] })
       ] }),
       /* @__PURE__ */ u3(Card, { kind: "gencard genmac", id: "genMac", children: [
@@ -4833,7 +4833,7 @@
           const pages = g2.items.filter((i3) => typeof i3 === "string");
           const folds = g2.items.filter((i3) => typeof i3 !== "string");
           return [
-            ...pages.length ? [/* @__PURE__ */ u3("optgroup", { label: g2.head, children: pages.map(option) }, "h:" + g2.head)] : [],
+            ...pages.length ? [/* @__PURE__ */ u3("optgroup", { label: g2.head || "Settings", children: pages.map(option) }, "h:" + g2.head)] : [],
             ...folds.map((f4) => /* @__PURE__ */ u3("optgroup", { label: pages.length ? f4.label : `${g2.head} › ${f4.label}`, children: f4.pages.map(option) }, "f:" + f4.label))
           ];
         })
@@ -4847,7 +4847,7 @@
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3(PagePicker, { groups: groups4, active: active2, counts, pick }),
       groups4.filter((g2) => g2.items.length).map((g2) => [
-        /* @__PURE__ */ u3("div", { class: "navhead", children: g2.head }, "h:" + g2.head),
+        g2.head && /* @__PURE__ */ u3("div", { class: "navhead", children: g2.head }, "h:" + g2.head),
         ...g2.items.map((item) => {
           if (typeof item === "string") return /* @__PURE__ */ u3(PageButton, { name: item, active: active2, counts, pick }, item);
           const f4 = item, open5 = isOpen2(f4);
@@ -6860,7 +6860,7 @@
       values,
       machine: thisMachine,
       open: (page) => {
-        const apps2 = navGroups.find((g2) => g2.head === "Apps")?.items || [];
+        const apps2 = navGroups.find((g2) => g2.head === "Advanced")?.items || [];
         const first = (x3) => !x3 ? thisMachine : typeof x3 === "string" ? x3 : x3.pages[0] || thisMachine;
         pickSettingsPage(page === "Advanced" ? first(apps2[0]) : page);
       },
@@ -7181,6 +7181,8 @@
   };
   var settingsPage = "";
   var extraPages = ["General", "Appearance", "People", "Phones"];
+  var keyPage = Object.fromEntries(["UPDATES_PAUSED", "WATCHTOWER_SCHEDULE", "AUTO_ROLLBACK", "AUTO_HEAL", "UPDATE_CHANNEL", "UPDATE_COPY_LIMIT", "UPDATES_HELD"].map((k3) => [k3, "Automatic care"]));
+  var renamedSections = { Notifications: "Alerts", Domain: "Reaching the apps" };
   function settingsPages(list) {
     const norm = (t3) => t3.toUpperCase().replace(/[^A-Z0-9]+/g, "_") + "_";
     const apps2 = (catalog?.apps || []).map((a3) => ({
@@ -7222,7 +7224,7 @@
     for (const s3 of list) {
       if (!perApp(s3.section)) {
         const isApp = apps2.some((a4) => s3.section === a4.name || s3.section.startsWith(a4.name + " "));
-        page(s3.section === "This Mac" ? thisMachine : s3.section, isApp ? "app" : "general").items.push(s3);
+        page(keyPage[s3.key] || renamedSections[s3.section] || (s3.section === "This Mac" ? thisMachine : s3.section), isApp ? "app" : "general").items.push(s3);
         continue;
       }
       const a3 = appOf(s3.key);
@@ -7232,9 +7234,8 @@
     return [...general, ...appPages];
   }
   var pageGroups = [
-    [thisMachine, ["General", thisMachine, "Storage", "Appearance"]],
-    ["Household", ["People", "Phones"]],
-    ["Reaching the apps", ["Domain", "Notifications"]]
+    ["", ["General", "People", "Phones", "Automatic care", "Alerts", "Reaching the apps"]],
+    [thisMachine, [thisMachine, "Storage", "Appearance", "Tidy Up"]]
   ];
   var navGroups = [];
   function renderSettingsNav(pages) {
@@ -7246,7 +7247,7 @@
     const others2 = known3 ? apps2.filter((p3) => !mine.includes(p3)) : [];
     const groups4 = pageGroups.map(([head, names5]) => ({ head, items: names5.filter((n3) => general.includes(n3)) }));
     const named6 = new Set(pageGroups.flatMap(([, names5]) => names5));
-    groups4[0].items.push(...general.filter((n3) => !named6.has(n3)));
+    groups4[1].items.push(...general.filter((n3) => !named6.has(n3)));
     const cats = catalog?.categories || [];
     const catOf = (name) => (catalog?.apps || []).find((a3) => a3.kind !== "helper" && (name === a3.name || name.startsWith(a3.name + " ")))?.category || "";
     const folds = cats.map((c4) => ({ label: c4.label, pages: mine.filter((p3) => p3.name !== "Other apps" && catOf(p3.name) === c4.id).map((p3) => p3.name) })).filter((f4) => f4.pages.length);
@@ -7254,7 +7255,7 @@
     const other = mine.some((p3) => p3.name === "Other apps") ? ["Other apps"] : [];
     navGroups = [
       ...groups4,
-      { head: "Apps", items: [...loose2, ...folds, ...other, ...others2.length ? [{ label: "Apps you don't have", pages: others2.map((p3) => p3.name) }] : []] }
+      { head: "Advanced", items: [...loose2, ...folds, ...other, ...others2.length ? [{ label: "Apps you don't have", pages: others2.map((p3) => p3.name) }] : []] }
     ];
   }
   function pickSettingsPage(name) {
