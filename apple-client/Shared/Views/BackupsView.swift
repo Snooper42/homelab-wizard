@@ -2,9 +2,9 @@ import SwiftUI
 
 /// Backups, as the redesign's phone picture (Nov 24; the owner's Nov 12
 /// order kept): Last night, how many copies were made, when and where to,
-/// with Back Up Now and Test a Restore; three tiles for the restore test,
-/// the password export and the second copy; what needs you, in one list;
-/// the fresh ones folded to a row of logos; and the rest one tap down (More).
+/// with Back Up Now and Test a Restore; what needs you, in one list; the
+/// restore test and off-site side by side; the fresh ones folded to a row of
+/// logos; and the rest one tap down (More), the password export among it.
 struct BackupsView: View {
     let backups: BackupsViewModel
     /// The fresh copies, opened from their row of logos. Kept like Status's folds.
@@ -24,6 +24,7 @@ struct BackupsView: View {
                         heading(overview)
                         warnings(overview)
                         needsYou(overview)
+                        cards(overview)
                     }
                     .formStyle(.grouped)
                     Form {
@@ -38,6 +39,7 @@ struct BackupsView: View {
                         heading(overview)
                         warnings(overview)
                         needsYou(overview)
+                        cards(overview)
                         fresh(overview)
                         more(overview)
                     } else {
@@ -74,7 +76,13 @@ struct BackupsView: View {
             BackupsHero(overview: overview)
                 .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
                 .listRowBackground(Color.clear)
-            BackupTiles(tiles: overview.tiles())
+        }
+    }
+
+    /// The restore test and off-site, side by side under Needs You, as the redesign's picture.
+    private func cards(_ overview: BackupOverview) -> some View {
+        Section {
+            BackupCards(cards: overview.cards())
                 .listRowInsets(EdgeInsets(top: 6, leading: 0, bottom: 4, trailing: 0))
                 .listRowBackground(Color.clear)
                 .listRowSeparator(.hidden)
@@ -134,7 +142,8 @@ struct BackupsView: View {
     /// and backups on the same disk as the data.
     @ViewBuilder
     private func warnings(_ o: BackupOverview) -> some View {
-        if !o.plainExports.isEmpty || !o.destinationOK {
+        let vault = o.vaultNeedsDoing()
+        if !o.plainExports.isEmpty || !o.destinationOK || vault != nil {
             Section {
                 if !o.plainExports.isEmpty {
                     Label("Unencrypted password exports are lying in recovery-staging. Delete them on the computer.", systemImage: "exclamationmark.lock.fill")
@@ -142,6 +151,11 @@ struct BackupsView: View {
                 }
                 if !o.destinationOK {
                     Label("The backups are on the same disk as the data. Choose another drive on the computer, under Backups.", systemImage: "exclamationmark.triangle")
+                        .foregroundStyle(Theme.warning)
+                }
+                // The password export, due or never made: its tile left the top for the redesign's two cards.
+                if let vault {
+                    Label("\(vault.title): \([vault.value, vault.detail].compactMap { $0 }.joined(separator: ", "))", systemImage: "lock")
                         .foregroundStyle(Theme.warning)
                 }
             }
@@ -641,71 +655,39 @@ private struct CopyRow: View {
     }
 }
 
-/// The three tiles under the top card: the restore test, the password
-/// export, and the second copy (or the settings file), each a word or two
-/// in its colour. Side by side; one under another at the largest text sizes.
-private struct BackupTiles: View {
-    let tiles: [BackupOverview.Tile]
+/// The restore test and off-site, as the redesign's phone picture: each its
+/// name, its state in big (amber or red when it needs a look), and a line or
+/// two. Side by side; one under the other at the largest text sizes.
+private struct BackupCards: View {
+    let cards: [BackupOverview.Card]
     @Environment(\.dynamicTypeSize) private var typeSize
 
     var body: some View {
         let layout = typeSize.isAccessibilitySize
-            ? AnyLayout(VStackLayout(spacing: 10))
-            : AnyLayout(HStackLayout(alignment: .top, spacing: 10))
+            ? AnyLayout(VStackLayout(spacing: 12))
+            : AnyLayout(HStackLayout(alignment: .top, spacing: 12))
         layout {
-            ForEach(tiles) { tile in
-                TileView(tile: tile)
-            }
-        }
-    }
-
-    private struct TileView: View {
-        let tile: BackupOverview.Tile
-
-        var body: some View {
-            VStack(alignment: .leading, spacing: 5) {
-                Image(systemName: symbol)
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundStyle(tint)
-                    .frame(width: 28, height: 28)
-                    .background(tint.opacity(0.14), in: RoundedRectangle(cornerRadius: 7, style: .continuous))
-                    .accessibilityHidden(true)
-                Text(verbatim: tile.title)
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(Theme.secondaryInk)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.85)
-                Text(verbatim: tile.value)
-                    .font(.subheadline.weight(.bold))
-                    .foregroundStyle(tile.tone == .good ? Theme.ink : tint)
-                    .lineLimit(2)
-                if let detail = tile.detail {
-                    Text(verbatim: detail)
-                        .font(.caption)
-                        .foregroundStyle(Theme.secondaryInk)
+            ForEach(cards) { card in
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(verbatim: card.title)
+                        .font(.headline)
+                        .foregroundStyle(Theme.ink)
+                    Text(verbatim: card.value)
+                        .font(.title2.weight(.bold))
+                        .foregroundStyle(card.tone == .good ? Theme.ink : card.tone == .warn ? Theme.warning : Theme.danger)
                         .lineLimit(2)
+                        .minimumScaleFactor(0.7)
+                    ForEach(card.lines, id: \.self) { line in
+                        Text(verbatim: line)
+                            .font(.subheadline)
+                            .foregroundStyle(Theme.secondaryInk)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
                 }
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(12)
-            .card(radius: 16)
-            .accessibilityElement(children: .combine)
-        }
-
-        private var tint: Color {
-            switch tile.tone {
-            case .good: tile.kind == .second ? Theme.info : Theme.success
-            case .warn: Theme.warning
-            case .bad: Theme.danger
-            }
-        }
-
-        private var symbol: String {
-            switch tile.kind {
-            case .restore: tile.tone == .bad ? "xmark" : tile.tone == .good ? "checkmark" : "clock"
-            case .vault: "lock.fill"
-            case .second: "square.stack.fill"
-            case .settingsFile: "doc.text.fill"
+                .frame(maxWidth: .infinity, alignment: .topLeading)
+                .padding(16)
+                .card(radius: 24)
+                .accessibilityElement(children: .combine)
             }
         }
     }

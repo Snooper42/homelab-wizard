@@ -236,6 +236,46 @@ extension BackupOverview {
         return [restore, vault, third]
     }
 
+    /// The redesign's two cards under Needs You (phone-backups.png, as the
+    /// computer's Restore test and Off-site): the restore test's result in
+    /// big, when, and what it checked; where the copies go, encrypted, and
+    /// the second copy or the settings file. Built from `tiles`, so they
+    /// say each the same way.
+    struct Card: Equatable, Sendable, Identifiable {
+        let id: String
+        let title: String
+        let value: String
+        let lines: [String]
+        let tone: Tile.Tone
+    }
+
+    func cards(now: Date = Date()) -> [Card] {
+        let t = tiles(now: now)
+        let restore = t[0], third = t[2]
+        var restoreLines = [restore.detail].compactMap { $0 }
+        if let failed = restoreTest.failedSince, !failed.summary.isEmpty {
+            restoreLines.append(failed.summary)
+        } else if restoreTest.failedSince == nil, let summary = restoreTest.lastSummary, !summary.isEmpty {
+            restoreLines.append(summary)
+        }
+        let offsite = Card(
+            id: "offsite", title: "Off-site",
+            value: destinationOK ? Self.placeName(destination) : "Not set",
+            lines: (destinationOK ? ["Encrypted before it leaves"] : ["Choose where on the computer, under Backups go to"])
+                + ["\(third.title): \([third.value, third.detail].compactMap { $0 }.joined(separator: ", "))"],
+            tone: !destinationOK ? .warn : third.tone)
+        return [Card(id: "restore", title: restore.title, value: restore.value, lines: restoreLines, tone: restore.tone), offsite]
+    }
+
+    /// The password export's tile when it needs doing (due, or never made), for a line at the top now that the cards
+    /// leave it to More; a plain export lying around has its own red line there already.
+    func vaultNeedsDoing(now: Date = Date()) -> Tile? {
+        switch vaultState {
+        case .due, .neverMade: tiles(now: now)[1]
+        default: nil
+        }
+    }
+
     /// This app's copy, by its id.
     func copy(for appID: String) -> BackupCopy? { copies.first { $0.id == appID } }
 
