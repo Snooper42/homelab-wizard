@@ -26,8 +26,9 @@ struct MachineFacts: Sendable, Equatable {
         return MachineFacts(free: Int64(free), total: Int64(total), low: flag("low"), power: power, keptAwake: flag("keptAwake"))
     }
 
-    /// "412 GB": the figure, with "free" beside it.
-    var freeFigure: String { free.formatted(.byteCount(style: .file)) }
+    /// "412 GB": the figure, with "free" beside it, in 1024s as the computer counts its disks (`diskspace.Size`),
+    /// so the phone and the computer say the same number.
+    var freeFigure: String { free.formatted(.byteCount(style: .memory)) }
 
     /// The power in a few words, as the computer's card says it; nil where it can't be told.
     var powerWords: String? {

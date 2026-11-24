@@ -178,6 +178,7 @@ Each phone sees Finances at the level it was paired with: none, the money card, 
 | People in the household, and what's shared with them | yes | on purpose | on purpose | on purpose | |
 | Devices on your tailnet | yes | on purpose | on purpose | on purpose | |
 | Quiet hours | yes | yes, as a setting | yes, as a setting | yes | |
+| Settings in the redesign's order: Household (phones), then Automatic Care (nightly updates, restart, undo, quiet hours, alerts) | yes: Settings › General | partly: the everyday settings in the page's list | yes | yes | `SaveSettings`, `SetUpdatesPaused` |
 | The lock (Face ID), the widget's switch, **Alerts From** | — | — | yes | yes | |
 | **Lock After**: how long the app may be away before Face ID again (Right Away, 1, 5 or 15 minutes) | — | — | yes, 5 minutes unless changed (a change still asks; the screen locking locks it) | yes | |
 | Appearance, start at login, the menu bar or tray | yes ([Host](<Host.md>)) | on purpose: the phone's own | on purpose | on purpose | |
