@@ -2363,6 +2363,8 @@ img.fx-cardpic { object-fit:cover; padding:0; }
    notes under it, category, account, amount), a header of sort buttons above them on the same grid. Sorted by a column
    other than the date, one list with each row's date after its logo. Narrow, the list as before and no header. */
 .fx-transactions { container:fxtx / inline-size; --fx-lead:32px; }
+/* The table's first column holds the date's heading (DATE ↓) over the logos: room for it. */
+@container fxtx (min-width: 700px) { .fx-transactions:not(.fx-txpicking) :is(.fx-txhead, .fx-rows li) { --fx-lead:46px; } .fx-txhead .fx-txcol-date { white-space:nowrap; } }
 .fx-transactions.fx-txpicking { --fx-lead:60px; }
 .fx-txlead { display:inline-flex; align-items:center; gap:8px; flex:none; }
 .fx-txhead { display:none; }
@@ -2379,7 +2381,8 @@ img.fx-cardpic { object-fit:cover; padding:0; }
   .fx-txcol[aria-pressed="true"] { color:var(--text); }
   .fx-txcol:hover { background:var(--shade-04); }
   .fx-txcol:focus-visible { outline:2px solid var(--fin-accent); }
-  .fx-transactions .fx-rows .fx-txlead { grid-column:1; grid-row:1 / span 2; }
+  /* The logo on the name's line, with the category, the account and the amount (the picture's table): notes and tags under the name. */
+  .fx-transactions .fx-rows .fx-txlead { grid-column:1; grid-row:1; align-self:center; }
   .fx-transactions .fx-rows li > .rowopen > .grow, .fx-transactions .fx-rows li > .rowopen > .grow > .muted, .fx-transactions .fx-rows li > .grow, .fx-transactions .fx-rows li > .grow > .muted { display:contents; }
   .fx-transactions .fx-rows .grow > strong { grid-column:2; grid-row:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .fx-transactions .fx-rows .fx-txextra { grid-column:2; grid-row:2; display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 10px; font-size:12px; }
@@ -2401,6 +2404,7 @@ img.fx-cardpic { object-fit:cover; padding:0; }
   .fx-txhead:has(+ .fx-txflat) .fx-txcol-link { grid-column:6; }
   .fx-txhead .fx-txcol-link:hover { background:none; }
   .fx-transactions .fx-rows .fx-txextra .fx-txpays { display:none; }
+  .fx-transactions .fx-rows .fx-txextra:not(:has(> :not(.fx-txpays))) { display:none; }
   .fx-txhead .fx-txcol { text-transform:uppercase; letter-spacing:.06em; font-size:11px; }
 }
 @media (prefers-color-scheme: dark) { .fx-txcol:hover { background:var(--glow-06); } }
@@ -2411,7 +2415,8 @@ img.fx-cardpic { object-fit:cover; padding:0; }
 .fx-txday h3 .fx-txdaysum { font-weight:500; font-variant-numeric:tabular-nums; }
 /* The table's look (docs/images/redesign/computer-transactions.png): each day a band with its total; the category a tag in
    its colour; the account with its mark; Linked to with its link. */
-.fx-transactions .fx-txday h3 { background:var(--sunken); margin:10px -6px 4px; padding:7px 10px; border-radius:8px; }
+.fx-transactions .fx-txday h3 { background:var(--sunken); margin:6px -6px 2px; padding:7px 10px; border-radius:8px; }
+.fx-transactions .fx-txday + .fx-txday { margin-top:4px; }
 .fx-cattag { display:inline-flex; align-items:center; gap:6px; max-width:100%; padding:2px 10px; border-radius:999px; background:color-mix(in srgb, var(--fx-hue, var(--muted)) 14%, transparent); color:var(--text); font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .fx-cattag.plain { background:var(--sunken); color:var(--muted); }
 .fx-cattagdot { width:7px; height:7px; flex:none; border-radius:50%; background:var(--fx-hue); }
