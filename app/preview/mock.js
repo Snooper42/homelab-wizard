@@ -171,6 +171,8 @@ try { if ((window.__MOCK || {}).tidyTab) localStorage.setItem('homelab.tidyTab',
     SetMenuEntry: (on) => { M.menuEntry = { added: on }; return later(null); },
     // Snooze a failing check's alerts: kept on the watchdog's summary, as the app does.
     SnoozeCheck: (check, hours) => { const w = M.watchdog || {}; const z = { ...(w.snoozed || {}) }; if (hours) z[check] = new Date(Date.now() + hours * 36e5).toISOString(); else delete z[check]; M.watchdog = { ...w, snoozed: z }; return later(null); },
+    // The computer's free space and power, the machine card a phone reads (core.Machine).
+    Machine: () => later(M.machine || { free: 412 * 2 ** 30, total: 994 * 2 ** 30, low: false, power: 'plugged', keptAwake: true }),
     Watchdog: () => later(M.watchdog || { lastRun: '0001-01-01T00:00:00Z', checks: 0, failing: [], pending: 0 }),
     RevealReport: () => later(null),
     RecoveryKit: () => later(null),
@@ -511,7 +513,7 @@ try { if ((window.__MOCK || {}).tidyTab) localStorage.setItem('homelab.tidyTab',
   // once it is read, and the pages' answers while it still checks them.
   // M.cardDelay holds a card back so many milliseconds more.
   const own = { ...app };
-  const cardOf = { watchdog: 'Watchdog', crash: 'LastCrash', savings: 'SavingsHistory', storage: 'Storage', alerts: 'Alerts', usage: 'Usage', week: 'Weekly', protection: 'Protection', downloads: 'Downloads', answers: 'Answers' };
+  const cardOf = { machine: 'Machine', watchdog: 'Watchdog', crash: 'LastCrash', savings: 'SavingsHistory', storage: 'Storage', alerts: 'Alerts', usage: 'Usage', week: 'Weekly', protection: 'Protection', downloads: 'Downloads', answers: 'Answers' };
   const files = ['watchdog', 'crash', 'savings', 'storage'];
   app.StatusBoard = (n, want) => {
     const card = (name) => later(null, M.cardDelay?.[name] || 0).then(() => own[cardOf[name]]()).then(
