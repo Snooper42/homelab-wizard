@@ -18,6 +18,20 @@ Once per account: open Claude Code on the web, start a session on this repositor
 
 **To pause a lane:** change **Paused: no** to **Paused: yes** at the top of its loop file and commit.
 
+## Try it on your machine (Nov 24)
+
+What changed on the night of Nov 23, to try on the real thing. Write what's wrong under **Doesn't work or bugs me** below, one line each; the loops read it first.
+
+**The computer** (it updates itself: let it look, then **Update now**, or quit and open it; Settings › This Mac should say the newest version):
+1. **Finances' sidebar:** five small icons at the top, then Dashboard, Transactions, Bills & paychecks (Recurring and Paychecks under it), Calendar, Net worth, Collection, Reports, then your accounts. On Status or Backups, no bank balances in the sidebar.
+2. **The top bar:** **Add a transaction ▾** (the ▾ has the other adds, Update balances, Export), your paycheck's name over its days with ‹ ›, Paycheck or Month, the eye, and the customise button.
+3. **The Dashboard:** *Left after this paycheck's bills* first, with its chart and the three figures under it; Latest transactions beside it; Net worth, Cash flow, Where the money went, Coming up, Budgets to watch, Investments with this month's change.
+4. **Where the other cards went:** This paycheck on Paychecks; Renewing soon and Where it goes on Recurring; Checking ahead on Calendar; Looking back and Money flow on Reports.
+5. **Back buttons:** an app's page from Status (*‹ Status › its name*), an account's page from Net worth, Transactions opened from a Dashboard card.
+6. **Your real numbers:** does *Left after this paycheck's bills* match your own sums? Does *+x% this month* on Investments look right?
+
+**The iPhone:** build it in Xcode as usual; Settings › About should now show the same version as the computer's Settings › This Mac. (Its screens aren't redesigned yet.)
+
 ## Doesn't work or bugs me
 
 Rough is fine: one line each, worst first, naming the screen.
