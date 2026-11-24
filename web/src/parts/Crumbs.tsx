@@ -18,7 +18,8 @@ export interface Crumb {
 export function Crumbs({ trail, here }: { trail: Crumb[]; here: ComponentChildren }) {
   const up = [...trail].reverse().find((c) => c.go);
   return (
-    <nav class="crumbs" aria-label="Where you are">
+    // A div, not a <nav>: style.css draws every nav as the sidebar.
+    <div class="crumbs" role="navigation" aria-label="Where you are">
       {up && (
         <button type="button" class="back" title={`Back to ${up.label}`} aria-label={`Back to ${up.label}`} onClick={up.go}>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6" /></svg>
@@ -34,6 +35,6 @@ export function Crumbs({ trail, here }: { trail: Crumb[]; here: ComponentChildre
         ))}
         <li aria-current="page"><span class="crumb here">{here}</span></li>
       </ol>
-    </nav>
+    </div>
   );
 }

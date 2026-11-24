@@ -8718,19 +8718,22 @@
   // web/src/parts/Crumbs.tsx
   function Crumbs({ trail, here: here3 }) {
     const up = [...trail].reverse().find((c4) => c4.go);
-    return /* @__PURE__ */ u3("nav", { class: "crumbs", "aria-label": "Where you are", children: [
-      up && /* @__PURE__ */ u3("button", { type: "button", class: "back", title: `Back to ${up.label}`, "aria-label": `Back to ${up.label}`, onClick: up.go, children: [
-        /* @__PURE__ */ u3("svg", { viewBox: "0 0 24 24", "aria-hidden": "true", children: /* @__PURE__ */ u3("path", { d: "M15 18l-6-6 6-6" }) }),
-        /* @__PURE__ */ u3("span", { class: "backlabel", "aria-hidden": "true", children: up.label })
-      ] }),
-      /* @__PURE__ */ u3("ol", { children: [
-        trail.map((c4) => /* @__PURE__ */ u3("li", { children: [
-          c4.go ? /* @__PURE__ */ u3("button", { type: "button", class: "crumb", onClick: c4.go, children: c4.label }) : /* @__PURE__ */ u3("span", { class: "crumb", children: c4.label }),
-          /* @__PURE__ */ u3("span", { class: "crumbsep", "aria-hidden": "true", children: "›" })
-        ] }, c4.label)),
-        /* @__PURE__ */ u3("li", { "aria-current": "page", children: /* @__PURE__ */ u3("span", { class: "crumb here", children: here3 }) })
+    return (
+      // A div, not a <nav>: style.css draws every nav as the sidebar.
+      /* @__PURE__ */ u3("div", { class: "crumbs", role: "navigation", "aria-label": "Where you are", children: [
+        up && /* @__PURE__ */ u3("button", { type: "button", class: "back", title: `Back to ${up.label}`, "aria-label": `Back to ${up.label}`, onClick: up.go, children: [
+          /* @__PURE__ */ u3("svg", { viewBox: "0 0 24 24", "aria-hidden": "true", children: /* @__PURE__ */ u3("path", { d: "M15 18l-6-6 6-6" }) }),
+          /* @__PURE__ */ u3("span", { class: "backlabel", "aria-hidden": "true", children: up.label })
+        ] }),
+        /* @__PURE__ */ u3("ol", { children: [
+          trail.map((c4) => /* @__PURE__ */ u3("li", { children: [
+            c4.go ? /* @__PURE__ */ u3("button", { type: "button", class: "crumb", onClick: c4.go, children: c4.label }) : /* @__PURE__ */ u3("span", { class: "crumb", children: c4.label }),
+            /* @__PURE__ */ u3("span", { class: "crumbsep", "aria-hidden": "true", children: "›" })
+          ] }, c4.label)),
+          /* @__PURE__ */ u3("li", { "aria-current": "page", children: /* @__PURE__ */ u3("span", { class: "crumb here", children: here3 }) })
+        ] })
       ] })
-    ] });
+    );
   }
 
   // web/src/parts/MenuButton.tsx
