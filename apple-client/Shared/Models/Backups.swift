@@ -137,6 +137,41 @@ extension BackupOverview {
     /// Paused and not copied yet, each with its note (copyGroups').
     var waitingGroups: [CopyGroup] { copyGroups.filter { $0.state == "paused" || $0.state == "none" } }
 
+    // MARK: Backups as the redesign's phone picture (Nov 24)
+
+    /// What needs you, in one list (phone-backups.png's Needs You): the
+    /// copies out of date or shrunk first, then the ones waiting for their
+    /// drive or not copied yet.
+    var needingYou: [BackupCopy] { needingALook + waitingGroups.flatMap(\.copies) }
+
+    /// The Last night card's words, as the computer's (`BackupTiles` in
+    /// web/src/backups/Backups.tsx): how many of last night's copies were
+    /// made, when it finished and where they went, and a chip for what was
+    /// skipped.
+    struct LastNight: Equatable, Sendable {
+        /// "11", over "of 12 copied".
+        let figure: String
+        let unit: String
+        /// "3:41 AM · Encrypted to Proton Drive"; "2 days ago · …" when it's older than a night.
+        let caption: String
+        /// "Mealie skipped", "2 skipped"; nil when nothing was.
+        let chip: String?
+    }
+
+    func lastNight(now: Date = .now) -> LastNight {
+        let count = upToDate
+        var parts: [String] = []
+        if let run = lastRun {
+            parts.append(now.timeIntervalSince(run) < 30 * 3600
+                ? run.formatted(date: .omitted, time: .shortened)
+                : run.formatted(.relative(presentation: .named)))
+        }
+        if destinationOK, !destination.isEmpty { parts.append("Encrypted to \(Self.placeName(destination))") }
+        let skipped = copies.filter { $0.state == "stale" }
+        let chip: String? = skipped.isEmpty ? nil : skipped.count == 1 ? "\(skipped[0].name) skipped" : "\(skipped.count) skipped"
+        return LastNight(figure: "\(count.fresh)", unit: "of \(count.of) copied", caption: parts.joined(separator: " · "), chip: chip)
+    }
+
     /// One of the three tiles under the top card: the restore test, the
     /// password export, and the second copy (Kopia), or the settings file
     /// where there's no Kopia. Each says how it is in a word or two.

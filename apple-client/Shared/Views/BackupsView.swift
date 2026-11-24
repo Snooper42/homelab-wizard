@@ -1,10 +1,10 @@
 import SwiftUI
 
-/// Backups, as the owner picked it (Nov 12): a card with a ring of the
-/// copies that are fresh, when the last backup ran and where to, and Back
-/// Up Now and Test a Restore; three tiles for the restore test, the
-/// password export and the second copy; the copies that need a look; the
-/// fresh ones folded to a row of logos; and the rest one tap down (More).
+/// Backups, as the redesign's phone picture (Nov 24; the owner's Nov 12
+/// order kept): Last night, how many copies were made, when and where to,
+/// with Back Up Now and Test a Restore; three tiles for the restore test,
+/// the password export and the second copy; what needs you, in one list;
+/// the fresh ones folded to a row of logos; and the rest one tap down (More).
 struct BackupsView: View {
     let backups: BackupsViewModel
     /// The fresh copies, opened from their row of logos. Kept like Status's folds.
@@ -23,8 +23,7 @@ struct BackupsView: View {
                     Form {
                         heading(overview)
                         warnings(overview)
-                        needsALook(overview)
-                        waiting(overview)
+                        needsYou(overview)
                     }
                     .formStyle(.grouped)
                     Form {
@@ -38,8 +37,7 @@ struct BackupsView: View {
                     if let overview = backups.overview {
                         heading(overview)
                         warnings(overview)
-                        needsALook(overview)
-                        waiting(overview)
+                        needsYou(overview)
                         fresh(overview)
                         more(overview)
                     } else {
@@ -83,30 +81,21 @@ struct BackupsView: View {
         }
     }
 
+    /// What needs you, in one list as the redesign's picture: the copies out of date or shrunk, then the ones waiting
+    /// for their drive or not copied yet, each with its fix (Start for a stopped app); the waiting ones' notes under it.
     @ViewBuilder
-    private func needsALook(_ overview: BackupOverview) -> some View {
-        if !overview.needingALook.isEmpty {
+    private func needsYou(_ overview: BackupOverview) -> some View {
+        let copies = overview.needingYou
+        if !copies.isEmpty {
+            let notes = overview.waitingGroups.compactMap(\.note)
             Section {
-                ForEach(overview.needingALook) { copy in
+                ForEach(copies) { copy in
                     CopyRow(copy: copy)
                 }
             } header: {
-                CountHeader(title: "Needs a Look", count: overview.needingALook.count, tint: Theme.warning)
-            }
-        }
-    }
-
-    @ViewBuilder
-    private func waiting(_ overview: BackupOverview) -> some View {
-        ForEach(overview.waitingGroups) { group in
-            Section {
-                ForEach(group.copies) { copy in
-                    CopyRow(copy: copy)
-                }
-            } header: {
-                Text(group.title)
+                CountHeader(title: "Needs You", count: copies.count, tint: overview.needingALook.isEmpty ? .secondary : Theme.warning)
             } footer: {
-                if let note = group.note { Text(note) }
+                if !notes.isEmpty { Text(verbatim: notes.joined(separator: "\n")) }
             }
         }
     }
@@ -442,85 +431,120 @@ private struct JobRow: View {
     }
 }
 
-/// The top of Backups: a ring of the copies that are fresh out of those
-/// that should be, the words for it (as Status's Backups tile says them),
-/// when the last backup ran and where to, and the two jobs as buttons.
+/// The top of Backups, as the redesign's phone picture (phone-backups.png)
+/// and the computer's Last night card: a chip for what was skipped, how many
+/// of last night's copies were made ("11 of 12 copied"), when it finished
+/// and where they went, then Back Up Now and Test a Restore side by side.
+/// The fourteen nights' squares join when the computer keeps each night's
+/// result (quality-loop Q4).
 private struct BackupsHero: View {
     let overview: BackupOverview
     @Environment(HomelabTasksViewModel.self) private var tasks
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     var body: some View {
-        let count = overview.upToDate
-        let tile = StatusTiles.backups(overview)
-        HStack(alignment: .center, spacing: 14) {
-            ProgressRing(value: count.of == 0 ? 0 : Double(count.fresh) / Double(count.of), lineWidth: 8,
-                         tint: tile.alert ? Theme.warning : Theme.success, track: Theme.accent.opacity(0.14)) {
-                VStack(spacing: 0) {
-                    Text(count.fresh, format: .number)
-                        .font(.title3.weight(.bold))
-                        .monospacedDigit()
-                    Text("of \(count.of)")
-                        .font(.caption2)
-                        .foregroundStyle(Theme.secondaryInk)
+        let words = overview.lastNight()
+        VStack(alignment: .leading, spacing: 6) {
+            ViewThatFits(in: .horizontal) {
+                HStack(alignment: .firstTextBaseline) {
+                    title
+                    Spacer(minLength: 8)
+                    chip(words.chip)
+                }
+                VStack(alignment: .leading, spacing: 6) {
+                    title
+                    chip(words.chip)
                 }
             }
-            .frame(width: 76, height: 76)
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel("\(count.fresh) of \(count.of) copies fresh")
-
-            VStack(alignment: .leading, spacing: 3) {
-                Text(verbatim: tile.value)
-                    .font(.headline)
-                    .foregroundStyle(tile.alert ? Theme.warning : Theme.ink)
-                if let last = overview.lastRun {
-                    Text("Last backup \(last, format: .relative(presentation: .named))")
-                        .font(.subheadline)
-                        .foregroundStyle(Theme.secondaryInk)
-                }
-                Text(verbatim: "To \(BackupOverview.placeName(overview.destination))")
-                    .font(.subheadline)
+            HStack(alignment: .firstTextBaseline, spacing: 6) {
+                Text(verbatim: words.figure)
+                    .font(.system(.largeTitle, design: .rounded).weight(.bold))
+                    .monospacedDigit()
+                    .foregroundStyle(Theme.ink)
+                Text(verbatim: words.unit)
+                    .font(.title3.weight(.semibold))
                     .foregroundStyle(Theme.secondaryInk)
-                    .lineLimit(1)
-                if tasks.canRun {
-                    HStack(spacing: 8) {
-                        Button(HomelabTask.backup.title) { tasks.start(.backup) }
-                            .buttonStyle(.borderedProminent)
-                            .tint(Theme.accentFill)
-                        Button(HomelabTask.restoreTest.title) { tasks.start(.restoreTest) }
-                            .buttonStyle(.bordered)
+            }
+            .accessibilityElement(children: .combine)
+            if !words.caption.isEmpty {
+                Text(verbatim: words.caption)
+                    .font(.caption.weight(.semibold))
+                    .textCase(.uppercase)
+                    .tracking(0.6)
+                    .foregroundStyle(Theme.secondaryInk)
+            }
+            if tasks.canRun {
+                let layout = typeSize.isAccessibilitySize
+                    ? AnyLayout(VStackLayout(spacing: 10))
+                    : AnyLayout(HStackLayout(spacing: 10))
+                layout {
+                    Button { tasks.start(.backup) } label: {
+                        Text(HomelabTask.backup.title).frame(maxWidth: .infinity)
                     }
-                    .buttonBorderShape(.capsule)
-                    .controlSize(.small)
-                    .font(.subheadline.weight(.semibold))
-                    .disabled(tasks.running != nil)
-                    .padding(.top, 6)
-                } else {
-                    Text("This device can only look.")
-                        .font(.caption)
-                        .foregroundStyle(Theme.secondaryInk)
+                    .buttonStyle(.borderedProminent)
+                    .tint(Theme.accentFill)
+                    Button { tasks.start(.restoreTest) } label: {
+                        Text(HomelabTask.restoreTest.title).frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
                 }
-                if let running = tasks.running, running == .backup || running == .restoreTest {
-                    HStack(spacing: 6) {
-                        ProgressView().controlSize(.small)
-                        Text(running.progressTitle).font(.caption).foregroundStyle(Theme.secondaryInk)
-                    }
-                }
-                ForEach([HomelabTask.backup, .restoreTest], id: \.self) { task in
-                    if let error = tasks.errors[task] {
-                        Text(error).font(.caption).foregroundStyle(Theme.danger)
-                    }
+                .buttonBorderShape(.capsule)
+                .controlSize(.large)
+                .font(.headline)
+                .disabled(tasks.running != nil)
+                .padding(.top, 8)
+            } else {
+                Text("This device can only look.")
+                    .font(.caption)
+                    .foregroundStyle(Theme.secondaryInk)
+            }
+            if let running = tasks.running, running == .backup || running == .restoreTest {
+                HStack(spacing: 6) {
+                    ProgressView().controlSize(.small)
+                    Text(running.progressTitle).font(.caption).foregroundStyle(Theme.secondaryInk)
                 }
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
+            ForEach([HomelabTask.backup, .restoreTest], id: \.self) { task in
+                if let error = tasks.errors[task] {
+                    Text(error).font(.caption).foregroundStyle(Theme.danger)
+                }
+            }
         }
-        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(18)
         .card(radius: 24)
+    }
+
+    private var title: some View {
+        Text("Last night")
+            .font(.headline)
+            .foregroundStyle(Theme.ink)
+    }
+
+    @ViewBuilder
+    private func chip(_ words: String?) -> some View {
+        if let words {
+            Label(words, systemImage: "exclamationmark.triangle")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(Theme.warning)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 4)
+                .background(Theme.warning.opacity(0.14), in: Capsule())
+                .lineLimit(1)
+        }
     }
 }
 
 private struct CopyRow: View {
     @Environment(DashboardViewModel.self) private var dashboard
+    @Environment(AppActionsViewModel.self) private var actions
     let copy: BackupCopy
+
+    /// The app of a copy that's out of date because it's stopped: Start, beside it, is its fix.
+    private var stoppedApp: AppStatus? {
+        guard copy.state == "stale", let id = copy.app else { return nil }
+        return dashboard.liveEvents.status?.apps.first { $0.id == id && $0.state == "stopped" }
+    }
 
     var body: some View {
         HStack(spacing: 10) {
@@ -565,7 +589,15 @@ private struct CopyRow: View {
                 }
             }
             Spacer(minLength: 0)
-            if copy.size > 0 {
+            if let app = stoppedApp, actions.canChangeApps {
+                Button("Start") { actions.request(.start, on: app) }
+                    .buttonStyle(.borderedProminent)
+                    .buttonBorderShape(.capsule)
+                    .controlSize(.small)
+                    .tint(Theme.accentFill)
+                    .disabled(actions.isBusy)
+                    .accessibilityLabel("Start \(app.name)")
+            } else if copy.size > 0 {
                 VStack(alignment: .trailing, spacing: 1) {
                     Text(copy.size, format: .byteCount(style: .memory))
                     if !copy.shrank, copy.sizeChanged {
