@@ -1880,12 +1880,15 @@ const smokes = [
     await page.waitForSelector('label.app:has-text("Frigate") .sysnote:has-text("AMD graphics")', { timeout: 5000 });
   } },
   { name: 'Setup on Windows: the tray icon\'s dot', screen: 'settings', mock: { platform: 'Win32', host: { ...host, os: 'Windows 11 24H2', machine: 'this PC' } }, run: async (page) => {
+    await thisMachinePage(page);
     await page.waitForSelector('#trayNote:has-text("orange dot on the tray icon")', { timeout: 5000 });
   } },
   { name: 'Setup on GNOME: the tray icon needs AppIndicator', screen: 'settings', mock: { platform: 'Linux x86_64', host: { ...host, os: 'Ubuntu 24.04', machine: 'this machine', desktop: 'gnome' } }, run: async (page) => {
+    await thisMachinePage(page);
     await page.waitForSelector('#trayNote:has-text("AppIndicator extension")', { timeout: 5000 });
   } },
   { name: 'Setup on KDE: no tray note', screen: 'settings', mock: { platform: 'Linux x86_64', host: { ...host, os: 'Linux (SteamOS 3.7)', machine: 'Steam Machine', desktop: 'kde' } }, run: async (page) => {
+    await thisMachinePage(page);
     await page.waitForSelector('#trayAtLogin', { timeout: 5000 });
     if (await page.locator('#trayNote').count()) throw new Error('a tray note on KDE, where the tray works as on the others');
   } },
@@ -2135,6 +2138,7 @@ const smokes = [
     await page.waitForSelector('#reportLog:not([hidden])', { timeout: 5000 });
   } },
   { name: 'Take the homelab off this machine: the plan, typed out, then the run', screen: 'settings', run: async (page) => {
+    await thisMachinePage(page);
     await page.waitForSelector('#thisMacCard #uninstall', { timeout: 5000 });
     await page.check('#uninstall-folder');
     if (!(await page.isChecked('#uninstall-data')) || !(await page.isDisabled('#uninstall-data'))) throw new Error('the folder does not take the data with it');
@@ -2150,6 +2154,7 @@ const smokes = [
     if (!(await page.textContent('#uninstallLog')).includes('removed the scheduled jobs')) throw new Error('no log');
   } },
   { name: 'Everything else in the runtime asks for delete everything', screen: 'settings', run: async (page) => {
+    await thisMachinePage(page);
     await page.waitForSelector('#thisMacCard #uninstall', { timeout: 5000 });
     await page.check('#uninstall-everythingElse');
     await page.click('#uninstallReview');
@@ -2181,6 +2186,7 @@ const smokes = [
     await page.waitForSelector('#updateLine', { state: 'hidden' });
   } },
   { name: 'A finished Go back stays on Setup until Clear', screen: 'settings', mock: { upgrade: { ...upgrade, previous: { commit: 'abc1234', version: '0.13.0', when: new Date(Date.now() - 864e5).toISOString() } }, jobApps: { 'upgrade-back': ['navidrome', 'vikunja', 'mealie'] } }, run: async (page) => {
+    await thisMachinePage(page);
     await page.click('#upgradeBack', { timeout: 5000 });
     await page.click('#upgradeBack');
     // The rows fold Show details away: the log is there, not shown.
@@ -2644,6 +2650,7 @@ const smokes = [
     await page.waitForSelector('#updateLine .head:text-is("Homelab Wizard 0.15.0 is ready")', { timeout: 5000 });
   } },
   { name: 'Install on quit is on until turned off, and not offered where installing asks for a password', screen: 'settings', mock: { update: { ...update, canInstallOnQuit: true } }, run: async (page) => {
+    await thisMachinePage(page);
     await page.waitForSelector('#updatesSettings #installOnQuit:checked', { timeout: 5000 });
     await page.click('#updatesSettings #installOnQuit');
     await page.waitForFunction(() => window.__MOCK.installOnQuit === false);
@@ -2652,10 +2659,12 @@ const smokes = [
     await page.waitForFunction(() => window.__MOCK.looksNow === 1);
   } },
   { name: 'No install on quit where installing asks for a password', screen: 'settings', mock: { platform: 'Linux x86_64', host: { ...host, os: 'Ubuntu 24.04', machine: 'this machine' }, update: { ...update, canInstallOnQuit: false } }, run: async (page) => {
+    await thisMachinePage(page);
     await page.waitForSelector('#updatesSettings:has-text("Look for updates")', { timeout: 5000 });
     if (await page.$('#installOnQuit')) throw new Error('install on quit offered where installing asks for a password');
   } },
   { name: 'Version says up to date once', screen: 'settings', run: async (page) => {
+    await thisMachinePage(page);
     await page.waitForSelector('#versionInfo:has-text("up to date")', { timeout: 5000 });
     // Check again (on Setup) reads the machine and the update again.
     await page.evaluate(() => document.getElementById('recheck').click());
@@ -2664,10 +2673,12 @@ const smokes = [
     if (text.split('up to date').length !== 2) throw new Error(`version line: ${text}`);
   } },
   { name: 'No app menu row outside the AppImage', screen: 'settings', run: async (page) => {
+    await thisMachinePage(page);
     await page.waitForSelector('#hostInfo:has-text("Homelab folder")', { timeout: 5000 });
     if (await page.$('#menuEntry')) throw new Error('the app menu row shows outside the AppImage');
   } },
   { name: 'AppImage: add to the app menu', screen: 'settings', mock: { menuEntry: { added: false }, host: { ...host, os: 'Linux (SteamOS 3.7)', machine: 'Steam Machine' } }, run: async (page) => {
+    await thisMachinePage(page);
     await page.waitForSelector('#hostInfo:has-text("opened from its file")', { timeout: 5000 });
     await page.click('#menuEntry');
     await page.waitForSelector('#hostInfo:has-text("in the app menu")', { timeout: 5000 });
@@ -2680,11 +2691,13 @@ const smokes = [
     await page.waitForSelector('#diskSpace .disk:has(strong:text-is("Hobbies")) .storagebar');
   } },
   { name: 'Tray at login', screen: 'settings', run: async (page) => {
+    await thisMachinePage(page);
     await page.waitForSelector('#hostInfo:has-text("only while the app is open")', { timeout: 5000 });
     await page.click('#trayAtLogin');
     await page.waitForSelector('#hostInfo:has-text("starts at login")', { timeout: 5000 });
   } },
   { name: 'Tray at sign-in, in Windows\' word', screen: 'settings', mock: { platform: 'Win32', host: { ...host, os: 'Windows 11' } }, run: async (page) => {
+    await thisMachinePage(page);
     await page.click('#trayAtLogin:has-text("Start at sign-in")', { timeout: 5000 });
     await page.waitForSelector('#hostInfo:has-text("starts at sign-in")', { timeout: 5000 });
   } },
