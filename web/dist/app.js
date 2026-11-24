@@ -10723,9 +10723,19 @@
                 dayShort(t3.date),
                 /* @__PURE__ */ u3("span", { class: "fx-txsep", children: " · " })
               ] }),
-              /* @__PURE__ */ u3("span", { class: "fx-txcat", title: what2, children: what2 }),
+              /* @__PURE__ */ u3("span", { class: "fx-txcat", title: what2, children: /* @__PURE__ */ u3("span", { class: "fx-cattag" + (t3.to || !t3.category && !t3.splits?.length ? " plain" : " " + hue(categoryHue(t3.splits?.length ? t3.splits[0].category : t3.category, v3.categories))), children: [
+                !t3.to && (t3.category || !!t3.splits?.length) && /* @__PURE__ */ u3("span", { class: "fx-cattagdot", "aria-hidden": "true" }),
+                what2
+              ] }) }),
               /* @__PURE__ */ u3("span", { class: "fx-txsep", children: " · " }),
-              /* @__PURE__ */ u3("span", { class: "fx-txacct", title: where, children: where }),
+              /* @__PURE__ */ u3("span", { class: "fx-txacct", title: where, children: [
+                a3 && /* @__PURE__ */ u3(AcctMark, { a: a3, size: "sm" }),
+                /* @__PURE__ */ u3("span", { class: "fx-txacctname", children: where })
+              ] }),
+              /* @__PURE__ */ u3("span", { class: "fx-txlinked", children: t3.payment && L2.payment[t3.payment] ? /* @__PURE__ */ u3(S, { children: [
+                /* @__PURE__ */ u3("svg", { viewBox: "0 0 24 24", "aria-hidden": "true", children: /* @__PURE__ */ u3("path", { d: "M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1 1M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1-1" }) }),
+                L2.payment[t3.payment].name
+              ] }) : /* @__PURE__ */ u3("span", { class: "fx-sub", "aria-label": "Not linked", children: "—" }) }),
               /* @__PURE__ */ u3("span", { class: "fx-txextra", children: [
                 t3.payment && L2.payment[t3.payment] && /* @__PURE__ */ u3("span", { class: "fx-txpays", children: [
                   /* @__PURE__ */ u3("span", { class: "fx-txsep", children: " · " }),
@@ -10861,19 +10871,22 @@
                 "Together ",
                 /* @__PURE__ */ u3(Amount, { value: shown8.filter((t3) => !t3.to || account).reduce((s3, t3) => s3 + (account && t3.to === account ? -amt(t3) : amt(t3)), 0), form: "full", sign: true })
               ] }),
-              !!shown8.length && /* @__PURE__ */ u3("div", { class: "fx-txhead", role: "group", "aria-label": "Sort the transactions by", children: columns.map(([by, label, up]) => {
-                const on2 = sort.by === by;
-                const next = on2 ? { by, up: !sort.up } : { by, up };
-                const way2 = (x3) => x3.by === "date" ? x3.up ? "oldest first" : "newest first" : x3.by === "amount" ? x3.up ? "most out first" : "most in first" : x3.up ? "A to Z" : "Z to A";
-                return /* @__PURE__ */ u3("button", { type: "button", class: "fx-txcol fx-txcol-" + by, "aria-pressed": on2, title: `Sort by ${label.toLowerCase()}, ${way2(next)}`, onClick: () => setSort(next), children: [
-                  label,
-                  on2 && /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: sort.up ? " ↑" : " ↓" }),
-                  on2 && /* @__PURE__ */ u3("span", { class: "fx-hidden", children: [
-                    ", ",
-                    way2(sort)
-                  ] })
-                ] }, by);
-              }) }),
+              !!shown8.length && /* @__PURE__ */ u3("div", { class: "fx-txhead", role: "group", "aria-label": "Sort the transactions by", children: [
+                columns.map(([by, label, up]) => {
+                  const on2 = sort.by === by;
+                  const next = on2 ? { by, up: !sort.up } : { by, up };
+                  const way2 = (x3) => x3.by === "date" ? x3.up ? "oldest first" : "newest first" : x3.by === "amount" ? x3.up ? "most out first" : "most in first" : x3.up ? "A to Z" : "Z to A";
+                  return /* @__PURE__ */ u3("button", { type: "button", class: "fx-txcol fx-txcol-" + by, "aria-pressed": on2, title: `Sort by ${label.toLowerCase()}, ${way2(next)}`, onClick: () => setSort(next), children: [
+                    label,
+                    on2 && /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: sort.up ? " ↑" : " ↓" }),
+                    on2 && /* @__PURE__ */ u3("span", { class: "fx-hidden", children: [
+                      ", ",
+                      way2(sort)
+                    ] })
+                  ] }, by);
+                }),
+                /* @__PURE__ */ u3("span", { class: "fx-txcol fx-txcol-link", "aria-hidden": "true", children: "Linked to" })
+              ] }),
               !byDay2 && !!shown8.length && /* @__PURE__ */ u3(Rows, { kind: "fx-rows fx-txflat", children: list.slice(0, upTo).map((t3) => rowOf(t3, true)) }),
               byDay2 && days.map((d3, i3) => /* @__PURE__ */ u3(S, { children: [
                 !!v3.plan.trackFrom && !sort.up && d3.date < v3.plan.trackFrom && (i3 === 0 || days[i3 - 1].date >= v3.plan.trackFrom) && /* @__PURE__ */ u3("p", { class: "fx-sub fx-trackline", children: [
@@ -10894,7 +10907,7 @@
                         owed(acct.kind) ? "owed" : "in " + acct.name,
                         " after the day"
                       ] })
-                    ] }) : d3.list.filter((t3) => !t3.to).length > 1 && /* @__PURE__ */ u3("span", { class: "fx-txdaysum", children: [
+                    ] }) : d3.list.some((t3) => !t3.to) && /* @__PURE__ */ u3("span", { class: "fx-txdaysum", children: [
                       /* @__PURE__ */ u3(Amount, { value: d3.list.filter((t3) => !t3.to).reduce((n3, t3) => n3 + amt(t3), 0), sign: true, form: "full" }),
                       /* @__PURE__ */ u3("span", { class: "fx-hidden", children: " in all that day" })
                     ] })

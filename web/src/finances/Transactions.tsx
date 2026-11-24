@@ -20,7 +20,8 @@ import { Empty } from '../parts/Empty';
 import { Row, Rows } from '../parts/Row';
 import { Amount, Stat } from './ui/Amount';
 import { Widget } from './ui/Widget';
-import { Mark, payeeBrand } from './Mark';
+import { AcctMark, Mark, payeeBrand } from './Mark';
+import { hue } from './ui/Legend';
 import { paysBill } from './guessCategory';
 import { joined, type Pair, pairs, suggestLinks, withLearned } from './importData';
 import { categoryHue } from './hues';
@@ -349,7 +350,7 @@ export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger, logo
     const opens = picking ? (e: MouseEvent) => toggle(t.id, e.shiftKey) : edit ? () => edit('transaction', t.id) : t.receipt && readReceipt ? () => look(t) : undefined;
     const open = !picking && seen?.id === t.id ? seen : null;
     return <Fragment key={t.id}><Row lead={<span class="fx-txlead">{picking && <span class={'fx-check' + (on ? ' on' : '')} aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-7" /></svg></span>}<TxMark t={t} categories={v.categories} /></span>} title={txTitle(t, L)}
-      sub={<>{dated && <span class="fx-txdate">{dayShort(t.date)}<span class="fx-txsep"> · </span></span>}<span class="fx-txcat" title={what}>{what}</span><span class="fx-txsep"> · </span><span class="fx-txacct" title={where}>{where}</span><span class="fx-txextra">{t.payment && L.payment[t.payment] && <span class="fx-txpays"><span class="fx-txsep"> · </span>pays {L.payment[t.payment].name}</span>}{t.receipt && <span class="fx-txreceipt"><span class="fx-txsep"> · </span>Receipt</span>}{shownNote(t.note, t.payee) && <span class="fx-txnote"><span class="fx-txsep"> · </span>{shownNote(t.note, t.payee)}</span>}{!!t.tags?.length && <span class="fx-txtags">{t.tags.map((x) => <span key={x} class="fx-tag">{x}</span>)}</span>}</span></>}
+      sub={<>{dated && <span class="fx-txdate">{dayShort(t.date)}<span class="fx-txsep"> · </span></span>}<span class="fx-txcat" title={what}><span class={'fx-cattag' + (t.to || (!t.category && !t.splits?.length) ? ' plain' : ' ' + hue(categoryHue(t.splits?.length ? t.splits[0].category : t.category, v.categories)))}>{!t.to && (t.category || !!t.splits?.length) && <span class="fx-cattagdot" aria-hidden="true" />}{what}</span></span><span class="fx-txsep"> · </span><span class="fx-txacct" title={where}>{a && <AcctMark a={a} size="sm" />}<span class="fx-txacctname">{where}</span></span><span class="fx-txlinked">{t.payment && L.payment[t.payment] ? <><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1 1M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1-1" /></svg>{L.payment[t.payment].name}</> : <span class="fx-sub" aria-label="Not linked">—</span>}</span><span class="fx-txextra">{t.payment && L.payment[t.payment] && <span class="fx-txpays"><span class="fx-txsep"> · </span>pays {L.payment[t.payment].name}</span>}{t.receipt && <span class="fx-txreceipt"><span class="fx-txsep"> · </span>Receipt</span>}{shownNote(t.note, t.payee) && <span class="fx-txnote"><span class="fx-txsep"> · </span>{shownNote(t.note, t.payee)}</span>}{!!t.tags?.length && <span class="fx-txtags">{t.tags.map((x) => <span key={x} class="fx-tag">{x}</span>)}</span>}</span></>}
       when={<Amount value={t.amount} sign={t.amount > 0} tone={t.amount > 0 && !t.to ? 'in' : ''} form="full" currency={a?.currency} />} whenPlain
       onOpen={opens} pressed={picking ? on : undefined} openLabel={picking ? undefined : edit ? 'edit' : opens ? (open ? 'hide the receipt' : 'see the receipt') : undefined} />
       {open && <li class="fx-receiptshown">{open.url ? <ReceiptView url={open.url} /> : open.problem ? <span class="formerr bad" role="alert">{open.problem}</span> : <span class="muted" role="status">Reading the receipt…</span>}</li>}
@@ -426,6 +427,7 @@ export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger, logo
               const way = (x: TxSort) => (x.by === 'date' ? (x.up ? 'oldest first' : 'newest first') : x.by === 'amount' ? (x.up ? 'most out first' : 'most in first') : x.up ? 'A to Z' : 'Z to A');
               return <button key={by} type="button" class={'fx-txcol fx-txcol-' + by} aria-pressed={on} title={`Sort by ${label.toLowerCase()}, ${way(next)}`} onClick={() => setSort(next)}>{label}{on && <span aria-hidden="true">{sort.up ? ' ↑' : ' ↓'}</span>}{on && <span class="fx-hidden">, {way(sort)}</span>}</button>;
             })}
+            <span class="fx-txcol fx-txcol-link" aria-hidden="true">Linked to</span>
           </div>}
           {!byDay && !!shown.length && <Rows kind="fx-rows fx-txflat">{list.slice(0, upTo).map((t) => rowOf(t, true))}</Rows>}
           {byDay && days.map((d, i) => (<Fragment key={d.date}>
@@ -435,8 +437,8 @@ export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger, logo
             <section key={d.date} class="fx-txday" aria-label={dayLong(d.date)}>
               <h3><span>{dayLong(d.date)}{d.date === v.today ? ', today' : ''}</span>
                 {runs ? <span class="fx-txbal">{moneyIn(after(d.date), acct!.currency)}<span class="fx-hidden"> {owed(acct!.kind) ? 'owed' : 'in ' + acct!.name} after the day</span></span>
-                  // More than one in or out that day: what they came to together (a transfer is neither).
-                  : d.list.filter((t) => !t.to).length > 1 && <span class="fx-txdaysum"><Amount value={d.list.filter((t) => !t.to).reduce((n, t) => n + amt(t), 0)} sign form="full" /><span class="fx-hidden"> in all that day</span></span>}</h3>
+                  // Each day with money in or out: what it came to together (a transfer is neither), as the picture has it.
+                  : d.list.some((t) => !t.to) && <span class="fx-txdaysum"><Amount value={d.list.filter((t) => !t.to).reduce((n, t) => n + amt(t), 0)} sign form="full" /><span class="fx-hidden"> in all that day</span></span>}</h3>
               <Rows kind="fx-rows">
                 {d.list.map((t) => rowOf(t, false))}
               </Rows>
