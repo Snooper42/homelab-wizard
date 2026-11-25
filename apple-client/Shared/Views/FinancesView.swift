@@ -1538,71 +1538,84 @@ private struct FinanceBillsPage: View {
     }
 }
 
-/// New since you looked, as an inbox: swipe right when it's right (it's
-/// marked reviewed), left to pick its category (and it's marked reviewed
-/// too). Reviewed ones leave the list; Mark All Reviewed empties it.
+/// New transactions to review, as a stack of cards (the owner's pick, Nov 24): one at a time, its logo, amount
+/// and payee, its other times at that payee one tap away, its category as chips (its own, its payee's, the most
+/// used, and Other), and the day and account. Reviewed (or a swipe right) keeps the category picked and marks it;
+/// Skip (or a swipe left) leaves it for later. The note and tags are on the transaction's page.
 private struct ReviewInboxPage: View {
     @Bindable var finances: FinancesViewModel
+    @State private var skipped = Set<String>()
+    /// The category picked on each card, by transaction id, until it's saved.
+    @State private var picked: [String: String] = [:]
     @State private var categorizing: FinanceTransaction?
-    @Namespace private var zoom
+    @State private var drag: CGSize = .zero
 
     var body: some View {
-        let items = (finances.ledger?.newestFirst ?? []).filter { finances.isNew($0) }
-        List {
-            if !items.isEmpty {
-                Section {
-                    ForEach(items) { t in
-                        NavigationLink {
-                            TransactionDetailView(transaction: t, finances: finances)
-                                .zoomTransition(id: t.id, in: zoom)
-                        } label: {
-                            WalletTransactionRow(transaction: t, finances: finances, isNew: true)
-                                .zoomSource(id: t.id, in: zoom)
-                        }
-                        .swipeActions(edge: .leading, allowsFullSwipe: true) {
-                            Button {
-                                withAnimation(.snappy) { finances.markReviewed([t]) }
-                            } label: {
-                                Label("Reviewed", systemImage: "checkmark")
-                            }
-                            .tint(Theme.success)
-                        }
-                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                            if finances.canAddTransactions, LedgerEdit.canUpdate(t) {
-                                Button {
-                                    finances.clearSaveError()
-                                    categorizing = t
-                                } label: {
-                                    Label("Category", systemImage: "tag")
-                                }
-                                .tint(Theme.accent)
-                            }
-                        }
+        let all = (finances.ledger?.newestFirst ?? []).filter { finances.isNew($0) }
+        let items = all.filter { !skipped.contains($0.id) }
+        ScrollView {
+            VStack(spacing: 22) {
+                if let t = items.first {
+                    ZStack(alignment: .bottom) {
+                        // The ones behind it, as edges under the card.
+                        if items.count > 2 { behind(inset: 24, drop: 20, opacity: 0.5) }
+                        if items.count > 1 { behind(inset: 12, drop: 10, opacity: 0.8) }
+                        card(t)
+                            .offset(x: drag.width)
+                            .rotationEffect(.degrees(Double(drag.width) / 24))
+                            .gesture(DragGesture()
+                                .onChanged { drag = $0.translation }
+                                .onEnded { end in
+                                    if end.translation.width > 110 { reviewed(t) } else if end.translation.width < -110 { skip(t) }
+                                    withAnimation(.snappy) { drag = .zero }
+                                })
                     }
-                } header: {
-                    Text(items.count == 1
-                         ? "1 new since you looked. Swipe right when it’s right, left to change its category."
-                         : "\(items.count) new since you looked. Swipe right when it’s right, left to change its category.")
-                        .textCase(nil)
-                        .font(.subheadline)
+                    .padding(.top, 8)
+                    HStack(spacing: 10) {
+                        Button { skip(t) } label: {
+                            Text("Skip").frame(maxWidth: .infinity, minHeight: 50)
+                        }
+                        .buttonStyle(.plain)
+                        .background(Theme.surface, in: Capsule())
+                        .overlay(Capsule().strokeBorder(Theme.separator))
+                        Button { reviewed(t) } label: {
+                            Text("Reviewed").frame(maxWidth: .infinity, minHeight: 50)
+                        }
+                        .buttonStyle(.plain)
+                        .foregroundStyle(.white)
+                        .background(Theme.accentFill, in: Capsule())
+                        .layoutPriority(1)
+                    }
+                    .font(.headline)
+                } else if !skipped.isEmpty {
+                    ContentUnavailableView {
+                        Label("\(skipped.count) skipped", systemImage: "arrow.uturn.backward.circle")
+                    } actions: {
+                        Button("Go through them again") { withAnimation(.snappy) { skipped = [] } }
+                    }
+                    .padding(.top, 80)
                 }
             }
+            .padding(.horizontal, 16)
+            .padding(.bottom, 28)
+            .animation(.snappy, value: items.map(\.id))
         }
-        .themedCanvas()
+        .background(Theme.canvas.ignoresSafeArea())
         .overlay {
-            if finances.ledger != nil, items.isEmpty {
-                ContentUnavailableView("All Reviewed", systemImage: "checkmark.circle",
-                                       description: Text("New transactions show here as they come in."))
+            if finances.ledger != nil, all.isEmpty {
+                ContentUnavailableView("All Reviewed", systemImage: "checkmark.circle")
             } else if finances.ledger == nil {
                 ProgressView()
             }
         }
-        .animation(.snappy, value: items.map(\.id))
-        .navigationTitle("To Review")
+        .navigationTitle(items.isEmpty ? "Review" : "\(items.count) left")
+        #if os(iOS)
+        .navigationBarTitleDisplayMode(.inline)
+        #endif
         .toolbar {
-            if !items.isEmpty {
+            if items.count > 1 {
                 ToolbarItem(placement: .primaryAction) {
-                    Button("Mark All Reviewed") {
+                    Button("All Reviewed") {
                         withAnimation(.snappy) { finances.markReviewed(items) }
                     }
                 }
@@ -1615,6 +1628,157 @@ private struct ReviewInboxPage: View {
         }
         .sensoryFeedback(.success, trigger: finances.savedCount)
         .task { if finances.ledger == nil { await finances.loadLedger() } }
+    }
+
+    private func behind(inset: CGFloat, drop: CGFloat, opacity: Double) -> some View {
+        RoundedRectangle(cornerRadius: 22, style: .continuous)
+            .fill(Theme.surface)
+            .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(Theme.separator))
+            .frame(height: 40)
+            .padding(.horizontal, inset)
+            .offset(y: drop)
+            .opacity(opacity)
+    }
+
+    private func card(_ t: FinanceTransaction) -> some View {
+        let newestFirst = finances.ledger?.newestFirst ?? []
+        let others = TransactionMatching.moreAt(t, in: newestFirst, limit: .max)
+        let categories = finances.plan?.categories ?? []
+        let choices = ReviewChoices.categories(for: t, others: others, all: newestFirst)
+        let current = picked[t.id] ?? t.category
+        let canChange = finances.canAddTransactions && LedgerEdit.canUpdate(t)
+        return VStack(alignment: .leading, spacing: 0) {
+            HStack(alignment: .top) {
+                LogoCircle(transaction: t, categories: categories, size: 52)
+                Spacer()
+                Money(value: t.amount, currency: finances.currency, finances: finances)
+                    .font(.title2.weight(.semibold))
+                    .foregroundStyle(t.amount > 0 ? Theme.success : Theme.ink)
+            }
+            Text(verbatim: TransactionDetailView.title(of: t, finances: finances))
+                .font(.title3.weight(.semibold))
+                .foregroundStyle(Theme.ink)
+                .padding(.top, 10)
+            NavigationLink {
+                TransactionDetailView(transaction: t, finances: finances)
+            } label: {
+                HStack(spacing: 3) {
+                    Text(verbatim: others.isEmpty ? "Details" : "\(others.count + 1) transactions")
+                    Image(systemName: "chevron.right").font(.caption.weight(.bold)).accessibilityHidden(true)
+                }
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(Theme.accent)
+            }
+            .buttonStyle(.plain)
+            .padding(.top, 3)
+            if (t.to ?? "").isEmpty, !t.isSplit {
+                label("Category")
+                FlowChips {
+                    ForEach(choices, id: \.self) { name in
+                        chip(name, on: current.caseInsensitiveCompare(name) == .orderedSame, categories: categories) {
+                            picked[t.id] = name
+                        }
+                        .disabled(!canChange)
+                    }
+                    if canChange {
+                        Button {
+                            finances.clearSaveError()
+                            categorizing = t
+                        } label: {
+                            Label("Other", systemImage: "magnifyingglass")
+                                .font(.subheadline.weight(.medium))
+                                .padding(.horizontal, 11)
+                                .frame(minHeight: 32)
+                                .overlay(Capsule().strokeBorder(Theme.separator))
+                        }
+                        .buttonStyle(.plain)
+                        .foregroundStyle(Theme.ink)
+                    }
+                }
+            }
+            label("Day")
+            Text(verbatim: RowWords.line([t.date?.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day()),
+                                          finances.accountName(t.account)]))
+                .font(.body)
+                .foregroundStyle(Theme.ink)
+                .padding(.horizontal, 12)
+                .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+                .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Theme.separator))
+        }
+        .padding(18)
+        .background(Theme.surface, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(Theme.separator))
+        .shadow(color: Design.shadow.opacity(0.07), radius: 14, y: 8)
+    }
+
+    private func label(_ words: LocalizedStringKey) -> some View {
+        Text(words)
+            .font(.caption.weight(.semibold))
+            .textCase(.uppercase)
+            .foregroundStyle(Theme.secondaryInk)
+            .padding(.top, 16)
+            .padding(.bottom, 8)
+    }
+
+    private func chip(_ name: String, on: Bool, categories: [FinanceCategory], pick: @escaping () -> Void) -> some View {
+        let tint = Design.category(PayeeLogos.shared.categoryHue(name, in: categories))
+        return Button(action: { withAnimation(.snappy) { pick() } }) {
+            HStack(spacing: 6) {
+                LogoCircle(category: name, categories: categories, size: 18)
+                Text(verbatim: name)
+            }
+            .font(.subheadline.weight(on ? .semibold : .medium))
+            .foregroundStyle(on ? (tint?.ink ?? Theme.accent) : Theme.ink)
+            .padding(.horizontal, 11)
+            .frame(minHeight: 32)
+            .background(on ? (tint?.soft ?? Theme.accent.opacity(0.14)) : .clear, in: Capsule())
+            .overlay(Capsule().strokeBorder(on ? .clear : Theme.separator))
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(on ? .isSelected : [])
+    }
+
+    private func skip(_ t: FinanceTransaction) {
+        withAnimation(.snappy) { _ = skipped.insert(t.id) }
+    }
+
+    private func reviewed(_ t: FinanceTransaction) {
+        let category = picked[t.id]
+        Task {
+            if let category, category != t.category {
+                guard await finances.setCategory(t, to: category) else { return }
+            }
+            withAnimation(.snappy) { finances.markReviewed([t]) }
+        }
+    }
+}
+
+/// Chips that wrap onto as many lines as they need.
+private struct FlowChips: Layout {
+    var spacing: CGFloat = 7
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let width = proposal.width ?? .infinity
+        var x: CGFloat = 0, y: CGFloat = 0, line: CGFloat = 0, widest: CGFloat = 0
+        for view in subviews {
+            let size = view.sizeThatFits(.unspecified)
+            if x > 0, x + size.width > width { y += line + spacing; x = 0; line = 0 }
+            x += size.width + spacing
+            line = max(line, size.height)
+            widest = max(widest, x - spacing)
+        }
+        return CGSize(width: min(widest, width), height: y + line)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        var x = bounds.minX, y = bounds.minY, line: CGFloat = 0
+        for view in subviews {
+            let size = view.sizeThatFits(.unspecified)
+            if x > bounds.minX, x + size.width > bounds.maxX { y += line + spacing; x = bounds.minX; line = 0 }
+            view.place(at: CGPoint(x: x, y: y), proposal: ProposedViewSize(size))
+            x += size.width + spacing
+            line = max(line, size.height)
+        }
     }
 }
 
@@ -4516,8 +4680,8 @@ private struct TransactionDetailView: View {
 /// Which transactions go together on a transaction's page.
 enum TransactionMatching {
     /// The other times at the same payee (its brand, or the same name as a
-    /// person would write it), newest first, five at most; never transfers.
-    static func moreAt(_ t: FinanceTransaction, in newestFirst: [FinanceTransaction], logos: PayeeLogos = .shared) -> [FinanceTransaction] {
+    /// person would write it), newest first, five at most (or `limit`); never transfers.
+    static func moreAt(_ t: FinanceTransaction, in newestFirst: [FinanceTransaction], limit: Int = 5, logos: PayeeLogos = .shared) -> [FinanceTransaction] {
         guard !t.payee.isEmpty, (t.to ?? "").isEmpty else { return [] }
         let brand = logos.payeeBrand(institution: t.institution, payee: t.payee)
         let name = logos.cleanPayee(t.payee).lowercased()
@@ -4525,7 +4689,7 @@ enum TransactionMatching {
             guard other.id != t.id, (other.to ?? "").isEmpty, !other.payee.isEmpty else { return false }
             if let brand, logos.payeeBrand(institution: other.institution, payee: other.payee) == brand { return true }
             return logos.cleanPayee(other.payee).lowercased() == name
-        }.prefix(5))
+        }.prefix(limit))
     }
 }
 
