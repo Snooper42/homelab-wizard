@@ -85,7 +85,7 @@ export function LoanSection({ v, L, ledger, a, saveLedger, keepPlan }: LoanProps
       </Widget>
       <Widget title="Payments linked to this loan" span="all" kind="fx-loanlinked"
         actions={saveLedger && into.length ? <button class="small" aria-expanded={picking} onClick={() => setPicking(!picking)}>Link a payment…</button> : undefined}>
-        <p class="fx-sub fx-lead">{into.length ? `Each one counts as paying ${into[0].name}. Link one, and the same payee's next ones are offered here.` : 'No payment in the plan goes to this loan yet.'}</p>
+        <p class="fx-sub fx-lead">{into.length ? `Each one counts as paying ${into[0].name}.` : 'No payment in the plan goes to this loan yet.'}</p>
         {!into.length && keepPlan && (() => {
           const maybe = mayPay(v.plan, a, ledger);
           const pays = async (id: string) => {

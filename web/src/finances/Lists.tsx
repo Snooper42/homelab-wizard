@@ -171,7 +171,6 @@ function FoundWidget({ v, add }: { v: finance.View; add?: (x: finance.Payment) =
   const every: Record<string, string> = { week: 'weekly', '2 weeks': 'every other week', month: 'monthly', '3 months': 'every 3 months', year: 'yearly' };
   return (
     <Widget title="Found in your transactions" span="all" kind="fx-found">
-      <p class="fx-sub fx-lead">Paid on a rhythm, but not in the plan yet.</p>
       <Rows kind="fx-rows">
         {v.found.map((f) => (
           <Row key={f.payee + f.account} lead={<Mark brand={brandOf(f.institution, f.payee)} name={f.payee} />} title={f.payee}

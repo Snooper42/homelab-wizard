@@ -147,8 +147,6 @@ struct AddPaymentView: View {
                 } footer: {
                     if let error = finances.saveError, !saving {
                         Text(verbatim: error).foregroundStyle(Theme.danger)
-                    } else {
-                        Text("It shows in Bills and in what's left from its next day on.")
                     }
                 }
             }

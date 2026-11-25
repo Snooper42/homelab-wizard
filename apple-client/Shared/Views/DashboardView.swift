@@ -852,8 +852,7 @@ private struct SplitDashboard: View {
         case .backups?:
             ContentUnavailableView("Backups", systemImage: "externaldrive")
         case .setup?:
-            ContentUnavailableView("Setup", systemImage: "wrench.and.screwdriver",
-                                   description: Text("What still needs you, and how this machine is doing, are beside this."))
+            ContentUnavailableView("Setup", systemImage: "wrench.and.screwdriver")
         default:
             ContentUnavailableView("No App Selected", systemImage: "server.rack", description: Text("Choose an app to see its details."))
         }
