@@ -53,9 +53,6 @@ struct MoneyFlowCard: View {
                             }
                         }
                     }
-                    Text(verbatim: lead(flow))
-                        .font(.footnote)
-                        .foregroundStyle(Theme.secondaryInk)
                     SankeyDrawing(flow: flow, columns: wide ? 4 : 3, money: money, picked: picked) { id in
                         picked = picked == id ? nil : id
                     }
@@ -180,12 +177,6 @@ struct MoneyFlowCard: View {
         }
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
-    }
-
-    private func lead(_ f: FinanceFlow) -> String {
-        let when = shownMonth.isEmpty ? "A typical month, from the plan" : "\(Self.monthWords(shownMonth)), from your transactions"
-        if f.saved < 0 { return "\(when): \(money(-f.saved)) more went out than came in." }
-        return "\(when): \(money(f.income)) in, \(money(f.expenses)) spent\(f.taxes > 0.005 ? ", \(money(f.taxes)) in taxes" : ""), \(money(f.saved)) left."
     }
 
     /// The flow in words, for VoiceOver.

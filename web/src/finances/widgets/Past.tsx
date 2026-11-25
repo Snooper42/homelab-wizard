@@ -26,7 +26,7 @@ export function PastWidget({ v, L, past, title = 'What happened', ledger, edit }
   const list = latest(txs, all ? txs.length : shown);
   return (
     <Widget title={title} kind="fx-past" span="all">
-      <p class="fx-sub fx-lead fx-dates">{dayShort(past.start)} – {dayShort(past.last)}, from your transactions</p>
+      <p class="fx-sub fx-lead fx-dates">{dayShort(past.start)} – {dayShort(past.last)}</p>
       {txs.length ? <>
         <div class="fx-pastsums">
           <Stat value={<Amount value={sum.in} tone="in" />} caption="Came in" />
