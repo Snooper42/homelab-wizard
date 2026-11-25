@@ -3431,3 +3431,13 @@ html.os-mac:not(.companion) nav #settingsNav .pagebtn.active .icon { color:var(-
 /* Tidy Up's steps as a line of checks, not a row of boxes. */
 .tidysteps li { border:0; background:none; border-radius:0; padding:0; }
 .tidysteps li.now, .tidysteps li.next, .tidysteps li[aria-current] { border:0; background:none; box-shadow:none; }
+/* The last fourteen nights under Last night (R7, quality-loop Q4 (a)): a square a night, its weekday under it. */
+.bknights { display:flex; gap:4px; margin:10px 0 4px; max-width:560px; }
+.bknight { flex:1 1 0; min-width:0; display:grid; justify-items:center; gap:3px; }
+.bknight > i { display:block; width:100%; height:14px; border-radius:4px; background:var(--line); }
+.bknight.ok > i { background:var(--ok); } .bknight.warn > i { background:var(--warn); } .bknight.bad > i { background:var(--bad); }
+.bknight > small { font-size:10.5px; color:var(--muted); line-height:1; }
+.bknight:last-child > small { color:var(--text); font-weight:600; }
+/* Each app's last seven nights as dots (the warn and bad ones keep their shapes). */
+table.copies td.nights { white-space:nowrap; text-align:right; }
+table.copies td.nights .dot { margin:0 0 0 4px; }

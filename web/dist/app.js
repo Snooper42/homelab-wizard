@@ -7909,6 +7909,35 @@
       !never(j3.nextRun) && line(`Next run ${dateTimeText(new Date(j3.nextRun))}`, "outfoot")
     ] });
   }
+  var resultTone = (r3) => r3 === "copied" ? "ok" : r3 === "stopped" ? "warn" : r3 === "failed" ? "bad" : "";
+  function nightTone(n3) {
+    const r3 = Object.values(n3.apps || {});
+    if (r3.includes("failed")) return "bad";
+    if (r3.includes("stopped")) return "warn";
+    return r3.includes("copied") ? "ok" : "";
+  }
+  var nightDate = (day3) => {
+    const [y3, m3, d3] = day3.split("-").map(Number);
+    return new Date(y3, m3 - 1, d3);
+  };
+  function nightWords(n3, name) {
+    const all = Object.entries(n3.apps || {}).filter(([, r3]) => r3 !== "none" && r3 !== "outside");
+    const copied = all.filter(([, r3]) => r3 === "copied").length;
+    const missed2 = all.filter(([, r3]) => r3 === "failed" || r3 === "stopped").map(([id2, r3]) => `${name(id2)} ${r3}`);
+    const day3 = nightDate(n3.date).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+    return `${day3}: ${all.length ? `${copied} of ${all.length} copied` : "nothing to copy"}${missed2.length ? " · " + missed2.join(", ") : ""}`;
+  }
+  function Nights({ nights, name }) {
+    const shown8 = nights.slice(-14);
+    return /* @__PURE__ */ u3("div", { class: "bknights", role: "list", "aria-label": `The last ${shown8.length} nights`, children: shown8.map((n3) => {
+      const words5 = nightWords(n3, name);
+      return /* @__PURE__ */ u3("span", { role: "listitem", class: "bknight " + nightTone(n3), title: words5, "aria-label": words5, children: [
+        /* @__PURE__ */ u3("i", {}),
+        /* @__PURE__ */ u3("small", { "aria-hidden": "true", children: ["Su", "M", "Tu", "W", "Th", "F", "Sa"][nightDate(n3.date).getDay()] })
+      ] }, n3.date);
+    }) });
+  }
+  var appNights = (nights, app, count2 = 7) => nights.slice(-count2).map((n3) => ({ date: n3.date, result: n3.apps?.[app] }));
   var drivesOf = (copies) => [...new Set(copies.map((c4) => driveName(c4.waitingFor || "")))].join(" and ");
   function BackupTiles({ o: o3, os, test, apps: apps2, start, gaps, addGap }) {
     const copies = sortedCopies(o3);
@@ -7937,6 +7966,7 @@
             chip: stale.length ? /* @__PURE__ */ u3("span", { class: "bkskipped", children: stale.length === 1 ? `${stale[0].name} skipped` : `${stale.length} skipped` }) : void 0
           }
         ),
+        !!o3.nights?.length && /* @__PURE__ */ u3(Nights, { nights: o3.nights, name: (id2) => copies.find((c4) => c4.app === id2)?.name || apps2?.[id2]?.name || id2 }),
         /* @__PURE__ */ u3("p", { class: "bksub", children: !copies.length ? "The first are made the night after an app with a database starts" : /* @__PURE__ */ u3(S, { children: [
           !!stale.length && /* @__PURE__ */ u3("span", { class: "bad", children: [
             "Out of date: ",
@@ -8027,12 +8057,14 @@
   function CopyRows({ o: o3, apps: apps2 }) {
     const [picked, setPicked] = d2({});
     const groups4 = copyGroups(o3);
-    if (!groups4.length) return /* @__PURE__ */ u3("tr", { children: /* @__PURE__ */ u3("td", { colSpan: 4, class: "muted", children: "No installed app has a database to dump yet." }) });
+    const nights = o3.nights || [];
+    const cols = nights.length ? 5 : 4;
+    if (!groups4.length) return /* @__PURE__ */ u3("tr", { children: /* @__PURE__ */ u3("td", { colSpan: cols, class: "muted", children: "No installed app has a database to dump yet." }) });
     return /* @__PURE__ */ u3(S, { children: groups4.map((g2) => {
       const open5 = picked[g2.key] ?? (g2.key === "stale" || g2.key === "fresh");
       const toggle = () => setPicked({ ...picked, [g2.key]: !open5 });
       return [
-        /* @__PURE__ */ u3("tr", { class: "grouphead fold copygroup " + g2.key + (g2.tone === "bad" ? " bad" : "") + (open5 ? " open" : ""), onClick: toggle, children: /* @__PURE__ */ u3("th", { colSpan: 4, children: [
+        /* @__PURE__ */ u3("tr", { class: "grouphead fold copygroup " + g2.key + (g2.tone === "bad" ? " bad" : "") + (open5 ? " open" : ""), onClick: toggle, children: /* @__PURE__ */ u3("th", { colSpan: cols, children: [
           /* @__PURE__ */ u3("button", { type: "button", class: "foldbtn", "aria-expanded": open5, onClick: (e3) => {
             e3.stopPropagation();
             toggle();
@@ -8066,7 +8098,8 @@
               ")"
             ] })
           ] }),
-          /* @__PURE__ */ u3("td", { class: "kept muted", children: c4.count ? `${c4.count} kept` : "—" })
+          /* @__PURE__ */ u3("td", { class: "kept muted", children: c4.count ? `${c4.count} kept` : "—" }),
+          !!nights.length && /* @__PURE__ */ u3("td", { class: "nights", "aria-label": `The last ${Math.min(7, nights.length)} nights`, children: appNights(nights, c4.app || c4.id).map((n3) => /* @__PURE__ */ u3("span", { class: "dot " + resultTone(n3.result), title: `${nightDate(n3.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}: ${n3.result || "not copied yet"}` }, n3.date)) })
         ] }, c4.id)) : []
       ];
     }) });

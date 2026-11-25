@@ -153,6 +153,13 @@ const backups = {
     { id: 'kavita', app: 'kavita', name: 'Kavita', newest: hoursAgo(13 * 24), size: 1.2e6, count: 7, state: 'paused', waitingFor: '/Volumes/Hobbies' },
     { id: 'moneymatter-attachments', app: 'moneymatter', name: 'MoneyMatter (attachments)', volume: true, newest: hoursAgo(7.5), size: 22e6, count: 7, state: 'fresh' },
   ],
+  // The last fourteen nights (quality-loop Q4 (a)): every app copied, but Mealie stopped the last three (its copy is 3
+  // days old) and Komga and Kavita out of them while they wait for the Hobbies drive.
+  nights: Array.from({ length: 14 }, (_, k) => {
+    const d = new Date(); d.setDate(d.getDate() - (13 - k));
+    const date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    return { date, apps: { ...Object.fromEntries(dumped.map(([id]) => [id, 'copied'])), mealie: k >= 11 ? 'stopped' : 'copied', moneymatter: 'copied' } };
+  }),
 };
 const duplicatiJobs = [
   ['Homelab AppData', 6.7, '3.311 GiB'], ['Homelab Databases', 7.1, '412 MB'], ['Homelab Infrastructure', 3 * 24, '18.4 MB'],
@@ -511,7 +518,8 @@ const shots = [
     await page.evaluate(() => document.getElementById('storageCard').scrollIntoView({ block: 'start' }));
   } },
   { name: 'choose', screen: 'choose', before: async (page) => { await page.click('#starters .starter:has-text("Music")'); await page.click('#more > summary'); await page.click('#presets .chip >> text=Household'); await page.waitForTimeout(500); } },
-  { name: 'backups', screen: 'backups', mock: { backupGaps: [{ name: 'The synced Files (Syncthing)', path: '/Users/you/Homelab/data/sync', job: 'Homelab Files', why: 'No backup job yet' }, { name: 'Films, shows and music', path: '/Volumes/Hobbies/media', why: 'Too big for a nightly copy: keep a copy of your own' }] } },
+  // Every app copied every night in this picture, as its 12 of 12 says.
+  { name: 'backups', screen: 'backups', mock: { backups: { ...backups, nights: backups.nights.map((n) => ({ ...n, apps: { ...n.apps, mealie: 'copied' } })) }, backupGaps: [{ name: 'The synced Files (Syncthing)', path: '/Users/you/Homelab/data/sync', job: 'Homelab Files', why: 'No backup job yet' }, { name: 'Films, shows and music', path: '/Volumes/Hobbies/media', why: 'Too big for a nightly copy: keep a copy of your own' }] } },
   { name: 'finances', screen: 'finances' },
   { name: 'finances-worth', screen: 'finances', before: async (page) => { await finTab(page, 'Net worth'); await page.waitForTimeout(300); } },
   { name: 'finances-pay', screen: 'finances', before: async (page) => { await finTab(page, 'Pay'); await page.waitForTimeout(300); } },
@@ -2072,6 +2080,27 @@ const smokes = [
       const ran = await page.evaluate(() => JSON.stringify(window.__MOCK.homelabRan));
       throw new Error('Add ran no duplicati setup: ' + ran);
     }
+  } },
+  // R7 with quality-loop Q4 (a): the last fourteen nights as squares under Last night, the last three amber (Mealie
+  // stopped) and the rest green, each its weekday's letter; each app's last seven as dots, Mealie's last three amber.
+  { name: 'Backups: the last fourteen nights as squares, each app\'s seven as dots', screen: 'backups', run: async (page) => {
+    const nights = page.locator('#copiesTile .bknights');
+    await nights.waitFor({ timeout: 5000 });
+    const tones = await nights.locator('.bknight').evaluateAll((es) => es.map((e) => e.className.replace('bknight', '').trim()));
+    if (tones.length !== 14 || tones.slice(0, 11).some((t) => t !== 'ok') || tones.slice(11).some((t) => t !== 'warn')) throw new Error(`the nights: ${tones}`);
+    const last = await nights.locator('.bknight').last().getAttribute('aria-label');
+    if (!last.includes('copied') || !last.includes('Mealie stopped')) throw new Error(`last night says: ${last}`);
+    const mealie = page.locator('#backupRows tr.copy:has-text("Mealie") td.nights .dot');
+    if ((await mealie.count()) !== 7) throw new Error(`Mealie has ${await mealie.count()} nights`);
+    const mealieTones = await mealie.evaluateAll((es) => es.map((e) => e.className));
+    if (mealieTones.slice(4).some((c) => !c.includes('warn')) || mealieTones.slice(0, 4).some((c) => !c.includes('ok'))) throw new Error(`Mealie's nights: ${mealieTones}`);
+    const vault = page.locator('#backupRows tr.copy:has-text("Vaultwarden") td.nights .dot.ok');
+    if ((await vault.count()) !== 7) throw new Error('Vaultwarden\'s seven nights aren\'t all copied');
+  } },
+  { name: 'Backups: no nights kept yet, no squares and no dots', screen: 'backups', mock: { backups: { ...backups, nights: undefined } }, run: async (page) => {
+    await page.waitForSelector('#copiesTile', { timeout: 5000 });
+    await page.waitForTimeout(300);
+    if (await page.locator('.bknights, td.nights').count()) throw new Error('nights drawn with none kept');
   } },
   { name: 'Backups: Not in any backup hides while nothing is left out', screen: 'backups', run: async (page) => {
     await page.waitForSelector('#copiesTile', { timeout: 5000 });
