@@ -73,6 +73,8 @@ type Overview struct {
 	PlainExports []string  `json:"plainExports,omitempty"`
 	// Kopia is the second engine's line (ADR-0019), when it is installed.
 	Kopia *Engine `json:"kopia,omitempty"`
+	// Nights is each of the last fourteen nightly backups' result per app, oldest first (quality-loop Q4 (a)).
+	Nights []Night `json:"nights,omitempty"`
 }
 
 // Engine is a second backup engine's line on Backups: where it keeps its
@@ -159,6 +161,7 @@ func Read(root string, sources []Source, env map[string]string, now time.Time) O
 	o.VaultDue = now.Sub(o.VaultExport) > 30*24*time.Hour
 	o.RestoreTest = LoadRestoreLog(filepath.Join(root, "scripts", "logs", "restore-test.json"))
 	o.RestoreDue = now.Sub(o.RestoreTest.LastTest) > 30*24*time.Hour
+	o.Nights = LoadNights(NightsPath(root))
 	return o
 }
 

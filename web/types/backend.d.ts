@@ -434,6 +434,10 @@ declare namespace backup {
     failed?: string;
     due: boolean;
   }
+  interface Night {
+    date: string;
+    apps: Record<string, string>;
+  }
   interface Overview {
     destination: string;
     destinationOK: boolean;
@@ -450,6 +454,7 @@ declare namespace backup {
     vaultDue: boolean;
     plainExports?: string[];
     kopia?: backup.Engine | null;
+    nights?: backup.Night[];
   }
   interface RestoreLog {
     lastTest: string;

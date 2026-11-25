@@ -40,6 +40,7 @@ version: 0.17.0
 
 | File | Written by | Holds |
 |---|---|---|
+| `data/backup-nights.json` | the nightly backup | Each of the last fourteen nights, each app's result: copied, failed, stopped, outside the homelab, or no database yet; Backups shows them |
 | `data/storage.json` | the nightly backup | Photos per person (Immich, read from its database) and the size of each app folder in `data/appdata` and `appdata`, largest first; Status shows them |
 | `data/updates.json` | the watchdog, `homelab rollback` | The image each app ran before its update, kept a week (`homelab-rollback/<app>:previous`); its data from just before is in `recovery-staging/before-update` |
 | `data/people.json`, `data/people/<name>.html` | `homelab person` | The household, and each person's welcome page |

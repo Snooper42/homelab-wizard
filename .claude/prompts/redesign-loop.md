@@ -54,4 +54,4 @@ Each is one pull request unless it says it's split. Tick it in the pull request 
 
 Lanes M and Q add a line here when something R can now lay out has shipped, with its pull request.
 
-- (none yet)
+- **Q, Q4 (a): each app's result each night, fourteen nights** (`Backups()`'s `nights`: `backup.Night{date, apps: {id: copied | failed | stopped | outside | none}}`, oldest first): the picture's fourteen-night squares and per-app dots (R7) can be drawn from it.

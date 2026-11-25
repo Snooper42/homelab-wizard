@@ -177,9 +177,11 @@ func (h *homelab) backup(ctx context.Context, args []string) error {
 		container string
 	}
 	var jobs []job
-	type volume struct{ name, full string } // compose name, Docker name (<project>_<name>)
+	type volume struct{ name, full, app string } // compose name, Docker name (<project>_<name>), its app
 	var volumes []volume
 	var failures []string
+	// Each app's result tonight, for Backups' fourteen nights (a whole run only).
+	night := backup.NightResults{}
 	for _, a := range h.catalog.Apps {
 		if a.Meta.Dump == "" && len(a.Meta.Archive) == 0 || len(selected) > 0 && !selected[a.ID] {
 			continue
@@ -193,9 +195,11 @@ func (h *homelab) backup(ctx context.Context, args []string) error {
 				u.Info("%s %s", a.ID, u.Dim("(not installed, skipped)"))
 			case detect.External:
 				failures = append(failures, core.OutsideLine(a.ID))
+				night.Set(a.ID, backup.NightOutside)
 				u.Warn("%s runs outside the homelab: not backed up (homelab adopt %s)", a.ID, a.ID)
 			default:
 				failures = append(failures, core.NotRunningLine(a.ID))
+				night.Set(a.ID, backup.NightStopped)
 				u.Warn("%s is not running: not backed up", a.ID)
 			}
 			continue
@@ -205,7 +209,7 @@ func (h *homelab) backup(ctx context.Context, args []string) error {
 			u.Info("dump %s → %s", a.ID, h.rel(h.stagingDir("databases", a.ID)))
 		}
 		for _, v := range a.Meta.Archive {
-			volumes = append(volumes, volume{v, a.Project() + "_" + v})
+			volumes = append(volumes, volume{v, a.Project() + "_" + v, a.ID})
 			u.Info("archive volume %s → %s", v, h.rel(h.stagingDir("volumes", v)))
 		}
 	}
@@ -250,14 +254,17 @@ func (h *homelab) backup(ctx context.Context, args []string) error {
 		}
 		cancel()
 		if errors.Is(err, backup.ErrNoDatabase) {
+			night.Set(j.app.ID, backup.NightNone)
 			u.Info("%s %s", j.app.ID, u.Dim("(no SQLite database yet, skipped)"))
 			continue
 		}
 		if err != nil {
+			night.Set(j.app.ID, backup.NightFailed)
 			failures = append(failures, err.Error())
 			u.Fail("%v", err)
 			continue
 		}
+		night.Set(j.app.ID, backup.NightCopied)
 		info, _ := os.Stat(path)
 		removed, _ := backup.Rotate(dir, j.app.ID, *keep)
 		u.OK("%s: %s (%s)%s", j.app.ID, filepath.Base(path), size(info.Size()), map[bool]string{true: fmt.Sprintf(", removed %d old", len(removed)), false: ""}[len(removed) > 0])
@@ -270,10 +277,12 @@ func (h *homelab) backup(ctx context.Context, args []string) error {
 		path, entries, err := backup.VolumeArchive(vctx, client, vol.full, dir, name, now)
 		cancel()
 		if err != nil {
+			night.Set(vol.app, backup.NightFailed)
 			failures = append(failures, err.Error())
 			u.Fail("%v", err)
 			continue
 		}
+		night.Set(vol.app, backup.NightCopied)
 		info, _ := os.Stat(path)
 		_, _ = backup.Rotate(dir, name, *keep)
 		u.OK("%s: %s (%d files, %s)", name, filepath.Base(path), entries, size(info.Size()))
@@ -320,6 +329,9 @@ func (h *homelab) backup(ctx context.Context, args []string) error {
 			return fmt.Errorf("%s", strings.Join(failures, "; "))
 		}
 		return nil // the nightly extras below are for the nightly run
+	}
+	if err := backup.RecordNight(backup.NightsPath(h.root), now, night); err != nil {
+		u.Warn("recording tonight's results: %v", err)
 	}
 	// The day's yearly saving, as Status shows it, for the app's trend.
 	if err := savings.Record(savings.HistoryPath(h.root), time.Now(), api.StatusOf(ctx, h.catalog, containers, h.envMap(), false).Savings); err != nil {

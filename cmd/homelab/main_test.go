@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"github.com/Snooper42/homelab-wizard/internal/backup"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -522,6 +523,14 @@ func TestBackupWritesVerifiedFiles(t *testing.T) {
 	if len(archives) != 1 || !strings.Contains(readCalls(t, calls), "run --rm --cpu-shares 256 -v homelab_budget_tracker_moneymatter-attachments:/data:ro alpine:3 tar czf - -C /data .") {
 		t.Fatalf("attachments archive: %v\n%s", archives, out)
 	}
+	// Tonight, for Backups' fourteen nights (quality-loop Q4 (a)): each app copied says so; one not installed isn't there.
+	nights := backup.LoadNights(backup.NightsPath(root))
+	if len(nights) != 1 || nights[0].Apps["paperless-db"] != backup.NightCopied || nights[0].Apps["moneymatter-attachments"] != "" {
+		t.Errorf("tonight's results: %+v", nights)
+	}
+	if _, ok := nights[0].Apps["immich-database"]; ok {
+		t.Errorf("an app not installed has a result: %+v", nights[0].Apps)
+	}
 }
 
 func TestBackupFailsWhenADatabaseIsStopped(t *testing.T) {
@@ -532,6 +541,9 @@ func TestBackupFailsWhenADatabaseIsStopped(t *testing.T) {
 	out, code := homelabCmd(t, root, "", "backup", "--apply")
 	if code == 0 || !strings.Contains(out, "paperless-db is not running: not backed up") {
 		t.Fatalf("a stopped database must fail the backup, exit %d:\n%s", code, out)
+	}
+	if nights := backup.LoadNights(backup.NightsPath(root)); len(nights) != 1 || nights[0].Apps["paperless-db"] != backup.NightStopped {
+		t.Errorf("a stopped database's night: %+v", nights)
 	}
 	if _, code := homelabCmd(t, root, "", "backup", "--apply", "--keep", "0"); code == 0 {
 		t.Fatal("--keep 0 would delete the dump just made")
