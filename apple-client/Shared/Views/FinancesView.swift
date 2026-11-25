@@ -518,21 +518,28 @@ private struct FinanceLeadCard: View {
 enum NetWorthRange: Int, CaseIterable, Identifiable, Sendable {
     case month = 31
     case threeMonths = 92
+    case sixMonths = 183
     case year = 366
+    /// Every balance kept.
+    case all = 36_500
 
     var id: Int { rawValue }
     var label: String {
         switch self {
         case .month: "1M"
         case .threeMonths: "3M"
+        case .sixMonths: "6M"
         case .year: "1Y"
+        case .all: "All"
         }
     }
     var words: String {
         switch self {
-        case .month: "past month"
-        case .threeMonths: "past 3 months"
-        case .year: "past year"
+        case .month: "1 month"
+        case .threeMonths: "3 months"
+        case .sixMonths: "6 months"
+        case .year: "1 year"
+        case .all: "all time"
         }
     }
 }
@@ -546,24 +553,32 @@ private struct NetWorthCard: View {
     var linked = true
     @State private var range: NetWorthRange = .threeMonths
     @State private var picked: Date?
+    /// On Accounts: one group of accounts (Cash, Credit Cards, …) by its title; nil for net worth.
+    @State private var group: String?
 
     private var shown: Bool { finances.amountsShown && !finances.amountsHiddenByPlan }
 
     var body: some View {
-        let series = view.netWorthSeries(days: range.rawValue)
+        let shownGroup = linked ? nil : view.accountGroups.first { $0.title == group }
+        let series = shownGroup.map { view.worthSeries(days: range.rawValue, of: $0.accounts) } ?? view.netWorthSeries(days: range.rawValue)
+        let total = shownGroup.map { g in g.accounts.reduce(0) { $0 + view.worth(of: $1) } } ?? view.netWorth
         let point = TrendChart.point(in: series, at: picked)
-        let change = series.count >= 2 ? (series.last?.value ?? 0) - (series.first?.value ?? 0) : nil
+        let change = AccountsLook.change(series)
         VStack(alignment: .leading, spacing: 0) {
+            if !linked, view.accountGroups.count > 1 {
+                groupChips
+                    .padding(.top, 14)
+            }
             Group {
                 if linked {
                     NavigationLink {
                         FinanceAccountsPage(finances: finances)
                     } label: {
-                        heading(point: point, change: change)
+                        heading(point: point, change: change, total: total)
                     }
                     .buttonStyle(PressableButtonStyle())
                 } else {
-                    heading(point: point, change: change)
+                    heading(point: point, change: change, total: total)
                 }
             }
             .padding(.horizontal, 18)
@@ -587,12 +602,43 @@ private struct NetWorthCard: View {
         }
         .card()
         .animation(.smooth(duration: 0.35), value: range)
+        .animation(.smooth(duration: 0.35), value: group)
     }
 
-    private func heading(point: NetWorthPoint?, change: Double?) -> some View {
+    /// Net worth, then each group of accounts, as chips (the owner's reference: Net worth, Cash, Credit cards).
+    private var groupChips: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 6) {
+                groupChip("Net worth", on: group == nil) { group = nil }
+                ForEach(view.accountGroups) { g in
+                    groupChip(g.title, on: group == g.title) { group = g.title }
+                }
+            }
+            .padding(.horizontal, 18)
+        }
+        .scrollClipDisabled()
+    }
+
+    private func groupChip(_ title: String, on: Bool, pick: @escaping () -> Void) -> some View {
+        Button {
+            withAnimation(.snappy) { picked = nil; pick() }
+        } label: {
+            Text(verbatim: title)
+                .font(.caption.weight(.semibold))
+                .textCase(.uppercase)
+                .foregroundStyle(on ? Theme.ink : Theme.secondaryInk)
+                .padding(.horizontal, 12)
+                .frame(minHeight: 30)
+                .background(on ? Theme.canvas : .clear, in: Capsule())
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(on ? .isSelected : [])
+    }
+
+    private func heading(point: NetWorthPoint?, change: AccountsLook.Change?, total: Double) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
-                Text(point.map { $0.date.formatted(.dateTime.month(.abbreviated).day().year()) } ?? "Net worth")
+                Text(point.map { $0.date.formatted(.dateTime.month(.abbreviated).day().year()) } ?? (group ?? "Net worth"))
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(Theme.secondaryInk)
                 Spacer()
@@ -602,24 +648,25 @@ private struct NetWorthCard: View {
                         .foregroundStyle(.tertiary)
                 }
             }
-            Text(verbatim: amountText(point?.value ?? view.netWorth, view.plan.currency, finances))
+            Text(verbatim: amountText(point?.value ?? total, view.plan.currency, finances))
                 .font(.largeTitle.weight(.semibold))
                 .monospacedDigit()
                 .foregroundStyle(shown ? Theme.ink : Theme.secondaryInk)
                 .contentTransition(.numericText())
                 .lineLimit(1)
                 .minimumScaleFactor(0.6)
-            if shown, let change, abs(change) >= 0.5, point == nil {
+            if shown, let change, abs(change.amount) >= 0.5, point == nil {
                 HStack(spacing: 4) {
-                    Image(systemName: change >= 0 ? "arrow.up.right" : "arrow.down.right")
+                    Image(systemName: change.amount >= 0 ? "arrow.up" : "arrow.down")
                         .font(.caption.weight(.bold))
-                    Text(verbatim: amountText(abs(change), view.plan.currency, finances, whole: true))
+                    Text(verbatim: amountText(abs(change.amount), view.plan.currency, finances)
+                         + (change.share.map { " (" + abs($0).formatted(.percent.precision(.fractionLength(1))) + ")" } ?? ""))
                     Text(verbatim: range.words)
                         .foregroundStyle(Theme.secondaryInk)
                         .fontWeight(.regular)
                 }
                 .font(.subheadline.weight(.semibold))
-                .foregroundStyle(change >= 0 ? Theme.success : Theme.danger)
+                .foregroundStyle(change.amount >= 0 ? Theme.success : Theme.danger)
                 .contentTransition(.numericText())
             }
         }
@@ -2951,7 +2998,7 @@ private struct FinanceAccountsPage: View {
         ScrollView {
             if let view = finances.plan {
                 VStack(spacing: 18) {
-                    // Net worth with its line (1M, 3M, 1Y), as Finances' home had it before its half card.
+                    // Net worth with its line (1M to All, and each group), as Finances' home had it before its half card.
                     NetWorthCard(view: view, finances: finances, linked: false)
                     if finances.amountsShown, !finances.amountsHiddenByPlan, view.assets + view.liabilities > 0 { summary(view) }
                     ForEach(view.accountGroups) { group in
@@ -3159,12 +3206,13 @@ private struct FinanceAccountsPage: View {
             }
             Spacer(minLength: 8)
             VStack(alignment: .trailing, spacing: 2) {
-                Money(value: view.start[account.id] ?? 0, currency: account.currency ?? view.plan.currency, finances: finances)
+                // What a card or loan owes, as less than nothing (as on Finances' accounts row).
+                Money(value: (account.isOwed ? -1 : 1) * (view.start[account.id] ?? 0), currency: account.currency ?? view.plan.currency, finances: finances)
                     .font(.body.weight(.semibold))
                     .foregroundStyle(Theme.ink)
                     .contentTransition(.numericText())
-                if account.isOwed {
-                    Text("owed").font(.caption2).foregroundStyle(Theme.secondaryInk)
+                if let updated = AccountsLook.updated(account.updated, today: view.today) {
+                    Text(verbatim: updated).font(.caption).foregroundStyle(Theme.secondaryInk)
                 }
             }
         }
