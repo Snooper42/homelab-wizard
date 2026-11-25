@@ -1187,7 +1187,7 @@ function RulesForm(props: EditProps) {
           <button type="button" class="small" aria-label={`Remove the rule for ${r.match}`} onClick={() => setRules(latest.current.filter((_, j) => j !== i))}>Remove</button>
         </li>)}
       </ul>
-      {!rules.length && <p class="muted">No rules yet. On a transaction, give its payee a name or a category and tick <strong>Always do this for…</strong>.</p>}
+      {!rules.length && <p class="muted">No rules yet.</p>}
       {problem && <p class="formerr bad" role="alert">{problem}</p>}
       <Actions busy={busy} exists={false} remove={() => {}} close={props.close} touched={touched || JSON.stringify(rules) !== JSON.stringify(plan.rules || [])} />
     </form>
@@ -1486,7 +1486,7 @@ function ImportForm(props: EditProps) {
           const sum = (l: typeof fresh) => money(Math.round(l.reduce((a, t) => a + Math.abs(t.amount), 0) * 100) / 100);
           return <p class="muted importnote importsum">{out.length} out, {sum(out)} · {inn.length} in, {sum(inn)}</p>;
         })()}
-        {guessed.some(Boolean) && <p class="muted importnote">A row that looks like a planned payment pays it, so the plan doesn't take it out again on its day. Change it below if it's wrong.</p>}
+        {guessed.some(Boolean) && <p class="muted importnote">Rows that match a planned payment pay it. Change any below.</p>}
         <ul class="importlist">
           {found.slice(0, 60).map((t, i) => {
             const k = fresh.indexOf(t), fixing = fixes.has(i), renaming = renames.has(i), dup = k < 0 && !fixing && !renaming;

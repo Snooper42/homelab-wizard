@@ -2310,7 +2310,7 @@ const smokes = [
     await note.waitFor({ timeout: 5000 });
     if (!/Anna Smith is added/.test(await note.textContent())) throw new Error(`the note: ${await note.textContent()}`);
     if (await page.evaluate(() => window.__MOCK.opened)) throw new Error('the welcome page opened by itself');
-    if (!/for them alone.*fridge sheet/s.test(await note.textContent())) throw new Error('the note does not say the welcome page is theirs alone, and what to send instead');
+    if (!/don't email it.*fridge sheet/s.test(await note.textContent())) throw new Error('the note does not say the welcome page is theirs alone, and what to send instead');
     await note.locator('button:text-is("Show their sign-in to scan")').click();
     await page.waitForFunction(() => window.__MOCK.opened === 'anna', null, { timeout: 3000 });
     await note.locator('button:text-is("Open the fridge sheet")').click();

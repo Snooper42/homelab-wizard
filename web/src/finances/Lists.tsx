@@ -288,7 +288,7 @@ export function Pay({ v, L, edit, saveSettings, keep, calendar }: ListProps & { 
               actions={edit && <IconButton icon="edit" label={`Edit ${e.name}'s pay`} onClick={() => edit('person', e.id)} />}>
               <Stat value={<Amount value={e.net} />} caption={<>Take-home, each paycheck · about {whole(e.net * perMonth(e.schedule) * 12)} a year</>} />
               {/* No gross or deductions yet: say what they would show, and open the form for them. */}
-              {!e.gross && !ded.length && edit && <p class="fx-sub fx-payhint">Add the gross and what is taken out (taxes, a 401(k), insurance) to see where the rest of the pay goes. <button type="button" class="small" onClick={() => edit('person', e.id)}>Add them</button></p>}
+              {!e.gross && !ded.length && edit && <p class="fx-sub fx-payhint">Add the gross and what's taken out. <button type="button" class="small" onClick={() => edit('person', e.id)}>Add them</button></p>}
               {!!e.gross && (() => {
                 const parts: Part[] = [{ label: 'Take-home', value: e.net, color: 'in' }, ...ded.map((d) => ({ label: d.name, value: d.amount, color: (d.account ? 'save' : 'track') as Hue })), ...(e.gross - e.net - taken > 0.5 ? [{ label: 'Taxes and the rest', value: e.gross - e.net - taken, color: 'muted' as Hue }] : [])];
                 return <><SplitBar size="sm" label={`${e.name}'s pay`} parts={parts} /><Legend layout="inline" items={parts.map((p) => ({ label: p.label, color: p.color }))} /></>;

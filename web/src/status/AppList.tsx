@@ -481,7 +481,6 @@ function GroupMenu({ g, p, count, tone }: { g: Group; p: AppListProps; count: st
             </button>
           )}
           {running.length > 0 && <button type="button" role="menuitem" class="stoplater" aria-haspopup="menu" disabled={p.busy} onClick={() => showLater(true)}>Stop for a while ›</button>}
-          {running.length > 0 && <p class="menufoot muted">Stopping what you don’t use gives its memory back. Nothing starts it again by itself until you do.</p>}
           {held.length > 0 && <p class="menufoot muted heldnote">Stopped by you: {held.map((a) => a.name).join(', ')}. {held.length === 1 ? 'Start it' : 'Start each'} from its row.</p>}
         </div>
       )}

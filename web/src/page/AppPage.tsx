@@ -405,7 +405,6 @@ function Done({ on }: { on: AppPageActions }) {
             : <Empty>Nothing done to it yet that's kept here. Its starts, stops, restarts and updates, and the watchdog's, are kept for 90 days.</Empty>}
       <Sheet id="doneSheet" titleId="doneTitle">
         <h2 id="doneTitle">Everything that was done</h2>
-        <p class="muted">The last 90 days: starts, stops, restarts, updates, roll backs, the watchdog's restarts, settings and Finances changed, and who did each.</p>
         <input type="search" class="donesearch" value={q} onInput={(e) => setQ((e.target as HTMLInputElement).value)} placeholder="Search: an app, a phone, restarted…" aria-label="Search what was done" autocomplete="off" spellcheck={false} />
         {all === null ? <Empty>Reading…</Empty>
           : all.length ? <Rows>{all.map((e) => <Row key={e.id} title={e.text} sub={doneSub(e)} />)}</Rows>

@@ -111,7 +111,6 @@ export function Checklist({ steps, showDone, showLater, running, failed = {}, on
           <span class="mark"><Icon name="check" /></span>
           <div class="body">
             <strong class="title">{`All ${steps.length} steps are done`}</strong>
-            <div class="sub muted">If one comes undone (a token runs out, the backup drive goes away), it shows here again, and Setup comes back in the sidebar.</div>
           </div>
           <div class="actions"><button id="toggleDone" class="linkbtn small" aria-expanded={showDone} onClick={on.toggleDone}>{showDone ? 'Hide' : 'Show'}</button></div>
         </li>

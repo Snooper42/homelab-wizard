@@ -770,7 +770,7 @@ function Overview({ d, job, act, review, pick, placing, folders }: { d: app.Tidy
         <Widget title="Needs your OK" kind="fx-paycheck tidyneeds" actions={waiting ? <span class="muted">{count(waiting, 'thing')}{gain ? ' · ' + size(gain) + ' to win back' : ''}</span> : undefined}>
           {todos.length ? <TodoRows todos={todos} job={job} /> : (
             <div class="tidyclear"><span class="fmark logo tidyicon fx-h-in" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" /></svg></span>
-              <div><strong>Everything's tidy</strong><div class="muted">New downloads are filed as they finish, and anything new to tidy shows up here.</div></div></div>
+              <div><strong>Everything's tidy</strong></div></div>
           )}
         </Widget>
         <DriveWidget d={d} />
@@ -809,7 +809,6 @@ function InboxWidget({ d, job, act }: { d: app.TidyUp; job: TidyJob | null; act:
   const state = (f: string) => gone.has(f) ? "Not there now: plug in its drive" : !ib.watching ? "Not watched: Tidy Up's background work is off in Settings" : when === 'manual' ? 'Tidied when you press Tidy up now' : when === 'daily' ? 'Tidied once a day, after 3 AM' : 'Watched: tidied as things arrive';
   return (
     <Widget title="Drop anything here" span="all" kind="tidyinbox">
-      <p class="muted tidyinboxlead">Music, films, shows, books, and audiobooks: put them in one of these folders, however messy, and Tidy Up works out what each is, cleans it up, and files it in your library.</p>
       <fieldset class="tidyinboxset" disabled={waits}>
       <Rows kind="fx-rows tidytodo">
         {folders.map((f) => (

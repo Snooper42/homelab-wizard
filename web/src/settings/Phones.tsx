@@ -90,7 +90,7 @@ export function Phones({ phones, on }: { phones: companion.Phone[]; on: PhonesAc
   return (
     <>
       <CardHead title="Phones"><span class="muted">{phones.length ? `${phones.length} paired` : 'none paired yet'}</span></CardHead>
-      <p class="muted">Status and Backups on your phones, at home and on your own private network (never on the internet). Each pairs once; it can only look unless you let it make changes, and it sees Finances only if you pick that for it.</p>
+      <p class="muted">Never on the internet. A phone can only look unless you allow changes.</p>
       {!!phones.length && (
         <Rows>
           {phones.map((p) => (

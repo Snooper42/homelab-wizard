@@ -662,10 +662,7 @@
       return /* @__PURE__ */ u3(S, { children: [
         /* @__PURE__ */ u3("li", { class: "alldone", children: [
           /* @__PURE__ */ u3("span", { class: "mark", children: /* @__PURE__ */ u3(Icon, { name: "check" }) }),
-          /* @__PURE__ */ u3("div", { class: "body", children: [
-            /* @__PURE__ */ u3("strong", { class: "title", children: `All ${steps.length} steps are done` }),
-            /* @__PURE__ */ u3("div", { class: "sub muted", children: "If one comes undone (a token runs out, the backup drive goes away), it shows here again, and Setup comes back in the sidebar." })
-          ] }),
+          /* @__PURE__ */ u3("div", { class: "body", children: /* @__PURE__ */ u3("strong", { class: "title", children: `All ${steps.length} steps are done` }) }),
           /* @__PURE__ */ u3("div", { class: "actions", children: /* @__PURE__ */ u3("button", { id: "toggleDone", class: "linkbtn small", "aria-expanded": showDone, onClick: on2.toggleDone, children: showDone ? "Hide" : "Show" }) })
         ] }),
         showDone && done.map((s3, i3) => row(s3, i3 + 1))
@@ -1128,7 +1125,16 @@
     const trouble2 = st.apps.filter((a3) => troubled(a3, st.stopped));
     const u4 = st.updates;
     return /* @__PURE__ */ u3(S, { children: [
-      /* @__PURE__ */ u3(Card, { kind: "tile headline" + (trouble2.length ? " warn" : " good"), id: "statusHeadline", children: [
+      !trouble2.length && !st.missing ? /* @__PURE__ */ u3("div", { class: "headline good slim", id: "statusHeadline", role: "status", children: [
+        /* @__PURE__ */ u3("span", { class: "okmark", "aria-hidden": "true", children: "✓" }),
+        /* @__PURE__ */ u3("span", { class: "value", children: "All good" }),
+        /* @__PURE__ */ u3("span", { class: "label", children: [
+          running5.length,
+          " of ",
+          counted2,
+          " running"
+        ] })
+      ] }) : /* @__PURE__ */ u3(Card, { kind: "tile headline" + (trouble2.length ? " warn" : " good"), id: "statusHeadline", children: [
         /* @__PURE__ */ u3("div", { class: "headlinemain", children: [
           /* @__PURE__ */ u3("div", { class: "value", children: trouble2.length ? trouble2.length === 1 ? "1 app needs you" : `${trouble2.length} apps need you` : "All good" }),
           /* @__PURE__ */ u3("div", { class: "label", children: [
@@ -3606,7 +3612,6 @@
             running5.length > 0 && /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", disabled: p3.busy, onClick: () => run2("restart", running5), children: running5.length === 1 ? `Restart ${running5[0].name}` : `Restart the ${running5.length} running` }),
             running5.length > 0 && /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", class: sure ? "danger" : "", disabled: p3.busy, onClick: () => run2("stop", running5), children: sure ? `Click again to stop ${running5.length === 1 ? running5[0].name : `all ${running5.length}`}` : running5.length === 1 ? `Stop ${running5[0].name}` : `Stop the ${running5.length} running` }),
             running5.length > 0 && /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", class: "stoplater", "aria-haspopup": "menu", disabled: p3.busy, onClick: () => showLater(true), children: "Stop for a while ›" }),
-            running5.length > 0 && /* @__PURE__ */ u3("p", { class: "menufoot muted", children: "Stopping what you don’t use gives its memory back. Nothing starts it again by itself until you do." }),
             held3.length > 0 && /* @__PURE__ */ u3("p", { class: "menufoot muted heldnote", children: [
               "Stopped by you: ",
               held3.map((a3) => a3.name).join(", "),
@@ -4721,7 +4726,7 @@
         /* @__PURE__ */ u3("button", { class: "small", onClick: () => on2.openSheet(who.username), children: "Open the fridge sheet" }),
         /* @__PURE__ */ u3("button", { class: "small", onClick: on2.doneAdding, children: "Done" })
       ] }),
-      /* @__PURE__ */ u3("p", { class: "muted", children: "The welcome page opens here, on this computer: they scan its code with their phone's camera, or you print it for them. It's for them alone, as it holds their sign-in link and their music and films password, so don't email it. To send something, send the fridge sheet: their apps with a code each, and neither of those." })
+      /* @__PURE__ */ u3("p", { class: "muted", children: "It holds their sign-in link and a password: show or print it, don't email it. The fridge sheet is safe to send." })
     ] });
   }
   function AddPerson({ apps: apps2, open: open5, on: on2 }) {
@@ -4781,7 +4786,7 @@
   function People({ people, pocket, apps: apps2, log: log2, on: on2, privateFinances, justAdded: justAdded2 }) {
     const here3 = people.filter(active);
     const head = /* @__PURE__ */ u3(CardHead, { title: "People", children: /* @__PURE__ */ u3("span", { class: "muted", children: here3.length ? `${here3.length} in the household` : "just you so far" }) });
-    const why = /* @__PURE__ */ u3("p", { class: "muted", children: "Each person gets one sign-in for the apps, with their phone's face or fingerprint and no password to remember, and a welcome page with their apps and the phone apps to install. Their films and music apps (Jellyfin and Navidrome) have a password of their own: once each app's admin key is on its page in Settings (Jellyfin, Navidrome), the homelab makes their accounts too. Their sign-in link works once: Welcome page shows it again until it's used, and Make a new sign-in link replaces one they lost." });
+    const why = null;
     if (!pocket) {
       return /* @__PURE__ */ u3(S, { children: [
         head,
@@ -4885,7 +4890,7 @@
     };
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3(CardHead, { title: "Phones", children: /* @__PURE__ */ u3("span", { class: "muted", children: phones.length ? `${phones.length} paired` : "none paired yet" }) }),
-      /* @__PURE__ */ u3("p", { class: "muted", children: "Status and Backups on your phones, at home and on your own private network (never on the internet). Each pairs once; it can only look unless you let it make changes, and it sees Finances only if you pick that for it." }),
+      /* @__PURE__ */ u3("p", { class: "muted", children: "Never on the internet. A phone can only look unless you allow changes." }),
       !!phones.length && /* @__PURE__ */ u3(Rows, { children: phones.map((p3) => /* @__PURE__ */ u3(
         Row,
         {
@@ -4962,7 +4967,7 @@
         online,
         " online"
       ] }) }),
-      /* @__PURE__ */ u3("p", { class: "muted", children: "Each of these can open the apps away from home. One that is lost or sold: Remove it, and it can no longer reach them." }),
+      /* @__PURE__ */ u3("p", { class: "muted", children: "Lost or sold one? Remove it." }),
       /* @__PURE__ */ u3(Rows, { children: devices.map((d3) => /* @__PURE__ */ u3(
         Row,
         {
@@ -5237,11 +5242,8 @@
       !system && !!noAccent && /* @__PURE__ */ u3("p", { id: "noAccent", class: "muted look-help", children: noAccent }),
       /* @__PURE__ */ u3(Choice, { label: "Contrast", value: look2.contrast, options: [["system", "Like the system"], ["more", "More"]], pick: put("contrast") }),
       /* @__PURE__ */ u3(Choice, { label: "Layout", value: look2.layout, options: [["classic", "Classic"], ["islands", "Islands"]], pick: put("layout") }),
-      /* @__PURE__ */ u3("p", { class: "muted look-help", children: "Islands sets the sidebar and the page apart as panels of their own, with space around them." }),
       /* @__PURE__ */ u3(Choice, { label: "Motion", value: look2.motion, options: [["system", "Like the system"], ["less", "Less"], ["none", "None"]], pick: put("motion") }),
-      /* @__PURE__ */ u3("p", { class: "muted look-help", children: "Less keeps colours fading but nothing slides, spins, or grows; None stops every animation." }),
       /* @__PURE__ */ u3(Choice, { label: "Transparency", value: look2.transparency, options: [["system", "Like the system"], ["off", "Off"]], pick: put("transparency") }),
-      /* @__PURE__ */ u3("p", { class: "muted look-help", children: "Off draws the bars that float over the page, and the side panel, solid instead of see-through." }),
       /* @__PURE__ */ u3(
         Choice,
         {
@@ -5251,8 +5253,7 @@
           pick: (v3) => set2({ ...look2, icon: v3 === "own" ? look2.icon.startsWith("#") ? look2.icon : look2.accent || "#2563eb" : v3 })
         }
       ),
-      iconMode === "own" && /* @__PURE__ */ u3(Colours, { label: "Icon colour", value: look2.icon, systemLabel: "The usual icon", pick: (v3) => set2({ ...look2, icon: v3 }) }),
-      /* @__PURE__ */ u3("p", { class: "muted look-help", children: "The icon in the menu bar (the system tray on Windows and Linux) takes its new colour within a few seconds." })
+      iconMode === "own" && /* @__PURE__ */ u3(Colours, { label: "Icon colour", value: look2.icon, systemLabel: "The usual icon", pick: (v3) => set2({ ...look2, icon: v3 }) })
     ] });
   }
   function mountAppearance(el3, props) {
@@ -9778,7 +9779,6 @@
       problem ? /* @__PURE__ */ u3(Empty, { children: problem }) : rows === null ? /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : shown8.length ? /* @__PURE__ */ u3(Rows, { children: shown8.map((e3) => /* @__PURE__ */ u3(Row, { title: e3.text, sub: doneSub(e3) }, e3.id)) }) : /* @__PURE__ */ u3(Empty, { children: "Nothing done to it yet that's kept here. Its starts, stops, restarts and updates, and the watchdog's, are kept for 90 days." }),
       /* @__PURE__ */ u3(Sheet, { id: "doneSheet", titleId: "doneTitle", children: [
         /* @__PURE__ */ u3("h2", { id: "doneTitle", children: "Everything that was done" }),
-        /* @__PURE__ */ u3("p", { class: "muted", children: "The last 90 days: starts, stops, restarts, updates, roll backs, the watchdog's restarts, settings and Finances changed, and who did each." }),
         /* @__PURE__ */ u3("input", { type: "search", class: "donesearch", value: q2, onInput: (e3) => setQ(e3.target.value), placeholder: "Search: an app, a phone, restarted…", "aria-label": "Search what was done", autocomplete: "off", spellcheck: false }),
         all === null ? /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : all.length ? /* @__PURE__ */ u3(Rows, { children: all.map((e3) => /* @__PURE__ */ u3(Row, { title: e3.text, sub: doneSub(e3) }, e3.id)) }) : /* @__PURE__ */ u3(Empty, { children: q2.trim() ? `Nothing done matches “${q2.trim()}”.` : "Nothing done yet that's kept here." }),
         /* @__PURE__ */ u3("div", { class: "actions", children: /* @__PURE__ */ u3("button", { class: "small", onClick: close3, children: "Close" }) })
@@ -10994,27 +10994,24 @@
           "Link all ",
           list.length
         ] }),
-        children: [
-          /* @__PURE__ */ u3("p", { class: "fx-sub fx-lead", children: "Linked, one is taken as paying it, so the plan doesn't take it out again on its day." }),
-          /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: list.map((t3) => {
-            const g2 = found2.get(t3.id), x3 = L2.payment[g2.payment];
-            return /* @__PURE__ */ u3(
-              Row,
-              {
-                lead: /* @__PURE__ */ u3(TxMark, { t: t3, categories: v3.categories }),
-                title: txTitle(t3, L2),
-                sub: `${dayLong(t3.date)} · looks like ${x3?.name || g2.payment}, planned ${money(x3?.amount || 0)} for ${dayShort(g2.due)}`,
-                when: /* @__PURE__ */ u3(Amount, { value: t3.amount, sign: t3.amount > 0, tone: t3.amount > 0 ? "in" : "", form: "full" }),
-                whenPlain: true,
-                end: /* @__PURE__ */ u3("span", { class: "fx-linkbtns", children: [
-                  /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy2, "aria-label": `Link ${t3.payee || "it"} on ${dayLong(t3.date)} to ${x3?.name}`, onClick: () => link([t3.id]), children: "Link" }),
-                  /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy2, "aria-label": `${t3.payee || "It"} on ${dayLong(t3.date)} is not ${x3?.name}`, onClick: () => notIt(t3.id), children: "Not it" })
-                ] })
-              },
-              t3.id
-            );
-          }) })
-        ]
+        children: /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: list.map((t3) => {
+          const g2 = found2.get(t3.id), x3 = L2.payment[g2.payment];
+          return /* @__PURE__ */ u3(
+            Row,
+            {
+              lead: /* @__PURE__ */ u3(TxMark, { t: t3, categories: v3.categories }),
+              title: txTitle(t3, L2),
+              sub: `${dayLong(t3.date)} · looks like ${x3?.name || g2.payment}, planned ${money(x3?.amount || 0)} for ${dayShort(g2.due)}`,
+              when: /* @__PURE__ */ u3(Amount, { value: t3.amount, sign: t3.amount > 0, tone: t3.amount > 0 ? "in" : "", form: "full" }),
+              whenPlain: true,
+              end: /* @__PURE__ */ u3("span", { class: "fx-linkbtns", children: [
+                /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy2, "aria-label": `Link ${t3.payee || "it"} on ${dayLong(t3.date)} to ${x3?.name}`, onClick: () => link([t3.id]), children: "Link" }),
+                /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy2, "aria-label": `${t3.payee || "It"} on ${dayLong(t3.date)} is not ${x3?.name}`, onClick: () => notIt(t3.id), children: "Not it" })
+              ] })
+            },
+            t3.id
+          );
+        }) })
       }
     );
   }
@@ -11070,24 +11067,21 @@
           "Join all ",
           list.length
         ] }),
-        children: [
-          /* @__PURE__ */ u3("p", { class: "fx-sub fx-lead", children: "Money out of one of your accounts and the same into another: joined, it is one transfer, neither spending nor income." }),
-          /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: list.map((p3) => /* @__PURE__ */ u3(
-            Row,
-            {
-              lead: /* @__PURE__ */ u3(TxMark, { t: joined(p3) }),
-              title: `${name(p3.out.account)} → ${name(p3.in.account)}`,
-              sub: `${p3.out.payee || "Out"}, ${dayShort(p3.out.date)} · ${p3.in.payee || "in"}, ${dayShort(p3.in.date)}`,
-              when: /* @__PURE__ */ u3(Amount, { value: -p3.out.amount, form: "full" }),
-              whenPlain: true,
-              end: /* @__PURE__ */ u3("span", { class: "fx-linkbtns", children: [
-                /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy2, "aria-label": `Join ${money(-p3.out.amount)} from ${name(p3.out.account)} to ${name(p3.in.account)}`, onClick: () => join([p3]), children: "Join" }),
-                /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy2, "aria-label": `${money(-p3.out.amount)} from ${name(p3.out.account)} to ${name(p3.in.account)} is not one transfer`, onClick: () => apart(p3), children: "Not one transfer" })
-              ] })
-            },
-            p3.out.id + p3.in.id
-          )) })
-        ]
+        children: /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: list.map((p3) => /* @__PURE__ */ u3(
+          Row,
+          {
+            lead: /* @__PURE__ */ u3(TxMark, { t: joined(p3) }),
+            title: `${name(p3.out.account)} → ${name(p3.in.account)}`,
+            sub: `${p3.out.payee || "Out"}, ${dayShort(p3.out.date)} · ${p3.in.payee || "in"}, ${dayShort(p3.in.date)}`,
+            when: /* @__PURE__ */ u3(Amount, { value: -p3.out.amount, form: "full" }),
+            whenPlain: true,
+            end: /* @__PURE__ */ u3("span", { class: "fx-linkbtns", children: [
+              /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy2, "aria-label": `Join ${money(-p3.out.amount)} from ${name(p3.out.account)} to ${name(p3.in.account)}`, onClick: () => join([p3]), children: "Join" }),
+              /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy2, "aria-label": `${money(-p3.out.amount)} from ${name(p3.out.account)} to ${name(p3.in.account)} is not one transfer`, onClick: () => apart(p3), children: "Not one transfer" })
+            ] })
+          },
+          p3.out.id + p3.in.id
+        )) })
       }
     );
   }
@@ -12816,11 +12810,7 @@
         ] }),
         /* @__PURE__ */ u3("button", { type: "button", class: "small", "aria-label": `Remove the rule for ${r3.match}`, onClick: () => setRules(latest2.current.filter((_3, j3) => j3 !== i3)), children: "Remove" })
       ] }, i3)) }),
-      !rules.length && /* @__PURE__ */ u3("p", { class: "muted", children: [
-        "No rules yet. On a transaction, give its payee a name or a category and tick ",
-        /* @__PURE__ */ u3("strong", { children: "Always do this for…" }),
-        "."
-      ] }),
+      !rules.length && /* @__PURE__ */ u3("p", { class: "muted", children: "No rules yet." }),
       problem && /* @__PURE__ */ u3("p", { class: "formerr bad", role: "alert", children: problem }),
       /* @__PURE__ */ u3(Actions3, { busy: busy2, exists: false, remove: () => {
       }, close: props.close, touched: touched2 || JSON.stringify(rules) !== JSON.stringify(plan.rules || []) })
@@ -13149,7 +13139,7 @@
             sum(inn)
           ] });
         })(),
-        guessed.some(Boolean) && /* @__PURE__ */ u3("p", { class: "muted importnote", children: "A row that looks like a planned payment pays it, so the plan doesn't take it out again on its day. Change it below if it's wrong." }),
+        guessed.some(Boolean) && /* @__PURE__ */ u3("p", { class: "muted importnote", children: "Rows that match a planned payment pay it. Change any below." }),
         /* @__PURE__ */ u3("ul", { class: "importlist", children: found2.slice(0, 60).map((t3, i3) => {
           const k3 = fresh.indexOf(t3), fixing = fixes2.has(i3), renaming = renames.has(i3), dup = k3 < 0 && !fixing && !renaming;
           const g2 = k3 < 0 ? void 0 : guessed[k3], link = k3 < 0 ? "" : linkOf(k3), x3 = payments.find((q2) => q2.id === link);
@@ -14063,7 +14053,7 @@
               ] }),
               /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => setPicked(""), children: "Close" })
             ] }),
-            node.id === "kept:cash" ? /* @__PURE__ */ u3("p", { class: "fx-sub", children: "What was left after taxes, spending, and what went into savings accounts: it stayed where it came in." }) : node.id === "src:accounts" ? /* @__PURE__ */ u3("p", { class: "fx-sub", children: "More went out than came in: the rest came out of what the accounts held." }) : /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: [
+            node.id === "kept:cash" ? /* @__PURE__ */ u3("p", { class: "fx-sub", children: "It stayed where it came in." }) : node.id === "src:accounts" ? /* @__PURE__ */ u3("p", { class: "fx-sub", children: "It came out of what the accounts held." }) : /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: [
               items.slice(0, many).map((it, i3) => /* @__PURE__ */ u3(
                 Row,
                 {
@@ -14374,8 +14364,8 @@
     const shown8 = all ? list : list.slice(0, 5);
     return /* @__PURE__ */ u3(Widget, { title: "Taken as done", span: "all", kind: "fx-since", children: [
       /* @__PURE__ */ u3("p", { class: "fx-sub fx-lead", children: [
-        "Dated on or after the day you typed in the balances, so counted in them. A bill due that day still comes out",
-        set2 ? ": mark it Already in if the balance has it. Mark any that hasn't happened yet: it comes today." : "."
+        "Already in the balances you typed. A bill due that day still comes out",
+        set2 ? ": mark it Already in if the balance has it." : "."
       ] }),
       /* @__PURE__ */ u3(Rows, { kind: "finrows fx-rows", children: shown8.map((s3) => {
         const x3 = s3.payment ? L2.payment[s3.payment] : void 0;
@@ -17921,7 +17911,7 @@ ${pays}
                 " a year"
               ] }) }),
               !e3.gross && !ded.length && edit && /* @__PURE__ */ u3("p", { class: "fx-sub fx-payhint", children: [
-                "Add the gross and what is taken out (taxes, a 401(k), insurance) to see where the rest of the pay goes. ",
+                "Add the gross and what's taken out. ",
                 /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => edit("person", e3.id), children: "Add them" })
               ] }),
               !!e3.gross && (() => {
@@ -21304,10 +21294,7 @@ ${pays}
           gain ? " · " + size(gain) + " to win back" : ""
         ] }) : void 0, children: todos.length ? /* @__PURE__ */ u3(TodoRows, { todos, job: job2 }) : /* @__PURE__ */ u3("div", { class: "tidyclear", children: [
           /* @__PURE__ */ u3("span", { class: "fmark logo tidyicon fx-h-in", "aria-hidden": "true", children: /* @__PURE__ */ u3("svg", { viewBox: "0 0 24 24", children: /* @__PURE__ */ u3("path", { d: "M20 6 9 17l-5-5" }) }) }),
-          /* @__PURE__ */ u3("div", { children: [
-            /* @__PURE__ */ u3("strong", { children: "Everything's tidy" }),
-            /* @__PURE__ */ u3("div", { class: "muted", children: "New downloads are filed as they finish, and anything new to tidy shows up here." })
-          ] })
+          /* @__PURE__ */ u3("div", { children: /* @__PURE__ */ u3("strong", { children: "Everything's tidy" }) })
         ] }) }),
         /* @__PURE__ */ u3(DriveWidget, { d: d3 })
       ] }),
@@ -21333,7 +21320,6 @@ ${pays}
     const waits2 = busy(job2) || !!other;
     const state3 = (f4) => gone.has(f4) ? "Not there now: plug in its drive" : !ib.watching ? "Not watched: Tidy Up's background work is off in Settings" : when3 === "manual" ? "Tidied when you press Tidy up now" : when3 === "daily" ? "Tidied once a day, after 3 AM" : "Watched: tidied as things arrive";
     return /* @__PURE__ */ u3(Widget, { title: "Drop anything here", span: "all", kind: "tidyinbox", children: [
-      /* @__PURE__ */ u3("p", { class: "muted tidyinboxlead", children: "Music, films, shows, books, and audiobooks: put them in one of these folders, however messy, and Tidy Up works out what each is, cleans it up, and files it in your library." }),
       /* @__PURE__ */ u3("fieldset", { class: "tidyinboxset", disabled: waits2, children: [
         /* @__PURE__ */ u3(Rows, { kind: "fx-rows tidytodo", children: [
           folders.map((f4) => /* @__PURE__ */ u3(
