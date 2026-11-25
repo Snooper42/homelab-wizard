@@ -104,9 +104,10 @@ func Write(path string, data []byte, mode os.FileMode) error {
 	if werr == nil {
 		deadline := time.Now().Add(RenameWait)
 		for {
-			// Windows says "access is denied" for a file open elsewhere;
-			// any other failure is final.
-			if werr = os.Rename(tmp, path); werr == nil || !os.IsPermission(werr) || time.Now().After(deadline) {
+			// Windows says "access is denied", "in use by another
+			// process" or "delete pending" for a file open elsewhere (as
+			// Read meets them); any other failure is final.
+			if werr = rename(tmp, path); werr == nil || !(os.IsPermission(werr) || onWindows && busy(werr)) || time.Now().After(deadline) {
 				break
 			}
 			time.Sleep(2 * time.Millisecond)
@@ -180,6 +181,7 @@ const (
 var (
 	onWindows = runtime.GOOS == "windows"
 	readFile  = os.ReadFile
+	rename    = os.Rename
 )
 
 // busy is asked only on Windows (Read returns at once elsewhere).

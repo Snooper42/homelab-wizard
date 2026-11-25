@@ -26,7 +26,7 @@ struct PrivateLockedView: View {
                 .background(Theme.accentFill, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                 .accessibilityHidden(true)
             Text("Your Finances are private")
-                .font(.title3.weight(.bold))
+                .font(.headline)
                 .foregroundStyle(Theme.ink)
             Text("Only you can open them, here on your own phone. The Homelab keeps them locked and can’t open them, whoever runs it.")
                 .font(.subheadline)
@@ -123,7 +123,7 @@ struct PrivateLockedView: View {
         }
         .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .card(radius: 24)
+        .card()
     }
 
     private func openWithPassphrase() {
@@ -221,7 +221,7 @@ struct PrivateOfferCard: View {
         }
         .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .card(radius: 24)
+        .card()
         .sheet(isPresented: $making) { MakePrivateSheet(finances: finances) }
     }
 }

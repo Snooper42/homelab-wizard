@@ -65,3 +65,32 @@ enum TransactionDays {
         return name
     }
 }
+
+/// The pay periods Transactions' date chip offers beside the months, as the
+/// computer's date picker (Transactions.tsx): this paycheck's (the plan's
+/// first period) and the one before it (from the payday before it to the day
+/// before this one starts).
+enum PaySpans {
+    struct Span: Identifiable, Equatable {
+        let title: String
+        let days: ClosedRange<Date>
+        var id: String { title }
+    }
+
+    static func make(_ view: FinancesPlanView, calendar: Calendar = .current) -> [Span] {
+        guard let now = view.periods.first, let start = now.start, let last = now.last, start <= last else { return [] }
+        var out = [Span(title: "This paycheck", days: start...last)]
+        if let pay = view.before.first?.date, let end = calendar.date(byAdding: .day, value: -1, to: start), pay <= end {
+            out.append(Span(title: "Last paycheck", days: pay...end))
+        }
+        return out
+    }
+
+    /// "Nov 6 – 19", or "Oct 23 – Nov 5" across a month.
+    static func words(_ days: ClosedRange<Date>, calendar: Calendar = .current) -> String {
+        let first = days.lowerBound.formatted(.dateTime.month(.abbreviated).day())
+        let sameMonth = calendar.isDate(days.lowerBound, equalTo: days.upperBound, toGranularity: .month)
+        let last = sameMonth ? days.upperBound.formatted(.dateTime.day()) : days.upperBound.formatted(.dateTime.month(.abbreviated).day())
+        return "\(first) – \(last)"
+    }
+}
