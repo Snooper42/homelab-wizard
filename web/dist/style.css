@@ -3332,8 +3332,8 @@ html.os-mac:not(.companion) .foot { border-top:1px solid var(--shade-1); padding
    computer at the foot. Moving between screens changes only the menu's items and the mark; nothing in the sidebar
    moves, slides or animates. A window under 700px keeps its rail. */
 @container window (min-width: 701px) {
-  html nav { display:grid; grid-template-columns:repeat(5, minmax(0, 1fr)); grid-template-rows:auto auto 1fr auto auto auto; grid-auto-flow:row dense; column-gap:2px; }
-  html nav:has(> button[data-screen="setup"]:not([hidden])) { grid-template-columns:repeat(6, minmax(0, 1fr)); }
+  html nav { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); grid-template-rows:auto auto 1fr auto auto auto; grid-auto-flow:row dense; column-gap:2px; }
+  html nav:has(> button[data-screen="setup"]:not([hidden])) { grid-template-columns:repeat(5, minmax(0, 1fr)); }
   html nav > * { grid-column:1 / -1; }
   html nav > button:is([data-screen="choose"], [data-screen="status"], [data-screen="backups"], [data-screen="tidy"], [data-screen="finances"], [data-screen="setup"]) { grid-column:auto; grid-row:2; justify-content:center; padding:8px 0; margin-bottom:10px; }
   html nav > button:is([data-screen="choose"], [data-screen="status"], [data-screen="backups"], [data-screen="tidy"], [data-screen="finances"], [data-screen="setup"]) > span:not(.count) { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
@@ -3447,7 +3447,7 @@ table.copies td.nights .dot { margin:0 0 0 3px; }
 /* A category's page on Status (status/CategoryPage.tsx, the owner's computer-category pictures): the overview steps aside
    while one shows; big tiles three across (two on a phone), see-through on a soft violet and teal glow; the apps to add
    faded, with a dashed edge. */
-#status:not([data-part]) > #statusPart, #status[data-part] > :not(#statusPart, #statusChips) { display:none !important; }
+#status:not([data-part]) > #statusPart, #status[data-part] > :not(#statusPart, #statusChips, #statusStore), #status:not([data-part="add"]) > #statusStore { display:none !important; }
 main:has(> #status.active[data-part]) { background:radial-gradient(60% 40% at 25% 0, color-mix(in srgb, var(--violet) 10%, transparent), transparent 70%), radial-gradient(50% 40% at 100% 100%, color-mix(in srgb, var(--cyan) 8%, transparent), transparent 70%), var(--bg); }
 .catpage { --cat-tile:color-mix(in srgb, var(--panel) 72%, transparent); --cat-edge:var(--line); }
 .catpage .row.header { align-items:flex-start; }
@@ -3578,3 +3578,28 @@ nav .sidemenulist .sidedot + .total { margin-left:8px; }
 #customBody .customForm { padding:0; }
 @media (max-width: 700px) { .statusfind { width:100%; order:-1; } }
 #installSheet .sheethead h2, #customSheet .sheethead h2 { font-size:22px; font-weight:700; }
+/* An app you could add: its own page, as an installed app's (choose/InstallSheet.tsx): breadcrumbs and its head across,
+   its facts and what to know on the left, the plan with Install in a card on the right, staying in view. */
+#statusStore { display:grid; grid-template-columns:minmax(0, 3fr) minmax(300px, 2fr); grid-template-areas:"head head" "facts facts" "notes plan"; gap:0 18px; align-items:start; }
+#storeHead { grid-area:head; margin-bottom:18px; } #storeFacts { grid-area:facts; } #storeNotes { grid-area:notes; } #storePlan { grid-area:plan; position:sticky; top:12px; padding:18px 20px; }
+#storeFacts:empty { display:none; }
+#storePlan aside.plan { position:static; width:auto; border:0; box-shadow:none; padding:0; margin:0; background:none; }
+#storePlan aside.plan > h2 { margin-top:0; }
+.storehead .appmark { width:88px; height:88px; border-radius:22px; }
+.storehead .storemarks { display:flex; } .storehead .storemarks .appmark { width:64px; height:64px; border-radius:16px; margin-right:-14px; box-shadow:0 0 0 3px var(--bg); }
+.storehead .storemarks + div { margin-left:24px; }
+.storenotes { padding:16px 20px; margin-top:0; }
+.storenotes h2 { margin:0 0 8px; font-size:15px; }
+.storenotes ul { margin:0; padding-left:18px; display:grid; gap:6px; color:var(--muted); }
+.storenotes li.warn { color:var(--warn); }
+.storeapps { list-style:none; margin:0; padding:6px; display:grid; gap:2px; }
+.storeapp { all:unset; box-sizing:border-box; display:flex; align-items:center; gap:12px; width:100%; padding:10px 12px; border-radius:10px; cursor:default; }
+.storeapp:hover { background:var(--sunken); } .storeapp:focus-visible { outline:2px solid var(--accent); outline-offset:-2px; }
+.storeapp > span:last-child { display:flex; flex-direction:column; min-width:0; } .storeapp .muted { font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+@container (max-width: 760px) { #statusStore { grid-template-columns:1fr; grid-template-areas:"head" "facts" "plan" "notes"; } #storePlan { position:static; margin-bottom:14px; } }
+@media (max-width: 700px) { .storehead .appmark { width:64px; height:64px; border-radius:16px; } }
+@media (prefers-color-scheme: dark) and (prefers-contrast: no-preference) {
+  #status[data-part="add"] .card { background:var(--glow-04); border-color:var(--glow-1); box-shadow:none; backdrop-filter:blur(12px); }
+  .storeapp:hover { background:var(--glow-06); }
+}
+#storeFacts { margin-bottom:18px; }

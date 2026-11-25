@@ -5,52 +5,77 @@ import { questions } from '../choose/questions';
 import { appNote, systemOf } from '../differs';
 import { mountJobApps } from '../job/Apps';
 import { mountCategories, mountStarted, mountWiring, type WireLink } from '../choose/Started';
-import { loadStatus, statusById, statusData } from './status';
+import { loadStatus, pageOpener, pickStatusPart, statusById, statusData } from './status';
 import { hostOS } from './setup';
 import { settingLabel, settingsData, showSettings } from './settings';
 import { cliProgress, startJob } from '../jobs';
 import { inTurn, waitWords } from '../job/queue';
 import { $, go, minute, osName, showError } from '../core';
-import { mountAbout, mountInstallSheets } from '../choose/InstallSheet';
+import { mountCustomSheet, mountStore } from '../choose/InstallSheet';
+import type { Crumb } from '../parts/Crumbs';
+import { goBack, navigate } from '../app';
 import { icons as appIcons } from '../status/appIcons';
 
 // Choose apps
 export let catalog: api.Catalog | null = null;
-// Choose apps is gone (the owner, Nov 25): its plan and its own-app form live in sheets (choose/InstallSheet.tsx) that
-// any Install opens; the picker below stays out of sight, keeping what it ticks for the plan.
-let sheets = false;
-function drawSheets() {
-  if (sheets) return;
-  sheets = true;
-  mountInstallSheets($('installSheets'), { close: closeInstall, closeCustom: () => { $('customSheet').hidden = true; } });
+// Choose apps is gone (the owner, Nov 25): an app you could add has a page of its own on Status (choose/InstallSheet.tsx,
+// as an installed app's page), its plan beside its facts; Add your own app is a sheet. The plan's and the form's parts
+// move there once; the picker below stays out of sight, keeping what it ticks for the plan.
+let placed = false;
+function place() {
+  if (placed) return;
+  placed = true;
+  mountCustomSheet($('customSheetBox'), () => { $('customSheet').hidden = true; });
   const plan = document.querySelector('#choose aside.plan');
-  if (plan) { plan.classList.remove('card'); $('installBody').appendChild(plan); }
+  if (plan) { plan.classList.remove('card'); $('storePlan').appendChild(plan); }
   const form = document.querySelector('#customCard .customForm');
   if (form) $('customBody').appendChild(form);
 }
-/** Install: the sheet with the app's page (or a set's) atop its plan, the plan first. */
+/** Install: the app's page (or a set's) on Status, its plan beside it. */
 export function openInstall(ids: string[], about?: { app?: string; set?: string }) {
-  drawSheets();
-  if (!installing) { selected.clear(); ids.forEach((id) => selected.add(id)); }
-  const app = catalog?.apps.find((a) => a.id === (about?.app ?? (ids.length === 1 ? ids[0] : '')));
-  const set = catalog?.presets.find((p) => p.id === about?.set);
-  const notes = app && catalog ? [
+  const key = about?.set ? 'set:' + about.set : about?.app || ids[0];
+  if (!key) return;
+  navigate('status');
+  pickStatusPart('add:' + key);
+}
+let shown = '';
+/** Draws the page of an app or a set to add (key: its ID, or set:ID), picking its apps for the plan when it's new. */
+export function showStore(key: string, trail: Crumb[]) {
+  place();
+  const set = key.startsWith('set:') ? catalog?.presets.find((p) => p.id === key.slice(4)) : undefined;
+  const app = set ? undefined : catalog?.apps.find((a) => a.id === key);
+  if (!catalog || (!set && !app)) { mountStore($('storeHead'), $('storeFacts'), $('storeNotes'), null); return; }
+  if (key !== shown && !installing) {
+    shown = key;
+    selected.clear();
+    (set ? set.apps : [app!.id]).forEach((id) => selected.add(id));
+    clearInstall();
+    renderApps();
+    replan();
+  }
+  const notes = app ? [
     appNote(app.id, systemOf(osName, hostOS)),
     ...sameJob(app, { catalog, status: statusById }).map(([o, why]) => `You already run ${o.name}: ${why}`),
     ...suggested(app, { catalog, status: statusById }).map(([o, why]) => `Goes with ${o.name}, which you run: ${why}`),
   ].filter(Boolean) as string[] : [];
-  mountAbout($('installAbout'), catalog && (app || set) ? { app, set, catalog, icons: appIcons, notes } : null);
-  $('installTitle').textContent = set ? set.name : app ? app.name : 'Install';
-  $('installSheet').hidden = false;
+  mountStore($('storeHead'), $('storeFacts'), $('storeNotes'), {
+    app, set, catalog, icons: appIcons, notes, trail,
+    here: set ? set.apps.filter((id) => ['running', 'stopped'].includes(statusById[id]?.state || '')) : [],
+    open: (id) => (statusById[id] && statusById[id].state !== 'missing' ? pageOpener.open(id) : pickStatusPart('add:' + id)),
+  });
+}
+/** Leaving the page: what it picked goes, unless it's installing. */
+export function leaveStore() {
+  if (!shown || installing) return;
+  shown = '';
+  selected.clear();
+  clearInstall();
   renderApps();
   replan();
 }
-function closeInstall() {
-  $('installSheet').hidden = true;
-  if (!installing) { selected.clear(); clearInstall(); renderApps(); replan(); }
-}
-/** Add your own app, in its sheet; once added, its install sheet with the plan. */
-export function openCustom() { drawSheets(); $('customSheet').hidden = false; }
+function closeInstall() { clearInstall(); goBack() || pickStatusPart('overview'); }
+/** Add your own app, in its sheet; once added, its page with the plan. */
+export function openCustom() { place(); $('customSheet').hidden = false; }
 export const selected = new Set<string>();
 const settings: Record<string, string> = {}; // form values, sent with every plan and install
 const appName = (id) => (catalog.apps.find((a) => a.id === id) || { name: id }).name;

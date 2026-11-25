@@ -85,6 +85,7 @@
   <section id="status" class="screen active">
     <div id="statusChips" class="companion-only"></div>
     <div id="statusPart"></div>
+    <div id="statusStore"><div id="storeHead"></div><div id="storeFacts"></div><div id="storeNotes"></div><div id="storePlan" class="card"></div></div>
     <div class="row header">
       <div><h1>Status</h1><p class="lead statuslead"><span id="statusAge" hidden></span></p></div>
       <div class="toolbar"><label class="catfind statusfind"><svg class="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input id="statusFind" type="search" placeholder="Find an app" aria-label="Find an app" autocomplete="off" spellcheck="false"></label><button id="phoneReport" class="btn companion-only" title="A file with what is running and the recent logs, every password and token removed, to send to whoever helps you">Send a report</button>
@@ -121,7 +122,7 @@
   <section id="app" class="screen" aria-label="An app"><div id="appPage"></div></section>
   <!-- The command and log sheets, over whichever screen opened them. -->
   <div id="sheets"></div>
-  <div id="installSheets"></div>
+  <div id="customSheetBox"></div>
   <div id="palette"></div>
   <div id="keys"></div>
   <section id="backups" class="screen">
@@ -161,7 +162,7 @@
     <details id="setupDetails" class="jobdetails" open><summary>Show details</summary><pre id="setupLog" role="log" hidden></pre></details>
     <p class="jobclear"><button id="setupClear" class="btn" hidden title="Takes the finished job's bar, apps, and log off this screen">Done</button></p>
     <p id="checkWait" class="muted" hidden>The rest of setting up shows here once your homelab is made.</p>
-    <p id="firstApps" hidden>Next, pick your first apps on <button id="firstAppsGo" class="linkbtn">Choose apps</button>. Each app's own steps join this list once it is installed.</p>
+    <p id="firstApps" hidden>Next, pick your first apps: <button id="firstAppsGo" class="linkbtn">Find an app</button>. Each app's own steps join this list once it is installed.</p>
     <div id="checkHead" class="row finishhead"><h2 id="checkTitle">Finish setting up</h2><span id="checkCount" class="muted"></span>
       <div class="meter"><div id="setupMeter" style="width:0"></div></div>
       <button id="runAll" class="primary small" hidden title="Runs each step that is ready, one after another, and stops at the first that needs you">Do the steps I can</button></div>

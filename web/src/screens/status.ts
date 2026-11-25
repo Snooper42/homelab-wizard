@@ -15,6 +15,7 @@ import { icons, onIcon, wantIcons } from '../status/appIcons';
 import { shippedLogo } from '../parts/AppMark';
 import { goToPart, mountSideMenu, type SideItem, sideIcons } from '../parts/SideMenu';
 import { mountCategoryPage } from '../status/CategoryPage';
+import { keepsTabs, tabChanged } from '../tabs';
 import { mountAnalytics, recordTotals, type Totals } from '../status/Analytics';
 import { ReleaseNotes } from '../status/ReleaseNotes';
 import { h as vnode } from 'preact';
@@ -26,7 +27,7 @@ import { mountCrashNote } from '../status/CrashNote';
 import { type History as UsageHistory, mountUsage, record as recordUsage } from '../status/Usage';
 import { memoryByApp } from '../status/memory';
 import { settingLabel, showSettingsPage } from './settings';
-import { catalog, openCustom, openInstall, renderApps } from './choose';
+import { catalog, leaveStore, openCustom, openInstall, renderApps, showStore } from './choose';
 import { suggested } from '../choose/Choose';
 import { clearJob, cliProgress, startJob } from '../jobs';
 import { navigate } from '../app';
@@ -188,8 +189,20 @@ function drawStatusSide() {
   mountSideMenu($('statusChips'), onPhone() ? { ...menu, label: 'Status parts' } : null);
 }
 /** Shows the overview, or the category picked, with the apps as last read. */
+/** The Status page an app's page to add was opened from (a category, All apps), for its breadcrumbs and Back. */
+let storeFrom = 'overview';
 function drawStatusPart() {
   const section = $('status');
+  if (statusHere.startsWith('add:')) {
+    section.dataset.part = 'add';
+    mountAnalytics($('statusPart'), null);
+    mountCategoryPage($('statusPart'), null);
+    const fromLabel = storeFrom === 'find' ? 'All apps' : statusParts.find((p) => p.id === storeFrom)?.label;
+    const trail = [{ label: 'Status', go: () => pickStatusPart('overview') }, ...(fromLabel ? [{ label: fromLabel, go: () => pickStatusPart(storeFrom) }] : [])];
+    showStore(statusHere.slice(4), trail);
+    return;
+  }
+  leaveStore();
   if (statusHere === 'analytics') {
     section.dataset.part = 'analytics';
     mountCategoryPage($('statusPart'), null);
@@ -237,10 +250,21 @@ $('statusFind').addEventListener('input', (e) => {
 export function pickStatusPart(key: string, find = '') {
   findText = find;
   if (key === statusHere && key !== 'find') { goToPart('status', null); return; }
+  if (key.startsWith('add:') && !statusHere.startsWith('add:')) storeFrom = statusHere;
   statusHere = key;
   drawStatusSide();
   drawStatusPart();
   goToPart('status', null);
+  tabChanged();
+}
+// Each of Status' pages (Overview, Analytics, a category, All apps) a step for Back and Forward, and the app's page
+// knows which one it was opened from (its breadcrumbs: Status › Media › Navidrome).
+keepsTabs('status', () => statusHere, (key) => { statusHere = key; drawStatusSide(); drawStatusPart(); });
+/** The Status page an app's page was opened from, for its breadcrumbs: its name and how to go back to it. */
+export function statusCrumb(): { label: string; go: () => void } | null {
+  if (statusHere === 'overview') return null;
+  const label = statusHere === 'analytics' ? 'Analytics' : statusHere === 'find' ? 'All apps' : statusParts.find((p) => p.id === statusHere)?.label;
+  return label ? { label, go: () => { navigate('status'); } } : null;
 }
 
 // The passwords and keys of each app not ticked Saved yet: a dot on its ⚙

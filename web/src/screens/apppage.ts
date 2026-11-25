@@ -7,7 +7,7 @@ import { type Day, mountAppPage } from '../page/AppPage';
 import { stateOf } from '../status/AppList';
 import { icons, readIcon } from '../status/appIcons';
 import { stoppedNext } from '../status/stopFor';
-import { appActions, appsBusyNow, cliFlow, pageOpener, pendingOf, statusById, statusData, unkept, unkeptChanged, watchRows } from './status';
+import { appActions, appsBusyNow, cliFlow, pageOpener, pendingOf, pickStatusPart, statusById, statusCrumb, statusData, unkept, unkeptChanged, watchRows } from './status';
 import { backupsData } from './backups';
 import { catalog } from './choose';
 import { usedByPeople } from './settings';
@@ -141,6 +141,8 @@ function draw() {
     privacy: id === privateApp && !companion ? privacy : undefined,
     on: {
       back: () => navigate('status'),
+      from: statusCrumb(),
+      overview: () => { navigate('status'); pickStatusPart('overview'); },
       act: (action) => appActions.act(a, action),
       details: () => appActions.details(a),
       stopFor: (until) => appActions.stopFor(a, until),

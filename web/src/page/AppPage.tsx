@@ -25,6 +25,10 @@ import { attackDetail, attackFrom, attackWords } from '../status/attack';
 /** What the page does; screens/apppage.ts runs each. */
 export interface AppPageActions {
   back: () => void;
+  /** The Status page it was opened from (a category, Analytics, All apps), between Status and the app: none from the overview. */
+  from?: { label: string; go: () => void } | null;
+  /** Status' overview. */
+  overview?: () => void;
   /** start, stop, restart, or rollback. */
   act: (action: string) => void;
   /** The output of its last command, in a sheet (after a failure). */
@@ -545,7 +549,7 @@ function More({ p }: { p: AppPageProps }) {
 export function AppPage(p: AppPageProps) {
   return (
     <div class="apppage">
-      <Crumbs trail={[{ label: 'Status', go: p.on.back }]} here={p.a.name} />
+      <Crumbs trail={p.on.from ? [{ label: 'Status', go: p.on.overview || p.on.back }, p.on.from] : [{ label: 'Status', go: p.on.back }]} here={p.a.name} />
       <Header p={p} />
       <Facts p={p} />
       <div class="pagecols">
