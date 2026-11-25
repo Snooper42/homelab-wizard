@@ -2058,8 +2058,12 @@ const smokes = [
     { name: 'The synced Files (Syncthing)', path: '/Users/you/Homelab/data/sync', job: 'Homelab Files', why: 'No backup job yet' },
     { name: 'Films, shows and music', path: '/Volumes/Hobbies/media', why: 'Too big for a nightly copy: keep a copy of your own' },
   ] }, run: async (page) => {
-    const card = page.locator('#gapsCard');
+    // In Backups' top, a card of its own after Needs you, across the whole width (R7).
+    const card = page.locator('#backupTiles #gapsTile');
     await card.locator('li:has-text("The synced Files (Syncthing)"):has-text("No backup job yet")').waitFor({ timeout: 5000 });
+    const [gap, board, needs] = await page.evaluate(() => ['gapsTile', 'backupTiles', 'needsYou'].map((id) => document.getElementById(id)?.getBoundingClientRect()));
+    if (Math.abs(gap.width - board.width) > 2) throw new Error(`Not in any backup is ${gap.width} wide in a board ${board.width} wide`);
+    if (needs && gap.top < needs.bottom) throw new Error('Not in any backup comes before Needs you');
     if (await card.locator('li:has-text("Films, shows and music") button').count()) throw new Error('the media library offers Add');
     if (!(await card.locator('li:has-text("Films, shows and music")').textContent()).includes('Too big')) throw new Error('the media library says no why');
     await card.locator('li:has-text("The synced Files") button:text-is("Add")').click();
@@ -2072,7 +2076,10 @@ const smokes = [
   { name: 'Backups: Not in any backup hides while nothing is left out', screen: 'backups', run: async (page) => {
     await page.waitForSelector('#copiesTile', { timeout: 5000 });
     await page.waitForTimeout(300);
-    if (await page.isVisible('#gapsCard')) throw new Error('an empty Not in any backup shows');
+    if (await page.isVisible('#gapsTile')) throw new Error('an empty Not in any backup shows');
+    // The restore test and off-site keep half the row each.
+    const [r, o] = await page.evaluate(() => ['restoreTile', 'offsiteTile'].map((id) => Math.round(document.getElementById(id).getBoundingClientRect().width)));
+    if (Math.abs(r - o) > 2) throw new Error(`restore test ${r} and off-site ${o} differ`);
   } },
   { name: 'Restore drills: timing and record', screen: 'backups', run: async (page) => {
     await page.waitForSelector('#restoreTile:has-text("in 3 minutes")', { timeout: 5000 });

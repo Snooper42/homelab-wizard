@@ -1,6 +1,6 @@
 // Backups: the copies and Duplicati's jobs as last read, and the backup
 // screen's commands.
-import { mountBackupTiles, mountCopyRows, mountGaps, mountJobs, mountKopia, mountVault, placeName } from '../backups/Backups';
+import { mountBackupTiles, mountCopyRows, mountJobs, mountKopia, mountVault, placeName } from '../backups/Backups';
 import { jobFinished, jobStarted } from '../job/done';
 import { store } from '../store';
 import { appActions, statusById, statusData } from './status';
@@ -22,14 +22,8 @@ backupsData.watch(() => { drawBackups(); drawJobs(); });
 jobsData.watch(() => { if (backupsData.value && !backupsData.error) drawBackups(); drawJobs(); });
 // What no job copies (Not in any backup), read once the jobs are: none while Duplicati can't be asked.
 export const gapsData = store(async () => (await go().BackupGaps()) || []);
-gapsData.watch(() => drawGaps());
+gapsData.watch(() => redrawBackups());
 export function loadBackups() { return Promise.all([jobsData.load(), backupsData.load(), gapsData.load().catch(() => {})]); }
-
-function drawGaps() {
-  const gaps = gapsData.error ? [] : gapsData.value || [];
-  $('gapsCard').hidden = !gaps.length;
-  mountGaps($('gapsCard'), { gaps, add: () => backupTask('duplicati-setup', 'Adding the backup job…', 'Backup job added', 'Adding the job stopped: the log says why') });
-}
 
 /** Draws Backups again with the apps' state, which says why a stale copy is stale (status.ts calls it as that changes). */
 export function redrawBackups() { if (backupsData.value && !backupsData.error) drawBackups(); }
@@ -40,7 +34,10 @@ function drawBackups() {
   // The restore test needs the Homelab AppData job to have run once.
   const testable = (jobsData.value || []).some((j) => j.name.toLowerCase() === 'homelab appdata' && j.state !== 'never');
   const test = () => backupTask('restore-test', 'Testing a restore (a few minutes)…', 'Restore test passed', 'The restore test failed: the log says why');
-  mountBackupTiles($('backupTiles'), { o, os: osName, test: testable ? test : undefined, apps: statusData.value ? statusById : undefined, start: (a) => appActions.act(a, 'start') });
+  // Not in any backup sits with the restore test and off-site (R7): what no job copies, and Add, which makes the jobs.
+  const gaps = gapsData.error ? [] : gapsData.value || [];
+  const addGap = () => backupTask('duplicati-setup', 'Adding the backup job…', 'Backup job added', 'Adding the job stopped: the log says why');
+  mountBackupTiles($('backupTiles'), { o, os: osName, test: testable ? test : undefined, apps: statusData.value ? statusById : undefined, start: (a) => appActions.act(a, 'start'), gaps, addGap });
   mountCopyRows($('backupRows'), { o, apps: statusData.value ? statusById : undefined });
   backupsNeed = (o.copies || []).filter((c) => c.state === 'stale' || c.state === 'paused').length;
   drawBackupsSide();

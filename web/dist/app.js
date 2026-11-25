@@ -7910,7 +7910,7 @@
     ] });
   }
   var drivesOf = (copies) => [...new Set(copies.map((c4) => driveName(c4.waitingFor || "")))].join(" and ");
-  function BackupTiles({ o: o3, os, test, apps: apps2, start }) {
+  function BackupTiles({ o: o3, os, test, apps: apps2, start, gaps, addGap }) {
     const copies = sortedCopies(o3);
     const fresh = copies.filter((c4) => c4.state === "fresh");
     const stale = copies.filter((c4) => c4.state === "stale");
@@ -7993,7 +7993,8 @@
           "In ",
           lastFolder(o3.destination)
         ] }) : os === "linux" ? "Put a backup drive or a synced folder in Settings › Backups go to" : "Put a Proton Drive folder in Settings › Backups go to" })
-      ] })
+      ] }),
+      !!gaps?.length && addGap && /* @__PURE__ */ u3(Card, { kind: "bkcard", id: "gapsTile", children: /* @__PURE__ */ u3(Gaps, { gaps, add: addGap }) })
     ] });
   }
   function copyGroups(o3) {
@@ -8177,20 +8178,18 @@
       /* @__PURE__ */ u3(Rows, { kind: "gaplist", children: gaps.map((g2) => /* @__PURE__ */ u3(
         Row,
         {
-          dot: g2.job ? "warn" : "",
           title: g2.name,
           sub: /* @__PURE__ */ u3(S, { children: [
             /* @__PURE__ */ u3("span", { title: g2.path, children: shortPath(g2.path) }),
             " · ",
             g2.why
           ] }),
-          end: g2.job ? /* @__PURE__ */ u3("button", { type: "button", class: "small primary", onClick: add, children: "Add" }) : void 0
+          end: g2.job ? /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: add, children: "Add" }) : void 0
         },
         g2.path
       )) })
     ] });
   }
-  var mountGaps = (el3, props) => R(props && /* @__PURE__ */ u3(Gaps, { ...props }), el3);
 
   // web/src/screens/backups.ts
   var backupsData = store(() => go().Backups());
@@ -8204,15 +8203,10 @@
     drawJobs();
   });
   var gapsData = store(async () => await go().BackupGaps() || []);
-  gapsData.watch(() => drawGaps());
+  gapsData.watch(() => redrawBackups());
   function loadBackups() {
     return Promise.all([jobsData.load(), backupsData.load(), gapsData.load().catch(() => {
     })]);
-  }
-  function drawGaps() {
-    const gaps = gapsData.error ? [] : gapsData.value || [];
-    $("gapsCard").hidden = !gaps.length;
-    mountGaps($("gapsCard"), { gaps, add: () => backupTask("duplicati-setup", "Adding the backup job…", "Backup job added", "Adding the job stopped: the log says why") });
   }
   function redrawBackups() {
     if (backupsData.value && !backupsData.error) drawBackups();
@@ -8226,7 +8220,9 @@
     const o3 = backupsData.value;
     const testable2 = (jobsData.value || []).some((j3) => j3.name.toLowerCase() === "homelab appdata" && j3.state !== "never");
     const test = () => backupTask("restore-test", "Testing a restore (a few minutes)…", "Restore test passed", "The restore test failed: the log says why");
-    mountBackupTiles($("backupTiles"), { o: o3, os: osName, test: testable2 ? test : void 0, apps: statusData.value ? statusById : void 0, start: (a3) => appActions.act(a3, "start") });
+    const gaps = gapsData.error ? [] : gapsData.value || [];
+    const addGap = () => backupTask("duplicati-setup", "Adding the backup job…", "Backup job added", "Adding the job stopped: the log says why");
+    mountBackupTiles($("backupTiles"), { o: o3, os: osName, test: testable2 ? test : void 0, apps: statusData.value ? statusById : void 0, start: (a3) => appActions.act(a3, "start"), gaps, addGap });
     mountCopyRows($("backupRows"), { o: o3, apps: statusData.value ? statusById : void 0 });
     backupsNeed = (o3.copies || []).filter((c4) => c4.state === "stale" || c4.state === "paused").length;
     drawBackupsSide();
