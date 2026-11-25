@@ -838,7 +838,7 @@ private struct RecentTransactionsCard: View {
                     TransactionDetailView(transaction: t, finances: finances)
                         .zoomTransition(id: t.id, in: zoom)
                 } label: {
-                    WalletTransactionRow(transaction: t, finances: finances, isNew: finances.isNew(t))
+                    WalletTransactionRow(transaction: t, finances: finances, isNew: finances.isNew(t), showsAccount: true, showsDay: false)
                         .contentShape(Rectangle())
                         .zoomSource(id: t.id, in: zoom)
                 }
@@ -1084,6 +1084,15 @@ private struct FinanceBudgetsPage: View {
         Form {
             if let view = finances.plan {
                 let total = BudgetsTotal(view.budgets, today: view.today)
+                // This month, every account, moves between them left out: on Budgets, as on the computer.
+                if let ledger = finances.ledger, !ledger.transactions.isEmpty {
+                    Section {
+                        ThisMonthCard(month: ThisMonth.make(ledger.transactions, today: view.today ?? Date()), finances: finances)
+                    } header: {
+                        Text("This Month")
+                            .dynamicTypeSize(...DynamicTypeSize.accessibility1)
+                    }
+                }
                 if !view.budgets.isEmpty {
                     Section {
                         VStack(alignment: .leading, spacing: 6) {
@@ -3434,12 +3443,6 @@ struct TransactionsView: View {
     }
     @Environment(\.dynamicTypeSize) private var typeSize
 
-    private struct MonthGroup: Identifiable {
-        let month: Date
-        var items: [FinanceTransaction]
-        var id: Date { month }
-    }
-
     /// The account shown, by id; nil for all of them.
     private var account: String? {
         if let picked { return picked }
@@ -3489,21 +3492,6 @@ struct TransactionsView: View {
         return sort.sorted(kept,
                            payee: { TransactionDetailView.title(of: $0, finances: finances) },
                            accountName: { names[$0] ?? "Account" })
-    }
-
-    /// By date, the rows drawn in their months.
-    private func months(_ items: [FinanceTransaction]) -> [MonthGroup] {
-        let calendar = Calendar.current
-        var out: [MonthGroup] = []
-        for t in items {
-            let month = t.date.flatMap { calendar.dateInterval(of: .month, for: $0)?.start } ?? .distantPast
-            if out.last?.month == month {
-                out[out.count - 1].items.append(t)
-            } else {
-                out.append(MonthGroup(month: month, items: [t]))
-            }
-        }
-        return out
     }
 
     /// Date, payee, category, account or amount, and which way: the
@@ -3644,20 +3632,9 @@ struct TransactionsView: View {
         let newCount = finances.newTransactionCount
         let all = ordered
         let rows = Array(all.prefix(drawn))
-        let groups = sort.byDay ? months(rows) : []
+        let groups = sort.byDay ? TransactionDays.group(rows) : []
         let running = sort.isNewestFirst ? runningBalances(groups) : [:]
         List(selection: listSelection) {
-            // As the computer's first card: every account, moves between them left out.
-            if search.isEmpty, let ledger = finances.ledger, !ledger.transactions.isEmpty {
-                // The computer's today, as the rest of Finances (and its own card) reads it.
-                Section {
-                    ThisMonthCard(month: ThisMonth.make(ledger.transactions, today: finances.plan?.today ?? Date()), finances: finances)
-                } header: {
-                    // At the largest text it took the screen in grey (large-transactions, after #800).
-                    Text("This Month, Every Account")
-                        .dynamicTypeSize(...DynamicTypeSize.accessibility1)
-                }
-            }
             if search.isEmpty, let view = finances.plan, !view.plan.accounts.isEmpty {
                 Section {
                     AccountCard(account: view.plan.accounts.first { $0.id == account }, view: view, finances: finances)
@@ -3694,9 +3671,17 @@ struct TransactionsView: View {
                     .textCase(nil)
             }
             ForEach(groups) { group in
-                Section(FinanceLedger.sectionTitle(group.month, trackFrom: finances.plan?.plan.trackFrom)) {
+                Section {
                     ForEach(group.items) { t in
                         row(t, balanceAfter: running[t.id], withYear: false)
+                    }
+                } header: {
+                    HStack {
+                        Text(verbatim: TransactionDays.title(group.day, trackFrom: finances.plan?.plan.trackFrom, today: finances.plan?.today ?? Date()))
+                        Spacer()
+                        let total = TransactionDays.total(group.items, account: search.isEmpty ? account : nil)
+                        Text(verbatim: (total >= 0.005 ? "+" : total <= -0.005 ? "−" : "") + amountText(abs(total), finances.currency, finances))
+                            .monospacedDigit()
                     }
                 }
             }
@@ -3858,11 +3843,14 @@ struct TransactionsView: View {
                     .dynamicTypeSize(...DynamicTypeSize.accessibility1)
                 }
             }
-            // A search or a filter: how many, and what they come to together (the computer's Together).
-            if !search.isEmpty || filter.isOn, !all.isEmpty {
-                let together = TransactionFilter.together(all, account: search.isEmpty ? account : nil)
-                Text(verbatim: "\(TransactionFilter.count(all.count)) · together \(amountText(together, finances.currency, finances))")
+            // How many, what came in and what went out (the picture's line over the list).
+            if !all.isEmpty {
+                let line = TransactionDays.line(all, account: search.isEmpty ? account : nil)
+                Text(verbatim: RowWords.line([TransactionFilter.count(line.count),
+                                              "In +\(amountText(line.moneyIn, finances.currency, finances, whole: true))",
+                                              "Out −\(amountText(line.moneyOut, finances.currency, finances, whole: true))"]))
                     .font(.subheadline)
+                    .monospacedDigit()
                     .foregroundStyle(Theme.secondaryInk)
             }
         }
@@ -3875,7 +3863,8 @@ struct TransactionsView: View {
             TransactionDetailView(transaction: t, finances: finances)
                 .zoomTransition(id: t.id, in: zoom)
         } label: {
-            WalletTransactionRow(transaction: t, finances: finances, isNew: isNew, balanceAfter: balanceAfter, withYear: withYear)
+            WalletTransactionRow(transaction: t, finances: finances, isNew: isNew, balanceAfter: balanceAfter, withYear: withYear,
+                                 showsAccount: account == nil, showsDay: !sort.byDay)
                 .zoomSource(id: t.id, in: zoom)
         }
         .swipeActions(edge: .leading) {
@@ -3905,7 +3894,7 @@ struct TransactionsView: View {
 
     /// One account picked, the whole of it shown: what it held after each day,
     /// on the day's latest transaction (`AccountBalance.daily`).
-    private func runningBalances(_ groups: [MonthGroup]) -> [String: Double] {
+    private func runningBalances(_ groups: [TransactionDays.Day]) -> [String: Double] {
         guard search.isEmpty, !onlyNew, !filter.isOn, let id = account,
               let a = finances.plan?.plan.accounts.first(where: { $0.id == id }),
               let all = finances.ledger?.transactions else { return [:] }
@@ -4109,6 +4098,10 @@ struct WalletTransactionRow: View {
     /// In one list (sorted by other than the date): the day with its year
     /// when it isn't this year's.
     var withYear = false
+    /// The account under the payee, as the redesign's rows (every account shown).
+    var showsAccount = false
+    /// The day under the payee; off where the list is a day at a time.
+    var showsDay = true
 
     var body: some View {
         HStack(spacing: 12) {
@@ -4134,13 +4127,18 @@ struct WalletTransactionRow: View {
                             .accessibilityLabel("Receipt kept")
                     }
                 }
-                // What it was and the day: one line, as Wallet's, or two when it needs them
+                // What it was, its account and the day: one line, or two when it needs them
                 // (a transfer's other account and the day cut off as "From Chase Checki…").
-                Text(verbatim: RowWords.line([subtitle, withYear ? TransactionSort.dayWords(transaction.date) : TransactionsView.dayWords(transaction.date)]))
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(2)
-                    .fixedSize(horizontal: false, vertical: true)
+                HStack(alignment: .firstTextBaseline, spacing: 5) {
+                    if let dot {
+                        Circle().fill(dot).frame(width: 7, height: 7).accessibilityHidden(true)
+                    }
+                    Text(verbatim: RowWords.line([subtitle, account, day]))
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
             }
             Spacer(minLength: 8)
             VStack(alignment: .trailing, spacing: 1) {
@@ -4158,6 +4156,24 @@ struct WalletTransactionRow: View {
         }
         .accessibilityElement(children: .combine)
         .accessibilityValue(isNew ? "New" : "")
+    }
+
+    private var isTransfer: Bool { !(transaction.to ?? "").isEmpty }
+
+    /// The category's colour, as on the computer's tags; none for a transfer or a split.
+    private var dot: Color? {
+        guard !isTransfer, !transaction.isSplit, !transaction.category.isEmpty else { return nil }
+        return Design.category(PayeeLogos.shared.categoryHue(transaction.category, in: finances.plan?.categories ?? []))?.base
+    }
+
+    private var account: String? {
+        guard showsAccount, !isTransfer else { return nil }
+        return finances.accountName(transaction.account)
+    }
+
+    private var day: String? {
+        guard showsDay else { return nil }
+        return withYear ? TransactionSort.dayWords(transaction.date) : TransactionsView.dayWords(transaction.date)
     }
 
     private var subtitle: String? {
