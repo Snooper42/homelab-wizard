@@ -330,7 +330,7 @@ function Facts({ p }: { p: AppPageProps }) {
   const { a, entry, usage, disk, days, backup: o, on } = p;
   const url = a.address ? 'https://' + a.address : a.url || '';
   const reach = entry?.public ? 'At home, and on the internet through the Cloudflare Tunnel'
-    : a.address ? 'At home and on your own private network, not on the internet' : 'On this machine only';
+    : a.address ? 'Your own private network, not on the internet' : 'On this machine only';
   const seen = { watching: p.watching, stopped: a.state === 'stopped' };
   const [weekValue] = weekWords(days, p.outages, Date.now(), seen);
   const late = o && !never(o.lastRun) && Date.now() - new Date(o.lastRun).getTime() > (o.staleAfterHours || 30) * 36e5;
@@ -482,7 +482,7 @@ function People({ p }: { p: AppPageProps }) {
 }
 
 /** One of its settings as a switch, with what it means beneath. */
-function Switch({ label, sub, on, disabled, set }: { label: string; sub: string; on: boolean; disabled: boolean; set: (on: boolean) => void }) {
+function Switch({ label, sub, on, disabled, set }: { label: string; sub?: string; on: boolean; disabled: boolean; set: (on: boolean) => void }) {
   return (
     <Row title={label} sub={sub}
       end={<>
@@ -512,11 +512,10 @@ function Settings({ p }: { p: AppPageProps }) {
       <CardHead title="Settings">{null}</CardHead>
       <Rows>
         {container && <Switch label="Nightly updates" disabled={busy || 'updates' in switching} on={updates} set={(v) => on.setting('updates', v)}
-          sub={!updates ? 'Held: the nightly update leaves it out' : ownDays ? `On ${daysText} only, with a backup of its data first` : 'Every night, with a backup of its data first'} />}
-        {container && updates && <Switch label={`Only on ${daysText}`} disabled={busy || 'sundays' in switching} on={ownDays} set={(v) => on.setting('sundays', v)}
-          sub={ownDays ? 'The other nights leave it alone; updating it by hand still works any day' : 'For an app you would rather not see change midweek'} />}
+          sub={!updates ? 'Held' : ownDays ? `On ${daysText} only` : 'Every night'} />}
+        {container && updates && <Switch label={`Only on ${daysText}`} disabled={busy || 'sundays' in switching} on={ownDays} set={(v) => on.setting('sundays', v)} />}
         <Switch label="Tell me if it stops" disabled={busy || 'alerts' in switching} on={alerts} set={(v) => on.setting('alerts', v)}
-          sub={alerts ? `On your phone through ntfy, and on ${p.machine}` : 'Still checked and shown on Status, without an alert'} />
+          sub={alerts ? `On your phone and ${p.machine}` : 'Shown on Status, without an alert'} />
         {a.reach && <Switch label="Reach it away from home" disabled={busy || 'away' in switching} on={away} set={(v) => on.setting('away', v)}
           sub={away ? 'Opens anywhere through your Cloudflare tunnel; away from home, Cloudflare can see what passes' : 'Home only: it opens on your home Wi-Fi, and nobody outside can reach it'} />}
         <Row title="In the nightly backup" sub={kept} end={<ActionLink onClick={on.openBackups}>Backups ›</ActionLink>} />

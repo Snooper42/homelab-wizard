@@ -66,7 +66,7 @@ function SavedHover({ value, history }: { value: string; history: savings.Point[
     <Hover cls="savedso" label={value} tip={
       <>
         <strong>Saved so far: {dollars(s.total)}</strong>
-        <span class="muted">since {since}, from what the apps replace each day</span>
+        <span class="muted">since {since}</span>
         <ul class="savedmonths">{s.months.slice(0, 12).map((m) => <li key={m.month}><span>{monthName(m.month)}</span><span>{dollars(m.amount)}</span></li>)}</ul>
       </>
     } />
@@ -140,7 +140,7 @@ export function Tiles({ status: st, history, onPause, onChoose, words, start, lo
         <div class="headlinemain">
           <div class="value">{trouble.length ? (trouble.length === 1 ? '1 app needs you' : `${trouble.length} apps need you`) : 'All good'}</div>
           <div class="label">{running.length} of {counted} running</div>
-          <div class="sub"><span>{st.missing ? <span class="bad">{st.missing === 1 ? "1 of the homelab's own apps is down." : `${st.missing} of the homelab's own apps are down.`}</span> : "The homelab's own apps are all up."}{!trouble.length && ' Nothing unhealthy or stopped.'}</span></div>
+          {!!st.missing && <div class="sub"><span class="bad">{st.missing === 1 ? "1 of the homelab's own apps is down." : `${st.missing} of the homelab's own apps are down.`}</span></div>}
         </div>
         {!!trouble.length && <ul class="headlineapps">
           {trouble.slice(0, 3).map((a) => (

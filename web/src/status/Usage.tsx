@@ -57,11 +57,7 @@ export function Usage({ stats, history, nameOf }: UsageProps) {
           );
         })}
       </Rows>
-      <p class="muted">
-        {heavy.length
-          ? `${heavy.map((s) => nameOf(s.name)).join(' and ')} ${heavy.length === 1 ? 'is' : 'are'} busy. Some apps work hard for a while after you add files (Immich reads new photos); if it lasts, stop what you don’t use. On battery, the battery saver pauses the heaviest apps.`
-          : 'Nothing is working hard. On battery, the battery saver pauses the heaviest apps.'}
-      </p>
+      {!!heavy.length && <p class="muted">{`${heavy.map((s) => nameOf(s.name)).join(' and ')} ${heavy.length === 1 ? 'is' : 'are'} busy.`}</p>}
     </>
   );
 }
