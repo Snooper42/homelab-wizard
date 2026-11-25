@@ -10,6 +10,8 @@ import SwiftUI
 /// amounts is on at the computer.
 struct FinancesView: View {
     @Bindable var finances: FinancesViewModel
+    /// The floating +'s Add Transaction (the owner's look, Nov 25).
+    @State private var adding = false
 
     var body: some View {
         ScrollView {
@@ -68,7 +70,7 @@ struct FinancesView: View {
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 4)
-                .padding(.bottom, 28)
+                .padding(.bottom, 88)  // Room under the last card for the floating +.
             } else if let error = finances.planError {
                 ContentUnavailableView("Couldn't Read Finances", systemImage: "banknote", description: Text(verbatim: error))
                     .padding(.top, 80)
@@ -136,6 +138,29 @@ struct FinancesView: View {
         .sensoryFeedback(.success, trigger: finances.savedCount)
         .animation(.smooth, value: finances.amountsShown)
         .modifier(AwayClashSheet(finances: finances))
+        // A floating + to add a transaction (the owner's look, Nov 25), where this device may.
+        .overlay(alignment: .bottomTrailing) {
+            if finances.plan != nil, finances.canAddTransactions {
+                Button {
+                    finances.clearSaveError()
+                    adding = true
+                } label: {
+                    Image(systemName: "plus")
+                        .font(.title2.weight(.semibold))
+                        .foregroundStyle(.white)
+                        .frame(width: 58, height: 58)
+                        .background(Theme.accentFill, in: Circle())
+                        .shadow(color: Theme.accentFill.opacity(0.4), radius: 12, y: 6)
+                }
+                .buttonStyle(PressableButtonStyle())
+                .accessibilityLabel("Add Transaction")
+                .padding(.trailing, 18)
+                .padding(.bottom, 14)
+            }
+        }
+        .sheet(isPresented: $adding) {
+            AddTransactionView(finances: finances)
+        }
         .navigationTitle(finances.isMember ? "My Finances" : "Finances")
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
