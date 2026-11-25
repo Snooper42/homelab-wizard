@@ -2460,7 +2460,7 @@ const smokes = [
     await page.locator('#appStopped').getByText(/^Nothing yet today; 14 this week, the last /).waitFor({ timeout: 5000 });
   } },
   { name: 'The proxy’s page when CrowdSec can’t be read', screen: 'app:nginx-proxy-manager', mock: { protection: null }, run: async (page) => {
-    await page.locator('#appStopped').getByText('CrowdSec can\'t be read right now: it and the proxy both need to be running.').waitFor({ timeout: 5000 });
+    await page.locator('#appStopped').getByText('CrowdSec can\'t be read: it and the proxy need to be running.').waitFor({ timeout: 5000 });
   } },
   { name: 'Other apps’ pages have no CrowdSec card', screen: 'app:vikunja', run: async (page) => {
     await page.waitForSelector('#appUpdates', { timeout: 5000 });
@@ -5745,7 +5745,7 @@ const smokes = [
     await card.waitFor({ state: 'visible', timeout: 3000 });
     await card.locator(':text("Newest: v8.5.0")').waitFor({ timeout: 3000 });
     const said = (await card.innerText()).replace(/\s+/g, ' ');
-    for (const want of [/Left out of the nightly updates after a rollback/, /Nightly updates on its page puts it back/, /Newest: v8\.5\.0 · Oct 30, 2026 \(it runs v8\.4\.2\)/, /Logs from every host in one view by @amir20 Faster search/]) {
+    for (const want of [/Left out of nightly updates after a rollback/, /Newest: v8\.5\.0 · Oct 30, 2026 \(it runs v8\.4\.2\)/, /Logs from every host in one view by @amir20 Faster search/]) {
       if (!want.test(said)) throw new Error(`no ${want} in: ${said}`);
     }
     if (/What's Changed|Fixed a crash|\*\*|\]\(/.test(said)) throw new Error('more than its first lines, or its marks: ' + said);

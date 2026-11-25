@@ -362,7 +362,7 @@ function Updates({ p }: { p: AppPageProps }) {
       <CardHead title="Updates">
         {a.state === 'running' && <button class="small change" disabled={busy} title="Shows what it brings first: its newer releases' notes" onClick={on.update}>Check for an update</button>}
       </CardHead>
-      {rows.length ? <Rows>{rows}</Rows> : <Empty>No update since the homelab last started it. The nightly update dumps its database first, then updates it.</Empty>}
+      {rows.length ? <Rows>{rows}</Rows> : <Empty>No update since it last started.</Empty>}
     </Card>
   );
 }
@@ -402,7 +402,7 @@ function Done({ on }: { on: AppPageActions }) {
       {problem ? <Empty>{problem}</Empty>
         : rows === null ? <Empty>Reading…</Empty>
           : shown.length ? <Rows>{shown.map((e) => <Row key={e.id} title={e.text} sub={doneSub(e)} />)}</Rows>
-            : <Empty>Nothing done to it yet that's kept here. Its starts, stops, restarts and updates, and the watchdog's, are kept for 90 days.</Empty>}
+            : <Empty>Nothing yet.</Empty>}
       <Sheet id="doneSheet" titleId="doneTitle">
         <h2 id="doneTitle">Everything that was done</h2>
         <input type="search" class="donesearch" value={q} onInput={(e) => setQ((e.target as HTMLInputElement).value)} placeholder="Search: an app, a phone, restarted…" aria-label="Search what was done" autocomplete="off" spellcheck={false} />
@@ -426,7 +426,7 @@ function Stopped({ stopped }: { stopped: crowdsec.Protection | null | 'reading' 
     <Card kind="alerts pagecard" id="appStopped">
       <CardHead title="What CrowdSec stopped today">{head && <span class="muted">{head}</span>}</CardHead>
       {reading && <Empty>Asking CrowdSec…</Empty>}
-      {!s && !reading && <Empty>CrowdSec can't be read right now: it and the proxy both need to be running.</Empty>}
+      {!s && !reading && <Empty>CrowdSec can't be read: it and the proxy need to be running.</Empty>}
       {s && !s.enforced && (
         <Rows><Row dot="bad" title="Bans aren't reaching the proxy" sub={`${s.bouncer}. Status › Protection › Fix reconnects them.`} /></Rows>
       )}

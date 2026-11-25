@@ -1250,7 +1250,7 @@ function CategoriesForm(props: EditProps) {
   return (
     <form class="finform fincats" onSubmit={submit}>
       <div class="formhead"><h2 id="finSheetTitle">Categories</h2></div>
-      <p class="formsub muted">Renaming one renames it on every transaction; deleting one moves its transactions to its group.</p>
+      <p class="formsub muted">Renaming changes every transaction.</p>
       <ul class="catlist">
         {ordered.map((r) => {
           const i = rows.indexOf(r);

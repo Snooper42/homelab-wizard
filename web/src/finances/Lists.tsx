@@ -58,7 +58,7 @@ function CalendarFeed({ v, calendar, busy, set }: { v: finance.View; calendar: (
     <fieldset class="fincalendar">
       <legend>Calendar feed</legend>
       {!key ? <>
-        <p class="fx-sub">Paydays and bills in your phone's calendar, through a link only you have. It works over Tailscale or the homelab's own domain, never over the home Wi-Fi.</p>
+        <p class="fx-sub">Paydays and bills in your phone's calendar, through a private link.</p>
         <label class="fcheckbox"><input type="checkbox" checked={withAmounts} onClick={(e) => setWithAmounts((e.currentTarget as HTMLInputElement).checked)} /> With amounts</label>
         <p><button type="button" class="small" disabled={busy} onClick={() => set(newKey(), withAmounts)}>Make a calendar link</button></p>
       </> : <>
@@ -111,7 +111,7 @@ function Settings({ v, save, calendar }: { v: finance.View; save: SaveSettings; 
         <label class="field">Amounts in <select disabled={busy} value={currency} onChange={(e) => keep({ currency: (e.target as HTMLSelectElement).value, holidays })}>{(currencies.includes(currency) ? currencies : [currency, ...currencies]).map((c) => <option key={c} value={c}>{c}</option>)}</select></label>
       </div>
       {!!others.length && <div class="finrates">
-        <p class="fx-sub">Accounts in other currencies count at these rates, typed in by you: Finances never looks a rate up.</p>
+        <p class="fx-sub">Typed in by you; never looked up.</p>
         {others.map((code) => (
           <label key={code} class="field finrate">1 {code} is <span class="moneyfield"><span aria-hidden="true">{currencySign()}</span><input inputmode="decimal" disabled={busy} value={rates[code] ?? ''} aria-label={`1 ${code} in ${currency}`} onChange={(e) => setRate(code, (e.target as HTMLInputElement).value)} /></span>
             <small class="muted">{(v.plan.accounts || []).filter((a) => a.currency === code).map((a) => a.name).join(', ')}</small></label>

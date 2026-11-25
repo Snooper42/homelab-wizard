@@ -124,7 +124,7 @@ export function Tiles({ status: st, history, onPause, onChoose, words, start, lo
     return (
       <Card kind="emptystate" id="statusEmpty">
         <h2>No apps yet</h2>
-        <p>Pick a few on Choose apps. They show up here as they start, with their addresses.</p>
+        <p>Pick a few on Choose apps.</p>
         <button class="btn primary" onClick={onChoose}>Choose apps</button>
       </Card>
     );

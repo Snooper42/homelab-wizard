@@ -224,7 +224,7 @@ export function JobPanel({ job, stop, done, fix, again }: { job: TidyJob; stop: 
       </CardHead>
       {job.step && <p class="tidystep">Step {job.step.n} of {job.step.total} · {job.step.text}</p>}
       {!job.ended && <Bar title={job.title} p={p} idle="Starting…" />}
-      {job.stopping && !job.ended && <p class="muted tidynow">Stopping at the next safe point, so nothing is left half done. Run it again to carry on from there.</p>}
+      {job.stopping && !job.ended && <p class="muted tidynow">Stopping at the next safe point.</p>}
       {p?.note && !job.ended && !job.stopping && <p class="muted tidynow">Now: {p.note}</p>}
       {job.ended && !job.ended.ok && job.ended.why && <p class="bad">{job.ended.why}</p>}
       {fix && <p class="tidyfix"><button class="primary small" onClick={fix.run}>{fix.label}</button> <span class="muted">Then it carries on by itself.</span></p>}
@@ -251,7 +251,7 @@ function RunningCard({ lock, now, stop, stopping }: { lock: app.TidyUp['lock'] &
       </CardHead>
       {now?.step && <p class="tidystep">Step {now.step.n} of {now.step.total} · {now.step.text}</p>}
       <Bar title={title} p={p} idle="Working…" />
-      {stopping ? <p class="muted tidynow">Stopping at the next safe point, so nothing is left half done. Run it again to carry on from there.</p>
+      {stopping ? <p class="muted tidynow">Stopping at the next safe point.</p>
         : p?.note && <p class="muted tidynow">Now: {p.note}</p>}
       <p class="muted">Started {startedText(lock.start)}, outside this window, and carries on with it closed. The buttons below wait until it's done.</p>
     </Card>
@@ -697,7 +697,7 @@ function DoneWidget({ d, job, act, kind, span = 'all' }: { d: app.TidyUp; job: T
               end={<>{!!a.freed && <><span class="fx-amount fx-in tidygain">{size(a.freed)}</span><span class="sr"> freed</span></>}<span class="muted tidywhen">{ago(a.at)}</span>{u && <Go label="Undo" job={job} onClick={u} />}</>} />;
           })}
         </Rows>
-      ) : <Empty>Nothing yet. What Tidy Up does shows here, with Undo where it can be undone.</Empty>}
+      ) : <Empty>Nothing yet.</Empty>}
     </Widget>
   );
 }
@@ -914,7 +914,7 @@ function PlacesWidget({ d, job, act, first }: { d: app.TidyUp; job: TidyJob | nu
           : <Go primary label={chosen ? `Use ${label(chosen)}` : 'Use it'} job={job} onClick={() => chosen && act.useMediaRoot(chosen.root, label(chosen))} />}
         {!first && <button class="small" onClick={() => act.places(false)}>{chosen?.current ? 'Close' : 'Cancel'}</button>}
       </div>
-      {!chosen?.current && <p class="muted tidyplacenote">Jellyfin, Navidrome, Calibre-Web and your other apps that read the libraries restart once, so they look there. Tidy Up lists them and asks first. Nothing is moved or copied.</p>}
+      {!chosen?.current && <p class="muted tidyplacenote">The apps that read the libraries restart once. Nothing is moved or copied.</p>}
     </Widget>
   );
 }

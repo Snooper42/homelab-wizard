@@ -195,7 +195,7 @@ function HeldNotes({ a, load }: { a: api.AppStatus; load: (id: string) => Promis
   const when = r && new Date(r.when);
   return (
     <>
-      <span class="outline">Left out of the nightly updates after a rollback, so it stays on what works. Nightly updates on its page puts it back.</span>
+      <span class="outline">Left out of nightly updates after a rollback.</span>
       {problem ? <span class="outline muted">Could not read its releases: {problem}</span>
         : !p ? <span class="outline muted">Reading its newest release…</span>
         : !r ? <span class="outline muted">Its project has published no releases{p.repo ? '' : ' that its image names'}.</span>
