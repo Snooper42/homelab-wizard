@@ -218,10 +218,10 @@ const tileCss = `
 .pill.pri{background:var(--acc);border-color:transparent;color:#fff}@media (prefers-color-scheme:dark){.pill.pri{color:#140c33}}
 .tile6.add{background:var(--glass2);border-style:dashed}.tile6.add .alogo{opacity:.75;box-shadow:none}
 .tile6.new{background:transparent;border-style:dashed;color:var(--muted)}.tile6.new .plus{width:64px;height:64px;border-radius:18px;display:grid;place-items:center;border:1.5px dashed var(--glassline);color:var(--acc)}
-.widgets{display:grid;gap:14px;align-content:start}.layout{display:grid;grid-template-columns:232px minmax(0,1fr);gap:20px;align-items:start}.layout .sect:first-of-type{margin-top:2px}
+.widgets{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:8px}.widgets .widget{display:flex;flex-direction:column;min-height:150px}.widgets .widget .wfoot{margin-top:auto;font-size:12.5px;color:var(--muted)}
 .widget{border-radius:20px;background:var(--glass);border:1px solid var(--glassline);backdrop-filter:blur(18px);padding:14px 16px}
 .widget h5{margin:0 0 8px;font-size:13px;font-weight:600;color:var(--muted)}
-.rings{display:flex;gap:14px;justify-content:space-between}.bar2{height:8px;border-radius:99px;background:var(--ringbg);overflow:hidden;margin:10px 0 6px}.bar2 i{display:block;height:100%;width:9%;background:var(--acc);border-radius:99px}.ring{display:grid;justify-items:center;gap:1px}.ring text{font:700 15px Inter,system-ui;fill:var(--text)}.ring b{font-size:12.5px;font-weight:600}.ring small{font-size:11px;color:var(--muted)}
+.rings{display:flex;gap:28px;align-items:center}.ring{grid-template-columns:auto;}.bar2{height:8px;border-radius:99px;background:var(--ringbg);overflow:hidden;margin:10px 0 6px}.bar2 i{display:block;height:100%;width:9%;background:var(--acc);border-radius:99px}.ring{display:grid;justify-items:center;gap:1px}.ring text{font:700 15px Inter,system-ui;fill:var(--text)}.ring b{font-size:12.5px;font-weight:600}.ring small{font-size:11px;color:var(--muted)}
 .wnum{font-size:26px;font-weight:700;letter-spacing:-.02em}.wnum small{font-size:13px;color:var(--muted);font-weight:500}
 .chead{display:flex;align-items:center;gap:16px;margin:4px 0 14px}.chead .t{flex:1}.chead h2{margin:0;font-size:26px;font-weight:700;letter-spacing:-.01em}
 `;
@@ -229,15 +229,15 @@ const tile = (a) => `<div class="tile6"><i class="dot ${a.state === 'running' ? 
 const addTile = (a) => `<div class="tile6 add">${logoOf(a.id, 64)}<b>${a.name}</b><small>${a.note}</small><span class="pill">${icon('download', 12)}Install</span></div>`;
 const newTile = `<div class="tile6 new"><span class="plus">${icon('plus', 26)}</span><b style="color:var(--text)">More for Media</b><small>7 more to add</small></div>`;
 const widgets = `<div class="widgets">
-  <div class="widget"><h5>Media, right now</h5><div class="rings">${ring(7, 'Processor', 'of 8 cores')}${ring(18, 'Memory', '1.6 of 32 GB')}</div></div>
-  <div class="widget"><h5>Watching</h5><div class="wnum">2 <small>on Jellyfin</small></div><div class="muted" style="font-size:12.5px;margin-top:4px">Backed up last night · 3 of 3</div></div>
-  <div class="widget"><h5>Media drive</h5><div class="wnum">3.4 <small>TB free</small></div><div class="bar2"><i></i></div><div class="muted" style="font-size:12px">330 GB of films, shows and music</div></div>
+  <div class="widget"><h5>Right now</h5><div class="rings">${ring(7, 'Processor', 'of 8 cores')}${ring(18, 'Memory', '1.6 of 32 GB')}</div></div>
+  <div class="widget"><h5>Watching</h5><div class="wnum">2 <small>on Jellyfin</small></div><div class="wfoot">Backed up last night · 3 of 3</div></div>
+  <div class="widget"><h5>Media drive</h5><div class="wnum">3.4 <small>TB free</small></div><div class="bar2"><i></i></div><div class="wfoot">330 GB of films, shows and music</div></div>
 </div>`;
 const grid = `<div class="sect">On this server <span>3</span></div><div class="tiles6">${media.map(tile).join('')}</div>
 <div class="sect">Add to Media <span>9</span></div><div class="tiles6">${more.map(addTile).join('')}${newTile}</div>`;
 const catHead = `<div class="chead"><div class="t"><h2>Media</h2></div><div class="search" style="width:260px;background:var(--glass);border-color:var(--glassline)">${icon('search', 15)}Find an app</div></div>`;
 writeFileSync(out + 'web-category.html', `<!doctype html><html><head><meta charset="utf-8"><title>Media</title><style>${deskCss}${extra}${wideCss}${tileCss}
-main.backdrop{min-height:100vh}.tiles6{--ar:1.02}</style></head><body>${sideFor('Media')}<main class="backdrop"><header class="top" style="padding-bottom:0;background:transparent"></header>${catHead}<div class="layout">${widgets}<div>${grid}</div></div></main></body></html>`);
+main.backdrop{min-height:100vh}.tiles6{--ar:1.55}.ring svg{width:62px;height:62px}</style></head><body>${sideFor('Media')}<main class="backdrop"><header class="top" style="padding-bottom:0;background:transparent"></header>${catHead}${widgets}${grid}</main></body></html>`);
 
 // On a phone (two across) and the iPhone Duo unfolded upright (three across): the same, under the tab bar.
 const catPhone = (cols, ar) => `<!doctype html><html><head><meta charset="utf-8"><style>${phoneCss}${extra}${tileCss}
