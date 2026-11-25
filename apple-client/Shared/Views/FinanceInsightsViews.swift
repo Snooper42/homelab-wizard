@@ -49,37 +49,39 @@ struct FinanceCashFlowPage: View {
         let currency = view.plan.currency
         return VStack(alignment: .leading, spacing: 14) {
             Text(m.month, format: .dateTime.month(.wide).year())
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(.white.opacity(0.7))
+                .font(.headline)
+                .foregroundStyle(Theme.ink)
             VStack(alignment: .leading, spacing: 2) {
                 Text(m.net >= 0 ? "Left over" : "More out than in")
                     .font(.subheadline)
-                    .foregroundStyle(.white.opacity(0.75))
+                    .foregroundStyle(Theme.secondaryInk)
                 Text(verbatim: amountText(abs(m.net), currency, finances, whole: true))
-                    .font(.system(size: 38, weight: .heavy))
+                    .font(.system(size: 38, weight: .semibold))
                     .monospacedDigit()
+                    .foregroundStyle(m.net >= 0 ? Theme.success : Theme.danger)
                     .contentTransition(.numericText())
                     .lineLimit(1)
                     .minimumScaleFactor(0.6)
             }
             HStack(spacing: 18) {
-                figure("In", m.income, Design.running, currency)
-                figure("Out", m.spent, Color(light: 0xFF8FA3, dark: 0xFF8FA3), currency)
+                figure("In", m.income, Theme.success, currency)
+                figure("Out", m.spent, Theme.danger, currency)
             }
         }
         .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .heroCard()
+        .card()
         .accessibilityElement(children: .combine)
     }
 
     private func figure(_ title: String, _ value: Double, _ tint: Color, _ currency: String) -> some View {
         HStack(spacing: 6) {
             Circle().fill(tint).frame(width: 8, height: 8)
-            Text(title).foregroundStyle(.white.opacity(0.75))
+            Text(title).foregroundStyle(Theme.secondaryInk)
             Text(verbatim: amountText(value, currency, finances, whole: true))
                 .fontWeight(.semibold)
                 .monospacedDigit()
+                .foregroundStyle(Theme.ink)
         }
         .font(.subheadline)
     }
@@ -253,14 +255,16 @@ private struct MonthReviewCards: View {
     private var hero: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text(review.month, format: .dateTime.month(.wide).year())
-                .font(.title2.weight(.bold))
+                .font(.headline)
+                .foregroundStyle(Theme.ink)
             VStack(alignment: .leading, spacing: 2) {
                 Text("You spent")
                     .font(.subheadline)
-                    .foregroundStyle(.white.opacity(0.75))
+                    .foregroundStyle(Theme.secondaryInk)
                 Text(verbatim: amountText(review.spent, currency, finances, whole: true))
-                    .font(.system(size: 40, weight: .heavy))
+                    .font(.system(size: 40, weight: .semibold))
                     .monospacedDigit()
+                    .foregroundStyle(Theme.ink)
                     .lineLimit(1)
                     .minimumScaleFactor(0.6)
             }
@@ -272,17 +276,18 @@ private struct MonthReviewCards: View {
                     Image(systemName: less ? "arrow.down.right" : "arrow.up.right")
                 }
                 .font(.subheadline.weight(.semibold))
+                .foregroundStyle(less ? Theme.success : Theme.danger)
                 .padding(.horizontal, 10)
                 .padding(.vertical, 5)
-                .background((less ? Design.running : Color(light: 0xFF8FA3, dark: 0xFF8FA3)).opacity(0.22), in: Capsule())
+                .background((less ? Theme.success : Theme.danger).opacity(0.12), in: Capsule())
             }
             Text(verbatim: "\(review.purchases) purchase\(review.purchases == 1 ? "" : "s")")
                 .font(.caption)
-                .foregroundStyle(.white.opacity(0.65))
+                .foregroundStyle(Theme.secondaryInk)
         }
         .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .heroCard()
+        .card()
         .accessibilityElement(children: .combine)
     }
 
