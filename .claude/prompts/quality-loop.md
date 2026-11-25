@@ -59,7 +59,7 @@ For a pull request that needs Q's review, check every one of these, and say whic
   - **What's sent, when, and on whose click,** written in `docs/Security.md`. (Done Nov 25: *What leaves this computer, and on whose click*.)
   - **What's in `homelab report` and the logs:** checked to carry no amount, payee or key.
 - [ ] **Q4. The backups' engine, for R's Backups** (`docs/Redesign.md`, *New work behind the pictures*).
-  - **(a) Each app's result each night,** kept for fourteen nights.
+  - [x] **(a) Each app's result each night,** kept for fourteen nights. (Nov 25: `data/backup-nights.json`, `backup.Night`, in `Backups()` as `nights`.)
   - **(b) Not in any backup:** moved up, as D1.
   - **(c) Get something back:** one file or a whole app from a chosen night, through the backup engine, saved as a copy or put back, with a test against a real Duplicati and Kopia (`test/realdocker`).
 
