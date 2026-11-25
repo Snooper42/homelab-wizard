@@ -7,6 +7,7 @@ package catalog
 import (
 	"errors"
 	"fmt"
+	"maps"
 	"path"
 	"path/filepath"
 	"regexp"
@@ -591,6 +592,38 @@ func (c *Catalog) Validate(declared map[string]bool) []Issue {
 	errf := func(format string, args ...any) { issues = append(issues, Issue{true, fmt.Sprintf(format, args...)}) }
 	warnf := func(format string, args ...any) { issues = append(issues, Issue{false, fmt.Sprintf(format, args...)}) }
 
+	// No app's data goes unbacked without anyone saying so (quality-loop D2): every named volume is a database's
+	// (its service is marked dump), archived by the nightly backup, or marked as rebuilding itself.
+	covered := map[string]bool{}
+	for _, a := range c.Apps {
+		for _, v := range a.Meta.Archive {
+			covered[v] = true
+		}
+		for _, v := range a.Meta.Rebuilds {
+			covered[v] = true
+		}
+		// A dump covers the volume its database lives in: PostgreSQL's data volume, or the one a SQLite file is in.
+		if d := a.Meta.Dump; d != "" {
+			for _, v := range a.Volumes {
+				file := strings.TrimPrefix(d, "sqlite:")
+				if namedVolume(v) && (d == "postgres" || strings.HasPrefix(file, strings.TrimSuffix(v.Target, "/")+"/")) {
+					covered[v.Source] = true
+				}
+			}
+		}
+	}
+	unbacked := map[string]string{}
+	for _, a := range c.Apps {
+		for _, v := range a.Volumes {
+			if namedVolume(v) && !covered[v.Source] && unbacked[v.Source] == "" {
+				unbacked[v.Source] = a.ID
+			}
+		}
+	}
+	for _, vol := range slices.Sorted(maps.Keys(unbacked)) {
+		errf("%s: named volume %q is in no backup: mark its service dump, list it under archive, or under rebuilds if the app makes it again by itself", unbacked[vol], vol)
+	}
+
 	for _, a := range c.Apps {
 		if a.Public() && a.Admin() {
 			errf("%s is an admin app and must not be public: its pages would face the internet (docs/Security.md: put Cloudflare Access in front first)", a.ID)
@@ -698,6 +731,14 @@ func (c *Catalog) Validate(declared map[string]bool) []Issue {
 		}
 		if r := a.Meta.Releases; r != "" && !githubProject.MatchString(r) {
 			errf("%s: releases %q is not a GitHub project (owner/name)", a.ID, r)
+		}
+		for _, vol := range a.Meta.Rebuilds {
+			if !slices.ContainsFunc(a.Volumes, func(v compose.Volume) bool { return v.Source == vol }) {
+				errf("%s: rebuilds lists %q, which is not a named volume of this service", a.ID, vol)
+			}
+			if slices.Contains(a.Meta.Archive, vol) {
+				errf("%s: %q is both archived and rebuilt; it is one or the other", a.ID, vol)
+			}
 		}
 		for _, vol := range a.Meta.Archive {
 			mounted := false
@@ -808,4 +849,12 @@ func conflicting(a *App, otherID string) bool {
 		}
 	}
 	return false
+}
+
+// namedVolume is a Docker named volume (a plain name), not a bind of a folder or a tmpfs.
+func namedVolume(v compose.Volume) bool {
+	if v.Source == "" || v.Type == "bind" || v.Type == "tmpfs" {
+		return false
+	}
+	return !strings.ContainsAny(v.Source[:1], "./~$")
 }

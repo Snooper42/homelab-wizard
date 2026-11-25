@@ -165,6 +165,14 @@ services:
   keyed:
     image: k
     x-homelab: {name: Keyed, category: media, web: false, keys: [NO_SUCH_KEY], recovery: [NO_SUCH_PASS], keyfile: ../outside.xml}
+  keeper:
+    image: v
+    volumes: [forgotten:/data, index:/index, both:/both, ./bound:/bound, "${DATA_ROOT}/x:/x"]
+    x-homelab: {name: Keeper, category: media, web: false, archive: [both], rebuilds: [index, both, ghostvol]}
+  db:
+    image: postgres
+    volumes: [db-data:/var/lib/postgresql/data]
+    x-homelab: {name: DB, category: media, web: false, dump: postgres}
 `))
 	if err != nil {
 		t.Fatal(err)
@@ -210,9 +218,19 @@ services:
 		"keyed: keys NO_SUCH_KEY is not in .env.example",
 		"keyed: recovery NO_SUCH_PASS is not in .env.example",
 		`keyed: keyfile "../outside.xml" must be a file in its own /config`,
+		// Quality-loop D2: a named volume nothing backs up or rebuilds is said; a bind, a dump's, an archived or a
+		// rebuilt one is not.
+		`keeper: named volume "forgotten" is in no backup`,
+		`keeper: rebuilds lists "ghostvol", which is not a named volume of this service`,
+		`keeper: "both" is both archived and rebuilt`,
 	} {
 		if !strings.Contains(all, want) {
 			t.Errorf("missing %q in:\n%s", want, all)
+		}
+	}
+	for _, not := range []string{`"index" is in no backup`, `"db-data" is in no backup`, `"./bound"`, `x" is in no backup`} {
+		if strings.Contains(all, not) {
+			t.Errorf("%s said, but it is backed up, rebuilt or a folder:\n%s", not, all)
 		}
 	}
 }

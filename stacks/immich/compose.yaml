@@ -74,6 +74,7 @@ services:
     healthcheck:
       disable: false
     x-homelab:
+      rebuilds: [immich-model-cache]
       memory: 1200
       name: Immich machine learning
       category: cloud

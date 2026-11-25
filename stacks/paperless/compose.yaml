@@ -95,6 +95,7 @@ services:
     volumes:
       - paperless-redisdata:/data
     x-homelab:
+      rebuilds: [paperless-redisdata]
       name: Paperless broker
       category: system
       description: Task queue for Paperless-ngx

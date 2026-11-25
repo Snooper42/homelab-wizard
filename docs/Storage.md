@@ -90,6 +90,8 @@ Keep the repository at `~/Homelab`. Inside `~/Desktop`, `~/Documents`, `~/Downlo
 
 Databases and caches use named volumes inside the container runtime (OrbStack's VM on a Mac): faster than bind mounts on macOS, and safe from Finder and Spotlight. Their contents reach backups only through `homelab backup`.
 
+`homelab validate` checks that every named volume is a database's (its service marked `dump`), listed under `archive`, or listed under `rebuilds` (the app makes it again by itself), so none is left out of the backup without anyone saying so.
+
 | Volume | Holds | Backed up |
 |---|---|---|
 | `homelab_immich_immich-pgdata` | Immich database | Daily dump |
@@ -100,6 +102,9 @@ Databases and caches use named volumes inside the container runtime (OrbStack's 
 | `homelab_budget_tracker_moneymatter-attachments` | MoneyMatter attachments | Daily archive |
 | `homelab_budget_tracker_moneymatter-redis`, `-rates` | Cache, exchange rates | No (rebuilt) |
 | `homelab_karakeep_karakeep-meilisearch` | Karakeep's search index | No (rebuilds itself) |
+| `homelab_linkwarden_linkwarden-meilisearch` | Linkwarden's search index | No (rebuilds itself) |
+| `homelab_firefly_iii_firefly-iii-upload` | Firefly III's uploaded attachments | Daily archive |
+| `homelab_tandoor_tandoor-static` | Tandoor's built static files | No (rebuilt at start) |
 | `homelab_<stack>_<app>-pgdata` (RomM, Ghostfolio, Docmost, Dawarich, Firefly III, Linkwarden, Nextcloud, Tandoor) | Each optional stack's database | Daily dump |
 | `homelab_romm_romm-redis`, `homelab_dawarich_dawarich-public` | Cache, generated files | No |
 | `homelab_core_npm-logs` | Proxy logs, shared with CrowdSec (kept its `homelab_core` name after the category split) | No |

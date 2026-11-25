@@ -140,6 +140,7 @@ services:
       timeout: 3s
       retries: 5
     x-homelab:
+      rebuilds: [moneymatter-redis]
       name: MoneyMatter Redis
       category: system
       description: Cache and sessions for MoneyMatter
@@ -167,6 +168,7 @@ services:
       retries: 3
       start_period: 300s
     x-homelab:
+      rebuilds: [moneymatter-rates]
       name: MoneyMatter exchange rates
       category: system
       description: Currency exchange rates for MoneyMatter

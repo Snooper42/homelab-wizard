@@ -84,6 +84,7 @@ services:
       - linkwarden-meilisearch:/meili_data
     # Pinned: Meilisearch's data format changes between versions.
     x-homelab:
+      rebuilds: [linkwarden-meilisearch]
       memory: 300
       name: Linkwarden search
       category: system

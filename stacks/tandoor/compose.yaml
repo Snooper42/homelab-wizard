@@ -52,6 +52,7 @@ services:
     depends_on: [tandoor-db]
     networks: [default, homelab]
     x-homelab:
+      rebuilds: [tandoor-static]
       memory: 400
       url: TANDOOR_URL
       name: Tandoor

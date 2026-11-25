@@ -142,8 +142,12 @@ type Meta struct {
 	KeyFile string   `yaml:"keyfile"`
 	Dump    string   `yaml:"dump"`
 	Archive []string `yaml:"archive"` // named volumes `homelab backup` tars up
-	Doc     string   `yaml:"doc"`
-	Warning string   `yaml:"warning"`
+	// Rebuilds names the service's named volumes it makes again by itself
+	// (a search index, built static files): kept out of the backup on purpose,
+	// so the catalog check knows they aren't forgotten.
+	Rebuilds []string `yaml:"rebuilds"`
+	Doc      string   `yaml:"doc"`
+	Warning  string   `yaml:"warning"`
 	// Stores names the .env folder settings an app fills (Frigate's
 	// recordings), each with what it keeps there: the install's plan says
 	// where that folder is and how much room its drive has.

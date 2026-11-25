@@ -90,6 +90,7 @@ services:
       - karakeep-meilisearch:/meili_data
     # Pinned: Meilisearch's data format changes between versions.
     x-homelab:
+      rebuilds: [karakeep-meilisearch]
       memory: 300
       name: Karakeep search
       category: system
