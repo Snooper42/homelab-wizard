@@ -9,6 +9,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 ### New
 
 <!-- The iPhone and iPad app (lane 4): add a line just below this one. -->
+- **Fewer explaining lines on the Homelab app's forms:** on the iPhone and iPad, Add Goal, Add Payment, a card's editor, a holding's buys and sales and the password export no longer have a line under them saying what a switch or a tap does.
 - **Fewer words on Goals and This Month on the Homelab app:** on the iPhone and iPad, Goals no longer says *Tap a goal to change its target*, and This Month compares money out as the Spending card does (*$1,028 more out vs Sep*).
 - **What to sort, under Transactions' review strip on the Homelab app:** on the iPhone and iPad, under *3 new to review* a line says what's waiting, as the redesign's picture: *2 look like bills · 1 needs a category*.
 - **Transactions closer to the redesign's picture on the Homelab app:** on the iPhone and iPad, the list newest first has no *Latest Transactions* heading over it, only the line saying how many, what came in and what went out, the figures in bold; each day's heading is in small capitals (*NOV 22*) with its total.

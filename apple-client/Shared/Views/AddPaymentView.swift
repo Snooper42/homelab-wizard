@@ -95,8 +95,6 @@ struct AddPaymentView: View {
                     }
                 } header: {
                     Text("Each time")
-                } footer: {
-                    if !comesIn { Text("For one that changes, like electric.") }
                 }
                 Section {
                     Picker("How often", selection: $often) {
@@ -127,8 +125,6 @@ struct AddPaymentView: View {
                     }
                 } header: {
                     Text("When")
-                } footer: {
-                    if withPaychecks { Text("It comes on those paydays.") }
                 }
                 Section {
                     if comesIn {

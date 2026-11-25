@@ -64,8 +64,6 @@ struct AddGoalView: View {
                     }
                 } header: {
                     Text("When")
-                } footer: {
-                    Text("Off: whenever. On: what it needs a month shows on Goals.")
                 }
                 Section {
                     ForEach($shares) { $share in
