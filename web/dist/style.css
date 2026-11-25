@@ -3397,7 +3397,7 @@ html.os-mac:not(.companion) nav #settingsNav .pagebtn.active .icon { color:var(-
 .tiles > .tile:not(.headline) .label .statusmore { margin-left:0; }
 .tiles > .tile:not(.headline) .sub.statusupdates { justify-content:flex-start; gap:10px; }
 /* Backups' top, as Status': its stats are facts in a row, no cards; Needs you keeps a card while something needs you. */
-#backupTiles > .bkcard:not(.bkneeds), #backupTiles > .bkcard.bkneeds:not(:has(.bkneedlist)) { background:none; border:0; box-shadow:none; border-radius:0; padding:2px 20px 2px 18px; border-left:1px solid var(--line); }
+#backupTiles > .bkcard:not(.bkneeds):where(:not(#gapsTile)), #backupTiles > .bkcard.bkneeds:not(:has(.bkneedlist)) { background:none; border:0; box-shadow:none; border-radius:0; padding:2px 20px 2px 18px; border-left:1px solid var(--line); }
 #backupTiles > .bkcard:first-child { border-left:0; padding-left:0; }
 #backupTiles .bkcard .value { font-size:19px; font-weight:600; letter-spacing:-.01em; }
 #backupTiles .bkcard .value small { font-size:13px; }
@@ -3411,9 +3411,11 @@ html.os-mac:not(.companion) nav #settingsNav .pagebtn.active .icon { color:var(-
 #backupTiles .card-figurevalue { font-size:19px; font-weight:600; }
 #backupTiles .card-figurevalue .value { font-size:inherit; font-weight:inherit; }
 #backupTiles { display:flex; flex-wrap:wrap; align-items:flex-start; gap:14px 0; }
-#backupTiles > .bkcard:not(.bkneeds), #backupTiles > .bkcard.bkneeds:not(:has(.bkneedlist)) { flex:1 1 220px; }
+#backupTiles > .bkcard:not(.bkneeds):where(:not(#gapsTile)), #backupTiles > .bkcard.bkneeds:not(:has(.bkneedlist)) { flex:1 1 220px; }
 #backupTiles > .bkcard.bklast { flex:2 1 360px; }
 #backupTiles > .bkcard.bkneeds:has(.bkneedlist) { flex:1 1 100%; order:9; }
+/* Not in any backup (R7): a card after Needs you, as it is, while something is left out. */
+#backupTiles > .bkcard#gapsTile { flex:1 1 100%; order:10; }
 #backupTiles > .bkcard:not(.bklast):not(.bkneeds) .card-figure { margin-top:6px; }
 #backupTiles #restoreTile .value, #backupTiles #offsiteTile .value, #backupTiles #copiesTile .card-figurevalue > .value { font-size:19px; font-weight:600; }
 #backupTiles .card-figurelabel { font-weight:400; color:var(--muted); }

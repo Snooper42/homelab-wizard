@@ -90,14 +90,18 @@ export interface BackupTilesProps {
   /** Each app's state by its ID (Status'), to say why a copy is stale and offer Start. */
   apps?: Record<string, api.AppStatus>;
   start?: (a: api.AppStatus) => void;
+  /** What no job copies (quality-loop D1), and Add, which makes the missing jobs: Not in any backup's card. */
+  gaps?: duplicati.Gap[];
+  addGap?: () => void;
 }
 
 /**
  * The top of Backups as the redesign's picture (R7): Last night, with how many copied, when it finished, what it came
- * to and where it went, then Next, its size and what's kept; Needs you beside it; the restore test and off-site under.
+ * to and where it went, then Next, its size and what's kept; Needs you beside it; the restore test, off-site and Not
+ * in any backup under, a third each (the last only while something is left out).
  * The fourteen nights and each app's nights join when the engine keeps them (quality-loop Q4 (a)).
  */
-export function BackupTiles({ o, os, test, apps, start }: BackupTilesProps) {
+export function BackupTiles({ o, os, test, apps, start, gaps, addGap }: BackupTilesProps) {
   const copies = sortedCopies(o);
   const fresh = copies.filter((c) => c.state === 'fresh');
   const stale = copies.filter((c) => c.state === 'stale');
@@ -140,6 +144,7 @@ export function BackupTiles({ o, os, test, apps, start }: BackupTilesProps) {
         <p class="bksub">{o.destinationOK ? <span title={o.destination}>In {lastFolder(o.destination)}</span>
           : os === 'linux' ? 'Put a backup drive or a synced folder in Settings › Backups go to' : 'Put a Proton Drive folder in Settings › Backups go to'}</p>
       </Card>
+      {!!gaps?.length && addGap && <Card kind="bkcard" id="gapsTile"><Gaps gaps={gaps} add={addGap} /></Card>}
     </>
   );
 }
@@ -314,19 +319,17 @@ export const mountCopyRows = (el: Element, props: { o: backup.Overview; apps?: R
 export const mountVault = (el: Element, props: { o: backup.Overview }) => render(<Vault {...props} />, el);
 export const mountJobs = (el: Element, props: JobsProps) => render(<Jobs {...props} />, el);
 
-/** Not in any backup (quality-loop D1): each folder of the household's that no job copies, where it is, and why;
- * Add for one a job can copy (it makes the homelab's missing jobs). */
+/** Not in any backup (quality-loop D1), as the picture's card beside the restore test and off-site: each folder of
+ * the household's that no job copies, where it is, and why; Add for one a job can copy (it makes the missing jobs). */
 export function Gaps({ gaps, add }: { gaps: duplicati.Gap[]; add: () => void }) {
   if (!gaps.length) return null;
   return (
     <>
       <CardHead title="Not in any backup" />
       <Rows kind="gaplist">
-        {gaps.map((g) => <Row key={g.path} dot={g.job ? 'warn' : ''} title={g.name} sub={<><span title={g.path}>{shortPath(g.path)}</span> · {g.why}</>}
-          end={g.job ? <button type="button" class="small primary" onClick={add}>Add</button> : undefined} />)}
+        {gaps.map((g) => <Row key={g.path} title={g.name} sub={<><span title={g.path}>{shortPath(g.path)}</span> · {g.why}</>}
+          end={g.job ? <button type="button" class="small" onClick={add}>Add</button> : undefined} />)}
       </Rows>
     </>
   );
 }
-
-export const mountGaps = (el: Element, props: { gaps: duplicati.Gap[]; add: () => void } | null) => render(props && <Gaps {...props} />, el);
