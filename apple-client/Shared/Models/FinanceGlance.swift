@@ -53,9 +53,11 @@ struct CashFlowGlance: Sendable, Equatable {
 
     /// How much more (plus) or less was kept than last month by the same
     /// day, as a share of it; nil when last month kept nothing by then, so
-    /// there's no share to give.
+    /// there's no share to give, and nil when this month has kept nothing,
+    /// where "−138%" says less than the red figure and *Spent more than
+    /// came in* already do.
     var change: Double? {
-        guard let keptBefore, keptBefore >= 0.5 else { return nil }
+        guard let keptBefore, keptBefore >= 0.5, kept >= 0 else { return nil }
         return (kept - keptBefore) / keptBefore
     }
 

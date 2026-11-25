@@ -73,6 +73,18 @@ import Testing
         #expect(CashFlowGlance.make(rows, today: try day(2026, 11, 1), calendar: calendar) == nil)
     }
 
+    @Test func noChangeOnceThisMonthKeptNothing() throws {
+        let flow = try #require(CashFlowGlance.make(try transactions("""
+        {"id":"a","date":"2026-11-02","account":"chk","amount":2150,"payee":"Paycheck"},
+        {"id":"b","date":"2026-11-03","account":"chk","amount":-2562.40,"payee":"Rent and more"},
+        {"id":"e","date":"2026-10-02","account":"chk","amount":2000,"payee":"Paycheck"},
+        {"id":"f","date":"2026-10-03","account":"chk","amount":-600,"payee":"Rent"}
+        """), today: try day(2026, 11, 6), calendar: calendar))
+        #expect(flow.keptBefore == 1400 && flow.kept < 0)
+        // Not "−129.5%": the red figure and its caption say it.
+        #expect(flow.change == nil)
+    }
+
     @Test func noChangeWhenLastMonthKeptNothing() throws {
         let flow = try #require(CashFlowGlance.make(try transactions("""
         {"id":"a","date":"2026-11-02","account":"chk","amount":500,"payee":"Paycheck"},
