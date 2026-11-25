@@ -72,6 +72,12 @@ The loops add questions here: the question, the options, the one they recommend,
 - **From the redesign (Nov 23):** show your wife the *Finances on a partner's phone* picture (`docs/Redesign.md`, *On the iPhone*). Is that what she'd want?
 - **From the redesign (Nov 23):** Setup off the phone's tab bar, with its unfinished steps shown on Status: OK?
 - **From the redesign (Nov 23):** the phone's accounts as small cards to swipe, or as a list?
+- **From the redesign (Nov 25): Analytics' week.** Nothing on the machine keeps the processor and memory over time: Status samples them only while it's open. So Analytics draws the minutes since Status opened, and says *A week isn't kept yet*. Drawing your picture's week and month needs the agent to keep a sample (new work, lane Q's Go side):
+  - **(a) Recommended:** the agent keeps one sample every 5 minutes for a month, in a small file in the homelab's data folder (about 1 MB; nothing leaves the machine). Then Day, Week and Month, the nightly jobs dotted.
+  - **(b)** Read Beszel's history where Beszel is installed (nothing kept by us, but only with Beszel).
+  - **(c)** Keep it live only.
+
+  Meanwhile Analytics shows what exists, and the redesign carries on with the phone's page.
 
 ## Answered
 

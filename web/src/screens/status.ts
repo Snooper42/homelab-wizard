@@ -15,6 +15,7 @@ import { icons, onIcon, wantIcons } from '../status/appIcons';
 import { shippedLogo } from '../parts/AppMark';
 import { goToPart, mountSideMenu, type SideItem, sideIcons } from '../parts/SideMenu';
 import { mountCategoryPage } from '../status/CategoryPage';
+import { mountAnalytics, recordTotals, type Totals } from '../status/Analytics';
 import { ReleaseNotes } from '../status/ReleaseNotes';
 import { h as vnode } from 'preact';
 import { mountStatusNote } from '../parts/Notes';
@@ -179,13 +180,25 @@ let statusHere = 'overview';
 function drawStatusSide() {
   mountSideMenu($('statusSide'), onPhone() ? null : {
     label: 'Status', here: statusHere, pick: pickStatusPart,
-    items: [{ key: 'overview', label: 'Overview', icon: sideIcons.overview }, ...statusSide],
+    items: [{ key: 'overview', label: 'Overview', icon: sideIcons.overview }, { key: 'analytics', label: 'Analytics', icon: sideIcons.analytics }, ...statusSide],
   });
 }
 /** Shows the overview, or the category picked, with the apps as last read. */
 function drawStatusPart() {
-  const part = statusHere === 'overview' ? undefined : statusParts.find((p) => p.id === statusHere);
   const section = $('status');
+  if (statusHere === 'analytics') {
+    section.dataset.part = 'analytics';
+    mountCategoryPage($('statusPart'), null);
+    const disk = onPhone() ? phoneMachine : machineNow()?.i.disks?.[0] || null;
+    mountAnalytics($('statusPart'), {
+      stats: lastStats, history: usageHistory, totals, cores: onPhone() ? undefined : navigator.hardwareConcurrency || undefined,
+      disk: disk && disk.total ? { free: disk.free, total: disk.total, low: disk.low } : null, storage: lastStorage,
+      apps: lastStatus?.apps || [], catalog, icons, page: (a) => pageOpener.open(a.id),
+    });
+    return;
+  }
+  mountAnalytics($('statusPart'), null);
+  const part = statusHere === 'overview' ? undefined : statusParts.find((p) => p.id === statusHere);
   if (part) section.dataset.part = part.id; else delete section.dataset.part;
   if (!part || !appList) { mountCategoryPage($('statusPart'), null); return; }
   wantIcons(part.apps.filter((a) => a.state !== 'missing' && !shippedLogo(a.id)).map((a) => a.id));
@@ -483,7 +496,10 @@ function showDownloads(c: downloads.Card | null) {
 
 // Photos per person: what each person keeps in Immich, as the nightly
 // backup last read it, largest first, with a bar against the largest.
+let lastStorage: storage.Record | null = null;
 function showStorage(rec: storage.Record | null) {
+  lastStorage = rec;
+  if (statusHere === 'analytics') drawStatusPart();
   const card = $('storageCard');
   card.hidden = !storageShown(rec);
   if (card.hidden) return;
@@ -502,12 +518,18 @@ async function loadUsage() {
 }
 function showUsage(stats: docker.Stat[]) {
   recordUsage(usageHistory, stats);
+  recordTotals(totals, stats, catalog);
+  lastStats = stats;
+  if (statusHere === 'analytics') drawStatusPart();
   mountUsage($('usageCard'), { stats, history: usageHistory, nameOf: (id) => catalog?.apps.find((a) => a.id === id)?.name || id });
   // Each group's memory on its heading and in its menu.
   memory = memoryByApp(stats, catalog);
   if (appList) mountAppList($('statusRows'), (appList = { ...appList, memory }));
 }
 let memory: Record<string, number> | undefined;
+/** The latest stats, and the whole machine's since Status opened (Analytics). */
+let lastStats: docker.Stat[] = [];
+const totals: Totals = { at: [], cpu: [], mem: [] };
 // While Status is open (and the window shown), usage is sampled every 10
 // seconds for the card's lines.
 const usageHistory: UsageHistory = new Map();
