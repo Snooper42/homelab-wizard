@@ -129,10 +129,29 @@ struct SettingRow: View {
     let form: HomelabSettingsForm
     let label: String
     @Binding var about: String?
+    /// Automatic Care's look (phone-settings.png): its symbol and a line under it, in place of the ⓘ.
+    var look: CareLook.Row?
 
     var body: some View {
         let editable = computer.canChange && form.phoneMayChange(setting)
-        if setting.isToggle {
+        if let look {
+            let tile = IconTileLabel(title: look.title, systemImage: look.symbol, tint: TileColour.named(look.tint), subtitle: look.subtitle)
+            if setting.isToggle {
+                Toggle(isOn: Binding(
+                    get: { setting.value.lowercased() == "true" },
+                    set: { on in Task { _ = await computer.saveForm([setting.key: on ? "true" : "false"]) } }
+                )) {
+                    tile
+                }
+                .disabled(!editable || computer.isSavingForm)
+            } else {
+                NavigationLink {
+                    SettingDetailView(computer: computer, key: setting.key, label: label)
+                } label: {
+                    tile
+                }
+            }
+        } else if setting.isToggle {
             // A switch, flipped in place, as iPhone Settings has them; its ⓘ opens what it does.
             HStack(spacing: 10) {
                 Text(verbatim: label)
