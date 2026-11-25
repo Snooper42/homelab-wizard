@@ -151,23 +151,24 @@ How far the phone's page (`homelab serve`) can go toward the Homelab app, drawn 
 - **Alerts:** Web Push to the page added to the Home Screen (iOS 16.4 and later), from the alerts the computer already keeps, quiet hours kept. No Apple Developer account needed, unlike the app's push.
 - **On a tablet or a wide window:** the computer's sidebar, the screens as a strip of icons then Status' own menu; today the phone's page keeps the old list above 700 px (every strip rule is `html:not(.companion)`, and the screens mount no menu on the phone).
 
-#### A category's page: a tile for every app
+#### A category's page: the apps as a home screen
 
-The owner, Nov 25: click a category in Status' menu (Network, Media, …) and get its apps as tiles, **three across**, as CasaOS lays out its apps (ideas only, never its look or words): every app the category has, whether it's on this machine or not, each with the one obvious button.
+The owner, Nov 25: click a category in Status' menu (Network, Media, …) and get its apps as tiles, three across, with CasaOS's dashboard as the reference (its ideas only, never its look, words or pictures; its own screenshot is in its repository's README). After two passes the owner liked this one: **the icon is the hero**, the tiles are light and see-through over a soft backdrop, and the live numbers live in widgets rather than on every tile.
 
-<picture><source media="(prefers-color-scheme: dark)" srcset="images/redesign/web-category-dark.png"><img alt="Network's page on a tablet: Status' menu with Network picked, then six tiles three across: Tailscale running with Its page, Speedtest Tracker stopped with Start, AdGuard Home with Install, and three not installed that wait on something" src="images/redesign/web-category.png"></picture>
+<picture><source media="(prefers-color-scheme: dark)" srcset="images/redesign/web-category-dark.png"><img alt="Media's page on a tablet: widgets down the left (processor and memory rings, two watching on Jellyfin, the media drive's free space); On this server, three big-icon tiles (Jellyfin and Jellystat running with Open, jfa-go stopped with Start); Add to Media, two lighter tiles with Install and a More for Media tile" src="images/redesign/web-category.png"></picture>
 
 <p>
-<picture><source media="(prefers-color-scheme: dark)" srcset="images/redesign/web-category-duo-dark.png"><img alt="Network's page on the iPhone Duo unfolded upright: three tiles across, the tab bar at the foot" src="images/redesign/web-category-duo.png" width="300"></picture>
-<picture><source media="(prefers-color-scheme: dark)" srcset="images/redesign/web-category-phone-dark.png"><img alt="Network's page on a phone: two tiles across" src="images/redesign/web-category-phone.png" width="200"></picture>
+<picture><source media="(prefers-color-scheme: dark)" srcset="images/redesign/web-category-duo-dark.png"><img alt="Media's page on the iPhone Duo unfolded upright: three tiles across, the tab bar at the foot" src="images/redesign/web-category-duo.png" width="300"></picture>
+<picture><source media="(prefers-color-scheme: dark)" srcset="images/redesign/web-category-phone-dark.png"><img alt="Media's page on a phone: two tiles across" src="images/redesign/web-category-phone.png" width="200"></picture>
 </p>
 
-- **A tile:** the app's logo, its state (*Running*, *Stopped*, or *Not installed*), its name, one line on what it does (the catalog's), its address once installed (or about how much memory it takes before), and one button: **Its page** when running, **Start** when stopped, **Install** when it can be, or what it waits for (*Needs a domain*, *AdGuard Home first*) in a dashed button that opens the step. ⋯ holds the rest (Open, Restart, Stop, Logs, Remove).
-- **The order:** the apps on this machine first (stopped before running), then the ones that can be installed, then the ones waiting on something. Installed tiles are solid; the rest dashed.
-- **Three across** on a tablet, a wide window and the iPhone Duo unfolded; **two** on a phone; one at 320 px.
-- **The header:** the category, *2 of 6 on this server · 1 running*, Find an app, **Your own app**.
-- **Your own apps** is a category like the rest, its tiles from `stacks/custom`.
-- **Install** on the phone's page needs the owner's yes for Choose apps on the phone (`.claude/prompts/web-loop.md`, W13): until then the phone's page shows the tiles, with Install only on the computer.
+- **A tile:** the app's logo, big (64 px; 56 on a phone) and centred; its name; one short live line (*2 watching now*, *Up 6 days*, *Stopped 20 min ago*); one small button, **Open** (or **Start**, in the accent, when stopped); a status dot top left (green running, amber stopped); ⋯ top right for the rest (Its page, Restart, Stop, Logs, Remove). Nothing else on the tile.
+- **Widgets** (a slim column on the left on a tablet or wide window; under the title on a phone): the category's processor and memory as rings, what it's doing now (*2 watching on Jellyfin*), its drive. Each category picks its widgets from data the computer already has (`StatusBoard`'s `usage` and `storage`, an app's own API where the homelab already reads it); a widget with no data isn't drawn.
+- **On this server**, then **Add to <category>**: the apps not installed, faded with a dashed edge, each with **Install**; the last tile is **More for <category>** (*7 more to add*), opening Choose apps on that category, as CasaOS ends its grid with its app store.
+- **The backdrop:** the page's own colour with two soft glows (violet top left, teal bottom right; lighter by day); tiles and widgets are translucent with a blur, a hairline edge, radius 20.
+- **Every app has a logo** (owner, Nov 25: *"add logos everywhere"*): the catalog's, or for your own apps the app's own icon (below, and `web-loop.md` W17); letters only while none is found.
+- **Three across** on a tablet, a wide window and the iPhone Duo unfolded; **two** on a phone.
+- **Install** on the phone's page waits for the owner's yes for Choose apps on the phone (W13).
 
 ## Logos for every payee
 
