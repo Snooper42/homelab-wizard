@@ -4,6 +4,7 @@ import { render } from 'preact';
 import { useState } from 'preact/hooks';
 import { ActionLink } from '../ActionLink';
 import { CardHead } from '../parts/Card';
+import { AppMark } from '../parts/AppMark';
 
 /** The apps an install started, each opening in the browser, and Close, which takes the finished install away. */
 export interface AlsoStarted { name: string; what: string; by: string }
@@ -13,7 +14,7 @@ export function Started({ started, also = [], open, close }: { started: api.Star
     <>
       <CardHead title="Ready to open" />
       {started.length
-        ? <ul>{started.map((s) => <li key={s.id}>{s.url ? <ActionLink onClick={() => open(s.url!)}>{s.name}</ActionLink> : s.name}{s.next && <div class="muted startednext">{s.next}</div>}</li>)}</ul>
+        ? <ul>{started.map((s) => <li key={s.id}><AppMark id={s.id} name={s.name} icon="" small />{s.url ? <ActionLink onClick={() => open(s.url!)}>{s.name}</ActionLink> : s.name}{s.next && <div class="muted startednext">{s.next}</div>}</li>)}</ul>
         : <p class="muted">Nothing new to start.</p>}
       {/* What started with them, so nothing installed goes unsaid. */}
       {!!also.length && <p class="muted" id="alsoStarted">{also.map((x) => `With ${x.by}: ${x.name}, ${x.what.charAt(0).toLowerCase() + x.what.slice(1)}.`).join(' ')}</p>}

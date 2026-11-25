@@ -4,8 +4,19 @@
 import { useState } from 'preact/hooks';
 import { appLogos } from '../status/appLogos';
 
+/** The app whose logo an id shows: its own, else, for a helper (immich-database, paperless-db, moneymatter-db), its app's. */
+export function logoId(id?: string): string {
+  if (!id) return '';
+  if (appLogos.has(id)) return id;
+  for (let base = id; base.includes('-');) {
+    base = base.slice(0, base.lastIndexOf('-'));
+    for (const c of [base, base + '-server', base + '-frontend']) if (appLogos.has(c)) return c;
+  }
+  return '';
+}
+
 /** The logo shipped for an app (web/dist/applogos, the iPhone app's set), or '' when there's none. */
-export const shippedLogo = (id?: string) => (id && appLogos.has(id) ? `applogos/${id}.png` : '');
+export const shippedLogo = (id?: string) => { const l = logoId(id); return l ? `applogos/${l}.png` : ''; };
 
 /** The app's own icon in a tile, or its first letter when it has none
  * (or the picture cannot be drawn). A favicon of 24 pixels or less is

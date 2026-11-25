@@ -939,6 +939,7 @@
     "qbittorrent",
     "radarr",
     "romm",
+    "sabnzbd",
     "seerr",
     "sonarr",
     "speedtest-tracker",
@@ -955,7 +956,19 @@
   ]);
 
   // web/src/parts/AppMark.tsx
-  var shippedLogo = (id2) => id2 && appLogos.has(id2) ? `applogos/${id2}.png` : "";
+  function logoId(id2) {
+    if (!id2) return "";
+    if (appLogos.has(id2)) return id2;
+    for (let base = id2; base.includes("-"); ) {
+      base = base.slice(0, base.lastIndexOf("-"));
+      for (const c4 of [base, base + "-server", base + "-frontend"]) if (appLogos.has(c4)) return c4;
+    }
+    return "";
+  }
+  var shippedLogo = (id2) => {
+    const l3 = logoId(id2);
+    return l3 ? `applogos/${l3}.png` : "";
+  };
   function AppMark({ name, icon: own2, small, id: id2, quiet: quiet2 }) {
     const shipped = shippedLogo(id2), icon = shipped || own2;
     const [broken, setBroken] = d2("");
@@ -4777,6 +4790,7 @@
         apps2.map((a3) => /* @__PURE__ */ u3("label", { class: "check", children: [
           /* @__PURE__ */ u3("input", { type: "checkbox", value: a3.id, checked: only && picked.has(a3.id), onChange: (e3) => toggle(a3.id, e3.currentTarget.checked) }),
           " ",
+          /* @__PURE__ */ u3(AppMark, { id: a3.id, name: a3.name, icon: "", small: true }),
           a3.name
         ] }, a3.id))
       ] }),
@@ -5716,6 +5730,7 @@
     const by = !p3.selected.has(a3.id) && p3.needed?.[a3.id] ? p3.catalog.apps.find((x3) => x3.id === p3.needed[a3.id])?.name || p3.needed[a3.id] : "";
     return /* @__PURE__ */ u3("label", { class: "app", children: [
       /* @__PURE__ */ u3("input", { type: "checkbox", checked: p3.selected.has(a3.id) || !!by, disabled: native || !!by, title: by ? `Installed with ${by}, which needs it` : void 0, onChange: (e3) => p3.tick(a3.id, e3.currentTarget.checked) }),
+      /* @__PURE__ */ u3(AppMark, { id: a3.id, name: a3.name, icon: "", small: true }),
       /* @__PURE__ */ u3("div", { class: "grow", children: [
         /* @__PURE__ */ u3("strong", { children: a3.name }),
         native && /* @__PURE__ */ u3("span", { class: "badge", children: "runs natively" }),
@@ -5807,7 +5822,10 @@
     ].filter((d3) => d3.items.length);
     return /* @__PURE__ */ u3(S, { children: [
       lead2 && /* @__PURE__ */ u3("p", { class: "planLead", children: lead2 }),
-      !!picked.length && /* @__PURE__ */ u3("ul", { class: "ok planApps", children: picked.map((id2) => /* @__PURE__ */ u3("li", { children: appName2(id2) }, id2)) }),
+      !!picked.length && /* @__PURE__ */ u3("ul", { class: "ok planApps", children: picked.map((id2) => /* @__PURE__ */ u3("li", { children: [
+        /* @__PURE__ */ u3(AppMark, { id: id2, name: appName2(id2), icon: "", small: true }),
+        appName2(id2)
+      ] }, id2)) }),
       /* @__PURE__ */ u3(List, { title: "Waiting for a setting", cls: "warn", items: needs.map((s3) => /* @__PURE__ */ u3("span", { children: [
         /* @__PURE__ */ u3("strong", { children: appName2(s3.app) }),
         ": ",
@@ -5948,6 +5966,7 @@
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3(CardHead, { title: "Ready to open" }),
       started.length ? /* @__PURE__ */ u3("ul", { children: started.map((s3) => /* @__PURE__ */ u3("li", { children: [
+        /* @__PURE__ */ u3(AppMark, { id: s3.id, name: s3.name, icon: "", small: true }),
         s3.url ? /* @__PURE__ */ u3(ActionLink, { onClick: () => open5(s3.url), children: s3.name }) : s3.name,
         s3.next && /* @__PURE__ */ u3("div", { class: "muted startednext", children: s3.next })
       ] }, s3.id)) }) : /* @__PURE__ */ u3("p", { class: "muted", children: "Nothing new to start." }),
@@ -7960,6 +7979,7 @@
           return /* @__PURE__ */ u3(
             Row,
             {
+              lead: /* @__PURE__ */ u3(AppMark, { id: c4.app, name: c4.name, icon: "", small: true }),
               dot: c4.state === "stale" ? "bad" : "warn",
               title: c4.name,
               sub: c4.state === "paused" ? `Waiting for ${driveName(c4.waitingFor || "")}` : staleWhy(c4, apps2) || `Last copied ${ago(c4.newest)}`,
@@ -8030,6 +8050,7 @@
         ...open5 ? g2.copies.map((c4) => /* @__PURE__ */ u3("tr", { class: "copy " + c4.state + (c4.shrank ? " shrank" : ""), children: [
           /* @__PURE__ */ u3("td", { class: "name", children: [
             /* @__PURE__ */ u3("span", { class: "dot " + (c4.shrank ? "bad" : g2.tone) }),
+            /* @__PURE__ */ u3(AppMark, { id: c4.app, name: c4.name, icon: "", small: true }),
             c4.name,
             c4.shrank && /* @__PURE__ */ u3("span", { class: "note bad", children: [
               "Less than half the night before's ",

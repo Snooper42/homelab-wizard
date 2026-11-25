@@ -3261,6 +3261,13 @@ html:is(.os-mac, .os-windows, .os-linux) .tidynavdrives .tidydrivebar { backgrou
 /* Each app's row on Status with its logo before its name (the owner, Nov 24); a letter, when it has none, from the stylesheet. */
 .appmark.quiet::before { content:attr(data-letter); }
 #statusRows tr:not(.grouphead) > td:first-child > .appmark.mini { vertical-align:middle; margin-right:10px; }
+/* An app's logo wherever it's named (the owner, Nov 24): Choose apps' rows, Ready to open, Backups' copies, People's apps. */
+label.app > .appmark.mini { align-self:flex-start; margin-top:1px; }
+li > .appmark.mini, td.name > .appmark.mini, label.check > .appmark.mini { vertical-align:middle; margin:0 8px 0 0; box-shadow:none; }
+td.name > .dot + .appmark.mini { margin-left:2px; }
+.alertlist li > .appmark.mini { box-shadow:none; margin:0; align-self:center; }
+html:is(.os-mac, .os-windows, .os-linux) .planApps li:has(> .appmark)::before { content:none; }
+.planApps li { display:flex; align-items:center; gap:8px; } .planApps li > .appmark.mini { margin:0; box-shadow:none; }
 #statusHeadline .headlinemain { flex:1 1 300px; }
 
 /* Transactions' line over the table (redesign-loop R4, the picture's "18 transactions · In · Out"). */
