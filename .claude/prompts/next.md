@@ -30,6 +30,10 @@ So, in this order (each its own pull request, one open at a time):
    menus on a wide window (today `drawStatusSide` mounts `null` on the phone: `onPhone() ? null`), the same pages
    narrow, same look and behaviour. Coordinate with lane W (`web-loop.md` W3, W5a, W18): the owner asked *you*; take
    the shared screens, and tell W in `web-loop.md` › *From the other lanes* what shipped.
+**Light and dark, following the system setting, on everything** (the owner, Nov 25): every screen and every new
+part (category pages, Analytics, the web page, the iPhone app) in both, switching with the system's appearance. The
+pictures have a light pair: `computer-category.png`, `web-analytics.png`, `web-analytics-full.png`, `web-category.png`
+(same branch). Colours as tokens that both modes define; check every pull request's pictures and smoke in both.
 4. **Then carry this design language through every screen** (the dark look, the glow backdrop, translucent cards of
    one anatomy, logos everywhere, few words): Backups, Settings, Tidy Up, Finances, Choose apps, Setup, the app page.
 
