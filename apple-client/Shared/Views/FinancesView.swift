@@ -4240,13 +4240,17 @@ struct TransactionsView: View {
                         row(t, balanceAfter: running[t.id], withYear: false)
                     }
                 } header: {
+                    // The picture's day heading: NOV 22, in small capitals, its total at the end.
                     HStack {
                         Text(verbatim: TransactionDays.title(group.day, trackFrom: finances.plan?.plan.trackFrom, today: finances.plan?.today ?? Date()))
+                            .textCase(.uppercase)
                         Spacer()
                         let total = TransactionDays.total(group.items, account: search.isEmpty ? account : nil)
                         Text(verbatim: (total >= 0.005 ? "+" : total <= -0.005 ? "−" : "") + amountText(abs(total), finances.currency, finances))
                             .monospacedDigit()
                     }
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(Theme.secondaryInk)
                 }
             }
             // By anything but the date: one list, each row with its day.
@@ -4378,6 +4382,8 @@ struct TransactionsView: View {
         // At the largest text sizes the button goes under the heading: beside it,
         // "Latest Transactions" broke mid-word ("Trans- actions", large-transactions).
         VStack(alignment: .leading, spacing: 4) {
+            // Newest first with nothing filtered, the picture's list has no heading: the line under it says it.
+            if !sort.isNewestFirst || filter.isOn || onlyNew {
             (typeSize.isAccessibilitySize ? AnyLayout(VStackLayout(alignment: .leading, spacing: 6))
                                           : AnyLayout(HStackLayout(alignment: .firstTextBaseline))) {
                 Text(verbatim: sort.heading)
@@ -4407,12 +4413,16 @@ struct TransactionsView: View {
                     .dynamicTypeSize(...DynamicTypeSize.accessibility1)
                 }
             }
-            // How many, what came in and what went out (the picture's line over the list).
+            }
+            // How many, what came in and what went out (the picture's line over the list), the figures in ink.
             if !all.isEmpty {
                 let line = TransactionDays.line(all, account: search.isEmpty ? account : nil)
-                Text(verbatim: RowWords.line([TransactionFilter.count(line.count),
-                                              "In +\(amountText(line.moneyIn, finances.currency, finances, whole: true))",
-                                              "Out −\(amountText(line.moneyOut, finances.currency, finances, whole: true))"]))
+                let count = Text(verbatim: "\(line.count)").fontWeight(.semibold).foregroundStyle(Theme.ink)
+                let moneyIn = Text(verbatim: "+" + amountText(line.moneyIn, finances.currency, finances, whole: true))
+                    .fontWeight(.semibold).foregroundStyle(Theme.ink)
+                let moneyOut = Text(verbatim: "−" + amountText(line.moneyOut, finances.currency, finances, whole: true))
+                    .fontWeight(.semibold).foregroundStyle(Theme.ink)
+                Text("\(count) \(line.count == 1 ? "transaction" : "transactions")   In \(moneyIn)   Out \(moneyOut)")
                     .font(.subheadline)
                     .monospacedDigit()
                     .foregroundStyle(Theme.secondaryInk)
