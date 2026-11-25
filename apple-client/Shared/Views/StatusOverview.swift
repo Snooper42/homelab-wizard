@@ -513,14 +513,14 @@ struct StatusPair: View {
                 if let overview {
                     let words = Self.backups(overview)
                     Button { IntentInbox.shared.screen = .backups } label: {
-                        PairCard(title: "Backups", figure: words.figure, unit: words.unit, lines: words.lines, alert: words.alert)
+                        PairCard(title: "Backups", icon: "externaldrive", figure: words.figure, unit: words.unit, lines: words.lines, alert: words.alert)
                     }
                     .buttonStyle(PressableButtonStyle())
                     .accessibilityHint("Opens Backups")
                 }
                 if machine != nil || updates != nil {
                     let words = Self.machine(machine, updates: updates)
-                    PairCard(title: "This Machine", figure: words.figure, unit: words.unit, lines: words.lines, alert: words.alert)
+                    PairCard(title: "This Machine", icon: "desktopcomputer", figure: words.figure, unit: words.unit, lines: words.lines, alert: words.alert)
                 }
             }
         }
@@ -570,6 +570,7 @@ struct StatusPair: View {
 /// and a line or two under it, as the computer's Backups and This Mac cards.
 private struct PairCard: View {
     let title: String
+    var icon = "square.grid.2x2"
     let figure: String
     let unit: String
     let lines: [String]
@@ -577,9 +578,7 @@ private struct PairCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(verbatim: title)
-                .font(.headline)
-                .foregroundStyle(Theme.ink)
+            SymbolTitle(text: title, icon: icon)
             HStack(alignment: .firstTextBaseline, spacing: 4) {
                 Text(verbatim: figure)
                     .font(.title.weight(.bold))

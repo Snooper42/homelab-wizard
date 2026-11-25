@@ -528,9 +528,7 @@ private struct BackupsHero: View {
     }
 
     private var title: some View {
-        Text("Last night")
-            .font(.headline)
-            .foregroundStyle(Theme.ink)
+        SymbolTitle(text: "Last night", icon: "moon.stars")
     }
 
     @ViewBuilder
@@ -667,9 +665,7 @@ private struct BackupCards: View {
         layout {
             ForEach(cards) { card in
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(verbatim: card.title)
-                        .font(.headline)
-                        .foregroundStyle(Theme.ink)
+                    SymbolTitle(text: card.title, icon: card.id == "offsite" ? "icloud" : "arrow.counterclockwise")
                     Text(verbatim: card.value)
                         .font(.title2.weight(.bold))
                         .foregroundStyle(card.tone == .good ? Theme.ink : card.tone == .warn ? Theme.warning : Theme.danger)

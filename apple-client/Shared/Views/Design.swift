@@ -671,3 +671,21 @@ struct SkeletonCards: View {
         .background(Theme.surface, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
     }
 }
+
+/// A card's title with a small symbol before it (the owner's look, Nov 25), as Finances' cards have.
+struct SymbolTitle: View {
+    let text: String
+    let icon: String
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: icon)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(Theme.secondaryInk)
+                .accessibilityHidden(true)
+            Text(verbatim: text)
+                .font(.headline)
+                .foregroundStyle(Theme.ink)
+        }
+    }
+}
