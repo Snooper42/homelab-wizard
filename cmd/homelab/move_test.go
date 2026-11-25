@@ -137,3 +137,27 @@ func TestNewestInBreaksATieByName(t *testing.T) {
 		t.Errorf("newest: %s", got)
 	}
 }
+
+// The apps' data kept outside the homelab folder (APPDATA_ROOT, quality-loop D3) would be left behind by a move: Move
+// out says so and packs nothing.
+func TestMoveOutRefusesDataKeptElsewhere(t *testing.T) {
+	fakeDocker(t, ghostfolioDB())
+	fakeSystemctl(t)
+	old, _ := repoCopy(t)
+	elsewhere := t.TempDir()
+	env, err := os.ReadFile(filepath.Join(old, ".env"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(old, ".env"), append(env, []byte("\nAPPDATA_ROOT="+elsewhere+"\n")...), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	bundle := filepath.Join(t.TempDir(), "move.tar")
+	out, code := homelabCmd(t, old, "", "move", "out", "--to", bundle, "--apply")
+	if code == 0 || !strings.Contains(out, "APPDATA_ROOT") || !strings.Contains(out, "leave it behind") {
+		t.Errorf("Move out with the apps' data elsewhere (exit %d):\n%s", code, out)
+	}
+	if _, err := os.Stat(bundle); err == nil {
+		t.Error("a move file was made anyway")
+	}
+}

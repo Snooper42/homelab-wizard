@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/Snooper42/homelab-wizard/internal/appdata"
 	"io"
 	"io/fs"
 	"os"
@@ -73,7 +74,7 @@ func (h *homelab) rebuild(ctx context.Context, args []string) error {
 		var st rebuildState
 		restored = json.Unmarshal(data, &st) == nil && st.From == folder
 	}
-	if !restored && !*force && hasFiles(filepath.Join(h.root, "data", "appdata")) {
+	if !restored && !*force && hasFiles(appdata.Dir(h.root)) {
 		return errors.New("this homelab folder already has apps' data (data/appdata); rebuild into a new one, or add --force to replace it")
 	}
 
@@ -177,6 +178,10 @@ type rebuildJob struct {
 }
 
 func (j rebuildJob) dir(h *homelab) string {
+	// The apps' data goes where the restored .env says (APPDATA_ROOT), as the apps will look for it.
+	if j.job.Folder == "appdata" {
+		return appdata.Dir(h.root)
+	}
 	return filepath.Join(append([]string{h.root}, j.path...)...)
 }
 
@@ -186,7 +191,7 @@ func (j rebuildJob) dir(h *homelab) string {
 func rebuildJobs(folder string) []rebuildJob {
 	where := map[string]rebuildJob{
 		"databases":      {into: "recovery-staging (the database copies, the volumes, the apps' versions)", path: []string{"recovery-staging"}},
-		"appdata":        {into: "data/appdata", path: []string{"data", "appdata"}},
+		"appdata":        {into: "the apps' data folder (APPDATA_ROOT, else data/appdata)", path: []string{"data", "appdata"}},
 		"stack-data":     {into: "appdata", path: []string{"appdata"}},
 		"infrastructure": {into: "stacks/custom (your own apps)", path: []string{"recovery-staging", "rebuild", "stacks"}},
 	}
