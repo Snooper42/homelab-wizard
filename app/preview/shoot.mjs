@@ -2454,7 +2454,7 @@ const smokes = [
     await sheet.waitFor({ state: 'hidden', timeout: 3000 });
   } },
   { name: 'An app’s page with nothing done to it says so', screen: 'app:vikunja', mock: { history: [] }, run: async (page) => {
-    await page.locator('#appDone').getByText("Nothing done to it yet that's kept here.", { exact: false }).waitFor({ timeout: 5000 });
+    await page.locator('#appDone').getByText('Nothing yet.', { exact: true }).waitFor({ timeout: 5000 });
   } },
   { name: 'CrowdSec’s page on a quiet day', screen: 'app:crowdsec', mock: { protection: { ...protection, today: [], todayCount: 0, bannedNow: 0 } }, run: async (page) => {
     await page.locator('#appStopped').getByText(/^Nothing yet today; 14 this week, the last /).waitFor({ timeout: 5000 });
@@ -9967,9 +9967,9 @@ const smokes = [
     await finTab(page, 'Reports', { timeout: 5000 });
     await page.waitForSelector('.fx-trend .fx-yoy:has-text("A year before is not in the transactions yet.")', { timeout: 5000 });
   } },
-  { name: 'Finances: reports with no transactions say where they come from', screen: 'finances', mock: { ledger: null }, run: async (page) => {
+  { name: 'Finances: reports with no transactions say so', screen: 'finances', mock: { ledger: null }, run: async (page) => {
     await finTab(page, 'Reports', { timeout: 5000 });
-    await page.waitForSelector('.fin :text("Reports read the transactions")', { timeout: 5000 });
+    await page.waitForSelector('.fin :text("No transactions yet.")', { timeout: 5000 });
   } },
   // A bank's file into the ledger: a CSV's columns guessed, those already in skipped (the same day and amount, a payee
   // alike), a payee bringing its last category; an OFX statement by the bank's own IDs, so the same file twice is once.
