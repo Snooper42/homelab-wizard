@@ -4083,6 +4083,21 @@ struct TransactionsView: View {
         }
     }
 
+    /// Under the strip, as the picture's: what looks like a bill or a transfer (sorted just below, where the
+    /// ledger may be changed) and how many new ones have no category yet.
+    private var reviewLine: String? {
+        let all = finances.ledger?.transactions ?? []
+        var bills = 0, transfers = 0
+        if search.isEmpty, !filter.isOn, finances.canAddTransactions {
+            // Counted as the sections below show them: only rows still in the ledger.
+            let ids = Set(all.map(\.id))
+            let review = finances.transactionReview()
+            bills = review.links.filter { ids.contains($0.id) }.count
+            transfers = review.pairs.filter { ids.contains($0.out) && ids.contains($0.into) }.count
+        }
+        return ReviewStrip.line(bills: bills, transfers: transfers, uncategorized: ReviewStrip.uncategorized(all.filter { finances.isNew($0) }))
+    }
+
     /// New since you looked, as the picture's strip: Review opens them.
     private func reviewStrip(_ count: Int) -> some View {
         HStack(spacing: 12) {
@@ -4090,9 +4105,17 @@ struct TransactionsView: View {
                 .font(.title3.weight(.semibold))
                 .foregroundStyle(Theme.accent)
                 .accessibilityHidden(true)
-            Text(verbatim: count == 1 ? "1 new to review" : "\(count) new to review")
-                .font(.headline)
-                .foregroundStyle(Theme.ink)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(verbatim: count == 1 ? "1 new to review" : "\(count) new to review")
+                    .font(.headline)
+                    .foregroundStyle(Theme.ink)
+                if let line = reviewLine {
+                    Text(verbatim: line)
+                        .font(.subheadline)
+                        .foregroundStyle(Theme.secondaryInk)
+                        .lineLimit(2)
+                }
+            }
             Spacer(minLength: 8)
             Text("Review")
                 .font(.subheadline.weight(.semibold))
