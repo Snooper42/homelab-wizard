@@ -50,8 +50,6 @@ struct HoldingTradesSection: View {
             }
         } header: {
             Text("Buys and Sales")
-        } footer: {
-            Text("Tap one to put it right, as Ghostfolio keeps it.")
         }
         .task(id: finances.savedCount) { await load() }
         .sheet(item: $editing) { t in
