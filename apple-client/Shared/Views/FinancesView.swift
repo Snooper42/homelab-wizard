@@ -941,6 +941,83 @@ private struct FullCardChip: View {
     }
 }
 
+/// The latest transactions, as Wallet lists them; All opens them all.
+private struct RecentTransactionsCard: View {
+    let view: FinancesPlanView
+    let finances: FinancesViewModel
+    @Namespace private var zoom
+
+    var body: some View {
+        let latest = Array((finances.ledger?.newestFirst ?? []).prefix(4))
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(alignment: .center) {
+                NavigationLink {
+                    TransactionsView(finances: finances)
+                } label: {
+                    Label("Latest transactions", systemImage: "list.bullet")
+                        .labelStyle(CardTitleLabelStyle())
+                        .font(.headline)
+                        .foregroundStyle(Theme.ink)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                if finances.newTransactionCount > 0 {
+                    // New ones go to the inbox.
+                    NavigationLink {
+                        ReviewInboxPage(finances: finances)
+                    } label: {
+                        HStack(spacing: 4) {
+                            Text("\(finances.newTransactionCount) to review")
+                            Image(systemName: "chevron.right").accessibilityHidden(true).font(.caption.weight(.bold))
+                        }
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .background(Theme.accentFill, in: Capsule())
+                    }
+                    .buttonStyle(PressableButtonStyle())
+                } else {
+                    NavigationLink {
+                        TransactionsView(finances: finances)
+                    } label: {
+                        OpenButton(label: "All transactions")
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(.bottom, 6)
+            if finances.ledger == nil {
+                HStack {
+                    Spacer()
+                    if finances.ledgerError == nil { ProgressView() } else { Text("Couldn't read the transactions.").foregroundStyle(Theme.secondaryInk) }
+                    Spacer()
+                }
+                .padding(.vertical, 16)
+            } else if latest.isEmpty {
+                Text("No transactions yet.")
+                    .foregroundStyle(Theme.secondaryInk)
+                    .padding(.vertical, 12)
+            }
+            ForEach(Array(latest.enumerated()), id: \.element.id) { i, t in
+                if i > 0 { Divider().padding(.leading, 58) }
+                NavigationLink {
+                    TransactionDetailView(transaction: t, finances: finances)
+                        .zoomTransition(id: t.id, in: zoom)
+                } label: {
+                    WalletTransactionRow(transaction: t, finances: finances, isNew: finances.isNew(t), showsAccount: true, showsDay: false)
+                        .contentShape(Rectangle())
+                        .zoomSource(id: t.id, in: zoom)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(16)
+        .card()
+    }
+}
+
 /// Spending this month against last month: what's gone out so far, the
 /// difference from last month by the same day in a chip, and both months as
 /// lines, this one filled to today and last month's dashed. All opens
