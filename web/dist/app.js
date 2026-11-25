@@ -3359,7 +3359,7 @@
       "Install"
     ] });
     if (a3.state !== "running") return /* @__PURE__ */ u3(S, { children: [
-      /* @__PURE__ */ u3("button", { class: "small rowmain change", title: `Start ${a3.name}`, disabled: busy2, onClick: () => on2.act(a3, "start"), children: [
+      /* @__PURE__ */ u3("button", { class: "small rowmain change" + (marks2 ? " primary" : ""), title: `Start ${a3.name}`, disabled: busy2, onClick: () => on2.act(a3, "start"), children: [
         mark("start"),
         "Start"
       ] }),
@@ -4075,6 +4075,8 @@
   }
 
   // web/src/status/CategoryPage.tsx
+  var plainOf = (s3) => s3.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  var wordsOf = (x3) => plainOf([x3.name, x3.description, ...x3.aliases || [], ...x3.replaces || []].join(" "));
   var doing2 = { start: "Starting…", stop: "Stopping…", restart: "Restarting…", update: "Updating…", rollback: "Rolling back…" };
   function upFor(since, now2 = Date.now()) {
     const mins = Math.max(0, Math.round((now2 - new Date(since).getTime()) / 6e4)), hours = Math.round(mins / 60);
@@ -4163,7 +4165,11 @@
     const [menu2, setMenu] = d2(null);
     const [find2, setFind] = d2(typed);
     const running5 = apps2.filter((a3) => a3.state === "running").length;
-    const shown9 = find2 ? apps2.filter((a3) => matches(a3, find2)) : apps2;
+    const entryOf = (a3) => list.catalog?.apps.find((x3) => x3.id === a3.id);
+    const shown9 = find2 ? apps2.filter((a3) => {
+      const e3 = entryOf(a3);
+      return matches(a3, find2) || !!e3 && wordsOf(e3).includes(plainOf(find2));
+    }) : apps2;
     const plain2 = (s3) => s3.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
     const words5 = (x3) => plain2([x3.name, x3.description, ...x3.aliases || [], ...x3.replaces || []].join(" "));
     const toAdd = find2 ? add.filter((x3) => words5(x3).includes(plain2(find2))) : add;
@@ -11730,7 +11736,7 @@
   }
   var txTitle = (t3, L2) => t3.payee || (t3.to ? `To ${L2.account[t3.to]?.name || "another account"}` : "No payee");
   var catsOf = (t3) => t3.splits?.length ? t3.splits.map((s3) => s3.category) : t3.category ? [t3.category] : [];
-  var wordsOf = (t3, L2) => [
+  var wordsOf2 = (t3, L2) => [
     t3.payee,
     ...catsOf(t3),
     t3.note,
@@ -11888,7 +11894,7 @@
     const month3 = months.includes(monthPick) || span ? monthPick : "";
     const tag = tags.includes(tagPick) ? tagPick : "";
     const want = q2.trim().toLowerCase().split(/\s+/).filter(Boolean);
-    const shown9 = all.filter((t3) => (!account || t3.account === account || t3.to === account) && (!category || inCategory(t3, category)) && (!month3 || (span ? t3.date >= span.start && t3.date <= span.last : t3.date.startsWith(month3))) && (!tag || !!t3.tags?.includes(tag)) && (!way || (way === "move" ? !!t3.to : !t3.to && (way === "in" ? t3.amount > 0 : t3.amount < 0))) && want.every((w3) => wordsOf(t3, L2).includes(w3)));
+    const shown9 = all.filter((t3) => (!account || t3.account === account || t3.to === account) && (!category || inCategory(t3, category)) && (!month3 || (span ? t3.date >= span.start && t3.date <= span.last : t3.date.startsWith(month3))) && (!tag || !!t3.tags?.includes(tag)) && (!way || (way === "move" ? !!t3.to : !t3.to && (way === "in" ? t3.amount > 0 : t3.amount < 0))) && want.every((w3) => wordsOf2(t3, L2).includes(w3)));
     const filtered = shown9.length !== all.length;
     const catOf = (t3) => t3.splits?.length ? t3.splits.map((x3) => x3.category).join(", ") : t3.category || (t3.to ? "Transfer" : "No category");
     const acctOf = (t3) => t3.to ? `${L2.account[t3.account]?.name || t3.account} → ${L2.account[t3.to]?.name || t3.to}` : L2.account[t3.account]?.name || t3.account;

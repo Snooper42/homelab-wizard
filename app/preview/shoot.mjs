@@ -1887,7 +1887,7 @@ const smokes = [
     const top = () => page.evaluate(() => Math.round(document.querySelector('main').scrollTop));
     const scrollTo = (y) => page.evaluate((v) => { document.querySelector('main').scrollTop = v; }, y);
     // What is at the top of the window: the same after opening again, though a card drawn late above moves the pixels.
-    const atTop = () => page.evaluate(() => { const m = document.querySelector('main').getBoundingClientRect(); return document.elementFromPoint(m.left + m.width / 2, m.top + 60)?.closest('label, li, h2, summary, p')?.textContent.trim().slice(0, 60) || ''; });
+    const atTop = () => page.evaluate(() => { const m = document.querySelector('main').getBoundingClientRect(); return document.elementFromPoint(m.left + m.width / 2, m.top + 60)?.closest('label, li, h2, summary, p, tr, .card')?.textContent.trim().slice(0, 60) || ''; });
     await page.waitForSelector('#backups.active #copiesCard', { timeout: 5000 });
     await page.setViewportSize({ width: 1280, height: 500 });
     await page.waitForFunction(() => document.querySelector('main').scrollHeight > 1100, null, { timeout: 5000 });
@@ -4875,7 +4875,7 @@ const smokes = [
     await page.fill('#inputs input', 'wg-key-test');
     await page.waitForSelector('#plan .planLead:has-text("Installs 1 app")', { timeout: 5000 });
     if (await page.isVisible('#wireRow')) throw new Error('Connect the apps for me is offered with nothing to connect qBittorrent to');
-    if (!(await page.isVisible('#plan :text("Gluetun")'))) throw new Error('the plan leaves out the tunnel qBittorrent brings');
+    if (!/Gluetun/.test(await page.textContent('#plan'))) throw new Error('the plan leaves out the tunnel qBittorrent brings');
     if (/helper|download client/i.test(await page.textContent('#planBox, #plan'))) throw new Error('the plan says helper or download client');
     await page.click('#installBtn');
     await page.waitForSelector('#started li', { timeout: 10000 });
@@ -5873,9 +5873,10 @@ const smokes = [
     await findApp(page, '');
     await page.click('#statusPart .cattile.set[data-set="files"] .catname');
     await page.waitForSelector('#plan .planLead', { timeout: 5000 });
-    await closeSheet(page);
+    // Back leaves it (the plan goes), and Forward is the set's page again, with its plan.
+    await page.keyboard.press('Meta+BracketLeft');
+    await page.waitForSelector('#statusStore', { state: 'hidden', timeout: 5000 });
     await page.waitForSelector('#plan:has-text("Nothing selected yet")', { state: 'attached', timeout: 5000 });
-    // Back and Forward step through it: Forward is the set's page again, with its plan.
     await page.keyboard.press('Meta+BracketRight');
     await page.waitForSelector('#storePlan #plan .planLead', { timeout: 5000 });
   } },
@@ -6674,7 +6675,8 @@ const smokes = [
     // Your own apps: the apps of no catalog category, and no shelf.
     await page.click('#statusSide button[data-key="own"]');
     await page.waitForSelector('#statusPart .catpage h1:text-is("Your own apps")', { timeout: 5000 });
-    if (await page.$('#statusPart .cattile.toadd')) throw new Error('your own apps have a shelf');
+    if (await page.$('#statusPart .cattile.toadd:not(.addown)')) throw new Error('your own apps have a shelf');
+    if (!(await page.$('#statusPart .cattile.addown'))) throw new Error('no Add your own app on your own apps');
   } },
   // Analytics (the owner, Nov 25): second in Status' menu; Processor, Memory and Drives drawn in every state (a dash before
   // the first read), the timeline once samples come, and each app's use heaviest first, 8 then Show all.

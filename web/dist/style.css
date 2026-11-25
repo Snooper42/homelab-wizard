@@ -3470,7 +3470,6 @@ main:has(> #status.active[data-part]) { background:radial-gradient(60% 40% at 25
 .cattile .catbtn { margin-top:auto; padding-top:12px; display:flex; gap:6px; }
 .cattile .catbtn button.small { border-radius:999px; padding:4px 14px; font-weight:600; }
 .cattile .catbtn button.small .icon { width:13px; height:13px; }
-.cattile .catbtn button.change { background:var(--primary); color:var(--primary-text); border-color:transparent; }
 .cattile .catbtn .lookonly { display:none; }
 .cattile.toadd { border-style:dashed; background:color-mix(in srgb, var(--cat-tile) 55%, transparent); }
 .cattile.toadd .appmark { opacity:.85; }

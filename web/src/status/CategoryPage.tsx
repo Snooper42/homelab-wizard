@@ -35,6 +35,10 @@ export interface CategoryPageProps {
   find?: string;
 }
 
+const plainOf = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+/** What Find an app matches an app by: its name, what it does, its other names, and what it replaces. */
+const wordsOf = (x: api.App) => plainOf([x.name, x.description, ...(x.aliases || []), ...(x.replaces || [])].join(' '));
+
 const doing: Record<string, string> = { start: 'Starting…', stop: 'Stopping…', restart: 'Restarting…', update: 'Updating…', rollback: 'Rolling back…' };
 
 /** How long it's been up, as a tile says it: "Up 6 days". */
@@ -111,7 +115,8 @@ export function CategoryPage({ label, apps, add, here, list, install, sets = [],
   const [menu, setMenu] = useState<MenuAt | null>(null);
   const [find, setFind] = useState(typed);
   const running = apps.filter((a) => a.state === 'running').length;
-  const shown = find ? apps.filter((a) => matches(a, find)) : apps;
+  const entryOf = (a: api.AppStatus) => list.catalog?.apps.find((x) => x.id === a.id);
+  const shown = find ? apps.filter((a) => { const e = entryOf(a); return matches(a, find) || (!!e && wordsOf(e).includes(plainOf(find))); }) : apps;
   const plain = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
   // By name, what it does, its other names, and what it replaces (photos, Spotify, budget…), as Choose apps' search was.
   const words = (x: api.App) => plain([x.name, x.description, ...(x.aliases || []), ...(x.replaces || [])].join(' '));
