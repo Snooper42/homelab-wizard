@@ -233,7 +233,7 @@ struct FinanceCalendarView: View {
                 if day.past {
                     figure(day.net, signed: true, tint: day.net > 0 ? Theme.success : Theme.ink, caption: "What your transactions recorded")
                 } else if day.later {
-                    Text("What's planned for the day. Checking is read ahead to \(shortDay(cal.read)), so its balance isn't shown.")
+                    Text("Checking is read ahead to \(shortDay(cal.read)), so its balance isn't shown.")
                         .font(.footnote).foregroundStyle(Theme.secondaryInk)
                 } else {
                     figure(day.balance, signed: false, tint: day.balance < 0 ? Theme.danger : day.low ? Theme.warning : Theme.ink,

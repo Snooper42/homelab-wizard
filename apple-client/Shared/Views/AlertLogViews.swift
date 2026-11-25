@@ -15,7 +15,7 @@ struct AlertLogView: View {
                 Text(verbatim: problem).foregroundStyle(.secondary)
             } else if let alerts {
                 if alerts.isEmpty {
-                    Text("No alerts kept yet. From now on, each one the homelab sends is kept here for 90 days.")
+                    Text("No alerts yet. Each is kept 90 days.")
                         .foregroundStyle(.secondary)
                 } else {
                     ForEach(alerts) { alert in

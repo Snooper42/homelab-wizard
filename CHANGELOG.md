@@ -9,6 +9,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 ### New
 
 <!-- The iPhone and iPad app (lane 4): add a line just below this one. -->
+- **Fewer words in empty and in-between places on the Homelab app:** on the iPhone and iPad, Recurring with nothing says *Nothing repeats yet.*, Alerts with none *No alerts yet. Each is kept 90 days.*, Add Payment drops its line on what a payment does, a later day on the Calendar keeps only why its balance isn't shown, and the iPad's empty Setup pane has no sentence.
 - **Cash Flow and Month in Review in the quieter look on the Homelab app:** on the iPhone and iPad, their first card is a plain card like the rest, not a dark one with a heavy shadow: what was left over in green (red when more went out), In and Out beside it.
 - **Fewer words on Recurring and Spending on the Homelab app:** on the iPhone and iPad, Recurring no longer says what a tap or + does, and Spending's note keeps only what isn't counted.
 - **Money Flow without its sentence on the Homelab app:** on the iPhone and iPad, the line under Money Flow's title (*October 2026, from your transactions: $6,700 in, $1,196 spent, $5,504 left.*) is gone; the month is in its picker and the amounts in the chart.
