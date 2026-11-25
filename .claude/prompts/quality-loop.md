@@ -44,7 +44,7 @@ For a pull request that needs Q's review, check every one of these, and say whic
   - [ ] **D2. No app's data goes unbacked without anyone saying so.** A catalog check (`go run ./cmd/homelab --root . validate`): every named Docker volume is a database marked `dump`, listed under `archive`, or marked as rebuilding itself (a new `x-homelab` field, such as `rebuilds: [linkwarden-meilisearch]`). The table in `docs/Storage.md` gets the ones it lacks: Firefly III's uploads (archived), Linkwarden's search index and Tandoor's static files (rebuilt).
   - [ ] **D3. Choose where the apps' data lives.** A setting for the folder that's `data/appdata` today, as CasaOS has its data folder, so it can sit on a bigger or faster drive; every compose file reads it; changing it moves the data with Undo, and a restore test passes after. Moving the household's files needs the owner's yes (lanes.md rule 13): the pull request asks in `owner.md` and merges on their yes. Pairs with Q7 (d), a second drive.
   - **Decided, leave as they are (the owner, Nov 23):** one database per app, not one shared PostgreSQL (one app's upgrade can't break another, and Immich needs its own image); Finances in JSON, not a database, until bank imports (M1, M2) make it slow.
-- [ ] **Q1. The open security list.**
+- [x] **Q1. The open security list.**
   - **Make the list.** From `audit-loop.md`'s *Security backlog, in order* (only that section, and only its items not marked done) and the open items in its *For Account 2* usability findings, write the ones still open into this file, one line each and worst first, under **The security list** below.
   - **Archive the history.** Say at the top of `audit-loop.md` that it's archived, then work the list from here.
 - [ ] **Q2. The owner's machine, for real.** `test/realdocker` and the nightly workflow are the closest thing to it. Make sure the nightly run covers what the owner uses most:
@@ -77,9 +77,11 @@ For a pull request that needs Q's review, check every one of these, and say whic
 
 ## The security list
 
-Q1 fills this in, one line each, worst first; Q5 works it.
+Q1 filled this in (Nov 25), one line each, worst first; Q5 works it. Read against `audit-loop.md`'s *Security backlog* (166 items: all done, held or decided but the two below) and its *For Account 2* findings (all fixed but 22, Q4 (c)'s); N21 shipped as `homelab-tunnel`.
 
-- (Q1 hasn't run yet)
+1. **N29 part 2, Medium: the app checks a Windows or Linux update's build provenance** before it swaps itself. Releases have carried provenance since Nov 10 (`TestEveryReleaseIsAttested`); the app doesn't check it yet. Fetch a real bundle from a release first (`GET /repos/Snooper42/homelab-wizard/attestations/sha256:<digest>`), then choose: check by hand (Fulcio chain, the workflow's identity, the DSSE signature, Rekor's proof) or a pinned library.
+2. **Item 71, Low: Paperless-AI's first-run window.** Until its first account, anyone on the household's network (or tailnet) who opens it first makes the admin; it's `admin: true`, never public. The install could call `POST /api/setup` itself with a user and password from `.env`, as the nightly test does, so the window never opens; worth it only with a test like the nightly's.
+3. **For Account 2, item 22 (usability, not security): nothing gets one file back.** It's Q4 (c).
 
 ## From the other lanes
 
