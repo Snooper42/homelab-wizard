@@ -19,7 +19,7 @@ export function TailnetDevices({ devices, open }: { devices: tailnet.Device[]; o
   return (
     <>
       <CardHead title="Devices on your tailnet"><span class="muted">{devices.length === 1 ? '1 device' : `${devices.length} devices`}, {online} online</span></CardHead>
-      <p class="muted">Each of these can open the apps away from home. One that is lost or sold: Remove it, and it can no longer reach them.</p>
+      <p class="muted">Lost or sold one? Remove it.</p>
       <Rows>
         {devices.map((d) => (
           <Row key={d.ip || d.name} dot={d.online ? 'ok' : away(d) ? 'warn' : ''} title={d.name}

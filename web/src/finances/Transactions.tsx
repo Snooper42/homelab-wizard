@@ -74,7 +74,6 @@ function LinksWidget({ v, L, ledger, save }: { v: finance.View; L: Lookup; ledge
   return (
     <Widget title="These look like planned payments" span="all" kind="fx-links"
       actions={list.length > 1 && <button type="button" class="small" disabled={busy} onClick={() => link(list.map((t) => t.id))}>Link all {list.length}</button>}>
-      <p class="fx-sub fx-lead">Linked, one is taken as paying it, so the plan doesn't take it out again on its day.</p>
       <Rows kind="fx-rows">
         {list.map((t) => {
           const g = found.get(t.id)!, x = L.payment[g.payment];
@@ -152,7 +151,6 @@ function PairsWidget({ L, ledger, save }: { L: Lookup; ledger: finance.Ledger; s
   return (
     <Widget title="These look like transfers" span="all" kind="fx-pairs"
       actions={list.length > 1 && <button type="button" class="small" disabled={busy} onClick={() => join(list)}>Join all {list.length}</button>}>
-      <p class="fx-sub fx-lead">Money out of one of your accounts and the same into another: joined, it is one transfer, neither spending nor income.</p>
       <Rows kind="fx-rows">
         {list.map((p) => (
           <Row key={p.out.id + p.in.id} lead={<TxMark t={joined(p)} />} title={`${name(p.out.account)} → ${name(p.in.account)}`}

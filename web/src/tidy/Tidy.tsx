@@ -224,7 +224,7 @@ export function JobPanel({ job, stop, done, fix, again }: { job: TidyJob; stop: 
       </CardHead>
       {job.step && <p class="tidystep">Step {job.step.n} of {job.step.total} · {job.step.text}</p>}
       {!job.ended && <Bar title={job.title} p={p} idle="Starting…" />}
-      {job.stopping && !job.ended && <p class="muted tidynow">Stopping at the next safe point, so nothing is left half done. Run it again to carry on from there.</p>}
+      {job.stopping && !job.ended && <p class="muted tidynow">Stopping at the next safe point.</p>}
       {p?.note && !job.ended && !job.stopping && <p class="muted tidynow">Now: {p.note}</p>}
       {job.ended && !job.ended.ok && job.ended.why && <p class="bad">{job.ended.why}</p>}
       {fix && <p class="tidyfix"><button class="primary small" onClick={fix.run}>{fix.label}</button> <span class="muted">Then it carries on by itself.</span></p>}
@@ -251,7 +251,7 @@ function RunningCard({ lock, now, stop, stopping }: { lock: app.TidyUp['lock'] &
       </CardHead>
       {now?.step && <p class="tidystep">Step {now.step.n} of {now.step.total} · {now.step.text}</p>}
       <Bar title={title} p={p} idle="Working…" />
-      {stopping ? <p class="muted tidynow">Stopping at the next safe point, so nothing is left half done. Run it again to carry on from there.</p>
+      {stopping ? <p class="muted tidynow">Stopping at the next safe point.</p>
         : p?.note && <p class="muted tidynow">Now: {p.note}</p>}
       <p class="muted">Started {startedText(lock.start)}, outside this window, and carries on with it closed. The buttons below wait until it's done.</p>
     </Card>
@@ -474,25 +474,25 @@ export function todosFor(l: app.TidyLibrary, d: app.TidyUp, act: TidyActions, re
     const none = n(lyr?.none), apart = n(lyr?.to_clean);
     const notOn = n(lyr?.not_found) ? ` · ${count(n(lyr!.not_found), 'song')} not on LRCLIB yet` : '';
     // Setting lyrics right is done on this computer (--tidy): it never waits for LRCLIB, which thousands of songs would.
-    if (lyr && apart > 0) out.push({ kind: 'lyrics', title: `${count(apart, 'song')} show two languages on one line`, sub: 'Each translation goes on a line of its own under its original, so both scroll along in Navidrome. Done on this computer, in minutes', go: { label: 'Tidy lyrics', run: () => act.run('music', 'lyrics', ['--tidy']) } });
-    if (lyr && none > 0) out.push({ kind: 'lyrics', title: `${count(none, 'song')} could get lyrics`, sub: `Synced from LRCLIB, so they scroll along in Navidrome${notOn}`, go: { label: 'Add lyrics', run: () => act.run('music', 'lyrics') } });
+    if (lyr && apart > 0) out.push({ kind: 'lyrics', title: `${count(apart, 'song')} show two languages on one line`, sub: '', go: { label: 'Tidy lyrics', run: () => act.run('music', 'lyrics', ['--tidy']) } });
+    if (lyr && none > 0) out.push({ kind: 'lyrics', title: `${count(none, 'song')} could get lyrics`, sub: notOn.replace(/^ · /, ''), go: { label: 'Add lyrics', run: () => act.run('music', 'lyrics') } });
     // A check from before Tidy Up counted those: one more, which changes nothing, finds them.
     // Never checked: say so on Overview too (it was on the Music tab only, so lyrics seemed to have no option at all).
-    if (!lyr) out.push({ kind: 'lyrics', title: 'See how many songs have lyrics', sub: 'Reads every song; changes nothing. Then Tidy Up offers to tidy them or add the missing ones', go: { label: 'Check lyrics', run: () => act.run('music', 'lyrics', ['--check']), quiet: true } });
-    if (lyr && lyr.to_clean === undefined && none === 0) out.push({ kind: 'lyrics', title: 'Look over the lyrics again', sub: 'Finds songs that show two languages on one line; changes nothing', go: { label: 'Check lyrics', run: () => act.run('music', 'lyrics', ['--check']), quiet: true } });
+    if (!lyr) out.push({ kind: 'lyrics', title: 'See how many songs have lyrics', sub: '', go: { label: 'Check lyrics', run: () => act.run('music', 'lyrics', ['--check']), quiet: true } });
+    if (lyr && lyr.to_clean === undefined && none === 0) out.push({ kind: 'lyrics', title: 'Look over the lyrics again', sub: '', go: { label: 'Check lyrics', run: () => act.run('music', 'lyrics', ['--check']), quiet: true } });
   } else if (k === 'movies' || k === 'tv') {
     const c = l.counts || {}, bloated = n(c.bloated), withTdarr = n(c.queued) + n(l.waiting);
     const reasons = Object.keys((scan?.reasons || {}) as Record<string, number>).slice(0, 2).map((r) => r.replace(/\b([Hh])\.?26([45])\b/g, 'H.26$2')).join(', ');
-    if (!scan) out.push({ kind: k, title: `Look at your ${k === 'tv' ? 'TV' : 'films'} first`, sub: 'A scan finds what wastes space and changes nothing', go: { label: 'Scan', run: () => act.run(k, 'scan') } });
-    else if (bloated && !d.tdarr?.[k]) out.push({ kind: k, title: `Set up Tdarr to shrink ${things(k, bloated)}`, sub: "Tidy Up makes Tdarr's library with the space-saving settings", gain: n(scan.saving), go: { label: 'Set up Tdarr', run: () => act.run('tdarr', 'setup', ['--apply']) } });
-    else if (bloated) out.push({ kind: k, title: `Shrink ${things(k, bloated)}`, sub: `They look the same after${reasons ? ' · ' + lead(reasons) : ''}`, gain: n(scan.saving), go: { label: 'Shrink', run: () => act.run(k, 'run') } });
+    if (!scan) out.push({ kind: k, title: `Look at your ${k === 'tv' ? 'TV' : 'films'} first`, sub: '', go: { label: 'Scan', run: () => act.run(k, 'scan') } });
+    else if (bloated && !d.tdarr?.[k]) out.push({ kind: k, title: `Set up Tdarr to shrink ${things(k, bloated)}`, sub: '', gain: n(scan.saving), go: { label: 'Set up Tdarr', run: () => act.run('tdarr', 'setup', ['--apply']) } });
+    else if (bloated) out.push({ kind: k, title: `Shrink ${things(k, bloated)}`, sub: reasons ? lead(reasons) : '', gain: n(scan.saving), go: { label: 'Shrink', run: () => act.run(k, 'run') } });
     // The same film or episode twice, as the last scan found (until the extras are removed).
     const dupes = n(scan?.duplicates), dd = last(l, 'dedupe'), scanned = last(l, 'scan');
     if (dupes && !(dd?.ok && scanned && dd.at > scanned.at)) {
       const list = ((scan?.duplicate_list || []) as { keep: string; extra: string[] }[]);
       const extras = list.reduce((t, x) => t + x.extra.length, 0) || dupes;
       const file = (p: string) => p.split(/[\\/]/).pop() || p;
-      out.push({ kind: k, title: `${lead(things(k, dupes))} ${dupes === 1 ? 'is' : 'are'} in the library twice`, sub: 'The copy with the best picture stays; the extra ones go', gain: n(scan?.duplicate_bytes),
+      out.push({ kind: k, title: `${lead(things(k, dupes))} ${dupes === 1 ? 'is' : 'are'} in the library twice`, sub: '', gain: n(scan?.duplicate_bytes),
         go: { label: 'Remove extras…', risky: true, run: () => act.ask({
           title: 'Put the extra copies in the Trash?', action: 'Put them in the Trash',
           lead: `${count(extras, 'copy', 'copies')}, each checked again first: one changed since the scan, or of another length, stays. They go to ${d.trash}, never straight away.`,
@@ -512,7 +512,7 @@ export function todosFor(l: app.TidyLibrary, d: app.TidyUp, act: TidyActions, re
     const away = !!looked && !looked.ok && /answering|reach/i.test(looked.why || '');
     if (withTdarr) out.push({ kind: k, title: `Tdarr is shrinking ${things(k, withTdarr)}`, warn: away,
       sub: away ? "Tdarr isn't answering, so nothing is shrinking: it's paused on battery until this computer is plugged in, or stopped (start it from Status)"
-        : 'Swapped in one by one as each is ready; a big library takes days',
+        : '',
       go: { label: 'Collect', run: () => act.run(k, 'collect'), quiet: true } });
   } else if (k === 'books') {
     const rv = last(l, 'review');
@@ -522,7 +522,7 @@ export function todosFor(l: app.TidyLibrary, d: app.TidyUp, act: TidyActions, re
     // A folder of books with no Calibre library (no metadata.db): made first, or nothing else here can read them.
     if (l.noCalibre) {
       const many = n(l.loose);
-      if (many) out.push({ kind: k, title: `Make a Calibre library from your ${things(k, many)}`, sub: 'Each book with its own title, author, series, and cover, so the review and Calibre-Web can read them',
+      if (many) out.push({ kind: k, title: `Make a Calibre library from your ${things(k, many)}`, sub: '',
         go: { label: 'Make it…', run: () => act.ask({ title: `Make a Calibre library from ${things(k, many)}?`, action: 'Make it',
           lead: `Calibre adds each book with the details and cover beside it. Calibre-Web is paused meanwhile. Nothing is deleted: your books' folders move to "${l.folder.split(/[\\/]/).pop()} (before Calibre)" beside it, and stay there until you've looked.`,
           steps: ['Their folders move aside, on the same drive', 'Calibre adds each one as a book, its formats together', 'Every book is counted in before it says done'],
@@ -530,13 +530,13 @@ export function todosFor(l: app.TidyLibrary, d: app.TidyUp, act: TidyActions, re
       else out.push({ kind: k, title: 'Not a Calibre library yet', sub: 'No books in folders of their own were found here: put each book in a folder of its own, or point Books at your Calibre library in Settings', warn: true });
       return out;
     }
-    if (!rv) out.push({ kind: k, title: 'Look over your books', sub: 'Titles, series, publishers, genres, and covers: nothing changes until you say', go: { label: 'Review', run: () => act.review() } });
-    else if (many && !reviewApplied(l)) out.push({ kind: k, title: `${things(k, many)} could look tidier`, sub: changing.length ? changing.slice(0, 2).join(', ') + (changing.length > 2 ? `, and ${changing.length - 2} more` : '') : 'Titles, series, and covers, from the last review', go: { label: 'Look…', run: () => act.review() } });
+    if (!rv) out.push({ kind: k, title: 'Look over your books', sub: '', go: { label: 'Review', run: () => act.review() } });
+    else if (many && !reviewApplied(l)) out.push({ kind: k, title: `${things(k, many)} could look tidier`, sub: changing.length ? changing.slice(0, 2).join(', ') + (changing.length > 2 ? `, and ${changing.length - 2} more` : '') : '', go: { label: 'Look…', run: () => act.review() } });
   } else if (k === 'audiobooks') {
-    if (!scan) out.push({ kind: k, title: 'Look at your audiobooks first', sub: 'A scan finds books split into many files and changes nothing', go: { label: 'Scan', run: () => act.run('audiobooks', 'scan') } });
+    if (!scan) out.push({ kind: k, title: 'Look at your audiobooks first', sub: '', go: { label: 'Scan', run: () => act.run('audiobooks', 'scan') } });
     else if (n(scan.books)) out.push({ kind: k, title: `Merge ${things(k, n(scan.books))}`, sub: `${count(n(scan.files), 'file')} into one .m4b each, with chapters and one cover`, gain: n(scan.saving), go: { label: 'Merge', run: () => act.run('audiobooks', 'run') } });
     // Nothing split: said with how many are whole, rather than a bare nought.
-    else if (n(scan.whole)) out.push({ kind: k, title: `All ${things(k, n(scan.whole))} are one file each`, sub: 'Nothing to merge. One that comes in split into many files shows up here after the next scan' });
+    else if (n(scan.whole)) out.push({ kind: k, title: `All ${things(k, n(scan.whole))} are one file each`, sub: 'Nothing to merge' });
   }
   return out;
 }
@@ -697,7 +697,7 @@ function DoneWidget({ d, job, act, kind, span = 'all' }: { d: app.TidyUp; job: T
               end={<>{!!a.freed && <><span class="fx-amount fx-in tidygain">{size(a.freed)}</span><span class="sr"> freed</span></>}<span class="muted tidywhen">{ago(a.at)}</span>{u && <Go label="Undo" job={job} onClick={u} />}</>} />;
           })}
         </Rows>
-      ) : <Empty>Nothing yet. What Tidy Up does shows here, with Undo where it can be undone.</Empty>}
+      ) : <Empty>Nothing yet.</Empty>}
     </Widget>
   );
 }
@@ -770,7 +770,7 @@ function Overview({ d, job, act, review, pick, placing, folders }: { d: app.Tidy
         <Widget title="Needs your OK" kind="fx-paycheck tidyneeds" actions={waiting ? <span class="muted">{count(waiting, 'thing')}{gain ? ' · ' + size(gain) + ' to win back' : ''}</span> : undefined}>
           {todos.length ? <TodoRows todos={todos} job={job} /> : (
             <div class="tidyclear"><span class="fmark logo tidyicon fx-h-in" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" /></svg></span>
-              <div><strong>Everything's tidy</strong><div class="muted">New downloads are filed as they finish, and anything new to tidy shows up here.</div></div></div>
+              <div><strong>Everything's tidy</strong></div></div>
           )}
         </Widget>
         <DriveWidget d={d} />
@@ -809,7 +809,6 @@ function InboxWidget({ d, job, act }: { d: app.TidyUp; job: TidyJob | null; act:
   const state = (f: string) => gone.has(f) ? "Not there now: plug in its drive" : !ib.watching ? "Not watched: Tidy Up's background work is off in Settings" : when === 'manual' ? 'Tidied when you press Tidy up now' : when === 'daily' ? 'Tidied once a day, after 3 AM' : 'Watched: tidied as things arrive';
   return (
     <Widget title="Drop anything here" span="all" kind="tidyinbox">
-      <p class="muted tidyinboxlead">Music, films, shows, books, and audiobooks: put them in one of these folders, however messy, and Tidy Up works out what each is, cleans it up, and files it in your library.</p>
       <fieldset class="tidyinboxset" disabled={waits}>
       <Rows kind="fx-rows tidytodo">
         {folders.map((f) => (
@@ -915,7 +914,7 @@ function PlacesWidget({ d, job, act, first }: { d: app.TidyUp; job: TidyJob | nu
           : <Go primary label={chosen ? `Use ${label(chosen)}` : 'Use it'} job={job} onClick={() => chosen && act.useMediaRoot(chosen.root, label(chosen))} />}
         {!first && <button class="small" onClick={() => act.places(false)}>{chosen?.current ? 'Close' : 'Cancel'}</button>}
       </div>
-      {!chosen?.current && <p class="muted tidyplacenote">Jellyfin, Navidrome, Calibre-Web and your other apps that read the libraries restart once, so they look there. Tidy Up lists them and asks first. Nothing is moved or copied.</p>}
+      {!chosen?.current && <p class="muted tidyplacenote">The apps that read the libraries restart once. Nothing is moved or copied.</p>}
     </Widget>
   );
 }
@@ -999,7 +998,7 @@ function TodayWidget({ d, job, act, wide }: { d: app.TidyUp; job: TidyJob | null
               end={<>{f.undo && !f.undone && <Go label="Undo" job={job} title={`Put ${f.title} back where it came from`} onClick={() => act.run('inbox', 'undo', [f.id])} />}<span class="muted tidywhen">{clock(f.at)}</span></>} />
           ))}
         </Rows>
-      ) : <Empty>Nothing yet today. Drop something in a watched folder, or press Tidy up now.</Empty>}
+      ) : <Empty>Nothing yet today.</Empty>}
     </Widget>
   );
 }

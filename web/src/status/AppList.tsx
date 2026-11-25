@@ -195,7 +195,7 @@ function HeldNotes({ a, load }: { a: api.AppStatus; load: (id: string) => Promis
   const when = r && new Date(r.when);
   return (
     <>
-      <span class="outline">Left out of the nightly updates after a rollback, so it stays on what works. Nightly updates on its page puts it back.</span>
+      <span class="outline">Left out of nightly updates after a rollback.</span>
       {problem ? <span class="outline muted">Could not read its releases: {problem}</span>
         : !p ? <span class="outline muted">Reading its newest release…</span>
         : !r ? <span class="outline muted">Its project has published no releases{p.repo ? '' : ' that its image names'}.</span>
@@ -481,7 +481,6 @@ function GroupMenu({ g, p, count, tone }: { g: Group; p: AppListProps; count: st
             </button>
           )}
           {running.length > 0 && <button type="button" role="menuitem" class="stoplater" aria-haspopup="menu" disabled={p.busy} onClick={() => showLater(true)}>Stop for a while ›</button>}
-          {running.length > 0 && <p class="menufoot muted">Stopping what you don’t use gives its memory back. Nothing starts it again by itself until you do.</p>}
           {held.length > 0 && <p class="menufoot muted heldnote">Stopped by you: {held.map((a) => a.name).join(', ')}. {held.length === 1 ? 'Start it' : 'Start each'} from its row.</p>}
         </div>
       )}
