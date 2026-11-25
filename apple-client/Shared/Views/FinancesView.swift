@@ -54,7 +54,8 @@ struct FinancesView: View {
                         HouseholdCard(shared: shared, finances: finances)
                     }
                     // Net worth and Cash flow side by side, as the redesign's picture; the full line is on Accounts.
-                    WorthAndFlow(view: view, finances: finances)
+                    NetWorthFullCard(view: view, finances: finances)
+                    CashFlowFullCard(view: view, finances: finances)
                     // Spending this month against last, as a line (the owner's Monarch feel, Nov 24).
                     SpendingPaceCard(view: view, finances: finances)
                     // This paycheck's bills, then the latest transactions and the budgets worth a look.
@@ -696,151 +697,247 @@ private struct NetWorthCard: View {
     }
 }
 
-/// Net worth and Cash flow side by side, as the redesign's phone picture
-/// (phone-finances.png): net worth short, its change over three months in a
-/// chip and its line; this month's cash flow from the transactions, its
-/// change against last month by the same day, and how much of what came in
-/// was kept. Net worth opens Accounts (its full line, with 1M, 3M and 1Y);
-/// Cash flow opens Cash Flow. With no transactions this month, Net worth
-/// alone.
-private struct WorthAndFlow: View {
+/// Net worth as a full card (the owner's reference, Nov 25): today's figure with its cents smaller, its change
+/// over three months as a % chip, and its line with a scale, dotted green or red where it moved most. ↗ opens
+/// Accounts, where the line has its ranges and each group.
+private struct NetWorthFullCard: View {
     let view: FinancesPlanView
     let finances: FinancesViewModel
-    @Environment(\.dynamicTypeSize) private var typeSize
 
     private var shown: Bool { finances.amountsShown && !finances.amountsHiddenByPlan }
-    private var currency: String { view.plan.currency }
 
     var body: some View {
-        let flow = CashFlowGlance.make(finances.countedTransactions, today: view.today ?? Date())
-        // Side by side, or one above the other at the largest text sizes.
-        let layout = typeSize.isAccessibilitySize ? AnyLayout(VStackLayout(spacing: 12)) : AnyLayout(HStackLayout(alignment: .top, spacing: 12))
-        layout {
-            NavigationLink {
-                FinanceAccountsPage(finances: finances)
-            } label: {
-                worth
-            }
-            .buttonStyle(PressableButtonStyle())
-            if let flow {
-                NavigationLink {
-                    FinanceCashFlowPage(finances: finances)
-                } label: {
-                    cash(flow)
-                }
-                .buttonStyle(PressableButtonStyle())
-            }
-        }
-        // The two the same height, as the picture's.
-        .fixedSize(horizontal: false, vertical: true)
-    }
-
-    private var worth: some View {
         let series = view.netWorthSeries(days: NetWorthRange.threeMonths.rawValue)
-        let change = series.count >= 2 ? (series.last?.value ?? 0) - (series.first?.value ?? 0) : nil
-        return tile(title: "Net worth") {
-            figure(shown ? CompactMoney.text(view.netWorth, currency: currency) : "••••", tint: Theme.ink)
-            if shown, let change, abs(change) >= 0.5 {
-                let words = CompactMoney.text(abs(change), currency: currency)
-                chip(up: change >= 0, words: (change >= 0 ? "+" : "−") + words)
-                    .accessibilityLabel(Text(verbatim: "\(change >= 0 ? "Up" : "Down") \(words) in 3 months"))
+        let change = AccountsLook.change(series)
+        let currency = view.plan.currency
+        VStack(alignment: .leading, spacing: 10) {
+            CardHeading(title: "Net worth", icon: "chart.line.uptrend.xyaxis") {
+                NavigationLink { FinanceAccountsPage(finances: finances) } label: { OpenButton(label: "Accounts") }
+                    .buttonStyle(.plain)
             }
-            Spacer(minLength: 0)
+            HStack(alignment: .top) {
+                FullCardFigure(text: amountText(view.netWorth, currency, finances), tint: Theme.ink, under: "Today")
+                Spacer(minLength: 8)
+                if shown, let change, abs(change.amount) >= 0.5 {
+                    VStack(alignment: .trailing, spacing: 4) {
+                        if let share = change.share {
+                            FullCardChip(up: change.amount >= 0, words: abs(share).formatted(.percent.precision(.fractionLength(1))))
+                        }
+                        Text(verbatim: (change.amount >= 0 ? "+" : "−") + CompactMoney.text(abs(change.amount), currency: currency) + " · 3 months")
+                            .font(.caption)
+                            .foregroundStyle(Theme.secondaryInk)
+                    }
+                    .accessibilityElement(children: .combine)
+                }
+            }
             if shown, series.count >= 2 {
-                Spark(series: series)
-                    .frame(height: 40)
-                    .padding(.top, 4)
+                chart(series, currency: currency)
+                    .frame(height: 170)
             }
         }
+        .padding(16)
+        .card()
     }
 
-    private func cash(_ flow: CashFlowGlance) -> some View {
-        let kept = flow.kept
-        let amount = amountText(abs(kept), currency, finances, whole: true)
-        let sign: String = !shown ? "" : kept >= 0.5 ? "+" : kept <= -0.5 ? "−" : ""
-        let tint: Color = !shown ? Theme.ink : kept >= 0 ? Theme.success : Theme.danger
-        return tile(title: "Cash flow") {
-            figure(sign + amount, tint: tint)
-            if shown, let change = flow.change, abs(change) >= 0.0005 {
-                let words = abs(change).formatted(.percent.precision(.fractionLength(1)))
-                chip(up: change >= 0, words: (change >= 0 ? "+" : "−") + words)
-                    .accessibilityLabel(Text(verbatim: "\(words) \(change >= 0 ? "more" : "less") kept than by this day last month"))
+    private func chart(_ series: [NetWorthPoint], currency: String) -> some View {
+        let low = series.map(\.value).min() ?? 0
+        let high = series.map(\.value).max() ?? 0
+        let span = max(high - low, 1)
+        return Chart {
+            ForEach(series, id: \.date) { p in
+                AreaMark(x: .value("Day", p.date), yStart: .value("Low", low - span * 0.05), yEnd: .value("Net worth", p.value))
+                    .foregroundStyle(LinearGradient(colors: [Theme.accent.opacity(0.32), Theme.accent.opacity(0.0)], startPoint: .top, endPoint: .bottom))
+                LineMark(x: .value("Day", p.date), y: .value("Net worth", p.value))
+                    .foregroundStyle(Theme.accent)
+                    .lineStyle(StrokeStyle(lineWidth: 2.2))
             }
-            Spacer(minLength: 0)
-            if shown {
-                // What went out, then what was kept, of what came in.
-                let share = flow.keptShare ?? 0
-                GeometryReader { geo in
-                    HStack(spacing: 2) {
-                        if share < 1 { Capsule().fill(Theme.danger) }
-                        if share > 0 { Capsule().fill(Theme.success).frame(width: max(6, (geo.size.width - 2) * share)) }
+            ForEach(NetWorthJumps.top(series)) { jump in
+                PointMark(x: .value("Day", jump.point.date), y: .value("Net worth", jump.point.value))
+                    .foregroundStyle(jump.up ? Theme.success : Theme.danger)
+                    .symbolSize(70)
+            }
+        }
+        .chartYScale(domain: (low - span * 0.05)...(high + span * 0.05))
+        .chartYAxis {
+            AxisMarks(position: .leading, values: .automatic(desiredCount: 4)) { value in
+                AxisValueLabel {
+                    if let v = value.as(Double.self) { Text(verbatim: CompactMoney.text(v, currency: currency)) }
+                }
+            }
+        }
+        .chartXAxis {
+            AxisMarks(values: .automatic(desiredCount: 4)) { _ in
+                AxisValueLabel(format: .dateTime.month(.abbreviated).day())
+            }
+        }
+        .accessibilityElement()
+        .accessibilityLabel("Net worth over three months")
+    }
+}
+
+/// Cash flow as a full card (the owner's reference, Nov 25): this month's in less out with its change against
+/// last month by the same day, a bar of what was kept and what went out, Income · Expenses · Saved, and the last
+/// six months as bars of what each kept, the savings rate dotted over them. ↗ opens Cash Flow. With no
+/// transactions this month, no card.
+private struct CashFlowFullCard: View {
+    let view: FinancesPlanView
+    let finances: FinancesViewModel
+
+    private var shown: Bool { finances.amountsShown && !finances.amountsHiddenByPlan }
+
+    var body: some View {
+        let today = view.today ?? Date()
+        if let flow = CashFlowGlance.make(finances.countedTransactions, today: today) {
+            let currency = view.plan.currency
+            let kept = flow.kept
+            let sign = !shown ? "" : kept >= 0.5 ? "+" : kept <= -0.5 ? "−" : ""
+            let lastMonth = Calendar.current.date(byAdding: .month, value: -1, to: flow.month)?.formatted(.dateTime.month(.wide)) ?? "last month"
+            VStack(alignment: .leading, spacing: 10) {
+                CardHeading(title: "Cash flow", icon: "arrow.left.arrow.right") {
+                    NavigationLink { FinanceCashFlowPage(finances: finances) } label: { OpenButton(label: "Cash Flow") }
+                        .buttonStyle(.plain)
+                }
+                HStack(alignment: .top) {
+                    FullCardFigure(text: sign + amountText(abs(kept), currency, finances), tint: !shown ? Theme.ink : kept >= 0 ? Theme.success : Theme.danger,
+                                   under: flow.month.formatted(.dateTime.month(.wide)))
+                    Spacer(minLength: 8)
+                    if shown, let change = flow.change, abs(change) >= 0.0005 {
+                        VStack(alignment: .trailing, spacing: 4) {
+                            FullCardChip(up: change >= 0, words: abs(change).formatted(.percent.precision(.fractionLength(1))))
+                            Text(verbatim: "vs \(lastMonth)").font(.caption).foregroundStyle(Theme.secondaryInk)
+                        }
+                        .accessibilityElement(children: .combine)
                     }
                 }
-                .frame(height: 6)
-                .padding(.top, 6)
-                .accessibilityHidden(true)
+                if shown {
+                    let share = flow.keptShare ?? 0
+                    GeometryReader { geo in
+                        HStack(spacing: 2) {
+                            if share > 0 { Capsule().fill(Theme.success).frame(width: max(6, (geo.size.width - 2) * share)) }
+                            if share < 1 { Capsule().fill(Theme.danger) }
+                        }
+                    }
+                    .frame(height: 8)
+                    .accessibilityHidden(true)
+                }
+                HStack(spacing: 8) {
+                    tile("Income", amountText(flow.moneyIn, currency, finances, whole: true), tint: Theme.success)
+                    tile("Expenses", amountText(flow.moneyOut, currency, finances, whole: true), tint: Theme.ink)
+                    tile("Saved", shown ? (flow.keptShare.map { $0.formatted(.percent.precision(.fractionLength(0))) } ?? "—") : "••••", tint: Theme.success)
+                }
+                if shown {
+                    let months = CashFlowHistory.make(CashFlow.months(finances.countedTransactions, ending: today, count: 6, categories: view.categories))
+                    if months.count >= 2 {
+                        HStack {
+                            Text("Last 6 months")
+                            Spacer()
+                            Label("Savings rate", systemImage: "circle.dotted")
+                        }
+                        .font(.caption2.weight(.semibold))
+                        .textCase(.uppercase)
+                        .foregroundStyle(Theme.secondaryInk)
+                        .padding(.top, 4)
+                        history(months)
+                            .frame(height: 120)
+                    }
+                }
             }
-            Text(verbatim: shown ? flow.caption() : flow.month.formatted(.dateTime.month(.wide)))
-                .font(.caption)
-                .foregroundStyle(Theme.secondaryInk)
-                .lineLimit(2)
-                .fixedSize(horizontal: false, vertical: true)
+            .padding(16)
+            .card()
         }
     }
 
-    private func figure(_ words: String, tint: Color) -> some View {
-        Text(verbatim: words)
-            .font(.title2.weight(.semibold))
-            .monospacedDigit()
-            .foregroundStyle(tint)
-            .lineLimit(1)
-            .minimumScaleFactor(0.6)
-            .contentTransition(.numericText())
-    }
-
-    /// The picture's chip: an arrow and the change, green up, red down.
-    private func chip(up: Bool, words: String) -> some View {
-        Label(words, systemImage: up ? "arrow.up.right" : "arrow.down.right")
-            .font(.caption.weight(.semibold))
-            .foregroundStyle(up ? Theme.success : Theme.danger)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 3)
-            .background((up ? Theme.success : Theme.danger).opacity(0.12), in: Capsule())
-    }
-
-    private func tile<Content: View>(title: LocalizedStringKey, @ViewBuilder content: () -> Content) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
+    private func tile(_ title: LocalizedStringKey, _ value: String, tint: Color) -> some View {
+        VStack(alignment: .leading, spacing: 3) {
             Text(title)
-                .font(.headline)
-                .foregroundStyle(Theme.ink)
-            content()
+                .font(.caption2.weight(.bold))
+                .textCase(.uppercase)
+                .foregroundStyle(Theme.secondaryInk)
+            Text(verbatim: value)
+                .font(.subheadline.weight(.semibold))
+                .monospacedDigit()
+                .foregroundStyle(tint)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
         }
-        .padding(14)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .card()
-        .contentShape(Rectangle())
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Theme.separator))
         .accessibilityElement(children: .combine)
     }
 
-    /// Net worth's line, small: no axes, nothing to read with a finger (Accounts has that).
-    private struct Spark: View {
-        let series: [NetWorthPoint]
-
-        var body: some View {
-            let low = series.map(\.value).min() ?? 0
-            let high = series.map(\.value).max() ?? 0
-            Chart(series, id: \.date) { point in
-                AreaMark(x: .value("Day", point.date), yStart: .value("Low", low), yEnd: .value("Net worth", point.value))
-                    .foregroundStyle(LinearGradient(colors: [Theme.accent.opacity(0.22), Theme.accent.opacity(0.02)], startPoint: .top, endPoint: .bottom))
-                LineMark(x: .value("Day", point.date), y: .value("Net worth", point.value))
-                    .foregroundStyle(Theme.accent)
-                    .lineStyle(StrokeStyle(lineWidth: 2))
+    /// Each month's kept as a bar (this one brighter), the savings rate dotted over them on the bars' scale.
+    private func history(_ months: [CashFlowHistory.Month]) -> some View {
+        let top = max(months.map(\.kept).max() ?? 0, 1)
+        let last = months.last?.month
+        return Chart {
+            ForEach(months) { m in
+                BarMark(x: .value("Month", m.month, unit: .month), y: .value("Kept", m.kept), width: .ratio(0.55))
+                    .foregroundStyle(m.month == last ? Theme.success : Theme.success.opacity(0.45))
+                    .cornerRadius(5)
             }
-            .chartXAxis(.hidden)
-            .chartYAxis(.hidden)
-            .chartYScale(domain: low...(high > low ? high : low + 1))
-            .accessibilityHidden(true)
+            ForEach(months.filter { $0.rate != nil }) { m in
+                LineMark(x: .value("Month", m.month, unit: .month), y: .value("Rate", (m.rate ?? 0) * top))
+                    .foregroundStyle(Theme.warning)
+                    .lineStyle(StrokeStyle(lineWidth: 1.6, dash: [2, 4]))
+                PointMark(x: .value("Month", m.month, unit: .month), y: .value("Rate", (m.rate ?? 0) * top))
+                    .foregroundStyle(Theme.warning)
+                    .symbolSize(36)
+                    .annotation(position: .top, spacing: 4) {
+                        if m.month == last, let rate = m.rate {
+                            Text(verbatim: rate.formatted(.percent.precision(.fractionLength(0))))
+                                .font(.caption2.weight(.bold))
+                                .foregroundStyle(Theme.warning)
+                        }
+                    }
+            }
         }
+        .chartYAxis(.hidden)
+        .chartXAxis {
+            AxisMarks(values: .stride(by: .month)) { _ in
+                AxisValueLabel(format: .dateTime.month(.abbreviated), centered: true)
+            }
+        }
+        .accessibilityElement()
+        .accessibilityLabel("What each of the last six months kept, with its savings rate")
+    }
+}
+
+/// A full card's figure: the cents smaller, and what it is under it.
+private struct FullCardFigure: View {
+    let text: String
+    let tint: Color
+    let under: String
+
+    var body: some View {
+        let figure = FinanceLead.splitCents(text)
+        VStack(alignment: .leading, spacing: 2) {
+            (Text(verbatim: figure.whole).font(.largeTitle.weight(.semibold))
+             + Text(verbatim: figure.cents).font(.title2.weight(.semibold)).foregroundColor(Theme.secondaryInk))
+                .monospacedDigit()
+                .foregroundStyle(tint)
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+            Text(verbatim: under)
+                .font(.subheadline)
+                .foregroundStyle(Theme.secondaryInk)
+        }
+    }
+}
+
+/// A full card's % chip: green and up, or red and down.
+private struct FullCardChip: View {
+    let up: Bool
+    let words: String
+
+    var body: some View {
+        Label(words, systemImage: up ? "arrow.up.right" : "arrow.down.right")
+            .font(.subheadline.weight(.bold))
+            .foregroundStyle(up ? Theme.success : Theme.danger)
+            .padding(.horizontal, 9)
+            .padding(.vertical, 3)
+            .background((up ? Theme.success : Theme.danger).opacity(0.14), in: Capsule())
     }
 }
 
