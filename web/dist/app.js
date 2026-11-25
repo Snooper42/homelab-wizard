@@ -16210,7 +16210,7 @@
           kind: "fx-loanlinked",
           actions: saveLedger2 && into2.length ? /* @__PURE__ */ u3("button", { class: "small", "aria-expanded": picking, onClick: () => setPicking(!picking), children: "Link a payment…" }) : void 0,
           children: [
-            /* @__PURE__ */ u3("p", { class: "fx-sub fx-lead", children: into2.length ? `Each one counts as paying ${into2[0].name}. Link one, and the same payee's next ones are offered here.` : "No payment in the plan goes to this loan yet." }),
+            /* @__PURE__ */ u3("p", { class: "fx-sub fx-lead", children: into2.length ? `Each one counts as paying ${into2[0].name}.` : "No payment in the plan goes to this loan yet." }),
             !into2.length && keepPlan && (() => {
               const maybe = mayPay(v3.plan, a3, ledger);
               const pays = async (id2) => {
@@ -17560,7 +17560,6 @@ ${pays}
     const button = /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: got.busy, onClick: pull, children: got.busy ? "Reading Wallos…" : got.subs ? "Read again" : "From Wallos" });
     const names5 = (list) => list.map((s3) => s3.name).join(", ");
     return /* @__PURE__ */ u3(Widget, { title: "Subscriptions in Wallos", span: "all", kind: "fx-wallos", actions: button, children: [
-      !got.subs && !got.problem && /* @__PURE__ */ u3("p", { class: "fx-sub fx-lead", children: "Bring in Wallos' subscriptions the plan doesn't have." }),
       got.problem && /* @__PURE__ */ u3("p", { class: "formerr bad", role: "alert", children: got.problem }),
       sorted && /* @__PURE__ */ u3(S, { children: [
         sorted.add.length ? /* @__PURE__ */ u3(S, { children: [
@@ -17780,27 +17779,24 @@ ${pays}
   function FoundWidget({ v: v3, add }) {
     if (!v3.found?.length || !add) return null;
     const every = { week: "weekly", "2 weeks": "every other week", month: "monthly", "3 months": "every 3 months", year: "yearly" };
-    return /* @__PURE__ */ u3(Widget, { title: "Found in your transactions", span: "all", kind: "fx-found", children: [
-      /* @__PURE__ */ u3("p", { class: "fx-sub fx-lead", children: "Paid on a rhythm, but not in the plan yet." }),
-      /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: v3.found.map((f4) => /* @__PURE__ */ u3(
-        Row,
-        {
-          lead: /* @__PURE__ */ u3(Mark, { brand: brandOf(f4.institution, f4.payee), name: f4.payee }),
-          title: f4.payee,
-          sub: `${money(f4.amount)} ${every[f4.every] || f4.every} since ${dayShort(f4.since)} · ${plural(f4.times, "time")}${f4.next ? ` · next about ${dayShort(f4.next)}` : ""}`,
-          end: /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => add({
-            id: "",
-            name: f4.payee,
-            amount: f4.amount,
-            institution: f4.institution,
-            kind: kindForBrand(brandOf(f4.institution, f4.payee)) || kindFromCategory(f4.category, v3.categories),
-            from: f4.account === v3.checking ? void 0 : f4.account,
-            schedule: { every: f4.every, start: f4.next || f4.last }
-          }), children: "Add to the plan" })
-        },
-        f4.payee + f4.account
-      )) })
-    ] });
+    return /* @__PURE__ */ u3(Widget, { title: "Found in your transactions", span: "all", kind: "fx-found", children: /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: v3.found.map((f4) => /* @__PURE__ */ u3(
+      Row,
+      {
+        lead: /* @__PURE__ */ u3(Mark, { brand: brandOf(f4.institution, f4.payee), name: f4.payee }),
+        title: f4.payee,
+        sub: `${money(f4.amount)} ${every[f4.every] || f4.every} since ${dayShort(f4.since)} · ${plural(f4.times, "time")}${f4.next ? ` · next about ${dayShort(f4.next)}` : ""}`,
+        end: /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => add({
+          id: "",
+          name: f4.payee,
+          amount: f4.amount,
+          institution: f4.institution,
+          kind: kindForBrand(brandOf(f4.institution, f4.payee)) || kindFromCategory(f4.category, v3.categories),
+          from: f4.account === v3.checking ? void 0 : f4.account,
+          schedule: { every: f4.every, start: f4.next || f4.last }
+        }), children: "Add to the plan" })
+      },
+      f4.payee + f4.account
+    )) }) });
   }
   function Recurring({ v: v3, L: L2, edit, keep: keep3, running: running5, fromWallos }) {
     const [filter2, setFilter2] = d2(() => {
@@ -18348,7 +18344,7 @@ ${pays}
         kind: "fx-missing",
         actions: open5 && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: open5, children: "Transactions" }),
         children: [
-          /* @__PURE__ */ u3("p", { class: "fx-sub fx-lead", children: list.length === 1 ? "Paid before, but nothing in your transactions pays it yet. If it went through, link it in Transactions." : "Paid before, but nothing in your transactions pays these yet. If one went through, link it in Transactions." }),
+          /* @__PURE__ */ u3("p", { class: "fx-sub fx-lead", children: list.length === 1 ? "Nothing in your transactions pays it yet." : "Nothing in your transactions pays these yet." }),
           /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: list.map((m3) => {
             const x3 = L2.payment[m3.payment];
             return /* @__PURE__ */ u3(
