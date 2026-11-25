@@ -9,6 +9,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 ### New
 
 <!-- The iPhone and iPad app (lane 4): add a line just below this one. -->
+- **Fewer words on Recurring and Spending on the Homelab app:** on the iPhone and iPad, Recurring no longer says what a tap or + does, and Spending's note keeps only what isn't counted.
 - **Money Flow without its sentence on the Homelab app:** on the iPhone and iPad, the line under Money Flow's title (*October 2026, from your transactions: $6,700 in, $1,196 spent, $5,504 left.*) is gone; the month is in its picker and the amounts in the chart.
 - **Fewer explaining lines on the Homelab app's forms:** on the iPhone and iPad, Add Goal, Add Payment, a card's editor, a holding's buys and sales and the password export no longer have a line under them saying what a switch or a tap does.
 - **Fewer words on Goals and This Month on the Homelab app:** on the iPhone and iPad, Goals no longer says *Tap a goal to change its target*, and This Month compares money out as the Spending card does (*$1,028 more out vs Sep*).
