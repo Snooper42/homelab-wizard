@@ -40,7 +40,7 @@ Every setting lives in `~/Homelab/.env`, read by every Compose project. `.env.ex
 | `IMMICH_UPLOAD_LOCATION` | `/Volumes/Media/photos` | Immich's photo library |
 | `BACKUP_DESTINATION` | `./backups` | Duplicati's destination: a *Homelab Backups* folder in a cloud drive's synced folder or on an external drive, which Setup › **Backups leave this machine** offers ([Backups](<Backups.md>)) |
 | `JELLYFIN_DATA_DIR` | `~/.local/share/jellyfin` | Native Jellyfin's data folder, backed up by Duplicati |
-| `SYNC_ROOT` | `./data/sync` | Syncthing's shared folders (backed up only if you add them to a Duplicati job) |
+| `SYNC_ROOT` | `./data/sync` | Syncthing's shared folders (the Homelab Files job backs them up) |
 | `KOPIA_REPOSITORY` | `./backups-kopia` | Where Kopia (optional, the second backup beside Duplicati) keeps its repository: best another drive, never Duplicati's folder. Setup's *A second copy with Kopia* step, or `homelab kopia repository <folder>`, sets it ([Kopia](<../services/system/Kopia.md>)) |
 | `NAVIDROME_MUSIC_PATH` | empty | Where Navidrome sees the music folder in its container. Empty: the same path as on this machine, so playlists with full paths keep working; Windows sets `/music` |
 | `KIWIX_ZIM_ROOT`, `NEXTCLOUD_DATA`, `FRIGATE_RECORDINGS` | not in the template | Optional folders for Kiwix's libraries, Nextcloud's files, and Frigate's recordings, when they should not be in their default places (`MEDIA_ROOT/kiwix`, `appdata/nextcloud/data`, `MEDIA_ROOT/frigate`). Add the line to `.env` yourself |

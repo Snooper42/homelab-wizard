@@ -60,7 +60,7 @@ Keeps folders in sync between your devices directly over the home network, with 
 ## Connects to
 
 - Complements [File Browser](<../cloud and files/File Browser.md>) (the media drive), [Immich](<../cloud and files/Immich.md>) (photos), and [PairDrop](<../cloud and files/PairDrop.md>) (one-off transfers).
-- `SYNC_ROOT` is not mounted in [Duplicati](<../system/Duplicati.md>): add a read-only volume to Duplicati's service and a job to back it up.
+- `SYNC_ROOT` is mounted read-only in [Duplicati](<../system/Duplicati.md>) as `/source/sync`, and the Homelab Files job copies it every night.
 - Only the web UI goes through [Nginx Proxy Manager](<../network/Nginx Proxy Manager.md>) (`sync.example.com`); sync traffic uses ports 22000 and 21027 on the Mac directly (`LAN_BIND_IP`).
 - `.env`: `SYNCTHING_PORT`, `SYNC_ROOT`, `LAN_BIND_IP`, and `PUID`/`PGID` (who owns the synced files).
 
@@ -105,7 +105,7 @@ curl -s -X POST -H "X-API-Key: $SYNCTHING_API_KEY" "http://localhost:8384/rest/d
 
 ## Backup
 
-The configuration in `data/appdata/syncthing` is covered by the AppData job. The synced folders in `SYNC_ROOT` are not: add them to a Duplicati job if this Mac is their only extra copy.
+The configuration in `data/appdata/syncthing` is covered by the AppData job, and the synced folders in `SYNC_ROOT` by the Homelab Files job, made once the folder has files (the nightly run adds it to a homelab set up before). Until then Backups lists it under **Not in any backup**, with **Add**. Syncthing passes a deletion on to every device, so this backup is where a file deleted by mistake comes back from.
 
 ## Troubleshooting
 

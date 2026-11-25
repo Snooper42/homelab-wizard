@@ -61,6 +61,8 @@ Job settings always use the container paths on the right. Sources are read-only,
 | Music, movies, TV, audiobooks, comics | **Not backed up** (re-obtainable, and too large for most cloud drives) |
 | The homelab's own records in `data/` (the household, paired phones, single sign-on settings, Finances with each balance's history, its receipts and the Collection's pictures, update history) | `homelab backup` copies them into `recovery-staging/secrets/data` → Homelab Secrets job |
 
+Backups lists what no job copies under **Not in any backup**: a job's folder that has files but no job yet (the synced Files before their job is made, say), with **Add**, which makes the homelab's missing jobs; and the media library and the downloads, left out on purpose, each with why. A named volume no backup covers fails `homelab validate` (see [Storage](<Storage.md>)).
+
 ## Database dumps
 
 `homelab backup` runs `pg_dumpall --clean --if-exists` inside each database container, using the container's own `POSTGRES_USER` (so no password leaves the container). It gzips the output and keeps the file only if it ends with Postgres's completion marker. Databases are marked in the compose files with `dump: postgres`; a new database with that line is included automatically.

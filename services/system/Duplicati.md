@@ -77,7 +77,7 @@ By hand instead: in Duplicati, add a job per row of the table in [Automation](<.
 - Add filters (job › Edit › Source data › Filters) to skip caches and logs that bloat the AppData job.
 - Raise the advanced option `backup-test-samples` so each run checks more files at the destination.
 - Run `./homelab restore-test --auto` once a month: it restores a sample and compares it with the live files.
-- Back up Syncthing's `SYNC_ROOT`: it is not mounted here, so add a read-only volume to the service first.
+- Syncthing's `SYNC_ROOT` is mounted at `/source/sync` and copied by the Homelab Files job. A folder of the household's that no job copies is listed on Backups under **Not in any backup**.
 
 ## Useful commands
 

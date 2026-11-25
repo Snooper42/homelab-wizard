@@ -11,7 +11,7 @@ import { drawHealth } from './status/healthLine';
 import { healthData, hostData, loadAppearance, loadHost, loadSetup, setupNav, stepsData } from './screens/setup';
 import { changed, loadSettings, settingsData } from './screens/settings';
 import { loadCatalog } from './screens/choose';
-import { backupsData, jobsData, loadBackups } from './screens/backups';
+import { backupsData, gapsData, jobsData, loadBackups } from './screens/backups';
 import { openApp, openedApp, refreshApp } from './screens/apppage';
 import { updateFromMenu } from './screens/updates';
 import { financesData, ledgerData, loadFinances, sharedData, toggleHideAmounts } from './screens/finances';
@@ -56,7 +56,7 @@ function freshen(name) {
   // A phone's Status shows Setup's unfinished steps (no Setup tab there): read them at most every ten minutes.
   if (name === 'status' && onPhone()) stepsData.fresh(10 * minute);
   // Status too: a stale copy says why from its app's state.
-  if (name === 'backups') { backupsData.fresh(minute); jobsData.fresh(minute); statusData.fresh(minute); }
+  if (name === 'backups') { backupsData.fresh(minute); jobsData.fresh(minute); gapsData.fresh(minute).catch(() => {}); statusData.fresh(minute); }
   if (name === 'setup') { hostData.fresh(minute); stepsData.fresh(minute); healthData.fresh(minute); statusData.fresh(minute); }
   if (name === 'settings') { hostData.fresh(minute); if (!Object.keys(changed).length) settingsData.fresh(minute); }
   if (name === 'tidy') tidyData.fresh(minute);

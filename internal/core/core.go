@@ -414,6 +414,30 @@ func DuplicatiJobs(ctx context.Context, root string) ([]duplicati.Job, error) {
 	return duplicati.WithChecks(jobs, duplicati.LoadChecks(duplicati.CheckPath(root))), nil
 }
 
+// BackupGaps is what no backup job copies (Backups' Not in any backup): read against Duplicati's jobs, so none while
+// Duplicati can't be asked (its card says why).
+func BackupGaps(ctx context.Context, root string) ([]duplicati.Gap, error) {
+	jobs, err := DuplicatiJobs(ctx, root)
+	if err != nil {
+		return nil, err
+	}
+	env := Env(root)
+	home, _ := os.UserHomeDir()
+	// The synced Files' folder as Compose resolves it: a relative SYNC_ROOT is under the homelab folder.
+	sync := env["SYNC_ROOT"]
+	if sync == "" {
+		sync = "./data/sync"
+	}
+	switch {
+	case strings.HasPrefix(sync, "~/"):
+		sync = filepath.Join(home, sync[2:])
+	case !filepath.IsAbs(sync):
+		sync = filepath.Join(root, sync)
+	}
+	env["SYNC_ROOT"] = sync
+	return duplicati.Gaps(env, home, jobs), nil
+}
+
 // ErrNoCrowdSec means CrowdSec or the proxy is not running, so there is no
 // protection to show.
 var ErrNoCrowdSec = errors.New("CrowdSec and the proxy are not both running")
