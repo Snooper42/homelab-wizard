@@ -27,6 +27,7 @@ import { type History as UsageHistory, mountUsage, record as recordUsage } from 
 import { memoryByApp } from '../status/memory';
 import { settingLabel, showSettingsPage } from './settings';
 import { catalog, openCustom, openInstall, renderApps } from './choose';
+import { suggested } from '../choose/Choose';
 import { clearJob, cliProgress, startJob } from '../jobs';
 import { navigate } from '../app';
 import { mountOvernight, nightOf } from '../status/Overnight';
@@ -208,6 +209,7 @@ function drawStatusPart() {
     const sets = (catalog?.presets || []).filter((p) => !p.id.startsWith('stack:')).sort((x, y) => Number(!!y.starter) - Number(!!x.starter));
     mountCategoryPage($('statusPart'), {
       label: 'All apps', apps: lastStatus.apps, add: (catalog?.apps || []).filter((x) => x.kind !== 'helper' && !installed.has(x.id)), list: appList,
+      goes: catalog ? catalog.apps.filter((x) => x.kind !== 'helper' && suggested(x, { catalog, status: statusById }).length) : [],
       here: appList.companion ? 'On the server' : 'On ' + thisMachine.replace(/^This/, 'this'), addLabel: 'Add apps', sets, find: findText,
       install: (id) => openInstall([id]), installSet: (id) => { const p = catalog?.presets.find((x) => x.id === id); if (p) openInstall(p.apps, { set: id }); },
     });

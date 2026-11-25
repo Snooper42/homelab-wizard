@@ -29,6 +29,8 @@ export interface CategoryPageProps {
   addOwn?: () => void;
   /** The shelf's heading: "Add to Media", "Add apps". */
   addLabel?: string;
+  /** Apps that go with ones you run (All apps), first, as Choose apps suggested them. */
+  goes?: api.App[];
   /** What Find an app starts with (typed on the overview). */
   find?: string;
 }
@@ -105,7 +107,7 @@ function SetTile({ set, catalog, icons, install, change }: { set: api.Preset; ca
   );
 }
 
-export function CategoryPage({ label, apps, add, here, list, install, sets = [], installSet, addOwn, addLabel, find: typed = '' }: CategoryPageProps) {
+export function CategoryPage({ label, apps, add, here, list, install, sets = [], installSet, addOwn, addLabel, goes = [], find: typed = '' }: CategoryPageProps) {
   const [menu, setMenu] = useState<MenuAt | null>(null);
   const [find, setFind] = useState(typed);
   const running = apps.filter((a) => a.state === 'running').length;
@@ -124,11 +126,15 @@ export function CategoryPage({ label, apps, add, here, list, install, sets = [],
         <div><h1>{label}</h1><p class="lead">{facts}</p></div>
         <label class="catfind"><Icon name="search" /><input type="search" placeholder="Find an app" aria-label="Find an app" value={find} autoFocus={!!typed} onInput={(e) => setFind((e.currentTarget as HTMLInputElement).value)} /></label>
       </div>
-      <h2 class="cathead">{here} <span class="n">{apps.length}</span></h2>
+      {!find && goes.length > 0 && <>
+        <h2 class="cathead">Goes with your apps <span class="n">{goes.length}</span></h2>
+        <ul class="cattiles">{goes.map((x) => <Shelf key={x.id} app={x} icon={list.icons?.[x.id] || ''} install={install} change={change} />)}</ul>
+      </>}
       {setsShown.length > 0 && installSet && <>
         <h2 class="cathead">Sets <span class="n">{setsShown.length}</span></h2>
         <ul class="cattiles">{setsShown.map((x) => <SetTile key={x.id} set={x} catalog={list.catalog} icons={list.icons} install={installSet} change={change} />)}</ul>
       </>}
+      {(!find || shown.length > 0) && <h2 class="cathead">{here} <span class="n">{apps.length}</span></h2>}
       {shown.length || (addOwn && change) ? <ul class="cattiles">{shown.map((a) => <Tile key={a.id} a={a} p={list} menu={menu} setMenu={setMenu} />)}
         {addOwn && change && <li class="cattile toadd opens addown" onClick={addOwn}>
           <span class="appmark ownmark" aria-hidden="true"><svg class="icon" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16zM3.27 6.96 12 12.01l8.73-5.05M12 22.08V12" /></svg></span>
@@ -136,7 +142,7 @@ export function CategoryPage({ label, apps, add, here, list, install, sets = [],
           <span class="catline">Any container image</span>
           <span class="catbtn"><button type="button" class="small" onClick={(e) => { e.stopPropagation(); addOwn(); }}>Add</button></span>
         </li>}</ul>
-        : <p class="muted catnone">{find ? 'None by that name' : 'None yet'}</p>}
+        : !find && <p class="muted catnone">None yet</p>}
       {add.length > 0 && <>
         <h2 class="cathead">{addLabel || `Add to ${label}`} <span class="n">{add.length}</span></h2>
         {toAdd.length ? <ul class="cattiles">{toAdd.map((x) => <Shelf key={x.id} app={x} icon={list.icons?.[x.id] || ''} install={install} change={change} />)}</ul>

@@ -24,14 +24,18 @@ export function InstallSheets({ close, closeCustom }: { close: () => void; close
 }
 
 /** The app's own page atop the plan: one app's, or a set's apps as marks. */
-export function About({ app, set, catalog, icons }: { app?: api.App; set?: api.Preset; catalog: api.Catalog; icons?: Record<string, string> }) {
+export function About({ app, set, catalog, icons, notes = [] }: { app?: api.App; set?: api.Preset; catalog: api.Catalog; icons?: Record<string, string>;
+  /** Choose apps' lines for it: how it runs on this system, an app you run that does the same, one it goes with. */
+  notes?: string[] }) {
   if (set) {
     const apps = (set.apps || []).map((id) => catalog.apps.find((a) => a.id === id)).filter(Boolean) as api.App[];
     return (
       <div class="installabout">
         <div class="aboutmarks">{apps.slice(0, 5).map((a) => <AppMark key={a.id} id={a.id} name={a.name} icon={icons?.[a.id] || ''} />)}</div>
-        <p class="aboutwhat">{set.description}</p>
-        <p class="muted aboutfacts">{apps.map((a) => a.name).join(' · ')}</p>
+        <div class="abouttext">
+          <p class="aboutwhat">{set.description}</p>
+          <p class="muted aboutfacts">{apps.map((a) => a.name).join(' · ')}</p>
+        </div>
       </div>
     );
   }
@@ -40,20 +44,24 @@ export function About({ app, set, catalog, icons }: { app?: api.App; set?: api.P
   const cat = catalog.categories.find((c) => c.id === app.category)?.label;
   const facts = [
     cat,
-    app.replaces?.length ? `Instead of ${app.replaces.join(', ')}` : '',
+    app.kind === 'native' ? 'Runs natively' : '',
+    app.replaces?.length ? `Replaces ${app.replaces.join(', ')}` : '',
     app.public ? 'Can be reached away from home' : '',
   ].filter(Boolean);
   const goes = Object.keys(app.goesWith || {});
   return (
     <div class="installabout">
       <AppMark id={app.id} name={app.name} icon={icons?.[app.id] || ''} />
+      <div class="abouttext">
       <p class="aboutwhat">{app.description}</p>
       {!!facts.length && <p class="muted aboutfacts">{facts.join(' · ')}</p>}
       {!!goes.length && <p class="muted aboutfacts">Goes with {goes.map(name).join(', ')}</p>}
+      {notes.map((n) => <p key={n} class="muted aboutfacts aboutnote">{n}</p>)}
       {app.warning && <p class="warn aboutfacts">{app.warning}</p>}
+      </div>
     </div>
   );
 }
 
 export const mountInstallSheets = (el: Element, p: { close: () => void; closeCustom: () => void }) => render(<InstallSheets {...p} />, el);
-export const mountAbout = (el: Element, p: { app?: api.App; set?: api.Preset; catalog: api.Catalog; icons?: Record<string, string> } | null) => render(p && <About {...p} />, el);
+export const mountAbout = (el: Element, p: { app?: api.App; set?: api.Preset; catalog: api.Catalog; icons?: Record<string, string>; notes?: string[] } | null) => render(p && <About {...p} />, el);

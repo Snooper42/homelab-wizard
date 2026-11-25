@@ -4160,7 +4160,7 @@
       ] }) })
     ] });
   }
-  function CategoryPage({ label, apps: apps2, add, here: here3, list, install, sets = [], installSet, addOwn, addLabel, find: typed = "" }) {
+  function CategoryPage({ label, apps: apps2, add, here: here3, list, install, sets = [], installSet, addOwn, addLabel, goes = [], find: typed = "" }) {
     const [menu2, setMenu] = d2(null);
     const [find2, setFind] = d2(typed);
     const running5 = apps2.filter((a3) => a3.state === "running").length;
@@ -4182,10 +4182,12 @@
           /* @__PURE__ */ u3("input", { type: "search", placeholder: "Find an app", "aria-label": "Find an app", value: find2, autoFocus: !!typed, onInput: (e3) => setFind(e3.currentTarget.value) })
         ] })
       ] }),
-      /* @__PURE__ */ u3("h2", { class: "cathead", children: [
-        here3,
-        " ",
-        /* @__PURE__ */ u3("span", { class: "n", children: apps2.length })
+      !find2 && goes.length > 0 && /* @__PURE__ */ u3(S, { children: [
+        /* @__PURE__ */ u3("h2", { class: "cathead", children: [
+          "Goes with your apps ",
+          /* @__PURE__ */ u3("span", { class: "n", children: goes.length })
+        ] }),
+        /* @__PURE__ */ u3("ul", { class: "cattiles", children: goes.map((x3) => /* @__PURE__ */ u3(Shelf, { app: x3, icon: list.icons?.[x3.id] || "", install, change }, x3.id)) })
       ] }),
       setsShown.length > 0 && installSet && /* @__PURE__ */ u3(S, { children: [
         /* @__PURE__ */ u3("h2", { class: "cathead", children: [
@@ -4193,6 +4195,11 @@
           /* @__PURE__ */ u3("span", { class: "n", children: setsShown.length })
         ] }),
         /* @__PURE__ */ u3("ul", { class: "cattiles", children: setsShown.map((x3) => /* @__PURE__ */ u3(SetTile, { set: x3, catalog: list.catalog, icons: list.icons, install: installSet, change }, x3.id)) })
+      ] }),
+      (!find2 || shown8.length > 0) && /* @__PURE__ */ u3("h2", { class: "cathead", children: [
+        here3,
+        " ",
+        /* @__PURE__ */ u3("span", { class: "n", children: apps2.length })
       ] }),
       shown8.length || addOwn && change ? /* @__PURE__ */ u3("ul", { class: "cattiles", children: [
         shown8.map((a3) => /* @__PURE__ */ u3(Tile2, { a: a3, p: list, menu: menu2, setMenu }, a3.id)),
@@ -4205,7 +4212,7 @@
             addOwn();
           }, children: "Add" }) })
         ] })
-      ] }) : /* @__PURE__ */ u3("p", { class: "muted catnone", children: find2 ? "None by that name" : "None yet" }),
+      ] }) : !find2 && /* @__PURE__ */ u3("p", { class: "muted catnone", children: "None yet" }),
       add.length > 0 && /* @__PURE__ */ u3(S, { children: [
         /* @__PURE__ */ u3("h2", { class: "cathead", children: [
           addLabel || `Add to ${label}`,
@@ -6462,13 +6469,15 @@
       ] })
     ] });
   }
-  function About({ app, set: set2, catalog: catalog2, icons: icons4 }) {
+  function About({ app, set: set2, catalog: catalog2, icons: icons4, notes = [] }) {
     if (set2) {
       const apps2 = (set2.apps || []).map((id2) => catalog2.apps.find((a3) => a3.id === id2)).filter(Boolean);
       return /* @__PURE__ */ u3("div", { class: "installabout", children: [
         /* @__PURE__ */ u3("div", { class: "aboutmarks", children: apps2.slice(0, 5).map((a3) => /* @__PURE__ */ u3(AppMark, { id: a3.id, name: a3.name, icon: icons4?.[a3.id] || "" }, a3.id)) }),
-        /* @__PURE__ */ u3("p", { class: "aboutwhat", children: set2.description }),
-        /* @__PURE__ */ u3("p", { class: "muted aboutfacts", children: apps2.map((a3) => a3.name).join(" · ") })
+        /* @__PURE__ */ u3("div", { class: "abouttext", children: [
+          /* @__PURE__ */ u3("p", { class: "aboutwhat", children: set2.description }),
+          /* @__PURE__ */ u3("p", { class: "muted aboutfacts", children: apps2.map((a3) => a3.name).join(" · ") })
+        ] })
       ] });
     }
     if (!app) return null;
@@ -6476,19 +6485,23 @@
     const cat = catalog2.categories.find((c4) => c4.id === app.category)?.label;
     const facts2 = [
       cat,
-      app.replaces?.length ? `Instead of ${app.replaces.join(", ")}` : "",
+      app.kind === "native" ? "Runs natively" : "",
+      app.replaces?.length ? `Replaces ${app.replaces.join(", ")}` : "",
       app.public ? "Can be reached away from home" : ""
     ].filter(Boolean);
     const goes = Object.keys(app.goesWith || {});
     return /* @__PURE__ */ u3("div", { class: "installabout", children: [
       /* @__PURE__ */ u3(AppMark, { id: app.id, name: app.name, icon: icons4?.[app.id] || "" }),
-      /* @__PURE__ */ u3("p", { class: "aboutwhat", children: app.description }),
-      !!facts2.length && /* @__PURE__ */ u3("p", { class: "muted aboutfacts", children: facts2.join(" · ") }),
-      !!goes.length && /* @__PURE__ */ u3("p", { class: "muted aboutfacts", children: [
-        "Goes with ",
-        goes.map(name).join(", ")
-      ] }),
-      app.warning && /* @__PURE__ */ u3("p", { class: "warn aboutfacts", children: app.warning })
+      /* @__PURE__ */ u3("div", { class: "abouttext", children: [
+        /* @__PURE__ */ u3("p", { class: "aboutwhat", children: app.description }),
+        !!facts2.length && /* @__PURE__ */ u3("p", { class: "muted aboutfacts", children: facts2.join(" · ") }),
+        !!goes.length && /* @__PURE__ */ u3("p", { class: "muted aboutfacts", children: [
+          "Goes with ",
+          goes.map(name).join(", ")
+        ] }),
+        notes.map((n3) => /* @__PURE__ */ u3("p", { class: "muted aboutfacts aboutnote", children: n3 }, n3)),
+        app.warning && /* @__PURE__ */ u3("p", { class: "warn aboutfacts", children: app.warning })
+      ] })
     ] });
   }
   var mountInstallSheets = (el3, p3) => R(/* @__PURE__ */ u3(InstallSheets, { ...p3 }), el3);
@@ -6519,7 +6532,12 @@
     }
     const app = catalog?.apps.find((a3) => a3.id === (about?.app ?? (ids.length === 1 ? ids[0] : "")));
     const set2 = catalog?.presets.find((p3) => p3.id === about?.set);
-    mountAbout($("installAbout"), catalog && (app || set2) ? { app, set: set2, catalog, icons: icons2 } : null);
+    const notes = app && catalog ? [
+      appNote(app.id, systemOf(osName, hostOS)),
+      ...sameJob(app, { catalog, status: statusById }).map(([o3, why]) => `You already run ${o3.name}: ${why}`),
+      ...suggested(app, { catalog, status: statusById }).map(([o3, why]) => `Goes with ${o3.name}, which you run: ${why}`)
+    ].filter(Boolean) : [];
+    mountAbout($("installAbout"), catalog && (app || set2) ? { app, set: set2, catalog, icons: icons2, notes } : null);
     $("installTitle").textContent = set2 ? set2.name : app ? app.name : "Install";
     $("installSheet").hidden = false;
     renderApps();
@@ -8965,6 +8983,7 @@
         apps: lastStatus.apps,
         add: (catalog?.apps || []).filter((x3) => x3.kind !== "helper" && !installed2.has(x3.id)),
         list: appList,
+        goes: catalog ? catalog.apps.filter((x3) => x3.kind !== "helper" && suggested(x3, { catalog, status: statusById }).length) : [],
         here: appList.companion ? "On the server" : "On " + thisMachine.replace(/^This/, "this"),
         addLabel: "Add apps",
         sets,

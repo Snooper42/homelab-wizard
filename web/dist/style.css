@@ -3560,10 +3560,11 @@ nav .sidemenulist .sidedot + .total { margin-left:8px; }
    add opens its sheet; Your own apps' Add tile. */
 .sheethead { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:8px; }
 .sheethead h2 { margin:0; font-size:20px; }
-.installabout { display:grid; grid-template-columns:auto 1fr; column-gap:16px; align-items:center; padding:4px 0 14px; margin-bottom:12px; border-bottom:1px solid var(--line); }
-.installabout > .appmark, .installabout > .aboutmarks { grid-row:span 3; }
-.installabout .appmark { width:64px; height:64px; border-radius:16px; }
-.installabout .aboutmarks { display:flex; } .installabout .aboutmarks .appmark { width:44px; height:44px; border-radius:12px; margin-right:-10px; box-shadow:0 0 0 2px var(--panel); }
+.installabout { display:flex; align-items:flex-start; gap:16px; padding:4px 0 14px; margin-bottom:12px; border-bottom:1px solid var(--line); }
+.installabout > .appmark, .installabout > .aboutmarks { flex:none; }
+.installabout .abouttext { flex:1; min-width:0; }
+.installabout > .appmark { width:64px; height:64px; border-radius:16px; }
+.installabout .aboutmarks { display:flex; padding-right:10px; } .installabout .aboutmarks .appmark { width:44px; height:44px; border-radius:12px; margin-right:-10px; box-shadow:0 0 0 2px var(--panel); }
 .installabout p { margin:0; }
 .aboutwhat { font-size:15px; }
 .aboutfacts { font-size:13px; margin-top:4px !important; }
@@ -3576,3 +3577,4 @@ nav .sidemenulist .sidedot + .total { margin-left:8px; }
 .cattile .ownmark .icon { width:28px; height:28px; }
 #customBody .customForm { padding:0; }
 @media (max-width: 700px) { .statusfind { width:100%; order:-1; } }
+#installSheet .sheethead h2, #customSheet .sheethead h2 { font-size:22px; font-weight:700; }

@@ -66,10 +66,10 @@ const matches = (a: api.App, query: string) => !query || [a.name, a.id, a.descri
 
 const stateBadge: Record<string, [string, string]> = { running: ['running', 'ok'], stopped: ['stopped', 'warn'], elsewhere: ['runs elsewhere', 'warn'] };
 
-const installed = (p: GroupsProps, id: string) => ['running', 'stopped'].includes(p.status[id]?.state || '');
+const installed = (p: Pick<GroupsProps, 'status'>, id: string) => ['running', 'stopped'].includes(p.status[id]?.state || '');
 
 /** The apps a, not yet run, adds to among those you run (x-homelab goes_with), each with what it brings them. */
-function suggested(a: api.App, p: GroupsProps): [api.App, string][] {
+export function suggested(a: api.App, p: Pick<GroupsProps, 'status' | 'catalog'>): [api.App, string][] {
   if (installed(p, a.id) || a.kind === 'native') return [];
   return Object.entries(a.goesWith || {}).flatMap(([id, why]): [api.App, string][] => {
     const with_ = p.catalog.apps.find((o) => o.id === id);
@@ -79,7 +79,7 @@ function suggested(a: api.App, p: GroupsProps): [api.App, string][] {
 
 /** Apps that do much the same as a and are installed (running or stopped), each with why one might keep one or both;
  * a pair is written on one side (x-homelab same_job) and said on both. Not said on an app that is itself installed. */
-function sameJob(a: api.App, p: GroupsProps): [api.App, string][] {
+export function sameJob(a: api.App, p: Pick<GroupsProps, 'status' | 'catalog'>): [api.App, string][] {
   if (installed(p, a.id)) return [];
   return p.catalog.apps.flatMap((o): [api.App, string][] => {
     const why = a.sameJob?.[o.id] || o.sameJob?.[a.id];

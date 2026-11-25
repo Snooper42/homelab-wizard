@@ -1,6 +1,6 @@
 // Choose apps: the catalog, the picks, the plan, the install, and wiring
 // the apps together.
-import { catalogProblem, mountBundles, mountGroups, mountInputs, mountPlan, mountStarters } from '../choose/Choose';
+import { catalogProblem, mountBundles, mountGroups, mountInputs, mountPlan, mountStarters, sameJob, suggested } from '../choose/Choose';
 import { questions } from '../choose/questions';
 import { appNote, systemOf } from '../differs';
 import { mountJobApps } from '../job/Apps';
@@ -34,7 +34,12 @@ export function openInstall(ids: string[], about?: { app?: string; set?: string 
   if (!installing) { selected.clear(); ids.forEach((id) => selected.add(id)); }
   const app = catalog?.apps.find((a) => a.id === (about?.app ?? (ids.length === 1 ? ids[0] : '')));
   const set = catalog?.presets.find((p) => p.id === about?.set);
-  mountAbout($('installAbout'), catalog && (app || set) ? { app, set, catalog, icons: appIcons } : null);
+  const notes = app && catalog ? [
+    appNote(app.id, systemOf(osName, hostOS)),
+    ...sameJob(app, { catalog, status: statusById }).map(([o, why]) => `You already run ${o.name}: ${why}`),
+    ...suggested(app, { catalog, status: statusById }).map(([o, why]) => `Goes with ${o.name}, which you run: ${why}`),
+  ].filter(Boolean) as string[] : [];
+  mountAbout($('installAbout'), catalog && (app || set) ? { app, set, catalog, icons: appIcons, notes } : null);
   $('installTitle').textContent = set ? set.name : app ? app.name : 'Install';
   $('installSheet').hidden = false;
   renderApps();
