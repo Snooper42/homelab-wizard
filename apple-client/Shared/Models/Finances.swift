@@ -141,6 +141,8 @@ struct FinancesPlanView: Decodable, Sendable, Equatable {
     /// Checking at the end of each day read ahead, by day (YYYY-MM-DD, `View.Days`):
     /// Bills' *On payday, once its own payments are out*.
     var dayBalances: [String: Double] = [:]
+    /// The paydays before this period, newest first (`View.Before`): Last paycheck's days.
+    var before: [FinancePayday] = []
 
     private struct DayBalance: Decodable {
         let date: String
@@ -148,7 +150,7 @@ struct FinancesPlanView: Decodable, Sendable, Equatable {
     }
 
     enum CodingKeys: String, CodingKey {
-        case today, checking, start, periods, plan, readOnly, budgets, goals, loans, categories, since, checkingNow, afterPay, worthEstimated, dues, days
+        case today, checking, start, periods, plan, readOnly, budgets, goals, loans, categories, since, checkingNow, afterPay, worthEstimated, dues, days, before
     }
 
     init(from decoder: Decoder) throws {
@@ -172,6 +174,7 @@ struct FinancesPlanView: Decodable, Sendable, Equatable {
         dues = ((try? c.decodeIfPresent([String: [String]].self, forKey: .dues)) ?? nil) ?? [:]
         let days = ((try? c.decodeIfPresent([DayBalance].self, forKey: .days)) ?? nil) ?? []
         dayBalances = Dictionary(days.map { ($0.date, $0.balance) }, uniquingKeysWith: { first, _ in first })
+        before = ((try? c.decodeIfPresent([FinancePayday].self, forKey: .before)) ?? nil) ?? []
     }
 
     /// The keys waiting now: what `Plan.waiting` should hold, as the computer reads it.
