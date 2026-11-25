@@ -1,6 +1,6 @@
 # Loop W: The phone's page
 
-**Started by** its launcher below, or by the accounts' start lines once `lanes.md` has a row for lane W (only the owner changes `lanes.md`: the row to add is under *Adding it to lanes.md*).
+**Started by** account B's start line (`lanes.md`: M and W by turns from Wed Nov 25, 9 PM; the owner, Nov 25), or by the launcher below.
 
 **Paused:** no
 
@@ -8,7 +8,7 @@
 
 *"I want to only focus on the web page component. This needs to be perfect across all possible platforms. And let's try and optimize for iPhone Duo."*
 
-So this is the only work: the phone's page, on every device and browser people actually use, with **the iPhone Duo (Apple's foldable) first.** Nothing outside this file's items, and nothing in `apple-client/`, Finances' data or the computer-only screens. (The other lanes' loops are the owner's to pause: **Paused: yes** at the top of each.)
+So this is the only work: the phone's page, on every device and browser people actually use, with **the iPhone Duo (Apple's foldable) first.** Nothing outside this file's items, and nothing in `apple-client/`, Finances' data or the computer-only screens. The other lanes keep running (the owner, Nov 25); `lanes.md` rule 2 keeps you apart.
 
 ## Why this lane exists
 
@@ -139,6 +139,7 @@ Each item is one pull request unless it says it splits. Tick it here in the same
 
   **Touch targets at least 44 px** in every size; nothing important in the centre fold line of the unfolded Duo in landscape (a card may cross it, a button shouldn't sit on it: keep the two panes' gap there).
 - [ ] **W5. Status on the phone as `web-status.png`.** The stopped app first, with Start, Logs and Its page; Backups and the machine side by side; each category one row. The machine's card says what's true of *this* machine: a server with no battery says the disks and the next update (not *Plugged in*); a Mac or laptop keeps power. Name it from the computer's own facts (`core.Machine`, `internal/host`), never from the phone. The *Alerts on this phone* offer waits for W9.
+- [ ] **W5b. A server's words** (the owner's yes, Nov 25). On a machine with no battery and no desktop session (no display server, `systemctl get-default` is `multi-user.target`, or what `internal/host` can read on each system), Setup leaves out *This machine stays awake* and every screen says *The server* in place of *This Mac* / *This machine*, on the computer's screens and the phone's page alike. The detection is Go in `internal/host` (lane Q's): with a test per system and **Needs Q's review: yes**. Laptops and desktops unchanged.
 - [ ] **W6. An app's page on the phone as `web-app.png`.** A back button with the screen it came from, the app's name as the title (no search bar from the screen before). Open, then Restart, Logs and Stop sharing the width. Its week as seven squares; its backups (the last seven nights, the size, where); its last update with Roll back (a look-only phone sees no Roll back). Use what `web/src/page/AppPage.tsx` and `web/src/screens/apppage.ts` already draw; leave out what the phone's calls don't carry yet, and list it under *Next*.
 - [ ] **W7. Moving around like an app.**
   - Every screen and page pushes a history entry, so iOS's edge swipe and Android's back button go back, and a reload lands where you were.
@@ -146,7 +147,7 @@ Each item is one pull request unless it says it splits. Tick it here in the same
   - Page changes with the View Transitions API where the browser has it (Safari 18), with nothing on `prefers-reduced-motion`.
   - The tab bar and top bar clear the safe areas in standalone mode.
 - [ ] **W8. Offline, honestly.** With the computer unreachable (away without Tailscale, Tailscale off), the last Status, Backups and each app's page as last read, with *As of 7:02 AM* on top and every change button disabled with why. `sw.js` keeps the page; the readings go in IndexedDB (never Finances in plain form: those wait for W12). Back online, everything is read again by itself. A test in `app/preview/companion.mjs`.
-- [ ] **W9. Alerts on the Lock Screen (Web Push)** (`web-push.png`). **Needs Q's review: yes** (a new outgoing host, a new secret, a new phone call), **and the owner's yes before it merges** (`lanes.md` rule 13: alerts leave the machine for Apple's, Google's or Mozilla's push service; their contents are encrypted end to end, the service sees only that one was sent). Split in two:
+- [ ] **W9. Alerts on the Lock Screen (Web Push)** (`web-push.png`). **Needs Q's review: yes** (a new outgoing host, a new secret, a new phone call), **The owner's yes: given Nov 25** (`lanes.md` rule 13: alerts leave the machine for Apple's, Google's or Mozilla's push service; their contents are encrypted end to end, the service sees only that one was sent). Off until each phone turns it on. Q's review still comes first. Split in two:
   - **(a) The computer's side:**
     - VAPID keys made once, kept in `.env` (`WEBPUSH_PRIVATE_KEY`, 0600; `lanes.md` rule 9; in `.env.example` with a comment, and in the redaction lists).
     - A subscription per paired phone, an optional field in `data/phones.json` (`lanes.md` rule 10, with a test loading a file without it), removed when the phone is removed or lowered.
@@ -162,14 +163,14 @@ Each item is one pull request unless it says it splits. Tick it here in the same
     - The service worker shows the alert and opens the right page on a tap (the app's page for a stopped app; Backups for a backup).
     - The alert's words are the computer's alert's, never a token or an address.
 - [ ] **W10. The count on the Home Screen icon.** `navigator.setAppBadge(n)` with the same count as the Status badge (one problem, one count), set when the page reads Status and by the service worker on a push. Cleared at zero. Only in standalone mode.
-- [ ] **W11. A passkey lock** (Face ID or Touch ID, WebAuthn). **Needs Q's review: yes** (sign-in). An owner's question first (`lanes.md` rule 4: a security choice): offer it, or require it for phones allowed changes?
+- [ ] **W11. A passkey lock** (Face ID or Touch ID, WebAuthn). **Needs Q's review: yes** (sign-in). **The owner, Nov 25: optional** (offered once on phones allowed changes; never required).
   - A phone allowed changes may add a passkey for this site (the relying party is the page's own host).
   - The computer keeps its public key beside the phone's token in `data/phones.json` (optional field).
   - With a passkey set, every `Change: true` call carries a fresh assertion that the computer checks (`allowed`, `internal/companion/server.go` ~481): the server checks the user, not just the page.
   - The page locks after 5 minutes in the background, as the iPhone app does.
   - Without a passkey nothing changes. Over plain `http://`, a passkey can't exist, so the page says to open the https address.
-- [ ] **W12. Finances offline, sealed.** After W11 and with the owner's yes: the last Finances read, kept on the phone encrypted with a key from the passkey (WebAuthn PRF, iOS 18 and current Chrome), opened with Face ID, gone when Finances is taken from the phone or it's unpaired. The same rules as the iPhone app's `OfflineFinances` (`apple-client/README.md`, *Finances offline*). Changes made offline wait and replay as the app's do, through the same code (`mobile/finance`'s wasm build, `web/dist/finance.wasm`). With lane M's agreement in `money-loop.md` › **From the other lanes**.
-- [ ] **W13. Choose apps on the phone.** **The owner's call first** (`lanes.md` rule 4): Choose apps stays on the computer *on purpose* today (`docs/Parity.md`, Gaps). For a household with no computer screen (a server), it's the one thing they can't do from the page. Mock it (`app/preview/redesign/web.mjs`: the list, the install plan, Install) and ask in `owner.md`. Only on a yes: the install calls in `phoneMethods` (**Needs Q's review: yes**), for phones allowed changes, behind W11's passkey once it exists.
+- [x] ~~**W12. Finances offline, sealed.**~~ **Dropped: the owner said no, Nov 25.** Finances show only while the homelab answers; never keep them on the phone. The old text, for the record: After W11 and with the owner's yes: the last Finances read, kept on the phone encrypted with a key from the passkey (WebAuthn PRF, iOS 18 and current Chrome), opened with Face ID, gone when Finances is taken from the phone or it's unpaired. The same rules as the iPhone app's `OfflineFinances` (`apple-client/README.md`, *Finances offline*). Changes made offline wait and replay as the app's do, through the same code (`mobile/finance`'s wasm build, `web/dist/finance.wasm`). With lane M's agreement in `money-loop.md` › **From the other lanes**.
+- [ ] **W13. Choose apps on the phone.** **The owner, Nov 25: mock it first,** and build only on their yes once they've seen it. Choose apps stays on the computer *on purpose* today (`docs/Parity.md`, Gaps). For a household with no computer screen (a server), it's the one thing they can't do from the page. Mock it (`app/preview/redesign/web.mjs`: the list, the install plan, Install) and ask in `owner.md`. Only on a yes: the install calls in `phoneMethods` (**Needs Q's review: yes**), for phones allowed changes, behind W11's passkey once it exists.
 - [ ] **W14. Every other phone.** Android (Chrome) and an iPad, as rule 7's sizes: the manifest's maskable icon, Android's back button (W7), Chrome's install prompt (shown once, as Status's alerts offer is). Fix what's off; list what can't be.
 - [ ] **W15. Keep it in step with lane R.** For every screen R has redesigned since the last check, the phone's page at rule 7's sizes, against its `phone-*` picture and the pattern. Anything off: fix it here if the file is free, else a line in `redesign-loop.md` › **From the other lanes**. Then keep this item open: it repeats whenever R merges a screen.
 
@@ -181,21 +182,15 @@ Each item is one pull request unless it says it splits. Tick it here in the same
 - A `CHANGELOG.md` line under *Everything else* (`lanes.md` rule 3).
 - **Try this tonight:** three to five steps on the owner's own phone, and one for the tester's server (*on the server: `git pull` and `./homelab restart`; on the phone: pull to refresh*).
 
-## Adding it to lanes.md (the owner's, only)
+## The owner's answers (Nov 25)
 
-To run this lane on an account's schedule, add a row to *Which account runs what* and one to the lanes table:
-
-    | W, The phone's page | web-loop.md | claude/web-* | web/dist/companion.js, sw.js, phone.css; internal/companion; the phone's smoke cases; app/preview/redesign/web.mjs; Phone companion's note; Parity.md's Phone's page column |
-
-Until then, any session can run it with the launcher above. Steady pace (`lanes.md`: stop after three merged pull requests).
-
-## Questions for the owner (asked in owner.md as each item reaches them)
-
-- W9: alerts through Apple's, Google's or Mozilla's push service (encrypted, the service sees only that one was sent): yes?
-- W11: offer a passkey lock, or require one for phones allowed changes?
-- W12: finances kept on the phone, sealed by the passkey, for offline: yes?
-- W13: Choose apps on the phone, for phones allowed changes: yes, with the mock?
-- Server words: on a machine with no battery and no desktop, Setup's *This machine stays awake* step goes, and *This Mac* / *This machine* reads *The server*: yes?
+- W0: land the branch through a pull request: yes.
+- W9, alerts through the push services: yes, off until each phone turns them on.
+- W11, the passkey lock: optional, never required.
+- W12, Finances kept on the phone: **no** (dropped).
+- W13, Choose apps on the phone: mock it first; build only on a yes after.
+- W5b, a server's words: yes.
+- The other lanes keep running. Lane W runs on account B, by turns with M (`lanes.md`).
 
 ## From the other lanes
 
