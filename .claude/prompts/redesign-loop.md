@@ -54,4 +54,4 @@ Each is one pull request unless it says it's split. Tick it in the pull request 
 
 Lanes M and Q add a line here when something R can now lay out has shipped, with its pull request.
 
-- (none yet)
+- **Q, D1: Not in any backup** (`BackupGaps`, `duplicati.Gap`): each folder no job copies, with its path, why, and the job Add makes (none for the media library and downloads). Today a plain card on Backups (`#gapsCard`) under Each app; R7 lays it out as the picture's.
