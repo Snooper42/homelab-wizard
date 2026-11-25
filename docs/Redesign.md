@@ -180,6 +180,20 @@ The owner, Nov 25: click a category in Status' menu (Network, Media, …) and ge
 
 <picture><source media="(prefers-color-scheme: dark)" srcset="images/redesign/computer-category-dark.png"><img alt="Media's page in Homelab Wizard on the computer: the strip of Choose apps, Status, Backups, Tidy Up and Finances; Status' menu with Analytics and each category; On this Mac, three tiles; Add to Media, every Media app to install" src="images/redesign/computer-category.png"></picture>
 
+#### Analytics
+
+The owner, Nov 25: the machine's numbers on a screen of their own, under Overview in Status' menu, not on every category ([the whole page](<images/redesign/web-analytics-full-dark.png>)).
+
+<picture><source media="(prefers-color-scheme: dark)" srcset="images/redesign/web-analytics-dark.png"><img alt="Analytics: Day, Week, Month on top; three cards built one way (processor 7% on average, busiest at the nightly backup; memory 11 of 32 GB, Immich uses the most; drives 3.4 TB free, both healthy); this week's processor and memory as one chart with each night's backups marked; what each app uses, heaviest first" src="images/redesign/web-analytics.png"></picture>
+
+<picture><source media="(prefers-color-scheme: dark)" srcset="images/redesign/web-analytics-phone-dark.png"><img alt="Analytics on a phone: Day, Week, Month; memory and processor cards; what each app uses" src="images/redesign/web-analytics-phone.png" width="200"></picture>
+
+- **Day, Week, Month** on top, changing every part of the page.
+- **Three cards built one way** (*Cards*, above): **Processor** (the average, when it was busiest and why: *the nightly backup*), **Memory** (in use of the total, the app that uses most with its logo), **Drives** (free space, health, *full in about 3 years* from the growth so far). Each footer is the last 24 hours as a line, scaled to its own range, or the drive's bar.
+- **This week**, one chart: processor and memory, with each night's backups and updates as a dotted line, so a spike explains itself.
+- **What each app uses**, heaviest first: its logo, memory as a bar and a figure, processor, and what it keeps on disk. A row opens the app's page. On a phone: memory and processor only.
+- Its data: `StatusBoard`'s `usage` and `storage`, the history the computer keeps (Beszel's where it runs, else the agent's own samples), and the jobs' times. Nothing new leaves the machine.
+
 #### Toward 1.0: an app store
 
 The owner, Nov 25: *"little by little once we reach 1.0 I could add more and more apps and this could become sort of like an App Store where anybody on any platform could just download this or access it via the web and then they could configure and add any apps they want."* So a category's *Add to …* half is the store's shelf, and every choice now should let it grow:

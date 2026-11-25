@@ -34,8 +34,8 @@ try {
 }
 
 // Page file, picture name.
-const computer = [['dashboard', 'computer-finances'], ['transactions', 'computer-transactions'], ['backups', 'computer-backups'], ['settings', 'computer-settings'], ['tidy', 'computer-tidy'], ['computer-category', 'computer-category'], ['web-wide', 'web-wide'], ['web-wide-ok', 'web-wide-ok'], ['web-category', 'web-category']];
-const phone = [['phone-finances', 'phone-finances'], ['phone-transactions', 'phone-transactions'], ['phone-status', 'phone-status'], ['phone-jordan', 'phone-partner'], ['phone-backups', 'phone-backups'], ['phone-settings', 'phone-settings'], ['web-status', 'web-status'], ['web-app', 'web-app'], ['web-push', 'web-push'], ['web-category-phone', 'web-category-phone']];
+const computer = [['dashboard', 'computer-finances'], ['transactions', 'computer-transactions'], ['backups', 'computer-backups'], ['settings', 'computer-settings'], ['tidy', 'computer-tidy'], ['computer-category', 'computer-category'], ['web-wide', 'web-wide'], ['web-wide-ok', 'web-wide-ok'], ['web-analytics', 'web-analytics'], ['web-category', 'web-category']];
+const phone = [['phone-finances', 'phone-finances'], ['phone-transactions', 'phone-transactions'], ['phone-status', 'phone-status'], ['phone-jordan', 'phone-partner'], ['phone-backups', 'phone-backups'], ['phone-settings', 'phone-settings'], ['web-status', 'web-status'], ['web-app', 'web-app'], ['web-push', 'web-push'], ['web-category-phone', 'web-category-phone'], ['web-analytics-phone', 'web-analytics-phone']];
 
 // The iPhone Duo unfolded, upright (about 669 × 951, reported: .claude/prompts/web-loop.md).
 const duo = [['web-category-duo', 'web-category-duo']];
