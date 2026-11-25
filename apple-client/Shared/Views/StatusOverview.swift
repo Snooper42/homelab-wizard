@@ -128,26 +128,62 @@ struct StatusHero: View {
 /// that isn't well) and Logs, as capsules.
 struct HeroButtons: View {
     let app: AppStatus
+    /// As the redesign's card (phone-status.png): each a symbol and its word, the buttons sharing the width.
+    var wide = false
     @Environment(AppActionsViewModel.self) private var actions
     @Environment(DashboardViewModel.self) private var dashboard
 
     var body: some View {
-        HStack(spacing: 8) {
-            if let action = actions.available(for: app).first(where: \.isEveryday) {
-                Button(action.title) { actions.request(action, on: app) }
-                    .buttonStyle(.borderedProminent)
-                    .tint(Theme.accentFill)
-                    .disabled(actions.isBusy)
-            }
-            if app.hasLogs {
-                Button("Logs") { dashboard.logsApp = app }
-                    .buttonStyle(.bordered)
-            }
+        // Wide, the card's layout places each beside Its Page; otherwise together in a row of their own.
+        if wide {
+            buttons
+        } else {
+            HStack(spacing: 8) { buttons }
         }
-        .buttonBorderShape(.capsule)
-        .controlSize(.small)
-        .font(.subheadline.weight(.semibold))
-        .dynamicTypeSize(...DynamicTypeSize.accessibility1)
+    }
+
+    @ViewBuilder
+    private var buttons: some View {
+        if let action = actions.available(for: app).first(where: \.isEveryday) {
+            Button { actions.request(action, on: app) } label: {
+                label(action.title, symbol: action.systemImage)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(Theme.accentFill)
+            .disabled(actions.isBusy)
+            .modifier(HeroButtonLook(wide: wide))
+        }
+        if app.hasLogs {
+            Button { dashboard.logsApp = app } label: {
+                label("Logs", symbol: "line.3.horizontal")
+            }
+            .buttonStyle(.bordered)
+            .modifier(HeroButtonLook(wide: wide))
+        }
+    }
+
+    @ViewBuilder
+    private func label(_ title: String, symbol: String) -> some View {
+        if wide {
+            Label(title, systemImage: symbol)
+                .lineLimit(1)
+                .frame(maxWidth: .infinity)
+        } else {
+            Text(title)
+        }
+    }
+}
+
+/// The hero card's capsules: small beside other words; on the redesign's card a size up, sharing the width.
+struct HeroButtonLook: ViewModifier {
+    let wide: Bool
+
+    func body(content: Content) -> some View {
+        content
+            .buttonBorderShape(.capsule)
+            .controlSize(wide ? .regular : .small)
+            .font(.subheadline.weight(.semibold))
+            .dynamicTypeSize(...DynamicTypeSize.accessibility1)
     }
 }
 
@@ -362,13 +398,12 @@ struct StatusAlertCard: View {
                     }
                 }
                 buttons {
-                    HeroButtons(app: app)
-                    Button("Its Page") { open() }
+                    HeroButtons(app: app, wide: true)
+                    Button { open() } label: {
+                        Text("Its Page").lineLimit(1).frame(maxWidth: .infinity)
+                    }
                     .buttonStyle(.bordered)
-                    .buttonBorderShape(.capsule)
-                    .controlSize(.small)
-                    .font(.subheadline.weight(.semibold))
-                    .dynamicTypeSize(...DynamicTypeSize.accessibility1)
+                    .modifier(HeroButtonLook(wide: true))
                 }
             }
             .padding(14)
