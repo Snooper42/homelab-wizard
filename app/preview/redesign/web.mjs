@@ -133,7 +133,7 @@ const wideCss = `
 .apps span{position:relative}.apps em{position:absolute;top:-4px;right:6px;min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:#fdeee6;color:#c2410c;font:700 10px/16px Inter,system-ui;text-align:center}
 @media (prefers-color-scheme:dark){.apps em{background:#2f1a15;color:#ff8a73}}
 .fnav a .cnt{margin-left:auto;font-size:11.5px;font-weight:700;padding:1px 7px;border-radius:99px;background:#fdeee6;color:#c2410c}@media (prefers-color-scheme:dark){.fnav a .cnt{background:#2f1a15;color:#ff8a73}}
-.fnav a .n{margin-left:auto;color:var(--muted);font-size:12.5px}
+.fnav a .n{margin-left:auto;color:var(--muted);font-size:12.5px}.fnav a .sdot{margin-left:auto;width:8px;height:8px;border-radius:50%;background:#f59e0b;box-shadow:0 0 0 3px rgba(245,158,11,.18)}.fnav a .sdot+.n{margin-left:10px}
 .alogo{border-radius:8px;flex:none;background:#fff;box-shadow:0 0 0 1px var(--line)}
 .stack{display:flex}.stack img,.stack .own{margin-left:-7px;border:2px solid var(--panel);box-sizing:content-box}.stack>:first-child{margin-left:0}
 .warnfig{color:#b45309}@media (prefers-color-scheme:dark){.warnfig{color:#fbbf24}}
@@ -142,23 +142,26 @@ const wideCss = `
 .search{display:flex;align-items:center;gap:8px;height:38px;width:280px;padding:0 12px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--muted);font-size:13px}
 .grow{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--line)}.grow:first-child{border-top:0}.grow .n{flex:1;min-width:0;display:grid}.grow .n b{font-weight:600}.grow .n small{color:var(--muted);font-size:12.5px}
 `;
-const sideMenu = [['grid', 'Overview', '', true], ['warn', 'Stopped', 1], ...groups.map((g) => [{ Security: 'shield', 'Cloud & Files': 'cloud', Documents: 'file', Media: 'film', 'Your own apps': 'plus', System: 'server', Network: 'globe' }[g[0]], g[0], g[1].length])];
+// Status' menu: Overview, then each category, your own apps last (never a +: it read as "add an app" in the middle
+// of the list). No Stopped item (the owner, Nov 25): a category holding a stopped app shows an amber dot by its count.
+const sideOrder = [...groups.filter((g) => g[0] !== 'Your own apps'), ...groups.filter((g) => g[0] === 'Your own apps')];
+const sideMenu = [['grid', 'Overview', ''], ...sideOrder.map((g) => [{ Security: 'shield', 'Cloud & Files': 'cloud', Documents: 'file', Media: 'film', 'Your own apps': 'box', System: 'server', Network: 'globe' }[g[0]], g[0], g[1].length])];
 Object.assign(P, {
   warn: 'm21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3ZM12 9v4M12 17h.01',
   shield: 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z', cloud: 'M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z',
   file: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6', film: 'M2 2h20v20H2zM7 2v20M17 2v20M2 12h20',
   server: 'M2 2h20v8H2zM2 14h20v8H2zM6 6h.01M6 18h.01', globe: 'c12,12,10|M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z',
 });
-const sideFor = (here) => `
+const sideFor = (here, stopped = []) => `
 <aside class="side">
   <div class="brand"><img src="file://${repo}/assets/logo.svg" width="26" height="26"><div><b>Homelab Wizard</b></div></div>
   <nav class="apps" aria-label="Homelab">${[['activity', 'Status', 1], ['archive', 'Backups'], ['layers', 'Choose apps']].map(([i, n, b]) => `<span class="${n === 'Status' ? 'on' : ''}" title="${n}">${icon(i, 17)}${b ? `<em>${b}</em>` : ''}</span>`).join('')}</nav>
-  <nav class="fnav">${sideMenu.map(([i, n, c]) => `<a class="${n === here ? 'on' : ''}">${icon(i, 17)}<span>${n}</span>${typeof c === 'number' && n === 'Stopped' ? `<span class="cnt">${c}</span>` : c ? `<span class="n">${c}</span>` : ''}</a>`).join('')}</nav>
+  <nav class="fnav">${sideMenu.map(([i, n, c]) => `<a class="${n === here ? 'on' : ''}">${icon(i, 17)}<span>${n}</span>${stopped.includes(n) ? '<i class="sdot"></i>' : ''}${c ? `<span class="n">${c}</span>` : ''}</a>`).join('')}</nav>
   <div style="flex:1"></div>
   <nav class="fnav"><a>${icon('gear', 17)}<span>Settings</span></a></nav>
   <div class="foot"><div class="synced"><i></i>Linux · 0.42.8 · 3.4 TB free</div></div>
 </aside>`;
-const wideSide = sideFor('Overview');
+const wideSide = sideFor('Overview', ['Your own apps']);
 const wide = `
 <header class="top"><h2 style="margin:0;font-size:24px;font-weight:700;letter-spacing:-.01em;flex:1">Status</h2><div class="search">${icon('search', 15)}Find an app</div><button class="sq">${icon('sync', 17)}</button></header>
 <div class="grid">
@@ -237,7 +240,7 @@ const grid = `<div class="sect">On this server <span>3</span></div><div class="t
 <div class="sect">Add to Media <span>9</span></div><div class="tiles6">${more.map(addTile).join('')}${newTile}</div>`;
 const catHead = `<div class="chead"><div class="t"><h2>Media</h2></div><div class="search" style="width:260px;background:var(--glass);border-color:var(--glassline)">${icon('search', 15)}Find an app</div></div>`;
 writeFileSync(out + 'web-category.html', `<!doctype html><html><head><meta charset="utf-8"><title>Media</title><style>${deskCss}${extra}${wideCss}${tileCss}
-main.backdrop{min-height:100vh}.tiles6{--ar:1.55}.ring svg{width:62px;height:62px}</style></head><body>${sideFor('Media')}<main class="backdrop"><header class="top" style="padding-bottom:0;background:transparent"></header>${catHead}${widgets}${grid}</main></body></html>`);
+main.backdrop{min-height:100vh}.tiles6{--ar:1.55}.ring svg{width:62px;height:62px}</style></head><body>${sideFor('Media', ['Media'])}<main class="backdrop"><header class="top" style="padding-bottom:0;background:transparent"></header>${catHead}${widgets}${grid}</main></body></html>`);
 
 // On a phone (two across) and the iPhone Duo unfolded upright (three across): the same, under the tab bar.
 const catPhone = (cols, ar) => `<!doctype html><html><head><meta charset="utf-8"><style>${phoneCss}${extra}${tileCss}

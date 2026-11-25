@@ -149,7 +149,7 @@ How far the phone's page (`homelab serve`) can go toward the Homelab app, drawn 
 - **Status:** the phone's Status above, with the server in place of This Mac, and **Alerts on this phone** offered once.
 - **An app's page:** a back button and its own title; Open, Restart, Logs and Stop; its week, its backups (with Get something back), its last update with Roll back.
 - **Alerts:** Web Push to the page added to the Home Screen (iOS 16.4 and later), from the alerts the computer already keeps, quiet hours kept. No Apple Developer account needed, unlike the app's push.
-- **On a tablet or a wide window:** the computer's sidebar, the screens as a strip of icons then Status' own menu; today the phone's page keeps the old list above 700 px (every strip rule is `html:not(.companion)`, and the screens mount no menu on the phone).
+- **On a tablet or a wide window:** the computer's sidebar, the screens as a strip of icons then Status' own menu: **Overview, then each category, your own apps last** (a box, never a +, which read as *add an app* in the middle of the list). **No *Stopped* item** (the owner, Nov 25): a category holding a stopped app shows an amber dot by its count, and Status' badge on the strip still counts it; today the phone's page keeps the old list above 700 px (every strip rule is `html:not(.companion)`, and the screens mount no menu on the phone).
 
 #### A category's page: the apps as a home screen
 
