@@ -5,6 +5,49 @@ For the next session running lane R (account A until Thu Nov 26 noon ET, then ac
 decisions from the web-page session (`merge-nov25.md` on `claude/quirky-ramanujan-jfgtq2`, PR #891).
 **Read only what this file points to.** Where a decision below contradicts older pictures or notes, it wins.
 
+## 0. The owner's ask for you (Nov 25, 2:15 PM ET: this is the job)
+
+The owner sent these two pictures, both on #891's branch (`git show origin/claude/quirky-ramanujan-jfgtq2:docs/images/
+redesign/<name> > /tmp/x.png`, then look): **`web-analytics-full-dark.png`** and **`computer-category-full-dark.png`**.
+
+> *"i like this analytics screen. this app stack page. Build this out for each individual stack so specific media apps
+> and it's relevant media stack with all of it. You know that same look same for the networking, etc. and then I want
+> this built out for both the computer app and the webpage I feel like the webpage drifted quite a bit, and I want
+> that accessible on the web and have it mimic the computer app and it's usability UYUX and just everything under the
+> sun."* … *"I need this design language to be followed all throughout the app."*
+
+So, in this order (each its own pull request, one open at a time):
+1. **A category's page for every category** (Media, Network, Security, Cloud & Files, Documents, System, …, and
+   *Your own apps* last), exactly as `computer-category-full-dark.png`: title + *3 on this Mac · 2 running · 8 to add*,
+   *Find an app* top right; *On this Mac* (count) tiles three across: status dot top left, ⋯ top right, logo 64 px,
+   name, one live line (*2 watching now*, *Up 6 days*, *Stopped 20 min ago*), **Open** or **Start** (accent);
+   *Add to <category>* (count): **every** catalog app of that category not installed, dashed edge, logo, name, its
+   one-line description, **Install** (the computer's install flow, the plan first). Soft violet/teal glow backdrop,
+   translucent tiles, radius 20. Status' menu: Overview, **Analytics**, each category with its count (amber dot when
+   one is stopped), Your own apps last; **no** *Needs a look* / *Stopped* / *Pinned* items in the menu.
+2. **Analytics**, exactly as `web-analytics-full-dark.png` (§1 has its parts).
+3. **The web page (phone's page, `html.companion`) mimics the computer app:** the same screens, sidebar strip and
+   menus on a wide window (today `drawStatusSide` mounts `null` on the phone: `onPhone() ? null`), the same pages
+   narrow, same look and behaviour. Coordinate with lane W (`web-loop.md` W3, W5a, W18): the owner asked *you*; take
+   the shared screens, and tell W in `web-loop.md` › *From the other lanes* what shipped.
+4. **Then carry this design language through every screen** (the dark look, the glow backdrop, translucent cards of
+   one anatomy, logos everywhere, few words): Backups, Settings, Tidy Up, Finances, Choose apps, Setup, the app page.
+
+**What the last session found in the code (so you needn't look again):**
+- Status is one `<section id="status">` in `web/dist/index.html` (header, `#tiles`, `#statusRows` table, cards).
+  Its sidebar menu is `drawStatusSide()` / `pickStatusPart()` in `web/src/screens/status.ts` (~line 156): today a
+  pick only scrolls to that group's row in the table. Groups are built in `renderAppList()` (~line 127) from
+  `catalog.categories` and `catOf` (Seerr counted in Media; *media-automation* folded last).
+- Plan: two new containers in `#status` (e.g. `#statusPart` for a category or Analytics) and a `data-part` on the
+  section that hides the overview while one shows; new `web/src/status/CategoryPage.tsx` and `Analytics.tsx`.
+- Install from a tile: Choose apps' flow, `web/src/screens/choose.ts`. ⋯: reuse `web/src/status/RowMenu.tsx`.
+  Logos: `web/src/status/appLogos.ts` (`shippedLogo`), `appIcons.ts`.
+- Analytics' data: per-app memory now (`memory.ts` `memoryByApp`), processor (`Usage.tsx` keeps only 5 minutes,
+  sampled while Status is open), disk per app (StatusBoard `storage`). **A week of history isn't kept in the page:**
+  find what the agent keeps (Beszel where it runs, the agent's own samples) before drawing the week; if nothing
+  keeps it, keeping samples (a month, on the machine) is new work: say so to the owner, draw what exists meanwhile.
+- The phone's page gets every screen from the same code; its own rules are `html.companion` in `web/dist/style.css`.
+
 ## 1. The owner's Nov 25 decisions (the rules every screen follows now)
 
 - **Never "needs you".** Name what happened: *Decypharr stopped*, *2 apps stopped*, *2 backups failed*.
@@ -68,7 +111,8 @@ each with `-dark`): `web-wide.png`, `web-wide-ok.png`, `computer-category.png` (
 ## 4. Next, in order (who builds what, once)
 
 1. **Land #894, then open `claude/redesign-iphone-fewer-empties`.** One open PR at a time.
-2. **R12 + Status' Overview on the computer** (R): category pages (*On this Mac*, *Add to <category>*, Install via
+2. **§0 above, items 1–4** (the owner's ask supersedes the order below where they overlap). Background:
+   **R12 + Status' Overview on the computer** (R): category pages (*On this Mac*, *Add to <category>*, Install via
    the computer's flow), menu without *Stopped* (amber dot), **Analytics** item under Overview, *Your own apps*
    last, Overview's first card **Apps** in every state (`web-wide*.png`). Files: `web/src/screens/`,
    `web/src/status/`; check no W pull request holds them first (`lanes.md` rule 2). Lane W's W5a (a) follows on
@@ -89,8 +133,8 @@ Stop starting new work Thu Nov 26 10 AM ET (account A); account C takes over Thu
 ## 5. Open questions for the owner (in `owner.md` › *Waiting on you*; ask there, don't wait on them)
 
 - Setup off the iPhone app's tab bar (four tabs), its unfinished steps on Status? (asked Nov 23)
-- The owner's dark look (MoneyMatter-style, the iPhone's) on the computer app too?
-- Analytics: the web-page session's mock or another account's, if they differ?
+- Answered Nov 25: the dark look and this design language go *"all throughout the app"*, computer and web page;
+  the Analytics picture to build is `web-analytics-full-dark.png` (the owner sent it).
 - R12's Install on the computer: straight in, or the plan shown first (R12 says the plan first)?
 
 ## 6. How this lane works (unchanged)
