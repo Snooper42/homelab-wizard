@@ -217,10 +217,12 @@ struct TransactionFilter: Equatable, Sendable {
     var atLeast: Double?
     /// A month, by its first day; nil for every month.
     var month: Date?
+    /// A pay period's days, first to last (This paycheck, Last paycheck); nil for none.
+    var days: ClosedRange<Date>?
     /// One tag; nil for every tag.
     var tag: String?
 
-    var isOn: Bool { flow != .all || category != nil || atLeast != nil || month != nil || tag != nil }
+    var isOn: Bool { flow != .all || category != nil || atLeast != nil || month != nil || days != nil || tag != nil }
 
     func keeps(_ t: FinanceTransaction, categories: [FinanceCategory], calendar: Calendar = .current) -> Bool {
         let move = !(t.to ?? "").isEmpty
@@ -238,6 +240,11 @@ struct TransactionFilter: Equatable, Sendable {
         if let atLeast, abs(t.amount) < atLeast { return false }
         if let month {
             guard let date = t.date, calendar.isDate(date, equalTo: month, toGranularity: .month) else { return false }
+        }
+        if let days {
+            guard let date = t.date else { return false }
+            let day = calendar.startOfDay(for: date)
+            guard day >= calendar.startOfDay(for: days.lowerBound), day <= calendar.startOfDay(for: days.upperBound) else { return false }
         }
         if let tag, !t.tags.contains(tag) { return false }
         return true

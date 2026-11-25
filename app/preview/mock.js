@@ -154,6 +154,7 @@ try { if ((window.__MOCK || {}).tidyTab) localStorage.setItem('homelab.tidyTab',
     // Devices on the tailnet: none unless a case gives them (Tailscale not running).
     TailnetDevices: () => (M.tailnetDevices ? later(M.tailnetDevices) : Promise.reject(new Error('Tailscale is not running'))),
     DuplicatiJobs: () => (M.duplicatiError ? Promise.reject(new Error(M.duplicatiError)) : later(M.duplicatiJobs || [])),
+    BackupGaps: () => (M.duplicatiError ? Promise.reject(new Error(M.duplicatiError)) : later(M.backupGaps || [])),
     Alerts: () => later(M.alerts || []),
     AlertLog: () => later(M.alertLog || []),
     // privacy: qBittorrent's page's Downloads are private (wiring.Privacy); none: it can't be read.

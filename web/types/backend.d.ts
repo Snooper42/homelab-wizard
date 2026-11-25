@@ -587,6 +587,12 @@ declare namespace downloads {
 }
 
 declare namespace duplicati {
+  interface Gap {
+    name: string;
+    path: string;
+    job?: string;
+    why: string;
+  }
   interface Job {
     id: string;
     name: string;
@@ -1377,6 +1383,7 @@ interface Backend {
     AppIcon(arg1: string): Promise<string>;
     Appearance(): Promise<tray.Appearance>;
     Background(): Promise<app.BackgroundJob[]>;
+    BackupGaps(): Promise<duplicati.Gap[]>;
     Backups(): Promise<backup.Overview>;
     Catalog(): Promise<api.Catalog>;
     ChooseFolder(arg1: string): Promise<string>;

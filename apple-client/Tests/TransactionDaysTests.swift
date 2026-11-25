@@ -57,3 +57,42 @@ import Testing
         #expect(TransactionDays.title(.distantPast, trackFrom: nil, today: today, calendar: calendar) == "No date")
     }
 }
+
+/// This paycheck and Last paycheck in Transactions' date chip, as the computer's date picker.
+@Suite struct PaySpansTests {
+    private func view(before: String) throws -> FinancesPlanView {
+        try JSONDecoder.homelab().decode(FinancesPlanView.self, from: Data(#"""
+        {"today":"2026-11-08","checking":"chk","start":{"chk":900},
+         "plan":{"people":[{"id":"alex","name":"Alex"}],"accounts":[{"id":"chk","name":"Example Checking","kind":"checking"}],"payments":[],"cushion":500},
+         "periods":[{"now":true,"start":"2026-11-06","last":"2026-11-19","carried":900,"in":0,"out":0,"saved":0,"left":900,"rows":[]}],
+         "before":\#(before),"days":[]}
+        """#.utf8))
+    }
+
+    @Test func thisPaycheckAndTheOneBefore() throws {
+        let spans = PaySpans.make(try view(before: #"[{"date":"2026-10-23","people":["alex"],"amount":2150}]"#))
+        #expect(spans.map(\.title) == ["This paycheck", "Last paycheck"])
+        let us = Locale(identifier: "en_US")
+        func day(_ d: Date) -> String { d.formatted(Date.FormatStyle(locale: us).year().month(.twoDigits).day(.twoDigits)) }
+        #expect(day(spans[0].days.lowerBound) == "11/06/2026" && day(spans[0].days.upperBound) == "11/19/2026")
+        #expect(day(spans[1].days.lowerBound) == "10/23/2026" && day(spans[1].days.upperBound) == "11/05/2026")
+    }
+
+    @Test func noPaydayBeforeOnlyThisOne() throws {
+        #expect(PaySpans.make(try view(before: "[]")).map(\.title) == ["This paycheck"])
+    }
+
+    @Test func aFilterKeepsThePeriodsDays() throws {
+        let rows = try JSONDecoder.homelab().decode(FinanceLedger.self, from: Data(#"""
+        {"transactions":[
+          {"id":"in","date":"2026-11-19","account":"chk","amount":-5,"payee":"Last day"},
+          {"id":"out","date":"2026-11-20","account":"chk","amount":-5,"payee":"After"},
+          {"id":"early","date":"2026-11-05","account":"chk","amount":-5,"payee":"Before"}]}
+        """#.utf8)).transactions
+        let span = try #require(PaySpans.make(try view(before: "[]")).first)
+        var filter = TransactionFilter()
+        filter.days = span.days
+        #expect(filter.isOn)
+        #expect(rows.filter { filter.keeps($0, categories: []) }.map(\.id) == ["in"])
+    }
+}
