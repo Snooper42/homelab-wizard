@@ -65,7 +65,7 @@ For a pull request that needs Q's review, check every one of these, and say whic
 
   Each part is one pull request, then a line for R under **From the other lanes** in `redesign-loop.md`.
 - [ ] **Q5. The security list** (Q1), worst first, one item per pull request.
-- [ ] **Q6. Whatever's flaky.** A test that fails now and then (the Windows `TestJobLogSplitsAtOnceAllFinish`, *being used by another process*): find the cause and fix it, never retry it away.
+- [ ] **Q6. Whatever's flaky.** (Nov 25: `TestJobLogSplitsAtOnceAllFinish`'s cause found and fixed: `lockedfile.Write` retried a rename only on *access is denied*, not on Windows' *in use by another process* or *delete pending*, which Read already waited out.) A test that fails now and then (the Windows `TestJobLogSplitsAtOnceAllFinish`, *being used by another process*): find the cause and fix it, never retry it away.
 - [ ] **Q7. Media automation.**
   - **Where it stands:** `arr-loop.md`'s sections *3. Where it stands* and *4. The work, in order*, and its *0. Rules*, which still bind media automation (above all rule 2: the wizard never picks search sites).
   - **What's left:**

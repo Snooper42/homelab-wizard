@@ -190,3 +190,44 @@ func TestBeingSavedInAFolderThatIsNotThere(t *testing.T) {
 		t.Error("a missing folder reads as a save under way")
 	}
 }
+
+// Quality-loop Q6, the Windows TestJobLogSplitsAtOnceAllFinish ("being used by another process"): a rename over a file
+// another process has open meets a sharing violation, not only "access is denied", and the old file in the moment it
+// is replaced meets delete pending. Write tries again on both while RenameWait lasts, as Read does.
+func TestWriteTriesAgainWhileTheFileIsInUse(t *testing.T) {
+	was, wasWait, wasRename := onWindows, RenameWait, rename
+	t.Cleanup(func() { onWindows, RenameWait, rename = was, wasWait, wasRename })
+	onWindows, RenameWait = true, 200*time.Millisecond
+	path := filepath.Join(t.TempDir(), "watchdog.log")
+	for _, busyErr := range []error{errSharingViolation, errDeletePending, os.ErrPermission} {
+		tries := 0
+		rename = func(from, to string) error {
+			tries++
+			if tries <= 2 {
+				return &os.LinkError{Op: "rename", Old: from, New: to, Err: busyErr}
+			}
+			return os.Rename(from, to)
+		}
+		if err := Write(path, []byte("47 checks passed\n"), 0o600); err != nil {
+			t.Fatalf("%v twice, then free: %v", busyErr, err)
+		}
+		if tries != 3 {
+			t.Errorf("%v: renamed %d times, want 3", busyErr, tries)
+		}
+	}
+	// Anything else is final, at once.
+	tries := 0
+	rename = func(from, to string) error {
+		tries++
+		return &os.LinkError{Op: "rename", Old: from, New: to, Err: os.ErrNotExist}
+	}
+	if err := Write(path, []byte("x"), 0o600); err == nil || tries != 1 {
+		t.Errorf("a missing folder: err %v after %d tries", err, tries)
+	}
+	entries, _ := os.ReadDir(filepath.Dir(path))
+	for _, e := range entries {
+		if e.Name() != "watchdog.log" {
+			t.Errorf("left behind: %s", e.Name())
+		}
+	}
+}
