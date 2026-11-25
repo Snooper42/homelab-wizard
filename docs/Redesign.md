@@ -139,12 +139,12 @@ Leads with what happened and what needs you: Today (each download filed, with Un
 How far the phone's page (`homelab serve`) can go toward the Homelab app, drawn on a server's homelab: tailnet only, with streaming apps added as its own (Nov 25, from a tester's server). It's the desktop app's own screens, so every screen above reaches it; these four show what it adds.
 
 <p>
-<picture><source media="(prefers-color-scheme: dark)" srcset="images/redesign/web-status-dark.png"><img alt="The phone's page on an iPhone, added to the Home Screen: Status with alerts offered, one app that needs you, Backups and the server, and each category" src="images/redesign/web-status.png" width="200"></picture>
+<picture><source media="(prefers-color-scheme: dark)" srcset="images/redesign/web-status-dark.png"><img alt="The phone's page on an iPhone, added to the Home Screen: Status with alerts offered, the stopped app, Backups and the server, and each category" src="images/redesign/web-status.png" width="200"></picture>
 <picture><source media="(prefers-color-scheme: dark)" srcset="images/redesign/web-app-dark.png"><img alt="An app's page on the phone's page: Immich with Open, Restart, Logs and Stop, its week, its backups, and its last update with Roll back" src="images/redesign/web-app.png" width="200"></picture>
 <picture><source media="(prefers-color-scheme: dark)" srcset="images/redesign/web-push-dark.png"><img alt="The Lock Screen with two alerts from the phone's page: an app stopped, and last night's backup" src="images/redesign/web-push.png" width="200"></picture>
 </p>
 
-<picture><source media="(prefers-color-scheme: dark)" srcset="images/redesign/web-wide-dark.png"><img alt="The phone's page on a tablet: the computer's sidebar with the screens as a strip of icons and Status' own menu, then the app that needs you, Backups, the server, and each category" src="images/redesign/web-wide.png"></picture>
+<picture><source media="(prefers-color-scheme: dark)" srcset="images/redesign/web-wide-dark.png"><img alt="The phone's page on a tablet: the computer's sidebar with the screens as a strip of icons and Status' own menu, then the stopped app, Backups, the server, and each category" src="images/redesign/web-wide.png"></picture>
 
 - **Status:** the phone's Status above, with the server in place of This Mac, and **Alerts on this phone** offered once.
 - **An app's page:** a back button and its own title; Open, Restart, Logs and Stop; its week, its backups (with Get something back), its last update with Roll back.

@@ -56,9 +56,8 @@ const status = `
 <div class="sub"><i class="live"></i>The server · live</div>
 <div class="note"><span style="color:var(--acc)">${icon('bell', 22)}</span><div class="n"><b>Alerts on this phone</b><small>When an app stops or a backup fails, even with this page closed</small></div><button class="btn pri">Turn on</button></div>
 <section class="card">
-  <div class="figrow"><div><div class="fig md" style="color:var(--warn)">1 app needs you</div><div class="lab">${up} of ${total} running</div></div></div>
-  <div class="row" style="margin-top:6px">${own('DP', '#ea580c', 40)}<div class="n"><b>Decypharr</b><small>Stopped 20 minutes ago</small></div></div>
-  <div style="display:flex;gap:8px"><button class="btn pri" style="flex:1">${icon('play', 14)}Start</button><button class="btn" style="flex:1">${icon('logs', 15)}Logs</button><button class="btn" style="flex:1">Its page</button></div>
+  <div class="row" style="padding-top:0;border-top:0">${own('DP', '#ea580c', 44)}<div class="n"><b style="font-size:18px">Decypharr stopped</b><small>20 minutes ago · ${up} of ${total} running</small></div></div>
+  <div style="display:flex;gap:8px;margin-top:4px"><button class="btn pri" style="flex:1">${icon('play', 14)}Start</button><button class="btn" style="flex:1">${icon('logs', 15)}Logs</button><button class="btn" style="flex:1">Its page</button></div>
 </section>
 <div class="two">
   <section class="card">${ch('Backups')}<div class="fig md">17<small style="font-size:15px"> of 17</small></div><div class="muted" style="font-size:12.5px;margin-top:4px">Last night at 3:30<br>Off-site to Hetzner</div></section>
@@ -138,7 +137,7 @@ const wideCss = `
 .search{display:flex;align-items:center;gap:8px;height:38px;width:280px;padding:0 12px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--muted);font-size:13px}
 .grow{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--line)}.grow:first-child{border-top:0}.grow .n{flex:1;min-width:0;display:grid}.grow .n b{font-weight:600}.grow .n small{color:var(--muted);font-size:12.5px}
 `;
-const sideMenu = [['grid', 'Overview', '', true], ['warn', 'Needs you', 1], ...groups.map((g) => [{ Security: 'shield', 'Cloud & Files': 'cloud', Documents: 'file', Media: 'film', 'Your own apps': 'plus', System: 'server', Network: 'globe' }[g[0]], g[0], g[1].length])];
+const sideMenu = [['grid', 'Overview', '', true], ['warn', 'Stopped', 1], ...groups.map((g) => [{ Security: 'shield', 'Cloud & Files': 'cloud', Documents: 'file', Media: 'film', 'Your own apps': 'plus', System: 'server', Network: 'globe' }[g[0]], g[0], g[1].length])];
 Object.assign(P, {
   warn: 'm21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3ZM12 9v4M12 17h.01',
   shield: 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z', cloud: 'M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z',
@@ -149,7 +148,7 @@ const wideSide = `
 <aside class="side">
   <div class="brand"><img src="file://${repo}/assets/logo.svg" width="26" height="26"><div><b>Homelab Wizard</b></div></div>
   <nav class="apps" aria-label="Homelab">${[['activity', 'Status', 1], ['archive', 'Backups'], ['layers', 'Choose apps']].map(([i, n, b]) => `<span class="${n === 'Status' ? 'on' : ''}" title="${n}">${icon(i, 17)}${b ? `<em>${b}</em>` : ''}</span>`).join('')}</nav>
-  <nav class="fnav">${sideMenu.map(([i, n, c, on]) => `<a class="${on ? 'on' : ''}">${icon(i, 17)}<span>${n}</span>${typeof c === 'number' && n === 'Needs you' ? `<span class="cnt">${c}</span>` : c ? `<span class="n">${c}</span>` : ''}</a>`).join('')}</nav>
+  <nav class="fnav">${sideMenu.map(([i, n, c, on]) => `<a class="${on ? 'on' : ''}">${icon(i, 17)}<span>${n}</span>${typeof c === 'number' && n === 'Stopped' ? `<span class="cnt">${c}</span>` : c ? `<span class="n">${c}</span>` : ''}</a>`).join('')}</nav>
   <div style="flex:1"></div>
   <nav class="fnav"><a>${icon('gear', 17)}<span>Settings</span></a></nav>
   <div class="foot"><div class="synced"><i></i>Linux · 0.42.8 · 3.4 TB free</div></div>
@@ -158,9 +157,8 @@ const wide = `
 <header class="top"><h2 style="margin:0;font-size:24px;font-weight:700;letter-spacing:-.01em;flex:1">Status</h2><div class="search">${icon('search', 15)}Find an app</div><button class="sq">${icon('sync', 17)}</button></header>
 <div class="grid">
   <section class="card">
-    <div class="ch"><h3>Needs you</h3><span class="pill" style="background:#fdeee6;color:#c2410c">1</span></div>
-    <div class="fig warnfig" style="font-size:26px">1 app needs you</div><div class="lab">${up} of ${total} running</div>
-    <div class="grow" style="margin-top:8px;border-top:0">${own('DP', '#ea580c', 40)}<div class="n"><b>Decypharr</b><small>Stopped 20 minutes ago: the debrid service didn't answer</small></div></div>
+    <div class="ch"><h3>Stopped</h3><span class="muted" style="font-size:12.5px">${up} of ${total} running</span></div>
+    <div class="grow" style="border-top:0;padding-top:2px">${own('DP', '#ea580c', 44)}<div class="n"><b style="font-size:18px">Decypharr</b><small>20 minutes ago: the debrid service didn't answer</small></div></div>
     <div style="display:flex;gap:8px"><span class="cta pri" style="flex:1">${icon('play', 13)}Start</span><span class="cta" style="flex:1">${icon('logs', 14)}Logs</span><span class="cta" style="flex:1">Its page</span></div>
   </section>
   <section class="card">
