@@ -56,7 +56,7 @@ For a pull request that needs Q's review, check every one of these, and say whic
 
   A gap becomes a test, and a failing one an issue.
 - [ ] **Q3. Privacy of every call out.** `internal/sitelogo`, `internal/cardprice`, the release-notes reader, and each new one as it ships (SimpleFIN, the logo service).
-  - **What's sent, when, and on whose click,** written in `docs/Security.md`.
+  - **What's sent, when, and on whose click,** written in `docs/Security.md`. (Done Nov 25: *What leaves this computer, and on whose click*.)
   - **What's in `homelab report` and the logs:** checked to carry no amount, payee or key.
 - [ ] **Q4. The backups' engine, for R's Backups** (`docs/Redesign.md`, *New work behind the pictures*).
   - **(a) Each app's result each night,** kept for fourteen nights.

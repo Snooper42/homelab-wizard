@@ -307,6 +307,23 @@ Everything merged from #544 to #560 was read again by a session that wrote none 
 - **CSV a spreadsheet would run (backlog item 77):** the two CSVs made to be opened in a spreadsheet, Finances' Reports and its money ahead, put an apostrophe before any cell that starts with `=`, `+`, `-`, `@`, a tab or a return (`cell` in `web/src/finances/reportData.ts` and `exportData.ts`). Amounts stay numbers, so a payee or a bank reference someone else wrote is never run as a formula. The data export (`internal/export`) writes every database's tables as they are, for another service to import, so changing a cell there would corrupt the copy. It is not offered as a spreadsheet.
 - **Investments (#558):** no new network call, log line or alert: Ghostfolio's counts are compared with its own buys and sales on the machine, and the tests use made-up numbers.
 
+## What leaves this computer, and on whose click (November 2026)
+
+Every request the homelab's own code makes to the internet, what it carries, and what starts it (quality-loop Q3). The apps themselves (Immich's map tiles, Jellyfin's metadata, and so on) make their own; this is the homelab's. Each new call out is added here in the pull request that adds it.
+
+| Call | Goes to | What is sent | When, and on whose click |
+|---|---|---|---|
+| Get the real logo (`internal/sitelogo`) | The company's own website, as typed or guessed (`sites.ts`), public addresses only (N46) | A plain GET of its home page and its icon: no cookies, no plan, no amount | Only when the household clicks **Get the real logo** or **Get them all** in Finances, from the computer; nothing on its own |
+| Card prices (`internal/cardprice`) | TCGdex (`api.tcgdex.net`, `assets.tcgdex.net`) | A card's name, then TCGdex's own id for it | Only on **Update prices**; see the next section |
+| An app's release notes (`internal/releases`) | GitHub's API (`api.github.com`) | The app's GitHub project, to list its releases newer than the version it runs | When the household looks at an update (Status' **Update apps**, an app's page, `homelab updates notes`); cached 6 hours |
+| The homelab's own update (`internal/upgrade`, `internal/selfupdate`) | GitHub (`api.github.com`, the release files, `git fetch` of this repository) | Nothing of the household's: which build to fetch, and the download | The app looks every 15 minutes, the folder at most every 10; installing waits for **Update now**, or for the app to quit when Settings › This Mac says so |
+| DNS records (`internal/domain`) | Cloudflare's API (`api.cloudflare.com`), with the household's token | The app names and the home address the records point at | When the household sets up a domain, adds an app with an address, or the home address changes (the watchdog) |
+| Explain (`internal/explain`) | Ollama, on this computer or another machine of the household's | An app's recent log, every value from `.env` taken out first | Only on **Explain this** on an app's page |
+| Tidy Up's lookups | LRCLIB, MusicBrainz and the others in **Posture** above | A song's or book's title, artist, album and length | On **Add lyrics**, a review, or new music filed (each can be turned off); see Posture |
+| Image pulls | Each app's image registry (Docker Hub, GitHub's, Quay) | Which image and version | Installing an app, and the nightly updates |
+
+Nothing here sends an amount, a balance, a payee, an account, a password or a key, apart from the Cloudflare token to Cloudflare itself. `homelab report` and the logs are checked against a `.env` of distinctive fake secrets (backlog item 11); checking them against a Finances plan's payees and amounts is the next part of Q3.
+
 ## Finances' one outside source: card prices (November 2026)
 
 Finances reads nothing from the internet but this, which the owner asked for (Nov 13): **Update prices** on the Collection reads TCGplayer's prices and the cards' pictures from TCGdex (`internal/cardprice`).
