@@ -924,6 +924,13 @@ func (a *App) DuplicatiJobs() ([]duplicati.Job, error) {
 	return core.DuplicatiJobs(ctx, a.root)
 }
 
+// BackupGaps is what no backup job copies: Backups' Not in any backup, with Add where a job can copy it.
+func (a *App) BackupGaps() ([]duplicati.Gap, error) {
+	ctx, cancel := a.timed()
+	defer cancel()
+	return core.BackupGaps(ctx, a.root)
+}
+
 // UpgradeInfo is the homelab folder against GitHub, and this app against
 // the folder.
 type UpgradeInfo struct {
