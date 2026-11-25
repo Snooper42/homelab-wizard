@@ -19,7 +19,7 @@ struct WorthALookCard: View {
             if let view = finances.plan, !shown(view).isEmpty {
                 VStack(alignment: .leading, spacing: 0) {
                     Text("Worth a Look")
-                        .font(.title3.weight(.bold))
+                        .font(.headline)
                         .foregroundStyle(Theme.ink)
                         .padding(.bottom, 6)
                     ForEach(Array(shown(view).enumerated()), id: \.element.id) { i, row in
@@ -29,7 +29,7 @@ struct WorthALookCard: View {
                 }
                 .padding(16)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .card(radius: 24)
+                .card()
             }
         }
         // Worked out again when the view or the ledger behind it changes.

@@ -77,8 +77,8 @@ struct CardBackground: ViewModifier {
         content.background {
             RoundedRectangle(cornerRadius: radius, style: .continuous)
                 .fill(Theme.surface)
-                .shadow(color: Design.shadow.opacity(0.05), radius: 1, y: 1)
-                .shadow(color: Design.shadow.opacity(0.07), radius: 11, y: 8)
+                .overlay(RoundedRectangle(cornerRadius: radius, style: .continuous).strokeBorder(Theme.separator, lineWidth: 1))
+                .shadow(color: Design.shadow.opacity(0.04), radius: 3, y: 1)
         }
     }
 }
@@ -98,7 +98,7 @@ struct HeroCardBackground: ViewModifier {
 }
 
 extension View {
-    /// On a white card (dark grey at night) with a soft shadow.
+    /// On a white card (warm near-black at night) with a hairline edge.
     func card(radius: CGFloat = Theme.cardRadius) -> some View { modifier(CardBackground(radius: radius)) }
 
     /// On the dark hero card, in white.

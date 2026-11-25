@@ -117,3 +117,26 @@ import Testing
         #expect(BudgetsGlance.top([]).isEmpty)
     }
 }
+
+/// Net worth's biggest moves and cash flow's last months, for the full-width cards.
+@Suite struct FullCardsTests {
+    private func day(_ s: String) throws -> Date { try #require(LocalDay.parse(s)) }
+
+    @Test func theBiggestMovesInDateOrder() throws {
+        let series = [NetWorthPoint(date: try day("2026-11-01"), value: 100), NetWorthPoint(date: try day("2026-11-02"), value: 300),
+                      NetWorthPoint(date: try day("2026-11-03"), value: 250), NetWorthPoint(date: try day("2026-11-04"), value: 260),
+                      NetWorthPoint(date: try day("2026-11-05"), value: 160)]
+        let jumps = NetWorthJumps.top(series, count: 2)
+        #expect(jumps.map(\.point.value) == [300, 160])
+        #expect(jumps.map(\.up) == [true, false])
+        #expect(NetWorthJumps.top([series[0]]).isEmpty)
+    }
+
+    @Test func eachMonthsKeptAndRate() throws {
+        let months = [CashFlowMonth(month: try day("2026-10-01"), income: 4000, spent: 3000),
+                      CashFlowMonth(month: try day("2026-11-01"), income: 0, spent: 50)]
+        let history = CashFlowHistory.make(months)
+        #expect(history.map(\.kept) == [1000, -50])
+        #expect(history.map(\.rate) == [0.25, nil])
+    }
+}
