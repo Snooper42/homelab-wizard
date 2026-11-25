@@ -592,7 +592,10 @@
     chevron: '<polyline points="9 18 15 12 9 6"/>',
     eye: '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>',
     "eye-off": '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>',
-    folder: '<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>'
+    folder: '<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>',
+    more: '<circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>',
+    search: '<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',
+    open: '<line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/>'
   };
 
   // web/src/Icon.tsx
@@ -3340,20 +3343,35 @@
       open5().catch(() => setBusy(false));
     }, children: label });
   }
-  function Actions2({ a: a3, entry, busy: busy2, os, on: on2 }) {
+  function Actions2({ a: a3, entry, busy: busy2, os, on: on2, marks: marks2 }) {
+    const mark = (name) => marks2 ? /* @__PURE__ */ u3(Icon, { name }) : null;
     if (entry?.kind === "native") {
       const title = os === "mac" ? `Open ${a3.name}; it then keeps running in the menu bar` : os === "windows" ? `Start ${a3.name} (Windows asks for approval)` : `Start ${a3.name}'s service (asks for your password)`;
-      return entry.macApp && a3.state !== "running" ? /* @__PURE__ */ u3(NativeButton, { a: a3, title, label: os === "mac" ? "Open" : "Start", open: () => on2.openNative(a3) }) : null;
+      if (entry.macApp && a3.state !== "running") return /* @__PURE__ */ u3(NativeButton, { a: a3, title, label: os === "mac" ? "Open" : "Start", open: () => on2.openNative(a3) });
+      const page = a3.address ? "https://" + a3.address : a3.url;
+      return marks2 && a3.state === "running" && page ? /* @__PURE__ */ u3("button", { class: "small rowmain", title: `Open ${a3.name}`, onClick: () => on2.open(page), children: [
+        mark("open"),
+        "Open"
+      ] }) : null;
     }
     if (a3.state === "elsewhere") return null;
-    if (a3.state === "missing") return /* @__PURE__ */ u3("button", { class: "small", onClick: () => on2.install(a3), children: "Install" });
+    if (a3.state === "missing") return /* @__PURE__ */ u3("button", { class: "small", onClick: () => on2.install(a3), children: [
+      mark("update"),
+      "Install"
+    ] });
     if (a3.state !== "running") return /* @__PURE__ */ u3(S, { children: [
-      /* @__PURE__ */ u3("button", { class: "small rowmain change", title: `Start ${a3.name}`, disabled: busy2, onClick: () => on2.act(a3, "start"), children: "Start" }),
+      /* @__PURE__ */ u3("button", { class: "small rowmain change", title: `Start ${a3.name}`, disabled: busy2, onClick: () => on2.act(a3, "start"), children: [
+        mark("start"),
+        "Start"
+      ] }),
       /* @__PURE__ */ u3("span", { class: "lookonly muted", children: "Start it from the computer" })
     ] });
     const url = a3.address ? "https://" + a3.address : a3.url;
     const local = a3.address && a3.url ? a3.url : "";
-    return url ? /* @__PURE__ */ u3("button", { class: "small rowmain", title: local ? `Open ${a3.name} (${shift(os)}click: on this machine, ${local.replace(/^http:\/\//, "")})` : `Open ${a3.name}`, onClick: (e3) => on2.open(local && e3.shiftKey ? local : url), children: "Open" }) : null;
+    return url ? /* @__PURE__ */ u3("button", { class: "small rowmain", title: local ? `Open ${a3.name} (${shift(os)}click: on this machine, ${local.replace(/^http:\/\//, "")})` : `Open ${a3.name}`, onClick: (e3) => on2.open(local && e3.shiftKey ? local : url), children: [
+      mark("open"),
+      "Open"
+    ] }) : null;
   }
   function Row2({ a: a3, p: p3, menu: menu2, setMenu, said: said2, say }) {
     const pend = p3.pending[a3.id];
@@ -3497,7 +3515,7 @@
     const [open5, setOpen] = d2(false);
     const [sure, setSure] = d2(false);
     const [later2, setLater] = d2(false);
-    const [doing3, setDoing] = d2(null);
+    const [doing4, setDoing] = d2(null);
     const [up, setUp] = d2(false);
     const wrap = A2(null);
     const btn = A2(null);
@@ -3549,7 +3567,7 @@
       p3.on.groupAct(apps2, action, (i3) => setDoing({ action, at: i3, of: apps2.length }), until).finally(() => setDoing(null));
     };
     const verb2 = { start: "Starting", stop: "Stopping", restart: "Restarting" };
-    const label = doing3 ? `${verb2[doing3.action]} ${doing3.at + 1} of ${doing3.of}…` : count2 + (used ? ` · ${formatMem(used)}` : "");
+    const label = doing4 ? `${verb2[doing4.action]} ${doing4.at + 1} of ${doing4.of}…` : count2 + (used ? ` · ${formatMem(used)}` : "");
     const byMem = running5.filter((a3) => mem?.[a3.id]).sort((a3, b2) => (mem[b2.id] || 0) - (mem[a3.id] || 0));
     return /* @__PURE__ */ u3(
       "span",
@@ -3583,7 +3601,7 @@
               class: "n groupcount" + (tone ? " countpill " + tone : ""),
               "aria-haspopup": "menu",
               "aria-expanded": open5,
-              disabled: !!doing3,
+              disabled: !!doing4,
               title: `${g2.label}: start, stop, or restart them all, and what they hold in memory`,
               onClick: (e3) => {
                 if (open5) {
@@ -3783,6 +3801,10 @@
     }
     if (e3.metaKey || e3.ctrlKey || e3.altKey || e3.key.length !== 1 || e3.key === " " || e3.key === "?") return;
     if (t3.closest?.("input, textarea, select, [contenteditable], [role=menu], dialog, .sheet")) return;
+    if (status.dataset.part) {
+      status.querySelector("#statusPart .catfind input")?.focus();
+      return;
+    }
     e3.preventDefault();
     if (!filter.on) before = document.activeElement instanceof HTMLElement && document.activeElement !== document.body ? document.activeElement : null;
     focusBox = true;
@@ -4034,13 +4056,17 @@
     apps: "M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01",
     start: "M12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2z",
     steps: "M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11",
-    add: "M12 5v14M5 12h14"
+    add: "M12 5v14M5 12h14",
+    analytics: "M3 3v18h18M7 14l4-4 4 4 5-6",
+    own: "M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16zM3.27 6.96 12 12.01l8.73-5.05M12 22.08V12"
   };
   function SideMenu({ label, items, here: here3, pick }) {
     return /* @__PURE__ */ u3("ul", { class: "finmenu sidemenulist", "aria-label": label, children: items.map((it) => /* @__PURE__ */ u3("li", { children: /* @__PURE__ */ u3("button", { type: "button", class: "finmenuitem" + (here3 === it.key ? " on" : ""), "data-key": it.key, "aria-current": here3 === it.key ? "page" : void 0, onClick: () => pick(it.key), children: [
       /* @__PURE__ */ u3("svg", { class: "icon", viewBox: "0 0 24 24", "aria-hidden": "true", children: /* @__PURE__ */ u3("path", { d: it.icon }) }),
       /* @__PURE__ */ u3("span", { children: it.label }),
-      !!it.count && /* @__PURE__ */ u3("span", { class: "count", children: it.count })
+      !!it.count && /* @__PURE__ */ u3("span", { class: "count", children: it.count }),
+      it.dot && /* @__PURE__ */ u3("span", { class: "sidedot", role: "img", "aria-label": "One stopped" }),
+      !!it.total && /* @__PURE__ */ u3("span", { class: "total", children: it.total })
     ] }) }, it.key)) });
   }
   var mountSideMenu = (el3, props) => R(props && /* @__PURE__ */ u3(SideMenu, { ...props }), el3);
@@ -4048,6 +4074,114 @@
     if (el3) el3.scrollIntoView({ block: "start" });
     else document.getElementById(screen)?.closest("main")?.scrollTo({ top: 0 });
   }
+
+  // web/src/status/CategoryPage.tsx
+  var doing2 = { start: "Starting…", stop: "Stopping…", restart: "Restarting…", update: "Updating…", rollback: "Rolling back…" };
+  function upFor(since, now2 = Date.now()) {
+    const mins = Math.max(0, Math.round((now2 - new Date(since).getTime()) / 6e4)), hours = Math.round(mins / 60);
+    return mins < 2 ? "Up a minute" : mins < 60 ? `Up ${mins} min` : hours < 48 ? `Up ${hours} ${hours === 1 ? "hour" : "hours"}` : `Up ${Math.round(hours / 24)} days`;
+  }
+  function tileLine(a3, p3, now2 = Date.now()) {
+    const pend = p3.pending[a3.id];
+    if (pend && !pend.failed) return ["warn", pend.note || doing2[pend.action] || "Working…"];
+    const [cls, words5] = stateOf(a3, p3.batteryPaused, p3.held);
+    if (pend?.failed) return ["bad", `Could not ${pend.action}`];
+    if (cls === "ok" && a3.health === "native") return [cls, "Running"];
+    return [cls, cls === "ok" && a3.since ? upFor(a3.since, now2) : words5];
+  }
+  function Tile2({ a: a3, p: p3, menu: menu2, setMenu }) {
+    const [cls, line] = tileLine(a3, p3);
+    const [said2, say] = d2("");
+    const entry = p3.catalog?.apps.find((c4) => c4.id === a3.id);
+    const pend = p3.pending[a3.id];
+    const menuable = a3.state !== "missing" && a3.state !== "elsewhere" && (!p3.companion || document.documentElement.classList.contains("can-change"));
+    const close3 = (refocus) => {
+      const from2 = menu2?.from;
+      setMenu(null);
+      if (refocus && from2?.isConnected) from2.focus();
+    };
+    return /* @__PURE__ */ u3(
+      "li",
+      {
+        class: "cattile" + (menu2?.id === a3.id ? " menued" : ""),
+        "data-app": a3.id,
+        onClick: a3.state !== "missing" ? (e3) => {
+          if (!e3.target.closest("button, .rowmenu")) p3.on.page(a3);
+        } : void 0,
+        children: [
+          /* @__PURE__ */ u3("span", { class: "dot " + cls, role: "img", "aria-label": line }),
+          menuable && /* @__PURE__ */ u3(
+            "button",
+            {
+              type: "button",
+              class: "iconbtn catmore",
+              "aria-label": `${a3.name}: more`,
+              "aria-haspopup": "menu",
+              onClick: (e3) => {
+                const r3 = e3.currentTarget.getBoundingClientRect();
+                setMenu({ id: a3.id, x: r3.right - 200, y: r3.bottom + 4, from: e3.currentTarget });
+              },
+              children: /* @__PURE__ */ u3(Icon, { name: "more" })
+            }
+          ),
+          /* @__PURE__ */ u3(AppMark, { id: a3.id, name: a3.name, icon: p3.icons?.[a3.id] || "" }),
+          /* @__PURE__ */ u3("strong", { class: "catname", children: a3.name }),
+          /* @__PURE__ */ u3("span", { class: "catline" + (cls === "bad" ? " bad" : ""), title: line, children: said2 || line }),
+          /* @__PURE__ */ u3("span", { class: "catbtn", children: /* @__PURE__ */ u3(Actions2, { a: a3, entry, busy: p3.busy || !!pend && !pend.failed, os: p3.os, on: p3.on, marks: true }) }),
+          menu2?.id === a3.id && /* @__PURE__ */ u3(RowMenu, { a: a3, x: menu2.x, y: menu2.y, native: entry?.kind === "native", busy: p3.busy, companion: p3.companion, on: p3.on.menu, close: close3, said: say })
+        ]
+      }
+    );
+  }
+  function Shelf({ app, icon, install, change }) {
+    return /* @__PURE__ */ u3("li", { class: "cattile toadd", "data-app": app.id, children: [
+      /* @__PURE__ */ u3(AppMark, { id: app.id, name: app.name, icon }),
+      /* @__PURE__ */ u3("strong", { class: "catname", children: app.name }),
+      /* @__PURE__ */ u3("span", { class: "catline", title: app.description, children: app.description }),
+      change && /* @__PURE__ */ u3("span", { class: "catbtn", children: /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => install(app.id), children: [
+        /* @__PURE__ */ u3(Icon, { name: "update" }),
+        "Install"
+      ] }) })
+    ] });
+  }
+  function CategoryPage({ label, apps: apps2, add, here: here3, list, install }) {
+    const [menu2, setMenu] = d2(null);
+    const [find2, setFind] = d2("");
+    const running5 = apps2.filter((a3) => a3.state === "running").length;
+    const shown8 = find2 ? apps2.filter((a3) => matches(a3, find2)) : apps2;
+    const plain2 = (s3) => s3.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+    const toAdd = find2 ? add.filter((x3) => plain2(x3.name + " " + x3.description).includes(plain2(find2))) : add;
+    const change = !list.companion || document.documentElement.classList.contains("can-change");
+    const facts2 = [`${apps2.length} ${here3.replace(/^On /, "on ")}`, apps2.length ? `${running5} running` : "", add.length ? `${add.length} to add` : ""].filter(Boolean).join(" · ");
+    return /* @__PURE__ */ u3("div", { class: "catpage", children: [
+      /* @__PURE__ */ u3("div", { class: "row header", children: [
+        /* @__PURE__ */ u3("div", { children: [
+          /* @__PURE__ */ u3("h1", { children: label }),
+          /* @__PURE__ */ u3("p", { class: "lead", children: facts2 })
+        ] }),
+        /* @__PURE__ */ u3("label", { class: "catfind", children: [
+          /* @__PURE__ */ u3(Icon, { name: "search" }),
+          /* @__PURE__ */ u3("input", { type: "search", placeholder: "Find an app", "aria-label": "Find an app", value: find2, onInput: (e3) => setFind(e3.currentTarget.value) })
+        ] })
+      ] }),
+      /* @__PURE__ */ u3("h2", { class: "cathead", children: [
+        here3,
+        " ",
+        /* @__PURE__ */ u3("span", { class: "n", children: apps2.length })
+      ] }),
+      shown8.length ? /* @__PURE__ */ u3("ul", { class: "cattiles", children: shown8.map((a3) => /* @__PURE__ */ u3(Tile2, { a: a3, p: list, menu: menu2, setMenu }, a3.id)) }) : /* @__PURE__ */ u3("p", { class: "muted catnone", children: find2 ? "None by that name" : "None yet" }),
+      add.length > 0 && /* @__PURE__ */ u3(S, { children: [
+        /* @__PURE__ */ u3("h2", { class: "cathead", children: [
+          "Add to ",
+          label,
+          " ",
+          /* @__PURE__ */ u3("span", { class: "n", children: add.length })
+        ] }),
+        toAdd.length ? /* @__PURE__ */ u3("ul", { class: "cattiles", children: toAdd.map((x3) => /* @__PURE__ */ u3(Shelf, { app: x3, icon: list.icons?.[x3.id] || "", install, change }, x3.id)) }) : /* @__PURE__ */ u3("p", { class: "muted catnone", children: "None by that name" })
+      ] })
+    ] });
+  }
+  var mountCategoryPage = (el3, props) => R(props && /* @__PURE__ */ u3(CategoryPage, { ...props }), el3);
 
   // web/src/status/ReleaseNotes.tsx
   function summary(name, p3) {
@@ -8473,7 +8607,10 @@
     }
     const n3 = trouble2.length;
     $("statusCount").textContent = n3 ? String(n3) : "";
-    setHealthApps(trouble2.map((a3) => ({ id: a3.id, name: a3.name, words: stateOf(a3, batteryPaused, held)[1] })), () => navigate("status"));
+    setHealthApps(trouble2.map((a3) => ({ id: a3.id, name: a3.name, words: stateOf(a3, batteryPaused, held)[1] })), () => {
+      navigate("status");
+      pickStatusPart("overview");
+    });
     if (n3 !== lastAttention && !document.documentElement.classList.contains("companion")) {
       lastAttention = n3;
       Promise.resolve(go().SetAttention(n3)).catch(() => {
@@ -8502,9 +8639,32 @@
     wantIcons(groups4.flatMap((g2) => g2.apps.slice(0, 3).filter((x3) => x3.state !== "missing" && !shippedLogo(x3.id)).map((x3) => x3.id)));
     mountAppList($("statusRows"), appList);
     if (!unkept && !appList.companion) refreshUnkept();
-    statusSide = groups4.map((g2) => ({ key: g2.id, label: g2.label, icon: sideIcons[g2.id] || sideIcons.other, count: g2.alert ? g2.apps.length : void 0 }));
+    const cats = [...catalog?.categories || []].sort((x3, y3) => Number(x3.id === automation) - Number(y3.id === automation));
+    const own2 = st.apps.filter((a3) => !cats.some((c4) => c4.id === catOf[a3.id]));
+    const installed2 = new Set(st.apps.map((a3) => a3.id));
+    statusParts = [
+      ...cats.map((c4) => ({
+        id: c4.id,
+        label: c4.id === automation ? "Media automation" : c4.label,
+        apps: st.apps.filter((a3) => catOf[a3.id] === c4.id),
+        add: (catalog?.apps || []).filter((x3) => x3.category === c4.id && x3.kind !== "helper" && !installed2.has(x3.id) && !(c4.id === automation && x3.id === "seerr"))
+      })),
+      { id: "own", label: "Your own apps", apps: own2, add: [] }
+    ];
+    const seerr = (catalog?.apps || []).find((x3) => x3.id === "seerr");
+    const media = statusParts.find((p3) => p3.id === "media");
+    if (seerr && media && !installed2.has("seerr") && !media.add.includes(seerr)) media.add.push(seerr);
+    statusSide = statusParts.map((p3) => ({
+      key: p3.id,
+      label: p3.label,
+      icon: sideIcons[p3.id] || sideIcons.other,
+      total: p3.apps.length,
+      dot: p3.apps.some((a3) => troubled(a3, st.stopped))
+    }));
     drawStatusSide();
+    drawStatusPart();
   }
+  var statusParts = [];
   var statusSide = [];
   var statusHere = "overview";
   function drawStatusSide() {
@@ -8515,13 +8675,35 @@
       items: [{ key: "overview", label: "Overview", icon: sideIcons.overview }, ...statusSide]
     });
   }
+  function drawStatusPart() {
+    const part = statusHere === "overview" ? void 0 : statusParts.find((p3) => p3.id === statusHere);
+    const section = $("status");
+    if (part) section.dataset.part = part.id;
+    else delete section.dataset.part;
+    if (!part || !appList) {
+      mountCategoryPage($("statusPart"), null);
+      return;
+    }
+    wantIcons(part.apps.filter((a3) => a3.state !== "missing" && !shippedLogo(a3.id)).map((a3) => a3.id));
+    mountCategoryPage($("statusPart"), {
+      label: part.label,
+      apps: part.apps,
+      add: part.add,
+      list: appList,
+      here: appList.companion ? "On the server" : "On " + thisMachine.replace(/^This/, "this"),
+      install: (id2) => {
+        selected.add(id2);
+        navigate("choose");
+        renderApps();
+        replan();
+      }
+    });
+  }
   function pickStatusPart(key7) {
     statusHere = key7;
     drawStatusSide();
-    const row = () => key7 === "overview" ? null : document.querySelector(`#statusRows tr.grouphead[data-group="${CSS.escape(key7)}"]`);
-    const r3 = row();
-    if (r3 && !r3.classList.contains("open")) r3.click();
-    goToPart("status", row());
+    drawStatusPart();
+    goToPart("status", null);
   }
   onIcon(() => {
     if (appList) mountAppList($("statusRows"), appList = { ...appList, icons: { ...icons2 } });
@@ -9518,7 +9700,7 @@
   }
 
   // web/src/page/AppPage.tsx
-  var doing2 = { start: "Starting…", stop: "Stopping…", restart: "Restarting…", update: "Updating…", rollback: "Rolling back…" };
+  var doing3 = { start: "Starting…", stop: "Stopping…", restart: "Restarting…", update: "Updating…", rollback: "Rolling back…" };
   function uptime(since) {
     if (!since) return "";
     const mins = Math.max(0, Math.round((Date.now() - new Date(since).getTime()) / 6e4)), hours = Math.round(mins / 60);
@@ -9653,7 +9835,7 @@
   }
   function Header({ p: p3 }) {
     const { a: a3, entry, pending: pending2, busy: busy2, on: on2 } = p3;
-    const [tone, words5] = pending2 && !pending2.failed ? ["warn", pending2.note || doing2[pending2.action] || "Working…"] : p3.state;
+    const [tone, words5] = pending2 && !pending2.failed ? ["warn", pending2.note || doing3[pending2.action] || "Working…"] : p3.state;
     const up = a3.state === "running" && !pending2 ? uptime(a3.since) : "";
     const url = a3.address ? "https://" + a3.address : a3.url || "";
     const run2 = (action, label, title, danger = false) => /* @__PURE__ */ u3("button", { class: "btn change" + (danger ? " danger" : ""), title, disabled: busy2, onClick: () => on2.act(action), children: label });
@@ -21371,7 +21553,7 @@ ${pays}
         ] }) }),
         /* @__PURE__ */ u3(DriveWidget, { d: d3 })
       ] }),
-      /* @__PURE__ */ u3(Shelf, { d: d3, act, review: review2, pick }),
+      /* @__PURE__ */ u3(Shelf2, { d: d3, act, review: review2, pick }),
       /* @__PURE__ */ u3("div", { class: "fx-board tidybottom", children: [
         /* @__PURE__ */ u3(GenresWidget, { d: d3, job: job2, act }),
         /* @__PURE__ */ u3(DoneWidget, { d: d3, job: job2, act, span: 1 })
@@ -21636,7 +21818,7 @@ ${pays}
     const many = l3.kind === "music" ? n2(last(l3, "run")?.result?.in_library) || n2(last(l3, "scan")?.result?.files) : l3.kind === "movies" || l3.kind === "tv" ? n2(c4.lean) + n2(c4.bloated) + n2(c4.queued) + n2(l3.waiting) : l3.kind === "books" ? n2(last(l3, "review")?.result?.books) : 0;
     return [many ? things(l3.kind, many) : "", l3.size ? size(l3.size) : ""].filter(Boolean).join(" · ");
   }
-  function Shelf({ d: d3, act, review: review2, pick }) {
+  function Shelf2({ d: d3, act, review: review2, pick }) {
     return /* @__PURE__ */ u3("section", { class: "tidyshelf", "aria-labelledby": "tidyShelfTitle", children: [
       /* @__PURE__ */ u3("h2", { id: "tidyShelfTitle", children: "Your libraries" }),
       /* @__PURE__ */ u3("ul", { children: LIBRARIES.map((k3) => {

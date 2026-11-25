@@ -510,6 +510,8 @@ async function acctForm(page, row, opts = {}) {
 }
 const shots = [
   { name: 'status', screen: 'status', mock: { statusOpen: '' } },
+  // A category's page (the owner's computer-category pictures): its apps here as tiles, then every app to add.
+  { name: 'status-category', screen: 'status', before: async (page) => { await page.click('#statusSide button[data-key="media"]', { timeout: 5000 }); await page.waitForSelector('#statusPart .cattile', { timeout: 5000 }); } },
   // Below the apps: storage, and what is using power with each busy app's
   // last minutes (a minute of samples, run on the page's clock).
   { name: 'status-cards', screen: 'status', clock: true, mock: { usageSeries }, before: async (page) => {
@@ -6567,15 +6569,85 @@ const smokes = [
       const menuBox = await page.locator(menu).boundingBox(), settings = await page.locator('nav > button[data-screen="settings"]').boundingBox();
       if (menuBox.y <= tops[0] || (screen !== 'finances' && settings.y < menuBox.y + menuBox.height)) throw new Error(`on ${screen}, the menu is not between the icons and Settings`);
     }
-    // Status's menu opens a folded category and goes to it.
+    // Status's menu shows a category's page (the owner, Nov 25), in place of the overview.
     await page.click('nav > button[data-screen="status"]');
-    await page.click('#statusSide button:has-text("Media")');
-    await page.waitForSelector('#statusRows tr.grouphead.open[data-group="media"]', { timeout: 5000 });
-    await page.waitForSelector('#statusSide [aria-current="page"]:has-text("Media")');
+    await page.click('#statusSide button[data-key="media"]');
+    await page.waitForSelector('#statusPart .catpage h1:text-is("Media")', { timeout: 5000 });
+    await page.waitForSelector('#statusSide [aria-current="page"][data-key="media"]');
+    if (await page.isVisible('#statusRows')) throw new Error("a category's page left the overview's list showing");
     // Backups' Needs you says how many wait, and goes to its card.
     await page.click('nav > button[data-screen="backups"]');
     await page.click('#backupsSide button:has-text("Each app")');
     await page.waitForFunction(() => { const r = document.getElementById('copiesCard').getBoundingClientRect(); return r.top >= 0 && r.top < innerHeight / 2; }, null, { timeout: 5000 });
+  } },
+  // A category's page for every category (the owner, Nov 25: computer-category-full-dark.png): the menu is Overview, each
+  // catalog category with its apps' count (an amber dot where one is stopped), your own apps last, and no Needs a look,
+  // Pinned or Stopped; a page has its apps on this machine as tiles (dot, one line, Open or Start, ⋯), then every catalog
+  // app of the category not installed, each with Install, which opens Choose apps with it ticked and its plan.
+  { name: "Status: a category's page has its apps as tiles and every app to add, Install going to the plan", screen: 'status', run: async (page) => {
+    await page.waitForSelector('#statusSide button[data-key="media"]', { timeout: 5000 });
+    const menu = await page.$$eval('#statusSide .finmenuitem', (bs) => bs.map((b) => ({ key: b.dataset.key, label: b.querySelector('span').textContent, total: b.querySelector('.total')?.textContent || '', dot: !!b.querySelector('.sidedot') })));
+    const keys = menu.map((m) => m.key);
+    if (keys[0] !== 'overview' || keys[keys.length - 1] !== 'own') throw new Error('the menu: ' + keys.join(', '));
+    for (const no of ['attention', 'pinned', 'stopped', 'other']) if (keys.includes(no)) throw new Error(`the menu has ${no}: ${keys.join(', ')}`);
+    const { cats, apps, status } = await page.evaluate(async () => {
+      const go = window.go.main.App;
+      const c = await go.Catalog(), st = await go.Status();
+      return { cats: c.categories.map((x) => x.id), apps: c.apps.map((x) => ({ id: x.id, name: x.name, category: x.category, kind: x.kind })), status: st.apps.map((a) => ({ id: a.id, name: a.name, state: a.state })) };
+    });
+    for (const c of cats) if (!keys.includes(c)) throw new Error(`no page for ${c}: ${keys.join(', ')}`);
+    const catOf = Object.fromEntries(apps.map((x) => [x.id, x.id === 'seerr' ? 'media' : x.category]));
+    const installed = new Set(status.map((a) => a.id));
+    const mediaApps = status.filter((a) => catOf[a.id] === 'media');
+    const media = menu.find((m) => m.key === 'media');
+    if (media.total !== String(mediaApps.length || '')) throw new Error(`Media's count ${media.total}, not ${mediaApps.length}`);
+    // Stop one: its category's dot comes, and its tile says Start.
+    await page.click('#statusSide button[data-key="media"]');
+    await page.waitForSelector('#statusPart .catpage h1:text-is("Media")', { timeout: 5000 });
+    const tiles = await page.$$eval('#statusPart .cattile:not(.toadd) .catname', (els) => els.map((e) => e.textContent));
+    if (tiles.length !== mediaApps.length) throw new Error(`tiles ${tiles.join(', ')}; on this machine ${mediaApps.map((a) => a.name).join(', ')}`);
+    const shelf = await page.$$eval('#statusPart .cattile.toadd', (els) => els.map((e) => e.dataset.app).sort());
+    const want = apps.filter((x) => catOf[x.id] === 'media' && x.kind !== 'helper' && !installed.has(x.id)).map((x) => x.id).sort();
+    if (JSON.stringify(shelf) !== JSON.stringify(want)) throw new Error(`Add to Media: ${shelf.join(', ')}; the catalog's: ${want.join(', ')}`);
+    const lead = await page.textContent('#statusPart .catpage .lead');
+    if (!lead.includes(`${mediaApps.length} on this Mac`) || (want.length && !lead.includes(`${want.length} to add`))) throw new Error('its line: ' + lead);
+    // Each tile: a dot, one line, and one button.
+    const bad = await page.$$eval('#statusPart .cattile:not(.toadd)', (els) => els.filter((e) => !e.querySelector('.dot') || !e.querySelector('.catline').textContent.trim()).map((e) => e.dataset.app));
+    if (bad.length) throw new Error('tiles without a dot or a line: ' + bad.join(', '));
+    // Three across on the computer.
+    const tops = await page.$$eval('#statusPart .cattiles:first-of-type > li', (els) => els.slice(0, 3).map((e) => Math.round(e.getBoundingClientRect().top)));
+    if (tops.length === 3 && new Set(tops).size !== 1) throw new Error('not three across: ' + tops);
+    // Find an app narrows both.
+    if (want.length) {
+      const first = apps.find((x) => x.id === want[0]);
+      await page.fill('#statusPart .catfind input', first.name);
+      await page.waitForFunction((id) => [...document.querySelectorAll('#statusPart .cattile.toadd')].map((e) => e.dataset.app).join() === id, first.id, { timeout: 5000 });
+      await page.fill('#statusPart .catfind input', '');
+      // Install: Choose apps, with it ticked.
+      await page.click(`#statusPart .cattile.toadd[data-app="${first.id}"] button:has-text("Install")`);
+      await page.waitForSelector('#choose.active', { timeout: 5000 });
+      const ticked = await page.$$eval('#choose label.app', (ls) => ls.filter((l) => l.querySelector('input:checked')).map((l) => l.querySelector('strong')?.textContent || l.textContent));
+      if (!ticked.some((t) => t.startsWith(first.name))) throw new Error(`Install left ${first.name} unticked on Choose apps: ${ticked.join(', ')}`);
+      await page.click('nav > button[data-screen="status"]');
+    }
+    // Overview: the list again.
+    await page.click('#statusSide button[data-key="overview"]');
+    await page.waitForSelector('#statusRows', { state: 'visible', timeout: 5000 });
+    if (await page.isVisible('#statusPart .catpage')) throw new Error("Overview left the category's page showing");
+    // Your own apps: the apps of no catalog category, and no shelf.
+    await page.click('#statusSide button[data-key="own"]');
+    await page.waitForSelector('#statusPart .catpage h1:text-is("Your own apps")', { timeout: 5000 });
+    if (await page.$('#statusPart .cattile.toadd')) throw new Error('your own apps have a shelf');
+  } },
+  // A stopped app (Mealie, in the preview's state): an amber dot by its category's count, and its tile's Start.
+  { name: "Status: a stopped app puts an amber dot by its category, and its tile says Start", screen: 'status', run: async (page) => {
+    await page.waitForSelector('#statusSide button[data-key="household"] .sidedot', { timeout: 5000 });
+    const dots = await page.$$eval('#statusSide .sidedot', (els) => els.map((e) => e.closest('button').dataset.key));
+    if (dots.join() !== 'household') throw new Error('amber dots on: ' + dots.join(', '));
+    await page.click('#statusSide button[data-key="household"]');
+    await page.waitForSelector('#statusPart .cattile[data-app="mealie"] button:has-text("Start")', { timeout: 5000 });
+    const line = await page.textContent('#statusPart .cattile[data-app="mealie"] .catline');
+    if (!/^Stopped/.test(line)) throw new Error('its line: ' + line);
   } },
   // Usability task 15, item 4: on the phone (390px, and 320px with text at 1.5×, which is 213px), back, the period's name
   // and forward on one line, the name wrapping between them.
@@ -10909,6 +10981,7 @@ const screens = [
   { name: 'Status, filtered by name', screen: 'status', before: async (page) => { await page.waitForSelector('#statusRows tr.grouphead', { timeout: 5000 }); await page.keyboard.type('me'); await page.waitForSelector('.filterbox input'); } },
   { name: 'Command palette, an app typed', screen: 'status', before: async (page) => { await page.waitForSelector('#statusRows tr.grouphead', { timeout: 5000 }); await page.keyboard.press((await page.evaluate(() => /Mac/.test(navigator.platform))) ? 'Meta+k' : 'Control+k'); await page.keyboard.type('navi'); await page.waitForSelector('.palette [role=option]'); } },
   { name: 'Status after a crash', screen: 'status', mock: { crash: crashed } },
+  { name: "Status, a category's page", screen: 'status', before: async (page) => { await page.click('#statusSide button[data-key="media"]', { timeout: 5000 }); await page.waitForSelector('#statusPart .cattile', { timeout: 5000 }); } },
   { name: 'Choose apps', screen: 'choose' },
   { name: 'Backups', screen: 'backups' },
   { name: 'Setup', screen: 'setup' },

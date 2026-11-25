@@ -14,6 +14,7 @@ import { store } from '../store';
 import { icons, onIcon, wantIcons } from '../status/appIcons';
 import { shippedLogo } from '../parts/AppMark';
 import { goToPart, mountSideMenu, type SideItem, sideIcons } from '../parts/SideMenu';
+import { mountCategoryPage } from '../status/CategoryPage';
 import { ReleaseNotes } from '../status/ReleaseNotes';
 import { h as vnode } from 'preact';
 import { mountStatusNote } from '../parts/Notes';
@@ -104,7 +105,7 @@ function renderTiles(st: api.Status) {
   const n = trouble.length;
   $('statusCount').textContent = n ? String(n) : '';
   // Health in one line, at the top of the other screens: these, in their rows' words.
-  setHealthApps(trouble.map((a) => ({ id: a.id, name: a.name, words: stateOf(a, batteryPaused, held)[1] })), () => navigate('status'));
+  setHealthApps(trouble.map((a) => ({ id: a.id, name: a.name, words: stateOf(a, batteryPaused, held)[1] })), () => { navigate('status'); pickStatusPart('overview'); });
   // The same count on the Dock icon (the Mac), as Mail shows unread mail;
   // a phone has no Dock.
   if (n !== lastAttention && !document.documentElement.classList.contains('companion')) {
@@ -149,12 +150,30 @@ function renderAppList(st: api.Status) {
   wantIcons(groups.flatMap((g) => g.apps.slice(0, 3).filter((x) => x.state !== 'missing' && !shippedLogo(x.id)).map((x) => x.id)));
   mountAppList($('statusRows'), appList);
   if (!unkept && !appList.companion) refreshUnkept();
-  statusSide = groups.map((g) => ({ key: g.id, label: g.label, icon: sideIcons[g.id] || sideIcons.other, count: g.alert ? g.apps.length : undefined }));
+  // The menu and a category's page: each catalog category with its apps on this machine, whatever their state (the
+  // owner, Nov 25: an amber dot where one is stopped, never a Stopped or Needs a look item), your own apps last.
+  const cats = [...(catalog?.categories || [])].sort((x, y) => Number(x.id === automation) - Number(y.id === automation));
+  const own = st.apps.filter((a) => !cats.some((c) => c.id === catOf[a.id]));
+  const installed = new Set(st.apps.map((a) => a.id));
+  statusParts = [
+    ...cats.map((c) => ({ id: c.id, label: c.id === automation ? 'Media automation' : c.label, apps: st.apps.filter((a) => catOf[a.id] === c.id),
+      add: (catalog?.apps || []).filter((x) => x.category === c.id && x.kind !== 'helper' && !installed.has(x.id) && !(c.id === automation && x.id === 'seerr')) })),
+    { id: 'own', label: 'Your own apps', apps: own, add: [] },
+  ];
+  // Seerr sits in Media (above): its shelf too.
+  const seerr = (catalog?.apps || []).find((x) => x.id === 'seerr');
+  const media = statusParts.find((p) => p.id === 'media');
+  if (seerr && media && !installed.has('seerr') && !media.add.includes(seerr)) media.add.push(seerr);
+  statusSide = statusParts.map((p) => ({ key: p.id, label: p.label, icon: sideIcons[p.id] || sideIcons.other, total: p.apps.length,
+    dot: p.apps.some((a) => troubled(a, st.stopped)) }));
   drawStatusSide();
+  drawStatusPart();
 }
 
-// Status's menu in the sidebar (parts/SideMenu): Overview, then each group as the list has it; a pick goes to its row,
-// opening it when folded.
+// Status's menu in the sidebar (parts/SideMenu): Overview, then each category, your own apps last; a pick shows that
+// category's page (status/CategoryPage) in place of the overview.
+interface StatusPart { id: string; label: string; apps: api.AppStatus[]; add: api.App[] }
+let statusParts: StatusPart[] = [];
 let statusSide: SideItem[] = [];
 let statusHere = 'overview';
 function drawStatusSide() {
@@ -163,13 +182,24 @@ function drawStatusSide() {
     items: [{ key: 'overview', label: 'Overview', icon: sideIcons.overview }, ...statusSide],
   });
 }
-function pickStatusPart(key: string) {
+/** Shows the overview, or the category picked, with the apps as last read. */
+function drawStatusPart() {
+  const part = statusHere === 'overview' ? undefined : statusParts.find((p) => p.id === statusHere);
+  const section = $('status');
+  if (part) section.dataset.part = part.id; else delete section.dataset.part;
+  if (!part || !appList) { mountCategoryPage($('statusPart'), null); return; }
+  wantIcons(part.apps.filter((a) => a.state !== 'missing' && !shippedLogo(a.id)).map((a) => a.id));
+  mountCategoryPage($('statusPart'), {
+    label: part.label, apps: part.apps, add: part.add, list: appList,
+    here: appList.companion ? 'On the server' : 'On ' + thisMachine.replace(/^This/, 'this'),
+    install: (id) => { selected.add(id); navigate('choose'); renderApps(); replan(); },
+  });
+}
+export function pickStatusPart(key: string) {
   statusHere = key;
   drawStatusSide();
-  const row = () => key === 'overview' ? null : document.querySelector<HTMLElement>(`#statusRows tr.grouphead[data-group="${CSS.escape(key)}"]`);
-  const r = row();
-  if (r && !r.classList.contains('open')) r.click();
-  goToPart('status', row());
+  drawStatusPart();
+  goToPart('status', null);
 }
 
 // The passwords and keys of each app not ticked Saved yet: a dot on its ⚙

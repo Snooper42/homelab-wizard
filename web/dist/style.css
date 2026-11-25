@@ -3445,3 +3445,44 @@ table.copies td.nights { white-space:nowrap; text-align:right; }
 table.copies td.nights .dot { margin:0 0 0 3px; }
 /* One column (a small window, big text): the dots would push the table sideways; the squares under Last night say it. */
 @container (max-width: 760px) { #copiesCard table.copies td.nights { display:none; } }
+/* A category's page on Status (status/CategoryPage.tsx, the owner's computer-category pictures): the overview steps aside
+   while one shows; big tiles three across (two on a phone), see-through on a soft violet and teal glow; the apps to add
+   faded, with a dashed edge. */
+#status:not([data-part]) > #statusPart, #status[data-part] > :not(#statusPart) { display:none !important; }
+main:has(> #status.active[data-part]) { background:radial-gradient(60% 40% at 25% 0, color-mix(in srgb, var(--violet) 10%, transparent), transparent 70%), radial-gradient(50% 40% at 100% 100%, color-mix(in srgb, var(--cyan) 8%, transparent), transparent 70%), var(--bg); }
+.catpage { --cat-tile:color-mix(in srgb, var(--panel) 72%, transparent); --cat-edge:var(--line); }
+.catpage .row.header { align-items:flex-start; }
+.catfind { display:flex; align-items:center; gap:8px; width:260px; max-width:100%; padding:7px 12px; border:1px solid var(--cat-edge); border-radius:10px; background:var(--cat-tile); color:var(--muted); }
+.catfind input { all:unset; flex:1; min-width:0; color:var(--text); font-size:13px; }
+.catfind:focus-within { border-color:var(--accent); }
+.cathead { font-size:14px; font-weight:600; margin:22px 0 10px 4px; }
+.cathead .n { margin-left:6px; color:var(--muted); font-weight:500; }
+.catnone { margin:0 4px; }
+.cattiles { list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:14px; }
+.cattile { position:relative; display:flex; flex-direction:column; align-items:center; gap:4px; min-height:218px; padding:28px 16px 22px; border:1px solid var(--cat-edge); border-radius:20px; background:var(--cat-tile); text-align:center; backdrop-filter:blur(12px); }
+.cattile:not(.toadd) { cursor:default; }
+.cattile:not(.toadd):hover { border-color:var(--line-strong); }
+.cattile > .dot { position:absolute; top:14px; left:14px; margin:0; }
+.cattile .catmore { position:absolute; top:8px; right:8px; }
+.cattile .appmark { width:64px; height:64px; border-radius:16px; margin-bottom:10px; }
+.cattile .catname { font-size:15px; font-weight:600; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.cattile .catline { font-size:13px; color:var(--muted); max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.cattile .catline.bad { color:var(--bad); }
+.cattile .catbtn { margin-top:auto; padding-top:12px; display:flex; gap:6px; }
+.cattile .catbtn button.small { border-radius:999px; padding:4px 14px; font-weight:600; }
+.cattile .catbtn button.small .icon { width:13px; height:13px; }
+.cattile .catbtn button.change { background:var(--primary); color:var(--primary-text); border-color:transparent; }
+.cattile .catbtn .lookonly { display:none; }
+.cattile.toadd { border-style:dashed; background:color-mix(in srgb, var(--cat-tile) 55%, transparent); }
+.cattile.toadd .appmark { opacity:.85; }
+@container (max-width: 760px) { .cattiles { grid-template-columns:repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 700px) { .cattiles { grid-template-columns:repeat(2, minmax(0, 1fr)); gap:10px; } .cattile { min-height:190px; padding:24px 10px 16px; } .catpage .row.header { flex-wrap:wrap; } .catfind { width:100%; } }
+@media (prefers-color-scheme: dark) and (prefers-contrast: no-preference) {
+  main:has(> #status.active[data-part]) { background:radial-gradient(60% 40% at 25% 0, color-mix(in srgb, var(--violet) 18%, transparent), transparent 70%), radial-gradient(50% 40% at 100% 100%, color-mix(in srgb, var(--cyan) 10%, transparent), transparent 70%), var(--fin-night); }
+  .catpage { --cat-tile:var(--glow-04); --cat-edge:var(--glow-1); }
+  .cattile:not(.toadd):hover { border-color:var(--glow-16); }
+}
+/* Status' menu: each category's apps in grey, an amber dot where one is stopped. */
+nav .sidemenulist .total { margin-left:auto; font-size:12px; color:var(--nav-muted); font-variant-numeric:tabular-nums; }
+nav .sidemenulist .sidedot { margin-left:auto; width:7px; height:7px; border-radius:50%; background:var(--amber); }
+nav .sidemenulist .sidedot + .total { margin-left:8px; }
