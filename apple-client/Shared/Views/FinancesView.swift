@@ -2098,7 +2098,7 @@ private struct FinanceSpendingPage: View {
                     if !spent.isEmpty {
                         list(spent, month: month, isThisMonth: month == thisMonth, view: view)
                     }
-                    Text("From the transactions on your computer. Money moved between your own accounts and money coming in aren’t counted; a refund counts against its category.")
+                    Text("Moves between your own accounts and money coming in aren’t counted; a refund counts against its category.")
                         .font(.footnote)
                         .foregroundStyle(Theme.secondaryInk)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -2362,13 +2362,6 @@ private struct FinanceRecurringPage: View {
                             .padding(18)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .card()
-                    }
-                    if finances.canEditPlan, !items.isEmpty {
-                        Text("Tap one to change what it costs, or + to add one. Remove them on the computer.")
-                            .font(.footnote)
-                            .foregroundStyle(Theme.secondaryInk)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.horizontal, 4)
                     }
                 }
                 .padding(.horizontal, 16)
