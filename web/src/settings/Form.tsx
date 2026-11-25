@@ -145,7 +145,7 @@ function Row({ s, p, value, hidden, edit }: RowProps) {
   return (
     // Its .env name shows on hover, and under it while searching.
     <div class={'setting' + (toggle ? ' toggle' : '') + (p.focus.includes(s.key) ? ' focus' : '') + (p.wanted.has(s.key) ? '' : ' more')} id={'setting-' + s.key} hidden={hidden}>
-      <div class="key" title={s.key}><span class="label">{label}</span><code>{s.key}</code></div>
+      <div class="key" title={s.key}><span class="label">{label}</span>{s.help && <span class="helptip" tabIndex={0} role="img" aria-label={plainHelp(s.help, toggle)} title={plainHelp(s.help, toggle)}>i</span>}<code>{s.key}</code></div>
       {buttons.length ? <div class="inputrow">{input}{buttons}</div> : input}
       <div class={'test' + (result ? ' ' + result.tone : '')} hidden={!result}>{result?.text}</div>
       {s.help && <div class="help">{plainHelp(s.help, toggle)}</div>}

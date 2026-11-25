@@ -58,7 +58,7 @@ function CalendarFeed({ v, calendar, busy, set }: { v: finance.View; calendar: (
     <fieldset class="fincalendar">
       <legend>Calendar feed</legend>
       {!key ? <>
-        <p class="fx-sub">Paydays and bills in your phone's calendar, through a link only you have. It works over Tailscale or the homelab's own domain, never over the home Wi-Fi.</p>
+        <p class="fx-sub">Paydays and bills in your phone's calendar, through a private link.</p>
         <label class="fcheckbox"><input type="checkbox" checked={withAmounts} onClick={(e) => setWithAmounts((e.currentTarget as HTMLInputElement).checked)} /> With amounts</label>
         <p><button type="button" class="small" disabled={busy} onClick={() => set(newKey(), withAmounts)}>Make a calendar link</button></p>
       </> : <>
@@ -111,7 +111,7 @@ function Settings({ v, save, calendar }: { v: finance.View; save: SaveSettings; 
         <label class="field">Amounts in <select disabled={busy} value={currency} onChange={(e) => keep({ currency: (e.target as HTMLSelectElement).value, holidays })}>{(currencies.includes(currency) ? currencies : [currency, ...currencies]).map((c) => <option key={c} value={c}>{c}</option>)}</select></label>
       </div>
       {!!others.length && <div class="finrates">
-        <p class="fx-sub">Accounts in other currencies count at these rates, typed in by you: Finances never looks a rate up.</p>
+        <p class="fx-sub">Typed in by you; never looked up.</p>
         {others.map((code) => (
           <label key={code} class="field finrate">1 {code} is <span class="moneyfield"><span aria-hidden="true">{currencySign()}</span><input inputmode="decimal" disabled={busy} value={rates[code] ?? ''} aria-label={`1 ${code} in ${currency}`} onChange={(e) => setRate(code, (e.target as HTMLInputElement).value)} /></span>
             <small class="muted">{(v.plan.accounts || []).filter((a) => a.currency === code).map((a) => a.name).join(', ')}</small></label>
@@ -288,7 +288,7 @@ export function Pay({ v, L, edit, saveSettings, keep, calendar }: ListProps & { 
               actions={edit && <IconButton icon="edit" label={`Edit ${e.name}'s pay`} onClick={() => edit('person', e.id)} />}>
               <Stat value={<Amount value={e.net} />} caption={<>Take-home, each paycheck · about {whole(e.net * perMonth(e.schedule) * 12)} a year</>} />
               {/* No gross or deductions yet: say what they would show, and open the form for them. */}
-              {!e.gross && !ded.length && edit && <p class="fx-sub fx-payhint">Add the gross and what is taken out (taxes, a 401(k), insurance) to see where the rest of the pay goes. <button type="button" class="small" onClick={() => edit('person', e.id)}>Add them</button></p>}
+              {!e.gross && !ded.length && edit && <p class="fx-sub fx-payhint">Add the gross and what's taken out. <button type="button" class="small" onClick={() => edit('person', e.id)}>Add them</button></p>}
               {!!e.gross && (() => {
                 const parts: Part[] = [{ label: 'Take-home', value: e.net, color: 'in' }, ...ded.map((d) => ({ label: d.name, value: d.amount, color: (d.account ? 'save' : 'track') as Hue })), ...(e.gross - e.net - taken > 0.5 ? [{ label: 'Taxes and the rest', value: e.gross - e.net - taken, color: 'muted' as Hue }] : [])];
                 return <><SplitBar size="sm" label={`${e.name}'s pay`} parts={parts} /><Legend layout="inline" items={parts.map((p) => ({ label: p.label, color: p.color }))} /></>;

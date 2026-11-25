@@ -842,7 +842,7 @@ function BalancesForm(props: EditProps) {
   return (
     <form class="finform finbalances" onSubmit={submit} {...watch}>
       <div class="formhead"><h2 id="finSheetTitle">Update balances</h2></div>
-      <p class="formsub muted">Each starts at what it should hold today. Type what your bank shows, then press Enter.</p>
+      <p class="formsub muted">Type what your bank shows.</p>
       {!!props.fromApps?.length && <div class="fromapp">
         {props.fromApps.map((app) => <button key={app.name} type="button" class="small" disabled={!!pulled.busy} onClick={() => fromApp(app)}>{pulled.busy === app.name ? `Reading ${app.name}…` : `From ${app.name}`}</button>)}
         {pulled.said && <span class="muted" role="status">{pulled.said}</span>}
@@ -1128,7 +1128,7 @@ function LogosForm(props: EditProps) {
   return (
     <form class="finform finlogos" onSubmit={submit} {...watch}>
       <div class="formhead"><h2 id="finSheetTitle">Logos</h2></div>
-      <p class="formsub muted">These show initials. <strong>Get the real logo</strong> asks that company's website for its own icon, from this computer, only when you click; nothing else is sent, and the logo is kept only in your plan.</p>
+      <p class="formsub muted"><strong>Get the real logo</strong> asks that company's website for its icon, only when you click.</p>
       {fetchLogo && ready > 1 && <p><button type="button" class="small" disabled={getting.length > 0} onClick={getAll}>{getting.length ? 'Getting the logos…' : `Get them all (${ready})`}</button></p>}
       <ul class="logolist">
         {rows.map((r) => {
@@ -1175,7 +1175,6 @@ function RulesForm(props: EditProps) {
   return (
     <form class="finform finrules" onSubmit={submit} {...watch}>
       <div class="formhead"><h2 id="finSheetTitle">Rules</h2></div>
-      <p class="formsub muted">What each payee becomes as it comes in, from <strong>Always do this for…</strong> on a transaction. Every import follows them, before anything is guessed.</p>
       <datalist id="finRuleCategories">{named.map((n) => <option key={n} value={n} />)}</datalist>
       <ul class="rulelist">
         {rules.map((r, i) => <li key={i}>
@@ -1188,7 +1187,7 @@ function RulesForm(props: EditProps) {
           <button type="button" class="small" aria-label={`Remove the rule for ${r.match}`} onClick={() => setRules(latest.current.filter((_, j) => j !== i))}>Remove</button>
         </li>)}
       </ul>
-      {!rules.length && <p class="muted">No rules yet. On a transaction, give its payee a name or a category and tick <strong>Always do this for…</strong>.</p>}
+      {!rules.length && <p class="muted">No rules yet.</p>}
       {problem && <p class="formerr bad" role="alert">{problem}</p>}
       <Actions busy={busy} exists={false} remove={() => {}} close={props.close} touched={touched || JSON.stringify(rules) !== JSON.stringify(plan.rules || [])} />
     </form>
@@ -1251,7 +1250,7 @@ function CategoriesForm(props: EditProps) {
   return (
     <form class="finform fincats" onSubmit={submit}>
       <div class="formhead"><h2 id="finSheetTitle">Categories</h2></div>
-      <p class="formsub muted">Renaming one renames it on every transaction; deleting one moves its transactions to its group.</p>
+      <p class="formsub muted">Renaming changes every transaction.</p>
       <ul class="catlist">
         {ordered.map((r) => {
           const i = rows.indexOf(r);
@@ -1303,7 +1302,6 @@ function BudgetsForm(props: EditProps) {
   return (
     <form class="finform" onSubmit={submit} {...watch}>
       <div class="formhead"><h2 id="finSheetTitle">Budgets</h2></div>
-      <p class="formsub muted">A budget for a group counts its own categories too (Food counts Groceries and Eating out).</p>
       <ul class="catlist budgetlist">
         {rows.map((r, i) => (
           <li key={i}>
@@ -1457,7 +1455,7 @@ function ImportForm(props: EditProps) {
   return (
     <form class="finform finimport" onSubmit={bring}>
       <div class="formhead"><h2 id="finSheetTitle">Import a bank's file</h2></div>
-      <p class="formsub muted">A CSV or an OFX/QFX file from your bank's website. It is read on this device and kept only in your ledger.</p>
+      <p class="formsub muted">A CSV or OFX/QFX file from your bank. Read on this device only.</p>
       <div class="formgrid">
         <Field label="File"><span class="importfile">
           <input ref={file} type="file" accept=".csv,.ofx,.qfx,text/csv" hidden onChange={(e) => read(e.currentTarget.files?.[0])} />
@@ -1488,7 +1486,7 @@ function ImportForm(props: EditProps) {
           const sum = (l: typeof fresh) => money(Math.round(l.reduce((a, t) => a + Math.abs(t.amount), 0) * 100) / 100);
           return <p class="muted importnote importsum">{out.length} out, {sum(out)} · {inn.length} in, {sum(inn)}</p>;
         })()}
-        {guessed.some(Boolean) && <p class="muted importnote">A row that looks like a planned payment pays it, so the plan doesn't take it out again on its day. Change it below if it's wrong.</p>}
+        {guessed.some(Boolean) && <p class="muted importnote">Rows that match a planned payment pay it. Change any below.</p>}
         <ul class="importlist">
           {found.slice(0, 60).map((t, i) => {
             const k = fresh.indexOf(t), fixing = fixes.has(i), renaming = renames.has(i), dup = k < 0 && !fixing && !renaming;
@@ -1558,7 +1556,6 @@ function GoalForm(props: EditProps) {
   return (
     <form class="finform" onSubmit={submit} {...watch}>
       <div class="formhead"><h2 id="finSheetTitle">{g ? g.name : 'Add a goal'}</h2></div>
-      <p class="formsub muted">A goal never moves money: it counts a share of what accounts hold toward something.</p>
       <div class="formgrid">
         <Field label="Name"><input value={name} onInput={input(setName)} placeholder="Emergency fund" /></Field>
         <MoneyField label="How much it needs" value={target} set={setTarget} hint="10000" />

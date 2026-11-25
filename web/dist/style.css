@@ -154,7 +154,7 @@ td.state .rowerr { display:block; white-space:normal; font-size:12px; color:var(
 .cols { display:grid; grid-template-columns:minmax(0,1fr) 340px; gap:24px; align-items:start; }
 /* It stays in view while the list scrolls, and scrolls itself when a long
    plan is taller than the window, so Install is always in reach. */
-.plan { position:sticky; top:0; padding:4px 18px 18px; max-height:calc(100vh / var(--zoom, 1) - 66px); overflow-y:auto; overscroll-behavior:contain; }
+.plan { position:sticky; top:0; padding:4px 18px 18px; max-height:calc(100vh / var(--zoom, 1) - 104px); overflow-y:auto; overscroll-behavior:contain; }
 .plan ul { margin:4px 0 10px; padding-left:18px; } .plan li { margin:3px 0; }
 .planLead { margin:6px 0 4px; font-weight:600; color:var(--text); }
 .planApps { display:grid; grid-template-columns:1fr 1fr; column-gap:18px; } .planApps li { margin:3px 0; }
@@ -562,7 +562,7 @@ html.companion .applog { white-space:pre-wrap; overflow-wrap:anywhere; }
 /* Settings: a name for people with its .env key beneath, switches, and
    the rarely changed sections folded. */
 .setting .key { font-family:inherit; font-size:13px; }
-.setting .key .label { display:block; font-weight:600; }
+.setting .key .label { display:inline; font-weight:600; }
 .setting .key code { display:block; font-family:var(--mono); font-size:11px; color:var(--muted); margin-top:2px; }
 input.switch { appearance:none; -webkit-appearance:none; width:38px; height:22px; padding:0; border-radius:11px; border:1px solid var(--line-strong); background:var(--line); position:relative; cursor:default; transition:background .15s; margin-top:4px; }
 input.switch::after { content:""; position:absolute; top:2px; left:2px; width:16px; height:16px; border-radius:50%; background:var(--white); box-shadow:0 1px 2px var(--shade-25); transition:left .15s; }
@@ -1178,6 +1178,10 @@ html:is(.os-mac, .os-windows, .os-linux) .checklist > li.fold, html:is(.os-mac, 
 .settingsnav .navfold .n { font-size:11px; color:var(--muted); font-variant-numeric:tabular-nums; }
 .settingsnav .pagebtn.infold { padding-left:25px; }
 #settingsForm:not(.searching) .setting .key code { display:none; }
+/* The owner, Nov 24: no explanations under each setting. Its help is behind the ⓘ by its name, and shows while searching (it's what matched). */
+#settingsForm:not(.searching) .setting .help { display:none; }
+.setting .helptip { display:inline-flex; align-items:center; justify-content:center; width:15px; height:15px; margin-left:6px; border-radius:50%; border:1px solid var(--line); color:var(--muted); font:600 10px/1 var(--font, inherit); font-style:italic; vertical-align:1px; cursor:help; }
+.setting .helptip:hover, .setting .helptip:focus-visible { color:var(--text); border-color:var(--muted); }
 html #settingsForm .setting.toggle { grid-template-columns:minmax(0,1fr) auto; column-gap:18px; }
 html #settingsForm .setting.toggle .key { grid-column:1; grid-row:1; padding-top:0; }
 html #settingsForm .setting.toggle > input.switch { grid-column:2; grid-row:1 / span 2; align-self:center; }
@@ -3111,6 +3115,14 @@ html.companion .crumbs .backlabel { display:inline; }
 #statusHeadline .headlineacts .btn { width:auto; margin:0; padding:4px 10px; font-size:12px; }
 /* Two tiles wide only beside two others; a whole row once the tiles go two by two or one under another (a span 2 in one column would add a second). */
 @container (max-width: 824px) { #statusHeadline { grid-column:1 / -1; } }
+/* All good is a line under the title, not a card; Backups and This Mac share the row under it. */
+#statusHeadline.slim { grid-column:1 / -1; display:flex; align-items:baseline; gap:8px; border:0; background:none; box-shadow:none; padding:0; margin:-4px 0 -2px; }
+#statusHeadline.slim .okmark { color:var(--ok); font-weight:700; }
+#statusHeadline.slim .value { font-size:15px; font-weight:600; color:var(--text); }
+#statusHeadline.slim .label { font-size:14px; color:var(--muted); }
+#statusHeadline.slim ~ .statuscard { grid-column:span 2; }
+html.companion #statusHeadline.slim ~ .statuscard { grid-column:span 1; }
+@container (max-width: 824px) { #statusHeadline.slim ~ .statuscard { grid-column:span 2; } }
 
 /* Status's categories as the redesign's rows (R6c): their first apps' icons overlapping, and the count a pill, green with
    a tick when all of them run, amber when one doesn't. */
@@ -3366,3 +3378,54 @@ html:not(.companion) #settings .settingscols { grid-template-columns:minmax(0,1f
 .settingsnav .pagebtn .pagename > .icon { display:none; }
 html:not(.companion) nav #settingsNav .pagebtn .pagename > .icon { display:block; width:18px; height:18px; padding:0; background:none; box-shadow:none; color:inherit; stroke-width:1.8; flex:none; }
 html.os-mac:not(.companion) nav #settingsNav .pagebtn.active .icon { color:var(--fin-accent); }
+
+/* The owner, Nov 24: no boxes that only hold a label and a big number. A stat is a fact in a line: no card around it,
+   its figure at reading size, the facts in a row parted by a hairline. A card that asks something of you (an app that
+   needs you) keeps its card. */
+.tiles > .tile:not(.headline), .tiles > .card.tile:not(.headline) { background:none; border:0; box-shadow:none; border-radius:0; padding:2px 0 2px 16px; border-left:1px solid var(--line); min-width:0; }
+.tiles > #statusHeadline.slim + .tile, .tiles > .tile:first-child:not(.headline) { border-left:0; padding-left:0; }
+.tiles > .tile:not(.headline) .label { font-size:12.5px; font-weight:500; text-transform:none; letter-spacing:0; color:var(--muted); }
+.tiles > .tile:not(.headline) .value, html.os-mac .tiles > .tile:not(.headline) .value { font-family:inherit; font-size:17px; font-weight:600; letter-spacing:-.01em; margin-top:1px; }
+.tiles > .tile:not(.headline) .value small { font-size:13px; }
+.tiles > .tile:not(.headline) .sub { min-height:0; font-size:12.5px; margin-top:2px; }
+.tiles > .tile:not(.headline) .sub .btn, .tiles > .tile:not(.headline) .sub button { padding:2px 9px; font-size:12px; }
+#statusHeadline.slim ~ .statuscard { grid-column:span 1; }
+.tiles:has(> #statusHeadline.slim) { display:flex; flex-wrap:wrap; gap:10px 0; }
+.tiles:has(> #statusHeadline.slim) > #statusHeadline.slim { flex:1 1 100%; }
+.tiles:has(> #statusHeadline.slim) > .tile { flex:0 1 auto; padding-right:28px; }
+.tiles > .tile:not(.headline) .label { display:flex; align-items:baseline; gap:10px; }
+.tiles > .tile:not(.headline) .label .statusmore { margin-left:0; }
+.tiles > .tile:not(.headline) .sub.statusupdates { justify-content:flex-start; gap:10px; }
+/* Backups' top, as Status': its stats are facts in a row, no cards; Needs you keeps a card while something needs you. */
+#backupTiles > .bkcard:not(.bkneeds), #backupTiles > .bkcard.bkneeds:not(:has(.bkneedlist)) { background:none; border:0; box-shadow:none; border-radius:0; padding:2px 20px 2px 18px; border-left:1px solid var(--line); }
+#backupTiles > .bkcard:first-child { border-left:0; padding-left:0; }
+#backupTiles .bkcard .value { font-size:19px; font-weight:600; letter-spacing:-.01em; }
+#backupTiles .bkcard .value small { font-size:13px; }
+#backupTiles .bkcard > h2, #backupTiles .bkcard > .row h2 { font-size:12.5px; font-weight:500; color:var(--muted); }
+#backupTiles .card-figure { margin:2px 0 0; }
+#backupTiles .card-figurelabel { font-size:12.5px; text-transform:none; letter-spacing:0; }
+.bkfacts { display:flex; flex-wrap:wrap; gap:4px 16px; margin-top:8px; }
+.bkfacts > div { display:flex; align-items:baseline; gap:5px; padding:0; background:none; border-radius:0; }
+.bkfacts dt { font-size:12px; font-weight:500; text-transform:none; letter-spacing:0; }
+.bkfacts dd { margin:0; font-size:13px; font-weight:600; white-space:nowrap; }
+#backupTiles .card-figurevalue { font-size:19px; font-weight:600; }
+#backupTiles .card-figurevalue .value { font-size:inherit; font-weight:inherit; }
+#backupTiles { display:flex; flex-wrap:wrap; align-items:flex-start; gap:14px 0; }
+#backupTiles > .bkcard:not(.bkneeds), #backupTiles > .bkcard.bkneeds:not(:has(.bkneedlist)) { flex:1 1 220px; }
+#backupTiles > .bkcard.bklast { flex:2 1 360px; }
+#backupTiles > .bkcard.bkneeds:has(.bkneedlist) { flex:1 1 100%; order:9; }
+#backupTiles > .bkcard:not(.bklast):not(.bkneeds) .card-figure { margin-top:6px; }
+#backupTiles #restoreTile .value, #backupTiles #offsiteTile .value, #backupTiles #copiesTile .card-figurevalue > .value { font-size:19px; font-weight:600; }
+#backupTiles .card-figurelabel { font-weight:400; color:var(--muted); }
+/* Finances' small figure boxes (Now, Payday, Bills; Income, Spending): facts in a row, as everywhere. */
+.fx-tile { border:0; border-radius:0; padding:0 0 0 14px; border-left:1px solid var(--line); background:none; }
+.fx-tile:first-child { border-left:0; padding-left:0; }
+.fx-clearrow > .fx-clearfig > .fx-clearbtn { box-shadow:none; border-radius:0; padding:2px 0 2px 14px; border-left:1px solid var(--line); }
+.fx-clearrow > .fx-clearfig:first-child > .fx-clearbtn { border-left:0; padding-left:0; }
+.fx-clearrow > .fx-clearfig > .fx-clearbtn:focus-visible { outline:2px solid var(--accent); outline-offset:3px; border-radius:4px; }
+/* Amber text off a card sits on the page's ground: a step darker there, so it still reads at 4.5:1. */
+.tiles > .tile:not(.headline) .warn, #backupTiles > .bkcard:not(.bkneeds) .warn { color:color-mix(in srgb, var(--warn) 70%, var(--text)); }
+.fx-clearrow > .fx-clearfig > .fx-cleartile { box-shadow:none; border:0; border-radius:0; background:none; padding:2px 0 2px 14px; border-left:1px solid var(--line); }
+/* Tidy Up's steps as a line of checks, not a row of boxes. */
+.tidysteps li { border:0; background:none; border-radius:0; padding:0; }
+.tidysteps li.now, .tidysteps li.next, .tidysteps li[aria-current] { border:0; background:none; box-shadow:none; }

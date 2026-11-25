@@ -54,7 +54,7 @@ export function ArrangedBoard({ slots, phone, kind }: { slots: Slot[]; phone?: b
   // On a phone, or never arranged: the usual board, exactly as it was drawn before.
   if (phone) return <div class="fx-board">{present.map((s) => s.node)}</div>;
   const button = <div class="fx-arrange">{editing
-    ? <><span class="fx-arrangehint">Drag a card by its handle, or use ▲ ▼. Pick its width; Hide what you don't use. Kept on this device.</span>
+    ? <><span class="fx-arrangehint">Kept on this device.</span>
       <button type="button" class="btn" onClick={() => { keepLayout(null); setLayout(null); }}>Reset to the usual</button>
       <button type="button" class="btn fx-primary" onClick={() => setEditing(false)}>Done</button></>
     : null}</div>;

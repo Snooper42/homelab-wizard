@@ -157,9 +157,9 @@ export function MoneyFlowWidget({ v, L, ledger, edit, title = 'Money flow' }: { 
           <button type="button" class="small" onClick={() => setPicked('')}>Close</button>
         </div>
         {node.id === 'kept:cash'
-          ? <p class="fx-sub">What was left after taxes, spending, and what went into savings accounts: it stayed where it came in.</p>
+          ? <p class="fx-sub">It stayed where it came in.</p>
           : node.id === 'src:accounts'
-            ? <p class="fx-sub">More went out than came in: the rest came out of what the accounts held.</p>
+            ? <p class="fx-sub">It came out of what the accounts held.</p>
             : <Rows kind="fx-rows">
               {items.slice(0, many).map((it, i) => <Row key={i} title={it.label} sub={[it.date && dayShort(it.date), it.note].filter(Boolean).join(' · ') || (it.payment ? 'Planned, a month' : it.person ? 'Pay, a month' : '')}
                 when={<Amount value={it.amount} sign={it.amount > 0} tone={it.amount > 0 ? 'in' : ''} form="full" />} whenPlain
