@@ -3,8 +3,8 @@ import PhotosUI
 import SwiftUI
 
 /// Finances' home, as cards: what's left after this paycheck's bills, the
-/// accounts as a row of small cards, net worth with a line to run a finger along,
-/// what's left to spend and the next bill side by side, the latest
+/// accounts as a row of small cards, net worth and this month's cash flow
+/// side by side, what's left to spend and the next bill side by side, the latest
 /// transactions, the bills coming, and the rest of Finances one tap away.
 /// Amounts stay hidden until Show Amounts, and none show at all while Hide
 /// amounts is on at the computer.
@@ -53,7 +53,8 @@ struct FinancesView: View {
                     if finances.isMember, let shared = finances.shared, !shared.isEmpty {
                         HouseholdCard(shared: shared, finances: finances)
                     }
-                    NetWorthCard(view: view, finances: finances)
+                    // Net worth and Cash flow side by side, as the redesign's picture; the full line is on Accounts.
+                    WorthAndFlow(view: view, finances: finances)
                     GlanceTiles(view: view, finances: finances)
                     RecentTransactionsCard(view: view, finances: finances)
                     UpcomingBillsCard(view: view, finances: finances)
@@ -547,6 +548,8 @@ enum NetWorthRange: Int, CaseIterable, Identifiable, Sendable {
 private struct NetWorthCard: View {
     let view: FinancesPlanView
     let finances: FinancesViewModel
+    /// Opens Accounts; off on Accounts itself, where it's the page's top.
+    var linked = true
     @State private var range: NetWorthRange = .threeMonths
     @State private var picked: Date?
 
@@ -557,44 +560,18 @@ private struct NetWorthCard: View {
         let point = TrendChart.point(in: series, at: picked)
         let change = series.count >= 2 ? (series.last?.value ?? 0) - (series.first?.value ?? 0) : nil
         VStack(alignment: .leading, spacing: 0) {
-            NavigationLink {
-                FinanceAccountsPage(finances: finances)
-            } label: {
-                VStack(alignment: .leading, spacing: 6) {
-                    HStack {
-                        Text(point.map { $0.date.formatted(.dateTime.month(.abbreviated).day().year()) } ?? "Net worth")
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(Theme.secondaryInk)
-                        Spacer()
-                        Image(systemName: "chevron.right").accessibilityHidden(true)
-                            .font(.footnote.weight(.semibold))
-                            .foregroundStyle(.tertiary)
+            Group {
+                if linked {
+                    NavigationLink {
+                        FinanceAccountsPage(finances: finances)
+                    } label: {
+                        heading(point: point, change: change)
                     }
-                    Text(verbatim: amountText(point?.value ?? view.netWorth, view.plan.currency, finances))
-                        .font(.largeTitle.weight(.heavy))
-                        .monospacedDigit()
-                        .foregroundStyle(shown ? Theme.ink : Theme.secondaryInk)
-                        .contentTransition(.numericText())
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.6)
-                    if shown, let change, abs(change) >= 0.5, point == nil {
-                        HStack(spacing: 4) {
-                            Image(systemName: change >= 0 ? "arrow.up.right" : "arrow.down.right")
-                                .font(.caption.weight(.bold))
-                            Text(verbatim: amountText(abs(change), view.plan.currency, finances, whole: true))
-                            Text(verbatim: range.words)
-                                .foregroundStyle(Theme.secondaryInk)
-                                .fontWeight(.regular)
-                        }
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(change >= 0 ? Theme.success : Theme.danger)
-                        .contentTransition(.numericText())
-                    }
+                    .buttonStyle(PressableButtonStyle())
+                } else {
+                    heading(point: point, change: change)
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .contentShape(Rectangle())
             }
-            .buttonStyle(PressableButtonStyle())
             .padding(.horizontal, 18)
             .padding(.top, 18)
             // The line and its range sit outside the link, so a finger on the line reads it.
@@ -616,6 +593,192 @@ private struct NetWorthCard: View {
         }
         .card(radius: 24)
         .animation(.smooth(duration: 0.35), value: range)
+    }
+
+    private func heading(point: NetWorthPoint?, change: Double?) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Text(point.map { $0.date.formatted(.dateTime.month(.abbreviated).day().year()) } ?? "Net worth")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Theme.secondaryInk)
+                Spacer()
+                if linked {
+                    Image(systemName: "chevron.right").accessibilityHidden(true)
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(.tertiary)
+                }
+            }
+            Text(verbatim: amountText(point?.value ?? view.netWorth, view.plan.currency, finances))
+                .font(.largeTitle.weight(.heavy))
+                .monospacedDigit()
+                .foregroundStyle(shown ? Theme.ink : Theme.secondaryInk)
+                .contentTransition(.numericText())
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+            if shown, let change, abs(change) >= 0.5, point == nil {
+                HStack(spacing: 4) {
+                    Image(systemName: change >= 0 ? "arrow.up.right" : "arrow.down.right")
+                        .font(.caption.weight(.bold))
+                    Text(verbatim: amountText(abs(change), view.plan.currency, finances, whole: true))
+                    Text(verbatim: range.words)
+                        .foregroundStyle(Theme.secondaryInk)
+                        .fontWeight(.regular)
+                }
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(change >= 0 ? Theme.success : Theme.danger)
+                .contentTransition(.numericText())
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .contentShape(Rectangle())
+    }
+}
+
+/// Net worth and Cash flow side by side, as the redesign's phone picture
+/// (phone-finances.png): net worth short, its change over three months in a
+/// chip and its line; this month's cash flow from the transactions, its
+/// change against last month by the same day, and how much of what came in
+/// was kept. Net worth opens Accounts (its full line, with 1M, 3M and 1Y);
+/// Cash flow opens Cash Flow. With no transactions this month, Net worth
+/// alone.
+private struct WorthAndFlow: View {
+    let view: FinancesPlanView
+    let finances: FinancesViewModel
+    @Environment(\.dynamicTypeSize) private var typeSize
+
+    private var shown: Bool { finances.amountsShown && !finances.amountsHiddenByPlan }
+    private var currency: String { view.plan.currency }
+
+    var body: some View {
+        let flow = CashFlowGlance.make(finances.countedTransactions, today: view.today ?? Date())
+        // Side by side, or one above the other at the largest text sizes.
+        let layout = typeSize.isAccessibilitySize ? AnyLayout(VStackLayout(spacing: 12)) : AnyLayout(HStackLayout(alignment: .top, spacing: 12))
+        layout {
+            NavigationLink {
+                FinanceAccountsPage(finances: finances)
+            } label: {
+                worth
+            }
+            .buttonStyle(PressableButtonStyle())
+            if let flow {
+                NavigationLink {
+                    FinanceCashFlowPage(finances: finances)
+                } label: {
+                    cash(flow)
+                }
+                .buttonStyle(PressableButtonStyle())
+            }
+        }
+        // The two the same height, as the picture's.
+        .fixedSize(horizontal: false, vertical: true)
+    }
+
+    private var worth: some View {
+        let series = view.netWorthSeries(days: NetWorthRange.threeMonths.rawValue)
+        let change = series.count >= 2 ? (series.last?.value ?? 0) - (series.first?.value ?? 0) : nil
+        return tile(title: "Net worth") {
+            figure(shown ? CompactMoney.text(view.netWorth, currency: currency) : "••••", tint: Theme.ink)
+            if shown, let change, abs(change) >= 0.5 {
+                let words = CompactMoney.text(abs(change), currency: currency)
+                chip(up: change >= 0, words: (change >= 0 ? "+" : "−") + words)
+                    .accessibilityLabel(Text(verbatim: "\(change >= 0 ? "Up" : "Down") \(words) in 3 months"))
+            }
+            Spacer(minLength: 0)
+            if shown, series.count >= 2 {
+                Spark(series: series)
+                    .frame(height: 40)
+                    .padding(.top, 4)
+            }
+        }
+    }
+
+    private func cash(_ flow: CashFlowGlance) -> some View {
+        let kept = flow.kept
+        let amount = amountText(abs(kept), currency, finances, whole: true)
+        let sign: String = !shown ? "" : kept >= 0.5 ? "+" : kept <= -0.5 ? "−" : ""
+        let tint: Color = !shown ? Theme.ink : kept >= 0 ? Theme.success : Theme.danger
+        return tile(title: "Cash flow") {
+            figure(sign + amount, tint: tint)
+            if shown, let change = flow.change, abs(change) >= 0.0005 {
+                let words = abs(change).formatted(.percent.precision(.fractionLength(1)))
+                chip(up: change >= 0, words: (change >= 0 ? "+" : "−") + words)
+                    .accessibilityLabel(Text(verbatim: "\(words) \(change >= 0 ? "more" : "less") kept than by this day last month"))
+            }
+            Spacer(minLength: 0)
+            if shown {
+                // What went out, then what was kept, of what came in.
+                let share = flow.keptShare ?? 0
+                GeometryReader { geo in
+                    HStack(spacing: 2) {
+                        if share < 1 { Capsule().fill(Theme.danger) }
+                        if share > 0 { Capsule().fill(Theme.success).frame(width: max(6, (geo.size.width - 2) * share)) }
+                    }
+                }
+                .frame(height: 6)
+                .padding(.top, 6)
+                .accessibilityHidden(true)
+            }
+            Text(verbatim: shown ? flow.caption() : flow.month.formatted(.dateTime.month(.wide)))
+                .font(.caption)
+                .foregroundStyle(Theme.secondaryInk)
+                .lineLimit(2)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private func figure(_ words: String, tint: Color) -> some View {
+        Text(verbatim: words)
+            .font(.title2.weight(.heavy))
+            .monospacedDigit()
+            .foregroundStyle(tint)
+            .lineLimit(1)
+            .minimumScaleFactor(0.6)
+            .contentTransition(.numericText())
+    }
+
+    /// The picture's chip: an arrow and the change, green up, red down.
+    private func chip(up: Bool, words: String) -> some View {
+        Label(words, systemImage: up ? "arrow.up.right" : "arrow.down.right")
+            .font(.caption.weight(.semibold))
+            .foregroundStyle(up ? Theme.success : Theme.danger)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 3)
+            .background((up ? Theme.success : Theme.danger).opacity(0.12), in: Capsule())
+    }
+
+    private func tile<Content: View>(title: LocalizedStringKey, @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title)
+                .font(.headline)
+                .foregroundStyle(Theme.ink)
+            content()
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .card(radius: 20)
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
+    }
+
+    /// Net worth's line, small: no axes, nothing to read with a finger (Accounts has that).
+    private struct Spark: View {
+        let series: [NetWorthPoint]
+
+        var body: some View {
+            let low = series.map(\.value).min() ?? 0
+            let high = series.map(\.value).max() ?? 0
+            Chart(series, id: \.date) { point in
+                AreaMark(x: .value("Day", point.date), yStart: .value("Low", low), yEnd: .value("Net worth", point.value))
+                    .foregroundStyle(LinearGradient(colors: [Theme.accent.opacity(0.22), Theme.accent.opacity(0.02)], startPoint: .top, endPoint: .bottom))
+                LineMark(x: .value("Day", point.date), y: .value("Net worth", point.value))
+                    .foregroundStyle(Theme.accent)
+                    .lineStyle(StrokeStyle(lineWidth: 2))
+            }
+            .chartXAxis(.hidden)
+            .chartYAxis(.hidden)
+            .chartYScale(domain: low...(high > low ? high : low + 1))
+            .accessibilityHidden(true)
+        }
     }
 }
 
@@ -2510,7 +2673,9 @@ private struct FinanceAccountsPage: View {
         ScrollView {
             if let view = finances.plan {
                 VStack(spacing: 18) {
-                    summary(view)
+                    // Net worth with its line (1M, 3M, 1Y), as Finances' home had it before its half card.
+                    NetWorthCard(view: view, finances: finances, linked: false)
+                    if finances.amountsShown, !finances.amountsHiddenByPlan, view.assets + view.liabilities > 0 { summary(view) }
                     ForEach(view.accountGroups) { group in
                         groupCard(group, view)
                     }
@@ -2561,17 +2726,8 @@ private struct FinanceAccountsPage: View {
         let shown = finances.amountsShown && !finances.amountsHiddenByPlan
         let assets = view.assets, owed = view.liabilities
         let share = assets + owed > 0 ? assets / (assets + owed) : 1
+        // What's owned against what's owed; net worth itself is the card above.
         return VStack(alignment: .leading, spacing: 10) {
-            Text("Net worth")
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(Theme.secondaryInk)
-            Text(verbatim: amountText(view.netWorth, view.plan.currency, finances))
-                .font(.largeTitle.weight(.heavy))
-                .monospacedDigit()
-                .foregroundStyle(shown ? Theme.ink : Theme.secondaryInk)
-                .contentTransition(.numericText())
-                .lineLimit(1)
-                .minimumScaleFactor(0.6)
             if shown, assets + owed > 0 {
                 GeometryReader { geo in
                     HStack(spacing: 3) {
