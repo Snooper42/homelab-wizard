@@ -57,6 +57,7 @@ services:
     depends_on: [dawarich-db, dawarich-redis, dawarich-sidekiq]
     networks: [default, homelab]
     x-homelab:
+      rebuilds: [dawarich-public]
       memory: 500
       releases: Freika/dawarich
       name: Dawarich

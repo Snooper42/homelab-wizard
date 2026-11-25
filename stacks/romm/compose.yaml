@@ -57,6 +57,7 @@ services:
     depends_on: [romm-db]
     networks: [default, homelab]
     x-homelab:
+      rebuilds: [romm-redis]
       memory: 300
       releases: rommapp/romm
       name: RomM

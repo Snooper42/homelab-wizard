@@ -73,6 +73,7 @@ services:
     # Built locally with the CrowdSec bouncer baked in: a pulled upstream
     # image would silently drop it. Update with ./homelab update nginx-proxy-manager.
     x-homelab:
+      rebuilds: [npm-logs]
       memory: 200
       dump: sqlite:/data/database.sqlite
       pin: Carries the CrowdSec bouncer; pulling the upstream image would silently drop it
@@ -95,6 +96,7 @@ services:
       - ./data/appdata/adguard-home/conf:/opt/adguardhome/conf
       - adguard-work:/opt/adguardhome/work
     x-homelab:
+      rebuilds: [adguard-work]
       releases: AdguardTeam/AdGuardHome
       name: AdGuard Home
       login: [ADGUARD_USER, ADGUARD_PASSWORD]

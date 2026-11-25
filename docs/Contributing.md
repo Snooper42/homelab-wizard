@@ -103,6 +103,7 @@ Use `../../appdata/<name>/...` for bind mounts so data sits next to the other st
 | `keyfile` | Where the app keeps its own API key in its `/config` (`config.xml`, `settings.json`, `config/config.yaml`): its sign-in details copies it from there |
 | `dump: postgres` | `homelab backup` dumps this database daily |
 | `archive` | Named volumes `homelab backup` tars daily |
+| `rebuilds` | Named volumes the app makes again by itself (a search index, a cache, built files), kept out of the backup on purpose. `homelab validate` fails on a named volume that is in neither `archive`, a `dump` service's data, nor `rebuilds` |
 | `phone` | The phone app people use the app with, shown on each person's welcome page (`homelab person add`) |
 | `version` | For a PostgreSQL database (`dump: postgres`): the `.env` setting with its major version, used in its image as `postgres:${KEY:-N}`; `homelab db upgrade` moves it on |
 | `proxy_host` | Reach the UI through another container (qBittorrent through `gluetun`) |
