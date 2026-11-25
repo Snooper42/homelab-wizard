@@ -3556,3 +3556,23 @@ nav .sidemenulist .sidedot + .total { margin-left:8px; }
   #statusChips .total { color:inherit; opacity:.6; font-size:12px; }
   #statusChips .sidedot { width:7px; height:7px; border-radius:50%; background:var(--amber); }
 }
+/* Installing (choose/InstallSheet.tsx): the app's page atop the plan, in a sheet; Find an app on the overview; a tile to
+   add opens its sheet; Your own apps' Add tile. */
+.sheethead { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:8px; }
+.sheethead h2 { margin:0; font-size:20px; }
+.installabout { display:grid; grid-template-columns:auto 1fr; column-gap:16px; align-items:center; padding:4px 0 14px; margin-bottom:12px; border-bottom:1px solid var(--line); }
+.installabout > .appmark, .installabout > .aboutmarks { grid-row:span 3; }
+.installabout .appmark { width:64px; height:64px; border-radius:16px; }
+.installabout .aboutmarks { display:flex; } .installabout .aboutmarks .appmark { width:44px; height:44px; border-radius:12px; margin-right:-10px; box-shadow:0 0 0 2px var(--panel); }
+.installabout p { margin:0; }
+.aboutwhat { font-size:15px; }
+.aboutfacts { font-size:13px; margin-top:4px !important; }
+#installBody aside.plan { position:static; width:auto; border:0; box-shadow:none; padding:0; background:none; }
+#installBody aside.plan > h2 { font-size:14px; margin:0 0 6px; }
+.statusfind { width:220px; }
+#status[data-part] .statusfind { display:none; }
+.cattile.opens { cursor:default; } .cattile.opens:hover { border-color:var(--line-strong); }
+.cattile .ownmark { display:inline-flex; align-items:center; justify-content:center; background:var(--sunken); color:var(--muted); border:1px dashed var(--line-strong); }
+.cattile .ownmark .icon { width:28px; height:28px; }
+#customBody .customForm { padding:0; }
+@media (max-width: 700px) { .statusfind { width:100%; order:-1; } }

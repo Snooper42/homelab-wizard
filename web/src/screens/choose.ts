@@ -10,11 +10,42 @@ import { hostOS } from './setup';
 import { settingLabel, settingsData, showSettings } from './settings';
 import { cliProgress, startJob } from '../jobs';
 import { inTurn, waitWords } from '../job/queue';
-import { $, go, minute, onPhone, osName, showError } from '../core';
-import { goToPart, mountSideMenu, sideIcons } from '../parts/SideMenu';
+import { $, go, minute, osName, showError } from '../core';
+import { mountAbout, mountInstallSheets } from '../choose/InstallSheet';
+import { icons as appIcons } from '../status/appIcons';
 
 // Choose apps
 export let catalog: api.Catalog | null = null;
+// Choose apps is gone (the owner, Nov 25): its plan and its own-app form live in sheets (choose/InstallSheet.tsx) that
+// any Install opens; the picker below stays out of sight, keeping what it ticks for the plan.
+let sheets = false;
+function drawSheets() {
+  if (sheets) return;
+  sheets = true;
+  mountInstallSheets($('installSheets'), { close: closeInstall, closeCustom: () => { $('customSheet').hidden = true; } });
+  const plan = document.querySelector('#choose aside.plan');
+  if (plan) { plan.classList.remove('card'); $('installBody').appendChild(plan); }
+  const form = document.querySelector('#customCard .customForm');
+  if (form) $('customBody').appendChild(form);
+}
+/** Install: the sheet with the app's page (or a set's) atop its plan, the plan first. */
+export function openInstall(ids: string[], about?: { app?: string; set?: string }) {
+  drawSheets();
+  if (!installing) { selected.clear(); ids.forEach((id) => selected.add(id)); }
+  const app = catalog?.apps.find((a) => a.id === (about?.app ?? (ids.length === 1 ? ids[0] : '')));
+  const set = catalog?.presets.find((p) => p.id === about?.set);
+  mountAbout($('installAbout'), catalog && (app || set) ? { app, set, catalog, icons: appIcons } : null);
+  $('installTitle').textContent = set ? set.name : app ? app.name : 'Install';
+  $('installSheet').hidden = false;
+  renderApps();
+  replan();
+}
+function closeInstall() {
+  $('installSheet').hidden = true;
+  if (!installing) { selected.clear(); clearInstall(); renderApps(); replan(); }
+}
+/** Add your own app, in its sheet; once added, its install sheet with the plan. */
+export function openCustom() { drawSheets(); $('customSheet').hidden = false; }
 export const selected = new Set<string>();
 const settings: Record<string, string> = {}; // form values, sent with every plan and install
 const appName = (id) => (catalog.apps.find((a) => a.id === id) || { name: id }).name;
@@ -74,7 +105,7 @@ $('cAdd').onclick = async () => {
     }, (behind) => { log.textContent = `${waitWords(behind)}…\n`; });
     const added = catalog.apps.find((a) => !before.has(a.id));
     renderApps();
-    if (added) { selected.add(added.id); renderApps(); replan(); }
+    if (added) { $('customSheet').hidden = true; openInstall([added.id]); }
     for (const id of ['cName', 'cImage', 'cPort', 'cDesc', 'cVolumes']) $(id).value = '';
     log.hidden = true; // added and ticked: the log has done its job
   } catch (e) {
@@ -110,26 +141,6 @@ export function renderApps() {
     open: (url) => go().Open(url),
     settings: (keys) => showSettings(keys),
     note: (id) => appNote(id, systemOf(osName, hostOS)),
-  });
-  drawChooseSide();
-}
-
-// Choose apps' menu in the sidebar (parts/SideMenu): Start here, each category (opening Add more), and Add your own app.
-let chooseHere = 'start';
-function drawChooseSide() {
-  const cats = (catalog?.categories || []).filter((c) => catalog.apps.some((a) => a.kind !== 'helper' && a.category === c.id));
-  mountSideMenu($('chooseSide'), onPhone() ? null : {
-    label: 'Choose apps', here: chooseHere, pick: (key) => {
-      chooseHere = key;
-      drawChooseSide();
-      if (key === 'start') { goToPart('choose', null); return; }
-      ($('more') as HTMLDetailsElement).open = true;
-      if (key === 'own') ($('customCard') as HTMLDetailsElement).open = true;
-      goToPart('choose', key === 'own' ? $('customCard') : document.querySelector(`#groups .group[data-cat="${CSS.escape(key)}"]`));
-    },
-    items: [{ key: 'start', label: 'Start here', icon: sideIcons.start },
-      ...cats.map((c) => ({ key: c.id, label: c.label, icon: sideIcons[c.id] || sideIcons.other })),
-      { key: 'own', label: 'Add your own app', icon: sideIcons.add }],
   });
 }
 
@@ -239,7 +250,7 @@ $('installBtn').onclick = async () => {
         const a = catalog.apps.find((x) => x.id === id);
         return a && a.kind !== 'helper' ? [{ name: a.name, what: a.description, by: appName(by) }] : [];
       });
-      mountStarted($('started'), { started, also, open: (url) => go().Open(url), close: () => { clearInstall(); $('search').focus(); } });
+      mountStarted($('started'), { started, also, open: (url) => go().Open(url), close: closeInstall });
       if (!$('wireRow').hidden && $('wire').checked && started.length) await wire($('wiring'));
       selected.clear();
       // New apps: Settings has their settings, and Status (with the ticks here) changed.

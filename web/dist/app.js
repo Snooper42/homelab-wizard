@@ -4134,7 +4134,9 @@
     );
   }
   function Shelf({ app, icon, install, change }) {
-    return /* @__PURE__ */ u3("li", { class: "cattile toadd", "data-app": app.id, children: [
+    return /* @__PURE__ */ u3("li", { class: "cattile toadd" + (change ? " opens" : ""), "data-app": app.id, onClick: change ? (e3) => {
+      if (!e3.target.closest("button")) install(app.id);
+    } : void 0, children: [
       /* @__PURE__ */ u3(AppMark, { id: app.id, name: app.name, icon }),
       /* @__PURE__ */ u3("strong", { class: "catname", children: app.name }),
       /* @__PURE__ */ u3("span", { class: "catline", title: app.description, children: app.description }),
@@ -4144,13 +4146,29 @@
       ] }) })
     ] });
   }
-  function CategoryPage({ label, apps: apps2, add, here: here3, list, install }) {
+  function SetTile({ set: set2, catalog: catalog2, icons: icons4, install, change }) {
+    const first = catalog2?.apps.find((a3) => a3.id === set2.apps[0]);
+    return /* @__PURE__ */ u3("li", { class: "cattile toadd set" + (change ? " opens" : ""), "data-set": set2.id, onClick: change ? (e3) => {
+      if (!e3.target.closest("button")) install(set2.id);
+    } : void 0, children: [
+      /* @__PURE__ */ u3(AppMark, { id: first?.id, name: set2.name, icon: first && icons4?.[first.id] || "" }),
+      /* @__PURE__ */ u3("strong", { class: "catname", children: set2.name }),
+      /* @__PURE__ */ u3("span", { class: "catline", title: set2.description, children: set2.description || `${set2.apps.length} apps` }),
+      change && /* @__PURE__ */ u3("span", { class: "catbtn", children: /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => install(set2.id), children: [
+        /* @__PURE__ */ u3(Icon, { name: "update" }),
+        "Install"
+      ] }) })
+    ] });
+  }
+  function CategoryPage({ label, apps: apps2, add, here: here3, list, install, sets = [], installSet, addOwn, addLabel, find: typed = "" }) {
     const [menu2, setMenu] = d2(null);
-    const [find2, setFind] = d2("");
+    const [find2, setFind] = d2(typed);
     const running5 = apps2.filter((a3) => a3.state === "running").length;
     const shown8 = find2 ? apps2.filter((a3) => matches(a3, find2)) : apps2;
     const plain2 = (s3) => s3.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
-    const toAdd = find2 ? add.filter((x3) => plain2(x3.name + " " + x3.description).includes(plain2(find2))) : add;
+    const words5 = (x3) => plain2([x3.name, x3.description, ...x3.aliases || [], ...x3.replaces || []].join(" "));
+    const toAdd = find2 ? add.filter((x3) => words5(x3).includes(plain2(find2))) : add;
+    const setsShown = find2 ? sets.filter((x3) => plain2(x3.name + " " + (x3.description || "")).includes(plain2(find2))) : sets;
     const change = !list.companion;
     const facts2 = [`${apps2.length} ${here3.replace(/^On /, "on ")}`, apps2.length ? `${running5} running` : "", add.length ? `${add.length} to add` : ""].filter(Boolean).join(" · ");
     return /* @__PURE__ */ u3("div", { class: "catpage", children: [
@@ -4161,7 +4179,7 @@
         ] }),
         /* @__PURE__ */ u3("label", { class: "catfind", children: [
           /* @__PURE__ */ u3(Icon, { name: "search" }),
-          /* @__PURE__ */ u3("input", { type: "search", placeholder: "Find an app", "aria-label": "Find an app", value: find2, onInput: (e3) => setFind(e3.currentTarget.value) })
+          /* @__PURE__ */ u3("input", { type: "search", placeholder: "Find an app", "aria-label": "Find an app", value: find2, autoFocus: !!typed, onInput: (e3) => setFind(e3.currentTarget.value) })
         ] })
       ] }),
       /* @__PURE__ */ u3("h2", { class: "cathead", children: [
@@ -4169,11 +4187,28 @@
         " ",
         /* @__PURE__ */ u3("span", { class: "n", children: apps2.length })
       ] }),
-      shown8.length ? /* @__PURE__ */ u3("ul", { class: "cattiles", children: shown8.map((a3) => /* @__PURE__ */ u3(Tile2, { a: a3, p: list, menu: menu2, setMenu }, a3.id)) }) : /* @__PURE__ */ u3("p", { class: "muted catnone", children: find2 ? "None by that name" : "None yet" }),
+      setsShown.length > 0 && installSet && /* @__PURE__ */ u3(S, { children: [
+        /* @__PURE__ */ u3("h2", { class: "cathead", children: [
+          "Sets ",
+          /* @__PURE__ */ u3("span", { class: "n", children: setsShown.length })
+        ] }),
+        /* @__PURE__ */ u3("ul", { class: "cattiles", children: setsShown.map((x3) => /* @__PURE__ */ u3(SetTile, { set: x3, catalog: list.catalog, icons: list.icons, install: installSet, change }, x3.id)) })
+      ] }),
+      shown8.length || addOwn && change ? /* @__PURE__ */ u3("ul", { class: "cattiles", children: [
+        shown8.map((a3) => /* @__PURE__ */ u3(Tile2, { a: a3, p: list, menu: menu2, setMenu }, a3.id)),
+        addOwn && change && /* @__PURE__ */ u3("li", { class: "cattile toadd opens addown", onClick: addOwn, children: [
+          /* @__PURE__ */ u3("span", { class: "appmark ownmark", "aria-hidden": "true", children: /* @__PURE__ */ u3("svg", { class: "icon", viewBox: "0 0 24 24", children: /* @__PURE__ */ u3("path", { d: "M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16zM3.27 6.96 12 12.01l8.73-5.05M12 22.08V12" }) }) }),
+          /* @__PURE__ */ u3("strong", { class: "catname", children: "Add your own app" }),
+          /* @__PURE__ */ u3("span", { class: "catline", children: "Any container image" }),
+          /* @__PURE__ */ u3("span", { class: "catbtn", children: /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: (e3) => {
+            e3.stopPropagation();
+            addOwn();
+          }, children: "Add" }) })
+        ] })
+      ] }) : /* @__PURE__ */ u3("p", { class: "muted catnone", children: find2 ? "None by that name" : "None yet" }),
       add.length > 0 && /* @__PURE__ */ u3(S, { children: [
         /* @__PURE__ */ u3("h2", { class: "cathead", children: [
-          "Add to ",
-          label,
+          addLabel || `Add to ${label}`,
           " ",
           /* @__PURE__ */ u3("span", { class: "n", children: add.length })
         ] }),
@@ -6407,8 +6442,102 @@
     bgProgress(parseFloat(box.querySelector(".fill").style.width) || 0, box.querySelector(".step").textContent || "");
   }
 
+  // web/src/choose/InstallSheet.tsx
+  function InstallSheets({ close: close3, closeCustom }) {
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3(Sheet, { id: "installSheet", titleId: "installTitle", onClose: close3, children: [
+        /* @__PURE__ */ u3("div", { class: "row sheethead", children: [
+          /* @__PURE__ */ u3("h2", { id: "installTitle", children: "Install" }),
+          /* @__PURE__ */ u3("button", { type: "button", class: "btn", onClick: close3, children: "Close" })
+        ] }),
+        /* @__PURE__ */ u3("div", { id: "installAbout" }),
+        /* @__PURE__ */ u3("div", { id: "installBody" })
+      ] }),
+      /* @__PURE__ */ u3(Sheet, { id: "customSheet", titleId: "customTitle", onClose: closeCustom, children: [
+        /* @__PURE__ */ u3("div", { class: "row sheethead", children: [
+          /* @__PURE__ */ u3("h2", { id: "customTitle", children: "Add your own app" }),
+          /* @__PURE__ */ u3("button", { type: "button", class: "btn", onClick: closeCustom, children: "Close" })
+        ] }),
+        /* @__PURE__ */ u3("div", { id: "customBody" })
+      ] })
+    ] });
+  }
+  function About({ app, set: set2, catalog: catalog2, icons: icons4 }) {
+    if (set2) {
+      const apps2 = (set2.apps || []).map((id2) => catalog2.apps.find((a3) => a3.id === id2)).filter(Boolean);
+      return /* @__PURE__ */ u3("div", { class: "installabout", children: [
+        /* @__PURE__ */ u3("div", { class: "aboutmarks", children: apps2.slice(0, 5).map((a3) => /* @__PURE__ */ u3(AppMark, { id: a3.id, name: a3.name, icon: icons4?.[a3.id] || "" }, a3.id)) }),
+        /* @__PURE__ */ u3("p", { class: "aboutwhat", children: set2.description }),
+        /* @__PURE__ */ u3("p", { class: "muted aboutfacts", children: apps2.map((a3) => a3.name).join(" · ") })
+      ] });
+    }
+    if (!app) return null;
+    const name = (id2) => catalog2.apps.find((a3) => a3.id === id2)?.name || id2;
+    const cat = catalog2.categories.find((c4) => c4.id === app.category)?.label;
+    const facts2 = [
+      cat,
+      app.replaces?.length ? `Instead of ${app.replaces.join(", ")}` : "",
+      app.public ? "Can be reached away from home" : ""
+    ].filter(Boolean);
+    const goes = Object.keys(app.goesWith || {});
+    return /* @__PURE__ */ u3("div", { class: "installabout", children: [
+      /* @__PURE__ */ u3(AppMark, { id: app.id, name: app.name, icon: icons4?.[app.id] || "" }),
+      /* @__PURE__ */ u3("p", { class: "aboutwhat", children: app.description }),
+      !!facts2.length && /* @__PURE__ */ u3("p", { class: "muted aboutfacts", children: facts2.join(" · ") }),
+      !!goes.length && /* @__PURE__ */ u3("p", { class: "muted aboutfacts", children: [
+        "Goes with ",
+        goes.map(name).join(", ")
+      ] }),
+      app.warning && /* @__PURE__ */ u3("p", { class: "warn aboutfacts", children: app.warning })
+    ] });
+  }
+  var mountInstallSheets = (el3, p3) => R(/* @__PURE__ */ u3(InstallSheets, { ...p3 }), el3);
+  var mountAbout = (el3, p3) => R(p3 && /* @__PURE__ */ u3(About, { ...p3 }), el3);
+
   // web/src/screens/choose.ts
   var catalog = null;
+  var sheets = false;
+  function drawSheets() {
+    if (sheets) return;
+    sheets = true;
+    mountInstallSheets($("installSheets"), { close: closeInstall, closeCustom: () => {
+      $("customSheet").hidden = true;
+    } });
+    const plan = document.querySelector("#choose aside.plan");
+    if (plan) {
+      plan.classList.remove("card");
+      $("installBody").appendChild(plan);
+    }
+    const form2 = document.querySelector("#customCard .customForm");
+    if (form2) $("customBody").appendChild(form2);
+  }
+  function openInstall(ids, about) {
+    drawSheets();
+    if (!installing) {
+      selected.clear();
+      ids.forEach((id2) => selected.add(id2));
+    }
+    const app = catalog?.apps.find((a3) => a3.id === (about?.app ?? (ids.length === 1 ? ids[0] : "")));
+    const set2 = catalog?.presets.find((p3) => p3.id === about?.set);
+    mountAbout($("installAbout"), catalog && (app || set2) ? { app, set: set2, catalog, icons: icons2 } : null);
+    $("installTitle").textContent = set2 ? set2.name : app ? app.name : "Install";
+    $("installSheet").hidden = false;
+    renderApps();
+    replan();
+  }
+  function closeInstall() {
+    $("installSheet").hidden = true;
+    if (!installing) {
+      selected.clear();
+      clearInstall();
+      renderApps();
+      replan();
+    }
+  }
+  function openCustom() {
+    drawSheets();
+    $("customSheet").hidden = false;
+  }
   var selected = /* @__PURE__ */ new Set();
   var settings = {};
   var appName = (id2) => (catalog.apps.find((a3) => a3.id === id2) || { name: id2 }).name;
@@ -6470,9 +6599,8 @@
       const added = catalog.apps.find((a3) => !before3.has(a3.id));
       renderApps();
       if (added) {
-        selected.add(added.id);
-        renderApps();
-        replan();
+        $("customSheet").hidden = true;
+        openInstall([added.id]);
       }
       for (const id2 of ["cName", "cImage", "cPort", "cDesc", "cVolumes"]) $(id2).value = "";
       log2.hidden = true;
@@ -6510,31 +6638,6 @@
       open: (url) => go().Open(url),
       settings: (keys2) => showSettings(keys2),
       note: (id2) => appNote(id2, systemOf(osName, hostOS))
-    });
-    drawChooseSide();
-  }
-  var chooseHere = "start";
-  function drawChooseSide() {
-    const cats = (catalog?.categories || []).filter((c4) => catalog.apps.some((a3) => a3.kind !== "helper" && a3.category === c4.id));
-    mountSideMenu($("chooseSide"), onPhone() ? null : {
-      label: "Choose apps",
-      here: chooseHere,
-      pick: (key7) => {
-        chooseHere = key7;
-        drawChooseSide();
-        if (key7 === "start") {
-          goToPart("choose", null);
-          return;
-        }
-        $("more").open = true;
-        if (key7 === "own") $("customCard").open = true;
-        goToPart("choose", key7 === "own" ? $("customCard") : document.querySelector(`#groups .group[data-cat="${CSS.escape(key7)}"]`));
-      },
-      items: [
-        { key: "start", label: "Start here", icon: sideIcons.start },
-        ...cats.map((c4) => ({ key: c4.id, label: c4.label, icon: sideIcons[c4.id] || sideIcons.other })),
-        { key: "own", label: "Add your own app", icon: sideIcons.add }
-      ]
     });
   }
   var planSeq = 0;
@@ -6646,10 +6749,7 @@
           const a3 = catalog.apps.find((x3) => x3.id === id2);
           return a3 && a3.kind !== "helper" ? [{ name: a3.name, what: a3.description, by: appName(by) }] : [];
         });
-        mountStarted($("started"), { started, also, open: (url) => go().Open(url), close: () => {
-          clearInstall();
-          $("search").focus();
-        } });
+        mountStarted($("started"), { started, also, open: (url) => go().Open(url), close: closeInstall });
         if (!$("wireRow").hidden && $("wire").checked && started.length) await wire($("wiring"));
         selected.clear();
         settingsData.stale();
@@ -7233,7 +7333,10 @@
   var failStep = (s3, e3, choice) => {
     failedSteps[s3.id] = { why: errorText(e3), again: (choice === void 0 ? s3.runLabel : s3.choices?.[choice]?.label) || "Run" };
   };
-  $("firstAppsGo").onclick = () => navigate("choose");
+  $("firstAppsGo").onclick = () => {
+    navigate("status");
+    pickStatusPart("find");
+  };
   var watchingApps = false;
   function renderSetup(steps) {
     lastSteps = steps;
@@ -7604,12 +7707,7 @@
     openSheet: (username) => {
       go().OpenSheet(username).catch(showError);
     },
-    installPocket: () => {
-      selected.add("pocket-id");
-      navigate("choose");
-      renderApps();
-      replan();
-    },
+    installPocket: () => openInstall(["pocket-id"]),
     // Said on the screen, with ways to hand them their welcome page, rather than opened by itself.
     added: async (name) => {
       const added = (await go().People()).find((p3) => p3.name === name);
@@ -8747,7 +8845,7 @@
         }
         await loadStatus();
       },
-      onChoose: () => navigate("choose"),
+      onChoose: () => pickStatusPart("find"),
       words: (a3) => stateOf(a3, batteryPaused, held)[1],
       start: (a3) => appActions.act(a3, "start"),
       logs: (a3) => {
@@ -8858,6 +8956,27 @@
       return;
     }
     mountAnalytics($("statusPart"), null);
+    if (statusHere === "find" && appList && lastStatus) {
+      section.dataset.part = "find";
+      const installed2 = new Set(lastStatus.apps.map((a3) => a3.id));
+      const sets = (catalog?.presets || []).filter((p3) => !p3.id.startsWith("stack:")).sort((x3, y3) => Number(!!y3.starter) - Number(!!x3.starter));
+      mountCategoryPage($("statusPart"), {
+        label: "All apps",
+        apps: lastStatus.apps,
+        add: (catalog?.apps || []).filter((x3) => x3.kind !== "helper" && !installed2.has(x3.id)),
+        list: appList,
+        here: appList.companion ? "On the server" : "On " + thisMachine.replace(/^This/, "this"),
+        addLabel: "Add apps",
+        sets,
+        find: findText,
+        install: (id2) => openInstall([id2]),
+        installSet: (id2) => {
+          const p3 = catalog?.presets.find((x3) => x3.id === id2);
+          if (p3) openInstall(p3.apps, { set: id2 });
+        }
+      });
+      return;
+    }
     const part = statusHere === "overview" ? void 0 : statusParts.find((p3) => p3.id === statusHere);
     if (part) section.dataset.part = part.id;
     else delete section.dataset.part;
@@ -8872,15 +8991,22 @@
       add: part.add,
       list: appList,
       here: appList.companion ? "On the server" : "On " + thisMachine.replace(/^This/, "this"),
-      install: (id2) => {
-        selected.add(id2);
-        navigate("choose");
-        renderApps();
-        replan();
-      }
+      install: (id2) => openInstall([id2]),
+      addOwn: part.id === "own" ? openCustom : void 0
     });
   }
-  function pickStatusPart(key7) {
+  var findText = "";
+  $("statusFind").addEventListener("input", (e3) => {
+    const box = e3.currentTarget, text2 = box.value;
+    box.value = "";
+    pickStatusPart("find", text2);
+  });
+  function pickStatusPart(key7, find2 = "") {
+    findText = find2;
+    if (key7 === statusHere && key7 !== "find") {
+      goToPart("status", null);
+      return;
+    }
     statusHere = key7;
     drawStatusSide();
     drawStatusPart();
@@ -9273,12 +9399,7 @@
       showError(err);
       throw err;
     }),
-    install: (a3) => {
-      selected.add(a3.id);
-      navigate("choose");
-      renderApps();
-      replan();
-    },
+    install: (a3) => openInstall([a3.id]),
     adopt: (a3) => cliFlow(`Move ${a3.name} into the homelab`, "adopt", a3.id, "Move it"),
     releaseNotes: (id2) => go().ReleaseNotes(id2),
     open: (url) => go().Open(url),
@@ -22523,7 +22644,7 @@ ${pays}
 
   // web/src/palette/Shortcuts.tsx
   var names4 = {
-    choose: "Choose apps",
+    choose: "Find an app",
     status: "Status",
     backups: "Backups",
     setup: "Setup",
@@ -22538,8 +22659,6 @@ ${pays}
           [["a–z"], "Start typing an app’s name to show only the apps that match; Escape shows them all again"],
           [["↑", "↓"], "In an app’s or a group’s menu, the item above or below"]
         ];
-      case "choose":
-        return [[[mod + "F"], "Search the apps"]];
       case "settings":
         return [[[mod + "F"], "Search the settings"]];
       case "finances":
@@ -22641,7 +22760,7 @@ ${pays}
     return scored.sort((a3, b2) => b2.score - a3.score || a3.i - b2.i).map((s3) => s3.c);
   }
   var screenList = [
-    ["choose", "Choose apps", "1", "install add apps"],
+    ["choose", "Find an app", "1", "install add apps choose"],
     ["status", "Status", "2", "apps running"],
     ["backups", "Backups", "3", "backup restore"],
     ["setup", "Setup", "4", ""],
@@ -23086,6 +23205,11 @@ ${pays}
   // web/src/app.ts
   var placed = false;
   function show3(name) {
+    if (name === "choose") {
+      show3("status");
+      pickStatusPart("find");
+      return;
+    }
     const picked = name === "app" ? "status" : name;
     const was = document.querySelector(".screen.active")?.id;
     if (placed && was !== name) leavePlace(was);
@@ -23368,7 +23492,7 @@ ${pays}
       e3.preventDefault();
       if (current2) reload(current2);
     } else if (e3.key.toLowerCase() === "f") {
-      const search = { choose: "search", settings: "settingsSearch" }[current2];
+      const search = { status: "statusFind", settings: "settingsSearch" }[current2];
       if (search) {
         e3.preventDefault();
         $(search).focus();

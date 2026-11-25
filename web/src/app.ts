@@ -6,7 +6,7 @@
 // components (*.tsx). app/preview/lint.mjs keeps it under 400 lines.
 import { placeOf, readTargets, showSent } from './phone/send';
 import { progress } from './setup/Checklist';
-import { drawRemembered, leftStatus, loadStatus, refreshStatus, statusData, undoNow } from './screens/status';
+import { drawRemembered, leftStatus, loadStatus, pickStatusPart, refreshStatus, statusData, undoNow } from './screens/status';
 import { drawHealth } from './status/healthLine';
 import { healthData, hostData, loadAppearance, loadHost, loadSetup, setupNav, stepsData } from './screens/setup';
 import { changed, loadSettings, settingsData } from './screens/settings';
@@ -28,6 +28,8 @@ import { onTabChange, tabbed } from './tabs';
 
 let placed = false; // a screen was shown: the one the page starts on has no place of its own to keep yet
 export function show(name) {
+  // Choose apps is gone (the owner, Nov 25): ⌘1, the Mac's View menu and old links open Find an app on Status.
+  if (name === 'choose') { show('status'); pickStatusPart('find'); return; }
   // An app's page belongs to Status: its button stays the one picked.
   const picked = name === 'app' ? 'status' : name;
   const was = document.querySelector('.screen.active')?.id;
@@ -285,7 +287,7 @@ document.addEventListener('keydown', (e) => {
     e.preventDefault();
     if (current) reload(current);
   } else if (e.key.toLowerCase() === 'f') {
-    const search = { choose: 'search', settings: 'settingsSearch' }[current];
+    const search = { status: 'statusFind', settings: 'settingsSearch' }[current];
     if (search) { e.preventDefault(); $(search).focus(); $(search).select(); }
     // Finances: Transactions' own search, while it shows.
     const box = current === 'finances' ? document.querySelector<HTMLInputElement>('#finances .fx-txsearch') : null;

@@ -10,18 +10,16 @@
 <!-- Icons: Feather (feathericons.com, MIT licence), drawn inline. -->
 <nav aria-label="Screens">
   <div class="brand"><img src="logo.svg" alt=""><span>Homelab Wizard<small>Your apps, at home</small></span></div>
-  <button data-screen="status"><svg class="icon" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span>Status</span><span class="count" id="statusCount"></span></button>
+  <button data-screen="status" class="active"><svg class="icon" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span>Status</span><span class="count" id="statusCount"></span></button>
   <button data-screen="backups"><svg class="icon" viewBox="0 0 24 24"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg><span>Backups</span><span class="count" id="backupsCount"></span></button>
   <button data-screen="tidy"><svg class="icon" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M7 12h10"/><path d="M10 18h4"/></svg><span>Tidy Up</span><span class="count" id="tidyCount"></span></button>
   <button data-screen="finances"><svg class="icon" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg><span>Finances</span><span class="count" id="financesCount"></span></button>
-  <button data-screen="choose" class="active"><svg class="icon" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg><span>Choose apps</span></button>
   <div class="navbody">
     <div id="finMenu"></div>
     <div id="finNav" class="fx-navbalances"></div>
     <div id="tidyMenu"></div>
     <div id="statusSide" class="sidemenu"></div>
     <div id="backupsSide" class="sidemenu"></div>
-    <div id="chooseSide" class="sidemenu"></div>
     <div id="setupSide" class="sidemenu"></div>
     <div id="settingsSide" class="sidemenu"></div>
   </div>
@@ -38,7 +36,7 @@
   <div id="undoNote"></div>
   <div id="swipeHint" aria-hidden="true"></div>
   <div id="contextMenu"></div>
-  <section id="choose" class="screen active">
+  <section id="choose" class="screen" hidden>
     <div class="cols">
       <div class="pick">
         <div class="header">
@@ -84,12 +82,12 @@
       </aside>
     </div>
   </section>
-  <section id="status" class="screen">
+  <section id="status" class="screen active">
     <div id="statusChips" class="companion-only"></div>
     <div id="statusPart"></div>
     <div class="row header">
       <div><h1>Status</h1><p class="lead statuslead"><span id="statusAge" hidden></span></p></div>
-      <div class="toolbar"><button id="phoneReport" class="btn companion-only" title="A file with what is running and the recent logs, every password and token removed, to send to whoever helps you">Send a report</button>
+      <div class="toolbar"><label class="catfind statusfind"><svg class="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input id="statusFind" type="search" placeholder="Find an app" aria-label="Find an app" autocomplete="off" spellcheck="false"></label><button id="phoneReport" class="btn companion-only" title="A file with what is running and the recent logs, every password and token removed, to send to whoever helps you">Send a report</button>
         <button id="fixIt" class="btn primary" hidden title="Restarts what is down or unwell, frees space from unused images, and installs missing jobs; shows the plan first">Fix it</button>
         <button id="updateAll" class="btn" title="Update every app the nightly update would, now: databases are dumped first, and the list shows before anything changes">Update apps</button>
         <div class="menuwrap"><button id="statusMore" class="btn" aria-haspopup="menu" aria-expanded="false">More…</button>
@@ -123,6 +121,7 @@
   <section id="app" class="screen" aria-label="An app"><div id="appPage"></div></section>
   <!-- The command and log sheets, over whichever screen opened them. -->
   <div id="sheets"></div>
+  <div id="installSheets"></div>
   <div id="palette"></div>
   <div id="keys"></div>
   <section id="backups" class="screen">

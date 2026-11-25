@@ -26,7 +26,7 @@ import { mountCrashNote } from '../status/CrashNote';
 import { type History as UsageHistory, mountUsage, record as recordUsage } from '../status/Usage';
 import { memoryByApp } from '../status/memory';
 import { settingLabel, showSettingsPage } from './settings';
-import { catalog, renderApps, replan, selected } from './choose';
+import { catalog, openCustom, openInstall, renderApps } from './choose';
 import { clearJob, cliProgress, startJob } from '../jobs';
 import { navigate } from '../app';
 import { mountOvernight, nightOf } from '../status/Overnight';
@@ -90,7 +90,7 @@ function renderTiles(st: api.Status) {
       try { await go().SetUpdatesPaused(paused); } catch (err) { showError(err); }
       await loadStatus();
     },
-    onChoose: () => navigate('choose'),
+    onChoose: () => pickStatusPart('find'),
     words: (a) => stateOf(a, batteryPaused, held)[1],
     start: (a) => appActions.act(a, 'start'),
     logs: (a) => { pageOpener.open(a.id); requestAnimationFrame(() => document.getElementById('appLog')?.scrollIntoView({ block: 'start' })); },
@@ -201,6 +201,18 @@ function drawStatusPart() {
     return;
   }
   mountAnalytics($('statusPart'), null);
+  // Find an app (the overview's box, or no apps yet): every app here and every one to add, the sets first.
+  if (statusHere === 'find' && appList && lastStatus) {
+    section.dataset.part = 'find';
+    const installed = new Set(lastStatus.apps.map((a) => a.id));
+    const sets = (catalog?.presets || []).filter((p) => !p.id.startsWith('stack:')).sort((x, y) => Number(!!y.starter) - Number(!!x.starter));
+    mountCategoryPage($('statusPart'), {
+      label: 'All apps', apps: lastStatus.apps, add: (catalog?.apps || []).filter((x) => x.kind !== 'helper' && !installed.has(x.id)), list: appList,
+      here: appList.companion ? 'On the server' : 'On ' + thisMachine.replace(/^This/, 'this'), addLabel: 'Add apps', sets, find: findText,
+      install: (id) => openInstall([id]), installSet: (id) => { const p = catalog?.presets.find((x) => x.id === id); if (p) openInstall(p.apps, { set: id }); },
+    });
+    return;
+  }
   const part = statusHere === 'overview' ? undefined : statusParts.find((p) => p.id === statusHere);
   if (part) section.dataset.part = part.id; else delete section.dataset.part;
   if (!part || !appList) { mountCategoryPage($('statusPart'), null); return; }
@@ -208,10 +220,21 @@ function drawStatusPart() {
   mountCategoryPage($('statusPart'), {
     label: part.label, apps: part.apps, add: part.add, list: appList,
     here: appList.companion ? 'On the server' : 'On ' + thisMachine.replace(/^This/, 'this'),
-    install: (id) => { selected.add(id); navigate('choose'); renderApps(); replan(); },
+    install: (id) => openInstall([id]),
+    addOwn: part.id === 'own' ? openCustom : undefined,
   });
 }
-export function pickStatusPart(key: string) {
+/** What was typed in the overview's Find an app, for the page it opens. */
+let findText = '';
+// The overview's Find an app: what's typed opens All apps with it, the box there taking over.
+$('statusFind').addEventListener('input', (e) => {
+  const box = e.currentTarget as HTMLInputElement, text = box.value;
+  box.value = '';
+  pickStatusPart('find', text);
+});
+export function pickStatusPart(key: string, find = '') {
+  findText = find;
+  if (key === statusHere && key !== 'find') { goToPart('status', null); return; }
   statusHere = key;
   drawStatusSide();
   drawStatusPart();
@@ -570,7 +593,7 @@ function showAlerts(events: notify.Event[] | null, err: Error | null) {
 const appListActions: AppListActions = {
   act: (a, action) => (action === 'update' ? showUpdate(a) : runAppAction(a, action)),
   openNative: (a) => go().OpenNativeApp(a.id).then(() => { setTimeout(loadStatus, 3000); }, (err) => { showError(err); throw err; }),
-  install: (a) => { selected.add(a.id); navigate('choose'); renderApps(); replan(); },
+  install: (a) => openInstall([a.id]),
   adopt: (a) => cliFlow(`Move ${a.name} into the homelab`, 'adopt', a.id, 'Move it'),
   releaseNotes: (id) => go().ReleaseNotes(id),
   open: (url) => go().Open(url),
