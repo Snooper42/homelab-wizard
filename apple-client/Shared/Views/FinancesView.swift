@@ -3628,11 +3628,19 @@ struct TransactionsView: View {
     private var chips: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
-                chip(filter.month.map { $0.formatted(.dateTime.month(.wide).year()) } ?? "Every month", systemImage: "calendar", on: filter.month != nil) {
-                    Picker("Month", selection: $filter.month.animation(.snappy)) {
-                        Text("Every month").tag(Date?.none)
+                chip(filter.days.map { PaySpans.words($0) } ?? filter.month.map { $0.formatted(.dateTime.month(.wide).year()) } ?? "Every month",
+                     systemImage: "calendar", on: filter.month != nil || filter.days != nil) {
+                    when("Every month", picked: filter.month == nil && filter.days == nil) { filter.month = nil; filter.days = nil }
+                    if let view = finances.plan {
+                        Section {
+                            ForEach(PaySpans.make(view)) { span in
+                                when("\(span.title) · \(PaySpans.words(span.days))", picked: filter.days == span.days) { filter.month = nil; filter.days = span.days }
+                            }
+                        }
+                    }
+                    Section {
                         ForEach(filterMonths, id: \.self) { month in
-                            Text(verbatim: month.formatted(.dateTime.month(.wide).year())).tag(Date?.some(month))
+                            when(month.formatted(.dateTime.month(.wide).year()), picked: filter.days == nil && filter.month == month) { filter.days = nil; filter.month = month }
                         }
                     }
                 }
@@ -3657,6 +3665,15 @@ struct TransactionsView: View {
         }
         .scrollClipDisabled()
         .sensoryFeedback(.selection, trigger: picked)
+    }
+
+    /// A choice in the date chip's menu, ticked while it's the one shown.
+    private func when(_ words: String, picked: Bool, pick: @escaping () -> Void) -> some View {
+        Button {
+            withAnimation(.snappy) { pick() }
+        } label: {
+            if picked { Label(words, systemImage: "checkmark") } else { Text(verbatim: words) }
+        }
     }
 
     private func chip<Options: View>(_ words: String, systemImage: String?, on: Bool, @ViewBuilder options: () -> Options) -> some View {
