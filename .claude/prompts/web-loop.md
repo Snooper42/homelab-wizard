@@ -1,0 +1,139 @@
+# Loop W: The phone's page
+
+**Started by** its launcher below, or by the accounts' start lines once `lanes.md` has a row for lane W (only the owner changes `lanes.md`: the row to add is under *Adding it to lanes.md*).
+
+**Paused:** no
+
+## Why this lane exists
+
+The owner, Nov 25: *"I think they should kinda be in parallel in case there are more people like my buddy that'll only use it via the web."* A tester runs the homelab on a rented server (Ubuntu 24.04, no screen, tailnet only) and sees it only through the phone's page (`homelab serve`), from a phone and a tablet. For him and anyone like him, **the phone's page is the whole product.** Lane R builds every screen for the computer; this lane makes sure each one arrives on the phone's page as well, at every size, and adds what only a web page can do (alerts on the Lock Screen, a passkey lock, working offline).
+
+The phone's page is the computer's own screens (`web/dist`, the same bundle) drawn under `html.companion`, with `web/dist/companion.js` sending each call to the computer, which answers only the calls in `phoneMethods` (`cmd/homelab/serve.go`). So most of the redesign reaches it automatically. The gaps are where the page is told to be different: CSS scoped `html.companion` / `html:not(.companion)`, code behind `onPhone()`, and calls missing from `phoneMethods`.
+
+**The target:** the four pictures in `docs/Redesign.md` › *The phone's page* (`docs/images/redesign/web-*.png`, drawn by `app/preview/redesign/web.mjs`), plus the `phone-*.png` pictures for the screens they don't cover:
+
+| Picture | What it is |
+|---|---|
+| `web-wide.png` | A tablet or wide window (1280×800): the computer's sidebar, the screens as a strip of icons, then Status' own menu; the stopped app, Backups, the server; each category |
+| `web-status.png` | A phone added to the Home Screen (390×844): Status, *Alerts on this phone* offered once, the stopped app with Start, Logs, Its page |
+| `web-app.png` | An app's own page: back button, Open, Restart, Logs, Stop; its week; its backups; its last update with Roll back |
+| `web-push.png` | An alert on the Lock Screen, through Web Push |
+
+## Launcher (paste into a new session)
+
+    Read .claude/prompts/lanes.md, then .claude/prompts/web-loop.md, and follow web-loop.md as lane W. Take the next unticked item.
+
+Or, for a loop that paces itself: `/loop Read .claude/prompts/web-loop.md and do the next round.`
+
+## Rules
+
+`lanes.md` holds the rules for every lane. Read *Every session, step by step* and *Rules that never bend*, and follow them, with these for this lane:
+
+1. **Branches:** `claude/web-*`. One open pull request at a time (two only while one waits for a review, `lanes.md` rule 6).
+2. **What this lane owns** (`lanes.md` rule 2 still decides who may touch a file today: a file another open pull request touches is theirs until it merges):
+   - `web/dist/companion.js`, `web/dist/sw.js`, and `web/dist/phone.css` once item W1 makes it;
+   - `internal/companion/` and the serve side of `cmd/homelab/serve.go` (`phoneMethods` only with Q's review, `lanes.md` rule 6);
+   - `app/preview/companion.mjs`, the phone's cases in `app/preview/shoot.mjs` (add only, rule 3), `app/preview/redesign/web.mjs` and `docs/images/redesign/web-*.png`;
+   - `services/system/Phone companion.md`, and the **Phone's page** column of `docs/Parity.md`.
+3. **What it shares with lane R:** the screens themselves (`web/src/screens/`, `web/src/status/`, `web/src/backups/`, `web/src/page/`, `web/src/parts/`). Change one only for the phone's page (an `onPhone()` branch, a part both use), and only when R has no open pull request on that file. A change R should make on the computer goes under **From the other lanes** in `redesign-loop.md`.
+4. **Never:** `apple-client/` (lane R's item P1), Finances' data (lane M: `web/src/finances` data files, `internal/finance`), Tidy Up on the phone (the owner: it stays on the computer).
+5. **Q reviews first** (`lanes.md` rule 6) for anything that: adds a call to `phoneMethods`; changes pairing, tokens, or what a phone may do; adds a host the homelab calls (Web Push does: W9); stores a new secret (VAPID keys: W9); or touches sign-in (passkeys: W11). Write **Needs Q's review: yes** and why on the description's first line.
+6. **Words** (`lanes.md` rule 12), and the owner's, Nov 25: **never "needs you"** (*"1 app needs you"*, *"Needs you"*). Say what happened: *"Decypharr stopped"*, *"Stopped"*, *"2 backups failed"*. Never write the household's chores as the app's feelings.
+7. **Sizes to check, every pull request that changes how the phone's page looks** (light and dark, pictures in the description):
+   - **Phone:** 390×844 and 320×568 with big text;
+   - **Phone in landscape:** 844×390;
+   - **Tablet:** 820×1180 and 1180×820;
+   - **Wide window:** 1280×800.
+
+   Always as a paired phone (`html.companion`), and once as **look only** (no Start, Stop, Edit or Add anywhere) and once as a **wall screen** (`#kiosk`: Status only, no buttons).
+8. **The server's homelab is a first-class case.** Use the preview's household for pictures (`app/preview/shoot.mjs`'s mock), and check every screen also reads right on Linux with no battery, no display and no desktop (no *This Mac*, no *Plugged in*, no tray).
+
+## Facts (checked Nov 25; read the code before relying on them)
+
+- **The 700 px cliff.** The phone's layout (tab bar along the bottom, one column, rows as cards) is one block, `@media (max-width: 700px)` with `html.companion` rules, near line 646 of `web/dist/style.css`. Above 700 px the phone's page gets the computer's layout **as it was before the redesign:** every rule that makes the sidebar the strip of icons plus a screen's menu is scoped `html:not(.companion)` (the `@container window (min-width: 701px)` block near line 3334, and lines 87–89, 1247–1256, 3316). The screens also draw no menu on the phone: `mountSideMenu(…, onPhone() ? null : {…})` in `web/src/screens/status.ts` (~161), `backups.ts` (~147), `setup.ts` (~296), and `choose.ts`. That is the tester's screenshot: a plain list sidebar on a tablet.
+- **What the phone's page hides:** `web/dist/style.css` ~601–623: Choose apps, Tidy Up, Setup's tab, Finances unless allowed, Settings' People, Phones, Appearance and Uninstall cards, and every change button on a look-only phone.
+- **Phone in landscape** (844×390, or 932×430 on a large iPhone) is wider than 700 px, so it falls into the computer's layout.
+- **Installing:** the companion already serves `manifest.webmanifest`, `apple-mobile-web-app-capable`, the theme colours and the 180 px icon (`internal/companion/server.go` ~630). `web/dist/sw.js` keeps the page's own files for when the computer can't be reached; `companion.js` keeps the last Status and draws it with when. Nothing keeps Backups or an app's page offline yet.
+- **HTTPS matters.** Service workers, Web Push, passkeys and the Badging API all need a secure page: the tailnet address (`https://<TAILSCALE_HOST>:8099`) or the domain's. A phone paired over plain `http://<LAN>:8099` gets none of them, and never gets Finances. Every new feature here must say plainly, on the page, what to open instead.
+- **What iOS gives a page added to the Home Screen** (iOS 16.4 and later): Web Push (only after the person taps something, only once added to the Home Screen), the app badge (`navigator.setAppBadge`), screen wake lock, the share sheet (`navigator.share`), the camera (`getUserMedia`, for the pairing QR code), passkeys (WebAuthn, Face ID), and the PRF extension for a key from a passkey (iOS 18). No widgets, no Siri or Shortcuts, no Live Activities, no work in the background, no vibration. Safari clears a site's stored data after 7 days without a visit, unless the page was added to the Home Screen.
+- **Why push matters here:** the iPhone app is built with a free Apple ID, so it has no push (`apple-client/README.md`, *The day you sign*). Web Push needs no Apple Developer account. For anyone without the app, it is the only way an alert reaches the Lock Screen other than ntfy's own app.
+- **The version** a git checkout shows comes from its newest release tag since 59ab5ad (`./homelab`, `homelab.cmd`, `make build`); the release builds number themselves (`internal/tools/nextversion`).
+- **The phone's calls** are tested against `docs/Parity.md` (`TestParityNamesEveryPhoneCall`, `cmd/homelab/contract_test.go`) and against the iPhone app (`apple-client/Tests/Resources/CompanionContract.json`, `go test ./cmd/homelab -run TestCompanionContract -update-contract`). A new call updates both.
+
+## The work, in order
+
+Each item is one pull request unless it says it splits. Tick it here in the same pull request.
+
+- [ ] **W0. Land the start.** Branch `claude/quirky-ramanujan-jfgtq2` holds three commits not on main: 59ab5ad (a git checkout shows its real version), 8ab68b9 and ed32b46 (the four `web-*` mocks, `app/preview/redesign/web.mjs`, `docs/Redesign.md` › *The phone's page*). If they aren't on main, cherry-pick them onto `claude/web-start`, run the checks (`lanes.md` rule 7), and open one pull request. **Try this tonight:** `git pull`, `./homelab version` shows the newest release (not 0.17.0), and the sidebar's foot on the phone's page says the same.
+- [ ] **W1. The phone's own stylesheet.** Move every `html.companion` rule out of `web/dist/style.css` into `web/dist/phone.css`, loaded only by the phone's page (the companion's `head` in `internal/companion/server.go`, after `style.css`), so lane R and this lane stop meeting in one 3,000-line file. **No change on screen:** the phone's smoke cases and pictures before and after must be identical (diff the PNGs; any pixel that moves is a mistake). Keep the `html:not(.companion)` rules in `style.css` (they're the computer's).
+- [ ] **W2. No more "needs you".** Everywhere a person reads it: the computer's and the phone's Status headline and sidebar item, Backups' card, Setup, alerts, `docs/Redesign.md`, `docs/Tour.md`, the `phone-*` and `computer-*` mocks (`app/preview/redesign/`, then `make redesign`), and `owner.md`'s notes. The pattern: the headline names the problem (*Decypharr stopped*; two or more: *2 apps stopped* with each in a row under it); the card or menu item is *Stopped* (or *Failed*, for backups). Add `needs you` to the words check (`app/preview/words.mjs`) so it can't come back. The iPhone app's strings: a line under **From the other lanes** in `redesign-loop.md` for P1, not this lane. About 27 files today: `rg -il "needs you" web/src app/preview docs apple-client cmd internal`.
+- [ ] **W3. A tablet or a wide window: the redesigned sidebar** (`web-wide.png`). Above 700 px the phone's page gets the strip of icons and each screen's own menu, as the computer has had since #839:
+  - the strip's rules apply to `html.companion` too, sized to the screens this phone has (Status, Backups, and Finances only where allowed: two to four icons, never empty columns);
+  - Status, Backups and Settings mount their menus on the phone (`onPhone() ? null` goes, leaving out items for parts the phone can't open);
+  - the foot is one line: the system, the version, the free space (`Linux · 0.42.8 · 3.4 TB free`);
+  - the wall screen keeps no sidebar.
+  
+  Check every size in rule 7; the 700 px phone layout must not change.
+- [ ] **W4. A phone in landscape keeps the phone's layout.** A short, wide window (landscape and at most about 500 px tall) gets the tab bar and the phone's cards, in two columns where they fit, with the safe areas (`env(safe-area-inset-left/right)`) clear of the notch. A tablet in landscape keeps W3's sidebar.
+- [ ] **W5. Status on the phone as `web-status.png`.** The stopped app first, with Start, Logs and Its page; Backups and the machine side by side; each category one row. The machine's card says what's true of *this* machine: a server with no battery says the disks and the next update (not *Plugged in*); a Mac or laptop keeps power. Name it from the computer's own facts (`core.Machine`, `internal/host`), never from the phone. The *Alerts on this phone* offer waits for W9.
+- [ ] **W6. An app's page on the phone as `web-app.png`.** A back button with the screen it came from, the app's name as the title (no search bar from the screen before). Open, then Restart, Logs and Stop sharing the width. Its week as seven squares; its backups (the last seven nights, the size, where); its last update with Roll back (a look-only phone sees no Roll back). Use what `web/src/page/AppPage.tsx` and `web/src/screens/apppage.ts` already draw; leave out what the phone's calls don't carry yet, and list it under *Next*.
+- [ ] **W7. Moving around like an app.**
+  - Every screen and page pushes a history entry, so iOS's edge swipe and Android's back button go back, and a reload lands where you were.
+  - Pull down to refresh on Status and Backups.
+  - Page changes with the View Transitions API where the browser has it (Safari 18), with nothing on `prefers-reduced-motion`.
+  - The tab bar and top bar clear the safe areas in standalone mode.
+- [ ] **W8. Offline, honestly.** With the computer unreachable (away without Tailscale, Tailscale off), the last Status, Backups and each app's page as last read, with *As of 7:02 AM* on top and every change button disabled with why. `sw.js` keeps the page; the readings go in IndexedDB (never Finances in plain form: those wait for W12). Back online, everything is read again by itself. A test in `app/preview/companion.mjs`.
+- [ ] **W9. Alerts on the Lock Screen (Web Push)** (`web-push.png`). **Needs Q's review: yes** (a new outgoing host, a new secret, a new phone call), **and the owner's yes before it merges** (`lanes.md` rule 13: alerts leave the machine for Apple's, Google's or Mozilla's push service; their contents are encrypted end to end, the service sees only that one was sent). Split in two:
+  - **(a) The computer's side:**
+    - VAPID keys made once, kept in `.env` (`WEBPUSH_PRIVATE_KEY`, 0600; `lanes.md` rule 9; in `.env.example` with a comment, and in the redaction lists).
+    - A subscription per paired phone, an optional field in `data/phones.json` (`lanes.md` rule 10, with a test loading a file without it), removed when the phone is removed or lowered.
+    - The calls `PushKey` (the public key) and `SubscribePush` / `UnsubscribePush` in `phoneMethods`.
+    - Sending from where ntfy's alerts are sent (`internal/notify`), with the same quiet hours, snoozes and priorities, as RFC 8291 (`aes128gcm`) with RFC 8292 (VAPID).
+    - **Only to the known push services' hosts** (`web.push.apple.com`, `*.push.apple.com`, `fcm.googleapis.com`, `updates.push.services.mozilla.com`, `*.notify.windows.com`): a subscription naming any other host is refused, so a phone can't make the computer call an address of its choosing.
+    - A dead subscription (404 or 410) is dropped.
+    - Tests: an `httptest` push service that decrypts the payload with the subscription's keys; a refused host; quiet hours.
+    - A new Go dependency only if it's small and maintained (`govulncheck` clean); writing the encryption against the RFCs' test vectors is fine too.
+  - **(b) The page's side:**
+    - *Alerts on this phone* on Status (once) and in Settings › This phone, offered only where it can work: standalone (`display-mode: standalone`), a secure page, and a phone allowed alerts.
+    - Elsewhere, one line on how: add to the Home Screen; open the https address.
+    - The service worker shows the alert and opens the right page on a tap (the app's page for a stopped app; Backups for a backup).
+    - The alert's words are the computer's alert's, never a token or an address.
+- [ ] **W10. The count on the Home Screen icon.** `navigator.setAppBadge(n)` with the same count as the Status badge (one problem, one count), set when the page reads Status and by the service worker on a push. Cleared at zero. Only in standalone mode.
+- [ ] **W11. A passkey lock** (Face ID or Touch ID, WebAuthn). **Needs Q's review: yes** (sign-in). An owner's question first (`lanes.md` rule 4: a security choice): offer it, or require it for phones allowed changes?
+  - A phone allowed changes may add a passkey for this site (the relying party is the page's own host).
+  - The computer keeps its public key beside the phone's token in `data/phones.json` (optional field).
+  - With a passkey set, every `Change: true` call carries a fresh assertion that the computer checks (`allowed`, `internal/companion/server.go` ~481): the server checks the user, not just the page.
+  - The page locks after 5 minutes in the background, as the iPhone app does.
+  - Without a passkey nothing changes. Over plain `http://`, a passkey can't exist, so the page says to open the https address.
+- [ ] **W12. Finances offline, sealed.** After W11 and with the owner's yes: the last Finances read, kept on the phone encrypted with a key from the passkey (WebAuthn PRF, iOS 18 and current Chrome), opened with Face ID, gone when Finances is taken from the phone or it's unpaired. The same rules as the iPhone app's `OfflineFinances` (`apple-client/README.md`, *Finances offline*). Changes made offline wait and replay as the app's do, through the same code (`mobile/finance`'s wasm build, `web/dist/finance.wasm`). With lane M's agreement in `money-loop.md` › **From the other lanes**.
+- [ ] **W13. Choose apps on the phone.** **The owner's call first** (`lanes.md` rule 4): Choose apps stays on the computer *on purpose* today (`docs/Parity.md`, Gaps). For a household with no computer screen (a server), it's the one thing they can't do from the page. Mock it (`app/preview/redesign/web.mjs`: the list, the install plan, Install) and ask in `owner.md`. Only on a yes: the install calls in `phoneMethods` (**Needs Q's review: yes**), for phones allowed changes, behind W11's passkey once it exists.
+- [ ] **W14. Every other phone.** Android (Chrome) and an iPad, as rule 7's sizes: the manifest's maskable icon, Android's back button (W7), Chrome's install prompt (shown once, as Status's alerts offer is). Fix what's off; list what can't be.
+- [ ] **W15. Keep it in step with lane R.** For every screen R has redesigned since the last check, the phone's page at rule 7's sizes, against its `phone-*` picture and the pattern. Anything off: fix it here if the file is free, else a line in `redesign-loop.md` › **From the other lanes**. Then keep this item open: it repeats whenever R merges a screen.
+
+## When an item is done
+
+- The pictures for rule 7's sizes, light and dark, in the pull request, beside the mock where there is one.
+- `make frontend` (commit `web/dist`), `make frontend-check`, `make app-smoke`. Plus `make check` for Go, and `node app/preview/companion.mjs` for the bridge. The phone's smoke cases pass at every size they cover; add cases for the sizes they don't (landscape, tablet).
+- `docs/Parity.md`'s **Phone's page** cells and `services/system/Phone companion.md` say what's now true.
+- A `CHANGELOG.md` line under *Everything else* (`lanes.md` rule 3).
+- **Try this tonight:** three to five steps on the owner's own phone, and one for the tester's server (*on the server: `git pull` and `./homelab restart`; on the phone: pull to refresh*).
+
+## Adding it to lanes.md (the owner's, only)
+
+To run this lane on an account's schedule, add a row to *Which account runs what* and one to the lanes table:
+
+    | W, The phone's page | web-loop.md | claude/web-* | web/dist/companion.js, sw.js, phone.css; internal/companion; the phone's smoke cases; app/preview/redesign/web.mjs; Phone companion's note; Parity.md's Phone's page column |
+
+Until then, any session can run it with the launcher above. Steady pace (`lanes.md`: stop after three merged pull requests).
+
+## Questions for the owner (asked in owner.md as each item reaches them)
+
+- W9: alerts through Apple's, Google's or Mozilla's push service (encrypted, the service sees only that one was sent): yes?
+- W11: offer a passkey lock, or require one for phones allowed changes?
+- W12: finances kept on the phone, sealed by the passkey, for offline: yes?
+- W13: Choose apps on the phone, for phones allowed changes: yes, with the mock?
+- Server words: on a machine with no battery and no desktop, Setup's *This machine stays awake* step goes, and *This Mac* / *This machine* reads *The server*: yes?
+
+## From the other lanes
+
+Lanes R, M and Q add a line here when something this lane can now carry to the phone has shipped, with its pull request.

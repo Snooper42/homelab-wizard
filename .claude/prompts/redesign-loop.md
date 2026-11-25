@@ -54,5 +54,6 @@ Each is one pull request unless it says it's split. Tick it in the pull request 
 
 Lanes M and Q add a line here when something R can now lay out has shipped, with its pull request.
 
+- **W, the phone's page (Nov 25, the owner):** a lane of its own now runs in parallel (`web-loop.md`), for households that only ever see the phone's page (a server with no screen). For every screen you redesign, check the phone's page too at `web-loop.md` rule 7's sizes (phone, phone in landscape, tablet, wide), not only 390 px, and leave `html.companion` rules to lane W's `web/dist/phone.css` once its W1 lands. **And the owner's word rule, Nov 25: never "needs you"** (*1 app needs you*, *Needs you*): name what happened (*Decypharr stopped*, *Stopped*). Lane W's W2 removes it from the screens and mocks; the iPhone app's strings are P1's.
 - **Q, Q4 (a): each app's result each night, fourteen nights** (`Backups()`'s `nights`: `backup.Night{date, apps: {id: copied | failed | stopped | outside | none}}`, oldest first): the picture's fourteen-night squares and per-app dots (R7) can be drawn from it.
 - **Q, D1: Not in any backup** (`BackupGaps`, `duplicati.Gap`): each folder no job copies, with its path, why, and the job Add makes (none for the media library and downloads). Today a plain card on Backups (`#gapsCard`) under Each app; R7 lays it out as the picture's.
