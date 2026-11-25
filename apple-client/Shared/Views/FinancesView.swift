@@ -231,7 +231,7 @@ struct CardHeading<Trailing: View>: View {
     var body: some View {
         HStack(alignment: .firstTextBaseline) {
             Text(title)
-                .font(.title3.weight(.bold))
+                .font(.headline)
                 .foregroundStyle(Theme.ink)
             Spacer(minLength: 8)
             trailing()
@@ -385,7 +385,7 @@ private struct FinanceLeadCard: View {
                         .font(.headline)
                         .foregroundStyle(Theme.ink)
                     HStack(alignment: .firstTextBaseline) {
-                        (Text(verbatim: figure.whole).font(.system(.largeTitle, design: .rounded).weight(.bold))
+                        (Text(verbatim: figure.whole).font(.largeTitle.weight(.semibold))
                             + Text(verbatim: figure.cents).font(.title2.weight(.semibold)).foregroundColor(Theme.secondaryInk))
                             .monospacedDigit()
                             .foregroundStyle(!shown ? Theme.secondaryInk : lead.left < 0 ? Theme.danger : Theme.ink)
@@ -442,7 +442,7 @@ private struct FinanceLeadCard: View {
             }
         }
         .padding(18)
-        .card(radius: 24)
+        .card()
     }
 
     @ViewBuilder
@@ -585,7 +585,7 @@ private struct NetWorthCard: View {
                 Spacer().frame(height: 18)
             }
         }
-        .card(radius: 24)
+        .card()
         .animation(.smooth(duration: 0.35), value: range)
     }
 
@@ -603,7 +603,7 @@ private struct NetWorthCard: View {
                 }
             }
             Text(verbatim: amountText(point?.value ?? view.netWorth, view.plan.currency, finances))
-                .font(.largeTitle.weight(.heavy))
+                .font(.largeTitle.weight(.semibold))
                 .monospacedDigit()
                 .foregroundStyle(shown ? Theme.ink : Theme.secondaryInk)
                 .contentTransition(.numericText())
@@ -722,7 +722,7 @@ private struct WorthAndFlow: View {
 
     private func figure(_ words: String, tint: Color) -> some View {
         Text(verbatim: words)
-            .font(.title2.weight(.heavy))
+            .font(.title2.weight(.semibold))
             .monospacedDigit()
             .foregroundStyle(tint)
             .lineLimit(1)
@@ -749,7 +749,7 @@ private struct WorthAndFlow: View {
         }
         .padding(14)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .card(radius: 20)
+        .card()
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
     }
@@ -790,7 +790,7 @@ private struct RecentTransactionsCard: View {
                     TransactionsView(finances: finances)
                 } label: {
                     Text("Latest transactions")
-                        .font(.title3.weight(.bold))
+                        .font(.headline)
                         .foregroundStyle(Theme.ink)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .contentShape(Rectangle())
@@ -848,7 +848,7 @@ private struct RecentTransactionsCard: View {
             }
         }
         .padding(16)
-        .card(radius: 24)
+        .card()
     }
 }
 
@@ -900,7 +900,7 @@ private struct UpcomingBillsCard: View {
                 }
             }
             .padding(16)
-            .card(radius: 24)
+            .card()
         }
     }
 }
@@ -925,7 +925,7 @@ private struct SpendingPaceCard: View {
                     HStack(alignment: .top) {
                         let figure = FinanceLead.splitCents(amountText(pace.spent, view.plan.currency, finances))
                         VStack(alignment: .leading, spacing: 2) {
-                            (Text(verbatim: figure.whole).font(.system(.largeTitle, design: .rounded).weight(.bold))
+                            (Text(verbatim: figure.whole).font(.largeTitle.weight(.semibold))
                                 + Text(verbatim: figure.cents).font(.title2.weight(.semibold)).foregroundColor(Theme.secondaryInk))
                                 .monospacedDigit()
                                 .foregroundStyle(Theme.ink)
@@ -948,7 +948,7 @@ private struct SpendingPaceCard: View {
                     }
                 }
                 .padding(16)
-                .card(radius: 24)
+                .card()
                 .contentShape(Rectangle())
             }
             .buttonStyle(PressableButtonStyle())
@@ -1043,7 +1043,7 @@ private struct BudgetsCard: View {
                     }
                 }
                 .padding(16)
-                .card(radius: 24)
+                .card()
                 .contentShape(Rectangle())
             }
             .buttonStyle(PressableButtonStyle())
@@ -1159,7 +1159,7 @@ private struct MoreFinancesCard: View {
             }
         }
         .padding(.vertical, 6)
-        .card(radius: 24)
+        .card()
     }
 
     private func row<Destination: View, Label: View>(@ViewBuilder _ destination: @escaping () -> Destination, @ViewBuilder label: () -> Label) -> some View {
@@ -1207,7 +1207,7 @@ private struct FinanceBudgetsPage: View {
                                 .font(.subheadline.weight(.semibold))
                                 .foregroundStyle(total.isOver ? Theme.danger : .secondary)
                             Money(value: abs(total.left), currency: view.plan.currency, finances: finances)
-                                .font(.largeTitle.weight(.bold))
+                                .font(.largeTitle.weight(.semibold))
                             BudgetBar(share: total.share, tint: total.isOver ? Theme.danger : Theme.accent)
                                 .padding(.vertical, 2)
                             HStack(spacing: 4) {
@@ -1807,7 +1807,7 @@ private struct FinanceSpendingPage: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .card(radius: 24)
+        .card()
     }
 
     private func bars(_ months: [SpendingMonth], month: Date, view: FinancesPlanView) -> some View {
@@ -1853,7 +1853,7 @@ private struct FinanceSpendingPage: View {
             .frame(height: 122)
         }
         .padding(16)
-        .card(radius: 24)
+        .card()
     }
 
     private func list(_ spent: [SpendingCategory], month: Date, isThisMonth: Bool, view: FinancesPlanView) -> some View {
@@ -1905,7 +1905,7 @@ private struct FinanceSpendingPage: View {
             }
         }
         .padding(.vertical, 4)
-        .card(radius: 24)
+        .card()
     }
 }
 
@@ -1969,7 +1969,7 @@ private struct FinanceRecurringPage: View {
                             .foregroundStyle(Theme.secondaryInk)
                             .padding(18)
                             .frame(maxWidth: .infinity, alignment: .leading)
-                            .card(radius: 24)
+                            .card()
                     }
                     if finances.canEditPlan, !items.isEmpty {
                         Text("Tap one to change what it costs, or + to add one. Remove them on the computer.")
@@ -2004,7 +2004,7 @@ private struct FinanceRecurringPage: View {
             HStack(alignment: .firstTextBaseline, spacing: 4) {
                 Text(verbatim: "≈").foregroundStyle(Theme.secondaryInk)
                 Text(verbatim: amountText(view.recurringPerMonth, view.plan.currency, finances, whole: true))
-                    .font(.largeTitle.weight(.heavy))
+                    .font(.largeTitle.weight(.semibold))
                     .monospacedDigit()
                     .lineLimit(1)
                     .minimumScaleFactor(0.6)
@@ -2020,7 +2020,7 @@ private struct FinanceRecurringPage: View {
         }
         .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .card(radius: 24)
+        .card()
     }
 
     private func chip(_ words: String, _ tint: Color) -> some View {
@@ -2036,7 +2036,7 @@ private struct FinanceRecurringPage: View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(alignment: .firstTextBaseline) {
                 Text(verbatim: sort.title)
-                    .font(.title3.weight(.bold))
+                    .font(.headline)
                     .foregroundStyle(Theme.ink)
                 Spacer()
                 let monthly = rows.reduce(0) { $0 + ($1.monthly ?? 0) }
@@ -2066,7 +2066,7 @@ private struct FinanceRecurringPage: View {
             }
         }
         .padding(16)
-        .card(radius: 24)
+        .card()
     }
 
     private func row(_ item: RecurringItem, _ view: FinancesPlanView) -> some View {
@@ -2152,7 +2152,7 @@ private struct FinanceInvestmentsPage: View {
                     }
                     .padding(18)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .card(radius: 24)
+                    .card()
                     readNote
                 }
             }
@@ -2352,7 +2352,7 @@ private struct InvestmentsHero<Actions: View>: View {
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(Theme.secondaryInk)
             Text(verbatim: amountText(point?.value ?? investments.total, view.plan.currency, finances))
-                .font(.largeTitle.weight(.heavy))
+                .font(.largeTitle.weight(.semibold))
                 .monospacedDigit()
                 .foregroundStyle(shown ? Theme.ink : Theme.secondaryInk)
                 .contentTransition(.numericText())
@@ -2384,7 +2384,7 @@ private struct InvestmentsHero<Actions: View>: View {
         }
         .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .card(radius: 24)
+        .card()
         .animation(.smooth(duration: 0.35), value: range)
     }
 
@@ -2435,7 +2435,7 @@ private struct HoldingsCard: View {
             }
         }
         .padding(16)
-        .card(radius: 24)
+        .card()
     }
 
     private func currency(_ account: FinanceAccount) -> String {
@@ -2820,7 +2820,7 @@ private struct FinanceAccountsPage: View {
         }
         .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .card(radius: 24)
+        .card()
     }
 
     private func legend(_ title: LocalizedStringKey, _ value: Double, _ tint: Color, _ view: FinancesPlanView) -> some View {
@@ -2840,7 +2840,7 @@ private struct FinanceAccountsPage: View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(alignment: .firstTextBaseline) {
                 Text(verbatim: group.title)
-                    .font(.title3.weight(.bold))
+                    .font(.headline)
                     .foregroundStyle(Theme.ink)
                 Spacer()
                 Text(verbatim: amountText(group.total, view.plan.currency, finances, whole: true))
@@ -2862,7 +2862,7 @@ private struct FinanceAccountsPage: View {
             }
         }
         .padding(16)
-        .card(radius: 24)
+        .card()
     }
 
     /// Track from: the day the charts and totals count from (the owner, Nov 16).
@@ -2894,7 +2894,7 @@ private struct FinanceAccountsPage: View {
                 }
             }
             .padding(16)
-            .card(radius: 20)
+            .card()
             .contentShape(Rectangle())
         }
         .buttonStyle(PressableButtonStyle())
@@ -2934,7 +2934,7 @@ private struct FinanceAccountsPage: View {
                 }
             }
             .padding(16)
-            .card(radius: 20)
+            .card()
             .contentShape(Rectangle())
         }
         .buttonStyle(PressableButtonStyle())

@@ -121,7 +121,7 @@ struct FinanceCashFlowPage: View {
             .font(.caption)
         }
         .padding(16)
-        .card(radius: 24)
+        .card()
     }
 
     private func legend(_ title: String, _ tint: Color) -> some View {
@@ -159,7 +159,7 @@ struct FinanceCashFlowPage: View {
                 if i < months.count - 1 { Divider().padding(.leading, 16) }
             }
         }
-        .card(radius: 24)
+        .card()
     }
 }
 
@@ -241,7 +241,7 @@ private struct MonthReviewCards: View {
                     WalletTransactionRow(transaction: biggest, finances: finances, isNew: false)
                 }
                 .padding(16)
-                .card(radius: 24)
+                .card()
             }
             Text("Swipe for other months.")
                 .font(.footnote)
@@ -320,7 +320,7 @@ private struct MonthReviewCards: View {
             }
         }
         .padding(16)
-        .card(radius: 24)
+        .card()
     }
 
     private var changes: some View {
@@ -335,7 +335,7 @@ private struct MonthReviewCards: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .card(radius: 24)
+        .card()
     }
 
     private func change(_ c: MonthReview.Category, symbol: String, tint: Color, verb: String) -> some View {
@@ -362,7 +362,7 @@ private struct MonthReviewCards: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .card(radius: 20)
+        .card()
         .accessibilityElement(children: .combine)
     }
 
@@ -425,7 +425,7 @@ struct RecurringCalendarCard: View {
             }
         }
         .padding(16)
-        .card(radius: 24)
+        .card()
         .animation(.smooth(duration: 0.25), value: picked)
         .sensoryFeedback(.selection, trigger: picked)
     }
