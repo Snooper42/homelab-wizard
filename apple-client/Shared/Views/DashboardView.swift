@@ -1180,7 +1180,7 @@ private struct AwayModeView: View {
                     }
                 }
                 .padding(.horizontal, 14)
-                .card(radius: 20)
+                .card()
                 Button("Try Again") {
                     Task {
                         await model.refresh()

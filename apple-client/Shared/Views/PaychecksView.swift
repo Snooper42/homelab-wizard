@@ -19,7 +19,7 @@ struct FinancePaychecksPage: View {
                             .foregroundStyle(Theme.secondaryInk)
                             .padding(18)
                             .frame(maxWidth: .infinity, alignment: .leading)
-                            .card(radius: 24)
+                            .card()
                     }
                     ForEach(paychecks.people) { person in
                         if person.parts.isEmpty && person.deductions.isEmpty {
@@ -76,7 +76,7 @@ struct FinancePaychecksPage: View {
             }
         }
         .padding(16)
-        .card(radius: 24)
+        .card()
         .accessibilityElement(children: .combine)
     }
 
@@ -116,7 +116,7 @@ struct FinancePaychecksPage: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .card(radius: 24)
+        .card()
     }
 
     /// "Alex's pay: Take-home 77%, 401(k) 8%, …", for VoiceOver.
@@ -163,7 +163,7 @@ struct FinancePaychecksPage: View {
 
     private func nextCard(_ months: [Paychecks.Month]) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Next Paychecks").font(.title3.weight(.bold)).foregroundStyle(Theme.ink)
+            Text("Next Paychecks").font(.headline).foregroundStyle(Theme.ink)
             ForEach(months) { m in
                 VStack(alignment: .leading, spacing: 0) {
                     HStack(alignment: .firstTextBaseline) {
@@ -198,7 +198,7 @@ struct FinancePaychecksPage: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .card(radius: 24)
+        .card()
     }
 
     /// "December · 3 paychecks", the year when it isn't this one, and ", to Dec 18" when the month isn't read to its end.

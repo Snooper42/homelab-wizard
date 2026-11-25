@@ -107,14 +107,14 @@ struct AccountDetailView: View {
         }
         .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .card(radius: 24)
+        .card()
     }
 
     private func latestCard(_ view: FinancesPlanView) -> some View {
         let mine = Array(AccountBalance.mine(account, finances.ledger?.transactions ?? []).prefix(8))
         return VStack(alignment: .leading, spacing: 4) {
             Text("Latest Transactions")
-                .font(.title3.weight(.bold))
+                .font(.headline)
                 .foregroundStyle(Theme.ink)
                 .padding(.bottom, 6)
             if mine.isEmpty {
@@ -130,7 +130,7 @@ struct AccountDetailView: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .card(radius: 24)
+        .card()
     }
 }
 
@@ -150,7 +150,7 @@ private struct LoanSection: View {
         let monthly = links.payments.compactMap(\.amount).reduce(0, +)
         VStack(alignment: .leading, spacing: 12) {
             Text("The Loan")
-                .font(.title3.weight(.bold))
+                .font(.headline)
                 .foregroundStyle(Theme.ink)
             HStack(alignment: .top, spacing: 18) {
                 fact("Each Month") { Money(value: monthly, currency: view.plan.currency, finances: finances) }
@@ -220,7 +220,7 @@ private struct LoanSection: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .card(radius: 24)
+        .card()
         .sheet(isPresented: $picking) { LinkPaymentView(account: account, view: view, finances: finances) }
     }
 

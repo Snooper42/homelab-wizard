@@ -27,7 +27,7 @@ struct FinanceCalendarView: View {
                         .foregroundStyle(Theme.secondaryInk)
                         .padding(18)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .card(radius: 24)
+                        .card()
                         .padding(16)
                 } else if wide {
                     HStack(alignment: .top, spacing: 16) {
@@ -88,7 +88,7 @@ struct FinanceCalendarView: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .firstTextBaseline) {
                 Text(verbatim: monthTitle(month))
-                    .font(.title3.weight(.bold))
+                    .font(.headline)
                     .foregroundStyle(Theme.ink)
                 Spacer(minLength: 8)
                 Button("Today") { go(cal.opening, cal) }
@@ -289,7 +289,7 @@ struct FinanceCalendarView: View {
             }
             .padding(16)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .card(radius: 24)
+            .card()
         }
     }
 
@@ -378,7 +378,7 @@ struct FinanceCalendarView: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .card(radius: 24)
+        .card()
     }
 
     private func summaryRow(_ title: String, _ sub: String, _ value: Double, _ currency: String, tint: Color, signed: Bool) -> some View {

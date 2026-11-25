@@ -17,7 +17,7 @@ struct WatchlistCard: View {
             VStack(alignment: .leading, spacing: 4) {
                 HStack(alignment: .firstTextBaseline) {
                     Text("Watchlist")
-                        .font(.title3.weight(.bold))
+                        .font(.headline)
                         .foregroundStyle(Theme.ink)
                     Spacer()
                     if finances.canEdit {
@@ -46,7 +46,7 @@ struct WatchlistCard: View {
             }
             .padding(16)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .card(radius: 24)
+            .card()
             .sheet(isPresented: $adding) { FollowTickerView(finances: finances) }
         }
     }
