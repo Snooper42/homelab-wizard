@@ -129,9 +129,6 @@ struct ComputerView: View {
             TaskButton(task: .fix)
         } header: {
             Text("Problems")
-        } footer: {
-            // The steps by their buttons' names: the footnote named only Fix These, under Look for Problems.
-            Text("Look for Problems lists what it would fix first. Nothing changes until you tap Fix These under that list.")
         }
     }
 
@@ -141,8 +138,6 @@ struct ComputerView: View {
             TaskButton(task: .updateAll)
         } header: {
             Text("Updates")
-        } footer: {
-            Text("Lists which apps have an update and which wait for their own days or are held. Nothing changes until you tap Update Them under that list; then it updates them one at a time, to the end, even if you close this app.")
         }
     }
 
@@ -301,12 +296,12 @@ struct ComputerView: View {
                 Text(verbatim: coordinator.lockAfter.words)
                 #endif
                 if WidgetSummaryStore.isAvailable {
-                    Text("The money widget says how Finances stands in words, such as On track until Nov 19 and Next bill tomorrow, never an amount. Like the other widget it shows without Face ID; it fills in the next time Finances is read.")
+                    Text("The money widget shows words only, never an amount.")
                 }
                 if actions.computerAnswers("AlertLog") {
                     switch alertSource {
                     case .ntfy:
-                        Text("The ntfy app notifies this device of the homelab's alerts. Every Alert, under Recent Alerts, lists them here.")
+                        EmptyView()
                     case .thisApp:
                         Text("This app notifies while it's open. Turn off the ntfy app's notifications on this device so nothing arrives twice. A locked phone hears only from the ntfy app until the paid Apple program.")
                     }

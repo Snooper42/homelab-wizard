@@ -41,8 +41,6 @@ struct RulesView: View {
                         Text("No rules yet. Change a transaction's payee or category and turn on Always do this for….")
                     } else if !finances.canChangeRules {
                         Text("Rules change the plan for every device, so they're changed once the Homelab answers.")
-                    } else {
-                        Text("What each payee becomes as it comes in. Every import follows them, before anything is guessed. Swipe one to remove it.")
                     }
                 }
             }

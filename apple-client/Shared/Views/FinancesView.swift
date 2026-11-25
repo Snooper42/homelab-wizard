@@ -62,17 +62,6 @@ struct FinancesView: View {
                     MoreFinancesCard(view: view, finances: finances)
                     if finances.canMakePrivate { PrivateOfferCard(finances: finances) }
                     if finances.privacy == .open, finances.canEdit { PrivateOffButton(finances: finances) }
-                    Text(finances.offlineAsOf != nil
-                         ? (finances.canEditAway
-                            ? "Offline: today's Finances, worked out on this device. Balances, the cushion, budgets, goals and payments change here and go to the Homelab once it answers."
-                            : "Offline: these are the Finances last read on this device. Changes wait until the Homelab answers, and then the newest are read by themselves.")
-                         : finances.canEdit
-                         ? "Balances, the cushion, budgets, goals and what a payment costs change on their pages. The rest of the plan is on the computer."
-                         : "Read-only on this device. Change the plan on the computer.")
-                        .font(.footnote)
-                        .foregroundStyle(Theme.secondaryInk)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.horizontal, 4)
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 4)
@@ -2653,16 +2642,13 @@ private struct FinanceAccountsPage: View {
                     }
                     if finances.canEditPlan || view.plan.cushion > 0 { cushionCard(view) }
                     if finances.canEditPlan || view.plan.trackFrom != nil { trackFromCard(view) }
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Tap an account for its page: its balance day by day and its latest transactions.")
-                        if view.plan.accounts.contains(where: { $0.currency != nil && $0.currency != "" }) {
-                            Text("Net worth counts each account in the plan's currency as it's typed, without exchange rates.")
-                        }
+                    if view.plan.accounts.contains(where: { $0.currency != nil && $0.currency != "" }) {
+                        Text("Net worth counts each account in the plan's currency as it's typed, without exchange rates.")
+                            .font(.footnote)
+                            .foregroundStyle(Theme.secondaryInk)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal, 4)
                     }
-                    .font(.footnote)
-                    .foregroundStyle(Theme.secondaryInk)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 4)
                 }
                 .padding(.horizontal, 16)
                 .padding(.bottom, 28)

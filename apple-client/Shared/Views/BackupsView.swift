@@ -305,8 +305,6 @@ struct BackupsView: View {
                 }
                 .font(.callout)
             }
-        } footer: {
-            Text("A restore test restores the newest backup somewhere apart and checks it. Your apps aren't touched.")
         }
     }
 

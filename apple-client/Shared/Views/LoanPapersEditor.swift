@@ -57,8 +57,6 @@ struct LoanPapersEditor: View {
                     field("Finance charge", text: $charge, hint: "968.39")
                 } header: {
                     Text("If the papers say")
-                } footer: {
-                    Text("The finance charge counts the days before the first payment, so what it owes comes out to the cent.")
                 }
                 Section {
                     readingView
