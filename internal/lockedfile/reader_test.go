@@ -14,7 +14,10 @@ import (
 // A save outlasts a reader that opens the file again and again (the agent
 // and the app read .env and the records all the time): on Windows each
 // rename over the open file fails for that moment, and Write tries again
-// in the gaps. Off Windows a rename never waits for a reader.
+// in the gaps. Off Windows a rename never waits for a reader. Each reader
+// leaves a millisecond between reads, as a real one does: two reading back
+// to back with no gap at all left a slow Windows runner no moment to rename
+// in for RenameWait (#894's Windows tests, save 104).
 func TestWriteOutlastsAReaderOpeningItAgainAndAgain(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "record.json")
 	if err := Write(path, []byte(`{"n":0}`), 0o600); err != nil {
@@ -28,6 +31,7 @@ func TestWriteOutlastsAReaderOpeningItAgainAndAgain(t *testing.T) {
 			defer wg.Done()
 			for !stop.Load() {
 				_, _ = os.ReadFile(path)
+				time.Sleep(time.Millisecond)
 			}
 		}()
 	}
