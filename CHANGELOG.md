@@ -9,6 +9,8 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 ### New
 
 <!-- The iPhone and iPad app (lane 4): add a line just below this one. -->
+- **Fewer words on Goals and This Month on the Homelab app:** on the iPhone and iPad, Goals no longer says *Tap a goal to change its target*, and This Month compares money out as the Spending card does (*$1,028 more out vs Sep*).
+- **What to sort, under Transactions' review strip on the Homelab app:** on the iPhone and iPad, under *3 new to review* a line says what's waiting, as the redesign's picture: *2 look like bills · 1 needs a category*.
 - **Transactions closer to the redesign's picture on the Homelab app:** on the iPhone and iPad, the list newest first has no *Latest Transactions* heading over it, only the line saying how many, what came in and what went out, the figures in bold; each day's heading is in small capitals (*NOV 22*) with its total.
 - **Status' buttons as the redesign's picture on the Homelab app:** on the iPhone and iPad, the card for the app that needs you has Start (or Restart), Logs and Its Page a size up and sharing the card's width, Start with ▷ and Logs with ≡.
 - **Settings' Automatic Care as the redesign's picture on the Homelab app:** on the iPhone and iPad, each care setting has a coloured symbol and a line under it (*Checked every 15 minutes*, *Puts the version before back by itself*, quiet hours as *10 PM – 7 AM*) in place of the ⓘ, and Phones and iPads says how many are paired and which only look (*2 paired · Jordan's looks only*).

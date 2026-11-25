@@ -3386,8 +3386,6 @@ private struct FinanceGoalsPage: View {
                             goalRow(goal, view)
                         }
                     }
-                } footer: {
-                    if finances.canEditPlan { Text("Tap a goal to change its target.") }
                 }
             }
         }
@@ -4083,6 +4081,21 @@ struct TransactionsView: View {
         }
     }
 
+    /// Under the strip, as the picture's: what looks like a bill or a transfer (sorted just below, where the
+    /// ledger may be changed) and how many new ones have no category yet.
+    private var reviewLine: String? {
+        let all = finances.ledger?.transactions ?? []
+        var bills = 0, transfers = 0
+        if search.isEmpty, !filter.isOn, finances.canAddTransactions {
+            // Counted as the sections below show them: only rows still in the ledger.
+            let ids = Set(all.map(\.id))
+            let review = finances.transactionReview()
+            bills = review.links.filter { ids.contains($0.id) }.count
+            transfers = review.pairs.filter { ids.contains($0.out) && ids.contains($0.into) }.count
+        }
+        return ReviewStrip.line(bills: bills, transfers: transfers, uncategorized: ReviewStrip.uncategorized(all.filter { finances.isNew($0) }))
+    }
+
     /// New since you looked, as the picture's strip: Review opens them.
     private func reviewStrip(_ count: Int) -> some View {
         HStack(spacing: 12) {
@@ -4090,9 +4103,17 @@ struct TransactionsView: View {
                 .font(.title3.weight(.semibold))
                 .foregroundStyle(Theme.accent)
                 .accessibilityHidden(true)
-            Text(verbatim: count == 1 ? "1 new to review" : "\(count) new to review")
-                .font(.headline)
-                .foregroundStyle(Theme.ink)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(verbatim: count == 1 ? "1 new to review" : "\(count) new to review")
+                    .font(.headline)
+                    .foregroundStyle(Theme.ink)
+                if let line = reviewLine {
+                    Text(verbatim: line)
+                        .font(.subheadline)
+                        .foregroundStyle(Theme.secondaryInk)
+                        .lineLimit(2)
+                }
+            }
             Spacer(minLength: 8)
             Text("Review")
                 .font(.subheadline.weight(.semibold))
@@ -4691,15 +4712,15 @@ private struct ThisMonthCard: View {
         return signed && value > 0 && text != "••••" ? "+" + text : text
     }
 
-    /// "$212 less out than by Oct 21 last month ($3,427)."
+    /// "$212 less out vs Oct", as the Spending card's chip says it: against last month by the same day.
     private var comparison: Text? {
-        guard let change = month.outChange, let before = month.outBefore, let day = month.lastMonthDay else { return nil }
-        let dayText = day.formatted(.dateTime.month(.abbreviated).day())
-        if change == 0 { return Text(verbatim: "The same out as by \(dayText) last month.") }
+        guard let change = month.outChange, month.outBefore != nil, let day = month.lastMonthDay else { return nil }
+        let monthText = day.formatted(.dateTime.month(.abbreviated))
+        if change == 0 { return Text(verbatim: "The same out as \(monthText)") }
         let lead = Text(verbatim: "\(whole(abs(change), signed: false)) \(change > 0 ? "more" : "less")")
             .fontWeight(.semibold)
             .foregroundStyle(change > 0 ? Theme.danger : Theme.success)
-        return Text("\(lead) out than by \(dayText) last month (\(whole(before, signed: false))).")
+        return Text("\(lead) out vs \(monthText)")
     }
 }
 
