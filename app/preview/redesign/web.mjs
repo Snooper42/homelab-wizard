@@ -160,13 +160,16 @@ const wideCss = `
 // Status' menu: Overview, then each category, your own apps last (never a +: it read as "add an app" in the middle
 // of the list). No Stopped item (the owner, Nov 25): a category holding a stopped app shows an amber dot by its count.
 const sideOrder = [...groups.filter((g) => g[0] !== 'Your own apps'), ...groups.filter((g) => g[0] === 'Your own apps')];
-const sideMenu = [['grid', 'Overview', ''], ...sideOrder.map((g) => [{ Security: 'shield', 'Cloud & Files': 'cloud', Documents: 'file', Media: 'film', 'Your own apps': 'box', System: 'server', Network: 'globe' }[g[0]], g[0], g[1].length])];
+// Analytics under Overview (the owner, Nov 25): the machine's numbers (processor, memory, drives, what each app uses) get
+// a screen of their own, mocked on another account; a category's page is only its apps.
+const sideMenu = [['grid', 'Overview', ''], ['chart', 'Analytics', ''], ...sideOrder.map((g) => [{ Security: 'shield', 'Cloud & Files': 'cloud', Documents: 'file', Media: 'film', 'Your own apps': 'box', System: 'server', Network: 'globe' }[g[0]], g[0], g[1].length])];
 Object.assign(P, {
   warn: 'm21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3ZM12 9v4M12 17h.01',
   shield: 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z', cloud: 'M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z',
   file: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6', film: 'M2 2h20v20H2zM7 2v20M17 2v20M2 12h20',
   server: 'M2 2h20v8H2zM2 14h20v8H2zM6 6h.01M6 18h.01', globe: 'c12,12,10|M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z',
 });
+Object.assign(P, { chart: 'M3 3v18h18M7 15l4-4 3 3 5-6' });
 const sideFor = (here, stopped = []) => `
 <aside class="side">
   <div class="brand"><img src="file://${repo}/assets/logo.svg" width="26" height="26"><div><b>Homelab Wizard</b></div></div>
@@ -270,9 +273,9 @@ const widgets = `<div class="widgets">
 </div>`;
 const grid = `<div class="sect">On this server <span>3</span></div><div class="tiles6">${media.map(tile).join('')}</div>
 <div class="sect">Add to Media <span>9</span></div><div class="tiles6">${more.map(addTile).join('')}${newTile}</div>`;
-const catHead = `<div class="chead"><div class="t"><h2>Media</h2></div><div class="search" style="width:260px;background:var(--glass);border-color:var(--glassline)">${icon('search', 15)}Find an app</div></div>`;
+const catHead = `<div class="chead"><div class="t"><h2>Media</h2><small style="color:var(--muted);font-size:13px">3 on this server · 2 running · 9 more to add</small></div><div class="search" style="width:260px;background:var(--glass);border-color:var(--glassline)">${icon('search', 15)}Find an app</div></div>`;
 writeFileSync(out + 'web-category.html', `<!doctype html><html><head><meta charset="utf-8"><title>Media</title><style>${deskCss}${extra}${wideCss}${tileCss}
-main.backdrop{min-height:100vh}.tiles6{--ar:1.55}.ring svg{width:62px;height:62px}</style></head><body>${sideFor('Media', ['Media'])}<main class="backdrop"><header class="top" style="padding-bottom:0;background:transparent"></header>${catHead}${widgets}${grid}</main></body></html>`);
+main.backdrop{min-height:100vh}.tiles6{--ar:1.45}.ring svg{width:62px;height:62px}</style></head><body>${sideFor('Media', ['Media'])}<main class="backdrop"><header class="top" style="padding-bottom:0;background:transparent"></header>${catHead}${grid}</main></body></html>`);
 
 // On a phone (two across) and the iPhone Duo unfolded upright (three across): the same, under the tab bar.
 const catPhone = (cols, ar) => `<!doctype html><html><head><meta charset="utf-8"><style>${phoneCss}${extra}${tileCss}

@@ -161,7 +161,7 @@ How far the phone's page (`homelab serve`) can go toward the Homelab app, drawn 
 
 The owner, Nov 25: click a category in Status' menu (Network, Media, …) and get its apps as tiles, three across, with CasaOS's dashboard as the reference (its ideas only, never its look, words or pictures; its own screenshot is in its repository's README). After two passes the owner liked this one: **the icon is the hero**, the tiles are light and see-through over a soft backdrop, and the live numbers live in widgets rather than on every tile.
 
-<picture><source media="(prefers-color-scheme: dark)" srcset="images/redesign/web-category-dark.png"><img alt="Media's page on a tablet: three equal widgets in a row on top (processor and memory rings, two watching on Jellyfin, the media drive's free space); On this server, three big-icon tiles (Jellyfin and Jellystat running with Open, jfa-go stopped with Start); Add to Media, two lighter tiles with Install and a More for Media tile" src="images/redesign/web-category.png"></picture>
+<picture><source media="(prefers-color-scheme: dark)" srcset="images/redesign/web-category-dark.png"><img alt="Media's page on a tablet: the title with 3 on this server, 2 running, 9 more to add; On this server, three big-icon tiles (Jellyfin and Jellystat running with Open, jfa-go stopped with Start); Add to Media, two lighter tiles with Install and a More for Media tile" src="images/redesign/web-category.png"></picture>
 
 <p>
 <picture><source media="(prefers-color-scheme: dark)" srcset="images/redesign/web-category-duo-dark.png"><img alt="Media's page on the iPhone Duo unfolded upright: three tiles across, the tab bar at the foot" src="images/redesign/web-category-duo.png" width="300"></picture>
@@ -169,12 +169,21 @@ The owner, Nov 25: click a category in Status' menu (Network, Media, …) and ge
 </p>
 
 - **A tile:** the app's logo, big (64 px; 56 on a phone) and centred; its name; one short live line (*2 watching now*, *Up 6 days*, *Stopped 20 min ago*); one small button, **Open** (or **Start**, in the accent, when stopped); a status dot top left (green running, amber stopped); ⋯ top right for the rest (Its page, Restart, Stop, Logs, Remove). Nothing else on the tile.
-- **Widgets: a row of three, equal size, on top** (the tester, Nov 25: a column beside the sidebar *"makes you think the left column are actions"* and didn't line up), then the apps under them; on a phone they come under the title, one across. They show: the category's processor and memory as rings, what it's doing now (*2 watching on Jellyfin*), its drive. Each category picks its widgets from data the computer already has (`StatusBoard`'s `usage` and `storage`, an app's own API where the homelab already reads it); a widget with no data isn't drawn.
+- **No widgets on a category's page** (the owner, Nov 25: the machine's numbers *"need[s] its own dedicated analytics screen"*): only the title, *3 on this server · 2 running · 9 more to add*, and the apps. Processor, memory, drives and what each app uses live on **Analytics**, under Overview in Status' menu (its picture is being mocked on another account; lay it out from that, in this pattern).
 - **On this server**, then **Add to <category>**: the apps not installed, faded with a dashed edge, each with **Install**; the last tile is **More for <category>** (*7 more to add*), opening Choose apps on that category, as CasaOS ends its grid with its app store.
 - **The backdrop:** the page's own colour with two soft glows (violet top left, teal bottom right; lighter by day); tiles and widgets are translucent with a blur, a hairline edge, radius 20.
 - **Every app has a logo** (owner, Nov 25: *"add logos everywhere"*): the catalog's, or for your own apps the app's own icon (below, and `web-loop.md` W17); letters only while none is found.
 - **Three across** on a tablet, a wide window and the iPhone Duo unfolded; **two** on a phone.
 - **Install** on the phone's page waits for the owner's yes for Choose apps on the phone (W13).
+
+#### Toward 1.0: an app store
+
+The owner, Nov 25: *"little by little once we reach 1.0 I could add more and more apps and this could become sort of like an App Store where anybody on any platform could just download this or access it via the web and then they could configure and add any apps they want."* So a category's *Add to …* half is the store's shelf, and every choice now should let it grow:
+
+- **The catalog grows without a release of the app:** apps described as data (`compose/`, `x-homelab`), so an added app reaches every homelab with the homelab files' update, and *Add to …* shows it.
+- **The same shelf everywhere:** the computer, the phone's page and the iPhone app all show a category's apps to add from the same catalog call; Install where the device may make changes.
+- **An app's store page:** what it does, its pictures, what it needs (memory, a domain, another app), what it replaces, and Install; reached from a tile's ⋯ or by tapping a faded tile.
+- **Anyone's app, safely:** your own apps (`homelab custom add`, the pasted compose file) stay the way to run something the catalog doesn't have; a shared catalog of other people's entries is a later decision (who reviews them, how they're signed), for the owner.
 
 ## Logos for every payee
 
