@@ -242,10 +242,6 @@ struct ImportFileView: View {
                 Text(verbatim: warning).foregroundStyle(Theme.danger)
             } else if let error = finances.saveError, !saving {
                 Text(verbatim: error).foregroundStyle(Theme.danger)
-            } else if found.contains(where: { $0.guessed != nil }) {
-                Text("A row that looks like a planned payment pays it, so the plan doesn't take it out again on its day. Change it on the row if it's wrong.")
-            } else if !found.isEmpty {
-                Text("The bank's own words go in the note, and each payee takes its last category or its rule's.")
             }
         }
     }

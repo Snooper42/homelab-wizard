@@ -850,8 +850,7 @@ private struct SplitDashboard: View {
                 SettingsFormView(computer: computer, section: nil)
             }
         case .backups?:
-            ContentUnavailableView("Backups", systemImage: "externaldrive",
-                                   description: Text("Duplicati’s jobs, the restore tests, where the backups go and the password export open here."))
+            ContentUnavailableView("Backups", systemImage: "externaldrive")
         case .setup?:
             ContentUnavailableView("Setup", systemImage: "wrench.and.screwdriver",
                                    description: Text("What still needs you, and how this machine is doing, are beside this."))

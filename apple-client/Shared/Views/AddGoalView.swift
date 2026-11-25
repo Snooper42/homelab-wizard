@@ -99,9 +99,7 @@ struct AddGoalView: View {
                     } else if shares.isEmpty {
                         Text("No account here holds money to put by, or other goals count all of it.")
                     } else if let target, target > 0 {
-                        Text(verbatim: "Together that's \(amountText(together, currency, finances)) of \(amountText(target, currency, finances)) today. Each share is of what other goals leave of that account.")
-                    } else {
-                        Text("Each share is of what other goals leave of that account. Swipe one to take it off.")
+                        Text(verbatim: "Together that's \(amountText(together, currency, finances)) of \(amountText(target, currency, finances)) today.")
                     }
                 }
             }

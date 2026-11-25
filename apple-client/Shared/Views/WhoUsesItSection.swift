@@ -33,7 +33,7 @@ struct WhoUsesItSection: View {
                     } header: {
                         Text("Who Uses It")
                     } footer: {
-                        Text("The people in the household who sign in to \(app.name). Add someone or change what they use on the computer's Settings › People.")
+                        Text("Changed on the computer's Settings › People.")
                     }
                 }
             } else if !failed {

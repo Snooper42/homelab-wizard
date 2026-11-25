@@ -24,11 +24,6 @@ struct FinanceCashFlowPage: View {
                     // Where the month's money went, as the computer's Money flow.
                     MoneyFlowCard(finances: finances)
                     list(months, view)
-                    Text("Money in is everything that came in (paychecks, refunds), and money out everything that went out, as on the computer. Money moved between your own accounts isn’t either.")
-                        .font(.footnote)
-                        .foregroundStyle(Theme.secondaryInk)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.horizontal, 4)
                 }
                 .padding(.horizontal, 16)
                 .padding(.bottom, 28)
