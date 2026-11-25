@@ -11,6 +11,10 @@ export interface SideItem {
   icon: string;
   /** How many wait on you here, in the sidebar's amber; none when 0. */
   count?: number;
+  /** How many it holds, in grey (Status' categories: their apps); none when 0. */
+  total?: number;
+  /** One of them wants a look (an app stopped): an amber dot before the total. */
+  dot?: boolean;
 }
 
 export interface SideMenuProps {
@@ -44,6 +48,8 @@ export const sideIcons: Record<string, string> = {
   start: 'M12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2z',
   steps: 'M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11',
   add: 'M12 5v14M5 12h14',
+  analytics: 'M3 3v18h18M7 14l4-4 4 4 5-6',
+  own: 'M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16zM3.27 6.96 12 12.01l8.73-5.05M12 22.08V12',
 };
 
 export function SideMenu({ label, items, here, pick }: SideMenuProps) {
@@ -52,7 +58,7 @@ export function SideMenu({ label, items, here, pick }: SideMenuProps) {
       {items.map((it) => (
         <li key={it.key}>
           <button type="button" class={'finmenuitem' + (here === it.key ? ' on' : '')} data-key={it.key} aria-current={here === it.key ? 'page' : undefined} onClick={() => pick(it.key)}>
-            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d={it.icon} /></svg><span>{it.label}</span>{!!it.count && <span class="count">{it.count}</span>}
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d={it.icon} /></svg><span>{it.label}</span>{!!it.count && <span class="count">{it.count}</span>}{it.dot && <span class="sidedot" role="img" aria-label="One stopped" />}{!!it.total && <span class="total">{it.total}</span>}
           </button>
         </li>
       ))}
