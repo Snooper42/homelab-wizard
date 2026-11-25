@@ -15,6 +15,7 @@
     "Backups",
     "Catalog",
     "CopySignIn",
+    "Downloads",
     "DuplicatiJobs",
     "ExplainLogs",
     "Finances",
@@ -1560,10 +1561,30 @@
      "public": false
     },
     {
+     "id": "sabnzbd",
+     "name": "SABnzbd",
+     "category": "media-automation",
+     "description": "Usenet downloader, preferred over torrents; it has no network except the ProtonVPN tunnel",
+     "kind": "optional",
+     "dependsOn": [
+      "gluetun"
+     ],
+     "goesWith": {
+      "radarr": "Downloads from Usenet, preferred over torrents, so a release nobody shares doesn't hold things up.",
+      "sonarr": "Downloads from Usenet, preferred over torrents, so a release nobody shares doesn't hold things up."
+     },
+     "login": [
+      "ARR_USER",
+      "ARR_PASSWORD"
+     ],
+     "keyFile": true,
+     "public": false
+    },
+    {
      "id": "gluetun",
      "name": "Gluetun",
      "category": "media-automation",
-     "description": "ProtonVPN tunnel that qBittorrent's traffic is forced through",
+     "description": "ProtonVPN tunnel that qBittorrent's and SABnzbd's traffic is forced through",
      "kind": "optional",
      "inputs": [
       "PROTONVPN_WIREGUARD_PRIVATE_KEY"
@@ -1715,6 +1736,7 @@
       "lidarr",
       "bazarr",
       "flaresolverr",
+      "sabnzbd",
       "qbittorrent",
       "seerr"
      ]
@@ -1898,6 +1920,7 @@
     "bazarr",
     "seerr",
     "qbittorrent",
+    "sabnzbd",
     "flaresolverr"
    ]
   },
@@ -2061,6 +2084,246 @@
      "size": 22000000,
      "count": 7,
      "state": "fresh"
+    }
+   ],
+   "nights": [
+    {
+     "date": "2026-11-12",
+     "apps": {
+      "nginx-proxy-manager": "copied",
+      "vaultwarden": "copied",
+      "uptime-kuma": "copied",
+      "ntfy": "copied",
+      "navidrome": "copied",
+      "audiobookshelf": "copied",
+      "immich-database": "copied",
+      "paperless-db": "copied",
+      "moneymatter-db": "copied",
+      "vikunja": "copied",
+      "mealie": "copied",
+      "moneymatter": "copied"
+     }
+    },
+    {
+     "date": "2026-11-13",
+     "apps": {
+      "nginx-proxy-manager": "copied",
+      "vaultwarden": "copied",
+      "uptime-kuma": "copied",
+      "ntfy": "copied",
+      "navidrome": "copied",
+      "audiobookshelf": "copied",
+      "immich-database": "copied",
+      "paperless-db": "copied",
+      "moneymatter-db": "copied",
+      "vikunja": "copied",
+      "mealie": "copied",
+      "moneymatter": "copied"
+     }
+    },
+    {
+     "date": "2026-11-14",
+     "apps": {
+      "nginx-proxy-manager": "copied",
+      "vaultwarden": "copied",
+      "uptime-kuma": "copied",
+      "ntfy": "copied",
+      "navidrome": "copied",
+      "audiobookshelf": "copied",
+      "immich-database": "copied",
+      "paperless-db": "copied",
+      "moneymatter-db": "copied",
+      "vikunja": "copied",
+      "mealie": "copied",
+      "moneymatter": "copied"
+     }
+    },
+    {
+     "date": "2026-11-15",
+     "apps": {
+      "nginx-proxy-manager": "copied",
+      "vaultwarden": "copied",
+      "uptime-kuma": "copied",
+      "ntfy": "copied",
+      "navidrome": "copied",
+      "audiobookshelf": "copied",
+      "immich-database": "copied",
+      "paperless-db": "copied",
+      "moneymatter-db": "copied",
+      "vikunja": "copied",
+      "mealie": "copied",
+      "moneymatter": "copied"
+     }
+    },
+    {
+     "date": "2026-11-16",
+     "apps": {
+      "nginx-proxy-manager": "copied",
+      "vaultwarden": "copied",
+      "uptime-kuma": "copied",
+      "ntfy": "copied",
+      "navidrome": "copied",
+      "audiobookshelf": "copied",
+      "immich-database": "copied",
+      "paperless-db": "copied",
+      "moneymatter-db": "copied",
+      "vikunja": "copied",
+      "mealie": "copied",
+      "moneymatter": "copied"
+     }
+    },
+    {
+     "date": "2026-11-17",
+     "apps": {
+      "nginx-proxy-manager": "copied",
+      "vaultwarden": "copied",
+      "uptime-kuma": "copied",
+      "ntfy": "copied",
+      "navidrome": "copied",
+      "audiobookshelf": "copied",
+      "immich-database": "copied",
+      "paperless-db": "copied",
+      "moneymatter-db": "copied",
+      "vikunja": "copied",
+      "mealie": "copied",
+      "moneymatter": "copied"
+     }
+    },
+    {
+     "date": "2026-11-18",
+     "apps": {
+      "nginx-proxy-manager": "copied",
+      "vaultwarden": "copied",
+      "uptime-kuma": "copied",
+      "ntfy": "copied",
+      "navidrome": "copied",
+      "audiobookshelf": "copied",
+      "immich-database": "copied",
+      "paperless-db": "copied",
+      "moneymatter-db": "copied",
+      "vikunja": "copied",
+      "mealie": "copied",
+      "moneymatter": "copied"
+     }
+    },
+    {
+     "date": "2026-11-19",
+     "apps": {
+      "nginx-proxy-manager": "copied",
+      "vaultwarden": "copied",
+      "uptime-kuma": "copied",
+      "ntfy": "copied",
+      "navidrome": "copied",
+      "audiobookshelf": "copied",
+      "immich-database": "copied",
+      "paperless-db": "copied",
+      "moneymatter-db": "copied",
+      "vikunja": "copied",
+      "mealie": "copied",
+      "moneymatter": "copied"
+     }
+    },
+    {
+     "date": "2026-11-20",
+     "apps": {
+      "nginx-proxy-manager": "copied",
+      "vaultwarden": "copied",
+      "uptime-kuma": "copied",
+      "ntfy": "copied",
+      "navidrome": "copied",
+      "audiobookshelf": "copied",
+      "immich-database": "copied",
+      "paperless-db": "copied",
+      "moneymatter-db": "copied",
+      "vikunja": "copied",
+      "mealie": "copied",
+      "moneymatter": "copied"
+     }
+    },
+    {
+     "date": "2026-11-21",
+     "apps": {
+      "nginx-proxy-manager": "copied",
+      "vaultwarden": "copied",
+      "uptime-kuma": "copied",
+      "ntfy": "copied",
+      "navidrome": "copied",
+      "audiobookshelf": "copied",
+      "immich-database": "copied",
+      "paperless-db": "copied",
+      "moneymatter-db": "copied",
+      "vikunja": "copied",
+      "mealie": "copied",
+      "moneymatter": "copied"
+     }
+    },
+    {
+     "date": "2026-11-22",
+     "apps": {
+      "nginx-proxy-manager": "copied",
+      "vaultwarden": "copied",
+      "uptime-kuma": "copied",
+      "ntfy": "copied",
+      "navidrome": "copied",
+      "audiobookshelf": "copied",
+      "immich-database": "copied",
+      "paperless-db": "copied",
+      "moneymatter-db": "copied",
+      "vikunja": "copied",
+      "mealie": "copied",
+      "moneymatter": "copied"
+     }
+    },
+    {
+     "date": "2026-11-23",
+     "apps": {
+      "nginx-proxy-manager": "copied",
+      "vaultwarden": "copied",
+      "uptime-kuma": "copied",
+      "ntfy": "copied",
+      "navidrome": "copied",
+      "audiobookshelf": "copied",
+      "immich-database": "copied",
+      "paperless-db": "copied",
+      "moneymatter-db": "copied",
+      "vikunja": "copied",
+      "mealie": "stopped",
+      "moneymatter": "copied"
+     }
+    },
+    {
+     "date": "2026-11-24",
+     "apps": {
+      "nginx-proxy-manager": "copied",
+      "vaultwarden": "copied",
+      "uptime-kuma": "copied",
+      "ntfy": "copied",
+      "navidrome": "copied",
+      "audiobookshelf": "copied",
+      "immich-database": "copied",
+      "paperless-db": "copied",
+      "moneymatter-db": "copied",
+      "vikunja": "copied",
+      "mealie": "stopped",
+      "moneymatter": "copied"
+     }
+    },
+    {
+     "date": "2026-11-25",
+     "apps": {
+      "nginx-proxy-manager": "copied",
+      "vaultwarden": "copied",
+      "uptime-kuma": "copied",
+      "ntfy": "copied",
+      "navidrome": "copied",
+      "audiobookshelf": "copied",
+      "immich-database": "copied",
+      "paperless-db": "copied",
+      "moneymatter-db": "copied",
+      "vikunja": "copied",
+      "mealie": "stopped",
+      "moneymatter": "copied"
+     }
     }
    ]
   },
@@ -2713,6 +2976,14 @@
      "value": "true"
     },
     {
+     "key": "STALL_RESCUE_HOURS",
+     "section": "Tidy Up",
+     "help": "A download nobody is sharing, stuck this many hours, is handed back to Sonarr, Radarr or Lidarr: removed, that release marked bad so it isn't picked again, and they look for another. Ones still moving, and ones you added to qBittorrent yourself, are left alone. 0 turns it off.",
+     "secret": false,
+     "set": true,
+     "value": "6"
+    },
+    {
      "key": "TIDY_KEEP_LANGUAGES",
      "section": "Tidy Up",
      "help": "The audio and subtitle languages films and episodes keep (ISO 639-2, e.g. eng, jpn); the rest are removed when Tdarr shrinks them.",
@@ -3007,6 +3278,14 @@
      "secret": false,
      "set": true,
      "value": "8082"
+    },
+    {
+     "key": "SABNZBD_PORT",
+     "section": "App ports (the installer moves these if something else holds them)",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "8091"
     },
     {
      "key": "FRESHRSS_PORT",
@@ -3875,7 +4154,7 @@
     {
      "key": "ARR_USER",
      "section": "App settings and secrets",
-     "help": "The login for Prowlarr, Sonarr, Radarr and Lidarr, made at install. Connect apps (homelab wire) sets it in each app, so none asks you to make one; each app's ⚙ Sign-in details shows it, to copy into your password manager.",
+     "help": "The login for Prowlarr, Sonarr, Radarr, Lidarr and SABnzbd, made at install. Connect apps (homelab wire) sets it in each app, so none asks you to make one; each app's ⚙ Sign-in details shows it, to copy into your password manager.",
      "secret": false,
      "set": true,
      "value": "admin"
@@ -3891,7 +4170,7 @@
     {
      "key": "PROTONVPN_WIREGUARD_PRIVATE_KEY",
      "section": "App settings and secrets",
-     "help": "Needed for qBittorrent: it only downloads through your ProtonVPN, on a paid plan (its free servers don't carry torrents). Make a key at account.protonvpn.com › Downloads › WireGuard configuration, then paste its PrivateKey here.",
+     "help": "Needed for qBittorrent: it only downloads through your ProtonVPN, on a paid plan (its free servers don't carry torrents). Make a key at account.protonvpn.com: Downloads (left menu), scroll down to WireGuard configuration, choose Router, turn on NAT-PMP (Port Forwarding), Create on any P2P server, then paste only the text after PrivateKey = here.",
      "secret": true,
      "set": true,
      "value": ""
@@ -3903,6 +4182,14 @@
      "secret": false,
      "set": true,
      "value": ""
+    },
+    {
+     "key": "SEARCH_THROUGH_VPN",
+     "section": "App settings and secrets",
+     "help": "Search through the VPN: on, Prowlarr's searches go out through ProtonVPN too, so the search sites see its address, not yours (once the key above is set). Some sites block VPN addresses or ask for more captchas, and searching stops while the VPN is down. off: Prowlarr searches from your home connection. After a change, start Prowlarr again (Status, or homelab update prowlarr).",
+     "secret": false,
+     "set": true,
+     "value": "on"
     },
     {
      "key": "QBITTORRENT_USER",
@@ -3919,6 +4206,62 @@
      "secret": true,
      "set": true,
      "value": ""
+    },
+    {
+     "key": "USENET_HOST",
+     "section": "App settings and secrets",
+     "help": "Usenet, for SABnzbd: preferred over torrents, so a release nobody shares doesn't hold a request up. Your Usenet service's server, from its welcome email or account page (a paid plan; the homelab names none). SSL is always on: the port is its SSL one, 563 unless it says otherwise. Connections: how many your plan allows at once, 8 unless it says otherwise. Connect apps (homelab wire) puts these into SABnzbd; it downloads only through ProtonVPN.",
+     "secret": false,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "USENET_PORT",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "USENET_USER",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "USENET_PASSWORD",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": true,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "USENET_CONNECTIONS",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "TORRENT_DELAY_MINUTES",
+     "section": "App settings and secrets",
+     "help": "With SABnzbd, Sonarr and Radarr wait this many minutes for a Usenet release before taking a torrent, so Usenet goes first (Connect apps sets it on their default delay profile). 0 leaves their delay profile as you set it.",
+     "secret": false,
+     "set": true,
+     "value": "60"
+    },
+    {
+     "key": "MEDIA_QUALITY",
+     "section": "App settings and secrets",
+     "help": "What you mostly watch on, which decides what Sonarr and Radarr download (Connect apps gives them the Homelab quality profile, and Seerr asks for it): save-space: 1080p, the smaller files first (HEVC), about 2-4 GB a film; hd: the best 1080p, about 8-15 GB a film; 4k: 4K when there is one, else 1080p, about 15-25 GB a film. After a change, run Connect apps.",
+     "secret": false,
+     "set": true,
+     "value": "save-space"
     },
     {
      "key": "TAILSCALE_AUTHKEY",
@@ -5329,7 +5672,7 @@
       ]
      }
     ],
-    "holdingsRead": "@ago:1850817"
+    "holdingsRead": "@ago:2268194"
    },
    "today": "2026-10-30",
    "checking": "chk",
@@ -10698,31 +11041,31 @@
    },
    "days": {
     "vikunja": {
-     "2026-11-14": [
-      96,
-      96
-     ],
-     "2026-11-15": [
-      96,
-      96
-     ],
-     "2026-11-16": [
-      96,
-      96
-     ],
-     "2026-11-17": [
-      93,
-      96
-     ],
-     "2026-11-18": [
-      96,
-      96
-     ],
      "2026-11-19": [
       96,
       96
      ],
      "2026-11-20": [
+      96,
+      96
+     ],
+     "2026-11-21": [
+      96,
+      96
+     ],
+     "2026-11-22": [
+      93,
+      96
+     ],
+     "2026-11-23": [
+      96,
+      96
+     ],
+     "2026-11-24": [
+      96,
+      96
+     ],
+     "2026-11-25": [
       40,
       40
      ]
@@ -10810,26 +11153,6 @@
   ],
   "savings": [
    {
-    "date": "2026-09-22",
-    "annual": 2991
-   },
-   {
-    "date": "2026-09-23",
-    "annual": 2991
-   },
-   {
-    "date": "2026-09-24",
-    "annual": 2991
-   },
-   {
-    "date": "2026-09-25",
-    "annual": 2991
-   },
-   {
-    "date": "2026-09-26",
-    "annual": 2991
-   },
-   {
     "date": "2026-09-27",
     "annual": 2991
    },
@@ -10859,23 +11182,23 @@
    },
    {
     "date": "2026-10-04",
-    "annual": 3112
+    "annual": 2991
    },
    {
     "date": "2026-10-05",
-    "annual": 3112
+    "annual": 2991
    },
    {
     "date": "2026-10-06",
-    "annual": 3112
+    "annual": 2991
    },
    {
     "date": "2026-10-07",
-    "annual": 3112
+    "annual": 2991
    },
    {
     "date": "2026-10-08",
-    "annual": 3112
+    "annual": 2991
    },
    {
     "date": "2026-10-09",
@@ -10931,23 +11254,23 @@
    },
    {
     "date": "2026-10-22",
-    "annual": 3232
+    "annual": 3112
    },
    {
     "date": "2026-10-23",
-    "annual": 3232
+    "annual": 3112
    },
    {
     "date": "2026-10-24",
-    "annual": 3232
+    "annual": 3112
    },
    {
     "date": "2026-10-25",
-    "annual": 3232
+    "annual": 3112
    },
    {
     "date": "2026-10-26",
-    "annual": 3232
+    "annual": 3112
    },
    {
     "date": "2026-10-27",
@@ -10999,23 +11322,23 @@
    },
    {
     "date": "2026-11-08",
-    "annual": 3292
+    "annual": 3232
    },
    {
     "date": "2026-11-09",
-    "annual": 3292
+    "annual": 3232
    },
    {
     "date": "2026-11-10",
-    "annual": 3292
+    "annual": 3232
    },
    {
     "date": "2026-11-11",
-    "annual": 3292
+    "annual": 3232
    },
    {
     "date": "2026-11-12",
-    "annual": 3292
+    "annual": 3232
    },
    {
     "date": "2026-11-13",
@@ -11047,6 +11370,26 @@
    },
    {
     "date": "2026-11-20",
+    "annual": 3292
+   },
+   {
+    "date": "2026-11-21",
+    "annual": 3292
+   },
+   {
+    "date": "2026-11-22",
+    "annual": 3292
+   },
+   {
+    "date": "2026-11-23",
+    "annual": 3292
+   },
+   {
+    "date": "2026-11-24",
+    "annual": 3292
+   },
+   {
+    "date": "2026-11-25",
     "annual": 3292
    }
   ],

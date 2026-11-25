@@ -9,6 +9,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 ### New
 
 <!-- The iPhone and iPad app (lane 4): add a line just below this one. -->
+- **The last fourteen nights on Backups on the Homelab app:** on the iPhone and iPad, Last night has the last fourteen nightly backups as squares, each with its weekday (green when every copy was made, amber when an app was stopped, red when one failed), and each app's row its last seven nights as dots, as on the computer.
 - **Symbols on Status' and Backups' cards on the Homelab app:** on the iPhone and iPad, Backups and This Machine on Status, and Last night, Restore test and Off-site on Backups, have a small symbol before their titles, as Finances' cards do.
 - **A floating + on Finances on the Homelab app:** on the iPhone and iPad, a round + at the foot of Finances' home adds a transaction, where the device may.
 - **Net worth and Cash flow as full cards on the Homelab app:** on the iPhone and iPad, net worth's line has a scale and dots where it moved most, with its change as a %; cash flow shows Income, Expenses and what share you saved, and the last six months as bars with the savings rate over them.
