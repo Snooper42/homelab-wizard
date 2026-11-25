@@ -3443,3 +3443,5 @@ html.os-mac:not(.companion) nav #settingsNav .pagebtn.active .icon { color:var(-
 /* Each app's last seven nights as dots (the warn and bad ones keep their shapes). */
 table.copies td.nights { white-space:nowrap; text-align:right; }
 table.copies td.nights .dot { margin:0 0 0 3px; }
+/* One column (a small window, big text): the dots would push the table sideways; the squares under Last night say it. */
+@container (max-width: 760px) { #copiesCard table.copies td.nights { display:none; } }
