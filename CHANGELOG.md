@@ -9,6 +9,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 ### New
 
 <!-- The iPhone and iPad app (lane 4): add a line just below this one. -->
+- **This paycheck's bills on the Homelab app:** on the iPhone and iPad, Finances shows This paycheck with its days: Upcoming, the bills still to come before payday with what's left to pay and how long until each, and Paid, what's gone out since the last payday, ticked. It takes the place of Coming up.
 - **A quieter look on the Homelab app:** on the iPhone and iPad, a warm off-white background (a warm near-black at night), cards with a thin edge instead of a lifted shadow, lighter card headings and figures, on every screen.
 - **This paycheck and Last paycheck in Transactions on the Homelab app:** on the iPhone and iPad, the date chip offers your pay periods with their days (*Nov 6 – 19*) beside the months, as on the computer.
 - **Spending this month against last month on the Homelab app:** on the iPhone and iPad, a Spending card under Net worth and Cash flow: what's gone out so far, how that compares with last month by the same day (*$177 more* *vs Oct*), and both months as lines, this one filled to today and last month's dashed. Moves between your own accounts don't count.

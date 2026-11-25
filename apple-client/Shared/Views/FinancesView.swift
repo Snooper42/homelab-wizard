@@ -57,8 +57,8 @@ struct FinancesView: View {
                     WorthAndFlow(view: view, finances: finances)
                     // Spending this month against last, as a line (the owner's Monarch feel, Nov 24).
                     SpendingPaceCard(view: view, finances: finances)
-                    // Then as the picture: the next bills, the latest transactions and the budgets worth a look.
-                    UpcomingBillsCard(view: view, finances: finances)
+                    // This paycheck's bills, then the latest transactions and the budgets worth a look.
+                    PaycheckBillsCards(view: view, finances: finances)
                     RecentTransactionsCard(view: view, finances: finances)
                     BudgetsCard(view: view, finances: finances)
                     MoreFinancesCard(view: view, finances: finances)
@@ -852,59 +852,6 @@ private struct RecentTransactionsCard: View {
     }
 }
 
-/// The next bills to come out, each with its logo, day and amount, as the
-/// redesign's Coming up card; its heading opens Calendar (Bills is on the
-/// list under it).
-private struct UpcomingBillsCard: View {
-    let view: FinancesPlanView
-    let finances: FinancesViewModel
-
-    var body: some View {
-        let rows = FinancesView.upcomingBills(view, limit: 3)
-        if !rows.isEmpty {
-            VStack(alignment: .leading, spacing: 4) {
-                NavigationLink {
-                    FinanceCalendarView(finances: finances)
-                } label: {
-                    CardHeading(title: "Coming up") { AllLink(words: "Calendar") }
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .padding(.bottom, 6)
-                ForEach(Array(rows.enumerated()), id: \.offset) { i, row in
-                    if i > 0 { Divider().padding(.leading, 52) }
-                    HStack(spacing: 12) {
-                        if let payment = view.payment(row.payment) {
-                            LogoCircle(payment: payment, size: 40)
-                        }
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(verbatim: view.paymentTitle(row.payment) ?? "Payment")
-                                .font(.body.weight(.medium))
-                                .foregroundStyle(Theme.ink)
-                                .lineLimit(1)
-                            Text(verbatim: Self.when(row, view))
-                                .font(.caption)
-                                .foregroundStyle(row.late ? Theme.danger : Theme.secondaryInk)
-                        }
-                        Spacer(minLength: 8)
-                        HStack(spacing: 2) {
-                            if row.estimate { Text(verbatim: "≈").foregroundStyle(Theme.secondaryInk).accessibilityLabel("About") }
-                            Text(verbatim: amountText(row.amount, view.plan.currency, finances))
-                                .monospacedDigit()
-                                .foregroundStyle(Theme.ink)
-                        }
-                        .font(.body.weight(.semibold))
-                    }
-                    .padding(.vertical, 6)
-                    .accessibilityElement(children: .combine)
-                }
-            }
-            .padding(16)
-            .card()
-        }
-    }
-}
-
 /// Spending this month against last month: what's gone out so far, the
 /// difference from last month by the same day in a chip, and both months as
 /// lines, this one filled to today and last month's dashed. All opens
@@ -1010,13 +957,103 @@ private struct SpendingPaceCard: View {
     }
 }
 
-extension UpcomingBillsCard {
-    /// "Today", "Tomorrow", else "Fri, Nov 14".
-    static func when(_ row: FinanceRow, _ view: FinancesPlanView) -> String {
-        if row.dateText == view.todayText { return "Today" }
-        if let date = row.date, let today = view.today, let tomorrow = Calendar.current.date(byAdding: .day, value: 1, to: today),
-           Calendar.current.isDate(date, inSameDayAs: tomorrow) { return "Tomorrow" }
-        return row.date?.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day()) ?? ""
+/// This paycheck's bills (the owner's pick, Nov 24): what's still to come out of checking before payday,
+/// with what's left to pay and how long until each, and what's been paid since the last payday, ticked.
+/// Upcoming's heading opens Calendar; each row shows how often it comes.
+private struct PaycheckBillsCards: View {
+    let view: FinancesPlanView
+    let finances: FinancesViewModel
+
+    var body: some View {
+        if let bills = PaycheckBills.make(view, transactions: finances.countedTransactions, named: { view.paymentTitle($0) != nil }) {
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(alignment: .firstTextBaseline) {
+                    Text("This paycheck")
+                        .font(.title3.weight(.semibold))
+                        .foregroundStyle(Theme.ink)
+                    Spacer()
+                    Text(verbatim: PaySpans.words(bills.days))
+                        .font(.subheadline)
+                        .foregroundStyle(Theme.secondaryInk)
+                }
+                .padding(.horizontal, 4)
+                if !bills.upcoming.isEmpty {
+                    group(title: "Upcoming", note: "\(amountText(bills.leftToPay, view.plan.currency, finances)) left to pay", link: true,
+                          rows: Array(bills.upcoming.prefix(5)), paid: false)
+                }
+                if !bills.paid.isEmpty {
+                    group(title: "Paid", note: "\(bills.paid.count) of \(bills.paid.count + bills.upcoming.count)", link: false,
+                          rows: Array(bills.paid.prefix(5)), paid: true)
+                }
+            }
+        }
+    }
+
+    private func group(title: LocalizedStringKey, note: String, link: Bool, rows: [PaycheckBills.Bill], paid: Bool) -> some View {
+        VStack(spacing: 0) {
+            NavigationLink {
+                FinanceCalendarView(finances: finances)
+            } label: {
+                HStack(alignment: .firstTextBaseline) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(title).font(.headline).foregroundStyle(Theme.ink)
+                        Text(verbatim: note).font(.subheadline).foregroundStyle(Theme.secondaryInk)
+                    }
+                    Spacer()
+                    if link { AllLink(words: "Calendar").font(.subheadline.weight(.semibold)) }
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .disabled(!link)
+            ForEach(rows) { bill in
+                Divider().overlay(Theme.separator)
+                row(bill, paid: paid)
+            }
+        }
+        .card()
+    }
+
+    private func row(_ bill: PaycheckBills.Bill, paid: Bool) -> some View {
+        let payment = view.payment(bill.payment)
+        return HStack(spacing: 12) {
+            if let payment { LogoCircle(payment: payment, size: 38) }
+            VStack(alignment: .leading, spacing: 1) {
+                Text(verbatim: view.paymentTitle(bill.payment) ?? "Payment")
+                    .font(.body.weight(.medium))
+                    .foregroundStyle(Theme.ink)
+                    .lineLimit(1)
+                if let words = payment?.schedule?.words {
+                    Text(verbatim: words).font(.footnote).foregroundStyle(Theme.secondaryInk)
+                }
+            }
+            Spacer(minLength: 8)
+            VStack(alignment: .trailing, spacing: 1) {
+                HStack(spacing: 6) {
+                    if paid {
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 9, weight: .bold))
+                            .foregroundStyle(Theme.success)
+                            .frame(width: 18, height: 18)
+                            .background(Theme.success.opacity(0.14), in: Circle())
+                            .accessibilityLabel("Paid")
+                    }
+                    Text(verbatim: amountText(bill.amount, view.plan.currency, finances))
+                        .font(.body.weight(.semibold))
+                        .monospacedDigit()
+                        .foregroundStyle(Theme.ink)
+                }
+                Text(verbatim: paid ? (bill.date?.formatted(.dateTime.month(.abbreviated).day()) ?? "")
+                                    : PaycheckBills.until(bill.date, today: view.today ?? Date()))
+                    .font(.footnote)
+                    .foregroundStyle(Theme.secondaryInk)
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .accessibilityElement(children: .combine)
     }
 }
 
