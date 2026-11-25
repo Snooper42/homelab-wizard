@@ -109,3 +109,39 @@ enum BudgetsGlance {
             .prefix(max(limit, 0)))
     }
 }
+
+/// Net worth's line marked where it moved most (the owner's reference): the
+/// `count` biggest changes from one point to the next, up in green, down in red.
+enum NetWorthJumps {
+    struct Jump: Equatable, Identifiable {
+        let point: NetWorthPoint
+        let up: Bool
+        var id: Date { point.date }
+    }
+
+    static func top(_ series: [NetWorthPoint], count: Int = 3) -> [Jump] {
+        guard series.count >= 2 else { return [] }
+        let moves = (1..<series.count).map { (series[$0], series[$0].value - series[$0 - 1].value) }
+        return moves.filter { abs($0.1) >= 0.5 }
+            .sorted { abs($0.1) > abs($1.1) }
+            .prefix(max(count, 0))
+            .map { Jump(point: $0.0, up: $0.1 > 0) }
+            .sorted { $0.point.date < $1.point.date }
+    }
+}
+
+/// Cash flow's last months as bars (the owner's reference): what each kept,
+/// and what share of what came in that was, the savings rate.
+enum CashFlowHistory {
+    struct Month: Equatable, Identifiable {
+        let month: Date
+        let kept: Double
+        /// Kept as a share of what came in; nil when nothing came in.
+        let rate: Double?
+        var id: Date { month }
+    }
+
+    static func make(_ months: [CashFlowMonth]) -> [Month] {
+        months.map { Month(month: $0.month, kept: $0.net, rate: $0.income > 0 ? $0.net / $0.income : nil) }
+    }
+}

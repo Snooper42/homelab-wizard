@@ -5,8 +5,9 @@ import UIKit
 import AppKit
 #endif
 
-/// The app's look: a plain iPhone app, with a violet accent, a warm grey
-/// canvas behind white cards (a deep blue-black behind dark ones), calm
+/// The app's look: a plain iPhone app, quiet and warm (the owner, Nov 24): a
+/// violet accent, a warm off-white canvas behind white cards with hairline
+/// edges (a warm near-black behind dark ones), lighter headings, calm
 /// status colours, and pills for states. Every colour has a light and a
 /// dark value. As text, each keeps at least 4.5:1 contrast on the card and
 /// on the canvas, light and dark. The shared pieces built on these are in
@@ -25,16 +26,16 @@ enum Theme {
     /// The accent's deeper end, for the app mark's gradient.
     static let accentDeep = Color(light: 0x4B32C3, dark: 0x5B45D6)
 
-    /// Behind grouped lists and forms: warm grey by day, blue-black by night.
-    static let canvas = Color(light: 0xF5F4F2, dark: 0x121019)
-    /// A card on the canvas.
-    static let surface = Color(light: 0xFFFFFF, dark: 0x1E1B27)
+    /// Behind grouped lists and forms: warm off-white by day; by night the owner's dark (Nov 25), a near-black.
+    static let canvas = Color(light: 0xF6F4EF, dark: 0x0A0A0D)
+    /// A card on the canvas: white by day, a shade above the near-black by night.
+    static let surface = Color(light: 0xFFFFFF, dark: 0x15151A)
     /// Text on a card: near-black by day, near-white by night.
     static let ink = Color(light: 0x1C1C1E, dark: 0xF2F2F7)
     /// Quieter text on a card or the canvas: a caption, a date.
     static let secondaryInk = Color(light: 0x5E5E66, dark: 0x98989F)
     /// A hairline between rows inside a card.
-    static let separator = Color(light: 0xECEAE5, dark: 0x2E2A3D)
+    static let separator = Color(light: 0xECE9E2, dark: 0x25252D)
 
     static let success = Color(light: 0x137A60, dark: 0x3CC79F)
     static let warning = Color(light: 0xA35700, dark: 0xFFA733)
@@ -45,7 +46,7 @@ enum Theme {
     /// The corner radius of bordered buttons and small boxes.
     static let radius: CGFloat = 10
     /// The corner radius of a card.
-    static let cardRadius: CGFloat = 20
+    static let cardRadius: CGFloat = 18
 }
 
 extension Color {
