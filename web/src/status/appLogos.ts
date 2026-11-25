@@ -60,6 +60,7 @@ export const appLogos = new Set([
   'qbittorrent',
   'radarr',
   'romm',
+  'sabnzbd',
   'seerr',
   'sonarr',
   'speedtest-tracker',

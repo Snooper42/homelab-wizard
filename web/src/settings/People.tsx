@@ -1,5 +1,6 @@
 // Settings › People: the household, each with a Pocket ID sign-in and a
 // welcome page (homelab person). Adding someone needs Pocket ID running.
+import { AppMark } from '../parts/AppMark';
 import { render } from 'preact';
 import { useState } from 'preact/hooks';
 import { CardHead } from '../parts/Card';
@@ -115,7 +116,7 @@ function AddPerson({ apps, open, on }: { apps: { id: string; name: string }[]; o
           <div class="muted small">The apps they use</div>
           <label class="check"><input type="radio" name="personApps" id="personAllApps" checked={!only} onChange={() => { setOnly(false); setPicked(new Set()); }} /> All the apps</label>
           <label class="check"><input type="radio" name="personApps" id="personOnlyApps" checked={only} onChange={() => setOnly(true)} /> Only these:</label>
-          {apps.map((a) => <label key={a.id} class="check"><input type="checkbox" value={a.id} checked={only && picked.has(a.id)} onChange={(e) => toggle(a.id, e.currentTarget.checked)} /> {a.name}</label>)}
+          {apps.map((a) => <label key={a.id} class="check"><input type="checkbox" value={a.id} checked={only && picked.has(a.id)} onChange={(e) => toggle(a.id, e.currentTarget.checked)} /> <AppMark id={a.id} name={a.name} icon="" small />{a.name}</label>)}
         </div>
       )}
       <button class="small primary" id="addPerson" disabled={busy} onClick={add}>Add them</button>

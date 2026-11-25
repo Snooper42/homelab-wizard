@@ -7,6 +7,7 @@ import { useState } from 'preact/hooks';
 import { ago, bytes, clockText, dateTimeText, dayText, never, untilText } from '../format';
 import { Card, CardFigure, CardHead } from '../parts/Card';
 import { Hover } from '../parts/Hover';
+import { AppMark } from '../parts/AppMark';
 import { Row, Rows, type Tone } from '../parts/Row';
 
 /** "45 seconds", "3 minutes". */
@@ -127,7 +128,7 @@ export function BackupTiles({ o, os, test, apps, start }: BackupTilesProps) {
         <CardHead title={<>Needs you{!!stale.length && <span class="bkcount">{stale.length}</span>}</>} />
         {needs.length ? <Rows kind="bkneedlist">{needs.map((c) => {
           const a = c.app ? apps?.[c.app] : undefined;
-          return <Row key={c.id} dot={c.state === 'stale' ? 'bad' : 'warn'} title={c.name}
+          return <Row key={c.id} lead={<AppMark id={c.app} name={c.name} icon="" small />} dot={c.state === 'stale' ? 'bad' : 'warn'} title={c.name}
             sub={c.state === 'paused' ? `Waiting for ${driveName(c.waitingFor || '')}` : staleWhy(c, apps) || `Last copied ${ago(c.newest)}`}
             end={c.state === 'stale' && a && a.state !== 'running' && start ? <button type="button" class="small primary" onClick={() => start(a)}>Start</button> : undefined} />;
         })}</Rows> : <p class="bksub ok">✓ Nothing needs you: every copy is up to date.</p>}
@@ -195,7 +196,7 @@ export function CopyRows({ o, apps }: { o: backup.Overview; apps?: Record<string
           </tr>,
           ...(open ? g.copies.map((c) => (
             <tr key={c.id} class={'copy ' + c.state + (c.shrank ? ' shrank' : '')}>
-              <td class="name"><span class={'dot ' + (c.shrank ? 'bad' : g.tone)} />{c.name}
+              <td class="name"><span class={'dot ' + (c.shrank ? 'bad' : g.tone)} /><AppMark id={c.app} name={c.name} icon="" small />{c.name}
                 {c.shrank && <span class="note bad">Less than half the night before's {bytes(c.before || 0)}: check that {c.name} still has its data</span>}
                 {c.state === 'stale' && staleWhy(c, apps) && <span class="note muted">{staleWhy(c, apps)}</span>}
               </td>

@@ -145,8 +145,6 @@ struct AwayChangesList: View {
                                 Button("Undo", role: .destructive) { Task { await finances.undoAwayLedger(at: i) } }
                             }
                     }
-                } footer: {
-                    Text("They go to the Homelab by themselves once it answers. Swipe one to undo it.")
                 }
             }
             .navigationTitle("Waiting")

@@ -43,8 +43,6 @@ struct TransactionReviewSections: View {
                 header("These Look Like Planned Payments", all: links.count > 1 ? "Link All \(links.count)" : nil) {
                     act { _ = await finances.linkSuggested(links) }
                 }
-            } footer: {
-                Text("Linked, one counts as paying it, so the plan doesn't take it out again on its day.")
             }
         }
         if !pairs.isEmpty {
@@ -56,8 +54,6 @@ struct TransactionReviewSections: View {
                 header("These Look Like Transfers", all: pairs.count > 1 ? "Join All \(pairs.count)" : nil) {
                     act { _ = await finances.join(pairs) }
                 }
-            } footer: {
-                Text("Money out of one of your accounts and the same into another: joined, it's one transfer, neither spending nor income.")
             }
         }
     }
