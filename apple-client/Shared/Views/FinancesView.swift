@@ -3386,8 +3386,6 @@ private struct FinanceGoalsPage: View {
                             goalRow(goal, view)
                         }
                     }
-                } footer: {
-                    if finances.canEditPlan { Text("Tap a goal to change its target.") }
                 }
             }
         }
@@ -4714,15 +4712,15 @@ private struct ThisMonthCard: View {
         return signed && value > 0 && text != "••••" ? "+" + text : text
     }
 
-    /// "$212 less out than by Oct 21 last month ($3,427)."
+    /// "$212 less out vs Oct", as the Spending card's chip says it: against last month by the same day.
     private var comparison: Text? {
-        guard let change = month.outChange, let before = month.outBefore, let day = month.lastMonthDay else { return nil }
-        let dayText = day.formatted(.dateTime.month(.abbreviated).day())
-        if change == 0 { return Text(verbatim: "The same out as by \(dayText) last month.") }
+        guard let change = month.outChange, month.outBefore != nil, let day = month.lastMonthDay else { return nil }
+        let monthText = day.formatted(.dateTime.month(.abbreviated))
+        if change == 0 { return Text(verbatim: "The same out as \(monthText)") }
         let lead = Text(verbatim: "\(whole(abs(change), signed: false)) \(change > 0 ? "more" : "less")")
             .fontWeight(.semibold)
             .foregroundStyle(change > 0 ? Theme.danger : Theme.success)
-        return Text("\(lead) out than by \(dayText) last month (\(whole(before, signed: false))).")
+        return Text("\(lead) out vs \(monthText)")
     }
 }
 
