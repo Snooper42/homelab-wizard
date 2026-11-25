@@ -9,6 +9,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 ### New
 
 <!-- The iPhone and iPad app (lane 4): add a line just below this one. -->
+- **Review one at a time on the Homelab app:** on the iPhone and iPad, new transactions to review come as a stack of cards (*3 left*): the payee and amount, its other transactions one tap away, the category as chips to tap, and Skip or Reviewed, or a swipe right or left.
 - **This paycheck's bills on the Homelab app:** on the iPhone and iPad, Finances shows This paycheck with its days: Upcoming, the bills still to come before payday with what's left to pay and how long until each, and Paid, what's gone out since the last payday, ticked. It takes the place of Coming up.
 - **A quieter look on the Homelab app:** on the iPhone and iPad, a warm off-white background (a warm near-black at night), cards with a thin edge instead of a lifted shadow, lighter card headings and figures, on every screen.
 - **This paycheck and Last paycheck in Transactions on the Homelab app:** on the iPhone and iPad, the date chip offers your pay periods with their days (*Nov 6 – 19*) beside the months, as on the computer.
