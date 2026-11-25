@@ -25,10 +25,12 @@ struct BackupOverview: Decodable, Sendable, Equatable {
     let plainExports: [String]
     /// The second engine's line, when Kopia is installed.
     let kopia: BackupEngine?
+    /// Each of the last fourteen nightly backups' result per app, oldest first (`backup.Night`).
+    let nights: [BackupNight]
 
     enum CodingKeys: String, CodingKey {
         case destination, destinationOK, lastRun, envCopied, copies, stale, shrank, paused, restoreTest
-        case restoreDue, staleAfterHours, vaultExport, vaultDue, plainExports, kopia
+        case restoreDue, staleAfterHours, vaultExport, vaultDue, plainExports, kopia, nights
     }
 
     init(from decoder: Decoder) throws {
@@ -48,7 +50,102 @@ struct BackupOverview: Decodable, Sendable, Equatable {
         vaultDue = try c.decodeIfPresent(Bool.self, forKey: .vaultDue) ?? false
         plainExports = try c.decodeIfPresent([String].self, forKey: .plainExports) ?? []
         kopia = try c.decodeIfPresent(BackupEngine.self, forKey: .kopia)
+        nights = try c.decodeIfPresent([BackupNight].self, forKey: .nights) ?? []
     }
+}
+
+/// One nightly backup's result for each app it had to copy (`backup.Night`):
+/// copied, failed, stopped (so not copied), outside (runs outside the
+/// homelab), or none (no database yet).
+struct BackupNight: Decodable, Sendable, Equatable, Identifiable {
+    /// YYYY-MM-DD, the night's day.
+    let date: String
+    let apps: [String: String]
+    var id: String { date }
+
+    enum CodingKeys: String, CodingKey { case date, apps }
+
+    init(date: String, apps: [String: String]) {
+        self.date = date
+        self.apps = apps
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        date = try c.decode(String.self, forKey: .date)
+        apps = try c.decodeIfPresent([String: String].self, forKey: .apps) ?? [:]
+    }
+
+    /// As the computer's (`nightTone`, `resultTone` in web/src/backups/Backups.tsx).
+    enum Tone: Sendable, Equatable { case ok, warn, bad, none }
+
+    /// A night's result for one app: copied ok, stopped warn, failed bad; nothing to copy none.
+    static func tone(_ result: String?) -> Tone {
+        switch result {
+        case "copied": .ok
+        case "stopped": .warn
+        case "failed": .bad
+        default: .none
+        }
+    }
+
+    /// The whole night: bad when a copy failed, warn when an app was stopped, ok when every one was copied.
+    var tone: Tone {
+        let results = Array(apps.values)
+        if results.contains("failed") { return .bad }
+        if results.contains("stopped") { return .warn }
+        return results.contains("copied") ? .ok : .none
+    }
+
+    /// The night's day, at noon where the phone is.
+    var day: Date? { LocalDay.parse(date) }
+
+    /// Its weekday's letter, as the picture's: Su M Tu W Th F Sa.
+    func weekday(calendar: Calendar = .current) -> String {
+        guard let day else { return "" }
+        return ["Su", "M", "Tu", "W", "Th", "F", "Sa"][calendar.component(.weekday, from: day) - 1]
+    }
+
+    /// "Mon, Nov 24: 11 of 12 copied · Mealie stopped", as the computer's `nightWords`.
+    func words(name: (String) -> String, locale: Locale = .current) -> String {
+        let all = apps.filter { $0.value != "none" && $0.value != "outside" }
+        let copied = all.values.filter { $0 == "copied" }.count
+        let missed = all.filter { $0.value == "failed" || $0.value == "stopped" }
+            .map { "\(name($0.key)) \($0.value)" }
+            .sorted()
+        let when = day.map { $0.formatted(Date.FormatStyle(locale: locale).weekday(.abbreviated).month(.abbreviated).day()) } ?? date
+        let count = all.isEmpty ? "nothing to copy" : "\(copied) of \(all.count) copied"
+        return "\(when): \(count)" + (missed.isEmpty ? "" : " · " + missed.joined(separator: ", "))
+    }
+}
+
+extension BackupOverview {
+    /// The last `count` nights for Last night's squares, oldest first.
+    func lastNights(_ count: Int = 14) -> [BackupNight] { Array(nights.suffix(max(count, 0))) }
+
+    /// A copy's last `count` nights, oldest first: its result each night (nil where the night didn't have it), by its
+    /// app or, without one, its own id, as the computer's `appNights`.
+    func nights(of copy: BackupCopy, count: Int = 7) -> [AppNight] {
+        let key = copy.nightKey
+        return nights.suffix(max(count, 0)).map { AppNight(date: $0.date, result: $0.apps[key]) }
+    }
+
+    /// One app's result on one night; nil where the night didn't have it.
+    struct AppNight: Equatable, Sendable, Identifiable {
+        let date: String
+        let result: String?
+        var id: String { date }
+    }
+
+    /// An app's name in a night's words: its copy's, or the id.
+    func nightName(_ id: String) -> String {
+        copies.first { $0.nightKey == id }?.name ?? id
+    }
+}
+
+extension BackupCopy {
+    /// What the nights call it: its app, or its own id without one.
+    var nightKey: String { (app ?? "").isEmpty ? id : app ?? id }
 }
 
 extension BackupOverview {

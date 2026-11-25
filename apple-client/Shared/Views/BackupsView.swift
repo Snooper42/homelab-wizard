@@ -98,7 +98,7 @@ struct BackupsView: View {
             let notes = overview.waitingGroups.compactMap(\.note)
             Section {
                 ForEach(copies) { copy in
-                    CopyRow(copy: copy)
+                    CopyRow(copy: copy, nights: overview.nights(of: copy))
                 }
             } header: {
                 CountHeader(title: "Needs You", count: copies.count, tint: overview.needingALook.isEmpty ? .secondary : Theme.warning)
@@ -114,7 +114,7 @@ struct BackupsView: View {
             Section {
                 if freshOpen {
                     ForEach(overview.freshCopies) { copy in
-                        CopyRow(copy: copy)
+                        CopyRow(copy: copy, nights: overview.nights(of: copy))
                     }
                 } else {
                     FoldedCopies(copies: overview.freshCopies) { freshOpen = true }
@@ -447,8 +447,7 @@ private struct JobRow: View {
 /// and the computer's Last night card: a chip for what was skipped, how many
 /// of last night's copies were made ("11 of 12 copied"), when it finished
 /// and where they went, then Back Up Now and Test a Restore side by side.
-/// The fourteen nights' squares join when the computer keeps each night's
-/// result (quality-loop Q4).
+/// The last fourteen nights as squares under it, each its weekday's letter.
 private struct BackupsHero: View {
     let overview: BackupOverview
     @Environment(HomelabTasksViewModel.self) private var tasks
@@ -484,6 +483,11 @@ private struct BackupsHero: View {
                     .textCase(.uppercase)
                     .tracking(0.6)
                     .foregroundStyle(Theme.secondaryInk)
+            }
+            let nights = overview.lastNights()
+            if !nights.isEmpty {
+                NightSquares(nights: nights, name: overview.nightName)
+                    .padding(.top, 6)
             }
             if tasks.canRun {
                 let layout = typeSize.isAccessibilitySize
@@ -545,10 +549,70 @@ private struct BackupsHero: View {
     }
 }
 
+/// The last fourteen nights, oldest first, as the computer's (R7): green
+/// when every copy was made, amber when an app was stopped, red when one
+/// failed; the night in words for VoiceOver.
+private struct NightSquares: View {
+    let nights: [BackupNight]
+    let name: (String) -> String
+
+    var body: some View {
+        HStack(spacing: 4) {
+            ForEach(nights) { night in
+                VStack(spacing: 3) {
+                    RoundedRectangle(cornerRadius: 5, style: .continuous)
+                        .fill(BackupTone.color(night.tone))
+                        .frame(height: 22)
+                    Text(verbatim: night.weekday())
+                        .font(.caption2.weight(night.id == nights.last?.id ? .bold : .regular))
+                        .foregroundStyle(night.id == nights.last?.id ? Theme.ink : Theme.secondaryInk)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.5)
+                }
+                .frame(maxWidth: .infinity)
+                .accessibilityElement()
+                .accessibilityLabel(night.words(name: name))
+            }
+        }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("The last \(nights.count) nights")
+    }
+}
+
+/// A night's tone as a colour, for its square or an app's dot.
+enum BackupTone {
+    static func color(_ tone: BackupNight.Tone) -> Color {
+        switch tone {
+        case .ok: Theme.success
+        case .warn: Theme.warning
+        case .bad: Theme.danger
+        case .none: Theme.separator
+        }
+    }
+}
+
+/// An app's last seven nights as dots, as the picture's Each app.
+private struct NightDots: View {
+    let nights: [BackupOverview.AppNight]
+
+    var body: some View {
+        HStack(spacing: 3) {
+            ForEach(nights) { night in
+                Circle()
+                    .fill(BackupTone.color(BackupNight.tone(night.result)))
+                    .frame(width: 7, height: 7)
+            }
+        }
+        .accessibilityElement()
+        .accessibilityLabel("Copied \(nights.filter { $0.result == "copied" }.count) of the last \(nights.count) nights")
+    }
+}
+
 private struct CopyRow: View {
     @Environment(DashboardViewModel.self) private var dashboard
     @Environment(AppActionsViewModel.self) private var actions
     let copy: BackupCopy
+    var nights: [BackupOverview.AppNight] = []
 
     /// The app of a copy that's out of date because it's stopped: Start, beside it, is its fix.
     private var stoppedApp: AppStatus? {
@@ -607,9 +671,10 @@ private struct CopyRow: View {
                     .tint(Theme.accentFill)
                     .disabled(actions.isBusy)
                     .accessibilityLabel("Start \(app.name)")
-            } else if copy.size > 0 {
-                VStack(alignment: .trailing, spacing: 1) {
-                    Text(copy.size, format: .byteCount(style: .memory))
+            } else if copy.size > 0 || hasNights {
+                VStack(alignment: .trailing, spacing: 3) {
+                    if hasNights { NightDots(nights: nights) }
+                    if copy.size > 0 { Text(copy.size, format: .byteCount(style: .memory)) }
                     if !copy.shrank, copy.sizeChanged {
                         Text("was \(copy.before, format: .byteCount(style: .memory))")
                     }
@@ -620,6 +685,9 @@ private struct CopyRow: View {
         }
         .accessibilityElement(children: .combine)
     }
+
+    /// Some night had something to say about this copy.
+    private var hasNights: Bool { nights.contains { $0.result != nil } }
 
     private var stateWords: String {
         if copy.shrank { return "Shrank" }
