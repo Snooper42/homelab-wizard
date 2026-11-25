@@ -42,6 +42,7 @@ Every screen is built from the same few parts. A screen that matches its picture
 - **Rows inside a card** have a logo or icon on the left, a name with a short line under it, and the amount or the action on the right.
 - **Every card opens what it summarises** (its ↗).
 - **Nothing empty:** a card's height comes from what it holds; no tall card beside a short one leaving a hole.
+- **Cards in a row are built the same way** (the owner, Nov 25: *"we need to stop doing that"*, of three cards on a row each laid out differently): the title row, then **one figure on the same line in every card**, then **one line under it**, then a **footer pinned to the bottom at the same height** (the buttons, the nights, a bar). **No boxes inside a card**, no text that wraps in a figure, no empty band under one card's content where its neighbour has more. If one card has more to say, it goes behind its ↗, not into the card.
 
 ### The computer's sidebar
 

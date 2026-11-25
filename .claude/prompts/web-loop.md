@@ -44,8 +44,9 @@ Or, for a loop that paces itself: `/loop Read .claude/prompts/web-loop.md and do
 3. **What it shares with lane R:** the screens themselves (`web/src/screens/`, `web/src/status/`, `web/src/backups/`, `web/src/page/`, `web/src/parts/`). Change one only for the phone's page (an `onPhone()` branch, a part both use), and only when R has no open pull request on that file. A change R should make on the computer goes under **From the other lanes** in `redesign-loop.md`.
 4. **Never:** `apple-client/` (lane R's item P1), Finances' data (lane M: `web/src/finances` data files, `internal/finance`), Tidy Up on the phone (the owner: it stays on the computer).
 5. **Q reviews first** (`lanes.md` rule 6) for anything that: adds a call to `phoneMethods`; changes pairing, tokens, or what a phone may do; adds a host the homelab calls (Web Push does: W9); stores a new secret (VAPID keys: W9); or touches sign-in (passkeys: W11). Write **Needs Q's review: yes** and why on the description's first line.
-6. **Words** (`lanes.md` rule 12), and the owner's, Nov 25: **never "needs you"** (*"1 app needs you"*, *"Needs you"*). Say what happened: *"Decypharr stopped"*, *"Stopped"*, *"2 backups failed"*. Never write the household's chores as the app's feelings.
-7. **The devices to check, every pull request that changes how the phone's page looks.** Pictures of the **Duo's four poses** go in the description, light and dark; the rest run as smoke cases (`app/preview/shoot.mjs`, add a case per size):
+6. **Cards in a row share one anatomy** (the owner, Nov 25: *"we need to stop doing that"*): title row, one figure on the same line in every card, one line under it, a footer pinned to the bottom at the same height. No boxes inside cards, no wrapping figures, no empty band under one card. `docs/Redesign.md` › *Cards*. Check it in every picture before opening a pull request.
+7. **Words** (`lanes.md` rule 12), and the owner's, Nov 25: **never "needs you"** (*"1 app needs you"*, *"Needs you"*). Say what happened: *"Decypharr stopped"*, *"Stopped"*, *"2 backups failed"*. Never write the household's chores as the app's feelings.
+8. **The devices to check, every pull request that changes how the phone's page looks.** Pictures of the **Duo's four poses** go in the description, light and dark; the rest run as smoke cases (`app/preview/shoot.mjs`, add a case per size):
 
    | Device | CSS size (portrait; landscape swapped) | Why |
    |---|---|---|
@@ -73,7 +74,7 @@ Or, for a loop that paces itself: `/loop Read .claude/prompts/web-loop.md and do
    - VoiceOver order (`make app-smoke`'s axe check);
    - the page added to the Home Screen (`display-mode: standalone`) and in Safari's tab;
    - no sideways scroll at any size.
-8. **The server's homelab is a first-class case.** Use the preview's household for pictures (`app/preview/shoot.mjs`'s mock), and check every screen also reads right on Linux with no battery, no display and no desktop (no *This Mac*, no *Plugged in*, no tray).
+9. **The server's homelab is a first-class case.** Use the preview's household for pictures (`app/preview/shoot.mjs`'s mock), and check every screen also reads right on Linux with no battery, no display and no desktop (no *This Mac*, no *Plugged in*, no tray).
 
 ## The iPhone Duo (reported Nov 25; **confirm on a real device**, item W1)
 

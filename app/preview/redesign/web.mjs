@@ -46,7 +46,7 @@ const nights = ['Th', 'F', 'Sa', 'Su', 'M', 'Tu', 'W', 'Th', 'F', 'Sa', 'Su', 'M
 const strip = (n = 14) => `<div class="nights">${nights.slice(-n).map((d, i, a) => `<div><i></i><span${i === a.length - 1 ? ' class="b"' : ''}>${d}</span></div>`).join('')}</div>`;
 
 const extra = `
-.alogo.own{display:inline-grid;place-items:center;overflow:hidden;color:#fff;font-weight:700;border-radius:9px;box-shadow:none}
+.alogo.own{display:inline-grid;place-items:center;overflow:hidden;box-shadow:0 0 0 1px var(--line);color:#fff;font-weight:700;border-radius:9px;box-shadow:none}
 .nights{display:flex;gap:4px;margin-top:12px}.nights div{flex:1;display:grid;gap:4px;justify-items:center}.nights i{display:block;width:100%;height:20px;border-radius:5px;background:var(--in);opacity:.85}
 .nights span{font-size:10px;color:var(--muted)}.nights span.b{font-weight:700;color:var(--text)}
 .chip.warn{background:var(--warn-soft,#fff4e0);color:var(--warn,#b45309)}
@@ -129,6 +129,21 @@ writeFileSync(out + 'web-push.html', lock);
 
 // ---------- On a tablet or a wide window: the computer's sidebar ----------
 const wideCss = `
+/* The same soft backdrop and see-through cards as a category's page (the tester liked the soft purple, Nov 25). */
+.ov{--glass:rgba(255,255,255,.62);--glassline:rgba(255,255,255,.75);min-height:100vh;background:radial-gradient(60% 55% at 15% 0%,#e9e3ff,transparent 70%),radial-gradient(55% 60% at 100% 100%,#dff3f6,transparent 70%),var(--bg)}
+@media (prefers-color-scheme:dark){.ov{--glass:rgba(255,255,255,.05);--glassline:rgba(255,255,255,.09);background:radial-gradient(60% 55% at 15% 0%,rgba(124,92,255,.22),transparent 70%),radial-gradient(55% 60% at 100% 100%,rgba(14,116,144,.2),transparent 70%),var(--bg)}}
+.ov .card{background:var(--glass);border-color:var(--glassline);backdrop-filter:blur(18px);box-shadow:none}.ov .top{background:transparent}.ov .search,.ov .sq{background:var(--glass);border-color:var(--glassline)}
+
+/* The overview's top cards share one anatomy (the owner, Nov 25: never three cards built three ways): a title row,
+   one figure on the same line in every card, one line under it, and a footer pinned to the bottom at the same height. */
+.grid .card.k{display:flex;flex-direction:column;gap:0;min-height:216px}
+.k .kh{display:flex;align-items:baseline;gap:8px;margin-bottom:14px}.k .kh h3{margin:0;flex:1;font-size:14.5px;font-weight:600}.k .kh span{font-size:12.5px;color:var(--muted)}
+.k .kf{display:flex;align-items:center;gap:10px;height:40px;font-size:30px;font-weight:650;letter-spacing:-.02em;font-variant-numeric:tabular-nums;white-space:nowrap}.k .kf small{font-size:15px;font-weight:600;color:var(--muted);letter-spacing:0;margin-left:2px;align-self:flex-end;padding-bottom:7px}.k .kf .alogo,.k .kf .own{border-radius:9px}.k .kf span{font-size:26px}
+.k .ks{margin-top:6px;font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.k .kb{margin-top:auto;padding-top:16px;height:54px;display:flex;align-items:flex-end;gap:8px}.k .kb .cta{flex:1;height:34px}.k .kb .cta.sqb{flex:none;width:38px;padding:0}
+.k .kb .nights{margin:0;width:100%}.k .kb .nights div{gap:0}.k .kb .nights i{height:34px;border-radius:7px}
+.k .kbar{flex-direction:column;align-items:stretch;justify-content:flex-end;gap:8px}.k .kbar .bar2{margin:0;height:10px;border-radius:99px;background:var(--sunken);overflow:hidden}.k .kbar .bar2 i{display:block;height:100%;background:var(--acc);border-radius:99px}.k .kbar span{font-size:12.5px;color:var(--muted)}
+
 .side .foot .synced{padding:0 6px}
 .apps span{position:relative}.apps em{position:absolute;top:-4px;right:6px;min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:#fdeee6;color:#c2410c;font:700 10px/16px Inter,system-ui;text-align:center}
 @media (prefers-color-scheme:dark){.apps em{background:#2f1a15;color:#ff8a73}}
@@ -162,23 +177,27 @@ const sideFor = (here, stopped = []) => `
   <div class="foot"><div class="synced"><i></i>Linux · 0.42.8 · 3.4 TB free</div></div>
 </aside>`;
 const wideSide = sideFor('Overview', ['Your own apps']);
+Object.assign(P, { dots: 'c5,12,1|c12,12,1|c19,12,1' });
 const wide = `
 <header class="top"><h2 style="margin:0;font-size:24px;font-weight:700;letter-spacing:-.01em;flex:1">Status</h2><div class="search">${icon('search', 15)}Find an app</div><button class="sq">${icon('sync', 17)}</button></header>
 <div class="grid">
-  <section class="card">
-    <div class="ch"><h3>Stopped</h3><span class="muted" style="font-size:12.5px">${up} of ${total} running</span></div>
-    <div class="grow" style="border-top:0;padding-top:2px">${logoOf('own:DP,#ea580c', 44)}<div class="n"><b style="font-size:18px">Decypharr</b><small>20 minutes ago: the debrid service didn't answer</small></div></div>
-    <div style="display:flex;gap:8px"><span class="cta pri" style="flex:1">${icon('play', 13)}Start</span><span class="cta" style="flex:1">${icon('logs', 14)}Logs</span><span class="cta" style="flex:1">Its page</span></div>
+  <section class="card k">
+    <div class="kh"><h3>Stopped</h3><span>${up} of ${total} running</span></div>
+    <div class="kf">${logoOf('own:DP,#ea580c', 34)}<span>Decypharr</span></div>
+    <div class="ks">20 minutes ago · the debrid service didn't answer</div>
+    <div class="kb"><span class="cta pri">${icon('play', 13)}Start</span><span class="cta">${icon('logs', 14)}Logs</span><span class="cta sqb">${icon('dots', 16)}</span></div>
   </section>
-  <section class="card">
-    <div class="ch"><h3>Backups</h3><span class="muted" style="font-size:12.5px">Every night at 3:30</span></div>
-    <div class="fig">17<small> of 17 copied</small></div><div class="lab">Encrypted to Hetzner · Kopia too</div>
-    ${strip()}
+  <section class="card k">
+    <div class="kh"><h3>Backups</h3><span>Every night at 3:30</span></div>
+    <div class="kf">17<small>of 17 copied</small></div>
+    <div class="ks">Last night · encrypted to Hetzner · Kopia too</div>
+    <div class="kb">${strip(14).replace(/<span[^>]*>[^<]*<\/span>/g, '')}</div>
   </section>
-  <section class="card">
-    <div class="ch"><h3>The server</h3></div>
-    <div class="fig">3.4<small> TB free</small></div><div class="lab">RAID 1 · both disks healthy</div>
-    <div class="trio" style="margin-top:14px"><div><span>Memory</span><b>11 of 32 GB</b></div><div><span>Updates</span><b>Tonight 4:00</b></div><div><span>Up</span><b>23 days</b></div></div>
+  <section class="card k">
+    <div class="kh"><h3>The server</h3><span>Up 23 days</span></div>
+    <div class="kf">3.4<small>TB free</small></div>
+    <div class="ks">Both disks healthy · updates tonight at 4:00</div>
+    <div class="kb kbar"><div class="bar2"><i style="width:34%"></i></div><span>Memory · 11 of 32 GB</span></div>
   </section>
   <section class="card" style="grid-column:1/-1;padding-top:8px;padding-bottom:8px">
     <div style="display:grid;grid-template-columns:1fr 1fr;column-gap:36px">
@@ -186,7 +205,7 @@ const wide = `
     </div>
   </section>
 </div>`;
-writeFileSync(out + 'web-wide.html', `<!doctype html><html><head><meta charset="utf-8"><title>Status</title><style>${deskCss}${extra}${wideCss}</style></head><body>${wideSide}<main>${wide}</main></body></html>`);
+writeFileSync(out + 'web-wide.html', `<!doctype html><html><head><meta charset="utf-8"><title>Status</title><style>${deskCss}${extra}${wideCss}</style></head><body>${wideSide}<main class="ov">${wide}</main></body></html>`);
 
 // ---------- A category's own page: the apps as a home screen (the owner, Nov 25) ----------
 // Click a category in Status' menu: its apps as big-icon tiles three across, as CasaOS's dashboard lays out apps
