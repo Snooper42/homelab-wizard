@@ -66,7 +66,7 @@ function SavedHover({ value, history }: { value: string; history: savings.Point[
     <Hover cls="savedso" label={value} tip={
       <>
         <strong>Saved so far: {dollars(s.total)}</strong>
-        <span class="muted">since {since}, from what the apps replace each day</span>
+        <span class="muted">since {since}</span>
         <ul class="savedmonths">{s.months.slice(0, 12).map((m) => <li key={m.month}><span>{monthName(m.month)}</span><span>{dollars(m.amount)}</span></li>)}</ul>
       </>
     } />
@@ -124,7 +124,7 @@ export function Tiles({ status: st, history, onPause, onChoose, words, start, lo
     return (
       <Card kind="emptystate" id="statusEmpty">
         <h2>No apps yet</h2>
-        <p>Pick a few on Choose apps. They show up here as they start, with their addresses.</p>
+        <p>Pick a few on Choose apps.</p>
         <button class="btn primary" onClick={onChoose}>Choose apps</button>
       </Card>
     );
@@ -135,12 +135,17 @@ export function Tiles({ status: st, history, onPause, onChoose, words, start, lo
   const u = st.updates;
   return (
     <>
-      {/* The headline (docs/Redesign.md, Status; redesign-loop R6): All good, or how many apps need you, each with its fix. */}
-      <Card kind={'tile headline' + (trouble.length ? ' warn' : ' good')} id="statusHeadline">
+      {/* The headline (docs/Redesign.md, Status; redesign-loop R6): how many apps need you, each with its fix. All good is
+          one line, not a card (the owner, Nov 24: "a ginormous box that simply just says all good"). */}
+      {!trouble.length && !st.missing ? (
+        <div class="headline good slim" id="statusHeadline" role="status">
+          <span class="okmark" aria-hidden="true">✓</span><span class="value">All good</span><span class="label">{running.length} of {counted} running</span>
+        </div>
+      ) : <Card kind={'tile headline' + (trouble.length ? ' warn' : ' good')} id="statusHeadline">
         <div class="headlinemain">
           <div class="value">{trouble.length ? (trouble.length === 1 ? '1 app needs you' : `${trouble.length} apps need you`) : 'All good'}</div>
           <div class="label">{running.length} of {counted} running</div>
-          <div class="sub"><span>{st.missing ? <span class="bad">{st.missing === 1 ? "1 of the homelab's own apps is down." : `${st.missing} of the homelab's own apps are down.`}</span> : "The homelab's own apps are all up."}{!trouble.length && ' Nothing unhealthy or stopped.'}</span></div>
+          {!!st.missing && <div class="sub"><span class="bad">{st.missing === 1 ? "1 of the homelab's own apps is down." : `${st.missing} of the homelab's own apps are down.`}</span></div>}
         </div>
         {!!trouble.length && <ul class="headlineapps">
           {trouble.slice(0, 3).map((a) => (
@@ -156,7 +161,7 @@ export function Tiles({ status: st, history, onPause, onChoose, words, start, lo
           ))}
           {trouble.length > 3 && <li class="muted">and {trouble.length - 3} more, in the list below</li>}
         </ul>}
-      </Card>
+      </Card>}
       {/* The picture's Backups and This Mac beside the headline (redesign-loop R6); Instead of subscriptions is lower (Savings). */}
       <Card kind="tile statuscard" id="statusBackups">
         <div class="label">Backups{openBackups && <button type="button" class="linkbtn statusmore" onClick={openBackups}>Backups ›</button>}</div>

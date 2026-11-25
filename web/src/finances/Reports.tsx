@@ -82,7 +82,7 @@ export function Reports({ v, ledger, exportFile, open }: { v: finance.View; ledg
           </div>
           <p class="fx-sub fx-exported" role="status">{saved}</p>
         </Widget>
-        {!txs.length ? <Widget title="Nothing yet" span="all"><Empty>Reports read the transactions: add some on Transactions, and they show here.</Empty></Widget> : <>
+        {!txs.length ? <Widget title="Nothing yet" span="all"><Empty>No transactions yet.</Empty></Widget> : <>
           <Widget title="Spending by category" kind="fx-bycat">
             {groups.length ? <Rows kind="fx-rows">
               {groups.map((g) => {

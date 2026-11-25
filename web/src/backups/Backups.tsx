@@ -137,7 +137,7 @@ export function BackupTiles({ o, os, test, apps, start }: BackupTilesProps) {
       <Card kind="bkcard" id="offsiteTile">
         <CardHead title="Off-site" />
         <CardFigure figure={<span class="value">{o.destinationOK ? placeName(o.destination) : <span class="warn">Not set</span>}</span>} label={o.destinationOK ? 'Encrypted before it leaves' : undefined} />
-        <p class="bksub">{o.destinationOK ? <span title={o.destination}>Encrypted, in {lastFolder(o.destination)}. Only your recovery kit can open it.</span>
+        <p class="bksub">{o.destinationOK ? <span title={o.destination}>In {lastFolder(o.destination)}</span>
           : os === 'linux' ? 'Put a backup drive or a synced folder in Settings › Backups go to' : 'Put a Proton Drive folder in Settings › Backups go to'}</p>
       </Card>
     </>
@@ -264,7 +264,7 @@ export function Jobs({ jobs, place, problem, waitingFor, create }: JobsProps) {
     return (
       <>
         <CardHead title={title}><button class="small" onClick={create}>Create the backup jobs</button></CardHead>
-        <p class="muted">No jobs yet. This makes the jobs in docs/Automation.md, encrypted with passphrases kept in .env, and runs the small ones once. Then copy DUPLICATI_SECRETS_PASSPHRASE from Settings into Vaultwarden.</p>
+        <p class="muted">No jobs yet. Afterwards, copy DUPLICATI_SECRETS_PASSPHRASE from Settings into Vaultwarden.</p>
       </>
     );
   }
@@ -300,7 +300,7 @@ export function KopiaLine({ k, test }: { k: backup.Engine; test: () => void }) {
           : <span class="ok">✓ Restore proven {ago(k.lastTest)}</span>}
       </CardHead>
       <p class="muted">
-        Kopia keeps a copy of its own of the same folders in <span title={k.repository}>{shortPath(k.repository)}</span>, apart from Duplicati's, and its restore is tested on its own.
+        In <span title={k.repository}>{shortPath(k.repository)}</span>.
         {' '}{k.failed ? `The last test: ${k.failed}.` : never(k.lastTest) ? 'No restore test yet.' : `Last proven ${ago(k.lastTest)}.`}
       </p>
       <div class="actions"><button class="btn" onClick={test}>Test Kopia's restore</button></div>

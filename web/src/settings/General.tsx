@@ -62,7 +62,7 @@ export function General(p: GeneralProps) {
           <Row key={x.id} lead={<Letter name={x.name} />} title={x.name}
             sub={[x.canChange ? 'Can make changes' : 'Looks only', x.personName ? `${x.personName}'s` : '', never(x.lastSeen) ? 'not seen yet' : `seen ${ago(x.lastSeen)}`].filter(Boolean).join(' · ')}
             onOpen={() => p.open('Phones')} openLabel="open" />
-        ))}</Rows> : <p class="gensub">No phone paired yet: the Homelab app sees Status and Finances from anywhere.</p>}
+        ))}</Rows> : <p class="gensub">No phone paired yet.</p>}
       </Card>
       <Card kind="gencard" id="genCare">
         <CardHead title="Automatic care" />

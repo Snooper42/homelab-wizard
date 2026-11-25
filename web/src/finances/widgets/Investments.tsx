@@ -187,7 +187,7 @@ function Watchlist({ v, keep, follow, find }: { v: finance.View; keep?: Investme
   return (
     <div class="fx-watch">
       <div class="fx-watchhead">
-        <div><h3>Watchlist</h3><p class="fx-sub">Followed, not owned: priced by Ghostfolio at each read, never counted in your worth</p></div>
+        <div><h3>Watchlist</h3><p class="fx-sub">Followed, not owned: not in your worth</p></div>
         {can && <button type="button" class="small" aria-expanded={adding} onClick={() => { setAdding(!adding); setProblem(''); }}>Follow a ticker</button>}
       </div>
       {adding && <div class="fx-watchadd">
@@ -409,7 +409,7 @@ function Unmatched({ v, state, keep, read }: { v: finance.View; state: InvestSta
   };
   return (
     <div class="fx-investleft">
-      <p class="fx-sub">Not matched to an account here yet, so not shown: pick which account each is.</p>
+      <p class="fx-sub">Not matched to an account yet.</p>
       <ul>
         {left.map((name) => (
           <li key={name}>

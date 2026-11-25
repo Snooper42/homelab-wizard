@@ -826,7 +826,8 @@ const smokes = [
         const li = page.locator(`#tidy .tidyneeds li:has(strong:text-is("${r}")), #tidy .tidyneeds li:has(strong:has-text("${r}"))`).first();
         await li.waitFor({ timeout: 5000 });
         const lines = await li.evaluate((l) => { const e = l.querySelector('.grow > .muted, .grow > .line'); if (!e) return -1; return Math.round(e.getBoundingClientRect().height / (parseFloat(getComputedStyle(e).lineHeight) || 20)); });
-        if (lines !== 1) wraps.push(`${tab} › ${r}: ${lines} lines`);
+        // A row may have no caption now (the owner, Nov 24: no lines that only explain); one that has one keeps it to one line.
+        if (lines > 1) wraps.push(`${tab} › ${r}: ${lines} lines`);
       }
     }
     if (wraps.length) throw new Error(wraps.join('; '));
@@ -1225,7 +1226,7 @@ const smokes = [
   } },
   { name: 'Tidy Up: What I did today with nothing yet says how to start', screen: 'tidy', mock: { tidy: { ...tidy, today: [] } }, run: async (page) => {
     await tidyTab(page, 'Inbox');
-    await page.waitForSelector('#tidy .tidytoday:has-text("Nothing yet today. Drop something in a watched folder, or press Tidy up now.")', { timeout: 5000 });
+    await page.waitForSelector('#tidy .tidytoday:has-text("Nothing yet today.")', { timeout: 5000 });
   } },
   // Needs a look (the owner's Nov 8 mockup; beside What I did today since the redesign, R9): what Tidy Up couldn't place,
   // with why. A video can be named a film or an episode in a sheet (File it waits for what it needs; a number box takes
@@ -2009,7 +2010,7 @@ const smokes = [
     const value = await page.textContent('#copiesTile .value');
     if (value.replace(/\s+/g, ' ').trim() !== '11 of 12 copied') throw new Error(`copies up to date: ${value}`);
     await page.waitForSelector('#offsiteTile .value:text-is("Proton Drive")', { timeout: 5000 });
-    await page.waitForSelector('#offsiteTile:has-text("Encrypted, in homelab-backups")');
+    await page.waitForSelector('#offsiteTile:has-text("In homelab-backups")');
     // Paused is folded, with its names and why; stale and up to date are open.
     await page.waitForSelector('tr.copygroup.paused:not(.open) .names:has-text("Komga, Kavita wait for the Hobbies drive; their last copies (13 days ago) are kept")');
     if (await page.isVisible('tr.copy.paused')) throw new Error('the paused copies show before their group is opened');
@@ -2331,7 +2332,7 @@ const smokes = [
     await note.waitFor({ timeout: 5000 });
     if (!/Anna Smith is added/.test(await note.textContent())) throw new Error(`the note: ${await note.textContent()}`);
     if (await page.evaluate(() => window.__MOCK.opened)) throw new Error('the welcome page opened by itself');
-    if (!/for them alone.*fridge sheet/s.test(await note.textContent())) throw new Error('the note does not say the welcome page is theirs alone, and what to send instead');
+    if (!/don't email it.*fridge sheet/s.test(await note.textContent())) throw new Error('the note does not say the welcome page is theirs alone, and what to send instead');
     await note.locator('button:text-is("Show their sign-in to scan")').click();
     await page.waitForFunction(() => window.__MOCK.opened === 'anna', null, { timeout: 3000 });
     await note.locator('button:text-is("Open the fridge sheet")').click();
@@ -2475,13 +2476,13 @@ const smokes = [
     await sheet.waitFor({ state: 'hidden', timeout: 3000 });
   } },
   { name: 'An app’s page with nothing done to it says so', screen: 'app:vikunja', mock: { history: [] }, run: async (page) => {
-    await page.locator('#appDone').getByText("Nothing done to it yet that's kept here.", { exact: false }).waitFor({ timeout: 5000 });
+    await page.locator('#appDone').getByText('Nothing yet.', { exact: true }).waitFor({ timeout: 5000 });
   } },
   { name: 'CrowdSec’s page on a quiet day', screen: 'app:crowdsec', mock: { protection: { ...protection, today: [], todayCount: 0, bannedNow: 0 } }, run: async (page) => {
     await page.locator('#appStopped').getByText(/^Nothing yet today; 14 this week, the last /).waitFor({ timeout: 5000 });
   } },
   { name: 'The proxy’s page when CrowdSec can’t be read', screen: 'app:nginx-proxy-manager', mock: { protection: null }, run: async (page) => {
-    await page.locator('#appStopped').getByText('CrowdSec can\'t be read right now: it and the proxy both need to be running.').waitFor({ timeout: 5000 });
+    await page.locator('#appStopped').getByText('CrowdSec can\'t be read: it and the proxy need to be running.').waitFor({ timeout: 5000 });
   } },
   { name: 'Other apps’ pages have no CrowdSec card', screen: 'app:vikunja', run: async (page) => {
     await page.waitForSelector('#appUpdates', { timeout: 5000 });
@@ -3162,7 +3163,7 @@ const smokes = [
     await page.waitForSelector('#oneLine.trouble:has-text("The watchdog’s check of crowdsec bouncer is failing"), #oneLine.trouble:has-text("check of crowdsec bouncer is failing")', { timeout: 5000 });
   } },
   { name: 'Watchdog not run yet', screen: 'status', mock: { watchdog: null }, run: async (page) => {
-    await page.waitForSelector('#watchCard:has-text("once the jobs are installed")', { timeout: 5000 });
+    await page.waitForSelector('#watchCard:has-text("Not set up"):has(a:has-text("Open Setup"))', { timeout: 5000 });
   } },
   // The owner, Nov 12: Dashboard cards they can move and size ("maybe resize them"); the mockup's artboard 5 was a yes,
   // kept per device. Arrange the Dashboard: ▲ ▼ move a card, ⅓ ½ Full set its width, Hide puts it below; kept after a
@@ -3623,7 +3624,9 @@ const smokes = [
     await page.waitForSelector('tr.grouphead:has(.names:has-text("Mealie"))', { timeout: 5000 });
     const label = (await page.locator('tr.grouphead:has(.names:has-text("Mealie")) .kiosklabel').textContent()).trim();
     const head = page.locator(`tr.grouphead:has(.kiosklabel:text-is("${label}"))`);
-    await page.waitForSelector('#statusHeadline.good:has-text("All good"):has-text("Nothing unhealthy or stopped")');
+    await page.waitForSelector('#statusHeadline.good:has-text("All good")');
+    // The owner, Nov 24: no line saying what the headline already says.
+    if (await page.locator('#statusHeadline .sub').count()) throw new Error('All good carries a line under it: ' + await page.locator('#statusHeadline .sub').textContent());
     if ((await head.locator('.foldbtn').getAttribute('aria-expanded')) !== 'false') throw new Error('a group with only an app stopped on purpose opened by itself');
     if (await head.locator('.startall').count()) throw new Error(`Start them offers an app stopped on purpose: ${await head.locator('.startall').textContent()}`);
     await page.click('#statusAll');
@@ -3738,7 +3741,8 @@ const smokes = [
   // Account 3's tester, task 2, finding 4: Status in a household's words. Apps, not stacks; the homelab's own apps, not
   // baseline ones; what the savings are instead of; what CrowdSec caught, not its scenario's name and an address.
   ...[[], ['companion']].map((phone) => ({ name: `Status in a household's words${phone.length ? ', on the phone' : ''}`, screen: 'status', phone, mock: { protection }, run: async (page) => {
-    await page.waitForSelector('#statusHeadline:has-text("running"):has-text("The homelab\'s own apps are all up")', { timeout: 5000 });
+    await page.waitForSelector('#statusHeadline:has-text("running")', { timeout: 5000 });
+    if (/stack|baseline/i.test(await page.locator('#statusHeadline').textContent())) throw new Error('the headline speaks of stacks');
     await page.waitForSelector('#savingsCard .tile:has-text("Instead of subscriptions"):has-text("a year")');
     await page.waitForSelector('#protectCard li:has-text("Probing for a known security hole"):has-text("Netherlands · Example Hosting B.V.")', { timeout: 5000 });
     const said = await page.evaluate(() => document.body.innerText);
@@ -4604,7 +4608,7 @@ const smokes = [
     } })),
   { name: 'Every alert with none kept says so', screen: 'status', mock: { alertLog: [] }, run: async (page) => {
     await page.locator('#alertsCard').getByRole('button', { name: 'Every alert…' }).click();
-    await page.locator('#alertLogSheet').getByText('No alerts kept yet.', { exact: false }).waitFor({ timeout: 5000 });
+    await page.locator('#alertLogSheet').getByText('No alerts yet.', { exact: false }).waitFor({ timeout: 5000 });
   } },
   // Check again reads the alerts now: one whose problem cleared is gone.
   { name: 'Check again on Recent alerts reads them now', screen: 'status', run: async (page) => {
@@ -5763,7 +5767,7 @@ const smokes = [
     await card.waitFor({ state: 'visible', timeout: 3000 });
     await card.locator(':text("Newest: v8.5.0")').waitFor({ timeout: 3000 });
     const said = (await card.innerText()).replace(/\s+/g, ' ');
-    for (const want of [/Left out of the nightly updates after a rollback/, /Nightly updates on its page puts it back/, /Newest: v8\.5\.0 · Oct 30, 2026 \(it runs v8\.4\.2\)/, /Logs from every host in one view by @amir20 Faster search/]) {
+    for (const want of [/Left out of nightly updates after a rollback/, /Newest: v8\.5\.0 · Oct 30, 2026 \(it runs v8\.4\.2\)/, /Logs from every host in one view by @amir20 Faster search/]) {
       if (!want.test(said)) throw new Error(`no ${want} in: ${said}`);
     }
     if (/What's Changed|Fixed a crash|\*\*|\]\(/.test(said)) throw new Error('more than its first lines, or its marks: ' + said);
@@ -6313,7 +6317,7 @@ const smokes = [
     if (await page.$(sw('Reach it away from home'))) throw new Error('Vikunja shows the reach switch');
     await page.click(sw('Nightly updates'));
     if (await page.isChecked(sw('Nightly updates'))) throw new Error('the switch did not move at once');
-    await page.waitForSelector('#appSettings:has-text("Held: the nightly update leaves it out")', { timeout: 300 });
+    await page.waitForSelector('#appSettings .grow:has(strong:text-is("Nightly updates")):has-text("Held")', { timeout: 300 });
     await page.waitForSelector(`${sw('Nightly updates')}:not([disabled])`, { timeout: 5000 });
     await page.click(sw('Tell me if it stops'));
     await page.waitForSelector('#appSettings:has-text("without an alert")', { timeout: 300 });
@@ -6347,10 +6351,10 @@ const smokes = [
     const sw = (label) => `#appSettings input.switch[aria-label="${label}"]`;
     await page.waitForSelector(sw('Only on Sundays'), { timeout: 5000 });
     if (await page.isChecked(sw('Only on Sundays'))) throw new Error('an app with no window starts on Sundays only');
-    await page.waitForSelector('#appSettings:has-text("Every night, with a backup of its data first")');
+    await page.waitForSelector('#appSettings:has-text("Every night")');
     await page.click(sw('Only on Sundays'));
     if (!(await page.isChecked(sw('Only on Sundays')))) throw new Error('the switch did not move at once');
-    await page.waitForSelector('#appSettings:has-text("On Sundays only, with a backup of its data first")', { timeout: 300 });
+    await page.waitForSelector('#appSettings:has-text("On Sundays only")', { timeout: 300 });
     await page.waitForSelector(`${sw('Only on Sundays')}:not([disabled])`, { timeout: 5000 });
     const set = await page.evaluate(() => window.__MOCK.settingsSet);
     if (JSON.stringify(set) !== JSON.stringify([['vikunja', 'sundays', true]])) throw new Error('set ' + JSON.stringify(set));
@@ -6362,14 +6366,14 @@ const smokes = [
     await page.waitForSelector('#appSettings:has-text("On Saturdays and Sundays only")');
     // Held: no window to choose.
     await page.click(sw('Nightly updates'));
-    await page.waitForSelector('#appSettings:has-text("Held: the nightly update leaves it out")', { timeout: 300 });
+    await page.waitForSelector('#appSettings .grow:has(strong:text-is("Nightly updates")):has-text("Held")', { timeout: 300 });
     if (await page.locator(sw('Only on Saturdays and Sundays')).count()) throw new Error('a held app still offers its days');
   } },
   { name: "A stopped app's nightly updates can be held too", screen: 'app:vikunja', mock: { status: { ...status, apps: status.apps.map((a) => (a.id === 'vikunja' ? { ...a, state: 'stopped', health: '' } : a)) } }, run: async (page) => {
     const sw = '#appSettings input.switch[aria-label="Nightly updates"]';
     await page.waitForSelector(`${sw}:not([disabled])`, { timeout: 5000 });
     await page.click(sw);
-    await page.waitForSelector('#appSettings:has-text("Held: the nightly update leaves it out")', { timeout: 5000 });
+    await page.waitForSelector('#appSettings .grow:has(strong:text-is("Nightly updates")):has-text("Held")', { timeout: 5000 });
     const set = await page.evaluate(() => window.__MOCK.settingsSet);
     if (JSON.stringify(set) !== JSON.stringify([['vikunja', 'updates', false]])) throw new Error('set ' + JSON.stringify(set));
   } },
@@ -9985,9 +9989,9 @@ const smokes = [
     await finTab(page, 'Reports', { timeout: 5000 });
     await page.waitForSelector('.fx-trend .fx-yoy:has-text("A year before is not in the transactions yet.")', { timeout: 5000 });
   } },
-  { name: 'Finances: reports with no transactions say where they come from', screen: 'finances', mock: { ledger: null }, run: async (page) => {
+  { name: 'Finances: reports with no transactions say so', screen: 'finances', mock: { ledger: null }, run: async (page) => {
     await finTab(page, 'Reports', { timeout: 5000 });
-    await page.waitForSelector('.fin :text("Reports read the transactions")', { timeout: 5000 });
+    await page.waitForSelector('.fin :text("No transactions yet.")', { timeout: 5000 });
   } },
   // A bank's file into the ledger: a CSV's columns guessed, those already in skipped (the same day and amount, a payee
   // alike), a payee bringing its last category; an OFX statement by the bank's own IDs, so the same file twice is once.

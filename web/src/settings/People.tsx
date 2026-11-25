@@ -83,7 +83,7 @@ function Added({ who, on }: { who: { name: string; username: string }; on: Peopl
         <button class="small" onClick={() => on.openSheet(who.username)}>Open the fridge sheet</button>
         <button class="small" onClick={on.doneAdding}>Done</button>
       </div>
-      <p class="muted">The welcome page opens here, on this computer: they scan its code with their phone's camera, or you print it for them. It's for them alone, as it holds their sign-in link and their music and films password, so don't email it. To send something, send the fridge sheet: their apps with a code each, and neither of those.</p>
+      <p class="muted">It holds their sign-in link and a password: show or print it, don't email it. The fridge sheet is safe to send.</p>
     </div>
   );
 }
@@ -127,7 +127,7 @@ function AddPerson({ apps, open, on }: { apps: { id: string; name: string }[]; o
 export function People({ people, pocket, apps, log, on, privateFinances, justAdded }: PeopleProps) {
   const here = people.filter(active);
   const head = <CardHead title="People"><span class="muted">{here.length ? `${here.length} in the household` : 'just you so far'}</span></CardHead>;
-  const why = <p class="muted">Each person gets one sign-in for the apps, with their phone's face or fingerprint and no password to remember, and a welcome page with their apps and the phone apps to install. Their films and music apps (Jellyfin and Navidrome) have a password of their own: once each app's admin key is on its page in Settings (Jellyfin, Navidrome), the homelab makes their accounts too. Their sign-in link works once: Welcome page shows it again until it's used, and Make a new sign-in link replaces one they lost.</p>;
+  const why = null;
   if (!pocket) {
     return (
       <>

@@ -662,10 +662,7 @@
       return /* @__PURE__ */ u3(S, { children: [
         /* @__PURE__ */ u3("li", { class: "alldone", children: [
           /* @__PURE__ */ u3("span", { class: "mark", children: /* @__PURE__ */ u3(Icon, { name: "check" }) }),
-          /* @__PURE__ */ u3("div", { class: "body", children: [
-            /* @__PURE__ */ u3("strong", { class: "title", children: `All ${steps.length} steps are done` }),
-            /* @__PURE__ */ u3("div", { class: "sub muted", children: "If one comes undone (a token runs out, the backup drive goes away), it shows here again, and Setup comes back in the sidebar." })
-          ] }),
+          /* @__PURE__ */ u3("div", { class: "body", children: /* @__PURE__ */ u3("strong", { class: "title", children: `All ${steps.length} steps are done` }) }),
           /* @__PURE__ */ u3("div", { class: "actions", children: /* @__PURE__ */ u3("button", { id: "toggleDone", class: "linkbtn small", "aria-expanded": showDone, onClick: on2.toggleDone, children: showDone ? "Hide" : "Show" }) })
         ] }),
         showDone && done.map((s3, i3) => row(s3, i3 + 1))
@@ -1106,8 +1103,7 @@
       ] }),
       /* @__PURE__ */ u3("span", { class: "muted", children: [
         "since ",
-        since,
-        ", from what the apps replace each day"
+        since
       ] }),
       /* @__PURE__ */ u3("ul", { class: "savedmonths", children: s3.months.slice(0, 12).map((m3) => /* @__PURE__ */ u3("li", { children: [
         /* @__PURE__ */ u3("span", { children: monthName3(m3.month) }),
@@ -1133,7 +1129,7 @@
     if (!st.apps.length) {
       return /* @__PURE__ */ u3(Card, { kind: "emptystate", id: "statusEmpty", children: [
         /* @__PURE__ */ u3("h2", { children: "No apps yet" }),
-        /* @__PURE__ */ u3("p", { children: "Pick a few on Choose apps. They show up here as they start, with their addresses." }),
+        /* @__PURE__ */ u3("p", { children: "Pick a few on Choose apps." }),
         /* @__PURE__ */ u3("button", { class: "btn primary", onClick: onChoose, children: "Choose apps" })
       ] });
     }
@@ -1142,7 +1138,16 @@
     const trouble2 = st.apps.filter((a3) => troubled(a3, st.stopped));
     const u4 = st.updates;
     return /* @__PURE__ */ u3(S, { children: [
-      /* @__PURE__ */ u3(Card, { kind: "tile headline" + (trouble2.length ? " warn" : " good"), id: "statusHeadline", children: [
+      !trouble2.length && !st.missing ? /* @__PURE__ */ u3("div", { class: "headline good slim", id: "statusHeadline", role: "status", children: [
+        /* @__PURE__ */ u3("span", { class: "okmark", "aria-hidden": "true", children: "✓" }),
+        /* @__PURE__ */ u3("span", { class: "value", children: "All good" }),
+        /* @__PURE__ */ u3("span", { class: "label", children: [
+          running5.length,
+          " of ",
+          counted2,
+          " running"
+        ] })
+      ] }) : /* @__PURE__ */ u3(Card, { kind: "tile headline" + (trouble2.length ? " warn" : " good"), id: "statusHeadline", children: [
         /* @__PURE__ */ u3("div", { class: "headlinemain", children: [
           /* @__PURE__ */ u3("div", { class: "value", children: trouble2.length ? trouble2.length === 1 ? "1 app needs you" : `${trouble2.length} apps need you` : "All good" }),
           /* @__PURE__ */ u3("div", { class: "label", children: [
@@ -1151,10 +1156,7 @@
             counted2,
             " running"
           ] }),
-          /* @__PURE__ */ u3("div", { class: "sub", children: /* @__PURE__ */ u3("span", { children: [
-            st.missing ? /* @__PURE__ */ u3("span", { class: "bad", children: st.missing === 1 ? "1 of the homelab's own apps is down." : `${st.missing} of the homelab's own apps are down.` }) : "The homelab's own apps are all up.",
-            !trouble2.length && " Nothing unhealthy or stopped."
-          ] }) })
+          !!st.missing && /* @__PURE__ */ u3("div", { class: "sub", children: /* @__PURE__ */ u3("span", { class: "bad", children: st.missing === 1 ? "1 of the homelab's own apps is down." : `${st.missing} of the homelab's own apps are down.` }) })
         ] }),
         !!trouble2.length && /* @__PURE__ */ u3("ul", { class: "headlineapps", children: [
           trouble2.slice(0, 3).map((a3) => /* @__PURE__ */ u3("li", { children: [
@@ -2729,7 +2731,7 @@
   function Watchdog({ w: w3, unchecked: unchecked2 = [], openSetup, fix, stop: stop2, snooze }) {
     if (never(w3.lastRun)) {
       return /* @__PURE__ */ u3(CardHead, { title: "Watchdog", children: /* @__PURE__ */ u3("span", { class: "muted", children: [
-        "It checks every app, address, and backup every 15 minutes once the jobs are installed. ",
+        "Not set up. ",
         /* @__PURE__ */ u3(ActionLink, { onClick: openSetup, children: "Open Setup" })
       ] }) });
     }
@@ -2758,13 +2760,13 @@
         ] })
       ] }) }),
       w3.memory && /* @__PURE__ */ u3(MemoryPressure, { m: w3.memory, stop: stop2 }),
-      late && /* @__PURE__ */ u3("div", { class: "muted more", children: [
-        "It has not run since ",
+      late && /* @__PURE__ */ u3("div", { class: "warn more", children: [
+        "Hasn't run since ",
         ago(w3.lastRun),
-        ". Setup › Install the jobs schedules it every 15 minutes."
+        "."
       ] }),
       !!failing.length && /* @__PURE__ */ u3("div", { class: "row more", children: [
-        /* @__PURE__ */ u3("span", { class: "muted", children: "Fix it restarts what is down or unwell and reconnects what dropped; it shows the plan first." }),
+        /* @__PURE__ */ u3("span", { class: "grow" }),
         /* @__PURE__ */ u3("button", { id: "watchFix", class: "small", onClick: fix, children: "Fix it" })
       ] }),
       !!failing.length && /* @__PURE__ */ u3(Rows, { children: failing.map((f4) => {
@@ -2823,7 +2825,7 @@
       /* @__PURE__ */ u3(CardHead, { title: "Downloads", children: /* @__PURE__ */ u3("span", { id: "downloadsLine", class: tone, children: c4.line }) }),
       c4.warning && /* @__PURE__ */ u3("p", { id: "downloadsWarning", class: full ? "bad" : "warn", children: c4.warning }),
       !!shown8.length && /* @__PURE__ */ u3(Rows, { children: shown8.map((i3, n3) => /* @__PURE__ */ u3(Row, { dot: stateDot[i3.state] ?? "", title: i3.name, sub: i3.words, subTone: i3.state === "stuck" ? "warn" : "", when: i3.app }, n3)) }),
-      items.length > shown8.length && /* @__PURE__ */ u3("p", { class: "muted", children: `And ${items.length - shown8.length} more: each app's own page lists them all.` })
+      items.length > shown8.length && /* @__PURE__ */ u3("p", { class: "muted", children: `And ${items.length - shown8.length} more` })
     ] });
   }
   var topicName = { watchtower: "Updates", "duplicati-alerts": "Backups", "uptime-kuma": "Uptime Kuma", "tunnel-watchdog": "Watchdog" };
@@ -2846,7 +2848,7 @@
     const every = /* @__PURE__ */ u3(AlertLog, { log: log2, watch: watch2, snooze });
     if (!events) {
       return /* @__PURE__ */ u3(CardHead, { title: "Recent alerts", children: /NTFY_READ_TOKEN/.test(problem || "") ? /* @__PURE__ */ u3("span", { class: "muted", children: [
-        "They appear here once the alert token is set up. ",
+        "Not set up. ",
         /* @__PURE__ */ u3(ActionLink, { onClick: openSetup, children: "Open Setup" }),
         " ",
         every
@@ -2932,7 +2934,6 @@
       /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: open5, children: "Every alert…" }),
       /* @__PURE__ */ u3(Sheet, { id: "alertLogSheet", titleId: "alertLogTitle", children: [
         /* @__PURE__ */ u3("h2", { id: "alertLogTitle", children: "Every alert" }),
-        /* @__PURE__ */ u3("p", { class: "muted", children: "What the homelab alerted about in the last 90 days, kept on this computer: when each problem cleared, and who snoozed one." }),
         problem ? /* @__PURE__ */ u3("p", { class: "muted", children: problem }) : all === null ? /* @__PURE__ */ u3("p", { class: "muted", children: "Reading…" }) : all.length ? /* @__PURE__ */ u3(Rows, { children: all.map((a3) => {
           const fate = alertFate(a3);
           const open6 = snooze ? snoozable(a3, w3) : [];
@@ -2953,7 +2954,7 @@
             },
             a3.id
           );
-        }) }) : /* @__PURE__ */ u3("p", { class: "muted", children: "No alerts kept yet. From now on, each one the homelab sends is kept here for 90 days." }),
+        }) }) : /* @__PURE__ */ u3("p", { class: "muted", children: "No alerts yet." }),
         /* @__PURE__ */ u3("div", { class: "actions", children: /* @__PURE__ */ u3("button", { class: "small", onClick: close3, children: "Close" }) })
       ] })
     ] });
@@ -3001,8 +3002,7 @@
     const head = w3.problems ? /* @__PURE__ */ u3("span", { class: "warn", children: `${w3.problems} thing${w3.problems === 1 ? "" : "s"} to look at` }) : toSet ? /* @__PURE__ */ u3("span", { class: "muted", children: `Getting started: ${toSet} still to set up` }) : /* @__PURE__ */ u3("span", { class: "ok", children: "✓ All well" });
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3(CardHead, { title: "This week", children: head }),
-      /* @__PURE__ */ u3(Rows, { kind: "week", children: lines.map((l3, i3) => /* @__PURE__ */ u3(Row, { dot: l3.startsWith("✓") ? "ok" : l3.startsWith("•") ? "warn" : "", children: l3.replace(/^[✓•◦]\s*/, "") }, i3)) }),
-      /* @__PURE__ */ u3("p", { class: "muted", children: "The same summary reaches your phone on Sundays once alerts are set up." })
+      /* @__PURE__ */ u3(Rows, { kind: "week", children: lines.map((l3, i3) => /* @__PURE__ */ u3(Row, { dot: l3.startsWith("✓") ? "ok" : l3.startsWith("•") ? "warn" : "", children: l3.replace(/^[✓•◦]\s*/, "") }, i3)) })
     ] });
   }
   var mountWatchdog = (el3, props) => R(/* @__PURE__ */ u3(Watchdog, { ...props }), el3);
@@ -3277,7 +3277,7 @@
     const r3 = p3?.releases?.[0];
     const when3 = r3 && new Date(r3.when);
     return /* @__PURE__ */ u3(S, { children: [
-      /* @__PURE__ */ u3("span", { class: "outline", children: "Left out of the nightly updates after a rollback, so it stays on what works. Nightly updates on its page puts it back." }),
+      /* @__PURE__ */ u3("span", { class: "outline", children: "Left out of nightly updates after a rollback." }),
       problem ? /* @__PURE__ */ u3("span", { class: "outline muted", children: [
         "Could not read its releases: ",
         problem
@@ -3625,7 +3625,6 @@
             running5.length > 0 && /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", disabled: p3.busy, onClick: () => run2("restart", running5), children: running5.length === 1 ? `Restart ${running5[0].name}` : `Restart the ${running5.length} running` }),
             running5.length > 0 && /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", class: sure ? "danger" : "", disabled: p3.busy, onClick: () => run2("stop", running5), children: sure ? `Click again to stop ${running5.length === 1 ? running5[0].name : `all ${running5.length}`}` : running5.length === 1 ? `Stop ${running5[0].name}` : `Stop the ${running5.length} running` }),
             running5.length > 0 && /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", class: "stoplater", "aria-haspopup": "menu", disabled: p3.busy, onClick: () => showLater(true), children: "Stop for a while ›" }),
-            running5.length > 0 && /* @__PURE__ */ u3("p", { class: "menufoot muted", children: "Stopping what you don’t use gives its memory back. Nothing starts it again by itself until you do." }),
             held3.length > 0 && /* @__PURE__ */ u3("p", { class: "menufoot muted heldnote", children: [
               "Stopped by you: ",
               held3.map((a3) => a3.name).join(", "),
@@ -4119,14 +4118,14 @@
     return /* @__PURE__ */ u3(Card, { kind: "notice", children: [
       /* @__PURE__ */ u3("strong", { children: /not running/.test(down) ? "The container runtime is not running" : "Status is not available" }),
       /* @__PURE__ */ u3("div", { class: "muted", children: down }),
-      /* @__PURE__ */ u3("div", { class: "muted", children: "Every app runs inside it, so they are all paused until it starts. This page checks again every 10 seconds." })
+      /* @__PURE__ */ u3("div", { class: "muted", children: "Every app is paused until it starts." })
     ] });
   }
   function ReportActions({ reveal, show: show4, email }) {
     return /* @__PURE__ */ u3("div", { class: "actions reveal", children: [
       /* @__PURE__ */ u3("button", { class: "small", onClick: show4, children: reveal }),
       /* @__PURE__ */ u3("button", { id: "emailReport", class: "small", onClick: email, children: "Email it to my helper" }),
-      /* @__PURE__ */ u3("span", { class: "muted", children: "Read it through, then share the file when asking for help. Email starts a message to HELPER_EMAIL and shows the file to attach." })
+      /* @__PURE__ */ u3("span", { class: "muted", children: "Read it through before you share it." })
     ] });
   }
   function mountStatusNote(el3, props) {
@@ -4453,7 +4452,7 @@
           s3.name
         );
       }) }),
-      /* @__PURE__ */ u3("p", { class: "muted", children: heavy.length ? `${heavy.map((s3) => nameOf(s3.name)).join(" and ")} ${heavy.length === 1 ? "is" : "are"} busy. Some apps work hard for a while after you add files (Immich reads new photos); if it lasts, stop what you don’t use. On battery, the battery saver pauses the heaviest apps.` : "Nothing is working hard. On battery, the battery saver pauses the heaviest apps." })
+      !!heavy.length && /* @__PURE__ */ u3("p", { class: "muted", children: `${heavy.map((s3) => nameOf(s3.name)).join(" and ")} ${heavy.length === 1 ? "is" : "are"} busy.` })
     ] });
   }
   function mountUsage(el3, props) {
@@ -4531,6 +4530,7 @@
       /* @__PURE__ */ u3("div", { class: "setting" + (toggle ? " toggle" : "") + (p3.focus.includes(s3.key) ? " focus" : "") + (p3.wanted.has(s3.key) ? "" : " more"), id: "setting-" + s3.key, hidden: hidden3, children: [
         /* @__PURE__ */ u3("div", { class: "key", title: s3.key, children: [
           /* @__PURE__ */ u3("span", { class: "label", children: label }),
+          s3.help && /* @__PURE__ */ u3("span", { class: "helptip", tabIndex: 0, role: "img", "aria-label": plainHelp(s3.help, toggle), title: plainHelp(s3.help, toggle), children: "i" }),
           /* @__PURE__ */ u3("code", { children: s3.key })
         ] }),
         buttons.length ? /* @__PURE__ */ u3("div", { class: "inputrow", children: [
@@ -4612,7 +4612,7 @@
             openLabel: "open"
           },
           x3.id
-        )) }) : /* @__PURE__ */ u3("p", { class: "gensub", children: "No phone paired yet: the Homelab app sees Status and Finances from anywhere." })
+        )) }) : /* @__PURE__ */ u3("p", { class: "gensub", children: "No phone paired yet." })
       ] }),
       /* @__PURE__ */ u3(Card, { kind: "gencard", id: "genCare", children: [
         /* @__PURE__ */ u3(CardHead, { title: "Automatic care" }),
@@ -4739,7 +4739,7 @@
         /* @__PURE__ */ u3("button", { class: "small", onClick: () => on2.openSheet(who.username), children: "Open the fridge sheet" }),
         /* @__PURE__ */ u3("button", { class: "small", onClick: on2.doneAdding, children: "Done" })
       ] }),
-      /* @__PURE__ */ u3("p", { class: "muted", children: "The welcome page opens here, on this computer: they scan its code with their phone's camera, or you print it for them. It's for them alone, as it holds their sign-in link and their music and films password, so don't email it. To send something, send the fridge sheet: their apps with a code each, and neither of those." })
+      /* @__PURE__ */ u3("p", { class: "muted", children: "It holds their sign-in link and a password: show or print it, don't email it. The fridge sheet is safe to send." })
     ] });
   }
   function AddPerson({ apps: apps2, open: open5, on: on2 }) {
@@ -4800,7 +4800,7 @@
   function People({ people, pocket, apps: apps2, log: log2, on: on2, privateFinances, justAdded: justAdded2 }) {
     const here3 = people.filter(active);
     const head = /* @__PURE__ */ u3(CardHead, { title: "People", children: /* @__PURE__ */ u3("span", { class: "muted", children: here3.length ? `${here3.length} in the household` : "just you so far" }) });
-    const why = /* @__PURE__ */ u3("p", { class: "muted", children: "Each person gets one sign-in for the apps, with their phone's face or fingerprint and no password to remember, and a welcome page with their apps and the phone apps to install. Their films and music apps (Jellyfin and Navidrome) have a password of their own: once each app's admin key is on its page in Settings (Jellyfin, Navidrome), the homelab makes their accounts too. Their sign-in link works once: Welcome page shows it again until it's used, and Make a new sign-in link replaces one they lost." });
+    const why = null;
     if (!pocket) {
       return /* @__PURE__ */ u3(S, { children: [
         head,
@@ -4904,7 +4904,7 @@
     };
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3(CardHead, { title: "Phones", children: /* @__PURE__ */ u3("span", { class: "muted", children: phones.length ? `${phones.length} paired` : "none paired yet" }) }),
-      /* @__PURE__ */ u3("p", { class: "muted", children: "Status and Backups on your phones, at home and on your own private network (never on the internet). Each pairs once; it can only look unless you let it make changes, and it sees Finances only if you pick that for it." }),
+      /* @__PURE__ */ u3("p", { class: "muted", children: "Never on the internet. A phone can only look unless you allow changes." }),
       !!phones.length && /* @__PURE__ */ u3(Rows, { children: phones.map((p3) => /* @__PURE__ */ u3(
         Row,
         {
@@ -4981,7 +4981,7 @@
         online,
         " online"
       ] }) }),
-      /* @__PURE__ */ u3("p", { class: "muted", children: "Each of these can open the apps away from home. One that is lost or sold: Remove it, and it can no longer reach them." }),
+      /* @__PURE__ */ u3("p", { class: "muted", children: "Lost or sold one? Remove it." }),
       /* @__PURE__ */ u3(Rows, { children: devices.map((d3) => /* @__PURE__ */ u3(
         Row,
         {
@@ -5092,7 +5092,7 @@
       ] }),
       log2 && /* @__PURE__ */ u3("pre", { id: "uninstallLog", role: "log", ref: logRef, children: log2 }),
       result === "done" && /* @__PURE__ */ u3("p", { id: "uninstallDone", class: "ok", children: o3.app ? "Done. Homelab Wizard quits now." : "Done: the log’s last lines say what is left for you." }),
-      result === "failed" && /* @__PURE__ */ u3("p", { id: "uninstallFailed", class: "bad", children: "Some of it could not be removed: the log says which. Fix that, then run it again; what already went stays gone." })
+      result === "failed" && /* @__PURE__ */ u3("p", { id: "uninstallFailed", class: "bad", children: "Some of it could not be removed: the log says which." })
     ] });
   }
   var mountUninstall = (el3, props) => R(/* @__PURE__ */ u3(Uninstall, { ...props }), el3);
@@ -5256,11 +5256,8 @@
       !system && !!noAccent && /* @__PURE__ */ u3("p", { id: "noAccent", class: "muted look-help", children: noAccent }),
       /* @__PURE__ */ u3(Choice, { label: "Contrast", value: look2.contrast, options: [["system", "Like the system"], ["more", "More"]], pick: put("contrast") }),
       /* @__PURE__ */ u3(Choice, { label: "Layout", value: look2.layout, options: [["classic", "Classic"], ["islands", "Islands"]], pick: put("layout") }),
-      /* @__PURE__ */ u3("p", { class: "muted look-help", children: "Islands sets the sidebar and the page apart as panels of their own, with space around them." }),
       /* @__PURE__ */ u3(Choice, { label: "Motion", value: look2.motion, options: [["system", "Like the system"], ["less", "Less"], ["none", "None"]], pick: put("motion") }),
-      /* @__PURE__ */ u3("p", { class: "muted look-help", children: "Less keeps colours fading but nothing slides, spins, or grows; None stops every animation." }),
       /* @__PURE__ */ u3(Choice, { label: "Transparency", value: look2.transparency, options: [["system", "Like the system"], ["off", "Off"]], pick: put("transparency") }),
-      /* @__PURE__ */ u3("p", { class: "muted look-help", children: "Off draws the bars that float over the page, and the side panel, solid instead of see-through." }),
       /* @__PURE__ */ u3(
         Choice,
         {
@@ -5270,8 +5267,7 @@
           pick: (v3) => set2({ ...look2, icon: v3 === "own" ? look2.icon.startsWith("#") ? look2.icon : look2.accent || "#2563eb" : v3 })
         }
       ),
-      iconMode === "own" && /* @__PURE__ */ u3(Colours, { label: "Icon colour", value: look2.icon, systemLabel: "The usual icon", pick: (v3) => set2({ ...look2, icon: v3 }) }),
-      /* @__PURE__ */ u3("p", { class: "muted look-help", children: "The icon in the menu bar (the system tray on Windows and Linux) takes its new colour within a few seconds." })
+      iconMode === "own" && /* @__PURE__ */ u3(Colours, { label: "Icon colour", value: look2.icon, systemLabel: "The usual icon", pick: (v3) => set2({ ...look2, icon: v3 }) })
     ] });
   }
   function mountAppearance(el3, props) {
@@ -7994,9 +7990,8 @@
         /* @__PURE__ */ u3(CardHead, { title: "Off-site" }),
         /* @__PURE__ */ u3(CardFigure, { figure: /* @__PURE__ */ u3("span", { class: "value", children: o3.destinationOK ? placeName(o3.destination) : /* @__PURE__ */ u3("span", { class: "warn", children: "Not set" }) }), label: o3.destinationOK ? "Encrypted before it leaves" : void 0 }),
         /* @__PURE__ */ u3("p", { class: "bksub", children: o3.destinationOK ? /* @__PURE__ */ u3("span", { title: o3.destination, children: [
-          "Encrypted, in ",
-          lastFolder(o3.destination),
-          ". Only your recovery kit can open it."
+          "In ",
+          lastFolder(o3.destination)
         ] }) : os === "linux" ? "Put a backup drive or a synced folder in Settings › Backups go to" : "Put a Proton Drive folder in Settings › Backups go to" })
       ] })
     ] });
@@ -8117,7 +8112,7 @@
     if (!jobs.length) {
       return /* @__PURE__ */ u3(S, { children: [
         /* @__PURE__ */ u3(CardHead, { title, children: /* @__PURE__ */ u3("button", { class: "small", onClick: create, children: "Create the backup jobs" }) }),
-        /* @__PURE__ */ u3("p", { class: "muted", children: "No jobs yet. This makes the jobs in docs/Automation.md, encrypted with passphrases kept in .env, and runs the small ones once. Then copy DUPLICATI_SECRETS_PASSPHRASE from Settings into Vaultwarden." })
+        /* @__PURE__ */ u3("p", { class: "muted", children: "No jobs yet. Afterwards, copy DUPLICATI_SECRETS_PASSPHRASE from Settings into Vaultwarden." })
       ] });
     }
     const bad = jobs.filter((j3) => j3.state !== "ok" || j3.checkProblem).length;
@@ -8161,9 +8156,9 @@
         ago(k3.lastTest)
       ] }) }),
       /* @__PURE__ */ u3("p", { class: "muted", children: [
-        "Kopia keeps a copy of its own of the same folders in ",
+        "In ",
         /* @__PURE__ */ u3("span", { title: k3.repository, children: shortPath(k3.repository) }),
-        ", apart from Duplicati's, and its restore is tested on its own.",
+        ".",
         " ",
         k3.failed ? `The last test: ${k3.failed}.` : never(k3.lastTest) ? "No restore test yet." : `Last proven ${ago(k3.lastTest)}.`
       ] }),
@@ -9722,7 +9717,7 @@
   function Facts({ p: p3 }) {
     const { a: a3, entry, usage: usage2, disk: disk2, days, backup: o3, on: on2 } = p3;
     const url = a3.address ? "https://" + a3.address : a3.url || "";
-    const reach = entry?.public ? "At home, and on the internet through the Cloudflare Tunnel" : a3.address ? "At home and on your own private network, not on the internet" : "On this machine only";
+    const reach = entry?.public ? "At home, and on the internet through the Cloudflare Tunnel" : a3.address ? "Your own private network, not on the internet" : "On this machine only";
     const seen2 = { watching: p3.watching, stopped: a3.state === "stopped" };
     const [weekValue] = weekWords(days, p3.outages, Date.now(), seen2);
     const late = o3 && !never(o3.lastRun) && Date.now() - new Date(o3.lastRun).getTime() > (o3.staleAfterHours || 30) * 36e5;
@@ -9799,7 +9794,7 @@
     if (a3.held) rows.push(/* @__PURE__ */ u3(Row, { dot: "warn", title: "Its updates are held", sub: `After a rollback, the nightly update leaves it out; homelab updates release ${a3.id} puts it back` }, "held"));
     return /* @__PURE__ */ u3(Card, { kind: "alerts pagecard", id: "appUpdates", children: [
       /* @__PURE__ */ u3(CardHead, { title: "Updates", children: a3.state === "running" && /* @__PURE__ */ u3("button", { class: "small change", disabled: busy2, title: "Shows what it brings first: its newer releases' notes", onClick: on2.update, children: "Check for an update" }) }),
-      rows.length ? /* @__PURE__ */ u3(Rows, { children: rows }) : /* @__PURE__ */ u3(Empty, { children: "No update since the homelab last started it. The nightly update dumps its database first, then updates it." })
+      rows.length ? /* @__PURE__ */ u3(Rows, { children: rows }) : /* @__PURE__ */ u3(Empty, { children: "No update since it last started." })
     ] });
   }
   function doneSub(e3) {
@@ -9831,10 +9826,9 @@
     const shown8 = (rows || []).slice(0, 6);
     return /* @__PURE__ */ u3(Card, { kind: "alerts pagecard", id: "appDone", children: [
       /* @__PURE__ */ u3(CardHead, { title: "Recently done", children: /* @__PURE__ */ u3("button", { class: "small change", onClick: open5, children: "Everything that was done…" }) }),
-      problem ? /* @__PURE__ */ u3(Empty, { children: problem }) : rows === null ? /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : shown8.length ? /* @__PURE__ */ u3(Rows, { children: shown8.map((e3) => /* @__PURE__ */ u3(Row, { title: e3.text, sub: doneSub(e3) }, e3.id)) }) : /* @__PURE__ */ u3(Empty, { children: "Nothing done to it yet that's kept here. Its starts, stops, restarts and updates, and the watchdog's, are kept for 90 days." }),
+      problem ? /* @__PURE__ */ u3(Empty, { children: problem }) : rows === null ? /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : shown8.length ? /* @__PURE__ */ u3(Rows, { children: shown8.map((e3) => /* @__PURE__ */ u3(Row, { title: e3.text, sub: doneSub(e3) }, e3.id)) }) : /* @__PURE__ */ u3(Empty, { children: "Nothing yet." }),
       /* @__PURE__ */ u3(Sheet, { id: "doneSheet", titleId: "doneTitle", children: [
         /* @__PURE__ */ u3("h2", { id: "doneTitle", children: "Everything that was done" }),
-        /* @__PURE__ */ u3("p", { class: "muted", children: "The last 90 days: starts, stops, restarts, updates, roll backs, the watchdog's restarts, settings and Finances changed, and who did each." }),
         /* @__PURE__ */ u3("input", { type: "search", class: "donesearch", value: q2, onInput: (e3) => setQ(e3.target.value), placeholder: "Search: an app, a phone, restarted…", "aria-label": "Search what was done", autocomplete: "off", spellcheck: false }),
         all === null ? /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : all.length ? /* @__PURE__ */ u3(Rows, { children: all.map((e3) => /* @__PURE__ */ u3(Row, { title: e3.text, sub: doneSub(e3) }, e3.id)) }) : /* @__PURE__ */ u3(Empty, { children: q2.trim() ? `Nothing done matches “${q2.trim()}”.` : "Nothing done yet that's kept here." }),
         /* @__PURE__ */ u3("div", { class: "actions", children: /* @__PURE__ */ u3("button", { class: "small", onClick: close3, children: "Close" }) })
@@ -9850,7 +9844,7 @@
     return /* @__PURE__ */ u3(Card, { kind: "alerts pagecard", id: "appStopped", children: [
       /* @__PURE__ */ u3(CardHead, { title: "What CrowdSec stopped today", children: head && /* @__PURE__ */ u3("span", { class: "muted", children: head }) }),
       reading3 && /* @__PURE__ */ u3(Empty, { children: "Asking CrowdSec…" }),
-      !s3 && !reading3 && /* @__PURE__ */ u3(Empty, { children: "CrowdSec can't be read right now: it and the proxy both need to be running." }),
+      !s3 && !reading3 && /* @__PURE__ */ u3(Empty, { children: "CrowdSec can't be read: it and the proxy need to be running." }),
       s3 && !s3.enforced && /* @__PURE__ */ u3(Rows, { children: /* @__PURE__ */ u3(Row, { dot: "bad", title: "Bans aren't reaching the proxy", sub: `${s3.bouncer}. Status › Protection › Fix reconnects them.` }) }),
       s3 && (today2.length ? /* @__PURE__ */ u3(Rows, { children: [
         today2.map((a3, i3) => /* @__PURE__ */ u3(
@@ -9934,19 +9928,10 @@
             disabled: busy2 || "updates" in switching2,
             on: updates,
             set: (v3) => on2.setting("updates", v3),
-            sub: !updates ? "Held: the nightly update leaves it out" : ownDays ? `On ${daysText} only, with a backup of its data first` : "Every night, with a backup of its data first"
+            sub: !updates ? "Held" : ownDays ? `On ${daysText} only` : "Every night"
           }
         ),
-        container && updates && /* @__PURE__ */ u3(
-          Switch2,
-          {
-            label: `Only on ${daysText}`,
-            disabled: busy2 || "sundays" in switching2,
-            on: ownDays,
-            set: (v3) => on2.setting("sundays", v3),
-            sub: ownDays ? "The other nights leave it alone; updating it by hand still works any day" : "For an app you would rather not see change midweek"
-          }
-        ),
+        container && updates && /* @__PURE__ */ u3(Switch2, { label: `Only on ${daysText}`, disabled: busy2 || "sundays" in switching2, on: ownDays, set: (v3) => on2.setting("sundays", v3) }),
         /* @__PURE__ */ u3(
           Switch2,
           {
@@ -9954,7 +9939,7 @@
             disabled: busy2 || "alerts" in switching2,
             on: alerts,
             set: (v3) => on2.setting("alerts", v3),
-            sub: alerts ? `On your phone through ntfy, and on ${p3.machine}` : "Still checked and shown on Status, without an alert"
+            sub: alerts ? `On your phone and ${p3.machine}` : "Shown on Status, without an alert"
           }
         ),
         a3.reach && /* @__PURE__ */ u3(
@@ -11059,27 +11044,24 @@
           "Link all ",
           list.length
         ] }),
-        children: [
-          /* @__PURE__ */ u3("p", { class: "fx-sub fx-lead", children: "Linked, one is taken as paying it, so the plan doesn't take it out again on its day." }),
-          /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: list.map((t3) => {
-            const g2 = found2.get(t3.id), x3 = L2.payment[g2.payment];
-            return /* @__PURE__ */ u3(
-              Row,
-              {
-                lead: /* @__PURE__ */ u3(TxMark, { t: t3, categories: v3.categories }),
-                title: txTitle(t3, L2),
-                sub: `${dayLong(t3.date)} · looks like ${x3?.name || g2.payment}, planned ${money(x3?.amount || 0)} for ${dayShort(g2.due)}`,
-                when: /* @__PURE__ */ u3(Amount, { value: t3.amount, sign: t3.amount > 0, tone: t3.amount > 0 ? "in" : "", form: "full" }),
-                whenPlain: true,
-                end: /* @__PURE__ */ u3("span", { class: "fx-linkbtns", children: [
-                  /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy2, "aria-label": `Link ${t3.payee || "it"} on ${dayLong(t3.date)} to ${x3?.name}`, onClick: () => link([t3.id]), children: "Link" }),
-                  /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy2, "aria-label": `${t3.payee || "It"} on ${dayLong(t3.date)} is not ${x3?.name}`, onClick: () => notIt(t3.id), children: "Not it" })
-                ] })
-              },
-              t3.id
-            );
-          }) })
-        ]
+        children: /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: list.map((t3) => {
+          const g2 = found2.get(t3.id), x3 = L2.payment[g2.payment];
+          return /* @__PURE__ */ u3(
+            Row,
+            {
+              lead: /* @__PURE__ */ u3(TxMark, { t: t3, categories: v3.categories }),
+              title: txTitle(t3, L2),
+              sub: `${dayLong(t3.date)} · looks like ${x3?.name || g2.payment}, planned ${money(x3?.amount || 0)} for ${dayShort(g2.due)}`,
+              when: /* @__PURE__ */ u3(Amount, { value: t3.amount, sign: t3.amount > 0, tone: t3.amount > 0 ? "in" : "", form: "full" }),
+              whenPlain: true,
+              end: /* @__PURE__ */ u3("span", { class: "fx-linkbtns", children: [
+                /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy2, "aria-label": `Link ${t3.payee || "it"} on ${dayLong(t3.date)} to ${x3?.name}`, onClick: () => link([t3.id]), children: "Link" }),
+                /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy2, "aria-label": `${t3.payee || "It"} on ${dayLong(t3.date)} is not ${x3?.name}`, onClick: () => notIt(t3.id), children: "Not it" })
+              ] })
+            },
+            t3.id
+          );
+        }) })
       }
     );
   }
@@ -11135,24 +11117,21 @@
           "Join all ",
           list.length
         ] }),
-        children: [
-          /* @__PURE__ */ u3("p", { class: "fx-sub fx-lead", children: "Money out of one of your accounts and the same into another: joined, it is one transfer, neither spending nor income." }),
-          /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: list.map((p3) => /* @__PURE__ */ u3(
-            Row,
-            {
-              lead: /* @__PURE__ */ u3(TxMark, { t: joined(p3) }),
-              title: `${name(p3.out.account)} → ${name(p3.in.account)}`,
-              sub: `${p3.out.payee || "Out"}, ${dayShort(p3.out.date)} · ${p3.in.payee || "in"}, ${dayShort(p3.in.date)}`,
-              when: /* @__PURE__ */ u3(Amount, { value: -p3.out.amount, form: "full" }),
-              whenPlain: true,
-              end: /* @__PURE__ */ u3("span", { class: "fx-linkbtns", children: [
-                /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy2, "aria-label": `Join ${money(-p3.out.amount)} from ${name(p3.out.account)} to ${name(p3.in.account)}`, onClick: () => join([p3]), children: "Join" }),
-                /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy2, "aria-label": `${money(-p3.out.amount)} from ${name(p3.out.account)} to ${name(p3.in.account)} is not one transfer`, onClick: () => apart(p3), children: "Not one transfer" })
-              ] })
-            },
-            p3.out.id + p3.in.id
-          )) })
-        ]
+        children: /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: list.map((p3) => /* @__PURE__ */ u3(
+          Row,
+          {
+            lead: /* @__PURE__ */ u3(TxMark, { t: joined(p3) }),
+            title: `${name(p3.out.account)} → ${name(p3.in.account)}`,
+            sub: `${p3.out.payee || "Out"}, ${dayShort(p3.out.date)} · ${p3.in.payee || "in"}, ${dayShort(p3.in.date)}`,
+            when: /* @__PURE__ */ u3(Amount, { value: -p3.out.amount, form: "full" }),
+            whenPlain: true,
+            end: /* @__PURE__ */ u3("span", { class: "fx-linkbtns", children: [
+              /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy2, "aria-label": `Join ${money(-p3.out.amount)} from ${name(p3.out.account)} to ${name(p3.in.account)}`, onClick: () => join([p3]), children: "Join" }),
+              /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy2, "aria-label": `${money(-p3.out.amount)} from ${name(p3.out.account)} to ${name(p3.in.account)} is not one transfer`, onClick: () => apart(p3), children: "Not one transfer" })
+            ] })
+          },
+          p3.out.id + p3.in.id
+        )) })
       }
     );
   }
@@ -12467,7 +12446,7 @@
     };
     return /* @__PURE__ */ u3("form", { class: "finform finbalances", onSubmit: submit, ...watch2, children: [
       /* @__PURE__ */ u3("div", { class: "formhead", children: /* @__PURE__ */ u3("h2", { id: "finSheetTitle", children: "Update balances" }) }),
-      /* @__PURE__ */ u3("p", { class: "formsub muted", children: "Each starts at what it should hold today. Type what your bank shows, then press Enter." }),
+      /* @__PURE__ */ u3("p", { class: "formsub muted", children: "Type what your bank shows." }),
       !!props.fromApps?.length && /* @__PURE__ */ u3("div", { class: "fromapp", children: [
         props.fromApps.map((app) => /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: !!pulled.busy, onClick: () => fromApp(app), children: pulled.busy === app.name ? `Reading ${app.name}…` : `From ${app.name}` }, app.name)),
         pulled.said && /* @__PURE__ */ u3("span", { class: "muted", role: "status", children: pulled.said }),
@@ -12820,9 +12799,8 @@
     return /* @__PURE__ */ u3("form", { class: "finform finlogos", onSubmit: submit, ...watch2, children: [
       /* @__PURE__ */ u3("div", { class: "formhead", children: /* @__PURE__ */ u3("h2", { id: "finSheetTitle", children: "Logos" }) }),
       /* @__PURE__ */ u3("p", { class: "formsub muted", children: [
-        "These show initials. ",
         /* @__PURE__ */ u3("strong", { children: "Get the real logo" }),
-        " asks that company's website for its own icon, from this computer, only when you click; nothing else is sent, and the logo is kept only in your plan."
+        " asks that company's website for its icon, only when you click."
       ] }),
       fetchLogo2 && ready2 > 1 && /* @__PURE__ */ u3("p", { children: /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: getting.length > 0, onClick: getAll, children: getting.length ? "Getting the logos…" : `Get them all (${ready2})` }) }),
       /* @__PURE__ */ u3("ul", { class: "logolist", children: rows.map((r3) => {
@@ -12869,11 +12847,6 @@
     };
     return /* @__PURE__ */ u3("form", { class: "finform finrules", onSubmit: submit, ...watch2, children: [
       /* @__PURE__ */ u3("div", { class: "formhead", children: /* @__PURE__ */ u3("h2", { id: "finSheetTitle", children: "Rules" }) }),
-      /* @__PURE__ */ u3("p", { class: "formsub muted", children: [
-        "What each payee becomes as it comes in, from ",
-        /* @__PURE__ */ u3("strong", { children: "Always do this for…" }),
-        " on a transaction. Every import follows them, before anything is guessed."
-      ] }),
       /* @__PURE__ */ u3("datalist", { id: "finRuleCategories", children: named6.map((n3) => /* @__PURE__ */ u3("option", { value: n3 }, n3)) }),
       /* @__PURE__ */ u3("ul", { class: "rulelist", children: rules.map((r3, i3) => /* @__PURE__ */ u3("li", { children: [
         /* @__PURE__ */ u3("span", { class: "grow rulefields", children: [
@@ -12887,11 +12860,7 @@
         ] }),
         /* @__PURE__ */ u3("button", { type: "button", class: "small", "aria-label": `Remove the rule for ${r3.match}`, onClick: () => setRules(latest2.current.filter((_3, j3) => j3 !== i3)), children: "Remove" })
       ] }, i3)) }),
-      !rules.length && /* @__PURE__ */ u3("p", { class: "muted", children: [
-        "No rules yet. On a transaction, give its payee a name or a category and tick ",
-        /* @__PURE__ */ u3("strong", { children: "Always do this for…" }),
-        "."
-      ] }),
+      !rules.length && /* @__PURE__ */ u3("p", { class: "muted", children: "No rules yet." }),
       problem && /* @__PURE__ */ u3("p", { class: "formerr bad", role: "alert", children: problem }),
       /* @__PURE__ */ u3(Actions3, { busy: busy2, exists: false, remove: () => {
       }, close: props.close, touched: touched2 || JSON.stringify(rules) !== JSON.stringify(plan.rules || []) })
@@ -12970,7 +12939,7 @@
     };
     return /* @__PURE__ */ u3("form", { class: "finform fincats", onSubmit: submit, children: [
       /* @__PURE__ */ u3("div", { class: "formhead", children: /* @__PURE__ */ u3("h2", { id: "finSheetTitle", children: "Categories" }) }),
-      /* @__PURE__ */ u3("p", { class: "formsub muted", children: "Renaming one renames it on every transaction; deleting one moves its transactions to its group." }),
+      /* @__PURE__ */ u3("p", { class: "formsub muted", children: "Renaming changes every transaction." }),
       /* @__PURE__ */ u3("ul", { class: "catlist", children: ordered2.map((r3) => {
         const i3 = rows.indexOf(r3);
         return /* @__PURE__ */ u3("li", { class: r3.parent ? "sub" : "", "data-was": r3.was || void 0, children: [
@@ -13023,7 +12992,6 @@
     };
     return /* @__PURE__ */ u3("form", { class: "finform", onSubmit: submit, ...watch2, children: [
       /* @__PURE__ */ u3("div", { class: "formhead", children: /* @__PURE__ */ u3("h2", { id: "finSheetTitle", children: "Budgets" }) }),
-      /* @__PURE__ */ u3("p", { class: "formsub muted", children: "A budget for a group counts its own categories too (Food counts Groceries and Eating out)." }),
       /* @__PURE__ */ u3("ul", { class: "catlist budgetlist", children: rows.map((r3, i3) => /* @__PURE__ */ u3("li", { children: [
         /* @__PURE__ */ u3("select", { "aria-label": `Budget ${i3 + 1} category`, value: r3.category, onChange: (ev) => set2(i3, "category", ev.target.value), children: [
           /* @__PURE__ */ u3("option", { value: "", children: "Pick a category" }),
@@ -13153,7 +13121,7 @@
     ] }) });
     return /* @__PURE__ */ u3("form", { class: "finform finimport", onSubmit: bring, children: [
       /* @__PURE__ */ u3("div", { class: "formhead", children: /* @__PURE__ */ u3("h2", { id: "finSheetTitle", children: "Import a bank's file" }) }),
-      /* @__PURE__ */ u3("p", { class: "formsub muted", children: "A CSV or an OFX/QFX file from your bank's website. It is read on this device and kept only in your ledger." }),
+      /* @__PURE__ */ u3("p", { class: "formsub muted", children: "A CSV or OFX/QFX file from your bank. Read on this device only." }),
       /* @__PURE__ */ u3("div", { class: "formgrid", children: [
         /* @__PURE__ */ u3(Field, { label: "File", children: /* @__PURE__ */ u3("span", { class: "importfile", children: [
           /* @__PURE__ */ u3("input", { ref: file, type: "file", accept: ".csv,.ofx,.qfx,text/csv", hidden: true, onChange: (e3) => read(e3.currentTarget.files?.[0]) }),
@@ -13221,7 +13189,7 @@
             sum(inn)
           ] });
         })(),
-        guessed.some(Boolean) && /* @__PURE__ */ u3("p", { class: "muted importnote", children: "A row that looks like a planned payment pays it, so the plan doesn't take it out again on its day. Change it below if it's wrong." }),
+        guessed.some(Boolean) && /* @__PURE__ */ u3("p", { class: "muted importnote", children: "Rows that match a planned payment pay it. Change any below." }),
         /* @__PURE__ */ u3("ul", { class: "importlist", children: found2.slice(0, 60).map((t3, i3) => {
           const k3 = fresh.indexOf(t3), fixing = fixes2.has(i3), renaming = renames.has(i3), dup = k3 < 0 && !fixing && !renaming;
           const g2 = k3 < 0 ? void 0 : guessed[k3], link = k3 < 0 ? "" : linkOf(k3), x3 = payments.find((q2) => q2.id === link);
@@ -13295,7 +13263,6 @@
     const remove = () => keep3({ ...plan, goals: (plan.goals || []).filter((q2) => q2.id !== g2?.id) });
     return /* @__PURE__ */ u3("form", { class: "finform", onSubmit: submit, ...watch2, children: [
       /* @__PURE__ */ u3("div", { class: "formhead", children: /* @__PURE__ */ u3("h2", { id: "finSheetTitle", children: g2 ? g2.name : "Add a goal" }) }),
-      /* @__PURE__ */ u3("p", { class: "formsub muted", children: "A goal never moves money: it counts a share of what accounts hold toward something." }),
       /* @__PURE__ */ u3("div", { class: "formgrid", children: [
         /* @__PURE__ */ u3(Field, { label: "Name", children: /* @__PURE__ */ u3("input", { value: name, onInput: input(setName), placeholder: "Emergency fund" }) }),
         /* @__PURE__ */ u3(MoneyField, { label: "How much it needs", value: target, set: setTarget, hint: "10000" }),
@@ -14136,7 +14103,7 @@
               ] }),
               /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => setPicked(""), children: "Close" })
             ] }),
-            node.id === "kept:cash" ? /* @__PURE__ */ u3("p", { class: "fx-sub", children: "What was left after taxes, spending, and what went into savings accounts: it stayed where it came in." }) : node.id === "src:accounts" ? /* @__PURE__ */ u3("p", { class: "fx-sub", children: "More went out than came in: the rest came out of what the accounts held." }) : /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: [
+            node.id === "kept:cash" ? /* @__PURE__ */ u3("p", { class: "fx-sub", children: "It stayed where it came in." }) : node.id === "src:accounts" ? /* @__PURE__ */ u3("p", { class: "fx-sub", children: "It came out of what the accounts held." }) : /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: [
               items.slice(0, many).map((it, i3) => /* @__PURE__ */ u3(
                 Row,
                 {
@@ -14447,8 +14414,8 @@
     const shown8 = all ? list : list.slice(0, 5);
     return /* @__PURE__ */ u3(Widget, { title: "Taken as done", span: "all", kind: "fx-since", children: [
       /* @__PURE__ */ u3("p", { class: "fx-sub fx-lead", children: [
-        "Dated on or after the day you typed in the balances, so counted in them. A bill due that day still comes out",
-        set2 ? ": mark it Already in if the balance has it. Mark any that hasn't happened yet: it comes today." : "."
+        "Already in the balances you typed. A bill due that day still comes out",
+        set2 ? ": mark it Already in if the balance has it." : "."
       ] }),
       /* @__PURE__ */ u3(Rows, { kind: "finrows fx-rows", children: shown8.map((s3) => {
         const x3 = s3.payment ? L2.payment[s3.payment] : void 0;
@@ -15291,7 +15258,7 @@
       /* @__PURE__ */ u3("div", { class: "fx-watchhead", children: [
         /* @__PURE__ */ u3("div", { children: [
           /* @__PURE__ */ u3("h3", { children: "Watchlist" }),
-          /* @__PURE__ */ u3("p", { class: "fx-sub", children: "Followed, not owned: priced by Ghostfolio at each read, never counted in your worth" })
+          /* @__PURE__ */ u3("p", { class: "fx-sub", children: "Followed, not owned: not in your worth" })
         ] }),
         can && /* @__PURE__ */ u3("button", { type: "button", class: "small", "aria-expanded": adding2, onClick: () => {
           setAdding(!adding2);
@@ -15630,7 +15597,7 @@
       if (await keep3({ ...plan, accounts })) read();
     };
     return /* @__PURE__ */ u3("div", { class: "fx-investleft", children: [
-      /* @__PURE__ */ u3("p", { class: "fx-sub", children: "Not matched to an account here yet, so not shown: pick which account each is." }),
+      /* @__PURE__ */ u3("p", { class: "fx-sub", children: "Not matched to an account yet." }),
       /* @__PURE__ */ u3("ul", { children: left.map((name) => /* @__PURE__ */ u3("li", { children: /* @__PURE__ */ u3("label", { children: [
         /* @__PURE__ */ u3("strong", { children: name }),
         " in Ghostfolio is",
@@ -16356,7 +16323,7 @@
           }
         ),
         a3.kind === "loan" && /* @__PURE__ */ u3(LoanSection, { v: v3, L: L2, ledger, a: a3, saveLedger: saveLedger2, keepPlan: keep3 }),
-        (a3.kind !== "loan" || !!mine.length) && /* @__PURE__ */ u3(Widget, { title: "Latest transactions", span: "all", kind: "fx-acctlatest", open: mine.length ? () => toTx({ account: a3.id }) : void 0, openLabel: `Open ${a3.name}'s transactions`, children: mine.length ? /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: mine.slice(0, 8).map((t3) => /* @__PURE__ */ u3(TxRow, { t: t3, v: v3, L: L2, edit: editTx, compact: true }, t3.id)) }) : /* @__PURE__ */ u3(Empty, { children: "No transactions in or out of it yet. An import or one typed in shows here." }) })
+        (a3.kind !== "loan" || !!mine.length) && /* @__PURE__ */ u3(Widget, { title: "Latest transactions", span: "all", kind: "fx-acctlatest", open: mine.length ? () => toTx({ account: a3.id }) : void 0, openLabel: `Open ${a3.name}'s transactions`, children: mine.length ? /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: mine.slice(0, 8).map((t3) => /* @__PURE__ */ u3(TxRow, { t: t3, v: v3, L: L2, edit: editTx, compact: true }, t3.id)) }) : /* @__PURE__ */ u3(Empty, { children: "No transactions yet." }) })
       ] })
     ] });
   }
@@ -16845,7 +16812,7 @@ ${pays}
       focusing.current = "";
     });
     const cushion = v3.plan.cushion || 0;
-    if (!dates.length) return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3(Widget, { title: "Calendar", span: "all", children: /* @__PURE__ */ u3(Empty, { children: "Nothing to show yet: add a checking account, a paycheck, and the payments that repeat." }) }) });
+    if (!dates.length) return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3(Widget, { title: "Calendar", span: "all", children: /* @__PURE__ */ u3(Empty, { children: "Nothing to show yet." }) }) });
     const go3 = (day3, focus = false) => {
       const d3 = day3 < first ? first : day3 > last2 ? last2 : day3;
       setSel(d3);
@@ -17249,7 +17216,7 @@ ${pays}
         ] }),
         /* @__PURE__ */ u3("p", { class: "fx-sub fx-exported", role: "status", children: saved })
       ] }),
-      !txs.length ? /* @__PURE__ */ u3(Widget, { title: "Nothing yet", span: "all", children: /* @__PURE__ */ u3(Empty, { children: "Reports read the transactions: add some on Transactions, and they show here." }) }) : /* @__PURE__ */ u3(S, { children: [
+      !txs.length ? /* @__PURE__ */ u3(Widget, { title: "Nothing yet", span: "all", children: /* @__PURE__ */ u3(Empty, { children: "No transactions yet." }) }) : /* @__PURE__ */ u3(S, { children: [
         /* @__PURE__ */ u3(Widget, { title: "Spending by category", kind: "fx-bycat", children: groups4.length ? /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: groups4.map((g2) => {
           const icon = iconOf(v3.categories, g2.name), hue2 = categoryHue(g2.name, v3.categories);
           return /* @__PURE__ */ u3(
@@ -17564,7 +17531,7 @@ ${pays}
     const button = /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: got.busy, onClick: pull, children: got.busy ? "Reading Wallos…" : got.subs ? "Read again" : "From Wallos" });
     const names5 = (list) => list.map((s3) => s3.name).join(", ");
     return /* @__PURE__ */ u3(Widget, { title: "Subscriptions in Wallos", span: "all", kind: "fx-wallos", actions: button, children: [
-      !got.subs && !got.problem && /* @__PURE__ */ u3("p", { class: "fx-sub fx-lead", children: "Wallos is running here. Bring in the subscriptions it keeps that the plan doesn't have yet; Wallos isn't changed." }),
+      !got.subs && !got.problem && /* @__PURE__ */ u3("p", { class: "fx-sub fx-lead", children: "Bring in Wallos' subscriptions the plan doesn't have." }),
       got.problem && /* @__PURE__ */ u3("p", { class: "formerr bad", role: "alert", children: got.problem }),
       sorted && /* @__PURE__ */ u3(S, { children: [
         sorted.add.length ? /* @__PURE__ */ u3(S, { children: [
@@ -17661,7 +17628,7 @@ ${pays}
     return /* @__PURE__ */ u3("fieldset", { class: "fincalendar", children: [
       /* @__PURE__ */ u3("legend", { children: "Calendar feed" }),
       !key7 ? /* @__PURE__ */ u3(S, { children: [
-        /* @__PURE__ */ u3("p", { class: "fx-sub", children: "Paydays and bills in your phone's calendar, through a link only you have. It works over Tailscale or the homelab's own domain, never over the home Wi-Fi." }),
+        /* @__PURE__ */ u3("p", { class: "fx-sub", children: "Paydays and bills in your phone's calendar, through a private link." }),
         /* @__PURE__ */ u3("label", { class: "fcheckbox", children: [
           /* @__PURE__ */ u3("input", { type: "checkbox", checked: withAmounts, onClick: (e3) => setWithAmounts(e3.currentTarget.checked) }),
           " With amounts"
@@ -17730,7 +17697,7 @@ ${pays}
         ] })
       ] }),
       !!others2.length && /* @__PURE__ */ u3("div", { class: "finrates", children: [
-        /* @__PURE__ */ u3("p", { class: "fx-sub", children: "Accounts in other currencies count at these rates, typed in by you: Finances never looks a rate up." }),
+        /* @__PURE__ */ u3("p", { class: "fx-sub", children: "Typed in by you; never looked up." }),
         others2.map((code2) => /* @__PURE__ */ u3("label", { class: "field finrate", children: [
           "1 ",
           code2,
@@ -17994,7 +17961,7 @@ ${pays}
                 " a year"
               ] }) }),
               !e3.gross && !ded.length && edit && /* @__PURE__ */ u3("p", { class: "fx-sub fx-payhint", children: [
-                "Add the gross and what is taken out (taxes, a 401(k), insurance) to see where the rest of the pay goes. ",
+                "Add the gross and what's taken out. ",
                 /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => edit("person", e3.id), children: "Add them" })
               ] }),
               !!e3.gross && (() => {
@@ -18840,7 +18807,7 @@ ${pays}
     const present = slots.filter((s3) => !!s3.node);
     if (phone2) return /* @__PURE__ */ u3("div", { class: "fx-board", children: present.map((s3) => s3.node) });
     const button = /* @__PURE__ */ u3("div", { class: "fx-arrange", children: editing2 ? /* @__PURE__ */ u3(S, { children: [
-      /* @__PURE__ */ u3("span", { class: "fx-arrangehint", children: "Drag a card by its handle, or use ▲ ▼. Pick its width; Hide what you don't use. Kept on this device." }),
+      /* @__PURE__ */ u3("span", { class: "fx-arrangehint", children: "Kept on this device." }),
       /* @__PURE__ */ u3("button", { type: "button", class: "btn", onClick: () => {
         keepLayout(null);
         setLayout(null);
@@ -18992,7 +18959,7 @@ ${pays}
     } : null;
     const read = month3 ? month3.when === "ahead" ? void 0 : { start: month3.start, last: month3.when === "now" ? v3.today : month3.last } : was;
     const spentDays = month3 ? month3.when === "past" ? { from: month3.start, to: month3.last } : void 0 : was && { from: was.start, to: was.last };
-    if (!v3.plan.accounts?.length && !v3.plan.people?.length && !add) return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3(Card, { kind: "finstart", children: /* @__PURE__ */ u3(Empty, { children: "Nothing typed in yet: Finances are filled in on the computer, or on a phone allowed to change them." }) }) });
+    if (!v3.plan.accounts?.length && !v3.plan.people?.length && !add) return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3(Card, { kind: "finstart", children: /* @__PURE__ */ u3(Empty, { children: "Nothing typed in yet." }) }) });
     if (!v3.plan.accounts?.length && !v3.plan.people?.length) {
       return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3("div", { class: "fx-board", children: /* @__PURE__ */ u3(StartThree, { v: v3, add }) }) });
     }
@@ -20810,7 +20777,7 @@ ${pays}
         job2.step.text
       ] }),
       !job2.ended && /* @__PURE__ */ u3(Bar, { title: job2.title, p: p3, idle: "Starting…" }),
-      job2.stopping && !job2.ended && /* @__PURE__ */ u3("p", { class: "muted tidynow", children: "Stopping at the next safe point, so nothing is left half done. Run it again to carry on from there." }),
+      job2.stopping && !job2.ended && /* @__PURE__ */ u3("p", { class: "muted tidynow", children: "Stopping at the next safe point." }),
       p3?.note && !job2.ended && !job2.stopping && /* @__PURE__ */ u3("p", { class: "muted tidynow", children: [
         "Now: ",
         p3.note
@@ -20853,7 +20820,7 @@ ${pays}
         now2.step.text
       ] }),
       /* @__PURE__ */ u3(Bar, { title, p: p3, idle: "Working…" }),
-      stopping ? /* @__PURE__ */ u3("p", { class: "muted tidynow", children: "Stopping at the next safe point, so nothing is left half done. Run it again to carry on from there." }) : p3?.note && /* @__PURE__ */ u3("p", { class: "muted tidynow", children: [
+      stopping ? /* @__PURE__ */ u3("p", { class: "muted tidynow", children: "Stopping at the next safe point." }) : p3?.note && /* @__PURE__ */ u3("p", { class: "muted tidynow", children: [
         "Now: ",
         p3.note
       ] }),
@@ -21068,16 +21035,16 @@ ${pays}
       const lyr = last(l3, "lyrics")?.result;
       const none2 = n2(lyr?.none), apart = n2(lyr?.to_clean);
       const notOn = n2(lyr?.not_found) ? ` · ${count(n2(lyr.not_found), "song")} not on LRCLIB yet` : "";
-      if (lyr && apart > 0) out.push({ kind: "lyrics", title: `${count(apart, "song")} show two languages on one line`, sub: "Each translation goes on a line of its own under its original, so both scroll along in Navidrome. Done on this computer, in minutes", go: { label: "Tidy lyrics", run: () => act.run("music", "lyrics", ["--tidy"]) } });
-      if (lyr && none2 > 0) out.push({ kind: "lyrics", title: `${count(none2, "song")} could get lyrics`, sub: `Synced from LRCLIB, so they scroll along in Navidrome${notOn}`, go: { label: "Add lyrics", run: () => act.run("music", "lyrics") } });
-      if (!lyr) out.push({ kind: "lyrics", title: "See how many songs have lyrics", sub: "Reads every song; changes nothing. Then Tidy Up offers to tidy them or add the missing ones", go: { label: "Check lyrics", run: () => act.run("music", "lyrics", ["--check"]), quiet: true } });
-      if (lyr && lyr.to_clean === void 0 && none2 === 0) out.push({ kind: "lyrics", title: "Look over the lyrics again", sub: "Finds songs that show two languages on one line; changes nothing", go: { label: "Check lyrics", run: () => act.run("music", "lyrics", ["--check"]), quiet: true } });
+      if (lyr && apart > 0) out.push({ kind: "lyrics", title: `${count(apart, "song")} show two languages on one line`, sub: "", go: { label: "Tidy lyrics", run: () => act.run("music", "lyrics", ["--tidy"]) } });
+      if (lyr && none2 > 0) out.push({ kind: "lyrics", title: `${count(none2, "song")} could get lyrics`, sub: notOn.replace(/^ · /, ""), go: { label: "Add lyrics", run: () => act.run("music", "lyrics") } });
+      if (!lyr) out.push({ kind: "lyrics", title: "See how many songs have lyrics", sub: "", go: { label: "Check lyrics", run: () => act.run("music", "lyrics", ["--check"]), quiet: true } });
+      if (lyr && lyr.to_clean === void 0 && none2 === 0) out.push({ kind: "lyrics", title: "Look over the lyrics again", sub: "", go: { label: "Check lyrics", run: () => act.run("music", "lyrics", ["--check"]), quiet: true } });
     } else if (k3 === "movies" || k3 === "tv") {
       const c4 = l3.counts || {}, bloated = n2(c4.bloated), withTdarr = n2(c4.queued) + n2(l3.waiting);
       const reasons = Object.keys(scan?.reasons || {}).slice(0, 2).map((r3) => r3.replace(/\b([Hh])\.?26([45])\b/g, "H.26$2")).join(", ");
-      if (!scan) out.push({ kind: k3, title: `Look at your ${k3 === "tv" ? "TV" : "films"} first`, sub: "A scan finds what wastes space and changes nothing", go: { label: "Scan", run: () => act.run(k3, "scan") } });
-      else if (bloated && !d3.tdarr?.[k3]) out.push({ kind: k3, title: `Set up Tdarr to shrink ${things(k3, bloated)}`, sub: "Tidy Up makes Tdarr's library with the space-saving settings", gain: n2(scan.saving), go: { label: "Set up Tdarr", run: () => act.run("tdarr", "setup", ["--apply"]) } });
-      else if (bloated) out.push({ kind: k3, title: `Shrink ${things(k3, bloated)}`, sub: `They look the same after${reasons ? " · " + lead(reasons) : ""}`, gain: n2(scan.saving), go: { label: "Shrink", run: () => act.run(k3, "run") } });
+      if (!scan) out.push({ kind: k3, title: `Look at your ${k3 === "tv" ? "TV" : "films"} first`, sub: "", go: { label: "Scan", run: () => act.run(k3, "scan") } });
+      else if (bloated && !d3.tdarr?.[k3]) out.push({ kind: k3, title: `Set up Tdarr to shrink ${things(k3, bloated)}`, sub: "", gain: n2(scan.saving), go: { label: "Set up Tdarr", run: () => act.run("tdarr", "setup", ["--apply"]) } });
+      else if (bloated) out.push({ kind: k3, title: `Shrink ${things(k3, bloated)}`, sub: reasons ? lead(reasons) : "", gain: n2(scan.saving), go: { label: "Shrink", run: () => act.run(k3, "run") } });
       const dupes = n2(scan?.duplicates), dd = last(l3, "dedupe"), scanned = last(l3, "scan");
       if (dupes && !(dd?.ok && scanned && dd.at > scanned.at)) {
         const list = scan?.duplicate_list || [];
@@ -21086,7 +21053,7 @@ ${pays}
         out.push({
           kind: k3,
           title: `${lead(things(k3, dupes))} ${dupes === 1 ? "is" : "are"} in the library twice`,
-          sub: "The copy with the best picture stays; the extra ones go",
+          sub: "",
           gain: n2(scan?.duplicate_bytes),
           go: { label: "Remove extras…", risky: true, run: () => act.ask({
             title: "Put the extra copies in the Trash?",
@@ -21113,7 +21080,7 @@ ${pays}
         kind: k3,
         title: `Tdarr is shrinking ${things(k3, withTdarr)}`,
         warn: away2,
-        sub: away2 ? "Tdarr isn't answering, so nothing is shrinking: it's paused on battery until this computer is plugged in, or stopped (start it from Status)" : "Swapped in one by one as each is ready; a big library takes days",
+        sub: away2 ? "Tdarr isn't answering, so nothing is shrinking: it's paused on battery until this computer is plugged in, or stopped (start it from Status)" : "",
         go: { label: "Collect", run: () => act.run(k3, "collect"), quiet: true }
       });
     } else if (k3 === "books") {
@@ -21125,7 +21092,7 @@ ${pays}
         if (many2) out.push({
           kind: k3,
           title: `Make a Calibre library from your ${things(k3, many2)}`,
-          sub: "Each book with its own title, author, series, and cover, so the review and Calibre-Web can read them",
+          sub: "",
           go: { label: "Make it…", run: () => act.ask({
             title: `Make a Calibre library from ${things(k3, many2)}?`,
             action: "Make it",
@@ -21137,12 +21104,12 @@ ${pays}
         else out.push({ kind: k3, title: "Not a Calibre library yet", sub: "No books in folders of their own were found here: put each book in a folder of its own, or point Books at your Calibre library in Settings", warn: true });
         return out;
       }
-      if (!rv) out.push({ kind: k3, title: "Look over your books", sub: "Titles, series, publishers, genres, and covers: nothing changes until you say", go: { label: "Review", run: () => act.review() } });
-      else if (many && !reviewApplied(l3)) out.push({ kind: k3, title: `${things(k3, many)} could look tidier`, sub: changing.length ? changing.slice(0, 2).join(", ") + (changing.length > 2 ? `, and ${changing.length - 2} more` : "") : "Titles, series, and covers, from the last review", go: { label: "Look…", run: () => act.review() } });
+      if (!rv) out.push({ kind: k3, title: "Look over your books", sub: "", go: { label: "Review", run: () => act.review() } });
+      else if (many && !reviewApplied(l3)) out.push({ kind: k3, title: `${things(k3, many)} could look tidier`, sub: changing.length ? changing.slice(0, 2).join(", ") + (changing.length > 2 ? `, and ${changing.length - 2} more` : "") : "", go: { label: "Look…", run: () => act.review() } });
     } else if (k3 === "audiobooks") {
-      if (!scan) out.push({ kind: k3, title: "Look at your audiobooks first", sub: "A scan finds books split into many files and changes nothing", go: { label: "Scan", run: () => act.run("audiobooks", "scan") } });
+      if (!scan) out.push({ kind: k3, title: "Look at your audiobooks first", sub: "", go: { label: "Scan", run: () => act.run("audiobooks", "scan") } });
       else if (n2(scan.books)) out.push({ kind: k3, title: `Merge ${things(k3, n2(scan.books))}`, sub: `${count(n2(scan.files), "file")} into one .m4b each, with chapters and one cover`, gain: n2(scan.saving), go: { label: "Merge", run: () => act.run("audiobooks", "run") } });
-      else if (n2(scan.whole)) out.push({ kind: k3, title: `All ${things(k3, n2(scan.whole))} are one file each`, sub: "Nothing to merge. One that comes in split into many files shows up here after the next scan" });
+      else if (n2(scan.whole)) out.push({ kind: k3, title: `All ${things(k3, n2(scan.whole))} are one file each`, sub: "Nothing to merge" });
     }
     return out;
   }
@@ -21315,7 +21282,7 @@ ${pays}
         },
         i3
       );
-    }) }) : /* @__PURE__ */ u3(Empty, { children: "Nothing yet. What Tidy Up does shows here, with Undo where it can be undone." }) });
+    }) }) : /* @__PURE__ */ u3(Empty, { children: "Nothing yet." }) });
   }
   var toolFor = { all: [...LIBRARIES], video: ["movies", "tv"], books: ["books"] };
   var TOOLS = /* @__PURE__ */ new Set(["python", "ffmpeg", "calibredb"]);
@@ -21377,10 +21344,7 @@ ${pays}
           gain ? " · " + size(gain) + " to win back" : ""
         ] }) : void 0, children: todos.length ? /* @__PURE__ */ u3(TodoRows, { todos, job: job2 }) : /* @__PURE__ */ u3("div", { class: "tidyclear", children: [
           /* @__PURE__ */ u3("span", { class: "fmark logo tidyicon fx-h-in", "aria-hidden": "true", children: /* @__PURE__ */ u3("svg", { viewBox: "0 0 24 24", children: /* @__PURE__ */ u3("path", { d: "M20 6 9 17l-5-5" }) }) }),
-          /* @__PURE__ */ u3("div", { children: [
-            /* @__PURE__ */ u3("strong", { children: "Everything's tidy" }),
-            /* @__PURE__ */ u3("div", { class: "muted", children: "New downloads are filed as they finish, and anything new to tidy shows up here." })
-          ] })
+          /* @__PURE__ */ u3("div", { children: /* @__PURE__ */ u3("strong", { children: "Everything's tidy" }) })
         ] }) }),
         /* @__PURE__ */ u3(DriveWidget, { d: d3 })
       ] }),
@@ -21406,7 +21370,6 @@ ${pays}
     const waits2 = busy(job2) || !!other;
     const state3 = (f4) => gone.has(f4) ? "Not there now: plug in its drive" : !ib.watching ? "Not watched: Tidy Up's background work is off in Settings" : when3 === "manual" ? "Tidied when you press Tidy up now" : when3 === "daily" ? "Tidied once a day, after 3 AM" : "Watched: tidied as things arrive";
     return /* @__PURE__ */ u3(Widget, { title: "Drop anything here", span: "all", kind: "tidyinbox", children: [
-      /* @__PURE__ */ u3("p", { class: "muted tidyinboxlead", children: "Music, films, shows, books, and audiobooks: put them in one of these folders, however messy, and Tidy Up works out what each is, cleans it up, and files it in your library." }),
       /* @__PURE__ */ u3("fieldset", { class: "tidyinboxset", disabled: waits2, children: [
         /* @__PURE__ */ u3(Rows, { kind: "fx-rows tidytodo", children: [
           folders.map((f4) => /* @__PURE__ */ u3(
@@ -21512,7 +21475,7 @@ ${pays}
         chosen?.current ? /* @__PURE__ */ u3("span", { class: "muted", children: "Your libraries are here now." }) : /* @__PURE__ */ u3(Go, { primary: true, label: chosen ? `Use ${label(chosen)}` : "Use it", job: job2, onClick: () => chosen && act.useMediaRoot(chosen.root, label(chosen)) }),
         !first && /* @__PURE__ */ u3("button", { class: "small", onClick: () => act.places(false), children: chosen?.current ? "Close" : "Cancel" })
       ] }),
-      !chosen?.current && /* @__PURE__ */ u3("p", { class: "muted tidyplacenote", children: "Jellyfin, Navidrome, Calibre-Web and your other apps that read the libraries restart once, so they look there. Tidy Up lists them and asks first. Nothing is moved or copied." })
+      !chosen?.current && /* @__PURE__ */ u3("p", { class: "muted tidyplacenote", children: "The apps that read the libraries restart once. Nothing is moved or copied." })
     ] });
   }
   var showIn = osName === "mac" ? "Show in Finder" : osName === "windows" ? "Show in Explorer" : "Show the folder";
@@ -21629,7 +21592,7 @@ ${pays}
           ] })
         },
         f4.id
-      )) }) : /* @__PURE__ */ u3(Empty, { children: "Nothing yet today. Drop something in a watched folder, or press Tidy up now." })
+      )) }) : /* @__PURE__ */ u3(Empty, { children: "Nothing yet today." })
     ] });
   }
   function meterOf(l3) {

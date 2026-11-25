@@ -149,7 +149,7 @@ export function Overview({ v, L, sel, pick, add, edit, setSince, keep, ledger, o
   // The cards the period picked puts in the paycheck card's place, and the days the spending ring reads.
   const read = month ? (month.when === 'ahead' ? undefined : { start: month.start, last: month.when === 'now' ? v.today : month.last }) : was;
   const spentDays = month ? (month.when === 'past' ? { from: month.start, to: month.last } : undefined) : was && { from: was.start, to: was.last };
-  if (!v.plan.accounts?.length && !v.plan.people?.length && !add) return <div class="fin"><Card kind="finstart"><Empty>Nothing typed in yet: Finances are filled in on the computer, or on a phone allowed to change them.</Empty></Card></div>;
+  if (!v.plan.accounts?.length && !v.plan.people?.length && !add) return <div class="fin"><Card kind="finstart"><Empty>Nothing typed in yet.</Empty></Card></div>;
   if (!v.plan.accounts?.length && !v.plan.people?.length) {
     return <div class="fin"><div class="fx-board"><StartThree v={v} add={add} /></div></div>;
   }

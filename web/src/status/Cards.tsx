@@ -78,7 +78,7 @@ function MemoryPressure({ m, stop }: { m: health.Memory; stop?: (id: string) => 
  */
 export function Watchdog({ w, unchecked = [], openSetup, fix, stop, snooze }: WatchdogProps) {
   if (never(w.lastRun)) {
-    return <Head title="Watchdog"><span class="muted">It checks every app, address, and backup every 15 minutes once the jobs are installed. <ActionLink onClick={openSetup}>Open Setup</ActionLink></span></Head>;
+    return <Head title="Watchdog"><span class="muted">Not set up. <ActionLink onClick={openSetup}>Open Setup</ActionLink></span></Head>;
   }
   const failing = w.failing || [];
   const late = Date.now() - new Date(w.lastRun).getTime() > 45 * 60000;
@@ -92,10 +92,10 @@ export function Watchdog({ w, unchecked = [], openSetup, fix, stop, snooze }: Wa
         </span>
       </Head>
       {w.memory && <MemoryPressure m={w.memory} stop={stop} />}
-      {late && <div class="muted more">It has not run since {ago(w.lastRun)}. Setup › Install the jobs schedules it every 15 minutes.</div>}
+      {late && <div class="warn more">Hasn't run since {ago(w.lastRun)}.</div>}
       {!!failing.length && (
         <div class="row more">
-          <span class="muted">Fix it restarts what is down or unwell and reconnects what dropped; it shows the plan first.</span>
+          <span class="grow" />
           <button id="watchFix" class="small" onClick={fix}>Fix it</button>
         </div>
       )}
@@ -164,7 +164,7 @@ export function Downloads({ c }: { c: downloads.Card }) {
           {shown.map((i, n) => <Row key={n} dot={stateDot[i.state] ?? ''} title={i.name} sub={i.words} subTone={i.state === 'stuck' ? 'warn' : ''} when={i.app} />)}
         </Rows>
       )}
-      {items.length > shown.length && <p class="muted">{`And ${items.length - shown.length} more: each app's own page lists them all.`}</p>}
+      {items.length > shown.length && <p class="muted">{`And ${items.length - shown.length} more`}</p>}
     </>
   );
 }
@@ -215,7 +215,7 @@ export function Alerts({ events, problem, openSetup, refresh, log, watch, snooze
     return (
       <Head title="Recent alerts">
         {/NTFY_READ_TOKEN/.test(problem || '')
-          ? <span class="muted">They appear here once the alert token is set up. <ActionLink onClick={openSetup}>Open Setup</ActionLink> {every}</span>
+          ? <span class="muted">Not set up. <ActionLink onClick={openSetup}>Open Setup</ActionLink> {every}</span>
           : <span class="muted">{problem} {every}</span>}
       </Head>
     );
@@ -285,7 +285,6 @@ function AlertLog({ log, watch, snooze }: { log: () => Promise<history.Alert[]>;
       <button type="button" class="small" onClick={open}>Every alert…</button>
       <Sheet id="alertLogSheet" titleId="alertLogTitle">
         <h2 id="alertLogTitle">Every alert</h2>
-        <p class="muted">What the homelab alerted about in the last 90 days, kept on this computer: when each problem cleared, and who snoozed one.</p>
         {problem ? <p class="muted">{problem}</p>
           : all === null ? <p class="muted">Reading…</p>
             : all.length ? (
@@ -300,7 +299,7 @@ function AlertLog({ log, watch, snooze }: { log: () => Promise<history.Alert[]>;
                   );
                 })}
               </Rows>
-            ) : <p class="muted">No alerts kept yet. From now on, each one the homelab sends is kept here for 90 days.</p>}
+            ) : <p class="muted">No alerts yet.</p>}
         <div class="actions"><button class="small" onClick={close}>Close</button></div>
       </Sheet>
     </>
@@ -364,7 +363,6 @@ export function Week({ w }: { w: app.Weekly }) {
       <Rows kind="week">
         {lines.map((l, i) => <Row key={i} dot={l.startsWith('✓') ? 'ok' : l.startsWith('•') ? 'warn' : ''}>{l.replace(/^[✓•◦]\s*/, '')}</Row>)}
       </Rows>
-      <p class="muted">The same summary reaches your phone on Sundays once alerts are set up.</p>
     </>
   );
 }

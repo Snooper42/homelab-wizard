@@ -101,7 +101,7 @@ export function Uninstall({ machine, on }: { machine: string; on: UninstallActio
       )}
       {log && <pre id="uninstallLog" role="log" ref={logRef}>{log}</pre>}
       {result === 'done' && <p id="uninstallDone" class="ok">{o.app ? 'Done. Homelab Wizard quits now.' : 'Done: the log’s last lines say what is left for you.'}</p>}
-      {result === 'failed' && <p id="uninstallFailed" class="bad">Some of it could not be removed: the log says which. Fix that, then run it again; what already went stays gone.</p>}
+      {result === 'failed' && <p id="uninstallFailed" class="bad">Some of it could not be removed: the log says which.</p>}
     </div>
   );
 }

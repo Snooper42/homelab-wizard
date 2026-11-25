@@ -10,7 +10,7 @@ export function StatusNote({ text, down }: { text: string; down?: string }) {
     <Card kind="notice">
       <strong>{/not running/.test(down) ? 'The container runtime is not running' : 'Status is not available'}</strong>
       <div class="muted">{down}</div>
-      <div class="muted">Every app runs inside it, so they are all paused until it starts. This page checks again every 10 seconds.</div>
+      <div class="muted">Every app is paused until it starts.</div>
     </Card>
   );
 }
@@ -21,7 +21,7 @@ export function ReportActions({ reveal, show, email }: { reveal: string; show: (
     <div class="actions reveal">
       <button class="small" onClick={show}>{reveal}</button>
       <button id="emailReport" class="small" onClick={email}>Email it to my helper</button>
-      <span class="muted">Read it through, then share the file when asking for help. Email starts a message to HELPER_EMAIL and shows the file to attach.</span>
+      <span class="muted">Read it through before you share it.</span>
     </div>
   );
 }

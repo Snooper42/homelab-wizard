@@ -148,7 +148,7 @@ export function Calendar({ v, L, ledger, edit }: CalendarProps) {
     focusing.current = '';
   });
   const cushion = v.plan.cushion || 0;
-  if (!dates.length) return <div class="fin"><Widget title="Calendar" span="all"><Empty>Nothing to show yet: add a checking account, a paycheck, and the payments that repeat.</Empty></Widget></div>;
+  if (!dates.length) return <div class="fin"><Widget title="Calendar" span="all"><Empty>Nothing to show yet.</Empty></Widget></div>;
 
   const go = (day: string, focus = false) => {
     const d = day < first ? first : day > last ? last : day;

@@ -330,7 +330,7 @@ function Facts({ p }: { p: AppPageProps }) {
   const { a, entry, usage, disk, days, backup: o, on } = p;
   const url = a.address ? 'https://' + a.address : a.url || '';
   const reach = entry?.public ? 'At home, and on the internet through the Cloudflare Tunnel'
-    : a.address ? 'At home and on your own private network, not on the internet' : 'On this machine only';
+    : a.address ? 'Your own private network, not on the internet' : 'On this machine only';
   const seen = { watching: p.watching, stopped: a.state === 'stopped' };
   const [weekValue] = weekWords(days, p.outages, Date.now(), seen);
   const late = o && !never(o.lastRun) && Date.now() - new Date(o.lastRun).getTime() > (o.staleAfterHours || 30) * 36e5;
@@ -362,7 +362,7 @@ function Updates({ p }: { p: AppPageProps }) {
       <CardHead title="Updates">
         {a.state === 'running' && <button class="small change" disabled={busy} title="Shows what it brings first: its newer releases' notes" onClick={on.update}>Check for an update</button>}
       </CardHead>
-      {rows.length ? <Rows>{rows}</Rows> : <Empty>No update since the homelab last started it. The nightly update dumps its database first, then updates it.</Empty>}
+      {rows.length ? <Rows>{rows}</Rows> : <Empty>No update since it last started.</Empty>}
     </Card>
   );
 }
@@ -402,10 +402,9 @@ function Done({ on }: { on: AppPageActions }) {
       {problem ? <Empty>{problem}</Empty>
         : rows === null ? <Empty>Reading…</Empty>
           : shown.length ? <Rows>{shown.map((e) => <Row key={e.id} title={e.text} sub={doneSub(e)} />)}</Rows>
-            : <Empty>Nothing done to it yet that's kept here. Its starts, stops, restarts and updates, and the watchdog's, are kept for 90 days.</Empty>}
+            : <Empty>Nothing yet.</Empty>}
       <Sheet id="doneSheet" titleId="doneTitle">
         <h2 id="doneTitle">Everything that was done</h2>
-        <p class="muted">The last 90 days: starts, stops, restarts, updates, roll backs, the watchdog's restarts, settings and Finances changed, and who did each.</p>
         <input type="search" class="donesearch" value={q} onInput={(e) => setQ((e.target as HTMLInputElement).value)} placeholder="Search: an app, a phone, restarted…" aria-label="Search what was done" autocomplete="off" spellcheck={false} />
         {all === null ? <Empty>Reading…</Empty>
           : all.length ? <Rows>{all.map((e) => <Row key={e.id} title={e.text} sub={doneSub(e)} />)}</Rows>
@@ -427,7 +426,7 @@ function Stopped({ stopped }: { stopped: crowdsec.Protection | null | 'reading' 
     <Card kind="alerts pagecard" id="appStopped">
       <CardHead title="What CrowdSec stopped today">{head && <span class="muted">{head}</span>}</CardHead>
       {reading && <Empty>Asking CrowdSec…</Empty>}
-      {!s && !reading && <Empty>CrowdSec can't be read right now: it and the proxy both need to be running.</Empty>}
+      {!s && !reading && <Empty>CrowdSec can't be read: it and the proxy need to be running.</Empty>}
       {s && !s.enforced && (
         <Rows><Row dot="bad" title="Bans aren't reaching the proxy" sub={`${s.bouncer}. Status › Protection › Fix reconnects them.`} /></Rows>
       )}
@@ -482,7 +481,7 @@ function People({ p }: { p: AppPageProps }) {
 }
 
 /** One of its settings as a switch, with what it means beneath. */
-function Switch({ label, sub, on, disabled, set }: { label: string; sub: string; on: boolean; disabled: boolean; set: (on: boolean) => void }) {
+function Switch({ label, sub, on, disabled, set }: { label: string; sub?: string; on: boolean; disabled: boolean; set: (on: boolean) => void }) {
   return (
     <Row title={label} sub={sub}
       end={<>
@@ -512,11 +511,10 @@ function Settings({ p }: { p: AppPageProps }) {
       <CardHead title="Settings">{null}</CardHead>
       <Rows>
         {container && <Switch label="Nightly updates" disabled={busy || 'updates' in switching} on={updates} set={(v) => on.setting('updates', v)}
-          sub={!updates ? 'Held: the nightly update leaves it out' : ownDays ? `On ${daysText} only, with a backup of its data first` : 'Every night, with a backup of its data first'} />}
-        {container && updates && <Switch label={`Only on ${daysText}`} disabled={busy || 'sundays' in switching} on={ownDays} set={(v) => on.setting('sundays', v)}
-          sub={ownDays ? 'The other nights leave it alone; updating it by hand still works any day' : 'For an app you would rather not see change midweek'} />}
+          sub={!updates ? 'Held' : ownDays ? `On ${daysText} only` : 'Every night'} />}
+        {container && updates && <Switch label={`Only on ${daysText}`} disabled={busy || 'sundays' in switching} on={ownDays} set={(v) => on.setting('sundays', v)} />}
         <Switch label="Tell me if it stops" disabled={busy || 'alerts' in switching} on={alerts} set={(v) => on.setting('alerts', v)}
-          sub={alerts ? `On your phone through ntfy, and on ${p.machine}` : 'Still checked and shown on Status, without an alert'} />
+          sub={alerts ? `On your phone and ${p.machine}` : 'Shown on Status, without an alert'} />
         {a.reach && <Switch label="Reach it away from home" disabled={busy || 'away' in switching} on={away} set={(v) => on.setting('away', v)}
           sub={away ? 'Opens anywhere through your Cloudflare tunnel; away from home, Cloudflare can see what passes' : 'Home only: it opens on your home Wi-Fi, and nobody outside can reach it'} />}
         <Row title="In the nightly backup" sub={kept} end={<ActionLink onClick={on.openBackups}>Backups ›</ActionLink>} />

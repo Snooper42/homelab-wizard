@@ -42,7 +42,7 @@ export function SinceWidget({ v, L, set }: { v: finance.View; L: Lookup; set?: (
   const shown = all ? list : list.slice(0, 5);
   return (
     <Widget title="Taken as done" span="all" kind="fx-since">
-      <p class="fx-sub fx-lead">Dated on or after the day you typed in the balances, so counted in them. A bill due that day still comes out{set ? ': mark it Already in if the balance has it. Mark any that hasn\'t happened yet: it comes today.' : '.'}</p>
+      <p class="fx-sub fx-lead">Already in the balances you typed. A bill due that day still comes out{set ? ': mark it Already in if the balance has it.' : '.'}</p>
       <Rows kind="finrows fx-rows">
         {shown.map((s) => {
           const x = s.payment ? L.payment[s.payment] : undefined;

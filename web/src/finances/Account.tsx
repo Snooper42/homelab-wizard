@@ -82,7 +82,7 @@ export function AccountPage({ v, L, ledger, id, done, edit, update, toTx, editTx
         {/* As the Dashboard's Latest transactions (R5): one line a row, and the ↗ to all of them in Transactions. */}
         {(a.kind !== 'loan' || !!mine.length) && <Widget title="Latest transactions" span="all" kind="fx-acctlatest" open={mine.length ? () => toTx({ account: a.id }) : undefined} openLabel={`Open ${a.name}'s transactions`}>
           {mine.length ? <Rows kind="fx-rows">{mine.slice(0, 8).map((t) => <TxRow key={t.id} t={t} v={v} L={L} edit={editTx} compact />)}</Rows>
-            : <Empty>No transactions in or out of it yet. An import or one typed in shows here.</Empty>}
+            : <Empty>No transactions yet.</Empty>}
         </Widget>}
       </div>
     </div>
