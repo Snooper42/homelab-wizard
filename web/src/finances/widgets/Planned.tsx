@@ -26,7 +26,7 @@ export function PlannedWidget({ v, L, title, start, last, edit }: { v: finance.V
   const list = all ? rows : rows.slice(0, shown);
   return (
     <Widget title={title} kind="fx-planned" span="all">
-      <p class="fx-sub fx-lead fx-dates">{dayShort(start)} – {dayShort(last)}, from the plan</p>
+      <p class="fx-sub fx-lead fx-dates">{dayShort(start)} – {dayShort(last)}</p>
       {rows.length ? <>
         <div class="fx-pastsums">
           <Stat value={<Amount value={cameIn} tone="in" />} caption="Comes in" />

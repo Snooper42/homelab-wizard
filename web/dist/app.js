@@ -18482,8 +18482,7 @@ ${pays}
       /* @__PURE__ */ u3("p", { class: "fx-sub fx-lead fx-dates", children: [
         dayShort(past.start),
         " – ",
-        dayShort(past.last),
-        ", from your transactions"
+        dayShort(past.last)
       ] }),
       txs.length ? /* @__PURE__ */ u3(S, { children: [
         /* @__PURE__ */ u3("div", { class: "fx-pastsums", children: [
@@ -18511,8 +18510,7 @@ ${pays}
       /* @__PURE__ */ u3("p", { class: "fx-sub fx-lead fx-dates", children: [
         dayShort(start),
         " – ",
-        dayShort(last2),
-        ", from the plan"
+        dayShort(last2)
       ] }),
       rows.length ? /* @__PURE__ */ u3(S, { children: [
         /* @__PURE__ */ u3("div", { class: "fx-pastsums", children: [
