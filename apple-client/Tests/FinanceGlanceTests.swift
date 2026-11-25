@@ -94,3 +94,26 @@ import Testing
         #expect(flow.change == nil)
     }
 }
+
+/// The redesign's Budgets card on Finances' home: those worth a look first.
+@Suite struct BudgetsGlanceTests {
+    private func budgets(_ rows: String) throws -> [FinanceBudget] {
+        try JSONDecoder.homelab().decode([FinanceBudget].self, from: Data("[\(rows)]".utf8))
+    }
+
+    @Test func overThenAheadThenNearlyGoneThenMostUsed() throws {
+        let list = try budgets("""
+        {"category":"Car","per":"month","amount":300,"spent":48,"left":252,"pace":200},
+        {"category":"Food","per":"month","amount":600,"spent":298,"left":302,"pace":400},
+        {"category":"Gifts","per":"month","amount":100,"spent":92,"left":8,"pace":95},
+        {"category":"Coffee","per":"month","amount":40,"spent":30,"left":10,"pace":20},
+        {"category":"Subscriptions","per":"month","amount":150,"spent":200,"left":-50,"pace":100}
+        """)
+        #expect(BudgetsGlance.top(list).map(\.category) == ["Subscriptions", "Coffee", "Gifts"])
+        #expect(BudgetsGlance.top(list, limit: 5).map(\.category) == ["Subscriptions", "Coffee", "Gifts", "Food", "Car"])
+    }
+
+    @Test func noneIsNoCard() {
+        #expect(BudgetsGlance.top([]).isEmpty)
+    }
+}

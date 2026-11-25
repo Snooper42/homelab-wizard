@@ -55,9 +55,10 @@ struct FinancesView: View {
                     }
                     // Net worth and Cash flow side by side, as the redesign's picture; the full line is on Accounts.
                     WorthAndFlow(view: view, finances: finances)
-                    GlanceTiles(view: view, finances: finances)
-                    RecentTransactionsCard(view: view, finances: finances)
+                    // Then as the picture: the next bills, the latest transactions and the budgets worth a look.
                     UpcomingBillsCard(view: view, finances: finances)
+                    RecentTransactionsCard(view: view, finances: finances)
+                    BudgetsCard(view: view, finances: finances)
                     MoreFinancesCard(view: view, finances: finances)
                     if finances.canMakePrivate { PrivateOfferCard(finances: finances) }
                     if finances.privacy == .open, finances.canEdit { PrivateOffButton(finances: finances) }
@@ -252,11 +253,13 @@ extension CardHeading where Trailing == EmptyView {
     init(_ title: LocalizedStringKey) { self.init(title: title) { EmptyView() } }
 }
 
-/// "See All" on a card, in the accent.
-private struct SeeAll: View {
+/// A card's link in the accent, as the redesign's: "All ›", "Calendar ›".
+private struct AllLink: View {
+    var words: LocalizedStringKey = "All"
+
     var body: some View {
         HStack(spacing: 3) {
-            Text("See All")
+            Text(words)
             Image(systemName: "chevron.right").accessibilityHidden(true).font(.caption.weight(.bold))
         }
         .foregroundStyle(Theme.accent)
@@ -782,104 +785,7 @@ private struct WorthAndFlow: View {
     }
 }
 
-/// What's left to spend and the next bill, side by side.
-private struct GlanceTiles: View {
-    let view: FinancesPlanView
-    let finances: FinancesViewModel
-    @Environment(\.dynamicTypeSize) private var typeSize
-
-    var body: some View {
-        let next = FinancesView.upcomingBills(view, limit: 1).first
-        // Side by side, or one above the other at the largest text sizes.
-        let layout = typeSize.isAccessibilitySize ? AnyLayout(VStackLayout(spacing: 12)) : AnyLayout(HStackLayout(alignment: .top, spacing: 12))
-        if !view.budgets.isEmpty || next != nil {
-            layout {
-                if !view.budgets.isEmpty {
-                    let total = BudgetsTotal(view.budgets, today: view.today)
-                    NavigationLink {
-                        FinanceBudgetsPage(finances: finances)
-                    } label: {
-                        tile(title: total.isOver ? "Over budget" : "Left to spend", systemImage: "chart.pie.fill",
-                             tint: total.isOver ? Theme.danger : Color(light: 0xC2410C, dark: 0xF07B3F)) {
-                            Text(verbatim: amountText(abs(total.left), view.plan.currency, finances, whole: true))
-                                .font(.title2.weight(.heavy))
-                                .monospacedDigit()
-                                .foregroundStyle(total.isOver ? Theme.danger : Theme.ink)
-                                .lineLimit(1)
-                                .minimumScaleFactor(0.6)
-                                .contentTransition(.numericText())
-                            ProgressView(value: total.share)
-                                .tint(total.isOver ? Theme.danger : Theme.accent)
-                                .padding(.top, 2)
-                        }
-                    }
-                    .buttonStyle(PressableButtonStyle())
-                }
-                if let next, let name = view.paymentTitle(next.payment) {
-                    NavigationLink {
-                        FinanceBillsPage(finances: finances)
-                    } label: {
-                        tile(title: "Next bill", systemImage: "calendar", tint: Theme.danger) {
-                            HStack(spacing: 8) {
-                                if let payment = view.payment(next.payment) {
-                                    LogoCircle(payment: payment, size: 30)
-                                }
-                                VStack(alignment: .leading, spacing: 1) {
-                                    // Two lines, so "Groceries and gas" isn't "Groceries a…" in a narrow tile.
-                                    Text(verbatim: name)
-                                        .font(.subheadline.weight(.semibold))
-                                        .foregroundStyle(Theme.ink)
-                                        .lineLimit(2)
-                                    Text(verbatim: Self.when(next, view))
-                                        .font(.caption)
-                                        .foregroundStyle(Theme.secondaryInk)
-                                        .lineLimit(1)
-                                }
-                            }
-                            Text(verbatim: amountText(next.amount, view.plan.currency, finances))
-                                .font(.headline)
-                                .monospacedDigit()
-                                .foregroundStyle(Theme.ink)
-                                .contentTransition(.numericText())
-                        }
-                    }
-                    .buttonStyle(PressableButtonStyle())
-                }
-            }
-        }
-    }
-
-    /// "Today", "Tomorrow", else "Fri, Nov 14".
-    static func when(_ row: FinanceRow, _ view: FinancesPlanView) -> String {
-        if row.dateText == view.todayText { return "Today" }
-        if let date = row.date, let today = view.today, let tomorrow = Calendar.current.date(byAdding: .day, value: 1, to: today),
-           Calendar.current.isDate(date, inSameDayAs: tomorrow) { return "Tomorrow" }
-        return row.date?.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day()) ?? ""
-    }
-
-    private func tile<Content: View>(title: LocalizedStringKey, systemImage: String, tint: Color, @ViewBuilder content: () -> Content) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 6) {
-                Image(systemName: systemImage)
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(.white)
-                    .frame(width: 22, height: 22)
-                    .background(tint, in: RoundedRectangle(cornerRadius: 6, style: .continuous))
-                    .accessibilityHidden(true)
-                Text(title)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(Theme.secondaryInk)
-            }
-            content()
-        }
-        .padding(14)
-        .frame(maxWidth: .infinity, minHeight: 112, alignment: .topLeading)
-        .card(radius: 20)
-        .contentShape(Rectangle())
-    }
-}
-
-/// The latest transactions, as Wallet lists them; See All opens them all.
+/// The latest transactions, as Wallet lists them; All opens them all.
 private struct RecentTransactionsCard: View {
     let view: FinancesPlanView
     let finances: FinancesViewModel
@@ -892,7 +798,7 @@ private struct RecentTransactionsCard: View {
                 NavigationLink {
                     TransactionsView(finances: finances)
                 } label: {
-                    Text("Transactions")
+                    Text("Latest transactions")
                         .font(.title3.weight(.bold))
                         .foregroundStyle(Theme.ink)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -919,7 +825,7 @@ private struct RecentTransactionsCard: View {
                     NavigationLink {
                         TransactionsView(finances: finances)
                     } label: {
-                        SeeAll().font(.subheadline.weight(.semibold))
+                        AllLink().font(.subheadline.weight(.semibold))
                     }
                     .buttonStyle(.plain)
                 }
@@ -955,19 +861,21 @@ private struct RecentTransactionsCard: View {
     }
 }
 
-/// The next bills to come out, each with its logo, day and amount.
+/// The next bills to come out, each with its logo, day and amount, as the
+/// redesign's Coming up card; its heading opens Calendar (Bills is on the
+/// list under it).
 private struct UpcomingBillsCard: View {
     let view: FinancesPlanView
     let finances: FinancesViewModel
 
     var body: some View {
-        let rows = FinancesView.upcomingBills(view, limit: 4)
+        let rows = FinancesView.upcomingBills(view, limit: 3)
         if !rows.isEmpty {
             VStack(alignment: .leading, spacing: 4) {
                 NavigationLink {
-                    FinanceBillsPage(finances: finances)
+                    FinanceCalendarView(finances: finances)
                 } label: {
-                    CardHeading(title: "Coming Up") { SeeAll() }
+                    CardHeading(title: "Coming up") { AllLink(words: "Calendar") }
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
@@ -983,7 +891,7 @@ private struct UpcomingBillsCard: View {
                                 .font(.body.weight(.medium))
                                 .foregroundStyle(Theme.ink)
                                 .lineLimit(1)
-                            Text(verbatim: GlanceTiles.when(row, view))
+                            Text(verbatim: Self.when(row, view))
                                 .font(.caption)
                                 .foregroundStyle(row.late ? Theme.danger : Theme.secondaryInk)
                         }
@@ -1003,6 +911,70 @@ private struct UpcomingBillsCard: View {
             .padding(16)
             .card(radius: 24)
         }
+    }
+}
+
+extension UpcomingBillsCard {
+    /// "Today", "Tomorrow", else "Fri, Nov 14".
+    static func when(_ row: FinanceRow, _ view: FinancesPlanView) -> String {
+        if row.dateText == view.todayText { return "Today" }
+        if let date = row.date, let today = view.today, let tomorrow = Calendar.current.date(byAdding: .day, value: 1, to: today),
+           Calendar.current.isDate(date, inSameDayAs: tomorrow) { return "Tomorrow" }
+        return row.date?.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day()) ?? ""
+    }
+}
+
+/// The budgets worth a look, as the redesign's Budgets card: three at most
+/// (`BudgetsGlance`), each with its mark, what's left or how far over, and its
+/// bar (green, amber ahead of an even pace, red over). All opens Budgets,
+/// where what's left to spend in all is at the top. No budgets, no card.
+private struct BudgetsCard: View {
+    let view: FinancesPlanView
+    let finances: FinancesViewModel
+
+    var body: some View {
+        let shown = BudgetsGlance.top(view.budgets)
+        if !shown.isEmpty {
+            NavigationLink {
+                FinanceBudgetsPage(finances: finances)
+            } label: {
+                VStack(alignment: .leading, spacing: 4) {
+                    CardHeading(title: "Budgets") { AllLink() }
+                        .padding(.bottom, 6)
+                    ForEach(Array(shown.enumerated()), id: \.element.id) { i, budget in
+                        if i > 0 { Divider().padding(.leading, 40) }
+                        row(budget)
+                    }
+                }
+                .padding(16)
+                .card(radius: 24)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(PressableButtonStyle())
+        }
+    }
+
+    private func row(_ budget: FinanceBudget) -> some View {
+        let tint = budget.isOver ? Theme.danger : budget.isAhead ? Theme.warning : Theme.success
+        return VStack(alignment: .leading, spacing: 7) {
+            HStack(spacing: 10) {
+                LogoCircle(category: budget.category, categories: view.categories, size: 28)
+                Text(verbatim: budget.category)
+                    .font(.body.weight(.medium))
+                    .foregroundStyle(Theme.ink)
+                    .lineLimit(1)
+                Spacer(minLength: 8)
+                Text(verbatim: "\(amountText(abs(budget.left), view.plan.currency, finances, whole: true)) \(budget.isOver ? "over" : "left")")
+                    .font(.subheadline)
+                    .monospacedDigit()
+                    .foregroundStyle(budget.isOver ? Theme.danger : budget.isAhead ? Theme.warning : Theme.secondaryInk)
+            }
+            ProgressView(value: budget.share)
+                .tint(tint)
+                .accessibilityHidden(true)
+        }
+        .padding(.vertical, 6)
+        .accessibilityElement(children: .combine)
     }
 }
 

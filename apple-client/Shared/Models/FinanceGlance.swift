@@ -89,3 +89,23 @@ struct CashFlowGlance: Sendable, Equatable {
         return "\(Int(((keptShare ?? 0) * 100).rounded()))% kept · \(name)"
     }
 }
+
+/// The budgets Finances' home shows, as the redesign's Budgets card: those
+/// worth a look first, as the computer's Dashboard picks them (Budgets.tsx's
+/// `toWatch`: over, then ahead of an even pace, then nine tenths gone), then
+/// the most used; at most `limit`.
+enum BudgetsGlance {
+    static func top(_ budgets: [FinanceBudget], limit: Int = 3) -> [FinanceBudget] {
+        func rank(_ b: FinanceBudget) -> Int {
+            if b.isOver { return 0 }
+            if b.isAhead { return 1 }
+            if b.amount > 0, b.spent >= b.amount * 0.9 { return 2 }
+            return 3
+        }
+        func used(_ b: FinanceBudget) -> Double { b.amount > 0 ? b.spent / b.amount : 1 }
+        return Array(budgets.enumerated()
+            .sorted { (rank($0.element), -used($0.element), $0.offset) < (rank($1.element), -used($1.element), $1.offset) }
+            .map(\.element)
+            .prefix(max(limit, 0)))
+    }
+}
