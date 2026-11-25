@@ -470,7 +470,7 @@ private struct BackupsHero: View {
             }
             HStack(alignment: .firstTextBaseline, spacing: 6) {
                 Text(verbatim: words.figure)
-                    .font(.system(.largeTitle, design: .rounded).weight(.bold))
+                    .font(.largeTitle.weight(.semibold))
                     .monospacedDigit()
                     .foregroundStyle(Theme.ink)
                 Text(verbatim: words.unit)
@@ -524,7 +524,7 @@ private struct BackupsHero: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(18)
-        .card(radius: 24)
+        .card()
     }
 
     private var title: some View {
@@ -684,7 +684,7 @@ private struct BackupCards: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .topLeading)
                 .padding(16)
-                .card(radius: 24)
+                .card()
                 .accessibilityElement(children: .combine)
             }
         }

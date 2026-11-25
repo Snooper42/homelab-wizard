@@ -120,7 +120,7 @@ struct StatusHero: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(14)
-        .card(radius: 24)
+        .card()
     }
 }
 
@@ -178,7 +178,7 @@ struct StatusTile: View {
         }
         .frame(maxWidth: .infinity, minHeight: 64, alignment: .leading)
         .padding(12)
-        .card(radius: 24)
+        .card()
         .accessibilityElement(children: .combine)
     }
 }
@@ -373,7 +373,7 @@ struct StatusAlertCard: View {
             }
             .padding(14)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .card(radius: 20)
+            .card()
         } else {
             legacy(buttons: buttons, heading: heading)
         }
@@ -416,7 +416,7 @@ struct StatusAlertCard: View {
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .card(radius: 20)
+        .card()
     }
 }
 
@@ -474,7 +474,7 @@ struct CrashNoteCard: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .card(radius: 20)
+        .card()
     }
 
     private func share() async {
@@ -602,7 +602,7 @@ private struct PairCard: View {
         }
         .frame(maxWidth: .infinity, minHeight: 96, alignment: .topLeading)
         .padding(16)
-        .card(radius: 24)
+        .card()
         .accessibilityElement(children: .combine)
     }
 }

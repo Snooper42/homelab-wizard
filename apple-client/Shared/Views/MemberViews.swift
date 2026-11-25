@@ -113,7 +113,7 @@ struct HouseholdCard: View {
             }
         }
         .padding(16)
-        .card(radius: 24)
+        .card()
     }
 
     private func row(_ p: HouseholdShared.Payment, trailing: String?) -> some View {
@@ -154,7 +154,7 @@ struct FirstAccountCard: View {
                 .frame(width: 48, height: 48)
                 .background(Theme.accentFill, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
             Text(finances.isMember ? "Your own Finances start here" : "Finances start here")
-                .font(.title3.weight(.bold))
+                .font(.headline)
                 .foregroundStyle(Theme.ink)
             Text(finances.isMember
                  ? "Add your checking account first, then savings and cards. They’re yours alone: no one else’s phone shows them."
@@ -175,7 +175,7 @@ struct FirstAccountCard: View {
         }
         .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .card(radius: 24)
+        .card()
         .sheet(isPresented: $adding) { AddAccountView(finances: finances) }
     }
 }

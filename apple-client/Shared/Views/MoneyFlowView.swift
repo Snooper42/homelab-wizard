@@ -38,7 +38,7 @@ struct MoneyFlowCard: View {
             if let flow, !flow.nodes.isEmpty {
                 VStack(alignment: .leading, spacing: 12) {
                     HStack(alignment: .firstTextBaseline) {
-                        Text("Money Flow").font(.title3.weight(.bold)).foregroundStyle(Theme.ink)
+                        Text("Money Flow").font(.headline).foregroundStyle(Theme.ink)
                         Spacer(minLength: 8)
                         if !months.isEmpty {
                             Menu {
@@ -73,7 +73,7 @@ struct MoneyFlowCard: View {
                 }
                 .padding(16)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .card(radius: 24)
+                .card()
             }
         }
         .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width = $0 }
