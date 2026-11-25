@@ -510,6 +510,12 @@ async function acctForm(page, row, opts = {}) {
 }
 const shots = [
   { name: 'status', screen: 'status', mock: { statusOpen: '' } },
+  // Analytics (the owner's web-analytics pictures): a few minutes of samples, on the page's clock.
+  { name: 'status-analytics', screen: 'status', clock: true, mock: { usageSeries }, before: async (page) => {
+    await page.click('#statusSide button[data-key="analytics"]', { timeout: 5000 });
+    await page.clock.runFor(185000);
+    await page.waitForSelector('#statusPart .antimeline', { timeout: 5000 });
+  } },
   // A category's page (the owner's computer-category pictures): its apps here as tiles, then every app to add.
   { name: 'status-category', screen: 'status', before: async (page) => { await page.click('#statusSide button[data-key="media"]', { timeout: 5000 }); await page.waitForSelector('#statusPart .cattile', { timeout: 5000 }); } },
   // Below the apps: storage, and what is using power with each busy app's
@@ -6639,6 +6645,29 @@ const smokes = [
     await page.waitForSelector('#statusPart .catpage h1:text-is("Your own apps")', { timeout: 5000 });
     if (await page.$('#statusPart .cattile.toadd')) throw new Error('your own apps have a shelf');
   } },
+  // Analytics (the owner, Nov 25): second in Status' menu; Processor, Memory and Drives drawn in every state (a dash before
+  // the first read), the timeline once samples come, and each app's use heaviest first, 8 then Show all.
+  { name: 'Status: Analytics has its three cards before and after a read, and each app heaviest first', screen: 'status', mock: { usageSeries }, run: async (page) => {
+    // The page's clock, from a fresh load: Status samples every 10 seconds.
+    await page.clock.install();
+    await page.reload();
+    await page.waitForSelector('#statusSide button[data-key="analytics"]', { timeout: 5000 });
+    const keys = await page.$$eval('#statusSide .finmenuitem', (bs) => bs.map((b) => b.dataset.key));
+    if (keys[1] !== 'analytics') throw new Error('the menu: ' + keys.join(', '));
+    await page.click('#statusSide button[data-key="analytics"]');
+    await page.waitForSelector('#statusPart .antpage h1:text-is("Analytics")', { timeout: 5000 });
+    for (const id of ['antCpu', 'antMem', 'antDisk', 'antTime', 'antApps']) if (!(await page.isVisible('#' + id))) throw new Error(`no ${id}`);
+    const tops = await page.$$eval('.anttiles > .card', (cs) => cs.map((c) => [Math.round(c.getBoundingClientRect().top), Math.round(c.getBoundingClientRect().height)]));
+    if (new Set(tops.map((t) => t.join())).size !== 1) throw new Error('the three cards differ in place or height: ' + JSON.stringify(tops));
+    await page.clock.runFor(65000);
+    await page.waitForSelector('#statusPart .antimeline.cpu svg', { timeout: 5000 });
+    const mem = await page.$$eval('#antApps tbody tr', (rs) => rs.map((r) => r.querySelector('.antmem').textContent));
+    const bytes = (t) => parseFloat(t) * (/GB/.test(t) ? 1e3 : 1);
+    for (let i = 1; i < mem.length; i++) if (bytes(mem[i]) > bytes(mem[i - 1])) throw new Error('not heaviest first: ' + mem.join(', '));
+    if (!/\d/.test(await page.textContent('#antCpu .antfig'))) throw new Error('no processor figure after a read');
+    await page.click('#statusSide button[data-key="overview"]');
+    await page.waitForSelector('#statusRows', { state: 'visible', timeout: 5000 });
+  } },
   // A stopped app (Mealie, in the preview's state): an amber dot by its category's count, and its tile's Start.
   { name: "Status: a stopped app puts an amber dot by its category, and its tile says Start", screen: 'status', run: async (page) => {
     await page.waitForSelector('#statusSide button[data-key="household"] .sidedot', { timeout: 5000 });
@@ -10981,6 +11010,7 @@ const screens = [
   { name: 'Status, filtered by name', screen: 'status', before: async (page) => { await page.waitForSelector('#statusRows tr.grouphead', { timeout: 5000 }); await page.keyboard.type('me'); await page.waitForSelector('.filterbox input'); } },
   { name: 'Command palette, an app typed', screen: 'status', before: async (page) => { await page.waitForSelector('#statusRows tr.grouphead', { timeout: 5000 }); await page.keyboard.press((await page.evaluate(() => /Mac/.test(navigator.platform))) ? 'Meta+k' : 'Control+k'); await page.keyboard.type('navi'); await page.waitForSelector('.palette [role=option]'); } },
   { name: 'Status after a crash', screen: 'status', mock: { crash: crashed } },
+  { name: 'Status, Analytics', screen: 'status', before: async (page) => { await page.click('#statusSide button[data-key="analytics"]', { timeout: 5000 }); await page.waitForSelector('#statusPart .antpage', { timeout: 5000 }); } },
   { name: "Status, a category's page", screen: 'status', before: async (page) => { await page.click('#statusSide button[data-key="media"]', { timeout: 5000 }); await page.waitForSelector('#statusPart .cattile', { timeout: 5000 }); } },
   { name: 'Choose apps', screen: 'choose' },
   { name: 'Backups', screen: 'backups' },

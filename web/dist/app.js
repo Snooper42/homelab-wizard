@@ -4183,6 +4183,166 @@
   }
   var mountCategoryPage = (el3, props) => R(props && /* @__PURE__ */ u3(CategoryPage, { ...props }), el3);
 
+  // web/src/status/Analytics.tsx
+  var keepTotals = 360;
+  function recordTotals(t3, stats, catalog2, now2 = Date.now()) {
+    if (!stats.length) return;
+    const mem = Object.values(memoryByApp(stats, catalog2)).reduce((s3, n3) => s3 + n3, 0);
+    t3.at.push(now2);
+    t3.cpu.push(stats.reduce((s3, x3) => s3 + x3.cpu, 0));
+    t3.mem.push(mem);
+    for (const k3 of ["at", "cpu", "mem"]) if (t3[k3].length > keepTotals) t3[k3].shift();
+  }
+  function formatDisk(b2) {
+    if (b2 >= 1e12) return `${(b2 / 1e12).toFixed(b2 >= 1e13 ? 0 : 1)} TB`;
+    if (b2 >= 1e9) return `${Math.round(b2 / 1e9)} GB`;
+    return `${Math.max(0, Math.round(b2 / 1e6))} MB`;
+  }
+  var pct = (n3) => n3 >= 10 ? Math.round(n3) : Math.round(n3 * 10) / 10;
+  var minutesOf = (t3) => t3.at.length > 1 ? Math.max(1, Math.round((t3.at[t3.at.length - 1] - t3.at[0]) / 6e4)) : 0;
+  function Chart({ values, kind, label, mark }) {
+    const w3 = 600, h3 = 110;
+    const top = Math.max(...values, kind === "cpu" ? 10 : 1) * 1.15;
+    const x3 = (i3) => i3 / Math.max(1, values.length - 1) * w3, y3 = (v3) => h3 - v3 / top * h3;
+    const line = values.map((v3, i3) => `${x3(i3).toFixed(1)},${y3(v3).toFixed(1)}`).join(" ");
+    return /* @__PURE__ */ u3("figure", { class: "antimeline " + kind, children: [
+      /* @__PURE__ */ u3("figcaption", { children: label }),
+      /* @__PURE__ */ u3("div", { class: "antplot", children: [
+        /* @__PURE__ */ u3("svg", { viewBox: `0 0 ${w3} ${h3}`, preserveAspectRatio: "none", role: "img", "aria-label": `${label}: ${mark(values[values.length - 1])} now, ${mark(Math.max(...values))} at most`, children: [
+          [0.25, 0.5, 0.75].map((f4) => /* @__PURE__ */ u3("line", { class: "grid", x1: "0", x2: w3, y1: h3 * f4, y2: h3 * f4 }, f4)),
+          /* @__PURE__ */ u3("polygon", { class: "area", points: `0,${h3} ${line} ${w3},${h3}` }),
+          /* @__PURE__ */ u3("polyline", { class: "line", points: line, "vector-effect": "non-scaling-stroke" })
+        ] }),
+        /* @__PURE__ */ u3("span", { class: "antmarks", "aria-hidden": "true", children: [0.75, 0.5, 0.25].map((f4) => /* @__PURE__ */ u3("span", { children: mark(top * f4) }, f4)) })
+      ] })
+    ] });
+  }
+  function Analytics({ stats, history, totals: totals3, cores, disk: disk2, storage, apps: apps2, catalog: catalog2, icons: icons4, page }) {
+    const [all, setAll] = d2(false);
+    const byId = Object.fromEntries(apps2.map((a3) => [a3.id, a3]));
+    const nameOf = (id2) => byId[id2]?.name || catalog2?.apps.find((a3) => a3.id === id2)?.name || id2;
+    const mem = memoryByApp(stats, catalog2);
+    const helpers = Object.fromEntries((catalog2?.apps || []).filter((a3) => a3.kind !== "helper").flatMap((a3) => (a3.dependsOn || []).filter((d3) => catalog2?.apps.find((x3) => x3.id === d3)?.kind === "helper").map((d3) => [d3, a3.id])));
+    const cpu = {};
+    const past = {};
+    for (const s3 of stats) {
+      const id2 = helpers[s3.name] || s3.name;
+      cpu[id2] = (cpu[id2] || 0) + s3.cpu;
+      if (!helpers[s3.name]) past[id2] = history.get(s3.name) || [];
+    }
+    const disked = Object.fromEntries((storage?.apps || []).map((f4) => [f4.app, f4.bytes]));
+    const ids = [.../* @__PURE__ */ new Set([...Object.keys(mem), ...Object.keys(cpu)])].filter((id2) => byId[id2] || catalog2?.apps.some((a3) => a3.id === id2));
+    const rows = ids.sort((a3, b2) => (mem[b2] || 0) - (mem[a3] || 0) || (cpu[b2] || 0) - (cpu[a3] || 0));
+    const most = Math.max(1, ...rows.map((id2) => mem[id2] || 0));
+    const totalCpu = stats.reduce((s3, x3) => s3 + x3.cpu, 0), totalMem = Object.values(mem).reduce((s3, n3) => s3 + n3, 0);
+    const busiest = [...rows].sort((a3, b2) => (cpu[b2] || 0) - (cpu[a3] || 0))[0];
+    const heaviest = rows[0];
+    const read = stats.length > 0;
+    const mins = minutesOf(totals3);
+    const span = mins ? mins === 1 ? "The last minute" : `The last ${mins} minutes` : "Now";
+    const who = (id2, words5) => id2 ? /* @__PURE__ */ u3("span", { class: "antwho", children: [
+      /* @__PURE__ */ u3(AppMark, { id: id2, name: nameOf(id2), icon: icons4?.[id2] || "", small: true }),
+      /* @__PURE__ */ u3("span", { class: "antname", children: nameOf(id2) }),
+      /* @__PURE__ */ u3("span", { class: "antfigs", children: words5 })
+    ] }) : /* @__PURE__ */ u3("span", { class: "antwho", children: "Not read yet" });
+    const used = disk2 && disk2.total ? Math.min(100, Math.max(1, Math.round(100 * (1 - disk2.free / disk2.total)))) : 0;
+    const folders = (storage?.apps || []).reduce((s3, f4) => s3 + f4.bytes, 0);
+    const photos = (storage?.photos || []).reduce((s3, p3) => s3 + p3.bytes, 0);
+    return /* @__PURE__ */ u3("div", { class: "antpage", children: [
+      /* @__PURE__ */ u3("div", { class: "row header", children: /* @__PURE__ */ u3("div", { children: [
+        /* @__PURE__ */ u3("h1", { children: "Analytics" }),
+        /* @__PURE__ */ u3("p", { class: "lead", children: span })
+      ] }) }),
+      /* @__PURE__ */ u3("div", { class: "anttiles", children: [
+        /* @__PURE__ */ u3(Card, { kind: "anttile", id: "antCpu", children: [
+          /* @__PURE__ */ u3("div", { class: "anthead", children: [
+            /* @__PURE__ */ u3("h2", { children: "Processor" }),
+            /* @__PURE__ */ u3("span", { class: "muted", children: cores ? `${cores} cores` : "" })
+          ] }),
+          /* @__PURE__ */ u3("div", { class: "antfig", children: read ? /* @__PURE__ */ u3(S, { children: [
+            cores ? pct(totalCpu / cores) : pct(totalCpu),
+            /* @__PURE__ */ u3("small", { children: "%" }),
+            " ",
+            /* @__PURE__ */ u3("span", { class: "muted", children: cores ? "in use" : "of a core" })
+          ] }) : "—" }),
+          /* @__PURE__ */ u3("div", { class: "antline muted", children: read && busiest && cpu[busiest] >= 0.1 ? who(busiest, `uses the most · ${pct(cpu[busiest])}%`) : read ? /* @__PURE__ */ u3("span", { class: "antwho", children: "Every app idle" }) : who(void 0, "") }),
+          /* @__PURE__ */ u3("div", { class: "antfoot", children: totals3.cpu.length > 2 ? /* @__PURE__ */ u3(Spark, { values: totals3.cpu, w: 240, h: 36, title: `The apps' processor, ${span.toLowerCase()}` }) : /* @__PURE__ */ u3("span", { class: "antempty" }) })
+        ] }),
+        /* @__PURE__ */ u3(Card, { kind: "anttile", id: "antMem", children: [
+          /* @__PURE__ */ u3("div", { class: "anthead", children: [
+            /* @__PURE__ */ u3("h2", { children: "Memory" }),
+            /* @__PURE__ */ u3("span", { class: "muted" })
+          ] }),
+          /* @__PURE__ */ u3("div", { class: "antfig", children: read ? /* @__PURE__ */ u3(S, { children: [
+            formatMem(totalMem).replace(/ (\w+)$/, ""),
+            /* @__PURE__ */ u3("small", { children: formatMem(totalMem).replace(/^[^ ]+/, "") }),
+            " ",
+            /* @__PURE__ */ u3("span", { class: "muted", children: "in use" })
+          ] }) : "—" }),
+          /* @__PURE__ */ u3("div", { class: "antline muted", children: read && heaviest ? who(heaviest, `uses the most · ${formatMem(mem[heaviest] || 0)}`) : who(void 0, "") }),
+          /* @__PURE__ */ u3("div", { class: "antfoot", children: totals3.mem.length > 2 ? /* @__PURE__ */ u3(Spark, { values: totals3.mem, w: 240, h: 36, title: `The apps' memory, ${span.toLowerCase()}` }) : /* @__PURE__ */ u3("span", { class: "antempty" }) })
+        ] }),
+        /* @__PURE__ */ u3(Card, { kind: "anttile", id: "antDisk", children: [
+          /* @__PURE__ */ u3("div", { class: "anthead", children: [
+            /* @__PURE__ */ u3("h2", { children: "Drives" }),
+            /* @__PURE__ */ u3("span", { class: "muted", children: disk2?.total ? formatDisk(disk2.total) : "" })
+          ] }),
+          /* @__PURE__ */ u3("div", { class: "antfig" + (disk2?.low ? " bad" : ""), children: disk2 ? /* @__PURE__ */ u3(S, { children: [
+            formatDisk(disk2.free).replace(/ (\w+)$/, ""),
+            /* @__PURE__ */ u3("small", { children: formatDisk(disk2.free).replace(/^[^ ]+/, "") }),
+            " ",
+            /* @__PURE__ */ u3("span", { class: "muted", children: "free" })
+          ] }) : "—" }),
+          /* @__PURE__ */ u3("div", { class: "antline muted", children: /* @__PURE__ */ u3("span", { class: "antwho", children: folders ? `The apps' data ${formatDisk(folders)}${photos ? ` · photos ${formatDisk(photos)}` : ""}` : disk2 ? `${formatDisk(disk2.total - disk2.free)} used` : "Not read yet" }) }),
+          /* @__PURE__ */ u3("div", { class: "antfoot", children: disk2?.total ? /* @__PURE__ */ u3("div", { class: "antbar", role: "img", "aria-label": `${used}% used`, children: /* @__PURE__ */ u3("span", { style: { width: `${used}%` } }) }) : /* @__PURE__ */ u3("span", { class: "antempty" }) })
+        ] })
+      ] }),
+      /* @__PURE__ */ u3(Card, { kind: "antweek", id: "antTime", children: [
+        /* @__PURE__ */ u3("div", { class: "anthead", children: [
+          /* @__PURE__ */ u3("h2", { children: span }),
+          /* @__PURE__ */ u3("span", { class: "muted", children: "A week isn't kept yet" })
+        ] }),
+        totals3.cpu.length > 2 ? /* @__PURE__ */ u3(S, { children: [
+          /* @__PURE__ */ u3(Chart, { values: totals3.cpu, kind: "cpu", label: "Processor", mark: (v3) => `${Math.round(cores ? v3 / cores : v3)}%` }),
+          /* @__PURE__ */ u3(Chart, { values: totals3.mem, kind: "mem", label: "Memory", mark: (v3) => formatMem(v3) })
+        ] }) : /* @__PURE__ */ u3("p", { class: "muted antwait", children: "Drawn as Status reads the apps, every 10 seconds" })
+      ] }),
+      /* @__PURE__ */ u3(Card, { kind: "antapps", id: "antApps", children: [
+        /* @__PURE__ */ u3("div", { class: "anthead", children: [
+          /* @__PURE__ */ u3("h2", { children: "What each app uses" }),
+          /* @__PURE__ */ u3("span", { class: "muted", children: "Heaviest first" })
+        ] }),
+        rows.length ? /* @__PURE__ */ u3("table", { class: "anttable", children: [
+          /* @__PURE__ */ u3("thead", { children: /* @__PURE__ */ u3("tr", { children: [
+            /* @__PURE__ */ u3("th", { children: "App" }),
+            /* @__PURE__ */ u3("th", { children: "Memory now" }),
+            /* @__PURE__ */ u3("th", { class: "antspark", children: "Recent" }),
+            /* @__PURE__ */ u3("th", { class: "num", children: "Processor" }),
+            /* @__PURE__ */ u3("th", { class: "num", children: "On disk" })
+          ] }) }),
+          /* @__PURE__ */ u3("tbody", { children: (all ? rows : rows.slice(0, 8)).map((id2) => /* @__PURE__ */ u3("tr", { class: byId[id2] ? "topage" : void 0, onClick: byId[id2] ? () => page(byId[id2]) : void 0, children: [
+            /* @__PURE__ */ u3("td", { children: /* @__PURE__ */ u3("span", { class: "antapp", children: [
+              /* @__PURE__ */ u3(AppMark, { id: id2, name: nameOf(id2), icon: icons4?.[id2] || "", small: true }),
+              nameOf(id2)
+            ] }) }),
+            /* @__PURE__ */ u3("td", { children: /* @__PURE__ */ u3("span", { class: "antmem", children: [
+              /* @__PURE__ */ u3("span", { class: "antbar", children: /* @__PURE__ */ u3("span", { style: { width: `${Math.max(2, Math.round((mem[id2] || 0) / most * 100))}%` } }) }),
+              formatMem(mem[id2] || 0)
+            ] }) }),
+            /* @__PURE__ */ u3("td", { class: "antspark", children: (past[id2]?.length || 0) > 2 ? /* @__PURE__ */ u3(Spark, { values: past[id2], w: 120, h: 18, title: `${nameOf(id2)}'s processor, ${span.toLowerCase()}` }) : null }),
+            /* @__PURE__ */ u3("td", { class: "num", children: [
+              pct(cpu[id2] || 0),
+              "%"
+            ] }),
+            /* @__PURE__ */ u3("td", { class: "num", children: disked[id2] ? formatDisk(disked[id2]) : "—" })
+          ] }, id2)) })
+        ] }) : /* @__PURE__ */ u3("p", { class: "muted antwait", children: "Not read yet" }),
+        rows.length > 8 && /* @__PURE__ */ u3("button", { type: "button", class: "linkbtn antall", onClick: () => setAll(!all), children: all ? "Show fewer" : `Show all ${rows.length}` })
+      ] })
+    ] });
+  }
+  var mountAnalytics = (el3, props) => R(props && /* @__PURE__ */ u3(Analytics, { ...props }), el3);
+
   // web/src/status/ReleaseNotes.tsx
   function summary(name, p3) {
     const n3 = p3.releases.length;
@@ -4449,9 +4609,9 @@
       draw();
     }
   }
-  function bgProgress(pct, step2) {
+  function bgProgress(pct2, step2) {
     if (!bg || bg.state !== "running") return;
-    bg.pct = pct;
+    bg.pct = pct2;
     bg.step = step2;
     if (hidden2) draw();
   }
@@ -8672,12 +8832,31 @@
       label: "Status",
       here: statusHere,
       pick: pickStatusPart,
-      items: [{ key: "overview", label: "Overview", icon: sideIcons.overview }, ...statusSide]
+      items: [{ key: "overview", label: "Overview", icon: sideIcons.overview }, { key: "analytics", label: "Analytics", icon: sideIcons.analytics }, ...statusSide]
     });
   }
   function drawStatusPart() {
-    const part = statusHere === "overview" ? void 0 : statusParts.find((p3) => p3.id === statusHere);
     const section = $("status");
+    if (statusHere === "analytics") {
+      section.dataset.part = "analytics";
+      mountCategoryPage($("statusPart"), null);
+      const disk2 = onPhone() ? phoneMachine : machineNow()?.i.disks?.[0] || null;
+      mountAnalytics($("statusPart"), {
+        stats: lastStats,
+        history: usageHistory,
+        totals,
+        cores: onPhone() ? void 0 : navigator.hardwareConcurrency || void 0,
+        disk: disk2 && disk2.total ? { free: disk2.free, total: disk2.total, low: disk2.low } : null,
+        storage: lastStorage,
+        apps: lastStatus?.apps || [],
+        catalog,
+        icons: icons2,
+        page: (a3) => pageOpener.open(a3.id)
+      });
+      return;
+    }
+    mountAnalytics($("statusPart"), null);
+    const part = statusHere === "overview" ? void 0 : statusParts.find((p3) => p3.id === statusHere);
     if (part) section.dataset.part = part.id;
     else delete section.dataset.part;
     if (!part || !appList) {
@@ -9020,7 +9199,10 @@
     card.hidden = !c4 || !c4.apps || !c4.line;
     if (!card.hidden) mountDownloads(card, { c: c4 });
   }
+  var lastStorage = null;
   function showStorage(rec) {
+    lastStorage = rec;
+    if (statusHere === "analytics") drawStatusPart();
     const card = $("storageCard");
     card.hidden = !storageShown(rec);
     if (card.hidden) return;
@@ -9040,11 +9222,16 @@
   }
   function showUsage(stats) {
     record(usageHistory, stats);
+    recordTotals(totals, stats, catalog);
+    lastStats = stats;
+    if (statusHere === "analytics") drawStatusPart();
     mountUsage($("usageCard"), { stats, history: usageHistory, nameOf: (id2) => catalog?.apps.find((a3) => a3.id === id2)?.name || id2 });
     memory = memoryByApp(stats, catalog);
     if (appList) mountAppList($("statusRows"), appList = { ...appList, memory });
   }
   var memory;
+  var lastStats = [];
+  var totals = { at: [], cpu: [], mem: [] };
   var usageHistory = /* @__PURE__ */ new Map();
   setInterval(() => {
     if (!document.hidden && $("status").classList.contains("active")) loadUsage();
@@ -10922,19 +11109,19 @@
     const good = flat4 ? null : value > 0 !== !!downIsGood;
     const tone = good === null ? "muted" : good ? "in" : "out";
     if (amountsHidden()) return look2 === "badge" ? null : /* @__PURE__ */ u3("span", { class: "fx-delta", children: label && /* @__PURE__ */ u3("span", { class: "fx-sub", children: label }) });
-    const pct = base && Math.abs(base) > 5e-3 ? `${value < 0 ? "−" : "+"}${Math.abs(value / Math.abs(base) * 100).toFixed(1)}%` : "";
-    if (look2 === "badge") return /* @__PURE__ */ u3("span", { class: "fx-badge fx-" + tone, children: shareOnly ? pct : /* @__PURE__ */ u3(S, { children: [
+    const pct2 = base && Math.abs(base) > 5e-3 ? `${value < 0 ? "−" : "+"}${Math.abs(value / Math.abs(base) * 100).toFixed(1)}%` : "";
+    if (look2 === "badge") return /* @__PURE__ */ u3("span", { class: "fx-badge fx-" + tone, children: shareOnly ? pct2 : /* @__PURE__ */ u3(S, { children: [
       signed(value),
-      pct && /* @__PURE__ */ u3(S, { children: [
+      pct2 && /* @__PURE__ */ u3(S, { children: [
         " ",
-        pct
+        pct2
       ] })
     ] }) });
     return /* @__PURE__ */ u3("span", { class: "fx-delta", children: [
       /* @__PURE__ */ u3("span", { class: "fx-" + tone, children: flat4 ? "No change" : /* @__PURE__ */ u3(S, { children: [
         /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: value < 0 ? "↓ " : "↑ " }),
         signed(value),
-        pct && ` (${pct})`
+        pct2 && ` (${pct2})`
       ] }) }),
       label && /* @__PURE__ */ u3("span", { class: "fx-sub", children: [
         " ",
@@ -11173,7 +11360,7 @@
     }
     return [...by.values()].sort((a3, b2) => b2.amount - a3.amount).slice(0, n3);
   }
-  function totals(txs, r3) {
+  function totals2(txs, r3) {
     const list = txs.filter((t3) => !t3.to && inRange(t3, r3));
     return { in: list.filter((t3) => t3.amount > 0).reduce((s3, t3) => s3 + t3.amount, 0), out: -list.filter((t3) => t3.amount < 0).reduce((s3, t3) => s3 + t3.amount, 0) };
   }
@@ -13459,7 +13646,7 @@
     });
     const submit = (e3) => {
       e3.preventDefault();
-      const list = Object.entries(shares2).map(([account, pct]) => ({ account, percent: num(pct) }));
+      const list = Object.entries(shares2).map(([account, pct2]) => ({ account, percent: num(pct2) }));
       const over = list.find((s3) => s3.percent + taken(s3.account) > 100.0001);
       const wrong = !name.trim() ? "Give it a name." : !(num(target) > 0) ? "Type how much it needs." : list.some((s3) => !(s3.percent > 0) || s3.percent > 100) ? "Each share is more than nothing and at most 100%." : over ? `${accounts.find((a3) => a3.id === over.account)?.name}: the other goals have ${taken(over.account)}% of it, so this one can have ${Math.max(0, 100 - taken(over.account))}% at most.` : "";
       setProblem(wrong);
@@ -13670,7 +13857,7 @@
     const axis = zero ? ticks(lo, hi * 1.08) : ticks(lo - (hi - lo) * 0.1, hi + (hi - lo) * 0.1);
     const y3 = (v3) => (axis.top - v3) / (axis.top - axis.bottom || 1) * tall;
     const x3 = (i3) => i3 / (n3 - 1) * 1e3;
-    const pct = (i3) => i3 / (n3 - 1) * 100;
+    const pct2 = (i3) => i3 / (n3 - 1) * 100;
     const cut = aheadFrom === void 0 ? n3 - 1 : Math.min(n3 - 1, aheadFrom);
     const path = (from2, to) => values.slice(from2, to + 1).map((v3, k3) => k3 ? stepped ? `H${x3(from2 + k3).toFixed(1)} V${y3(v3).toFixed(1)}` : `L${x3(from2 + k3).toFixed(1)} ${y3(v3).toFixed(1)}` : `M${x3(from2).toFixed(1)} ${y3(v3).toFixed(1)}`).join(" ");
     const behind = behindTo === void 0 ? 0 : Math.max(0, Math.min(cut, behindTo));
@@ -13696,7 +13883,7 @@
             }),
             children: [
               showAxis && axis.ticks.map((t3) => /* @__PURE__ */ u3("span", { class: "fx-grid" + (t3 === 0 ? " zero" : ""), style: { top: `${y3(t3)}px` } }, t3)),
-              band && /* @__PURE__ */ u3("span", { class: "fx-band", style: { left: `${pct(band.from)}%`, width: `${pct(band.to) - pct(band.from)}%` } }),
+              band && /* @__PURE__ */ u3("span", { class: "fx-band", style: { left: `${pct2(band.from)}%`, width: `${pct2(band.to) - pct2(band.from)}%` } }),
               threshold !== void 0 && /* @__PURE__ */ u3("span", { class: "fx-threshold", style: { top: `${y3(threshold)}px` } }),
               /* @__PURE__ */ u3("svg", { viewBox: `0 0 1000 ${tall}`, preserveAspectRatio: "none", "aria-hidden": "true", children: [
                 /* @__PURE__ */ u3("path", { class: "fx-areafill", d: `${solid} L${x3(cut).toFixed(1)} ${tall} L${x3(behind).toFixed(1)} ${tall} Z` }),
@@ -13704,17 +13891,17 @@
                 /* @__PURE__ */ u3("path", { class: "fx-line", d: solid, "vector-effect": "non-scaling-stroke" }),
                 cut < n3 - 1 && /* @__PURE__ */ u3("path", { class: "fx-line ahead", d: path(cut, n3 - 1), "vector-effect": "non-scaling-stroke" })
               ] }),
-              marks2.map((m3, k3) => /* @__PURE__ */ u3("span", { class: "fx-mark fx-h-" + m3.tone, style: { left: `${pct(m3.i)}%`, top: `${y3(values[m3.i])}px` } }, k3)),
+              marks2.map((m3, k3) => /* @__PURE__ */ u3("span", { class: "fx-mark fx-h-" + m3.tone, style: { left: `${pct2(m3.i)}%`, top: `${y3(values[m3.i])}px` } }, k3)),
               at2 >= 0 && /* @__PURE__ */ u3(S, { children: [
-                /* @__PURE__ */ u3("span", { class: "fx-cross", style: { left: `${pct(at2)}%` } }),
-                /* @__PURE__ */ u3("span", { class: "fx-pin", style: { left: `${pct(at2)}%`, top: `${y3(values[at2])}px` } }),
-                tip && /* @__PURE__ */ u3("div", { class: "fx-tip", style: tipSide(pct(at2)), children: tip(at2) })
+                /* @__PURE__ */ u3("span", { class: "fx-cross", style: { left: `${pct2(at2)}%` } }),
+                /* @__PURE__ */ u3("span", { class: "fx-pin", style: { left: `${pct2(at2)}%`, top: `${y3(values[at2])}px` } }),
+                tip && /* @__PURE__ */ u3("div", { class: "fx-tip", style: tipSide(pct2(at2)), children: tip(at2) })
               ] })
             ]
           }
         )
       ] }),
-      /* @__PURE__ */ u3("div", { class: "fx-xlabels" + (showAxis ? "" : " bare"), "aria-hidden": "true", children: xLabels.map((l3) => /* @__PURE__ */ u3("span", { style: { left: `${pct(l3.i)}%` }, children: l3.label }, l3.i)) })
+      /* @__PURE__ */ u3("div", { class: "fx-xlabels" + (showAxis ? "" : " bare"), "aria-hidden": "true", children: xLabels.map((l3) => /* @__PURE__ */ u3("span", { style: { left: `${pct2(l3.i)}%` }, children: l3.label }, l3.i)) })
     ] });
   }
   function StackedBars({ columns: columns2, height = 260, format: format2, tip, label, lineless, onPick }) {
@@ -13953,8 +14140,8 @@
     });
     const lit2 = (from2, to) => !on2 || (on2.node ? on2.node === from2 || on2.node === to : false);
     const litNode = (id2) => !on2 || (on2.node ? on2.node === id2 || ls.some((l3) => l3.from === on2.node && l3.to === id2 || l3.to === on2.node && l3.from === id2) : on2.link !== void 0 && (bands[on2.link].l.from === id2 || bands[on2.link].l.to === id2));
-    const pct = (n3) => `${Math.round(n3 * 100)}%`;
-    const said2 = (p3) => `${p3.label}, ${money3(p3.value)}${p3.share < 0.9995 ? `, ${pct(p3.share)}` : ""}`;
+    const pct2 = (n3) => `${Math.round(n3 * 100)}%`;
+    const said2 = (p3) => `${p3.label}, ${money3(p3.value)}${p3.share < 0.9995 ? `, ${pct2(p3.share)}` : ""}`;
     const tip = on2?.link !== void 0 ? bands[on2.link] : null;
     return /* @__PURE__ */ u3(
       "figure",
@@ -14001,7 +14188,7 @@
                     money3(p3.value),
                     p3.share < 0.9995 && /* @__PURE__ */ u3("span", { class: "fx-spct", children: [
                       " (",
-                      pct(p3.share),
+                      pct2(p3.share),
                       ")"
                     ] })
                   ] })
@@ -16639,14 +16826,14 @@
   }
   function Gain({ worth, paid }) {
     if (!(paid > 5e-3)) return null;
-    const pct = Math.round((worth - paid) / paid * 100);
+    const pct2 = Math.round((worth - paid) / paid * 100);
     return /* @__PURE__ */ u3("span", { class: "fx-cardgain", children: [
       /* @__PURE__ */ u3(Amount, { value: worth - paid, sign: true, tone: "auto", form: "full" }),
       " ",
-      /* @__PURE__ */ u3("span", { class: pct < 0 ? "fx-out" : pct > 0 ? "fx-in" : "", children: [
+      /* @__PURE__ */ u3("span", { class: pct2 < 0 ? "fx-out" : pct2 > 0 ? "fx-in" : "", children: [
         "(",
-        pct > 0 ? "+" : "",
-        pct,
+        pct2 > 0 ? "+" : "",
+        pct2,
         "%)"
       ] })
     ] });
@@ -17390,7 +17577,7 @@ ${pays}
     const txs = inHome(v3.plan, typed);
     const all = ranges(v3.today, txs[0]?.date || v3.today);
     const r3 = all.find((x3) => x3.key === key7) || all[0];
-    const sum = totals(txs, r3);
+    const sum = totals2(txs, r3);
     const groups4 = byCategory(txs, v3.categories || [], r3);
     const months = byMonth(txs, r3).filter((m3) => tracked(v3, m3.month));
     const everyPayee = topPayees(txs, r3, Infinity);
@@ -18654,7 +18841,7 @@ ${pays}
     const [all, setAll] = d2(false);
     const range = { key: "period", label: "", from: past.start, to: past.last };
     const txs = inHome(v3.plan, ledger?.transactions || []).filter((t3) => t3.date >= past.start && t3.date <= past.last);
-    const sum = totals(txs, range);
+    const sum = totals2(txs, range);
     const list = latest(txs, all ? txs.length : shown6);
     return /* @__PURE__ */ u3(Widget, { title, kind: "fx-past", span: "all", children: [
       /* @__PURE__ */ u3("p", { class: "fx-sub fx-lead fx-dates", children: [
@@ -20957,11 +21144,11 @@ ${pays}
   }
   var toneWords = { ok: "Done", warn: "To look at", bad: "Failed" };
   function Bar({ title, p: p3, idle: idle2 }) {
-    const pct = p3 && p3.total ? Math.min(100, Math.round(p3.done / p3.total * 100)) : void 0;
+    const pct2 = p3 && p3.total ? Math.min(100, Math.round(p3.done / p3.total * 100)) : void 0;
     const left = p3?.eta ? p3.eta > 3600 ? `~${Math.floor(p3.eta / 3600)}h ${Math.round(p3.eta % 3600 / 60)}m left` : `~${Math.max(1, Math.round(p3.eta / 60))}m left` : "";
     return /* @__PURE__ */ u3("div", { class: "progress", children: [
-      /* @__PURE__ */ u3("div", { class: "track", role: "progressbar", "aria-label": title, "aria-valuemin": 0, "aria-valuemax": 100, "aria-valuenow": pct, children: /* @__PURE__ */ u3("span", { class: "fill", style: { width: `${pct ?? 0}%` } }) }),
-      /* @__PURE__ */ u3("p", { class: "step", children: p3 ? `${p3.label} ${p3.done.toLocaleString()} of ${p3.total.toLocaleString()}${pct !== void 0 ? ` · ${pct}%` : ""}${left ? " · " + left : ""}` : idle2 })
+      /* @__PURE__ */ u3("div", { class: "track", role: "progressbar", "aria-label": title, "aria-valuemin": 0, "aria-valuemax": 100, "aria-valuenow": pct2, children: /* @__PURE__ */ u3("span", { class: "fill", style: { width: `${pct2 ?? 0}%` } }) }),
+      /* @__PURE__ */ u3("p", { class: "step", children: p3 ? `${p3.label} ${p3.done.toLocaleString()} of ${p3.total.toLocaleString()}${pct2 !== void 0 ? ` · ${pct2}%` : ""}${left ? " · " + left : ""}` : idle2 })
     ] });
   }
   function JobPanel({ job: job2, stop: stop2, done, fix, again }) {
@@ -21828,15 +22015,15 @@ ${pays}
         const next = todos.find((t3) => t3.go && !t3.go.risky) || todos[0];
         const m3 = l3.found ? meterOf(l3) : void 0;
         const facts2 = l3.found ? factsOf(l3) : "";
-        const pct = m3 ? Math.round(m3.share * 100) : 0;
+        const pct2 = m3 ? Math.round(m3.share * 100) : 0;
         return /* @__PURE__ */ u3("li", { children: /* @__PURE__ */ u3("button", { type: "button", class: "tidytile " + hue(looks[k3].hue) + (l3.found ? "" : " away"), onClick: () => pick(k3), children: [
           /* @__PURE__ */ u3(LibIcon, { kind: k3 }),
           /* @__PURE__ */ u3("span", { class: "tidytilename", children: names3[k3] }),
           /* @__PURE__ */ u3("span", { class: "tidytilefacts", children: l3.found ? facts2 || "Not looked at yet" : "Its drive isn't plugged in" }),
-          m3 && /* @__PURE__ */ u3("span", { class: "tidymeter", "aria-hidden": "true", children: /* @__PURE__ */ u3("span", { style: { width: `${pct}%` } }) }),
+          m3 && /* @__PURE__ */ u3("span", { class: "tidymeter", "aria-hidden": "true", children: /* @__PURE__ */ u3("span", { style: { width: `${pct2}%` } }) }),
           /* @__PURE__ */ u3("span", { class: "tidytilenext", children: [
             m3 && /* @__PURE__ */ u3("strong", { children: [
-              pct,
+              pct2,
               "% ",
               m3.words
             ] }),
