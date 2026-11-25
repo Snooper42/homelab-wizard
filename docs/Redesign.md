@@ -151,6 +151,24 @@ How far the phone's page (`homelab serve`) can go toward the Homelab app, drawn 
 - **Alerts:** Web Push to the page added to the Home Screen (iOS 16.4 and later), from the alerts the computer already keeps, quiet hours kept. No Apple Developer account needed, unlike the app's push.
 - **On a tablet or a wide window:** the computer's sidebar, the screens as a strip of icons then Status' own menu; today the phone's page keeps the old list above 700 px (every strip rule is `html:not(.companion)`, and the screens mount no menu on the phone).
 
+#### A category's page: a tile for every app
+
+The owner, Nov 25: click a category in Status' menu (Network, Media, …) and get its apps as tiles, **three across**, as CasaOS lays out its apps (ideas only, never its look or words): every app the category has, whether it's on this machine or not, each with the one obvious button.
+
+<picture><source media="(prefers-color-scheme: dark)" srcset="images/redesign/web-category-dark.png"><img alt="Network's page on a tablet: Status' menu with Network picked, then six tiles three across: Tailscale running with Its page, Speedtest Tracker stopped with Start, AdGuard Home with Install, and three not installed that wait on something" src="images/redesign/web-category.png"></picture>
+
+<p>
+<picture><source media="(prefers-color-scheme: dark)" srcset="images/redesign/web-category-duo-dark.png"><img alt="Network's page on the iPhone Duo unfolded upright: three tiles across, the tab bar at the foot" src="images/redesign/web-category-duo.png" width="300"></picture>
+<picture><source media="(prefers-color-scheme: dark)" srcset="images/redesign/web-category-phone-dark.png"><img alt="Network's page on a phone: two tiles across" src="images/redesign/web-category-phone.png" width="200"></picture>
+</p>
+
+- **A tile:** the app's logo, its state (*Running*, *Stopped*, or *Not installed*), its name, one line on what it does (the catalog's), its address once installed (or about how much memory it takes before), and one button: **Its page** when running, **Start** when stopped, **Install** when it can be, or what it waits for (*Needs a domain*, *AdGuard Home first*) in a dashed button that opens the step. ⋯ holds the rest (Open, Restart, Stop, Logs, Remove).
+- **The order:** the apps on this machine first (stopped before running), then the ones that can be installed, then the ones waiting on something. Installed tiles are solid; the rest dashed.
+- **Three across** on a tablet, a wide window and the iPhone Duo unfolded; **two** on a phone; one at 320 px.
+- **The header:** the category, *2 of 6 on this server · 1 running*, Find an app, **Your own app**.
+- **Your own apps** is a category like the rest, its tiles from `stacks/custom`.
+- **Install** on the phone's page needs the owner's yes for Choose apps on the phone (`.claude/prompts/web-loop.md`, W13): until then the phone's page shows the tiles, with Install only on the computer.
+
 ## Logos for every payee
 
 Every row in the pictures has its payee's logo; in the app today most imported payees are a letter. How the others do it:

@@ -144,15 +144,16 @@ Object.assign(P, {
   file: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6', film: 'M2 2h20v20H2zM7 2v20M17 2v20M2 12h20',
   server: 'M2 2h20v8H2zM2 14h20v8H2zM6 6h.01M6 18h.01', globe: 'c12,12,10|M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z',
 });
-const wideSide = `
+const sideFor = (here) => `
 <aside class="side">
   <div class="brand"><img src="file://${repo}/assets/logo.svg" width="26" height="26"><div><b>Homelab Wizard</b></div></div>
   <nav class="apps" aria-label="Homelab">${[['activity', 'Status', 1], ['archive', 'Backups'], ['layers', 'Choose apps']].map(([i, n, b]) => `<span class="${n === 'Status' ? 'on' : ''}" title="${n}">${icon(i, 17)}${b ? `<em>${b}</em>` : ''}</span>`).join('')}</nav>
-  <nav class="fnav">${sideMenu.map(([i, n, c, on]) => `<a class="${on ? 'on' : ''}">${icon(i, 17)}<span>${n}</span>${typeof c === 'number' && n === 'Stopped' ? `<span class="cnt">${c}</span>` : c ? `<span class="n">${c}</span>` : ''}</a>`).join('')}</nav>
+  <nav class="fnav">${sideMenu.map(([i, n, c]) => `<a class="${n === here ? 'on' : ''}">${icon(i, 17)}<span>${n}</span>${typeof c === 'number' && n === 'Stopped' ? `<span class="cnt">${c}</span>` : c ? `<span class="n">${c}</span>` : ''}</a>`).join('')}</nav>
   <div style="flex:1"></div>
   <nav class="fnav"><a>${icon('gear', 17)}<span>Settings</span></a></nav>
   <div class="foot"><div class="synced"><i></i>Linux · 0.42.8 · 3.4 TB free</div></div>
 </aside>`;
+const wideSide = sideFor('Overview');
 const wide = `
 <header class="top"><h2 style="margin:0;font-size:24px;font-weight:700;letter-spacing:-.01em;flex:1">Status</h2><div class="search">${icon('search', 15)}Find an app</div><button class="sq">${icon('sync', 17)}</button></header>
 <div class="grid">
@@ -178,3 +179,57 @@ const wide = `
   </section>
 </div>`;
 writeFileSync(out + 'web-wide.html', `<!doctype html><html><head><meta charset="utf-8"><title>Status</title><style>${deskCss}${extra}${wideCss}</style></head><body>${wideSide}<main>${wide}</main></body></html>`);
+
+// ---------- A category's own page: a tile for every app it has, installed or not (the owner, Nov 25) ----------
+// Click Network in the sidebar: each app the category has, as tiles three across, the ones on this machine first,
+// each with the one obvious button (Open, Start, Install) and its menu. Ideas from CasaOS's app grid, not its look.
+Object.assign(P, { dots: 'c5,12,1|c12,12,1|c19,12,1', download: 'M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3' });
+const net = [
+  { id: 'tailscale', name: 'Tailscale', what: 'Reach every app from your phones, at home and away, without opening a port', state: 'running', addr: 'homelab.tail3c9e.ts.net', btn: 'page' },
+  { id: 'speedtest-tracker', name: 'Speedtest Tracker', what: 'Measures the connection on a schedule and keeps the history', state: 'stopped', addr: 'speedtest.tail3c9e.ts.net', btn: 'start' },
+  { id: 'adguard-home', name: 'AdGuard Home', what: 'Blocks ads and trackers for every device that uses it', state: 'none', btn: 'install', mem: '120 MB' },
+  { id: 'tailnet-dns', name: 'Ad blocking on the tailnet', what: 'Sends your devices’ lookups to AdGuard Home, at home and away', state: 'none', btn: 'after', after: 'AdGuard Home first' },
+  { id: 'nginx-proxy-manager', name: 'Nginx Proxy Manager', what: 'Short names like photos.example.com, with your own domain', state: 'none', btn: 'after', after: 'Needs a domain' },
+  { id: 'cloudflared', name: 'Cloudflare Tunnel', what: 'Chosen apps open without Tailscale, through Cloudflare', state: 'none', btn: 'after', after: 'Needs a domain' },
+];
+const tileCss = `
+.tiles6{display:grid;grid-template-columns:repeat(var(--cols,3),minmax(0,1fr));gap:var(--gap,16px)}
+.tile6{position:relative;display:flex;flex-direction:column;gap:10px;background:var(--panel,var(--card));border:1px solid var(--line);border-radius:18px;padding:16px;min-width:0}
+.tile6.none{background:transparent;border-style:dashed}
+.tile6 .ttop{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.tile6 .ttop .alogo,.tile6 .ttop .own{border-radius:14px}
+.tile6 h4{margin:2px 0 0;font-size:15.5px;font-weight:650;line-height:1.25}
+.tile6 p{margin:0;color:var(--muted);font-size:13px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.8em}
+.tile6 .addr{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-height:1.2em}
+.st{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:650;padding:3px 9px;border-radius:99px;white-space:nowrap}
+.st i{width:7px;height:7px;border-radius:50%;background:currentColor}
+.st.run{background:var(--in-soft);color:var(--in)}.st.stop{background:#fff4e0;color:#b45309}.st.off{color:var(--muted);padding-left:0;padding-right:0}
+@media (prefers-color-scheme:dark){.st.stop{background:#2a2110;color:#fbbf24}}
+.tile6 .acts{display:flex;gap:8px;margin-top:auto}
+.tb{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px;height:36px;border-radius:10px;font:600 13.5px Inter,system-ui,sans-serif;border:1px solid var(--line2,var(--line));background:var(--panel,var(--card));color:var(--text)}
+.tb.pri{background:var(--acc);border-color:var(--acc);color:#fff}@media (prefers-color-scheme:dark){.tb.pri{color:#140c33}}
+.tb.dim{color:var(--muted);background:transparent;border-style:dashed;font-weight:550}
+.tb.sq{flex:none;width:36px;padding:0}
+.chead{display:flex;align-items:flex-end;gap:16px;margin:4px 0 16px}.chead .t{flex:1}.chead h2{margin:0;font-size:24px;font-weight:700;letter-spacing:-.01em}.chead small{color:var(--muted);font-size:13px}
+`;
+const tileLogo = (a, s) => logoOf(a.id, s);
+const tile = (a) => `<div class="tile6 ${a.state === 'none' ? 'none' : ''}">
+  <div class="ttop">${tileLogo(a, 48)}${a.state === 'running' ? '<span class="st run"><i></i>Running</span>' : a.state === 'stopped' ? '<span class="st stop"><i></i>Stopped</span>' : '<span class="st off">Not installed</span>'}</div>
+  <div><h4>${a.name}</h4></div>
+  <p>${a.what}</p>
+  <div class="addr">${a.addr ? icon('lock', 11) + ' ' + a.addr : a.mem ? 'Uses about ' + a.mem : ''}</div>
+  <div class="acts">${a.btn === 'page' ? `<span class="tb pri">Its page</span>` : a.btn === 'start' ? `<span class="tb pri">${icon('play', 13)}Start</span>` : a.btn === 'install' ? `<span class="tb pri">${icon('download', 14)}Install</span>` : `<span class="tb dim">${a.after}</span>`}${a.state === 'none' ? '' : `<span class="tb sq">${icon('dots', 16)}</span>`}</div>
+</div>`;
+const catHead = (sub = true) => `<div class="chead"><div class="t"><h2>Network</h2><small>2 of 6 on this server · 1 running</small></div>${sub ? `<div class="search" style="width:240px">${icon('search', 15)}Find an app</div><span class="cta">${icon('plus', 14)}Your own app</span>` : ''}</div>`;
+writeFileSync(out + 'web-category.html', `<!doctype html><html><head><meta charset="utf-8"><title>Network</title><style>${deskCss}${extra}${wideCss}${tileCss}</style></head><body>${sideFor('Network')}<main><header class="top" style="padding-bottom:0"></header>${catHead()}<div class="tiles6">${net.map(tile).join('')}</div></main></body></html>`);
+
+// The iPhone Duo unfolded, upright (about 669 wide): the tab bar, three tiles across.
+const phoneTabs = tabs('Status');
+const catPhone = (cols, gap) => `<!doctype html><html><head><meta charset="utf-8"><style>${phoneCss}${extra}${tileCss}
+body{width:auto}.tile6{background:var(--card);border-color:transparent}.tile6.none{border-color:var(--line);background:transparent}.tiles6{--cols:${cols};--gap:${gap}px;margin:0 16px}
+.tb{height:34px;font-size:13px}.tile6 h4{font-size:15px}</style></head><body>${sb}
+<div class="nav"><span class="who" style="padding:0 14px 0 8px;color:var(--acc)">${icon('left', 20)}Status</span><span style="flex:1"></span><span class="gb">${icon('search', 20)}</span><span class="gb">${icon('plus', 22)}</span></div>
+<h1>Network</h1><div class="sub">2 of 6 on this server · 1 running</div>
+<div class="tiles6">${net.map(tile).join('')}</div>${phoneTabs}</body></html>`;
+writeFileSync(out + 'web-category-duo.html', catPhone(3, 12));
+writeFileSync(out + 'web-category-phone.html', catPhone(2, 10));
