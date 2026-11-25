@@ -24,6 +24,25 @@ func someone(t *testing.T, root string, p int, what string, at time.Time) string
 	return file
 }
 
+// ends takes a ticket out of the queue as its job ending would. On Windows a
+// file another goroutine is reading can't be removed (Take reads the queue
+// every few milliseconds), so it tries again until it's gone: ignoring that
+// error once left the ticket in place and the test waiting ten minutes.
+func ends(t *testing.T, file string) {
+	t.Helper()
+	deadline := time.Now().Add(5 * time.Second)
+	for {
+		err := os.Remove(file)
+		if err == nil || os.IsNotExist(err) {
+			return
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("removing %s: %v", filepath.Base(file), err)
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
+}
+
 func fakes(t *testing.T, live map[int]bool) {
 	was, wasAlive, wasStarted, wasPoll := pid, alive, started, poll
 	pid = func() int { return 100 }
@@ -84,9 +103,14 @@ func TestTakeWaitsItsTurn(t *testing.T) {
 	if q := Queue(root); len(q) != 2 || q[0].What != "the nightly update" || q[1].What != "restarting Immich" {
 		t.Fatalf("the queue: %+v", q)
 	}
-	_ = os.Remove(other)
-	if err := <-done; err != nil {
-		t.Fatal(err)
+	ends(t, other)
+	select {
+	case err := <-done:
+		if err != nil {
+			t.Fatal(err)
+		}
+	case <-time.After(10 * time.Second):
+		t.Fatal("still waiting after the job ahead ended")
 	}
 	if len(said) != 1 || said[0] != "the nightly update" {
 		t.Errorf("said it waited for %v", said)
