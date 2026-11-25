@@ -48,5 +48,7 @@ import Testing
         #expect(PaycheckBills.until(LocalDay.parse("2026-11-22"), today: today) == "Today")
         #expect(PaycheckBills.until(LocalDay.parse("2026-11-23"), today: today) == "Tomorrow")
         #expect(PaycheckBills.until(LocalDay.parse("2026-11-26"), today: today) == "in 4 days")
+        #expect(PaycheckBills.due(LocalDay.parse("2026-12-06"), today: today) == "in 14 days")
+        #expect(PaycheckBills.due(LocalDay.parse("2026-12-07"), today: today) != "in 15 days")
     }
 }

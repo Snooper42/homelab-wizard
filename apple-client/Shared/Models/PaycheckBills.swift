@@ -44,6 +44,13 @@ struct PaycheckBills: Equatable {
         return PaycheckBills(days: first...last, upcoming: upcoming, paid: paid)
     }
 
+    /// "in 4 days" within two weeks, else the day: "Dec 1".
+    static func due(_ date: Date?, today: Date, calendar: Calendar = .current) -> String {
+        guard let date else { return "" }
+        let n = calendar.dateComponents([.day], from: calendar.startOfDay(for: today), to: calendar.startOfDay(for: date)).day ?? 0
+        return n <= 14 ? until(date, today: today, calendar: calendar) : date.formatted(.dateTime.month(.abbreviated).day())
+    }
+
     /// "Today", "Tomorrow", "in 4 days".
     static func until(_ date: Date?, today: Date, calendar: Calendar = .current) -> String {
         guard let date else { return "" }

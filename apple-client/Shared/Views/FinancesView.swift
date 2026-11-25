@@ -2327,7 +2327,7 @@ private struct FinanceRecurringPage: View {
                     .font(.body.weight(.medium))
                     .foregroundStyle(Theme.ink)
                     .lineLimit(1)
-                Text(verbatim: [p.schedule?.words, p.schedule?.endWords(today: view.todayText), item.next.map { "next \(Self.when($0, view))" }, into ? p.payer.map { "from \($0)" } : nil]
+                Text(verbatim: [p.schedule?.words, p.schedule?.endWords(today: view.todayText), into ? p.payer.map { "from \($0)" } : nil]
                     .compactMap { $0 }.joined(separator: " · "))
                     .font(.caption)
                     .foregroundStyle(Theme.secondaryInk)
@@ -2348,6 +2348,12 @@ private struct FinanceRecurringPage: View {
                     }
                     .font(.body.weight(.semibold))
                 }
+                // When it comes next, under its amount (the owner's reference: "in 10 days").
+                if let next = item.next, let today = view.today {
+                    Text(verbatim: PaycheckBills.due(next, today: today))
+                        .font(.caption)
+                        .foregroundStyle(Theme.secondaryInk)
+                }
             }
         }
         .padding(.vertical, 6)
@@ -2355,15 +2361,6 @@ private struct FinanceRecurringPage: View {
         .accessibilityElement(children: .combine)
     }
 
-    /// "today", "tomorrow", else "Fri, Nov 14".
-    static func when(_ date: Date, _ view: FinancesPlanView) -> String {
-        let calendar = Calendar.current
-        if let today = view.today {
-            if calendar.isDate(date, inSameDayAs: today) { return "today" }
-            if let tomorrow = calendar.date(byAdding: .day, value: 1, to: today), calendar.isDate(date, inSameDayAs: tomorrow) { return "tomorrow" }
-        }
-        return date.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day())
-    }
 }
 
 /// Investments, as Ghostfolio last read them; where Finances may be
