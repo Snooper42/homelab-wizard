@@ -4,6 +4,12 @@
 
 **Paused:** no
 
+## The focus (the owner, Nov 25)
+
+*"I want to only focus on the web page component. This needs to be perfect across all possible platforms. And let's try and optimize for iPhone Duo."*
+
+So this is the only work: the phone's page, on every device and browser people actually use, with **the iPhone Duo (Apple's foldable) first.** Nothing outside this file's items, and nothing in `apple-client/`, Finances' data or the computer-only screens. (The other lanes' loops are the owner's to pause: **Paused: yes** at the top of each.)
+
 ## Why this lane exists
 
 The owner, Nov 25: *"I think they should kinda be in parallel in case there are more people like my buddy that'll only use it via the web."* A tester runs the homelab on a rented server (Ubuntu 24.04, no screen, tailnet only) and sees it only through the phone's page (`homelab serve`), from a phone and a tablet. For him and anyone like him, **the phone's page is the whole product.** Lane R builds every screen for the computer; this lane makes sure each one arrives on the phone's page as well, at every size, and adds what only a web page can do (alerts on the Lock Screen, a passkey lock, working offline).
@@ -39,14 +45,53 @@ Or, for a loop that paces itself: `/loop Read .claude/prompts/web-loop.md and do
 4. **Never:** `apple-client/` (lane R's item P1), Finances' data (lane M: `web/src/finances` data files, `internal/finance`), Tidy Up on the phone (the owner: it stays on the computer).
 5. **Q reviews first** (`lanes.md` rule 6) for anything that: adds a call to `phoneMethods`; changes pairing, tokens, or what a phone may do; adds a host the homelab calls (Web Push does: W9); stores a new secret (VAPID keys: W9); or touches sign-in (passkeys: W11). Write **Needs Q's review: yes** and why on the description's first line.
 6. **Words** (`lanes.md` rule 12), and the owner's, Nov 25: **never "needs you"** (*"1 app needs you"*, *"Needs you"*). Say what happened: *"Decypharr stopped"*, *"Stopped"*, *"2 backups failed"*. Never write the household's chores as the app's feelings.
-7. **Sizes to check, every pull request that changes how the phone's page looks** (light and dark, pictures in the description):
-   - **Phone:** 390×844 and 320×568 with big text;
-   - **Phone in landscape:** 844×390;
-   - **Tablet:** 820×1180 and 1180×820;
-   - **Wide window:** 1280×800.
+7. **The devices to check, every pull request that changes how the phone's page looks.** Pictures of the **Duo's four poses** go in the description, light and dark; the rest run as smoke cases (`app/preview/shoot.mjs`, add a case per size):
 
-   Always as a paired phone (`html.companion`), and once as **look only** (no Start, Stop, Edit or Add anywhere) and once as a **wall screen** (`#kiosk`: Status only, no buttons).
+   | Device | CSS size (portrait; landscape swapped) | Why |
+   |---|---|---|
+   | **iPhone Duo, folded** | 382 × 556 | the tester's phone (reported) |
+   | **iPhone Duo, unfolded** | 669 × 951 and 951 × 669 | the tester's phone; crosses 700 (reported) |
+   | **iPhone Duo, two windows** | 385 × 669 | Split View unfolded (reported) |
+   | iPhone SE | 320 × 568, big text | the smallest |
+   | iPhone (6.1") | 390 × 844, and 844 × 390 | the most common |
+   | iPhone Pro Max | 440 × 956, and 956 × 440 | the largest phone, wider than 700 in landscape |
+   | Android phone | 360 × 800, and 412 × 915 | Chrome, the back button |
+   | Android foldable, unfolded | about 690 × 840 | the same cliff as the Duo |
+   | iPad mini | 744 × 1133, and Split View at 320 and 507 | iPad's narrowest |
+   | iPad | 820 × 1180, and 1180 × 820 | the tablet |
+   | A tablet in landscape | 1280 × 800 | the tester's other screen |
+   | A computer's browser | 1280 × 800 and 1920 × 1080 | Chrome, Safari, Firefox, Edge on Mac, Windows and Linux |
+
+   Every row as a paired phone (`html.companion`), once as **look only** (no Start, Stop, Edit or Add anywhere), and once as a **wall screen** (`#kiosk`: Status only, no buttons).
+
+   **Engines:** Chromium is installed here (Playwright). Run the smoke cases in **WebKit** too, the engine every iPhone and iPad browser uses: try `require('playwright').webkit`; if it's missing, add the WebKit run to CI's frontend job (`.github/workflows/`) rather than skipping it, with **Needs Q's review: yes** (CI). Firefox where CI can.
+
+   **Also, every time:**
+   - big text (the browser's text size at 200%);
+   - reduced motion;
+   - dark mode, and increased contrast;
+   - VoiceOver order (`make app-smoke`'s axe check);
+   - the page added to the Home Screen (`display-mode: standalone`) and in Safari's tab;
+   - no sideways scroll at any size.
 8. **The server's homelab is a first-class case.** Use the preview's household for pictures (`app/preview/shoot.mjs`'s mock), and check every screen also reads right on Linux with no battery, no display and no desktop (no *This Mac*, no *Plugged in*, no tray).
+
+## The iPhone Duo (reported Nov 25; **confirm on a real device**, item W1)
+
+Apple's foldable, the tester's phone. Apple's spec pages give the panels: inner 7.6" OLED, 1878 × 2670 at 430 ppi; outer 5.4", 1398 × 2034 at 460 ppi. Apple gives no CSS viewport. Safari's widths as reported from a WebKit post (ppc.land, *Safari 27.1 on iPhone Duo runs web pages from 382 to 951 pixels wide*; third-party, not measured here):
+
+| Pose | CSS width | Height (worked out from the panel at the same scale, not measured) | Today's layout |
+|---|---|---|---|
+| Folded (outer screen) | about 382 | about 556 | phone (under 700) |
+| Unfolded, portrait, one window | about 669 | about 951 | phone: one narrow column on a 7.6" screen |
+| Unfolded, landscape | about 951 | about 669 | **the computer's old layout** (over 700): the tester's screenshot |
+| Unfolded, two windows side by side | about 385 each | about 669 | phone |
+
+Other sites give 890 × 626 at 3×; that is the panel divided by 3, not Safari's report. Trust W1's measurement over both.
+
+**What this means:** the page's one breakpoint (700 px) sits in the middle of this phone's range. Unfolding or turning it switches the page between the tab bar and the computer's sidebar, mid-use. On the Duo the page must:
+- choose its layout by what fits, not by "phone or computer": a tab bar and two columns of cards unfolded in portrait; list and detail side by side unfolded in landscape (W4);
+- keep where you were, what's open and what's typed when it's folded, unfolded or turned (W4);
+- stay usable at about 382 when folded and in a two-window split.
 
 ## Facts (checked Nov 25; read the code before relying on them)
 
@@ -65,7 +110,13 @@ Or, for a loop that paces itself: `/loop Read .claude/prompts/web-loop.md and do
 Each item is one pull request unless it says it splits. Tick it here in the same pull request.
 
 - [ ] **W0. Land the start.** Branch `claude/quirky-ramanujan-jfgtq2` holds three commits not on main: 59ab5ad (a git checkout shows its real version), 8ab68b9 and ed32b46 (the four `web-*` mocks, `app/preview/redesign/web.mjs`, `docs/Redesign.md` › *The phone's page*). If they aren't on main, cherry-pick them onto `claude/web-start`, run the checks (`lanes.md` rule 7), and open one pull request. **Try this tonight:** `git pull`, `./homelab version` shows the newest release (not 0.17.0), and the sidebar's foot on the phone's page says the same.
-- [ ] **W1. The phone's own stylesheet.** Move every `html.companion` rule out of `web/dist/style.css` into `web/dist/phone.css`, loaded only by the phone's page (the companion's `head` in `internal/companion/server.go`, after `style.css`), so lane R and this lane stop meeting in one 3,000-line file. **No change on screen:** the phone's smoke cases and pictures before and after must be identical (diff the PNGs; any pixel that moves is a mistake). Keep the `html:not(.companion)` rules in `style.css` (they're the computer's).
+- [ ] **W1. Measure the real devices.** Settings › This phone on the phone's page gets a small **About this screen** line, and `Report` includes it:
+  - the window's CSS size, the device pixel ratio, and the safe-area insets;
+  - `display-mode` (standalone or tab), and whether push, passkeys and the badge are offered here;
+  - every change of size since the page opened (folding, unfolding, turning, Split View), with the time.
+
+  Ask the tester (via the owner, `owner.md`) to open it on the Duo in each pose of rule 7's table, and on his tablet, and send the line. Put the measured numbers in this file's Duo table (replacing *reported*) and in the smoke cases. Until then, build to the reported sizes.
+- [ ] **W1b. The phone's own stylesheet.** Move every `html.companion` rule out of `web/dist/style.css` into `web/dist/phone.css`, loaded only by the phone's page (the companion's `head` in `internal/companion/server.go`, after `style.css`), so lane R and this lane stop meeting in one 3,000-line file. **No change on screen:** the phone's smoke cases and pictures before and after must be identical (diff the PNGs; any pixel that moves is a mistake). Keep the `html:not(.companion)` rules in `style.css` (they're the computer's).
 - [ ] **W2. No more "needs you".** Everywhere a person reads it: the computer's and the phone's Status headline and sidebar item, Backups' card, Setup, alerts, `docs/Redesign.md`, `docs/Tour.md`, the `phone-*` and `computer-*` mocks (`app/preview/redesign/`, then `make redesign`), and `owner.md`'s notes. The pattern: the headline names the problem (*Decypharr stopped*; two or more: *2 apps stopped* with each in a row under it); the card or menu item is *Stopped* (or *Failed*, for backups). Add `needs you` to the words check (`app/preview/words.mjs`) so it can't come back. The iPhone app's strings: a line under **From the other lanes** in `redesign-loop.md` for P1, not this lane. About 27 files today: `rg -il "needs you" web/src app/preview docs apple-client cmd internal`.
 - [ ] **W3. A tablet or a wide window: the redesigned sidebar** (`web-wide.png`). Above 700 px the phone's page gets the strip of icons and each screen's own menu, as the computer has had since #839:
   - the strip's rules apply to `html.companion` too, sized to the screens this phone has (Status, Backups, and Finances only where allowed: two to four icons, never empty columns);
@@ -73,8 +124,20 @@ Each item is one pull request unless it says it splits. Tick it here in the same
   - the foot is one line: the system, the version, the free space (`Linux · 0.42.8 · 3.4 TB free`);
   - the wall screen keeps no sidebar.
   
-  Check every size in rule 7; the 700 px phone layout must not change.
-- [ ] **W4. A phone in landscape keeps the phone's layout.** A short, wide window (landscape and at most about 500 px tall) gets the tab bar and the phone's cards, in two columns where they fit, with the safe areas (`env(safe-area-inset-left/right)`) clear of the notch. A tablet in landscape keeps W3's sidebar.
+  Check every size in rule 7; the narrow phone layout must not change. On the Duo unfolded in landscape this is the screen the tester sees first.
+- [ ] **W4. Layout by what fits: the Duo and every foldable.** Replace the single 700 px switch with sizes chosen by the window, so no device lands on the wrong one:
+  - **Narrow** (under about 600 wide: phones, the Duo folded, any Split View): the tab bar, one column. As today.
+  - **Roomy** (about 600 to 900 wide and taller than wide: **the Duo unfolded in portrait**, an iPad in Split View, an Android foldable): the tab bar, cards in **two columns**, Status' categories two to a row, an app's page with its cards side by side.
+  - **Wide** (over about 900, or landscape and taller than about 500: **the Duo unfolded in landscape**, a tablet): W3's sidebar with **list and detail side by side**. Status' list on the left, the app's page on the right, as the iPad app does (`apple-client/README.md`); no full-page jump to an app.
+  - **Short and wide** (landscape and under about 500 tall: a phone on its side, the Pro Max at 956 × 440): the tab bar, two columns, the safe areas (`env(safe-area-inset-left/right)`) clear of the camera.
+
+  **Mock it first:** add the Duo unfolded to `app/preview/redesign/web.mjs` (`web-duo-portrait` at 669 × 951, `web-duo-landscape` at 951 × 669, with the tester's apps), show the owner (`owner.md`, `lanes.md` rule 4: it's a new picture), then build it.
+
+  Use container queries on `main` where a card's own width decides (most of them), media queries only for the frame.
+
+  **Folding, unfolding and turning keep everything:** the screen, the app's page that's open, the scroll position, a half-typed form or setting, an open menu (closed cleanly, not left floating). Test each pose change in both directions with Playwright's `setViewportSize` on the Duo's sizes; nothing reloads, nothing is read twice.
+
+  **Touch targets at least 44 px** in every size; nothing important in the centre fold line of the unfolded Duo in landscape (a card may cross it, a button shouldn't sit on it: keep the two panes' gap there).
 - [ ] **W5. Status on the phone as `web-status.png`.** The stopped app first, with Start, Logs and Its page; Backups and the machine side by side; each category one row. The machine's card says what's true of *this* machine: a server with no battery says the disks and the next update (not *Plugged in*); a Mac or laptop keeps power. Name it from the computer's own facts (`core.Machine`, `internal/host`), never from the phone. The *Alerts on this phone* offer waits for W9.
 - [ ] **W6. An app's page on the phone as `web-app.png`.** A back button with the screen it came from, the app's name as the title (no search bar from the screen before). Open, then Restart, Logs and Stop sharing the width. Its week as seven squares; its backups (the last seven nights, the size, where); its last update with Roll back (a look-only phone sees no Roll back). Use what `web/src/page/AppPage.tsx` and `web/src/screens/apppage.ts` already draw; leave out what the phone's calls don't carry yet, and list it under *Next*.
 - [ ] **W7. Moving around like an app.**
