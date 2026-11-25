@@ -33,14 +33,24 @@ What changed on the night of Nov 23, to try on the real thing. Write what's wron
 **Added Nov 24** (merged through the day; each arrives as a new version, as above):
 7. **Transactions:** a table: date, payee with its logo, the category as a coloured tag, the account, *Linked to*, the amount; each day's total in its band. Are the names level with their logos now?
 8. **Budgets:** its own page in Finances' menu, with This month at the top (*vs last month* as a chip beside Money out).
-9. **Status:** one headline, *All good* or *1 app needs you* with Start, Logs and Its page; Backups and This Mac beside it; each category one row with its apps' icons and a green *✓ 4 running* pill; Instead of subscriptions below the apps. A stopped app badges Status only, not Backups as well.
+9. **Status:** (its sidebar changed since: see 15) one headline, *All good* or *1 app needs you* with Start, Logs and Its page; Backups and This Mac beside it; each category one row with its apps' icons and a green *✓ 4 running* pill; Instead of subscriptions below the apps. A stopped app badges Status only, not Backups as well.
 10. **Backups:** *Last night* (how many copied, what was skipped) with *Needs you* beside it; the restore test and off-site as cards; each app's copy one line, two to a line.
-11. **Settings:** opens on *General*: People, Phones, Automatic care's three switches (they save at once), Alerts, Reaching the apps, This Mac. The list on the left in the same order, each app's own settings under *Advanced*.
+11. **Settings:** (its list is in the sidebar now: see 15) opens on *General*: People, Phones, Automatic care's three switches (they save at once), Alerts, Reaching the apps, This Mac. The list on the left in the same order, each app's own settings under *Advanced*.
 12. **Tidy Up:** *What I did today* first with *Needs a look* beside it; the folders and when to tidy behind **Folders and when…**, **Tidy up now** beside it; its own menu in the sidebar (Overview, each library, the drive).
 13. **The rest of Finances:** Net worth's three figures in one row; ↗ in place of *See all*; Paychecks' tiles level; *Income* without a gap before it.
 14. **On your phone in the browser** (the companion): Backups' night in one line, the restore test and off-site side by side.
 
-**The iPhone:** build it in Xcode as usual; Settings › About should now show the same version as the computer's Settings › This Mac. (Its screens aren't redesigned yet.)
+**Added later on Nov 24:**
+15. **One sidebar everywhere:** on every screen, the homelab's screens are a row of icons at the top, then that screen's own pages (Status: Overview and each category; Backups: Last night, Needs you, Restore test, Off-site, Each app; Settings: its pages with their icons; Choose apps, Setup, Finances and Tidy Up their own), then Settings and *412 GB free · plugged in* at the foot. Nothing in it moves or animates as you switch screens. Is it the same on every screen?
+16. **Transactions:** a line over the table with how many, what came in and what went out; **This paycheck** and **Last paycheck** in the date picker.
+17. **Backups and Setup** have no line under their title any more, as Status.
+18. **On your phone in the browser:** Status shows **This machine** (free space, plugged in, the nightly updates) beside Backups.
+
+**The iPhone:** build it in Xcode as usual; Settings › About should show the same version as the computer's Settings › This Mac. Redesigned on Nov 24:
+- **Status:** *1 app needs you* (or how many) with the app and Start, Logs, Its Page; **Backups** and **This Machine** side by side under it (its free space should match the computer's); the categories as one **Apps** card, a row each with logos and *✓ 4 running*, a tap opening it, a long press for Start, Restart, Stop.
+- **Backups:** **Last night** (11 of 12 copied, when, where to, a chip for what was skipped) with Back Up Now and Test a Restore; **Needs You** in one list with Start beside a stopped app's copy; **Restore test** and **Off-site** as two cards.
+- **Settings:** **Household** (phones), then **Automatic Care** (nightly updates, restart, undo, quiet hours, alerts).
+- **Finances:** opens on **Left after this paycheck's bills**, the figure the computer's Dashboard shows, with checking day by day as a chart (a dot at each bill), and **Now**, **Payday** and **Bills** under it. Does the figure match the computer's?
 
 ## Doesn't work or bugs me
 
