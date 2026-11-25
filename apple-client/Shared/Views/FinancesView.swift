@@ -226,10 +226,18 @@ func amountText(_ value: Double, _ currency: String, _ finances: FinancesViewMod
 /// A card's heading: its name, and a link or a note on the right.
 struct CardHeading<Trailing: View>: View {
     let title: LocalizedStringKey
+    /// A small symbol before the title (the owner's look, Nov 25).
+    var icon: String? = nil
     @ViewBuilder var trailing: () -> Trailing
 
     var body: some View {
-        HStack(alignment: .firstTextBaseline) {
+        HStack(alignment: .center, spacing: 8) {
+            if let icon {
+                Image(systemName: icon)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Theme.secondaryInk)
+                    .accessibilityHidden(true)
+            }
             Text(title)
                 .font(.headline)
                 .foregroundStyle(Theme.ink)
@@ -244,16 +252,29 @@ extension CardHeading where Trailing == EmptyView {
     init(_ title: LocalizedStringKey) { self.init(title: title) { EmptyView() } }
 }
 
-/// A card's link in the accent, as the redesign's: "All ›", "Calendar ›".
-private struct AllLink: View {
-    var words: LocalizedStringKey = "All"
+/// A card's title with its small symbol before it, as CardHeading draws one.
+private struct CardTitleLabelStyle: LabelStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        HStack(spacing: 8) {
+            configuration.icon
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(Theme.secondaryInk)
+            configuration.title
+        }
+    }
+}
+
+/// A card's round ↗ (the owner's look, Nov 25): opens what's behind the card.
+private struct OpenButton: View {
+    var label: LocalizedStringKey = "Open"
 
     var body: some View {
-        HStack(spacing: 3) {
-            Text(words)
-            Image(systemName: "chevron.right").accessibilityHidden(true).font(.caption.weight(.bold))
-        }
-        .foregroundStyle(Theme.accent)
+        Image(systemName: "arrow.up.right")
+            .font(.footnote.weight(.bold))
+            .foregroundStyle(Theme.secondaryInk)
+            .frame(width: 32, height: 32)
+            .background(Theme.separator, in: Circle())
+            .accessibilityLabel(Text(label))
     }
 }
 
@@ -832,11 +853,12 @@ private struct RecentTransactionsCard: View {
     var body: some View {
         let latest = Array((finances.ledger?.newestFirst ?? []).prefix(4))
         VStack(alignment: .leading, spacing: 4) {
-            HStack(alignment: .firstTextBaseline) {
+            HStack(alignment: .center) {
                 NavigationLink {
                     TransactionsView(finances: finances)
                 } label: {
-                    Text("Latest transactions")
+                    Label("Latest transactions", systemImage: "list.bullet")
+                        .labelStyle(CardTitleLabelStyle())
                         .font(.headline)
                         .foregroundStyle(Theme.ink)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -863,7 +885,7 @@ private struct RecentTransactionsCard: View {
                     NavigationLink {
                         TransactionsView(finances: finances)
                     } label: {
-                        AllLink().font(.subheadline.weight(.semibold))
+                        OpenButton(label: "All transactions")
                     }
                     .buttonStyle(.plain)
                 }
@@ -915,7 +937,7 @@ private struct SpendingPaceCard: View {
                 FinanceSpendingPage(finances: finances)
             } label: {
                 VStack(alignment: .leading, spacing: 8) {
-                    CardHeading(title: "Spending") { AllLink() }
+                    CardHeading(title: "Spending", icon: "cart") { OpenButton(label: "Spending") }
                     HStack(alignment: .top) {
                         let figure = FinanceLead.splitCents(amountText(pace.spent, view.plan.currency, finances))
                         VStack(alignment: .leading, spacing: 2) {
@@ -1041,13 +1063,13 @@ private struct PaycheckBillsCards: View {
             NavigationLink {
                 FinanceCalendarView(finances: finances)
             } label: {
-                HStack(alignment: .firstTextBaseline) {
+                HStack(alignment: .center) {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(title).font(.headline).foregroundStyle(Theme.ink)
                         Text(verbatim: note).font(.subheadline).foregroundStyle(Theme.secondaryInk)
                     }
                     Spacer()
-                    if link { AllLink(words: "Calendar").font(.subheadline.weight(.semibold)) }
+                    if link { OpenButton(label: "Calendar") }
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)
@@ -1119,7 +1141,7 @@ private struct BudgetsCard: View {
                 FinanceBudgetsPage(finances: finances)
             } label: {
                 VStack(alignment: .leading, spacing: 4) {
-                    CardHeading(title: "Budgets") { AllLink() }
+                    CardHeading(title: "Budgets", icon: "chart.pie") { OpenButton(label: "Budgets") }
                         .padding(.bottom, 6)
                     ForEach(Array(shown.enumerated()), id: \.element.id) { i, budget in
                         if i > 0 { Divider().padding(.leading, 40) }

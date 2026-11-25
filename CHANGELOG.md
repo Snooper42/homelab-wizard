@@ -9,6 +9,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 ### New
 
 <!-- The iPhone and iPad app (lane 4): add a line just below this one. -->
+- **The owner's dark look on the Homelab app:** on the iPhone and iPad at night, a near-black background with cards a shade above it; on Finances' cards a symbol before the title and a round ↗ to open, in place of *All ›*.
 - **Recurring's rows as the bills card's on the Homelab app:** on the iPhone and iPad, each bill and subscription says how often it comes under its name and when it comes next under its amount (*in 10 days*, or the day when it's further off).
 - **Accounts on the Homelab app, as the owner's pick:** on the iPhone and iPad, chips over the chart switch it between net worth and each group (Cash, Credit Cards, …), the ranges are 1M, 3M, 6M, 1Y and All, the change says its share too (*↑ $19,889 (11.2%) 3 months*), and each account says when its balance was last typed in. A card or loan shows what it owes with a minus.
 - **Review one at a time on the Homelab app:** on the iPhone and iPad, new transactions to review come as a stack of cards (*3 left*): the payee and amount, its other transactions one tap away, the category as chips to tap, and Skip or Reviewed, or a swipe right or left.

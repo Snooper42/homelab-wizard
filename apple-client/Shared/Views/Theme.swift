@@ -26,16 +26,16 @@ enum Theme {
     /// The accent's deeper end, for the app mark's gradient.
     static let accentDeep = Color(light: 0x4B32C3, dark: 0x5B45D6)
 
-    /// Behind grouped lists and forms: warm off-white by day, warm near-black by night.
-    static let canvas = Color(light: 0xF6F4EF, dark: 0x0E0D0C)
-    /// A card on the canvas.
-    static let surface = Color(light: 0xFFFFFF, dark: 0x1C1B1A)
+    /// Behind grouped lists and forms: warm off-white by day; by night the owner's dark (Nov 25), a near-black.
+    static let canvas = Color(light: 0xF6F4EF, dark: 0x0A0A0D)
+    /// A card on the canvas: white by day, a shade above the near-black by night.
+    static let surface = Color(light: 0xFFFFFF, dark: 0x15151A)
     /// Text on a card: near-black by day, near-white by night.
     static let ink = Color(light: 0x1C1C1E, dark: 0xF2F2F7)
     /// Quieter text on a card or the canvas: a caption, a date.
     static let secondaryInk = Color(light: 0x5E5E66, dark: 0x98989F)
     /// A hairline between rows inside a card.
-    static let separator = Color(light: 0xECE9E2, dark: 0x2A2826)
+    static let separator = Color(light: 0xECE9E2, dark: 0x25252D)
 
     static let success = Color(light: 0x137A60, dark: 0x3CC79F)
     static let warning = Color(light: 0xA35700, dark: 0xFFA733)
