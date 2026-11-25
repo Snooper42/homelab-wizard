@@ -310,8 +310,6 @@ struct CardEditor: View {
                     Stepper(value: $draft.count, in: 1...FinancePlanEdit.maxCardCount) {
                         LabeledContent("How Many", value: "\(draft.count)")
                     }
-                } footer: {
-                    Text("Update Prices finds it by its name, then its number and set.")
                 }
                 Section {
                     TextField(amountsKept ? "Paid, each: hidden, type to change" : "Paid, each (optional)", text: $paidText)

@@ -331,8 +331,6 @@ struct BackupsView: View {
             }
         } header: {
             Text("Password Vault Export")
-        } footer: {
-            Text("A copy of your passwords you can open anywhere, once a month.")
         }
     }
 
