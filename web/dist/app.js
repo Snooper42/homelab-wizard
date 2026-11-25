@@ -8170,6 +8170,27 @@
   var mountCopyRows = (el3, props) => R(props && /* @__PURE__ */ u3(CopyRows, { ...props }), el3);
   var mountVault = (el3, props) => R(/* @__PURE__ */ u3(Vault, { ...props }), el3);
   var mountJobs = (el3, props) => R(/* @__PURE__ */ u3(Jobs, { ...props }), el3);
+  function Gaps({ gaps, add }) {
+    if (!gaps.length) return null;
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3(CardHead, { title: "Not in any backup" }),
+      /* @__PURE__ */ u3(Rows, { kind: "gaplist", children: gaps.map((g2) => /* @__PURE__ */ u3(
+        Row,
+        {
+          dot: g2.job ? "warn" : "",
+          title: g2.name,
+          sub: /* @__PURE__ */ u3(S, { children: [
+            /* @__PURE__ */ u3("span", { title: g2.path, children: shortPath(g2.path) }),
+            " · ",
+            g2.why
+          ] }),
+          end: g2.job ? /* @__PURE__ */ u3("button", { type: "button", class: "small primary", onClick: add, children: "Add" }) : void 0
+        },
+        g2.path
+      )) })
+    ] });
+  }
+  var mountGaps = (el3, props) => R(props && /* @__PURE__ */ u3(Gaps, { ...props }), el3);
 
   // web/src/screens/backups.ts
   var backupsData = store(() => go().Backups());
@@ -8182,8 +8203,16 @@
     if (backupsData.value && !backupsData.error) drawBackups();
     drawJobs();
   });
+  var gapsData = store(async () => await go().BackupGaps() || []);
+  gapsData.watch(() => drawGaps());
   function loadBackups() {
-    return Promise.all([jobsData.load(), backupsData.load()]);
+    return Promise.all([jobsData.load(), backupsData.load(), gapsData.load().catch(() => {
+    })]);
+  }
+  function drawGaps() {
+    const gaps = gapsData.error ? [] : gapsData.value || [];
+    $("gapsCard").hidden = !gaps.length;
+    mountGaps($("gapsCard"), { gaps, add: () => backupTask("duplicati-setup", "Adding the backup job…", "Backup job added", "Adding the job stopped: the log says why") });
   }
   function redrawBackups() {
     if (backupsData.value && !backupsData.error) drawBackups();
@@ -22692,6 +22721,8 @@ ${pays}
     if (name === "backups") {
       backupsData.fresh(minute);
       jobsData.fresh(minute);
+      gapsData.fresh(minute).catch(() => {
+      });
       statusData.fresh(minute);
     }
     if (name === "setup") {

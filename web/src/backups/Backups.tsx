@@ -313,3 +313,20 @@ export const mountBackupTiles = (el: Element, props: BackupTilesProps) => render
 export const mountCopyRows = (el: Element, props: { o: backup.Overview; apps?: Record<string, api.AppStatus> } | null) => render(props && <CopyRows {...props} />, el);
 export const mountVault = (el: Element, props: { o: backup.Overview }) => render(<Vault {...props} />, el);
 export const mountJobs = (el: Element, props: JobsProps) => render(<Jobs {...props} />, el);
+
+/** Not in any backup (quality-loop D1): each folder of the household's that no job copies, where it is, and why;
+ * Add for one a job can copy (it makes the homelab's missing jobs). */
+export function Gaps({ gaps, add }: { gaps: duplicati.Gap[]; add: () => void }) {
+  if (!gaps.length) return null;
+  return (
+    <>
+      <CardHead title="Not in any backup" />
+      <Rows kind="gaplist">
+        {gaps.map((g) => <Row key={g.path} dot={g.job ? 'warn' : ''} title={g.name} sub={<><span title={g.path}>{shortPath(g.path)}</span> · {g.why}</>}
+          end={g.job ? <button type="button" class="small primary" onClick={add}>Add</button> : undefined} />)}
+      </Rows>
+    </>
+  );
+}
+
+export const mountGaps = (el: Element, props: { gaps: duplicati.Gap[]; add: () => void } | null) => render(props && <Gaps {...props} />, el);

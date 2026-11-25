@@ -511,7 +511,7 @@ const shots = [
     await page.evaluate(() => document.getElementById('storageCard').scrollIntoView({ block: 'start' }));
   } },
   { name: 'choose', screen: 'choose', before: async (page) => { await page.click('#starters .starter:has-text("Music")'); await page.click('#more > summary'); await page.click('#presets .chip >> text=Household'); await page.waitForTimeout(500); } },
-  { name: 'backups', screen: 'backups' },
+  { name: 'backups', screen: 'backups', mock: { backupGaps: [{ name: 'The synced Files (Syncthing)', path: '/Users/you/Homelab/data/sync', job: 'Homelab Files', why: 'No backup job yet' }, { name: 'Films, shows and music', path: '/Volumes/Hobbies/media', why: 'Too big for a nightly copy: keep a copy of your own' }] } },
   { name: 'finances', screen: 'finances' },
   { name: 'finances-worth', screen: 'finances', before: async (page) => { await finTab(page, 'Net worth'); await page.waitForTimeout(300); } },
   { name: 'finances-pay', screen: 'finances', before: async (page) => { await finTab(page, 'Pay'); await page.waitForTimeout(300); } },
@@ -2051,6 +2051,28 @@ const smokes = [
   { name: 'Create the backup jobs', screen: 'backups', mock: { duplicatiJobs: [] }, run: async (page) => {
     await page.click('#dupCard button:has-text("Create the backup jobs")');
     await page.waitForSelector('#backupTitle:has-text("Backup jobs created")', { timeout: 5000 });
+  } },
+  // Quality-loop D1: Not in any backup lists the folders no job copies, where they are and why; Add for the synced Files
+  // makes the job (duplicati setup), and the media library, left out on purpose, has no Add.
+  { name: 'Backups: Not in any backup, with Add for the synced Files', screen: 'backups', mock: { backupGaps: [
+    { name: 'The synced Files (Syncthing)', path: '/Users/you/Homelab/data/sync', job: 'Homelab Files', why: 'No backup job yet' },
+    { name: 'Films, shows and music', path: '/Volumes/Hobbies/media', why: 'Too big for a nightly copy: keep a copy of your own' },
+  ] }, run: async (page) => {
+    const card = page.locator('#gapsCard');
+    await card.locator('li:has-text("The synced Files (Syncthing)"):has-text("No backup job yet")').waitFor({ timeout: 5000 });
+    if (await card.locator('li:has-text("Films, shows and music") button').count()) throw new Error('the media library offers Add');
+    if (!(await card.locator('li:has-text("Films, shows and music")').textContent()).includes('Too big')) throw new Error('the media library says no why');
+    await card.locator('li:has-text("The synced Files") button:text-is("Add")').click();
+    await page.waitForSelector('#backupTitle:has-text("Backup job added")', { timeout: 5000 });
+    if (!(await page.evaluate(() => (window.__MOCK.homelabRan || []).includes('duplicati-setup')))) {
+      const ran = await page.evaluate(() => JSON.stringify(window.__MOCK.homelabRan));
+      throw new Error('Add ran no duplicati setup: ' + ran);
+    }
+  } },
+  { name: 'Backups: Not in any backup hides while nothing is left out', screen: 'backups', run: async (page) => {
+    await page.waitForSelector('#copiesTile', { timeout: 5000 });
+    await page.waitForTimeout(300);
+    if (await page.isVisible('#gapsCard')) throw new Error('an empty Not in any backup shows');
   } },
   { name: 'Restore drills: timing and record', screen: 'backups', run: async (page) => {
     await page.waitForSelector('#restoreTile:has-text("in 3 minutes")', { timeout: 5000 });
