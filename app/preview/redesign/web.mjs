@@ -303,68 +303,82 @@ writeFileSync(out + 'web-category-duo.html', catPhone(3, 0.95));
 writeFileSync(out + 'web-category-phone.html', catPhone(2, 0.95));
 
 // ---------- Analytics (the owner, Nov 25): the machine's numbers, off the category pages ----------
-// Under Overview in Status' menu. Three cards built one way (processor, memory, drives: a figure, one line, a footer
-// line of the last 24 hours or the drive's bar), then the week as one chart with the nightly jobs marked, then what
-// each app uses, heaviest first, each with its logo. A period switch (Day, Week, Month) on top.
+// Under Overview in Status' menu. Day, Week, Month on top; three cards built one way (processor, memory, drives);
+// the week as two charts on one timeline (processor in %, memory in GB: never two units on one axis), each night's
+// backups and updates marked; what each app uses, heaviest first, with its own week as a line.
 Object.assign(P, { chart: P.chart || 'M3 3v18h18M7 15l4-4 3 3 5-6' });
+// A made-up but believable week, hour by hour (168 points, Thursday 00:00 to Wednesday 23:00): a quiet base, evenings
+// busier (Jellyfin streaming), the nightly backup at 3:30 and the updates at 4:00, memory creeping up after each
+// update and dropping back on Sunday's restart of Immich.
+const rnd = (i) => { const x = Math.sin(i * 12.9898) * 43758.5453; return x - Math.floor(x); };
+const weekCpu = Array.from({ length: 168 }, (_, i) => { const h = i % 24; let v = 3 + rnd(i) * 1.5; if (h >= 19 && h <= 23) v += 6 + rnd(i + 3) * 5; if (h === 3) v += 26; if (h === 4) v += 11; if (i >= 96 && i < 99 && h < 3) v += 4; return v; });
+const weekMem = Array.from({ length: 168 }, (_, i) => { const h = i % 24, d = Math.floor(i / 24); let v = 9.6 + d * 0.22 + (d >= 3 ? -0.7 : 0) + rnd(i + 7) * 0.15; if (h >= 19 && h <= 23) v += 0.9; if (h === 3) v += 1.4; return v; });
+// Each app's week, twice a day, with its own shape: Immich growing as photos arrive, Jellyfin up every evening,
+// the backups' engines up each night, the rest steady.
+const shapes = { 1: (i) => 0.75 + i * 0.02, 2: (i) => (i % 2 ? 1.25 : 0.8), 7: (i) => (i % 2 ? 0.7 : 1.3), 8: (i) => (i % 2 ? 0.7 : 1.3) };
+const appWeek = (seed, base) => Array.from({ length: 14 }, (_, i) => base * (shapes[seed] ? shapes[seed](i) : 0.95 + 0.1 * rnd(i + seed * 5)));
 const usage = [
-  ['immich-server', 'Immich', 2.1, 3.2, '412 GB'], ['jellyfin-container', 'Jellyfin', 1.4, 6.1, '38 GB'], ['nextcloud', 'Nextcloud', 0.92, 1.4, '61 GB'],
-  ['paperless', 'Paperless-ngx', 0.78, 0.9, '4.2 GB'], ['own:AS,#111827', 'AIOStreams', 0.41, 0.6, '120 MB'], ['own:JS,#0b0b12', 'Jellystat', 0.21, 0.3, '310 MB'],
-  ['kopia', 'Kopia', 0.19, 0.2, '—'], ['duplicati', 'Duplicati', 0.17, 0.2, '—'], ['own:AM,#ffffff', 'AIOMetadata', 0.15, 0.2, '40 MB'],
-  ['uptime-kuma', 'Uptime Kuma', 0.12, 0.3, '90 MB'], ['pocket-id', 'Pocket ID', 0.07, 0.1, '12 MB'], ['vaultwarden', 'Vaultwarden', 0.06, 0.1, '94 MB'],
+  ['immich-server', 'Immich', 2.1, 3.2, '412 GB', 1], ['jellyfin-container', 'Jellyfin', 1.4, 6.1, '38 GB', 2], ['nextcloud', 'Nextcloud', 0.92, 1.4, '61 GB', 3],
+  ['paperless', 'Paperless-ngx', 0.78, 0.9, '4.2 GB', 4], ['own:AS,#111827', 'AIOStreams', 0.41, 0.6, '120 MB', 5], ['own:JS,#0b0b12', 'Jellystat', 0.21, 0.3, '310 MB', 6],
+  ['kopia', 'Kopia', 0.19, 0.2, '—', 7], ['duplicati', 'Duplicati', 0.17, 0.2, '—', 8],
 ];
-const series = (n, base, amp, spikes = []) => Array.from({ length: n }, (_, i) => base + amp * (0.5 + 0.5 * Math.sin(i / 3.1) * Math.cos(i / 7.3)) + (spikes.includes(i % 24) ? amp * 2.6 : 0));
-const lineSvg = (vals, w, h, max, cls = 'line') => {
-  const pts = vals.map((v, i) => `${((i / (vals.length - 1)) * w).toFixed(1)},${(h - (v / max) * (h - 4) - 2).toFixed(1)}`);
-  return `<path d="M${pts.join(' L')}" class="${cls}" fill="none"/>`;
-};
-// The last 24 hours, scaled to the day's own range so its shape shows (the figure above says how much).
-const spark24 = (vals) => { const lo = Math.min(...vals) * 0.9, hi = Math.max(...vals); const y = (v) => (40 - ((v - lo) / (hi - lo)) * 34 - 2).toFixed(1); const pts = vals.map((v, i) => `${(i / (vals.length - 1)) * 300},${y(v)}`).join(' L'); return `<svg viewBox="0 0 300 40" width="100%" height="40" preserveAspectRatio="none" class="chart"><path d="M0,40 L${pts} L300,40 Z" class="area"/><path d="M${pts}" class="line" fill="none"/></svg>`; };
-const cpu24 = series(24, 4, 3, [3, 20]), mem24 = series(24, 10.2, 0.9, [3]);
-const weekCpu = series(168, 5, 5, [3]), weekMem = series(168, 10, 1.2, [3]);
-const weekChart = (w, h) => {
-  const days = ['Thu', 'Fri', 'Sat', 'Sun', 'Mon', 'Tue', 'Wed'];
-  const grid = [0, 25, 50, 75, 100].map((p) => `<line x1="0" x2="${w}" y1="${h - (p / 100) * (h - 24) - 20}" y2="${h - (p / 100) * (h - 24) - 20}" class="gl"/>`).join('');
-  const nights = days.map((_, d) => { const x = ((d * 24 + 3.5) / 167) * w; return `<line x1="${x}" x2="${x}" y1="4" y2="${h - 20}" class="nl"/>`; }).join('');
-  const labels = days.map((d, i) => `<text x="${((i * 24 + 12) / 167) * w}" y="${h - 4}" class="tick" text-anchor="middle">${d}</text>`).join('');
-  const cpu = weekCpu.map((v) => (v / 40) * 100), mem = weekMem.map((v) => (v / 32) * 100);
-  const path = (vals, cls) => `<path d="M${vals.map((v, i) => `${((i / 167) * w).toFixed(1)},${(h - 20 - (v / 100) * (h - 24)).toFixed(1)}`).join(' L')}" class="${cls}" fill="none"/>`;
-  return `<svg viewBox="0 0 ${w} ${h}" width="100%" height="${h}" preserveAspectRatio="none" class="chart wk">${grid}${nights}${path(mem, 'mem')}${path(cpu, 'cpu')}${labels}</svg>`;
+const fmtGB = (gb) => (gb >= 1 ? gb.toFixed(1) + ' GB' : Math.round(gb * 1000) + ' MB');
+const spark = (vals, w = 300, h = 40, area = true, range = null) => { const [lo, hi] = range || [Math.min(...vals), Math.max(...vals)]; const y = (v) => (h - ((v - lo) / (hi - lo || 1)) * (h - 6) - 3).toFixed(1); const pts = vals.map((v, i) => `${((i / (vals.length - 1)) * w).toFixed(1)},${y(v)}`).join(' L'); return `<svg viewBox="0 0 ${w} ${h}" width="100%" height="${h}" preserveAspectRatio="none" class="chart">${area ? `<path d="M0,${h} L${pts} L${w},${h} Z" class="area"/>` : ''}<path d="M${pts}" class="line" fill="none"/></svg>`; };
+const day = (vals) => vals.slice(144);
+const weekPanel = (vals, unit, max, ticks, cls, label, w = 1000, h = 120, xlabels = false) => {
+  const days = ['Thu', 'Fri', 'Sat', 'Sun', 'Mon', 'Tue', 'Today'];
+  const gw = w - 56; // the line stops short of the scale's labels
+  const y = (v) => (h - 6 - (v / max) * (h - 16)).toFixed(1);
+  const grid = ticks.map((t) => `<line x1="0" x2="${gw}" y1="${y(t)}" y2="${y(t)}" class="gl"/><text x="${w - 2}" y="${(+y(t) + 4).toFixed(1)}" class="ytick" text-anchor="end">${t}${unit}</text>`).join('');
+  const nights = days.map((_, d) => { const x = (((d * 24 + 3.5) / 167) * gw).toFixed(1); return `<line x1="${x}" x2="${x}" y1="0" y2="${h - 6}" class="nl"/>`; }).join('');
+  const pts = vals.map((v, i) => `${((i / 167) * gw).toFixed(1)},${y(v)}`).join(' L');
+  const xl = xlabels ? days.map((d, i) => `<text x="${((i * 24 + 12) / 167) * gw}" y="${h + 14}" class="tick" text-anchor="middle">${d}</text>`).join('') : '';
+  return `<div class="wkp"><span class="wkl">${label}</span><svg viewBox="0 0 ${w} ${h + (xlabels ? 20 : 0)}" width="100%" height="${h + (xlabels ? 20 : 0)}" preserveAspectRatio="none" class="chart wk">${grid}${nights}<path d="M0,${h - 6} L${pts} L${gw},${h - 6} Z" class="${cls}a"/><path d="M${pts}" class="${cls}" fill="none"/>${xl}</svg></div>`;
 };
 const anaCss = `
 .chart .area{fill:var(--acc);opacity:.12}.chart .line{stroke:var(--acc);stroke-width:2;vector-effect:non-scaling-stroke}
-.wk .gl{stroke:var(--line);stroke-width:1;vector-effect:non-scaling-stroke}.wk .nl{stroke:var(--muted);stroke-dasharray:2 4;opacity:.45;vector-effect:non-scaling-stroke}
-.wk .cpu{stroke:var(--acc);stroke-width:2;vector-effect:non-scaling-stroke}.wk .mem{stroke:#14b8a6;stroke-width:2;vector-effect:non-scaling-stroke}.wk .tick{font-size:11px;fill:var(--muted)}
-.legend2{display:flex;gap:16px;font-size:12.5px;color:var(--muted)}.legend2 i{display:inline-block;width:10px;height:3px;border-radius:2px;margin-right:6px;vertical-align:middle}
+.wk .gl{stroke:var(--line);stroke-width:1;vector-effect:non-scaling-stroke}.wk .nl{stroke:var(--muted);stroke-dasharray:2 4;opacity:.4;vector-effect:non-scaling-stroke}
+.wk .cpu{stroke:var(--acc);stroke-width:1.8;vector-effect:non-scaling-stroke}.wk .cpua{fill:var(--acc);opacity:.10}.wk .mem{stroke:#14b8a6;stroke-width:1.8;vector-effect:non-scaling-stroke}.wk .mema{fill:#14b8a6;opacity:.10}
+.wk .tick{font-size:11px;fill:var(--muted)}.wk .ytick{font-size:10.5px;fill:var(--muted)}
+.wkp{position:relative;margin-top:6px}.wkl{position:absolute;left:0;top:-2px;font-size:12px;font-weight:600;color:var(--muted)}.wkp+.wkp{margin-top:14px}
+.legend2{display:flex;gap:16px;font-size:12.5px;color:var(--muted);align-items:center}.legend2 i{display:inline-block;width:14px;border-top:1.5px dashed var(--muted);margin-right:6px;vertical-align:middle;opacity:.7}
 .seg2{display:flex;background:var(--glass);border:1px solid var(--glassline);border-radius:10px;padding:3px;font-size:13px;font-weight:600}.seg2 span{padding:6px 14px;border-radius:7px;color:var(--muted)}.seg2 span.on{background:var(--panel);color:var(--text);box-shadow:0 0 0 1px var(--line)}
+.kf .fig2{font-size:30px;font-weight:650}.kf .fig2 .unit{font-size:22px!important;font-weight:650;margin-left:1px}
+.k .kfoot{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:4px}
 .utab{width:100%;border-collapse:collapse;font-size:13.5px}.utab th{background:transparent;text-align:left;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;padding:8px 10px;border-bottom:1px solid var(--line)}
-.utab td{padding:9px 10px;border-bottom:1px solid var(--line);white-space:nowrap}.utab tr:last-child td{border-bottom:0}.utab td.app{display:flex;align-items:center;gap:10px;font-weight:550}.utab td.num{text-align:right;font-variant-numeric:tabular-nums;color:var(--muted)}
-.mbar{width:180px;height:8px;border-radius:99px;background:var(--sunken);overflow:hidden;display:inline-block;vertical-align:middle;margin-right:10px}.mbar i{display:block;height:100%;background:var(--acc);border-radius:99px}
-.utab .alogo,.utab .own{border-radius:7px}
+.utab td{padding:9px 10px;border-bottom:1px solid var(--line);white-space:nowrap;vertical-align:middle}.utab .app{display:flex;align-items:center;gap:10px;font-weight:550}.utab td.num{text-align:right;font-variant-numeric:tabular-nums;color:var(--muted)}
+.utab td.wkc{width:140px}.utab td.wkc svg .area{display:none}
+.mbar{width:160px;height:8px;border-radius:99px;background:var(--sunken);overflow:hidden;display:inline-block;vertical-align:middle;margin-right:10px}.mbar i{display:block;height:100%;background:var(--acc);border-radius:99px}
+.utab .alogo,.utab .own{border-radius:7px}.showall{display:block;text-align:center;padding:12px 0 2px;color:var(--acc);font-weight:600;font-size:13.5px}
 `;
-const usageRows = (rows, showDisk = true) => rows.map(([id, n, gb, cpu, disk]) => `<tr><td class="app">${logoOf(id, 26)}${n}</td><td><span class="mbar"><i style="width:${(gb / 2.1) * 100}%"></i></span><span style="font-variant-numeric:tabular-nums">${gb >= 1 ? gb.toFixed(1) + ' GB' : Math.round(gb * 1000) + ' MB'}</span></td><td class="num">${cpu.toFixed(1)}%</td>${showDisk ? `<td class="num">${disk}</td>` : ''}</tr>`).join('');
+const usageRows = (rows, phone = false) => rows.map(([id, n, gb, cpu, disk, seed]) => `<tr><td><div class="app">${logoOf(id, 26)}${n}</div></td><td><span class="mbar"><i style="width:${(gb / 2.1) * 100}%"></i></span><span style="font-variant-numeric:tabular-nums">${fmtGB(gb)}</span></td>${phone ? '' : `<td class="wkc">${spark(appWeek(seed, gb), 140, 26, false, [gb * 0.5, gb * 1.5])}</td>`}<td class="num">${cpu.toFixed(1)}%</td>${phone ? '' : `<td class="num">${disk}</td>`}</tr>`).join('');
+const cards = `
+  <section class="card k"><div class="kh"><h3>Processor</h3><span>8 cores</span></div><div class="kf"><b class="fig2">7<span class="unit">%</span></b><small>on average</small></div><div class="ks">Busiest at 3:31 AM · the nightly backup</div><div class="kb" style="flex-direction:column;align-items:stretch;gap:0">${spark(day(weekCpu))}<div class="kfoot"><span>24 hours ago</span><span>now</span></div></div></section>
+  <section class="card k"><div class="kh"><h3>Memory</h3><span>32 GB</span></div><div class="kf"><b class="fig2">11<span class="unit"> GB</span></b><small>of 32 in use</small></div><div class="ks">${logoOf('immich-server', 16)} Immich uses the most · 2.1 GB</div><div class="kb" style="flex-direction:column;align-items:stretch;gap:0">${spark(day(weekMem))}<div class="kfoot"><span>24 hours ago</span><span>now</span></div></div></section>
+  <section class="card k"><div class="kh"><h3>Drives</h3><span>RAID 1 · 2 × 4 TB</span></div><div class="kf"><b class="fig2">3.4<span class="unit"> TB</span></b><small>free</small></div><div class="ks">Both disks healthy · full in about 3 years</div><div class="kb kbar"><div class="bar2"><i style="width:15%"></i></div><span>520 GB used · photos 412 GB</span></div></section>`;
 const anaWide = `
 <header class="top" style="background:transparent"><h2 style="margin:0;font-size:24px;font-weight:700;letter-spacing:-.01em;flex:1">Analytics</h2><div class="seg2"><span>Day</span><span class="on">Week</span><span>Month</span></div></header>
-<div class="grid">
-  <section class="card k"><div class="kh"><h3>Processor</h3><span>8 cores</span></div><div class="kf">7<small>% on average</small></div><div class="ks">Busiest at 3:31 AM · the nightly backup</div><div class="kb">${spark24(cpu24)}</div></section>
-  <section class="card k"><div class="kh"><h3>Memory</h3><span>32 GB</span></div><div class="kf">11<small>of 32 GB in use</small></div><div class="ks">${logoOf('immich-server', 16)} Immich uses the most · 2.1 GB</div><div class="kb">${spark24(mem24)}</div></section>
-  <section class="card k"><div class="kh"><h3>Drives</h3><span>RAID 1 · 2 × 4 TB</span></div><div class="kf">3.4<small>TB free</small></div><div class="ks">Both disks healthy · full in about 3 years</div><div class="kb kbar"><div class="bar2"><i style="width:15%"></i></div><span>520 GB used · photos 412 GB</span></div></section>
-  <section class="card" style="grid-column:1/-1"><div class="ch"><h3>This week</h3><div class="legend2"><span><i style="background:var(--acc)"></i>Processor</span><span><i style="background:#14b8a6"></i>Memory</span><span><i style="background:var(--muted);height:1px;opacity:.6"></i>Nightly backups and updates</span></div></div>${weekChart(1000, 190)}</section>
-  <section class="card" style="grid-column:1/-1"><div class="ch"><h3>What each app uses</h3><span class="muted" style="font-size:12.5px">Right now · heaviest first</span></div>
-    <table class="utab"><thead><tr><th>App</th><th>Memory</th><th style="text-align:right">Processor</th><th style="text-align:right">On disk</th></tr></thead><tbody>${usageRows(usage)}</tbody></table></section>
+<div class="grid">${cards}
+  <section class="card" style="grid-column:1/-1"><div class="ch"><h3>This week</h3><div class="legend2"><span><i></i>Nightly backup and updates</span></div></div>
+    ${weekPanel(weekCpu, '%', 40, [10, 20, 30], 'cpu', 'Processor')}
+    ${weekPanel(weekMem, ' GB', 16, [4, 8, 12], 'mem', 'Memory', 1000, 110, true)}
+  </section>
+  <section class="card" style="grid-column:1/-1"><div class="ch"><h3>What each app uses</h3><span class="muted" style="font-size:12.5px">Heaviest first</span></div>
+    <table class="utab"><thead><tr><th>App</th><th>Memory now</th><th>This week</th><th style="text-align:right">Processor</th><th style="text-align:right">On disk</th></tr></thead><tbody>${usageRows(usage)}</tbody></table>
+    <span class="showall">Show all 18</span></section>
 </div>`;
-const anaSide = (computer) => { let s = sideFor('Analytics', ['Your own apps']); if (computer) s = s.replace(/<nav class="apps"[\s\S]*?<\/nav>/, `<nav class="apps" aria-label="Homelab">${[['layers', 'Choose apps'], ['activity', 'Status', 1], ['archive', 'Backups'], ['tidy', 'Tidy Up'], ['dollar', 'Finances']].map(([i, n, b]) => `<span class="${n === 'Status' ? 'on' : ''}" title="${n}">${icon(i, 17)}${b ? `<em>${b}</em>` : ''}</span>`).join('')}</nav>`); return s; };
-writeFileSync(out + 'web-analytics.html', `<!doctype html><html><head><meta charset="utf-8"><title>Analytics</title><style>${deskCss}${extra}${wideCss}${anaCss}</style></head><body>${anaSide(false)}<main class="ov">${anaWide}</main></body></html>`);
+const anaSide = () => sideFor('Analytics', ['Your own apps']);
+writeFileSync(out + 'web-analytics.html', `<!doctype html><html><head><meta charset="utf-8"><title>Analytics</title><style>${deskCss}${extra}${wideCss}${anaCss}</style></head><body>${anaSide()}<main class="ov">${anaWide}</main></body></html>`);
 
-// On a phone: the same, one column; the period as a segmented switch under the title; the app list without disk.
+// On a phone: the same, one column; the app list memory and processor only.
 const anaPhone = `<!doctype html><html><head><meta charset="utf-8"><style>${phoneCss}${extra}${anaCss}
 .seg2{margin:0 16px 14px;justify-content:space-between}.seg2 span{flex:1;text-align:center}.utab td,.utab th{padding:8px 6px}.mbar{width:70px}.card .kh{display:flex;justify-content:space-between;margin-bottom:6px}.card .kh h3{margin:0;font-size:15px}.card .kh span{color:var(--muted);font-size:12.5px}
-.kf{font-size:30px;font-weight:700;letter-spacing:-.02em}.kf small{font-size:14px;color:var(--muted);font-weight:600;margin-left:6px}.ks{color:var(--muted);font-size:13px;margin:4px 0 10px}.ks .alogo,.ks .own{vertical-align:-3px;border-radius:4px;margin-right:4px}</style></head><body>${sb}
+.kf{font-size:30px;font-weight:700;letter-spacing:-.02em}.kf .fig2{font-weight:700}.kf .fig2 .unit{font-size:22px}.kf small{font-size:14px;color:var(--muted);font-weight:600;margin-left:6px}.ks{color:var(--muted);font-size:13px;margin:4px 0 10px}.ks .alogo,.ks .own{vertical-align:-3px;border-radius:4px;margin-right:4px}.kfoot{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:4px}</style></head><body>${sb}
 <div class="nav"><span class="who" style="padding:0 14px 0 8px;color:var(--acc)">${icon('left', 20)}Status</span><span style="flex:1"></span></div>
 <h1>Analytics</h1><div class="sub">The server · this week</div>
 <div class="seg2"><span>Day</span><span class="on">Week</span><span>Month</span></div>
-<section class="card"><div class="kh"><h3>Memory</h3><span>32 GB</span></div><div class="kf">11<small>of 32 GB</small></div><div class="ks">${logoOf('immich-server', 16)} Immich uses the most · 2.1 GB</div>${spark24(mem24)}</section>
-<section class="card"><div class="kh"><h3>Processor</h3><span>8 cores</span></div><div class="kf">7<small>% on average</small></div><div class="ks">Busiest at 3:31 AM · the nightly backup</div>${spark24(cpu24)}</section>
-<section class="card"><div class="ch"><h3>What each app uses</h3></div><table class="utab"><tbody>${usageRows(usage.slice(0, 6), false)}</tbody></table></section>
+<section class="card"><div class="kh"><h3>Memory</h3><span>32 GB</span></div><div class="kf"><b class="fig2">11<span class="unit"> GB</span></b><small>of 32 in use</small></div><div class="ks">${logoOf('immich-server', 16)} Immich uses the most · 2.1 GB</div>${spark(day(weekMem))}<div class="kfoot"><span>24 hours ago</span><span>now</span></div></section>
+<section class="card"><div class="kh"><h3>Processor</h3><span>8 cores</span></div><div class="kf"><b class="fig2">7<span class="unit">%</span></b><small>on average</small></div><div class="ks">Busiest at 3:31 AM · the nightly backup</div>${spark(day(weekCpu))}<div class="kfoot"><span>24 hours ago</span><span>now</span></div></section>
+<section class="card"><div class="ch"><h3>What each app uses</h3></div><table class="utab"><tbody>${usageRows(usage.slice(0, 6), true)}</tbody></table></section>
 ${tabs('Status')}</body></html>`;
 writeFileSync(out + 'web-analytics-phone.html', anaPhone);

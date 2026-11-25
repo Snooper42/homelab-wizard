@@ -190,8 +190,9 @@ The owner, Nov 25: the machine's numbers on a screen of their own, under Overvie
 
 - **Day, Week, Month** on top, changing every part of the page.
 - **Three cards built one way** (*Cards*, above): **Processor** (the average, when it was busiest and why: *the nightly backup*), **Memory** (in use of the total, the app that uses most with its logo), **Drives** (free space, health, *full in about 3 years* from the growth so far). Each footer is the last 24 hours as a line, scaled to its own range, or the drive's bar.
-- **This week**, one chart: processor and memory, with each night's backups and updates as a dotted line, so a spike explains itself.
-- **What each app uses**, heaviest first: its logo, memory as a bar and a figure, processor, and what it keeps on disk. A row opens the app's page. On a phone: memory and processor only.
+- **This week**, two charts on one timeline: processor in %, memory in GB (never two units on one axis), the scale in a gutter on the right, each night's backup and updates as a dotted line so a spike explains itself.
+- **What each app uses**, heaviest first, the eight heaviest then **Show all**: its logo, memory now as a bar and a figure, **its week as a line** on a fair scale (half to one and a half times its usual, so a steady app reads flat and a growing one, like Immich as photos arrive, reads as growing), processor, and what it keeps on disk. A row opens the app's page. On a phone: memory and processor only.
+- **Figures with their units as one piece** (*7%*, *11 GB*, *3.4 TB*), the detail small after them.
 - Its data: `StatusBoard`'s `usage` and `storage`, the history the computer keeps (Beszel's where it runs, else the agent's own samples), and the jobs' times. Nothing new leaves the machine.
 
 #### Toward 1.0: an app store
