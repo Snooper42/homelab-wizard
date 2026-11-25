@@ -161,7 +161,7 @@ How far the phone's page (`homelab serve`) can go toward the Homelab app, drawn 
 
 The owner, Nov 25: click a category in Status' menu (Network, Media, …) and get its apps as tiles, three across, with CasaOS's dashboard as the reference (its ideas only, never its look, words or pictures; its own screenshot is in its repository's README). After two passes the owner liked this one: **the icon is the hero**, the tiles are light and see-through over a soft backdrop, and the live numbers live in widgets rather than on every tile.
 
-<picture><source media="(prefers-color-scheme: dark)" srcset="images/redesign/web-category-dark.png"><img alt="Media's page on a tablet: the title with 3 on this server, 2 running, 9 more to add; On this server, three big-icon tiles (Jellyfin and Jellystat running with Open, jfa-go stopped with Start); Add to Media, two lighter tiles with Install and a More for Media tile" src="images/redesign/web-category.png"></picture>
+<picture><source media="(prefers-color-scheme: dark)" srcset="images/redesign/web-category-dark.png"><img alt="Media's page on a tablet: On this server, three big-icon tiles (Jellyfin and Jellystat running with Open, jfa-go stopped with Start); Add to Media, every Media app not installed, three across, each with Install" src="images/redesign/web-category.png"></picture>
 
 <p>
 <picture><source media="(prefers-color-scheme: dark)" srcset="images/redesign/web-category-duo-dark.png"><img alt="Media's page on the iPhone Duo unfolded upright: three tiles across, the tab bar at the foot" src="images/redesign/web-category-duo.png" width="300"></picture>
@@ -170,11 +170,15 @@ The owner, Nov 25: click a category in Status' menu (Network, Media, …) and ge
 
 - **A tile:** the app's logo, big (64 px; 56 on a phone) and centred; its name; one short live line (*2 watching now*, *Up 6 days*, *Stopped 20 min ago*); one small button, **Open** (or **Start**, in the accent, when stopped); a status dot top left (green running, amber stopped); ⋯ top right for the rest (Its page, Restart, Stop, Logs, Remove). Nothing else on the tile.
 - **No widgets on a category's page** (the owner, Nov 25: the machine's numbers *"need[s] its own dedicated analytics screen"*): only the title, *3 on this server · 2 running · 9 more to add*, and the apps. Processor, memory, drives and what each app uses live on **Analytics**, under Overview in Status' menu (its picture is being mocked on another account; lay it out from that, in this pattern).
-- **On this server**, then **Add to <category>**: the apps not installed, faded with a dashed edge, each with **Install**; the last tile is **More for <category>** (*7 more to add*), opening Choose apps on that category, as CasaOS ends its grid with its app store.
+- **On this server**, then **Add to <category>**: **every** app of that category not installed (the owner, Nov 25: no *More* tile, show them all), faded with a dashed edge, each with **Install**, in the catalog's order. A long category simply scrolls; Find an app narrows it.
 - **The backdrop:** the page's own colour with two soft glows (violet top left, teal bottom right; lighter by day); tiles and widgets are translucent with a blur, a hairline edge, radius 20.
 - **Every app has a logo** (owner, Nov 25: *"add logos everywhere"*): the catalog's, or for your own apps the app's own icon (below, and `web-loop.md` W17); letters only while none is found.
 - **Three across** on a tablet, a wide window and the iPhone Duo unfolded; **two** on a phone.
 - **Install** on the phone's page waits for the owner's yes for Choose apps on the phone (W13).
+
+**On the computer too** (the owner, Nov 25: *"I want this incorporated into the computer app"*): Homelab Wizard's own window gets the same pages, with its full strip of screens and *On this Mac* ([the whole page](<images/redesign/computer-category-full-dark.png>)).
+
+<picture><source media="(prefers-color-scheme: dark)" srcset="images/redesign/computer-category-dark.png"><img alt="Media's page in Homelab Wizard on the computer: the strip of Choose apps, Status, Backups, Tidy Up and Finances; Status' menu with Analytics and each category; On this Mac, three tiles; Add to Media, every Media app to install" src="images/redesign/computer-category.png"></picture>
 
 #### Toward 1.0: an app store
 

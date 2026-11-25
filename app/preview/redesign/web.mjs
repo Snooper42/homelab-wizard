@@ -234,9 +234,16 @@ const media = [
   { id: 'own:JS,#7c3aed', name: 'Jellystat', state: 'running', note: 'Up 6 days' },
   { id: 'own:JF,#0e7490', name: 'jfa-go', state: 'stopped', note: 'Stopped 20 min ago' },
 ];
+// Every Media app in the catalog that isn't on this machine (the owner, Nov 25: show them all, no "More" tile).
 const more = [
   { id: 'navidrome', name: 'Navidrome', note: 'Your music' },
+  { id: 'feishin', name: 'Feishin', note: 'Music player in the browser' },
   { id: 'audiobookshelf', name: 'Audiobookshelf', note: 'Audiobooks, podcasts' },
+  { id: 'calibre-web', name: 'Calibre-Web', note: 'E-books' },
+  { id: 'komga', name: 'Komga', note: 'Comics and manga' },
+  { id: 'kavita', name: 'Kavita', note: 'Books, comics, manga' },
+  { id: 'romm', name: 'RomM', note: 'Your game library' },
+  { id: 'beets', name: 'beets', note: 'Tags and sorts music' },
 ];
 const ring = (pct, label, sub) => { const r = 30, c = 2 * Math.PI * r; return `<div class="ring"><svg viewBox="0 0 72 72" width="72" height="72"><circle cx="36" cy="36" r="${r}" fill="none" stroke="var(--ringbg)" stroke-width="7"/><circle cx="36" cy="36" r="${r}" fill="none" stroke="var(--acc)" stroke-width="7" stroke-linecap="round" stroke-dasharray="${(pct / 100) * c} ${c}" transform="rotate(-90 36 36)"/><text x="36" y="41" text-anchor="middle">${pct}%</text></svg><b>${label}</b><small>${sub}</small></div>`; };
 const tileCss = `
@@ -272,17 +279,25 @@ const widgets = `<div class="widgets">
   <div class="widget"><h5>Media drive</h5><div class="wnum">3.4 <small>TB free</small></div><div class="bar2"><i></i></div><div class="wfoot">330 GB of films, shows and music</div></div>
 </div>`;
 const grid = `<div class="sect">On this server <span>3</span></div><div class="tiles6">${media.map(tile).join('')}</div>
-<div class="sect">Add to Media <span>9</span></div><div class="tiles6">${more.map(addTile).join('')}${newTile}</div>`;
-const catHead = `<div class="chead"><div class="t"><h2>Media</h2><small style="color:var(--muted);font-size:13px">3 on this server · 2 running · 9 more to add</small></div><div class="search" style="width:260px;background:var(--glass);border-color:var(--glassline)">${icon('search', 15)}Find an app</div></div>`;
+<div class="sect">Add to Media <span>${more.length}</span></div><div class="tiles6">${more.map(addTile).join('')}</div>`;
+const catHead = `<div class="chead"><div class="t"><h2>Media</h2><small style="color:var(--muted);font-size:13px">3 on this server · 2 running · 8 to add</small></div><div class="search" style="width:260px;background:var(--glass);border-color:var(--glassline)">${icon('search', 15)}Find an app</div></div>`;
 writeFileSync(out + 'web-category.html', `<!doctype html><html><head><meta charset="utf-8"><title>Media</title><style>${deskCss}${extra}${wideCss}${tileCss}
 main.backdrop{min-height:100vh}.tiles6{--ar:1.45}.ring svg{width:62px;height:62px}</style></head><body>${sideFor('Media', ['Media'])}<main class="backdrop"><header class="top" style="padding-bottom:0;background:transparent"></header>${catHead}${grid}</main></body></html>`);
+
+// The computer app (Homelab Wizard's own window): the same page, with the computer's strip of screens (Choose apps,
+// Status, Backups, Tidy Up, Finances) and its foot. The owner, Nov 25: the categories' pages go into the computer too.
+const computerSide = sideFor('Media', ['Media'])
+  .replace(/<nav class="apps"[\s\S]*?<\/nav>/, `<nav class="apps" aria-label="Homelab">${[['layers', 'Choose apps'], ['activity', 'Status', 1], ['archive', 'Backups'], ['tidy', 'Tidy Up'], ['dollar', 'Finances']].map(([i, n, b]) => `<span class="${n === 'Status' ? 'on' : ''}" title="${n}">${icon(i, 17)}${b ? `<em>${b}</em>` : ''}</span>`).join('')}</nav>`)
+  .replace('Linux · 0.42.8 · 3.4 TB free', '412 GB free · plugged in');
+writeFileSync(out + 'computer-category.html', `<!doctype html><html><head><meta charset="utf-8"><title>Media</title><style>${deskCss}${extra}${wideCss}${tileCss}
+main.backdrop{min-height:100vh}.tiles6{--ar:1.45}</style></head><body>${computerSide}<main class="backdrop"><header class="top" style="padding-bottom:0;background:transparent"></header>${catHead.replace('3 on this server', '3 on this Mac')}${grid.replace('On this server', 'On this Mac')}</main></body></html>`);
 
 // On a phone (two across) and the iPhone Duo unfolded upright (three across): the same, under the tab bar.
 const catPhone = (cols, ar) => `<!doctype html><html><head><meta charset="utf-8"><style>${phoneCss}${extra}${tileCss}
 body{width:auto;min-height:100vh}.tiles6{--cols:${cols};--ar:${ar};--gap:12px;margin:0 16px}.sect{margin-left:20px}.tiles6{--ar:0.95}
 .tile6 .alogo,.tile6 .own{width:56px!important;height:56px!important}</style></head><body class="backdrop">${sb}
 <div class="nav"><span class="who" style="padding:0 14px 0 8px;color:var(--acc)">${icon('left', 20)}Status</span><span style="flex:1"></span><span class="gb">${icon('search', 20)}</span></div>
-<h1>Media</h1><div class="sub">3 on this server · 2 running · 2 watching</div>
+<h1>Media</h1><div class="sub">3 on this server · 2 running · 8 to add</div>
 ${grid}${tabs('Status')}</body></html>`;
 writeFileSync(out + 'web-category-duo.html', catPhone(3, 0.95));
 writeFileSync(out + 'web-category-phone.html', catPhone(2, 0.95));
