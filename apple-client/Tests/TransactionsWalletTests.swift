@@ -45,7 +45,7 @@ struct TransactionsWalletTests {
         #expect(TransactionsView.dayWords(nil, now: now, calendar: calendar) == "")
     }
 
-    @Test func opensOnCheckingWithoutTheThingsYouOwn() throws {
+    @Test func theAccountsToPickWithoutTheThingsYouOwn() throws {
         let accounts = try JSONDecoder.homelab().decode([FinanceAccount].self, from: Data(#"""
         [{"id":"coins","name":"Coin Collection","kind":"collectible"},
          {"id":"house","name":"House","kind":"home"},
@@ -54,11 +54,7 @@ struct TransactionsWalletTests {
          {"id":"sav","name":"High-Yield Savings","kind":"savings"},
          {"id":"chk","name":"Everyday Checking","kind":"checking"}]
         """#.utf8))
-        // It opens on checking, never on whatever comes first.
-        #expect(TransactionsView.openingAccount(checking: "chk", in: accounts) == "chk")
-        // No checking account (or none yet): all of them.
-        #expect(TransactionsView.openingAccount(checking: "", in: accounts) == nil)
-        #expect(TransactionsView.openingAccount(checking: "gone", in: accounts) == nil)
+        // It opens on every account (the owner, Nov 24), so nothing picks one first.
         // A home, a car and a collectible have no transactions: not in the switcher.
         #expect(TransactionsView.switcherAccounts(accounts).map(\.id) == ["chk", "sav", "visa"])
     }
