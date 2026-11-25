@@ -55,6 +55,8 @@ struct FinancesView: View {
                     }
                     // Net worth and Cash flow side by side, as the redesign's picture; the full line is on Accounts.
                     WorthAndFlow(view: view, finances: finances)
+                    // Spending this month against last, as a line (the owner's Monarch feel, Nov 24).
+                    SpendingPaceCard(view: view, finances: finances)
                     // Then as the picture: the next bills, the latest transactions and the budgets worth a look.
                     UpcomingBillsCard(view: view, finances: finances)
                     RecentTransactionsCard(view: view, finances: finances)
@@ -900,6 +902,111 @@ private struct UpcomingBillsCard: View {
             .padding(16)
             .card(radius: 24)
         }
+    }
+}
+
+/// Spending this month against last month: what's gone out so far, the
+/// difference from last month by the same day in a chip, and both months as
+/// lines, this one filled to today and last month's dashed. All opens
+/// Spending. Nothing in either month, no card.
+private struct SpendingPaceCard: View {
+    let view: FinancesPlanView
+    let finances: FinancesViewModel
+
+    private var shown: Bool { finances.amountsShown && !finances.amountsHiddenByPlan }
+
+    var body: some View {
+        if let pace = SpendingPace.make(finances.countedTransactions, today: view.today ?? Date()) {
+            NavigationLink {
+                FinanceSpendingPage(finances: finances)
+            } label: {
+                VStack(alignment: .leading, spacing: 8) {
+                    CardHeading(title: "Spending") { AllLink() }
+                    HStack(alignment: .top) {
+                        let figure = FinanceLead.splitCents(amountText(pace.spent, view.plan.currency, finances))
+                        VStack(alignment: .leading, spacing: 2) {
+                            (Text(verbatim: figure.whole).font(.system(.largeTitle, design: .rounded).weight(.bold))
+                                + Text(verbatim: figure.cents).font(.title2.weight(.semibold)).foregroundColor(Theme.secondaryInk))
+                                .monospacedDigit()
+                                .foregroundStyle(Theme.ink)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.6)
+                            Text("This month")
+                                .font(.caption.weight(.semibold))
+                                .textCase(.uppercase)
+                                .foregroundStyle(Theme.secondaryInk)
+                        }
+                        Spacer(minLength: 8)
+                        if shown, let difference = pace.difference, abs(difference) >= 0.5 {
+                            chip(difference, pace)
+                        }
+                    }
+                    if shown {
+                        chart(pace)
+                            .frame(height: 120)
+                            .padding(.top, 4)
+                    }
+                }
+                .padding(16)
+                .card(radius: 24)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(PressableButtonStyle())
+        }
+    }
+
+    /// "↑ $177 more" in red or "↓ $212 less" in green, "vs Oct" under it: last month by the same day.
+    private func chip(_ difference: Double, _ pace: SpendingPace) -> some View {
+        let more = difference > 0
+        let amount = amountText(abs(difference), view.plan.currency, finances, whole: true)
+        let lastMonth = Calendar.current.date(byAdding: .month, value: -1, to: pace.month)?.formatted(.dateTime.month(.abbreviated)) ?? "last month"
+        return VStack(alignment: .trailing, spacing: 2) {
+            Label("\(amount) \(more ? "more" : "less")", systemImage: more ? "arrow.up.right" : "arrow.down.right")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(more ? Theme.danger : Theme.success)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 4)
+                .background((more ? Theme.danger : Theme.success).opacity(0.12), in: Capsule())
+            Text(verbatim: "vs \(lastMonth)")
+                .font(.caption)
+                .foregroundStyle(Theme.secondaryInk)
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    private func chart(_ pace: SpendingPace) -> some View {
+        Chart {
+            ForEach(pace.lastMonth) { p in
+                LineMark(x: .value("Day", p.day), y: .value("Spent", p.total), series: .value("Month", "Last month"))
+                    .foregroundStyle(Theme.secondaryInk.opacity(0.55))
+                    .lineStyle(StrokeStyle(lineWidth: 2, dash: [4, 4]))
+            }
+            ForEach(pace.thisMonth) { p in
+                AreaMark(x: .value("Day", p.day), y: .value("Spent", p.total))
+                    .foregroundStyle(LinearGradient(colors: [Theme.accent.opacity(0.22), Theme.accent.opacity(0.02)], startPoint: .top, endPoint: .bottom))
+                LineMark(x: .value("Day", p.day), y: .value("Spent", p.total), series: .value("Month", "This month"))
+                    .foregroundStyle(Theme.accent)
+                    .lineStyle(StrokeStyle(lineWidth: 2.5))
+            }
+            if let today = pace.thisMonth.last {
+                PointMark(x: .value("Day", today.day), y: .value("Spent", today.total))
+                    .foregroundStyle(Theme.accent)
+                    .symbolSize(60)
+            }
+        }
+        .chartXScale(domain: 1...pace.daysInMonth)
+        .chartXAxis {
+            AxisMarks(values: [1, 15, pace.daysInMonth]) { value in
+                AxisValueLabel {
+                    if let d = value.as(Int.self) {
+                        Text(verbatim: d == 1 ? pace.month.formatted(.dateTime.month(.abbreviated).day()) : "\(d)")
+                    }
+                }
+            }
+        }
+        .chartYAxis(.hidden)
+        .accessibilityElement()
+        .accessibilityLabel("Spending each day this month, against last month's")
     }
 }
 
@@ -3521,11 +3628,19 @@ struct TransactionsView: View {
     private var chips: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
-                chip(filter.month.map { $0.formatted(.dateTime.month(.wide).year()) } ?? "Every month", systemImage: "calendar", on: filter.month != nil) {
-                    Picker("Month", selection: $filter.month.animation(.snappy)) {
-                        Text("Every month").tag(Date?.none)
+                chip(filter.days.map { PaySpans.words($0) } ?? filter.month.map { $0.formatted(.dateTime.month(.wide).year()) } ?? "Every month",
+                     systemImage: "calendar", on: filter.month != nil || filter.days != nil) {
+                    when("Every month", picked: filter.month == nil && filter.days == nil) { filter.month = nil; filter.days = nil }
+                    if let view = finances.plan {
+                        Section {
+                            ForEach(PaySpans.make(view)) { span in
+                                when("\(span.title) · \(PaySpans.words(span.days))", picked: filter.days == span.days) { filter.month = nil; filter.days = span.days }
+                            }
+                        }
+                    }
+                    Section {
                         ForEach(filterMonths, id: \.self) { month in
-                            Text(verbatim: month.formatted(.dateTime.month(.wide).year())).tag(Date?.some(month))
+                            when(month.formatted(.dateTime.month(.wide).year()), picked: filter.days == nil && filter.month == month) { filter.days = nil; filter.month = month }
                         }
                     }
                 }
@@ -3550,6 +3665,15 @@ struct TransactionsView: View {
         }
         .scrollClipDisabled()
         .sensoryFeedback(.selection, trigger: picked)
+    }
+
+    /// A choice in the date chip's menu, ticked while it's the one shown.
+    private func when(_ words: String, picked: Bool, pick: @escaping () -> Void) -> some View {
+        Button {
+            withAnimation(.snappy) { pick() }
+        } label: {
+            if picked { Label(words, systemImage: "checkmark") } else { Text(verbatim: words) }
+        }
     }
 
     private func chip<Options: View>(_ words: String, systemImage: String?, on: Bool, @ViewBuilder options: () -> Options) -> some View {

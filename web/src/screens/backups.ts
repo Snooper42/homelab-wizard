@@ -1,6 +1,6 @@
 // Backups: the copies and Duplicati's jobs as last read, and the backup
 // screen's commands.
-import { mountBackupTiles, mountCopyRows, mountJobs, mountKopia, mountVault, placeName } from '../backups/Backups';
+import { mountBackupTiles, mountCopyRows, mountGaps, mountJobs, mountKopia, mountVault, placeName } from '../backups/Backups';
 import { jobFinished, jobStarted } from '../job/done';
 import { store } from '../store';
 import { appActions, statusById, statusData } from './status';
@@ -20,7 +20,16 @@ export const jobsData = store(async () => (await go().DuplicatiJobs()) || []);
 // the jobs' card names the place from the copies' destination.
 backupsData.watch(() => { drawBackups(); drawJobs(); });
 jobsData.watch(() => { if (backupsData.value && !backupsData.error) drawBackups(); drawJobs(); });
-export function loadBackups() { return Promise.all([jobsData.load(), backupsData.load()]); }
+// What no job copies (Not in any backup), read once the jobs are: none while Duplicati can't be asked.
+export const gapsData = store(async () => (await go().BackupGaps()) || []);
+gapsData.watch(() => drawGaps());
+export function loadBackups() { return Promise.all([jobsData.load(), backupsData.load(), gapsData.load().catch(() => {})]); }
+
+function drawGaps() {
+  const gaps = gapsData.error ? [] : gapsData.value || [];
+  $('gapsCard').hidden = !gaps.length;
+  mountGaps($('gapsCard'), { gaps, add: () => backupTask('duplicati-setup', 'Adding the backup job…', 'Backup job added', 'Adding the job stopped: the log says why') });
+}
 
 /** Draws Backups again with the apps' state, which says why a stale copy is stale (status.ts calls it as that changes). */
 export function redrawBackups() { if (backupsData.value && !backupsData.error) drawBackups(); }
