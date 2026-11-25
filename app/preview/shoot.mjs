@@ -71,6 +71,13 @@ const longWeek = { title: 'Homelab this week: 4 things to look at', problems: 4,
 // qBittorrent, running in the VPN's network (media automation is opt-in, so it's added where a check needs it).
 const qbit = { id: 'qbittorrent', name: 'qBittorrent', state: 'running', health: 'healthy', url: 'http://localhost:8082' };
 const status = { apps, missing: 0, unmatched: 0, savings: 3292, updates: { paused: false, schedule: 'daily at 04:00' } };
+// What each app replaces at its price, as Status › Subscriptions reads it: docs/Savings.md's per-app tables.
+const savingsRows = readFileSync(join(root, 'docs', 'Savings.md'), 'utf8').split('\n').filter((l) => /^\| \[/.test(l)).flatMap((l) => {
+  const c = l.split('|').slice(1, -1).map((x) => x.trim());
+  const ids = [...c[0].matchAll(/\[([^\]]+)\]/g)].map((m) => byName[m[1]]).filter(Boolean);
+  const num = (x) => Number(String(x).replace(/[$,*]/g, ''));
+  return ids.length && c.length >= 7 && !Number.isNaN(num(c[5])) ? [{ apps: ids, replaces: c[2], kind: c[3], monthly: num(c[4]), annual: num(c[5]), condition: c[6].replace(/\[([^\]]+)\]\(<[^>]+>\)/g, '$1') }] : [];
+});
 // What docker stats says over a minute: Immich indexing photos, Jellyfin
 // streaming, Paperless reading a scan.
 const usageSeries = [[162, 18, 9], [148, 22, 31], [171, 19, 12], [139, 25, 8], [155, 21, 6], [176, 17, 24], [151, 23, 7], [164, 20, 11]]
@@ -404,7 +411,7 @@ const alertLog = [
   { id: 2, at: hoursAgo(14), topic: 'tunnel-watchdog', title: 'Homelab: something is down', body: 'vikunja: not answering', priority: 4, checks: ['vikunja'], clearedAt: hoursAgo(13.6) },
   { id: 1, at: hoursAgo(50), topic: 'watchtower', title: 'Homelab: an update was rolled back', body: 'Navidrome' },
 ];
-const mock = { platform: 'MacIntel', tidy, tidyReview, cliSteps, upgrade: { ...upgrade, behind: 0, changes: [], appChanged: false, appCommit: '7d9be080888433f921c9fa860a38b329ac368c88', appBehind: 0 }, catalog, status, setup, settings, host, logs, actionLog, urls, envFor, tests, backups, cliLog, cliPreview, alerts, watchdog, protection, savingsHistory, duplicatiJobs, phones, finances, ledger, history, alertLog, screen: 'status' };
+const mock = { savingsRows, platform: 'MacIntel', tidy, tidyReview, cliSteps, upgrade: { ...upgrade, behind: 0, changes: [], appChanged: false, appCommit: '7d9be080888433f921c9fa860a38b329ac368c88', appBehind: 0 }, catalog, status, setup, settings, host, logs, actionLog, urls, envFor, tests, backups, cliLog, cliPreview, alerts, watchdog, protection, savingsHistory, duplicatiJobs, phones, finances, ledger, history, alertLog, screen: 'status' };
 // Finances' tabs are four: Spending holds Transactions and Reports, Plan holds Calendar, Recurring and Paychecks (Pay),
 // each in a second row under it. A page by its name, its tab first.
 /** The Finances page open, as the sidebar's menu marks it on the computer ("Recurring", "Net worth"). */
@@ -528,6 +535,10 @@ async function acctForm(page, row, opts = {}) {
 }
 const shots = [
   { name: 'status', screen: 'status', mock: { statusOpen: '' } },
+  // An app stopped by itself: the Apps card names it, with Start, Logs and its page; its category's row says so.
+  { name: 'status-stopped', screen: 'status', mock: stoppedByItself() },
+  // Status › Subscriptions (the owner, Nov 25): each app beside the paid service it replaces, at its price.
+  { name: 'status-subscriptions', screen: 'status', before: async (page) => { await page.click('#statusSide button[data-key="subscriptions"]', { timeout: 5000 }); await page.waitForSelector('#subNow .subrow', { timeout: 5000 }); } },
   // Analytics (the owner's web-analytics pictures): a few minutes of samples, on the page's clock.
   { name: 'status-analytics', screen: 'status', clock: true, mock: { usageSeries }, before: async (page) => {
     await page.click('#statusSide button[data-key="analytics"]', { timeout: 5000 });
@@ -2316,25 +2327,25 @@ const smokes = [
   // The phone's Status beside Backups: This machine from the computer's machine card (core.Machine), as the iPhone app's,
   // in place of the Nightly updates tile; the updates and Pause under it. On battery is amber; little room is red.
   { name: "The phone's Status: This machine beside Backups, its free space and power", screen: 'status', phone: ['companion', 'can-change'], run: async (page) => {
-    await page.waitForSelector('#statusMachine .value:has-text("412 GB")', { timeout: 5000 });
-    if ((await page.textContent('#statusMachine .label')).trim() !== 'This machine') throw new Error('not named This machine');
-    await page.waitForSelector('#statusMachine .sub:has-text("Plugged in")');
-    await page.waitForSelector('#statusMachine .statusupdates button');
+    await page.waitForSelector('#statusMachine .antfig:has-text("412 GB")', { timeout: 5000 });
+    if ((await page.textContent('#statusMachine .anthead h2')).trim() !== 'This machine') throw new Error('not named This machine');
+    await page.waitForSelector('#statusMachine .antline:has-text("Plugged in")');
+    await page.waitForSelector('#statusMachine .antfoot button');
     if (await page.locator('#tiles .tile:has(.label:text-is("Nightly updates"))').count()) throw new Error('the Nightly updates tile is still there');
   } },
   { name: "The phone's Status: This machine says when the computer is on battery or short of room", screen: 'status', phone: ['companion'], mock: { machine: { free: 3 * 2 ** 30, total: 994 * 2 ** 30, low: true, power: 'battery', keptAwake: true } }, run: async (page) => {
-    await page.waitForSelector('#statusMachine .value.bad:has-text("3.0 GB")', { timeout: 5000 });
-    await page.waitForSelector('#statusMachine .sub.warn:has-text("On battery")');
+    await page.waitForSelector('#statusMachine .antfig.bad:has-text("3.0 GB")', { timeout: 5000 });
+    await page.waitForSelector('#statusMachine .antline .warn:has-text("On battery")');
   } },
   { name: "The computer's Status doesn't repeat Setup's steps", screen: 'status', run: async (page) => {
-    await page.waitForSelector('#statusHeadline', { timeout: 5000 });
+    await page.waitForSelector('#statusApps', { timeout: 5000 });
     if (await page.isVisible('#setupOnStatus')) throw new Error("Setup's steps on the computer's Status");
   } },
   // The machine's line moved into Status' This Mac card and the sidebar's foot (the redesign): what's wrong in its tone,
   // once, and the foot's dot as the worst; the system and version in the foot's tooltip.
   { name: "Status' This Mac card and the sidebar's foot say how the machine is", screen: 'status', mock: { health: { agent: 'running', lastCheck: new Date().toISOString(), power: 'battery', keptAwake: true } }, run: async (page) => {
-    await page.waitForSelector('#statusMac .sub.warn:has-text("On battery")', { timeout: 5000 });
-    if (await page.locator('#statusMac :text-is("On battery")').count() !== 1) throw new Error('On battery said twice');
+    await page.waitForSelector('#statusMac .antline .warn:has-text("On battery")', { timeout: 5000 });
+    if (await page.locator('#statusMac .warn:text-is("On battery")').count() !== 1) throw new Error('On battery said twice');
     await page.waitForSelector('#foot .machine .dot.warn', { timeout: 5000 });
     const said = (await page.textContent('#foot .machine')).trim();
     if (!/^\d[\d.,]* [KMGT]B free · on battery$/.test(said)) throw new Error('the foot says: ' + said);
@@ -3681,9 +3692,9 @@ const smokes = [
     // Not counted yet: its group says all running, and the tile's total leaves it out.
     const group = await page.textContent('tr.grouphead:has-text("System") .n');
     if (!/✓ \d+ running/.test(group)) throw new Error(`System group: ${group}`);
-    const tile = await page.textContent('#statusHeadline .label');
-    const of = (tile.match(/of\s*(\d+)/) || [])[1];
-    if (Number(of) !== status.apps.length - 1) throw new Error(`Running tile: ${tile}`);
+    // The Apps card counts it out too: all the others running, no "of".
+    const tile = (await page.textContent('#statusApps .antfig')).replace(/\s+/g, ' ').trim();
+    if (tile !== `${status.apps.length - 1} running`) throw new Error(`Apps card: ${tile}`);
   } },
   { name: 'Start Jellyfin on Linux when it is not running', screen: 'status', mock: { platform: 'Linux x86_64', status: { ...status, apps: status.apps.map((a) => (a.id === 'jellyfin' ? { ...a, state: 'not running', health: '' } : a)) } }, run: async (page) => {
     await page.click('tr:has(strong:text-is("Jellyfin")) button:has-text("Start")', { timeout: 5000 });
@@ -3776,15 +3787,15 @@ const smokes = [
   // says until when. A group whose only stopped app was stopped on purpose needs no look, so it stays folded.
   { name: 'Stopped by you: its row says so, and Start them leaves it', screen: 'status', mock: { statusOpen: '', status: { ...status, stopped: { mealie: { since: new Date().toISOString() }, vikunja: { since: new Date().toISOString(), until: new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate() + 1, 8).toISOString() } },
     apps: status.apps.map((a) => (a.id === 'vikunja' ? { ...a, state: 'stopped', health: '', since: undefined } : a)) } }, run: async (page) => {
+    // Nothing stopped by itself: the Apps card says all answering, and Household's row on the overview isn't amber.
+    await page.waitForSelector('#statusApps .antline:has-text("All answering")', { timeout: 5000 });
+    if (await page.$('#statusApps .antfig.warn')) throw new Error('the Apps card counts an app stopped on purpose as a problem');
+    if (await page.$('#statusPanel .ovrow[data-key="household"] .pill.warn')) throw new Error("Household's row is amber for apps stopped on purpose");
+    await page.click('#statusAll');
     await page.waitForSelector('tr.grouphead:has(.names:has-text("Mealie"))', { timeout: 5000 });
     const label = (await page.locator('tr.grouphead:has(.names:has-text("Mealie")) .kiosklabel').textContent()).trim();
     const head = page.locator(`tr.grouphead:has(.kiosklabel:text-is("${label}"))`);
-    await page.waitForSelector('#statusHeadline.good:has-text("All good")');
-    // The owner, Nov 24: no line saying what the headline already says.
-    if (await page.locator('#statusHeadline .sub').count()) throw new Error('All good carries a line under it: ' + await page.locator('#statusHeadline .sub').textContent());
-    if ((await head.locator('.foldbtn').getAttribute('aria-expanded')) !== 'false') throw new Error('a group with only an app stopped on purpose opened by itself');
     if (await head.locator('.startall').count()) throw new Error(`Start them offers an app stopped on purpose: ${await head.locator('.startall').textContent()}`);
-    await page.click('#statusAll');
     await page.waitForFunction(([n, t]) => [...document.querySelectorAll('tr')].some((r) => r.querySelector('strong')?.textContent === n && r.querySelector('td.state')?.textContent.replace(/\s+/g, ' ').trim() === t), ['Mealie', 'Stopped by you'], { timeout: 3000 });
     await page.waitForSelector('tr:has(strong:text-is("Vikunja")) td.state:has-text("Stopped until tomorrow, 8")');
     if (await page.$('tr:has(strong:text-is("Mealie")) td.state .dot.warn')) throw new Error('stopped on purpose is shown as a warning');
@@ -3800,11 +3811,13 @@ const smokes = [
   // A restart that keeps failing: the watchdog stopped it, and unlike one stopped by you it needs a look: its row
   // says why with a red dot, the headline names it, its group opens, and the group menu does not call it yours.
   { name: 'Stopped for restarting over and over: its row says so, and it needs a look', screen: 'status', mock: { statusOpen: '', status: { ...status, stopped: { mealie: { since: new Date().toISOString(), why: 'restarting', restarts: 5 } } } }, run: async (page) => {
+    // The Apps card names it, and Household's row on the overview is amber.
+    await page.waitForSelector('#statusApps .antline:has-text("Mealie")', { timeout: 5000 });
+    await page.waitForSelector('#statusPanel .ovrow[data-key="household"] .pill.warn', { timeout: 3000 });
+    await page.click('#statusAll');
     await page.waitForSelector('tr:has(strong:text-is("Mealie")) td.state:has-text("Stopped: it restarted 5 times in an hour")', { timeout: 5000 });
     if (!(await page.$('tr:has(strong:text-is("Mealie")) td.state .dot.bad'))) throw new Error('stopped by the watchdog has no red dot');
-    await page.waitForSelector('#statusHeadline.warn li:has-text("Mealie")', { timeout: 3000 });
     const head = page.locator('#statusRows tr:has(strong:text-is("Mealie"))').locator('xpath=preceding-sibling::tr[contains(concat(" ", @class, " "), " grouphead ")][1]');
-    if ((await head.locator('.foldbtn').getAttribute('aria-expanded')) !== 'true') throw new Error('its group stayed folded');
     if (await head.locator('.startall').count()) throw new Error('Start them offers it, which would only restart the loop');
     await head.locator('.groupcount').click();
     await page.waitForSelector('.groupmenulist', { timeout: 3000 });
@@ -3819,26 +3832,41 @@ const smokes = [
     await page.click('#statusAll');
     await page.waitForSelector('tr:has(strong:text-is("Mealie")) td.state:has-text("Stopped at 3:12 AM: it ran out of memory")', { timeout: 5000 });
     if (!(await page.$('tr:has(strong:text-is("Mealie")) td.state .dot.bad'))) throw new Error('an app that ran out of memory has no red dot');
-    await page.waitForSelector('#statusHeadline.warn li:has-text("Mealie")', { timeout: 3000 });
+    await page.waitForSelector('#statusApps .antline:has-text("Mealie")', { timeout: 3000 });
     await page.waitForFunction(([n, t]) => [...document.querySelectorAll('tr')].some((r) => r.querySelector('strong')?.textContent === n && r.querySelector('td.state')?.textContent.replace(/\s+/g, ' ').trim() === t), ['Vikunja', 'Stopped yesterday, 9:40 PM']);
     await page.waitForSelector('tr:has(strong:text-is("Mealie")) button.rowmain:text-is("Start")');
   } },
-  // Status's headline (redesign-loop R6b): the app that needs you, with its fix right there. Start starts it; Logs
-  // opens its page at its log; Its page opens its page.
-  { name: 'Status headline: the app that needs you, with Start, Logs and Its page', screen: 'status', mock: stoppedByItself(), run: async (page) => {
-    const item = '#statusHeadline.warn li:has-text("Mealie")';
-    await page.waitForSelector('#statusHeadline .value:text-matches("apps? needs? you")', { timeout: 5000 });
-    await page.waitForSelector(`${item}:has-text("out of memory")`);
-    await page.click(`${item} button:text-is("Start")`);
+  // The Apps card (the owner's web-wide pictures, Nov 25; never "needs you"): one app stopped is named with what
+  // happened, with Start, Logs and its page; two or more, Start all and See them; all well, how many run and the week.
+  { name: 'Status: the Apps card names the app that stopped, with Start, Logs and its page', screen: 'status', mock: (() => { const m = stoppedByItself(); m.status.apps = m.status.apps.map((a) => (a.id === 'vikunja' ? { ...a, state: 'running', health: 'healthy' } : a)); return m; })(), run: async (page) => {
+    const card = '#statusApps';
+    await page.waitForSelector(`${card} .antfig.warn`, { timeout: 5000 });
+    await page.waitForSelector(`${card} .antline:has-text("Mealie stopped at 3:12 AM: it ran out of memory")`);
+    if (/needs? you/i.test(await page.textContent(card))) throw new Error('the card says needs you');
+    await page.click(`${card} button:has-text("Start")`);
     await page.waitForFunction(() => window.__MOCK.calls.AppAction >= 1, null, { timeout: 5000 });
-    await page.click(`${item} button:text-is("Logs")`);
+    await page.click(`${card} button:has-text("Logs")`);
     await page.waitForSelector('#app.active #appLog', { timeout: 5000 });
   } },
-  { name: 'Status headline: All good when nothing needs you', screen: 'status', mock: { status: { ...status, apps: status.apps.map((a) => ({ ...a, state: 'running', health: a.health === 'unhealthy' ? 'healthy' : a.health })) } }, run: async (page) => {
-    await page.waitForSelector('#statusHeadline.good .value:text-is("All good")', { timeout: 5000 });
-    const label = await page.textContent('#statusHeadline .label');
-    if (!/^\d+ of \d+ running$/.test(label.trim())) throw new Error(label);
-    if (await page.$('#statusHeadline .headlineapps')) throw new Error('All good lists apps');
+  { name: 'Status: the Apps card with two stopped offers Start all and See them', screen: 'status', mock: stoppedByItself(), run: async (page) => {
+    await page.waitForSelector('#statusApps .antline:has-text("Mealie, Vikunja stopped")', { timeout: 5000 });
+    await page.click('#statusApps button:has-text("See them")');
+    await page.waitForSelector('#statusRows tr:has(strong:text-is("Vikunja"))', { state: 'visible', timeout: 5000 });
+    await page.click('#statusApps button:has-text("Start all")');
+    await page.waitForFunction(() => window.__MOCK.calls.AppAction >= 1, null, { timeout: 5000 });
+  } },
+  { name: 'Status: the Apps card when all is well, with the week as squares', screen: 'status', mock: { status: { ...status, apps: status.apps.map((a) => ({ ...a, state: 'running', health: a.health === 'unhealthy' ? 'healthy' : a.health })) } }, run: async (page) => {
+    await page.waitForSelector('#statusApps .antline:has-text("All answering")', { timeout: 5000 });
+    const fig = (await page.textContent('#statusApps .antfig')).replace(/\s+/g, ' ').trim();
+    if (!/^\d+ running$/.test(fig)) throw new Error(fig);
+    await page.waitForSelector('#statusApps .ovdays i', { timeout: 5000 });
+    if (await page.locator('#statusApps .ovdays i').count() !== 7) throw new Error('not a square a day of the week');
+    // The three cards of one anatomy: their tops and heights the same.
+    const boxes = await page.$$eval('#tiles > .ovcard', (cs) => cs.map((c) => { const r = c.getBoundingClientRect(); return [Math.round(r.top), Math.round(r.height)].join(); }));
+    if (boxes.length !== 3 || new Set(boxes).size !== 1) throw new Error('the cards differ: ' + boxes.join(' | '));
+    // The categories as one panel, each row opening its page.
+    await page.click('#statusPanel .ovrow[data-key="media"]');
+    await page.waitForSelector('#statusPart .catpage h1:text-is("Media")', { timeout: 5000 });
   } },
   // On the phone, 320px wide and with big text (213px is 320 at 1.5×): the why is all there, on a line of its own if
   // need be, and nothing slides sideways.
@@ -3896,8 +3924,8 @@ const smokes = [
   // Account 3's tester, task 2, finding 4: Status in a household's words. Apps, not stacks; the homelab's own apps, not
   // baseline ones; what the savings are instead of; what CrowdSec caught, not its scenario's name and an address.
   ...[[], ['companion']].map((phone) => ({ name: `Status in a household's words${phone.length ? ', on the phone' : ''}`, screen: 'status', phone, mock: { protection }, run: async (page) => {
-    await page.waitForSelector('#statusHeadline:has-text("running")', { timeout: 5000 });
-    if (/stack|baseline/i.test(await page.locator('#statusHeadline').textContent())) throw new Error('the headline speaks of stacks');
+    await page.waitForSelector('#statusApps:has-text("running")', { timeout: 5000 });
+    if (/stack|baseline/i.test(await page.locator('#statusApps').textContent())) throw new Error('the Apps card speaks of stacks');
     await page.waitForSelector('#savingsCard .tile:has-text("Instead of subscriptions"):has-text("a year")');
     await page.waitForSelector('#protectCard li:has-text("Probing for a known security hole"):has-text("Netherlands · Example Hosting B.V.")', { timeout: 5000 });
     const said = await page.evaluate(() => document.body.innerText);
@@ -4644,7 +4672,7 @@ const smokes = [
   } },
   { name: 'A running app that does not answer needs a look', screen: 'status', mock: { status: { ...status, apps: status.apps.map((a) => (a.id === 'vikunja' ? { ...a, notAnswering: 'HTTP 502' } : a)) } }, run: async (page) => {
     await page.waitForSelector('tr:has(strong:text-is("Vikunja")) td.state:has-text("Not answering: HTTP 502")', { timeout: 5000 });
-    await page.waitForSelector('#statusHeadline.warn li:has-text("Vikunja"):has-text("Not answering")');
+    await page.waitForSelector('#statusApps .antline:has-text("Vikunja"):has-text("not answering")');
     await page.waitForSelector('#fixIt:not([hidden])');
   } },
   { name: 'Status follows the engine', screen: 'status', run: async (page) => {

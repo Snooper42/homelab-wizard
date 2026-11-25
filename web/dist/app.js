@@ -1054,6 +1054,403 @@
     );
   }
 
+  // web/src/parts/Row.tsx
+  function Rows({ kind, children }) {
+    return /* @__PURE__ */ u3("ul", { class: "alertlist" + (kind ? " " + kind : ""), children });
+  }
+  function Row({ dot, lead: lead2, title, sub, subTone, children, end, when: when3, whenTitle, whenPlain, onOpen, openLabel, pressed }) {
+    const Box2 = onOpen ? "span" : "div";
+    const body = /* @__PURE__ */ u3(S, { children: [
+      dot !== void 0 && /* @__PURE__ */ u3("span", { class: "dot " + dot }),
+      lead2,
+      /* @__PURE__ */ u3(Box2, { class: "grow", children: [
+        title !== void 0 && /* @__PURE__ */ u3("strong", { children: title }),
+        !!sub && /* @__PURE__ */ u3(Box2, { class: (subTone || "muted") + (onOpen ? " line" : ""), children: sub }),
+        children
+      ] }),
+      end,
+      when3 !== void 0 && /* @__PURE__ */ u3("span", { class: whenPlain ? "when" : "when muted", title: whenTitle, children: when3 })
+    ] });
+    if (!onOpen) return /* @__PURE__ */ u3("li", { children: body });
+    return /* @__PURE__ */ u3("li", { class: "opens" + (pressed ? " on" : ""), children: /* @__PURE__ */ u3("button", { type: "button", class: "rowopen", "aria-pressed": pressed, onClick: onOpen, children: [
+      body,
+      openLabel && /* @__PURE__ */ u3("span", { class: "sr", children: [
+        ", ",
+        openLabel
+      ] })
+    ] }) });
+  }
+
+  // web/src/backups/Backups.tsx
+  var tookText = (s3) => s3 < 120 ? `${s3} seconds` : `${Math.round(s3 / 60)} minutes`;
+  var shortPath = (p3) => {
+    const parts3 = p3.split("/").filter(Boolean);
+    return parts3.length > 2 ? "…/" + parts3.slice(-2).join("/") : p3;
+  };
+  var order = { stale: 0, none: 1, paused: 2, fresh: 3 };
+  var sortedCopies = (o3) => (o3.copies || []).slice().sort((a3, b2) => order[a3.state] - order[b2.state]);
+  function placeName(dest) {
+    const clouds = [[/ProtonDrive/i, "Proton Drive"], [/OneDrive/i, "OneDrive"], [/GoogleDrive|Google Drive/i, "Google Drive"], [/Dropbox/i, "Dropbox"], [/iCloud|Mobile Documents/i, "iCloud Drive"], [/pCloud/i, "pCloud"]];
+    for (const [re, name] of clouds) if (re.test(dest)) return name;
+    const drive = dest.match(/^\/(?:Volumes|media\/[^/]+|run\/media\/[^/]+|mnt)\/([^/]+)/) || dest.match(/^([A-Z]):[\\/]/i);
+    if (drive) return `the ${drive[1]} drive`;
+    return dest.split(/[\\/]/).filter(Boolean).pop() || dest;
+  }
+  var lastFolder = (p3) => p3.split(/[\\/]/).filter(Boolean).pop() || p3;
+  var driveName = (path) => placeName(path);
+  function sizeText(s3) {
+    const m3 = s3.trim().match(/^([\d.,]+)\s*(bytes|B|KB|KiB|MB|MiB|GB|GiB|TB|TiB)$/i);
+    if (!m3) return s3;
+    const power = { b: 0, bytes: 0, kb: 1, kib: 1, mb: 2, mib: 2, gb: 3, gib: 3, tb: 4, tib: 4 }[m3[2].toLowerCase()];
+    return bytes(parseFloat(m3[1].replace(",", ".")) * 1024 ** power);
+  }
+  function RestoreTile({ t: t3, due, test }) {
+    const runs2 = t3.history || [];
+    const newest2 = runs2[runs2.length - 1];
+    const timed = runs2.slice().reverse().find((r3) => r3.passed && r3.seconds);
+    const failed = !!newest2 && !newest2.passed;
+    const sub = failed ? /* @__PURE__ */ u3("span", { class: "bad", children: [
+      "Failed ",
+      ago(newest2.when),
+      ": ",
+      newest2.summary
+    ] }) : due ? /* @__PURE__ */ u3("span", { class: "warn", children: "Prove the backups open, once a month" }) : (t3.lastSummary || (never(t3.lastTest) ? "Once there is a backup to test" : "Proven in the last 30 days")) + (timed ? ` · in ${tookText(timed.seconds)}` : "");
+    const record2 = runs2.slice(-6).reverse().map((r3) => `${dayText(new Date(r3.when), { day: "numeric", month: "short" })}: ${r3.passed ? "passed" : "failed"}${r3.seconds ? " in " + tookText(r3.seconds) : ""}`);
+    return /* @__PURE__ */ u3(Card, { kind: "bkcard", id: "restoreTile", title: record2.length ? `Restore drills on record (${runs2.length}):
+` + record2.join("\n") : void 0, children: [
+      /* @__PURE__ */ u3(CardHead, { title: "Restore test" }),
+      /* @__PURE__ */ u3(CardFigure, { figure: /* @__PURE__ */ u3("span", { class: "value" + (failed ? " bad" : ""), children: never(t3.lastTest) ? "Never" : failed ? "Failed" : "Passed" }), label: never(t3.lastTest) ? void 0 : ago(t3.lastTest) }),
+      /* @__PURE__ */ u3("p", { class: "bksub", children: sub }),
+      test && /* @__PURE__ */ u3("div", { class: "bkactions", children: /* @__PURE__ */ u3("button", { id: "restoreTest", class: "small", title: "Duplicati restores a dozen files from last night's Homelab AppData backup, and each is compared with the live file", onClick: test, children: "Test a restore" }) })
+    ] });
+  }
+  var sourceNames = (sources) => sources.map((s3) => s3.split("/").filter(Boolean).pop() || s3).join(", ");
+  function JobRun({ j: j3 }) {
+    const line = (text2, cls = "outline") => /* @__PURE__ */ u3("span", { class: cls, children: text2 });
+    return /* @__PURE__ */ u3(S, { children: [
+      line(never(j3.lastFinished) ? "Never ran" : `Last ran ${dateTimeText(new Date(j3.lastFinished))}` + (j3.took ? `, in ${tookText(j3.took)}` : "")),
+      j3.holds && line(`Holds ${j3.holds} of yours` + (j3.files ? `, ${j3.files.toLocaleString("en-US")} ${j3.files === 1 ? "file" : "files"}` : "")),
+      (j3.size || j3.versions) && line([j3.size && `${sizeText(j3.size)} where it is kept`, j3.versions && `${j3.versions} ${j3.versions === 1 ? "version" : "versions"} to go back to`].filter(Boolean).join(", ")),
+      !!j3.sources?.length && line(`Copies ${sourceNames(j3.sources)}`),
+      !never(j3.checked) && line(j3.checkProblem ? `Checked ${dateTimeText(new Date(j3.checked))}: a file is damaged` : `Checked ${dateTimeText(new Date(j3.checked))}: a sample of its files matched`),
+      !never(j3.nextRun) && line(`Next run ${dateTimeText(new Date(j3.nextRun))}`, "outfoot")
+    ] });
+  }
+  var resultTone = (r3) => r3 === "copied" ? "ok" : r3 === "stopped" ? "warn" : r3 === "failed" ? "bad" : "";
+  function nightTone(n3) {
+    const r3 = Object.values(n3.apps || {});
+    if (r3.includes("failed")) return "bad";
+    if (r3.includes("stopped")) return "warn";
+    return r3.includes("copied") ? "ok" : "";
+  }
+  var nightDate = (day3) => {
+    const [y3, m3, d3] = day3.split("-").map(Number);
+    return new Date(y3, m3 - 1, d3);
+  };
+  function nightWords(n3, name) {
+    const all = Object.entries(n3.apps || {}).filter(([, r3]) => r3 !== "none" && r3 !== "outside");
+    const copied = all.filter(([, r3]) => r3 === "copied").length;
+    const missed2 = all.filter(([, r3]) => r3 === "failed" || r3 === "stopped").map(([id2, r3]) => `${name(id2)} ${r3}`);
+    const day3 = nightDate(n3.date).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+    return `${day3}: ${all.length ? `${copied} of ${all.length} copied` : "nothing to copy"}${missed2.length ? " · " + missed2.join(", ") : ""}`;
+  }
+  function Nights({ nights, name }) {
+    const shown9 = nights.slice(-14);
+    return /* @__PURE__ */ u3("div", { class: "bknights", role: "list", "aria-label": `The last ${shown9.length} nights`, children: shown9.map((n3) => {
+      const words5 = nightWords(n3, name);
+      return /* @__PURE__ */ u3("span", { role: "listitem", class: "bknight " + nightTone(n3), title: words5, "aria-label": words5, children: [
+        /* @__PURE__ */ u3("i", {}),
+        /* @__PURE__ */ u3("small", { "aria-hidden": "true", children: ["Su", "M", "Tu", "W", "Th", "F", "Sa"][nightDate(n3.date).getDay()] })
+      ] }, n3.date);
+    }) });
+  }
+  var appNights = (nights, app, count2 = 7) => nights.slice(-count2).map((n3) => ({ date: n3.date, result: n3.apps?.[app] }));
+  var drivesOf = (copies) => [...new Set(copies.map((c4) => driveName(c4.waitingFor || "")))].join(" and ");
+  function BackupTiles({ o: o3, os, test, apps: apps2, start, gaps, addGap }) {
+    const copies = sortedCopies(o3);
+    const fresh = copies.filter((c4) => c4.state === "fresh");
+    const stale = copies.filter((c4) => c4.state === "stale");
+    const paused = copies.filter((c4) => c4.state === "paused");
+    const kept6 = Math.max(0, ...copies.map((c4) => c4.count));
+    const size2 = fresh.reduce((t3, c4) => t3 + c4.size, 0);
+    const lastNight2 = !never(o3.lastRun) && Date.now() - new Date(o3.lastRun).getTime() < 30 * 36e5;
+    const needs = [...stale, ...paused];
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3(Card, { kind: "bkcard bklast", id: "copiesTile", children: [
+        /* @__PURE__ */ u3(CardHead, { title: lastNight2 || never(o3.lastRun) ? "Last night" : "Last backup", children: /* @__PURE__ */ u3("span", { class: "muted", children: "Every night at 03:30" }) }),
+        /* @__PURE__ */ u3(
+          CardFigure,
+          {
+            figure: /* @__PURE__ */ u3("span", { class: "value", children: copies.length ? /* @__PURE__ */ u3(S, { children: [
+              fresh.length,
+              /* @__PURE__ */ u3("small", { children: [
+                " of ",
+                copies.length - paused.length,
+                " copied"
+              ] })
+            ] }) : "None yet" }),
+            label: never(o3.lastRun) ? void 0 : [lastNight2 ? `Finished ${clockText(new Date(o3.lastRun))}` : ago(o3.lastRun), size2 ? bytes(size2) : "", o3.destinationOK ? `Encrypted to ${placeName(o3.destination)}` : ""].filter(Boolean).join(" · "),
+            chip: stale.length ? /* @__PURE__ */ u3("span", { class: "bkskipped", children: stale.length === 1 ? `${stale[0].name} skipped` : `${stale.length} skipped` }) : void 0
+          }
+        ),
+        !!o3.nights?.length && /* @__PURE__ */ u3(Nights, { nights: o3.nights, name: (id2) => copies.find((c4) => c4.app === id2)?.name || apps2?.[id2]?.name || id2 }),
+        /* @__PURE__ */ u3("p", { class: "bksub", children: !copies.length ? "The first are made the night after an app with a database starts" : /* @__PURE__ */ u3(S, { children: [
+          !!stale.length && /* @__PURE__ */ u3("span", { class: "bad", children: [
+            "Out of date: ",
+            stale.map((c4) => `${c4.name}, last copied ${ago(c4.newest)}`).join("; "),
+            ". "
+          ] }),
+          !!paused.length && /* @__PURE__ */ u3("span", { children: [
+            `${paused.length} more paused: ${paused.length === 1 ? "its app waits" : "their apps wait"} for ${drivesOf(paused)}`,
+            ". "
+          ] }),
+          !stale.length && !paused.length && `Each under ${o3.staleAfterHours} hours old.`,
+          never(o3.envCopied) ? " Settings file not copied yet." : " The settings file too."
+        ] }) }),
+        /* @__PURE__ */ u3("dl", { class: "bkfacts", children: [
+          /* @__PURE__ */ u3("div", { children: [
+            /* @__PURE__ */ u3("dt", { children: "Next" }),
+            /* @__PURE__ */ u3("dd", { children: "Tonight, 03:30" })
+          ] }),
+          /* @__PURE__ */ u3("div", { children: [
+            /* @__PURE__ */ u3("dt", { children: lastNight2 ? "Last night's size" : "Its size" }),
+            /* @__PURE__ */ u3("dd", { children: size2 ? bytes(size2) : "—" })
+          ] }),
+          /* @__PURE__ */ u3("div", { children: [
+            /* @__PURE__ */ u3("dt", { children: "Kept" }),
+            /* @__PURE__ */ u3("dd", { children: kept6 ? `${kept6} ${kept6 === 1 ? "night" : "nights"}` : "—" })
+          ] })
+        ] })
+      ] }),
+      /* @__PURE__ */ u3(Card, { kind: "bkcard bkneeds", id: "needsYou", children: [
+        /* @__PURE__ */ u3(CardHead, { title: /* @__PURE__ */ u3(S, { children: [
+          "Needs you",
+          !!stale.length && /* @__PURE__ */ u3("span", { class: "bkcount", children: stale.length })
+        ] }) }),
+        needs.length ? /* @__PURE__ */ u3(Rows, { kind: "bkneedlist", children: needs.map((c4) => {
+          const a3 = c4.app ? apps2?.[c4.app] : void 0;
+          return /* @__PURE__ */ u3(
+            Row,
+            {
+              lead: /* @__PURE__ */ u3(AppMark, { id: c4.app, name: c4.name, icon: "", small: true }),
+              dot: c4.state === "stale" ? "bad" : "warn",
+              title: c4.name,
+              sub: c4.state === "paused" ? `Waiting for ${driveName(c4.waitingFor || "")}` : staleWhy(c4, apps2) || `Last copied ${ago(c4.newest)}`,
+              end: c4.state === "stale" && a3 && a3.state !== "running" && start ? /* @__PURE__ */ u3("button", { type: "button", class: "small primary", onClick: () => start(a3), children: "Start" }) : void 0
+            },
+            c4.id
+          );
+        }) }) : /* @__PURE__ */ u3("p", { class: "bksub ok", children: "✓ Nothing needs you: every copy is up to date." })
+      ] }),
+      /* @__PURE__ */ u3(RestoreTile, { t: o3.restoreTest || {}, due: o3.restoreDue, test }),
+      /* @__PURE__ */ u3(Card, { kind: "bkcard", id: "offsiteTile", children: [
+        /* @__PURE__ */ u3(CardHead, { title: "Off-site" }),
+        /* @__PURE__ */ u3(CardFigure, { figure: /* @__PURE__ */ u3("span", { class: "value", children: o3.destinationOK ? placeName(o3.destination) : /* @__PURE__ */ u3("span", { class: "warn", children: "Not set" }) }), label: o3.destinationOK ? "Encrypted before it leaves" : void 0 }),
+        /* @__PURE__ */ u3("p", { class: "bksub", children: o3.destinationOK ? /* @__PURE__ */ u3("span", { title: o3.destination, children: [
+          "In ",
+          lastFolder(o3.destination)
+        ] }) : os === "linux" ? "Put a backup drive or a synced folder in Settings › Backups go to" : "Put a Proton Drive folder in Settings › Backups go to" })
+      ] }),
+      !!gaps?.length && addGap && /* @__PURE__ */ u3(Card, { kind: "bkcard", id: "gapsTile", children: /* @__PURE__ */ u3(Gaps, { gaps, add: addGap }) })
+    ] });
+  }
+  function copyGroups(o3) {
+    const copies = sortedCopies(o3);
+    const of = (state3) => copies.filter((c4) => c4.state === state3);
+    const paused = of("paused"), none2 = of("none");
+    const oldest = paused.filter((c4) => !never(c4.newest)).map((c4) => c4.newest).sort()[0];
+    return [
+      { key: "stale", label: "Out of date", tone: "bad", copies: of("stale"), note: "" },
+      { key: "fresh", label: "Up to date", tone: "ok", copies: of("fresh"), note: "" },
+      {
+        key: "paused",
+        label: "Paused",
+        tone: "",
+        copies: paused,
+        note: `${paused.map((c4) => c4.name).join(", ")} ${paused.length === 1 ? "waits" : "wait"} for ${drivesOf(paused)}` + (oldest ? `; ${paused.length === 1 ? "its last copy" : "their last copies"} (${ago(oldest)}) ${paused.length === 1 ? "is" : "are"} kept` : "")
+      },
+      { key: "none", label: "Not copied yet", tone: "", copies: none2, note: `${none2.map((c4) => c4.name).join(", ")}, tonight` }
+    ].filter((g2) => g2.copies.length);
+  }
+  var changed = (c4) => !!c4.before && Math.abs(c4.size - c4.before) >= c4.before / 10;
+  function staleWhy(c4, apps2) {
+    if (!apps2 || !c4.app) return "";
+    const a3 = apps2[c4.app];
+    if (!a3) return "It isn't installed any more: its last copies are kept.";
+    if (a3.state === "stopped") return "It's stopped, so the nightly copy skips it. Start it, and tonight's copy catches up.";
+    if (a3.state !== "running") return "It isn't running, so the nightly copy skips it.";
+    return "Last night's copy didn't come. Back up now tries again; if it fails, the backup's log says why.";
+  }
+  function CopyRows({ o: o3, apps: apps2 }) {
+    const [picked, setPicked] = d2({});
+    const groups4 = copyGroups(o3);
+    const nights = o3.nights || [];
+    const cols = nights.length ? 5 : 4;
+    if (!groups4.length) return /* @__PURE__ */ u3("tr", { children: /* @__PURE__ */ u3("td", { colSpan: cols, class: "muted", children: "No installed app has a database to dump yet." }) });
+    return /* @__PURE__ */ u3(S, { children: groups4.map((g2) => {
+      const open5 = picked[g2.key] ?? (g2.key === "stale" || g2.key === "fresh");
+      const toggle = () => setPicked({ ...picked, [g2.key]: !open5 });
+      return [
+        /* @__PURE__ */ u3("tr", { class: "grouphead fold copygroup " + g2.key + (g2.tone === "bad" ? " bad" : "") + (open5 ? " open" : ""), onClick: toggle, children: /* @__PURE__ */ u3("th", { colSpan: cols, children: [
+          /* @__PURE__ */ u3("button", { type: "button", class: "foldbtn", "aria-expanded": open5, onClick: (e3) => {
+            e3.stopPropagation();
+            toggle();
+          }, children: [
+            /* @__PURE__ */ u3("span", { class: "chev", "aria-hidden": "true", children: open5 ? "▾" : "▸" }),
+            g2.label
+          ] }),
+          /* @__PURE__ */ u3("span", { class: "n", children: String(g2.copies.length) }),
+          !open5 && g2.note && /* @__PURE__ */ u3("span", { class: "names", children: g2.note })
+        ] }) }, "g:" + g2.key),
+        ...open5 ? g2.copies.map((c4) => /* @__PURE__ */ u3("tr", { class: "copy " + c4.state + (c4.shrank ? " shrank" : ""), children: [
+          /* @__PURE__ */ u3("td", { class: "name", children: [
+            /* @__PURE__ */ u3("span", { class: "dot " + (c4.shrank ? "bad" : g2.tone) }),
+            /* @__PURE__ */ u3(AppMark, { id: c4.app, name: c4.name, icon: "", small: true }),
+            c4.name,
+            c4.shrank && /* @__PURE__ */ u3("span", { class: "note bad", children: [
+              "Less than half the night before's ",
+              bytes(c4.before || 0),
+              ": check that ",
+              c4.name,
+              " still has its data"
+            ] }),
+            c4.state === "stale" && staleWhy(c4, apps2) && /* @__PURE__ */ u3("span", { class: "note muted", children: staleWhy(c4, apps2) })
+          ] }),
+          /* @__PURE__ */ u3("td", { class: "when muted", children: never(c4.newest) ? "—" : ago(c4.newest) }),
+          /* @__PURE__ */ u3("td", { class: "size muted", title: c4.before ? `The night before: ${bytes(c4.before)}` : void 0, children: [
+            bytes(c4.size),
+            !c4.shrank && changed(c4) && /* @__PURE__ */ u3("span", { class: "was", children: [
+              " (was ",
+              bytes(c4.before || 0),
+              ")"
+            ] })
+          ] }),
+          /* @__PURE__ */ u3("td", { class: "kept muted", children: c4.count ? `${c4.count} kept` : "—" }),
+          !!nights.length && /* @__PURE__ */ u3("td", { class: "nights", "aria-label": `The last ${Math.min(7, nights.length)} nights`, children: appNights(nights, c4.app || c4.id).map((n3) => /* @__PURE__ */ u3("span", { class: "dot " + resultTone(n3.result), title: `${nightDate(n3.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}: ${n3.result || "not copied yet"}` }, n3.date)) })
+        ] }, c4.id)) : []
+      ];
+    }) });
+  }
+  function Vault({ o: o3 }) {
+    const plain2 = o3.plainExports || [];
+    const [tone, said2] = plain2.length ? ["bad", "A plain export is lying in recovery-staging/secrets: delete it"] : never(o3.vaultExport) ? ["warn", "Never made yet"] : o3.vaultDue ? ["warn", `Due: the last one is from ${ago(o3.vaultExport)}`] : ["ok", `The last one ${ago(o3.vaultExport)}`];
+    return /* @__PURE__ */ u3("details", { class: "morerow", open: !!plain2.length, children: [
+      /* @__PURE__ */ u3("summary", { children: [
+        /* @__PURE__ */ u3("span", { class: "dot " + tone }),
+        /* @__PURE__ */ u3("span", { class: "grow", children: [
+          /* @__PURE__ */ u3("strong", { children: "Password vault export" }),
+          /* @__PURE__ */ u3("span", { class: "sub " + (tone === "bad" ? "bad" : "muted"), children: [
+            "A copy of your passwords you can open anywhere, once a month. ",
+            said2,
+            "."
+          ] })
+        ] }),
+        /* @__PURE__ */ u3("span", { class: "btn small", children: "How" })
+      ] }),
+      !!plain2.length && /* @__PURE__ */ u3("p", { class: "bad", children: [
+        plain2.join(", "),
+        " in recovery-staging/secrets holds every password readable. Delete it, then export again encrypted."
+      ] }),
+      /* @__PURE__ */ u3("p", { children: [
+        "The database backup needs the server to open. Once a month, also keep an export you can open anywhere: in the Bitwarden web vault, Tools › Export vault › .json (Encrypted) › Password protected, with that password kept outside the vault. Save it in ",
+        /* @__PURE__ */ u3("code", { children: "recovery-staging/secrets" }),
+        " and the nightly Secrets job takes it off-site. The backup reminds you when one is due."
+      ] })
+    ] });
+  }
+  var jobMark = { ok: ["ok", "Ran"], failed: ["bad", "Failed"], stale: ["warn", "Not run for over a week"], never: ["warn", "Never run"] };
+  function jobsProblem(problem, waitingFor) {
+    if (/DUPLICATI_PASSWORD is empty/.test(problem)) return "Shown here once DUPLICATI_PASSWORD is in Settings.";
+    if (waitingFor) return `Duplicati waits for ${driveName(waitingFor)}: the jobs show here once it is plugged in.`;
+    if (/connection refused|dial tcp|no such host|timeout|EOF/i.test(problem)) return "Duplicati is not answering: start it on Status, and the jobs show here.";
+    return problem;
+  }
+  function Jobs({ jobs, place: place2, problem, waitingFor, create }) {
+    const title = place2 ? `Encrypted to ${place2}` : "Encrypted off-site";
+    if (!jobs) {
+      return /* @__PURE__ */ u3(CardHead, { title, children: /* @__PURE__ */ u3("span", { class: "muted", title: problem, children: jobsProblem(problem || "", waitingFor) }) });
+    }
+    if (!jobs.length) {
+      return /* @__PURE__ */ u3(S, { children: [
+        /* @__PURE__ */ u3(CardHead, { title, children: /* @__PURE__ */ u3("button", { class: "small", onClick: create, children: "Create the backup jobs" }) }),
+        /* @__PURE__ */ u3("p", { class: "muted", children: "No jobs yet. Afterwards, copy DUPLICATI_SECRETS_PASSPHRASE from Settings into Vaultwarden." })
+      ] });
+    }
+    const bad = jobs.filter((j3) => j3.state !== "ok" || j3.checkProblem).length;
+    const newest2 = jobs.map((j3) => j3.lastFinished).filter((t3) => !never(t3)).sort().pop();
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3(CardHead, { title, children: bad ? /* @__PURE__ */ u3("span", { class: "warn", children: [
+        bad,
+        " need a look"
+      ] }) : /* @__PURE__ */ u3("span", { class: "ok", children: [
+        "✓ All ",
+        jobs.length,
+        " ran",
+        newest2 ? " " + ago(newest2) : ""
+      ] }) }),
+      /* @__PURE__ */ u3(Rows, { kind: "jobs", children: jobs.map((j3) => {
+        const [mark, word] = jobMark[j3.state] || ["", j3.state];
+        const damaged = j3.checkProblem && j3.state === "ok" ? `Failed its check ${dateTimeText(new Date(j3.checked))}: ${j3.checkProblem}. A version may not restore: open the job in Duplicati.` : "";
+        const tone = damaged ? "bad" : mark;
+        return /* @__PURE__ */ u3(
+          Row,
+          {
+            dot: tone,
+            title: j3.name,
+            sub: j3.errorMessage || damaged || j3.state !== "ok" && word,
+            subTone: j3.errorMessage || damaged ? "bad" : void 0,
+            end: j3.size && /* @__PURE__ */ u3("span", { class: "size muted", children: sizeText(j3.size) }),
+            when: /* @__PURE__ */ u3(Hover, { label: never(j3.nextRun) ? never(j3.lastFinished) ? "never ran" : "ran " + ago(j3.lastFinished) : /* @__PURE__ */ u3("span", { class: "next", children: [
+              "next ",
+              untilText(j3.nextRun)
+            ] }), tip: /* @__PURE__ */ u3(JobRun, { j: j3 }) })
+          },
+          j3.id
+        );
+      }) })
+    ] });
+  }
+  function KopiaLine({ k: k3, test }) {
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3(CardHead, { title: "Second copy (Kopia)", children: k3.failed ? /* @__PURE__ */ u3("span", { class: "bad", children: "✗ Restore test failed" }) : k3.due ? /* @__PURE__ */ u3("span", { class: "warn", children: "Due: Test Kopia's restore" }) : /* @__PURE__ */ u3("span", { class: "ok", children: [
+        "✓ Restore proven ",
+        ago(k3.lastTest)
+      ] }) }),
+      /* @__PURE__ */ u3("p", { class: "muted", children: [
+        "In ",
+        /* @__PURE__ */ u3("span", { title: k3.repository, children: shortPath(k3.repository) }),
+        ".",
+        " ",
+        k3.failed ? `The last test: ${k3.failed}.` : never(k3.lastTest) ? "No restore test yet." : `Last proven ${ago(k3.lastTest)}.`
+      ] }),
+      /* @__PURE__ */ u3("div", { class: "actions", children: /* @__PURE__ */ u3("button", { class: "btn", onClick: test, children: "Test Kopia's restore" }) })
+    ] });
+  }
+  var mountKopia = (el3, props) => R(props && /* @__PURE__ */ u3(KopiaLine, { ...props }), el3);
+  var mountBackupTiles = (el3, props) => R(/* @__PURE__ */ u3(BackupTiles, { ...props }), el3);
+  var mountCopyRows = (el3, props) => R(props && /* @__PURE__ */ u3(CopyRows, { ...props }), el3);
+  var mountVault = (el3, props) => R(/* @__PURE__ */ u3(Vault, { ...props }), el3);
+  var mountJobs = (el3, props) => R(/* @__PURE__ */ u3(Jobs, { ...props }), el3);
+  function Gaps({ gaps, add }) {
+    if (!gaps.length) return null;
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3(CardHead, { title: "Not in any backup" }),
+      /* @__PURE__ */ u3(Rows, { kind: "gaplist", children: gaps.map((g2) => /* @__PURE__ */ u3(
+        Row,
+        {
+          title: g2.name,
+          sub: /* @__PURE__ */ u3(S, { children: [
+            /* @__PURE__ */ u3("span", { title: g2.path, children: shortPath(g2.path) }),
+            " · ",
+            g2.why
+          ] }),
+          end: g2.job ? /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: add, children: "Add" }) : void 0
+        },
+        g2.path
+      )) })
+    ] });
+  }
+
   // web/src/setup/Health.tsx
   function facts({ h: h3, i: i3, machine }) {
     const checked = never(h3.lastCheck) ? "no check yet" : `last check ${ago(h3.lastCheck)}`;
@@ -1189,7 +1586,7 @@
   }
   var awaitingJobs = (a3) => a3.id === "homelab-companion" && a3.state === "not running";
   var troubled = (a3, held3 = {}) => a3.health === "unhealthy" || a3.health === "restarting" || !!a3.notAnswering || a3.state === "missing" || a3.state === "stopped" && (!held3[a3.id] || keptRestarting(held3[a3.id]));
-  function Tiles({ status: st, history, onPause, onChoose, words: words5, start, logs, open: open5, backups, openBackups, mac, machine }) {
+  function Tiles({ status: st, history, onPause, onChoose, words: words5, start, logs, open: open5, backups, openBackups, mac, machine, week: week2, nights, startAll, seeAll }) {
     if (!st.apps.length) {
       return /* @__PURE__ */ u3(Card, { kind: "emptystate", id: "statusEmpty", children: [
         /* @__PURE__ */ u3("h2", { children: "No apps yet" }),
@@ -1200,60 +1597,72 @@
     const counted2 = st.apps.filter((a3) => !awaitingJobs(a3)).length;
     const trouble2 = st.apps.filter((a3) => troubled(a3, st.stopped));
     const u4 = st.updates;
+    const lower = (w3) => w3.charAt(0).toLowerCase() + w3.slice(1);
+    const one = trouble2.length === 1 ? trouble2[0] : null;
+    const outages2 = week2 ? week2.days.filter((d3) => d3 !== "ok").length : 0;
     return /* @__PURE__ */ u3(S, { children: [
-      !trouble2.length && !st.missing ? /* @__PURE__ */ u3("div", { class: "headline good slim", id: "statusHeadline", role: "status", children: [
-        /* @__PURE__ */ u3("span", { class: "okmark", "aria-hidden": "true", children: "✓" }),
-        /* @__PURE__ */ u3("span", { class: "value", children: "All good" }),
-        /* @__PURE__ */ u3("span", { class: "label", children: [
+      /* @__PURE__ */ u3(Card, { kind: "tile ovcard", id: "statusApps", children: [
+        /* @__PURE__ */ u3("div", { class: "anthead", children: [
+          /* @__PURE__ */ u3("h2", { children: "Apps" }),
+          /* @__PURE__ */ u3("span", { class: "muted", children: week2?.checked || "" })
+        ] }),
+        /* @__PURE__ */ u3("div", { class: "antfig" + (trouble2.length ? " warn" : ""), children: trouble2.length ? /* @__PURE__ */ u3(S, { children: [
           running5.length,
-          " of ",
-          counted2,
-          " running"
-        ] })
-      ] }) : /* @__PURE__ */ u3(Card, { kind: "tile headline" + (trouble2.length ? " warn" : " good"), id: "statusHeadline", children: [
-        /* @__PURE__ */ u3("div", { class: "headlinemain", children: [
-          /* @__PURE__ */ u3("div", { class: "value", children: trouble2.length ? trouble2.length === 1 ? "1 app needs you" : `${trouble2.length} apps need you` : "All good" }),
-          /* @__PURE__ */ u3("div", { class: "label", children: [
-            running5.length,
+          /* @__PURE__ */ u3("span", { class: "muted", children: [
             " of ",
             counted2,
             " running"
+          ] })
+        ] }) : /* @__PURE__ */ u3(S, { children: [
+          running5.length,
+          /* @__PURE__ */ u3("span", { class: "muted", children: " running" })
+        ] }) }),
+        /* @__PURE__ */ u3("div", { class: "antline muted", children: one ? /* @__PURE__ */ u3("span", { class: "antwho", children: [
+          /* @__PURE__ */ u3(AppMark, { id: one.id, name: one.name, icon: "", small: true }),
+          /* @__PURE__ */ u3("span", { class: "antname", children: [
+            one.name,
+            " ",
+            lower(words5 ? words5(one) : one.state)
+          ] })
+        ] }) : trouble2.length ? /* @__PURE__ */ u3("span", { class: "antwho", children: /* @__PURE__ */ u3("span", { class: "antname", children: [
+          trouble2.map((a3) => a3.name).join(", "),
+          " stopped"
+        ] }) }) : st.missing ? /* @__PURE__ */ u3("span", { class: "bad", children: st.missing === 1 ? "1 of the homelab's own apps is down" : `${st.missing} of the homelab's own apps are down` }) : /* @__PURE__ */ u3("span", { children: [
+          "All answering",
+          week2 ? ` · ${outages2 ? `${outages2 === 1 ? "1 day" : `${outages2} days`} with an outage this week` : "no outage this week"}` : ""
+        ] }) }),
+        /* @__PURE__ */ u3("div", { class: "antfoot", children: one ? /* @__PURE__ */ u3("span", { class: "ovacts", children: [
+          start && one.state !== "running" && /* @__PURE__ */ u3("button", { type: "button", class: "primary small", onClick: () => start(one), children: [
+            /* @__PURE__ */ u3(Icon, { name: "start" }),
+            "Start"
           ] }),
-          !!st.missing && /* @__PURE__ */ u3("div", { class: "sub", children: /* @__PURE__ */ u3("span", { class: "bad", children: st.missing === 1 ? "1 of the homelab's own apps is down." : `${st.missing} of the homelab's own apps are down.` }) })
-        ] }),
-        !!trouble2.length && /* @__PURE__ */ u3("ul", { class: "headlineapps", children: [
-          trouble2.slice(0, 3).map((a3) => /* @__PURE__ */ u3("li", { children: [
-            /* @__PURE__ */ u3(AppMark, { id: a3.id, name: a3.name, icon: "", small: true }),
-            /* @__PURE__ */ u3("span", { class: "grow", children: [
-              /* @__PURE__ */ u3("strong", { children: a3.name }),
-              /* @__PURE__ */ u3("span", { class: "muted", children: words5 ? words5(a3) : a3.state })
-            ] }),
-            /* @__PURE__ */ u3("span", { class: "headlineacts", children: [
-              start && a3.state !== "running" && /* @__PURE__ */ u3("button", { type: "button", class: "btn primary small", onClick: () => start(a3), children: "Start" }),
-              logs && a3.state !== "missing" && /* @__PURE__ */ u3("button", { type: "button", class: "btn small", onClick: () => logs(a3), children: "Logs" }),
-              open5 && /* @__PURE__ */ u3("button", { type: "button", class: "btn small", onClick: () => open5(a3), children: "Its page" })
-            ] })
-          ] }, a3.id)),
-          trouble2.length > 3 && /* @__PURE__ */ u3("li", { class: "muted", children: [
-            "and ",
-            trouble2.length - 3,
-            " more, in the list below"
-          ] })
-        ] })
+          logs && one.state !== "missing" && /* @__PURE__ */ u3("button", { type: "button", class: "btn small", onClick: () => logs(one), children: [
+            /* @__PURE__ */ u3(Icon, { name: "logs" }),
+            "Logs"
+          ] }),
+          open5 && /* @__PURE__ */ u3("button", { type: "button", class: "iconbtn", "aria-label": `${one.name}: its page`, title: `${one.name}: its page`, onClick: () => open5(one), children: /* @__PURE__ */ u3(Icon, { name: "more" }) })
+        ] }) : trouble2.length ? /* @__PURE__ */ u3("span", { class: "ovacts", children: [
+          startAll && /* @__PURE__ */ u3("button", { type: "button", class: "primary small", onClick: () => startAll(trouble2), children: [
+            /* @__PURE__ */ u3(Icon, { name: "start" }),
+            "Start all"
+          ] }),
+          seeAll && /* @__PURE__ */ u3("button", { type: "button", class: "btn small", onClick: seeAll, children: "See them" })
+        ] }) : week2 ? /* @__PURE__ */ u3("span", { class: "ovdays", role: "img", "aria-label": `This week: ${outages2 ? `${outages2} days with an outage` : "no outage"}`, children: week2.days.map((d3, i3) => /* @__PURE__ */ u3("i", { class: d3 }, i3)) }) : /* @__PURE__ */ u3("span", { class: "antempty" }) })
       ] }),
-      /* @__PURE__ */ u3(Card, { kind: "tile statuscard", id: "statusBackups", children: [
-        /* @__PURE__ */ u3("div", { class: "label", children: [
-          "Backups",
-          openBackups && /* @__PURE__ */ u3("button", { type: "button", class: "linkbtn statusmore", onClick: openBackups, children: "Backups ›" })
+      /* @__PURE__ */ u3(Card, { kind: "tile ovcard", id: "statusBackups", children: [
+        /* @__PURE__ */ u3("div", { class: "anthead", children: [
+          /* @__PURE__ */ u3("h2", { children: openBackups ? /* @__PURE__ */ u3("button", { type: "button", class: "linkbtn ovtitle", onClick: openBackups, children: "Backups" }) : "Backups" }),
+          /* @__PURE__ */ u3("span", { class: "muted", children: "Every night at 03:30" })
         ] }),
-        /* @__PURE__ */ u3("div", { class: "value", children: backups ? /* @__PURE__ */ u3(S, { children: [
+        /* @__PURE__ */ u3("div", { class: "antfig" + (backups?.skipped.length ? " warn" : ""), children: backups ? /* @__PURE__ */ u3(S, { children: [
           backups.copied,
-          /* @__PURE__ */ u3("small", { children: [
+          /* @__PURE__ */ u3("span", { class: "muted", children: [
             " of ",
-            backups.of
+            backups.of,
+            " copied"
           ] })
-        ] }) : "…" }),
-        /* @__PURE__ */ u3("div", { class: "sub", children: !backups ? "Reading last night…" : /* @__PURE__ */ u3("span", { children: [
+        ] }) : "—" }),
+        /* @__PURE__ */ u3("div", { class: "antline muted", children: !backups ? "Reading last night…" : /* @__PURE__ */ u3("span", { children: [
           backups.at,
           backups.skipped.length ? /* @__PURE__ */ u3(S, { children: [
             " · ",
@@ -1262,55 +1671,83 @@
               " skipped"
             ] })
           ] }) : ""
-        ] }) })
+        ] }) }),
+        /* @__PURE__ */ u3("div", { class: "antfoot", children: nights?.length ? /* @__PURE__ */ u3("span", { class: "ovdays", role: "img", "aria-label": `The last ${Math.min(14, nights.length)} nights`, children: nights.slice(-14).map((n3) => /* @__PURE__ */ u3("i", { class: nightTone(n3), title: nightWords(n3, (id2) => id2) }, n3.date)) }) : /* @__PURE__ */ u3("span", { class: "antempty" }) })
       ] }),
-      mac ? /* @__PURE__ */ u3(MacCard, { mac, updates: u4, onPause }) : machine?.total ? /* @__PURE__ */ u3(MachineCard, { m: machine, updates: u4, onPause }) : /* @__PURE__ */ u3(
-        Tile,
-        {
-          label: "Nightly updates",
-          value: u4?.paused ? "Paused" : "On",
-          sub: /* @__PURE__ */ u3(S, { children: [
-            u4?.paused ? "Until you resume them" : `Run ${u4?.schedule}`,
-            /* @__PURE__ */ u3(PauseButton, { paused: !!u4?.paused, onPause })
-          ] })
-        }
-      )
+      mac ? /* @__PURE__ */ u3(MacCard, { mac, updates: u4, onPause }) : machine?.total ? /* @__PURE__ */ u3(MachineCard, { m: machine, updates: u4, onPause }) : /* @__PURE__ */ u3(Card, { kind: "tile ovcard", id: "statusMachine", children: [
+        /* @__PURE__ */ u3("div", { class: "anthead", children: [
+          /* @__PURE__ */ u3("h2", { children: "Updates" }),
+          /* @__PURE__ */ u3("span", { class: "muted" })
+        ] }),
+        /* @__PURE__ */ u3("div", { class: "antfig", children: u4?.paused ? "Paused" : "On" }),
+        /* @__PURE__ */ u3("div", { class: "antline muted", children: u4?.paused ? "Until you resume them" : `Run ${u4?.schedule}` }),
+        /* @__PURE__ */ u3("div", { class: "antfoot", children: /* @__PURE__ */ u3(PauseButton, { paused: !!u4?.paused, onPause }) })
+      ] })
     ] });
   }
   function MachineCard({ m: m3, updates: u4, onPause }) {
     const power = m3.power === "battery" ? { words: "On battery", tone: "warn" } : m3.power === "plugged" ? m3.keptAwake ? { words: "Plugged in", tone: "" } : { words: "Plugged in, may sleep", tone: "warn" } : null;
-    return /* @__PURE__ */ u3(Card, { kind: "tile statuscard", id: "statusMachine", children: [
-      /* @__PURE__ */ u3("div", { class: "label", children: "This machine" }),
-      /* @__PURE__ */ u3("div", { class: "value" + (m3.low ? " bad" : ""), children: [
-        bytes(m3.free),
-        /* @__PURE__ */ u3("small", { children: " free" })
-      ] }),
-      power && /* @__PURE__ */ u3("div", { class: "sub " + power.tone, children: /* @__PURE__ */ u3("span", { children: power.words }) }),
-      /* @__PURE__ */ u3("div", { class: "sub statusupdates", children: [
-        /* @__PURE__ */ u3("span", { children: u4?.paused ? "Updates paused" : `Updates ${u4?.schedule ? "run " + u4.schedule : "nightly"}` }),
-        /* @__PURE__ */ u3(PauseButton, { paused: !!u4?.paused, onPause })
-      ] })
-    ] });
+    return /* @__PURE__ */ u3(Machine, { id: "statusMachine", name: "This machine", free: m3.free, total: m3.total, low: m3.low, line: power ? /* @__PURE__ */ u3("span", { class: power.tone, children: power.words }) : null, u: u4, onPause });
   }
   function MacCard({ mac, updates: u4, onPause }) {
     const all = facts(mac);
     const of = (k3) => all.find((f4) => f4.key === k3);
-    const disk2 = of("disk"), power = of("power"), runtime = of("runtime");
+    const power = of("power"), runtime = of("runtime");
     const wrong = all.filter((f4) => f4.tone !== "ok" && f4.key !== "disk");
     const fine = [power, runtime].filter((f4) => f4 && f4.tone === "ok").map((f4) => f4.short).join(" · ");
     const stopped2 = mac.h.agent === "stopped" || mac.h.agent === "quit";
+    const d3 = (mac.i.disks || [])[0];
     const name = mac.machine.charAt(0).toUpperCase() + mac.machine.slice(1);
-    return /* @__PURE__ */ u3(Card, { kind: "tile statuscard", id: "statusMac", children: [
-      /* @__PURE__ */ u3("div", { class: "label", children: name }),
-      /* @__PURE__ */ u3("div", { class: "value" + (disk2 && disk2.tone !== "ok" ? " bad" : ""), children: [
-        disk2 ? disk2.value.replace(/ free$/, "") : "—",
-        /* @__PURE__ */ u3("small", { children: disk2 ? " free" : "" })
+    return /* @__PURE__ */ u3(
+      Machine,
+      {
+        id: "statusMac",
+        name,
+        free: d3?.free || 0,
+        total: d3?.total || 0,
+        low: !!d3?.low,
+        u: u4,
+        onPause,
+        line: /* @__PURE__ */ u3(S, { children: [
+          fine && /* @__PURE__ */ u3("span", { children: fine }),
+          wrong.map((f4) => /* @__PURE__ */ u3("span", { class: f4.tone, children: [
+            fine ? " · " : "",
+            f4.short
+          ] }, f4.key))
+        ] }),
+        extra: stopped2 ? /* @__PURE__ */ u3(StartAgent, { id: "startAgentMac", start: mac.startAgent }) : null
+      }
+    );
+  }
+  function Machine({ id: id2, name, free, total, low, line, u: u4, onPause, extra }) {
+    const used = total ? Math.min(100, Math.max(1, Math.round(100 * (1 - free / total)))) : 0;
+    return /* @__PURE__ */ u3(Card, { kind: "tile ovcard", id: id2, children: [
+      /* @__PURE__ */ u3("div", { class: "anthead", children: [
+        /* @__PURE__ */ u3("h2", { children: name }),
+        /* @__PURE__ */ u3("span", { class: "muted", children: u4?.paused ? "Updates paused" : `Updates ${u4?.schedule || "nightly"}` })
       ] }),
-      fine && /* @__PURE__ */ u3("div", { class: "sub", children: /* @__PURE__ */ u3("span", { children: fine }) }),
-      wrong.map((f4) => /* @__PURE__ */ u3("div", { class: "sub " + f4.tone, children: /* @__PURE__ */ u3("span", { children: f4.short }) }, f4.key)),
-      stopped2 && /* @__PURE__ */ u3(StartAgent, { id: "startAgentMac", start: mac.startAgent }),
-      /* @__PURE__ */ u3("div", { class: "sub statusupdates", children: [
-        /* @__PURE__ */ u3("span", { children: u4?.paused ? "Updates paused" : `Updates ${u4?.schedule ? "run " + u4.schedule : "nightly"}` }),
+      /* @__PURE__ */ u3("div", { class: "antfig" + (low ? " bad" : ""), children: total ? /* @__PURE__ */ u3(S, { children: [
+        bytes(free).replace(/ \S+$/, ""),
+        /* @__PURE__ */ u3("span", { class: "muted", children: [
+          " ",
+          bytes(free).replace(/^\S+ /, ""),
+          " free"
+        ] })
+      ] }) : "—" }),
+      /* @__PURE__ */ u3("div", { class: "antline muted", children: [
+        line,
+        extra
+      ] }),
+      /* @__PURE__ */ u3("div", { class: "antfoot ovmachine", children: [
+        total ? /* @__PURE__ */ u3("span", { class: "ovbar", children: [
+          /* @__PURE__ */ u3("span", { class: "antbar", role: "img", "aria-label": `${used}% used`, children: /* @__PURE__ */ u3("span", { style: { width: `${used}%` } }) }),
+          /* @__PURE__ */ u3("small", { class: "muted", children: [
+            bytes(total - free),
+            " of ",
+            bytes(total),
+            " used"
+          ] })
+        ] }) : /* @__PURE__ */ u3("span", { class: "antempty" }),
         /* @__PURE__ */ u3(PauseButton, { paused: !!u4?.paused, onPause })
       ] })
     ] });
@@ -2692,33 +3129,6 @@
     return /* @__PURE__ */ u3("div", { ref, id: id2, class: "panel sheet", role: "dialog", "aria-modal": "true", "aria-labelledby": titleId, tabIndex: -1, hidden: true, children });
   }
 
-  // web/src/parts/Row.tsx
-  function Rows({ kind, children }) {
-    return /* @__PURE__ */ u3("ul", { class: "alertlist" + (kind ? " " + kind : ""), children });
-  }
-  function Row({ dot, lead: lead2, title, sub, subTone, children, end, when: when3, whenTitle, whenPlain, onOpen, openLabel, pressed }) {
-    const Box2 = onOpen ? "span" : "div";
-    const body = /* @__PURE__ */ u3(S, { children: [
-      dot !== void 0 && /* @__PURE__ */ u3("span", { class: "dot " + dot }),
-      lead2,
-      /* @__PURE__ */ u3(Box2, { class: "grow", children: [
-        title !== void 0 && /* @__PURE__ */ u3("strong", { children: title }),
-        !!sub && /* @__PURE__ */ u3(Box2, { class: (subTone || "muted") + (onOpen ? " line" : ""), children: sub }),
-        children
-      ] }),
-      end,
-      when3 !== void 0 && /* @__PURE__ */ u3("span", { class: whenPlain ? "when" : "when muted", title: whenTitle, children: when3 })
-    ] });
-    if (!onOpen) return /* @__PURE__ */ u3("li", { children: body });
-    return /* @__PURE__ */ u3("li", { class: "opens" + (pressed ? " on" : ""), children: /* @__PURE__ */ u3("button", { type: "button", class: "rowopen", "aria-pressed": pressed, onClick: onOpen, children: [
-      body,
-      openLabel && /* @__PURE__ */ u3("span", { class: "sr", children: [
-        ", ",
-        openLabel
-      ] })
-    ] }) });
-  }
-
   // web/src/status/attack.ts
   var words2 = [
     [/(^|-)cve-|^vpatch-/i, "Probing for a known security hole"],
@@ -3769,6 +4179,7 @@
   var folded = [];
   function show(f4) {
     fold = f4;
+    queueMicrotask(() => viewers.forEach((v3) => v3()));
     try {
       localStorage.setItem(foldKey, f4.all ? "all" : JSON.stringify(f4.picked));
     } catch {
@@ -3783,6 +4194,14 @@
   function setFold(f4) {
     show(f4);
     if (!f4.all) keep(f4.picked);
+  }
+  function showEveryApp() {
+    setFold({ all: true, picked: {} });
+  }
+  var listView = () => fold.all || filter.on;
+  var viewers = [];
+  function onListView(f4) {
+    viewers.push(f4);
   }
   function foldsFromComputer(picked) {
     if (JSON.stringify(picked) !== JSON.stringify(fold.picked)) show({ all: fold.all, picked: { ...picked } });
@@ -3803,6 +4222,7 @@
   var before = null;
   var focusBox = false;
   function setFilter(f4) {
+    queueMicrotask(() => viewers.forEach((v3) => v3()));
     filter = f4;
     filters.forEach((fn) => fn(f4));
   }
@@ -3997,6 +4417,129 @@
       unsaved > 0 && /* @__PURE__ */ u3("span", { class: "gearDot", "aria-hidden": "true" })
     ] });
   }
+
+  // web/src/status/CategoryPanel.tsx
+  function CategoryPanel({ rows, icons: icons4, open: open5 }) {
+    if (!rows.length) return null;
+    return /* @__PURE__ */ u3(Card, { kind: "ovpanel", id: "statusPanelCard", children: /* @__PURE__ */ u3("ul", { class: "ovrows", children: rows.map((r3) => {
+      const running5 = r3.apps.filter((a3) => a3.state === "running").length;
+      const names5 = r3.apps.map((a3) => a3.name);
+      const lead2 = r3.stopped.length ? [`${r3.stopped.join(", ")} stopped`, ...names5.filter((n3) => !r3.stopped.includes(n3))] : names5;
+      const line = lead2.slice(0, 2).join(r3.stopped.length ? " · " : ", ") + (lead2.length > 2 ? ` +${lead2.length - 2}` : "");
+      const warn = r3.stopped.length > 0;
+      return /* @__PURE__ */ u3("li", { children: /* @__PURE__ */ u3("button", { type: "button", class: "ovrow", "data-key": r3.id, onClick: () => open5(r3.id), children: [
+        /* @__PURE__ */ u3("span", { class: "ovlogos", "aria-hidden": "true", children: r3.apps.slice(0, 3).map((a3) => /* @__PURE__ */ u3(AppMark, { id: a3.id, name: a3.name, icon: icons4?.[a3.id] || "", small: true }, a3.id)) }),
+        /* @__PURE__ */ u3("span", { class: "ovname", children: [
+          /* @__PURE__ */ u3("strong", { children: r3.label }),
+          /* @__PURE__ */ u3("span", { class: "muted", children: line })
+        ] }),
+        /* @__PURE__ */ u3("span", { class: "pill " + (warn ? "warn" : "ok"), children: warn ? `${running5} of ${r3.apps.length} running` : /* @__PURE__ */ u3(S, { children: [
+          /* @__PURE__ */ u3(Icon, { name: "check" }),
+          running5,
+          " running"
+        ] }) }),
+        /* @__PURE__ */ u3(Icon, { name: "chevron" })
+      ] }) }, r3.id);
+    }) }) });
+  }
+  var mountCategoryPanel = (el3, p3) => R(p3 && /* @__PURE__ */ u3(CategoryPanel, { ...p3 }), el3);
+
+  // web/src/status/Subscriptions.tsx
+  var money2 = (n3) => "$" + (n3 >= 100 ? Math.round(n3).toLocaleString("en-US") : n3.toFixed(2));
+  function Row3({ o: o3, p: p3, faded }) {
+    const name = (id2) => p3.catalog?.apps.find((a3) => a3.id === id2)?.name || id2;
+    return /* @__PURE__ */ u3("li", { class: "subrow" + (faded ? " faded" : ""), children: [
+      /* @__PURE__ */ u3("button", { type: "button", class: "subapp", onClick: () => p3.open(o3.apps[0]), children: [
+        /* @__PURE__ */ u3("span", { class: "sublogos", "aria-hidden": "true", children: o3.apps.slice(0, 2).map((id2) => /* @__PURE__ */ u3(AppMark, { id: id2, name: name(id2), icon: p3.icons?.[id2] || "", small: true }, id2)) }),
+        /* @__PURE__ */ u3("span", { class: "subnames", children: [
+          /* @__PURE__ */ u3("strong", { children: o3.apps.map(name).join(" + ") }),
+          /* @__PURE__ */ u3("span", { class: "muted", children: [
+            "instead of ",
+            o3.replaces
+          ] })
+        ] })
+      ] }),
+      /* @__PURE__ */ u3("span", { class: "pill " + (o3.kind === "Direct" ? "ok" : ""), title: o3.kind === "Direct" ? "The same thing, at home" : "Does the same job, its own way", children: o3.kind }),
+      /* @__PURE__ */ u3("span", { class: "subprice", children: [
+        /* @__PURE__ */ u3("strong", { children: money2(o3.monthly) }),
+        /* @__PURE__ */ u3("span", { class: "muted", children: " a month" })
+      ] }),
+      /* @__PURE__ */ u3("span", { class: "subprice", children: [
+        /* @__PURE__ */ u3("strong", { children: money2(o3.annual) }),
+        /* @__PURE__ */ u3("span", { class: "muted", children: " a year" })
+      ] }),
+      o3.condition && /* @__PURE__ */ u3("span", { class: "subwhen muted", children: o3.condition })
+    ] });
+  }
+  function Subscriptions(p3) {
+    const offers2 = (p3.offers || []).filter((o3) => Number.isFinite(o3.annual)).map((o3) => ({ ...o3, monthly: Number.isFinite(o3.monthly) && o3.monthly > 0 ? o3.monthly : o3.annual / 12 })).sort((a3, b2) => b2.annual - a3.annual);
+    const runs2 = (o3) => o3.apps.every((id2) => p3.running.has(id2));
+    const now2 = offers2.filter(runs2), more2 = offers2.filter((o3) => !runs2(o3));
+    const year = now2.reduce((t3, o3) => t3 + o3.annual, 0), month3 = now2.reduce((t3, o3) => t3 + o3.monthly, 0);
+    const could = more2.reduce((t3, o3) => t3 + o3.annual, 0);
+    const pts = p3.history.filter((x3) => x3.annual > 0);
+    const since = pts.length > 1 ? pts[pts.length - 1].annual - pts[0].annual : 0;
+    const sinceDay = pts.length > 1 ? (/* @__PURE__ */ new Date(pts[0].date + "T12:00:00")).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "";
+    return /* @__PURE__ */ u3("div", { class: "subpage", children: [
+      /* @__PURE__ */ u3("div", { class: "row header", children: /* @__PURE__ */ u3("div", { children: [
+        /* @__PURE__ */ u3("h1", { children: "Subscriptions" }),
+        /* @__PURE__ */ u3("p", { class: "lead", children: "What your apps stand in for, at their annual prices" })
+      ] }) }),
+      /* @__PURE__ */ u3("div", { class: "anttiles", children: [
+        /* @__PURE__ */ u3(Card, { kind: "anttile", id: "subYear", children: [
+          /* @__PURE__ */ u3("div", { class: "anthead", children: [
+            /* @__PURE__ */ u3("h2", { children: "Saved a year" }),
+            /* @__PURE__ */ u3("span", { class: "muted", children: [
+              now2.length,
+              " services"
+            ] })
+          ] }),
+          /* @__PURE__ */ u3("div", { class: "antfig", children: p3.offers ? money2(year) : "—" }),
+          /* @__PURE__ */ u3("div", { class: "antline muted", children: since > 0 ? `+${money2(since)} since ${sinceDay}` : "From the apps running now" }),
+          /* @__PURE__ */ u3("div", { class: "antfoot", children: pts.length > 2 ? /* @__PURE__ */ u3(Spark, { values: pts.map((x3) => x3.annual), w: 240, h: 36, title: "The yearly saving over time" }) : /* @__PURE__ */ u3("span", { class: "antempty" }) })
+        ] }),
+        /* @__PURE__ */ u3(Card, { kind: "anttile", id: "subMonth", children: [
+          /* @__PURE__ */ u3("div", { class: "anthead", children: [
+            /* @__PURE__ */ u3("h2", { children: "A month" }),
+            /* @__PURE__ */ u3("span", { class: "muted" })
+          ] }),
+          /* @__PURE__ */ u3("div", { class: "antfig", children: p3.offers ? money2(month3) : "—" }),
+          /* @__PURE__ */ u3("div", { class: "antline muted", children: now2[0] ? `${now2[0].replaces} the most, ${money2(now2[0].monthly)}` : "Nothing replaced yet" }),
+          /* @__PURE__ */ u3("div", { class: "antfoot", children: year > 0 ? /* @__PURE__ */ u3("span", { class: "antbar", role: "img", "aria-label": "Direct and equivalent", children: /* @__PURE__ */ u3("span", { style: { width: `${Math.round(100 * now2.filter((o3) => o3.kind === "Direct").reduce((t3, o3) => t3 + o3.annual, 0) / year)}%` } }) }) : /* @__PURE__ */ u3("span", { class: "antempty" }) })
+        ] }),
+        /* @__PURE__ */ u3(Card, { kind: "anttile", id: "subCould", children: [
+          /* @__PURE__ */ u3("div", { class: "anthead", children: [
+            /* @__PURE__ */ u3("h2", { children: "Could save too" }),
+            /* @__PURE__ */ u3("span", { class: "muted", children: [
+              more2.length,
+              " more"
+            ] })
+          ] }),
+          /* @__PURE__ */ u3("div", { class: "antfig", children: [
+            p3.offers ? money2(could) : "—",
+            /* @__PURE__ */ u3("span", { class: "muted", children: " a year" })
+          ] }),
+          /* @__PURE__ */ u3("div", { class: "antline muted", children: more2[0] ? `${more2[0].apps.map((id2) => p3.catalog?.apps.find((a3) => a3.id === id2)?.name || id2).join(" + ")} instead of ${more2[0].replaces}` : "Every one you could" }),
+          /* @__PURE__ */ u3("div", { class: "antfoot", children: /* @__PURE__ */ u3("span", { class: "antempty" }) })
+        ] })
+      ] }),
+      /* @__PURE__ */ u3(Card, { kind: "subcard", id: "subNow", children: [
+        /* @__PURE__ */ u3("h2", { children: [
+          "Replaced now ",
+          /* @__PURE__ */ u3("span", { class: "n", children: now2.length })
+        ] }),
+        now2.length ? /* @__PURE__ */ u3("ul", { class: "sublist", children: now2.map((o3) => /* @__PURE__ */ u3(Row3, { o: o3, p: p3 }, o3.replaces + o3.apps.join())) }) : /* @__PURE__ */ u3("p", { class: "muted", children: "None of your apps replaces a paid service yet." })
+      ] }),
+      more2.length > 0 && /* @__PURE__ */ u3(Card, { kind: "subcard", id: "subMore", children: [
+        /* @__PURE__ */ u3("h2", { children: [
+          "Could replace too ",
+          /* @__PURE__ */ u3("span", { class: "n", children: more2.length })
+        ] }),
+        /* @__PURE__ */ u3("ul", { class: "sublist", children: more2.map((o3) => /* @__PURE__ */ u3(Row3, { o: o3, p: p3, faded: true }, o3.replaces + o3.apps.join())) })
+      ] })
+    ] });
+  }
+  var mountSubscriptions = (el3, p3) => R(p3 && /* @__PURE__ */ u3(Subscriptions, { ...p3 }), el3);
 
   // web/src/store.ts
   function store(read) {
@@ -4283,16 +4826,16 @@
 
   // web/src/tabs.ts
   var tabbed = {};
-  var changed = () => {
+  var changed2 = () => {
   };
   function keepsTabs(screen, now2, put) {
     tabbed[screen] = { now: now2, put };
   }
   function tabChanged() {
-    changed();
+    changed2();
   }
   function onTabChange(f4) {
-    changed = f4;
+    changed2 = f4;
   }
 
   // web/src/status/Analytics.tsx
@@ -4892,7 +5435,7 @@
     if (!toggle) return words5;
     return words5.split(new RegExp("(?<=\\.)\\s+")).filter((t3) => !/^(true|false)\b/i.test(t3)).join(" ");
   }
-  function Row3({ s: s3, p: p3, value, hidden: hidden3, edit }) {
+  function Row4({ s: s3, p: p3, value, hidden: hidden3, edit }) {
     const [result, setResult] = d2(null);
     const [testing, setTesting] = d2(false);
     const [kept6, setKept] = d2(void 0);
@@ -4964,7 +5507,7 @@
     const searching = !!p3.view.query.trim();
     return /* @__PURE__ */ u3(S, { children: p3.pages.map((pg) => /* @__PURE__ */ u3("div", { class: "group", "data-page": pg.name, "data-kind": pg.kind, hidden: !show4.counts[pg.name], children: [
       /* @__PURE__ */ u3("h2", { hidden: !searching, children: pg.name }),
-      pg.items.map((s3) => /* @__PURE__ */ u3(Row3, { s: s3, p: p3, value: edits[s3.key], hidden: !show4.keys.has(s3.key), edit }, s3.key))
+      pg.items.map((s3) => /* @__PURE__ */ u3(Row4, { s: s3, p: p3, value: edits[s3.key], hidden: !show4.keys.has(s3.key), edit }, s3.key))
     ] }, pg.name)) });
   }
   function mountForm(el3, props, version) {
@@ -7709,7 +8252,7 @@
   }
 
   // web/src/screens/settings.ts
-  var changed2 = {};
+  var changed3 = {};
   var testable = null;
   var lastPhones = null;
   var lastPeople = null;
@@ -7952,7 +8495,7 @@
     renderAppearance();
     const list = settingsData.value, focus = settingsFocus;
     if (afresh) {
-      for (const k3 of Object.keys(changed2)) delete changed2[k3];
+      for (const k3 of Object.keys(changed3)) delete changed3[k3];
       markChanged();
       formVersion++;
     }
@@ -7995,8 +8538,8 @@
   var isSecret = (key7) => !!form?.pages.some((pg) => pg.items.some((s3) => s3.key === key7 && s3.secret));
   var formActions = {
     edited: (edits) => {
-      for (const k3 of Object.keys(changed2)) delete changed2[k3];
-      Object.assign(changed2, edits);
+      for (const k3 of Object.keys(changed3)) delete changed3[k3];
+      Object.assign(changed3, edits);
       markChanged();
     },
     // The test checks the saved values, so a value just typed is saved
@@ -8004,7 +8547,7 @@
     test: async (key7, pending2) => {
       let used = false;
       const save3 = {};
-      for (const k3 of testReads[key7] || []) if (k3 in changed2 && !(isSecret(k3) && changed2[k3] === "")) save3[k3] = changed2[k3];
+      for (const k3 of testReads[key7] || []) if (k3 in changed3 && !(isSecret(k3) && changed3[k3] === "")) save3[k3] = changed3[k3];
       if (pending2 !== void 0) {
         if (!(isSecret(key7) && pending2 === "")) save3[key7] = pending2;
         used = true;
@@ -8274,7 +8817,7 @@
     return text2.charAt(0).toUpperCase() + text2.slice(1);
   }
   function markChanged() {
-    const n3 = Object.keys(changed2).length;
+    const n3 = Object.keys(changed3).length;
     $("saveSettings").hidden = n3 === 0;
     $("saveSettings").textContent = n3 === 1 ? "Save 1 change" : `Save ${n3} changes`;
   }
@@ -8304,7 +8847,7 @@
   }
   $("saveSettings").onclick = async () => {
     const values = {};
-    for (const [k3, v3] of Object.entries(changed2)) {
+    for (const [k3, v3] of Object.entries(changed3)) {
       if (isSecret(k3) && v3 === "") continue;
       values[k3] = v3;
     }
@@ -8420,376 +8963,6 @@
     text2.textContent = said2 || "✓ All well";
     btn.hidden = !said2;
     btn.onclick = () => open2?.();
-  }
-
-  // web/src/backups/Backups.tsx
-  var tookText = (s3) => s3 < 120 ? `${s3} seconds` : `${Math.round(s3 / 60)} minutes`;
-  var shortPath = (p3) => {
-    const parts3 = p3.split("/").filter(Boolean);
-    return parts3.length > 2 ? "…/" + parts3.slice(-2).join("/") : p3;
-  };
-  var order = { stale: 0, none: 1, paused: 2, fresh: 3 };
-  var sortedCopies = (o3) => (o3.copies || []).slice().sort((a3, b2) => order[a3.state] - order[b2.state]);
-  function placeName(dest) {
-    const clouds = [[/ProtonDrive/i, "Proton Drive"], [/OneDrive/i, "OneDrive"], [/GoogleDrive|Google Drive/i, "Google Drive"], [/Dropbox/i, "Dropbox"], [/iCloud|Mobile Documents/i, "iCloud Drive"], [/pCloud/i, "pCloud"]];
-    for (const [re, name] of clouds) if (re.test(dest)) return name;
-    const drive = dest.match(/^\/(?:Volumes|media\/[^/]+|run\/media\/[^/]+|mnt)\/([^/]+)/) || dest.match(/^([A-Z]):[\\/]/i);
-    if (drive) return `the ${drive[1]} drive`;
-    return dest.split(/[\\/]/).filter(Boolean).pop() || dest;
-  }
-  var lastFolder = (p3) => p3.split(/[\\/]/).filter(Boolean).pop() || p3;
-  var driveName = (path) => placeName(path);
-  function sizeText(s3) {
-    const m3 = s3.trim().match(/^([\d.,]+)\s*(bytes|B|KB|KiB|MB|MiB|GB|GiB|TB|TiB)$/i);
-    if (!m3) return s3;
-    const power = { b: 0, bytes: 0, kb: 1, kib: 1, mb: 2, mib: 2, gb: 3, gib: 3, tb: 4, tib: 4 }[m3[2].toLowerCase()];
-    return bytes(parseFloat(m3[1].replace(",", ".")) * 1024 ** power);
-  }
-  function RestoreTile({ t: t3, due, test }) {
-    const runs2 = t3.history || [];
-    const newest2 = runs2[runs2.length - 1];
-    const timed = runs2.slice().reverse().find((r3) => r3.passed && r3.seconds);
-    const failed = !!newest2 && !newest2.passed;
-    const sub = failed ? /* @__PURE__ */ u3("span", { class: "bad", children: [
-      "Failed ",
-      ago(newest2.when),
-      ": ",
-      newest2.summary
-    ] }) : due ? /* @__PURE__ */ u3("span", { class: "warn", children: "Prove the backups open, once a month" }) : (t3.lastSummary || (never(t3.lastTest) ? "Once there is a backup to test" : "Proven in the last 30 days")) + (timed ? ` · in ${tookText(timed.seconds)}` : "");
-    const record2 = runs2.slice(-6).reverse().map((r3) => `${dayText(new Date(r3.when), { day: "numeric", month: "short" })}: ${r3.passed ? "passed" : "failed"}${r3.seconds ? " in " + tookText(r3.seconds) : ""}`);
-    return /* @__PURE__ */ u3(Card, { kind: "bkcard", id: "restoreTile", title: record2.length ? `Restore drills on record (${runs2.length}):
-` + record2.join("\n") : void 0, children: [
-      /* @__PURE__ */ u3(CardHead, { title: "Restore test" }),
-      /* @__PURE__ */ u3(CardFigure, { figure: /* @__PURE__ */ u3("span", { class: "value" + (failed ? " bad" : ""), children: never(t3.lastTest) ? "Never" : failed ? "Failed" : "Passed" }), label: never(t3.lastTest) ? void 0 : ago(t3.lastTest) }),
-      /* @__PURE__ */ u3("p", { class: "bksub", children: sub }),
-      test && /* @__PURE__ */ u3("div", { class: "bkactions", children: /* @__PURE__ */ u3("button", { id: "restoreTest", class: "small", title: "Duplicati restores a dozen files from last night's Homelab AppData backup, and each is compared with the live file", onClick: test, children: "Test a restore" }) })
-    ] });
-  }
-  var sourceNames = (sources) => sources.map((s3) => s3.split("/").filter(Boolean).pop() || s3).join(", ");
-  function JobRun({ j: j3 }) {
-    const line = (text2, cls = "outline") => /* @__PURE__ */ u3("span", { class: cls, children: text2 });
-    return /* @__PURE__ */ u3(S, { children: [
-      line(never(j3.lastFinished) ? "Never ran" : `Last ran ${dateTimeText(new Date(j3.lastFinished))}` + (j3.took ? `, in ${tookText(j3.took)}` : "")),
-      j3.holds && line(`Holds ${j3.holds} of yours` + (j3.files ? `, ${j3.files.toLocaleString("en-US")} ${j3.files === 1 ? "file" : "files"}` : "")),
-      (j3.size || j3.versions) && line([j3.size && `${sizeText(j3.size)} where it is kept`, j3.versions && `${j3.versions} ${j3.versions === 1 ? "version" : "versions"} to go back to`].filter(Boolean).join(", ")),
-      !!j3.sources?.length && line(`Copies ${sourceNames(j3.sources)}`),
-      !never(j3.checked) && line(j3.checkProblem ? `Checked ${dateTimeText(new Date(j3.checked))}: a file is damaged` : `Checked ${dateTimeText(new Date(j3.checked))}: a sample of its files matched`),
-      !never(j3.nextRun) && line(`Next run ${dateTimeText(new Date(j3.nextRun))}`, "outfoot")
-    ] });
-  }
-  var resultTone = (r3) => r3 === "copied" ? "ok" : r3 === "stopped" ? "warn" : r3 === "failed" ? "bad" : "";
-  function nightTone(n3) {
-    const r3 = Object.values(n3.apps || {});
-    if (r3.includes("failed")) return "bad";
-    if (r3.includes("stopped")) return "warn";
-    return r3.includes("copied") ? "ok" : "";
-  }
-  var nightDate = (day3) => {
-    const [y3, m3, d3] = day3.split("-").map(Number);
-    return new Date(y3, m3 - 1, d3);
-  };
-  function nightWords(n3, name) {
-    const all = Object.entries(n3.apps || {}).filter(([, r3]) => r3 !== "none" && r3 !== "outside");
-    const copied = all.filter(([, r3]) => r3 === "copied").length;
-    const missed2 = all.filter(([, r3]) => r3 === "failed" || r3 === "stopped").map(([id2, r3]) => `${name(id2)} ${r3}`);
-    const day3 = nightDate(n3.date).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
-    return `${day3}: ${all.length ? `${copied} of ${all.length} copied` : "nothing to copy"}${missed2.length ? " · " + missed2.join(", ") : ""}`;
-  }
-  function Nights({ nights, name }) {
-    const shown9 = nights.slice(-14);
-    return /* @__PURE__ */ u3("div", { class: "bknights", role: "list", "aria-label": `The last ${shown9.length} nights`, children: shown9.map((n3) => {
-      const words5 = nightWords(n3, name);
-      return /* @__PURE__ */ u3("span", { role: "listitem", class: "bknight " + nightTone(n3), title: words5, "aria-label": words5, children: [
-        /* @__PURE__ */ u3("i", {}),
-        /* @__PURE__ */ u3("small", { "aria-hidden": "true", children: ["Su", "M", "Tu", "W", "Th", "F", "Sa"][nightDate(n3.date).getDay()] })
-      ] }, n3.date);
-    }) });
-  }
-  var appNights = (nights, app, count2 = 7) => nights.slice(-count2).map((n3) => ({ date: n3.date, result: n3.apps?.[app] }));
-  var drivesOf = (copies) => [...new Set(copies.map((c4) => driveName(c4.waitingFor || "")))].join(" and ");
-  function BackupTiles({ o: o3, os, test, apps: apps2, start, gaps, addGap }) {
-    const copies = sortedCopies(o3);
-    const fresh = copies.filter((c4) => c4.state === "fresh");
-    const stale = copies.filter((c4) => c4.state === "stale");
-    const paused = copies.filter((c4) => c4.state === "paused");
-    const kept6 = Math.max(0, ...copies.map((c4) => c4.count));
-    const size2 = fresh.reduce((t3, c4) => t3 + c4.size, 0);
-    const lastNight2 = !never(o3.lastRun) && Date.now() - new Date(o3.lastRun).getTime() < 30 * 36e5;
-    const needs = [...stale, ...paused];
-    return /* @__PURE__ */ u3(S, { children: [
-      /* @__PURE__ */ u3(Card, { kind: "bkcard bklast", id: "copiesTile", children: [
-        /* @__PURE__ */ u3(CardHead, { title: lastNight2 || never(o3.lastRun) ? "Last night" : "Last backup", children: /* @__PURE__ */ u3("span", { class: "muted", children: "Every night at 03:30" }) }),
-        /* @__PURE__ */ u3(
-          CardFigure,
-          {
-            figure: /* @__PURE__ */ u3("span", { class: "value", children: copies.length ? /* @__PURE__ */ u3(S, { children: [
-              fresh.length,
-              /* @__PURE__ */ u3("small", { children: [
-                " of ",
-                copies.length - paused.length,
-                " copied"
-              ] })
-            ] }) : "None yet" }),
-            label: never(o3.lastRun) ? void 0 : [lastNight2 ? `Finished ${clockText(new Date(o3.lastRun))}` : ago(o3.lastRun), size2 ? bytes(size2) : "", o3.destinationOK ? `Encrypted to ${placeName(o3.destination)}` : ""].filter(Boolean).join(" · "),
-            chip: stale.length ? /* @__PURE__ */ u3("span", { class: "bkskipped", children: stale.length === 1 ? `${stale[0].name} skipped` : `${stale.length} skipped` }) : void 0
-          }
-        ),
-        !!o3.nights?.length && /* @__PURE__ */ u3(Nights, { nights: o3.nights, name: (id2) => copies.find((c4) => c4.app === id2)?.name || apps2?.[id2]?.name || id2 }),
-        /* @__PURE__ */ u3("p", { class: "bksub", children: !copies.length ? "The first are made the night after an app with a database starts" : /* @__PURE__ */ u3(S, { children: [
-          !!stale.length && /* @__PURE__ */ u3("span", { class: "bad", children: [
-            "Out of date: ",
-            stale.map((c4) => `${c4.name}, last copied ${ago(c4.newest)}`).join("; "),
-            ". "
-          ] }),
-          !!paused.length && /* @__PURE__ */ u3("span", { children: [
-            `${paused.length} more paused: ${paused.length === 1 ? "its app waits" : "their apps wait"} for ${drivesOf(paused)}`,
-            ". "
-          ] }),
-          !stale.length && !paused.length && `Each under ${o3.staleAfterHours} hours old.`,
-          never(o3.envCopied) ? " Settings file not copied yet." : " The settings file too."
-        ] }) }),
-        /* @__PURE__ */ u3("dl", { class: "bkfacts", children: [
-          /* @__PURE__ */ u3("div", { children: [
-            /* @__PURE__ */ u3("dt", { children: "Next" }),
-            /* @__PURE__ */ u3("dd", { children: "Tonight, 03:30" })
-          ] }),
-          /* @__PURE__ */ u3("div", { children: [
-            /* @__PURE__ */ u3("dt", { children: lastNight2 ? "Last night's size" : "Its size" }),
-            /* @__PURE__ */ u3("dd", { children: size2 ? bytes(size2) : "—" })
-          ] }),
-          /* @__PURE__ */ u3("div", { children: [
-            /* @__PURE__ */ u3("dt", { children: "Kept" }),
-            /* @__PURE__ */ u3("dd", { children: kept6 ? `${kept6} ${kept6 === 1 ? "night" : "nights"}` : "—" })
-          ] })
-        ] })
-      ] }),
-      /* @__PURE__ */ u3(Card, { kind: "bkcard bkneeds", id: "needsYou", children: [
-        /* @__PURE__ */ u3(CardHead, { title: /* @__PURE__ */ u3(S, { children: [
-          "Needs you",
-          !!stale.length && /* @__PURE__ */ u3("span", { class: "bkcount", children: stale.length })
-        ] }) }),
-        needs.length ? /* @__PURE__ */ u3(Rows, { kind: "bkneedlist", children: needs.map((c4) => {
-          const a3 = c4.app ? apps2?.[c4.app] : void 0;
-          return /* @__PURE__ */ u3(
-            Row,
-            {
-              lead: /* @__PURE__ */ u3(AppMark, { id: c4.app, name: c4.name, icon: "", small: true }),
-              dot: c4.state === "stale" ? "bad" : "warn",
-              title: c4.name,
-              sub: c4.state === "paused" ? `Waiting for ${driveName(c4.waitingFor || "")}` : staleWhy(c4, apps2) || `Last copied ${ago(c4.newest)}`,
-              end: c4.state === "stale" && a3 && a3.state !== "running" && start ? /* @__PURE__ */ u3("button", { type: "button", class: "small primary", onClick: () => start(a3), children: "Start" }) : void 0
-            },
-            c4.id
-          );
-        }) }) : /* @__PURE__ */ u3("p", { class: "bksub ok", children: "✓ Nothing needs you: every copy is up to date." })
-      ] }),
-      /* @__PURE__ */ u3(RestoreTile, { t: o3.restoreTest || {}, due: o3.restoreDue, test }),
-      /* @__PURE__ */ u3(Card, { kind: "bkcard", id: "offsiteTile", children: [
-        /* @__PURE__ */ u3(CardHead, { title: "Off-site" }),
-        /* @__PURE__ */ u3(CardFigure, { figure: /* @__PURE__ */ u3("span", { class: "value", children: o3.destinationOK ? placeName(o3.destination) : /* @__PURE__ */ u3("span", { class: "warn", children: "Not set" }) }), label: o3.destinationOK ? "Encrypted before it leaves" : void 0 }),
-        /* @__PURE__ */ u3("p", { class: "bksub", children: o3.destinationOK ? /* @__PURE__ */ u3("span", { title: o3.destination, children: [
-          "In ",
-          lastFolder(o3.destination)
-        ] }) : os === "linux" ? "Put a backup drive or a synced folder in Settings › Backups go to" : "Put a Proton Drive folder in Settings › Backups go to" })
-      ] }),
-      !!gaps?.length && addGap && /* @__PURE__ */ u3(Card, { kind: "bkcard", id: "gapsTile", children: /* @__PURE__ */ u3(Gaps, { gaps, add: addGap }) })
-    ] });
-  }
-  function copyGroups(o3) {
-    const copies = sortedCopies(o3);
-    const of = (state3) => copies.filter((c4) => c4.state === state3);
-    const paused = of("paused"), none2 = of("none");
-    const oldest = paused.filter((c4) => !never(c4.newest)).map((c4) => c4.newest).sort()[0];
-    return [
-      { key: "stale", label: "Out of date", tone: "bad", copies: of("stale"), note: "" },
-      { key: "fresh", label: "Up to date", tone: "ok", copies: of("fresh"), note: "" },
-      {
-        key: "paused",
-        label: "Paused",
-        tone: "",
-        copies: paused,
-        note: `${paused.map((c4) => c4.name).join(", ")} ${paused.length === 1 ? "waits" : "wait"} for ${drivesOf(paused)}` + (oldest ? `; ${paused.length === 1 ? "its last copy" : "their last copies"} (${ago(oldest)}) ${paused.length === 1 ? "is" : "are"} kept` : "")
-      },
-      { key: "none", label: "Not copied yet", tone: "", copies: none2, note: `${none2.map((c4) => c4.name).join(", ")}, tonight` }
-    ].filter((g2) => g2.copies.length);
-  }
-  var changed3 = (c4) => !!c4.before && Math.abs(c4.size - c4.before) >= c4.before / 10;
-  function staleWhy(c4, apps2) {
-    if (!apps2 || !c4.app) return "";
-    const a3 = apps2[c4.app];
-    if (!a3) return "It isn't installed any more: its last copies are kept.";
-    if (a3.state === "stopped") return "It's stopped, so the nightly copy skips it. Start it, and tonight's copy catches up.";
-    if (a3.state !== "running") return "It isn't running, so the nightly copy skips it.";
-    return "Last night's copy didn't come. Back up now tries again; if it fails, the backup's log says why.";
-  }
-  function CopyRows({ o: o3, apps: apps2 }) {
-    const [picked, setPicked] = d2({});
-    const groups4 = copyGroups(o3);
-    const nights = o3.nights || [];
-    const cols = nights.length ? 5 : 4;
-    if (!groups4.length) return /* @__PURE__ */ u3("tr", { children: /* @__PURE__ */ u3("td", { colSpan: cols, class: "muted", children: "No installed app has a database to dump yet." }) });
-    return /* @__PURE__ */ u3(S, { children: groups4.map((g2) => {
-      const open5 = picked[g2.key] ?? (g2.key === "stale" || g2.key === "fresh");
-      const toggle = () => setPicked({ ...picked, [g2.key]: !open5 });
-      return [
-        /* @__PURE__ */ u3("tr", { class: "grouphead fold copygroup " + g2.key + (g2.tone === "bad" ? " bad" : "") + (open5 ? " open" : ""), onClick: toggle, children: /* @__PURE__ */ u3("th", { colSpan: cols, children: [
-          /* @__PURE__ */ u3("button", { type: "button", class: "foldbtn", "aria-expanded": open5, onClick: (e3) => {
-            e3.stopPropagation();
-            toggle();
-          }, children: [
-            /* @__PURE__ */ u3("span", { class: "chev", "aria-hidden": "true", children: open5 ? "▾" : "▸" }),
-            g2.label
-          ] }),
-          /* @__PURE__ */ u3("span", { class: "n", children: String(g2.copies.length) }),
-          !open5 && g2.note && /* @__PURE__ */ u3("span", { class: "names", children: g2.note })
-        ] }) }, "g:" + g2.key),
-        ...open5 ? g2.copies.map((c4) => /* @__PURE__ */ u3("tr", { class: "copy " + c4.state + (c4.shrank ? " shrank" : ""), children: [
-          /* @__PURE__ */ u3("td", { class: "name", children: [
-            /* @__PURE__ */ u3("span", { class: "dot " + (c4.shrank ? "bad" : g2.tone) }),
-            /* @__PURE__ */ u3(AppMark, { id: c4.app, name: c4.name, icon: "", small: true }),
-            c4.name,
-            c4.shrank && /* @__PURE__ */ u3("span", { class: "note bad", children: [
-              "Less than half the night before's ",
-              bytes(c4.before || 0),
-              ": check that ",
-              c4.name,
-              " still has its data"
-            ] }),
-            c4.state === "stale" && staleWhy(c4, apps2) && /* @__PURE__ */ u3("span", { class: "note muted", children: staleWhy(c4, apps2) })
-          ] }),
-          /* @__PURE__ */ u3("td", { class: "when muted", children: never(c4.newest) ? "—" : ago(c4.newest) }),
-          /* @__PURE__ */ u3("td", { class: "size muted", title: c4.before ? `The night before: ${bytes(c4.before)}` : void 0, children: [
-            bytes(c4.size),
-            !c4.shrank && changed3(c4) && /* @__PURE__ */ u3("span", { class: "was", children: [
-              " (was ",
-              bytes(c4.before || 0),
-              ")"
-            ] })
-          ] }),
-          /* @__PURE__ */ u3("td", { class: "kept muted", children: c4.count ? `${c4.count} kept` : "—" }),
-          !!nights.length && /* @__PURE__ */ u3("td", { class: "nights", "aria-label": `The last ${Math.min(7, nights.length)} nights`, children: appNights(nights, c4.app || c4.id).map((n3) => /* @__PURE__ */ u3("span", { class: "dot " + resultTone(n3.result), title: `${nightDate(n3.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}: ${n3.result || "not copied yet"}` }, n3.date)) })
-        ] }, c4.id)) : []
-      ];
-    }) });
-  }
-  function Vault({ o: o3 }) {
-    const plain2 = o3.plainExports || [];
-    const [tone, said2] = plain2.length ? ["bad", "A plain export is lying in recovery-staging/secrets: delete it"] : never(o3.vaultExport) ? ["warn", "Never made yet"] : o3.vaultDue ? ["warn", `Due: the last one is from ${ago(o3.vaultExport)}`] : ["ok", `The last one ${ago(o3.vaultExport)}`];
-    return /* @__PURE__ */ u3("details", { class: "morerow", open: !!plain2.length, children: [
-      /* @__PURE__ */ u3("summary", { children: [
-        /* @__PURE__ */ u3("span", { class: "dot " + tone }),
-        /* @__PURE__ */ u3("span", { class: "grow", children: [
-          /* @__PURE__ */ u3("strong", { children: "Password vault export" }),
-          /* @__PURE__ */ u3("span", { class: "sub " + (tone === "bad" ? "bad" : "muted"), children: [
-            "A copy of your passwords you can open anywhere, once a month. ",
-            said2,
-            "."
-          ] })
-        ] }),
-        /* @__PURE__ */ u3("span", { class: "btn small", children: "How" })
-      ] }),
-      !!plain2.length && /* @__PURE__ */ u3("p", { class: "bad", children: [
-        plain2.join(", "),
-        " in recovery-staging/secrets holds every password readable. Delete it, then export again encrypted."
-      ] }),
-      /* @__PURE__ */ u3("p", { children: [
-        "The database backup needs the server to open. Once a month, also keep an export you can open anywhere: in the Bitwarden web vault, Tools › Export vault › .json (Encrypted) › Password protected, with that password kept outside the vault. Save it in ",
-        /* @__PURE__ */ u3("code", { children: "recovery-staging/secrets" }),
-        " and the nightly Secrets job takes it off-site. The backup reminds you when one is due."
-      ] })
-    ] });
-  }
-  var jobMark = { ok: ["ok", "Ran"], failed: ["bad", "Failed"], stale: ["warn", "Not run for over a week"], never: ["warn", "Never run"] };
-  function jobsProblem(problem, waitingFor) {
-    if (/DUPLICATI_PASSWORD is empty/.test(problem)) return "Shown here once DUPLICATI_PASSWORD is in Settings.";
-    if (waitingFor) return `Duplicati waits for ${driveName(waitingFor)}: the jobs show here once it is plugged in.`;
-    if (/connection refused|dial tcp|no such host|timeout|EOF/i.test(problem)) return "Duplicati is not answering: start it on Status, and the jobs show here.";
-    return problem;
-  }
-  function Jobs({ jobs, place: place2, problem, waitingFor, create }) {
-    const title = place2 ? `Encrypted to ${place2}` : "Encrypted off-site";
-    if (!jobs) {
-      return /* @__PURE__ */ u3(CardHead, { title, children: /* @__PURE__ */ u3("span", { class: "muted", title: problem, children: jobsProblem(problem || "", waitingFor) }) });
-    }
-    if (!jobs.length) {
-      return /* @__PURE__ */ u3(S, { children: [
-        /* @__PURE__ */ u3(CardHead, { title, children: /* @__PURE__ */ u3("button", { class: "small", onClick: create, children: "Create the backup jobs" }) }),
-        /* @__PURE__ */ u3("p", { class: "muted", children: "No jobs yet. Afterwards, copy DUPLICATI_SECRETS_PASSPHRASE from Settings into Vaultwarden." })
-      ] });
-    }
-    const bad = jobs.filter((j3) => j3.state !== "ok" || j3.checkProblem).length;
-    const newest2 = jobs.map((j3) => j3.lastFinished).filter((t3) => !never(t3)).sort().pop();
-    return /* @__PURE__ */ u3(S, { children: [
-      /* @__PURE__ */ u3(CardHead, { title, children: bad ? /* @__PURE__ */ u3("span", { class: "warn", children: [
-        bad,
-        " need a look"
-      ] }) : /* @__PURE__ */ u3("span", { class: "ok", children: [
-        "✓ All ",
-        jobs.length,
-        " ran",
-        newest2 ? " " + ago(newest2) : ""
-      ] }) }),
-      /* @__PURE__ */ u3(Rows, { kind: "jobs", children: jobs.map((j3) => {
-        const [mark, word] = jobMark[j3.state] || ["", j3.state];
-        const damaged = j3.checkProblem && j3.state === "ok" ? `Failed its check ${dateTimeText(new Date(j3.checked))}: ${j3.checkProblem}. A version may not restore: open the job in Duplicati.` : "";
-        const tone = damaged ? "bad" : mark;
-        return /* @__PURE__ */ u3(
-          Row,
-          {
-            dot: tone,
-            title: j3.name,
-            sub: j3.errorMessage || damaged || j3.state !== "ok" && word,
-            subTone: j3.errorMessage || damaged ? "bad" : void 0,
-            end: j3.size && /* @__PURE__ */ u3("span", { class: "size muted", children: sizeText(j3.size) }),
-            when: /* @__PURE__ */ u3(Hover, { label: never(j3.nextRun) ? never(j3.lastFinished) ? "never ran" : "ran " + ago(j3.lastFinished) : /* @__PURE__ */ u3("span", { class: "next", children: [
-              "next ",
-              untilText(j3.nextRun)
-            ] }), tip: /* @__PURE__ */ u3(JobRun, { j: j3 }) })
-          },
-          j3.id
-        );
-      }) })
-    ] });
-  }
-  function KopiaLine({ k: k3, test }) {
-    return /* @__PURE__ */ u3(S, { children: [
-      /* @__PURE__ */ u3(CardHead, { title: "Second copy (Kopia)", children: k3.failed ? /* @__PURE__ */ u3("span", { class: "bad", children: "✗ Restore test failed" }) : k3.due ? /* @__PURE__ */ u3("span", { class: "warn", children: "Due: Test Kopia's restore" }) : /* @__PURE__ */ u3("span", { class: "ok", children: [
-        "✓ Restore proven ",
-        ago(k3.lastTest)
-      ] }) }),
-      /* @__PURE__ */ u3("p", { class: "muted", children: [
-        "In ",
-        /* @__PURE__ */ u3("span", { title: k3.repository, children: shortPath(k3.repository) }),
-        ".",
-        " ",
-        k3.failed ? `The last test: ${k3.failed}.` : never(k3.lastTest) ? "No restore test yet." : `Last proven ${ago(k3.lastTest)}.`
-      ] }),
-      /* @__PURE__ */ u3("div", { class: "actions", children: /* @__PURE__ */ u3("button", { class: "btn", onClick: test, children: "Test Kopia's restore" }) })
-    ] });
-  }
-  var mountKopia = (el3, props) => R(props && /* @__PURE__ */ u3(KopiaLine, { ...props }), el3);
-  var mountBackupTiles = (el3, props) => R(/* @__PURE__ */ u3(BackupTiles, { ...props }), el3);
-  var mountCopyRows = (el3, props) => R(props && /* @__PURE__ */ u3(CopyRows, { ...props }), el3);
-  var mountVault = (el3, props) => R(/* @__PURE__ */ u3(Vault, { ...props }), el3);
-  var mountJobs = (el3, props) => R(/* @__PURE__ */ u3(Jobs, { ...props }), el3);
-  function Gaps({ gaps, add }) {
-    if (!gaps.length) return null;
-    return /* @__PURE__ */ u3(S, { children: [
-      /* @__PURE__ */ u3(CardHead, { title: "Not in any backup" }),
-      /* @__PURE__ */ u3(Rows, { kind: "gaplist", children: gaps.map((g2) => /* @__PURE__ */ u3(
-        Row,
-        {
-          title: g2.name,
-          sub: /* @__PURE__ */ u3(S, { children: [
-            /* @__PURE__ */ u3("span", { title: g2.path, children: shortPath(g2.path) }),
-            " · ",
-            g2.why
-          ] }),
-          end: g2.job ? /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: add, children: "Add" }) : void 0
-        },
-        g2.path
-      )) })
-    ] });
   }
 
   // web/src/screens/backups.ts
@@ -8968,6 +9141,8 @@
   }
 
   // web/src/screens/status.ts
+  var offers = null;
+  var offersAsked = false;
   var statusById = {};
   var batteryPaused = /* @__PURE__ */ new Set();
   var held = {};
@@ -9008,6 +9183,21 @@
   var seen = loadSeen();
   var savingsHistory = [];
   var lastAttention = -1;
+  function weekSquares() {
+    if (!lastWatch) return null;
+    const all = Object.values(lastWatch.outages || {}).flat();
+    const days = Array.from({ length: 7 }, (_3, i3) => {
+      const start = /* @__PURE__ */ new Date();
+      start.setHours(0, 0, 0, 0);
+      start.setDate(start.getDate() - (6 - i3));
+      const end = new Date(start);
+      end.setDate(end.getDate() + 1);
+      const hit = all.filter((o3) => new Date(o3.from) < end && (!o3.to || new Date(o3.to) >= start));
+      return !hit.length ? "ok" : i3 === 6 && hit.some((o3) => !o3.to) ? "bad" : "warn";
+    });
+    const run2 = lastWatch.lastRun && !lastWatch.lastRun.startsWith("0001") ? `Checked ${ago(lastWatch.lastRun)}` : "";
+    return { days, checked: run2 };
+  }
   function renderTiles(st) {
     const trouble2 = st.apps.filter((a3) => troubled(a3, st.stopped));
     mountTiles($("tiles"), {
@@ -9030,6 +9220,13 @@
       },
       open: (a3) => pageOpener.open(a3.id),
       backups: lastNight(),
+      nights: backupsData.value?.nights,
+      week: weekSquares(),
+      startAll: (apps2) => {
+        groupAct(apps2.filter((a3) => a3.state === "stopped"), "start", () => {
+        });
+      },
+      seeAll: () => showEveryApp(),
       openBackups: () => navigate("backups"),
       mac: machineNow(),
       machine: onPhone() ? phoneMachine : null
@@ -9097,7 +9294,18 @@
     }));
     drawStatusSide();
     drawStatusPart();
+    drawPanel();
   }
+  function drawPanel() {
+    const list = listView();
+    $("status").classList.toggle("listview", list);
+    mountCategoryPanel($("statusPanel"), list || !statusParts.length ? null : {
+      rows: statusParts.filter((p3) => p3.apps.length).map((p3) => ({ id: p3.id, label: p3.label, apps: p3.apps, stopped: p3.apps.filter((a3) => lastStatus && troubled(a3, lastStatus.stopped)).map((a3) => a3.name) })),
+      icons: icons2,
+      open: (id2) => pickStatusPart(id2)
+    });
+  }
+  onListView(drawPanel);
   var statusParts = [];
   var statusSide = [];
   var statusHere = "overview";
@@ -9106,7 +9314,7 @@
       label: "Status",
       here: statusHere,
       pick: pickStatusPart,
-      items: [{ key: "overview", label: "Overview", icon: sideIcons.overview }, { key: "analytics", label: "Analytics", icon: sideIcons.analytics }, ...statusSide]
+      items: [{ key: "overview", label: "Overview", icon: sideIcons.overview }, { key: "analytics", label: "Analytics", icon: sideIcons.analytics }, { key: "subscriptions", label: "Subscriptions", icon: sideIcons.finance }, ...statusSide]
     };
     mountSideMenu($("statusSide"), menu2);
     mountSideMenu($("statusChips"), onPhone() ? { ...menu2, label: "Status parts" } : null);
@@ -9143,6 +9351,29 @@
       return;
     }
     mountAnalytics($("statusPart"), null);
+    if (statusHere === "subscriptions") {
+      section.dataset.part = "subscriptions";
+      mountCategoryPage($("statusPart"), null);
+      if (!offersAsked) {
+        offersAsked = true;
+        Promise.resolve(go().SavingsRows?.()).then((o3) => {
+          offers = o3 || [];
+          if (statusHere === "subscriptions") drawStatusPart();
+        }, () => {
+          offers = [];
+        });
+      }
+      mountSubscriptions($("statusPart"), {
+        offers,
+        running: new Set((lastStatus?.apps || []).filter((a3) => a3.state === "running").map((a3) => a3.id)),
+        catalog,
+        icons: icons2,
+        history: savingsHistory,
+        open: (id2) => statusById[id2] && statusById[id2].state !== "missing" ? pageOpener.open(id2) : pickStatusPart("add:" + id2)
+      });
+      return;
+    }
+    mountSubscriptions($("statusPart"), null);
     if (statusHere === "find" && appList && lastStatus) {
       section.dataset.part = "find";
       const installed2 = new Set(lastStatus.apps.map((a3) => a3.id));
@@ -12310,7 +12541,7 @@
   };
   var text = (n3) => n3 ? String(n3) : "";
   var cents = (n3) => Number.isInteger(n3) ? String(n3) : n3.toFixed(2);
-  var money2 = (n3) => n3 ? cents(n3) : "";
+  var money22 = (n3) => n3 ? cents(n3) : "";
   var input = (set2) => (e3) => set2(e3.target.value);
   var everies = [["month", "Monthly"], ["2 weeks", "Every 2 weeks"], ["week", "Weekly"], ["twice a month", "Twice a month"], ["3 months", "Every 3 months"], ["year", "Yearly"], ["once", "Once"]];
   var categories = [["home", "Home"], ["utilities", "Utilities"], ["car", "Car"], ["subscriptions", "Subscriptions"], ["loans", "Loans"], ["cards", "Cards"], ["spending", "Spending"], ["savings", "Saving"], ["other", "Other"]];
@@ -12626,7 +12857,7 @@
         follow3(b2);
       }
     };
-    const [amount, setAmount] = d2(money2(x3?.amount));
+    const [amount, setAmount] = d2(money22(x3?.amount));
     const [estimate, setEstimate] = d2(!!x3?.estimate);
     const [every, setEvery] = d2(x3?.schedule.every || "month");
     const [person, setPerson] = d2(x3?.schedule.person || "");
@@ -12799,14 +13030,14 @@
     const had = plan.logos?.[opened3];
     const [img, setImg] = d2(had);
     const real2 = brand === "none" ? "" : brand;
-    const [balance, setBalance] = d2(money2(a3?.balance));
+    const [balance, setBalance] = d2(money22(a3?.balance));
     const [pending2, setPending2] = d2(text(a3?.pending));
     const [rate, setRate] = d2(text(a3?.rate));
-    const [original, setOriginal] = d2(money2(a3?.original));
+    const [original, setOriginal] = d2(money22(a3?.original));
     const [firstDue, setFirstDue] = d2(a3?.firstDue || "");
-    const [payment, setPayment] = d2(money2(a3?.payment));
+    const [payment, setPayment] = d2(money22(a3?.payment));
     const [term, setTerm] = d2(text(a3?.term));
-    const [charge, setCharge] = d2(money2(a3?.charge));
+    const [charge, setCharge] = d2(money22(a3?.charge));
     const planMonthly = Math.round((plan.payments || []).filter((x3) => a3 && x3.to === a3.id).reduce((t3, x3) => t3 + x3.amount * perMonth(x3.schedule, plan.people, props.checking), 0) * 100) / 100;
     const read = kind === "loan" && firstDue ? papers({ original: num(original), rate: num(rate), firstDue, term: Math.round(num(term)), charge: num(charge) }, num(payment) || planMonthly, todayISO()) : null;
     const [loan, setLoan] = d2(a3?.loan || "");
@@ -12995,13 +13226,13 @@
     const { plan, id: id2, checking } = props;
     const e3 = (plan.people || []).find((q2) => q2.id === id2);
     const [name, setName] = d2(e3?.name || "");
-    const [net, setNet] = d2(money2(e3?.net));
-    const [gross, setGross] = d2(money2(e3?.gross));
+    const [net, setNet] = d2(money22(e3?.net));
+    const [gross, setGross] = d2(money22(e3?.gross));
     const [every, setEvery] = d2(e3?.schedule.every || "2 weeks");
     const [start, setStart] = d2(e3?.schedule.start || todayISO());
     const [day22, setDay2] = d2(String(e3?.schedule.day2 || 15));
     const [account, setAccount] = d2(e3?.account || checking || "");
-    const [deds, setDeds] = d2((e3?.deductions || []).map((d3) => ({ name: d3.name, amount: money2(d3.amount), account: d3.account || "" })));
+    const [deds, setDeds] = d2((e3?.deductions || []).map((d3) => ({ name: d3.name, amount: money22(d3.amount), account: d3.account || "" })));
     const { busy: busy2, keep: keep4, touched: touched2, watch: watch2 } = useSaving(props);
     const accounts = (plan.accounts || []).filter((a3) => !owed(a3.kind) && !held2(a3.kind));
     const [problem, setProblem] = d2("");
@@ -13247,7 +13478,7 @@
     const [payment, setPayment] = d2(t3?.payment || "");
     const [paymentPicked, setPaymentPicked] = d2(!!t3?.payment || !!t3?.notPlanned);
     const [note, setNote] = d2(t3?.note || "");
-    const [parts3, setParts] = d2((t3?.splits || []).map((sp) => ({ category: sp.category, amount: money2(Math.abs(sp.amount)), note: sp.note || "" })));
+    const [parts3, setParts] = d2((t3?.splits || []).map((sp) => ({ category: sp.category, amount: money22(Math.abs(sp.amount)), note: sp.note || "" })));
     const [tagText, setTagText] = d2((t3?.tags || []).join(", "));
     const [receipt, setReceipt] = d2(t3?.receipt);
     const setPart = (i3, k3, val) => setParts(parts3.map((sp, j3) => j3 === i3 ? { ...sp, [k3]: val } : sp));
@@ -13691,7 +13922,7 @@
   function BudgetsForm(props) {
     const { plan } = props;
     const names5 = (props.categories || []).map((c4) => c4.name);
-    const [rows, setRows] = d2(() => (plan.budgets || []).map((b2) => ({ category: b2.category, amount: money2(b2.amount), per: b2.per || "month", rollover: !!b2.rollover })));
+    const [rows, setRows] = d2(() => (plan.budgets || []).map((b2) => ({ category: b2.category, amount: money22(b2.amount), per: b2.per || "month", rollover: !!b2.rollover })));
     const { busy: busy2, keep: keep4, touched: touched2, watch: watch2 } = useSaving(props);
     const [problem, setProblem] = d2("");
     const set2 = (i3, k3, val) => setRows(rows.map((r3, j3) => j3 === i3 ? { ...r3, [k3]: val } : r3));
@@ -13950,7 +14181,7 @@
     const accounts = (plan.accounts || []).filter((a3) => goalKinds.includes(a3.kind));
     const taken = (acct) => others2.reduce((t3, q2) => t3 + (q2.shares || []).filter((s3) => s3.account === acct).reduce((u4, s3) => u4 + s3.percent, 0), 0);
     const [name, setName] = d2(g2?.name || "");
-    const [target, setTarget] = d2(money2(g2?.target));
+    const [target, setTarget] = d2(money22(g2?.target));
     const [date, setDate] = d2(g2?.date || "");
     const [shares2, setShares] = d2(() => Object.fromEntries((g2?.shares || []).map((s3) => [s3.account, String(s3.percent)])));
     const { busy: busy2, keep: keep4, touched: touched2, watch: watch2 } = useSaving(props);
@@ -14022,9 +14253,9 @@
     const [number, setNumber] = d2(c4?.number || "");
     const [grade, setGrade] = d2(c4?.grade || "");
     const [count2, setCount] = d2(String(c4?.count || 1));
-    const [paid, setPaid] = d2(money2(c4?.paid));
+    const [paid, setPaid] = d2(money22(c4?.paid));
     const [paidOn, setPaidOn] = d2(c4?.paidOn || (c4 ? "" : todayISO()));
-    const [price, setPrice] = d2(money2(c4?.price));
+    const [price, setPrice] = d2(money22(c4?.price));
     const [typed, setTyped] = d2(!!c4?.typed);
     const [account, setAccount] = d2(c4?.account || holding[0]?.id || "");
     const [picture, setPicture] = d2(c4?.picture || "");
@@ -16834,8 +17065,8 @@
     const linked = newest2(txs.filter((t3) => t3.payment && byId[t3.payment]));
     const free = newest2(txs.filter((t3) => !t3.payment && !t3.notPlanned && !t3.to && t3.amount < 0));
     const payees = [...new Set(linked.map((t3) => t3.payee || ""))].filter(Boolean);
-    const offers = into2.length ? free.filter((t3) => payees.some((n3) => alike(n3, t3.payee || ""))).slice(0, 6) : [];
-    const pick = free.filter((t3) => !offers.includes(t3)).slice(0, 12);
+    const offers2 = into2.length ? free.filter((t3) => payees.some((n3) => alike(n3, t3.payee || ""))).slice(0, 6) : [];
+    const pick = free.filter((t3) => !offers2.includes(t3)).slice(0, 12);
     const keep4 = async (change) => {
       if (!saveLedger2 || !ledger || busy2) return;
       setBusy(true);
@@ -16925,12 +17156,12 @@
               /* @__PURE__ */ u3("p", { class: "fx-sub", children: "Money out not linked to anything yet, newest first:" }),
               pick.length ? /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: pick.map((t3) => /* @__PURE__ */ u3(TxRow, { t: t3, v: v3, L: L2, end: /* @__PURE__ */ u3("button", { class: "small", disabled: busy2, onClick: () => link(t3.id), children: "Link" }) }, t3.id)) }) : /* @__PURE__ */ u3("p", { class: "fx-say", children: "Nothing to link." })
             ] }),
-            !!offers.length && /* @__PURE__ */ u3("div", { class: "fx-loanoffer", children: [
+            !!offers2.length && /* @__PURE__ */ u3("div", { class: "fx-loanoffer", children: [
               /* @__PURE__ */ u3("p", { class: "fx-sub", children: [
                 /* @__PURE__ */ u3("strong", { children: "These look like it:" }),
                 " the same payee as the ones linked."
               ] }),
-              /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: offers.map((t3) => /* @__PURE__ */ u3(TxRow, { t: t3, v: v3, L: L2, end: saveLedger2 && /* @__PURE__ */ u3("span", { class: "actions", children: [
+              /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: offers2.map((t3) => /* @__PURE__ */ u3(TxRow, { t: t3, v: v3, L: L2, end: saveLedger2 && /* @__PURE__ */ u3("span", { class: "actions", children: [
                 /* @__PURE__ */ u3("button", { class: "small", disabled: busy2, onClick: () => unlink(t3.id), children: "Not this one" }),
                 /* @__PURE__ */ u3("button", { class: "small fx-primary", disabled: busy2, onClick: () => link(t3.id), children: "Link" })
               ] }) }, t3.id)) })
@@ -23429,7 +23660,7 @@ ${pays}
     }
     if (name === "settings") {
       hostData.fresh(minute);
-      if (!Object.keys(changed2).length) settingsData.fresh(minute);
+      if (!Object.keys(changed3).length) settingsData.fresh(minute);
     }
     if (name === "tidy") tidyData.fresh(minute);
     if (name === "finances") {

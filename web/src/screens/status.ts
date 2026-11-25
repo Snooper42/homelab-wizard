@@ -9,7 +9,12 @@ import { mountUndoNote } from '../status/UndoNote';
 import { stoppedWords } from '../status/stopFor';
 import { mountWallCard } from '../status/WallCard';
 import { mountAlerts, mountDownloads, mountProtection, mountStorage, mountWatchdog, mountWeek, storageShown } from '../status/Cards';
-import { type AppListActions, type AppListProps, clearAppList, foldsFromComputer, mountAppList, mountShowAll, onFoldsPicked, type Pending, stateOf } from '../status/AppList';
+import { type AppListActions, type AppListProps, clearAppList, foldsFromComputer, listView, mountAppList, mountShowAll, onFoldsPicked, onListView, type Pending, showEveryApp, stateOf } from '../status/AppList';
+import { mountCategoryPanel } from '../status/CategoryPanel';
+import { mountSubscriptions, type Offer } from '../status/Subscriptions';
+/** What each app replaces, at its price (docs/Savings.md), read once Subscriptions opens. */
+let offers: Offer[] | null = null;
+let offersAsked = false;
 import { store } from '../store';
 import { icons, onIcon, wantIcons } from '../status/appIcons';
 import { shippedLogo } from '../parts/AppMark';
@@ -84,6 +89,20 @@ let seen = loadSeen();
 // change since the first of them (the nightly backup records one a day).
 let savingsHistory: savings.Point[] = [];
 let lastAttention = -1;
+/** This week as the watchdog saw it, a square a day, oldest first: ok, warn (a check failed that day), or bad (one
+ * still failing today); and when it last checked. Null before it's read. */
+function weekSquares(): { days: string[]; checked: string } | null {
+  if (!lastWatch) return null;
+  const all = Object.values(lastWatch.outages || {}).flat();
+  const days = Array.from({ length: 7 }, (_, i) => {
+    const start = new Date(); start.setHours(0, 0, 0, 0); start.setDate(start.getDate() - (6 - i));
+    const end = new Date(start); end.setDate(end.getDate() + 1);
+    const hit = all.filter((o) => new Date(o.from) < end && (!o.to || new Date(o.to) >= start));
+    return !hit.length ? 'ok' : i === 6 && hit.some((o) => !o.to) ? 'bad' : 'warn';
+  });
+  const run = lastWatch.lastRun && !lastWatch.lastRun.startsWith('0001') ? `Checked ${ago(lastWatch.lastRun)}` : '';
+  return { days, checked: run };
+}
 function renderTiles(st: api.Status) {
   const trouble = st.apps.filter((a) => troubled(a, st.stopped));
   mountTiles($('tiles'), {
@@ -99,6 +118,10 @@ function renderTiles(st: api.Status) {
     logs: (a) => { pageOpener.open(a.id); requestAnimationFrame(() => document.getElementById('appLog')?.scrollIntoView({ block: 'start' })); },
     open: (a) => pageOpener.open(a.id),
     backups: lastNight(),
+    nights: backupsData.value?.nights,
+    week: weekSquares(),
+    startAll: (apps) => { groupAct(apps.filter((a) => a.state === 'stopped'), 'start', () => {}); },
+    seeAll: () => showEveryApp(),
     openBackups: () => navigate('backups'),
     mac: machineNow(),
     machine: onPhone() ? phoneMachine : null,
@@ -172,7 +195,20 @@ function renderAppList(st: api.Status) {
     dot: p.apps.some((a) => troubled(a, st.stopped)) }));
   drawStatusSide();
   drawStatusPart();
+  drawPanel();
 }
+
+// The overview's categories as one panel (status/CategoryPanel), or the whole list while Show every app is on or a
+// filter is typed: the same apps, two ways (the owner's web-wide pictures).
+function drawPanel() {
+  const list = listView();
+  $('status').classList.toggle('listview', list);
+  mountCategoryPanel($('statusPanel'), list || !statusParts.length ? null : {
+    rows: statusParts.filter((p) => p.apps.length).map((p) => ({ id: p.id, label: p.label, apps: p.apps, stopped: p.apps.filter((a) => lastStatus && troubled(a, lastStatus.stopped)).map((a) => a.name) })),
+    icons, open: (id) => pickStatusPart(id),
+  });
+}
+onListView(drawPanel);
 
 // Status's menu in the sidebar (parts/SideMenu): Overview, then each category, your own apps last; a pick shows that
 // category's page (status/CategoryPage) in place of the overview.
@@ -183,7 +219,7 @@ let statusHere = 'overview';
 function drawStatusSide() {
   const menu = {
     label: 'Status', here: statusHere, pick: pickStatusPart,
-    items: [{ key: 'overview', label: 'Overview', icon: sideIcons.overview }, { key: 'analytics', label: 'Analytics', icon: sideIcons.analytics }, ...statusSide],
+    items: [{ key: 'overview', label: 'Overview', icon: sideIcons.overview }, { key: 'analytics', label: 'Analytics', icon: sideIcons.analytics }, { key: 'subscriptions', label: 'Subscriptions', icon: sideIcons.finance }, ...statusSide],
   };
   // The sidebar's, and on a phone's narrow page the same items as a row of chips atop Status (the tab bar has no room).
   mountSideMenu($('statusSide'), menu);
@@ -216,6 +252,17 @@ function drawStatusPart() {
     return;
   }
   mountAnalytics($('statusPart'), null);
+  if (statusHere === 'subscriptions') {
+    section.dataset.part = 'subscriptions';
+    mountCategoryPage($('statusPart'), null);
+    if (!offersAsked) { offersAsked = true; Promise.resolve((go() as any).SavingsRows?.()).then((o) => { offers = o || []; if (statusHere === 'subscriptions') drawStatusPart(); }, () => { offers = []; }); }
+    mountSubscriptions($('statusPart'), {
+      offers, running: new Set((lastStatus?.apps || []).filter((a) => a.state === 'running').map((a) => a.id)), catalog, icons, history: savingsHistory,
+      open: (id) => (statusById[id] && statusById[id].state !== 'missing' ? pageOpener.open(id) : pickStatusPart('add:' + id)),
+    });
+    return;
+  }
+  mountSubscriptions($('statusPart'), null);
   // Find an app (the overview's box, or no apps yet): every app here and every one to add, the sets first.
   if (statusHere === 'find' && appList && lastStatus) {
     section.dataset.part = 'find';
