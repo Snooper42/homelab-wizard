@@ -82,6 +82,50 @@ export function JobRun({ j }: { j: duplicati.Job }) {
   );
 }
 
+/** A night's result for one app, as a tone: copied is ok, stopped (so not copied) warn, failed bad; nothing to copy none. */
+export const resultTone = (r?: string): Tone => (r === 'copied' ? 'ok' : r === 'stopped' ? 'warn' : r === 'failed' ? 'bad' : '');
+
+/** A whole night (quality-loop Q4 (a)): bad when an app's copy failed, warn when one was stopped, ok when every app it
+ * had to copy was copied; '' with nothing to copy. */
+export function nightTone(n: backup.Night): Tone {
+  const r = Object.values(n.apps || {});
+  if (r.includes('failed')) return 'bad';
+  if (r.includes('stopped')) return 'warn';
+  return r.includes('copied') ? 'ok' : '';
+}
+
+const nightDate = (day: string) => { const [y, m, d] = day.split('-').map(Number); return new Date(y, m - 1, d); };
+
+/** "Mon, Nov 24: 11 of 12 copied · Mealie stopped". */
+export function nightWords(n: backup.Night, name: (id: string) => string): string {
+  const all = Object.entries(n.apps || {}).filter(([, r]) => r !== 'none' && r !== 'outside');
+  const copied = all.filter(([, r]) => r === 'copied').length;
+  const missed = all.filter(([, r]) => r === 'failed' || r === 'stopped').map(([id, r]) => `${name(id)} ${r}`);
+  const day = nightDate(n.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  return `${day}: ${all.length ? `${copied} of ${all.length} copied` : 'nothing to copy'}${missed.length ? ' · ' + missed.join(', ') : ''}`;
+}
+
+/** The last fourteen nights as squares under Last night (R7), oldest first, each its weekday's letter under it. */
+function Nights({ nights, name }: { nights: backup.Night[]; name: (id: string) => string }) {
+  const shown = nights.slice(-14);
+  return (
+    <div class="bknights" role="list" aria-label={`The last ${shown.length} nights`}>
+      {shown.map((n) => {
+        const words = nightWords(n, name);
+        return (
+          <span key={n.date} role="listitem" class={'bknight ' + nightTone(n)} title={words} aria-label={words}>
+            <i />
+            <small aria-hidden="true">{['Su', 'M', 'Tu', 'W', 'Th', 'F', 'Sa'][nightDate(n.date).getDay()]}</small>
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
+/** An app's last `count` nights, oldest first: its result each night (undefined where the night didn't have it). */
+export const appNights = (nights: backup.Night[], app: string, count = 7) => nights.slice(-count).map((n) => ({ date: n.date, result: n.apps?.[app] }));
+
 /** The drives the paused copies' apps wait for, in words. */
 const drivesOf = (copies: backup.Copy[]) => [...new Set(copies.map((c) => driveName(c.waitingFor || '')))].join(' and ');
 
@@ -99,7 +143,7 @@ export interface BackupTilesProps {
  * The top of Backups as the redesign's picture (R7): Last night, with how many copied, when it finished, what it came
  * to and where it went, then Next, its size and what's kept; Needs you beside it; the restore test, off-site and Not
  * in any backup under, a third each (the last only while something is left out).
- * The fourteen nights and each app's nights join when the engine keeps them (quality-loop Q4 (a)).
+ * The fourteen nights (quality-loop Q4 (a)) as squares under Last night; each app's last seven as dots in Each app.
  */
 export function BackupTiles({ o, os, test, apps, start, gaps, addGap }: BackupTilesProps) {
   const copies = sortedCopies(o);
@@ -118,6 +162,7 @@ export function BackupTiles({ o, os, test, apps, start, gaps, addGap }: BackupTi
           figure={<span class="value">{copies.length ? <>{fresh.length}<small> of {copies.length - paused.length} copied</small></> : 'None yet'}</span>}
           label={never(o.lastRun) ? undefined : [lastNight ? `Finished ${clockText(new Date(o.lastRun))}` : ago(o.lastRun), size ? bytes(size) : '', o.destinationOK ? `Encrypted to ${placeName(o.destination)}` : ''].filter(Boolean).join(' · ')}
           chip={stale.length ? <span class="bkskipped">{stale.length === 1 ? `${stale[0].name} skipped` : `${stale.length} skipped`}</span> : undefined} />
+        {!!o.nights?.length && <Nights nights={o.nights} name={(id) => copies.find((c) => c.app === id)?.name || apps?.[id]?.name || id} />}
         <p class="bksub">{!copies.length ? 'The first are made the night after an app with a database starts'
           : <>{!!stale.length && <span class="bad">Out of date: {stale.map((c) => `${c.name}, last copied ${ago(c.newest)}`).join('; ')}. </span>}
             {!!paused.length && <span>{`${paused.length} more paused: ${paused.length === 1 ? 'its app waits' : 'their apps wait'} for ${drivesOf(paused)}`}. </span>}
@@ -183,7 +228,9 @@ export function staleWhy(c: backup.Copy, apps?: Record<string, api.AppStatus>): 
 export function CopyRows({ o, apps }: { o: backup.Overview; apps?: Record<string, api.AppStatus> }) {
   const [picked, setPicked] = useState<Record<string, boolean>>({});
   const groups = copyGroups(o);
-  if (!groups.length) return <tr><td colSpan={4} class="muted">No installed app has a database to dump yet.</td></tr>;
+  const nights = o.nights || [];
+  const cols = nights.length ? 5 : 4;
+  if (!groups.length) return <tr><td colSpan={cols} class="muted">No installed app has a database to dump yet.</td></tr>;
   return (
     <>
       {groups.map((g) => {
@@ -191,7 +238,7 @@ export function CopyRows({ o, apps }: { o: backup.Overview; apps?: Record<string
         const toggle = () => setPicked({ ...picked, [g.key]: !open });
         return [
           <tr key={'g:' + g.key} class={'grouphead fold copygroup ' + g.key + (g.tone === 'bad' ? ' bad' : '') + (open ? ' open' : '')} onClick={toggle}>
-            <th colSpan={4}>
+            <th colSpan={cols}>
               <button type="button" class="foldbtn" aria-expanded={open} onClick={(e) => { e.stopPropagation(); toggle(); }}>
                 <span class="chev" aria-hidden="true">{open ? '▾' : '▸'}</span>{g.label}
               </button>
@@ -210,6 +257,9 @@ export function CopyRows({ o, apps }: { o: backup.Overview; apps?: Record<string
                 {bytes(c.size)}{!c.shrank && changed(c) && <span class="was"> (was {bytes(c.before || 0)})</span>}
               </td>
               <td class="kept muted">{c.count ? `${c.count} kept` : '—'}</td>
+              {!!nights.length && <td class="nights" aria-label={`The last ${Math.min(7, nights.length)} nights`}>
+                {appNights(nights, c.app || c.id).map((n) => <span key={n.date} class={'dot ' + resultTone(n.result)} title={`${nightDate(n.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}: ${n.result || 'not copied yet'}`} />)}
+              </td>}
             </tr>
           )) : []),
         ];
