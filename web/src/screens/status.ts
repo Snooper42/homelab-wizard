@@ -178,10 +178,13 @@ let statusParts: StatusPart[] = [];
 let statusSide: SideItem[] = [];
 let statusHere = 'overview';
 function drawStatusSide() {
-  mountSideMenu($('statusSide'), onPhone() ? null : {
+  const menu = {
     label: 'Status', here: statusHere, pick: pickStatusPart,
     items: [{ key: 'overview', label: 'Overview', icon: sideIcons.overview }, { key: 'analytics', label: 'Analytics', icon: sideIcons.analytics }, ...statusSide],
-  });
+  };
+  // The sidebar's, and on a phone's narrow page the same items as a row of chips atop Status (the tab bar has no room).
+  mountSideMenu($('statusSide'), menu);
+  mountSideMenu($('statusChips'), onPhone() ? { ...menu, label: 'Status parts' } : null);
 }
 /** Shows the overview, or the category picked, with the apps as last read. */
 function drawStatusPart() {

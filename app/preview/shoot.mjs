@@ -516,6 +516,8 @@ const shots = [
     await page.clock.runFor(185000);
     await page.waitForSelector('#statusPart .antimeline', { timeout: 5000 });
   } },
+  // The same page on the phone's page, narrow: Status' menu as chips, the tiles two across.
+  { name: 'status-category-phone', screen: 'status', phone: ['companion', 'can-change'], before: async (page) => { await page.click('#statusChips button[data-key="media"]', { timeout: 5000 }); await page.waitForSelector('#statusPart .cattile', { timeout: 5000 }); } },
   // A category's page (the owner's computer-category pictures): its apps here as tiles, then every app to add.
   { name: 'status-category', screen: 'status', before: async (page) => { await page.click('#statusSide button[data-key="media"]', { timeout: 5000 }); await page.waitForSelector('#statusPart .cattile', { timeout: 5000 }); } },
   // Below the apps: storage, and what is using power with each busy app's
@@ -6667,6 +6669,30 @@ const smokes = [
     if (!/\d/.test(await page.textContent('#antCpu .antfig'))) throw new Error('no processor figure after a read');
     await page.click('#statusSide button[data-key="overview"]');
     await page.waitForSelector('#statusRows', { state: 'visible', timeout: 5000 });
+  } },
+  // The phone's page mimics the computer (the owner, Nov 25): on a wide window the same strip of icons (only the phone's
+  // screens, no empty columns) with Status' menu under it; narrow, the tab bar, and Status' menu as a row of chips; a
+  // category's page either way, its shelf without Install (the phone installs nothing yet).
+  { name: "The phone's page: the computer's strip and Status' menu when wide, chips when narrow, a category's page in each", screen: 'status', phone: ['companion', 'can-change'], run: async (page) => {
+    await page.setViewportSize({ width: 1100, height: 760 });
+    await page.waitForSelector('#statusSide button[data-key="media"]', { state: 'visible', timeout: 5000 });
+    const strip = await page.$$eval('nav > button[data-screen]', (bs) => bs.filter((b) => b.checkVisibility() && b.dataset.screen !== 'settings').map((b) => [b.dataset.screen, Math.round(b.getBoundingClientRect().top), Math.round(b.getBoundingClientRect().width)]));
+    if (strip.length < 2 || new Set(strip.map((x) => x[1])).size !== 1 || strip.some((x) => x[2] > 120)) throw new Error('not a strip of icons: ' + JSON.stringify(strip));
+    if (await page.isVisible('#statusChips')) throw new Error('chips on a wide window');
+    if (await page.isVisible('#backupsSide .finmenuitem')) throw new Error("Backups' menu shows on Status");
+    await page.click('#statusSide button[data-key="media"]');
+    await page.waitForSelector('#statusPart .catpage h2:has-text("On the server")', { timeout: 5000 });
+    if (await page.$('#statusPart .cattile.toadd button')) throw new Error('Install on the phone');
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.waitForSelector('#statusChips button[data-key="analytics"]', { state: 'visible', timeout: 5000 });
+    if (await page.isVisible('#statusSide')) throw new Error("Status' sidebar menu in the tab bar");
+    const tops = await page.$$eval('#statusChips .finmenuitem', (bs) => new Set(bs.map((b) => Math.round(b.getBoundingClientRect().top))).size);
+    if (tops !== 1) throw new Error('the chips are not one row');
+    const across = await page.$$eval('#statusPart .cattiles:first-of-type > li', (els) => new Set(els.slice(0, 2).map((e) => Math.round(e.getBoundingClientRect().top))).size);
+    if (across !== 1) throw new Error('not two across on a phone');
+    await page.click('#statusChips button[data-key="overview"]');
+    await page.waitForSelector('#statusRows', { state: 'visible', timeout: 5000 });
+    if (await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1)) throw new Error('the page scrolls sideways');
   } },
   // A stopped app (Mealie, in the preview's state): an amber dot by its category's count, and its tile's Start.
   { name: "Status: a stopped app puts an amber dot by its category, and its tile says Start", screen: 'status', run: async (page) => {

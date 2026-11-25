@@ -4151,7 +4151,7 @@
     const shown8 = find2 ? apps2.filter((a3) => matches(a3, find2)) : apps2;
     const plain2 = (s3) => s3.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
     const toAdd = find2 ? add.filter((x3) => plain2(x3.name + " " + x3.description).includes(plain2(find2))) : add;
-    const change = !list.companion || document.documentElement.classList.contains("can-change");
+    const change = !list.companion;
     const facts2 = [`${apps2.length} ${here3.replace(/^On /, "on ")}`, apps2.length ? `${running5} running` : "", add.length ? `${add.length} to add` : ""].filter(Boolean).join(" · ");
     return /* @__PURE__ */ u3("div", { class: "catpage", children: [
       /* @__PURE__ */ u3("div", { class: "row header", children: [
@@ -8681,7 +8681,7 @@
     ["apps", "Each app", sideIcons.apps, "copiesCard"]
   ];
   function drawBackupsSide() {
-    mountSideMenu($("backupsSide"), onPhone() ? null : {
+    mountSideMenu($("backupsSide"), {
       label: "Backups",
       here: backupsHere,
       pick: (key7) => {
@@ -8828,12 +8828,14 @@
   var statusSide = [];
   var statusHere = "overview";
   function drawStatusSide() {
-    mountSideMenu($("statusSide"), onPhone() ? null : {
+    const menu2 = {
       label: "Status",
       here: statusHere,
       pick: pickStatusPart,
       items: [{ key: "overview", label: "Overview", icon: sideIcons.overview }, { key: "analytics", label: "Analytics", icon: sideIcons.analytics }, ...statusSide]
-    });
+    };
+    mountSideMenu($("statusSide"), menu2);
+    mountSideMenu($("statusChips"), onPhone() ? { ...menu2, label: "Status parts" } : null);
   }
   function drawStatusPart() {
     const section = $("status");

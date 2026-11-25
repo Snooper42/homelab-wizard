@@ -3332,26 +3332,25 @@ html.os-mac:not(.companion) .foot { border-top:1px solid var(--shade-1); padding
    computer at the foot. Moving between screens changes only the menu's items and the mark; nothing in the sidebar
    moves, slides or animates. A window under 700px keeps its rail. */
 @container window (min-width: 701px) {
-  html:not(.companion) nav { display:grid; grid-template-columns:repeat(5, minmax(0, 1fr)); grid-template-rows:auto auto 1fr auto auto auto; grid-auto-flow:row dense; column-gap:2px; }
-  html:not(.companion) nav:has(> button[data-screen="setup"]:not([hidden])) { grid-template-columns:repeat(6, minmax(0, 1fr)); }
-  html:not(.companion) nav > * { grid-column:1 / -1; }
-  html:not(.companion) nav > button:is([data-screen="choose"], [data-screen="status"], [data-screen="backups"], [data-screen="tidy"], [data-screen="finances"], [data-screen="setup"]) { grid-column:auto; grid-row:2; justify-content:center; padding:8px 0; margin-bottom:10px; }
-  html:not(.companion) nav > button:is([data-screen="choose"], [data-screen="status"], [data-screen="backups"], [data-screen="tidy"], [data-screen="finances"], [data-screen="setup"]) > span:not(.count) { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
-  html:not(.companion) nav > button:is([data-screen="choose"], [data-screen="status"], [data-screen="backups"], [data-screen="tidy"], [data-screen="finances"], [data-screen="setup"]) .count { position:absolute; top:0; right:2px; min-width:0; padding:0 5px; font-size:10px; line-height:15px; }
-  html:not(.companion) nav > button:is([data-screen="choose"], [data-screen="status"], [data-screen="backups"], [data-screen="tidy"], [data-screen="finances"], [data-screen="setup"]).active::before { display:none; }
-  html:not(.companion) nav > .navbody { align-self:start; }
+  html nav { display:grid; grid-template-columns:repeat(5, minmax(0, 1fr)); grid-template-rows:auto auto 1fr auto auto auto; grid-auto-flow:row dense; column-gap:2px; }
+  html nav:has(> button[data-screen="setup"]:not([hidden])) { grid-template-columns:repeat(6, minmax(0, 1fr)); }
+  html nav > * { grid-column:1 / -1; }
+  html nav > button:is([data-screen="choose"], [data-screen="status"], [data-screen="backups"], [data-screen="tidy"], [data-screen="finances"], [data-screen="setup"]) { grid-column:auto; grid-row:2; justify-content:center; padding:8px 0; margin-bottom:10px; }
+  html nav > button:is([data-screen="choose"], [data-screen="status"], [data-screen="backups"], [data-screen="tidy"], [data-screen="finances"], [data-screen="setup"]) > span:not(.count) { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+  html nav > button:is([data-screen="choose"], [data-screen="status"], [data-screen="backups"], [data-screen="tidy"], [data-screen="finances"], [data-screen="setup"]) .count { position:absolute; top:0; right:2px; min-width:0; padding:0 5px; font-size:10px; line-height:15px; }
+  html nav > button:is([data-screen="choose"], [data-screen="status"], [data-screen="backups"], [data-screen="tidy"], [data-screen="finances"], [data-screen="setup"]).active::before { display:none; }
+  html nav > .navbody { align-self:start; }
 }
 /* In a contrast theme the strip's open screen keeps its bar, along the icon's foot. */
 @media (forced-colors: active) {
   @container window (min-width: 701px) {
-    html:not(.companion) nav > button:is([data-screen="choose"], [data-screen="status"], [data-screen="backups"], [data-screen="tidy"], [data-screen="finances"], [data-screen="setup"]).active::before { display:block; top:auto; bottom:0; left:25%; right:25%; width:auto; height:3px; }
+    html nav > button:is([data-screen="choose"], [data-screen="status"], [data-screen="backups"], [data-screen="tidy"], [data-screen="finances"], [data-screen="setup"]).active::before { display:block; top:auto; bottom:0; left:25%; right:25%; width:auto; height:3px; }
   }
 }
 html.companion nav .navbody { display:contents; }
 .sidemenu:empty { display:none; }
 nav:not(:has(> button[data-screen="status"].active)) #statusSide, nav:not(:has(> button[data-screen="backups"].active)) #backupsSide,
-nav:not(:has(> button[data-screen="choose"].active)) #chooseSide, nav:not(:has(> button[data-screen="setup"].active)) #setupSide,
-html.companion .sidemenu { display:none !important; }
+nav:not(:has(> button[data-screen="choose"].active)) #chooseSide, nav:not(:has(> button[data-screen="setup"].active)) #setupSide { display:none !important; }
 html:not(.companion) nav, html:not(.companion) nav * { transition:none !important; animation:none !important; }
 /* Settings' page list is its menu in the sidebar on the computer (screens/settings.ts moves #settingsNav into
    #settingsSide), under the screens' icons as every screen's menu is; the page takes the whole width. A small window's
@@ -3448,7 +3447,7 @@ table.copies td.nights .dot { margin:0 0 0 3px; }
 /* A category's page on Status (status/CategoryPage.tsx, the owner's computer-category pictures): the overview steps aside
    while one shows; big tiles three across (two on a phone), see-through on a soft violet and teal glow; the apps to add
    faded, with a dashed edge. */
-#status:not([data-part]) > #statusPart, #status[data-part] > :not(#statusPart) { display:none !important; }
+#status:not([data-part]) > #statusPart, #status[data-part] > :not(#statusPart, #statusChips) { display:none !important; }
 main:has(> #status.active[data-part]) { background:radial-gradient(60% 40% at 25% 0, color-mix(in srgb, var(--violet) 10%, transparent), transparent 70%), radial-gradient(50% 40% at 100% 100%, color-mix(in srgb, var(--cyan) 8%, transparent), transparent 70%), var(--bg); }
 .catpage { --cat-tile:color-mix(in srgb, var(--panel) 72%, transparent); --cat-edge:var(--line); }
 .catpage .row.header { align-items:flex-start; }
@@ -3537,3 +3536,23 @@ nav .sidemenulist .sidedot + .total { margin-left:8px; }
 .antwho .antname { min-width:0; overflow:hidden; text-overflow:ellipsis; }
 .antwho .antfigs { flex:none; }
 .antwho .appmark.mini { margin-right:4px; }
+/* The phone's page on a wide window looks as the computer (the owner, Nov 25: "mimic the computer app"): the same strip of
+   icons, sized to the screens a phone has (Status and Backups, Finances where allowed: no empty columns), the open
+   screen's menu under it, Settings at the foot. Narrow, the tab bar stays, and Status' menu is a row of chips. */
+@container window (min-width: 701px) {
+  html.companion nav { grid-template-columns:repeat(2, minmax(0, 1fr)); }
+  html.companion.finances nav { grid-template-columns:repeat(3, minmax(0, 1fr)); }
+  html.companion nav > .navbody { display:block; }
+  html.companion nav > button[data-screen="settings"] { margin-top:auto; }
+}
+@media (max-width: 700px) { html.companion nav .sidemenu { display:none !important; } }
+#statusChips { display:none; }
+@media (max-width: 700px) {
+  html.companion #statusChips { display:block; margin:0 -14px 12px; }
+  html.companion #statusChips .sidemenulist { display:flex; flex-direction:row; gap:8px; overflow-x:auto; list-style:none; margin:0; padding:0 14px 2px; scrollbar-width:none; }
+  #statusChips .finmenuitem { display:inline-flex; align-items:center; gap:6px; white-space:nowrap; min-height:36px; padding:6px 12px; border:1px solid var(--line); border-radius:999px; background:var(--panel); color:var(--text); font:inherit; font-size:14px; }
+  #statusChips .finmenuitem.on { background:var(--text); color:var(--bg); border-color:transparent; }
+  #statusChips .finmenuitem .icon { width:15px; height:15px; }
+  #statusChips .total { color:inherit; opacity:.6; font-size:12px; }
+  #statusChips .sidedot { width:7px; height:7px; border-radius:50%; background:var(--amber); }
+}
