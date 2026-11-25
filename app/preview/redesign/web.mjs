@@ -22,11 +22,11 @@ Object.assign(P, {
 
 // His homelab (the server of the README's questions): the apps he picked, and his own apps added with `homelab custom add`.
 const own = (letters, bg, s) => `<span class="alogo own" style="width:${s}px;height:${s}px;background:${bg};font-size:${s * 0.36}px">${letters}</span>`;
-// Your own apps' logos: the project's own icon where it publishes one (app/preview/redesign/logos/, from each
+// Your own apps' logos: each project's own icon (app/preview/redesign/logos/: Jellystat from dashboard-icons, the rest from
 // project's repository or the dashboard-icons set), on its own background; else the letters. The real page reads
 // each app's icon from the app itself (its favicon or web manifest, on this machine), so none is a letter for long.
-const ownLogos = { JS: ['jellystat', '#0b0b12'], JF: ['jfa-go', '#ffffff'], AS: ['aiostreams', '#111827'] };
-const ownImg = (letters, s) => { const [f, bg] = ownLogos[letters]; return `<span class="alogo own" style="width:${s}px;height:${s}px;background:${bg}"><img src="file://${repo}/app/preview/redesign/logos/${f}.png" width="${Math.round(s * 0.72)}" height="${Math.round(s * 0.72)}" style="display:block"></span>`; };
+const ownLogos = { JS: ['jellystat', '#0b0b12'], JF: ['jfa-go', '#ffffff'], AS: ['aiostreams', '#111827'], DP: ['decypharr', '#ffffff', 0.96], AM: ['aiometadata', '#ffffff', 0.8] };
+const ownImg = (letters, s) => { const [f, bg, k = 0.72] = ownLogos[letters]; return `<span class="alogo own" style="width:${s}px;height:${s}px;background:${bg}"><img src="file://${repo}/app/preview/redesign/logos/${f}.png" width="${Math.round(s * k)}" height="${Math.round(s * k)}" style="display:block"></span>`; };
 const logoOf = (id, s) => { if (!id.startsWith('own:')) return appLogo(id, s); const [l, bg] = id.slice(4).split(','); return ownLogos[l] ? ownImg(l, s) : own(l, bg, s); };
 const groups = [
   ['Security', [['vaultwarden', 'Vaultwarden'], ['pocket-id', 'Pocket ID'], ['uptime-kuma', 'Uptime Kuma'], ['ntfy', 'ntfy']], 4],
@@ -61,7 +61,7 @@ const status = `
 <div class="sub"><i class="live"></i>The server · live</div>
 <div class="note"><span style="color:var(--acc)">${icon('bell', 22)}</span><div class="n"><b>Alerts on this phone</b><small>When an app stops or a backup fails, even with this page closed</small></div><button class="btn pri">Turn on</button></div>
 <section class="card">
-  <div class="row" style="padding-top:0;border-top:0">${own('DP', '#ea580c', 44)}<div class="n"><b style="font-size:18px">Decypharr stopped</b><small>20 minutes ago · ${up} of ${total} running</small></div></div>
+  <div class="row" style="padding-top:0;border-top:0">${logoOf('own:DP,#ea580c', 44)}<div class="n"><b style="font-size:18px">Decypharr stopped</b><small>20 minutes ago · ${up} of ${total} running</small></div></div>
   <div style="display:flex;gap:8px;margin-top:4px"><button class="btn pri" style="flex:1">${icon('play', 14)}Start</button><button class="btn" style="flex:1">${icon('logs', 15)}Logs</button><button class="btn" style="flex:1">Its page</button></div>
 </section>
 <div class="two">
@@ -167,7 +167,7 @@ const wide = `
 <div class="grid">
   <section class="card">
     <div class="ch"><h3>Stopped</h3><span class="muted" style="font-size:12.5px">${up} of ${total} running</span></div>
-    <div class="grow" style="border-top:0;padding-top:2px">${own('DP', '#ea580c', 44)}<div class="n"><b style="font-size:18px">Decypharr</b><small>20 minutes ago: the debrid service didn't answer</small></div></div>
+    <div class="grow" style="border-top:0;padding-top:2px">${logoOf('own:DP,#ea580c', 44)}<div class="n"><b style="font-size:18px">Decypharr</b><small>20 minutes ago: the debrid service didn't answer</small></div></div>
     <div style="display:flex;gap:8px"><span class="cta pri" style="flex:1">${icon('play', 13)}Start</span><span class="cta" style="flex:1">${icon('logs', 14)}Logs</span><span class="cta" style="flex:1">Its page</span></div>
   </section>
   <section class="card">
