@@ -9,6 +9,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 ### New
 
 <!-- The iPhone and iPad app (lane 4): add a line just below this one. -->
+- **Settings' Automatic Care as the redesign's picture on the Homelab app:** on the iPhone and iPad, each care setting has a coloured symbol and a line under it (*Checked every 15 minutes*, *Puts the version before back by itself*, quiet hours as *10 PM – 7 AM*) in place of the ⓘ, and Phones and iPads says how many are paired and which only look (*2 paired · Jordan's looks only*).
 - **The last fourteen nights on Backups on the Homelab app:** on the iPhone and iPad, Last night has the last fourteen nightly backups as squares, each with its weekday (green when every copy was made, amber when an app was stopped, red when one failed), and each app's row its last seven nights as dots, as on the computer.
 - **Symbols on Status' and Backups' cards on the Homelab app:** on the iPhone and iPad, Backups and This Machine on Status, and Last night, Restore test and Off-site on Backups, have a small symbol before their titles, as Finances' cards do.
 - **A floating + on Finances on the Homelab app:** on the iPhone and iPad, a round + at the foot of Finances' home adds a transaction, where the device may.

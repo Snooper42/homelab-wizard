@@ -577,6 +577,20 @@ enum TileColour {
     static let teal = Color(light: 0x0E7490, dark: 0x30B0C7)
     static let grey = Color(light: 0x6E6E73, dark: 0x8E8E93)
     static let purple = Color(light: 0x8944AB, dark: 0xBF5AF2)
+
+    /// One by name (`CareLook.Row.tint`); grey for any other.
+    static func named(_ name: String) -> Color {
+        switch name {
+        case "green": green
+        case "indigo": indigo
+        case "blue": blue
+        case "orange": orange
+        case "red": red
+        case "teal": teal
+        case "purple": purple
+        default: grey
+        }
+    }
 }
 
 // MARK: - Zoom

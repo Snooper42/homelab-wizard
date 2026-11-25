@@ -80,11 +80,17 @@ struct ComputerView: View {
         }
         .task {
             await computer.load()
-            if page == .settings { await computer.loadForm() }
+            if page == .settings {
+                await computer.loadForm()
+                await computer.loadPhones()
+            }
         }
         .refreshable {
             await computer.load()
-            if page == .settings { await computer.loadForm() }
+            if page == .settings {
+                await computer.loadForm()
+                await computer.loadPhones()
+            }
             if page == .setup { await computer.loadSetup() }
         }
         .sheet(item: $computer.report) { report in
@@ -220,7 +226,8 @@ struct ComputerView: View {
             if let form = computer.form {
                 ForEach(form.firstSettings) { setting in
                     SettingRow(computer: computer, setting: setting, form: form,
-                               label: SettingWords.label(setting.key, apps: dashboard.catalog?.apps ?? []), about: $about)
+                               label: SettingWords.label(setting.key, apps: dashboard.catalog?.apps ?? []), about: $about,
+                               look: CareLook.row(setting.key, value: setting.value))
                 }
             }
         } header: {
@@ -242,7 +249,7 @@ struct ComputerView: View {
             NavigationLink {
                 PhonesPage(computer: computer)
             } label: {
-                IconTileLabel(title: "Phones and iPads", systemImage: "iphone", tint: TileColour.indigo)
+                IconTileLabel(title: "Phones and iPads", systemImage: "iphone", tint: TileColour.indigo, subtitle: CareLook.phones(computer.phones))
             }
         } header: {
             Text("Household")
