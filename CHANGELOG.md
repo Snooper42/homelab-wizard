@@ -9,6 +9,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 ### New
 
 <!-- The iPhone and iPad app (lane 4): add a line just below this one. -->
+- **Accounts on the Homelab app, as the owner's pick:** on the iPhone and iPad, chips over the chart switch it between net worth and each group (Cash, Credit Cards, …), the ranges are 1M, 3M, 6M, 1Y and All, the change says its share too (*↑ $19,889 (11.2%) 3 months*), and each account says when its balance was last typed in. A card or loan shows what it owes with a minus.
 - **Review one at a time on the Homelab app:** on the iPhone and iPad, new transactions to review come as a stack of cards (*3 left*): the payee and amount, its other transactions one tap away, the category as chips to tap, and Skip or Reviewed, or a swipe right or left.
 - **This paycheck's bills on the Homelab app:** on the iPhone and iPad, Finances shows This paycheck with its days: Upcoming, the bills still to come before payday with what's left to pay and how long until each, and Paid, what's gone out since the last payday, ticked. It takes the place of Coming up.
 - **A quieter look on the Homelab app:** on the iPhone and iPad, a warm off-white background (a warm near-black at night), cards with a thin edge instead of a lifted shadow, lighter card headings and figures, on every screen.
