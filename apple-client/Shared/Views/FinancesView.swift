@@ -2,8 +2,8 @@ import Charts
 import PhotosUI
 import SwiftUI
 
-/// Finances' home, as cards: checking as a Wallet card with what it is
-/// after the next paycheck, net worth with a line to run a finger along,
+/// Finances' home, as cards: what's left after this paycheck's bills, the
+/// accounts as a row of small cards, net worth with a line to run a finger along,
 /// what's left to spend and the next bill side by side, the latest
 /// transactions, the bills coming, and the rest of Finances one tap away.
 /// Amounts stay hidden until Show Amounts, and none show at all while Hide
@@ -42,7 +42,11 @@ struct FinancesView: View {
                     if view.plan.accounts.isEmpty, finances.canEditPlan {
                         FirstAccountCard(finances: finances)
                     }
-                    if let now = view.checkingNow { CheckingHero(now: now, view: view, finances: finances) }
+                    if let now = view.checkingNow {
+                        CheckingHero(now: now, view: view, finances: finances)
+                    } else {
+                        AccountsRow(view: view, finances: finances)
+                    }
                     // Worth a look: the Dashboard's prompts, only when one needs you (not on private Finances).
                     if !finances.isPrivate { WorthALookCard(finances: finances) }
                     // A member's phone: what the owner shares of the household's, first.
@@ -258,21 +262,14 @@ private struct SeeAll: View {
     }
 }
 
-/// Checking, as the computer's Dashboard starts with it (main #482): a
-/// Wallet card with its balance now, and under it checking once the next
-/// paycheck lands. Each opens how it adds up, row by row.
+/// Finances' top, as the redesign's phone picture (phone-finances.png): what's
+/// left after this paycheck's bills, then the accounts as a row of cards.
 private struct CheckingHero: View {
     let now: FinanceWorking
     let view: FinancesPlanView
     let finances: FinancesViewModel
-    @Namespace private var zoom
-    @Environment(\.dynamicTypeSize) private var typeSize
 
     var body: some View {
-        let account = view.plan.accounts.first { $0.id == view.checking }
-        let logos = PayeeLogos.shared
-        let brand = account.flatMap { logos.brandOf(institution: $0.institution, name: $0.name, kind: $0.kind) }
-        let caption = now.typedSameDay ? "Now, as typed in today" : "Now, typed in \(Self.short(now.from))"
         VStack(spacing: 10) {
             // What's left first: the number people open Finances for (apple-loop.md item 1), as the redesign's
             // card (phone-finances.png): the figure, its chart through the period, and Now, Payday and Bills under it.
@@ -280,20 +277,8 @@ private struct CheckingHero: View {
                 FinanceLeadCard(lead: lead, left: left, now: now, view: view, finances: finances)
                     .padding(.bottom, 8)
             }
-            NavigationLink {
-                CheckingWorkingView(working: now, view: view, finances: finances, title: caption,
-                                    start: "Checking, typed in \(Self.long(now.from))", end: "Checking now", note: nil)
-                    .zoomTransition(id: "checking", in: zoom)
-            } label: {
-                WalletCard(title: account?.name ?? "Checking",
-                           amount: amountText(now.result, view.plan.currency, finances),
-                           detail: caption,
-                           style: .checking,
-                           mark: brand.flatMap { logos.brandsByKey[$0] }.map { LogoContent.brand($0) })
-                    .zoomSource(id: "checking", in: zoom)
-            }
-            .buttonStyle(PressableButtonStyle())
-            .accessibilityHint("How it adds up")
+            // How checking adds up is the first card's Now; here each account opens its own page.
+            AccountsRow(view: view, finances: finances)
         }
     }
 
@@ -305,6 +290,74 @@ private struct CheckingHero: View {
     /// "Friday, November 14".
     static func long(_ date: Date?) -> String {
         date?.formatted(.dateTime.weekday(.wide).month(.wide).day()) ?? "a day"
+    }
+}
+
+/// The accounts as small cards in a row, as the redesign's phone picture
+/// (phone-finances.png): checking first, each with its bank's logo, its
+/// balance (what a card owes as less than nothing) and its name; a swipe for
+/// the rest. Each opens its account's page.
+private struct AccountsRow: View {
+    let view: FinancesPlanView
+    let finances: FinancesViewModel
+
+    static let size = CGSize(width: 156, height: 104)
+
+    var body: some View {
+        let cards = AccountStrip.cards(view)
+        if !cards.isEmpty {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 10) {
+                    ForEach(cards) { card in
+                        NavigationLink {
+                            AccountDetailView(account: card.account, finances: finances)
+                        } label: {
+                            tile(card)
+                        }
+                        .buttonStyle(PressableButtonStyle())
+                        .accessibilityHint("Opens its page")
+                    }
+                }
+                // Room for the cards' shadow, which the row would otherwise cut.
+                .padding(.vertical, 6)
+            }
+            // The row runs to the screen's edge as it slides, as in the picture.
+            .scrollClipDisabled()
+            // Small cards: their words stay on them at any text size.
+            .dynamicTypeSize(...DynamicTypeSize.xxLarge)
+        }
+    }
+
+    private func tile(_ card: AccountStrip.Card) -> some View {
+        let style = WalletStyle(kind: card.account.kind)
+        let ink: Color = style.hasDarkText ? Color(light: 0x1C1C1E, dark: 0x1C1C1E) : .white
+        let quiet: Color = style.hasDarkText ? Color(light: 0x5E5E66, dark: 0x5E5E66) : .white.opacity(0.9)
+        let amount = amountText(card.amount, card.account.currency ?? view.plan.currency, finances)
+        return VStack(alignment: .leading, spacing: 1) {
+            LogoCircle(account: card.account, size: 26)
+            Spacer(minLength: 4)
+            Text(verbatim: amount)
+                .font(.title3.weight(.bold))
+                .monospacedDigit()
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+                .contentTransition(.numericText())
+            Text(verbatim: card.account.name)
+                .font(.footnote.weight(.medium))
+                .foregroundStyle(quiet)
+                .lineLimit(1)
+        }
+        .foregroundStyle(ink)
+        .padding(14)
+        .frame(width: Self.size.width, height: Self.size.height, alignment: .leading)
+        .background {
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(LinearGradient(colors: style.colours, startPoint: .topLeading, endPoint: .bottomTrailing))
+                .shadow(color: Design.shadow.opacity(0.14), radius: 6, y: 4)
+        }
+        .environment(\.colorScheme, style.hasDarkText ? .light : .dark)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(verbatim: "\(card.account.name), \(amount)"))
     }
 }
 
@@ -3287,9 +3340,7 @@ struct TransactionsView: View {
     /// The accounts in the switcher, in the screen's order: not a home, a
     /// car or a collectible, which have no transactions.
     nonisolated static func switcherAccounts(_ accounts: [FinanceAccount]) -> [FinanceAccount] {
-        accounts
-            .filter { !["home", "car", "collectible"].contains($0.kind) }
-            .sorted { ($0.kindOrder, $0.name.localizedLowercase) < ($1.kindOrder, $1.name.localizedLowercase) }
+        AccountStrip.listed(accounts)
     }
 
     /// What a new search, filter or account starts Show More again from.
