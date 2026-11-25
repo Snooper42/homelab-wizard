@@ -4,6 +4,7 @@
 import { Fragment, render } from 'preact';
 import { Icon } from '../Icon';
 import { Empty } from '../parts/Empty';
+import { AppMark } from '../parts/AppMark';
 import { type Walkthrough, walkthroughs } from './walkthroughs';
 import { questions } from './questions';
 
@@ -103,6 +104,8 @@ function AppRow({ a, p }: { a: api.App; p: GroupsProps }) {
   return (
     <label class="app">
       <input type="checkbox" checked={p.selected.has(a.id) || !!by} disabled={native || !!by} title={by ? `Installed with ${by}, which needs it` : undefined} onChange={(e) => p.tick(a.id, e.currentTarget.checked)} />
+      {/* Every app its logo (the owner, Nov 24: a logo wherever an app is named). */}
+      <AppMark id={a.id} name={a.name} icon="" small />
       <div class="grow">
         <strong>{a.name}</strong>
         {native && <span class="badge">runs natively</span>}
@@ -187,7 +190,7 @@ export function Plan({ plan: p, appName, reason }: PlanProps) {
   return (
     <>
       {lead && <p class="planLead">{lead}</p>}
-      {!!picked.length && <ul class="ok planApps">{picked.map((id) => <li key={id}>{appName(id)}</li>)}</ul>}
+      {!!picked.length && <ul class="ok planApps">{picked.map((id) => <li key={id}><AppMark id={id} name={appName(id)} icon="" small />{appName(id)}</li>)}</ul>}
       <List title="Waiting for a setting" cls="warn" items={needs.map((s) => <span><strong>{appName(s.app)}</strong>: {reason(s.reason)}</span>)} />
       <List title="Runs outside the homelab" items={outside.map((s) => <span><strong>{appName(s.app)}</strong> {reason(s.reason)}</span>)} />
       <List title="Problems" cls="bad" items={p.problems} />
