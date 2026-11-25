@@ -43,6 +43,7 @@ Every screen is built from the same few parts. A screen that matches its picture
 - **Every card opens what it summarises** (its ↗).
 - **Nothing empty:** a card's height comes from what it holds; no tall card beside a short one leaving a hole.
 - **Cards in a row are built the same way** (the owner, Nov 25: *"we need to stop doing that"*, of three cards on a row each laid out differently): the title row, then **one figure on the same line in every card**, then **one line under it**, then a **footer pinned to the bottom at the same height** (the buttons, the nights, a bar). **No boxes inside a card**, no text that wraps in a figure, no empty band under one card's content where its neighbour has more. If one card has more to say, it goes behind its ↗, not into the card.
+- **Every card is drawn in every state it can be in** (the owner, Nov 25: *"what's gonna happen to that box … once we start it up again"*): all well, one problem, several, no data yet. A card never appears, disappears or changes size when the state changes; only what's inside it does. A card *about* a problem ("Stopped", "Decypharr") isn't a card: the card is the thing the problem belongs to (Apps), and the problem is its state.
 
 ### The computer's sidebar
 
@@ -146,6 +147,10 @@ How far the phone's page (`homelab serve`) can go toward the Homelab app, drawn 
 </p>
 
 <picture><source media="(prefers-color-scheme: dark)" srcset="images/redesign/web-wide-dark.png"><img alt="The phone's page on a tablet: the computer's sidebar with the screens as a strip of icons and Status' own menu, then the stopped app, Backups, the server, and each category" src="images/redesign/web-wide.png"></picture>
+
+<picture><source media="(prefers-color-scheme: dark)" srcset="images/redesign/web-wide-ok-dark.png"><img alt="The same page with every app running: Apps says 18 running, all answering, with the last fourteen days as squares (one amber), in the place where Start and Logs were" src="images/redesign/web-wide-ok.png"></picture>
+
+**Status' first card is Apps, always.** All well: how many run, *All answering · 1 outage in 14 days*, and the last fourteen days as squares (amber on a day any app was down), as Backups shows its nights. Something stopped: the figure turns amber (*17 of 18 running*), the line names it with its logo (*Decypharr stopped 20 min ago*), and the footer becomes **Start**, **Logs** and ⋯ (two or more: **Start all** and **See them**). Start it and the card goes back without moving.
 
 - **Status:** the phone's Status above, with the server in place of This Mac, and **Alerts on this phone** offered once.
 - **An app's page:** a back button and its own title; Open, Restart, Logs and Stop; its week, its backups (with Get something back), its last update with Roll back.

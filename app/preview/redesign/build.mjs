@@ -34,7 +34,7 @@ try {
 }
 
 // Page file, picture name.
-const computer = [['dashboard', 'computer-finances'], ['transactions', 'computer-transactions'], ['backups', 'computer-backups'], ['settings', 'computer-settings'], ['tidy', 'computer-tidy'], ['web-wide', 'web-wide'], ['web-category', 'web-category']];
+const computer = [['dashboard', 'computer-finances'], ['transactions', 'computer-transactions'], ['backups', 'computer-backups'], ['settings', 'computer-settings'], ['tidy', 'computer-tidy'], ['web-wide', 'web-wide'], ['web-wide-ok', 'web-wide-ok'], ['web-category', 'web-category']];
 const phone = [['phone-finances', 'phone-finances'], ['phone-transactions', 'phone-transactions'], ['phone-status', 'phone-status'], ['phone-jordan', 'phone-partner'], ['phone-backups', 'phone-backups'], ['phone-settings', 'phone-settings'], ['web-status', 'web-status'], ['web-app', 'web-app'], ['web-push', 'web-push'], ['web-category-phone', 'web-category-phone']];
 
 // The iPhone Duo unfolded, upright (about 669 × 951, reported: .claude/prompts/web-loop.md).

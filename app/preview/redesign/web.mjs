@@ -139,7 +139,7 @@ const wideCss = `
 .grid .card.k{display:flex;flex-direction:column;gap:0;min-height:216px}
 .k .kh{display:flex;align-items:baseline;gap:8px;margin-bottom:14px}.k .kh h3{margin:0;flex:1;font-size:14.5px;font-weight:600}.k .kh span{font-size:12.5px;color:var(--muted)}
 .k .kf{display:flex;align-items:center;gap:10px;height:40px;font-size:30px;font-weight:650;letter-spacing:-.02em;font-variant-numeric:tabular-nums;white-space:nowrap}.k .kf small{font-size:15px;font-weight:600;color:var(--muted);letter-spacing:0;margin-left:2px;align-self:flex-end;padding-bottom:7px}.k .kf .alogo,.k .kf .own{border-radius:9px}.k .kf span{font-size:26px}
-.k .ks{margin-top:6px;font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.k .ks .alogo,.k .ks .own{vertical-align:-3px;margin-right:4px;border-radius:4px}.k .ks{margin-top:6px;font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .k .kb{margin-top:auto;padding-top:16px;height:54px;display:flex;align-items:flex-end;gap:8px}.k .kb .cta{flex:1;height:34px}.k .kb .cta.sqb{flex:none;width:38px;padding:0}
 .k .kb .nights{margin:0;width:100%}.k .kb .nights div{gap:0}.k .kb .nights i{height:34px;border-radius:7px}
 .k .kbar{flex-direction:column;align-items:stretch;justify-content:flex-end;gap:8px}.k .kbar .bar2{margin:0;height:10px;border-radius:99px;background:var(--sunken);overflow:hidden}.k .kbar .bar2 i{display:block;height:100%;background:var(--acc);border-radius:99px}.k .kbar span{font-size:12.5px;color:var(--muted)}
@@ -178,15 +178,27 @@ const sideFor = (here, stopped = []) => `
 </aside>`;
 const wideSide = sideFor('Overview', ['Your own apps']);
 Object.assign(P, { dots: 'c5,12,1|c12,12,1|c19,12,1' });
+// The first card is always Apps (the owner, Nov 25: a card about one stopped app has nothing to say once it starts).
+// The same anatomy in both states: all well, the figure is how many run and the footer the last fourteen days (a day
+// any app was down is amber); something stopped, the figure turns amber, the line names it, and the footer becomes
+// its Start and Logs (two or more: Start all and See them). Start it, and the card goes back without moving.
+const days14 = (amber = []) => `<div class="nights">${Array.from({ length: 14 }, (_, i) => `<div><i${amber.includes(i) ? ' style="background:#f59e0b"' : ''}></i></div>`).join('')}</div>`;
+const appsCardFor = (stopped) => stopped ? `<section class="card k">
+    <div class="kh"><h3>Apps</h3><span>Checked 2 min ago</span></div>
+    <div class="kf warnfig">${up}<small>of ${total} running</small></div>
+    <div class="ks">${logoOf('own:DP,#ea580c', 16)} Decypharr stopped 20 min ago</div>
+    <div class="kb"><span class="cta pri">${icon('play', 13)}Start</span><span class="cta">${icon('logs', 14)}Logs</span><span class="cta sqb">${icon('dots', 16)}</span></div>
+  </section>` : `<section class="card k">
+    <div class="kh"><h3>Apps</h3><span>Checked 2 min ago</span></div>
+    <div class="kf">${total}<small>running</small></div>
+    <div class="ks">All answering · 1 outage in 14 days</div>
+    <div class="kb">${days14([9])}</div>
+  </section>`;
+let appsCard = appsCardFor(true);
 const wide = `
 <header class="top"><h2 style="margin:0;font-size:24px;font-weight:700;letter-spacing:-.01em;flex:1">Status</h2><div class="search">${icon('search', 15)}Find an app</div><button class="sq">${icon('sync', 17)}</button></header>
 <div class="grid">
-  <section class="card k">
-    <div class="kh"><h3>Stopped</h3><span>${up} of ${total} running</span></div>
-    <div class="kf">${logoOf('own:DP,#ea580c', 34)}<span>Decypharr</span></div>
-    <div class="ks">20 minutes ago · the debrid service didn't answer</div>
-    <div class="kb"><span class="cta pri">${icon('play', 13)}Start</span><span class="cta">${icon('logs', 14)}Logs</span><span class="cta sqb">${icon('dots', 16)}</span></div>
-  </section>
+  ${appsCard}
   <section class="card k">
     <div class="kh"><h3>Backups</h3><span>Every night at 3:30</span></div>
     <div class="kf">17<small>of 17 copied</small></div>
@@ -206,6 +218,7 @@ const wide = `
   </section>
 </div>`;
 writeFileSync(out + 'web-wide.html', `<!doctype html><html><head><meta charset="utf-8"><title>Status</title><style>${deskCss}${extra}${wideCss}</style></head><body>${wideSide}<main class="ov">${wide}</main></body></html>`);
+writeFileSync(out + 'web-wide-ok.html', `<!doctype html><html><head><meta charset="utf-8"><title>Status</title><style>${deskCss}${extra}${wideCss}</style></head><body>${sideFor('Overview').replace('<em>1</em>', '')}<main class="ov">${wide.replace(appsCardFor(true), appsCardFor(false)).replace(running(3, 4), running(4, 4)).replace('Decypharr stopped · AIOStreams +2', 'AIOStreams, AIOMetadata +2')}</main></body></html>`);
 
 // ---------- A category's own page: the apps as a home screen (the owner, Nov 25) ----------
 // Click a category in Status' menu: its apps as big-icon tiles three across, as CasaOS's dashboard lays out apps
