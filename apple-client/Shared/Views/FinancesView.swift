@@ -1126,7 +1126,7 @@ private struct FinanceBudgetsPage: View {
                     ForEach(view.budgets) { budget in
                         // As the computer's row: its transactions this month (a pay period's, every month).
                         NavigationLink {
-                            TransactionsView(finances: finances, filter: budget.transactionsFilter(), allAccounts: true)
+                            TransactionsView(finances: finances, filter: budget.transactionsFilter())
                         } label: {
                             BudgetRow(budget: budget, view: view, finances: finances)
                         }
@@ -3411,8 +3411,7 @@ struct TransactionsView: View {
     @Bindable var finances: FinancesViewModel
     @State private var search = ""
     @State private var adding = false
-    /// The account picked, by id (nil inside for all of them); nil until
-    /// one is picked, so the page opens on checking.
+    /// The account picked, by id; nil (or nil inside) for every account, as it opens.
     @State private var picked: String??
     /// Only the new ones.
     @State private var onlyNew = false
@@ -3434,25 +3433,16 @@ struct TransactionsView: View {
     @State private var drawn = TransactionSort.page
     @Namespace private var zoom
 
-    /// Opened from a budget (its category and month) on every account, or
-    /// as Finances' own Transactions page, on checking.
-    init(finances: FinancesViewModel, filter: TransactionFilter = TransactionFilter(), allAccounts: Bool = false) {
+    /// Opened on every account, as the redesign's picture (the owner, Nov 24);
+    /// from a budget, on its category and month.
+    init(finances: FinancesViewModel, filter: TransactionFilter = TransactionFilter()) {
         _finances = Bindable(finances)
         _filter = State(initialValue: filter)
-        _picked = State(initialValue: allAccounts ? .some(nil) : nil)
     }
     @Environment(\.dynamicTypeSize) private var typeSize
 
     /// The account shown, by id; nil for all of them.
-    private var account: String? {
-        if let picked { return picked }
-        return finances.plan.flatMap { Self.openingAccount(checking: $0.checking, in: $0.plan.accounts) }
-    }
-
-    /// The page opens on checking, where there is one; else on all of them.
-    nonisolated static func openingAccount(checking: String, in accounts: [FinanceAccount]) -> String? {
-        accounts.contains { $0.id == checking } ? checking : nil
-    }
+    private var account: String? { picked ?? nil }
 
     /// The accounts in the switcher, in the screen's order: not a home, a
     /// car or a collectible, which have no transactions.
@@ -3527,7 +3517,87 @@ struct TransactionsView: View {
         withAnimation(.snappy) { sort = next }
     }
 
-    /// Money in or out, one category, or only $100 or more.
+    /// The picture's chips over the list: the month, the account and the category, each a menu.
+    private var chips: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                chip(filter.month.map { $0.formatted(.dateTime.month(.wide).year()) } ?? "Every month", systemImage: "calendar", on: filter.month != nil) {
+                    Picker("Month", selection: $filter.month.animation(.snappy)) {
+                        Text("Every month").tag(Date?.none)
+                        ForEach(filterMonths, id: \.self) { month in
+                            Text(verbatim: month.formatted(.dateTime.month(.wide).year())).tag(Date?.some(month))
+                        }
+                    }
+                }
+                chip(account.flatMap { finances.accountName($0) } ?? "All accounts", systemImage: nil, on: account != nil) {
+                    Picker("Account", selection: Binding(get: { account }, set: { id in withAnimation(.snappy) { picked = .some(id) } })) {
+                        Text("All accounts").tag(String?.none)
+                        ForEach(Self.switcherAccounts(finances.plan?.plan.accounts ?? [])) { a in
+                            Text(verbatim: a.name).tag(String?.some(a.id))
+                        }
+                    }
+                }
+                chip(filter.category ?? "All categories", systemImage: nil, on: filter.category != nil) {
+                    Picker("Category", selection: $filter.category.animation(.snappy)) {
+                        Text("All categories").tag(String?.none)
+                        ForEach(filterCategories, id: \.self) { name in
+                            Text(verbatim: name).tag(String?.some(name))
+                        }
+                    }
+                }
+            }
+            .padding(.vertical, 2)
+        }
+        .scrollClipDisabled()
+        .sensoryFeedback(.selection, trigger: picked)
+    }
+
+    private func chip<Options: View>(_ words: String, systemImage: String?, on: Bool, @ViewBuilder options: () -> Options) -> some View {
+        Menu {
+            options()
+        } label: {
+            HStack(spacing: 6) {
+                if let systemImage { Image(systemName: systemImage).accessibilityHidden(true) }
+                Text(verbatim: words).lineLimit(1)
+                Image(systemName: "chevron.down").font(.caption.weight(.semibold)).accessibilityHidden(true)
+            }
+            .font(.subheadline.weight(.semibold))
+            .foregroundStyle(on ? Theme.accent : Theme.ink)
+            .padding(.horizontal, 13)
+            .frame(minHeight: 36)
+            .background(on ? Theme.accent.opacity(0.14) : Theme.surface, in: Capsule())
+        }
+    }
+
+    /// New since you looked, as the picture's strip: Review opens them.
+    private func reviewStrip(_ count: Int) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: "arrow.triangle.2.circlepath")
+                .font(.title3.weight(.semibold))
+                .foregroundStyle(Theme.accent)
+                .accessibilityHidden(true)
+            Text(verbatim: count == 1 ? "1 new to review" : "\(count) new to review")
+                .font(.headline)
+                .foregroundStyle(Theme.ink)
+            Spacer(minLength: 8)
+            Text("Review")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.white)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .background(Theme.accentFill, in: Capsule())
+        }
+        .padding(.vertical, 4)
+        // The whole strip opens the inbox, without a list row's chevron.
+        .background {
+            NavigationLink { ReviewInboxPage(finances: finances) } label: { EmptyView() }
+                .opacity(0)
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isButton)
+    }
+
+    /// Money in or out, one tag, or only $100 or more.
     private var filterMenu: some View {
         Menu {
             Picker("Show", selection: $filter.flow.animation(.snappy)) {
@@ -3536,20 +3606,6 @@ struct TransactionsView: View {
                 Text("Money In").tag(TransactionFilter.Flow.moneyIn)
                 Text("Between My Accounts").tag(TransactionFilter.Flow.betweenAccounts)
             }
-            Picker("Category", selection: $filter.category.animation(.snappy)) {
-                Text("Every Category").tag(String?.none)
-                ForEach(filterCategories, id: \.self) { name in
-                    Text(verbatim: name).tag(String?.some(name))
-                }
-            }
-            .pickerStyle(.menu)
-            Picker("Month", selection: $filter.month.animation(.snappy)) {
-                Text("Every Month").tag(Date?.none)
-                ForEach(filterMonths, id: \.self) { month in
-                    Text(verbatim: month.formatted(.dateTime.month(.wide).year())).tag(Date?.some(month))
-                }
-            }
-            .pickerStyle(.menu)
             if !filterTags.isEmpty {
                 Picker("Tag", selection: $filter.tag.animation(.snappy)) {
                     Text("Every Tag").tag(String?.none)
@@ -3635,22 +3691,16 @@ struct TransactionsView: View {
         let groups = sort.byDay ? TransactionDays.group(rows) : []
         let running = sort.isNewestFirst ? runningBalances(groups) : [:]
         List(selection: listSelection) {
-            if search.isEmpty, let view = finances.plan, !view.plan.accounts.isEmpty {
+            Section {
+                chips
+                    .listRowInsets(EdgeInsets(top: 2, leading: 0, bottom: 2, trailing: 0))
+                    .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)
+            }
+            if search.isEmpty, newCount > 0 {
                 Section {
-                    AccountCard(account: view.plan.accounts.first { $0.id == account }, view: view, finances: finances)
-                        // Room under it for its shadow, which the row would otherwise cut.
-                        .padding(.bottom, 14)
-                        .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 0, trailing: 0))
-                        .listRowBackground(Color.clear)
-                        .listRowSeparator(.hidden)
-                    let accounts = Self.switcherAccounts(view.plan.accounts)
-                    AccountSwitcher(accounts: accounts,
-                                    amounts: Dictionary(accounts.map { ($0.id, shortAmount($0, view)) }, uniquingKeysWith: { first, _ in first }),
-                                    allAmount: shortAmount(nil, view),
-                                    selection: account) { id in picked = .some(id) }
-                        .listRowInsets(EdgeInsets(top: 6, leading: 0, bottom: 4, trailing: 0))
-                        .listRowBackground(Color.clear)
-                        .listRowSeparator(.hidden)
+                    reviewStrip(newCount)
+                        .listRowBackground(Theme.accent.opacity(0.12))
                 }
             }
             // What looks like a planned payment or a transfer, to sort (as the computer's top of Transactions).
@@ -3833,8 +3883,8 @@ struct TransactionsView: View {
                         .buttonBorderShape(.capsule)
                         .controlSize(.small)
                         .dynamicTypeSize(...DynamicTypeSize.accessibility1)
-                } else if newCount > 0 || onlyNew {
-                    Button(onlyNew ? "Show All" : "\(newCount) New") {
+                } else if onlyNew {
+                    Button("Show All") {
                         withAnimation(.snappy) { onlyNew.toggle() }
                     }
                     .buttonStyle(.bordered)
@@ -3950,16 +4000,6 @@ struct TransactionsView: View {
         }
     }
 
-    /// An account's balance in whole units, for its small card; net worth for All.
-    private func shortAmount(_ account: FinanceAccount?, _ view: FinancesPlanView) -> String {
-        if finances.amountsHiddenByPlan || !finances.amountsShown { return "••••" }
-        guard let account else {
-            return view.netWorth.formatted(.currency(code: view.plan.currency).precision(.fractionLength(0)))
-        }
-        let value = view.start[account.id] ?? account.balance ?? 0
-        return value.formatted(.currency(code: account.currency ?? view.plan.currency).precision(.fractionLength(0)))
-    }
-
     /// "Today", "Yesterday", a weekday within the week, else "Nov 5".
     nonisolated static func dayWords(_ date: Date?, now: Date = Date(), calendar: Calendar = .current) -> String {
         guard let date else { return "" }
@@ -3968,122 +4008,6 @@ struct TransactionsView: View {
         let days = calendar.dateComponents([.day], from: calendar.startOfDay(for: date), to: calendar.startOfDay(for: now)).day ?? 99
         if (2..<7).contains(days) { return date.formatted(.dateTime.weekday(.wide)) }
         return date.formatted(.dateTime.month(.abbreviated).day())
-    }
-}
-
-/// The account shown, as a card in a wallet: its name and bank, and its
-/// balance; for all of them, net worth.
-private struct AccountCard: View {
-    let account: FinanceAccount?
-    let view: FinancesPlanView
-    let finances: FinancesViewModel
-
-    private var hidden: Bool { finances.amountsHiddenByPlan || !finances.amountsShown }
-
-    private func money(_ value: Double, _ currency: String? = nil) -> String {
-        hidden ? "••••" : value.formatted(.currency(code: currency ?? view.plan.currency))
-    }
-
-    var body: some View {
-        if let account {
-            let logos = PayeeLogos.shared
-            let brand = logos.brandOf(institution: account.institution, name: account.name, kind: account.kind)
-            WalletCard(title: account.name,
-                       amount: money(view.start[account.id] ?? account.balance ?? 0, account.currency) + (account.isOwed && !hidden ? " owed" : ""),
-                       detail: detail(account),
-                       style: WalletStyle(kind: account.kind),
-                       mark: brand.flatMap { logos.brandsByKey[$0] }.map { LogoContent.brand($0) })
-        } else {
-            WalletCard(title: "All accounts", amount: money(view.netWorth), detail: "Net worth", style: .other)
-        }
-    }
-
-    private func detail(_ account: FinanceAccount) -> String? {
-        if account.id == view.checking, let after = view.afterPay, let date = after.date, !hidden {
-            return "\(money(after.result)) after \(date.formatted(.dateTime.weekday(.wide)))’s pay"
-        }
-        return [account.kindTitle, account.institution.flatMap { logosName($0) }].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · ")
-    }
-
-    private func logosName(_ key: String) -> String? {
-        PayeeLogos.shared.brandsByKey[key]?.name ?? key
-    }
-}
-
-/// The accounts as small cards in a row, All first; the one shown ringed.
-/// Each card has the account's logo and balance, its name under it.
-private struct AccountSwitcher: View {
-    let accounts: [FinanceAccount]
-    /// Each account's balance as its card shows it, by id.
-    let amounts: [String: String]
-    let allAmount: String
-    let selection: String?
-    let pick: (String?) -> Void
-
-    private static let cardWidth: CGFloat = 112
-
-    var body: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(alignment: .top, spacing: 12) {
-                chip(id: nil, name: "All accounts", amount: allAmount, style: .other) {
-                    Image(systemName: "square.stack.fill")
-                        .font(.system(size: 12, weight: .semibold))
-                        .frame(width: 24, height: 24)
-                        .background(.white.opacity(0.2), in: Circle())
-                }
-                ForEach(accounts) { account in
-                    chip(id: account.id, name: account.name, amount: amounts[account.id] ?? "", style: WalletStyle(kind: account.kind)) {
-                        LogoCircle(account: account, size: 24)
-                    }
-                }
-            }
-            .padding(.horizontal, 4)
-            .padding(.vertical, 5)
-        }
-        // Small cards: their words stay on them at any text size.
-        .dynamicTypeSize(...DynamicTypeSize.xxLarge)
-    }
-
-    private func chip<Mark: View>(id: String?, name: String, amount: String, style: WalletStyle, @ViewBuilder mark: () -> Mark) -> some View {
-        let picked = selection == id
-        let ink: Color = style.hasDarkText ? Color(light: 0x1C1C1E, dark: 0x1C1C1E) : .white
-        return Button {
-            withAnimation(.snappy) { pick(id) }
-        } label: {
-            VStack(spacing: 6) {
-                VStack(alignment: .leading, spacing: 0) {
-                    mark()
-                    Spacer(minLength: 4)
-                    Text(verbatim: amount)
-                        .font(.footnote.weight(.bold))
-                        .monospacedDigit()
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.7)
-                }
-                .foregroundStyle(ink)
-                .padding(10)
-                .frame(width: Self.cardWidth, height: 68, alignment: .leading)
-                .background(LinearGradient(colors: style.colours, startPoint: .topLeading, endPoint: .bottomTrailing),
-                            in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-                .shadow(color: Design.shadow.opacity(0.12), radius: 2, y: 1)
-                .overlay {
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .strokeBorder(picked ? Theme.accent : .clear, lineWidth: 2)
-                        .padding(-3)
-                }
-                Text(verbatim: name)
-                    .font(.caption.weight(picked ? .semibold : .regular))
-                    .foregroundStyle(picked ? Theme.ink : Theme.secondaryInk)
-                    .multilineTextAlignment(.center)
-                    .lineLimit(2)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .frame(width: Self.cardWidth)
-            }
-        }
-        .buttonStyle(PressableButtonStyle())
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Text(verbatim: amount.isEmpty ? name : "\(name), \(amount)"))
-        .accessibilityAddTraits(picked ? [.isButton, .isSelected] : .isButton)
     }
 }
 
