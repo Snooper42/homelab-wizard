@@ -134,6 +134,23 @@ Leads with what happened and what needs you: Today (each download filed, with Un
 - **A partner's Finances:** her own paycheck, **Shared with …** from her side (what to send, Mark sent, what she pays herself), and SimpleFIN offered as hers to turn on ([whole](<images/redesign/phone-partner-full.png>)).
 - **Backups** and **Settings:** the computer's, in one column ([Backups whole](<images/redesign/phone-backups-full.png>), [Settings whole](<images/redesign/phone-settings-full.png>)).
 
+### The phone's page
+
+How far the phone's page (`homelab serve`) can go toward the Homelab app, drawn on a server's homelab: tailnet only, with streaming apps added as its own (Nov 25, from a tester's server). It's the desktop app's own screens, so every screen above reaches it; these four show what it adds.
+
+<p>
+<picture><source media="(prefers-color-scheme: dark)" srcset="images/redesign/web-status-dark.png"><img alt="The phone's page on an iPhone, added to the Home Screen: Status with alerts offered, one app that needs you, Backups and the server, and each category" src="images/redesign/web-status.png" width="200"></picture>
+<picture><source media="(prefers-color-scheme: dark)" srcset="images/redesign/web-app-dark.png"><img alt="An app's page on the phone's page: Immich with Open, Restart, Logs and Stop, its week, its backups, and its last update with Roll back" src="images/redesign/web-app.png" width="200"></picture>
+<picture><source media="(prefers-color-scheme: dark)" srcset="images/redesign/web-push-dark.png"><img alt="The Lock Screen with two alerts from the phone's page: an app stopped, and last night's backup" src="images/redesign/web-push.png" width="200"></picture>
+</p>
+
+<picture><source media="(prefers-color-scheme: dark)" srcset="images/redesign/web-wide-dark.png"><img alt="The phone's page on a tablet: the computer's sidebar with the screens as a strip of icons and Status' own menu, then the app that needs you, Backups, the server, and each category" src="images/redesign/web-wide.png"></picture>
+
+- **Status:** the phone's Status above, with the server in place of This Mac, and **Alerts on this phone** offered once.
+- **An app's page:** a back button and its own title; Open, Restart, Logs and Stop; its week, its backups (with Get something back), its last update with Roll back.
+- **Alerts:** Web Push to the page added to the Home Screen (iOS 16.4 and later), from the alerts the computer already keeps, quiet hours kept. No Apple Developer account needed, unlike the app's push.
+- **On a tablet or a wide window:** the computer's sidebar, the screens as a strip of icons then Status' own menu; today the phone's page keeps the old list above 700 px (every strip rule is `html:not(.companion)`, and the screens mount no menu on the phone).
+
 ## Logos for every payee
 
 Every row in the pictures has its payee's logo; in the app today most imported payees are a letter. How the others do it:
@@ -172,6 +189,8 @@ Most of the redesign is the same data laid out again. These pieces need somethin
 | **Not in any backup** | Backups | Working out what's left out (Syncthing's folder today), and adding it |
 | **Each app's last nights** | Backups | Each night's result per app kept, if it isn't already |
 | **Comparison chips** | Every Finances card | The same figure for the period before |
+| **Web Push** | The phone's page, Lock Screen | The computer's own VAPID keys, a subscription per paired phone kept with it, the kept alerts sent to Apple's and the browsers' push services as well as ntfy, quiet hours honoured; the new outgoing hosts reviewed for security |
+| **The phone's page on a wide screen** | The phone's page on a tablet | The sidebar's strip and each screen's menu for `html.companion` above 700 px, sized to the screens a phone has; a phone in landscape keeps the tab bar |
 | **Logos for every payee** | Every row with a payee, on both systems | All of simple-icons and a merchant list built in; the opt-in logo service (above); a payee's website and a logo search; the category's mark when nothing is found |
 
 ## Still to decide
