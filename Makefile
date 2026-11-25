@@ -1,4 +1,7 @@
 VERSION := $(shell cat VERSION)
+# What a build here says it is: the newest release tag this checkout has (v0.42.8 → 0.42.8), as the release builds and
+# the iPhone app number it; VERSION in a copy without tags. VERSION itself stays the floor the release workflow counts from.
+BUILD_VERSION := $(or $(patsubst v%,%,$(firstword $(shell git tag --list 'v*' --merged HEAD --sort=-v:refname 2>/dev/null | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$$'))),$(VERSION))
 COMPOSE_FILES := compose.yaml $(wildcard stacks/*/compose.yaml)
 # One project per category, run from the homelab folder.
 CATEGORY_FILES := $(wildcard compose/*.yaml)
@@ -6,7 +9,7 @@ CATEGORY_FILES := $(wildcard compose/*.yaml)
 .PHONY: build test lint check coverage music-pins music-pins-check security compose-config app app-check screenshots frontend frontend-check app-smoke redesign phone-finance-wasm phone-finance-page phone-finance-framework help
 
 build: phone-finance-page
-	go build -trimpath -ldflags "-s -w -X main.version=$(VERSION)" -o bin/homelab ./cmd/homelab
+	go build -trimpath -ldflags "-s -w -X main.version=$(BUILD_VERSION)" -o bin/homelab ./cmd/homelab
 
 test:
 	go test ./...
@@ -136,7 +139,7 @@ compose-config:
 
 # The desktop app (separate module; needs the Wails CLI, see app/README.md).
 app:
-	cd app && wails build -ldflags "-X main.version=$(VERSION)"
+	cd app && wails build -ldflags "-X main.version=$(BUILD_VERSION)"
 	@# On macOS the menu bar item is a helper inside the bundle.
 	@if [ "$$(uname)" = Darwin ]; then cd app && b="$$(ls -d build/bin/*.app)" && mkdir -p "$$b/Contents/Helpers" && go build -o "$$b/Contents/Helpers/homelab-tray" ./cmd/homelab-tray; fi
 
