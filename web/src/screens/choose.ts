@@ -10,7 +10,7 @@ import { hostOS } from './setup';
 import { settingLabel, settingsData, showSettings } from './settings';
 import { cliProgress, startJob } from '../jobs';
 import { inTurn, waitWords } from '../job/queue';
-import { $, go, minute, osName, showError } from '../core';
+import { $, go, minute, onPhone, osName, showError } from '../core';
 import { mountCustomSheet, mountStore } from '../choose/InstallSheet';
 import type { Crumb } from '../parts/Crumbs';
 import { goBack, navigate } from '../app';
@@ -37,8 +37,28 @@ export function openInstall(ids: string[], about?: { app?: string; set?: string 
 }
 let shown = '';
 /** Draws the page of an app or a set to add (key: its ID, or set:ID), picking its apps for the plan when it's new. */
+// An app's note and the subscriptions the apps replace, read once each for its page.
+const guides: Record<string, docs.Guide> = {};
+const guideAsked = new Set<string>();
+let offerRows: savings.Offer[] | undefined;
+let offersAsked = false;
+let lastStore: [string, Crumb[]] | null = null;
+function redrawStore(key: string) { if (lastStore && lastStore[0] === key && shown === key) showStore(...lastStore); }
+function askGuide(key: string) {
+  // The web page asks only what the computer serves it: no guide there, the page as it was.
+  if (!guideAsked.has(key) && !onPhone()) {
+    guideAsked.add(key);
+    Promise.resolve((go() as any).AppGuide?.(key)).then((g: docs.Guide | null) => { guides[key] = g || {}; redrawStore(key); }, () => { guides[key] = {}; });
+  }
+  if (!offersAsked) {
+    offersAsked = true;
+    Promise.resolve((go() as any).SavingsRows?.()).then((o: savings.Offer[] | null) => { offerRows = o || []; redrawStore(key); }, () => { offerRows = []; });
+  }
+}
+
 export function showStore(key: string, trail: Crumb[]) {
   place();
+  lastStore = [key, trail];
   const set = key.startsWith('set:') ? catalog?.presets.find((p) => p.id === key.slice(4)) : undefined;
   const app = set ? undefined : catalog?.apps.find((a) => a.id === key);
   if (!catalog || (!set && !app)) { mountStore($('storeHead'), $('storeFacts'), $('storeNotes'), null); return; }
@@ -55,8 +75,11 @@ export function showStore(key: string, trail: Crumb[]) {
     ...sameJob(app, { catalog, status: statusById }).map(([o, why]) => `You already run ${o.name}: ${why}`),
     ...suggested(app, { catalog, status: statusById }).map(([o, why]) => `Goes with ${o.name}, which you run: ${why}`),
   ].filter(Boolean) as string[] : [];
+  if (app) askGuide(app.id);
   mountStore($('storeHead'), $('storeFacts'), $('storeNotes'), {
     app, set, catalog, icons: appIcons, notes, trail,
+    guide: app ? guides[app.id] : undefined, offers: offerRows,
+    openURL: (url) => { Promise.resolve(go().Open(url)).catch(showError); },
     here: set ? set.apps.filter((id) => ['running', 'stopped'].includes(statusById[id]?.state || '')) : [],
     open: (id) => (statusById[id] && statusById[id].state !== 'missing' ? pageOpener.open(id) : pickStatusPart('add:' + id)),
   });

@@ -551,6 +551,25 @@ declare namespace docker {
   }
 }
 
+declare namespace docs {
+  interface Guide {
+    purpose?: string[];
+    setup?: string[];
+    everyday?: string[];
+    ideas?: string[];
+    connects?: docs.GuideLink[];
+    learn?: docs.GuideLink[];
+    memory?: number;
+    updates?: string;
+  }
+  interface GuideLink {
+    label: string;
+    text?: string;
+    id?: string;
+    url?: string;
+  }
+}
+
 declare namespace downloads {
   interface Card {
     line: string;
@@ -1421,6 +1440,7 @@ interface Backend {
     Alerts(): Promise<notify.Event[]>;
     Answers(): Promise<Record<string, string>>;
     AppAction(arg1: string, arg2: string): Promise<void>;
+    AppGuide(arg1: string): Promise<docs.Guide>;
     AppIcon(arg1: string): Promise<string>;
     Appearance(): Promise<tray.Appearance>;
     Background(): Promise<app.BackgroundJob[]>;

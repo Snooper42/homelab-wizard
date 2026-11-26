@@ -417,7 +417,9 @@ const alertLog = [
   { id: 2, at: hoursAgo(14), topic: 'tunnel-watchdog', title: 'Homelab: something is down', body: 'vikunja: not answering', priority: 4, checks: ['vikunja'], clearedAt: hoursAgo(13.6) },
   { id: 1, at: hoursAgo(50), topic: 'watchtower', title: 'Homelab: an update was rolled back', body: 'Navidrome' },
 ];
-const mock = { savingsRows, platform: 'MacIntel', tidy, tidyReview, cliSteps, upgrade: { ...upgrade, behind: 0, changes: [], appChanged: false, appCommit: '7d9be080888433f921c9fa860a38b329ac368c88', appBehind: 0 }, catalog, status, setup, settings, host, logs, actionLog, urls, envFor, tests, backups, cliLog, cliPreview, alerts, watchdog, protection, savingsHistory, duplicatiJobs, phones, finances, ledger, history, alertLog, screen: 'status' };
+// Each app's note as AppGuide reads it (internal/docs ReadGuide), for its page before it's installed.
+const guides = JSON.parse(readFileSync(join(root, 'app', 'preview', 'guides.json'), 'utf8'));
+const mock = { savingsRows, guides, platform: 'MacIntel', tidy, tidyReview, cliSteps, upgrade: { ...upgrade, behind: 0, changes: [], appChanged: false, appCommit: '7d9be080888433f921c9fa860a38b329ac368c88', appBehind: 0 }, catalog, status, setup, settings, host, logs, actionLog, urls, envFor, tests, backups, cliLog, cliPreview, alerts, watchdog, protection, savingsHistory, duplicatiJobs, phones, finances, ledger, history, alertLog, screen: 'status' };
 // Finances' tabs are four: Spending holds Transactions and Reports, Plan holds Calendar, Recurring and Paychecks (Pay),
 // each in a second row under it. A page by its name, its tab first.
 /** The Finances page open, as the sidebar's menu marks it on the computer ("Recurring", "Net worth"). */
@@ -574,6 +576,10 @@ const shots = [
   { name: 'status-category-phone', screen: 'status', phone: ['companion', 'can-change'], before: async (page) => { await toStatusPart(page, 'media'); await page.waitForSelector('#statusPart .cattile', { timeout: 5000 }); } },
   // An app you could add has a page of its own, as an installed app's (the owner, Nov 25).
   { name: 'status-add', screen: 'status', before: async (page) => { await page.click('#statusSide button[data-key="media"]', { timeout: 5000 }); await page.click('#statusPart .cattile[data-app="kavita"] .catname'); await page.waitForSelector('#storePlan #plan .planLead', { timeout: 5000 }); } },
+  // Before it's installed, its note: what it does, the day to day, what it works with, setting it up (Kopia); what it can
+  // replace, at its price (Tandoor).
+  { name: 'status-add-guide', screen: 'status', before: async (page) => { await page.evaluate(() => window.__emit('navigate', 'choose')); await page.fill('#statusPart .catfind input', 'kopia'); await page.click('#statusPart .cattile.toadd[data-app="kopia"] .catname', { timeout: 5000 }); await page.waitForSelector('#storeNotes .storedocs', { timeout: 5000 }); } },
+  { name: 'status-add-saves', screen: 'status', before: async (page) => { await page.evaluate(() => window.__emit('navigate', 'choose')); await page.fill('#statusPart .catfind input', 'tandoor'); await page.click('#statusPart .cattile.toadd[data-app="tandoor"] .catname', { timeout: 5000 }); await page.waitForSelector('#storeNotes .storesaves', { timeout: 5000 }); } },
   { name: 'status-add-set', screen: 'status', before: async (page) => { await page.evaluate(() => window.__emit('navigate', 'choose')); await page.click('#statusPart .cattile.set[data-set="household"] .catname', { timeout: 5000 }); await page.waitForSelector('#storePlan #plan .planLead', { timeout: 5000 }); } },
   { name: 'status-find', screen: 'status', before: async (page) => { await page.evaluate(() => window.__emit('navigate', 'choose')); await page.waitForSelector('#statusPart .cattile.set', { timeout: 5000 }); } },
   // A category's page (the owner's computer-category pictures): its apps here as tiles, then every app to add.
@@ -2027,6 +2033,27 @@ const smokes = [
       await closeSheet(page);
     }
     if (!found) throw new Error('no app says it goes with Paperless-ngx');
+  } },
+  // An app's page before it's installed reads its note: what it does, the day to day, what it works with (each opening
+  // its own page), setting it up, and where to read more; and what it can replace, at its price, from Subscriptions.
+  { name: 'Find an app: its page says what it does and what it replaces', screen: 'status', run: async (page) => {
+    await findApp(page, 'kopia');
+    await installSheet(page, 'kopia');
+    await page.waitForSelector('#storeNotes .storeabout:has-text("A second backup of the homelab, made by different software")', { timeout: 5000 });
+    await page.waitForSelector('#storeNotes .guidefact:has-text("Uses about 300 MB of memory")', { timeout: 3000 });
+    await page.waitForSelector('#storeNotes .storedocs ol > li code:text-is("./homelab install kopia")', { timeout: 3000 });
+    await page.waitForSelector('#storeNotes .storeuse li strong:text-is("Snapshots:")', { timeout: 3000 });
+    if (await page.locator('#storeNotes .storesaves').count()) throw new Error('Kopia is not counted against a subscription, yet its page lists one');
+    await page.click('#storeNotes .storelearn a:text-is("kopia.io")');
+    await page.waitForFunction(() => window.__MOCK.opened === 'https://kopia.io', null, { timeout: 3000 })
+      .catch(async () => { throw new Error('Learn more opened ' + (await page.evaluate(() => window.__MOCK.opened))); });
+    await page.click('#storeNotes .storeworks button:has-text("Duplicati")');
+    await page.waitForSelector('#statusStore', { state: 'hidden', timeout: 5000 });
+    await findApp(page, 'tandoor');
+    await installSheet(page, 'tandoor');
+    await page.waitForSelector('#storeNotes .storesaves li:has-text("Plan to Eat"):has-text("$5.95 a month")', { timeout: 5000 });
+    await page.waitForSelector('#storeNotes .storesaves .pill:text-is("Up to $49 a year")', { timeout: 3000 });
+    await closeSheet(page);
   } },
   // Two apps that do the same job: an app's page says which one you already run and why one might keep one or both,
   // from whichever side the pair is written; an app you run is a tile of its own, not one to add.

@@ -46,7 +46,7 @@ func (h *homelab) startWhenDue(ctx context.Context, client *docker.Client, conta
 	var started []*catalog.App
 	for _, pa := range h.byProject(apps) {
 		for _, id := range pa.ids {
-			if err := client.Compose(ctx, h.project(pa.file), pa.profiles, "start", id); err != nil {
+			if err := h.startApps(ctx, client, h.project(pa.file), pa.profiles, "start", []string{id}); err != nil {
 				h.ui.Warn("start %s again: %v", id, err)
 				continue
 			}

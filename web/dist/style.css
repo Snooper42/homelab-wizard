@@ -3032,13 +3032,33 @@ nav .sidemenulist .sidedot + .total { margin-left:8px; }
 .storehead .storemarks { display:flex; } .storehead .storemarks .appmark { width:64px; height:64px; border-radius:16px; margin-right:-14px; box-shadow:0 0 0 3px var(--bg); }
 .storehead .storemarks + div { margin-left:24px; }
 .storenotes { padding:16px 20px; margin-top:0; }
-.storenotes h2 { margin:0 0 8px; font-size:15px; }
+#storeNotes .storenotes h2 { margin:0 0 8px; font-size:15px; }
 .storenotes ul { margin:0; padding-left:18px; display:grid; gap:6px; color:var(--muted); }
 .storenotes li.warn { color:var(--warn); }
 .storeapps { list-style:none; margin:0; padding:6px; display:grid; gap:2px; }
 .storeapp { all:unset; box-sizing:border-box; display:flex; align-items:center; gap:12px; width:100%; padding:10px 12px; border-radius:10px; cursor:default; }
 .storeapp:hover { background:var(--sunken); } .storeapp:focus-visible { outline:2px solid var(--accent); outline-offset:-2px; }
 .storeapp > span:last-child { display:flex; flex-direction:column; min-width:0; } .storeapp .muted { font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+#storeNotes { display:grid; gap:14px; }
+.storenotes p { margin:0 0 8px; color:var(--text); line-height:1.5; } .storenotes p:last-child { margin-bottom:0; }
+.storeabout ul { color:var(--text); }
+.storenotes code { font-size:12px; padding:1px 5px; border-radius:5px; background:var(--sunken); color:var(--text); overflow-wrap:anywhere; }
+.storenotes li strong { color:var(--text); }
+.storesaves .row { justify-content:space-between; align-items:center; margin-bottom:8px; } #storeNotes .storesaves .row h2, #storeNotes .storedocs summary h2 { margin:0; }
+.storesaves ul.saves { list-style:none; padding:0; gap:0; }
+.storesaves ul.saves li { display:grid; grid-template-columns:1fr auto; gap:2px 12px; padding:10px 0; border-top:1px solid var(--line); }
+.storesaves ul.saves li:first-child { border-top:0; padding-top:2px; }
+.storesaves .what { display:flex; flex-direction:column; } .storesaves .what strong { color:var(--text); } .storesaves .what .muted, .storesaves .cond { font-size:13px; }
+.storesaves .price { color:var(--text); font-variant-numeric:tabular-nums; text-align:right; } .storesaves .price .muted { font-size:13px; }
+.storesaves .cond { grid-column:1 / -1; }
+.storeworks .storeapps { padding:0; margin:0 -12px; } .storeworks .storeapp .muted { white-space:normal; }
+.storedocs { display:grid; gap:10px; }
+.storedocs summary { list-style:none; display:flex; align-items:center; gap:8px; cursor:default; } .storedocs summary::-webkit-details-marker { display:none; }
+.storedocs summary::before { content:'›'; display:inline-block; width:10px; color:var(--muted); transition:transform .15s; } .storedocs details[open] > summary::before { transform:rotate(90deg); }
+.storedocs summary h2 { margin:0; }
+.storedocs ol, .storedocs details ul { margin:8px 0 0; padding-left:22px; display:grid; gap:8px; color:var(--muted); line-height:1.45; }
+.storelearn .btn { padding:4px 10px; font-size:13px; text-decoration:none; }
+.storelearn { display:flex; flex-wrap:wrap; align-items:center; gap:8px; padding:0 4px; } .storelearn .muted { font-size:13px; margin-right:4px; }
 @container (max-width: 760px) { #statusStore { grid-template-columns:1fr; grid-template-areas:"head" "facts" "plan" "notes"; } #storePlan { position:static; margin-bottom:14px; } }
 @media (max-width: 700px) { .storehead .appmark { width:64px; height:64px; border-radius:16px; } }
 @media (prefers-color-scheme: dark) and (prefers-contrast: no-preference) {
