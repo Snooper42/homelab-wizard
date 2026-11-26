@@ -488,10 +488,11 @@ struct BackupsTests {
         let run = ISO8601DateFormatter().date(from: "2026-11-24T08:41:00Z")!
         let night = o.lastNight(now: run.addingTimeInterval(3600))
         #expect(night.figure == "2" && night.unit == "of 3 copied" && night.chip == "Mealie skipped")
-        #expect(night.caption == run.formatted(date: .omitted, time: .shortened) + " · Encrypted to Proton Drive")
+        // Its time alone: where they went is Off-site's.
+        #expect(night.caption == run.formatted(date: .omitted, time: .shortened))
         // Older than a night: when, in words, in place of the time.
         let older = o.lastNight(now: run.addingTimeInterval(4 * 86400)).caption
-        #expect(older != night.caption && older.hasSuffix(" · Encrypted to Proton Drive"))
+        #expect(older != night.caption && !older.contains("Encrypted"))
         let two = try JSONDecoder.homelab().decode(BackupOverview.self, from: Data(#"{"copies":[{"id":"a","name":"A","state":"stale"},{"id":"b","name":"B","state":"stale"}]}"#.utf8))
         #expect(two.lastNight().chip == "2 skipped" && two.lastNight().caption.isEmpty)
         #expect(try JSONDecoder.homelab().decode(BackupOverview.self, from: Data(#"{"copies":[{"id":"a","name":"A","state":"fresh"}]}"#.utf8)).lastNight().chip == nil)
