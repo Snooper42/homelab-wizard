@@ -4,7 +4,7 @@
 import { render } from 'preact';
 import { AppMark } from '../parts/AppMark';
 import { Card } from '../parts/Card';
-import { Spark } from '../Spark';
+import { brandOf, Mark } from '../finances/Mark';
 
 export interface Offer {
   /** The apps that together replace it, by ID. */
@@ -32,18 +32,23 @@ export interface SubscriptionsProps {
 
 const money = (n: number) => '$' + (n >= 100 ? Math.round(n).toLocaleString('en-US') : n.toFixed(2));
 
-function Row({ o, p, faded }: { o: Offer; p: SubscriptionsProps; faded?: boolean }) {
+/** One paid service as a tile (the owner, Nov 25: "the logo of the app that's being replaced, a nice ui with the pricing,
+ * and then the logos and the apps replacing it"): its mark and name, its price a month and a year, and under them the
+ * apps that stand in for it. What it takes for the saving to be real is the tile's tooltip. */
+function Tile({ o, p, faded }: { o: Offer; p: SubscriptionsProps; faded?: boolean }) {
   const name = (id: string) => p.catalog?.apps.find((a) => a.id === id)?.name || id;
+  const service = o.replaces.replace(/\s*\(.*\)$/, '');
   return (
-    <li class={'subrow' + (faded ? ' faded' : '')}>
-      <button type="button" class="subapp" onClick={() => p.open(o.apps[0])}>
-        <span class="sublogos" aria-hidden="true">{o.apps.slice(0, 2).map((id) => <AppMark key={id} id={id} name={name(id)} icon={p.icons?.[id] || ''} small />)}</span>
-        <span class="subnames"><strong>{o.apps.map(name).join(' + ')}</strong><span class="muted">instead of {o.replaces}</span></span>
+    <li class={'subtile' + (faded ? ' faded' : '')} title={o.condition}>
+      <div class="subsvc">
+        <Mark brand={brandOf(undefined, o.replaces)} name={service} size="lg" auto />
+        <span class="subsvcname"><strong>{service}</strong><span class={'pill ' + (o.kind === 'Direct' ? 'ok' : '')}>{o.kind}</span></span>
+      </div>
+      <div class="subcost"><span class="subbig">{money(o.monthly)}</span><span class="muted"> a month</span><span class="subyear">{money(o.annual)} a year</span></div>
+      <button type="button" class="subby" onClick={() => p.open(o.apps[0])}>
+        <span class="muted">{faded ? 'Could be' : 'Replaced by'}</span>
+        <span class="subapps">{o.apps.map((id) => <span key={id} class="subappname"><AppMark id={id} name={name(id)} icon={p.icons?.[id] || ''} small />{name(id)}</span>)}</span>
       </button>
-      <span class={'pill ' + (o.kind === 'Direct' ? 'ok' : '')} title={o.kind === 'Direct' ? 'The same thing, at home' : 'Does the same job, its own way'}>{o.kind}</span>
-      <span class="subprice"><strong>{money(o.monthly)}</strong><span class="muted"> a month</span></span>
-      <span class="subprice"><strong>{money(o.annual)}</strong><span class="muted"> a year</span></span>
-      {o.condition && <span class="subwhen muted">{o.condition}</span>}
     </li>
   );
 }
@@ -58,36 +63,41 @@ export function Subscriptions(p: SubscriptionsProps) {
   const pts = p.history.filter((x) => x.annual > 0);
   const since = pts.length > 1 ? pts[pts.length - 1].annual - pts[0].annual : 0;
   const sinceDay = pts.length > 1 ? new Date(pts[0].date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
+  const appName = (id: string) => p.catalog?.apps.find((a) => a.id === id)?.name || id;
+  // Where the saving comes from: each kind of app's share of the year, largest first, in its category's colour.
+  const cats = p.catalog?.categories || [];
+  const byCat = new Map<string, number>();
+  for (const o of now) { const c = p.catalog?.apps.find((a) => a.id === o.apps[0])?.category || 'other'; byCat.set(c, (byCat.get(c) || 0) + o.annual); }
+  const parts = [...byCat.entries()].sort((x, y) => y[1] - x[1]).map(([id, n], i) => ({ id, label: cats.find((c) => c.id === id)?.label || 'Your own', n, tone: `var(--cat-${(i % 8) + 1})` }));
   return (
     <div class="subpage">
-      <div class="row header"><div><h1>Subscriptions</h1><p class="lead">What your apps stand in for, at their annual prices</p></div></div>
-      <div class="anttiles">
-        <Card kind="anttile" id="subYear">
-          <div class="anthead"><h2>Saved a year</h2><span class="muted">{now.length} services</span></div>
-          <div class="antfig">{p.offers ? money(year) : '—'}</div>
-          <div class="antline muted">{since > 0 ? `+${money(since)} since ${sinceDay}` : 'From the apps running now'}</div>
-          <div class="antfoot">{pts.length > 2 ? <Spark values={pts.map((x) => x.annual)} w={240} h={36} title="The yearly saving over time" /> : <span class="antempty" />}</div>
+      <div class="row header"><div><h1>Subscriptions</h1><p class="lead">{p.offers ? `${money(year)} a year, ${money(month)} a month, instead of ${now.length} subscriptions` : 'Reading the prices…'}</p></div></div>
+      <div class="subtop">
+        <Card kind="subcard" id="subWhere">
+          <div class="anthead"><h2>Where it comes from</h2><span class="muted">{since > 0 ? `+${money(since)} since ${sinceDay}` : ''}</span></div>
+          {year > 0 ? <>
+            <div class="subbar" role="img" aria-label={parts.map((x) => `${x.label} ${money(x.n)}`).join(', ')}>{parts.map((x) => <span key={x.id} style={{ width: `${(100 * x.n) / year}%`, background: x.tone }} />)}</div>
+            <ul class="sublegend">{parts.map((x) => <li key={x.id}><i style={{ background: x.tone }} />{x.label}<strong>{money(x.n)}</strong></li>)}</ul>
+          </> : <p class="muted">None of your apps replaces a paid service yet.</p>}
         </Card>
-        <Card kind="anttile" id="subMonth">
-          <div class="anthead"><h2>A month</h2><span class="muted" /></div>
-          <div class="antfig">{p.offers ? money(month) : '—'}</div>
-          <div class="antline muted">{now[0] ? `${now[0].replaces} the most, ${money(now[0].monthly)}` : 'Nothing replaced yet'}</div>
-          <div class="antfoot">{year > 0 ? <span class="antbar" role="img" aria-label="Direct and equivalent"><span style={{ width: `${Math.round(100 * now.filter((o) => o.kind === 'Direct').reduce((t, o) => t + o.annual, 0) / year)}%` }} /></span> : <span class="antempty" />}</div>
-        </Card>
-        <Card kind="anttile" id="subCould">
-          <div class="anthead"><h2>Could save too</h2><span class="muted">{more.length} more</span></div>
-          <div class="antfig">{p.offers ? money(could) : '—'}<span class="muted"> a year</span></div>
-          <div class="antline muted">{more[0] ? `${more[0].apps.map((id) => p.catalog?.apps.find((a) => a.id === id)?.name || id).join(' + ')} instead of ${more[0].replaces}` : 'Every one you could'}</div>
-          <div class="antfoot"><span class="antempty" /></div>
+        <Card kind="subcard" id="subCould">
+          <div class="anthead"><h2>Could save {money(could)} more</h2><span class="muted">a year</span></div>
+          <ul class="subnext">{more.slice(0, 3).map((o) => (
+            <li key={o.replaces + o.apps.join()}><button type="button" class="subapp" onClick={() => p.open(o.apps[0])}>
+              <span class="sublogos" aria-hidden="true"><AppMark id={o.apps[0]} name={appName(o.apps[0])} icon={p.icons?.[o.apps[0]] || ''} small /></span>
+              <span class="subnames"><strong>{o.apps.map(appName).join(' + ')}</strong><span class="muted">instead of {o.replaces}</span></span>
+              <span class="subprice"><strong>{money(o.annual)}</strong></span>
+            </button></li>
+          ))}</ul>
         </Card>
       </div>
       <Card kind="subcard" id="subNow">
         <h2>Replaced now <span class="n">{now.length}</span></h2>
-        {now.length ? <ul class="sublist">{now.map((o) => <Row key={o.replaces + o.apps.join()} o={o} p={p} />)}</ul> : <p class="muted">None of your apps replaces a paid service yet.</p>}
+        {now.length ? <ul class="subtiles">{now.map((o) => <Tile key={o.replaces + o.apps.join()} o={o} p={p} />)}</ul> : <p class="muted">None of your apps replaces a paid service yet.</p>}
       </Card>
       {more.length > 0 && <Card kind="subcard" id="subMore">
         <h2>Could replace too <span class="n">{more.length}</span></h2>
-        <ul class="sublist">{more.map((o) => <Row key={o.replaces + o.apps.join()} o={o} p={p} faded />)}</ul>
+        <ul class="subtiles">{more.map((o) => <Tile key={o.replaces + o.apps.join()} o={o} p={p} faded />)}</ul>
       </Card>}
     </div>
   );

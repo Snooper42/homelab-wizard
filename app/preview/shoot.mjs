@@ -538,7 +538,7 @@ const shots = [
   // An app stopped by itself: the Apps card names it, with Start, Logs and its page; its category's row says so.
   { name: 'status-stopped', screen: 'status', mock: stoppedByItself() },
   // Status › Subscriptions (the owner, Nov 25): each app beside the paid service it replaces, at its price.
-  { name: 'status-subscriptions', screen: 'status', before: async (page) => { await page.click('#statusSide button[data-key="subscriptions"]', { timeout: 5000 }); await page.waitForSelector('#subNow .subrow', { timeout: 5000 }); } },
+  { name: 'status-subscriptions', screen: 'status', before: async (page) => { await page.click('#statusSide button[data-key="subscriptions"]', { timeout: 5000 }); await page.waitForSelector('#subNow .subtile', { timeout: 5000 }); } },
   // Analytics (the owner's web-analytics pictures): a few minutes of samples, on the page's clock.
   { name: 'status-analytics', screen: 'status', clock: true, mock: { usageSeries }, before: async (page) => {
     await page.click('#statusSide button[data-key="analytics"]', { timeout: 5000 });

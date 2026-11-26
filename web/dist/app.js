@@ -4446,29 +4446,32 @@
 
   // web/src/status/Subscriptions.tsx
   var money2 = (n3) => "$" + (n3 >= 100 ? Math.round(n3).toLocaleString("en-US") : n3.toFixed(2));
-  function Row3({ o: o3, p: p3, faded }) {
+  function Tile2({ o: o3, p: p3, faded }) {
     const name = (id2) => p3.catalog?.apps.find((a3) => a3.id === id2)?.name || id2;
-    return /* @__PURE__ */ u3("li", { class: "subrow" + (faded ? " faded" : ""), children: [
-      /* @__PURE__ */ u3("button", { type: "button", class: "subapp", onClick: () => p3.open(o3.apps[0]), children: [
-        /* @__PURE__ */ u3("span", { class: "sublogos", "aria-hidden": "true", children: o3.apps.slice(0, 2).map((id2) => /* @__PURE__ */ u3(AppMark, { id: id2, name: name(id2), icon: p3.icons?.[id2] || "", small: true }, id2)) }),
-        /* @__PURE__ */ u3("span", { class: "subnames", children: [
-          /* @__PURE__ */ u3("strong", { children: o3.apps.map(name).join(" + ") }),
-          /* @__PURE__ */ u3("span", { class: "muted", children: [
-            "instead of ",
-            o3.replaces
-          ] })
+    const service = o3.replaces.replace(/\s*\(.*\)$/, "");
+    return /* @__PURE__ */ u3("li", { class: "subtile" + (faded ? " faded" : ""), title: o3.condition, children: [
+      /* @__PURE__ */ u3("div", { class: "subsvc", children: [
+        /* @__PURE__ */ u3(Mark, { brand: brandOf(void 0, o3.replaces), name: service, size: "lg", auto: true }),
+        /* @__PURE__ */ u3("span", { class: "subsvcname", children: [
+          /* @__PURE__ */ u3("strong", { children: service }),
+          /* @__PURE__ */ u3("span", { class: "pill " + (o3.kind === "Direct" ? "ok" : ""), children: o3.kind })
         ] })
       ] }),
-      /* @__PURE__ */ u3("span", { class: "pill " + (o3.kind === "Direct" ? "ok" : ""), title: o3.kind === "Direct" ? "The same thing, at home" : "Does the same job, its own way", children: o3.kind }),
-      /* @__PURE__ */ u3("span", { class: "subprice", children: [
-        /* @__PURE__ */ u3("strong", { children: money2(o3.monthly) }),
-        /* @__PURE__ */ u3("span", { class: "muted", children: " a month" })
+      /* @__PURE__ */ u3("div", { class: "subcost", children: [
+        /* @__PURE__ */ u3("span", { class: "subbig", children: money2(o3.monthly) }),
+        /* @__PURE__ */ u3("span", { class: "muted", children: " a month" }),
+        /* @__PURE__ */ u3("span", { class: "subyear", children: [
+          money2(o3.annual),
+          " a year"
+        ] })
       ] }),
-      /* @__PURE__ */ u3("span", { class: "subprice", children: [
-        /* @__PURE__ */ u3("strong", { children: money2(o3.annual) }),
-        /* @__PURE__ */ u3("span", { class: "muted", children: " a year" })
-      ] }),
-      o3.condition && /* @__PURE__ */ u3("span", { class: "subwhen muted", children: o3.condition })
+      /* @__PURE__ */ u3("button", { type: "button", class: "subby", onClick: () => p3.open(o3.apps[0]), children: [
+        /* @__PURE__ */ u3("span", { class: "muted", children: faded ? "Could be" : "Replaced by" }),
+        /* @__PURE__ */ u3("span", { class: "subapps", children: o3.apps.map((id2) => /* @__PURE__ */ u3("span", { class: "subappname", children: [
+          /* @__PURE__ */ u3(AppMark, { id: id2, name: name(id2), icon: p3.icons?.[id2] || "", small: true }),
+          name(id2)
+        ] }, id2)) })
+      ] })
     ] });
   }
   function Subscriptions(p3) {
@@ -4480,47 +4483,54 @@
     const pts = p3.history.filter((x3) => x3.annual > 0);
     const since = pts.length > 1 ? pts[pts.length - 1].annual - pts[0].annual : 0;
     const sinceDay = pts.length > 1 ? (/* @__PURE__ */ new Date(pts[0].date + "T12:00:00")).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "";
+    const appName2 = (id2) => p3.catalog?.apps.find((a3) => a3.id === id2)?.name || id2;
+    const cats = p3.catalog?.categories || [];
+    const byCat = /* @__PURE__ */ new Map();
+    for (const o3 of now2) {
+      const c4 = p3.catalog?.apps.find((a3) => a3.id === o3.apps[0])?.category || "other";
+      byCat.set(c4, (byCat.get(c4) || 0) + o3.annual);
+    }
+    const parts3 = [...byCat.entries()].sort((x3, y3) => y3[1] - x3[1]).map(([id2, n3], i3) => ({ id: id2, label: cats.find((c4) => c4.id === id2)?.label || "Your own", n: n3, tone: `var(--cat-${i3 % 8 + 1})` }));
     return /* @__PURE__ */ u3("div", { class: "subpage", children: [
       /* @__PURE__ */ u3("div", { class: "row header", children: /* @__PURE__ */ u3("div", { children: [
         /* @__PURE__ */ u3("h1", { children: "Subscriptions" }),
-        /* @__PURE__ */ u3("p", { class: "lead", children: "What your apps stand in for, at their annual prices" })
+        /* @__PURE__ */ u3("p", { class: "lead", children: p3.offers ? `${money2(year)} a year, ${money2(month3)} a month, instead of ${now2.length} subscriptions` : "Reading the prices…" })
       ] }) }),
-      /* @__PURE__ */ u3("div", { class: "anttiles", children: [
-        /* @__PURE__ */ u3(Card, { kind: "anttile", id: "subYear", children: [
+      /* @__PURE__ */ u3("div", { class: "subtop", children: [
+        /* @__PURE__ */ u3(Card, { kind: "subcard", id: "subWhere", children: [
           /* @__PURE__ */ u3("div", { class: "anthead", children: [
-            /* @__PURE__ */ u3("h2", { children: "Saved a year" }),
-            /* @__PURE__ */ u3("span", { class: "muted", children: [
-              now2.length,
-              " services"
-            ] })
+            /* @__PURE__ */ u3("h2", { children: "Where it comes from" }),
+            /* @__PURE__ */ u3("span", { class: "muted", children: since > 0 ? `+${money2(since)} since ${sinceDay}` : "" })
           ] }),
-          /* @__PURE__ */ u3("div", { class: "antfig", children: p3.offers ? money2(year) : "—" }),
-          /* @__PURE__ */ u3("div", { class: "antline muted", children: since > 0 ? `+${money2(since)} since ${sinceDay}` : "From the apps running now" }),
-          /* @__PURE__ */ u3("div", { class: "antfoot", children: pts.length > 2 ? /* @__PURE__ */ u3(Spark, { values: pts.map((x3) => x3.annual), w: 240, h: 36, title: "The yearly saving over time" }) : /* @__PURE__ */ u3("span", { class: "antempty" }) })
+          year > 0 ? /* @__PURE__ */ u3(S, { children: [
+            /* @__PURE__ */ u3("div", { class: "subbar", role: "img", "aria-label": parts3.map((x3) => `${x3.label} ${money2(x3.n)}`).join(", "), children: parts3.map((x3) => /* @__PURE__ */ u3("span", { style: { width: `${100 * x3.n / year}%`, background: x3.tone } }, x3.id)) }),
+            /* @__PURE__ */ u3("ul", { class: "sublegend", children: parts3.map((x3) => /* @__PURE__ */ u3("li", { children: [
+              /* @__PURE__ */ u3("i", { style: { background: x3.tone } }),
+              x3.label,
+              /* @__PURE__ */ u3("strong", { children: money2(x3.n) })
+            ] }, x3.id)) })
+          ] }) : /* @__PURE__ */ u3("p", { class: "muted", children: "None of your apps replaces a paid service yet." })
         ] }),
-        /* @__PURE__ */ u3(Card, { kind: "anttile", id: "subMonth", children: [
+        /* @__PURE__ */ u3(Card, { kind: "subcard", id: "subCould", children: [
           /* @__PURE__ */ u3("div", { class: "anthead", children: [
-            /* @__PURE__ */ u3("h2", { children: "A month" }),
-            /* @__PURE__ */ u3("span", { class: "muted" })
-          ] }),
-          /* @__PURE__ */ u3("div", { class: "antfig", children: p3.offers ? money2(month3) : "—" }),
-          /* @__PURE__ */ u3("div", { class: "antline muted", children: now2[0] ? `${now2[0].replaces} the most, ${money2(now2[0].monthly)}` : "Nothing replaced yet" }),
-          /* @__PURE__ */ u3("div", { class: "antfoot", children: year > 0 ? /* @__PURE__ */ u3("span", { class: "antbar", role: "img", "aria-label": "Direct and equivalent", children: /* @__PURE__ */ u3("span", { style: { width: `${Math.round(100 * now2.filter((o3) => o3.kind === "Direct").reduce((t3, o3) => t3 + o3.annual, 0) / year)}%` } }) }) : /* @__PURE__ */ u3("span", { class: "antempty" }) })
-        ] }),
-        /* @__PURE__ */ u3(Card, { kind: "anttile", id: "subCould", children: [
-          /* @__PURE__ */ u3("div", { class: "anthead", children: [
-            /* @__PURE__ */ u3("h2", { children: "Could save too" }),
-            /* @__PURE__ */ u3("span", { class: "muted", children: [
-              more2.length,
+            /* @__PURE__ */ u3("h2", { children: [
+              "Could save ",
+              money2(could),
               " more"
-            ] })
+            ] }),
+            /* @__PURE__ */ u3("span", { class: "muted", children: "a year" })
           ] }),
-          /* @__PURE__ */ u3("div", { class: "antfig", children: [
-            p3.offers ? money2(could) : "—",
-            /* @__PURE__ */ u3("span", { class: "muted", children: " a year" })
-          ] }),
-          /* @__PURE__ */ u3("div", { class: "antline muted", children: more2[0] ? `${more2[0].apps.map((id2) => p3.catalog?.apps.find((a3) => a3.id === id2)?.name || id2).join(" + ")} instead of ${more2[0].replaces}` : "Every one you could" }),
-          /* @__PURE__ */ u3("div", { class: "antfoot", children: /* @__PURE__ */ u3("span", { class: "antempty" }) })
+          /* @__PURE__ */ u3("ul", { class: "subnext", children: more2.slice(0, 3).map((o3) => /* @__PURE__ */ u3("li", { children: /* @__PURE__ */ u3("button", { type: "button", class: "subapp", onClick: () => p3.open(o3.apps[0]), children: [
+            /* @__PURE__ */ u3("span", { class: "sublogos", "aria-hidden": "true", children: /* @__PURE__ */ u3(AppMark, { id: o3.apps[0], name: appName2(o3.apps[0]), icon: p3.icons?.[o3.apps[0]] || "", small: true }) }),
+            /* @__PURE__ */ u3("span", { class: "subnames", children: [
+              /* @__PURE__ */ u3("strong", { children: o3.apps.map(appName2).join(" + ") }),
+              /* @__PURE__ */ u3("span", { class: "muted", children: [
+                "instead of ",
+                o3.replaces
+              ] })
+            ] }),
+            /* @__PURE__ */ u3("span", { class: "subprice", children: /* @__PURE__ */ u3("strong", { children: money2(o3.annual) }) })
+          ] }) }, o3.replaces + o3.apps.join())) })
         ] })
       ] }),
       /* @__PURE__ */ u3(Card, { kind: "subcard", id: "subNow", children: [
@@ -4528,14 +4538,14 @@
           "Replaced now ",
           /* @__PURE__ */ u3("span", { class: "n", children: now2.length })
         ] }),
-        now2.length ? /* @__PURE__ */ u3("ul", { class: "sublist", children: now2.map((o3) => /* @__PURE__ */ u3(Row3, { o: o3, p: p3 }, o3.replaces + o3.apps.join())) }) : /* @__PURE__ */ u3("p", { class: "muted", children: "None of your apps replaces a paid service yet." })
+        now2.length ? /* @__PURE__ */ u3("ul", { class: "subtiles", children: now2.map((o3) => /* @__PURE__ */ u3(Tile2, { o: o3, p: p3 }, o3.replaces + o3.apps.join())) }) : /* @__PURE__ */ u3("p", { class: "muted", children: "None of your apps replaces a paid service yet." })
       ] }),
       more2.length > 0 && /* @__PURE__ */ u3(Card, { kind: "subcard", id: "subMore", children: [
         /* @__PURE__ */ u3("h2", { children: [
           "Could replace too ",
           /* @__PURE__ */ u3("span", { class: "n", children: more2.length })
         ] }),
-        /* @__PURE__ */ u3("ul", { class: "sublist", children: more2.map((o3) => /* @__PURE__ */ u3(Row3, { o: o3, p: p3, faded: true }, o3.replaces + o3.apps.join())) })
+        /* @__PURE__ */ u3("ul", { class: "subtiles", children: more2.map((o3) => /* @__PURE__ */ u3(Tile2, { o: o3, p: p3, faded: true }, o3.replaces + o3.apps.join())) })
       ] })
     ] });
   }
@@ -4684,7 +4694,7 @@
     if (cls === "ok" && a3.health === "native") return [cls, "Running"];
     return [cls, cls === "ok" && a3.since ? upFor(a3.since, now2) : words5];
   }
-  function Tile2({ a: a3, p: p3, menu: menu2, setMenu }) {
+  function Tile3({ a: a3, p: p3, menu: menu2, setMenu }) {
     const [cls, line] = tileLine(a3, p3);
     const [said2, say] = d2("");
     const entry = p3.catalog?.apps.find((c4) => c4.id === a3.id);
@@ -4801,7 +4811,7 @@
         /* @__PURE__ */ u3("span", { class: "n", children: apps2.length })
       ] }),
       shown9.length || addOwn && change ? /* @__PURE__ */ u3("ul", { class: "cattiles", children: [
-        shown9.map((a3) => /* @__PURE__ */ u3(Tile2, { a: a3, p: list, menu: menu2, setMenu }, a3.id)),
+        shown9.map((a3) => /* @__PURE__ */ u3(Tile3, { a: a3, p: list, menu: menu2, setMenu }, a3.id)),
         addOwn && change && /* @__PURE__ */ u3("li", { class: "cattile toadd opens addown", onClick: addOwn, children: [
           /* @__PURE__ */ u3("span", { class: "appmark ownmark", "aria-hidden": "true", children: /* @__PURE__ */ u3("svg", { class: "icon", viewBox: "0 0 24 24", children: /* @__PURE__ */ u3("path", { d: "M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16zM3.27 6.96 12 12.01l8.73-5.05M12 22.08V12" }) }) }),
           /* @__PURE__ */ u3("strong", { class: "catname", children: "Add your own app" }),
@@ -5435,7 +5445,7 @@
     if (!toggle) return words5;
     return words5.split(new RegExp("(?<=\\.)\\s+")).filter((t3) => !/^(true|false)\b/i.test(t3)).join(" ");
   }
-  function Row4({ s: s3, p: p3, value, hidden: hidden3, edit }) {
+  function Row3({ s: s3, p: p3, value, hidden: hidden3, edit }) {
     const [result, setResult] = d2(null);
     const [testing, setTesting] = d2(false);
     const [kept6, setKept] = d2(void 0);
@@ -5507,7 +5517,7 @@
     const searching = !!p3.view.query.trim();
     return /* @__PURE__ */ u3(S, { children: p3.pages.map((pg) => /* @__PURE__ */ u3("div", { class: "group", "data-page": pg.name, "data-kind": pg.kind, hidden: !show4.counts[pg.name], children: [
       /* @__PURE__ */ u3("h2", { hidden: !searching, children: pg.name }),
-      pg.items.map((s3) => /* @__PURE__ */ u3(Row4, { s: s3, p: p3, value: edits[s3.key], hidden: !show4.keys.has(s3.key), edit }, s3.key))
+      pg.items.map((s3) => /* @__PURE__ */ u3(Row3, { s: s3, p: p3, value: edits[s3.key], hidden: !show4.keys.has(s3.key), edit }, s3.key))
     ] }, pg.name)) });
   }
   function mountForm(el3, props, version) {

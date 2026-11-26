@@ -3684,3 +3684,40 @@ nav .sidemenulist .sidedot + .total { margin-left:8px; }
 .subwhen { grid-column:1 / -1; font-size:12px; margin:4px 0 0 50px; }
 @container (max-width: 760px) { .subrow { grid-template-columns:minmax(0, 1fr) auto; } .subrow .subprice:last-of-type { display:none; } .subwhen { margin-left:0; } }
 @media (max-width: 700px) { .subrow { grid-template-columns:minmax(0, 1fr) auto; } .subrow .pill { display:none; } .subrow .subprice:last-of-type { display:none; } .subwhen { margin-left:0; } }
+.subtop { display:grid; grid-template-columns:minmax(0, 3fr) minmax(0, 2fr); gap:14px; margin-bottom:14px; }
+.subtop .card { margin:0; }
+.subbar { display:flex; height:14px; border-radius:999px; overflow:hidden; margin:14px 0 14px; background:var(--sunken); }
+.subbar > span { display:block; height:100%; }
+.subbar > span + span { box-shadow:inset 2px 0 0 var(--panel); }
+.sublegend { list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:8px 24px; font-size:13px; }
+.sublegend li { display:flex; align-items:center; gap:8px; }
+.sublegend i { width:10px; height:10px; border-radius:3px; flex:none; }
+.sublegend strong { margin-left:auto; font-variant-numeric:tabular-nums; }
+.subnext { list-style:none; margin:6px 0 0; padding:0; }
+.subnext li + li { border-top:1px solid var(--line); }
+.subnext .subapp { width:100%; padding:10px 0; }
+.subnext .subprice { margin-left:auto; }
+@container (max-width: 860px) { .subtop { grid-template-columns:1fr; } }
+@media (max-width: 700px) { .subtop { grid-template-columns:1fr; } .sublegend { grid-template-columns:1fr; } }
+/* A paid service as a tile: its mark and name, its price, and the apps standing in for it (the owner, Nov 25). */
+.subtiles { list-style:none; margin:8px 0 0; padding:0; display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:12px; }
+.subtile { display:flex; flex-direction:column; gap:12px; padding:16px; border:1px solid var(--line); border-radius:16px; background:color-mix(in srgb, var(--panel) 60%, transparent); }
+.subtile.faded { border-style:dashed; }
+.subtile.faded .subsvc, .subtile.faded .subcost { opacity:.75; }
+.subsvc { display:flex; align-items:center; gap:12px; min-width:0; }
+.subsvc .fmark.lg { width:44px; height:44px; border-radius:12px; flex:none; }
+.subsvcname { display:flex; flex-direction:column; align-items:flex-start; gap:4px; min-width:0; }
+.subsvcname strong { font-size:15px; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.subcost { font-variant-numeric:tabular-nums; }
+.subbig { font-size:26px; font-weight:700; letter-spacing:-.02em; }
+.subyear { display:block; color:var(--muted); font-size:13px; }
+.subby { all:unset; box-sizing:border-box; display:flex; flex-direction:column; gap:6px; margin-top:auto; padding-top:12px; border-top:1px solid var(--line); cursor:default; }
+.subby:focus-visible { outline:2px solid var(--accent); outline-offset:2px; border-radius:6px; }
+.subby > .muted { font-size:12px; }
+.subapps { display:flex; flex-wrap:wrap; gap:6px 14px; }
+.subappname { display:inline-flex; align-items:center; gap:8px; font-weight:600; font-size:14px; }
+.subappname .appmark.mini { width:26px; height:26px; border-radius:7px; }
+.subby:hover .subappname { color:var(--link); }
+@container (max-width: 980px) { .subtiles { grid-template-columns:repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 700px) { .subtiles { grid-template-columns:1fr; } }
+@media (prefers-color-scheme: dark) and (prefers-contrast: no-preference) { .subtile { background:var(--glow-04); border-color:var(--glow-1); } .subby { border-color:var(--glow-1); } }
