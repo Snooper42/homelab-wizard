@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/Snooper42/homelab-wizard/internal/ui"
 )
@@ -69,5 +70,49 @@ func TestWebMethods(t *testing.T) {
 	}
 	if v, err := call("People"); err != nil || v == nil {
 		t.Errorf("People with no household yet: %v, %v", v, err)
+	}
+}
+
+// Adding apps from the web page (serve_web_install.go): a device allowed to change things, over https (the form's
+// passwords go through it), and the selection is apps or sets, never a flag for the command it runs.
+func TestWebInstallMethods(t *testing.T) {
+	root, _ := repoCopy(t)
+	h, err := newHomelab(&ui.UI{Out: &strings.Builder{}}, root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	m := h.webInstallMethods()
+	for _, name := range []string{"Plan", "Install", "AddCustom", "Wire", "WireSeerr", "FixQbitPassword"} {
+		if !m[name].Change {
+			t.Errorf("%s: only a device allowed to change things", name)
+		}
+	}
+	for _, name := range []string{"Plan", "Install", "WireSeerr"} {
+		if !m[name].Private {
+			t.Errorf("%s carries passwords: over https only", name)
+		}
+	}
+	raw := func(v ...any) []json.RawMessage {
+		var out []json.RawMessage
+		for _, x := range v {
+			b, _ := json.Marshal(x)
+			out = append(out, b)
+		}
+		return out
+	}
+	if _, _, err := installArgs(raw([]string{"--root=/"}, nil)); err == nil {
+		t.Error("a flag passed as an app")
+	}
+	if tokens, set, err := installArgs(raw([]string{"jellyfin", "media"}, map[string]string{"TZ": "Europe/Lisbon"})); err != nil || len(tokens) != 2 || set["TZ"] != "Europe/Lisbon" {
+		t.Errorf("installArgs: %v %v %v", tokens, set, err)
+	}
+	if _, _, err := installArgs(raw([]string{"jellyfin"})); err != nil {
+		t.Errorf("no settings typed: %v", err)
+	}
+	if err := h.runSelfJSON(context.Background(), time.Second, map[string]string{"X": "a\nB=b"}, func(jsonLine) {}, func(string) {}, "plan"); err == nil || !strings.Contains(err.Error(), "one line") {
+		t.Errorf("a setting with a line break would set another: %v", err)
+	}
+	if all := h.servedMethods(); all["Install"].Stream == nil || all["Wire"].Stream == nil {
+		t.Error("Install and Connect apps stream their progress")
 	}
 }
