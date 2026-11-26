@@ -58,6 +58,7 @@ try { if ((window.__MOCK || {}).tidyTab) localStorage.setItem('homelab.tidyTab',
     Health: () => later(M.health || { agent: 'running', lastCheck: new Date(Date.now() - 4 * 60000).toISOString(), power: 'plugged', keptAwake: true }),
     StartAgent: () => { M.agentStarted = true; M.health = { ...(M.health || {}), agent: 'running' }; return later(null); },
     Catalog: () => later(M.catalog),
+    SavingsRows: () => later(M.savingsRows || []),
     // statusDelay: a slow engine (ms); M.statusAnswered once it has answered.
     Status: () => (M.statusError ? Promise.reject(new Error(M.statusError)) : later(M.status, M.statusDelay).then((st) => { M.statusAnswered = true; return st; })),
     // lastStatus: the agent's last reading, lastStatusAge seconds old (default 20).

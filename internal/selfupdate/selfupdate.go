@@ -331,12 +331,16 @@ func Stage(ctx context.Context, r Release, dir string, on func(done, total int64
 // one installed (N24). GitHub's checksum comes from the same release as the
 // download, so it says the file arrived whole, not who made it: a release
 // put up by someone who got at the repository would pass it, and the swap
-// takes the quarantine off, so Gatekeeper would not ask either. An app
-// with no Team ID (an ad-hoc build, made without the Developer ID secret)
-// has no signer to keep, and takes the update as before.
+// takes the quarantine off, so Gatekeeper would not ask either. Past the
+// team, the new app must meet the installed one's designated requirement,
+// which names its certificate: that holds an app signed with a certificate
+// of the household's own (no Team ID, docs/Releasing.md) to it too. An
+// ad-hoc app (made without a signing secret) has neither to keep, and takes
+// the update as before, held to the build provenance alone.
 func keepsSigner(ctx context.Context, installed, staged string) error {
 	team := teamOf(ctx, installed)
-	if team == "" {
+	req := requirementOf(ctx, installed)
+	if team == "" && req == "" {
 		return nil
 	}
 	if out, err := exec.CommandContext(ctx, "codesign", "--verify", "--deep", "--strict", staged).CombinedOutput(); err != nil {
@@ -345,7 +349,26 @@ func keepsSigner(ctx context.Context, installed, staged string) error {
 	if got := teamOf(ctx, staged); got != team {
 		return fmt.Errorf("the new build is signed by someone else (team %s, not %s), so it was not installed; download the newest build from the release page instead", cmpOr(got, "none"), team)
 	}
+	if req != "" {
+		if out, err := exec.CommandContext(ctx, "codesign", "--verify", "--deep", "--strict", "-R="+req, staged).CombinedOutput(); err != nil {
+			return fmt.Errorf("the new build is signed by someone else (it does not meet this app's signature, %s), so it was not installed; download the newest build from the release page instead", strings.TrimSpace(string(out)))
+		}
+	}
 	return nil
+}
+
+// requirementOf is the designated requirement app is signed with, as
+// codesign -d -r- prints it: "" for none, or for an ad-hoc signature, whose
+// requirement is its own code hash and so no other build meets it.
+func requirementOf(ctx context.Context, app string) string {
+	out, _ := exec.CommandContext(ctx, "codesign", "-d", "-r-", app).CombinedOutput()
+	for _, line := range strings.Split(string(out), "\n") {
+		_, req, ok := strings.Cut(line, "designated => ")
+		if req = strings.TrimSpace(req); ok && req != "" && !strings.HasPrefix(req, "cdhash ") {
+			return req
+		}
+	}
+	return ""
 }
 
 // teamOf is the Team ID app is signed with: "" for none (an ad-hoc
