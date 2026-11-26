@@ -322,3 +322,38 @@ func Apps(c *catalog.Catalog) []*catalog.App {
 	}
 	return out
 }
+
+// AddArgs is the homelab command that adds s (homelab custom add … --apply),
+// and what to give it on its input: its settings, as KEY=value lines, with
+// --env-stdin. An own app's settings are often a password or an API key, so
+// they never go on the command line, where anyone on the machine could read
+// them in the process list. A setting with a line break is refused, so it
+// can't set another.
+func (s Spec) AddArgs() (args []string, stdin string, err error) {
+	args = []string{"custom", "add", s.ID, "--image", s.Image, "--name", s.Name, "--category", s.Category, "--apply"}
+	if s.Port > 0 {
+		args = append(args, "--port", fmt.Sprint(s.Port))
+	}
+	if s.Description != "" {
+		args = append(args, "--description", s.Description)
+	}
+	for _, v := range s.Volumes {
+		args = append(args, "--volume", v)
+	}
+	if len(s.Env) == 0 {
+		return args, "", nil
+	}
+	keys := make([]string, 0, len(s.Env))
+	for k := range s.Env {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	var b strings.Builder
+	for _, k := range keys {
+		if strings.ContainsAny(k+s.Env[k], "\r\n") {
+			return nil, "", fmt.Errorf("the setting %s is one line", k)
+		}
+		b.WriteString(k + "=" + s.Env[k] + "\n")
+	}
+	return append(args, "--env-stdin"), b.String(), nil
+}

@@ -931,6 +931,24 @@ func TestCustomAppLifecycle(t *testing.T) {
 	}
 }
 
+// custom add --env-stdin reads your own app's settings as KEY=value lines,
+// as the desktop app and the web page send them, off the command line.
+func TestCustomAddReadsSettingsFromItsInput(t *testing.T) {
+	fakeDocker(t, nil)
+	root, _ := repoCopy(t)
+	out, code := homelabCmd(t, root, "DB_PASSWORD=s3cret-pw\n\n# a note\nTZ=Europe/Lisbon\n", "custom", "add", "whiteboard", "--image", "docker.io/excalidraw/excalidraw:latest", "--port", "80", "--env-stdin", "--apply")
+	if code != 0 || !strings.Contains(out, "added whiteboard") {
+		t.Fatalf("add exit %d:\n%s", code, out)
+	}
+	data, err := os.ReadFile(filepath.Join(root, "stacks", "custom", "compose.yaml"))
+	if err != nil || !strings.Contains(string(data), "DB_PASSWORD") || !strings.Contains(string(data), "s3cret-pw") || !strings.Contains(string(data), "Europe/Lisbon") {
+		t.Fatalf("the settings were not kept: %v\n%s", err, data)
+	}
+	if _, code := homelabCmd(t, root, "not a setting\n", "custom", "add", "other", "--image", "docker.io/library/nginx:latest", "--env-stdin", "--apply"); code == 0 {
+		t.Error("a line that is no KEY=value was taken")
+	}
+}
+
 func TestTailscaleVerdict(t *testing.T) {
 	cases := []struct {
 		status, routes string

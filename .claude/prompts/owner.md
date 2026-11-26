@@ -72,6 +72,12 @@ The loops add questions here: the question, the options, the one they recommend,
 - **From the redesign (Nov 23):** show your wife the *Finances on a partner's phone* picture (`docs/Redesign.md`, *On the iPhone*). Is that what she'd want?
 - **From the redesign (Nov 23):** Setup off the phone's tab bar, with its unfinished steps shown on Status: OK?
 - **From the redesign (Nov 23):** the phone's accounts as small cards to swipe, or as a list?
+- **From lane Q (Nov 26): wiping the homelab from the web page.** #916 gives the web page *Take the homelab off this machine*, including **delete the apps' data** and **delete the backups**, for any device allowed to make changes. On the computer that needs someone at the machine; from the web page, a phone left unlocked at home could wipe everything, backups too, with no way back.
+  - **(a) Recommended:** the web page can take the homelab off, but deleting the data and the backups stays on the computer.
+  - **(b)** All of it on the web page, as #916 has it now.
+  - **(c)** None of it on the web page: uninstall stays the computer's, as Appearance does.
+
+  Meanwhile #916 waits on this (and on two other changes in its review), and lane Q carries on with its list.
 - **From the redesign (Nov 25): Analytics' week.** Nothing on the machine keeps the processor and memory over time: Status samples them only while it's open. So Analytics draws the minutes since Status opened, and says *A week isn't kept yet*. Drawing your picture's week and month needs the agent to keep a sample (new work, lane Q's Go side):
   - **(a) Recommended:** the agent keeps one sample every 5 minutes for a month, in a small file in the homelab's data folder (about 1 MB; nothing leaves the machine). Then Day, Week and Month, the nightly jobs dotted.
   - **(b)** Read Beszel's history where Beszel is installed (nothing kept by us, but only with Beszel).

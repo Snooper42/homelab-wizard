@@ -42,7 +42,7 @@ Apps:
   homelab detect                       containers already running on this machine
   homelab cleanup [--volumes]          remove old containers whose apps now run in the homelab
   homelab signups open|close           Vaultwarden sign-ups, open for 10 minutes (--for 30m)
-  homelab custom add <id> --image X    add your own app (--port, --volume, --env, --install)
+  homelab custom add <id> --image X    add your own app (--port, --volume, --env, --env-stdin, --install)
   homelab custom [remove <id>]         list or remove your own apps
   homelab adopt <apps>                 move apps running outside the homelab into it:
                                        stop the old containers, copy their data, start
