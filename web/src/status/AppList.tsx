@@ -706,7 +706,7 @@ export function AppList(p: AppListProps) {
 export function ShowAll() {
   const f = useFold();
   const on = useFilter().on;
-  return <>{on ? <FilterBox /> : <button id="statusAll" class="linkbtn" onClick={() => (listing ? foldAgain() : setFold({ all: true, picked: {} }))}>{listing ? 'Fold them again' : 'Show every app'}</button>}</>;
+  return <>{on ? <FilterBox /> : <button id="statusAll" class="linkbtn" onClick={() => (f.all ? foldAgain() : setFold({ all: true, picked: {} }))}>{f.all ? 'Fold them again' : 'Show every app'}</button>}</>;
 }
 
 /** Renders the list into the table body el. */

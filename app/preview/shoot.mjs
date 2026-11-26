@@ -2840,6 +2840,8 @@ const smokes = [
     if (last !== 'Media automation') throw new Error(`groups: ${order.join(', ')}`);
     const auto = page.locator(`${heads}:has-text("Media automation")`);
     if ((await auto.locator('.foldbtn').getAttribute('aria-expanded')) !== 'false') await auto.locator('.foldbtn').click();
+    const mediaFold = page.locator(heads).filter({ has: page.locator('.foldbtn', { hasText: /^.Media$/ }) }).locator('.foldbtn');
+    if ((await mediaFold.getAttribute('aria-expanded')) !== 'false') await mediaFold.click();
     const line = auto.locator('.names');
     if ((await line.textContent()) !== 'Finds and downloads what you ask for in Seerr' || !/Sonarr/.test(await line.getAttribute('title'))) throw new Error(`folded line: ${await line.textContent()}`);
     // Seerr is in Media with Jellyfin, not under the fold.
@@ -3819,6 +3821,10 @@ const smokes = [
   // here though it's healthy; opening or folding one here saves it there; Show every app is this device's own and saves
   // nothing; Fold them again puts every device back to the defaults.
   { name: 'Status folds are kept by the computer, the same on every device', screen: 'status', mock: { statusOpen: '', statusFolds: { Security: true } }, run: async (page) => {
+    // Kept folds don't bring the list back on their own; Show every app does.
+    await page.waitForSelector('#statusPanel .ovrow', { timeout: 5000 });
+    if (await page.isVisible('#statusRows tr')) throw new Error('kept folds brought the old list back');
+    await page.click('#statusAll');
     await page.waitForSelector('#statusRows tr:has(strong:text-is("Vaultwarden"))', { timeout: 5000 });
     await page.click('#statusRows tr.grouphead:has-text("Security") button.foldbtn');
     await page.waitForFunction(() => window.__MOCK.statusFoldsSaved?.at(-1)?.Security === false, null, { timeout: 5000 });

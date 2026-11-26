@@ -8072,7 +8072,7 @@
   function ShowAll() {
     const f4 = useFold();
     const on2 = useFilter().on;
-    return /* @__PURE__ */ u3(S, { children: on2 ? /* @__PURE__ */ u3(FilterBox, {}) : /* @__PURE__ */ u3("button", { id: "statusAll", class: "linkbtn", onClick: () => listing ? foldAgain() : setFold({ all: true, picked: {} }), children: listing ? "Fold them again" : "Show every app" }) });
+    return /* @__PURE__ */ u3(S, { children: on2 ? /* @__PURE__ */ u3(FilterBox, {}) : /* @__PURE__ */ u3("button", { id: "statusAll", class: "linkbtn", onClick: () => f4.all ? foldAgain() : setFold({ all: true, picked: {} }), children: f4.all ? "Fold them again" : "Show every app" }) });
   }
   function mountAppList(el3, props) {
     R(/* @__PURE__ */ u3(AppList, { ...props }), el3);
