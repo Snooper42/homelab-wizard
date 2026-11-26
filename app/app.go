@@ -2120,25 +2120,20 @@ func (a *App) AddCustom(spec custom.Spec) (api.Catalog, error) {
 	if err := spec.Check(c); err != nil {
 		return api.Catalog{}, err
 	}
-	args := []string{"custom", "add", spec.ID, "--image", spec.Image, "--name", spec.Name, "--category", spec.Category, "--apply"}
-	if spec.Port > 0 {
-		args = append(args, "--port", strconv.Itoa(spec.Port))
-	}
-	if spec.Description != "" {
-		args = append(args, "--description", spec.Description)
-	}
-	for _, v := range spec.Volumes {
-		args = append(args, "--volume", v)
-	}
-	for k, v := range spec.Env {
-		args = append(args, "--env", k+"="+v)
+	// Its settings go on the command's input, never its command line, where
+	// anyone on the machine could read them in the process list.
+	args, stdin, err := spec.AddArgs()
+	if err != nil {
+		return api.Catalog{}, err
 	}
 	if !a.install.TryLock() {
 		return api.Catalog{}, errors.New("an install or setup step is running")
 	}
 	defer a.install.Unlock()
 	emitEvent(a.ctx, "cli:log", "$ homelab custom add "+spec.ID)
-	if err := a.stream(core.CLI(a.root, args...), "cli:log"); err != nil {
+	cmd := core.CLI(a.root, args...)
+	cmd.Stdin = strings.NewReader(stdin)
+	if err := a.stream(cmd, "cli:log"); err != nil {
 		return api.Catalog{}, err
 	}
 	return a.Catalog()

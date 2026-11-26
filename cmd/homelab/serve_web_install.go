@@ -16,7 +16,6 @@ import (
 	"os"
 	"os/exec"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
 
@@ -96,6 +95,27 @@ func (h *homelab) runSelfJSON(ctx context.Context, limit time.Duration, set map[
 		return errors.New(failed)
 	}
 	return err
+}
+
+// runSelfInput runs this homelab as runSelf does, with stdin on its input:
+// how a password reaches it without going on its command line.
+func (h *homelab) runSelfInput(ctx context.Context, limit time.Duration, stdin string, args ...string) ([]string, error) {
+	exe, err := os.Executable()
+	if err != nil {
+		return nil, err
+	}
+	ctx, cancel := context.WithTimeout(ctx, limit)
+	defer cancel()
+	c := procattr.Hide(exec.CommandContext(ctx, exe, append([]string{"--root", h.root, "--no-color"}, args...)...))
+	c.Dir = h.root
+	c.Env = append(os.Environ(), actorEnv+"="+whoAsked(ctx))
+	c.Stdin = strings.NewReader(stdin)
+	out, err := c.CombinedOutput()
+	text := strings.TrimRight(string(out), "\n")
+	if text == "" {
+		return nil, err
+	}
+	return strings.Split(text, "\n"), err
 }
 
 // installArgs reads Plan's and Install's arguments: the selection (app IDs
@@ -181,8 +201,9 @@ func (h *homelab) webInstallMethods() map[string]companion.Method {
 			}, func(t string) { event("install:log", t) }, append([]string{"install", "--apply"}, tokens...)...)
 			result(started, err)
 		}},
-		// Your own app, from its image: added to the catalog, then the catalog as it is now.
-		"AddCustom": {Change: true, Call: func(ctx context.Context, args []json.RawMessage) (any, []string, error) {
+		// Your own app, from its image: added to the catalog, then the catalog as it is now. Its settings may be
+		// passwords: over https only, and to the command on its input, never its command line.
+		"AddCustom": {Change: true, Private: true, Call: func(ctx context.Context, args []json.RawMessage) (any, []string, error) {
 			var spec custom.Spec
 			if len(args) < 1 || json.Unmarshal(args[0], &spec) != nil {
 				return nil, nil, errors.New("AddCustom takes your app: its name and image")
@@ -197,25 +218,11 @@ func (h *homelab) webInstallMethods() map[string]companion.Method {
 			if err := spec.Check(c); err != nil {
 				return nil, nil, err
 			}
-			cmd := []string{"custom", "add", spec.ID, "--image", spec.Image, "--name", spec.Name, "--category", spec.Category, "--apply"}
-			if spec.Port > 0 {
-				cmd = append(cmd, "--port", strconv.Itoa(spec.Port))
+			cmd, stdin, err := spec.AddArgs()
+			if err != nil {
+				return nil, nil, err
 			}
-			if spec.Description != "" {
-				cmd = append(cmd, "--description", spec.Description)
-			}
-			for _, v := range spec.Volumes {
-				cmd = append(cmd, "--volume", v)
-			}
-			keys := make([]string, 0, len(spec.Env))
-			for k := range spec.Env {
-				keys = append(keys, k)
-			}
-			sort.Strings(keys)
-			for _, k := range keys {
-				cmd = append(cmd, "--env", k+"="+spec.Env[k])
-			}
-			lines, err := h.runSelf(ctx, cmd...)
+			lines, err := h.runSelfInput(ctx, 30*time.Minute, stdin, cmd...)
 			log := append([]string{"$ homelab custom add " + spec.ID}, lines...)
 			if err != nil {
 				return nil, log, err
