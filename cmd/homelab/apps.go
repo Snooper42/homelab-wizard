@@ -929,6 +929,8 @@ func (h *homelab) lifecycle(action string) func(context.Context, []string) error
 				}
 			case "remove":
 				err = run(append([]string{"rm", "--stop", "--force"}, pa.ids...)...)
+			case "start", "restart":
+				err = h.startApps(ctx, client, p, pa.profiles, action, pa.ids)
 			default:
 				err = run(append([]string{action}, pa.ids...)...)
 			}
@@ -1264,4 +1266,59 @@ func (h *homelab) sayUpdated(before, after map[string]ranImage, ids []string) {
 	if len(same) > 0 {
 		h.ui.Printf("Already up to date: %s.\n", strings.Join(same, ", "))
 	}
+}
+
+// startApps starts (or restarts) ids, all of one project. One that lives
+// in another container's network (network_mode: service:gluetun) can't
+// start once that container has been made anew, by an update say: Docker
+// still looks for the old one ("joining network namespace of container:
+// No such container"). Those are made again instead, onto the one there
+// now; their data is in folders on disk, so nothing is lost.
+func (h *homelab) startApps(ctx context.Context, client *docker.Client, p docker.Project, profiles []string, action string, ids []string) error {
+	lost := map[string]bool{}
+	if cs, err := client.Containers(ctx); err == nil {
+		lost = lostNetwork(cs, p.Name)
+	}
+	var plain, remake []string
+	for _, id := range ids {
+		if lost[id] {
+			remake = append(remake, id)
+		} else {
+			plain = append(plain, id)
+		}
+	}
+	if len(remake) > 0 {
+		h.ui.Info("%s shared a network with a container that has since been replaced; making it again", strings.Join(remake, ", "))
+		if err := client.Compose(ctx, p, profiles, append([]string{"up", "--detach", "--force-recreate"}, remake...)...); err != nil {
+			return err
+		}
+	}
+	if len(plain) > 0 {
+		return client.Compose(ctx, p, profiles, append([]string{action}, plain...)...)
+	}
+	return nil
+}
+
+// lostNetwork is the services of project whose container joined another
+// container's network ("container:<id>") that is no longer there.
+func lostNetwork(cs []docker.Container, project string) map[string]bool {
+	lost := map[string]bool{}
+	for _, c := range cs {
+		target, ok := strings.CutPrefix(c.NetworkMode, "container:")
+		if !ok || target == "" || c.Project() != project {
+			continue
+		}
+		found := false
+		for _, o := range cs {
+			// Docker may name it by its full id, a short one, or its name.
+			if strings.HasPrefix(o.ID, target) || strings.HasPrefix(target, o.ID) || o.Name == target || o.Name == "/"+target {
+				found = true
+				break
+			}
+		}
+		if !found {
+			lost[c.Service()] = true
+		}
+	}
+	return lost
 }

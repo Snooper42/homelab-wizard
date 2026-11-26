@@ -106,7 +106,7 @@ func (h *homelab) batterySaver(ctx context.Context, client *docker.Client, conta
 		// paused, for the next run.
 		failed := map[string]bool{}
 		start := func(file *compose.File, profiles, ids []string) error {
-			return client.Compose(ctx, h.project(file), profiles, append([]string{"start"}, ids...)...)
+			return h.startApps(ctx, client, h.project(file), profiles, "start", ids)
 		}
 		for _, pa := range h.byProject(apps) {
 			if start(pa.file, pa.profiles, pa.ids) == nil {
