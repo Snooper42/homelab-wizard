@@ -10,7 +10,7 @@ import { hostOS } from './setup';
 import { settingLabel, settingsData, showSettings } from './settings';
 import { cliProgress, startJob } from '../jobs';
 import { inTurn, waitWords } from '../job/queue';
-import { $, go, minute, osName, showError } from '../core';
+import { $, go, minute, onPhone, osName, showError } from '../core';
 import { mountCustomSheet, mountStore } from '../choose/InstallSheet';
 import type { Crumb } from '../parts/Crumbs';
 import { goBack, navigate } from '../app';
@@ -45,7 +45,8 @@ let offersAsked = false;
 let lastStore: [string, Crumb[]] | null = null;
 function redrawStore(key: string) { if (lastStore && lastStore[0] === key && shown === key) showStore(...lastStore); }
 function askGuide(key: string) {
-  if (!guideAsked.has(key)) {
+  // The web page asks only what the computer serves it: no guide there, the page as it was.
+  if (!guideAsked.has(key) && !onPhone()) {
     guideAsked.add(key);
     Promise.resolve((go() as any).AppGuide?.(key)).then((g: docs.Guide | null) => { guides[key] = g || {}; redrawStore(key); }, () => { guides[key] = {}; });
   }

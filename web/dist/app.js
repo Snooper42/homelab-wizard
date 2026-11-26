@@ -3625,6 +3625,7 @@
     return /* @__PURE__ */ u3(S, { children: parts3.map((t3, i3) => t3.startsWith("`") && t3.endsWith("`") && t3.length > 1 ? /* @__PURE__ */ u3("code", { children: t3.slice(1, -1) }, i3) : t3.startsWith("**") && t3.endsWith("**") && t3.length > 3 ? /* @__PURE__ */ u3("strong", { children: t3.slice(2, -2) }, i3) : t3) });
   }
   var money = (n3) => "$" + (Number.isInteger(n3) ? String(n3) : n3.toFixed(2));
+  var priced = (n3) => typeof n3 === "number" && Number.isFinite(n3);
   function StoreHead(p3) {
     return /* @__PURE__ */ u3(Store, { ...p3, part: "head" });
   }
@@ -3691,7 +3692,7 @@
       /* @__PURE__ */ u3(Tile, { label: "Asks you", value: asks ? `${asks} ${asks === 1 ? "thing" : "things"}` : "Nothing", sub: asks ? "Beside, before it installs" : "Ready as it comes" })
     ] }) });
     const mine = offers2.filter((o3) => o3.apps.includes(app.id));
-    const yearly = mine.filter((o3) => o3.counted).reduce((t3, o3) => t3 + o3.annual, 0);
+    const yearly = mine.filter((o3) => o3.counted && priced(o3.annual)).reduce((t3, o3) => t3 + o3.annual, 0);
     const g2 = guide || {};
     const facts2 = [
       g2.memory ? `Uses about ${g2.memory >= 1e3 ? (g2.memory / 1e3).toFixed(1).replace(/\.0$/, "") + " GB" : g2.memory + " MB"} of memory when busy.` : "",
@@ -3713,7 +3714,7 @@
             /* @__PURE__ */ u3("strong", { children: o3.replaces }),
             /* @__PURE__ */ u3("span", { class: "muted", children: o3.kind })
           ] }),
-          /* @__PURE__ */ u3("span", { class: "price", children: [
+          priced(o3.monthly) && /* @__PURE__ */ u3("span", { class: "price", children: [
             money(o3.monthly),
             /* @__PURE__ */ u3("span", { class: "muted", children: " a month" })
           ] }),
@@ -3840,7 +3841,7 @@
     if (lastStore && lastStore[0] === key6 && shown3 === key6) showStore(...lastStore);
   }
   function askGuide(key6) {
-    if (!guideAsked.has(key6)) {
+    if (!guideAsked.has(key6) && !onPhone()) {
       guideAsked.add(key6);
       Promise.resolve(go().AppGuide?.(key6)).then((g2) => {
         guides[key6] = g2 || {};

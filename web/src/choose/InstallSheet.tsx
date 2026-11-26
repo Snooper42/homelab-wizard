@@ -44,6 +44,7 @@ export function Rich({ text }: { text: string }) {
 }
 
 const money = (n: number) => '$' + (Number.isInteger(n) ? String(n) : n.toFixed(2));
+const priced = (n: number | null | undefined): n is number => typeof n === 'number' && Number.isFinite(n);
 
 /** The page's head (#storeHead) and its facts (#storeFacts); the plan sits beside the facts (#storePlan). */
 export function StoreHead(p: StoreHeadProps) { return <Store {...p} part="head" />; }
@@ -112,7 +113,7 @@ function Store({ app, set, catalog, icons, notes = [], trail, here = [], open, g
     </>
   );
   const mine = offers.filter((o) => o.apps.includes(app.id));
-  const yearly = mine.filter((o) => o.counted).reduce((t, o) => t + o.annual, 0);
+  const yearly = mine.filter((o) => o.counted && priced(o.annual)).reduce((t, o) => t + o.annual, 0);
   const g = guide || {};
   const facts = [
     g.memory ? `Uses about ${g.memory >= 1000 ? (g.memory / 1000).toFixed(1).replace(/\.0$/, '') + ' GB' : g.memory + ' MB'} of memory when busy.` : '',
@@ -135,7 +136,7 @@ function Store({ app, set, catalog, icons, notes = [], trail, here = [], open, g
             {mine.map((o) => (
               <li key={o.replaces + o.kind}>
                 <span class="what"><strong>{o.replaces}</strong><span class="muted">{o.kind}</span></span>
-                <span class="price">{money(o.monthly)}<span class="muted"> a month</span></span>
+                {priced(o.monthly) && <span class="price">{money(o.monthly)}<span class="muted"> a month</span></span>}
                 {o.condition && <span class="cond muted">{o.condition}</span>}
               </li>
             ))}
