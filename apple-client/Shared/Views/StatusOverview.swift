@@ -1,128 +1,586 @@
 import SwiftUI
 
-// The top of Status, as the owner chose it ("The pick" in the mockups): a
-// card with a ring of the apps running out of all of them and the one thing
-// that needs a look, with its button; then four small tiles (Backups,
-// Saved, Updates, Checks). Below them the apps stay a list, by category,
-// as the computer's Status.
+// Status' Overview as the computer's (the owner's pictures, Nov 25: docs/images/app-status.png, app-phone.png;
+// web/src/status/Tiles.tsx and CategoryPanel.tsx): three cards of one anatomy (a title row, one figure, one line, a
+// footer), Apps, Backups and the machine; then the categories as a list, each opening its page. Nothing below them.
+// Never "needs you": each card says what happened ("Mealie stopped", "Mealie skipped").
 
-/// What the top of Status says, worked out from the status alone, so it can
-/// be tested without a screen.
-struct StatusHeadline: Equatable {
-    /// Apps running, out of those counted (the companion waiting for its
-    /// scheduled jobs isn't counted, as on the computer).
-    let running: Int
-    let total: Int
-    /// The first app that needs a look, if any.
-    let attentionID: AppStatus.ID?
-    /// How many need a look.
-    let attentionCount: Int
-
-    init(status: HomelabStatus?) {
-        let counted = (status?.apps ?? []).filter { !$0.awaitingJobs }
-        running = counted.filter(\.isRunning).count
-        total = counted.count
-        let attention = (status?.apps ?? []).filter(\.needsAttention)
-        attentionID = attention.first?.id
-        attentionCount = attention.count
-    }
-
-    /// 0 to 1, for the ring.
-    var share: Double { total == 0 ? 0 : Double(running) / Double(total) }
-
-    /// The headline when something needs you, as the redesign's Status
-    /// (docs/images/redesign/phone-status.png): "1 app needs you",
-    /// "3 apps need you".
-    var title: String { attentionCount == 1 ? "1 app needs you" : "\(attentionCount) apps need you" }
-
-    /// Under it: "21 of 22 running".
-    var runningLine: String { "\(running) of \(total) running" }
+/// One square of the Apps card's days or the Backups card's nights.
+struct DaySquare: Equatable, Sendable, Identifiable {
+    let id: String
+    let tone: BackupNight.Tone
+    /// What VoiceOver says for it: "Mon, Nov 24: every app answered".
+    let words: String
 }
 
-/// The ring and the one thing that needs a look, or that all is well.
-struct StatusHero: View {
-    let model: DashboardViewModel
-    @Environment(\.dynamicTypeSize) private var typeSize
+/// The Apps card's words, from the status and the watchdog alone, so they can be tested without a screen
+/// (`Tiles` in web/src/status/Tiles.tsx).
+struct OverviewApps: Equatable {
+    let running: Int
+    /// The apps counted: the companion waiting for its scheduled jobs isn't, as on the computer.
+    let counted: Int
+    /// Unwell, not answering, missing, or stopped when nobody stopped it on purpose (`troubled`).
+    let trouble: [AppStatus]
+    /// The homelab's own apps that are down.
+    let missing: Int
+    /// The watchdog's days, oldest first: fourteen from a computer that keeps them, else the week from its outages.
+    let days: [DaySquare]
+    /// When the watchdog last checked.
+    let checked: Date?
+
+    init(status: HomelabStatus?, watchdog: WatchdogSummary?, now: Date = .now, calendar: Calendar = .current) {
+        let apps = status?.apps ?? []
+        running = apps.filter(\.isRunning).count
+        counted = apps.filter { !$0.awaitingJobs }.count
+        trouble = apps.filter(\.needsAttention)
+        missing = status?.missing ?? 0
+        days = Self.days(watchdog, now: now, calendar: calendar)
+        checked = watchdog?.lastRun
+    }
+
+    /// "22" over "running", or "21" over "of 22 running" when one isn't.
+    var figure: String { "\(running)" }
+    var unit: String { trouble.isEmpty ? "running" : "of \(counted) running" }
+    var alert: Bool { !trouble.isEmpty }
+
+    /// The one app that stopped or isn't well: named with its logo, and its buttons.
+    var one: AppStatus? { trouble.count == 1 ? trouble[0] : nil }
+
+    /// The line under the figure: what's down, the one app and what happened to it, the several grouped, or the
+    /// days: "All answering · no outage this week".
+    var line: String {
+        if missing > 0 { return missing == 1 ? "1 of the homelab's own apps is down" : "\(missing) of the homelab's own apps are down" }
+        if let one { return "\(one.name) \(Self.lowered(one.detailLine))" }
+        if !trouble.isEmpty { return Self.troubleLine(trouble) }
+        guard !days.isEmpty else { return "All answering" }
+        let outages = days.filter { $0.tone == .warn || $0.tone == .bad }.count
+        return "All answering · " + (outages == 0 ? "no outage \(span)" : "\(outages == 1 ? "1 day" : "\(outages) days") with an outage \(span)")
+    }
+
+    private var span: String { days.count > 7 ? "in two weeks" : "this week" }
+
+    /// What VoiceOver says for the squares.
+    var daysLabel: String {
+        let outages = days.filter { $0.tone == .warn || $0.tone == .bad }.count
+        return (days.count > 7 ? "The last two weeks: " : "This week: ") + (outages == 0 ? "no outage" : "\(outages) days with an outage")
+    }
+
+    /// What's wrong with each, grouped: "Mealie, Vikunja stopped · Immich not answering" (`troubleLine`).
+    static func troubleLine(_ apps: [AppStatus]) -> String {
+        func kind(_ app: AppStatus) -> String {
+            if app.state == "missing" { return "missing" }
+            if app.isRunning { return (app.notAnswering ?? "").isEmpty ? "unwell" : "not answering" }
+            return "stopped"
+        }
+        var order: [String] = []
+        var names: [String: [String]] = [:]
+        for app in apps {
+            let k = kind(app)
+            if names[k] == nil { order.append(k) }
+            names[k, default: []].append(app.name)
+        }
+        return order.map { k in
+            let n = names[k] ?? []
+            return (n.count > 3 ? n.prefix(2).joined(separator: ", ") + " +\(n.count - 2)" : n.joined(separator: ", ")) + " " + k
+        }.joined(separator: " · ")
+    }
+
+    /// The watchdog's days as squares (`weekSquares` in web/src/screens/status.ts): ok, none (it didn't run), warn
+    /// (an app was down a while that day), bad (one is still down today). None before it has run.
+    static func days(_ w: WatchdogSummary?, now: Date = .now, calendar: Calendar = .current) -> [DaySquare] {
+        guard let w, w.lastRun != nil else { return [] }
+        let style = Date.FormatStyle.dateTime.weekday(.abbreviated).month(.abbreviated).day()
+        if !w.daily.isEmpty {
+            let downNow = !w.failing.isEmpty
+            return w.daily.indices.map { i in
+                let d = w.daily[i]
+                let tone: BackupNight.Tone = d.failed == 0 ? (d.runs > 0 ? .ok : .none) : (i == w.daily.count - 1 && downNow ? .bad : .warn)
+                let words = d.failed > 0 ? (d.failed == 1 ? "1 app down for a while" : "\(d.failed) apps down for a while")
+                    : d.runs > 0 ? "every app answered" : "not checked"
+                return DaySquare(id: d.date, tone: tone, words: "\(LocalDay.parse(d.date)?.formatted(style) ?? d.date): \(words)")
+            }
+        }
+        let all = w.outages.values.flatMap { $0 }
+        let today = calendar.startOfDay(for: now)
+        return (0..<7).map { i in
+            let start = calendar.date(byAdding: .day, value: i - 6, to: today) ?? today
+            let end = calendar.date(byAdding: .day, value: 1, to: start) ?? now
+            let hit = all.filter { o in o.from < end && (o.to.map { $0 >= start } ?? true) }
+            let tone: BackupNight.Tone = hit.isEmpty ? .ok : (i == 6 && hit.contains { $0.to == nil } ? .bad : .warn)
+            return DaySquare(id: "\(i)", tone: tone, words: "\(start.formatted(style)): " + (hit.isEmpty ? "every app answered" : "an app down for a while"))
+        }
+    }
+
+    /// "Stopped at 3:12 AM" as it reads after a name: "stopped at 3:12 AM".
+    static func lowered(_ words: String) -> String { words.prefix(1).lowercased() + words.dropFirst() }
+}
+
+/// The Backups card's words: how many of last night's copies were made, when, what was skipped, and the last
+/// fourteen nights (`lastNight` in web/src/screens/status.ts).
+struct OverviewBackups: Equatable {
+    let figure: String
+    let unit: String
+    /// "Last run Thu 7:48 AM", "Not run yet", or "Reading last night…" before Backups is read.
+    let line: String
+    /// "Mealie, Vikunja skipped"; nil when nothing was.
+    let skipped: String?
+    let nights: [DaySquare]
+
+    init(_ o: BackupOverview?) {
+        guard let o else {
+            figure = "—"; unit = ""; line = "Reading last night…"; skipped = nil; nights = []
+            return
+        }
+        let count = o.upToDate
+        figure = "\(count.fresh)"
+        unit = "of \(count.of) copied"
+        line = o.lastRun.map { "Last run " + $0.formatted(.dateTime.weekday(.abbreviated)) + " " + $0.formatted(date: .omitted, time: .shortened) } ?? "Not run yet"
+        let names = o.copies.filter { $0.state == "stale" }.map(\.name)
+        skipped = names.isEmpty ? nil : names.joined(separator: ", ") + " skipped"
+        nights = o.lastNights().map { DaySquare(id: $0.id, tone: $0.tone, words: $0.words(name: o.nightName)) }
+    }
+}
+
+/// The machine card's words (`MachineCard` in web/src/status/Tiles.tsx): its free space as the figure, its power
+/// on the line, how long it has been up (or the nightly updates) in the title row, and the drive's room as a bar.
+/// From a computer that sends no facts, the nightly updates alone.
+struct OverviewMachine: Equatable {
+    let title: String
+    let trailing: String
+    let figure: String
+    let unit: String
+    let line: String
+    /// Little room left: the figure in red.
+    let low: Bool
+    /// On battery, or plugged in but free to sleep: the line in amber.
+    let lineAlert: Bool
+    /// The drive's share used and its words ("582 GB of 994 GB used"); nil without facts.
+    let bar: Double?
+    let barWords: String
+
+    init(_ m: MachineFacts?, updates: UpdatesState?, now: Date = .now) {
+        let paused = updates?.paused == true
+        let schedule = updates?.schedule ?? ""
+        let updatesWords = paused ? "Updates paused" : "Updates " + (schedule.isEmpty ? "nightly" : schedule)
+        guard let m else {
+            title = "Updates"; trailing = ""
+            figure = paused ? "Paused" : "On"; unit = ""
+            line = paused ? "Until you resume them" : "Run " + (schedule.isEmpty ? "nightly" : schedule)
+            low = false; lineAlert = false; bar = nil; barWords = ""
+            return
+        }
+        let up = MachineFacts.upFor(m.booted, now: now)
+        title = "This machine"
+        trailing = up ?? updatesWords
+        let free = m.freeParts
+        figure = free.figure
+        unit = free.unit
+        line = [m.powerWords, up == nil ? nil : OverviewApps.lowered(updatesWords)].compactMap { $0 }.joined(separator: " · ")
+        low = m.low
+        lineAlert = m.power == "battery" || (m.power == "plugged" && !m.keptAwake)
+        bar = m.usedShare
+        barWords = m.usedWords
+    }
+}
+
+/// A category on the Overview and its page: each of the catalog's categories with its apps on this machine,
+/// whatever their state, Media automation last and your own apps after it (`statusParts` in
+/// web/src/screens/status.ts).
+struct StatusCategory: Identifiable, Equatable {
+    let id: String
+    let label: String
+    let apps: [AppStatus]
+    /// What its line says in place of its apps' names while none stopped (Media automation's).
+    var summary: String? = nil
+
+    static let automation = "media-automation"
+
+    /// The apps that stopped or aren't well, by name.
+    var stopped: [String] { apps.filter(\.needsAttention).map(\.name) }
+    var running: Int { apps.filter(\.isRunning).count }
+
+    /// "Nginx Proxy Manager, AdGuard Home +2"; "Mealie stopped · Vikunja" when one stopped.
+    var line: String {
+        let stopped = self.stopped
+        if stopped.isEmpty, let summary { return summary }
+        let names = apps.map(\.name)
+        let lead = stopped.isEmpty ? names : ["\(stopped.joined(separator: ", ")) stopped"] + names.filter { !stopped.contains($0) }
+        return lead.prefix(2).joined(separator: stopped.isEmpty ? ", " : " · ") + (lead.count > 2 ? " +\(lead.count - 2)" : "")
+    }
+
+    /// "4 running" when all of them run, "1 of 2 running" in amber when one doesn't.
+    var pill: (words: String, fine: Bool) {
+        stopped.isEmpty ? ("\(running) running", true) : ("\(running) of \(apps.count) running", false)
+    }
+
+    /// What VoiceOver says for its row: "Network, 4 running: Nginx Proxy Manager, AdGuard Home, …".
+    var spoken: String { "\(label), \(pill.words): \(apps.map(\.name).joined(separator: ", "))" }
+
+    static func list(apps: [AppStatus], catalog: AppCatalog?) -> [StatusCategory] {
+        let sorted = apps.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+        var categoryOf = Dictionary((catalog?.apps ?? []).map { ($0.id, $0.category) }, uniquingKeysWith: { first, _ in first })
+        // Seerr sits in Media, beside Jellyfin: a household asks there and watches there (arr item 8).
+        if categoryOf["seerr"] == automation { categoryOf["seerr"] = "media" }
+        let all = catalog?.categories ?? []
+        let categories = all.filter { $0.id != automation } + all.filter { $0.id == automation }
+        let known = Set(categories.map(\.id))
+        var out = categories.map { c in
+            StatusCategory(id: c.id, label: c.id == automation ? "Media automation" : c.label,
+                           apps: sorted.filter { categoryOf[$0.id] == c.id },
+                           summary: c.id == automation ? "Finds and downloads what you ask for in Seerr" : nil)
+        }
+        out.append(StatusCategory(id: "own", label: "Your own apps", apps: sorted.filter { !known.contains(categoryOf[$0.id] ?? "") }))
+        return out.filter { !$0.apps.isEmpty }
+    }
+}
+
+/// Where Status' stack goes: an app's page, a category's page, or every app.
+enum StatusPlace: Hashable {
+    case app(AppStatus.ID)
+    case category(String)
+    case every
+
+    var appID: AppStatus.ID? {
+        if case .app(let id) = self { return id }
+        return nil
+    }
+}
+
+// MARK: - The cards
+
+/// The three cards' anatomy: a title row (its name, and a few words at its end), one figure with a smaller word
+/// beside it, one line, and a footer.
+struct OverviewCard<Line: View, Footer: View>: View {
+    let title: String
+    var trailing: String = ""
+    let figure: String
+    var unit: String = ""
+    var tone: Color? = nil
+    @ViewBuilder let line: Line
+    @ViewBuilder let footer: Footer
 
     var body: some View {
-        let headline = StatusHeadline(status: model.liveEvents.status)
-        let app = model.app(id: headline.attentionID)
-        let health = model.healthLine ?? ""
-        // The ring beside the words, or above them at the largest text sizes.
-        let layout = typeSize.isAccessibilitySize
-            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 14))
-            : AnyLayout(HStackLayout(alignment: .center, spacing: 14))
-        layout {
-            ProgressRing(value: headline.share, lineWidth: 8,
-                         tint: app == nil && health.isEmpty ? Theme.success : Theme.accent,
-                         track: Theme.accent.opacity(0.14)) {
-                VStack(spacing: 0) {
-                    Text(headline.running, format: .number)
-                        .font(.title3.weight(.bold))
-                        .monospacedDigit()
-                        .contentTransition(.numericText(value: Double(headline.running)))
-                    Text("of \(headline.total)")
-                        .font(.caption2)
-                        .foregroundStyle(Theme.secondaryInk)
-                }
-            }
-            .frame(width: 76, height: 76)
-            // The ring's number stays inside the ring at any text size.
-            .dynamicTypeSize(...DynamicTypeSize.xLarge)
-            .animation(.snappy, value: headline.running)
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel("\(headline.running) of \(headline.total) apps running")
-
-            VStack(alignment: .leading, spacing: 3) {
-                if let app {
-                    Text(headline.attentionCount > 1 ? "\(headline.attentionCount) need a look" : "Needs a look")
-                        .font(.footnote.weight(.semibold))
-                        .foregroundStyle(Theme.warning)
-                    Text(verbatim: app.name)
-                        .font(.headline)
-                    Text(verbatim: app.detailLine)
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Text(verbatim: title)
+                    .font(.headline)
+                    .foregroundStyle(Theme.ink)
+                Spacer(minLength: 8)
+                if !trailing.isEmpty {
+                    Text(verbatim: trailing)
                         .font(.subheadline)
                         .foregroundStyle(Theme.secondaryInk)
-                        .lineLimit(2)
-                    HeroButtons(app: app)
-                        .padding(.top, 6)
-                } else if !health.isEmpty {
-                    Text("Needs a look")
-                        .font(.footnote.weight(.semibold))
-                        .foregroundStyle(Theme.warning)
-                    Text(verbatim: health)
-                        .font(.headline)
-                        .lineLimit(3)
-                } else {
-                    Text("All well")
-                        .font(.footnote.weight(.semibold))
-                        .foregroundStyle(Theme.success)
-                    Text(verbatim: model.summary)
-                        .font(.headline)
-                    if let words = model.overnightLine {
-                        Text(words)
-                            .font(.subheadline)
-                            .foregroundStyle(Theme.secondaryInk)
-                            .lineLimit(3)
-                    }
-                }
-                if let error = model.liveEvents.refreshError {
-                    Label {
-                        Text(verbatim: error)
-                    } icon: {
-                        Image(systemName: "exclamationmark.triangle")
-                    }
-                    .font(.footnote)
-                    .foregroundStyle(Theme.warning)
-                    .padding(.top, 4)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
                 }
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
+            HStack(alignment: .firstTextBaseline, spacing: 6) {
+                Text(verbatim: figure)
+                    .font(.largeTitle.weight(.bold))
+                    .monospacedDigit()
+                    .foregroundStyle(tone ?? Theme.ink)
+                if !unit.isEmpty {
+                    Text(verbatim: unit)
+                        .font(.title3)
+                        .foregroundStyle(Theme.secondaryInk)
+                }
+            }
+            .lineLimit(1)
+            .minimumScaleFactor(0.7)
+            .padding(.top, 2)
+            line
+                .font(.subheadline)
+                .foregroundStyle(Theme.secondaryInk)
+                .fixedSize(horizontal: false, vertical: true)
+            footer
+                .padding(.top, 10)
         }
-        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(18)
         .card()
     }
 }
+
+/// A row of squares, a day or a night each, as the computer's cards draw them.
+struct DaySquaresView: View {
+    let squares: [DaySquare]
+    let label: String
+
+    var body: some View {
+        let many = squares.count > 7
+        HStack(spacing: many ? 4 : 6) {
+            ForEach(squares) { square in
+                RoundedRectangle(cornerRadius: many ? 6 : 8, style: .continuous)
+                    .fill(BackupTone.color(square.tone))
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 32)
+                    .accessibilityElement()
+                    .accessibilityLabel(Text(verbatim: square.words))
+            }
+        }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel(Text(verbatim: label))
+    }
+}
+
+/// Apps: how many run, then all answering and the watchdog's days; one app that stopped named with its logo,
+/// Start · Logs and its page; two or more, Start All and See Them.
+struct OverviewAppsCard: View {
+    let words: OverviewApps
+    /// Opens an app's page.
+    let open: @MainActor (AppStatus.ID) -> Void
+    /// Shows every app.
+    let seeAll: @MainActor () -> Void
+    @Environment(AppActionsViewModel.self) private var actions
+
+    var body: some View {
+        OverviewCard(title: "Apps", trailing: words.checked.map { "Checked " + $0.formatted(.relative(presentation: .named)) } ?? "",
+                     figure: words.figure, unit: words.unit, tone: words.alert ? Theme.warning : nil) {
+            if let one = words.one, words.missing == 0 {
+                HStack(spacing: 8) {
+                    AppIconView(app: one, size: 22, stateBadge: false)
+                    Text(verbatim: words.line)
+                        .lineLimit(2)
+                }
+            } else {
+                Text(verbatim: words.line)
+                    .foregroundStyle(words.missing > 0 ? Theme.danger : Theme.secondaryInk)
+            }
+        } footer: {
+            footer
+        }
+    }
+
+    @ViewBuilder
+    private var footer: some View {
+        if let one = words.one {
+            HStack(spacing: 8) {
+                HeroButtons(app: one)
+                Spacer(minLength: 0)
+                Button { open(one.id) } label: {
+                    Image(systemName: "ellipsis")
+                        .frame(width: 20, height: 20)
+                }
+                .buttonStyle(.bordered)
+                .buttonBorderShape(.circle)
+                .controlSize(.small)
+                .accessibilityLabel(Text(verbatim: "\(one.name): its page"))
+            }
+        } else if !words.trouble.isEmpty {
+            let stopped = AppAction.groupTargets(.start, in: words.trouble)
+            HStack(spacing: 8) {
+                if actions.canChangeApps, !stopped.isEmpty {
+                    Button { actions.requestGroup(.start, on: stopped) } label: {
+                        Label("Start All", systemImage: AppAction.start.systemImage)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(Theme.accentFill)
+                    .disabled(actions.isBusy)
+                }
+                Button("See Them") { seeAll() }
+                    .buttonStyle(.bordered)
+            }
+            .buttonBorderShape(.capsule)
+            .controlSize(.small)
+            .font(.subheadline.weight(.semibold))
+        } else if !words.days.isEmpty {
+            DaySquaresView(squares: words.days, label: words.daysLabel)
+        }
+    }
+}
+
+/// Backups: last night's copies, what was skipped, and the last fourteen nights; a tap opens Backups.
+struct OverviewBackupsCard: View {
+    let words: OverviewBackups
+
+    var body: some View {
+        Button { IntentInbox.shared.screen = .backups } label: {
+            OverviewCard(title: "Backups", trailing: "Every night at 03:30", figure: words.figure, unit: words.unit,
+                         tone: words.skipped == nil ? nil : Theme.warning) {
+                if let skipped = words.skipped {
+                    Text("\(Text(verbatim: words.line)) · \(Text(verbatim: skipped).foregroundStyle(Theme.warning))")
+                } else {
+                    Text(verbatim: words.line)
+                }
+            } footer: {
+                if !words.nights.isEmpty {
+                    DaySquaresView(squares: words.nights, label: "The last \(words.nights.count) nights")
+                }
+            }
+        }
+        .buttonStyle(PressableButtonStyle())
+        .accessibilityHint("Opens Backups")
+    }
+}
+
+/// The machine: its free space, its power, the drive's bar, and Pause or Resume for the nightly updates.
+struct OverviewMachineCard: View {
+    let words: OverviewMachine
+    let computer: ComputerViewModel
+
+    var body: some View {
+        OverviewCard(title: words.title, trailing: words.trailing, figure: words.figure, unit: words.unit,
+                     tone: words.low ? Theme.danger : nil) {
+            if !words.line.isEmpty {
+                Text(verbatim: words.line)
+                    .foregroundStyle(words.lineAlert ? Theme.warning : Theme.secondaryInk)
+            }
+        } footer: {
+            HStack(alignment: .bottom, spacing: 12) {
+                if let share = words.bar {
+                    VStack(alignment: .leading, spacing: 6) {
+                        ProgressView(value: share)
+                            .tint(Theme.accent)
+                            .accessibilityLabel("Drive used")
+                        Text(verbatim: words.barWords)
+                            .font(.footnote)
+                            .foregroundStyle(Theme.secondaryInk)
+                    }
+                } else {
+                    Spacer(minLength: 0)
+                }
+                if computer.canChange, let updates = computer.updates {
+                    Button(updates.paused ? "Resume" : "Pause") {
+                        Task { await computer.setNightlyUpdates(on: updates.paused) }
+                    }
+                    .buttonStyle(.bordered)
+                    .buttonBorderShape(.capsule)
+                    .controlSize(.small)
+                    .font(.subheadline.weight(.semibold))
+                    .disabled(computer.isSavingUpdates)
+                    .accessibilityLabel(updates.paused ? "Resume nightly app updates" : "Pause nightly app updates")
+                }
+            }
+            if let error = computer.updatesError {
+                Text(verbatim: error)
+                    .font(.footnote)
+                    .foregroundStyle(Theme.danger)
+            }
+        }
+    }
+}
+
+/// The three cards, one above the other on a phone and side by side where there's room. A household member's
+/// phone has Apps alone: the homelab's backups and machine aren't theirs to look after.
+struct OverviewCards: View {
+    let model: DashboardViewModel
+    let computer: ComputerViewModel
+    var isMember = false
+    let open: @MainActor (AppStatus.ID) -> Void
+    let seeAll: @MainActor () -> Void
+
+    var body: some View {
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 300), spacing: 12, alignment: .top)], spacing: 12) {
+            OverviewAppsCard(words: OverviewApps(status: model.liveEvents.status, watchdog: model.cards.watchdog), open: open, seeAll: seeAll)
+            if !isMember {
+                OverviewBackupsCard(words: OverviewBackups(model.backups.overview))
+                OverviewMachineCard(words: OverviewMachine(model.cards.machine, updates: computer.updates), computer: computer)
+            }
+        }
+    }
+}
+
+/// A category's row: its first three logos, its name over its apps' names, how many run (amber when one stopped).
+struct CategoryRow: View {
+    let category: StatusCategory
+    @ScaledMetric(relativeTo: .body) private var logo: CGFloat = 30
+    @Environment(\.dynamicTypeSize) private var typeSize
+
+    var body: some View {
+        let size = min(logo, 42)
+        let layout = typeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8))
+            : AnyLayout(HStackLayout(spacing: 12))
+        layout {
+            HStack(spacing: -size * 0.3) {
+                ForEach(category.apps.prefix(3)) { app in
+                    AppIconView(app: app, size: size, stateBadge: false)
+                }
+            }
+            VStack(alignment: .leading, spacing: 2) {
+                Text(verbatim: category.label)
+                    .font(.headline)
+                    .foregroundStyle(Theme.ink)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                Text(verbatim: category.line)
+                    .font(.subheadline)
+                    .foregroundStyle(Theme.secondaryInk)
+                    .lineLimit(typeSize.isAccessibilitySize ? 3 : 1)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            let pill = category.pill
+            HStack(spacing: 3) {
+                if pill.fine {
+                    Image(systemName: "checkmark")
+                        .font(.caption.weight(.bold))
+                }
+                Text(verbatim: pill.words)
+                    .lineLimit(1)
+            }
+            .pill(pill.fine ? Theme.success : Theme.warning)
+        }
+        .padding(.vertical, 4)
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(verbatim: category.spoken))
+    }
+}
+
+/// A category's page: its apps, each opening its page.
+struct CategoryPage: View {
+    let model: DashboardViewModel
+    let id: String
+    var zoom: Namespace.ID
+
+    var body: some View {
+        let category = StatusCategory.list(apps: model.liveEvents.status?.apps ?? [], catalog: model.catalog).first { $0.id == id }
+        List {
+            ForEach(category?.apps ?? []) { app in
+                NavigationLink(value: StatusPlace.app(app.id)) {
+                    AppRowView(app: app)
+                }
+                .zoomSource(id: app.id, in: zoom)
+                .appActionControls(for: app)
+            }
+        }
+        .overlay {
+            if category == nil {
+                ContentUnavailableView("No Apps Here", systemImage: "square.grid.2x2")
+            }
+        }
+        .themedCanvas()
+        .navigationTitle(category?.label ?? "")
+    }
+}
+
+/// Every app, by group as the computer's whole list: what needs a look, the pinned ones, then each category.
+struct EveryAppPage: View {
+    let model: DashboardViewModel
+    var zoom: Namespace.ID
+
+    var body: some View {
+        List {
+            ForEach(model.groups) { group in
+                Section {
+                    ForEach(group.apps) { app in
+                        NavigationLink(value: StatusPlace.app(app.id)) {
+                            AppRowView(app: app)
+                        }
+                        .zoomSource(id: app.id, in: zoom)
+                        .appActionControls(for: app)
+                    }
+                } header: {
+                    Text(verbatim: group.label)
+                }
+            }
+        }
+        .themedCanvas()
+        .navigationTitle("Every App")
+    }
+}
+
+// MARK: - The one app's buttons
 
 /// The app's everyday action (Start for a stopped one, Restart for one
 /// that isn't well) and Logs, as capsules.
@@ -187,99 +645,6 @@ struct HeroButtonLook: ViewModifier {
     }
 }
 
-/// One small tile: what it is in its colour, a big value, a line under it.
-struct StatusTile: View {
-    let title: String
-    let systemImage: String
-    let tint: Color
-    let value: String
-    var detail: String?
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Label(title, systemImage: systemImage)
-                .font(.footnote.weight(.semibold))
-                .foregroundStyle(tint)
-            Text(verbatim: value)
-                .font(.title3.weight(.bold))
-                .foregroundStyle(Theme.ink)
-                .lineLimit(1)
-                .minimumScaleFactor(0.7)
-            if let detail {
-                Text(verbatim: detail)
-                    .font(.footnote)
-                    .foregroundStyle(Theme.secondaryInk)
-                    .lineLimit(1)
-            }
-        }
-        .frame(maxWidth: .infinity, minHeight: 64, alignment: .leading)
-        .padding(12)
-        .card()
-        .accessibilityElement(children: .combine)
-    }
-}
-
-/// Backups, Saved, Updates and Checks, two by two; a tile with nothing to
-/// say yet isn't shown.
-struct StatusTiles: View {
-    @Environment(\.dynamicTypeSize) private var typeSize
-    let model: DashboardViewModel
-    /// Opens the Backups tab.
-    var openBackups: (@MainActor () -> Void)?
-
-    var body: some View {
-        LazyVGrid(columns: typeSize.isAccessibilitySize
-                  ? [GridItem(.flexible())]
-                  : [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 10) {
-            if let overview = model.backups.overview {
-                let tile = Self.backups(overview)
-                Button { openBackups?() } label: {
-                    StatusTile(title: "Backups", systemImage: "archivebox", tint: tile.alert ? Theme.warning : Theme.success,
-                               value: tile.value, detail: tile.detail)
-                }
-                .buttonStyle(PressableButtonStyle())
-                .disabled(openBackups == nil)
-            }
-            if let savings = model.yearlySavings {
-                StatusTile(title: "Saved", systemImage: "dollarsign.circle", tint: Theme.accent,
-                           value: savings.formatted(.currency(code: "USD").precision(.fractionLength(0))) + " a year",
-                           detail: "Subscriptions you don’t pay")
-            }
-            if let updates = model.liveEvents.status?.updates {
-                StatusTile(title: "Updates", systemImage: "arrow.triangle.2.circlepath", tint: updates.paused ? Theme.warning : Theme.info,
-                           value: updates.paused ? "Paused" : "On",
-                           detail: updates.paused ? "Nightly updates are off" : updates.schedule.isEmpty ? nil : ClockWords.schedule(updates.schedule))
-            }
-            if let watchdog = model.cards.watchdog, watchdog.checks > 0 {
-                let failing = model.failingChecks
-                StatusTile(title: "Checks", systemImage: "stethoscope", tint: failing > 0 ? Theme.danger : Theme.success,
-                           value: failing > 0 ? "\(failing) failing" : "All \(watchdog.checks) pass",
-                           detail: watchdog.lastRun.map { "Checked " + $0.formatted(.relative(presentation: .named)) })
-            }
-        }
-    }
-
-    /// The Backups tile's words: how many copies are fresh, or how many need a look.
-    nonisolated static func backups(_ o: BackupOverview) -> (value: String, detail: String?, alert: Bool) {
-        let trouble = o.stale + o.shrank
-        let value: String
-        if o.copies.isEmpty {
-            value = "None yet"
-        } else if trouble > 0 {
-            value = "\(trouble) need\(trouble == 1 ? "s" : "") a look"
-        } else {
-            value = o.copies.count == 1 ? "1 fresh" : "All \(o.copies.count) fresh"
-        }
-        let detail = o.lastRun.map { "Last run " + $0.formatted(.relative(presentation: .named)) }
-        return (value, detail, trouble > 0)
-    }
-
-    nonisolated static func capitalized(_ s: String) -> String? {
-        guard let first = s.first else { return nil }
-        return first.uppercased() + s.dropFirst()
-    }
-}
-
 extension View {
     /// The floating glass tab bar shrinks as you scroll down, as in Apple's
     /// own apps, on iOS 26 and later; earlier, nothing changes.
@@ -293,165 +658,6 @@ extension View {
         #else
         self
         #endif
-    }
-}
-
-// MARK: - The trimmed top (Nov 9)
-
-/// The top of Status as the owner trimmed it: one line when all is well
-/// ("All 47 apps are running"), or one card for what needs a look, with
-/// what's wrong in a sentence and its button. Nothing else above the apps.
-struct StatusTop: View {
-    let model: DashboardViewModel
-    /// Opens an app's page (Status's navigation path).
-    var open: @MainActor (AppStatus.ID) -> Void = { _ in }
-
-    var body: some View {
-        let headline = StatusHeadline(status: model.liveEvents.status)
-        if let app = model.app(id: headline.attentionID) {
-            StatusAlertCard(app: app, others: headline.attentionCount - 1, headline: headline) { open(app.id) }
-        } else if let health = model.healthLine, !health.isEmpty {
-            StatusAlertCard(app: nil, others: 0, words: health)
-        } else {
-            HStack(spacing: 8) {
-                Circle()
-                    .fill(Design.running)
-                    .frame(width: 9, height: 9)
-                Text(verbatim: Self.line(model.liveEvents.status))
-                    .font(.subheadline)
-                    .foregroundStyle(Theme.secondaryInk)
-                if let error = model.liveEvents.refreshError {
-                    Image(systemName: "exclamationmark.triangle")
-                        .foregroundStyle(Theme.warning)
-                        .accessibilityLabel(Text(verbatim: error))
-                }
-            }
-            .padding(.horizontal, 4)
-            .accessibilityElement(children: .combine)
-        }
-    }
-
-    /// "All 47 apps are running", or what keeps that from being true
-    /// without anything being wrong: "46 running, 1 stopped by you".
-    nonisolated static func line(_ status: HomelabStatus?) -> String {
-        guard let status else { return "Reading your apps…" }
-        let counted = status.apps.filter { !$0.awaitingJobs }
-        guard !counted.isEmpty else { return "No apps yet" }
-        let running = counted.filter(\.isRunning).count
-        if running == counted.count {
-            return counted.count == 1 ? "Your app is running" : "All \(counted.count) apps are running"
-        }
-        let stopped = counted.count - running
-        return "\(running) running, \(stopped) stopped by you"
-    }
-}
-
-/// What needs a look, as one card: the app's logo, "Needs a look", what's
-/// wrong in a sentence, then its everyday button and Open Its Page.
-struct StatusAlertCard: View {
-    let app: AppStatus?
-    /// How many more need a look besides it.
-    let others: Int
-    /// For a problem that's no app's (the health line): its words.
-    var words: String? = nil
-    /// The whole homelab's count, for the redesign's headline over the app
-    /// ("1 app needs you", "21 of 22 running").
-    var headline: StatusHeadline? = nil
-    /// Opens the app's page.
-    var open: @MainActor () -> Void = {}
-    @Environment(\.dynamicTypeSize) private var typeSize
-
-    var body: some View {
-        // The buttons side by side, or Open Its Page under the others at the
-        // largest text sizes (beside them it squeezed Start to "Star / t").
-        let buttons = typeSize.isAccessibilitySize
-            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8)) : AnyLayout(HStackLayout(spacing: 8))
-        // The logo over its words there too: beside them it took a column of its own, and
-        // "Needs a look" broke onto two lines beside it (large-status).
-        let heading = typeSize.isAccessibilitySize
-            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8)) : AnyLayout(HStackLayout(spacing: 11))
-        if let app, let headline {
-            // The redesign's card (phone-status.png): the headline and the count
-            // over a rule, then the app with what's wrong, then its buttons.
-            VStack(alignment: .leading, spacing: 10) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(verbatim: headline.title)
-                        .font(.title2.weight(.bold))
-                        .foregroundStyle(Theme.warning)
-                    Text(verbatim: headline.runningLine)
-                        .font(.caption.weight(.semibold))
-                        .textCase(.uppercase)
-                        .foregroundStyle(Theme.secondaryInk)
-                }
-                Divider()
-                heading {
-                    AppIconView(app: app, size: 40, stateBadge: false)
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text(verbatim: app.name)
-                            .font(.headline)
-                            .foregroundStyle(Theme.ink)
-                            .lineLimit(1)
-                        Text(verbatim: app.detailLine)
-                            .font(.subheadline)
-                            .foregroundStyle(Theme.secondaryInk)
-                            .lineLimit(2)
-                    }
-                }
-                buttons {
-                    HeroButtons(app: app, wide: true)
-                    Button { open() } label: {
-                        Text("Its Page").lineLimit(1).frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(.bordered)
-                    .modifier(HeroButtonLook(wide: true))
-                }
-            }
-            .padding(14)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .card()
-        } else {
-            legacy(buttons: buttons, heading: heading)
-        }
-    }
-
-    /// A problem that's no app's (the health line), or an app without the
-    /// homelab's count: "Needs a look" over its words, as before.
-    private func legacy(buttons: AnyLayout, heading: AnyLayout) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            heading {
-                if let app {
-                    AppIconView(app: app, size: 40, stateBadge: false)
-                }
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(others > 0 ? "\(others + 1) need a look" : "Needs a look")
-                        .font(.caption.weight(.bold))
-                        .textCase(.uppercase)
-                        .foregroundStyle(Theme.warning)
-                    Text(verbatim: app?.name ?? (words ?? ""))
-                        .font(.headline)
-                        .foregroundStyle(Theme.ink)
-                        .lineLimit(app == nil ? 3 : 1)
-                }
-            }
-            if let app {
-                Text(verbatim: app.detailLine)
-                    .font(.subheadline)
-                    .foregroundStyle(Theme.secondaryInk)
-                    .lineLimit(2)
-                buttons {
-                    HeroButtons(app: app)
-                    Button("Open Its Page") { open() }
-                    .buttonStyle(.bordered)
-                    .buttonBorderShape(.capsule)
-                    .controlSize(.small)
-                    .font(.subheadline.weight(.semibold))
-                    .dynamicTypeSize(...DynamicTypeSize.accessibility1)
-                }
-            }
-        }
-        .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .card()
     }
 }
 
@@ -521,122 +727,5 @@ struct CrashNoteCard: View {
         } catch {
             problem = "Couldn't make the report: \(error.localizedDescription)"
         }
-    }
-}
-
-// MARK: - Backups and This Mac (the redesign, Nov 24)
-
-/// Under the headline, two cards side by side as the redesign's phone
-/// picture (`phone-status.png`) and the computer's Status: **Backups**, how
-/// many of last night's copies were made and what was skipped, opening
-/// Backups; and **This Mac**, its free space, its power and the nightly
-/// updates. One above the other at the largest text sizes. Not on a
-/// household member's phone, whose homelab isn't theirs to look after.
-struct StatusPair: View {
-    @Environment(\.dynamicTypeSize) private var typeSize
-    let model: DashboardViewModel
-
-    var body: some View {
-        let overview = model.backups.overview
-        let machine = model.cards.machine
-        let updates = model.liveEvents.status?.updates
-        if overview != nil || machine != nil || updates != nil {
-            let columns = typeSize.isAccessibilitySize
-                ? [GridItem(.flexible())]
-                : [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)]
-            LazyVGrid(columns: columns, alignment: .leading, spacing: 12) {
-                if let overview {
-                    let words = Self.backups(overview)
-                    Button { IntentInbox.shared.screen = .backups } label: {
-                        PairCard(title: "Backups", icon: "externaldrive", figure: words.figure, unit: words.unit, lines: words.lines, alert: words.alert)
-                    }
-                    .buttonStyle(PressableButtonStyle())
-                    .accessibilityHint("Opens Backups")
-                }
-                if machine != nil || updates != nil {
-                    let words = Self.machine(machine, updates: updates)
-                    PairCard(title: "This Machine", icon: "desktopcomputer", figure: words.figure, unit: words.unit, lines: words.lines, alert: words.alert)
-                }
-            }
-        }
-    }
-
-    /// The Backups card's words: "11" "of 12", then when it ran and what was skipped.
-    nonisolated static func backups(_ o: BackupOverview, now: Date = .now) -> (figure: String, unit: String, lines: [String], alert: Bool) {
-        let copies = o.copies
-        guard !copies.isEmpty else { return ("—", "", ["No copies yet"], false) }
-        let fresh = copies.filter { $0.state == "fresh" }.count
-        var lines: [String] = []
-        if let run = o.lastRun {
-            lines.append(now.timeIntervalSince(run) < 30 * 3600
-                ? "Last night at " + run.formatted(date: .omitted, time: .shortened)
-                : "Last run " + run.formatted(.relative(presentation: .named)))
-        }
-        let skipped = copies.filter { $0.state == "stale" }
-        let waiting = copies.filter { $0.state == "paused" }
-        if skipped.count == 1 {
-            lines.append("\(skipped[0].name) skipped")
-        } else if skipped.count > 1 {
-            lines.append("\(skipped.count) skipped")
-        } else if !waiting.isEmpty {
-            lines.append(waiting.count == 1 ? "1 waiting for its drive" : "\(waiting.count) waiting for their drive")
-        }
-        return ("\(fresh)", "of \(copies.count)", lines, !skipped.isEmpty || o.shrank > 0)
-    }
-
-    /// The This Mac card's words: "412 GB" "free", then the power and the nightly updates.
-    nonisolated static func machine(_ m: MachineFacts?, updates: UpdatesState?) -> (figure: String, unit: String, lines: [String], alert: Bool) {
-        var lines: [String] = []
-        if let words = m?.powerWords { lines.append(words) }
-        if let updates {
-            if updates.paused {
-                lines.append("Updates paused")
-            } else if !updates.schedule.isEmpty {
-                let when = ClockWords.schedule(updates.schedule)
-                lines.append("Updates " + when.prefix(1).lowercased() + when.dropFirst())
-            }
-        }
-        guard let m else { return ("—", "", lines, false) }
-        return (m.freeFigure, "free", lines, m.needsALook)
-    }
-}
-
-/// One of the two: its name, a big figure with a smaller word beside it,
-/// and a line or two under it, as the computer's Backups and This Mac cards.
-private struct PairCard: View {
-    let title: String
-    var icon = "square.grid.2x2"
-    let figure: String
-    let unit: String
-    let lines: [String]
-    var alert = false
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            SymbolTitle(text: title, icon: icon)
-            HStack(alignment: .firstTextBaseline, spacing: 4) {
-                Text(verbatim: figure)
-                    .font(.title.weight(.bold))
-                    .foregroundStyle(alert ? Theme.warning : Theme.ink)
-                    .monospacedDigit()
-                if !unit.isEmpty {
-                    Text(verbatim: unit)
-                        .font(.title3.weight(.semibold))
-                        .foregroundStyle(Theme.secondaryInk)
-                }
-            }
-            .lineLimit(1)
-            .minimumScaleFactor(0.7)
-            ForEach(lines, id: \.self) { line in
-                Text(verbatim: line)
-                    .font(.subheadline)
-                    .foregroundStyle(Theme.secondaryInk)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        }
-        .frame(maxWidth: .infinity, minHeight: 96, alignment: .topLeading)
-        .padding(16)
-        .card()
-        .accessibilityElement(children: .combine)
     }
 }

@@ -70,6 +70,7 @@
         "StatusFolds",
         "StopUntil",
         "UnsealFinances",
+        "Usage",
         "Watchdog"
       ],
       "features": [

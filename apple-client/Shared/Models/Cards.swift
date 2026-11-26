@@ -21,8 +21,11 @@ struct WatchdogSummary: Decodable, Sendable, Equatable {
     /// Failing checks whose alerts are snoozed on the computer, and until
     /// when, by check name (main #469). Still checked and shown.
     let snoozed: [String: Date]
+    /// The last fourteen days to today, oldest first, all checks together (`health.Day`, lane D's D3): the
+    /// Overview's Apps card draws a square for each. Empty from a computer that doesn't keep them.
+    let daily: [WatchdogDay]
 
-    enum CodingKeys: String, CodingKey { case lastRun, checks, failing, pending, week, outages, memory, snoozed }
+    enum CodingKeys: String, CodingKey { case lastRun, checks, failing, pending, week, outages, memory, snoozed, daily }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -35,6 +38,7 @@ struct WatchdogSummary: Decodable, Sendable, Equatable {
         // A part the phone can't read costs only that part.
         memory = (try? c.decodeIfPresent(MemoryPressure.self, forKey: .memory)) ?? nil
         snoozed = ((try? c.decodeIfPresent([String: Date].self, forKey: .snoozed)) ?? nil) ?? [:]
+        daily = ((try? c.decodeIfPresent([WatchdogDay].self, forKey: .daily)) ?? nil) ?? []
     }
 
     /// When the alerts about a failing check start again, while snoozed.
@@ -136,6 +140,31 @@ struct MemoryPressure: Decodable, Sendable, Equatable {
             return (Double(bytes) / gib).formatted(.number.precision(.fractionLength(1)).locale(Locale(identifier: "en_US_POSIX"))) + " GB"
         }
         return "\(Int((Double(bytes) / mib).rounded())) MB"
+    }
+}
+
+/// One day of the watchdog's checks, all apps together (`health.Day`).
+struct WatchdogDay: Decodable, Sendable, Equatable {
+    /// YYYY-MM-DD, where the computer is.
+    let date: String
+    /// Checks down at some point that day: an outage, not a blip.
+    let failed: Int
+    /// Checks run that day; 0 when the watchdog didn't run (the machine off or asleep).
+    let runs: Int
+
+    enum CodingKeys: String, CodingKey { case date, failed, runs }
+
+    init(date: String, failed: Int, runs: Int) {
+        self.date = date
+        self.failed = failed
+        self.runs = runs
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        date = try c.decodeIfPresent(String.self, forKey: .date) ?? ""
+        failed = try c.decodeIfPresent(Int.self, forKey: .failed) ?? 0
+        runs = try c.decodeIfPresent(Int.self, forKey: .runs) ?? 0
     }
 }
 

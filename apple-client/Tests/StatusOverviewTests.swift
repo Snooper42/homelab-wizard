@@ -6,33 +6,39 @@ import Testing
 // look, and the Backups tile's words.
 @Suite("Status overview")
 struct StatusOverviewTests {
-    @Test func theRingCountsAsTheComputer() throws {
+    // The Apps card counts as the computer's (`Tiles` in web/src/status/Tiles.tsx).
+    @Test func theAppsCardCountsAsTheComputer() throws {
         let status = try JSONDecoder.homelab().decode(HomelabStatus.self, from: Data(#"""
         {"apps":[{"id":"a","name":"A","state":"running"},{"id":"b","name":"B","state":"stopped"},
                  {"id":"homelab-companion","name":"Phone companion","state":"not running"},
                  {"id":"c","name":"C","state":"missing"},{"id":"d","name":"D","state":"running"}],
          "stopped":{"b":{"since":"2026-11-05T14:00:00Z"}}}
         """#.utf8))
-        let headline = StatusHeadline(status: status)
+        let apps = OverviewApps(status: status, watchdog: nil)
         // The companion waiting for its scheduled jobs isn't counted.
-        #expect(headline.running == 2 && headline.total == 4)
-        #expect(headline.share == 0.5)
-        // B was stopped on purpose; C is missing: it needs the look.
-        #expect(headline.attentionID == "c" && headline.attentionCount == 1)
+        #expect(apps.running == 2 && apps.counted == 4)
+        // B was stopped on purpose; C is missing: it's the one named.
+        #expect(apps.trouble.map(\.id) == ["c"] && apps.one?.id == "c")
+        #expect(apps.figure == "2" && apps.unit == "of 4 running" && apps.alert)
     }
 
-    // The redesign's headline (phone-status.png): how many need you, and the
-    // homelab's count under it.
-    @Test func theHeadlineSaysHowManyNeedYou() throws {
+    // Never "needs you": the card says what happened, to which app.
+    @Test func theAppsCardSaysWhatHappened() throws {
         func status(_ json: String) throws -> HomelabStatus {
             try JSONDecoder.homelab().decode(HomelabStatus.self, from: Data(json.utf8))
         }
-        let one = StatusHeadline(status: try status(#"{"apps":[{"id":"a","name":"A","state":"running"},{"id":"c","name":"C","state":"missing"}]}"#))
-        #expect(one.title == "1 app needs you")
-        #expect(one.runningLine == "1 of 2 running")
-        let two = StatusHeadline(status: try status(#"{"apps":[{"id":"a","name":"A","state":"running"},{"id":"c","name":"C","state":"missing"},{"id":"d","name":"D","state":"missing"}]}"#))
-        #expect(two.title == "2 apps need you")
-        #expect(two.runningLine == "1 of 3 running")
+        let one = OverviewApps(status: try status(#"{"apps":[{"id":"a","name":"A","state":"running"},{"id":"m","name":"Mealie","state":"stopped"}]}"#), watchdog: nil)
+        #expect(one.unit == "of 2 running")
+        #expect(one.line.hasPrefix("Mealie stopped"))
+        #expect(!one.line.contains("need"))
+        let two = OverviewApps(status: try status(#"{"apps":[{"id":"a","name":"A","state":"running"},{"id":"m","name":"Mealie","state":"stopped"},{"id":"v","name":"Vikunja","state":"stopped"},{"id":"i","name":"Immich","state":"running","notAnswering":"no answer for 5 minutes"}]}"#), watchdog: nil)
+        #expect(two.one == nil && two.unit == "of 4 running")
+        #expect(two.line == "Mealie, Vikunja stopped · Immich not answering")
+        // The homelab's own apps down come first.
+        let down = OverviewApps(status: try status(#"{"apps":[{"id":"a","name":"A","state":"running"}],"missing":2}"#), watchdog: nil)
+        #expect(down.line == "2 of the homelab's own apps are down")
+        // Four or more of a kind: two named and a count.
+        #expect(OverviewApps.troubleLine(try status(#"{"apps":[{"id":"a","name":"A","state":"stopped"},{"id":"b","name":"B","state":"stopped"},{"id":"c","name":"C","state":"stopped"},{"id":"d","name":"D","state":"stopped"}]}"#).apps) == "A, B +2 stopped")
     }
 
     // A category's pill, as the redesign's and the computer's Status: how many run.
@@ -48,23 +54,23 @@ struct StatusOverviewTests {
     }
 
     @Test func nothingYet() {
-        let headline = StatusHeadline(status: nil)
-        #expect(headline.running == 0 && headline.total == 0 && headline.share == 0)
-        #expect(headline.attentionID == nil)
+        let apps = OverviewApps(status: nil, watchdog: nil)
+        #expect(apps.running == 0 && apps.counted == 0 && apps.trouble.isEmpty)
+        #expect(apps.one == nil && apps.days.isEmpty)
+        #expect(apps.unit == "running" && apps.line == "All answering")
     }
 
-    @Test func theBackupsTile() throws {
+    @Test func theBackupsCardBeforeAndWithoutCopies() throws {
         func o(_ json: String) throws -> BackupOverview { try JSONDecoder.homelab().decode(BackupOverview.self, from: Data(json.utf8)) }
-        let fresh = StatusTiles.backups(try o(#"{"lastRun":"2026-11-05T03:12:00Z","copies":[{"id":"a","name":"A","state":"fresh"},{"id":"b","name":"B","state":"fresh"}]}"#))
-        #expect(fresh.value == "All 2 fresh" && !fresh.alert && fresh.detail != nil)
-        let one = StatusTiles.backups(try o(#"{"copies":[{"id":"a","name":"A","state":"fresh"}]}"#))
-        #expect(one.value == "1 fresh" && one.detail == nil)
-        let stale = StatusTiles.backups(try o(#"{"copies":[{"id":"a","name":"A","state":"stale"},{"id":"b","name":"B","state":"fresh"}],"stale":1,"shrank":1}"#))
-        #expect(stale.value == "2 need a look" && stale.alert)
-        let none = StatusTiles.backups(try o(#"{"copies":[]}"#))
-        #expect(none.value == "None yet" && !none.alert)
-        #expect(StatusTiles.capitalized("daily at 04:00") == "Daily at 04:00")
-        #expect(StatusTiles.capitalized("") == nil)
+        let fresh = OverviewBackups(try o(#"{"lastRun":"2026-11-05T03:12:00Z","copies":[{"id":"a","name":"A","state":"fresh"},{"id":"b","name":"B","state":"fresh"}]}"#))
+        #expect(fresh.figure == "2" && fresh.unit == "of 2 copied" && fresh.skipped == nil && fresh.line.hasPrefix("Last run "))
+        let one = OverviewBackups(try o(#"{"copies":[{"id":"a","name":"A","state":"fresh"}]}"#))
+        #expect(one.figure == "1" && one.unit == "of 1 copied" && one.line == "Not run yet")
+        let none = OverviewBackups(try o(#"{"copies":[]}"#))
+        #expect(none.figure == "0" && none.unit == "of 0 copied" && none.skipped == nil)
+        // Before Backups is read.
+        let reading = OverviewBackups(nil)
+        #expect(reading.figure == "—" && reading.line == "Reading last night…" && reading.nights.isEmpty)
     }
 
     // A folded group's logos: a badge only on what isn't simply running.
@@ -84,57 +90,93 @@ struct StatusOverviewTests {
         #expect(try !app("missing").isPlainlyFine)
     }
 
-    // The trimmed top of Status: one line when nothing needs a look.
-    @Test func theOneLine() throws {
-        func status(_ json: String) throws -> HomelabStatus {
-            try JSONDecoder.homelab().decode(HomelabStatus.self, from: Data(json.utf8))
-        }
-        #expect(StatusTop.line(nil) == "Reading your apps…")
-        #expect(StatusTop.line(try status(#"{"apps":[]}"#)) == "No apps yet")
-        #expect(StatusTop.line(try status(#"{"apps":[{"id":"a","name":"A","state":"running"},{"id":"b","name":"B","state":"running"},{"id":"homelab-companion","name":"Phone companion","state":"not running"}]}"#)) == "All 2 apps are running")
-        #expect(StatusTop.line(try status(#"{"apps":[{"id":"a","name":"A","state":"running"}]}"#)) == "Your app is running")
-        #expect(StatusTop.line(try status(#"{"apps":[{"id":"a","name":"A","state":"running"},{"id":"b","name":"B","state":"stopped"}],"stopped":{"b":{"since":"2026-11-05T14:00:00Z"}}}"#)) == "1 running, 1 stopped by you")
+    // When all is well: all answering, and the watchdog's days as squares (lane D's D3: fourteen of them).
+    @Test func allAnsweringAndTheDays() throws {
+        func w(_ json: String) throws -> WatchdogSummary { try JSONDecoder.homelab().decode(WatchdogSummary.self, from: Data(json.utf8)) }
+        let status = try JSONDecoder.homelab().decode(HomelabStatus.self, from: Data(#"{"apps":[{"id":"a","name":"A","state":"running"},{"id":"b","name":"B","state":"running"},{"id":"homelab-companion","name":"Phone companion","state":"not running"}]}"#.utf8))
+        let days = (1...14).map { #"{"date":"2026-11-\#(String(format: "%02d", $0))","failed":\#($0 == 10 ? 1 : 0),"runs":\#($0 == 4 ? 0 : 96)}"# }.joined(separator: ",")
+        let two = OverviewApps(status: status, watchdog: try w(#"{"lastRun":"2026-11-14T10:00:00Z","checks":3,"failing":[],"daily":[\#(days)]}"#))
+        #expect(two.figure == "2" && two.unit == "running" && !two.alert)
+        #expect(two.days.count == 14)
+        #expect(two.days[3].tone == .none && two.days[9].tone == .warn && two.days[13].tone == .ok)
+        #expect(two.line == "All answering · 1 day with an outage in two weeks")
+        // One still down today: its square is red.
+        let down = OverviewApps(status: status, watchdog: try w(#"{"lastRun":"2026-11-14T10:00:00Z","checks":3,"failing":[{"name":"B","problem":"no answer","since":"2026-11-14T09:00:00Z"}],"daily":[{"date":"2026-11-13","failed":0,"runs":96},{"date":"2026-11-14","failed":1,"runs":40}]}"#))
+        #expect(down.days.map(\.tone) == [.ok, .bad])
+        // From a computer without the daily summary, the week from its outages.
+        let week = OverviewApps(status: status, watchdog: try w(#"{"lastRun":"2026-11-14T10:00:00Z","checks":3,"failing":[]}"#))
+        #expect(week.days.count == 7 && week.line == "All answering · no outage this week")
+        // Before the watchdog has run, no squares.
+        #expect(OverviewApps(status: status, watchdog: try w(#"{"checks":0,"failing":[]}"#)).days.isEmpty)
     }
 
-    // Backups and This Machine under the headline (the redesign's phone picture): the words each card says.
+    // The Backups card: how many were copied of those not waiting for a drive, and what was skipped.
     @Test func theBackupsCardSaysWhatWasCopiedAndSkipped() throws {
         func o(_ json: String) throws -> BackupOverview { try JSONDecoder.homelab().decode(BackupOverview.self, from: Data(json.utf8)) }
-        let run = ISO8601DateFormatter().date(from: "2026-11-24T08:30:00Z")!
-        let night = try o(#"{"lastRun":"2026-11-24T08:30:00Z","copies":[{"id":"a","name":"Immich","state":"fresh"},{"id":"b","name":"Mealie","state":"stale"},{"id":"c","name":"Navidrome","state":"fresh"}],"stale":1}"#)
-        let words = StatusPair.backups(night, now: run.addingTimeInterval(3600))
-        #expect(words.figure == "2" && words.unit == "of 3" && words.alert)
-        #expect(words.lines.count == 2 && words.lines[0].hasPrefix("Last night at ") && words.lines[1] == "Mealie skipped")
-        let old = StatusPair.backups(night, now: run.addingTimeInterval(4 * 86400))
-        #expect(old.lines[0].hasPrefix("Last run "))
-        let waiting = StatusPair.backups(try o(#"{"copies":[{"id":"a","name":"A","state":"fresh"},{"id":"k","name":"Komga","state":"paused"},{"id":"v","name":"Kavita","state":"paused"}]}"#))
-        #expect(waiting.figure == "1" && waiting.lines == ["2 waiting for their drive"] && !waiting.alert)
-        #expect(StatusPair.backups(try o(#"{"copies":[]}"#)).lines == ["No copies yet"])
+        let night = try o(#"{"lastRun":"2026-11-24T08:30:00Z","copies":[{"id":"a","name":"Immich","state":"fresh"},{"id":"b","name":"Mealie","state":"stale"},{"id":"c","name":"Navidrome","state":"fresh"}],"stale":1,"nights":[{"date":"2026-11-23","apps":{"immich":"copied"}},{"date":"2026-11-24","apps":{"immich":"copied","mealie":"stopped"}}]}"#)
+        let words = OverviewBackups(night)
+        #expect(words.figure == "2" && words.unit == "of 3 copied")
+        #expect(words.line.hasPrefix("Last run ") && words.skipped == "Mealie skipped")
+        #expect(words.nights.map(\.tone) == [.ok, .warn])
+        let waiting = OverviewBackups(try o(#"{"copies":[{"id":"a","name":"A","state":"fresh"},{"id":"k","name":"Komga","state":"paused"},{"id":"v","name":"Kavita","state":"paused"}]}"#))
+        #expect(waiting.figure == "1" && waiting.unit == "of 1 copied" && waiting.skipped == nil)
     }
 
     @Test func theMachineCardSaysItsRoomPowerAndUpdates() {
         let facts = MachineFacts.from(.object(["free": .number(412 * 1_073_741_824), "total": .number(994 * 1_073_741_824), "low": .bool(false), "power": .string("plugged"), "keptAwake": .bool(true)]))
         #expect(facts?.powerWords == "Plugged in" && facts?.needsALook == false)
-        let words = StatusPair.machine(facts, updates: UpdatesState(paused: false, schedule: "daily at 04:00"))
+        let words = OverviewMachine(facts, updates: UpdatesState(paused: false, schedule: "daily at 04:00"))
         // In 1024s, as the computer says it (412 GB free of 994 GB).
-        #expect(words.unit == "free" && !words.alert && words.figure.contains("412"))
-        #expect(words.lines.count == 2 && words.lines[0] == "Plugged in" && words.lines[1].hasPrefix("Updates every night at "))
-        #expect(StatusPair.machine(facts, updates: UpdatesState(paused: true, schedule: "daily at 04:00")).lines.last == "Updates paused")
-        // On battery, or plugged in but free to sleep, is worth a look; a computer that doesn't send it shows the updates alone.
+        #expect(words.title == "This machine" && words.figure.contains("412") && words.unit == "GB free" && !words.low)
+        #expect(words.trailing == "Updates daily at 04:00" && words.line == "Plugged in" && !words.lineAlert)
+        #expect(words.barWords.hasSuffix(" used") && (words.bar ?? 0) > 0.5)
+        #expect(OverviewMachine(facts, updates: UpdatesState(paused: true, schedule: "daily at 04:00")).trailing == "Updates paused")
+        // On battery, or plugged in but free to sleep, is said in amber.
         #expect(MachineFacts.from(.object(["free": .number(1e9), "total": .number(2e9), "power": .string("battery")]))?.needsALook == true)
-        #expect(MachineFacts.from(.object(["free": .number(1e9), "total": .number(2e9), "power": .string("plugged")]))?.powerWords == "Plugged in, may sleep")
+        #expect(OverviewMachine(MachineFacts.from(.object(["free": .number(1e9), "total": .number(2e9), "power": .string("plugged")])), updates: nil).lineAlert)
         #expect(MachineFacts.from(.object(["total": .number(0)])) == nil)
-        let none = StatusPair.machine(nil, updates: UpdatesState(paused: true, schedule: ""))
-        #expect(none.figure == "—" && none.lines == ["Updates paused"])
+        // A computer that sends no facts: the nightly updates alone.
+        let none = OverviewMachine(nil, updates: UpdatesState(paused: true, schedule: ""))
+        #expect(none.title == "Updates" && none.figure == "Paused" && none.line == "Until you resume them" && none.bar == nil)
+        // Up for a while: in the title row, the updates moving to the line.
+        let now = Date(timeIntervalSince1970: 1_800_000_000)
+        let up = OverviewMachine(MachineFacts.from(.object(["free": .number(1e9), "total": .number(2e9), "power": .string("plugged"), "keptAwake": .bool(true), "booted": .string("2027-01-01T00:00:00Z")])), updates: UpdatesState(paused: false, schedule: "daily at 04:00"), now: now)
+        #expect(up.trailing.hasPrefix("Up ") && up.trailing.hasSuffix(" days") && up.line == "Plugged in · updates daily at 04:00")
+        #expect(MachineFacts.upFor(now.addingTimeInterval(-30), now: now) == "Up a minute")
+        #expect(MachineFacts.upFor(now.addingTimeInterval(-5 * 3600), now: now) == "Up 5 hours")
+        #expect(MachineFacts.upFor(nil, now: now) == nil)
     }
 
-    // A category's row in the one Apps card: its apps' names under its name, and what VoiceOver says.
+    // A category's row on the Overview: its apps' names under its name, a stopped one first, and what VoiceOver says.
     @Test func aCategoryRowSaysItsAppsAndHowManyRun() throws {
         let s = try JSONDecoder.homelab().decode(HomelabStatus.self, from: Data(#"{"apps":[{"id":"a","name":"AdGuard Home","state":"running"},{"id":"b","name":"Cloudflare Tunnel","state":"running"},{"id":"c","name":"Speedtest Tracker","state":"stopped"}]}"#.utf8))
-        let network = AppGroup(label: "Network", apps: s.apps)
-        #expect(GroupRow.names(network) == "AdGuard Home, Cloudflare Tunnel, Speedtest Tracker")
-        #expect(GroupRow.spoken(network) == "Network, 2 of 3 running: AdGuard Home, Cloudflare Tunnel, Speedtest Tracker")
-        let fine = AppGroup(label: "Network", apps: Array(s.apps.prefix(2)))
-        #expect(GroupRow.spoken(fine) == "Network, 2 running: AdGuard Home, Cloudflare Tunnel")
-        #expect(GroupRow.spoken(AppGroup(label: "Pinned", apps: Array(s.apps.prefix(1)), pinned: true)) == "Pinned, 1 app: AdGuard Home")
+        let network = StatusCategory(id: "network", label: "Network", apps: s.apps)
+        #expect(network.line == "Speedtest Tracker stopped · AdGuard Home +1")
+        #expect(network.pill.words == "2 of 3 running" && !network.pill.fine)
+        #expect(network.spoken == "Network, 2 of 3 running: AdGuard Home, Cloudflare Tunnel, Speedtest Tracker")
+        let fine = StatusCategory(id: "network", label: "Network", apps: Array(s.apps.prefix(2)))
+        #expect(fine.line == "AdGuard Home, Cloudflare Tunnel" && fine.pill.words == "2 running" && fine.pill.fine)
+        #expect(fine.spoken == "Network, 2 running: AdGuard Home, Cloudflare Tunnel")
+        // Media automation says what it does while none stopped.
+        let automation = StatusCategory(id: StatusCategory.automation, label: "Media automation", apps: Array(s.apps.prefix(1)), summary: "Finds and downloads")
+        #expect(automation.line == "Finds and downloads")
+    }
+
+    // The categories as the computer lists them: the catalog's order, Media automation last, Seerr in Media,
+    // your own apps after, each with its apps whatever their state.
+    @Test func theCategoriesAsTheComputerListsThem() throws {
+        let catalog = try JSONDecoder.homelab().decode(AppCatalog.self, from: Data(#"""
+        {"categories":[{"id":"media-automation","label":"Automation"},{"id":"media","label":"Media"},{"id":"network","label":"Network"}],
+         "apps":[{"id":"jellyfin","name":"Jellyfin","category":"media","description":"","kind":"app"},
+                 {"id":"seerr","name":"Seerr","category":"media-automation","description":"","kind":"app"},
+                 {"id":"radarr","name":"Radarr","category":"media-automation","description":"","kind":"app"},
+                 {"id":"adguard-home","name":"AdGuard Home","category":"network","description":"","kind":"app"}]}
+        """#.utf8))
+        let s = try JSONDecoder.homelab().decode(HomelabStatus.self, from: Data(#"{"apps":[{"id":"radarr","name":"Radarr","state":"running"},{"id":"seerr","name":"Seerr","state":"running"},{"id":"jellyfin","name":"Jellyfin","state":"stopped"},{"id":"mine","name":"My App","state":"running"}]}"#.utf8))
+        let list = StatusCategory.list(apps: s.apps, catalog: catalog)
+        #expect(list.map(\.id) == ["media", "media-automation", "own"])
+        #expect(list[0].apps.map(\.id) == ["jellyfin", "seerr"])
+        #expect(list[1].label == "Media automation" && list[1].line == "Finds and downloads what you ask for in Seerr")
+        #expect(list[2].label == "Your own apps" && list[2].apps.map(\.id) == ["mine"])
     }
 }
