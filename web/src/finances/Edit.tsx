@@ -47,7 +47,7 @@ export interface EditProps {
   receipts?: { save: (dataURL: string) => Promise<string>; read: (name: string) => Promise<string> };
   /** Keeps a card's own photo (a data URL) and gives its name; reads one back by its name. */
   cardPictures?: { save: (dataURL: string) => Promise<string>; read: (name: string) => Promise<string> };
-  /** Finds a company's real logo on its website (the desktop app's FinancesFetchLogo, internal/sitelogo); none on a phone. */
+  /** Finds a company's real logo on its website (FinancesFetchLogo, internal/sitelogo), on the computer and the web page. */
   fetchLogo?: (site: string) => Promise<{ image: string; from: string }>;
   close: () => void;
 }

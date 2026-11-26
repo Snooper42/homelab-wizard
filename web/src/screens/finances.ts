@@ -43,9 +43,8 @@ function runningApps(): Running[] {
 }
 const runs = (id: string) => (statusData.value?.apps || []).some((a) => a.id === id && (a.state === 'running' || a.state === 'elsewhere'));
 const wallosRunning = () => runs('wallos');
-/** The apps Update balances reads from on a click: on the computer, those running. */
+/** The apps Update balances reads from on a click: those running, on the computer and the web page alike. */
 function fromApps() {
-  if (phone) return undefined;
   const all = [
     { id: 'firefly-iii', name: 'Firefly III', read: () => go().FinancesFromFirefly() },
     { id: 'ghostfolio', name: 'Ghostfolio', read: () => go().FinancesFromGhostfolio() },
@@ -152,9 +151,9 @@ function draw() {
     updatePrices: !v || v.readOnly ? undefined : async () => { const r = await go().FinancesUpdatePrices(); financesData.set(await go().Finances()); return r; },
     saveLedger,
     running: runningApps(),
-    calendar: phone ? undefined : () => go().FinancesCalendar(),
-    // Wallos's subscriptions, on the computer while Wallos runs.
-    fromWallos: phone || !wallosRunning() ? undefined : () => go().FinancesFromWallos(),
+    calendar: () => go().FinancesCalendar(),
+    // Wallos's subscriptions while Wallos runs, on the computer and the web page alike (the owner, Nov 26: parity).
+    fromWallos: !wallosRunning() ? undefined : () => go().FinancesFromWallos(),
     phone,
     // Read now and Add a holding wherever Finances may be changed (the computer, a phone allowed to change it): never hidden
     // behind Status, which may not see the Ghostfolio that answers; when it does not answer, the card says so.
@@ -205,7 +204,7 @@ async function save(plan: finance.Plan): Promise<boolean> {
 const receipts = { save: (dataURL: string) => go().SaveFinancesReceipt(dataURL), read: (name: string) => go().FinancesReceipt(name) };
 const cardPictures = { save: (dataURL: string) => go().SaveFinancesCardPicture(dataURL), read: (name: string) => go().FinancesCardPicture(name) };
 // A company's real logo from its website, asked by the computer (the desktop app); a phone has none to ask with.
-const fetchLogo = phone ? undefined : (site: string) => go().FinancesFetchLogo(site);
+const fetchLogo = (site: string) => go().FinancesFetchLogo(site);
 
 async function saveLedger(l: finance.Ledger): Promise<boolean> {
   try {

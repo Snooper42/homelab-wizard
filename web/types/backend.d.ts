@@ -132,23 +132,9 @@ declare namespace app {
     dark: string;
     text?: string;
   }
-  interface AppBalance {
-    name: string;
-    balance: number;
-    currency?: string;
-  }
   interface AppLogo {
     image: string;
     from: string;
-  }
-  interface AppSubscription {
-    name: string;
-    amount: number;
-    every: string;
-    cycle: string;
-    next?: string;
-    category?: string;
-    off?: boolean;
   }
   interface AppSymbol {
     symbol: string;
@@ -1026,6 +1012,23 @@ declare namespace finance {
   }
 }
 
+declare namespace financeapps {
+  interface Balance {
+    name: string;
+    balance: number;
+    currency?: string;
+  }
+  interface Subscription {
+    name: string;
+    amount: number;
+    every: string;
+    cycle: string;
+    next?: string;
+    category?: string;
+    off?: boolean;
+  }
+}
+
 declare namespace health {
   interface AppMemory {
     id?: string;
@@ -1448,9 +1451,9 @@ interface Backend {
     FinancesFetchLogo(arg1: string): Promise<app.AppLogo>;
     FinancesFindSymbol(arg1: string): Promise<app.AppSymbol[]>;
     FinancesFollow(arg1: app.AppSymbol): Promise<finance.View>;
-    FinancesFromFirefly(): Promise<app.AppBalance[]>;
-    FinancesFromGhostfolio(): Promise<app.AppBalance[]>;
-    FinancesFromWallos(): Promise<app.AppSubscription[]>;
+    FinancesFromFirefly(): Promise<financeapps.Balance[]>;
+    FinancesFromGhostfolio(): Promise<financeapps.Balance[]>;
+    FinancesFromWallos(): Promise<financeapps.Subscription[]>;
     FinancesInvestmentTrades(arg1: string, arg2: string): Promise<app.InvestmentTrade[]>;
     FinancesLedger(): Promise<finance.Ledger>;
     FinancesReadInvestments(): Promise<app.InvestmentsRead>;
