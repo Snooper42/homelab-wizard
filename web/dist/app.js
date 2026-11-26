@@ -527,7 +527,6 @@
   var targets = [];
   var reading = null;
   function readTargets() {
-    if (onPhone()) return Promise.resolve();
     reading ??= Promise.resolve().then(() => go().SendTargets()).then((t3) => {
       targets = t3 || [];
     }, () => {
@@ -824,7 +823,7 @@
 
   // web/src/parts/Hover.tsx
   var made = 0;
-  function useHoverCard(tip, { wide, side = "below", lazy } = {}) {
+  function useHoverCard(tip, { wide: wide2, side = "below", lazy } = {}) {
     const [open5, setOpen] = d2(false);
     const [id2] = d2(() => `hover-${++made}`);
     const at2 = A2(null);
@@ -869,11 +868,11 @@
         }
       }
     };
-    const card = /* @__PURE__ */ u3("span", { id: id2, role: "tooltip", class: "hovercard" + (wide ? " wide" : ""), ref: box, hidden: !open5, children: (!lazy || open5) && tip });
+    const card = /* @__PURE__ */ u3("span", { id: id2, role: "tooltip", class: "hovercard" + (wide2 ? " wide" : ""), ref: box, hidden: !open5, children: (!lazy || open5) && tip });
     return { on: on2, card, show: show4, open: open5 };
   }
-  function Hover({ label, cls = "", tip, wide, lazy }) {
-    const { on: on2, card, show: show4 } = useHoverCard(tip, { wide, lazy });
+  function Hover({ label, cls = "", tip, wide: wide2, lazy }) {
+    const { on: on2, card, show: show4 } = useHoverCard(tip, { wide: wide2, lazy });
     return /* @__PURE__ */ u3("span", { class: "hovers " + cls, tabIndex: 0, ...on2, onClick: () => show4(true), children: [
       label,
       card
@@ -3115,12 +3114,13 @@
   }
 
   // web/src/status/RowMenu.tsx
+  var wide = () => matchMedia("(min-width: 701px)").matches;
   function RowMenu({ a: a3, x: x3, y: y3, up, native, busy: busy2, companion: companion2, on: on2, close: close3, said: said2 }) {
     const box = A2(null);
     const [sure, setSure] = d2(false);
     const [later2, setLater] = d2(false);
     const [sending, setSending] = d2(false);
-    const phones = companion2 ? [] : on2.targets(a3);
+    const phones = on2.targets(a3);
     const items = () => [...box.current?.querySelectorAll("[role^=menuitem]:not([disabled])") || []];
     _2(() => {
       if (box.current) putInside(box.current, x3, y3, up);
@@ -3203,7 +3203,7 @@
           /* @__PURE__ */ u3("p", { class: "menufoot muted", children: "It starts again by itself then." })
         ] }) : /* @__PURE__ */ u3(S, { children: [
           running5 && url && item("Open", pick(() => on2.open(url))),
-          running5 && a3.address && !companion2 && item("Open on a phone", pick(() => on2.phone(a3))),
+          running5 && a3.address && (!companion2 || wide()) && item("Open on a phone", pick(() => on2.phone(a3))),
           url && item("Copy address", pick(() => {
             on2.copy(url).then(() => said2("Address copied"), () => said2("Could not copy the address"));
           })),
@@ -3222,12 +3222,12 @@
           !native && running5 && /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", class: "stoplater", "aria-haspopup": "menu", disabled: busy2, onClick: () => showLater(true), children: "Stop for a while ›" }),
           !native && /* @__PURE__ */ u3("hr", {}),
           !native && item("Logs", pick(() => on2.logs(a3))),
-          !companion2 && item("Back up now", pick(() => on2.backupNow())),
-          !native && !companion2 && /* @__PURE__ */ u3("button", { type: "button", role: "menuitemcheckbox", "aria-checked": !a3.quiet, onClick: pick(() => on2.alerts(a3, !!a3.quiet)), children: [
+          item("Back up now", pick(() => on2.backupNow())),
+          !native && /* @__PURE__ */ u3("button", { type: "button", role: "menuitemcheckbox", "aria-checked": !a3.quiet, onClick: pick(() => on2.alerts(a3, !!a3.quiet)), children: [
             "Tell me if it stops",
             /* @__PURE__ */ u3("span", { class: "check", "aria-hidden": "true", children: a3.quiet ? "" : "✓" })
           ] }),
-          !companion2 && /* @__PURE__ */ u3("button", { type: "button", role: "menuitemcheckbox", "aria-checked": !!a3.pinned, onClick: pick(() => on2.pin(a3, !a3.pinned)), children: [
+          /* @__PURE__ */ u3("button", { type: "button", role: "menuitemcheckbox", "aria-checked": !!a3.pinned, onClick: pick(() => on2.pin(a3, !a3.pinned)), children: [
             "Pin to the top",
             /* @__PURE__ */ u3("span", { class: "check", "aria-hidden": "true", children: a3.pinned ? "✓" : "" })
           ] })
@@ -9072,7 +9072,7 @@
     appList = { groups: groups4, pending, catalog, weekUp, outages, seen, batteryPaused, held, busy: appsBusy, companion: document.documentElement.classList.contains("companion"), os: osName, on: appListActions, memory, unkept, icons: icons2 };
     wantIcons(groups4.flatMap((g2) => g2.apps.slice(0, 3).filter((x3) => x3.state !== "missing" && !shippedLogo(x3.id)).map((x3) => x3.id)));
     mountAppList($("statusRows"), appList);
-    if (!unkept && !appList.companion) refreshUnkept();
+    if (!unkept) refreshUnkept();
     const cats = [...catalog?.categories || []].sort((x3, y3) => Number(x3.id === automation) - Number(y3.id === automation));
     const own2 = st.apps.filter((a3) => !cats.some((c4) => c4.id === catOf[a3.id]));
     const installed2 = new Set(st.apps.map((a3) => a3.id));
@@ -10415,12 +10415,12 @@
             }
           )
         ] }) : run2("start", "Start", "Start it")),
-        a3.state === "running" && a3.address && !p3.companion && /* @__PURE__ */ u3("button", { class: "btn", disabled: busy2, onClick: on2.phone, children: [
+        a3.state === "running" && a3.address && /* @__PURE__ */ u3("button", { class: "btn openphone", disabled: busy2, onClick: on2.phone, children: [
           /* @__PURE__ */ u3(Icon, { name: "phone" }),
           "Open on a phone"
         ] }),
         a3.state === "running" && url && /* @__PURE__ */ u3("button", { class: "primary small", onClick: () => on2.open(url), children: "Open" }),
-        !p3.companion && /* @__PURE__ */ u3(GearButton, { name: a3.name, unsaved: p3.unkept || 0, open: on2.signIn })
+        /* @__PURE__ */ u3(GearButton, { name: a3.name, unsaved: p3.unkept || 0, open: on2.signIn })
       ] })
     ] });
   }
@@ -10674,7 +10674,7 @@
         /* @__PURE__ */ u3("button", { class: "small change", disabled: p3.busy, title: "Dumps every database and copies the settings now, as the nightly backup does", onClick: p3.on.backupNow, children: "Back up now" }),
         /* @__PURE__ */ u3("button", { class: "small", onClick: p3.on.openBackups, children: "Open Backups" })
       ] }),
-      container && !p3.companion && /* @__PURE__ */ u3("div", { class: "remove", children: [
+      container && /* @__PURE__ */ u3("div", { class: "remove", children: [
         /* @__PURE__ */ u3("button", { class: "small danger change", disabled: p3.busy, title: "Backs it up first; its container goes, its data stays in the homelab folder", onClick: p3.on.remove, children: [
           "Remove ",
           p3.a.name,
@@ -10799,14 +10799,13 @@
   }
   async function readRest() {
     const at2 = id;
-    const companion2 = document.documentElement.classList.contains("companion");
     const [w3, st, ppl, ex, pr, pv] = await Promise.allSettled([
       go().Watchdog(),
       go().Storage(),
       go().People(),
       go().Explainer(),
       guards.has(at2) ? go().Protection() : Promise.resolve(null),
-      at2 === privateApp && !companion2 ? go().DownloadsPrivate() : Promise.resolve(null)
+      at2 === privateApp ? go().DownloadsPrivate() : Promise.resolve(null)
     ]);
     if (at2 !== id) return;
     stopped = pr.status === "fulfilled" ? pr.value : null;
@@ -10854,7 +10853,7 @@
       machine: thisMachine.replace(/^This/, "this"),
       companion: companion2,
       stopped: guards.has(id) ? stopped : void 0,
-      privacy: id === privateApp && !companion2 ? privacy : void 0,
+      privacy: id === privateApp ? privacy : void 0,
       on: {
         back: () => navigate("status"),
         from: statusCrumb(),
@@ -12567,8 +12566,8 @@
     return Object.keys(logos).length ? logos : void 0;
   }
   var tick2 = (set2) => (e3) => set2(e3.currentTarget.checked);
-  function Field({ label, children, wide }) {
-    return /* @__PURE__ */ u3("label", { class: "field" + (wide ? " wide" : ""), children: [
+  function Field({ label, children, wide: wide2 }) {
+    return /* @__PURE__ */ u3("label", { class: "field" + (wide2 ? " wide" : ""), children: [
       label,
       children
     ] });
@@ -22264,9 +22263,9 @@ ${pays}
       )) })
     ] });
   }
-  function TodayWidget({ d: d3, job: job2, act, wide }) {
+  function TodayWidget({ d: d3, job: job2, act, wide: wide2 }) {
     const today2 = d3.today || [];
-    return /* @__PURE__ */ u3(Widget, { title: "What I did today", span: wide ? "all" : 1, kind: "tidytoday", children: [
+    return /* @__PURE__ */ u3(Widget, { title: "What I did today", span: wide2 ? "all" : 1, kind: "tidytoday", children: [
       !!today2.length && /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3("span", { class: "fx-amount", children: [
         today2.filter((f4) => !f4.undone).length,
         /* @__PURE__ */ u3("small", { children: [

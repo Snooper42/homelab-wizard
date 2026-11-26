@@ -23,7 +23,12 @@ const phoneMethods = (() => {
   const body = src.slice(src.indexOf('func (h *homelab) phoneMethods('));
   const names = [...body.slice(0, body.indexOf('\n}\n')).matchAll(/^\t\t"([A-Z][A-Za-z]+)":/gm)].map((m) => m[1]);
   if (!names.includes('StatusBoard') || !names.includes('Host')) throw new Error('could not read the phone\'s methods from serve.go: ' + names);
-  return names;
+  // The web page's, beside them (serve_web.go, the owner's parity, Nov 26).
+  const web = readFileSync(join(root, 'cmd', 'homelab', 'serve_web.go'), 'utf8');
+  const webBody = web.slice(web.indexOf('func (h *homelab) webMethods('));
+  const more = [...webBody.slice(0, webBody.indexOf('\n}\n')).matchAll(/^\t\t"([A-Z][A-Za-z]+)":/gm)].map((m) => m[1]);
+  if (!more.includes('Kept')) throw new Error('could not read the web page\'s methods from serve_web.go: ' + more);
+  return [...names, ...more];
 })();
 const phoneMock = (phone) => (phone?.includes('companion') ? { phone, phoneMethods } : {});
 const require = createRequire(import.meta.url);
@@ -671,6 +676,36 @@ const popupsWhole = async () => {
 };
 
 const smokes = [
+  // Parity with the computer on the web page (the owner, Nov 26): on a wide window, from a device that may change things,
+  // an app's page has Open on a phone (its QR code), its sign-in details' ⚙ and Remove; Status has Update apps; Backups'
+  // Recovery kit opens; and none of it is refused as the computer's own.
+  { name: 'The web page has the computer\'s: an app\'s page, Update apps, the recovery kit', screen: 'app:vikunja', phone: ['companion', 'can-change'], run: async (page) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.waitForSelector('#app.active', { timeout: 5000 });
+    for (const [what, sel] of [['Open on a phone', '#app button.openphone'], ['the sign-in ⚙', '#app button.gear'], ['Remove', '#app .remove button']]) {
+      if (!(await page.isVisible(sel))) throw new Error(`no ${what} on an app's page`);
+    }
+    await page.click('#app button.openphone');
+    await page.waitForSelector('img[src^="data:image/svg+xml"], .qr img, .qr svg', { timeout: 3000 });
+    await page.keyboard.press('Escape');
+    await page.click('nav button[data-screen=status]');
+    await page.waitForSelector('#status.active', { timeout: 5000 });
+    if (!(await page.isVisible('#updateAll'))) throw new Error('no Update apps on Status');
+    await page.click('nav button[data-screen=backups]');
+    await page.waitForSelector('#backups.active #recoveryKit', { timeout: 5000 });
+    await page.click('#recoveryKit');
+    await page.waitForTimeout(300);
+    const refused = await page.evaluate(() => window.__MOCK.refused);
+    if (refused.length) throw new Error('refused as the computer\'s own: ' + [...new Set(refused)].join(', '));
+  } },
+  { name: 'The web page on a device that only looks: no Update apps, no Remove', screen: 'app:vikunja', phone: ['companion'], run: async (page) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.waitForSelector('#app.active', { timeout: 5000 });
+    if (await page.isVisible('#app .remove button')) throw new Error('Remove shows on a device that only looks');
+    await page.click('nav button[data-screen=status]');
+    await page.waitForSelector('#status.active', { timeout: 5000 });
+    if (await page.isVisible('#updateAll')) throw new Error('Update apps shows on a device that only looks');
+  } },
   // Every pop-up whole, in sight and on top (the owner, Nov 25: "hunt for this across the application"): every menu behind
   // a button, every hover card and the right-click menus, on each screen, at 1280×800 and in a small window at text size
   // 1.5 (html's zoom once put every hover card 150px off), and on the phone: each item hit-tested where it shows.
@@ -5677,18 +5712,19 @@ const smokes = [
     }
     await page.waitForSelector('#appSettings li:has-text("Tell me if it stops") .switchstate:text-is("On")');
   } },
-  // Quick actions: on a phone that may make changes, a long press on an app's row opens the quick ones (Open, Restart,
-  // Stop for a while, Logs), not this computer's (Back up now, alerts, Pin); the page does not open under it. A tap
-  // still opens the page, and a phone that only looks has no menu.
+  // Quick actions: on a phone that may make changes, a long press on an app's row opens its menu, the computer's whole
+  // (the owner, Nov 26: parity): Open, Restart, Stop for a while, Logs, Back up now, alerts and Pin, but not Open on a
+  // phone on the phone itself; the page does not open under it. A tap still opens the page, and a phone that only looks
+  // has no menu.
   { name: 'The phone: a long press on an app for its quick actions', screen: 'status', phone: ['companion', 'can-change'], run: async (page) => {
     await page.waitForSelector('#statusRows tr:has(strong:text-is("Vikunja"))', { timeout: 5000 });
     await longPress(page, 'Vikunja', 650);
     const menu = page.locator('#statusRows .rowmenu');
     await menu.waitFor({ timeout: 3000 });
     const items = await menu.locator('[role^=menuitem]').allTextContents();
-    for (const want of ['Open', 'Restart', 'Stop', 'Stop for a while ›', 'Logs']) if (!items.includes(want)) throw new Error(`no ${want} in ${items}`);
-    for (const never of ['Back up now', 'Pin to the top', 'Open on a phone']) if (items.some((i) => i.startsWith(never))) throw new Error(`${never} on the phone: ${items}`);
-    if (items.some((i) => i.startsWith('Tell me if it stops'))) throw new Error(`alerts on the phone: ${items}`);
+    for (const want of ['Open', 'Restart', 'Stop', 'Stop for a while ›', 'Logs', 'Back up now']) if (!items.includes(want)) throw new Error(`no ${want} in ${items}`);
+    for (const want of ['Tell me if it stops', 'Pin to the top']) if (!items.some((i) => i.startsWith(want))) throw new Error(`no ${want} on the phone: ${items}`);
+    if (items.some((i) => i.startsWith('Open on a phone'))) throw new Error(`Open on a phone, on the phone: ${items}`);
     if (await page.isVisible('#app')) throw new Error('the long press opened the app\'s page too');
     // The finger held there selects no text (and iOS shows no callout).
     if ((await page.$eval('#statusRows tr:has(strong)', (r) => getComputedStyle(r).userSelect)) !== 'none') throw new Error('a held finger can select the row\'s text');
@@ -5712,7 +5748,7 @@ const smokes = [
     await page.click('#app button:text-is("Restart")', { timeout: 5000 });
     await page.waitForFunction(() => window.__MOCK.calls.AppAction >= 1, null, { timeout: 5000 });
     if (await page.isVisible('#cliPanel')) throw new Error('a sheet opened for a Restart: it runs on the row now');
-    if (await page.isVisible('#app button:has-text("Remove")')) throw new Error('Remove shows on a phone');
+    if (!(await page.isVisible('#app button:has-text("Remove")'))) throw new Error('no Remove on a phone allowed to make changes (the computer has it)');
   } },
   // With no https link yet (no domain, no Tailscale), a phone pairs over the
   // home Wi-Fi and can only look, without Finances, whatever was picked:
