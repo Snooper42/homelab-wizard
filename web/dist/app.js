@@ -1932,7 +1932,7 @@
           running5.length,
           /* @__PURE__ */ u3("span", { class: "muted", children: " running" })
         ] }) }),
-        /* @__PURE__ */ u3("div", { class: "antline muted", children: one ? /* @__PURE__ */ u3("span", { class: "antwho", children: [
+        /* @__PURE__ */ u3("div", { class: "antline muted", children: st.missing ? /* @__PURE__ */ u3("span", { class: "bad", children: st.missing === 1 ? "1 of the homelab's own apps is down" : `${st.missing} of the homelab's own apps are down` }) : one ? /* @__PURE__ */ u3("span", { class: "antwho", children: [
           /* @__PURE__ */ u3(AppMark, { id: one.id, name: one.name, icon: "", small: true }),
           /* @__PURE__ */ u3("span", { class: "antname", children: [
             one.name,
@@ -1942,7 +1942,7 @@
         ] }) : trouble2.length ? /* @__PURE__ */ u3("span", { class: "antwho", children: /* @__PURE__ */ u3("span", { class: "antname", children: [
           trouble2.map((a3) => a3.name).join(", "),
           " stopped"
-        ] }) }) : st.missing ? /* @__PURE__ */ u3("span", { class: "bad", children: st.missing === 1 ? "1 of the homelab's own apps is down" : `${st.missing} of the homelab's own apps are down` }) : /* @__PURE__ */ u3("span", { children: [
+        ] }) }) : /* @__PURE__ */ u3("span", { children: [
           "All answering",
           week2 ? ` · ${outages2 ? `${outages2 === 1 ? "1 day" : `${outages2} days`} with an outage this week` : "no outage this week"}` : ""
         ] }) }),
@@ -8134,7 +8134,7 @@
       const running5 = r3.apps.filter((a3) => a3.state === "running").length;
       const names5 = r3.apps.map((a3) => a3.name);
       const lead2 = r3.stopped.length ? [`${r3.stopped.join(", ")} stopped`, ...names5.filter((n3) => !r3.stopped.includes(n3))] : names5;
-      const line = lead2.slice(0, 2).join(r3.stopped.length ? " · " : ", ") + (lead2.length > 2 ? ` +${lead2.length - 2}` : "");
+      const line = !r3.stopped.length && r3.summary ? r3.summary : lead2.slice(0, 2).join(r3.stopped.length ? " · " : ", ") + (lead2.length > 2 ? ` +${lead2.length - 2}` : "");
       const warn = r3.stopped.length > 0;
       return /* @__PURE__ */ u3("li", { children: /* @__PURE__ */ u3("button", { type: "button", class: "ovrow", "data-key": r3.id, onClick: () => open5(r3.id), children: [
         /* @__PURE__ */ u3("span", { class: "ovlogos", "aria-hidden": "true", children: r3.apps.slice(0, 3).map((a3) => /* @__PURE__ */ u3(AppMark, { id: a3.id, name: a3.name, icon: icons4?.[a3.id] || "", small: true }, a3.id)) }),
@@ -9299,7 +9299,7 @@
     const list = listView();
     $("status").classList.toggle("listview", list);
     mountCategoryPanel($("statusPanel"), list || !statusParts.length ? null : {
-      rows: statusParts.filter((p3) => p3.apps.length).map((p3) => ({ id: p3.id, label: p3.label, apps: p3.apps, stopped: p3.apps.filter((a3) => lastStatus && troubled(a3, lastStatus.stopped)).map((a3) => a3.name) })),
+      rows: statusParts.filter((p3) => p3.apps.length).map((p3) => ({ id: p3.id, label: p3.label, apps: p3.apps, stopped: p3.apps.filter((a3) => lastStatus && troubled(a3, lastStatus.stopped)).map((a3) => a3.name), summary: p3.id === automation ? automationSummary : void 0 })),
       icons: icons2,
       open: (id2) => pickStatusPart(id2)
     });

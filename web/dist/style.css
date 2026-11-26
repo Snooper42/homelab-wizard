@@ -3755,3 +3755,9 @@ nav .sidemenulist .sidedot + .total { margin-left:8px; }
     html.os-mac.companion .foot { border-top-color:var(--glow-1); }
   }
 }
+/* The phone's page in iPhone Safari stays put (the owner, Nov 25: "super bouncy, it doesn't stick to a side"): the page
+   itself never rubber-bands or pans sideways; only main scrolls, up and down, and no further than its end. A wide table
+   or chart still scrolls sideways inside its own box; pinch-zoom still works. */
+html.companion, html.companion body { overscroll-behavior:none; overflow:hidden; width:100%; height:100%; }
+html.companion main { overscroll-behavior:contain; overflow-x:hidden; overflow-x:clip; touch-action:pan-y pinch-zoom; -webkit-overflow-scrolling:touch; }
+html.companion main > .screen { max-width:100%; overflow-x:clip; }

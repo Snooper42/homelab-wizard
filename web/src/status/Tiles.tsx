@@ -152,9 +152,9 @@ export function Tiles({ status: st, history, onPause, onChoose, words, start, lo
         <div class="anthead"><h2>Apps</h2><span class="muted">{week?.checked || ''}</span></div>
         <div class={'antfig' + (trouble.length ? ' warn' : '')}>{trouble.length ? <>{running.length}<span class="muted"> of {counted} running</span></> : <>{running.length}<span class="muted"> running</span></>}</div>
         <div class="antline muted">
-          {one ? <span class="antwho"><AppMark id={one.id} name={one.name} icon="" small /><span class="antname">{one.name} {lower(words ? words(one) : one.state)}</span></span>
+          {st.missing ? <span class="bad">{st.missing === 1 ? "1 of the homelab's own apps is down" : `${st.missing} of the homelab's own apps are down`}</span>
+            : one ? <span class="antwho"><AppMark id={one.id} name={one.name} icon="" small /><span class="antname">{one.name} {lower(words ? words(one) : one.state)}</span></span>
             : trouble.length ? <span class="antwho"><span class="antname">{trouble.map((a) => a.name).join(', ')} stopped</span></span>
-            : st.missing ? <span class="bad">{st.missing === 1 ? "1 of the homelab's own apps is down" : `${st.missing} of the homelab's own apps are down`}</span>
             : <span>All answering{week ? ` · ${outages ? `${outages === 1 ? '1 day' : `${outages} days`} with an outage this week` : 'no outage this week'}` : ''}</span>}
         </div>
         <div class="antfoot">

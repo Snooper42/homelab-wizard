@@ -6,7 +6,9 @@ import { AppMark } from '../parts/AppMark';
 import { Card } from '../parts/Card';
 import { Icon } from '../Icon';
 
-export interface PanelRow { id: string; label: string; apps: api.AppStatus[]; stopped: string[] }
+export interface PanelRow { id: string; label: string; apps: api.AppStatus[]; stopped: string[];
+  /** What its line says in place of its apps' names while none stopped (Media automation's, arr item 8). */
+  summary?: string }
 
 export function CategoryPanel({ rows, icons, open }: { rows: PanelRow[]; icons?: Record<string, string>; open: (id: string) => void }) {
   if (!rows.length) return null;
@@ -18,7 +20,7 @@ export function CategoryPanel({ rows, icons, open }: { rows: PanelRow[]; icons?:
           const names = r.apps.map((a) => a.name);
           // A stopped app named first, then the others, two at most and a count.
           const lead = r.stopped.length ? [`${r.stopped.join(', ')} stopped`, ...names.filter((n) => !r.stopped.includes(n))] : names;
-          const line = lead.slice(0, 2).join(r.stopped.length ? ' · ' : ', ') + (lead.length > 2 ? ` +${lead.length - 2}` : '');
+          const line = !r.stopped.length && r.summary ? r.summary : lead.slice(0, 2).join(r.stopped.length ? ' · ' : ', ') + (lead.length > 2 ? ` +${lead.length - 2}` : '');
           const warn = r.stopped.length > 0;
           return (
             <li key={r.id}>

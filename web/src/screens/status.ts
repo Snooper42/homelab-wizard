@@ -205,7 +205,7 @@ function drawPanel() {
   const list = listView();
   $('status').classList.toggle('listview', list);
   mountCategoryPanel($('statusPanel'), list || !statusParts.length ? null : {
-    rows: statusParts.filter((p) => p.apps.length).map((p) => ({ id: p.id, label: p.label, apps: p.apps, stopped: p.apps.filter((a) => lastStatus && troubled(a, lastStatus.stopped)).map((a) => a.name) })),
+    rows: statusParts.filter((p) => p.apps.length).map((p) => ({ id: p.id, label: p.label, apps: p.apps, stopped: p.apps.filter((a) => lastStatus && troubled(a, lastStatus.stopped)).map((a) => a.name), summary: p.id === automation ? automationSummary : undefined })),
     icons, open: (id) => pickStatusPart(id),
   });
 }
