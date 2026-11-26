@@ -3660,6 +3660,7 @@ nav .sidemenulist .sidedot + .total { margin-left:8px; }
 .ovmachine { gap:12px; }
 .ovbar { flex:1; display:flex; flex-direction:column; gap:6px; min-width:0; }
 .ovbar .antbar { flex:none; height:8px; }
+.ovbar.memline.warn .antbar span { background:var(--warn); }
 #status:not(.listview) table.grouped { display:none; }
 #status.listview #statusPanel { display:none; }
 .ovpanel { padding:8px 20px; border-radius:20px; margin-bottom:16px; }

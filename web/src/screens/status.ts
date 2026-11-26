@@ -31,7 +31,7 @@ import { bgEnd, bgHide, bgProgress, bgStart, waitForBg } from '../job/Background
 import { inTurn, waitWords } from '../job/queue';
 import { mountCrashNote } from '../status/CrashNote';
 import { type History as UsageHistory, mountUsage, record as recordUsage } from '../status/Usage';
-import { memoryByApp } from '../status/memory';
+import { memoryByApp, parseMem } from '../status/memory';
 import { fitMenu } from '../parts/place';
 import { settingLabel, showSettingsPage } from './settings';
 import { catalog, leaveStore, openCustom, openInstall, renderApps, showStore } from './choose';
@@ -137,7 +137,8 @@ function renderTiles(st: api.Status) {
     seeAll: () => showEveryApp(),
     openBackups: () => navigate('backups'),
     mac: machineNow(),
-    machine: onPhone() ? phoneMachine : null,
+    machine: onPhone() || phoneMachine?.memory ? phoneMachine : null,
+    appsMemory: lastStats.reduce((n, x) => n + parseMem(x.mem), 0),
   });
   mountSavings($('savingsCard'), { status: st, history: savingsHistory });
   // The Backups card's numbers: Backups' own read, asked from here at most once a minute (and kept ten minutes).
@@ -413,13 +414,15 @@ export function loadStatus() { return statusData.load(); }
 let boardNo = 0; // the latest board asked for
 /** The computer's free space and power, on a phone (the machine card), for This machine; null until read, or from a computer that doesn't send it. */
 let phoneMachine: MachineFacts | null = null;
+let machineAt = 0; // when the computer last asked for the machine card
 let boardStatus: api.Status | null = null; // its Status, once in
 let boardFailed = false; // its Status could not be read
 let boardAnswers: Record<string, string> | null = null; // its pages' answers, once in
 async function readStatus() {
   const want = ['watchdog', 'crash', 'alerts', 'storage'];
   // A phone can't read the machine as Setup does: the computer sends its free space and power (core.Machine) for This machine.
-  if (onPhone()) want.push('machine');
+  // The computer asks too, at most once a minute, for its memory and how long it's been up (the machine card, lane D, D5).
+  if (onPhone() || Date.now() - machineAt > 60000) { machineAt = Date.now(); want.push('machine'); }
   if (!savingsHistory.length) want.push('savings');
   if (Date.now() - protectionAt > 60000) { protectionAt = Date.now(); want.push('protection'); }
   if (Date.now() - downloadsAt > 30000) { downloadsAt = Date.now(); want.push('downloads'); }
@@ -482,7 +485,7 @@ function showCard(c) {
     case 'machine':
       phoneMachine = err ? null : data;
       // The web page's foot says what the computer's does: its free space and power, with how it is.
-      if (phoneMachine?.total) {
+      if (onPhone() && phoneMachine?.total) {
         const m = phoneMachine;
         drawFoot({ machine: { words: `${bytes(m.free)} free${m.power === 'battery' ? ' · on battery' : m.power === 'plugged' ? ' · plugged in' : ''}`, tone: m.low ? 'bad' : m.power === 'battery' ? 'warn' : 'ok' } });
       }
@@ -648,6 +651,8 @@ function showUsage(stats: docker.Stat[]) {
   // Each group's memory on its heading and in its menu.
   memory = memoryByApp(stats, catalog);
   if (appList) mountAppList($('statusRows'), (appList = { ...appList, memory }));
+  // The machine card's memory bar: what the apps hold now.
+  if (lastStatus) renderTiles(lastStatus);
 }
 let memory: Record<string, number> | undefined;
 /** The latest stats, and the whole machine's since Status opened (Analytics). */
