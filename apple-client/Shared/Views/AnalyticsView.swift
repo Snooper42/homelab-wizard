@@ -28,6 +28,15 @@ struct AnalyticsPage: View {
                         .font(.subheadline)
                         .foregroundStyle(Theme.secondaryInk)
                 }
+                // Memory nearly full, while the watchdog says so: the biggest apps, each with Stop.
+                if let pressure = model.cards.watchdog?.memory, pressure.total > 0 {
+                    VStack(alignment: .leading, spacing: 8) {
+                        MemoryPressureView(memory: pressure)
+                    }
+                    .padding(18)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .card()
+                }
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 300), spacing: 12, alignment: .top)], spacing: 12) {
                     processor(now, samples: samples)
                     memory(now, samples: samples)

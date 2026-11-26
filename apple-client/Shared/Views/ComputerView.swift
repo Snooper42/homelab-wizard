@@ -61,6 +61,15 @@ struct ComputerView: View {
                 homelabCard
                 setupRow
                 if computer.canListPhones { phonesSection }
+                if actions.computerAnswers("AlertLog") {
+                    Section {
+                        NavigationLink {
+                            AlertLogView()
+                        } label: {
+                            IconTileLabel(title: "Alerts Sent", systemImage: "bell", tint: TileColour.red)
+                        }
+                    }
+                }
                 homelabFirstSection
                 thisDeviceSection
                 everythingElseSection
