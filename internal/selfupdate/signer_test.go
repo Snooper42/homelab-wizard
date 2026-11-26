@@ -126,3 +126,75 @@ func TestAnAdHocMacUpdateNeedsItsProvenance(t *testing.T) {
 		t.Errorf("a release from before attestations: %v", err)
 	}
 }
+
+// Security list item 4 (Q review of #908): an app signed with a certificate
+// of the household's own has no Team ID, so the team check above passes any
+// signer. The installed app's designated requirement (codesign -d -r-) names
+// its certificate, so the staged app is held to it: the same certificate is
+// taken, another one or none is refused. An ad-hoc app's requirement is its
+// own code hash, which no new build meets, so it keeps nothing, as before.
+func TestAMacUpdateKeepsItsDesignatedRequirement(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("sh stand-ins for hdiutil, ditto, and codesign")
+	}
+	bin := t.TempDir()
+	stub := func(name, body string) {
+		if err := os.WriteFile(filepath.Join(bin, name), []byte("#!/bin/sh\n"+body), 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	stub("hdiutil", `[ "$1" = attach ] || exit 0
+mkdir -p "$5/Homelab Wizard.app/Contents/MacOS" && echo new >"$5/Homelab Wizard.app/Contents/MacOS/homelab-wizard"
+`)
+	stub("ditto", `cp -R "$1" "$2"
+`)
+	// The installed app's requirement is OLD_REQ; the download (under
+	// update/) is signed so that it meets NEW_REQ only. Neither has a team.
+	stub("codesign", `last=""; req=""; for a; do last="$a"; case "$a" in -R=*) req="${a#-R}";; esac; done
+case "$last" in
+  */update/*) mine="$NEW_REQ";;
+  *) mine="$OLD_REQ";;
+esac
+case "$1" in
+  -dv) echo "Executable=$last" >&2; echo "TeamIdentifier=not set" >&2; exit 0;;
+  -d) echo "Executable=$last" >&2; [ -n "$mine" ] || exit 1; echo "designated => $mine"; exit 0;;
+  --verify) [ -z "$req" ] && exit 0; [ "$req" = "=$mine" ] && exit 0; echo "$last: valid on disk" >&2; echo "$last: does not satisfy its designated Requirement" >&2; exit 3;;
+esac
+exit 1
+`)
+	t.Setenv("PATH", bin+string(os.PathListSeparator)+os.Getenv("PATH"))
+	installedAs(t, Installed{Kind: KindMac, Path: filepath.Join(t.TempDir(), "Applications", "Homelab Wizard.app")})
+
+	const ours = `identifier "com.homelab.wizard" and certificate leaf = H"1111111111111111111111111111111111111111"`
+	const theirs = `identifier "com.homelab.wizard" and certificate leaf = H"2222222222222222222222222222222222222222"`
+	for _, c := range []struct {
+		name, old, new string
+		refused        string // "" when the update goes ahead
+	}{
+		{"the same certificate", ours, ours, ""},
+		{"another certificate", ours, theirs, "signed by someone else"},
+		{"an ad-hoc build", ours, `cdhash H"3333333333333333333333333333333333333333"`, "signed by someone else"},
+		{"an ad-hoc app takes any signer", `cdhash H"4444444444444444444444444444444444444444"`, theirs, ""},
+		{"no requirement read", "", theirs, ""},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			t.Setenv("OLD_REQ", c.old)
+			t.Setenv("NEW_REQ", c.new)
+			rel := serve(t, map[string][]byte{MacAsset: []byte("a disk image")}, nil)
+			dir := filepath.Join(t.TempDir(), "update")
+			staged, err := Stage(context.Background(), rel, dir, nil)
+			if c.refused == "" {
+				if err != nil {
+					t.Fatalf("refused: %v", err)
+				}
+				return
+			}
+			if err == nil || !strings.Contains(err.Error(), c.refused) {
+				t.Fatalf("took the build: %q, %v", staged, err)
+			}
+			if _, serr := os.Stat(filepath.Join(dir, "Homelab Wizard.app")); serr == nil {
+				t.Error("the refused app was left staged")
+			}
+		})
+	}
+}
