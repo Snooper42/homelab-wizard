@@ -240,6 +240,7 @@ enum StatusPlace: Hashable {
     case category(String)
     case every
     case analytics
+    case subscriptions
 
     var appID: AppStatus.ID? {
         if case .app(let id) = self { return id }

@@ -358,6 +358,11 @@ private struct PhoneStatus: View {
                             NavigationLink(value: StatusPlace.analytics) {
                                 AnalyticsRow(model: model)
                             }
+                            if actions.computerAnswers("SavingsRows") {
+                                NavigationLink(value: StatusPlace.subscriptions) {
+                                    SubscriptionsRow(model: model)
+                                }
+                            }
                         }
                     }
                     // The categories as one list, a row each (the computer's panel): a tap opens its page.
@@ -403,6 +408,8 @@ private struct PhoneStatus: View {
                     EveryAppPage(model: model, zoom: zoom)
                 case .analytics:
                     AnalyticsPage(model: model)
+                case .subscriptions:
+                    SubscriptionsPage(model: model)
                 }
             }
             // Stage Manager and Split View: the app open beside the list when the

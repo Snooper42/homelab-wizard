@@ -24,6 +24,9 @@ final class CardsViewModel {
     /// The computer's kept usage, by the days asked for (`UsageHistory`), for Analytics' Day, Week and Month.
     private(set) var usageHistory: [Int: UsageHistory] = [:]
     private(set) var usageHistoryError: String?
+    /// Every subscription the apps replace, at its price (`SavingsRows`), read once Subscriptions or its row shows.
+    private(set) var offers: [SubscriptionOffer]?
+    private(set) var offersError: String?
 
     init(api: APIClient, liveEvents: LiveEventManager) {
         self.api = api
@@ -139,6 +142,27 @@ final class CardsViewModel {
         } catch {
             Log.network.error("Usage failed: \(APIError.from(error).logName, privacy: .public)")
         }
+    }
+
+    /// The subscriptions' prices, once: they change only with an update.
+    func readOffers() async {
+        guard offers == nil else { return }
+        do {
+            offers = try await api.call("SavingsRows", as: [SubscriptionOffer]?.self) ?? []
+            offersError = nil
+        } catch is CancellationError {
+            return
+        } catch {
+            let apiError = APIError.from(error)
+            Log.network.error("SavingsRows failed: \(apiError.logName, privacy: .public)")
+            offersError = apiError.errorDescription
+        }
+    }
+
+    /// The yearly saving each day, as the nightly backup recorded it (the "savings" card).
+    var savingsPoints: [SavingsPoint] {
+        if case .savings(let points)? = cards["savings"]?.data { return points }
+        return []
     }
 
     /// The apps' use over the last `days`, as the computer kept it.
