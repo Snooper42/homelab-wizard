@@ -1974,7 +1974,8 @@
     const u4 = st.updates;
     const lower = (w3) => w3.charAt(0).toLowerCase() + w3.slice(1);
     const one = trouble2.length === 1 ? trouble2[0] : null;
-    const outages2 = week2 ? week2.days.filter((d3) => d3 !== "ok").length : 0;
+    const outages2 = week2 ? week2.days.filter((d3) => d3 === "warn" || d3 === "bad").length : 0;
+    const span = week2 && week2.days.length > 7 ? "in two weeks" : "this week";
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3(Card, { kind: "tile ovcard", id: "statusApps", children: [
         /* @__PURE__ */ u3("div", { class: "anthead", children: [
@@ -2004,7 +2005,7 @@
           " stopped"
         ] }) }) : /* @__PURE__ */ u3("span", { children: [
           "All answering",
-          week2 ? ` · ${outages2 ? `${outages2 === 1 ? "1 day" : `${outages2} days`} with an outage this week` : "no outage this week"}` : ""
+          week2 ? ` · ${outages2 ? `${outages2 === 1 ? "1 day" : `${outages2} days`} with an outage ${span}` : `no outage ${span}`}` : ""
         ] }) }),
         /* @__PURE__ */ u3("div", { class: "antfoot", children: one ? /* @__PURE__ */ u3("span", { class: "ovacts", children: [
           start && one.state !== "running" && /* @__PURE__ */ u3("button", { type: "button", class: "primary small", onClick: () => start(one), children: [
@@ -2022,7 +2023,7 @@
             "Start all"
           ] }),
           seeAll && /* @__PURE__ */ u3("button", { type: "button", class: "btn small", onClick: seeAll, children: "See them" })
-        ] }) : week2 ? /* @__PURE__ */ u3("span", { class: "ovdays", role: "img", "aria-label": `This week: ${outages2 ? `${outages2} days with an outage` : "no outage"}`, children: week2.days.map((d3, i3) => /* @__PURE__ */ u3("i", { class: d3 }, i3)) }) : /* @__PURE__ */ u3("span", { class: "antempty" }) })
+        ] }) : week2 ? /* @__PURE__ */ u3("span", { class: "ovdays" + (week2.days.length > 7 ? " fourteen" : ""), role: "img", "aria-label": `${span === "this week" ? "This week" : "The last two weeks"}: ${outages2 ? `${outages2} days with an outage` : "no outage"}`, children: week2.days.map((d3, i3) => /* @__PURE__ */ u3("i", { class: d3, title: week2.titles?.[i3] }, i3)) }) : /* @__PURE__ */ u3("span", { class: "antempty" }) })
       ] }),
       /* @__PURE__ */ u3(Card, { kind: "tile ovcard", id: "statusBackups", children: [
         /* @__PURE__ */ u3("div", { class: "anthead", children: [
@@ -9254,6 +9255,17 @@
   var lastAttention = -1;
   function weekSquares() {
     if (!lastWatch) return null;
+    const run2 = lastWatch.lastRun && !lastWatch.lastRun.startsWith("0001") ? `Checked ${ago(lastWatch.lastRun)}` : "";
+    const daily = lastWatch.daily || [];
+    if (daily.length) {
+      const downNow = (lastWatch.failing || []).length > 0;
+      const days2 = daily.map((d3, i3) => !d3.failed ? d3.runs ? "ok" : "none" : i3 === daily.length - 1 && downNow ? "bad" : "warn");
+      const titles2 = daily.map((d3) => {
+        const day3 = (/* @__PURE__ */ new Date(`${d3.date}T12:00:00`)).toLocaleDateString(void 0, { weekday: "short", month: "short", day: "numeric" });
+        return `${day3}: ${d3.failed ? d3.failed === 1 ? "1 app down for a while" : `${d3.failed} apps down for a while` : d3.runs ? "every app answered" : "not checked"}`;
+      });
+      return { days: days2, titles: titles2, checked: run2 };
+    }
     const all = Object.values(lastWatch.outages || {}).flat();
     const days = Array.from({ length: 7 }, (_3, i3) => {
       const start = /* @__PURE__ */ new Date();
@@ -9264,8 +9276,7 @@
       const hit = all.filter((o3) => new Date(o3.from) < end && (!o3.to || new Date(o3.to) >= start));
       return !hit.length ? "ok" : i3 === 6 && hit.some((o3) => !o3.to) ? "bad" : "warn";
     });
-    const run2 = lastWatch.lastRun && !lastWatch.lastRun.startsWith("0001") ? `Checked ${ago(lastWatch.lastRun)}` : "";
-    return { days, checked: run2 };
+    return { days, titles: [], checked: run2 };
   }
   function renderTiles(st) {
     const trouble2 = st.apps.filter((a3) => troubled(a3, st.stopped));

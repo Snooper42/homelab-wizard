@@ -3927,6 +3927,20 @@ const smokes = [
     await page.click('#statusPanel .ovrow[data-key="media"]');
     await page.waitForSelector('#statusPart .catpage h1:text-is("Media")', { timeout: 5000 });
   } },
+  // The owner's picture has 14 squares (lane D, D3): from the watchdog's daily summary, two weeks, each with its day's
+  // words on hover; a day it didn't run is grey, a day an app was down amber.
+  { name: 'Status: the Apps card with the last two weeks as fourteen squares', screen: 'status', mock: {
+    status: { ...status, apps: status.apps.map((a) => ({ ...a, state: 'running', health: a.health === 'unhealthy' ? 'healthy' : a.health })) },
+    watchdog: { ...watchdog, failing: [], daily: Array.from({ length: 14 }, (_, i) => { const d = new Date(); d.setDate(d.getDate() - (13 - i)); return { date: d.toISOString().slice(0, 10), failed: i === 9 ? 1 : 0, runs: i === 3 ? 0 : 96 }; }) },
+  }, run: async (page) => {
+    await page.waitForSelector('#statusApps .ovdays.fourteen i', { timeout: 5000 });
+    const sq = await page.$$eval('#statusApps .ovdays i', (is) => is.map((i) => i.className));
+    if (sq.length !== 14 || sq[3] !== 'none' || sq[9] !== 'warn' || sq.filter((c) => c === 'ok').length !== 12) throw new Error('the squares: ' + sq.join(' '));
+    await page.waitForSelector('#statusApps .antline:has-text("1 day with an outage in two weeks")');
+    if (!/1 app down/.test(await page.getAttribute('#statusApps .ovdays i >> nth=9', 'title') || '')) throw new Error('no words on the amber day');
+    const boxes = await page.$$eval('#tiles > .ovcard', (cs) => cs.map((c) => { const r = c.getBoundingClientRect(); return [Math.round(r.top), Math.round(r.height)].join(); }));
+    if (new Set(boxes).size !== 1) throw new Error('the cards differ: ' + boxes.join(' | '));
+  } },
   // On the phone, 320px wide and with big text (213px is 320 at 1.5×): the why is all there, on a line of its own if
   // need be, and nothing slides sideways.
   ...[320, 213].map((w) => ({ name: `Stopped by itself, on the phone at ${w}px: the why is all there`, screen: 'status', phone: ['companion'], mock: stoppedByItself(), run: async (page) => {

@@ -112,7 +112,7 @@ export interface TilesProps {
   backups?: { copied: number; of: number; skipped: string[]; at: string } | null;
   openBackups?: () => void;
   /** This week as the watchdog saw it: a square per day (ok, warn, bad), and when it last checked; null before it's read. */
-  week?: { days: string[]; checked: string } | null;
+  week?: { days: string[]; titles?: string[]; checked: string } | null;
   /** The last nights' copies (Backups' squares), oldest first. */
   nights?: backup.Night[];
   /** Starts each stopped app; and shows them all in the list. */
@@ -145,7 +145,9 @@ export function Tiles({ status: st, history, onPause, onChoose, words, start, lo
   // one figure, one line, a footer at the same height), each drawn in every state. Never "needs you": what happened.
   const lower = (w: string) => w.charAt(0).toLowerCase() + w.slice(1);
   const one = trouble.length === 1 ? trouble[0] : null;
-  const outages = week ? week.days.filter((d) => d !== 'ok').length : 0;
+  const outages = week ? week.days.filter((d) => d === 'warn' || d === 'bad').length : 0;
+  // Fourteen squares from a computer that keeps two weeks (lane D, D3), seven from an older one.
+  const span = week && week.days.length > 7 ? 'in two weeks' : 'this week';
   return (
     <>
       <Card kind="tile ovcard" id="statusApps">
@@ -155,7 +157,7 @@ export function Tiles({ status: st, history, onPause, onChoose, words, start, lo
           {st.missing ? <span class="bad">{st.missing === 1 ? "1 of the homelab's own apps is down" : `${st.missing} of the homelab's own apps are down`}</span>
             : one ? <span class="antwho"><AppMark id={one.id} name={one.name} icon="" small /><span class="antname">{one.name} {lower(words ? words(one) : one.state)}</span></span>
             : trouble.length ? <span class="antwho"><span class="antname">{trouble.map((a) => a.name).join(', ')} stopped</span></span>
-            : <span>All answering{week ? ` · ${outages ? `${outages === 1 ? '1 day' : `${outages} days`} with an outage this week` : 'no outage this week'}` : ''}</span>}
+            : <span>All answering{week ? ` · ${outages ? `${outages === 1 ? '1 day' : `${outages} days`} with an outage ${span}` : `no outage ${span}`}` : ''}</span>}
         </div>
         <div class="antfoot">
           {one ? <span class="ovacts">
@@ -167,7 +169,7 @@ export function Tiles({ status: st, history, onPause, onChoose, words, start, lo
               {startAll && <button type="button" class="primary small" onClick={() => startAll(trouble)}><Icon name="start" />Start all</button>}
               {seeAll && <button type="button" class="btn small" onClick={seeAll}>See them</button>}
             </span>
-            : week ? <span class="ovdays" role="img" aria-label={`This week: ${outages ? `${outages} days with an outage` : 'no outage'}`}>{week.days.map((d, i) => <i key={i} class={d} />)}</span>
+            : week ? <span class={'ovdays' + (week.days.length > 7 ? ' fourteen' : '')} role="img" aria-label={`${span === 'this week' ? 'This week' : 'The last two weeks'}: ${outages ? `${outages} days with an outage` : 'no outage'}`}>{week.days.map((d, i) => <i key={i} class={d} title={week.titles?.[i]} />)}</span>
             : <span class="antempty" />}
         </div>
       </Card>
