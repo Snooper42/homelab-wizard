@@ -25,7 +25,7 @@ import { bgEnd, bgHide, bgProgress, bgStart, waitForBg } from '../job/Background
 import { inTurn, waitWords } from '../job/queue';
 import { mountCrashNote } from '../status/CrashNote';
 import { type History as UsageHistory, mountUsage, record as recordUsage } from '../status/Usage';
-import { memoryByApp } from '../status/memory';
+import { memoryByApp, parseMem } from '../status/memory';
 import { fitMenu } from '../parts/place';
 import { settingLabel, showSettingsPage } from './settings';
 import { catalog, leaveStore, openCustom, openInstall, renderApps, showStore } from './choose';
@@ -101,7 +101,8 @@ function renderTiles(st: api.Status) {
     backups: lastNight(),
     openBackups: () => navigate('backups'),
     mac: machineNow(),
-    machine: onPhone() ? phoneMachine : null,
+    machine: machineFacts,
+    appsMemory: lastStats.reduce((n, x) => n + parseMem(x.mem), 0),
   });
   mountSavings($('savingsCard'), { status: st, history: savingsHistory });
   // The Backups card's numbers: Backups' own read, asked from here at most once a minute (and kept ten minutes).
@@ -207,7 +208,7 @@ function drawStatusPart() {
   if (statusHere === 'analytics') {
     section.dataset.part = 'analytics';
     mountCategoryPage($('statusPart'), null);
-    const disk = onPhone() ? phoneMachine : machineNow()?.i.disks?.[0] || null;
+    const disk = onPhone() ? machineFacts : machineNow()?.i.disks?.[0] || null;
     mountAnalytics($('statusPart'), {
       stats: lastStats, history: usageHistory, totals, cores: onPhone() ? undefined : navigator.hardwareConcurrency || undefined,
       disk: disk && disk.total ? { free: disk.free, total: disk.total, low: disk.low } : null, storage: lastStorage,
@@ -349,15 +350,18 @@ export function loadStatus() { return statusData.load(); }
 // so the quick ones show while the slow ones are still being read. The
 // cards read at most every so often are asked for only when due.
 let boardNo = 0; // the latest board asked for
-/** The computer's free space and power, on a phone (the machine card), for This machine; null until read, or from a computer that doesn't send it. */
-let phoneMachine: MachineFacts | null = null;
+/** The computer's facts (the machine card): on a phone its free space and power for This machine; on both, its memory
+ * and boot time. Null until read, or from a computer that doesn't send it. */
+let machineFacts: MachineFacts | null = null;
+let machineAt = 0; // when the computer last asked for it (a phone asks each time, as before)
 let boardStatus: api.Status | null = null; // its Status, once in
 let boardFailed = false; // its Status could not be read
 let boardAnswers: Record<string, string> | null = null; // its pages' answers, once in
 async function readStatus() {
   const want = ['watchdog', 'crash', 'alerts', 'storage'];
-  // A phone can't read the machine as Setup does: the computer sends its free space and power (core.Machine) for This machine.
-  if (onPhone()) want.push('machine');
+  // A phone can't read the machine as Setup does: the computer sends its free space and power (core.Machine) for This
+  // machine. The computer asks too, once a minute, for its memory and how long it's been up (This Mac's bar).
+  if (onPhone() || Date.now() - machineAt > 60000) { machineAt = Date.now(); want.push('machine'); }
   if (!savingsHistory.length) want.push('savings');
   if (Date.now() - protectionAt > 60000) { protectionAt = Date.now(); want.push('protection'); }
   if (Date.now() - downloadsAt > 30000) { downloadsAt = Date.now(); want.push('downloads'); }
@@ -418,7 +422,7 @@ function showCard(c) {
     case 'alerts': showAlerts(data, err); break;
     case 'storage': showStorage(err ? null : data); break;
     case 'machine':
-      phoneMachine = err ? null : data;
+      machineFacts = err ? null : data;
       if (lastStatus) renderTiles(lastStatus);
       break;
     case 'usage': showUsage((!err && data) || []); break;
@@ -581,6 +585,8 @@ function showUsage(stats: docker.Stat[]) {
   // Each group's memory on its heading and in its menu.
   memory = memoryByApp(stats, catalog);
   if (appList) mountAppList($('statusRows'), (appList = { ...appList, memory }));
+  // The machine card's memory bar: what the apps hold now.
+  if (lastStatus) renderTiles(lastStatus);
 }
 let memory: Record<string, number> | undefined;
 /** The latest stats, and the whole machine's since Status opened (Analytics). */

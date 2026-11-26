@@ -1189,7 +1189,32 @@
   }
   var awaitingJobs = (a3) => a3.id === "homelab-companion" && a3.state === "not running";
   var troubled = (a3, held3 = {}) => a3.health === "unhealthy" || a3.health === "restarting" || !!a3.notAnswering || a3.state === "missing" || a3.state === "stopped" && (!held3[a3.id] || keptRestarting(held3[a3.id]));
-  function Tiles({ status: st, history, onPause, onChoose, words: words5, start, logs, open: open5, backups, openBackups, mac, machine }) {
+  function gb(n3) {
+    const g2 = n3 / 2 ** 30;
+    return g2 >= 10 ? String(Math.round(g2)) : g2.toFixed(1).replace(/\.0$/, "");
+  }
+  function upFor(booted, now2 = Date.now()) {
+    if (!booted || booted.startsWith("0001-")) return "";
+    const mins = Math.floor((now2 - new Date(booted).getTime()) / 6e4);
+    if (!(mins >= 0)) return "";
+    if (mins < 60) return `Up ${mins <= 1 ? "a minute" : `${mins} minutes`}`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 48) return `Up ${hours === 1 ? "an hour" : `${hours} hours`}`;
+    return `Up ${Math.floor(hours / 24)} days`;
+  }
+  function MemoryLine({ total, used }) {
+    if (!total) return null;
+    const share4 = used ? Math.min(1, used / total) : 0;
+    const pct2 = Math.round(share4 * 100);
+    return /* @__PURE__ */ u3("div", { class: "sub memline" + (share4 > 0.85 ? " warn" : ""), children: [
+      /* @__PURE__ */ u3("span", { children: [
+        "Memory · ",
+        used ? `${gb(used)} of ${gb(total)} GB` : `${gb(total)} GB`
+      ] }),
+      !!used && /* @__PURE__ */ u3("span", { class: "bar", role: "meter", "aria-label": "Memory the apps use", "aria-valuemin": 0, "aria-valuemax": 100, "aria-valuenow": pct2, children: /* @__PURE__ */ u3("span", { style: { width: `${Math.max(2, pct2)}%` } }) })
+    ] });
+  }
+  function Tiles({ status: st, history, onPause, onChoose, words: words5, start, logs, open: open5, backups, openBackups, mac, machine, appsMemory }) {
     if (!st.apps.length) {
       return /* @__PURE__ */ u3(Card, { kind: "emptystate", id: "statusEmpty", children: [
         /* @__PURE__ */ u3("h2", { children: "No apps yet" }),
@@ -1264,7 +1289,7 @@
           ] }) : ""
         ] }) })
       ] }),
-      mac ? /* @__PURE__ */ u3(MacCard, { mac, updates: u4, onPause }) : machine?.total ? /* @__PURE__ */ u3(MachineCard, { m: machine, updates: u4, onPause }) : /* @__PURE__ */ u3(
+      mac ? /* @__PURE__ */ u3(MacCard, { mac, facts: machine, appsMemory, updates: u4, onPause }) : machine?.total ? /* @__PURE__ */ u3(MachineCard, { m: machine, appsMemory, updates: u4, onPause }) : /* @__PURE__ */ u3(
         Tile,
         {
           label: "Nightly updates",
@@ -1277,27 +1302,30 @@
       )
     ] });
   }
-  function MachineCard({ m: m3, updates: u4, onPause }) {
+  function MachineCard({ m: m3, appsMemory, updates: u4, onPause }) {
     const power = m3.power === "battery" ? { words: "On battery", tone: "warn" } : m3.power === "plugged" ? m3.keptAwake ? { words: "Plugged in", tone: "" } : { words: "Plugged in, may sleep", tone: "warn" } : null;
+    const up = upFor(m3.booted);
     return /* @__PURE__ */ u3(Card, { kind: "tile statuscard", id: "statusMachine", children: [
       /* @__PURE__ */ u3("div", { class: "label", children: "This machine" }),
       /* @__PURE__ */ u3("div", { class: "value" + (m3.low ? " bad" : ""), children: [
         bytes(m3.free),
         /* @__PURE__ */ u3("small", { children: " free" })
       ] }),
-      power && /* @__PURE__ */ u3("div", { class: "sub " + power.tone, children: /* @__PURE__ */ u3("span", { children: power.words }) }),
+      power && power.tone ? /* @__PURE__ */ u3("div", { class: "sub " + power.tone, children: /* @__PURE__ */ u3("span", { children: power.words }) }) : (power || up) && /* @__PURE__ */ u3("div", { class: "sub", children: /* @__PURE__ */ u3("span", { children: [power?.words, up].filter(Boolean).join(" · ") }) }),
+      power?.tone && up && /* @__PURE__ */ u3("div", { class: "sub", children: /* @__PURE__ */ u3("span", { children: up }) }),
+      /* @__PURE__ */ u3(MemoryLine, { total: m3.memory, used: appsMemory }),
       /* @__PURE__ */ u3("div", { class: "sub statusupdates", children: [
         /* @__PURE__ */ u3("span", { children: u4?.paused ? "Updates paused" : `Updates ${u4?.schedule ? "run " + u4.schedule : "nightly"}` }),
         /* @__PURE__ */ u3(PauseButton, { paused: !!u4?.paused, onPause })
       ] })
     ] });
   }
-  function MacCard({ mac, updates: u4, onPause }) {
+  function MacCard({ mac, facts: m3, appsMemory, updates: u4, onPause }) {
     const all = facts(mac);
     const of = (k3) => all.find((f4) => f4.key === k3);
     const disk2 = of("disk"), power = of("power"), runtime = of("runtime");
     const wrong = all.filter((f4) => f4.tone !== "ok" && f4.key !== "disk");
-    const fine = [power, runtime].filter((f4) => f4 && f4.tone === "ok").map((f4) => f4.short).join(" · ");
+    const fine = [...[power, runtime].filter((f4) => f4 && f4.tone === "ok").map((f4) => f4.short), upFor(m3?.booted)].filter(Boolean).join(" · ");
     const stopped2 = mac.h.agent === "stopped" || mac.h.agent === "quit";
     const name = mac.machine.charAt(0).toUpperCase() + mac.machine.slice(1);
     return /* @__PURE__ */ u3(Card, { kind: "tile statuscard", id: "statusMac", children: [
@@ -1308,6 +1336,7 @@
       ] }),
       fine && /* @__PURE__ */ u3("div", { class: "sub", children: /* @__PURE__ */ u3("span", { children: fine }) }),
       wrong.map((f4) => /* @__PURE__ */ u3("div", { class: "sub " + f4.tone, children: /* @__PURE__ */ u3("span", { children: f4.short }) }, f4.key)),
+      /* @__PURE__ */ u3(MemoryLine, { total: m3?.memory, used: appsMemory }),
       stopped2 && /* @__PURE__ */ u3(StartAgent, { id: "startAgentMac", start: mac.startAgent }),
       /* @__PURE__ */ u3("div", { class: "sub statusupdates", children: [
         /* @__PURE__ */ u3("span", { children: u4?.paused ? "Updates paused" : `Updates ${u4?.schedule ? "run " + u4.schedule : "nightly"}` }),
@@ -4129,7 +4158,7 @@
   var plainOf = (s3) => s3.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
   var wordsOf = (x3) => plainOf([x3.name, x3.description, ...x3.aliases || [], ...x3.replaces || []].join(" "));
   var doing2 = { start: "Starting…", stop: "Stopping…", restart: "Restarting…", update: "Updating…", rollback: "Rolling back…" };
-  function upFor(since, now2 = Date.now()) {
+  function upFor2(since, now2 = Date.now()) {
     const mins = Math.max(0, Math.round((now2 - new Date(since).getTime()) / 6e4)), hours = Math.round(mins / 60);
     return mins < 2 ? "Up a minute" : mins < 60 ? `Up ${mins} min` : hours < 48 ? `Up ${hours} ${hours === 1 ? "hour" : "hours"}` : `Up ${Math.round(hours / 24)} days`;
   }
@@ -4139,7 +4168,7 @@
     const [cls, words5] = stateOf(a3, p3.batteryPaused, p3.held);
     if (pend?.failed) return ["bad", `Could not ${pend.action}`];
     if (cls === "ok" && a3.health === "native") return [cls, "Running"];
-    return [cls, cls === "ok" && a3.since ? upFor(a3.since, now2) : words5];
+    return [cls, cls === "ok" && a3.since ? upFor2(a3.since, now2) : words5];
   }
   function Tile2({ a: a3, p: p3, menu: menu2, setMenu }) {
     const [cls, line] = tileLine(a3, p3);
@@ -9032,7 +9061,8 @@
       backups: lastNight(),
       openBackups: () => navigate("backups"),
       mac: machineNow(),
-      machine: onPhone() ? phoneMachine : null
+      machine: machineFacts,
+      appsMemory: lastStats.reduce((n4, x3) => n4 + parseMem(x3.mem), 0)
     });
     mountSavings($("savingsCard"), { status: st, history: savingsHistory });
     if (!backupsData.value && Date.now() - backupsAsked > 6e4) {
@@ -9127,7 +9157,7 @@
     if (statusHere === "analytics") {
       section.dataset.part = "analytics";
       mountCategoryPage($("statusPart"), null);
-      const disk2 = onPhone() ? phoneMachine : machineNow()?.i.disks?.[0] || null;
+      const disk2 = onPhone() ? machineFacts : machineNow()?.i.disks?.[0] || null;
       mountAnalytics($("statusPart"), {
         stats: lastStats,
         history: usageHistory,
@@ -9306,13 +9336,17 @@
     return statusData.load();
   }
   var boardNo = 0;
-  var phoneMachine = null;
+  var machineFacts = null;
+  var machineAt = 0;
   var boardStatus = null;
   var boardFailed = false;
   var boardAnswers = null;
   async function readStatus() {
     const want = ["watchdog", "crash", "alerts", "storage"];
-    if (onPhone()) want.push("machine");
+    if (onPhone() || Date.now() - machineAt > 6e4) {
+      machineAt = Date.now();
+      want.push("machine");
+    }
     if (!savingsHistory.length) want.push("savings");
     if (Date.now() - protectionAt > 6e4) {
       protectionAt = Date.now();
@@ -9388,7 +9422,7 @@
         showStorage(err ? null : data2);
         break;
       case "machine":
-        phoneMachine = err ? null : data2;
+        machineFacts = err ? null : data2;
         if (lastStatus) renderTiles(lastStatus);
         break;
       case "usage":
@@ -9559,6 +9593,7 @@
     mountUsage($("usageCard"), { stats, history: usageHistory, nameOf: (id2) => catalog?.apps.find((a3) => a3.id === id2)?.name || id2 });
     memory = memoryByApp(stats, catalog);
     if (appList) mountAppList($("statusRows"), appList = { ...appList, memory });
+    if (lastStatus) renderTiles(lastStatus);
   }
   var memory;
   var lastStats = [];

@@ -2326,6 +2326,24 @@ const smokes = [
     await page.waitForSelector('#statusMachine .value.bad:has-text("3.0 GB")', { timeout: 5000 });
     await page.waitForSelector('#statusMachine .sub.warn:has-text("On battery")');
   } },
+  // The machine card's bar (lane D, D5; the redesign's picture: "Memory · 11 of 32 GB", "Up 23 days"): the computer's
+  // memory and boot time from its machine card, what the apps hold from the usage card. On the computer's This Mac and
+  // the phone's This machine alike; an older computer that doesn't send them shows neither.
+  ...[['computer', '#statusMac', undefined], ['phone', '#statusMachine', ['companion']]].map(([who, card, phone]) => ({
+    name: `The ${who}'s machine card: its memory under a bar, and how long it's been up`, screen: 'status', phone,
+    mock: { machine: { free: 412 * 2 ** 30, total: 994 * 2 ** 30, low: false, power: 'plugged', keptAwake: true, memory: 32 * 2 ** 30, booted: new Date(Date.now() - 23.5 * 86400000).toISOString() },
+      usage: [{ name: 'immich-server', cpu: 3, mem: '9GiB' }, { name: 'jellyfin', cpu: 1, mem: '2GiB' }] },
+    run: async (page) => {
+      await page.waitForSelector(`${card} .memline:has-text("Memory · 11 of 32 GB")`, { timeout: 8000 });
+      if (await page.getAttribute(`${card} .memline .bar`, 'aria-valuenow') !== '34') throw new Error('the bar is not at 34%');
+      await page.waitForSelector(`${card} .sub:has-text("Up 23 days")`);
+      if (await page.locator(`${card} :text("Up 23 days")`).count() !== 1) throw new Error('Up 23 days said twice');
+    } })),
+  { name: "The machine card from a computer that doesn't send its memory: no bar, no Up", screen: 'status', phone: ['companion'], run: async (page) => {
+    await page.waitForSelector('#statusMachine .value:has-text("412 GB")', { timeout: 5000 });
+    if (await page.locator('#statusMachine .memline').count()) throw new Error('a memory line without the memory');
+    if (/\bUp (\d|a |an )/.test(await page.textContent('#statusMachine'))) throw new Error('Up without a boot time');
+  } },
   { name: "The computer's Status doesn't repeat Setup's steps", screen: 'status', run: async (page) => {
     await page.waitForSelector('#statusHeadline', { timeout: 5000 });
     if (await page.isVisible('#setupOnStatus')) throw new Error("Setup's steps on the computer's Status");

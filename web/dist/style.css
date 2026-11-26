@@ -3624,3 +3624,8 @@ nav .sidemenulist .sidedot + .total { margin-left:8px; }
   #settings .savebar { background:color-mix(in srgb, var(--fin-night) 55%, transparent); }
 }
 .statusfind { border-color:var(--line); background:color-mix(in srgb, var(--panel) 72%, transparent); }
+/* The machine card's memory (lane D, D5): "Memory · 11 of 32 GB" over a thin bar. */
+.statuscard .memline { display:flex; flex-direction:column; align-items:stretch; gap:4px; }
+.statuscard .memline .bar { display:block; height:4px; border-radius:2px; background:var(--line); overflow:hidden; }
+.statuscard .memline .bar span { display:block; height:100%; background:var(--accent); border-radius:2px; }
+.statuscard .memline.warn .bar span { background:var(--warn); }

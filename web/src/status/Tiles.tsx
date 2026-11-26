@@ -111,14 +111,49 @@ export interface TilesProps {
   openBackups?: () => void;
   /** This machine's facts as Setup read them (none on a phone): the This Mac card. */
   mac?: HealthProps | null;
-  /** On a phone: the computer's free space and power as it sends them (the machine card), for This machine. */
+  /** The computer's facts as it sends them (the machine card): on a phone, This machine; on the computer, the memory and
+   * uptime on This Mac. */
   machine?: MachineFacts | null;
+  /** What the apps hold in memory now, in bytes (the usage card's sum), for the memory bar; 0 before it's read. */
+  appsMemory?: number;
 }
 
-/** The computer's free space and power, as `core.MachineFacts` sends them to a phone. */
-export interface MachineFacts { free: number; total: number; low: boolean; power?: string; keptAwake: boolean }
+/** The computer's free space, power, memory and boot time, as `core.MachineFacts` sends them (memory and booted only
+ * from 0.43.6 on, and only where the system tells them). */
+export interface MachineFacts { free: number; total: number; low: boolean; power?: string; keptAwake: boolean; memory?: number; booted?: string }
 
-export function Tiles({ status: st, history, onPause, onChoose, words, start, logs, open, backups, openBackups, mac, machine }: TilesProps) {
+/** Memory in GB as the machine's own spec says it (powers of 1024: 32 GB, not 34.4): whole from 10 up, else to a tenth. */
+function gb(n: number): string {
+  const g = n / 2 ** 30;
+  return g >= 10 ? String(Math.round(g)) : g.toFixed(1).replace(/\.0$/, '');
+}
+
+/** How long the machine has been up: "Up 23 days", "Up 5 hours", "Up 12 minutes"; '' when it isn't known. */
+export function upFor(booted?: string, now = Date.now()): string {
+  if (!booted || booted.startsWith('0001-')) return '';
+  const mins = Math.floor((now - new Date(booted).getTime()) / 60000);
+  if (!(mins >= 0)) return '';
+  if (mins < 60) return `Up ${mins <= 1 ? 'a minute' : `${mins} minutes`}`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 48) return `Up ${hours === 1 ? 'an hour' : `${hours} hours`}`;
+  return `Up ${Math.floor(hours / 24)} days`;
+}
+
+/** The machine card's memory (the redesign's picture: "Memory · 11 of 32 GB" over a bar): what the apps hold of the
+ * machine's memory, amber past 85%. Just the machine's memory until the apps' is read; nothing where it isn't told. */
+function MemoryLine({ total, used }: { total?: number; used?: number }) {
+  if (!total) return null;
+  const share = used ? Math.min(1, used / total) : 0;
+  const pct = Math.round(share * 100);
+  return (
+    <div class={'sub memline' + (share > 0.85 ? ' warn' : '')}>
+      <span>Memory · {used ? `${gb(used)} of ${gb(total)} GB` : `${gb(total)} GB`}</span>
+      {!!used && <span class="bar" role="meter" aria-label="Memory the apps use" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct}><span style={{ width: `${Math.max(2, pct)}%` }} /></span>}
+    </div>
+  );
+}
+
+export function Tiles({ status: st, history, onPause, onChoose, words, start, logs, open, backups, openBackups, mac, machine, appsMemory }: TilesProps) {
   // No app yet: no 0-of-0 tiles, but what to do first (the empty list hides with it).
   if (!st.apps.length) {
     return (
@@ -167,7 +202,7 @@ export function Tiles({ status: st, history, onPause, onChoose, words, start, lo
         <div class="value">{backups ? <>{backups.copied}<small> of {backups.of}</small></> : '…'}</div>
         <div class="sub">{!backups ? 'Reading last night…' : <span>{backups.at}{backups.skipped.length ? <>{' · '}<span class="warn">{backups.skipped.join(', ')} skipped</span></> : ''}</span>}</div>
       </Card>
-      {mac ? <MacCard mac={mac} updates={u} onPause={onPause} /> : machine?.total ? <MachineCard m={machine} updates={u} onPause={onPause} /> : (
+      {mac ? <MacCard mac={mac} facts={machine} appsMemory={appsMemory} updates={u} onPause={onPause} /> : machine?.total ? <MachineCard m={machine} appsMemory={appsMemory} updates={u} onPause={onPause} /> : (
         <Tile label="Nightly updates" value={u?.paused ? 'Paused' : 'On'}
           sub={<>{u?.paused ? 'Until you resume them' : `Run ${u?.schedule}`}<PauseButton paused={!!u?.paused} onPause={onPause} /></>} />
       )}
@@ -177,13 +212,16 @@ export function Tiles({ status: st, history, onPause, onChoose, words, start, lo
 
 /** This machine on a phone (the redesign's phone picture, as the iPhone app's): the computer's free space as the figure,
  * its power under it (amber when it's on battery or may sleep), and the nightly updates with Pause. */
-function MachineCard({ m, updates: u, onPause }: { m: MachineFacts; updates: api.Status['updates']; onPause: (paused: boolean) => Promise<void> }) {
+function MachineCard({ m, appsMemory, updates: u, onPause }: { m: MachineFacts; appsMemory?: number; updates: api.Status['updates']; onPause: (paused: boolean) => Promise<void> }) {
   const power = m.power === 'battery' ? { words: 'On battery', tone: 'warn' } : m.power === 'plugged' ? (m.keptAwake ? { words: 'Plugged in', tone: '' } : { words: 'Plugged in, may sleep', tone: 'warn' }) : null;
+  const up = upFor(m.booted);
   return (
     <Card kind="tile statuscard" id="statusMachine">
       <div class="label">This machine</div>
       <div class={'value' + (m.low ? ' bad' : '')}>{bytes(m.free)}<small> free</small></div>
-      {power && <div class={'sub ' + power.tone}><span>{power.words}</span></div>}
+      {power && power.tone ? <div class={'sub ' + power.tone}><span>{power.words}</span></div> : (power || up) && <div class="sub"><span>{[power?.words, up].filter(Boolean).join(' · ')}</span></div>}
+      {power?.tone && up && <div class="sub"><span>{up}</span></div>}
+      <MemoryLine total={m.memory} used={appsMemory} />
       <div class="sub statusupdates"><span>{u?.paused ? 'Updates paused' : `Updates ${u?.schedule ? 'run ' + u.schedule : 'nightly'}`}</span><PauseButton paused={!!u?.paused} onPause={onPause} /></div>
     </Card>
   );
@@ -191,13 +229,13 @@ function MachineCard({ m, updates: u, onPause }: { m: MachineFacts; updates: api
 
 /** This Mac (redesign-loop R6, the picture's): its free space as the figure, power and what runs the apps under it, the
  * nightly updates with Pause, and anything wrong with the machine said here too (Start for a stopped agent). */
-function MacCard({ mac, updates: u, onPause }: { mac: HealthProps; updates: api.Status['updates']; onPause: (paused: boolean) => Promise<void> }) {
+function MacCard({ mac, facts: m, appsMemory, updates: u, onPause }: { mac: HealthProps; facts?: MachineFacts | null; appsMemory?: number; updates: api.Status['updates']; onPause: (paused: boolean) => Promise<void> }) {
   const all = facts(mac);
   const of = (k: string) => all.find((f) => f.key === k);
   const disk = of('disk'), power = of('power'), runtime = of('runtime');
   const wrong = all.filter((f) => f.tone !== 'ok' && f.key !== 'disk');
   // Power and the runtime in a line when they're fine; what isn't has a line of its own, in its tone.
-  const fine = [power, runtime].filter((f) => f && f.tone === 'ok').map((f) => f!.short).join(' · ');
+  const fine = [...[power, runtime].filter((f) => f && f.tone === 'ok').map((f) => f!.short), upFor(m?.booted)].filter(Boolean).join(' · ');
   const stopped = mac.h.agent === 'stopped' || mac.h.agent === 'quit';
   const name = mac.machine.charAt(0).toUpperCase() + mac.machine.slice(1);
   return (
@@ -206,6 +244,7 @@ function MacCard({ mac, updates: u, onPause }: { mac: HealthProps; updates: api.
       <div class={'value' + (disk && disk.tone !== 'ok' ? ' bad' : '')}>{disk ? disk.value.replace(/ free$/, '') : '—'}<small>{disk ? ' free' : ''}</small></div>
       {fine && <div class="sub"><span>{fine}</span></div>}
       {wrong.map((f) => <div key={f.key} class={'sub ' + f.tone}><span>{f.short}</span></div>)}
+      <MemoryLine total={m?.memory} used={appsMemory} />
       {stopped && <StartAgent id="startAgentMac" start={mac.startAgent} />}
       <div class="sub statusupdates"><span>{u?.paused ? 'Updates paused' : `Updates ${u?.schedule ? 'run ' + u.schedule : 'nightly'}`}</span><PauseButton paused={!!u?.paused} onPause={onPause} /></div>
     </Card>
