@@ -605,7 +605,7 @@ html.companion #choose, html.companion:not(.finances) #finances, html.companion:
 /* Settings on a phone (#596's gap 6): the settings it may change; what's the computer's own stays there. */
 html.companion #settings :is(.reportrow, #reportLog, #reportActions, #uninstallCard, #appearanceCard, #peopleCard, #phonesCard, #tailnetCard) { display:none !important; }
 html.companion:not(.can-change) #saveSettings { display:none !important; }
-html.companion .menuwrap, html.companion #moveCard, html.companion .rowActions button.small:not(.rowmain) { display:none; }
+html.companion:not(.can-change) .menuwrap, html.companion.kiosk .menuwrap, html.companion #moveCard, html.companion:not(.can-change) .rowActions button.small:not(.rowmain) { display:none; }
 /* Parity with the computer (the owner, Nov 26): Update apps for a device that may change things; Open on a phone where
    this page isn't on one already. */
 html.companion:not(.can-change) #updateAll { display:none; }

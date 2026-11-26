@@ -24,9 +24,8 @@ const phoneMethods = (() => {
   const names = [...body.slice(0, body.indexOf('\n}\n')).matchAll(/^\t\t"([A-Z][A-Za-z]+)":/gm)].map((m) => m[1]);
   if (!names.includes('StatusBoard') || !names.includes('Host')) throw new Error('could not read the phone\'s methods from serve.go: ' + names);
   // The web page's, beside them (serve_web.go, the owner's parity, Nov 26).
-  const web = readFileSync(join(root, 'cmd', 'homelab', 'serve_web.go'), 'utf8');
-  const webBody = web.slice(web.indexOf('func (h *homelab) webMethods('));
-  const more = [...webBody.slice(0, webBody.indexOf('\n}\n')).matchAll(/^\t\t"([A-Z][A-Za-z]+)":/gm)].map((m) => m[1]);
+  const web = ['serve_web.go', 'serve_web_install.go'].map((f) => readFileSync(join(root, 'cmd', 'homelab', f), 'utf8')).join('\n');
+  const more = [...web.matchAll(/^\t\t"([A-Z][A-Za-z]+)":/gm)].map((m) => m[1]);
   if (!more.includes('Kept')) throw new Error('could not read the web page\'s methods from serve_web.go: ' + more);
   return [...names, ...more];
 })();
@@ -676,6 +675,30 @@ const popupsWhole = async () => {
 };
 
 const smokes = [
+  // Parity, part 2 (the owner, Nov 26): the web page adds apps as the computer does. From a device allowed to make
+  // changes, a category's shelf has Install, the plan comes, and Install runs to Done; Connect apps runs; nothing is
+  // refused as the computer's own. A device that only looks sees the shelf without Install.
+  { name: 'The web page adds apps: Install from a category, the plan, Done, and Connect apps', screen: 'status', phone: ['companion', 'can-change'], run: async (page) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.click('#statusMore', { timeout: 5000 });
+    await page.click('#connect', { timeout: 3000 });
+    await page.waitForFunction(() => (window.__MOCK.calls.Wire || 0) >= 1, null, { timeout: 5000 });
+    await pick(page, 'qbittorrent');
+    await page.waitForSelector('#inputs .fieldName:has-text("ProtonVPN WireGuard key")', { timeout: 5000 });
+    await page.fill('#inputs input', 'wg-key-test');
+    await page.waitForSelector('#plan .planLead:has-text("Installs 1 app")', { timeout: 5000 });
+    await page.click('#installBtn');
+    await page.waitForSelector('#started li', { timeout: 10000 });
+    const refused = await page.evaluate(() => window.__MOCK.refused);
+    if (refused.length) throw new Error('refused as the computer\'s own: ' + [...new Set(refused)].join(', '));
+  } },
+  { name: 'The web page on a device that only looks: a category shows what to add, no Install', screen: 'status', phone: ['companion'], run: async (page) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.click('#statusSide button[data-key="media"]', { timeout: 5000 });
+    await page.waitForSelector('#statusPart .cattile.toadd', { timeout: 5000 });
+    if (await page.locator('#statusPart .cattile.toadd button:has-text("Install")').count()) throw new Error('Install on a device that only looks');
+    if (await page.isVisible('#statusMore')) throw new Error('More… on a device that only looks');
+  } },
   // Parity with the computer on the web page (the owner, Nov 26): on a wide window, from a device that may change things,
   // an app's page has Open on a phone (its QR code), its sign-in details' ⚙ and Remove; Status has Update apps; Backups'
   // Recovery kit opens; and none of it is refused as the computer's own.
