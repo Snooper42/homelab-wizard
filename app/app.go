@@ -1047,8 +1047,6 @@ func (a *App) InstallAppUpdate() error {
 	return nil
 }
 
-// SavingsHistory is the yearly saving the nightly backup recorded each day,
-// oldest first.
 // Storage is what each person's photos take in Immich, as the nightly
 // backup last read it.
 func (a *App) Storage() storage.Record { return storage.Load(storage.Path(a.root)) }
@@ -1061,8 +1059,22 @@ func (a *App) Usage() ([]docker.Stat, error) {
 	return core.Usage(ctx)
 }
 
+// SavingsHistory is the yearly saving the nightly backup recorded each day,
+// oldest first.
 func (a *App) SavingsHistory() []savings.Point {
 	return savings.LoadHistory(savings.HistoryPath(a.root))
+}
+
+// SavingsRows is every subscription the apps can replace, at its price, from
+// docs/Savings.md, for Status › Subscriptions: the apps' IDs, the service, its
+// kind, monthly and annual price, when the saving is real, and whether it's
+// counted (each paid service once, so the counted rows make the yearly figure).
+func (a *App) SavingsRows() ([]savings.Offer, error) {
+	c, err := a.catalog()
+	if err != nil {
+		return nil, err
+	}
+	return savings.Offers(c)
 }
 
 // Finances is the household's money plan read forward from today: each
