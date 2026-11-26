@@ -101,9 +101,8 @@ async function readIconOf(of: string) {
 
 async function readRest() {
   const at = id;
-  const companion = document.documentElement.classList.contains('companion');
   const [w, st, ppl, ex, pr, pv] = await Promise.allSettled([go().Watchdog(), go().Storage(), go().People(), go().Explainer(), guards.has(at) ? go().Protection() : Promise.resolve(null),
-    at === privateApp && !companion ? go().DownloadsPrivate() : Promise.resolve(null)]);
+    at === privateApp ? go().DownloadsPrivate() : Promise.resolve(null)]);
   if (at !== id) return;
   stopped = pr.status === 'fulfilled' ? pr.value : null;
   privacy = pv.status === 'fulfilled' ? pv.value : null;
@@ -138,7 +137,7 @@ function draw() {
     dozzle: !companion && statusById.dozzle?.state === 'running' ? statusById.dozzle.url || '' : '',
     machine: thisMachine.replace(/^This/, 'this'), companion,
     stopped: guards.has(id) ? stopped : undefined,
-    privacy: id === privateApp && !companion ? privacy : undefined,
+    privacy: id === privateApp ? privacy : undefined,
     on: {
       back: () => navigate('status'),
       from: statusCrumb(),

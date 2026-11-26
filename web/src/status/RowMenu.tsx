@@ -38,7 +38,7 @@ export interface RowMenuProps {
   native: boolean;
   /** An app's command runs: what changes it waits. */
   busy: boolean;
-  /** The phone companion: no Open on a phone. */
+  /** The web page (homelab serve): Open on a phone only where it isn't on one (a wide window). */
   companion: boolean;
   on: RowMenuActions;
   /** Closes it; refocus puts the focus back where it was. */
@@ -47,12 +47,15 @@ export interface RowMenuProps {
   said: (words: string) => void;
 }
 
+/** A window wider than a phone's: the web page on a computer. */
+const wide = () => matchMedia('(min-width: 701px)').matches;
+
 export function RowMenu({ a, x, y, native, busy, companion, on, close, said }: RowMenuProps) {
   const box = useRef<HTMLDivElement>(null);
   const [sure, setSure] = useState(false);
   const [later, setLater] = useState(false);
   const [sending, setSending] = useState(false);
-  const phones = companion ? [] : on.targets(a);
+  const phones = on.targets(a);
   const [at, setAt] = useState({ left: x, top: y });
   const items = () => [...(box.current?.querySelectorAll<HTMLButtonElement>('[role^=menuitem]:not([disabled])') || [])];
   // Inside the window: moved left or up when it would run past an edge.
@@ -105,7 +108,7 @@ export function RowMenu({ a, x, y, native, busy, companion, on, close, said }: R
       ) : (
         <>
           {running && url && item('Open', pick(() => on.open(url)))}
-          {running && a.address && !companion && item('Open on a phone', pick(() => on.phone(a)))}
+          {running && a.address && (!companion || wide()) && item('Open on a phone', pick(() => on.phone(a)))}
           {url && item('Copy address', pick(() => { on.copy(url).then(() => said('Address copied'), () => said('Could not copy the address')); }))}
           {!!phones.length && <button type="button" role="menuitem" class="sendphone" aria-haspopup="menu" onClick={() => showSend(true)}>Send to my phone ›</button>}
           {!native && url && <hr />}
@@ -115,18 +118,15 @@ export function RowMenu({ a, x, y, native, busy, companion, on, close, said }: R
           {!native && running && <button type="button" role="menuitem" class="stoplater" aria-haspopup="menu" disabled={busy} onClick={() => showLater(true)}>Stop for a while ›</button>}
           {!native && <hr />}
           {!native && item('Logs', pick(() => on.logs(a)))}
-          {/* On the phone, the quick ones: what is done to this app now. */}
-          {!companion && item('Back up now', pick(() => on.backupNow()))}
-          {!native && !companion && (
+          {item('Back up now', pick(() => on.backupNow()))}
+          {!native && (
             <button type="button" role="menuitemcheckbox" aria-checked={!a.quiet} onClick={pick(() => on.alerts(a, !!a.quiet))}>
               Tell me if it stops<span class="check" aria-hidden="true">{a.quiet ? '' : '✓'}</span>
             </button>
           )}
-          {!companion && (
-            <button type="button" role="menuitemcheckbox" aria-checked={!!a.pinned} onClick={pick(() => on.pin(a, !a.pinned))}>
-              Pin to the top<span class="check" aria-hidden="true">{a.pinned ? '✓' : ''}</span>
-            </button>
-          )}
+          <button type="button" role="menuitemcheckbox" aria-checked={!!a.pinned} onClick={pick(() => on.pin(a, !a.pinned))}>
+            Pin to the top<span class="check" aria-hidden="true">{a.pinned ? '✓' : ''}</span>
+          </button>
         </>
       )}
     </div>
