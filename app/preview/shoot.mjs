@@ -662,10 +662,11 @@ const popupsWhole = async () => {
   };
   // Menus behind a button.
   for (const btn of [...document.querySelectorAll('[aria-haspopup]')].filter(vis)) {
-    const before = new Set([...document.querySelectorAll('[role=menu],[role=listbox],.menu')].filter(vis));
+    const pops = '[role=menu],[role=listbox],.menu,.sidemenulist';
+    const before = new Set([...document.querySelectorAll(pops)].filter(vis));
     btn.scrollIntoView({ block: 'center' });
     btn.click(); await sleep(150);
-    const menus = [...document.querySelectorAll('[role=menu],[role=listbox],.menu')].filter((m) => vis(m) && !before.has(m));
+    const menus = [...document.querySelectorAll(pops)].filter((m) => vis(m) && !before.has(m));
     if (!menus.length) out.push(`menu of "${name(btn)}": nothing opened`);
     for (const m of menus) checkBox(`menu of "${name(btn)}"`, m, [...m.querySelectorAll('[role=menuitem],[role=option],button')].filter(vis), btn);
     document.activeElement?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
@@ -3324,6 +3325,8 @@ const smokes = [
     await page.waitForSelector('#setting-CLOUDFLARE_API_TOKEN .test:has-text("Copied")', { timeout: 5000 });
   } },
   { name: 'Watchdog failures', screen: 'status', mock: { watchdog: { ...watchdog, failing: [{ name: 'crowdsec bouncer', problem: "the proxy's bouncer last pulled CrowdSec's decisions 9 minutes ago", since: hoursAgo(0.3) }] } }, run: async (page) => {
+    // The card moved to Analytics with the new Overview (the owner's picture, Nov 25).
+    await toStatusPart(page, 'analytics');
     await page.waitForSelector('#watchCard:has-text("1 of 47 checks failing")', { timeout: 5000 });
     await page.waitForSelector('#watchCard li:has-text("crowdsec bouncer")');
   } },
@@ -3343,6 +3346,8 @@ const smokes = [
     await page.waitForFunction(() => !document.querySelector('#watchCard li')?.textContent?.includes('No alerts about it until'), null, { timeout: 5000 });
   } },
   { name: 'Watchdog on a phone that may change things: snooze a failing check for a day', screen: 'status', phone: ['companion', 'can-change'], mock: { watchdog: { ...watchdog, failing: [{ name: 'crowdsec bouncer', problem: 'no pull for 9 minutes', since: hoursAgo(0.3) }] } }, run: async (page) => {
+    // The card moved to Analytics with the new Overview (the owner's picture, Nov 25).
+    await toStatusPart(page, 'analytics');
     const pick = '#watchCard select[aria-label="Snooze the alerts about crowdsec bouncer"]';
     await page.waitForSelector(pick, { state: 'visible', timeout: 5000 });
     await page.selectOption(pick, '24');
@@ -3350,10 +3355,14 @@ const smokes = [
     if (!(await page.evaluate(() => window.__MOCK.calls.SnoozeCheck))) throw new Error('not snoozed');
   } },
   { name: 'Watchdog on a phone that only looks: a failing check, no Snooze', screen: 'status', phone: ['companion'], mock: { watchdog: { ...watchdog, failing: [{ name: 'crowdsec bouncer', problem: 'no pull for 9 minutes', since: hoursAgo(0.3) }] } }, run: async (page) => {
+    // The card moved to Analytics with the new Overview (the owner's picture, Nov 25).
+    await toStatusPart(page, 'analytics');
     await page.waitForSelector('#watchCard li:has-text("crowdsec bouncer")', { timeout: 5000 });
     if (await page.isVisible('#watchCard select.snoozepick')) throw new Error('Snooze on a phone that only looks');
   } },
   { name: 'Bans not enforced', screen: 'status', mock: { protection: { ...protection, enforced: false, bouncer: "the proxy's bouncer last pulled CrowdSec's decisions 9 minutes ago" } }, run: async (page) => {
+    // The card moved to Analytics with the new Overview (the owner's picture, Nov 25).
+    await toStatusPart(page, 'analytics');
     await page.waitForSelector('#protectCard:has-text("Bans not enforced")', { timeout: 5000 });
     await page.waitForSelector('#protectCard:has-text("new attackers are not blocked")');
     await page.click('#protectFix');
@@ -3362,6 +3371,8 @@ const smokes = [
   // Memory nearly full: while the watchdog's alert stands (health.StepMemory), its card lists the biggest apps,
   // each with Stop; one the catalog does not know has none, and a phone that only looks shows none.
   { name: 'Memory nearly full: the biggest apps, each with Stop', screen: 'status', mock: { watchdog: { ...watchdog, memory: memoryHigh } }, run: async (page) => {
+    // The card moved to Analytics with the new Overview (the owner's picture, Nov 25).
+    await toStatusPart(page, 'analytics');
     await page.waitForSelector('#watchCard #memoryPressure:has-text("the apps use 94% of the 8.0 GB Docker has")', { timeout: 5000 });
     const rows = await page.locator('#memoryPressure li').allInnerTexts();
     if (rows.length !== 3 || !/Immich/.test(rows[0]) || !/2\.5 GB/.test(rows[0]) || !/900 MB/.test(rows[2])) throw new Error(`rows: ${JSON.stringify(rows)}`);
@@ -3370,6 +3381,8 @@ const smokes = [
     await page.waitForFunction(() => window.__MOCK.calls.AppAction === 1, null, { timeout: 5000 });
   } },
   { name: 'Memory nearly full on a phone that only looks: no Stop', screen: 'status', phone: ['companion'], mock: { watchdog: { ...watchdog, memory: memoryHigh } }, run: async (page) => {
+    // The card moved to Analytics with the new Overview (the owner's picture, Nov 25).
+    await toStatusPart(page, 'analytics');
     await page.waitForSelector('#memoryPressure li:has-text("Immich")', { timeout: 5000 });
     if (await page.isVisible('#memoryPressure button.memstop')) throw new Error('a phone that only looks may stop an app');
   } },
@@ -3392,6 +3405,8 @@ const smokes = [
     await page.waitForSelector('#oneLine.trouble:has-text("The watchdog’s check of crowdsec bouncer is failing"), #oneLine.trouble:has-text("check of crowdsec bouncer is failing")', { timeout: 5000 });
   } },
   { name: 'Watchdog not run yet', screen: 'status', mock: { watchdog: null }, run: async (page) => {
+    // The card moved to Analytics with the new Overview (the owner's picture, Nov 25).
+    await toStatusPart(page, 'analytics');
     await page.waitForSelector('#watchCard:has-text("Not set up"):has(a:has-text("Open Setup"))', { timeout: 5000 });
   } },
   // The owner, Nov 12: Dashboard cards they can move and size ("maybe resize them"); the mockup's artboard 5 was a yes,
@@ -3717,13 +3732,17 @@ const smokes = [
     await page.waitForSelector('#tidy.active', { timeout: 3000 });
     await page.waitForSelector(tidyItem('Music') + '.on', { timeout: 3000 });
   } },
+  // Healthy categories stay folded (the owner's picture, Nov 25): on the Overview each is one quiet row of the panel, its
+  // apps not listed; Show every app opens every one, and Fold them again folds them back to the panel.
   { name: 'Healthy categories fold into their headings', screen: 'status', mock: { statusOpen: '' }, run: async (page) => {
-    await page.waitForSelector('#statusRows tr.grouphead.fold:has-text("Security"):has-text("✓ 4 running")', { timeout: 5000 });
+    await page.waitForSelector('#statusPanel .ovrow[data-key="security"]:has-text("4 running")', { timeout: 5000 });
+    if (await page.$('#statusPanel .ovrow[data-key="security"] .pill.warn')) throw new Error('a healthy category is amber');
     if (await page.isVisible('#statusRows tr:has(strong:text-is("Vaultwarden"))')) throw new Error('a healthy category is open');
-    await page.click('#statusRows tr.grouphead.fold:has-text("Security")');
-    await page.waitForSelector('#statusRows tr:has(strong:text-is("Vaultwarden"))', { timeout: 5000 });
     await page.click('#statusAll');
+    await page.waitForSelector('#statusRows tr:has(strong:text-is("Vaultwarden"))', { timeout: 5000 });
     await page.waitForSelector('#statusRows tr:has(strong:text-is("Navidrome"))', { timeout: 5000 });
+    await page.click('#statusAll');
+    await page.waitForSelector('#statusRows tr:has(strong:text-is("Vaultwarden"))', { state: 'hidden', timeout: 5000 });
   } },
   // The folds are the computer's, the same on every device (the owner, Nov 10): a group another device opened shows open
   // here though it's healthy; opening or folding one here saves it there; Show every app is this device's own and saves
@@ -3755,9 +3774,9 @@ const smokes = [
     // Not counted yet: its group says all running, and the tile's total leaves it out.
     const group = await page.textContent('tr.grouphead:has-text("System") .n');
     if (!/✓ \d+ running/.test(group)) throw new Error(`System group: ${group}`);
-    // The Apps card counts it out too: all the others running, no "of".
+    // The Apps card counts it out too: of every app but it (the preview has Mealie stopped, so "N of M running").
     const tile = (await page.textContent('#statusApps .antfig')).replace(/\s+/g, ' ').trim();
-    if (tile !== `${status.apps.length - 1} running`) throw new Error(`Apps card: ${tile}`);
+    if (!(tile === `${status.apps.length - 1} running` || tile.endsWith(` of ${status.apps.length - 1} running`))) throw new Error(`Apps card: ${tile}`);
   } },
   { name: 'Start Jellyfin on Linux when it is not running', screen: 'status', mock: { platform: 'Linux x86_64', status: { ...status, apps: status.apps.map((a) => (a.id === 'jellyfin' ? { ...a, state: 'not running', health: '' } : a)) } }, run: async (page) => {
     await page.click('tr:has(strong:text-is("Jellyfin")) button:has-text("Start")', { timeout: 5000 });
@@ -3855,8 +3874,9 @@ const smokes = [
     if (await page.$('#statusApps .antfig.warn')) throw new Error('the Apps card counts an app stopped on purpose as a problem');
     if (await page.$('#statusPanel .ovrow[data-key="household"] .pill.warn')) throw new Error("Household's row is amber for apps stopped on purpose");
     await page.click('#statusAll');
-    await page.waitForSelector('tr.grouphead:has(.names:has-text("Mealie"))', { timeout: 5000 });
-    const label = (await page.locator('tr.grouphead:has(.names:has-text("Mealie")) .kiosklabel').textContent()).trim();
+    // Every group open behind Show every app: Mealie's is Household.
+    await page.waitForSelector('tr.grouphead:has(.kiosklabel:text-is("Household"))', { timeout: 5000 });
+    const label = 'Household';
     const head = page.locator(`tr.grouphead:has(.kiosklabel:text-is("${label}"))`);
     if (await head.locator('.startall').count()) throw new Error(`Start them offers an app stopped on purpose: ${await head.locator('.startall').textContent()}`);
     await page.waitForFunction(([n, t]) => [...document.querySelectorAll('tr')].some((r) => r.querySelector('strong')?.textContent === n && r.querySelector('td.state')?.textContent.replace(/\s+/g, ' ').trim() === t), ['Mealie', 'Stopped by you'], { timeout: 3000 });
@@ -3935,6 +3955,8 @@ const smokes = [
   // need be, and nothing slides sideways.
   ...[320, 213].map((w) => ({ name: `Stopped by itself, on the phone at ${w}px: the why is all there`, screen: 'status', phone: ['companion'], mock: stoppedByItself(), run: async (page) => {
     await page.setViewportSize({ width: w, height: 640 });
+    // The Overview keeps the list behind Show every app (the owner's picture, Nov 25): opened first.
+    await page.click('#statusAll', { timeout: 5000 });
     const cell = page.locator('#statusRows tr:has(strong:text-is("Mealie")) td.state');
     await cell.waitFor({ timeout: 5000 });
     await cell.scrollIntoViewIfNeeded();
@@ -3982,6 +4004,8 @@ const smokes = [
   } },
   // The watchdog doesn't check a stopped app: beside "All 47 checks passed", it names it, on the computer and the phone.
   ...[[], ['companion']].map((phone) => ({ name: `The watchdog line names the stopped app it doesn't check${phone.length ? ', on the phone' : ''}`, screen: 'status', phone, run: async (page) => {
+    // The card moved to Analytics with the new Overview (the owner's picture, Nov 25).
+    await toStatusPart(page, 'analytics');
     await page.waitForSelector('#watchCard .unchecked:has-text("Not checked while stopped: Mealie")', { timeout: 5000 });
   } })),
   // Account 3's tester, task 2, finding 4: Status in a household's words. Apps, not stacks; the homelab's own apps, not
@@ -4169,10 +4193,11 @@ const smokes = [
   { name: 'Right-click an app’s row: its menu', screen: 'status', run: async (page) => {
     // Tall enough for the whole menu under the pointer (Send to my phone › made it a row longer); a menu that would not
     // fit moves up, its own case.
-    await page.setViewportSize({ width: 1280, height: 1000 });
+    // Tall enough that the list's last row has room under it, below the Overview's three cards.
+    await page.setViewportSize({ width: 1280, height: 2400 });
     const row = page.locator('tr:has(strong:text-is("Vikunja"))');
     await row.waitFor({ timeout: 5000 });
-    await row.scrollIntoViewIfNeeded();
+    await row.evaluate((e) => e.scrollIntoView({ block: 'center' }));
     const box = await row.locator('td.state').boundingBox();
     await page.mouse.click(box.x + 20, box.y + box.height / 2, { button: 'right' });
     const menu = page.locator('.rowmenu');
@@ -4379,8 +4404,11 @@ const smokes = [
   // Start, not Restart or Stop.
   { name: 'Right-click an app’s row: from the keyboard, and a stopped app', screen: 'status', run: async (page) => {
     // Room under Vikunja, the last row, for the whole menu (near the bottom it opens upward: its own case).
-    await page.setViewportSize({ width: 1280, height: 1000 });
+    // Tall enough that the list's last row has room under it, below the Overview's three cards.
+    await page.setViewportSize({ width: 1280, height: 2400 });
     const row = page.locator('tr:has(strong:text-is("Vikunja"))');
+    await row.locator('button.rowmain').waitFor({ timeout: 5000 });
+    await row.evaluate((e) => e.scrollIntoView({ block: 'center' }));
     await row.locator('button.rowmain').focus({ timeout: 5000 });
     await page.keyboard.press('Shift+F10');
     const menu = page.locator('.rowmenu');
@@ -5188,6 +5216,8 @@ const smokes = [
     await page.waitForSelector('#weekCard .warn:has-text("1 thing to look at")');
   } },
   { name: 'This week on a new homelab: still to set up, in grey', screen: 'status', mock: { weekly: { title: 'Homelab this week: getting started, 2 still to set up (Setup)', body: '\u2713 4 apps running and healthy\n\u25e6 No restore test yet (Backups \u203a Test a restore)\n\u25e6 Off-site jobs: none yet (Setup \u203a Create the backup jobs)\nReplacing $247 a year in subscriptions', problems: 0 } }, run: async (page) => {
+    // The card moved to Analytics with the new Overview (the owner's picture, Nov 25).
+    await toStatusPart(page, 'analytics');
     await page.waitForSelector('#weekCard .muted:has-text("Getting started: 2 still to set up")', { timeout: 5000 });
     if (await page.locator('#weekCard .dot.warn').count()) throw new Error('an orange dot on a new homelab');
     if (!(await page.isVisible('#weekCard li:has-text("Replacing $247") .dot:not(.ok):not(.warn)'))) throw new Error('the savings line is not grey');
@@ -5243,6 +5273,8 @@ const smokes = [
       await page.waitForSelector('#backups.screen.active', { timeout: 5000 });
     } })),
   { name: 'A tile’s line wraps under its chart rather than being cut off, at big text', screen: 'status', run: async (page) => {
+    // The card moved to Subscriptions with the new Overview (the owner's picture, Nov 25).
+    await toStatusPart(page, 'subscriptions');
     for (const [w, zoom] of [[1280, '1.5'], [1100, '1.25'], [860, '1.2']]) {
       await page.setViewportSize({ width: w, height: 800 });
       await page.evaluate((z) => document.documentElement.style.setProperty('--zoom', z), zoom);
@@ -5480,6 +5512,8 @@ const smokes = [
     if (bad.length) throw new Error(`buttons beside the words of: ${bad.join(', ')}`);
   } },
   { name: 'This week: one thing a line, however long', screen: 'status', mock: { weekly: longWeek }, run: async (page) => {
+    // The card moved to Analytics with the new Overview (the owner's picture, Nov 25).
+    await toStatusPart(page, 'analytics');
     await page.waitForSelector('#weekCard li', { timeout: 5000 });
     const lefts = await page.$$eval('#weekCard li', (li) => li.map((l) => Math.round(l.getBoundingClientRect().left)));
     if (lefts.length !== 8 || new Set(lefts).size !== 1) throw new Error(`the lines are side by side (left edges ${lefts.join(', ')})`);

@@ -1999,10 +1999,7 @@
             " ",
             lower(words5 ? words5(one) : one.state)
           ] })
-        ] }) : trouble2.length ? /* @__PURE__ */ u3("span", { class: "antwho", children: /* @__PURE__ */ u3("span", { class: "antname", children: [
-          trouble2.map((a3) => a3.name).join(", "),
-          " stopped"
-        ] }) }) : /* @__PURE__ */ u3("span", { children: [
+        ] }) : trouble2.length ? /* @__PURE__ */ u3("span", { class: "antwho", children: /* @__PURE__ */ u3("span", { class: "antname", children: trouble2.slice(0, 2).map((a3) => `${a3.name} ${lower(words5 ? words5(a3) : a3.state)}`).join(" · ") + (trouble2.length > 2 ? ` +${trouble2.length - 2}` : "") }) }) : /* @__PURE__ */ u3("span", { children: [
           "All answering",
           week2 ? ` · ${outages2 ? `${outages2 === 1 ? "1 day" : `${outages2} days`} with an outage this week` : "no outage this week"}` : ""
         ] }) }),

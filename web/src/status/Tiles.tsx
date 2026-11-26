@@ -154,7 +154,7 @@ export function Tiles({ status: st, history, onPause, onChoose, words, start, lo
         <div class="antline muted">
           {st.missing ? <span class="bad">{st.missing === 1 ? "1 of the homelab's own apps is down" : `${st.missing} of the homelab's own apps are down`}</span>
             : one ? <span class="antwho"><AppMark id={one.id} name={one.name} icon="" small /><span class="antname">{one.name} {lower(words ? words(one) : one.state)}</span></span>
-            : trouble.length ? <span class="antwho"><span class="antname">{trouble.map((a) => a.name).join(', ')} stopped</span></span>
+            : trouble.length ? <span class="antwho"><span class="antname">{trouble.slice(0, 2).map((a) => `${a.name} ${lower(words ? words(a) : a.state)}`).join(' · ') + (trouble.length > 2 ? ` +${trouble.length - 2}` : '')}</span></span>
             : <span>All answering{week ? ` · ${outages ? `${outages === 1 ? '1 day' : `${outages} days`} with an outage this week` : 'no outage this week'}` : ''}</span>}
         </div>
         <div class="antfoot">
