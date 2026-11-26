@@ -1032,6 +1032,11 @@ declare namespace health {
     name: string;
     bytes: number;
   }
+  interface Day {
+    date: string;
+    failed: number;
+    runs: number;
+  }
   interface Failure {
     name: string;
     problem: string;
@@ -1057,6 +1062,7 @@ declare namespace health {
     week: Record<string, number>;
     days?: Record<string, Record<string, number[]>>;
     outages?: Record<string, health.Outage[]>;
+    daily: health.Day[];
     memory?: health.Memory | null;
     snoozed?: Record<string, string>;
   }

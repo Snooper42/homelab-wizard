@@ -64,7 +64,7 @@ version: 0.17.0
 | `data/upgrade/` | `homelab upgrade` | Where the folder was before the last upgrade (`previous.json`; for a folder the app made, a copy of its files), for `upgrade --back` |
 | `data/homelab-move.json` | `homelab move in` | Where the bundle came from and what ran there, until the move is done |
 | `data/appdata/tailscale/serve.json` | `homelab tailnet setup` | Home mode: the app addresses Tailscale Serve answers |
-| `scripts/logs/watchdog-state.json` | the watchdog | Its last run, failing checks, and per-check pass and run counts for each of the last 7 days (`days`) |
+| `scripts/logs/watchdog-state.json` | the watchdog | Its last run, failing checks, and per-check pass and run counts and outages for each of the last 14 days (`days`, `outages`) |
 | `scripts/logs/restore-test.json` | `homelab restore-test` | The last 24 restore tests |
 | `scripts/logs/digest.json` | the nightly backup | When the weekly summary was last sent |
 | `scripts/logs/<part>.log`, `<part>.1.log` | the background agent | Each part's output (the watchdog, the backup, startup, …); at 5 MB the older half moves to `<part>.1.log`, replacing the one before |
