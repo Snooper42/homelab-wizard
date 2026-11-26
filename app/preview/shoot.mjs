@@ -6730,6 +6730,34 @@ const smokes = [
     await page.waitForSelector('#statusRows', { state: 'visible', timeout: 5000 });
     if (await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1)) throw new Error('the page scrolls sideways');
   } },
+  // From an app's page, a pick in Status' menu goes to that page (the owner, Nov 25: it "just stalls out"), the one it
+  // came from too; a tile's ⋯ menu opens whole and on top of the tiles beside it.
+  { name: "Status' menu from an app's page goes there, and a tile's ⋯ menu shows whole", screen: 'status', run: async (page) => {
+    await page.click('#statusSide button[data-key="media"]', { timeout: 5000 });
+    await page.click('#statusPart .cattile:not(.toadd) .catname');
+    await page.waitForSelector('#app.active', { timeout: 5000 });
+    await page.click('#statusSide button[data-key="media"]');
+    await page.waitForSelector('#status.active #statusPart .catpage h1:text-is("Media")', { timeout: 5000 });
+    await page.click('#statusPart .cattile:not(.toadd) .catname');
+    await page.waitForSelector('#app.active', { timeout: 5000 });
+    await page.click('#statusSide button[data-key="security"]');
+    await page.waitForSelector('#status.active #statusPart .catpage h1:text-is("Security")', { timeout: 5000 });
+    await page.click('#statusPart .cattile:not(.toadd) .catmore');
+    const item = page.locator('.rowmenu [role=menuitem]').first();
+    await item.waitFor({ timeout: 3000 });
+    const r = await item.boundingBox();
+    const hit = await page.evaluate(([x, y]) => !!document.elementFromPoint(x, y)?.closest('.rowmenu'), [r.x + r.width / 2, r.y + r.height / 2]);
+    if (!hit) throw new Error("the ⋯ menu is behind something");
+  } },
+  // A menu opens whole, in sight and on top (the owner, Nov 25: Finances' ▾ ran behind the sidebar): every item of the
+  // Add ▾ menu can be clicked where it shows, and the button's tooltip is gone while the menu is open.
+  { name: 'Finances: the Add ▾ menu opens whole, every item on top and in sight', screen: 'finances', run: async (page) => {
+    await page.click('.fx-addsplit .fx-addmore', { timeout: 5000 });
+    await page.waitForSelector('.fx-addsplit .menu [role=menuitem]', { timeout: 3000 });
+    const bad = await page.$$eval('.fx-addsplit .menu [role=menuitem]', (bs) => bs.filter((b) => { const r = b.getBoundingClientRect(); const at = document.elementFromPoint(r.left + 6, r.top + r.height / 2); return !at || !b.contains(at) || r.left < 0 || r.bottom > innerHeight; }).map((b) => b.textContent));
+    if (bad.length) throw new Error('hidden or cut off: ' + bad.join(', '));
+    if (await page.getAttribute('.fx-addsplit .fx-addmore', 'title')) throw new Error('the tooltip stays over the open menu');
+  } },
   // A stopped app (Mealie, in the preview's state): an amber dot by its category's count, and its tile's Start.
   { name: "Status: a stopped app puts an amber dot by its category, and its tile says Start", screen: 'status', run: async (page) => {
     await page.waitForSelector('#statusSide button[data-key="household"] .sidedot', { timeout: 5000 });
