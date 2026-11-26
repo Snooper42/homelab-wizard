@@ -291,7 +291,7 @@ extension ScreenshotMode {
     @MainActor static var screen: DashboardViewModel.SidebarItem? {
         switch shot {
         case nil: nil
-        case "status", "app": .status(.all)
+        case "status", "app", "category": .status(.all)
         case "backups": .backups
         case "setup": .setup
         case "settings", "settings-all", "phones", "storage": .settings
@@ -407,8 +407,10 @@ private struct PhoneStatus: View {
             // The screenshots: an app's page, opened as a tap opens it (its own title, no Status search over
             // it: an overlay on the list showed both, apple-loop.md item 1).
             .onChange(of: model.hasLoaded, initial: true) {
-                guard ScreenshotMode.shot == "app", path.isEmpty, model.hasLoaded,
-                      let app = model.app(id: "vikunja") ?? model.latestApps.first else { return }
+                guard path.isEmpty, model.hasLoaded else { return }
+                // A category's page: Media, as the computer's picture (app-status-category-phone.png).
+                if ScreenshotMode.shot == "category" { path.append(.category("media")) }
+                guard ScreenshotMode.shot == "app", let app = model.app(id: "vikunja") ?? model.latestApps.first else { return }
                 path.append(.app(app.id))
             }
             #endif
