@@ -6,8 +6,9 @@
 // no focus on a click). Stop asks for a second click; Stop for a while ›
 // shows its times in place of the menu, and Send to my phone › the phones
 // it can go to (the owner, Nov 12: pick a phone each time).
-import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
+import { useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { stopChoices } from './stopFor';
+import { putInside } from '../parts/place';
 
 /** What the row's menu does; app.ts runs each. */
 export interface RowMenuActions {
@@ -34,6 +35,8 @@ export interface RowMenuProps {
   /** Where it opens: the pointer's spot, or under the app's name. */
   x: number;
   y: number;
+  /** Where it ends when it opens upward (no room below): over its button, not over the spot. */
+  up?: number;
   /** A native app (Jellyfin on a Mac): no Start, Stop, or alerts here. */
   native: boolean;
   /** An app's command runs: what changes it waits. */
@@ -47,23 +50,19 @@ export interface RowMenuProps {
   said: (words: string) => void;
 }
 
-export function RowMenu({ a, x, y, native, busy, companion, on, close, said }: RowMenuProps) {
+export function RowMenu({ a, x, y, up, native, busy, companion, on, close, said }: RowMenuProps) {
   const box = useRef<HTMLDivElement>(null);
   const [sure, setSure] = useState(false);
   const [later, setLater] = useState(false);
   const [sending, setSending] = useState(false);
   const phones = companion ? [] : on.targets(a);
-  const [at, setAt] = useState({ left: x, top: y });
   const items = () => [...(box.current?.querySelectorAll<HTMLButtonElement>('[role^=menuitem]:not([disabled])') || [])];
   // Inside the window: moved left or up when it would run past an edge.
+  useLayoutEffect(() => { if (box.current) putInside(box.current, x, y, up); }, [x, y, up, later, sending]);
+  // At once, as the menu is drawn: a key pressed right after the one that opened it lands in the menu.
+  useLayoutEffect(() => { items()[0]?.focus(); }, []);
+  // Listening as it is drawn too: a press right after it opens closes it.
   useLayoutEffect(() => {
-    const m = box.current?.getBoundingClientRect();
-    if (!m) return;
-    setAt({ left: Math.max(8, Math.min(x, innerWidth - m.width - 8)), top: y + m.height > innerHeight - 8 ? Math.max(8, y - m.height) : y });
-  }, [x, y, later]);
-  useEffect(() => {
-    // At once, as the menu is drawn: a key pressed right after the one that opened it lands in the menu.
-    items()[0]?.focus();
     const outside = (e: Event) => { if (!box.current?.contains(e.target as Node)) close(); };
     const gone = () => close();
     document.addEventListener('mousedown', outside, true);
@@ -79,7 +78,7 @@ export function RowMenu({ a, x, y, native, busy, companion, on, close, said }: R
   const item = (label: string, fn: () => void, opts: { cls?: string; disabled?: boolean } = {}) =>
     <button type="button" role="menuitem" class={opts.cls} disabled={opts.disabled} onClick={fn}>{label}</button>;
   return (
-    <div ref={box} class="menu rowmenu" role="menu" aria-label={later ? `Stop ${a.name} for a while` : sending ? `Send ${a.name} to a phone` : a.name} style={{ left: at.left + 'px', top: at.top + 'px' }}
+    <div ref={box} class="menu rowmenu" role="menu" aria-label={later ? `Stop ${a.name} for a while` : sending ? `Send ${a.name} to a phone` : a.name}
       onKeyDown={(e) => {
         if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); if (later) showLater(false); else if (sending) showSend(false); else close(true); return; }
         const all = items(), i = all.indexOf(document.activeElement as HTMLButtonElement);

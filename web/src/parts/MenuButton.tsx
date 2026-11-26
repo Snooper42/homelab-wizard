@@ -5,6 +5,7 @@
 // the keyboard, its first item takes the focus.
 import { type ComponentChildren } from 'preact';
 import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
+import { fitMenu } from './place';
 
 export interface MenuItem {
   label: string;
@@ -44,12 +45,7 @@ export function MenuButton({ label, title, menuLabel, items, foot, disabled, cls
   useLayoutEffect(() => {
     const m = menu.current;
     if (!open || !m) return;
-    m.style.left = m.style.right = m.style.top = m.style.bottom = '';
-    const area = (m.closest('main') || document.body).getBoundingClientRect();
-    let r = m.getBoundingClientRect();
-    if (r.left < area.left + 4) { m.style.left = '0'; m.style.right = 'auto'; r = m.getBoundingClientRect(); }
-    if (r.right > Math.min(area.right, innerWidth) - 4) { m.style.right = '0'; m.style.left = 'auto'; }
-    if (r.bottom > innerHeight - 4 && r.top - r.height - 12 > 0) { m.style.top = 'auto'; m.style.bottom = 'calc(100% + 6px)'; }
+    fitMenu(m, btn.current);
   }, [open]);
   return (
     <span class="menuwrap" ref={wrap}

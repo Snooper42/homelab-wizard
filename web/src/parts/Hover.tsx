@@ -7,6 +7,7 @@
 // window cuts it off.
 import { type ComponentChildren, type JSX } from 'preact';
 import { useLayoutEffect, useRef, useState } from 'preact/hooks';
+import { putAt } from './place';
 
 let made = 0;
 
@@ -35,7 +36,7 @@ export function useHoverCard<T extends HTMLElement>(tip: ComponentChildren, { wi
   useLayoutEffect(() => {
     const t = at.current, c = box.current;
     if (!open || !t || !c) return;
-    const r = t.getBoundingClientRect(), w = c.offsetWidth, h = c.offsetHeight, pad = 8;
+    const r = t.getBoundingClientRect(), cr = c.getBoundingClientRect(), w = cr.width, h = cr.height, pad = 8;
     let left: number, top: number;
     if (side === 'right') {
       left = Math.min(r.right + 8, innerWidth - w - pad);
@@ -44,9 +45,10 @@ export function useHoverCard<T extends HTMLElement>(tip: ComponentChildren, { wi
       left = Math.max(pad, Math.min(r.left, innerWidth - w - pad));
       const below = r.bottom + 6;
       top = below + h > innerHeight - pad && r.top - h - 6 > pad ? r.top - h - 6 : below;
+      // Room neither way: kept whole in the window, over the trigger's neighbours rather than cut off.
+      top = Math.max(pad, Math.min(top, innerHeight - h - pad));
     }
-    c.style.left = `${left}px`;
-    c.style.top = `${top}px`;
+    putAt(c, left, top);
   }, [open]);
   const on = {
     ref: at,

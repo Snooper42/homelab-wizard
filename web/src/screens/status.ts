@@ -26,6 +26,7 @@ import { inTurn, waitWords } from '../job/queue';
 import { mountCrashNote } from '../status/CrashNote';
 import { type History as UsageHistory, mountUsage, record as recordUsage } from '../status/Usage';
 import { memoryByApp } from '../status/memory';
+import { fitMenu } from '../parts/place';
 import { settingLabel, showSettingsPage } from './settings';
 import { catalog, leaveStore, openCustom, openInstall, renderApps, showStore } from './choose';
 import { suggested } from '../choose/Choose';
@@ -1028,6 +1029,7 @@ function closeMenu() { $('statusMenu').hidden = true; $('statusMore').setAttribu
 function openMenu(at?: 'first' | 'last') {
   $('statusMenu').hidden = false;
   $('statusMore').setAttribute('aria-expanded', 'true');
+  fitMenu($('statusMenu'), $('statusMore'));
   const items = menuItems();
   if (at && items.length) items[at === 'first' ? 0 : items.length - 1].focus();
 }
