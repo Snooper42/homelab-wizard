@@ -83,6 +83,8 @@ const savingsRows = readFileSync(join(root, 'docs', 'Savings.md'), 'utf8').split
   const num = (x) => Number(String(x).replace(/[$,*]/g, ''));
   return ids.length && c.length >= 7 && !Number.isNaN(num(c[5])) ? [{ apps: ids, replaces: c[2], kind: c[3], monthly: num(c[4]), annual: num(c[5]), condition: c[6].replace(/\[([^\]]+)\]\(<[^>]+>\)/g, '$1') }] : [];
 });
+// Counted as internal/savings counts it (lane D, D1): each service's dearest row, of equals the later.
+{ const best = {}; savingsRows.forEach((r, i) => { if (best[r.replaces] === undefined || r.annual >= savingsRows[best[r.replaces]].annual) best[r.replaces] = i; }); savingsRows.forEach((r, i) => { r.counted = best[r.replaces] === i; }); }
 // What docker stats says over a minute: Immich indexing photos, Jellyfin
 // streaming, Paperless reading a scan.
 const usageSeries = [[162, 18, 9], [148, 22, 31], [171, 19, 12], [139, 25, 8], [155, 21, 6], [176, 17, 24], [151, 23, 7], [164, 20, 11]]
@@ -3950,6 +3952,36 @@ const smokes = [
     // The categories as one panel, each row opening its page.
     await page.click('#statusPanel .ovrow[data-key="media"]');
     await page.waitForSelector('#statusPart .catpage h1:text-is("Media")', { timeout: 5000 });
+  } },
+  // Subscriptions takes each service's price and kind from the row the computer counts (lane D, D1: `counted`), so the
+  // page and Status' yearly figure agree: here a service two apps replace at different prices, the cheaper one counted.
+  { name: 'Subscriptions: a service two apps replace shows the counted row', screen: 'status', mock: {
+    savingsRows: [
+      { apps: ['vaultwarden'], replaces: 'Test Vault', kind: 'Equivalent', monthly: 9, annual: 90, condition: 'a', counted: false },
+      { apps: ['ntfy'], replaces: 'Test Vault', kind: 'Direct', monthly: 5, annual: 50, condition: 'b', counted: true },
+    ],
+  }, run: async (page) => {
+    await page.click('#statusSide button[data-key="subscriptions"]', { timeout: 5000 });
+    const tile = '#subNow .subtile:has-text("Test Vault")';
+    await page.waitForSelector(tile, { timeout: 5000 });
+    if (await page.locator('#subNow .subtile:has-text("Test Vault")').count() !== 1) throw new Error('the service shows twice');
+    const said = (await page.textContent(tile)).replace(/\s+/g, ' ');
+    if (!/\$5\.00 a month/.test(said) || !/Direct/.test(said) || !/\$50\.00 a year/.test(said)) throw new Error('not the counted row: ' + said);
+    if (!/Vaultwarden/.test(said) || !/ntfy/.test(said)) throw new Error('not both apps: ' + said);
+  } },
+  // The owner's picture has 14 squares (lane D, D3): from the watchdog's daily summary, two weeks, each with its day's
+  // words on hover; a day it didn't run is grey, a day an app was down amber.
+  { name: 'Status: the Apps card with the last two weeks as fourteen squares', screen: 'status', mock: {
+    status: { ...status, apps: status.apps.map((a) => ({ ...a, state: 'running', health: a.health === 'unhealthy' ? 'healthy' : a.health })) },
+    watchdog: { ...watchdog, failing: [], daily: Array.from({ length: 14 }, (_, i) => { const d = new Date(); d.setDate(d.getDate() - (13 - i)); return { date: d.toISOString().slice(0, 10), failed: i === 9 ? 1 : 0, runs: i === 3 ? 0 : 96 }; }) },
+  }, run: async (page) => {
+    await page.waitForSelector('#statusApps .ovdays.fourteen i', { timeout: 5000 });
+    const sq = await page.$$eval('#statusApps .ovdays i', (is) => is.map((i) => i.className));
+    if (sq.length !== 14 || sq[3] !== 'none' || sq[9] !== 'warn' || sq.filter((c) => c === 'ok').length !== 12) throw new Error('the squares: ' + sq.join(' '));
+    await page.waitForSelector('#statusApps .antline:has-text("1 day with an outage in two weeks")');
+    if (!/1 app down/.test(await page.getAttribute('#statusApps .ovdays i >> nth=9', 'title') || '')) throw new Error('no words on the amber day');
+    const boxes = await page.$$eval('#tiles > .ovcard', (cs) => cs.map((c) => { const r = c.getBoundingClientRect(); return [Math.round(r.top), Math.round(r.height)].join(); }));
+    if (new Set(boxes).size !== 1) throw new Error('the cards differ: ' + boxes.join(' | '));
   } },
   // On the phone, 320px wide and with big text (213px is 320 at 1.5×): the why is all there, on a line of its own if
   // need be, and nothing slides sideways.

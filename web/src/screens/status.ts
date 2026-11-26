@@ -90,10 +90,23 @@ let seen = loadSeen();
 // change since the first of them (the nightly backup records one a day).
 let savingsHistory: savings.Point[] = [];
 let lastAttention = -1;
-/** This week as the watchdog saw it, a square a day, oldest first: ok, warn (a check failed that day), or bad (one
- * still failing today); and when it last checked. Null before it's read. */
-function weekSquares(): { days: string[]; checked: string } | null {
+/** The watchdog's days, a square a day, oldest first: ok, warn (a check was down that day), bad (one still down
+ * today) or none (it didn't run); each square's words for its tooltip; and when it last checked. The last 14 days from
+ * the watchdog's own daily summary (lane D, D3: the owner's picture has 14); from an older computer without one, the
+ * week from its outages. Null before it's read. */
+function weekSquares(): { days: string[]; titles: string[]; checked: string } | null {
   if (!lastWatch) return null;
+  const run = lastWatch.lastRun && !lastWatch.lastRun.startsWith('0001') ? `Checked ${ago(lastWatch.lastRun)}` : '';
+  const daily = lastWatch.daily || [];
+  if (daily.length) {
+    const downNow = (lastWatch.failing || []).length > 0;
+    const days = daily.map((d, i) => (!d.failed ? (d.runs ? 'ok' : 'none') : i === daily.length - 1 && downNow ? 'bad' : 'warn'));
+    const titles = daily.map((d) => {
+      const day = new Date(`${d.date}T12:00:00`).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+      return `${day}: ${d.failed ? (d.failed === 1 ? '1 app down for a while' : `${d.failed} apps down for a while`) : d.runs ? 'every app answered' : 'not checked'}`;
+    });
+    return { days, titles, checked: run };
+  }
   const all = Object.values(lastWatch.outages || {}).flat();
   const days = Array.from({ length: 7 }, (_, i) => {
     const start = new Date(); start.setHours(0, 0, 0, 0); start.setDate(start.getDate() - (6 - i));
@@ -101,8 +114,7 @@ function weekSquares(): { days: string[]; checked: string } | null {
     const hit = all.filter((o) => new Date(o.from) < end && (!o.to || new Date(o.to) >= start));
     return !hit.length ? 'ok' : i === 6 && hit.some((o) => !o.to) ? 'bad' : 'warn';
   });
-  const run = lastWatch.lastRun && !lastWatch.lastRun.startsWith('0001') ? `Checked ${ago(lastWatch.lastRun)}` : '';
-  return { days, checked: run };
+  return { days, titles: [], checked: run };
 }
 function renderTiles(st: api.Status) {
   const trouble = st.apps.filter((a) => troubled(a, st.stopped));

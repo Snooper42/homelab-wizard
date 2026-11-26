@@ -1960,6 +1960,12 @@
     return /* @__PURE__ */ u3("button", { class: "small change", disabled: busy2, onClick: click, children: paused ? "Resume" : "Pause" });
   }
   var awaitingJobs = (a3) => a3.id === "homelab-companion" && a3.state === "not running";
+  function troubleLine(apps2) {
+    const kind = (a3) => a3.state === "missing" ? "missing" : a3.state === "running" ? a3.notAnswering ? "not answering" : "unwell" : "stopped";
+    const by = /* @__PURE__ */ new Map();
+    for (const a3 of apps2) by.set(kind(a3), [...by.get(kind(a3)) || [], a3.name]);
+    return [...by].map(([k3, names5]) => `${names5.length > 3 ? `${names5.slice(0, 2).join(", ")} +${names5.length - 2}` : names5.join(", ")} ${k3}`).join(" · ");
+  }
   var troubled = (a3, held3 = {}) => a3.health === "unhealthy" || a3.health === "restarting" || !!a3.notAnswering || a3.state === "missing" || a3.state === "stopped" && (!held3[a3.id] || keptRestarting(held3[a3.id]));
   function Tiles({ status: st, history, onPause, onChoose, words: words5, start, logs, open: open5, backups, openBackups, mac, machine, week: week2, nights, startAll, seeAll }) {
     if (!st.apps.length) {
@@ -1974,7 +1980,8 @@
     const u4 = st.updates;
     const lower = (w3) => w3.charAt(0).toLowerCase() + w3.slice(1);
     const one = trouble2.length === 1 ? trouble2[0] : null;
-    const outages2 = week2 ? week2.days.filter((d3) => d3 !== "ok").length : 0;
+    const outages2 = week2 ? week2.days.filter((d3) => d3 === "warn" || d3 === "bad").length : 0;
+    const span = week2 && week2.days.length > 7 ? "in two weeks" : "this week";
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3(Card, { kind: "tile ovcard", id: "statusApps", children: [
         /* @__PURE__ */ u3("div", { class: "anthead", children: [
@@ -1999,9 +2006,9 @@
             " ",
             lower(words5 ? words5(one) : one.state)
           ] })
-        ] }) : trouble2.length ? /* @__PURE__ */ u3("span", { class: "antwho", children: /* @__PURE__ */ u3("span", { class: "antname", children: trouble2.slice(0, 2).map((a3) => `${a3.name} ${lower(words5 ? words5(a3) : a3.state)}`).join(" · ") + (trouble2.length > 2 ? ` +${trouble2.length - 2}` : "") }) }) : /* @__PURE__ */ u3("span", { children: [
+        ] }) : trouble2.length ? /* @__PURE__ */ u3("span", { class: "antwho", children: /* @__PURE__ */ u3("span", { class: "antname", children: troubleLine(trouble2) }) }) : /* @__PURE__ */ u3("span", { children: [
           "All answering",
-          week2 ? ` · ${outages2 ? `${outages2 === 1 ? "1 day" : `${outages2} days`} with an outage this week` : "no outage this week"}` : ""
+          week2 ? ` · ${outages2 ? `${outages2 === 1 ? "1 day" : `${outages2} days`} with an outage ${span}` : `no outage ${span}`}` : ""
         ] }) }),
         /* @__PURE__ */ u3("div", { class: "antfoot", children: one ? /* @__PURE__ */ u3("span", { class: "ovacts", children: [
           start && one.state !== "running" && /* @__PURE__ */ u3("button", { type: "button", class: "primary small", onClick: () => start(one), children: [
@@ -2019,7 +2026,7 @@
             "Start all"
           ] }),
           seeAll && /* @__PURE__ */ u3("button", { type: "button", class: "btn small", onClick: seeAll, children: "See them" })
-        ] }) : week2 ? /* @__PURE__ */ u3("span", { class: "ovdays", role: "img", "aria-label": `This week: ${outages2 ? `${outages2} days with an outage` : "no outage"}`, children: week2.days.map((d3, i3) => /* @__PURE__ */ u3("i", { class: d3 }, i3)) }) : /* @__PURE__ */ u3("span", { class: "antempty" }) })
+        ] }) : week2 ? /* @__PURE__ */ u3("span", { class: "ovdays" + (week2.days.length > 7 ? " fourteen" : ""), role: "img", "aria-label": `${span === "this week" ? "This week" : "The last two weeks"}: ${outages2 ? `${outages2} days with an outage` : "no outage"}`, children: week2.days.map((d3, i3) => /* @__PURE__ */ u3("i", { class: d3, title: week2.titles?.[i3] }, i3)) }) : /* @__PURE__ */ u3("span", { class: "antempty" }) })
       ] }),
       /* @__PURE__ */ u3(Card, { kind: "tile ovcard", id: "statusBackups", children: [
         /* @__PURE__ */ u3("div", { class: "anthead", children: [
@@ -8241,7 +8248,9 @@
         out.set(k3, { ...o3, apps: [...o3.apps] });
         continue;
       }
-      for (const id2 of o3.apps) if (!had.apps.includes(id2)) had.apps.push(id2);
+      const apps2 = [...had.apps];
+      for (const id2 of o3.apps) if (!apps2.includes(id2)) apps2.push(id2);
+      out.set(k3, o3.counted && !had.counted ? { ...o3, apps: apps2 } : { ...had, apps: apps2 });
     }
     return [...out.values()];
   }
@@ -9251,6 +9260,17 @@
   var lastAttention = -1;
   function weekSquares() {
     if (!lastWatch) return null;
+    const run2 = lastWatch.lastRun && !lastWatch.lastRun.startsWith("0001") ? `Checked ${ago(lastWatch.lastRun)}` : "";
+    const daily = lastWatch.daily || [];
+    if (daily.length) {
+      const downNow = (lastWatch.failing || []).length > 0;
+      const days2 = daily.map((d3, i3) => !d3.failed ? d3.runs ? "ok" : "none" : i3 === daily.length - 1 && downNow ? "bad" : "warn");
+      const titles2 = daily.map((d3) => {
+        const day3 = (/* @__PURE__ */ new Date(`${d3.date}T12:00:00`)).toLocaleDateString(void 0, { weekday: "short", month: "short", day: "numeric" });
+        return `${day3}: ${d3.failed ? d3.failed === 1 ? "1 app down for a while" : `${d3.failed} apps down for a while` : d3.runs ? "every app answered" : "not checked"}`;
+      });
+      return { days: days2, titles: titles2, checked: run2 };
+    }
     const all = Object.values(lastWatch.outages || {}).flat();
     const days = Array.from({ length: 7 }, (_3, i3) => {
       const start = /* @__PURE__ */ new Date();
@@ -9261,8 +9281,7 @@
       const hit = all.filter((o3) => new Date(o3.from) < end && (!o3.to || new Date(o3.to) >= start));
       return !hit.length ? "ok" : i3 === 6 && hit.some((o3) => !o3.to) ? "bad" : "warn";
     });
-    const run2 = lastWatch.lastRun && !lastWatch.lastRun.startsWith("0001") ? `Checked ${ago(lastWatch.lastRun)}` : "";
-    return { days, checked: run2 };
+    return { days, titles: [], checked: run2 };
   }
   function renderTiles(st) {
     const trouble2 = st.apps.filter((a3) => troubled(a3, st.stopped));

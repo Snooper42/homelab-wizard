@@ -3656,6 +3656,7 @@ nav .sidemenulist .sidedot + .total { margin-left:8px; }
 .ovdays { display:flex; gap:5px; width:100%; height:34px; }
 .ovdays i { flex:1; border-radius:6px; background:var(--ok); opacity:.85; }
 .ovdays i.warn { background:var(--warn); } .ovdays i.bad { background:var(--bad); } .ovdays i.none, .ovdays i:not(.ok):not(.warn):not(.bad) { background:var(--line-strong); }
+.ovdays.fourteen { gap:3px; } .ovdays.fourteen i { border-radius:4px; }
 .ovmachine { gap:12px; }
 .ovbar { flex:1; display:flex; flex-direction:column; gap:6px; min-width:0; }
 .ovbar .antbar { flex:none; height:8px; }

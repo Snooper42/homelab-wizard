@@ -93,6 +93,13 @@ function PauseButton({ paused, onPause }: { paused: boolean; onPause: (paused: b
 export const awaitingJobs = (a: api.AppStatus) => a.id === 'homelab-companion' && a.state === 'not running';
 
 /** Apps that need a look: unwell, not answering, or not running; not one stopped on purpose (held). */
+/** What's wrong with each, grouped (the owner's picture: "Mealie, Vikunja stopped"): "Mealie stopped · Vikunja not answering". */
+export function troubleLine(apps: api.AppStatus[]): string {
+  const kind = (a: api.AppStatus) => (a.state === 'missing' ? 'missing' : a.state === 'running' ? (a.notAnswering ? 'not answering' : 'unwell') : 'stopped');
+  const by = new Map<string, string[]>();
+  for (const a of apps) by.set(kind(a), [...(by.get(kind(a)) || []), a.name]);
+  return [...by].map(([k, names]) => `${names.length > 3 ? `${names.slice(0, 2).join(', ')} +${names.length - 2}` : names.join(', ')} ${k}`).join(' · ');
+}
 export const troubled = (a: api.AppStatus, held: Record<string, stopped.Stop> = {}) => a.health === 'unhealthy' || a.health === 'restarting' || !!a.notAnswering || a.state === 'missing' || (a.state === 'stopped' && (!held[a.id] || keptRestarting(held[a.id])));
 
 export interface TilesProps {
@@ -112,7 +119,7 @@ export interface TilesProps {
   backups?: { copied: number; of: number; skipped: string[]; at: string } | null;
   openBackups?: () => void;
   /** This week as the watchdog saw it: a square per day (ok, warn, bad), and when it last checked; null before it's read. */
-  week?: { days: string[]; checked: string } | null;
+  week?: { days: string[]; titles?: string[]; checked: string } | null;
   /** The last nights' copies (Backups' squares), oldest first. */
   nights?: backup.Night[];
   /** Starts each stopped app; and shows them all in the list. */
@@ -145,7 +152,9 @@ export function Tiles({ status: st, history, onPause, onChoose, words, start, lo
   // one figure, one line, a footer at the same height), each drawn in every state. Never "needs you": what happened.
   const lower = (w: string) => w.charAt(0).toLowerCase() + w.slice(1);
   const one = trouble.length === 1 ? trouble[0] : null;
-  const outages = week ? week.days.filter((d) => d !== 'ok').length : 0;
+  const outages = week ? week.days.filter((d) => d === 'warn' || d === 'bad').length : 0;
+  // Fourteen squares from a computer that keeps two weeks (lane D, D3), seven from an older one.
+  const span = week && week.days.length > 7 ? 'in two weeks' : 'this week';
   return (
     <>
       <Card kind="tile ovcard" id="statusApps">
@@ -154,8 +163,8 @@ export function Tiles({ status: st, history, onPause, onChoose, words, start, lo
         <div class="antline muted">
           {st.missing ? <span class="bad">{st.missing === 1 ? "1 of the homelab's own apps is down" : `${st.missing} of the homelab's own apps are down`}</span>
             : one ? <span class="antwho"><AppMark id={one.id} name={one.name} icon="" small /><span class="antname">{one.name} {lower(words ? words(one) : one.state)}</span></span>
-            : trouble.length ? <span class="antwho"><span class="antname">{trouble.slice(0, 2).map((a) => `${a.name} ${lower(words ? words(a) : a.state)}`).join(' · ') + (trouble.length > 2 ? ` +${trouble.length - 2}` : '')}</span></span>
-            : <span>All answering{week ? ` · ${outages ? `${outages === 1 ? '1 day' : `${outages} days`} with an outage this week` : 'no outage this week'}` : ''}</span>}
+            : trouble.length ? <span class="antwho"><span class="antname">{troubleLine(trouble)}</span></span>
+            : <span>All answering{week ? ` · ${outages ? `${outages === 1 ? '1 day' : `${outages} days`} with an outage ${span}` : `no outage ${span}`}` : ''}</span>}
         </div>
         <div class="antfoot">
           {one ? <span class="ovacts">
@@ -167,7 +176,7 @@ export function Tiles({ status: st, history, onPause, onChoose, words, start, lo
               {startAll && <button type="button" class="primary small" onClick={() => startAll(trouble)}><Icon name="start" />Start all</button>}
               {seeAll && <button type="button" class="btn small" onClick={seeAll}>See them</button>}
             </span>
-            : week ? <span class="ovdays" role="img" aria-label={`This week: ${outages ? `${outages} days with an outage` : 'no outage'}`}>{week.days.map((d, i) => <i key={i} class={d} />)}</span>
+            : week ? <span class={'ovdays' + (week.days.length > 7 ? ' fourteen' : '')} role="img" aria-label={`${span === 'this week' ? 'This week' : 'The last two weeks'}: ${outages ? `${outages} days with an outage` : 'no outage'}`}>{week.days.map((d, i) => <i key={i} class={d} title={week.titles?.[i]} />)}</span>
             : <span class="antempty" />}
         </div>
       </Card>
