@@ -1240,6 +1240,15 @@ declare namespace releases {
 }
 
 declare namespace savings {
+  interface Offer {
+    apps: string[];
+    replaces: string;
+    kind: string;
+    monthly: number;
+    annual: number;
+    condition: string;
+    counted: boolean;
+  }
   interface Point {
     date: string;
     annual: number;
@@ -1466,6 +1475,7 @@ interface Backend {
     SaveFinancesReceipt(arg1: string): Promise<string>;
     SaveSettings(arg1: Record<string, string>): Promise<settings.Setting[]>;
     SavingsHistory(): Promise<savings.Point[]>;
+    SavingsRows(): Promise<savings.Offer[]>;
     Screen(): Promise<string>;
     SendTargets(): Promise<app.SendTarget[]>;
     SendToPhone(arg1: string, arg2: string, arg3: string): Promise<void>;
