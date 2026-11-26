@@ -75,6 +75,15 @@ const longWeek = { title: 'Homelab this week: 4 things to look at', problems: 4,
 // qBittorrent, running in the VPN's network (media automation is opt-in, so it's added where a check needs it).
 const qbit = { id: 'qbittorrent', name: 'qBittorrent', state: 'running', health: 'healthy', url: 'http://localhost:8082' };
 const status = { apps, missing: 0, unmatched: 0, savings: 3292, updates: { paused: false, schedule: 'daily at 04:00' } };
+// What each app replaces at its price, as Status › Subscriptions reads it: docs/Savings.md's per-app tables.
+const savingsRows = readFileSync(join(root, 'docs', 'Savings.md'), 'utf8').split('\n').filter((l) => /^\| \[/.test(l)).flatMap((l) => {
+  const c = l.split('|').slice(1, -1).map((x) => x.trim());
+  const ids = [...c[0].matchAll(/\[([^\]]+)\]/g)].map((m) => byName[m[1]]).filter(Boolean);
+  const num = (x) => Number(String(x).replace(/[$,*]/g, ''));
+  return ids.length && c.length >= 7 && !Number.isNaN(num(c[5])) ? [{ apps: ids, replaces: c[2], kind: c[3], monthly: num(c[4]), annual: num(c[5]), condition: c[6].replace(/\[([^\]]+)\]\(<[^>]+>\)/g, '$1') }] : [];
+});
+// Counted as internal/savings counts it (lane D, D1): each service's dearest row, of equals the later.
+{ const best = {}; savingsRows.forEach((r, i) => { if (best[r.replaces] === undefined || r.annual >= savingsRows[best[r.replaces]].annual) best[r.replaces] = i; }); savingsRows.forEach((r, i) => { r.counted = best[r.replaces] === i; }); }
 // What docker stats says over a minute: Immich indexing photos, Jellyfin
 // streaming, Paperless reading a scan.
 const usageSeries = [[162, 18, 9], [148, 22, 31], [171, 19, 12], [139, 25, 8], [155, 21, 6], [176, 17, 24], [151, 23, 7], [164, 20, 11]]
@@ -408,7 +417,7 @@ const alertLog = [
   { id: 2, at: hoursAgo(14), topic: 'tunnel-watchdog', title: 'Homelab: something is down', body: 'vikunja: not answering', priority: 4, checks: ['vikunja'], clearedAt: hoursAgo(13.6) },
   { id: 1, at: hoursAgo(50), topic: 'watchtower', title: 'Homelab: an update was rolled back', body: 'Navidrome' },
 ];
-const mock = { platform: 'MacIntel', tidy, tidyReview, cliSteps, upgrade: { ...upgrade, behind: 0, changes: [], appChanged: false, appCommit: '7d9be080888433f921c9fa860a38b329ac368c88', appBehind: 0 }, catalog, status, setup, settings, host, logs, actionLog, urls, envFor, tests, backups, cliLog, cliPreview, alerts, watchdog, protection, savingsHistory, duplicatiJobs, phones, finances, ledger, history, alertLog, screen: 'status' };
+const mock = { savingsRows, platform: 'MacIntel', tidy, tidyReview, cliSteps, upgrade: { ...upgrade, behind: 0, changes: [], appChanged: false, appCommit: '7d9be080888433f921c9fa860a38b329ac368c88', appBehind: 0 }, catalog, status, setup, settings, host, logs, actionLog, urls, envFor, tests, backups, cliLog, cliPreview, alerts, watchdog, protection, savingsHistory, duplicatiJobs, phones, finances, ledger, history, alertLog, screen: 'status' };
 // Finances' tabs are four: Spending holds Transactions and Reports, Plan holds Calendar, Recurring and Paychecks (Pay),
 // each in a second row under it. A page by its name, its tab first.
 /** The Finances page open, as the sidebar's menu marks it on the computer ("Recurring", "Net worth"). */
@@ -507,6 +516,14 @@ async function finTab(page, name, opts = {}) {
   await page.click(`#finRoot > .seg button:text-is("${group}")`, opts);
   return page.click(`#finRoot .fx-subtabs .seg button:text-is("${name === 'Pay' ? 'Paychecks' : name}")`, opts);
 }
+/** Opens a Status page (Analytics, Subscriptions, a category) from its menu: the sidebar's, or on a phone its dropdown. */
+async function toStatusPart(page, key) {
+  // Whichever shows: the sidebar's button on the computer, the dropdown on a phone (the other is in the page, hidden).
+  await page.waitForFunction((k) => [document.querySelector(`#statusSide button[data-key="${k}"]`), document.querySelector('#statusChips .sidedropbtn')].some((e) => e?.checkVisibility()), key, { timeout: 8000 });
+  if (await page.isVisible(`#statusSide button[data-key="${key}"]`)) return page.click(`#statusSide button[data-key="${key}"]`);
+  await page.click('#statusChips .sidedropbtn');
+  await page.click(`#statusChips .sidemenulist button[data-key="${key}"]`);
+}
 /** Find an app on Status (Choose apps folded into it, the owner, Nov 25): All apps, with what's typed in its box. */
 async function findApp(page, text = '') {
   await page.evaluate(() => window.__emit('navigate', 'choose'));
@@ -532,6 +549,10 @@ async function acctForm(page, row, opts = {}) {
 }
 const shots = [
   { name: 'status', screen: 'status', mock: { statusOpen: '' } },
+  // An app stopped by itself: the Apps card names it, with Start, Logs and its page; its category's row says so.
+  { name: 'status-stopped', screen: 'status', mock: stoppedByItself() },
+  // Status › Subscriptions (the owner, Nov 25): each app beside the paid service it replaces, at its price.
+  { name: 'status-subscriptions', screen: 'status', before: async (page) => { await page.click('#statusSide button[data-key="subscriptions"]', { timeout: 5000 }); await page.waitForSelector('#subNow .subtile', { timeout: 5000 }); } },
   // Analytics (the owner's web-analytics pictures): a few minutes of samples, on the page's clock.
   { name: 'status-analytics', screen: 'status', clock: true, mock: { usageSeries }, before: async (page) => {
     await page.click('#statusSide button[data-key="analytics"]', { timeout: 5000 });
@@ -539,7 +560,7 @@ const shots = [
     await page.waitForSelector('#statusPart .antimeline', { timeout: 5000 });
   } },
   // The same page on the phone's page, narrow: Status' menu as chips, the tiles two across.
-  { name: 'status-category-phone', screen: 'status', phone: ['companion', 'can-change'], before: async (page) => { await page.click('#statusChips button[data-key="media"]', { timeout: 5000 }); await page.waitForSelector('#statusPart .cattile', { timeout: 5000 }); } },
+  { name: 'status-category-phone', screen: 'status', phone: ['companion', 'can-change'], before: async (page) => { await toStatusPart(page, 'media'); await page.waitForSelector('#statusPart .cattile', { timeout: 5000 }); } },
   // An app you could add has a page of its own, as an installed app's (the owner, Nov 25).
   { name: 'status-add', screen: 'status', before: async (page) => { await page.click('#statusSide button[data-key="media"]', { timeout: 5000 }); await page.click('#statusPart .cattile[data-app="kavita"] .catname'); await page.waitForSelector('#storePlan #plan .planLead', { timeout: 5000 }); } },
   { name: 'status-add-set', screen: 'status', before: async (page) => { await page.evaluate(() => window.__emit('navigate', 'choose')); await page.click('#statusPart .cattile.set[data-set="household"] .catname', { timeout: 5000 }); await page.waitForSelector('#storePlan #plan .planLead', { timeout: 5000 }); } },
@@ -642,10 +663,11 @@ const popupsWhole = async () => {
   };
   // Menus behind a button.
   for (const btn of [...document.querySelectorAll('[aria-haspopup]')].filter(vis)) {
-    const before = new Set([...document.querySelectorAll('[role=menu],[role=listbox],.menu')].filter(vis));
+    const pops = '[role=menu],[role=listbox],.menu,.sidemenulist';
+    const before = new Set([...document.querySelectorAll(pops)].filter(vis));
     btn.scrollIntoView({ block: 'center' });
     btn.click(); await sleep(150);
-    const menus = [...document.querySelectorAll('[role=menu],[role=listbox],.menu')].filter((m) => vis(m) && !before.has(m));
+    const menus = [...document.querySelectorAll(pops)].filter((m) => vis(m) && !before.has(m));
     if (!menus.length) out.push(`menu of "${name(btn)}": nothing opened`);
     for (const m of menus) checkBox(`menu of "${name(btn)}"`, m, [...m.querySelectorAll('[role=menuitem],[role=option],button')].filter(vis), btn);
     document.activeElement?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
@@ -2103,6 +2125,8 @@ const smokes = [
   // Savings over time: the year's figure on Status, hovered (or reached with Tab), says what has been saved since the
   // first record, month by month, newest first, and the card is not cut off.
   { name: 'Status: hover what the apps replace for what they have saved so far', screen: 'status', run: async (page) => {
+    // Instead of subscriptions is Subscriptions' own now (the owner, Nov 25).
+    await toStatusPart(page, 'subscriptions');
     const tile = '#savingsCard .tile:has-text("Instead of subscriptions") .savedso';
     await page.waitForSelector(tile, { timeout: 5000 });
     await page.hover(tile);
@@ -2374,15 +2398,15 @@ const smokes = [
   // The phone's Status beside Backups: This machine from the computer's machine card (core.Machine), as the iPhone app's,
   // in place of the Nightly updates tile; the updates and Pause under it. On battery is amber; little room is red.
   { name: "The phone's Status: This machine beside Backups, its free space and power", screen: 'status', phone: ['companion', 'can-change'], run: async (page) => {
-    await page.waitForSelector('#statusMachine .value:has-text("412 GB")', { timeout: 5000 });
-    if ((await page.textContent('#statusMachine .label')).trim() !== 'This machine') throw new Error('not named This machine');
-    await page.waitForSelector('#statusMachine .sub:has-text("Plugged in")');
-    await page.waitForSelector('#statusMachine .statusupdates button');
+    await page.waitForSelector('#statusMachine .antfig:has-text("412 GB")', { timeout: 5000 });
+    if ((await page.textContent('#statusMachine .anthead h2')).trim() !== 'This machine') throw new Error('not named This machine');
+    await page.waitForSelector('#statusMachine .antline:has-text("Plugged in")');
+    await page.waitForSelector('#statusMachine .antfoot button');
     if (await page.locator('#tiles .tile:has(.label:text-is("Nightly updates"))').count()) throw new Error('the Nightly updates tile is still there');
   } },
   { name: "The phone's Status: This machine says when the computer is on battery or short of room", screen: 'status', phone: ['companion'], mock: { machine: { free: 3 * 2 ** 30, total: 994 * 2 ** 30, low: true, power: 'battery', keptAwake: true } }, run: async (page) => {
-    await page.waitForSelector('#statusMachine .value.bad:has-text("3.0 GB")', { timeout: 5000 });
-    await page.waitForSelector('#statusMachine .sub.warn:has-text("On battery")');
+    await page.waitForSelector('#statusMachine .antfig.bad:has-text("3.0 GB")', { timeout: 5000 });
+    await page.waitForSelector('#statusMachine .antline .warn:has-text("On battery")');
   } },
   // The machine card's bar (lane D, D5; the redesign's picture: "Memory · 11 of 32 GB", "Up 23 days"): the computer's
   // memory and boot time from its machine card, what the apps hold from the usage card. On the computer's This Mac and
@@ -2393,24 +2417,26 @@ const smokes = [
       usage: [{ name: 'immich-server', cpu: 3, mem: '9GiB' }, { name: 'jellyfin', cpu: 1, mem: '2GiB' }] },
     run: async (page) => {
       await page.waitForSelector(`${card} .memline:has-text("Memory · 11 of 32 GB")`, { timeout: 8000 });
-      if (await page.getAttribute(`${card} .memline .bar`, 'aria-valuenow') !== '34') throw new Error('the bar is not at 34%');
-      await page.waitForSelector(`${card} .sub:has-text("Up 23 days")`);
-      if (await page.locator(`${card} :text("Up 23 days")`).count() !== 1) throw new Error('Up 23 days said twice');
+      if (await page.getAttribute(`${card} .memline .antbar`, 'aria-valuenow') !== '34') throw new Error('the bar is not at 34%');
+      await page.waitForSelector(`${card} .anthead:has-text("Up 23 days")`);
+      if ((await page.textContent(card)).split('Up 23 days').length !== 2) throw new Error('Up 23 days said twice');
+      if (!/updates /i.test(await page.textContent(`${card} .antline`))) throw new Error('the updates moved off the card');
     } })),
   { name: "The machine card from a computer that doesn't send its memory: no bar, no Up", screen: 'status', phone: ['companion'], run: async (page) => {
-    await page.waitForSelector('#statusMachine .value:has-text("412 GB")', { timeout: 5000 });
+    await page.waitForSelector('#statusMachine .antfig:has-text("412")', { timeout: 5000 });
     if (await page.locator('#statusMachine .memline').count()) throw new Error('a memory line without the memory');
+    if (!(await page.locator('#statusMachine .ovbar:has-text("used")').count())) throw new Error("the drive's bar is gone");
     if (/\bUp (\d|a |an )/.test(await page.textContent('#statusMachine'))) throw new Error('Up without a boot time');
   } },
   { name: "The computer's Status doesn't repeat Setup's steps", screen: 'status', run: async (page) => {
-    await page.waitForSelector('#statusHeadline', { timeout: 5000 });
+    await page.waitForSelector('#statusApps', { timeout: 5000 });
     if (await page.isVisible('#setupOnStatus')) throw new Error("Setup's steps on the computer's Status");
   } },
   // The machine's line moved into Status' This Mac card and the sidebar's foot (the redesign): what's wrong in its tone,
   // once, and the foot's dot as the worst; the system and version in the foot's tooltip.
   { name: "Status' This Mac card and the sidebar's foot say how the machine is", screen: 'status', mock: { health: { agent: 'running', lastCheck: new Date().toISOString(), power: 'battery', keptAwake: true } }, run: async (page) => {
-    await page.waitForSelector('#statusMac .sub.warn:has-text("On battery")', { timeout: 5000 });
-    if (await page.locator('#statusMac :text-is("On battery")').count() !== 1) throw new Error('On battery said twice');
+    await page.waitForSelector('#statusMac .antline .warn:has-text("On battery")', { timeout: 5000 });
+    if (await page.locator('#statusMac .warn:text-is("On battery")').count() !== 1) throw new Error('On battery said twice');
     await page.waitForSelector('#foot .machine .dot.warn', { timeout: 5000 });
     const said = (await page.textContent('#foot .machine')).trim();
     if (!/^\d[\d.,]* [KMGT]B free · on battery$/.test(said)) throw new Error('the foot says: ' + said);
@@ -2765,8 +2791,24 @@ const smokes = [
   } },
   // Arr item 8: media automation folded away. Seerr, where the household asks, shows beside Jellyfin in Media; the apps
   // in between sit last on Status, folded under one line saying what they do (their names on hover), and open on a click.
-  { name: 'Status: media automation sits last under one line, Seerr beside Jellyfin', screen: 'status',
+  { name: 'Status: on the overview, media automation last under its one line, Seerr in Media', screen: 'status',
     mock: { statusOpen: '', status: { ...status, apps: [...status.apps,
+      { id: 'jellyfin', name: 'Jellyfin', state: 'running', health: 'healthy', url: 'http://localhost:8096' },
+      { id: 'seerr', name: 'Seerr', state: 'running', health: 'healthy', url: 'http://localhost:5055' },
+      { id: 'prowlarr', name: 'Prowlarr', state: 'running', health: 'healthy', url: 'http://localhost:9696' },
+      { id: 'sonarr', name: 'Sonarr', state: 'running', health: 'healthy', url: 'http://localhost:8989' },
+      { id: 'radarr', name: 'Radarr', state: 'running', health: 'healthy', url: 'http://localhost:7878' }] } }, run: async (page) => {
+    // On the overview's panel: Media automation last of the catalog's, under its one line; Seerr in Media's row.
+    await page.waitForSelector('#statusPanel .ovrow[data-key="media-automation"]', { timeout: 5000 });
+    const rows = await page.$$eval('#statusPanel .ovrow', (rs) => rs.map((r) => r.dataset.key).filter((k) => k !== 'own'));
+    if (rows[rows.length - 1] !== 'media-automation') throw new Error('panel rows: ' + rows.join(', '));
+    const said = await page.textContent('#statusPanel .ovrow[data-key="media-automation"] .ovname .muted');
+    if (said !== 'Finds and downloads what you ask for in Seerr') throw new Error(`its line: ${said}`);
+    // Its row names two and counts the rest; every one of them is in its tooltip.
+    if (!/Seerr/.test(await page.getAttribute('#statusPanel .ovrow[data-key="media"]', 'title'))) throw new Error('Seerr is not in Media');
+  } },
+  { name: 'Status: media automation sits last under one line, Seerr beside Jellyfin', screen: 'status',
+    mock: { statusOpen: '', statusFolds: { Network: true }, status: { ...status, apps: [...status.apps,
       { id: 'jellyfin', name: 'Jellyfin', state: 'running', health: 'healthy', url: 'http://localhost:8096' },
       { id: 'seerr', name: 'Seerr', state: 'running', health: 'healthy', url: 'http://localhost:5055' },
       { id: 'prowlarr', name: 'Prowlarr', state: 'running', health: 'healthy', url: 'http://localhost:9696' },
@@ -3328,12 +3370,16 @@ const smokes = [
     await page.waitForSelector('#setting-CLOUDFLARE_API_TOKEN .test:has-text("Copied")', { timeout: 5000 });
   } },
   { name: 'Watchdog failures', screen: 'status', mock: { watchdog: { ...watchdog, failing: [{ name: 'crowdsec bouncer', problem: "the proxy's bouncer last pulled CrowdSec's decisions 9 minutes ago", since: hoursAgo(0.3) }] } }, run: async (page) => {
+    // The card moved to Analytics with the new Overview (the owner's picture, Nov 25).
+    await toStatusPart(page, 'analytics');
     await page.waitForSelector('#watchCard:has-text("1 of 47 checks failing")', { timeout: 5000 });
     await page.waitForSelector('#watchCard li:has-text("crowdsec bouncer")');
   } },
   // Snooze an alert: a failing check's alerts wait an hour or a day; its line says until when, and Alert again now undoes it.
   // A phone allowed to change things snoozes the same way; one that only looks has no Snooze.
   { name: 'Watchdog: snooze a failing check for an hour, then alert again', screen: 'status', mock: { watchdog: { ...watchdog, failing: [{ name: 'crowdsec bouncer', problem: "the proxy's bouncer last pulled CrowdSec's decisions 9 minutes ago", since: hoursAgo(0.3) }] } }, run: async (page) => {
+    // The card moved to Analytics with the new Overview (the owner's picture, Nov 25).
+    await toStatusPart(page, 'analytics');
     const pick = '#watchCard select[aria-label="Snooze the alerts about crowdsec bouncer"]';
     await page.waitForSelector(pick, { timeout: 5000 });
     await page.selectOption(pick, '1');
@@ -3345,6 +3391,8 @@ const smokes = [
     await page.waitForFunction(() => !document.querySelector('#watchCard li')?.textContent?.includes('No alerts about it until'), null, { timeout: 5000 });
   } },
   { name: 'Watchdog on a phone that may change things: snooze a failing check for a day', screen: 'status', phone: ['companion', 'can-change'], mock: { watchdog: { ...watchdog, failing: [{ name: 'crowdsec bouncer', problem: 'no pull for 9 minutes', since: hoursAgo(0.3) }] } }, run: async (page) => {
+    // The card moved to Analytics with the new Overview (the owner's picture, Nov 25).
+    await toStatusPart(page, 'analytics');
     const pick = '#watchCard select[aria-label="Snooze the alerts about crowdsec bouncer"]';
     await page.waitForSelector(pick, { state: 'visible', timeout: 5000 });
     await page.selectOption(pick, '24');
@@ -3352,10 +3400,14 @@ const smokes = [
     if (!(await page.evaluate(() => window.__MOCK.calls.SnoozeCheck))) throw new Error('not snoozed');
   } },
   { name: 'Watchdog on a phone that only looks: a failing check, no Snooze', screen: 'status', phone: ['companion'], mock: { watchdog: { ...watchdog, failing: [{ name: 'crowdsec bouncer', problem: 'no pull for 9 minutes', since: hoursAgo(0.3) }] } }, run: async (page) => {
+    // The card moved to Analytics with the new Overview (the owner's picture, Nov 25).
+    await toStatusPart(page, 'analytics');
     await page.waitForSelector('#watchCard li:has-text("crowdsec bouncer")', { timeout: 5000 });
     if (await page.isVisible('#watchCard select.snoozepick')) throw new Error('Snooze on a phone that only looks');
   } },
   { name: 'Bans not enforced', screen: 'status', mock: { protection: { ...protection, enforced: false, bouncer: "the proxy's bouncer last pulled CrowdSec's decisions 9 minutes ago" } }, run: async (page) => {
+    // The card moved to Analytics with the new Overview (the owner's picture, Nov 25).
+    await toStatusPart(page, 'analytics');
     await page.waitForSelector('#protectCard:has-text("Bans not enforced")', { timeout: 5000 });
     await page.waitForSelector('#protectCard:has-text("new attackers are not blocked")');
     await page.click('#protectFix');
@@ -3364,6 +3416,8 @@ const smokes = [
   // Memory nearly full: while the watchdog's alert stands (health.StepMemory), its card lists the biggest apps,
   // each with Stop; one the catalog does not know has none, and a phone that only looks shows none.
   { name: 'Memory nearly full: the biggest apps, each with Stop', screen: 'status', mock: { watchdog: { ...watchdog, memory: memoryHigh } }, run: async (page) => {
+    // The card moved to Analytics with the new Overview (the owner's picture, Nov 25).
+    await toStatusPart(page, 'analytics');
     await page.waitForSelector('#watchCard #memoryPressure:has-text("the apps use 94% of the 8.0 GB Docker has")', { timeout: 5000 });
     const rows = await page.locator('#memoryPressure li').allInnerTexts();
     if (rows.length !== 3 || !/Immich/.test(rows[0]) || !/2\.5 GB/.test(rows[0]) || !/900 MB/.test(rows[2])) throw new Error(`rows: ${JSON.stringify(rows)}`);
@@ -3372,6 +3426,8 @@ const smokes = [
     await page.waitForFunction(() => window.__MOCK.calls.AppAction === 1, null, { timeout: 5000 });
   } },
   { name: 'Memory nearly full on a phone that only looks: no Stop', screen: 'status', phone: ['companion'], mock: { watchdog: { ...watchdog, memory: memoryHigh } }, run: async (page) => {
+    // The card moved to Analytics with the new Overview (the owner's picture, Nov 25).
+    await toStatusPart(page, 'analytics');
     await page.waitForSelector('#memoryPressure li:has-text("Immich")', { timeout: 5000 });
     if (await page.isVisible('#memoryPressure button.memstop')) throw new Error('a phone that only looks may stop an app');
   } },
@@ -3394,6 +3450,8 @@ const smokes = [
     await page.waitForSelector('#oneLine.trouble:has-text("The watchdog’s check of crowdsec bouncer is failing"), #oneLine.trouble:has-text("check of crowdsec bouncer is failing")', { timeout: 5000 });
   } },
   { name: 'Watchdog not run yet', screen: 'status', mock: { watchdog: null }, run: async (page) => {
+    // The card moved to Analytics with the new Overview (the owner's picture, Nov 25).
+    await toStatusPart(page, 'analytics');
     await page.waitForSelector('#watchCard:has-text("Not set up"):has(a:has-text("Open Setup"))', { timeout: 5000 });
   } },
   // The owner, Nov 12: Dashboard cards they can move and size ("maybe resize them"); the mockup's artboard 5 was a yes,
@@ -3719,13 +3777,17 @@ const smokes = [
     await page.waitForSelector('#tidy.active', { timeout: 3000 });
     await page.waitForSelector(tidyItem('Music') + '.on', { timeout: 3000 });
   } },
+  // Healthy categories stay folded (the owner's picture, Nov 25): on the Overview each is one quiet row of the panel, its
+  // apps not listed; Show every app opens every one, and Fold them again folds them back to the panel.
   { name: 'Healthy categories fold into their headings', screen: 'status', mock: { statusOpen: '' }, run: async (page) => {
-    await page.waitForSelector('#statusRows tr.grouphead.fold:has-text("Security"):has-text("✓ 4 running")', { timeout: 5000 });
+    await page.waitForSelector('#statusPanel .ovrow[data-key="security"]:has-text("4 running")', { timeout: 5000 });
+    if (await page.$('#statusPanel .ovrow[data-key="security"] .pill.warn')) throw new Error('a healthy category is amber');
     if (await page.isVisible('#statusRows tr:has(strong:text-is("Vaultwarden"))')) throw new Error('a healthy category is open');
-    await page.click('#statusRows tr.grouphead.fold:has-text("Security")');
-    await page.waitForSelector('#statusRows tr:has(strong:text-is("Vaultwarden"))', { timeout: 5000 });
     await page.click('#statusAll');
+    await page.waitForSelector('#statusRows tr:has(strong:text-is("Vaultwarden"))', { timeout: 5000 });
     await page.waitForSelector('#statusRows tr:has(strong:text-is("Navidrome"))', { timeout: 5000 });
+    await page.click('#statusAll');
+    await page.waitForSelector('#statusRows tr:has(strong:text-is("Vaultwarden"))', { state: 'hidden', timeout: 5000 });
   } },
   // The folds are the computer's, the same on every device (the owner, Nov 10): a group another device opened shows open
   // here though it's healthy; opening or folding one here saves it there; Show every app is this device's own and saves
@@ -3757,9 +3819,9 @@ const smokes = [
     // Not counted yet: its group says all running, and the tile's total leaves it out.
     const group = await page.textContent('tr.grouphead:has-text("System") .n');
     if (!/✓ \d+ running/.test(group)) throw new Error(`System group: ${group}`);
-    const tile = await page.textContent('#statusHeadline .label');
-    const of = (tile.match(/of\s*(\d+)/) || [])[1];
-    if (Number(of) !== status.apps.length - 1) throw new Error(`Running tile: ${tile}`);
+    // The Apps card counts it out too: of every app but it (the preview has Mealie stopped, so "N of M running").
+    const tile = (await page.textContent('#statusApps .antfig')).replace(/\s+/g, ' ').trim();
+    if (!(tile === `${status.apps.length - 1} running` || tile.endsWith(` of ${status.apps.length - 1} running`))) throw new Error(`Apps card: ${tile}`);
   } },
   { name: 'Start Jellyfin on Linux when it is not running', screen: 'status', mock: { platform: 'Linux x86_64', status: { ...status, apps: status.apps.map((a) => (a.id === 'jellyfin' ? { ...a, state: 'not running', health: '' } : a)) } }, run: async (page) => {
     await page.click('tr:has(strong:text-is("Jellyfin")) button:has-text("Start")', { timeout: 5000 });
@@ -3852,15 +3914,16 @@ const smokes = [
   // says until when. A group whose only stopped app was stopped on purpose needs no look, so it stays folded.
   { name: 'Stopped by you: its row says so, and Start them leaves it', screen: 'status', mock: { statusOpen: '', status: { ...status, stopped: { mealie: { since: new Date().toISOString() }, vikunja: { since: new Date().toISOString(), until: new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate() + 1, 8).toISOString() } },
     apps: status.apps.map((a) => (a.id === 'vikunja' ? { ...a, state: 'stopped', health: '', since: undefined } : a)) } }, run: async (page) => {
-    await page.waitForSelector('tr.grouphead:has(.names:has-text("Mealie"))', { timeout: 5000 });
-    const label = (await page.locator('tr.grouphead:has(.names:has-text("Mealie")) .kiosklabel').textContent()).trim();
-    const head = page.locator(`tr.grouphead:has(.kiosklabel:text-is("${label}"))`);
-    await page.waitForSelector('#statusHeadline.good:has-text("All good")');
-    // The owner, Nov 24: no line saying what the headline already says.
-    if (await page.locator('#statusHeadline .sub').count()) throw new Error('All good carries a line under it: ' + await page.locator('#statusHeadline .sub').textContent());
-    if ((await head.locator('.foldbtn').getAttribute('aria-expanded')) !== 'false') throw new Error('a group with only an app stopped on purpose opened by itself');
-    if (await head.locator('.startall').count()) throw new Error(`Start them offers an app stopped on purpose: ${await head.locator('.startall').textContent()}`);
+    // Nothing stopped by itself: the Apps card says all answering, and Household's row on the overview isn't amber.
+    await page.waitForSelector('#statusApps .antline:has-text("All answering")', { timeout: 5000 });
+    if (await page.$('#statusApps .antfig.warn')) throw new Error('the Apps card counts an app stopped on purpose as a problem');
+    if (await page.$('#statusPanel .ovrow[data-key="household"] .pill.warn')) throw new Error("Household's row is amber for apps stopped on purpose");
     await page.click('#statusAll');
+    // Every group open behind Show every app: Mealie's is Household.
+    await page.waitForSelector('tr.grouphead:has(.kiosklabel:text-is("Household"))', { timeout: 5000 });
+    const label = 'Household';
+    const head = page.locator(`tr.grouphead:has(.kiosklabel:text-is("${label}"))`);
+    if (await head.locator('.startall').count()) throw new Error(`Start them offers an app stopped on purpose: ${await head.locator('.startall').textContent()}`);
     await page.waitForFunction(([n, t]) => [...document.querySelectorAll('tr')].some((r) => r.querySelector('strong')?.textContent === n && r.querySelector('td.state')?.textContent.replace(/\s+/g, ' ').trim() === t), ['Mealie', 'Stopped by you'], { timeout: 3000 });
     await page.waitForSelector('tr:has(strong:text-is("Vikunja")) td.state:has-text("Stopped until tomorrow, 8")');
     if (await page.$('tr:has(strong:text-is("Mealie")) td.state .dot.warn')) throw new Error('stopped on purpose is shown as a warning');
@@ -3876,11 +3939,13 @@ const smokes = [
   // A restart that keeps failing: the watchdog stopped it, and unlike one stopped by you it needs a look: its row
   // says why with a red dot, the headline names it, its group opens, and the group menu does not call it yours.
   { name: 'Stopped for restarting over and over: its row says so, and it needs a look', screen: 'status', mock: { statusOpen: '', status: { ...status, stopped: { mealie: { since: new Date().toISOString(), why: 'restarting', restarts: 5 } } } }, run: async (page) => {
+    // The Apps card names it, and Household's row on the overview is amber.
+    await page.waitForSelector('#statusApps .antline:has-text("Mealie")', { timeout: 5000 });
+    await page.waitForSelector('#statusPanel .ovrow[data-key="household"] .pill.warn', { timeout: 3000 });
+    await page.click('#statusAll');
     await page.waitForSelector('tr:has(strong:text-is("Mealie")) td.state:has-text("Stopped: it restarted 5 times in an hour")', { timeout: 5000 });
     if (!(await page.$('tr:has(strong:text-is("Mealie")) td.state .dot.bad'))) throw new Error('stopped by the watchdog has no red dot');
-    await page.waitForSelector('#statusHeadline.warn li:has-text("Mealie")', { timeout: 3000 });
     const head = page.locator('#statusRows tr:has(strong:text-is("Mealie"))').locator('xpath=preceding-sibling::tr[contains(concat(" ", @class, " "), " grouphead ")][1]');
-    if ((await head.locator('.foldbtn').getAttribute('aria-expanded')) !== 'true') throw new Error('its group stayed folded');
     if (await head.locator('.startall').count()) throw new Error('Start them offers it, which would only restart the loop');
     await head.locator('.groupcount').click();
     await page.waitForSelector('.groupmenulist', { timeout: 3000 });
@@ -3895,31 +3960,78 @@ const smokes = [
     await page.click('#statusAll');
     await page.waitForSelector('tr:has(strong:text-is("Mealie")) td.state:has-text("Stopped at 3:12 AM: it ran out of memory")', { timeout: 5000 });
     if (!(await page.$('tr:has(strong:text-is("Mealie")) td.state .dot.bad'))) throw new Error('an app that ran out of memory has no red dot');
-    await page.waitForSelector('#statusHeadline.warn li:has-text("Mealie")', { timeout: 3000 });
+    await page.waitForSelector('#statusApps .antline:has-text("Mealie")', { timeout: 3000 });
     await page.waitForFunction(([n, t]) => [...document.querySelectorAll('tr')].some((r) => r.querySelector('strong')?.textContent === n && r.querySelector('td.state')?.textContent.replace(/\s+/g, ' ').trim() === t), ['Vikunja', 'Stopped yesterday, 9:40 PM']);
     await page.waitForSelector('tr:has(strong:text-is("Mealie")) button.rowmain:text-is("Start")');
   } },
-  // Status's headline (redesign-loop R6b): the app that needs you, with its fix right there. Start starts it; Logs
-  // opens its page at its log; Its page opens its page.
-  { name: 'Status headline: the app that needs you, with Start, Logs and Its page', screen: 'status', mock: stoppedByItself(), run: async (page) => {
-    const item = '#statusHeadline.warn li:has-text("Mealie")';
-    await page.waitForSelector('#statusHeadline .value:text-matches("apps? needs? you")', { timeout: 5000 });
-    await page.waitForSelector(`${item}:has-text("out of memory")`);
-    await page.click(`${item} button:text-is("Start")`);
+  // The Apps card (the owner's web-wide pictures, Nov 25; never "needs you"): one app stopped is named with what
+  // happened, with Start, Logs and its page; two or more, Start all and See them; all well, how many run and the week.
+  { name: 'Status: the Apps card names the app that stopped, with Start, Logs and its page', screen: 'status', mock: (() => { const m = stoppedByItself(); m.status.apps = m.status.apps.map((a) => (a.id === 'vikunja' ? { ...a, state: 'running', health: 'healthy' } : a)); return m; })(), run: async (page) => {
+    const card = '#statusApps';
+    await page.waitForSelector(`${card} .antfig.warn`, { timeout: 5000 });
+    await page.waitForSelector(`${card} .antline:has-text("Mealie stopped at 3:12 AM: it ran out of memory")`);
+    if (/needs? you/i.test(await page.textContent(card))) throw new Error('the card says needs you');
+    await page.click(`${card} button:has-text("Start")`);
     await page.waitForFunction(() => window.__MOCK.calls.AppAction >= 1, null, { timeout: 5000 });
-    await page.click(`${item} button:text-is("Logs")`);
+    await page.click(`${card} button:has-text("Logs")`);
     await page.waitForSelector('#app.active #appLog', { timeout: 5000 });
   } },
-  { name: 'Status headline: All good when nothing needs you', screen: 'status', mock: { status: { ...status, apps: status.apps.map((a) => ({ ...a, state: 'running', health: a.health === 'unhealthy' ? 'healthy' : a.health })) } }, run: async (page) => {
-    await page.waitForSelector('#statusHeadline.good .value:text-is("All good")', { timeout: 5000 });
-    const label = await page.textContent('#statusHeadline .label');
-    if (!/^\d+ of \d+ running$/.test(label.trim())) throw new Error(label);
-    if (await page.$('#statusHeadline .headlineapps')) throw new Error('All good lists apps');
+  { name: 'Status: the Apps card with two stopped offers Start all and See them', screen: 'status', mock: stoppedByItself(), run: async (page) => {
+    await page.waitForSelector('#statusApps .antline:has-text("Mealie, Vikunja stopped")', { timeout: 5000 });
+    await page.click('#statusApps button:has-text("See them")');
+    await page.waitForSelector('#statusRows tr:has(strong:text-is("Vikunja"))', { state: 'visible', timeout: 5000 });
+    await page.click('#statusApps button:has-text("Start all")');
+    await page.waitForFunction(() => window.__MOCK.calls.AppAction >= 1, null, { timeout: 5000 });
+  } },
+  { name: 'Status: the Apps card when all is well, with the week as squares', screen: 'status', mock: { statusOpen: '', status: { ...status, apps: status.apps.map((a) => ({ ...a, state: 'running', health: a.health === 'unhealthy' ? 'healthy' : a.health })) } }, run: async (page) => {
+    await page.waitForSelector('#statusApps .antline:has-text("All answering")', { timeout: 5000 });
+    const fig = (await page.textContent('#statusApps .antfig')).replace(/\s+/g, ' ').trim();
+    if (!/^\d+ running$/.test(fig)) throw new Error(fig);
+    await page.waitForSelector('#statusApps .ovdays i', { timeout: 5000 });
+    if (await page.locator('#statusApps .ovdays i').count() !== 7) throw new Error('not a square a day of the week');
+    // The three cards of one anatomy: their tops and heights the same.
+    const boxes = await page.$$eval('#tiles > .ovcard', (cs) => cs.map((c) => { const r = c.getBoundingClientRect(); return [Math.round(r.top), Math.round(r.height)].join(); }));
+    if (boxes.length !== 3 || new Set(boxes).size !== 1) throw new Error('the cards differ: ' + boxes.join(' | '));
+    // The categories as one panel, each row opening its page.
+    await page.click('#statusPanel .ovrow[data-key="media"]');
+    await page.waitForSelector('#statusPart .catpage h1:text-is("Media")', { timeout: 5000 });
+  } },
+  // Subscriptions takes each service's price and kind from the row the computer counts (lane D, D1: `counted`), so the
+  // page and Status' yearly figure agree: here a service two apps replace at different prices, the cheaper one counted.
+  { name: 'Subscriptions: a service two apps replace shows the counted row', screen: 'status', mock: {
+    savingsRows: [
+      { apps: ['vaultwarden'], replaces: 'Test Vault', kind: 'Equivalent', monthly: 9, annual: 90, condition: 'a', counted: false },
+      { apps: ['ntfy'], replaces: 'Test Vault', kind: 'Direct', monthly: 5, annual: 50, condition: 'b', counted: true },
+    ],
+  }, run: async (page) => {
+    await page.click('#statusSide button[data-key="subscriptions"]', { timeout: 5000 });
+    const tile = '#subNow .subtile:has-text("Test Vault")';
+    await page.waitForSelector(tile, { timeout: 5000 });
+    if (await page.locator('#subNow .subtile:has-text("Test Vault")').count() !== 1) throw new Error('the service shows twice');
+    const said = (await page.textContent(tile)).replace(/\s+/g, ' ');
+    if (!/\$5\.00 a month/.test(said) || !/Direct/.test(said) || !/\$50\.00 a year/.test(said)) throw new Error('not the counted row: ' + said);
+    if (!/Vaultwarden/.test(said) || !/ntfy/.test(said)) throw new Error('not both apps: ' + said);
+  } },
+  // The owner's picture has 14 squares (lane D, D3): from the watchdog's daily summary, two weeks, each with its day's
+  // words on hover; a day it didn't run is grey, a day an app was down amber.
+  { name: 'Status: the Apps card with the last two weeks as fourteen squares', screen: 'status', mock: {
+    status: { ...status, apps: status.apps.map((a) => ({ ...a, state: 'running', health: a.health === 'unhealthy' ? 'healthy' : a.health })) },
+    watchdog: { ...watchdog, failing: [], daily: Array.from({ length: 14 }, (_, i) => { const d = new Date(); d.setDate(d.getDate() - (13 - i)); return { date: d.toISOString().slice(0, 10), failed: i === 9 ? 1 : 0, runs: i === 3 ? 0 : 96 }; }) },
+  }, run: async (page) => {
+    await page.waitForSelector('#statusApps .ovdays.fourteen i', { timeout: 5000 });
+    const sq = await page.$$eval('#statusApps .ovdays i', (is) => is.map((i) => i.className));
+    if (sq.length !== 14 || sq[3] !== 'none' || sq[9] !== 'warn' || sq.filter((c) => c === 'ok').length !== 12) throw new Error('the squares: ' + sq.join(' '));
+    await page.waitForSelector('#statusApps .antline:has-text("1 day with an outage in two weeks")');
+    if (!/1 app down/.test(await page.getAttribute('#statusApps .ovdays i >> nth=9', 'title') || '')) throw new Error('no words on the amber day');
+    const boxes = await page.$$eval('#tiles > .ovcard', (cs) => cs.map((c) => { const r = c.getBoundingClientRect(); return [Math.round(r.top), Math.round(r.height)].join(); }));
+    if (new Set(boxes).size !== 1) throw new Error('the cards differ: ' + boxes.join(' | '));
   } },
   // On the phone, 320px wide and with big text (213px is 320 at 1.5×): the why is all there, on a line of its own if
   // need be, and nothing slides sideways.
   ...[320, 213].map((w) => ({ name: `Stopped by itself, on the phone at ${w}px: the why is all there`, screen: 'status', phone: ['companion'], mock: stoppedByItself(), run: async (page) => {
     await page.setViewportSize({ width: w, height: 640 });
+    // The Overview keeps the list behind Show every app (the owner's picture, Nov 25): opened first.
+    await page.click('#statusAll', { timeout: 5000 });
     const cell = page.locator('#statusRows tr:has(strong:text-is("Mealie")) td.state');
     await cell.waitFor({ timeout: 5000 });
     await cell.scrollIntoViewIfNeeded();
@@ -3967,17 +4079,25 @@ const smokes = [
   } },
   // The watchdog doesn't check a stopped app: beside "All 47 checks passed", it names it, on the computer and the phone.
   ...[[], ['companion']].map((phone) => ({ name: `The watchdog line names the stopped app it doesn't check${phone.length ? ', on the phone' : ''}`, screen: 'status', phone, run: async (page) => {
+    // The card moved to Analytics with the new Overview (the owner's picture, Nov 25).
+    await toStatusPart(page, 'analytics');
     await page.waitForSelector('#watchCard .unchecked:has-text("Not checked while stopped: Mealie")', { timeout: 5000 });
   } })),
   // Account 3's tester, task 2, finding 4: Status in a household's words. Apps, not stacks; the homelab's own apps, not
   // baseline ones; what the savings are instead of; what CrowdSec caught, not its scenario's name and an address.
   ...[[], ['companion']].map((phone) => ({ name: `Status in a household's words${phone.length ? ', on the phone' : ''}`, screen: 'status', phone, mock: { protection }, run: async (page) => {
-    await page.waitForSelector('#statusHeadline:has-text("running")', { timeout: 5000 });
-    if (/stack|baseline/i.test(await page.locator('#statusHeadline').textContent())) throw new Error('the headline speaks of stacks');
+    await page.waitForSelector('#statusApps:has-text("running")', { timeout: 5000 });
+    if (/stack|baseline/i.test(await page.locator('#statusApps').textContent())) throw new Error('the Apps card speaks of stacks');
+    const words = ['stacks', 'baseline', 'Replaces a year', 'vpatch-', 'http-probing', '203.0.113.7'];
+    const check = async (where) => { const said = await page.evaluate(() => document.body.innerText); for (const w of words) if (said.includes(w)) throw new Error(`${where} says "${w}"`); };
+    await check('the overview');
+    // Instead of subscriptions on Subscriptions, what CrowdSec caught on Analytics (the owner, Nov 25).
+    await toStatusPart(page, 'subscriptions');
     await page.waitForSelector('#savingsCard .tile:has-text("Instead of subscriptions"):has-text("a year")');
+    await check('Subscriptions');
+    await toStatusPart(page, 'analytics');
     await page.waitForSelector('#protectCard li:has-text("Probing for a known security hole"):has-text("Netherlands · Example Hosting B.V.")', { timeout: 5000 });
-    const said = await page.evaluate(() => document.body.innerText);
-    for (const w of ['stacks', 'baseline', 'Replaces a year', 'vpatch-', 'http-probing', '203.0.113.7']) if (said.includes(w)) throw new Error(`Status says "${w}"`);
+    await check('Analytics');
     if (await page.locator('nav button[data-screen="choose"]').count()) throw new Error('Choose apps is still in the sidebar');
   } })),
   // Finding 5: on the phone, an app's log wraps its lines: none runs out of its box.
@@ -4148,10 +4268,11 @@ const smokes = [
   { name: 'Right-click an app’s row: its menu', screen: 'status', run: async (page) => {
     // Tall enough for the whole menu under the pointer (Send to my phone › made it a row longer); a menu that would not
     // fit moves up, its own case.
-    await page.setViewportSize({ width: 1280, height: 1000 });
+    // Tall enough that the list's last row has room under it, below the Overview's three cards.
+    await page.setViewportSize({ width: 1280, height: 2400 });
     const row = page.locator('tr:has(strong:text-is("Vikunja"))');
     await row.waitFor({ timeout: 5000 });
-    await row.scrollIntoViewIfNeeded();
+    await row.evaluate((e) => e.scrollIntoView({ block: 'center' }));
     const box = await row.locator('td.state').boundingBox();
     await page.mouse.click(box.x + 20, box.y + box.height / 2, { button: 'right' });
     const menu = page.locator('.rowmenu');
@@ -4358,8 +4479,11 @@ const smokes = [
   // Start, not Restart or Stop.
   { name: 'Right-click an app’s row: from the keyboard, and a stopped app', screen: 'status', run: async (page) => {
     // Room under Vikunja, the last row, for the whole menu (near the bottom it opens upward: its own case).
-    await page.setViewportSize({ width: 1280, height: 1000 });
+    // Tall enough that the list's last row has room under it, below the Overview's three cards.
+    await page.setViewportSize({ width: 1280, height: 2400 });
     const row = page.locator('tr:has(strong:text-is("Vikunja"))');
+    await row.locator('button.rowmain').waitFor({ timeout: 5000 });
+    await row.evaluate((e) => e.scrollIntoView({ block: 'center' }));
     await row.locator('button.rowmain').focus({ timeout: 5000 });
     await page.keyboard.press('Shift+F10');
     const menu = page.locator('.rowmenu');
@@ -4632,6 +4756,8 @@ const smokes = [
   { name: 'Status’s cards: short ones stacked beside the alerts, a long alert folded', screen: 'status', mock: { alerts: [
     { id: 'down', time: new Date(Date.now() - 3 * 36e5).toISOString(), topic: 'tunnel-watchdog', title: 'Homelab: something is down', message: ['filebrowser', 'syncthing', 'freshrss', 'prowlarr', 'sonarr', 'radarr', 'lidarr', 'bazarr', 'flaresolverr', 'seerr', 'lazylibrarian'].map((a) => a + ': not running').join('\n'), priority: 4 },
     ...alerts] }, run: async (page) => {
+    // These cards are under Analytics now (the owner, Nov 25: off the overview).
+    await toStatusPart(page, 'analytics');
     await page.waitForSelector('#alertsCard:not([hidden]) li:has-text("something is down")', { timeout: 8000 });
     await page.waitForSelector('#protectCard:not([hidden])', { timeout: 8000 });
     await page.waitForSelector('#storageCard:not([hidden]) .sizes li', { timeout: 8000 });
@@ -4720,7 +4846,7 @@ const smokes = [
   } },
   { name: 'A running app that does not answer needs a look', screen: 'status', mock: { status: { ...status, apps: status.apps.map((a) => (a.id === 'vikunja' ? { ...a, notAnswering: 'HTTP 502' } : a)) } }, run: async (page) => {
     await page.waitForSelector('tr:has(strong:text-is("Vikunja")) td.state:has-text("Not answering: HTTP 502")', { timeout: 5000 });
-    await page.waitForSelector('#statusHeadline.warn li:has-text("Vikunja"):has-text("Not answering")');
+    await page.waitForSelector('#statusApps .antline:has-text("Vikunja"):has-text("not answering")');
     await page.waitForSelector('#fixIt:not([hidden])');
   } },
   { name: 'Status follows the engine', screen: 'status', run: async (page) => {
@@ -4792,17 +4918,22 @@ const smokes = [
   // it is read, the quick ones while the slow one is still on its way.
   { name: 'Status opens in one request; its cards fill in one by one', screen: 'status',
     mock: { status: { ...status, checking: true }, answers: { vikunja: 'HTTP 502' }, cardDelay: { week: 1500 } }, run: async (page) => {
+    // These cards are under Analytics now (the owner, Nov 25: off the overview).
+    await toStatusPart(page, 'analytics');
       await page.waitForSelector('#watchCard:not([hidden])', { timeout: 5000 });
       await page.waitForSelector('#alertsCard:not([hidden])', { timeout: 2000 });
-      await page.waitForSelector('tr:has(strong:text-is("Vikunja")) td.state:has-text("Not answering: HTTP 502")', { timeout: 2000 });
       if (await page.isVisible('#weekCard')) throw new Error('the slow card came with the quick ones');
       await page.waitForSelector('#weekCard:not([hidden])', { timeout: 3000 });
+      // The pages' answers came in the same request: an app's row says it, shown or folded away behind Show every app.
+      await page.waitForSelector('tr:has(strong:text-is("Vikunja")) td.state:has-text("Not answering: HTTP 502")', { state: 'attached', timeout: 2000 });
       const reads = ['Status', 'StatusBoard', 'Watchdog', 'LastCrash', 'SavingsHistory', 'Alerts', 'Storage', 'Usage', 'Weekly', 'Protection', 'Answers'];
       const asked = Object.entries(await backendCalls(page)).filter(([k]) => reads.includes(k)).map(([k, n]) => `${k} ×${n}`);
       if (asked.join(', ') !== 'StatusBoard ×1') throw new Error('Status asked: ' + asked.join(', '));
     } },
   // Every alert…: the computer's record, past ntfy's 12 hours, each saying when it cleared or who snoozed it, until when.
   ...[[], ['companion']].map((phone) => ({ name: `Every alert on Recent alerts lists the kept ones${phone.length ? ', on the phone' : ''}`, screen: 'status', phone: phone.length ? phone : undefined, run: async (page) => {
+    // The card moved to Analytics with the new Overview (the owner's picture, Nov 25).
+    await toStatusPart(page, 'analytics');
     await page.locator('#alertsCard').getByRole('button', { name: 'Every alert…' }).click();
     const sheet = page.locator('#alertLogSheet');
     await sheet.locator('h2:has-text("Every alert")').waitFor({ timeout: 5000 });
@@ -4819,6 +4950,8 @@ const smokes = [
   // one that cleared, one about no check, or one whose check passes now. A phone that only looks has none.
   ...[[], ['companion', 'can-change'], ['companion']].map((phone) => ({ name: `Every alert: Snooze on an alert whose check still fails${phone.length ? (phone.includes('can-change') ? ', on a phone that may change things' : ', none on a phone that only looks') : ''}`, screen: 'status', phone: phone.length ? phone : undefined,
     mock: { watchdog: { ...watchdog, failing: [{ name: 'immich', problem: 'not answering', since: hoursAgo(0.3) }] }, alertLog: [{ id: 5, at: hoursAgo(0.3), topic: 'tunnel-watchdog', title: 'Homelab: something is down', body: 'immich: not answering', priority: 4, checks: ['immich'] }, ...alertLog] }, run: async (page) => {
+    // The card moved to Analytics with the new Overview (the owner's picture, Nov 25).
+    await toStatusPart(page, 'analytics');
       await page.locator('#alertsCard').getByRole('button', { name: 'Every alert…' }).click();
       const sheet = page.locator('#alertLogSheet');
       await sheet.locator('li').nth(4).waitFor({ timeout: 5000 });
@@ -4837,11 +4970,15 @@ const smokes = [
       if (!calls) throw new Error('not snoozed');
     } })),
   { name: 'Every alert with none kept says so', screen: 'status', mock: { alertLog: [] }, run: async (page) => {
+    // The card moved to Analytics with the new Overview (the owner's picture, Nov 25).
+    await toStatusPart(page, 'analytics');
     await page.locator('#alertsCard').getByRole('button', { name: 'Every alert…' }).click();
     await page.locator('#alertLogSheet').getByText('No alerts yet.', { exact: false }).waitFor({ timeout: 5000 });
   } },
   // Check again reads the alerts now: one whose problem cleared is gone.
   { name: 'Check again on Recent alerts reads them now', screen: 'status', run: async (page) => {
+    // The card moved to Analytics with the new Overview (the owner's picture, Nov 25).
+    await toStatusPart(page, 'analytics');
     await page.waitForSelector('#alertsCard:has-text("3 in the last 12 hours")', { timeout: 5000 });
     await page.evaluate(() => { window.__MOCK.alerts = window.__MOCK.alerts.slice(0, 2); });
     await page.click('#alertsCheck');
@@ -4863,6 +5000,8 @@ const smokes = [
   // Folds are kept by the computer now (the owner, Nov 10), so the one call
   // folding makes is keeping them; it still reads nothing again.
   { name: 'Opening and folding every category reads nothing again, only keeps the folds', screen: 'status', mock: { statusOpen: '' }, run: async (page) => {
+    // The Overview keeps the list behind Show every app (the owner's picture, Nov 25): opened first.
+    await page.click('#statusAll', { timeout: 5000 });
     await page.waitForSelector('#statusRows tr.grouphead', { timeout: 5000 });
     await page.waitForTimeout(500); // the cards read beside Status
     const before = await backendCalls(page);
@@ -4943,6 +5082,8 @@ const smokes = [
     if (await page.isVisible('#statusAge')) throw new Error('an age on a fresh reading');
   } },
   { name: 'A category with something stopped folds too', screen: 'status', mock: { statusOpen: '' }, run: async (page) => {
+    // The Overview keeps the list behind Show every app (the owner's picture, Nov 25): opened first.
+    await page.click('#statusAll', { timeout: 5000 });
     await page.waitForSelector('#statusRows tr:has(strong:text-is("Mealie"))', { timeout: 5000 });
     await page.click('#statusRows tr.grouphead:has-text("Household")');
     await page.waitForSelector('#statusRows tr:has(strong:text-is("Mealie"))', { state: 'detached', timeout: 5000 });
@@ -5055,6 +5196,8 @@ const smokes = [
       { name: 'The Bear S4 E1', app: 'Sonarr', state: 'filing', words: 'Finished: being put in the library', percent: 0 },
     ],
   } }, run: async (page) => {
+    // These cards are under Analytics now (the owner, Nov 25: off the overview).
+    await toStatusPart(page, 'analytics');
     await page.waitForSelector('#downloadsCard:not([hidden]) #downloadsLine:text-is("Getting 2 · 1 stuck: no search site has it · Drive 88% full")', { timeout: 5000 });
     if (await page.textContent('#downloadsWarning') !== 'The media drive is 88% full: room for about 30 more films.') throw new Error(`the warning: ${await page.textContent('#downloadsWarning')}`);
     const first = await page.textContent('#downloadsCard li:first-child');
@@ -5068,6 +5211,8 @@ const smokes = [
     if (await page.isVisible('#downloadsCard')) throw new Error('the Downloads card shows without the media apps');
   } },
   { name: 'Photos per person on Status', screen: 'status', run: async (page) => {
+    // These cards are under Analytics now (the owner, Nov 25: off the overview).
+    await toStatusPart(page, 'analytics');
     await page.waitForSelector('#storageCard:not([hidden]) li:has-text("Anna Smith") .when:has-text("412 GB")', { timeout: 5000 });
     await page.waitForSelector('#storageCard .muted:has-text("580 GB in Immich")');
     await page.waitForSelector('#storageCard li:has-text("Paperless-ngx") .when:has-text("18 GB")');
@@ -5124,6 +5269,8 @@ const smokes = [
     if ((await heads.first().locator('.groupcount').getAttribute('aria-expanded')) !== 'true') throw new Error('the second menu did not open');
   } },
   { name: 'What is using power on Status', screen: 'status', mock: { usage: [{ name: 'immich-machine-learning', cpu: 143.5, mem: '1.2GiB' }, { name: 'jellyfin', cpu: 12.3, mem: '300MiB' }, { name: 'vaultwarden', cpu: 0.1, mem: '40MiB' }] }, run: async (page) => {
+    // These cards are under Analytics now (the owner, Nov 25: off the overview).
+    await toStatusPart(page, 'analytics');
     await page.waitForSelector('#usageCard:not([hidden]) li:has-text("Jellyfin") .when:has-text("12%")', { timeout: 5000 });
     await page.waitForSelector('#usageCard .muted:has-text("156% of a core")');
     await page.waitForSelector('#usageCard p:has-text("is busy")');
@@ -5138,10 +5285,14 @@ const smokes = [
     if (await page.isVisible('#storageCard')) throw new Error('the storage card shows with nothing to show');
   } },
   { name: 'This week on Status', screen: 'status', run: async (page) => {
+    // These cards are under Analytics now (the owner, Nov 25: off the overview).
+    await toStatusPart(page, 'analytics');
     await page.waitForSelector('#weekCard:not([hidden]) li:has-text("No restore test yet") .dot.warn, #weekCard li:has-text("No restore test yet")', { timeout: 5000 });
     await page.waitForSelector('#weekCard .warn:has-text("1 thing to look at")');
   } },
   { name: 'This week on a new homelab: still to set up, in grey', screen: 'status', mock: { weekly: { title: 'Homelab this week: getting started, 2 still to set up (Setup)', body: '\u2713 4 apps running and healthy\n\u25e6 No restore test yet (Backups \u203a Test a restore)\n\u25e6 Off-site jobs: none yet (Setup \u203a Create the backup jobs)\nReplacing $247 a year in subscriptions', problems: 0 } }, run: async (page) => {
+    // The card moved to Analytics with the new Overview (the owner's picture, Nov 25).
+    await toStatusPart(page, 'analytics');
     await page.waitForSelector('#weekCard .muted:has-text("Getting started: 2 still to set up")', { timeout: 5000 });
     if (await page.locator('#weekCard .dot.warn').count()) throw new Error('an orange dot on a new homelab');
     if (!(await page.isVisible('#weekCard li:has-text("Replacing $247") .dot:not(.ok):not(.warn)'))) throw new Error('the savings line is not grey');
@@ -5197,6 +5348,8 @@ const smokes = [
       await page.waitForSelector('#backups.screen.active', { timeout: 5000 });
     } })),
   { name: 'A tile’s line wraps under its chart rather than being cut off, at big text', screen: 'status', run: async (page) => {
+    // The card moved to Subscriptions with the new Overview (the owner's picture, Nov 25).
+    await toStatusPart(page, 'subscriptions');
     for (const [w, zoom] of [[1280, '1.5'], [1100, '1.25'], [860, '1.2']]) {
       await page.setViewportSize({ width: w, height: 800 });
       await page.evaluate((z) => document.documentElement.style.setProperty('--zoom', z), zoom);
@@ -5347,6 +5500,8 @@ const smokes = [
     if (cut.length) throw new Error(`cut off: ${cut.join(', ')}`);
   } })),
   ...[['Status', 'status', '#status .duo'], ['an app’s page', 'app:vikunja', '#app .pagecols']].map(([label, screen, sel]) => ({ name: `${label}: two columns only when there is room for both at the text size`, screen, mock: pageMock, run: async (page) => {
+    // Status' cards are under Analytics now (the owner, Nov 25).
+    if (screen === 'status') await toStatusPart(page, 'analytics');
     for (const [w, h, zoom, want] of [[1280, 800, '1', 2], [1440, 900, '2', 1], [1280, 800, '1.5', 1]]) {
       await page.setViewportSize({ width: w, height: h });
       await page.evaluate((z) => document.documentElement.style.setProperty('--zoom', z), zoom);
@@ -5432,6 +5587,8 @@ const smokes = [
     if (bad.length) throw new Error(`buttons beside the words of: ${bad.join(', ')}`);
   } },
   { name: 'This week: one thing a line, however long', screen: 'status', mock: { weekly: longWeek }, run: async (page) => {
+    // The card moved to Analytics with the new Overview (the owner's picture, Nov 25).
+    await toStatusPart(page, 'analytics');
     await page.waitForSelector('#weekCard li', { timeout: 5000 });
     const lefts = await page.$$eval('#weekCard li', (li) => li.map((l) => Math.round(l.getBoundingClientRect().left)));
     if (lefts.length !== 8 || new Set(lefts).size !== 1) throw new Error(`the lines are side by side (left edges ${lefts.join(', ')})`);
@@ -5735,6 +5892,7 @@ const smokes = [
     // there the cards come one by one.
     const refused = [...new Set(await page.evaluate(() => window.__MOCK.refused))].filter((m) => methods.includes(m) || !['StatusBoard', 'LastStatus'].includes(m));
     if (refused.length) throw new Error('the phone asked what it is not served: ' + refused.join(', '));
+    await toStatusPart(page, 'analytics');
     if (!(await page.isVisible('#watchCard')) || !(await page.isVisible('#alertsCard'))) throw new Error('the watchdog and alerts cards did not come');
   } })),
   { name: 'A read-only phone has no restart, stop, start, or switches', screen: 'status', phone: ['companion'], run: async (page) => {
@@ -6233,7 +6391,8 @@ const smokes = [
     await page.waitForSelector('#statusRows tr:has(strong:text-is("Vikunja"))', { timeout: 5000 });
     if (await page.isVisible('#statusNote .notice')) throw new Error('the notice stayed after the runtime answered');
     // The cards that ask the runtime were not read while it was down: they
-    // come with the first Status that is, not minutes later.
+    // come with the first Status that is, not minutes later (under Analytics now).
+    await toStatusPart(page, 'analytics');
     await page.waitForSelector('#weekCard:not([hidden])', { timeout: 3000 });
     await page.waitForSelector('#protectCard:not([hidden])', { timeout: 3000 });
   } },
@@ -6852,7 +7011,7 @@ const smokes = [
     await page.waitForSelector('#statusRows', { state: 'visible', timeout: 5000 });
   } },
   // The phone's page mimics the computer (the owner, Nov 25): on a wide window the same strip of icons (only the phone's
-  // screens, no empty columns) with Status' menu under it; narrow, the tab bar, and Status' menu as a row of chips; a
+  // screens, no empty columns) with Status' menu under it; narrow, the tab bar, and Status' menu as one dropdown; a
   // category's page either way, its shelf with Install on a phone that may change things (the owner, Nov 26: parity).
   { name: "The phone's page: the computer's strip and Status' menu when wide, chips when narrow, a category's page in each", screen: 'status', phone: ['companion', 'can-change'], run: async (page) => {
     await page.setViewportSize({ width: 1100, height: 760 });
@@ -6865,19 +7024,21 @@ const smokes = [
     await page.waitForSelector('#statusPart .catpage h2:has-text("On the server")', { timeout: 5000 });
     if (!(await page.$('#statusPart .cattile.toadd button'))) throw new Error('no Install on a phone that may change things');
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.waitForSelector('#statusChips button[data-key="analytics"]', { state: 'visible', timeout: 5000 });
+    // Narrow, Status' menu is one dropdown at the top (the owner, Nov 25), not chips: every part and category in it, each
+    // whole on the screen.
+    await page.waitForSelector('#statusChips .sidedropbtn', { state: 'visible', timeout: 5000 });
     if (await page.isVisible('#statusSide')) throw new Error("Status' sidebar menu in the tab bar");
-    // Every chip within the screen (they wrap, never slide off it).
-    const off = await page.$$eval('#statusChips .finmenuitem', (bs) => bs.filter((b) => b.getBoundingClientRect().right > innerWidth + 1).map((b) => b.textContent));
-    if (off.length) throw new Error('chips off the screen: ' + off.join(', '));
-    // Several to a line, not one under another.
-    const rows = await page.$$eval('#statusChips .finmenuitem', (bs) => new Set(bs.map((b) => Math.round(b.getBoundingClientRect().top))).size);
-    const n = await page.locator('#statusChips .finmenuitem').count();
-    if (rows > Math.ceil(n / 2)) throw new Error(`${n} chips on ${rows} lines`);
+    await page.click('#statusChips .sidedropbtn');
+    await page.waitForSelector('#statusChips .sidemenulist button[data-key="analytics"]', { state: 'visible', timeout: 5000 });
+    const off = await page.$$eval('#statusChips .sidemenulist button', (bs) => bs.filter((b) => b.getBoundingClientRect().right > innerWidth + 1 || b.getBoundingClientRect().left < -1).map((b) => b.textContent));
+    if (off.length) throw new Error('menu items off the screen: ' + off.join(', '));
+    await page.click('#statusChips .sidemenulist button[data-key="media"]');
+    await page.waitForSelector('#statusPart .catpage h2:has-text("On the server")', { timeout: 5000 });
     const across = await page.$$eval('#statusPart .cattiles:first-of-type > li', (els) => new Set(els.slice(0, 2).map((e) => Math.round(e.getBoundingClientRect().top))).size);
     if (across !== 1) throw new Error('not two across on a phone');
-    await page.click('#statusChips button[data-key="overview"]');
-    await page.waitForSelector('#statusRows', { state: 'visible', timeout: 5000 });
+    await page.click('#statusChips .sidedropbtn');
+    await page.click('#statusChips .sidemenulist button[data-key="overview"]');
+    await page.waitForSelector('#statusPart .ovcards, #tiles', { state: 'visible', timeout: 5000 });
     if (await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1)) throw new Error('the page scrolls sideways');
   } },
   // From an app's page, a pick in Status' menu goes to that page (the owner, Nov 25: it "just stalls out"), the one it
@@ -9224,6 +9385,8 @@ const smokes = [
   // link, and a round back button to the step above, named for a screen reader; on the phone's page, the back button
   // with the step above's name.
   { name: "Breadcrumbs: an app's page, an account's and a card's say where they sit, and go back up", screen: 'status', mock: { statusOpen: '' }, run: async (page) => {
+    // The Overview keeps the list behind Show every app (the owner's picture, Nov 25): opened first.
+    await page.click('#statusAll', { timeout: 5000 });
     await page.click('#statusRows tr:has(strong:text-is("Vikunja")) td.state', { timeout: 5000 });
     await page.waitForSelector('#app.active .crumbs', { timeout: 5000 });
     const trail = async (root) => (await page.textContent(`${root} .crumbs ol`)).replace(/\s*›\s*/g, ' › ').trim();
@@ -9245,6 +9408,8 @@ const smokes = [
     if (await page.isVisible('#finRoot .fx-account')) throw new Error('the back button did not leave the account');
   } },
   { name: "Breadcrumbs on the phone: the back button says where it goes", screen: 'status', phone: ['companion', 'finances'], mock: { statusOpen: '' }, run: async (page) => {
+    // The Overview keeps the list behind Show every app (the owner's picture, Nov 25): opened first.
+    await page.click('#statusAll', { timeout: 5000 });
     await page.click('#statusRows tr:has(strong:text-is("Vikunja")) td.state', { timeout: 5000 });
     await page.waitForSelector('#app.active .crumbs .back', { timeout: 5000 });
     if ((await page.textContent('#app .crumbs .back')).trim() !== 'Status') throw new Error(`the phone's back: ${await page.textContent('#app .crumbs .back')}`);

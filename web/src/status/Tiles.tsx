@@ -1,6 +1,6 @@
 // The four tiles at the top of Status: what runs, what needs a look, what
 // the homelab saves a year, and the nightly updates (with Pause/Resume).
-import { render, type ComponentChildren } from 'preact';
+import { Fragment, render, type ComponentChildren } from 'preact';
 import { useState } from 'preact/hooks';
 import { bytes, dayText, dollars } from '../format';
 import { Card } from '../parts/Card';
@@ -8,6 +8,8 @@ import { Hover } from '../parts/Hover';
 import { Spark } from '../Spark';
 import { keptRestarting } from './stopFor';
 import { AppMark } from '../parts/AppMark';
+import { Icon } from '../Icon';
+import { nightTone, nightWords } from '../backups/Backups';
 import { facts, type HealthProps, StartAgent } from '../setup/Health';
 
 export function Tile({ label, value, sub, tone, id, title }: { label: string; value: ComponentChildren; sub: ComponentChildren; tone?: string; id?: string; title?: string }) {
@@ -91,6 +93,13 @@ function PauseButton({ paused, onPause }: { paused: boolean; onPause: (paused: b
 export const awaitingJobs = (a: api.AppStatus) => a.id === 'homelab-companion' && a.state === 'not running';
 
 /** Apps that need a look: unwell, not answering, or not running; not one stopped on purpose (held). */
+/** What's wrong with each, grouped (the owner's picture: "Mealie, Vikunja stopped"): "Mealie stopped · Vikunja not answering". */
+export function troubleLine(apps: api.AppStatus[]): string {
+  const kind = (a: api.AppStatus) => (a.state === 'missing' ? 'missing' : a.state === 'running' ? (a.notAnswering ? 'not answering' : 'unwell') : 'stopped');
+  const by = new Map<string, string[]>();
+  for (const a of apps) by.set(kind(a), [...(by.get(kind(a)) || []), a.name]);
+  return [...by].map(([k, names]) => `${names.length > 3 ? `${names.slice(0, 2).join(', ')} +${names.length - 2}` : names.join(', ')} ${k}`).join(' · ');
+}
 export const troubled = (a: api.AppStatus, held: Record<string, stopped.Stop> = {}) => a.health === 'unhealthy' || a.health === 'restarting' || !!a.notAnswering || a.state === 'missing' || (a.state === 'stopped' && (!held[a.id] || keptRestarting(held[a.id])));
 
 export interface TilesProps {
@@ -109,17 +118,23 @@ export interface TilesProps {
   /** Last night's copies as Backups read them (null until read): the Backups card (redesign-loop R6, the picture's). */
   backups?: { copied: number; of: number; skipped: string[]; at: string } | null;
   openBackups?: () => void;
+  /** This week as the watchdog saw it: a square per day (ok, warn, bad), and when it last checked; null before it's read. */
+  week?: { days: string[]; titles?: string[]; checked: string } | null;
+  /** The last nights' copies (Backups' squares), oldest first. */
+  nights?: backup.Night[];
+  /** Starts each stopped app; and shows them all in the list. */
+  startAll?: (apps: api.AppStatus[]) => void;
+  seeAll?: () => void;
   /** This machine's facts as Setup read them (none on a phone): the This Mac card. */
   mac?: HealthProps | null;
-  /** The computer's facts as it sends them (the machine card): on a phone, This machine; on the computer, the memory and
-   * uptime on This Mac. */
+  /** On a phone: the computer's free space and power as it sends them (the machine card), for This machine. */
   machine?: MachineFacts | null;
-  /** What the apps hold in memory now, in bytes (the usage card's sum), for the memory bar; 0 before it's read. */
+  /** What the apps hold in memory now, in bytes (the usage reading's sum), for the machine card's bar; 0 before it's read. */
   appsMemory?: number;
 }
 
-/** The computer's free space, power, memory and boot time, as `core.MachineFacts` sends them (memory and booted only
- * from 0.43.6 on, and only where the system tells them). */
+/** The computer's free space, power, memory and boot time, as `core.MachineFacts` sends them (memory and booted from
+ * 0.44, and only where the system tells them: lane D, D5). */
 export interface MachineFacts { free: number; total: number; low: boolean; power?: string; keptAwake: boolean; memory?: number; booted?: string }
 
 /** Memory in GB as the machine's own spec says it (powers of 1024: 32 GB, not 34.4): whole from 10 up, else to a tenth. */
@@ -139,21 +154,7 @@ export function upFor(booted?: string, now = Date.now()): string {
   return `Up ${Math.floor(hours / 24)} days`;
 }
 
-/** The machine card's memory (the redesign's picture: "Memory · 11 of 32 GB" over a bar): what the apps hold of the
- * machine's memory, amber past 85%. Just the machine's memory until the apps' is read; nothing where it isn't told. */
-function MemoryLine({ total, used }: { total?: number; used?: number }) {
-  if (!total) return null;
-  const share = used ? Math.min(1, used / total) : 0;
-  const pct = Math.round(share * 100);
-  return (
-    <div class={'sub memline' + (share > 0.85 ? ' warn' : '')}>
-      <span>Memory · {used ? `${gb(used)} of ${gb(total)} GB` : `${gb(total)} GB`}</span>
-      {!!used && <span class="bar" role="meter" aria-label="Memory the apps use" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct}><span style={{ width: `${Math.max(2, pct)}%` }} /></span>}
-    </div>
-  );
-}
-
-export function Tiles({ status: st, history, onPause, onChoose, words, start, logs, open, backups, openBackups, mac, machine, appsMemory }: TilesProps) {
+export function Tiles({ status: st, history, onPause, onChoose, words, start, logs, open, backups, openBackups, mac, machine, week, nights, startAll, seeAll, appsMemory }: TilesProps) {
   // No app yet: no 0-of-0 tiles, but what to do first (the empty list hides with it).
   if (!st.apps.length) {
     return (
@@ -167,86 +168,98 @@ export function Tiles({ status: st, history, onPause, onChoose, words, start, lo
   const counted = st.apps.filter((a) => !awaitingJobs(a)).length;
   const trouble = st.apps.filter((a) => troubled(a, st.stopped));
   const u = st.updates;
+  // The owner's web-wide pictures (Nov 25): Apps, Backups and the machine as three cards of one anatomy (title row,
+  // one figure, one line, a footer at the same height), each drawn in every state. Never "needs you": what happened.
+  const lower = (w: string) => w.charAt(0).toLowerCase() + w.slice(1);
+  const one = trouble.length === 1 ? trouble[0] : null;
+  const outages = week ? week.days.filter((d) => d === 'warn' || d === 'bad').length : 0;
+  // Fourteen squares from a computer that keeps two weeks (lane D, D3), seven from an older one.
+  const span = week && week.days.length > 7 ? 'in two weeks' : 'this week';
   return (
     <>
-      {/* The headline (docs/Redesign.md, Status; redesign-loop R6): how many apps need you, each with its fix. All good is
-          one line, not a card (the owner, Nov 24: "a ginormous box that simply just says all good"). */}
-      {!trouble.length && !st.missing ? (
-        <div class="headline good slim" id="statusHeadline" role="status">
-          <span class="okmark" aria-hidden="true">✓</span><span class="value">All good</span><span class="label">{running.length} of {counted} running</span>
+      <Card kind="tile ovcard" id="statusApps">
+        <div class="anthead"><h2>Apps</h2><span class="muted">{week?.checked || ''}</span></div>
+        <div class={'antfig' + (trouble.length ? ' warn' : '')}>{trouble.length ? <>{running.length}<span class="muted"> of {counted} running</span></> : <>{running.length}<span class="muted"> running</span></>}</div>
+        <div class="antline muted">
+          {st.missing ? <span class="bad">{st.missing === 1 ? "1 of the homelab's own apps is down" : `${st.missing} of the homelab's own apps are down`}</span>
+            : one ? <span class="antwho"><AppMark id={one.id} name={one.name} icon="" small /><span class="antname">{one.name} {lower(words ? words(one) : one.state)}</span></span>
+            : trouble.length ? <span class="antwho"><span class="antname">{troubleLine(trouble)}</span></span>
+            : <span>All answering{week ? ` · ${outages ? `${outages === 1 ? '1 day' : `${outages} days`} with an outage ${span}` : `no outage ${span}`}` : ''}</span>}
         </div>
-      ) : <Card kind={'tile headline' + (trouble.length ? ' warn' : ' good')} id="statusHeadline">
-        <div class="headlinemain">
-          <div class="value">{trouble.length ? (trouble.length === 1 ? '1 app needs you' : `${trouble.length} apps need you`) : 'All good'}</div>
-          <div class="label">{running.length} of {counted} running</div>
-          {!!st.missing && <div class="sub"><span class="bad">{st.missing === 1 ? "1 of the homelab's own apps is down." : `${st.missing} of the homelab's own apps are down.`}</span></div>}
+        <div class="antfoot">
+          {one ? <span class="ovacts">
+            {start && one.state !== 'running' && <button type="button" class="primary small" onClick={() => start(one)}><Icon name="start" />Start</button>}
+            {logs && one.state !== 'missing' && <button type="button" class="btn small" onClick={() => logs(one)}><Icon name="logs" />Logs</button>}
+            {open && <button type="button" class="iconbtn" aria-label={`${one.name}: its page`} title={`${one.name}: its page`} onClick={() => open(one)}><Icon name="more" /></button>}
+          </span>
+            : trouble.length ? <span class="ovacts">
+              {startAll && <button type="button" class="primary small" onClick={() => startAll(trouble)}><Icon name="start" />Start all</button>}
+              {seeAll && <button type="button" class="btn small" onClick={seeAll}>See them</button>}
+            </span>
+            : week ? <span class={'ovdays' + (week.days.length > 7 ? ' fourteen' : '')} role="img" aria-label={`${span === 'this week' ? 'This week' : 'The last two weeks'}: ${outages ? `${outages} days with an outage` : 'no outage'}`}>{week.days.map((d, i) => <i key={i} class={d} title={week.titles?.[i]} />)}</span>
+            : <span class="antempty" />}
         </div>
-        {!!trouble.length && <ul class="headlineapps">
-          {trouble.slice(0, 3).map((a) => (
-            <li key={a.id}>
-              <AppMark id={a.id} name={a.name} icon="" small />
-              <span class="grow"><strong>{a.name}</strong><span class="muted">{words ? words(a) : a.state}</span></span>
-              <span class="headlineacts">
-                {start && a.state !== 'running' && <button type="button" class="btn primary small" onClick={() => start(a)}>Start</button>}
-                {logs && a.state !== 'missing' && <button type="button" class="btn small" onClick={() => logs(a)}>Logs</button>}
-                {open && <button type="button" class="btn small" onClick={() => open(a)}>Its page</button>}
-              </span>
-            </li>
-          ))}
-          {trouble.length > 3 && <li class="muted">and {trouble.length - 3} more, in the list below</li>}
-        </ul>}
-      </Card>}
-      {/* The picture's Backups and This Mac beside the headline (redesign-loop R6); Instead of subscriptions is lower (Savings). */}
-      <Card kind="tile statuscard" id="statusBackups">
-        <div class="label">Backups{openBackups && <button type="button" class="linkbtn statusmore" onClick={openBackups}>Backups ›</button>}</div>
-        <div class="value">{backups ? <>{backups.copied}<small> of {backups.of}</small></> : '…'}</div>
-        <div class="sub">{!backups ? 'Reading last night…' : <span>{backups.at}{backups.skipped.length ? <>{' · '}<span class="warn">{backups.skipped.join(', ')} skipped</span></> : ''}</span>}</div>
+      </Card>
+      <Card kind="tile ovcard" id="statusBackups">
+        <div class="anthead"><h2>{openBackups ? <button type="button" class="linkbtn ovtitle" onClick={openBackups}>Backups</button> : 'Backups'}</h2><span class="muted">Every night at 03:30</span></div>
+        <div class={'antfig' + (backups?.skipped.length ? ' warn' : '')}>{backups ? <>{backups.copied}<span class="muted"> of {backups.of} copied</span></> : '—'}</div>
+        <div class="antline muted">{!backups ? 'Reading last night…' : <span>{backups.at}{backups.skipped.length ? <>{' · '}<span class="warn">{backups.skipped.join(', ')} skipped</span></> : ''}</span>}</div>
+        <div class="antfoot">{nights?.length ? <span class="ovdays" role="img" aria-label={`The last ${Math.min(14, nights.length)} nights`}>{nights.slice(-14).map((n) => <i key={n.date} class={nightTone(n)} title={nightWords(n, (id) => id)} />)}</span> : <span class="antempty" />}</div>
       </Card>
       {mac ? <MacCard mac={mac} facts={machine} appsMemory={appsMemory} updates={u} onPause={onPause} /> : machine?.total ? <MachineCard m={machine} appsMemory={appsMemory} updates={u} onPause={onPause} /> : (
-        <Tile label="Nightly updates" value={u?.paused ? 'Paused' : 'On'}
-          sub={<>{u?.paused ? 'Until you resume them' : `Run ${u?.schedule}`}<PauseButton paused={!!u?.paused} onPause={onPause} /></>} />
+        <Card kind="tile ovcard" id="statusMachine">
+          <div class="anthead"><h2>Updates</h2><span class="muted" /></div>
+          <div class="antfig">{u?.paused ? 'Paused' : 'On'}</div>
+          <div class="antline muted">{u?.paused ? 'Until you resume them' : `Run ${u?.schedule}`}</div>
+          <div class="antfoot"><PauseButton paused={!!u?.paused} onPause={onPause} /></div>
+        </Card>
       )}
     </>
   );
 }
 
-/** This machine on a phone (the redesign's phone picture, as the iPhone app's): the computer's free space as the figure,
- * its power under it (amber when it's on battery or may sleep), and the nightly updates with Pause. */
+/** The machine's card (the picture's *The server*): free space as the figure, power and what runs the apps on its
+ * line, and the drive's room as a bar with the nightly updates' Pause at its foot. On a phone, from what the computer sends. */
 function MachineCard({ m, appsMemory, updates: u, onPause }: { m: MachineFacts; appsMemory?: number; updates: api.Status['updates']; onPause: (paused: boolean) => Promise<void> }) {
   const power = m.power === 'battery' ? { words: 'On battery', tone: 'warn' } : m.power === 'plugged' ? (m.keptAwake ? { words: 'Plugged in', tone: '' } : { words: 'Plugged in, may sleep', tone: 'warn' }) : null;
-  const up = upFor(m.booted);
-  return (
-    <Card kind="tile statuscard" id="statusMachine">
-      <div class="label">This machine</div>
-      <div class={'value' + (m.low ? ' bad' : '')}>{bytes(m.free)}<small> free</small></div>
-      {power && power.tone ? <div class={'sub ' + power.tone}><span>{power.words}</span></div> : (power || up) && <div class="sub"><span>{[power?.words, up].filter(Boolean).join(' · ')}</span></div>}
-      {power?.tone && up && <div class="sub"><span>{up}</span></div>}
-      <MemoryLine total={m.memory} used={appsMemory} />
-      <div class="sub statusupdates"><span>{u?.paused ? 'Updates paused' : `Updates ${u?.schedule ? 'run ' + u.schedule : 'nightly'}`}</span><PauseButton paused={!!u?.paused} onPause={onPause} /></div>
-    </Card>
-  );
+  return <Machine id="statusMachine" name="This machine" free={m.free} total={m.total} low={m.low} line={power ? <span class={power.tone}>{power.words}</span> : null} u={u} onPause={onPause} memory={m.memory} appsMemory={appsMemory} booted={m.booted} />;
 }
 
-/** This Mac (redesign-loop R6, the picture's): its free space as the figure, power and what runs the apps under it, the
- * nightly updates with Pause, and anything wrong with the machine said here too (Start for a stopped agent). */
 function MacCard({ mac, facts: m, appsMemory, updates: u, onPause }: { mac: HealthProps; facts?: MachineFacts | null; appsMemory?: number; updates: api.Status['updates']; onPause: (paused: boolean) => Promise<void> }) {
   const all = facts(mac);
   const of = (k: string) => all.find((f) => f.key === k);
-  const disk = of('disk'), power = of('power'), runtime = of('runtime');
+  const power = of('power'), runtime = of('runtime');
   const wrong = all.filter((f) => f.tone !== 'ok' && f.key !== 'disk');
-  // Power and the runtime in a line when they're fine; what isn't has a line of its own, in its tone.
-  const fine = [...[power, runtime].filter((f) => f && f.tone === 'ok').map((f) => f!.short), upFor(m?.booted)].filter(Boolean).join(' · ');
+  const fine = [power, runtime].filter((f) => f && f.tone === 'ok').map((f) => f!.short).join(' · ');
   const stopped = mac.h.agent === 'stopped' || mac.h.agent === 'quit';
+  const d = (mac.i.disks || [])[0];
   const name = mac.machine.charAt(0).toUpperCase() + mac.machine.slice(1);
   return (
-    <Card kind="tile statuscard" id="statusMac">
-      <div class="label">{name}</div>
-      <div class={'value' + (disk && disk.tone !== 'ok' ? ' bad' : '')}>{disk ? disk.value.replace(/ free$/, '') : '—'}<small>{disk ? ' free' : ''}</small></div>
-      {fine && <div class="sub"><span>{fine}</span></div>}
-      {wrong.map((f) => <div key={f.key} class={'sub ' + f.tone}><span>{f.short}</span></div>)}
-      <MemoryLine total={m?.memory} used={appsMemory} />
-      {stopped && <StartAgent id="startAgentMac" start={mac.startAgent} />}
-      <div class="sub statusupdates"><span>{u?.paused ? 'Updates paused' : `Updates ${u?.schedule ? 'run ' + u.schedule : 'nightly'}`}</span><PauseButton paused={!!u?.paused} onPause={onPause} /></div>
+    <Machine id="statusMac" name={name} free={d?.free || 0} total={d?.total || 0} low={!!d?.low} u={u} onPause={onPause}
+      line={<>{fine && <span>{fine}</span>}{wrong.map((f, i) => <Fragment key={f.key}>{fine || i ? ' · ' : ''}<span class={f.tone}>{f.short}</span></Fragment>)}</>}
+      extra={stopped ? <StartAgent id="startAgentMac" start={mac.startAgent} /> : null} memory={m?.memory} appsMemory={appsMemory} booted={m?.booted} />
+  );
+}
+
+/** The picture's *The server* (lane D, D5): how long it's been up in the title row, and its memory as the bar, "Memory ·
+ * 11 of 32 GB": what the apps hold of the machine's memory (amber past 85%). From a computer that doesn't send them,
+ * the nightly updates in the title row and the drive's room as the bar, as before; the updates move to the line then. */
+function Machine({ id, name, free, total, low, line, u, onPause, extra, memory, appsMemory, booted }: { id: string; name: string; free: number; total: number; low: boolean; line: ComponentChildren; u: api.Status['updates']; onPause: (paused: boolean) => Promise<void>; extra?: ComponentChildren; memory?: number; appsMemory?: number; booted?: string }) {
+  const used = total ? Math.min(100, Math.max(1, Math.round(100 * (1 - free / total)))) : 0;
+  const updates = u?.paused ? 'Updates paused' : `Updates ${u?.schedule || 'nightly'}`;
+  const up = upFor(booted);
+  const share = memory && appsMemory ? Math.min(1, appsMemory / memory) : 0;
+  const pct = Math.round(share * 100);
+  return (
+    <Card kind="tile ovcard" id={id}>
+      <div class="anthead"><h2>{name}</h2><span class="muted">{up || updates}</span></div>
+      <div class={'antfig' + (low ? ' bad' : '')}>{total ? <>{bytes(free).replace(/ \S+$/, '')}<span class="muted"> {bytes(free).replace(/^\S+ /, '')} free</span></> : '—'}</div>
+      <div class="antline muted">{line}{up ? <> · {updates.charAt(0).toLowerCase() + updates.slice(1)}</> : null}{extra}</div>
+      <div class="antfoot ovmachine">
+        {memory ? <span class={'ovbar memline' + (share > 0.85 ? ' warn' : '')}><span class="antbar" role="meter" aria-label="Memory the apps use" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct}><span style={{ width: `${Math.max(appsMemory ? 2 : 0, pct)}%` }} /></span><small class="muted">Memory · {appsMemory ? `${gb(appsMemory)} of ${gb(memory)} GB` : `${gb(memory)} GB`}</small></span>
+          : total ? <span class="ovbar"><span class="antbar" role="img" aria-label={`${used}% used`}><span style={{ width: `${used}%` }} /></span><small class="muted">{bytes(total - free)} of {bytes(total)} used</small></span> : <span class="antempty" />}
+        <PauseButton paused={!!u?.paused} onPause={onPause} />
+      </div>
     </Card>
   );
 }

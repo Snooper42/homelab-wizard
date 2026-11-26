@@ -2,18 +2,24 @@
 // actions and the sheets they open, a homelab command with its preview,
 // and the phone's report.
 import { sendTo, targetsFor } from '../phone/send';
-import { ago } from '../format';
+import { ago, bytes } from '../format';
+import { drawFoot } from './setup';
 import { mountSavings, mountTiles, troubled, type MachineFacts } from '../status/Tiles';
 import { machineNow, onMachine } from '../status/machine';
 import { mountUndoNote } from '../status/UndoNote';
 import { stoppedWords } from '../status/stopFor';
 import { mountWallCard } from '../status/WallCard';
 import { mountAlerts, mountDownloads, mountProtection, mountStorage, mountWatchdog, mountWeek, storageShown } from '../status/Cards';
-import { type AppListActions, type AppListProps, clearAppList, foldsFromComputer, mountAppList, mountShowAll, onFoldsPicked, type Pending, stateOf } from '../status/AppList';
+import { type AppListActions, type AppListProps, clearAppList, foldsFromComputer, listView, mountAppList, mountShowAll, onFoldsPicked, onListView, type Pending, showEveryApp, stateOf } from '../status/AppList';
+import { mountCategoryPanel } from '../status/CategoryPanel';
+import { mountSubscriptions, type Offer } from '../status/Subscriptions';
+/** What each app replaces, at its price (docs/Savings.md), read once Subscriptions opens. */
+let offers: Offer[] | null = null;
+let offersAsked = false;
 import { store } from '../store';
 import { icons, onIcon, wantIcons } from '../status/appIcons';
 import { shippedLogo } from '../parts/AppMark';
-import { goToPart, mountSideMenu, type SideItem, sideIcons } from '../parts/SideMenu';
+import { goToPart, mountSideDropdown, mountSideMenu, type SideItem, sideIcons } from '../parts/SideMenu';
 import { mountCategoryPage } from '../status/CategoryPage';
 import { keepsTabs, tabChanged } from '../tabs';
 import { mountAnalytics, recordTotals, type Totals } from '../status/Analytics';
@@ -84,6 +90,32 @@ let seen = loadSeen();
 // change since the first of them (the nightly backup records one a day).
 let savingsHistory: savings.Point[] = [];
 let lastAttention = -1;
+/** The watchdog's days, a square a day, oldest first: ok, warn (a check was down that day), bad (one still down
+ * today) or none (it didn't run); each square's words for its tooltip; and when it last checked. The last 14 days from
+ * the watchdog's own daily summary (lane D, D3: the owner's picture has 14); from an older computer without one, the
+ * week from its outages. Null before it's read. */
+function weekSquares(): { days: string[]; titles: string[]; checked: string } | null {
+  if (!lastWatch) return null;
+  const run = lastWatch.lastRun && !lastWatch.lastRun.startsWith('0001') ? `Checked ${ago(lastWatch.lastRun)}` : '';
+  const daily = lastWatch.daily || [];
+  if (daily.length) {
+    const downNow = (lastWatch.failing || []).length > 0;
+    const days = daily.map((d, i) => (!d.failed ? (d.runs ? 'ok' : 'none') : i === daily.length - 1 && downNow ? 'bad' : 'warn'));
+    const titles = daily.map((d) => {
+      const day = new Date(`${d.date}T12:00:00`).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+      return `${day}: ${d.failed ? (d.failed === 1 ? '1 app down for a while' : `${d.failed} apps down for a while`) : d.runs ? 'every app answered' : 'not checked'}`;
+    });
+    return { days, titles, checked: run };
+  }
+  const all = Object.values(lastWatch.outages || {}).flat();
+  const days = Array.from({ length: 7 }, (_, i) => {
+    const start = new Date(); start.setHours(0, 0, 0, 0); start.setDate(start.getDate() - (6 - i));
+    const end = new Date(start); end.setDate(end.getDate() + 1);
+    const hit = all.filter((o) => new Date(o.from) < end && (!o.to || new Date(o.to) >= start));
+    return !hit.length ? 'ok' : i === 6 && hit.some((o) => !o.to) ? 'bad' : 'warn';
+  });
+  return { days, titles: [], checked: run };
+}
 function renderTiles(st: api.Status) {
   const trouble = st.apps.filter((a) => troubled(a, st.stopped));
   mountTiles($('tiles'), {
@@ -99,9 +131,13 @@ function renderTiles(st: api.Status) {
     logs: (a) => { pageOpener.open(a.id); requestAnimationFrame(() => document.getElementById('appLog')?.scrollIntoView({ block: 'start' })); },
     open: (a) => pageOpener.open(a.id),
     backups: lastNight(),
+    nights: backupsData.value?.nights,
+    week: weekSquares(),
+    startAll: (apps) => { groupAct(apps.filter((a) => a.state === 'stopped'), 'start', () => {}); },
+    seeAll: () => showEveryApp(),
     openBackups: () => navigate('backups'),
     mac: machineNow(),
-    machine: machineFacts,
+    machine: onPhone() || phoneMachine?.memory ? phoneMachine : null,
     appsMemory: lastStats.reduce((n, x) => n + parseMem(x.mem), 0),
   });
   mountSavings($('savingsCard'), { status: st, history: savingsHistory });
@@ -173,7 +209,20 @@ function renderAppList(st: api.Status) {
     dot: p.apps.some((a) => troubled(a, st.stopped)) }));
   drawStatusSide();
   drawStatusPart();
+  drawPanel();
 }
+
+// The overview's categories as one panel (status/CategoryPanel), or the whole list while Show every app is on or a
+// filter is typed: the same apps, two ways (the owner's web-wide pictures).
+function drawPanel() {
+  const list = listView();
+  $('status').classList.toggle('listview', list);
+  mountCategoryPanel($('statusPanel'), list || !statusParts.length ? null : {
+    rows: statusParts.filter((p) => p.apps.length).map((p) => ({ id: p.id, label: p.label, apps: p.apps, stopped: p.apps.filter((a) => lastStatus && troubled(a, lastStatus.stopped)).map((a) => a.name), summary: p.id === automation ? automationSummary : undefined })),
+    icons, open: (id) => pickStatusPart(id),
+  });
+}
+onListView(drawPanel);
 
 // Status's menu in the sidebar (parts/SideMenu): Overview, then each category, your own apps last; a pick shows that
 // category's page (status/CategoryPage) in place of the overview.
@@ -184,11 +233,13 @@ let statusHere = 'overview';
 function drawStatusSide() {
   const menu = {
     label: 'Status', here: statusHere, pick: pickStatusPart,
-    items: [{ key: 'overview', label: 'Overview', icon: sideIcons.overview }, { key: 'analytics', label: 'Analytics', icon: sideIcons.analytics }, ...statusSide],
+    items: [{ key: 'overview', label: 'Overview', icon: sideIcons.overview }, { key: 'analytics', label: 'Analytics', icon: sideIcons.analytics }, { key: 'subscriptions', label: 'Subscriptions', icon: sideIcons.finance }, ...statusSide],
   };
   // The sidebar's, and on a phone's narrow page the same items as a row of chips atop Status (the tab bar has no room).
   mountSideMenu($('statusSide'), menu);
-  mountSideMenu($('statusChips'), onPhone() ? { ...menu, label: 'Status parts' } : null);
+  // A phone's narrow page: the same menu as one dropdown at the top (the owner, Nov 25: "a more effective way of
+  // displaying the stacks on mobile… like a drop down menu"); a category's page has breadcrumbs back too.
+  mountSideDropdown($('statusChips'), onPhone() ? { ...menu, label: 'Status parts', here: statusHere.startsWith('add:') ? '' : statusHere } : null);
 }
 /** Shows the overview, or the category picked, with the apps as last read. */
 /** The Status page an app's page to add was opened from (a category, All apps), for its breadcrumbs and Back. */
@@ -208,7 +259,7 @@ function drawStatusPart() {
   if (statusHere === 'analytics') {
     section.dataset.part = 'analytics';
     mountCategoryPage($('statusPart'), null);
-    const disk = onPhone() ? machineFacts : machineNow()?.i.disks?.[0] || null;
+    const disk = onPhone() ? phoneMachine : machineNow()?.i.disks?.[0] || null;
     mountAnalytics($('statusPart'), {
       stats: lastStats, history: usageHistory, totals, cores: onPhone() ? undefined : navigator.hardwareConcurrency || undefined,
       disk: disk && disk.total ? { free: disk.free, total: disk.total, low: disk.low } : null, storage: lastStorage,
@@ -217,6 +268,17 @@ function drawStatusPart() {
     return;
   }
   mountAnalytics($('statusPart'), null);
+  if (statusHere === 'subscriptions') {
+    section.dataset.part = 'subscriptions';
+    mountCategoryPage($('statusPart'), null);
+    if (!offersAsked) { offersAsked = true; Promise.resolve((go() as any).SavingsRows?.()).then((o) => { offers = o || []; if (statusHere === 'subscriptions') drawStatusPart(); }, () => { offers = []; }); }
+    mountSubscriptions($('statusPart'), {
+      offers, running: new Set((lastStatus?.apps || []).filter((a) => a.state === 'running').map((a) => a.id)), catalog, icons, history: savingsHistory,
+      open: (id) => (statusById[id] && statusById[id].state !== 'missing' ? pageOpener.open(id) : pickStatusPart('add:' + id)),
+    });
+    return;
+  }
+  mountSubscriptions($('statusPart'), null);
   // Find an app (the overview's box, or no apps yet): every app here and every one to add, the sets first.
   if (statusHere === 'find' && appList && lastStatus) {
     section.dataset.part = 'find';
@@ -235,7 +297,7 @@ function drawStatusPart() {
   if (!part || !appList) { mountCategoryPage($('statusPart'), null); return; }
   wantIcons(part.apps.filter((a) => a.state !== 'missing' && !shippedLogo(a.id)).map((a) => a.id));
   mountCategoryPage($('statusPart'), {
-    label: part.label, apps: part.apps, add: part.add, list: appList,
+    label: part.label, apps: part.apps, add: part.add, list: appList, trail: [{ label: 'Status', go: () => pickStatusPart('overview') }],
     here: appList.companion ? 'On the server' : 'On ' + thisMachine.replace(/^This/, 'this'),
     install: (id) => openInstall([id]),
     addOwn: part.id === 'own' ? openCustom : undefined,
@@ -350,17 +412,16 @@ export function loadStatus() { return statusData.load(); }
 // so the quick ones show while the slow ones are still being read. The
 // cards read at most every so often are asked for only when due.
 let boardNo = 0; // the latest board asked for
-/** The computer's facts (the machine card): on a phone its free space and power for This machine; on both, its memory
- * and boot time. Null until read, or from a computer that doesn't send it. */
-let machineFacts: MachineFacts | null = null;
-let machineAt = 0; // when the computer last asked for it (a phone asks each time, as before)
+/** The computer's free space and power, on a phone (the machine card), for This machine; null until read, or from a computer that doesn't send it. */
+let phoneMachine: MachineFacts | null = null;
+let machineAt = 0; // when the computer last asked for the machine card
 let boardStatus: api.Status | null = null; // its Status, once in
 let boardFailed = false; // its Status could not be read
 let boardAnswers: Record<string, string> | null = null; // its pages' answers, once in
 async function readStatus() {
   const want = ['watchdog', 'crash', 'alerts', 'storage'];
-  // A phone can't read the machine as Setup does: the computer sends its free space and power (core.Machine) for This
-  // machine. The computer asks too, once a minute, for its memory and how long it's been up (This Mac's bar).
+  // A phone can't read the machine as Setup does: the computer sends its free space and power (core.Machine) for This machine.
+  // The computer asks too, at most once a minute, for its memory and how long it's been up (the machine card, lane D, D5).
   if (onPhone() || Date.now() - machineAt > 60000) { machineAt = Date.now(); want.push('machine'); }
   if (!savingsHistory.length) want.push('savings');
   if (Date.now() - protectionAt > 60000) { protectionAt = Date.now(); want.push('protection'); }
@@ -422,7 +483,12 @@ function showCard(c) {
     case 'alerts': showAlerts(data, err); break;
     case 'storage': showStorage(err ? null : data); break;
     case 'machine':
-      machineFacts = err ? null : data;
+      phoneMachine = err ? null : data;
+      // The web page's foot says what the computer's does: its free space and power, with how it is.
+      if (onPhone() && phoneMachine?.total) {
+        const m = phoneMachine;
+        drawFoot({ machine: { words: `${bytes(m.free)} free${m.power === 'battery' ? ' · on battery' : m.power === 'plugged' ? ' · plugged in' : ''}`, tone: m.low ? 'bad' : m.power === 'battery' ? 'warn' : 'ok' } });
+      }
       if (lastStatus) renderTiles(lastStatus);
       break;
     case 'usage': showUsage((!err && data) || []); break;

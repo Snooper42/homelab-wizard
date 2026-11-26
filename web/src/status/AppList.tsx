@@ -543,6 +543,7 @@ try {
 const folded: ((f: Fold) => void)[] = [];
 function show(f: Fold) {
   fold = f;
+  queueMicrotask(() => viewers.forEach((v) => v()));
   try { localStorage.setItem(foldKey, f.all ? 'all' : JSON.stringify(f.picked)); } catch { /* not kept */ }
   folded.forEach((fn) => fn(f));
 }
@@ -553,6 +554,13 @@ function setFold(f: Fold) {
   show(f);
   if (!f.all) keep(f.picked);
 }
+/** Every app in the list (the overview's See them, Start all's companion). */
+export function showEveryApp() { setFold({ all: true, picked: {} }); }
+/** Whether the overview shows the whole list (Show every app, or a filter typed) rather than its categories' panel. */
+export const listView = () => fold.all || filter.on || Object.values(fold.picked).some(Boolean);
+const viewers: (() => void)[] = [];
+/** Calls back when that changes. */
+export function onListView(f: () => void) { viewers.push(f); }
 /** What the computer keeps as picked (another device's folds, or this one's from before): the list's, Show every app as it is here. */
 export function foldsFromComputer(picked: Record<string, boolean>) {
   if (JSON.stringify(picked) !== JSON.stringify(fold.picked)) show({ all: fold.all, picked: { ...picked } });
@@ -580,6 +588,7 @@ let before: HTMLElement | null = null;
 /** The box takes the focus once it is drawn (typing began outside it). */
 let focusBox = false;
 export function setFilter(f: Filter) {
+  queueMicrotask(() => viewers.forEach((v) => v()));
   filter = f;
   filters.forEach((fn) => fn(f));
 }
