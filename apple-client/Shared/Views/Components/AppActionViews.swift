@@ -49,59 +49,12 @@ enum Clipboard {
 struct AppActionControls: ViewModifier {
     @Environment(AppActionsViewModel.self) private var actions
     @Environment(DashboardViewModel.self) private var dashboard
-    @Environment(\.openURL) private var openURL
     let app: AppStatus
 
     func body(content: Content) -> some View {
         let available = actions.available(for: app)
         content
-            .contextMenu {
-                // As the computer's row menu: Open while it runs, and Copy Address.
-                if let address = app.address, let url = AppDetailView.httpsURL(address) {
-                    if app.isRunning {
-                        Button {
-                            openURL(url)
-                        } label: {
-                            Label("Open", systemImage: "safari")
-                        }
-                    }
-                    Button {
-                        Clipboard.copy(url.absoluteString)
-                    } label: {
-                        Label("Copy Address", systemImage: "doc.on.doc")
-                    }
-                    Divider()
-                }
-                ForEach(available) { action in
-                    Button(role: action.needsConfirmation ? .destructive : nil) {
-                        actions.request(action, on: app)
-                    } label: {
-                        Label(action.title, systemImage: action.systemImage)
-                    }
-                    .disabled(actions.isBusy)
-                }
-                if available.contains(.stop), actions.canStopForAWhile {
-                    StopForAWhileMenu(app: app)
-                }
-                if actions.canChange {
-                    Divider()
-                    let pinned = actions.value(of: .pinned, for: app)
-                    Button {
-                        Task { await actions.set(.pinned, on: !pinned, for: app) }
-                    } label: {
-                        Label(pinned ? "Unpin" : "Pin to the Top", systemImage: pinned ? "pin.slash" : "pin")
-                    }
-                    .disabled(actions.isBusy)
-                }
-                if app.hasLogs {
-                    Divider()
-                    Button {
-                        dashboard.logsApp = app
-                    } label: {
-                        Label("Logs", systemImage: "doc.text")
-                    }
-                }
-            }
+            .contextMenu { AppMenuItems(app: app) }
             // VoiceOver: the same actions in the Actions rotor, no swipe or long press needed.
             .accessibilityActions {
                 if !actions.isBusy {
@@ -128,6 +81,64 @@ struct AppActionControls: ViewModifier {
                 }
             }
             #endif
+    }
+}
+
+/// An app's menu, as the computer's row menu: Open while it runs and Copy Address, its actions, Stop for a
+/// While, Pin, and Logs. The row's long press and a tile's ⋯ both show it.
+struct AppMenuItems: View {
+    @Environment(AppActionsViewModel.self) private var actions
+    @Environment(DashboardViewModel.self) private var dashboard
+    @Environment(\.openURL) private var openURL
+    let app: AppStatus
+
+    var body: some View {
+        let available = actions.available(for: app)
+        // As the computer's row menu: Open while it runs, and Copy Address.
+        if let address = app.address, let url = AppDetailView.httpsURL(address) {
+            if app.isRunning {
+                Button {
+                    openURL(url)
+                } label: {
+                    Label("Open", systemImage: "safari")
+                }
+            }
+            Button {
+                Clipboard.copy(url.absoluteString)
+            } label: {
+                Label("Copy Address", systemImage: "doc.on.doc")
+            }
+            Divider()
+        }
+        ForEach(available) { action in
+            Button(role: action.needsConfirmation ? .destructive : nil) {
+                actions.request(action, on: app)
+            } label: {
+                Label(action.title, systemImage: action.systemImage)
+            }
+            .disabled(actions.isBusy)
+        }
+        if available.contains(.stop), actions.canStopForAWhile {
+            StopForAWhileMenu(app: app)
+        }
+        if actions.canChange {
+            Divider()
+            let pinned = actions.value(of: .pinned, for: app)
+            Button {
+                Task { await actions.set(.pinned, on: !pinned, for: app) }
+            } label: {
+                Label(pinned ? "Unpin" : "Pin to the Top", systemImage: pinned ? "pin.slash" : "pin")
+            }
+            .disabled(actions.isBusy)
+        }
+        if app.hasLogs {
+            Divider()
+            Button {
+                dashboard.logsApp = app
+            } label: {
+                Label("Logs", systemImage: "doc.text")
+            }
+        }
     }
 }
 

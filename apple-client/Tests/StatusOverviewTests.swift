@@ -179,4 +179,47 @@ struct StatusOverviewTests {
         #expect(list[1].label == "Media automation" && list[1].line == "Finds and downloads what you ask for in Seerr")
         #expect(list[2].label == "Your own apps" && list[2].apps.map(\.id) == ["mine"])
     }
+
+    // A category's page (P2): each tile's dot and one live line, as the computer's `tileLine`.
+    @Test func aTileSaysHowLongItsBeenUpOrWhatHappened() throws {
+        func app(_ json: String) throws -> AppStatus {
+            try JSONDecoder.homelab().decode(HomelabStatus.self, from: Data(#"{"apps":[\#(json)]}"#.utf8)).apps[0]
+        }
+        let now = ISO8601DateFormatter().date(from: "2026-11-26T12:00:00Z")!
+        let up = TileLine.of(try app(#"{"id":"a","name":"A","state":"running","health":"healthy","since":"2026-11-22T12:00:00Z"}"#), now: now)
+        #expect(up.tone == .ok && up.words == "Up 4 days")
+        #expect(TileLine.of(try app(#"{"id":"a","name":"A","state":"running","health":"unhealthy"}"#), now: now) == TileLine(tone: .bad, words: "Unhealthy"))
+        #expect(TileLine.of(try app(#"{"id":"a","name":"A","state":"running","notAnswering":"no answer"}"#), now: now) == TileLine(tone: .bad, words: "Not answering: no answer"))
+        #expect(TileLine.of(try app(#"{"id":"a","name":"A","state":"missing"}"#), now: now) == TileLine(tone: .bad, words: "Not running"))
+        let stopped = TileLine.of(try app(#"{"id":"a","name":"A","state":"stopped"}"#), now: now)
+        #expect(stopped.tone == .warn && stopped.words.hasPrefix("Stopped"))
+        #expect(TileLine.upFor(now.addingTimeInterval(-30), now: now) == "Up a minute")
+        #expect(TileLine.upFor(now.addingTimeInterval(-12 * 60), now: now) == "Up 12 min")
+        #expect(TileLine.upFor(now.addingTimeInterval(-3600), now: now) == "Up 1 hour")
+        #expect(TileLine.upFor(now.addingTimeInterval(-5 * 3600), now: now) == "Up 5 hours")
+    }
+
+    // What a category's page offers to add: the catalog's others, no helpers, Seerr in Media; nothing for your own apps.
+    @Test func aCategoryPageShelvesWhatIsNotHereYet() throws {
+        let catalog = try JSONDecoder.homelab().decode(AppCatalog.self, from: Data(#"""
+        {"categories":[{"id":"media","label":"Media"},{"id":"media-automation","label":"Automation"}],
+         "apps":[{"id":"jellyfin","name":"Jellyfin","category":"media","description":"Films and shows","kind":"optional"},
+                 {"id":"navidrome","name":"Navidrome","category":"media","description":"Your music","kind":"optional"},
+                 {"id":"helper","name":"Helper","category":"media","kind":"helper"},
+                 {"id":"seerr","name":"Seerr","category":"media-automation","description":"Ask for films","kind":"optional"},
+                 {"id":"radarr","name":"Radarr","category":"media-automation","kind":"optional"}]}
+        """#.utf8))
+        let add = StatusCategory.toAdd("media", installed: ["jellyfin"], catalog: catalog)
+        #expect(add.map(\.id) == ["navidrome", "seerr"])
+        #expect(StatusCategory.toAdd("media-automation", installed: [], catalog: catalog).map(\.id) == ["radarr"])
+        #expect(StatusCategory.toAdd("own", installed: [], catalog: catalog).isEmpty)
+        let s = try JSONDecoder.homelab().decode(HomelabStatus.self, from: Data(#"{"apps":[{"id":"jellyfin","name":"Jellyfin","state":"running"},{"id":"x","name":"X","state":"stopped"}]}"#.utf8))
+        #expect(StatusCategory.facts(apps: s.apps, toAdd: 2) == "2 on the server · 1 running · 2 to add")
+        #expect(StatusCategory.facts(apps: [], toAdd: 0) == "")
+        // Find an app: by name or what it does, whatever the case and accents.
+        #expect(StatusCategory.matches(["Navidrome", "Your music"], "MUSIC"))
+        #expect(StatusCategory.matches(["Café"], "cafe"))
+        #expect(!StatusCategory.matches(["Navidrome"], "photos"))
+        #expect(StatusCategory.matches(["Navidrome"], " "))
+    }
 }

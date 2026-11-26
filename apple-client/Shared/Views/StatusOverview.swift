@@ -527,30 +527,283 @@ struct CategoryRow: View {
     }
 }
 
-/// A category's page: its apps, each opening its page.
+/// A tile's dot and its one live line (`tileLine` and `stateOf` in web/src/status): how long it has been up when
+/// it's well, else what happened to it.
+struct TileLine: Equatable {
+    enum Tone: Equatable { case ok, warn, bad, plain }
+    let tone: Tone
+    let words: String
+
+    static func of(_ a: AppStatus, now: Date = .now) -> TileLine {
+        // Stopped on purpose is no trouble: a plain dot. Stopped by the watchdog for restarting over and over is.
+        if a.state == "stopped", let stop = a.stoppedOnPurpose {
+            return TileLine(tone: stop.keptRestarting ? .bad : .plain, words: stop.words(now: now))
+        }
+        if a.state != "running", a.pausedOnBattery { return TileLine(tone: .warn, words: "Paused on battery") }
+        if a.state == "stopped", let drive = a.waitingFor, !drive.isEmpty {
+            return TileLine(tone: .warn, words: "Waiting for the \(AppStatus.driveName(drive)) drive")
+        }
+        if a.state == "stopped" {
+            return TileLine(tone: (a.stoppedWhy ?? "").isEmpty ? .warn : .bad,
+                            words: AppStatus.stoppedByItself(at: a.stoppedAt.flatMap(GoTime.parse), why: a.stoppedWhy, now: now))
+        }
+        if a.isRunning {
+            switch a.health {
+            case "unhealthy": return TileLine(tone: .bad, words: "Unhealthy")
+            case "restarting": return TileLine(tone: .bad, words: "Restarting")
+            case "starting": return TileLine(tone: .warn, words: "Starting")
+            default: break
+            }
+            if let problem = a.notAnswering, !problem.isEmpty { return TileLine(tone: .bad, words: "Not answering: \(problem)") }
+            if a.health == "native" { return TileLine(tone: .ok, words: "Running") }
+            return TileLine(tone: .ok, words: a.startedAt.map { upFor($0, now: now) } ?? "Running")
+        }
+        if a.awaitingJobs { return TileLine(tone: .plain, words: "Starts with the scheduled jobs (Setup)") }
+        switch a.state {
+        case "missing": return TileLine(tone: .bad, words: "Not running")
+        case "elsewhere": return TileLine(tone: .warn, words: "Runs elsewhere")
+        default: return TileLine(tone: .warn, words: "Not running")
+        }
+    }
+
+    /// "Up a minute", "Up 12 min", "Up 5 hours", "Up 4 days", as a tile says it (`upFor` in CategoryPage.tsx).
+    static func upFor(_ since: Date, now: Date = .now) -> String {
+        let minutes = max(0, Int((now.timeIntervalSince(since) / 60).rounded()))
+        let hours = Int((Double(minutes) / 60).rounded())
+        if minutes < 2 { return "Up a minute" }
+        if minutes < 60 { return "Up \(minutes) min" }
+        if hours < 48 { return "Up \(hours) \(hours == 1 ? "hour" : "hours")" }
+        return "Up \(Int((Double(hours) / 24).rounded())) days"
+    }
+
+    var color: Color {
+        switch tone {
+        case .ok: Design.running
+        case .warn: Theme.warning
+        case .bad: Theme.danger
+        case .plain: Theme.secondaryInk.opacity(0.5)
+        }
+    }
+}
+
+extension StatusCategory {
+    /// The catalog's apps of a category not on this machine yet, to add (helpers aside; Seerr in Media); none for
+    /// your own apps, which come from no catalog.
+    static func toAdd(_ id: String, installed: Set<String>, catalog: AppCatalog?) -> [CatalogEntry] {
+        guard id != "own" else { return [] }
+        return (catalog?.apps ?? []).filter { entry in
+            let category = entry.id == "seerr" && entry.category == automation ? "media" : entry.category
+            return category == id && entry.kind != "helper" && !installed.contains(entry.id)
+        }
+    }
+
+    /// The line under the page's title: "6 on the server · 6 running · 5 to add".
+    static func facts(apps: [AppStatus], toAdd: Int) -> String {
+        [apps.isEmpty ? nil : "\(apps.count) on the server",
+         apps.isEmpty ? nil : "\(apps.filter(\.isRunning).count) running",
+         toAdd > 0 ? "\(toAdd) to add" : nil].compactMap { $0 }.joined(separator: " · ")
+    }
+
+    /// Whether Find an App matches it: its name, or what it does, regardless of case and accents.
+    static func matches(_ words: [String], _ query: String) -> Bool {
+        let needle = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !needle.isEmpty else { return true }
+        return words.contains { $0.range(of: needle, options: [.caseInsensitive, .diacriticInsensitive]) != nil }
+    }
+}
+
+/// A category's page (the computer's, two across on a phone: app-status-category-phone.png): its apps as tiles,
+/// each with its dot, its logo, one live line, Open or Start, and ⋯; then the catalog's others, faded, under
+/// *Add to <category>* (no Install on a phone yet: they're added on the computer).
 struct CategoryPage: View {
     let model: DashboardViewModel
     let id: String
     var zoom: Namespace.ID
+    @State private var find = ""
 
     var body: some View {
-        let category = StatusCategory.list(apps: model.liveEvents.status?.apps ?? [], catalog: model.catalog).first { $0.id == id }
-        List {
-            ForEach(category?.apps ?? []) { app in
-                NavigationLink(value: StatusPlace.app(app.id)) {
-                    AppRowView(app: app)
+        let apps = model.liveEvents.status?.apps ?? []
+        let category = StatusCategory.list(apps: apps, catalog: model.catalog).first { $0.id == id }
+        let label = category?.label ?? model.catalog?.categories.first(where: { $0.id == id })?.label ?? ""
+        let installed = category?.apps ?? []
+        let add = StatusCategory.toAdd(id, installed: Set(apps.map(\.id)), catalog: model.catalog)
+        let shown = installed.filter { StatusCategory.matches([$0.name, model.catalog?.entry($0.id)?.description ?? ""], find) }
+        let addShown = add.filter { StatusCategory.matches([$0.name, $0.description], find) }
+        let columns = [GridItem(.adaptive(minimum: 150), spacing: 12, alignment: .top)]
+        ScrollView {
+            VStack(alignment: .leading, spacing: 12) {
+                let facts = StatusCategory.facts(apps: installed, toAdd: add.count)
+                if !facts.isEmpty, find.isEmpty {
+                    Text(verbatim: facts)
+                        .font(.subheadline)
+                        .foregroundStyle(Theme.secondaryInk)
                 }
-                .zoomSource(id: app.id, in: zoom)
-                .appActionControls(for: app)
+                if !shown.isEmpty {
+                    TileHeading(title: "On the server", count: installed.count)
+                    LazyVGrid(columns: columns, spacing: 12) {
+                        ForEach(shown) { app in
+                            AppTile(app: app)
+                                .zoomSource(id: app.id, in: zoom)
+                        }
+                    }
+                }
+                if !addShown.isEmpty {
+                    TileHeading(title: "Add to \(label)", count: add.count)
+                        .padding(.top, 8)
+                    LazyVGrid(columns: columns, spacing: 12) {
+                        ForEach(addShown) { entry in
+                            ShelfTile(entry: entry)
+                        }
+                    }
+                }
             }
+            .padding(.horizontal)
+            .padding(.bottom, 24)
         }
         .overlay {
-            if category == nil {
+            if !find.isEmpty, shown.isEmpty, addShown.isEmpty {
+                ContentUnavailableView.search(text: find)
+            } else if installed.isEmpty, add.isEmpty {
                 ContentUnavailableView("No Apps Here", systemImage: "square.grid.2x2")
             }
         }
         .themedCanvas()
-        .navigationTitle(category?.label ?? "")
+        .navigationTitle(label)
+        .searchable(text: $find, prompt: "Find an app")
+    }
+}
+
+/// "On the server  6": a shelf's heading and how many it has.
+private struct TileHeading: View {
+    let title: String
+    let count: Int
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Text(verbatim: title)
+                .font(.headline)
+                .foregroundStyle(Theme.ink)
+            Text(verbatim: "\(count)")
+                .font(.subheadline)
+                .monospacedDigit()
+                .foregroundStyle(Theme.secondaryInk)
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isHeader)
+    }
+}
+
+/// An app's tile: its dot and ⋯ (the row's menu) at the top, its logo and name, one live line, and Open while it
+/// runs or Start when it stopped by itself. A tap opens its page.
+struct AppTile: View {
+    let app: AppStatus
+    @Environment(AppActionsViewModel.self) private var actions
+    @Environment(\.openURL) private var openURL
+
+    var body: some View {
+        let line = TileLine.of(app)
+        VStack(spacing: 8) {
+            HStack {
+                Circle()
+                    .fill(line.color)
+                    .frame(width: 9, height: 9)
+                    .accessibilityHidden(true)
+                Spacer()
+                Menu {
+                    AppMenuItems(app: app)
+                } label: {
+                    Image(systemName: "ellipsis")
+                        .font(.body.weight(.semibold))
+                        .foregroundStyle(Theme.secondaryInk)
+                        .frame(width: 36, height: 28)
+                        .contentShape(Rectangle())
+                }
+                .accessibilityLabel(Text(verbatim: "\(app.name): more"))
+            }
+            NavigationLink(value: StatusPlace.app(app.id)) {
+                VStack(spacing: 6) {
+                    AppIconView(app: app, size: 58, stateBadge: false)
+                    Text(verbatim: app.name)
+                        .font(.headline)
+                        .foregroundStyle(Theme.ink)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                    if let pending = actions.pending[app.id] {
+                        PendingActionLine(app: app, pending: pending)
+                            .font(.subheadline)
+                            .lineLimit(1)
+                    } else {
+                        Text(verbatim: line.words)
+                            .font(.subheadline)
+                            .foregroundStyle(line.tone == .bad ? Theme.danger : Theme.secondaryInk)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
+                    }
+                }
+                .frame(maxWidth: .infinity)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityHint("Opens its page")
+            button
+                .frame(minHeight: 34)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity)
+        .card()
+        .accessibilityElement(children: .contain)
+    }
+
+    @ViewBuilder
+    private var button: some View {
+        if actions.stoppedOffer(for: app) == .start, actions.pending[app.id] == nil {
+            Button { actions.request(.start, on: app) } label: {
+                Label(AppAction.start.title, systemImage: AppAction.start.systemImage)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(Theme.accentFill)
+            .buttonBorderShape(.capsule)
+            .controlSize(.small)
+            .font(.subheadline.weight(.semibold))
+            .disabled(actions.isBusy)
+        } else if app.isRunning, let address = app.address, let url = AppDetailView.httpsURL(address) {
+            Button { openURL(url) } label: {
+                Label("Open", systemImage: "arrow.up.right")
+            }
+            .buttonStyle(.bordered)
+            .buttonBorderShape(.capsule)
+            .controlSize(.small)
+            .font(.subheadline.weight(.semibold))
+        } else {
+            Color.clear.frame(height: 1)
+        }
+    }
+}
+
+/// A catalog app not on this machine yet, faded: its logo, its name and what it does.
+struct ShelfTile: View {
+    let entry: CatalogEntry
+
+    var body: some View {
+        VStack(spacing: 6) {
+            AppLogo(id: entry.id, size: 58)
+            Text(verbatim: entry.name)
+                .font(.headline)
+                .foregroundStyle(Theme.ink)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+            Text(verbatim: entry.description)
+                .font(.subheadline)
+                .foregroundStyle(Theme.secondaryInk)
+                .multilineTextAlignment(.center)
+                .lineLimit(2)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(14)
+        .card()
+        .opacity(0.55)
+        .accessibilityElement(children: .combine)
+        .accessibilityHint("Add it on the computer")
     }
 }
 
