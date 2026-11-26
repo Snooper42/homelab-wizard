@@ -3454,7 +3454,7 @@ table.copies td.nights .dot { margin:0 0 0 3px; }
 /* A category's page on Status (status/CategoryPage.tsx, the owner's computer-category pictures): the overview steps aside
    while one shows; big tiles three across (two on a phone), see-through on a soft violet and teal glow; the apps to add
    faded, with a dashed edge. */
-#status:not([data-part]) > #statusPart, #status[data-part] > :not(#statusPart, #statusChips, #statusStore), #status:not([data-part="add"]) > #statusStore { display:none !important; }
+#status:not([data-part]) > #statusPart, #status[data-part] > :not(#statusPart, #statusChips, #statusStore, #analyticsMore, #subscriptionsMore), #status:not([data-part="add"]) > #statusStore, #status:not([data-part="analytics"]) > #analyticsMore, #status:not([data-part="subscriptions"]) > #subscriptionsMore { display:none !important; }
 main:has(> #status.active[data-part]) { background:radial-gradient(60% 40% at 25% 0, color-mix(in srgb, var(--violet) 10%, transparent), transparent 70%), radial-gradient(50% 40% at 100% 100%, color-mix(in srgb, var(--cyan) 8%, transparent), transparent 70%), var(--bg); }
 .catpage { --cat-tile:color-mix(in srgb, var(--panel) 72%, transparent); --cat-edge:var(--line); }
 .catpage .row.header { align-items:flex-start; }
@@ -3554,14 +3554,25 @@ nav .sidemenulist .sidedot + .total { margin-left:8px; }
 @media (max-width: 700px) { html.companion nav .sidemenu { display:none !important; } }
 #statusChips { display:none; }
 @media (max-width: 700px) {
-  html.companion #statusChips { display:block; margin:0 0 12px; }
-  html.companion #statusChips .sidemenulist { display:flex; flex-direction:row; flex-wrap:wrap; gap:6px; list-style:none; margin:0; padding:0; }
-  #statusChips .finmenuitem { display:inline-flex; align-items:center; gap:5px; white-space:nowrap; min-height:36px; padding:4px 12px; border:1px solid var(--line); border-radius:999px; background:var(--panel); color:var(--text); font:inherit; font-size:13px; max-width:100%; }
-  #statusChips .finmenuitem > span:first-of-type { overflow:hidden; text-overflow:ellipsis; }
-  #statusChips .finmenuitem.on { background:var(--text); color:var(--bg); border-color:transparent; }
-  #statusChips .finmenuitem .icon { display:none; }
-  #statusChips .total { color:inherit; opacity:.6; font-size:12px; }
-  #statusChips .sidedot { width:7px; height:7px; border-radius:50%; background:var(--amber); }
+  html.companion #statusChips { display:block; margin:0 0 14px; }
+  /* First on every Status page; on the overview its heading and Find an app above it. */
+  html.companion #status.active { display:flex; flex-direction:column; }
+  html.companion #status:not([data-part]) > .row.header { order:-1; }
+  html.companion .catpage > .crumbs { display:none; }
+  .sidedrop { position:relative; }
+  .sidedropbtn { display:flex; align-items:center; gap:10px; width:100%; min-height:44px; padding:8px 14px; border:1px solid var(--line); border-radius:12px; background:var(--panel); color:var(--text); font:inherit; font-size:15px; font-weight:600; text-align:left; }
+  .sidedropbtn > span:first-of-type { flex:1; }
+  .sidedropbtn .chev { color:var(--muted); transition:none; }
+  .sidedrop.open .sidedropbtn .chev { transform:rotate(180deg); }
+  .sidedrop .sidedot { width:8px; height:8px; border-radius:50%; background:var(--amber); }
+  .sidedrop .sidemenulist { position:absolute; z-index:20; left:0; right:0; top:calc(100% + 6px); max-height:60vh; overflow:auto; margin:0; padding:6px; list-style:none; display:flex; flex-direction:column; gap:1px; border:1px solid var(--line); border-radius:14px; background:var(--panel); box-shadow:0 12px 30px var(--shade-2); }
+  .sidedrop .finmenuitem { display:flex; align-items:center; gap:12px; width:100%; min-height:44px; padding:8px 10px; border:0; border-radius:9px; background:none; color:var(--text); font:inherit; font-size:15px; text-align:left; }
+  .sidedrop .finmenuitem.on { background:var(--sunken); font-weight:600; }
+  .sidedrop .finmenuitem .icon { width:18px; height:18px; color:var(--muted); }
+  .sidedrop .finmenuitem.on .icon { color:var(--fin-accent); }
+  .sidedrop .total { margin-left:auto; color:var(--muted); font-size:13px; font-variant-numeric:tabular-nums; }
+  .sidedrop .sidedot + .total { margin-left:8px; }
+  .sidedrop .finmenuitem .sidedot { margin-left:auto; }
 }
 /* Installing (choose/InstallSheet.tsx): the app's page atop the plan, in a sheet; Find an app on the overview; a tile to
    add opens its sheet; Your own apps' Add tile. */
@@ -3631,3 +3642,130 @@ nav .sidemenulist .sidedot + .total { margin-left:8px; }
   #settings .savebar { background:color-mix(in srgb, var(--fin-night) 55%, transparent); }
 }
 .statusfind { border-color:var(--line); background:color-mix(in srgb, var(--panel) 72%, transparent); }
+/* The overview (the owner's web-wide pictures): Apps, Backups and the machine as three cards of one anatomy, as
+   Analytics' (title row, one figure, one line, a footer at the same height); then the categories as one panel, two
+   columns. Show every app shows the whole list in the panel's place. */
+#tiles.tiles { grid-template-columns:repeat(3, minmax(0, 1fr)); margin:4px 0 16px; }
+#tiles .ovcard { display:flex; flex-direction:column; min-height:204px; padding:18px 20px; border-radius:20px; }
+#tiles .anthead h2 { margin:0; font-size:15px; font-weight:600; }
+#tiles .antfig .muted { font-size:16px; font-weight:500; letter-spacing:0; margin-left:4px; }
+#tiles .antfig.warn { color:var(--warn); }
+#tiles .antline .warn { color:var(--warn); }
+#tiles .ovtitle { font:inherit; font-weight:600; font-size:15px; color:var(--text); padding:0; }
+#tiles .ovtitle:hover { color:var(--link); }
+.ovacts { display:flex; flex-wrap:wrap; gap:8px; align-items:center; min-width:0; }
+.ovacts button.primary.small { display:inline-flex; align-items:center; gap:6px; }
+.ovacts .icon { width:13px; height:13px; }
+.ovdays { display:flex; gap:5px; width:100%; height:34px; }
+.ovdays i { flex:1; border-radius:6px; background:var(--ok); opacity:.85; }
+.ovdays i.warn { background:var(--warn); } .ovdays i.bad { background:var(--bad); } .ovdays i.none, .ovdays i:not(.ok):not(.warn):not(.bad) { background:var(--line-strong); }
+.ovdays.fourteen { gap:3px; } .ovdays.fourteen i { border-radius:4px; }
+.ovmachine { gap:12px; }
+.ovbar { flex:1; display:flex; flex-direction:column; gap:6px; min-width:0; }
+.ovbar .antbar { flex:none; height:8px; }
+#status:not(.listview) table.grouped { display:none; }
+#status.listview #statusPanel { display:none; }
+.ovpanel { padding:8px 20px; border-radius:20px; margin-bottom:16px; }
+.ovrows { list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); column-gap:44px; }
+.ovrows li { border-bottom:1px solid var(--line); }
+.ovrow { all:unset; box-sizing:border-box; display:flex; align-items:center; gap:14px; width:100%; padding:14px 0; cursor:default; }
+.ovrow:focus-visible { outline:2px solid var(--accent); outline-offset:2px; border-radius:8px; }
+.ovrow:hover strong { color:var(--link); }
+.ovlogos { display:flex; flex:none; }
+.ovlogos .appmark.mini { width:34px; height:34px; border-radius:9px; margin-right:-6px; box-shadow:0 0 0 2px var(--panel); }
+.ovname { flex:1; min-width:0; display:flex; flex-direction:column; margin-left:8px; }
+.ovname strong { font-size:15px; }
+.ovname .muted { font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.ovrow > .icon { color:var(--muted); }
+@container (max-width: 860px) { #tiles.tiles { grid-template-columns:1fr; } #tiles .ovcard { min-height:0; } .ovrows { grid-template-columns:minmax(0, 1fr); } }
+@media (max-width: 700px) { #tiles.tiles { grid-template-columns:1fr; } .ovrows { grid-template-columns:minmax(0, 1fr); } .ovpanel { padding:4px 14px; } .ovrow { gap:10px; } .ovname { margin-left:4px; } .ovrow .pill { padding:2px 8px; } }
+#tiles .ovcard { background:color-mix(in srgb, var(--panel) 78%, transparent); border:1px solid var(--line); box-shadow:none; backdrop-filter:blur(12px); }
+@media (prefers-color-scheme: dark) and (prefers-contrast: no-preference) { #tiles .ovcard { background:var(--glow-04); border-color:var(--glow-1); } }
+@media (prefers-contrast: more) { #tiles .ovcard { background:var(--panel); border-color:var(--line-strong); } }
+/* Status › Subscriptions (status/Subscriptions.tsx): the three cards as Analytics', then each service an app replaces,
+   a row each: the app's logo and name over what it's instead of, Direct or Equivalent, a month, a year, and what it
+   takes on a line under; the ones not running yet faded. */
+.subpage .card { padding:18px 20px; border-radius:20px; margin-bottom:14px; }
+.subpage .anttiles .card { margin:0; }
+.subcard h2 { margin:0 0 6px; font-size:15px; font-weight:600; }
+.subcard h2 .n { margin-left:6px; color:var(--muted); font-weight:500; }
+.sublist { list-style:none; margin:0; padding:0; }
+.subrow { display:grid; grid-template-columns:minmax(0, 1fr) auto 120px 120px; align-items:center; column-gap:16px; padding:12px 0; border-top:1px solid var(--line); }
+.subrow:first-child { border-top:0; }
+.subrow.faded .subapp, .subrow.faded .subprice { opacity:.75; }
+.subapp { all:unset; box-sizing:border-box; display:flex; align-items:center; gap:12px; min-width:0; cursor:default; }
+.subapp:hover strong { color:var(--link); } .subapp:focus-visible { outline:2px solid var(--accent); outline-offset:2px; border-radius:8px; }
+.sublogos { display:flex; flex:none; } .sublogos .appmark.mini { width:32px; height:32px; border-radius:9px; margin-right:-6px; box-shadow:0 0 0 2px var(--panel); }
+.subnames { display:flex; flex-direction:column; min-width:0; margin-left:6px; }
+.subnames .muted { font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.subprice { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.subprice .muted { font-size:12px; }
+.subwhen { grid-column:1 / -1; font-size:12px; margin:4px 0 0 50px; }
+@container (max-width: 760px) { .subrow { grid-template-columns:minmax(0, 1fr) auto; } .subrow .subprice:last-of-type { display:none; } .subwhen { margin-left:0; } }
+@media (max-width: 700px) { .subrow { grid-template-columns:minmax(0, 1fr) auto; } .subrow .pill { display:none; } .subrow .subprice:last-of-type { display:none; } .subwhen { margin-left:0; } }
+.subtop { display:grid; grid-template-columns:minmax(0, 3fr) minmax(0, 2fr); gap:14px; margin-bottom:14px; }
+.subtop .card { margin:0; }
+.subbar { display:flex; height:14px; border-radius:999px; overflow:hidden; margin:14px 0 14px; background:var(--sunken); }
+.subbar > span { display:block; height:100%; }
+.subbar > span + span { box-shadow:inset 2px 0 0 var(--panel); }
+.sublegend { list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:8px 24px; font-size:13px; }
+.sublegend li { display:flex; align-items:center; gap:8px; }
+.sublegend i { width:10px; height:10px; border-radius:3px; flex:none; }
+.sublegend strong { margin-left:auto; font-variant-numeric:tabular-nums; }
+.subnext { list-style:none; margin:6px 0 0; padding:0; }
+.subnext li + li { border-top:1px solid var(--line); }
+.subnext .subapp { width:100%; padding:10px 0; }
+.subnext .subprice { margin-left:auto; }
+@container (max-width: 860px) { .subtop { grid-template-columns:1fr; } }
+@media (max-width: 700px) { .subtop { grid-template-columns:1fr; } .sublegend { grid-template-columns:1fr; } }
+/* A paid service as a tile: its mark and name, its price, and the apps standing in for it (the owner, Nov 25). */
+.subtiles { list-style:none; margin:8px 0 0; padding:0; display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:12px; }
+.subtile { display:flex; flex-direction:column; gap:12px; padding:16px; border:1px solid var(--line); border-radius:16px; background:color-mix(in srgb, var(--panel) 60%, transparent); }
+.subtile.faded { border-style:dashed; }
+.subtile.faded .subsvc, .subtile.faded .subcost { opacity:.75; }
+.subsvc { display:flex; align-items:center; gap:12px; min-width:0; }
+.subsvc .fmark.lg { width:44px; height:44px; border-radius:12px; flex:none; }
+.subsvcname { display:flex; flex-direction:column; align-items:flex-start; gap:4px; min-width:0; }
+.subsvcname strong { font-size:15px; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.subcost { font-variant-numeric:tabular-nums; }
+.subbig { font-size:26px; font-weight:700; letter-spacing:-.02em; }
+.subyear { display:block; color:var(--muted); font-size:13px; }
+.subby { all:unset; box-sizing:border-box; display:flex; flex-direction:column; gap:6px; margin-top:auto; padding-top:12px; border-top:1px solid var(--line); cursor:default; }
+.subby:focus-visible { outline:2px solid var(--accent); outline-offset:2px; border-radius:6px; }
+.subby > .muted { font-size:12px; }
+.subapps { display:flex; flex-wrap:wrap; gap:6px 14px; }
+.subappname { display:inline-flex; align-items:center; gap:8px; font-weight:600; font-size:14px; }
+.subappname .appmark.mini { width:26px; height:26px; border-radius:7px; }
+.subby:hover .subappname { color:var(--link); }
+@container (max-width: 980px) { .subtiles { grid-template-columns:repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 700px) { .subtiles { grid-template-columns:1fr; } }
+@media (prefers-color-scheme: dark) and (prefers-contrast: no-preference) { .subtile { background:var(--glow-04); border-color:var(--glow-1); } .subby { border-color:var(--glow-1); } }
+/* The phone's page on a wide window wears the computer's sidebar exactly (the owner, Nov 25: "mimic the computer app…
+   this exact look and admin feel"): the same rules as above, for html.companion from 701px; narrower keeps its tab bar. */
+@media (min-width: 701px) {
+  html.companion .brand small { display:none; }
+  html.os-mac.companion nav button { border-radius:9px; border:1px solid transparent; }
+    html.os-mac.companion .brand { font-size:14px; margin:0 8px 18px; }
+    html.os-mac.companion nav button { padding:7px 10px; gap:10px; font-size:14px; }
+  html.os-mac.companion nav button .icon { width:18px; height:18px; padding:0; border-radius:0; background:none; box-shadow:none; color:inherit; stroke-width:1.8; }
+  html.os-mac.companion nav button:hover { background:var(--shade-05); }
+  html.os-mac.companion nav button.active, html.os-mac.companion nav .finmenuitem.on { background:var(--panel); border-color:var(--line); box-shadow:0 1px 2px var(--shade-06); font-weight:500; }
+  html.os-mac.companion nav :is(button.active, .finmenuitem.on) .icon { color:var(--fin-accent); }
+  html.companion nav .count { background:var(--warn-soft); color:var(--warn); font-weight:700; box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--warn) 18%, transparent); }
+  html.companion .foot .machine { display:flex; align-items:center; gap:7px; }
+  html.companion .foot .machine .dot { width:7px; height:7px; border-radius:50%; flex:none; background:var(--ok); }
+  html.companion .foot .machine .dot.warn { background:var(--warn); }
+  html.companion .foot .machine .dot.bad { background:var(--bad); }
+  html.os-mac.companion .foot { border-top:1px solid var(--shade-1); padding-top:9px; margin-left:4px; margin-right:4px; }
+  @media (prefers-color-scheme: dark) {
+    html.os-mac.companion nav button:hover { background:var(--glow-06); }
+    html.os-mac.companion nav button.active, html.os-mac.companion nav .finmenuitem.on { background:var(--glow-1); box-shadow:none; }
+    html.os-mac.companion .foot { border-top-color:var(--glow-1); }
+  }
+}
+/* The phone's page in iPhone Safari stays put (the owner, Nov 25: "super bouncy, it doesn't stick to a side"): the page
+   itself never rubber-bands or pans sideways; only main scrolls, up and down, and no further than its end. A wide table
+   or chart still scrolls sideways inside its own box; pinch-zoom still works. */
+html.companion, html.companion body { overscroll-behavior:none; overflow:hidden; width:100%; height:100%; }
+html.companion main { overscroll-behavior:contain; overflow-x:hidden; overflow-x:clip; touch-action:pan-y pinch-zoom; -webkit-overflow-scrolling:touch; }
+html.companion main > .screen { max-width:100%; overflow-x:clip; }

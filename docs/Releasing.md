@@ -49,7 +49,7 @@ Each build carries where it came from: `-ldflags` set `main.version`, `main.comm
 
 ## Opening an unsigned build
 
-Until the Developer ID secrets are in place, the Mac app is signed ad hoc, which macOS blocks for downloads. After dragging it to Applications, clear the download flag once:
+Until the Developer ID secrets are in place, the Mac app is signed ad hoc (or with your own certificate: [A lasting signature for free](#a-lasting-signature-for-free)), which macOS blocks for downloads. After dragging it to Applications, clear the download flag once:
 
 ```sh
 xattr -dr com.apple.quarantine "/Applications/Homelab Wizard.app"
@@ -70,7 +70,19 @@ Add these in the repository's Settings › Secrets and variables › Actions. Ne
 | `APPLE_APP_PASSWORD` | An app-specific password from account.apple.com |
 | `WINDOWS_CERT_PFX`, `WINDOWS_CERT_PASSWORD` | A code-signing certificate as base64 .pfx, and its password |
 
-macOS signing needs the Apple Developer Program. On Windows, code-signing certificates issued since mid-2023 keep their key on hardware or in a cloud signing service, so most cannot be exported as .pfx. With one of those, replace the "Sign the app" step with the provider's signing tool (for example Microsoft's cloud signing service and its GitHub action). The Microsoft Store is the other route: the Store signs MSIX packages itself, so no certificate is needed, but the MSIX package is not built yet.
+macOS signing with a Developer ID needs the Apple Developer Program. Without it, a certificate of your own does most of the job for free (below).
+
+### A lasting signature for free
+
+A build signed ad hoc gets a new signature each time, so macOS takes every update for a new app: it asks again to read the drives, and the agent waits for approval at login (*Looks after the homelab: Stopped*). A self-signed certificate is the same signer on every build, so what you allowed stays allowed. It's made once, on the Mac, in about five minutes:
+
+1. **Keychain Access › Certificate Assistant › Create a Certificate…**: name it `Homelab Wizard Signing`, Identity Type **Self Signed Root**, Certificate Type **Code Signing**, then **Create**.
+2. In Keychain Access, **login › My Certificates**: right-click **Homelab Wizard Signing › Export…**, save it as `HomelabSigning.p12`, and give it a password.
+3. In Terminal: `base64 -i HomelabSigning.p12 | pbcopy` (from the folder you saved it in) copies it.
+4. On GitHub, **Settings › Secrets and variables › Actions › New repository secret**, three times: `MACOS_CERT_P12` (paste), `MACOS_CERT_PASSWORD` (the password), and `MACOS_SIGN_IDENTITY` (`Homelab Wizard Signing`). Leave `APPLE_ID` unset: the release then signs with your certificate, without the hardened runtime or a timestamp, and skips notarizing.
+5. Delete `HomelabSigning.p12` from where you saved it; the certificate stays in your keychain.
+
+The first update signed this way asks once more (the signer changed); every update after keeps what you allowed. macOS still stops the app the first time it's downloaded (Open Anyway, as above), since only a Developer ID removes that. The self-updater keeps a Developer ID's team from build to build; a self-signed build has no team, so it takes updates as before. On Windows, code-signing certificates issued since mid-2023 keep their key on hardware or in a cloud signing service, so most cannot be exported as .pfx. With one of those, replace the "Sign the app" step with the provider's signing tool (for example Microsoft's cloud signing service and its GitHub action). The Microsoft Store is the other route: the Store signs MSIX packages itself, so no certificate is needed, but the MSIX package is not built yet.
 
 Linux packages are not signed; the checksums and build provenance cover them.
 

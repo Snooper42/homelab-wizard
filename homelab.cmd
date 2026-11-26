@@ -7,6 +7,11 @@ set "ROOT=%ROOT:~0,-1%"
 set "BIN=%ROOT%\bin\homelab.exe"
 set "VERSION=dev"
 if exist "%ROOT%\VERSION" set /p VERSION=<"%ROOT%\VERSION"
+rem The newest release this checkout has (its v0.42.8 tag), as the release
+rem builds and the iPhone app number it; VERSION in a copy without tags.
+set "TAG="
+for /f "delims=" %%T in ('git -C "%ROOT%" tag --list "v*" --merged HEAD --sort=-v:refname 2^>nul ^| findstr /r /x "v[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*"') do if not defined TAG set "TAG=%%T"
+if defined TAG set "VERSION=%TAG:~1%"
 where go >nul 2>nul
 if %errorlevel%==0 goto build
 if exist "%BIN%" goto run

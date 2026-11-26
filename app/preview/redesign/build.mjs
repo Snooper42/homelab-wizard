@@ -23,6 +23,7 @@ await import('./finances.mjs');
 await import('./phone.mjs');
 await import('./backups-settings.mjs');
 await import('./tidy.mjs');
+await import('./web.mjs');
 
 const require = createRequire(import.meta.url);
 let chromium;
@@ -33,8 +34,11 @@ try {
 }
 
 // Page file, picture name.
-const computer = [['dashboard', 'computer-finances'], ['transactions', 'computer-transactions'], ['backups', 'computer-backups'], ['settings', 'computer-settings'], ['tidy', 'computer-tidy']];
-const phone = [['phone-finances', 'phone-finances'], ['phone-transactions', 'phone-transactions'], ['phone-status', 'phone-status'], ['phone-jordan', 'phone-partner'], ['phone-backups', 'phone-backups'], ['phone-settings', 'phone-settings']];
+const computer = [['dashboard', 'computer-finances'], ['transactions', 'computer-transactions'], ['backups', 'computer-backups'], ['settings', 'computer-settings'], ['tidy', 'computer-tidy'], ['computer-category', 'computer-category'], ['web-wide', 'web-wide'], ['web-wide-ok', 'web-wide-ok'], ['web-analytics', 'web-analytics'], ['web-category', 'web-category']];
+const phone = [['phone-finances', 'phone-finances'], ['phone-transactions', 'phone-transactions'], ['phone-status', 'phone-status'], ['phone-jordan', 'phone-partner'], ['phone-backups', 'phone-backups'], ['phone-settings', 'phone-settings'], ['web-status', 'web-status'], ['web-app', 'web-app'], ['web-push', 'web-push'], ['web-category-phone', 'web-category-phone'], ['web-analytics-phone', 'web-analytics-phone']];
+
+// The iPhone Duo unfolded, upright (about 669 × 951, reported: .claude/prompts/web-loop.md).
+const duo = [['web-category-duo', 'web-category-duo']];
 
 const browser = await chromium.launch();
 const loaded = (page) => page.waitForFunction(() => [...document.images].every((i) => i.complete && i.naturalWidth > 0), null, { timeout: 10000 });
@@ -51,6 +55,13 @@ for (const scheme of ['light', 'dark']) {
     await loaded(full);
     await full.screenshot({ path: join(pics, `${name}-full${suffix}.png`), fullPage: true });
     await full.close();
+  }
+  for (const [file, name] of duo) {
+    const page = await browser.newPage({ viewport: { width: 669, height: 951 }, colorScheme: scheme, deviceScaleFactor: 2 });
+    await page.goto(pathToFileURL(join(html, file + '.html')).href);
+    await loaded(page);
+    await page.screenshot({ path: join(pics, `${name}${suffix}.png`) });
+    await page.close();
   }
   for (const [file, name] of phone) {
     const page = await browser.newPage({ viewport: { width: 390, height: 844 }, colorScheme: scheme, deviceScaleFactor: 2 });

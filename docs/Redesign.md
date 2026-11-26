@@ -42,6 +42,8 @@ Every screen is built from the same few parts. A screen that matches its picture
 - **Rows inside a card** have a logo or icon on the left, a name with a short line under it, and the amount or the action on the right.
 - **Every card opens what it summarises** (its ↗).
 - **Nothing empty:** a card's height comes from what it holds; no tall card beside a short one leaving a hole.
+- **Cards in a row are built the same way** (the owner, Nov 25: *"we need to stop doing that"*, of three cards on a row each laid out differently): the title row, then **one figure on the same line in every card**, then **one line under it**, then a **footer pinned to the bottom at the same height** (the buttons, the nights, a bar). **No boxes inside a card**, no text that wraps in a figure, no empty band under one card's content where its neighbour has more. If one card has more to say, it goes behind its ↗, not into the card.
+- **Every card is drawn in every state it can be in** (the owner, Nov 25: *"what's gonna happen to that box … once we start it up again"*): all well, one problem, several, no data yet. A card never appears, disappears or changes size when the state changes; only what's inside it does. A card *about* a problem ("Stopped", "Decypharr") isn't a card: the card is the thing the problem belongs to (Apps), and the problem is its state.
 
 ### The computer's sidebar
 
@@ -134,6 +136,74 @@ Leads with what happened and what needs you: Today (each download filed, with Un
 - **A partner's Finances:** her own paycheck, **Shared with …** from her side (what to send, Mark sent, what she pays herself), and SimpleFIN offered as hers to turn on ([whole](<images/redesign/phone-partner-full.png>)).
 - **Backups** and **Settings:** the computer's, in one column ([Backups whole](<images/redesign/phone-backups-full.png>), [Settings whole](<images/redesign/phone-settings-full.png>)).
 
+### The phone's page
+
+How far the phone's page (`homelab serve`) can go toward the Homelab app, drawn on a server's homelab: tailnet only, with streaming apps added as its own (Nov 25, from a tester's server). It's the desktop app's own screens, so every screen above reaches it; these four show what it adds.
+
+<p>
+<picture><source media="(prefers-color-scheme: dark)" srcset="images/redesign/web-status-dark.png"><img alt="The phone's page on an iPhone, added to the Home Screen: Status with alerts offered, the stopped app, Backups and the server, and each category" src="images/redesign/web-status.png" width="200"></picture>
+<picture><source media="(prefers-color-scheme: dark)" srcset="images/redesign/web-app-dark.png"><img alt="An app's page on the phone's page: Immich with Open, Restart, Logs and Stop, its week, its backups, and its last update with Roll back" src="images/redesign/web-app.png" width="200"></picture>
+<picture><source media="(prefers-color-scheme: dark)" srcset="images/redesign/web-push-dark.png"><img alt="The Lock Screen with two alerts from the phone's page: an app stopped, and last night's backup" src="images/redesign/web-push.png" width="200"></picture>
+</p>
+
+<picture><source media="(prefers-color-scheme: dark)" srcset="images/redesign/web-wide-dark.png"><img alt="The phone's page on a tablet: the computer's sidebar with the screens as a strip of icons and Status' own menu, then the stopped app, Backups, the server, and each category" src="images/redesign/web-wide.png"></picture>
+
+<picture><source media="(prefers-color-scheme: dark)" srcset="images/redesign/web-wide-ok-dark.png"><img alt="The same page with every app running: Apps says 18 running, all answering, with the last fourteen days as squares (one amber), in the place where Start and Logs were" src="images/redesign/web-wide-ok.png"></picture>
+
+**Status' first card is Apps, always.** All well: how many run, *All answering · 1 outage in 14 days*, and the last fourteen days as squares (amber on a day any app was down), as Backups shows its nights. Something stopped: the figure turns amber (*17 of 18 running*), the line names it with its logo (*Decypharr stopped 20 min ago*), and the footer becomes **Start**, **Logs** and ⋯ (two or more: **Start all** and **See them**). Start it and the card goes back without moving.
+
+- **Status:** the phone's Status above, with the server in place of This Mac, and **Alerts on this phone** offered once.
+- **An app's page:** a back button and its own title; Open, Restart, Logs and Stop; its week, its backups (with Get something back), its last update with Roll back.
+- **Alerts:** Web Push to the page added to the Home Screen (iOS 16.4 and later), from the alerts the computer already keeps, quiet hours kept. No Apple Developer account needed, unlike the app's push.
+- **On a tablet or a wide window:** the computer's sidebar, the screens as a strip of icons then Status' own menu: **Overview, then each category, your own apps last** (a box, never a +, which read as *add an app* in the middle of the list). **No *Stopped* item** (the owner, Nov 25): a category holding a stopped app shows an amber dot by its count, and Status' badge on the strip still counts it; today the phone's page keeps the old list above 700 px (every strip rule is `html:not(.companion)`, and the screens mount no menu on the phone).
+
+#### A category's page: the apps as a home screen
+
+The owner, Nov 25: click a category in Status' menu (Network, Media, …) and get its apps as tiles, three across, with CasaOS's dashboard as the reference (its ideas only, never its look, words or pictures; its own screenshot is in its repository's README). After two passes the owner liked this one: **the icon is the hero**, the tiles are light and see-through over a soft backdrop, and the live numbers live in widgets rather than on every tile.
+
+<picture><source media="(prefers-color-scheme: dark)" srcset="images/redesign/web-category-dark.png"><img alt="Media's page on a tablet: On this server, three big-icon tiles (Jellyfin and Jellystat running with Open, jfa-go stopped with Start); Add to Media, every Media app not installed, three across, each with Install" src="images/redesign/web-category.png"></picture>
+
+<p>
+<picture><source media="(prefers-color-scheme: dark)" srcset="images/redesign/web-category-duo-dark.png"><img alt="Media's page on the iPhone Duo unfolded upright: three tiles across, the tab bar at the foot" src="images/redesign/web-category-duo.png" width="300"></picture>
+<picture><source media="(prefers-color-scheme: dark)" srcset="images/redesign/web-category-phone-dark.png"><img alt="Media's page on a phone: two tiles across" src="images/redesign/web-category-phone.png" width="200"></picture>
+</p>
+
+- **A tile:** the app's logo, big (64 px; 56 on a phone) and centred; its name; one short live line (*2 watching now*, *Up 6 days*, *Stopped 20 min ago*); one small button, **Open** (or **Start**, in the accent, when stopped); a status dot top left (green running, amber stopped); ⋯ top right for the rest (Its page, Restart, Stop, Logs, Remove). Nothing else on the tile.
+- **No widgets on a category's page** (the owner, Nov 25: the machine's numbers *"need[s] its own dedicated analytics screen"*): only the title, *3 on this server · 2 running · 9 more to add*, and the apps. Processor, memory, drives and what each app uses live on **Analytics**, under Overview in Status' menu (its picture is being mocked on another account; lay it out from that, in this pattern).
+- **On this server**, then **Add to <category>**: **every** app of that category not installed (the owner, Nov 25: no *More* tile, show them all), faded with a dashed edge, each with **Install**, in the catalog's order. A long category simply scrolls; Find an app narrows it.
+- **The backdrop:** the page's own colour with two soft glows (violet top left, teal bottom right; lighter by day); tiles and widgets are translucent with a blur, a hairline edge, radius 20.
+- **Every app has a logo** (owner, Nov 25: *"add logos everywhere"*): the catalog's, or for your own apps the app's own icon (below, and `web-loop.md` W17); letters only while none is found.
+- **Three across** on a tablet, a wide window and the iPhone Duo unfolded; **two** on a phone.
+- **Install** on the phone's page waits for the owner's yes for Choose apps on the phone (W13).
+
+**On the computer too** (the owner, Nov 25: *"I want this incorporated into the computer app"*): Homelab Wizard's own window gets the same pages, with its full strip of screens and *On this Mac* ([the whole page](<images/redesign/computer-category-full-dark.png>)).
+
+<picture><source media="(prefers-color-scheme: dark)" srcset="images/redesign/computer-category-dark.png"><img alt="Media's page in Homelab Wizard on the computer: the strip of Choose apps, Status, Backups, Tidy Up and Finances; Status' menu with Analytics and each category; On this Mac, three tiles; Add to Media, every Media app to install" src="images/redesign/computer-category.png"></picture>
+
+#### Analytics
+
+The owner, Nov 25: the machine's numbers on a screen of their own, under Overview in Status' menu, not on every category ([the whole page](<images/redesign/web-analytics-full-dark.png>)).
+
+<picture><source media="(prefers-color-scheme: dark)" srcset="images/redesign/web-analytics-dark.png"><img alt="Analytics: Day, Week, Month on top; three cards built one way (processor 7% on average, busiest at the nightly backup; memory 11 of 32 GB, Immich uses the most; drives 3.4 TB free, both healthy); this week's processor and memory as one chart with each night's backups marked; what each app uses, heaviest first" src="images/redesign/web-analytics.png"></picture>
+
+<picture><source media="(prefers-color-scheme: dark)" srcset="images/redesign/web-analytics-phone-dark.png"><img alt="Analytics on a phone: Day, Week, Month; memory and processor cards; what each app uses" src="images/redesign/web-analytics-phone.png" width="200"></picture>
+
+- **Day, Week, Month** on top, changing every part of the page.
+- **Three cards built one way** (*Cards*, above): **Processor** (the average, when it was busiest and why: *the nightly backup*), **Memory** (in use of the total, the app that uses most with its logo), **Drives** (free space, health, *full in about 3 years* from the growth so far). Each footer is the last 24 hours as a line, scaled to its own range, or the drive's bar.
+- **This week**, two charts on one timeline: processor in %, memory in GB (never two units on one axis), the scale in a gutter on the right, each night's backup and updates as a dotted line so a spike explains itself.
+- **What each app uses**, heaviest first, the eight heaviest then **Show all**: its logo, memory now as a bar and a figure, **its week as a line** on a fair scale (half to one and a half times its usual, so a steady app reads flat and a growing one, like Immich as photos arrive, reads as growing), processor, and what it keeps on disk. A row opens the app's page. On a phone: memory and processor only.
+- **Figures with their units as one piece** (*7%*, *11 GB*, *3.4 TB*), the detail small after them.
+- Its data: `StatusBoard`'s `usage` and `storage`, the history the computer keeps (Beszel's where it runs, else the agent's own samples), and the jobs' times. Nothing new leaves the machine.
+
+#### Toward 1.0: an app store
+
+The owner, Nov 25: *"little by little once we reach 1.0 I could add more and more apps and this could become sort of like an App Store where anybody on any platform could just download this or access it via the web and then they could configure and add any apps they want."* So a category's *Add to …* half is the store's shelf, and every choice now should let it grow:
+
+- **The catalog grows without a release of the app:** apps described as data (`compose/`, `x-homelab`), so an added app reaches every homelab with the homelab files' update, and *Add to …* shows it.
+- **The same shelf everywhere:** the computer, the phone's page and the iPhone app all show a category's apps to add from the same catalog call; Install where the device may make changes.
+- **An app's store page:** what it does, its pictures, what it needs (memory, a domain, another app), what it replaces, and Install; reached from a tile's ⋯ or by tapping a faded tile.
+- **Anyone's app, safely:** your own apps (`homelab custom add`, the pasted compose file) stay the way to run something the catalog doesn't have; a shared catalog of other people's entries is a later decision (who reviews them, how they're signed), for the owner.
+
 ## Logos for every payee
 
 Every row in the pictures has its payee's logo; in the app today most imported payees are a letter. How the others do it:
@@ -172,6 +242,8 @@ Most of the redesign is the same data laid out again. These pieces need somethin
 | **Not in any backup** | Backups | Working out what's left out (Syncthing's folder today), and adding it |
 | **Each app's last nights** | Backups | Each night's result per app kept, if it isn't already |
 | **Comparison chips** | Every Finances card | The same figure for the period before |
+| **Web Push** | The phone's page, Lock Screen | The computer's own VAPID keys, a subscription per paired phone kept with it, the kept alerts sent to Apple's and the browsers' push services as well as ntfy, quiet hours honoured; the new outgoing hosts reviewed for security |
+| **The phone's page on a wide screen** | The phone's page on a tablet | The sidebar's strip and each screen's menu for `html.companion` above 700 px, sized to the screens a phone has; a phone in landscape keeps the tab bar |
 | **Logos for every payee** | Every row with a payee, on both systems | All of simple-icons and a merchant list built in; the opt-in logo service (above); a payee's website and a logo search; the category's mark when nothing is found |
 
 ## Still to decide
