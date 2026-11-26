@@ -598,6 +598,8 @@ const shots = [
   // The phone companion (homelab serve): the same screens at phone width.
   { name: 'phone', screen: 'status', phone: ['companion'] },
   { name: 'phone-backups', screen: 'backups', phone: ['companion', 'can-change'] },
+  // Settings › Alerts: quiet hours and where alerts go, then every alert sent, Snooze… on the one still failing.
+  { name: 'settings-alerts', screen: 'settings', mock: { watchdog: { ...watchdog, failing: [{ name: 'immich', problem: 'not answering', since: hoursAgo(0.3) }] }, alertLog: [{ id: 5, at: hoursAgo(0.3), topic: 'tunnel-watchdog', title: 'Homelab: something is down', body: 'immich: not answering', priority: 4, checks: ['immich'] }, ...alertLog] }, before: async (page) => { await page.click('#settingsNav .pagebtn[data-page="Alerts"]', { timeout: 5000 }); await page.waitForSelector('#alertHistoryCard li'); await page.evaluate(() => document.getElementById('alertHistoryCard').scrollIntoView({ block: 'start' })); } },
   { name: 'phones', screen: 'settings', before: async (page) => { await page.click('#settingsNav .pagebtn[data-page="Phones"]', { timeout: 5000 }); await page.click('#pairPhone'); await page.waitForSelector('#pairing img'); } },
   // An app's page, its log explained by the AI on this machine.
   { name: 'page', screen: 'app:vikunja', mock: { ...pageMock, explainer: 'llama3.2:latest', explained: { vikunja: 'Vikunja started cleanly, its database is up to date, and every recent request worked (HTTP 200). Nothing to do.' } }, before: async (page) => {
@@ -710,6 +712,43 @@ const smokes = [
   // Parity, part 3 (the owner, Nov 26: the same powers, as the web page answers only at home): on a device that may
   // change things, Settings has People and Phones, and a phone can be paired there; nothing is refused as the
   // computer's own. A device that only looks has neither.
+  // Settings › Alerts keeps every alert sent: each saying when it cleared or who snoozed it, until when; Snooze… on one
+  // whose watchdog check still fails, none on one that cleared, one about no check, or one whose check passes now; none on
+  // a phone that only looks. Off the other pages.
+  ...[[], ['companion', 'can-change'], ['companion']].map((phone) => ({ name: `Settings › Alerts lists the alerts sent, with Snooze on one still failing${phone.length ? (phone.includes('can-change') ? ', on a phone that may change things' : ', none on a phone that only looks') : ''}`, screen: 'settings', phone: phone.length ? phone : undefined,
+    mock: { watchdog: { ...watchdog, failing: [{ name: 'immich', problem: 'not answering', since: hoursAgo(0.3) }] }, alertLog: [{ id: 5, at: hoursAgo(0.3), topic: 'tunnel-watchdog', title: 'Homelab: something is down', body: 'immich: not answering', priority: 4, checks: ['immich'] }, ...alertLog] }, run: async (page) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    if (await page.isVisible('#alertHistoryCard')) throw new Error('Alerts sent shows off the Alerts page');
+    await page.click('#settingsNav .pagebtn[data-page="Alerts"]', { timeout: 5000 });
+    const card = page.locator('#alertHistoryCard');
+    await card.locator('h2:text-is("Alerts sent")').waitFor({ timeout: 5000 });
+    await card.locator('li').nth(4).waitFor({ timeout: 5000 });
+    const texts = await card.locator('li').allTextContents();
+    if (texts.length !== 5) throw new Error(`five kept: ${JSON.stringify(texts)}`);
+    if (!/Snoozed by Sam’s iPhone until/.test(texts[1].replace("'", '’'))) throw new Error(`who snoozed it: ${texts[1]}`);
+    if (!/Cleared at /.test(texts[3])) throw new Error(`when it cleared: ${texts[3]}`);
+    if (!texts[4].includes('rolled back')) throw new Error(`two days ago: ${texts[4]}`);
+    const picks = card.locator('select.snoozepick');
+    if (phone.length && !phone.includes('can-change')) {
+      if (await picks.first().isVisible().catch(() => false)) throw new Error('Snooze on a phone that only looks');
+      return;
+    }
+    // Only the open one: crowdsec bouncer passes now, vikunja cleared, the reminder is about no check.
+    const pick = card.locator('li').first().locator('select[aria-label="Snooze the alerts about immich"]');
+    await pick.waitFor({ state: 'visible', timeout: 3000 });
+    if ((await picks.count()) !== 1) throw new Error(`one Snooze: ${await picks.count()}`);
+    await pick.selectOption('1');
+    await card.locator('li').first().locator('select.snoozepick option:first-child:has-text("Snoozed until")').waitFor({ state: 'attached', timeout: 5000 });
+    if (!(await page.evaluate(() => window.__MOCK.calls.SnoozeCheck))) throw new Error('not snoozed');
+    if (phone.length) {
+      const refused = await page.evaluate(() => window.__MOCK.refused);
+      if (refused.length) throw new Error('refused as the computer\'s own: ' + [...new Set(refused)].join(', '));
+    }
+  } })),
+  { name: 'Settings › Alerts with no alert kept says so', screen: 'settings', mock: { alertLog: [] }, run: async (page) => {
+    await page.click('#settingsNav .pagebtn[data-page="Alerts"]', { timeout: 5000 });
+    await page.locator('#alertHistoryCard').getByText('No alerts yet.', { exact: false }).waitFor({ timeout: 5000 });
+  } },
   { name: 'The web page has Settings › People and Phones, and pairs a phone', screen: 'settings', phone: ['companion', 'can-change'], run: async (page) => {
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.click('#settingsNav .pagebtn[data-page="People"]', { timeout: 5000 });

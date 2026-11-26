@@ -6,6 +6,7 @@ import { mountGeneral } from '../settings/General';
 import { mountPeople, type PeopleActions, type PeopleProps } from '../settings/People';
 import { mountPhones, type PhonesActions } from '../settings/Phones';
 import { mountTailnetDevices } from '../settings/TailnetDevices';
+import { mountAlertHistory } from '../settings/AlertHistory';
 import { mountUninstall, type UninstallActions } from '../settings/Uninstall';
 import { store } from '../store';
 import { mountNav, mountPagePicker, type NavGroup } from '../settings/Nav';
@@ -61,6 +62,23 @@ async function loadTailnet() {
   try { devices = await go().TailnetDevices(); } catch { card.hidden = true; return; }
   card.hidden = !devices?.length;
   mountTailnetDevices(card, { devices: devices || [], open: (url) => { Promise.resolve(go().Open(url)).catch(showError); } });
+}
+
+// Alerts sent (Alerts' page): every alert the computer kept, with Snooze… on one whose check still fails, by
+// the watchdog's last run. Read when the page opens, and again after a snooze.
+let alertsRead = 0;
+async function loadAlertHistory(force = false) {
+  if (settingsPage !== 'Alerts' || (!force && Date.now() - alertsRead < 30000)) return;
+  alertsRead = Date.now();
+  const card = $('alertHistoryCard');
+  const [log, watch] = await Promise.all([
+    Promise.resolve(go().AlertLog()).then((a) => ({ a: a || [], err: '' }), (e) => ({ a: null, err: String(e?.message || e) })),
+    Promise.resolve(go().Watchdog()).catch(() => null),
+  ]);
+  mountAlertHistory(card, {
+    alerts: log.a, problem: log.err, watch,
+    snooze: async (check, hours) => { try { await go().SnoozeCheck(check, hours); } catch (e) { showError(e); } loadAlertHistory(true); },
+  });
 }
 
 const phonesActions: PhonesActions = {
@@ -415,7 +433,8 @@ function filterSettings() {
   mountForm($('settingsForm'), form, formVersion);
   const searching = !!form.view.query.trim();
   const sh = shownSettings(form.pages, form.view, form.wanted, form.label, form.checks);
-  for (const [id, name] of [['thisMacCard', thisMachine], ['appearanceCard', 'Appearance'], ['peopleCard', 'People'], ['phonesCard', 'Phones'], ['tailnetCard', 'Phones']]) $(id).classList.toggle('offpage', searching || settingsPage !== name);
+  for (const [id, name] of [['thisMacCard', thisMachine], ['appearanceCard', 'Appearance'], ['peopleCard', 'People'], ['phonesCard', 'Phones'], ['tailnetCard', 'Phones'], ['alertHistoryCard', 'Alerts']]) $(id).classList.toggle('offpage', searching || settingsPage !== name);
+  loadAlertHistory();
   if (!onPhone() && $('settingsNav').parentElement !== $('settingsSide')) $('settingsSide').appendChild($('settingsNav'));
   const nav = { groups: navGroups, active: settingsPage, counts: searching ? sh.counts : null, pick: pickSettingsPage };
   mountNav($('settingsNav'), nav);
