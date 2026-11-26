@@ -151,7 +151,11 @@ jobs:
           security import "$RUNNER_TEMP/cert.p12" -k "$kc" -P "$MACOS_CERT_PASSWORD" -T /usr/bin/codesign
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$pw" "$kc" >/dev/null
           security list-keychains -d user -s "$kc" $(security list-keychains -d user | tr -d '"')
-          sign() { codesign --force --options runtime --timestamp --sign "$MACOS_SIGN_IDENTITY" "$@"; }
+          # A Developer ID (APPLE_ID set too): the hardened runtime and a timestamp, for notarizing. A certificate of
+          # your own (no APPLE_ID; docs/Releasing.md, "A lasting signature for free"): the same signer on every build,
+          # so macOS keeps what you allowed (the drives, the agent at login) across updates; nothing to notarize.
+          flags=""; [ -n "$APPLE_ID" ] && flags="--options runtime --timestamp"
+          sign() { codesign --force $flags --sign "$MACOS_SIGN_IDENTITY" "$@"; }
           sign app/build/bin/*.app/Contents/Helpers/homelab-tray
           sign app/build/bin/*.app/Contents/Library/LoginItems/*.app
           sign app/build/bin/*.app build/cli/*
@@ -167,7 +171,8 @@ jobs:
           hdiutil create -volname "Homelab Wizard" -srcfolder "$stage" -ov -format UDZO dist/Homelab-Wizard-macOS.dmg
           for f in build/cli/*; do ditto -c -k "$f" "dist/$(basename "$f").zip"; done
           if [ -n "$MACOS_CERT_P12" ]; then
-            codesign --force --timestamp --sign "$MACOS_SIGN_IDENTITY" dist/Homelab-Wizard-macOS.dmg
+            stamp=""; [ -n "$APPLE_ID" ] && stamp="--timestamp"
+            codesign --force $stamp --sign "$MACOS_SIGN_IDENTITY" dist/Homelab-Wizard-macOS.dmg
           fi
       - name: Notarize
         if: env.MACOS_CERT_P12 != '' && env.APPLE_ID != ''
