@@ -503,7 +503,8 @@ html.companion:not(.can-change) .snoozepick { display:none; }
 #memoryPressure .alertlist button.memstop { margin-left:8px; }
 
 html.companion #choose, html.companion:not(.finances) #finances, html.companion:not(.finances) nav button[data-screen="finances"], html.companion nav button[data-screen="choose"], html.companion nav button[data-screen="setup"], html.companion.kiosk nav button[data-screen="settings"], html.companion.kiosk #settings, html.companion nav button[data-screen="tidy"], html.companion #tidy { display:none; }
-html.companion #settings :is(.reportrow, #reportLog, #reportActions, #uninstallCard, #appearanceCard, #peopleCard, #phonesCard, #tailnetCard) { display:none !important; }
+html.companion #settings :is(.reportrow, #reportLog, #reportActions, #appearanceCard) { display:none !important; }
+html.companion:is(:not(.can-change), .kiosk) #settings :is(#uninstallCard, #peopleCard, #phonesCard) { display:none !important; }
 html.companion:not(.can-change) #saveSettings { display:none !important; }
 html.companion:not(.can-change) .menuwrap, html.companion.kiosk .menuwrap, html.companion #moveCard, html.companion:not(.can-change) .rowActions button.small:not(.rowmain) { display:none; }
 html.companion:not(.can-change) #updateAll { display:none; }
