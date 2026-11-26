@@ -24,7 +24,7 @@ const phoneMethods = (() => {
   const names = [...body.slice(0, body.indexOf('\n}\n')).matchAll(/^\t\t"([A-Z][A-Za-z]+)":/gm)].map((m) => m[1]);
   if (!names.includes('StatusBoard') || !names.includes('Host')) throw new Error('could not read the phone\'s methods from serve.go: ' + names);
   // The web page's, beside them (serve_web.go, the owner's parity, Nov 26).
-  const web = ['serve_web.go', 'serve_web_install.go'].map((f) => readFileSync(join(root, 'cmd', 'homelab', f), 'utf8')).join('\n');
+  const web = ['serve_web.go', 'serve_web_install.go', 'serve_web_settings.go'].map((f) => readFileSync(join(root, 'cmd', 'homelab', f), 'utf8')).join('\n');
   const more = [...web.matchAll(/^\t\t"([A-Z][A-Za-z]+)":/gm)].map((m) => m[1]);
   if (!more.includes('Kept')) throw new Error('could not read the web page\'s methods from serve_web.go: ' + more);
   return [...names, ...more];
@@ -697,6 +697,25 @@ const popupsWhole = async () => {
 };
 
 const smokes = [
+  // Parity, part 3 (the owner, Nov 26: the same powers, as the web page answers only at home): on a device that may
+  // change things, Settings has People and Phones, and a phone can be paired there; nothing is refused as the
+  // computer's own. A device that only looks has neither.
+  { name: 'The web page has Settings › People and Phones, and pairs a phone', screen: 'settings', phone: ['companion', 'can-change'], run: async (page) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.click('#settingsNav .pagebtn[data-page="People"]', { timeout: 5000 });
+    await page.waitForSelector('#peopleCard:not([hidden])', { timeout: 5000 });
+    await page.click('#settingsNav .pagebtn[data-page="Phones"]', { timeout: 5000 });
+    await page.click('#pairPhone', { timeout: 5000 });
+    await page.waitForSelector('#pairing img', { timeout: 5000 });
+    const refused = await page.evaluate(() => window.__MOCK.refused);
+    if (refused.length) throw new Error('refused as the computer\'s own: ' + [...new Set(refused)].join(', '));
+  } },
+  { name: 'The web page on a device that only looks: no People or Phones in Settings', screen: 'settings', phone: ['companion'], run: async (page) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.waitForSelector('#settings.active', { timeout: 5000 });
+    await page.waitForTimeout(500);
+    if (await page.isVisible('#peopleCard') || await page.isVisible('#phonesCard')) throw new Error('People or Phones on a device that only looks');
+  } },
   // Parity, part 2 (the owner, Nov 26): the web page adds apps as the computer does. From a device allowed to make
   // changes, a category's shelf has Install, the plan comes, and Install runs to Done; Connect apps runs; nothing is
   // refused as the computer's own. A device that only looks sees the shelf without Install.
@@ -3142,12 +3161,17 @@ const smokes = [
     await page.click('nav button[data-screen="settings"]', { timeout: 5000 });
     // At a phone's width the pages are a list to pick from.
     await page.selectOption('#settingsNav select', 'Alerts', { timeout: 5000 });
-    if ((await page.$$eval('#settingsNav option', (o) => o.map((x) => x.value))).some((v) => ['General', 'Appearance', 'People', 'Phones'].includes(v))) throw new Error("the computer's own pages on the phone");
+    // People and Phones as on the computer (the owner, Nov 26: parity, the web page answering only at home); General and
+    // Appearance are the computer's own window.
+    const pages = await page.$$eval('#settingsNav option', (o) => o.map((x) => x.value));
+    if (pages.some((v) => ['General', 'Appearance'].includes(v))) throw new Error("the computer's own pages on the phone: " + pages.join(', '));
+    for (const want of ['People', 'Phones']) if (!pages.includes(want)) throw new Error(`no ${want} on a phone that may change things: ${pages.join(', ')}`);
     await page.fill('#setting-QUIET_HOURS input', '23-6');
     await page.click('#saveSettings:text-is("Save 1 change")', { timeout: 3000 });
     await page.waitForSelector('#saveSettings', { state: 'hidden', timeout: 5000 });
     if ((await page.evaluate(() => window.__MOCK.saved || {})).QUIET_HOURS !== '23-6') throw new Error('not saved');
-    // Nothing a phone can't change or use: no secret, no setting it connects through, no Phones, People or Uninstall.
+    // Nothing a phone can't change or use: no secret, no setting it connects through; Phones, People and Uninstall only
+    // on their own pages, not on Alerts.
     for (const sel of ['#setting-CLOUDFLARE_API_TOKEN', '#setting-PHONE_COMPANION', '#phonesCard', '#peopleCard', '#uninstallCard', '#report']) {
       if (await page.isVisible(sel)) throw new Error(`${sel} on the phone`);
     }

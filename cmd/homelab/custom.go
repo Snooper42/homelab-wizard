@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"strings"
@@ -49,13 +50,33 @@ func (h *homelab) custom(ctx context.Context, args []string) error {
 			spec.Env[k] = v
 			return nil
 		})
+		// Its settings as KEY=value lines on the input, kept off the command
+		// line (the desktop app and the web page send them so: custom.AddArgs).
+		envStdin := fs.Bool("env-stdin", false, "")
 		install := fs.Bool("install", false, "")
 		rest, err := parseFlags(fs, args)
 		if err != nil {
 			return err
 		}
+		if *envStdin {
+			sc := bufio.NewScanner(u.In)
+			for sc.Scan() {
+				line := strings.TrimSpace(sc.Text())
+				if line == "" || strings.HasPrefix(line, "#") {
+					continue
+				}
+				k, v, ok := strings.Cut(line, "=")
+				if !ok {
+					return fmt.Errorf("--env-stdin wants KEY=value lines")
+				}
+				spec.Env[k] = v
+			}
+			if err := sc.Err(); err != nil {
+				return err
+			}
+		}
 		if len(rest) != 1 {
-			return fmt.Errorf("usage: homelab custom add <id> --image <image> [--port <web port>] [--name <name>] [--category <id>] [--description <text>] [--volume /path]... [--env KEY=value]... [--install]")
+			return fmt.Errorf("usage: homelab custom add <id> --image <image> [--port <web port>] [--name <name>] [--category <id>] [--description <text>] [--volume /path]... [--env KEY=value]... [--env-stdin] [--install]")
 		}
 		spec.ID = rest[0]
 		if spec.Name == "" {

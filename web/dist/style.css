@@ -603,7 +603,10 @@ html.companion:not(.can-change) .snoozepick { display:none; }
    buttons this phone may use (html.can-change). */
 html.companion #choose, html.companion:not(.finances) #finances, html.companion:not(.finances) nav button[data-screen="finances"], html.companion nav button[data-screen="choose"], html.companion nav button[data-screen="setup"], html.companion.kiosk nav button[data-screen="settings"], html.companion.kiosk #settings, html.companion nav button[data-screen="tidy"], html.companion #tidy { display:none; }
 /* Settings on a phone (#596's gap 6): the settings it may change; what's the computer's own stays there. */
-html.companion #settings :is(.reportrow, #reportLog, #reportActions, #uninstallCard, #appearanceCard, #peopleCard, #phonesCard, #tailnetCard) { display:none !important; }
+html.companion #settings :is(.reportrow, #reportLog, #reportActions, #appearanceCard) { display:none !important; }
+/* People, Phones and taking the homelab off the machine, as on the computer (the owner, Nov 26), for a device that may
+   change things: the web page answers only at home. */
+html.companion:is(:not(.can-change), .kiosk) #settings :is(#uninstallCard, #peopleCard, #phonesCard) { display:none !important; }
 html.companion:not(.can-change) #saveSettings { display:none !important; }
 html.companion:not(.can-change) .menuwrap, html.companion.kiosk .menuwrap, html.companion #moveCard, html.companion:not(.can-change) .rowActions button.small:not(.rowmain) { display:none; }
 /* Parity with the computer (the owner, Nov 26): Update apps for a device that may change things; Open on a phone where

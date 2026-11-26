@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"strings"
 	"testing"
 
@@ -116,5 +117,40 @@ func TestVolumePathsAreChecked(t *testing.T) {
 		if err := s.Check(c); err == nil || !strings.Contains(err.Error(), "folder") {
 			t.Errorf("%q: %v", v, err)
 		}
+	}
+}
+
+// Your own app's settings are often a database password or an API key, so
+// the command that adds it (from the desktop app or the web page) carries
+// them on its input, never its command line, where anyone on the machine
+// could read them in the process list (Q review of #911).
+func TestAddArgsKeepSettingsOffTheCommandLine(t *testing.T) {
+	s := Spec{ID: "whiteboard", Name: "Whiteboard", Image: "docker.io/excalidraw/excalidraw:latest", Category: "documents", Port: 80,
+		Volumes: []string{"/data"}, Env: map[string]string{"DB_PASSWORD": "s3cret-pw", "API_KEY": "k3y"}}
+	args, stdin, err := s.AddArgs()
+	if err != nil {
+		t.Fatal(err)
+	}
+	line := strings.Join(args, " ")
+	for _, secret := range []string{"s3cret-pw", "k3y", "DB_PASSWORD", "--env "} {
+		if strings.Contains(line, secret) {
+			t.Errorf("%q on the command line: %s", secret, line)
+		}
+	}
+	if !slices.Contains(args, "--env-stdin") || stdin != "API_KEY=k3y\nDB_PASSWORD=s3cret-pw\n" {
+		t.Errorf("args %q, stdin %q", args, stdin)
+	}
+	if want := "custom add whiteboard --image docker.io/excalidraw/excalidraw:latest --name Whiteboard --category documents --apply --port 80 --volume /data --env-stdin"; line != want {
+		t.Errorf("args:\n%s\nwant\n%s", line, want)
+	}
+	// No settings: nothing to read.
+	s.Env = nil
+	if args, stdin, _ := s.AddArgs(); slices.Contains(args, "--env-stdin") || stdin != "" {
+		t.Errorf("no settings: %q %q", args, stdin)
+	}
+	// A setting with a line break would set another.
+	s.Env = map[string]string{"A": "x\nB=y"}
+	if _, _, err := s.AddArgs(); err == nil {
+		t.Error("a setting with a line break was taken")
 	}
 }

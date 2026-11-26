@@ -116,3 +116,53 @@ func TestWebInstallMethods(t *testing.T) {
 		t.Error("Install and Connect apps stream their progress")
 	}
 }
+
+// Settings and Phones on the web page (serve_web_settings.go): the computer's powers, each for a device allowed to
+// change things over https (and only at home: companion.Server.AtHome); a phone paired, given more, and removed.
+func TestWebSettingsMethods(t *testing.T) {
+	root, _ := repoCopy(t, "PHONE_COMPANION=true")
+	h, err := newHomelab(&ui.UI{Out: &strings.Builder{}}, root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	phones := h.webPhoneMethods()
+	for name, m := range phones {
+		if !m.Change || !m.Private || m.Member {
+			t.Errorf("%s: the owner's device allowed to change things, over https: %+v", name, m)
+		}
+	}
+	for _, name := range []string{"PersonAction", "OpenWelcome"} {
+		if m := h.webSettingsMethods()[name]; !m.Change || !m.Private {
+			t.Errorf("%s: a device allowed to change things, over https", name)
+		}
+	}
+	call := func(name string, args ...any) (any, error) {
+		t.Helper()
+		var raw []json.RawMessage
+		for _, a := range args {
+			b, _ := json.Marshal(a)
+			raw = append(raw, b)
+		}
+		v, _, err := phones[name].Call(context.Background(), raw)
+		return v, err
+	}
+	v, err := call("PairPhone", "Sam's iPhone", false, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if p := v.(webPairing); p.Code == "" {
+		t.Fatalf("no code: %+v", p)
+	}
+	if _, _, err := h.webSettingsMethods()["PersonAction"].Call(context.Background(), nil); err == nil {
+		t.Error("PersonAction with nothing")
+	}
+	if _, _, err := h.webSettingsMethods()["PersonAction"].Call(context.Background(), []json.RawMessage{json.RawMessage(`"add"`), json.RawMessage(`"--root=/"`)}); err == nil {
+		t.Error("a flag taken as a name")
+	}
+	if _, _, err := h.webSettingsMethods()["OpenWelcome"].Call(context.Background(), []json.RawMessage{json.RawMessage(`"../../etc/passwd"`)}); err == nil {
+		t.Error("a path taken as a person")
+	}
+	if got := (webUninstall{Data: true, App: true}).args(); strings.Join(got, " ") != "uninstall --data --app" {
+		t.Errorf("uninstall's flags: %v", got)
+	}
+}
