@@ -2723,7 +2723,8 @@ const smokes = [
     if (rows[rows.length - 1] !== 'media-automation') throw new Error('panel rows: ' + rows.join(', '));
     const said = await page.textContent('#statusPanel .ovrow[data-key="media-automation"] .ovname .muted');
     if (said !== 'Finds and downloads what you ask for in Seerr') throw new Error(`its line: ${said}`);
-    if (!/Seerr/.test(await page.textContent('#statusPanel .ovrow[data-key="media"]'))) throw new Error('Seerr is not in Media');
+    // Its row names two and counts the rest; every one of them is in its tooltip.
+    if (!/Seerr/.test(await page.getAttribute('#statusPanel .ovrow[data-key="media"]', 'title'))) throw new Error('Seerr is not in Media');
   } },
   { name: 'Status: media automation sits last under one line, Seerr beside Jellyfin', screen: 'status',
     mock: { statusOpen: '', statusFolds: { Network: true }, status: { ...status, apps: [...status.apps,
@@ -3882,7 +3883,7 @@ const smokes = [
     await page.click('#statusApps button:has-text("Start all")');
     await page.waitForFunction(() => window.__MOCK.calls.AppAction >= 1, null, { timeout: 5000 });
   } },
-  { name: 'Status: the Apps card when all is well, with the week as squares', screen: 'status', mock: { status: { ...status, apps: status.apps.map((a) => ({ ...a, state: 'running', health: a.health === 'unhealthy' ? 'healthy' : a.health })) } }, run: async (page) => {
+  { name: 'Status: the Apps card when all is well, with the week as squares', screen: 'status', mock: { statusOpen: '', status: { ...status, apps: status.apps.map((a) => ({ ...a, state: 'running', health: a.health === 'unhealthy' ? 'healthy' : a.health })) } }, run: async (page) => {
     await page.waitForSelector('#statusApps .antline:has-text("All answering")', { timeout: 5000 });
     const fig = (await page.textContent('#statusApps .antfig')).replace(/\s+/g, ' ').trim();
     if (!/^\d+ running$/.test(fig)) throw new Error(fig);
@@ -4783,9 +4784,10 @@ const smokes = [
     await toStatusPart(page, 'analytics');
       await page.waitForSelector('#watchCard:not([hidden])', { timeout: 5000 });
       await page.waitForSelector('#alertsCard:not([hidden])', { timeout: 2000 });
-      await page.waitForSelector('tr:has(strong:text-is("Vikunja")) td.state:has-text("Not answering: HTTP 502")', { timeout: 2000 });
       if (await page.isVisible('#weekCard')) throw new Error('the slow card came with the quick ones');
       await page.waitForSelector('#weekCard:not([hidden])', { timeout: 3000 });
+      // The pages' answers came in the same request: an app's row says it, shown or folded away behind Show every app.
+      await page.waitForSelector('tr:has(strong:text-is("Vikunja")) td.state:has-text("Not answering: HTTP 502")', { state: 'attached', timeout: 2000 });
       const reads = ['Status', 'StatusBoard', 'Watchdog', 'LastCrash', 'SavingsHistory', 'Alerts', 'Storage', 'Usage', 'Weekly', 'Protection', 'Answers'];
       const asked = Object.entries(await backendCalls(page)).filter(([k]) => reads.includes(k)).map(([k, n]) => `${k} ×${n}`);
       if (asked.join(', ') !== 'StatusBoard ×1') throw new Error('Status asked: ' + asked.join(', '));

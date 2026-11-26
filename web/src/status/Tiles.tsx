@@ -1,6 +1,6 @@
 // The four tiles at the top of Status: what runs, what needs a look, what
 // the homelab saves a year, and the nightly updates (with Pause/Resume).
-import { render, type ComponentChildren } from 'preact';
+import { Fragment, render, type ComponentChildren } from 'preact';
 import { useState } from 'preact/hooks';
 import { bytes, dayText, dollars } from '../format';
 import { Card } from '../parts/Card';
@@ -207,7 +207,7 @@ function MacCard({ mac, updates: u, onPause }: { mac: HealthProps; updates: api.
   const name = mac.machine.charAt(0).toUpperCase() + mac.machine.slice(1);
   return (
     <Machine id="statusMac" name={name} free={d?.free || 0} total={d?.total || 0} low={!!d?.low} u={u} onPause={onPause}
-      line={<>{fine && <span>{fine}</span>}{wrong.map((f) => <span key={f.key} class={f.tone}>{fine ? ' · ' : ''}{f.short}</span>)}</>}
+      line={<>{fine && <span>{fine}</span>}{wrong.map((f, i) => <Fragment key={f.key}>{fine || i ? ' · ' : ''}<span class={f.tone}>{f.short}</span></Fragment>)}</>}
       extra={stopped ? <StartAgent id="startAgentMac" start={mac.startAgent} /> : null} />
   );
 }

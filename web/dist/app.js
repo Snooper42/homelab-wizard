@@ -2086,9 +2086,9 @@
         onPause,
         line: /* @__PURE__ */ u3(S, { children: [
           fine && /* @__PURE__ */ u3("span", { children: fine }),
-          wrong.map((f4) => /* @__PURE__ */ u3("span", { class: f4.tone, children: [
-            fine ? " · " : "",
-            f4.short
+          wrong.map((f4, i3) => /* @__PURE__ */ u3(S, { children: [
+            fine || i3 ? " · " : "",
+            /* @__PURE__ */ u3("span", { class: f4.tone, children: f4.short })
           ] }, f4.key))
         ] }),
         extra: stopped2 ? /* @__PURE__ */ u3(StartAgent, { id: "startAgentMac", start: mac.startAgent }) : null
@@ -8187,7 +8187,7 @@
       const lead2 = r3.stopped.length ? [`${r3.stopped.join(", ")} stopped`, ...names5.filter((n3) => !r3.stopped.includes(n3))] : names5;
       const line = !r3.stopped.length && r3.summary ? r3.summary : lead2.slice(0, 2).join(r3.stopped.length ? " · " : ", ") + (lead2.length > 2 ? ` +${lead2.length - 2}` : "");
       const warn = r3.stopped.length > 0;
-      return /* @__PURE__ */ u3("li", { children: /* @__PURE__ */ u3("button", { type: "button", class: "ovrow", "data-key": r3.id, onClick: () => open5(r3.id), children: [
+      return /* @__PURE__ */ u3("li", { children: /* @__PURE__ */ u3("button", { type: "button", class: "ovrow", "data-key": r3.id, title: names5.join(", "), onClick: () => open5(r3.id), children: [
         /* @__PURE__ */ u3("span", { class: "ovlogos", "aria-hidden": "true", children: r3.apps.slice(0, 3).map((a3) => /* @__PURE__ */ u3(AppMark, { id: a3.id, name: a3.name, icon: icons4?.[a3.id] || "", small: true }, a3.id)) }),
         /* @__PURE__ */ u3("span", { class: "ovname", children: [
           /* @__PURE__ */ u3("strong", { children: r3.label }),

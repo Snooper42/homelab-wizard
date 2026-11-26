@@ -24,7 +24,7 @@ export function CategoryPanel({ rows, icons, open }: { rows: PanelRow[]; icons?:
           const warn = r.stopped.length > 0;
           return (
             <li key={r.id}>
-              <button type="button" class="ovrow" data-key={r.id} onClick={() => open(r.id)}>
+              <button type="button" class="ovrow" data-key={r.id} title={names.join(', ')} onClick={() => open(r.id)}>
                 <span class="ovlogos" aria-hidden="true">{r.apps.slice(0, 3).map((a) => <AppMark key={a.id} id={a.id} name={a.name} icon={icons?.[a.id] || ''} small />)}</span>
                 <span class="ovname"><strong>{r.label}</strong><span class="muted">{line}</span></span>
                 <span class={'pill ' + (warn ? 'warn' : 'ok')}>{warn ? `${running} of ${r.apps.length} running` : <><Icon name="check" />{running} running</>}</span>
