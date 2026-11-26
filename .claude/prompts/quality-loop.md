@@ -55,9 +55,9 @@ For a pull request that needs Q's review, check every one of these, and say whic
   - Connect apps for media automation
 
   A gap becomes a test, and a failing one an issue.
-- [ ] **Q3. Privacy of every call out.** `internal/sitelogo`, `internal/cardprice`, the release-notes reader, and each new one as it ships (SimpleFIN, the logo service).
+- [x] **Q3. Privacy of every call out.** `internal/sitelogo`, `internal/cardprice`, the release-notes reader, and each new one as it ships (SimpleFIN, the logo service).
   - **What's sent, when, and on whose click,** written in `docs/Security.md`. (Done Nov 25: *What leaves this computer, and on whose click*.)
-  - **What's in `homelab report` and the logs:** checked to carry no amount, payee or key.
+  - **What's in `homelab report` and the logs:** checked to carry no amount, payee or key. (Nov 25: the report's weekly summary carried this week's bills and spending, payee and amount; now `digest --no-money` there, `TestReportCarriesNoFinances`. The weekly send logs only *sent to …*.)
 - [ ] **Q4. The backups' engine, for R's Backups** (`docs/Redesign.md`, *New work behind the pictures*).
   - [x] **(a) Each app's result each night,** kept for fourteen nights. (Nov 25: `data/backup-nights.json`, `backup.Night`, in `Backups()` as `nights`.)
   - **(b) Not in any backup:** moved up, as D1.
