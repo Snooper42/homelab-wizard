@@ -1,0 +1,93 @@
+{
+  "kopia": {
+    "purpose": [
+      "A second backup of the homelab, made by different software into a different place. Duplicati stays the main backup and the one that goes off-site; Kopia keeps another copy, usually on a second drive. If Duplicati's copy or its own database breaks, Kopia's is still there."
+    ],
+    "setup": [
+      "`./homelab install kopia`. On its first start it makes the repository at `KOPIA_REPOSITORY`, encrypted with `KOPIA_PASSWORD`, and schedules each folder for 3:45 every night. Left as it is, that is `backups-kopia` in the homelab folder, on the same drive as everything else.",
+      "Choose where its copies go: Setup's step *A second copy with Kopia* offers one button per drive plugged in (then the cloud drives), each making a `Homelab Kopia` folder there. It never offers the drive with Duplicati's backups or the media. Or `./homelab kopia repository /Volumes/Spare/Homelab\\ Kopia`, or any folder in Settings › `KOPIA_REPOSITORY`. Kopia starts again on the new folder. Once done, the step also says how Kopia's last restore test went (`homelab restore-test --auto --engine kopia`), or that none has run yet.",
+      "Keep `KOPIA_PASSWORD` outside this machine, with `DUPLICATI_SECRETS_PASSPHRASE` (Vaultwarden and the recovery kit): without it, nothing in the repository can be read.",
+      "Open it to see the snapshots: the user is `admin`, and **Sign-in details** on its page in Status copies the password (`KOPIA_SERVER_PASSWORD`)."
+    ],
+    "everyday": [
+      "**Snapshots:** each folder with its last snapshot, its size, and when the next runs. **Snapshot now** makes one at once.",
+      "**Restore:** open a snapshot, pick a folder or file, and restore it into `/staging/...` (that is `recovery-staging` in the homelab folder), then copy it back where it belongs. It never writes into the folders it backs up. Running as you, it cannot give files their original owners, so untick **Restore File Ownership**; they come back as yours. A folder restored by itself comes back read-only: `chmod -R u+w` it before deleting it (the restore test does this for its own folder).",
+      "**The restore test:** `./homelab restore-test --auto --engine kopia` picks a dozen files in `data/appdata` that haven't changed for a day, restores each from Kopia's newest snapshot into `recovery-staging/restore-test`, and compares them with the live files, as Duplicati's test does. It is on record beside Duplicati's in `scripts/logs/restore-test.json`, and the nightly backup reminds you once a month until one passes.",
+      "**Policies:** how many snapshots to keep. By default: the latest 10, one a day for 7 days, one a week for 4 weeks, one a month for 24 months, and one a year for 3 years."
+    ],
+    "ideas": [
+      "Point `KOPIA_REPOSITORY` at a USB drive you keep in another room, for a copy that survives this machine's drive failing.",
+      "Keep more monthly snapshots for the photos folder than for the rest."
+    ],
+    "connects": [
+      {
+        "label": "Duplicati",
+        "text": "the main backup: the same folders, a different engine and destination.",
+        "id": "duplicati"
+      },
+      {
+        "label": "ntfy",
+        "text": "a failed snapshot can alert through Kopia's notifications (Settings › Notifications in its page).",
+        "id": "ntfy"
+      }
+    ],
+    "learn": [
+      {
+        "label": "kopia.io",
+        "url": "https://kopia.io"
+      },
+      {
+        "label": "GitHub: kopia/kopia",
+        "url": "https://github.com/kopia/kopia"
+      }
+    ],
+    "memory": 300,
+    "updates": "By hand. A backup engine reads and writes every copy you keep; set KOPIA_VERSION to a newer release after reading its notes, then ./homelab update kopia"
+  },
+  "tandoor": {
+    "purpose": [
+      "The household's recipes in one place, with what Mealie leaves out: a meal plan by the week, a shopping list built from it and sorted by the shop's aisles, nutrition per serving from the ingredients, and recipes imported from almost any cooking site by its address. Pick one of Mealie and Tandoor for the household; Mealie is simpler, Tandoor does more."
+    ],
+    "setup": [
+      "`./homelab install tandoor`, then open it: `https://\u003cTAILSCALE_HOST\u003e:8093` in Home mode, `https://recipes.example.com` with a domain, or `http://localhost:8093` on this computer.",
+      "The first page makes the first account, which is the administrator; keep its password in Vaultwarden.",
+      "Create the household's *space* (its shared cookbook) when asked, then invite the others from the space's settings (**Members** › **Invite**), each with their own account.",
+      "**Import** a few recipes by their web address, or bring a whole collection over from Mealie, Paprika, Chowdown, or another app (**Import** › the app's export file)."
+    ],
+    "everyday": [
+      "**Plan:** Meal Plan › drag recipes onto the week; **Add to shopping list** puts their ingredients on the list, merged and in aisle order.",
+      "**Shop:** the shopping list on a phone, ticked off as you go; it updates for everyone at once.",
+      "**Cook:** a recipe's page scales to the servings you need and keeps the screen on while you cook.",
+      "**Collect:** **Import** with a recipe's web address, or the browser bookmarklet from Settings."
+    ],
+    "ideas": [
+      "Supermarket categories (Settings › Shopping) in the order of your shop's aisles.",
+      "Recipe books for each person's favourites, shared with the space.",
+      "The API (below) to put the week's meals on Homepage or a wall screen."
+    ],
+    "connects": [
+      {
+        "label": "Mealie",
+        "text": "the simpler recipe app (pick one), and Grocy, for what is already in the cupboards.",
+        "id": "mealie"
+      },
+      {
+        "label": "Open WebUI",
+        "text": "Tandoor's AI features (importing a recipe from a photo, for one) can use the Ollama on this computer, so recipes stay here: in its AI settings, an Ollama provider at `http://host.docker.internal:11434` (the model Open WebUI uses works).",
+        "id": "open-webui"
+      }
+    ],
+    "learn": [
+      {
+        "label": "docs.tandoor.dev",
+        "url": "https://docs.tandoor.dev"
+      },
+      {
+        "label": "GitHub: TandoorRecipes/recipes",
+        "url": "https://github.com/TandoorRecipes/recipes"
+      }
+    ],
+    "memory": 400,
+    "updates": "Nightly at 4 AM, with a copy of its data first"
+  }
+}

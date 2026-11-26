@@ -1,6 +1,6 @@
 import { render } from 'preact';
 import { AppMark } from '../parts/AppMark';
-import { Card } from '../parts/Card';
+import { Card, CardHead } from '../parts/Card';
 import { type Crumb, Crumbs } from '../parts/Crumbs';
 import { Sheet } from '../parts/Sheet';
 import { Tile } from '../status/Tiles';
@@ -28,13 +28,28 @@ export interface StoreHeadProps {
   here?: string[];
   /** Opens another app's page (one it goes with, one of a set's). */
   open: (id: string) => void;
+  /** Its note (AppGuide): what it's for, setup, everyday use; undefined while it's read. */
+  guide?: docs.Guide;
+  /** The subscriptions it replaces (SavingsRows' rows naming it). */
+  offers?: savings.Offer[];
+  /** Opens a web page (Learn more). */
+  openURL?: (url: string) => void;
 }
+
+/** A note's line: `code` and **bold** kept, the rest as written. */
+export function Rich({ text }: { text: string }) {
+  const parts = text.split(/(`[^`]+`|\*\*[^*]+\*\*)/g).filter(Boolean);
+  return <>{parts.map((t, i) => t.startsWith('`') && t.endsWith('`') && t.length > 1 ? <code key={i}>{t.slice(1, -1)}</code>
+    : t.startsWith('**') && t.endsWith('**') && t.length > 3 ? <strong key={i}>{t.slice(2, -2)}</strong> : t)}</>;
+}
+
+const money = (n: number) => '$' + (Number.isInteger(n) ? String(n) : n.toFixed(2));
 
 /** The page's head (#storeHead) and its facts (#storeFacts); the plan sits beside the facts (#storePlan). */
 export function StoreHead(p: StoreHeadProps) { return <Store {...p} part="head" />; }
 export function StoreFacts(p: StoreHeadProps) { return <Store {...p} part="facts" />; }
 export function StoreNotes(p: StoreHeadProps) { return <Store {...p} part="notes" />; }
-function Store({ app, set, catalog, icons, notes = [], trail, here = [], open, part }: StoreHeadProps & { part: 'head' | 'facts' | 'notes' }) {
+function Store({ app, set, catalog, icons, notes = [], trail, here = [], open, guide, offers = [], openURL, part }: StoreHeadProps & { part: 'head' | 'facts' | 'notes' }) {
   const name = (id: string) => catalog.apps.find((a) => a.id === id)?.name || id;
   if (set) {
     const apps = set.apps.map((id) => catalog.apps.find((a) => a.id === id)).filter(Boolean) as api.App[];
@@ -96,17 +111,88 @@ function Store({ app, set, catalog, icons, notes = [], trail, here = [], open, p
       </div>
     </>
   );
+  const mine = offers.filter((o) => o.apps.includes(app.id));
+  const yearly = mine.filter((o) => o.counted).reduce((t, o) => t + o.annual, 0);
+  const g = guide || {};
+  const facts = [
+    g.memory ? `Uses about ${g.memory >= 1000 ? (g.memory / 1000).toFixed(1).replace(/\.0$/, '') + ' GB' : g.memory + ' MB'} of memory when busy.` : '',
+    g.updates ? `Updates: ${g.updates}` : '',
+  ].filter(Boolean);
   return (
     <>
-      {(notes.length > 0 || app.warning || goes.length > 1) && (
+      {g.purpose && g.purpose.length > 0 && (
+        <Card kind="storenotes storeabout">
+          <h2>What it does</h2>
+          {g.purpose.length > 1
+            ? <ul>{g.purpose.map((p) => <li key={p}><Rich text={p} /></li>)}</ul>
+            : g.purpose.map((p) => <p key={p}><Rich text={p} /></p>)}
+        </Card>
+      )}
+      {mine.length > 0 && (
+        <Card kind="storenotes storesaves">
+          <CardHead title="What it can replace">{yearly > 0 ? <span class="pill ok">Up to {money(yearly)} a year</span> : undefined}</CardHead>
+          <ul class="saves">
+            {mine.map((o) => (
+              <li key={o.replaces + o.kind}>
+                <span class="what"><strong>{o.replaces}</strong><span class="muted">{o.kind}</span></span>
+                <span class="price">{money(o.monthly)}<span class="muted"> a month</span></span>
+                {o.condition && <span class="cond muted">{o.condition}</span>}
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
+      {(notes.length > 0 || app.warning || goes.length > 1 || facts.length > 0) && (
         <Card kind="storenotes">
           <h2>To know</h2>
           <ul>
             {app.warning && <li class="warn">{app.warning}</li>}
             {notes.map((n) => <li key={n} class="aboutnote">{n}</li>)}
             {goes.slice(1).map(([id, why]) => <li key={id}>Goes with <button type="button" class="linkbtn" onClick={() => open(id)}>{name(id)}</button>: {why}</li>)}
+            {facts.map((f) => <li key={f} class="guidefact"><Rich text={f} /></li>)}
           </ul>
         </Card>
+      )}
+      {g.everyday && g.everyday.length > 0 && (
+        <Card kind="storenotes storeuse">
+          <h2>Day to day</h2>
+          <ul>{g.everyday.map((t) => <li key={t}><Rich text={t} /></li>)}</ul>
+        </Card>
+      )}
+      {g.connects && g.connects.length > 0 && (
+        <Card kind="storenotes storeworks">
+          <h2>Works with</h2>
+          <ul class="storeapps">
+            {g.connects.map((l) => (
+              <li key={l.id}><button type="button" class="storeapp" onClick={() => open(l.id!)}>
+                <AppMark id={l.id!} name={l.label} icon={icons?.[l.id!] || ''} small />
+                <span><strong>{name(l.id!)}</strong>{l.text && <span class="muted"><Rich text={l.text} /></span>}</span>
+              </button></li>
+            ))}
+          </ul>
+        </Card>
+      )}
+      {((g.setup && g.setup.length > 0) || (g.ideas && g.ideas.length > 0)) && (
+        <Card kind="storenotes storedocs">
+          {g.setup && g.setup.length > 0 && (
+            <details open>
+              <summary><h2>Setting it up</h2></summary>
+              <ol>{g.setup.map((t) => <li key={t}><Rich text={t} /></li>)}</ol>
+            </details>
+          )}
+          {g.ideas && g.ideas.length > 0 && (
+            <details>
+              <summary><h2>Ideas to try</h2></summary>
+              <ul>{g.ideas.map((t) => <li key={t}><Rich text={t} /></li>)}</ul>
+            </details>
+          )}
+        </Card>
+      )}
+      {g.learn && g.learn.length > 0 && (
+        <div class="storelearn">
+          <span class="muted">Learn more</span>
+          {g.learn.map((l) => <a key={l.url} href={l.url} class="btn" onClick={(e) => { e.preventDefault(); openURL?.(l.url!); }}>{l.label}</a>)}
+        </div>
       )}
     </>
   );
