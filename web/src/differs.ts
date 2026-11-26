@@ -1,6 +1,3 @@
-// What works differently on this system, said on the screen where it shows
-// (docs/Host.md's parity table, its "said on screen" rows). Each function
-// returns "" where the system works the same as the others.
 
 /** The system the app runs on, as the parity table's columns name it. */
 export type System = 'mac' | 'windows' | 'linux' | 'steamos';

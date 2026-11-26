@@ -1,9 +1,3 @@
-// The kit's charts: an area over days with marks on them, bars stacked
-// above and below zero with a line over them, and
-// a donut. Each takes numbers, labels, and hues (ui/Legend), knows nothing
-// of the plan, says what it shows to a screen reader in one sentence, and
-// draws the rest with tokens (style.css, fx-chart). Pointing at the area or
-// the stacked bars shows the day's or month's card (tip).
 import type { ComponentChildren } from 'preact';
 import { useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { type Hue, hue } from './Legend';

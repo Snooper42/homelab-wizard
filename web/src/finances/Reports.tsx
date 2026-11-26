@@ -1,14 +1,3 @@
-// Finances › Reports: what the ledger says about a stretch of time (this
-// month, last month, three months, this year, or all): money in and out,
-// spending by category (each group, its own categories under it), money in
-// against out month by month, where the money went by payee, and by tag;
-// a category's last twelve months, and this month so far against the same
-// days a year before;
-// a tag picked narrows every one of them to what carries it. Export CSV
-// saves the stretch's transactions (the tag's, when one is picked) for a
-// spreadsheet: on the computer where you choose, on a phone shared. Each
-// chart has a table beside it for a screen reader. Transfers between the
-// household's own accounts are neither in nor out.
 import { useState } from 'preact/hooks';
 import { Empty } from '../parts/Empty';
 import { Row, Rows } from '../parts/Row';

@@ -1,8 +1,3 @@
-// An app's page: everything about one app in one place, opened from its
-// row on Status. Its state and buttons at the top; how to reach it, what it
-// uses, its week, and its last backup as four tiles; then its log (with
-// Explain this), its updates, who uses it, and the actions needed now and
-// then. screens/apppage.ts reads what it shows and runs what it does.
 import { AppMark } from '../parts/AppMark';
 import { Crumbs } from '../parts/Crumbs';
 import { render, type ComponentChildren } from 'preact';
@@ -282,9 +277,6 @@ function Header({ p }: { p: AppPageProps }) {
     <button class={'btn change' + (danger ? ' danger' : '')} title={title} disabled={busy} onClick={() => on.act(action)}>{label}</button>
   );
   const container = entry?.kind !== 'native' && a.state !== 'missing' && a.state !== 'elsewhere';
-  // Stop asks for a second click, as a group's Stop does: the first turns it
-  // into "Click again to stop", which goes back after 5 seconds or when the
-  // focus leaves it.
   const [sure, setSure] = useState(false);
   useEffect(() => {
     if (!sure) return;
@@ -476,7 +468,6 @@ function People({ p }: { p: AppPageProps }) {
         {!!entry?.login?.length && <button class="small" onClick={() => on.signIn()}><Icon name="key" />Sign-in details</button>}
       </CardHead>
       {people && (people.length
-        // Each person's letter in the row's lead, so the name and the email under it start at the same edge (redesign-loop R11).
         ? <Rows>{people.map((x) => <Row key={x.username} lead={<span class="initial" aria-hidden="true">{(x.name || x.username).slice(0, 1)}</span>} title={x.name || x.username} sub={x.email} />)}</Rows>
         : <Empty>Nobody in the household uses it yet.</Empty>)}
       {people && <p class="muted foot"><ActionLink onClick={on.openPeople}>Add someone in Settings › People</ActionLink></p>}
@@ -570,10 +561,6 @@ export function AppPage(p: AppPageProps) {
   );
 }
 
-/** Draws the page into el, updating what changed since the last time. Each
- * app gets a page of its own (the key), so nothing one app's page holds (its
- * log, an answer, a Copied) is ever drawn on another's, not even for a frame,
- * and an answer that comes back after the page moved on is dropped. */
 export function mountAppPage(el: Element, props: AppPageProps | null) { render(props ? <AppPage key={props.a.id} {...props} /> : null, el); }
 
 const dayWords: Record<string, string> = { mon: 'Mondays', tue: 'Tuesdays', wed: 'Wednesdays', thu: 'Thursdays', fri: 'Fridays', sat: 'Saturdays', sun: 'Sundays' };

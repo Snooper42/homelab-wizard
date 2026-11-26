@@ -35,7 +35,6 @@ function drawBackups() {
   // The restore test needs the Homelab AppData job to have run once.
   const testable = (jobsData.value || []).some((j) => j.name.toLowerCase() === 'homelab appdata' && j.state !== 'never');
   const test = () => backupTask('restore-test', 'Testing a restore (a few minutes)…', 'Restore test passed', 'The restore test failed: the log says why');
-  // Not in any backup sits with the restore test and off-site (R7): what no job copies, and Add, which makes the jobs.
   const gaps = gapsData.error ? [] : gapsData.value || [];
   const addGap = () => backupTask('duplicati-setup', 'Adding the backup job…', 'Backup job added', 'Adding the job stopped: the log says why');
   mountBackupTiles($('backupTiles'), { o, os: osName, test: testable ? test : undefined, apps: statusData.value ? statusById : undefined, start: (a) => appActions.act(a, 'start'), gaps, addGap });
@@ -43,8 +42,6 @@ function drawBackups() {
   mountVault($('vaultCard'), { o });
   $('kopiaCard').hidden = !o.kopia;
   mountKopia($('kopiaCard'), o.kopia ? { k: o.kopia, test: () => backupTask('restore-test-kopia', "Testing Kopia's restore (a few minutes)…", "Kopia's restore test passed", "Kopia's restore test failed: the log says why") } : null);
-  // A copy paused while its app waits for a drive is not a problem. One problem, one badge (docs/Redesign.md): a copy
-  // stale only because its app isn't running is that app's, and Status counts it; Backups counts the rest.
   const appDown = (c: backup.Copy) => !!c.app && !!statusById[c.app] && statusById[c.app].state !== 'running';
   const problems = (o.copies || []).filter((c) => c.state === 'stale' && !appDown(c)).length + (o.plainExports || []).length + (o.kopia?.failed ? 1 : 0);
   $('backupsCount').textContent = problems ? String(problems) : '';
@@ -135,5 +132,4 @@ $('recoveryKit').onclick = async () => {
   btn.disabled = false;
 };
 
-// Backups is one of Status' pages (the owner, Nov 25): its trail leads back there, as a category's does.
 render(h(Crumbs, { trail: [{ label: 'Status', go: () => pickStatusPart('overview') }], here: 'Backups' }), $('backupsCrumbs'));

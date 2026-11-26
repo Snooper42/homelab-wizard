@@ -1,10 +1,3 @@
-// Paying debts off faster, worked out on the device: what an extra amount
-// a month does to one loan, and two ways to pay several down with the same
-// money: the highest rate first (avalanche), or the smallest balance first
-// (snowball). Each month every debt accrues its interest and gets its own
-// payment; what is left of the money (the extra, and the payments of
-// debts already paid off) goes to the one first in line. Plain functions,
-// the same reading as internal/finance's amortize.
 
 /** A debt read to zero: what it owes, its yearly rate (percent), and its payment a month. */
 export interface Debt { id: string; balance: number; rate: number; monthly: number }
@@ -35,12 +28,6 @@ export interface Strategy {
   ok: boolean;
 }
 
-/**
- * Several debts paid down with their own payments and an extra amount a
- * month, the money left each month going to the debt first in line:
- * avalanche, the highest rate (then the smaller balance); snowball, the
- * smallest balance (then the higher rate).
- */
 export function payDown(debts: Debt[], extra: number, way: 'avalanche' | 'snowball'): Strategy {
   const live = debts.filter((d) => d.balance > 0.005).map((d) => ({ ...d, b: d.balance }));
   const budget = live.reduce((t, d) => t + d.monthly, 0) + Math.max(0, extra);
@@ -61,10 +48,6 @@ export function payDown(debts: Debt[], extra: number, way: 'avalanche' | 'snowba
   }
   return { months: month, interest: Math.round(interest * 100) / 100, order, ok: true };
 }
-
-// A loan read from its papers, the same reading as internal/finance's
-// loanpapers.go: the account form shows what it will owe as the papers
-// are typed in. The engine's reading is the one Finances keeps.
 
 /** A loan's k-th payment day after its first (0 is the first): the same day of the month, or the month's last. */
 export function dueOn(first: string, k: number): string {

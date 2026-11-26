@@ -1,8 +1,3 @@
-// A card: a panel of the page with its heading row. Most cards are a box in
-// index.html that a component draws into; CardHead is their heading, Card
-// the whole box for one a component draws itself (a tile, a notice).
-// CardFigure and Chip are the redesign's card shape (docs/Redesign.md,
-// Cards): one figure, its label, and the comparison with the period before.
 import type { ComponentChildren } from 'preact';
 
 /** A card's heading row: its title and a few words, or a button, beside it (just the title when nothing is). */
@@ -36,7 +31,6 @@ export interface ChipProps {
   words?: string;
 }
 
-/** The comparison with the period before, on a card's right (docs/Redesign.md, Cards): a green or red pill with its arrow, its words under it. */
 export function Chip({ dir, good, value, words }: ChipProps) {
   const tone = good === null ? 'flat' : good ? 'good' : 'bad';
   const arrow = dir === 'up' ? 'M7 17 17 7M8 7h9v9' : dir === 'down' ? 'M7 7l10 10M17 8v9H8' : 'M5 12h14';

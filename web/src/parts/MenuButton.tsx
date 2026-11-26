@@ -1,8 +1,3 @@
-// A button that opens a short menu under it, as Status's More… and a
-// group's menu do: the arrow keys, Home, and End move through it, Escape
-// closes it back on its button, and a press anywhere else closes it (read
-// as the press begins, since WebKit moves no focus on a click). Opened from
-// the keyboard, its first item takes the focus.
 import { type ComponentChildren } from 'preact';
 import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { fitMenu } from './place';
@@ -38,9 +33,6 @@ export function MenuButton({ label, title, menuLabel, items, foot, disabled, cls
     setOpen(true);
     if (first) requestAnimationFrame(() => { const m = all(); m[first === 'first' ? 0 : m.length - 1]?.focus(); });
   };
-  // Kept whole in sight (the owner, Nov 25: a menu "out of frame behind the screen"): it opens under its button, aligned
-  // to the button's right edge, but turns to its left edge when that would run past the screen's content (behind the
-  // sidebar), and opens upward when there's no room below. Measured once it's drawn, before it's painted.
   const menu = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
     const m = menu.current;

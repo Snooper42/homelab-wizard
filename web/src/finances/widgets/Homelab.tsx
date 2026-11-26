@@ -1,8 +1,3 @@
-// The homelab doing a paid service's job: each payment still in the plan
-// that an app running here stands in for ("Jellyfin is running: Netflix
-// still costs $239.88 a year"), with Cancelled it where Finances may be
-// changed, which takes the payment out and keeps it among those cancelled
-// because of the homelab; under them, what those come to a year.
 import { Row, Rows } from '../../parts/Row';
 import { Amount } from '../ui/Amount';
 import { Widget } from '../ui/Widget';

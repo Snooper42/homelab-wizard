@@ -1,7 +1,3 @@
-// What an update brings, before it goes ahead: the releases of the app's
-// project newer than the version it runs, with the start of each one's
-// notes and a link to the rest. Update stays available while they load or
-// when none are known.
 import { render } from 'preact';
 import { useEffect, useState } from 'preact/hooks';
 import { dayText } from '../format';

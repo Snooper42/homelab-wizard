@@ -1,9 +1,3 @@
-// An app you could add has a page of its own (the owner, Nov 25: "the individual app splash screens … added a ton",
-// and the install sheet reworked into one), laid out as an installed app's page (page/AppPage.tsx): its breadcrumbs
-// (Status › Media › Kavita), its logo, name and what it does in the head, its facts as tiles of one anatomy (what kind
-// of app, what it replaces, what it goes with, where it's reached), what to know about it, and beside them the plan
-// with the settings it needs and Install. screens/choose.ts moves the plan's parts in once and fills them by their
-// IDs, as Choose apps did; a set (Music, Household) has the same page with its apps. Add your own app is a sheet.
 import { render } from 'preact';
 import { AppMark } from '../parts/AppMark';
 import { Card } from '../parts/Card';

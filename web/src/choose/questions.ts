@@ -1,7 +1,3 @@
-// Plain questions the plan asks in place of a setting's text field: each
-// answer is one of the setting's values, the first the default. What an
-// answer does lives on the computer's side (Go): MEDIA_QUALITY's in
-// internal/wiring's Qualities, the one place it's mapped (arr item 7).
 
 export interface Answer {
   value: string;

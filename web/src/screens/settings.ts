@@ -16,16 +16,12 @@ import { statusById } from './status';
 import { navigate, show } from '../app';
 import { $, $1, errorText, go, onPhone, showError, thisMachine } from '../core';
 
-// Settings: .env as a form. Secrets are never sent to the page; an empty
-// secret field keeps the stored value. Logins, tokens, and folders have a
-// Test button that checks the saved value against the real service.
 export const changed: Record<string, string> = {};
 let testable: Set<string> | null = null;
 
 // The General page's lists (settings/General.tsx), as Phones and People last read them.
 let lastPhones: companion.Phone[] | null = null;
 let lastPeople: people.Person[] | null = null;
-/** The General page (redesign-loop R8): the computer's first page of Settings, a card for each part with its › to the page. */
 function renderGeneral() {
   const el = document.getElementById('generalCard');
   if (!el) return;
@@ -146,10 +142,6 @@ mountUninstall($('uninstallCard'), { machine: thisMachine, on: uninstallActions 
 // The settings marked (focus) are a Setup step's, asked for from there.
 let settingsFocus: string[] = [];
 export const settingsData = store(async () => {
-  // The phone's page (#596's gap 6): the settings this phone may change, as
-  // the computer lists them for a phone (serve.go's listPhoneSettings), and
-  // none of its secrets nor what it connects through; no Phones, People or
-  // Tests, which are the computer's.
   if (onPhone()) {
     const r = (await go().Settings()) as unknown as { settings?: settings.Setting[]; computerOnly?: string[] } | settings.Setting[];
     testable = new Set();
@@ -180,9 +172,6 @@ export function loadSettings(focus: string[] = []) {
   return settingsData.load();
 }
 
-// Draws the settings as last read. afresh: they were just read, so the
-// form starts again and what was typed is dropped; else it is kept.
-// scroll: to the first marked setting.
 export function drawSettings(afresh: boolean, scroll: boolean) {
   renderAppearance();
   const list = settingsData.value!, focus = settingsFocus;
@@ -193,16 +182,11 @@ export function drawSettings(afresh: boolean, scroll: boolean) {
   }
   const checks: Record<string, setup.Step> = {};
   for (const s of lastSteps) for (const k of s.settings || []) checks[k] = s;
-  // Pages, as in System Settings: the homelab-wide sections, then one page
-  // per app (its port, settings, and secrets together), then People and
-  // Phones. The .env sections of every app's ports and every app's settings
-  // are split by app.
   const pages: FormPage[] = settingsPages(list);
   const wanted = new Set([...everyday, ...(catalog?.apps || []).flatMap((a) => a.inputs || []), ...Object.keys(checks), ...focus]);
   everydayCount = list.filter((s) => wanted.has(s.key)).length;
   moreCount = list.length - everydayCount;
   if (focus.length) settingsPage = pages.find((pg) => pg.items.some((s) => s.key === focus[0]))?.name || settingsPage;
-  // The computer opens on General (redesign-loop R8); a phone on its first page.
   if (!settingsPage && !onPhone()) settingsPage = 'General';
   if (!pages.some((pg) => pg.name === settingsPage) && !extraPages.includes(settingsPage)) settingsPage = pages[0]?.name || '';
   form = { pages, wanted, focus, checks, testable: testable!, label: settingLabel, view: settingsView(), on: formActions,
@@ -266,20 +250,11 @@ const formActions: FormActions = {
 let settingsPage = '';
 const extraPages = ['General', 'Appearance', 'People', 'Phones'];
 
-// The redesign's pages (redesign-loop R8), from the .env's sections without changing them (a household's file keeps
-// its own): the updates and self-repair settings are Automatic care; Notifications is Alerts; Domain is Reaching the apps.
 const keyPage: Record<string, string> = Object.fromEntries(['UPDATES_PAUSED', 'WATCHTOWER_SCHEDULE', 'AUTO_ROLLBACK', 'AUTO_HEAL', 'UPDATE_CHANNEL', 'UPDATE_COPY_LIMIT', 'UPDATES_HELD']
   .map((k) => [k, 'Automatic care']));
 const renamedSections: Record<string, string> = { Notifications: 'Alerts', Domain: 'Reaching the apps' };
 
-// settingsPages groups the settings into pages: each .env section, except
-// the two that hold every app's ports and settings, which are split by app
-// (by the app's inputs, else its ID as the key's prefix: IMMICH_PORT is
-// Immich's). An app page joins the section named after it (AdGuard Home).
 function settingsPages(list) {
-  // A key belongs to the app whose ID is its longest prefix (IMMICH_ML_ to
-  // immich-ml), else to the app named by its first word (IMMICH_PORT to
-  // Immich), a main app before a helper.
   const norm = (t) => t.toUpperCase().replace(/[^A-Z0-9]+/g, '_') + '_';
   const apps = (catalog?.apps || []).map((a) => ({ name: a.name, inputs: new Set(a.inputs || []), helper: a.kind === 'helper', stack: a.stack,
     prefixes: [[norm(a.id), 0], [norm(a.name), 2], [norm(a.id.split('-')[0]), 1]] as [string, number][] }));
@@ -323,12 +298,6 @@ function settingsPages(list) {
   return [...general, ...appPages];
 }
 
-// The page list on the left (owner, 29 Oct: "per category"): this machine,
-// the household, and reaching the apps; then the installed apps folded by
-// their category on Status; then the apps not installed, folded as one.
-// A page not named in the groups joins the first.
-// The redesign's list (redesign-loop R8): the everyday pages first, without a heading; then this machine's; then each
-// app's own settings, folded by category, under Advanced.
 const pageGroups: [string, string[]][] = [
   ['', ['General', 'People', 'Phones', 'Automatic care', 'Alerts', 'Reaching the apps']],
   [thisMachine, [thisMachine, 'Storage', 'Appearance', 'Tidy Up']],
@@ -363,7 +332,6 @@ function pickSettingsPage(name) {
   document.querySelector('main').scrollTo({ top: 0 });
   tabChanged();
 }
-// Each of Settings' pages a step for Back and Forward (the owner, Nov 25: "more memory … to go back and forth further").
 keepsTabs('settings', () => settingsPage, (page) => { settingsPage = page; $('settingsSearch').value = ''; filterSettings(); });
 // A page in a folded category has no button until its fold opens: picked
 // directly, its fold opens with it.
@@ -408,9 +376,6 @@ const settingLabels = {
 const upper = new Set(['API', 'URL', 'DNS', 'IP', 'HTTP', 'HTTPS', 'ID', 'PDF', 'AI', 'IGDB', 'SSL', 'UI', 'OCR', 'JWT', 'SSO', 'VPN']);
 const wordLabels = { DB: 'database', NEXTAUTH: 'NextAuth', MEILI: 'Meilisearch', SCREENSCRAPER: 'ScreenScraper', NPM: 'Nginx Proxy Manager' };
 const envPrefix = (t) => t.toUpperCase().replace(/[^A-Z0-9]+/g, '_') + '_';
-// The app a key starts with, in the app's own spelling (OPEN_WEBUI_PORT:
-// Open WebUI), by its ID, its name, or the first word of both (ADGUARD_PORT:
-// AdGuard Home), a main app before a helper.
 function keyApp(key): [string, string] | null {
   let best: [string, string] | null = null, score = 0;
   for (const a of catalog?.apps || []) {
@@ -440,9 +405,6 @@ function markChanged() {
   $('saveSettings').textContent = n === 1 ? 'Save 1 change' : `Save ${n} changes`;
 }
 
-// Settings search: by key, help text, or section; every word must match,
-// across every page. Without a search, the chosen page shows; on the
-// homelab-wide pages, the rarely changed settings wait behind Show all.
 function filterSettings() {
   if (!form) return;
   form = { ...form, view: settingsView() };
@@ -450,8 +412,6 @@ function filterSettings() {
   const searching = !!form.view.query.trim();
   const sh = shownSettings(form.pages, form.view, form.wanted, form.label, form.checks);
   for (const [id, name] of [['thisMacCard', thisMachine], ['appearanceCard', 'Appearance'], ['peopleCard', 'People'], ['phonesCard', 'Phones'], ['tailnetCard', 'Phones']]) $(id).classList.toggle('offpage', searching || settingsPage !== name);
-  // On the computer the page list is Settings' menu in the sidebar, under the screens' icons as every screen's is (the
-  // owner, Nov 24); the drop-down stays over the page for a small window's rail. A phone keeps both in the page.
   if (!onPhone() && $('settingsNav').parentElement !== $('settingsSide')) $('settingsSide').appendChild($('settingsNav'));
   const nav = { groups: navGroups, active: settingsPage, counts: searching ? sh.counts : null, pick: pickSettingsPage };
   mountNav($('settingsNav'), nav);

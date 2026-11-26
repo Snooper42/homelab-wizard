@@ -1,8 +1,3 @@
-// The money card on a wall screen's Status (kiosk mode), when Settings ›
-// Phones lets that screen have it: the next payday and who is paid, what
-// checking holds once its bills are paid, and the next 3 bills. The screen
-// is sent only these (finance.WallCard), and no amount at all while Hide
-// amounts is on: then each says $•••.
 import { render } from 'preact';
 import { Card } from '../parts/Card';
 import { Mark, brandOf } from '../finances/Mark';

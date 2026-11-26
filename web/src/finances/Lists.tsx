@@ -1,9 +1,3 @@
-// Finances › Recurring and Pay, laid from the kit. Recurring: a month of
-// pay and what it pays, and the payments that repeat, each with its next
-// day and the paycheck that covers it, opening its form; the subscriptions
-// on their own, with what they cost a month and a year. Pay: each person
-// who gets paid (the pay stub when typed in), the paychecks ahead, and
-// the bank holidays and currency.
 import { useEffect, useState } from 'preact/hooks';
 import { Card } from '../parts/Card';
 import { Empty } from '../parts/Empty';
@@ -36,12 +30,6 @@ const currencies = ['USD', 'CAD', 'EUR', 'GBP', 'AUD', 'NZD', 'CHF', 'SEK', 'NOK
 /** A new calendar link's key: 24 random bytes as hex, made on this device. */
 const newKey = () => Array.from(crypto.getRandomValues(new Uint8Array(24)), (b) => b.toString(16).padStart(2, '0')).join('');
 
-/**
- * The calendar feed: paydays and bills in a phone's calendar, through a
- * link only the household has (over Tailscale or the homelab's own
- * domain, never the home Wi-Fi). Made, copied, with amounts or without,
- * made again (the old link stops working), or turned off.
- */
 function CalendarFeed({ v, calendar, busy, set }: { v: finance.View; calendar: () => Promise<string>; busy: boolean; set: (key: string | undefined, amounts: boolean) => void }) {
   const key = v.plan.calendarKey, amounts = !!v.plan.calendarAmounts;
   const [link, setLink] = useState<{ key?: string; url?: string; problem?: string }>({});
@@ -82,12 +70,6 @@ function CalendarFeed({ v, calendar, busy, set }: { v: finance.View; calendar: (
 const reminders: [string, string][] = [['due', 'A bill or card due tomorrow'], ['cushion', 'Three days before a paycheck leaves checking under the cushion'], ['renewal', 'A week before a yearly payment renews'], ['balances', 'Each week the balances go without an update']];
 const calendars: [string, string][] = [['us', 'US bank holidays'], ['uk', 'UK bank holidays (England and Wales)'], ['none', 'Weekends only']];
 
-/**
- * Pay › Paydays and money: the bank holidays a payday moves before, the
- * currency amounts are in, and, for each other currency an account is kept
- * in, how much of the plan's one of it is (typed in, never looked up),
- * kept as it changes.
- */
 function Settings({ v, save, calendar }: { v: finance.View; save: SaveSettings; calendar?: () => Promise<string> }) {
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState('');
@@ -161,11 +143,6 @@ const kindFromCategory = (cat: string | undefined, cats: finance.Category[] | un
   return ({ home: 'home', utilities: 'utilities', car: 'car', subscriptions: 'subscriptions', food: 'spending', shopping: 'spending' } as Record<string, string>)[top] || 'other';
 };
 
-/**
- * Found in your transactions: payees paid on a rhythm no planned payment
- * covers (View.Found), each with Add to the plan, which keeps it as a
- * payment from its next day; then it is covered, and gone from here.
- */
 function FoundWidget({ v, add }: { v: finance.View; add?: (x: finance.Payment) => void }) {
   if (!v.found?.length || !add) return null;
   const every: Record<string, string> = { week: 'weekly', '2 weeks': 'every other week', month: 'monthly', '3 months': 'every 3 months', year: 'yearly' };

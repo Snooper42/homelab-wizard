@@ -1,8 +1,3 @@
-// Settings' page list on the left, in groups (this machine, the household,
-// reaching the apps), then the installed apps folded by category, then the
-// apps not installed folded as one; each page with a count of matches while
-// searching. A fold opens by itself when it holds the page shown, or a match.
-// A screen too narrow for the list shows the same pages as one drop-down.
 import { render } from 'preact';
 import { useState } from 'preact/hooks';
 import { Icon } from '../Icon';

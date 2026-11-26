@@ -1,10 +1,3 @@
-// An answer on hover: a badge, a few words, or a button that shows a small
-// card when the pointer rests on it, when the keyboard reaches it (Tab), or
-// when a phone taps it. Escape, the pointer leaving, or the focus moving on
-// closes it. The card is the trigger's description (aria-describedby), so
-// a screen reader reads it too; it is placed under the trigger (or beside
-// it, in the sidebar), inside the window, so neither a table's edge nor the
-// window cuts it off.
 import { type ComponentChildren, type JSX } from 'preact';
 import { useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { putAt } from './place';
@@ -20,11 +13,6 @@ export interface HoverCardOptions {
   lazy?: boolean;
 }
 
-/**
- * The card for a trigger of the caller's own (a button keeps its own click):
- * spread `on` onto the trigger, and put `card` beside it, outside it, so the
- * trigger's name stays its own words.
- */
 export function useHoverCard<T extends HTMLElement>(tip: ComponentChildren, { wide, side = 'below', lazy }: HoverCardOptions = {}) {
   const [open, setOpen] = useState(false);
   const [id] = useState(() => `hover-${++made}`);

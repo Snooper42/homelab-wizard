@@ -1,10 +1,3 @@
-// Status's app list: every app grouped by category (what needs a look
-// first, in a group of its own), each folding into its heading, with the
-// app's state, address, and buttons. Preact updates only what changed, so
-// a live change leaves the focus and an open tooltip where they were.
-// Which categories are open is the list's own: a click folds or opens one
-// without app.ts or the backend. Typing on Status narrows it to the apps
-// whose name has what is typed, as Finder does (Filter, below).
 import { render, type JSX } from 'preact';
 import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { ActionLink } from '../ActionLink';
@@ -275,18 +268,9 @@ interface MenuAt { id: string; x: number; y: number; from: Element | null }
 
 function Row({ a, p, menu, setMenu, said, say }: { a: api.AppStatus; p: AppListProps; menu: MenuAt | null; setMenu: (m: MenuAt | null) => void; said?: string; say: (id: string, words: string) => void }) {
   const pend = p.pending[a.id];
-  // Its menu: on this computer, and on a phone that may make changes (a
-  // long press); never on a look-only phone or a wall screen, nor for an
-  // app not installed or run elsewhere.
-  // The phone's level is read when the finger is down: it can come after the rows were drawn, and change.
   const phoneMay = () => { const c = document.documentElement.classList; return c.contains('can-change') && !c.contains('kiosk'); };
   const menuable = a.state !== 'missing' && a.state !== 'elsewhere';
   const openMenu = (x: number, y: number) => setMenu({ id: a.id, x, y, from: document.activeElement });
-  // A long press, as on the phone's own Home Screen: half a second held
-  // still opens the row's menu where the finger is, and the click that
-  // follows the press is not taken as opening the app's page. Listened for
-  // by name, so it works wherever touch events come, not only where the
-  // browser says it has a touchscreen.
   const rowRef = useRef<HTMLTableRowElement>(null);
   const opener = useRef(openMenu);
   opener.current = openMenu;
@@ -380,14 +364,6 @@ function StartAll({ g, p }: { g: Group; p: AppListProps }) {
 
 const isNative = (p: AppListProps, a: api.AppStatus) => p.catalog?.apps.find((c) => c.id === a.id)?.kind === 'native';
 
-/**
- * A group's count, which opens its menu: what the group holds in memory
- * now, each running app's share biggest first, and Start, Restart, or Stop
- * for the whole group. Stopping asks for a second click, as it takes the
- * apps away from everyone. The menu works as More… does: the arrow keys
- * move through it, Escape closes it back on the count, and a click
- * elsewhere closes it. On the phone the count is plain text.
- */
 function GroupMenu({ g, p, count, tone }: { g: Group; p: AppListProps; count: string; tone: '' | 'ok' | 'warn' }) {
   const [open, setOpen] = useState(false);
   const [sure, setSure] = useState(false);
@@ -411,9 +387,6 @@ function GroupMenu({ g, p, count, tone }: { g: Group; p: AppListProps; count: st
     setSure(false);
     requestAnimationFrame(() => (on ? items()[0] : wrap.current?.querySelector<HTMLButtonElement>('.stoplater'))?.focus());
   };
-  // A press anywhere else closes it, another group's count included: read
-  // as the press begins (capture), since each count keeps its own click
-  // from the heading's fold, and so from a listener on the document.
   useEffect(() => {
     if (!open) return;
     const outside = (e: Event) => { if (!wrap.current?.contains(e.target as Node)) close(); };
@@ -505,7 +478,6 @@ function GroupHead({ g, open, toggle, p }: { g: Group; open: boolean; toggle: ()
         if (c.getAttribute('aria-expanded') !== 'true') c.click();
       }}>
       <th colSpan={4}>
-        {/* Its first three apps' own icons, overlapping, as the redesign's rows (letters until they arrive). */}
         <span class="groupmarks" aria-hidden="true">{g.apps.slice(0, 3).map((a) => <AppMark key={a.id} id={a.id} name={a.name} icon={p.icons?.[a.id] || ''} small />)}</span>
         <button type="button" class="foldbtn" aria-expanded={open} onClick={(e) => { e.stopPropagation(); toggle(); }}>
           <span class="chev" aria-hidden="true">{open ? '▾' : '▸'}</span>
@@ -513,7 +485,6 @@ function GroupHead({ g, open, toggle, p }: { g: Group; open: boolean; toggle: ()
         </button>
         {/* A wall screen hides every button, this one too: its name as plain text there. */}
         <span class="kiosklabel">{g.label}</span>
-        {/* The redesign's pill: green with a tick when all of them run, amber when one doesn't. */}
         <GroupMenu g={g} p={p} count={g.alert ? String(g.apps.length) : running >= counted ? `✓ ${running} running` : `${running} of ${counted} running`}
           tone={g.alert ? '' : running >= counted ? 'ok' : 'warn'} />
         <StartAll g={g} p={p} />
@@ -523,12 +494,7 @@ function GroupHead({ g, open, toggle, p }: { g: Group; open: boolean; toggle: ()
   );
 }
 
-// Which categories are open, kept between visits and restarts: each one
-// the user opened or closed; the rest open when something in them is not
-// running. all: Show every app was picked. Shared by the list and its
-// Show every app button. What was picked is the computer's too
-// (internal/statusfolds), so every device shows the same; Show every app is
-// this device's own. Kept here as well, so the list draws at once.
+// The whole list shows only after Show every app (or a filter), never from folds kept from before.
 interface Fold { all: boolean; picked: Record<string, boolean> }
 const foldKey = 'homelab.statusOpen';
 let fold: Fold = { all: false, picked: {} };
@@ -540,24 +506,24 @@ try {
     fold = { all: false, picked: Array.isArray(kept) ? Object.fromEntries(kept.map((l: string) => [l, true])) : kept };
   }
 } catch { /* private window: the defaults */ }
+let listing = fold.all;
 const folded: ((f: Fold) => void)[] = [];
 function show(f: Fold) {
   fold = f;
+  if (f.all) listing = true;
   queueMicrotask(() => viewers.forEach((v) => v()));
   try { localStorage.setItem(foldKey, f.all ? 'all' : JSON.stringify(f.picked)); } catch { /* not kept */ }
   folded.forEach((fn) => fn(f));
 }
-/** Who keeps what is picked for every device (screens/status.ts): told of each fold or open, never of Show every app. */
 let keep: (picked: Record<string, boolean>) => void = () => {};
 export function onFoldsPicked(fn: (picked: Record<string, boolean>) => void) { keep = fn; }
 function setFold(f: Fold) {
   show(f);
   if (!f.all) keep(f.picked);
 }
-/** Every app in the list (the overview's See them, Start all's companion). */
 export function showEveryApp() { setFold({ all: true, picked: {} }); }
-/** Whether the overview shows the whole list (Show every app, or a filter typed) rather than its categories' panel. */
-export const listView = () => fold.all || filter.on || Object.values(fold.picked).some(Boolean);
+export const listView = () => listing || filter.on;
+function foldAgain() { listing = false; setFold({ all: false, picked: {} }); }
 const viewers: (() => void)[] = [];
 /** Calls back when that changes. */
 export function onListView(f: () => void) { viewers.push(f); }
@@ -575,11 +541,6 @@ function useFold(): Fold {
   return f;
 }
 
-// Type to filter: a letter typed anywhere on Status (not in a field, a
-// menu, or a sheet) opens a filter box beside Show every app with it, and
-// the list keeps only the apps whose name (or ID) has what is typed, each
-// group open. Return opens the first one's page; Escape clears it and the
-// whole list comes back. Shared by the list and the box.
 interface Filter { text: string; on: boolean }
 let filter: Filter = { text: '', on: false };
 const filters: ((f: Filter) => void)[] = [];
@@ -621,7 +582,6 @@ function setFound(f: typeof found) {
   founds.forEach((fn) => fn(f));
 }
 
-/** Clears the filter, and the focus goes back where it was before typing (or the box's place in the page). */
 function clearFilter() {
   setFilter({ text: '', on: false });
   const back = before;
@@ -689,11 +649,6 @@ function openGroups(groups: Group[], f: Fold, held: Record<string, stopped.Stop>
   return Object.fromEntries(groups.map((g) => [g.label, f.all || (g.label in f.picked ? f.picked[g.label] : !fine(g))]));
 }
 
-// Status read aloud: a screen reader hears each row's change as it is drawn,
-// a job's step as well as its end (Vikunja: Restarting…, then Vikunja:
-// Running), and an app that goes down while Status is open. The words are
-// the row's own; apps that change to the same words are said together. Not
-// on the first draw, nor while Status is not the screen shown.
 const heard = new Map<string, string>();
 let heardOnce = false;
 const listed = (names: string[]) => (names.length <= 5 ? names.slice(0, -1).join(', ') + (names.length > 1 ? ' and ' : '') + names[names.length - 1] : `${names.slice(0, 4).join(', ')} and ${names.length - 4} more`);
@@ -751,7 +706,7 @@ export function AppList(p: AppListProps) {
 export function ShowAll() {
   const f = useFold();
   const on = useFilter().on;
-  return <>{on ? <FilterBox /> : <button id="statusAll" class="linkbtn" onClick={() => setFold({ all: !f.all, picked: {} })}>{f.all ? 'Fold them again' : 'Show every app'}</button>}</>;
+  return <>{on ? <FilterBox /> : <button id="statusAll" class="linkbtn" onClick={() => (listing ? foldAgain() : setFold({ all: true, picked: {} }))}>{listing ? 'Fold them again' : 'Show every app'}</button>}</>;
 }
 
 /** Renders the list into the table body el. */

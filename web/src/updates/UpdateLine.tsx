@@ -1,10 +1,3 @@
-// The update, as one line at the top of every screen: ready (already
-// downloaded) with What's new, Later, and Update now; a bar while it goes
-// in place; "Updated to …" once the new version opens; why, in one
-// sentence, when it cannot finish by itself; and when the app opened again
-// on the version it was (Windows blocked the new one), that it did not
-// install, with the release page to install it by hand. Settings › This Mac keeps its
-// two choices: looking now, and installing when the app quits.
 import { render } from 'preact';
 import { useState } from 'preact/hooks';
 import { ActionLink } from '../ActionLink';

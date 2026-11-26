@@ -1,10 +1,3 @@
-// Arrange the Dashboard (the owner, Nov 12: "you should be able to move them
-// around, maybe resize them"; the mockup's artboard 5 was a yes, kept per
-// device): Arrange the Dashboard, then each card's handle to drag it, or ▲ ▼
-// for the keyboard; a third, half or the whole row for its width; Hide, the
-// hidden waiting below to come back; Reset to the usual; Done. Kept in this
-// device's storage only, in try: none kept is the usual board, drawn as it
-// always was. Not on a phone, where the cards stack anyway.
 import type { ComponentChildren } from 'preact';
 import { useEffect, useState } from 'preact/hooks';
 

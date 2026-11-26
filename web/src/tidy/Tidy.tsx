@@ -1,9 +1,3 @@
-// Tidy Up: the libraries on the media drive, sorted, tagged, and lean.
-// Overview says what needs your OK (each thing with what it wins back and
-// one button), the genres, the drive, and what was done, with Undo; each
-// library's tab says the same for it alone. screens/tidy.ts reads TidyUp,
-// runs the jobs (TidyRun), and keeps the running job's events; these
-// components only draw, and say what a click wants (run, confirm, reveal).
 import { createContext, render, type ComponentChildren } from 'preact';
 import { useContext, useEffect, useState } from 'preact/hooks';
 import { errorText, osName, thisMachine } from '../core';
@@ -258,11 +252,6 @@ function RunningCard({ lock, now, stop, stopping }: { lock: app.TidyUp['lock'] &
   );
 }
 
-/**
- * The flags a job that stopped part-way ran with: its lock's; for a lock from before they were kept (none said), the
- * one a job takes the lock with only (Set up Tdarr and Check Downloads lock only with --apply). Undefined when it
- * can't be told: lyrics locks as Add lyrics and as Tidy lyrics alike.
- */
 export function staleFlags(s: { kind: string; action: string; flags?: string[] | null }): string[] | undefined {
   if (s.flags) return s.flags;
   const what = `${s.kind} ${s.action}`;
@@ -546,9 +535,6 @@ function TodoRows({ todos, job }: { todos: Todo[]; job: TidyJob | null }) {
   // One main button, on the first thing to do (the list is in the order to do them), never on one that throws things
   // away; the rest are there, quieter.
   const first = todos.findIndex((t) => t.go && !t.go.quiet && !t.go.risky);
-  // Next up: that thing leads the list, drawn larger (style.css, the row with the main button), after only what has to
-  // be put right before anything runs (a drive away, a tool missing). Before, a step that throws things away could
-  // sit above it, and the main button hid in the middle of the list.
   let warned = 0;
   while (warned < todos.length && todos[warned].warn) warned++;
   const order = first > warned ? [...todos.slice(0, warned), todos[first], ...todos.slice(warned, first), ...todos.slice(first + 1)] : todos;
@@ -728,10 +714,6 @@ function toolsRow(d: app.TidyUp, act: TidyActions, only: (needs: string) => bool
       : calibre ? { label: 'Get Calibre', run: () => act.open('https://calibre-ebook.com/download'), quiet: true } : undefined }];
 }
 
-/** Overview's list, Needs your OK: the drive when it's away (one row, whatever lives on it), the tools missing (one
- * row), each library's next things, then a library whose own folder is away. The screen's first line counts the same
- * list, so the two always agree. Before, a drive away was a row of its own and one more for each library on it, and
- * each tool a row: nine rows on a new Mac with the drive unplugged. */
 function needsFor(d: app.TidyUp, act: TidyActions, review: app.TidyBook[] | null, pick: (t: TidyTab) => void): Todo[] {
   const drive = d.checks.find((c) => c.id === 'drive' && !c.ok);
   const root = drive?.note?.replace(/ isn't there$/, '') || '';
@@ -745,7 +727,6 @@ function needsFor(d: app.TidyUp, act: TidyActions, review: app.TidyBook[] | null
   // A tool only a library that's away needs waits for it: with the drive unplugged, only Python is asked for.
   const here = new Set(d.libraries.filter((l) => l.found).map((l) => l.kind));
   const tools = toolsRow(d, act, (needs) => needs === 'all' || (toolFor[needs] || []).some((k) => here.has(k)));
-  // Anything else the machine needs (power for a big job): a row each, as before.
   const machine: Todo[] = d.checks.filter((c) => !c.ok && c.needs && c.id !== 'drive' && !TOOLS.has(c.id)).map((c) => ({ kind: 'machine', title: c.name, sub: `${c.note}. ${c.fix}`, warn: true }));
   return [...plug, ...tools, ...machine, ...LIBRARIES.flatMap((k) => todosFor(lib(d, k), d, act, review, pick)), ...gone];
 }
@@ -762,8 +743,6 @@ function Overview({ d, job, act, review, pick, placing, folders }: { d: app.Tidy
   // doing (the shelf), and what was done (beside the genres).
   return (
     <>
-      {/* The redesign (redesign-loop R9): the watched folders and when to tidy behind the header's button; then Today,
-          two-thirds wide, with Needs a look beside it (Today the whole row when nothing needs a look). */}
       {folders && <div class="fx-board"><InboxWidget d={d} job={job} act={act} /></div>}
       <div class="fx-board tidynow"><TodayWidget d={d} job={job} act={act} wide={!(d.needs || []).length} /><NeedsLookWidget d={d} job={job} act={act} /></div>
       <div class="fx-board tidytop">
@@ -790,10 +769,6 @@ const WHENS: [string, string][] = [['arrive', 'As things arrive'], ['daily', 'On
 /** A folder's own name, the last part of its path. */
 const folderName = (p: string) => p.replace(/[\\/]+$/, '').split(/[\\/]/).pop() || p;
 
-/**
- * Drop anything here: the folders Tidy Up watches (Add, and Remove while another is left), when it files what's in them,
- * and Tidy up now. Whatever lands in them, however messy, is worked out, cleaned up, and filed in its library.
- */
 function InboxWidget({ d, job, act }: { d: app.TidyUp; job: TidyJob | null; act: TidyActions }) {
   const ib = d.inbox;
   const folders = ib.folders || [];
@@ -831,11 +806,6 @@ function InboxWidget({ d, job, act }: { d: app.TidyUp; job: TidyJob | null; act:
 /** A time of day as the clock reads it: 9:41 AM. */
 const clock = (at: string) => new Date(at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
 
-/**
- * What I did today: a plain line for each download the inbox filed, newest first: what it is, where it went, and what
- * was done (tags, lyrics, the better copy kept, shrinking first). Undo puts its files back where they came from, and the
- * inbox then leaves them there.
- */
 /** What a library's folders are, counted: artists in music, films, shows, authors. */
 const shelfUnit: Record<string, [string, string]> = { music: ['artist', 'artists'], movies: ['film', 'films'], tv: ['show', 'shows'], books: ['author', 'authors'], audiobooks: ['author', 'authors'] };
 const kindWords: Record<string, string> = { music: 'music', movies: 'films', tv: 'TV', books: 'books', audiobooks: 'audiobooks' };
@@ -988,7 +958,6 @@ function TodayWidget({ d, job, act, wide }: { d: app.TidyUp; job: TidyJob | null
   const today = d.today || [];
   return (
     <Widget title="What I did today" span={wide ? 'all' : 1} kind="tidytoday">
-      {/* As the redesign's Today (R9): how many it filed, as a figure, over the list. */}
       {!!today.length && <Stat value={<span class="fx-amount">{today.filter((f) => !f.undone).length}<small> {today.filter((f) => !f.undone).length === 1 ? 'download' : 'downloads'} filed</small></span>} caption="Since midnight" />}
       {today.length ? (
         <Rows kind="fx-rows tidytoday">
@@ -1220,7 +1189,6 @@ export const tabNow = (t: string): TidyTab => (t === 'inbox' ? 'overview' : t ==
 
 export function TidyScreen(p: TidyProps) {
   const { d, job, act } = p;
-  // The watched folders and when to tidy (Drop anything here), behind the header's button (redesign-loop R9).
   const [folders, setFolders] = useState(false);
   const tab = tabNow(p.tab);
   const waiting = d ? needsFor(d, act, p.review, p.pick).filter((t) => t.go).length : 0;
@@ -1236,7 +1204,6 @@ export function TidyScreen(p: TidyProps) {
           {d && <Elsewhere.Provider value={other ? jobTitle(other.kind, other.action, other.flags || []) : ''}><Go primary label="Tidy up now" job={job} onClick={() => act.run('inbox', 'scan', ['--apply'])} /></Elsewhere.Provider>}
         </div>
       </div>
-      {/* The sidebar's menu has these on the computer (TidyMenu, redesign-loop R9); the tabs stay for a screen without it. */}
       <div class="tidytabs"><Segmented label="Tidy Up sections" value={tab} pick={(v) => p.pick(v as TidyTab)} options={[['overview', 'Inbox'], ...LIBRARIES.map((k): [string, string] => [k, names[k]])]} /></div>
       {other && <RunningCard lock={other} now={p.running?.lock ? p.running.now : undefined} stop={() => p.act.stopElsewhere(other)} stopping={p.stoppingElsewhere === other.start} />}
       {d?.stale && !other && !job && (() => {
@@ -1259,10 +1226,6 @@ export function TidyScreen(p: TidyProps) {
   );
 }
 
-/**
- * Tidy Up's menu, in the sidebar while it shows (redesign-loop R9, as Finances' FinMenu): Overview with how many things
- * wait on you, each library, then the drive and its free space.
- */
 function TidyMenu({ tab, pick, d }: { tab: TidyTab; pick: (t: TidyTab) => void; d: app.TidyUp | null }) {
   const here = tabNow(tab);
   const dr = d?.drive;

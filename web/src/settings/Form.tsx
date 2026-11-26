@@ -1,8 +1,3 @@
-// Settings: .env as a form, in pages (each homelab-wide section, then one
-// page per app). Secrets are never sent to the page; an empty secret field
-// keeps the stored value. Logins, tokens, and folders have a Test button
-// that checks the saved value against the real service. The form keeps
-// what was typed; app.ts saves it.
 import { render } from 'preact';
 import { useState } from 'preact/hooks';
 
@@ -21,11 +16,6 @@ export interface Result {
 export interface FormActions {
   /** What was typed and not saved yet, after each change. */
   edited: (edits: Record<string, string>) => void;
-  /**
-   * Saves a typed value first (when pending is set), then checks the saved
-   * one. used: the typed value was saved (or was an empty secret, which
-   * keeps the stored one), so it is no longer pending.
-   */
   test: (key: string, pending?: string) => Promise<{ result: Result; used: boolean }>;
   copy: (key: string) => Promise<Result>;
   /** A folder picked for key, or '' when none was. */
@@ -68,11 +58,6 @@ export interface Shown {
 /** Settings that hold a folder get a Choose… button. */
 const folderKey = /(_ROOT|_DESTINATION|_LOCATION|_DIR)$/;
 
-/**
- * Settings search: by name, key, help text, or page; every word must match,
- * across every page. Without a search, the chosen page shows; on the
- * homelab-wide pages, the rarely changed settings wait behind Show all.
- */
 export function shown(pages: Page[], view: View, wanted: Set<string>, label: (key: string) => string, checks: Record<string, setup.Step>): Shown {
   const words = view.query.toLowerCase().split(/\s+/).filter(Boolean);
   const out: Shown = { keys: new Set(), counts: {}, pageMore: 0 };
@@ -93,12 +78,6 @@ export function shown(pages: Page[], view: View, wanted: Set<string>, label: (ke
   return out;
 }
 
-/**
- * A setting's help in plain words: the commands behind it ("(./homelab
- * domain setup --ssl)") go, and for a switch so do the sentences that
- * spell out a value ("false lets it sleep as set.", "false: off."), since
- * the switch shows it.
- */
 export function plainHelp(help: string, toggle: boolean): string {
   const words = help.replace(/\s*\((?:\.\/)?homelab [^)]*\)/g, '');
   if (!toggle) return words;

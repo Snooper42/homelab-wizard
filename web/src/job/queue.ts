@@ -1,10 +1,3 @@
-// One job at a time, in turn. The Go side runs one install, setup step,
-// command, or app action at a time (its install lock), and the window has
-// one bar and one log for it (jobs.ts): a job asked for while another
-// runs used to be refused ("another install or setup step is running").
-// Now it waits its turn, in the order asked, says so where it was asked
-// (a row, a panel, the command sheet), and runs by itself when the one
-// before it ends, however that ends.
 
 interface Turn {
   title: string;
@@ -23,11 +16,6 @@ export const jobsWaiting = () => waiting.map((t) => t.title);
 export function watchJobs(fn: () => void) { watchers.push(fn); }
 const tell = () => watchers.forEach((fn) => fn());
 
-/**
- * Runs job in its turn: at once when nothing runs, else after the jobs
- * before it. wait is told what it waits for (the job running now) when it
- * must wait, so its place can say so. It resolves or rejects as job does.
- */
 export function inTurn<T>(title: string, job: () => Promise<T>, wait?: (behind: string) => void): Promise<T> {
   return new Promise<T>((resolve, reject) => {
     const go = () => {

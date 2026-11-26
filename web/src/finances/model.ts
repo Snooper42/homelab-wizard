@@ -1,8 +1,3 @@
-// What Finances' widgets show, worked out from the plan read forward
-// (finance.View): a month of pay and what it pays, spending by kind, the
-// accounts by group, net worth by month, and checking day by day. Plain
-// functions of the view, no drawing: a widget takes what one returns and
-// hands it to the kit (finances/ui), which knows nothing of the plan.
 import { allPayments, isoDay, type Lookup, owed, parseDay, perMonth, saving } from './money';
 
 /** A month of pay, and what it pays: spent, kept (savings, an investment, retirement), and left. */
@@ -19,13 +14,6 @@ export interface Month {
   others: { name: string; payer: string; amount: number }[];
 }
 
-/**
- * A month on average. A bill charged to a card is spent through the card's
- * payment (which pays it with the card's other spending); payments between
- * other accounts, and money moved into checking, are neither. Money from
- * someone outside the household is in, as pay is (and saved, when it goes
- * into savings).
- */
 export function month(v: finance.View, L: Lookup): Month {
   const people = v.plan.people || [];
   // A card paid off with each paycheck is a payment here, its spending counted once: there, not as each bill on it.
@@ -57,10 +45,6 @@ export function rateOf(plan: finance.Plan, a?: finance.Account): number {
   return (c && plan.rates?.[c]) || 1;
 }
 
-/**
- * The transactions with each on an account kept in another currency in
- * the plan's (parts too), so they add up: as Finances reads ahead.
- */
 export function inHome(plan: finance.Plan, txs: finance.Transaction[]): finance.Transaction[] {
   if (!plan.rates || !Object.keys(plan.rates).length) return txs;
   const rate = new Map((plan.accounts || []).map((a) => [a.id, rateOf(plan, a)]));
@@ -114,11 +98,6 @@ function balanceOn(v: finance.View, a: finance.Account, day: string): number {
   return kept !== undefined ? kept * rateOf(v.plan, a) : todayOf(v, a);
 }
 
-/**
- * What an account held (or a card or loan owed) at the end of a day, worked back (and on) from its balance as typed
- * in on its day, through every transaction in or out of it (Transactions' running balance, and an account's page).
- * Not for a home, a car, or a collectible, whose worth no transaction moves: `runsFrom` says which do.
- */
 export function balanceAfter(acct: finance.Account, all: finance.Transaction[], day: string): number {
   // What a transaction did to the account: money out of it, or a transfer into it; a card or loan owes the more for a charge.
   const effect = (t: finance.Transaction) => (t.account === acct.id ? t.amount : t.to === acct.id ? -t.amount : 0) * (owed(acct.kind) ? -1 : 1);
@@ -132,11 +111,6 @@ export const daysBack = (day: string, n: number): string => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
 
-/**
- * An account at each day's end over the last `days` days, today last: worked through its transactions from the
- * balance typed in, else what was typed in by then (a home, a car, an account with no transactions). The account's
- * own page and the Dashboard's look back draw the same line.
- */
 export function balanceSeries(v: finance.View, a: finance.Account, all: finance.Transaction[], days: number): { steps: string[]; values: number[]; runs: boolean } {
   const runs = runsFrom(a) && all.some((t) => t.account === a.id || t.to === a.id);
   const steps = Array.from({ length: days + 1 }, (_, i) => daysBack(v.today, days - i));
@@ -174,11 +148,6 @@ export interface WorthMonth {
   net: number;
 }
 
-/**
- * Net worth month by month: from the first balance kept to today, then the
- * months ahead as the paychecks and bills leave the accounts (the last
- * paycheck stretch ending in each month).
- */
 export function worthByMonth(v: finance.View, back = 3, ahead = 3): WorthMonth[] {
   const accounts = v.plan.accounts || [];
   const groupOf = (kind: string) => groups.find((g) => g.kinds.includes(kind))?.key || 'other';
@@ -266,11 +235,6 @@ export function monthPeriods(v: finance.View): { months: MonthPeriod[]; now: num
   return { months, now: monthsBack };
 }
 
-/**
- * Track from (Plan.trackFrom; the owner, Nov 16: Jan 1, 2026): what a
- * chart, total, average or report counts, the transactions on or after it.
- * The ledger keeps every row, and Transactions lists them all.
- */
 export function counted<T extends { date: string }>(v: finance.View, txs: T[]): T[] {
   const from = v.plan.trackFrom;
   return from ? txs.filter((t) => t.date >= from) : txs;

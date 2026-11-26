@@ -1,11 +1,3 @@
-// An app's row's own menu on Status: a right-click on the row, Shift+F10,
-// or the context-menu key opens it, with what its page offers, without
-// opening the page. It works as a group's menu does: the arrow keys, Home,
-// and End move through it, Escape closes it back where the focus was, and
-// a press elsewhere closes it (read as the press begins, since WebKit moves
-// no focus on a click). Stop asks for a second click; Stop for a while ›
-// shows its times in place of the menu, and Send to my phone › the phones
-// it can go to (the owner, Nov 12: pick a phone each time).
 import { useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { stopChoices } from './stopFor';
 import { putInside } from '../parts/place';

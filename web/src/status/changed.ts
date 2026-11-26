@@ -1,9 +1,3 @@
-// What changed since you looked: each app as you last saw it on Status
-// (its state, when it started, its last update), kept on this device when
-// you leave Status (an app's page counts as Status). On the next visit, a
-// row whose app changed meanwhile has a dot saying how: restarted,
-// updated, stopped, started. Leaving Status again clears them, since you
-// have seen them. The first visit on a device has nothing to compare.
 
 const key = 'homelab.statusSeen';
 

@@ -1,9 +1,3 @@
-// Set aside: the bills that come less often than monthly (every three
-// months, once a year), each with what it costs a year, what to put aside
-// from each paycheck so it is there when it comes, and when it next does;
-// together, what each paycheck puts aside. Where Finances may be changed,
-// a payment into savings with each paycheck can be added for it, or
-// brought up to date when the bills changed.
 import { Row, Rows } from '../../parts/Row';
 import { Amount } from '../ui/Amount';
 import { Widget } from '../ui/Widget';

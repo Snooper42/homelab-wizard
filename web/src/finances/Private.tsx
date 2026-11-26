@@ -1,8 +1,3 @@
-// A household member's private Finances on her phone's page (privacy.ts):
-// above Finances, the card that turns privacy on (what it means, the page's
-// one limit, her recovery code once, two of its words typed back, then
-// Face ID or a passphrase), the one that unlocks them (Face ID, her
-// passphrase, or her recovery code), and, while they're open, Lock.
 import { render } from 'preact';
 import { useState } from 'preact/hooks';
 import { errorText } from '../core';

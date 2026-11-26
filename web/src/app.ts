@@ -1,9 +1,3 @@
-// Homelab Wizard frontend, in TypeScript: esbuild compiles it to
-// web/dist/app.js (npm run build), which Wails serves and homelab serve
-// shows on a phone. The Go methods in app.go are window.go.main.App, typed
-// in web/types. This file chooses the screen, answers the keyboard, and
-// starts the app; each screen's code is in web/src/screens, drawn by Preact
-// components (*.tsx). app/preview/lint.mjs keeps it under 400 lines.
 import { placeOf, readTargets, showSent } from './phone/send';
 import { progress } from './setup/Checklist';
 import { drawRemembered, leftStatus, loadStatus, pickStatusPart, refreshStatus, statusData, statusSideChanged, undoNow } from './screens/status';
@@ -28,10 +22,7 @@ import { onTabChange, tabbed } from './tabs';
 
 let placed = false; // a screen was shown: the one the page starts on has no place of its own to keep yet
 export function show(name) {
-  // Choose apps is gone (the owner, Nov 25): ⌘1, the Mac's View menu and old links open Find an app on Status.
   if (name === 'choose') { show('status'); pickStatusPart('find'); return; }
-  // An app's page and Backups belong to Status (the owner, Nov 25: Backups an item in Status' menu): its button stays
-  // the one picked, and its menu marks Backups.
   const picked = name === 'app' || name === 'backups' ? 'status' : name;
   const was = document.querySelector('.screen.active')?.id;
   // Where the screen being left was (place.ts); not the one the page starts on, before any is shown.
@@ -50,10 +41,6 @@ export function show(name) {
   freshen(name);
   drawHealth(); // the line at the top: not on Status, on every other screen
 }
-// Each screen's data is kept between visits (store.ts): picking a screen
-// draws what is kept, and reads it again only when it is out of date (the
-// engine said it changed, an install added settings) or over a minute old.
-// Settings with something typed and not saved are not read again.
 function freshen(name) {
   if (name === 'status') { statusData.fresh(minute); healthData.fresh(minute); }
   if (name === 'app') { statusData.fresh(minute); refreshApp(); }
@@ -100,14 +87,7 @@ export function navigate(name) {
   remember();
 }
 
-// Back and Forward between screens, as a browser has them (the owner, Nov 11): an app's page with its app, a
-// screen's tab or page (Status' categories, Settings' pages), 500 back and kept between launches. ⌘[ and ⌘] (Alt+← and Alt+→ elsewhere), the mouse's back and forward buttons, and a two-finger swipe on a
-// trackpad: fingers to the right is Back, to the left Forward.
-// A screen with tabs (Finances, Tidy Up) is a step per tab (the owner, Nov 12: Back from Recurring or Spending went
-// straight to Status): it names the tab it is on, and puts one back.
 type Place = { screen: string; app?: string; tab?: string };
-// 500 steps each way (the owner, Nov 25: "more memory … to go back and forth further"), kept on this device between
-// launches, so Back after opening the app again goes where it went before.
 const keep = 500;
 const kept = (() => { try { return JSON.parse(localStorage.getItem('homelab.history') || '{}'); } catch { return {}; } })();
 const back: Place[] = Array.isArray(kept.back) ? kept.back.slice(-keep) : [], ahead: Place[] = Array.isArray(kept.ahead) ? kept.ahead.slice(-keep) : [];
@@ -176,9 +156,6 @@ function swipeHint(way: 'back' | 'forward') {
   render(vnode('div', { key: Date.now(), class: 'swipehint ' + way }, way === 'back' ? '‹' : '›'), box);
   hintGone = window.setTimeout(() => render(null, box), 500);
 }
-// A two-finger swipe on a trackpad is a sideways wheel: its distance added up while it lasts (a pause ends it), and
-// once past a threshold, Back or Forward, once a swipe. Not over something that still scrolls that way (a wide table,
-// a chart), and not on a phone, whose screens are a bar of tabs.
 let swipeSum = 0, swipeAt = 0, swiped = false;
 function scrollsSideways(t: EventTarget | null, dx: number): boolean {
   for (let el = t instanceof Element ? t : null; el && el !== document.body; el = el.parentElement) {
@@ -215,12 +192,6 @@ $$('nav button[data-screen]').forEach((b) => {
 // A right-click on a screen in the sidebar: its own menu (palette/navMenu.tsx).
 wireNavMenus();
 
-// Keyboard: Cmd (Ctrl elsewhere) with 1-7 picks a screen, comma opens
-// Settings, R refreshes, F finds (Choose apps, Settings), K opens the
-// command palette (palette/Palette.tsx); Escape clears a
-// search. On the Mac the View menu has the same shortcuts and sends them as
-// navigate and refresh events.
-// Text size, kept per machine: the whole app scales, 80% to 200%.
 let textSize = 1;
 function setTextSize(z) {
   textSize = Math.round(Math.min(2, Math.max(0.8, z)) * 10) / 10;

@@ -1,11 +1,3 @@
-// The command palette: ⌘K (Ctrl+K elsewhere, and View › Command Palette on
-// a Mac) on any screen, then type "immich" for its Open, Restart, or Logs,
-// or "stop media", "back up now", "update all". The arrow keys pick, Return
-// runs, Escape or a press outside closes it with the focus back where it
-// was. Stop asks for a second press, as the row's menu does; what changes
-// more than one thing (Update all) shows its plan first, as its button does.
-// Not while a sheet is open (a job or a form owns the window), nor on a wall
-// screen.
 import { render } from 'preact';
 import { useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { type Command, commands, match } from './commands';
@@ -81,7 +73,6 @@ export function Palette({ list, close }: PaletteProps) {
   );
 }
 
-// Open or not, and where the focus was before.
 let el: HTMLElement | null = null;
 let before: HTMLElement | null = null;
 const isOpen = () => !!el?.firstChild;

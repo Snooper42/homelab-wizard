@@ -5,11 +5,6 @@ import { catalog } from './screens/choose';
 import { $ } from './core';
 import { bgProgress } from './job/Background';
 
-// The window running a job (cli, backup, setup, or install): a bar with
-// the step at hand in words, a row per app (job:app, from what Compose
-// prints), and the raw lines under Show details, which fold away once the
-// rows say it better. The CLI's steps (cli:step) drive the bar; without
-// them, the apps' rows do.
 export let jobBox = 'cli';
 /** The job window's box goes back to the command sheet's. */
 export function endJob() { jobBox = 'cli'; }

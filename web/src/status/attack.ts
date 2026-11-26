@@ -1,6 +1,3 @@
-// CrowdSec's scenarios in words a household reads: "Probing for a known
-// security hole", not "vpatch-CVE-2017-9841". The scenario's own name and
-// the address it came from stay in the row's tooltip.
 
 const words: [RegExp, string][] = [
   [/(^|-)cve-|^vpatch-/i, 'Probing for a known security hole'],

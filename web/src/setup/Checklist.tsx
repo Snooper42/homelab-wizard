@@ -1,7 +1,3 @@
-// Finish setting up: the checklist from the engine, one line a step (what
-// it gives you, and its buttons), grouped as what needs you now, what can
-// wait, and what is done; a step opens for the rest of what it says. Once
-// every step is done, the list is one line.
 import { render } from 'preact';
 import { useState } from 'preact/hooks';
 import { ActionLink } from '../ActionLink';

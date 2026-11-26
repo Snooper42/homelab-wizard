@@ -1,12 +1,3 @@
-// Loans, read to zero: each with what it owes, what goes to it a month,
-// and at its rate the month it is paid off and the interest still to pay;
-// in amber when the payment does not keep up with the interest, or none
-// goes to it. Under them, the loan picked, its balance month by month to
-// zero, with a table for a screen reader. Loans owing nothing are listed
-// apart, as paid off. A card carrying a balance (a rate, paid down by a
-// payment into it) is read with them. Where Finances may be changed, Pay
-// more: what an extra amount a paycheck does to the loan picked, and with
-// two or more, the highest rate first against the smallest balance first.
 import { useState } from 'preact/hooks';
 import { Row, Rows } from '../../parts/Row';
 import { Segmented } from '../../parts/Segmented';
@@ -32,7 +23,6 @@ export function payoffWords(p: finance.Payoff): string {
   return `${money(p.monthly)} a month: paid off ${monthOf(p.date!)}${p.interest ? `, ${money(p.interest)} interest still to pay` : ''}`;
 }
 
-/** "Dec 9, 2026". */
 const dayYear = (d: string) => `${dayShort(d)}, ${d.slice(0, 4)}`;
 
 /** The payments ring: how many of a loan's payments are made, as a circle filling. */
@@ -49,13 +39,6 @@ function Ring({ made, of }: { made: number; of: number }) {
   );
 }
 
-/**
- * A loan read from its papers: the ring of payments made, what is paid
- * down of what was borrowed, the next payment split into what pays the
- * loan down and what is interest, who pays it each month when more than
- * one payment goes into it, when it is half paid and paid off, and every
- * payment in a table to open.
- */
 function Papers({ v, L, p }: { v: finance.View; L: Lookup; p: finance.Payoff }) {
   const a = L.account[p.account], rows = p.rows!, made = p.made || 0;
   const original = rows.reduce((t, x) => t + x.principal, 0);

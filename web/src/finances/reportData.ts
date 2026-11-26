@@ -1,7 +1,3 @@
-// What Reports reads from the ledger: plain functions of the transactions
-// and the categories, no drawing. Spending is money out less refunds, a
-// split by its parts; money in is what came in outside the household's
-// own accounts; a transfer between them is neither.
 import { isoDay, monthName, parseDay } from './money';
 
 export interface Range { key: string; label: string; from: string; to: string }
@@ -126,13 +122,6 @@ function cell(s: string): string {
   return /[",\r\n;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 }
 
-/**
- * The transactions in a range as a CSV a spreadsheet opens: oldest first,
- * one row each, a split one row per part (the same note and tags on each).
- * Amounts are as the account saw them, money out a minus; a transfer names
- * the account it went to. With currency (accounts in more than one), a
- * last column says each amount's.
- */
 export function toCsv(txs: finance.Transaction[], r: Range, account: (id: string) => string, currency?: (id: string) => string): string {
   const rows = [['Date', 'Account', 'Payee', 'Category', 'Amount', 'Note', 'Tags', 'Transfer to', ...(currency ? ['Currency'] : [])]];
   for (const t of txs) {
@@ -168,11 +157,6 @@ export function twelveMonths(today: string): Range {
   return { key: 'twelve', label: 'The last 12 months', from: isoDay(new Date(d.getFullYear(), d.getMonth() - 11, 1)), to: isoDay(new Date(d.getFullYear(), d.getMonth() + 1, 0)) };
 }
 
-/**
- * A group's spending this month to today, and on the same days a year
- * before (the 1st to today's day): null when the ledger does not reach
- * back into those days yet.
- */
 export function yearOnYear(txs: finance.Transaction[], cats: finance.Category[], group: string, today: string): { now: number; then: number | null } {
   const d = parseDay(today);
   const spent = (from: Date, to: Date) => byCategory(txs, cats, { key: '', label: '', from: isoDay(from), to: isoDay(to) }).find((g) => g.name.toLowerCase() === group.toLowerCase())?.amount || 0;

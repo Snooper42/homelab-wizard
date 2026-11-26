@@ -1,13 +1,3 @@
-// Goals: money put by for something, from shares of the accounts (it never
-// moves money). Each with a bar of what is saved against its target, what
-// is left, what it needs a month and a paycheck to be there by its day,
-// and the pace the accounts have kept, with the month that pace reaches it:
-// in amber when that is after its day. Edit opens a goal's form; Add a
-// goal a new one; none yet, it says what they are for. Over them, a word
-// when the goals together need more a month than the plan puts by; under
-// them, What if: another amount a paycheck, and when that gets there, or
-// another day, and what that needs a paycheck (not on a phone allowed only
-// to look, which has nothing to type into).
 import { useState } from 'preact/hooks';
 import { Empty } from '../../parts/Empty';
 import { Row, Rows } from '../../parts/Row';
@@ -54,11 +44,6 @@ export function paydaysAMonth(v: finance.View): number {
 /** The month (YYYY-MM) n months on from a day. */
 const monthsOn = (day: string, n: number) => { const d = new Date(+day.slice(0, 4), +day.slice(5, 7) - 1 + n, 1); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; };
 
-/**
- * What if, for a goal not reached: another amount put by a paycheck and the
- * month it gets there (before or after its day), or another day and what
- * it needs a paycheck. It changes nothing; the goal's form does.
- */
 function WhatIf({ v, goals }: { v: finance.View; goals: finance.GoalNow[] }) {
   const open = goals.filter((g) => g.left > 0);
   const [id, setId] = useState('');
@@ -91,10 +76,6 @@ function WhatIf({ v, goals }: { v: finance.View; goals: finance.GoalNow[] }) {
   );
 }
 
-/**
- * The goals; with all (the phone's Dashboard), only how each stands, and
- * its ↗ to Net worth, where goals are added and What if is asked.
- */
 export function GoalsWidget({ v, L, edit, all }: { v: finance.View; L: Lookup; edit?: (what: 'goal', id?: string) => void; all?: () => void }) {
   const goals = v.goals || [];
   if (all && !goals.length) return null;

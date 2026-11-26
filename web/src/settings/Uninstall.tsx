@@ -1,7 +1,3 @@
-// Settings › This machine › Take the homelab off this machine: homelab
-// uninstall, with what else to remove picked here. The plan comes from
-// the homelab itself (the folders it names, the backups it keeps because
-// a cloud drive syncs them), and nothing happens until the words are typed.
 import { render } from 'preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 

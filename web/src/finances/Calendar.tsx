@@ -1,14 +1,3 @@
-// Finances › Calendar: the money month by month. Each day shows who is
-// paid (in their colour), each payment's mark, a bank holiday, and checking
-// at the end of the day, marked when it falls under the cushion. Picking a
-// day says what moves on it and what checking holds after. Narrow (a
-// phone), the month is a list, week by week, of the days something happens.
-// It reads only what the projection gives (View.Days, Later, Paydays,
-// Holidays): checking each day as far as the chart reads ahead, then a year
-// from today of paychecks and payments on their days, without a balance,
-// so a yearly renewal shows in its month. Before today, a day shows what
-// the ledger recorded on it (each payee's mark and the day's total), back
-// to a year ago.
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { Empty } from '../parts/Empty';
 import { Row, Rows } from '../parts/Row';
@@ -110,10 +99,8 @@ function Lead({ e, L, size }: { e: finance.Event; L: Lookup; size?: 'sm' }) {
   return <PayMark x={x} size={size} />;
 }
 
-/** Where a charge goes, in words: "on Chase Freedom, due Nov 21". */
 export const onCard = (e: finance.Event, L: Lookup) => `on ${L.account[e.card || '']?.name || 'a card'}` + (e.due ? `, due ${dayShort(e.due)}` : '');
 
-/** Why a payday moved, in words: "Moved from Sat, Nov 7: the weekend". */
 const movedText = (m: finance.Moved, L: Lookup) => `${L.person[m.person]?.name || m.person}'s payday moved from ${dayLong(m.from)}: ${m.why}`;
 
 /** A day read out: what moves and what checking holds after; before today, what was recorded. */
@@ -188,7 +175,7 @@ export function Calendar({ v, L, ledger, edit }: CalendarProps) {
   while (cells.length % 7) cells.push(null);
   const weeks: (string | null)[][] = [];
   for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7));
-  const heads = Array.from({ length: 7 }, (_, i) => addDays('2026-11-01', (i + (monday ? 1 : 0)) % 7)); // Nov 1, 2026 is a Sunday
+  const heads = Array.from({ length: 7 }, (_, i) => addDays('2026-11-01', (i + (monday ? 1 : 0)) % 7));
 
   const picked = days[sel];
   const lowCount = inMonth.filter((d) => days[d]?.low).length;
@@ -261,11 +248,6 @@ export function Calendar({ v, L, ledger, edit }: CalendarProps) {
   );
 }
 
-/**
- * The month shown in all: what its paychecks bring and its bills take,
- * the lowest checking gets and on which day, and, for its days before
- * today, what the transactions recorded. Beside the day picked.
- */
 function MonthCard({ L, month, ds, cushion, today }: { L: Lookup; month: string; ds: DayInfo[]; cushion: number; today: string }) {
   const name = parseDay(month + '-01').toLocaleDateString(undefined, { month: 'long' });
   const events = ds.flatMap((d) => d.events);

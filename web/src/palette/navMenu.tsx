@@ -1,11 +1,3 @@
-// A right-click on a screen in the sidebar (or Shift+F10, or the
-// context-menu key, on it) opens that screen's own menu, without picking
-// the screen first: Status's Check again, Update all, and Fix it;
-// Backups' Back up now and Test a restore; Finances' Add a transaction,
-// Update balances, and Hide amounts; every screen's Check again. Each item
-// opens its screen and does what the screen's own button does, so nothing
-// here changes anything another way: Update all shows its list first, as
-// its button does. Not on a phone, whose screens are a bar of tabs.
 import { openContextMenu, type ContextEntry } from '../parts/ContextMenu';
 import { financesData, openFinanceForm, toggleHideAmounts } from '../screens/finances';
 import { navigate, reloadScreen } from '../app';

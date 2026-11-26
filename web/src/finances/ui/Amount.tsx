@@ -1,6 +1,3 @@
-// The kit's primitives for money: an amount, a change, and a figure with
-// its caption. They take numbers and words only, never the plan; colours
-// come from the tone classes (fx-in, fx-out, …) in style.css.
 import type { ComponentChildren } from 'preact';
 import { Chip } from '../../parts/Card';
 import { amountsHidden, compact, money, moneyIn, signed, split, whole } from '../money';

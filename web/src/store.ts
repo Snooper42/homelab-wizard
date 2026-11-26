@@ -1,7 +1,3 @@
-// One screen's data, kept between visits: the last reading, when it was
-// read, and why the last read failed. The engine's changes and the
-// screen's actions read it again; picking the screen, or a click inside
-// it, draws what is kept instead of asking the backend.
 
 export interface Store<T> {
   /** The last reading that worked. */
@@ -10,10 +6,6 @@ export interface Store<T> {
   readonly error: unknown;
   /** When it was last read or set (0: never, failed, or marked out of date). */
   readonly at: number;
-  /**
-   * Reads it now and tells the watchers. One read at a time: asked during
-   * one, it reads once more after it. Never rejects; see error.
-   */
   load(): Promise<void>;
   /** Reads it only when never read, marked out of date, or older than maxAge (ms); waits for a read that runs. */
   fresh(maxAge: number): Promise<void>;

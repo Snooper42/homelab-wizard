@@ -7,7 +7,6 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<!-- Icons: Feather (feathericons.com, MIT licence), drawn inline. -->
 <nav aria-label="Screens">
   <div class="brand"><img src="logo.svg" alt=""><span>Homelab Wizard<small>Your apps, at home</small></span></div>
   <button data-screen="status" class="active"><svg class="icon" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span>Status</span><span class="count" id="statusCount"></span></button>
@@ -88,16 +87,15 @@
     <div id="statusStore"><div id="storeHead"></div><div id="storeFacts"></div><div id="storeNotes"></div><div id="storePlan" class="card"></div></div>
     <div class="row header">
       <div><h1>Status</h1><p class="lead statuslead"><span id="statusAge" hidden></span></p></div>
-      <div class="toolbar"><label class="catfind statusfind"><svg class="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input id="statusFind" type="search" placeholder="Find an app" aria-label="Find an app" autocomplete="off" spellcheck="false"></label><button id="phoneReport" class="btn companion-only" title="A file with what is running and the recent logs, every password and token removed, to send to whoever helps you">Send a report</button>
-        <button id="fixIt" class="btn primary" hidden title="Restarts what is down or unwell, frees space from unused images, and installs missing jobs; shows the plan first">Fix it</button>
-        <button id="updateAll" class="btn" title="Update every app the nightly update would, now: databases are dumped first, and the list shows before anything changes">Update apps</button>
+      <div class="toolbar"><label class="catfind statusfind"><svg class="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input id="statusFind" type="search" placeholder="Find an app" aria-label="Find an app" autocomplete="off" spellcheck="false"></label><button id="phoneReport" class="btn companion-only">Send a report</button>
+        <button id="fixIt" class="btn primary" hidden>Fix it</button>
+        <button id="updateAll" class="btn">Update apps</button>
         <div class="menuwrap"><button id="statusMore" class="btn" aria-haspopup="menu" aria-expanded="false">More…</button>
           <div id="statusMenu" class="menu" role="menu" hidden>
             <button id="connect" role="menuitem" title="Connect Prowlarr, the *arr apps, qBittorrent, Seerr, and Bazarr through their APIs">Connect apps</button>
             <button id="cleanup" role="menuitem" title="Remove stopped containers from before the homelab, whose apps now run in it">Clean up old containers</button>
           </div></div></div>
     </div>
-    <div id="overnightLine" hidden></div>
     <div id="crashNote" hidden></div>
     <div id="wallCard" hidden></div>
     <div id="tiles" class="tiles"></div>
@@ -107,8 +105,6 @@
     <div id="statusPanel"></div>
     <table class="grouped"><thead><tr><th>App</th><th>State</th><th>Address</th><th></th></tr></thead><tbody id="statusRows"></tbody></table>
     <p id="statusAloud" class="sr" role="status" aria-live="polite"></p>
-    <!-- Below Analytics (the owner, Nov 25: off the overview, each where it's useful): the checks, the alerts, the week,
-         protection, downloads, who keeps what, what's using power. Instead of subscriptions is Subscriptions' own. -->
     <div id="analyticsMore">
       <div id="watchCard" class="card alerts" hidden></div>
       <div class="duo">
@@ -122,10 +118,8 @@
       </div>
       <div id="weekCard" class="card alerts" hidden></div>
     </div>
-    <div id="subscriptionsMore"><div id="savingsCard" class="tiles savingsrow"></div></div>
   </section>
   <section id="app" class="screen" aria-label="An app"><div id="appPage"></div></section>
-  <!-- The command and log sheets, over whichever screen opened them. -->
   <div id="sheets"></div>
   <div id="customSheetBox"></div>
   <div id="palette"></div>
@@ -134,7 +128,7 @@
     <div id="backupsCrumbs"></div>
     <div class="row header">
       <div><h1>Backups</h1></div>
-      <div class="toolbar"><button id="recoveryKit" class="btn" title="A page to print and keep with your papers: where the backups and passphrases are, and how to restore (no passwords in it)">Recovery kit</button> <button id="openDuplicati" class="btn" title="Every backup and its files, in the backup app (Duplicati)" hidden>Browse the backups</button> <button id="backupNow" class="primary small">Back up now</button></div>
+      <div class="toolbar"><button id="recoveryKit" class="btn">Recovery kit</button> <button id="openDuplicati" class="btn" hidden>Browse the backups</button> <button id="backupNow" class="primary small">Back up now</button></div>
     </div>
     <div id="backupTiles" class="bkboard"></div>
     <div id="backupPanel" class="panel" hidden><div class="row"><h2 id="backupTitle" aria-live="polite"></h2><button id="backupDone" class="btn" hidden title="Takes the finished job off this screen">Done</button></div><div id="backupProgress" class="progress" hidden><div class="track"><span class="fill"></span></div><p class="step" aria-live="polite"></p></div><div id="backupApps" aria-live="polite"></div><details id="backupDetails" class="jobdetails" open><summary>Show details</summary><pre id="backupLog" role="log"></pre></details></div>

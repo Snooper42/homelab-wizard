@@ -1,7 +1,3 @@
-// Settings › Phones › Devices on your tailnet: every phone and computer on
-// the household's tailnet (Tailscale's own status), when each was last
-// seen, and Remove for a lost or sold one. Removing is done in Tailscale's
-// admin console (no device can remove another), so Remove opens it there.
 import { render } from 'preact';
 import { ago, never } from '../format';
 import { CardHead } from '../parts/Card';

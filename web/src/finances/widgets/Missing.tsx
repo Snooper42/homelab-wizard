@@ -1,7 +1,3 @@
-// A bill not seen yet: a planned payment the ledger has paid before (so
-// the household follows it there) with no transaction for its last day,
-// three days or more after it, up to two weeks. The Dashboard says which,
-// so a bill that didn't go through is caught; Transactions finds it.
 import { Row, Rows } from '../../parts/Row';
 import { Amount } from '../ui/Amount';
 import { Widget } from '../ui/Widget';

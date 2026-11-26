@@ -1,12 +1,3 @@
-// Where a page sits, and the way back up (the owner, Nov 23: proper
-// breadcrumbs and back buttons). A page under another (an app's page under
-// Status, an account's under Net worth, a card's under the Collection,
-// Transactions opened from a Dashboard card) leads with its trail: a round
-// back button to the step above, then each step as a link and the page
-// itself. On the phone's page only the back button shows, with the step
-// above's name (docs/Redesign.md, The phone: a detail page has a back
-// button and its own title). ⌘[ and the trackpad's swipe go back through
-// what was opened (app.ts), this up through where it sits.
 import type { ComponentChildren } from 'preact';
 
 export interface Crumb {

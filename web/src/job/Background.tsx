@@ -1,10 +1,3 @@
-// A command that carries on with its sheet hidden. The command sheet
-// (sheets/Sheet.tsx) holds the window while it is open, so a long one
-// (Update all apps now, an app's update, Fix it) offers Hide: the sheet
-// goes, the command runs on, and a chip at the foot of the sidebar (above
-// the tab bar on a phone) shows its title, its bar, and its step. Clicking
-// the chip brings the sheet back; once the command ends, the chip says how
-// it went until it is opened or dismissed.
 import { render } from 'preact';
 import { $, showError } from '../core';
 import { jobsWaiting, watchJobs } from './queue';

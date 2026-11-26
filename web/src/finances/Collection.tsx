@@ -1,11 +1,3 @@
-// The Collection (the owner, Nov 12: "a mini Collectr" for their Pokémon
-// cards; the mockup a yes, Nov 13), under Net worth: what the cards are
-// worth now with the gain on what was paid and a chart of it over time,
-// then each card with its picture, what one cost, what it is worth and its
-// gain; a card opens its own page, large. The cards are kept in a
-// collectible account worth what they are (internal/finance/collection.go),
-// so Net worth counts them. A picture is the computer's own file; until a
-// card has one it shows a plain placeholder, never one fetched.
 import { Crumbs } from '../parts/Crumbs';
 import { useEffect, useState } from 'preact/hooks';
 import { Empty } from '../parts/Empty';
@@ -23,16 +15,13 @@ const cardPaid = (c: finance.Collected) => (c.paid || 0) * Math.max(1, c.count |
 /** Its printing, condition and how many, as one line: "Set A · 4/102 · Near mint · ×2". */
 const cardLine = (c: finance.Collected) => [c.set, c.number, c.grade, (c.count || 1) > 1 ? `×${c.count}` : ''].filter(Boolean).join(' · ') || 'A card';
 
-/** Pictures read back from the computer, by name: each read once while the screen is open. */
 const pictures = new Map<string, Promise<string>>();
 
-/** Reads a card's picture by name (the computer's own file), once. */
 const pictureOf = (name: string, read: (name: string) => Promise<string>) => {
   if (!pictures.has(name)) pictures.set(name, read(name).catch((e) => { pictures.delete(name); throw e; }));
   return pictures.get(name)!;
 };
 
-/** The card's picture: its own, once the computer has saved one; until then (or while it reads) a plain placeholder. */
 export function CardPicture({ c, large, read }: { c: finance.Collected; large?: boolean; read?: (name: string) => Promise<string> }) {
   const [url, setUrl] = useState('');
   useEffect(() => {
@@ -64,7 +53,6 @@ export interface CollectionProps {
   open: (id: string) => void;
   /** Add a card, or change one; none on a phone allowed only to look. */
   edit?: (id?: string) => void;
-  /** A card's picture by its name, from the computer. */
   read?: (name: string) => Promise<string>;
   /** Update prices from TCGdex; none on a phone allowed only to look. */
   update?: () => Promise<cardprice.Result>;
@@ -138,13 +126,11 @@ export interface CardPageProps {
   done: () => void;
   /** Its form; none on a phone allowed only to look. */
   edit?: () => void;
-  /** Its picture by its name, from the computer. */
   read?: (name: string) => Promise<string>;
   /** Each card's prices over time, by its id. */
   prices?: () => Promise<Record<string, finance.Point[]>>;
 }
 
-/** A card opened large: its picture, what it is worth and its gain, what it cost and when, and where it is counted. */
 export function CardPage({ v, id, done, edit, read, prices }: CardPageProps) {
   const c = (v.plan.collection || []).find((x) => x.id === id);
   const [points, setPoints] = useState<finance.Point[]>([]);

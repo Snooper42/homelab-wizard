@@ -2132,25 +2132,10 @@ const smokes = [
   // versions kept, its folders, and its next run; a job Duplicati says little about says only that.
   // Savings over time: the year's figure on Status, hovered (or reached with Tab), says what has been saved since the
   // first record, month by month, newest first, and the card is not cut off.
-  { name: 'Status: hover what the apps replace for what they have saved so far', screen: 'status', run: async (page) => {
-    // Instead of subscriptions is Subscriptions' own now (the owner, Nov 25).
+  { name: 'Subscriptions has no old Instead of subscriptions tile under it', screen: 'status', run: async (page) => {
     await toStatusPart(page, 'subscriptions');
-    const tile = '#savingsCard .tile:has-text("Instead of subscriptions") .savedso';
-    await page.waitForSelector(tile, { timeout: 5000 });
-    await page.hover(tile);
-    const card = await page.waitForSelector(`${tile} [role=tooltip]`, { state: 'visible', timeout: 3000 });
-    const said = (await card.innerText()).replace(/\s+/g, ' ');
-    // The preview's 60 days: 12 at $2,991 a year, 18 at $3,112, 17 at $3,232, and 13 at $3,292.
-    if (!/^Saved so far: \$520 since /.test(said)) throw new Error(`the total: ${said}`);
-    const months = await card.$$eval('.savedmonths li', (li) => li.map((l) => l.textContent));
-    const now = new Date().toLocaleString('en-US', { month: 'long' });
-    if (months.length < 2 || !months[0].startsWith(now)) throw new Error(`the months, newest first: ${months}`);
-    const inside = await card.evaluate((c) => { const r = c.getBoundingClientRect(); const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return r.left >= 0 && r.right <= innerWidth && r.bottom <= innerHeight && c.contains(hit); });
-    if (!inside) throw new Error('the card is cut off or covered');
-    await page.mouse.move(5, 5);
-    await page.waitForSelector(`${tile} [role=tooltip]`, { state: 'hidden', timeout: 2000 });
-    await page.focus(tile);
-    await page.waitForSelector(`${tile} [role=tooltip]`, { state: 'visible', timeout: 2000 });
+    await page.waitForSelector('#statusPart .subpage', { timeout: 5000 });
+    if (await page.$('#savingsCard, #subscriptionsMore')) throw new Error('the old savings tile is still there');
   } },
   // What changed since last night: a copy's size beside the night before's, said when it moved by a tenth, and a
   // copy less than half the night before's warned about on its row.
@@ -2222,11 +2207,11 @@ const smokes = [
     if (!/^(\d+) of \1 copied$/.test(v)) throw new Error(`Last night: ${v}`);
   } },
   { name: 'Backups: copies paused while their apps wait for a drive, the place named, one line a copy', screen: 'backups', run: async (page) => {
-    await page.waitForSelector('#copiesTile:has-text("2 more paused: their apps wait for the Hobbies drive")', { timeout: 5000 });
+    await page.waitForSelector('#needsYou li:has-text("Komga"):has-text("Waiting for the Hobbies drive")', { timeout: 5000 });
     const value = await page.textContent('#copiesTile .value');
     if (value.replace(/\s+/g, ' ').trim() !== '11 of 12 copied') throw new Error(`copies up to date: ${value}`);
     await page.waitForSelector('#offsiteTile .value:text-is("Proton Drive")', { timeout: 5000 });
-    await page.waitForSelector('#offsiteTile:has-text("In homelab-backups")');
+    await page.waitForSelector('#offsiteTile:has-text("homelab-backups")');
     // Paused is folded, with its names and why; stale and up to date are open.
     await page.waitForSelector('tr.copygroup.paused:not(.open) .names:has-text("Komga, Kavita wait for the Hobbies drive; their last copies (13 days ago) are kept")');
     if (await page.isVisible('tr.copy.paused')) throw new Error('the paused copies show before their group is opened');
@@ -2319,7 +2304,7 @@ const smokes = [
     if (Math.abs(r - o) > 2) throw new Error(`restore test ${r} and off-site ${o} differ`);
   } },
   { name: 'Restore drills: timing and record', screen: 'backups', run: async (page) => {
-    await page.waitForSelector('#restoreTile:has-text("in 3 minutes")', { timeout: 5000 });
+    await page.waitForSelector('#restoreTile .value:text-is("Passed")', { timeout: 5000 });
     const title = await page.getAttribute('#restoreTile', 'title');
     if (!title || !title.includes('(2)') || !title.includes('passed in 4 minutes')) throw new Error(`record: ${title}`);
   } },
@@ -2409,7 +2394,8 @@ const smokes = [
   { name: "The phone's Status: This machine beside Backups, its free space and power", screen: 'status', phone: ['companion', 'can-change'], run: async (page) => {
     await page.waitForSelector('#statusMachine .antfig:has-text("412 GB")', { timeout: 5000 });
     if ((await page.textContent('#statusMachine .anthead h2')).trim() !== 'This machine') throw new Error('not named This machine');
-    await page.waitForSelector('#statusMachine .antline:has-text("Plugged in")');
+    // A machine that's fine says nothing on its line.
+    if (/Plugged in/.test(await page.textContent('#statusMachine'))) throw new Error('the card says Plugged in');
     await page.waitForSelector('#statusMachine .antfoot button');
     if (await page.locator('#tiles .tile:has(.label:text-is("Nightly updates"))').count()) throw new Error('the Nightly updates tile is still there');
   } },
@@ -2417,19 +2403,15 @@ const smokes = [
     await page.waitForSelector('#statusMachine .antfig.bad:has-text("3.0 GB")', { timeout: 5000 });
     await page.waitForSelector('#statusMachine .antline .warn:has-text("On battery")');
   } },
-  // The machine card's bar (lane D, D5; the redesign's picture: "Memory · 11 of 32 GB", "Up 23 days"): the computer's
-  // memory and boot time from its machine card, what the apps hold from the usage card. On the computer's This Mac and
-  // the phone's This machine alike; an older computer that doesn't send them shows neither.
+  // The machine card's bar: the apps' memory of the machine's. No uptime, no schedule.
   ...[['computer', '#statusMac', undefined], ['phone', '#statusMachine', ['companion']]].map(([who, card, phone]) => ({
-    name: `The ${who}'s machine card: its memory under a bar, and how long it's been up`, screen: 'status', phone,
+    name: `The ${who}'s machine card: its memory under a bar, nothing more`, screen: 'status', phone,
     mock: { machine: { free: 412 * 2 ** 30, total: 994 * 2 ** 30, low: false, power: 'plugged', keptAwake: true, memory: 32 * 2 ** 30, booted: new Date(Date.now() - 23.5 * 86400000).toISOString() },
       usage: [{ name: 'immich-server', cpu: 3, mem: '9GiB' }, { name: 'jellyfin', cpu: 1, mem: '2GiB' }] },
     run: async (page) => {
-      await page.waitForSelector(`${card} .memline:has-text("Memory · 11 of 32 GB")`, { timeout: 8000 });
+      await page.waitForSelector(`${card} .memline:has-text("Memory 11 of 32 GB")`, { timeout: 8000 });
       if (await page.getAttribute(`${card} .memline .antbar`, 'aria-valuenow') !== '34') throw new Error('the bar is not at 34%');
-      await page.waitForSelector(`${card} .anthead:has-text("Up 23 days")`);
-      if ((await page.textContent(card)).split('Up 23 days').length !== 2) throw new Error('Up 23 days said twice');
-      if (!/updates /i.test(await page.textContent(`${card} .antline`))) throw new Error('the updates moved off the card');
+      if (/Up 23 days|daily at|Updates /.test(await page.textContent(card))) throw new Error(`the card says more than its figure: ${await page.textContent(card)}`);
     } })),
   { name: "The machine card from a computer that doesn't send its memory: no bar, no Up", screen: 'status', phone: ['companion'], run: async (page) => {
     await page.waitForSelector('#statusMachine .antfig:has-text("412")', { timeout: 5000 });
@@ -2824,12 +2806,16 @@ const smokes = [
       { id: 'sonarr', name: 'Sonarr', state: 'running', health: 'healthy', url: 'http://localhost:8989' },
       { id: 'radarr', name: 'Radarr', state: 'running', health: 'healthy', url: 'http://localhost:7878' }] } }, run: async (page) => {
     const heads = '#statusRows tr.grouphead';
+    // Folds kept from before don't bring the list back; Show every app does.
+    await page.waitForSelector('#statusPanel .ovrow', { timeout: 5000 });
+    if (await page.isVisible('#statusRows tr')) throw new Error('kept folds brought the old list back');
+    await page.click('#statusAll');
     await page.waitForSelector(`${heads}:has-text("Media automation")`, { timeout: 5000 });
     const order = await page.$$eval(heads, (hs) => hs.map((h) => h.querySelector('.foldbtn')?.textContent?.replace(/^[▸▾]/, '').trim()));
     const last = order.filter((l) => l !== 'Other').pop();
     if (last !== 'Media automation') throw new Error(`groups: ${order.join(', ')}`);
     const auto = page.locator(`${heads}:has-text("Media automation")`);
-    if ((await auto.locator('.foldbtn').getAttribute('aria-expanded')) !== 'false') throw new Error('media automation opens by itself');
+    if ((await auto.locator('.foldbtn').getAttribute('aria-expanded')) !== 'false') await auto.locator('.foldbtn').click();
     const line = auto.locator('.names');
     if ((await line.textContent()) !== 'Finds and downloads what you ask for in Seerr' || !/Sonarr/.test(await line.getAttribute('title'))) throw new Error(`folded line: ${await line.textContent()}`);
     // Seerr is in Media with Jellyfin, not under the fold.
@@ -4104,7 +4090,7 @@ const smokes = [
     await check('the overview');
     // Instead of subscriptions on Subscriptions, what CrowdSec caught on Analytics (the owner, Nov 25).
     await toStatusPart(page, 'subscriptions');
-    await page.waitForSelector('#savingsCard .tile:has-text("Instead of subscriptions"):has-text("a year")');
+    await page.waitForSelector('#statusPart .subpage');
     await check('Subscriptions');
     await toStatusPart(page, 'analytics');
     await page.waitForSelector('#protectCard li:has-text("Probing for a known security hole"):has-text("Netherlands · Example Hosting B.V.")', { timeout: 5000 });
@@ -4776,11 +4762,9 @@ const smokes = [
     const [prot, stor, al] = [await box('#protectCard'), await box('#storageCard'), await box('#alertsCard')];
     if (Math.abs(prot.x - stor.x) > 1 || stor.y < prot.y + prot.height) throw new Error('What the apps keep is not under Protection, in its column');
     if (al.x < prot.x + prot.width) throw new Error('Recent alerts is not beside them');
-    const row = page.locator('#alertsCard li:has-text("something is down")');
-    const shown = await row.locator('.grow > .muted > div').count();
-    if (shown !== 3) throw new Error(`a long alert shows ${shown} lines, not 3`);
-    await row.locator('button.morelines:text-is("Show 8 more")').click();
-    if ((await row.locator('.grow > .muted > div').count()) !== 11) throw new Error('Show 8 more did not show every line');
+    // An alert is its title alone; its whole message is in Every alert….
+    const row = page.locator('#alertsCard li').filter({ hasText: /down/ }).first();
+    if (await row.locator('.grow > .muted > div').count()) throw new Error('an alert shows its message under its title');
     const size = page.locator('#storageCard .sizes li').first();
     const [name, bar] = [await size.locator('strong').boundingBox(), await size.locator('.bar').boundingBox()];
     if (bar.y > name.y + name.height || bar.x < name.x + name.width) throw new Error('an app’s size takes two lines');
@@ -5210,7 +5194,7 @@ const smokes = [
     // These cards are under Analytics now (the owner, Nov 25: off the overview).
     await toStatusPart(page, 'analytics');
     await page.waitForSelector('#downloadsCard:not([hidden]) #downloadsLine:text-is("Getting 2 · 1 stuck: no search site has it · Drive 88% full")', { timeout: 5000 });
-    if (await page.textContent('#downloadsWarning') !== 'The media drive is 88% full: room for about 30 more films.') throw new Error(`the warning: ${await page.textContent('#downloadsWarning')}`);
+    if (await page.$('#downloadsWarning')) throw new Error('the drive said twice: in the line and a sentence under it');
     const first = await page.textContent('#downloadsCard li:first-child');
     if (!/Arrival \(2016\)/.test(first) || !/No search site has it yet/.test(first) || !/Radarr/.test(first)) throw new Error(`stuck isn't first: ${first}`);
     if (await page.locator('#downloadsCard li').count() !== 4) throw new Error('not one row per thing on the way');
@@ -5357,18 +5341,6 @@ const smokes = [
       }
       await toBackups(page);
     } })),
-  { name: 'A tile’s line wraps under its chart rather than being cut off, at big text', screen: 'status', run: async (page) => {
-    // The card moved to Subscriptions with the new Overview (the owner's picture, Nov 25).
-    await toStatusPart(page, 'subscriptions');
-    for (const [w, zoom] of [[1280, '1.5'], [1100, '1.25'], [860, '1.2']]) {
-      await page.setViewportSize({ width: w, height: 800 });
-      await page.evaluate((z) => document.documentElement.style.setProperty('--zoom', z), zoom);
-      await page.waitForSelector('#savingsCard .trend', { timeout: 5000 });
-      await page.waitForTimeout(100);
-      const cut = await page.$eval('#savingsCard .trend', (e) => e.scrollWidth > e.clientWidth + 1);
-      if (cut) throw new Error(`in a ${w}px window at text size ${zoom}, “${await page.textContent('#savingsCard .trend')}” is cut off`);
-    }
-  } },
   // A long name and a long address (a deep subdomain on your own domain): the page wraps them, in a wide window and a narrow one.
   ...[[1280, 800, '1'], [860, 560, '1.25']].map(([w, h, zoom]) => ({ name: `A long name and address fit an app’s page, ${w}×${h} at text size ${zoom}`, screen: 'app:vikunja',
     mock: { ...pageMock, status: { ...status, apps: status.apps.map((a) => (a.id === 'vikunja' ? { ...a, name: 'Vikunja for the whole extended family and friends', address: 'todo.household-projects.snooper42-homelab-wizard.example.com' } : a)) } }, run: async (page) => {
@@ -5602,59 +5574,18 @@ const smokes = [
     const lefts = await page.$$eval('#weekCard li', (li) => li.map((l) => Math.round(l.getBoundingClientRect().left)));
     if (lefts.length !== 8 || new Set(lefts).size !== 1) throw new Error(`the lines are side by side (left edges ${lefts.join(', ')})`);
   } },
-  // What happened overnight: in the morning, Status's first line is the night since 8 PM (updates, a rollback, the night's
-  // copies, and whether anything needed you); an app down overnight says so instead; Hide until tomorrow keeps it away for
-  // the day; in the afternoon there is none.
-  ...(() => {
-    const at = (h, m = 0) => { const d = new Date(); d.setHours(h, m, 0, 0); return d; };
-    const morning = at(7, 30), iso = (h, m = 0) => at(h, m).toISOString();
-    const night = {
-      overnight: true,
-      status: { ...status, apps: status.apps.map((a) => ({ ...a, updatedAt: ['vikunja', 'speedtest-tracker'].includes(a.id) ? iso(4) : undefined })) },
-      alerts: [{ id: 'r1', time: iso(4, 20), topic: 'watchtower', title: 'Homelab: Navidrome rolled back', message: 'It runs the version from before its update again.', tags: ['rewind'] },
-        { id: 'o1', time: at(5, 0).toISOString(), topic: 'tunnel-watchdog', title: 'Homelab: recovered', message: 'all well' }],
-      backups: { ...backups, copies: [{ id: 'immich', name: 'Immich', newest: iso(3, 30), size: 1.5 * 1024 ** 3, count: 7, state: 'fresh' }, { id: 'paperless', name: 'Paperless-ngx', newest: iso(3, 35), size: 0.6 * 1024 ** 3, count: 7, state: 'fresh' }, { id: 'old', name: 'Mealie', newest: new Date(at(3).getTime() - 864e5).toISOString(), size: 9e9, count: 7, state: 'stale' }] },
-      watchdog: { lastRun: morning.toISOString(), checks: 40, failing: [], pending: 0, week: {}, outages: {} },
-    };
-    const line = '#overnightLine .overnight';
-    return [
-      // Backups failing in the morning: the overnight line asks for it again at most once a minute, not over and over.
-      { name: 'What happened overnight: Backups failing is not asked for over and over', screen: 'status', mock: { ...night, backupsError: 'the database is locked' }, run: async (page) => {
-        await page.clock.setFixedTime(morning);
-        await page.evaluate(() => { window.__MOCK.calls.Backups = 0; window.__emit('status:changed'); });
-        await page.waitForSelector('#statusRows tr', { timeout: 5000 });
-        await page.waitForTimeout(1500);
-        const asked = await page.evaluate(() => window.__MOCK.calls.Backups || 0);
-        if (asked > 2) throw new Error(`Backups was asked ${asked} times in a second and a half`);
-        await page.waitForSelector(line, { timeout: 5000 });
-      } },
-      { name: 'What happened overnight: Status’s first line in the morning', screen: 'status', mock: night, run: async (page) => {
-        await page.clock.setFixedTime(morning);
-        await page.evaluate(() => window.__emit('status:changed'));
-        await page.waitForSelector(line, { timeout: 5000 });
-        await page.waitForFunction((s) => /backup/.test(document.querySelector(s)?.textContent || ''), line, { timeout: 5000 });
-        const said = (await page.textContent(`${line} > span`)).trim();
-        if (said !== 'Overnight: 2 apps updated, 1 rolled back, a backup of 2.1 GB, nothing needed you.') throw new Error('it says: ' + said);
-        // Above the machine's line, under the heading.
-        if (!(await page.evaluate(() => document.getElementById('overnightLine').previousElementSibling?.classList.contains('header')))) throw new Error('not under the heading');
-        await page.click(`${line} button:text-is("Hide until tomorrow")`);
-        await page.waitForSelector('#overnightLine', { state: 'hidden', timeout: 2000 });
-        await page.evaluate(() => window.__emit('status:changed'));
-        await page.waitForTimeout(400);
-        if (await page.isVisible(line)) throw new Error('back after Hide until tomorrow');
-      } },
-      { name: 'What happened overnight: an app down in the night says so, and none in the afternoon', screen: 'status',
-        mock: { ...night, watchdog: { ...night.watchdog, outages: { 'immich-server': [{ from: iso(2, 10), to: iso(2, 40), problem: 'HTTP 502' }] } } }, run: async (page) => {
-        await page.clock.setFixedTime(morning);
-        await page.evaluate(() => window.__emit('status:changed'));
-        await page.waitForFunction((s) => /was down/.test(document.querySelector(s)?.textContent || ''), line, { timeout: 5000 });
-        if (!/Immich was down for a while\.$/.test((await page.textContent(`${line} > span`)).trim())) throw new Error('it says: ' + await page.textContent(line));
-        await page.clock.setFixedTime(at(15));
-        await page.evaluate(() => window.__emit('status:changed'));
-        await page.waitForSelector('#overnightLine', { state: 'hidden', timeout: 3000 });
-      } },
-    ];
-  })(),
+  // No Overnight line (the owner, Nov 26: less words): the cards say what happened.
+  { name: 'Fix it is a button in the toolbar, not a bar across it', screen: 'status', mock: { status: { ...status, apps: status.apps.map((a) => (a.id === 'mealie' ? { ...a, health: 'unhealthy' } : a)) } }, run: async (page) => {
+    for (const w of [1280, 1100]) {
+      await page.setViewportSize({ width: w, height: 800 });
+      const b = await (await page.waitForSelector('#fixIt:not([hidden])', { timeout: 5000 })).boundingBox();
+      if (b.width > 160 || b.height > 48) throw new Error(`at ${w}px Fix it is ${Math.round(b.width)}×${Math.round(b.height)}`);
+    }
+  } },
+  { name: 'Status has no Overnight line in the morning', screen: 'status', mock: { overnight: true }, run: async (page) => {
+    await page.waitForSelector('#statusApps', { timeout: 5000 });
+    if (await page.$('#overnightLine, .overnight')) throw new Error('an Overnight line');
+  } },
   // What changed since you looked: nothing the first time; after leaving Status, a row whose app restarted, updated, stopped,
   // or started meanwhile has a dot saying how (its name for a screen reader); leaving Status again clears them. An app's page
   // counts as Status. Kept on this device across launches.

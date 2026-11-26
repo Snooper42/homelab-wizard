@@ -1,9 +1,3 @@
-// A subscription whose charge changed: the last two it was paid (linked
-// transactions, View.Paid) came to the same new amount, not the plan's.
-// The Dashboard asks once: "Netflix is now $17.99, was $15.49. Update
-// the plan?" Update keeps the new amount; Keep the plan's is remembered on
-// this device for that amount, so a later change asks again. On a phone
-// allowed only to look it only says so.
 import { useState } from 'preact/hooks';
 import { Row, Rows } from '../../parts/Row';
 import { Widget } from '../ui/Widget';

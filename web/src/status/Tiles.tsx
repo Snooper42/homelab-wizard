@@ -1,11 +1,7 @@
-// The four tiles at the top of Status: what runs, what needs a look, what
-// the homelab saves a year, and the nightly updates (with Pause/Resume).
 import { Fragment, render, type ComponentChildren } from 'preact';
 import { useState } from 'preact/hooks';
-import { bytes, dayText, dollars } from '../format';
+import { bytes } from '../format';
 import { Card } from '../parts/Card';
-import { Hover } from '../parts/Hover';
-import { Spark } from '../Spark';
 import { keptRestarting } from './stopFor';
 import { AppMark } from '../parts/AppMark';
 import { Icon } from '../Icon';
@@ -19,22 +15,6 @@ export function Tile({ label, value, sub, tone, id, title }: { label: string; va
       <div class="value">{value}</div>
       <div class="sub">{sub}</div>
     </Card>
-  );
-}
-
-/** A sparkline of the last 90 recorded days and the change since the first
- * of them (the nightly backup records one a day). */
-export function SavingsTrend({ history }: { history: savings.Point[] }) {
-  const pts = history.slice(-90);
-  if (pts.length < 2) return <>in subscriptions</>;
-  const first = pts[0], last = pts[pts.length - 1];
-  const delta = last.annual - first.annual;
-  const since = dayText(new Date(first.date + 'T12:00:00'), { month: 'short', day: 'numeric' });
-  return (
-    <>
-      <Spark values={pts.map((p) => p.annual)} />
-      <span class="trend">{delta === 0 ? `same since ${since}` : `${delta > 0 ? '+' : '−'}${dollars(Math.abs(delta))} since ${since}`}</span>
-    </>
   );
 }
 
@@ -58,23 +38,6 @@ export function savedSoFar(history: savings.Point[]): { total: number; since: st
   return { total, since: pts[0]?.date || '', months };
 }
 
-/** The year's figure, and on hover (or Tab) what has been saved so far, month by month. */
-function SavedHover({ value, history }: { value: string; history: savings.Point[] }) {
-  const s = savedSoFar(history);
-  if (!s.since) return <>{value}</>;
-  const since = dayText(new Date(s.since + 'T12:00:00'), { month: 'short', day: 'numeric', year: 'numeric' });
-  const monthName = (m: string) => dayText(new Date(m + '-15T12:00:00'), { month: 'long', year: 'numeric' });
-  return (
-    <Hover cls="savedso" label={value} tip={
-      <>
-        <strong>Saved so far: {dollars(s.total)}</strong>
-        <span class="muted">since {since}</span>
-        <ul class="savedmonths">{s.months.slice(0, 12).map((m) => <li key={m.month}><span>{monthName(m.month)}</span><span>{dollars(m.amount)}</span></li>)}</ul>
-      </>
-    } />
-  );
-}
-
 /** Pause or Resume: disabled while the change is made. */
 function PauseButton({ paused, onPause }: { paused: boolean; onPause: (paused: boolean) => Promise<void> }) {
   const [busy, setBusy] = useState(false);
@@ -93,7 +56,6 @@ function PauseButton({ paused, onPause }: { paused: boolean; onPause: (paused: b
 export const awaitingJobs = (a: api.AppStatus) => a.id === 'homelab-companion' && a.state === 'not running';
 
 /** Apps that need a look: unwell, not answering, or not running; not one stopped on purpose (held). */
-/** What's wrong with each, grouped (the owner's picture: "Mealie, Vikunja stopped"): "Mealie stopped · Vikunja not answering". */
 export function troubleLine(apps: api.AppStatus[]): string {
   const kind = (a: api.AppStatus) => (a.state === 'missing' ? 'missing' : a.state === 'running' ? (a.notAnswering ? 'not answering' : 'unwell') : 'stopped');
   const by = new Map<string, string[]>();
@@ -115,7 +77,6 @@ export interface TilesProps {
   onPause: (paused: boolean) => Promise<void>;
   /** Opens Find an app (every app and the starter sets), from a homelab with no apps yet. */
   onChoose: () => void;
-  /** Last night's copies as Backups read them (null until read): the Backups card (redesign-loop R6, the picture's). */
   backups?: { copied: number; of: number; skipped: string[]; at: string } | null;
   openBackups?: () => void;
   /** This week as the watchdog saw it: a square per day (ok, warn, bad), and when it last checked; null before it's read. */
@@ -133,25 +94,12 @@ export interface TilesProps {
   appsMemory?: number;
 }
 
-/** The computer's free space, power, memory and boot time, as `core.MachineFacts` sends them (memory and booted from
- * 0.44, and only where the system tells them: lane D, D5). */
 export interface MachineFacts { free: number; total: number; low: boolean; power?: string; keptAwake: boolean; memory?: number; booted?: string }
 
 /** Memory in GB as the machine's own spec says it (powers of 1024: 32 GB, not 34.4): whole from 10 up, else to a tenth. */
 function gb(n: number): string {
   const g = n / 2 ** 30;
   return g >= 10 ? String(Math.round(g)) : g.toFixed(1).replace(/\.0$/, '');
-}
-
-/** How long the machine has been up: "Up 23 days", "Up 5 hours", "Up 12 minutes"; '' when it isn't known. */
-export function upFor(booted?: string, now = Date.now()): string {
-  if (!booted || booted.startsWith('0001-')) return '';
-  const mins = Math.floor((now - new Date(booted).getTime()) / 60000);
-  if (!(mins >= 0)) return '';
-  if (mins < 60) return `Up ${mins <= 1 ? 'a minute' : `${mins} minutes`}`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 48) return `Up ${hours === 1 ? 'an hour' : `${hours} hours`}`;
-  return `Up ${Math.floor(hours / 24)} days`;
 }
 
 export function Tiles({ status: st, history, onPause, onChoose, words, start, logs, open, backups, openBackups, mac, machine, week, nights, startAll, seeAll, appsMemory }: TilesProps) {
@@ -168,23 +116,20 @@ export function Tiles({ status: st, history, onPause, onChoose, words, start, lo
   const counted = st.apps.filter((a) => !awaitingJobs(a)).length;
   const trouble = st.apps.filter((a) => troubled(a, st.stopped));
   const u = st.updates;
-  // The owner's web-wide pictures (Nov 25): Apps, Backups and the machine as three cards of one anatomy (title row,
-  // one figure, one line, a footer at the same height), each drawn in every state. Never "needs you": what happened.
   const lower = (w: string) => w.charAt(0).toLowerCase() + w.slice(1);
   const one = trouble.length === 1 ? trouble[0] : null;
   const outages = week ? week.days.filter((d) => d === 'warn' || d === 'bad').length : 0;
-  // Fourteen squares from a computer that keeps two weeks (lane D, D3), seven from an older one.
   const span = week && week.days.length > 7 ? 'in two weeks' : 'this week';
   return (
     <>
       <Card kind="tile ovcard" id="statusApps">
-        <div class="anthead"><h2>Apps</h2><span class="muted">{week?.checked || ''}</span></div>
+        <div class="anthead"><h2>Apps</h2></div>
         <div class={'antfig' + (trouble.length ? ' warn' : '')}>{trouble.length ? <>{running.length}<span class="muted"> of {counted} running</span></> : <>{running.length}<span class="muted"> running</span></>}</div>
         <div class="antline muted">
           {st.missing ? <span class="bad">{st.missing === 1 ? "1 of the homelab's own apps is down" : `${st.missing} of the homelab's own apps are down`}</span>
             : one ? <span class="antwho"><AppMark id={one.id} name={one.name} icon="" small /><span class="antname">{one.name} {lower(words ? words(one) : one.state)}</span></span>
             : trouble.length ? <span class="antwho"><span class="antname">{troubleLine(trouble)}</span></span>
-            : <span>All answering{week ? ` · ${outages ? `${outages === 1 ? '1 day' : `${outages} days`} with an outage ${span}` : `no outage ${span}`}` : ''}</span>}
+            : null}
         </div>
         <div class="antfoot">
           {one ? <span class="ovacts">
@@ -201,16 +146,16 @@ export function Tiles({ status: st, history, onPause, onChoose, words, start, lo
         </div>
       </Card>
       <Card kind="tile ovcard" id="statusBackups">
-        <div class="anthead"><h2>{openBackups ? <button type="button" class="linkbtn ovtitle" onClick={openBackups}>Backups</button> : 'Backups'}</h2><span class="muted">Every night at 03:30</span></div>
+        <div class="anthead"><h2>{openBackups ? <button type="button" class="linkbtn ovtitle" onClick={openBackups}>Backups</button> : 'Backups'}</h2></div>
         <div class={'antfig' + (backups?.skipped.length ? ' warn' : '')}>{backups ? <>{backups.copied}<span class="muted"> of {backups.of} copied</span></> : '—'}</div>
-        <div class="antline muted">{!backups ? 'Reading last night…' : <span>{backups.at}{backups.skipped.length ? <>{' · '}<span class="warn">{backups.skipped.join(', ')} skipped</span></> : ''}</span>}</div>
+        <div class="antline muted">{backups?.skipped.length ? <span class="warn">{backups.skipped.join(', ')} skipped</span> : null}</div>
         <div class="antfoot">{nights?.length ? <span class="ovdays" role="img" aria-label={`The last ${Math.min(14, nights.length)} nights`}>{nights.slice(-14).map((n) => <i key={n.date} class={nightTone(n)} title={nightWords(n, (id) => id)} />)}</span> : <span class="antempty" />}</div>
       </Card>
       {mac ? <MacCard mac={mac} facts={machine} appsMemory={appsMemory} updates={u} onPause={onPause} /> : machine?.total ? <MachineCard m={machine} appsMemory={appsMemory} updates={u} onPause={onPause} /> : (
         <Card kind="tile ovcard" id="statusMachine">
-          <div class="anthead"><h2>Updates</h2><span class="muted" /></div>
+          <div class="anthead"><h2>Updates</h2></div>
           <div class="antfig">{u?.paused ? 'Paused' : 'On'}</div>
-          <div class="antline muted">{u?.paused ? 'Until you resume them' : `Run ${u?.schedule}`}</div>
+          <div class="antline muted" />
           <div class="antfoot"><PauseButton paused={!!u?.paused} onPause={onPause} /></div>
         </Card>
       )}
@@ -218,58 +163,41 @@ export function Tiles({ status: st, history, onPause, onChoose, words, start, lo
   );
 }
 
-/** The machine's card (the picture's *The server*): free space as the figure, power and what runs the apps on its
- * line, and the drive's room as a bar with the nightly updates' Pause at its foot. On a phone, from what the computer sends. */
 function MachineCard({ m, appsMemory, updates: u, onPause }: { m: MachineFacts; appsMemory?: number; updates: api.Status['updates']; onPause: (paused: boolean) => Promise<void> }) {
-  const power = m.power === 'battery' ? { words: 'On battery', tone: 'warn' } : m.power === 'plugged' ? (m.keptAwake ? { words: 'Plugged in', tone: '' } : { words: 'Plugged in, may sleep', tone: 'warn' }) : null;
-  return <Machine id="statusMachine" name="This machine" free={m.free} total={m.total} low={m.low} line={power ? <span class={power.tone}>{power.words}</span> : null} u={u} onPause={onPause} memory={m.memory} appsMemory={appsMemory} booted={m.booted} />;
+  const power = m.power === 'battery' ? { words: 'On battery', tone: 'warn' } : m.power === 'plugged' && !m.keptAwake ? { words: 'May sleep', tone: 'warn' } : null;
+  return <Machine id="statusMachine" name="This machine" free={m.free} total={m.total} low={m.low} line={power ? <span class={power.tone}>{power.words}</span> : null} u={u} onPause={onPause} memory={m.memory} appsMemory={appsMemory} />;
 }
 
 function MacCard({ mac, facts: m, appsMemory, updates: u, onPause }: { mac: HealthProps; facts?: MachineFacts | null; appsMemory?: number; updates: api.Status['updates']; onPause: (paused: boolean) => Promise<void> }) {
   const all = facts(mac);
-  const of = (k: string) => all.find((f) => f.key === k);
-  const power = of('power'), runtime = of('runtime');
   const wrong = all.filter((f) => f.tone !== 'ok' && f.key !== 'disk');
-  const fine = [power, runtime].filter((f) => f && f.tone === 'ok').map((f) => f!.short).join(' · ');
   const stopped = mac.h.agent === 'stopped' || mac.h.agent === 'quit';
   const d = (mac.i.disks || [])[0];
   const name = mac.machine.charAt(0).toUpperCase() + mac.machine.slice(1);
   return (
     <Machine id="statusMac" name={name} free={d?.free || 0} total={d?.total || 0} low={!!d?.low} u={u} onPause={onPause}
-      line={<>{fine && <span>{fine}</span>}{wrong.map((f, i) => <Fragment key={f.key}>{fine || i ? ' · ' : ''}<span class={f.tone}>{f.short}</span></Fragment>)}</>}
-      extra={stopped ? <StartAgent id="startAgentMac" start={mac.startAgent} /> : null} memory={m?.memory} appsMemory={appsMemory} booted={m?.booted} />
+      line={<>{wrong.map((f, i) => <Fragment key={f.key}>{i ? ' · ' : ''}<span class={f.tone}>{f.short}</span></Fragment>)}</>}
+      extra={stopped ? <StartAgent id="startAgentMac" start={mac.startAgent} /> : null} memory={m?.memory} appsMemory={appsMemory} />
   );
 }
 
-/** The picture's *The server* (lane D, D5): how long it's been up in the title row, and its memory as the bar, "Memory ·
- * 11 of 32 GB": what the apps hold of the machine's memory (amber past 85%). From a computer that doesn't send them,
- * the nightly updates in the title row and the drive's room as the bar, as before; the updates move to the line then. */
-function Machine({ id, name, free, total, low, line, u, onPause, extra, memory, appsMemory, booted }: { id: string; name: string; free: number; total: number; low: boolean; line: ComponentChildren; u: api.Status['updates']; onPause: (paused: boolean) => Promise<void>; extra?: ComponentChildren; memory?: number; appsMemory?: number; booted?: string }) {
+function Machine({ id, name, free, total, low, line, u, onPause, extra, memory, appsMemory }: { id: string; name: string; free: number; total: number; low: boolean; line: ComponentChildren; u: api.Status['updates']; onPause: (paused: boolean) => Promise<void>; extra?: ComponentChildren; memory?: number; appsMemory?: number }) {
   const used = total ? Math.min(100, Math.max(1, Math.round(100 * (1 - free / total)))) : 0;
-  const updates = u?.paused ? 'Updates paused' : `Updates ${u?.schedule || 'nightly'}`;
-  const up = upFor(booted);
   const share = memory && appsMemory ? Math.min(1, appsMemory / memory) : 0;
   const pct = Math.round(share * 100);
   return (
     <Card kind="tile ovcard" id={id}>
-      <div class="anthead"><h2>{name}</h2><span class="muted">{up || updates}</span></div>
+      <div class="anthead"><h2>{name}</h2>{u?.paused ? <span class="warn">Updates paused</span> : null}</div>
       <div class={'antfig' + (low ? ' bad' : '')}>{total ? <>{bytes(free).replace(/ \S+$/, '')}<span class="muted"> {bytes(free).replace(/^\S+ /, '')} free</span></> : '—'}</div>
-      <div class="antline muted">{line}{up ? <> · {updates.charAt(0).toLowerCase() + updates.slice(1)}</> : null}{extra}</div>
+      <div class="antline muted">{line}{extra}</div>
       <div class="antfoot ovmachine">
-        {memory ? <span class={'ovbar memline' + (share > 0.85 ? ' warn' : '')}><span class="antbar" role="meter" aria-label="Memory the apps use" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct}><span style={{ width: `${Math.max(appsMemory ? 2 : 0, pct)}%` }} /></span><small class="muted">Memory · {appsMemory ? `${gb(appsMemory)} of ${gb(memory)} GB` : `${gb(memory)} GB`}</small></span>
+        {memory ? <span class={'ovbar memline' + (share > 0.85 ? ' warn' : '')}><span class="antbar" role="meter" aria-label="Memory the apps use" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct}><span style={{ width: `${Math.max(appsMemory ? 2 : 0, pct)}%` }} /></span><small class="muted">Memory {appsMemory ? `${gb(appsMemory)} of ${gb(memory)} GB` : `${gb(memory)} GB`}</small></span>
           : total ? <span class="ovbar"><span class="antbar" role="img" aria-label={`${used}% used`}><span style={{ width: `${used}%` }} /></span><small class="muted">{bytes(total - free)} of {bytes(total)} used</small></span> : <span class="antempty" />}
         <PauseButton paused={!!u?.paused} onPause={onPause} />
       </div>
     </Card>
   );
 }
-
-/** Instead of subscriptions, below the apps (it was beside the headline before the picture's Backups and This Mac). */
-export function Savings({ status: st, history }: { status: api.Status; history: savings.Point[] }) {
-  if (!st.apps.length) return null;
-  return <Tile label="Instead of subscriptions" value={<><SavedHover value={st.savings > 0 ? dollars(st.savings) : '$0'} history={history} /><small> a year</small></>} sub={<SavingsTrend history={history} />} />;
-}
-export function mountSavings(el: Element, props: { status: api.Status; history: savings.Point[] }) { render(<Savings {...props} />, el); }
 
 /** Draws the tiles into el, updating what changed since the last time. */
 export function mountTiles(el: Element, props: TilesProps) {

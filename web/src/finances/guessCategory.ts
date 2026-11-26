@@ -1,14 +1,3 @@
-// What a transaction brought in from a bank's file is for, when that is
-// plain: the category its payee had last (the household's own choice,
-// first), the one of the planned payment it pays (Xfinity paying
-// Internet), a known company's usual one (Costco is Groceries, Netflix
-// Streaming and music), its words (a payroll deposit is a Paycheck), or
-// what the bank's file calls it (American Express's Restaurant-Restaurant
-// is Eating out).
-// Money between the household's own accounts (paying a card off,
-// moving to savings) is a move to that account, not spending, when one
-// account plainly fits. Anything else is left for the household to
-// pick. Plain functions: nothing is looked up anywhere.
 import { brandOf, hintOf, paysAlike, subTypeName, suggestType } from './Mark';
 import { brands } from './logos';
 
@@ -39,13 +28,6 @@ const hintCategory: Record<string, string> = {
 /** A category a household may call by another name: Gaming is its Games or Video games just as well. */
 const alsoCalled: Record<string, string[]> = { gaming: ['Gaming', 'Games', 'Video games', 'Video gaming'] };
 
-/**
- * What a bank's own word for a row (a file's Category column) is, in the
- * household's: the word itself first (a household that keeps
- * "Entertainment" takes American Express's Entertainment), then what it
- * means. American Express writes a group and what in it, "Merchandise &
- * Supplies-Groceries" (what in it first); Chase a word, "Food & Drink".
- */
 const bankWords: [RegExp, string[]][] = [
   [/grocer|supermarket/, ['Groceries']],
   [/restaurant|food & drink|food and drink|dining|bar & caf|fast food|coffee/, ['Eating out']],
@@ -79,10 +61,6 @@ export function bankKinds(word: string | undefined): string[] {
 /** What a guess says: a category, or the household's own account the money moved to or came from. */
 export interface Guess { category?: string; account?: string }
 
-/**
- * A planned payment's category: its name's hint (an Internet bill is
- * Internet), a subscription's type, or its kind's group.
- */
 function paymentCategory(p: finance.Payment): string[] {
   const out: string[] = [];
   const h = hintOf(p.kind, p.name);
@@ -96,15 +74,6 @@ function paymentCategory(p: finance.Payment): string[] {
 /** Words for matching: lower case, letters and digits, one space between. */
 const flat = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
 
-/**
- * The household's own account a transaction moved money to or from: a card
- * paid off ("Payment to Chase card ••1234": the card with those last four,
- * else the only card of that bank), or an account named by the payee
- * ("Apple Savings"), or a card of the payee's company paid off by the
- * bank's words ("AMERICAN EXPRESS ACH PMT", "APPLECARD GSBANK PAYMENT":
- * the only card of that brand). One account, never the one imported into;
- * none when two fit.
- */
 export function ownAccount(payee: string, into: string, accounts: finance.Account[], raw?: string): string | undefined {
   const others = accounts.filter((a) => a.id !== into && a.kind !== 'home' && a.kind !== 'car' && a.kind !== 'collectible' && a.kind !== 'other');
   const card = payee.match(/^Payment to (.+) card ••(\d{4})$/);
@@ -127,12 +96,6 @@ export function ownAccount(payee: string, into: string, accounts: finance.Accoun
   return named.length === 1 ? named[0].id : undefined;
 }
 
-/**
- * What an imported row is for: the category its payee had last, else the
- * planned payment's it pays, else a known company's, else its words'; or
- * the household's own account it moved to or from. Only a category in
- * the household's list is given.
- */
 export function guessFor(t: { payee?: string; amount: number; raw?: string; kind?: string }, into: string, plan: finance.Plan, categories: finance.Category[], last?: string, pays?: finance.Payment): Guess {
   const payee = t.payee || '';
   const moved = payee && ownAccount(payee, into, plan.accounts || [], t.amount < 0 ? t.raw : undefined);
@@ -163,12 +126,6 @@ export function guessFor(t: { payee?: string; amount: number; raw?: string; kind
 /** The kinds of planned payment a payee may pay by what it is: bills, never a spending or saving envelope. */
 const billKinds = new Set(['utilities', 'home', 'car', 'subscriptions', 'loans']);
 
-/**
- * Whether a payee pays a planned bill by what it is, its name saying
- * nothing of the bill's: an electric company the Electric bill (FPL),
- * a car's make the car payment (Mazda paying "Car payment", or a loan
- * called "Car loan"), an insurer Car insurance (GEICO).
- */
 export function samePurpose(payee: string, x: finance.Payment): boolean {
   if (!billKinds.has(x.kind || '')) return false;
   const brand = brandOf(undefined, payee);
