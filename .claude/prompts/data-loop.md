@@ -30,7 +30,7 @@ owner has seen in a picture and asked for.
   the total matches the app's yearly figure. A binding `SavingsRows() ([]Offer, error)` in `app/app.go`, JSON fields
   exactly: `apps []string` (catalog IDs), `replaces string`, `kind string`, `monthly number` (0 when the table has none),
   `annual number`, `condition string` (links as plain text), `counted bool`. Lane R's page already calls it by that name.
-- [ ] **D2. A month of the machine's processor and memory, kept on the machine, for Analytics' Day / Week / Month.**
+- [x] **D2. A month of the machine's processor and memory, kept on the machine, for Analytics' Day / Week / Month.**
   Nothing keeps it today (Status samples only while open). The agent writes one sample every 5 minutes: the apps'
   processor (sum of `docker stats`' CPU %) and memory (bytes), and each app's own, to `data/usage-history.json` (about
   1 MB a month; the oldest dropped past 31 days; written whole under a lock as `savings`' history is). A binding

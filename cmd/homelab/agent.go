@@ -165,6 +165,10 @@ func (h *homelab) agent(ctx context.Context, args []string) error {
 	// minutes, and the watchdog's next run should not wait for it.
 	var verifying atomic.Bool
 	var verifyTried time.Time
+	// A sample of what the apps use every 5 minutes, for Analytics (lane D, D2), beside the timetable too: docker
+	// stats takes a second or two. A runtime that doesn't answer is said once, not every 5 minutes.
+	var sampling, sampleFailed atomic.Bool
+	var lastSample time.Time
 	for {
 		now := time.Now()
 		if tidying.CompareAndSwap(false, true) {
@@ -175,6 +179,19 @@ func (h *homelab) agent(ctx context.Context, args []string) error {
 				_ = run("media", "media", "tick")
 			}()
 		}
+		if usageDue(now, lastSample) && sampling.CompareAndSwap(false, true) {
+			lastSample = now
+			wg.Add(1)
+			go func(at time.Time) {
+				defer wg.Done()
+				defer sampling.Store(false)
+				if err := h.sampleUsage(ctx, at); err == nil {
+					sampleFailed.Store(false)
+				} else if !sampleFailed.Swap(true) && ctx.Err() == nil {
+					h.ui.Warn("agent: no sample of what the apps use for Analytics: %v", err)
+				}
+			}(now)
+		}
 		if due, woke := watchDue(now, lastWatch, lastTick); due {
 			if woke {
 				h.ui.Info("agent: awake again: checking every app now")
@@ -184,6 +201,7 @@ func (h *homelab) agent(ctx context.Context, args []string) error {
 		}
 		lastTick = now
 		if s := loadAgentState(state); backupDue(now, s.LastBackup) {
+			h.nightlyJob("backup", now)
 			_ = run("backup", "backup", "--apply")
 			s.LastBackup = now
 			_ = saveAgentState(state, s)
@@ -192,6 +210,7 @@ func (h *homelab) agent(ctx context.Context, args []string) error {
 		if s := loadAgentState(state); updateDue(now, s.LastUpdate, env) {
 			// Paused (Status, the menu): the night passes without one.
 			if !updates.Paused(env) {
+				h.nightlyJob("update", now)
 				_ = run("update", "update", "--all", "--nightly", "--apply")
 			}
 			s.LastUpdate = now
@@ -203,6 +222,7 @@ func (h *homelab) agent(ctx context.Context, args []string) error {
 			go func() {
 				defer wg.Done()
 				defer verifying.Store(false)
+				h.nightlyJob("backup-check", time.Now())
 				_ = run("backup-check", "backup-check", "--quiet")
 			}()
 		}
