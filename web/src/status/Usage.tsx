@@ -1,9 +1,3 @@
-import { render } from 'preact';
-import { CardHead } from '../parts/Card';
-import { Row, Rows } from '../parts/Row';
-import { Spark } from '../Spark';
-import { formatMem, parseMem } from './memory';
-
 /** Samples kept per app: five minutes at one every 10 seconds. */
 export const keep = 30;
 
@@ -20,47 +14,4 @@ export function record(history: History, stats: docker.Stat[]) {
     if (h.length > keep) h.shift();
     history.set(s.name, h);
   }
-}
-
-export interface UsageProps {
-  stats: docker.Stat[];
-  history: History;
-  /** An app's name from its compose service name. */
-  nameOf: (id: string) => string;
-}
-
-export function Usage({ stats, history, nameOf }: UsageProps) {
-  const busy = stats.filter((s) => s.cpu >= 1);
-  const total = stats.reduce((t, s) => t + s.cpu, 0);
-  const held = stats.reduce((t, s) => t + parseMem(s.mem), 0);
-  const most = Math.max(busy[0]?.cpu || 0, 100);
-  const heavy = busy.filter((s) => s.cpu >= 50);
-  const minutes = Math.round(((history.get(busy[0]?.name)?.length || 1) * 10) / 60);
-  return (
-    <>
-      <CardHead title="What’s using power">
-        <span class="muted" title="Percent of one processor core; 100% is one core kept busy">
-          {Math.round(total)}% of a core in all{held ? ` · ${formatMem(held)} in memory` : ''} · {minutes > 1 ? `live, the last ${minutes} minutes` : minutes === 1 ? 'live, the last minute' : 'just now'}
-        </span>
-      </CardHead>
-      <Rows kind="usage">
-        {busy.slice(0, 6).map((s) => {
-          const past = history.get(s.name) || [];
-          return (
-            <Row key={s.name} title={nameOf(s.name)} whenPlain when={<>{Math.round(s.cpu)}%{s.mem ? ' · ' + s.mem : ''}</>}
-              end={past.length >= 3 ? <Spark values={past} w={72} h={20} title={`${nameOf(s.name)}'s use over the last minutes`} /> : null}>
-              <div class="bar"><span style={{ width: `${Math.max(2, Math.round((s.cpu / most) * 100))}%` }} /></div>
-            </Row>
-          );
-        })}
-      </Rows>
-      {!!heavy.length && <p class="muted">{`${heavy.map((s) => nameOf(s.name)).join(' and ')} ${heavy.length === 1 ? 'is' : 'are'} busy.`}</p>}
-    </>
-  );
-}
-
-/** Draws the card into el; it hides while nothing is busy. */
-export function mountUsage(el: HTMLElement, props: UsageProps) {
-  el.hidden = !props.stats.some((s) => s.cpu >= 1);
-  render(el.hidden ? null : <Usage {...props} />, el);
 }

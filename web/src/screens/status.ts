@@ -6,7 +6,6 @@ import { machineNow, onMachine } from '../status/machine';
 import { mountUndoNote } from '../status/UndoNote';
 import { stoppedWords } from '../status/stopFor';
 import { mountWallCard } from '../status/WallCard';
-import { mountAlerts, mountDownloads, mountProtection, mountStorage, mountWatchdog, mountWeek, storageShown } from '../status/Cards';
 import { type AppListActions, type AppListProps, clearAppList, foldsFromComputer, listView, mountAppList, mountShowAll, onFoldsPicked, onListView, type Pending, showEveryApp, stateOf } from '../status/AppList';
 import { mountCategoryPanel } from '../status/CategoryPanel';
 import { mountSubscriptions, type Offer } from '../status/Subscriptions';
@@ -27,7 +26,7 @@ import { Buttons, mountSheet, mountSheets, PhoneCode, type SheetButton, type Sig
 import { bgEnd, bgHide, bgProgress, bgStart, waitForBg } from '../job/Background';
 import { inTurn, waitWords } from '../job/queue';
 import { mountCrashNote } from '../status/CrashNote';
-import { type History as UsageHistory, mountUsage, record as recordUsage } from '../status/Usage';
+import { type History as UsageHistory, record as recordUsage } from '../status/Usage';
 import { memoryByApp, parseMem } from '../status/memory';
 import { fitMenu } from '../parts/place';
 import { settingLabel, showSettingsPage } from './settings';
@@ -380,13 +379,10 @@ let boardStatus: api.Status | null = null; // its Status, once in
 let boardFailed = false; // its Status could not be read
 let boardAnswers: Record<string, string> | null = null; // its pages' answers, once in
 async function readStatus() {
-  const want = ['watchdog', 'crash', 'alerts', 'storage'];
+  const want = ['watchdog', 'crash', 'storage'];
   if (onPhone() || Date.now() - machineAt > 60000) { machineAt = Date.now(); want.push('machine'); }
   if (!savingsHistory.length) want.push('savings');
-  if (Date.now() - protectionAt > 60000) { protectionAt = Date.now(); want.push('protection'); }
-  if (Date.now() - downloadsAt > 30000) { downloadsAt = Date.now(); want.push('downloads'); }
   if (Date.now() - usageAt >= 9000) { usageAt = Date.now(); want.push('usage'); }
-  if (Date.now() - weekAt >= 600000) { weekAt = Date.now(); want.push('week'); }
   const n = ++boardNo;
   boardStatus = boardAnswers = null;
   boardFailed = false;
@@ -403,16 +399,13 @@ async function readStatus() {
   } catch (e) {
     if (n === boardNo) boardFailed = true;
     // The cards that ask the runtime were not read: due again next time.
-    if (want.includes('protection')) protectionAt = 0;
-    if (want.includes('downloads')) downloadsAt = 0;
     if (want.includes('usage')) usageAt = 0;
-    if (want.includes('week')) weekAt = 0;
     throw e;
   }
 }
 
 let boardServed = true;
-const singly: Record<string, string> = { watchdog: 'Watchdog', alerts: 'Alerts', protection: 'Protection', savings: 'SavingsHistory' };
+const singly: Record<string, string> = { watchdog: 'Watchdog', savings: 'SavingsHistory' };
 async function statusAlone(n: number, want: string[]) {
   const st = await go().Status();
   for (const name of want.filter((w) => singly[w])) {
@@ -434,10 +427,7 @@ function showCard(c) {
       savingsHistory = (!err && data) || [];
       if (lastStatus) renderTiles(lastStatus);
       break;
-    case 'protection': showProtection(data, err); break;
-    case 'downloads': showDownloads(err ? null : data); break;
-    case 'alerts': showAlerts(data, err); break;
-    case 'storage': showStorage(err ? null : data); break;
+    case 'storage': lastStorage = err ? null : data; if (statusHere === 'analytics') drawStatusPart(); break;
     case 'machine':
       phoneMachine = err ? null : data;
       // The web page's foot says what the computer's does: its free space and power, with how it is.
@@ -448,7 +438,6 @@ function showCard(c) {
       if (lastStatus) renderTiles(lastStatus);
       break;
     case 'usage': showUsage((!err && data) || []); break;
-    case 'week': showWeek(err ? null : data); break;
     case 'answers':
       if (c.board !== boardNo) return;
       boardAnswers = data || {};
@@ -468,12 +457,6 @@ function drawStatus() {
     clearAppList($('statusRows'));
     $('statusRows').closest('table').hidden = true;
     $('tiles').replaceChildren();
-    $('alertsCard').hidden = true;
-    $('watchCard').hidden = true;
-    $('protectCard').hidden = true;
-    protectionAt = 0;
-    $('downloadsCard').hidden = true;
-    downloadsAt = 0;
     const e: any = statusData.error;
     mountStatusNote($('statusNote'), { text: '', down: String((e && e.message) || e) });
     return;
@@ -488,7 +471,6 @@ function drawStatus() {
   $('statusRows').closest('table').hidden = false;
   lastStatus = st;
   renderAppList(st);
-  if (lastWatch) drawWatchdog(); // the apps it doesn't check, as they change
   if (st.checking && !kept) {
     if (st !== boardStatus) answerPages(st);
     else if (boardAnswers) applyAnswers(st, boardAnswers);
@@ -514,67 +496,23 @@ async function showWall() {
 }
 setInterval(() => { if (!$('wallCard').hidden) { wallAt = 0; showWall(); } }, 60000);
 
+// The watchdog's summary: the failing checks that are no app's, for the line on the other screens, and each app's
+// week and outages, for its row.
 let lastWatch: health.Summary | null = null;
 function showWatchdog(w: health.Summary | null) {
-  const card = $('watchCard');
   lastWatch = w;
-  // The failing checks that are no app's (an app's own trouble is its row's), for the line on the other screens.
   const apps = new Set((catalog?.apps || []).map((a) => a.id));
   setHealthChecks((w?.failing || []).map((f) => f.name).filter((name) => !apps.has(name)));
-  if (!w) { card.hidden = true; return; }
+  if (!w) return;
   weekUp = w.week || {};
   outages = w.outages || {};
   if (appList && lastStatus) renderAppList(lastStatus); // the week on the rows
-  card.hidden = false;
-  drawWatchdog();
 }
 
-/** The apps stopped, not on purpose, that the watchdog doesn't check (one
- * that stopped by itself is a failing check of its own). */
-const unchecked = (st: api.Status | null, w: health.Summary) => (st?.apps || []).filter((a) =>
-  a.state === 'stopped' && !held[a.id] && !batteryPaused.has(a.id) && !a.waitingFor && !(w.failing || []).some((f) => f.name === a.id)).map((a) => a.name);
-
-function drawWatchdog() {
-  const w = lastWatch;
-  if (!w) return;
-  mountWatchdog($('watchCard'), {
-    w, unchecked: unchecked(lastStatus, w), openSetup: () => { navigate('setup'); }, fix: () => cliFlow('Fix it', 'fix', '', 'Fix these'),
-    // Memory nearly full: Stop on one of the biggest, as its row's Stop.
-    stop: (id) => { const a = lastStatus?.apps.find((x) => x.id === id); if (a) void runAppAction(a, 'stop'); },
-    // Snooze a failing check's alerts, then draw the card again with it.
-    snooze: async (check, hours) => { try { await go().SnoozeCheck(check, hours); showWatchdog(await go().Watchdog()); } catch (e) { showError(e); } },
-  });
-}
-
-let protectionAt = 0;
-function showProtection(p: crowdsec.Protection, err: Error | null) {
-  const card = $('protectCard');
-  if (err) { card.hidden = true; return; }
-  card.hidden = false;
-  mountProtection(card, { p, fix: () => cliFlow('Fix it', 'fix', '', 'Fix these') });
-}
-
-let downloadsAt = 0;
-function showDownloads(c: downloads.Card | null) {
-  const card = $('downloadsCard');
-  card.hidden = !c || !c.apps || !c.line;
-  if (!card.hidden) mountDownloads(card, { c: c! });
-}
-
-// Photos per person: what each person keeps in Immich, as the nightly
-// backup last read it, largest first, with a bar against the largest.
+// What each person keeps in Immich, as the nightly backup last read it (Analytics' drives).
 let lastStorage: storage.Record | null = null;
-function showStorage(rec: storage.Record | null) {
-  lastStorage = rec;
-  if (statusHere === 'analytics') drawStatusPart();
-  const card = $('storageCard');
-  card.hidden = !storageShown(rec);
-  if (card.hidden) return;
-  mountStorage(card, { rec: rec!, nameOf: (id) => catalog?.apps.find((a) => a.id === id)?.name || id });
-}
 
-// What's using power: each running app's CPU right now (docker stats),
-// read at most once a minute since docker measures over a second or two.
+// Each running app's processor and memory now (docker stats), read at most every 9 seconds, for Analytics.
 let usageAt = 0;
 async function loadUsage() {
   if (Date.now() - usageAt < 9000) return;
@@ -591,7 +529,6 @@ function showUsage(stats: docker.Stat[]) {
   if (stats.length) statsAt = Date.now();
   lastStats = stats;
   if (statusHere === 'analytics') drawStatusPart();
-  mountUsage($('usageCard'), { stats, history: usageHistory, nameOf: (id) => catalog?.apps.find((a) => a.id === id)?.name || id });
   // Each group's memory on its heading and in its menu.
   memory = memoryByApp(stats, catalog);
   if (appList) mountAppList($('statusRows'), (appList = { ...appList, memory }));
@@ -608,27 +545,6 @@ const totals: Totals = { at: [], cpu: [], mem: [] };
 const usageHistory: UsageHistory = new Map();
 setInterval(() => { if (!document.hidden && $('status').classList.contains('active')) loadUsage(); }, 10000);
 
-// This week: the Sunday summary (homelab digest), read at most every 10
-// minutes since it asks several apps.
-let weekAt = 0;
-function showWeek(w: app.Weekly | null) {
-  const card = $('weekCard');
-  if (!w) { card.hidden = true; return; }
-  card.hidden = !w.body.split('\n').some(Boolean);
-  if (!card.hidden) mountWeek(card, { w });
-}
-
-function showAlerts(events: notify.Event[] | null, err: Error | null) {
-  const card = $('alertsCard');
-  const openSetup = () => { navigate('setup'); };
-  card.hidden = false;
-  const log = () => go().AlertLog();
-  // Snooze… on an alert whose check still fails, as the Watchdog card's: its card drawn again with it.
-  const watch = () => lastWatch;
-  const snooze = async (check: string, hours: number) => { await go().SnoozeCheck(check, hours); showWatchdog(await go().Watchdog()); };
-  if (err) mountAlerts(card, { events: null, problem: err.message, openSetup, refresh: loadStatus, log, watch, snooze });
-  else mountAlerts(card, { events: events || [], openSetup, refresh: loadStatus, log, watch, snooze });
-}
 
 // What the app list's rows do.
 const appListActions: AppListActions = {
