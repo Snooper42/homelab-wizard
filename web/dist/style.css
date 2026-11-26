@@ -3548,7 +3548,7 @@ nav .sidemenulist .sidedot + .total { margin-left:8px; }
 #statusChips { display:none; }
 @media (max-width: 700px) {
   html.companion #statusChips { display:block; margin:0 0 12px; }
-  html.companion #statusChips .sidemenulist { display:flex; flex-wrap:wrap; gap:6px; list-style:none; margin:0; padding:0; }
+  html.companion #statusChips .sidemenulist { display:flex; flex-direction:row; flex-wrap:wrap; gap:6px; list-style:none; margin:0; padding:0; }
   #statusChips .finmenuitem { display:inline-flex; align-items:center; gap:5px; white-space:nowrap; min-height:36px; padding:4px 12px; border:1px solid var(--line); border-radius:999px; background:var(--panel); color:var(--text); font:inherit; font-size:13px; max-width:100%; }
   #statusChips .finmenuitem > span:first-of-type { overflow:hidden; text-overflow:ellipsis; }
   #statusChips .finmenuitem.on { background:var(--text); color:var(--bg); border-color:transparent; }

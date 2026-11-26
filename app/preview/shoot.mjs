@@ -6720,6 +6720,10 @@ const smokes = [
     // Every chip within the screen (they wrap, never slide off it).
     const off = await page.$$eval('#statusChips .finmenuitem', (bs) => bs.filter((b) => b.getBoundingClientRect().right > innerWidth + 1).map((b) => b.textContent));
     if (off.length) throw new Error('chips off the screen: ' + off.join(', '));
+    // Several to a line, not one under another.
+    const rows = await page.$$eval('#statusChips .finmenuitem', (bs) => new Set(bs.map((b) => Math.round(b.getBoundingClientRect().top))).size);
+    const n = await page.locator('#statusChips .finmenuitem').count();
+    if (rows > Math.ceil(n / 2)) throw new Error(`${n} chips on ${rows} lines`);
     const across = await page.$$eval('#statusPart .cattiles:first-of-type > li', (els) => new Set(els.slice(0, 2).map((e) => Math.round(e.getBoundingClientRect().top))).size);
     if (across !== 1) throw new Error('not two across on a phone');
     await page.click('#statusChips button[data-key="overview"]');
