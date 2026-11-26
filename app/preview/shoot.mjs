@@ -6835,7 +6835,7 @@ const smokes = [
   } },
   // The phone's page mimics the computer (the owner, Nov 25): on a wide window the same strip of icons (only the phone's
   // screens, no empty columns) with Status' menu under it; narrow, the tab bar, and Status' menu as a row of chips; a
-  // category's page either way, its shelf without Install (the phone installs nothing yet).
+  // category's page either way, its shelf with Install on a phone that may change things (the owner, Nov 26: parity).
   { name: "The phone's page: the computer's strip and Status' menu when wide, chips when narrow, a category's page in each", screen: 'status', phone: ['companion', 'can-change'], run: async (page) => {
     await page.setViewportSize({ width: 1100, height: 760 });
     await page.waitForSelector('#statusSide button[data-key="media"]', { state: 'visible', timeout: 5000 });
@@ -6845,7 +6845,7 @@ const smokes = [
     if (await page.isVisible('#backupsSide .finmenuitem')) throw new Error("Backups' menu shows on Status");
     await page.click('#statusSide button[data-key="media"]');
     await page.waitForSelector('#statusPart .catpage h2:has-text("On the server")', { timeout: 5000 });
-    if (await page.$('#statusPart .cattile.toadd button')) throw new Error('Install on the phone');
+    if (!(await page.$('#statusPart .cattile.toadd button'))) throw new Error('no Install on a phone that may change things');
     await page.setViewportSize({ width: 390, height: 844 });
     await page.waitForSelector('#statusChips button[data-key="analytics"]', { state: 'visible', timeout: 5000 });
     if (await page.isVisible('#statusSide')) throw new Error("Status' sidebar menu in the tab bar");
