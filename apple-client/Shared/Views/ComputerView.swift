@@ -27,6 +27,25 @@ struct ComputerView: View {
     /// A switch's own page, opened from its ⓘ (the everyday ones atop Settings).
     @State private var about: String?
 
+    /// Setup, one of Settings' pages: how many steps are left, while some are.
+    private var setupRow: some View {
+        Section {
+            NavigationLink {
+                ComputerView(computer: computer, page: .setup)
+            } label: {
+                LabeledContent {
+                    if let steps = computer.setupSteps, !SetupChecklist.progress(steps).allDone {
+                        let p = SetupChecklist.progress(steps)
+                        Text(verbatim: "\(p.total - p.done) left").monospacedDigit()
+                    }
+                } label: {
+                    IconTileLabel(title: "Setup", systemImage: DashboardViewModel.SidebarItem.setup.systemImage, tint: TileColour.indigo)
+                }
+            }
+        }
+        .task { await computer.loadSetup() }
+    }
+
     var body: some View {
         @Bindable var computer = computer
         Form {
@@ -38,10 +57,9 @@ struct ComputerView: View {
                 fixSection
                 updateAllSection
             case .settings:
-                // As the redesign's phone picture (phone-settings.png, Nov 24): the homelab, then the
-                // household (its phones), then Automatic Care (the everyday ones, in plain words), then
-                // this device's; the rest a tap down.
+                // The homelab, Setup, the household (its phones), Automatic Care, this device's; the rest a tap down.
                 homelabCard
+                setupRow
                 if computer.canListPhones { phonesSection }
                 homelabFirstSection
                 thisDeviceSection

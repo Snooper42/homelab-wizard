@@ -162,8 +162,9 @@ private struct PhoneDashboard: View {
         Binding(
             get: {
                 let screen = (Screen(storageKey: savedTab) ?? .status(.all)).row
-                // Backups is one of Status' pages on the iPhone, as on the computer.
+                // Backups is one of Status' pages on the iPhone, and Setup one of Settings', as on the computer.
                 if screen == .backups { return .status(.all) }
+                if screen == .setup { return isMember ? .status(.all) : .settings }
                 return IntentInbox.landing(screen, isMember: isMember, canSeeFinances: finances.canSeePlan)
             },
             set: { screen in
@@ -194,13 +195,6 @@ private struct PhoneDashboard: View {
                 .tabItem { Label("Finances", systemImage: Screen.finances.systemImage) }
                 .tag(Screen.finances)
             }
-            if !isMember {
-                NavigationStack {
-                    ComputerView(computer: computer, page: .setup)
-                }
-                .tabItem { Label("Setup", systemImage: Screen.setup.systemImage) }
-                .tag(Screen.setup)
-            }
             NavigationStack {
                 if isMember {
                     MemberSettingsView()
@@ -220,9 +214,9 @@ private struct PhoneDashboard: View {
         // phone has it (the tab's own rules still apply).
         .onChange(of: IntentInbox.shared.screen, initial: true) { _, screen in
             guard let screen else { return }
-            if screen == .backups {
+            if screen == .backups || screen == .setup {
                 savedTab = Screen.status(.all).storageKey
-                if !isMember { IntentInbox.shared.statusPage = .backups }
+                if !isMember { IntentInbox.shared.statusPage = screen == .backups ? .backups : .setup }
             } else {
                 savedTab = screen.storageKey
             }
@@ -233,9 +227,9 @@ private struct PhoneDashboard: View {
         #if SCREENSHOTS
         .onAppear {
             if let tab = screenshotTab {
-                if tab == .backups {
+                if tab == .backups || tab == .setup {
                     savedTab = Screen.status(.all).storageKey
-                    IntentInbox.shared.statusPage = .backups
+                    IntentInbox.shared.statusPage = tab == .backups ? .backups : .setup
                 } else {
                     savedTab = tab.storageKey
                 }
@@ -357,6 +351,16 @@ private struct PhoneStatus: View {
                             .padding(.bottom, 6)
                             .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 0, trailing: 0))
                             .listRowBackground(Color.clear)
+                        if !isMember, let steps = computer.setupSteps, !steps.isEmpty, !SetupChecklist.progress(steps).allDone {
+                            Button { path.append(.setup) } label: {
+                                SetupCard(steps: steps)
+                            }
+                            .buttonStyle(PressableButtonStyle())
+                            .accessibilityHint("Opens Setup")
+                            .padding(.bottom, 6)
+                            .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 0, trailing: 0))
+                            .listRowBackground(Color.clear)
+                        }
                     }
                     // Analytics, as the first of the computer's Status menu after the Overview (not a member's).
                     if !isMember {
@@ -422,6 +426,8 @@ private struct PhoneStatus: View {
                     SubscriptionsPage(model: model)
                 case .backups:
                     BackupsView(backups: model.backups)
+                case .setup:
+                    ComputerView(computer: computer, page: .setup)
                 }
             }
             // Stage Manager and Split View: the app open beside the list when the
@@ -452,6 +458,8 @@ private struct PhoneStatus: View {
             }
             // The Backups card and the tab's badge, read once if that tab hasn't yet.
             .task { if !isMember, model.backups.overview == nil { await model.backups.load() } }
+            // Finish setting up's card, while steps are left.
+            .task(id: model.hasLoaded) { if !isMember, model.hasLoaded { await computer.loadSetup() } }
             // Siri or a shortcut: the app's page, and the action asked for,
             // once Status is read (after unlock).
             .onChange(of: IntentInbox.shared.pending, initial: true) { takeRequest() }

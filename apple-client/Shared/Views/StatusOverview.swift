@@ -223,6 +223,7 @@ enum StatusPlace: Hashable {
     case analytics
     case subscriptions
     case backups
+    case setup
 
     var appID: AppStatus.ID? {
         if case .app(let id) = self { return id }
@@ -467,6 +468,23 @@ struct OverviewCards: View {
                 OverviewBackupsCard(words: OverviewBackups(model.backups.overview))
                 OverviewMachineCard(words: OverviewMachine(model.cards.machine, updates: computer.updates), computer: computer)
             }
+        }
+    }
+}
+
+/// Finish setting up, on the Overview while steps are left: how many, and the checklist's progress.
+struct SetupCard: View {
+    let steps: [SetupStepInfo]
+
+    var body: some View {
+        let progress = SetupChecklist.progress(steps)
+        let left = progress.total - progress.done
+        OverviewCard(title: "Finish setting up", figure: "\(left)", unit: left == 1 ? "step left" : "steps left") {
+            EmptyView()
+        } footer: {
+            ProgressView(value: Double(progress.done), total: Double(max(progress.total, 1)))
+                .tint(Theme.accent)
+                .accessibilityHidden(true)
         }
     }
 }
