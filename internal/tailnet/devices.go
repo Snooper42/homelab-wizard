@@ -3,6 +3,8 @@ package tailnet
 import (
 	"encoding/json"
 	"fmt"
+	"net"
+	"net/netip"
 	"sort"
 	"strings"
 	"time"
@@ -90,4 +92,41 @@ func ParseDevices(data []byte) ([]Device, error) {
 		return strings.ToLower(a.Name) < strings.ToLower(b.Name)
 	})
 	return out, nil
+}
+
+// AtHome reports whether the device with tailnet address ip is on the home
+// network now, from `tailscale status --json`: online, and connected
+// straight to this machine over a home address (its CurAddr is the
+// 192.168…, 10…, or 172.16… address Tailscale reaches it at), not over the
+// internet nor through a relay. The web page answers only at home (the
+// owner, Nov 26), so a device that's away, or that Tailscale doesn't know,
+// is not.
+func AtHome(data []byte, ip string) bool {
+	var st struct {
+		Peer map[string]struct {
+			TailscaleIPs []string
+			Online       bool
+			CurAddr      string
+		}
+	}
+	if json.Unmarshal(data, &st) != nil {
+		return false
+	}
+	for _, n := range st.Peer {
+		for _, a := range n.TailscaleIPs {
+			if a != ip {
+				continue
+			}
+			if !n.Online || n.CurAddr == "" {
+				return false
+			}
+			host, _, err := net.SplitHostPort(n.CurAddr)
+			if err != nil {
+				return false
+			}
+			at, err := netip.ParseAddr(host)
+			return err == nil && at.Unmap().IsPrivate()
+		}
+	}
+	return false
 }
