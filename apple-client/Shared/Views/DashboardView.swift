@@ -352,6 +352,14 @@ private struct PhoneStatus: View {
                             .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 0, trailing: 0))
                             .listRowBackground(Color.clear)
                     }
+                    // Analytics, as the first of the computer's Status menu after the Overview (not a member's).
+                    if !isMember {
+                        Section {
+                            NavigationLink(value: StatusPlace.analytics) {
+                                AnalyticsRow(model: model)
+                            }
+                        }
+                    }
                     // The categories as one list, a row each (the computer's panel): a tap opens its page.
                     let categories = StatusCategory.list(apps: model.liveEvents.status?.apps ?? [], catalog: model.catalog)
                     if !categories.isEmpty {
@@ -393,6 +401,8 @@ private struct PhoneStatus: View {
                     CategoryPage(model: model, id: id, zoom: zoom)
                 case .every:
                     EveryAppPage(model: model, zoom: zoom)
+                case .analytics:
+                    AnalyticsPage(model: model)
                 }
             }
             // Stage Manager and Split View: the app open beside the list when the

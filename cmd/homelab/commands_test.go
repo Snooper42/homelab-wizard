@@ -24,8 +24,10 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/board"
 	"github.com/Snooper42/homelab-wizard/internal/docker"
 	"github.com/Snooper42/homelab-wizard/internal/kit"
+	"github.com/Snooper42/homelab-wizard/internal/savings"
 	"github.com/Snooper42/homelab-wizard/internal/ui"
 	"github.com/Snooper42/homelab-wizard/internal/upgrade"
+	usagehistory "github.com/Snooper42/homelab-wizard/internal/usage"
 )
 
 // gitRepo makes root a git checkout of origin (a bare repository) with one
@@ -291,6 +293,25 @@ func TestPhoneMethods(t *testing.T) {
 		if v, _, err := call(name); err != nil || v == nil {
 			t.Errorf("%s: %v %v", name, v, err)
 		}
+	}
+	// Status › Subscriptions and Analytics on a phone: the prices, each with its apps, and the usage history
+	// (empty before the computer kept any, never an error). The prices are docs/Savings.md, as a homelab has it.
+	if b, err := os.ReadFile(filepath.Join(repoDir(), "docs", "Savings.md")); err != nil {
+		t.Fatal(err)
+	} else if err := os.MkdirAll(filepath.Join(root, "docs"), 0o755); err != nil {
+		t.Fatal(err)
+	} else if err := os.WriteFile(filepath.Join(root, "docs", "Savings.md"), b, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if v, _, err := call("SavingsRows"); err != nil {
+		t.Errorf("SavingsRows: %v", err)
+	} else if rows, ok := v.([]savings.Offer); !ok || len(rows) == 0 {
+		t.Errorf("SavingsRows: %T %v", v, v)
+	}
+	if v, _, err := call("UsageHistory", 7); err != nil {
+		t.Errorf("UsageHistory: %v", err)
+	} else if h, ok := v.(usagehistory.History); !ok || h.At == nil || h.Apps == nil {
+		t.Errorf("UsageHistory: %T %v", v, v)
 	}
 	// Status with its cards in one answer: the result, then each card, the
 	// ones the phone does not show saying so.

@@ -37,6 +37,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/setup"
 	"github.com/Snooper42/homelab-wizard/internal/statusfolds"
 	"github.com/Snooper42/homelab-wizard/internal/storage"
+	usagehistory "github.com/Snooper42/homelab-wizard/internal/usage"
 	"github.com/Snooper42/homelab-wizard/web"
 )
 
@@ -507,6 +508,24 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 		})),
 		"SavingsHistory": read(func(context.Context, []json.RawMessage) (any, error) {
 			return savings.LoadHistory(savings.HistoryPath(root)), nil
+		}),
+		// Status › Subscriptions on a phone: each subscription the apps replace, at its price (docs/Savings.md), as
+		// the computer's SavingsRows. Public prices, nothing of the household's; not a member's phone.
+		"SavingsRows": read(func(context.Context, []json.RawMessage) (any, error) {
+			c, err := core.Catalog(root)
+			if err != nil {
+				return nil, err
+			}
+			return savings.Offers(c)
+		}),
+		// Status › Analytics on a phone: the apps' processor and memory over the last days (1 to 31, usage.Read
+		// keeps it in range), as the computer's UsageHistory, for Day, Week and Month. Not a member's phone.
+		"UsageHistory": read(func(_ context.Context, args []json.RawMessage) (any, error) {
+			days := 1
+			if len(args) > 0 {
+				_ = json.Unmarshal(args[0], &days)
+			}
+			return usagehistory.Read(usagehistory.Path(root), time.Now(), days)
 		}),
 		// What was done (internal/history), to look at: [app, search, before],
 		// each optional. The owner's phones only (a member's isn't one of
