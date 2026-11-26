@@ -602,6 +602,35 @@ func TestAHomelabsLife(t *testing.T) {
 		l.run("updates", "release", "ntfy")
 	})
 
+	// The apps' data moved to another drive's folder and back (quality-loop D3 part 2, the owner's yes of Nov 26):
+	// every app starts on the copy with its data, Undo goes back to the old folder, and Remove the old copy deletes
+	// only the one not in use.
+	step("the apps' data moved to another folder, and back", func(t *testing.T) {
+		elsewhere := filepath.Join(filepath.Dir(l.root), "appdata-elsewhere")
+		l.run("appdata", "move", elsewhere, "--apply")
+		l.up(as)
+		for _, a := range as {
+			if a.check != nil {
+				if err := a.check(l); err != nil {
+					t.Errorf("%s on the moved folder: %v", a.id, err)
+				}
+			}
+		}
+		l.run("appdata", "undo", "--apply")
+		l.up(as)
+		l.run("appdata", "remove-old", "--apply")
+		if _, err := os.Stat(elsewhere); !os.IsNotExist(err) {
+			t.Errorf("the moved copy is still at %s after remove-old: %v", elsewhere, err)
+		}
+		for _, a := range as {
+			if a.check != nil {
+				if err := a.check(l); err != nil {
+					t.Errorf("%s back on the old folder: %v", a.id, err)
+				}
+			}
+		}
+	})
+
 	pack := filepath.Join(filepath.Dir(l.root), "homelab-move.tar")
 	// The ntfy the rollback above left: older than binwiederhier/ntfy:latest,
 	// so the move in must start it from the backup's record, not the newest.
