@@ -7413,10 +7413,10 @@ const smokes = [
     await page.waitForSelector('.fincalendar .formerr:has-text("never sent over the home Wi-Fi")', { timeout: 5000 });
     if (await page.$('.fincalendar input[aria-label="Calendar link"]')) throw new Error('a link with nowhere to serve it');
   } },
-  { name: 'The phone: no calendar link to make', screen: 'finances', phone: ['companion', 'finances'], run: async (page) => {
+  { name: 'The phone: a calendar link, as on the computer', screen: 'finances', phone: ['companion', 'finances'], run: async (page) => {
     await finTab(page, 'Pay', { timeout: 5000 });
     await page.waitForSelector('.finreminders', { timeout: 5000 });
-    if (await page.$('.fincalendar')) throw new Error('the phone offers a calendar link');
+    await page.waitForSelector('.fincalendar', { timeout: 5000 });
   } },
   // Money flow on Recurring: a typical month, each person's pay before taxes (Alex's $3,050 every other week is $6,608.33 a
   // month; $599 of each is taxes, $1,297.83 a month) into all of it, out to taxes, each kind of bill, and saving, which goes
@@ -8274,10 +8274,10 @@ const smokes = [
     await page.waitForSelector('#finSheet input#bal-chk', { timeout: 5000 });
     if (await page.$('#finSheet .fromapp')) throw new Error('reading from an app that is not running');
   } },
-  { name: 'The phone: Update balances reads from no app', screen: 'finances', phone: ['companion', 'finances'], mock: { status: runningToo('firefly-iii', 'ghostfolio') }, run: async (page) => {
+  { name: 'The phone: Update balances reads from the apps running, as on the computer', screen: 'finances', phone: ['companion', 'finances'], mock: { status: runningToo('firefly-iii', 'ghostfolio') }, run: async (page) => {
     await finAdd(page, 'Update balances', { timeout: 5000 });
     await page.waitForSelector('#finSheet input#bal-chk', { timeout: 5000 });
-    if (await page.$('#finSheet .fromapp')) throw new Error('reading from an app on a phone');
+    await page.waitForSelector('#finSheet .fromapp', { timeout: 5000 });
   } },
   // Update balances: one panel with every account, each box at what is expected today, the difference as it is typed;
   // Enter keeps them all, each as today's, and the cushion with them.
