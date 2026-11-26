@@ -60,6 +60,7 @@ version: 0.17.0
 | `data/media-health.json` | Tidy Up's pass | Which of the media apps' health problems were seen, since when, and which were said (arr item 4). Safe to delete: each problem still there is said once more |
 | `data/pinned.json` | `homelab pin\|unpin <app>` (a row's right-click › **Pin to the top**, or a phone) | The apps at the top of Status and of the menu bar's Open an app, in the order pinned. It used to be `APPS_PINNED` in `.env`: the first install or `homelab pin` after an upgrade moves it here and takes the key out |
 | `data/savings-history.json` | the nightly backup | The yearly savings over time |
+| `data/usage-history.json` | the agent, every 5 minutes | What the apps took from the processor and memory, in all and each app's own, and when the nightly jobs started, for the last 31 days (1 to 2 MB); Analytics draws its Day, Week and Month from it |
 | `data/upgrade/` | `homelab upgrade` | Where the folder was before the last upgrade (`previous.json`; for a folder the app made, a copy of its files), for `upgrade --back` |
 | `data/homelab-move.json` | `homelab move in` | Where the bundle came from and what ran there, until the move is done |
 | `data/appdata/tailscale/serve.json` | `homelab tailnet setup` | Home mode: the app addresses Tailscale Serve answers |

@@ -472,6 +472,16 @@ var ErrNoTailscale = errors.New("Tailscale is not running")
 // TailnetDevices is every device on the household's tailnet, from
 // Tailscale's status in its container: Settings › Devices on your tailnet.
 func TailnetDevices(ctx context.Context, root string) ([]tailnet.Device, error) {
+	out, err := TailnetStatus(ctx, root)
+	if err != nil {
+		return nil, err
+	}
+	return tailnet.ParseDevices(out)
+}
+
+// TailnetStatus is `tailscale status --json` from the Tailscale container;
+// ErrNoTailscale while it isn't running.
+func TailnetStatus(ctx context.Context, root string) ([]byte, error) {
 	c, err := Catalog(root)
 	if err != nil {
 		return nil, err
@@ -488,7 +498,7 @@ func TailnetDevices(ctx context.Context, root string) ([]tailnet.Device, error) 
 	if err != nil {
 		return nil, fmt.Errorf("reading Tailscale's status: %w", err)
 	}
-	return tailnet.ParseDevices(out)
+	return out, nil
 }
 
 // ErrNoReadToken means alerts cannot be read yet: notify setup has not made
