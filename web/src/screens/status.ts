@@ -639,12 +639,15 @@ async function loadUsage() {
   if (Date.now() - usageAt < 9000) return;
   usageAt = Date.now();
   let stats: docker.Stat[];
-  try { stats = await go().Usage(); } catch { stats = []; }
+  // A read that fails (the runtime busy, or a phone's computer from before it served Usage) keeps the last reading
+  // for a minute rather than blanking Analytics' figures between them.
+  try { stats = await go().Usage(); } catch { if (Date.now() - statsAt < 60000) return; stats = []; }
   showUsage(stats);
 }
 function showUsage(stats: docker.Stat[]) {
   recordUsage(usageHistory, stats);
   recordTotals(totals, stats, catalog);
+  if (stats.length) statsAt = Date.now();
   lastStats = stats;
   if (statusHere === 'analytics') drawStatusPart();
   mountUsage($('usageCard'), { stats, history: usageHistory, nameOf: (id) => catalog?.apps.find((a) => a.id === id)?.name || id });
@@ -657,6 +660,7 @@ function showUsage(stats: docker.Stat[]) {
 let memory: Record<string, number> | undefined;
 /** The latest stats, and the whole machine's since Status opened (Analytics). */
 let lastStats: docker.Stat[] = [];
+let statsAt = 0; // when a reading last had the apps in it
 const totals: Totals = { at: [], cpu: [], mem: [] };
 // While Status is open (and the window shown), usage is sampled every 10
 // seconds for the card's lines.

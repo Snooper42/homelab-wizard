@@ -1547,14 +1547,14 @@
   }
   function RestoreTile({ t: t3, due, test }) {
     const runs2 = t3.history || [];
-    const newest2 = runs2[runs2.length - 1];
+    const newest3 = runs2[runs2.length - 1];
     const timed = runs2.slice().reverse().find((r3) => r3.passed && r3.seconds);
-    const failed = !!newest2 && !newest2.passed;
+    const failed = !!newest3 && !newest3.passed;
     const sub = failed ? /* @__PURE__ */ u3("span", { class: "bad", children: [
       "Failed ",
-      ago(newest2.when),
+      ago(newest3.when),
       ": ",
-      newest2.summary
+      newest3.summary
     ] }) : due ? /* @__PURE__ */ u3("span", { class: "warn", children: "Prove the backups open, once a month" }) : (t3.lastSummary || (never(t3.lastTest) ? "Once there is a backup to test" : "Proven in the last 30 days")) + (timed ? ` · in ${tookText(timed.seconds)}` : "");
     const record2 = runs2.slice(-6).reverse().map((r3) => `${dayText(new Date(r3.when), { day: "numeric", month: "short" })}: ${r3.passed ? "passed" : "failed"}${r3.seconds ? " in " + tookText(r3.seconds) : ""}`);
     return /* @__PURE__ */ u3(Card, { kind: "bkcard", id: "restoreTile", title: record2.length ? `Restore drills on record (${runs2.length}):
@@ -1818,7 +1818,7 @@
       ] });
     }
     const bad = jobs.filter((j3) => j3.state !== "ok" || j3.checkProblem).length;
-    const newest2 = jobs.map((j3) => j3.lastFinished).filter((t3) => !never(t3)).sort().pop();
+    const newest3 = jobs.map((j3) => j3.lastFinished).filter((t3) => !never(t3)).sort().pop();
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3(CardHead, { title, children: bad ? /* @__PURE__ */ u3("span", { class: "warn", children: [
         bad,
@@ -1827,7 +1827,7 @@
         "✓ All ",
         jobs.length,
         " ran",
-        newest2 ? " " + ago(newest2) : ""
+        newest3 ? " " + ago(newest3) : ""
       ] }) }),
       /* @__PURE__ */ u3(Rows, { kind: "jobs", children: jobs.map((j3) => {
         const [mark, word] = jobMark[j3.state] || ["", j3.state];
@@ -1900,8 +1900,8 @@
       /* @__PURE__ */ u3("div", { class: "sub", children: sub })
     ] });
   }
-  function SavingsTrend({ history }) {
-    const pts = history.slice(-90);
+  function SavingsTrend({ history: history2 }) {
+    const pts = history2.slice(-90);
     if (pts.length < 2) return /* @__PURE__ */ u3(S, { children: "in subscriptions" });
     const first = pts[0], last2 = pts[pts.length - 1];
     const delta = last2.annual - first.annual;
@@ -1911,8 +1911,8 @@
       /* @__PURE__ */ u3("span", { class: "trend", children: delta === 0 ? `same since ${since}` : `${delta > 0 ? "+" : "−"}${dollars(Math.abs(delta))} since ${since}` })
     ] });
   }
-  function savedSoFar(history) {
-    const pts = [...history].sort((a3, b2) => a3.date.localeCompare(b2.date));
+  function savedSoFar(history2) {
+    const pts = [...history2].sort((a3, b2) => a3.date.localeCompare(b2.date));
     const byMonth2 = /* @__PURE__ */ new Map();
     let total = 0;
     pts.forEach((p3, i3) => {
@@ -1927,8 +1927,8 @@
     const months = [...byMonth2].map(([month3, amount]) => ({ month: month3, amount })).sort((a3, b2) => b2.month.localeCompare(a3.month));
     return { total, since: pts[0]?.date || "", months };
   }
-  function SavedHover({ value, history }) {
-    const s3 = savedSoFar(history);
+  function SavedHover({ value, history: history2 }) {
+    const s3 = savedSoFar(history2);
     if (!s3.since) return /* @__PURE__ */ u3(S, { children: value });
     const since = dayText(/* @__PURE__ */ new Date(s3.since + "T12:00:00"), { month: "short", day: "numeric", year: "numeric" });
     const monthName3 = (m3) => dayText(/* @__PURE__ */ new Date(m3 + "-15T12:00:00"), { month: "long", year: "numeric" });
@@ -1980,7 +1980,7 @@
     if (hours < 48) return `Up ${hours === 1 ? "an hour" : `${hours} hours`}`;
     return `Up ${Math.floor(hours / 24)} days`;
   }
-  function Tiles({ status: st, history, onPause, onChoose, words: words5, start, logs, open: open5, backups, openBackups, mac, machine, week: week2, nights, startAll, seeAll, appsMemory }) {
+  function Tiles({ status: st, history: history2, onPause, onChoose, words: words5, start, logs, open: open5, backups, openBackups, mac, machine, week: week2, nights, startAll, seeAll, appsMemory }) {
     if (!st.apps.length) {
       return /* @__PURE__ */ u3(Card, { kind: "emptystate", id: "statusEmpty", children: [
         /* @__PURE__ */ u3("h2", { children: "No apps yet" }),
@@ -2161,12 +2161,12 @@
       ] })
     ] });
   }
-  function Savings({ status: st, history }) {
+  function Savings({ status: st, history: history2 }) {
     if (!st.apps.length) return null;
     return /* @__PURE__ */ u3(Tile, { label: "Instead of subscriptions", value: /* @__PURE__ */ u3(S, { children: [
-      /* @__PURE__ */ u3(SavedHover, { value: st.savings > 0 ? dollars(st.savings) : "$0", history }),
+      /* @__PURE__ */ u3(SavedHover, { value: st.savings > 0 ? dollars(st.savings) : "$0", history: history2 }),
       /* @__PURE__ */ u3("small", { children: " a year" })
-    ] }), sub: /* @__PURE__ */ u3(SavingsTrend, { history }) });
+    ] }), sub: /* @__PURE__ */ u3(SavingsTrend, { history: history2 }) });
   }
   function mountSavings(el3, props) {
     R(/* @__PURE__ */ u3(Savings, { ...props }), el3);
@@ -4339,7 +4339,7 @@
     },
     reload: () => loadPhones()
   };
-  var usedByPeople = (a3, entry) => !!(a3.address || a3.url) && a3.id !== "homepage" && entry?.kind !== "helper" && (!["network", "system", "security"].includes(entry?.category || "") || a3.id === "vaultwarden");
+  var usedByPeople = (a3, entry2) => !!(a3.address || a3.url) && a3.id !== "homepage" && entry2?.kind !== "helper" && (!["network", "system", "security"].includes(entry2?.category || "") || a3.id === "vaultwarden");
   var peopleView = null;
   var peopleLog = "";
   var justAdded;
@@ -7609,11 +7609,11 @@
       open5().catch(() => setBusy(false));
     }, children: label });
   }
-  function Actions2({ a: a3, entry, busy: busy2, os, on: on2, marks: marks2 }) {
+  function Actions2({ a: a3, entry: entry2, busy: busy2, os, on: on2, marks: marks2 }) {
     const mark = (name) => marks2 ? /* @__PURE__ */ u3(Icon, { name }) : null;
-    if (entry?.kind === "native") {
+    if (entry2?.kind === "native") {
       const title = os === "mac" ? `Open ${a3.name}; it then keeps running in the menu bar` : os === "windows" ? `Start ${a3.name} (Windows asks for approval)` : `Start ${a3.name}'s service (asks for your password)`;
-      if (entry.macApp && a3.state !== "running") return /* @__PURE__ */ u3(NativeButton, { a: a3, title, label: os === "mac" ? "Open" : "Start", open: () => on2.openNative(a3) });
+      if (entry2.macApp && a3.state !== "running") return /* @__PURE__ */ u3(NativeButton, { a: a3, title, label: os === "mac" ? "Open" : "Start", open: () => on2.openNative(a3) });
       const page = a3.address ? "https://" + a3.address : a3.url;
       return marks2 && a3.state === "running" && page ? /* @__PURE__ */ u3("button", { class: "small rowmain", title: `Open ${a3.name}`, onClick: () => on2.open(page), children: [
         mark("open"),
@@ -7696,7 +7696,7 @@
       if (refocus && from2?.isConnected && from2 !== document.body) from2.focus();
     };
     const [cls, words5] = rowWords(a3, p3);
-    const entry = p3.catalog?.apps.find((c4) => c4.id === a3.id);
+    const entry2 = p3.catalog?.apps.find((c4) => c4.id === a3.id);
     const changed4 = changedSince(a3, p3.seen ?? null);
     return (
       // A click anywhere on the row (not on its links and buttons), or Return
@@ -7754,10 +7754,10 @@
             ] }),
             /* @__PURE__ */ u3("td", { title: a3.address && a3.url ? "On this machine: " + a3.url : "", children: a3.address ? /* @__PURE__ */ u3(Link, { url: "https://" + a3.address, text: a3.address, open: p3.on.open, copy, os: p3.os }) : a3.url ? /* @__PURE__ */ u3(Link, { url: a3.url, text: a3.url.replace(/^http:\/\//, ""), open: p3.on.open, copy, os: p3.os }) : /* @__PURE__ */ u3("span", { class: "muted", children: "—" }) }),
             /* @__PURE__ */ u3("td", { class: "rowActions", children: [
-              /* @__PURE__ */ u3(Actions2, { a: a3, entry, busy: p3.busy || !!pend && !pend.failed, os: p3.os, on: p3.on }),
+              /* @__PURE__ */ u3(Actions2, { a: a3, entry: entry2, busy: p3.busy || !!pend && !pend.failed, os: p3.os, on: p3.on }),
               a3.state !== "missing" && !p3.companion && /* @__PURE__ */ u3(GearButton, { name: a3.name, unsaved: p3.unkept?.[a3.id] || 0, open: () => p3.on.signIn(a3) }),
               a3.state !== "missing" && /* @__PURE__ */ u3("button", { class: "iconbtn topage", title: `${a3.name}: its page`, "aria-label": `${a3.name}: its page`, onClick: () => p3.on.page(a3), children: /* @__PURE__ */ u3(Icon, { name: "chevron" }) }),
-              menu2?.id === a3.id && /* @__PURE__ */ u3(RowMenu, { a: a3, x: menu2.x, y: menu2.y, native: entry?.kind === "native", busy: p3.busy, companion: p3.companion, on: p3.on.menu, close: close3, said: (w3) => say(a3.id, w3) })
+              menu2?.id === a3.id && /* @__PURE__ */ u3(RowMenu, { a: a3, x: menu2.x, y: menu2.y, native: entry2?.kind === "native", busy: p3.busy, companion: p3.companion, on: p3.on.menu, close: close3, said: (w3) => say(a3.id, w3) })
             ] })
           ]
         }
@@ -8389,7 +8389,7 @@
   function Tile3({ a: a3, p: p3, menu: menu2, setMenu }) {
     const [cls, line] = tileLine(a3, p3);
     const [said2, say] = d2("");
-    const entry = p3.catalog?.apps.find((c4) => c4.id === a3.id);
+    const entry2 = p3.catalog?.apps.find((c4) => c4.id === a3.id);
     const pend = p3.pending[a3.id];
     const menuable = a3.state !== "missing" && a3.state !== "elsewhere" && (!p3.companion || document.documentElement.classList.contains("can-change"));
     const close3 = (refocus) => {
@@ -8424,8 +8424,8 @@
           /* @__PURE__ */ u3(AppMark, { id: a3.id, name: a3.name, icon: p3.icons?.[a3.id] || "" }),
           /* @__PURE__ */ u3("strong", { class: "catname", children: a3.name }),
           /* @__PURE__ */ u3("span", { class: "catline" + (cls === "bad" ? " bad" : ""), title: line, children: said2 || line }),
-          /* @__PURE__ */ u3("span", { class: "catbtn", children: /* @__PURE__ */ u3(Actions2, { a: a3, entry, busy: p3.busy || !!pend && !pend.failed, os: p3.os, on: p3.on, marks: true }) }),
-          menu2?.id === a3.id && /* @__PURE__ */ u3(RowMenu, { a: a3, x: menu2.x, y: menu2.y, up: menu2.up, native: entry?.kind === "native", busy: p3.busy, companion: p3.companion, on: p3.on.menu, close: close3, said: say })
+          /* @__PURE__ */ u3("span", { class: "catbtn", children: /* @__PURE__ */ u3(Actions2, { a: a3, entry: entry2, busy: p3.busy || !!pend && !pend.failed, os: p3.os, on: p3.on, marks: true }) }),
+          menu2?.id === a3.id && /* @__PURE__ */ u3(RowMenu, { a: a3, x: menu2.x, y: menu2.y, up: menu2.up, native: entry2?.kind === "native", busy: p3.busy, companion: p3.companion, on: p3.on.menu, close: close3, said: say })
         ]
       }
     );
@@ -8561,7 +8561,7 @@
       ] })
     ] });
   }
-  function Analytics({ stats, history, totals: totals3, cores, disk: disk2, storage, apps: apps2, catalog: catalog2, icons: icons4, page }) {
+  function Analytics({ stats, history: history2, totals: totals3, cores, disk: disk2, storage, apps: apps2, catalog: catalog2, icons: icons4, page }) {
     const [all, setAll] = d2(false);
     const byId = Object.fromEntries(apps2.map((a3) => [a3.id, a3]));
     const nameOf = (id2) => byId[id2]?.name || catalog2?.apps.find((a3) => a3.id === id2)?.name || id2;
@@ -8572,7 +8572,7 @@
     for (const s3 of stats) {
       const id2 = helpers[s3.name] || s3.name;
       cpu[id2] = (cpu[id2] || 0) + s3.cpu;
-      if (!helpers[s3.name]) past[id2] = history.get(s3.name) || [];
+      if (!helpers[s3.name]) past[id2] = history2.get(s3.name) || [];
     }
     const disked = Object.fromEntries((storage?.apps || []).map((f4) => [f4.app, f4.bytes]));
     const ids = [.../* @__PURE__ */ new Set([...Object.keys(mem), ...Object.keys(cpu)])].filter((id2) => byId[id2] || catalog2?.apps.some((a3) => a3.id === id2));
@@ -8918,23 +8918,23 @@
 
   // web/src/status/Usage.tsx
   var keep2 = 30;
-  function record(history, stats) {
+  function record(history2, stats) {
     const now2 = new Set(stats.map((s3) => s3.name));
-    for (const name of history.keys()) if (!now2.has(name)) history.delete(name);
+    for (const name of history2.keys()) if (!now2.has(name)) history2.delete(name);
     for (const s3 of stats) {
-      const h3 = history.get(s3.name) || [];
+      const h3 = history2.get(s3.name) || [];
       h3.push(s3.cpu);
       if (h3.length > keep2) h3.shift();
-      history.set(s3.name, h3);
+      history2.set(s3.name, h3);
     }
   }
-  function Usage({ stats, history, nameOf }) {
+  function Usage({ stats, history: history2, nameOf }) {
     const busy2 = stats.filter((s3) => s3.cpu >= 1);
     const total = stats.reduce((t3, s3) => t3 + s3.cpu, 0);
     const held3 = stats.reduce((t3, s3) => t3 + parseMem(s3.mem), 0);
     const most = Math.max(busy2[0]?.cpu || 0, 100);
     const heavy = busy2.filter((s3) => s3.cpu >= 50);
-    const minutes = Math.round((history.get(busy2[0]?.name)?.length || 1) * 10 / 60);
+    const minutes = Math.round((history2.get(busy2[0]?.name)?.length || 1) * 10 / 60);
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3(CardHead, { title: "What’s using power", children: /* @__PURE__ */ u3("span", { class: "muted", title: "Percent of one processor core; 100% is one core kept busy", children: [
         Math.round(total),
@@ -8944,7 +8944,7 @@
         minutes > 1 ? `live, the last ${minutes} minutes` : minutes === 1 ? "live, the last minute" : "just now"
       ] }) }),
       /* @__PURE__ */ u3(Rows, { kind: "usage", children: busy2.slice(0, 6).map((s3) => {
-        const past = history.get(s3.name) || [];
+        const past = history2.get(s3.name) || [];
         return /* @__PURE__ */ u3(
           Row,
           {
@@ -9907,6 +9907,7 @@
     try {
       stats = await go().Usage();
     } catch {
+      if (Date.now() - statsAt < 6e4) return;
       stats = [];
     }
     showUsage(stats);
@@ -9914,6 +9915,7 @@
   function showUsage(stats) {
     record(usageHistory, stats);
     recordTotals(totals, stats, catalog);
+    if (stats.length) statsAt = Date.now();
     lastStats = stats;
     if (statusHere === "analytics") drawStatusPart();
     mountUsage($("usageCard"), { stats, history: usageHistory, nameOf: (id2) => catalog?.apps.find((a3) => a3.id === id2)?.name || id2 });
@@ -9923,6 +9925,7 @@
   }
   var memory;
   var lastStats = [];
+  var statsAt = 0;
   var totals = { at: [], cpu: [], mem: [] };
   var usageHistory = /* @__PURE__ */ new Map();
   setInterval(() => {
@@ -10122,8 +10125,8 @@
     if (sheetBusy()) return;
     const panel = $("cliPanel");
     if (cliStop) cliStop();
-    const entry = catalog?.apps.find((x3) => x3.id === a3.id);
-    const wanted = [...entry?.login || [], ...entry?.keys || [], ...entry?.recovery || []];
+    const entry2 = catalog?.apps.find((x3) => x3.id === a3.id);
+    const wanted = [...entry2?.login || [], ...entry2?.keys || [], ...entry2?.recovery || []];
     let list = [];
     if (wanted.length) {
       try {
@@ -10159,11 +10162,11 @@
       };
     };
     const groups4 = [];
-    if (entry?.login?.length) groups4.push({ title: "Sign in", rows: entry.login.map(row) });
-    const paste = (entry?.keys || []).map(row);
-    if (entry?.keyFile) paste.unshift({ label: "API key", shown: "••••••••", copy: () => go().CopyAppKey(a3.id), kept: !!keptNow["app:" + a3.id], keep: keep4("app:" + a3.id) });
+    if (entry2?.login?.length) groups4.push({ title: "Sign in", rows: entry2.login.map(row) });
+    const paste = (entry2?.keys || []).map(row);
+    if (entry2?.keyFile) paste.unshift({ label: "API key", shown: "••••••••", copy: () => go().CopyAppKey(a3.id), kept: !!keptNow["app:" + a3.id], keep: keep4("app:" + a3.id) });
     if (paste.length) groups4.push({ title: "Paste into another app", rows: paste });
-    if (entry?.recovery?.length) groups4.push({ title: "Keep safe", note: "Without this the backups can’t be opened.", rows: entry.recovery.map(row) });
+    if (entry2?.recovery?.length) groups4.push({ title: "Keep safe", note: "Without this the backups can’t be opened.", rows: entry2.recovery.map(row) });
     const url = a3.address ? "https://" + a3.address : a3.url || "";
     panel.hidden = false;
     $("cliTitle").textContent = `${a3.name}: sign-in details`;
@@ -10694,12 +10697,12 @@
     ] }) : "Copy" });
   }
   function Header({ p: p3 }) {
-    const { a: a3, entry, pending: pending2, busy: busy2, on: on2 } = p3;
+    const { a: a3, entry: entry2, pending: pending2, busy: busy2, on: on2 } = p3;
     const [tone, words5] = pending2 && !pending2.failed ? ["warn", pending2.note || doing3[pending2.action] || "Working…"] : p3.state;
     const up = a3.state === "running" && !pending2 ? uptime(a3.since) : "";
     const url = a3.address ? "https://" + a3.address : a3.url || "";
     const run2 = (action, label, title, danger = false) => /* @__PURE__ */ u3("button", { class: "btn change" + (danger ? " danger" : ""), title, disabled: busy2, onClick: () => on2.act(action), children: label });
-    const container = entry?.kind !== "native" && a3.state !== "missing" && a3.state !== "elsewhere";
+    const container = entry2?.kind !== "native" && a3.state !== "missing" && a3.state !== "elsewhere";
     const [sure, setSure] = d2(false);
     h2(() => {
       if (!sure) return;
@@ -10736,7 +10739,7 @@
               up && ` · ${up}`
             ] })
           ] }),
-          entry?.description && /* @__PURE__ */ u3("p", { class: "lead", children: entry.description }),
+          entry2?.description && /* @__PURE__ */ u3("p", { class: "lead", children: entry2.description }),
           p3.next?.[0] && !pending2 && /* @__PURE__ */ u3("p", { class: "stopnext", role: "note", children: [
             p3.next[0],
             p3.next[1] && /* @__PURE__ */ u3("span", { class: "change", children: [
@@ -10786,9 +10789,9 @@
     ] });
   }
   function Facts({ p: p3 }) {
-    const { a: a3, entry, usage: usage2, disk: disk2, days, backup: o3, on: on2 } = p3;
+    const { a: a3, entry: entry2, usage: usage2, disk: disk2, days, backup: o3, on: on2 } = p3;
     const url = a3.address ? "https://" + a3.address : a3.url || "";
-    const reach = entry?.public ? "At home, and on the internet through the Cloudflare Tunnel" : a3.address ? "Your own private network, not on the internet" : "On this machine only";
+    const reach = entry2?.public ? "At home, and on the internet through the Cloudflare Tunnel" : a3.address ? "Your own private network, not on the internet" : "On this machine only";
     const seen2 = { watching: p3.watching, stopped: a3.state === "stopped" };
     const [weekValue] = weekWords(days, p3.outages, Date.now(), seen2);
     const late = o3 && !never(o3.lastRun) && Date.now() - new Date(o3.lastRun).getTime() > (o3.staleAfterHours || 30) * 36e5;
@@ -10955,10 +10958,10 @@
     ] });
   }
   function People2({ p: p3 }) {
-    const { entry, people, on: on2 } = p3;
-    if (!people && !entry?.login?.length) return null;
+    const { entry: entry2, people, on: on2 } = p3;
+    if (!people && !entry2?.login?.length) return null;
     return /* @__PURE__ */ u3(Card, { kind: "alerts pagecard", id: "appPeople", children: [
-      /* @__PURE__ */ u3(CardHead, { title: people ? "Who uses it" : "Signing in", children: !!entry?.login?.length && /* @__PURE__ */ u3("button", { class: "small", onClick: () => on2.signIn(), children: [
+      /* @__PURE__ */ u3(CardHead, { title: people ? "Who uses it" : "Signing in", children: !!entry2?.login?.length && /* @__PURE__ */ u3("button", { class: "small", onClick: () => on2.signIn(), children: [
         /* @__PURE__ */ u3(Icon, { name: "key" }),
         "Sign-in details"
       ] }) }),
@@ -10980,13 +10983,13 @@
     );
   }
   function Settings({ p: p3 }) {
-    const { a: a3, entry, busy: busy2, backup: o3, switching: switching2, on: on2 } = p3;
-    const container = entry?.kind !== "native" && a3.state !== "missing" && a3.state !== "elsewhere";
+    const { a: a3, entry: entry2, busy: busy2, backup: o3, switching: switching2, on: on2 } = p3;
+    const container = entry2?.kind !== "native" && a3.state !== "missing" && a3.state !== "elsewhere";
     const updates = switching2.updates ?? !a3.held, alerts = switching2.alerts ?? !a3.quiet;
     const away2 = switching2.away ?? a3.reach === "away";
     const days = a3.updateDays || [], ownDays = switching2.sundays ?? days.length > 0;
     const daysText = switching2.sundays || !days.length ? "Sundays" : weekdaysText(days);
-    const ids = [a3.id, ...entry?.dependsOn || []];
+    const ids = [a3.id, ...entry2?.dependsOn || []];
     const copy = o3?.copies?.find((c4) => ids.includes(c4.id) && !c4.volume && !never(c4.newest));
     const kept6 = container ? copy ? `Its files, and its database's copy from ${when(copy.newest)}` : "Its files in the homelab folder, every night" : "It runs on its own, outside the homelab; its own app keeps its data";
     return /* @__PURE__ */ u3(Card, { kind: "alerts pagecard", id: "appSettings", children: [
@@ -11189,11 +11192,11 @@
       }
       return;
     }
-    const entry = catalog?.apps.find((c4) => c4.id === id);
+    const entry2 = catalog?.apps.find((c4) => c4.id === id);
     const companion2 = document.documentElement.classList.contains("companion");
     mountAppPage($("appPage"), {
       a: a3,
-      entry,
+      entry: entry2,
       unkept: unkept?.[id] || 0,
       state: stateOf(a3, new Set(statusData.value?.batteryPaused || []), statusData.value?.stopped || {}),
       pending: pendingOf(id),
@@ -11206,7 +11209,7 @@
       outages: watch ? watch.outages ? watch.outages[id] || [] : void 0 : void 0,
       switching: switching[id] || {},
       backup: backupsData.value || null,
-      people: usedByPeople(a3, entry) && household ? household : null,
+      people: usedByPeople(a3, entry2) && household ? household : null,
       icon: icons2[id] || "",
       explainer,
       // Dozzle is kept to this computer (docs/Security.md, L1): not on a phone.
@@ -12319,8 +12322,8 @@
     const acctOf = (t3) => t3.to ? `${L2.account[t3.account]?.name || t3.account} → ${L2.account[t3.to]?.name || t3.to}` : L2.account[t3.account]?.name || t3.account;
     const byWords = (f4) => (x3, y3) => f4(x3).localeCompare(f4(y3), void 0, { sensitivity: "base" });
     const cmp = sort.by === "payee" ? byWords((t3) => txTitle(t3, L2)) : sort.by === "category" ? byWords(catOf) : sort.by === "account" ? byWords(acctOf) : sort.by === "amount" ? (x3, y3) => amt(x3) - amt(y3) : null;
-    const newest2 = [...shown9].reverse();
-    const list = sort.by === "date" ? sort.up ? [...shown9] : newest2 : newest2.map((t3, i3) => ({ t: t3, i: i3 })).sort((x3, y3) => (sort.up ? 1 : -1) * cmp(x3.t, y3.t) || x3.i - y3.i).map((x3) => x3.t);
+    const newest3 = [...shown9].reverse();
+    const list = sort.by === "date" ? sort.up ? [...shown9] : newest3 : newest3.map((t3, i3) => ({ t: t3, i: i3 })).sort((x3, y3) => (sort.up ? 1 : -1) * cmp(x3.t, y3.t) || x3.i - y3.i).map((x3) => x3.t);
     const byDay2 = sort.by === "date";
     const filterKey = [q2, account, category, month3, way, tag].join("\0");
     const upTo = drawn.key === filterKey ? drawn.n : txPage;
@@ -17190,9 +17193,9 @@
     const into2 = allPayments(v3.plan).filter((x3) => x3.to === a3.id && !x3.card);
     const byId = Object.fromEntries(into2.map((x3) => [x3.id, x3]));
     const txs = ledger?.transactions || [];
-    const newest2 = (list) => [...list].sort((x3, y3) => x3.date < y3.date ? 1 : x3.date > y3.date ? -1 : 0);
-    const linked = newest2(txs.filter((t3) => t3.payment && byId[t3.payment]));
-    const free = newest2(txs.filter((t3) => !t3.payment && !t3.notPlanned && !t3.to && t3.amount < 0));
+    const newest3 = (list) => [...list].sort((x3, y3) => x3.date < y3.date ? 1 : x3.date > y3.date ? -1 : 0);
+    const linked = newest3(txs.filter((t3) => t3.payment && byId[t3.payment]));
+    const free = newest3(txs.filter((t3) => !t3.payment && !t3.notPlanned && !t3.to && t3.amount < 0));
     const payees = [...new Set(linked.map((t3) => t3.payee || ""))].filter(Boolean);
     const offers2 = into2.length ? free.filter((t3) => payees.some((n3) => alike(n3, t3.payee || ""))).slice(0, 6) : [];
     const pick = free.filter((t3) => !offers2.includes(t3)).slice(0, 12);
@@ -21918,8 +21921,8 @@ ${pays}
   }
   function ConfirmSheet({ c: c4, close: close3 }) {
     const [sure, setSure] = d2(false);
-    const [entry, setEntry] = d2({ c: null, v: {} });
-    const typed = entry.c === c4 ? entry.v : {};
+    const [entry2, setEntry] = d2({ c: null, v: {} });
+    const typed = entry2.c === c4 ? entry2.v : {};
     const type = (key7, v3) => setEntry((e3) => ({ c: c4, v: { ...e3.c === c4 ? e3.v : {}, [key7]: v3 } }));
     h2(() => setSure(false), [c4]);
     const [found2, setFound2] = d2(null);
@@ -23350,14 +23353,14 @@ ${pays}
     }
     const apps2 = Object.values(statusById);
     if (!apps2.length) return list;
-    const entry = (id2) => catalog?.apps.find((c4) => c4.id === id2);
+    const entry2 = (id2) => catalog?.apps.find((c4) => c4.id === id2);
     const busy2 = appsBusyNow(), held3 = heldNow(), paused = batteryPausedNow();
-    const container = (a3) => entry(a3.id)?.kind !== "native";
+    const container = (a3) => entry2(a3.id)?.kind !== "native";
     const startable2 = (a3) => a3.state === "stopped" && !a3.waitingFor && !paused.has(a3.id) && !held3[a3.id];
     const m3 = rowActions.menu;
     if (!phone2 && !busy2) {
       for (const g2 of catalog?.categories || []) {
-        const mine = apps2.filter((a3) => entry(a3.id)?.category === g2.id && container(a3));
+        const mine = apps2.filter((a3) => entry2(a3.id)?.category === g2.id && container(a3));
         const running5 = mine.filter((a3) => a3.state === "running"), stopped2 = mine.filter(startable2);
         const n3 = (k3) => k3 === 1 ? `the 1 ${g2.label} app` : `the ${k3} ${g2.label} apps`;
         const act = (action, of) => onStatus(() => {
@@ -23370,7 +23373,7 @@ ${pays}
       }
     }
     for (const a3 of apps2.sort((x3, y3) => x3.name.localeCompare(y3.name))) {
-      const g2 = catalog?.categories.find((c4) => c4.id === entry(a3.id)?.category)?.label || "";
+      const g2 = catalog?.categories.find((c4) => c4.id === entry2(a3.id)?.category)?.label || "";
       const also = `${a3.id} ${g2}`;
       const url = a3.address ? "https://" + a3.address : a3.url || "";
       const running5 = a3.state === "running";
@@ -23867,14 +23870,26 @@ ${pays}
     const screen = document.querySelector(".screen.active")?.id;
     if (!screen) return;
     const next = { screen, app: screen === "app" ? openedApp() : void 0, tab: tabbed[screen]?.now() };
-    if (!moving && current && (current.screen !== next.screen || current.app !== next.app || current.tab !== next.tab)) {
+    const moved = !moving && !!current && (current.screen !== next.screen || current.app !== next.app || current.tab !== next.tab);
+    if (moved) {
       back2.push(current);
       if (back2.length > keep3) back2.shift();
       ahead.length = 0;
       keepHistory();
     }
     current = next;
+    if (moved && onPhone()) history.pushState({ homelab: newest2 = ++entry }, "");
   }
+  var entry = 0;
+  var newest2 = 0;
+  addEventListener("popstate", (e3) => {
+    const n3 = e3.state?.homelab;
+    if (typeof n3 !== "number") return;
+    const steps = n3 - entry;
+    entry = n3;
+    for (let i3 = 0; i3 < -steps && stepBack(); i3++) ;
+    for (let i3 = 0; i3 < steps && stepForward(); i3++) ;
+  });
   function visit(p3) {
     moving = true;
     try {
@@ -23896,6 +23911,13 @@ ${pays}
     focusScreen(p3.screen);
   }
   function goBack() {
+    if (onPhone() && entry > 0 && back2.length) {
+      history.back();
+      return true;
+    }
+    return stepBack();
+  }
+  function stepBack() {
     const p3 = back2.pop();
     if (!p3) return false;
     if (current) ahead.push(current);
@@ -23905,6 +23927,13 @@ ${pays}
     return true;
   }
   function goForward() {
+    if (onPhone() && entry < newest2 && ahead.length) {
+      history.forward();
+      return true;
+    }
+    return stepForward();
+  }
+  function stepForward() {
     const p3 = ahead.pop();
     if (!p3) return false;
     if (current) back2.push(current);
@@ -24077,6 +24106,7 @@ ${pays}
     window.runtime.EventsOn("cli:step", cliProgress);
     window.runtime.EventsOn("job:app", jobApp);
     window.runtime.EventsOn("refresh", reloadScreen);
+    if (onPhone()) history.replaceState({ homelab: 0 }, "");
     await loadAppearance();
     const last2 = Promise.resolve().then(() => go().LastStatus()).catch(() => null);
     try {
@@ -24091,7 +24121,10 @@ ${pays}
       if (!steps) return show2("status");
       await steps;
       if (stepsData.error) throw stepsData.error;
-      if (progress(stepsData.value).left && !navigated) show2("setup");
+      if (!(await last2)?.status && !statusData.value) await statusData.fresh(minute).catch(() => {
+      });
+      const firstTime = !((await last2)?.status?.apps?.length || statusData.value?.apps?.length);
+      if (progress(stepsData.value).left && !navigated && firstTime) show2("setup");
     } catch (e3) {
       showError(e3);
       show2("setup");
