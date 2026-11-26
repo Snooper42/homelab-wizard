@@ -118,10 +118,69 @@ func TestWeek(t *testing.T) {
 	if d := s.Summary().Days["app"]; d["2026-10-01"] != [2]int{2, 2} || d["2026-10-02"] != [2]int{1, 2} {
 		t.Fatalf("days %v", d)
 	}
-	// Eight days on, the first two days are gone.
+	// Eight days on, the week is that day alone, but the first two days are still kept: fourteen days are, for the
+	// Overview's squares (lane D, D3).
 	s.Update([]Result{ok}, start.AddDate(0, 0, 8))
-	if w := s.Week()["app"]; w != 1 || len(s.Days["app"]) != 1 {
+	if w := s.Week()["app"]; w != 1 || len(s.Days["app"]) != 3 {
 		t.Fatalf("week %v, days %v", w, s.Days["app"])
+	}
+	// Fifteen days on, they're gone.
+	s.Update([]Result{ok}, start.AddDate(0, 0, 15))
+	if w := s.Week()["app"]; w != 1 || len(s.Days["app"]) != 2 {
+		t.Fatalf("week %v, days %v", w, s.Days["app"])
+	}
+}
+
+// Lane D, D3: the last fourteen days, oldest first, each with how many checks were down at some point that day (a
+// blip that passed the next run is not down, as it is no alert) and how many runs there were.
+func TestSummaryFourteenDays(t *testing.T) {
+	var s State
+	start := time.Date(2026, 11, 1, 10, 0, 0, 0, time.Local)
+	ok, bad := Result{Name: "app", Status: 200}, Result{Name: "app", Err: errors.New("down")}
+	other, otherBad := Result{Name: "other", Status: 200}, Result{Name: "other", Err: errors.New("down")}
+	s.Update([]Result{ok, other}, start)
+	// Day 2: app down for 30 minutes, other blips once.
+	d2 := start.AddDate(0, 0, 1)
+	s.Update([]Result{bad, otherBad}, d2)
+	s.Update([]Result{bad, other}, d2.Add(15*time.Minute))
+	s.Update([]Result{ok, other}, d2.Add(30*time.Minute))
+	// Day 5, late: both down, overnight (the machine asleep), until day 6.
+	d5 := start.AddDate(0, 0, 4).Add(13 * time.Hour)
+	s.Update([]Result{bad, otherBad}, d5)
+	s.Update([]Result{bad, otherBad}, d5.Add(15*time.Minute))
+	s.Update([]Result{ok, other}, d5.Add(12*time.Hour))
+	// Day 14: all well.
+	s.Update([]Result{ok, other}, start.AddDate(0, 0, 13))
+	now := start.AddDate(0, 0, 13).Add(time.Hour)
+	sum := s.SummaryAt(now)
+	if len(sum.Daily) != 14 {
+		t.Fatalf("%d days: %+v", len(sum.Daily), sum.Daily)
+	}
+	if sum.Daily[0].Date != "2026-11-01" || sum.Daily[13].Date != "2026-11-14" {
+		t.Errorf("from %s to %s", sum.Daily[0].Date, sum.Daily[13].Date)
+	}
+	want := map[string]int{"2026-11-02": 1, "2026-11-05": 2, "2026-11-06": 2}
+	for _, d := range sum.Daily {
+		if d.Failed != want[d.Date] {
+			t.Errorf("%s: %d down, want %d", d.Date, d.Failed, want[d.Date])
+		}
+	}
+	if sum.Daily[0].Runs != 2 || sum.Daily[1].Runs != 6 || sum.Daily[12].Runs != 0 || sum.Daily[13].Runs != 2 {
+		t.Errorf("runs: %+v", sum.Daily)
+	}
+	// "% up this week" is still the last seven days: day 14's run alone, though five days are kept.
+	if w := s.Week(); w["app"] != 1 || w["other"] != 1 || len(s.Days["app"]) != 5 {
+		t.Errorf("week: %v, days %v", w, s.Days["app"])
+	}
+	// Still down: today counts it.
+	s.Update([]Result{bad, other}, now)
+	s.Update([]Result{bad, other}, now.Add(15*time.Minute))
+	if d := s.SummaryAt(now.Add(20 * time.Minute)).Daily; d[13].Failed != 1 {
+		t.Errorf("down now: %+v", d[13])
+	}
+	// A state from before (no runs kept) still makes fourteen days, all clear.
+	if d := (State{}).SummaryAt(now).Daily; len(d) != 14 || d[13].Failed != 0 || d[13].Runs != 0 {
+		t.Errorf("an old state: %+v", d)
 	}
 }
 
@@ -191,18 +250,22 @@ func TestOutages(t *testing.T) {
 			}
 		})
 	}
-	// A week on, an outage that ended is gone; one still going stays.
+	// Two weeks on, an outage that ended is gone; one still going stays.
 	var s State
 	s.Update([]Result{refused, {Name: "other", Err: errors.New("down")}}, at(0))
 	s.Update([]Result{refused, {Name: "other", Err: errors.New("down")}}, at(15))
 	s.Update([]Result{ok, {Name: "other", Err: errors.New("down")}}, at(30))
 	s.Update([]Result{ok, {Name: "other", Err: errors.New("down")}}, start.AddDate(0, 0, 8))
+	if o := s.Outages; len(o["app"]) != 1 {
+		t.Fatalf("eight days on, the outage is still kept: %+v", o)
+	}
+	s.Update([]Result{ok, {Name: "other", Err: errors.New("down")}}, start.AddDate(0, 0, 15))
 	if o := s.Outages; o["app"] != nil || len(o["other"]) != 1 || !o["other"][0].To.IsZero() {
-		t.Fatalf("a week on: %+v", o)
+		t.Fatalf("two weeks on: %+v", o)
 	}
 	// A check no longer run ends its outage at the last run that saw it; Forget drops it.
-	s.Update([]Result{ok}, start.AddDate(0, 0, 8).Add(15*time.Minute))
-	if o := s.Outages["other"]; len(o) != 1 || !o[0].To.Equal(start.AddDate(0, 0, 8)) {
+	s.Update([]Result{ok}, start.AddDate(0, 0, 15).Add(15*time.Minute))
+	if o := s.Outages["other"]; len(o) != 1 || !o[0].To.Equal(start.AddDate(0, 0, 15)) {
 		t.Fatalf("no longer run: %+v", o)
 	}
 	s.Forget("other")

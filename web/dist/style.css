@@ -605,7 +605,11 @@ html.companion #choose, html.companion:not(.finances) #finances, html.companion:
 /* Settings on a phone (#596's gap 6): the settings it may change; what's the computer's own stays there. */
 html.companion #settings :is(.reportrow, #reportLog, #reportActions, #uninstallCard, #appearanceCard, #peopleCard, #phonesCard, #tailnetCard) { display:none !important; }
 html.companion:not(.can-change) #saveSettings { display:none !important; }
-html.companion #weekCard, html.companion .menuwrap, html.companion #updateAll, html.companion #openDuplicati, html.companion #moveCard, html.companion .rowActions button.small:not(.rowmain) { display:none; }
+html.companion .menuwrap, html.companion #moveCard, html.companion .rowActions button.small:not(.rowmain) { display:none; }
+/* Parity with the computer (the owner, Nov 26): Update apps for a device that may change things; Open on a phone where
+   this page isn't on one already. */
+html.companion:not(.can-change) #updateAll { display:none; }
+@media (max-width: 700px) { html.companion .openphone { display:none; } }
 /* Finances' Export changes nothing: its menu shows on a phone, even one allowed only to look. */
 html.companion .fx-export .menuwrap { display:inline-block; }
 /* Quick actions: a finger held on a row opens its menu, so on a phone that may make changes the row's text isn't selected
