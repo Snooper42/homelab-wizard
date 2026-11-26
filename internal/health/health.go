@@ -89,10 +89,11 @@ type State struct {
 	Checks   int               `json:"checks,omitempty"`
 	Problems map[string]string `json:"problems,omitempty"`
 	// Days counts each check's passing and total runs per day (local date),
-	// for the last WeekDays days: how each app did this week.
+	// for the last KeepDays days: how each app did this week, and the
+	// Overview's fourteen squares.
 	Days map[string]map[string][2]int `json:"days,omitempty"`
-	// Outages are each check's times down this week, oldest first: what
-	// "94% up this week" was, for its hover.
+	// Outages are each check's times down in the last KeepDays days, oldest
+	// first: what "94% up this week" was, for its hover.
 	Outages map[string][]Outage `json:"outages,omitempty"`
 	// Memory is the apps' memory at the last run (StepMemory).
 	Memory *Memory `json:"memory,omitempty"`
@@ -108,15 +109,27 @@ type Outage struct {
 	Problem string    `json:"problem"`
 }
 
-// WeekDays is how many days of runs Days keeps.
-const WeekDays = 7
+// WeekDays is the days "% up this week" counts; KeepDays how many Days and
+// Outages keep (lane D, D3: the Overview's Apps card shows fourteen).
+const (
+	WeekDays = 7
+	KeepDays = 14
+)
 
-// Week is each check's share of passing runs over the kept days, 0 to 1.
+// Week is each check's share of passing runs over the last WeekDays days to
+// the last run, 0 to 1.
 func (s State) Week() map[string]float64 {
 	out := map[string]float64{}
+	oldest := ""
+	if !s.LastRun.IsZero() {
+		oldest = s.LastRun.AddDate(0, 0, -(WeekDays - 1)).Format("2006-01-02")
+	}
 	for name, days := range s.Days {
 		ok, all := 0, 0
-		for _, c := range days {
+		for d, c := range days {
+			if d < oldest {
+				continue
+			}
 			ok, all = ok+c[0], all+c[1]
 		}
 		if all > 0 {
@@ -202,7 +215,7 @@ func (s *State) Update(results []Result, now time.Time) (failed []Result, recove
 	if s.Pending == nil {
 		s.Pending = map[string]int{}
 	}
-	day, oldest := now.Format("2006-01-02"), now.AddDate(0, 0, -(WeekDays-1)).Format("2006-01-02")
+	day, oldest := now.Format("2006-01-02"), now.AddDate(0, 0, -(KeepDays-1)).Format("2006-01-02")
 	seen := map[string]bool{}
 	for _, r := range results {
 		seen[r.Name] = true
@@ -248,7 +261,7 @@ func (s *State) Update(results []Result, now time.Time) (failed []Result, recove
 			s.Pending[r.Name]++
 		}
 	}
-	// Days past the week, and checks that no longer exist, are dropped quietly.
+	// Days past the kept ones, and checks that no longer exist, are dropped quietly.
 	for name, days := range s.Days {
 		for d := range days {
 			if d < oldest {
@@ -265,8 +278,8 @@ func (s *State) Update(results []Result, now time.Time) (failed []Result, recove
 		}
 	}
 	// A check no longer run ends its outage at the last run that saw it; an
-	// outage that ended before the week's first day is dropped.
-	start := now.AddDate(0, 0, -(WeekDays - 1))
+	// outage that ended before the first kept day is dropped.
+	start := now.AddDate(0, 0, -(KeepDays - 1))
 	start = time.Date(start.Year(), start.Month(), start.Day(), 0, 0, 0, 0, now.Location())
 	for name, list := range s.Outages {
 		if !seen[name] {
@@ -317,10 +330,14 @@ type Summary struct {
 	// Week is each check's share of passing runs this week, 0 to 1.
 	Week map[string]float64 `json:"week"`
 	// Days are each check's passing and total runs per day (local date,
-	// 2006-01-02) this week: an app's page draws them as the week's bars.
+	// 2006-01-02), the last KeepDays: an app's page draws a week of them as
+	// its bars.
 	Days map[string]map[string][2]int `json:"days,omitempty"`
-	// Outages are each check's times down this week, oldest first.
+	// Outages are each check's times down in the last KeepDays, oldest first.
 	Outages map[string][]Outage `json:"outages,omitempty"`
+	// Daily is the last KeepDays days to today, oldest first, all checks
+	// together: the Overview's Apps card draws a square for each.
+	Daily []Day `json:"daily"`
 	// Memory is there while the apps' memory has stayed high long enough
 	// to alert: Status lists the biggest apps, each with Stop.
 	Memory *Memory `json:"memory,omitempty"`
@@ -329,9 +346,23 @@ type Summary struct {
 	Snoozed map[string]time.Time `json:"snoozed,omitempty"`
 }
 
+// Day is one day of the watchdog's checks, all apps together.
+type Day struct {
+	Date string `json:"date"` // local, 2006-01-02
+	// Failed is how many checks were down at some point that day: an outage,
+	// not a blip that passed the next run (as it is no alert either).
+	Failed int `json:"failed"`
+	// Runs is how many checks ran that day; 0 when the watchdog didn't (the
+	// machine off or asleep, or before it kept fourteen days).
+	Runs int `json:"runs"`
+}
+
 // Summary lists the confirmed failures with what each said last.
-func (s State) Summary() Summary {
-	sum := Summary{LastRun: s.LastRun, Checks: s.Checks, Failing: []Failure{}, Pending: len(s.Pending), Week: s.Week(), Days: s.Days, Outages: s.Outages}
+func (s State) Summary() Summary { return s.SummaryAt(time.Now()) }
+
+// SummaryAt is Summary, with its days to now's.
+func (s State) SummaryAt(now time.Time) Summary {
+	sum := Summary{LastRun: s.LastRun, Checks: s.Checks, Failing: []Failure{}, Pending: len(s.Pending), Week: s.Week(), Days: s.Days, Outages: s.Outages, Daily: s.daily(now)}
 	if s.Memory != nil && s.Memory.Alerted {
 		sum.Memory = s.Memory
 	}
@@ -343,6 +374,30 @@ func (s State) Summary() Summary {
 		return a.Since.Before(b.Since) || a.Since.Equal(b.Since) && a.Name < b.Name
 	})
 	return sum
+}
+
+// daily is the last KeepDays days to now's, oldest first.
+func (s State) daily(now time.Time) []Day {
+	out := make([]Day, 0, KeepDays)
+	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+	for i := KeepDays - 1; i >= 0; i-- {
+		start := today.AddDate(0, 0, -i)
+		end := start.AddDate(0, 0, 1)
+		d := Day{Date: start.Format("2006-01-02")}
+		for _, days := range s.Days {
+			d.Runs += days[d.Date][1]
+		}
+		for _, list := range s.Outages {
+			for _, o := range list {
+				if o.From.Before(end) && (o.To.IsZero() || !o.To.Before(start)) {
+					d.Failed++
+					break
+				}
+			}
+		}
+		out = append(out, d)
+	}
+	return out
 }
 
 // Confirmed reports whether a check has failed long enough to count.

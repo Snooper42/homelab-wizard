@@ -37,7 +37,7 @@ owner has seen in a picture and asked for.
   `UsageHistory(days int) (usage.History, error)`: `{ at: string[], cpu: number[], mem: number[], apps: { [id]: { cpu:
   number[], mem: number[] } } }`, oldest first, and the nightly jobs' times (`jobs: { name, at }[]`) so lane R dots them
   on the chart. Owner's question (Nov 25, `owner.md`): option (a), recommended; the owner handed this choice over Nov 25.
-- [ ] **D3. Fourteen days of each app's checks for the Overview's Apps card** (the owner's picture has 14 squares; the
+- [x] **D3. Fourteen days of each app's checks for the Overview's Apps card** (the owner's picture has 14 squares; the
   watchdog keeps 7, `health.WeekDays`). Keep 14 days in `health.State.Days` and `Outages`; keep `Week()` as the last 7
   so "% up this week" stays true; add the per-day results to the Summary the computer sends (`days: { date, failed }[]`).
 - [ ] **D4. Tidy Up on the phone's page** (the owner: "build out the web to match the computer"): Tidy Up's read-only
