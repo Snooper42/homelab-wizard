@@ -64,31 +64,6 @@ struct ComputerView: View {
                 homelabFirstSection
                 thisDeviceSection
                 everythingElseSection
-                // What used to be Status's Saved tile, one line here now.
-                if let savings = dashboard.yearlySavings {
-                    Section {
-                        LabeledContent {
-                            Text(verbatim: savings.formatted(.currency(code: "USD").precision(.fractionLength(0))) + " a year")
-                                .monospacedDigit()
-                        } label: {
-                            IconTileLabel(title: "Subscriptions you don’t pay", systemImage: "dollarsign.circle", tint: TileColour.green)
-                        }
-                    }
-                }
-                // Status's Storage card on the iPad; here, a row that opens it (the owner's pick, Nov 20).
-                if let storage = dashboard.cards.storage {
-                    Section {
-                        NavigationLink {
-                            StoragePage(storage: storage, nameOf: { dashboard.app(id: $0)?.name ?? $0 })
-                        } label: {
-                            LabeledContent {
-                                Text(storage.total.formatted(.byteCount(style: .file))).monospacedDigit()
-                            } label: {
-                                IconTileLabel(title: "What the apps keep", systemImage: "internaldrive", tint: TileColour.blue)
-                            }
-                        }
-                    }
-                }
             }
         }
         .formStyle(.grouped)

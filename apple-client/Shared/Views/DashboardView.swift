@@ -1030,14 +1030,6 @@ private struct SplitDashboard: View {
                         .appActionControls(for: app)
                 }
             }
-            // The cards, below the apps as on the computer's Status.
-            if filter == .all, !model.isSearching, model.hasLoaded {
-                // Not rows to select: the selection is an app. Every Alert
-                // opens beside the list, in the app's place.
-                StatusCards(cards: model.cards, finances: finances, nameOf: { model.app(id: $0)?.name ?? $0 })
-                    .selectionDisabled()
-                    .environment(\.openAlertLog, { model.openAlertLog() })
-            }
         }
         // Again once the device's level is known: right after unlock it may not be yet.
         .task(id: finances.canSeeMoney) { await finances.load() }
