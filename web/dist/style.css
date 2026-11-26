@@ -220,10 +220,6 @@ dl { margin:0; }
 .alerts > .row:first-child { min-height:28px; }
 .alerts > .row:first-child h2 { margin:0; }
 .alerts > .row:first-child + * { margin-top:4px; }
-.duo { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:0 14px; align-items:start; }
-.duo:has(> [hidden]) { grid-template-columns:1fr; }
-.duo > .stack { min-width:0; }
-#status .duo:not(:has(> .stack > :not([hidden]))) { grid-template-columns:1fr; }
 .alertlist { list-style:none; margin:0; padding:0; }
 .alertlist li { display:flex; align-items:baseline; gap:10px; padding:8px 0; border-top:1px solid var(--line); }
 .alertlist li:first-child { border-top:0; }
@@ -401,7 +397,6 @@ table.grouped tr.grouphead .names { display:block; margin:4px 0 0 14px; font-wei
 .filterbox .filtercount { font-size:12px; }
 table.grouped tr.nomatch td { padding:14px 12px; color:var(--muted); }
 .linkbtn { background:none; border:0; padding:4px 0; color:var(--link); font:inherit; font-size:13px; cursor:default; }
-#status > #watchCard { margin-top:16px; }
 table.grouped tbody tr .rowActions > .topage { color:var(--muted); }
 .pagecard input.switch { margin-top:0; }
 .pagecard .switchstate { display:none; }
@@ -500,7 +495,6 @@ details.group > summary h2 .n { font-weight:600; color:var(--muted); letter-spac
 html:not(.companion) .companion-only { display:none; }
 html.companion:not(.can-change) .memstop { display:none; }
 html.companion:not(.can-change) .snoozepick { display:none; }
-#memoryPressure .alertlist button.memstop { margin-left:8px; }
 
 html.companion #choose, html.companion:not(.finances) #finances, html.companion:not(.finances) nav button[data-screen="finances"], html.companion nav button[data-screen="choose"], html.companion nav button[data-screen="setup"], html.companion.kiosk nav button[data-screen="settings"], html.companion.kiosk #settings, html.companion nav button[data-screen="tidy"], html.companion #tidy { display:none; }
 html.companion #settings :is(.reportrow, #reportLog, #reportActions, #appearanceCard) { display:none !important; }
@@ -523,9 +517,9 @@ html.companion:not(.can-change) td.rowActions .lookonly { display:inline-block; 
 html.unpaired nav, html.unpaired main { display:none; }
 
 html.kiosk nav, html.kiosk main > section:not(#status), html.kiosk #status .toolbar, html.kiosk #statusAll,
-html.kiosk main button, html.kiosk .rowActions, html.kiosk #statusWiring, html.kiosk #usageCard, html.kiosk #storageCard { display:none !important; }
+html.kiosk main button, html.kiosk .rowActions, html.kiosk #statusWiring { display:none !important; }
 html.kiosk main > #status { display:block !important; }
-html.kiosk #status thead th:nth-child(4), html.kiosk #watchCard .row.more { display:none; }
+html.kiosk #status thead th:nth-child(4) { display:none; }
 html.kiosk main { zoom:1.3; max-width:none; }
 html.kiosk body { cursor:none; }
 #kioskClock { display:none; }
@@ -559,7 +553,6 @@ html.kiosk:not(.unpaired) #kioskClock { display:block; position:fixed; top:18px;
   html.companion td:nth-child(3) { flex:1 1 60%; min-width:0; padding-top:0; overflow-wrap:anywhere; }
   html.companion td:nth-child(3) .local { display:none; }
   html.companion td.rowActions { flex:none; width:auto; padding-top:0; }
-  html.companion .duo { grid-template-columns:1fr; }
 }
 .updateline { container-type:inline-size; margin:0 0 16px; border-radius:var(--radius); background:var(--accent-soft); box-shadow:0 0 0 1px var(--line); overflow:hidden; position:relative; z-index:3; /* above Settings' sticky header, whose blurred backdrop reaches up over it */ }
 .updateline.done { background:var(--ok-soft); }
@@ -1050,7 +1043,7 @@ html:is(.os-mac, .os-windows) .header .toolbar:not(:has(input)) { flex-wrap:nowr
 @container (max-width: 824px) {
   #choose .cols { grid-template-columns:1fr; }
   #choose .plan { position:static; max-height:none; overflow:visible; }
-  #status .duo, #app .pagecols { grid-template-columns:1fr; }
+  #app .pagecols { grid-template-columns:1fr; }
 }
 @container (max-width: 824px) {
   html .tiles { grid-template-columns:repeat(2, minmax(0,1fr)); }
@@ -2898,7 +2891,7 @@ html.os-mac:not(.companion) nav #settingsNav .pagebtn.active .icon { color:var(-
 table.copies td.nights { white-space:nowrap; text-align:right; }
 table.copies td.nights .dot { margin:0 0 0 3px; }
 @container (max-width: 760px) { #copiesCard table.copies td.nights { display:none; } }
-#status:not([data-part]) > #statusPart, #status[data-part] > :not(#statusPart, #statusChips, #statusStore, #analyticsMore, #subscriptionsMore), #status:not([data-part="add"]) > #statusStore, #status:not([data-part="analytics"]) > #analyticsMore, #status:not([data-part="subscriptions"]) > #subscriptionsMore { display:none !important; }
+#status:not([data-part]) > #statusPart, #status[data-part] > :not(#statusPart, #statusChips, #statusStore, #subscriptionsMore), #status:not([data-part="add"]) > #statusStore, #status:not([data-part="subscriptions"]) > #subscriptionsMore { display:none !important; }
 main:has(> #status.active[data-part]) { background:radial-gradient(60% 40% at 25% 0, color-mix(in srgb, var(--violet) 10%, transparent), transparent 70%), radial-gradient(50% 40% at 100% 100%, color-mix(in srgb, var(--cyan) 8%, transparent), transparent 70%), var(--bg); }
 .catpage { --cat-tile:color-mix(in srgb, var(--panel) 72%, transparent); --cat-edge:var(--line); }
 .catpage .row.header { align-items:flex-start; }

@@ -6901,360 +6901,6 @@
     R(w3 ? /* @__PURE__ */ u3(WallCard, { w: w3 }) : null, el3);
   }
 
-  // web/src/status/attack.ts
-  var words2 = [
-    [/(^|-)cve-|^vpatch-/i, "Probing for a known security hole"],
-    [/sensitive-files/, "Looking for private files (passwords, backups)"],
-    [/path-traversal/, "Trying to reach files outside the site"],
-    [/sqli/, "Trying to break into a database"],
-    [/xss/, "Trying to plant a script in a page"],
-    [/backdoor/, "Looking for a back door left by other attackers"],
-    [/admin-interface/, "Looking for admin pages"],
-    [/wordpress|wp-/, "Scanning for WordPress holes"],
-    [/bad-user-agent/, "A known attack tool"],
-    [/open-proxy/, "Trying to use the homelab as a proxy"],
-    [/ssh.*bf|ssh-.*brute/, "Guessing an SSH password"],
-    [/(^|-)bf$|bruteforce|brute-force/, "Guessing passwords"],
-    [/crawl/, "Crawling every page"],
-    [/probing/, "Probing for pages that aren't there"]
-  ];
-  function attackWords(scenario) {
-    const s3 = scenario.replace(/^crowdsecurity\//, "");
-    return words2.find(([re]) => re.test(s3))?.[1] || "Suspicious requests";
-  }
-  var regions = null;
-  function attackFrom(a3) {
-    let country = a3.country || "";
-    try {
-      regions ||= new Intl.DisplayNames(["en"], { type: "region" });
-      if (/^[A-Z]{2}$/.test(country)) country = regions.of(country) || country;
-    } catch {
-    }
-    return [country, a3.network].filter(Boolean).join(" · ");
-  }
-  var attackDetail = (a3) => `${a3.scenario}${a3.ip ? " from " + a3.ip : ""}`;
-
-  // web/src/status/Cards.tsx
-  var wakeText = (t3) => {
-    const d3 = new Date(t3);
-    return d3.toDateString() === (/* @__PURE__ */ new Date()).toDateString() ? clockText(d3) : `${dayText(d3, { weekday: "short" })} ${clockText(d3)}`;
-  };
-  function SnoozePick({ check, until, snooze }) {
-    return /* @__PURE__ */ u3("select", { class: "snoozepick", "aria-label": `Snooze the alerts about ${check}`, value: "", onChange: (e3) => {
-      const v3 = e3.currentTarget.value;
-      if (v3 !== "") snooze(check, Number(v3));
-    }, children: [
-      /* @__PURE__ */ u3("option", { value: "", disabled: true, children: until ? `Snoozed until ${wakeText(until)}` : "Snooze…" }),
-      /* @__PURE__ */ u3("option", { value: "1", children: "For an hour" }),
-      /* @__PURE__ */ u3("option", { value: "24", children: "For a day" }),
-      until && /* @__PURE__ */ u3("option", { value: "0", children: "Alert again now" })
-    ] });
-  }
-  var memText = (n3) => n3 >= 2 ** 30 ? `${(n3 / 2 ** 30).toFixed(1)} GB` : `${Math.round(n3 / 2 ** 20)} MB`;
-  function MemoryPressure({ m: m3, stop: stop2 }) {
-    const share4 = m3.total ? Math.round(m3.used / m3.total * 100) : 0;
-    return /* @__PURE__ */ u3("div", { id: "memoryPressure", children: [
-      /* @__PURE__ */ u3("div", { class: "row more", children: /* @__PURE__ */ u3("span", { children: [
-        /* @__PURE__ */ u3("span", { class: "bad", children: "Memory nearly full:" }),
-        " ",
-        /* @__PURE__ */ u3("span", { class: "muted", children: [
-          "the apps use ",
-          share4,
-          "% of the ",
-          memText(m3.total),
-          " Docker has, high since ",
-          ago(m3.since),
-          ". Stop one you don't need now."
-        ] })
-      ] }) }),
-      /* @__PURE__ */ u3(Rows, { children: (m3.biggest || []).map((a3) => /* @__PURE__ */ u3(Row, { dot: "warn", title: a3.name, end: /* @__PURE__ */ u3(S, { children: [
-        /* @__PURE__ */ u3("span", { class: "muted", children: memText(a3.bytes) }),
-        a3.id && stop2 && /* @__PURE__ */ u3("button", { class: "small memstop", "aria-label": `Stop ${a3.name}`, onClick: () => stop2(a3.id), children: "Stop" })
-      ] }) }, a3.name)) })
-    ] });
-  }
-  function Watchdog({ w: w3, unchecked: unchecked2 = [], openSetup, fix, stop: stop2, snooze }) {
-    if (never(w3.lastRun)) {
-      return /* @__PURE__ */ u3(CardHead, { title: "Watchdog", children: /* @__PURE__ */ u3("span", { class: "muted", children: [
-        "Not set up. ",
-        /* @__PURE__ */ u3(ActionLink, { onClick: openSetup, children: "Open Setup" })
-      ] }) });
-    }
-    const failing = w3.failing || [];
-    const late = Date.now() - new Date(w3.lastRun).getTime() > 45 * 6e4;
-    return /* @__PURE__ */ u3(S, { children: [
-      /* @__PURE__ */ u3(CardHead, { title: "Watchdog", children: /* @__PURE__ */ u3("span", { children: [
-        failing.length ? /* @__PURE__ */ u3("span", { class: "bad", children: [
-          failing.length,
-          " of ",
-          w3.checks,
-          " checks failing"
-        ] }) : /* @__PURE__ */ u3("span", { class: "ok", children: [
-          "✓ All ",
-          w3.checks,
-          " checks passed"
-        ] }),
-        /* @__PURE__ */ u3("span", { class: "muted", children: [
-          w3.pending && !failing.length ? `, ${w3.pending} checked again next run` : "",
-          " · ",
-          ago(w3.lastRun)
-        ] }),
-        !!unchecked2.length && /* @__PURE__ */ u3("span", { class: "warn unchecked", children: [
-          " · Not checked while stopped: ",
-          unchecked2.join(", ")
-        ] })
-      ] }) }),
-      w3.memory && /* @__PURE__ */ u3(MemoryPressure, { m: w3.memory, stop: stop2 }),
-      late && /* @__PURE__ */ u3("div", { class: "warn more", children: [
-        "Hasn't run since ",
-        ago(w3.lastRun),
-        "."
-      ] }),
-      !!failing.length && /* @__PURE__ */ u3("div", { class: "row more", children: [
-        /* @__PURE__ */ u3("span", { class: "grow" }),
-        /* @__PURE__ */ u3("button", { id: "watchFix", class: "small", onClick: fix, children: "Fix it" })
-      ] }),
-      !!failing.length && /* @__PURE__ */ u3(Rows, { children: failing.map((f4) => {
-        const until = w3.snoozed?.[f4.name];
-        return /* @__PURE__ */ u3(
-          Row,
-          {
-            dot: "bad",
-            title: f4.name,
-            sub: until ? `${f4.problem}. No alerts about it until ${wakeText(until)}` : f4.problem,
-            when: ago(f4.since),
-            whenTitle: "Failing since",
-            end: snooze && /* @__PURE__ */ u3(SnoozePick, { check: f4.name, until, snooze })
-          },
-          f4.name
-        );
-      }) })
-    ] });
-  }
-  function Protection({ p: p3, fix }) {
-    const recent = p3.recent || [];
-    const week2 = p3.week === 1 ? "1 attack caught this week" : `${p3.week} caught this week`;
-    return /* @__PURE__ */ u3(S, { children: [
-      /* @__PURE__ */ u3(CardHead, { title: "Protection", children: /* @__PURE__ */ u3("span", { children: [
-        p3.enforced ? /* @__PURE__ */ u3("span", { class: "ok", children: "✓ Bans enforced" }) : /* @__PURE__ */ u3("span", { class: "bad", children: "Bans not enforced" }),
-        /* @__PURE__ */ u3("span", { class: "muted", children: [
-          " · ",
-          p3.week ? week2 : "nothing caught this week",
-          p3.bannedNow ? ` · ${p3.bannedNow} banned now` : ""
-        ] })
-      ] }) }),
-      !p3.enforced && /* @__PURE__ */ u3("div", { class: "row more", children: [
-        /* @__PURE__ */ u3("span", { class: "muted", title: p3.bouncer, children: "The proxy is not getting CrowdSec's ban list, so new attackers are not blocked." }),
-        /* @__PURE__ */ u3("button", { id: "protectFix", class: "small", title: "Reconnects the proxy to CrowdSec (both restart for a moment); shows the plan first", onClick: fix, children: "Fix" })
-      ] }),
-      !!recent.length && /* @__PURE__ */ u3(Rows, { children: recent.slice(0, 3).map((a3, i3) => /* @__PURE__ */ u3(
-        Row,
-        {
-          dot: a3.banned ? "bad" : "",
-          title: /* @__PURE__ */ u3("span", { title: attackDetail(a3), children: attackWords(a3.scenario) }),
-          sub: attackFrom(a3),
-          end: a3.banned && /* @__PURE__ */ u3("span", { class: "badge", children: "Banned" }),
-          when: ago(a3.when)
-        },
-        i3
-      )) })
-    ] });
-  }
-  var stateDot = { stuck: "warn", getting: "ok", waiting: "", filing: "ok" };
-  function Downloads({ c: c4 }) {
-    const items = c4.items || [];
-    const full = !!c4.drive && c4.drive.used >= 95;
-    const tone = full ? "bad" : items.some((i3) => i3.state === "stuck") || c4.warning ? "warn" : "muted";
-    const shown9 = items.slice(0, 6);
-    return /* @__PURE__ */ u3(S, { children: [
-      /* @__PURE__ */ u3(CardHead, { title: "Downloads", children: /* @__PURE__ */ u3("span", { id: "downloadsLine", class: tone, children: c4.line }) }),
-      !!shown9.length && /* @__PURE__ */ u3(Rows, { children: shown9.map((i3, n3) => /* @__PURE__ */ u3(Row, { dot: stateDot[i3.state] ?? "", title: i3.name, sub: i3.words, subTone: i3.state === "stuck" ? "warn" : "", when: i3.app }, n3)) }),
-      items.length > shown9.length && /* @__PURE__ */ u3("p", { class: "muted", children: `And ${items.length - shown9.length} more` })
-    ] });
-  }
-  var topicName = { watchtower: "Updates", "duplicati-alerts": "Backups", "uptime-kuma": "Uptime Kuma", "tunnel-watchdog": "Watchdog" };
-  function Lines({ text: text2 }) {
-    const [all, setAll] = d2(false);
-    const lines = text2.split("\n").filter((l3) => l3.trim());
-    const cut = !all && lines.length > 4;
-    return /* @__PURE__ */ u3(S, { children: [
-      (cut ? lines.slice(0, 3) : lines).map((line, i3) => /* @__PURE__ */ u3("div", { children: line }, i3)),
-      lines.length > 4 && /* @__PURE__ */ u3("button", { type: "button", class: "linkbtn morelines", "aria-expanded": all, onClick: () => setAll(!all), children: all ? "Show less" : `Show ${lines.length - 3} more` })
-    ] });
-  }
-  function Alerts({ events, problem, openSetup, refresh, log: log2, watch: watch2, snooze }) {
-    const [checking, setChecking] = d2(false);
-    const again = () => {
-      setChecking(true);
-      refresh().finally(() => setChecking(false));
-    };
-    const check = /* @__PURE__ */ u3("button", { id: "alertsCheck", class: "small", disabled: checking, title: "Reads the alerts again and leaves out those whose problem has cleared", onClick: again, children: checking ? "Checking…" : "Check again" });
-    const every = /* @__PURE__ */ u3(AlertLog, { log: log2, watch: watch2, snooze });
-    if (!events) {
-      return /* @__PURE__ */ u3(CardHead, { title: "Recent alerts", children: /NTFY_READ_TOKEN/.test(problem || "") ? /* @__PURE__ */ u3("span", { class: "muted", children: [
-        "Not set up. ",
-        /* @__PURE__ */ u3(ActionLink, { onClick: openSetup, children: "Open Setup" }),
-        " ",
-        every
-      ] }) : /* @__PURE__ */ u3("span", { class: "muted", children: [
-        problem,
-        " ",
-        every
-      ] }) });
-    }
-    if (!events.length) return /* @__PURE__ */ u3(CardHead, { title: "Recent alerts", children: /* @__PURE__ */ u3("span", { children: [
-      /* @__PURE__ */ u3("span", { class: "ok", children: "✓ None in the last 12 hours" }),
-      " ",
-      check,
-      " ",
-      every
-    ] }) });
-    const shown9 = events.slice(0, 5);
-    const tone = (e3) => (e3.priority || 0) >= 4 ? "bad" : (e3.tags || []).includes("white_check_mark") || /^recovered/i.test(e3.title || "") ? "ok" : "";
-    return /* @__PURE__ */ u3(S, { children: [
-      /* @__PURE__ */ u3(CardHead, { title: "Recent alerts", children: /* @__PURE__ */ u3("span", { children: [
-        /* @__PURE__ */ u3("span", { class: "muted", children: [
-          events.length,
-          " in the last 12 hours"
-        ] }),
-        " ",
-        check,
-        " ",
-        every
-      ] }) }),
-      /* @__PURE__ */ u3(Rows, { children: shown9.map((e3) => /* @__PURE__ */ u3(
-        Row,
-        {
-          dot: tone(e3),
-          title: e3.title || e3.message,
-          end: /* @__PURE__ */ u3("span", { class: "badge", children: topicName[e3.topic] || e3.topic }),
-          when: ago(e3.time)
-        },
-        e3.id
-      )) }),
-      events.length > shown9.length && /* @__PURE__ */ u3("div", { class: "muted more", children: [
-        "and ",
-        events.length - shown9.length,
-        " more in Every alert…"
-      ] })
-    ] });
-  }
-  function alertFate(a3, now2 = Date.now()) {
-    if (a3.clearedAt) return `Cleared at ${wakeText(a3.clearedAt)}`;
-    if (a3.snoozedUntil && new Date(a3.snoozedUntil).getTime() > now2) return a3.snoozedBy ? `Snoozed by ${a3.snoozedBy} until ${wakeText(a3.snoozedUntil)}` : `Snoozed until ${wakeText(a3.snoozedUntil)}`;
-    return a3.checks?.length ? "Not cleared yet" : "";
-  }
-  function snoozable(a3, w3) {
-    if (a3.clearedAt || !w3) return [];
-    const failing = new Set((w3.failing || []).map((f4) => f4.name));
-    return (a3.checks || []).filter((c4) => failing.has(c4));
-  }
-  function AlertLog({ log: log2, watch: watch2, snooze }) {
-    const [all, setAll] = d2(null);
-    const [problem, setProblem] = d2("");
-    const [w3, setW] = d2(null);
-    const sheet2 = () => document.getElementById("alertLogSheet");
-    const open5 = () => {
-      setProblem("");
-      setW(watch2?.() || null);
-      log2().then(setAll, (e3) => setProblem(String(e3?.message || e3)));
-      const s3 = sheet2();
-      if (s3) s3.hidden = false;
-    };
-    const close3 = () => {
-      const s3 = sheet2();
-      if (s3) s3.hidden = true;
-    };
-    const pick = (check, hours) => {
-      if (!snooze) return;
-      snooze(check, hours).then(() => {
-        setW(watch2?.() || null);
-        return log2().then(setAll);
-      }, (e3) => setProblem(String(e3?.message || e3)));
-    };
-    const tone = (a3) => a3.clearedAt ? "ok" : (a3.priority || 0) >= 4 ? "bad" : "";
-    return /* @__PURE__ */ u3(S, { children: [
-      /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: open5, children: "Every alert…" }),
-      /* @__PURE__ */ u3(Sheet, { id: "alertLogSheet", titleId: "alertLogTitle", children: [
-        /* @__PURE__ */ u3("h2", { id: "alertLogTitle", children: "Every alert" }),
-        problem ? /* @__PURE__ */ u3("p", { class: "muted", children: problem }) : all === null ? /* @__PURE__ */ u3("p", { class: "muted", children: "Reading…" }) : all.length ? /* @__PURE__ */ u3(Rows, { children: all.map((a3) => {
-          const fate = alertFate(a3);
-          const open6 = snooze ? snoozable(a3, w3) : [];
-          return /* @__PURE__ */ u3(
-            Row,
-            {
-              dot: tone(a3),
-              title: a3.title,
-              sub: /* @__PURE__ */ u3(S, { children: [
-                a3.body && /* @__PURE__ */ u3(Lines, { text: a3.body }),
-                fate && /* @__PURE__ */ u3("div", { class: "fate", children: fate })
-              ] }),
-              end: /* @__PURE__ */ u3(S, { children: [
-                open6.map((c4) => /* @__PURE__ */ u3(SnoozePick, { check: c4, until: w3?.snoozed?.[c4], snooze: pick }, c4)),
-                /* @__PURE__ */ u3("span", { class: "badge", children: topicName[a3.topic] || a3.topic })
-              ] }),
-              when: ago(a3.at)
-            },
-            a3.id
-          );
-        }) }) : /* @__PURE__ */ u3("p", { class: "muted", children: "No alerts yet." }),
-        /* @__PURE__ */ u3("div", { class: "actions", children: /* @__PURE__ */ u3("button", { class: "small", onClick: close3, children: "Close" }) })
-      ] })
-    ] });
-  }
-  function bytesText(n3) {
-    const units2 = ["bytes", "KB", "MB", "GB", "TB"];
-    let i3 = 0;
-    while (n3 >= 1e3 && i3 < units2.length - 1) {
-      n3 /= 1e3;
-      i3++;
-    }
-    return `${i3 ? n3.toFixed(n3 < 10 ? 1 : 0) : n3} ${units2[i3]}`;
-  }
-  function Bars({ rows }) {
-    const most = rows[0].bytes;
-    return /* @__PURE__ */ u3(Rows, { kind: "usage sizes", children: rows.map((r3) => /* @__PURE__ */ u3(Row, { title: r3.label, when: bytesText(r3.bytes), whenPlain: true, children: /* @__PURE__ */ u3("div", { class: "bar", children: /* @__PURE__ */ u3("span", { style: `width:${Math.max(2, Math.round(r3.bytes / most * 100))}%` }) }) }, r3.label)) });
-  }
-  var storageShown = (rec) => (rec?.photos || []).some((p3) => p3.bytes > 0) || (rec?.apps || []).some((f4) => f4.bytes > 0);
-  function Storage({ rec, nameOf }) {
-    const people = (rec.photos || []).filter((p3) => p3.bytes > 0);
-    const folders = (rec.apps || []).filter((f4) => f4.bytes > 0);
-    const total = (rows) => rows.reduce((t3, r3) => t3 + r3.bytes, 0);
-    return /* @__PURE__ */ u3(S, { children: [
-      !!people.length && /* @__PURE__ */ u3(S, { children: [
-        /* @__PURE__ */ u3(CardHead, { title: "Photos per person", children: /* @__PURE__ */ u3("span", { class: "muted", children: [
-          bytesText(total(people)),
-          " in Immich · ",
-          ago(rec.when)
-        ] }) }),
-        /* @__PURE__ */ u3(Bars, { rows: people.map((p3) => ({ label: p3.name, bytes: p3.bytes })) })
-      ] }),
-      !!folders.length && /* @__PURE__ */ u3(S, { children: [
-        /* @__PURE__ */ u3(CardHead, { title: "What the apps keep", children: /* @__PURE__ */ u3("span", { class: "muted", title: "Each app’s folder in data/appdata, measured by the nightly backup; photos and media on their own drive are not counted", children: [
-          bytesText(total(folders)),
-          " of app data · ",
-          ago(rec.when)
-        ] }) }),
-        /* @__PURE__ */ u3(Bars, { rows: folders.slice(0, 6).map((f4) => ({ label: nameOf(f4.app), bytes: f4.bytes })) })
-      ] })
-    ] });
-  }
-  function Week({ w: w3 }) {
-    const lines = w3.body.split("\n").filter(Boolean);
-    const toSet = lines.filter((l3) => l3.startsWith("◦")).length;
-    const head = w3.problems ? /* @__PURE__ */ u3("span", { class: "warn", children: `${w3.problems} thing${w3.problems === 1 ? "" : "s"} to look at` }) : toSet ? /* @__PURE__ */ u3("span", { class: "muted", children: `Getting started: ${toSet} still to set up` }) : /* @__PURE__ */ u3("span", { class: "ok", children: "✓ All well" });
-    return /* @__PURE__ */ u3(S, { children: [
-      /* @__PURE__ */ u3(CardHead, { title: "This week", children: head }),
-      /* @__PURE__ */ u3(Rows, { kind: "week", children: lines.map((l3, i3) => /* @__PURE__ */ u3(Row, { dot: l3.startsWith("✓") ? "ok" : l3.startsWith("•") ? "warn" : "", children: l3.replace(/^[✓•◦]\s*/, "") }, i3)) })
-    ] });
-  }
-  var mountWatchdog = (el3, props) => R(/* @__PURE__ */ u3(Watchdog, { ...props }), el3);
-  var mountProtection = (el3, props) => R(/* @__PURE__ */ u3(Protection, { ...props }), el3);
-  var mountDownloads = (el3, props) => R(/* @__PURE__ */ u3(Downloads, { ...props }), el3);
-  var mountAlerts = (el3, props) => R(/* @__PURE__ */ u3(Alerts, { ...props }), el3);
-  var mountStorage = (el3, props) => R(/* @__PURE__ */ u3(Storage, { ...props }), el3);
-  var mountWeek = (el3, props) => R(/* @__PURE__ */ u3(Week, { ...props }), el3);
-
   // web/src/parts/Address.tsx
   function Address({ text: text2 }) {
     return /* @__PURE__ */ u3(S, { children: text2.split(new RegExp("(?<=[.:])")).map((t3, i3) => /* @__PURE__ */ u3(S, { children: [
@@ -8900,46 +8546,6 @@
       history2.set(s3.name, h3);
     }
   }
-  function Usage({ stats, history: history2, nameOf }) {
-    const busy2 = stats.filter((s3) => s3.cpu >= 1);
-    const total = stats.reduce((t3, s3) => t3 + s3.cpu, 0);
-    const held3 = stats.reduce((t3, s3) => t3 + parseMem(s3.mem), 0);
-    const most = Math.max(busy2[0]?.cpu || 0, 100);
-    const heavy = busy2.filter((s3) => s3.cpu >= 50);
-    const minutes = Math.round((history2.get(busy2[0]?.name)?.length || 1) * 10 / 60);
-    return /* @__PURE__ */ u3(S, { children: [
-      /* @__PURE__ */ u3(CardHead, { title: "What’s using power", children: /* @__PURE__ */ u3("span", { class: "muted", title: "Percent of one processor core; 100% is one core kept busy", children: [
-        Math.round(total),
-        "% of a core in all",
-        held3 ? ` · ${formatMem(held3)} in memory` : "",
-        " · ",
-        minutes > 1 ? `live, the last ${minutes} minutes` : minutes === 1 ? "live, the last minute" : "just now"
-      ] }) }),
-      /* @__PURE__ */ u3(Rows, { kind: "usage", children: busy2.slice(0, 6).map((s3) => {
-        const past = history2.get(s3.name) || [];
-        return /* @__PURE__ */ u3(
-          Row,
-          {
-            title: nameOf(s3.name),
-            whenPlain: true,
-            when: /* @__PURE__ */ u3(S, { children: [
-              Math.round(s3.cpu),
-              "%",
-              s3.mem ? " · " + s3.mem : ""
-            ] }),
-            end: past.length >= 3 ? /* @__PURE__ */ u3(Spark, { values: past, w: 72, h: 20, title: `${nameOf(s3.name)}'s use over the last minutes` }) : null,
-            children: /* @__PURE__ */ u3("div", { class: "bar", children: /* @__PURE__ */ u3("span", { style: { width: `${Math.max(2, Math.round(s3.cpu / most * 100))}%` } }) })
-          },
-          s3.name
-        );
-      }) }),
-      !!heavy.length && /* @__PURE__ */ u3("p", { class: "muted", children: `${heavy.map((s3) => nameOf(s3.name)).join(" and ")} ${heavy.length === 1 ? "is" : "are"} busy.` })
-    ] });
-  }
-  function mountUsage(el3, props) {
-    el3.hidden = !props.stats.some((s3) => s3.cpu >= 1);
-    R(el3.hidden ? null : /* @__PURE__ */ u3(Usage, { ...props }), el3);
-  }
 
   // web/src/status/healthLine.ts
   var apps = null;
@@ -9556,27 +9162,15 @@
   var boardFailed = false;
   var boardAnswers = null;
   async function readStatus() {
-    const want = ["watchdog", "crash", "alerts", "storage"];
+    const want = ["watchdog", "crash", "storage"];
     if (onPhone() || Date.now() - machineAt > 6e4) {
       machineAt = Date.now();
       want.push("machine");
     }
     if (!savingsHistory.length) want.push("savings");
-    if (Date.now() - protectionAt > 6e4) {
-      protectionAt = Date.now();
-      want.push("protection");
-    }
-    if (Date.now() - downloadsAt > 3e4) {
-      downloadsAt = Date.now();
-      want.push("downloads");
-    }
     if (Date.now() - usageAt >= 9e3) {
       usageAt = Date.now();
       want.push("usage");
-    }
-    if (Date.now() - weekAt >= 6e5) {
-      weekAt = Date.now();
-      want.push("week");
     }
     const n3 = ++boardNo;
     boardStatus = boardAnswers = null;
@@ -9591,15 +9185,12 @@
       return st;
     } catch (e3) {
       if (n3 === boardNo) boardFailed = true;
-      if (want.includes("protection")) protectionAt = 0;
-      if (want.includes("downloads")) downloadsAt = 0;
       if (want.includes("usage")) usageAt = 0;
-      if (want.includes("week")) weekAt = 0;
       throw e3;
     }
   }
   var boardServed = true;
-  var singly = { watchdog: "Watchdog", alerts: "Alerts", protection: "Protection", savings: "SavingsHistory" };
+  var singly = { watchdog: "Watchdog", savings: "SavingsHistory" };
   async function statusAlone(n3, want) {
     const st = await go().Status();
     for (const name of want.filter((w3) => singly[w3])) {
@@ -9623,17 +9214,9 @@
         savingsHistory = !err && data2 || [];
         if (lastStatus) renderTiles(lastStatus);
         break;
-      case "protection":
-        showProtection(data2, err);
-        break;
-      case "downloads":
-        showDownloads(err ? null : data2);
-        break;
-      case "alerts":
-        showAlerts(data2, err);
-        break;
       case "storage":
-        showStorage(err ? null : data2);
+        lastStorage = err ? null : data2;
+        if (statusHere === "analytics") drawStatusPart();
         break;
       case "machine":
         phoneMachine = err ? null : data2;
@@ -9645,9 +9228,6 @@
         break;
       case "usage":
         showUsage(!err && data2 || []);
-        break;
-      case "week":
-        showWeek(err ? null : data2);
         break;
       case "answers":
         if (c4.board !== boardNo) return;
@@ -9666,12 +9246,6 @@
       clearAppList($("statusRows"));
       $("statusRows").closest("table").hidden = true;
       $("tiles").replaceChildren();
-      $("alertsCard").hidden = true;
-      $("watchCard").hidden = true;
-      $("protectCard").hidden = true;
-      protectionAt = 0;
-      $("downloadsCard").hidden = true;
-      downloadsAt = 0;
       const e3 = statusData.error;
       mountStatusNote($("statusNote"), { text: "", down: String(e3 && e3.message || e3) });
       return;
@@ -9686,7 +9260,6 @@
     $("statusRows").closest("table").hidden = false;
     lastStatus = st;
     renderAppList(st);
-    if (lastWatch) drawWatchdog();
     if (st.checking && !kept6) {
       if (st !== boardStatus) answerPages(st);
       else if (boardAnswers) applyAnswers(st, boardAnswers);
@@ -9722,72 +9295,15 @@
   }, 6e4);
   var lastWatch = null;
   function showWatchdog(w3) {
-    const card = $("watchCard");
     lastWatch = w3;
     const apps2 = new Set((catalog?.apps || []).map((a3) => a3.id));
     setHealthChecks((w3?.failing || []).map((f4) => f4.name).filter((name) => !apps2.has(name)));
-    if (!w3) {
-      card.hidden = true;
-      return;
-    }
+    if (!w3) return;
     weekUp = w3.week || {};
     outages = w3.outages || {};
     if (appList && lastStatus) renderAppList(lastStatus);
-    card.hidden = false;
-    drawWatchdog();
-  }
-  var unchecked = (st, w3) => (st?.apps || []).filter((a3) => a3.state === "stopped" && !held[a3.id] && !batteryPaused.has(a3.id) && !a3.waitingFor && !(w3.failing || []).some((f4) => f4.name === a3.id)).map((a3) => a3.name);
-  function drawWatchdog() {
-    const w3 = lastWatch;
-    if (!w3) return;
-    mountWatchdog($("watchCard"), {
-      w: w3,
-      unchecked: unchecked(lastStatus, w3),
-      openSetup: () => {
-        navigate("setup");
-      },
-      fix: () => cliFlow("Fix it", "fix", "", "Fix these"),
-      // Memory nearly full: Stop on one of the biggest, as its row's Stop.
-      stop: (id2) => {
-        const a3 = lastStatus?.apps.find((x3) => x3.id === id2);
-        if (a3) void runAppAction(a3, "stop");
-      },
-      // Snooze a failing check's alerts, then draw the card again with it.
-      snooze: async (check, hours) => {
-        try {
-          await go().SnoozeCheck(check, hours);
-          showWatchdog(await go().Watchdog());
-        } catch (e3) {
-          showError(e3);
-        }
-      }
-    });
-  }
-  var protectionAt = 0;
-  function showProtection(p3, err) {
-    const card = $("protectCard");
-    if (err) {
-      card.hidden = true;
-      return;
-    }
-    card.hidden = false;
-    mountProtection(card, { p: p3, fix: () => cliFlow("Fix it", "fix", "", "Fix these") });
-  }
-  var downloadsAt = 0;
-  function showDownloads(c4) {
-    const card = $("downloadsCard");
-    card.hidden = !c4 || !c4.apps || !c4.line;
-    if (!card.hidden) mountDownloads(card, { c: c4 });
   }
   var lastStorage = null;
-  function showStorage(rec) {
-    lastStorage = rec;
-    if (statusHere === "analytics") drawStatusPart();
-    const card = $("storageCard");
-    card.hidden = !storageShown(rec);
-    if (card.hidden) return;
-    mountStorage(card, { rec, nameOf: (id2) => catalog?.apps.find((a3) => a3.id === id2)?.name || id2 });
-  }
   var usageAt = 0;
   async function loadUsage() {
     if (Date.now() - usageAt < 9e3) return;
@@ -9807,7 +9323,6 @@
     if (stats.length) statsAt = Date.now();
     lastStats = stats;
     if (statusHere === "analytics") drawStatusPart();
-    mountUsage($("usageCard"), { stats, history: usageHistory, nameOf: (id2) => catalog?.apps.find((a3) => a3.id === id2)?.name || id2 });
     memory = memoryByApp(stats, catalog);
     if (appList) mountAppList($("statusRows"), appList = { ...appList, memory });
     if (lastStatus) renderTiles(lastStatus);
@@ -9820,31 +9335,6 @@
   setInterval(() => {
     if (!document.hidden && $("status").classList.contains("active")) loadUsage();
   }, 1e4);
-  var weekAt = 0;
-  function showWeek(w3) {
-    const card = $("weekCard");
-    if (!w3) {
-      card.hidden = true;
-      return;
-    }
-    card.hidden = !w3.body.split("\n").some(Boolean);
-    if (!card.hidden) mountWeek(card, { w: w3 });
-  }
-  function showAlerts(events, err) {
-    const card = $("alertsCard");
-    const openSetup = () => {
-      navigate("setup");
-    };
-    card.hidden = false;
-    const log2 = () => go().AlertLog();
-    const watch2 = () => lastWatch;
-    const snooze = async (check, hours) => {
-      await go().SnoozeCheck(check, hours);
-      showWatchdog(await go().Watchdog());
-    };
-    if (err) mountAlerts(card, { events: null, problem: err.message, openSetup, refresh: loadStatus, log: log2, watch: watch2, snooze });
-    else mountAlerts(card, { events: events || [], openSetup, refresh: loadStatus, log: log2, watch: watch2, snooze });
-  }
   var appListActions = {
     act: (a3, action) => action === "update" ? showUpdate(a3) : runAppAction(a3, action),
     openNative: (a3) => go().OpenNativeApp(a3.id).then(() => {
@@ -10449,6 +9939,39 @@
     );
   }
 
+  // web/src/status/attack.ts
+  var words2 = [
+    [/(^|-)cve-|^vpatch-/i, "Probing for a known security hole"],
+    [/sensitive-files/, "Looking for private files (passwords, backups)"],
+    [/path-traversal/, "Trying to reach files outside the site"],
+    [/sqli/, "Trying to break into a database"],
+    [/xss/, "Trying to plant a script in a page"],
+    [/backdoor/, "Looking for a back door left by other attackers"],
+    [/admin-interface/, "Looking for admin pages"],
+    [/wordpress|wp-/, "Scanning for WordPress holes"],
+    [/bad-user-agent/, "A known attack tool"],
+    [/open-proxy/, "Trying to use the homelab as a proxy"],
+    [/ssh.*bf|ssh-.*brute/, "Guessing an SSH password"],
+    [/(^|-)bf$|bruteforce|brute-force/, "Guessing passwords"],
+    [/crawl/, "Crawling every page"],
+    [/probing/, "Probing for pages that aren't there"]
+  ];
+  function attackWords(scenario) {
+    const s3 = scenario.replace(/^crowdsecurity\//, "");
+    return words2.find(([re]) => re.test(s3))?.[1] || "Suspicious requests";
+  }
+  var regions = null;
+  function attackFrom(a3) {
+    let country = a3.country || "";
+    try {
+      regions ||= new Intl.DisplayNames(["en"], { type: "region" });
+      if (/^[A-Z]{2}$/.test(country)) country = regions.of(country) || country;
+    } catch {
+    }
+    return [country, a3.network].filter(Boolean).join(" · ");
+  }
+  var attackDetail = (a3) => `${a3.scenario}${a3.ip ? " from " + a3.ip : ""}`;
+
   // web/src/page/AppPage.tsx
   var doing3 = { start: "Starting…", stop: "Stopping…", restart: "Restarting…", update: "Updating…", rollback: "Rolling back…" };
   function uptime(since) {
@@ -10499,7 +10022,7 @@
     const n3 = missed2.reduce((k3, d3) => k3 + d3.all - d3.ok, 0);
     return [`Up ${share4}%`, `It didn't answer ${n3} of its checks on ${missed2.map((d3) => d3.weekday).join(", ")}`];
   }
-  function Week2({ days, outages: outages2, seen: seen2 }) {
+  function Week({ days, outages: outages2, seen: seen2 }) {
     const [, line] = weekWords(days, outages2, Date.now(), seen2);
     const said2 = days.map((d3) => `${d3.name}: ${!d3.all ? "not checked" : d3.ok === d3.all ? "up" : `${d3.ok} of ${d3.all} checks passed`}`).join("; ");
     return /* @__PURE__ */ u3(S, { children: [
@@ -10716,7 +10239,7 @@
           ] })
         }
       ),
-      /* @__PURE__ */ u3(Tile, { label: "This week", value: weekValue, tone: weekShare(days) < 0.99 ? "warn" : "", sub: /* @__PURE__ */ u3(Week2, { days, outages: p3.outages, seen: seen2 }) }),
+      /* @__PURE__ */ u3(Tile, { label: "This week", value: weekValue, tone: weekShare(days) < 0.99 ? "warn" : "", sub: /* @__PURE__ */ u3(Week, { days, outages: p3.outages, seen: seen2 }) }),
       /* @__PURE__ */ u3(
         Tile,
         {

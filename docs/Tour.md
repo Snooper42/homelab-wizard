@@ -30,11 +30,11 @@ The screen the app opens on. Every app the computer runs, live, with a coloured 
   <img alt="Status: all 22 apps running, nothing that needs a look, what they replace as subscriptions, and each category folded into one line" src="images/app-status.png">
 </picture>
 
-Further down, the same screen shows the watchdog's checks, what CrowdSec blocked, recent alerts, **This week**'s summary, what each person and app keeps on disk, and a live line of what each busy app uses right now.
+**Analytics**, under Overview in Status' menu, shows the processor, memory and drives, this week's use, and what each app uses.
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="images/app-status-cards-dark.png">
-  <img alt="Status further down: photos per person and what the apps keep as storage bars, and what is using power with a live line per app" src="images/app-status-cards.png">
+  <source media="(prefers-color-scheme: dark)" srcset="images/app-status-analytics-dark.png">
+  <img alt="Analytics: the processor, memory and drives as three cards, this week's processor and memory, and what each app uses, heaviest first" src="images/app-status-analytics.png">
 </picture>
 
 When something is wrong, **Fix it** shows a plan and puts it right. More: [Monitoring](<Monitoring.md>), [Troubleshooting](<Troubleshooting.md>).
