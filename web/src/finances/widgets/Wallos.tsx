@@ -14,7 +14,7 @@ import { brandOf, kindForBrand, Mark, subTypeName, suggestType } from '../Mark';
 import { cleanPayee } from '../payees';
 import { allPayments, dayShort, money, plural } from '../money';
 
-type Sub = app.AppSubscription;
+type Sub = financeapps.Subscription;
 
 /** Words for matching: lower case, letters and digits, one space between. */
 const flat = (s: string) => s.toLowerCase().replace(/['’]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
