@@ -16,6 +16,11 @@ final class CardsViewModel {
     @ObservationIgnored private let liveEvents: LiveEventManager
     /// The request number. A card from an older request is dropped.
     @ObservationIgnored private var board = 0
+    /// Analytics' own reads of the usage card alone, numbered apart from the board's.
+    @ObservationIgnored private var usageBoard = 1_000_000
+    /// The apps' processor and memory together each time the usage card came, the last hour, oldest first:
+    /// Analytics' timeline.
+    private(set) var usageSamples: [UsageSample] = []
 
     init(api: APIClient, liveEvents: LiveEventManager) {
         self.api = api
@@ -66,13 +71,15 @@ final class CardsViewModel {
         return nil
     }
 
+    /// A card's data as it came, for the cards read whole (usage, storage, machine); nil before it's read.
+    func json(_ name: String) -> JSONValue? {
+        if case .other(let v)? = cards[name]?.data { return v }
+        return nil
+    }
+
     /// What an app takes on the computer: memory and processor now, and its folder.
     func resources(of id: AppStatus.ID) -> AppResources {
-        func json(_ name: String) -> JSONValue? {
-            if case .other(let v)? = cards[name]?.data { return v }
-            return nil
-        }
-        return AppResources.of(id, usage: json("usage"), storage: json("storage"))
+        AppResources.of(id, usage: json("usage"), storage: json("storage"))
     }
 
     var protection: Protection? {
@@ -94,7 +101,7 @@ final class CardsViewModel {
                     liveEvents.ingest(status)
                 case .card(let card):
                     guard card.board == mine else { continue }
-                    cards[card.name] = card
+                    take(card)
                 }
             }
             error = nil
@@ -106,5 +113,43 @@ final class CardsViewModel {
             Log.network.error("Cards failed: \(apiError.logName, privacy: .public)")
             self.error = apiError.errorDescription
         }
+    }
+
+    /// The usage card alone, for Analytics while it's open: what each app uses now, and one more sample.
+    func readUsage() async {
+        usageBoard += 1
+        let mine = usageBoard
+        do {
+            let stream = try await api.statusBoard(board: mine, cards: ["usage"])
+            for try await update in stream {
+                guard mine == usageBoard else { return }
+                switch update {
+                case .status(let status):
+                    liveEvents.ingest(status)
+                case .card(let card):
+                    guard card.board == mine else { continue }
+                    take(card)
+                }
+            }
+        } catch is CancellationError {
+            return
+        } catch {
+            Log.network.error("Usage failed: \(APIError.from(error).logName, privacy: .public)")
+        }
+    }
+
+    private func take(_ card: StatusCard) {
+        cards[card.name] = card
+        guard card.name == "usage" else { return }
+        var usage: JSONValue?
+        if case .other(let v)? = card.data { usage = v }
+        let now = Date()
+        guard let sample = UsageNow.from(usage: usage, storage: nil, apps: []).sample(at: now) else { return }
+        usageSamples = Self.keeping(usageSamples + [sample], now: now)
+    }
+
+    /// The samples of the last hour.
+    nonisolated static func keeping(_ samples: [UsageSample], now: Date) -> [UsageSample] {
+        samples.filter { now.timeIntervalSince($0.at) <= 3600 }
     }
 }
