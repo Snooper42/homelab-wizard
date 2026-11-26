@@ -4,8 +4,24 @@
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BIN="$ROOT/bin/homelab"
 
+# The version this build says it is: the newest release this checkout has
+# (its v0.42.8 tag), as the release builds and the iPhone app number it
+# (apple-client/scripts/app-version.sh). In a copy without tags (a
+# download, a shallow clone) it is the VERSION file.
+build_version() {
+  local v
+  v="$(git -C "$ROOT" tag --list 'v*' --merged HEAD --sort=-v:refname 2>/dev/null |
+    grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1)"
+  v="${v#v}"
+  [ -n "$v" ] || v="$(tr -d ' \t\r\n' <"$ROOT/VERSION" 2>/dev/null)"
+  echo "${v:-dev}"
+}
+version="$(build_version)"
+
 stale() {
   [ ! -x "$BIN" ] && return 0
+  # A pull that brings a newer release tag changes the version, not a file.
+  [ "$(cat "$BIN.version" 2>/dev/null)" != "$version" ] && return 0
   [ -n "$(find "$ROOT/cmd" "$ROOT/internal" "$ROOT/mobile" "$ROOT/web/dist" "$ROOT/go.mod" "$ROOT/go.sum" "$ROOT/VERSION" -newer "$BIN" -print 2>/dev/null | head -n 1)" ]
 }
 
@@ -23,12 +39,12 @@ if stale; then
     exit 1
   fi
   echo "Building the homelab CLI..." >&2
-  version="$(cat "$ROOT/VERSION" 2>/dev/null || echo dev)"
   # Finances read forward on a household member's phone, for her private
   # Finances (cmd/financewasm): built into the page the CLI serves.
   (cd "$ROOT" && GOOS=js GOARCH=wasm go build -trimpath -ldflags "-s -w" -o web/dist/finance.wasm ./cmd/financewasm && cat "$(go env GOROOT)/lib/wasm/wasm_exec.js" > web/dist/wasm_exec.js) \
     || echo "(private Finances on a phone's page wait for the next build)" >&2
   (cd "$ROOT" && go build -trimpath -ldflags "-s -w -X main.version=$version" -o "$BIN" ./cmd/homelab) || exit 1
+  echo "$version" >"$BIN.version"
 fi
 
 exec "$BIN" --root "$ROOT" "$@"
