@@ -32,7 +32,7 @@ struct ComputerView: View {
         Form {
             switch page {
             case .setup:
-                ScreenLead(text: "What still needs you, and how this machine is doing.")
+                ScreenLead(text: "What's left to set up, and how this machine is doing.")
                 if computer.canSeeSetup { SetupChecklistSections(computer: computer) }
                 hostSection
                 fixSection
@@ -573,7 +573,7 @@ struct TaskOutputView: View {
                     if let outcome = output.outcome, !outcome.problems.isEmpty {
                         // Why first, in the computer's words; the whole log under it.
                         VStack(alignment: .leading, spacing: 8) {
-                            Label("What Needs You", systemImage: "exclamationmark.triangle.fill")
+                            Label("What Happened", systemImage: "exclamationmark.triangle.fill")
                                 .font(.headline)
                                 .foregroundStyle(Theme.warning)
                             if let lead = outcome.lead {
