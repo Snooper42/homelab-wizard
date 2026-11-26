@@ -4254,7 +4254,7 @@
     const words5 = (x3) => plain2([x3.name, x3.description, ...x3.aliases || [], ...x3.replaces || []].join(" "));
     const toAdd = find2 ? add.filter((x3) => words5(x3).includes(plain2(find2))) : add;
     const setsShown = find2 ? sets.filter((x3) => plain2(x3.name + " " + (x3.description || "")).includes(plain2(find2))) : sets;
-    const change = !list.companion;
+    const change = !list.companion || document.documentElement.classList.contains("can-change") && !document.documentElement.classList.contains("kiosk");
     const facts2 = [`${apps2.length} ${here3.replace(/^On /, "on ")}`, apps2.length ? `${running5} running` : "", add.length ? `${add.length} to add` : ""].filter(Boolean).join(" · ");
     return /* @__PURE__ */ u3("div", { class: "catpage", children: [
       /* @__PURE__ */ u3("div", { class: "row header", children: [
