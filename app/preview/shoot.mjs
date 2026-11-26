@@ -3917,7 +3917,7 @@ const smokes = [
   { name: 'Stopped by you: its row says so, and Start them leaves it', screen: 'status', mock: { statusOpen: '', status: { ...status, stopped: { mealie: { since: new Date().toISOString() }, vikunja: { since: new Date().toISOString(), until: new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate() + 1, 8).toISOString() } },
     apps: status.apps.map((a) => (a.id === 'vikunja' ? { ...a, state: 'stopped', health: '', since: undefined } : a)) } }, run: async (page) => {
     // Nothing stopped by itself: the Apps card says all answering, and Household's row on the overview isn't amber.
-    await page.waitForSelector('#statusApps .antline:has-text("All answering")', { timeout: 5000 });
+    await page.waitForSelector('#statusApps .antfig', { timeout: 5000 });
     if (await page.$('#statusApps .antfig.warn')) throw new Error('the Apps card counts an app stopped on purpose as a problem');
     if (await page.$('#statusPanel .ovrow[data-key="household"] .pill.warn')) throw new Error("Household's row is amber for apps stopped on purpose");
     await page.click('#statusAll');
@@ -3986,7 +3986,8 @@ const smokes = [
     await page.waitForFunction(() => window.__MOCK.calls.AppAction >= 1, null, { timeout: 5000 });
   } },
   { name: 'Status: the Apps card when all is well, with the week as squares', screen: 'status', mock: { statusOpen: '', status: { ...status, apps: status.apps.map((a) => ({ ...a, state: 'running', health: a.health === 'unhealthy' ? 'healthy' : a.health })) } }, run: async (page) => {
-    await page.waitForSelector('#statusApps .antline:has-text("All answering")', { timeout: 5000 });
+    await page.waitForSelector('#statusApps .antfig', { timeout: 5000 });
+    if ((await page.textContent('#statusApps .antline')).trim()) throw new Error('the Apps card has a line with nothing wrong');
     const fig = (await page.textContent('#statusApps .antfig')).replace(/\s+/g, ' ').trim();
     if (!/^\d+ running$/.test(fig)) throw new Error(fig);
     await page.waitForSelector('#statusApps .ovdays i', { timeout: 5000 });
@@ -4023,7 +4024,7 @@ const smokes = [
     await page.waitForSelector('#statusApps .ovdays.fourteen i', { timeout: 5000 });
     const sq = await page.$$eval('#statusApps .ovdays i', (is) => is.map((i) => i.className));
     if (sq.length !== 14 || sq[3] !== 'none' || sq[9] !== 'warn' || sq.filter((c) => c === 'ok').length !== 12) throw new Error('the squares: ' + sq.join(' '));
-    await page.waitForSelector('#statusApps .antline:has-text("1 day with an outage in two weeks")');
+    if ((await page.textContent('#statusApps .antline')).trim()) throw new Error('the Apps card has a line with nothing wrong');
     if (!/1 app down/.test(await page.getAttribute('#statusApps .ovdays i >> nth=9', 'title') || '')) throw new Error('no words on the amber day');
     const boxes = await page.$$eval('#tiles > .ovcard', (cs) => cs.map((c) => { const r = c.getBoundingClientRect(); return [Math.round(r.top), Math.round(r.height)].join(); }));
     if (new Set(boxes).size !== 1) throw new Error('the cards differ: ' + boxes.join(' | '));
@@ -4110,12 +4111,13 @@ const smokes = [
     const wide = await log.evaluate((e) => e.scrollWidth > e.clientWidth + 1);
     if (wide) throw new Error('a log line runs out of its box');
   } },
-  // A stale copy says why, from its app's state, and what helps: Mealie is stopped (the preview's status), so the
-  // nightly copy skips it; one whose app runs says Back up now tries again.
-  ...[['its app is stopped', status, "It's stopped, so the nightly copy skips it. Start it, and tonight's copy catches up."],
-    ['its app runs', { ...status, apps: status.apps.map((a) => (a.id === 'mealie' ? { ...a, state: 'running', health: 'healthy' } : a)) }, "Last night's copy didn't come. Back up now tries again; if it fails, the backup's log says why."],
+  // A stale copy says why in a word when its app isn't running, and nothing more when it runs.
+  ...[['its app is stopped', status, 'Stopped'],
+    ['its app runs', { ...status, apps: status.apps.map((a) => (a.id === 'mealie' ? { ...a, state: 'running', health: 'healthy' } : a)) }, ''],
   ].map(([what, st, words]) => ({ name: `A stale copy says why: ${what}`, screen: 'backups', mock: { status: st }, run: async (page) => {
-    await page.waitForSelector(`tr.copy.stale:has-text("Mealie") .note:text-is("${words}")`, { timeout: 5000 });
+    await page.waitForSelector('tr.copy.stale:has-text("Mealie")', { timeout: 5000 });
+    const note = await page.locator('tr.copy.stale:has-text("Mealie") .note').allTextContents();
+    if (note.join('') !== words) throw new Error(`its note: ${note.join(' | ')}`);
   } })),
   // "This Mac" in a sentence keeps its capital: "Take the homelab off this Mac", not "this mac"; "this PC" on Windows.
   ...[['MacIntel', 'this Mac'], ['Win32', 'this PC']].map(([platform, words]) => ({ name: `Settings says ${words} in a sentence`, screen: 'settings', mock: { platform }, run: async (page) => {
@@ -5152,8 +5154,8 @@ const smokes = [
     const text = await page.$eval('#backups', (e) => e.innerText);
     const bad = text.match(/\bStale\b|sampled|Open Duplicati/i);
     if (bad) throw new Error(`Backups says "${bad[0]}"`);
-    if (!/Out of date: Mealie, last copied 3 days ago/.test(text)) throw new Error('the out-of-date copy doesn’t say how old');
-    if (!/12 files checked, all the same as now/.test(text)) throw new Error('the restore test doesn’t say what it checked');
+    if (!/Mealie\s+Stopped/.test(text)) throw new Error('the skipped copy doesn’t say why');
+    if (/files checked|Encrypted before it leaves|Out of date:/.test(text)) throw new Error('Backups explains itself in sentences');
   } },
   // Usability task 3, item 20: picking qBittorrent alone offers no "Connect the apps for me" (nothing to connect it to);
   // the VPN tunnel it brings shows ticked and greyed while it's needed; and Done names the tunnel too.
