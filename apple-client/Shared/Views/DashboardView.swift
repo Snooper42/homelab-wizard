@@ -162,6 +162,8 @@ private struct PhoneDashboard: View {
         Binding(
             get: {
                 let screen = (Screen(storageKey: savedTab) ?? .status(.all)).row
+                // Backups is one of Status' pages on the iPhone, as on the computer.
+                if screen == .backups { return .status(.all) }
                 return IntentInbox.landing(screen, isMember: isMember, canSeeFinances: finances.canSeePlan)
             },
             set: { screen in
@@ -176,16 +178,8 @@ private struct PhoneDashboard: View {
         TabView(selection: tab) {
             PhoneStatus(model: model, computer: computer, isMember: isMember)
                 .tabItem { Label("Status", systemImage: Screen.status(.all).systemImage) }
-                .badge(model.attentionCount)
+                .badge(model.attentionCount + (isMember ? 0 : model.backups.needsAttention))
                 .tag(Screen.status(.all))
-            if !isMember {
-                NavigationStack {
-                    BackupsView(backups: model.backups)
-                }
-                .tabItem { Label("Backups", systemImage: Screen.backups.systemImage) }
-                .badge(model.backups.needsAttention)
-                .tag(Screen.backups)
-            }
             if finances.canSeePlan {
                 NavigationStack {
                     financesRoot
@@ -226,14 +220,26 @@ private struct PhoneDashboard: View {
         // phone has it (the tab's own rules still apply).
         .onChange(of: IntentInbox.shared.screen, initial: true) { _, screen in
             guard let screen else { return }
-            savedTab = screen.storageKey
+            if screen == .backups {
+                savedTab = Screen.status(.all).storageKey
+                if !isMember { IntentInbox.shared.statusPage = .backups }
+            } else {
+                savedTab = screen.storageKey
+            }
             IntentInbox.shared.screen = nil
             // No Finances on this phone: no page of it waits either.
             if !finances.canSeePlan { IntentInbox.shared.financePage = nil }
         }
         #if SCREENSHOTS
         .onAppear {
-            if let tab = screenshotTab { savedTab = tab.storageKey }
+            if let tab = screenshotTab {
+                if tab == .backups {
+                    savedTab = Screen.status(.all).storageKey
+                    IntentInbox.shared.statusPage = .backups
+                } else {
+                    savedTab = tab.storageKey
+                }
+            }
             finances.amountsShown = !ScreenshotMode.hidesAmounts
         }
         #endif
@@ -363,6 +369,10 @@ private struct PhoneStatus: View {
                                     SubscriptionsRow(model: model)
                                 }
                             }
+                            NavigationLink(value: StatusPlace.backups) {
+                                BackupsRow(model: model)
+                            }
+                            .badge(model.backups.needsAttention)
                         }
                     }
                     // The categories as one list, a row each (the computer's panel): a tap opens its page.
@@ -410,6 +420,8 @@ private struct PhoneStatus: View {
                     AnalyticsPage(model: model)
                 case .subscriptions:
                     SubscriptionsPage(model: model)
+                case .backups:
+                    BackupsView(backups: model.backups)
                 }
             }
             // Stage Manager and Split View: the app open beside the list when the
@@ -444,6 +456,12 @@ private struct PhoneStatus: View {
             // once Status is read (after unlock).
             .onChange(of: IntentInbox.shared.pending, initial: true) { takeRequest() }
             .onChange(of: model.hasLoaded) { takeRequest() }
+            // A link, the Backups card or a screenshot asked for one of Status' pages.
+            .onChange(of: IntentInbox.shared.statusPage, initial: true) { _, page in
+                guard let page else { return }
+                path = [page]
+                IntentInbox.shared.statusPage = nil
+            }
             .toolbar {
                 #if os(iOS)
                 ToolbarItem(placement: .topBarLeading) {

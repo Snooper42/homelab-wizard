@@ -146,11 +146,11 @@ struct BackupsView: View {
         if !o.plainExports.isEmpty || !o.destinationOK || vault != nil {
             Section {
                 if !o.plainExports.isEmpty {
-                    Label("Unencrypted password exports are lying in recovery-staging. Delete them on the computer.", systemImage: "exclamationmark.lock.fill")
+                    Label("Unencrypted password exports in recovery-staging", systemImage: "exclamationmark.lock.fill")
                         .foregroundStyle(Theme.danger)
                 }
                 if !o.destinationOK {
-                    Label("The backups are on the same disk as the data. Choose another drive on the computer, under Backups.", systemImage: "exclamationmark.triangle")
+                    Label("On the same disk as the data", systemImage: "exclamationmark.triangle")
                         .foregroundStyle(Theme.warning)
                 }
                 // The password export, due or never made: its tile left the top for the redesign's two cards.
@@ -229,15 +229,11 @@ struct BackupsView: View {
                     .textSelection(.enabled)
             }
             if !o.destinationOK {
-                Label("The backups are on the same disk as the data. Choose another drive on the computer, under Backups.", systemImage: "exclamationmark.triangle")
+                Label("On the same disk as the data", systemImage: "exclamationmark.triangle")
                     .foregroundStyle(Theme.warning)
             }
         } header: {
             Text("Nightly Backup")
-        } footer: {
-            if o.staleAfterHours > 0 {
-                Text("A copy counts as out of date after \(o.staleAfterHours) hours.")
-            }
         }
     }
 
@@ -262,7 +258,7 @@ struct BackupsView: View {
                 Text("No restore test has passed yet.").foregroundStyle(.secondary)
             }
             if o.restoreDue {
-                Label("A restore test is due: Test a Restore, below, runs one.", systemImage: "calendar.badge.exclamationmark")
+                Label("Due", systemImage: "calendar.badge.exclamationmark")
                     .foregroundStyle(Theme.warning)
             }
             if !o.restoreTest.history.isEmpty {
@@ -290,7 +286,7 @@ struct BackupsView: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Kopia").fontWeight(.semibold)
                     if !kopia.repository.isEmpty {
-                        Text("A second copy of the same folders, apart from Duplicati's, in \(kopia.repository)")
+                        Text(verbatim: kopia.repository)
                             .foregroundStyle(.secondary)
                             .textSelection(.enabled)
                     }
@@ -323,7 +319,7 @@ struct BackupsView: View {
                 LabeledContent("Last encrypted export") { Text(exported, format: .relative(presentation: .named)) }
             }
             if !o.plainExports.isEmpty {
-                Label("Unencrypted exports are lying in recovery-staging. Delete them on the computer:", systemImage: "exclamationmark.lock.fill")
+                Label("Unencrypted exports in recovery-staging:", systemImage: "exclamationmark.lock.fill")
                     .foregroundStyle(Theme.danger)
                 ForEach(o.plainExports, id: \.self) { name in
                     Text(verbatim: name).font(.caption.monospaced()).textSelection(.enabled)
@@ -348,7 +344,7 @@ struct BackupsView: View {
             }
         } else if let jobs = backups.jobs, jobs.isEmpty {
             Section("Duplicati") {
-                Text("No jobs yet. Create the backup jobs on the computer, under Backups.")
+                Text("None yet")
                     .foregroundStyle(.secondary)
             }
         } else if let error = backups.jobsError {
@@ -380,7 +376,7 @@ private struct JobRow: View {
                 Text(message).font(.caption).foregroundStyle(Theme.danger).lineLimit(4)
             } else if job.damaged, let checked = job.checked, let problem = job.checkProblem {
                 // Sunday's check found a damaged file (main #463).
-                Text("Failed its check \(checked.formatted(Self.checkTime)): \(problem). A version may not restore: open the job in Duplicati.")
+                Text("Failed its check \(checked.formatted(Self.checkTime)): \(problem)")
                     .font(.caption).foregroundStyle(Theme.danger).lineLimit(5)
             } else if job.state == "stale" {
                 Text("Not run for over a week").font(.caption).foregroundStyle(Theme.warning)
@@ -655,7 +651,7 @@ private struct CopyRow: View {
                         .foregroundStyle(.secondary)
                 }
                 if copy.shrank {
-                    Text("Less than half the night before's \(copy.before, format: .byteCount(style: .memory)): check that \(copy.name) still has its data.")
+                    Text("Under half the night before's \(copy.before, format: .byteCount(style: .memory))")
                         .font(.caption)
                         .foregroundStyle(Theme.danger)
                 }

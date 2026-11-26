@@ -222,6 +222,7 @@ enum StatusPlace: Hashable {
     case every
     case analytics
     case subscriptions
+    case backups
 
     var appID: AppStatus.ID? {
         if case .app(let id) = self { return id }
@@ -467,6 +468,35 @@ struct OverviewCards: View {
                 OverviewMachineCard(words: OverviewMachine(model.cards.machine, updates: computer.updates), computer: computer)
             }
         }
+    }
+}
+
+/// Backups' row on Status: its symbol, its name, and what was skipped.
+struct BackupsRow: View {
+    let model: DashboardViewModel
+
+    var body: some View {
+        let skipped = OverviewBackups(model.backups.overview).skipped
+        HStack(spacing: 12) {
+            Image(systemName: DashboardViewModel.SidebarItem.backups.systemImage)
+                .font(.title3)
+                .foregroundStyle(Theme.accent)
+                .frame(width: 30)
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Backups")
+                    .font(.headline)
+                    .foregroundStyle(Theme.ink)
+                if let skipped {
+                    Text(verbatim: skipped)
+                        .font(.subheadline)
+                        .foregroundStyle(Theme.warning)
+                        .lineLimit(1)
+                }
+            }
+        }
+        .padding(.vertical, 4)
+        .accessibilityElement(children: .combine)
     }
 }
 
