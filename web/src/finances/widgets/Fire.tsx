@@ -1,9 +1,3 @@
-// Financial independence, as an estimate: what is enough to live on what
-// it earns (a year's spending over the share drawn a year), what is in the
-// investment and retirement accounts toward it, and the month it gets
-// there at what is put by a month, at the growth taken and two points
-// either way. The two assumptions are the household's to change, where
-// Finances may be changed; it is said to be an estimate, not advice.
 import { useState } from 'preact/hooks';
 import { Amount } from '../ui/Amount';
 import { Widget } from '../ui/Widget';

@@ -1,9 +1,3 @@
-// Settings › Appearance on the page: the theme and the contrast switch the
-// stylesheet's own dark and more-contrast blocks on or off (so style.css
-// keeps one copy of each), the accent replaces the platform's or the
-// system's, Islands sets the sidebar and the page apart as panels, and
-// Motion and Transparency set html.motion-less, motion-none, and no-blur,
-// which every animation, transition, and blur in style.css follows.
 
 /** The media blocks as written, before a theme or contrast forced them. */
 const written = new WeakMap<CSSMediaRule, string>();
@@ -46,10 +40,6 @@ export function contrast(a: string, b: string) {
   const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
   return (hi + 0.05) / (lo + 0.05);
 }
-/** The accent as link text: itself when it reads at 4.5:1 on the darkest
- *  light page (or the lightest dark one) tinted with the accent as
- *  --accent-soft is, else darkened (lightened) until it does, so a picked
- *  yellow still gives readable links. */
 export function linkOn(hex: string, dark: boolean) {
   const page = dark ? mix('#36363a', hex, 0.15) : mix('#e6e6ea', hex, 0.1);
   let c = hex;

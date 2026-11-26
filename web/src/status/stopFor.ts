@@ -1,6 +1,3 @@
-// Stop for a while: the times it offers, and how a row says an app was
-// stopped on purpose. The backend keeps the stop (internal/stopped) and
-// starts the app again when its time comes.
 import { clockText, dayText } from '../format';
 
 export interface StopChoice {
@@ -43,10 +40,6 @@ export function stoppedWords(s: stopped.Stop, now = new Date()): string {
   return `Stopped until ${day}${clockText(t)}`;
 }
 
-/** When an app that wasn't stopped from here stopped, and why when Docker
- * knows: "Stopped at 3:12 AM: it ran out of memory", "Stopped yesterday,
- * 9:40 PM", "Stopped Tue, 9:40 PM", "Stopped Oct 28"; just "Stopped"
- * when Docker didn't say when. */
 export function stoppedByItself(a: { stoppedAt?: string; stoppedWhy?: string }, now = new Date()): string {
   let when = '';
   if (a.stoppedAt) {
@@ -57,10 +50,6 @@ export function stoppedByItself(a: { stoppedAt?: string; stoppedWhy?: string }, 
   return `Stopped${when}${a.stoppedWhy ? ': ' + a.stoppedWhy : ''}`;
 }
 
-/** What to do about an app that isn't running, for its page: why it
- * stopped, when its state doesn't say so already, and what helps with the
- * buttons a computer (or a phone that may make changes) has. Nothing for
- * one that runs. */
 export function stoppedNext(a: { state: string; stoppedWhy?: string; waitingFor?: string }, held?: stopped.Stop, paused = false, now = new Date()): [why: string, todo: string] {
   if (a.state !== 'stopped') return ['', ''];
   if (held && keptRestarting(held)) return ['The watchdog stopped it after Docker restarted it again and again; its log below says why.', 'Once that is put right, Start tries again.'];

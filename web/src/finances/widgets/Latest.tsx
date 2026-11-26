@@ -1,7 +1,3 @@
-// Latest transactions: the five newest from the ledger on the Dashboard,
-// each opening its own form (or nothing, on a phone allowed only to look),
-// and its ↗ to Transactions. None yet, no card: the Dashboard reads the
-// plan first, and a household that keeps no ledger has nothing to see here.
 import type { ComponentChildren } from 'preact';
 import { Row, Rows } from '../../parts/Row';
 import { Amount } from '../ui/Amount';
@@ -21,7 +17,6 @@ export function latest(txs: finance.Transaction[], n = latestCount): finance.Tra
 
 /** One transaction's row, as the Dashboard lists them: its mark, payee, day, category and account, and amount; it opens its form where it may. */
 export function TxRow({ t, v, L, edit, end, compact }: { t: finance.Transaction; v: finance.View; L: Lookup; edit?: (what: 'transaction', id: string) => void; end?: ComponentChildren;
-  /** The Dashboard's one-line form (docs/images/redesign/computer-finances.png): the category with its colour under the payee, the day under the amount. */
   compact?: boolean }) {
   const a = L.account[t.account];
   const what = t.splits?.length ? t.splits.map((sp) => sp.category).join(', ') : t.category || (t.to ? 'Transfer' : 'No category');

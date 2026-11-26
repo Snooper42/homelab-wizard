@@ -1,7 +1,3 @@
-// A widget: one card of the Finances grid, with its title, the small
-// icon buttons beside it, and what it shows. It is a Card (parts/Card), so
-// it reads as one with the other screens; how wide it is in the grid is
-// its span, never the screen's business.
 import type { ComponentChildren } from 'preact';
 import { Card, CardFigure, CardHead } from '../../parts/Card';
 
@@ -15,18 +11,12 @@ export interface WidgetProps {
   span?: 1 | 2 | 'all';
   /** A look of its own (style.css), beside fx-widget. */
   kind?: string;
-  /**
-   * Opens what the card sums up (its transactions, Recurring, the calendar): a click or a tap on its title does. The
-   * keyboard has the ↗ added after its actions for it, so the title is no second stop for Tab.
-   */
   open?: () => void;
   /** Its actions already open the same (See all): no ↗ is added. */
   seeAll?: boolean;
   /** Where open goes, for the ↗ and a screen reader: "Open Recurring: a typical month, payment by payment". */
   openLabel?: string;
-  /** The card's one figure, under its title (docs/Redesign.md, Cards): an Amount, its cents smaller. */
   figure?: ComponentChildren;
-  /** The small capitalised words under the figure: "In checking on Nov 19, after 10 bills". */
   label?: ComponentChildren;
   /** The comparison with the period before, on the figure's right: a MoneyChip, only where the View has that period. */
   chip?: ComponentChildren;

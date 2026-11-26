@@ -1,18 +1,3 @@
-// Finances › Transactions: what actually happened, from the ledger
-// (data/finance-ledger.json), newest first and by day: each with its
-// payee's mark, its category and account, Receipt when one is kept with
-// it, and what it came to, money in green. Above them, this month's money
-// in and out (a transfer between the household's accounts is neither), and
-// a search with filters: words in the payee, category, note, or tags, an
-// account, a category, a tag, a month, and money in or out. A row opens
-// its form (the bank's own wording, kept in its note, is not shown in
-// the list; search still finds it); on a phone allowed only to look, only a row with a receipt
-// opens, to show the receipt under it. A row that pays a planned payment
-// says so; above them, those that look like one but are not linked yet,
-// each to link with a click or say Not it. Select picks rows (Select all
-// takes every one shown, so a filter then Select all is a whole import or
-// month; Shift+click a range) to delete together, give one category, or
-// move to another account, each with Undo after.
 import { Crumbs } from '../parts/Crumbs';
 import { Fragment } from 'preact';
 import { useLayoutEffect, useRef, useState } from 'preact/hooks';
@@ -34,7 +19,6 @@ import { showUndo } from '../status/UndoNote';
 import { shownNote } from './payees';
 
 export interface TransactionsProps {
-  /** This month and the budgets above the table (the phone's page); on the computer they're the Budgets page's (redesign-loop R4). */
   summary?: boolean;
   v: finance.View;
   L: Lookup;
@@ -52,12 +36,6 @@ export interface TransactionsProps {
   saveLedger?: (l: finance.Ledger) => Promise<boolean>;
 }
 
-/**
- * Transactions that look like a planned payment but are not linked to it:
- * each says which and what was planned, with Link and Not it, and Link all.
- * A linked one is taken as that payment's, so the plan does not take it
- * out again on its day.
- */
 function LinksWidget({ v, L, ledger, save }: { v: finance.View; L: Lookup; ledger: finance.Ledger; save: (l: finance.Ledger) => Promise<boolean> }) {
   const [busy, setBusy] = useState(false);
   const found = suggestLinks(ledger.transactions, allPayments(v.plan).filter((x) => !x.card), v.dues || {}, v.checking, withLearned(paysBill, ledger.transactions));
@@ -90,7 +68,6 @@ function LinksWidget({ v, L, ledger, save }: { v: finance.View; L: Lookup; ledge
   );
 }
 
-/** A receipt as kept: a picture, or a PDF in a frame (with words where a frame shows no PDF). */
 export function ReceiptView({ url }: { url: string }) {
   return url.startsWith('data:application/pdf')
     ? <object class="receiptview pdf" data={url} type="application/pdf" aria-label="The receipt"><p class="muted">A PDF receipt, kept with this transaction.</p></object>
@@ -103,12 +80,6 @@ export function iconOf(categories: finance.Category[] | undefined, name: string 
   return c?.icon || (c?.parent ? iconOf(categories, c.parent) : undefined);
 }
 
-/**
- * A transaction's mark: its payee's logo, a transfer's arrows, its
- * category's icon, else its payee's own mark (its initials on its colour)
- * where there would be a plain letter; a payee whose logo was set to None
- * keeps the letter.
- */
 export function TxMark({ t, size, categories }: { t: finance.Transaction; size?: 'sm' | 'lg'; categories?: finance.Category[] }) {
   const brand = t.to ? undefined : payeeBrand(t.institution, t.payee);
   const cat = t.splits?.length ? t.splits[0].category : t.category;
@@ -122,16 +93,9 @@ export const txTitle = (t: finance.Transaction, L: Lookup): string => t.payee ||
 /** A transaction's categories: its own, or its parts'. */
 const catsOf = (t: finance.Transaction): string[] => (t.splits?.length ? t.splits.map((s) => s.category) : t.category ? [t.category] : []);
 
-/** The words a search looks through: payee, categories, note, tags, the accounts, the amount as typed and as shown (86.10, 1,240.55), so a charge is found by what it came to, and its day as shown (Oct 28). */
 const wordsOf = (t: finance.Transaction, L: Lookup): string => [t.payee, ...catsOf(t), t.note, ...(t.tags || []), L.account[t.account]?.name, t.to && L.account[t.to]?.name,
   Math.abs(t.amount).toFixed(2), Math.abs(t.amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), dayShort(t.date)].filter(Boolean).join(' ').toLowerCase();
 
-/**
- * Rows that look like one transfer between the household's own accounts,
- * a minus on one and the same plus on another a few days apart: Join
- * makes them one (neither spending nor income), Not one transfer keeps
- * them apart and stops asking.
- */
 function PairsWidget({ L, ledger, save }: { L: Lookup; ledger: finance.Ledger; save: (l: finance.Ledger) => Promise<boolean> }) {
   const [busy, setBusy] = useState(false);
   const list = pairs(ledger.transactions);
@@ -254,8 +218,6 @@ export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger, logo
   // nothing: its menu would show Every … while the list stayed empty.
   const account = accounts.some((a) => a.id === accountPick) ? accountPick : '';
   const category = cats.includes(categoryPick) ? categoryPick : '';
-  // The pay periods the top bar steps through, as dates to pick (redesign-loop R4, the picture's Nov 6 – Nov 19): this
-  // paycheck's (from its payday, through today) and the one before.
   const nowPay = v.periods[0], lastPay = pastPeriods(v)[0];
   const spans: Record<string, { start: string; last: string; label: string }> = {};
   if (nowPay) spans['pay:0'] = { start: nowPay.start, last: nowPay.last, label: `This paycheck · ${dayShort(nowPay.start)} – ${dayShort(nowPay.last)}` };
@@ -427,8 +389,6 @@ export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger, logo
             <datalist id="fxPickCategories">{[...new Set([...(v.categories || []).map((c) => c.name), ...cats])].map((c) => <option key={c} value={c} />)}</datalist>
           </div>}
           {runs && !!shown.length && <p class="fx-sub fx-txrunning">After each day, what {acct!.name} {owed(acct!.kind) ? 'owed' : 'held'}: worked from the {moneyIn(acct!.balance, acct!.currency)} typed in on {dayShort(acct!.updated!)} through these transactions.</p>}
-          {/* As the picture's line over the table (redesign-loop R4): how many are shown, what came in and went out (moves
-              between your own accounts left out), and with a filter on, what they come to together. */}
           {!!shown.length && <p class="fx-sub fx-txsummary"><span><strong>{shown.length.toLocaleString('en-US')}</strong> {shown.length === 1 ? 'transaction' : 'transactions'}</span>
             <span>In <Amount value={shown.filter((t) => !t.to && amt(t) > 0).reduce((s, t) => s + amt(t), 0)} form="full" tone="in" /></span>
             <span>Out <Amount value={shown.filter((t) => !t.to && amt(t) < 0).reduce((s, t) => s + amt(t), 0)} form="full" /></span>
@@ -450,7 +410,6 @@ export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger, logo
             <section key={d.date} class="fx-txday" aria-label={dayLong(d.date)}>
               <h3><span>{dayLong(d.date)}{d.date === v.today ? ', today' : ''}</span>
                 {runs ? <span class="fx-txbal">{moneyIn(after(d.date), acct!.currency)}<span class="fx-hidden"> {owed(acct!.kind) ? 'owed' : 'in ' + acct!.name} after the day</span></span>
-                  // Each day with money in or out: what it came to together (a transfer is neither), as the picture has it.
                   : d.list.some((t) => !t.to) && <span class="fx-txdaysum"><Amount value={d.list.filter((t) => !t.to).reduce((n, t) => n + amt(t), 0)} sign form="full" /><span class="fx-hidden"> in all that day</span></span>}</h3>
               <Rows kind="fx-rows">
                 {d.list.map((t) => rowOf(t, false))}

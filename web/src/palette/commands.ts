@@ -1,10 +1,3 @@
-// What the command palette (Palette.tsx) offers, read fresh each time it
-// opens or Status changes: the screens, the commands used now and then
-// (Update all, Back up now, Check again, Hide amounts), each group's Start,
-// Restart, and Stop, and each app's Open, page, Restart, Stop, Logs, and
-// Copy address, as its row's menu has them. Each runs what the screen's own
-// button does, so nothing here changes state another way: Update all shows
-// its list first, Stop asks for a second press.
 import { appsBusyNow, batteryPausedNow, heldNow, pageOpener, rowActions, statusById } from '../screens/status';
 import { catalog } from '../screens/choose';
 import { financesData, toggleHideAmounts } from '../screens/finances';
@@ -29,11 +22,6 @@ export interface Command {
 /** Words as they are matched: lower case, accents off, split on anything else. */
 export const words = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
 
-/**
- * The commands that have every word typed, each as the start of one of
- * theirs, best first: those whose own label has the words before those
- * found by their other words, and otherwise in the list's order.
- */
 export function match(list: Command[], query: string): Command[] {
   const want = words(query);
   if (!want.length) return list;
@@ -92,7 +80,6 @@ export function commands(): Command[] {
   if (fin && !fin.readOnly) add({ id: 'hide', label: fin.plan.hideAmounts ? 'Show amounts' : 'Hide amounts', hint: isMac ? '⌘⇧H' : 'Ctrl+Shift+H', also: 'money privacy blur', run: toggleHideAmounts });
   // Opened once the palette has closed and put the focus back, where the sheet returns it.
   if (!phone) add({ id: 'shortcuts', label: 'Keyboard shortcuts', hint: '?', also: 'keys help', run: () => { requestAnimationFrame(() => requestAnimationFrame(() => openShortcuts())); } });
-  // Send to my phone: this page, to each phone it can go to (the owner, Nov 12: pick a phone each time).
   const page = sendable();
   if (page && !phone) for (const t of targetsFor(page.link)) add({ id: `send:${t.id}`, label: `Send ${page.title} to ${t.name}`, also: 'send to my phone open on', run: () => sendTo(t, page.link, page.title) });
   for (const [id, label, key, also] of screenList) {

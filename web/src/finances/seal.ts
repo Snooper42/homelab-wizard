@@ -1,24 +1,3 @@
-// A household member's private Finances, sealed on her own phone so only
-// she can open them, the person who runs the homelab included
-// (.claude/prompts/private-finances.md 3.1). Her phone makes a random data
-// key and seals her plan and ledger with it (AES-256-GCM, a fresh 96-bit
-// nonce each save); the key is wrapped twice, by her recovery code and by
-// her passkey (or, where the passkey can't give a secret, a passphrase), and
-// the computer keeps only the envelope (internal/finance/sealed.go), which it
-// can't open. Nothing here leaves the phone but that envelope: the opened
-// key is a CryptoKey that can't be read out, held while Finances is open.
-//
-// The format, for the iPhone app to match (step 4):
-// - sealed: nonce (12) || AES-256-GCM(data key, the JSON {plan, ledger}),
-//   associated data "homelab-finances:1:<username>";
-// - a wrapped key: nonce (12) || AES-256-GCM(wrapping key, the 32-byte data
-//   key), associated data "homelab-finances-key:1:<username>";
-// - by the recovery code: scrypt(the code's 16 bytes, kdf.salt, N 2^17, r 8,
-//   p 1, 32 bytes); by a passphrase: scrypt(its UTF-8, NFKC, kdf.passphraseSalt,
-//   the same); by the passkey: HKDF-SHA256(its PRF output, no salt, info
-//   "homelab-finances-passkey:1", 32 bytes), the PRF asked with PRF_INPUT;
-// - a receipt: as sealed, of its data URL, associated data
-//   "homelab-finances-receipt:1:<username>".
 
 /** Bytes, as WebCrypto takes them. */
 export type Bytes = Uint8Array<ArrayBuffer>;
@@ -181,11 +160,6 @@ async function unwrap(wrapping: CryptoKey, wrapped: string | undefined, username
 }
 const sealData = async (key: CryptoKey, username: string, data: Private) => b64(await seal(key, enc.encode(JSON.stringify(data)), aad('homelab-finances', username)));
 
-/**
- * Turns privacy on: a new data key, her Finances sealed with it, and the key
- * wrapped by her code and by her passkey or passphrase. The envelope is what
- * the computer keeps; the key, for this page while Finances is open.
- */
 export async function turnOn(data: Private, username: string, ways: Ways): Promise<{ envelope: Envelope; key: CryptoKey }> {
   if (!ways.prf && (ways.passphrase || '').length < MIN_PASSPHRASE) throw new Error(`A passphrase is ${MIN_PASSPHRASE} characters or more.`);
   const raw = random(32);

@@ -1,9 +1,3 @@
-// A sheet: a panel over the screen for one task (a command and its log, an
-// app's log, a form), with the focus in it while it is open (a form's in its
-// first field) and back where it was after, Tab going round its own controls
-// only, and Escape or a click on the dimmed screen around it closing it
-// through its own Close or Cancel (a command still running has Hide instead). The screens open and close it by its hidden
-// attribute, and fill it by the IDs inside.
 import type { ComponentChildren } from 'preact';
 import { useLayoutEffect, useRef } from 'preact/hooks';
 
@@ -22,9 +16,6 @@ let listening = false;
 function keys() {
   if (listening) return;
   listening = true;
-  // A click on the dimmed screen around the top sheet (html.sheet-open's
-  // body::after, so the click lands on body) closes it, when the press began
-  // there too: a text selection dragged out of the sheet does not.
   let downOnDim = false;
   document.addEventListener('mousedown', (e) => { downOnDim = e.target === document.body && openSheets().length > 0; }, true);
   document.addEventListener('click', (e) => {
@@ -62,10 +53,6 @@ export function Sheet({ id, titleId, onClose, children }: { id: string; titleId:
       document.documentElement.classList.toggle('sheet-open', openSheets().length > 0);
       if (!panel.hidden) {
         if (!panel.contains(document.activeElement)) before = document.activeElement;
-        // A form's cursor in its first field, the sheet at its top; a
-        // command's on its first button. Not once it is in one of the
-        // sheet's own controls already (a click into another field as it
-        // opened): what is typed there stays there.
         requestAnimationFrame(() => {
           const now = document.activeElement;
           if (panel.hidden || (now && now !== panel && panel.contains(now))) return;

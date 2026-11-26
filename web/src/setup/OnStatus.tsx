@@ -1,5 +1,3 @@
-// Setup's unfinished steps on the phone's Status (docs/Redesign.md, On the iPhone: Setup leaves the tab bar, and its
-// unfinished steps show on Status; redesign-loop R10): how many are done, the next few, and Continue to Setup.
 import { render } from 'preact';
 import { Card, CardHead } from '../parts/Card';
 import { progress, waits } from './Checklist';

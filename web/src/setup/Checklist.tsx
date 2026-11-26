@@ -1,7 +1,3 @@
-// Finish setting up: the checklist from the engine, one line a step (what
-// it gives you, and its buttons), grouped as what needs you now, what can
-// wait, and what is done; a step opens for the rest of what it says. Once
-// every step is done, the list is one line.
 import { render } from 'preact';
 import { useState } from 'preact/hooks';
 import { ActionLink } from '../ActionLink';
@@ -120,7 +116,7 @@ export function Checklist({ steps, showDone, showLater, running, failed = {}, on
   }
   return (
     <>
-      {!!now.length && <li class="grouphead">{`Needs you · ${now.length}`}</li>}
+      {!!now.length && <li class="grouphead">{`To do · ${now.length}`}</li>}
       {now.map((s, i) => row(s, i + 1))}
       {!!later.length && <Fold id="toggleLater" cls="later" title={`Can wait · ${later.length}`} names={later.map((s) => s.title).join(', ')} shown={showLater} toggle={on.toggleLater} />}
       {showLater && later.map((s, i) => row(s, now.length + i + 1))}

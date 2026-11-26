@@ -1,13 +1,3 @@
-// Every pop-up whole, in sight and on top (the owner, Nov 25: "hunt for this across the application").
-//
-// A fixed pop-up (a hover card, a right-click menu) is placed in the window's
-// pixels, as getBoundingClientRect measures them; but the text size scales
-// html (zoom), and a transformed ancestor (a sheet) moves a fixed child's
-// origin, so the left and top it is given land elsewhere. putAt measures
-// both and lands it where it was meant to go. fitMenu keeps a menu that
-// opens under its button inside the window and beside the sidebar: turned
-// to the button's other edge, opened upward, or, with room neither way,
-// scrolled within the larger side.
 
 /** Places a position:fixed element's top-left corner at (left, top) in the window, whatever the zoom or its containing block. */
 export function putAt(el: HTMLElement, left: number, top: number) {
@@ -38,12 +28,6 @@ function scale(el: HTMLElement) {
   return w ? el.getBoundingClientRect().width / w : 1;
 }
 
-/**
- * A menu positioned under its button (position:absolute in its wrap, the
- * button's right edge by default): turned to the left edge when it would run
- * past `main` (behind the sidebar) or the window, opened upward when there's
- * no room below, and given a scroll when there's room neither way.
- */
 export function fitMenu(m: HTMLElement, button: HTMLElement | null) {
   const s = m.style;
   s.left = s.right = s.top = s.bottom = s.maxHeight = s.overflowY = '';

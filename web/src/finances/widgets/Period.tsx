@@ -1,14 +1,3 @@
-// The period the Dashboard shows, picked once at its top: by paycheck or by
-// month, the period's name and days, ‹ and › to step, and Today to come
-// back. Every card under it that is about a period follows it (the
-// paycheck's accounts and payments, the checking chart's shaded days,
-// what happened in a period before now, the plan for a month ahead), so
-// none has a picker of its own. By paycheck, ahead of now a period is the
-// plan's (View.periods) and before now one of the paydays the computer
-// kept (View.before), read from the ledger: the pick is an index, 0 now, 1
-// and on the paychecks ahead, -1 and below the periods before now. By
-// month, the months monthPeriods gives. Overview works out which; this
-// only draws it.
 import { Card } from '../../parts/Card';
 import { Segmented } from '../../parts/Segmented';
 import { IconButton } from '../ui/Widget';
@@ -26,7 +15,6 @@ export const pickedOf = (v: finance.View, past: PastPeriod[], sel: number): numb
 export interface PeriodBarProps {
   by: PeriodBy;
   setBy: (by: PeriodBy) => void;
-  /** The period's name ("Alex's paycheck · Fri, Nov 6", "October 2026") and its days, with what it is read from. */
   title: string;
   dates: string;
   step: (d: -1 | 1) => void;

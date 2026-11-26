@@ -1,6 +1,3 @@
-// Settings' first page, as the redesign's picture (docs/images/redesign/computer-settings.png, redesign-loop R8): what
-// the homelab is set to, a card each, and each card's › to its own page. The everyday switches work here as they do on
-// their page: Automatic care's three and Alerts' one save at once.
 import { render } from 'preact';
 import { ago, never } from '../format';
 import { Card, CardHead } from '../parts/Card';

@@ -1,6 +1,3 @@
-// A month of money: what is left of it (Cash flow), where the spending
-// goes (Where it goes), and how it flows, pay to bills, saving, and what
-// is left (Money flow). The pay period card picks a paycheck.
 import { useState } from 'preact/hooks';
 import { Empty } from '../../parts/Empty';
 import { Row, Rows } from '../../parts/Row';
@@ -15,12 +12,6 @@ import type { showTransactions } from '../Transactions';
 import { kindHueOf, ledgerMonths, monthFlow, savedHue, typicalFlow } from '../flowData';
 import { dayShort, type Lookup, money, monthName, whole } from '../money';
 
-
-/**
- * The last six months as the ledger has them, in against out a month,
- * each month a button opening its transactions. Only with two months or
- * more that have any: one alone says nothing a typical month does not.
- */
 function LastMonths({ v, ledger, open }: { v: finance.View; ledger?: finance.Ledger | null; open?: (f: Parameters<typeof showTransactions>[0]) => void }) {
   if (!ledger?.transactions.length) return null;
   const t = new Date(+v.today.slice(0, 4), +v.today.slice(5, 7) - 1, 1);
@@ -63,7 +54,6 @@ export function CashFlowWidget({ v, L, open, ledger, showIn }: { v: finance.View
   );
 }
 
-
 /** The Recurring filter a payment kind is under (Lists.tsx's groups): Home, Car and the other bills under Bills. */
 const filterOf = (kind: string): string => ({ cards: 'cards', subscriptions: 'subscriptions', spending: 'spending', savings: 'saving' } as Record<string, string>)[kind] || 'bills';
 
@@ -88,21 +78,9 @@ export function SpendingWidget({ v, L, open, openKind }: { v: finance.View; L: L
 /** How many of each column a month's flow shows before the rest are one Other. */
 const tops: [string, string][] = [['5', 'Top 5'], ['8', 'Top 8'], ['0', 'All']];
 
-/** A month as people say it: "Oct 2026", or "A typical month". */
 const periodName = (p: string) => (p === typical ? 'A typical month' : `${monthName(p + '-01').slice(0, 3)} ${p.slice(0, 4)}`);
 const typical = 'typical';
 
-/**
- * Money flow: where a month's money came from, through all of it, to
- * taxes, spending, and saving, and on to each kind of spending and each
- * account it was saved in (or kept as cash). ‹ › step through the months
- * the ledger has, and a typical month from the plan; Top 8 keeps the
- * largest of each column, the rest as Other. Above it, income, taxes,
- * expenses, and saved, each as a share of income. Picking a box shows
- * what is behind it under the chart: its transactions, or the planned
- * payments and pay, each opening its form. A table says it all to a
- * screen reader.
- */
 export function MoneyFlowWidget({ v, L, ledger, edit, title = 'Money flow' }: { v: finance.View; L: Lookup; ledger?: finance.Ledger | null; edit?: (what: 'transaction' | 'payment', id: string) => void; title?: string }) {
   const months = ledgerMonths(ledger || null).filter((m) => tracked(v, m));
   const periods = [typical, ...[...months].reverse()];

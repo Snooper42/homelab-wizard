@@ -1,6 +1,3 @@
-// The sidebar's foot: this system and the app's version, each kept whole,
-// and a link to the update line while an update waits (after Later) or
-// goes in place.
 import { render } from 'preact';
 import { ActionLink } from '../ActionLink';
 

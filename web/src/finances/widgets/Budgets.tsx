@@ -1,9 +1,3 @@
-// Budgets: each category's budget this month (or pay period), from the
-// ledger: a bar of what is spent against what it may take, the line where
-// an even pace would be by today, and what is left, or how far over. Over
-// is in red; ahead of the pace, in amber. Edit budgets opens their form;
-// with none yet, it says what they are for. On the Dashboard, only those
-// worth a look (toWatch), and none, no card.
 import { Empty } from '../../parts/Empty';
 import { Row, Rows } from '../../parts/Row';
 import { Amount } from '../ui/Amount';

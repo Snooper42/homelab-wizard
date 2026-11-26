@@ -31,7 +31,6 @@ let following: number | undefined;
 let stoppingElsewhere = '';
 const FOLLOW_MS = 3000;
 
-
 function pickTab(t: TidyTab) { tab = t; try { localStorage.setItem('homelab.tidyTab', t); } catch { /* none */ } if (t === 'books' && !review) loadReview(); draw(); tabChanged(); }
 function draw() {
   const d = tidyData.value || null;

@@ -1,6 +1,3 @@
-// A holding's logo on Investments: its ticker symbol to a brand already in
-// logos.ts (a Vanguard fund to Vanguard, AAPL to Apple). Kept here, never
-// looked up: a symbol not listed stands as its own monogram.
 import { brands } from './logos';
 
 const funds: Record<string, string[]> = {

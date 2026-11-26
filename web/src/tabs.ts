@@ -1,7 +1,3 @@
-// A screen's tabs, for Back and Forward (app.ts): which tab it is on, and how
-// to put one back (the owner, Nov 12: Back from Finances' Recurring or
-// Spending went straight to Status). A module of its own, with nothing to
-// import, so a screen can name its tabs as it loads, before app.ts has.
 
 export interface Tabs { now: () => string; put: (tab: string) => void }
 

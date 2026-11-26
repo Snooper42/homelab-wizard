@@ -1,9 +1,3 @@
-// The update: one line at the top of every screen (updates/UpdateLine.tsx).
-// The app looks for it by itself every 15 minutes and when the window
-// comes forward (app/updates.go), downloads it ahead, and Update now puts
-// the homelab files and the app in place in one step. Later hides the line
-// until something newer turns up; the sidebar's ● Update ready brings it
-// back. The menu bar item's Update to … opens the window on "update".
 import { lineShown, mountUpdateLine, mountUpdateSettings } from '../updates/UpdateLine';
 import { drawFoot } from './setup';
 import { $, go, showError } from '../core';

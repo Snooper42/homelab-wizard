@@ -1,10 +1,3 @@
-// Money flow, as numbers: where a month's money came from, through all of
-// it together, to taxes, spending and saving, and on to each kind of
-// spending and each account it was saved in. A real month reads the
-// ledger; a typical month reads the plan. Each piece keeps what is behind
-// it (transactions, or planned payments and pay) so the chart can open it.
-// Plain functions of the view and ledger; the chart (ui/charts Sankey)
-// knows nothing of them.
 import type { Hue } from './ui/Legend';
 import { categoryHue, kindHueOf } from './hues';
 import { inHome, kindName } from './model';
@@ -84,13 +77,6 @@ function build(sources: FlowNode[], taxes: FlowNode | null, spend: FlowNode[], k
 /** The months the ledger has transactions in, newest first (YYYY-MM). */
 export const ledgerMonths = (ledger: finance.Ledger | null): string[] => [...new Set((ledger?.transactions || []).map((t) => t.date.slice(0, 7)))].sort().reverse();
 
-/**
- * A real month, from the ledger: money in by its category (or payee),
- * taxes, spending by top category (a refund taking off its own), and what
- * is left, into each savings account it was moved to and the rest kept as
- * cash. A transfer between the household's own accounts is neither in nor
- * out; one into savings is where the saved went.
- */
 export function monthFlow(v: finance.View, L: Lookup, ledger: finance.Ledger, month: string, top: number): Flow {
   const cats = v.categories || [];
   const byName = new Map(cats.map((c) => [c.name.toLowerCase(), c]));
@@ -134,12 +120,6 @@ export function monthFlow(v: finance.View, L: Lookup, ledger: finance.Ledger, mo
   return build([...src.values()], tax, [...spend.values()], [...into.values()], top);
 }
 
-/**
- * A typical month, from the plan: each person's pay (before taxes, when
- * their gross pay is typed in) and money in from someone; taxes, what is
- * taken from pay that is not saved, each kind of payment, and what is
- * saved, into each account and the rest kept as cash.
- */
 export function typicalFlow(v: finance.View, L: Lookup, top: number): Flow {
   const people = v.plan.people || [];
   const kept = (id?: string) => saving(L.account[id || '']?.kind);

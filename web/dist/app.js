@@ -562,13 +562,13 @@
 
   // web/src/ActionLink.tsx
   function ActionLink({ onClick, title, id: id2, cls, children }) {
-    const key7 = (e3) => {
+    const key6 = (e3) => {
       if (e3.key === "Enter" || e3.key === " ") {
         e3.preventDefault();
         onClick(e3);
       }
     };
-    return /* @__PURE__ */ u3("a", { id: id2, class: cls, tabIndex: 0, role: "button", title, onClick, onKeyDown: key7, children });
+    return /* @__PURE__ */ u3("a", { id: id2, class: cls, tabIndex: 0, role: "button", title, onClick, onKeyDown: key6, children });
   }
 
   // web/src/icons.ts
@@ -671,7 +671,7 @@
       ] });
     }
     return /* @__PURE__ */ u3(S, { children: [
-      !!now2.length && /* @__PURE__ */ u3("li", { class: "grouphead", children: `Needs you · ${now2.length}` }),
+      !!now2.length && /* @__PURE__ */ u3("li", { class: "grouphead", children: `To do · ${now2.length}` }),
       now2.map((s3, i3) => row(s3, i3 + 1)),
       !!later2.length && /* @__PURE__ */ u3(Fold, { id: "toggleLater", cls: "later", title: `Can wait · ${later2.length}`, names: later2.map((s3) => s3.title).join(", "), shown: showLater, toggle: on2.toggleLater }),
       showLater && later2.map((s3, i3) => row(s3, now2.length + i3 + 1)),
@@ -682,7 +682,6 @@
   var mountChecklist = (el3, props) => R(/* @__PURE__ */ u3(Checklist, { ...props }), el3);
 
   // web/src/format.ts
-  var dollars = (v3) => "$" + Math.round(v3).toLocaleString("en-US");
   var monthFirst = /^12/.test(new Date(2e3, 11, 31).toLocaleDateString());
   var hourCycle = new Intl.DateTimeFormat(void 0, { hour: "numeric" }).resolvedOptions().hourCycle;
   var dateLocale = monthFirst ? "en-US" : "en-GB";
@@ -711,8 +710,8 @@
     return days === 1 ? "yesterday" : `${days} days ago`;
   }
   function startedText(t3) {
-    const d3 = new Date(t3), today2 = /* @__PURE__ */ new Date();
-    const days = Math.round((new Date(today2.getFullYear(), today2.getMonth(), today2.getDate()).getTime() - new Date(d3.getFullYear(), d3.getMonth(), d3.getDate()).getTime()) / 864e5);
+    const d3 = new Date(t3), today = /* @__PURE__ */ new Date();
+    const days = Math.round((new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime() - new Date(d3.getFullYear(), d3.getMonth(), d3.getDate()).getTime()) / 864e5);
     const at2 = `at ${clockText(d3)}`;
     if (days <= 0) return at2;
     if (days === 1) return `yesterday ${at2}`;
@@ -1229,132 +1228,6 @@
   }
   var mountSetupOnStatus = (el3, props) => R(props.steps?.length ? /* @__PURE__ */ u3(SetupOnStatus, { steps: props.steps, open: props.open }) : null, el3);
 
-  // web/src/parts/place.ts
-  function putAt(el3, left, top) {
-    el3.style.left = "0px";
-    el3.style.top = "0px";
-    const o3 = el3.getBoundingClientRect();
-    el3.style.left = "100px";
-    el3.style.top = "100px";
-    const p3 = el3.getBoundingClientRect();
-    const kx = (p3.left - o3.left) / 100 || 1, ky = (p3.top - o3.top) / 100 || 1;
-    el3.style.left = `${(left - o3.left) / kx}px`;
-    el3.style.top = `${(top - o3.top) / ky}px`;
-  }
-  function putInside(el3, x3, y3, up) {
-    const pad = 8;
-    const r3 = el3.getBoundingClientRect();
-    const left = Math.max(pad, Math.min(x3, innerWidth - r3.width - pad));
-    let top = y3;
-    if (y3 + r3.height > innerHeight - pad) top = Math.max(pad, (up ?? y3) - r3.height);
-    putAt(el3, left, top);
-  }
-  function scale(el3) {
-    const w3 = el3.offsetWidth;
-    return w3 ? el3.getBoundingClientRect().width / w3 : 1;
-  }
-  function fitMenu(m3, button) {
-    const s3 = m3.style;
-    s3.left = s3.right = s3.top = s3.bottom = s3.maxHeight = s3.overflowY = "";
-    const area = (m3.closest("main") || document.body).getBoundingClientRect();
-    const lo = Math.max(area.left, 0) + 4, hi = Math.min(area.right, innerWidth) - 4;
-    let r3 = m3.getBoundingClientRect();
-    if (r3.left < lo) {
-      s3.left = "0";
-      s3.right = "auto";
-      r3 = m3.getBoundingClientRect();
-    }
-    if (r3.right > hi) {
-      s3.right = "0";
-      s3.left = "auto";
-      r3 = m3.getBoundingClientRect();
-    }
-    if (r3.left < lo) {
-      s3.left = "0";
-      s3.right = "auto";
-    }
-    const b2 = (button || m3.parentElement).getBoundingClientRect();
-    const below = innerHeight - b2.bottom - 12, above = b2.top - 12;
-    if (r3.height <= below) return;
-    const k3 = scale(m3);
-    if (r3.height <= above || above > below) {
-      s3.top = "auto";
-      s3.bottom = "calc(100% + 6px)";
-      if (r3.height > above) {
-        s3.maxHeight = `${above / k3}px`;
-        s3.overflowY = "auto";
-      }
-    } else {
-      s3.maxHeight = `${below / k3}px`;
-      s3.overflowY = "auto";
-    }
-  }
-
-  // web/src/parts/Hover.tsx
-  var made = 0;
-  function useHoverCard(tip, { wide: wide2, side = "below", lazy } = {}) {
-    const [open5, setOpen] = d2(false);
-    const [id2] = d2(() => `hover-${++made}`);
-    const at2 = A2(null);
-    const box = A2(null);
-    const timer = A2(0);
-    const show4 = (soon2) => {
-      clearTimeout(timer.current);
-      if (soon2) setOpen(true);
-      else timer.current = window.setTimeout(() => setOpen(true), 250);
-    };
-    const hide = () => {
-      clearTimeout(timer.current);
-      setOpen(false);
-    };
-    _2(() => {
-      const t3 = at2.current, c4 = box.current;
-      if (!open5 || !t3 || !c4) return;
-      const r3 = t3.getBoundingClientRect(), cr = c4.getBoundingClientRect(), w3 = cr.width, h3 = cr.height, pad = 8;
-      let left, top;
-      if (side === "right") {
-        left = Math.min(r3.right + 8, innerWidth - w3 - pad);
-        top = Math.max(pad, Math.min(r3.top - 4, innerHeight - h3 - pad));
-      } else {
-        left = Math.max(pad, Math.min(r3.left, innerWidth - w3 - pad));
-        const below = r3.bottom + 6;
-        top = below + h3 > innerHeight - pad && r3.top - h3 - 6 > pad ? r3.top - h3 - 6 : below;
-        top = Math.max(pad, Math.min(top, innerHeight - h3 - pad));
-      }
-      putAt(c4, left, top);
-    }, [open5]);
-    const on2 = {
-      ref: at2,
-      "aria-describedby": id2,
-      onMouseEnter: () => show4(false),
-      onMouseLeave: hide,
-      onFocus: () => show4(true),
-      onBlur: hide,
-      onKeyDown: (e3) => {
-        if (e3.key === "Escape" && open5) {
-          e3.stopPropagation();
-          hide();
-        }
-      }
-    };
-    const card = /* @__PURE__ */ u3("span", { id: id2, role: "tooltip", class: "hovercard" + (wide2 ? " wide" : ""), ref: box, hidden: !open5, children: (!lazy || open5) && tip });
-    return { on: on2, card, show: show4, open: open5 };
-  }
-  function Hover({ label, cls = "", tip, wide: wide2, lazy }) {
-    const { on: on2, card, show: show4 } = useHoverCard(tip, { wide: wide2, lazy });
-    return /* @__PURE__ */ u3("span", { class: "hovers " + cls, tabIndex: 0, ...on2, onClick: () => show4(true), children: [
-      label,
-      card
-    ] });
-  }
-
-  // web/src/Spark.tsx
-  function Spark({ values, w: w3 = 96, h: h3 = 24, title }) {
-    const lo = Math.min(...values), hi = Math.max(...values), span = hi - lo || 1;
-    const points = values.map((v3, i3) => `${(i3 / Math.max(1, values.length - 1) * w3).toFixed(1)},${(h3 - 2 - (v3 - lo) / span * (h3 - 4)).toFixed(1)}`).join(" ");
-    return /* @__PURE__ */ u3("svg", { class: "spark", viewBox: `0 0 ${w3} ${h3}`, role: title ? "img" : void 0, "aria-label": title, children: /* @__PURE__ */ u3("polyline", { points, fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linejoin": "round", "stroke-linecap": "round" }) });
-  }
-
   // web/src/status/stopFor.ts
   var iso = (d3) => d3.toISOString().replace(/\.\d{3}Z$/, "Z");
   var at = (now2, days, hour) => new Date(now2.getFullYear(), now2.getMonth(), now2.getDate() + days, hour);
@@ -1522,6 +1395,125 @@
     );
   }
 
+  // web/src/parts/place.ts
+  function putAt(el3, left, top) {
+    el3.style.left = "0px";
+    el3.style.top = "0px";
+    const o3 = el3.getBoundingClientRect();
+    el3.style.left = "100px";
+    el3.style.top = "100px";
+    const p3 = el3.getBoundingClientRect();
+    const kx = (p3.left - o3.left) / 100 || 1, ky = (p3.top - o3.top) / 100 || 1;
+    el3.style.left = `${(left - o3.left) / kx}px`;
+    el3.style.top = `${(top - o3.top) / ky}px`;
+  }
+  function putInside(el3, x3, y3, up) {
+    const pad = 8;
+    const r3 = el3.getBoundingClientRect();
+    const left = Math.max(pad, Math.min(x3, innerWidth - r3.width - pad));
+    let top = y3;
+    if (y3 + r3.height > innerHeight - pad) top = Math.max(pad, (up ?? y3) - r3.height);
+    putAt(el3, left, top);
+  }
+  function scale(el3) {
+    const w3 = el3.offsetWidth;
+    return w3 ? el3.getBoundingClientRect().width / w3 : 1;
+  }
+  function fitMenu(m3, button) {
+    const s3 = m3.style;
+    s3.left = s3.right = s3.top = s3.bottom = s3.maxHeight = s3.overflowY = "";
+    const area = (m3.closest("main") || document.body).getBoundingClientRect();
+    const lo = Math.max(area.left, 0) + 4, hi = Math.min(area.right, innerWidth) - 4;
+    let r3 = m3.getBoundingClientRect();
+    if (r3.left < lo) {
+      s3.left = "0";
+      s3.right = "auto";
+      r3 = m3.getBoundingClientRect();
+    }
+    if (r3.right > hi) {
+      s3.right = "0";
+      s3.left = "auto";
+      r3 = m3.getBoundingClientRect();
+    }
+    if (r3.left < lo) {
+      s3.left = "0";
+      s3.right = "auto";
+    }
+    const b2 = (button || m3.parentElement).getBoundingClientRect();
+    const below = innerHeight - b2.bottom - 12, above = b2.top - 12;
+    if (r3.height <= below) return;
+    const k3 = scale(m3);
+    if (r3.height <= above || above > below) {
+      s3.top = "auto";
+      s3.bottom = "calc(100% + 6px)";
+      if (r3.height > above) {
+        s3.maxHeight = `${above / k3}px`;
+        s3.overflowY = "auto";
+      }
+    } else {
+      s3.maxHeight = `${below / k3}px`;
+      s3.overflowY = "auto";
+    }
+  }
+
+  // web/src/parts/Hover.tsx
+  var made = 0;
+  function useHoverCard(tip, { wide: wide2, side = "below", lazy } = {}) {
+    const [open5, setOpen] = d2(false);
+    const [id2] = d2(() => `hover-${++made}`);
+    const at2 = A2(null);
+    const box = A2(null);
+    const timer = A2(0);
+    const show4 = (soon2) => {
+      clearTimeout(timer.current);
+      if (soon2) setOpen(true);
+      else timer.current = window.setTimeout(() => setOpen(true), 250);
+    };
+    const hide = () => {
+      clearTimeout(timer.current);
+      setOpen(false);
+    };
+    _2(() => {
+      const t3 = at2.current, c4 = box.current;
+      if (!open5 || !t3 || !c4) return;
+      const r3 = t3.getBoundingClientRect(), cr = c4.getBoundingClientRect(), w3 = cr.width, h3 = cr.height, pad = 8;
+      let left, top;
+      if (side === "right") {
+        left = Math.min(r3.right + 8, innerWidth - w3 - pad);
+        top = Math.max(pad, Math.min(r3.top - 4, innerHeight - h3 - pad));
+      } else {
+        left = Math.max(pad, Math.min(r3.left, innerWidth - w3 - pad));
+        const below = r3.bottom + 6;
+        top = below + h3 > innerHeight - pad && r3.top - h3 - 6 > pad ? r3.top - h3 - 6 : below;
+        top = Math.max(pad, Math.min(top, innerHeight - h3 - pad));
+      }
+      putAt(c4, left, top);
+    }, [open5]);
+    const on2 = {
+      ref: at2,
+      "aria-describedby": id2,
+      onMouseEnter: () => show4(false),
+      onMouseLeave: hide,
+      onFocus: () => show4(true),
+      onBlur: hide,
+      onKeyDown: (e3) => {
+        if (e3.key === "Escape" && open5) {
+          e3.stopPropagation();
+          hide();
+        }
+      }
+    };
+    const card = /* @__PURE__ */ u3("span", { id: id2, role: "tooltip", class: "hovercard" + (wide2 ? " wide" : ""), ref: box, hidden: !open5, children: (!lazy || open5) && tip });
+    return { on: on2, card, show: show4, open: open5 };
+  }
+  function Hover({ label, cls = "", tip, wide: wide2, lazy }) {
+    const { on: on2, card, show: show4 } = useHoverCard(tip, { wide: wide2, lazy });
+    return /* @__PURE__ */ u3("span", { class: "hovers " + cls, tabIndex: 0, ...on2, onClick: () => show4(true), children: [
+      label,
+      card
+    ] });
+  }
+
   // web/src/backups/Backups.tsx
   var tookText = (s3) => s3 < 120 ? `${s3} seconds` : `${Math.round(s3 / 60)} minutes`;
   var shortPath = (p3) => {
@@ -1548,21 +1540,15 @@
   function RestoreTile({ t: t3, due, test }) {
     const runs2 = t3.history || [];
     const newest3 = runs2[runs2.length - 1];
-    const timed = runs2.slice().reverse().find((r3) => r3.passed && r3.seconds);
     const failed = !!newest3 && !newest3.passed;
-    const sub = failed ? /* @__PURE__ */ u3("span", { class: "bad", children: [
-      "Failed ",
-      ago(newest3.when),
-      ": ",
-      newest3.summary
-    ] }) : due ? /* @__PURE__ */ u3("span", { class: "warn", children: "Prove the backups open, once a month" }) : (t3.lastSummary || (never(t3.lastTest) ? "Once there is a backup to test" : "Proven in the last 30 days")) + (timed ? ` · in ${tookText(timed.seconds)}` : "");
+    const sub = failed ? /* @__PURE__ */ u3("span", { class: "bad", children: newest3.summary }) : due ? /* @__PURE__ */ u3("span", { class: "warn", children: "Due" }) : null;
     const record2 = runs2.slice(-6).reverse().map((r3) => `${dayText(new Date(r3.when), { day: "numeric", month: "short" })}: ${r3.passed ? "passed" : "failed"}${r3.seconds ? " in " + tookText(r3.seconds) : ""}`);
     return /* @__PURE__ */ u3(Card, { kind: "bkcard", id: "restoreTile", title: record2.length ? `Restore drills on record (${runs2.length}):
 ` + record2.join("\n") : void 0, children: [
       /* @__PURE__ */ u3(CardHead, { title: "Restore test" }),
       /* @__PURE__ */ u3(CardFigure, { figure: /* @__PURE__ */ u3("span", { class: "value" + (failed ? " bad" : ""), children: never(t3.lastTest) ? "Never" : failed ? "Failed" : "Passed" }), label: never(t3.lastTest) ? void 0 : ago(t3.lastTest) }),
-      /* @__PURE__ */ u3("p", { class: "bksub", children: sub }),
-      test && /* @__PURE__ */ u3("div", { class: "bkactions", children: /* @__PURE__ */ u3("button", { id: "restoreTest", class: "small", title: "Duplicati restores a dozen files from last night's Homelab AppData backup, and each is compared with the live file", onClick: test, children: "Test a restore" }) })
+      sub && /* @__PURE__ */ u3("p", { class: "bksub", children: sub }),
+      test && /* @__PURE__ */ u3("div", { class: "bkactions", children: /* @__PURE__ */ u3("button", { id: "restoreTest", class: "small", onClick: test, children: "Test a restore" }) })
     ] });
   }
   var sourceNames = (sources) => sources.map((s3) => s3.split("/").filter(Boolean).pop() || s3).join(", ");
@@ -1618,7 +1604,7 @@
     const needs = [...stale, ...paused];
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3(Card, { kind: "bkcard bklast", id: "copiesTile", children: [
-        /* @__PURE__ */ u3(CardHead, { title: lastNight2 || never(o3.lastRun) ? "Last night" : "Last backup", children: /* @__PURE__ */ u3("span", { class: "muted", children: "Every night at 03:30" }) }),
+        /* @__PURE__ */ u3(CardHead, { title: lastNight2 || never(o3.lastRun) ? "Last night" : "Last backup" }),
         /* @__PURE__ */ u3(
           CardFigure,
           {
@@ -1630,24 +1616,12 @@
                 " copied"
               ] })
             ] }) : "None yet" }),
-            label: never(o3.lastRun) ? void 0 : [lastNight2 ? `Finished ${clockText(new Date(o3.lastRun))}` : ago(o3.lastRun), size2 ? bytes(size2) : "", o3.destinationOK ? `Encrypted to ${placeName(o3.destination)}` : ""].filter(Boolean).join(" · "),
+            label: never(o3.lastRun) ? void 0 : lastNight2 ? clockText(new Date(o3.lastRun)) : ago(o3.lastRun),
             chip: stale.length ? /* @__PURE__ */ u3("span", { class: "bkskipped", children: stale.length === 1 ? `${stale[0].name} skipped` : `${stale.length} skipped` }) : void 0
           }
         ),
         !!o3.nights?.length && /* @__PURE__ */ u3(Nights, { nights: o3.nights, name: (id2) => copies.find((c4) => c4.app === id2)?.name || apps2?.[id2]?.name || id2 }),
-        /* @__PURE__ */ u3("p", { class: "bksub", children: !copies.length ? "The first are made the night after an app with a database starts" : /* @__PURE__ */ u3(S, { children: [
-          !!stale.length && /* @__PURE__ */ u3("span", { class: "bad", children: [
-            "Out of date: ",
-            stale.map((c4) => `${c4.name}, last copied ${ago(c4.newest)}`).join("; "),
-            ". "
-          ] }),
-          !!paused.length && /* @__PURE__ */ u3("span", { children: [
-            `${paused.length} more paused: ${paused.length === 1 ? "its app waits" : "their apps wait"} for ${drivesOf(paused)}`,
-            ". "
-          ] }),
-          !stale.length && !paused.length && `Each under ${o3.staleAfterHours} hours old.`,
-          never(o3.envCopied) ? " Settings file not copied yet." : " The settings file too."
-        ] }) }),
+        !copies.length && /* @__PURE__ */ u3("p", { class: "bksub", children: "None yet" }),
         /* @__PURE__ */ u3("dl", { class: "bkfacts", children: [
           /* @__PURE__ */ u3("div", { children: [
             /* @__PURE__ */ u3("dt", { children: "Next" }),
@@ -1665,7 +1639,7 @@
       ] }),
       /* @__PURE__ */ u3(Card, { kind: "bkcard bkneeds", id: "needsYou", children: [
         /* @__PURE__ */ u3(CardHead, { title: /* @__PURE__ */ u3(S, { children: [
-          "Needs you",
+          "Skipped",
           !!stale.length && /* @__PURE__ */ u3("span", { class: "bkcount", children: stale.length })
         ] }) }),
         needs.length ? /* @__PURE__ */ u3(Rows, { kind: "bkneedlist", children: needs.map((c4) => {
@@ -1681,16 +1655,12 @@
             },
             c4.id
           );
-        }) }) : /* @__PURE__ */ u3("p", { class: "bksub ok", children: "✓ Nothing needs you: every copy is up to date." })
+        }) }) : /* @__PURE__ */ u3("p", { class: "bksub ok", children: "✓ Every copy is up to date." })
       ] }),
       /* @__PURE__ */ u3(RestoreTile, { t: o3.restoreTest || {}, due: o3.restoreDue, test }),
       /* @__PURE__ */ u3(Card, { kind: "bkcard", id: "offsiteTile", children: [
         /* @__PURE__ */ u3(CardHead, { title: "Off-site" }),
-        /* @__PURE__ */ u3(CardFigure, { figure: /* @__PURE__ */ u3("span", { class: "value", children: o3.destinationOK ? placeName(o3.destination) : /* @__PURE__ */ u3("span", { class: "warn", children: "Not set" }) }), label: o3.destinationOK ? "Encrypted before it leaves" : void 0 }),
-        /* @__PURE__ */ u3("p", { class: "bksub", children: o3.destinationOK ? /* @__PURE__ */ u3("span", { title: o3.destination, children: [
-          "In ",
-          lastFolder(o3.destination)
-        ] }) : os === "linux" ? "Put a backup drive or a synced folder in Settings › Backups go to" : "Put a Proton Drive folder in Settings › Backups go to" })
+        /* @__PURE__ */ u3(CardFigure, { figure: /* @__PURE__ */ u3("span", { class: "value", children: o3.destinationOK ? placeName(o3.destination) : /* @__PURE__ */ u3("span", { class: "warn", children: "Not set" }) }), label: o3.destinationOK ? lastFolder(o3.destination) : "Settings › Backups go to" })
       ] }),
       !!gaps?.length && addGap && /* @__PURE__ */ u3(Card, { kind: "bkcard", id: "gapsTile", children: /* @__PURE__ */ u3(Gaps, { gaps, add: addGap }) })
     ] });
@@ -1717,10 +1687,10 @@
   function staleWhy(c4, apps2) {
     if (!apps2 || !c4.app) return "";
     const a3 = apps2[c4.app];
-    if (!a3) return "It isn't installed any more: its last copies are kept.";
-    if (a3.state === "stopped") return "It's stopped, so the nightly copy skips it. Start it, and tonight's copy catches up.";
-    if (a3.state !== "running") return "It isn't running, so the nightly copy skips it.";
-    return "Last night's copy didn't come. Back up now tries again; if it fails, the backup's log says why.";
+    if (!a3) return "Removed";
+    if (a3.state === "stopped") return "Stopped";
+    if (a3.state !== "running") return "Not running";
+    return "";
   }
   function CopyRows({ o: o3, apps: apps2 }) {
     const [picked, setPicked] = d2({});
@@ -1749,11 +1719,8 @@
             /* @__PURE__ */ u3(AppMark, { id: c4.app, name: c4.name, icon: "", small: true }),
             c4.name,
             c4.shrank && /* @__PURE__ */ u3("span", { class: "note bad", children: [
-              "Less than half the night before's ",
-              bytes(c4.before || 0),
-              ": check that ",
-              c4.name,
-              " still has its data"
+              "Under half the night before's ",
+              bytes(c4.before || 0)
             ] }),
             c4.state === "stale" && staleWhy(c4, apps2) && /* @__PURE__ */ u3("span", { class: "note muted", children: staleWhy(c4, apps2) })
           ] }),
@@ -1900,53 +1867,6 @@
       /* @__PURE__ */ u3("div", { class: "sub", children: sub })
     ] });
   }
-  function SavingsTrend({ history: history2 }) {
-    const pts = history2.slice(-90);
-    if (pts.length < 2) return /* @__PURE__ */ u3(S, { children: "in subscriptions" });
-    const first = pts[0], last2 = pts[pts.length - 1];
-    const delta = last2.annual - first.annual;
-    const since = dayText(/* @__PURE__ */ new Date(first.date + "T12:00:00"), { month: "short", day: "numeric" });
-    return /* @__PURE__ */ u3(S, { children: [
-      /* @__PURE__ */ u3(Spark, { values: pts.map((p3) => p3.annual) }),
-      /* @__PURE__ */ u3("span", { class: "trend", children: delta === 0 ? `same since ${since}` : `${delta > 0 ? "+" : "−"}${dollars(Math.abs(delta))} since ${since}` })
-    ] });
-  }
-  function savedSoFar(history2) {
-    const pts = [...history2].sort((a3, b2) => a3.date.localeCompare(b2.date));
-    const byMonth2 = /* @__PURE__ */ new Map();
-    let total = 0;
-    pts.forEach((p3, i3) => {
-      const day3 = /* @__PURE__ */ new Date(p3.date + "T12:00:00");
-      const next = pts[i3 + 1] ? /* @__PURE__ */ new Date(pts[i3 + 1].date + "T12:00:00") : new Date(day3.getTime() + 864e5);
-      for (const d3 = new Date(day3); d3 < next; d3.setDate(d3.getDate() + 1)) {
-        const month3 = `${d3.getFullYear()}-${String(d3.getMonth() + 1).padStart(2, "0")}`;
-        byMonth2.set(month3, (byMonth2.get(month3) || 0) + p3.annual / 365);
-        total += p3.annual / 365;
-      }
-    });
-    const months = [...byMonth2].map(([month3, amount]) => ({ month: month3, amount })).sort((a3, b2) => b2.month.localeCompare(a3.month));
-    return { total, since: pts[0]?.date || "", months };
-  }
-  function SavedHover({ value, history: history2 }) {
-    const s3 = savedSoFar(history2);
-    if (!s3.since) return /* @__PURE__ */ u3(S, { children: value });
-    const since = dayText(/* @__PURE__ */ new Date(s3.since + "T12:00:00"), { month: "short", day: "numeric", year: "numeric" });
-    const monthName3 = (m3) => dayText(/* @__PURE__ */ new Date(m3 + "-15T12:00:00"), { month: "long", year: "numeric" });
-    return /* @__PURE__ */ u3(Hover, { cls: "savedso", label: value, tip: /* @__PURE__ */ u3(S, { children: [
-      /* @__PURE__ */ u3("strong", { children: [
-        "Saved so far: ",
-        dollars(s3.total)
-      ] }),
-      /* @__PURE__ */ u3("span", { class: "muted", children: [
-        "since ",
-        since
-      ] }),
-      /* @__PURE__ */ u3("ul", { class: "savedmonths", children: s3.months.slice(0, 12).map((m3) => /* @__PURE__ */ u3("li", { children: [
-        /* @__PURE__ */ u3("span", { children: monthName3(m3.month) }),
-        /* @__PURE__ */ u3("span", { children: dollars(m3.amount) })
-      ] }, m3.month)) })
-    ] }) });
-  }
   function PauseButton({ paused, onPause }) {
     const [busy2, setBusy] = d2(false);
     const click = async () => {
@@ -1971,15 +1891,6 @@
     const g2 = n3 / 2 ** 30;
     return g2 >= 10 ? String(Math.round(g2)) : g2.toFixed(1).replace(/\.0$/, "");
   }
-  function upFor(booted, now2 = Date.now()) {
-    if (!booted || booted.startsWith("0001-")) return "";
-    const mins = Math.floor((now2 - new Date(booted).getTime()) / 6e4);
-    if (!(mins >= 0)) return "";
-    if (mins < 60) return `Up ${mins <= 1 ? "a minute" : `${mins} minutes`}`;
-    const hours = Math.floor(mins / 60);
-    if (hours < 48) return `Up ${hours === 1 ? "an hour" : `${hours} hours`}`;
-    return `Up ${Math.floor(hours / 24)} days`;
-  }
   function Tiles({ status: st, history: history2, onPause, onChoose, words: words5, start, logs, open: open5, backups, openBackups, mac, machine, week: week2, nights, startAll, seeAll, appsMemory }) {
     if (!st.apps.length) {
       return /* @__PURE__ */ u3(Card, { kind: "emptystate", id: "statusEmpty", children: [
@@ -1997,10 +1908,7 @@
     const span = week2 && week2.days.length > 7 ? "in two weeks" : "this week";
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3(Card, { kind: "tile ovcard", id: "statusApps", children: [
-        /* @__PURE__ */ u3("div", { class: "anthead", children: [
-          /* @__PURE__ */ u3("h2", { children: "Apps" }),
-          /* @__PURE__ */ u3("span", { class: "muted", children: week2?.checked || "" })
-        ] }),
+        /* @__PURE__ */ u3("div", { class: "anthead", children: /* @__PURE__ */ u3("h2", { children: "Apps" }) }),
         /* @__PURE__ */ u3("div", { class: "antfig" + (trouble2.length ? " warn" : ""), children: trouble2.length ? /* @__PURE__ */ u3(S, { children: [
           running5.length,
           /* @__PURE__ */ u3("span", { class: "muted", children: [
@@ -2019,10 +1927,7 @@
             " ",
             lower(words5 ? words5(one) : one.state)
           ] })
-        ] }) : trouble2.length ? /* @__PURE__ */ u3("span", { class: "antwho", children: /* @__PURE__ */ u3("span", { class: "antname", children: troubleLine(trouble2) }) }) : /* @__PURE__ */ u3("span", { children: [
-          "All answering",
-          week2 ? ` · ${outages2 ? `${outages2 === 1 ? "1 day" : `${outages2} days`} with an outage ${span}` : `no outage ${span}`}` : ""
-        ] }) }),
+        ] }) : trouble2.length ? /* @__PURE__ */ u3("span", { class: "antwho", children: /* @__PURE__ */ u3("span", { class: "antname", children: troubleLine(trouble2) }) }) : null }),
         /* @__PURE__ */ u3("div", { class: "antfoot", children: one ? /* @__PURE__ */ u3("span", { class: "ovacts", children: [
           start && one.state !== "running" && /* @__PURE__ */ u3("button", { type: "button", class: "primary small", onClick: () => start(one), children: [
             /* @__PURE__ */ u3(Icon, { name: "start" }),
@@ -2042,10 +1947,7 @@
         ] }) : week2 ? /* @__PURE__ */ u3("span", { class: "ovdays" + (week2.days.length > 7 ? " fourteen" : ""), role: "img", "aria-label": `${span === "this week" ? "This week" : "The last two weeks"}: ${outages2 ? `${outages2} days with an outage` : "no outage"}`, children: week2.days.map((d3, i3) => /* @__PURE__ */ u3("i", { class: d3, title: week2.titles?.[i3] }, i3)) }) : /* @__PURE__ */ u3("span", { class: "antempty" }) })
       ] }),
       /* @__PURE__ */ u3(Card, { kind: "tile ovcard", id: "statusBackups", children: [
-        /* @__PURE__ */ u3("div", { class: "anthead", children: [
-          /* @__PURE__ */ u3("h2", { children: openBackups ? /* @__PURE__ */ u3("button", { type: "button", class: "linkbtn ovtitle", onClick: openBackups, children: "Backups" }) : "Backups" }),
-          /* @__PURE__ */ u3("span", { class: "muted", children: "Every night at 03:30" })
-        ] }),
+        /* @__PURE__ */ u3("div", { class: "anthead", children: /* @__PURE__ */ u3("h2", { children: openBackups ? /* @__PURE__ */ u3("button", { type: "button", class: "linkbtn ovtitle", onClick: openBackups, children: "Backups" }) : "Backups" }) }),
         /* @__PURE__ */ u3("div", { class: "antfig" + (backups?.skipped.length ? " warn" : ""), children: backups ? /* @__PURE__ */ u3(S, { children: [
           backups.copied,
           /* @__PURE__ */ u3("span", { class: "muted", children: [
@@ -2054,39 +1956,27 @@
             " copied"
           ] })
         ] }) : "—" }),
-        /* @__PURE__ */ u3("div", { class: "antline muted", children: !backups ? "Reading last night…" : /* @__PURE__ */ u3("span", { children: [
-          backups.at,
-          backups.skipped.length ? /* @__PURE__ */ u3(S, { children: [
-            " · ",
-            /* @__PURE__ */ u3("span", { class: "warn", children: [
-              backups.skipped.join(", "),
-              " skipped"
-            ] })
-          ] }) : ""
-        ] }) }),
+        /* @__PURE__ */ u3("div", { class: "antline muted", children: backups?.skipped.length ? /* @__PURE__ */ u3("span", { class: "warn", children: [
+          backups.skipped.join(", "),
+          " skipped"
+        ] }) : null }),
         /* @__PURE__ */ u3("div", { class: "antfoot", children: nights?.length ? /* @__PURE__ */ u3("span", { class: "ovdays", role: "img", "aria-label": `The last ${Math.min(14, nights.length)} nights`, children: nights.slice(-14).map((n3) => /* @__PURE__ */ u3("i", { class: nightTone(n3), title: nightWords(n3, (id2) => id2) }, n3.date)) }) : /* @__PURE__ */ u3("span", { class: "antempty" }) })
       ] }),
       mac ? /* @__PURE__ */ u3(MacCard, { mac, facts: machine, appsMemory, updates: u4, onPause }) : machine?.total ? /* @__PURE__ */ u3(MachineCard, { m: machine, appsMemory, updates: u4, onPause }) : /* @__PURE__ */ u3(Card, { kind: "tile ovcard", id: "statusMachine", children: [
-        /* @__PURE__ */ u3("div", { class: "anthead", children: [
-          /* @__PURE__ */ u3("h2", { children: "Updates" }),
-          /* @__PURE__ */ u3("span", { class: "muted" })
-        ] }),
+        /* @__PURE__ */ u3("div", { class: "anthead", children: /* @__PURE__ */ u3("h2", { children: "Updates" }) }),
         /* @__PURE__ */ u3("div", { class: "antfig", children: u4?.paused ? "Paused" : "On" }),
-        /* @__PURE__ */ u3("div", { class: "antline muted", children: u4?.paused ? "Until you resume them" : `Run ${u4?.schedule}` }),
+        /* @__PURE__ */ u3("div", { class: "antline muted" }),
         /* @__PURE__ */ u3("div", { class: "antfoot", children: /* @__PURE__ */ u3(PauseButton, { paused: !!u4?.paused, onPause }) })
       ] })
     ] });
   }
   function MachineCard({ m: m3, appsMemory, updates: u4, onPause }) {
-    const power = m3.power === "battery" ? { words: "On battery", tone: "warn" } : m3.power === "plugged" ? m3.keptAwake ? { words: "Plugged in", tone: "" } : { words: "Plugged in, may sleep", tone: "warn" } : null;
-    return /* @__PURE__ */ u3(Machine, { id: "statusMachine", name: "This machine", free: m3.free, total: m3.total, low: m3.low, line: power ? /* @__PURE__ */ u3("span", { class: power.tone, children: power.words }) : null, u: u4, onPause, memory: m3.memory, appsMemory, booted: m3.booted });
+    const power = m3.power === "battery" ? { words: "On battery", tone: "warn" } : m3.power === "plugged" && !m3.keptAwake ? { words: "May sleep", tone: "warn" } : null;
+    return /* @__PURE__ */ u3(Machine, { id: "statusMachine", name: "This machine", free: m3.free, total: m3.total, low: m3.low, line: power ? /* @__PURE__ */ u3("span", { class: power.tone, children: power.words }) : null, u: u4, onPause, memory: m3.memory, appsMemory });
   }
   function MacCard({ mac, facts: m3, appsMemory, updates: u4, onPause }) {
     const all = facts(mac);
-    const of = (k3) => all.find((f4) => f4.key === k3);
-    const power = of("power"), runtime = of("runtime");
     const wrong = all.filter((f4) => f4.tone !== "ok" && f4.key !== "disk");
-    const fine = [power, runtime].filter((f4) => f4 && f4.tone === "ok").map((f4) => f4.short).join(" · ");
     const stopped2 = mac.h.agent === "stopped" || mac.h.agent === "quit";
     const d3 = (mac.i.disks || [])[0];
     const name = mac.machine.charAt(0).toUpperCase() + mac.machine.slice(1);
@@ -2100,30 +1990,24 @@
         low: !!d3?.low,
         u: u4,
         onPause,
-        line: /* @__PURE__ */ u3(S, { children: [
-          fine && /* @__PURE__ */ u3("span", { children: fine }),
-          wrong.map((f4, i3) => /* @__PURE__ */ u3(S, { children: [
-            fine || i3 ? " · " : "",
-            /* @__PURE__ */ u3("span", { class: f4.tone, children: f4.short })
-          ] }, f4.key))
-        ] }),
+        line: /* @__PURE__ */ u3(S, { children: wrong.map((f4, i3) => /* @__PURE__ */ u3(S, { children: [
+          i3 ? " · " : "",
+          /* @__PURE__ */ u3("span", { class: f4.tone, children: f4.short })
+        ] }, f4.key)) }),
         extra: stopped2 ? /* @__PURE__ */ u3(StartAgent, { id: "startAgentMac", start: mac.startAgent }) : null,
         memory: m3?.memory,
-        appsMemory,
-        booted: m3?.booted
+        appsMemory
       }
     );
   }
-  function Machine({ id: id2, name, free, total, low, line, u: u4, onPause, extra, memory: memory3, appsMemory, booted }) {
+  function Machine({ id: id2, name, free, total, low, line, u: u4, onPause, extra, memory: memory3, appsMemory }) {
     const used = total ? Math.min(100, Math.max(1, Math.round(100 * (1 - free / total)))) : 0;
-    const updates = u4?.paused ? "Updates paused" : `Updates ${u4?.schedule || "nightly"}`;
-    const up = upFor(booted);
     const share4 = memory3 && appsMemory ? Math.min(1, appsMemory / memory3) : 0;
     const pct2 = Math.round(share4 * 100);
     return /* @__PURE__ */ u3(Card, { kind: "tile ovcard", id: id2, children: [
       /* @__PURE__ */ u3("div", { class: "anthead", children: [
         /* @__PURE__ */ u3("h2", { children: name }),
-        /* @__PURE__ */ u3("span", { class: "muted", children: up || updates })
+        u4?.paused ? /* @__PURE__ */ u3("span", { class: "warn", children: "Updates paused" }) : null
       ] }),
       /* @__PURE__ */ u3("div", { class: "antfig" + (low ? " bad" : ""), children: total ? /* @__PURE__ */ u3(S, { children: [
         bytes(free).replace(/ \S+$/, ""),
@@ -2135,17 +2019,13 @@
       ] }) : "—" }),
       /* @__PURE__ */ u3("div", { class: "antline muted", children: [
         line,
-        up ? /* @__PURE__ */ u3(S, { children: [
-          " · ",
-          updates.charAt(0).toLowerCase() + updates.slice(1)
-        ] }) : null,
         extra
       ] }),
       /* @__PURE__ */ u3("div", { class: "antfoot ovmachine", children: [
         memory3 ? /* @__PURE__ */ u3("span", { class: "ovbar memline" + (share4 > 0.85 ? " warn" : ""), children: [
           /* @__PURE__ */ u3("span", { class: "antbar", role: "meter", "aria-label": "Memory the apps use", "aria-valuemin": 0, "aria-valuemax": 100, "aria-valuenow": pct2, children: /* @__PURE__ */ u3("span", { style: { width: `${Math.max(appsMemory ? 2 : 0, pct2)}%` } }) }),
           /* @__PURE__ */ u3("small", { class: "muted", children: [
-            "Memory · ",
+            "Memory ",
             appsMemory ? `${gb(appsMemory)} of ${gb(memory3)} GB` : `${gb(memory3)} GB`
           ] })
         ] }) : total ? /* @__PURE__ */ u3("span", { class: "ovbar", children: [
@@ -2160,16 +2040,6 @@
         /* @__PURE__ */ u3(PauseButton, { paused: !!u4?.paused, onPause })
       ] })
     ] });
-  }
-  function Savings({ status: st, history: history2 }) {
-    if (!st.apps.length) return null;
-    return /* @__PURE__ */ u3(Tile, { label: "Instead of subscriptions", value: /* @__PURE__ */ u3(S, { children: [
-      /* @__PURE__ */ u3(SavedHover, { value: st.savings > 0 ? dollars(st.savings) : "$0", history: history2 }),
-      /* @__PURE__ */ u3("small", { children: " a year" })
-    ] }), sub: /* @__PURE__ */ u3(SavingsTrend, { history: history2 }) });
-  }
-  function mountSavings(el3, props) {
-    R(/* @__PURE__ */ u3(Savings, { ...props }), el3);
   }
   function mountTiles(el3, props) {
     R(/* @__PURE__ */ u3(Tiles, { ...props }), el3);
@@ -2466,11 +2336,11 @@
   }
   function Form(p3) {
     const [edits, setEdits] = d2({});
-    const edit = (key7, value) => {
+    const edit = (key6, value) => {
       setEdits((old) => {
         const next = { ...old };
-        if (value === void 0) delete next[key7];
-        else next[key7] = value;
+        if (value === void 0) delete next[key6];
+        else next[key6] = value;
         p3.on.edited(next);
         return next;
       });
@@ -2942,10 +2812,10 @@
       if (logRef.current) logRef.current.scrollTop = logRef.current.scrollHeight;
     }, [log2]);
     const phrase = o3.everythingElse ? "delete everything" : "uninstall";
-    const set2 = (key7, on3) => {
-      const next = { ...o3, [key7]: on3 };
-      if (key7 === "folder" && on3) next.data = true;
-      if (key7 === "data" && !on3) next.folder = false;
+    const set2 = (key6, on3) => {
+      const next = { ...o3, [key6]: on3 };
+      if (key6 === "folder" && on3) next.data = true;
+      if (key6 === "data" && !on3) next.folder = false;
       setO(next);
       setPlan("");
       setTyped("");
@@ -3787,7 +3657,7 @@
     const goes = Object.entries(app.goesWith || {});
     const needs = (app.dependsOn || []).filter((d3) => catalog2.apps.find((a3) => a3.id === d3)?.kind !== "helper");
     const keys2 = new Set([app, ...(app.dependsOn || []).map((d3) => catalog2.apps.find((a3) => a3.id === d3))].flatMap((a3) => a3?.inputs || []));
-    for (const [key7, q2] of Object.entries(questions)) if (q2.apps.includes(app.id)) keys2.add(key7);
+    for (const [key6, q2] of Object.entries(questions)) if (q2.apps.includes(app.id)) keys2.add(key6);
     const asks = keys2.size;
     if (part === "head") return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3(Crumbs, { trail, here: app.name }),
@@ -3887,22 +3757,22 @@
     if (form2) $("customBody").appendChild(form2);
   }
   function openInstall(ids, about) {
-    const key7 = about?.set ? "set:" + about.set : about?.app || ids[0];
-    if (!key7) return;
+    const key6 = about?.set ? "set:" + about.set : about?.app || ids[0];
+    if (!key6) return;
     navigate("status");
-    pickStatusPart("add:" + key7);
+    pickStatusPart("add:" + key6);
   }
   var shown3 = "";
-  function showStore(key7, trail) {
+  function showStore(key6, trail) {
     place();
-    const set2 = key7.startsWith("set:") ? catalog?.presets.find((p3) => p3.id === key7.slice(4)) : void 0;
-    const app = set2 ? void 0 : catalog?.apps.find((a3) => a3.id === key7);
+    const set2 = key6.startsWith("set:") ? catalog?.presets.find((p3) => p3.id === key6.slice(4)) : void 0;
+    const app = set2 ? void 0 : catalog?.apps.find((a3) => a3.id === key6);
     if (!catalog || !set2 && !app) {
       mountStore($("storeHead"), $("storeFacts"), $("storeNotes"), null);
       return;
     }
-    if (key7 !== shown3 && !installing) {
-      shown3 = key7;
+    if (key6 !== shown3 && !installing) {
+      shown3 = key6;
       selected.clear();
       (set2 ? set2.apps : [app.id]).forEach((id2) => selected.add(id2));
       clearInstall();
@@ -4250,9 +4120,9 @@
         const first = (x3) => !x3 ? thisMachine : typeof x3 === "string" ? x3 : x3.pages[0] || thisMachine;
         pickSettingsPage(page === "Advanced" ? first(apps2[0]) : page);
       },
-      set: async (key7, value) => {
+      set: async (key6, value) => {
         try {
-          await go().SaveSettings({ [key7]: value });
+          await go().SaveSettings({ [key6]: value });
         } catch (e3) {
           showError(e3);
         }
@@ -4516,7 +4386,7 @@
   var form = null;
   var formVersion = 0;
   var settingsView = () => ({ query: $("settingsSearch").value, page: settingsPage, showAll: settingsShowAll });
-  var isSecret = (key7) => !!form?.pages.some((pg) => pg.items.some((s3) => s3.key === key7 && s3.secret));
+  var isSecret = (key6) => !!form?.pages.some((pg) => pg.items.some((s3) => s3.key === key6 && s3.secret));
   var formActions = {
     edited: (edits) => {
       for (const k3 of Object.keys(changed3)) delete changed3[k3];
@@ -4525,12 +4395,12 @@
     },
     // The test checks the saved values, so a value just typed is saved
     // first, with the ones its test reads too (the Domain for the token).
-    test: async (key7, pending2) => {
+    test: async (key6, pending2) => {
       let used = false;
       const save3 = {};
-      for (const k3 of testReads[key7] || []) if (k3 in changed3 && !(isSecret(k3) && changed3[k3] === "")) save3[k3] = changed3[k3];
+      for (const k3 of testReads[key6] || []) if (k3 in changed3 && !(isSecret(k3) && changed3[k3] === "")) save3[k3] = changed3[k3];
       if (pending2 !== void 0) {
-        if (!(isSecret(key7) && pending2 === "")) save3[key7] = pending2;
+        if (!(isSecret(key6) && pending2 === "")) save3[key6] = pending2;
         used = true;
       }
       if (Object.keys(save3).length) {
@@ -4541,23 +4411,23 @@
         }
       }
       try {
-        const r3 = await go().TestSetting(key7);
+        const r3 = await go().TestSetting(key6);
         return { result: { tone: r3.ok ? "ok" : "bad", text: (r3.ok ? "✓ " : "✗ ") + r3.message }, used };
       } catch (e3) {
         return { result: { tone: "bad", text: errorText(e3) }, used };
       }
     },
-    copy: async (key7) => {
+    copy: async (key6) => {
       try {
-        await go().CopySetting(key7);
+        await go().CopySetting(key6);
         return { tone: "ok", text: "✓ Copied. Paste it into Proton Pass; the clipboard clears in 90 seconds." };
       } catch (e3) {
         return { tone: "bad", text: errorText(e3) };
       }
     },
-    choose: async (key7) => {
+    choose: async (key6) => {
       try {
-        return await go().ChooseFolder(key7) || "";
+        return await go().ChooseFolder(key6) || "";
       } catch (e3) {
         showError(e3);
         return "";
@@ -4578,14 +4448,14 @@
       prefixes: [[norm(a3.id), 0], [norm(a3.name), 2], [norm(a3.id.split("-")[0]), 1]]
     }));
     const main2 = (a3) => a3 && a3.helper && a3.stack && apps2.find((b2) => !b2.helper && b2.stack === a3.stack) || a3;
-    const appOf = (key7) => main2(findApp(key7));
-    const findApp = (key7) => {
-      const own2 = apps2.find((a3) => a3.inputs.has(key7));
+    const appOf = (key6) => main2(findApp(key6));
+    const findApp = (key6) => {
+      const own2 = apps2.find((a3) => a3.inputs.has(key6));
       if (own2) return own2;
       let best = null, score = 0;
       for (const a3 of apps2) {
         for (const [p3, bonus] of a3.prefixes) {
-          const sc = key7.startsWith(p3) ? p3.length * 10 + bonus + (a3.helper ? 0 : 3) : 0;
+          const sc = key6.startsWith(p3) ? p3.length * 10 + bonus + (a3.helper ? 0 : 3) : 0;
           if (sc > score) {
             best = a3;
             score = sc;
@@ -4773,26 +4643,26 @@
   var upper = /* @__PURE__ */ new Set(["API", "URL", "DNS", "IP", "HTTP", "HTTPS", "ID", "PDF", "AI", "IGDB", "SSL", "UI", "OCR", "JWT", "SSO", "VPN"]);
   var wordLabels = { DB: "database", NEXTAUTH: "NextAuth", MEILI: "Meilisearch", SCREENSCRAPER: "ScreenScraper", NPM: "Nginx Proxy Manager" };
   var envPrefix = (t3) => t3.toUpperCase().replace(/[^A-Z0-9]+/g, "_") + "_";
-  function keyApp(key7) {
+  function keyApp(key6) {
     let best = null, score = 0;
     for (const a3 of catalog?.apps || []) {
       const first = envPrefix(a3.id.split("-")[0]);
       const prefixes = [envPrefix(a3.id), envPrefix(a3.name)];
       if (a3.kind !== "helper" && envPrefix(a3.name).startsWith(first)) prefixes.push(first);
       for (const p3 of prefixes) {
-        const sc = key7.startsWith(p3) ? p3.length * 2 + (a3.kind === "helper" ? 0 : 1) : 0;
+        const sc = key6.startsWith(p3) ? p3.length * 2 + (a3.kind === "helper" ? 0 : 1) : 0;
         if (sc > score) {
-          best = [a3.name, key7.slice(p3.length)];
+          best = [a3.name, key6.slice(p3.length)];
           score = sc;
         }
       }
     }
     return best;
   }
-  function settingLabel(key7) {
-    if (settingLabels[key7]) return settingLabels[key7];
-    const app = keyApp(key7);
-    const words5 = (app ? app[1] : key7).split("_").filter(Boolean).map((w3) => wordLabels[w3] || (upper.has(w3) ? w3 : w3.toLowerCase()));
+  function settingLabel(key6) {
+    if (settingLabels[key6]) return settingLabels[key6];
+    const app = keyApp(key6);
+    const words5 = (app ? app[1] : key6).split("_").filter(Boolean).map((w3) => wordLabels[w3] || (upper.has(w3) ? w3 : w3.toLowerCase()));
     if (app) return [app[0], ...words5].join(" ");
     const text2 = words5.join(" ");
     return text2.charAt(0).toUpperCase() + text2.slice(1);
@@ -5094,6 +4964,7 @@
     "media-automation": "M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15",
     household: "M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM9 22V12h6v10",
     other: "M12 2a10 10 0 1 0 0 20 10 10 0 1 0 0-20zM8 12h.01M12 12h.01M16 12h.01",
+    backups: "M21 8v13H3V8M1 3h22v5H1zM10 12h4",
     night: "M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z",
     restore: "M1 4v6h6M3.51 15a9 9 0 1 0 2.13-9.36L1 10",
     offsite: "M3 11h18v11H3zM7 11V7a5 5 0 0 1 10 0v4",
@@ -5485,10 +5356,10 @@
     mountSideMenu($("setupSide"), onPhone() ? null : {
       label: "Setup",
       here: setupHere,
-      pick: (key7) => {
-        setupHere = key7;
+      pick: (key6) => {
+        setupHere = key6;
         drawSetupSide(left);
-        goToPart("setup", key7 === "steps" ? null : $("healthTiles"));
+        goToPart("setup", key6 === "steps" ? null : $("healthTiles"));
       },
       items: [
         { key: "steps", label: "Steps", icon: sideIcons.steps, count: left || void 0 },
@@ -7093,7 +6964,6 @@
     const shown9 = items.slice(0, 6);
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3(CardHead, { title: "Downloads", children: /* @__PURE__ */ u3("span", { id: "downloadsLine", class: tone, children: c4.line }) }),
-      c4.warning && /* @__PURE__ */ u3("p", { id: "downloadsWarning", class: full ? "bad" : "warn", children: c4.warning }),
       !!shown9.length && /* @__PURE__ */ u3(Rows, { children: shown9.map((i3, n3) => /* @__PURE__ */ u3(Row, { dot: stateDot[i3.state] ?? "", title: i3.name, sub: i3.words, subTone: i3.state === "stuck" ? "warn" : "", when: i3.app }, n3)) }),
       items.length > shown9.length && /* @__PURE__ */ u3("p", { class: "muted", children: `And ${items.length - shown9.length} more` })
     ] });
@@ -7153,7 +7023,6 @@
         {
           dot: tone(e3),
           title: e3.title || e3.message,
-          sub: e3.title && e3.message && /* @__PURE__ */ u3(Lines, { text: e3.message }),
           end: /* @__PURE__ */ u3("span", { class: "badge", children: topicName[e3.topic] || e3.topic }),
           when: ago(e3.time)
         },
@@ -7974,9 +7843,11 @@
     }
   } catch {
   }
+  var listing = fold.all;
   var folded = [];
   function show3(f4) {
     fold = f4;
+    if (f4.all) listing = true;
     queueMicrotask(() => viewers.forEach((v3) => v3()));
     try {
       localStorage.setItem(foldKey, f4.all ? "all" : JSON.stringify(f4.picked));
@@ -7996,7 +7867,11 @@
   function showEveryApp() {
     setFold({ all: true, picked: {} });
   }
-  var listView = () => fold.all || filter.on || Object.values(fold.picked).some(Boolean);
+  var listView = () => listing || filter.on;
+  function foldAgain() {
+    listing = false;
+    setFold({ all: false, picked: {} });
+  }
   var viewers = [];
   function onListView(f4) {
     viewers.push(f4);
@@ -8197,7 +8072,7 @@
   function ShowAll() {
     const f4 = useFold();
     const on2 = useFilter().on;
-    return /* @__PURE__ */ u3(S, { children: on2 ? /* @__PURE__ */ u3(FilterBox, {}) : /* @__PURE__ */ u3("button", { id: "statusAll", class: "linkbtn", onClick: () => setFold({ all: !f4.all, picked: {} }), children: f4.all ? "Fold them again" : "Show every app" }) });
+    return /* @__PURE__ */ u3(S, { children: on2 ? /* @__PURE__ */ u3(FilterBox, {}) : /* @__PURE__ */ u3("button", { id: "statusAll", class: "linkbtn", onClick: () => f4.all ? foldAgain() : setFold({ all: true, picked: {} }), children: f4.all ? "Fold them again" : "Show every app" }) });
   }
   function mountAppList(el3, props) {
     R(/* @__PURE__ */ u3(AppList, { ...props }), el3);
@@ -8247,7 +8122,7 @@
   function Tile2({ o: o3, p: p3, faded }) {
     const name = (id2) => p3.catalog?.apps.find((a3) => a3.id === id2)?.name || id2;
     const service = o3.replaces.replace(/\s*\(.*\)$/, "");
-    return /* @__PURE__ */ u3("li", { class: "subtile" + (faded ? " faded" : ""), title: o3.condition, children: [
+    return /* @__PURE__ */ u3("li", { class: "subtile" + (faded ? " faded" : ""), children: [
       /* @__PURE__ */ u3("div", { class: "subsvc", children: [
         /* @__PURE__ */ u3(Mark2, { brand: brandOf(void 0, o3.replaces), name: service, size: "lg", auto: true }),
         /* @__PURE__ */ u3("span", { class: "subsvcname", children: [
@@ -8294,13 +8169,9 @@
     const now2 = perService(offers2.filter(runs2));
     const replaced = new Set(now2.map(serviceOf));
     const more2 = perService(offers2.filter((o3) => !runs2(o3) && !replaced.has(serviceOf(o3))));
-    const counted2 = now2.filter((o3) => !isLibrary(o3)), library = now2.filter(isLibrary);
+    const counted2 = now2.filter((o3) => !isLibrary(o3));
     const year = counted2.reduce((t3, o3) => t3 + o3.annual, 0), month3 = counted2.reduce((t3, o3) => t3 + o3.monthly, 0);
-    const libraryYear = library.reduce((t3, o3) => t3 + o3.annual, 0);
     const could = more2.filter((o3) => !isLibrary(o3)).reduce((t3, o3) => t3 + o3.annual, 0);
-    const pts = p3.history.filter((x3) => x3.annual > 0);
-    const since = pts.length > 1 ? pts[pts.length - 1].annual - pts[0].annual : 0;
-    const sinceDay = pts.length > 1 ? (/* @__PURE__ */ new Date(pts[0].date + "T12:00:00")).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "";
     const appName2 = (id2) => p3.catalog?.apps.find((a3) => a3.id === id2)?.name || id2;
     const cats = p3.catalog?.categories || [];
     const byCat = /* @__PURE__ */ new Map();
@@ -8312,15 +8183,11 @@
     return /* @__PURE__ */ u3("div", { class: "subpage", children: [
       /* @__PURE__ */ u3("div", { class: "row header", children: /* @__PURE__ */ u3("div", { children: [
         /* @__PURE__ */ u3("h1", { children: "Subscriptions" }),
-        /* @__PURE__ */ u3("p", { class: "lead", children: p3.offers ? `${money2(year)} a year, ${money2(month3)} a month, instead of ${counted2.length} subscriptions` : "Reading the prices…" }),
-        libraryYear > 0 && /* @__PURE__ */ u3("p", { class: "muted sublibrary", children: `+ ${money2(libraryYear)} a year more if you own the media (${library.length} like ${library[0].replaces.replace(/\s*\(.*\)$/, "")})` })
+        /* @__PURE__ */ u3("p", { class: "lead", children: p3.offers ? `${money2(year)} a year · ${money2(month3)} a month` : "Reading the prices…" })
       ] }) }),
       /* @__PURE__ */ u3("div", { class: "subtop", children: [
         /* @__PURE__ */ u3(Card, { kind: "subcard", id: "subWhere", children: [
-          /* @__PURE__ */ u3("div", { class: "anthead", children: [
-            /* @__PURE__ */ u3("h2", { children: "Where it comes from" }),
-            /* @__PURE__ */ u3("span", { class: "muted", children: since > 0 ? `+${money2(since)} since ${sinceDay}` : "" })
-          ] }),
+          /* @__PURE__ */ u3("div", { class: "anthead", children: /* @__PURE__ */ u3("h2", { children: "Where it comes from" }) }),
           year > 0 ? /* @__PURE__ */ u3(S, { children: [
             /* @__PURE__ */ u3("div", { class: "subbar", role: "img", "aria-label": parts3.map((x3) => `${x3.label} ${money2(x3.n)}`).join(", "), children: parts3.map((x3) => /* @__PURE__ */ u3("span", { style: { width: `${100 * x3.n / year}%`, background: x3.tone } }, x3.id)) }),
             /* @__PURE__ */ u3("ul", { class: "sublegend", children: parts3.map((x3) => /* @__PURE__ */ u3("li", { children: [
@@ -8331,22 +8198,16 @@
           ] }) : /* @__PURE__ */ u3("p", { class: "muted", children: "None of your apps replaces a paid service yet." })
         ] }),
         /* @__PURE__ */ u3(Card, { kind: "subcard", id: "subCould", children: [
-          /* @__PURE__ */ u3("div", { class: "anthead", children: [
-            /* @__PURE__ */ u3("h2", { children: [
-              "Could save ",
-              money2(could),
-              " more"
-            ] }),
-            /* @__PURE__ */ u3("span", { class: "muted", children: "a year" })
-          ] }),
+          /* @__PURE__ */ u3("div", { class: "anthead", children: /* @__PURE__ */ u3("h2", { children: [
+            "Could save ",
+            money2(could),
+            " more a year"
+          ] }) }),
           /* @__PURE__ */ u3("ul", { class: "subnext", children: more2.filter((o3) => !isLibrary(o3)).slice(0, 3).map((o3) => /* @__PURE__ */ u3("li", { children: /* @__PURE__ */ u3("button", { type: "button", class: "subapp", onClick: () => p3.open(o3.apps[0]), children: [
             /* @__PURE__ */ u3("span", { class: "sublogos", "aria-hidden": "true", children: /* @__PURE__ */ u3(AppMark, { id: o3.apps[0], name: appName2(o3.apps[0]), icon: p3.icons?.[o3.apps[0]] || "", small: true }) }),
             /* @__PURE__ */ u3("span", { class: "subnames", children: [
               /* @__PURE__ */ u3("strong", { children: o3.apps.map(appName2).join(" + ") }),
-              /* @__PURE__ */ u3("span", { class: "muted", children: [
-                "instead of ",
-                o3.replaces
-              ] })
+              /* @__PURE__ */ u3("span", { class: "muted", children: o3.replaces })
             ] }),
             /* @__PURE__ */ u3("span", { class: "subprice", children: /* @__PURE__ */ u3("strong", { children: money2(o3.annual) }) })
           ] }) }, o3.replaces + o3.apps.join())) })
@@ -8374,7 +8235,7 @@
   var plainOf = (s3) => s3.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
   var wordsOf = (x3) => plainOf([x3.name, x3.description, ...x3.aliases || [], ...x3.replaces || []].join(" "));
   var doing2 = { start: "Starting…", stop: "Stopping…", restart: "Restarting…", update: "Updating…", rollback: "Rolling back…" };
-  function upFor2(since, now2 = Date.now()) {
+  function upFor(since, now2 = Date.now()) {
     const mins = Math.max(0, Math.round((now2 - new Date(since).getTime()) / 6e4)), hours = Math.round(mins / 60);
     return mins < 2 ? "Up a minute" : mins < 60 ? `Up ${mins} min` : hours < 48 ? `Up ${hours} ${hours === 1 ? "hour" : "hours"}` : `Up ${Math.round(hours / 24)} days`;
   }
@@ -8384,7 +8245,7 @@
     const [cls, words5] = stateOf(a3, p3.batteryPaused, p3.held);
     if (pend?.failed) return ["bad", `Could not ${pend.action}`];
     if (cls === "ok" && a3.health === "native") return [cls, "Running"];
-    return [cls, cls === "ok" && a3.since ? upFor2(a3.since, now2) : words5];
+    return [cls, cls === "ok" && a3.since ? upFor(a3.since, now2) : words5];
   }
   function Tile3({ a: a3, p: p3, menu: menu2, setMenu }) {
     const [cls, line] = tileLine(a3, p3);
@@ -8526,6 +8387,13 @@
     ] });
   }
   var mountCategoryPage = (el3, props) => R(props && /* @__PURE__ */ u3(CategoryPage, { ...props }), el3);
+
+  // web/src/Spark.tsx
+  function Spark({ values, w: w3 = 96, h: h3 = 24, title }) {
+    const lo = Math.min(...values), hi = Math.max(...values), span = hi - lo || 1;
+    const points = values.map((v3, i3) => `${(i3 / Math.max(1, values.length - 1) * w3).toFixed(1)},${(h3 - 2 - (v3 - lo) / span * (h3 - 4)).toFixed(1)}`).join(" ");
+    return /* @__PURE__ */ u3("svg", { class: "spark", viewBox: `0 0 ${w3} ${h3}`, role: title ? "img" : void 0, "aria-label": title, children: /* @__PURE__ */ u3("polyline", { points, fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linejoin": "round", "stroke-linecap": "round" }) });
+  }
 
   // web/src/status/Analytics.tsx
   var keepTotals = 360;
@@ -8969,74 +8837,6 @@
     R(el3.hidden ? null : /* @__PURE__ */ u3(Usage, { ...props }), el3);
   }
 
-  // web/src/status/Overnight.tsx
-  function nightOf(now2) {
-    const d3 = new Date(now2);
-    if (d3.getHours() < 5 || d3.getHours() >= 12) return null;
-    const from2 = new Date(d3.getFullYear(), d3.getMonth(), d3.getDate() - 1, 20).getTime();
-    return [from2, now2];
-  }
-  function overnightWords(n3) {
-    const night = nightOf(n3.now);
-    if (!night) return null;
-    const [from2, to] = night;
-    const within = (t3) => {
-      const ms = t3 ? new Date(t3).getTime() : NaN;
-      return ms >= from2 && ms <= to;
-    };
-    const parts3 = [];
-    const updated = n3.apps.filter((a3) => within(a3.updatedAt));
-    if (updated.length) parts3.push(updated.length === 1 ? `${updated[0].name} updated` : `${updated.length} apps updated`);
-    const back3 = n3.events.filter((e3) => within(e3.time) && (e3.tags?.includes("rewind") || /rolled back/i.test(e3.title || "")));
-    if (back3.length) parts3.push(`${back3.length} rolled back`);
-    if (n3.copies) {
-      const made2 = n3.copies.filter((c4) => within(c4.newest));
-      const size2 = made2.reduce((t3, c4) => t3 + (c4.size || 0), 0);
-      if (made2.length) parts3.push(size2 > 0 ? `a backup of ${bytes(size2)}` : "the backup ran");
-    }
-    const down = Object.entries(n3.outages).filter(([, list]) => list.some((o3) => (o3.to ? new Date(o3.to).getTime() : to) >= from2 && new Date(o3.from).getTime() <= to));
-    const loud = n3.events.filter((e3) => within(e3.time) && (e3.priority || 3) >= 4 && !back3.includes(e3));
-    if (down.length) {
-      const name = n3.apps.find((a3) => a3.id === down[0][0])?.name || down[0][0];
-      parts3.push(down.length === 1 ? `${name} was down for a while` : `${down.length} apps were down for a while`);
-    } else if (loud.length) {
-      parts3.push(loud.length === 1 ? "1 alert to look at" : `${loud.length} alerts to look at`);
-    } else if (n3.watched) {
-      parts3.push("nothing needed you");
-    }
-    return parts3.length ? "Overnight: " + parts3.join(", ") + "." : null;
-  }
-  var key3 = "homelab.overnightHidden";
-  var today = (now2) => new Date(now2).toDateString();
-  var hiddenOn = "";
-  var hiddenToday = (now2) => {
-    if (hiddenOn === today(now2)) return true;
-    try {
-      return localStorage.getItem(key3) === today(now2);
-    } catch {
-      return false;
-    }
-  };
-  function Overnight({ words: words5, hide }) {
-    return /* @__PURE__ */ u3("p", { class: "overnight", role: "status", children: [
-      /* @__PURE__ */ u3("span", { children: words5 }),
-      /* @__PURE__ */ u3("button", { type: "button", class: "linkbtn", onClick: hide, children: "Hide until tomorrow" })
-    ] });
-  }
-  function mountOvernight(el3, n3) {
-    const words5 = hiddenToday(n3.now) ? null : overnightWords(n3);
-    el3.hidden = !words5;
-    const hide = () => {
-      hiddenOn = today(Date.now());
-      try {
-        localStorage.setItem(key3, hiddenOn);
-      } catch {
-      }
-      mountOvernight(el3, n3);
-    };
-    R(words5 ? /* @__PURE__ */ u3(Overnight, { words: words5, hide }) : null, el3);
-  }
-
   // web/src/status/healthLine.ts
   var apps = null;
   var checks = [];
@@ -9107,14 +8907,13 @@
     const addGap = () => backupTask("duplicati-setup", "Adding the backup job…", "Backup job added", "Adding the job stopped: the log says why");
     mountBackupTiles($("backupTiles"), { o: o3, os: osName, test: testable2 ? test : void 0, apps: statusData.value ? statusById : void 0, start: (a3) => appActions.act(a3, "start"), gaps, addGap });
     mountCopyRows($("backupRows"), { o: o3, apps: statusData.value ? statusById : void 0 });
-    backupsNeed = (o3.copies || []).filter((c4) => c4.state === "stale" || c4.state === "paused").length;
-    drawBackupsSide();
     mountVault($("vaultCard"), { o: o3 });
     $("kopiaCard").hidden = !o3.kopia;
     mountKopia($("kopiaCard"), o3.kopia ? { k: o3.kopia, test: () => backupTask("restore-test-kopia", "Testing Kopia's restore (a few minutes)…", "Kopia's restore test passed", "Kopia's restore test failed: the log says why") } : null);
     const appDown = (c4) => !!c4.app && !!statusById[c4.app] && statusById[c4.app].state !== "running";
     const problems = (o3.copies || []).filter((c4) => c4.state === "stale" && !appDown(c4)).length + (o3.plainExports || []).length + (o3.kopia?.failed ? 1 : 0);
     $("backupsCount").textContent = problems ? String(problems) : "";
+    setBackupProblems(problems);
     const dup = statusById.duplicati;
     $("openDuplicati").hidden = !(dup?.state === "running" && dup.url);
     $("openDuplicati").onclick = () => go().Open(dup.url);
@@ -9227,27 +9026,7 @@
     }
     btn.disabled = false;
   };
-  var backupsNeed = 0;
-  var backupsHere = "night";
-  var backupParts = [
-    ["night", "Last night", sideIcons.night, "copiesTile"],
-    ["needs", "Needs you", sideIcons.attention, "needsYou"],
-    ["restore", "Restore test", sideIcons.restore, "restoreTile"],
-    ["offsite", "Off-site", sideIcons.offsite, "offsiteTile"],
-    ["apps", "Each app", sideIcons.apps, "copiesCard"]
-  ];
-  function drawBackupsSide() {
-    mountSideMenu($("backupsSide"), {
-      label: "Backups",
-      here: backupsHere,
-      pick: (key7) => {
-        backupsHere = key7;
-        drawBackupsSide();
-        goToPart("backups", key7 === "night" ? null : document.getElementById(backupParts.find((p3) => p3[0] === key7)[3]));
-      },
-      items: backupParts.filter((p3) => !!document.getElementById(p3[3])).map(([key7, label, icon]) => ({ key: key7, label, icon, count: key7 === "needs" ? backupsNeed : void 0 }))
-    });
-  }
+  R(k(Crumbs, { trail: [{ label: "Status", go: () => pickStatusPart("overview") }], here: "Backups" }), $("backupsCrumbs"));
 
   // web/src/screens/status.ts
   var offers = null;
@@ -9257,19 +9036,7 @@
   var held = {};
   var weekUp = {};
   var outages = {};
-  var lastEvents = [];
-  var watched = false;
   var backupsAsked = 0;
-  function drawOvernight() {
-    if (!lastStatus) return;
-    const now2 = Date.now();
-    if (nightOf(now2) && !backupsData.value && now2 - backupsAsked > 6e4) {
-      backupsAsked = now2;
-      backupsData.fresh(10 * 6e4);
-    }
-    mountOvernight($("overnightLine"), { now: now2, apps: lastStatus.apps, events: lastEvents, outages, copies: backupsData.value?.copies || null, watched });
-  }
-  backupsData.watch(drawOvernight);
   backupsData.watch(() => {
     if (lastStatus) renderTiles(lastStatus);
   });
@@ -9351,7 +9118,6 @@
       machine: onPhone() || phoneMachine?.memory ? phoneMachine : null,
       appsMemory: lastStats.reduce((n4, x3) => n4 + parseMem(x3.mem), 0)
     });
-    mountSavings($("savingsCard"), { status: st, history: savingsHistory });
     if (!backupsData.value && Date.now() - backupsAsked > 6e4) {
       backupsAsked = Date.now();
       backupsData.fresh(10 * 6e4);
@@ -9429,12 +9195,29 @@
   var statusParts = [];
   var statusSide = [];
   var statusHere = "overview";
+  var backupProblems = 0;
+  function setBackupProblems(n3) {
+    if (n3 !== backupProblems) {
+      backupProblems = n3;
+      drawStatusSide();
+    }
+  }
+  function statusSideChanged() {
+    drawStatusSide();
+  }
   function drawStatusSide() {
+    const onBackups = $("backups").classList.contains("active");
     const menu2 = {
       label: "Status",
-      here: statusHere,
+      here: onBackups ? "backups" : statusHere,
       pick: pickStatusPart,
-      items: [{ key: "overview", label: "Overview", icon: sideIcons.overview }, { key: "analytics", label: "Analytics", icon: sideIcons.analytics }, { key: "subscriptions", label: "Subscriptions", icon: sideIcons.finance }, ...statusSide]
+      items: [
+        { key: "overview", label: "Overview", icon: sideIcons.overview },
+        { key: "analytics", label: "Analytics", icon: sideIcons.analytics },
+        { key: "subscriptions", label: "Subscriptions", icon: sideIcons.finance },
+        { key: "backups", label: "Backups", icon: sideIcons.backups, count: backupProblems || void 0 },
+        ...statusSide
+      ]
     };
     mountSideMenu($("statusSide"), menu2);
     mountSideDropdown($("statusChips"), onPhone() ? { ...menu2, label: "Status parts", here: statusHere.startsWith("add:") ? "" : statusHere } : null);
@@ -9541,22 +9324,27 @@
     box.value = "";
     pickStatusPart("find", text2);
   });
-  function pickStatusPart(key7, find2 = "") {
+  function pickStatusPart(key6, find2 = "") {
+    if (key6 === "backups") {
+      navigate("backups");
+      focusScreen("backups");
+      return;
+    }
     findText = find2;
     if (!$("status").classList.contains("active")) navigate("status");
-    if (key7 === statusHere && key7 !== "find") {
+    if (key6 === statusHere && key6 !== "find") {
       goToPart("status", null);
       return;
     }
-    if (key7.startsWith("add:") && !statusHere.startsWith("add:")) storeFrom = statusHere;
-    statusHere = key7;
+    if (key6.startsWith("add:") && !statusHere.startsWith("add:")) storeFrom = statusHere;
+    statusHere = key6;
     drawStatusSide();
     drawStatusPart();
     goToPart("status", null);
     tabChanged();
   }
-  keepsTabs("status", () => statusHere, (key7) => {
-    statusHere = key7;
+  keepsTabs("status", () => statusHere, (key6) => {
+    statusHere = key6;
     drawStatusSide();
     drawStatusPart();
   });
@@ -9794,7 +9582,6 @@
     $("statusRows").closest("table").hidden = false;
     lastStatus = st;
     renderAppList(st);
-    drawOvernight();
     if (lastWatch) drawWatchdog();
     if (st.checking && !kept6) {
       if (st !== boardStatus) answerPages(st);
@@ -9841,8 +9628,6 @@
     }
     weekUp = w3.week || {};
     outages = w3.outages || {};
-    watched = true;
-    drawOvernight();
     if (appList && lastStatus) renderAppList(lastStatus);
     card.hidden = false;
     drawWatchdog();
@@ -9947,8 +9732,6 @@
       navigate("setup");
     };
     card.hidden = false;
-    lastEvents = events || [];
-    drawOvernight();
     const log2 = () => go().AlertLog();
     const watch2 = () => lastWatch;
     const snooze = async (check, hours) => {
@@ -10911,8 +10694,8 @@
   }
   function Stopped({ stopped: stopped2 }) {
     const reading3 = stopped2 === "reading", s3 = reading3 ? null : stopped2;
-    const today2 = s3?.today || [];
-    const more2 = (s3?.todayCount || 0) - today2.length;
+    const today = s3?.today || [];
+    const more2 = (s3?.todayCount || 0) - today.length;
     const head = s3 && (s3.todayCount === 1 ? "1 today" : `${s3.todayCount} today`) + (s3.bannedNow ? ` · ${s3.bannedNow} banned now` : "");
     const quiet2 = !s3 ? "" : s3.week ? `Nothing yet today; ${s3.week === 1 ? "1" : s3.week} this week${s3.recent?.[0] ? `, the last ${ago(s3.recent[0].when)}` : ""}.` : "Nothing this week.";
     return /* @__PURE__ */ u3(Card, { kind: "alerts pagecard", id: "appStopped", children: [
@@ -10920,8 +10703,8 @@
       reading3 && /* @__PURE__ */ u3(Empty, { children: "Asking CrowdSec…" }),
       !s3 && !reading3 && /* @__PURE__ */ u3(Empty, { children: "CrowdSec can't be read: it and the proxy need to be running." }),
       s3 && !s3.enforced && /* @__PURE__ */ u3(Rows, { children: /* @__PURE__ */ u3(Row, { dot: "bad", title: "Bans aren't reaching the proxy", sub: `${s3.bouncer}. Status › Protection › Fix reconnects them.` }) }),
-      s3 && (today2.length ? /* @__PURE__ */ u3(Rows, { children: [
-        today2.map((a3, i3) => /* @__PURE__ */ u3(
+      s3 && (today.length ? /* @__PURE__ */ u3(Rows, { children: [
+        today.map((a3, i3) => /* @__PURE__ */ u3(
           Row,
           {
             dot: a3.banned ? "bad" : "",
@@ -11138,8 +10921,8 @@
     for (let i3 = 6; i3 >= 0; i3--) {
       const d3 = /* @__PURE__ */ new Date();
       d3.setDate(d3.getDate() - i3);
-      const key7 = `${d3.getFullYear()}-${String(d3.getMonth() + 1).padStart(2, "0")}-${String(d3.getDate()).padStart(2, "0")}`;
-      const [ok, all] = runs2[key7] || [0, 0];
+      const key6 = `${d3.getFullYear()}-${String(d3.getMonth() + 1).padStart(2, "0")}-${String(d3.getDate()).padStart(2, "0")}`;
+      const [ok, all] = runs2[key6] || [0, 0];
       out.push({ letter: dayText(d3, { weekday: "narrow" }), name: dayText(d3, { weekday: "long", day: "numeric", month: "short" }), weekday: dayText(d3, { weekday: "long" }), ok, all, today: i3 === 0 });
     }
     return out;
@@ -11365,13 +11148,13 @@
     const a3 = Math.floor(lo * 100) / 100, b2 = Math.ceil(hi * 100) / 100;
     return Math.abs(of(a3) - charge) <= Math.abs(of(b2) - charge) ? a3 : b2;
   }
-  function papers(a3, monthly, today2) {
+  function papers(a3, monthly, today) {
     if (!(a3.original > 0) || !/^\d{4}-\d\d-\d\d$/.test(a3.firstDue || "") || !(monthly > 0)) return null;
     const odd = a3.term && a3.charge ? oddDays(a3.firstDue, a3.original, a3.rate || 0, monthly, a3.charge) : 0;
     const rows = installments(a3.firstDue, a3.original, a3.rate || 0, monthly, odd);
     if (!rows) return null;
     let made2 = 0;
-    while (made2 < rows.length && rows[made2].date < today2) made2++;
+    while (made2 < rows.length && rows[made2].date < today) made2++;
     return { rows, made: made2, owed: made2 ? rows[made2 - 1].after : c3(a3.original) };
   }
 
@@ -11687,14 +11470,14 @@
       return { owned, owes, secured, net };
     };
     const out = [];
-    const today2 = parseDay(v3.today);
+    const today = parseDay(v3.today);
     for (let i3 = back3; i3 >= 1; i3--) {
-      const end = isoDay(new Date(today2.getFullYear(), today2.getMonth() - i3 + 1, 0));
+      const end = isoDay(new Date(today.getFullYear(), today.getMonth() - i3 + 1, 0));
       out.push({ date: end, ahead: false, estimated: end < firstKept(v3) && !!v3.worthEstimated?.length, ...split2((a3) => balanceOn(v3, a3, end)) });
     }
     out.push({ date: v3.today, ahead: false, ...split2((a3) => todayOf(v3, a3)) });
     for (let i3 = 1; i3 <= ahead2; i3++) {
-      const end = isoDay(new Date(today2.getFullYear(), today2.getMonth() + i3 + 1, 0));
+      const end = isoDay(new Date(today.getFullYear(), today.getMonth() + i3 + 1, 0));
       if (!v3.periods.some((q2) => q2.last >= end)) break;
       const p3 = [...v3.periods].reverse().find((q2) => q2.last <= end && q2.accounts);
       if (!p3) break;
@@ -11725,11 +11508,11 @@
   }
   var monthsBack = 6;
   function monthPeriods(v3) {
-    const today2 = parseDay(v3.today);
+    const today = parseDay(v3.today);
     const reach = (v3.days || []).at(-1)?.date || v3.today;
     const months = [];
     for (let k3 = -monthsBack; ; k3++) {
-      const first = new Date(today2.getFullYear(), today2.getMonth() + k3, 1);
+      const first = new Date(today.getFullYear(), today.getMonth() + k3, 1);
       const start = isoDay(first);
       if (k3 > 0 && start > reach) break;
       const last2 = isoDay(new Date(first.getFullYear(), first.getMonth() + 1, 0));
@@ -11975,8 +11758,8 @@
   }
 
   // web/src/finances/reportData.ts
-  function ranges(today2, first) {
-    const d3 = parseDay(today2);
+  function ranges(today, first) {
+    const d3 = parseDay(today);
     const month3 = (n3) => isoDay(new Date(d3.getFullYear(), d3.getMonth() + n3, 1));
     const end = (n3) => isoDay(new Date(d3.getFullYear(), d3.getMonth() + n3 + 1, 0));
     return [
@@ -12005,12 +11788,12 @@
     for (const t3 of txs) {
       if (!inRange(t3, r3)) continue;
       for (const p3 of parts(t3, income)) {
-        const key7 = p3.category.toLowerCase();
-        const g2 = parent.get(key7) || name.get(key7) || p3.category;
+        const key6 = p3.category.toLowerCase();
+        const g2 = parent.get(key6) || name.get(key6) || p3.category;
         const top = groups4.get(g2) || { name: g2, amount: 0, children: [] };
         top.amount += p3.amount;
-        if (parent.get(key7)) {
-          const child = top.children.find((c4) => c4.name.toLowerCase() === key7) || (top.children.push({ name: name.get(key7) || p3.category, amount: 0 }), top.children.at(-1));
+        if (parent.get(key6)) {
+          const child = top.children.find((c4) => c4.name.toLowerCase() === key6) || (top.children.push({ name: name.get(key6) || p3.category, amount: 0 }), top.children.at(-1));
           child.amount += p3.amount;
         }
         groups4.set(g2, top);
@@ -12032,11 +11815,11 @@
     const by = /* @__PURE__ */ new Map();
     for (const t3 of txs) {
       if (t3.to || t3.amount >= 0 || !inRange(t3, r3) || !t3.payee) continue;
-      const key7 = t3.payee.toLowerCase();
-      const p3 = by.get(key7) || { payee: t3.payee, amount: 0, count: 0 };
+      const key6 = t3.payee.toLowerCase();
+      const p3 = by.get(key6) || { payee: t3.payee, amount: 0, count: 0 };
       p3.amount -= t3.amount;
       p3.count++;
-      by.set(key7, p3);
+      by.set(key6, p3);
     }
     return [...by.values()].sort((a3, b2) => b2.amount - a3.amount).slice(0, n3);
   }
@@ -12075,8 +11858,8 @@
     return rows.map((row) => row.map((c4, i3) => i3 === 4 ? c4 : cell(c4)).join(",")).join("\r\n") + "\r\n";
   }
   var csvName = (r3, tag = "") => `finances-${r3.from}-to-${r3.to}${tag ? "-" + tag.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "").toLowerCase() : ""}.csv`;
-  function categoryTrend(txs, cats, group2, today2, n3 = 12) {
-    const d3 = parseDay(today2);
+  function categoryTrend(txs, cats, group2, today, n3 = 12) {
+    const d3 = parseDay(today);
     const out = [];
     for (let k3 = n3 - 1; k3 >= 0; k3--) {
       const first = new Date(d3.getFullYear(), d3.getMonth() - k3, 1);
@@ -12086,12 +11869,12 @@
     }
     return out;
   }
-  function twelveMonths(today2) {
-    const d3 = parseDay(today2);
+  function twelveMonths(today) {
+    const d3 = parseDay(today);
     return { key: "twelve", label: "The last 12 months", from: isoDay(new Date(d3.getFullYear(), d3.getMonth() - 11, 1)), to: isoDay(new Date(d3.getFullYear(), d3.getMonth() + 1, 0)) };
   }
-  function yearOnYear(txs, cats, group2, today2) {
-    const d3 = parseDay(today2);
+  function yearOnYear(txs, cats, group2, today) {
+    const d3 = parseDay(today);
     const spent = (from2, to) => byCategory(txs, cats, { key: "", label: "", from: isoDay(from2), to: isoDay(to) }).find((g2) => g2.name.toLowerCase() === group2.toLowerCase())?.amount || 0;
     const start = new Date(d3.getFullYear() - 1, d3.getMonth(), 1);
     const end = new Date(d3.getFullYear() - 1, d3.getMonth(), Math.min(d3.getDate(), new Date(d3.getFullYear() - 1, d3.getMonth() + 1, 0).getDate()));
@@ -12923,9 +12706,9 @@
       problem && /* @__PURE__ */ u3("span", { class: "formerr bad", role: "alert", children: problem })
     ] });
   }
-  function withLogo(plan, key7, img, opened3, had) {
+  function withLogo(plan, key6, img, opened3, had) {
     const logos = { ...plan.logos || {} };
-    if (img) logos[key7] = img;
+    if (img) logos[key6] = img;
     else if (had) delete logos[opened3];
     return Object.keys(logos).length ? logos : void 0;
   }
@@ -13485,9 +13268,9 @@
     }, []);
     const papered = (a3) => a3.kind === "loan" && !!a3.firstDue && (a3.original || 0) > 0;
     const firstShown = groups.flatMap((g2) => accounts.filter((a3) => g2.kinds.includes(a3.kind) && !papered(a3)))[0]?.id;
-    const read = (key7, was) => {
-      const n3 = parseAmount(typed[key7] ?? "");
-      return typed[key7]?.trim() && !isNaN(n3) ? n3 : was;
+    const read = (key6, was) => {
+      const n3 = parseAmount(typed[key6] ?? "");
+      return typed[key6]?.trim() && !isNaN(n3) ? n3 : was;
     };
     const submit = (e3) => {
       e3.preventDefault();
@@ -13495,10 +13278,10 @@
       const wrong = bad ? `${bad.name}: type it without a minus.` : "";
       setProblem(wrong);
       if (wrong) return;
-      const today2 = todayISO();
-      keep4({ ...plan, updated: today2, cushion: Math.max(0, read("cushion", plan.cushion || 0)), accounts: accounts.map((a3) => ({ ...a3, balance: read(a3.id, est(a3)), pending: a3.kind === "card" ? read(a3.id + ":p", a3.pending || 0) : a3.pending, updated: today2 })) });
+      const today = todayISO();
+      keep4({ ...plan, updated: today, cushion: Math.max(0, read("cushion", plan.cushion || 0)), accounts: accounts.map((a3) => ({ ...a3, balance: read(a3.id, est(a3)), pending: a3.kind === "card" ? read(a3.id + ":p", a3.pending || 0) : a3.pending, updated: today })) });
     };
-    const type = (key7) => (e3) => setTyped({ ...typed, [key7]: e3.target.value });
+    const type = (key6) => (e3) => setTyped({ ...typed, [key6]: e3.target.value });
     const [pulled, setPulled] = d2({});
     const fromApp = async (app) => {
       setPulled({ busy: app.name });
@@ -15521,7 +15304,7 @@
   function PostPayWidget({ v: v3, L: L2, sel: sel2, pick, update }) {
     const accounts = (v3.plan.accounts || []).filter(shown6);
     const cols = v3.periods.slice(0, postCols);
-    const today2 = (a3) => owed(a3.kind) ? -todayOf(v3, a3) : todayOf(v3, a3);
+    const today = (a3) => owed(a3.kind) ? -todayOf(v3, a3) : todayOf(v3, a3);
     const at2 = (a3, p3) => owed(a3.kind) ? -(p3.accounts?.[a3.id] ?? 0) : p3.accounts?.[a3.id] ?? todayOf(v3, a3);
     const total = (f4) => accounts.reduce((t3, a3) => t3 + f4(a3), 0);
     const change = (d3) => Math.abs(d3) >= 5e-3 && /* @__PURE__ */ u3("span", { class: "delta " + (d3 < 0 ? "bad" : "ok"), children: signed(d3) });
@@ -15563,9 +15346,9 @@
                 (a3.kind === "card" ? a3.pending ? `${money(a3.pending)} pending` : "" : a3.detail) && /* @__PURE__ */ u3("small", { children: a3.kind === "card" ? `${money(a3.pending)} pending` : a3.detail })
               ] })
             ] }) }),
-            /* @__PURE__ */ u3("td", { class: "today", children: /* @__PURE__ */ u3("span", { class: "num", children: money(today2(a3)) }) }),
+            /* @__PURE__ */ u3("td", { class: "today", children: /* @__PURE__ */ u3("span", { class: "num", children: money(today(a3)) }) }),
             cols.map((p3, i3) => {
-              const was = i3 ? at2(a3, cols[i3 - 1]) : today2(a3), now2 = at2(a3, p3);
+              const was = i3 ? at2(a3, cols[i3 - 1]) : today(a3), now2 = at2(a3, p3);
               return /* @__PURE__ */ u3("td", { class: i3 === sel2 ? "on" : "", children: [
                 /* @__PURE__ */ u3("span", { class: "num" + (a3.id === v3.checking && p3.left < (v3.plan.cushion || 0) ? p3.left < 0 ? " bad" : " warn" : ""), children: money(now2) }),
                 change(now2 - was)
@@ -15574,7 +15357,7 @@
           ] }, a3.id)) }),
           /* @__PURE__ */ u3("tfoot", { children: /* @__PURE__ */ u3("tr", { children: [
             /* @__PURE__ */ u3("th", { scope: "row", children: "Total" }),
-            /* @__PURE__ */ u3("td", { class: "today", children: /* @__PURE__ */ u3("span", { class: "num", children: money(total(today2)) }) }),
+            /* @__PURE__ */ u3("td", { class: "today", children: /* @__PURE__ */ u3("span", { class: "num", children: money(total(today)) }) }),
             cols.map((p3, i3) => /* @__PURE__ */ u3("td", { class: i3 === sel2 ? "on" : "", children: /* @__PURE__ */ u3("span", { class: "num", children: money(total((a3) => at2(a3, p3))) }) }, p3.start))
           ] }) })
         ] }) })
@@ -15613,14 +15396,14 @@
     if (m3.spent <= 0) return null;
     const f4 = fire(m3.spent * 12, have, monthly, withdraw, growth);
     const share4 = Math.min(100, have / f4.target * 100);
-    const set2 = (key7, text2, lo, hi) => {
+    const set2 = (key6, text2, lo, hi) => {
       const n3 = parseAmount(text2);
-      if (isNaN(n3) || n3 < lo || n3 > hi || key7 === "withdraw" && n3 === 0) {
-        setProblem(key7 === "withdraw" ? "A share to spend a year is more than 0 and at most 20%." : "Growth a year is between -10% and 20%.");
+      if (isNaN(n3) || n3 < lo || n3 > hi || key6 === "withdraw" && n3 === 0) {
+        setProblem(key6 === "withdraw" ? "A share to spend a year is more than 0 and at most 20%." : "Growth a year is between -10% and 20%.");
         return;
       }
       setProblem("");
-      keep4({ ...v3.plan, [key7]: n3 });
+      keep4({ ...v3.plan, [key6]: n3 });
     };
     const range = f4.sooner !== null && f4.later !== null && f4.sooner !== f4.later ? ` (${when2(v3.today, f4.sooner)} at ${growth + 2}%, ${when2(v3.today, f4.later)} at ${growth - 2}%)` : "";
     return /* @__PURE__ */ u3(Widget, { title: "Financial independence", span: "all", kind: "fx-fire", children: [
@@ -16169,16 +15952,16 @@
   }
 
   // web/src/finances/widgets/Investments.tsx
-  function readWhen(at2, today2) {
+  function readWhen(at2, today) {
     if (!at2) return "";
     const d3 = new Date(at2);
     if (isNaN(d3.getTime())) return "";
     const day3 = isoDay(d3);
     const time = d3.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
-    const y3 = /* @__PURE__ */ new Date(today2 + "T12:00:00");
+    const y3 = /* @__PURE__ */ new Date(today + "T12:00:00");
     y3.setDate(y3.getDate() - 1);
     const yesterday = isoDay(y3);
-    return day3 === today2 ? `read ${time} today` : day3 === yesterday ? `read yesterday at ${time}` : `read ${dayShort(day3)}`;
+    return day3 === today ? `read ${time} today` : day3 === yesterday ? `read yesterday at ${time}` : `read ${dayShort(day3)}`;
   }
   var share2 = (gain, paid) => Math.abs(paid) < 5e-3 ? "" : `${gain < 0 ? "−" : "+"}${Math.abs(gain / Math.abs(paid) * 100).toFixed(1)}%`;
   var shares = (n3) => amountsHidden() ? "•••" : n3.toLocaleString("en-US", { maximumFractionDigits: n3 < 1 ? 4 : 3 });
@@ -16830,9 +16613,9 @@
 
   // web/src/finances/Worth.tsx
   var ranges2 = [["3", "3 months", 3], ["6", "6 months", 6], ["12", "1 year", 12], ["all", "All", 600]];
-  function ago2(day3, today2) {
+  function ago2(day3, today) {
     if (!day3) return "not typed in yet";
-    const n3 = daysBetween(day3, today2);
+    const n3 = daysBetween(day3, today);
     return n3 <= 0 ? "updated today" : n3 === 1 ? "updated yesterday" : n3 < 14 ? `updated ${n3} days ago` : `updated ${dayShort(day3)}`;
   }
   var month2 = (day3) => monthName(day3).slice(0, 3);
@@ -16847,8 +16630,8 @@
         /* @__PURE__ */ u3(Row, { lead: /* @__PURE__ */ u3(Mark2, { kind: "home", name: "Home" }), title: "A home or a car", sub: "What it is worth, and the loan against it: its equity", end: /* @__PURE__ */ u3("button", { class: "small", onClick: () => edit("account"), children: "Add property" }) })
       ] }) }) }) });
     }
-    const kept6 = parseDay(worthStart(v3)), today2 = parseDay(v3.today);
-    const back3 = Math.max(1, Math.min(ranges2.find(([k3]) => k3 === range)?.[2] ?? 3, (today2.getFullYear() - kept6.getFullYear()) * 12 + today2.getMonth() - kept6.getMonth()));
+    const kept6 = parseDay(worthStart(v3)), today = parseDay(v3.today);
+    const back3 = Math.max(1, Math.min(ranges2.find(([k3]) => k3 === range)?.[2] ?? 3, (today.getFullYear() - kept6.getFullYear()) * 12 + today.getMonth() - kept6.getMonth()));
     const months = worthByMonth(v3, back3, 3);
     const start = months[0];
     const now2 = netWorth(v3);
@@ -17760,8 +17543,8 @@
     }
     return rows.map((row) => row.map((c4, i3) => i3 === 3 || i3 === 5 ? c4 : cell2(c4)).join(",")).join("\r\n") + "\r\n";
   }
-  var planName = (today2) => `finances-plan-${today2}.json`;
-  var aheadName = (today2) => `finances-ahead-${today2}.csv`;
+  var planName = (today) => `finances-plan-${today}.json`;
+  var aheadName = (today) => `finances-ahead-${today}.csv`;
   var monthName2 = (month3) => `finances-${month3}.html`;
   var esc = (s3) => s3.replace(/[&<>"]/g, (c4) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c4]);
   function monthPage(v3, month3, title) {
@@ -18044,18 +17827,18 @@ ${pays}
       /* @__PURE__ */ u3(MonthCard, { L: L2, month: month3, ds: inMonth.map((d3) => days[d3]).filter(Boolean), cushion, today: v3.today })
     ] }) });
   }
-  function MonthCard({ L: L2, month: month3, ds, cushion, today: today2 }) {
+  function MonthCard({ L: L2, month: month3, ds, cushion, today }) {
     const name = parseDay(month3 + "-01").toLocaleDateString(void 0, { month: "long" });
     const events = ds.flatMap((d3) => d3.events);
     const pays = events.filter((e3) => e3.people?.length), bills = events.filter((e3) => !e3.people?.length && e3.amount < 0), comes = events.filter((e3) => !e3.people?.length && e3.amount > 0);
     const charges = ds.flatMap((d3) => d3.charges);
     const sum = (es) => es.reduce((n3, e3) => n3 + e3.amount, 0);
     const who = [...new Set(pays.flatMap((e3) => e3.people || []))].map((id2) => L2.person[id2]?.name || id2);
-    const read = ds.filter((d3) => !d3.past && !d3.later && d3.date >= today2);
+    const read = ds.filter((d3) => !d3.past && !d3.later && d3.date >= today);
     const low = read.reduce((m3, d3) => !m3 || d3.balance < m3.balance ? d3 : m3, void 0);
-    const spent = ds.flatMap((d3) => d3.spent).filter((t3) => !t3.to && (ds.find((d3) => d3.date === t3.date)?.past || t3.date === today2));
+    const spent = ds.flatMap((d3) => d3.spent).filter((t3) => !t3.to && (ds.find((d3) => d3.date === t3.date)?.past || t3.date === today));
     const recIn = spent.filter((t3) => t3.amount > 0).length, recOut = spent.filter((t3) => t3.amount < 0).length;
-    const recNet = ds.filter((d3) => d3.past || d3.date === today2).reduce((n3, d3) => n3 + d3.net, 0);
+    const recNet = ds.filter((d3) => d3.past || d3.date === today).reduce((n3, d3) => n3 + d3.net, 0);
     const plural3 = (n3, one, many = one + "s") => `${n3} ${n3 === 1 ? one : many}`;
     const nothing = !pays.length && !bills.length && !comes.length && !charges.length && !low && !spent.length;
     return /* @__PURE__ */ u3(Widget, { title: `${name} in all`, kind: "fx-monthone", children: /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: [
@@ -18073,7 +17856,7 @@ ${pays}
           whenPlain: true
         }
       ),
-      !!spent.length && /* @__PURE__ */ u3(Row, { title: month3 < today2.slice(0, 7) ? "Recorded" : "Recorded so far", sub: [recIn && `${recIn} in`, recOut && `${recOut} out`].filter(Boolean).join(", ") + " · in your transactions", when: /* @__PURE__ */ u3(Amount, { value: recNet, sign: true, tone: "auto", form: "full" }), whenPlain: true }),
+      !!spent.length && /* @__PURE__ */ u3(Row, { title: month3 < today.slice(0, 7) ? "Recorded" : "Recorded so far", sub: [recIn && `${recIn} in`, recOut && `${recOut} out`].filter(Boolean).join(", ") + " · in your transactions", when: /* @__PURE__ */ u3(Amount, { value: recNet, sign: true, tone: "auto", form: "full" }), whenPlain: true }),
       nothing && /* @__PURE__ */ u3("li", { children: /* @__PURE__ */ u3(Empty, { children: "Nothing comes or goes this month." }) })
     ] }) });
   }
@@ -18244,7 +18027,7 @@ ${pays}
 
   // web/src/finances/Reports.tsx
   function Reports({ v: v3, ledger, exportFile: exportFile2, open: open5 }) {
-    const [key7, setKey] = d2("month");
+    const [key6, setKey] = d2("month");
     const [saved, setSaved] = d2("");
     const [tag, setTag] = d2("");
     const [trendOf, setTrendOf] = d2("");
@@ -18256,7 +18039,7 @@ ${pays}
     const typed = picked ? kept6.filter((t3) => t3.tags?.includes(picked)) : kept6;
     const txs = inHome(v3.plan, typed);
     const all = ranges(v3.today, txs[0]?.date || v3.today);
-    const r3 = all.find((x3) => x3.key === key7) || all[0];
+    const r3 = all.find((x3) => x3.key === key6) || all[0];
     const sum = totals2(txs, r3);
     const groups4 = byCategory(txs, v3.categories || [], r3);
     const months = byMonth(txs, r3).filter((m3) => tracked(v3, m3.month));
@@ -18276,7 +18059,7 @@ ${pays}
     const yearGroups = byCategory(txs, v3.categories || [], twelveMonths(v3.today));
     const most = groups4[0]?.amount || 1;
     const spent = groups4.reduce((s3, g2) => s3 + g2.amount, 0);
-    const inMonth = key7 === "month" || key7 === "last" ? r3.from.slice(0, 7) : void 0;
+    const inMonth = key6 === "month" || key6 === "last" ? r3.from.slice(0, 7) : void 0;
     const opens = (f4) => open5 ? () => open5({ ...f4, month: inMonth }) : void 0;
     return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3("div", { class: "fx-board", children: [
       /* @__PURE__ */ u3(Widget, { title: picked ? `Reports, tagged ${picked}` : "Reports", span: "all", kind: "fx-reportsum", actions: /* @__PURE__ */ u3(S, { children: [
@@ -18567,11 +18350,11 @@ ${pays}
     ];
     return c4 && pairs2.find(([re]) => re.test(c4))?.[1] || "";
   }
-  function paymentFromWallos(s3, today2) {
+  function paymentFromWallos(s3, today) {
     const brand = brandOf(void 0, s3.name) || brandOf(void 0, cleanPayee(s3.name));
     const kind = kindForBrand(brand) || (/utilit/i.test(s3.category || "") ? "utilities" : "subscriptions");
     const type = kind === "subscriptions" ? typeFromCategory(s3.category) || suggestType(brand, s3.name) : "";
-    return { id: "", name: s3.name, amount: s3.amount, kind, institution: brand, type: type || void 0, schedule: { every: s3.every, start: s3.next || today2 } };
+    return { id: "", name: s3.name, amount: s3.amount, kind, institution: brand, type: type || void 0, schedule: { every: s3.every, start: s3.next || today } };
   }
   function sortWallos(subs, plan) {
     const payments = allPayments(plan);
@@ -18685,14 +18468,14 @@ ${pays}
   var currencies = ["USD", "CAD", "EUR", "GBP", "AUD", "NZD", "CHF", "SEK", "NOK", "DKK", "JPY", "MXN", "INR", "ZAR"];
   var newKey = () => Array.from(crypto.getRandomValues(new Uint8Array(24)), (b2) => b2.toString(16).padStart(2, "0")).join("");
   function CalendarFeed({ v: v3, calendar, busy: busy2, set: set2 }) {
-    const key7 = v3.plan.calendarKey, amounts = !!v3.plan.calendarAmounts;
+    const key6 = v3.plan.calendarKey, amounts = !!v3.plan.calendarAmounts;
     const [link, setLink] = d2({});
     const [said2, setSaid] = d2("");
     const [withAmounts, setWithAmounts] = d2(false);
     h2(() => {
-      if (!key7 || link.key === key7) return;
-      calendar().then((url) => setLink({ key: key7, url }), (e3) => setLink({ key: key7, problem: String(e3?.message || e3) }));
-    }, [key7]);
+      if (!key6 || link.key === key6) return;
+      calendar().then((url) => setLink({ key: key6, url }), (e3) => setLink({ key: key6, problem: String(e3?.message || e3) }));
+    }, [key6]);
     const copy = async () => {
       try {
         if (window.runtime?.ClipboardSetText) await window.runtime.ClipboardSetText(link.url);
@@ -18704,7 +18487,7 @@ ${pays}
     };
     return /* @__PURE__ */ u3("fieldset", { class: "fincalendar", children: [
       /* @__PURE__ */ u3("legend", { children: "Calendar feed" }),
-      !key7 ? /* @__PURE__ */ u3(S, { children: [
+      !key6 ? /* @__PURE__ */ u3(S, { children: [
         /* @__PURE__ */ u3("p", { class: "fx-sub", children: "Paydays and bills in your phone's calendar, through a private link." }),
         /* @__PURE__ */ u3("label", { class: "fcheckbox", children: [
           /* @__PURE__ */ u3("input", { type: "checkbox", checked: withAmounts, onClick: (e3) => setWithAmounts(e3.currentTarget.checked) }),
@@ -18712,14 +18495,14 @@ ${pays}
         ] }),
         /* @__PURE__ */ u3("p", { children: /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy2, onClick: () => set2(newKey(), withAmounts), children: "Make a calendar link" }) })
       ] }) : /* @__PURE__ */ u3(S, { children: [
-        link.key === key7 && link.url && /* @__PURE__ */ u3("div", { class: "fincalendarlink", children: [
+        link.key === key6 && link.url && /* @__PURE__ */ u3("div", { class: "fincalendarlink", children: [
           /* @__PURE__ */ u3("input", { readOnly: true, value: link.url, "aria-label": "Calendar link", onFocus: (e3) => e3.target.select() }),
           /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: copy, children: "Copy" })
         ] }),
-        link.key === key7 && link.problem && /* @__PURE__ */ u3("span", { class: "formerr bad", role: "alert", children: link.problem }),
+        link.key === key6 && link.problem && /* @__PURE__ */ u3("span", { class: "formerr bad", role: "alert", children: link.problem }),
         /* @__PURE__ */ u3("p", { class: "fx-sub", role: "status", children: said2 || "Subscribe to it in your phone's calendar (on an iPhone: Settings › Calendar › Accounts › Add Account › Other › Add Subscribed Calendar). Anyone with the link sees what it shows." }),
         /* @__PURE__ */ u3("label", { class: "fcheckbox", children: [
-          /* @__PURE__ */ u3("input", { type: "checkbox", disabled: busy2, checked: amounts, onClick: (e3) => set2(key7, e3.currentTarget.checked) }),
+          /* @__PURE__ */ u3("input", { type: "checkbox", disabled: busy2, checked: amounts, onClick: (e3) => set2(key6, e3.currentTarget.checked) }),
           " With amounts"
         ] }),
         /* @__PURE__ */ u3("p", { class: "fincalendarbuttons", children: [
@@ -18795,7 +18578,7 @@ ${pays}
           words5
         ] }, kind))
       ] }),
-      calendar && /* @__PURE__ */ u3(CalendarFeed, { v: v3, calendar, busy: busy2, set: (key7, amounts) => keep4({ currency, holidays, calendarKey: key7, calendarAmounts: amounts }) })
+      calendar && /* @__PURE__ */ u3(CalendarFeed, { v: v3, calendar, busy: busy2, set: (key6, amounts) => keep4({ currency, holidays, calendarKey: key6, calendarAmounts: amounts }) })
     ] });
   }
   var groups2 = {
@@ -18806,8 +18589,8 @@ ${pays}
     spending: (k3) => k3 === "spending",
     saving: (k3) => k3 === "savings"
   };
-  function after(day3, today2 = todayISO()) {
-    const d3 = daysBetween(today2, day3);
+  function after(day3, today = todayISO()) {
+    const d3 = daysBetween(today, day3);
     const months = Math.round(d3 / 30.4);
     return months >= 2 ? `in ${months} months` : d3 >= 14 ? `in ${Math.round(d3 / 7)} weeks` : `in ${plural2(d3, "day")}`;
   }
@@ -19499,7 +19282,7 @@ ${pays}
   function Box({ bare, children }) {
     return bare ? /* @__PURE__ */ u3("div", { class: "fx-periodbar", id: "finPeriod", children }) : /* @__PURE__ */ u3(Card, { kind: "fx-periodbar", id: "finPeriod", children });
   }
-  function PeriodBar({ by, setBy, title, dates, step: step2, canBack, canOn, today: today2, atToday, bare }) {
+  function PeriodBar({ by, setBy, title, dates, step: step2, canBack, canOn, today, atToday, bare }) {
     const unit2 = by === "month" ? "month" : "pay period";
     return /* @__PURE__ */ u3(Box, { bare, children: [
       /* @__PURE__ */ u3(Segmented, { label: "Show the Dashboard by", value: by, pick: (b2) => setBy(b2), options: [["pay", "Paycheck"], ["month", "Month"]] }),
@@ -19511,7 +19294,7 @@ ${pays}
         ] }),
         /* @__PURE__ */ u3(IconButton, { icon: "next", label: `The ${unit2} after`, disabled: !canOn, onClick: () => step2(1) })
       ] }),
-      /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: atToday, onClick: today2, children: "Today" })
+      /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: atToday, onClick: today, children: "Today" })
     ] });
   }
 
@@ -19636,8 +19419,8 @@ ${pays}
     const [folded2, setFolded] = d2(readFolded);
     const list = grouped(v3);
     if (!list.length) return null;
-    const fold2 = (key7) => {
-      const next = folded2.includes(key7) ? folded2.filter((k3) => k3 !== key7) : [...folded2, key7];
+    const fold2 = (key6) => {
+      const next = folded2.includes(key6) ? folded2.filter((k3) => k3 !== key6) : [...folded2, key6];
       setFolded(next);
       try {
         localStorage.setItem(foldedKey, JSON.stringify(next));
@@ -19738,8 +19521,8 @@ ${pays}
     }
     return out.sort((a3, b2) => a3.date < b2.date ? -1 : a3.date > b2.date ? 1 : 0);
   }
-  var soon = (today2, day3) => {
-    const n3 = daysBetween(today2, day3);
+  var soon = (today, day3) => {
+    const n3 = daysBetween(today, day3);
     return n3 === 0 ? "Today" : n3 === 1 ? "Tomorrow" : `In ${plural2(n3, "day")}`;
   };
   function ComingUpWidget({ v: v3, L: L2, calendar }) {
@@ -19840,11 +19623,11 @@ ${pays}
   }
 
   // web/src/finances/Arrange.tsx
-  var key4 = "homelab.finances.layout";
+  var key3 = "homelab.finances.layout";
   var widths = ["third", "half", "full"];
   function readLayout() {
     try {
-      const l3 = JSON.parse(localStorage.getItem(key4) || "null");
+      const l3 = JSON.parse(localStorage.getItem(key3) || "null");
       if (!l3 || !Array.isArray(l3.order)) return null;
       const ok = (x3) => typeof x3 === "string";
       const w3 = {};
@@ -19856,8 +19639,8 @@ ${pays}
   }
   function keepLayout(l3) {
     try {
-      if (l3) localStorage.setItem(key4, JSON.stringify(l3));
-      else localStorage.removeItem(key4);
+      if (l3) localStorage.setItem(key3, JSON.stringify(l3));
+      else localStorage.removeItem(key3);
     } catch {
     }
   }
@@ -20632,8 +20415,8 @@ ${pays}
     return Uint8Array.from(words5, (w3) => index.get(w3));
   }
   async function pbkdf2(password, salt, bytes3) {
-    const key7 = await subtle().importKey("raw", password, "PBKDF2", false, ["deriveBits"]);
-    return new Uint8Array(await subtle().deriveBits({ name: "PBKDF2", hash: "SHA-256", salt, iterations: 1 }, key7, bytes3 * 8));
+    const key6 = await subtle().importKey("raw", password, "PBKDF2", false, ["deriveBits"]);
+    return new Uint8Array(await subtle().deriveBits({ name: "PBKDF2", hash: "SHA-256", salt, iterations: 1 }, key6, bytes3 * 8));
   }
   function salsa8(b2, o3, x3) {
     for (let i3 = 0; i3 < 16; i3++) x3[i3] = b2[o3 + i3];
@@ -20704,17 +20487,17 @@ ${pays}
     return pbkdf2(password, bytes3, dkLen);
   }
   var aes = (raw, use) => subtle().importKey("raw", raw, "AES-GCM", false, use);
-  async function seal(key7, data2, ad) {
+  async function seal(key6, data2, ad) {
     const nonce = random(12);
-    const out = new Uint8Array(await subtle().encrypt({ name: "AES-GCM", iv: nonce, additionalData: ad }, key7, data2));
+    const out = new Uint8Array(await subtle().encrypt({ name: "AES-GCM", iv: nonce, additionalData: ad }, key6, data2));
     const all = new Uint8Array(12 + out.length);
     all.set(nonce);
     all.set(out, 12);
     return all;
   }
-  async function open3(key7, data2, ad) {
+  async function open3(key6, data2, ad) {
     if (data2.length < 28) throw new Error("nothing sealed");
-    return new Uint8Array(await subtle().decrypt({ name: "AES-GCM", iv: data2.subarray(0, 12), additionalData: ad }, key7, data2.subarray(12)));
+    return new Uint8Array(await subtle().decrypt({ name: "AES-GCM", iv: data2.subarray(0, 12), additionalData: ad }, key6, data2.subarray(12)));
   }
   var stretch = async (secret, salt) => aes(await scrypt(secret, unb64(salt), N2, R2, P2, 32), ["encrypt", "decrypt"]);
   var passphraseBytes = (s3) => enc.encode(s3.normalize("NFKC"));
@@ -20732,7 +20515,7 @@ ${pays}
     }
     return aes(raw, ["encrypt", "decrypt"]);
   }
-  var sealData = async (key7, username, data2) => b64(await seal(key7, enc.encode(JSON.stringify(data2)), aad("homelab-finances", username)));
+  var sealData = async (key6, username, data2) => b64(await seal(key6, enc.encode(JSON.stringify(data2)), aad("homelab-finances", username)));
   async function turnOn(data2, username, ways) {
     if (!ways.prf && (ways.passphrase || "").length < MIN_PASSPHRASE) throw new Error(`A passphrase is ${MIN_PASSPHRASE} characters or more.`);
     const raw = random(32);
@@ -20747,30 +20530,30 @@ ${pays}
       kdf.passphraseSalt = b64(random(16));
       wrappedByPasskey = await wrap(await stretch(passphraseBytes(ways.passphrase), kdf.passphraseSalt));
     }
-    const key7 = await aes(raw, ["encrypt", "decrypt"]);
+    const key6 = await aes(raw, ["encrypt", "decrypt"]);
     raw.fill(0);
-    return { envelope: { version: 1, kdf, wrappedByPasskey, wrappedByCode, sealed: await sealData(key7, username, data2) }, key: key7 };
+    return { envelope: { version: 1, kdf, wrappedByPasskey, wrappedByCode, sealed: await sealData(key6, username, data2) }, key: key6 };
   }
   var unlockWithCode = async (e3, username, code2) => unwrap(await stretch(code2, e3.kdf.salt), e3.wrappedByCode, username, "That recovery code doesn’t open these Finances. Check each word and try again.");
   var unlockWithPassphrase = async (e3, username, passphrase) => unwrap(await stretch(passphraseBytes(passphrase), e3.kdf.passphraseSalt || ""), e3.wrappedByPasskey, username, "That passphrase doesn’t open these Finances. Try again, or use your recovery code.");
   var unlockWithPasskey = async (e3, username, secret) => unwrap(await fromPasskey(secret), e3.wrappedByPasskey, username, "That passkey doesn’t open these Finances. Use your recovery code instead.");
-  async function openSealed(key7, e3, username) {
+  async function openSealed(key6, e3, username) {
     let plain2;
     try {
-      plain2 = await open3(key7, unb64(e3.sealed), aad("homelab-finances", username));
+      plain2 = await open3(key6, unb64(e3.sealed), aad("homelab-finances", username));
     } catch {
       throw new Error("These private Finances couldn’t be opened: they were changed, or aren’t yours.");
     }
     return JSON.parse(new TextDecoder().decode(plain2));
   }
-  async function reseal(key7, e3, username, data2) {
+  async function reseal(key6, e3, username, data2) {
     const { rev: _rev, ...rest } = e3;
-    return { ...rest, sealed: await sealData(key7, username, data2) };
+    return { ...rest, sealed: await sealData(key6, username, data2) };
   }
-  var sealText = async (key7, username, text2) => b64(await seal(key7, enc.encode(text2), aad("homelab-finances-receipt", username)));
-  async function openText(key7, username, sealed) {
+  var sealText = async (key6, username, text2) => b64(await seal(key6, enc.encode(text2), aad("homelab-finances-receipt", username)));
+  async function openText(key6, username, sealed) {
     try {
-      return new TextDecoder().decode(await open3(key7, unb64(sealed), aad("homelab-finances-receipt", username)));
+      return new TextDecoder().decode(await open3(key6, unb64(sealed), aad("homelab-finances-receipt", username)));
     } catch {
       throw new Error("This receipt couldn’t be opened: it was changed, or isn’t yours.");
     }
@@ -20783,7 +20566,7 @@ ${pays}
   var known2 = null;
   var me = {};
   var envelope = null;
-  var key5 = null;
+  var key4 = null;
   var data = null;
   var real;
   var watchers2 = [];
@@ -20889,7 +20672,7 @@ ${pays}
       offlineAt = "";
       if (!latest2) {
         await keptForget();
-        key5 = null;
+        key4 = null;
         data = null;
         envelope = null;
         state2 = "plain";
@@ -20912,7 +20695,7 @@ ${pays}
         kept3.pending = void 0;
       }
       envelope = latest2;
-      if (key5) data = await openSealed(key5, latest2, me.person);
+      if (key4) data = await openSealed(key4, latest2, me.person);
       await remember(latest2);
       tell2();
     })().finally(() => {
@@ -20952,7 +20735,7 @@ ${pays}
         throw e3;
       }
     }
-    if (state2 === "locked" || !key5 || !data) throw new Locked();
+    if (state2 === "locked" || !key4 || !data) throw new Locked();
     touched();
     switch (method) {
       case "Finances":
@@ -20966,13 +20749,13 @@ ${pays}
         await save({ ...data, ledger: unrev(args[0]) });
         return { ...data.ledger, rev: envelope.rev };
       case "SaveFinancesReceipt": {
-        const sealed = await sealText(key5, me.person, String(args[0]));
+        const sealed = await sealText(key4, me.person, String(args[0]));
         return sealedCalls().SaveFinancesSealedReceipt(sealed).catch((e3) => {
           throw isAway(e3) ? new Error("A receipt waits until the homelab answers: add it again when you’re home.") : e3;
         });
       }
       case "FinancesReceipt":
-        return openText(key5, me.person, await sealedCalls().FinancesSealedReceipt(String(args[0])));
+        return openText(key4, me.person, await sealedCalls().FinancesSealedReceipt(String(args[0])));
     }
     return pass();
   }
@@ -21000,7 +20783,7 @@ ${pays}
   var CHANGED = "Your Finances were changed on another of your devices after this was read. The latest is shown now: make your change again.";
   var AWAY_CHANGED = "While you were away, your Finances were changed on another of your devices, so the change made here wasn’t kept. The latest is shown now: make it again.";
   async function save(next) {
-    const sealed = await reseal(key5, envelope, me.person, next);
+    const sealed = await reseal(key4, envelope, me.person, next);
     const base = kept3?.pending?.was ?? envelope.rev;
     notice = "";
     try {
@@ -21023,7 +20806,7 @@ ${pays}
       if (!/changed on another device/.test(String(e3?.message))) throw e3;
       const latest2 = await sealedCalls().FinancesSealed();
       if (latest2) {
-        data = await openSealed(key5, latest2, me.person);
+        data = await openSealed(key4, latest2, me.person);
         envelope = latest2;
       }
       throw new Error(CHANGED);
@@ -21049,7 +20832,7 @@ ${pays}
     }
     data = await openSealed(k3, latest2, me.person);
     envelope = latest2;
-    key5 = k3;
+    key4 = k3;
     state2 = "open";
     await view();
     touched();
@@ -21068,7 +20851,7 @@ ${pays}
   }
   function lock() {
     if (state2 !== "open") return;
-    key5 = null;
+    key4 = null;
     data = null;
     state2 = "locked";
     clearTimeout(idle);
@@ -21134,22 +20917,22 @@ ${pays}
     envelope = { ...sealed, rev: r3.rev };
     await remember(envelope);
     data = { plan, ledger: { ...ledger, transactions } };
-    key5 = k0.key;
+    key4 = k0.key;
     state2 = "open";
     touched();
     tell2();
   }
   async function turnOff() {
-    if (state2 !== "open" || !key5 || !data || !envelope) throw new Locked();
+    if (state2 !== "open" || !key4 || !data || !envelope) throw new Locked();
     const ledger = data.ledger;
     const pictures2 = /* @__PURE__ */ new Map();
     for (const t3 of ledger.transactions || []) {
-      if (t3.receipt?.endsWith(".sealed")) pictures2.set(t3.id, await openText(key5, me.person, await sealedCalls().FinancesSealedReceipt(t3.receipt)));
+      if (t3.receipt?.endsWith(".sealed")) pictures2.set(t3.id, await openText(key4, me.person, await sealedCalls().FinancesSealedReceipt(t3.receipt)));
     }
     const bare = { ...ledger, transactions: (ledger.transactions || []).map((t3) => pictures2.has(t3.id) ? { ...t3, receipt: void 0 } : t3) };
     await sealedCalls().UnsealFinances(envelope.rev, data.plan, bare);
     await keptForget();
-    key5 = null;
+    key4 = null;
     data = null;
     envelope = null;
     state2 = "plain";
@@ -21279,8 +21062,8 @@ ${pays}
   }
   function Away() {
     const at2 = new Date(offlineSince());
-    const today2 = at2.toDateString() === (/* @__PURE__ */ new Date()).toDateString();
-    const when3 = at2.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }) + (today2 ? "" : ", " + at2.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" }));
+    const today = at2.toDateString() === (/* @__PURE__ */ new Date()).toDateString();
+    const when3 = at2.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }) + (today ? "" : ", " + at2.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" }));
     return /* @__PURE__ */ u3(S, { children: [
       "Offline: as of ",
       when3,
@@ -21675,14 +21458,14 @@ ${pays}
       return false;
     }
   }
-  function setSince(key7, state3) {
+  function setSince(key6, state3) {
     const v3 = financesData.value;
     const waiting2 = new Set((v3.since || []).filter((s3) => s3.waiting).map((s3) => s3.key));
     const held3 = new Set((v3.since || []).filter((s3) => s3.inBalance).map((s3) => s3.key));
-    waiting2.delete(key7);
-    held3.delete(key7);
-    if (state3 === "waiting") waiting2.add(key7);
-    if (state3 === "inBalance") held3.add(key7);
+    waiting2.delete(key6);
+    held3.delete(key6);
+    if (state3 === "waiting") waiting2.add(key6);
+    if (state3 === "inBalance") held3.add(key6);
     return save2({ ...v3.plan, waiting: [...waiting2], inBalance: held3.size ? [...held3] : void 0, notYet: void 0 });
   }
   var toggled = 0;
@@ -21922,7 +21705,7 @@ ${pays}
     const [sure, setSure] = d2(false);
     const [entry2, setEntry] = d2({ c: null, v: {} });
     const typed = entry2.c === c4 ? entry2.v : {};
-    const type = (key7, v3) => setEntry((e3) => ({ c: c4, v: { ...e3.c === c4 ? e3.v : {}, [key7]: v3 } }));
+    const type = (key6, v3) => setEntry((e3) => ({ c: c4, v: { ...e3.c === c4 ? e3.v : {}, [key6]: v3 } }));
     h2(() => setSure(false), [c4]);
     const [found2, setFound2] = d2(null);
     const look2 = found2?.c === c4 ? found2 : null;
@@ -21939,9 +21722,9 @@ ${pays}
         (e3) => setFound2((f4) => f4?.c === asked2 && f4.busy ? { c: asked2, error: errorText(e3) } : f4)
       );
     };
-    const typeAndForget = (key7, v3) => {
-      type(key7, v3);
-      if (look2 && (!c4?.find?.needs || key7 === c4.find.needs)) setFound2(null);
+    const typeAndForget = (key6, v3) => {
+      type(key6, v3);
+      if (look2 && (!c4?.find?.needs || key6 === c4.find.needs)) setFound2(null);
     };
     return /* @__PURE__ */ u3(Sheet, { id: "tidySheet", titleId: "tidySheetTitle", onClose: close3, children: [
       /* @__PURE__ */ u3("h2", { id: "tidySheetTitle", children: c4?.title }),
@@ -22627,17 +22410,17 @@ ${pays}
     ] });
   }
   function TodayWidget({ d: d3, job: job2, act, wide: wide2 }) {
-    const today2 = d3.today || [];
+    const today = d3.today || [];
     return /* @__PURE__ */ u3(Widget, { title: "What I did today", span: wide2 ? "all" : 1, kind: "tidytoday", children: [
-      !!today2.length && /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3("span", { class: "fx-amount", children: [
-        today2.filter((f4) => !f4.undone).length,
+      !!today.length && /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3("span", { class: "fx-amount", children: [
+        today.filter((f4) => !f4.undone).length,
         /* @__PURE__ */ u3("small", { children: [
           " ",
-          today2.filter((f4) => !f4.undone).length === 1 ? "download" : "downloads",
+          today.filter((f4) => !f4.undone).length === 1 ? "download" : "downloads",
           " filed"
         ] })
       ] }), caption: "Since midnight" }),
-      today2.length ? /* @__PURE__ */ u3(Rows, { kind: "fx-rows tidytoday", children: today2.map((f4) => /* @__PURE__ */ u3(
+      today.length ? /* @__PURE__ */ u3(Rows, { kind: "fx-rows tidytoday", children: today.map((f4) => /* @__PURE__ */ u3(
         Row,
         {
           lead: /* @__PURE__ */ u3(LibIcon, { kind: f4.kind }),
@@ -22751,7 +22534,7 @@ ${pays}
       if (!last(l3, "playlists")?.ok) extra.push({ kind: "music", title: "A smart playlist for each of your genres", sub: "Navidrome fills them by itself as music is added", go: { label: "Make playlists", run: () => act.run("music", "playlists"), quiet: true } });
       const lr = last(l3, "lyrics"), ly = lr?.result;
       if (lr && ly) {
-        const parts3 = [["synced", "time-synced"], ["plain", "plain"], ["none", "without lyrics"], ["not_found", "not on LRCLIB yet"]].filter(([key7]) => n2(ly[key7]) > 0).map(([key7, words5], i3) => `${i3 ? n2(ly[key7]).toLocaleString() : count(n2(ly[key7]), "song")} ${words5}`);
+        const parts3 = [["synced", "time-synced"], ["plain", "plain"], ["none", "without lyrics"], ["not_found", "not on LRCLIB yet"]].filter(([key6]) => n2(ly[key6]) > 0).map(([key6, words5], i3) => `${i3 ? n2(ly[key6]).toLocaleString() : count(n2(ly[key6]), "song")} ${words5}`);
         const found2 = n2(ly.to_clean) ? `${count(n2(ly.to_clean), "song")} with two languages on one line` : "none with two languages on one line";
         extra.push({
           kind: "lyrics",
@@ -22873,11 +22656,11 @@ ${pays}
   function TidyMenu({ tab: tab3, pick, d: d3 }) {
     const here3 = tabNow(tab3);
     const dr = d3?.drive;
-    const item = (key7, label, icon, n3) => /* @__PURE__ */ u3("li", { children: /* @__PURE__ */ u3("button", { type: "button", class: "finmenuitem tidymenuitem" + (here3 === key7 ? " on" : ""), "data-tab": key7, "aria-current": here3 === key7 ? "page" : void 0, onClick: () => pick(key7), children: [
+    const item = (key6, label, icon, n3) => /* @__PURE__ */ u3("li", { children: /* @__PURE__ */ u3("button", { type: "button", class: "finmenuitem tidymenuitem" + (here3 === key6 ? " on" : ""), "data-tab": key6, "aria-current": here3 === key6 ? "page" : void 0, onClick: () => pick(key6), children: [
       /* @__PURE__ */ u3("svg", { class: "icon", viewBox: "0 0 24 24", "aria-hidden": "true", children: /* @__PURE__ */ u3("path", { d: icon }) }),
       /* @__PURE__ */ u3("span", { children: label }),
       !!n3 && /* @__PURE__ */ u3("span", { class: "count", children: n3 })
-    ] }) }, key7);
+    ] }) }, key6);
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3("ul", { class: "finmenu tidymenu", "aria-label": "Tidy Up", children: [
         item("overview", "Overview", "M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z", (d3?.needs || []).length || void 0),
@@ -23346,9 +23129,9 @@ ${pays}
     } });
     const page = sendable();
     if (page && !phone2) for (const t3 of targetsFor(page.link)) add({ id: `send:${t3.id}`, label: `Send ${page.title} to ${t3.name}`, also: "send to my phone open on", run: () => sendTo(t3, page.link, page.title) });
-    for (const [id2, label, key7, also] of screenList) {
+    for (const [id2, label, key6, also] of screenList) {
       if (phone2 && (id2 === "setup" || id2 === "choose")) continue;
-      add({ id: "screen:" + id2, label, hint: mod + key7, also: "screen go " + also, run: () => navigate(id2) });
+      add({ id: "screen:" + id2, label, hint: mod + key6, also: "screen go " + also, run: () => navigate(id2) });
     }
     const apps2 = Object.values(statusById);
     if (!apps2.length) return list;
@@ -23550,11 +23333,11 @@ ${pays}
   }
 
   // web/src/place.ts
-  var key6 = "homelab.place";
+  var key5 = "homelab.place";
   var kept4 = /* @__PURE__ */ new Set(["choose", "status", "backups", "setup", "settings", "finances", "tidy"]);
   var places = {};
   try {
-    places = JSON.parse(localStorage.getItem(key6) || "{}") || {};
+    places = JSON.parse(localStorage.getItem(key5) || "{}") || {};
   } catch {
     places = {};
   }
@@ -23566,7 +23349,7 @@ ${pays}
     const all = sections(screen);
     places[screen] = { top: aiming.screen === screen ? aiming.top : Math.round(main().scrollTop), open: all.filter((d3) => d3.open).map((d3) => d3.id), shut: all.filter((d3) => !d3.open).map((d3) => d3.id) };
     try {
-      localStorage.setItem(key6, JSON.stringify(places));
+      localStorage.setItem(key5, JSON.stringify(places));
     } catch {
     }
   }
@@ -23703,16 +23486,8 @@ ${pays}
     if (screen === "status") {
       const items = [again, "-", { label: "Update all apps…", run: on("status", () => $("updateAll").click()), disabled: $("updateAll").disabled }];
       if (!$("fixIt").hidden) items.push({ label: "Fix it", run: on("status", () => $("fixIt").click()) });
+      items.push({ label: "Back up now", run: on("backups", () => $("backupNow").click()), disabled: $("backupNow").disabled });
       return items;
-    }
-    if (screen === "backups") {
-      const test = () => document.getElementById("restoreTest");
-      return [
-        again,
-        "-",
-        { label: "Back up now", run: on("backups", () => $("backupNow").click()), disabled: $("backupNow").disabled },
-        { label: "Test a restore", run: on("backups", () => test()?.click()), disabled: !test() || test().disabled }
-      ];
     }
     if (screen === "finances") {
       const v3 = financesData.value;
@@ -23750,7 +23525,7 @@ ${pays}
       pickStatusPart("find");
       return;
     }
-    const picked = name === "app" ? "status" : name;
+    const picked = name === "app" || name === "backups" ? "status" : name;
     const was = document.querySelector(".screen.active")?.id;
     if (placed2 && was !== name) leavePlace(was);
     if ((was === "status" || was === "app") && picked !== "status") leftStatus();
@@ -23763,6 +23538,7 @@ ${pays}
     if (!placed2 || was !== name) arrivePlace(name);
     placed2 = true;
     setupNav();
+    statusSideChanged();
     freshen(name);
     drawHealth2();
   }

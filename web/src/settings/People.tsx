@@ -37,7 +37,6 @@ export interface PeopleProps {
 
 const active = (p: people.Person) => !p.removed || p.removed.startsWith('0001');
 
-/** "Keeps their Finances private (last saved Nov 13)", for a member whose Finances only their phone opens. */
 function privately(at: string | undefined) {
   if (at === undefined) return '';
   const d = new Date(at);
@@ -67,13 +66,6 @@ function Person({ p, on, sealed }: { p: people.Person; on: PeopleActions; sealed
   );
 }
 
-/**
- * After Add them (usability task 7, item 13): who was added, and ways to
- * hand them their welcome page: on this screen, where they scan their
- * sign-in with their phone's camera; or printed. It holds their sign-in
- * link (and the music and films password), so it is theirs alone: what to
- * email or hang up is the fridge sheet, which has neither.
- */
 function Added({ who, on }: { who: { name: string; username: string }; on: PeopleActions }) {
   return (
     <div id="personAdded" class="addednote" role="status">

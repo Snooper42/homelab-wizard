@@ -1,7 +1,3 @@
-// Status's note after a crash: which part of the homelab stopped, when, and
-// a button that makes the diagnostics report (which carries the crash's
-// log) to send. app.ts reads the crash (LastCrash) and mounts this; once it
-// is sent or hidden, CrashSeen keeps it from showing again.
 import { render } from 'preact';
 import { Card } from '../parts/Card';
 import { dayText } from '../format';

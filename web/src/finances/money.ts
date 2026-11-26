@@ -14,10 +14,6 @@ export function setCurrency(c?: string) {
     code = want;
   } catch { /* an unknown code: keep the last */ }
 }
-// Hide amounts (the plan's hideAmounts, set as the screen draws): every
-// figure is written "$•••", so a screenshot, a shared screen, a copy, or a
-// screen reader gives nothing away. The forms' fields and the exports keep
-// the numbers: they are not written here.
 let hidden = false;
 /** Writes every amount as "$•••" from now on (true), or as it is. */
 export function setHidden(h: boolean) { hidden = !!h; }
@@ -74,11 +70,6 @@ export function compact(n: number): string {
   return sign + currencySign() + s;
 }
 
-/**
- * An amount as typed: "$1,234.56", "1.234,56", "1 234,56", "-40". The
- * decimal mark is the last . or , with one or two digits after it; any
- * other . , space, or currency sign groups thousands. NaN for nothing.
- */
 export function parseAmount(typed: string): number {
   let t = String(typed ?? '').replace(/[\s\u00a0\u202f']/g, '').replace(/[^0-9.,\-−]/g, '').replace('−', '-');
   const mark = t.search(/[.,]\d{1,2}$/);
@@ -87,12 +78,6 @@ export function parseAmount(typed: string): number {
   return t === '' || t === '-' ? NaN : parseFloat(t);
 }
 
-/**
- * A count as typed, shares most often, its decimals as many as typed:
- * "11.038" is eleven and a bit (parseAmount would read a thousands mark),
- * "1,234.5678" and "1.234,5678" over a thousand, "1,000" a thousand, "2,5"
- * two and a half. NaN when nothing is a number.
- */
 export function parseCount(typed: string): number {
   let t = String(typed ?? '').replace(/[\s\u00a0\u202f']/g, '').replace(/[^0-9.,\-−]/g, '').replace('−', '-');
   const dots = t.split('.').length - 1, commas = t.split(',').length - 1;
@@ -120,10 +105,8 @@ export function split(n: number): [string, string] {
 /** A YYYY-MM-DD day at midnight here. */
 export const parseDay = (s: string): Date => new Date(s + 'T00:00:00');
 
-/** "Fri 6 Nov" or "Fri, Nov 6", as the system orders them. */
 export const dayLong = (s: string): string => dayText(parseDay(s), { weekday: 'short', day: 'numeric', month: 'short' });
 
-/** "6 Nov" or "Nov 6". */
 export const dayShort = (s: string): string => dayText(parseDay(s), { day: 'numeric', month: 'short' });
 
 /** A month's name: "December". */
@@ -173,11 +156,6 @@ function scheduleBase(s: finance.Schedule, L?: Lookup): string {
   return s.every;
 }
 
-/**
- * How many times a month it comes, on average: with each of someone's
- * paychecks, as often as they are paid; with each paycheck, as often as
- * anyone's lands in checking (two on a day count twice here, a little high).
- */
 export function perMonth(s: finance.Schedule, people?: finance.Earner[], checking?: string): number {
   // One that has ended comes no more: nothing a month.
   if (s?.until && s.until < todayISO()) return 0;
@@ -203,12 +181,6 @@ export function lookup(p: finance.Plan): Lookup {
 /** A card paid off with each paycheck's payoff, by its ID ("card:visa"); its form is the card's. */
 export const cardOf = (paymentId: string | undefined): string => (paymentId?.startsWith('card:') ? paymentId.slice(5) : '');
 
-/**
- * The payments and, for each card paid off in full with each paycheck,
- * its payoff, as the Go side reads it (finance.Plan.WithCards): never
- * saved in the plan. What goes on a card between paychecks is its typed
- * spend, else worked (View.CardSpend: what the ledger says).
- */
 export function allPayments(p: finance.Plan, worked?: Record<string, number>): finance.Payment[] {
   const cards = (p.accounts || []).filter((a) => a.kind === 'card' && a.paidEach)
     .map((a): finance.Payment => ({ id: 'card:' + a.id, name: a.name, amount: a.spend || worked?.[a.id] || 0, kind: 'cards', institution: a.institution, card: a.id, schedule: { every: 'paycheck', start: '' } }));

@@ -1,7 +1,3 @@
-// Setup's machine cards: this computer, its container runtime, what runs
-// in the background, the homelab folder, its disks, and the version (with
-// the update check beside it); the runtime walked through while it is
-// missing; and making the homelab folder when there is none.
 import { render, type ComponentChildren } from 'preact';
 import { useState } from 'preact/hooks';
 import { ActionLink } from '../ActionLink';

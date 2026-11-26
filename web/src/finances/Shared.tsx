@@ -1,7 +1,3 @@
-// On a household member's phone: what the household shares with her
-// (homelab person share, FinancesShared), to look at, beside her own
-// Finances and never mixed into them, as the Homelab app's Household card
-// shows it: the bills coming up, the subscriptions, this month's budgets.
 import { render } from 'preact';
 import { Card } from '../parts/Card';
 import { dayShort, moneyIn } from './money';

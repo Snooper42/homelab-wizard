@@ -1,7 +1,3 @@
-// The ledger widgets: what the balances are taken to hold (Taken as done,
-// each with In or Not yet; a bill on the day they were typed, Comes out or
-// Already in), on the Dashboard; and every account today and
-// after each paycheck ahead (Accounts, paycheck by paycheck), on Net worth.
 import { useState } from 'preact/hooks';
 import { Empty } from '../../parts/Empty';
 import { Row, Rows } from '../../parts/Row';
@@ -17,12 +13,6 @@ export type SinceState = 'counted' | 'waiting' | 'inBalance';
 /** A bill dated the day its balance was typed in: it comes out, unless the balance has it already. */
 const typedBill = (s: finance.Past) => !!s.payment && !!s.typed;
 
-/**
- * What the balances are taken to hold: each paycheck and payment dated the
- * day a balance was typed in, or after it and before today. One the
- * household marks Not yet waits, and comes today. A bill on the day a
- * balance was typed in comes out that day; Already in says the balance has it.
- */
 export function SinceWidget({ v, L, set }: { v: finance.View; L: Lookup; set?: (key: string, state: SinceState) => Promise<boolean> }) {
   const [busy, setBusy] = useState('');
   const [all, setAll] = useState(false);
@@ -65,13 +55,6 @@ const shown = (a: finance.Account) => ['checking', 'savings', 'investment', 'ret
 /** How many stretches the table shows: now and the six paychecks after it (the table scrolls sideways for them). */
 const postCols = 7;
 
-/**
- * Each account today and post-pay after each paycheck ahead, with what it
- * changed by: what checking, savings, or a Roth IRA will hold once the
- * paycheck is in and its bills are paid, and what a card will owe. Picking
- * a column picks that paycheck. Update balances opens the one panel for
- * them (Edit's BalancesForm).
- */
 export function PostPayWidget({ v, L, sel, pick, update }: { v: finance.View; L: Lookup; sel: number; pick: (i: number) => void; update?: () => void }) {
   const accounts = (v.plan.accounts || []).filter(shown);
   const cols = v.periods.slice(0, postCols);

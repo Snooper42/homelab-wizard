@@ -1,7 +1,3 @@
-// A list of rows: one thing per row, with a dot for how it is, what it is,
-// a line under it, and what goes at the end (a badge, a size, a button,
-// when). Status's cards, Backups' jobs, Settings' people and phones, and
-// Setup's jobs and changes are all drawn with it.
 import type { ComponentChildren } from 'preact';
 
 /** How a row is: well, needs a look, failing, or nothing to say. */
@@ -31,17 +27,7 @@ export interface RowProps {
   whenTitle?: string;
   /** when in the text's own colour rather than grey. */
   whenPlain?: boolean;
-  /**
-   * Opens what the row is (its form, its page): the whole row is then one
-   * button, so it takes no Edit of its own. Only with nothing else to press
-   * in it (end holds words and figures, no buttons).
-   */
   onOpen?: (e: MouseEvent) => void;
-  /**
-   * What a screen reader hears after the row's own words, for what pressing
-   * it does ("edit"). The row's words stay the button's name, so a person
-   * who says what they see (voice control) can press it.
-   */
   openLabel?: string;
   /** With onOpen, the row is a toggle and this whether it is on (picked, in a list being picked from). */
   pressed?: boolean;

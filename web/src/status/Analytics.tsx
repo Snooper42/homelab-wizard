@@ -1,8 +1,3 @@
-// Analytics on Status (the owner, Nov 25: web-analytics-full-dark.png): the processor, memory and drives as three cards
-// of one anatomy, the two lines over time on one timeline (% and GB), and what each app uses, heaviest first, 8 then
-// Show all. Drawn from what the page has: Docker's stats sampled every 10 seconds while Status is open, the drive's
-// room, and each app's folder as the nightly backup measured it. A week isn't kept on the machine yet: the timeline is
-// the minutes since Status opened, and says so.
 import { render } from 'preact';
 import { useState } from 'preact/hooks';
 import { AppMark } from '../parts/AppMark';

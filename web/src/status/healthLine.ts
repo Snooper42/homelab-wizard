@@ -1,10 +1,3 @@
-// Health in one line: at the top of every screen but Status (whose tiles
-// and Needs a look say it already), "All well", or the one thing that needs
-// you, with Status a click away. Status gives it the apps in trouble (in
-// their rows' own words) and the watchdog's failing checks as it draws
-// them; app.ts draws it again on each screen change. Its markup is fixed
-// in index.html and only its words change, so drawing it never runs a
-// render while a screen's own is under way.
 
 export interface HealthTrouble {
   id: string;

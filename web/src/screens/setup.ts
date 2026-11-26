@@ -1,7 +1,3 @@
-// Setup: what still needs you (the checklist) and how this machine looks
-// after the homelab (an update is the line at the top: updates.ts). Once nothing needs you, Setup
-// leaves the sidebar; the machine's details and the report live in
-// Settings › This Mac, and Status keeps the machine's line.
 import { mountAppearance } from '../settings/Appearance';
 import { jobFinished, jobStarted } from '../job/done';
 import { noAccentNote, systemOf } from '../differs';
@@ -110,9 +106,6 @@ function drawHost() {
   renderRuntime(i);
 }
 
-// A job on this screen (Update, Go back, a step, the report): its bar, a
-// row per app, and its log. Once it ends the log folds away if it went fine,
-// and Done takes them all off.
 function setupJob() {
   startJob('setup');
   jobStarted($('setupDetails') as HTMLDetailsElement, $('setupClear'));
@@ -161,7 +154,6 @@ const hostActions: HostActions = {
   },
 };
 
-
 // The container runtime, walked through: download it, open it, and this
 // screen notices on its own once it answers.
 let runtimeWatch = null;
@@ -191,9 +183,6 @@ function renderNewHomelab(i: app.HostInfo) {
   });
 }
 
-// The machine card's version line: the homelab folder against GitHub as
-// last checked (a look for updates keeps it fresh), and the version to go
-// back to after an update.
 async function loadUpgrade(force: boolean) {
   let c: app.UpgradeInfo;
   try { c = await go().UpgradeCheck(force); } catch (e) {
@@ -263,7 +252,6 @@ function renderSetup(steps: setup.Step[]) {
   const { done, total, left, wait } = progress(steps);
   const all = !left && !wait;
   $('checkTitle').textContent = all ? 'Everything is set up' : 'Finish setting up';
-  // What can wait is said too, so all done but it doesn't read as finished (Nov 12).
   $('checkCount').textContent = all ? '' : `${done} of ${total} done` + (wait ? ` · ${wait} can wait` : '');
   $('setupMeter').parentElement!.hidden = all;
   $('setupMeter').style.width = total ? `${Math.round((100 * done) / total)}%` : '0';
@@ -275,10 +263,6 @@ function renderSetup(steps: setup.Step[]) {
   setupNav();
 }
 
-// Setup is in the sidebar while it has something for you: a step left (or
-// one that can wait), a homelab update, a missing runtime or folder, or a
-// job's results still on it; and while it is the screen shown. Opened from
-// the sidebar's update line, the tray, or its shortcut, it is always there.
 export function setupNav() {
   const btn = $1('nav button[data-screen="setup"]');
   if (!btn) return;
@@ -335,7 +319,6 @@ function setupBadge(left) {
 export const stepsData = store(() => go().Setup());
 stepsData.watch(() => {
   if (stepsData.error) return notOnPhone(stepsData.error) ? undefined : showError(stepsData.error);
-  // The phone has no Setup tab: its unfinished steps show on Status (redesign-loop R10).
   if (onPhone()) mountSetupOnStatus($('setupOnStatus'), { steps: stepsData.value || null, open: () => navigate('setup') });
   renderSetup(stepsData.value!);
   if (form) drawSettings(false, false); // each setting's step, marked under it

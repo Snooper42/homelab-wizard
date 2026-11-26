@@ -1,12 +1,3 @@
-// Finances › Net worth › Investments: what each investment account holds,
-// as Ghostfolio (the homelab's own investment tracker) last read it, kept
-// in the plan so it shows with Ghostfolio stopped and on a phone. Four
-// figures (what it is worth, what went in, the gain, this month's change),
-// how it splits by account, and a row a holding, each opening its worth at
-// each read. Read now reads Ghostfolio again, on the computer only; after
-// the first, Finances reads it once a day on opening, unless turned off.
-// Where Finances may be changed, an open holding lists its buys and sales
-// as Ghostfolio keeps them, each to put right or delete.
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { Segmented } from '../../parts/Segmented';
 import { AreaChart } from '../ui/charts';
@@ -53,7 +44,6 @@ export interface TradeOps {
   remove: (t: app.InvestmentTrade) => Promise<void>;
 }
 
-/** "read 7:02 AM today", "read yesterday at 7:02 AM", "read Nov 2". */
 export function readWhen(at: string | undefined, today: string): string {
   if (!at) return '';
   const d = new Date(at);
@@ -142,7 +132,6 @@ export function InvestmentsWidget({ v, read, state = {}, keep, add, find, trades
         <div><div class="fx-caption">Gain</div><div class="fx-investfig"><Amount value={gain} form="full" sign tone="auto" /></div><div class="fx-sub">{amountsHidden() ? 'on what you paid' : `${share(gain, paid)} on what you paid`}</div></div>
         <div><div class="fx-caption">This month</div><div class="fx-investfig"><Amount value={month} form="full" sign tone="auto" /></div><div class="fx-sub">{amountsHidden() ? '' : share(month, before) + ' '}since {dayShort(first)}</div></div>
       </div>
-      {/* The owner, Nov 12: no bar of what each account holds; the total's worth over the year instead, each holding separate below. */}
       <AreaChart values={year.map((d) => accounts.reduce((t, a) => t + worthOn(v, a, d), 0))} zero={false} height={140} format={compact}
         xLabels={[{ i: 0, label: monthName(year[0]).slice(0, 3) }, { i: 6, label: monthName(year[6]).slice(0, 3) }, { i: 12, label: 'Today' }]}
         label={`Investments' worth over the last year, month by month, to ${money(total)} today`} />
@@ -162,11 +151,6 @@ export function InvestmentsWidget({ v, read, state = {}, keep, add, find, trades
   );
 }
 
-/**
- * The Watchlist (the owner, Nov 12): tickers followed without owning them, each with its price as last read, its change
- * since it was followed, and a line of it; never in the worth above. Follow a ticker looks one up (as Add a holding
- * does) and follows it; Unfollow saves the plan without it. A phone allowed only to look sees the list alone.
- */
 function Watchlist({ v, keep, follow, find }: { v: finance.View; keep?: InvestmentsProps['keep']; follow?: InvestmentsProps['follow']; find?: InvestmentsProps['find'] }) {
   const list = v.plan.watch || [];
   const [adding, setAdding] = useState(false);
@@ -269,15 +253,8 @@ function HoldingHistory({ v, h, cur }: { v: finance.View; h: finance.Holding; cu
   );
 }
 
-/** "Nov 8, 2026": a trade's day, with its year, as buys go back years. */
 const dayYear = (s: string) => new Date(s + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
-/**
- * A holding's buys and sales, read from Ghostfolio as it opens: each with
- * its day, shares, and what was paid (or got) in all, to Change (in a
- * short form) or Delete (asked first). Either reads Ghostfolio again, so
- * the card's figures follow.
- */
 function Trades({ account, h, ops }: { account: finance.Account; h: finance.Holding; ops: TradeOps }) {
   const [list, setList] = useState<app.InvestmentTrade[] | null>(null);
   const [problem, setProblem] = useState('');
@@ -427,12 +404,6 @@ function Unmatched({ v, state, keep, read }: { v: finance.View; state: InvestSta
   );
 }
 
-/**
- * Add a holding: bought or sold, into which account (or a new one, made
- * in Finances and Ghostfolio by one name), what (a ticker or a name,
- * picked from what Ghostfolio finds), how many shares, what was paid (or
- * got) in all, and the day. Ghostfolio keeps it; the card reads it back.
- */
 function AddForm({ v, add, find, close }: { v: finance.View; add: NonNullable<InvestmentsProps['add']>; find: NonNullable<InvestmentsProps['find']>; close: () => void }) {
   const invest = (v.plan.accounts || []).filter((a) => a.kind === 'investment' || a.kind === 'retirement');
   const [way, setWay] = useState('bought');

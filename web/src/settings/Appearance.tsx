@@ -1,6 +1,3 @@
-// Settings › Appearance: how the app looks on this computer. Each choice
-// shows at once and is kept beside the window's place (app/tray/appearance.go),
-// not in .env: it is this person's, not the homelab's.
 import { render } from 'preact';
 import { CardHead } from '../parts/Card';
 import { Segmented } from '../parts/Segmented';

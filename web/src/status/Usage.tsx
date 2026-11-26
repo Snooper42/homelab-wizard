@@ -1,6 +1,3 @@
-// What's using power: each busy app's share of a processor core now, with a
-// line of the last five minutes (Status samples every 10 seconds while it
-// is open), and a word on what to do about it.
 import { render } from 'preact';
 import { CardHead } from '../parts/Card';
 import { Row, Rows } from '../parts/Row';

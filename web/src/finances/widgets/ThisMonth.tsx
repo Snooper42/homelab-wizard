@@ -1,7 +1,3 @@
-// This month, every account: money in, money out, and what's kept, with
-// how this month's money out compares with last month's by the same day.
-// It was Transactions' first card; on the computer it leads the Budgets
-// page now (redesign-loop R4), so Transactions opens on its table.
 import { CardFigure, Chip } from '../../parts/Card';
 import { Amount } from '../ui/Amount';
 import { Widget } from '../ui/Widget';
@@ -26,8 +22,6 @@ export function ThisMonthWidget({ v, ledger }: { v: finance.View; ledger: financ
   const same = Math.abs(outNow - outBefore) < 0.005;
   return (
     <Widget title="This month" span="all" kind="fx-txsum">
-      {/* As the Dashboard's figures (redesign-loop R5): each figure with its label under it, and money out's change on
-          last month to the same day in a chip beside it (more out is the red one). */}
       <div class="fx-stats">
         <CardFigure figure={<Amount value={sum((t) => t.amount > 0)} form="whole" tone="in" />} label="Money in" />
         <CardFigure figure={<Amount value={outNow} form="whole" tone="out" />} label="Money out"

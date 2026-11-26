@@ -1,6 +1,3 @@
-// The overview's categories (the owner's web-wide pictures, Nov 25: "i love that overview screen"): one panel, two
-// columns, a row per category with its first three logos, its name, its apps' names, how many run (amber when one
-// stopped) and a chevron; a click opens the category's page. Show every app still opens the whole list (AppList).
 import { render } from 'preact';
 import { AppMark } from '../parts/AppMark';
 import { Card } from '../parts/Card';

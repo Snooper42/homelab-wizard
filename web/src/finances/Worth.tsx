@@ -1,11 +1,3 @@
-// Finances › Net worth, laid from the kit: today's figure, its change over
-// the range picked, and what is owed; month by month, what is owned
-// stacked above zero (a home or car as its equity) and what else is owed
-// below it, net worth the line through them and the months ahead (read
-// forward from the paychecks) faded, with or without the home and car; and
-// what the household owns and owes, account by account, each opening its
-// form; then the loans, each read to zero, the goals, each counting
-// shares of the accounts, and financial independence, as an estimate.
 import { useState } from 'preact/hooks';
 import { Card } from '../parts/Card';
 import { Empty } from '../parts/Empty';
@@ -48,7 +40,6 @@ export interface NetWorthProps {
 /** How far back the chart goes: months. */
 const ranges: [string, string, number][] = [['3', '3 months', 3], ['6', '6 months', 6], ['12', '1 year', 12], ['all', 'All', 600]];
 
-/** "updated today", "updated 3 days ago", "updated Oct 2". */
 export function ago(day: string | undefined, today: string): string {
   if (!day) return 'not typed in yet';
   const n = daysBetween(day, today);
@@ -89,9 +80,6 @@ export function NetWorth({ v, L, edit, open, sel, pick, update, keep, group, set
   const onLoans = loans.reduce((t, a) => t - worthOf(v, a), 0);
   const loanDrop = loans.reduce((t, a) => t + (worthOf(v, a) - worthOn(v, a, start.date)), 0);
   const ownedKeys = groups.filter((g) => g.key !== 'cards' && g.key !== 'loans' && months.some((m) => (m.owned[g.key] || 0) > 0));
-  // A home or car stands as its equity, its loan taken from it: a house and its mortgage would otherwise
-  // set the scale, above zero and mirrored below it, and leave cash a sliver. Net worth is the same.
-  // Without them (picked), what is left is drawn at a scale of its own: cash and savings beside investments.
   const netted = months.some((m) => m.secured > 0);
   const hasHome = ownedKeys.some((g) => g.key === 'property');
   const homeToo = counted === 'all' || !hasHome;
@@ -122,7 +110,6 @@ export function NetWorth({ v, L, edit, open, sel, pick, update, keep, group, set
   return (
     <div class="fin">
       <div class="fx-board">
-        {/* The three figures, one row of three (R5): three cards on the board's two columns left one alone, a hole beside it. */}
         <div class="fx-figurerow">
         <Widget title="Net worth" kind="fx-figurecard">
           <Stat size="lg" value={<Amount value={now} />} />
@@ -234,15 +221,6 @@ function GroupCard({ v, focus, months, range, setRange, clear }: {
   );
 }
 
-/**
- * Track from (the owner, Nov 16: "standardize everything going back to Jan
- * 1st 2026"): one day the household's money is tracked from. Spending,
- * Cash Flow, Money flow, Reports and what's found recurring count nothing
- * dated before it (Transactions still lists it all, and nothing is
- * deleted); net worth goes back to it, worked back from the first balance
- * through the transactions, never saved (View.WorthEstimated), saying how
- * each account went back and when checking would be under nothing.
- */
 function TrackFrom({ v, L, keep }: { v: finance.View; L: Lookup; keep?: (plan: finance.Plan) => Promise<boolean> }) {
   const [day, setDay] = useState(v.plan.trackFrom || '');
   const [busy, setBusy] = useState(false);

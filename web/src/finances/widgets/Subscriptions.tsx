@@ -1,9 +1,3 @@
-// Recurring › Subscriptions: what the subscriptions cost a month and a
-// year, together and each (dearest first), which renew in the next week
-// and month, how many are paid yearly against monthly, and where each
-// stands: due today, tomorrow, in a few days, or just paid; and what they
-// cost by type (streaming, cloud and homelab…). A row opens its payment's
-// form.
 import { Empty } from '../../parts/Empty';
 import { Row, Rows } from '../../parts/Row';
 import { Amount, Stat } from '../ui/Amount';
@@ -87,12 +81,6 @@ export function SubscriptionsSummary({ v, L, edit }: SubscriptionsProps) {
 /** How far ahead the Dashboard's Renewing soon looks: a week. */
 const soonDays = 7;
 
-/**
- * The Dashboard's Renewing soon: each subscription due in the next week,
- * soonest first, with its day and what it costs, and together what they
- * come to. None due, it is not drawn. A row opens its payment's form; See
- * all opens Recurring's Subscriptions.
- */
 export function RenewingWidget({ v, L, edit, all }: SubscriptionsProps & { all?: () => void }) {
   const due = (v.plan.payments || []).filter((x) => x.kind === 'subscriptions').map((x) => ({ x, due: dueOf(v, x.id) }))
     .filter((s) => s.due.days >= 0 && s.due.days <= soonDays).sort((a, b) => a.due.days - b.due.days || b.x.amount - a.x.amount);

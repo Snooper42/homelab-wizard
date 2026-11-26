@@ -1,16 +1,3 @@
-// A payee as a bank writes it ("NETFLIX.COM", "AMZN MKTP US*2K4",
-// "SQ *BLUE BOTTLE", "TST* JOE'S CAFE 0042", "PAYPAL *SPOTIFY", "POS DEBIT
-// SHELL OIL 57444 SAN JOSE CA", "ACME CRUISES AD_PAYMENT PPD ID: 1234",
-// "Zelle payment from JANE DOE 1234567890") made into the name a person would write:
-// the card processor's prefix and the merchant's own reference taken off,
-// card and store numbers, dates, phone numbers, ".COM", and a trailing
-// state dropped, a known chain's wording made its name ("WM SUPERCENTER"
-// is Walmart), and capitals made ordinary. A direct debit or deposit
-// (ACH) loses its codes: the PPD or WEB ID, its entry wording
-// (AD_PAYMENT), and a long reference. Zelle says who, and a card paid
-// from checking says which; a bill or a card payment is its company
-// (FPL, American Express), and a car's lender its make (Mazda). Logos
-// then match the clean name. Plain functions: words in, words out.
 
 /** Processors that write their own name first, the merchant after a star. */
 const processors = new Set(['sq', 'tst', 'sp', 'pp', 'py', 'paypal', 'in', 'ggl', 'google', 'gglpay', 'clover', 'toast', 'zettle', 'izettle', 'pmt', 'chk', 'lsp', 'cke', 'wwp', 'wl']);
@@ -26,10 +13,6 @@ const achId = /\b(?:PPD|CCD|WEB|TEL|CTX|IAT|ARC|BOC|POP|RCK|CIE)\s*ID\s*:?\s*\S*
 const suffixes = new Set('llc inc corp corporation ltd pllc llp'.split(' '));
 const states = new Set('al ak az ar ca co ct de dc fl ga hi id il in ia ks ky la me md ma mi mn ms mo mt ne nv nh nj nm ny nc nd oh ok or pa ri sc sd tn tx ut vt va wa wv wi wy pr'.split(' '));
 
-/**
- * A chain's statement wording and its name, the longest first: a clean
- * line that is, or starts with, the wording takes the name.
- */
 const chains: [string, string][] = ([
   ['amzn mktp', 'Amazon'], ['amzn mktplace', 'Amazon'], ['amazon mktplace', 'Amazon'], ['amazon mktpl', 'Amazon'], ['amazon mktp', 'Amazon'], ['amzn', 'Amazon'], ['amazon com', 'Amazon'],
   ['amazon prime', 'Amazon Prime'], ['prime video', 'Prime Video'], ['wm supercenter', 'Walmart'], ['wal mart', 'Walmart'], ['walmart supercenter', 'Walmart'], ['walmart', 'Walmart'],
@@ -80,15 +63,6 @@ const unglued = (s: string) => s.match(/^(.*[A-Za-z].*\d)[A-Z][A-Z .'-]{1,12}$/)
 /** A website in a line. */
 const site = /\.(?:com|net|org|co|io|tv|us)\b/i;
 
-/**
- * The shop alone, its town and state taken off. American Express pads a
- * line into columns ("BLUE BOTTLE COFFEE  OAKLAND   CA"): the shop, then
- * its town (or website, or phone number), then its state. When the shop's
- * column is full, the town follows its store number with no space ("PET
- * SUPERMARKET #100SUNRISE FL"), and a shop online gives its website as its
- * town ("AMAZON.COM AMZN.COM/BILL WA"). A line that is none of these, or
- * that would keep nothing but a bank's words, comes back as it was.
- */
 function shopOf(line: string): string {
   const s = line.trim();
   const keeps = (x: string) => /[A-Za-z]/.test(x.replace(leading, '')) ? x : s;
@@ -111,11 +85,6 @@ function shopOf(line: string): string {
   return s;
 }
 
-/**
- * A bank's wording with the town its file names for it (a City/State
- * column: "SAN JOSE CA", or on two lines) taken off its end; the wording as
- * it was when it doesn't end with that town.
- */
 export function withoutTown(raw: string, town: string | undefined): string {
   const words = (town || '').split(/\s+/).filter(Boolean);
   if (words.length > 1 && isState(words[words.length - 1])) words.pop();
@@ -182,12 +151,6 @@ export function bankWording(note: string): boolean {
   return (/\d{5,}/.test(s) || /\b(?:PPD|CCD|WEB|TEL)\s*ID\b|\bXFER\b/i.test(s) || shouting) && cleanPayee(s).toLowerCase() !== s.toLowerCase();
 }
 
-/**
- * A note as the list shows it: the bank's wording left out (it stays in
- * the transaction, for search and the form), a memo before it kept. The
- * wording the payee was made from ("Payment to Chase card ending in 9495
- * 11/06" for Payment to Chase card ••9495) is the bank's too.
- */
 export function shownNote(note: string | undefined, payee?: string): string {
   const s = (note || '').trim();
   const fromIt = (x: string) => !!payee && cleanPayee(x).toLowerCase() === payee.toLowerCase() && cleanPayee(x).toLowerCase() !== x.toLowerCase();

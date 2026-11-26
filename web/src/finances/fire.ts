@@ -1,8 +1,3 @@
-// The FIRE estimate (financial independence): what invested money would
-// let a year's spending be drawn from it, a share a year, for good; how
-// far there what is invested is; and the month it gets there at what is
-// put by a month and growth a year after rising prices, with two points
-// either way. An estimate from two assumptions, never advice.
 
 /** As far as it is read: a hundred years. */
 const maxMonths = 1200;

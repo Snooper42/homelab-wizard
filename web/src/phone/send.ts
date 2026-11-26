@@ -1,8 +1,3 @@
-// Send to my phone (unison-handoff.md item 7; the owner, Nov 12: pick a
-// phone each time, never a wall screen). On the computer: the paired phones
-// a page can go to, read once and again as a menu opens, and the send. On
-// the phone's page: a send from the computer shows at the bottom with Open,
-// which goes to that page.
 import { go } from '../core';
 import { showNote } from '../status/UndoNote';
 

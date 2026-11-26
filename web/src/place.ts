@@ -1,9 +1,3 @@
-// Remember where you were: each screen keeps how far down it was scrolled
-// and which of its sections were open (its own <details> with an ID, not
-// the log boxes), between visits and after quitting, on this device.
-// Leaving a screen keeps its place; coming back puts it back, once the
-// screen has drawn enough to scroll that far, unless you scroll first.
-// An app's page is left out: each app's is its own.
 import { $1 } from './core';
 
 const key = 'homelab.place';

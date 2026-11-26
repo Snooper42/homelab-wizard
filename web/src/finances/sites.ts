@@ -1,7 +1,3 @@
-// Each brand's website, for Get the real logo (internal/sitelogo): most
-// are their name and .com (wellsfargo.com, costco.com); the rest are here.
-// A guess the household can change before anything is asked; nothing is
-// asked until they click.
 import { brands } from './logos';
 
 /** Brands whose website is not their name and .com. */
@@ -22,11 +18,6 @@ const sites: Record<string, string> = {
   planetfitness: 'planetfitness.com', libertymutual: 'libertymutual.com', statefarm: 'statefarm.com', siriusxm: 'siriusxm.com', ynab: 'ynab.com',
 };
 
-/**
- * The website to ask for a logo: a brand's (above, else its name and
- * .com); "" for a name of no known brand (an HOA, a person, a loan called
- * Mortgage), whose website only the household knows.
- */
 export function siteFor(brand: string | undefined, _name?: string): string {
   if (!brand || brand === 'none' || !brands[brand]) return '';
   return sites[brand] || brands[brand].name.toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]/g, '') + '.com';

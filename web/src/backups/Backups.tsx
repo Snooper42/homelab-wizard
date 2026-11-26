@@ -1,7 +1,3 @@
-// The Backups screen's parts: the tiles, each database copy (grouped: stale,
-// up to date, paused while its app waits for a drive, not copied yet), the
-// vault export reminder, and the off-site Duplicati jobs. app.ts reads the
-// data and runs the buttons; these only draw.
 import { render } from 'preact';
 import { useState } from 'preact/hooks';
 import { ago, bytes, clockText, dateTimeText, dayText, never, untilText } from '../format';
@@ -47,19 +43,15 @@ export function sizeText(s: string): string {
 function RestoreTile({ t, due, test }: { t: backup.RestoreLog; due: boolean; test?: () => void }) {
   const runs = t.history || [];
   const newest = runs[runs.length - 1];
-  const timed = runs.slice().reverse().find((r) => r.passed && r.seconds);
   const failed = !!newest && !newest.passed;
-  const sub = failed ? <span class="bad">Failed {ago(newest.when)}: {newest.summary}</span>
-    : due ? <span class="warn">Prove the backups open, once a month</span>
-    : (t.lastSummary || (never(t.lastTest) ? 'Once there is a backup to test' : 'Proven in the last 30 days')) + (timed ? ` · in ${tookText(timed.seconds!)}` : '');
+  const sub = failed ? <span class="bad">{newest.summary}</span> : due ? <span class="warn">Due</span> : null;
   const record = runs.slice(-6).reverse().map((r) => `${dayText(new Date(r.when), { day: 'numeric', month: 'short' })}: ${r.passed ? 'passed' : 'failed'}${r.seconds ? ' in ' + tookText(r.seconds) : ''}`);
-  // The redesign's card (R7): Passed, Failed or Never in big, how long ago under it, then what was checked and Test a restore.
   return (
     <Card kind="bkcard" id="restoreTile" title={record.length ? `Restore drills on record (${runs.length}):\n` + record.join('\n') : undefined}>
       <CardHead title="Restore test" />
       <CardFigure figure={<span class={'value' + (failed ? ' bad' : '')}>{never(t.lastTest) ? 'Never' : failed ? 'Failed' : 'Passed'}</span>} label={never(t.lastTest) ? undefined : ago(t.lastTest)} />
-      <p class="bksub">{sub}</p>
-      {test && <div class="bkactions"><button id="restoreTest" class="small" title="Duplicati restores a dozen files from last night's Homelab AppData backup, and each is compared with the live file" onClick={test}>Test a restore</button></div>}
+      {sub && <p class="bksub">{sub}</p>}
+      {test && <div class="bkactions"><button id="restoreTest" class="small" onClick={test}>Test a restore</button></div>}
     </Card>
   );
 }
@@ -85,8 +77,6 @@ export function JobRun({ j }: { j: duplicati.Job }) {
 /** A night's result for one app, as a tone: copied is ok, stopped (so not copied) warn, failed bad; nothing to copy none. */
 export const resultTone = (r?: string): Tone => (r === 'copied' ? 'ok' : r === 'stopped' ? 'warn' : r === 'failed' ? 'bad' : '');
 
-/** A whole night (quality-loop Q4 (a)): bad when an app's copy failed, warn when one was stopped, ok when every app it
- * had to copy was copied; '' with nothing to copy. */
 export function nightTone(n: backup.Night): Tone {
   const r = Object.values(n.apps || {});
   if (r.includes('failed')) return 'bad';
@@ -96,7 +86,6 @@ export function nightTone(n: backup.Night): Tone {
 
 const nightDate = (day: string) => { const [y, m, d] = day.split('-').map(Number); return new Date(y, m - 1, d); };
 
-/** "Mon, Nov 24: 11 of 12 copied · Mealie stopped". */
 export function nightWords(n: backup.Night, name: (id: string) => string): string {
   const all = Object.entries(n.apps || {}).filter(([, r]) => r !== 'none' && r !== 'outside');
   const copied = all.filter(([, r]) => r === 'copied').length;
@@ -105,7 +94,6 @@ export function nightWords(n: backup.Night, name: (id: string) => string): strin
   return `${day}: ${all.length ? `${copied} of ${all.length} copied` : 'nothing to copy'}${missed.length ? ' · ' + missed.join(', ') : ''}`;
 }
 
-/** The last fourteen nights as squares under Last night (R7), oldest first, each its weekday's letter under it. */
 function Nights({ nights, name }: { nights: backup.Night[]; name: (id: string) => string }) {
   const shown = nights.slice(-14);
   return (
@@ -134,17 +122,10 @@ export interface BackupTilesProps {
   /** Each app's state by its ID (Status'), to say why a copy is stale and offer Start. */
   apps?: Record<string, api.AppStatus>;
   start?: (a: api.AppStatus) => void;
-  /** What no job copies (quality-loop D1), and Add, which makes the missing jobs: Not in any backup's card. */
   gaps?: duplicati.Gap[];
   addGap?: () => void;
 }
 
-/**
- * The top of Backups as the redesign's picture (R7): Last night, with how many copied, when it finished, what it came
- * to and where it went, then Next, its size and what's kept; Needs you beside it; the restore test, off-site and Not
- * in any backup under, a third each (the last only while something is left out).
- * The fourteen nights (quality-loop Q4 (a)) as squares under Last night; each app's last seven as dots in Each app.
- */
 export function BackupTiles({ o, os, test, apps, start, gaps, addGap }: BackupTilesProps) {
   const copies = sortedCopies(o);
   const fresh = copies.filter((c) => c.state === 'fresh');
@@ -157,16 +138,13 @@ export function BackupTiles({ o, os, test, apps, start, gaps, addGap }: BackupTi
   return (
     <>
       <Card kind="bkcard bklast" id="copiesTile">
-        <CardHead title={lastNight || never(o.lastRun) ? 'Last night' : 'Last backup'}><span class="muted">Every night at 03:30</span></CardHead>
+        <CardHead title={lastNight || never(o.lastRun) ? 'Last night' : 'Last backup'} />
         <CardFigure
           figure={<span class="value">{copies.length ? <>{fresh.length}<small> of {copies.length - paused.length} copied</small></> : 'None yet'}</span>}
-          label={never(o.lastRun) ? undefined : [lastNight ? `Finished ${clockText(new Date(o.lastRun))}` : ago(o.lastRun), size ? bytes(size) : '', o.destinationOK ? `Encrypted to ${placeName(o.destination)}` : ''].filter(Boolean).join(' · ')}
+          label={never(o.lastRun) ? undefined : lastNight ? clockText(new Date(o.lastRun)) : ago(o.lastRun)}
           chip={stale.length ? <span class="bkskipped">{stale.length === 1 ? `${stale[0].name} skipped` : `${stale.length} skipped`}</span> : undefined} />
         {!!o.nights?.length && <Nights nights={o.nights} name={(id) => copies.find((c) => c.app === id)?.name || apps?.[id]?.name || id} />}
-        <p class="bksub">{!copies.length ? 'The first are made the night after an app with a database starts'
-          : <>{!!stale.length && <span class="bad">Out of date: {stale.map((c) => `${c.name}, last copied ${ago(c.newest)}`).join('; ')}. </span>}
-            {!!paused.length && <span>{`${paused.length} more paused: ${paused.length === 1 ? 'its app waits' : 'their apps wait'} for ${drivesOf(paused)}`}. </span>}
-            {!stale.length && !paused.length && `Each under ${o.staleAfterHours} hours old.`}{never(o.envCopied) ? ' Settings file not copied yet.' : ' The settings file too.'}</>}</p>
+        {!copies.length && <p class="bksub">None yet</p>}
         <dl class="bkfacts">
           <div><dt>Next</dt><dd>Tonight, 03:30</dd></div>
           <div><dt>{lastNight ? "Last night's size" : 'Its size'}</dt><dd>{size ? bytes(size) : '—'}</dd></div>
@@ -174,20 +152,18 @@ export function BackupTiles({ o, os, test, apps, start, gaps, addGap }: BackupTi
         </dl>
       </Card>
       <Card kind="bkcard bkneeds" id="needsYou">
-        <CardHead title={<>Needs you{!!stale.length && <span class="bkcount">{stale.length}</span>}</>} />
+        <CardHead title={<>Skipped{!!stale.length && <span class="bkcount">{stale.length}</span>}</>} />
         {needs.length ? <Rows kind="bkneedlist">{needs.map((c) => {
           const a = c.app ? apps?.[c.app] : undefined;
           return <Row key={c.id} lead={<AppMark id={c.app} name={c.name} icon="" small />} dot={c.state === 'stale' ? 'bad' : 'warn'} title={c.name}
             sub={c.state === 'paused' ? `Waiting for ${driveName(c.waitingFor || '')}` : staleWhy(c, apps) || `Last copied ${ago(c.newest)}`}
             end={c.state === 'stale' && a && a.state !== 'running' && start ? <button type="button" class="small primary" onClick={() => start(a)}>Start</button> : undefined} />;
-        })}</Rows> : <p class="bksub ok">✓ Nothing needs you: every copy is up to date.</p>}
+        })}</Rows> : <p class="bksub ok">✓ Every copy is up to date.</p>}
       </Card>
       <RestoreTile t={o.restoreTest || ({} as backup.RestoreLog)} due={o.restoreDue} test={test} />
       <Card kind="bkcard" id="offsiteTile">
         <CardHead title="Off-site" />
-        <CardFigure figure={<span class="value">{o.destinationOK ? placeName(o.destination) : <span class="warn">Not set</span>}</span>} label={o.destinationOK ? 'Encrypted before it leaves' : undefined} />
-        <p class="bksub">{o.destinationOK ? <span title={o.destination}>In {lastFolder(o.destination)}</span>
-          : os === 'linux' ? 'Put a backup drive or a synced folder in Settings › Backups go to' : 'Put a Proton Drive folder in Settings › Backups go to'}</p>
+        <CardFigure figure={<span class="value">{o.destinationOK ? placeName(o.destination) : <span class="warn">Not set</span>}</span>} label={o.destinationOK ? lastFolder(o.destination) : 'Settings › Backups go to'} />
       </Card>
       {!!gaps?.length && addGap && <Card kind="bkcard" id="gapsTile"><Gaps gaps={gaps} add={addGap} /></Card>}
     </>
@@ -218,10 +194,10 @@ const changed = (c: backup.Copy) => !!c.before && Math.abs(c.size - c.before) >=
 export function staleWhy(c: backup.Copy, apps?: Record<string, api.AppStatus>): string {
   if (!apps || !c.app) return '';
   const a = apps[c.app];
-  if (!a) return "It isn't installed any more: its last copies are kept.";
-  if (a.state === 'stopped') return "It's stopped, so the nightly copy skips it. Start it, and tonight's copy catches up.";
-  if (a.state !== 'running') return "It isn't running, so the nightly copy skips it.";
-  return "Last night's copy didn't come. Back up now tries again; if it fails, the backup's log says why.";
+  if (!a) return 'Removed';
+  if (a.state === 'stopped') return 'Stopped';
+  if (a.state !== 'running') return 'Not running';
+  return '';
 }
 
 /** Each database copy or volume archive, in groups; stale and up to date open, the rest folded with their names. */
@@ -249,7 +225,7 @@ export function CopyRows({ o, apps }: { o: backup.Overview; apps?: Record<string
           ...(open ? g.copies.map((c) => (
             <tr key={c.id} class={'copy ' + c.state + (c.shrank ? ' shrank' : '')}>
               <td class="name"><span class={'dot ' + (c.shrank ? 'bad' : g.tone)} /><AppMark id={c.app} name={c.name} icon="" small />{c.name}
-                {c.shrank && <span class="note bad">Less than half the night before's {bytes(c.before || 0)}: check that {c.name} still has its data</span>}
+                {c.shrank && <span class="note bad">Under half the night before's {bytes(c.before || 0)}</span>}
                 {c.state === 'stale' && staleWhy(c, apps) && <span class="note muted">{staleWhy(c, apps)}</span>}
               </td>
               <td class="when muted">{never(c.newest) ? '—' : ago(c.newest)}</td>
@@ -369,8 +345,6 @@ export const mountCopyRows = (el: Element, props: { o: backup.Overview; apps?: R
 export const mountVault = (el: Element, props: { o: backup.Overview }) => render(<Vault {...props} />, el);
 export const mountJobs = (el: Element, props: JobsProps) => render(<Jobs {...props} />, el);
 
-/** Not in any backup (quality-loop D1), as the picture's card beside the restore test and off-site: each folder of
- * the household's that no job copies, where it is, and why; Add for one a job can copy (it makes the missing jobs). */
 export function Gaps({ gaps, add }: { gaps: duplicati.Gap[]; add: () => void }) {
   if (!gaps.length) return null;
   return (

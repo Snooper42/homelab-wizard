@@ -1,8 +1,3 @@
-// Looking back (Finances Step 5, the owner's yes Nov 12): an account at each
-// day's end over the last 30 or 90 days or a year, checking first, as its
-// own page draws it; another account picked from the list. A day clicked
-// opens it on the calendar (what happened that day); the title opens the
-// account's page. With no account to look back at, no card.
 import { useState } from 'preact/hooks';
 import { Segmented } from '../../parts/Segmented';
 import { Amount, Stat } from '../ui/Amount';

@@ -1,8 +1,3 @@
-// What the plan says for days ahead, the Dashboard's card for a month
-// picked by month (the rest of this one, or one after it): what comes in
-// and goes out, checking at the end of the days, and each paycheck and
-// payment in order, a payment opening its form. Read from the plan's days
-// (View.days), so it reaches as far as the chart does.
 import { useState } from 'preact/hooks';
 import { Empty } from '../../parts/Empty';
 import { Row, Rows } from '../../parts/Row';

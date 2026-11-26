@@ -1,7 +1,3 @@
-// Memory: what each app holds right now, from Docker's stats (Status
-// samples them every 10 seconds while it is open). An app counts its own
-// helpers too (its database, its cache), so a group's total is what
-// stopping its apps would give back.
 
 const units: Record<string, number> = { b: 1, kb: 1e3, mb: 1e6, gb: 1e9, tb: 1e12, kib: 1024, mib: 1024 ** 2, gib: 1024 ** 3, tib: 1024 ** 4 };
 
@@ -19,11 +15,6 @@ export function formatMem(bytes: number): string {
   return bytes > 0 ? '<1 MB' : '0 MB';
 }
 
-/**
- * Each app's memory by its ID: its own container's and its helpers'
- * (dependsOn of kind helper), each helper counted once. Stats are named by
- * compose service, as core.Usage reads them.
- */
 export function memoryByApp(stats: docker.Stat[], catalog: api.Catalog | null): Record<string, number> {
   const bytes = new Map(stats.map((s) => [s.name, parseMem(s.mem)]));
   const kind = new Map((catalog?.apps || []).map((a) => [a.id, a.kind]));

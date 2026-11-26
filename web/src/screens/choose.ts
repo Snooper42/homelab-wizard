@@ -18,9 +18,6 @@ import { icons as appIcons } from '../status/appIcons';
 
 // Choose apps
 export let catalog: api.Catalog | null = null;
-// Choose apps is gone (the owner, Nov 25): an app you could add has a page of its own on Status (choose/InstallSheet.tsx,
-// as an installed app's page), its plan beside its facts; Add your own app is a sheet. The plan's and the form's parts
-// move there once; the picker below stays out of sight, keeping what it ticks for the plan.
 let placed = false;
 function place() {
   if (placed) return;
@@ -303,9 +300,6 @@ $('installBtn').onclick = async () => {
 async function wire(box, run: () => Promise<WireLink[]> = () => go().Wire()) {
   const done: WireLink[] = [];
   let note = 'Connecting… this can take a minute while new apps start.';
-  // A link's fix, then connect again: the inbox filing as things arrive lets
-  // the next run hand the downloads over to Tidy Up; Seerr's sign-in goes
-  // with that run only (WireSeerr), never kept here.
   const fix = async (name: string, user?: string, password?: string) => {
     if (name === 'inbox-arrive') {
       try { await go().SaveSettings({ TIDY_INBOX_WHEN: 'arrive' }); } catch (e) { showError(e); return; }

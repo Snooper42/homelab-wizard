@@ -1,9 +1,3 @@
-// Net worth, small: today's, its change over the month, and month by
-// month (the months ahead hatched), opening the Net worth view. And the
-// sidebar's balances: each group of accounts with its total, the way a
-// glance at the side of the screen answers "how are we doing", and under
-// it each of its accounts with its logo and balance. A group's arrow folds
-// its accounts away; which are folded is kept on this device.
 import { render } from 'preact';
 import { useState } from 'preact/hooks';
 import { Amount, Delta, Stat } from '../ui/Amount';
@@ -48,12 +42,6 @@ export function NetWorthWidget({ v, open }: { v: finance.View; open: () => void 
 const foldedKey = 'homelab.finances.foldedGroups';
 const readFolded = (): string[] => { try { return JSON.parse(localStorage.getItem(foldedKey) || '[]') || []; } catch { return []; } };
 
-/**
- * The sidebar's balances, on every screen: each group and its total, and
- * under it its accounts, each with its logo and balance; picking a group or
- * an account opens Finances › Net worth on that group. Each group's arrow
- * folds its accounts away, and it stays folded.
- */
 function Balances({ v, open, toggle }: { v: finance.View; open: (group: string) => void; toggle?: () => void }) {
   const [folded, setFolded] = useState(readFolded);
   const list = grouped(v);

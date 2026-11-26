@@ -28,10 +28,6 @@ export interface WireLink { state: string; text: string; detail?: string; fix?: 
 /** A link's one-click fix (wiring.Link.Fix), by its name: the button's words. */
 const fixes: Record<string, string> = { 'inbox-arrive': 'Let Tidy Up file downloads as they arrive', 'seerr-signin': 'Sign Seerr in', 'qbit-password': 'Give qBittorrent the password in Settings' };
 
-/**
- * Seerr's first sign-in: a Jellyfin administrator's name and password, sent
- * once with Connect apps and kept nowhere (the field empties on send).
- */
 function SeerrSignIn({ send }: { send: (user: string, password: string) => void }) {
   const [user, setUser] = useState('');
   const [password, setPassword] = useState('');
@@ -48,9 +44,6 @@ const marks: Record<string, [string, string]> = { done: ['✓', 'ok'], already: 
 
 /** Connected for you: each link as it finishes, with what is still going on. */
 export function Wiring({ links, note, fix, close }: { links: WireLink[]; note: string; fix?: (name: string, user?: string, password?: string) => void; close?: () => void }) {
-  // While it runs, every link as it comes; once it ends (no note), what went
-  // fine folds into one line and only what needs you stays out (the owner,
-  // Nov 20: results shouldn't just sit there), with Done to take it away.
   const finished = !note;
   const fine = links.filter((l) => l.state === 'done' || l.state === 'already');
   const fold = finished && fine.length > 0;

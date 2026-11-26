@@ -1,9 +1,3 @@
-// The homelab doing a paid service's job: a payment still in the plan for
-// a service an app running here replaces (docs/Savings.md, through the
-// catalog's Replaces). A payment is that service when every word of its
-// name that says who it is (not "premium", "plan", or the like) is in the
-// service's name: Netflix is "Netflix Standard", iCloud "iCloud+ 2 TB",
-// and Google One is not "Google Home Premium".
 
 /** A running app and the paid services it stands in for. */
 export interface Running { name: string; replaces: string[] }

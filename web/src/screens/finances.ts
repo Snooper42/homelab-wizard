@@ -1,10 +1,3 @@
-// Finances: the household's money plan as last read (who gets paid, the
-// accounts, the payments that repeat, read forward from today), its
-// ledger (what actually happened), the view
-// and paycheck picked, and keeping what is typed in. The same screen shows
-// on the phones allowed it (homelab serve), so the plan can change on
-// another device between reading and saving: such a save is refused, and
-// the latest is read with the form kept open over it.
 import { mountFinanceSheet, type What } from '../finances/Edit';
 import { mountFinMenu, mountFinances } from '../finances/Finances';
 import { isoDay, setHidden, todayISO } from '../finances/money';
@@ -22,9 +15,6 @@ import { householdShared, installPrivate, isLocked, lock, privateState, watchPri
 import { mountPrivate } from '../finances/Private';
 import { mountShared } from '../finances/Shared';
 
-// A member's private Finances, on her phone: the page answers the Finances
-// calls itself once they're sealed (finances/privacy.ts), so it is in front
-// before the first read.
 installPrivate();
 
 export const financesData = store(() => go().Finances());
@@ -51,12 +41,6 @@ function runningApps(): Running[] {
   const up = new Set((statusData.value?.apps || []).filter((a) => a.state === 'running').map((a) => a.id));
   return (catalog?.apps || []).filter((a) => up.has(a.id) && a.replaces?.length).map((a) => ({ name: a.name, replaces: a.replaces! }));
 }
-/**
- * Whether an app answers here (Status): Recurring's From Wallos, Update
- * balances' apps, and the morning's read of Ghostfolio only then. One in a
- * container the homelab did not start (Status: Runs elsewhere) answers on
- * its port all the same.
- */
 const runs = (id: string) => (statusData.value?.apps || []).some((a) => a.id === id && (a.state === 'running' || a.state === 'elsewhere'));
 const wallosRunning = () => runs('wallos');
 /** The apps Update balances reads from on a click: those running, on the computer and the web page alike. */
@@ -67,10 +51,6 @@ function fromApps() {
   ];
   return all.filter((a) => runs(a.id)).map(({ name, read }) => ({ name, read }));
 }
-// Net worth › Investments, read from Ghostfolio: on Read now (the computer,
-// or a phone allowed to change Finances), and after the first, once a day
-// as Finances opens on the computer while Status sees Ghostfolio running
-// (unless turned off), when the last read is from before today or 12 hours old.
 let invest: InvestState = {};
 let autoTried = '';
 async function readInvestments() {
@@ -126,9 +106,6 @@ function readEachMorning(v: finance.View) {
 }
 export function loadFinances() { statusData.fresh(5 * 60000); return Promise.all([financesData.load(), ledgerData.load(), phone ? sharedData.load() : null]).then(() => {}); }
 
-// The view shown and the paycheck picked, kept between visits; until one
-// is picked, the next paycheck (the first stretch when it lands today and
-// is still to come).
 let tab = 'overview';
 // The group of accounts Net worth opens on (a sidebar balance), "" for all of them.
 let group = '';
@@ -194,11 +171,6 @@ function draw() {
   $('financesCount').textContent = low ? String(low) : '';
 }
 
-/**
- * Saves an export and says where it went, "" when cancelled: on the
- * computer where the dialog says; on a phone, shared (Files, Mail) or
- * else downloaded.
- */
 async function exportFile(name: string, text: string): Promise<string> {
   if (!phone) { const file = await go().ExportFinances(name, text); return file ? `Saved to ${file}` : ''; }
   const type = name.endsWith('.json') ? 'application/json' : name.endsWith('.html') ? 'text/html' : 'text/csv';
@@ -216,11 +188,6 @@ async function exportFile(name: string, text: string): Promise<string> {
   return `Downloaded ${name}`;
 }
 
-/**
- * Keeps the plan and draws what it reads forward; false when it failed.
- * After a failure the plan is read again: when another device saved in
- * between, what is shown (and an open form) then builds on its change.
- */
 async function save(plan: finance.Plan): Promise<boolean> {
   try {
     financesData.set(await go().SaveFinances(plan));
@@ -235,7 +202,6 @@ async function save(plan: finance.Plan): Promise<boolean> {
 /** Keeps the ledger; as with the plan, after a failure it is read again, the form kept open over it. */
 /** Receipts, kept on the homelab as soon as one is picked; a transaction names its own. */
 const receipts = { save: (dataURL: string) => go().SaveFinancesReceipt(dataURL), read: (name: string) => go().FinancesReceipt(name) };
-/** The Collection's pictures: a card's own photo kept, and each read back by its name. */
 const cardPictures = { save: (dataURL: string) => go().SaveFinancesCardPicture(dataURL), read: (name: string) => go().FinancesCardPicture(name) };
 // A company's real logo from its website, asked by the computer (the desktop app); a phone has none to ask with.
 const fetchLogo = (site: string) => go().FinancesFetchLogo(site);
@@ -253,11 +219,6 @@ async function saveLedger(l: finance.Ledger): Promise<boolean> {
   }
 }
 
-/**
- * Says what became of a paycheck or payment taken as done: counted (it
- * happened, or a bill on the day balances were typed comes out), waiting
- * (not yet: it comes today), or a bill on that day the balance has already.
- */
 function setSince(key: string, state: SinceState) {
   const v = financesData.value!;
   // What waits now, by its key (NotYet, the day's paychecks before, is one of them), and what the balances have.
@@ -273,11 +234,6 @@ function setSince(key: string, state: SinceState) {
 // The menu's item and the window's own shortcut can both see one ⌘⇧H: a
 // second toggle this soon after the first is the same press.
 let toggled = 0;
-/**
- * Hides every amount, or shows them again (⌘⇧H, Ctrl+Shift+H, View ›
- * Hide Amounts, or the eye): at once here, then kept in the plan for the
- * other devices. A phone allowed only to look follows the plan.
- */
 export function toggleHideAmounts() {
   const v = financesData.value;
   if (!v || v.readOnly || Date.now() - toggled < 400) return;

@@ -1,7 +1,3 @@
-// A screen's own menu in the sidebar, under the strip of the homelab's screens, as Finances' and Tidy Up's (the owner,
-// Nov 24: every screen's sidebar the same): an icon and a name each, a count where something waits, the one shown marked.
-// Status, Backups, Choose apps and Setup each mount one into their #…Side in index.html; the sidebar shows the one whose
-// screen is open. A pick goes straight to its part: no animation.
 import { render } from 'preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 
@@ -42,6 +38,7 @@ export const sideIcons: Record<string, string> = {
   'media-automation': 'M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15',
   household: 'M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM9 22V12h6v10',
   other: 'M12 2a10 10 0 1 0 0 20 10 10 0 1 0 0-20zM8 12h.01M12 12h.01M16 12h.01',
+  backups: 'M21 8v13H3V8M1 3h22v5H1zM10 12h4',
   night: 'M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z',
   restore: 'M1 4v6h6M3.51 15a9 9 0 1 0 2.13-9.36L1 10',
   offsite: 'M3 11h18v11H3zM7 11V7a5 5 0 0 1 10 0v4',
@@ -67,9 +64,6 @@ export function SideMenu({ label, items, here, pick }: SideMenuProps) {
   );
 }
 
-/** The same menu as one button on a phone's narrow page (the owner, Nov 25: "like a drop down menu"): where you are,
- * with a chevron; a tap lists every item, as the sidebar has them, and a pick goes there and closes it. A press
- * anywhere else, or Escape, closes it too. */
 export function SideDropdown({ label, items, here, pick }: SideMenuProps) {
   const [open, setOpen] = useState(false);
   const wrap = useRef<HTMLDivElement>(null);

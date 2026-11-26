@@ -1,6 +1,3 @@
-// Status's smaller cards: the watchdog's last run, protection, recent
-// alerts, storage, this week, and downloads. app.ts reads each and mounts
-// it into its card; these only draw.
 import { render } from 'preact';
 import { useState } from 'preact/hooks';
 import { ActionLink } from '../ActionLink';
@@ -28,11 +25,6 @@ const wakeText = (t: string) => {
   return d.toDateString() === new Date().toDateString() ? clockText(d) : `${dayText(d, { weekday: 'short' })} ${clockText(d)}`;
 };
 
-/**
- * Snooze on a failing check: no alerts about it for an hour or a day, for a
- * failure you already know of. The watchdog goes on checking it, and alerts
- * when the snooze ends if it still fails.
- */
 function SnoozePick({ check, until, snooze }: { check: string; until?: string; snooze: (check: string, hours: number) => void }) {
   return (
     <select class="snoozepick" aria-label={`Snooze the alerts about ${check}`} value="" onChange={(e) => { const v = e.currentTarget.value; if (v !== '') snooze(check, Number(v)); }}>
@@ -47,11 +39,6 @@ function SnoozePick({ check, until, snooze }: { check: string; until?: string; s
 /** Memory as the alert says it, in the binary units Docker sets it in: 2.1 GB, 900 MB. */
 export const memText = (n: number) => (n >= 2 ** 30 ? `${(n / 2 ** 30).toFixed(1)} GB` : `${Math.round(n / 2 ** 20)} MB`);
 
-/**
- * Memory nearly full: the apps have stayed above 90% of what Docker has
- * long enough for the watchdog to alert (health.StepMemory). The biggest,
- * each with Stop, until it comes down.
- */
 function MemoryPressure({ m, stop }: { m: health.Memory; stop?: (id: string) => void }) {
   const share = m.total ? Math.round((m.used / m.total) * 100) : 0;
   return (
@@ -71,11 +58,6 @@ function MemoryPressure({ m, stop }: { m: health.Memory; stop?: (id: string) => 
   );
 }
 
-/**
- * The watchdog's last run: every app, public address, database copy,
- * Duplicati job, and the CrowdSec bouncer, checked every 15 minutes by the
- * scheduled job. Failing checks are the ones it alerted about.
- */
 export function Watchdog({ w, unchecked = [], openSetup, fix, stop, snooze }: WatchdogProps) {
   if (never(w.lastRun)) {
     return <Head title="Watchdog"><span class="muted">Not set up. <ActionLink onClick={openSetup}>Open Setup</ActionLink></span></Head>;
@@ -145,11 +127,6 @@ export function Protection({ p, fix }: { p: crowdsec.Protection; fix: () => void
 /** How each thing on the way is shown: stuck needs a look, the rest are on their way. */
 const stateDot: Record<string, Tone> = { stuck: 'warn', getting: 'ok', waiting: '', filing: 'ok' };
 
-/**
- * Downloads (arr item 6): what the media apps have on the way, in plain
- * words (Getting 2 · 1 stuck: no search site has it · Drive 82% full),
- * stuck first, and a warning before the media drive fills.
- */
 export function Downloads({ c }: { c: downloads.Card }) {
   const items = c.items || [];
   const full = !!c.drive && c.drive.used >= 95;
@@ -158,7 +135,6 @@ export function Downloads({ c }: { c: downloads.Card }) {
   return (
     <>
       <Head title="Downloads"><span id="downloadsLine" class={tone}>{c.line}</span></Head>
-      {c.warning && <p id="downloadsWarning" class={full ? 'bad' : 'warn'}>{c.warning}</p>}
       {!!shown.length && (
         <Rows>
           {shown.map((i, n) => <Row key={n} dot={stateDot[i.state] ?? ''} title={i.name} sub={i.words} subTone={i.state === 'stuck' ? 'warn' : ''} when={i.app} />)}
@@ -200,12 +176,6 @@ function Lines({ text }: { text: string }) {
   );
 }
 
-/**
- * Recent alerts: what the nightly updates, Duplicati, Uptime Kuma, and the
- * watchdog sent to ntfy in the last 12 hours, less those whose problem has
- * cleared since (a later watchdog run passed, the apps a backup skipped run
- * again). Check again reads them now rather than at the next minute's poll.
- */
 export function Alerts({ events, problem, openSetup, refresh, log, watch, snooze }: AlertsProps) {
   const [checking, setChecking] = useState(false);
   const again = () => { setChecking(true); refresh().finally(() => setChecking(false)); };
@@ -228,7 +198,7 @@ export function Alerts({ events, problem, openSetup, refresh, log, watch, snooze
       <Head title="Recent alerts"><span><span class="muted">{events.length} in the last 12 hours</span> {check} {every}</span></Head>
       <Rows>
         {shown.map((e) => (
-          <Row key={e.id} dot={tone(e)} title={e.title || e.message} sub={e.title && e.message && <Lines text={e.message} />}
+          <Row key={e.id} dot={tone(e)} title={e.title || e.message}
             end={<span class="badge">{topicName[e.topic] || e.topic}</span>} when={ago(e.time)} />
         ))}
       </Rows>
@@ -244,22 +214,12 @@ export function alertFate(a: history.Alert, now = Date.now()): string {
   return a.checks?.length ? 'Not cleared yet' : '';
 }
 
-/**
- * The checks of a kept alert that Snooze… is for: not cleared, and still
- * failing at the watchdog's last run. None for an alert about no check.
- */
 export function snoozable(a: history.Alert, w: health.Summary | null | undefined): string[] {
   if (a.clearedAt || !w) return [];
   const failing = new Set((w.failing || []).map((f) => f.name));
   return (a.checks || []).filter((c) => failing.has(c));
 }
 
-/**
- * Every alert…: the computer's record of the alerts it sent (the last 90
- * days, internal/history), long after ntfy has let them go, each with when
- * its problem cleared or who snoozed it, and Snooze… on one whose check
- * still fails (hidden on a phone that only looks, as the Watchdog card's).
- */
 function AlertLog({ log, watch, snooze }: { log: () => Promise<history.Alert[]>; watch?: () => health.Summary | null; snooze?: (check: string, hours: number) => Promise<void> }) {
   const [all, setAll] = useState<history.Alert[] | null>(null);
   const [problem, setProblem] = useState('');

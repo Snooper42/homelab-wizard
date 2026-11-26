@@ -1,7 +1,3 @@
-// Finances' sheet: adding or changing a payment, an account (first what
-// kind, then its bank, broker, or make by logo, and what it holds), or
-// someone who gets paid; and updating every balance at once. What is typed
-// stays in the form until Save; screens/finances.ts keeps the plan.
 import { render } from 'preact';
 import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { Segmented } from '../parts/Segmented';
@@ -84,12 +80,6 @@ const named = (kind: string, b: string) => ({ checking: `${b} Checking`, savings
 /** Worth what is typed in, and nothing is paid out of them or into them. */
 const held = (kind: string) => kind === 'home' || kind === 'car' || kind === 'collectible';
 
-/**
- * Save, Cancel, and for one that exists Delete (asked twice); what is
- * missing above them. Cancel (or Escape) on a form with something typed
- * asks once before it drops it. An account that payments use (uses names
- * them) asks whether they go with it (removeAll) or stay.
- */
 function Actions({ busy, exists, remove, close, problem, touched, uses, removeAll }: { busy: boolean; exists: boolean; remove: () => void; close: () => void; problem?: string; touched: boolean; uses?: string; removeAll?: () => void }) {
   const [sure, setSure] = useState(false);
   const [leaving, setLeaving] = useState(false);
@@ -133,11 +123,6 @@ function useSaving(props: EditProps) {
   return { busy, keep, touched, watch };
 }
 
-/**
- * An image of one's own as a small data URL: drawn into 96 pixels square
- * on this device (never sent anywhere to be made smaller), as PNG, or as
- * WebP when a photo makes the PNG too large for the file.
- */
 async function shrink(f: File): Promise<string> {
   const bmp = await createImageBitmap(f);
   const n = 96, scale = Math.min(n / bmp.width, n / bmp.height, 1);
@@ -149,10 +134,6 @@ async function shrink(f: File): Promise<string> {
   return png.length < 60000 ? png : url(await c.convertToBlob({ type: 'image/webp', quality: 0.85 }));
 }
 
-/**
- * A card's photo made small on this device (never sent anywhere to be): drawn into at most 800 pixels on its longer side,
- * as a JPEG, which the computer keeps as the card's picture.
- */
 async function shrinkPhoto(f: File): Promise<string> {
   const bmp = await createImageBitmap(f);
   const scale = Math.min(800 / bmp.width, 800 / bmp.height, 1);
@@ -165,11 +146,6 @@ async function shrinkPhoto(f: File): Promise<string> {
 /** A file as a data URL. */
 const asDataURL = (b: Blob) => new Promise<string>((ok, bad) => { const r = new FileReader(); r.onload = () => ok(String(r.result)); r.onerror = () => bad(r.error); r.readAsDataURL(b); });
 
-/**
- * A logo a website gave (PNG, ICO, SVG, …, as a data URL) as one to keep:
- * drawn by the browser into 96 px, its shape whole, as a PNG (or WebP when
- * that is too large), as internal/finance keeps an image of one's own.
- */
 async function keptLogo(src: string): Promise<string> {
   const img = new Image();
   img.src = src;
@@ -188,11 +164,6 @@ const hostOf = (u: string) => { try { return new URL(u).hostname.replace(/^www\.
 /** The most a receipt may hold (internal/finance's MaxReceipt). */
 const maxReceipt = 2 << 20;
 
-/**
- * A receipt as a data URL: a photo made smaller on this device (its long
- * side at most 1600 pixels, as JPEG, readable and well under the limit),
- * or a PDF as it is. Never sent anywhere to be made smaller.
- */
 async function receiptOf(f: File): Promise<string> {
   if (f.type === 'application/pdf') {
     if (f.size > maxReceipt) throw new Error('That PDF is over 2 MB: keep the page with the receipt on it.');
@@ -210,17 +181,11 @@ async function receiptOf(f: File): Promise<string> {
   throw new Error('That picture is too large even made smaller.');
 }
 
-/**
- * A transaction's receipt: added from a photo or a PDF (on a phone, the
- * camera is offered), kept at once, shown here (a picture, or the PDF in
- * a frame), changed, or removed. What the form saves is its name.
- */
 function Receipt({ name, set, receipts }: { name?: string; set: (name: string | undefined) => void; receipts: NonNullable<EditProps['receipts']> }) {
   const file = useRef<HTMLInputElement>(null);
   const [shown, setShown] = useState<{ name: string; url: string } | null>(null);
   const [problem, setProblem] = useState('');
   const [busy, setBusy] = useState(false);
-  // The one named, read once; a receipt no longer kept says so.
   useEffect(() => {
     if (!name || shown?.name === name) return;
     let live = true;
@@ -253,12 +218,6 @@ function Receipt({ name, set, receipts }: { name?: string; set: (name: string | 
   );
 }
 
-/**
- * Your own image for a logo: picked from a file, or the company's real
- * logo got from its website (on the computer: fetchLogo), shown at once,
- * and kept with the plan when it is saved. The website starts as a guess
- * (sites.ts) and nothing is asked of it until Get the real logo.
- */
 function OwnLogo({ value, set, what, fetchLogo, guess }: { value?: string; set: (img: string | undefined) => void; what: string; fetchLogo?: EditProps['fetchLogo']; guess?: string }) {
   const file = useRef<HTMLInputElement>(null);
   const [problem, setProblem] = useState('');
@@ -305,11 +264,6 @@ function withLogo(plan: finance.Plan, key: string, img: string | undefined, open
   return Object.keys(logos).length ? logos : undefined;
 }
 
-/**
- * A box ticked, read on its click: by its change event the form, which
- * marked itself touched on the input event before it, has drawn the box
- * again as it was, so a click by mouse or finger never ticked it.
- */
 const tick = (set: (on: boolean) => void) => (e: MouseEvent) => set((e.currentTarget as HTMLInputElement).checked);
 
 function Field({ label, children, wide }: { label: string; children: any; wide?: boolean }) {
@@ -434,17 +388,9 @@ function PaymentForm(props: EditProps) {
   );
 }
 
-/**
- * A bank, broker, or make, by its mark: a search when there are many, then
- * the marks, those that fit the kind first, and the last tile for one not
- * among them (its name is typed below).
- */
 function BrandPick({ kind, value, set, payment }: { kind: string; value: string; set: (k: string) => void; payment?: boolean }) {
   const [q, setQ] = useState('');
   const grid = useRef<HTMLDivElement>(null);
-  // The one picked in view as the form opens (Wells Fargo is far down the list): a frame on, once the
-  // sheet that holds it shows.
-  // And whenever the name picks one out of view as it is typed ("Toyota" far down): the grid goes to it.
   useLayoutEffect(() => {
     if (!value) return undefined;
     const id = requestAnimationFrame(() => {
@@ -737,11 +683,6 @@ function PersonForm(props: EditProps) {
   );
 }
 
-/**
- * A planned payment's last few, from the transactions linked to it: each
- * day, what it came to, and how far that was from the plan's amount; with
- * their average when it changes. Read only: a row is changed on Transactions.
- */
 function PaidLately({ x, ledger }: { x: finance.Payment; ledger?: finance.Ledger | null }) {
   const paid = (ledger?.transactions || []).filter((t) => t.payment === x.id).sort((a, b) => b.date.localeCompare(a.date));
   if (!paid.length) return null;
@@ -764,11 +705,6 @@ function PaidLately({ x, ledger }: { x: finance.Payment; ledger?: finance.Ledger
   );
 }
 
-/**
- * An account's last few balances as kept (Account.History, one a day it
- * was typed in or read), newest first, each with how it moved from the one
- * before: up is good for what it holds, down for what it owes.
- */
 function BalancesLately({ a }: { a: finance.Account }) {
   const points = (a.history || []).slice(-7);
   if (points.length < 2) return null;
@@ -788,11 +724,6 @@ function BalancesLately({ a }: { a: finance.Account }) {
   );
 }
 
-/**
- * Update balances: every account in one list, each box starting at what
- * it is expected to hold today, the difference shown as it is typed, and
- * Enter (or Save) keeping them all as today's.
- */
 function BalancesForm(props: EditProps) {
   const { plan, start } = props;
   const accounts = plan.accounts || [];
@@ -890,13 +821,6 @@ function BalancesForm(props: EditProps) {
 
 /** +$487.60, −$12.00. */
 
-/**
- * A transaction: money out, money in, or moved between the household's
- * own accounts; its payee (the logo follows the name, as a payment's
- * does), day, account, category, the planned payment it pays, and a note.
- * Picking a planned payment fills in what is still empty from it. Splits
- * and tags a transaction already has are kept as they are.
- */
 function TransactionForm(props: EditProps) {
   const { plan, checking, ledger } = props;
   const t = (ledger?.transactions || []).find((q) => q.id === props.id);
@@ -1076,13 +1000,6 @@ function TransactionForm(props: EditProps) {
   );
 }
 
-/**
- * Finances › Transactions › Logos: every payee, account, and payment that
- * shows initials (no mark of its brand's own and no image of the
- * household's), with its website guessed (sites.ts). Get the real logo
- * asks that website for its icon, from this computer, one at a time or
- * all at once; each is shown here before Save keeps them in the plan.
- */
 function LogosForm(props: EditProps) {
   const { plan, ledger, fetchLogo } = props;
   const { busy, keep, touched, watch } = useSaving(props);
@@ -1150,10 +1067,6 @@ function LogosForm(props: EditProps) {
   );
 }
 
-/**
- * The rules (Always do this for <payee>): each payee's name as it comes in, or the words names start with, and the
- * name and category it becomes, each changeable here; Remove takes one away.
- */
 function RulesForm(props: EditProps) {
   const { plan } = props;
   const { busy, keep, touched, watch } = useSaving(props);
@@ -1199,13 +1112,6 @@ const categoryIcons: [string, string][] = [['', 'None'], ['home', 'Home'], ['uti
   ['food', 'Food'], ['spending', 'Shopping cart'], ['car', 'Car'], ['insurance', 'Insurance'], ['subscriptions', 'Repeat'], ['streaming', 'TV'], ['music', 'Music'], ['software', 'Software'],
   ['cloud', 'Cloud'], ['gaming', 'Games'], ['news', 'News'], ['fitness', 'Fitness'], ['health', 'Health'], ['school', 'School'], ['savings', 'Money in'], ['trash', 'Trash'], ['other', 'Box']];
 
-/**
- * The household's categories: each one's name, the group it is under,
- * and its icon; added, renamed, moved, or deleted. A rename is carried
- * into the ledger (and its splits), and a category deleted leaves its
- * transactions in its group (or none). The plan is kept first, then the
- * ledger when anything in it changed.
- */
 function CategoriesForm(props: EditProps) {
   const { plan, ledger } = props;
   const [rows, setRows] = useState(() => (props.categories || []).map((c) => ({ was: c.name, name: c.name, parent: c.parent || '', icon: c.icon || '', income: !!c.income })));
@@ -1278,10 +1184,6 @@ function CategoriesForm(props: EditProps) {
   );
 }
 
-/**
- * Budgets: how much each category may take, a month or each paycheck, and
- * whether what is left (or spent beyond it) rolls over to the next.
- */
 function BudgetsForm(props: EditProps) {
   const { plan } = props;
   const names = (props.categories || []).map((c) => c.name);
@@ -1325,19 +1227,6 @@ function BudgetsForm(props: EditProps) {
   );
 }
 
-/**
- * Bringing in a bank's file: a CSV or an OFX/QFX statement picked on this
- * device and read here (never sent anywhere), into an account. A CSV's
- * columns are guessed from its header and can be picked; a preview lists
- * what would come in, those already in the ledger skipped, each payee with
- * the category it had last. A row that plainly pays a planned payment is
- * linked to it, so the plan does not take it out again on its day; the
- * preview says so, and the link can be changed or taken off there. A row
- * brought in before with only CREDIT or DEBIT as its payee (a Chase file,
- * read wrongly) takes this file's payee for it, rather than coming in twice;
- * one whose payee was the bank's own words (its codes left in) takes the
- * clearer name this file's row now reads as.
- */
 function ImportForm(props: EditProps) {
   const { plan, checking, ledger } = props;
   const accounts = (plan.accounts || []).filter((a) => !held(a.kind));
@@ -1368,9 +1257,6 @@ function ImportForm(props: EditProps) {
   const guessFlip = signed && card && chargesPlus(asRead);
   const flipped = signed && (flip ?? guessFlip);
   const read_ = flipped ? asRead.map((t) => ({ ...t, amount: -t.amount })) : asRead;
-  // A card's file left on an account that isn't a card (the sheet starts on checking): most rows are money in, as a
-  // card's file writes its charges. Said before anything comes in, with the card to bring it into: the one American
-  // Express card, or else the only card.
   const cards = accounts.filter((a) => a.kind === 'card');
   const amexCards = cards.filter((a) => brandOf(a.institution, a.name) === 'americanexpress');
   const toCard = amexCards.length === 1 ? amexCards[0] : cards.length === 1 ? cards[0] : undefined;
@@ -1518,12 +1404,6 @@ function ImportForm(props: EditProps) {
 /** The accounts a goal can count: those that hold money (internal/finance's goalKinds). */
 const goalKinds = ['checking', 'savings', 'investment', 'retirement', 'other'];
 
-/**
- * A goal: its name, how much, the day it is wanted by (or none), and the
- * accounts that count toward it, each with the share of it that does (all
- * of it to start). What the other goals take of an account is said beside
- * it, so no account is shared out past all it holds.
- */
 function GoalForm(props: EditProps) {
   const { plan, id } = props;
   const g = (plan.goals || []).find((q) => q.id === id);
@@ -1587,12 +1467,6 @@ const cardsAccount = (plan: finance.Plan): finance.Account => {
   return { id, name: 'Pokémon cards', kind: 'collectible', balance: 0 };
 };
 
-/**
- * A card of the Collection: its name, set and number, its condition or grade, how many, what one cost and when, and
- * what one is worth now. It goes in an account that holds cards already (never one whose worth was typed in, which the
- * cards' total would replace), or a new Pokémon cards account when there is none. Keep this price: it is never looked
- * up (a graded slab the price service doesn't list).
- */
 function CardForm(props: EditProps) {
   const { plan, id } = props;
   const c = (plan.collection || []).find((x) => x.id === id);

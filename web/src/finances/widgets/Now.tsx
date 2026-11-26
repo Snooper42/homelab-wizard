@@ -1,12 +1,3 @@
-// The Dashboard's lead card, Left after this paycheck's bills
-// (docs/Redesign.md): checking once the period picked has paid its bills,
-// the chart of checking through it (each bill a dot, the cushion dashed),
-// and under it the figures the household checks against its own sums:
-// checking now, checking once the next paycheck lands, and the bills left.
-// Resting on either of the first two, Tab to it, or a tap on a phone shows
-// how it was reached, row by row: the balance it starts from, each thing
-// in and out, and the result (finance.Working, the projection's own steps,
-// so it is always the sum the app did).
 import type { ComponentChildren } from 'preact';
 import { Amount, MoneyChip } from '../ui/Amount';
 import { AreaChart } from '../ui/charts';

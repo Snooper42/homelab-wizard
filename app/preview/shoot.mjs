@@ -524,6 +524,17 @@ async function toStatusPart(page, key) {
   await page.click('#statusChips .sidedropbtn');
   await page.click(`#statusChips .sidemenulist button[data-key="${key}"]`);
 }
+/** Picks a screen as a person would: Backups through Status' menu, the rest by their button in the strip. */
+async function pickScreen(page, screen) {
+  if (screen === 'backups') return toBackups(page);
+  await page.click(`nav button[data-screen="${screen}"]`);
+}
+/** Backups, an item in Status' menu: Status first from another screen. */
+async function toBackups(page) {
+  if (!(await page.evaluate(() => !!document.querySelector('nav > button[data-screen="status"].active')))) await page.click('nav > button[data-screen="status"]');
+  await toStatusPart(page, 'backups');
+  await page.waitForSelector('#backups.screen.active', { timeout: 5000 });
+}
 /** Find an app on Status (Choose apps folded into it, the owner, Nov 25): All apps, with what's typed in its box. */
 async function findApp(page, text = '') {
   await page.evaluate(() => window.__emit('navigate', 'choose'));
@@ -571,6 +582,8 @@ const shots = [
   // last minutes (a minute of samples, run on the page's clock).
   { name: 'status-cards', screen: 'status', clock: true, mock: { usageSeries }, before: async (page) => {
     await page.clock.runFor(65000);
+    // Under Analytics since the Status rework (#914), off the overview.
+    await toStatusPart(page, 'analytics');
     await page.waitForSelector('#usageCard .spark', { timeout: 5000 });
     await page.evaluate(() => document.getElementById('storageCard').scrollIntoView({ block: 'start' }));
   } },
@@ -755,7 +768,7 @@ const smokes = [
     await page.click('nav button[data-screen=status]');
     await page.waitForSelector('#status.active', { timeout: 5000 });
     if (!(await page.isVisible('#updateAll'))) throw new Error('no Update apps on Status');
-    await page.click('nav button[data-screen=backups]');
+    await toBackups(page);
     await page.waitForSelector('#backups.active #recoveryKit', { timeout: 5000 });
     await page.click('#recoveryKit');
     await page.waitForTimeout(300);
@@ -2075,7 +2088,7 @@ const smokes = [
     await page.waitForTimeout(500);
     const status = await top();
     if (status < 250) throw new Error(`Status only scrolls to ${status}`);
-    await page.click('nav button[data-screen=backups]');
+    await toBackups(page);
     await page.waitForFunction((y) => Math.abs(document.querySelector('main').scrollTop - y) <= 1, chose, { timeout: 3000 }).catch(() => {});
     if (Math.abs((await top()) - chose) > 1) throw new Error(`back on Backups at ${await top()}, not ${chose}`);
     await page.click('nav button[data-screen=status]');
@@ -2143,25 +2156,10 @@ const smokes = [
   // versions kept, its folders, and its next run; a job Duplicati says little about says only that.
   // Savings over time: the year's figure on Status, hovered (or reached with Tab), says what has been saved since the
   // first record, month by month, newest first, and the card is not cut off.
-  { name: 'Status: hover what the apps replace for what they have saved so far', screen: 'status', run: async (page) => {
-    // Instead of subscriptions is Subscriptions' own now (the owner, Nov 25).
+  { name: 'Subscriptions has no old Instead of subscriptions tile under it', screen: 'status', run: async (page) => {
     await toStatusPart(page, 'subscriptions');
-    const tile = '#savingsCard .tile:has-text("Instead of subscriptions") .savedso';
-    await page.waitForSelector(tile, { timeout: 5000 });
-    await page.hover(tile);
-    const card = await page.waitForSelector(`${tile} [role=tooltip]`, { state: 'visible', timeout: 3000 });
-    const said = (await card.innerText()).replace(/\s+/g, ' ');
-    // The preview's 60 days: 12 at $2,991 a year, 18 at $3,112, 17 at $3,232, and 13 at $3,292.
-    if (!/^Saved so far: \$520 since /.test(said)) throw new Error(`the total: ${said}`);
-    const months = await card.$$eval('.savedmonths li', (li) => li.map((l) => l.textContent));
-    const now = new Date().toLocaleString('en-US', { month: 'long' });
-    if (months.length < 2 || !months[0].startsWith(now)) throw new Error(`the months, newest first: ${months}`);
-    const inside = await card.evaluate((c) => { const r = c.getBoundingClientRect(); const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return r.left >= 0 && r.right <= innerWidth && r.bottom <= innerHeight && c.contains(hit); });
-    if (!inside) throw new Error('the card is cut off or covered');
-    await page.mouse.move(5, 5);
-    await page.waitForSelector(`${tile} [role=tooltip]`, { state: 'hidden', timeout: 2000 });
-    await page.focus(tile);
-    await page.waitForSelector(`${tile} [role=tooltip]`, { state: 'visible', timeout: 2000 });
+    await page.waitForSelector('#statusPart .subpage', { timeout: 5000 });
+    if (await page.$('#savingsCard, #subscriptionsMore')) throw new Error('the old savings tile is still there');
   } },
   // What changed since last night: a copy's size beside the night before's, said when it moved by a tenth, and a
   // copy less than half the night before's warned about on its row.
@@ -2170,7 +2168,7 @@ const smokes = [
     : c.id === 'navidrome' ? { ...c, before: 6.1e6 }
     : c.id === 'vikunja' ? { ...c, before: 405e3 } : c) } }, run: async (page) => {
     const row = (name) => page.locator(`#copiesCard tr.copy:has(td.name:has-text("${name}"))`).first();
-    await row('Immich database').locator('.note.bad').getByText('Less than half the night before\'s 58 MB: check that Immich database still has its data').waitFor({ timeout: 5000 });
+    await row('Immich database').locator('.note.bad').getByText('Under half the night before\'s 58 MB').waitFor({ timeout: 5000 });
     if (!(await row('Immich database').locator('.dot.bad').count())) throw new Error('the shrunk copy has no red dot');
     // Grown by a third: both sizes shown. Within a tenth: its own size only, the night before's on hover.
     await row('Navidrome').locator('td.size .was').getByText('(was 5.8 MB)').waitFor({ timeout: 3000 });
@@ -2213,12 +2211,12 @@ const smokes = [
   // Status's alone.
   { name: 'One problem, one badge: a running app\'s stale copy badges Backups, a stopped one\'s only Status', screen: 'backups', mock: { status: { ...status, apps: status.apps.map((a) => (a.id === 'mealie' ? { ...a, state: 'running' } : a)) } }, run: async (page) => {
     await page.waitForSelector('tr.copy.stale:has-text("Mealie")', { timeout: 5000 });
-    await page.waitForFunction(() => document.getElementById('backupsCount').textContent.trim() === '1', null, { timeout: 5000 });
+    await page.waitForFunction(() => document.querySelector('#statusSide button[data-key="backups"] .count')?.textContent.trim() === '1', null, { timeout: 5000 });
     if ((await page.textContent('#statusCount')).trim() !== '') throw new Error(`Status badges a running app: ${await page.textContent('#statusCount')}`);
   } },
-  // Backups as the redesign's picture (redesign-loop R7): Last night says what was skipped, and Needs you lists it with its
+  // Backups as the redesign's picture (redesign-loop R7): Last night says what was skipped, and Skipped lists it with its
   // fix: Mealie's copy is out of date because Mealie is stopped, so Start, which starts it; the paused ones wait for their drive.
-  { name: 'Backups: Needs you lists a skipped copy with Start, and the paused ones waiting for their drive', screen: 'backups', mock: { backups: { ...backups, copies: backups.copies.map((c) => (c.id === 'mealie' ? { ...c, state: 'stale', newest: new Date(Date.now() - 80 * 3600e3).toISOString() } : c)) } }, run: async (page) => {
+  { name: 'Backups: Skipped lists a skipped copy with Start, and the paused ones waiting for their drive', screen: 'backups', mock: { backups: { ...backups, copies: backups.copies.map((c) => (c.id === 'mealie' ? { ...c, state: 'stale', newest: new Date(Date.now() - 80 * 3600e3).toISOString() } : c)) } }, run: async (page) => {
     await page.waitForSelector('#copiesTile .bkskipped:text-is("Mealie skipped")', { timeout: 5000 });
     await page.waitForSelector('#needsYou li:has-text("Mealie"):has-text("stopped")', { timeout: 5000 });
     await page.waitForSelector('#needsYou li:has-text("Komga"):has-text("Waiting for the Hobbies drive")');
@@ -2226,17 +2224,18 @@ const smokes = [
     await page.click('#needsYou li:has-text("Mealie") button:text-is("Start")');
     await page.waitForFunction(() => window.__MOCK.calls.AppAction >= 1, null, { timeout: 5000 });
   } },
-  { name: 'Backups: nothing to do, Needs you says so', screen: 'backups', mock: { backups: { ...backups, copies: backups.copies.filter((c) => c.state === 'fresh') } }, run: async (page) => {
-    await page.waitForSelector('#needsYou:has-text("Nothing needs you")', { timeout: 5000 });
+  { name: 'Backups: nothing skipped, the card says every copy is up to date', screen: 'backups', mock: { backups: { ...backups, copies: backups.copies.filter((c) => c.state === 'fresh') } }, run: async (page) => {
+    await page.waitForSelector('#needsYou:has-text("Every copy is up to date")', { timeout: 5000 });
+    if (/needs you/i.test(await page.textContent('#backups'))) throw new Error('Backups says "needs you"');
     const v = (await page.textContent('#copiesTile .value')).replace(/\s+/g, ' ').trim();
     if (!/^(\d+) of \1 copied$/.test(v)) throw new Error(`Last night: ${v}`);
   } },
   { name: 'Backups: copies paused while their apps wait for a drive, the place named, one line a copy', screen: 'backups', run: async (page) => {
-    await page.waitForSelector('#copiesTile:has-text("2 more paused: their apps wait for the Hobbies drive")', { timeout: 5000 });
+    await page.waitForSelector('#needsYou li:has-text("Komga"):has-text("Waiting for the Hobbies drive")', { timeout: 5000 });
     const value = await page.textContent('#copiesTile .value');
     if (value.replace(/\s+/g, ' ').trim() !== '11 of 12 copied') throw new Error(`copies up to date: ${value}`);
     await page.waitForSelector('#offsiteTile .value:text-is("Proton Drive")', { timeout: 5000 });
-    await page.waitForSelector('#offsiteTile:has-text("In homelab-backups")');
+    await page.waitForSelector('#offsiteTile:has-text("homelab-backups")');
     // Paused is folded, with its names and why; stale and up to date are open.
     await page.waitForSelector('tr.copygroup.paused:not(.open) .names:has-text("Komga, Kavita wait for the Hobbies drive; their last copies (13 days ago) are kept")');
     if (await page.isVisible('tr.copy.paused')) throw new Error('the paused copies show before their group is opened');
@@ -2247,7 +2246,7 @@ const smokes = [
     // Mealie's copy is stale because Mealie is stopped: Status's badge, not Backups' (one problem, one badge); and the
     // paused copies are no problem at all.
     await page.waitForFunction(() => document.getElementById('statusCount').textContent.trim() === '1', null, { timeout: 5000 });
-    if ((await page.textContent('#backupsCount')).trim() !== '') throw new Error(`Backups' badge: ${await page.textContent('#backupsCount')} (a paused copy, or a stopped app's, counted)`);
+    if (await page.$('#statusSide button[data-key="backups"] .count')) throw new Error(`Backups' badge: ${await page.textContent('#statusSide button[data-key="backups"]')} (a paused copy, or a stopped app's, counted)`);
     // One line a copy: no cell wraps, nor says "database" under the name. A copy with a note under its name (why it is
     // stale, or that it shrank) is that one line and the note: its other cells stay on one line each.
     const tall = await page.$$eval('tr.copy', (rows) => rows.filter((r) => (r.querySelector('.note')
@@ -2329,7 +2328,7 @@ const smokes = [
     if (Math.abs(r - o) > 2) throw new Error(`restore test ${r} and off-site ${o} differ`);
   } },
   { name: 'Restore drills: timing and record', screen: 'backups', run: async (page) => {
-    await page.waitForSelector('#restoreTile:has-text("in 3 minutes")', { timeout: 5000 });
+    await page.waitForSelector('#restoreTile .value:text-is("Passed")', { timeout: 5000 });
     const title = await page.getAttribute('#restoreTile', 'title');
     if (!title || !title.includes('(2)') || !title.includes('passed in 4 minutes')) throw new Error(`record: ${title}`);
   } },
@@ -2419,7 +2418,8 @@ const smokes = [
   { name: "The phone's Status: This machine beside Backups, its free space and power", screen: 'status', phone: ['companion', 'can-change'], run: async (page) => {
     await page.waitForSelector('#statusMachine .antfig:has-text("412 GB")', { timeout: 5000 });
     if ((await page.textContent('#statusMachine .anthead h2')).trim() !== 'This machine') throw new Error('not named This machine');
-    await page.waitForSelector('#statusMachine .antline:has-text("Plugged in")');
+    // A machine that's fine says nothing on its line.
+    if (/Plugged in/.test(await page.textContent('#statusMachine'))) throw new Error('the card says Plugged in');
     await page.waitForSelector('#statusMachine .antfoot button');
     if (await page.locator('#tiles .tile:has(.label:text-is("Nightly updates"))').count()) throw new Error('the Nightly updates tile is still there');
   } },
@@ -2441,8 +2441,7 @@ const smokes = [
   // the browser's buttons (Safari's edge swipe) walk them, as the app's own Back does.
   { name: "The web page: the browser's Back and Forward go between its screens", screen: 'status', phone: ['companion', 'can-change'], run: async (page) => {
     await page.waitForSelector('#status.active', { timeout: 5000 });
-    await page.click('nav button[data-screen="backups"]');
-    await page.waitForSelector('#backups.active', { timeout: 5000 });
+    await pickScreen(page, 'backups');
     await page.click('nav button[data-screen="settings"]');
     await page.waitForSelector('#settings.active', { timeout: 5000 });
     await page.goBack();
@@ -2453,19 +2452,15 @@ const smokes = [
     await page.waitForSelector('#backups.active', { timeout: 5000 });
     if (!page.url().startsWith('file:')) throw new Error('the page left: ' + page.url());
   } },
-  // The machine card's bar (lane D, D5; the redesign's picture: "Memory · 11 of 32 GB", "Up 23 days"): the computer's
-  // memory and boot time from its machine card, what the apps hold from the usage card. On the computer's This Mac and
-  // the phone's This machine alike; an older computer that doesn't send them shows neither.
+  // The machine card's bar: the apps' memory of the machine's. No uptime, no schedule.
   ...[['computer', '#statusMac', undefined], ['phone', '#statusMachine', ['companion']]].map(([who, card, phone]) => ({
-    name: `The ${who}'s machine card: its memory under a bar, and how long it's been up`, screen: 'status', phone,
+    name: `The ${who}'s machine card: its memory under a bar, nothing more`, screen: 'status', phone,
     mock: { machine: { free: 412 * 2 ** 30, total: 994 * 2 ** 30, low: false, power: 'plugged', keptAwake: true, memory: 32 * 2 ** 30, booted: new Date(Date.now() - 23.5 * 86400000).toISOString() },
       usage: [{ name: 'immich-server', cpu: 3, mem: '9GiB' }, { name: 'jellyfin', cpu: 1, mem: '2GiB' }] },
     run: async (page) => {
-      await page.waitForSelector(`${card} .memline:has-text("Memory · 11 of 32 GB")`, { timeout: 8000 });
+      await page.waitForSelector(`${card} .memline:has-text("Memory 11 of 32 GB")`, { timeout: 8000 });
       if (await page.getAttribute(`${card} .memline .antbar`, 'aria-valuenow') !== '34') throw new Error('the bar is not at 34%');
-      await page.waitForSelector(`${card} .anthead:has-text("Up 23 days")`);
-      if ((await page.textContent(card)).split('Up 23 days').length !== 2) throw new Error('Up 23 days said twice');
-      if (!/updates /i.test(await page.textContent(`${card} .antline`))) throw new Error('the updates moved off the card');
+      if (/Up 23 days|daily at|Updates /.test(await page.textContent(card))) throw new Error(`the card says more than its figure: ${await page.textContent(card)}`);
     } })),
   { name: "The machine card from a computer that doesn't send its memory: no bar, no Up", screen: 'status', phone: ['companion'], run: async (page) => {
     await page.waitForSelector('#statusMachine .antfig:has-text("412")', { timeout: 5000 });
@@ -2492,7 +2487,7 @@ const smokes = [
     { id: 'a', title: 'Step A', why: 'Why A matters, at some length so that it would not fit on one line beside its buttons at all.', detail: 'Right now: something to know about A.', state: 'todo', run: [['a']] },
     { id: 'b', title: 'Step B', why: 'x', state: 'todo', later: true },
     { id: 'c', title: 'Step C', why: 'x', state: 'done' }] }, run: async (page) => {
-    await page.waitForSelector('#checklist li.grouphead:text-is("Needs you · 1")', { timeout: 5000 });
+    await page.waitForSelector('#checklist li.grouphead:text-is("To do · 1")', { timeout: 5000 });
     if (await page.isVisible('#checklist li:has-text("Right now: something to know about A")')) throw new Error("a step's detail shows before it is opened");
     await page.click('#checklist li.todo .more');
     await page.waitForSelector('#checklist li.open .detail:has-text("Right now: something to know about A")');
@@ -2860,12 +2855,18 @@ const smokes = [
       { id: 'sonarr', name: 'Sonarr', state: 'running', health: 'healthy', url: 'http://localhost:8989' },
       { id: 'radarr', name: 'Radarr', state: 'running', health: 'healthy', url: 'http://localhost:7878' }] } }, run: async (page) => {
     const heads = '#statusRows tr.grouphead';
+    // Folds kept from before don't bring the list back; Show every app does.
+    await page.waitForSelector('#statusPanel .ovrow', { timeout: 5000 });
+    if (await page.isVisible('#statusRows tr')) throw new Error('kept folds brought the old list back');
+    await page.click('#statusAll');
     await page.waitForSelector(`${heads}:has-text("Media automation")`, { timeout: 5000 });
     const order = await page.$$eval(heads, (hs) => hs.map((h) => h.querySelector('.foldbtn')?.textContent?.replace(/^[▸▾]/, '').trim()));
     const last = order.filter((l) => l !== 'Other').pop();
     if (last !== 'Media automation') throw new Error(`groups: ${order.join(', ')}`);
     const auto = page.locator(`${heads}:has-text("Media automation")`);
-    if ((await auto.locator('.foldbtn').getAttribute('aria-expanded')) !== 'false') throw new Error('media automation opens by itself');
+    if ((await auto.locator('.foldbtn').getAttribute('aria-expanded')) !== 'false') await auto.locator('.foldbtn').click();
+    const mediaFold = page.locator(heads).filter({ has: page.locator('.foldbtn', { hasText: /^.Media$/ }) }).locator('.foldbtn');
+    if ((await mediaFold.getAttribute('aria-expanded')) !== 'false') await mediaFold.click();
     const line = auto.locator('.names');
     if ((await line.textContent()) !== 'Finds and downloads what you ask for in Seerr' || !/Sonarr/.test(await line.getAttribute('title'))) throw new Error(`folded line: ${await line.textContent()}`);
     // Seerr is in Media with Jellyfin, not under the fold.
@@ -2977,9 +2978,11 @@ const smokes = [
     await page.keyboard.press(`${mod}+Digit0`);
   } },
   { name: 'Screen readers hear the screen change', screen: 'status', run: async (page) => {
-    await page.click('nav button[data-screen="backups"]', { timeout: 5000 });
-    const where = await page.evaluate(() => [document.activeElement.textContent, document.querySelector('nav button[aria-current="page"]')?.dataset.screen]);
-    if (where[0] !== 'Backups' || where[1] !== 'backups') throw new Error(`focus ${where}`);
+    // Backups, from Status' menu: its heading takes the focus, Status the screen and Backups the page in its menu.
+    await toStatusPart(page, 'backups');
+    await page.waitForSelector('#backups.screen.active', { timeout: 5000 });
+    const where = await page.evaluate(() => [document.activeElement.textContent, document.querySelector('nav > button[aria-current="page"]')?.dataset.screen, document.querySelector('#statusSide [aria-current="page"]')?.dataset.key]);
+    if (where.join() !== 'Backups,status,backups') throw new Error(`focus ${where}`);
   } },
   { name: 'Links that act work from the keyboard', screen: 'status', mock: { update }, run: async (page) => {
     await page.click('#updateLater', { timeout: 5000 });
@@ -3308,12 +3311,12 @@ const smokes = [
     await page.waitForSelector('nav #settingsNav .pagebtn', { timeout: 5000 });
     await page.waitForTimeout(300);
     const plain = await shot();
-    await tabTo('nav button[data-screen="backups"]');
+    await tabTo('nav button[data-screen="finances"]');
     const elsewhere = await shot();
     await tabTo('nav > button.active');
     const focused = await shot();
-    if (await same(focused, elsewhere)) throw new Error('Settings looks the same with the focus on it and on Backups');
-    if (!(await same(plain, elsewhere))) throw new Error('Settings changes when the focus is on Backups');
+    if (await same(focused, elsewhere)) throw new Error('Settings looks the same with the focus on it and on Finances');
+    if (!(await same(plain, elsewhere))) throw new Error('Settings changes when the focus is on Finances');
     const mark = await page.$eval('nav > button.active', (e) => { const a = getComputedStyle(e, '::before'); return a.display !== 'none' && parseFloat(a.width) >= 3 && a.forcedColorAdjust === 'none'; });
     if (!mark) throw new Error('the current screen has no bar of its own');
   } })),
@@ -3778,7 +3781,7 @@ const smokes = [
   // with its app, and a two-finger swipe on a trackpad (sideways wheel), right for Back, left for Forward.
   { name: 'Back and Forward between screens: ⌘[ and ⌘], and a two-finger swipe', screen: 'status', run: async (page) => {
     const on = () => page.evaluate(() => document.querySelector('.screen.active')?.id);
-    await page.click('nav button[data-screen="backups"]');
+    await toBackups(page);
     await page.click('nav button[data-screen="finances"]');
     await page.keyboard.press('Meta+BracketLeft');
     if ((await on()) !== 'backups') throw new Error(`Back went to ${await on()}`);
@@ -3843,6 +3846,10 @@ const smokes = [
   // here though it's healthy; opening or folding one here saves it there; Show every app is this device's own and saves
   // nothing; Fold them again puts every device back to the defaults.
   { name: 'Status folds are kept by the computer, the same on every device', screen: 'status', mock: { statusOpen: '', statusFolds: { Security: true } }, run: async (page) => {
+    // Kept folds don't bring the list back on their own; Show every app does.
+    await page.waitForSelector('#statusPanel .ovrow', { timeout: 5000 });
+    if (await page.isVisible('#statusRows tr')) throw new Error('kept folds brought the old list back');
+    await page.click('#statusAll');
     await page.waitForSelector('#statusRows tr:has(strong:text-is("Vaultwarden"))', { timeout: 5000 });
     await page.click('#statusRows tr.grouphead:has-text("Security") button.foldbtn');
     await page.waitForFunction(() => window.__MOCK.statusFoldsSaved?.at(-1)?.Security === false, null, { timeout: 5000 });
@@ -3965,7 +3972,7 @@ const smokes = [
   { name: 'Stopped by you: its row says so, and Start them leaves it', screen: 'status', mock: { statusOpen: '', status: { ...status, stopped: { mealie: { since: new Date().toISOString() }, vikunja: { since: new Date().toISOString(), until: new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate() + 1, 8).toISOString() } },
     apps: status.apps.map((a) => (a.id === 'vikunja' ? { ...a, state: 'stopped', health: '', since: undefined } : a)) } }, run: async (page) => {
     // Nothing stopped by itself: the Apps card says all answering, and Household's row on the overview isn't amber.
-    await page.waitForSelector('#statusApps .antline:has-text("All answering")', { timeout: 5000 });
+    await page.waitForSelector('#statusApps .antfig', { timeout: 5000 });
     if (await page.$('#statusApps .antfig.warn')) throw new Error('the Apps card counts an app stopped on purpose as a problem');
     if (await page.$('#statusPanel .ovrow[data-key="household"] .pill.warn')) throw new Error("Household's row is amber for apps stopped on purpose");
     await page.click('#statusAll');
@@ -4034,7 +4041,8 @@ const smokes = [
     await page.waitForFunction(() => window.__MOCK.calls.AppAction >= 1, null, { timeout: 5000 });
   } },
   { name: 'Status: the Apps card when all is well, with the week as squares', screen: 'status', mock: { statusOpen: '', status: { ...status, apps: status.apps.map((a) => ({ ...a, state: 'running', health: a.health === 'unhealthy' ? 'healthy' : a.health })) } }, run: async (page) => {
-    await page.waitForSelector('#statusApps .antline:has-text("All answering")', { timeout: 5000 });
+    await page.waitForSelector('#statusApps .antfig', { timeout: 5000 });
+    if ((await page.textContent('#statusApps .antline')).trim()) throw new Error('the Apps card has a line with nothing wrong');
     const fig = (await page.textContent('#statusApps .antfig')).replace(/\s+/g, ' ').trim();
     if (!/^\d+ running$/.test(fig)) throw new Error(fig);
     await page.waitForSelector('#statusApps .ovdays i', { timeout: 5000 });
@@ -4071,7 +4079,7 @@ const smokes = [
     await page.waitForSelector('#statusApps .ovdays.fourteen i', { timeout: 5000 });
     const sq = await page.$$eval('#statusApps .ovdays i', (is) => is.map((i) => i.className));
     if (sq.length !== 14 || sq[3] !== 'none' || sq[9] !== 'warn' || sq.filter((c) => c === 'ok').length !== 12) throw new Error('the squares: ' + sq.join(' '));
-    await page.waitForSelector('#statusApps .antline:has-text("1 day with an outage in two weeks")');
+    if ((await page.textContent('#statusApps .antline')).trim()) throw new Error('the Apps card has a line with nothing wrong');
     if (!/1 app down/.test(await page.getAttribute('#statusApps .ovdays i >> nth=9', 'title') || '')) throw new Error('no words on the amber day');
     const boxes = await page.$$eval('#tiles > .ovcard', (cs) => cs.map((c) => { const r = c.getBoundingClientRect(); return [Math.round(r.top), Math.round(r.height)].join(); }));
     if (new Set(boxes).size !== 1) throw new Error('the cards differ: ' + boxes.join(' | '));
@@ -4143,7 +4151,7 @@ const smokes = [
     await check('the overview');
     // Instead of subscriptions on Subscriptions, what CrowdSec caught on Analytics (the owner, Nov 25).
     await toStatusPart(page, 'subscriptions');
-    await page.waitForSelector('#savingsCard .tile:has-text("Instead of subscriptions"):has-text("a year")');
+    await page.waitForSelector('#statusPart .subpage');
     await check('Subscriptions');
     await toStatusPart(page, 'analytics');
     await page.waitForSelector('#protectCard li:has-text("Probing for a known security hole"):has-text("Netherlands · Example Hosting B.V.")', { timeout: 5000 });
@@ -4158,12 +4166,13 @@ const smokes = [
     const wide = await log.evaluate((e) => e.scrollWidth > e.clientWidth + 1);
     if (wide) throw new Error('a log line runs out of its box');
   } },
-  // A stale copy says why, from its app's state, and what helps: Mealie is stopped (the preview's status), so the
-  // nightly copy skips it; one whose app runs says Back up now tries again.
-  ...[['its app is stopped', status, "It's stopped, so the nightly copy skips it. Start it, and tonight's copy catches up."],
-    ['its app runs', { ...status, apps: status.apps.map((a) => (a.id === 'mealie' ? { ...a, state: 'running', health: 'healthy' } : a)) }, "Last night's copy didn't come. Back up now tries again; if it fails, the backup's log says why."],
+  // A stale copy says why in a word when its app isn't running, and nothing more when it runs.
+  ...[['its app is stopped', status, 'Stopped'],
+    ['its app runs', { ...status, apps: status.apps.map((a) => (a.id === 'mealie' ? { ...a, state: 'running', health: 'healthy' } : a)) }, ''],
   ].map(([what, st, words]) => ({ name: `A stale copy says why: ${what}`, screen: 'backups', mock: { status: st }, run: async (page) => {
-    await page.waitForSelector(`tr.copy.stale:has-text("Mealie") .note:text-is("${words}")`, { timeout: 5000 });
+    await page.waitForSelector('tr.copy.stale:has-text("Mealie")', { timeout: 5000 });
+    const note = await page.locator('tr.copy.stale:has-text("Mealie") .note').allTextContents();
+    if (note.join('') !== words) throw new Error(`its note: ${note.join(' | ')}`);
   } })),
   // "This Mac" in a sentence keeps its capital: "Take the homelab off this Mac", not "this mac"; "this PC" on Windows.
   ...[['MacIntel', 'this Mac'], ['Win32', 'this PC']].map(([platform, words]) => ({ name: `Settings says ${words} in a sentence`, screen: 'settings', mock: { platform }, run: async (page) => {
@@ -4485,7 +4494,7 @@ const smokes = [
       return b;
     };
     const b = await rightClick('status');
-    if ((await items()).join('|') !== 'Check again|Update all apps…') throw new Error('Status: ' + (await items()).join(', '));
+    if ((await items()).join('|') !== 'Check again|Update all apps…|Back up now') throw new Error('Status: ' + (await items()).join(', '));
     if ((await menu.getAttribute('aria-label')) !== 'Status') throw new Error('the menu is named ' + await menu.getAttribute('aria-label'));
     const m = await menu.boundingBox();
     if (Math.abs(m.x - (b.x + 30)) > 2 || Math.abs(m.y - (b.y + b.height / 2)) > 2) throw new Error(`the menu opened at ${m.x},${m.y}, not at the pointer`);
@@ -4495,8 +4504,6 @@ const smokes = [
     await page.keyboard.press('Escape');
     await menu.waitFor({ state: 'detached', timeout: 1000 });
     // Backups: Back up now and Test a restore.
-    await rightClick('backups');
-    if ((await items()).join('|') !== 'Check again|Back up now|Test a restore') throw new Error('Backups: ' + (await items()).join(', '));
     await page.locator('#tiles').dispatchEvent('mousedown', { detail: 1 });
     await menu.waitFor({ state: 'detached', timeout: 1000 });
     // Finances, from the keyboard: Shift+F10 on its button, the first item focused, the arrows, Return.
@@ -4815,11 +4822,9 @@ const smokes = [
     const [prot, stor, al] = [await box('#protectCard'), await box('#storageCard'), await box('#alertsCard')];
     if (Math.abs(prot.x - stor.x) > 1 || stor.y < prot.y + prot.height) throw new Error('What the apps keep is not under Protection, in its column');
     if (al.x < prot.x + prot.width) throw new Error('Recent alerts is not beside them');
-    const row = page.locator('#alertsCard li:has-text("something is down")');
-    const shown = await row.locator('.grow > .muted > div').count();
-    if (shown !== 3) throw new Error(`a long alert shows ${shown} lines, not 3`);
-    await row.locator('button.morelines:text-is("Show 8 more")').click();
-    if ((await row.locator('.grow > .muted > div').count()) !== 11) throw new Error('Show 8 more did not show every line');
+    // An alert is its title alone; its whole message is in Every alert….
+    const row = page.locator('#alertsCard li').filter({ hasText: /down/ }).first();
+    if (await row.locator('.grow > .muted > div').count()) throw new Error('an alert shows its message under its title');
     const size = page.locator('#storageCard .sizes li').first();
     const [name, bar] = [await size.locator('strong').boundingBox(), await size.locator('.bar').boundingBox()];
     if (bar.y > name.y + name.height || bar.x < name.x + name.width) throw new Error('an app’s size takes two lines');
@@ -4941,7 +4946,7 @@ const smokes = [
       .catch(async () => { throw new Error(`two apps not said together: ${JSON.stringify(await said())}`); });
     // On another screen, Status's changes are not read out.
     const n = (await said()).length;
-    await page.click('nav button[data-screen="backups"]');
+    await page.click('nav button[data-screen="settings"]');
     await page.evaluate(() => {
       const M = window.__MOCK;
       M.status = { ...M.status, apps: M.status.apps.map((a) => (a.id === 'navidrome' ? { ...a, state: 'stopped', health: '' } : a)) };
@@ -4952,7 +4957,7 @@ const smokes = [
   } },
   { name: "The agent's change carries Status: drawn on any screen, nothing asked", screen: 'status', run: async (page) => {
     await page.waitForSelector('tr:has(strong:text-is("Navidrome")) td.state:has-text("Running")', { timeout: 5000 });
-    await page.click('nav button[data-screen="backups"]');
+    await page.click('nav button[data-screen="settings"]');
     const before = await backendCalls(page);
     await page.evaluate(() => {
       const M = window.__MOCK;
@@ -5077,12 +5082,12 @@ const smokes = [
   { name: 'Going back to a screen draws what was read', screen: 'status', run: async (page) => {
     await page.waitForSelector('#statusRows tr', { timeout: 5000 });
     for (const screen of ['backups', 'setup', 'settings', 'status']) {
-      await page.click(`nav button[data-screen="${screen}"]`);
+      await pickScreen(page, screen);
       await page.waitForTimeout(400);
     }
     await page.waitForSelector('#settingsNav .pagebtn', { state: 'attached', timeout: 5000 });
     const before = await backendCalls(page);
-    for (const screen of ['backups', 'setup', 'settings', 'status', 'setup', 'status']) await page.click(`nav button[data-screen="${screen}"]`);
+    for (const screen of ['backups', 'setup', 'settings', 'status', 'setup', 'status']) await pickScreen(page, screen);
     await page.waitForTimeout(300);
     await page.waitForSelector('#statusRows tr', { timeout: 2000 });
     const asked = diffCalls(before, await backendCalls(page));
@@ -5096,7 +5101,7 @@ const smokes = [
     await page.evaluate(() => { window.__MOCK.status.apps = window.__MOCK.status.apps.map((a) => (a.id === 'vikunja' ? { ...a, state: 'stopped', health: '' } : a)); window.__emit('status:changed'); });
     await page.waitForSelector('tr:has(strong:text-is("Vikunja")) td.state:has-text("Stopped")', { timeout: 3000 });
     if (await reads() !== n + 1) throw new Error(`Status read ${await reads() - n} times for one change`);
-    await page.click('nav button[data-screen="backups"]');
+    await page.click('nav button[data-screen="settings"]');
     await page.waitForTimeout(300);
     n = await reads();
     await page.evaluate(() => window.__emit('status:changed'));
@@ -5204,8 +5209,8 @@ const smokes = [
     const text = await page.$eval('#backups', (e) => e.innerText);
     const bad = text.match(/\bStale\b|sampled|Open Duplicati/i);
     if (bad) throw new Error(`Backups says "${bad[0]}"`);
-    if (!/Out of date: Mealie, last copied 3 days ago/.test(text)) throw new Error('the out-of-date copy doesn’t say how old');
-    if (!/12 files checked, all the same as now/.test(text)) throw new Error('the restore test doesn’t say what it checked');
+    if (!/Mealie\s+Stopped/.test(text)) throw new Error('the skipped copy doesn’t say why');
+    if (/files checked|Encrypted before it leaves|Out of date:/.test(text)) throw new Error('Backups explains itself in sentences');
   } },
   // Usability task 3, item 20: picking qBittorrent alone offers no "Connect the apps for me" (nothing to connect it to);
   // the VPN tunnel it brings shows ticked and greyed while it's needed; and Done names the tunnel too.
@@ -5249,7 +5254,7 @@ const smokes = [
     // These cards are under Analytics now (the owner, Nov 25: off the overview).
     await toStatusPart(page, 'analytics');
     await page.waitForSelector('#downloadsCard:not([hidden]) #downloadsLine:text-is("Getting 2 · 1 stuck: no search site has it · Drive 88% full")', { timeout: 5000 });
-    if (await page.textContent('#downloadsWarning') !== 'The media drive is 88% full: room for about 30 more films.') throw new Error(`the warning: ${await page.textContent('#downloadsWarning')}`);
+    if (await page.$('#downloadsWarning')) throw new Error('the drive said twice: in the line and a sentence under it');
     const first = await page.textContent('#downloadsCard li:first-child');
     if (!/Arrival \(2016\)/.test(first) || !/No search site has it yet/.test(first) || !/Radarr/.test(first)) throw new Error(`stuck isn't first: ${first}`);
     if (await page.locator('#downloadsCard li').count() !== 4) throw new Error('not one row per thing on the way');
@@ -5394,21 +5399,8 @@ const smokes = [
         if (rail.cut) throw new Error(`at text size ${zoom} the sidebar is cut off at the bottom`);
         if (await page.getByRole('button', { name: /^Status/ }).count() !== 1) throw new Error('the Status button lost its name');
       }
-      await page.click('nav button[data-screen="backups"]');
-      await page.waitForSelector('#backups.screen.active', { timeout: 5000 });
+      await toBackups(page);
     } })),
-  { name: 'A tile’s line wraps under its chart rather than being cut off, at big text', screen: 'status', run: async (page) => {
-    // The card moved to Subscriptions with the new Overview (the owner's picture, Nov 25).
-    await toStatusPart(page, 'subscriptions');
-    for (const [w, zoom] of [[1280, '1.5'], [1100, '1.25'], [860, '1.2']]) {
-      await page.setViewportSize({ width: w, height: 800 });
-      await page.evaluate((z) => document.documentElement.style.setProperty('--zoom', z), zoom);
-      await page.waitForSelector('#savingsCard .trend', { timeout: 5000 });
-      await page.waitForTimeout(100);
-      const cut = await page.$eval('#savingsCard .trend', (e) => e.scrollWidth > e.clientWidth + 1);
-      if (cut) throw new Error(`in a ${w}px window at text size ${zoom}, “${await page.textContent('#savingsCard .trend')}” is cut off`);
-    }
-  } },
   // A long name and a long address (a deep subdomain on your own domain): the page wraps them, in a wide window and a narrow one.
   ...[[1280, 800, '1'], [860, 560, '1.25']].map(([w, h, zoom]) => ({ name: `A long name and address fit an app’s page, ${w}×${h} at text size ${zoom}`, screen: 'app:vikunja',
     mock: { ...pageMock, status: { ...status, apps: status.apps.map((a) => (a.id === 'vikunja' ? { ...a, name: 'Vikunja for the whole extended family and friends', address: 'todo.household-projects.snooper42-homelab-wizard.example.com' } : a)) } }, run: async (page) => {
@@ -5476,8 +5468,7 @@ const smokes = [
     await page.waitForSelector('#error:not([hidden]):has-text("Wait for “Update all apps now” to finish")', { timeout: 3000 });
     if (await page.isVisible('#cliPanel')) throw new Error('a second command took the sheet');
     // The rest of the app is there to use meanwhile.
-    await page.click('nav button[data-screen="backups"]');
-    await page.waitForSelector('#backups.active', { timeout: 3000 });
+    await toBackups(page);
     // A job of another screen waits its turn, saying so, and the chip says what is next.
     await page.click('#backupNow');
     await page.waitForSelector('#backupPanel:not([hidden]) #backupTitle:has-text("Waiting for “Update all apps now” to finish, then: Backing up…")', { timeout: 3000 });
@@ -5643,59 +5634,18 @@ const smokes = [
     const lefts = await page.$$eval('#weekCard li', (li) => li.map((l) => Math.round(l.getBoundingClientRect().left)));
     if (lefts.length !== 8 || new Set(lefts).size !== 1) throw new Error(`the lines are side by side (left edges ${lefts.join(', ')})`);
   } },
-  // What happened overnight: in the morning, Status's first line is the night since 8 PM (updates, a rollback, the night's
-  // copies, and whether anything needed you); an app down overnight says so instead; Hide until tomorrow keeps it away for
-  // the day; in the afternoon there is none.
-  ...(() => {
-    const at = (h, m = 0) => { const d = new Date(); d.setHours(h, m, 0, 0); return d; };
-    const morning = at(7, 30), iso = (h, m = 0) => at(h, m).toISOString();
-    const night = {
-      overnight: true,
-      status: { ...status, apps: status.apps.map((a) => ({ ...a, updatedAt: ['vikunja', 'speedtest-tracker'].includes(a.id) ? iso(4) : undefined })) },
-      alerts: [{ id: 'r1', time: iso(4, 20), topic: 'watchtower', title: 'Homelab: Navidrome rolled back', message: 'It runs the version from before its update again.', tags: ['rewind'] },
-        { id: 'o1', time: at(5, 0).toISOString(), topic: 'tunnel-watchdog', title: 'Homelab: recovered', message: 'all well' }],
-      backups: { ...backups, copies: [{ id: 'immich', name: 'Immich', newest: iso(3, 30), size: 1.5 * 1024 ** 3, count: 7, state: 'fresh' }, { id: 'paperless', name: 'Paperless-ngx', newest: iso(3, 35), size: 0.6 * 1024 ** 3, count: 7, state: 'fresh' }, { id: 'old', name: 'Mealie', newest: new Date(at(3).getTime() - 864e5).toISOString(), size: 9e9, count: 7, state: 'stale' }] },
-      watchdog: { lastRun: morning.toISOString(), checks: 40, failing: [], pending: 0, week: {}, outages: {} },
-    };
-    const line = '#overnightLine .overnight';
-    return [
-      // Backups failing in the morning: the overnight line asks for it again at most once a minute, not over and over.
-      { name: 'What happened overnight: Backups failing is not asked for over and over', screen: 'status', mock: { ...night, backupsError: 'the database is locked' }, run: async (page) => {
-        await page.clock.setFixedTime(morning);
-        await page.evaluate(() => { window.__MOCK.calls.Backups = 0; window.__emit('status:changed'); });
-        await page.waitForSelector('#statusRows tr', { timeout: 5000 });
-        await page.waitForTimeout(1500);
-        const asked = await page.evaluate(() => window.__MOCK.calls.Backups || 0);
-        if (asked > 2) throw new Error(`Backups was asked ${asked} times in a second and a half`);
-        await page.waitForSelector(line, { timeout: 5000 });
-      } },
-      { name: 'What happened overnight: Status’s first line in the morning', screen: 'status', mock: night, run: async (page) => {
-        await page.clock.setFixedTime(morning);
-        await page.evaluate(() => window.__emit('status:changed'));
-        await page.waitForSelector(line, { timeout: 5000 });
-        await page.waitForFunction((s) => /backup/.test(document.querySelector(s)?.textContent || ''), line, { timeout: 5000 });
-        const said = (await page.textContent(`${line} > span`)).trim();
-        if (said !== 'Overnight: 2 apps updated, 1 rolled back, a backup of 2.1 GB, nothing needed you.') throw new Error('it says: ' + said);
-        // Above the machine's line, under the heading.
-        if (!(await page.evaluate(() => document.getElementById('overnightLine').previousElementSibling?.classList.contains('header')))) throw new Error('not under the heading');
-        await page.click(`${line} button:text-is("Hide until tomorrow")`);
-        await page.waitForSelector('#overnightLine', { state: 'hidden', timeout: 2000 });
-        await page.evaluate(() => window.__emit('status:changed'));
-        await page.waitForTimeout(400);
-        if (await page.isVisible(line)) throw new Error('back after Hide until tomorrow');
-      } },
-      { name: 'What happened overnight: an app down in the night says so, and none in the afternoon', screen: 'status',
-        mock: { ...night, watchdog: { ...night.watchdog, outages: { 'immich-server': [{ from: iso(2, 10), to: iso(2, 40), problem: 'HTTP 502' }] } } }, run: async (page) => {
-        await page.clock.setFixedTime(morning);
-        await page.evaluate(() => window.__emit('status:changed'));
-        await page.waitForFunction((s) => /was down/.test(document.querySelector(s)?.textContent || ''), line, { timeout: 5000 });
-        if (!/Immich was down for a while\.$/.test((await page.textContent(`${line} > span`)).trim())) throw new Error('it says: ' + await page.textContent(line));
-        await page.clock.setFixedTime(at(15));
-        await page.evaluate(() => window.__emit('status:changed'));
-        await page.waitForSelector('#overnightLine', { state: 'hidden', timeout: 3000 });
-      } },
-    ];
-  })(),
+  // No Overnight line (the owner, Nov 26: less words): the cards say what happened.
+  { name: 'Fix it is a button in the toolbar, not a bar across it', screen: 'status', mock: { status: { ...status, apps: status.apps.map((a) => (a.id === 'mealie' ? { ...a, health: 'unhealthy' } : a)) } }, run: async (page) => {
+    for (const w of [1280, 1100]) {
+      await page.setViewportSize({ width: w, height: 800 });
+      const b = await (await page.waitForSelector('#fixIt:not([hidden])', { timeout: 5000 })).boundingBox();
+      if (b.width > 160 || b.height > 48) throw new Error(`at ${w}px Fix it is ${Math.round(b.width)}×${Math.round(b.height)}`);
+    }
+  } },
+  { name: 'Status has no Overnight line in the morning', screen: 'status', mock: { overnight: true }, run: async (page) => {
+    await page.waitForSelector('#statusApps', { timeout: 5000 });
+    if (await page.$('#overnightLine, .overnight')) throw new Error('an Overnight line');
+  } },
   // What changed since you looked: nothing the first time; after leaving Status, a row whose app restarted, updated, stopped,
   // or started meanwhile has a dot saying how (its name for a screen reader); leaving Status again clears them. An app's page
   // counts as Status. Kept on this device across launches.
@@ -5725,7 +5675,7 @@ const smokes = [
     if ((await dots()).join(' | ') !== want.join(' | ')) throw new Error('dots: ' + (await dots()).join(' | '));
     if ((await page.$eval('#statusRows .changedot', (d) => d.getAttribute('role'))) !== 'img') throw new Error('a dot has no name for a screen reader');
     // Seen: leaving and coming back clears them.
-    await page.click('nav button[data-screen=backups]');
+    await page.click('nav button[data-screen=settings]');
     await page.click('nav button[data-screen=status]');
     await page.waitForFunction(() => !document.querySelector('#statusRows .changedot'), null, { timeout: 3000 });
   } },
@@ -6604,7 +6554,7 @@ const smokes = [
   // Settings › Appearance › Motion and Transparency, on every screen.
   { name: 'Motion None: nothing moves on any screen, a running job and an open sheet included', screen: 'status', mock: { look: { motion: 'none' }, actionDelay: 1500 }, run: async (page) => {
     for (const screen of ['backups', 'setup', 'settings', 'finances', 'status']) {
-      await page.click(`nav button[data-screen="${screen}"]`);
+      await pickScreen(page, screen);
       await page.waitForTimeout(250);
       const moving = await page.evaluate(movingNow);
       if (moving.length) throw new Error(`${screen}: ${moving.slice(0, 4).join('; ')}`);
@@ -6656,7 +6606,7 @@ const smokes = [
     for (const phone of [false, true]) {
       if (phone) await page.evaluate(() => document.documentElement.classList.add('companion'));
       for (const screen of ['settings', 'status', 'backups']) {
-        if (screen !== 'settings') await page.click(`nav button[data-screen="${screen}"]`);
+        if (screen !== 'settings') await pickScreen(page, screen);
         const blurred = await page.evaluate(() => [...document.querySelectorAll('*')].filter((e) => {
           const cs = getComputedStyle(e);
           return (cs.backdropFilter && cs.backdropFilter !== 'none') || (cs.webkitBackdropFilter && cs.webkitBackdropFilter !== 'none');
@@ -6926,7 +6876,7 @@ const smokes = [
     const current = async () => (await page.textContent('#finMenu [aria-current="page"]'))?.trim();
     if ((await current()) !== 'Dashboard') throw new Error(`the menu opens on ${await current()}`);
     if (await page.locator('#finances .seg').filter({ hasText: 'Spending' }).count()) throw new Error("the tabs are still on Finances' page");
-    for (const s of ['status', 'backups', 'tidy', 'finances']) {
+    for (const s of ['status', 'tidy', 'finances']) {
       const b = page.locator(`nav > button[data-screen="${s}"]`);
       if (!(await b.isVisible())) throw new Error(`the ${s} icon is not in the strip`);
       if ((await b.boundingBox()).width > 60) throw new Error(`the ${s} button is a whole line, not an icon`);
@@ -6951,12 +6901,12 @@ const smokes = [
   // Every screen's sidebar as Finances' (the owner, Nov 24): the homelab's screens a strip of icons, then the screen's own
   // menu (parts/SideMenu), then Settings and the computer's line at the foot; a pick in the menu goes to its part.
   { name: "Every screen's sidebar is laid out as Finances': the icons in a strip, then its own menu", screen: 'status', run: async (page) => {
-    for (const [screen, menu, first] of [['status', '#statusSide', 'Overview'], ['backups', '#backupsSide', 'Last night'], ['setup', '#setupSide', 'Steps'], ['finances', '#finMenu', 'Dashboard'], ['tidy', '#tidyMenu', 'Overview']]) {
+    for (const [screen, menu, first] of [['status', '#statusSide', 'Overview'], ['setup', '#setupSide', 'Steps'], ['finances', '#finMenu', 'Dashboard'], ['tidy', '#tidyMenu', 'Overview']]) {
       await page.click(`nav > button[data-screen="${screen}"]`);
       await page.waitForSelector(`#${screen}.active`, { timeout: 5000 });
       await page.waitForSelector(`${menu} [aria-current="page"]:has-text("${first}")`, { timeout: 5000 });
       const tops = [];
-      for (const s of ['status', 'backups', 'tidy', 'finances']) {
+      for (const s of ['status', 'tidy', 'finances']) {
         const box = await page.locator(`nav > button[data-screen="${s}"]`).boundingBox();
         if (!box || box.width > 60) throw new Error(`on ${screen}, the ${s} button is a whole line, not an icon`);
         tops.push(Math.round(box.y));
@@ -6973,10 +6923,19 @@ const smokes = [
     await page.waitForSelector('#statusPart .catpage h1:text-is("Media")', { timeout: 5000 });
     await page.waitForSelector('#statusSide [aria-current="page"][data-key="media"]');
     if (await page.isVisible('#statusRows')) throw new Error("a category's page left the overview's list showing");
-    // Backups' Needs you says how many wait, and goes to its card.
-    await page.click('nav > button[data-screen="backups"]');
-    await page.click('#backupsSide button:has-text("Each app")');
-    await page.waitForFunction(() => { const r = document.getElementById('copiesCard').getBoundingClientRect(); return r.top >= 0 && r.top < innerHeight / 2; }, null, { timeout: 5000 });
+    // Backups is an item in Status' menu, under Subscriptions (the owner, Nov 25), not a button in the strip; its page has
+    // its parts (Last night, Restore test, Off-site, Each app) and leads back to Status.
+    if (await page.isVisible('nav > button[data-screen="backups"]')) throw new Error('Backups is still a button in the strip');
+    const order = await page.$$eval('#statusSide button[data-key]', (bs) => bs.map((b) => b.dataset.key).slice(0, 4).join());
+    if (order !== 'overview,analytics,subscriptions,backups') throw new Error(`Status' menu: ${order}`);
+    await page.click('#statusSide button[data-key="backups"]');
+    await page.waitForSelector('#backups.screen.active #copiesCard', { timeout: 5000 });
+    await page.waitForSelector('#statusSide [aria-current="page"][data-key="backups"]', { timeout: 3000 });
+    if (!(await page.isVisible('nav > button[data-screen="status"].active'))) throw new Error('Status is not the screen picked on Backups');
+    for (const part of ['#copiesTile', '#restoreTile', '#offsiteTile', '#copiesCard']) if (!(await page.$(part))) throw new Error(`Backups' page has no ${part}`);
+    await page.click('#backupsCrumbs button.crumb:text-is("Status")');
+    await page.waitForSelector('#status.screen.active', { timeout: 3000 });
+    await page.waitForSelector('#statusSide [aria-current="page"][data-key="overview"]', { timeout: 3000 });
   } },
   // A category's page for every category (the owner, Nov 25: computer-category-full-dark.png): the menu is Overview, each
   // catalog category with its apps' count (an amber dot where one is stopped), your own apps last, and no Needs a look,
@@ -7082,7 +7041,8 @@ const smokes = [
     await page.setViewportSize({ width: 1100, height: 760 });
     await page.waitForSelector('#statusSide button[data-key="media"]', { state: 'visible', timeout: 5000 });
     const strip = await page.$$eval('nav > button[data-screen]', (bs) => bs.filter((b) => b.checkVisibility() && b.dataset.screen !== 'settings').map((b) => [b.dataset.screen, Math.round(b.getBoundingClientRect().top), Math.round(b.getBoundingClientRect().width)]));
-    if (strip.length < 2 || new Set(strip.map((x) => x[1])).size !== 1 || strip.some((x) => x[2] > 120)) throw new Error('not a strip of icons: ' + JSON.stringify(strip));
+    // Backups is in Status' menu now (the owner, Nov 25), so a phone without Finances has Status alone in the strip.
+    if (!strip.length || strip.some((x) => x[0] === 'backups') || new Set(strip.map((x) => x[1])).size !== 1 || strip.some((x) => x[2] > 120)) throw new Error('not a strip of icons: ' + JSON.stringify(strip));
     if (await page.isVisible('#statusChips')) throw new Error('chips on a wide window');
     if (await page.isVisible('#backupsSide .finmenuitem')) throw new Error("Backups' menu shows on Status");
     await page.click('#statusSide button[data-key="media"]');

@@ -1,7 +1,3 @@
-// The command sheet, and what goes in its action row: its buttons, an
-// app's address as a QR code for a phone, and its sign-in details.
-// screens/status.ts opens the sheet (#cliPanel) and mounts one of these
-// in it.
 import { render, type ComponentChildren } from 'preact';
 import { useEffect, useState } from 'preact/hooks';
 import { Sheet } from '../parts/Sheet';

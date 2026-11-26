@@ -1,11 +1,3 @@
-// The pay period picked, the dashboard's one card for it. The period is
-// picked once, by the bar atop the Dashboard (Period.tsx), which says whose
-// paycheck and when; the card says the days it covers. Under it, the accounts side
-// by side, each as it stands once the paycheck is in and its bills are
-// paid, with the change since the period before; one money goes into in
-// that period is lit (the Roth the day its $625 lands). The cards are one
-// tile together, and so are the collectibles. Then checking after the bills, and each payment the
-// paycheck covers, in order; a row opens its payment's form.
 import type { ComponentChildren } from 'preact';
 import { useState } from 'preact/hooks';
 import { Rows, Row } from '../../parts/Row';
@@ -108,8 +100,6 @@ export function PaycheckWidget({ v, L, sel, edit, open }: { v: finance.View; L: 
         caption={<>{p.now ? `Checking on ${dayShort(p.last)}, before the next paycheck` : `Checking on ${dayShort(p.last)}, after its bills`}
           {p.left < 0 ? <span class="fx-out">, short {money(-p.left)}</span> : p.left < cushion ? <span>, under your {compact(cushion)} cushion</span> : ''}</>}
         aside={!p.now && <Delta value={p.in - p.out} />} />
-      {/* Checking at the end of payday itself, its own payments out (savings, a card paid off), before the bills after it:
-          what a spreadsheet that counts paychecks against a month of bills comes to (the owner's, with "2" paychecks, the second). */}
       {!p.now && (() => {
         const day = v.days?.find((d) => d.date === p.pay!.date);
         return day && <p class="fx-sub fx-onpayday">On payday, {dayShort(p.pay!.date)}, once its own payments are out: <strong><Amount value={day.balance} form="full" tone={day.balance < 0 ? 'out' : ''} /></strong></p>;

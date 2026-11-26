@@ -1,7 +1,3 @@
-// The Finances screen: its heading, the seven views (Dashboard, Calendar,
-// Transactions, Reports, Recurring, Pay, Net worth), and the one shown. screens/finances.ts reads the plan,
-// keeps it, and opens the sheet; this only draws. On a phone allowed only
-// to look (v.readOnly) it draws no Edit or Add.
 import { BudgetsWidget } from './widgets/Budgets';
 import { ThisMonthWidget } from './widgets/ThisMonth';
 import type { ComponentChildren } from 'preact';
@@ -57,7 +53,6 @@ export interface FinancesProps {
   fromWallos?: () => Promise<financeapps.Subscription[]>;
   /** Reads a receipt by its name: a phone allowed only to look shows it under its transaction. */
   readReceipt: (name: string) => Promise<string>;
-  /** A card of the Collection's picture, by its name, as a data URL. */
   readCardPicture?: (name: string) => Promise<string>;
   /** Each card's prices over time, by its id. */
   readCardPrices?: () => Promise<Record<string, finance.Point[]>>;
@@ -82,12 +77,6 @@ export interface FinancesProps {
 
 const tabs: [string, string][] = [['overview', 'Dashboard'], ['calendar', 'Calendar'], ['transactions', 'Transactions'], ['budgets', 'Budgets'], ['reports', 'Reports'], ['recurring', 'Recurring'], ['pay', 'Paychecks'], ['worth', 'Net worth'], ['collection', 'Collection']];
 
-/**
- * The tabs in four: what happened (Spending: Transactions, Reports) and what
- * is coming (Plan: Calendar, Recurring, Paychecks) each a tab with its pages
- * in a second row under it, the first page opening with it. Each page keeps
- * its own name inside (`tab`), so every way into one still opens it.
- */
 const groups: [string, string, string[]][] = [['overview', 'Dashboard', ['overview']], ['spending', 'Spending', ['transactions', 'reports']],
   ['plan', 'Plan', ['calendar', 'recurring', 'pay']], ['worth', 'Net worth', ['worth', 'collection']]];
 // An account's own page ("account:<id>") is under Net worth, a card's ("card:<id>") under its Collection.
@@ -100,11 +89,6 @@ const pageOf = (group: string) => leftOn[group] || groups.find(([k]) => k === gr
 const addAll: [What, string][] = [['transaction', 'Add a transaction'], ['payment', 'Add a payment'], ['person', 'Add a paycheck'], ['account', 'Add an account'], ['card', 'Add a card']];
 const adds: Record<string, [What, string]> = { overview: ['transaction', 'Add a transaction'], calendar: ['payment', 'Add a payment'], transactions: ['transaction', 'Add a transaction'], budgets: ['transaction', 'Add a transaction'], reports: ['transaction', 'Add a transaction'], recurring: ['payment', 'Add a payment'], pay: ['person', 'Add a paycheck'], worth: ['account', 'Add an account'], collection: ['card', 'Add a card'] };
 
-/**
- * Export (F18): the plan as JSON, what's ahead as CSV, and this month or the
- * next on paper. Each says where it went beside the menu; nothing changes,
- * so a phone allowed only to look has it too.
- */
 /** The export choices and what the last one said ("Saved to …"), for the phone's Export menu and the computer's ▾. */
 function useExport(v: finance.View | null, exportFile: FinancesProps['exportFile'], printMonth: FinancesProps['printMonth']) {
   const [said, setSaid] = useState('');
@@ -178,14 +162,9 @@ function FinancesScreen({ v, ledger, error, retry, tab, setTab, sel, pick, setSi
           {!ro && <div class="toolbar">{eye}{updateBtn}{addBtn}</div>}
         </div>
       </div>
-      /* On the computer, one top bar (docs/Redesign.md, The top bar; redesign-loop R2): the main action, the period the
-         Dashboard picked (drawn into #finTopPeriod by Overview), and the small buttons. No title or subtitle: the sidebar
-         says it's Finances, and the balances' age is said only once it's a week old. */
         : <>
           <h1 class="sr">Finances</h1>
           <div class="fx-topbar">
-            {/* The main action, and the ▾ with the rest (docs/images/redesign/computer-finances.png): the other things to add,
-                Update balances, and Export. */}
             <div class="toolbar fx-addsplit">{addBtn}<MenuButton cls="btn fx-primary fx-addmore" disabled={!v} menuLabel="Add and more"
               title="Add something else, update balances, or export"
               label={null}
@@ -241,11 +220,6 @@ function View({ v, L, phone, ledger, setTab, toTx, back, tab, sel, pick, openWor
     : <Overview v={v} L={L} ledger={ledger} sel={sel} pick={pick} openWorth={openWorth} openSubscriptions={openSubscriptions} openRecurring={openRecurring} openTransactions={openTransactions} showIn={showIn} openCalendar={openCalendar} openPay={openPay} openAccount={openAccount} phone={phone} />;
 }
 
-/**
- * The Dashboard's cards that moved to a page of their own (the owner, Nov 23; redesign-loop R3), above that page's own:
- * This paycheck on Paychecks, Renewing soon and Where it goes on Recurring, Checking ahead on Calendar, Looking back
- * and Money flow on Reports. The phone keeps them on its Dashboard until R10.
- */
 function PageCards({ children }: { children: ComponentChildren }) {
   return <div class="fin fx-pagecards"><div class="fx-board">{children}</div></div>;
 }
@@ -264,14 +238,6 @@ const menuIcons: Record<string, string> = {
   reports: 'M12 3a9 9 0 1 0 9 9h-9zM15 3.5A9 9 0 0 1 20.5 9H15z',
 };
 
-/**
- * Finances' own menu (docs/Redesign.md, The computer's sidebar): while
- * Finances shows, the sidebar holds its pages in place of the tabs, then
- * the accounts (widgets/Worth's Balances). A part with more than one page
- * (Bills & paychecks: Recurring and Paychecks) shows them under it while
- * it's open; each opens where it was left. Budgets is a page of its own
- * on the computer (redesign-loop R4): This month and the budgets.
- */
 const menu: { key: string; label: string; pages: string[]; sub?: [string, string][] }[] = [
   { key: 'overview', label: 'Dashboard', pages: ['overview'] },
   { key: 'transactions', label: 'Transactions', pages: ['transactions'] },

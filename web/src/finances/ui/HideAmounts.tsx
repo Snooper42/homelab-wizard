@@ -1,6 +1,3 @@
-// The eye that hides every amount, or shows them again: on Finances'
-// header and beside the sidebar's Accounts. ⌘⇧H (Ctrl+Shift+H) and View ›
-// Hide Amounts do the same.
 import { Icon } from '../../Icon';
 import { osName } from '../../core';
 

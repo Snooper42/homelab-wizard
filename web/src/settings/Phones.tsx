@@ -1,6 +1,3 @@
-// Settings › Phones: the phones (and wall screens) paired with the phone
-// companion (homelab serve), what each may do (make changes; see or change
-// Finances), and a one-time code with its QR code to pair another.
 import { render } from 'preact';
 import { useState } from 'preact/hooks';
 import { ago, clockText, dayText } from '../format';
@@ -31,14 +28,8 @@ function FinancesPick({ value, set, label, id, paired }: { value: string; set: (
 // How long a phone keeps more than looking: a guest's phone for a week, say.
 const untilChoices: [number, string][] = [[0, 'Until you change it'], [24, 'For a day'], [24 * 7, 'For a week'], [24 * 30, 'For a month']];
 
-/** When a phone's changes and Finances end: "Thu, Nov 12, 3:00 PM". */
 const untilText = (t: string) => { const d = new Date(t); return `${dayText(d, { weekday: 'short', month: 'short', day: 'numeric' })}, ${clockText(d)}`; };
 
-/**
- * The code, its QR code, and the link to use, until Done: for a phone, or
- * for a TV or a wall screen (its own QR code, the link with &kiosk in it, so
- * nothing is typed onto a link). asked is what was picked for the phone.
- */
 function Pairing({ p, wall, asked, done }: { p: app.PhonePairing; wall: boolean; asked: { canChange: boolean; finances: string }; done: () => void }) {
   const links = p.links || [];
   const secure = links.find((l) => l.startsWith('https:'));

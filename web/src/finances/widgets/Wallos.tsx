@@ -1,11 +1,3 @@
-// Wallos, on a click: the subscriptions Wallos keeps on this machine, read
-// only while it runs (the computer only), with those the plan doesn't have
-// yet to add, each or all. A subscription is in the plan already when a
-// payment has its name (as a person would write it) or its brand. Each
-// added is a payment from its next day in Wallos, with its brand's logo,
-// and its type from Wallos's category, else from its brand. Those turned
-// off in Wallos, and those on a rhythm Finances doesn't keep (every 6
-// months), are named, not added.
 import { useState } from 'preact/hooks';
 import { Row, Rows } from '../../parts/Row';
 import { Amount } from '../ui/Amount';

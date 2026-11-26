@@ -13,7 +13,6 @@ export const $$ = (sel: string, root: ParentNode = document): any[] => [...root.
 /** The first element a selector finds, or null; loosely typed like $. */
 export const $1 = (sel: string, root: ParentNode = document): any => root.querySelector(sel);
 
-
 let errorTimer = 0;
 export function showError(e) {
   // The phone away from the homelab (companion.js): the line at the top already says so.

@@ -1,12 +1,3 @@
-// A loan on its account's page (the owner, Nov 12: their share of the
-// mortgage goes as a Zelle payment to the person they share it with): what
-// is left and when it is paid off, the plan's payment each month (theirs,
-// and the whole one when the papers say more), its rate, and this month's
-// interest against what comes off; then the payments linked to it (a
-// transaction's `payment`), one paid over the plan's asked about each time
-// (the owner's pick: Count it keeps it counted in full, `extra`; Not this
-// one takes it off), the same payee's next ones offered to link by
-// themselves, and Link a payment… for any other.
 import { useState } from 'preact/hooks';
 import { Row, Rows } from '../parts/Row';
 import { Amount } from './ui/Amount';
@@ -27,13 +18,6 @@ export interface LoanProps {
   keepPlan?: (plan: finance.Plan) => Promise<boolean>;
 }
 
-/**
- * The plan's payments that may well pay this loan though none says so
- * (the owner's Mortgage, Nov 16: its transactions linked to it, the loan's
- * page saying nothing pays it): no account they go into, not money in or a
- * card's payoff, and a home, car or loan payment, or named like the loan;
- * the ones with transactions linked to them first.
- */
 export function mayPay(plan: finance.Plan, a: finance.Account, ledger: finance.Ledger | null): finance.Payment[] {
   const used = new Set((ledger?.transactions || []).map((t) => t.payment).filter(Boolean));
   const name = a.name.toLowerCase();

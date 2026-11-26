@@ -1,8 +1,3 @@
-// A note at the bottom of the window after apps were stopped: what stopped,
-// and Undo, which starts them again (or, from showUndo, after transactions
-// were deleted, which brings them back). It stays 10 seconds, longer while the
-// pointer or the focus is on it (so it is never gone mid-reach), and ⌘Z
-// (Ctrl+Z elsewhere) undoes too while it shows.
 import { render } from 'preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 

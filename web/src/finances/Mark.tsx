@@ -1,9 +1,3 @@
-// What stands before an account or payment: its brand's mark in the
-// brand's colour (logos.ts), or its logo in its own colours on white, or its
-// initials on its colour for a brand with neither, else an icon for its
-// kind, else its first
-// letter. And a person's initial, in their colour. A brand's mark is
-// .fmark.logo, not .brand: that is the sidebar's name, margins and all.
 import { cleanPayee } from './payees';
 import { alike } from './importData';
 import { brands } from './logos';
@@ -77,12 +71,6 @@ export function autoMark(name: string): { letters: string; hue: number } {
   return { letters, hue: h % autoHues };
 }
 
-/**
- * Words in a payment's name that say what it is for, so a bill with no
- * brand shows a water drop or a shield, not its kind's icon like every
- * other. The first list with a word in the name wins: "Groceries and gas"
- * is groceries, not the gas bill.
- */
 const hints: [string, string[]][] = [
   ['spending', ['groceries', 'grocery', 'supermarket']],
   ['insurance', ['insurance', 'insure', 'warranty']],
@@ -169,12 +157,6 @@ const brandWords = (): [string, string][] => named ??= [
   ...Object.entries(aliases).map(([a, k]): [string, string] => [words(a), k]),
 ].filter(([, k]) => brands[k]).sort((a, b) => b[0].length - a[0].length);
 
-/**
- * Brands whose name is also an everyday word ("Delta Dental" is no airline,
- * "Farmers market" no insurer): one is read only from a name that is the
- * brand alone, or the brand and a word for what is paid ("Steam
- * subscription", "Box plan").
- */
 const loose = new Set(['box', 'hey', 'public', 'calm', 'square', 'medium', 'delta', 'shell', 'ea', 'zoom', 'steam', 'notion', 'regal', 'frontier', 'travelers',
   'nationwide', 'gemini', 'kraken', 'regions', 'optimum', 'marcus', 'empower', 'acorns', 'affirm', 'philo', 'cox', 'bp', 'wix', 'starz', 'ring', 'max',
   'gap', 'subway', 'bookingcom', 'hotelscom']);
@@ -200,12 +182,6 @@ const models: Record<string, string> = Object.fromEntries(Object.entries({
   audi: 'a3|a4|a6|q3|q5|q7|e tron',
 }).flatMap(([make, list]) => list.split('|').map((m) => [m, make])));
 
-/**
- * The brand an account or payment shows: the one picked, else one whose
- * name is in its name, as whole words ("Claude Pro" is Claude; "Maxwell"
- * is not Max), and for a car its model ("CX-5" is Mazda). None for a name
- * with no brand in it, or for one given None by hand ("none").
- */
 export function brandOf(institution: string | undefined, name: string | undefined, kind?: string): string | undefined {
   if (institution) return institution;
   // Something else and collectibles pick no brand (a ring is no doorbell).
@@ -217,11 +193,6 @@ export function brandOf(institution: string | undefined, name: string | undefine
   return m && brands[models[m]] ? models[m] : undefined;
 }
 
-/**
- * A payee's brand: the one picked ("none" picked: none, whatever its name
- * says), else the one in its name as a bank writes it (cleanPayee), else in
- * its name as it is.
- */
 export const payeeBrand = (institution: string | undefined, payee: string | undefined): string | undefined =>
   institution === 'none' ? undefined : brandOf(institution, cleanPayee(payee)) || brandOf(undefined, payee);
 
@@ -241,12 +212,6 @@ export function Who({ name, n, size }: { name: string; n: number; size?: 'sm' | 
   return <span class={`fwho p${n}` + (size ? ' ' + size : '')} aria-hidden="true">{(name || '?').charAt(0).toUpperCase()}</span>;
 }
 
-/**
- * The brands for a kind of account's picker, by name: those that fit it
- * (banks for checking, brokers for retirement, makes for a car), then every
- * other bank, broker, and card, for checking at a broker or a card from a
- * bank. A car's and a home's are only their own.
- */
 export function brandsFor(kind: string): string[] {
   const want = { checking: ['bank'], savings: ['bank'], card: ['card', 'bank'], investment: ['investment'], retirement: ['investment'], loan: ['bank'], car: ['car'], home: ['home'] }[kind];
   const byName = (list: string[]) => list.sort((a, b) => brands[a].name.localeCompare(brands[b].name));

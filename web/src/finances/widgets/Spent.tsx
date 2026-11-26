@@ -1,7 +1,3 @@
-// Spent this month: what the ledger says went out since the 1st, by
-// category, as a donut with each category's line under it; a line opens
-// its transactions (this month's, of that category) on Transactions.
-// Beside Latest transactions on the Dashboard; with no ledger, no card.
 import { Empty } from '../../parts/Empty';
 import { Row, Rows } from '../../parts/Row';
 import { Amount, Stat } from '../ui/Amount';

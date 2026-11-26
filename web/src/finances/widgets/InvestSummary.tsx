@@ -1,10 +1,3 @@
-// The Dashboard's Investments card (docs/images/redesign/computer-finances.png;
-// redesign-loop R3): what the brokerage, the IRAs and the 401(k) hold
-// together today, and each account under it, largest first; the card
-// opens Net worth's Investments, a row its account. The chip and each row's
-// change are this month's: today against the 1st, from each account's kept
-// balances (worthOn), as Net worth's Investments card counts its month. An
-// account with nothing kept on the 1st has no change to show, and none is made up.
 import { Chip } from '../../parts/Card';
 import { Row, Rows } from '../../parts/Row';
 import { Amount } from '../ui/Amount';

@@ -1,7 +1,3 @@
-// The kit's colour keys: a coloured dot, a bar split in proportion, and a
-// legend that names each part. A colour is a series number (1 to 8, the
-// fixed --cat-N order, colour-blind checked) or a meaning (in, out, save,
-// accent, track), never a value, so light, dark, and contrast themes hold.
 import type { ComponentChildren } from 'preact';
 
 /** A series colour: --cat-1 … --cat-8, or what it means. */

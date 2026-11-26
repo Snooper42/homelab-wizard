@@ -1,7 +1,3 @@
-// Checking, day by day: the next month (or three) as an area, paydays
-// marked in green and big bills in red, the cushion dashed, the lowest day
-// called out, and the paycheck picked shaded. Pointing at a day says what
-// happened on it.
 import { useState } from 'preact/hooks';
 import { Segmented } from '../../parts/Segmented';
 import { Amount, Stat } from '../ui/Amount';

@@ -1,9 +1,3 @@
-// What happened in a pay period before now, the Dashboard's card for it in
-// the paycheck card's place when the period bar steps back: what came in
-// and went out, from the ledger (a move between the household's own
-// accounts is neither), and that period's transactions, the newest first,
-// each opening its own form. The plan says what was meant to happen; this
-// says what did.
 import { useState } from 'preact/hooks';
 import { Empty } from '../../parts/Empty';
 import { Rows } from '../../parts/Row';

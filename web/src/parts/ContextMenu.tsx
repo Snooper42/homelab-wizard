@@ -1,10 +1,3 @@
-// A right-click menu at the pointer (or under its button, from Shift+F10 or
-// the context-menu key), as an app's row's menu on Status works: its first
-// item takes the focus, the arrow keys, Home, and End move through it,
-// Escape closes it back where the focus was, and a press elsewhere, the
-// window losing focus, or a resize closes it (the press is read as it
-// begins, since WebKit moves no focus on a click). An item that changes
-// much (Update all) asks for a second click.
 import { render } from 'preact';
 import { useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { $ } from '../core';

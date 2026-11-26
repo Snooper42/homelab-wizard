@@ -1,9 +1,3 @@
-// Export (F18): the plan, and what's ahead, in open formats a household can
-// keep or take elsewhere, and a month on paper. The plan is finance.json's
-// own shape, so it reads back as it was; what's ahead is a CSV a
-// spreadsheet opens, one payday or payment a row, with checking after each
-// day; the month is a page of its own (nothing fetched from elsewhere)
-// that prints itself when opened.
 import { money } from './money';
 
 /** A cell of a CSV: quoted when it holds a comma, quote, or line break; text a spreadsheet would run as a formula starts with an apostrophe. */
@@ -27,13 +21,6 @@ function what(plan: finance.Plan, e: finance.Event): [string, string] {
 
 const accountName = (plan: finance.Plan, id?: string) => (id ? plan.accounts?.find((a) => a.id === id)?.name || id : '');
 
-/**
- * Every payday and payment from today to a year out, oldest first: the date,
- * who or what, its kind, the amount (money out a minus), the account it
- * comes from or goes to, and checking at the end of that day where the
- * projection reads it (the chart's months; past them, no balance). A charge
- * to a card says the card, and moves no checking money.
- */
 export function aheadCsv(v: finance.View): string {
   const rows: string[][] = [['Date', 'What', 'Kind', 'Amount', 'Account', 'Checking after']];
   const days = [...(v.days || []), ...(v.later || [])].filter((d) => d.date >= v.today);
@@ -61,13 +48,6 @@ export const monthName = (month: string) => `finances-${month}.html`;
 
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
 
-/**
- * A month on paper: each day with a payday or payment, what it is and its
- * amount, and checking at the day's end; then each paycheck starting in the
- * month, with what came in, went out, was saved, and was left. Amounts are
- * written as the screen writes them, so with Hide amounts on, they print
- * hidden too. month is YYYY-MM.
- */
 export function monthPage(v: finance.View, month: string, title: string): string {
   const days = [...(v.days || []), ...(v.later || [])].filter((d) => d.date.startsWith(month) && ((d.events || []).length || (d.charges || []).length));
   const label = new Date(month + '-01T12:00:00').toLocaleDateString('en-US', { month: 'long', year: 'numeric' });

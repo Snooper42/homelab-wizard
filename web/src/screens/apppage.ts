@@ -1,7 +1,3 @@
-// An app's page (page/AppPage.tsx): opened from its row on Status, it reads
-// what it shows beside the Status already read (its usage, the watchdog's
-// week, the last backup, who uses it), and its buttons run the rows'
-// actions (screens/status.ts), so a row and the page say the same.
 import { inTurn } from '../job/queue';
 import { type Day, mountAppPage } from '../page/AppPage';
 import { stateOf } from '../status/AppList';

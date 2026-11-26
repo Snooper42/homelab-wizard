@@ -1,7 +1,3 @@
-// Where to find a key, step by step, for the settings that are hard to find:
-// the plan's field shows these in place of .env.example's one line. Each says
-// first what's needed before the steps can work (a paid plan, an account),
-// and names things as the other site does, never by the setting's code.
 
 export interface Walkthrough {
   /** What's needed first, before the steps can work. */

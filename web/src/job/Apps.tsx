@@ -1,7 +1,3 @@
-// A job's apps, one row each: what is happening to it in plain words, and a
-// bar for how far along it is. The rows come from what Compose prints
-// (internal/progress, as job:app events); the raw lines stay under Show
-// details.
 import { render } from 'preact';
 
 /** How far along each stage is, for its bar when a download has no percent. */

@@ -1,11 +1,3 @@
-// Finances › Dashboard: the widgets laid on the board, nothing drawn here.
-// First checking now and after the next paycheck, each with how it adds up
-// (on a phone after Coming up and the goals); then checking over the next month and the paycheck picked side by side; a
-// month's cash flow (its bills pick the paycheck), where the spending goes,
-// and net worth; what the balances are taken to hold, when anything is;
-// and every account after each paycheck. A new household starts with the
-// three things to type in. On a phone it opens with what is coming up (the
-// next two weeks of bills) and the goals, then the paycheck.
 import { Card } from '../parts/Card';
 import { Empty } from '../parts/Empty';
 import { Row, Rows } from '../parts/Row';
@@ -66,7 +58,6 @@ export interface OverviewProps {
   showIn?: (f: Parameters<typeof showTransactions>[0]) => void;
   /** Shows Transactions (and its budgets). */
   openTransactions?: () => void;
-  /** Shows the Budgets page (the computer's; redesign-loop R4). */
   openBudgets?: () => void;
   /** Shows the Calendar, on a day when one is given (the checking chart's). */
   openCalendar?: (day?: string) => void;
@@ -78,11 +69,6 @@ export interface OverviewProps {
   phone?: boolean;
 }
 
-/**
- * The three things a plan starts with (usability task 15, item 1): each row
- * ticked once it's there ("✓ Example Checking"), its button gone; the card
- * goes only once all three are there.
- */
 function StartThree({ v, add }: { v: finance.View; add: NonNullable<OverviewProps['add']> }) {
   const acct = (v.plan.accounts || []).find((a) => a.kind === 'checking');
   const person = (v.plan.people || [])[0];
@@ -101,19 +87,11 @@ function StartThree({ v, add }: { v: finance.View; add: NonNullable<OverviewProp
   );
 }
 
-/**
- * Whether a plan is past its start: a paycheck and a payment are in. A
- * missing checking account after that is the note's to say, as before.
- */
 const startedThree = (v: finance.View) => !!v.plan.people?.length && !!v.plan.payments?.length;
 
 /** Whose paycheck: "Alex", "Alex and Jordan". */
 const paidWhom = (ids: string[], L: Lookup) => ids.map((id) => L.person[id]?.name || id).join(' and ');
 
-/**
- * The period, in the top bar on the computer (docs/Redesign.md, The top bar): drawn into Finances' #finTopPeriod, which
- * the screen draws before this, so the bar stays one row; emptied when the Dashboard isn't showing.
- */
 function TopPeriod({ bar }: { bar: PeriodBarProps | null }) {
   useEffect(() => {
     const slot = document.getElementById('finTopPeriod');
@@ -140,7 +118,6 @@ export function Overview({ v, L, sel, pick, add, edit, setSince, keep, ledger, o
       dates: `${dayShort(month.start)} – ${dayShort(month.last)}, ${month.when === 'past' ? 'what happened' : month.when === 'now' ? 'so far, then the plan' : 'the plan'}`,
       step: (d) => setMonthAt(Math.max(0, Math.min(months.length - 1, monthAt + d))), canBack: monthAt > 0, canOn: monthAt < months.length - 1,
       today: () => setMonthAt(thisMonth), atToday: monthAt === thisMonth }
-    // On the computer the top bar's words (docs/images/redesign/computer-finances.png): whose paycheck over its days in full.
     : p || was ? { by, setBy, title: phone ? (p ? periodTitle(p, L) : paydayTitle(was!.pay, L)) : p?.now ? 'Now' : `${paidWhom((p ? p.pay! : was!.pay).people, L)}'s paycheck`,
       dates: phone ? (p ? `${dayShort(p.start)} – ${dayShort(p.last)}${p.now ? ', from today' : ''}` : `${dayShort(was!.start)} – ${dayShort(was!.last)}, what happened`)
         : `${dayLong(p ? p.start : was!.start)} – ${dayLong(p ? p.last : was!.last)}${p?.now ? ', from today' : was ? ', what happened' : ''}`,
@@ -193,10 +170,6 @@ export function Overview({ v, L, sel, pick, add, edit, setSince, keep, ledger, o
         { id: 'moneyflow', title: 'Money flow', width: 'full', node: <MoneyFlowWidget v={v} L={L} ledger={ledger} edit={edit} /> },
         { id: 'networth', title: 'Net worth', width: 'full', node: <NetWorthWidget v={v} open={openWorth} /> },
       ]} />
-        /* The computer's Dashboard, as docs/images/redesign/computer-finances.png (redesign-loop R3): what needs you first,
-           only when something does; then the lead card with Latest transactions beside it, Net worth, Cash flow, Where the
-           money went, Coming up and the budgets to watch. The cards the picture doesn't have live on their own pages now
-           (the owner, Nov 23): Bills & paychecks, Calendar and Reports. */
         : <ArrangedBoard kind="fx-dash" slots={[
         { id: 'since', title: 'Since the balances', width: 'full', node: !!v.since?.length && <SinceWidget v={v} L={L} set={setSince} /> },
         { id: 'missing', title: 'Bills not seen', width: 'full', node: <MissingWidget v={v} L={L} open={openTransactions} /> },

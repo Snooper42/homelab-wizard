@@ -1,9 +1,3 @@
-// A bill whose amount changes (an estimate: electric, water) paid at least
-// three times in the last six months, as the ledger says (View.Paid), whose
-// average is off the plan's by 3% or more: the Dashboard asks "Electric
-// has averaged $152 over 6 months. Use that instead of $140?" Use it keeps
-// the average; Keep is remembered on this device for that average, so a
-// later one asks again. On a phone allowed only to look it only says so.
 import { useState } from 'preact/hooks';
 import { Row, Rows } from '../../parts/Row';
 import { Widget } from '../ui/Widget';

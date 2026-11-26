@@ -1,12 +1,3 @@
-// The flow chart: boxes in columns, each as tall as its money, and a band
-// from each to where its money went, as wide as that part of it. Each box
-// says its name, amount, and share of where it came from (or went). Resting
-// on a box or band, or Tab to a box, lights what it is part of and dims the
-// rest; a click (Return, a tap) picks a box, and the card shows what is
-// behind it. Narrow, the first column is left out: its money starts in the
-// second, and narrower still the second too. The last column's words are
-// spread so none run into the next, the chart taller when they need it.
-// Takes nodes and links only: it knows nothing of the plan.
 import { useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { type Hue, hue } from './Legend';
 

@@ -1,16 +1,3 @@
-// A household member's private Finances on her phone's page
-// (private-finances.md 3.2 to 3.4). Once she turns privacy on, the computer
-// keeps only her sealed envelope and refuses the plain Finances calls; this
-// page then answers them itself, in front of the same screens: the plan and
-// ledger opened here (seal.ts), read forward with the computer's own Go
-// built for the page (finance.wasm, cmd/financewasm), and saved sealed
-// again. The opened key and her plain Finances live in this page's memory
-// only, never in its storage, and go when it locks: the page hidden, another
-// screen picked, or 5 minutes without a touch.
-//
-// The one limit, said where she turns it on: the computer serves this page,
-// so her Finances stay private while the page is the homelab's own; the
-// Homelab app on her iPhone doesn't have that limit.
 import { go, onPhone } from '../core';
 import { todayISO } from './money';
 import * as seal from './seal';
@@ -55,12 +42,6 @@ let real: Backend;
 const watchers: (() => void)[] = [];
 const tell = () => watchers.forEach((fn) => fn());
 
-// Offline (2E step 6): her sealed envelope, and a change made while the
-// homelab didn't answer (sealed too), kept in IndexedDB, the one place the
-// spec allows and only for what's sealed: never the key, never plain data.
-// With no connection the page opens that copy (Face ID or her code), and a
-// change waits there until the homelab answers, when it is sent; one another
-// of her devices made meanwhile is said plainly and hers is shown instead.
 interface Kept {
   person: string;
   finances?: string;
@@ -164,11 +145,6 @@ function find(): Promise<void> {
   })());
 }
 
-/**
- * The homelab answers again: what waits is sent (refused when another of her
- * devices saved meanwhile, said plainly, and hers is shown), or the newest
- * is read; nothing happens while it still doesn't answer.
- */
 let homing: Promise<void> | null = null;
 function home(): Promise<void> {
   return (homing ??= (async () => {
@@ -366,11 +342,6 @@ async function passkeySecret(credential: string): Promise<Bytes> {
   return bytes(first);
 }
 
-/**
- * A new passkey for her private Finances, and the secret it gives; null
- * when this phone's passkeys can't give one (then a passphrase instead).
- * Cancelling Face ID is said, so she can try again or pick a passphrase.
- */
 export async function makePasskey(): Promise<{ secret: Bytes; credential: Bytes } | null> {
   if (!window.PublicKeyCredential || !navigator.credentials?.create) return null;
   let c: PublicKeyCredential | null;
@@ -392,12 +363,6 @@ export async function makePasskey(): Promise<{ secret: Bytes; credential: Bytes 
   return { secret: prf.results?.first ? bytes(prf.results.first) : await passkeySecret(btoa(String.fromCharCode(...credential))), credential };
 }
 
-/**
- * Turns privacy on (3.3's steps): her plain Finances read, each receipt
- * sealed and kept, everything sealed and saved as new. Only once that save
- * succeeds does the computer remove her plain files; a failure before it
- * leaves them as they were.
- */
 export async function turnOn(ways: seal.Ways) {
   const plan = unrev((await real.Finances()).plan) as finance.Plan;
   const ledger = unrev(await real.FinancesLedger()) as finance.Ledger;
@@ -419,12 +384,6 @@ export async function turnOn(ways: seal.Ways) {
   tell();
 }
 
-/**
- * Turns privacy off, from her phone, once she has confirmed: her sealed
- * receipts opened here first, her plan and ledger kept plain again (the
- * computer then removes the envelope and the sealed receipts), and each
- * receipt kept plain after, the ledger naming it again.
- */
 export async function turnOff() {
   if (state !== 'open' || !key || !data || !envelope) throw new Locked();
   const ledger = data.ledger as finance.Ledger;

@@ -1,6 +1,3 @@
-// Choose apps: the starter picks, the bundles, every app by category with
-// a box to tick, and the plan of what installing the ticked ones does,
-// with the settings they need. app.ts keeps the selection and plans.
 import { Fragment, render } from 'preact';
 import { Icon } from '../Icon';
 import { Empty } from '../parts/Empty';
@@ -104,7 +101,6 @@ function AppRow({ a, p }: { a: api.App; p: GroupsProps }) {
   return (
     <label class="app">
       <input type="checkbox" checked={p.selected.has(a.id) || !!by} disabled={native || !!by} title={by ? `Installed with ${by}, which needs it` : undefined} onChange={(e) => p.tick(a.id, e.currentTarget.checked)} />
-      {/* Every app its logo (the owner, Nov 24: a logo wherever an app is named). */}
       <AppMark id={a.id} name={a.name} icon="" small />
       <div class="grow">
         <strong>{a.name}</strong>
@@ -166,11 +162,6 @@ export interface PlanProps {
   reason: (r: string) => string;
 }
 
-/**
- * The plan in a few lines: the apps that will start, what still needs a
- * setting, and anything wrong. Helpers (databases, queues), apps already
- * running, port moves, and settings written wait under Details.
- */
 export function Plan({ plan: p, appName, reason }: PlanProps) {
   if (p === null) return <>Nothing selected yet. Pick something to start with, or tick an app.</>;
   if (typeof p === 'string') return <p class="bad">{p}</p>;
@@ -219,10 +210,6 @@ export interface InputsProps {
   open?: (url: string) => void;
 }
 
-/**
- * The settings the chosen apps need, by their names for people and with
- * their help (where to find a key, what it is for).
- */
 export function Inputs({ keys, meta, values, label, input, open }: InputsProps) {
   return (
     <>

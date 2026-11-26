@@ -1,14 +1,6 @@
 /*! Finances' logos: simple-icons (simpleicons.org), CC0. The marks are
  * their owners' trademarks, shown only beside the account or payment they
  * name. */
-// Brand marks for the Finances screen: banks, cards, bills, and car makes,
-// from simple-icons' package (one shape, drawn in the brand's ink on its
-// colour). A brand it has no mark for (Fidelity, Vanguard, GEICO) stands
-// as its initials on its colour, a mark of our own, never a copy of
-// theirs. Kept here, so no logo is fetched from anywhere (which bank you
-// use stays on this machine). Every ink reads at 4.5:1 on its colour
-// (app/preview/lint.mjs checks). The colours are the brands' own: data,
-// not the app theme (lint.mjs lists this file).
 
 export interface Brand {
   /** The brand as people say it. */
@@ -16,7 +8,6 @@ export interface Brand {
   /** Its colour, and the ink that reads on it. */
   bg: string;
   ink: string;
-  /** Its mark: a 24 by 24 path (simple-icons), or, for a monogram, its initials. A whole SVG in its own colours (art) is no longer used here. */
   path?: string;
   art?: string;
   letters?: string;

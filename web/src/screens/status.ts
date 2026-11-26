@@ -1,10 +1,7 @@
-// Status: the apps as last read (store.ts) with their cards, each row's
-// actions and the sheets they open, a homelab command with its preview,
-// and the phone's report.
 import { sendTo, targetsFor } from '../phone/send';
 import { ago, bytes } from '../format';
 import { drawFoot } from './setup';
-import { mountSavings, mountTiles, troubled, type MachineFacts } from '../status/Tiles';
+import { mountTiles, troubled, type MachineFacts } from '../status/Tiles';
 import { machineNow, onMachine } from '../status/machine';
 import { mountUndoNote } from '../status/UndoNote';
 import { stoppedWords } from '../status/stopFor';
@@ -37,8 +34,7 @@ import { settingLabel, showSettingsPage } from './settings';
 import { catalog, leaveStore, openCustom, openInstall, renderApps, showStore } from './choose';
 import { suggested } from '../choose/Choose';
 import { clearJob, cliProgress, startJob } from '../jobs';
-import { navigate } from '../app';
-import { mountOvernight, nightOf } from '../status/Overnight';
+import { focusScreen, navigate } from '../app';
 import { setHealthApps, setHealthChecks } from '../status/healthLine';
 import { backupsData, redrawBackups } from './backups';
 import { loadSeen, saveSeen } from '../status/changed';
@@ -53,20 +49,7 @@ let held: Record<string, stopped.Stop> = {};
 // Each app's share of the watchdog's passing checks this week (0 to 1).
 let weekUp = {};
 let outages: Record<string, health.Outage[]> = {};
-// What happened overnight (status/Overnight.tsx), in the morning: the alerts and whether the watchdog was read.
-let lastEvents: notify.Event[] = [];
-let watched = false;
 let backupsAsked = 0;
-function drawOvernight() {
-  if (!lastStatus) return;
-  const now = Date.now();
-  // The night's database copies come from Backups, read for it only in the
-  // morning, and asked again at most once a minute: a read that fails is
-  // drawn here too (backupsData.watch), and must not ask again at once.
-  if (nightOf(now) && !backupsData.value && now - backupsAsked > 60000) { backupsAsked = now; backupsData.fresh(10 * 60000); }
-  mountOvernight($('overnightLine'), { now, apps: lastStatus.apps, events: lastEvents, outages, copies: backupsData.value?.copies || null, watched });
-}
-backupsData.watch(drawOvernight);
 // The Backups and This Mac cards redraw as their reads come in.
 backupsData.watch(() => { if (lastStatus) renderTiles(lastStatus); });
 onMachine(() => { if (lastStatus) renderTiles(lastStatus); });
@@ -86,14 +69,8 @@ function lastNight() {
 // Each app as you last saw it on Status, for the dots on what changed since (status/changed.ts).
 let seen = loadSeen();
 
-// The savings trend: a sparkline of the last 90 recorded days and the
-// change since the first of them (the nightly backup records one a day).
 let savingsHistory: savings.Point[] = [];
 let lastAttention = -1;
-/** The watchdog's days, a square a day, oldest first: ok, warn (a check was down that day), bad (one still down
- * today) or none (it didn't run); each square's words for its tooltip; and when it last checked. The last 14 days from
- * the watchdog's own daily summary (lane D, D3: the owner's picture has 14); from an older computer without one, the
- * week from its outages. Null before it's read. */
 function weekSquares(): { days: string[]; titles: string[]; checked: string } | null {
   if (!lastWatch) return null;
   const run = lastWatch.lastRun && !lastWatch.lastRun.startsWith('0001') ? `Checked ${ago(lastWatch.lastRun)}` : '';
@@ -140,7 +117,6 @@ function renderTiles(st: api.Status) {
     machine: onPhone() || phoneMachine?.memory ? phoneMachine : null,
     appsMemory: lastStats.reduce((n, x) => n + parseMem(x.mem), 0),
   });
-  mountSavings($('savingsCard'), { status: st, history: savingsHistory });
   // The Backups card's numbers: Backups' own read, asked from here at most once a minute (and kept ten minutes).
   if (!backupsData.value && Date.now() - backupsAsked > 60000) { backupsAsked = Date.now(); backupsData.fresh(10 * 60000); }
   const n = trouble.length;
@@ -167,16 +143,8 @@ let lastStatus: api.Status | null = null;
 const automation = 'media-automation';
 const automationSummary = 'Finds and downloads what you ask for in Seerr';
 function renderAppList(st: api.Status) {
-  // Grouped by category, as on Choose apps; what needs a look comes
-  // first, in a group of its own.
-  // The apps pinned to the top come next, in the order pinned, and in no other group.
   const trouble = (a) => a.health === 'unhealthy' || a.health === 'restarting' || a.state === 'missing';
   const catOf = Object.fromEntries((catalog?.apps || []).map((x) => [x.id, x.category]));
-  // Media automation folded away (arr item 8): a household asks in Seerr and
-  // watches in Jellyfin, so Seerr shows beside Jellyfin in Media; the apps
-  // in between sit last, under one line that says what they do, and open
-  // only when one needs a look or on a click. The Downloads card says what
-  // they're getting. Choose apps keeps the catalog's own categories.
   if (catOf.seerr === automation) catOf.seerr = 'media';
   const byId = Object.fromEntries(st.apps.map((a) => [a.id, a]));
   const pinned = (st.pinned || []).map((id) => byId[id]).filter((a) => a && !trouble(a));
@@ -191,8 +159,6 @@ function renderAppList(st: api.Status) {
   wantIcons(groups.flatMap((g) => g.apps.slice(0, 3).filter((x) => x.state !== 'missing' && !shippedLogo(x.id)).map((x) => x.id)));
   mountAppList($('statusRows'), appList);
   if (!unkept) refreshUnkept();
-  // The menu and a category's page: each catalog category with its apps on this machine, whatever their state (the
-  // owner, Nov 25: an amber dot where one is stopped, never a Stopped or Needs a look item), your own apps last.
   const cats = [...(catalog?.categories || [])].sort((x, y) => Number(x.id === automation) - Number(y.id === automation));
   const own = st.apps.filter((a) => !cats.some((c) => c.id === catOf[a.id]));
   const installed = new Set(st.apps.map((a) => a.id));
@@ -212,8 +178,6 @@ function renderAppList(st: api.Status) {
   drawPanel();
 }
 
-// The overview's categories as one panel (status/CategoryPanel), or the whole list while Show every app is on or a
-// filter is typed: the same apps, two ways (the owner's web-wide pictures).
 function drawPanel() {
   const list = listView();
   $('status').classList.toggle('listview', list);
@@ -230,15 +194,20 @@ interface StatusPart { id: string; label: string; apps: api.AppStatus[]; add: ap
 let statusParts: StatusPart[] = [];
 let statusSide: SideItem[] = [];
 let statusHere = 'overview';
+/** What Backups counts (screens/backups.ts): copies gone stale for a reason of their own, on Backups' item in the menu. */
+let backupProblems = 0;
+export function setBackupProblems(n: number) { if (n !== backupProblems) { backupProblems = n; drawStatusSide(); } }
+/** Draws Status' menu again as the screen changes (app.ts's show): Backups marked while it shows. */
+export function statusSideChanged() { drawStatusSide(); }
 function drawStatusSide() {
+  const onBackups = $('backups').classList.contains('active');
   const menu = {
-    label: 'Status', here: statusHere, pick: pickStatusPart,
-    items: [{ key: 'overview', label: 'Overview', icon: sideIcons.overview }, { key: 'analytics', label: 'Analytics', icon: sideIcons.analytics }, { key: 'subscriptions', label: 'Subscriptions', icon: sideIcons.finance }, ...statusSide],
+    label: 'Status', here: onBackups ? 'backups' : statusHere, pick: pickStatusPart,
+    items: [{ key: 'overview', label: 'Overview', icon: sideIcons.overview }, { key: 'analytics', label: 'Analytics', icon: sideIcons.analytics }, { key: 'subscriptions', label: 'Subscriptions', icon: sideIcons.finance },
+      { key: 'backups', label: 'Backups', icon: sideIcons.backups, count: backupProblems || undefined }, ...statusSide],
   };
   // The sidebar's, and on a phone's narrow page the same items as a row of chips atop Status (the tab bar has no room).
   mountSideMenu($('statusSide'), menu);
-  // A phone's narrow page: the same menu as one dropdown at the top (the owner, Nov 25: "a more effective way of
-  // displaying the stacks on mobile… like a drop down menu"); a category's page has breadcrumbs back too.
   mountSideDropdown($('statusChips'), onPhone() ? { ...menu, label: 'Status parts', here: statusHere.startsWith('add:') ? '' : statusHere } : null);
 }
 /** Shows the overview, or the category picked, with the apps as last read. */
@@ -312,9 +281,9 @@ $('statusFind').addEventListener('input', (e) => {
   pickStatusPart('find', text);
 });
 export function pickStatusPart(key: string, find = '') {
+  // Backups is its own page, kept as it was (its panels and jobs), shown as one of Status'.
+  if (key === 'backups') { navigate('backups'); focusScreen('backups'); return; }
   findText = find;
-  // From an app's page (or any screen), a pick in Status' menu goes back to Status first (the owner, Nov 25: clicking
-  // another category from an app's page "just stalls out").
   if (!$('status').classList.contains('active')) navigate('status');
   if (key === statusHere && key !== 'find') { goToPart('status', null); return; }
   if (key.startsWith('add:') && !statusHere.startsWith('add:')) storeFrom = statusHere;
@@ -346,10 +315,6 @@ async function refreshUnkept() {
 /** Called when the dots change (an app's page redraws its own). */
 export const unkeptChanged = new Set<() => void>();
 
-// Status comes without waiting for the apps' pages (up to 3 seconds when
-// one hangs); the answers fill in after, on the same status if no newer one
-// has been drawn since. A board's come as its "answers" card; a Status the
-// agent sent asks for them.
 async function answerPages(st: api.Status) {
   let why: Record<string, string>;
   try { why = await go().Answers(); } catch { return; }
@@ -407,10 +372,6 @@ function loadFolds() { Promise.resolve(go().StatusFolds()).then((p) => { if (p) 
 onFoldsPicked((picked) => { Promise.resolve(go().SetStatusFolds(picked)).catch(() => { /* this device's own */ }); });
 export function loadStatus() { return statusData.load(); }
 
-// One request for Status and the cards beside it (StatusBoard): Status
-// comes back, and each card as a status:card event as soon as it is read,
-// so the quick ones show while the slow ones are still being read. The
-// cards read at most every so often are asked for only when due.
 let boardNo = 0; // the latest board asked for
 /** The computer's free space and power, on a phone (the machine card), for This machine; null until read, or from a computer that doesn't send it. */
 let phoneMachine: MachineFacts | null = null;
@@ -420,8 +381,6 @@ let boardFailed = false; // its Status could not be read
 let boardAnswers: Record<string, string> | null = null; // its pages' answers, once in
 async function readStatus() {
   const want = ['watchdog', 'crash', 'alerts', 'storage'];
-  // A phone can't read the machine as Setup does: the computer sends its free space and power (core.Machine) for This machine.
-  // The computer asks too, at most once a minute, for its memory and how long it's been up (the machine card, lane D, D5).
   if (onPhone() || Date.now() - machineAt > 60000) { machineAt = Date.now(); want.push('machine'); }
   if (!savingsHistory.length) want.push('savings');
   if (Date.now() - protectionAt > 60000) { protectionAt = Date.now(); want.push('protection'); }
@@ -452,9 +411,6 @@ async function readStatus() {
   }
 }
 
-// A phone's computer from before StatusBoard (0.14.9 and earlier) refuses it:
-// Status alone, then the phone's cards that computer answers one by one
-// (the others were never read on a phone).
 let boardServed = true;
 const singly: Record<string, string> = { watchdog: 'Watchdog', alerts: 'Alerts', protection: 'Protection', savings: 'SavingsHistory' };
 async function statusAlone(n: number, want: string[]) {
@@ -532,7 +488,6 @@ function drawStatus() {
   $('statusRows').closest('table').hidden = false;
   lastStatus = st;
   renderAppList(st);
-  drawOvernight();
   if (lastWatch) drawWatchdog(); // the apps it doesn't check, as they change
   if (st.checking && !kept) {
     if (st !== boardStatus) answerPages(st);
@@ -544,9 +499,6 @@ function drawStatus() {
     st.unmatched === 1 ? '1 other container on this machine isn’t a catalog app.' : st.unmatched ? `${st.unmatched} other containers on this machine aren’t catalog apps.` : ''].filter(Boolean).join(' ') });
 }
 
-// The money card, on a wall screen (or a phone) allowed it (companion.js
-// marks the page wallcard): read with Status at most every 5 minutes, and
-// each minute while it shows, so the bills move on by themselves.
 let wallAt = 0;
 async function showWall() {
   const el = $('wallCard');
@@ -562,9 +514,6 @@ async function showWall() {
 }
 setInterval(() => { if (!$('wallCard').hidden) { wallAt = 0; showWall(); } }, 60000);
 
-// The watchdog's last run: every app, public address, database copy,
-// Duplicati job, and the CrowdSec bouncer, checked every 15 minutes by the
-// scheduled job. Failing checks are the ones it alerted about.
 let lastWatch: health.Summary | null = null;
 function showWatchdog(w: health.Summary | null) {
   const card = $('watchCard');
@@ -575,8 +524,6 @@ function showWatchdog(w: health.Summary | null) {
   if (!w) { card.hidden = true; return; }
   weekUp = w.week || {};
   outages = w.outages || {};
-  watched = true;
-  drawOvernight();
   if (appList && lastStatus) renderAppList(lastStatus); // the week on the rows
   card.hidden = false;
   drawWatchdog();
@@ -599,9 +546,6 @@ function drawWatchdog() {
   });
 }
 
-// Protection: whether the proxy enforces CrowdSec's bans, and the attacks
-// CrowdSec caught this week. Read once a minute (each read runs cscli in
-// its container); hidden until CrowdSec and the proxy run.
 let protectionAt = 0;
 function showProtection(p: crowdsec.Protection, err: Error | null) {
   const card = $('protectCard');
@@ -610,9 +554,6 @@ function showProtection(p: crowdsec.Protection, err: Error | null) {
   mountProtection(card, { p, fix: () => cliFlow('Fix it', 'fix', '', 'Fix these') });
 }
 
-// Downloads (arr item 6): what the media apps have on the way, in words,
-// and the media drive's room. Read every 30 seconds at most (it asks each
-// media app); hidden without the media apps, or when it can't be read.
 let downloadsAt = 0;
 function showDownloads(c: downloads.Card | null) {
   const card = $('downloadsCard');
@@ -677,16 +618,10 @@ function showWeek(w: app.Weekly | null) {
   if (!card.hidden) mountWeek(card, { w });
 }
 
-// Recent alerts: what the nightly updates, Duplicati, Uptime Kuma, and the watchdog
-// sent to ntfy in the last 12 hours, read with notify setup's read token,
-// less those whose problem has cleared (core.Current). Check again reads
-// Status and its cards now.
 function showAlerts(events: notify.Event[] | null, err: Error | null) {
   const card = $('alertsCard');
   const openSetup = () => { navigate('setup'); };
   card.hidden = false;
-  lastEvents = events || [];
-  drawOvernight();
   const log = () => go().AlertLog();
   // Snooze… on an alert whose check still fails, as the Watchdog card's: its card drawn again with it.
   const watch = () => lastWatch;
@@ -733,10 +668,6 @@ const appListActions: AppListActions = {
     send: (a, t) => sendTo(t, 'homelab://app/' + a.id, a.name),
   },
 };
-/**
- * Leaving Status (for another screen, or closing the app): what it shows now
- * is what you saw, so the next visit's dots are what changed after it.
- */
 export function leftStatus() {
   if (!lastStatus) return;
   saveSeen(lastStatus.apps);
@@ -748,10 +679,6 @@ export function leftStatus() {
 export const rowActions = appListActions;
 /** The apps the battery saver paused, from the last Status. */
 export const batteryPausedNow = () => batteryPaused;
-// A group's apps started, stopped, or restarted one after another, each
-// row showing its action until the runtime confirms it; the first that
-// fails stops the rest and says why under its row. A stop with until is
-// for a while: each starts again then.
 async function groupAct(apps: api.AppStatus[], action: 'start' | 'stop' | 'restart', progress: (i: number) => void, until?: string) {
   const done: api.AppStatus[] = [];
   for (const a of apps) setPending(a.id, { action });
@@ -772,9 +699,6 @@ async function groupAct(apps: api.AppStatus[], action: 'start' | 'stop' | 'resta
   if (action === 'stop' && done.length) offerUndo(done, until);
 }
 
-// Undo, after apps were stopped: a note for 10 seconds that starts the ones
-// that stopped again (which also forgets they were stopped on purpose).
-// Restart has nothing to undo.
 let undoing: { apps: api.AppStatus[] } | null = null;
 function offerUndo(apps: api.AppStatus[], until?: string) {
   const catOf = (id: string) => catalog?.apps.find((c) => c.id === id)?.category;
@@ -805,9 +729,6 @@ export const appsBusyNow = () => appsBusy;
 const rowWatchers: (() => void)[] = [];
 /** Calls fn when a row's action starts, ends, or fails. */
 export function watchRows(fn: () => void) { rowWatchers.push(fn); }
-// The list as last shown. An app's command no longer holds every row's
-// buttons: another row's waits its turn (job/queue.ts), and a row's own
-// buttons wait while its action is pending.
 let appList: AppListProps | null = null;
 const appsBusy = false;
 // A click answers at once: the row says what it is doing ("Starting…")
@@ -834,10 +755,6 @@ async function showQR(a) {
 }
 // Closes the command sheet, its log ready for the next command.
 function closeCli() { $('cliPanel').hidden = true; $('cliLog').hidden = false; }
-// The command sheet's buttons, in place of what it showed.
-// A new set is a new row (its key): a button that replaced a running one is
-// not taken for it. A row that held the focus hands it to the new row's
-// first button, so it never falls out of the sheet onto the page.
 function cliButtons(buttons: SheetButton[]) {
   const row = $('cliActions'), had = row.contains(document.activeElement);
   mountSheet(row, vnode(Buttons, { buttons, key: buttons.map((b) => b.label).join('|') }));
@@ -851,12 +768,6 @@ const runInSheet = (title: string) => bgStart(title, () => { $('cliPanel').hidde
 // running one's): it says to wait instead.
 const sheetBusy = waitForBg;
 
-// Sign-in details (the ⚙ on its row and its page): its address, then
-// what the homelab knows to sign in to it, to paste into another app, and
-// to keep safe, each with Copy. A secret is copied straight to the
-// clipboard (CopySetting, CopyAppKey), never to the page, and the
-// clipboard clears after 90 seconds. Internal secrets (database
-// passwords, signing keys) aren't listed: they stay in Settings.
 async function showSignIn(a: api.AppStatus) {
   if (sheetBusy()) return;
   const panel = $('cliPanel');
@@ -901,12 +812,6 @@ async function showSignIn(a: api.AppStatus) {
 }
 
 const actionTitle = { start: 'Starting', stop: 'Stopping', restart: 'Restarting', update: 'Updating', rollback: 'Rolling back' };
-// Start, stop, and restart run quietly: the row (and the app's page) says
-// what it is doing, an image coming down first included ("Downloading the
-// app…"), and Status shows the result; no sheet of Docker's output to
-// close. A failure says why under the row, with Details for that output.
-// Update and roll back keep their sheet: their notes and steps are worth
-// reading.
 const quiet = new Set(['start', 'stop', 'restart']);
 const lastLog: Record<string, string> = {}; // each app's last command's output, for Details
 const downloading = /\b(Pulling|Downloading|Download complete|Extracting|Pull complete)\b/;
@@ -1006,14 +911,8 @@ function showUpdate(a) {
   panel.scrollIntoView({ block: 'nearest' });
 }
 
-// The command sheet (sheets/Sheet.tsx), closed until a command opens it.
-// Status behind it holds still (see refreshStatus) and catches up once it
-// closes.
 mountSheets($('sheets'), () => { if (missed) refreshStatus(); });
 
-// A homelab command with a preview: show its plan, then run it on confirm.
-// plain: the plan's own words above (usability task 4: Update apps), the
-// command and anything a terminal says folded under Show details until it runs.
 let cliStop = null; // the open flow's log listener
 export async function cliFlow(title, action, target, confirmLabel, plain = false) {
   if (sheetBusy()) return;
@@ -1068,7 +967,6 @@ export async function cliFlow(title, action, target, confirmLabel, plain = false
       plan.hidden = true;
       plan.textContent = '';
       details.open = true;
-      // Running, it can no longer be cancelled, but it can be hidden: it carries on.
       runInSheet(title);
       cliButtons([hideButton]);
       let failed = false;
@@ -1096,10 +994,6 @@ $('cleanup').onclick = () => cliFlow('Remove old containers whose apps now run i
 $('fixIt').onclick = () => cliFlow('Fix it', 'fix', '', 'Fix these');
 $('updateAll').onclick = () => cliFlow('Update all apps now', 'update-all', '', 'Update them', true);
 
-// More… on Status: the actions needed now and then, with the keys every
-// menu takes: Down (or Enter) opens it on its first item, Up and Down move
-// through the items, Escape closes it back on More…, and it closes when the
-// focus leaves it.
 const menuItems = () => ([...$('statusMenu').querySelectorAll('[role=menuitem]')] as HTMLButtonElement[]).filter((b) => !b.hidden && !b.disabled);
 function closeMenu() { $('statusMenu').hidden = true; $('statusMore').setAttribute('aria-expanded', 'false'); }
 function openMenu(at?: 'first' | 'last') {
@@ -1137,16 +1031,6 @@ document.addEventListener('keydown', (e) => {
 $('statusMore').closest('.menuwrap')!.addEventListener('focusout', () => setTimeout(() => {
   if (!$('statusMenu').hidden && document.hasFocus() && !$('statusMore').closest('.menuwrap')!.contains(document.activeElement)) closeMenu();
 }));
-// Status follows the engine (app.go's status:changed): a container that
-// starts, stops, or changes health is drawn at once. The agent sends the
-// Status it read after the change, which is drawn as it is, on any screen,
-// with nothing asked; from a watcher in this app (no agent) Status is read
-// again (one read at a time; a change during one reads again after it).
-// The poll each minute catches what the engine does not report (the
-// watchdog, storage, alerts). Without a Status, another screen only marks
-// it out of date, read when picked; behind an open sheet it waits either
-// way, so the page does not jump while a job runs (the sheet's closing
-// reads it).
 let missed = false; // a change came while a sheet was open
 export function refreshStatus(c?: engine.Change) {
   const behind = document.documentElement.classList.contains('sheet-open');

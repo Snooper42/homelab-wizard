@@ -1,11 +1,3 @@
-// Coming up: the bills of the next two weeks, day by day, for the phone,
-// where the calendar's month is too much to read on the way out the door.
-// Each says its day and how soon, and a bill charged to a card says which
-// card (no checking money moves). Money put by (savings) is not a bill, so
-// it is left out; a card's payoff is in, as it leaves checking. It reads
-// only what the calendar does: View.Days, then View.Later past them. A
-// paycheck in the two weeks is a line of its own among them, before its
-// day's bills, so what is due before payday shows, with its total.
 import { Empty } from '../../parts/Empty';
 import { Row, Rows } from '../../parts/Row';
 import { Fragment } from 'preact';
