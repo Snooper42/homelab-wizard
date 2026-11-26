@@ -68,7 +68,7 @@ func (h *homelab) serve(ctx context.Context, args []string) error {
 		changes.Publish(engine.Change{Open: &engine.Open{Device: sent.Device, Link: sent.Link, Title: sent.Title}})
 	})
 	s := &companion.Server{Store: companion.NewStore(companion.StorePath(h.root)), Methods: h.phoneMethods(), Version: version, Files: web.Files(), Changes: changes, Calendar: h.financeCalendar,
-		ProxyKey: func() string { return h.envMap()["COMPANION_PROXY_KEY"] }, ForMember: h.forMember,
+		ProxyKey: func() string { return h.envMap()["COMPANION_PROXY_KEY"] }, ForMember: h.forMember, AtHome: h.atHome(ctx),
 		// Away from home through the tunnel (ADR-0023): Setup's "Reach
 		// Finances away from home" writes these; without them it's refused.
 		Access: func() companion.Access {
