@@ -45,7 +45,7 @@ services:
     ports:
       - ${BIND_IP:-127.0.0.1}:${MEALIE_PORT:-9000}:9000
     volumes:
-      - ./data/appdata/mealie:/app/data
+      - ${APPDATA_ROOT:-./data/appdata}/mealie:/app/data
     x-homelab:
       same_job:
         tandoor: "Both keep recipes, meal plans, and shopping lists; one is usually enough."
@@ -81,8 +81,8 @@ services:
     ports:
       - ${BIND_IP:-127.0.0.1}:${VIKUNJA_PORT:-3456}:3456
     volumes:
-      - ./data/appdata/vikunja/db:/db
-      - ./data/appdata/vikunja/files:/app/vikunja/files
+      - ${APPDATA_ROOT:-./data/appdata}/vikunja/db:/db
+      - ${APPDATA_ROOT:-./data/appdata}/vikunja/files:/app/vikunja/files
     healthcheck:
       test: ["CMD", "/app/vikunja/vikunja", "healthcheck"]
       interval: 60s
@@ -108,7 +108,7 @@ services:
       - ${BIND_IP:-127.0.0.1}:${HOME_ASSISTANT_PORT:-8123}:8123
     networks: [front]
     volumes:
-      - ./data/appdata/home-assistant:/config
+      - ${APPDATA_ROOT:-./data/appdata}/home-assistant:/config
     x-homelab:
       memory: 400
       phone: Home Assistant
@@ -135,7 +135,7 @@ services:
     ports:
       - ${BIND_IP:-127.0.0.1}:${GROCY_PORT:-9283}:80
     volumes:
-      - ./data/appdata/grocy:/config
+      - ${APPDATA_ROOT:-./data/appdata}/grocy:/config
     x-homelab:
       dump: sqlite:/config/data/grocy.db
       name: Grocy
@@ -160,7 +160,7 @@ services:
     ports:
       - ${BIND_IP:-127.0.0.1}:${HOMEBOX_PORT:-7745}:7745
     volumes:
-      - ./data/appdata/homebox:/data
+      - ${APPDATA_ROOT:-./data/appdata}/homebox:/data
     x-homelab:
       dump: sqlite:/data/homebox.db
       name: Homebox

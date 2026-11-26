@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"errors"
-	"path/filepath"
+	"github.com/Snooper42/homelab-wizard/internal/appdata"
 
 	"github.com/Snooper42/homelab-wizard/internal/api"
 	"github.com/Snooper42/homelab-wizard/internal/homepage"
@@ -31,11 +31,11 @@ func (h *homelab) homepageCmd(ctx context.Context, args []string) error {
 }
 
 func (h *homelab) homepagePath() string {
-	return filepath.Join(h.root, "data", "appdata", "homepage", "services.yaml")
+	return appdata.Path(h.root, "homepage", "services.yaml")
 }
 
 func (h *homelab) homepageSettingsPath() string {
-	return filepath.Join(h.root, "data", "appdata", "homepage", "settings.yaml")
+	return appdata.Path(h.root, "homepage", "settings.yaml")
 }
 
 // tabNames is each active person's tab on Homepage, by username: their

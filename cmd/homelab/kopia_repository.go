@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/Snooper42/homelab-wizard/internal/appdata"
 	"os"
 	"path/filepath"
 
@@ -44,8 +45,8 @@ func (h *homelab) kopiaRepository(ctx context.Context, args []string) error {
 			return fmt.Errorf("%s is where Duplicati's backups are (BACKUP_DESTINATION %s): Kopia's copy goes somewhere else, best another drive", repo, dup)
 		}
 	}
-	for _, src := range []string{"data", "appdata", "stacks", "recovery-staging"} {
-		if p := filepath.Join(h.root, src); backup.Within(repo, p) || backup.Within(p, repo) {
+	for _, p := range []string{filepath.Join(h.root, "data"), appdata.Dir(h.root), filepath.Join(h.root, "appdata"), filepath.Join(h.root, "stacks"), filepath.Join(h.root, "recovery-staging")} {
+		if backup.Within(repo, p) || backup.Within(p, repo) {
 			return fmt.Errorf("%s is in the folders Kopia backs up (%s): choose a folder outside them, best on another drive", repo, p)
 		}
 	}

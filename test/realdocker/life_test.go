@@ -488,6 +488,15 @@ func TestAHomelabsLife(t *testing.T) {
 
 	step("the app's page against this homelab", func(t *testing.T) { l.appPage(t, ids) })
 
+	// Status' Stop, Start and Restart, as its row menu runs them (quality-loop Q2).
+	step("Status' Stop, Start and Restart", func(t *testing.T) {
+		i := slices.IndexFunc(as, func(a realApp) bool { return a.id == "ntfy" })
+		if i < 0 {
+			t.Skip("ntfy is not in this run")
+		}
+		l.startAndRestart(t, as[i])
+	})
+
 	step("the watchdog brings back what broke", func(t *testing.T) { l.watchdogCases(t, ids) })
 
 	step("an update, then its rollback", func(t *testing.T) {
@@ -598,6 +607,10 @@ func TestAHomelabsLife(t *testing.T) {
 	// so the move in must start it from the backup's record, not the newest.
 	ntfyRan := ""
 	step("moved out", func(t *testing.T) {
+		// Finances as the household keeps it, to be back after the move in (quality-loop Q2).
+		if err := saveFinances(l.root); err != nil {
+			t.Fatal(err)
+		}
 		if slices.Contains(ids, "ntfy") {
 			ntfyRan = l.image("ntfy")
 		}
@@ -631,6 +644,9 @@ func TestAHomelabsLife(t *testing.T) {
 					t.Errorf("%s: %v", a.id, err)
 				}
 			}
+		}
+		if err := financesBack(l.root); err != nil {
+			t.Errorf("Finances after the move in: %v", err)
 		}
 		if !t.Failed() {
 			l.restoreTiming(t, len(as), time.Since(start))

@@ -137,10 +137,32 @@
     });
   }
 
+  // A password or key the computer would put on its own clipboard: the computer sends it, and it goes on this device's.
+  // Safari keeps the click's permission only for a write started in it, so the write starts now with the value to come.
+  function copied(method, args) {
+    const value = call(method, args);
+    const text = value.then((v) => new Blob([String(v)], { type: 'text/plain' }));
+    if (navigator.clipboard && window.ClipboardItem) {
+      return navigator.clipboard.write([new ClipboardItem({ 'text/plain': text })]).catch(() => value.then((v) => navigator.clipboard.writeText(String(v)))).then(() => undefined);
+    }
+    return value.then((v) => navigator.clipboard.writeText(String(v)));
+  }
+  // The computer's own: the Dock's count of what needs attention has no place here.
+  const local = {
+    Open: (url) => { window.open(url, '_blank', 'noopener'); },
+    SetAttention: () => Promise.resolve(),
+    CopySetting: (...args) => copied('CopySetting', args),
+    CopyAppKey: (...args) => copied('CopyAppKey', args),
+    // The recovery kit, opened here to print, as the computer opens it in its browser (a window opened in the click).
+    RecoveryKit: () => {
+      const w = window.open('', '_blank');
+      return call('RecoveryKit', []).then((page) => {
+        if (w) { w.document.open(); w.document.write(page); w.document.close(); }
+      }, (e) => { if (w) w.close(); throw e; });
+    },
+  };
   window.go = { main: { App: new Proxy({}, {
-    get: (_, method) => (method === 'Open'
-      ? (url) => { window.open(url, '_blank', 'noopener'); }
-      : (...args) => call(method, args)),
+    get: (_, method) => local[method] || ((...args) => call(method, args)),
   }) } };
 
   function forget() {
