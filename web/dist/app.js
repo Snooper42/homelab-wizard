@@ -8247,6 +8247,27 @@
     t3.mem.push(mem);
     for (const k3 of ["at", "cpu", "mem"]) if (t3[k3].length > keepTotals) t3[k3].shift();
   }
+  var memText = (n3) => n3 >= 2 ** 30 ? `${(n3 / 2 ** 30).toFixed(1)} GB` : `${Math.round(n3 / 2 ** 20)} MB`;
+  function Pressure({ m: m3, stop: stop2 }) {
+    const share4 = m3.total ? Math.round(m3.used / m3.total * 100) : 0;
+    return /* @__PURE__ */ u3(Card, { kind: "antpressure", id: "memoryPressure", role: "status", children: [
+      /* @__PURE__ */ u3("div", { class: "anthead", children: [
+        /* @__PURE__ */ u3("h2", { class: "bad", children: "Memory nearly full" }),
+        /* @__PURE__ */ u3("span", { class: "muted", children: m3.since ? `since ${ago(m3.since)}` : "" })
+      ] }),
+      /* @__PURE__ */ u3("p", { class: "muted", children: [
+        "The apps use ",
+        share4,
+        "% of the ",
+        memText(m3.total),
+        " Docker has. Stop one you don't need now."
+      ] }),
+      /* @__PURE__ */ u3(Rows, { children: (m3.biggest || []).map((a3) => /* @__PURE__ */ u3(Row, { dot: "warn", title: a3.name, end: /* @__PURE__ */ u3(S, { children: [
+        /* @__PURE__ */ u3("span", { class: "muted", children: memText(a3.bytes) }),
+        a3.id && stop2 && /* @__PURE__ */ u3("button", { class: "small memstop", "aria-label": `Stop ${a3.name}`, onClick: () => stop2(a3.id), children: "Stop" })
+      ] }) }, a3.name)) })
+    ] });
+  }
   function formatDisk(b2) {
     if (b2 >= 1e12) return `${(b2 / 1e12).toFixed(b2 >= 1e13 ? 0 : 1)} TB`;
     if (b2 >= 1e9) return `${Math.round(b2 / 1e9)} GB`;
@@ -8271,7 +8292,7 @@
       ] })
     ] });
   }
-  function Analytics({ stats, history: history2, totals: totals3, cores, disk: disk2, storage, apps: apps2, catalog: catalog2, icons: icons4, page }) {
+  function Analytics({ stats, history: history2, totals: totals3, cores, disk: disk2, storage, apps: apps2, catalog: catalog2, icons: icons4, page, pressure, stop: stop2 }) {
     const [all, setAll] = d2(false);
     const byId = Object.fromEntries(apps2.map((a3) => [a3.id, a3]));
     const nameOf = (id2) => byId[id2]?.name || catalog2?.apps.find((a3) => a3.id === id2)?.name || id2;
@@ -8351,6 +8372,7 @@
           /* @__PURE__ */ u3("div", { class: "antfoot", children: disk2?.total ? /* @__PURE__ */ u3("div", { class: "antbar", role: "img", "aria-label": `${used}% used`, children: /* @__PURE__ */ u3("span", { style: { width: `${used}%` } }) }) : /* @__PURE__ */ u3("span", { class: "antempty" }) })
         ] })
       ] }),
+      pressure && pressure.total > 0 && /* @__PURE__ */ u3(Pressure, { m: pressure, stop: stop2 }),
       /* @__PURE__ */ u3(Card, { kind: "antweek", id: "antTime", children: [
         /* @__PURE__ */ u3("div", { class: "anthead", children: [
           /* @__PURE__ */ u3("h2", { children: span }),
@@ -9051,7 +9073,13 @@
         apps: lastStatus?.apps || [],
         catalog,
         icons: icons2,
-        page: (a3) => pageOpener.open(a3.id)
+        page: (a3) => pageOpener.open(a3.id),
+        // Memory nearly full (the watchdog's): Stop on one of the biggest, as its row's Stop.
+        pressure: lastWatch?.memory || null,
+        stop: (id2) => {
+          const a3 = lastStatus?.apps.find((x3) => x3.id === id2);
+          if (a3) void runAppAction(a3, "stop");
+        }
       });
       return;
     }
@@ -9394,6 +9422,7 @@
     weekUp = w3.week || {};
     outages = w3.outages || {};
     if (appList && lastStatus) renderAppList(lastStatus);
+    if (statusHere === "analytics") drawStatusPart();
   }
   var lastStorage = null;
   var usageAt = 0;

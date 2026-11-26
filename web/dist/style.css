@@ -237,6 +237,7 @@ dl { margin:0; }
 .sizes .bar { flex:1; margin-top:0; }
 .alertlist.sizes .when { min-width:5.5em; }
 .alerts .linkbtn.morelines { display:block; margin-top:2px; font-size:12px; }
+.antpressure { padding:16px 20px; margin-bottom:14px; } .antpressure p { margin:4px 0 8px; } .antpressure .memstop { margin-left:8px; }
 .alerthistory .fate { font-size:12px; color:var(--muted); margin-top:2px; } .alerthistory .linkbtn.more { margin-top:8px; font-size:13px; }
 .alertlist.usage .when { min-width:7.5em; text-align:right; }
 .alerts .more { font-size:12px; padding-top:4px; }

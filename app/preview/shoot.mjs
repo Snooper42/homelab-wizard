@@ -749,6 +749,28 @@ const smokes = [
     await page.click('#settingsNav .pagebtn[data-page="Alerts"]', { timeout: 5000 });
     await page.locator('#alertHistoryCard').getByText('No alerts yet.', { exact: false }).waitFor({ timeout: 5000 });
   } },
+  // Memory nearly full, from the watchdog: on Analytics, how much of what Docker has, and the biggest apps, each with Stop
+  // (none on a container the catalog doesn't know, none on a phone that only looks); nothing when memory is fine.
+  { name: 'Analytics: memory nearly full, the biggest apps each with Stop', screen: 'status', mock: { watchdog: { ...watchdog, memory: memoryHigh } }, run: async (page) => {
+    await toStatusPart(page, 'analytics');
+    await page.waitForSelector('#memoryPressure:has-text("The apps use 94% of the 8.0 GB Docker has")', { timeout: 5000 });
+    const rows = await page.locator('#memoryPressure li').allInnerTexts();
+    if (rows.length !== 3 || !/Immich/.test(rows[0]) || !/2\.5 GB/.test(rows[0]) || !/900 MB/.test(rows[2])) throw new Error(`rows: ${JSON.stringify(rows)}`);
+    if (await page.locator('#memoryPressure li:has-text("someones-own") button').count()) throw new Error('Stop on a container the catalog does not know');
+    await page.click('#memoryPressure button[aria-label="Stop Immich"]');
+    await page.waitForFunction(() => window.__MOCK.calls.AppAction === 1, null, { timeout: 5000 });
+  } },
+  { name: 'Analytics: memory nearly full on a phone that only looks, no Stop', screen: 'status', phone: ['companion'], mock: { watchdog: { ...watchdog, memory: memoryHigh } }, run: async (page) => {
+    await toStatusPart(page, 'analytics');
+    await page.waitForSelector('#memoryPressure li:has-text("Immich")', { timeout: 5000 });
+    if (await page.isVisible('#memoryPressure button.memstop')) throw new Error('a phone that only looks may stop an app');
+  } },
+  { name: 'Analytics: no memory warning while memory is fine', screen: 'status', run: async (page) => {
+    await toStatusPart(page, 'analytics');
+    await page.waitForSelector('#antMem', { timeout: 5000 });
+    await page.waitForTimeout(500);
+    if (await page.locator('#memoryPressure').count()) throw new Error('a memory warning with memory fine');
+  } },
   { name: 'The web page has Settings › People and Phones, and pairs a phone', screen: 'settings', phone: ['companion', 'can-change'], run: async (page) => {
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.click('#settingsNav .pagebtn[data-page="People"]', { timeout: 5000 });

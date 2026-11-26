@@ -2,6 +2,8 @@ import { render } from 'preact';
 import { useState } from 'preact/hooks';
 import { AppMark } from '../parts/AppMark';
 import { Card } from '../parts/Card';
+import { Row, Rows } from '../parts/Row';
+import { ago } from '../format';
 import { Spark } from '../Spark';
 import { formatMem, memoryByApp } from './memory';
 import type { History } from './Usage';
@@ -35,6 +37,32 @@ export interface AnalyticsProps {
   catalog: api.Catalog | null;
   icons?: Record<string, string>;
   page: (a: api.AppStatus) => void;
+  /** The watchdog's word that memory is nearly full, with the biggest apps; none while it isn't. */
+  pressure?: health.Memory | null;
+  /** Stops an app by its id: Stop beside each of the biggest. */
+  stop?: (id: string) => void;
+}
+
+/** Memory as Docker sets it, in binary units: 2.1 GB, 900 MB. */
+const memText = (n: number) => (n >= 2 ** 30 ? `${(n / 2 ** 30).toFixed(1)} GB` : `${Math.round(n / 2 ** 20)} MB`);
+
+/** Memory nearly full: how much of what Docker has, since when, and the biggest apps, each with Stop. */
+function Pressure({ m, stop }: { m: health.Memory; stop?: (id: string) => void }) {
+  const share = m.total ? Math.round((m.used / m.total) * 100) : 0;
+  return (
+    <Card kind="antpressure" id="memoryPressure" role="status">
+      <div class="anthead"><h2 class="bad">Memory nearly full</h2><span class="muted">{m.since ? `since ${ago(m.since)}` : ''}</span></div>
+      <p class="muted">The apps use {share}% of the {memText(m.total)} Docker has. Stop one you don't need now.</p>
+      <Rows>
+        {(m.biggest || []).map((a) => (
+          <Row key={a.name} dot="warn" title={a.name} end={<>
+            <span class="muted">{memText(a.bytes)}</span>
+            {a.id && stop && <button class="small memstop" aria-label={`Stop ${a.name}`} onClick={() => stop(a.id!)}>Stop</button>}
+          </>} />
+        ))}
+      </Rows>
+    </Card>
+  );
 }
 
 /** Bytes on a drive, short: "3.4 TB", "412 GB". */
@@ -68,7 +96,7 @@ function Chart({ values, kind, label, mark }: { values: number[]; kind: 'cpu' | 
   );
 }
 
-export function Analytics({ stats, history, totals, cores, disk, storage, apps, catalog, icons, page }: AnalyticsProps) {
+export function Analytics({ stats, history, totals, cores, disk, storage, apps, catalog, icons, page, pressure, stop }: AnalyticsProps) {
   const [all, setAll] = useState(false);
   const byId = Object.fromEntries(apps.map((a) => [a.id, a]));
   const nameOf = (id: string) => byId[id]?.name || catalog?.apps.find((a) => a.id === id)?.name || id;
@@ -121,6 +149,7 @@ export function Analytics({ stats, history, totals, cores, disk, storage, apps, 
           <div class="antfoot">{disk?.total ? <div class="antbar" role="img" aria-label={`${used}% used`}><span style={{ width: `${used}%` }} /></div> : <span class="antempty" />}</div>
         </Card>
       </div>
+      {pressure && pressure.total > 0 && <Pressure m={pressure} stop={stop} />}
       <Card kind="antweek" id="antTime">
         <div class="anthead"><h2>{span}</h2><span class="muted">A week isn't kept yet</span></div>
         {totals.cpu.length > 2 ? <>

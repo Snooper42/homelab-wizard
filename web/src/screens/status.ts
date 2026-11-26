@@ -232,6 +232,9 @@ function drawStatusPart() {
       stats: lastStats, history: usageHistory, totals, cores: onPhone() ? undefined : navigator.hardwareConcurrency || undefined,
       disk: disk && disk.total ? { free: disk.free, total: disk.total, low: disk.low } : null, storage: lastStorage,
       apps: lastStatus?.apps || [], catalog, icons, page: (a) => pageOpener.open(a.id),
+      // Memory nearly full (the watchdog's): Stop on one of the biggest, as its row's Stop.
+      pressure: lastWatch?.memory || null,
+      stop: (id) => { const a = lastStatus?.apps.find((x) => x.id === id); if (a) void runAppAction(a, 'stop'); },
     });
     return;
   }
@@ -507,6 +510,7 @@ function showWatchdog(w: health.Summary | null) {
   weekUp = w.week || {};
   outages = w.outages || {};
   if (appList && lastStatus) renderAppList(lastStatus); // the week on the rows
+  if (statusHere === 'analytics') drawStatusPart(); // Memory nearly full
 }
 
 // What each person keeps in Immich, as the nightly backup last read it (Analytics' drives).
