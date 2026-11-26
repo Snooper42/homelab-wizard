@@ -67,8 +67,8 @@ services:
       front:
         ipv4_address: 198.18.89.18
     volumes:
-      - ./data/appdata/nginx-proxy-manager/data:/data
-      - ./data/appdata/nginx-proxy-manager/letsencrypt:/etc/letsencrypt
+      - ${APPDATA_ROOT:-./data/appdata}/nginx-proxy-manager/data:/data
+      - ${APPDATA_ROOT:-./data/appdata}/nginx-proxy-manager/letsencrypt:/etc/letsencrypt
       - npm-logs:/data/logs
     # Built locally with the CrowdSec bouncer baked in: a pulled upstream
     # image would silently drop it. Update with ./homelab update nginx-proxy-manager.
@@ -93,7 +93,7 @@ services:
       - ${BIND_IP:-127.0.0.1}:${ADGUARD_PORT:-3003}:80
       - ${BIND_IP:-127.0.0.1}:${ADGUARD_SETUP_PORT:-3002}:3000
     volumes:
-      - ./data/appdata/adguard-home/conf:/opt/adguardhome/conf
+      - ${APPDATA_ROOT:-./data/appdata}/adguard-home/conf:/opt/adguardhome/conf
       - adguard-work:/opt/adguardhome/work
     x-homelab:
       rebuilds: [adguard-work]
@@ -181,7 +181,7 @@ services:
       front:
         ipv4_address: 198.18.89.19
     volumes:
-      - ./data/appdata/tailscale:/var/lib/tailscale
+      - ${APPDATA_ROOT:-./data/appdata}/tailscale:/var/lib/tailscale
     x-homelab:
       releases: tailscale/tailscale
       name: Tailscale
@@ -208,7 +208,7 @@ services:
     ports:
       - ${BIND_IP:-127.0.0.1}:${SPEEDTEST_PORT:-8765}:80
     volumes:
-      - ./data/appdata/speedtest-tracker:/config
+      - ${APPDATA_ROOT:-./data/appdata}/speedtest-tracker:/config
     x-homelab:
       memory: 200
       url: SPEEDTEST_URL

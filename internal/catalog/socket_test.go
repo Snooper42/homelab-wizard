@@ -203,7 +203,12 @@ func TestGluetunGivesQbittorrentItsPort(t *testing.T) {
 	file := env["VPN_PORT_FORWARDING_STATUS_FILE"]
 	mounted := false
 	for _, v := range f.Services["gluetun"].Volumes {
-		if parts := strings.Split(fmt.Sprint(v), ":"); len(parts) >= 2 && parts[1] == "/gluetun" && strings.HasPrefix(file, "/gluetun/") {
+		// The source may hold a ${VAR:-default}, with a colon of its own: the target is what follows it.
+		mount := fmt.Sprint(v)
+		if strings.HasPrefix(mount, "${") {
+			mount = mount[strings.Index(mount, "}")+1:]
+		}
+		if parts := strings.Split(mount, ":"); len(parts) >= 2 && parts[1] == "/gluetun" && strings.HasPrefix(file, "/gluetun/") {
 			mounted = true
 		}
 	}

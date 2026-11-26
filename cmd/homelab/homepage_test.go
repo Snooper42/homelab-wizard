@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/Snooper42/homelab-wizard/internal/finance"
 	"io"
 	"os"
 	"path/filepath"
@@ -206,5 +207,35 @@ func TestEverySecretIsRedacted(t *testing.T) {
 				t.Errorf("%s leaked into %s", k, name)
 			}
 		}
+	}
+}
+
+// Quality-loop Q3: a diagnostics report is shared with whoever helps, so it carries no Finances: the weekly summary
+// in it leaves out the money lines (a bill's payee and amount, what was spent), which only the household's own alert
+// shows.
+func TestReportCarriesNoFinances(t *testing.T) {
+	fakeDocker(t, nil)
+	root, _ := repoCopy(t)
+	plan := finance.Plan{Accounts: []finance.Account{{Name: "Checking", Kind: finance.Checking, Balance: 5000}},
+		People:   []finance.Earner{{Name: "Alex", Net: 2000, Schedule: finance.Schedule{Every: finance.Biweekly, Start: "2026-01-02"}}},
+		Payments: []finance.Payment{{Name: "Zorblax Landlord", Amount: 1845.37, Schedule: finance.Schedule{Every: finance.Weekly, Start: "2026-01-01"}}}}
+	if _, err := finance.Save(finance.Path(root), plan); err != nil {
+		t.Fatal(err)
+	}
+	// The weekly summary itself does show them (the household's own alert).
+	if out, _ := homelabCmd(t, root, "", "digest"); !strings.Contains(out, "Zorblax") {
+		t.Skipf("this week's summary shows no bill to check against:\n%s", out)
+	}
+	out, code := homelabCmd(t, root, "", "report", "--stdout")
+	if code != 0 {
+		t.Fatalf("exit %d:\n%s", code, out)
+	}
+	for _, leak := range []string{"Zorblax", "1,845.37", "1845.37", "5,000", "2,000"} {
+		if strings.Contains(out, leak) {
+			t.Errorf("the report carries %q:\n%s", leak, out[strings.Index(out, "===== weekly summary"):])
+		}
+	}
+	if !strings.Contains(out, "===== weekly summary =====") {
+		t.Error("the weekly summary is gone from the report altogether")
 	}
 }

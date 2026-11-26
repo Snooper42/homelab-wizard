@@ -31,10 +31,12 @@ const digestTopic = "tunnel-watchdog"
 func (h *homelab) digestCmd(ctx context.Context, args []string) error {
 	fs := newFlags("digest")
 	send := fs.Bool("send", false, "")
+	// --no-money leaves Finances out: the copy in a diagnostics report, which goes to whoever helps (quality-loop Q3).
+	noMoney := fs.Bool("no-money", false, "")
 	if _, err := parseFlags(fs, args); err != nil {
 		return err
 	}
-	title, body, problems := h.weekly(ctx)
+	title, body, problems := h.weeklyWith(ctx, !*noMoney)
 	if h.ui.JSON && !*send {
 		emit(h.ui, "digest", map[string]any{"title": title, "body": body, "problems": problems})
 		return nil
@@ -96,9 +98,17 @@ func (h *homelab) digestMessage(title, body string) notify.Message {
 
 // weekly gathers what the summary reads.
 func (h *homelab) weekly(ctx context.Context) (title, body string, problems int) {
+	return h.weeklyWith(ctx, true)
+}
+
+// weeklyWith is the summary, with Finances' lines (a bill's payee and amount, what was spent) or without them.
+func (h *homelab) weeklyWith(ctx context.Context, money bool) (title, body string, problems int) {
 	env := h.envMap()
 	home, _ := os.UserHomeDir()
-	in := digest.Input{Now: time.Now(), Currency: savings.Dollars, Disks: checkDisks(diskspace.Locations(h.root, home, env)), Finances: h.financeLines(time.Now())}
+	in := digest.Input{Now: time.Now(), Currency: savings.Dollars, Disks: checkDisks(diskspace.Locations(h.root, home, env))}
+	if money {
+		in.Finances = h.financeLines(time.Now())
+	}
 	if drives, err := checkDrives(ctx); err == nil {
 		in.Drives = drives
 	}

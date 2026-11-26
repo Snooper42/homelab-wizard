@@ -26,7 +26,7 @@ version: 0.17.0
 │
 ├── .env                         settings and secrets (not in git)
 ├── bin/                         the built CLI (not in git)
-├── data/appdata/<service>/      core service data (not in git)
+├── data/appdata/<service>/      core service data (not in git; APPDATA_ROOT can put it elsewhere)
 ├── data/                        the homelab's own records (below; not in git)
 ├── appdata/<stack>/             stack data, e.g. Paperless documents (not in git)
 ├── recovery-staging/            dumps, archives, .env copy, restores (not in git)

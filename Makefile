@@ -16,7 +16,7 @@ test:
 	python3 -m unittest discover -s tools/media/tests
 
 lint:
-	@test -z "$$(gofmt -l cmd internal mobile)" || (gofmt -l cmd internal mobile; exit 1)
+	@test -z "$$(gofmt -l app cmd internal mobile test testdata web)" || (gofmt -l app cmd internal mobile test testdata web; exit 1)
 	go vet ./...
 	go vet -tags forreal ./...
 	python3 -m py_compile tools/media/*.py
