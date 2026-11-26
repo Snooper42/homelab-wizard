@@ -503,6 +503,24 @@ async function finTab(page, name, opts = {}) {
   await page.click(`#finRoot > .seg button:text-is("${group}")`, opts);
   return page.click(`#finRoot .fx-subtabs .seg button:text-is("${name === 'Pay' ? 'Paychecks' : name}")`, opts);
 }
+/** Find an app on Status (Choose apps folded into it, the owner, Nov 25): All apps, with what's typed in its box. */
+async function findApp(page, text = '') {
+  await page.evaluate(() => window.__emit('navigate', 'choose'));
+  await page.waitForSelector('#statusPart .catpage h1:text-is("All apps")', { timeout: 5000 });
+  await page.fill('#statusPart .catfind input', text);
+}
+/** An app's page to add, from its tile: its head, facts, what to know, and the plan with Install. */
+async function installSheet(page, id) {
+  await page.click(`#statusPart .cattile.toadd[data-app="${id}"] .catname`);
+  await page.waitForSelector('#status[data-part="add"] #storeHead h1', { timeout: 5000 });
+}
+/** Back from that page, by its breadcrumbs' back button. */
+async function closeSheet(page) {
+  await page.click('#storeHead .crumbs button.back');
+  await page.waitForSelector('#statusStore', { state: 'hidden', timeout: 5000 });
+}
+/** An app's page to add, from All apps. */
+async function pick(page, id) { await findApp(page, ''); await installSheet(page, id); }
 /** An account's form, from Net worth: its row opens the account's own page, whose Edit opens the form. */
 async function acctForm(page, row, opts = {}) {
   await page.click(row, opts);
@@ -516,6 +534,12 @@ const shots = [
     await page.clock.runFor(185000);
     await page.waitForSelector('#statusPart .antimeline', { timeout: 5000 });
   } },
+  // The same page on the phone's page, narrow: Status' menu as chips, the tiles two across.
+  { name: 'status-category-phone', screen: 'status', phone: ['companion', 'can-change'], before: async (page) => { await page.click('#statusChips button[data-key="media"]', { timeout: 5000 }); await page.waitForSelector('#statusPart .cattile', { timeout: 5000 }); } },
+  // An app you could add has a page of its own, as an installed app's (the owner, Nov 25).
+  { name: 'status-add', screen: 'status', before: async (page) => { await page.click('#statusSide button[data-key="media"]', { timeout: 5000 }); await page.click('#statusPart .cattile[data-app="kavita"] .catname'); await page.waitForSelector('#storePlan #plan .planLead', { timeout: 5000 }); } },
+  { name: 'status-add-set', screen: 'status', before: async (page) => { await page.evaluate(() => window.__emit('navigate', 'choose')); await page.click('#statusPart .cattile.set[data-set="household"] .catname', { timeout: 5000 }); await page.waitForSelector('#storePlan #plan .planLead', { timeout: 5000 }); } },
+  { name: 'status-find', screen: 'status', before: async (page) => { await page.evaluate(() => window.__emit('navigate', 'choose')); await page.waitForSelector('#statusPart .cattile.set', { timeout: 5000 }); } },
   // A category's page (the owner's computer-category pictures): its apps here as tiles, then every app to add.
   { name: 'status-category', screen: 'status', before: async (page) => { await page.click('#statusSide button[data-key="media"]', { timeout: 5000 }); await page.waitForSelector('#statusPart .cattile', { timeout: 5000 }); } },
   // Below the apps: storage, and what is using power with each busy app's
@@ -525,7 +549,7 @@ const shots = [
     await page.waitForSelector('#usageCard .spark', { timeout: 5000 });
     await page.evaluate(() => document.getElementById('storageCard').scrollIntoView({ block: 'start' }));
   } },
-  { name: 'choose', screen: 'choose', before: async (page) => { await page.click('#starters .starter:has-text("Music")'); await page.click('#more > summary'); await page.click('#presets .chip >> text=Household'); await page.waitForTimeout(500); } },
+  { name: 'choose', screen: 'status', before: async (page) => { await findApp(page, ''); await page.click('#statusPart .cattile.set[data-set="household"] .catname'); await page.waitForTimeout(500); } },
   // Every app copied every night in this picture, as its 12 of 12 says.
   { name: 'backups', screen: 'backups', mock: { backups: { ...backups, nights: backups.nights.map((n) => ({ ...n, apps: { ...n.apps, mealie: 'copied' } })) }, backupGaps: [{ name: 'The synced Files (Syncthing)', path: '/Users/you/Homelab/data/sync', job: 'Homelab Files', why: 'No backup job yet' }, { name: 'Films, shows and music', path: '/Volumes/Hobbies/media', why: 'Too big for a nightly copy: keep a copy of your own' }] } },
   { name: 'finances', screen: 'finances' },
@@ -1778,9 +1802,9 @@ const smokes = [
     await page.waitForSelector('#checklist li', { state: 'visible', timeout: 5000 });
     await page.waitForTimeout(500);
     const said = await page.evaluate(() => document.querySelector('#setup').innerText);
-    if (!/Choose apps/.test(said)) throw new Error('once the homelab is made, nothing on Setup points to picking the first apps');
-    await page.click('#firstApps button:has-text("Choose apps")');
-    await page.waitForSelector('#choose.active', { timeout: 5000 });
+    if (!/Find an app/.test(said)) throw new Error('once the homelab is made, nothing on Setup points to picking the first apps');
+    await page.click('#firstApps button:has-text("Find an app")');
+    await page.waitForSelector('#status.active #statusPart .catpage h1:text-is("All apps")', { timeout: 5000 });
   } },
   { name: 'Setup says nothing of first apps once there are apps', screen: 'setup', run: async (page) => {
     await page.waitForSelector('#checklist li', { state: 'visible', timeout: 5000 });
@@ -1794,88 +1818,98 @@ const smokes = [
     await page.click('nav button[data-screen="settings"]');
     await page.waitForSelector('#hostInfo:has-text("/Users/you/Homelab")');
   } },
-  { name: 'A starter pick ticks its apps', screen: 'choose', run: async (page) => {
-    if (await page.isVisible('label.app:has-text("Navidrome")')) throw new Error('the full list should wait behind Add more');
-    await page.click('#starters .starter:has-text("Music")');
-    await page.waitForSelector('#starters .starter.on:has-text("Music")', { timeout: 5000 });
-    await page.click('#more > summary');
-    if (!(await page.isChecked('label.app:has-text("Feishin") input'))) throw new Error('Feishin should be ticked');
+  { name: 'A starter set installs its apps together', screen: 'status', run: async (page) => {
+    await findApp(page, '');
+    await page.click('#statusPart .cattile.set[data-set="music"] .catname');
+    // Navidrome and Feishin run already: the plan installs what's left of it.
+    await page.waitForSelector('#storePlan #plan:has-text("beets")', { timeout: 5000 });
   } },
-  { name: 'Searching opens Add more', screen: 'choose', run: async (page) => {
-    await page.fill('#search', 'spotify');
-    await page.waitForSelector('label.app:has-text("Navidrome")', { timeout: 5000 });
+  { name: 'Find an app finds one by what it replaces', screen: 'status', run: async (page) => {
+    await findApp(page, 'spotify');
+    await page.waitForSelector('#statusPart .cattile[data-app="navidrome"]', { timeout: 5000 });
   } },
-  // Suggestions from what you use: Add more opens on the apps that go with ones you run, each saying what it brings;
-  // one whose partner you don't run is not suggested, and ticking a suggestion picks it.
-  { name: 'Choose apps: suggestions from what you run', screen: 'choose', run: async (page) => {
-    await page.click('#more > summary');
-    const group = page.locator('.group.suggested');
-    await group.locator('h2:has-text("Suggested for what you run")').waitFor({ timeout: 5000 });
-    await group.locator('label.app:has-text("Beets") .goeswith').filter({ hasText: 'Goes with Navidrome, which you run: Tags and sorts the music' }).waitFor({ timeout: 3000 });
-    await group.locator('.goeswith').filter({ hasText: 'Goes with Paperless-ngx, which you run: Titles, tags, and correspondents' }).waitFor({ timeout: 3000 });
-    if (await group.locator('label.app:has-text("Bazarr")').count()) throw new Error('Bazarr is suggested without Sonarr or Radarr');
-    if (await group.locator('label.app strong:text-is("Navidrome")').count()) throw new Error('an app you run is suggested');
-    await group.locator('label.app:has-text("Beets") input').check();
-    if (!(await page.isChecked('.group:not(.suggested) label.app:has-text("Beets") input'))) throw new Error('ticking a suggestion did not pick the app');
-    // Searching hides the group; the row still says it.
-    await page.fill('#search', 'beets');
-    await page.waitForSelector('.group.suggested', { state: 'detached', timeout: 3000 });
-    await page.locator('label.app:has-text("Beets") .goeswith').waitFor({ timeout: 3000 });
+  // Suggestions from what you use: All apps opens on the apps that go with ones you run; an app's page says what it
+  // brings; one whose partner you don't run is not suggested, and Install from it plans it.
+  { name: 'Find an app: suggestions from what you run', screen: 'status', run: async (page) => {
+    await findApp(page, '');
+    await page.waitForSelector('#statusPart h2:has-text("Goes with your apps")', { timeout: 5000 });
+    const goes = await page.$$eval('#statusPart .cattiles:first-of-type > li', (ls) => ls.map((l) => l.dataset.app));
+    if (!goes.includes('beets')) throw new Error('beets is not suggested: ' + goes.join(', '));
+    if (goes.includes('bazarr')) throw new Error('Bazarr is suggested without Sonarr or Radarr');
+    if (goes.includes('navidrome')) throw new Error('an app you run is suggested');
+    await page.click('#statusPart .cattiles:first-of-type > li[data-app="beets"] .catname');
+    await page.waitForSelector('#status[data-part="add"] #storeHead h1:text-is("beets")', { timeout: 5000 });
+    await page.waitForSelector('#storeNotes .aboutnote:has-text("Goes with Navidrome, which you run: Tags and sorts the music")', { timeout: 5000 });
+    await page.waitForSelector('#storePlan #plan:has-text("beets")', { timeout: 5000 });
+    await closeSheet(page);
+    await findApp(page, 'paperless');
+    const ai = await page.$$eval('#statusPart .cattile.toadd', (ls) => ls.map((l) => l.dataset.app));
+    let found = false;
+    for (const id of ai) {
+      await installSheet(page, id);
+      if (await page.locator('#storeNotes .aboutnote').filter({ hasText: 'Goes with Paperless-ngx, which you run: Titles, tags, and correspondents' }).count()) found = true;
+      await closeSheet(page);
+    }
+    if (!found) throw new Error('no app says it goes with Paperless-ngx');
   } },
-  // Two apps that do the same job: an app's row says which one you already run and why one might keep one or both,
-  // from whichever side the pair is written, and an app you run says nothing.
-  { name: 'Choose apps: an app that does what one you run does says so', screen: 'choose', run: async (page) => {
-    await page.fill('#search', 'kavita');
-    const kavita = page.locator('label.app:has-text("Kavita")');
-    await kavita.locator('.samejob').filter({ hasText: 'You already run Komga: Both read comics and manga from the same folders' }).waitFor({ timeout: 5000 });
-    await kavita.locator('.samejob').filter({ hasText: 'You already run Calibre-Web: Both serve your e-books' }).waitFor({ timeout: 3000 });
+  // Two apps that do the same job: an app's page says which one you already run and why one might keep one or both,
+  // from whichever side the pair is written; an app you run is a tile of its own, not one to add.
+  { name: 'Find an app: an app that does what one you run does says so', screen: 'status', run: async (page) => {
+    await findApp(page, 'kavita');
+    await installSheet(page, 'kavita');
+    await page.locator('#storeNotes .aboutnote').filter({ hasText: 'You already run Komga: Both read comics and manga from the same folders' }).waitFor({ timeout: 5000 });
+    await page.locator('#storeNotes .aboutnote').filter({ hasText: 'You already run Calibre-Web: Both serve your e-books' }).waitFor({ timeout: 3000 });
+    await closeSheet(page);
     // Written on Mealie's side, said on Tandoor's; Mealie is installed though stopped.
-    await page.fill('#search', 'tandoor');
-    await page.locator('label.app:has-text("Tandoor") .samejob').filter({ hasText: 'You already run Mealie: Both keep recipes' }).waitFor({ timeout: 3000 });
-    await page.fill('#search', 'kopia');
-    await page.locator('label.app:has-text("Kopia") .samejob').filter({ hasText: 'You already run Duplicati: Meant to run beside it' }).waitFor({ timeout: 3000 });
-    // Komga runs: its own row names nothing.
-    await page.fill('#search', 'komga');
-    await page.waitForSelector('label.app:has-text("Komga")', { timeout: 3000 });
-    if (await page.locator('label.app:has-text("Komga") .samejob').count()) throw new Error('an app you run says it does what another does');
+    await findApp(page, 'tandoor');
+    await installSheet(page, 'tandoor');
+    await page.locator('#storeNotes .aboutnote').filter({ hasText: 'You already run Mealie: Both keep recipes' }).waitFor({ timeout: 3000 });
+    await closeSheet(page);
+    await findApp(page, 'kopia');
+    await installSheet(page, 'kopia');
+    await page.locator('#storeNotes .aboutnote').filter({ hasText: 'You already run Duplicati: Meant to run beside it' }).waitFor({ timeout: 3000 });
+    await closeSheet(page);
+    // Komga runs: its tile is its own, with no page to add it.
+    await findApp(page, 'komga');
+    await page.waitForSelector('#statusPart .cattile:not(.toadd)[data-app="komga"]', { timeout: 3000 });
+    if (await page.locator('#statusPart .cattile.toadd[data-app="komga"]').count()) throw new Error('an app you run is offered to add');
   } },
-  { name: 'Choose apps as a Mac: Beszel sees the VM, Frigate the processor', screen: 'choose', run: async (page) => {
-    await page.fill('#search', 'beszel');
-    await page.waitForSelector('label.app:has-text("Beszel") .sysnote:has-text("OrbStack\'s Linux VM")', { timeout: 5000 });
-    await page.fill('#search', 'frigate');
-    await page.waitForSelector('label.app:has-text("Frigate") .sysnote:has-text("containers reach no Coral")', { timeout: 5000 });
+  { name: 'Find an app as a Mac: Beszel sees the VM, Frigate the processor', screen: 'status', run: async (page) => {
+    await pick(page, 'beszel');
+    await page.waitForSelector('#storeNotes .aboutnote:has-text("OrbStack\'s Linux VM")', { timeout: 5000 });
+    await closeSheet(page);
+    await pick(page, 'frigate');
+    await page.waitForSelector('#storeNotes .aboutnote:has-text("containers reach no Coral")', { timeout: 5000 });
   } },
   // Remember where you were: each screen keeps its own scroll and open sections between visits (another screen starts at its
   // own place, not this one's) and after the app is opened again.
-  { name: 'Each screen keeps where you were: its scroll and open sections, after quitting too', screen: 'choose', run: async (page) => {
+  { name: 'Each screen keeps where you were: its scroll, after quitting too', screen: 'backups', run: async (page) => {
     const top = () => page.evaluate(() => Math.round(document.querySelector('main').scrollTop));
     const scrollTo = (y) => page.evaluate((v) => { document.querySelector('main').scrollTop = v; }, y);
     // What is at the top of the window: the same after opening again, though a card drawn late above moves the pixels.
-    const atTop = () => page.evaluate(() => { const m = document.querySelector('main').getBoundingClientRect(); return document.elementFromPoint(m.left + m.width / 2, m.top + 60)?.closest('label, li, h2, summary, p')?.textContent.trim().slice(0, 60) || ''; });
-    await page.waitForSelector('#choose.active #more', { timeout: 5000 });
-    await page.click('#more > summary');
-    await page.waitForFunction(() => document.querySelector('#more').open, null, { timeout: 2000 });
-    await page.waitForFunction(() => document.querySelector('main').scrollHeight > 2000, null, { timeout: 5000 });
-    await scrollTo(900);
+    const atTop = () => page.evaluate(() => { const m = document.querySelector('main').getBoundingClientRect(); return document.elementFromPoint(m.left + m.width / 2, m.top + 60)?.closest('label, li, h2, summary, p, tr, .card')?.textContent.trim().slice(0, 60) || ''; });
+    await page.waitForSelector('#backups.active #copiesCard', { timeout: 5000 });
+    await page.setViewportSize({ width: 1280, height: 500 });
+    await page.waitForFunction(() => document.querySelector('main').scrollHeight > 1100, null, { timeout: 5000 });
+    await scrollTo(600);
     const chose = await top(), shown = await atTop();
-    if (chose < 800 || !shown) throw new Error(`Choose apps only scrolls to ${chose} (${shown})`);
+    if (chose < 500 || !shown) throw new Error(`Backups only scrolls to ${chose} (${shown})`);
     await page.click('nav button[data-screen=status]');
     await page.waitForSelector('#statusRows tr:has(strong:text-is("Vikunja"))', { timeout: 5000 });
-    if ((await top()) !== 0) throw new Error(`Status opened ${await top()}px down, Choose apps' place`);
+    if ((await top()) !== 0) throw new Error(`Status opened ${await top()}px down, Backups' place`);
     await page.evaluate(() => new Promise((r) => requestAnimationFrame(r)));
     await scrollTo(300);
     // Where it is as it is left (a card drawn late above moves it, keeping the rows in view).
     await page.waitForTimeout(500);
     const status = await top();
     if (status < 250) throw new Error(`Status only scrolls to ${status}`);
-    await page.click('nav button[data-screen=choose]');
+    await page.click('nav button[data-screen=backups]');
     await page.waitForFunction((y) => Math.abs(document.querySelector('main').scrollTop - y) <= 1, chose, { timeout: 3000 }).catch(() => {});
-    if (Math.abs((await top()) - chose) > 1) throw new Error(`back on Choose apps at ${await top()}, not ${chose}`);
-    if (!(await page.evaluate(() => document.querySelector('#more').open))) throw new Error('Add more closed again');
+    if (Math.abs((await top()) - chose) > 1) throw new Error(`back on Backups at ${await top()}, not ${chose}`);
     await page.click('nav button[data-screen=status]');
     await page.waitForFunction((y) => Math.abs(document.querySelector('main').scrollTop - y) <= 1, status, { timeout: 3000 }).catch(() => {});
     if (Math.abs((await top()) - status) > 1) throw new Error(`back on Status at ${await top()}, not ${status}`);
-    // Quit and open again (on Choose apps): it is where it was, and so is Status. Quitting is the page going away
+    // Quit and open again (on Backups): it is where it was, and so is Status. Quitting is the page going away
     // (pagehide keeps Status's place); what it kept is what the app's storage holds when it opens again. Carried over by
     // hand: a reloaded file:// page in this browser can start with empty storage when the machine is busy.
     await page.evaluate(() => dispatchEvent(new Event('pagehide')));
@@ -1883,30 +1917,31 @@ const smokes = [
     if (!JSON.parse(kept)['homelab.place']) throw new Error('nothing kept on quitting');
     await page.addInitScript((k) => { for (const [key, value] of Object.entries(JSON.parse(k))) localStorage.setItem(key, value); }, kept);
     await page.reload();
-    await page.waitForSelector('#choose.active #more', { timeout: 5000 });
+    await page.waitForSelector('#backups.active #copiesCard', { timeout: 5000 });
     await page.waitForFunction((y) => document.querySelector('main').scrollTop >= y - 1, chose, { timeout: 3000 }).catch(() => {});
     await page.waitForTimeout(500);
-    if ((await atTop()) !== shown || !(await page.evaluate(() => document.querySelector('#more').open))) throw new Error(`after opening again: at ${await top()} showing "${await atTop()}", not "${shown}"; Add more open ${await page.evaluate(() => document.querySelector('#more').open)}`);
+    if ((await atTop()) !== shown) throw new Error(`after opening again: at ${await top()} showing "${await atTop()}", not "${shown}"`);
     await page.click('nav button[data-screen=status]');
     await page.waitForFunction((y) => Math.abs(document.querySelector('main').scrollTop - y) <= 1, status, { timeout: 3000 }).catch(() => {});
     if (Math.abs((await top()) - status) > 1) throw new Error(`Status after opening again at ${await top()}, not ${status}`);
   } },
-  { name: 'Choose apps as Windows: what Beszel and Frigate do there', screen: 'choose', mock: { platform: 'Win32', host: { ...host, os: 'Windows 11 24H2', machine: 'this PC' } }, run: async (page) => {
-    await page.fill('#search', 'beszel');
-    await page.waitForSelector('label.app:has-text("Beszel") .sysnote:has-text("Docker Desktop\'s WSL VM")', { timeout: 5000 });
-    await page.fill('#search', 'frigate');
-    await page.waitForSelector('label.app:has-text("Frigate") .sysnote:has-text("NVIDIA card")', { timeout: 5000 });
+  { name: 'Find an app as Windows: what Beszel and Frigate do there', screen: 'status', mock: { platform: 'Win32', host: { ...host, os: 'Windows 11 24H2', machine: 'this PC' } }, run: async (page) => {
+    await pick(page, 'beszel');
+    await page.waitForSelector('#storeNotes .aboutnote:has-text("Docker Desktop\'s WSL VM")', { timeout: 5000 });
+    await closeSheet(page);
+    await pick(page, 'frigate');
+    await page.waitForSelector('#storeNotes .aboutnote:has-text("NVIDIA card")', { timeout: 5000 });
   } },
-  { name: 'Choose apps as Linux: Beszel as everywhere, Frigate by hand', screen: 'choose', mock: { platform: 'Linux x86_64', host: { ...host, os: 'Ubuntu 24.04', machine: 'this machine' } }, run: async (page) => {
-    await page.fill('#search', 'frigate');
-    await page.waitForSelector('label.app:has-text("Frigate") .sysnote:has-text("a Coral or the graphics")', { timeout: 5000 });
-    await page.fill('#search', 'beszel');
-    await page.waitForSelector('label.app:has-text("Beszel")', { timeout: 5000 });
-    if (await page.locator('label.app:has-text("Beszel") .sysnote').count()) throw new Error('Beszel has a note on Linux, where it sees the machine itself');
+  { name: 'Find an app as Linux: Beszel as everywhere, Frigate by hand', screen: 'status', mock: { platform: 'Linux x86_64', host: { ...host, os: 'Ubuntu 24.04', machine: 'this machine' } }, run: async (page) => {
+    await pick(page, 'frigate');
+    await page.waitForSelector('#storeNotes .aboutnote:has-text("a Coral or the graphics")', { timeout: 5000 });
+    await closeSheet(page);
+    await pick(page, 'beszel');
+    if (await page.locator('#storeNotes .aboutnote').count()) throw new Error('Beszel has a note on Linux, where it sees the machine itself');
   } },
-  { name: 'Choose apps as SteamOS: Frigate with its AMD graphics', screen: 'choose', mock: { platform: 'Linux x86_64', host: { ...host, os: 'Linux (SteamOS 3.7)', machine: 'Steam Machine', desktop: 'kde' } }, run: async (page) => {
-    await page.fill('#search', 'frigate');
-    await page.waitForSelector('label.app:has-text("Frigate") .sysnote:has-text("AMD graphics")', { timeout: 5000 });
+  { name: 'Find an app as SteamOS: Frigate with its AMD graphics', screen: 'status', mock: { platform: 'Linux x86_64', host: { ...host, os: 'Linux (SteamOS 3.7)', machine: 'Steam Machine', desktop: 'kde' } }, run: async (page) => {
+    await pick(page, 'frigate');
+    await page.waitForSelector('#storeNotes .aboutnote:has-text("AMD graphics")', { timeout: 5000 });
   } },
   { name: 'Setup on Windows: the tray icon\'s dot', screen: 'settings', mock: { platform: 'Win32', host: { ...host, os: 'Windows 11 24H2', machine: 'this PC' } }, run: async (page) => {
     await thisMachinePage(page);
@@ -1925,9 +1960,10 @@ const smokes = [
     await page.click('#settingsNav .pagebtn[data-page="Appearance"]', { timeout: 5000 });
     await page.waitForSelector('#noAccent:has-text("GNOME from version 47")', { timeout: 5000 });
   } },
-  { name: 'Nothing left to install says why', screen: 'choose', run: async (page) => {
-    await page.click('#more > summary');
-    await page.click('label.app:has-text("Vikunja") input');
+  { name: 'Nothing left to install says why', screen: 'status', run: async (page) => {
+    // A set whose apps all run (Passwords: Vaultwarden): the plan says so, and Install is greyed out.
+    await findApp(page, '');
+    await page.click('#statusPart .cattile.set[data-set="passwords"] .catname');
     await page.waitForSelector('#nothingToInstall:has-text("already running")', { timeout: 5000 });
     if (!(await page.isDisabled('#installBtn'))) throw new Error('Install should be greyed out');
   } },
@@ -2759,7 +2795,7 @@ const smokes = [
   } },
   // On the Mac, where it was asked to try again before the new build was found again: the line is red, as a failure,
   // and Try again runs Update now (which reads the newest build itself), so it is not a line that only says what to do.
-  { name: 'An update that did not install is red, and Try again runs the update', screen: 'choose', mock: { update: { state: '', files: 0, app: false, version: '0.16.42', notInstalled: 'The update to 0.16.42 did not install: the new build was not put in place. Install it by hand from its release page, or try again.', page: 'https://github.com/o/r/releases/latest' } }, run: async (page) => {
+  { name: 'An update that did not install is red, and Try again runs the update', screen: 'status', mock: { update: { state: '', files: 0, app: false, version: '0.16.42', notInstalled: 'The update to 0.16.42 did not install: the new build was not put in place. Install it by hand from its release page, or try again.', page: 'https://github.com/o/r/releases/latest' } }, run: async (page) => {
     await page.waitForSelector('#updateLine.failed .line.failed .head:has-text("did not install")', { timeout: 5000 });
     const bg = await page.$eval('#updateLine', (e) => getComputedStyle(e).backgroundColor);
     const soft = await page.evaluate(() => { const d = document.createElement('div'); d.style.background = 'var(--bad-soft)'; document.body.append(d); const c = getComputedStyle(d).backgroundColor; d.remove(); return c; });
@@ -2954,8 +2990,10 @@ const smokes = [
   { name: 'A homelab with no apps yet: Status says to choose some, with no empty list', screen: 'status', mock: { status: { ...status, apps: [], savings: 0 } }, run: async (page) => {
     await page.waitForSelector('#statusEmpty:has-text("No apps yet")', { timeout: 5000 });
     for (const sel of ['#tiles .tile', '#status table.grouped', '#statusAll']) if (await page.isVisible(sel)) throw new Error(`${sel} shows with no apps`);
-    await page.click('#statusEmpty button:text-is("Choose apps")');
-    await page.waitForSelector('#choose.screen.active', { timeout: 5000 });
+    await page.click('#statusEmpty button:text-is("Find an app")');
+    await page.waitForSelector('#statusPart .catpage h1:text-is("All apps")', { timeout: 5000 });
+    // With no apps yet, the starter sets are there to start from.
+    await page.waitForSelector('#statusPart .cattile.set', { timeout: 5000 });
   } },
   { name: 'Backups before the first night: no 0 of 0, and no restore test said to be proven', screen: 'backups', mock: { backups: { ...backups, lastRun: undefined, envCopied: undefined, stale: 0, paused: 0, copies: [], restoreTest: { history: [] } } }, run: async (page) => {
     await page.waitForSelector('#copiesTile .value:text-is("None yet")', { timeout: 5000 });
@@ -3586,10 +3624,10 @@ const smokes = [
     const title = await page.getAttribute('tr:has(strong:text-is("Jellyfin")) button:has-text("Start")', 'title', { timeout: 5000 });
     if (!title || !title.includes('Windows asks for approval')) throw new Error(`Windows: ${title}`);
   } },
-  { name: 'A long plan scrolls, so Install stays in reach', screen: 'choose', run: async (page) => {
+  { name: 'A long plan scrolls, so Install stays in reach', screen: 'status', run: async (page) => {
     await page.setViewportSize({ width: 1280, height: 720 });
-    await page.click('#more > summary');
-    for (const p of ['Media automation', 'Household']) await page.click(`#presets .chip >> text=${p}`, { timeout: 5000 });
+    await findApp(page, '');
+    await page.click('#statusPart .cattile.set[data-set="arr"] .catname');
     await page.waitForSelector('#plan .planLead', { timeout: 5000 });
     // The plan can still be growing after its first line shows (a slow runner): scroll to Install again until it
     // stops moving, then it must be within the window.
@@ -3791,7 +3829,7 @@ const smokes = [
     await page.waitForSelector('#protectCard li:has-text("Probing for a known security hole"):has-text("Netherlands · Example Hosting B.V.")', { timeout: 5000 });
     const said = await page.evaluate(() => document.body.innerText);
     for (const w of ['stacks', 'baseline', 'Replaces a year', 'vpatch-', 'http-probing', '203.0.113.7']) if (said.includes(w)) throw new Error(`Status says "${w}"`);
-    if (!phone.length) await page.waitForSelector('nav button[data-screen="choose"]:has-text("Choose apps")');
+    if (await page.locator('nav button[data-screen="choose"]').count()) throw new Error('Choose apps is still in the sidebar');
   } })),
   // Finding 5: on the phone, an app's log wraps its lines: none runs out of its box.
   { name: "An app's log on the phone wraps its lines, 390px wide", screen: 'app:vikunja', phone: ['companion'], mock: pageMock, run: async (page) => {
@@ -4303,13 +4341,12 @@ const smokes = [
     await page.keyboard.press('Escape');
     await page.waitForSelector(`${sheet}`, { state: 'hidden', timeout: 2000 });
     // In a field, ? is a character like any other.
-    await page.click('nav button[data-screen="choose"]');
-    await page.fill('#search', 'what');
-    await page.focus('#search');
+    await findApp(page, 'what');
+    await page.focus('#statusPart .catfind input');
     await page.keyboard.press('?');
-    if ((await page.inputValue('#search')) !== 'what?') throw new Error(`the field holds "${await page.inputValue('#search')}"`);
+    if ((await page.inputValue('#statusPart .catfind input')) !== 'what?') throw new Error(`the field holds "${await page.inputValue('#statusPart .catfind input')}"`);
     if (await page.isVisible(sheet)) throw new Error('? in a field opened the sheet');
-    await page.fill('#search', '');
+    await page.fill('#statusPart .catfind input', '');
     // From the palette, on Finances: the calendar's keys, and Close back where the focus was.
     await page.click('nav button[data-screen="finances"]');
     await page.focus('nav button[data-screen="finances"]');
@@ -4763,10 +4800,8 @@ const smokes = [
     await page.click('#statusRows tr.grouphead:has-text("Household")');
     await page.waitForSelector('#statusRows tr:has(strong:text-is("Mealie"))', { timeout: 5000 });
   } },
-  { name: 'The plan in a few lines, asking for what an app needs', screen: 'choose', run: async (page) => {
-    await page.click('#more > summary');
-    await page.fill('#search', 'qbittorrent');
-    await page.click('#groups label.app:has(strong:text-is("qBittorrent")) input');
+  { name: 'The plan in a few lines, asking for what an app needs', screen: 'status', run: async (page) => {
+    await pick(page, 'qbittorrent');
     await page.waitForSelector('#plan li:has-text("Gluetun"):has-text("fill in ProtonVPN WireGuard key below")', { timeout: 5000 });
     await page.waitForSelector('#inputs .fieldName:has-text("ProtonVPN WireGuard key")');
     // A setting a picked app waits for is never called optional (usability task 3, item 19), and says where it's made.
@@ -4774,14 +4809,13 @@ const smokes = [
     if (/optional/i.test(help) || !/Needed/.test(help) || !/account\.protonvpn\.com/.test(help)) throw new Error(`the key's help: ${help}`);
     await page.fill('#inputs input', 'wg-key-test');
     await page.waitForSelector('#plan .planLead:has-text("Installs 1 app")', { timeout: 5000 });
-    if (await page.isVisible('#presets .chip:has-text("Immich")')) throw new Error("a stack's own preset is still a chip");
+    await closeSheet(page);
+    if (await page.locator('#statusPart .cattile.set[data-set^="stack:"]').count()) throw new Error("a stack's own preset is a set");
   } },
   // Arr item 2: the VPN key's field walks through where to find it, step by step, and says first that it
   // needs a paid Proton plan; a button opens Proton's page for it.
-  { name: 'The VPN key: a paid plan first, the steps, and Proton’s page a click away', screen: 'choose', run: async (page) => {
-    await page.click('#more > summary');
-    await page.fill('#search', 'qbittorrent');
-    await page.click('#groups label.app:has(strong:text-is("qBittorrent")) input');
+  { name: 'The VPN key: a paid plan first, the steps, and Proton’s page a click away', screen: 'status', run: async (page) => {
+    await pick(page, 'qbittorrent');
     const walk = page.locator('#inputs .walk');
     await walk.waitFor({ timeout: 5000 });
     const lead = await walk.locator('.walkLead').textContent();
@@ -4797,10 +4831,8 @@ const smokes = [
   } },
   // Arr item 7: one plain question instead of quality profiles. Picking Sonarr asks "What do you mostly watch on?", with
   // Save space chosen at first (the owner's answer, Nov 21) and its size said; another answer is a click, and no code shows.
-  { name: 'Choosing Sonarr asks what you mostly watch on, Save space first', screen: 'choose', run: async (page) => {
-    await page.click('#more > summary');
-    await page.fill('#search', 'sonarr');
-    await page.click('#groups label.app:has(strong:text-is("Sonarr")) input');
+  { name: 'Choosing Sonarr asks what you mostly watch on, Save space first', screen: 'status', run: async (page) => {
+    await pick(page, 'sonarr');
     const q = page.locator('#inputs .question');
     await q.waitFor({ timeout: 5000 });
     if (!/What do you mostly watch on\?/.test(await q.textContent())) throw new Error('no question');
@@ -4811,19 +4843,17 @@ const smokes = [
     if (!/15–25 GB/.test(await q.locator('.help').textContent())) throw new Error('the 4K answer says no size');
     if (/MEDIA_QUALITY|save-space/.test(await q.textContent())) throw new Error('the question shows its code');
   } },
-  // Usability task 3, item 21: Tab from an app's checkbox in Choose apps reaches its own links (Open, Settings).
-  { name: 'Choose apps: Tab reaches each app’s Open and Settings', screen: 'choose', run: async (page) => {
-    await page.click('#more > summary');
-    await page.fill('#search', 'qbittorrent');
-    await page.waitForSelector('#groups label.app:has(strong:text-is("qBittorrent"))', { timeout: 5000 });
-    const rows = page.locator('#groups label.app:has(.links-inline)');
-    const n = await rows.count();
-    if (!n) throw new Error('no app with links to try');
+  // Usability task 3, item 21, now on a category's tiles: Tab from a tile's ⋯ reaches its own button (Open, Start).
+  { name: 'A category’s tiles: Tab reaches each app’s ⋯ and its button', screen: 'status', run: async (page) => {
+    await page.click('#statusSide button[data-key="media"]', { timeout: 5000 });
+    const tiles = page.locator('#statusPart .cattile:not(.toadd):has(.catmore):has(.catbtn button)');
+    const n = await tiles.count();
+    if (!n) throw new Error('no tile with a button to try');
     for (let i = 0; i < n; i++) {
-      const row = rows.nth(i);
-      await row.locator('input[type=checkbox]').focus();
+      const tile = tiles.nth(i);
+      await tile.locator('.catmore').focus();
       await page.keyboard.press('Tab');
-      if (!(await row.locator('.links-inline').evaluate((l) => l.contains(document.activeElement)))) throw new Error(`Tab went past ${await row.locator('strong').first().textContent()}'s links`);
+      if (!(await tile.locator('.catbtn').evaluate((l) => l.contains(document.activeElement)))) throw new Error(`Tab went past ${await tile.locator('.catname').textContent()}'s button`);
     }
   } },
   // Usability task 5, item 23: Backups in plain words: a copy days old says how old, not "Stale"; the restore test
@@ -4839,16 +4869,13 @@ const smokes = [
   } },
   // Usability task 3, item 20: picking qBittorrent alone offers no "Connect the apps for me" (nothing to connect it to);
   // the VPN tunnel it brings shows ticked and greyed while it's needed; and Done names the tunnel too.
-  { name: 'Choose apps: qBittorrent alone, no Connect the apps, its tunnel ticked, and Done names it', screen: 'choose', run: async (page) => {
-    await page.click('#more > summary');
-    await page.fill('#search', 'qbittorrent');
-    await page.click('#groups label.app:has(strong:text-is("qBittorrent")) input');
+  { name: 'Installing: qBittorrent alone, no Connect the apps, its tunnel planned, and Done names it', screen: 'status', run: async (page) => {
+    await pick(page, 'qbittorrent');
     await page.waitForSelector('#inputs .fieldName:has-text("ProtonVPN WireGuard key")', { timeout: 5000 });
     await page.fill('#inputs input', 'wg-key-test');
     await page.waitForSelector('#plan .planLead:has-text("Installs 1 app")', { timeout: 5000 });
     if (await page.isVisible('#wireRow')) throw new Error('Connect the apps for me is offered with nothing to connect qBittorrent to');
-    const tunnel = page.locator('#groups label.app:has(strong:text-is("Gluetun")) input');
-    if (!(await tunnel.isChecked()) || !(await tunnel.isDisabled())) throw new Error('the tunnel qBittorrent brings is not ticked and greyed');
+    if (!/Gluetun/.test(await page.textContent('#plan'))) throw new Error('the plan leaves out the tunnel qBittorrent brings');
     if (/helper|download client/i.test(await page.textContent('#planBox, #plan'))) throw new Error('the plan says helper or download client');
     await page.click('#installBtn');
     await page.waitForSelector('#started li', { timeout: 10000 });
@@ -4857,10 +4884,8 @@ const smokes = [
   } },
   // Usability task 3, item 18: picking Frigate, the plan says where its recordings go and the room there; once it's
   // installed, Done says what to do next (add a camera).
-  { name: 'Choose apps: Frigate’s plan says where recordings go, and Done what to do next', screen: 'choose', run: async (page) => {
-    await page.click('#more > summary');
-    await page.fill('#search', 'frigate');
-    await page.click('#groups label.app:has(strong:text-is("Frigate")) input');
+  { name: 'Installing: Frigate’s plan says where recordings go, and Done what to do next', screen: 'status', run: async (page) => {
+    await pick(page, 'frigate');
     await page.waitForSelector('#plan :text("Frigate’s recordings go to"), #plan :text("Frigate\'s recordings go to")', { timeout: 5000 });
     const plan = await page.textContent('#plan');
     if (!/recordings go to \/Volumes\/Media\/frigate, on a drive with 1\.6 TB free/.test(plan) || !/Settings › Frigate picks another folder/.test(plan)) throw new Error(`the plan: ${plan}`);
@@ -4975,7 +5000,7 @@ const smokes = [
   // The smallest window the app allows (app/window.go), at its text size and one step up, with
   // long addresses, apps waiting for a drive, badges and a long week: no screen scrolls sideways.
   ...[['Mac', { platform: 'MacIntel' }], ['Windows', { platform: 'Win32' }], ['GNOME', { platform: 'Linux x86_64', host: { ...host, os: 'Ubuntu 24.04', machine: 'this machine', desktop: 'gnome' } }], ['KDE', { platform: 'Linux x86_64', host: { ...host, os: 'Linux (SteamOS 3.7)', machine: 'Steam Machine', desktop: 'kde' } }]]
-    .flatMap(([sys, m]) => ['status', 'backups', 'setup', 'settings', 'choose', 'finances', 'tidy', 'app:vikunja'].map((screen) => ({ name: `Nothing scrolls sideways in the smallest window, ${screen.replace('app:vikunja', 'an app’s page')}, ${sys}`, screen, mock: { ...m, weekly: longWeek,
+    .flatMap(([sys, m]) => ['status', 'backups', 'setup', 'settings', 'finances', 'tidy', 'app:vikunja'].map((screen) => ({ name: `Nothing scrolls sideways in the smallest window, ${screen.replace('app:vikunja', 'an app’s page')}, ${sys}`, screen, mock: { ...m, weekly: longWeek,
       status: { ...status, apps: status.apps.map((a, i) => ({ ...a, address: a.address && a.address.replace('example.com', 'snooper42-homelab.com'), ...(i % 5 === 2 ? { state: 'stopped', waitingFor: '/Volumes/Hobbies' } : {}), ...(i % 7 === 1 ? { restarts: 3, held: true, settingsChanged: true } : {}) })) } }, run: async (page) => {
       await page.setViewportSize({ width: 860, height: 560 });
       await page.waitForTimeout(300);
@@ -5050,11 +5075,11 @@ const smokes = [
       });
       if (bad.length) throw new Error(bad.join('; '));
     } })),
-  { name: 'A long search without spaces wraps its no-match line', screen: 'choose', run: async (page) => {
+  { name: 'A long search without spaces wraps its no-match line', screen: 'status', run: async (page) => {
     await page.setViewportSize({ width: 860, height: 560 });
     await page.evaluate(() => document.documentElement.style.setProperty('--zoom', '1.5'));
-    await page.fill('#search', 'Supercalifragilisticexpialidocious'.repeat(3), { timeout: 5000 });
-    await page.waitForSelector('#choose .empty:has-text("No app matches")', { timeout: 5000 });
+    await findApp(page, 'Supercalifragilisticexpialidocious'.repeat(3));
+    await page.waitForSelector('#statusPart .catnone:has-text("None by that name")', { timeout: 5000 });
     const wide = await page.evaluate(() => { const m = document.querySelector('main'); return m.scrollWidth > m.clientWidth + 1 ? `${m.scrollWidth}px in ${m.clientWidth}px` : ''; });
     if (wide) throw new Error(`the screen scrolls sideways: ${wide}`);
   } },
@@ -5172,7 +5197,7 @@ const smokes = [
     });
     if (cut.length) throw new Error(`cut off: ${cut.join(', ')}`);
   } })),
-  ...[['Choose apps', 'choose', '#choose .cols'], ['Status', 'status', '#status .duo'], ['an app’s page', 'app:vikunja', '#app .pagecols']].map(([label, screen, sel]) => ({ name: `${label}: two columns only when there is room for both at the text size`, screen, mock: pageMock, run: async (page) => {
+  ...[['Status', 'status', '#status .duo'], ['an app’s page', 'app:vikunja', '#app .pagecols']].map(([label, screen, sel]) => ({ name: `${label}: two columns only when there is room for both at the text size`, screen, mock: pageMock, run: async (page) => {
     for (const [w, h, zoom, want] of [[1280, 800, '1', 2], [1440, 900, '2', 1], [1280, 800, '1.5', 1]]) {
       await page.setViewportSize({ width: w, height: h });
       await page.evaluate((z) => document.documentElement.style.setProperty('--zoom', z), zoom);
@@ -5844,20 +5869,23 @@ const smokes = [
     await page.click('#upgradeBack');
     await page.waitForSelector('#setupLog:not([hidden])');
   } },
-  { name: 'The plan replaces the first words, and comes back to them', screen: 'choose', run: async (page) => {
-    await page.click('#starters .starter:has-text("Files")');
+  { name: 'Leaving an app’s page to add takes its plan away, and Forward brings it back', screen: 'status', run: async (page) => {
+    await findApp(page, '');
+    await page.click('#statusPart .cattile.set[data-set="files"] .catname');
     await page.waitForSelector('#plan .planLead', { timeout: 5000 });
-    if ((await page.textContent('#plan')).includes('Nothing selected yet')) throw new Error('the first words stayed beside the plan');
-    await page.click('#starters .starter:has-text("Files")');
-    await page.waitForSelector('#plan:has-text("Nothing selected yet")', { timeout: 5000 });
-    if (await page.isVisible('#plan .planLead')) throw new Error('the plan stayed');
+    // Back leaves it (the plan goes), and Forward is the set's page again, with its plan.
+    await page.keyboard.press('Meta+BracketLeft');
+    await page.waitForSelector('#statusStore', { state: 'hidden', timeout: 5000 });
+    await page.waitForSelector('#plan:has-text("Nothing selected yet")', { state: 'attached', timeout: 5000 });
+    await page.keyboard.press('Meta+BracketRight');
+    await page.waitForSelector('#storePlan #plan .planLead', { timeout: 5000 });
   } },
-  { name: 'Search puts the matches first', screen: 'choose', run: async (page) => {
-    await page.fill('#search', 'memos');
-    await page.waitForSelector('#starterBox', { state: 'hidden', timeout: 5000 });
-    await page.waitForSelector('#groups .app:has-text("Memos")', { timeout: 5000 });
-    await page.fill('#search', '');
-    await page.waitForSelector('#starters .starter', { timeout: 5000 });
+  { name: 'Find an app puts the matches first, and the sets back once cleared', screen: 'status', run: async (page) => {
+    await findApp(page, 'memos');
+    await page.waitForSelector('#statusPart .cattile[data-app="memos"]', { timeout: 5000 });
+    if (await page.locator('#statusPart .cattile.set').count()) throw new Error('the sets stayed while searching');
+    await page.fill('#statusPart .catfind input', '');
+    await page.waitForSelector('#statusPart .cattile.set', { timeout: 5000 });
   } },
   { name: 'Update all apps now', screen: 'status', mock: { jobApps: { 'update-all': ['navidrome', 'vikunja', 'mealie'] } }, run: async (page) => {
     await page.click('#updateAll');
@@ -5899,8 +5927,9 @@ const smokes = [
     const fold = await page.$eval('#cliDetails > summary', (s) => getComputedStyle(s, '::after').content);
     if (/Docker/.test(fold) || !/as it ran/.test(fold)) throw new Error(`Show details reads ${fold}`);
   } },
-  { name: 'Install shows a row per app', screen: 'choose', run: async (page) => {
-    await page.click('#starters .starter:has-text("Files")');
+  { name: 'Install shows a row per app', screen: 'status', run: async (page) => {
+    await findApp(page, '');
+    await page.click('#statusPart .cattile.set[data-set="files"] .catname');
     await page.waitForSelector('#installBtn:not([disabled])', { timeout: 5000 });
     await page.click('#installBtn');
     await page.waitForSelector('#installProgress:not([hidden]) .step', { timeout: 5000 });
@@ -5911,21 +5940,22 @@ const smokes = [
   } },
   // A finished install can be put away: Close takes the bar, the rows, the details, and Ready to open away, and the
   // focus goes to the search, to pick what is next.
-  { name: 'A finished install closes', screen: 'choose', run: async (page) => {
-    await page.click('#starters .starter:has-text("Files")');
+  // A finished install can be put away: Close takes the sheet, the bar, the rows, the details, and Ready to open away.
+  { name: 'A finished install closes', screen: 'status', run: async (page) => {
+    await findApp(page, '');
+    await page.click('#statusPart .cattile.set[data-set="files"] .catname');
     await page.waitForSelector('#installBtn:not([disabled])', { timeout: 5000 });
     await page.click('#installBtn');
     await page.waitForSelector('#started #installClose', { timeout: 10000 });
     await page.click('#installClose');
-    await page.waitForSelector('#started h2', { state: 'detached', timeout: 2000 });
+    await page.waitForSelector('#statusStore', { state: 'hidden', timeout: 2000 });
     const left = await page.evaluate(() => ({
       bar: !document.getElementById('installProgress').hidden,
       rows: document.querySelectorAll('#installApps li').length,
       details: !document.getElementById('installDetails').hidden,
-      focus: document.activeElement?.id,
+      started: !!document.querySelector('#started h2'),
     }));
-    if (left.bar || left.rows || left.details) throw new Error(`left behind: ${JSON.stringify(left)}`);
-    if (left.focus !== 'search') throw new Error(`the focus went to ${left.focus}`);
+    if (left.bar || left.rows || left.details || left.started) throw new Error(`left behind: ${JSON.stringify(left)}`);
   } },
   { name: 'Update shows what is new first', screen: 'app:vikunja', mock: { releaseNotes: { vikunja: { app: 'vikunja', repo: 'go-vikunja/vikunja', running: 'v0.24.4', placed: true, page: 'https://github.com/go-vikunja/vikunja/releases', releases: [
     { tag: 'v0.24.6', when: '2026-10-12T09:00:00Z', url: 'https://github.com/go-vikunja/vikunja/releases/tag/v0.24.6', notes: 'Fixes\n- Reminders are sent once again' },
@@ -6132,7 +6162,10 @@ const smokes = [
     await page.click('#connect');
     await page.waitForSelector('#statusWiring p:has-text("Nothing to connect")', { timeout: 3000 });
   } },
-  { name: 'Add your own app offers every category, Documents first picked', screen: 'choose', run: async (page) => {
+  { name: 'Add your own app offers every category, Documents first picked', screen: 'status', run: async (page) => {
+    await page.click('#statusSide button[data-key="own"]', { timeout: 5000 });
+    await page.click('#statusPart .cattile.addown');
+    await page.waitForSelector('#customSheet:not([hidden]) #cCategory', { timeout: 5000 });
     const [n, value] = await page.evaluate(() => [document.querySelectorAll('#cCategory option').length, document.getElementById('cCategory').value]);
     const want = await page.evaluate(() => window.__MOCK.catalog.categories.length);
     if (n !== want || value !== 'documents') throw new Error(`${n} of ${want} categories, ${value} picked`);
@@ -6211,7 +6244,7 @@ const smokes = [
   } },
   // Settings › Appearance › Motion and Transparency, on every screen.
   { name: 'Motion None: nothing moves on any screen, a running job and an open sheet included', screen: 'status', mock: { look: { motion: 'none' }, actionDelay: 1500 }, run: async (page) => {
-    for (const screen of ['choose', 'backups', 'setup', 'settings', 'finances', 'status']) {
+    for (const screen of ['backups', 'setup', 'settings', 'finances', 'status']) {
       await page.click(`nav button[data-screen="${screen}"]`);
       await page.waitForTimeout(250);
       const moving = await page.evaluate(movingNow);
@@ -6534,7 +6567,7 @@ const smokes = [
     const current = async () => (await page.textContent('#finMenu [aria-current="page"]'))?.trim();
     if ((await current()) !== 'Dashboard') throw new Error(`the menu opens on ${await current()}`);
     if (await page.locator('#finances .seg').filter({ hasText: 'Spending' }).count()) throw new Error("the tabs are still on Finances' page");
-    for (const s of ['choose', 'status', 'backups', 'tidy', 'finances']) {
+    for (const s of ['status', 'backups', 'tidy', 'finances']) {
       const b = page.locator(`nav > button[data-screen="${s}"]`);
       if (!(await b.isVisible())) throw new Error(`the ${s} icon is not in the strip`);
       if ((await b.boundingBox()).width > 60) throw new Error(`the ${s} button is a whole line, not an icon`);
@@ -6559,12 +6592,12 @@ const smokes = [
   // Every screen's sidebar as Finances' (the owner, Nov 24): the homelab's screens a strip of icons, then the screen's own
   // menu (parts/SideMenu), then Settings and the computer's line at the foot; a pick in the menu goes to its part.
   { name: "Every screen's sidebar is laid out as Finances': the icons in a strip, then its own menu", screen: 'status', run: async (page) => {
-    for (const [screen, menu, first] of [['status', '#statusSide', 'Overview'], ['backups', '#backupsSide', 'Last night'], ['choose', '#chooseSide', 'Start here'], ['setup', '#setupSide', 'Steps'], ['finances', '#finMenu', 'Dashboard'], ['tidy', '#tidyMenu', 'Overview']]) {
+    for (const [screen, menu, first] of [['status', '#statusSide', 'Overview'], ['backups', '#backupsSide', 'Last night'], ['setup', '#setupSide', 'Steps'], ['finances', '#finMenu', 'Dashboard'], ['tidy', '#tidyMenu', 'Overview']]) {
       await page.click(`nav > button[data-screen="${screen}"]`);
       await page.waitForSelector(`#${screen}.active`, { timeout: 5000 });
       await page.waitForSelector(`${menu} [aria-current="page"]:has-text("${first}")`, { timeout: 5000 });
       const tops = [];
-      for (const s of ['status', 'backups', 'tidy', 'finances', 'choose']) {
+      for (const s of ['status', 'backups', 'tidy', 'finances']) {
         const box = await page.locator(`nav > button[data-screen="${s}"]`).boundingBox();
         if (!box || box.width > 60) throw new Error(`on ${screen}, the ${s} button is a whole line, not an icon`);
         tops.push(Math.round(box.y));
@@ -6589,7 +6622,7 @@ const smokes = [
   // A category's page for every category (the owner, Nov 25: computer-category-full-dark.png): the menu is Overview, each
   // catalog category with its apps' count (an amber dot where one is stopped), your own apps last, and no Needs a look,
   // Pinned or Stopped; a page has its apps on this machine as tiles (dot, one line, Open or Start, ⋯), then every catalog
-  // app of the category not installed, each with Install, which opens Choose apps with it ticked and its plan.
+  // app of the category not installed, each with Install, which opens its sheet: its page atop the plan.
   { name: "Status: a category's page has its apps as tiles and every app to add, Install going to the plan", screen: 'status', run: async (page) => {
     await page.waitForSelector('#statusSide button[data-key="media"]', { timeout: 5000 });
     const menu = await page.$$eval('#statusSide .finmenuitem', (bs) => bs.map((b) => ({ key: b.dataset.key, label: b.querySelector('span').textContent, total: b.querySelector('.total')?.textContent || '', dot: !!b.querySelector('.sidedot') })));
@@ -6629,11 +6662,10 @@ const smokes = [
       await page.fill('#statusPart .catfind input', first.name);
       await page.waitForFunction((id) => [...document.querySelectorAll('#statusPart .cattile.toadd')].map((e) => e.dataset.app).join() === id, first.id, { timeout: 5000 });
       await page.fill('#statusPart .catfind input', '');
-      // Install: Choose apps, with it ticked.
+      // Install: its sheet, with its page atop the plan.
       await page.click(`#statusPart .cattile.toadd[data-app="${first.id}"] button:has-text("Install")`);
-      await page.waitForSelector('#choose.active', { timeout: 5000 });
-      const ticked = await page.$$eval('#choose label.app', (ls) => ls.filter((l) => l.querySelector('input:checked')).map((l) => l.querySelector('strong')?.textContent || l.textContent));
-      if (!ticked.some((t) => t.startsWith(first.name))) throw new Error(`Install left ${first.name} unticked on Choose apps: ${ticked.join(', ')}`);
+      await page.waitForSelector(`#storePlan #plan:has-text("${first.name}")`, { timeout: 5000 });
+      await closeSheet(page);
       await page.click('nav > button[data-screen="status"]');
     }
     // Overview: the list again.
@@ -6643,7 +6675,8 @@ const smokes = [
     // Your own apps: the apps of no catalog category, and no shelf.
     await page.click('#statusSide button[data-key="own"]');
     await page.waitForSelector('#statusPart .catpage h1:text-is("Your own apps")', { timeout: 5000 });
-    if (await page.$('#statusPart .cattile.toadd')) throw new Error('your own apps have a shelf');
+    if (await page.$('#statusPart .cattile.toadd:not(.addown)')) throw new Error('your own apps have a shelf');
+    if (!(await page.$('#statusPart .cattile.addown'))) throw new Error('no Add your own app on your own apps');
   } },
   // Analytics (the owner, Nov 25): second in Status' menu; Processor, Memory and Drives drawn in every state (a dash before
   // the first read), the timeline once samples come, and each app's use heaviest first, 8 then Show all.
@@ -6667,6 +6700,35 @@ const smokes = [
     if (!/\d/.test(await page.textContent('#antCpu .antfig'))) throw new Error('no processor figure after a read');
     await page.click('#statusSide button[data-key="overview"]');
     await page.waitForSelector('#statusRows', { state: 'visible', timeout: 5000 });
+  } },
+  // The phone's page mimics the computer (the owner, Nov 25): on a wide window the same strip of icons (only the phone's
+  // screens, no empty columns) with Status' menu under it; narrow, the tab bar, and Status' menu as a row of chips; a
+  // category's page either way, its shelf without Install (the phone installs nothing yet).
+  { name: "The phone's page: the computer's strip and Status' menu when wide, chips when narrow, a category's page in each", screen: 'status', phone: ['companion', 'can-change'], run: async (page) => {
+    await page.setViewportSize({ width: 1100, height: 760 });
+    await page.waitForSelector('#statusSide button[data-key="media"]', { state: 'visible', timeout: 5000 });
+    const strip = await page.$$eval('nav > button[data-screen]', (bs) => bs.filter((b) => b.checkVisibility() && b.dataset.screen !== 'settings').map((b) => [b.dataset.screen, Math.round(b.getBoundingClientRect().top), Math.round(b.getBoundingClientRect().width)]));
+    if (strip.length < 2 || new Set(strip.map((x) => x[1])).size !== 1 || strip.some((x) => x[2] > 120)) throw new Error('not a strip of icons: ' + JSON.stringify(strip));
+    if (await page.isVisible('#statusChips')) throw new Error('chips on a wide window');
+    if (await page.isVisible('#backupsSide .finmenuitem')) throw new Error("Backups' menu shows on Status");
+    await page.click('#statusSide button[data-key="media"]');
+    await page.waitForSelector('#statusPart .catpage h2:has-text("On the server")', { timeout: 5000 });
+    if (await page.$('#statusPart .cattile.toadd button')) throw new Error('Install on the phone');
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.waitForSelector('#statusChips button[data-key="analytics"]', { state: 'visible', timeout: 5000 });
+    if (await page.isVisible('#statusSide')) throw new Error("Status' sidebar menu in the tab bar");
+    // Every chip within the screen (they wrap, never slide off it).
+    const off = await page.$$eval('#statusChips .finmenuitem', (bs) => bs.filter((b) => b.getBoundingClientRect().right > innerWidth + 1).map((b) => b.textContent));
+    if (off.length) throw new Error('chips off the screen: ' + off.join(', '));
+    // Several to a line, not one under another.
+    const rows = await page.$$eval('#statusChips .finmenuitem', (bs) => new Set(bs.map((b) => Math.round(b.getBoundingClientRect().top))).size);
+    const n = await page.locator('#statusChips .finmenuitem').count();
+    if (rows > Math.ceil(n / 2)) throw new Error(`${n} chips on ${rows} lines`);
+    const across = await page.$$eval('#statusPart .cattiles:first-of-type > li', (els) => new Set(els.slice(0, 2).map((e) => Math.round(e.getBoundingClientRect().top))).size);
+    if (across !== 1) throw new Error('not two across on a phone');
+    await page.click('#statusChips button[data-key="overview"]');
+    await page.waitForSelector('#statusRows', { state: 'visible', timeout: 5000 });
+    if (await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1)) throw new Error('the page scrolls sideways');
   } },
   // A stopped app (Mealie, in the preview's state): an amber dot by its category's count, and its tile's Start.
   { name: "Status: a stopped app puts an amber dot by its category, and its tile says Start", screen: 'status', run: async (page) => {
@@ -11012,7 +11074,8 @@ const screens = [
   { name: 'Status after a crash', screen: 'status', mock: { crash: crashed } },
   { name: 'Status, Analytics', screen: 'status', before: async (page) => { await page.click('#statusSide button[data-key="analytics"]', { timeout: 5000 }); await page.waitForSelector('#statusPart .antpage', { timeout: 5000 }); } },
   { name: "Status, a category's page", screen: 'status', before: async (page) => { await page.click('#statusSide button[data-key="media"]', { timeout: 5000 }); await page.waitForSelector('#statusPart .cattile', { timeout: 5000 }); } },
-  { name: 'Choose apps', screen: 'choose' },
+  { name: 'Find an app', screen: 'status', before: async (page) => { await page.evaluate(() => window.__emit('navigate', 'choose')); await page.waitForSelector('#statusPart .catpage', { timeout: 5000 }); } },
+  { name: 'An app’s page to add', screen: 'status', before: async (page) => { await page.evaluate(() => window.__emit('navigate', 'choose')); await page.click('#statusPart .cattile.toadd[data-app="kavita"] .catname', { timeout: 5000 }); await page.waitForSelector('#storePlan #plan .planLead', { timeout: 5000 }); } },
   { name: 'Backups', screen: 'backups' },
   { name: 'Setup', screen: 'setup' },
   // The runtime down and no folder yet; each system's hint and folder are its own (systems).

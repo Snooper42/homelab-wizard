@@ -34,7 +34,7 @@
 <p align="center">
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/tour-dark.gif">
-  <img alt="A walk through Homelab Wizard: Status, an app's page, Finances, Tidy Up, Backups, and Choose apps, each with a caption saying what it is for" src="docs/images/tour.gif" width="960">
+  <img alt="A walk through Homelab Wizard: Status, an app's page, Finances, Tidy Up, Backups, and adding an app, each with a caption saying what it is for" src="docs/images/tour.gif" width="960">
 </picture>
 </p>
 
@@ -66,9 +66,9 @@ Two parts are its own: **Finances**, the household's money paycheck by paycheck,
 </picture></td>
 </tr>
 <tr>
-<td valign="top"><a href="docs/Tour.md#choose-apps"><strong>Choose apps</strong></a><br>Tick what you want; each app says what it does and which subscription it can replace. The plan says what it will install before anything happens.<br><br><picture>
+<td valign="top"><a href="docs/Tour.md#adding-an-app"><strong>Adding an app</strong></a><br>Every app has a page: what it does and which subscription it can replace. The plan beside it says what it will install before anything happens.<br><br><picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-choose-dark.png">
-  <img alt="Choose apps: Start here with Photos, Passwords, Movies and TV, Music, and Files, and the install plan" src="docs/images/app-choose.png">
+  <img alt="The Household set's page: its apps, and the plan with Install beside them" src="docs/images/app-choose.png">
 </picture></td>
 <td valign="top"><a href="docs/Tour.md#backups"><strong>Backups</strong></a><br>Each app's newest copy, the encrypted off-site jobs, the last restore test, and a printable recovery kit.<br><br><picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-backups-dark.png">
@@ -162,7 +162,7 @@ You need a computer that stays on (a Mac, a Windows 10 or 11 PC, a Linux machine
 
    Both download the newest build from [Releases](https://github.com/Snooper42/homelab-wizard/releases/latest), check it against GitHub's SHA-256 checksum, install it, and open it. The line is there because the builds aren't signed yet: a browser download gets blocked, a download from Terminal or PowerShell doesn't. Both scripts are short enough to read first ([install.sh](install.sh), [install.ps1](install.ps1)).
 2. **Open it and choose Set it up for me.** It makes the homelab folder (`~/Homelab`), with a strong password for every app, and starts the essentials (updates, backups, alerts).
-3. **Pick what you want** on Choose apps (Photos, Passwords, Movies and TV, Music, Files, or anything from the full list) and click **Install**.
+3. **Pick what you want** with **Find an app** on Status (Photos, Passwords, Movies and TV, Music, Files, or anything from the full list) and click **Install** on its page.
 4. **Finish on Setup.** **Do the N I can do for you** runs every step that is ready; the rest say in one line what they give you. Signing in to Tailscale and installing it on your phones is the part only you can do.
 
 You are done when Setup leaves the sidebar (it comes back by itself if a step comes undone) and every app on **Status** has a green dot. Then put Tailscale, the Homelab app, and the apps' own phone apps on each phone ([Getting Started › Set up each person's phone](docs/Getting%20Started.md#4-set-up-each-persons-phone)).
@@ -279,7 +279,7 @@ It runs a real household on a Mac. Windows, Linux, and SteamOS are built, tested
 
 ## What runs
 
-Over 70 apps in nine categories: the baseline ones start with the homelab, the rest are a tick in Choose apps (or `./homelab install <app>`) away. Each name links to the app's own page: ports, data folders, everyday use, useful commands, its API, and how it is backed up and fixed.
+Over 70 apps in nine categories: the baseline ones start with the homelab, the rest are an **Install** on their page in Status (or `./homelab install <app>`) away. Each name links to the app's own page: ports, data folders, everyday use, useful commands, its API, and how it is backed up and fixed.
 
 <details>
 <summary><strong>Every app, by category: what it does, how it starts, its address, and what it replaces</strong></summary>

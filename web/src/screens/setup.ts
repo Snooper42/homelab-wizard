@@ -14,7 +14,7 @@ import { setMachine } from '../status/machine';
 import { store } from '../store';
 import { type FootProps, mountFoot } from '../parts/Foot';
 import { mountReportActions } from '../parts/Notes';
-import { cliFlow, statusData } from './status';
+import { cliFlow, pickStatusPart, statusData } from './status';
 import { drawSettings, form, showSettings } from './settings';
 import { loadCatalog } from './choose';
 import { endJob, startJob } from '../jobs';
@@ -244,7 +244,7 @@ const failStep = (s: setup.Step, e, choice?: number) => {
   failedSteps[s.id] = { why: errorText(e), again: (choice === undefined ? s.runLabel : s.choices?.[choice]?.label) || 'Run' };
 };
 
-$('firstAppsGo').onclick = () => navigate('choose');
+$('firstAppsGo').onclick = () => { navigate('status'); pickStatusPart('find'); };
 // Whether there are apps yet (first apps, below); watched from the first
 // draw, as status.ts is not loaded yet when this module is.
 let watchingApps = false;

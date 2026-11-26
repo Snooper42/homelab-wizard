@@ -74,7 +74,7 @@ const captions = {
   tidy: "Tidy Up: drop in a download, and it's filed in the right library",
   music: 'Each library tidied step by step, with Undo for every change',
   backups: 'Backups: a copy of everything every night, and proof it restores',
-  choose: 'Choose apps: tick what you want, and it installs and connects them',
+  choose: 'Adding an app: its own page, and the plan says what it installs',
 };
 const caption = (text) => page.evaluate(([t, d]) => {
   let c = document.getElementById('tourcap');
