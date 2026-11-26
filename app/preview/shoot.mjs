@@ -9221,6 +9221,8 @@ const smokes = [
   // link, and a round back button to the step above, named for a screen reader; on the phone's page, the back button
   // with the step above's name.
   { name: "Breadcrumbs: an app's page, an account's and a card's say where they sit, and go back up", screen: 'status', mock: { statusOpen: '' }, run: async (page) => {
+    // The Overview keeps the list behind Show every app (the owner's picture, Nov 25): opened first.
+    await page.click('#statusAll', { timeout: 5000 });
     await page.click('#statusRows tr:has(strong:text-is("Vikunja")) td.state', { timeout: 5000 });
     await page.waitForSelector('#app.active .crumbs', { timeout: 5000 });
     const trail = async (root) => (await page.textContent(`${root} .crumbs ol`)).replace(/\s*›\s*/g, ' › ').trim();
@@ -9242,6 +9244,8 @@ const smokes = [
     if (await page.isVisible('#finRoot .fx-account')) throw new Error('the back button did not leave the account');
   } },
   { name: "Breadcrumbs on the phone: the back button says where it goes", screen: 'status', phone: ['companion', 'finances'], mock: { statusOpen: '' }, run: async (page) => {
+    // The Overview keeps the list behind Show every app (the owner's picture, Nov 25): opened first.
+    await page.click('#statusAll', { timeout: 5000 });
     await page.click('#statusRows tr:has(strong:text-is("Vikunja")) td.state', { timeout: 5000 });
     await page.waitForSelector('#app.active .crumbs .back', { timeout: 5000 });
     if ((await page.textContent('#app .crumbs .back')).trim() !== 'Status') throw new Error(`the phone's back: ${await page.textContent('#app .crumbs .back')}`);

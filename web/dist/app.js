@@ -8234,19 +8234,37 @@
       ] })
     ] });
   }
+  var serviceOf = (o3) => o3.replaces.replace(/\s*\(.*\)$/, "").trim().toLowerCase();
+  var isLibrary = (o3) => o3.kind === "Library";
+  function perService(list) {
+    const out = /* @__PURE__ */ new Map();
+    for (const o3 of list) {
+      const k3 = serviceOf(o3), had = out.get(k3);
+      if (!had) {
+        out.set(k3, { ...o3, apps: [...o3.apps] });
+        continue;
+      }
+      for (const id2 of o3.apps) if (!had.apps.includes(id2)) had.apps.push(id2);
+    }
+    return [...out.values()];
+  }
   function Subscriptions(p3) {
     const offers2 = (p3.offers || []).filter((o3) => Number.isFinite(o3.annual)).map((o3) => ({ ...o3, monthly: Number.isFinite(o3.monthly) && o3.monthly > 0 ? o3.monthly : o3.annual / 12 })).sort((a3, b2) => b2.annual - a3.annual);
     const runs2 = (o3) => o3.apps.every((id2) => p3.running.has(id2));
-    const now2 = offers2.filter(runs2), more2 = offers2.filter((o3) => !runs2(o3));
-    const year = now2.reduce((t3, o3) => t3 + o3.annual, 0), month3 = now2.reduce((t3, o3) => t3 + o3.monthly, 0);
-    const could = more2.reduce((t3, o3) => t3 + o3.annual, 0);
+    const now2 = perService(offers2.filter(runs2));
+    const replaced = new Set(now2.map(serviceOf));
+    const more2 = perService(offers2.filter((o3) => !runs2(o3) && !replaced.has(serviceOf(o3))));
+    const counted2 = now2.filter((o3) => !isLibrary(o3)), library = now2.filter(isLibrary);
+    const year = counted2.reduce((t3, o3) => t3 + o3.annual, 0), month3 = counted2.reduce((t3, o3) => t3 + o3.monthly, 0);
+    const libraryYear = library.reduce((t3, o3) => t3 + o3.annual, 0);
+    const could = more2.filter((o3) => !isLibrary(o3)).reduce((t3, o3) => t3 + o3.annual, 0);
     const pts = p3.history.filter((x3) => x3.annual > 0);
     const since = pts.length > 1 ? pts[pts.length - 1].annual - pts[0].annual : 0;
     const sinceDay = pts.length > 1 ? (/* @__PURE__ */ new Date(pts[0].date + "T12:00:00")).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "";
     const appName2 = (id2) => p3.catalog?.apps.find((a3) => a3.id === id2)?.name || id2;
     const cats = p3.catalog?.categories || [];
     const byCat = /* @__PURE__ */ new Map();
-    for (const o3 of now2) {
+    for (const o3 of counted2) {
       const c4 = p3.catalog?.apps.find((a3) => a3.id === o3.apps[0])?.category || "other";
       byCat.set(c4, (byCat.get(c4) || 0) + o3.annual);
     }
@@ -8254,7 +8272,8 @@
     return /* @__PURE__ */ u3("div", { class: "subpage", children: [
       /* @__PURE__ */ u3("div", { class: "row header", children: /* @__PURE__ */ u3("div", { children: [
         /* @__PURE__ */ u3("h1", { children: "Subscriptions" }),
-        /* @__PURE__ */ u3("p", { class: "lead", children: p3.offers ? `${money2(year)} a year, ${money2(month3)} a month, instead of ${now2.length} subscriptions` : "Reading the prices…" })
+        /* @__PURE__ */ u3("p", { class: "lead", children: p3.offers ? `${money2(year)} a year, ${money2(month3)} a month, instead of ${counted2.length} subscriptions` : "Reading the prices…" }),
+        libraryYear > 0 && /* @__PURE__ */ u3("p", { class: "muted sublibrary", children: `+ ${money2(libraryYear)} a year more if you own the media (${library.length} like ${library[0].replaces.replace(/\s*\(.*\)$/, "")})` })
       ] }) }),
       /* @__PURE__ */ u3("div", { class: "subtop", children: [
         /* @__PURE__ */ u3(Card, { kind: "subcard", id: "subWhere", children: [
@@ -8280,7 +8299,7 @@
             ] }),
             /* @__PURE__ */ u3("span", { class: "muted", children: "a year" })
           ] }),
-          /* @__PURE__ */ u3("ul", { class: "subnext", children: more2.slice(0, 3).map((o3) => /* @__PURE__ */ u3("li", { children: /* @__PURE__ */ u3("button", { type: "button", class: "subapp", onClick: () => p3.open(o3.apps[0]), children: [
+          /* @__PURE__ */ u3("ul", { class: "subnext", children: more2.filter((o3) => !isLibrary(o3)).slice(0, 3).map((o3) => /* @__PURE__ */ u3("li", { children: /* @__PURE__ */ u3("button", { type: "button", class: "subapp", onClick: () => p3.open(o3.apps[0]), children: [
             /* @__PURE__ */ u3("span", { class: "sublogos", "aria-hidden": "true", children: /* @__PURE__ */ u3(AppMark, { id: o3.apps[0], name: appName2(o3.apps[0]), icon: p3.icons?.[o3.apps[0]] || "", small: true }) }),
             /* @__PURE__ */ u3("span", { class: "subnames", children: [
               /* @__PURE__ */ u3("strong", { children: o3.apps.map(appName2).join(" + ") }),
