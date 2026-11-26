@@ -153,14 +153,18 @@
     SetAttention: () => Promise.resolve(),
     CopySetting: (...args) => copied('CopySetting', args),
     CopyAppKey: (...args) => copied('CopyAppKey', args),
-    // The recovery kit, opened here to print, as the computer opens it in its browser (a window opened in the click).
-    RecoveryKit: () => {
-      const w = window.open('', '_blank');
-      return call('RecoveryKit', []).then((page) => {
-        if (w) { w.document.open(); w.document.write(page); w.document.close(); }
-      }, (e) => { if (w) w.close(); throw e; });
-    },
+    // A page the computer opens in its browser (the recovery kit, a person's welcome page or sheet): opened here, in a
+    // window opened in the click, to print or send.
+    RecoveryKit: () => opened('RecoveryKit', []),
+    OpenWelcome: (...args) => opened('OpenWelcome', args),
+    OpenSheet: (...args) => opened('OpenSheet', args),
   };
+  function opened(method, args) {
+    const w = window.open('', '_blank');
+    return call(method, args).then((page) => {
+      if (w) { w.document.open(); w.document.write(page); w.document.close(); }
+    }, (e) => { if (w) w.close(); throw e; });
+  }
   window.go = { main: { App: new Proxy({}, {
     get: (_, method) => local[method] || ((...args) => call(method, args)),
   }) } };
