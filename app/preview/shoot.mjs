@@ -5301,9 +5301,7 @@ const smokes = [
     });
     if (cut.length) throw new Error(`cut off: ${cut.join(', ')}`);
   } })),
-  ...[['Status', 'status', '#status .duo'], ['an app’s page', 'app:vikunja', '#app .pagecols']].map(([label, screen, sel]) => ({ name: `${label}: two columns only when there is room for both at the text size`, screen, mock: pageMock, run: async (page) => {
-    // Status' cards are under Analytics now (the owner, Nov 25).
-    if (screen === 'status') await toStatusPart(page, 'analytics');
+  ...[['an app’s page', 'app:vikunja', '#app .pagecols']].map(([label, screen, sel]) => ({ name: `${label}: two columns only when there is room for both at the text size`, screen, mock: pageMock, run: async (page) => {
     for (const [w, h, zoom, want] of [[1280, 800, '1', 2], [1440, 900, '2', 1], [1280, 800, '1.5', 1]]) {
       await page.setViewportSize({ width: w, height: h });
       await page.evaluate((z) => document.documentElement.style.setProperty('--zoom', z), zoom);
