@@ -20,6 +20,7 @@ import (
 
 	"github.com/Snooper42/homelab-wizard/app/tray"
 	"github.com/Snooper42/homelab-wizard/internal/api"
+	"github.com/Snooper42/homelab-wizard/internal/appdata"
 	"github.com/Snooper42/homelab-wizard/internal/appicon"
 	"github.com/Snooper42/homelab-wizard/internal/backup"
 	"github.com/Snooper42/homelab-wizard/internal/board"
@@ -1579,6 +1580,20 @@ func (a *App) Homelab(action, target string, apply bool) error {
 		// Duplicati restores a sample of files, which are checked against the
 		// live ones. One at a time with a backup or an install.
 		args, apply, lock = []string{"restore-test", "--auto"}, false, true
+	case "appdata-move":
+		// Move the apps' data to target (Settings › Storage; the owner's yes of Nov 26): the plan first, then, on
+		// apply, the apps stop, every file is copied and checked, and they start on the new folder. The old folder
+		// is kept until appdata-remove-old.
+		if strings.TrimSpace(target) == "" {
+			return errors.New("choose the folder to move the apps' data to")
+		}
+		args, lock = []string{"appdata", "move", target}, apply
+	case "appdata-undo":
+		// Back to the old copy, while it's kept.
+		args, lock = []string{"appdata", "undo"}, apply
+	case "appdata-remove-old":
+		// Delete the copy not in use.
+		args = []string{"appdata", "remove-old"}
 	case "restore-test-kopia":
 		// The same, from Kopia's newest snapshot (the second engine).
 		args, apply, lock = []string{"restore-test", "--auto", "--engine", "kopia"}, false, true
@@ -1596,6 +1611,30 @@ func (a *App) Homelab(action, target string, apply bool) error {
 	}
 	emitEvent(a.ctx, "cli:log", "$ homelab "+strings.Join(args, " "))
 	return a.stream(core.CLI(a.root, args...), "cli:log")
+}
+
+// AppDataPlace is where the apps' data lives (Settings › Storage): the folder, whether it's the homelab's own
+// data/appdata, and the other copy a move keeps until it's removed (Old, with when it moved).
+type AppDataPlace struct {
+	Dir     string    `json:"dir"`
+	Default bool      `json:"default"`
+	Old     string    `json:"old,omitempty"`
+	MovedAt time.Time `json:"movedAt,omitzero"`
+}
+
+// AppData says where the apps' data lives, and any other copy kept.
+func (a *App) AppData() AppDataPlace {
+	dir := appdata.Dir(a.root)
+	p := AppDataPlace{Dir: dir, Default: filepath.Clean(dir) == filepath.Join(a.root, appdata.Default)}
+	if m, ok := appdata.LoadMove(a.root); ok {
+		p.Old, p.MovedAt = m.Old, m.At
+	}
+	return p
+}
+
+// PickAppDataFolder asks for the folder to move the apps' data to ("" when cancelled).
+func (a *App) PickAppDataFolder() (string, error) {
+	return directoryDialog(a.ctx, runtime.OpenDialogOptions{Title: "Choose where the apps' data should live", CanCreateDirectories: true})
 }
 
 // Move moves the homelab to another machine, as homelab move does: "out"

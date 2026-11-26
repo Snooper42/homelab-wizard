@@ -291,6 +291,7 @@ func run(ctx context.Context, u *ui.UI, args []string) int {
 		"recovery-kit": h.recoveryKit,
 		"export":       h.exportCmd,
 		"move":         h.moveCmd,
+		"appdata":      h.appdataCmd,
 		"rebuild":      h.rebuild,
 		"phone":        h.phoneCmd,
 		"fix":          h.fix,

@@ -11,6 +11,7 @@ cmd/homelab-run 80
 internal/accounts 83
 internal/adopt 82
 internal/api 76
+internal/appdata 74
 internal/appicon 92
 internal/backup 80
 internal/awake 78

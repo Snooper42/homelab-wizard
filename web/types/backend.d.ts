@@ -137,6 +137,12 @@ declare namespace app {
     balance: number;
     currency?: string;
   }
+  interface AppDataPlace {
+    dir: string;
+    default: boolean;
+    old?: string;
+    movedAt?: string;
+  }
   interface AppLogo {
     image: string;
     from: string;
@@ -1418,6 +1424,7 @@ interface Backend {
     Alerts(): Promise<notify.Event[]>;
     Answers(): Promise<Record<string, string>>;
     AppAction(arg1: string, arg2: string): Promise<void>;
+    AppData(): Promise<app.AppDataPlace>;
     AppIcon(arg1: string): Promise<string>;
     Appearance(): Promise<tray.Appearance>;
     Background(): Promise<app.BackgroundJob[]>;
@@ -1482,6 +1489,7 @@ interface Backend {
     People(): Promise<people.Person[]>;
     PersonAction(arg1: string, arg2: string, arg3: string, arg4: string[]): Promise<void>;
     Phones(): Promise<companion.Phone[]>;
+    PickAppDataFolder(): Promise<string>;
     Plan(arg1: string[], arg2: Record<string, string>): Promise<api.Plan>;
     PrintFinances(arg1: string, arg2: string): Promise<string>;
     PrivateFinances(): Promise<Record<string, string>>;

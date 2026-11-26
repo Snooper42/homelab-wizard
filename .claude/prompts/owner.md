@@ -84,11 +84,11 @@ The loops add questions here: the question, the options, the one they recommend,
   - **(c)** Keep it live only.
 
   Meanwhile Analytics shows what exists, and the redesign carries on with the phone's page.
-- **Moving the apps' data (quality-loop D3, Nov 25):** the apps' data folder can now live somewhere else (`APPDATA_ROOT` in `.env`, empty means `data/appdata` as today); nothing moves on its own. The next step is a **Move the apps' data…** button in Settings › Storage: it stops the apps, copies the folder to the drive you pick, checks every file, starts the apps on the new place, runs a restore test, and keeps the old folder until you press **Remove the old copy** (that's the Undo). It moves your files, so it waits for your yes.
-  - **Question:** build the move button? (Recommended: yes, with the old copy kept until you remove it.) Meanwhile I work the security list (Q1).
-
 ## Answered
 
 The loops move a question here once they've read your answer.
 
+- **Moving the apps' data (quality-loop D3, Nov 25):** the apps' data folder can now live somewhere else (`APPDATA_ROOT` in `.env`, empty means `data/appdata` as today); nothing moves on its own. The next step is a **Move the apps' data…** button in Settings › Storage: it stops the apps, copies the folder to the drive you pick, checks every file, starts the apps on the new place, runs a restore test, and keeps the old folder until you press **Remove the old copy** (that's the Undo). It moves your files, so it waits for your yes.
+  - **Question:** build the move button? (Recommended: yes, with the old copy kept until you remove it.)
+  - **Answer (the owner, Nov 26):** "Yes, keep the old copy": `homelab appdata move` and the app's bindings built; the Settings button is lane 1's.
 - **Account C's scheduled task (Nov 23):** a session isn't allowed to make one, so you made *Homelab loop, account C* by hand (every 5 hours at 4 past, a custom cron). **Do the same for A and B** when they start, named exactly *Homelab loop, account A* (every 3 hours: `4 */3 * * *`) and *Homelab loop, account B* (every 5 hours: `4 */5 * * *`), each with its start line as the instructions: a session looks for that exact name.

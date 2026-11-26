@@ -20,6 +20,7 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 
 	"github.com/Snooper42/homelab-wizard/internal/api"
+	"github.com/Snooper42/homelab-wizard/internal/appdata"
 	"github.com/Snooper42/homelab-wizard/internal/board"
 	"github.com/Snooper42/homelab-wizard/internal/companion"
 	"github.com/Snooper42/homelab-wizard/internal/core"
@@ -1035,5 +1036,22 @@ func TestUsageHistory(t *testing.T) {
 	}
 	if h, err = a.UsageHistory(1); err != nil || len(h.At) != 1 || h.CPU[0] != 1.5 || h.Apps["vaultwarden"].Mem[0] != 20<<20 {
 		t.Fatalf("after one: %+v %v", h, err)
+	}
+}
+
+// Settings › Storage reads where the apps' data lives and any copy a move keeps (quality-loop D3 part 2).
+func TestAppDataPlace(t *testing.T) {
+	a, _ := testApp(t)
+	if p := a.AppData(); !p.Default || p.Dir != filepath.Join(a.root, "data", "appdata") || p.Old != "" {
+		t.Errorf("before a move: %+v", p)
+	}
+	if err := appdata.SaveMove(a.root, appdata.Move{Old: "/old", New: "/new", At: time.Now()}); err != nil {
+		t.Fatal(err)
+	}
+	if p := a.AppData(); p.Old != "/old" || p.MovedAt.IsZero() {
+		t.Errorf("after a move: %+v", p)
+	}
+	if err := a.Homelab("appdata-move", " ", false); err == nil {
+		t.Error("a move with no folder")
 	}
 }
