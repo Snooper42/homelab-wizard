@@ -10082,6 +10082,27 @@
         m3[first === "first" ? 0 : m3.length - 1]?.focus();
       });
     };
+    const menu2 = A2(null);
+    _2(() => {
+      const m3 = menu2.current;
+      if (!open5 || !m3) return;
+      m3.style.left = m3.style.right = m3.style.top = m3.style.bottom = "";
+      const area = (m3.closest("main") || document.body).getBoundingClientRect();
+      let r3 = m3.getBoundingClientRect();
+      if (r3.left < area.left + 4) {
+        m3.style.left = "0";
+        m3.style.right = "auto";
+        r3 = m3.getBoundingClientRect();
+      }
+      if (r3.right > Math.min(area.right, innerWidth) - 4) {
+        m3.style.right = "0";
+        m3.style.left = "auto";
+      }
+      if (r3.bottom > innerHeight - 4 && r3.top - r3.height - 12 > 0) {
+        m3.style.top = "auto";
+        m3.style.bottom = "calc(100% + 6px)";
+      }
+    }, [open5]);
     return /* @__PURE__ */ u3(
       "span",
       {
@@ -10111,7 +10132,7 @@
               type: "button",
               ref: btn,
               class: cls,
-              title,
+              title: open5 ? void 0 : title,
               "aria-haspopup": "menu",
               "aria-expanded": open5,
               disabled,
@@ -10128,7 +10149,7 @@
               ]
             }
           ),
-          open5 && /* @__PURE__ */ u3("div", { class: "menu", role: "menu", "aria-label": menuLabel, children: [
+          open5 && /* @__PURE__ */ u3("div", { class: "menu", role: "menu", "aria-label": menuLabel, ref: menu2, children: [
             items.map((it) => /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", onClick: () => {
               close3(true);
               it.onClick();
