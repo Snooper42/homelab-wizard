@@ -554,7 +554,7 @@ const shots = [
     await page.waitForSelector('#statusPart .antimeline', { timeout: 5000 });
   } },
   // The same page on the phone's page, narrow: Status' menu as chips, the tiles two across.
-  { name: 'status-category-phone', screen: 'status', phone: ['companion', 'can-change'], before: async (page) => { await page.click('#statusChips button[data-key="media"]', { timeout: 5000 }); await page.waitForSelector('#statusPart .cattile', { timeout: 5000 }); } },
+  { name: 'status-category-phone', screen: 'status', phone: ['companion', 'can-change'], before: async (page) => { await toStatusPart(page, 'media'); await page.waitForSelector('#statusPart .cattile', { timeout: 5000 }); } },
   // An app you could add has a page of its own, as an installed app's (the owner, Nov 25).
   { name: 'status-add', screen: 'status', before: async (page) => { await page.click('#statusSide button[data-key="media"]', { timeout: 5000 }); await page.click('#statusPart .cattile[data-app="kavita"] .catname'); await page.waitForSelector('#storePlan #plan .planLead', { timeout: 5000 }); } },
   { name: 'status-add-set', screen: 'status', before: async (page) => { await page.evaluate(() => window.__emit('navigate', 'choose')); await page.click('#statusPart .cattile.set[data-set="household"] .catname', { timeout: 5000 }); await page.waitForSelector('#storePlan #plan .planLead', { timeout: 5000 }); } },
