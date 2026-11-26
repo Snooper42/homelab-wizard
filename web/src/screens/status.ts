@@ -177,7 +177,7 @@ function renderAppList(st: api.Status) {
   // The first three of each category's icons, each read once while the app is open (the list redraws as they arrive).
   wantIcons(groups.flatMap((g) => g.apps.slice(0, 3).filter((x) => x.state !== 'missing' && !shippedLogo(x.id)).map((x) => x.id)));
   mountAppList($('statusRows'), appList);
-  if (!unkept && !appList.companion) refreshUnkept();
+  if (!unkept) refreshUnkept();
   // The menu and a category's page: each catalog category with its apps on this machine, whatever their state (the
   // owner, Nov 25: an amber dot where one is stopped, never a Stopped or Needs a look item), your own apps last.
   const cats = [...(catalog?.categories || [])].sort((x, y) => Number(x.id === automation) - Number(y.id === automation));
