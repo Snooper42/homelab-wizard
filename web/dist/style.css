@@ -3458,7 +3458,7 @@ main:has(> #status.active[data-part]) { background:radial-gradient(60% 40% at 25
 .cathead .n { margin-left:6px; color:var(--muted); font-weight:500; }
 .catnone { margin:0 4px; }
 .cattiles { list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:14px; }
-.cattile { position:relative; display:flex; flex-direction:column; align-items:center; gap:4px; min-height:218px; padding:28px 16px 22px; border:1px solid var(--cat-edge); border-radius:20px; background:var(--cat-tile); text-align:center; backdrop-filter:blur(12px); }
+.cattile { position:relative; display:flex; flex-direction:column; align-items:center; gap:4px; min-height:218px; padding:28px 16px 22px; border:1px solid var(--cat-edge); border-radius:20px; background:var(--cat-tile); text-align:center; }
 .cattile:not(.toadd) { cursor:default; }
 .cattile:not(.toadd):hover { border-color:var(--line-strong); }
 .cattile > .dot { position:absolute; top:14px; left:14px; margin:0; }
@@ -3488,7 +3488,7 @@ nav .sidemenulist .sidedot + .total { margin-left:8px; }
    one figure, one line, a footer at the same height), the timeline's two charts, and each app's use. Same backdrop and
    see-through cards as a category's page. */
 .antpage { --cat-tile:color-mix(in srgb, var(--panel) 72%, transparent); --cat-edge:var(--line); }
-.antpage .card { background:var(--cat-tile); border:1px solid var(--cat-edge); border-radius:20px; box-shadow:none; padding:18px 20px; margin:0 0 14px; backdrop-filter:blur(12px); }
+.antpage .card { background:var(--cat-tile); border:1px solid var(--cat-edge); border-radius:20px; box-shadow:none; padding:18px 20px; margin:0 0 14px; }
 .anthead { display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin-bottom:8px; }
 #statusPart .anthead h2 { margin:0; font-size:15px; font-weight:600; }
 .anthead .muted { font-size:12px; }
@@ -3599,7 +3599,28 @@ nav .sidemenulist .sidedot + .total { margin-left:8px; }
 @container (max-width: 760px) { #statusStore { grid-template-columns:1fr; grid-template-areas:"head" "facts" "plan" "notes"; } #storePlan { position:static; margin-bottom:14px; } }
 @media (max-width: 700px) { .storehead .appmark { width:64px; height:64px; border-radius:16px; } }
 @media (prefers-color-scheme: dark) and (prefers-contrast: no-preference) {
-  #status[data-part="add"] .card { background:var(--glow-04); border-color:var(--glow-1); box-shadow:none; backdrop-filter:blur(12px); }
+  #status[data-part="add"] .card { background:var(--glow-04); border-color:var(--glow-1); box-shadow:none; }
   .storeapp:hover { background:var(--glow-06); }
 }
 #storeFacts { margin-bottom:18px; }
+/* The design language through every screen (the owner, Nov 25: "I need this design language to be followed all
+   throughout the app"): the soft violet and teal glow behind Status' overview, an app's page, Backups, Settings and
+   Setup, as behind a category's page and Analytics; their cards see-through with a thin edge and rounder corners. In the
+   dark, the near-black of Finances behind them. Not when the system asks for more contrast (that keeps its own). */
+@media (prefers-contrast: no-preference) {
+  main:has(> :is(#status, #app, #backups, #settings, #setup).active) { background:radial-gradient(60% 40% at 25% 0, color-mix(in srgb, var(--violet) 10%, transparent), transparent 70%), radial-gradient(50% 40% at 100% 100%, color-mix(in srgb, var(--cyan) 8%, transparent), transparent 70%), var(--bg); background-attachment:local; }
+  :is(#status, #app, #backups, #settings, #setup) .card:not(.sheet, .tile) { border-radius:18px; background:color-mix(in srgb, var(--panel) 78%, transparent); border-color:var(--line); }
+}
+@media (prefers-color-scheme: dark) and (prefers-contrast: no-preference) {
+  main:has(> :is(#status, #app, #backups, #settings, #setup).active) { background:radial-gradient(60% 40% at 25% 0, color-mix(in srgb, var(--violet) 18%, transparent), transparent 70%), radial-gradient(50% 40% at 100% 100%, color-mix(in srgb, var(--cyan) 10%, transparent), transparent 70%), var(--fin-night); background-attachment:local; }
+  :is(#status, #app, #backups, #settings, #setup) { --panel:var(--fin-night-card); --sunken:var(--fin-night-sunken); --line:var(--fin-night-line); --line-strong:var(--fin-night-line-strong); }
+  :is(#status, #app, #backups, #settings, #setup) .card:not(.sheet, .tile) { background:var(--glow-04); border-color:var(--glow-1); box-shadow:none; }
+}
+/* Settings' sticky bar over the glow: see-through with a blur, not a band of its own. The overview's Find an app box. */
+@media (prefers-contrast: no-preference) {
+  #settings .savebar { background:color-mix(in srgb, var(--bg) 55%, transparent); -webkit-backdrop-filter:blur(16px); backdrop-filter:blur(16px); }
+}
+@media (prefers-color-scheme: dark) and (prefers-contrast: no-preference) {
+  #settings .savebar { background:color-mix(in srgb, var(--fin-night) 55%, transparent); }
+}
+.statusfind { border-color:var(--line); background:color-mix(in srgb, var(--panel) 72%, transparent); }
