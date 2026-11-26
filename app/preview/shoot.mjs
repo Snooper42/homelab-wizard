@@ -3075,12 +3075,17 @@ const smokes = [
     await page.click('nav button[data-screen="settings"]', { timeout: 5000 });
     // At a phone's width the pages are a list to pick from.
     await page.selectOption('#settingsNav select', 'Alerts', { timeout: 5000 });
-    if ((await page.$$eval('#settingsNav option', (o) => o.map((x) => x.value))).some((v) => ['General', 'Appearance', 'People', 'Phones'].includes(v))) throw new Error("the computer's own pages on the phone");
+    // People and Phones as on the computer (the owner, Nov 26: parity, the web page answering only at home); General and
+    // Appearance are the computer's own window.
+    const pages = await page.$$eval('#settingsNav option', (o) => o.map((x) => x.value));
+    if (pages.some((v) => ['General', 'Appearance'].includes(v))) throw new Error("the computer's own pages on the phone: " + pages.join(', '));
+    for (const want of ['People', 'Phones']) if (!pages.includes(want)) throw new Error(`no ${want} on a phone that may change things: ${pages.join(', ')}`);
     await page.fill('#setting-QUIET_HOURS input', '23-6');
     await page.click('#saveSettings:text-is("Save 1 change")', { timeout: 3000 });
     await page.waitForSelector('#saveSettings', { state: 'hidden', timeout: 5000 });
     if ((await page.evaluate(() => window.__MOCK.saved || {})).QUIET_HOURS !== '23-6') throw new Error('not saved');
-    // Nothing a phone can't change or use: no secret, no setting it connects through, no Phones, People or Uninstall.
+    // Nothing a phone can't change or use: no secret, no setting it connects through; Phones, People and Uninstall only
+    // on their own pages, not on Alerts.
     for (const sel of ['#setting-CLOUDFLARE_API_TOKEN', '#setting-PHONE_COMPANION', '#phonesCard', '#peopleCard', '#uninstallCard', '#report']) {
       if (await page.isVisible(sel)) throw new Error(`${sel} on the phone`);
     }
