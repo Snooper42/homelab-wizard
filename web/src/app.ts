@@ -117,14 +117,28 @@ function remember() {
   const screen = document.querySelector('.screen.active')?.id;
   if (!screen) return;
   const next = { screen, app: screen === 'app' ? openedApp() : undefined, tab: tabbed[screen]?.now() };
-  if (!moving && current && (current.screen !== next.screen || current.app !== next.app || current.tab !== next.tab)) {
+  const moved = !moving && !!current && (current.screen !== next.screen || current.app !== next.app || current.tab !== next.tab);
+  if (moved) {
     back.push(current);
     if (back.length > keep) back.shift();
     ahead.length = 0;
     keepHistory();
   }
   current = next;
+  if (moved && onPhone()) history.pushState({ homelab: (newest = ++entry) }, '');
 }
+// The web page (the phone companion in a browser): the browser's Back and Forward, and Safari's edge swipe, walk the
+// same list (the owner, Nov 26: "why don't my back and forth buttons work on the web page?"). Each step the page takes
+// is a browser entry numbered from where it opened; going to one moves the page that many steps.
+let entry = 0, newest = 0;
+addEventListener('popstate', (e) => {
+  const n = e.state?.homelab;
+  if (typeof n !== 'number') return;
+  const steps = n - entry;
+  entry = n;
+  for (let i = 0; i < -steps && stepBack(); i++);
+  for (let i = 0; i < steps && stepForward(); i++);
+});
 function visit(p: Place) {
   moving = true;
   try {
@@ -145,8 +159,12 @@ export function goTo(p: Place) {
   navigate(p.screen);
   focusScreen(p.screen);
 }
-/** Back to the screen before (false when there is none). */
+/** Back to the screen before (false when there is none). On the web page, through the browser while it has the step. */
 export function goBack(): boolean {
+  if (onPhone() && entry > 0 && back.length) { history.back(); return true; }
+  return stepBack();
+}
+function stepBack(): boolean {
   const p = back.pop();
   if (!p) return false;
   if (current) ahead.push(current);
@@ -155,8 +173,12 @@ export function goBack(): boolean {
   swipeHint('back');
   return true;
 }
-/** Forward to the screen Back left (false when there is none). */
+/** Forward to the screen Back left (false when there is none). On the web page, through the browser while it has it. */
 export function goForward(): boolean {
+  if (onPhone() && entry < newest && ahead.length) { history.forward(); return true; }
+  return stepForward();
+}
+function stepForward(): boolean {
   const p = ahead.pop();
   if (!p) return false;
   if (current) back.push(current);
@@ -316,6 +338,7 @@ window.addEventListener('load', async () => {
   window.runtime.EventsOn('cli:step', cliProgress);
   window.runtime.EventsOn('job:app', jobApp);
   window.runtime.EventsOn('refresh', reloadScreen);
+  if (onPhone()) history.replaceState({ homelab: 0 }, ''); // the entry the page opened on (Back and Forward above)
   await loadAppearance(); // before the first paint of the screens
   // Asked beside the machine, so the last Status is drawn without waiting for Docker.
   // An older agent or phone companion has none (drawRemembered draws nothing).
@@ -336,7 +359,12 @@ window.addEventListener('load', async () => {
     // Until the first-time setup is done, the app opens on it.
     await steps;
     if (stepsData.error) throw stepsData.error;
-    if (progress(stepsData.value!).left && !navigated) show('setup');
+    // Only while the homelab has no app yet: once it has, it opens on Status, Setup's steps left in its sidebar (the
+    // owner, Nov 26: after each update it "jumps around and then lands in the setup page").
+    // No Status kept (the agent stopped, as after an update with no lasting signature): Status read now tells.
+    if (!(await last)?.status && !statusData.value) await statusData.fresh(minute).catch(() => {});
+    const firstTime = !((await last)?.status?.apps?.length || statusData.value?.apps?.length);
+    if (progress(stepsData.value!).left && !navigated && firstTime) show('setup');
   } catch (e) {
     showError(e);
     show('setup');

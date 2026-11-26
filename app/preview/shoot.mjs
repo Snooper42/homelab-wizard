@@ -2326,6 +2326,32 @@ const smokes = [
     await page.waitForSelector('#statusMachine .value.bad:has-text("3.0 GB")', { timeout: 5000 });
     await page.waitForSelector('#statusMachine .sub.warn:has-text("On battery")');
   } },
+  // Opening the app (the owner, Nov 26: after each update it "jumps around and then lands in the setup page"): Setup
+  // only while the homelab has no app yet; once it has, Status, with Setup's steps left where they always are.
+  { name: 'Opening the app with apps and a Setup step left: it stays on Status', screen: '', mock: { setup: [{ id: 'a', title: 'Step A', why: 'x', state: 'todo', run: [['a']] }] }, run: async (page) => {
+    await page.waitForSelector('#status.active', { timeout: 5000 });
+    await page.waitForTimeout(1500);
+    if (await page.isVisible('#setup.active')) throw new Error('it opened Setup');
+  } },
+  { name: 'Opening the app with no app yet: Setup first', screen: '', mock: { status: { ...status, apps: [] }, setup: [{ id: 'a', title: 'Step A', why: 'x', state: 'todo', run: [['a']] }] }, run: async (page) => {
+    await page.waitForSelector('#setup.active', { timeout: 5000 });
+  } },
+  // The web page's Back and Forward are the browser's (the owner, Nov 26): each screen it opens is a browser step, and
+  // the browser's buttons (Safari's edge swipe) walk them, as the app's own Back does.
+  { name: "The web page: the browser's Back and Forward go between its screens", screen: 'status', phone: ['companion', 'can-change'], run: async (page) => {
+    await page.waitForSelector('#status.active', { timeout: 5000 });
+    await page.click('nav button[data-screen="backups"]');
+    await page.waitForSelector('#backups.active', { timeout: 5000 });
+    await page.click('nav button[data-screen="settings"]');
+    await page.waitForSelector('#settings.active', { timeout: 5000 });
+    await page.goBack();
+    await page.waitForSelector('#backups.active', { timeout: 5000 });
+    await page.goBack();
+    await page.waitForSelector('#status.active', { timeout: 5000 });
+    await page.goForward();
+    await page.waitForSelector('#backups.active', { timeout: 5000 });
+    if (!page.url().startsWith('file:')) throw new Error('the page left: ' + page.url());
+  } },
   { name: "The computer's Status doesn't repeat Setup's steps", screen: 'status', run: async (page) => {
     await page.waitForSelector('#statusHeadline', { timeout: 5000 });
     if (await page.isVisible('#setupOnStatus')) throw new Error("Setup's steps on the computer's Status");
@@ -6773,6 +6799,21 @@ const smokes = [
     if (!/\d/.test(await page.textContent('#antCpu .antfig'))) throw new Error('no processor figure after a read');
     await page.click('#statusSide button[data-key="overview"]');
     await page.waitForSelector('#statusRows', { state: 'visible', timeout: 5000 });
+  } },
+  // Analytics on the web page (the owner, Nov 26: it "breaks on the web page"): Usage is a phone call, so the figures
+  // and each app's use come every 10 seconds as on the computer, not a dash between Status' minutely reads.
+  { name: "The web page's Analytics: the processor and each app's use, read every 10 seconds", screen: 'status', phone: ['companion', 'can-change'], mock: { usageSeries }, run: async (page) => {
+    await page.setViewportSize({ width: 1100, height: 760 });
+    await page.clock.install();
+    await page.reload();
+    await page.waitForSelector('#statusSide button[data-key="analytics"]', { state: 'visible', timeout: 5000 });
+    await page.click('#statusSide button[data-key="analytics"]');
+    await page.waitForSelector('#statusPart .antpage h1:text-is("Analytics")', { timeout: 5000 });
+    await page.clock.runFor(35000);
+    await page.waitForSelector('#antApps tbody tr', { timeout: 5000 });
+    if (!/\d/.test(await page.textContent('#antCpu .antfig'))) throw new Error('no processor figure');
+    const refused = await page.evaluate(() => window.__MOCK.refused || []);
+    if (refused.includes('Usage')) throw new Error('the phone was refused Usage');
   } },
   // The phone's page mimics the computer (the owner, Nov 25): on a wide window the same strip of icons (only the phone's
   // screens, no empty columns) with Status' menu under it; narrow, the tab bar, and Status' menu as a row of chips; a

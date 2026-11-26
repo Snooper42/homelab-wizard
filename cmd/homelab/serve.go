@@ -485,6 +485,10 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 			}
 			return list, err
 		}),
+		// Each app's processor and memory now, as the usage card gives it, for Analytics and Status' lines on the web
+		// page every 10 seconds (the owner, Nov 26: Analytics "breaks on the web page" without it). The owner's phones
+		// and wall screens, as the card; not a household member's, which gets none of the homelab's cards.
+		"Usage":      read(func(ctx context.Context, _ []json.RawMessage) (any, error) { return core.Usage(ctx) }),
 		"Protection": read(func(ctx context.Context, _ []json.RawMessage) (any, error) { return core.Protection(ctx, root) }),
 		"Watchdog": read(func(context.Context, []json.RawMessage) (any, error) {
 			return health.LoadState(health.StatePath(root)).Summary(), nil
