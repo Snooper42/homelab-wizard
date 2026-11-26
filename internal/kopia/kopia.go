@@ -14,6 +14,7 @@ import (
 	"net/url"
 	"path"
 	"regexp"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -209,6 +210,19 @@ func (c *Client) Latest(ctx context.Context, source string) (Snapshot, error) {
 		return Snapshot{}, fmt.Errorf("Kopia has no snapshot of %s yet", source)
 	}
 	return newest, nil
+}
+
+// Snapshots are every snapshot of the folder at source, newest first (Get something back: quality-loop Q4 (c)).
+func (c *Client) Snapshots(ctx context.Context, source string) ([]Snapshot, error) {
+	q := url.Values{"userName": {Owner}, "host": {Host}, "path": {source}}
+	var r struct {
+		Snapshots []Snapshot `json:"snapshots"`
+	}
+	if err := c.do(ctx, "GET", "snapshots?"+q.Encode(), nil, &r); err != nil {
+		return nil, err
+	}
+	sort.Slice(r.Snapshots, func(i, j int) bool { return r.Snapshots[i].StartTime.After(r.Snapshots[j].StartTime) })
+	return r.Snapshots, nil
 }
 
 // Find is the object of the file or folder at rel (slash-separated) under

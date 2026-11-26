@@ -486,6 +486,17 @@ func TestAHomelabsLife(t *testing.T) {
 		}
 	})
 
+	// Get something back (quality-loop Q4 (c)): one file from Kopia's newest snapshot, saved as a copy.
+	if slices.Contains(ids, "kopia") {
+		step("one file back from Kopia", func(t *testing.T) {
+			saved := t.TempDir()
+			l.run("get-back", kopiaFolder, "--engine", "kopia", "--file", kopiaFile, "--to", saved, "--apply")
+			if got, err := os.ReadFile(filepath.Join(saved, kopiaFile)); err != nil || string(got) != kopiaText {
+				t.Errorf("Kopia gave back %q: %v", got, err)
+			}
+		})
+	}
+
 	step("the app's page against this homelab", func(t *testing.T) { l.appPage(t, ids) })
 
 	// Status' Stop, Start and Restart, as its row menu runs them (quality-loop Q2).

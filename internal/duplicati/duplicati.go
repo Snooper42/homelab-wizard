@@ -173,20 +173,79 @@ func parse(s string) time.Time {
 // from the newest version of the job named job into restorePath (e.g.
 // /staging/restore-test), and waits up to wait for it to finish.
 func (c *Client) Restore(ctx context.Context, job string, paths []string, restorePath string, wait time.Duration) error {
+	return c.RestoreAt(ctx, job, paths, Night{Raw: "now"}, restorePath, wait)
+}
+
+// Night is one version a job holds (a night's backup): Duplicati's number for it (0 the newest), when it was
+// taken, its files, and Raw, the time as Duplicati wrote it, which a restore from that night names it by.
+type Night struct {
+	Version int       `json:"version"`
+	At      time.Time `json:"at"`
+	Files   int       `json:"files"`
+	Raw     string    `json:"-"`
+}
+
+// jobID is the ID of the job named job (case aside).
+func (c *Client) jobID(ctx context.Context, job string) (string, error) {
 	jobs, err := c.Jobs(ctx, time.Now())
+	if err != nil {
+		return "", err
+	}
+	for _, j := range jobs {
+		if strings.EqualFold(j.Name, job) {
+			return j.ID, nil
+		}
+	}
+	return "", fmt.Errorf("Duplicati has no job named %q (docs/Automation.md lists the jobs)", job)
+}
+
+// Nights are the versions the job named job holds, newest first (Get something back: quality-loop Q4 (c)).
+func (c *Client) Nights(ctx context.Context, job string) ([]Night, error) {
+	id, err := c.jobID(ctx, job)
+	if err != nil {
+		return nil, err
+	}
+	var sets []struct {
+		Version   int
+		Time      string
+		FileCount json.RawMessage
+	}
+	if err := c.call(ctx, http.MethodGet, "/api/v1/backup/"+id+"/filesets", nil, &sets); err != nil {
+		return nil, err
+	}
+	var out []Night
+	for _, s := range sets {
+		at := parseAny(s.Time)
+		if at.IsZero() {
+			continue
+		}
+		out = append(out, Night{Version: s.Version, At: at.UTC(), Files: count(strings.Trim(string(s.FileCount), `"`)), Raw: s.Time})
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].At.After(out[j].At) })
+	return out, nil
+}
+
+// parseAny reads a time as Duplicati's API writes it: RFC 3339, or its own compact form.
+func parseAny(s string) time.Time {
+	for _, layout := range []string{time.RFC3339Nano, "2006-01-02T15:04:05", "20060102T150405Z07:00"} {
+		if t, err := time.Parse(layout, s); err == nil {
+			return t
+		}
+	}
+	return time.Time{}
+}
+
+// RestoreAt restores paths from the night n of the job named job into restorePath, waiting up to wait.
+func (c *Client) RestoreAt(ctx context.Context, job string, paths []string, n Night, restorePath string, wait time.Duration) error {
+	id, err := c.jobID(ctx, job)
 	if err != nil {
 		return err
 	}
-	id := ""
-	for _, j := range jobs {
-		if strings.EqualFold(j.Name, job) {
-			id = j.ID
-		}
+	when := n.Raw
+	if when == "" {
+		when = "now"
 	}
-	if id == "" {
-		return fmt.Errorf("Duplicati has no job named %q (docs/Automation.md lists the jobs)", job)
-	}
-	body, _ := json.Marshal(map[string]any{"paths": paths, "time": "now", "restore_path": restorePath, "overwrite": true, "permissions": false, "skip_metadata": false})
+	body, _ := json.Marshal(map[string]any{"paths": paths, "time": when, "restore_path": restorePath, "overwrite": true, "permissions": false, "skip_metadata": false})
 	var started struct {
 		ID     int64
 		Status string

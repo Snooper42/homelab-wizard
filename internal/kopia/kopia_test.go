@@ -107,3 +107,14 @@ func TestFindAndRestore(t *testing.T) {
 		t.Fatal("a cancelled restore should stop")
 	}
 }
+
+// Get something back (quality-loop Q4 (c)): every snapshot of a folder, newest first.
+func TestSnapshots(t *testing.T) {
+	c := server(t, func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(`{"snapshots":[{"id":"a","rootID":"k1","startTime":"2026-10-01T03:45:00Z"},{"id":"c","rootID":"k3","startTime":"2026-10-20T03:45:00Z"},{"id":"b","rootID":"k2","startTime":"2026-10-10T03:45:00Z"}]}`))
+	})
+	s, err := c.Snapshots(context.Background(), "/source/appdata")
+	if err != nil || len(s) != 3 || s[0].RootID != "k3" || s[2].RootID != "k1" {
+		t.Fatalf("%+v %v", s, err)
+	}
+}

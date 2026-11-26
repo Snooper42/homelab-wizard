@@ -123,6 +123,20 @@ The manual way, for any job or a whole-job restore:
 
 Either way the test goes on record in `scripts/logs/restore-test.json` (the last 24, passed or failed): the restore drills. `--auto` times each one from asking Duplicati to the last file checked, so you know how long getting files back takes before you need it. The Backups screen shows the last pass and how long it took, a failure since in red, and the record when you hover the tile; the weekly summary and `homelab report` include them too. When the last pass is more than 30 days old, the nightly backup job sends a reminder to the `duplicati-alerts` topic, at most once a week until the next test.
 
+## Getting one file or an app back
+
+One file, or an app's whole folder, as a chosen night's backup has it, from Duplicati (the *Homelab AppData* job) or Kopia:
+
+```sh
+homelab get-back vikunja --nights                                     # the nights, newest first (0)
+homelab get-back vikunja --night 1 --file files/list.txt --apply      # a copy in Downloads
+homelab get-back vikunja --file files/list.txt --put-back --apply     # back in place
+homelab get-back vikunja --night 2026-11-24 --put-back --apply        # the whole folder, the app stopped meanwhile
+homelab get-back vikunja --engine kopia --to ~/Desktop/vikunja --apply
+```
+
+The folder from that night is restored into `recovery-staging/get-back/<app>` first. Saved as a copy, nothing of the app's changes. Put back, what's there now is set aside first in `recovery-staging/put-back/<app>-<when>`, so it can be put back in turn; the whole folder is swapped with the app stopped, and it starts again after. An app whose data is a database (dumped each night, see *Database dumps*) has no folder of its own here.
+
 ## Password vault export
 
 The Vaultwarden database dump restores the server, but it needs a working server to read. Once a month, also keep an export that opens anywhere:

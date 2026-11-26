@@ -1055,3 +1055,34 @@ func TestAppDataPlace(t *testing.T) {
 		t.Error("a move with no folder")
 	}
 }
+
+// Backups › Get something back runs homelab get-back with what was chosen (quality-loop Q4 (c)).
+func TestGetBackRuns(t *testing.T) {
+	a, w := testApp(t)
+	if n, err := a.BackupNights("vikunja", ""); err != nil || n == nil {
+		t.Fatalf("nights: %v %v", n, err)
+	}
+	if err := a.GetBack(GetBackRequest{App: "vikunja", Night: "2026-11-24T08:30:12Z", File: "files/list.txt", PutBack: true}); err != nil {
+		t.Fatal(err)
+	}
+	if err := a.GetBack(GetBackRequest{App: "vikunja", Engine: "kopia", To: "/tmp/x"}); err != nil {
+		t.Fatal(err)
+	}
+	said := strings.Join(func() []string {
+		var out []string
+		for _, e := range w.sent("cli:log") {
+			if s, ok := e.(string); ok {
+				out = append(out, s)
+			}
+		}
+		return out
+	}(), "\n")
+	for _, want := range []string{
+		"$ homelab get-back vikunja --engine duplicati --night 2026-11-24T08:30:12Z --file files/list.txt --put-back --apply",
+		"$ homelab get-back vikunja --engine kopia --night newest --to /tmp/x --apply",
+	} {
+		if !strings.Contains(said, want) {
+			t.Errorf("no %q in:\n%s", want, said)
+		}
+	}
+}

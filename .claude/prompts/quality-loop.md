@@ -61,7 +61,7 @@ For a pull request that needs Q's review, check every one of these, and say whic
 - [ ] **Q4. The backups' engine, for R's Backups** (`docs/Redesign.md`, *New work behind the pictures*).
   - [x] **(a) Each app's result each night,** kept for fourteen nights. (Nov 25: `data/backup-nights.json`, `backup.Night`, in `Backups()` as `nights`.)
   - **(b) Not in any backup:** moved up, as D1.
-  - **(c) Get something back:** one file or a whole app from a chosen night, through the backup engine, saved as a copy or put back, with a test against a real Duplicati and Kopia (`test/realdocker`).
+  - **(c) Get something back:** one file or a whole app from a chosen night, through the backup engine, saved as a copy or put back, with a test against a real Duplicati and Kopia (`test/realdocker`). (Nov 26: `homelab get-back`, the bindings `BackupNights`/`GetBack`; real-Docker steps in the rebuild and life tests. Backups' screen for it is lane 1's.)
 
   Each part is one pull request, then a line for R under **From the other lanes** in `redesign-loop.md`.
 - [ ] **Q5. The security list** (Q1), worst first, one item per pull request.

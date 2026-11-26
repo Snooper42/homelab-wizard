@@ -69,6 +69,35 @@ func TestRebuildFromDuplicati(t *testing.T) {
 	// The night: the backup's copies, then every Duplicati job.
 	l.run("backup", "--apply")
 	runDuplicatiJobs(t, l)
+	// Get something back (quality-loop Q4 (c)): a file of Vaultwarden's, changed after the backup, put back as last
+	// night's backup has it; then the whole folder saved as a copy.
+	vw := filepath.Join(l.root, "data", "appdata", "vaultwarden")
+	var pick string
+	_ = filepath.WalkDir(vw, func(p string, d os.DirEntry, err error) error {
+		if err == nil && pick == "" && d.Type().IsRegular() && !strings.HasPrefix(d.Name(), "db.sqlite3") {
+			pick = p
+		}
+		return nil
+	})
+	if pick == "" {
+		t.Fatal("Vaultwarden's folder holds no file to get back")
+	}
+	was, _ := os.ReadFile(pick)
+	rel, _ := filepath.Rel(vw, pick)
+	if err := os.WriteFile(pick, []byte("changed after the backup"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("%s", l.run("get-back", "vaultwarden", "--nights"))
+	l.run("get-back", "vaultwarden", "--file", filepath.ToSlash(rel), "--put-back", "--apply")
+	if got, _ := os.ReadFile(pick); string(got) != string(was) {
+		t.Errorf("%s after get-back: %q, not the backup's %d bytes", rel, got, len(was))
+	}
+	saved := t.TempDir()
+	l.run("get-back", "vaultwarden", "--to", filepath.Join(saved, "vw"), "--apply")
+	if got, err := os.ReadFile(filepath.Join(saved, "vw", rel)); err != nil || string(got) != string(was) {
+		t.Errorf("the folder's copy: %q %v", got, err)
+	}
+
 	dest, secret := l.env("BACKUP_DESTINATION"), l.env(duplicati.SecretsPassphraseKey)
 	if dest == "" || secret == "" {
 		t.Fatalf("BACKUP_DESTINATION %q, a Secrets passphrase set: %v", dest, secret != "")

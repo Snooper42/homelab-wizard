@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"cmp"
 	"context"
 	"encoding/json"
 	"errors"
@@ -1609,6 +1610,65 @@ func (a *App) Homelab(action, target string, apply bool) error {
 	if apply {
 		args = append(args, "--apply")
 	}
+	emitEvent(a.ctx, "cli:log", "$ homelab "+strings.Join(args, " "))
+	return a.stream(core.CLI(a.root, args...), "cli:log")
+}
+
+// BackupNight is a night the backup holds an app's folder from (Backups › Get something back).
+type BackupNight struct {
+	At    time.Time `json:"at"`
+	Files int       `json:"files,omitempty"`
+}
+
+// BackupNights are the nights engine ("duplicati" or "kopia") holds app's folder from, newest first.
+func (a *App) BackupNights(app, engine string) ([]BackupNight, error) {
+	ctx, cancel := context.WithTimeout(a.ctx, time.Minute)
+	defer cancel()
+	out, err := core.CLIContext(ctx, a.root, "--json", "get-back", app, "--engine", cmp.Or(engine, "duplicati"), "--nights").Output()
+	for _, line := range strings.Split(string(out), "\n") {
+		var l struct {
+			Type string `json:"type"`
+			Data struct {
+				Nights []BackupNight `json:"nights"`
+			} `json:"data"`
+		}
+		if json.Unmarshal([]byte(line), &l) == nil && l.Type == "nights" {
+			return l.Data.Nights, nil
+		}
+	}
+	if err != nil {
+		return nil, fmt.Errorf("the nights the backup holds: %w: %s", err, strings.TrimSpace(lastLine(string(out))))
+	}
+	return []BackupNight{}, nil
+}
+
+// GetBackRequest is what to get back: an app's folder (or one file in it, a path inside it), from a night (its
+// time, or "" for the newest) of an engine, saved as a copy (To, or Downloads when empty) or put back in place.
+type GetBackRequest struct {
+	App     string `json:"app"`
+	Engine  string `json:"engine"`
+	Night   string `json:"night"`
+	File    string `json:"file"`
+	To      string `json:"to"`
+	PutBack bool   `json:"putBack"`
+}
+
+// GetBack gets it back (homelab get-back), its lines as "cli:log" events; one at a time with installs and backups.
+func (a *App) GetBack(r GetBackRequest) error {
+	if !a.install.TryLock() {
+		return errors.New("another install or setup step is running")
+	}
+	defer a.install.Unlock()
+	args := []string{"get-back", r.App, "--engine", cmp.Or(r.Engine, "duplicati"), "--night", cmp.Or(r.Night, "newest")}
+	if r.File != "" {
+		args = append(args, "--file", r.File)
+	}
+	if r.PutBack {
+		args = append(args, "--put-back")
+	} else if r.To != "" {
+		args = append(args, "--to", r.To)
+	}
+	args = append(args, "--apply")
 	emitEvent(a.ctx, "cli:log", "$ homelab "+strings.Join(args, " "))
 	return a.stream(core.CLI(a.root, args...), "cli:log")
 }

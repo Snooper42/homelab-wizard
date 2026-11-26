@@ -175,6 +175,10 @@ declare namespace app {
     label: string;
     installed: boolean;
   }
+  interface BackupNight {
+    at: string;
+    files?: number;
+  }
   interface Disk {
     label: string;
     space: string;
@@ -188,6 +192,14 @@ declare namespace app {
     done: number;
     total: number;
     percent: number;
+  }
+  interface GetBackRequest {
+    app: string;
+    engine: string;
+    night: string;
+    file: string;
+    to: string;
+    putBack: boolean;
   }
   interface HealthInfo {
     agent: string;
@@ -1429,6 +1441,7 @@ interface Backend {
     Appearance(): Promise<tray.Appearance>;
     Background(): Promise<app.BackgroundJob[]>;
     BackupGaps(): Promise<duplicati.Gap[]>;
+    BackupNights(arg1: string, arg2: string): Promise<app.BackupNight[]>;
     Backups(): Promise<backup.Overview>;
     Catalog(): Promise<api.Catalog>;
     ChooseFolder(arg1: string): Promise<string>;
@@ -1465,6 +1478,7 @@ interface Backend {
     FinancesUpdatePrices(): Promise<cardprice.Result>;
     FinancesWall(): Promise<finance.Wall>;
     FixQbitPassword(): Promise<void>;
+    GetBack(arg1: app.GetBackRequest): Promise<void>;
     Health(): Promise<app.HealthInfo>;
     History(arg1: string, arg2: string, arg3: number): Promise<history.Entry[]>;
     Homelab(arg1: string, arg2: string, arg3: boolean): Promise<void>;
