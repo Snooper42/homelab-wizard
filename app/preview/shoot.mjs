@@ -517,7 +517,8 @@ async function finTab(page, name, opts = {}) {
 }
 /** Opens a Status page (Analytics, Subscriptions, a category) from its menu: the sidebar's, or on a phone its dropdown. */
 async function toStatusPart(page, key) {
-  await page.waitForSelector(`#statusSide button[data-key="${key}"], #statusChips .sidedropbtn`, { state: 'visible', timeout: 8000 });
+  // Whichever shows: the sidebar's button on the computer, the dropdown on a phone (the other is in the page, hidden).
+  await page.waitForFunction((k) => [document.querySelector(`#statusSide button[data-key="${k}"]`), document.querySelector('#statusChips .sidedropbtn')].some((e) => e?.checkVisibility()), key, { timeout: 8000 });
   if (await page.isVisible(`#statusSide button[data-key="${key}"]`)) return page.click(`#statusSide button[data-key="${key}"]`);
   await page.click('#statusChips .sidedropbtn');
   await page.click(`#statusChips .sidemenulist button[data-key="${key}"]`);
@@ -3328,6 +3329,8 @@ const smokes = [
   // Snooze an alert: a failing check's alerts wait an hour or a day; its line says until when, and Alert again now undoes it.
   // A phone allowed to change things snoozes the same way; one that only looks has no Snooze.
   { name: 'Watchdog: snooze a failing check for an hour, then alert again', screen: 'status', mock: { watchdog: { ...watchdog, failing: [{ name: 'crowdsec bouncer', problem: "the proxy's bouncer last pulled CrowdSec's decisions 9 minutes ago", since: hoursAgo(0.3) }] } }, run: async (page) => {
+    // The card moved to Analytics with the new Overview (the owner's picture, Nov 25).
+    await toStatusPart(page, 'analytics');
     const pick = '#watchCard select[aria-label="Snooze the alerts about crowdsec bouncer"]';
     await page.waitForSelector(pick, { timeout: 5000 });
     await page.selectOption(pick, '1');
@@ -4838,6 +4841,8 @@ const smokes = [
     } },
   // Every alert…: the computer's record, past ntfy's 12 hours, each saying when it cleared or who snoozed it, until when.
   ...[[], ['companion']].map((phone) => ({ name: `Every alert on Recent alerts lists the kept ones${phone.length ? ', on the phone' : ''}`, screen: 'status', phone: phone.length ? phone : undefined, run: async (page) => {
+    // The card moved to Analytics with the new Overview (the owner's picture, Nov 25).
+    await toStatusPart(page, 'analytics');
     await page.locator('#alertsCard').getByRole('button', { name: 'Every alert…' }).click();
     const sheet = page.locator('#alertLogSheet');
     await sheet.locator('h2:has-text("Every alert")').waitFor({ timeout: 5000 });
@@ -4854,6 +4859,8 @@ const smokes = [
   // one that cleared, one about no check, or one whose check passes now. A phone that only looks has none.
   ...[[], ['companion', 'can-change'], ['companion']].map((phone) => ({ name: `Every alert: Snooze on an alert whose check still fails${phone.length ? (phone.includes('can-change') ? ', on a phone that may change things' : ', none on a phone that only looks') : ''}`, screen: 'status', phone: phone.length ? phone : undefined,
     mock: { watchdog: { ...watchdog, failing: [{ name: 'immich', problem: 'not answering', since: hoursAgo(0.3) }] }, alertLog: [{ id: 5, at: hoursAgo(0.3), topic: 'tunnel-watchdog', title: 'Homelab: something is down', body: 'immich: not answering', priority: 4, checks: ['immich'] }, ...alertLog] }, run: async (page) => {
+    // The card moved to Analytics with the new Overview (the owner's picture, Nov 25).
+    await toStatusPart(page, 'analytics');
       await page.locator('#alertsCard').getByRole('button', { name: 'Every alert…' }).click();
       const sheet = page.locator('#alertLogSheet');
       await sheet.locator('li').nth(4).waitFor({ timeout: 5000 });
@@ -4872,11 +4879,15 @@ const smokes = [
       if (!calls) throw new Error('not snoozed');
     } })),
   { name: 'Every alert with none kept says so', screen: 'status', mock: { alertLog: [] }, run: async (page) => {
+    // The card moved to Analytics with the new Overview (the owner's picture, Nov 25).
+    await toStatusPart(page, 'analytics');
     await page.locator('#alertsCard').getByRole('button', { name: 'Every alert…' }).click();
     await page.locator('#alertLogSheet').getByText('No alerts yet.', { exact: false }).waitFor({ timeout: 5000 });
   } },
   // Check again reads the alerts now: one whose problem cleared is gone.
   { name: 'Check again on Recent alerts reads them now', screen: 'status', run: async (page) => {
+    // The card moved to Analytics with the new Overview (the owner's picture, Nov 25).
+    await toStatusPart(page, 'analytics');
     await page.waitForSelector('#alertsCard:has-text("3 in the last 12 hours")', { timeout: 5000 });
     await page.evaluate(() => { window.__MOCK.alerts = window.__MOCK.alerts.slice(0, 2); });
     await page.click('#alertsCheck');
@@ -4898,6 +4909,8 @@ const smokes = [
   // Folds are kept by the computer now (the owner, Nov 10), so the one call
   // folding makes is keeping them; it still reads nothing again.
   { name: 'Opening and folding every category reads nothing again, only keeps the folds', screen: 'status', mock: { statusOpen: '' }, run: async (page) => {
+    // The Overview keeps the list behind Show every app (the owner's picture, Nov 25): opened first.
+    await page.click('#statusAll', { timeout: 5000 });
     await page.waitForSelector('#statusRows tr.grouphead', { timeout: 5000 });
     await page.waitForTimeout(500); // the cards read beside Status
     const before = await backendCalls(page);
@@ -4978,6 +4991,8 @@ const smokes = [
     if (await page.isVisible('#statusAge')) throw new Error('an age on a fresh reading');
   } },
   { name: 'A category with something stopped folds too', screen: 'status', mock: { statusOpen: '' }, run: async (page) => {
+    // The Overview keeps the list behind Show every app (the owner's picture, Nov 25): opened first.
+    await page.click('#statusAll', { timeout: 5000 });
     await page.waitForSelector('#statusRows tr:has(strong:text-is("Mealie"))', { timeout: 5000 });
     await page.click('#statusRows tr.grouphead:has-text("Household")');
     await page.waitForSelector('#statusRows tr:has(strong:text-is("Mealie"))', { state: 'detached', timeout: 5000 });
@@ -6899,7 +6914,7 @@ const smokes = [
     await page.waitForSelector('#statusRows', { state: 'visible', timeout: 5000 });
   } },
   // The phone's page mimics the computer (the owner, Nov 25): on a wide window the same strip of icons (only the phone's
-  // screens, no empty columns) with Status' menu under it; narrow, the tab bar, and Status' menu as a row of chips; a
+  // screens, no empty columns) with Status' menu under it; narrow, the tab bar, and Status' menu as one dropdown; a
   // category's page either way, its shelf without Install (the phone installs nothing yet).
   { name: "The phone's page: the computer's strip and Status' menu when wide, chips when narrow, a category's page in each", screen: 'status', phone: ['companion', 'can-change'], run: async (page) => {
     await page.setViewportSize({ width: 1100, height: 760 });
@@ -6912,19 +6927,21 @@ const smokes = [
     await page.waitForSelector('#statusPart .catpage h2:has-text("On the server")', { timeout: 5000 });
     if (await page.$('#statusPart .cattile.toadd button')) throw new Error('Install on the phone');
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.waitForSelector('#statusChips button[data-key="analytics"]', { state: 'visible', timeout: 5000 });
+    // Narrow, Status' menu is one dropdown at the top (the owner, Nov 25), not chips: every part and category in it, each
+    // whole on the screen.
+    await page.waitForSelector('#statusChips .sidedropbtn', { state: 'visible', timeout: 5000 });
     if (await page.isVisible('#statusSide')) throw new Error("Status' sidebar menu in the tab bar");
-    // Every chip within the screen (they wrap, never slide off it).
-    const off = await page.$$eval('#statusChips .finmenuitem', (bs) => bs.filter((b) => b.getBoundingClientRect().right > innerWidth + 1).map((b) => b.textContent));
-    if (off.length) throw new Error('chips off the screen: ' + off.join(', '));
-    // Several to a line, not one under another.
-    const rows = await page.$$eval('#statusChips .finmenuitem', (bs) => new Set(bs.map((b) => Math.round(b.getBoundingClientRect().top))).size);
-    const n = await page.locator('#statusChips .finmenuitem').count();
-    if (rows > Math.ceil(n / 2)) throw new Error(`${n} chips on ${rows} lines`);
+    await page.click('#statusChips .sidedropbtn');
+    await page.waitForSelector('#statusChips .sidemenulist button[data-key="analytics"]', { state: 'visible', timeout: 5000 });
+    const off = await page.$$eval('#statusChips .sidemenulist button', (bs) => bs.filter((b) => b.getBoundingClientRect().right > innerWidth + 1 || b.getBoundingClientRect().left < -1).map((b) => b.textContent));
+    if (off.length) throw new Error('menu items off the screen: ' + off.join(', '));
+    await page.click('#statusChips .sidemenulist button[data-key="media"]');
+    await page.waitForSelector('#statusPart .catpage h2:has-text("On the server")', { timeout: 5000 });
     const across = await page.$$eval('#statusPart .cattiles:first-of-type > li', (els) => new Set(els.slice(0, 2).map((e) => Math.round(e.getBoundingClientRect().top))).size);
     if (across !== 1) throw new Error('not two across on a phone');
-    await page.click('#statusChips button[data-key="overview"]');
-    await page.waitForSelector('#statusRows', { state: 'visible', timeout: 5000 });
+    await page.click('#statusChips .sidedropbtn');
+    await page.click('#statusChips .sidemenulist button[data-key="overview"]');
+    await page.waitForSelector('#statusPart .ovcards, #tiles', { state: 'visible', timeout: 5000 });
     if (await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1)) throw new Error('the page scrolls sideways');
   } },
   // From an app's page, a pick in Status' menu goes to that page (the owner, Nov 25: it "just stalls out"), the one it
