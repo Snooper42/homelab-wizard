@@ -29,8 +29,8 @@ struct StatusOverviewTests {
         }
         let one = OverviewApps(status: try status(#"{"apps":[{"id":"a","name":"A","state":"running"},{"id":"m","name":"Mealie","state":"stopped"}]}"#), watchdog: nil)
         #expect(one.unit == "of 2 running")
-        #expect(one.line.hasPrefix("Mealie stopped"))
-        #expect(!one.line.contains("need"))
+        #expect(one.line?.hasPrefix("Mealie stopped") == true)
+        #expect(one.line?.contains("need") == false)
         let two = OverviewApps(status: try status(#"{"apps":[{"id":"a","name":"A","state":"running"},{"id":"m","name":"Mealie","state":"stopped"},{"id":"v","name":"Vikunja","state":"stopped"},{"id":"i","name":"Immich","state":"running","notAnswering":"no answer for 5 minutes"}]}"#), watchdog: nil)
         #expect(two.one == nil && two.unit == "of 4 running")
         #expect(two.line == "Mealie, Vikunja stopped · Immich not answering")
@@ -57,20 +57,20 @@ struct StatusOverviewTests {
         let apps = OverviewApps(status: nil, watchdog: nil)
         #expect(apps.running == 0 && apps.counted == 0 && apps.trouble.isEmpty)
         #expect(apps.one == nil && apps.days.isEmpty)
-        #expect(apps.unit == "running" && apps.line == "All answering")
+        #expect(apps.unit == "running" && apps.line == nil)
     }
 
     @Test func theBackupsCardBeforeAndWithoutCopies() throws {
         func o(_ json: String) throws -> BackupOverview { try JSONDecoder.homelab().decode(BackupOverview.self, from: Data(json.utf8)) }
         let fresh = OverviewBackups(try o(#"{"lastRun":"2026-11-05T03:12:00Z","copies":[{"id":"a","name":"A","state":"fresh"},{"id":"b","name":"B","state":"fresh"}]}"#))
-        #expect(fresh.figure == "2" && fresh.unit == "of 2 copied" && fresh.skipped == nil && fresh.line.hasPrefix("Last run "))
+        #expect(fresh.figure == "2" && fresh.unit == "of 2 copied" && fresh.skipped == nil)
         let one = OverviewBackups(try o(#"{"copies":[{"id":"a","name":"A","state":"fresh"}]}"#))
-        #expect(one.figure == "1" && one.unit == "of 1 copied" && one.line == "Not run yet")
+        #expect(one.figure == "1" && one.unit == "of 1 copied" && one.skipped == nil)
         let none = OverviewBackups(try o(#"{"copies":[]}"#))
         #expect(none.figure == "0" && none.unit == "of 0 copied" && none.skipped == nil)
         // Before Backups is read.
         let reading = OverviewBackups(nil)
-        #expect(reading.figure == "—" && reading.line == "Reading last night…" && reading.nights.isEmpty)
+        #expect(reading.figure == "—" && reading.unit.isEmpty && reading.skipped == nil && reading.nights.isEmpty)
     }
 
     // A folded group's logos: a badge only on what isn't simply running.
@@ -99,13 +99,14 @@ struct StatusOverviewTests {
         #expect(two.figure == "2" && two.unit == "running" && !two.alert)
         #expect(two.days.count == 14)
         #expect(two.days[3].tone == .none && two.days[9].tone == .warn && two.days[13].tone == .ok)
-        #expect(two.line == "All answering · 1 day with an outage in two weeks")
+        // All well: no line, only the squares; VoiceOver says the outages.
+        #expect(two.line == nil && two.daysLabel == "The last two weeks: 1 day with an outage")
         // One still down today: its square is red.
         let down = OverviewApps(status: status, watchdog: try w(#"{"lastRun":"2026-11-14T10:00:00Z","checks":3,"failing":[{"name":"B","problem":"no answer","since":"2026-11-14T09:00:00Z"}],"daily":[{"date":"2026-11-13","failed":0,"runs":96},{"date":"2026-11-14","failed":1,"runs":40}]}"#))
         #expect(down.days.map(\.tone) == [.ok, .bad])
         // From a computer without the daily summary, the week from its outages.
         let week = OverviewApps(status: status, watchdog: try w(#"{"lastRun":"2026-11-14T10:00:00Z","checks":3,"failing":[]}"#))
-        #expect(week.days.count == 7 && week.line == "All answering · no outage this week")
+        #expect(week.days.count == 7 && week.line == nil && week.daysLabel == "This week: no outage")
         // Before the watchdog has run, no squares.
         #expect(OverviewApps(status: status, watchdog: try w(#"{"checks":0,"failing":[]}"#)).days.isEmpty)
     }
@@ -116,7 +117,7 @@ struct StatusOverviewTests {
         let night = try o(#"{"lastRun":"2026-11-24T08:30:00Z","copies":[{"id":"a","name":"Immich","state":"fresh"},{"id":"b","name":"Mealie","state":"stale"},{"id":"c","name":"Navidrome","state":"fresh"}],"stale":1,"nights":[{"date":"2026-11-23","apps":{"immich":"copied"}},{"date":"2026-11-24","apps":{"immich":"copied","mealie":"stopped"}}]}"#)
         let words = OverviewBackups(night)
         #expect(words.figure == "2" && words.unit == "of 3 copied")
-        #expect(words.line.hasPrefix("Last run ") && words.skipped == "Mealie skipped")
+        #expect(words.skipped == "Mealie skipped")
         #expect(words.nights.map(\.tone) == [.ok, .warn])
         let waiting = OverviewBackups(try o(#"{"copies":[{"id":"a","name":"A","state":"fresh"},{"id":"k","name":"Komga","state":"paused"},{"id":"v","name":"Kavita","state":"paused"}]}"#))
         #expect(waiting.figure == "1" && waiting.unit == "of 1 copied" && waiting.skipped == nil)
@@ -128,23 +129,21 @@ struct StatusOverviewTests {
         let words = OverviewMachine(facts, updates: UpdatesState(paused: false, schedule: "daily at 04:00"))
         // In 1024s, as the computer says it (412 GB free of 994 GB).
         #expect(words.title == "This machine" && words.figure.contains("412") && words.unit == "GB free" && !words.low)
-        #expect(words.trailing == "Updates daily at 04:00" && words.line == "Plugged in" && !words.lineAlert)
+        // Fine: nothing in the title row, no line.
+        #expect(words.trailing.isEmpty && words.line.isEmpty)
         #expect(words.barWords.hasSuffix(" used") && (words.bar ?? 0) > 0.5)
         #expect(OverviewMachine(facts, updates: UpdatesState(paused: true, schedule: "daily at 04:00")).trailing == "Updates paused")
         // On battery, or plugged in but free to sleep, is said in amber.
         #expect(MachineFacts.from(.object(["free": .number(1e9), "total": .number(2e9), "power": .string("battery")]))?.needsALook == true)
-        #expect(OverviewMachine(MachineFacts.from(.object(["free": .number(1e9), "total": .number(2e9), "power": .string("plugged")])), updates: nil).lineAlert)
+        #expect(OverviewMachine(MachineFacts.from(.object(["free": .number(1e9), "total": .number(2e9), "power": .string("plugged")])), updates: nil).line == "May sleep")
+        #expect(OverviewMachine(MachineFacts.from(.object(["free": .number(1e9), "total": .number(2e9), "power": .string("battery")])), updates: nil).line == "On battery")
         #expect(MachineFacts.from(.object(["total": .number(0)])) == nil)
         // A computer that sends no facts: the nightly updates alone.
         let none = OverviewMachine(nil, updates: UpdatesState(paused: true, schedule: ""))
-        #expect(none.title == "Updates" && none.figure == "Paused" && none.line == "Until you resume them" && none.bar == nil)
-        // Up for a while: in the title row, the updates moving to the line.
-        let now = Date(timeIntervalSince1970: 1_800_000_000)
-        let up = OverviewMachine(MachineFacts.from(.object(["free": .number(1e9), "total": .number(2e9), "power": .string("plugged"), "keptAwake": .bool(true), "booted": .string("2027-01-01T00:00:00Z")])), updates: UpdatesState(paused: false, schedule: "daily at 04:00"), now: now)
-        #expect(up.trailing.hasPrefix("Up ") && up.trailing.hasSuffix(" days") && up.line == "Plugged in · updates daily at 04:00")
-        #expect(MachineFacts.upFor(now.addingTimeInterval(-30), now: now) == "Up a minute")
-        #expect(MachineFacts.upFor(now.addingTimeInterval(-5 * 3600), now: now) == "Up 5 hours")
-        #expect(MachineFacts.upFor(nil, now: now) == nil)
+        #expect(none.title == "Updates" && none.figure == "Paused" && none.line.isEmpty && none.bar == nil)
+        // How long it's been up isn't said: few words.
+        let booted = OverviewMachine(MachineFacts.from(.object(["free": .number(1e9), "total": .number(2e9), "power": .string("plugged"), "keptAwake": .bool(true), "booted": .string("2027-01-01T00:00:00Z")])), updates: UpdatesState(paused: false, schedule: "daily at 04:00"))
+        #expect(booted.trailing.isEmpty && booted.line.isEmpty)
     }
 
     // A category's row on the Overview: its apps' names under its name, a stopped one first, and what VoiceOver says.

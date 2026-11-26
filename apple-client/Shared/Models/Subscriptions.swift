@@ -1,9 +1,8 @@
 import Foundation
 
-// Status › Subscriptions (the owner, Nov 25 and 26; app-status-subscriptions.png; web/src/status/Subscriptions.tsx):
-// what the apps you run stand in for, each paid service once beside its price (docs/Savings.md, through
-// `SavingsRows`), Library services (a saving only if you own the media) on their own line, then what the apps you
-// don't run yet could replace.
+// Status › Subscriptions, as the computer's (web/src/status/Subscriptions.tsx): each paid service the apps you run
+// stand in for, once, at its price (docs/Savings.md through `SavingsRows`), then what more the others could replace.
+// Library services (a saving only if you own the media) stay out of the total.
 
 /// One row of docs/Savings.md (`savings.Offer`): the apps that together replace a paid service, and its price.
 struct SubscriptionOffer: Decodable, Sendable, Equatable {
@@ -60,10 +59,6 @@ struct SubscriptionsSummary: Equatable {
     let year: Double
     let month: Double
     let counted: Int
-    /// Library services replaced: what they'd save a year if you own the media, how many, and the dearest's name.
-    let libraryYear: Double
-    let library: Int
-    let libraryExample: String?
     /// What the apps you don't run could save more a year (Library apart).
     let could: Double
     /// Where the year comes from: each catalog category's share, largest first.
@@ -88,7 +83,7 @@ struct SubscriptionsSummary: Equatable {
         let now = perService(all.filter(runs))
         let replaced = Set(now.map(key))
         let more = perService(all.filter { !runs($0) && !replaced.contains(key($0)) })
-        let counted = now.filter { !$0.isLibrary }, library = now.filter(\.isLibrary)
+        let counted = now.filter { !$0.isLibrary }
         let year = counted.reduce(0) { $0 + $1.annual }
         var byCategory: [(id: String, amount: Double)] = []
         for o in counted {
@@ -102,7 +97,6 @@ struct SubscriptionsSummary: Equatable {
             }
         return SubscriptionsSummary(
             now: now, more: more, year: year, month: counted.reduce(0) { $0 + $1.monthly }, counted: counted.count,
-            libraryYear: library.reduce(0) { $0 + $1.annual }, library: library.count, libraryExample: library.first?.service,
             could: more.filter { !$0.isLibrary }.reduce(0) { $0 + $1.annual }, parts: parts)
     }
 
@@ -130,16 +124,8 @@ struct SubscriptionsSummary: Equatable {
         return order.compactMap { out[$0] }
     }
 
-    /// The line under the title: "$1,457 a year, $150 a month, instead of 15 subscriptions".
-    var lead: String {
-        "\(Self.money(year)) a year, \(Self.money(month)) a month, instead of \(counted) subscription\(counted == 1 ? "" : "s")"
-    }
-
-    /// "+ $2,028 a year more if you own the media (12 like Spotify Premium Family)"; nil without Library services.
-    var libraryLine: String? {
-        guard libraryYear > 0, let example = libraryExample else { return nil }
-        return "+ \(Self.money(libraryYear)) a year more if you own the media (\(library) like \(example))"
-    }
+    /// The line under the title: "$1,457 a year · $150 a month".
+    var lead: String { "\(Self.money(year)) a year · \(Self.money(month)) a month" }
 
     /// "$1,457", "$21.99", as the computer writes them.
     static func money(_ n: Double) -> String {

@@ -1,9 +1,8 @@
 import Foundation
 
-// Analytics on Status (the owner, Nov 25: app-status-analytics.png; web/src/status/Analytics.tsx): the processor,
-// memory and drives now, the apps' use over the minutes since Status' Analytics opened, and what each app uses,
-// heaviest first. From what a phone is served today: the "usage" card (`docker.Stat`, every app's containers), the
-// "storage" card (each app's folder) and the machine's facts. Day, Week and Month wait for `UsageHistory` on a phone.
+// Analytics on Status, as the computer's (web/src/status/Analytics.tsx): the processor, memory and drives now, the
+// apps' use over time, and what each app uses, heaviest first. From the "usage" card (`docker.Stat`), the "storage"
+// card (each app's folder), the machine's facts, and `UsageHistory` for a day, a week or a month.
 
 /// One reading of every app together: their processor (percent of one core) and memory (bytes).
 struct UsageSample: Equatable, Sendable, Identifiable {

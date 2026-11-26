@@ -1,9 +1,7 @@
 import SwiftUI
 
-// Status' Overview as the computer's (the owner's pictures, Nov 25: docs/images/app-status.png, app-phone.png;
-// web/src/status/Tiles.tsx and CategoryPanel.tsx): three cards of one anatomy (a title row, one figure, one line, a
-// footer), Apps, Backups and the machine; then the categories as a list, each opening its page. Nothing below them.
-// Never "needs you": each card says what happened ("Mealie stopped", "Mealie skipped").
+// Status' Overview, as the computer's (web/src/status/Tiles.tsx, CategoryPanel.tsx): Apps, Backups and the machine
+// as three cards of one anatomy, then the categories. A card is its title, its figure, and problems only.
 
 /// One square of the Apps card's days or the Backups card's nights.
 struct DaySquare: Equatable, Sendable, Identifiable {
@@ -13,8 +11,7 @@ struct DaySquare: Equatable, Sendable, Identifiable {
     let words: String
 }
 
-/// The Apps card's words, from the status and the watchdog alone, so they can be tested without a screen
-/// (`Tiles` in web/src/status/Tiles.tsx).
+/// The Apps card's words, from the status and the watchdog alone.
 struct OverviewApps: Equatable {
     let running: Int
     /// The apps counted: the companion waiting for its scheduled jobs isn't, as on the computer.
@@ -25,8 +22,6 @@ struct OverviewApps: Equatable {
     let missing: Int
     /// The watchdog's days, oldest first: fourteen from a computer that keeps them, else the week from its outages.
     let days: [DaySquare]
-    /// When the watchdog last checked.
-    let checked: Date?
 
     init(status: HomelabStatus?, watchdog: WatchdogSummary?, now: Date = .now, calendar: Calendar = .current) {
         let apps = status?.apps ?? []
@@ -35,7 +30,6 @@ struct OverviewApps: Equatable {
         trouble = apps.filter(\.needsAttention)
         missing = status?.missing ?? 0
         days = Self.days(watchdog, now: now, calendar: calendar)
-        checked = watchdog?.lastRun
     }
 
     /// "22" over "running", or "21" over "of 22 running" when one isn't.
@@ -46,23 +40,19 @@ struct OverviewApps: Equatable {
     /// The one app that stopped or isn't well: named with its logo, and its buttons.
     var one: AppStatus? { trouble.count == 1 ? trouble[0] : nil }
 
-    /// The line under the figure: what's down, the one app and what happened to it, the several grouped, or the
-    /// days: "All answering · no outage this week".
-    var line: String {
+    /// The line under the figure, only when something's wrong: what's down, the one app and what happened to it,
+    /// or the several grouped.
+    var line: String? {
         if missing > 0 { return missing == 1 ? "1 of the homelab's own apps is down" : "\(missing) of the homelab's own apps are down" }
         if let one { return "\(one.name) \(Self.lowered(one.detailLine))" }
         if !trouble.isEmpty { return Self.troubleLine(trouble) }
-        guard !days.isEmpty else { return "All answering" }
-        let outages = days.filter { $0.tone == .warn || $0.tone == .bad }.count
-        return "All answering · " + (outages == 0 ? "no outage \(span)" : "\(outages == 1 ? "1 day" : "\(outages) days") with an outage \(span)")
+        return nil
     }
-
-    private var span: String { days.count > 7 ? "in two weeks" : "this week" }
 
     /// What VoiceOver says for the squares.
     var daysLabel: String {
         let outages = days.filter { $0.tone == .warn || $0.tone == .bad }.count
-        return (days.count > 7 ? "The last two weeks: " : "This week: ") + (outages == 0 ? "no outage" : "\(outages) days with an outage")
+        return (days.count > 7 ? "The last two weeks: " : "This week: ") + (outages == 0 ? "no outage" : outages == 1 ? "1 day with an outage" : "\(outages) days with an outage")
     }
 
     /// What's wrong with each, grouped: "Mealie, Vikunja stopped · Immich not answering" (`troubleLine`).
@@ -115,69 +105,60 @@ struct OverviewApps: Equatable {
     static func lowered(_ words: String) -> String { words.prefix(1).lowercased() + words.dropFirst() }
 }
 
-/// The Backups card's words: how many of last night's copies were made, when, what was skipped, and the last
-/// fourteen nights (`lastNight` in web/src/screens/status.ts).
+/// The Backups card's words: how many of last night's copies were made, what was skipped, and the last fourteen
+/// nights.
 struct OverviewBackups: Equatable {
     let figure: String
     let unit: String
-    /// "Last run Thu 7:48 AM", "Not run yet", or "Reading last night…" before Backups is read.
-    let line: String
     /// "Mealie, Vikunja skipped"; nil when nothing was.
     let skipped: String?
     let nights: [DaySquare]
 
     init(_ o: BackupOverview?) {
         guard let o else {
-            figure = "—"; unit = ""; line = "Reading last night…"; skipped = nil; nights = []
+            figure = "—"; unit = ""; skipped = nil; nights = []
             return
         }
         let count = o.upToDate
         figure = "\(count.fresh)"
         unit = "of \(count.of) copied"
-        line = o.lastRun.map { "Last run " + $0.formatted(.dateTime.weekday(.abbreviated)) + " " + $0.formatted(date: .omitted, time: .shortened) } ?? "Not run yet"
         let names = o.copies.filter { $0.state == "stale" }.map(\.name)
         skipped = names.isEmpty ? nil : names.joined(separator: ", ") + " skipped"
         nights = o.lastNights().map { DaySquare(id: $0.id, tone: $0.tone, words: $0.words(name: o.nightName)) }
     }
 }
 
-/// The machine card's words (`MachineCard` in web/src/status/Tiles.tsx): its free space as the figure, its power
-/// on the line, how long it has been up (or the nightly updates) in the title row, and the drive's room as a bar.
-/// From a computer that sends no facts, the nightly updates alone.
+/// The machine card's words (`MachineCard` in Tiles.tsx): its free space, *Updates paused* and the power only when
+/// so, and the drive's room as a bar. From a computer that sends no facts, the nightly updates alone.
 struct OverviewMachine: Equatable {
     let title: String
+    /// "Updates paused", in amber; empty otherwise.
     let trailing: String
     let figure: String
     let unit: String
+    /// "On battery" or "May sleep", in amber; empty otherwise.
     let line: String
     /// Little room left: the figure in red.
     let low: Bool
-    /// On battery, or plugged in but free to sleep: the line in amber.
-    let lineAlert: Bool
     /// The drive's share used and its words ("582 GB of 994 GB used"); nil without facts.
     let bar: Double?
     let barWords: String
 
-    init(_ m: MachineFacts?, updates: UpdatesState?, now: Date = .now) {
+    init(_ m: MachineFacts?, updates: UpdatesState?) {
         let paused = updates?.paused == true
-        let schedule = updates?.schedule ?? ""
-        let updatesWords = paused ? "Updates paused" : "Updates " + (schedule.isEmpty ? "nightly" : schedule)
         guard let m else {
             title = "Updates"; trailing = ""
             figure = paused ? "Paused" : "On"; unit = ""
-            line = paused ? "Until you resume them" : "Run " + (schedule.isEmpty ? "nightly" : schedule)
-            low = false; lineAlert = false; bar = nil; barWords = ""
+            line = ""; low = false; bar = nil; barWords = ""
             return
         }
-        let up = MachineFacts.upFor(m.booted, now: now)
         title = "This machine"
-        trailing = up ?? updatesWords
+        trailing = paused ? "Updates paused" : ""
         let free = m.freeParts
         figure = free.figure
         unit = free.unit
-        line = [m.powerWords, up == nil ? nil : OverviewApps.lowered(updatesWords)].compactMap { $0 }.joined(separator: " · ")
+        line = m.power == "battery" ? "On battery" : (m.power == "plugged" && !m.keptAwake) ? "May sleep" : ""
         low = m.low
-        lineAlert = m.power == "battery" || (m.power == "plugged" && !m.keptAwake)
         bar = m.usedShare
         barWords = m.usedWords
     }
@@ -255,6 +236,7 @@ enum StatusPlace: Hashable {
 struct OverviewCard<Line: View, Footer: View>: View {
     let title: String
     var trailing: String = ""
+    var trailingTone: Color? = nil
     let figure: String
     var unit: String = ""
     var tone: Color? = nil
@@ -263,8 +245,7 @@ struct OverviewCard<Line: View, Footer: View>: View {
     @Environment(\.dynamicTypeSize) private var typeSize
 
     var body: some View {
-        // The title row's words under the title at the largest text sizes: beside it they squeezed the title to
-        // "Backu" (large-status, Nov 26).
+        // At the largest text sizes the title row's words go under the title, which keeps its whole width.
         let large = typeSize.isAccessibilitySize
         let titleRow = large
             ? AnyLayout(VStackLayout(alignment: .leading, spacing: 2))
@@ -279,7 +260,7 @@ struct OverviewCard<Line: View, Footer: View>: View {
                 if !trailing.isEmpty {
                     Text(verbatim: trailing)
                         .font(.subheadline)
-                        .foregroundStyle(Theme.secondaryInk)
+                        .foregroundStyle(trailingTone ?? Theme.secondaryInk)
                         .lineLimit(large ? 3 : 1)
                         .minimumScaleFactor(large ? 1 : 0.8)
                 }
@@ -344,17 +325,16 @@ struct OverviewAppsCard: View {
     @Environment(AppActionsViewModel.self) private var actions
 
     var body: some View {
-        OverviewCard(title: "Apps", trailing: words.checked.map { "Checked " + $0.formatted(.relative(presentation: .named)) } ?? "",
-                     figure: words.figure, unit: words.unit, tone: words.alert ? Theme.warning : nil) {
-            if let one = words.one, words.missing == 0 {
+        OverviewCard(title: "Apps", figure: words.figure, unit: words.unit, tone: words.alert ? Theme.warning : nil) {
+            if let line = words.line, let one = words.one, words.missing == 0 {
                 // The logo beside the line's first line, not the middle of a wrapped one.
                 HStack(alignment: .top, spacing: 8) {
                     AppIconView(app: one, size: 22, stateBadge: false)
-                    Text(verbatim: words.line)
+                    Text(verbatim: line)
                         .lineLimit(3)
                 }
-            } else {
-                Text(verbatim: words.line)
+            } else if let line = words.line {
+                Text(verbatim: line)
                     .foregroundStyle(words.missing > 0 ? Theme.danger : Theme.secondaryInk)
             }
         } footer: {
@@ -406,12 +386,11 @@ struct OverviewBackupsCard: View {
 
     var body: some View {
         Button { IntentInbox.shared.screen = .backups } label: {
-            OverviewCard(title: "Backups", trailing: "Every night at 03:30", figure: words.figure, unit: words.unit,
+            OverviewCard(title: "Backups", figure: words.figure, unit: words.unit,
                          tone: words.skipped == nil ? nil : Theme.warning) {
                 if let skipped = words.skipped {
-                    Text("\(Text(verbatim: words.line)) · \(Text(verbatim: skipped).foregroundStyle(Theme.warning))")
-                } else {
-                    Text(verbatim: words.line)
+                    Text(verbatim: skipped)
+                        .foregroundStyle(Theme.warning)
                 }
             } footer: {
                 if !words.nights.isEmpty {
@@ -430,11 +409,11 @@ struct OverviewMachineCard: View {
     let computer: ComputerViewModel
 
     var body: some View {
-        OverviewCard(title: words.title, trailing: words.trailing, figure: words.figure, unit: words.unit,
-                     tone: words.low ? Theme.danger : nil) {
+        OverviewCard(title: words.title, trailing: words.trailing, trailingTone: Theme.warning, figure: words.figure,
+                     unit: words.unit, tone: words.low ? Theme.danger : nil) {
             if !words.line.isEmpty {
                 Text(verbatim: words.line)
-                    .foregroundStyle(words.lineAlert ? Theme.warning : Theme.secondaryInk)
+                    .foregroundStyle(Theme.warning)
             }
         } footer: {
             HStack(alignment: .bottom, spacing: 12) {
@@ -623,9 +602,8 @@ extension StatusCategory {
     }
 }
 
-/// A category's page (the computer's, two across on a phone: app-status-category-phone.png): its apps as tiles,
-/// each with its dot, its logo, one live line, Open or Start, and ⋯; then the catalog's others, faded, under
-/// *Add to <category>* (no Install on a phone yet: they're added on the computer).
+/// A category's page: its apps as tiles, each with its dot, its logo, one live line, Open or Start, and ⋯; then the
+/// catalog's others, faded, under *Add to <category>*. They're added on the computer.
 struct CategoryPage: View {
     let model: DashboardViewModel
     let id: String
@@ -846,66 +824,29 @@ struct EveryAppPage: View {
 
 // MARK: - The one app's buttons
 
-/// The app's everyday action (Start for a stopped one, Restart for one
-/// that isn't well) and Logs, as capsules.
+/// The app's everyday action (Start for a stopped one, Restart for one that isn't well) and Logs, as small capsules.
 struct HeroButtons: View {
     let app: AppStatus
-    /// As the redesign's card (phone-status.png): each a symbol and its word, the buttons sharing the width.
-    var wide = false
     @Environment(AppActionsViewModel.self) private var actions
     @Environment(DashboardViewModel.self) private var dashboard
 
     var body: some View {
-        // Wide, the card's layout places each beside Its Page; otherwise together in a row of their own.
-        if wide {
-            buttons
-        } else {
-            HStack(spacing: 8) { buttons }
-        }
-    }
-
-    @ViewBuilder
-    private var buttons: some View {
-        if let action = actions.available(for: app).first(where: \.isEveryday) {
-            Button { actions.request(action, on: app) } label: {
-                label(action.title, symbol: action.systemImage)
+        HStack(spacing: 8) {
+            if let action = actions.available(for: app).first(where: \.isEveryday) {
+                Button(action.title) { actions.request(action, on: app) }
+                    .buttonStyle(.borderedProminent)
+                    .tint(Theme.accentFill)
+                    .disabled(actions.isBusy)
             }
-            .buttonStyle(.borderedProminent)
-            .tint(Theme.accentFill)
-            .disabled(actions.isBusy)
-            .modifier(HeroButtonLook(wide: wide))
-        }
-        if app.hasLogs {
-            Button { dashboard.logsApp = app } label: {
-                label("Logs", symbol: "line.3.horizontal")
+            if app.hasLogs {
+                Button("Logs") { dashboard.logsApp = app }
+                    .buttonStyle(.bordered)
             }
-            .buttonStyle(.bordered)
-            .modifier(HeroButtonLook(wide: wide))
         }
-    }
-
-    @ViewBuilder
-    private func label(_ title: String, symbol: String) -> some View {
-        if wide {
-            Label(title, systemImage: symbol)
-                .lineLimit(1)
-                .frame(maxWidth: .infinity)
-        } else {
-            Text(title)
-        }
-    }
-}
-
-/// The hero card's capsules: small beside other words; on the redesign's card a size up, sharing the width.
-struct HeroButtonLook: ViewModifier {
-    let wide: Bool
-
-    func body(content: Content) -> some View {
-        content
-            .buttonBorderShape(.capsule)
-            .controlSize(wide ? .regular : .small)
-            .font(.subheadline.weight(.semibold))
-            .dynamicTypeSize(...DynamicTypeSize.accessibility1)
+        .buttonBorderShape(.capsule)
+        .controlSize(.small)
+        .font(.subheadline.weight(.semibold))
+        .dynamicTypeSize(...DynamicTypeSize.accessibility1)
     }
 }
 
@@ -925,7 +866,7 @@ extension View {
     }
 }
 
-// MARK: - When Homelab Wizard stopped (the owner's pick, Nov 16)
+// MARK: - When Homelab Wizard stopped
 
 /// The computer's crash note at the top of Status: which part of Homelab
 /// Wizard stopped unexpectedly and when, Share the Report (shown in full
