@@ -260,20 +260,28 @@ struct OverviewCard<Line: View, Footer: View>: View {
     var tone: Color? = nil
     @ViewBuilder let line: Line
     @ViewBuilder let footer: Footer
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     var body: some View {
+        // The title row's words under the title at the largest text sizes: beside it they squeezed the title to
+        // "Backu" (large-status, Nov 26).
+        let large = typeSize.isAccessibilitySize
+        let titleRow = large
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 2))
+            : AnyLayout(HStackLayout(alignment: .firstTextBaseline, spacing: 8))
         VStack(alignment: .leading, spacing: 6) {
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
+            titleRow {
                 Text(verbatim: title)
                     .font(.headline)
                     .foregroundStyle(Theme.ink)
-                Spacer(minLength: 8)
+                    .fixedSize(horizontal: !large, vertical: false)
+                if !large { Spacer(minLength: 8) }
                 if !trailing.isEmpty {
                     Text(verbatim: trailing)
                         .font(.subheadline)
                         .foregroundStyle(Theme.secondaryInk)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.8)
+                        .lineLimit(large ? 3 : 1)
+                        .minimumScaleFactor(large ? 1 : 0.8)
                 }
             }
             HStack(alignment: .firstTextBaseline, spacing: 6) {
@@ -339,10 +347,11 @@ struct OverviewAppsCard: View {
         OverviewCard(title: "Apps", trailing: words.checked.map { "Checked " + $0.formatted(.relative(presentation: .named)) } ?? "",
                      figure: words.figure, unit: words.unit, tone: words.alert ? Theme.warning : nil) {
             if let one = words.one, words.missing == 0 {
-                HStack(spacing: 8) {
+                // The logo beside the line's first line, not the middle of a wrapped one.
+                HStack(alignment: .top, spacing: 8) {
                     AppIconView(app: one, size: 22, stateBadge: false)
                     Text(verbatim: words.line)
-                        .lineLimit(2)
+                        .lineLimit(3)
                 }
             } else {
                 Text(verbatim: words.line)
