@@ -2,7 +2,8 @@
 // actions and the sheets they open, a homelab command with its preview,
 // and the phone's report.
 import { sendTo, targetsFor } from '../phone/send';
-import { ago } from '../format';
+import { ago, bytes } from '../format';
+import { drawFoot } from './setup';
 import { mountSavings, mountTiles, troubled, type MachineFacts } from '../status/Tiles';
 import { machineNow, onMachine } from '../status/machine';
 import { mountUndoNote } from '../status/UndoNote';
@@ -466,6 +467,11 @@ function showCard(c) {
     case 'storage': showStorage(err ? null : data); break;
     case 'machine':
       phoneMachine = err ? null : data;
+      // The web page's foot says what the computer's does: its free space and power, with how it is.
+      if (phoneMachine?.total) {
+        const m = phoneMachine;
+        drawFoot({ machine: { words: `${bytes(m.free)} free${m.power === 'battery' ? ' · on battery' : m.power === 'plugged' ? ' · plugged in' : ''}`, tone: m.low ? 'bad' : m.power === 'battery' ? 'warn' : 'ok' } });
+      }
       if (lastStatus) renderTiles(lastStatus);
       break;
     case 'usage': showUsage((!err && data) || []); break;
