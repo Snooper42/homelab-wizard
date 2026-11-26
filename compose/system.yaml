@@ -44,9 +44,9 @@ services:
     ports:
       - ${BIND_IP:-127.0.0.1}:${DUPLICATI_PORT:-8200}:8200
     volumes:
-      - ./data/appdata/duplicati:/config
+      - ${APPDATA_ROOT:-./data/appdata}/duplicati:/config
       # Sources are read-only. Restore into /staging, then copy back.
-      - ./data/appdata:/source/appdata:ro
+      - ${APPDATA_ROOT:-./data/appdata}:/source/appdata:ro
       - ./appdata:/source/homelab-appdata:ro
       - ./stacks:/source/stacks:ro
       - ${JELLYFIN_DATA_DIR:-~/.local/share/jellyfin}:/source/jellyfin:ro
@@ -90,11 +90,11 @@ services:
       - ${BIND_IP:-127.0.0.1}:${KOPIA_PORT:-51515}:51515
     volumes:
       - ./config/kopia/start.sh:/homelab/start.sh:ro
-      - ./data/appdata/kopia/config:/app/config
+      - ${APPDATA_ROOT:-./data/appdata}/kopia/config:/app/config
       # Outside the folders it backs up, so it never copies its own cache.
       - ./data/kopia/cache:/app/cache
       - ./data/kopia/logs:/app/logs
-      - ./data/appdata:/source/appdata:ro
+      - ${APPDATA_ROOT:-./data/appdata}:/source/appdata:ro
       - ./appdata:/source/homelab-appdata:ro
       - ./stacks:/source/stacks:ro
       - ${JELLYFIN_DATA_DIR:-~/.local/share/jellyfin}:/source/jellyfin:ro
@@ -135,7 +135,7 @@ services:
       - ${BIND_IP:-127.0.0.1}:${HOMARR_PORT:-7575}:7575
     networks: [default, socket]
     volumes:
-      - ./data/appdata/homarr:/appdata
+      - ${APPDATA_ROOT:-./data/appdata}/homarr:/appdata
     depends_on: [docker-socket-proxy]
     x-homelab:
       same_job:
@@ -159,7 +159,7 @@ services:
     # socket: for container status, when docker.yaml names docker-socket-proxy.
     networks: [default, socket]
     volumes:
-      - ./data/appdata/homepage:/app/config
+      - ${APPDATA_ROOT:-./data/appdata}/homepage:/app/config
     x-homelab:
       name: Homepage
       category: system

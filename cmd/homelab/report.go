@@ -71,7 +71,7 @@ func (h *homelab) report(ctx context.Context, args []string) error {
 	run("setup checklist", h.setupChecklist)
 	run("scheduled jobs", h.schedule, "status")
 	run("duplicati jobs", h.duplicatiCmd, "jobs")
-	run("weekly summary", h.digestCmd)
+	run("weekly summary", h.digestCmd, "--no-money")
 	section("watchdog (last run)")
 	if w := health.LoadState(health.StatePath(h.root)).Summary(); w.LastRun.IsZero() {
 		b.WriteString("not run yet\n")
