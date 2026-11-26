@@ -120,7 +120,7 @@ export function Checklist({ steps, showDone, showLater, running, failed = {}, on
   }
   return (
     <>
-      {!!now.length && <li class="grouphead">{`Needs you · ${now.length}`}</li>}
+      {!!now.length && <li class="grouphead">{`To do · ${now.length}`}</li>}
       {now.map((s, i) => row(s, i + 1))}
       {!!later.length && <Fold id="toggleLater" cls="later" title={`Can wait · ${later.length}`} names={later.map((s) => s.title).join(', ')} shown={showLater} toggle={on.toggleLater} />}
       {showLater && later.map((s, i) => row(s, now.length + i + 1))}

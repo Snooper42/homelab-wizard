@@ -3,11 +3,12 @@
 import { mountBackupTiles, mountCopyRows, mountJobs, mountKopia, mountVault, placeName } from '../backups/Backups';
 import { jobFinished, jobStarted } from '../job/done';
 import { store } from '../store';
-import { appActions, statusById, statusData } from './status';
+import { appActions, pickStatusPart, setBackupProblems, statusById, statusData } from './status';
+import { h, render } from 'preact';
+import { Crumbs } from '../parts/Crumbs';
 import { cliProgress, endJob, startJob } from '../jobs';
 import { inTurn, waitWords } from '../job/queue';
 import { $, go, osName, showError } from '../core';
-import { goToPart, mountSideMenu, sideIcons } from '../parts/SideMenu';
 
 // Backups: the newest copy of each database and volume, the destination,
 // and the last restore test, read from the files the nightly job leaves.
@@ -39,8 +40,6 @@ function drawBackups() {
   const addGap = () => backupTask('duplicati-setup', 'Adding the backup job…', 'Backup job added', 'Adding the job stopped: the log says why');
   mountBackupTiles($('backupTiles'), { o, os: osName, test: testable ? test : undefined, apps: statusData.value ? statusById : undefined, start: (a) => appActions.act(a, 'start'), gaps, addGap });
   mountCopyRows($('backupRows'), { o, apps: statusData.value ? statusById : undefined });
-  backupsNeed = (o.copies || []).filter((c) => c.state === 'stale' || c.state === 'paused').length;
-  drawBackupsSide();
   mountVault($('vaultCard'), { o });
   $('kopiaCard').hidden = !o.kopia;
   mountKopia($('kopiaCard'), o.kopia ? { k: o.kopia, test: () => backupTask('restore-test-kopia', "Testing Kopia's restore (a few minutes)…", "Kopia's restore test passed", "Kopia's restore test failed: the log says why") } : null);
@@ -49,6 +48,7 @@ function drawBackups() {
   const appDown = (c: backup.Copy) => !!c.app && !!statusById[c.app] && statusById[c.app].state !== 'running';
   const problems = (o.copies || []).filter((c) => c.state === 'stale' && !appDown(c)).length + (o.plainExports || []).length + (o.kopia?.failed ? 1 : 0);
   $('backupsCount').textContent = problems ? String(problems) : '';
+  setBackupProblems(problems);
   const dup = statusById.duplicati;
   $('openDuplicati').hidden = !(dup?.state === 'running' && dup.url);
   $('openDuplicati').onclick = () => go().Open(dup.url);
@@ -135,21 +135,5 @@ $('recoveryKit').onclick = async () => {
   btn.disabled = false;
 };
 
-// Backups' menu in the sidebar (parts/SideMenu): each card, a pick going to it; Needs you with how many wait.
-let backupsNeed = 0;
-let backupsHere = 'night';
-const backupParts: [string, string, string, string][] = [
-  ['night', 'Last night', sideIcons.night, 'copiesTile'], ['needs', 'Needs you', sideIcons.attention, 'needsYou'],
-  ['restore', 'Restore test', sideIcons.restore, 'restoreTile'], ['offsite', 'Off-site', sideIcons.offsite, 'offsiteTile'],
-  ['apps', 'Each app', sideIcons.apps, 'copiesCard'],
-];
-function drawBackupsSide() {
-  mountSideMenu($('backupsSide'), {
-    label: 'Backups', here: backupsHere, pick: (key) => {
-      backupsHere = key;
-      drawBackupsSide();
-      goToPart('backups', key === 'night' ? null : document.getElementById(backupParts.find((p) => p[0] === key)![3]));
-    },
-    items: backupParts.filter((p) => !!document.getElementById(p[3])).map(([key, label, icon]) => ({ key, label, icon, count: key === 'needs' ? backupsNeed : undefined })),
-  });
-}
+// Backups is one of Status' pages (the owner, Nov 25): its trail leads back there, as a category's does.
+render(h(Crumbs, { trail: [{ label: 'Status', go: () => pickStatusPart('overview') }], here: 'Backups' }), $('backupsCrumbs'));

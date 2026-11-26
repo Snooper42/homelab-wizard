@@ -42,6 +42,7 @@ export const sideIcons: Record<string, string> = {
   'media-automation': 'M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15',
   household: 'M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM9 22V12h6v10',
   other: 'M12 2a10 10 0 1 0 0 20 10 10 0 1 0 0-20zM8 12h.01M12 12h.01M16 12h.01',
+  backups: 'M21 8v13H3V8M1 3h22v5H1zM10 12h4',
   night: 'M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z',
   restore: 'M1 4v6h6M3.51 15a9 9 0 1 0 2.13-9.36L1 10',
   offsite: 'M3 11h18v11H3zM7 11V7a5 5 0 0 1 10 0v4',

@@ -671,7 +671,7 @@
       ] });
     }
     return /* @__PURE__ */ u3(S, { children: [
-      !!now2.length && /* @__PURE__ */ u3("li", { class: "grouphead", children: `Needs you · ${now2.length}` }),
+      !!now2.length && /* @__PURE__ */ u3("li", { class: "grouphead", children: `To do · ${now2.length}` }),
       now2.map((s3, i3) => row(s3, i3 + 1)),
       !!later2.length && /* @__PURE__ */ u3(Fold, { id: "toggleLater", cls: "later", title: `Can wait · ${later2.length}`, names: later2.map((s3) => s3.title).join(", "), shown: showLater, toggle: on2.toggleLater }),
       showLater && later2.map((s3, i3) => row(s3, now2.length + i3 + 1)),
@@ -1665,7 +1665,7 @@
       ] }),
       /* @__PURE__ */ u3(Card, { kind: "bkcard bkneeds", id: "needsYou", children: [
         /* @__PURE__ */ u3(CardHead, { title: /* @__PURE__ */ u3(S, { children: [
-          "Needs you",
+          "Skipped",
           !!stale.length && /* @__PURE__ */ u3("span", { class: "bkcount", children: stale.length })
         ] }) }),
         needs.length ? /* @__PURE__ */ u3(Rows, { kind: "bkneedlist", children: needs.map((c4) => {
@@ -1681,7 +1681,7 @@
             },
             c4.id
           );
-        }) }) : /* @__PURE__ */ u3("p", { class: "bksub ok", children: "✓ Nothing needs you: every copy is up to date." })
+        }) }) : /* @__PURE__ */ u3("p", { class: "bksub ok", children: "✓ Every copy is up to date." })
       ] }),
       /* @__PURE__ */ u3(RestoreTile, { t: o3.restoreTest || {}, due: o3.restoreDue, test }),
       /* @__PURE__ */ u3(Card, { kind: "bkcard", id: "offsiteTile", children: [
@@ -5090,6 +5090,7 @@
     "media-automation": "M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15",
     household: "M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM9 22V12h6v10",
     other: "M12 2a10 10 0 1 0 0 20 10 10 0 1 0 0-20zM8 12h.01M12 12h.01M16 12h.01",
+    backups: "M21 8v13H3V8M1 3h22v5H1zM10 12h4",
     night: "M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z",
     restore: "M1 4v6h6M3.51 15a9 9 0 1 0 2.13-9.36L1 10",
     offsite: "M3 11h18v11H3zM7 11V7a5 5 0 0 1 10 0v4",
@@ -9103,14 +9104,13 @@
     const addGap = () => backupTask("duplicati-setup", "Adding the backup job…", "Backup job added", "Adding the job stopped: the log says why");
     mountBackupTiles($("backupTiles"), { o: o3, os: osName, test: testable2 ? test : void 0, apps: statusData.value ? statusById : void 0, start: (a3) => appActions.act(a3, "start"), gaps, addGap });
     mountCopyRows($("backupRows"), { o: o3, apps: statusData.value ? statusById : void 0 });
-    backupsNeed = (o3.copies || []).filter((c4) => c4.state === "stale" || c4.state === "paused").length;
-    drawBackupsSide();
     mountVault($("vaultCard"), { o: o3 });
     $("kopiaCard").hidden = !o3.kopia;
     mountKopia($("kopiaCard"), o3.kopia ? { k: o3.kopia, test: () => backupTask("restore-test-kopia", "Testing Kopia's restore (a few minutes)…", "Kopia's restore test passed", "Kopia's restore test failed: the log says why") } : null);
     const appDown = (c4) => !!c4.app && !!statusById[c4.app] && statusById[c4.app].state !== "running";
     const problems = (o3.copies || []).filter((c4) => c4.state === "stale" && !appDown(c4)).length + (o3.plainExports || []).length + (o3.kopia?.failed ? 1 : 0);
     $("backupsCount").textContent = problems ? String(problems) : "";
+    setBackupProblems(problems);
     const dup = statusById.duplicati;
     $("openDuplicati").hidden = !(dup?.state === "running" && dup.url);
     $("openDuplicati").onclick = () => go().Open(dup.url);
@@ -9223,27 +9223,7 @@
     }
     btn.disabled = false;
   };
-  var backupsNeed = 0;
-  var backupsHere = "night";
-  var backupParts = [
-    ["night", "Last night", sideIcons.night, "copiesTile"],
-    ["needs", "Needs you", sideIcons.attention, "needsYou"],
-    ["restore", "Restore test", sideIcons.restore, "restoreTile"],
-    ["offsite", "Off-site", sideIcons.offsite, "offsiteTile"],
-    ["apps", "Each app", sideIcons.apps, "copiesCard"]
-  ];
-  function drawBackupsSide() {
-    mountSideMenu($("backupsSide"), {
-      label: "Backups",
-      here: backupsHere,
-      pick: (key7) => {
-        backupsHere = key7;
-        drawBackupsSide();
-        goToPart("backups", key7 === "night" ? null : document.getElementById(backupParts.find((p3) => p3[0] === key7)[3]));
-      },
-      items: backupParts.filter((p3) => !!document.getElementById(p3[3])).map(([key7, label, icon]) => ({ key: key7, label, icon, count: key7 === "needs" ? backupsNeed : void 0 }))
-    });
-  }
+  R(k(Crumbs, { trail: [{ label: "Status", go: () => pickStatusPart("overview") }], here: "Backups" }), $("backupsCrumbs"));
 
   // web/src/screens/status.ts
   var offers = null;
@@ -9425,12 +9405,29 @@
   var statusParts = [];
   var statusSide = [];
   var statusHere = "overview";
+  var backupProblems = 0;
+  function setBackupProblems(n3) {
+    if (n3 !== backupProblems) {
+      backupProblems = n3;
+      drawStatusSide();
+    }
+  }
+  function statusSideChanged() {
+    drawStatusSide();
+  }
   function drawStatusSide() {
+    const onBackups = $("backups").classList.contains("active");
     const menu2 = {
       label: "Status",
-      here: statusHere,
+      here: onBackups ? "backups" : statusHere,
       pick: pickStatusPart,
-      items: [{ key: "overview", label: "Overview", icon: sideIcons.overview }, { key: "analytics", label: "Analytics", icon: sideIcons.analytics }, { key: "subscriptions", label: "Subscriptions", icon: sideIcons.finance }, ...statusSide]
+      items: [
+        { key: "overview", label: "Overview", icon: sideIcons.overview },
+        { key: "analytics", label: "Analytics", icon: sideIcons.analytics },
+        { key: "subscriptions", label: "Subscriptions", icon: sideIcons.finance },
+        { key: "backups", label: "Backups", icon: sideIcons.backups, count: backupProblems || void 0 },
+        ...statusSide
+      ]
     };
     mountSideMenu($("statusSide"), menu2);
     mountSideDropdown($("statusChips"), onPhone() ? { ...menu2, label: "Status parts", here: statusHere.startsWith("add:") ? "" : statusHere } : null);
@@ -9538,6 +9535,11 @@
     pickStatusPart("find", text2);
   });
   function pickStatusPart(key7, find2 = "") {
+    if (key7 === "backups") {
+      navigate("backups");
+      focusScreen("backups");
+      return;
+    }
     findText = find2;
     if (!$("status").classList.contains("active")) navigate("status");
     if (key7 === statusHere && key7 !== "find") {
@@ -23744,7 +23746,7 @@ ${pays}
       pickStatusPart("find");
       return;
     }
-    const picked = name === "app" ? "status" : name;
+    const picked = name === "app" || name === "backups" ? "status" : name;
     const was = document.querySelector(".screen.active")?.id;
     if (placed2 && was !== name) leavePlace(was);
     if ((was === "status" || was === "app") && picked !== "status") leftStatus();
@@ -23757,6 +23759,7 @@ ${pays}
     if (!placed2 || was !== name) arrivePlace(name);
     placed2 = true;
     setupNav();
+    statusSideChanged();
     freshen(name);
     drawHealth2();
   }

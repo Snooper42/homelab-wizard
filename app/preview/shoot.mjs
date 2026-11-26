@@ -524,6 +524,12 @@ async function toStatusPart(page, key) {
   await page.click('#statusChips .sidedropbtn');
   await page.click(`#statusChips .sidemenulist button[data-key="${key}"]`);
 }
+/** Backups, an item in Status' menu (the owner, Nov 25; the strip's button gone): Status first from another screen. */
+async function toBackups(page) {
+  if (!(await page.evaluate(() => !!document.querySelector('nav > button[data-screen="status"].active')))) await page.click('nav > button[data-screen="status"]');
+  await toStatusPart(page, 'backups');
+  await page.waitForSelector('#backups.screen.active', { timeout: 5000 });
+}
 /** Find an app on Status (Choose apps folded into it, the owner, Nov 25): All apps, with what's typed in its box. */
 async function findApp(page, text = '') {
   await page.evaluate(() => window.__emit('navigate', 'choose'));
@@ -571,6 +577,8 @@ const shots = [
   // last minutes (a minute of samples, run on the page's clock).
   { name: 'status-cards', screen: 'status', clock: true, mock: { usageSeries }, before: async (page) => {
     await page.clock.runFor(65000);
+    // Under Analytics since the Status rework (#914), off the overview.
+    await toStatusPart(page, 'analytics');
     await page.waitForSelector('#usageCard .spark', { timeout: 5000 });
     await page.evaluate(() => document.getElementById('storageCard').scrollIntoView({ block: 'start' }));
   } },
@@ -736,7 +744,7 @@ const smokes = [
     await page.click('nav button[data-screen=status]');
     await page.waitForSelector('#status.active', { timeout: 5000 });
     if (!(await page.isVisible('#updateAll'))) throw new Error('no Update apps on Status');
-    await page.click('nav button[data-screen=backups]');
+    await toBackups(page);
     await page.waitForSelector('#backups.active #recoveryKit', { timeout: 5000 });
     await page.click('#recoveryKit');
     await page.waitForTimeout(300);
@@ -2056,7 +2064,7 @@ const smokes = [
     await page.waitForTimeout(500);
     const status = await top();
     if (status < 250) throw new Error(`Status only scrolls to ${status}`);
-    await page.click('nav button[data-screen=backups]');
+    await toBackups(page);
     await page.waitForFunction((y) => Math.abs(document.querySelector('main').scrollTop - y) <= 1, chose, { timeout: 3000 }).catch(() => {});
     if (Math.abs((await top()) - chose) > 1) throw new Error(`back on Backups at ${await top()}, not ${chose}`);
     await page.click('nav button[data-screen=status]');
@@ -2194,12 +2202,12 @@ const smokes = [
   // Status's alone.
   { name: 'One problem, one badge: a running app\'s stale copy badges Backups, a stopped one\'s only Status', screen: 'backups', mock: { status: { ...status, apps: status.apps.map((a) => (a.id === 'mealie' ? { ...a, state: 'running' } : a)) } }, run: async (page) => {
     await page.waitForSelector('tr.copy.stale:has-text("Mealie")', { timeout: 5000 });
-    await page.waitForFunction(() => document.getElementById('backupsCount').textContent.trim() === '1', null, { timeout: 5000 });
+    await page.waitForFunction(() => document.querySelector('#statusSide button[data-key="backups"] .count')?.textContent.trim() === '1', null, { timeout: 5000 });
     if ((await page.textContent('#statusCount')).trim() !== '') throw new Error(`Status badges a running app: ${await page.textContent('#statusCount')}`);
   } },
-  // Backups as the redesign's picture (redesign-loop R7): Last night says what was skipped, and Needs you lists it with its
+  // Backups as the redesign's picture (redesign-loop R7): Last night says what was skipped, and Skipped lists it with its
   // fix: Mealie's copy is out of date because Mealie is stopped, so Start, which starts it; the paused ones wait for their drive.
-  { name: 'Backups: Needs you lists a skipped copy with Start, and the paused ones waiting for their drive', screen: 'backups', mock: { backups: { ...backups, copies: backups.copies.map((c) => (c.id === 'mealie' ? { ...c, state: 'stale', newest: new Date(Date.now() - 80 * 3600e3).toISOString() } : c)) } }, run: async (page) => {
+  { name: 'Backups: Skipped lists a skipped copy with Start, and the paused ones waiting for their drive', screen: 'backups', mock: { backups: { ...backups, copies: backups.copies.map((c) => (c.id === 'mealie' ? { ...c, state: 'stale', newest: new Date(Date.now() - 80 * 3600e3).toISOString() } : c)) } }, run: async (page) => {
     await page.waitForSelector('#copiesTile .bkskipped:text-is("Mealie skipped")', { timeout: 5000 });
     await page.waitForSelector('#needsYou li:has-text("Mealie"):has-text("stopped")', { timeout: 5000 });
     await page.waitForSelector('#needsYou li:has-text("Komga"):has-text("Waiting for the Hobbies drive")');
@@ -2207,8 +2215,9 @@ const smokes = [
     await page.click('#needsYou li:has-text("Mealie") button:text-is("Start")');
     await page.waitForFunction(() => window.__MOCK.calls.AppAction >= 1, null, { timeout: 5000 });
   } },
-  { name: 'Backups: nothing to do, Needs you says so', screen: 'backups', mock: { backups: { ...backups, copies: backups.copies.filter((c) => c.state === 'fresh') } }, run: async (page) => {
-    await page.waitForSelector('#needsYou:has-text("Nothing needs you")', { timeout: 5000 });
+  { name: 'Backups: nothing skipped, the card says every copy is up to date', screen: 'backups', mock: { backups: { ...backups, copies: backups.copies.filter((c) => c.state === 'fresh') } }, run: async (page) => {
+    await page.waitForSelector('#needsYou:has-text("Every copy is up to date")', { timeout: 5000 });
+    if (/needs you/i.test(await page.textContent('#backups'))) throw new Error('Backups says "needs you"');
     const v = (await page.textContent('#copiesTile .value')).replace(/\s+/g, ' ').trim();
     if (!/^(\d+) of \1 copied$/.test(v)) throw new Error(`Last night: ${v}`);
   } },
@@ -2228,7 +2237,7 @@ const smokes = [
     // Mealie's copy is stale because Mealie is stopped: Status's badge, not Backups' (one problem, one badge); and the
     // paused copies are no problem at all.
     await page.waitForFunction(() => document.getElementById('statusCount').textContent.trim() === '1', null, { timeout: 5000 });
-    if ((await page.textContent('#backupsCount')).trim() !== '') throw new Error(`Backups' badge: ${await page.textContent('#backupsCount')} (a paused copy, or a stopped app's, counted)`);
+    if (await page.$('#statusSide button[data-key="backups"] .count')) throw new Error(`Backups' badge: ${await page.textContent('#statusSide button[data-key="backups"]')} (a paused copy, or a stopped app's, counted)`);
     // One line a copy: no cell wraps, nor says "database" under the name. A copy with a note under its name (why it is
     // stale, or that it shrank) is that one line and the note: its other cells stay on one line each.
     const tall = await page.$$eval('tr.copy', (rows) => rows.filter((r) => (r.querySelector('.note')
@@ -2447,7 +2456,7 @@ const smokes = [
     { id: 'a', title: 'Step A', why: 'Why A matters, at some length so that it would not fit on one line beside its buttons at all.', detail: 'Right now: something to know about A.', state: 'todo', run: [['a']] },
     { id: 'b', title: 'Step B', why: 'x', state: 'todo', later: true },
     { id: 'c', title: 'Step C', why: 'x', state: 'done' }] }, run: async (page) => {
-    await page.waitForSelector('#checklist li.grouphead:text-is("Needs you · 1")', { timeout: 5000 });
+    await page.waitForSelector('#checklist li.grouphead:text-is("To do · 1")', { timeout: 5000 });
     if (await page.isVisible('#checklist li:has-text("Right now: something to know about A")')) throw new Error("a step's detail shows before it is opened");
     await page.click('#checklist li.todo .more');
     await page.waitForSelector('#checklist li.open .detail:has-text("Right now: something to know about A")');
@@ -2932,9 +2941,11 @@ const smokes = [
     await page.keyboard.press(`${mod}+Digit0`);
   } },
   { name: 'Screen readers hear the screen change', screen: 'status', run: async (page) => {
-    await page.click('nav button[data-screen="backups"]', { timeout: 5000 });
-    const where = await page.evaluate(() => [document.activeElement.textContent, document.querySelector('nav button[aria-current="page"]')?.dataset.screen]);
-    if (where[0] !== 'Backups' || where[1] !== 'backups') throw new Error(`focus ${where}`);
+    // Backups, from Status' menu: its heading takes the focus, Status the screen and Backups the page in its menu.
+    await toStatusPart(page, 'backups');
+    await page.waitForSelector('#backups.screen.active', { timeout: 5000 });
+    const where = await page.evaluate(() => [document.activeElement.textContent, document.querySelector('nav > button[aria-current="page"]')?.dataset.screen, document.querySelector('#statusSide [aria-current="page"]')?.dataset.key]);
+    if (where.join() !== 'Backups,status,backups') throw new Error(`focus ${where}`);
   } },
   { name: 'Links that act work from the keyboard', screen: 'status', mock: { update }, run: async (page) => {
     await page.click('#updateLater', { timeout: 5000 });
@@ -3258,12 +3269,12 @@ const smokes = [
     await page.waitForSelector('nav #settingsNav .pagebtn', { timeout: 5000 });
     await page.waitForTimeout(300);
     const plain = await shot();
-    await tabTo('nav button[data-screen="backups"]');
+    await tabTo('nav button[data-screen="finances"]');
     const elsewhere = await shot();
     await tabTo('nav > button.active');
     const focused = await shot();
-    if (await same(focused, elsewhere)) throw new Error('Settings looks the same with the focus on it and on Backups');
-    if (!(await same(plain, elsewhere))) throw new Error('Settings changes when the focus is on Backups');
+    if (await same(focused, elsewhere)) throw new Error('Settings looks the same with the focus on it and on Finances');
+    if (!(await same(plain, elsewhere))) throw new Error('Settings changes when the focus is on Finances');
     const mark = await page.$eval('nav > button.active', (e) => { const a = getComputedStyle(e, '::before'); return a.display !== 'none' && parseFloat(a.width) >= 3 && a.forcedColorAdjust === 'none'; });
     if (!mark) throw new Error('the current screen has no bar of its own');
   } })),
@@ -3728,7 +3739,7 @@ const smokes = [
   // with its app, and a two-finger swipe on a trackpad (sideways wheel), right for Back, left for Forward.
   { name: 'Back and Forward between screens: ⌘[ and ⌘], and a two-finger swipe', screen: 'status', run: async (page) => {
     const on = () => page.evaluate(() => document.querySelector('.screen.active')?.id);
-    await page.click('nav button[data-screen="backups"]');
+    await toBackups(page);
     await page.click('nav button[data-screen="finances"]');
     await page.keyboard.press('Meta+BracketLeft');
     if ((await on()) !== 'backups') throw new Error(`Back went to ${await on()}`);
@@ -4891,7 +4902,7 @@ const smokes = [
       .catch(async () => { throw new Error(`two apps not said together: ${JSON.stringify(await said())}`); });
     // On another screen, Status's changes are not read out.
     const n = (await said()).length;
-    await page.click('nav button[data-screen="backups"]');
+    await page.click('nav button[data-screen="settings"]');
     await page.evaluate(() => {
       const M = window.__MOCK;
       M.status = { ...M.status, apps: M.status.apps.map((a) => (a.id === 'navidrome' ? { ...a, state: 'stopped', health: '' } : a)) };
@@ -4902,7 +4913,7 @@ const smokes = [
   } },
   { name: "The agent's change carries Status: drawn on any screen, nothing asked", screen: 'status', run: async (page) => {
     await page.waitForSelector('tr:has(strong:text-is("Navidrome")) td.state:has-text("Running")', { timeout: 5000 });
-    await page.click('nav button[data-screen="backups"]');
+    await page.click('nav button[data-screen="settings"]');
     const before = await backendCalls(page);
     await page.evaluate(() => {
       const M = window.__MOCK;
@@ -5046,7 +5057,7 @@ const smokes = [
     await page.evaluate(() => { window.__MOCK.status.apps = window.__MOCK.status.apps.map((a) => (a.id === 'vikunja' ? { ...a, state: 'stopped', health: '' } : a)); window.__emit('status:changed'); });
     await page.waitForSelector('tr:has(strong:text-is("Vikunja")) td.state:has-text("Stopped")', { timeout: 3000 });
     if (await reads() !== n + 1) throw new Error(`Status read ${await reads() - n} times for one change`);
-    await page.click('nav button[data-screen="backups"]');
+    await page.click('nav button[data-screen="settings"]');
     await page.waitForTimeout(300);
     n = await reads();
     await page.evaluate(() => window.__emit('status:changed'));
@@ -5344,8 +5355,7 @@ const smokes = [
         if (rail.cut) throw new Error(`at text size ${zoom} the sidebar is cut off at the bottom`);
         if (await page.getByRole('button', { name: /^Status/ }).count() !== 1) throw new Error('the Status button lost its name');
       }
-      await page.click('nav button[data-screen="backups"]');
-      await page.waitForSelector('#backups.screen.active', { timeout: 5000 });
+      await toBackups(page);
     } })),
   { name: 'A tile’s line wraps under its chart rather than being cut off, at big text', screen: 'status', run: async (page) => {
     // The card moved to Subscriptions with the new Overview (the owner's picture, Nov 25).
@@ -5426,8 +5436,7 @@ const smokes = [
     await page.waitForSelector('#error:not([hidden]):has-text("Wait for “Update all apps now” to finish")', { timeout: 3000 });
     if (await page.isVisible('#cliPanel')) throw new Error('a second command took the sheet');
     // The rest of the app is there to use meanwhile.
-    await page.click('nav button[data-screen="backups"]');
-    await page.waitForSelector('#backups.active', { timeout: 3000 });
+    await toBackups(page);
     // A job of another screen waits its turn, saying so, and the chip says what is next.
     await page.click('#backupNow');
     await page.waitForSelector('#backupPanel:not([hidden]) #backupTitle:has-text("Waiting for “Update all apps now” to finish, then: Backing up…")', { timeout: 3000 });
@@ -5675,7 +5684,7 @@ const smokes = [
     if ((await dots()).join(' | ') !== want.join(' | ')) throw new Error('dots: ' + (await dots()).join(' | '));
     if ((await page.$eval('#statusRows .changedot', (d) => d.getAttribute('role'))) !== 'img') throw new Error('a dot has no name for a screen reader');
     // Seen: leaving and coming back clears them.
-    await page.click('nav button[data-screen=backups]');
+    await page.click('nav button[data-screen=settings]');
     await page.click('nav button[data-screen=status]');
     await page.waitForFunction(() => !document.querySelector('#statusRows .changedot'), null, { timeout: 3000 });
   } },
@@ -6901,12 +6910,12 @@ const smokes = [
   // Every screen's sidebar as Finances' (the owner, Nov 24): the homelab's screens a strip of icons, then the screen's own
   // menu (parts/SideMenu), then Settings and the computer's line at the foot; a pick in the menu goes to its part.
   { name: "Every screen's sidebar is laid out as Finances': the icons in a strip, then its own menu", screen: 'status', run: async (page) => {
-    for (const [screen, menu, first] of [['status', '#statusSide', 'Overview'], ['backups', '#backupsSide', 'Last night'], ['setup', '#setupSide', 'Steps'], ['finances', '#finMenu', 'Dashboard'], ['tidy', '#tidyMenu', 'Overview']]) {
+    for (const [screen, menu, first] of [['status', '#statusSide', 'Overview'], ['setup', '#setupSide', 'Steps'], ['finances', '#finMenu', 'Dashboard'], ['tidy', '#tidyMenu', 'Overview']]) {
       await page.click(`nav > button[data-screen="${screen}"]`);
       await page.waitForSelector(`#${screen}.active`, { timeout: 5000 });
       await page.waitForSelector(`${menu} [aria-current="page"]:has-text("${first}")`, { timeout: 5000 });
       const tops = [];
-      for (const s of ['status', 'backups', 'tidy', 'finances']) {
+      for (const s of ['status', 'tidy', 'finances']) {
         const box = await page.locator(`nav > button[data-screen="${s}"]`).boundingBox();
         if (!box || box.width > 60) throw new Error(`on ${screen}, the ${s} button is a whole line, not an icon`);
         tops.push(Math.round(box.y));
@@ -6923,10 +6932,19 @@ const smokes = [
     await page.waitForSelector('#statusPart .catpage h1:text-is("Media")', { timeout: 5000 });
     await page.waitForSelector('#statusSide [aria-current="page"][data-key="media"]');
     if (await page.isVisible('#statusRows')) throw new Error("a category's page left the overview's list showing");
-    // Backups' Needs you says how many wait, and goes to its card.
-    await page.click('nav > button[data-screen="backups"]');
-    await page.click('#backupsSide button:has-text("Each app")');
-    await page.waitForFunction(() => { const r = document.getElementById('copiesCard').getBoundingClientRect(); return r.top >= 0 && r.top < innerHeight / 2; }, null, { timeout: 5000 });
+    // Backups is an item in Status' menu, under Subscriptions (the owner, Nov 25), not a button in the strip; its page has
+    // its parts (Last night, Restore test, Off-site, Each app) and leads back to Status.
+    if (await page.isVisible('nav > button[data-screen="backups"]')) throw new Error('Backups is still a button in the strip');
+    const order = await page.$$eval('#statusSide button[data-key]', (bs) => bs.map((b) => b.dataset.key).slice(0, 4).join());
+    if (order !== 'overview,analytics,subscriptions,backups') throw new Error(`Status' menu: ${order}`);
+    await page.click('#statusSide button[data-key="backups"]');
+    await page.waitForSelector('#backups.screen.active #copiesCard', { timeout: 5000 });
+    await page.waitForSelector('#statusSide [aria-current="page"][data-key="backups"]', { timeout: 3000 });
+    if (!(await page.isVisible('nav > button[data-screen="status"].active'))) throw new Error('Status is not the screen picked on Backups');
+    for (const part of ['#copiesTile', '#restoreTile', '#offsiteTile', '#copiesCard']) if (!(await page.$(part))) throw new Error(`Backups' page has no ${part}`);
+    await page.click('#backupsCrumbs button.crumb:text-is("Status")');
+    await page.waitForSelector('#status.screen.active', { timeout: 3000 });
+    await page.waitForSelector('#statusSide [aria-current="page"][data-key="overview"]', { timeout: 3000 });
   } },
   // A category's page for every category (the owner, Nov 25: computer-category-full-dark.png): the menu is Overview, each
   // catalog category with its apps' count (an amber dot where one is stopped), your own apps last, and no Needs a look,
@@ -7017,7 +7035,8 @@ const smokes = [
     await page.setViewportSize({ width: 1100, height: 760 });
     await page.waitForSelector('#statusSide button[data-key="media"]', { state: 'visible', timeout: 5000 });
     const strip = await page.$$eval('nav > button[data-screen]', (bs) => bs.filter((b) => b.checkVisibility() && b.dataset.screen !== 'settings').map((b) => [b.dataset.screen, Math.round(b.getBoundingClientRect().top), Math.round(b.getBoundingClientRect().width)]));
-    if (strip.length < 2 || new Set(strip.map((x) => x[1])).size !== 1 || strip.some((x) => x[2] > 120)) throw new Error('not a strip of icons: ' + JSON.stringify(strip));
+    // Backups is in Status' menu now (the owner, Nov 25), so a phone without Finances has Status alone in the strip.
+    if (!strip.length || strip.some((x) => x[0] === 'backups') || new Set(strip.map((x) => x[1])).size !== 1 || strip.some((x) => x[2] > 120)) throw new Error('not a strip of icons: ' + JSON.stringify(strip));
     if (await page.isVisible('#statusChips')) throw new Error('chips on a wide window');
     if (await page.isVisible('#backupsSide .finmenuitem')) throw new Error("Backups' menu shows on Status");
     await page.click('#statusSide button[data-key="media"]');

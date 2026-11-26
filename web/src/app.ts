@@ -6,7 +6,7 @@
 // components (*.tsx). app/preview/lint.mjs keeps it under 400 lines.
 import { placeOf, readTargets, showSent } from './phone/send';
 import { progress } from './setup/Checklist';
-import { drawRemembered, leftStatus, loadStatus, pickStatusPart, refreshStatus, statusData, undoNow } from './screens/status';
+import { drawRemembered, leftStatus, loadStatus, pickStatusPart, refreshStatus, statusData, statusSideChanged, undoNow } from './screens/status';
 import { drawHealth } from './status/healthLine';
 import { healthData, hostData, loadAppearance, loadHost, loadSetup, setupNav, stepsData } from './screens/setup';
 import { changed, loadSettings, settingsData } from './screens/settings';
@@ -30,8 +30,9 @@ let placed = false; // a screen was shown: the one the page starts on has no pla
 export function show(name) {
   // Choose apps is gone (the owner, Nov 25): ⌘1, the Mac's View menu and old links open Find an app on Status.
   if (name === 'choose') { show('status'); pickStatusPart('find'); return; }
-  // An app's page belongs to Status: its button stays the one picked.
-  const picked = name === 'app' ? 'status' : name;
+  // An app's page and Backups belong to Status (the owner, Nov 25: Backups an item in Status' menu): its button stays
+  // the one picked, and its menu marks Backups.
+  const picked = name === 'app' || name === 'backups' ? 'status' : name;
   const was = document.querySelector('.screen.active')?.id;
   // Where the screen being left was (place.ts); not the one the page starts on, before any is shown.
   if (placed && was !== name) leavePlace(was);
@@ -45,6 +46,7 @@ export function show(name) {
   if (!placed || was !== name) arrivePlace(name);
   placed = true;
   setupNav();
+  statusSideChanged();
   freshen(name);
   drawHealth(); // the line at the top: not on Status, on every other screen
 }

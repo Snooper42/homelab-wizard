@@ -37,7 +37,7 @@ import { settingLabel, showSettingsPage } from './settings';
 import { catalog, leaveStore, openCustom, openInstall, renderApps, showStore } from './choose';
 import { suggested } from '../choose/Choose';
 import { clearJob, cliProgress, startJob } from '../jobs';
-import { navigate } from '../app';
+import { focusScreen, navigate } from '../app';
 import { mountOvernight, nightOf } from '../status/Overnight';
 import { setHealthApps, setHealthChecks } from '../status/healthLine';
 import { backupsData, redrawBackups } from './backups';
@@ -230,10 +230,17 @@ interface StatusPart { id: string; label: string; apps: api.AppStatus[]; add: ap
 let statusParts: StatusPart[] = [];
 let statusSide: SideItem[] = [];
 let statusHere = 'overview';
+/** What Backups counts (screens/backups.ts): copies gone stale for a reason of their own, on Backups' item in the menu. */
+let backupProblems = 0;
+export function setBackupProblems(n: number) { if (n !== backupProblems) { backupProblems = n; drawStatusSide(); } }
+/** Draws Status' menu again as the screen changes (app.ts's show): Backups marked while it shows. */
+export function statusSideChanged() { drawStatusSide(); }
 function drawStatusSide() {
+  const onBackups = $('backups').classList.contains('active');
   const menu = {
-    label: 'Status', here: statusHere, pick: pickStatusPart,
-    items: [{ key: 'overview', label: 'Overview', icon: sideIcons.overview }, { key: 'analytics', label: 'Analytics', icon: sideIcons.analytics }, { key: 'subscriptions', label: 'Subscriptions', icon: sideIcons.finance }, ...statusSide],
+    label: 'Status', here: onBackups ? 'backups' : statusHere, pick: pickStatusPart,
+    items: [{ key: 'overview', label: 'Overview', icon: sideIcons.overview }, { key: 'analytics', label: 'Analytics', icon: sideIcons.analytics }, { key: 'subscriptions', label: 'Subscriptions', icon: sideIcons.finance },
+      { key: 'backups', label: 'Backups', icon: sideIcons.backups, count: backupProblems || undefined }, ...statusSide],
   };
   // The sidebar's, and on a phone's narrow page the same items as a row of chips atop Status (the tab bar has no room).
   mountSideMenu($('statusSide'), menu);
@@ -312,6 +319,8 @@ $('statusFind').addEventListener('input', (e) => {
   pickStatusPart('find', text);
 });
 export function pickStatusPart(key: string, find = '') {
+  // Backups is its own page, kept as it was (its panels and jobs), shown as one of Status'.
+  if (key === 'backups') { navigate('backups'); focusScreen('backups'); return; }
   findText = find;
   // From an app's page (or any screen), a pick in Status' menu goes back to Status first (the owner, Nov 25: clicking
   // another category from an app's page "just stalls out").

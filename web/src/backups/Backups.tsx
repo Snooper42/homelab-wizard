@@ -141,7 +141,7 @@ export interface BackupTilesProps {
 
 /**
  * The top of Backups as the redesign's picture (R7): Last night, with how many copied, when it finished, what it came
- * to and where it went, then Next, its size and what's kept; Needs you beside it; the restore test, off-site and Not
+ * to and where it went, then Next, its size and what's kept; Skipped beside it; the restore test, off-site and Not
  * in any backup under, a third each (the last only while something is left out).
  * The fourteen nights (quality-loop Q4 (a)) as squares under Last night; each app's last seven as dots in Each app.
  */
@@ -174,13 +174,13 @@ export function BackupTiles({ o, os, test, apps, start, gaps, addGap }: BackupTi
         </dl>
       </Card>
       <Card kind="bkcard bkneeds" id="needsYou">
-        <CardHead title={<>Needs you{!!stale.length && <span class="bkcount">{stale.length}</span>}</>} />
+        <CardHead title={<>Skipped{!!stale.length && <span class="bkcount">{stale.length}</span>}</>} />
         {needs.length ? <Rows kind="bkneedlist">{needs.map((c) => {
           const a = c.app ? apps?.[c.app] : undefined;
           return <Row key={c.id} lead={<AppMark id={c.app} name={c.name} icon="" small />} dot={c.state === 'stale' ? 'bad' : 'warn'} title={c.name}
             sub={c.state === 'paused' ? `Waiting for ${driveName(c.waitingFor || '')}` : staleWhy(c, apps) || `Last copied ${ago(c.newest)}`}
             end={c.state === 'stale' && a && a.state !== 'running' && start ? <button type="button" class="small primary" onClick={() => start(a)}>Start</button> : undefined} />;
-        })}</Rows> : <p class="bksub ok">✓ Nothing needs you: every copy is up to date.</p>}
+        })}</Rows> : <p class="bksub ok">✓ Every copy is up to date.</p>}
       </Card>
       <RestoreTile t={o.restoreTest || ({} as backup.RestoreLog)} due={o.restoreDue} test={test} />
       <Card kind="bkcard" id="offsiteTile">
