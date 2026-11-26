@@ -2088,23 +2088,6 @@
    ],
    "nights": [
     {
-     "date": "2026-11-12",
-     "apps": {
-      "nginx-proxy-manager": "copied",
-      "vaultwarden": "copied",
-      "uptime-kuma": "copied",
-      "ntfy": "copied",
-      "navidrome": "copied",
-      "audiobookshelf": "copied",
-      "immich-database": "copied",
-      "paperless-db": "copied",
-      "moneymatter-db": "copied",
-      "vikunja": "copied",
-      "mealie": "copied",
-      "moneymatter": "copied"
-     }
-    },
-    {
      "date": "2026-11-13",
      "apps": {
       "nginx-proxy-manager": "copied",
@@ -2287,7 +2270,7 @@
       "paperless-db": "copied",
       "moneymatter-db": "copied",
       "vikunja": "copied",
-      "mealie": "stopped",
+      "mealie": "copied",
       "moneymatter": "copied"
      }
     },
@@ -2310,6 +2293,23 @@
     },
     {
      "date": "2026-11-25",
+     "apps": {
+      "nginx-proxy-manager": "copied",
+      "vaultwarden": "copied",
+      "uptime-kuma": "copied",
+      "ntfy": "copied",
+      "navidrome": "copied",
+      "audiobookshelf": "copied",
+      "immich-database": "copied",
+      "paperless-db": "copied",
+      "moneymatter-db": "copied",
+      "vikunja": "copied",
+      "mealie": "stopped",
+      "moneymatter": "copied"
+     }
+    },
+    {
+     "date": "2026-11-26",
      "apps": {
       "nginx-proxy-manager": "copied",
       "vaultwarden": "copied",
@@ -2570,7 +2570,7 @@
     {
      "key": "SYNC_ROOT",
      "section": "Storage",
-     "help": "Syncthing's shared folders (backed up only if you add it to a Duplicati job).",
+     "help": "Syncthing's shared folders (the Homelab Files job backs them up).",
      "secret": false,
      "set": true,
      "value": "./data/sync"
@@ -5672,7 +5672,7 @@
       ]
      }
     ],
-    "holdingsRead": "@ago:2268194"
+    "holdingsRead": "@ago:2366843"
    },
    "today": "2026-10-30",
    "checking": "chk",
@@ -11041,10 +11041,6 @@
    },
    "days": {
     "vikunja": {
-     "2026-11-19": [
-      96,
-      96
-     ],
      "2026-11-20": [
       96,
       96
@@ -11054,11 +11050,11 @@
       96
      ],
      "2026-11-22": [
-      93,
+      96,
       96
      ],
      "2026-11-23": [
-      96,
+      93,
       96
      ],
      "2026-11-24": [
@@ -11066,11 +11062,87 @@
       96
      ],
      "2026-11-25": [
+      96,
+      96
+     ],
+     "2026-11-26": [
       40,
       40
      ]
     }
-   }
+   },
+   "daily": [
+    {
+     "date": "2026-11-13",
+     "failed": 0,
+     "runs": 96
+    },
+    {
+     "date": "2026-11-14",
+     "failed": 0,
+     "runs": 96
+    },
+    {
+     "date": "2026-11-15",
+     "failed": 0,
+     "runs": 96
+    },
+    {
+     "date": "2026-11-16",
+     "failed": 0,
+     "runs": 96
+    },
+    {
+     "date": "2026-11-17",
+     "failed": 0,
+     "runs": 96
+    },
+    {
+     "date": "2026-11-18",
+     "failed": 0,
+     "runs": 96
+    },
+    {
+     "date": "2026-11-19",
+     "failed": 0,
+     "runs": 96
+    },
+    {
+     "date": "2026-11-20",
+     "failed": 0,
+     "runs": 96
+    },
+    {
+     "date": "2026-11-21",
+     "failed": 0,
+     "runs": 96
+    },
+    {
+     "date": "2026-11-22",
+     "failed": 0,
+     "runs": 96
+    },
+    {
+     "date": "2026-11-23",
+     "failed": 0,
+     "runs": 96
+    },
+    {
+     "date": "2026-11-24",
+     "failed": 0,
+     "runs": 96
+    },
+    {
+     "date": "2026-11-25",
+     "failed": 0,
+     "runs": 96
+    },
+    {
+     "date": "2026-11-26",
+     "failed": 0,
+     "runs": 96
+    }
+   ]
   },
   "protection": {
    "enforced": true,
@@ -11153,10 +11225,6 @@
   ],
   "savings": [
    {
-    "date": "2026-09-27",
-    "annual": 2991
-   },
-   {
     "date": "2026-09-28",
     "annual": 2991
    },
@@ -11202,7 +11270,7 @@
    },
    {
     "date": "2026-10-09",
-    "annual": 3112
+    "annual": 2991
    },
    {
     "date": "2026-10-10",
@@ -11274,7 +11342,7 @@
    },
    {
     "date": "2026-10-27",
-    "annual": 3232
+    "annual": 3112
    },
    {
     "date": "2026-10-28",
@@ -11342,7 +11410,7 @@
    },
    {
     "date": "2026-11-13",
-    "annual": 3292
+    "annual": 3232
    },
    {
     "date": "2026-11-14",
@@ -11390,6 +11458,10 @@
    },
    {
     "date": "2026-11-25",
+    "annual": 3292
+   },
+   {
+    "date": "2026-11-26",
     "annual": 3292
    }
   ],

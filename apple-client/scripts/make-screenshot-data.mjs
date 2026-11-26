@@ -79,6 +79,11 @@ const cards = { watchdog, protection, alerts, savings: savingsHistory };
 for (const [name, fn] of Object.entries({ watchdog: 'Watchdog', protection: 'Protection', alerts: 'Alerts', savings: 'SavingsHistory' })) {
   if (App[fn]) cards[name] = await App[fn]();
 }
+// The watchdog's last fourteen days, all checks together (health.Day), for the Overview's Apps card: every app answered.
+cards.watchdog = { ...cards.watchdog, daily: Array.from({ length: 14 }, (_, i) => {
+  const d = new Date(); d.setDate(d.getDate() - (13 - i));
+  return { date: d.toISOString().slice(0, 10), failed: 0, runs: 96 };
+}) };
 // An app's page (StatusCard.appCards): each app's memory and processor, and its folder, without the
 // household's names and addresses (serve.go's phoneStorage), Vikunja's too, the app the pictures open.
 cards.usage = state.usage;

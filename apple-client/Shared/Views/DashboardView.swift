@@ -174,7 +174,7 @@ private struct PhoneDashboard: View {
 
     var body: some View {
         TabView(selection: tab) {
-            PhoneStatus(model: model, isMember: isMember)
+            PhoneStatus(model: model, computer: computer, isMember: isMember)
                 .tabItem { Label("Status", systemImage: Screen.status(.all).systemImage) }
                 .badge(model.attentionCount)
                 .tag(Screen.status(.all))
@@ -301,25 +301,21 @@ extension ScreenshotMode {
 }
 #endif
 
-/// Status on iPhone, as the owner trimmed it (Nov 9): one line when all is
-/// well, or a card for what needs a look; then the apps by category, the
-/// pinned ones open, the rest folded to a row of logos until opened.
+/// Status on iPhone, as the computer's Overview (the owner's pictures, Nov 25): Apps, Backups and the machine as
+/// three cards of one anatomy, then the categories, each opening its page. Nothing below them. While searching,
+/// only the apps that match.
 private struct PhoneStatus: View {
     @Bindable var model: DashboardViewModel
+    let computer: ComputerViewModel
     /// A household member's phone: their apps only (and no backups to read).
     var isMember = false
-    /// Which groups are open (StatusFolds): names only, kept like the tab,
-    /// and the computer's for every device (FoldSync).
-    @SceneStorage("statusFolds") private var folds = ""
-    /// What the computer last said they are, to tell the person's own changes apart.
-    @State private var computerFolds: String?
     /// An app's page grows out of its row (iOS 18).
     @Namespace private var zoom
     @Environment(AppActionsViewModel.self) private var actions
     /// A link's action, waiting for its one tap.
     @State private var linkAsk: LinkAsk?
     /// The pages open on Status, so Siri can open one.
-    @State private var path: [AppStatus.ID] = []
+    @State private var path: [StatusPlace] = []
     /// The wide layout's app taken over once, when this layout appears (not
     /// each time the list shows again, or Back would open it again).
     @State private var tookWidePlace = false
@@ -327,79 +323,53 @@ private struct PhoneStatus: View {
     var body: some View {
         NavigationStack(path: $path) {
             List {
-                // While searching, only the apps that match.
-                // One line when all is well, or one card for what needs a
-                // look (the owner's trim, Nov 9). An app changed since you
-                // looked has its dot on its row.
-                if !model.isSearching, model.hasLoaded {
+                if model.isSearching {
+                    // While searching, every match, by group.
+                    ForEach(model.groups(matching: model.search)) { group in
+                        Section {
+                            ForEach(group.apps) { app in
+                                NavigationLink(value: StatusPlace.app(app.id)) {
+                                    AppRowView(app: app)
+                                }
+                                .zoomSource(id: app.id, in: zoom)
+                                .appActionControls(for: app)
+                            }
+                        } header: {
+                            Text(verbatim: group.label)
+                        }
+                    }
+                } else if model.hasLoaded {
                     Section {
                         if let note = model.crashNote {
                             CrashNoteCard(note: note, model: model)
                                 .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
                                 .listRowBackground(Color.clear)
                         }
-                        StatusTop(model: model) { id in path.append(id) }
+                        OverviewCards(model: model, computer: computer, isMember: isMember,
+                                      open: { id in path.append(.app(id)) }, seeAll: { path.append(.every) })
                             // Room under a card for its shadow, which the row would otherwise cut.
                             .padding(.bottom, 6)
                             .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 0, trailing: 0))
                             .listRowBackground(Color.clear)
-                        // Backups and This Machine beside each other, as the redesign's picture (not a member's).
-                        if !isMember {
-                            StatusPair(model: model)
-                                .padding(.bottom, 6)
-                                .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 0, trailing: 0))
-                                .listRowBackground(Color.clear)
-                        }
                     }
-                }
-                // By category, as the computer's Status: what needs a look
-                // first, then the pinned apps. While searching, every match shows.
-                let shownGroups = model.isSearching ? model.groups(matching: model.search) : model.groups
-                ForEach(shownGroups.filter { $0.alert || $0.pinned }) { group in
-                    let open = model.isSearching || StatusFolds.isOpen(group, in: folds)
-                    Section {
-                        if open {
-                            ForEach(group.apps) { app in
-                                NavigationLink(value: app.id) {
-                                    AppRowView(app: app)
+                    // The categories as one list, a row each (the computer's panel): a tap opens its page.
+                    let categories = StatusCategory.list(apps: model.liveEvents.status?.apps ?? [], catalog: model.catalog)
+                    if !categories.isEmpty {
+                        Section {
+                            ForEach(categories) { category in
+                                NavigationLink(value: StatusPlace.category(category.id)) {
+                                    CategoryRow(category: category)
                                 }
-                                .zoomSource(id: app.id, in: zoom)
-                                .appActionControls(for: app)
+                                .contextMenu { GroupActionItems(apps: category.apps) }
                             }
-                        } else {
-                            FoldedGroupNames(group: group) { folds = StatusFolds.setting(group, open: true, in: folds) }
-                        }
-                    } header: {
-                        GroupHeader(group: group, open: open) {
-                            folds = StatusFolds.setting(group, open: !open, in: folds)
-                        }
-                    }
-                }
-                // The categories in one card, a row each, as the redesign's phone picture (phone-status.png): the
-                // first apps' logos, the name over its apps', how many run; a tap opens the apps under it.
-                let categories = shownGroups.filter { !$0.alert && !$0.pinned }
-                if !categories.isEmpty {
-                    Section {
-                        ForEach(categories) { group in
-                            let open = model.isSearching || StatusFolds.isOpen(group, in: folds)
-                            GroupRow(group: group, open: open) {
-                                folds = StatusFolds.setting(group, open: !open, in: folds)
+                        } header: {
+                            HStack {
+                                Text("Categories")
+                                Spacer()
+                                Button("Show Every App") { path.append(.every) }
+                                    .font(.subheadline)
+                                    .textCase(nil)
                             }
-                            if open {
-                                ForEach(group.apps) { app in
-                                    NavigationLink(value: app.id) {
-                                        AppRowView(app: app)
-                                    }
-                                    .zoomSource(id: app.id, in: zoom)
-                                    .appActionControls(for: app)
-                                }
-                            }
-                        }
-                    } header: {
-                        HStack {
-                            Text("Apps")
-                            Spacer()
-                            Text(verbatim: "\(categories.reduce(0) { $0 + $1.apps.count })").monospacedDigit()
                         }
                     }
                 }
@@ -412,40 +382,44 @@ private struct PhoneStatus: View {
                 }
             }
             .themedCanvas()
-            .searchable(text: $model.search, prompt: "Apps")
-            // The folds are the computer's, the same on every device.
-            .task(id: model.hasLoaded) { await FoldSync.pull(model: model, actions: actions, folds: $folds, computer: $computerFolds) }
-            .onChange(of: folds) { _, new in FoldSync.push(new, model: model, actions: actions, computer: $computerFolds) }
+            .searchable(text: $model.search, prompt: "Find an app")
             .navigationTitle("Status")
-            .navigationDestination(for: AppStatus.ID.self) { id in
-                AppDetailView(app: model.app(id: id))
-                    .zoomTransition(id: id, in: zoom)
+            .navigationDestination(for: StatusPlace.self) { place in
+                switch place {
+                case .app(let id):
+                    AppDetailView(app: model.app(id: id))
+                        .zoomTransition(id: id, in: zoom)
+                case .category(let id):
+                    CategoryPage(model: model, id: id, zoom: zoom)
+                case .every:
+                    EveryAppPage(model: model, zoom: zoom)
+                }
             }
             // Stage Manager and Split View: the app open beside the list when the
             // window was wide, and the one open here if it widens.
             .onAppear {
                 guard !tookWidePlace else { return }
                 tookWidePlace = true
-                path = model.phoneStatusPath(keeping: path)
+                if path.isEmpty { path = model.phoneStatusPath(keeping: []).map(StatusPlace.app) }
             }
-            .onChange(of: path) { _, path in model.followPhoneStatus(path: path) }
+            .onChange(of: path) { _, path in model.followPhoneStatus(path: path.compactMap(\.appID)) }
             #if SCREENSHOTS
             // The screenshots: an app's page, opened as a tap opens it (its own title, no Status search over
             // it: an overlay on the list showed both, apple-loop.md item 1).
             .onChange(of: model.hasLoaded, initial: true) {
                 guard ScreenshotMode.shot == "app", path.isEmpty, model.hasLoaded,
                       let app = model.app(id: "vikunja") ?? model.latestApps.first else { return }
-                path.append(app.id)
+                path.append(.app(app.id))
             }
             #endif
             .refreshable {
-                // Status, and the backups the Backups tab's badge counts.
+                // Status, and the backups the Backups card and tab's badge count.
                 guard !isMember else { return await model.refresh() }
                 async let backups: Void = model.backups.load()
                 await model.refresh()
                 await backups
             }
-            // The Backups tab's badge, read once if that tab hasn't yet.
+            // The Backups card and the tab's badge, read once if that tab hasn't yet.
             .task { if !isMember, model.backups.overview == nil { await model.backups.load() } }
             // Siri or a shortcut: the app's page, and the action asked for,
             // once Status is read (after unlock).
@@ -476,7 +450,7 @@ private struct PhoneStatus: View {
         case .search(let said):
             model.search = said
         case .open(let id, let then):
-            path = [id]
+            path = [.app(id)]
             if let then, let app = model.app(id: id) {
                 follow(then, on: app, model: model, actions: actions) { linkAsk = $0 }
             }
@@ -1318,78 +1292,6 @@ struct GroupHeader: View {
                 .dynamicTypeSize(...DynamicTypeSize.accessibility1)
         }
         .textCase(nil)
-    }
-}
-
-/// A category on Status, as the redesign's phone picture: its first three
-/// apps' logos overlapping, its name over its apps' names, its pill (how
-/// many run) and a chevron that turns as it opens. A tap opens or folds it,
-/// as the computer's row does; a long press has the group's Start, Restart
-/// and Stop. At the largest text sizes the logos sit over the words.
-struct GroupRow: View {
-    let group: AppGroup
-    let open: Bool
-    let toggle: @MainActor () -> Void
-    @ScaledMetric(relativeTo: .body) private var logo: CGFloat = 32
-    @Environment(\.dynamicTypeSize) private var typeSize
-
-    var body: some View {
-        let size = min(logo, 44)
-        let layout = typeSize.isAccessibilitySize
-            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8))
-            : AnyLayout(HStackLayout(spacing: 12))
-        Button(action: toggle) {
-            layout {
-                HStack(spacing: -size * 0.3) {
-                    ForEach(group.apps.prefix(3)) { app in
-                        AppIconView(app: app, size: size, stateBadge: !app.isPlainlyFine)
-                    }
-                }
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(verbatim: group.label)
-                        .font(.headline)
-                        .foregroundStyle(Theme.ink)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.7)
-                    Text(verbatim: Self.names(group))
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(typeSize.isAccessibilitySize ? 3 : 1)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                HStack(spacing: 8) {
-                    if let pill = group.runningPill {
-                        Text(verbatim: pill.words)
-                            .pill(pill.fine ? Theme.success : Theme.warning)
-                    }
-                    Image(systemName: "chevron.right")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(.secondary)
-                        .rotationEffect(.degrees(open ? 90 : 0))
-                        .accessibilityHidden(true)
-                }
-            }
-            .padding(.vertical, 4)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .contextMenu { GroupActionItems(apps: group.apps) }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Text(verbatim: Self.spoken(group)))
-        .accessibilityValue(open ? "Open" : "Folded")
-        .accessibilityHint(open ? "Folds the group" : "Opens the group")
-    }
-
-    /// The line under the name: its apps, in the list's order.
-    nonisolated static func names(_ group: AppGroup) -> String {
-        group.apps.map(\.name).joined(separator: ", ")
-    }
-
-    /// What VoiceOver says: the name, how many run, and the apps.
-    nonisolated static func spoken(_ group: AppGroup) -> String {
-        let count = group.runningPill.map { $0.words.replacingOccurrences(of: "✓ ", with: "") }
-            ?? "\(group.apps.count) \(group.apps.count == 1 ? "app" : "apps")"
-        return "\(group.label), \(count): \(names(group))"
     }
 }
 
