@@ -79,13 +79,12 @@ The loops add questions here: the question, the options, the one they recommend,
 
   Meanwhile Analytics shows what exists, and the redesign carries on with the phone's page.
 
-- **Tidy Up on the phone's page (lane D, D4, Nov 26):** a new call lets a phone look at Tidy Up: what it filed today, what needs a look, each library's size and last run, the drive's room, the inbox, and whether it's at work. Nothing a phone calls moves, undoes or deletes a file; no folder or file path is sent. A wall screen gets it without titles and file names.
-  - **Question 1:** add it? (Recommended: yes.)
-  - **Question 2:** who sees it? **(a) Recommended:** your phones and wall screens only, as the Downloads card. **(b)** A household member's phone too (they'd see what was downloaded and filed today).
-  - Meanwhile lane D carries on with its other items; the pull request merges on your yes.
-
 ## Answered
 
 The loops move a question here once they've read your answer.
 
+- **Tidy Up on the phone's page (lane D, D4, Nov 26):** a new call lets a phone look at Tidy Up: what it filed today, what needs a look, each library's size and last run, the drive's room, the inbox, and whether it's at work. Nothing a phone calls moves, undoes or deletes a file; no folder or file path is sent. A wall screen gets it without titles and file names.
+  - **Question 1:** add it? (Recommended: yes.)
+  - **Question 2:** who sees it? **(a) Recommended:** your phones and wall screens only, as the Downloads card. **(b)** A household member's phone too (they'd see what was downloaded and filed today).
+  - **Answer (the owner, Nov 26):** "yes to D4, keep it to my phones only": built so, a wall screen left out too.
 - **Account C's scheduled task (Nov 23):** a session isn't allowed to make one, so you made *Homelab loop, account C* by hand (every 5 hours at 4 past, a custom cron). **Do the same for A and B** when they start, named exactly *Homelab loop, account A* (every 3 hours: `4 */3 * * *`) and *Homelab loop, account B* (every 5 hours: `4 */5 * * *`), each with its start line as the instructions: a session looks for that exact name.

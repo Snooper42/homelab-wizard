@@ -139,20 +139,3 @@ func TidyOverview(root string, now time.Time) Tidy {
 	}
 	return out
 }
-
-// WithoutNames is the overview for a wall screen, which anyone walking past
-// can read: how many were filed and need a look, without their titles and
-// file names.
-func (t Tidy) WithoutNames() Tidy {
-	today, needs := make([]TidyFiled, len(t.Today)), make([]TidyNeed, len(t.Needs))
-	for i, f := range t.Today {
-		f.Title = ""
-		today[i] = f
-	}
-	for i, n := range t.Needs {
-		n.Name = ""
-		needs[i] = n
-	}
-	t.Today, t.Needs = today, needs
-	return t
-}

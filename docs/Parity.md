@@ -162,7 +162,7 @@ Each phone sees Finances at the level it was paired with: none, the money card, 
 
 | Feature | Computer | Phone's page | iPhone | iPad | Phone calls |
 |---|---|---|---|---|---|
-| Tidy Up at a glance, to look at only: what it filed today, what needs a look, each library's size and last run, the drive's room, the inbox, and whether it's at work (no folder or file path) | yes | the call is there for the owner's phones (a wall screen gets it without titles and file names; not a household member's phone); the page draws it once the redesign wires it | not yet | not yet | `TidyOverview` |
+| Tidy Up at a glance, to look at only: what it filed today, what needs a look, each library's size and last run, the drive's room, the inbox, and whether it's at work (no folder or file path) | yes | the call is there for the owner's phones only (not a household member's phone, nor a wall screen); the page draws it once the redesign wires it | not yet | not yet | `TidyOverview` |
 | The Inbox: watched folders, Tidy up now, What I did today, Undo | yes | on purpose for now: it moves files on the computer's drives | on purpose for now | on purpose for now | |
 | Needs a look: It's a film…, It's an episode…, Look it up, Name these songs… | yes | on purpose for now (`unison-handoff.md` item 9 brings the questions to the phone) | on purpose for now | on purpose for now | |
 | Music, Books, Films and Shows; where the libraries live; a Calibre library | yes | on purpose: they move files on the computer | on purpose | on purpose | |

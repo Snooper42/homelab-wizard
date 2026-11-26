@@ -80,15 +80,6 @@ func TestTidyOverview(t *testing.T) {
 		}
 	}
 
-	// A wall screen's: how many, without their names.
-	wall := o.WithoutNames()
-	if len(wall.Today) != 2 || wall.Today[0].Title != "" || len(wall.Needs) != 1 || wall.Needs[0].Name != "" || wall.Needs[0].Why == "" {
-		t.Errorf("wall screen: %+v", wall)
-	}
-	if o.Today[0].Title == "" {
-		t.Error("WithoutNames changed the overview it was given")
-	}
-
 	// Switched off in .env: not watching.
 	os.WriteFile(filepath.Join(root, ".env"), []byte("TIDY_INBOX=off\n"), 0o600)
 	if o := TidyOverview(root, now); o.Inbox.Watching || o.Inbox.When != "arrive" {
