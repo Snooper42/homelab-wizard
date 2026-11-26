@@ -43,7 +43,7 @@ owner has seen in a picture and asked for.
 - [ ] **D4. Tidy Up on the phone's page** (the owner: "build out the web to match the computer"): Tidy Up's read-only
   methods in `phoneMethods` (`serve.go`), the household's member level only, nothing that moves or deletes a file.
   *Needs Q's review* (see Rules).
-- [ ] **D5. The machine's memory and uptime for the machine card's bar** (the picture: *Memory · 11 of 32 GB*, *Up 23
+- [x] **D5. The machine's memory and uptime for the machine card's bar** (the picture: *Memory · 11 of 32 GB*, *Up 23
   days*): total memory and boot time in the machine facts (`core.Machine`, `internal/host`), sent to a phone too.
 
 ## Start line for lane D
