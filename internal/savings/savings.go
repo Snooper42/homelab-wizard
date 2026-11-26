@@ -17,9 +17,26 @@ type Row struct {
 	Docs     []string // the apps' notes, relative to the repository root
 	Replaces string
 	Annual   float64 // the annual-plan price in dollars
+	// The columns below are optional: a table without them leaves them empty (lane D, D1).
+	Monthly   float64 // the monthly price in dollars, 0 when the table has none
+	Kind      string  // Direct, Equivalent or Library
+	Condition string  // when the saving is real, links as plain text
+	// Counted is false for a row whose paid service another row counts already (Dropbox Plus for both File Browser
+	// and Nextcloud): the counted rows add up to the Everything total. Of a service's rows, the dearest is counted,
+	// and of equals the last, the one whose note says "counted once, here".
+	Counted bool
 }
 
-var linkRe = regexp.MustCompile(`\]\(<\.\./([^>]+)>\)`)
+var (
+	linkRe = regexp.MustCompile(`\]\(<\.\./([^>]+)>\)`)
+	// Any Markdown link, for a condition shown as plain text.
+	anyLinkRe = regexp.MustCompile(`\[([^\]]*)\]\((?:<[^>]*>|[^)]*)\)`)
+)
+
+// price reads "$1,234.56", "**$9.99**" or "$3.33 †" as dollars.
+func price(cell string) (float64, error) {
+	return strconv.ParseFloat(strings.TrimSpace(strings.NewReplacer("$", "", ",", "", "*", "", "†", "").Replace(cell)), 64)
+}
 
 // Load reads the per-app tables (those with App and Annual plan columns).
 func Load(root string) ([]Row, error) {
@@ -29,6 +46,7 @@ func Load(root string) ([]Row, error) {
 	}
 	var rows []Row
 	col, inTable := -1, false
+	cols := map[string]int{}
 	for _, line := range strings.Split(string(data), "\n") {
 		if !strings.HasPrefix(line, "|") {
 			inTable = false
@@ -40,7 +58,9 @@ func Load(root string) ([]Row, error) {
 		}
 		if !inTable { // the header row
 			inTable, col = true, -1
+			cols = map[string]int{}
 			for i, c := range cells {
+				cols[c] = i
 				if c == "Annual plan" && cells[0] == "App" {
 					col = i
 				}
@@ -51,15 +71,33 @@ func Load(root string) ([]Row, error) {
 		if col < 0 || len(cells) <= col || len(links) == 0 {
 			continue // other tables, the separator, subtotals
 		}
-		amount, err := strconv.ParseFloat(strings.NewReplacer("$", "", ",", "", "*", "").Replace(cells[col]), 64)
+		amount, err := price(cells[col])
 		if err != nil {
 			continue
 		}
 		r := Row{Replaces: cells[2], Annual: amount}
+		cell := func(name string) string {
+			if i, ok := cols[name]; ok && i < len(cells) {
+				return cells[i]
+			}
+			return ""
+		}
+		r.Monthly, _ = price(cell("Monthly"))
+		r.Kind = cell("Kind")
+		r.Condition = anyLinkRe.ReplaceAllString(cell("Condition"), "$1")
 		for _, l := range links {
 			r.Docs = append(r.Docs, filepath.ToSlash(l[1]))
 		}
 		rows = append(rows, r)
+	}
+	counted := map[string]int{}
+	for i, r := range rows {
+		if j, ok := counted[r.Replaces]; !ok || r.Annual >= rows[j].Annual {
+			counted[r.Replaces] = i
+		}
+	}
+	for _, i := range counted {
+		rows[i].Counted = true
 	}
 	return rows, nil
 }

@@ -27,6 +27,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/docker"
 	"github.com/Snooper42/homelab-wizard/internal/finance"
 	"github.com/Snooper42/homelab-wizard/internal/host"
+	"github.com/Snooper42/homelab-wizard/internal/usage"
 )
 
 // window stands in for the Wails window: it records the events the App
@@ -994,5 +995,45 @@ func TestKept(t *testing.T) {
 	data, _ := os.ReadFile(filepath.Join(a.root, "data", "kept.json"))
 	if strings.Contains(string(data), "a-new-one-123") {
 		t.Fatal("never the value")
+	}
+}
+
+// Lane D, D1: Status › Subscriptions reads each row of docs/Savings.md, its apps by catalog ID.
+func TestSavingsRows(t *testing.T) {
+	a, _ := testApp(t)
+	if _, err := a.SavingsRows(); err == nil {
+		t.Fatal("SavingsRows without docs/Savings.md")
+	}
+	_, file, _, _ := goruntime.Caller(0)
+	data, err := os.ReadFile(filepath.Join(filepath.Dir(file), "..", "docs", "Savings.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	os.MkdirAll(filepath.Join(a.root, "docs"), 0o755)
+	if err := os.WriteFile(filepath.Join(a.root, "docs", "Savings.md"), data, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	rows, err := a.SavingsRows()
+	if err != nil || len(rows) == 0 {
+		t.Fatalf("SavingsRows: %d %v", len(rows), err)
+	}
+	if r := rows[0]; r.Replaces != "NextDNS Pro" || len(r.Apps) != 1 || r.Apps[0] != "adguard-home" || r.Kind != "Direct" || r.Monthly != 1.99 || !r.Counted {
+		t.Errorf("the first row: %+v", r)
+	}
+}
+
+// Lane D, D2: Analytics reads the month the agent keeps; nothing kept yet is an empty history, not an error.
+func TestUsageHistory(t *testing.T) {
+	a, _ := testApp(t)
+	h, err := a.UsageHistory(7)
+	if err != nil || len(h.At) != 0 || h.Apps == nil || h.Jobs == nil {
+		t.Fatalf("before any sample: %+v %v", h, err)
+	}
+	now := time.Now()
+	if err := usage.Record(usage.Path(a.root), now.Add(-time.Minute), map[string]usage.Reading{"vaultwarden": {CPU: 1.5, Mem: 20 << 20}}); err != nil {
+		t.Fatal(err)
+	}
+	if h, err = a.UsageHistory(1); err != nil || len(h.At) != 1 || h.CPU[0] != 1.5 || h.Apps["vaultwarden"].Mem[0] != 20<<20 {
+		t.Fatalf("after one: %+v %v", h, err)
 	}
 }

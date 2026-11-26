@@ -14,6 +14,9 @@ import { store } from '../store';
 import { icons, onIcon, wantIcons } from '../status/appIcons';
 import { shippedLogo } from '../parts/AppMark';
 import { goToPart, mountSideMenu, type SideItem, sideIcons } from '../parts/SideMenu';
+import { mountCategoryPage } from '../status/CategoryPage';
+import { keepsTabs, tabChanged } from '../tabs';
+import { mountAnalytics, recordTotals, type Totals } from '../status/Analytics';
 import { ReleaseNotes } from '../status/ReleaseNotes';
 import { h as vnode } from 'preact';
 import { mountStatusNote } from '../parts/Notes';
@@ -23,8 +26,10 @@ import { inTurn, waitWords } from '../job/queue';
 import { mountCrashNote } from '../status/CrashNote';
 import { type History as UsageHistory, mountUsage, record as recordUsage } from '../status/Usage';
 import { memoryByApp } from '../status/memory';
+import { fitMenu } from '../parts/place';
 import { settingLabel, showSettingsPage } from './settings';
-import { catalog, renderApps, replan, selected } from './choose';
+import { catalog, leaveStore, openCustom, openInstall, renderApps, showStore } from './choose';
+import { suggested } from '../choose/Choose';
 import { clearJob, cliProgress, startJob } from '../jobs';
 import { navigate } from '../app';
 import { mountOvernight, nightOf } from '../status/Overnight';
@@ -88,7 +93,7 @@ function renderTiles(st: api.Status) {
       try { await go().SetUpdatesPaused(paused); } catch (err) { showError(err); }
       await loadStatus();
     },
-    onChoose: () => navigate('choose'),
+    onChoose: () => pickStatusPart('find'),
     words: (a) => stateOf(a, batteryPaused, held)[1],
     start: (a) => appActions.act(a, 'start'),
     logs: (a) => { pageOpener.open(a.id); requestAnimationFrame(() => document.getElementById('appLog')?.scrollIntoView({ block: 'start' })); },
@@ -104,7 +109,7 @@ function renderTiles(st: api.Status) {
   const n = trouble.length;
   $('statusCount').textContent = n ? String(n) : '';
   // Health in one line, at the top of the other screens: these, in their rows' words.
-  setHealthApps(trouble.map((a) => ({ id: a.id, name: a.name, words: stateOf(a, batteryPaused, held)[1] })), () => navigate('status'));
+  setHealthApps(trouble.map((a) => ({ id: a.id, name: a.name, words: stateOf(a, batteryPaused, held)[1] })), () => { navigate('status'); pickStatusPart('overview'); });
   // The same count on the Dock icon (the Mac), as Mail shows unread mail;
   // a phone has no Dock.
   if (n !== lastAttention && !document.documentElement.classList.contains('companion')) {
@@ -148,28 +153,122 @@ function renderAppList(st: api.Status) {
   // The first three of each category's icons, each read once while the app is open (the list redraws as they arrive).
   wantIcons(groups.flatMap((g) => g.apps.slice(0, 3).filter((x) => x.state !== 'missing' && !shippedLogo(x.id)).map((x) => x.id)));
   mountAppList($('statusRows'), appList);
-  if (!unkept && !appList.companion) refreshUnkept();
-  statusSide = groups.map((g) => ({ key: g.id, label: g.label, icon: sideIcons[g.id] || sideIcons.other, count: g.alert ? g.apps.length : undefined }));
+  if (!unkept) refreshUnkept();
+  // The menu and a category's page: each catalog category with its apps on this machine, whatever their state (the
+  // owner, Nov 25: an amber dot where one is stopped, never a Stopped or Needs a look item), your own apps last.
+  const cats = [...(catalog?.categories || [])].sort((x, y) => Number(x.id === automation) - Number(y.id === automation));
+  const own = st.apps.filter((a) => !cats.some((c) => c.id === catOf[a.id]));
+  const installed = new Set(st.apps.map((a) => a.id));
+  statusParts = [
+    ...cats.map((c) => ({ id: c.id, label: c.id === automation ? 'Media automation' : c.label, apps: st.apps.filter((a) => catOf[a.id] === c.id),
+      add: (catalog?.apps || []).filter((x) => x.category === c.id && x.kind !== 'helper' && !installed.has(x.id) && !(c.id === automation && x.id === 'seerr')) })),
+    { id: 'own', label: 'Your own apps', apps: own, add: [] },
+  ];
+  // Seerr sits in Media (above): its shelf too.
+  const seerr = (catalog?.apps || []).find((x) => x.id === 'seerr');
+  const media = statusParts.find((p) => p.id === 'media');
+  if (seerr && media && !installed.has('seerr') && !media.add.includes(seerr)) media.add.push(seerr);
+  statusSide = statusParts.map((p) => ({ key: p.id, label: p.label, icon: sideIcons[p.id] || sideIcons.other, total: p.apps.length,
+    dot: p.apps.some((a) => troubled(a, st.stopped)) }));
   drawStatusSide();
+  drawStatusPart();
 }
 
-// Status's menu in the sidebar (parts/SideMenu): Overview, then each group as the list has it; a pick goes to its row,
-// opening it when folded.
+// Status's menu in the sidebar (parts/SideMenu): Overview, then each category, your own apps last; a pick shows that
+// category's page (status/CategoryPage) in place of the overview.
+interface StatusPart { id: string; label: string; apps: api.AppStatus[]; add: api.App[] }
+let statusParts: StatusPart[] = [];
 let statusSide: SideItem[] = [];
 let statusHere = 'overview';
 function drawStatusSide() {
-  mountSideMenu($('statusSide'), onPhone() ? null : {
+  const menu = {
     label: 'Status', here: statusHere, pick: pickStatusPart,
-    items: [{ key: 'overview', label: 'Overview', icon: sideIcons.overview }, ...statusSide],
+    items: [{ key: 'overview', label: 'Overview', icon: sideIcons.overview }, { key: 'analytics', label: 'Analytics', icon: sideIcons.analytics }, ...statusSide],
+  };
+  // The sidebar's, and on a phone's narrow page the same items as a row of chips atop Status (the tab bar has no room).
+  mountSideMenu($('statusSide'), menu);
+  mountSideMenu($('statusChips'), onPhone() ? { ...menu, label: 'Status parts' } : null);
+}
+/** Shows the overview, or the category picked, with the apps as last read. */
+/** The Status page an app's page to add was opened from (a category, All apps), for its breadcrumbs and Back. */
+let storeFrom = 'overview';
+function drawStatusPart() {
+  const section = $('status');
+  if (statusHere.startsWith('add:')) {
+    section.dataset.part = 'add';
+    mountAnalytics($('statusPart'), null);
+    mountCategoryPage($('statusPart'), null);
+    const fromLabel = storeFrom === 'find' ? 'All apps' : statusParts.find((p) => p.id === storeFrom)?.label;
+    const trail = [{ label: 'Status', go: () => pickStatusPart('overview') }, ...(fromLabel ? [{ label: fromLabel, go: () => pickStatusPart(storeFrom) }] : [])];
+    showStore(statusHere.slice(4), trail);
+    return;
+  }
+  leaveStore();
+  if (statusHere === 'analytics') {
+    section.dataset.part = 'analytics';
+    mountCategoryPage($('statusPart'), null);
+    const disk = onPhone() ? phoneMachine : machineNow()?.i.disks?.[0] || null;
+    mountAnalytics($('statusPart'), {
+      stats: lastStats, history: usageHistory, totals, cores: onPhone() ? undefined : navigator.hardwareConcurrency || undefined,
+      disk: disk && disk.total ? { free: disk.free, total: disk.total, low: disk.low } : null, storage: lastStorage,
+      apps: lastStatus?.apps || [], catalog, icons, page: (a) => pageOpener.open(a.id),
+    });
+    return;
+  }
+  mountAnalytics($('statusPart'), null);
+  // Find an app (the overview's box, or no apps yet): every app here and every one to add, the sets first.
+  if (statusHere === 'find' && appList && lastStatus) {
+    section.dataset.part = 'find';
+    const installed = new Set(lastStatus.apps.map((a) => a.id));
+    const sets = (catalog?.presets || []).filter((p) => !p.id.startsWith('stack:')).sort((x, y) => Number(!!y.starter) - Number(!!x.starter));
+    mountCategoryPage($('statusPart'), {
+      label: 'All apps', apps: lastStatus.apps, add: (catalog?.apps || []).filter((x) => x.kind !== 'helper' && !installed.has(x.id)), list: appList,
+      goes: catalog ? catalog.apps.filter((x) => x.kind !== 'helper' && suggested(x, { catalog, status: statusById }).length) : [],
+      here: appList.companion ? 'On the server' : 'On ' + thisMachine.replace(/^This/, 'this'), addLabel: 'Add apps', sets, find: findText,
+      install: (id) => openInstall([id]), installSet: (id) => { const p = catalog?.presets.find((x) => x.id === id); if (p) openInstall(p.apps, { set: id }); },
+    });
+    return;
+  }
+  const part = statusHere === 'overview' ? undefined : statusParts.find((p) => p.id === statusHere);
+  if (part) section.dataset.part = part.id; else delete section.dataset.part;
+  if (!part || !appList) { mountCategoryPage($('statusPart'), null); return; }
+  wantIcons(part.apps.filter((a) => a.state !== 'missing' && !shippedLogo(a.id)).map((a) => a.id));
+  mountCategoryPage($('statusPart'), {
+    label: part.label, apps: part.apps, add: part.add, list: appList,
+    here: appList.companion ? 'On the server' : 'On ' + thisMachine.replace(/^This/, 'this'),
+    install: (id) => openInstall([id]),
+    addOwn: part.id === 'own' ? openCustom : undefined,
   });
 }
-function pickStatusPart(key: string) {
+/** What was typed in the overview's Find an app, for the page it opens. */
+let findText = '';
+// The overview's Find an app: what's typed opens All apps with it, the box there taking over.
+$('statusFind').addEventListener('input', (e) => {
+  const box = e.currentTarget as HTMLInputElement, text = box.value;
+  box.value = '';
+  pickStatusPart('find', text);
+});
+export function pickStatusPart(key: string, find = '') {
+  findText = find;
+  // From an app's page (or any screen), a pick in Status' menu goes back to Status first (the owner, Nov 25: clicking
+  // another category from an app's page "just stalls out").
+  if (!$('status').classList.contains('active')) navigate('status');
+  if (key === statusHere && key !== 'find') { goToPart('status', null); return; }
+  if (key.startsWith('add:') && !statusHere.startsWith('add:')) storeFrom = statusHere;
   statusHere = key;
   drawStatusSide();
-  const row = () => key === 'overview' ? null : document.querySelector<HTMLElement>(`#statusRows tr.grouphead[data-group="${CSS.escape(key)}"]`);
-  const r = row();
-  if (r && !r.classList.contains('open')) r.click();
-  goToPart('status', row());
+  drawStatusPart();
+  goToPart('status', null);
+  tabChanged();
+}
+// Each of Status' pages (Overview, Analytics, a category, All apps) a step for Back and Forward, and the app's page
+// knows which one it was opened from (its breadcrumbs: Status › Media › Navidrome).
+keepsTabs('status', () => statusHere, (key) => { statusHere = key; drawStatusSide(); drawStatusPart(); });
+/** The Status page an app's page was opened from, for its breadcrumbs: its name and how to go back to it. */
+export function statusCrumb(): { label: string; go: () => void } | null {
+  if (statusHere === 'overview') return null;
+  const label = statusHere === 'analytics' ? 'Analytics' : statusHere === 'find' ? 'All apps' : statusParts.find((p) => p.id === statusHere)?.label;
+  return label ? { label, go: () => { navigate('status'); } } : null;
 }
 
 // The passwords and keys of each app not ticked Saved yet: a dot on its ⚙
@@ -453,7 +552,10 @@ function showDownloads(c: downloads.Card | null) {
 
 // Photos per person: what each person keeps in Immich, as the nightly
 // backup last read it, largest first, with a bar against the largest.
+let lastStorage: storage.Record | null = null;
 function showStorage(rec: storage.Record | null) {
+  lastStorage = rec;
+  if (statusHere === 'analytics') drawStatusPart();
   const card = $('storageCard');
   card.hidden = !storageShown(rec);
   if (card.hidden) return;
@@ -472,12 +574,18 @@ async function loadUsage() {
 }
 function showUsage(stats: docker.Stat[]) {
   recordUsage(usageHistory, stats);
+  recordTotals(totals, stats, catalog);
+  lastStats = stats;
+  if (statusHere === 'analytics') drawStatusPart();
   mountUsage($('usageCard'), { stats, history: usageHistory, nameOf: (id) => catalog?.apps.find((a) => a.id === id)?.name || id });
   // Each group's memory on its heading and in its menu.
   memory = memoryByApp(stats, catalog);
   if (appList) mountAppList($('statusRows'), (appList = { ...appList, memory }));
 }
 let memory: Record<string, number> | undefined;
+/** The latest stats, and the whole machine's since Status opened (Analytics). */
+let lastStats: docker.Stat[] = [];
+const totals: Totals = { at: [], cpu: [], mem: [] };
 // While Status is open (and the window shown), usage is sampled every 10
 // seconds for the card's lines.
 const usageHistory: UsageHistory = new Map();
@@ -515,7 +623,7 @@ function showAlerts(events: notify.Event[] | null, err: Error | null) {
 const appListActions: AppListActions = {
   act: (a, action) => (action === 'update' ? showUpdate(a) : runAppAction(a, action)),
   openNative: (a) => go().OpenNativeApp(a.id).then(() => { setTimeout(loadStatus, 3000); }, (err) => { showError(err); throw err; }),
-  install: (a) => { selected.add(a.id); navigate('choose'); renderApps(); replan(); },
+  install: (a) => openInstall([a.id]),
   adopt: (a) => cliFlow(`Move ${a.name} into the homelab`, 'adopt', a.id, 'Move it'),
   releaseNotes: (id) => go().ReleaseNotes(id),
   open: (url) => go().Open(url),
@@ -921,6 +1029,7 @@ function closeMenu() { $('statusMenu').hidden = true; $('statusMore').setAttribu
 function openMenu(at?: 'first' | 'last') {
   $('statusMenu').hidden = false;
   $('statusMore').setAttribute('aria-expanded', 'true');
+  fitMenu($('statusMenu'), $('statusMore'));
   const items = menuItems();
   if (at && items.length) items[at === 'first' ? 0 : items.length - 1].focus();
 }

@@ -6,7 +6,7 @@
 // components (*.tsx). app/preview/lint.mjs keeps it under 400 lines.
 import { placeOf, readTargets, showSent } from './phone/send';
 import { progress } from './setup/Checklist';
-import { drawRemembered, leftStatus, loadStatus, refreshStatus, statusData, undoNow } from './screens/status';
+import { drawRemembered, leftStatus, loadStatus, pickStatusPart, refreshStatus, statusData, undoNow } from './screens/status';
 import { drawHealth } from './status/healthLine';
 import { healthData, hostData, loadAppearance, loadHost, loadSetup, setupNav, stepsData } from './screens/setup';
 import { changed, loadSettings, settingsData } from './screens/settings';
@@ -28,6 +28,8 @@ import { onTabChange, tabbed } from './tabs';
 
 let placed = false; // a screen was shown: the one the page starts on has no place of its own to keep yet
 export function show(name) {
+  // Choose apps is gone (the owner, Nov 25): ⌘1, the Mac's View menu and old links open Find an app on Status.
+  if (name === 'choose') { show('status'); pickStatusPart('find'); return; }
   // An app's page belongs to Status: its button stays the one picked.
   const picked = name === 'app' ? 'status' : name;
   const was = document.querySelector('.screen.active')?.id;
@@ -96,13 +98,18 @@ export function navigate(name) {
   remember();
 }
 
-// Back and Forward between screens, as a browser has them (the owner, Nov 11): an app's page with its app, at most
-// 50 back. ⌘[ and ⌘] (Alt+← and Alt+→ elsewhere), the mouse's back and forward buttons, and a two-finger swipe on a
+// Back and Forward between screens, as a browser has them (the owner, Nov 11): an app's page with its app, a
+// screen's tab or page (Status' categories, Settings' pages), 500 back and kept between launches. ⌘[ and ⌘] (Alt+← and Alt+→ elsewhere), the mouse's back and forward buttons, and a two-finger swipe on a
 // trackpad: fingers to the right is Back, to the left Forward.
 // A screen with tabs (Finances, Tidy Up) is a step per tab (the owner, Nov 12: Back from Recurring or Spending went
 // straight to Status): it names the tab it is on, and puts one back.
 type Place = { screen: string; app?: string; tab?: string };
-const back: Place[] = [], ahead: Place[] = [];
+// 500 steps each way (the owner, Nov 25: "more memory … to go back and forth further"), kept on this device between
+// launches, so Back after opening the app again goes where it went before.
+const keep = 500;
+const kept = (() => { try { return JSON.parse(localStorage.getItem('homelab.history') || '{}'); } catch { return {}; } })();
+const back: Place[] = Array.isArray(kept.back) ? kept.back.slice(-keep) : [], ahead: Place[] = Array.isArray(kept.ahead) ? kept.ahead.slice(-keep) : [];
+function keepHistory() { try { localStorage.setItem('homelab.history', JSON.stringify({ back: back.slice(-keep), ahead: ahead.slice(-keep) })); } catch { /* this device keeps none */ } }
 let current: Place | undefined;
 let moving = false;
 onTabChange(() => remember());
@@ -112,8 +119,9 @@ function remember() {
   const next = { screen, app: screen === 'app' ? openedApp() : undefined, tab: tabbed[screen]?.now() };
   if (!moving && current && (current.screen !== next.screen || current.app !== next.app || current.tab !== next.tab)) {
     back.push(current);
-    if (back.length > 50) back.shift();
+    if (back.length > keep) back.shift();
     ahead.length = 0;
+    keepHistory();
   }
   current = next;
 }
@@ -143,6 +151,7 @@ export function goBack(): boolean {
   if (!p) return false;
   if (current) ahead.push(current);
   visit(p);
+  keepHistory();
   swipeHint('back');
   return true;
 }
@@ -152,6 +161,7 @@ export function goForward(): boolean {
   if (!p) return false;
   if (current) back.push(current);
   visit(p);
+  keepHistory();
   swipeHint('forward');
   return true;
 }
@@ -285,7 +295,7 @@ document.addEventListener('keydown', (e) => {
     e.preventDefault();
     if (current) reload(current);
   } else if (e.key.toLowerCase() === 'f') {
-    const search = { choose: 'search', settings: 'settingsSearch' }[current];
+    const search = { status: 'statusFind', settings: 'settingsSearch' }[current];
     if (search) { e.preventDefault(); $(search).focus(); $(search).select(); }
     // Finances: Transactions' own search, while it shows.
     const box = current === 'finances' ? document.querySelector<HTMLInputElement>('#finances .fx-txsearch') : null;

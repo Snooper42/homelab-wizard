@@ -15,8 +15,6 @@ enum Design {
     static let running = Color(light: 0x3CC79F, dark: 0x3CC79F)
     /// A red badge on an app that needs a look.
     static let badge = Color(light: 0xE5352B, dark: 0xFF453A)
-    /// The dark hero card's two ends (Status's "Right now").
-    static let hero = [Color(light: 0x10131A, dark: 0x1A1D25), Color(light: 0x2A3142, dark: 0x2C3344)]
     /// A logo circle with nothing of its own: a soft grey, and its icon in the quieter ink.
     static let plainCircle = Color(light: 0xEFEFF2, dark: 0x2C2C2E)
 
@@ -83,26 +81,9 @@ struct CardBackground: ViewModifier {
     }
 }
 
-/// The dark card at the top of Status: a near-black gradient with a deeper shadow.
-struct HeroCardBackground: ViewModifier {
-    func body(content: Content) -> some View {
-        content
-            .foregroundStyle(.white)
-            .background {
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .fill(LinearGradient(colors: Design.hero, startPoint: .topLeading, endPoint: .bottomTrailing))
-                    .shadow(color: Design.shadow.opacity(0.2), radius: 13, y: 10)
-            }
-            .environment(\.colorScheme, .dark)
-    }
-}
-
 extension View {
     /// On a white card (warm near-black at night) with a hairline edge.
     func card(radius: CGFloat = Theme.cardRadius) -> some View { modifier(CardBackground(radius: radius)) }
-
-    /// On the dark hero card, in white.
-    func heroCard() -> some View { modifier(HeroCardBackground()) }
 }
 
 // MARK: - Buttons

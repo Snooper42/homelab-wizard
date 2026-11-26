@@ -107,7 +107,7 @@ The steps are grouped as **Needs you**, **Can wait**, and **Done**.
 | **Scheduled jobs** | The homelab starts again after a restart, backs up at night, and checks itself every 15 minutes. | Click **Install the jobs**. |
 | **Alerts when this machine is down** | An email when the Mac itself stops, which the homelab cannot report on its own. | Create a free check at healthchecks.io (15-minute period and grace) and put its ping address in **Settings**. |
 | **Tailscale on phones and computers** | The apps open on each device, at home and away. | Install the Tailscale app on each phone and computer, sign in with the same account, then tick **Done**. |
-| **Ad blocking on every device** | Ads and trackers blocked on every device signed in to Tailscale, with no router change. Shown once *Ad blocking* is installed from Choose apps. | Click **Set up ad blocking**, then in the Tailscale admin console › DNS add the address it shows as a custom nameserver and turn on **Override DNS servers**. |
+| **Ad blocking on every device** | Ads and trackers blocked on every device signed in to Tailscale, with no router change. Shown once the *Ad blocking* set is installed (Find an app on Status). | Click **Set up ad blocking**, then in the Tailscale admin console › DNS add the address it shows as a custom nameserver and turn on **Override DNS servers**. |
 
 If a step does not turn green, open Settings › This Mac (This PC, This machine) and click **Make a diagnostics report**. It writes one file with every check and log, with all passwords and tokens removed, that you can share when asking for help.
 
@@ -129,18 +129,18 @@ Home mode needs no domain. When you want short addresses such as `photos.example
 
 ## 3. Choose more apps
 
-Open **Choose apps**.
+Click **Find an app** at the top of Status (or pick a kind of app, such as Media, in Status' menu).
 
-1. **Start here** has the five things most homes want first: Photos, Passwords, Movies and TV, Music, and Files. Click the ones you want.
-2. Every other app is under **Add more**, where each says what it does and which subscription it can replace. Tick what you want, or pick a preset such as *Household* (smart home, groceries, to-dos, saved links, and a start page) or *Media automation* (the *arr apps, Seerr for requests, and qBittorrent behind a VPN).
-3. Read the plan on the right. It says in one line how many apps it installs and lists the ones you picked; helpers, port moves, and settings written wait under **Details**. When an app needs a setting first (the VPN key for qBittorrent, for example), the plan names it and the field to fill in appears below, with where to find it.
+1. **Sets** have what most homes want first: Photos, Passwords, Movies and TV, Music, Files, and bundles such as *Household* (smart home, groceries, to-dos, saved links, and a start page) or *Media automation* (the *arr apps, Seerr for requests, and qBittorrent behind a VPN). Click one to see its page.
+2. Every other app is below, and **Find an app** finds one by name or by what it replaces. Click an app to open its page: what it does, what it replaces, what it goes with, and what to know.
+3. Read the plan beside it. It says in one line how many apps it installs; helpers, port moves, and settings written wait under **Details**. When an app needs a setting first (the VPN key for qBittorrent, for example), the plan asks for it, with where to find it.
 4. Click **Install**.
 
 If the apps would need more memory than the Mac has room for beside macOS and everyday apps, the plan says so and names the heaviest to leave out. On an 8 GB Mac the *Start here* picks fit; Immich's face and smart search (machine learning) is the one to add with care.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="images/app-choose-dark.png">
-  <img alt="Choose apps: apps by category, presets, and the install plan" src="images/app-choose.png">
+  <img alt="The Household set's page: its apps, and the plan with Install beside them" src="images/app-choose.png">
 </picture>
 
 ## 4. Set up each person's phone

@@ -6,8 +6,9 @@
 // no focus on a click). Stop asks for a second click; Stop for a while ›
 // shows its times in place of the menu, and Send to my phone › the phones
 // it can go to (the owner, Nov 12: pick a phone each time).
-import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
+import { useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { stopChoices } from './stopFor';
+import { putInside } from '../parts/place';
 
 /** What the row's menu does; app.ts runs each. */
 export interface RowMenuActions {
@@ -34,11 +35,13 @@ export interface RowMenuProps {
   /** Where it opens: the pointer's spot, or under the app's name. */
   x: number;
   y: number;
+  /** Where it ends when it opens upward (no room below): over its button, not over the spot. */
+  up?: number;
   /** A native app (Jellyfin on a Mac): no Start, Stop, or alerts here. */
   native: boolean;
   /** An app's command runs: what changes it waits. */
   busy: boolean;
-  /** The phone companion: no Open on a phone. */
+  /** The web page (homelab serve): Open on a phone only where it isn't on one (a wide window). */
   companion: boolean;
   on: RowMenuActions;
   /** Closes it; refocus puts the focus back where it was. */
@@ -47,23 +50,22 @@ export interface RowMenuProps {
   said: (words: string) => void;
 }
 
-export function RowMenu({ a, x, y, native, busy, companion, on, close, said }: RowMenuProps) {
+/** A window wider than a phone's: the web page on a computer. */
+const wide = () => matchMedia('(min-width: 701px)').matches;
+
+export function RowMenu({ a, x, y, up, native, busy, companion, on, close, said }: RowMenuProps) {
   const box = useRef<HTMLDivElement>(null);
   const [sure, setSure] = useState(false);
   const [later, setLater] = useState(false);
   const [sending, setSending] = useState(false);
-  const phones = companion ? [] : on.targets(a);
-  const [at, setAt] = useState({ left: x, top: y });
+  const phones = on.targets(a);
   const items = () => [...(box.current?.querySelectorAll<HTMLButtonElement>('[role^=menuitem]:not([disabled])') || [])];
   // Inside the window: moved left or up when it would run past an edge.
+  useLayoutEffect(() => { if (box.current) putInside(box.current, x, y, up); }, [x, y, up, later, sending]);
+  // At once, as the menu is drawn: a key pressed right after the one that opened it lands in the menu.
+  useLayoutEffect(() => { items()[0]?.focus(); }, []);
+  // Listening as it is drawn too: a press right after it opens closes it.
   useLayoutEffect(() => {
-    const m = box.current?.getBoundingClientRect();
-    if (!m) return;
-    setAt({ left: Math.max(8, Math.min(x, innerWidth - m.width - 8)), top: y + m.height > innerHeight - 8 ? Math.max(8, y - m.height) : y });
-  }, [x, y, later]);
-  useEffect(() => {
-    // At once, as the menu is drawn: a key pressed right after the one that opened it lands in the menu.
-    items()[0]?.focus();
     const outside = (e: Event) => { if (!box.current?.contains(e.target as Node)) close(); };
     const gone = () => close();
     document.addEventListener('mousedown', outside, true);
@@ -79,7 +81,7 @@ export function RowMenu({ a, x, y, native, busy, companion, on, close, said }: R
   const item = (label: string, fn: () => void, opts: { cls?: string; disabled?: boolean } = {}) =>
     <button type="button" role="menuitem" class={opts.cls} disabled={opts.disabled} onClick={fn}>{label}</button>;
   return (
-    <div ref={box} class="menu rowmenu" role="menu" aria-label={later ? `Stop ${a.name} for a while` : sending ? `Send ${a.name} to a phone` : a.name} style={{ left: at.left + 'px', top: at.top + 'px' }}
+    <div ref={box} class="menu rowmenu" role="menu" aria-label={later ? `Stop ${a.name} for a while` : sending ? `Send ${a.name} to a phone` : a.name}
       onKeyDown={(e) => {
         if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); if (later) showLater(false); else if (sending) showSend(false); else close(true); return; }
         const all = items(), i = all.indexOf(document.activeElement as HTMLButtonElement);
@@ -105,7 +107,7 @@ export function RowMenu({ a, x, y, native, busy, companion, on, close, said }: R
       ) : (
         <>
           {running && url && item('Open', pick(() => on.open(url)))}
-          {running && a.address && !companion && item('Open on a phone', pick(() => on.phone(a)))}
+          {running && a.address && (!companion || wide()) && item('Open on a phone', pick(() => on.phone(a)))}
           {url && item('Copy address', pick(() => { on.copy(url).then(() => said('Address copied'), () => said('Could not copy the address')); }))}
           {!!phones.length && <button type="button" role="menuitem" class="sendphone" aria-haspopup="menu" onClick={() => showSend(true)}>Send to my phone ›</button>}
           {!native && url && <hr />}
@@ -115,18 +117,15 @@ export function RowMenu({ a, x, y, native, busy, companion, on, close, said }: R
           {!native && running && <button type="button" role="menuitem" class="stoplater" aria-haspopup="menu" disabled={busy} onClick={() => showLater(true)}>Stop for a while ›</button>}
           {!native && <hr />}
           {!native && item('Logs', pick(() => on.logs(a)))}
-          {/* On the phone, the quick ones: what is done to this app now. */}
-          {!companion && item('Back up now', pick(() => on.backupNow()))}
-          {!native && !companion && (
+          {item('Back up now', pick(() => on.backupNow()))}
+          {!native && (
             <button type="button" role="menuitemcheckbox" aria-checked={!a.quiet} onClick={pick(() => on.alerts(a, !!a.quiet))}>
               Tell me if it stops<span class="check" aria-hidden="true">{a.quiet ? '' : '✓'}</span>
             </button>
           )}
-          {!companion && (
-            <button type="button" role="menuitemcheckbox" aria-checked={!!a.pinned} onClick={pick(() => on.pin(a, !a.pinned))}>
-              Pin to the top<span class="check" aria-hidden="true">{a.pinned ? '✓' : ''}</span>
-            </button>
-          )}
+          <button type="button" role="menuitemcheckbox" aria-checked={!!a.pinned} onClick={pick(() => on.pin(a, !a.pinned))}>
+            Pin to the top<span class="check" aria-hidden="true">{a.pinned ? '✓' : ''}</span>
+          </button>
         </>
       )}
     </div>

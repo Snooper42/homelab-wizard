@@ -13,7 +13,7 @@ import { isMac, mod, onPhone } from '../core';
 type Line = [keys: string[], what: string];
 
 const names: Record<string, string> = {
-  choose: 'Choose apps', status: 'Status', backups: 'Backups', setup: 'Setup', settings: 'Settings', finances: 'Finances', tidy: 'Tidy Up',
+  choose: 'Find an app', status: 'Status', backups: 'Backups', setup: 'Setup', settings: 'Settings', finances: 'Finances', tidy: 'Tidy Up',
 };
 
 /** What each screen adds to the shortcuts that work everywhere. */
@@ -24,8 +24,6 @@ function here(screen: string): Line[] {
         [['a–z'], 'Start typing an app’s name to show only the apps that match; Escape shows them all again'],
         [['↑', '↓'], 'In an app’s or a group’s menu, the item above or below'],
       ];
-    case 'choose':
-      return [[[mod + 'F'], 'Search the apps']];
     case 'settings':
       return [[[mod + 'F'], 'Search the settings']];
     case 'finances':

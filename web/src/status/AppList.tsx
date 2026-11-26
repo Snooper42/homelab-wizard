@@ -13,6 +13,7 @@ import { Address } from '../parts/Address';
 import { AppMark } from '../parts/AppMark';
 import { Hover } from '../parts/Hover';
 import { awaitingJobs } from './Tiles';
+import { fitMenu } from '../parts/place';
 import { formatMem } from './memory';
 import { keptRestarting, stopChoices, stoppedByItself, stoppedWords } from './stopFor';
 import { RowMenu, type RowMenuActions } from './RowMenu';
@@ -247,20 +248,26 @@ function NativeButton({ a, title, label, open }: { a: api.AppStatus; title: stri
 
 /** The one thing done most with an app: Open it, or Start it when it is
  * stopped. Everything else is on its page. */
-function Actions({ a, entry, busy, os, on }: { a: api.AppStatus; entry?: api.App; busy: boolean; os: string; on: AppListActions }) {
+export function Actions({ a, entry, busy, os, on, marks }: { a: api.AppStatus; entry?: api.App; busy: boolean; os: string; on: AppListActions;
+  /** Each button with its icon (a category's tiles): ↗ Open, ▷ Start. */
+  marks?: boolean }) {
+  const mark = (name: string) => (marks ? <Icon name={name} /> : null);
   if (entry?.kind === 'native') {
     const title = os === 'mac' ? `Open ${a.name}; it then keeps running in the menu bar`
       : os === 'windows' ? `Start ${a.name} (Windows asks for approval)` : `Start ${a.name}'s service (asks for your password)`;
-    return entry.macApp && a.state !== 'running' ? <NativeButton a={a} title={title} label={os === 'mac' ? 'Open' : 'Start'} open={() => on.openNative(a)} /> : null;
+    if (entry.macApp && a.state !== 'running') return <NativeButton a={a} title={title} label={os === 'mac' ? 'Open' : 'Start'} open={() => on.openNative(a)} />;
+    // A tile has one button always: Open, in the browser, while it runs.
+    const page = a.address ? 'https://' + a.address : a.url;
+    return marks && a.state === 'running' && page ? <button class="small rowmain" title={`Open ${a.name}`} onClick={() => on.open(page)}>{mark('open')}Open</button> : null;
   }
   if (a.state === 'elsewhere') return null;
-  if (a.state === 'missing') return <button class="small" onClick={() => on.install(a)}>Install</button>;
+  if (a.state === 'missing') return <button class="small" onClick={() => on.install(a)}>{mark('update')}Install</button>;
   // A phone that only looks has no Start (html.companion:not(.can-change) hides .change): it says where to start it.
-  if (a.state !== 'running') return <><button class="small rowmain change" title={`Start ${a.name}`} disabled={busy} onClick={() => on.act(a, 'start')}>Start</button><span class="lookonly muted">Start it from the computer</span></>;
+  if (a.state !== 'running') return <><button class={'small rowmain change' + (marks ? ' primary' : '')} title={`Start ${a.name}`} disabled={busy} onClick={() => on.act(a, 'start')}>{mark('start')}Start</button><span class="lookonly muted">Start it from the computer</span></>;
   const url = a.address ? 'https://' + a.address : a.url;
   // ⇧-click (Shift-click): its address on this machine instead of the domain, for when the domain does not answer.
   const local = a.address && a.url ? a.url : '';
-  return url ? <button class="small rowmain" title={local ? `Open ${a.name} (${shift(os)}click: on this machine, ${local.replace(/^http:\/\//, '')})` : `Open ${a.name}`} onClick={(e) => on.open(local && e.shiftKey ? local : url)}>Open</button> : null;
+  return url ? <button class="small rowmain" title={local ? `Open ${a.name} (${shift(os)}click: on this machine, ${local.replace(/^http:\/\//, '')})` : `Open ${a.name}`} onClick={(e) => on.open(local && e.shiftKey ? local : url)}>{mark('open')}Open</button> : null;
 }
 
 /** Where a row's menu is open, and which row: one at a time. */
@@ -387,7 +394,6 @@ function GroupMenu({ g, p, count, tone }: { g: Group; p: AppListProps; count: st
   // Stop for a while: the menu shows the times to choose from instead.
   const [later, setLater] = useState(false);
   const [doing, setDoing] = useState<{ action: string; at: number; of: number } | null>(null);
-  const [up, setUp] = useState(false);
   const wrap = useRef<HTMLSpanElement>(null);
   const btn = useRef<HTMLButtonElement>(null);
   const list = useRef<HTMLDivElement>(null);
@@ -416,13 +422,7 @@ function GroupMenu({ g, p, count, tone }: { g: Group; p: AppListProps; count: st
   }, [open]);
   // Opened near the bottom of what scrolls, it opens upward when there is
   // room above (both measured on the page, so the text size cannot skew it).
-  useLayoutEffect(() => {
-    if (!open) { setUp(false); return; }
-    const menu = list.current, box = wrap.current?.closest('main'), at = btn.current;
-    if (!menu || !box || !at) return;
-    const m = menu.getBoundingClientRect(), b = box.getBoundingClientRect(), a = at.getBoundingClientRect();
-    setUp(m.bottom > b.bottom && a.top - b.top > m.height);
-  }, [open]);
+  useLayoutEffect(() => { if (open && list.current) fitMenu(list.current, btn.current); }, [open, later]);
   if (p.companion || g.alert) return <span class={'n' + (tone ? ' countpill ' + tone : '')}>{count}</span>;
   // Stop asks for a second click; Stop for a while has had it (the time).
   const run = (action: 'start' | 'stop' | 'restart', apps: api.AppStatus[], until?: string) => {
@@ -458,7 +458,7 @@ function GroupMenu({ g, p, count, tone }: { g: Group; p: AppListProps; count: st
         {label}<span class="drop" aria-hidden="true">▾</span>
       </button>
       {open && later && (
-        <div ref={list} class={'menu groupmenulist' + (up ? ' up' : '')} role="menu" aria-label={`${g.label}: stop for a while`}>
+        <div ref={list} class="menu groupmenulist" role="menu" aria-label={`${g.label}: stop for a while`}>
           <p class="menuhead">{running.length === 1 ? `Stop ${running[0].name} for a while` : `Stop the ${running.length} running for a while`}</p>
           {stopChoices().map((c) => <button key={c.until} type="button" role="menuitem" disabled={p.busy} onClick={() => run('stop', running, c.until)}>{c.label}</button>)}
           <button type="button" role="menuitem" class="menuback" onClick={() => showLater(false)}>‹ Back</button>
@@ -466,7 +466,7 @@ function GroupMenu({ g, p, count, tone }: { g: Group; p: AppListProps; count: st
         </div>
       )}
       {open && !later && (
-        <div ref={list} class={'menu groupmenulist' + (up ? ' up' : '')} role="menu" aria-label={`${g.label}: all its apps`}>
+        <div ref={list} class="menu groupmenulist" role="menu" aria-label={`${g.label}: all its apps`}>
           <p class="menuhead">{mem ? (used ? `${formatMem(used)} in memory now` : 'Nothing in memory now') : 'Memory: measuring…'}</p>
           {byMem.length > 0 && (
             <ul class="memlist" aria-label="Memory by app">
@@ -633,6 +633,8 @@ document.addEventListener('keydown', (e) => {
   // ? is the keyboard shortcuts' (app.ts), not a letter to filter by.
   if (e.metaKey || e.ctrlKey || e.altKey || e.key.length !== 1 || e.key === ' ' || e.key === '?') return;
   if (t.closest?.('input, textarea, select, [contenteditable], [role=menu], dialog, .sheet')) return;
+  // A category's page: the letter goes to its Find an app (focused now, it takes the key).
+  if (status.dataset.part) { status.querySelector<HTMLInputElement>('#statusPart .catfind input')?.focus(); return; }
   e.preventDefault();
   if (!filter.on) before = document.activeElement instanceof HTMLElement && document.activeElement !== document.body ? document.activeElement : null;
   focusBox = true;

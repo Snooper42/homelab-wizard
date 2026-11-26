@@ -60,10 +60,11 @@ version: 0.17.0
 | `data/media-health.json` | Tidy Up's pass | Which of the media apps' health problems were seen, since when, and which were said (arr item 4). Safe to delete: each problem still there is said once more |
 | `data/pinned.json` | `homelab pin\|unpin <app>` (a row's right-click › **Pin to the top**, or a phone) | The apps at the top of Status and of the menu bar's Open an app, in the order pinned. It used to be `APPS_PINNED` in `.env`: the first install or `homelab pin` after an upgrade moves it here and takes the key out |
 | `data/savings-history.json` | the nightly backup | The yearly savings over time |
+| `data/usage-history.json` | the agent, every 5 minutes | What the apps took from the processor and memory, in all and each app's own, and when the nightly jobs started, for the last 31 days (1 to 2 MB); Analytics draws its Day, Week and Month from it |
 | `data/upgrade/` | `homelab upgrade` | Where the folder was before the last upgrade (`previous.json`; for a folder the app made, a copy of its files), for `upgrade --back` |
 | `data/homelab-move.json` | `homelab move in` | Where the bundle came from and what ran there, until the move is done |
 | `data/appdata/tailscale/serve.json` | `homelab tailnet setup` | Home mode: the app addresses Tailscale Serve answers |
-| `scripts/logs/watchdog-state.json` | the watchdog | Its last run, failing checks, and per-check pass and run counts for each of the last 7 days (`days`) |
+| `scripts/logs/watchdog-state.json` | the watchdog | Its last run, failing checks, and per-check pass and run counts and outages for each of the last 14 days (`days`, `outages`) |
 | `scripts/logs/restore-test.json` | `homelab restore-test` | The last 24 restore tests |
 | `scripts/logs/digest.json` | the nightly backup | When the weekly summary was last sent |
 | `scripts/logs/<part>.log`, `<part>.1.log` | the background agent | Each part's output (the watchdog, the backup, startup, …); at 5 MB the older half moves to `<part>.1.log`, replacing the one before |

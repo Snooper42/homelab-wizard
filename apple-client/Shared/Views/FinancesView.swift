@@ -2357,7 +2357,7 @@ private struct FinanceRecurringPage: View {
                         if !rows.isEmpty { group(sort, rows, view) }
                     }
                     if items.isEmpty {
-                        Text("Nothing repeats yet. Payments added to the plan on the computer show here with how often they come.")
+                        Text("Nothing repeats yet.")
                             .foregroundStyle(Theme.secondaryInk)
                             .padding(18)
                             .frame(maxWidth: .infinity, alignment: .leading)

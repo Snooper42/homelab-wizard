@@ -3,7 +3,7 @@
 // a page can go to, read once and again as a menu opens, and the send. On
 // the phone's page: a send from the computer shows at the bottom with Open,
 // which goes to that page.
-import { go, onPhone } from '../core';
+import { go } from '../core';
 import { showNote } from '../status/UndoNote';
 
 let targets: app.SendTarget[] = [];
@@ -11,7 +11,6 @@ let reading: Promise<void> | null = null;
 
 /** Reads the phones again (the list a menu shows is the last one read). */
 export function readTargets(): Promise<void> {
-  if (onPhone()) return Promise.resolve();
   reading ??= Promise.resolve().then(() => go().SendTargets()).then((t) => { targets = t || []; }, () => {}).finally(() => { reading = null; });
   return reading;
 }

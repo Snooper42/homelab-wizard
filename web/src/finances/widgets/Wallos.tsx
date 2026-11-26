@@ -73,7 +73,6 @@ export function WallosWidget({ v, read, keep }: { v: finance.View; read: () => P
   const names = (list: Sub[]) => list.map((s) => s.name).join(', ');
   return (
     <Widget title="Subscriptions in Wallos" span="all" kind="fx-wallos" actions={button}>
-      {!got.subs && !got.problem && <p class="fx-sub fx-lead">Bring in Wallos' subscriptions the plan doesn't have.</p>}
       {got.problem && <p class="formerr bad" role="alert">{got.problem}</p>}
       {sorted && <>
         {sorted.add.length ? <>

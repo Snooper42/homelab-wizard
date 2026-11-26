@@ -104,7 +104,7 @@ export interface TilesProps {
   history: savings.Point[];
   /** Pauses (true) or resumes the nightly updates. */
   onPause: (paused: boolean) => Promise<void>;
-  /** Opens Choose apps, from a homelab with no apps yet. */
+  /** Opens Find an app (every app and the starter sets), from a homelab with no apps yet. */
   onChoose: () => void;
   /** Last night's copies as Backups read them (null until read): the Backups card (redesign-loop R6, the picture's). */
   backups?: { copied: number; of: number; skipped: string[]; at: string } | null;
@@ -124,8 +124,7 @@ export function Tiles({ status: st, history, onPause, onChoose, words, start, lo
     return (
       <Card kind="emptystate" id="statusEmpty">
         <h2>No apps yet</h2>
-        <p>Pick a few on Choose apps.</p>
-        <button class="btn primary" onClick={onChoose}>Choose apps</button>
+        <button class="btn primary" onClick={onChoose}>Find an app</button>
       </Card>
     );
   }

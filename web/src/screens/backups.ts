@@ -6,7 +6,7 @@ import { store } from '../store';
 import { appActions, statusById, statusData } from './status';
 import { cliProgress, endJob, startJob } from '../jobs';
 import { inTurn, waitWords } from '../job/queue';
-import { $, go, onPhone, osName, showError } from '../core';
+import { $, go, osName, showError } from '../core';
 import { goToPart, mountSideMenu, sideIcons } from '../parts/SideMenu';
 
 // Backups: the newest copy of each database and volume, the destination,
@@ -144,7 +144,7 @@ const backupParts: [string, string, string, string][] = [
   ['apps', 'Each app', sideIcons.apps, 'copiesCard'],
 ];
 function drawBackupsSide() {
-  mountSideMenu($('backupsSide'), onPhone() ? null : {
+  mountSideMenu($('backupsSide'), {
     label: 'Backups', here: backupsHere, pick: (key) => {
       backupsHere = key;
       drawBackupsSide();

@@ -527,7 +527,6 @@
   var targets = [];
   var reading = null;
   function readTargets() {
-    if (onPhone()) return Promise.resolve();
     reading ??= Promise.resolve().then(() => go().SendTargets()).then((t3) => {
       targets = t3 || [];
     }, () => {
@@ -592,7 +591,10 @@
     chevron: '<polyline points="9 18 15 12 9 6"/>',
     eye: '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>',
     "eye-off": '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>',
-    folder: '<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>'
+    folder: '<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>',
+    more: '<circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>',
+    search: '<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',
+    open: '<line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/>'
   };
 
   // web/src/Icon.tsx
@@ -623,14 +625,14 @@
     const done = counted2.filter((s3) => s3.state === "done").length;
     return { done, total: counted2.length, left: counted2.length - done, wait: steps.length - counted2.length };
   }
-  function Fold({ id: id2, cls, title, names: names5, shown: shown8, toggle }) {
+  function Fold({ id: id2, cls, title, names: names5, shown: shown9, toggle }) {
     return /* @__PURE__ */ u3("li", { class: "fold " + cls, children: [
       /* @__PURE__ */ u3("span", { class: "mark", children: cls === "done" ? /* @__PURE__ */ u3(Icon, { name: "check" }) : /* @__PURE__ */ u3(Icon, { name: "clock" }) }),
       /* @__PURE__ */ u3("div", { class: "body", children: [
         /* @__PURE__ */ u3("strong", { class: "title", children: title }),
-        !shown8 && names5 && /* @__PURE__ */ u3("span", { class: "names muted", children: " · " + names5 })
+        !shown9 && names5 && /* @__PURE__ */ u3("span", { class: "names muted", children: " · " + names5 })
       ] }),
-      /* @__PURE__ */ u3("div", { class: "actions", children: /* @__PURE__ */ u3("button", { id: id2, class: "linkbtn small", "aria-expanded": shown8, onClick: toggle, children: shown8 ? "Hide" : "Show" }) })
+      /* @__PURE__ */ u3("div", { class: "actions", children: /* @__PURE__ */ u3("button", { id: id2, class: "linkbtn small", "aria-expanded": shown9, onClick: toggle, children: shown9 ? "Hide" : "Show" }) })
     ] });
   }
   function Checklist({ steps, showDone, showLater, running: running5, failed = {}, on: on2 }) {
@@ -758,9 +760,70 @@
     ] });
   }
 
+  // web/src/parts/place.ts
+  function putAt(el3, left, top) {
+    el3.style.left = "0px";
+    el3.style.top = "0px";
+    const o3 = el3.getBoundingClientRect();
+    el3.style.left = "100px";
+    el3.style.top = "100px";
+    const p3 = el3.getBoundingClientRect();
+    const kx = (p3.left - o3.left) / 100 || 1, ky = (p3.top - o3.top) / 100 || 1;
+    el3.style.left = `${(left - o3.left) / kx}px`;
+    el3.style.top = `${(top - o3.top) / ky}px`;
+  }
+  function putInside(el3, x3, y3, up) {
+    const pad = 8;
+    const r3 = el3.getBoundingClientRect();
+    const left = Math.max(pad, Math.min(x3, innerWidth - r3.width - pad));
+    let top = y3;
+    if (y3 + r3.height > innerHeight - pad) top = Math.max(pad, (up ?? y3) - r3.height);
+    putAt(el3, left, top);
+  }
+  function scale(el3) {
+    const w3 = el3.offsetWidth;
+    return w3 ? el3.getBoundingClientRect().width / w3 : 1;
+  }
+  function fitMenu(m3, button) {
+    const s3 = m3.style;
+    s3.left = s3.right = s3.top = s3.bottom = s3.maxHeight = s3.overflowY = "";
+    const area = (m3.closest("main") || document.body).getBoundingClientRect();
+    const lo = Math.max(area.left, 0) + 4, hi = Math.min(area.right, innerWidth) - 4;
+    let r3 = m3.getBoundingClientRect();
+    if (r3.left < lo) {
+      s3.left = "0";
+      s3.right = "auto";
+      r3 = m3.getBoundingClientRect();
+    }
+    if (r3.right > hi) {
+      s3.right = "0";
+      s3.left = "auto";
+      r3 = m3.getBoundingClientRect();
+    }
+    if (r3.left < lo) {
+      s3.left = "0";
+      s3.right = "auto";
+    }
+    const b2 = (button || m3.parentElement).getBoundingClientRect();
+    const below = innerHeight - b2.bottom - 12, above = b2.top - 12;
+    if (r3.height <= below) return;
+    const k3 = scale(m3);
+    if (r3.height <= above || above > below) {
+      s3.top = "auto";
+      s3.bottom = "calc(100% + 6px)";
+      if (r3.height > above) {
+        s3.maxHeight = `${above / k3}px`;
+        s3.overflowY = "auto";
+      }
+    } else {
+      s3.maxHeight = `${below / k3}px`;
+      s3.overflowY = "auto";
+    }
+  }
+
   // web/src/parts/Hover.tsx
   var made = 0;
-  function useHoverCard(tip, { wide, side = "below", lazy } = {}) {
+  function useHoverCard(tip, { wide: wide2, side = "below", lazy } = {}) {
     const [open5, setOpen] = d2(false);
     const [id2] = d2(() => `hover-${++made}`);
     const at2 = A2(null);
@@ -778,7 +841,7 @@
     _2(() => {
       const t3 = at2.current, c4 = box.current;
       if (!open5 || !t3 || !c4) return;
-      const r3 = t3.getBoundingClientRect(), w3 = c4.offsetWidth, h3 = c4.offsetHeight, pad = 8;
+      const r3 = t3.getBoundingClientRect(), cr = c4.getBoundingClientRect(), w3 = cr.width, h3 = cr.height, pad = 8;
       let left, top;
       if (side === "right") {
         left = Math.min(r3.right + 8, innerWidth - w3 - pad);
@@ -787,9 +850,9 @@
         left = Math.max(pad, Math.min(r3.left, innerWidth - w3 - pad));
         const below = r3.bottom + 6;
         top = below + h3 > innerHeight - pad && r3.top - h3 - 6 > pad ? r3.top - h3 - 6 : below;
+        top = Math.max(pad, Math.min(top, innerHeight - h3 - pad));
       }
-      c4.style.left = `${left}px`;
-      c4.style.top = `${top}px`;
+      putAt(c4, left, top);
     }, [open5]);
     const on2 = {
       ref: at2,
@@ -805,11 +868,11 @@
         }
       }
     };
-    const card = /* @__PURE__ */ u3("span", { id: id2, role: "tooltip", class: "hovercard" + (wide ? " wide" : ""), ref: box, hidden: !open5, children: (!lazy || open5) && tip });
+    const card = /* @__PURE__ */ u3("span", { id: id2, role: "tooltip", class: "hovercard" + (wide2 ? " wide" : ""), ref: box, hidden: !open5, children: (!lazy || open5) && tip });
     return { on: on2, card, show: show4, open: open5 };
   }
-  function Hover({ label, cls = "", tip, wide, lazy }) {
-    const { on: on2, card, show: show4 } = useHoverCard(tip, { wide, lazy });
+  function Hover({ label, cls = "", tip, wide: wide2, lazy }) {
+    const { on: on2, card, show: show4 } = useHoverCard(tip, { wide: wide2, lazy });
     return /* @__PURE__ */ u3("span", { class: "hovers " + cls, tabIndex: 0, ...on2, onClick: () => show4(true), children: [
       label,
       card
@@ -1129,8 +1192,7 @@
     if (!st.apps.length) {
       return /* @__PURE__ */ u3(Card, { kind: "emptystate", id: "statusEmpty", children: [
         /* @__PURE__ */ u3("h2", { children: "No apps yet" }),
-        /* @__PURE__ */ u3("p", { children: "Pick a few on Choose apps." }),
-        /* @__PURE__ */ u3("button", { class: "btn primary", onClick: onChoose, children: "Choose apps" })
+        /* @__PURE__ */ u3("button", { class: "btn primary", onClick: onChoose, children: "Find an app" })
       ] });
     }
     const running5 = st.apps.filter((a3) => a3.state === "running");
@@ -2820,12 +2882,12 @@
     const items = c4.items || [];
     const full = !!c4.drive && c4.drive.used >= 95;
     const tone = full ? "bad" : items.some((i3) => i3.state === "stuck") || c4.warning ? "warn" : "muted";
-    const shown8 = items.slice(0, 6);
+    const shown9 = items.slice(0, 6);
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3(CardHead, { title: "Downloads", children: /* @__PURE__ */ u3("span", { id: "downloadsLine", class: tone, children: c4.line }) }),
       c4.warning && /* @__PURE__ */ u3("p", { id: "downloadsWarning", class: full ? "bad" : "warn", children: c4.warning }),
-      !!shown8.length && /* @__PURE__ */ u3(Rows, { children: shown8.map((i3, n3) => /* @__PURE__ */ u3(Row, { dot: stateDot[i3.state] ?? "", title: i3.name, sub: i3.words, subTone: i3.state === "stuck" ? "warn" : "", when: i3.app }, n3)) }),
-      items.length > shown8.length && /* @__PURE__ */ u3("p", { class: "muted", children: `And ${items.length - shown8.length} more` })
+      !!shown9.length && /* @__PURE__ */ u3(Rows, { children: shown9.map((i3, n3) => /* @__PURE__ */ u3(Row, { dot: stateDot[i3.state] ?? "", title: i3.name, sub: i3.words, subTone: i3.state === "stuck" ? "warn" : "", when: i3.app }, n3)) }),
+      items.length > shown9.length && /* @__PURE__ */ u3("p", { class: "muted", children: `And ${items.length - shown9.length} more` })
     ] });
   }
   var topicName = { watchtower: "Updates", "duplicati-alerts": "Backups", "uptime-kuma": "Uptime Kuma", "tunnel-watchdog": "Watchdog" };
@@ -2865,7 +2927,7 @@
       " ",
       every
     ] }) });
-    const shown8 = events.slice(0, 5);
+    const shown9 = events.slice(0, 5);
     const tone = (e3) => (e3.priority || 0) >= 4 ? "bad" : (e3.tags || []).includes("white_check_mark") || /^recovered/i.test(e3.title || "") ? "ok" : "";
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3(CardHead, { title: "Recent alerts", children: /* @__PURE__ */ u3("span", { children: [
@@ -2878,7 +2940,7 @@
         " ",
         every
       ] }) }),
-      /* @__PURE__ */ u3(Rows, { children: shown8.map((e3) => /* @__PURE__ */ u3(
+      /* @__PURE__ */ u3(Rows, { children: shown9.map((e3) => /* @__PURE__ */ u3(
         Row,
         {
           dot: tone(e3),
@@ -2889,9 +2951,9 @@
         },
         e3.id
       )) }),
-      events.length > shown8.length && /* @__PURE__ */ u3("div", { class: "muted more", children: [
+      events.length > shown9.length && /* @__PURE__ */ u3("div", { class: "muted more", children: [
         "and ",
-        events.length - shown8.length,
+        events.length - shown9.length,
         " more in Every alert…"
       ] })
     ] });
@@ -3052,21 +3114,21 @@
   }
 
   // web/src/status/RowMenu.tsx
-  function RowMenu({ a: a3, x: x3, y: y3, native, busy: busy2, companion: companion2, on: on2, close: close3, said: said2 }) {
+  var wide = () => matchMedia("(min-width: 701px)").matches;
+  function RowMenu({ a: a3, x: x3, y: y3, up, native, busy: busy2, companion: companion2, on: on2, close: close3, said: said2 }) {
     const box = A2(null);
     const [sure, setSure] = d2(false);
     const [later2, setLater] = d2(false);
     const [sending, setSending] = d2(false);
-    const phones = companion2 ? [] : on2.targets(a3);
-    const [at2, setAt] = d2({ left: x3, top: y3 });
+    const phones = on2.targets(a3);
     const items = () => [...box.current?.querySelectorAll("[role^=menuitem]:not([disabled])") || []];
     _2(() => {
-      const m3 = box.current?.getBoundingClientRect();
-      if (!m3) return;
-      setAt({ left: Math.max(8, Math.min(x3, innerWidth - m3.width - 8)), top: y3 + m3.height > innerHeight - 8 ? Math.max(8, y3 - m3.height) : y3 });
-    }, [x3, y3, later2]);
-    h2(() => {
+      if (box.current) putInside(box.current, x3, y3, up);
+    }, [x3, y3, up, later2, sending]);
+    _2(() => {
       items()[0]?.focus();
+    }, []);
+    _2(() => {
       const outside = (e3) => {
         if (!box.current?.contains(e3.target)) close3();
       };
@@ -3104,7 +3166,6 @@
         class: "menu rowmenu",
         role: "menu",
         "aria-label": later2 ? `Stop ${a3.name} for a while` : sending ? `Send ${a3.name} to a phone` : a3.name,
-        style: { left: at2.left + "px", top: at2.top + "px" },
         onKeyDown: (e3) => {
           if (e3.key === "Escape") {
             e3.preventDefault();
@@ -3142,7 +3203,7 @@
           /* @__PURE__ */ u3("p", { class: "menufoot muted", children: "It starts again by itself then." })
         ] }) : /* @__PURE__ */ u3(S, { children: [
           running5 && url && item("Open", pick(() => on2.open(url))),
-          running5 && a3.address && !companion2 && item("Open on a phone", pick(() => on2.phone(a3))),
+          running5 && a3.address && (!companion2 || wide()) && item("Open on a phone", pick(() => on2.phone(a3))),
           url && item("Copy address", pick(() => {
             on2.copy(url).then(() => said2("Address copied"), () => said2("Could not copy the address"));
           })),
@@ -3161,12 +3222,12 @@
           !native && running5 && /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", class: "stoplater", "aria-haspopup": "menu", disabled: busy2, onClick: () => showLater(true), children: "Stop for a while ›" }),
           !native && /* @__PURE__ */ u3("hr", {}),
           !native && item("Logs", pick(() => on2.logs(a3))),
-          !companion2 && item("Back up now", pick(() => on2.backupNow())),
-          !native && !companion2 && /* @__PURE__ */ u3("button", { type: "button", role: "menuitemcheckbox", "aria-checked": !a3.quiet, onClick: pick(() => on2.alerts(a3, !!a3.quiet)), children: [
+          item("Back up now", pick(() => on2.backupNow())),
+          !native && /* @__PURE__ */ u3("button", { type: "button", role: "menuitemcheckbox", "aria-checked": !a3.quiet, onClick: pick(() => on2.alerts(a3, !!a3.quiet)), children: [
             "Tell me if it stops",
             /* @__PURE__ */ u3("span", { class: "check", "aria-hidden": "true", children: a3.quiet ? "" : "✓" })
           ] }),
-          !companion2 && /* @__PURE__ */ u3("button", { type: "button", role: "menuitemcheckbox", "aria-checked": !!a3.pinned, onClick: pick(() => on2.pin(a3, !a3.pinned)), children: [
+          /* @__PURE__ */ u3("button", { type: "button", role: "menuitemcheckbox", "aria-checked": !!a3.pinned, onClick: pick(() => on2.pin(a3, !a3.pinned)), children: [
             "Pin to the top",
             /* @__PURE__ */ u3("span", { class: "check", "aria-hidden": "true", children: a3.pinned ? "✓" : "" })
           ] })
@@ -3244,16 +3305,16 @@
     const end = new Date(now2), first = new Date(end.getFullYear(), end.getMonth(), end.getDate() - 6);
     const t0 = first.getTime(), span = now2 - t0;
     const days = Array.from({ length: 7 }, (_3, i3) => new Date(first.getFullYear(), first.getMonth(), first.getDate() + i3));
-    const shown8 = outages2.filter((o3) => (o3.to ? new Date(o3.to).getTime() : now2) > t0);
+    const shown9 = outages2.filter((o3) => (o3.to ? new Date(o3.to).getTime() : now2) > t0);
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3("span", { class: "outstrip", "aria-hidden": "true", children: [
         days.map((d3, i3) => /* @__PURE__ */ u3("span", { class: "outday", style: { left: `${(d3.getTime() - t0) / span * 100}%` }, children: weekday(d3).slice(0, 1) }, i3)),
-        shown8.map((o3, i3) => {
+        shown9.map((o3, i3) => {
           const from2 = Math.max(t0, new Date(o3.from).getTime()), to = o3.to ? new Date(o3.to).getTime() : now2;
           return /* @__PURE__ */ u3("span", { class: "out" + (o3.to ? "" : " now"), style: { left: `${(from2 - t0) / span * 100}%`, width: `max(3px, ${(to - from2) / span * 100}%)` } }, i3);
         })
       ] }),
-      shown8.length ? /* @__PURE__ */ u3("span", { class: "outlist", children: shown8.map((o3, i3) => /* @__PURE__ */ u3("span", { class: "outline", children: outageWords(o3, now2) }, i3)) }) : /* @__PURE__ */ u3("span", { class: "outline", children: "No outage: each check it missed passed the next time" }),
+      shown9.length ? /* @__PURE__ */ u3("span", { class: "outlist", children: shown9.map((o3, i3) => /* @__PURE__ */ u3("span", { class: "outline", children: outageWords(o3, now2) }, i3)) }) : /* @__PURE__ */ u3("span", { class: "outline", children: "No outage: each check it missed passed the next time" }),
       /* @__PURE__ */ u3("span", { class: "outfoot", children: "The watchdog checks it every 15 minutes" })
     ] });
   }
@@ -3340,20 +3401,35 @@
       open5().catch(() => setBusy(false));
     }, children: label });
   }
-  function Actions2({ a: a3, entry, busy: busy2, os, on: on2 }) {
+  function Actions2({ a: a3, entry, busy: busy2, os, on: on2, marks: marks2 }) {
+    const mark = (name) => marks2 ? /* @__PURE__ */ u3(Icon, { name }) : null;
     if (entry?.kind === "native") {
       const title = os === "mac" ? `Open ${a3.name}; it then keeps running in the menu bar` : os === "windows" ? `Start ${a3.name} (Windows asks for approval)` : `Start ${a3.name}'s service (asks for your password)`;
-      return entry.macApp && a3.state !== "running" ? /* @__PURE__ */ u3(NativeButton, { a: a3, title, label: os === "mac" ? "Open" : "Start", open: () => on2.openNative(a3) }) : null;
+      if (entry.macApp && a3.state !== "running") return /* @__PURE__ */ u3(NativeButton, { a: a3, title, label: os === "mac" ? "Open" : "Start", open: () => on2.openNative(a3) });
+      const page = a3.address ? "https://" + a3.address : a3.url;
+      return marks2 && a3.state === "running" && page ? /* @__PURE__ */ u3("button", { class: "small rowmain", title: `Open ${a3.name}`, onClick: () => on2.open(page), children: [
+        mark("open"),
+        "Open"
+      ] }) : null;
     }
     if (a3.state === "elsewhere") return null;
-    if (a3.state === "missing") return /* @__PURE__ */ u3("button", { class: "small", onClick: () => on2.install(a3), children: "Install" });
+    if (a3.state === "missing") return /* @__PURE__ */ u3("button", { class: "small", onClick: () => on2.install(a3), children: [
+      mark("update"),
+      "Install"
+    ] });
     if (a3.state !== "running") return /* @__PURE__ */ u3(S, { children: [
-      /* @__PURE__ */ u3("button", { class: "small rowmain change", title: `Start ${a3.name}`, disabled: busy2, onClick: () => on2.act(a3, "start"), children: "Start" }),
+      /* @__PURE__ */ u3("button", { class: "small rowmain change" + (marks2 ? " primary" : ""), title: `Start ${a3.name}`, disabled: busy2, onClick: () => on2.act(a3, "start"), children: [
+        mark("start"),
+        "Start"
+      ] }),
       /* @__PURE__ */ u3("span", { class: "lookonly muted", children: "Start it from the computer" })
     ] });
     const url = a3.address ? "https://" + a3.address : a3.url;
     const local = a3.address && a3.url ? a3.url : "";
-    return url ? /* @__PURE__ */ u3("button", { class: "small rowmain", title: local ? `Open ${a3.name} (${shift(os)}click: on this machine, ${local.replace(/^http:\/\//, "")})` : `Open ${a3.name}`, onClick: (e3) => on2.open(local && e3.shiftKey ? local : url), children: "Open" }) : null;
+    return url ? /* @__PURE__ */ u3("button", { class: "small rowmain", title: local ? `Open ${a3.name} (${shift(os)}click: on this machine, ${local.replace(/^http:\/\//, "")})` : `Open ${a3.name}`, onClick: (e3) => on2.open(local && e3.shiftKey ? local : url), children: [
+      mark("open"),
+      "Open"
+    ] }) : null;
   }
   function Row2({ a: a3, p: p3, menu: menu2, setMenu, said: said2, say }) {
     const pend = p3.pending[a3.id];
@@ -3497,8 +3573,7 @@
     const [open5, setOpen] = d2(false);
     const [sure, setSure] = d2(false);
     const [later2, setLater] = d2(false);
-    const [doing3, setDoing] = d2(null);
-    const [up, setUp] = d2(false);
+    const [doing4, setDoing] = d2(null);
     const wrap = A2(null);
     const btn = A2(null);
     const list = A2(null);
@@ -3529,15 +3604,8 @@
       return () => document.removeEventListener("mousedown", outside, true);
     }, [open5]);
     _2(() => {
-      if (!open5) {
-        setUp(false);
-        return;
-      }
-      const menu2 = list.current, box = wrap.current?.closest("main"), at2 = btn.current;
-      if (!menu2 || !box || !at2) return;
-      const m3 = menu2.getBoundingClientRect(), b2 = box.getBoundingClientRect(), a3 = at2.getBoundingClientRect();
-      setUp(m3.bottom > b2.bottom && a3.top - b2.top > m3.height);
-    }, [open5]);
+      if (open5 && list.current) fitMenu(list.current, btn.current);
+    }, [open5, later2]);
     if (p3.companion || g2.alert) return /* @__PURE__ */ u3("span", { class: "n" + (tone ? " countpill " + tone : ""), children: count2 });
     const run2 = (action, apps2, until) => {
       if (action === "stop" && !sure && !until) {
@@ -3549,7 +3617,7 @@
       p3.on.groupAct(apps2, action, (i3) => setDoing({ action, at: i3, of: apps2.length }), until).finally(() => setDoing(null));
     };
     const verb2 = { start: "Starting", stop: "Stopping", restart: "Restarting" };
-    const label = doing3 ? `${verb2[doing3.action]} ${doing3.at + 1} of ${doing3.of}…` : count2 + (used ? ` · ${formatMem(used)}` : "");
+    const label = doing4 ? `${verb2[doing4.action]} ${doing4.at + 1} of ${doing4.of}…` : count2 + (used ? ` · ${formatMem(used)}` : "");
     const byMem = running5.filter((a3) => mem?.[a3.id]).sort((a3, b2) => (mem[b2.id] || 0) - (mem[a3.id] || 0));
     return /* @__PURE__ */ u3(
       "span",
@@ -3583,7 +3651,7 @@
               class: "n groupcount" + (tone ? " countpill " + tone : ""),
               "aria-haspopup": "menu",
               "aria-expanded": open5,
-              disabled: !!doing3,
+              disabled: !!doing4,
               title: `${g2.label}: start, stop, or restart them all, and what they hold in memory`,
               onClick: (e3) => {
                 if (open5) {
@@ -3609,13 +3677,13 @@
               ]
             }
           ),
-          open5 && later2 && /* @__PURE__ */ u3("div", { ref: list, class: "menu groupmenulist" + (up ? " up" : ""), role: "menu", "aria-label": `${g2.label}: stop for a while`, children: [
+          open5 && later2 && /* @__PURE__ */ u3("div", { ref: list, class: "menu groupmenulist", role: "menu", "aria-label": `${g2.label}: stop for a while`, children: [
             /* @__PURE__ */ u3("p", { class: "menuhead", children: running5.length === 1 ? `Stop ${running5[0].name} for a while` : `Stop the ${running5.length} running for a while` }),
             stopChoices().map((c4) => /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", disabled: p3.busy, onClick: () => run2("stop", running5, c4.until), children: c4.label }, c4.until)),
             /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", class: "menuback", onClick: () => showLater(false), children: "‹ Back" }),
             /* @__PURE__ */ u3("p", { class: "menufoot muted", children: running5.length === 1 ? "It starts again by itself then." : "They start again by themselves then." })
           ] }),
-          open5 && !later2 && /* @__PURE__ */ u3("div", { ref: list, class: "menu groupmenulist" + (up ? " up" : ""), role: "menu", "aria-label": `${g2.label}: all its apps`, children: [
+          open5 && !later2 && /* @__PURE__ */ u3("div", { ref: list, class: "menu groupmenulist", role: "menu", "aria-label": `${g2.label}: all its apps`, children: [
             /* @__PURE__ */ u3("p", { class: "menuhead", children: mem ? used ? `${formatMem(used)} in memory now` : "Nothing in memory now" : "Memory: measuring…" }),
             byMem.length > 0 && /* @__PURE__ */ u3("ul", { class: "memlist", "aria-label": "Memory by app", children: byMem.slice(0, 8).map((a3) => /* @__PURE__ */ u3("li", { children: [
               /* @__PURE__ */ u3("span", { children: a3.name }),
@@ -3693,8 +3761,8 @@
     const v3 = localStorage.getItem(foldKey);
     if (v3 === "all") fold = { all: true, picked: {} };
     else if (v3) {
-      const kept5 = JSON.parse(v3);
-      fold = { all: false, picked: Array.isArray(kept5) ? Object.fromEntries(kept5.map((l3) => [l3, true])) : kept5 };
+      const kept6 = JSON.parse(v3);
+      fold = { all: false, picked: Array.isArray(kept6) ? Object.fromEntries(kept6.map((l3) => [l3, true])) : kept6 };
     }
   } catch {
   }
@@ -3783,6 +3851,10 @@
     }
     if (e3.metaKey || e3.ctrlKey || e3.altKey || e3.key.length !== 1 || e3.key === " " || e3.key === "?") return;
     if (t3.closest?.("input, textarea, select, [contenteditable], [role=menu], dialog, .sheet")) return;
+    if (status.dataset.part) {
+      status.querySelector("#statusPart .catfind input")?.focus();
+      return;
+    }
     e3.preventDefault();
     if (!filter.on) before = document.activeElement instanceof HTMLElement && document.activeElement !== document.body ? document.activeElement : null;
     focusBox = true;
@@ -3879,17 +3951,17 @@
     const q2 = useFilter().text;
     const open5 = openGroups(p3.groups, f4, p3.held);
     const toggle = (label) => setFold({ all: false, picked: { ...f4.all ? open5 : f4.picked, [label]: !open5[label] } });
-    const kept5 = q2.trim() ? p3.groups.map((g2) => ({ g: g2, apps: g2.apps.filter((a3) => matches(a3, q2)) })).filter((x3) => x3.apps.length) : null;
+    const kept6 = q2.trim() ? p3.groups.map((g2) => ({ g: g2, apps: g2.apps.filter((a3) => matches(a3, q2)) })).filter((x3) => x3.apps.length) : null;
     const all = p3.groups.reduce((t3, g2) => t3 + g2.apps.length, 0);
-    const first = kept5?.[0]?.apps.find((a3) => a3.state !== "missing");
+    const first = kept6?.[0]?.apps.find((a3) => a3.state !== "missing");
     const openFirst = A2(() => {
     });
     openFirst.current = () => {
       if (first) p3.on.page(first);
     };
     const opener = A2(() => openFirst.current());
-    h2(() => setFound({ n: kept5 ? kept5.reduce((t3, x3) => t3 + x3.apps.length, 0) : all, of: all, first: first ? opener.current : null }));
-    if (kept5 && !kept5.length) {
+    h2(() => setFound({ n: kept6 ? kept6.reduce((t3, x3) => t3 + x3.apps.length, 0) : all, of: all, first: first ? opener.current : null }));
+    if (kept6 && !kept6.length) {
       return /* @__PURE__ */ u3("tr", { class: "nomatch", children: /* @__PURE__ */ u3("td", { colSpan: 4, children: [
         "No app’s name has “",
         q2.trim(),
@@ -3898,7 +3970,7 @@
       ] }) });
     }
     const row = (a3) => /* @__PURE__ */ u3(Row2, { a: a3, p: p3, menu: menu2, setMenu, said: said2?.id === a3.id ? said2.words : void 0, say }, a3.id);
-    return /* @__PURE__ */ u3(S, { children: kept5 ? kept5.flatMap(({ g: g2, apps: apps2 }) => [/* @__PURE__ */ u3(GroupHead, { g: g2, open: true, toggle: () => {
+    return /* @__PURE__ */ u3(S, { children: kept6 ? kept6.flatMap(({ g: g2, apps: apps2 }) => [/* @__PURE__ */ u3(GroupHead, { g: g2, open: true, toggle: () => {
     }, p: p3 }, "g:" + g2.label), ...apps2.map(row)]) : p3.groups.flatMap((g2) => [
       /* @__PURE__ */ u3(GroupHead, { g: g2, open: open5[g2.label], toggle: () => toggle(g2.label), p: p3 }, "g:" + g2.label),
       ...open5[g2.label] ? g2.apps.map(row) : []
@@ -4034,13 +4106,17 @@
     apps: "M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01",
     start: "M12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2z",
     steps: "M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11",
-    add: "M12 5v14M5 12h14"
+    add: "M12 5v14M5 12h14",
+    analytics: "M3 3v18h18M7 14l4-4 4 4 5-6",
+    own: "M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16zM3.27 6.96 12 12.01l8.73-5.05M12 22.08V12"
   };
   function SideMenu({ label, items, here: here3, pick }) {
     return /* @__PURE__ */ u3("ul", { class: "finmenu sidemenulist", "aria-label": label, children: items.map((it) => /* @__PURE__ */ u3("li", { children: /* @__PURE__ */ u3("button", { type: "button", class: "finmenuitem" + (here3 === it.key ? " on" : ""), "data-key": it.key, "aria-current": here3 === it.key ? "page" : void 0, onClick: () => pick(it.key), children: [
       /* @__PURE__ */ u3("svg", { class: "icon", viewBox: "0 0 24 24", "aria-hidden": "true", children: /* @__PURE__ */ u3("path", { d: it.icon }) }),
       /* @__PURE__ */ u3("span", { children: it.label }),
-      !!it.count && /* @__PURE__ */ u3("span", { class: "count", children: it.count })
+      !!it.count && /* @__PURE__ */ u3("span", { class: "count", children: it.count }),
+      it.dot && /* @__PURE__ */ u3("span", { class: "sidedot", role: "img", "aria-label": "One stopped" }),
+      !!it.total && /* @__PURE__ */ u3("span", { class: "total", children: it.total })
     ] }) }, it.key)) });
   }
   var mountSideMenu = (el3, props) => R(props && /* @__PURE__ */ u3(SideMenu, { ...props }), el3);
@@ -4048,6 +4124,336 @@
     if (el3) el3.scrollIntoView({ block: "start" });
     else document.getElementById(screen)?.closest("main")?.scrollTo({ top: 0 });
   }
+
+  // web/src/status/CategoryPage.tsx
+  var plainOf = (s3) => s3.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  var wordsOf = (x3) => plainOf([x3.name, x3.description, ...x3.aliases || [], ...x3.replaces || []].join(" "));
+  var doing2 = { start: "Starting…", stop: "Stopping…", restart: "Restarting…", update: "Updating…", rollback: "Rolling back…" };
+  function upFor(since, now2 = Date.now()) {
+    const mins = Math.max(0, Math.round((now2 - new Date(since).getTime()) / 6e4)), hours = Math.round(mins / 60);
+    return mins < 2 ? "Up a minute" : mins < 60 ? `Up ${mins} min` : hours < 48 ? `Up ${hours} ${hours === 1 ? "hour" : "hours"}` : `Up ${Math.round(hours / 24)} days`;
+  }
+  function tileLine(a3, p3, now2 = Date.now()) {
+    const pend = p3.pending[a3.id];
+    if (pend && !pend.failed) return ["warn", pend.note || doing2[pend.action] || "Working…"];
+    const [cls, words5] = stateOf(a3, p3.batteryPaused, p3.held);
+    if (pend?.failed) return ["bad", `Could not ${pend.action}`];
+    if (cls === "ok" && a3.health === "native") return [cls, "Running"];
+    return [cls, cls === "ok" && a3.since ? upFor(a3.since, now2) : words5];
+  }
+  function Tile2({ a: a3, p: p3, menu: menu2, setMenu }) {
+    const [cls, line] = tileLine(a3, p3);
+    const [said2, say] = d2("");
+    const entry = p3.catalog?.apps.find((c4) => c4.id === a3.id);
+    const pend = p3.pending[a3.id];
+    const menuable = a3.state !== "missing" && a3.state !== "elsewhere" && (!p3.companion || document.documentElement.classList.contains("can-change"));
+    const close3 = (refocus) => {
+      const from2 = menu2?.from;
+      setMenu(null);
+      if (refocus && from2?.isConnected) from2.focus();
+    };
+    return /* @__PURE__ */ u3(
+      "li",
+      {
+        class: "cattile" + (menu2?.id === a3.id ? " menued" : ""),
+        "data-app": a3.id,
+        onClick: a3.state !== "missing" ? (e3) => {
+          if (!e3.target.closest("button, .rowmenu")) p3.on.page(a3);
+        } : void 0,
+        children: [
+          /* @__PURE__ */ u3("span", { class: "dot " + cls, role: "img", "aria-label": line }),
+          menuable && /* @__PURE__ */ u3(
+            "button",
+            {
+              type: "button",
+              class: "iconbtn catmore",
+              "aria-label": `${a3.name}: more`,
+              "aria-haspopup": "menu",
+              onClick: (e3) => {
+                const r3 = e3.currentTarget.getBoundingClientRect();
+                setMenu({ id: a3.id, x: r3.right - 200, y: r3.bottom + 4, up: r3.top - 4, from: e3.currentTarget });
+              },
+              children: /* @__PURE__ */ u3(Icon, { name: "more" })
+            }
+          ),
+          /* @__PURE__ */ u3(AppMark, { id: a3.id, name: a3.name, icon: p3.icons?.[a3.id] || "" }),
+          /* @__PURE__ */ u3("strong", { class: "catname", children: a3.name }),
+          /* @__PURE__ */ u3("span", { class: "catline" + (cls === "bad" ? " bad" : ""), title: line, children: said2 || line }),
+          /* @__PURE__ */ u3("span", { class: "catbtn", children: /* @__PURE__ */ u3(Actions2, { a: a3, entry, busy: p3.busy || !!pend && !pend.failed, os: p3.os, on: p3.on, marks: true }) }),
+          menu2?.id === a3.id && /* @__PURE__ */ u3(RowMenu, { a: a3, x: menu2.x, y: menu2.y, up: menu2.up, native: entry?.kind === "native", busy: p3.busy, companion: p3.companion, on: p3.on.menu, close: close3, said: say })
+        ]
+      }
+    );
+  }
+  function Shelf({ app, icon, install, change }) {
+    return /* @__PURE__ */ u3("li", { class: "cattile toadd" + (change ? " opens" : ""), "data-app": app.id, onClick: change ? (e3) => {
+      if (!e3.target.closest("button")) install(app.id);
+    } : void 0, children: [
+      /* @__PURE__ */ u3(AppMark, { id: app.id, name: app.name, icon }),
+      /* @__PURE__ */ u3("strong", { class: "catname", children: app.name }),
+      /* @__PURE__ */ u3("span", { class: "catline", title: app.description, children: app.description }),
+      change && /* @__PURE__ */ u3("span", { class: "catbtn", children: /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => install(app.id), children: [
+        /* @__PURE__ */ u3(Icon, { name: "update" }),
+        "Install"
+      ] }) })
+    ] });
+  }
+  function SetTile({ set: set2, catalog: catalog2, icons: icons4, install, change }) {
+    const first = catalog2?.apps.find((a3) => a3.id === set2.apps[0]);
+    return /* @__PURE__ */ u3("li", { class: "cattile toadd set" + (change ? " opens" : ""), "data-set": set2.id, onClick: change ? (e3) => {
+      if (!e3.target.closest("button")) install(set2.id);
+    } : void 0, children: [
+      /* @__PURE__ */ u3(AppMark, { id: first?.id, name: set2.name, icon: first && icons4?.[first.id] || "" }),
+      /* @__PURE__ */ u3("strong", { class: "catname", children: set2.name }),
+      /* @__PURE__ */ u3("span", { class: "catline", title: set2.description, children: set2.description || `${set2.apps.length} apps` }),
+      change && /* @__PURE__ */ u3("span", { class: "catbtn", children: /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => install(set2.id), children: [
+        /* @__PURE__ */ u3(Icon, { name: "update" }),
+        "Install"
+      ] }) })
+    ] });
+  }
+  function CategoryPage({ label, apps: apps2, add, here: here3, list, install, sets = [], installSet, addOwn, addLabel, goes = [], find: typed = "" }) {
+    const [menu2, setMenu] = d2(null);
+    const [find2, setFind] = d2(typed);
+    const running5 = apps2.filter((a3) => a3.state === "running").length;
+    const entryOf = (a3) => list.catalog?.apps.find((x3) => x3.id === a3.id);
+    const shown9 = find2 ? apps2.filter((a3) => {
+      const e3 = entryOf(a3);
+      return matches(a3, find2) || !!e3 && wordsOf(e3).includes(plainOf(find2));
+    }) : apps2;
+    const plain2 = (s3) => s3.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+    const words5 = (x3) => plain2([x3.name, x3.description, ...x3.aliases || [], ...x3.replaces || []].join(" "));
+    const toAdd = find2 ? add.filter((x3) => words5(x3).includes(plain2(find2))) : add;
+    const setsShown = find2 ? sets.filter((x3) => plain2(x3.name + " " + (x3.description || "")).includes(plain2(find2))) : sets;
+    const change = !list.companion;
+    const facts2 = [`${apps2.length} ${here3.replace(/^On /, "on ")}`, apps2.length ? `${running5} running` : "", add.length ? `${add.length} to add` : ""].filter(Boolean).join(" · ");
+    return /* @__PURE__ */ u3("div", { class: "catpage", children: [
+      /* @__PURE__ */ u3("div", { class: "row header", children: [
+        /* @__PURE__ */ u3("div", { children: [
+          /* @__PURE__ */ u3("h1", { children: label }),
+          /* @__PURE__ */ u3("p", { class: "lead", children: facts2 })
+        ] }),
+        /* @__PURE__ */ u3("label", { class: "catfind", children: [
+          /* @__PURE__ */ u3(Icon, { name: "search" }),
+          /* @__PURE__ */ u3("input", { type: "search", placeholder: "Find an app", "aria-label": "Find an app", value: find2, autoFocus: !!typed, onInput: (e3) => setFind(e3.currentTarget.value) })
+        ] })
+      ] }),
+      !find2 && goes.length > 0 && /* @__PURE__ */ u3(S, { children: [
+        /* @__PURE__ */ u3("h2", { class: "cathead", children: [
+          "Goes with your apps ",
+          /* @__PURE__ */ u3("span", { class: "n", children: goes.length })
+        ] }),
+        /* @__PURE__ */ u3("ul", { class: "cattiles", children: goes.map((x3) => /* @__PURE__ */ u3(Shelf, { app: x3, icon: list.icons?.[x3.id] || "", install, change }, x3.id)) })
+      ] }),
+      setsShown.length > 0 && installSet && /* @__PURE__ */ u3(S, { children: [
+        /* @__PURE__ */ u3("h2", { class: "cathead", children: [
+          "Sets ",
+          /* @__PURE__ */ u3("span", { class: "n", children: setsShown.length })
+        ] }),
+        /* @__PURE__ */ u3("ul", { class: "cattiles", children: setsShown.map((x3) => /* @__PURE__ */ u3(SetTile, { set: x3, catalog: list.catalog, icons: list.icons, install: installSet, change }, x3.id)) })
+      ] }),
+      (!find2 || shown9.length > 0) && /* @__PURE__ */ u3("h2", { class: "cathead", children: [
+        here3,
+        " ",
+        /* @__PURE__ */ u3("span", { class: "n", children: apps2.length })
+      ] }),
+      shown9.length || addOwn && change ? /* @__PURE__ */ u3("ul", { class: "cattiles", children: [
+        shown9.map((a3) => /* @__PURE__ */ u3(Tile2, { a: a3, p: list, menu: menu2, setMenu }, a3.id)),
+        addOwn && change && /* @__PURE__ */ u3("li", { class: "cattile toadd opens addown", onClick: addOwn, children: [
+          /* @__PURE__ */ u3("span", { class: "appmark ownmark", "aria-hidden": "true", children: /* @__PURE__ */ u3("svg", { class: "icon", viewBox: "0 0 24 24", children: /* @__PURE__ */ u3("path", { d: "M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16zM3.27 6.96 12 12.01l8.73-5.05M12 22.08V12" }) }) }),
+          /* @__PURE__ */ u3("strong", { class: "catname", children: "Add your own app" }),
+          /* @__PURE__ */ u3("span", { class: "catline", children: "Any container image" }),
+          /* @__PURE__ */ u3("span", { class: "catbtn", children: /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: (e3) => {
+            e3.stopPropagation();
+            addOwn();
+          }, children: "Add" }) })
+        ] })
+      ] }) : !find2 && /* @__PURE__ */ u3("p", { class: "muted catnone", children: "None yet" }),
+      add.length > 0 && /* @__PURE__ */ u3(S, { children: [
+        /* @__PURE__ */ u3("h2", { class: "cathead", children: [
+          addLabel || `Add to ${label}`,
+          " ",
+          /* @__PURE__ */ u3("span", { class: "n", children: add.length })
+        ] }),
+        toAdd.length ? /* @__PURE__ */ u3("ul", { class: "cattiles", children: toAdd.map((x3) => /* @__PURE__ */ u3(Shelf, { app: x3, icon: list.icons?.[x3.id] || "", install, change }, x3.id)) }) : /* @__PURE__ */ u3("p", { class: "muted catnone", children: "None by that name" })
+      ] })
+    ] });
+  }
+  var mountCategoryPage = (el3, props) => R(props && /* @__PURE__ */ u3(CategoryPage, { ...props }), el3);
+
+  // web/src/tabs.ts
+  var tabbed = {};
+  var changed = () => {
+  };
+  function keepsTabs(screen, now2, put) {
+    tabbed[screen] = { now: now2, put };
+  }
+  function tabChanged() {
+    changed();
+  }
+  function onTabChange(f4) {
+    changed = f4;
+  }
+
+  // web/src/status/Analytics.tsx
+  var keepTotals = 360;
+  function recordTotals(t3, stats, catalog2, now2 = Date.now()) {
+    if (!stats.length) return;
+    const mem = Object.values(memoryByApp(stats, catalog2)).reduce((s3, n3) => s3 + n3, 0);
+    t3.at.push(now2);
+    t3.cpu.push(stats.reduce((s3, x3) => s3 + x3.cpu, 0));
+    t3.mem.push(mem);
+    for (const k3 of ["at", "cpu", "mem"]) if (t3[k3].length > keepTotals) t3[k3].shift();
+  }
+  function formatDisk(b2) {
+    if (b2 >= 1e12) return `${(b2 / 1e12).toFixed(b2 >= 1e13 ? 0 : 1)} TB`;
+    if (b2 >= 1e9) return `${Math.round(b2 / 1e9)} GB`;
+    return `${Math.max(0, Math.round(b2 / 1e6))} MB`;
+  }
+  var pct = (n3) => n3 >= 10 ? Math.round(n3) : Math.round(n3 * 10) / 10;
+  var minutesOf = (t3) => t3.at.length > 1 ? Math.max(1, Math.round((t3.at[t3.at.length - 1] - t3.at[0]) / 6e4)) : 0;
+  function Chart({ values, kind, label, mark }) {
+    const w3 = 600, h3 = 110;
+    const top = Math.max(...values, kind === "cpu" ? 10 : 1) * 1.15;
+    const x3 = (i3) => i3 / Math.max(1, values.length - 1) * w3, y3 = (v3) => h3 - v3 / top * h3;
+    const line = values.map((v3, i3) => `${x3(i3).toFixed(1)},${y3(v3).toFixed(1)}`).join(" ");
+    return /* @__PURE__ */ u3("figure", { class: "antimeline " + kind, children: [
+      /* @__PURE__ */ u3("figcaption", { children: label }),
+      /* @__PURE__ */ u3("div", { class: "antplot", children: [
+        /* @__PURE__ */ u3("svg", { viewBox: `0 0 ${w3} ${h3}`, preserveAspectRatio: "none", role: "img", "aria-label": `${label}: ${mark(values[values.length - 1])} now, ${mark(Math.max(...values))} at most`, children: [
+          [0.25, 0.5, 0.75].map((f4) => /* @__PURE__ */ u3("line", { class: "grid", x1: "0", x2: w3, y1: h3 * f4, y2: h3 * f4 }, f4)),
+          /* @__PURE__ */ u3("polygon", { class: "area", points: `0,${h3} ${line} ${w3},${h3}` }),
+          /* @__PURE__ */ u3("polyline", { class: "line", points: line, "vector-effect": "non-scaling-stroke" })
+        ] }),
+        /* @__PURE__ */ u3("span", { class: "antmarks", "aria-hidden": "true", children: [0.75, 0.5, 0.25].map((f4) => /* @__PURE__ */ u3("span", { children: mark(top * f4) }, f4)) })
+      ] })
+    ] });
+  }
+  function Analytics({ stats, history, totals: totals3, cores, disk: disk2, storage, apps: apps2, catalog: catalog2, icons: icons4, page }) {
+    const [all, setAll] = d2(false);
+    const byId = Object.fromEntries(apps2.map((a3) => [a3.id, a3]));
+    const nameOf = (id2) => byId[id2]?.name || catalog2?.apps.find((a3) => a3.id === id2)?.name || id2;
+    const mem = memoryByApp(stats, catalog2);
+    const helpers = Object.fromEntries((catalog2?.apps || []).filter((a3) => a3.kind !== "helper").flatMap((a3) => (a3.dependsOn || []).filter((d3) => catalog2?.apps.find((x3) => x3.id === d3)?.kind === "helper").map((d3) => [d3, a3.id])));
+    const cpu = {};
+    const past = {};
+    for (const s3 of stats) {
+      const id2 = helpers[s3.name] || s3.name;
+      cpu[id2] = (cpu[id2] || 0) + s3.cpu;
+      if (!helpers[s3.name]) past[id2] = history.get(s3.name) || [];
+    }
+    const disked = Object.fromEntries((storage?.apps || []).map((f4) => [f4.app, f4.bytes]));
+    const ids = [.../* @__PURE__ */ new Set([...Object.keys(mem), ...Object.keys(cpu)])].filter((id2) => byId[id2] || catalog2?.apps.some((a3) => a3.id === id2));
+    const rows = ids.sort((a3, b2) => (mem[b2] || 0) - (mem[a3] || 0) || (cpu[b2] || 0) - (cpu[a3] || 0));
+    const most = Math.max(1, ...rows.map((id2) => mem[id2] || 0));
+    const totalCpu = stats.reduce((s3, x3) => s3 + x3.cpu, 0), totalMem = Object.values(mem).reduce((s3, n3) => s3 + n3, 0);
+    const busiest = [...rows].sort((a3, b2) => (cpu[b2] || 0) - (cpu[a3] || 0))[0];
+    const heaviest = rows[0];
+    const read = stats.length > 0;
+    const mins = minutesOf(totals3);
+    const span = mins ? mins === 1 ? "The last minute" : `The last ${mins} minutes` : "Now";
+    const who = (id2, words5) => id2 ? /* @__PURE__ */ u3("span", { class: "antwho", children: [
+      /* @__PURE__ */ u3(AppMark, { id: id2, name: nameOf(id2), icon: icons4?.[id2] || "", small: true }),
+      /* @__PURE__ */ u3("span", { class: "antname", children: nameOf(id2) }),
+      /* @__PURE__ */ u3("span", { class: "antfigs", children: words5 })
+    ] }) : /* @__PURE__ */ u3("span", { class: "antwho", children: "Not read yet" });
+    const used = disk2 && disk2.total ? Math.min(100, Math.max(1, Math.round(100 * (1 - disk2.free / disk2.total)))) : 0;
+    const folders = (storage?.apps || []).reduce((s3, f4) => s3 + f4.bytes, 0);
+    const photos = (storage?.photos || []).reduce((s3, p3) => s3 + p3.bytes, 0);
+    return /* @__PURE__ */ u3("div", { class: "antpage", children: [
+      /* @__PURE__ */ u3("div", { class: "row header", children: /* @__PURE__ */ u3("div", { children: [
+        /* @__PURE__ */ u3("h1", { children: "Analytics" }),
+        /* @__PURE__ */ u3("p", { class: "lead", children: span })
+      ] }) }),
+      /* @__PURE__ */ u3("div", { class: "anttiles", children: [
+        /* @__PURE__ */ u3(Card, { kind: "anttile", id: "antCpu", children: [
+          /* @__PURE__ */ u3("div", { class: "anthead", children: [
+            /* @__PURE__ */ u3("h2", { children: "Processor" }),
+            /* @__PURE__ */ u3("span", { class: "muted", children: cores ? `${cores} cores` : "" })
+          ] }),
+          /* @__PURE__ */ u3("div", { class: "antfig", children: read ? /* @__PURE__ */ u3(S, { children: [
+            cores ? pct(totalCpu / cores) : pct(totalCpu),
+            /* @__PURE__ */ u3("small", { children: "%" }),
+            " ",
+            /* @__PURE__ */ u3("span", { class: "muted", children: cores ? "in use" : "of a core" })
+          ] }) : "—" }),
+          /* @__PURE__ */ u3("div", { class: "antline muted", children: read && busiest && cpu[busiest] >= 0.1 ? who(busiest, `uses the most · ${pct(cpu[busiest])}%`) : read ? /* @__PURE__ */ u3("span", { class: "antwho", children: "Every app idle" }) : who(void 0, "") }),
+          /* @__PURE__ */ u3("div", { class: "antfoot", children: totals3.cpu.length > 2 ? /* @__PURE__ */ u3(Spark, { values: totals3.cpu, w: 240, h: 36, title: `The apps' processor, ${span.toLowerCase()}` }) : /* @__PURE__ */ u3("span", { class: "antempty" }) })
+        ] }),
+        /* @__PURE__ */ u3(Card, { kind: "anttile", id: "antMem", children: [
+          /* @__PURE__ */ u3("div", { class: "anthead", children: [
+            /* @__PURE__ */ u3("h2", { children: "Memory" }),
+            /* @__PURE__ */ u3("span", { class: "muted" })
+          ] }),
+          /* @__PURE__ */ u3("div", { class: "antfig", children: read ? /* @__PURE__ */ u3(S, { children: [
+            formatMem(totalMem).replace(/ (\w+)$/, ""),
+            /* @__PURE__ */ u3("small", { children: formatMem(totalMem).replace(/^[^ ]+/, "") }),
+            " ",
+            /* @__PURE__ */ u3("span", { class: "muted", children: "in use" })
+          ] }) : "—" }),
+          /* @__PURE__ */ u3("div", { class: "antline muted", children: read && heaviest ? who(heaviest, `uses the most · ${formatMem(mem[heaviest] || 0)}`) : who(void 0, "") }),
+          /* @__PURE__ */ u3("div", { class: "antfoot", children: totals3.mem.length > 2 ? /* @__PURE__ */ u3(Spark, { values: totals3.mem, w: 240, h: 36, title: `The apps' memory, ${span.toLowerCase()}` }) : /* @__PURE__ */ u3("span", { class: "antempty" }) })
+        ] }),
+        /* @__PURE__ */ u3(Card, { kind: "anttile", id: "antDisk", children: [
+          /* @__PURE__ */ u3("div", { class: "anthead", children: [
+            /* @__PURE__ */ u3("h2", { children: "Drives" }),
+            /* @__PURE__ */ u3("span", { class: "muted", children: disk2?.total ? formatDisk(disk2.total) : "" })
+          ] }),
+          /* @__PURE__ */ u3("div", { class: "antfig" + (disk2?.low ? " bad" : ""), children: disk2 ? /* @__PURE__ */ u3(S, { children: [
+            formatDisk(disk2.free).replace(/ (\w+)$/, ""),
+            /* @__PURE__ */ u3("small", { children: formatDisk(disk2.free).replace(/^[^ ]+/, "") }),
+            " ",
+            /* @__PURE__ */ u3("span", { class: "muted", children: "free" })
+          ] }) : "—" }),
+          /* @__PURE__ */ u3("div", { class: "antline muted", children: /* @__PURE__ */ u3("span", { class: "antwho", children: folders ? `The apps' data ${formatDisk(folders)}${photos ? ` · photos ${formatDisk(photos)}` : ""}` : disk2 ? `${formatDisk(disk2.total - disk2.free)} used` : "Not read yet" }) }),
+          /* @__PURE__ */ u3("div", { class: "antfoot", children: disk2?.total ? /* @__PURE__ */ u3("div", { class: "antbar", role: "img", "aria-label": `${used}% used`, children: /* @__PURE__ */ u3("span", { style: { width: `${used}%` } }) }) : /* @__PURE__ */ u3("span", { class: "antempty" }) })
+        ] })
+      ] }),
+      /* @__PURE__ */ u3(Card, { kind: "antweek", id: "antTime", children: [
+        /* @__PURE__ */ u3("div", { class: "anthead", children: [
+          /* @__PURE__ */ u3("h2", { children: span }),
+          /* @__PURE__ */ u3("span", { class: "muted", children: "A week isn't kept yet" })
+        ] }),
+        totals3.cpu.length > 2 ? /* @__PURE__ */ u3(S, { children: [
+          /* @__PURE__ */ u3(Chart, { values: totals3.cpu, kind: "cpu", label: "Processor", mark: (v3) => `${Math.round(cores ? v3 / cores : v3)}%` }),
+          /* @__PURE__ */ u3(Chart, { values: totals3.mem, kind: "mem", label: "Memory", mark: (v3) => formatMem(v3) })
+        ] }) : /* @__PURE__ */ u3("p", { class: "muted antwait", children: "Drawn as Status reads the apps, every 10 seconds" })
+      ] }),
+      /* @__PURE__ */ u3(Card, { kind: "antapps", id: "antApps", children: [
+        /* @__PURE__ */ u3("div", { class: "anthead", children: [
+          /* @__PURE__ */ u3("h2", { children: "What each app uses" }),
+          /* @__PURE__ */ u3("span", { class: "muted", children: "Heaviest first" })
+        ] }),
+        rows.length ? /* @__PURE__ */ u3("table", { class: "anttable", children: [
+          /* @__PURE__ */ u3("thead", { children: /* @__PURE__ */ u3("tr", { children: [
+            /* @__PURE__ */ u3("th", { children: "App" }),
+            /* @__PURE__ */ u3("th", { children: "Memory now" }),
+            /* @__PURE__ */ u3("th", { class: "antspark", children: "Recent" }),
+            /* @__PURE__ */ u3("th", { class: "num", children: "Processor" }),
+            /* @__PURE__ */ u3("th", { class: "num", children: "On disk" })
+          ] }) }),
+          /* @__PURE__ */ u3("tbody", { children: (all ? rows : rows.slice(0, 8)).map((id2) => /* @__PURE__ */ u3("tr", { class: byId[id2] ? "topage" : void 0, onClick: byId[id2] ? () => page(byId[id2]) : void 0, children: [
+            /* @__PURE__ */ u3("td", { children: /* @__PURE__ */ u3("span", { class: "antapp", children: [
+              /* @__PURE__ */ u3(AppMark, { id: id2, name: nameOf(id2), icon: icons4?.[id2] || "", small: true }),
+              nameOf(id2)
+            ] }) }),
+            /* @__PURE__ */ u3("td", { children: /* @__PURE__ */ u3("span", { class: "antmem", children: [
+              /* @__PURE__ */ u3("span", { class: "antbar", children: /* @__PURE__ */ u3("span", { style: { width: `${Math.max(2, Math.round((mem[id2] || 0) / most * 100))}%` } }) }),
+              formatMem(mem[id2] || 0)
+            ] }) }),
+            /* @__PURE__ */ u3("td", { class: "antspark", children: (past[id2]?.length || 0) > 2 ? /* @__PURE__ */ u3(Spark, { values: past[id2], w: 120, h: 18, title: `${nameOf(id2)}'s processor, ${span.toLowerCase()}` }) : null }),
+            /* @__PURE__ */ u3("td", { class: "num", children: [
+              pct(cpu[id2] || 0),
+              "%"
+            ] }),
+            /* @__PURE__ */ u3("td", { class: "num", children: disked[id2] ? formatDisk(disked[id2]) : "—" })
+          ] }, id2)) })
+        ] }) : /* @__PURE__ */ u3("p", { class: "muted antwait", children: "Not read yet" }),
+        rows.length > 8 && /* @__PURE__ */ u3("button", { type: "button", class: "linkbtn antall", onClick: () => setAll(!all), children: all ? "Show fewer" : `Show all ${rows.length}` })
+      ] })
+    ] });
+  }
+  var mountAnalytics = (el3, props) => R(props && /* @__PURE__ */ u3(Analytics, { ...props }), el3);
 
   // web/src/status/ReleaseNotes.tsx
   function summary(name, p3) {
@@ -4072,7 +4478,7 @@
         live = false;
       };
     }, []);
-    const shown8 = preview?.releases.slice(0, 5) || [];
+    const shown9 = preview?.releases.slice(0, 5) || [];
     return /* @__PURE__ */ u3("div", { class: "notes", children: [
       !preview && !problem && /* @__PURE__ */ u3("p", { class: "muted", children: "Reading what is new…" }),
       problem && /* @__PURE__ */ u3("p", { class: "muted", children: [
@@ -4081,7 +4487,7 @@
         "). Updating still works."
       ] }),
       preview && /* @__PURE__ */ u3("p", { children: summary(name, preview) }),
-      shown8.map((r3) => /* @__PURE__ */ u3("section", { class: "release", children: [
+      shown9.map((r3) => /* @__PURE__ */ u3("section", { class: "release", children: [
         /* @__PURE__ */ u3("div", { class: "row", children: [
           /* @__PURE__ */ u3("strong", { children: [
             r3.tag,
@@ -4095,9 +4501,9 @@
           open5(r3.url);
         }, children: "Full notes" })
       ] }, r3.tag)),
-      preview && preview.releases.length > shown8.length && preview.page && /* @__PURE__ */ u3("p", { class: "muted", children: [
+      preview && preview.releases.length > shown9.length && preview.page && /* @__PURE__ */ u3("p", { class: "muted", children: [
         "And ",
-        preview.releases.length - shown8.length,
+        preview.releases.length - shown9.length,
         " older ones: ",
         /* @__PURE__ */ u3("a", { href: "#", onClick: (e3) => {
           e3.preventDefault();
@@ -4315,9 +4721,9 @@
       draw();
     }
   }
-  function bgProgress(pct, step2) {
+  function bgProgress(pct2, step2) {
     if (!bg || bg.state !== "running") return;
-    bg.pct = pct;
+    bg.pct = pct2;
     bg.step = step2;
     if (hidden2) draw();
   }
@@ -4489,11 +4895,11 @@
   function Row3({ s: s3, p: p3, value, hidden: hidden3, edit }) {
     const [result, setResult] = d2(null);
     const [testing, setTesting] = d2(false);
-    const [kept5, setKept] = d2(void 0);
+    const [kept6, setKept] = d2(void 0);
     const step2 = p3.checks[s3.key];
     const toggle = !s3.secret && /^(true|false)$/i.test(s3.value || "");
     const label = p3.label(s3.key);
-    const input2 = toggle ? /* @__PURE__ */ u3("input", { type: "checkbox", class: "switch", role: "switch", "aria-label": label, disabled: p3.readOnly, checked: /^true$/i.test(value ?? kept5 ?? s3.value), onChange: (e3) => edit(s3.key, e3.currentTarget.checked ? "true" : "false") }) : /* @__PURE__ */ u3(
+    const input2 = toggle ? /* @__PURE__ */ u3("input", { type: "checkbox", class: "switch", role: "switch", "aria-label": label, disabled: p3.readOnly, checked: /^true$/i.test(value ?? kept6 ?? s3.value), onChange: (e3) => edit(s3.key, e3.currentTarget.checked ? "true" : "false") }) : /* @__PURE__ */ u3(
       "input",
       {
         type: s3.secret ? "password" : "text",
@@ -4501,7 +4907,7 @@
         spellcheck: false,
         "aria-label": label,
         disabled: p3.readOnly,
-        value: value ?? kept5 ?? (s3.secret ? "" : s3.value || ""),
+        value: value ?? kept6 ?? (s3.secret ? "" : s3.value || ""),
         placeholder: s3.secret ? s3.set ? "set · leave empty to keep" : "not set" : "",
         onInput: (e3) => edit(s3.key, e3.currentTarget.value)
       }
@@ -5998,7 +6404,7 @@
     const finished = !note;
     const fine = links.filter((l3) => l3.state === "done" || l3.state === "already");
     const fold2 = finished && fine.length > 0;
-    const shown8 = fold2 ? links.filter((l3) => !fine.includes(l3)) : links;
+    const shown9 = fold2 ? links.filter((l3) => !fine.includes(l3)) : links;
     const item = (l3, i3) => {
       const [mark, cls] = marks[l3.state] || ["•", "muted"];
       return /* @__PURE__ */ u3("li", { children: [
@@ -6023,7 +6429,7 @@
         ] }),
         /* @__PURE__ */ u3("ul", { class: "links", children: fine.map(item) })
       ] }),
-      !!shown8.length && /* @__PURE__ */ u3("ul", { class: "links", children: shown8.map(item) })
+      !!shown9.length && /* @__PURE__ */ u3("ul", { class: "links", children: shown9.map(item) })
     ] });
   }
   function mountStarted(el3, props) {
@@ -6113,8 +6519,195 @@
     bgProgress(parseFloat(box.querySelector(".fill").style.width) || 0, box.querySelector(".step").textContent || "");
   }
 
+  // web/src/parts/Crumbs.tsx
+  function Crumbs({ trail, here: here3 }) {
+    const up = [...trail].reverse().find((c4) => c4.go);
+    return (
+      // A div, not a <nav>: style.css draws every nav as the sidebar.
+      /* @__PURE__ */ u3("div", { class: "crumbs", role: "navigation", "aria-label": "Where you are", children: [
+        up && /* @__PURE__ */ u3("button", { type: "button", class: "back", title: `Back to ${up.label}`, "aria-label": `Back to ${up.label}`, onClick: up.go, children: [
+          /* @__PURE__ */ u3("svg", { viewBox: "0 0 24 24", "aria-hidden": "true", children: /* @__PURE__ */ u3("path", { d: "M15 18l-6-6 6-6" }) }),
+          /* @__PURE__ */ u3("span", { class: "backlabel", "aria-hidden": "true", children: up.label })
+        ] }),
+        /* @__PURE__ */ u3("ol", { children: [
+          trail.map((c4) => /* @__PURE__ */ u3("li", { children: [
+            c4.go ? /* @__PURE__ */ u3("button", { type: "button", class: "crumb", onClick: c4.go, children: c4.label }) : /* @__PURE__ */ u3("span", { class: "crumb", children: c4.label }),
+            /* @__PURE__ */ u3("span", { class: "crumbsep", "aria-hidden": "true", children: "›" })
+          ] }, c4.label)),
+          /* @__PURE__ */ u3("li", { "aria-current": "page", children: /* @__PURE__ */ u3("span", { class: "crumb here", children: here3 }) })
+        ] })
+      ] })
+    );
+  }
+
+  // web/src/choose/InstallSheet.tsx
+  function CustomSheet({ close: close3 }) {
+    return /* @__PURE__ */ u3(Sheet, { id: "customSheet", titleId: "customTitle", onClose: close3, children: [
+      /* @__PURE__ */ u3("div", { class: "row sheethead", children: [
+        /* @__PURE__ */ u3("h2", { id: "customTitle", children: "Add your own app" }),
+        /* @__PURE__ */ u3("button", { type: "button", class: "btn", onClick: close3, children: "Close" })
+      ] }),
+      /* @__PURE__ */ u3("div", { id: "customBody" })
+    ] });
+  }
+  function StoreHead(p3) {
+    return /* @__PURE__ */ u3(Store, { ...p3, part: "head" });
+  }
+  function StoreFacts(p3) {
+    return /* @__PURE__ */ u3(Store, { ...p3, part: "facts" });
+  }
+  function StoreNotes(p3) {
+    return /* @__PURE__ */ u3(Store, { ...p3, part: "notes" });
+  }
+  function Store({ app, set: set2, catalog: catalog2, icons: icons4, notes = [], trail, here: here3 = [], open: open5, part }) {
+    const name = (id2) => catalog2.apps.find((a3) => a3.id === id2)?.name || id2;
+    if (set2) {
+      const apps2 = set2.apps.map((id2) => catalog2.apps.find((a3) => a3.id === id2)).filter(Boolean);
+      if (part === "head") return /* @__PURE__ */ u3(S, { children: [
+        /* @__PURE__ */ u3(Crumbs, { trail, here: set2.name }),
+        /* @__PURE__ */ u3("div", { class: "pagehead storehead", children: /* @__PURE__ */ u3("div", { class: "who", children: [
+          /* @__PURE__ */ u3("span", { class: "storemarks", children: apps2.slice(0, 4).map((a3) => /* @__PURE__ */ u3(AppMark, { id: a3.id, name: a3.name, icon: icons4?.[a3.id] || "" }, a3.id)) }),
+          /* @__PURE__ */ u3("div", { children: [
+            /* @__PURE__ */ u3("div", { class: "titlerow", children: /* @__PURE__ */ u3("h1", { children: set2.name }) }),
+            set2.description && /* @__PURE__ */ u3("p", { class: "lead", children: set2.description })
+          ] })
+        ] }) })
+      ] });
+      if (part === "facts") return null;
+      return /* @__PURE__ */ u3(S, { children: /* @__PURE__ */ u3("ul", { class: "storeapps card", children: apps2.map((a3) => /* @__PURE__ */ u3("li", { children: /* @__PURE__ */ u3("button", { type: "button", class: "storeapp", onClick: () => open5(a3.id), children: [
+        /* @__PURE__ */ u3(AppMark, { id: a3.id, name: a3.name, icon: icons4?.[a3.id] || "", small: true }),
+        /* @__PURE__ */ u3("span", { children: [
+          /* @__PURE__ */ u3("strong", { children: a3.name }),
+          /* @__PURE__ */ u3("span", { class: "muted", children: here3.includes(a3.id) ? "Already here" : a3.description })
+        ] })
+      ] }) }, a3.id)) }) });
+    }
+    if (!app) return null;
+    const cat = catalog2.categories.find((c4) => c4.id === app.category)?.label || "Your own";
+    const goes = Object.entries(app.goesWith || {});
+    const needs = (app.dependsOn || []).filter((d3) => catalog2.apps.find((a3) => a3.id === d3)?.kind !== "helper");
+    const keys2 = new Set([app, ...(app.dependsOn || []).map((d3) => catalog2.apps.find((a3) => a3.id === d3))].flatMap((a3) => a3?.inputs || []));
+    for (const [key7, q2] of Object.entries(questions)) if (q2.apps.includes(app.id)) keys2.add(key7);
+    const asks = keys2.size;
+    if (part === "head") return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3(Crumbs, { trail, here: app.name }),
+      /* @__PURE__ */ u3("div", { class: "pagehead storehead", children: /* @__PURE__ */ u3("div", { class: "who", children: [
+        /* @__PURE__ */ u3(AppMark, { id: app.id, name: app.name, icon: icons4?.[app.id] || "" }),
+        /* @__PURE__ */ u3("div", { children: [
+          /* @__PURE__ */ u3("div", { class: "titlerow", children: [
+            /* @__PURE__ */ u3("h1", { children: app.name }),
+            /* @__PURE__ */ u3("span", { class: "pill", children: app.kind === "native" ? "Runs natively" : "Not installed" })
+          ] }),
+          /* @__PURE__ */ u3("p", { class: "lead", children: app.description })
+        ] })
+      ] }) })
+    ] });
+    if (part === "facts") return /* @__PURE__ */ u3(S, { children: /* @__PURE__ */ u3("div", { class: "tiles facts storefacts", children: [
+      /* @__PURE__ */ u3(Tile, { label: "Kind", value: cat, sub: app.kind === "native" ? "Installed on this machine itself" : "Runs in the homelab" }),
+      /* @__PURE__ */ u3(Tile, { label: "Replaces", value: app.replaces?.length ? app.replaces[0] : /* @__PURE__ */ u3("span", { class: "muted", children: "Nothing" }), sub: app.replaces && app.replaces.length > 1 ? app.replaces.slice(1).join(", ") : "" }),
+      /* @__PURE__ */ u3(
+        Tile,
+        {
+          label: "Goes with",
+          value: goes.length ? name(goes[0][0]) : needs.length ? name(needs[0]) : /* @__PURE__ */ u3("span", { class: "muted", children: "Works alone" }),
+          sub: goes.length ? goes[0][1] : needs.length ? "Installed with it" : ""
+        }
+      ),
+      /* @__PURE__ */ u3(Tile, { label: "Asks you", value: asks ? `${asks} ${asks === 1 ? "thing" : "things"}` : "Nothing", sub: asks ? "Beside, before it installs" : "Ready as it comes" })
+    ] }) });
+    return /* @__PURE__ */ u3(S, { children: (notes.length > 0 || app.warning || goes.length > 1) && /* @__PURE__ */ u3(Card, { kind: "storenotes", children: [
+      /* @__PURE__ */ u3("h2", { children: "To know" }),
+      /* @__PURE__ */ u3("ul", { children: [
+        app.warning && /* @__PURE__ */ u3("li", { class: "warn", children: app.warning }),
+        notes.map((n3) => /* @__PURE__ */ u3("li", { class: "aboutnote", children: n3 }, n3)),
+        goes.slice(1).map(([id2, why]) => /* @__PURE__ */ u3("li", { children: [
+          "Goes with ",
+          /* @__PURE__ */ u3("button", { type: "button", class: "linkbtn", onClick: () => open5(id2), children: name(id2) }),
+          ": ",
+          why
+        ] }, id2))
+      ] })
+    ] }) });
+  }
+  var mountCustomSheet = (el3, close3) => R(/* @__PURE__ */ u3(CustomSheet, { close: close3 }), el3);
+  function mountStore(head, facts2, notes, p3) {
+    R(p3 && /* @__PURE__ */ u3(StoreHead, { ...p3 }, p3.app?.id || p3.set?.id), head);
+    R(p3 && /* @__PURE__ */ u3(StoreFacts, { ...p3 }, p3.app?.id || p3.set?.id), facts2);
+    R(p3 && /* @__PURE__ */ u3(StoreNotes, { ...p3 }, p3.app?.id || p3.set?.id), notes);
+  }
+
   // web/src/screens/choose.ts
   var catalog = null;
+  var placed = false;
+  function place() {
+    if (placed) return;
+    placed = true;
+    mountCustomSheet($("customSheetBox"), () => {
+      $("customSheet").hidden = true;
+    });
+    const plan = document.querySelector("#choose aside.plan");
+    if (plan) {
+      plan.classList.remove("card");
+      $("storePlan").appendChild(plan);
+    }
+    const form2 = document.querySelector("#customCard .customForm");
+    if (form2) $("customBody").appendChild(form2);
+  }
+  function openInstall(ids, about) {
+    const key7 = about?.set ? "set:" + about.set : about?.app || ids[0];
+    if (!key7) return;
+    navigate("status");
+    pickStatusPart("add:" + key7);
+  }
+  var shown3 = "";
+  function showStore(key7, trail) {
+    place();
+    const set2 = key7.startsWith("set:") ? catalog?.presets.find((p3) => p3.id === key7.slice(4)) : void 0;
+    const app = set2 ? void 0 : catalog?.apps.find((a3) => a3.id === key7);
+    if (!catalog || !set2 && !app) {
+      mountStore($("storeHead"), $("storeFacts"), $("storeNotes"), null);
+      return;
+    }
+    if (key7 !== shown3 && !installing) {
+      shown3 = key7;
+      selected.clear();
+      (set2 ? set2.apps : [app.id]).forEach((id2) => selected.add(id2));
+      clearInstall();
+      renderApps();
+      replan();
+    }
+    const notes = app ? [
+      appNote(app.id, systemOf(osName, hostOS)),
+      ...sameJob(app, { catalog, status: statusById }).map(([o3, why]) => `You already run ${o3.name}: ${why}`),
+      ...suggested(app, { catalog, status: statusById }).map(([o3, why]) => `Goes with ${o3.name}, which you run: ${why}`)
+    ].filter(Boolean) : [];
+    mountStore($("storeHead"), $("storeFacts"), $("storeNotes"), {
+      app,
+      set: set2,
+      catalog,
+      icons: icons2,
+      notes,
+      trail,
+      here: set2 ? set2.apps.filter((id2) => ["running", "stopped"].includes(statusById[id2]?.state || "")) : [],
+      open: (id2) => statusById[id2] && statusById[id2].state !== "missing" ? pageOpener.open(id2) : pickStatusPart("add:" + id2)
+    });
+  }
+  function leaveStore() {
+    if (!shown3 || installing) return;
+    shown3 = "";
+    selected.clear();
+    clearInstall();
+    renderApps();
+    replan();
+  }
+  function closeInstall() {
+    clearInstall();
+    goBack() || pickStatusPart("overview");
+  }
+  function openCustom() {
+    place();
+    $("customSheet").hidden = false;
+  }
   var selected = /* @__PURE__ */ new Set();
   var settings = {};
   var appName = (id2) => (catalog.apps.find((a3) => a3.id === id2) || { name: id2 }).name;
@@ -6176,9 +6769,8 @@
       const added = catalog.apps.find((a3) => !before3.has(a3.id));
       renderApps();
       if (added) {
-        selected.add(added.id);
-        renderApps();
-        replan();
+        $("customSheet").hidden = true;
+        openInstall([added.id]);
       }
       for (const id2 of ["cName", "cImage", "cPort", "cDesc", "cVolumes"]) $(id2).value = "";
       log2.hidden = true;
@@ -6216,31 +6808,6 @@
       open: (url) => go().Open(url),
       settings: (keys2) => showSettings(keys2),
       note: (id2) => appNote(id2, systemOf(osName, hostOS))
-    });
-    drawChooseSide();
-  }
-  var chooseHere = "start";
-  function drawChooseSide() {
-    const cats = (catalog?.categories || []).filter((c4) => catalog.apps.some((a3) => a3.kind !== "helper" && a3.category === c4.id));
-    mountSideMenu($("chooseSide"), onPhone() ? null : {
-      label: "Choose apps",
-      here: chooseHere,
-      pick: (key7) => {
-        chooseHere = key7;
-        drawChooseSide();
-        if (key7 === "start") {
-          goToPart("choose", null);
-          return;
-        }
-        $("more").open = true;
-        if (key7 === "own") $("customCard").open = true;
-        goToPart("choose", key7 === "own" ? $("customCard") : document.querySelector(`#groups .group[data-cat="${CSS.escape(key7)}"]`));
-      },
-      items: [
-        { key: "start", label: "Start here", icon: sideIcons.start },
-        ...cats.map((c4) => ({ key: c4.id, label: c4.label, icon: sideIcons[c4.id] || sideIcons.other })),
-        { key: "own", label: "Add your own app", icon: sideIcons.add }
-      ]
     });
   }
   var planSeq = 0;
@@ -6352,10 +6919,7 @@
           const a3 = catalog.apps.find((x3) => x3.id === id2);
           return a3 && a3.kind !== "helper" ? [{ name: a3.name, what: a3.description, by: appName(by) }] : [];
         });
-        mountStarted($("started"), { started, also, open: (url) => go().Open(url), close: () => {
-          clearInstall();
-          $("search").focus();
-        } });
+        mountStarted($("started"), { started, also, open: (url) => go().Open(url), close: closeInstall });
         if (!$("wireRow").hidden && $("wire").checked && started.length) await wire($("wiring"));
         selected.clear();
         settingsData.stale();
@@ -6550,11 +7114,11 @@
       return;
     }
     const hidden3 = !running3() && step?.step !== "failed" && ready() && laterKey === key2(state) && !state.updated && !state.notInstalled;
-    const shown8 = lineShown(state, step) && !hidden3;
-    box.hidden = !shown8;
+    const shown9 = lineShown(state, step) && !hidden3;
+    box.hidden = !shown9;
     const failed = step?.step === "failed" || !!state.notInstalled && !step && !state.updated;
     box.className = "updateline" + (failed ? " failed" : state.updated && !ready() && !running3() ? " done" : "");
-    mountUpdateLine(box, shown8 ? { s: state, step, download, log, update: updateNow, later, close, open: (url) => go().Open(url) } : null);
+    mountUpdateLine(box, shown9 ? { s: state, step, download, log, update: updateNow, later, close, open: (url) => go().Open(url) } : null);
     drawFoot({ update: running3() ? "finishing" : ready() && hidden3 ? "ready" : "", openSetup: showLine });
     const settings2 = $("updatesSettings");
     if (settings2) mountUpdateSettings(settings2, { s: state, looking, look: lookNow, setInstallOnQuit });
@@ -6939,7 +7503,10 @@
   var failStep = (s3, e3, choice) => {
     failedSteps[s3.id] = { why: errorText(e3), again: (choice === void 0 ? s3.runLabel : s3.choices?.[choice]?.label) || "Run" };
   };
-  $("firstAppsGo").onclick = () => navigate("choose");
+  $("firstAppsGo").onclick = () => {
+    navigate("status");
+    pickStatusPart("find");
+  };
   var watchingApps = false;
   function renderSetup(steps) {
     lastSteps = steps;
@@ -7142,7 +7709,7 @@
   }
 
   // web/src/screens/settings.ts
-  var changed = {};
+  var changed2 = {};
   var testable = null;
   var lastPhones = null;
   var lastPeople = null;
@@ -7310,12 +7877,7 @@
     openSheet: (username) => {
       go().OpenSheet(username).catch(showError);
     },
-    installPocket: () => {
-      selected.add("pocket-id");
-      navigate("choose");
-      renderApps();
-      replan();
-    },
+    installPocket: () => openInstall(["pocket-id"]),
     // Said on the screen, with ways to hand them their welcome page, rather than opened by itself.
     added: async (name) => {
       const added = (await go().People()).find((p3) => p3.name === name);
@@ -7379,8 +7941,8 @@
   });
   function phoneSettings(r3) {
     const list = Array.isArray(r3) ? r3 : r3.settings || [];
-    const keep3 = new Set(Array.isArray(r3) ? [] : r3.computerOnly || []);
-    return list.filter((s3) => !s3.secret && !keep3.has(s3.key));
+    const keep4 = new Set(Array.isArray(r3) ? [] : r3.computerOnly || []);
+    return list.filter((s3) => !s3.secret && !keep4.has(s3.key));
   }
   function loadSettings(focus = []) {
     settingsFocus = focus;
@@ -7390,7 +7952,7 @@
     renderAppearance();
     const list = settingsData.value, focus = settingsFocus;
     if (afresh) {
-      for (const k3 of Object.keys(changed)) delete changed[k3];
+      for (const k3 of Object.keys(changed2)) delete changed2[k3];
       markChanged();
       formVersion++;
     }
@@ -7433,8 +7995,8 @@
   var isSecret = (key7) => !!form?.pages.some((pg) => pg.items.some((s3) => s3.key === key7 && s3.secret));
   var formActions = {
     edited: (edits) => {
-      for (const k3 of Object.keys(changed)) delete changed[k3];
-      Object.assign(changed, edits);
+      for (const k3 of Object.keys(changed2)) delete changed2[k3];
+      Object.assign(changed2, edits);
       markChanged();
     },
     // The test checks the saved values, so a value just typed is saved
@@ -7442,7 +8004,7 @@
     test: async (key7, pending2) => {
       let used = false;
       const save3 = {};
-      for (const k3 of testReads[key7] || []) if (k3 in changed && !(isSecret(k3) && changed[k3] === "")) save3[k3] = changed[k3];
+      for (const k3 of testReads[key7] || []) if (k3 in changed2 && !(isSecret(k3) && changed2[k3] === "")) save3[k3] = changed2[k3];
       if (pending2 !== void 0) {
         if (!(isSecret(key7) && pending2 === "")) save3[key7] = pending2;
         used = true;
@@ -7562,7 +8124,13 @@
     $("settingsSearch").value = "";
     filterSettings();
     document.querySelector("main").scrollTo({ top: 0 });
+    tabChanged();
   }
+  keepsTabs("settings", () => settingsPage, (page) => {
+    settingsPage = page;
+    $("settingsSearch").value = "";
+    filterSettings();
+  });
   function showSettingsPage(name) {
     pickSettingsPage(name);
   }
@@ -7706,7 +8274,7 @@
     return text2.charAt(0).toUpperCase() + text2.slice(1);
   }
   function markChanged() {
-    const n3 = Object.keys(changed).length;
+    const n3 = Object.keys(changed2).length;
     $("saveSettings").hidden = n3 === 0;
     $("saveSettings").textContent = n3 === 1 ? "Save 1 change" : `Save ${n3} changes`;
   }
@@ -7730,13 +8298,13 @@
   $("settingsSearch").oninput = filterSettings;
   function showSettings(keys2) {
     settingsFocus = keys2;
-    const kept5 = settingsData.at > 0;
+    const kept6 = settingsData.at > 0;
     show3("settings");
-    if (kept5) drawSettings(false, true);
+    if (kept6) drawSettings(false, true);
   }
   $("saveSettings").onclick = async () => {
     const values = {};
-    for (const [k3, v3] of Object.entries(changed)) {
+    for (const [k3, v3] of Object.entries(changed2)) {
       if (isSecret(k3) && v3 === "") continue;
       values[k3] = v3;
     }
@@ -7928,8 +8496,8 @@
     return `${day3}: ${all.length ? `${copied} of ${all.length} copied` : "nothing to copy"}${missed2.length ? " · " + missed2.join(", ") : ""}`;
   }
   function Nights({ nights, name }) {
-    const shown8 = nights.slice(-14);
-    return /* @__PURE__ */ u3("div", { class: "bknights", role: "list", "aria-label": `The last ${shown8.length} nights`, children: shown8.map((n3) => {
+    const shown9 = nights.slice(-14);
+    return /* @__PURE__ */ u3("div", { class: "bknights", role: "list", "aria-label": `The last ${shown9.length} nights`, children: shown9.map((n3) => {
       const words5 = nightWords(n3, name);
       return /* @__PURE__ */ u3("span", { role: "listitem", class: "bknight " + nightTone(n3), title: words5, "aria-label": words5, children: [
         /* @__PURE__ */ u3("i", {}),
@@ -7944,7 +8512,7 @@
     const fresh = copies.filter((c4) => c4.state === "fresh");
     const stale = copies.filter((c4) => c4.state === "stale");
     const paused = copies.filter((c4) => c4.state === "paused");
-    const kept5 = Math.max(0, ...copies.map((c4) => c4.count));
+    const kept6 = Math.max(0, ...copies.map((c4) => c4.count));
     const size2 = fresh.reduce((t3, c4) => t3 + c4.size, 0);
     const lastNight2 = !never(o3.lastRun) && Date.now() - new Date(o3.lastRun).getTime() < 30 * 36e5;
     const needs = [...stale, ...paused];
@@ -7991,7 +8559,7 @@
           ] }),
           /* @__PURE__ */ u3("div", { children: [
             /* @__PURE__ */ u3("dt", { children: "Kept" }),
-            /* @__PURE__ */ u3("dd", { children: kept5 ? `${kept5} ${kept5 === 1 ? "night" : "nights"}` : "—" })
+            /* @__PURE__ */ u3("dd", { children: kept6 ? `${kept6} ${kept6 === 1 ? "night" : "nights"}` : "—" })
           ] })
         ] })
       ] }),
@@ -8045,7 +8613,7 @@
       { key: "none", label: "Not copied yet", tone: "", copies: none2, note: `${none2.map((c4) => c4.name).join(", ")}, tonight` }
     ].filter((g2) => g2.copies.length);
   }
-  var changed2 = (c4) => !!c4.before && Math.abs(c4.size - c4.before) >= c4.before / 10;
+  var changed3 = (c4) => !!c4.before && Math.abs(c4.size - c4.before) >= c4.before / 10;
   function staleWhy(c4, apps2) {
     if (!apps2 || !c4.app) return "";
     const a3 = apps2[c4.app];
@@ -8092,7 +8660,7 @@
           /* @__PURE__ */ u3("td", { class: "when muted", children: never(c4.newest) ? "—" : ago(c4.newest) }),
           /* @__PURE__ */ u3("td", { class: "size muted", title: c4.before ? `The night before: ${bytes(c4.before)}` : void 0, children: [
             bytes(c4.size),
-            !c4.shrank && changed2(c4) && /* @__PURE__ */ u3("span", { class: "was", children: [
+            !c4.shrank && changed3(c4) && /* @__PURE__ */ u3("span", { class: "was", children: [
               " (was ",
               bytes(c4.before || 0),
               ")"
@@ -8138,8 +8706,8 @@
     if (/connection refused|dial tcp|no such host|timeout|EOF/i.test(problem)) return "Duplicati is not answering: start it on Status, and the jobs show here.";
     return problem;
   }
-  function Jobs({ jobs, place, problem, waitingFor, create }) {
-    const title = place ? `Encrypted to ${place}` : "Encrypted off-site";
+  function Jobs({ jobs, place: place2, problem, waitingFor, create }) {
+    const title = place2 ? `Encrypted to ${place2}` : "Encrypted off-site";
     if (!jobs) {
       return /* @__PURE__ */ u3(CardHead, { title, children: /* @__PURE__ */ u3("span", { class: "muted", title: problem, children: jobsProblem(problem || "", waitingFor) }) });
     }
@@ -8274,13 +8842,13 @@
     const create = () => backupTask("duplicati-setup", "Creating the backup jobs…", "Backup jobs created", "Creating the jobs stopped: the log says why");
     if (!jobsData.value && !jobsData.error) return;
     const o3 = backupsData.value;
-    const place = o3?.destinationOK ? placeName(o3.destination) : "";
+    const place2 = o3?.destinationOK ? placeName(o3.destination) : "";
     if (jobsData.error) {
       const e3 = jobsData.error;
-      mountJobs(card, { jobs: null, place, problem: String(e3 && e3.message || e3), waitingFor: statusById.duplicati?.waitingFor, create });
+      mountJobs(card, { jobs: null, place: place2, problem: String(e3 && e3.message || e3), waitingFor: statusById.duplicati?.waitingFor, create });
       return;
     }
-    mountJobs(card, { jobs: jobsData.value, place, create });
+    mountJobs(card, { jobs: jobsData.value, place: place2, create });
   }
   async function backupTask(action, busy2, done, failed) {
     const panel = $("backupPanel"), log2 = $("backupLog");
@@ -8387,7 +8955,7 @@
     ["apps", "Each app", sideIcons.apps, "copiesCard"]
   ];
   function drawBackupsSide() {
-    mountSideMenu($("backupsSide"), onPhone() ? null : {
+    mountSideMenu($("backupsSide"), {
       label: "Backups",
       here: backupsHere,
       pick: (key7) => {
@@ -8453,7 +9021,7 @@
         }
         await loadStatus();
       },
-      onChoose: () => navigate("choose"),
+      onChoose: () => pickStatusPart("find"),
       words: (a3) => stateOf(a3, batteryPaused, held)[1],
       start: (a3) => appActions.act(a3, "start"),
       logs: (a3) => {
@@ -8473,7 +9041,10 @@
     }
     const n3 = trouble2.length;
     $("statusCount").textContent = n3 ? String(n3) : "";
-    setHealthApps(trouble2.map((a3) => ({ id: a3.id, name: a3.name, words: stateOf(a3, batteryPaused, held)[1] })), () => navigate("status"));
+    setHealthApps(trouble2.map((a3) => ({ id: a3.id, name: a3.name, words: stateOf(a3, batteryPaused, held)[1] })), () => {
+      navigate("status");
+      pickStatusPart("overview");
+    });
     if (n3 !== lastAttention && !document.documentElement.classList.contains("companion")) {
       lastAttention = n3;
       Promise.resolve(go().SetAttention(n3)).catch(() => {
@@ -8501,27 +9072,148 @@
     appList = { groups: groups4, pending, catalog, weekUp, outages, seen, batteryPaused, held, busy: appsBusy, companion: document.documentElement.classList.contains("companion"), os: osName, on: appListActions, memory, unkept, icons: icons2 };
     wantIcons(groups4.flatMap((g2) => g2.apps.slice(0, 3).filter((x3) => x3.state !== "missing" && !shippedLogo(x3.id)).map((x3) => x3.id)));
     mountAppList($("statusRows"), appList);
-    if (!unkept && !appList.companion) refreshUnkept();
-    statusSide = groups4.map((g2) => ({ key: g2.id, label: g2.label, icon: sideIcons[g2.id] || sideIcons.other, count: g2.alert ? g2.apps.length : void 0 }));
+    if (!unkept) refreshUnkept();
+    const cats = [...catalog?.categories || []].sort((x3, y3) => Number(x3.id === automation) - Number(y3.id === automation));
+    const own2 = st.apps.filter((a3) => !cats.some((c4) => c4.id === catOf[a3.id]));
+    const installed2 = new Set(st.apps.map((a3) => a3.id));
+    statusParts = [
+      ...cats.map((c4) => ({
+        id: c4.id,
+        label: c4.id === automation ? "Media automation" : c4.label,
+        apps: st.apps.filter((a3) => catOf[a3.id] === c4.id),
+        add: (catalog?.apps || []).filter((x3) => x3.category === c4.id && x3.kind !== "helper" && !installed2.has(x3.id) && !(c4.id === automation && x3.id === "seerr"))
+      })),
+      { id: "own", label: "Your own apps", apps: own2, add: [] }
+    ];
+    const seerr = (catalog?.apps || []).find((x3) => x3.id === "seerr");
+    const media = statusParts.find((p3) => p3.id === "media");
+    if (seerr && media && !installed2.has("seerr") && !media.add.includes(seerr)) media.add.push(seerr);
+    statusSide = statusParts.map((p3) => ({
+      key: p3.id,
+      label: p3.label,
+      icon: sideIcons[p3.id] || sideIcons.other,
+      total: p3.apps.length,
+      dot: p3.apps.some((a3) => troubled(a3, st.stopped))
+    }));
     drawStatusSide();
+    drawStatusPart();
   }
+  var statusParts = [];
   var statusSide = [];
   var statusHere = "overview";
   function drawStatusSide() {
-    mountSideMenu($("statusSide"), onPhone() ? null : {
+    const menu2 = {
       label: "Status",
       here: statusHere,
       pick: pickStatusPart,
-      items: [{ key: "overview", label: "Overview", icon: sideIcons.overview }, ...statusSide]
+      items: [{ key: "overview", label: "Overview", icon: sideIcons.overview }, { key: "analytics", label: "Analytics", icon: sideIcons.analytics }, ...statusSide]
+    };
+    mountSideMenu($("statusSide"), menu2);
+    mountSideMenu($("statusChips"), onPhone() ? { ...menu2, label: "Status parts" } : null);
+  }
+  var storeFrom = "overview";
+  function drawStatusPart() {
+    const section = $("status");
+    if (statusHere.startsWith("add:")) {
+      section.dataset.part = "add";
+      mountAnalytics($("statusPart"), null);
+      mountCategoryPage($("statusPart"), null);
+      const fromLabel = storeFrom === "find" ? "All apps" : statusParts.find((p3) => p3.id === storeFrom)?.label;
+      const trail = [{ label: "Status", go: () => pickStatusPart("overview") }, ...fromLabel ? [{ label: fromLabel, go: () => pickStatusPart(storeFrom) }] : []];
+      showStore(statusHere.slice(4), trail);
+      return;
+    }
+    leaveStore();
+    if (statusHere === "analytics") {
+      section.dataset.part = "analytics";
+      mountCategoryPage($("statusPart"), null);
+      const disk2 = onPhone() ? phoneMachine : machineNow()?.i.disks?.[0] || null;
+      mountAnalytics($("statusPart"), {
+        stats: lastStats,
+        history: usageHistory,
+        totals,
+        cores: onPhone() ? void 0 : navigator.hardwareConcurrency || void 0,
+        disk: disk2 && disk2.total ? { free: disk2.free, total: disk2.total, low: disk2.low } : null,
+        storage: lastStorage,
+        apps: lastStatus?.apps || [],
+        catalog,
+        icons: icons2,
+        page: (a3) => pageOpener.open(a3.id)
+      });
+      return;
+    }
+    mountAnalytics($("statusPart"), null);
+    if (statusHere === "find" && appList && lastStatus) {
+      section.dataset.part = "find";
+      const installed2 = new Set(lastStatus.apps.map((a3) => a3.id));
+      const sets = (catalog?.presets || []).filter((p3) => !p3.id.startsWith("stack:")).sort((x3, y3) => Number(!!y3.starter) - Number(!!x3.starter));
+      mountCategoryPage($("statusPart"), {
+        label: "All apps",
+        apps: lastStatus.apps,
+        add: (catalog?.apps || []).filter((x3) => x3.kind !== "helper" && !installed2.has(x3.id)),
+        list: appList,
+        goes: catalog ? catalog.apps.filter((x3) => x3.kind !== "helper" && suggested(x3, { catalog, status: statusById }).length) : [],
+        here: appList.companion ? "On the server" : "On " + thisMachine.replace(/^This/, "this"),
+        addLabel: "Add apps",
+        sets,
+        find: findText,
+        install: (id2) => openInstall([id2]),
+        installSet: (id2) => {
+          const p3 = catalog?.presets.find((x3) => x3.id === id2);
+          if (p3) openInstall(p3.apps, { set: id2 });
+        }
+      });
+      return;
+    }
+    const part = statusHere === "overview" ? void 0 : statusParts.find((p3) => p3.id === statusHere);
+    if (part) section.dataset.part = part.id;
+    else delete section.dataset.part;
+    if (!part || !appList) {
+      mountCategoryPage($("statusPart"), null);
+      return;
+    }
+    wantIcons(part.apps.filter((a3) => a3.state !== "missing" && !shippedLogo(a3.id)).map((a3) => a3.id));
+    mountCategoryPage($("statusPart"), {
+      label: part.label,
+      apps: part.apps,
+      add: part.add,
+      list: appList,
+      here: appList.companion ? "On the server" : "On " + thisMachine.replace(/^This/, "this"),
+      install: (id2) => openInstall([id2]),
+      addOwn: part.id === "own" ? openCustom : void 0
     });
   }
-  function pickStatusPart(key7) {
+  var findText = "";
+  $("statusFind").addEventListener("input", (e3) => {
+    const box = e3.currentTarget, text2 = box.value;
+    box.value = "";
+    pickStatusPart("find", text2);
+  });
+  function pickStatusPart(key7, find2 = "") {
+    findText = find2;
+    if (!$("status").classList.contains("active")) navigate("status");
+    if (key7 === statusHere && key7 !== "find") {
+      goToPart("status", null);
+      return;
+    }
+    if (key7.startsWith("add:") && !statusHere.startsWith("add:")) storeFrom = statusHere;
     statusHere = key7;
     drawStatusSide();
-    const row = () => key7 === "overview" ? null : document.querySelector(`#statusRows tr.grouphead[data-group="${CSS.escape(key7)}"]`);
-    const r3 = row();
-    if (r3 && !r3.classList.contains("open")) r3.click();
-    goToPart("status", row());
+    drawStatusPart();
+    goToPart("status", null);
+    tabChanged();
+  }
+  keepsTabs("status", () => statusHere, (key7) => {
+    statusHere = key7;
+    drawStatusSide();
+    drawStatusPart();
+  });
+  function statusCrumb() {
+    if (statusHere === "overview") return null;
+    const label = statusHere === "analytics" ? "Analytics" : statusHere === "find" ? "All apps" : statusParts.find((p3) => p3.id === statusHere)?.label;
+    return label ? { label, go: () => {
+      navigate("status");
+    } } : null;
   }
   onIcon(() => {
     if (appList) mountAppList($("statusRows"), appList = { ...appList, icons: { ...icons2 } });
@@ -8712,9 +9404,9 @@
     }
   }
   function drawStatus() {
-    const kept5 = !statusData.error && statusData.value === remembered?.status;
-    $("statusAge").hidden = !kept5;
-    if (kept5) $("statusAge").textContent = `As it was ${Date.now() - new Date(remembered.at).getTime() < 6e4 ? "a few seconds ago" : ago(remembered.at)}; checking now…`;
+    const kept6 = !statusData.error && statusData.value === remembered?.status;
+    $("statusAge").hidden = !kept6;
+    if (kept6) $("statusAge").textContent = `As it was ${Date.now() - new Date(remembered.at).getTime() < 6e4 ? "a few seconds ago" : ago(remembered.at)}; checking now…`;
     if (statusData.error) {
       statusById = {};
       if (catalog) renderApps();
@@ -8744,7 +9436,7 @@
     renderAppList(st);
     drawOvernight();
     if (lastWatch) drawWatchdog();
-    if (st.checking && !kept5) {
+    if (st.checking && !kept6) {
       if (st !== boardStatus) answerPages(st);
       else if (boardAnswers) applyAnswers(st, boardAnswers);
     }
@@ -8838,7 +9530,10 @@
     card.hidden = !c4 || !c4.apps || !c4.line;
     if (!card.hidden) mountDownloads(card, { c: c4 });
   }
+  var lastStorage = null;
   function showStorage(rec) {
+    lastStorage = rec;
+    if (statusHere === "analytics") drawStatusPart();
     const card = $("storageCard");
     card.hidden = !storageShown(rec);
     if (card.hidden) return;
@@ -8858,11 +9553,16 @@
   }
   function showUsage(stats) {
     record(usageHistory, stats);
+    recordTotals(totals, stats, catalog);
+    lastStats = stats;
+    if (statusHere === "analytics") drawStatusPart();
     mountUsage($("usageCard"), { stats, history: usageHistory, nameOf: (id2) => catalog?.apps.find((a3) => a3.id === id2)?.name || id2 });
     memory = memoryByApp(stats, catalog);
     if (appList) mountAppList($("statusRows"), appList = { ...appList, memory });
   }
   var memory;
+  var lastStats = [];
+  var totals = { at: [], cpu: [], mem: [] };
   var usageHistory = /* @__PURE__ */ new Map();
   setInterval(() => {
     if (!document.hidden && $("status").classList.contains("active")) loadUsage();
@@ -8902,12 +9602,7 @@
       showError(err);
       throw err;
     }),
-    install: (a3) => {
-      selected.add(a3.id);
-      navigate("choose");
-      renderApps();
-      replan();
-    },
+    install: (a3) => openInstall([a3.id]),
     adopt: (a3) => cliFlow(`Move ${a3.name} into the homelab`, "adopt", a3.id, "Move it"),
     releaseNotes: (id2) => go().ReleaseNotes(id2),
     open: (url) => go().Open(url),
@@ -9081,7 +9776,7 @@
       keptNow = await go().Kept() || {};
     } catch {
     }
-    const keep3 = (name) => async (on2) => {
+    const keep4 = (name) => async (on2) => {
       await go().MarkKept(name, on2);
       keptNow[name] = on2;
       refreshUnkept();
@@ -9099,13 +9794,13 @@
         label: shared ? settingLabel(k3) : label(k3),
         shown: s3.secret ? s3.set ? "••••••••" : "not set" : s3.value || "not set",
         copy: s3.set ? s3.secret ? () => go().CopySetting(k3) : () => plain2(s3.value) : void 0,
-        ...s3.secret && s3.set ? { kept: !!keptNow[k3], keep: keep3(k3) } : {}
+        ...s3.secret && s3.set ? { kept: !!keptNow[k3], keep: keep4(k3) } : {}
       };
     };
     const groups4 = [];
     if (entry?.login?.length) groups4.push({ title: "Sign in", rows: entry.login.map(row) });
     const paste = (entry?.keys || []).map(row);
-    if (entry?.keyFile) paste.unshift({ label: "API key", shown: "••••••••", copy: () => go().CopyAppKey(a3.id), kept: !!keptNow["app:" + a3.id], keep: keep3("app:" + a3.id) });
+    if (entry?.keyFile) paste.unshift({ label: "API key", shown: "••••••••", copy: () => go().CopyAppKey(a3.id), kept: !!keptNow["app:" + a3.id], keep: keep4("app:" + a3.id) });
     if (paste.length) groups4.push({ title: "Paste into another app", rows: paste });
     if (entry?.recovery?.length) groups4.push({ title: "Keep safe", note: "Without this the backups can’t be opened.", rows: entry.recovery.map(row) });
     const url = a3.address ? "https://" + a3.address : a3.url || "";
@@ -9343,6 +10038,7 @@
   function openMenu(at2) {
     $("statusMenu").hidden = false;
     $("statusMore").setAttribute("aria-expanded", "true");
+    fitMenu($("statusMenu"), $("statusMore"));
     const items = menuItems();
     if (at2 && items.length) items[at2 === "first" ? 0 : items.length - 1].focus();
   }
@@ -9413,27 +10109,6 @@
     btn.textContent = "Send a report";
   };
 
-  // web/src/parts/Crumbs.tsx
-  function Crumbs({ trail, here: here3 }) {
-    const up = [...trail].reverse().find((c4) => c4.go);
-    return (
-      // A div, not a <nav>: style.css draws every nav as the sidebar.
-      /* @__PURE__ */ u3("div", { class: "crumbs", role: "navigation", "aria-label": "Where you are", children: [
-        up && /* @__PURE__ */ u3("button", { type: "button", class: "back", title: `Back to ${up.label}`, "aria-label": `Back to ${up.label}`, onClick: up.go, children: [
-          /* @__PURE__ */ u3("svg", { viewBox: "0 0 24 24", "aria-hidden": "true", children: /* @__PURE__ */ u3("path", { d: "M15 18l-6-6 6-6" }) }),
-          /* @__PURE__ */ u3("span", { class: "backlabel", "aria-hidden": "true", children: up.label })
-        ] }),
-        /* @__PURE__ */ u3("ol", { children: [
-          trail.map((c4) => /* @__PURE__ */ u3("li", { children: [
-            c4.go ? /* @__PURE__ */ u3("button", { type: "button", class: "crumb", onClick: c4.go, children: c4.label }) : /* @__PURE__ */ u3("span", { class: "crumb", children: c4.label }),
-            /* @__PURE__ */ u3("span", { class: "crumbsep", "aria-hidden": "true", children: "›" })
-          ] }, c4.label)),
-          /* @__PURE__ */ u3("li", { "aria-current": "page", children: /* @__PURE__ */ u3("span", { class: "crumb here", children: here3 }) })
-        ] })
-      ] })
-    );
-  }
-
   // web/src/parts/MenuButton.tsx
   function MenuButton({ label, title, menuLabel, items, foot: foot2, disabled, cls = "btn" }) {
     const [open5, setOpen] = d2(false);
@@ -9459,6 +10134,12 @@
         m3[first === "first" ? 0 : m3.length - 1]?.focus();
       });
     };
+    const menu2 = A2(null);
+    _2(() => {
+      const m3 = menu2.current;
+      if (!open5 || !m3) return;
+      fitMenu(m3, btn.current);
+    }, [open5]);
     return /* @__PURE__ */ u3(
       "span",
       {
@@ -9488,7 +10169,7 @@
               type: "button",
               ref: btn,
               class: cls,
-              title,
+              title: open5 ? void 0 : title,
               "aria-haspopup": "menu",
               "aria-expanded": open5,
               disabled,
@@ -9505,7 +10186,7 @@
               ]
             }
           ),
-          open5 && /* @__PURE__ */ u3("div", { class: "menu", role: "menu", "aria-label": menuLabel, children: [
+          open5 && /* @__PURE__ */ u3("div", { class: "menu", role: "menu", "aria-label": menuLabel, ref: menu2, children: [
             items.map((it) => /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", onClick: () => {
               close3(true);
               it.onClick();
@@ -9518,7 +10199,7 @@
   }
 
   // web/src/page/AppPage.tsx
-  var doing2 = { start: "Starting…", stop: "Stopping…", restart: "Restarting…", update: "Updating…", rollback: "Rolling back…" };
+  var doing3 = { start: "Starting…", stop: "Stopping…", restart: "Restarting…", update: "Updating…", rollback: "Rolling back…" };
   function uptime(since) {
     if (!since) return "";
     const mins = Math.max(0, Math.round((Date.now() - new Date(since).getTime()) / 6e4)), hours = Math.round(mins / 60);
@@ -9544,12 +10225,12 @@
     return all ? ok / all : 1;
   }
   function lastDown(outages2, weekFrom, now2 = Date.now()) {
-    const shown8 = outages2.filter((o4) => (o4.to ? new Date(o4.to).getTime() : now2) > weekFrom);
-    if (!shown8.length) return "";
-    const o3 = shown8.reduce((a3, b2) => new Date(b2.from) > new Date(a3.from) ? b2 : a3);
+    const shown9 = outages2.filter((o4) => (o4.to ? new Date(o4.to).getTime() : now2) > weekFrom);
+    if (!shown9.length) return "";
+    const o3 = shown9.reduce((a3, b2) => new Date(b2.from) > new Date(a3.from) ? b2 : a3);
     const from2 = new Date(o3.from), at2 = `${dayText(from2, { weekday: "short" })} at ${clockText(from2)}`;
     const line = o3.to ? `Last down ${at2} for ${lasted(new Date(o3.to).getTime() - from2.getTime())}: ${o3.problem}` : `Down since ${at2}: ${o3.problem}`;
-    return shown8.length > 1 ? `${line} · ${shown8.length} outages` : line;
+    return shown9.length > 1 ? `${line} · ${shown9.length} outages` : line;
   }
   function weekWords(days, outages2, now2 = Date.now(), seen2 = {}) {
     const ok = days.reduce((n4, d3) => n4 + d3.ok, 0), all = days.reduce((n4, d3) => n4 + d3.all, 0);
@@ -9653,7 +10334,7 @@
   }
   function Header({ p: p3 }) {
     const { a: a3, entry, pending: pending2, busy: busy2, on: on2 } = p3;
-    const [tone, words5] = pending2 && !pending2.failed ? ["warn", pending2.note || doing2[pending2.action] || "Working…"] : p3.state;
+    const [tone, words5] = pending2 && !pending2.failed ? ["warn", pending2.note || doing3[pending2.action] || "Working…"] : p3.state;
     const up = a3.state === "running" && !pending2 ? uptime(a3.since) : "";
     const url = a3.address ? "https://" + a3.address : a3.url || "";
     const run2 = (action, label, title, danger = false) => /* @__PURE__ */ u3("button", { class: "btn change" + (danger ? " danger" : ""), title, disabled: busy2, onClick: () => on2.act(action), children: label });
@@ -9734,12 +10415,12 @@
             }
           )
         ] }) : run2("start", "Start", "Start it")),
-        a3.state === "running" && a3.address && !p3.companion && /* @__PURE__ */ u3("button", { class: "btn", disabled: busy2, onClick: on2.phone, children: [
+        a3.state === "running" && a3.address && /* @__PURE__ */ u3("button", { class: "btn openphone", disabled: busy2, onClick: on2.phone, children: [
           /* @__PURE__ */ u3(Icon, { name: "phone" }),
           "Open on a phone"
         ] }),
         a3.state === "running" && url && /* @__PURE__ */ u3("button", { class: "primary small", onClick: () => on2.open(url), children: "Open" }),
-        !p3.companion && /* @__PURE__ */ u3(GearButton, { name: a3.name, unsaved: p3.unkept || 0, open: on2.signIn })
+        /* @__PURE__ */ u3(GearButton, { name: a3.name, unsaved: p3.unkept || 0, open: on2.signIn })
       ] })
     ] });
   }
@@ -9852,10 +10533,10 @@
       const s3 = document.getElementById("doneSheet");
       if (s3) s3.hidden = true;
     };
-    const shown8 = (rows || []).slice(0, 6);
+    const shown9 = (rows || []).slice(0, 6);
     return /* @__PURE__ */ u3(Card, { kind: "alerts pagecard", id: "appDone", children: [
       /* @__PURE__ */ u3(CardHead, { title: "Recently done", children: /* @__PURE__ */ u3("button", { class: "small change", onClick: open5, children: "Everything that was done…" }) }),
-      problem ? /* @__PURE__ */ u3(Empty, { children: problem }) : rows === null ? /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : shown8.length ? /* @__PURE__ */ u3(Rows, { children: shown8.map((e3) => /* @__PURE__ */ u3(Row, { title: e3.text, sub: doneSub(e3) }, e3.id)) }) : /* @__PURE__ */ u3(Empty, { children: "Nothing yet." }),
+      problem ? /* @__PURE__ */ u3(Empty, { children: problem }) : rows === null ? /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : shown9.length ? /* @__PURE__ */ u3(Rows, { children: shown9.map((e3) => /* @__PURE__ */ u3(Row, { title: e3.text, sub: doneSub(e3) }, e3.id)) }) : /* @__PURE__ */ u3(Empty, { children: "Nothing yet." }),
       /* @__PURE__ */ u3(Sheet, { id: "doneSheet", titleId: "doneTitle", children: [
         /* @__PURE__ */ u3("h2", { id: "doneTitle", children: "Everything that was done" }),
         /* @__PURE__ */ u3("input", { type: "search", class: "donesearch", value: q2, onInput: (e3) => setQ(e3.target.value), placeholder: "Search: an app, a phone, restarted…", "aria-label": "Search what was done", autocomplete: "off", spellcheck: false }),
@@ -9946,7 +10627,7 @@
     const daysText = switching2.sundays || !days.length ? "Sundays" : weekdaysText(days);
     const ids = [a3.id, ...entry?.dependsOn || []];
     const copy = o3?.copies?.find((c4) => ids.includes(c4.id) && !c4.volume && !never(c4.newest));
-    const kept5 = container ? copy ? `Its files, and its database's copy from ${when(copy.newest)}` : "Its files in the homelab folder, every night" : "It runs on its own, outside the homelab; its own app keeps its data";
+    const kept6 = container ? copy ? `Its files, and its database's copy from ${when(copy.newest)}` : "Its files in the homelab folder, every night" : "It runs on its own, outside the homelab; its own app keeps its data";
     return /* @__PURE__ */ u3(Card, { kind: "alerts pagecard", id: "appSettings", children: [
       /* @__PURE__ */ u3(CardHead, { title: "Settings", children: null }),
       /* @__PURE__ */ u3(Rows, { children: [
@@ -9981,7 +10662,7 @@
             sub: away2 ? "Opens anywhere through your Cloudflare tunnel; away from home, Cloudflare can see what passes" : "Home only: it opens on your home Wi-Fi, and nobody outside can reach it"
           }
         ),
-        /* @__PURE__ */ u3(Row, { title: "In the nightly backup", sub: kept5, end: /* @__PURE__ */ u3(ActionLink, { onClick: on2.openBackups, children: "Backups ›" }) })
+        /* @__PURE__ */ u3(Row, { title: "In the nightly backup", sub: kept6, end: /* @__PURE__ */ u3(ActionLink, { onClick: on2.openBackups, children: "Backups ›" }) })
       ] })
     ] });
   }
@@ -9993,7 +10674,7 @@
         /* @__PURE__ */ u3("button", { class: "small change", disabled: p3.busy, title: "Dumps every database and copies the settings now, as the nightly backup does", onClick: p3.on.backupNow, children: "Back up now" }),
         /* @__PURE__ */ u3("button", { class: "small", onClick: p3.on.openBackups, children: "Open Backups" })
       ] }),
-      container && !p3.companion && /* @__PURE__ */ u3("div", { class: "remove", children: [
+      container && /* @__PURE__ */ u3("div", { class: "remove", children: [
         /* @__PURE__ */ u3("button", { class: "small danger change", disabled: p3.busy, title: "Backs it up first; its container goes, its data stays in the homelab folder", onClick: p3.on.remove, children: [
           "Remove ",
           p3.a.name,
@@ -10005,7 +10686,7 @@
   }
   function AppPage(p3) {
     return /* @__PURE__ */ u3("div", { class: "apppage", children: [
-      /* @__PURE__ */ u3(Crumbs, { trail: [{ label: "Status", go: p3.on.back }], here: p3.a.name }),
+      /* @__PURE__ */ u3(Crumbs, { trail: p3.on.from ? [{ label: "Status", go: p3.on.overview || p3.on.back }, p3.on.from] : [{ label: "Status", go: p3.on.back }], here: p3.a.name }),
       /* @__PURE__ */ u3(Header, { p: p3 }),
       /* @__PURE__ */ u3(Facts, { p: p3 }),
       /* @__PURE__ */ u3("div", { class: "pagecols", children: [
@@ -10059,7 +10740,7 @@
     switching[appId] = rest;
     draw3();
   }
-  var shown3 = () => !!id && $("app").classList.contains("active");
+  var shown4 = () => !!id && $("app").classList.contains("active");
   var openedApp = () => id;
   function openApp(appId) {
     if (appId !== id) {
@@ -10111,21 +10792,20 @@
     draw3();
   }
   setInterval(() => {
-    if (!document.hidden && shown3()) readUsage();
+    if (!document.hidden && shown4()) readUsage();
   }, 1e4);
   async function readIconOf(of) {
     if (await readIcon(of) && of === id) draw3();
   }
   async function readRest() {
     const at2 = id;
-    const companion2 = document.documentElement.classList.contains("companion");
     const [w3, st, ppl, ex, pr, pv] = await Promise.allSettled([
       go().Watchdog(),
       go().Storage(),
       go().People(),
       go().Explainer(),
       guards.has(at2) ? go().Protection() : Promise.resolve(null),
-      at2 === privateApp && !companion2 ? go().DownloadsPrivate() : Promise.resolve(null)
+      at2 === privateApp ? go().DownloadsPrivate() : Promise.resolve(null)
     ]);
     if (at2 !== id) return;
     stopped = pr.status === "fulfilled" ? pr.value : null;
@@ -10142,7 +10822,7 @@
     if (!id) return;
     const a3 = statusById[id];
     if (!a3) {
-      if (shown3() && statusData.value) {
+      if (shown4() && statusData.value) {
         mountAppPage($("appPage"), null);
         show3("status");
       }
@@ -10173,9 +10853,14 @@
       machine: thisMachine.replace(/^This/, "this"),
       companion: companion2,
       stopped: guards.has(id) ? stopped : void 0,
-      privacy: id === privateApp && !companion2 ? privacy : void 0,
+      privacy: id === privateApp ? privacy : void 0,
       on: {
         back: () => navigate("status"),
+        from: statusCrumb(),
+        overview: () => {
+          navigate("status");
+          pickStatusPart("overview");
+        },
         act: (action) => appActions.act(a3, action),
         details: () => appActions.details(a3),
         stopFor: (until) => appActions.stopFor(a3, until),
@@ -10218,13 +10903,13 @@
     });
   }
   statusData.watch(() => {
-    if (shown3()) draw3();
+    if (shown4()) draw3();
   });
   backupsData.watch(() => {
-    if (shown3()) draw3();
+    if (shown4()) draw3();
   });
   watchRows(() => {
-    if (shown3()) draw3();
+    if (shown4()) draw3();
   });
 
   // web/src/finances/payoffPlan.ts
@@ -10540,16 +11225,16 @@
     const people = v3.plan.people || [];
     const payments = allPayments(v3.plan, v3.cardSpend);
     const income = people.reduce((t3, e3) => t3 + e3.net * perMonth(e3.schedule), 0);
-    const kept5 = (id2) => saving(L2.account[id2 || ""]?.kind);
+    const kept6 = (id2) => saving(L2.account[id2 || ""]?.kind);
     const onCard2 = (x3) => L2.account[x3.from || ""]?.kind === "card";
     const fromPay = payments.filter((x3) => !x3.payer && (!x3.from || x3.from === v3.checking || onCard2(x3)) && !(x3.to && x3.to === v3.checking));
     const each = (x3) => x3.amount * perMonth(x3.schedule, people, v3.checking);
     const fromOthers = payments.filter((x3) => x3.payer);
     const others2 = fromOthers.map((x3) => ({ name: x3.name, payer: x3.payer, amount: each(x3) }));
-    const spentList = fromPay.filter((x3) => !kept5(x3.to));
+    const spentList = fromPay.filter((x3) => !kept6(x3.to));
     const spent = spentList.reduce((t3, x3) => t3 + each(x3), 0);
-    const saved = [...fromPay, ...fromOthers].filter((x3) => kept5(x3.to)).reduce((t3, x3) => t3 + each(x3), 0);
-    const viaPay = people.reduce((t3, e3) => t3 + (e3.deductions || []).filter((d3) => kept5(d3.account)).reduce((u4, d3) => u4 + d3.amount, 0) * perMonth(e3.schedule), 0);
+    const saved = [...fromPay, ...fromOthers].filter((x3) => kept6(x3.to)).reduce((t3, x3) => t3 + each(x3), 0);
+    const viaPay = people.reduce((t3, e3) => t3 + (e3.deductions || []).filter((d3) => kept6(d3.account)).reduce((u4, d3) => u4 + d3.amount, 0) * perMonth(e3.schedule), 0);
     const kinds3 = {};
     for (const x3 of spentList) kinds3[x3.kind || "other"] = (kinds3[x3.kind || "other"] || 0) + each(x3);
     const byKind = Object.entries(kinds3).map(([kind, amount]) => ({ kind, amount })).filter((k3) => k3.amount > 5e-3).sort((a3, b2) => b2.amount - a3.amount);
@@ -10596,8 +11281,8 @@
     const h3 = a3.history || [];
     let at2;
     for (const p3 of h3) if (p3.date <= day3) at2 = p3.amount;
-    const kept5 = at2 ?? h3[0]?.amount;
-    return kept5 !== void 0 ? kept5 * rateOf(v3.plan, a3) : todayOf(v3, a3);
+    const kept6 = at2 ?? h3[0]?.amount;
+    return kept6 !== void 0 ? kept6 * rateOf(v3.plan, a3) : todayOf(v3, a3);
   }
   function balanceAfter(acct, all, day3) {
     const effect = (t3) => (t3.account === acct.id ? t3.amount : t3.to === acct.id ? -t3.amount : 0) * (owed(acct.kind) ? -1 : 1);
@@ -10740,19 +11425,19 @@
     const good = flat4 ? null : value > 0 !== !!downIsGood;
     const tone = good === null ? "muted" : good ? "in" : "out";
     if (amountsHidden()) return look2 === "badge" ? null : /* @__PURE__ */ u3("span", { class: "fx-delta", children: label && /* @__PURE__ */ u3("span", { class: "fx-sub", children: label }) });
-    const pct = base && Math.abs(base) > 5e-3 ? `${value < 0 ? "−" : "+"}${Math.abs(value / Math.abs(base) * 100).toFixed(1)}%` : "";
-    if (look2 === "badge") return /* @__PURE__ */ u3("span", { class: "fx-badge fx-" + tone, children: shareOnly ? pct : /* @__PURE__ */ u3(S, { children: [
+    const pct2 = base && Math.abs(base) > 5e-3 ? `${value < 0 ? "−" : "+"}${Math.abs(value / Math.abs(base) * 100).toFixed(1)}%` : "";
+    if (look2 === "badge") return /* @__PURE__ */ u3("span", { class: "fx-badge fx-" + tone, children: shareOnly ? pct2 : /* @__PURE__ */ u3(S, { children: [
       signed(value),
-      pct && /* @__PURE__ */ u3(S, { children: [
+      pct2 && /* @__PURE__ */ u3(S, { children: [
         " ",
-        pct
+        pct2
       ] })
     ] }) });
     return /* @__PURE__ */ u3("span", { class: "fx-delta", children: [
       /* @__PURE__ */ u3("span", { class: "fx-" + tone, children: flat4 ? "No change" : /* @__PURE__ */ u3(S, { children: [
         /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: value < 0 ? "↓ " : "↑ " }),
         signed(value),
-        pct && ` (${pct})`
+        pct2 && ` (${pct2})`
       ] }) }),
       label && /* @__PURE__ */ u3("span", { class: "fx-sub", children: [
         " ",
@@ -10991,7 +11676,7 @@
     }
     return [...by.values()].sort((a3, b2) => b2.amount - a3.amount).slice(0, n3);
   }
-  function totals(txs, r3) {
+  function totals2(txs, r3) {
     const list = txs.filter((t3) => !t3.to && inRange(t3, r3));
     return { in: list.filter((t3) => t3.amount > 0).reduce((s3, t3) => s3 + t3.amount, 0), out: -list.filter((t3) => t3.amount < 0).reduce((s3, t3) => s3 + t3.amount, 0) };
   }
@@ -11055,14 +11740,14 @@
     const found2 = suggestLinks(ledger.transactions, allPayments(v3.plan).filter((x3) => !x3.card), v3.dues || {}, v3.checking, withLearned(paysBill, ledger.transactions));
     if (!found2.size) return null;
     const list = ledger.transactions.filter((t3) => found2.has(t3.id)).reverse();
-    const keep3 = async (change) => {
+    const keep4 = async (change) => {
       if (busy2) return;
       setBusy(true);
       await save3({ ...ledger, transactions: ledger.transactions.map(change) });
       setBusy(false);
     };
-    const link = (ids) => keep3((t3) => ids.includes(t3.id) ? { ...t3, payment: found2.get(t3.id).payment } : t3);
-    const notIt = (id2) => keep3((t3) => t3.id === id2 ? { ...t3, notPlanned: true } : t3);
+    const link = (ids) => keep4((t3) => ids.includes(t3.id) ? { ...t3, payment: found2.get(t3.id).payment } : t3);
+    const notIt = (id2) => keep4((t3) => t3.id === id2 ? { ...t3, notPlanned: true } : t3);
     return /* @__PURE__ */ u3(
       Widget,
       {
@@ -11109,7 +11794,7 @@
   }
   var txTitle = (t3, L2) => t3.payee || (t3.to ? `To ${L2.account[t3.to]?.name || "another account"}` : "No payee");
   var catsOf = (t3) => t3.splits?.length ? t3.splits.map((s3) => s3.category) : t3.category ? [t3.category] : [];
-  var wordsOf = (t3, L2) => [
+  var wordsOf2 = (t3, L2) => [
     t3.payee,
     ...catsOf(t3),
     t3.note,
@@ -11124,17 +11809,17 @@
     const [busy2, setBusy] = d2(false);
     const list = pairs(ledger.transactions);
     if (!list.length) return null;
-    const keep3 = async (change) => {
+    const keep4 = async (change) => {
       if (busy2) return;
       setBusy(true);
       await save3({ ...ledger, transactions: change(ledger.transactions) });
       setBusy(false);
     };
-    const join = (ps) => keep3((txs) => {
+    const join = (ps) => keep4((txs) => {
       const gone = new Set(ps.map((p3) => p3.in.id)), made2 = new Map(ps.map((p3) => [p3.out.id, joined(p3)]));
       return txs.filter((t3) => !gone.has(t3.id)).map((t3) => made2.get(t3.id) || t3);
     });
-    const apart = (p3) => keep3((txs) => txs.map((t3) => t3.id === p3.out.id || t3.id === p3.in.id ? { ...t3, apart: true } : t3));
+    const apart = (p3) => keep4((txs) => txs.map((t3) => t3.id === p3.out.id || t3.id === p3.in.id ? { ...t3, apart: true } : t3));
     const name = (id2) => L2.account[id2]?.name || id2;
     return /* @__PURE__ */ u3(
       Widget,
@@ -11267,18 +11952,18 @@
     const month3 = months.includes(monthPick) || span ? monthPick : "";
     const tag = tags.includes(tagPick) ? tagPick : "";
     const want = q2.trim().toLowerCase().split(/\s+/).filter(Boolean);
-    const shown8 = all.filter((t3) => (!account || t3.account === account || t3.to === account) && (!category || inCategory(t3, category)) && (!month3 || (span ? t3.date >= span.start && t3.date <= span.last : t3.date.startsWith(month3))) && (!tag || !!t3.tags?.includes(tag)) && (!way || (way === "move" ? !!t3.to : !t3.to && (way === "in" ? t3.amount > 0 : t3.amount < 0))) && want.every((w3) => wordsOf(t3, L2).includes(w3)));
-    const filtered = shown8.length !== all.length;
+    const shown9 = all.filter((t3) => (!account || t3.account === account || t3.to === account) && (!category || inCategory(t3, category)) && (!month3 || (span ? t3.date >= span.start && t3.date <= span.last : t3.date.startsWith(month3))) && (!tag || !!t3.tags?.includes(tag)) && (!way || (way === "move" ? !!t3.to : !t3.to && (way === "in" ? t3.amount > 0 : t3.amount < 0))) && want.every((w3) => wordsOf2(t3, L2).includes(w3)));
+    const filtered = shown9.length !== all.length;
     const catOf = (t3) => t3.splits?.length ? t3.splits.map((x3) => x3.category).join(", ") : t3.category || (t3.to ? "Transfer" : "No category");
     const acctOf = (t3) => t3.to ? `${L2.account[t3.account]?.name || t3.account} → ${L2.account[t3.to]?.name || t3.to}` : L2.account[t3.account]?.name || t3.account;
     const byWords = (f4) => (x3, y3) => f4(x3).localeCompare(f4(y3), void 0, { sensitivity: "base" });
     const cmp = sort.by === "payee" ? byWords((t3) => txTitle(t3, L2)) : sort.by === "category" ? byWords(catOf) : sort.by === "account" ? byWords(acctOf) : sort.by === "amount" ? (x3, y3) => amt(x3) - amt(y3) : null;
-    const newest2 = [...shown8].reverse();
-    const list = sort.by === "date" ? sort.up ? [...shown8] : newest2 : newest2.map((t3, i3) => ({ t: t3, i: i3 })).sort((x3, y3) => (sort.up ? 1 : -1) * cmp(x3.t, y3.t) || x3.i - y3.i).map((x3) => x3.t);
+    const newest2 = [...shown9].reverse();
+    const list = sort.by === "date" ? sort.up ? [...shown9] : newest2 : newest2.map((t3, i3) => ({ t: t3, i: i3 })).sort((x3, y3) => (sort.up ? 1 : -1) * cmp(x3.t, y3.t) || x3.i - y3.i).map((x3) => x3.t);
     const byDay2 = sort.by === "date";
     const filterKey = [q2, account, category, month3, way, tag].join("\0");
     const upTo = drawn.key === filterKey ? drawn.n : txPage;
-    const chosen = shown8.filter((t3) => picked.has(t3.id));
+    const chosen = shown9.filter((t3) => picked.has(t3.id));
     const pick = (ids) => {
       setPicked(ids);
       setSure(false);
@@ -11298,7 +11983,7 @@
       setCatFor("");
       anchor.current = "";
     };
-    const pickAll = () => pick(/* @__PURE__ */ new Set([...picked, ...shown8.map((t3) => t3.id)]));
+    const pickAll = () => pick(/* @__PURE__ */ new Set([...picked, ...shown9.map((t3) => t3.id)]));
     keyed.current = { all: pickAll, stop: stopPicking };
     const change = async (txs) => {
       if (busy2 || !saveLedger2) return false;
@@ -11435,7 +12120,7 @@
         /* @__PURE__ */ u3(
           Widget,
           {
-            title: filtered ? `${plural(shown8.length, "transaction")} of ${all.length}` : "Transactions",
+            title: filtered ? `${plural(shown9.length, "transaction")} of ${all.length}` : "Transactions",
             span: "all",
             kind: "fx-transactions" + (picking ? " fx-txpicking" : ""),
             actions: edit && /* @__PURE__ */ u3(S, { children: [
@@ -11490,9 +12175,9 @@
               ] }),
               picking && /* @__PURE__ */ u3("div", { class: "fx-txpick", role: "group", "aria-label": "The selected transactions", children: [
                 /* @__PURE__ */ u3("span", { class: "fx-txpicked", role: "status", children: chosen.length ? `${plural(chosen.length, "transaction")} selected` : "None selected: click a row to select it" }),
-                chosen.length < shown8.length ? /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy2, onClick: pickAll, children: [
+                chosen.length < shown9.length ? /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy2, onClick: pickAll, children: [
                   "Select all ",
-                  shown8.length
+                  shown9.length
                 ] }) : /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy2, onClick: () => pick(/* @__PURE__ */ new Set()), children: "Select none" }),
                 !!chosen.length && /* @__PURE__ */ u3(S, { children: [
                   /* @__PURE__ */ u3("span", { class: "fx-txpickcat", children: [
@@ -11511,7 +12196,7 @@
                 problem && /* @__PURE__ */ u3("span", { class: "formerr bad", role: "alert", children: problem }),
                 /* @__PURE__ */ u3("datalist", { id: "fxPickCategories", children: [.../* @__PURE__ */ new Set([...(v3.categories || []).map((c4) => c4.name), ...cats])].map((c4) => /* @__PURE__ */ u3("option", { value: c4 }, c4)) })
               ] }),
-              runs2 && !!shown8.length && /* @__PURE__ */ u3("p", { class: "fx-sub fx-txrunning", children: [
+              runs2 && !!shown9.length && /* @__PURE__ */ u3("p", { class: "fx-sub fx-txrunning", children: [
                 "After each day, what ",
                 acct.name,
                 " ",
@@ -11522,26 +12207,26 @@
                 dayShort(acct.updated),
                 " through these transactions."
               ] }),
-              !!shown8.length && /* @__PURE__ */ u3("p", { class: "fx-sub fx-txsummary", children: [
+              !!shown9.length && /* @__PURE__ */ u3("p", { class: "fx-sub fx-txsummary", children: [
                 /* @__PURE__ */ u3("span", { children: [
-                  /* @__PURE__ */ u3("strong", { children: shown8.length.toLocaleString("en-US") }),
+                  /* @__PURE__ */ u3("strong", { children: shown9.length.toLocaleString("en-US") }),
                   " ",
-                  shown8.length === 1 ? "transaction" : "transactions"
+                  shown9.length === 1 ? "transaction" : "transactions"
                 ] }),
                 /* @__PURE__ */ u3("span", { children: [
                   "In ",
-                  /* @__PURE__ */ u3(Amount, { value: shown8.filter((t3) => !t3.to && amt(t3) > 0).reduce((s3, t3) => s3 + amt(t3), 0), form: "full", tone: "in" })
+                  /* @__PURE__ */ u3(Amount, { value: shown9.filter((t3) => !t3.to && amt(t3) > 0).reduce((s3, t3) => s3 + amt(t3), 0), form: "full", tone: "in" })
                 ] }),
                 /* @__PURE__ */ u3("span", { children: [
                   "Out ",
-                  /* @__PURE__ */ u3(Amount, { value: shown8.filter((t3) => !t3.to && amt(t3) < 0).reduce((s3, t3) => s3 + amt(t3), 0), form: "full" })
+                  /* @__PURE__ */ u3(Amount, { value: shown9.filter((t3) => !t3.to && amt(t3) < 0).reduce((s3, t3) => s3 + amt(t3), 0), form: "full" })
                 ] }),
                 filtered && /* @__PURE__ */ u3("span", { class: "fx-txtotal", children: [
                   "Together ",
-                  /* @__PURE__ */ u3(Amount, { value: shown8.filter((t3) => !t3.to || account).reduce((s3, t3) => s3 + (account && t3.to === account ? -amt(t3) : amt(t3)), 0), form: "full", sign: true })
+                  /* @__PURE__ */ u3(Amount, { value: shown9.filter((t3) => !t3.to || account).reduce((s3, t3) => s3 + (account && t3.to === account ? -amt(t3) : amt(t3)), 0), form: "full", sign: true })
                 ] })
               ] }),
-              !!shown8.length && /* @__PURE__ */ u3("div", { class: "fx-txhead", role: "group", "aria-label": "Sort the transactions by", children: [
+              !!shown9.length && /* @__PURE__ */ u3("div", { class: "fx-txhead", role: "group", "aria-label": "Sort the transactions by", children: [
                 columns.map(([by, label, up]) => {
                   const on2 = sort.by === by;
                   const next = on2 ? { by, up: !sort.up } : { by, up };
@@ -11557,7 +12242,7 @@
                 }),
                 /* @__PURE__ */ u3("span", { class: "fx-txcol fx-txcol-link", "aria-hidden": "true", children: "Linked to" })
               ] }),
-              !byDay2 && !!shown8.length && /* @__PURE__ */ u3(Rows, { kind: "fx-rows fx-txflat", children: list.slice(0, upTo).map((t3) => rowOf(t3, true)) }),
+              !byDay2 && !!shown9.length && /* @__PURE__ */ u3(Rows, { kind: "fx-rows fx-txflat", children: list.slice(0, upTo).map((t3) => rowOf(t3, true)) }),
               byDay2 && days.map((d3, i3) => /* @__PURE__ */ u3(S, { children: [
                 !!v3.plan.trackFrom && !sort.up && d3.date < v3.plan.trackFrom && (i3 === 0 || days[i3 - 1].date >= v3.plan.trackFrom) && /* @__PURE__ */ u3("p", { class: "fx-sub fx-trackline", children: [
                   "Before ",
@@ -11600,7 +12285,7 @@
                   sort.by === "date" ? sort.up ? "oldest first" : "newest first" : `by ${sort.by}`
                 ] })
               ] }),
-              !!all.length && !shown8.length && /* @__PURE__ */ u3(Empty, { children: "None match: try fewer words, or Show all." })
+              !!all.length && !shown9.length && /* @__PURE__ */ u3(Empty, { children: "None match: try fewer words, or Show all." })
             ]
           }
         )
@@ -11679,18 +12364,18 @@
         if (e3.target.closest(".brandgrid button, .kindswap button, .dedrow button, button.addded, .ownlogo button, .catlist button, .receipt button")) setTouched(true);
       }
     };
-    const keep3 = async (plan) => {
+    const keep4 = async (plan) => {
       setBusy(true);
       const ok = await props.save(plan);
       setBusy(false);
       if (ok) props.close();
     };
-    return { busy: busy2, keep: keep3, touched: touched2, watch: watch2 };
+    return { busy: busy2, keep: keep4, touched: touched2, watch: watch2 };
   }
   async function shrink(f4) {
     const bmp = await createImageBitmap(f4);
-    const n3 = 96, scale = Math.min(n3 / bmp.width, n3 / bmp.height, 1);
-    const w3 = Math.max(1, Math.round(bmp.width * scale)), h3 = Math.max(1, Math.round(bmp.height * scale));
+    const n3 = 96, scale2 = Math.min(n3 / bmp.width, n3 / bmp.height, 1);
+    const w3 = Math.max(1, Math.round(bmp.width * scale2)), h3 = Math.max(1, Math.round(bmp.height * scale2));
     const c4 = new OffscreenCanvas(n3, n3);
     c4.getContext("2d").drawImage(bmp, (n3 - w3) / 2, (n3 - h3) / 2, w3, h3);
     const url = (b2) => new Promise((ok, bad) => {
@@ -11704,8 +12389,8 @@
   }
   async function shrinkPhoto(f4) {
     const bmp = await createImageBitmap(f4);
-    const scale = Math.min(800 / bmp.width, 800 / bmp.height, 1);
-    const w3 = Math.max(1, Math.round(bmp.width * scale)), h3 = Math.max(1, Math.round(bmp.height * scale));
+    const scale2 = Math.min(800 / bmp.width, 800 / bmp.height, 1);
+    const w3 = Math.max(1, Math.round(bmp.width * scale2)), h3 = Math.max(1, Math.round(bmp.height * scale2));
     const c4 = new OffscreenCanvas(w3, h3);
     c4.getContext("2d").drawImage(bmp, 0, 0, w3, h3);
     return asDataURL(await c4.convertToBlob({ type: "image/jpeg", quality: 0.85 }));
@@ -11724,8 +12409,8 @@
     } catch {
       throw new Error("The website gave an image this can't read: use your own image instead.");
     }
-    const n3 = 96, w0 = img.naturalWidth || n3, h0 = img.naturalHeight || n3, scale = Math.min(n3 / w0, n3 / h0);
-    const w3 = Math.max(1, Math.round(w0 * scale)), h3 = Math.max(1, Math.round(h0 * scale));
+    const n3 = 96, w0 = img.naturalWidth || n3, h0 = img.naturalHeight || n3, scale2 = Math.min(n3 / w0, n3 / h0);
+    const w3 = Math.max(1, Math.round(w0 * scale2)), h3 = Math.max(1, Math.round(h0 * scale2));
     const c4 = new OffscreenCanvas(n3, n3);
     c4.getContext("2d").drawImage(img, (n3 - w3) / 2, (n3 - h3) / 2, w3, h3);
     const png = await asDataURL(await c4.convertToBlob({ type: "image/png" }));
@@ -11750,8 +12435,8 @@
     } catch {
       throw new Error("That file is not a picture this can read: try a photo, a PNG, or a PDF.");
     }
-    const scale = Math.min(1600 / Math.max(bmp.width, bmp.height), 1);
-    const c4 = new OffscreenCanvas(Math.max(1, Math.round(bmp.width * scale)), Math.max(1, Math.round(bmp.height * scale)));
+    const scale2 = Math.min(1600 / Math.max(bmp.width, bmp.height), 1);
+    const c4 = new OffscreenCanvas(Math.max(1, Math.round(bmp.width * scale2)), Math.max(1, Math.round(bmp.height * scale2)));
     c4.getContext("2d").drawImage(bmp, 0, 0, c4.width, c4.height);
     for (const quality of [0.82, 0.6, 0.4]) {
       const b2 = await c4.convertToBlob({ type: "image/jpeg", quality });
@@ -11761,11 +12446,11 @@
   }
   function Receipt({ name, set: set2, receipts: receipts2 }) {
     const file = A2(null);
-    const [shown8, setShown] = d2(null);
+    const [shown9, setShown] = d2(null);
     const [problem, setProblem] = d2("");
     const [busy2, setBusy] = d2(false);
     h2(() => {
-      if (!name || shown8?.name === name) return;
+      if (!name || shown9?.name === name) return;
       let live = true;
       receipts2.read(name).then((url2) => {
         if (live) setShown({ name, url: url2 });
@@ -11782,15 +12467,15 @@
       setProblem("");
       try {
         const url2 = await receiptOf(f4);
-        const kept5 = await receipts2.save(url2);
-        setShown({ name: kept5, url: url2 });
-        set2(kept5);
+        const kept6 = await receipts2.save(url2);
+        setShown({ name: kept6, url: url2 });
+        set2(kept6);
       } catch (e3) {
         setProblem(String(e3?.message || e3));
       }
       setBusy(false);
     };
-    const url = shown8 && shown8.name === name ? shown8.url : "";
+    const url = shown9 && shown9.name === name ? shown9.url : "";
     return /* @__PURE__ */ u3("div", { class: "receipt", children: [
       /* @__PURE__ */ u3("input", { ref: file, type: "file", accept: "image/*,application/pdf", hidden: true, "aria-label": "A receipt: a photo or a PDF", onChange: (e3) => {
         pick(e3.currentTarget.files?.[0]);
@@ -11881,8 +12566,8 @@
     return Object.keys(logos).length ? logos : void 0;
   }
   var tick2 = (set2) => (e3) => set2(e3.currentTarget.checked);
-  function Field({ label, children, wide }) {
-    return /* @__PURE__ */ u3("label", { class: "field" + (wide ? " wide" : ""), children: [
+  function Field({ label, children, wide: wide2 }) {
+    return /* @__PURE__ */ u3("label", { class: "field" + (wide2 ? " wide" : ""), children: [
       label,
       children
     ] });
@@ -11959,7 +12644,7 @@
     const had = plan.logos?.[opened3];
     const [img, setImg] = d2(had);
     const suggested2 = suggestType(brand, name);
-    const { busy: busy2, keep: keep3, touched: touched2, watch: watch2 } = useSaving(props);
+    const { busy: busy2, keep: keep4, touched: touched2, watch: watch2 } = useSaving(props);
     const [problem, setProblem] = d2("");
     const accounts = plan.accounts || [];
     const submit = (e3) => {
@@ -11983,9 +12668,9 @@
       const at2 = list.findIndex((q2) => q2.id === x3?.id);
       if (at2 >= 0) list[at2] = p3;
       else list.push(p3);
-      keep3({ ...plan, payments: list, logos: withLogo(plan, ownKey(brand, p3.name), img, opened3, had) });
+      keep4({ ...plan, payments: list, logos: withLogo(plan, ownKey(brand, p3.name), img, opened3, had) });
     };
-    const remove = () => keep3({ ...plan, payments: (plan.payments || []).filter((q2) => q2.id !== x3?.id) });
+    const remove = () => keep4({ ...plan, payments: (plan.payments || []).filter((q2) => q2.id !== x3?.id) });
     return /* @__PURE__ */ u3("form", { class: "finform", onSubmit: submit, ...watch2, children: [
       /* @__PURE__ */ u3("div", { class: "formhead", children: [
         /* @__PURE__ */ u3(Mark, { brand: brand === "none" ? "" : brand, kind, name: name || "Payment", type: kind === "subscriptions" ? type || suggested2 : void 0, img, size: "lg" }),
@@ -12043,7 +12728,7 @@
     }, [value]);
     const all = payment ? allBrands() : brandsFor(kind);
     const want = q2.trim().toLowerCase();
-    const shown8 = want ? all.filter((k3) => brandName(k3).toLowerCase().includes(want)) : all;
+    const shown9 = want ? all.filter((k3) => brandName(k3).toLowerCase().includes(want)) : all;
     const broker = kind === "investment" || kind === "retirement";
     const label = payment || kind === "home" ? "Logo" : kind === "car" ? "Make" : broker ? "Broker" : "Bank";
     const none2 = payment || kind === "home" ? "None" : kind === "car" ? "Another make" : broker ? "Another broker" : "Another bank";
@@ -12060,7 +12745,7 @@
       t3.focus();
       t3.scrollIntoView({ block: "nearest" });
     };
-    const list = value && !shown8.includes(value) ? [value, ...shown8] : shown8;
+    const list = value && !shown9.includes(value) ? [value, ...shown9] : shown9;
     const stop2 = list.includes(value) || !value ? value : list[0] ?? "";
     return /* @__PURE__ */ u3("div", { class: "brandpick", children: [
       /* @__PURE__ */ u3("div", { class: "brandhead", children: [
@@ -12077,7 +12762,7 @@
           /* @__PURE__ */ u3("span", { children: none2 })
         ] })
       ] }),
-      !shown8.length && /* @__PURE__ */ u3("p", { class: "muted brandnone", children: [
+      !shown9.length && /* @__PURE__ */ u3("p", { class: "muted brandnone", children: [
         "None by that name: pick ",
         none2,
         ", and type its name below."
@@ -12144,7 +12829,7 @@
     };
     const sign = foreign && /^[A-Z]{3}$/.test(code2) ? signOf(code2) : void 0;
     const payer = (plan.payments || []).find((x3) => a3 && x3.card === a3.id);
-    const { busy: busy2, keep: keep3, touched: touched2, watch: watch2 } = useSaving(props);
+    const { busy: busy2, keep: keep4, touched: touched2, watch: watch2 } = useSaving(props);
     const [problem, setProblem] = d2("");
     const loans = (plan.accounts || []).filter((q2) => q2.kind === "loan");
     const submit = (e3) => {
@@ -12181,7 +12866,7 @@
       const at2 = list.findIndex((q2) => q2.id === a3?.id);
       if (at2 >= 0) list[at2] = next;
       else list.push(next);
-      keep3({ ...plan, accounts: list, logos: withLogo(plan, ownKey(brand, next.name), img, opened3, had), rates: foreign ? { ...plan.rates || {}, [code2]: num(xrate) } : plan.rates });
+      keep4({ ...plan, accounts: list, logos: withLogo(plan, ownKey(brand, next.name), img, opened3, had), rates: foreign ? { ...plan.rates || {}, [code2]: num(xrate) } : plan.rates });
     };
     const usesIt = (x3) => !!a3 && [x3.from, x3.to, x3.card].includes(a3.id);
     const users = [
@@ -12189,7 +12874,7 @@
       ...(plan.people || []).filter((e3) => a3 && (e3.account === a3.id || (e3.deductions || []).some((d3) => d3.account === a3.id))).map((e3) => `${e3.name}'s paycheck`)
     ];
     const uses = users.length ? users.length > 3 ? `${users.slice(0, 3).join(", ")} and ${users.length - 3} more use` : users.length === 1 ? `${users[0]} uses` : `${users.slice(0, -1).join(", ")} and ${users.at(-1)} use` : void 0;
-    const without = (drop) => keep3({
+    const without = (drop) => keep4({
       ...plan,
       accounts: (plan.accounts || []).filter((q2) => q2.id !== a3?.id).map((q2) => q2.loan === a3?.id ? { ...q2, loan: void 0 } : q2),
       payments: (plan.payments || []).filter((x3) => !drop || !usesIt(x3)).map((x3) => ({ ...x3, from: x3.from === a3?.id ? void 0 : x3.from, to: x3.to === a3?.id ? void 0 : x3.to, card: x3.card === a3?.id ? void 0 : x3.card })),
@@ -12316,7 +13001,7 @@
     const [day22, setDay2] = d2(String(e3?.schedule.day2 || 15));
     const [account, setAccount] = d2(e3?.account || checking || "");
     const [deds, setDeds] = d2((e3?.deductions || []).map((d3) => ({ name: d3.name, amount: money2(d3.amount), account: d3.account || "" })));
-    const { busy: busy2, keep: keep3, touched: touched2, watch: watch2 } = useSaving(props);
+    const { busy: busy2, keep: keep4, touched: touched2, watch: watch2 } = useSaving(props);
     const accounts = (plan.accounts || []).filter((a3) => !owed(a3.kind) && !held2(a3.kind));
     const [problem, setProblem] = d2("");
     const setDed = (i3, k3, v3) => setDeds(deds.map((d3, j3) => j3 === i3 ? { ...d3, [k3]: v3 } : d3));
@@ -12338,9 +13023,9 @@
       const at2 = list.findIndex((q2) => q2.id === e3?.id);
       if (at2 >= 0) list[at2] = p3;
       else list.push(p3);
-      keep3({ ...plan, people: list });
+      keep4({ ...plan, people: list });
     };
-    const remove = () => keep3({ ...plan, people: (plan.people || []).filter((q2) => q2.id !== e3?.id) });
+    const remove = () => keep4({ ...plan, people: (plan.people || []).filter((q2) => q2.id !== e3?.id) });
     const taken = deds.reduce((t3, d3) => t3 + num(d3.amount), 0);
     return /* @__PURE__ */ u3("form", { class: "finform", onSubmit: submit, ...watch2, children: [
       /* @__PURE__ */ u3("div", { class: "formhead", children: [
@@ -12377,19 +13062,19 @@
   function PaidLately({ x: x3, ledger }) {
     const paid = (ledger?.transactions || []).filter((t3) => t3.payment === x3.id).sort((a3, b2) => b2.date.localeCompare(a3.date));
     if (!paid.length) return null;
-    const shown8 = paid.slice(0, 6);
-    const avg = shown8.reduce((n3, t3) => n3 + Math.abs(t3.amount), 0) / shown8.length;
-    const differs = shown8.some((t3) => Math.abs(Math.abs(t3.amount) - x3.amount) >= 5e-3);
+    const shown9 = paid.slice(0, 6);
+    const avg = shown9.reduce((n3, t3) => n3 + Math.abs(t3.amount), 0) / shown9.length;
+    const differs = shown9.some((t3) => Math.abs(Math.abs(t3.amount) - x3.amount) >= 5e-3);
     return /* @__PURE__ */ u3("section", { class: "paidlately", "aria-label": "Paid lately", children: [
       /* @__PURE__ */ u3("h3", { children: [
         "Paid lately",
-        differs && shown8.length > 1 && /* @__PURE__ */ u3("span", { class: "muted", children: [
+        differs && shown9.length > 1 && /* @__PURE__ */ u3("span", { class: "muted", children: [
           ", ",
           money(avg),
           " on average"
         ] })
       ] }),
-      /* @__PURE__ */ u3("ul", { children: shown8.map((t3) => {
+      /* @__PURE__ */ u3("ul", { children: shown9.map((t3) => {
         const off2 = Math.abs(t3.amount) - x3.amount;
         return /* @__PURE__ */ u3("li", { children: [
           /* @__PURE__ */ u3("span", { children: dayLong(t3.date) }),
@@ -12398,9 +13083,9 @@
           /* @__PURE__ */ u3("strong", { children: money(Math.abs(t3.amount)) })
         ] }, t3.id);
       }) }),
-      paid.length > shown8.length && /* @__PURE__ */ u3("p", { class: "muted", children: [
+      paid.length > shown9.length && /* @__PURE__ */ u3("p", { class: "muted", children: [
         "And ",
-        paid.length - shown8.length,
+        paid.length - shown9.length,
         " before, on Transactions."
       ] })
     ] });
@@ -12427,7 +13112,7 @@
     const now2 = (a3) => start?.[a3.id] !== void 0 ? Math.round(start[a3.id] / rateOf(plan, a3) * 100) / 100 : void 0;
     const est = (a3) => owed(a3.kind) ? Math.max(0, Math.round(((now2(a3) ?? a3.balance + (a3.pending || 0)) - (a3.pending || 0)) * 100) / 100) : now2(a3) ?? a3.balance;
     const [typed, setTyped] = d2(() => ({ cushion: String(plan.cushion || 0), ...Object.fromEntries(accounts.flatMap((a3) => [[a3.id, cents(est(a3))], ...a3.kind === "card" ? [[a3.id + ":p", cents(a3.pending || 0)]] : []])) }));
-    const { busy: busy2, keep: keep3, touched: touched2, watch: watch2 } = useSaving(props);
+    const { busy: busy2, keep: keep4, touched: touched2, watch: watch2 } = useSaving(props);
     const [problem, setProblem] = d2("");
     const first = A2(null);
     _2(() => {
@@ -12447,7 +13132,7 @@
       setProblem(wrong);
       if (wrong) return;
       const today2 = todayISO();
-      keep3({ ...plan, updated: today2, cushion: Math.max(0, read("cushion", plan.cushion || 0)), accounts: accounts.map((a3) => ({ ...a3, balance: read(a3.id, est(a3)), pending: a3.kind === "card" ? read(a3.id + ":p", a3.pending || 0) : a3.pending, updated: today2 })) });
+      keep4({ ...plan, updated: today2, cushion: Math.max(0, read("cushion", plan.cushion || 0)), accounts: accounts.map((a3) => ({ ...a3, balance: read(a3.id, est(a3)), pending: a3.kind === "card" ? read(a3.id + ":p", a3.pending || 0) : a3.pending, updated: today2 })) });
     };
     const type = (key7) => (e3) => setTyped({ ...typed, [key7]: e3.target.value });
     const [pulled, setPulled] = d2({});
@@ -12565,7 +13250,7 @@
     const [tagText, setTagText] = d2((t3?.tags || []).join(", "));
     const [receipt, setReceipt] = d2(t3?.receipt);
     const setPart = (i3, k3, val) => setParts(parts3.map((sp, j3) => j3 === i3 ? { ...sp, [k3]: val } : sp));
-    const placed2 = parts3.reduce((sum, sp) => sum + num(sp.amount), 0);
+    const placed3 = parts3.reduce((sum, sp) => sum + num(sp.amount), 0);
     const split2 = () => setParts(parts3.length ? [...parts3, { category: "", amount: "", note: "" }] : [{ category: category.trim(), amount: amount.trim(), note: "" }, { category: "", amount: "", note: "" }]);
     const { busy: busy2, touched: touched2, watch: watch2 } = useSaving(props);
     const [saving2, setSaving] = d2(false);
@@ -12757,7 +13442,7 @@
       way !== "move" && /* @__PURE__ */ u3(S, { children: [
         /* @__PURE__ */ u3("h3", { class: "formsub", children: [
           "Split across categories ",
-          /* @__PURE__ */ u3("span", { class: "muted", children: parts3.length ? Math.abs(placed2 - num(amount)) < 5e-3 ? "all of it placed" : `${money(num(amount) - placed2)} left to place` : "" })
+          /* @__PURE__ */ u3("span", { class: "muted", children: parts3.length ? Math.abs(placed3 - num(amount)) < 5e-3 ? "all of it placed" : `${money(num(amount) - placed3)} left to place` : "" })
         ] }),
         parts3.map((sp, i3) => /* @__PURE__ */ u3("div", { class: "dedrow", children: [
           /* @__PURE__ */ u3("input", { "aria-label": `Part ${i3 + 1} category`, value: sp.category, placeholder: "Groceries", list: "finCategories", onInput: (ev) => setPart(i3, "category", ev.target.value) }),
@@ -12781,7 +13466,7 @@
   }
   function LogosForm(props) {
     const { plan, ledger, fetchLogo: fetchLogo2 } = props;
-    const { busy: busy2, keep: keep3, touched: touched2, watch: watch2 } = useSaving(props);
+    const { busy: busy2, keep: keep4, touched: touched2, watch: watch2 } = useSaving(props);
     const rows = (() => {
       const seen2 = /* @__PURE__ */ new Map();
       const add = (brand, name, always) => {
@@ -12823,7 +13508,7 @@
         props.close();
         return;
       }
-      keep3({ ...plan, logos: { ...plan.logos || {}, ...add } });
+      keep4({ ...plan, logos: { ...plan.logos || {}, ...add } });
     };
     return /* @__PURE__ */ u3("form", { class: "finform finlogos", onSubmit: submit, ...watch2, children: [
       /* @__PURE__ */ u3("div", { class: "formhead", children: /* @__PURE__ */ u3("h2", { id: "finSheetTitle", children: "Logos" }) }),
@@ -12854,7 +13539,7 @@
   }
   function RulesForm(props) {
     const { plan } = props;
-    const { busy: busy2, keep: keep3, touched: touched2, watch: watch2 } = useSaving(props);
+    const { busy: busy2, keep: keep4, touched: touched2, watch: watch2 } = useSaving(props);
     const [rules, setRulesState] = d2(plan.rules || []);
     const latest2 = A2(rules);
     const setRules = (next) => {
@@ -12866,13 +13551,13 @@
     const named6 = (props.categories || []).map((c4) => c4.name);
     const submit = (e3) => {
       e3.preventDefault();
-      const kept5 = latest2.current.map((r3) => ({ match: r3.match.trim(), prefix: r3.prefix || void 0, payee: (r3.payee || "").trim() || void 0, category: (r3.category || "").trim() || void 0 }));
-      const bad = kept5.find((r3) => !r3.match || !r3.payee && !r3.category);
+      const kept6 = latest2.current.map((r3) => ({ match: r3.match.trim(), prefix: r3.prefix || void 0, payee: (r3.payee || "").trim() || void 0, category: (r3.category || "").trim() || void 0 }));
+      const bad = kept6.find((r3) => !r3.match || !r3.payee && !r3.category);
       if (bad) {
         setProblem(bad.match ? `The rule for ${bad.match} does nothing: give it a name or a category.` : "Each rule needs the name it is for.");
         return;
       }
-      keep3({ ...plan, rules: kept5.length ? kept5 : void 0 });
+      keep4({ ...plan, rules: kept6.length ? kept6 : void 0 });
     };
     return /* @__PURE__ */ u3("form", { class: "finform finrules", onSubmit: submit, ...watch2, children: [
       /* @__PURE__ */ u3("div", { class: "formhead", children: /* @__PURE__ */ u3("h2", { id: "finSheetTitle", children: "Rules" }) }),
@@ -13006,7 +13691,7 @@
     const { plan } = props;
     const names5 = (props.categories || []).map((c4) => c4.name);
     const [rows, setRows] = d2(() => (plan.budgets || []).map((b2) => ({ category: b2.category, amount: money2(b2.amount), per: b2.per || "month", rollover: !!b2.rollover })));
-    const { busy: busy2, keep: keep3, touched: touched2, watch: watch2 } = useSaving(props);
+    const { busy: busy2, keep: keep4, touched: touched2, watch: watch2 } = useSaving(props);
     const [problem, setProblem] = d2("");
     const set2 = (i3, k3, val) => setRows(rows.map((r3, j3) => j3 === i3 ? { ...r3, [k3]: val } : r3));
     const submit = (e3) => {
@@ -13017,7 +13702,7 @@
       const wrong = used.some((r3) => !r3.category) ? "Pick each budget's category." : used.some((r3) => !(num(r3.amount) > 0)) ? "Type how much each budget may take." : twice ? `${used.find((r3) => r3.category.toLowerCase() === twice).category} has two budgets.` : "";
       setProblem(wrong);
       if (wrong) return;
-      keep3({ ...plan, budgets: used.length ? used.map((r3) => ({ category: r3.category, amount: num(r3.amount), per: r3.per === "paycheck" ? "paycheck" : void 0, rollover: r3.rollover || void 0 })) : void 0 });
+      keep4({ ...plan, budgets: used.length ? used.map((r3) => ({ category: r3.category, amount: num(r3.amount), per: r3.per === "paycheck" ? "paycheck" : void 0, rollover: r3.rollover || void 0 })) : void 0 });
     };
     return /* @__PURE__ */ u3("form", { class: "finform", onSubmit: submit, ...watch2, children: [
       /* @__PURE__ */ u3("div", { class: "formhead", children: /* @__PURE__ */ u3("h2", { id: "finSheetTitle", children: "Budgets" }) }),
@@ -13128,7 +13813,7 @@
       }
       const fix = new Map([...fixes2].map(([i3, id2]) => [id2, found2[i3]]));
       const rename = new Map([...renames].map(([i3, id2]) => [id2, found2[i3].payee]));
-      const kept5 = have.map((q2) => {
+      const kept6 = have.map((q2) => {
         if (rename.has(q2.id) || recat.has(q2.id)) return { ...q2, payee: rename.get(q2.id) || q2.payee, category: q2.category || recat.get(q2.id) };
         const t3 = fix.get(q2.id);
         return t3 ? { ...q2, payee: t3.payee || q2.payee, note: q2.note || (t3.raw ? t3.memo ? `${t3.memo} (${t3.raw})` : t3.raw : t3.memo) || void 0, category: q2.category || t3.payee && lastCat(t3.payee) || void 0, institution: q2.institution || t3.payee && lastLogo(t3.payee) || void 0, bank: q2.bank || t3.id } : q2;
@@ -13140,7 +13825,7 @@
         return t3.amount < 0 ? { ...x3, to: g2.account, category: void 0, payment: void 0 } : { ...x3, account: g2.account, to: account, amount: -t3.amount, bank: void 0, toBank: t3.id, category: void 0, payment: void 0 };
       });
       setBusy(true);
-      const ok = await props.saveLedger({ ...ledger || { transactions: [] }, transactions: [...kept5, ...added] });
+      const ok = await props.saveLedger({ ...ledger || { transactions: [] }, transactions: [...kept6, ...added] });
       setBusy(false);
       if (ok) props.close();
     };
@@ -13267,7 +13952,7 @@
     const [target, setTarget] = d2(money2(g2?.target));
     const [date, setDate] = d2(g2?.date || "");
     const [shares2, setShares] = d2(() => Object.fromEntries((g2?.shares || []).map((s3) => [s3.account, String(s3.percent)])));
-    const { busy: busy2, keep: keep3, touched: touched2, watch: watch2 } = useSaving(props);
+    const { busy: busy2, keep: keep4, touched: touched2, watch: watch2 } = useSaving(props);
     const [problem, setProblem] = d2("");
     const toggle = (acct) => (on2) => setShares((s3) => {
       const next = { ...s3 };
@@ -13277,7 +13962,7 @@
     });
     const submit = (e3) => {
       e3.preventDefault();
-      const list = Object.entries(shares2).map(([account, pct]) => ({ account, percent: num(pct) }));
+      const list = Object.entries(shares2).map(([account, pct2]) => ({ account, percent: num(pct2) }));
       const over = list.find((s3) => s3.percent + taken(s3.account) > 100.0001);
       const wrong = !name.trim() ? "Give it a name." : !(num(target) > 0) ? "Type how much it needs." : list.some((s3) => !(s3.percent > 0) || s3.percent > 100) ? "Each share is more than nothing and at most 100%." : over ? `${accounts.find((a3) => a3.id === over.account)?.name}: the other goals have ${taken(over.account)}% of it, so this one can have ${Math.max(0, 100 - taken(over.account))}% at most.` : "";
       setProblem(wrong);
@@ -13287,9 +13972,9 @@
       const at2 = goals.findIndex((q2) => q2.id === g2?.id);
       if (at2 >= 0) goals[at2] = next;
       else goals.push(next);
-      keep3({ ...plan, goals });
+      keep4({ ...plan, goals });
     };
-    const remove = () => keep3({ ...plan, goals: (plan.goals || []).filter((q2) => q2.id !== g2?.id) });
+    const remove = () => keep4({ ...plan, goals: (plan.goals || []).filter((q2) => q2.id !== g2?.id) });
     return /* @__PURE__ */ u3("form", { class: "finform", onSubmit: submit, ...watch2, children: [
       /* @__PURE__ */ u3("div", { class: "formhead", children: /* @__PURE__ */ u3("h2", { id: "finSheetTitle", children: g2 ? g2.name : "Add a goal" }) }),
       /* @__PURE__ */ u3("div", { class: "formgrid", children: [
@@ -13342,9 +14027,9 @@
     const [typed, setTyped] = d2(!!c4?.typed);
     const [account, setAccount] = d2(c4?.account || holding[0]?.id || "");
     const [picture, setPicture] = d2(c4?.picture || "");
-    const [shown8, setShown] = d2("");
+    const [shown9, setShown] = d2("");
     const [reading3, setReading] = d2("");
-    const { busy: busy2, keep: keep3, touched: touched2, watch: watch2 } = useSaving(props);
+    const { busy: busy2, keep: keep4, touched: touched2, watch: watch2 } = useSaving(props);
     const [problem, setProblem] = d2("");
     h2(() => {
       if (!picture || !props.cardPictures) {
@@ -13399,9 +14084,9 @@
       const at2 = collection.findIndex((x3) => x3.id === c4?.id);
       if (at2 >= 0) collection[at2] = next;
       else collection.push(next);
-      keep3({ ...plan, accounts: fresh ? [...plan.accounts || [], fresh] : plan.accounts, collection });
+      keep4({ ...plan, accounts: fresh ? [...plan.accounts || [], fresh] : plan.accounts, collection });
     };
-    const remove = () => keep3({ ...plan, collection: (plan.collection || []).filter((x3) => x3.id !== c4?.id) });
+    const remove = () => keep4({ ...plan, collection: (plan.collection || []).filter((x3) => x3.id !== c4?.id) });
     return /* @__PURE__ */ u3("form", { class: "finform", onSubmit: submit, ...watch2, children: [
       /* @__PURE__ */ u3("div", { class: "formhead", children: /* @__PURE__ */ u3("h2", { id: "finSheetTitle", children: c4 ? c4.name : "Add a card" }) }),
       /* @__PURE__ */ u3("p", { class: "formsub muted", children: holding.length ? "Its worth counts in your net worth, in the account it is kept in." : "Your cards are kept in a new account, Pokémon cards, worth what they are: it counts in your net worth." }),
@@ -13421,7 +14106,7 @@
         " Keep this price: never look it up (a graded card the price service doesn't list)"
       ] }),
       props.cardPictures && /* @__PURE__ */ u3("div", { class: "fx-cardphoto", children: [
-        shown8 ? /* @__PURE__ */ u3("img", { class: "fx-cardpic", src: shown8, alt: "" }) : /* @__PURE__ */ u3("span", { class: "fx-cardpic", "aria-hidden": "true", children: /* @__PURE__ */ u3("svg", { viewBox: "0 0 24 24", children: [
+        shown9 ? /* @__PURE__ */ u3("img", { class: "fx-cardpic", src: shown9, alt: "" }) : /* @__PURE__ */ u3("span", { class: "fx-cardpic", "aria-hidden": "true", children: /* @__PURE__ */ u3("svg", { viewBox: "0 0 24 24", children: [
           /* @__PURE__ */ u3("rect", { x: "4", y: "3", width: "16", height: "18", rx: "2" }),
           /* @__PURE__ */ u3("circle", { cx: "12", cy: "11", r: "3.5" })
         ] }) }),
@@ -13488,7 +14173,7 @@
     const axis = zero ? ticks(lo, hi * 1.08) : ticks(lo - (hi - lo) * 0.1, hi + (hi - lo) * 0.1);
     const y3 = (v3) => (axis.top - v3) / (axis.top - axis.bottom || 1) * tall;
     const x3 = (i3) => i3 / (n3 - 1) * 1e3;
-    const pct = (i3) => i3 / (n3 - 1) * 100;
+    const pct2 = (i3) => i3 / (n3 - 1) * 100;
     const cut = aheadFrom === void 0 ? n3 - 1 : Math.min(n3 - 1, aheadFrom);
     const path = (from2, to) => values.slice(from2, to + 1).map((v3, k3) => k3 ? stepped ? `H${x3(from2 + k3).toFixed(1)} V${y3(v3).toFixed(1)}` : `L${x3(from2 + k3).toFixed(1)} ${y3(v3).toFixed(1)}` : `M${x3(from2).toFixed(1)} ${y3(v3).toFixed(1)}`).join(" ");
     const behind = behindTo === void 0 ? 0 : Math.max(0, Math.min(cut, behindTo));
@@ -13514,7 +14199,7 @@
             }),
             children: [
               showAxis && axis.ticks.map((t3) => /* @__PURE__ */ u3("span", { class: "fx-grid" + (t3 === 0 ? " zero" : ""), style: { top: `${y3(t3)}px` } }, t3)),
-              band && /* @__PURE__ */ u3("span", { class: "fx-band", style: { left: `${pct(band.from)}%`, width: `${pct(band.to) - pct(band.from)}%` } }),
+              band && /* @__PURE__ */ u3("span", { class: "fx-band", style: { left: `${pct2(band.from)}%`, width: `${pct2(band.to) - pct2(band.from)}%` } }),
               threshold !== void 0 && /* @__PURE__ */ u3("span", { class: "fx-threshold", style: { top: `${y3(threshold)}px` } }),
               /* @__PURE__ */ u3("svg", { viewBox: `0 0 1000 ${tall}`, preserveAspectRatio: "none", "aria-hidden": "true", children: [
                 /* @__PURE__ */ u3("path", { class: "fx-areafill", d: `${solid} L${x3(cut).toFixed(1)} ${tall} L${x3(behind).toFixed(1)} ${tall} Z` }),
@@ -13522,23 +14207,23 @@
                 /* @__PURE__ */ u3("path", { class: "fx-line", d: solid, "vector-effect": "non-scaling-stroke" }),
                 cut < n3 - 1 && /* @__PURE__ */ u3("path", { class: "fx-line ahead", d: path(cut, n3 - 1), "vector-effect": "non-scaling-stroke" })
               ] }),
-              marks2.map((m3, k3) => /* @__PURE__ */ u3("span", { class: "fx-mark fx-h-" + m3.tone, style: { left: `${pct(m3.i)}%`, top: `${y3(values[m3.i])}px` } }, k3)),
+              marks2.map((m3, k3) => /* @__PURE__ */ u3("span", { class: "fx-mark fx-h-" + m3.tone, style: { left: `${pct2(m3.i)}%`, top: `${y3(values[m3.i])}px` } }, k3)),
               at2 >= 0 && /* @__PURE__ */ u3(S, { children: [
-                /* @__PURE__ */ u3("span", { class: "fx-cross", style: { left: `${pct(at2)}%` } }),
-                /* @__PURE__ */ u3("span", { class: "fx-pin", style: { left: `${pct(at2)}%`, top: `${y3(values[at2])}px` } }),
-                tip && /* @__PURE__ */ u3("div", { class: "fx-tip", style: tipSide(pct(at2)), children: tip(at2) })
+                /* @__PURE__ */ u3("span", { class: "fx-cross", style: { left: `${pct2(at2)}%` } }),
+                /* @__PURE__ */ u3("span", { class: "fx-pin", style: { left: `${pct2(at2)}%`, top: `${y3(values[at2])}px` } }),
+                tip && /* @__PURE__ */ u3("div", { class: "fx-tip", style: tipSide(pct2(at2)), children: tip(at2) })
               ] })
             ]
           }
         )
       ] }),
-      /* @__PURE__ */ u3("div", { class: "fx-xlabels" + (showAxis ? "" : " bare"), "aria-hidden": "true", children: xLabels.map((l3) => /* @__PURE__ */ u3("span", { style: { left: `${pct(l3.i)}%` }, children: l3.label }, l3.i)) })
+      /* @__PURE__ */ u3("div", { class: "fx-xlabels" + (showAxis ? "" : " bare"), "aria-hidden": "true", children: xLabels.map((l3) => /* @__PURE__ */ u3("span", { style: { left: `${pct2(l3.i)}%` }, children: l3.label }, l3.i)) })
     ] });
   }
   function StackedBars({ columns: columns2, height = 260, format: format2, tip, label, lineless, onPick }) {
     const last2 = columns2.map((c4) => !c4.ahead).lastIndexOf(true);
     const [at2, setAt] = d2(-1);
-    const shown8 = at2 >= 0 ? at2 : last2;
+    const shown9 = at2 >= 0 ? at2 : last2;
     const lines = lineless ? [] : columns2.map((c4) => c4.line);
     const top = Math.max(...columns2.map((c4) => c4.up.reduce((t3, p3) => t3 + p3.value, 0)), ...lines, 1);
     const bottom = Math.min(0, ...columns2.map((c4) => -c4.down.reduce((t3, p3) => t3 + p3.value, 0)), ...lines);
@@ -13558,7 +14243,7 @@
           floor < 0 && /* @__PURE__ */ u3("span", { class: "fx-below", style: { top: `${y3(0)}px` } }),
           columns2.map((c4, i3) => {
             let up = 0, down = 0;
-            return /* @__PURE__ */ u3("div", { class: "fx-stackcol" + (c4.ahead || c4.estimated ? " ahead" : "") + (i3 === shown8 ? " on" : "") + (onPick ? " pick" : ""), style: { left: `${i3 / n3 * 100}%`, width: `${100 / n3}%` }, onPointerEnter: () => setAt(i3), onClick: onPick && (() => onPick(i3)), children: [
+            return /* @__PURE__ */ u3("div", { class: "fx-stackcol" + (c4.ahead || c4.estimated ? " ahead" : "") + (i3 === shown9 ? " on" : "") + (onPick ? " pick" : ""), style: { left: `${i3 / n3 * 100}%`, width: `${100 / n3}%` }, onPointerEnter: () => setAt(i3), onClick: onPick && (() => onPick(i3)), children: [
               c4.up.map((p3, k3) => {
                 const t3 = y3(up + p3.value), h3 = y3(up) - t3;
                 up += p3.value;
@@ -13575,11 +14260,11 @@
             /* @__PURE__ */ u3("polyline", { class: "fx-netline", points: line(0, last2), "vector-effect": "non-scaling-stroke" }),
             last2 < n3 - 1 && /* @__PURE__ */ u3("polyline", { class: "fx-netline ahead", points: line(last2, n3 - 1), "vector-effect": "non-scaling-stroke" })
           ] }),
-          !lineless && columns2.map((c4, i3) => /* @__PURE__ */ u3("span", { class: "fx-netdot" + (i3 === shown8 ? " on" : ""), style: { left: `${(i3 + 0.5) / n3 * 100}%`, top: `${y3(c4.line)}px` } }, i3)),
+          !lineless && columns2.map((c4, i3) => /* @__PURE__ */ u3("span", { class: "fx-netdot" + (i3 === shown9 ? " on" : ""), style: { left: `${(i3 + 0.5) / n3 * 100}%`, top: `${y3(c4.line)}px` } }, i3)),
           at2 >= 0 && /* @__PURE__ */ u3("div", { class: "fx-tip wide", style: tipSide((at2 + 0.5) / n3 * 100), children: tip(at2) })
         ] })
       ] }),
-      /* @__PURE__ */ u3("div", { class: "fx-barlabels" + (n3 > 8 ? " many" : ""), "aria-hidden": "true", style: { gridTemplateColumns: `repeat(${n3}, minmax(0, 1fr))` }, children: columns2.map((c4, i3) => /* @__PURE__ */ u3("span", { class: i3 === shown8 ? "on" : "", children: c4.label }, i3)) })
+      /* @__PURE__ */ u3("div", { class: "fx-barlabels" + (n3 > 8 ? " many" : ""), "aria-hidden": "true", style: { gridTemplateColumns: `repeat(${n3}, minmax(0, 1fr))` }, children: columns2.map((c4, i3) => /* @__PURE__ */ u3("span", { class: i3 === shown9 ? "on" : "", children: c4.label }, i3)) })
     ] });
   }
   function Donut({ slices, center, size: size2 = 150, label }) {
@@ -13720,34 +14405,34 @@
     }, []);
     const narrow = w3 > 0 && w3 < midAt;
     const drop = w3 > 0 && w3 < narrowAt ? 2 : narrow ? 1 : 0;
-    const shown8 = nodes.filter((n3) => n3.value > 5e-3 && n3.col >= drop);
+    const shown9 = nodes.filter((n3) => n3.value > 5e-3 && n3.col >= drop);
     const lineH = narrow ? 32 : 38;
-    const lastCol = Math.max(...shown8.map((n3) => n3.col), 0);
-    const H2 = Math.max(height || (narrow ? 360 : 440), shown8.filter((n3) => n3.col === lastCol).length * lineH);
-    const ids = new Set(shown8.map((n3) => n3.id));
+    const lastCol = Math.max(...shown9.map((n3) => n3.col), 0);
+    const H2 = Math.max(height || (narrow ? 360 : 440), shown9.filter((n3) => n3.col === lastCol).length * lineH);
+    const ids = new Set(shown9.map((n3) => n3.id));
     const ls = links.filter((l3) => l3.value > 5e-3 && ids.has(l3.from) && ids.has(l3.to));
-    const cols = [...new Set(shown8.map((n3) => n3.col))].sort((a3, b2) => a3 - b2);
+    const cols = [...new Set(shown9.map((n3) => n3.col))].sort((a3, b2) => a3 - b2);
     const labelW = drop === 2 ? 120 : narrow ? 170 : 230;
     const last2 = Math.max(0, w3 - labelW - nodeW);
     const xOf = (c4) => cols.length < 2 ? 0 : cols.indexOf(c4) / (cols.length - 1) * last2;
     const k3 = Math.min(...cols.map((c4) => {
-      const ns = shown8.filter((n3) => n3.col === c4);
+      const ns = shown9.filter((n3) => n3.col === c4);
       return (H2 - gap * Math.max(0, ns.length - 1)) / Math.max(ns.reduce((t3, n3) => t3 + n3.value, 0), 1);
     }));
-    const placed2 = [];
+    const placed3 = [];
     for (const c4 of cols) {
       let y3 = 0;
-      for (const n3 of shown8.filter((q2) => q2.col === c4)) {
+      for (const n3 of shown9.filter((q2) => q2.col === c4)) {
         const h3 = Math.max(2, n3.value * k3);
         const parent = ls.find((l3) => l3.to === n3.id);
-        const of = parent ? shown8.find((q2) => q2.id === parent.from)?.value : ls.filter((l3) => l3.from === n3.id).reduce((t3, l3) => t3 + l3.value, 0);
-        placed2.push({ ...n3, x: xOf(c4), y: y3, h: h3, share: of ? n3.value / of : 1 });
+        const of = parent ? shown9.find((q2) => q2.id === parent.from)?.value : ls.filter((l3) => l3.from === n3.id).reduce((t3, l3) => t3 + l3.value, 0);
+        placed3.push({ ...n3, x: xOf(c4), y: y3, h: h3, share: of ? n3.value / of : 1 });
         y3 += h3 + gap;
       }
     }
-    const at2 = new Map(placed2.map((p3) => [p3.id, p3]));
+    const at2 = new Map(placed3.map((p3) => [p3.id, p3]));
     const wordsAt = /* @__PURE__ */ new Map();
-    const ends = placed2.filter((p3) => p3.col === lastCol);
+    const ends = placed3.filter((p3) => p3.col === lastCol);
     let below = -Infinity;
     for (const p3 of ends) {
       const y3 = Math.max(p3.y + p3.h / 2, below + lineH, lineH / 2);
@@ -13771,8 +14456,8 @@
     });
     const lit2 = (from2, to) => !on2 || (on2.node ? on2.node === from2 || on2.node === to : false);
     const litNode = (id2) => !on2 || (on2.node ? on2.node === id2 || ls.some((l3) => l3.from === on2.node && l3.to === id2 || l3.to === on2.node && l3.from === id2) : on2.link !== void 0 && (bands[on2.link].l.from === id2 || bands[on2.link].l.to === id2));
-    const pct = (n3) => `${Math.round(n3 * 100)}%`;
-    const said2 = (p3) => `${p3.label}, ${money3(p3.value)}${p3.share < 0.9995 ? `, ${pct(p3.share)}` : ""}`;
+    const pct2 = (n3) => `${Math.round(n3 * 100)}%`;
+    const said2 = (p3) => `${p3.label}, ${money3(p3.value)}${p3.share < 0.9995 ? `, ${pct2(p3.share)}` : ""}`;
     const tip = on2?.link !== void 0 ? bands[on2.link] : null;
     return /* @__PURE__ */ u3(
       "figure",
@@ -13796,9 +14481,9 @@
               },
               i3
             )),
-            placed2.map((p3) => /* @__PURE__ */ u3("rect", { class: "fx-snoderect " + hue(p3.hue) + (litNode(p3.id) ? "" : " off"), x: p3.x, y: p3.y, width: nodeW, height: p3.h, rx: "2" }, p3.id))
+            placed3.map((p3) => /* @__PURE__ */ u3("rect", { class: "fx-snoderect " + hue(p3.hue) + (litNode(p3.id) ? "" : " off"), x: p3.x, y: p3.y, width: nodeW, height: p3.h, rx: "2" }, p3.id))
           ] }),
-          placed2.map((p3) => {
+          placed3.map((p3) => {
             const end = p3.col === lastCol, small = !end && p3.h < 34, mid = p3.col !== cols[0] && !end;
             const style = mid && !small ? { left: `${Math.min(Math.max(p3.x + nodeW / 2, 60), w3 - 60)}px`, top: `${p3.y + p3.h / 2}px` } : { left: `${p3.x + nodeW + 8}px`, top: `${end ? wordsAt.get(p3.id) : p3.y + p3.h / 2}px`, maxWidth: `${(end ? labelW : last2 / Math.max(1, cols.length - 1)) - 12}px` };
             return /* @__PURE__ */ u3(
@@ -13819,7 +14504,7 @@
                     money3(p3.value),
                     p3.share < 0.9995 && /* @__PURE__ */ u3("span", { class: "fx-spct", children: [
                       " (",
-                      pct(p3.share),
+                      pct2(p3.share),
                       ")"
                     ] })
                   ] })
@@ -13848,14 +14533,14 @@
   function topOf(nodes, top, id2, hue2) {
     const sorted = [...nodes].sort((a3, b2) => b2.value - a3.value);
     if (top <= 0 || sorted.length <= top) return sorted;
-    const kept5 = sorted.slice(0, top - 1), rest = sorted.slice(top - 1);
-    return [...kept5, { id: id2, label: `Other (${rest.length})`, value: rest.reduce((t3, n3) => t3 + n3.value, 0), col: rest[0].col, hue: hue2, items: rest.flatMap((n3) => n3.items) }];
+    const kept6 = sorted.slice(0, top - 1), rest = sorted.slice(top - 1);
+    return [...kept6, { id: id2, label: `Other (${rest.length})`, value: rest.reduce((t3, n3) => t3 + n3.value, 0), col: rest[0].col, hue: hue2, items: rest.flatMap((n3) => n3.items) }];
   }
-  function build(sources, taxes, spend, kept5, top) {
+  function build(sources, taxes, spend, kept6, top) {
     const sum = (ns) => ns.reduce((t3, n3) => t3 + n3.value, 0);
     const income = sum(sources), tax = taxes?.value || 0, expenses = sum(spend);
     const saved = income - tax - expenses;
-    const into2 = kept5.filter((n3) => n3.value > 5e-3);
+    const into2 = kept6.filter((n3) => n3.value > 5e-3);
     const moved = sum(into2);
     const short = tax + expenses + moved - income;
     const nodes = [], links = [];
@@ -13942,7 +14627,7 @@
   }
   function typicalFlow(v3, L2, top) {
     const people = v3.plan.people || [];
-    const kept5 = (id2) => saving(L2.account[id2 || ""]?.kind);
+    const kept6 = (id2) => saving(L2.account[id2 || ""]?.kind);
     const src = [], spend = /* @__PURE__ */ new Map(), into2 = /* @__PURE__ */ new Map();
     let taxes = 0;
     const taxItems = [];
@@ -13964,7 +14649,7 @@
         taxItems.push({ label: `${e3.name}'s taxes`, amount: -tax, person: e3.id });
       }
       for (const d3 of ded) {
-        if (kept5(d3.account)) add(into2, "kept:" + d3.account, L2.account[d3.account]?.name || d3.account, savedHue, d3.amount * each2, { label: `${d3.name}, from ${e3.name}'s pay`, amount: d3.amount * each2, person: e3.id });
+        if (kept6(d3.account)) add(into2, "kept:" + d3.account, L2.account[d3.account]?.name || d3.account, savedHue, d3.amount * each2, { label: `${d3.name}, from ${e3.name}'s pay`, amount: d3.amount * each2, person: e3.id });
         else add(spend, "cat:frompay", "Taken from pay", 6, d3.amount * each2, { label: `${d3.name}, from ${e3.name}'s pay`, amount: -d3.amount * each2, person: e3.id });
       }
     }
@@ -13977,7 +14662,7 @@
       }
       const onCard2 = L2.account[x3.from || ""]?.kind === "card";
       if (!(!x3.from || x3.from === v3.checking || onCard2) || x3.to && x3.to === v3.checking) continue;
-      if (kept5(x3.to)) add(into2, "kept:" + x3.to, L2.account[x3.to]?.name || x3.to, savedHue, each(x3), { label: x3.name, amount: each(x3), payment: x3.id });
+      if (kept6(x3.to)) add(into2, "kept:" + x3.to, L2.account[x3.to]?.name || x3.to, savedHue, each(x3), { label: x3.name, amount: each(x3), payment: x3.id });
       else add(spend, "kind:" + (x3.kind || "other"), kindName(x3.kind || "other"), kindHueOf(x3.kind, v3.categories || []), each(x3), { label: x3.name, amount: -each(x3), payment: x3.id });
     }
     return build(src, taxes > 5e-3 ? { id: "taxes", label: "Taxes", value: taxes, col: 2, hue: 7, items: taxItems } : null, [...spend.values()], [...into2.values()], top);
@@ -14175,7 +14860,7 @@
   }
 
   // web/src/finances/widgets/Paycheck.tsx
-  var shown4 = 5;
+  var shown5 = 5;
   var ownTile = ["checking", "savings", "investment", "retirement"];
   var names = (ids, L2) => ids.map((id2) => L2.person[id2]?.name || id2).join(" and ");
   var paydayTitle = (pd, L2) => `${names(pd.people, L2)}'s paycheck · ${dayLong(pd.date)}`;
@@ -14237,7 +14922,7 @@
     const i3 = Math.min(sel2, v3.periods.length - 1);
     const p3 = v3.periods[i3];
     if (!p3) return null;
-    const rows = all ? p3.rows : p3.rows.slice(0, shown4);
+    const rows = all ? p3.rows : p3.rows.slice(0, shown5);
     const cushion = v3.plan.cushion || 0;
     const row = tiles(v3, L2, i3);
     return /* @__PURE__ */ u3(Widget, { title: p3.now ? "Until the next paycheck" : "This paycheck", kind: "fx-paycheck", span: "all", open: open5, openLabel: "Open Paychecks", children: [
@@ -14322,7 +15007,7 @@
         }),
         !p3.rows.length && /* @__PURE__ */ u3("li", { children: /* @__PURE__ */ u3(Empty, { children: "Nothing to pay before the next paycheck." }) })
       ] }),
-      p3.rows.length > shown4 && /* @__PURE__ */ u3("p", { class: "actions fx-more", children: /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => setAll(!all), children: all ? "Show fewer" : `Show all ${p3.rows.length} payments` }) })
+      p3.rows.length > shown5 && /* @__PURE__ */ u3("p", { class: "actions fx-more", children: /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => setAll(!all), children: all ? "Show fewer" : `Show all ${p3.rows.length} payments` }) })
     ] });
   }
 
@@ -14358,9 +15043,9 @@
       return m3;
     }, {})).map(([type, year]) => ({ type, year })).sort((a3, b2) => b2.year - a3.year || order2.indexOf(a3.type) - order2.indexOf(b2.type));
     if (types.length > 8) {
-      const kept5 = types.filter((t3) => t3.type !== "other").slice(0, 7);
-      const rest = types.filter((t3) => !kept5.includes(t3));
-      types.splice(0, types.length, ...kept5, { type: "other", year: rest.reduce((t3, x3) => t3 + x3.year, 0) });
+      const kept6 = types.filter((t3) => t3.type !== "other").slice(0, 7);
+      const rest = types.filter((t3) => !kept6.includes(t3));
+      types.splice(0, types.length, ...kept6, { type: "other", year: rest.reduce((t3, x3) => t3 + x3.year, 0) });
     }
     return /* @__PURE__ */ u3("div", { class: "fx-subs", children: [
       /* @__PURE__ */ u3("div", { class: "fx-stats", children: [
@@ -14440,13 +15125,13 @@
     };
     const sub = (s3) => dayLong(s3.date) + (s3.waiting ? " · not yet: it comes today" : typedBill(s3) ? s3.inBalance ? " · already in the balance" : " · due the day the balance was typed" : s3.typed ? " · the day its balance was typed in" : " · since the balance was typed in");
     const name = (s3) => s3.person ? `${L2.person[s3.person]?.name || s3.person}'s paycheck` : L2.payment[s3.payment]?.name || s3.payment;
-    const shown8 = all ? list : list.slice(0, 5);
+    const shown9 = all ? list : list.slice(0, 5);
     return /* @__PURE__ */ u3(Widget, { title: "Taken as done", span: "all", kind: "fx-since", children: [
       /* @__PURE__ */ u3("p", { class: "fx-sub fx-lead", children: [
         "Already in the balances you typed. A bill due that day still comes out",
         set2 ? ": mark it Already in if the balance has it." : "."
       ] }),
-      /* @__PURE__ */ u3(Rows, { kind: "finrows fx-rows", children: shown8.map((s3) => {
+      /* @__PURE__ */ u3(Rows, { kind: "finrows fx-rows", children: shown9.map((s3) => {
         const x3 = s3.payment ? L2.payment[s3.payment] : void 0;
         return /* @__PURE__ */ u3(
           Row,
@@ -14467,10 +15152,10 @@
       list.length > 5 && /* @__PURE__ */ u3("p", { class: "actions", children: /* @__PURE__ */ u3("button", { class: "small", onClick: () => setAll(!all), children: all ? "Show fewer" : `Show all ${list.length}` }) })
     ] });
   }
-  var shown5 = (a3) => ["checking", "savings", "investment", "retirement", "card"].includes(a3.kind);
+  var shown6 = (a3) => ["checking", "savings", "investment", "retirement", "card"].includes(a3.kind);
   var postCols = 7;
   function PostPayWidget({ v: v3, L: L2, sel: sel2, pick, update }) {
-    const accounts = (v3.plan.accounts || []).filter(shown5);
+    const accounts = (v3.plan.accounts || []).filter(shown6);
     const cols = v3.periods.slice(0, postCols);
     const today2 = (a3) => owed(a3.kind) ? -todayOf(v3, a3) : todayOf(v3, a3);
     const at2 = (a3, p3) => owed(a3.kind) ? -(p3.accounts?.[a3.id] ?? 0) : p3.accounts?.[a3.id] ?? todayOf(v3, a3);
@@ -14554,7 +15239,7 @@
     const d3 = new Date(+day3.slice(0, 4), +day3.slice(5, 7) - 1 + n3, 1);
     return `${monthName(`${d3.getFullYear()}-${String(d3.getMonth() + 1).padStart(2, "0")}-01`).slice(0, 3)} ${d3.getFullYear()}`;
   };
-  function FireWidget({ v: v3, L: L2, keep: keep3 }) {
+  function FireWidget({ v: v3, L: L2, keep: keep4 }) {
     const m3 = month(v3, L2);
     const withdraw = v3.plan.withdraw || 4, growth = v3.plan.growth || 5;
     const [problem, setProblem] = d2("");
@@ -14571,7 +15256,7 @@
         return;
       }
       setProblem("");
-      keep3({ ...v3.plan, [key7]: n3 });
+      keep4({ ...v3.plan, [key7]: n3 });
     };
     const range = f4.sooner !== null && f4.later !== null && f4.sooner !== f4.later ? ` (${when2(v3.today, f4.sooner)} at ${growth + 2}%, ${when2(v3.today, f4.later)} at ${growth - 2}%)` : "";
     return /* @__PURE__ */ u3(Widget, { title: "Financial independence", span: "all", kind: "fx-fire", children: [
@@ -14601,7 +15286,7 @@
         range,
         "."
       ] }) }),
-      keep3 && /* @__PURE__ */ u3("div", { class: "fx-fireset", children: [
+      keep4 && /* @__PURE__ */ u3("div", { class: "fx-fireset", children: [
         /* @__PURE__ */ u3("label", { children: [
           "Draw ",
           /* @__PURE__ */ u3("input", { inputmode: "decimal", "aria-label": "Share to spend a year, %", value: String(withdraw), onChange: (e3) => set2("withdraw", e3.target.value, 0, 20) }),
@@ -14875,11 +15560,11 @@
       ] })
     ] });
   }
-  function PayMore({ v: v3, L: L2, shown: shown8, owing }) {
+  function PayMore({ v: v3, L: L2, shown: shown9, owing }) {
     const [text2, setText] = d2("");
     const extra = Math.max(0, parseAmount(text2) || 0) * paydaysAMonth(v3);
     const debts = owing.filter((p3) => p3.monthly > 0).map((p3) => ({ id: p3.account, balance: p3.balance, rate: p3.rate || 0, monthly: p3.monthly }));
-    const one = shown8 && extra > 0 ? amortize(shown8.balance, shown8.rate || 0, shown8.monthly + extra) : null;
+    const one = shown9 && extra > 0 ? amortize(shown9.balance, shown9.rate || 0, shown9.monthly + extra) : null;
     const ways = debts.length > 1 && extra > 0 ? ["avalanche", "snowball"].map((w3) => ({ w: w3, s: payDown(debts, extra, w3) })) : [];
     const when3 = (n3) => {
       const d3 = new Date(+v3.today.slice(0, 4), +v3.today.slice(5, 7) - 1 + n3, 1);
@@ -14898,15 +15583,15 @@
       ] }),
       /* @__PURE__ */ u3("p", { class: "fx-sub", role: "status", children: [
         !one && "Type an amount to see what it saves. Nothing is saved.",
-        one && shown8 && (one.ok ? /* @__PURE__ */ u3(S, { children: [
-          name(shown8.account),
+        one && shown9 && (one.ok ? /* @__PURE__ */ u3(S, { children: [
+          name(shown9.account),
           " paid off ",
           when3(one.months),
-          shown8.months ? `, ${plural(shown8.months - one.months, "month")} sooner` : "",
-          shown8.interest ? `, ${money(Math.max(0, shown8.interest - one.interest))} less interest` : "",
+          shown9.months ? `, ${plural(shown9.months - one.months, "month")} sooner` : "",
+          shown9.interest ? `, ${money(Math.max(0, shown9.interest - one.interest))} less interest` : "",
           "."
         ] }) : /* @__PURE__ */ u3(S, { children: [
-          name(shown8.account),
+          name(shown9.account),
           " is still never paid off at that."
         ] }))
       ] }),
@@ -14934,7 +15619,7 @@
     const charted = owing.filter((p3) => p3.path?.length);
     const [pick, setPick] = d2("");
     if (!loans.length) return null;
-    const shown8 = charted.find((p3) => p3.account === pick) || charted[0];
+    const shown9 = charted.find((p3) => p3.account === pick) || charted[0];
     const row = (p3) => {
       const a3 = L2.account[p3.account];
       const bad = p3.balance > 5e-3 && (p3.never || !p3.monthly);
@@ -14956,40 +15641,40 @@
         p3.account
       );
     };
-    const path = shown8?.path || [];
+    const path = shown9?.path || [];
     const every = path.length > 120 ? 60 : 12;
     const xLabels = path.map((_3, i3) => ({ i: i3, label: monthsOn2(v3.today, i3 + 1) })).filter((x3) => x3.label.endsWith("-01") && +x3.label.slice(0, 4) % (every / 12) === 0).map((x3) => ({ i: x3.i, label: x3.label.slice(0, 4) }));
     return /* @__PURE__ */ u3(Widget, { title: loans.some((p3) => L2.account[p3.account]?.kind === "card") ? "Loans and cards carrying a balance" : "Loans", span: "all", kind: "fx-loans", children: [
       !!owing.length && /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: owing.map(row) }),
-      shown8 && /* @__PURE__ */ u3("div", { class: "fx-loanchart", children: [
+      shown9 && /* @__PURE__ */ u3("div", { class: "fx-loanchart", children: [
         /* @__PURE__ */ u3("div", { class: "fx-loanhead", children: [
           /* @__PURE__ */ u3("h3", { children: [
-            L2.account[shown8.account].name,
+            L2.account[shown9.account].name,
             ", to zero"
           ] }),
-          charted.length > 1 && /* @__PURE__ */ u3(Segmented, { label: "Which loan", value: shown8.account, pick: setPick, options: charted.map((p3) => [p3.account, L2.account[p3.account].name]) })
+          charted.length > 1 && /* @__PURE__ */ u3(Segmented, { label: "Which loan", value: shown9.account, pick: setPick, options: charted.map((p3) => [p3.account, L2.account[p3.account].name]) })
         ] }),
-        !!shown8.rows?.length && /* @__PURE__ */ u3(Papers, { v: v3, L: L2, p: shown8 }),
+        !!shown9.rows?.length && /* @__PURE__ */ u3(Papers, { v: v3, L: L2, p: shown9 }),
         /* @__PURE__ */ u3(
           AreaChart,
           {
-            values: [shown8.balance, ...path],
+            values: [shown9.balance, ...path],
             xLabels: xLabels.map((x3) => ({ i: x3.i + 1, label: x3.label })),
             height: 160,
             format: tick,
-            label: `${L2.account[shown8.account].name}: what it owes each month until it is paid off in ${monthOf2(shown8.date)}. The table under it has the balance each year.`,
+            label: `${L2.account[shown9.account].name}: what it owes each month until it is paid off in ${monthOf2(shown9.date)}. The table under it has the balance each year.`,
             tip: (i3) => /* @__PURE__ */ u3(S, { children: [
               /* @__PURE__ */ u3("div", { class: "fx-caption", children: i3 === 0 ? "Today" : monthOf2(monthsOn2(v3.today, i3)) }),
               /* @__PURE__ */ u3("div", { class: "fx-tiptotal", children: [
                 /* @__PURE__ */ u3("span", { children: "Owed" }),
-                /* @__PURE__ */ u3(Amount, { value: i3 === 0 ? shown8.balance : path[i3 - 1], form: "full" })
+                /* @__PURE__ */ u3(Amount, { value: i3 === 0 ? shown9.balance : path[i3 - 1], form: "full" })
               ] })
             ] })
           }
         ),
         /* @__PURE__ */ u3("table", { class: "sr", children: [
           /* @__PURE__ */ u3("caption", { children: [
-            L2.account[shown8.account].name,
+            L2.account[shown9.account].name,
             " owed, each year"
           ] }),
           /* @__PURE__ */ u3("thead", { children: /* @__PURE__ */ u3("tr", { children: [
@@ -15002,7 +15687,7 @@
           ] }, x3.m)) })
         ] })
       ] }),
-      edit && !!owing.length && /* @__PURE__ */ u3(PayMore, { v: v3, L: L2, shown: shown8, owing }),
+      edit && !!owing.length && /* @__PURE__ */ u3(PayMore, { v: v3, L: L2, shown: shown9, owing }),
       !!done.length && /* @__PURE__ */ u3(S, { children: [
         /* @__PURE__ */ u3("h3", { class: "fx-loansdone", children: "Paid off" }),
         /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: done.map(row) })
@@ -15133,7 +15818,7 @@
   }
   var share2 = (gain, paid) => Math.abs(paid) < 5e-3 ? "" : `${gain < 0 ? "−" : "+"}${Math.abs(gain / Math.abs(paid) * 100).toFixed(1)}%`;
   var shares = (n3) => amountsHidden() ? "•••" : n3.toLocaleString("en-US", { maximumFractionDigits: n3 < 1 ? 4 : 3 });
-  function InvestmentsWidget({ v: v3, read, state: state3 = {}, keep: keep3, add, find: find2, trades, follow: follow3 }) {
+  function InvestmentsWidget({ v: v3, read, state: state3 = {}, keep: keep4, add, find: find2, trades, follow: follow3 }) {
     const [open5, setOpen] = d2("");
     const [adding2, setAdding] = d2(false);
     const accounts = (v3.plan.accounts || []).filter((a3) => a3.holdings?.length);
@@ -15155,7 +15840,7 @@
         form2,
         !form2 && !(ever && state3.said) && /* @__PURE__ */ u3("p", { class: "fx-sub fx-investintro", children: ever ? canAdd ? "Nothing in Ghostfolio matched an investment or retirement account here yet. Add a holding to put one there." : "Nothing in Ghostfolio matched an investment or retirement account here yet." : "Read what each of your investment accounts holds from Ghostfolio, the investment tracker on your homelab: each fund and share, what went in, and what it is worth now. Only ticker symbols leave the homelab, when Ghostfolio looks prices up; amounts and accounts stay here." }),
         said2,
-        /* @__PURE__ */ u3(Unmatched, { v: v3, state: state3, keep: keep3, read })
+        /* @__PURE__ */ u3(Unmatched, { v: v3, state: state3, keep: keep4, read })
       ] });
     }
     const own2 = (a3) => worthOf(v3, a3);
@@ -15241,15 +15926,15 @@
         ] }) }),
         lines.map((l3) => /* @__PURE__ */ u3(HoldingRow, { v: v3, l: l3, open: open5 === l3.key, toggle: () => setOpen(open5 === l3.key ? "" : l3.key), trades }, l3.key))
       ] }),
-      /* @__PURE__ */ u3(Watchlist, { v: v3, keep: keep3, follow: follow3, find: find2 }),
-      /* @__PURE__ */ u3(Unmatched, { v: v3, state: state3, keep: keep3, read }),
-      keep3 && read && /* @__PURE__ */ u3("label", { class: "fx-investauto", children: [
-        /* @__PURE__ */ u3("input", { type: "checkbox", checked: !v3.plan.readByHand, onChange: (e3) => keep3({ ...v3.plan, readByHand: e3.target.checked ? void 0 : true }) }),
+      /* @__PURE__ */ u3(Watchlist, { v: v3, keep: keep4, follow: follow3, find: find2 }),
+      /* @__PURE__ */ u3(Unmatched, { v: v3, state: state3, keep: keep4, read }),
+      keep4 && read && /* @__PURE__ */ u3("label", { class: "fx-investauto", children: [
+        /* @__PURE__ */ u3("input", { type: "checkbox", checked: !v3.plan.readByHand, onChange: (e3) => keep4({ ...v3.plan, readByHand: e3.target.checked ? void 0 : true }) }),
         "Read Ghostfolio once a day when Finances opens"
       ] })
     ] });
   }
-  function Watchlist({ v: v3, keep: keep3, follow: follow3, find: find2 }) {
+  function Watchlist({ v: v3, keep: keep4, follow: follow3, find: find2 }) {
     const list = v3.plan.watch || [];
     const [adding2, setAdding] = d2(false);
     const [q2, setQ] = d2("");
@@ -15282,7 +15967,7 @@
       }
       setBusy(false);
     };
-    const unfollow = (symbol) => keep3?.({ ...v3.plan, watch: list.filter((w3) => w3.symbol !== symbol) });
+    const unfollow = (symbol) => keep4?.({ ...v3.plan, watch: list.filter((w3) => w3.symbol !== symbol) });
     return /* @__PURE__ */ u3("div", { class: "fx-watch", children: [
       /* @__PURE__ */ u3("div", { class: "fx-watchhead", children: [
         /* @__PURE__ */ u3("div", { children: [
@@ -15334,7 +16019,7 @@
                 "% since ",
                 w3.since ? dayShort(w3.since) : "today"
               ] }),
-              keep3 && can && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => unfollow(w3.symbol), children: "Unfollow" })
+              keep4 && can && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => unfollow(w3.symbol), children: "Unfollow" })
             ] }),
             when: moneyIn(w3.price || 0, w3.currency),
             whenPlain: true
@@ -15615,15 +16300,15 @@
       ] })
     ] });
   }
-  function Unmatched({ v: v3, state: state3, keep: keep3, read }) {
+  function Unmatched({ v: v3, state: state3, keep: keep4, read }) {
     const left = state3.unmatched || [];
-    if (!left.length || !keep3 || !read) return null;
+    if (!left.length || !keep4 || !read) return null;
     const free = (v3.plan.accounts || []).filter((a3) => (a3.kind === "investment" || a3.kind === "retirement") && !a3.ghostfolio);
     const pick = async (name, to) => {
       if (!to) return;
       const plan = v3.plan;
       const accounts = to === "new" ? [...plan.accounts || [], { id: "", name, kind: "investment", balance: 0, ghostfolio: name }] : (plan.accounts || []).map((a3) => a3.id === to ? { ...a3, ghostfolio: name } : a3);
-      if (await keep3({ ...plan, accounts })) read();
+      if (await keep4({ ...plan, accounts })) read();
     };
     return /* @__PURE__ */ u3("div", { class: "fx-investleft", children: [
       /* @__PURE__ */ u3("p", { class: "fx-sub", children: "Not matched to an account yet." }),
@@ -15787,7 +16472,7 @@
     return n3 <= 0 ? "updated today" : n3 === 1 ? "updated yesterday" : n3 < 14 ? `updated ${n3} days ago` : `updated ${dayShort(day3)}`;
   }
   var month2 = (day3) => monthName(day3).slice(0, 3);
-  function NetWorth({ v: v3, L: L2, edit, open: open5, sel: sel2, pick, update, keep: keep3, group: group2, setGroup, invest: invest2 }) {
+  function NetWorth({ v: v3, L: L2, edit, open: open5, sel: sel2, pick, update, keep: keep4, group: group2, setGroup, invest: invest2 }) {
     const [range, setRange] = d2("3");
     const [counted2, setCounted] = d2("all");
     const accounts = v3.plan.accounts || [];
@@ -15798,8 +16483,8 @@
         /* @__PURE__ */ u3(Row, { lead: /* @__PURE__ */ u3(Mark, { kind: "home", name: "Home" }), title: "A home or a car", sub: "What it is worth, and the loan against it: its equity", end: /* @__PURE__ */ u3("button", { class: "small", onClick: () => edit("account"), children: "Add property" }) })
       ] }) }) }) });
     }
-    const kept5 = parseDay(worthStart(v3)), today2 = parseDay(v3.today);
-    const back3 = Math.max(1, Math.min(ranges2.find(([k3]) => k3 === range)?.[2] ?? 3, (today2.getFullYear() - kept5.getFullYear()) * 12 + today2.getMonth() - kept5.getMonth()));
+    const kept6 = parseDay(worthStart(v3)), today2 = parseDay(v3.today);
+    const back3 = Math.max(1, Math.min(ranges2.find(([k3]) => k3 === range)?.[2] ?? 3, (today2.getFullYear() - kept6.getFullYear()) * 12 + today2.getMonth() - kept6.getMonth()));
     const months = worthByMonth(v3, back3, 3);
     const start = months[0];
     const now2 = netWorth(v3);
@@ -15933,11 +16618,11 @@
               ...months.some((m3) => m3.ahead) ? [{ label: "Ahead, from your paychecks and bills", color: "muted", shape: "dash" }] : [],
               ...months.some((m3) => m3.estimated) ? [{ label: "Before your first balance, worked back from your transactions", color: "muted", shape: "dash" }] : []
             ] }),
-            !focus && /* @__PURE__ */ u3(TrackFrom, { v: v3, L: L2, keep: keep3 })
+            !focus && /* @__PURE__ */ u3(TrackFrom, { v: v3, L: L2, keep: keep4 })
           ]
         }
       ),
-      (!focus || focus.key === "investments") && /* @__PURE__ */ u3(InvestmentsWidget, { v: v3, keep: keep3, ...invest2 }),
+      (!focus || focus.key === "investments") && /* @__PURE__ */ u3(InvestmentsWidget, { v: v3, keep: keep4, ...invest2 }),
       (!focus || focus.accounts.some((a3) => !owed(a3.kind))) && /* @__PURE__ */ u3(Widget, { title: /* @__PURE__ */ u3(S, { children: [
         "What you own ",
         /* @__PURE__ */ u3("span", { class: "fx-sub", children: /* @__PURE__ */ u3(Amount, { value: owned.filter(inFocus).reduce((t3, a3) => t3 + worthOf(v3, a3), 0), form: "whole" }) })
@@ -15948,7 +16633,7 @@
       ] }), kind: "fx-owelist", span: focus ? "all" : void 0, children: debts.filter(inFocus).length ? /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: sorted(debts.filter(inFocus)).map(row) }) : /* @__PURE__ */ u3(Empty, { children: "Nothing owed." }) }),
       /* @__PURE__ */ u3(LoansWidget, { v: v3, L: L2, edit }),
       /* @__PURE__ */ u3(GoalsWidget, { v: v3, L: L2, edit }),
-      /* @__PURE__ */ u3(FireWidget, { v: v3, L: L2, keep: keep3 }),
+      /* @__PURE__ */ u3(FireWidget, { v: v3, L: L2, keep: keep4 }),
       /* @__PURE__ */ u3(PostPayWidget, { v: v3, L: L2, sel: Math.min(sel2, v3.periods.length - 1), pick, update })
     ] }) });
   }
@@ -16011,14 +16696,14 @@
       }
     );
   }
-  function TrackFrom({ v: v3, L: L2, keep: keep3 }) {
+  function TrackFrom({ v: v3, L: L2, keep: keep4 }) {
     const [day3, setDay] = d2(v3.plan.trackFrom || "");
     const [busy2, setBusy] = d2(false);
     const first = firstKept(v3);
     const save3 = async (to) => {
-      if (!keep3 || busy2) return;
+      if (!keep4 || busy2) return;
       setBusy(true);
-      await keep3({ ...v3.plan, trackFrom: to || void 0 });
+      await keep4({ ...v3.plan, trackFrom: to || void 0 });
       setBusy(false);
     };
     const back3 = v3.worthBack || [];
@@ -16041,7 +16726,7 @@
         first.slice(0, 4) !== v3.today.slice(0, 4) ? `, ${first.slice(0, 4)}` : "",
         ", and the charts count every transaction."
       ] }) }),
-      keep3 && /* @__PURE__ */ u3("div", { class: "fx-goesbackform", children: [
+      keep4 && /* @__PURE__ */ u3("div", { class: "fx-goesbackform", children: [
         /* @__PURE__ */ u3("label", { children: [
           "Track from ",
           /* @__PURE__ */ u3("input", { type: "date", name: "trackFrom", value: day3, max: v3.today, onInput: (e3) => setDay(e3.target.value) })
@@ -16150,15 +16835,15 @@
     const payees = [...new Set(linked.map((t3) => t3.payee || ""))].filter(Boolean);
     const offers = into2.length ? free.filter((t3) => payees.some((n3) => alike(n3, t3.payee || ""))).slice(0, 6) : [];
     const pick = free.filter((t3) => !offers.includes(t3)).slice(0, 12);
-    const keep3 = async (change) => {
+    const keep4 = async (change) => {
       if (!saveLedger2 || !ledger || busy2) return;
       setBusy(true);
       await saveLedger2({ ...ledger, transactions: ledger.transactions.map(change) });
       setBusy(false);
     };
-    const link = (id2) => keep3((t3) => t3.id === id2 ? { ...t3, payment: into2[0].id, notPlanned: void 0 } : t3);
-    const unlink = (id2) => keep3((t3) => t3.id === id2 ? { ...t3, payment: void 0, extra: void 0, notPlanned: true } : t3);
-    const count2 = (id2) => keep3((t3) => t3.id === id2 ? { ...t3, extra: true } : t3);
+    const link = (id2) => keep4((t3) => t3.id === id2 ? { ...t3, payment: into2[0].id, notPlanned: void 0 } : t3);
+    const unlink = (id2) => keep4((t3) => t3.id === id2 ? { ...t3, payment: void 0, extra: void 0, notPlanned: true } : t3);
+    const count2 = (id2) => keep4((t3) => t3.id === id2 ? { ...t3, extra: true } : t3);
     const whole2 = p3?.rows?.[p3.made || 0]?.payment;
     const next = p3?.rows?.[p3.made || 0];
     const monthly = into2.reduce((s3, x3) => s3 + x3.amount, 0);
@@ -16210,7 +16895,7 @@
           kind: "fx-loanlinked",
           actions: saveLedger2 && into2.length ? /* @__PURE__ */ u3("button", { class: "small", "aria-expanded": picking, onClick: () => setPicking(!picking), children: "Link a payment…" }) : void 0,
           children: [
-            /* @__PURE__ */ u3("p", { class: "fx-sub fx-lead", children: into2.length ? `Each one counts as paying ${into2[0].name}. Link one, and the same payee's next ones are offered here.` : "No payment in the plan goes to this loan yet." }),
+            /* @__PURE__ */ u3("p", { class: "fx-sub fx-lead", children: into2.length ? `Each one counts as paying ${into2[0].name}.` : "No payment in the plan goes to this loan yet." }),
             !into2.length && keepPlan && (() => {
               const maybe = mayPay(v3.plan, a3, ledger);
               const pays = async (id2) => {
@@ -16273,7 +16958,7 @@
   // web/src/finances/Account.tsx
   var kindName2 = { checking: "Checking", savings: "Savings", card: "Credit card", investment: "Investments", retirement: "Retirement", loan: "Loan", home: "Home", car: "Car", collectible: "Collectible" };
   var spans = [["30", "30 days", 30], ["90", "90 days", 90], ["365", "A year", 365]];
-  function AccountPage({ v: v3, L: L2, ledger, id: id2, done, edit, update, toTx, editTx, saveLedger: saveLedger2, keep: keep3 }) {
+  function AccountPage({ v: v3, L: L2, ledger, id: id2, done, edit, update, toTx, editTx, saveLedger: saveLedger2, keep: keep4 }) {
     const [span, setSpan] = d2("90");
     const a3 = (v3.plan.accounts || []).find((x3) => x3.id === id2);
     if (!a3) return /* @__PURE__ */ u3(Empty, { children: [
@@ -16351,7 +17036,7 @@
             ]
           }
         ),
-        a3.kind === "loan" && /* @__PURE__ */ u3(LoanSection, { v: v3, L: L2, ledger, a: a3, saveLedger: saveLedger2, keepPlan: keep3 }),
+        a3.kind === "loan" && /* @__PURE__ */ u3(LoanSection, { v: v3, L: L2, ledger, a: a3, saveLedger: saveLedger2, keepPlan: keep4 }),
         (a3.kind !== "loan" || !!mine.length) && /* @__PURE__ */ u3(Widget, { title: "Latest transactions", span: "all", kind: "fx-acctlatest", open: mine.length ? () => toTx({ account: a3.id }) : void 0, openLabel: `Open ${a3.name}'s transactions`, children: mine.length ? /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: mine.slice(0, 8).map((t3) => /* @__PURE__ */ u3(TxRow, { t: t3, v: v3, L: L2, edit: editTx, compact: true }, t3.id)) }) : /* @__PURE__ */ u3(Empty, { children: "No transactions yet." }) })
       ] })
     ] });
@@ -16457,14 +17142,14 @@
   }
   function Gain({ worth, paid }) {
     if (!(paid > 5e-3)) return null;
-    const pct = Math.round((worth - paid) / paid * 100);
+    const pct2 = Math.round((worth - paid) / paid * 100);
     return /* @__PURE__ */ u3("span", { class: "fx-cardgain", children: [
       /* @__PURE__ */ u3(Amount, { value: worth - paid, sign: true, tone: "auto", form: "full" }),
       " ",
-      /* @__PURE__ */ u3("span", { class: pct < 0 ? "fx-out" : pct > 0 ? "fx-in" : "", children: [
+      /* @__PURE__ */ u3("span", { class: pct2 < 0 ? "fx-out" : pct2 > 0 ? "fx-in" : "", children: [
         "(",
-        pct > 0 ? "+" : "",
-        pct,
+        pct2 > 0 ? "+" : "",
+        pct2,
         "%)"
       ] })
     ] });
@@ -16720,12 +17405,12 @@
     const label = (/* @__PURE__ */ new Date(month3 + "-01T12:00:00")).toLocaleDateString("en-US", { month: "long", year: "numeric" });
     const day3 = (iso2) => (/* @__PURE__ */ new Date(iso2 + "T12:00:00")).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
     const lines = days.map((d3) => {
-      const shown8 = (v3.days || []).includes(d3);
+      const shown9 = (v3.days || []).includes(d3);
       const items = [
         ...(d3.events || []).map((e3) => [what(v3.plan, e3)[0], money(e3.amount)]),
         ...(d3.charges || []).map((e3) => [`${what(v3.plan, e3)[0]} (on ${accountName(v3.plan, e3.card)})`, money(e3.amount)])
       ];
-      return `<tr><th scope="row">${esc(day3(d3.date))}</th><td>${items.map(([n3, a3]) => `<div><span>${esc(n3)}</span><span class="n">${esc(a3)}</span></div>`).join("")}</td><td class="n">${shown8 ? esc(money(d3.balance)) : ""}</td></tr>`;
+      return `<tr><th scope="row">${esc(day3(d3.date))}</th><td>${items.map(([n3, a3]) => `<div><span>${esc(n3)}</span><span class="n">${esc(a3)}</span></div>`).join("")}</td><td class="n">${shown9 ? esc(money(d3.balance)) : ""}</td></tr>`;
     }).join("\n");
     const pays = (v3.periods || []).filter((p3) => p3.start.startsWith(month3)).map((p3) => `<tr><th scope="row">${esc(day3(p3.start))} – ${esc(day3(p3.last))}</th><td class="n">${esc(money(p3.in))}</td><td class="n">${esc(money(p3.out))}</td><td class="n">${esc(money(p3.saved))}</td><td class="n">${esc(money(p3.left))}</td></tr>`).join("\n");
     return `<!doctype html>
@@ -17201,14 +17886,14 @@ ${pays}
     const [trendOf, setTrendOf] = d2("");
     const [allPayees, setAllPayees] = d2(false);
     if (!ledger) return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3(Empty, { children: "Reading…" }) });
-    const kept5 = counted(v3, ledger.transactions);
-    const tags = tagsOf(kept5);
+    const kept6 = counted(v3, ledger.transactions);
+    const tags = tagsOf(kept6);
     const picked = tags.includes(tag) ? tag : "";
-    const typed = picked ? kept5.filter((t3) => t3.tags?.includes(picked)) : kept5;
+    const typed = picked ? kept6.filter((t3) => t3.tags?.includes(picked)) : kept6;
     const txs = inHome(v3.plan, typed);
     const all = ranges(v3.today, txs[0]?.date || v3.today);
     const r3 = all.find((x3) => x3.key === key7) || all[0];
-    const sum = totals(txs, r3);
+    const sum = totals2(txs, r3);
     const groups4 = byCategory(txs, v3.categories || [], r3);
     const months = byMonth(txs, r3).filter((m3) => tracked(v3, m3.month));
     const everyPayee = topPayees(txs, r3, Infinity);
@@ -17418,7 +18103,7 @@ ${pays}
 
   // web/src/finances/widgets/SetAside.tsx
   var setAsideName = "Set aside for bills";
-  function SetAsideWidget({ v: v3, keep: keep3 }) {
+  function SetAsideWidget({ v: v3, keep: keep4 }) {
     const bills = (v3.plan.payments || []).filter((x3) => ["3 months", "year"].includes(x3.schedule?.every) && !x3.to && !x3.card && x3.amount > 0);
     const perYear = paydaysAMonth(v3) * 12;
     if (!bills.length || perYear <= 0) return null;
@@ -17429,7 +18114,7 @@ ${pays}
     const savings = (v3.plan.accounts || []).find((a3) => a3.kind === "savings");
     const keepIt = () => {
       const x3 = { ...had || { id: "", name: setAsideName, kind: "savings", schedule: { every: "paycheck", start: todayISO() } }, amount: total, to: had?.to || savings.id };
-      keep3({ ...v3.plan, payments: had ? (v3.plan.payments || []).map((q2) => q2.id === had.id ? x3 : q2) : [...v3.plan.payments || [], x3] });
+      keep4({ ...v3.plan, payments: had ? (v3.plan.payments || []).map((q2) => q2.id === had.id ? x3 : q2) : [...v3.plan.payments || [], x3] });
     };
     const current2 = had && Math.abs(had.amount - total) < 5e-3;
     return /* @__PURE__ */ u3(
@@ -17438,7 +18123,7 @@ ${pays}
         title: "Set aside for bills that come less often",
         span: "all",
         kind: "fx-setaside",
-        actions: keep3 && savings && !current2 && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: keepIt, children: had ? `Make it ${money(total)} a paycheck` : "Set it aside with each paycheck" }),
+        actions: keep4 && savings && !current2 && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: keepIt, children: had ? `Make it ${money(total)} a paycheck` : "Set it aside with each paycheck" }),
         children: [
           /* @__PURE__ */ u3("p", { class: "fx-sub fx-setasidesays", children: [
             money(total),
@@ -17466,12 +18151,12 @@ ${pays}
 
   // web/src/finances/widgets/Homelab.tsx
   var and = (names5) => names5.length < 3 ? names5.join(" and ") : `${names5.slice(0, -1).join(", ")}, and ${names5.at(-1)}`;
-  function HomelabWidget({ v: v3, replaced, keep: keep3 }) {
+  function HomelabWidget({ v: v3, replaced, keep: keep4 }) {
     const cancelled = v3.plan.cancelled || [];
     if (!replaced.length && !cancelled.length) return null;
     const year = (x3) => x3.amount * perMonth(x3.schedule, v3.plan.people, v3.checking) * 12;
     const total = cancelled.reduce((t3, c4) => t3 + c4.annual, 0);
-    const cancel = (r3) => keep3({
+    const cancel = (r3) => keep4({
       ...v3.plan,
       payments: (v3.plan.payments || []).filter((x3) => x3.id !== r3.payment.id),
       cancelled: [...cancelled, { name: r3.payment.name, annual: Math.round(year(r3.payment) * 100) / 100, date: todayISO(), because: and(r3.apps) }]
@@ -17483,7 +18168,7 @@ ${pays}
           lead: /* @__PURE__ */ u3(PayMark, { x: r3.payment }),
           title: r3.payment.name,
           sub: `${and(r3.apps)} ${r3.apps.length > 1 ? "are" : "is"} running: ${r3.payment.name} still costs ${money(year(r3.payment))} a year`,
-          end: keep3 && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => cancel(r3), children: "Cancelled it" }),
+          end: keep4 && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => cancel(r3), children: "Cancelled it" }),
           when: /* @__PURE__ */ u3(Amount, { value: year(r3.payment), form: "full" }),
           whenPlain: true
         },
@@ -17545,7 +18230,7 @@ ${pays}
     return out;
   }
   var rhythm = { week: "a week", "2 weeks": "every other week", month: "a month", "3 months": "every 3 months", year: "a year" };
-  function WallosWidget({ v: v3, read, keep: keep3 }) {
+  function WallosWidget({ v: v3, read, keep: keep4 }) {
     const [got, setGot] = d2({});
     const pull = async () => {
       setGot({ busy: true });
@@ -17555,12 +18240,11 @@ ${pays}
         setGot({ problem: String(e3?.message || e3) });
       }
     };
-    const add = (subs) => keep3({ ...v3.plan, payments: [...v3.plan.payments || [], ...subs.map((s3) => paymentFromWallos(s3, v3.today))] });
+    const add = (subs) => keep4({ ...v3.plan, payments: [...v3.plan.payments || [], ...subs.map((s3) => paymentFromWallos(s3, v3.today))] });
     const sorted = got.subs && sortWallos(got.subs, v3.plan);
     const button = /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: got.busy, onClick: pull, children: got.busy ? "Reading Wallos…" : got.subs ? "Read again" : "From Wallos" });
     const names5 = (list) => list.map((s3) => s3.name).join(", ");
     return /* @__PURE__ */ u3(Widget, { title: "Subscriptions in Wallos", span: "all", kind: "fx-wallos", actions: button, children: [
-      !got.subs && !got.problem && /* @__PURE__ */ u3("p", { class: "fx-sub fx-lead", children: "Bring in Wallos' subscriptions the plan doesn't have." }),
       got.problem && /* @__PURE__ */ u3("p", { class: "formerr bad", role: "alert", children: got.problem }),
       sorted && /* @__PURE__ */ u3(S, { children: [
         sorted.add.length ? /* @__PURE__ */ u3(S, { children: [
@@ -17693,7 +18377,7 @@ ${pays}
     const [busy2, setBusy] = d2(false);
     const [problem, setProblem] = d2("");
     const currency = v3.plan.currency || "USD", holidays = v3.plan.holidays || "us", rates = v3.plan.rates || {};
-    const keep3 = async (s3) => {
+    const keep4 = async (s3) => {
       setBusy(true);
       await save3({ rates: v3.plan.rates, quiet: v3.plan.quiet, calendarKey: v3.plan.calendarKey, calendarAmounts: v3.plan.calendarAmounts, ...s3 });
       setBusy(false);
@@ -17701,7 +18385,7 @@ ${pays}
     const quiet2 = v3.plan.quiet || [];
     const remind = (kind) => (e3) => {
       const on2 = e3.currentTarget.checked;
-      keep3({ currency, holidays, quiet: on2 ? quiet2.filter((k3) => k3 !== kind) : [...quiet2, kind] });
+      keep4({ currency, holidays, quiet: on2 ? quiet2.filter((k3) => k3 !== kind) : [...quiet2, kind] });
     };
     const others2 = [...new Set((v3.plan.accounts || []).map((a3) => a3.currency || "").filter((c4) => c4 && c4 !== currency))].sort();
     const setRate = (code2, text2) => {
@@ -17711,18 +18395,18 @@ ${pays}
         return;
       }
       setProblem("");
-      keep3({ currency, holidays, rates: { ...rates, [code2]: n3 } });
+      keep4({ currency, holidays, rates: { ...rates, [code2]: n3 } });
     };
     return /* @__PURE__ */ u3(Widget, { title: "Paydays and money", span: "all", children: [
       /* @__PURE__ */ u3("div", { class: "finsettings", children: [
         /* @__PURE__ */ u3("label", { class: "field", children: [
           "A payday on a weekend or ",
-          /* @__PURE__ */ u3("select", { disabled: busy2, value: holidays, onChange: (e3) => keep3({ currency, holidays: e3.target.value }), children: calendars.map(([k3, t3]) => /* @__PURE__ */ u3("option", { value: k3, children: t3 }, k3)) }),
+          /* @__PURE__ */ u3("select", { disabled: busy2, value: holidays, onChange: (e3) => keep4({ currency, holidays: e3.target.value }), children: calendars.map(([k3, t3]) => /* @__PURE__ */ u3("option", { value: k3, children: t3 }, k3)) }),
           " comes the business day before"
         ] }),
         /* @__PURE__ */ u3("label", { class: "field", children: [
           "Amounts in ",
-          /* @__PURE__ */ u3("select", { disabled: busy2, value: currency, onChange: (e3) => keep3({ currency: e3.target.value, holidays }), children: (currencies.includes(currency) ? currencies : [currency, ...currencies]).map((c4) => /* @__PURE__ */ u3("option", { value: c4, children: c4 }, c4)) })
+          /* @__PURE__ */ u3("select", { disabled: busy2, value: currency, onChange: (e3) => keep4({ currency: e3.target.value, holidays }), children: (currencies.includes(currency) ? currencies : [currency, ...currencies]).map((c4) => /* @__PURE__ */ u3("option", { value: c4, children: c4 }, c4)) })
         ] })
       ] }),
       !!others2.length && /* @__PURE__ */ u3("div", { class: "finrates", children: [
@@ -17747,7 +18431,7 @@ ${pays}
           words5
         ] }, kind))
       ] }),
-      calendar && /* @__PURE__ */ u3(CalendarFeed, { v: v3, calendar, busy: busy2, set: (key7, amounts) => keep3({ currency, holidays, calendarKey: key7, calendarAmounts: amounts }) })
+      calendar && /* @__PURE__ */ u3(CalendarFeed, { v: v3, calendar, busy: busy2, set: (key7, amounts) => keep4({ currency, holidays, calendarKey: key7, calendarAmounts: amounts }) })
     ] });
   }
   var groups2 = {
@@ -17780,29 +18464,26 @@ ${pays}
   function FoundWidget({ v: v3, add }) {
     if (!v3.found?.length || !add) return null;
     const every = { week: "weekly", "2 weeks": "every other week", month: "monthly", "3 months": "every 3 months", year: "yearly" };
-    return /* @__PURE__ */ u3(Widget, { title: "Found in your transactions", span: "all", kind: "fx-found", children: [
-      /* @__PURE__ */ u3("p", { class: "fx-sub fx-lead", children: "Paid on a rhythm, but not in the plan yet." }),
-      /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: v3.found.map((f4) => /* @__PURE__ */ u3(
-        Row,
-        {
-          lead: /* @__PURE__ */ u3(Mark, { brand: brandOf(f4.institution, f4.payee), name: f4.payee }),
-          title: f4.payee,
-          sub: `${money(f4.amount)} ${every[f4.every] || f4.every} since ${dayShort(f4.since)} · ${plural(f4.times, "time")}${f4.next ? ` · next about ${dayShort(f4.next)}` : ""}`,
-          end: /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => add({
-            id: "",
-            name: f4.payee,
-            amount: f4.amount,
-            institution: f4.institution,
-            kind: kindForBrand(brandOf(f4.institution, f4.payee)) || kindFromCategory(f4.category, v3.categories),
-            from: f4.account === v3.checking ? void 0 : f4.account,
-            schedule: { every: f4.every, start: f4.next || f4.last }
-          }), children: "Add to the plan" })
-        },
-        f4.payee + f4.account
-      )) })
-    ] });
+    return /* @__PURE__ */ u3(Widget, { title: "Found in your transactions", span: "all", kind: "fx-found", children: /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: v3.found.map((f4) => /* @__PURE__ */ u3(
+      Row,
+      {
+        lead: /* @__PURE__ */ u3(Mark, { brand: brandOf(f4.institution, f4.payee), name: f4.payee }),
+        title: f4.payee,
+        sub: `${money(f4.amount)} ${every[f4.every] || f4.every} since ${dayShort(f4.since)} · ${plural(f4.times, "time")}${f4.next ? ` · next about ${dayShort(f4.next)}` : ""}`,
+        end: /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => add({
+          id: "",
+          name: f4.payee,
+          amount: f4.amount,
+          institution: f4.institution,
+          kind: kindForBrand(brandOf(f4.institution, f4.payee)) || kindFromCategory(f4.category, v3.categories),
+          from: f4.account === v3.checking ? void 0 : f4.account,
+          schedule: { every: f4.every, start: f4.next || f4.last }
+        }), children: "Add to the plan" })
+      },
+      f4.payee + f4.account
+    )) }) });
   }
-  function Recurring({ v: v3, L: L2, edit, keep: keep3, running: running5, fromWallos }) {
+  function Recurring({ v: v3, L: L2, edit, keep: keep4, running: running5, fromWallos }) {
     const [filter2, setFilter2] = d2(() => {
       const f4 = opening3 || "all";
       opening3 = "";
@@ -17837,7 +18518,7 @@ ${pays}
         ] })
       ] });
     };
-    const kept5 = (x3, n3) => {
+    const kept6 = (x3, n3) => {
       const a3 = L2.account[x3.to || ""];
       if (!a3 || !saving(a3.kind)) return null;
       const after2 = n3?.period.accounts?.[a3.id];
@@ -17855,11 +18536,11 @@ ${pays}
       ] });
     };
     return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3("div", { class: "fx-board", children: [
-      /* @__PURE__ */ u3(HomelabWidget, { v: v3, replaced: replacedBy(v3.plan, running5 || []), keep: keep3 }),
-      /* @__PURE__ */ u3(FoundWidget, { v: v3, add: keep3 && ((x3) => {
-        keep3({ ...v3.plan, payments: [...v3.plan.payments || [], x3] });
+      /* @__PURE__ */ u3(HomelabWidget, { v: v3, replaced: replacedBy(v3.plan, running5 || []), keep: keep4 }),
+      /* @__PURE__ */ u3(FoundWidget, { v: v3, add: keep4 && ((x3) => {
+        keep4({ ...v3.plan, payments: [...v3.plan.payments || [], x3] });
       }) }),
-      keep3 && fromWallos && /* @__PURE__ */ u3(WallosWidget, { v: v3, read: fromWallos, keep: keep3 }),
+      keep4 && fromWallos && /* @__PURE__ */ u3(WallosWidget, { v: v3, read: fromWallos, keep: keep4 }),
       /* @__PURE__ */ u3(Widget, { title: "A typical month", span: "all", kind: "fx-monthsum", children: [
         /* @__PURE__ */ u3("div", { class: "fx-stats", children: [
           /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: m3.in, form: "whole", tone: "in" }), caption: `In · ${(v3.plan.people || []).length === 1 ? "1 paycheck" : (v3.plan.people || []).length ? `${(v3.plan.people || []).length} paychecks` : "no paychecks yet"}${m3.others.length ? ` and ${m3.others.map((o3) => o3.payer).filter((p3, i3, a3) => a3.indexOf(p3) === i3).join(" and ")}` : ""}` }),
@@ -17919,7 +18600,7 @@ ${pays}
                     title: x3.name,
                     sub: /* @__PURE__ */ u3(S, { children: [
                       scheduleText(x3.schedule, L2) + into2 + (x3.card ? " · the card's balance" : x3.estimate ? " · about" : "") + (!x3.card && Math.abs(perMonth(x3.schedule, v3.plan.people || [], v3.checking) - 1) > 1e-3 && monthly(x3) > 5e-3 ? ` · ${money(monthly(x3))} a month` : ""),
-                      kept5(x3, n3),
+                      kept6(x3, n3),
                       paidLine(x3)
                     ] }),
                     end: /* @__PURE__ */ u3("span", { class: "fx-next", children: n3 ? /* @__PURE__ */ u3(S, { children: [
@@ -17947,7 +18628,7 @@ ${pays}
       )
     ] }) });
   }
-  function Pay({ v: v3, L: L2, edit, saveSettings, keep: keep3, calendar }) {
+  function Pay({ v: v3, L: L2, edit, saveSettings, keep: keep4, calendar }) {
     const people = v3.plan.people || [];
     const read = v3.paydays || [];
     const lastMonth = read[9]?.date.slice(0, 7);
@@ -18043,7 +18724,7 @@ ${pays}
           p3.date
         )) })
       ] }, m3)) }),
-      /* @__PURE__ */ u3(SetAsideWidget, { v: v3, keep: keep3 }),
+      /* @__PURE__ */ u3(SetAsideWidget, { v: v3, keep: keep4 }),
       saveSettings && /* @__PURE__ */ u3(Settings2, { v: v3, save: saveSettings, calendar })
     ] }) });
   }
@@ -18279,15 +18960,15 @@ ${pays}
       return false;
     }
   };
-  function PricesWidget({ v: v3, L: L2, keep: keep3 }) {
+  function PricesWidget({ v: v3, L: L2, keep: keep4 }) {
     const [busy2, setBusy] = d2("");
     const [, redraw] = d2(0);
     const list = newPrices(v3).filter((p3) => !kept(p3) && L2.payment[p3.payment]);
     if (!list.length) return null;
     const update = async (p3) => {
-      if (!keep3 || busy2) return;
+      if (!keep4 || busy2) return;
       setBusy(p3.payment);
-      await keep3({ ...v3.plan, payments: (v3.plan.payments || []).map((x3) => x3.id === p3.payment ? { ...x3, amount: p3.now } : x3) });
+      await keep4({ ...v3.plan, payments: (v3.plan.payments || []).map((x3) => x3.id === p3.payment ? { ...x3, amount: p3.now } : x3) });
       setBusy("");
     };
     const leave = (p3) => {
@@ -18304,8 +18985,8 @@ ${pays}
         {
           lead: /* @__PURE__ */ u3(PayMark, { x: x3 }),
           title: `${x3.name} is now ${money(p3.now)}, was ${money(p3.was)}`,
-          sub: `Charged ${money(p3.now)} on ${dayShort(p3.last)} and the time before.${keep3 ? " Update the plan?" : ""}`,
-          end: keep3 && /* @__PURE__ */ u3("span", { class: "fx-linkbtns", children: [
+          sub: `Charged ${money(p3.now)} on ${dayShort(p3.last)} and the time before.${keep4 ? " Update the plan?" : ""}`,
+          end: keep4 && /* @__PURE__ */ u3("span", { class: "fx-linkbtns", children: [
             /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: !!busy2, onClick: () => update(p3), children: [
               "Update to ",
               money(p3.now)
@@ -18348,7 +19029,7 @@ ${pays}
         kind: "fx-missing",
         actions: open5 && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: open5, children: "Transactions" }),
         children: [
-          /* @__PURE__ */ u3("p", { class: "fx-sub fx-lead", children: list.length === 1 ? "Paid before, but nothing in your transactions pays it yet. If it went through, link it in Transactions." : "Paid before, but nothing in your transactions pays these yet. If one went through, link it in Transactions." }),
+          /* @__PURE__ */ u3("p", { class: "fx-sub fx-lead", children: list.length === 1 ? "Nothing in your transactions pays it yet." : "Nothing in your transactions pays these yet." }),
           /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: list.map((m3) => {
             const x3 = L2.payment[m3.payment];
             return /* @__PURE__ */ u3(
@@ -18393,15 +19074,15 @@ ${pays}
       return false;
     }
   };
-  function AveragesWidget({ v: v3, L: L2, keep: keep3 }) {
+  function AveragesWidget({ v: v3, L: L2, keep: keep4 }) {
     const [busy2, setBusy] = d2("");
     const [, redraw] = d2(0);
     const list = averages(v3).filter((a3) => !kept2(a3) && L2.payment[a3.payment]);
     if (!list.length) return null;
     const use = async (a3) => {
-      if (!keep3 || busy2) return;
+      if (!keep4 || busy2) return;
       setBusy(a3.payment);
-      await keep3({ ...v3.plan, payments: (v3.plan.payments || []).map((x3) => x3.id === a3.payment ? { ...x3, amount: a3.average } : x3) });
+      await keep4({ ...v3.plan, payments: (v3.plan.payments || []).map((x3) => x3.id === a3.payment ? { ...x3, amount: a3.average } : x3) });
       setBusy("");
     };
     const leave = (a3) => {
@@ -18418,8 +19099,8 @@ ${pays}
         {
           lead: /* @__PURE__ */ u3(PayMark, { x: x3 }),
           title: `${x3.name} has averaged ${money(a3.average)} over ${a3.months === 1 ? "a month" : `${a3.months} months`}`,
-          sub: `Paid ${a3.times} times; the plan says ${money(a3.planned)}.${keep3 ? ` Use ${money(a3.average)} instead?` : ""}`,
-          end: keep3 && /* @__PURE__ */ u3("span", { class: "fx-linkbtns", children: [
+          sub: `Paid ${a3.times} times; the plan says ${money(a3.planned)}.${keep4 ? ` Use ${money(a3.average)} instead?` : ""}`,
+          end: keep4 && /* @__PURE__ */ u3("span", { class: "fx-linkbtns", children: [
             /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: !!busy2, onClick: () => use(a3), children: [
               "Use ",
               money(a3.average)
@@ -18471,13 +19152,13 @@ ${pays}
   }
 
   // web/src/finances/widgets/Past.tsx
-  var shown6 = 6;
+  var shown7 = 6;
   function PastWidget({ v: v3, L: L2, past, title = "What happened", ledger, edit }) {
     const [all, setAll] = d2(false);
     const range = { key: "period", label: "", from: past.start, to: past.last };
     const txs = inHome(v3.plan, ledger?.transactions || []).filter((t3) => t3.date >= past.start && t3.date <= past.last);
-    const sum = totals(txs, range);
-    const list = latest(txs, all ? txs.length : shown6);
+    const sum = totals2(txs, range);
+    const list = latest(txs, all ? txs.length : shown7);
     return /* @__PURE__ */ u3(Widget, { title, kind: "fx-past", span: "all", children: [
       /* @__PURE__ */ u3("p", { class: "fx-sub fx-lead fx-dates", children: [
         dayShort(past.start),
@@ -18490,13 +19171,13 @@ ${pays}
           /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: sum.out }), caption: "Went out", aside: /* @__PURE__ */ u3(Delta, { value: sum.in - sum.out, label: "left over" }) })
         ] }),
         /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: list.map((t3) => /* @__PURE__ */ u3(TxRow, { t: t3, v: v3, L: L2, edit }, t3.id)) }),
-        txs.length > shown6 && /* @__PURE__ */ u3("p", { class: "actions fx-more", children: /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => setAll(!all), children: all ? "Show fewer" : `Show all ${txs.length} transactions` }) })
+        txs.length > shown7 && /* @__PURE__ */ u3("p", { class: "actions fx-more", children: /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => setAll(!all), children: all ? "Show fewer" : `Show all ${txs.length} transactions` }) })
       ] }) : /* @__PURE__ */ u3(Empty, { children: ledger?.transactions.length ? "No transactions kept for these days." : "What happened shows here once you import or add your transactions." })
     ] });
   }
 
   // web/src/finances/widgets/Planned.tsx
-  var shown7 = 6;
+  var shown8 = 6;
   function PlannedWidget({ v: v3, L: L2, title, start, last: last2, edit }) {
     const [all, setAll] = d2(false);
     const days = (v3.days || []).filter((d3) => d3.date >= start && d3.date <= last2);
@@ -18505,7 +19186,7 @@ ${pays}
     const goesOut = -rows.filter((r3) => r3.e.amount < 0).reduce((t3, r3) => t3 + r3.e.amount, 0);
     const end = days.at(-1);
     const cushion = v3.plan.cushion || 0;
-    const list = all ? rows : rows.slice(0, shown7);
+    const list = all ? rows : rows.slice(0, shown8);
     return /* @__PURE__ */ u3(Widget, { title, kind: "fx-planned", span: "all", children: [
       /* @__PURE__ */ u3("p", { class: "fx-sub fx-lead fx-dates", children: [
         dayShort(start),
@@ -18535,7 +19216,7 @@ ${pays}
             k3
           );
         }) }),
-        rows.length > shown7 && /* @__PURE__ */ u3("p", { class: "actions fx-more", children: /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => setAll(!all), children: all ? "Show fewer" : `Show all ${rows.length}` }) })
+        rows.length > shown8 && /* @__PURE__ */ u3("p", { class: "actions fx-more", children: /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => setAll(!all), children: all ? "Show fewer" : `Show all ${rows.length}` }) })
       ] }) : /* @__PURE__ */ u3(Empty, { children: "Nothing planned for these days." })
     ] });
   }
@@ -18545,8 +19226,8 @@ ${pays}
     if (!(v3.plan.accounts || []).length) return null;
     const now2 = netWorth(v3);
     const est = (v3.worthEstimated || []).filter((p3) => p3.date < v3.today);
-    const kept5 = [...est, ...(v3.worth || []).filter((p3) => p3.date < v3.today)];
-    const values = [...kept5.map((p3) => p3.amount), now2];
+    const kept6 = [...est, ...(v3.worth || []).filter((p3) => p3.date < v3.today)];
+    const values = [...kept6.map((p3) => p3.amount), now2];
     const month3 = worthByMonth(v3, 1, 0)[0];
     const each = (v3.plan.accounts || []).map((a3) => worthOf(v3, a3));
     const owned = each.filter((n3) => n3 > 0).reduce((t3, n3) => t3 + n3, 0), owes = -each.filter((n3) => n3 < 0).reduce((t3, n3) => t3 + n3, 0);
@@ -18562,11 +19243,11 @@ ${pays}
           fill: true,
           format: tick,
           behindTo: est.length || void 0,
-          xLabels: [{ i: 0, label: dayShort(kept5[0]?.date || v3.today) }, { i: values.length - 1, label: "Today" }],
-          label: `Net worth from ${money(values[0])} on ${dayShort(kept5[0]?.date || v3.today)} to ${money(now2)} today.`,
+          xLabels: [{ i: 0, label: dayShort(kept6[0]?.date || v3.today) }, { i: values.length - 1, label: "Today" }],
+          label: `Net worth from ${money(values[0])} on ${dayShort(kept6[0]?.date || v3.today)} to ${money(now2)} today.`,
           tip: (i3) => /* @__PURE__ */ u3(S, { children: [
             /* @__PURE__ */ u3("div", { class: "fx-tiphead", children: [
-              /* @__PURE__ */ u3("span", { children: i3 === values.length - 1 ? "Today" : dayShort(kept5[i3].date) }),
+              /* @__PURE__ */ u3("span", { children: i3 === values.length - 1 ? "Today" : dayShort(kept6[i3].date) }),
               /* @__PURE__ */ u3(Amount, { value: values[i3], form: "whole" })
             ] }),
             i3 < est.length && /* @__PURE__ */ u3("div", { class: "fx-caption", children: "Worked back from your transactions" })
@@ -18844,7 +19525,7 @@ ${pays}
     if (!layout && !editing2) return /* @__PURE__ */ u3("div", { class: "fx-board" + (kind ? " " + kind : ""), children: present.map((s3) => s3.node) });
     const all = ordered(present, layout);
     const hidden3 = new Set(layout?.hidden || []);
-    const shown8 = all.filter((s3) => !hidden3.has(s3.id));
+    const shown9 = all.filter((s3) => !hidden3.has(s3.id));
     const widthOf = (s3) => layout?.widths[s3.id] || s3.width;
     const save3 = (l3) => {
       keepLayout(l3);
@@ -18856,14 +19537,14 @@ ${pays}
       save3({ ...l3, order: [...ids, ...all.map((s3) => s3.id).filter((id2) => !ids.includes(id2))] });
     };
     const move = (id2, by) => {
-      const ids = shown8.map((s3) => s3.id), i3 = ids.indexOf(id2), j3 = i3 + by;
+      const ids = shown9.map((s3) => s3.id), i3 = ids.indexOf(id2), j3 = i3 + by;
       if (i3 < 0 || j3 < 0 || j3 >= ids.length) return;
       [ids[i3], ids[j3]] = [ids[j3], ids[i3]];
       reorder(ids);
     };
     const dropOn = (target) => {
       if (!dragged || dragged === target) return;
-      const ids = shown8.map((s3) => s3.id).filter((id2) => id2 !== dragged);
+      const ids = shown9.map((s3) => s3.id).filter((id2) => id2 !== dragged);
       ids.splice(ids.indexOf(target), 0, dragged);
       reorder(ids);
       setDragged("");
@@ -18879,7 +19560,7 @@ ${pays}
     };
     return /* @__PURE__ */ u3(S, { children: [
       editing2 && button,
-      /* @__PURE__ */ u3("div", { class: "fx-board arranged" + (editing2 ? " editing" : ""), children: shown8.map((s3, i3) => /* @__PURE__ */ u3(
+      /* @__PURE__ */ u3("div", { class: "fx-board arranged" + (editing2 ? " editing" : ""), children: shown9.map((s3, i3) => /* @__PURE__ */ u3(
         "div",
         {
           class: "fx-slot w-" + widthOf(s3) + (dragged === s3.id ? " dragging" : ""),
@@ -18896,7 +19577,7 @@ ${pays}
                 e3.dataTransfer?.setData("text/plain", s3.id);
               }, onDragEnd: () => setDragged(""), title: "Drag to move", "aria-hidden": "true", children: "⋮⋮" }),
               /* @__PURE__ */ u3("button", { type: "button", class: "small", "aria-label": `Move ${s3.title} up`, disabled: i3 === 0, onClick: () => move(s3.id, -1), children: "▲" }),
-              /* @__PURE__ */ u3("button", { type: "button", class: "small", "aria-label": `Move ${s3.title} down`, disabled: i3 === shown8.length - 1, onClick: () => move(s3.id, 1), children: "▼" }),
+              /* @__PURE__ */ u3("button", { type: "button", class: "small", "aria-label": `Move ${s3.title} down`, disabled: i3 === shown9.length - 1, onClick: () => move(s3.id, 1), children: "▼" }),
               /* @__PURE__ */ u3("span", { class: "grow" }),
               /* @__PURE__ */ u3("span", { class: "fx-widths", role: "group", "aria-label": `${s3.title}'s width`, children: widths.map((w3) => /* @__PURE__ */ u3("button", { type: "button", class: "small" + (widthOf(s3) === w3 ? " on" : ""), "aria-pressed": widthOf(s3) === w3, onClick: () => setWidth(s3.id, w3), children: [
                 w3 === "third" ? "⅓" : w3 === "half" ? "½" : "Full",
@@ -18950,7 +19631,7 @@ ${pays}
     }, []);
     return null;
   }
-  function Overview({ v: v3, L: L2, sel: sel2, pick, add, edit, setSince: setSince2, keep: keep3, ledger, openWorth, openSubscriptions, openRecurring, openTransactions, openBudgets, openCalendar, openPay, openAccount, showIn: showIn2, phone: phone2 }) {
+  function Overview({ v: v3, L: L2, sel: sel2, pick, add, edit, setSince: setSince2, keep: keep4, ledger, openWorth, openSubscriptions, openRecurring, openTransactions, openBudgets, openCalendar, openPay, openAccount, showIn: showIn2, phone: phone2 }) {
     const [by, setByState] = d2(readBy);
     const { months, now: thisMonth } = monthPeriods(v3);
     const [monthAt, setMonthAt] = d2(thisMonth);
@@ -19006,8 +19687,8 @@ ${pays}
         { id: "now", title: "Left after this paycheck's bills", width: "full", node: !phone2 && /* @__PURE__ */ u3(LeadWidget, { v: v3, L: L2, sel: p3 ? picked : 0, open: openPay }) },
         { id: "since", title: "Since the balances", width: "full", node: !!v3.since?.length && /* @__PURE__ */ u3(SinceWidget, { v: v3, L: L2, set: setSince2 }) },
         { id: "missing", title: "Bills not seen", width: "full", node: /* @__PURE__ */ u3(MissingWidget, { v: v3, L: L2, open: openTransactions }) },
-        { id: "prices", title: "New prices", width: "full", node: /* @__PURE__ */ u3(PricesWidget, { v: v3, L: L2, keep: keep3 }) },
-        { id: "averages", title: "Bills' averages", width: "full", node: /* @__PURE__ */ u3(AveragesWidget, { v: v3, L: L2, keep: keep3 }) },
+        { id: "prices", title: "New prices", width: "full", node: /* @__PURE__ */ u3(PricesWidget, { v: v3, L: L2, keep: keep4 }) },
+        { id: "averages", title: "Bills' averages", width: "full", node: /* @__PURE__ */ u3(AveragesWidget, { v: v3, L: L2, keep: keep4 }) },
         { id: "comingup", title: "Coming up", width: "full", node: phone2 && /* @__PURE__ */ u3(ComingUpWidget, { v: v3, L: L2, calendar: openCalendar }) },
         { id: "goals", title: "Goals", width: "full", node: phone2 && /* @__PURE__ */ u3(GoalsWidget, { v: v3, L: L2, edit: edit && ((w3, id2) => edit(w3, id2)), all: openWorth }) },
         { id: "nowphone", title: "Left after this paycheck's bills", width: "full", node: phone2 && /* @__PURE__ */ u3(LeadWidget, { v: v3, L: L2, sel: p3 ? picked : 0, open: openPay }) },
@@ -19030,8 +19711,8 @@ ${pays}
       ] }) : /* @__PURE__ */ u3(ArrangedBoard, { kind: "fx-dash", slots: [
         { id: "since", title: "Since the balances", width: "full", node: !!v3.since?.length && /* @__PURE__ */ u3(SinceWidget, { v: v3, L: L2, set: setSince2 }) },
         { id: "missing", title: "Bills not seen", width: "full", node: /* @__PURE__ */ u3(MissingWidget, { v: v3, L: L2, open: openTransactions }) },
-        { id: "prices", title: "New prices", width: "full", node: /* @__PURE__ */ u3(PricesWidget, { v: v3, L: L2, keep: keep3 }) },
-        { id: "averages", title: "Bills' averages", width: "full", node: /* @__PURE__ */ u3(AveragesWidget, { v: v3, L: L2, keep: keep3 }) },
+        { id: "prices", title: "New prices", width: "full", node: /* @__PURE__ */ u3(PricesWidget, { v: v3, L: L2, keep: keep4 }) },
+        { id: "averages", title: "Bills' averages", width: "full", node: /* @__PURE__ */ u3(AveragesWidget, { v: v3, L: L2, keep: keep4 }) },
         { id: "now", title: "Left after this paycheck's bills", width: "full", node: /* @__PURE__ */ u3(LeadWidget, { v: v3, L: L2, sel: p3 ? picked : 0, open: openPay }) },
         { id: "latest", title: "Latest transactions", width: "third", node: !read && /* @__PURE__ */ u3(LatestWidget, { v: v3, L: L2, ledger, edit, all: openTransactions, count: 9 }) },
         { id: "past", title: "What happened", width: "full", node: read && /* @__PURE__ */ u3(PastWidget, { v: v3, L: L2, past: read, title: month3?.when === "now" ? "So far this month" : void 0, ledger, edit }) },
@@ -19095,7 +19776,7 @@ ${pays}
       /* @__PURE__ */ u3(MenuButton, { label: "Export", menuLabel: "Export", title: "Your plan and what's ahead, to keep, open in a spreadsheet, or print", items: exp.items })
     ] });
   }
-  function FinancesScreen({ v: v3, ledger, error, retry, tab: tab3, setTab, sel: sel2, pick, setSince: setSince2, saveSettings, keep: keep3, edit: open5, exportFile: exportFile2, printMonth, readReceipt, readCardPicture, readCardPrices, updatePrices, saveLedger: saveLedger2, running: running5, calendar, fromWallos, phone: phone2, toggleHidden, group: group2, setGroup, investments }) {
+  function FinancesScreen({ v: v3, ledger, error, retry, tab: tab3, setTab, sel: sel2, pick, setSince: setSince2, saveSettings, keep: keep4, edit: open5, exportFile: exportFile2, printMonth, readReceipt, readCardPicture, readCardPrices, updatePrices, saveLedger: saveLedger2, running: running5, calendar, fromWallos, phone: phone2, toggleHidden, group: group2, setGroup, investments }) {
     const edit = (what3, id2, kind) => cardOf(id2) ? open5("account", cardOf(id2)) : open5(what3, id2, kind);
     const L2 = v3 ? lookup(v3.plan) : null;
     setCurrency(v3?.plan.currency);
@@ -19229,11 +19910,11 @@ ${pays}
             fresh();
           } })
         ] }),
-        /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, edit, keep: keep3, running: running5, fromWallos }, freshAt)
+        /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, edit, keep: keep4, running: running5, fromWallos }, freshAt)
       ] }) : tab3 === "pay" ? /* @__PURE__ */ u3(S, { children: [
         !phone2 && /* @__PURE__ */ u3(PageCards, { children: /* @__PURE__ */ u3(PaycheckWidget, { v: v3, L: L2, sel: Math.max(0, sel2), edit: (w3, id2) => edit(w3, id2) }) }),
-        /* @__PURE__ */ u3(Pay, { v: v3, L: L2, edit, saveSettings, keep: keep3, calendar })
-      ] }) : tab3.startsWith("account:") ? /* @__PURE__ */ u3(AccountPage, { v: v3, L: L2, ledger, id: tab3.slice(8), done: () => setTab("worth"), edit: () => edit("account", tab3.slice(8)), update: () => edit("balances"), toTx, editTx: (w3, id2) => edit(w3, id2), saveLedger: saveLedger2, keep: keep3 }) : tab3 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, edit, open: (id2) => setTab("account:" + id2), sel: Math.max(0, sel2), pick, update: () => edit("balances"), keep: keep3, group: group2, setGroup, invest: investments }) : tab3 === "collection" ? /* @__PURE__ */ u3(CollectionPage, { v: v3, open: (id2) => setTab("card:" + id2), edit: (id2) => edit("card", id2), read: readCardPicture, update: updatePrices }) : tab3.startsWith("card:") ? /* @__PURE__ */ u3(CardPage, { v: v3, id: tab3.slice(5), done: () => setTab("collection"), edit: () => edit("card", tab3.slice(5)), read: readCardPicture, prices: readCardPrices }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, ledger, sel: sel2, pick, setSince: ro ? void 0 : setSince2, keep: ro ? void 0 : keep3, add: (w3, k3) => edit(w3, void 0, k3), edit: (w3, id2) => edit(w3, id2), openWorth: () => setTab("worth"), openSubscriptions: () => {
+        /* @__PURE__ */ u3(Pay, { v: v3, L: L2, edit, saveSettings, keep: keep4, calendar })
+      ] }) : tab3.startsWith("account:") ? /* @__PURE__ */ u3(AccountPage, { v: v3, L: L2, ledger, id: tab3.slice(8), done: () => setTab("worth"), edit: () => edit("account", tab3.slice(8)), update: () => edit("balances"), toTx, editTx: (w3, id2) => edit(w3, id2), saveLedger: saveLedger2, keep: keep4 }) : tab3 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, edit, open: (id2) => setTab("account:" + id2), sel: Math.max(0, sel2), pick, update: () => edit("balances"), keep: keep4, group: group2, setGroup, invest: investments }) : tab3 === "collection" ? /* @__PURE__ */ u3(CollectionPage, { v: v3, open: (id2) => setTab("card:" + id2), edit: (id2) => edit("card", id2), read: readCardPicture, update: updatePrices }) : tab3.startsWith("card:") ? /* @__PURE__ */ u3(CardPage, { v: v3, id: tab3.slice(5), done: () => setTab("collection"), edit: () => edit("card", tab3.slice(5)), read: readCardPicture, prices: readCardPrices }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, ledger, sel: sel2, pick, setSince: ro ? void 0 : setSince2, keep: ro ? void 0 : keep4, add: (w3, k3) => edit(w3, void 0, k3), edit: (w3, id2) => edit(w3, id2), openWorth: () => setTab("worth"), openSubscriptions: () => {
         openOn("subscriptions");
         setTab("recurring");
       }, openRecurring: (f4) => {
@@ -19299,20 +19980,6 @@ ${pays}
   }
   function mountFinMenu(el3, props) {
     R(/* @__PURE__ */ u3(FinMenu, { ...props }), el3);
-  }
-
-  // web/src/tabs.ts
-  var tabbed = {};
-  var changed3 = () => {
-  };
-  function keepsTabs(screen, now2, put) {
-    tabbed[screen] = { now: now2, put };
-  }
-  function tabChanged() {
-    changed3();
-  }
-  function onTabChange(f4) {
-    changed3 = f4;
   }
 
   // web/src/finances/seal.ts
@@ -20779,11 +21446,11 @@ ${pays}
   }
   var toneWords = { ok: "Done", warn: "To look at", bad: "Failed" };
   function Bar({ title, p: p3, idle: idle2 }) {
-    const pct = p3 && p3.total ? Math.min(100, Math.round(p3.done / p3.total * 100)) : void 0;
+    const pct2 = p3 && p3.total ? Math.min(100, Math.round(p3.done / p3.total * 100)) : void 0;
     const left = p3?.eta ? p3.eta > 3600 ? `~${Math.floor(p3.eta / 3600)}h ${Math.round(p3.eta % 3600 / 60)}m left` : `~${Math.max(1, Math.round(p3.eta / 60))}m left` : "";
     return /* @__PURE__ */ u3("div", { class: "progress", children: [
-      /* @__PURE__ */ u3("div", { class: "track", role: "progressbar", "aria-label": title, "aria-valuemin": 0, "aria-valuemax": 100, "aria-valuenow": pct, children: /* @__PURE__ */ u3("span", { class: "fill", style: { width: `${pct ?? 0}%` } }) }),
-      /* @__PURE__ */ u3("p", { class: "step", children: p3 ? `${p3.label} ${p3.done.toLocaleString()} of ${p3.total.toLocaleString()}${pct !== void 0 ? ` · ${pct}%` : ""}${left ? " · " + left : ""}` : idle2 })
+      /* @__PURE__ */ u3("div", { class: "track", role: "progressbar", "aria-label": title, "aria-valuemin": 0, "aria-valuemax": 100, "aria-valuenow": pct2, children: /* @__PURE__ */ u3("span", { class: "fill", style: { width: `${pct2 ?? 0}%` } }) }),
+      /* @__PURE__ */ u3("p", { class: "step", children: p3 ? `${p3.label} ${p3.done.toLocaleString()} of ${p3.total.toLocaleString()}${pct2 !== void 0 ? ` · ${pct2}%` : ""}${left ? " · " + left : ""}` : idle2 })
     ] });
   }
   function JobPanel({ job: job2, stop: stop2, done, fix, again }) {
@@ -21375,7 +22042,7 @@ ${pays}
         ] }) }),
         /* @__PURE__ */ u3(DriveWidget, { d: d3 })
       ] }),
-      /* @__PURE__ */ u3(Shelf, { d: d3, act, review: review2, pick }),
+      /* @__PURE__ */ u3(Shelf2, { d: d3, act, review: review2, pick }),
       /* @__PURE__ */ u3("div", { class: "fx-board tidybottom", children: [
         /* @__PURE__ */ u3(GenresWidget, { d: d3, job: job2, act }),
         /* @__PURE__ */ u3(DoneWidget, { d: d3, job: job2, act, span: 1 })
@@ -21433,7 +22100,7 @@ ${pays}
   function PlacesWidget({ d: d3, job: job2, act, first }) {
     const [drives, setDrives] = d2(null);
     const [picked, setPicked] = d2("");
-    const [place, setPlace] = d2(null);
+    const [place2, setPlace] = d2(null);
     h2(() => {
       act.drives().then((ds) => {
         setDrives(ds);
@@ -21482,13 +22149,13 @@ ${pays}
           ] })
         ] })
       ] }),
-      chosen && place && /* @__PURE__ */ u3(S, { children: [
+      chosen && place2 && /* @__PURE__ */ u3(S, { children: [
         /* @__PURE__ */ u3("h3", { class: "tidyplacehead", children: [
           "On ",
           label(chosen),
           ", each library goes here"
         ] }),
-        /* @__PURE__ */ u3(Rows, { kind: "fx-rows tidytodo", children: place.libraries.map((s3) => /* @__PURE__ */ u3(
+        /* @__PURE__ */ u3(Rows, { kind: "fx-rows tidytodo", children: place2.libraries.map((s3) => /* @__PURE__ */ u3(
           Row,
           {
             lead: /* @__PURE__ */ u3(LibIcon, { kind: s3.kind }),
@@ -21596,9 +22263,9 @@ ${pays}
       )) })
     ] });
   }
-  function TodayWidget({ d: d3, job: job2, act, wide }) {
+  function TodayWidget({ d: d3, job: job2, act, wide: wide2 }) {
     const today2 = d3.today || [];
-    return /* @__PURE__ */ u3(Widget, { title: "What I did today", span: wide ? "all" : 1, kind: "tidytoday", children: [
+    return /* @__PURE__ */ u3(Widget, { title: "What I did today", span: wide2 ? "all" : 1, kind: "tidytoday", children: [
       !!today2.length && /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3("span", { class: "fx-amount", children: [
         today2.filter((f4) => !f4.undone).length,
         /* @__PURE__ */ u3("small", { children: [
@@ -21640,7 +22307,7 @@ ${pays}
     const many = l3.kind === "music" ? n2(last(l3, "run")?.result?.in_library) || n2(last(l3, "scan")?.result?.files) : l3.kind === "movies" || l3.kind === "tv" ? n2(c4.lean) + n2(c4.bloated) + n2(c4.queued) + n2(l3.waiting) : l3.kind === "books" ? n2(last(l3, "review")?.result?.books) : 0;
     return [many ? things(l3.kind, many) : "", l3.size ? size(l3.size) : ""].filter(Boolean).join(" · ");
   }
-  function Shelf({ d: d3, act, review: review2, pick }) {
+  function Shelf2({ d: d3, act, review: review2, pick }) {
     return /* @__PURE__ */ u3("section", { class: "tidyshelf", "aria-labelledby": "tidyShelfTitle", children: [
       /* @__PURE__ */ u3("h2", { id: "tidyShelfTitle", children: "Your libraries" }),
       /* @__PURE__ */ u3("ul", { children: LIBRARIES.map((k3) => {
@@ -21650,15 +22317,15 @@ ${pays}
         const next = todos.find((t3) => t3.go && !t3.go.risky) || todos[0];
         const m3 = l3.found ? meterOf(l3) : void 0;
         const facts2 = l3.found ? factsOf(l3) : "";
-        const pct = m3 ? Math.round(m3.share * 100) : 0;
+        const pct2 = m3 ? Math.round(m3.share * 100) : 0;
         return /* @__PURE__ */ u3("li", { children: /* @__PURE__ */ u3("button", { type: "button", class: "tidytile " + hue(looks[k3].hue) + (l3.found ? "" : " away"), onClick: () => pick(k3), children: [
           /* @__PURE__ */ u3(LibIcon, { kind: k3 }),
           /* @__PURE__ */ u3("span", { class: "tidytilename", children: names3[k3] }),
           /* @__PURE__ */ u3("span", { class: "tidytilefacts", children: l3.found ? facts2 || "Not looked at yet" : "Its drive isn't plugged in" }),
-          m3 && /* @__PURE__ */ u3("span", { class: "tidymeter", "aria-hidden": "true", children: /* @__PURE__ */ u3("span", { style: { width: `${pct}%` } }) }),
+          m3 && /* @__PURE__ */ u3("span", { class: "tidymeter", "aria-hidden": "true", children: /* @__PURE__ */ u3("span", { style: { width: `${pct2}%` } }) }),
           /* @__PURE__ */ u3("span", { class: "tidytilenext", children: [
             m3 && /* @__PURE__ */ u3("strong", { children: [
-              pct,
+              pct2,
               "% ",
               m3.words
             ] }),
@@ -22156,7 +22823,7 @@ ${pays}
 
   // web/src/palette/Shortcuts.tsx
   var names4 = {
-    choose: "Choose apps",
+    choose: "Find an app",
     status: "Status",
     backups: "Backups",
     setup: "Setup",
@@ -22171,8 +22838,6 @@ ${pays}
           [["a–z"], "Start typing an app’s name to show only the apps that match; Escape shows them all again"],
           [["↑", "↓"], "In an app’s or a group’s menu, the item above or below"]
         ];
-      case "choose":
-        return [[[mod + "F"], "Search the apps"]];
       case "settings":
         return [[[mod + "F"], "Search the settings"]];
       case "finances":
@@ -22274,7 +22939,7 @@ ${pays}
     return scored.sort((a3, b2) => b2.score - a3.score || a3.i - b2.i).map((s3) => s3.c);
   }
   var screenList = [
-    ["choose", "Choose apps", "1", "install add apps"],
+    ["choose", "Find an app", "1", "install add apps choose"],
     ["status", "Status", "2", "apps running"],
     ["backups", "Backups", "3", "backup restore"],
     ["setup", "Setup", "4", ""],
@@ -22366,7 +23031,7 @@ ${pays}
   function Palette({ list, close: close3 }) {
     const box = A2(null);
     const field2 = A2(null);
-    const shown8 = A2(null);
+    const shown9 = A2(null);
     const [query3, setQuery] = d2("");
     const [at2, setAt] = d2(0);
     const [sure, setSure] = d2(null);
@@ -22383,7 +23048,7 @@ ${pays}
       return () => document.removeEventListener("mousedown", outside, true);
     }, []);
     _2(() => {
-      shown8.current?.querySelector("[aria-selected=true]")?.scrollIntoView({ block: "nearest" });
+      shown9.current?.querySelector("[aria-selected=true]")?.scrollIntoView({ block: "nearest" });
     }, [at2, query3]);
     const run2 = (c4, by) => {
       if (!c4) return;
@@ -22461,7 +23126,7 @@ ${pays}
                 }
               }
             ),
-            /* @__PURE__ */ u3("ul", { ref: shown8, id: "palList", class: "pallist", role: "listbox", "aria-label": "Commands", children: found2.map((c4, i3) => /* @__PURE__ */ u3(
+            /* @__PURE__ */ u3("ul", { ref: shown9, id: "palList", class: "pallist", role: "listbox", "aria-label": "Commands", children: found2.map((c4, i3) => /* @__PURE__ */ u3(
               "li",
               {
                 id: optId(c4),
@@ -22589,16 +23254,15 @@ ${pays}
   // web/src/parts/ContextMenu.tsx
   function ContextMenu({ label, x: x3, y: y3, items, close: close3 }) {
     const box = A2(null);
-    const [at2, setAt] = d2({ left: x3, top: y3 });
     const [sure, setSure] = d2("");
     const buttons = () => [...box.current?.querySelectorAll("[role=menuitem]:not([disabled])") || []];
     _2(() => {
-      const m3 = box.current?.getBoundingClientRect();
-      if (!m3) return;
-      setAt({ left: Math.max(8, Math.min(x3, innerWidth - m3.width - 8)), top: y3 + m3.height > innerHeight - 8 ? Math.max(8, y3 - m3.height) : y3 });
+      if (box.current) putInside(box.current, x3, y3);
     }, [x3, y3]);
-    h2(() => {
+    _2(() => {
       buttons()[0]?.focus();
+    }, []);
+    _2(() => {
       const outside = (e3) => {
         if (!box.current?.contains(e3.target)) close3();
       };
@@ -22619,7 +23283,6 @@ ${pays}
         class: "menu rowmenu",
         role: "menu",
         "aria-label": label,
-        style: { left: at2.left + "px", top: at2.top + "px" },
         onKeyDown: (e3) => {
           if (e3.key === "Escape") {
             e3.preventDefault();
@@ -22717,11 +23380,16 @@ ${pays}
   }
 
   // web/src/app.ts
-  var placed = false;
+  var placed2 = false;
   function show3(name) {
+    if (name === "choose") {
+      show3("status");
+      pickStatusPart("find");
+      return;
+    }
     const picked = name === "app" ? "status" : name;
     const was = document.querySelector(".screen.active")?.id;
-    if (placed && was !== name) leavePlace(was);
+    if (placed2 && was !== name) leavePlace(was);
     if ((was === "status" || was === "app") && picked !== "status") leftStatus();
     $$("nav button[data-screen]").forEach((b2) => {
       b2.classList.toggle("active", b2.dataset.screen === picked);
@@ -22729,8 +23397,8 @@ ${pays}
       else b2.removeAttribute("aria-current");
     });
     document.querySelectorAll(".screen").forEach((s3) => s3.classList.toggle("active", s3.id === name));
-    if (!placed || was !== name) arrivePlace(name);
-    placed = true;
+    if (!placed2 || was !== name) arrivePlace(name);
+    placed2 = true;
     setupNav();
     freshen(name);
     drawHealth2();
@@ -22760,7 +23428,7 @@ ${pays}
     }
     if (name === "settings") {
       hostData.fresh(minute);
-      if (!Object.keys(changed).length) settingsData.fresh(minute);
+      if (!Object.keys(changed2).length) settingsData.fresh(minute);
     }
     if (name === "tidy") tidyData.fresh(minute);
     if (name === "finances") {
@@ -22815,8 +23483,22 @@ ${pays}
     show3(name);
     remember2();
   }
-  var back2 = [];
-  var ahead = [];
+  var keep3 = 500;
+  var kept5 = (() => {
+    try {
+      return JSON.parse(localStorage.getItem("homelab.history") || "{}");
+    } catch {
+      return {};
+    }
+  })();
+  var back2 = Array.isArray(kept5.back) ? kept5.back.slice(-keep3) : [];
+  var ahead = Array.isArray(kept5.ahead) ? kept5.ahead.slice(-keep3) : [];
+  function keepHistory() {
+    try {
+      localStorage.setItem("homelab.history", JSON.stringify({ back: back2.slice(-keep3), ahead: ahead.slice(-keep3) }));
+    } catch {
+    }
+  }
   var current;
   var moving = false;
   onTabChange(() => remember2());
@@ -22826,8 +23508,9 @@ ${pays}
     const next = { screen, app: screen === "app" ? openedApp() : void 0, tab: tabbed[screen]?.now() };
     if (!moving && current && (current.screen !== next.screen || current.app !== next.app || current.tab !== next.tab)) {
       back2.push(current);
-      if (back2.length > 50) back2.shift();
+      if (back2.length > keep3) back2.shift();
       ahead.length = 0;
+      keepHistory();
     }
     current = next;
   }
@@ -22856,6 +23539,7 @@ ${pays}
     if (!p3) return false;
     if (current) ahead.push(current);
     visit(p3);
+    keepHistory();
     swipeHint("back");
     return true;
   }
@@ -22864,6 +23548,7 @@ ${pays}
     if (!p3) return false;
     if (current) back2.push(current);
     visit(p3);
+    keepHistory();
     swipeHint("forward");
     return true;
   }
@@ -22911,7 +23596,7 @@ ${pays}
     const first = document.querySelector(".screen.active")?.id;
     if (first) {
       arrivePlace(first);
-      placed = true;
+      placed2 = true;
     }
   }
   remember2();
@@ -23001,7 +23686,7 @@ ${pays}
       e3.preventDefault();
       if (current2) reload(current2);
     } else if (e3.key.toLowerCase() === "f") {
-      const search = { choose: "search", settings: "settingsSearch" }[current2];
+      const search = { status: "statusFind", settings: "settingsSearch" }[current2];
       if (search) {
         e3.preventDefault();
         $(search).focus();

@@ -10,7 +10,8 @@ import { mountUninstall, type UninstallActions } from '../settings/Uninstall';
 import { store } from '../store';
 import { mountNav, mountPagePicker, type NavGroup } from '../settings/Nav';
 import { lastSteps, renderAppearance, stepsData } from './setup';
-import { catalog, renderApps, replan, selected } from './choose';
+import { catalog, openInstall } from './choose';
+import { keepsTabs, tabChanged } from '../tabs';
 import { statusById } from './status';
 import { navigate, show } from '../app';
 import { $, $1, errorText, go, onPhone, showError, thisMachine } from '../core';
@@ -116,7 +117,7 @@ const peopleActions: PeopleActions = {
   },
   openWelcome: (username) => { go().OpenWelcome(username).catch(showError); },
   openSheet: (username) => { go().OpenSheet(username).catch(showError); },
-  installPocket: () => { selected.add('pocket-id'); navigate('choose'); renderApps(); replan(); },
+  installPocket: () => openInstall(['pocket-id']),
   // Said on the screen, with ways to hand them their welcome page, rather than opened by itself.
   added: async (name) => {
     const added = (await go().People()).find((p) => p.name === name);
@@ -360,7 +361,10 @@ function pickSettingsPage(name) {
   $('settingsSearch').value = '';
   filterSettings();
   document.querySelector('main').scrollTo({ top: 0 });
+  tabChanged();
 }
+// Each of Settings' pages a step for Back and Forward (the owner, Nov 25: "more memory … to go back and forth further").
+keepsTabs('settings', () => settingsPage, (page) => { settingsPage = page; $('settingsSearch').value = ''; filterSettings(); });
 // A page in a folded category has no button until its fold opens: picked
 // directly, its fold opens with it.
 export function showSettingsPage(name) {

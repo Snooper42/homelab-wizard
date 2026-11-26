@@ -42,3 +42,22 @@ func TestParseDevices(t *testing.T) {
 		t.Error("no error for a status that does not read")
 	}
 }
+
+// The web page answers only at home: a phone on the tailnet is at home while Tailscale reaches it straight over a home
+// address, not over the internet, through a relay, offline, or unknown.
+func TestAtHome(t *testing.T) {
+	status := []byte(`{"Peer":{
+		"a":{"TailscaleIPs":["100.64.0.7","fd7a::7"],"Online":true,"CurAddr":"192.168.1.23:41641"},
+		"b":{"TailscaleIPs":["100.64.0.8"],"Online":true,"CurAddr":"203.0.113.9:41641"},
+		"c":{"TailscaleIPs":["100.64.0.9"],"Online":true,"CurAddr":"","Relay":"nyc"},
+		"d":{"TailscaleIPs":["100.64.0.10"],"Online":false,"CurAddr":"10.0.0.5:41641"},
+		"e":{"TailscaleIPs":["100.64.0.11"],"Online":true,"CurAddr":"[fd00::5]:41641"}}}`)
+	for ip, want := range map[string]bool{"100.64.0.7": true, "fd7a::7": true, "100.64.0.8": false, "100.64.0.9": false, "100.64.0.10": false, "100.64.0.11": true, "100.64.0.99": false} {
+		if got := AtHome(status, ip); got != want {
+			t.Errorf("%s at home: %v, want %v", ip, got, want)
+		}
+	}
+	if AtHome([]byte("not json"), "100.64.0.7") {
+		t.Error("an unreadable status says at home")
+	}
+}

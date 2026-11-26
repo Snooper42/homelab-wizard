@@ -605,7 +605,11 @@ html.companion #choose, html.companion:not(.finances) #finances, html.companion:
 /* Settings on a phone (#596's gap 6): the settings it may change; what's the computer's own stays there. */
 html.companion #settings :is(.reportrow, #reportLog, #reportActions, #uninstallCard, #appearanceCard, #peopleCard, #phonesCard, #tailnetCard) { display:none !important; }
 html.companion:not(.can-change) #saveSettings { display:none !important; }
-html.companion #weekCard, html.companion .menuwrap, html.companion #updateAll, html.companion #openDuplicati, html.companion #moveCard, html.companion .rowActions button.small:not(.rowmain) { display:none; }
+html.companion .menuwrap, html.companion #moveCard, html.companion .rowActions button.small:not(.rowmain) { display:none; }
+/* Parity with the computer (the owner, Nov 26): Update apps for a device that may change things; Open on a phone where
+   this page isn't on one already. */
+html.companion:not(.can-change) #updateAll { display:none; }
+@media (max-width: 700px) { html.companion .openphone { display:none; } }
 /* Finances' Export changes nothing: its menu shows on a phone, even one allowed only to look. */
 html.companion .fx-export .menuwrap { display:inline-block; }
 /* Quick actions: a finger held on a row opens its menu, so on a phone that may make changes the row's text isn't selected
@@ -3332,26 +3336,25 @@ html.os-mac:not(.companion) .foot { border-top:1px solid var(--shade-1); padding
    computer at the foot. Moving between screens changes only the menu's items and the mark; nothing in the sidebar
    moves, slides or animates. A window under 700px keeps its rail. */
 @container window (min-width: 701px) {
-  html:not(.companion) nav { display:grid; grid-template-columns:repeat(5, minmax(0, 1fr)); grid-template-rows:auto auto 1fr auto auto auto; grid-auto-flow:row dense; column-gap:2px; }
-  html:not(.companion) nav:has(> button[data-screen="setup"]:not([hidden])) { grid-template-columns:repeat(6, minmax(0, 1fr)); }
-  html:not(.companion) nav > * { grid-column:1 / -1; }
-  html:not(.companion) nav > button:is([data-screen="choose"], [data-screen="status"], [data-screen="backups"], [data-screen="tidy"], [data-screen="finances"], [data-screen="setup"]) { grid-column:auto; grid-row:2; justify-content:center; padding:8px 0; margin-bottom:10px; }
-  html:not(.companion) nav > button:is([data-screen="choose"], [data-screen="status"], [data-screen="backups"], [data-screen="tidy"], [data-screen="finances"], [data-screen="setup"]) > span:not(.count) { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
-  html:not(.companion) nav > button:is([data-screen="choose"], [data-screen="status"], [data-screen="backups"], [data-screen="tidy"], [data-screen="finances"], [data-screen="setup"]) .count { position:absolute; top:0; right:2px; min-width:0; padding:0 5px; font-size:10px; line-height:15px; }
-  html:not(.companion) nav > button:is([data-screen="choose"], [data-screen="status"], [data-screen="backups"], [data-screen="tidy"], [data-screen="finances"], [data-screen="setup"]).active::before { display:none; }
-  html:not(.companion) nav > .navbody { align-self:start; }
+  html nav { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); grid-template-rows:auto auto 1fr auto auto auto; grid-auto-flow:row dense; column-gap:2px; }
+  html nav:has(> button[data-screen="setup"]:not([hidden])) { grid-template-columns:repeat(5, minmax(0, 1fr)); }
+  html nav > * { grid-column:1 / -1; }
+  html nav > button:is([data-screen="choose"], [data-screen="status"], [data-screen="backups"], [data-screen="tidy"], [data-screen="finances"], [data-screen="setup"]) { grid-column:auto; grid-row:2; justify-content:center; padding:8px 0; margin-bottom:10px; }
+  html nav > button:is([data-screen="choose"], [data-screen="status"], [data-screen="backups"], [data-screen="tidy"], [data-screen="finances"], [data-screen="setup"]) > span:not(.count) { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+  html nav > button:is([data-screen="choose"], [data-screen="status"], [data-screen="backups"], [data-screen="tidy"], [data-screen="finances"], [data-screen="setup"]) .count { position:absolute; top:0; right:2px; min-width:0; padding:0 5px; font-size:10px; line-height:15px; }
+  html nav > button:is([data-screen="choose"], [data-screen="status"], [data-screen="backups"], [data-screen="tidy"], [data-screen="finances"], [data-screen="setup"]).active::before { display:none; }
+  html nav > .navbody { align-self:start; }
 }
 /* In a contrast theme the strip's open screen keeps its bar, along the icon's foot. */
 @media (forced-colors: active) {
   @container window (min-width: 701px) {
-    html:not(.companion) nav > button:is([data-screen="choose"], [data-screen="status"], [data-screen="backups"], [data-screen="tidy"], [data-screen="finances"], [data-screen="setup"]).active::before { display:block; top:auto; bottom:0; left:25%; right:25%; width:auto; height:3px; }
+    html nav > button:is([data-screen="choose"], [data-screen="status"], [data-screen="backups"], [data-screen="tidy"], [data-screen="finances"], [data-screen="setup"]).active::before { display:block; top:auto; bottom:0; left:25%; right:25%; width:auto; height:3px; }
   }
 }
 html.companion nav .navbody { display:contents; }
 .sidemenu:empty { display:none; }
 nav:not(:has(> button[data-screen="status"].active)) #statusSide, nav:not(:has(> button[data-screen="backups"].active)) #backupsSide,
-nav:not(:has(> button[data-screen="choose"].active)) #chooseSide, nav:not(:has(> button[data-screen="setup"].active)) #setupSide,
-html.companion .sidemenu { display:none !important; }
+nav:not(:has(> button[data-screen="choose"].active)) #chooseSide, nav:not(:has(> button[data-screen="setup"].active)) #setupSide { display:none !important; }
 html:not(.companion) nav, html:not(.companion) nav * { transition:none !important; animation:none !important; }
 /* Settings' page list is its menu in the sidebar on the computer (screens/settings.ts moves #settingsNav into
    #settingsSide), under the screens' icons as every screen's menu is; the page takes the whole width. A small window's
@@ -3445,3 +3448,183 @@ table.copies td.nights { white-space:nowrap; text-align:right; }
 table.copies td.nights .dot { margin:0 0 0 3px; }
 /* One column (a small window, big text): the dots would push the table sideways; the squares under Last night say it. */
 @container (max-width: 760px) { #copiesCard table.copies td.nights { display:none; } }
+/* A category's page on Status (status/CategoryPage.tsx, the owner's computer-category pictures): the overview steps aside
+   while one shows; big tiles three across (two on a phone), see-through on a soft violet and teal glow; the apps to add
+   faded, with a dashed edge. */
+#status:not([data-part]) > #statusPart, #status[data-part] > :not(#statusPart, #statusChips, #statusStore), #status:not([data-part="add"]) > #statusStore { display:none !important; }
+main:has(> #status.active[data-part]) { background:radial-gradient(60% 40% at 25% 0, color-mix(in srgb, var(--violet) 10%, transparent), transparent 70%), radial-gradient(50% 40% at 100% 100%, color-mix(in srgb, var(--cyan) 8%, transparent), transparent 70%), var(--bg); }
+.catpage { --cat-tile:color-mix(in srgb, var(--panel) 72%, transparent); --cat-edge:var(--line); }
+.catpage .row.header { align-items:flex-start; }
+.catfind { display:flex; align-items:center; gap:8px; width:260px; max-width:100%; padding:7px 12px; border:1px solid var(--cat-edge); border-radius:10px; background:var(--cat-tile); color:var(--muted); }
+.catfind input { all:unset; flex:1; min-width:0; color:var(--text); font-size:13px; }
+.catfind:focus-within { border-color:var(--accent); }
+.cathead { font-size:14px; font-weight:600; margin:22px 0 10px 4px; }
+.cathead .n { margin-left:6px; color:var(--muted); font-weight:500; }
+.catnone { margin:0 4px; }
+.cattiles { list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:14px; }
+.cattile { position:relative; display:flex; flex-direction:column; align-items:center; gap:4px; min-height:218px; padding:28px 16px 22px; border:1px solid var(--cat-edge); border-radius:20px; background:var(--cat-tile); text-align:center; }
+.cattile:not(.toadd) { cursor:default; }
+.cattile:not(.toadd):hover { border-color:var(--line-strong); }
+.cattile > .dot { position:absolute; top:14px; left:14px; margin:0; }
+.cattile .catmore { position:absolute; top:8px; right:8px; }
+.cattile .appmark { width:64px; height:64px; border-radius:16px; margin-bottom:10px; }
+.cattile .catname { font-size:15px; font-weight:600; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.cattile .catline { font-size:13px; color:var(--muted); max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.cattile .catline.bad { color:var(--bad); }
+.cattile .catbtn { margin-top:auto; padding-top:12px; display:flex; gap:6px; }
+.cattile .catbtn button.small { border-radius:999px; padding:4px 14px; font-weight:600; }
+.cattile .catbtn button.small .icon { width:13px; height:13px; }
+.cattile .catbtn .lookonly { display:none; }
+.cattile.toadd { border-style:dashed; background:color-mix(in srgb, var(--cat-tile) 55%, transparent); }
+.cattile.toadd .appmark { opacity:.85; }
+@container (max-width: 760px) { .cattiles { grid-template-columns:repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 700px) { .cattiles { grid-template-columns:repeat(2, minmax(0, 1fr)); gap:10px; } .cattile { min-height:190px; padding:24px 10px 16px; } .catpage .row.header { flex-wrap:wrap; } .catfind { width:100%; } }
+@media (prefers-color-scheme: dark) and (prefers-contrast: no-preference) {
+  main:has(> #status.active[data-part]) { background:radial-gradient(60% 40% at 25% 0, color-mix(in srgb, var(--violet) 18%, transparent), transparent 70%), radial-gradient(50% 40% at 100% 100%, color-mix(in srgb, var(--cyan) 10%, transparent), transparent 70%), var(--fin-night); }
+  .catpage { --cat-tile:var(--glow-04); --cat-edge:var(--glow-1); }
+  .cattile:not(.toadd):hover { border-color:var(--glow-16); }
+}
+/* Status' menu: each category's apps in grey, an amber dot where one is stopped. */
+nav .sidemenulist .total { margin-left:auto; font-size:12px; color:var(--nav-muted); font-variant-numeric:tabular-nums; }
+nav .sidemenulist .sidedot { margin-left:auto; width:7px; height:7px; border-radius:50%; background:var(--amber); }
+nav .sidemenulist .sidedot + .total { margin-left:8px; }
+/* Analytics on Status (status/Analytics.tsx, the owner's web-analytics pictures): three cards of one anatomy (title row,
+   one figure, one line, a footer at the same height), the timeline's two charts, and each app's use. Same backdrop and
+   see-through cards as a category's page. */
+.antpage { --cat-tile:color-mix(in srgb, var(--panel) 72%, transparent); --cat-edge:var(--line); }
+.antpage .card { background:var(--cat-tile); border:1px solid var(--cat-edge); border-radius:20px; box-shadow:none; padding:18px 20px; margin:0 0 14px; }
+.anthead { display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin-bottom:8px; }
+#statusPart .anthead h2 { margin:0; font-size:15px; font-weight:600; }
+.anthead .muted { font-size:12px; }
+.anttiles { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:14px; margin-bottom:14px; }
+.anttiles .card { margin:0; display:flex; flex-direction:column; min-height:196px; }
+.antfig { font-size:30px; font-weight:700; letter-spacing:-.02em; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.antfig small { font-size:20px; margin-left:2px; }
+.antfig .muted { font-size:15px; font-weight:500; letter-spacing:0; margin-left:6px; }
+.antfig.bad { color:var(--bad); }
+.antline { font-size:13px; margin-top:6px; min-height:22px; }
+.antwho { display:inline-flex; align-items:center; gap:4px; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.antwho .appmark.mini, .antapp .appmark.mini { width:20px; height:20px; border-radius:6px; font-size:11px; }
+.antfoot { margin-top:auto; padding-top:14px; height:52px; display:flex; align-items:flex-end; }
+.antfoot .spark { width:100%; height:36px; color:var(--violet); }
+.antbar { display:block; flex:1; height:8px; border-radius:999px; background:var(--sunken); overflow:hidden; }
+.antbar > span { display:block; height:100%; border-radius:inherit; background:var(--violet); }
+.antimeline { margin:8px 0 4px; }
+.antimeline figcaption { font-size:12px; color:var(--muted); margin-bottom:4px; }
+.antplot { display:flex; gap:10px; align-items:stretch; }
+.antplot svg { flex:1; height:110px; overflow:visible; }
+.antplot .grid { stroke:var(--line); stroke-width:1; vector-effect:non-scaling-stroke; }
+.antplot .line { fill:none; stroke-width:1.6; stroke-linejoin:round; }
+.antimeline.cpu .line { stroke:var(--violet); } .antimeline.cpu .area { fill:color-mix(in srgb, var(--violet) 14%, transparent); }
+.antimeline.mem .line { stroke:var(--cyan); } .antimeline.mem .area { fill:color-mix(in srgb, var(--cyan) 14%, transparent); }
+.antmarks { width:52px; display:flex; flex-direction:column; justify-content:space-around; font-size:11px; color:var(--muted); text-align:right; font-variant-numeric:tabular-nums; }
+.antwait { margin:12px 0 4px; }
+.anttable { width:100%; border-collapse:collapse; font-size:13px; }
+.anttable th { text-align:left; font-size:11px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); padding:8px 10px; border-bottom:1px solid var(--cat-edge); }
+.anttable td { padding:9px 10px; border-bottom:1px solid var(--cat-edge); vertical-align:middle; }
+.anttable tr:last-child td { border-bottom:0; }
+.anttable tr.topage { cursor:default; } .anttable tr.topage:hover td { background:var(--cat-tile); }
+.anttable .num { text-align:right; font-variant-numeric:tabular-nums; color:var(--muted); white-space:nowrap; }
+.antapp { display:inline-flex; align-items:center; gap:10px; font-weight:500; }
+.antmem { display:flex; align-items:center; gap:10px; white-space:nowrap; font-variant-numeric:tabular-nums; }
+.antmem .antbar { max-width:160px; height:6px; }
+.anttable td.antspark .spark { width:120px; height:18px; color:var(--violet); }
+.antall { display:block; margin:10px auto 0; font-weight:600; }
+@container (max-width: 760px) { .anttiles { grid-template-columns:1fr; } .anttiles .card { min-height:0; } .anttable .antspark { display:none; } }
+@media (max-width: 700px) { .anttiles { grid-template-columns:1fr; } .anttable .antspark, .anttable th:nth-child(5), .anttable td:nth-child(5) { display:none; } }
+@media (prefers-color-scheme: dark) and (prefers-contrast: no-preference) {
+  .antpage { --cat-tile:var(--glow-04); --cat-edge:var(--glow-1); }
+  .antbar { background:var(--glow-08); }
+}
+.antwho .antname { min-width:0; overflow:hidden; text-overflow:ellipsis; }
+.antwho .antfigs { flex:none; }
+.antwho .appmark.mini { margin-right:4px; }
+/* The phone's page on a wide window looks as the computer (the owner, Nov 25: "mimic the computer app"): the same strip of
+   icons, sized to the screens a phone has (Status and Backups, Finances where allowed: no empty columns), the open
+   screen's menu under it, Settings at the foot. Narrow, the tab bar stays, and Status' menu is a row of chips. */
+@container window (min-width: 701px) {
+  html.companion nav { grid-template-columns:repeat(2, minmax(0, 1fr)); }
+  html.companion.finances nav { grid-template-columns:repeat(3, minmax(0, 1fr)); }
+  html.companion nav > .navbody { display:block; }
+  html.companion nav > button[data-screen="settings"] { margin-top:auto; }
+}
+@media (max-width: 700px) { html.companion nav .sidemenu { display:none !important; } }
+#statusChips { display:none; }
+@media (max-width: 700px) {
+  html.companion #statusChips { display:block; margin:0 0 12px; }
+  html.companion #statusChips .sidemenulist { display:flex; flex-direction:row; flex-wrap:wrap; gap:6px; list-style:none; margin:0; padding:0; }
+  #statusChips .finmenuitem { display:inline-flex; align-items:center; gap:5px; white-space:nowrap; min-height:36px; padding:4px 12px; border:1px solid var(--line); border-radius:999px; background:var(--panel); color:var(--text); font:inherit; font-size:13px; max-width:100%; }
+  #statusChips .finmenuitem > span:first-of-type { overflow:hidden; text-overflow:ellipsis; }
+  #statusChips .finmenuitem.on { background:var(--text); color:var(--bg); border-color:transparent; }
+  #statusChips .finmenuitem .icon { display:none; }
+  #statusChips .total { color:inherit; opacity:.6; font-size:12px; }
+  #statusChips .sidedot { width:7px; height:7px; border-radius:50%; background:var(--amber); }
+}
+/* Installing (choose/InstallSheet.tsx): the app's page atop the plan, in a sheet; Find an app on the overview; a tile to
+   add opens its sheet; Your own apps' Add tile. */
+.sheethead { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:8px; }
+.sheethead h2 { margin:0; font-size:20px; }
+.installabout { display:flex; align-items:flex-start; gap:16px; padding:4px 0 14px; margin-bottom:12px; border-bottom:1px solid var(--line); }
+.installabout > .appmark, .installabout > .aboutmarks { flex:none; }
+.installabout .abouttext { flex:1; min-width:0; }
+.installabout > .appmark { width:64px; height:64px; border-radius:16px; }
+.installabout .aboutmarks { display:flex; padding-right:10px; } .installabout .aboutmarks .appmark { width:44px; height:44px; border-radius:12px; margin-right:-10px; box-shadow:0 0 0 2px var(--panel); }
+.installabout p { margin:0; }
+.aboutwhat { font-size:15px; }
+.aboutfacts { font-size:13px; margin-top:4px !important; }
+#installBody aside.plan { position:static; width:auto; border:0; box-shadow:none; padding:0; background:none; }
+#installBody aside.plan > h2 { font-size:14px; margin:0 0 6px; }
+.statusfind { width:220px; }
+#status[data-part] .statusfind { display:none; }
+.cattile.opens { cursor:default; } .cattile.opens:hover { border-color:var(--line-strong); }
+.cattile .ownmark { display:inline-flex; align-items:center; justify-content:center; background:var(--sunken); color:var(--muted); border:1px dashed var(--line-strong); }
+.cattile .ownmark .icon { width:28px; height:28px; }
+#customBody .customForm { padding:0; }
+@media (max-width: 700px) { #status > .row.header { flex-wrap:wrap; } #status > .row.header .toolbar { flex:1 1 100%; min-width:0; flex-wrap:wrap; } .statusfind { width:auto; flex:1 1 100%; min-width:0; order:-1; } .statusfind input { width:100%; } }
+#installSheet .sheethead h2, #customSheet .sheethead h2 { font-size:22px; font-weight:700; }
+/* An app you could add: its own page, as an installed app's (choose/InstallSheet.tsx): breadcrumbs and its head across,
+   its facts and what to know on the left, the plan with Install in a card on the right, staying in view. */
+#statusStore { display:grid; grid-template-columns:minmax(0, 3fr) minmax(300px, 2fr); grid-template-areas:"head head" "facts facts" "notes plan"; gap:0 18px; align-items:start; }
+#storeHead { grid-area:head; margin-bottom:18px; } #storeFacts { grid-area:facts; } #storeNotes { grid-area:notes; } #storePlan { grid-area:plan; position:sticky; top:12px; padding:18px 20px; }
+#storeFacts:empty { display:none; }
+#storePlan aside.plan { position:static; width:auto; border:0; box-shadow:none; padding:0; margin:0; background:none; }
+#storePlan aside.plan > h2 { margin-top:0; }
+.storehead .appmark { width:88px; height:88px; border-radius:22px; }
+.storehead .storemarks { display:flex; } .storehead .storemarks .appmark { width:64px; height:64px; border-radius:16px; margin-right:-14px; box-shadow:0 0 0 3px var(--bg); }
+.storehead .storemarks + div { margin-left:24px; }
+.storenotes { padding:16px 20px; margin-top:0; }
+.storenotes h2 { margin:0 0 8px; font-size:15px; }
+.storenotes ul { margin:0; padding-left:18px; display:grid; gap:6px; color:var(--muted); }
+.storenotes li.warn { color:var(--warn); }
+.storeapps { list-style:none; margin:0; padding:6px; display:grid; gap:2px; }
+.storeapp { all:unset; box-sizing:border-box; display:flex; align-items:center; gap:12px; width:100%; padding:10px 12px; border-radius:10px; cursor:default; }
+.storeapp:hover { background:var(--sunken); } .storeapp:focus-visible { outline:2px solid var(--accent); outline-offset:-2px; }
+.storeapp > span:last-child { display:flex; flex-direction:column; min-width:0; } .storeapp .muted { font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+@container (max-width: 760px) { #statusStore { grid-template-columns:1fr; grid-template-areas:"head" "facts" "plan" "notes"; } #storePlan { position:static; margin-bottom:14px; } }
+@media (max-width: 700px) { .storehead .appmark { width:64px; height:64px; border-radius:16px; } }
+@media (prefers-color-scheme: dark) and (prefers-contrast: no-preference) {
+  #status[data-part="add"] .card { background:var(--glow-04); border-color:var(--glow-1); box-shadow:none; }
+  .storeapp:hover { background:var(--glow-06); }
+}
+#storeFacts { margin-bottom:18px; }
+/* The design language through every screen (the owner, Nov 25: "I need this design language to be followed all
+   throughout the app"): the soft violet and teal glow behind Status' overview, an app's page, Backups, Settings and
+   Setup, as behind a category's page and Analytics; their cards see-through with a thin edge and rounder corners. In the
+   dark, the near-black of Finances behind them. Not when the system asks for more contrast (that keeps its own). */
+@media (prefers-contrast: no-preference) {
+  main:has(> :is(#status, #app, #backups, #settings, #setup).active) { background:radial-gradient(60% 40% at 25% 0, color-mix(in srgb, var(--violet) 10%, transparent), transparent 70%), radial-gradient(50% 40% at 100% 100%, color-mix(in srgb, var(--cyan) 8%, transparent), transparent 70%), var(--bg); background-attachment:local; }
+  :is(#status, #app, #backups, #settings, #setup) .card:not(.sheet, .tile) { border-radius:18px; background:color-mix(in srgb, var(--panel) 78%, transparent); border-color:var(--line); }
+}
+@media (prefers-color-scheme: dark) and (prefers-contrast: no-preference) {
+  main:has(> :is(#status, #app, #backups, #settings, #setup).active) { background:radial-gradient(60% 40% at 25% 0, color-mix(in srgb, var(--violet) 18%, transparent), transparent 70%), radial-gradient(50% 40% at 100% 100%, color-mix(in srgb, var(--cyan) 10%, transparent), transparent 70%), var(--fin-night); background-attachment:local; }
+  :is(#status, #app, #backups, #settings, #setup) { --panel:var(--fin-night-card); --sunken:var(--fin-night-sunken); --line:var(--fin-night-line); --line-strong:var(--fin-night-line-strong); }
+  :is(#status, #app, #backups, #settings, #setup) .card:not(.sheet, .tile) { background:var(--glow-04); border-color:var(--glow-1); box-shadow:none; }
+}
+/* Settings' sticky bar over the glow: see-through with a blur, not a band of its own. The overview's Find an app box. */
+@media (prefers-contrast: no-preference) {
+  #settings .savebar { background:color-mix(in srgb, var(--bg) 55%, transparent); -webkit-backdrop-filter:blur(16px); backdrop-filter:blur(16px); }
+}
+@media (prefers-color-scheme: dark) and (prefers-contrast: no-preference) {
+  #settings .savebar { background:color-mix(in srgb, var(--fin-night) 55%, transparent); }
+}
+.statusfind { border-color:var(--line); background:color-mix(in srgb, var(--panel) 72%, transparent); }

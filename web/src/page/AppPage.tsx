@@ -25,6 +25,10 @@ import { attackDetail, attackFrom, attackWords } from '../status/attack';
 /** What the page does; screens/apppage.ts runs each. */
 export interface AppPageActions {
   back: () => void;
+  /** The Status page it was opened from (a category, Analytics, All apps), between Status and the app: none from the overview. */
+  from?: { label: string; go: () => void } | null;
+  /** Status' overview. */
+  overview?: () => void;
   /** start, stop, restart, or rollback. */
   act: (action: string) => void;
   /** The output of its last command, in a sheet (after a failure). */
@@ -108,7 +112,7 @@ export interface AppPageProps {
   switching: Record<string, boolean>;
   /** The app's own icon as a data: URL (its favicon, kept by the Go side); "" for none. */
   icon: string;
-  /** The phone companion: no Open on a phone. */
+  /** The web page (homelab serve): its Dozzle is kept to the computer. */
   companion: boolean;
   /** The proxy's and CrowdSec's pages: what CrowdSec stopped ('reading' until it answers, null when it could not be read). Left out on other apps' pages. */
   stopped?: crowdsec.Protection | null | 'reading';
@@ -318,9 +322,9 @@ function Header({ p }: { p: AppPageProps }) {
               cls="btn change" items={stopChoices().map((c) => ({ label: c.label, onClick: () => on.stopFor(c.until) }))} foot="It starts again by itself then." />
           </>
           : run('start', 'Start', 'Start it'))}
-        {a.state === 'running' && a.address && !p.companion && <button class="btn" disabled={busy} onClick={on.phone}><Icon name="phone" />Open on a phone</button>}
+        {a.state === 'running' && a.address && <button class="btn openphone" disabled={busy} onClick={on.phone}><Icon name="phone" />Open on a phone</button>}
         {a.state === 'running' && url && <button class="primary small" onClick={() => on.open(url)}>Open</button>}
-        {!p.companion && <GearButton name={a.name} unsaved={p.unkept || 0} open={on.signIn} />}
+        <GearButton name={a.name} unsaved={p.unkept || 0} open={on.signIn} />
       </div>
     </div>
   );
@@ -532,7 +536,7 @@ function More({ p }: { p: AppPageProps }) {
         <button class="small change" disabled={p.busy} title="Dumps every database and copies the settings now, as the nightly backup does" onClick={p.on.backupNow}>Back up now</button>
         <button class="small" onClick={p.on.openBackups}>Open Backups</button>
       </div>
-      {container && !p.companion && (
+      {container && (
         <div class="remove">
           <button class="small danger change" disabled={p.busy} title="Backs it up first; its container goes, its data stays in the homelab folder" onClick={p.on.remove}>Remove {p.a.name}…</button>
           <span class="muted">A backup first; its data stays, so Choose apps can bring it back.</span>
@@ -545,7 +549,7 @@ function More({ p }: { p: AppPageProps }) {
 export function AppPage(p: AppPageProps) {
   return (
     <div class="apppage">
-      <Crumbs trail={[{ label: 'Status', go: p.on.back }]} here={p.a.name} />
+      <Crumbs trail={p.on.from ? [{ label: 'Status', go: p.on.overview || p.on.back }, p.on.from] : [{ label: 'Status', go: p.on.back }]} here={p.a.name} />
       <Header p={p} />
       <Facts p={p} />
       <div class="pagecols">

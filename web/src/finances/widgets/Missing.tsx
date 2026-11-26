@@ -36,7 +36,7 @@ export function MissingWidget({ v, L, open }: { v: finance.View; L: Lookup; open
   return (
     <Widget title={list.length === 1 ? 'A bill not seen yet' : 'Bills not seen yet'} span="all" kind="fx-missing"
       actions={open && <button type="button" class="small" onClick={open}>Transactions</button>}>
-      <p class="fx-sub fx-lead">{list.length === 1 ? 'Paid before, but nothing in your transactions pays it yet. If it went through, link it in Transactions.' : 'Paid before, but nothing in your transactions pays these yet. If one went through, link it in Transactions.'}</p>
+      <p class="fx-sub fx-lead">{list.length === 1 ? 'Nothing in your transactions pays it yet.' : 'Nothing in your transactions pays these yet.'}</p>
       <Rows kind="fx-rows">
         {list.map((m) => {
           const x = L.payment[m.payment];

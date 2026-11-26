@@ -4,7 +4,8 @@
 // as the press begins, since WebKit moves no focus on a click). Opened from
 // the keyboard, its first item takes the focus.
 import { type ComponentChildren } from 'preact';
-import { useEffect, useRef, useState } from 'preact/hooks';
+import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
+import { fitMenu } from './place';
 
 export interface MenuItem {
   label: string;
@@ -37,6 +38,15 @@ export function MenuButton({ label, title, menuLabel, items, foot, disabled, cls
     setOpen(true);
     if (first) requestAnimationFrame(() => { const m = all(); m[first === 'first' ? 0 : m.length - 1]?.focus(); });
   };
+  // Kept whole in sight (the owner, Nov 25: a menu "out of frame behind the screen"): it opens under its button, aligned
+  // to the button's right edge, but turns to its left edge when that would run past the screen's content (behind the
+  // sidebar), and opens upward when there's no room below. Measured once it's drawn, before it's painted.
+  const menu = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const m = menu.current;
+    if (!open || !m) return;
+    fitMenu(m, btn.current);
+  }, [open]);
   return (
     <span class="menuwrap" ref={wrap}
       onKeyDown={(e) => {
@@ -49,13 +59,13 @@ export function MenuButton({ label, title, menuLabel, items, foot, disabled, cls
         m[(to + m.length) % m.length].focus();
       }}
       onFocusOut={() => setTimeout(() => { if (open && document.hasFocus() && !wrap.current?.contains(document.activeElement)) close(); })}>
-      <button type="button" ref={btn} class={cls} title={title} aria-haspopup="menu" aria-expanded={open} disabled={disabled}
+      <button type="button" ref={btn} class={cls} title={open ? undefined : title} aria-haspopup="menu" aria-expanded={open} disabled={disabled}
         onClick={(e) => (open ? close() : show(e.detail === 0 ? 'first' : null))}
         onKeyDown={(e) => { if (!open && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) { e.preventDefault(); show(e.key === 'ArrowDown' ? 'first' : 'last'); } }}>
         {label}<span class="drop" aria-hidden="true">▾</span>
       </button>
       {open && (
-        <div class="menu" role="menu" aria-label={menuLabel}>
+        <div class="menu" role="menu" aria-label={menuLabel} ref={menu}>
           {items.map((it) => <button key={it.label} type="button" role="menuitem" onClick={() => { close(true); it.onClick(); }}>{it.label}</button>)}
           {foot && <p class="menufoot muted">{foot}</p>}
         </div>

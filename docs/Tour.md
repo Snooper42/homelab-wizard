@@ -12,7 +12,7 @@ This page walks through the app screen by screen. The pictures are the real app 
 |---|---|
 | [Status](#status) | Is everything running? |
 | [An app's page](#an-apps-page) | What is this app doing, and how do I fix it? |
-| [Choose apps](#choose-apps) | What can I add, and what does it replace? |
+| [Adding an app](#adding-an-app) | What can I add, and what does it replace? |
 | [Setup](#setup) | What's left to finish, and can it do it for me? |
 | [Backups](#backups) | Is everything copied, and does a restore really work? |
 | [Finances](#finances) | What does each paycheck leave once the bills are paid? |
@@ -57,13 +57,13 @@ The log never leaves the house: **Explain this** uses Ollama on this computer, n
 
 More: [Monitoring](<Monitoring.md>), [Automation](<Automation.md#nightly-updates-the-background-agent>).
 
-## Choose apps
+## Adding an app
 
-Where the homelab grows. **Start here** has the five things most homes want first (Photos, Passwords, Movies and TV, Music, Files); **Add more** lists every app by category, each saying what it does and which subscription it can replace. Tick what you want, or pick a preset. The plan on the right says in one line what it will install, names any setting an app needs first, and warns if the apps wouldn't fit in this computer's memory. Then **Install**.
+Where the homelab grows, on Status. Each kind of app in Status' menu (Media, Network, …) has a page: the apps you have as tiles, then every app of that kind you could add. **Find an app** at the top of Status opens **All apps**: what goes with the apps you run, the sets most homes want first (Photos, Passwords, Movies and TV, Music, Files, Household…), and every app, found by name or by what it replaces (*spotify* finds Navidrome). An app you could add has a page of its own, as an installed app's: what it does, what it replaces, what it goes with, what to know, and beside them the plan, which says in one line what it will install, asks for any setting first, and warns if the apps wouldn't fit in this computer's memory. Then **Install**. **Your own apps** has *Add your own app* for any container image.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="images/app-choose-dark.png">
-  <img alt="Choose apps: apps by category with what each replaces, and the install plan" src="images/app-choose.png">
+  <img alt="The Household set's page: its apps, and the plan with Install beside them" src="images/app-choose.png">
 </picture>
 
 More: [Services](<Services.md>), every app's own page.
