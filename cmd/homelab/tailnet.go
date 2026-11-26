@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/Snooper42/homelab-wizard/internal/appdata"
 	"net/url"
 	"os"
 	"os/exec"
@@ -93,7 +94,7 @@ func (h *homelab) tailnetSetup(ctx context.Context, auto bool) error {
 	}
 	routes := tailnet.Routes(running, compose.MapLookup(env))
 	cfg := tailnet.ServeConfig(routes)
-	path := filepath.Join(h.root, tailnet.ConfigFile)
+	path := appdata.Path(h.root, "tailscale", "serve.json")
 	old, _ := os.ReadFile(path)
 	if !bytes.Equal(old, cfg) {
 		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
