@@ -3,10 +3,13 @@ import SwiftUI
 
 /// Analytics on Status, as the computer's (app-status-analytics.png): Processor, Memory and Drives as three cards of
 /// the Overview's anatomy, the apps' processor and memory over the minutes since it opened, and what each app uses,
-/// heaviest first, eight then Show All. The usage card is read again every 15 seconds while it's open.
+/// heaviest first, eight then Show All. The usage card is read again every 15 seconds while it's open; Day, Week and
+/// Month are the computer's kept history (`UsageHistory`), from a computer that serves it to a phone.
 struct AnalyticsPage: View {
     let model: DashboardViewModel
     @State private var all = false
+    @State private var period: UsageSpan = .now
+    @Environment(AppActionsViewModel.self) private var actions
 
     var body: some View {
         let apps = model.liveEvents.status?.apps ?? []
@@ -14,17 +17,25 @@ struct AnalyticsPage: View {
         let samples = model.cards.usageSamples
         let span = UsageNow.span(samples)
         let machine = model.cards.machine
+        let kept = actions.computerAnswers("UsageHistory")
         ScrollView {
             VStack(alignment: .leading, spacing: 12) {
-                Text(verbatim: span)
-                    .font(.subheadline)
-                    .foregroundStyle(Theme.secondaryInk)
+                if kept {
+                    Picker("Over", selection: $period) {
+                        ForEach(UsageSpan.allCases) { Text($0.rawValue).tag($0) }
+                    }
+                    .pickerStyle(.segmented)
+                } else {
+                    Text(verbatim: span)
+                        .font(.subheadline)
+                        .foregroundStyle(Theme.secondaryInk)
+                }
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 300), spacing: 12, alignment: .top)], spacing: 12) {
                     processor(now, samples: samples)
                     memory(now, samples: samples)
                     drives(machine, appsData: now.appsData)
                 }
-                timeline(samples, span: span)
+                timeline(timelineSamples(samples), span: period == .now ? span : period.heading, kept: kept)
                 uses(now, apps: apps)
             }
             .padding(.horizontal)
@@ -38,6 +49,17 @@ struct AnalyticsPage: View {
                 try? await Task.sleep(for: .seconds(15))
             }
         }
+        // Day, Week or Month: read when picked, and again each time.
+        .task(id: period) {
+            guard let days = period.days else { return }
+            await model.cards.readUsageHistory(days: days)
+        }
+    }
+
+    /// The timeline's readings: the minutes since it opened, or the computer's kept ones, thinned.
+    private func timelineSamples(_ now: [UsageSample]) -> [UsageSample] {
+        guard let days = period.days else { return now }
+        return model.cards.usageHistory[days]?.thinned() ?? []
     }
 
     // MARK: The three cards
@@ -103,16 +125,18 @@ struct AnalyticsPage: View {
     // MARK: Over time
 
     @ViewBuilder
-    private func timeline(_ samples: [UsageSample], span: String) -> some View {
+    private func timeline(_ samples: [UsageSample], span: String, kept: Bool) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .firstTextBaseline) {
                 Text(verbatim: span)
                     .font(.headline)
                     .foregroundStyle(Theme.ink)
                 Spacer()
-                Text("A week isn't kept yet")
-                    .font(.subheadline)
-                    .foregroundStyle(Theme.secondaryInk)
+                if !kept {
+                    Text("A week isn't kept yet")
+                        .font(.subheadline)
+                        .foregroundStyle(Theme.secondaryInk)
+                }
             }
             if samples.count > 2 {
                 Text("Processor")
@@ -151,8 +175,12 @@ struct AnalyticsPage: View {
                 }
                 .frame(height: 110)
                 .accessibilityLabel("Memory, \(span.lowercased())")
+            } else if period != .now, let error = model.cards.usageHistoryError {
+                Text(verbatim: error)
+                    .font(.subheadline)
+                    .foregroundStyle(Theme.danger)
             } else {
-                Text("Drawn as Status reads the apps, every 15 seconds")
+                Text(period == .now ? "Drawn as Status reads the apps, every 15 seconds" : "Nothing kept yet for this stretch")
                     .font(.subheadline)
                     .foregroundStyle(Theme.secondaryInk)
             }

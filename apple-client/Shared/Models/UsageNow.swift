@@ -102,3 +102,64 @@ struct UsageNow: Equatable, Sendable {
         read ? UsageSample(at: at, processor: processor, memory: memory) : nil
     }
 }
+
+/// The apps' processor and memory over the last days, as the computer kept them (`usage.History`, `UsageHistory`):
+/// Analytics' Day, Week and Month.
+struct UsageHistory: Decodable, Sendable, Equatable {
+    /// The readings, oldest first, each the apps together.
+    let samples: [UsageSample]
+
+    enum CodingKeys: String, CodingKey { case at, cpu, mem }
+
+    init(samples: [UsageSample]) { self.samples = samples }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        let at = try c.decodeIfPresent([String].self, forKey: .at) ?? []
+        let cpu = try c.decodeIfPresent([Double].self, forKey: .cpu) ?? []
+        let mem = try c.decodeIfPresent([Double].self, forKey: .mem) ?? []
+        samples = at.indices.compactMap { i in
+            guard i < cpu.count, i < mem.count, let when = GoTime.parse(at[i]), cpu[i].isFinite, mem[i].isFinite else { return nil }
+            return UsageSample(at: when, processor: cpu[i], memory: Int64(max(0, mem[i])))
+        }
+    }
+
+    /// At most `count` points, each the average of its stretch, so a month draws as quickly as a day.
+    func thinned(to count: Int = 240) -> [UsageSample] {
+        guard samples.count > count, count > 0 else { return samples }
+        let size = Int((Double(samples.count) / Double(count)).rounded(.up))
+        return stride(from: 0, to: samples.count, by: size).map { start in
+            let part = samples[start..<min(start + size, samples.count)]
+            let n = Double(part.count)
+            return UsageSample(at: part[part.startIndex].at,
+                               processor: part.reduce(0) { $0 + $1.processor } / n,
+                               memory: Int64(Double(part.reduce(Int64(0)) { $0 + $1.memory }) / n))
+        }
+    }
+}
+
+/// What Analytics' timeline shows: the minutes since it opened, or the computer's day, week or month.
+enum UsageSpan: String, CaseIterable, Identifiable, Sendable {
+    case now = "Now", day = "Day", week = "Week", month = "Month"
+    var id: String { rawValue }
+
+    /// The days `UsageHistory` is asked for; nil for the minutes since it opened.
+    var days: Int? {
+        switch self {
+        case .now: nil
+        case .day: 1
+        case .week: 7
+        case .month: 31
+        }
+    }
+
+    /// The timeline's heading.
+    var heading: String {
+        switch self {
+        case .now: "Now"
+        case .day: "The last day"
+        case .week: "The last week"
+        case .month: "The last month"
+        }
+    }
+}

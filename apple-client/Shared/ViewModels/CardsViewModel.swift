@@ -21,6 +21,9 @@ final class CardsViewModel {
     /// The apps' processor and memory together each time the usage card came, the last hour, oldest first:
     /// Analytics' timeline.
     private(set) var usageSamples: [UsageSample] = []
+    /// The computer's kept usage, by the days asked for (`UsageHistory`), for Analytics' Day, Week and Month.
+    private(set) var usageHistory: [Int: UsageHistory] = [:]
+    private(set) var usageHistoryError: String?
 
     init(api: APIClient, liveEvents: LiveEventManager) {
         self.api = api
@@ -135,6 +138,20 @@ final class CardsViewModel {
             return
         } catch {
             Log.network.error("Usage failed: \(APIError.from(error).logName, privacy: .public)")
+        }
+    }
+
+    /// The apps' use over the last `days`, as the computer kept it.
+    func readUsageHistory(days: Int) async {
+        do {
+            usageHistory[days] = try await api.call("UsageHistory", [.number(Double(days))], as: UsageHistory.self)
+            usageHistoryError = nil
+        } catch is CancellationError {
+            return
+        } catch {
+            let apiError = APIError.from(error)
+            Log.network.error("UsageHistory failed: \(apiError.logName, privacy: .public)")
+            usageHistoryError = apiError.errorDescription
         }
     }
 

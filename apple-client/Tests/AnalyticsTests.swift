@@ -58,4 +58,25 @@ struct AnalyticsTests {
         let samples = [UsageSample(at: t.addingTimeInterval(-4000), processor: 1, memory: 1), UsageSample(at: t.addingTimeInterval(-60), processor: 2, memory: 2)]
         #expect(CardsViewModel.keeping(samples, now: t).map(\.processor) == [2])
     }
+
+    // Day, Week and Month: the computer's kept usage (`usage.History`), read as samples, thinned for a month.
+    @Test func theKeptHistoryReadsAndThins() throws {
+        let h = try JSONDecoder.homelab().decode(UsageHistory.self, from: Data(#"""
+        {"at":["2026-11-26T10:00:00-05:00","2026-11-26T10:05:00-05:00","not a time"],"cpu":[10,20,5],"mem":[1048576,2097152,1],
+         "apps":{"immich":{"cpu":[1,2,3],"mem":[1,2,3]}},"jobs":[{"name":"backup","at":"2026-11-26T03:30:00-05:00"}]}
+        """#.utf8))
+        // A time that doesn't read is left out, not the whole history.
+        #expect(h.samples.map(\.processor) == [10, 20])
+        #expect(h.samples.map(\.memory) == [1_048_576, 2_097_152])
+        let empty = try JSONDecoder.homelab().decode(UsageHistory.self, from: Data(#"{"at":[],"cpu":[],"mem":[],"apps":{},"jobs":[]}"#.utf8))
+        #expect(empty.samples.isEmpty)
+        let t = Date(timeIntervalSince1970: 1_800_000_000)
+        let many = UsageHistory(samples: (0..<1000).map { UsageSample(at: t.addingTimeInterval(Double($0) * 60), processor: Double($0 % 2), memory: 100) })
+        let thin = many.thinned(to: 240)
+        #expect(thin.count <= 240 && thin.count >= 200)
+        #expect(thin.first?.at == t && thin.allSatisfy { $0.memory == 100 && $0.processor > 0.3 && $0.processor < 0.7 })
+        #expect(UsageHistory(samples: Array(many.samples.prefix(5))).thinned(to: 240).count == 5)
+        #expect(UsageSpan.now.days == nil && UsageSpan.day.days == 1 && UsageSpan.week.days == 7 && UsageSpan.month.days == 31)
+        #expect(UsageSpan.week.heading == "The last week")
+    }
 }
