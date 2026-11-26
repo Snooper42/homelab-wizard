@@ -57,6 +57,7 @@
         "SaveFinancesSealedReceipt",
         "SaveSettings",
         "SavingsHistory",
+        "SavingsRows",
         "Screen",
         "SetAppSetting",
         "SetStatusFolds",
@@ -71,6 +72,7 @@
         "StopUntil",
         "UnsealFinances",
         "Usage",
+        "UsageHistory",
         "Watchdog"
       ],
       "features": [

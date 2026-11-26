@@ -62,6 +62,8 @@ What a phone may do also depends on how it was paired, on every phone (the phone
 | **Snooze…** a failing check | yes | yes (allowed changes) | yes, Face ID (allowed changes) | yes | `SnoozeCheck` |
 | Protection (what CrowdSec stopped today) | yes | yes | yes | yes | `Protection` |
 | Savings, and what the apps have saved month by month | yes | yes | yes | yes | `SavingsHistory` |
+| Status › Subscriptions: each paid service once, its price a month and a year, the apps that replace it | yes | yes | coming: the iPhone's Subscriptions (clearout 2d) | as the iPhone | `SavingsRows` |
+| Status › Analytics: the processor, memory and drives, the apps' use over a day, a week or a month | yes | yes | coming: the iPhone's Analytics (clearout 2c) reads the `usage` card now, the history next | as the iPhone | `StatusBoard`, `UsageHistory` |
 | Recent alerts | yes | yes | yes | yes | `Alerts` |
 | **Every alert…**: the 90 days the computer kept | yes | yes | yes | yes: **Every Alert** on Recent Alerts opens beside the list, in the app's place | `AlertLog` |
 | **Snooze…** on an open alert of Every alert (its watchdog check still fails) | yes | yes (allowed changes) | yes, Face ID | yes | `SnoozeCheck` |
