@@ -544,7 +544,8 @@ try { if ((window.__MOCK || {}).tidyTab) localStorage.setItem('homelab.tidyTab',
     else new MutationObserver((_, o) => { if (document.documentElement) { o.disconnect(); mark(); } }).observe(document, { childList: true });
     M.refused = [];
     for (const name of Object.keys(app)) {
-      if (name === 'Open' || M.phoneMethods.includes(name)) continue;
+      // The stand-in's own helpers (lower case, as playApps) are no method of the computer's: never refused.
+      if (name === 'Open' || M.phoneMethods.includes(name) || /^[a-z]/.test(name)) continue;
       app[name] = () => { M.refused.push(name); return Promise.reject(Object.assign(new Error('not on the phone: use Homelab Wizard on the computer'), { name: 'NotOnPhone' })); };
     }
   }

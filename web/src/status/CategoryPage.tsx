@@ -125,8 +125,9 @@ export function CategoryPage({ label, apps, add, here, list, install, sets = [],
   const words = (x: api.App) => plain([x.name, x.description, ...(x.aliases || []), ...(x.replaces || [])].join(' '));
   const toAdd = find ? add.filter((x) => words(x).includes(plain(find))) : add;
   const setsShown = find ? sets.filter((x) => plain(x.name + ' ' + (x.description || '')).includes(plain(find))) : sets;
-  // The phone's page installs nothing yet (lane W's W13 asks the owner first): its shelf shows what could be added.
-  const change = !list.companion;
+  // The web page adds apps as the computer does (the owner, Nov 26: parity), on a device allowed to make changes; one
+  // that only looks, or a wall screen, shows what could be added.
+  const change = !list.companion || (document.documentElement.classList.contains('can-change') && !document.documentElement.classList.contains('kiosk'));
   const facts = [`${apps.length} ${here.replace(/^On /, 'on ')}`, apps.length ? `${running} running` : '', add.length ? `${add.length} to add` : ''].filter(Boolean).join(' · ');
   return (
     <div class="catpage">
