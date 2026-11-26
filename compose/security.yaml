@@ -42,8 +42,8 @@ services:
       ENROLL_KEY: ${CROWDSEC_ENROLL_KEY:-}
       ENROLL_INSTANCE_NAME: homelab
     volumes:
-      - ./data/appdata/crowdsec/config:/etc/crowdsec
-      - ./data/appdata/crowdsec/data:/var/lib/crowdsec/data
+      - ${APPDATA_ROOT:-./data/appdata}/crowdsec/config:/etc/crowdsec
+      - ${APPDATA_ROOT:-./data/appdata}/crowdsec/data:/var/lib/crowdsec/data
       - ./config/crowdsec/acquis.yaml:/etc/crowdsec/acquis.d/nginx-proxy-manager.yaml:ro
       - ./config/crowdsec/appsec.yaml:/etc/crowdsec/acquis.d/appsec.yaml:ro
       - npm-logs:/var/log/npm:ro
@@ -67,7 +67,7 @@ services:
     ports:
       - ${BIND_IP:-127.0.0.1}:${VAULTWARDEN_PORT:-8087}:80
     volumes:
-      - ./data/appdata/vaultwarden:/data
+      - ${APPDATA_ROOT:-./data/appdata}/vaultwarden:/data
     x-homelab:
       releases: dani-garcia/vaultwarden
       # A new release waits 3 days before the nightly update takes it (items 87, 88).
@@ -90,7 +90,7 @@ services:
     ports:
       - ${BIND_IP:-127.0.0.1}:${UPTIME_KUMA_PORT:-3001}:3001
     volumes:
-      - ./data/appdata/uptime-kuma:/app/data
+      - ${APPDATA_ROOT:-./data/appdata}/uptime-kuma:/app/data
     x-homelab:
       memory: 150
       releases: louislam/uptime-kuma
@@ -119,8 +119,8 @@ services:
     ports:
       - ${BIND_IP:-127.0.0.1}:${NTFY_PORT:-9293}:80
     volumes:
-      - ./data/appdata/ntfy/cache:/var/cache/ntfy
-      - ./data/appdata/ntfy/lib:/var/lib/ntfy
+      - ${APPDATA_ROOT:-./data/appdata}/ntfy/cache:/var/cache/ntfy
+      - ${APPDATA_ROOT:-./data/appdata}/ntfy/lib:/var/lib/ntfy
     healthcheck:
       test: ["CMD-SHELL", "wget -q --tries=1 http://localhost:80/v1/health -O - | grep -Eo '\"healthy\"\\s*:\\s*true' || exit 1"]
       interval: 60s
@@ -159,7 +159,7 @@ services:
       - ${BIND_IP:-127.0.0.1}:${POCKET_ID_PORT:-1411}:1411
     networks: [front]
     volumes:
-      - ./data/appdata/pocket-id:/app/data
+      - ${APPDATA_ROOT:-./data/appdata}/pocket-id:/app/data
     x-homelab:
       url: POCKET_ID_URL
       name: Pocket ID

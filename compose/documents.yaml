@@ -30,7 +30,7 @@ services:
     ports:
       - ${BIND_IP:-127.0.0.1}:${FRESHRSS_PORT:-8085}:80
     volumes:
-      - ./data/appdata/freshrss:/config
+      - ${APPDATA_ROOT:-./data/appdata}/freshrss:/config
     x-homelab:
       name: FreshRSS
       category: documents
@@ -45,7 +45,7 @@ services:
     ports:
       - ${BIND_IP:-127.0.0.1}:${STIRLING_PDF_PORT:-8095}:8080
     volumes:
-      - ./data/appdata/stirling-pdf:/configs
+      - ${APPDATA_ROOT:-./data/appdata}/stirling-pdf:/configs
     x-homelab:
       memory: 600
       name: Stirling PDF
@@ -75,7 +75,7 @@ services:
     ports:
       - ${BIND_IP:-127.0.0.1}:${OPEN_WEBUI_PORT:-3080}:8080
     volumes:
-      - ./data/appdata/open-webui:/app/backend/data
+      - ${APPDATA_ROOT:-./data/appdata}/open-webui:/app/backend/data
     x-homelab:
       memory: 700
       url: OPEN_WEBUI_URL
@@ -96,7 +96,7 @@ services:
     ports:
       - ${BIND_IP:-127.0.0.1}:${CHANGEDETECTION_PORT:-5010}:5000
     volumes:
-      - ./data/appdata/changedetection:/datastore
+      - ${APPDATA_ROOT:-./data/appdata}/changedetection:/datastore
     x-homelab:
       memory: 200
       url: CHANGEDETECTION_URL
@@ -114,7 +114,7 @@ services:
     ports:
       - ${BIND_IP:-127.0.0.1}:${MEMOS_PORT:-5230}:5230
     volumes:
-      - ./data/appdata/memos:/var/opt/memos
+      - ${APPDATA_ROOT:-./data/appdata}/memos:/var/opt/memos
     x-homelab:
       releases: usememos/memos
       dump: sqlite:/var/opt/memos/memos_prod.db
@@ -137,7 +137,7 @@ services:
     ports:
       - ${BIND_IP:-127.0.0.1}:${KIWIX_PORT:-8098}:8080
     volumes:
-      - ./data/appdata/kiwix:/library
+      - ${APPDATA_ROOT:-./data/appdata}/kiwix:/library
       # ZIM files are large (all of Wikipedia is over 100 GB): on the media drive.
       - type: bind
         source: ${KIWIX_ZIM_ROOT:-${MEDIA_ROOT:-/Volumes/Media}/kiwix}

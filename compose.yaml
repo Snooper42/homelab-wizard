@@ -13,7 +13,8 @@
 # - The x-homelab block (always the last key of a service) is read by the CLI.
 #   See CONTRIBUTING.md for the fields.
 #
-# Paths: core services keep their data in ./data/appdata/<service>, stacks in
+# Paths: core services keep their data in APPDATA_ROOT/<service> (./data/appdata
+# unless .env says otherwise), stacks in
 # ./appdata/<stack>. Databases and caches use named volumes (faster and safer
 # than macOS bind mounts); `./homelab backup` dumps the databases daily.
 

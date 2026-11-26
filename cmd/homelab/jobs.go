@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/Snooper42/homelab-wizard/internal/appdata"
 	"io/fs"
 	"math/rand"
 	"net"
@@ -338,7 +339,7 @@ func (h *homelab) backup(ctx context.Context, args []string) error {
 		u.Warn("recording the savings: %v", err)
 	}
 	// What each person's photos and each app's folder take, for Status.
-	rec := storage.Record{When: time.Now(), Photos: []storage.Person{}, Apps: storage.AppFolders(filepath.Join(h.root, "data", "appdata"), filepath.Join(h.root, "appdata"))}
+	rec := storage.Record{When: time.Now(), Photos: []storage.Person{}, Apps: storage.AppFolders(appdata.Dir(h.root), filepath.Join(h.root, "appdata"))}
 	if ctr, ok := runningContainer(report, "immich-database"); ok {
 		if photos, err := storage.ImmichPhotos(ctx, client, ctr.Name); err != nil {
 			u.Warn("%v", err)
@@ -458,7 +459,7 @@ func (h *homelab) autoRestoreTest(ctx context.Context, job string) error {
 	}
 	started := time.Now()
 	h.ui.Step(1, 3, "Picking files to test")
-	original := filepath.Join(h.root, "data", "appdata")
+	original := appdata.Dir(h.root)
 	files, err := backup.SampleFiles(original, 12, time.Now(), rand.New(rand.NewSource(time.Now().UnixNano())), "duplicati") // #nosec G404 -- picks which backed-up files to test, nothing secret
 	if err != nil {
 		return err
@@ -688,7 +689,7 @@ func (h *homelab) remindRestoreTest(ctx context.Context) {
 // remindKopiaRestoreTest is the same for Kopia, once it is set up (its
 // settings hold the repository it connected to).
 func (h *homelab) remindKopiaRestoreTest(ctx context.Context) {
-	if _, err := os.Stat(filepath.Join(h.root, "data", "appdata", "kopia", "config", "repository.config")); err != nil {
+	if _, err := os.Stat(appdata.Path(h.root, "kopia", "config", "repository.config")); err != nil {
 		return
 	}
 	l := backup.LoadRestoreLog(h.restoreLogPath())
@@ -713,7 +714,7 @@ func (h *homelab) remindKopiaRestoreTest(ctx context.Context) {
 // secrets: a monthly reminder to make one, and an alert every night while a
 // plain (readable) export sits in the backup. Only when Vaultwarden is set up.
 func (h *homelab) remindVaultExport(ctx context.Context) {
-	if _, err := os.Stat(filepath.Join(h.root, "data", "appdata", "vaultwarden")); err != nil {
+	if _, err := os.Stat(appdata.Path(h.root, "vaultwarden")); err != nil {
 		return
 	}
 	newest, plain := backup.VaultExports(h.stagingDir("secrets"))
@@ -1590,7 +1591,7 @@ func (h *homelab) kopiaRestoreTest(ctx context.Context) error {
 		return err
 	}
 	h.ui.Step(1, 3, "Picking files to test")
-	original := filepath.Join(h.root, "data", "appdata")
+	original := appdata.Dir(h.root)
 	files, err := backup.SampleFiles(original, 12, time.Now(), rand.New(rand.NewSource(time.Now().UnixNano())), "duplicati", "kopia") // #nosec G404 -- picks which backed-up files to test, nothing secret
 	if err != nil {
 		return err

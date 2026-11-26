@@ -30,7 +30,7 @@ services:
     ports:
       - ${BIND_IP:-127.0.0.1}:${PROWLARR_PORT:-9696}:9696
     volumes:
-      - ./data/appdata/prowlarr:/config
+      - ${APPDATA_ROOT:-./data/appdata}/prowlarr:/config
     x-homelab:
       goes_with:
         sonarr: "Gives Sonarr its search sites in one place, shared with Radarr."
@@ -52,7 +52,7 @@ services:
     ports:
       - ${BIND_IP:-127.0.0.1}:${SONARR_PORT:-8989}:8989
     volumes:
-      - ./data/appdata/sonarr:/config
+      - ${APPDATA_ROOT:-./data/appdata}/sonarr:/config
       - type: bind
         source: ${MEDIA_ROOT:-/Volumes/Media}/tv
         target: /tv
@@ -81,7 +81,7 @@ services:
     ports:
       - ${BIND_IP:-127.0.0.1}:${RADARR_PORT:-7878}:7878
     volumes:
-      - ./data/appdata/radarr:/config
+      - ${APPDATA_ROOT:-./data/appdata}/radarr:/config
       - type: bind
         source: ${MEDIA_ROOT:-/Volumes/Media}/movies
         target: /movies
@@ -110,7 +110,7 @@ services:
     ports:
       - ${BIND_IP:-127.0.0.1}:${LIDARR_PORT:-8686}:8686
     volumes:
-      - ./data/appdata/lidarr:/config
+      - ${APPDATA_ROOT:-./data/appdata}/lidarr:/config
       - type: bind
         source: ${MEDIA_ROOT:-/Volumes/Media}/music
         target: /music
@@ -139,7 +139,7 @@ services:
     ports:
       - ${BIND_IP:-127.0.0.1}:${BAZARR_PORT:-6767}:6767
     volumes:
-      - ./data/appdata/bazarr:/config
+      - ${APPDATA_ROOT:-./data/appdata}/bazarr:/config
       - type: bind
         source: ${MEDIA_ROOT:-/Volumes/Media}/tv
         target: /tv
@@ -181,9 +181,9 @@ services:
     ports:
       - ${BIND_IP:-127.0.0.1}:${TDARR_PORT:-8265}:8265
     volumes:
-      - ./data/appdata/tdarr/server:/app/server
-      - ./data/appdata/tdarr/configs:/app/configs
-      - ./data/appdata/tdarr/logs:/app/logs
+      - ${APPDATA_ROOT:-./data/appdata}/tdarr/server:/app/server
+      - ${APPDATA_ROOT:-./data/appdata}/tdarr/configs:/app/configs
+      - ${APPDATA_ROOT:-./data/appdata}/tdarr/logs:/app/logs
       - type: bind
         source: ${MEDIA_ROOT:-/Volumes/Media}/tv
         target: /media/tv
@@ -247,7 +247,7 @@ services:
     ports:
       - ${BIND_IP:-127.0.0.1}:${SEERR_PORT:-5055}:5055
     volumes:
-      - ./data/appdata/seerr:/app/config
+      - ${APPDATA_ROOT:-./data/appdata}/seerr:/app/config
     x-homelab:
       goes_with:
         jellyfin: "Lets the household ask for films and shows, which Sonarr and Radarr then fetch."
@@ -270,7 +270,7 @@ services:
     ports:
       - ${BIND_IP:-127.0.0.1}:${LAZYLIBRARIAN_PORT:-5299}:5299
     volumes:
-      - ./data/appdata/lazylibrarian:/config
+      - ${APPDATA_ROOT:-./data/appdata}/lazylibrarian:/config
       - type: bind
         source: ${MEDIA_ROOT:-/Volumes/Media}/Books
         target: /books
@@ -305,7 +305,7 @@ services:
       TZ: ${TZ:-UTC}
       WEBUI_PORT: "8082"
     volumes:
-      - ./data/appdata/qbittorrent:/config
+      - ${APPDATA_ROOT:-./data/appdata}/qbittorrent:/config
       - type: bind
         source: ${DOWNLOADS_ROOT:-/Volumes/Media/downloads}
         target: /downloads
@@ -335,7 +335,7 @@ services:
     network_mode: service:gluetun
     environment: *linuxserver
     volumes:
-      - ./data/appdata/sabnzbd:/config
+      - ${APPDATA_ROOT:-./data/appdata}/sabnzbd:/config
       - type: bind
         source: ${DOWNLOADS_ROOT:-/Volumes/Media/downloads}
         target: /downloads
@@ -398,7 +398,7 @@ services:
       # SABnzbd's too (it listens on 8080 inside).
       - ${BIND_IP:-127.0.0.1}:${SABNZBD_PORT:-8091}:8080
     volumes:
-      - ./data/appdata/gluetun:/gluetun
+      - ${APPDATA_ROOT:-./data/appdata}/gluetun:/gluetun
     x-homelab:
       releases: qdm12/gluetun
       name: Gluetun

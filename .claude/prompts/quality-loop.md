@@ -42,12 +42,12 @@ For a pull request that needs Q's review, check every one of these, and say whic
 - **High priority, before Q1 (the owner, Nov 23): how the apps' data is kept.** Today: each app's files in `data/appdata/<app>`, databases in Docker volumes dumped nightly, uploads in volumes archived nightly, caches not backed up, the app's own records in JSON saved whole under a lock (`docs/Storage.md`). Three gaps, in this order:
   - [x] **D1. The Syncthing folder in the backups.** `SYNC_ROOT`, what the household syncs between devices, is in no backup today. Q4 (b) moved up to here: a *Not in any backup* card on Backups listing what's left out, with **Add**, and Syncthing's folder the first one in. Then a line for R under **From the other lanes** in `redesign-loop.md` (R7 lays it out).
   - [x] **D2. No app's data goes unbacked without anyone saying so.** A catalog check (`go run ./cmd/homelab --root . validate`): every named Docker volume is a database marked `dump`, listed under `archive`, or marked as rebuilding itself (a new `x-homelab` field, such as `rebuilds: [linkwarden-meilisearch]`). The table in `docs/Storage.md` gets the ones it lacks: Firefly III's uploads (archived), Linkwarden's search index and Tandoor's static files (rebuilt).
-  - [ ] **D3. Choose where the apps' data lives.** A setting for the folder that's `data/appdata` today, as CasaOS has its data folder, so it can sit on a bigger or faster drive; every compose file reads it; changing it moves the data with Undo, and a restore test passes after. Moving the household's files needs the owner's yes (lanes.md rule 13): the pull request asks in `owner.md` and merges on their yes. Pairs with Q7 (d), a second drive.
+  - [ ] **D3. Choose where the apps' data lives.** A setting for the folder that's `data/appdata` today, as CasaOS has its data folder, so it can sit on a bigger or faster drive; every compose file reads it; changing it moves the data with Undo, and a restore test passes after. Moving the household's files needs the owner's yes (lanes.md rule 13): the pull request asks in `owner.md` and merges on their yes. Pairs with Q7 (d), a second drive. **Part 1 done (Nov 25):** `APPDATA_ROOT`, read everywhere (`internal/appdata`), nothing moves. **Part 2**, the move with Undo, asks in `owner.md`.
   - **Decided, leave as they are (the owner, Nov 23):** one database per app, not one shared PostgreSQL (one app's upgrade can't break another, and Immich needs its own image); Finances in JSON, not a database, until bank imports (M1, M2) make it slow.
 - [x] **Q1. The open security list.**
   - **Make the list.** From `audit-loop.md`'s *Security backlog, in order* (only that section, and only its items not marked done) and the open items in its *For Account 2* usability findings, write the ones still open into this file, one line each and worst first, under **The security list** below.
   - **Archive the history.** Say at the top of `audit-loop.md` that it's archived, then work the list from here.
-- [ ] **Q2. The owner's machine, for real.** `test/realdocker` and the nightly workflow are the closest thing to it. Make sure the nightly run covers what the owner uses most:
+- [x] **Q2. The owner's machine, for real.** (Nov 26: backups, the restore test, update and undo, and Connect apps were covered; Status' Stop, Start and Restart and Finances kept through a move were added, in `test/realdocker/household_test.go`.) `test/realdocker` and the nightly workflow are the closest thing to it. Make sure the nightly run covers what the owner uses most:
   - Status's Start and Restart
   - a backup and a restore test
   - an update with its undo
@@ -55,9 +55,9 @@ For a pull request that needs Q's review, check every one of these, and say whic
   - Connect apps for media automation
 
   A gap becomes a test, and a failing one an issue.
-- [ ] **Q3. Privacy of every call out.** `internal/sitelogo`, `internal/cardprice`, the release-notes reader, and each new one as it ships (SimpleFIN, the logo service).
+- [x] **Q3. Privacy of every call out.** `internal/sitelogo`, `internal/cardprice`, the release-notes reader, and each new one as it ships (SimpleFIN, the logo service).
   - **What's sent, when, and on whose click,** written in `docs/Security.md`. (Done Nov 25: *What leaves this computer, and on whose click*.)
-  - **What's in `homelab report` and the logs:** checked to carry no amount, payee or key.
+  - **What's in `homelab report` and the logs:** checked to carry no amount, payee or key. (Nov 25: the report's weekly summary carried this week's bills and spending, payee and amount; now `digest --no-money` there, `TestReportCarriesNoFinances`. The weekly send logs only *sent to …*.)
 - [ ] **Q4. The backups' engine, for R's Backups** (`docs/Redesign.md`, *New work behind the pictures*).
   - [x] **(a) Each app's result each night,** kept for fourteen nights. (Nov 25: `data/backup-nights.json`, `backup.Night`, in `Backups()` as `nights`.)
   - **(b) Not in any backup:** moved up, as D1.
@@ -82,6 +82,7 @@ Q1 filled this in (Nov 25), one line each, worst first; Q5 works it. Read agains
 1. **N29 part 2, Medium: the app checks a Windows or Linux update's build provenance** before it swaps itself. Releases have carried provenance since Nov 10 (`TestEveryReleaseIsAttested`); the app doesn't check it yet. Fetch a real bundle from a release first (`GET /repos/Snooper42/homelab-wizard/attestations/sha256:<digest>`), then choose: check by hand (Fulcio chain, the workflow's identity, the DSSE signature, Rekor's proof) or a pinned library.
 2. **Item 71, Low: Paperless-AI's first-run window.** Until its first account, anyone on the household's network (or tailnet) who opens it first makes the admin; it's `admin: true`, never public. The install could call `POST /api/setup` itself with a user and password from `.env`, as the nightly test does, so the window never opens; worth it only with a test like the nightly's.
 3. **For Account 2, item 22 (usability, not security): nothing gets one file back.** It's Q4 (c).
+4. **Low: the Mac updater keeps only a Team ID.** With the self-signed certificate (#908), a build has no Team ID, so `keepsSigner` passes any signer and only build provenance holds the update to this repository. Holding the staged app to the installed one's designated requirement (`codesign --verify -R="$(codesign -d -r- <installed>)" <staged>`) keeps any signer, self-signed or Developer ID (Q review of #908, Nov 26).
 
 ## From the other lanes
 
