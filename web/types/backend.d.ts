@@ -1378,6 +1378,24 @@ declare namespace upgrade {
   }
 }
 
+declare namespace usage {
+  interface History {
+    at: string[];
+    cpu: number[];
+    mem: number[];
+    apps: Record<string, usage.Series>;
+    jobs: usage.Job[];
+  }
+  interface Job {
+    name: string;
+    at: string;
+  }
+  interface Series {
+    cpu: number[];
+    mem: number[];
+  }
+}
+
 declare namespace wiring {
   interface Link {
     text: string;
@@ -1533,6 +1551,7 @@ interface Backend {
     UpdateState(): Promise<app.UpdateState>;
     UpgradeCheck(arg1: boolean): Promise<app.UpgradeInfo>;
     Usage(): Promise<docker.Stat[]>;
+    UsageHistory(arg1: number): Promise<usage.History>;
     Watchdog(): Promise<health.Summary>;
     Weekly(): Promise<app.Weekly>;
     Wire(): Promise<wiring.Link[]>;

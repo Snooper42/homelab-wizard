@@ -63,6 +63,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/ui"
 	"github.com/Snooper42/homelab-wizard/internal/updates"
 	"github.com/Snooper42/homelab-wizard/internal/upgrade"
+	"github.com/Snooper42/homelab-wizard/internal/usage"
 	"github.com/Snooper42/homelab-wizard/internal/wiring"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
@@ -1061,6 +1062,15 @@ func (a *App) Usage() ([]docker.Stat, error) {
 
 // SavingsHistory is the yearly saving the nightly backup recorded each day,
 // oldest first.
+// UsageHistory is the last days (1 to 31) of what the apps took from the
+// machine, oldest first, as the agent sampled it every 5 minutes: the
+// processor and memory in all and each app's own, and when the nightly jobs
+// started, for Analytics' Day, Week and Month. A week or a month is averaged
+// down to at most 600 points.
+func (a *App) UsageHistory(days int) (usage.History, error) {
+	return usage.Read(usage.Path(a.root), time.Now(), days)
+}
+
 func (a *App) SavingsHistory() []savings.Point {
 	return savings.LoadHistory(savings.HistoryPath(a.root))
 }

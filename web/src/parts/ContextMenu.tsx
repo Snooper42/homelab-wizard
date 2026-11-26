@@ -6,8 +6,9 @@
 // begins, since WebKit moves no focus on a click). An item that changes
 // much (Update all) asks for a second click.
 import { render } from 'preact';
-import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
+import { useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { $ } from '../core';
+import { putInside } from './place';
 
 export interface ContextItem {
   label: string;
@@ -22,17 +23,14 @@ export type ContextEntry = ContextItem | '-';
 
 export function ContextMenu({ label, x, y, items, close }: { label: string; x: number; y: number; items: ContextEntry[]; close: (refocus?: boolean) => void }) {
   const box = useRef<HTMLDivElement>(null);
-  const [at, setAt] = useState({ left: x, top: y });
   const [sure, setSure] = useState('');
   const buttons = () => [...(box.current?.querySelectorAll<HTMLButtonElement>('[role=menuitem]:not([disabled])') || [])];
   // Inside the window: moved left or up when it would run past an edge.
+  // Placed, then its first item focused, as it is drawn: a key pressed right after the one that opened it lands in the menu.
+  useLayoutEffect(() => { if (box.current) putInside(box.current, x, y); }, [x, y]);
+  useLayoutEffect(() => { buttons()[0]?.focus(); }, []);
+  // Listening as it is drawn too: a press right after it opens closes it.
   useLayoutEffect(() => {
-    const m = box.current?.getBoundingClientRect();
-    if (!m) return;
-    setAt({ left: Math.max(8, Math.min(x, innerWidth - m.width - 8)), top: y + m.height > innerHeight - 8 ? Math.max(8, y - m.height) : y });
-  }, [x, y]);
-  useEffect(() => {
-    buttons()[0]?.focus();
     const outside = (e: Event) => { if (!box.current?.contains(e.target as Node)) close(); };
     const gone = () => close();
     document.addEventListener('mousedown', outside, true);
@@ -41,7 +39,7 @@ export function ContextMenu({ label, x, y, items, close }: { label: string; x: n
     return () => { document.removeEventListener('mousedown', outside, true); window.removeEventListener('blur', gone); window.removeEventListener('resize', gone); };
   }, []);
   return (
-    <div ref={box} class="menu rowmenu" role="menu" aria-label={label} style={{ left: at.left + 'px', top: at.top + 'px' }}
+    <div ref={box} class="menu rowmenu" role="menu" aria-label={label}
       onKeyDown={(e) => {
         if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(true); return; }
         const all = buttons(), i = all.indexOf(document.activeElement as HTMLButtonElement);
