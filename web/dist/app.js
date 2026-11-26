@@ -23699,16 +23699,8 @@ ${pays}
     if (screen === "status") {
       const items = [again, "-", { label: "Update all apps…", run: on("status", () => $("updateAll").click()), disabled: $("updateAll").disabled }];
       if (!$("fixIt").hidden) items.push({ label: "Fix it", run: on("status", () => $("fixIt").click()) });
+      items.push({ label: "Back up now", run: on("backups", () => $("backupNow").click()), disabled: $("backupNow").disabled });
       return items;
-    }
-    if (screen === "backups") {
-      const test = () => document.getElementById("restoreTest");
-      return [
-        again,
-        "-",
-        { label: "Back up now", run: on("backups", () => $("backupNow").click()), disabled: $("backupNow").disabled },
-        { label: "Test a restore", run: on("backups", () => test()?.click()), disabled: !test() || test().disabled }
-      ];
     }
     if (screen === "finances") {
       const v3 = financesData.value;
