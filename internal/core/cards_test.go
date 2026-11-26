@@ -2,6 +2,7 @@ package core
 
 import (
 	"context"
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -13,6 +14,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/board"
 	"github.com/Snooper42/homelab-wizard/internal/docker"
 	"github.com/Snooper42/homelab-wizard/internal/engine"
+	"github.com/Snooper42/homelab-wizard/internal/host"
 )
 
 // Every card Status shows comes back, as its own function gives it: the
@@ -93,6 +95,14 @@ func TestMachine(t *testing.T) {
 	}
 	if m.Power != "" && m.Power != "plugged" && m.Power != "battery" {
 		t.Errorf("power %q", m.Power)
+	}
+	// Lane D, D5: the machine's memory and when it started, for the machine card's bar.
+	if m.Memory != host.Memory() || !m.Booted.Equal(host.Booted()) {
+		t.Errorf("memory %d, booted %v", m.Memory, m.Booted)
+	}
+	// Sent as JSON: an older phone that doesn't know them skips them; where they can't be told, they're absent.
+	if data, _ := json.Marshal(MachineFacts{}); strings.Contains(string(data), "memory") || strings.Contains(string(data), "booted") {
+		t.Errorf("unknown facts sent: %s", data)
 	}
 	if err := os.WriteFile(filepath.Join(root, ".env"), []byte("KEEP_AWAKE=false\n"), 0o600); err != nil {
 		t.Fatal(err)
