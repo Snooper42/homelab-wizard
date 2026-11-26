@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/Snooper42/homelab-wizard/internal/appdata"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -52,6 +53,10 @@ func (h *homelab) moveOut(ctx context.Context, args []string) error {
 	to := fs.String("to", "", "")
 	if _, err := parseFlags(fs, args); err != nil {
 		return err
+	}
+	// A bundle packs the homelab folder; the apps' data kept elsewhere (APPDATA_ROOT) would be left behind.
+	if dir := appdata.Dir(h.root); filepath.Clean(dir) != filepath.Join(h.root, appdata.Default) {
+		return fmt.Errorf("the apps' data is in %s (APPDATA_ROOT), outside the homelab folder, so a move would leave it behind: copy it to the new machine yourself, or empty APPDATA_ROOT and move the folder back to data/appdata first", dir)
 	}
 	u := h.ui
 	out := *to
@@ -152,7 +157,7 @@ func (h *homelab) moveIn(ctx context.Context, args []string) error {
 		if m, err = moving.ReadManifest(bundle); err != nil {
 			return err
 		}
-		if !*force && hasFiles(filepath.Join(h.root, "data", "appdata")) {
+		if !*force && hasFiles(appdata.Dir(h.root)) {
 			return fmt.Errorf("this homelab folder already has apps' data (data/appdata); move into a new one, or add --force to replace it")
 		}
 	} else if m, err = moving.LoadKept(kept); err != nil {

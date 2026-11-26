@@ -13,8 +13,8 @@ package docker
 // household wrote stays as it was.
 
 import (
+	"github.com/Snooper42/homelab-wizard/internal/appdata"
 	"os"
-	"path/filepath"
 	"regexp"
 	"slices"
 	"strings"
@@ -23,7 +23,7 @@ import (
 // HomeAssistantConfig is Home Assistant's configuration.yaml in the homelab
 // folder (compose/household.yaml mounts data/appdata/home-assistant).
 func HomeAssistantConfig(root string) string {
-	return filepath.Join(root, "data", "appdata", "home-assistant", "configuration.yaml")
+	return appdata.Path(root, "home-assistant", "configuration.yaml")
 }
 
 // starterRanges are the private ranges the starter configuration trusted.

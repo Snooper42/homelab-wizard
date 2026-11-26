@@ -29,8 +29,8 @@ services:
     ports:
       - ${BIND_IP:-127.0.0.1}:${WALLOS_PORT:-8282}:80
     volumes:
-      - ./data/appdata/wallos/db:/var/www/html/db
-      - ./data/appdata/wallos/logos:/var/www/html/images/uploads/logos
+      - ${APPDATA_ROOT:-./data/appdata}/wallos/db:/var/www/html/db
+      - ${APPDATA_ROOT:-./data/appdata}/wallos/logos:/var/www/html/images/uploads/logos
     x-homelab:
       releases: ellite/Wallos
       dump: sqlite:/var/www/html/db/wallos.db
@@ -54,7 +54,7 @@ services:
     ports:
       - ${BIND_IP:-127.0.0.1}:${ACTUAL_PORT:-5006}:5006
     volumes:
-      - ./data/appdata/actual-budget:/data
+      - ${APPDATA_ROOT:-./data/appdata}/actual-budget:/data
     x-homelab:
       same_job:
         firefly-iii: "Both keep the household's budget: Actual is lighter, Firefly III a full ledger. One is usually enough."

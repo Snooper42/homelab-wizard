@@ -35,8 +35,8 @@ services:
         target: /srv
         bind:
           create_host_path: false
-      - ./data/appdata/filebrowser/database:/database
-      - ./data/appdata/filebrowser/config:/config
+      - ${APPDATA_ROOT:-./data/appdata}/filebrowser/database:/database
+      - ${APPDATA_ROOT:-./data/appdata}/filebrowser/config:/config
     x-homelab:
       releases: filebrowser/filebrowser
       name: File Browser
@@ -62,7 +62,7 @@ services:
       - ${LAN_BIND_IP:-0.0.0.0}:22000:22000/udp
       - ${LAN_BIND_IP:-0.0.0.0}:21027:21027/udp
     volumes:
-      - ./data/appdata/syncthing:/config
+      - ${APPDATA_ROOT:-./data/appdata}/syncthing:/config
       - ${SYNC_ROOT:-./data/sync}:/data
     x-homelab:
       memory: 150
@@ -80,8 +80,8 @@ services:
     ports:
       - ${BIND_IP:-127.0.0.1}:${BAIKAL_PORT:-5232}:80
     volumes:
-      - ./data/appdata/baikal/config:/var/www/baikal/config
-      - ./data/appdata/baikal/specific:/var/www/baikal/Specific
+      - ${APPDATA_ROOT:-./data/appdata}/baikal/config:/var/www/baikal/config
+      - ${APPDATA_ROOT:-./data/appdata}/baikal/specific:/var/www/baikal/Specific
     x-homelab:
       releases: sabre-io/Baikal
       name: Baikal
@@ -121,7 +121,7 @@ services:
     ports:
       - ${BIND_IP:-127.0.0.1}:${PSITRANSFER_PORT:-3030}:3000
     volumes:
-      - ./data/appdata/psitransfer:/data
+      - ${APPDATA_ROOT:-./data/appdata}/psitransfer:/data
     x-homelab:
       releases: psi-4ward/psitransfer
       name: PsiTransfer
