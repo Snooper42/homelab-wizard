@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Snooper42/homelab-wizard/internal/companion"
 	"github.com/Snooper42/homelab-wizard/internal/ui"
 )
 
@@ -164,5 +165,27 @@ func TestWebSettingsMethods(t *testing.T) {
 	}
 	if got := (webUninstall{Data: true, App: true}).args(); strings.Join(got, " ") != "uninstall --data --app" {
 		t.Errorf("uninstall's flags: %v", got)
+	}
+}
+
+// Finances on the web page (serve_web_finances.go): reading the apps and a logo change Finances, so a device that may
+// change them; the calendar's link for one that may see them; never a member's.
+func TestWebFinanceMethods(t *testing.T) {
+	root, _ := repoCopy(t)
+	h, err := newHomelab(&ui.UI{Out: &strings.Builder{}}, root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	m := h.webFinanceMethods()
+	for _, name := range []string{"FinancesFromFirefly", "FinancesFromWallos", "FinancesFromGhostfolio", "FinancesFetchLogo"} {
+		if m[name].Finances != companion.FinancesEdit || m[name].Member {
+			t.Errorf("%s: a device that may change Finances, the owner's: %+v", name, m[name])
+		}
+	}
+	if m["FinancesCalendar"].Finances != companion.FinancesView {
+		t.Error("the calendar's link: a device that may see Finances")
+	}
+	if _, _, err := m["FinancesFromWallos"].Call(context.Background(), nil); err == nil || !strings.Contains(err.Error(), "WALLOS_API_KEY") {
+		t.Errorf("Wallos with no key says so: %v", err)
 	}
 }

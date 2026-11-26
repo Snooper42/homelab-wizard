@@ -24,7 +24,7 @@ const phoneMethods = (() => {
   const names = [...body.slice(0, body.indexOf('\n}\n')).matchAll(/^\t\t"([A-Z][A-Za-z]+)":/gm)].map((m) => m[1]);
   if (!names.includes('StatusBoard') || !names.includes('Host')) throw new Error('could not read the phone\'s methods from serve.go: ' + names);
   // The web page's, beside them (serve_web.go, the owner's parity, Nov 26).
-  const web = ['serve_web.go', 'serve_web_install.go', 'serve_web_settings.go'].map((f) => readFileSync(join(root, 'cmd', 'homelab', f), 'utf8')).join('\n');
+  const web = ['serve_web.go', 'serve_web_install.go', 'serve_web_settings.go', 'serve_web_finances.go'].map((f) => readFileSync(join(root, 'cmd', 'homelab', f), 'utf8')).join('\n');
   const more = [...web.matchAll(/^\t\t"([A-Z][A-Za-z]+)":/gm)].map((m) => m[1]);
   if (!more.includes('Kept')) throw new Error('could not read the web page\'s methods from serve_web.go: ' + more);
   return [...names, ...more];
@@ -7620,15 +7620,19 @@ const smokes = [
     await page.click('.fx-wallos button:text-is("From Wallos")', { timeout: 5000 });
     await page.waitForSelector('.fx-wallos .formerr:has-text("API key is not set")', { timeout: 5000 });
   } },
-  { name: 'Finances: no From Wallos while Wallos is not running, nor on a phone', screen: 'finances', run: async (page) => {
+  { name: 'Finances: no From Wallos while Wallos is not running', screen: 'finances', run: async (page) => {
     await finTab(page, 'Recurring', { timeout: 5000 });
     await page.waitForSelector('.fx-homelab', { timeout: 5000 });
     if (await page.$('.fx-wallos')) throw new Error('From Wallos with Wallos not running');
   } },
-  { name: 'The phone: no From Wallos', screen: 'finances', phone: ['companion', 'finances'], mock: { status: withWallos, wallos: wallosSubs }, run: async (page) => {
+  // Parity, part 4 (the owner, Nov 26): the web page adds from Wallos as the computer does, nothing refused.
+  { name: 'The phone: From Wallos adds every one not in the plan, as on the computer', screen: 'finances', phone: ['companion', 'finances'], mock: { status: withWallos, wallos: wallosSubs }, run: async (page) => {
     await finTab(page, 'Recurring', { timeout: 5000 });
-    await page.waitForSelector('.fx-homelab', { timeout: 5000 });
-    if (await page.$('.fx-wallos')) throw new Error('From Wallos on a phone');
+    await page.click('.fx-wallos button:text-is("From Wallos")', { timeout: 5000 });
+    await page.click('.fx-wallos button:text-is("Add all 2")', { timeout: 5000 });
+    await page.waitForFunction(() => window.__MOCK.financesSaved?.length === 1, null, { timeout: 5000 });
+    const refused = await page.evaluate(() => window.__MOCK.refused);
+    if (refused.length) throw new Error('refused as the computer\'s own: ' + [...new Set(refused)].join(', '));
   } },
   // From Ghostfolio: each account's worth (cash and holdings) fills the box of the account with its name and currency;
   // one in another currency, or with no account of its name, said not matched; then saved.

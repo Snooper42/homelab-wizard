@@ -21473,7 +21473,6 @@ ${pays}
   var runs = (id2) => (statusData.value?.apps || []).some((a3) => a3.id === id2 && (a3.state === "running" || a3.state === "elsewhere"));
   var wallosRunning = () => runs("wallos");
   function fromApps() {
-    if (phone) return void 0;
     const all = [
       { id: "firefly-iii", name: "Firefly III", read: () => go().FinancesFromFirefly() },
       { id: "ghostfolio", name: "Ghostfolio", read: () => go().FinancesFromGhostfolio() }
@@ -21597,9 +21596,9 @@ ${pays}
       },
       saveLedger,
       running: runningApps(),
-      calendar: phone ? void 0 : () => go().FinancesCalendar(),
-      // Wallos's subscriptions, on the computer while Wallos runs.
-      fromWallos: phone || !wallosRunning() ? void 0 : () => go().FinancesFromWallos(),
+      calendar: () => go().FinancesCalendar(),
+      // Wallos's subscriptions while Wallos runs, on the computer and the web page alike (the owner, Nov 26: parity).
+      fromWallos: !wallosRunning() ? void 0 : () => go().FinancesFromWallos(),
       phone,
       // Read now and Add a holding wherever Finances may be changed (the computer, a phone allowed to change it): never hidden
       // behind Status, which may not see the Ghostfolio that answers; when it does not answer, the card says so.
@@ -21661,7 +21660,7 @@ ${pays}
   }
   var receipts = { save: (dataURL) => go().SaveFinancesReceipt(dataURL), read: (name) => go().FinancesReceipt(name) };
   var cardPictures = { save: (dataURL) => go().SaveFinancesCardPicture(dataURL), read: (name) => go().FinancesCardPicture(name) };
-  var fetchLogo = phone ? void 0 : (site2) => go().FinancesFetchLogo(site2);
+  var fetchLogo = (site2) => go().FinancesFetchLogo(site2);
   async function saveLedger(l3) {
     try {
       ledgerData.set(await go().SaveFinancesLedger(l3));

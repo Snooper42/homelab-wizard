@@ -244,7 +244,7 @@ func (h *homelab) webMethods() map[string]companion.Method {
 // own answer kept where both have one.
 func (h *homelab) servedMethods() map[string]companion.Method {
 	all := h.webMethods()
-	for _, more := range []map[string]companion.Method{h.webInstallMethods(), h.webSettingsMethods(), h.webPhoneMethods()} {
+	for _, more := range []map[string]companion.Method{h.webInstallMethods(), h.webSettingsMethods(), h.webPhoneMethods(), h.webFinanceMethods()} {
 		for k, m := range more {
 			all[k] = m
 		}
