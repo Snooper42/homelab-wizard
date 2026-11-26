@@ -24,7 +24,7 @@
   var minute = 6e4;
   var errorText = (e3) => String(e3 && e3.message || e3);
 
-  // ../../../../../../home/user/homelab-wizard/node_modules/preact/dist/preact.module.js
+  // node_modules/preact/dist/preact.module.js
   var n;
   var l;
   var u;
@@ -304,7 +304,7 @@
     return n3.__v.__b - l3.__v.__b;
   }, H.__r = 0, f = Math.random().toString(8), c = "__d" + f, a = "__a" + f, s = /(PointerCapture)$|Capture$/i, h = 0, p = V(false), v = V(true), y = 0;
 
-  // ../../../../../../home/user/homelab-wizard/node_modules/preact/hooks/dist/hooks.module.js
+  // node_modules/preact/hooks/dist/hooks.module.js
   var t2;
   var r2;
   var u2;
@@ -453,7 +453,7 @@
     return "function" == typeof t3 ? t3(n3) : t3;
   }
 
-  // ../../../../../../home/user/homelab-wizard/node_modules/preact/jsx-runtime/dist/jsxRuntime.module.js
+  // node_modules/preact/jsx-runtime/dist/jsxRuntime.module.js
   var f3 = 0;
   function u3(e3, t3, n3, o3, i3, u4) {
     t3 || (t3 = {});
@@ -9140,6 +9140,7 @@
   });
   function pickStatusPart(key7, find2 = "") {
     findText = find2;
+    if (!$("status").classList.contains("active")) navigate("status");
     if (key7 === statusHere && key7 !== "find") {
       goToPart("status", null);
       return;

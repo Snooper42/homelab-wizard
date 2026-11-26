@@ -6730,6 +6730,25 @@ const smokes = [
     await page.waitForSelector('#statusRows', { state: 'visible', timeout: 5000 });
     if (await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1)) throw new Error('the page scrolls sideways');
   } },
+  // From an app's page, a pick in Status' menu goes to that page (the owner, Nov 25: it "just stalls out"), the one it
+  // came from too; a tile's ⋯ menu opens whole and on top of the tiles beside it.
+  { name: "Status' menu from an app's page goes there, and a tile's ⋯ menu shows whole", screen: 'status', run: async (page) => {
+    await page.click('#statusSide button[data-key="media"]', { timeout: 5000 });
+    await page.click('#statusPart .cattile:not(.toadd) .catname');
+    await page.waitForSelector('#app.active', { timeout: 5000 });
+    await page.click('#statusSide button[data-key="media"]');
+    await page.waitForSelector('#status.active #statusPart .catpage h1:text-is("Media")', { timeout: 5000 });
+    await page.click('#statusPart .cattile:not(.toadd) .catname');
+    await page.waitForSelector('#app.active', { timeout: 5000 });
+    await page.click('#statusSide button[data-key="security"]');
+    await page.waitForSelector('#status.active #statusPart .catpage h1:text-is("Security")', { timeout: 5000 });
+    await page.click('#statusPart .cattile:not(.toadd) .catmore');
+    const item = page.locator('.rowmenu [role=menuitem]').first();
+    await item.waitFor({ timeout: 3000 });
+    const r = await item.boundingBox();
+    const hit = await page.evaluate(([x, y]) => !!document.elementFromPoint(x, y)?.closest('.rowmenu'), [r.x + r.width / 2, r.y + r.height / 2]);
+    if (!hit) throw new Error("the ⋯ menu is behind something");
+  } },
   // A stopped app (Mealie, in the preview's state): an amber dot by its category's count, and its tile's Start.
   { name: "Status: a stopped app puts an amber dot by its category, and its tile says Start", screen: 'status', run: async (page) => {
     await page.waitForSelector('#statusSide button[data-key="household"] .sidedot', { timeout: 5000 });

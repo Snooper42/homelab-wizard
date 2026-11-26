@@ -249,6 +249,9 @@ $('statusFind').addEventListener('input', (e) => {
 });
 export function pickStatusPart(key: string, find = '') {
   findText = find;
+  // From an app's page (or any screen), a pick in Status' menu goes back to Status first (the owner, Nov 25: clicking
+  // another category from an app's page "just stalls out").
+  if (!$('status').classList.contains('active')) navigate('status');
   if (key === statusHere && key !== 'find') { goToPart('status', null); return; }
   if (key.startsWith('add:') && !statusHere.startsWith('add:')) storeFrom = statusHere;
   statusHere = key;
