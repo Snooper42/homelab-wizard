@@ -78,6 +78,8 @@ The loops add questions here: the question, the options, the one they recommend,
   - **(c)** Keep it live only.
 
   Meanwhile Analytics shows what exists, and the redesign carries on with the phone's page.
+- **Moving the apps' data (quality-loop D3, Nov 25):** the apps' data folder can now live somewhere else (`APPDATA_ROOT` in `.env`, empty means `data/appdata` as today); nothing moves on its own. The next step is a **Move the apps' data…** button in Settings › Storage: it stops the apps, copies the folder to the drive you pick, checks every file, starts the apps on the new place, runs a restore test, and keeps the old folder until you press **Remove the old copy** (that's the Undo). It moves your files, so it waits for your yes.
+  - **Question:** build the move button? (Recommended: yes, with the old copy kept until you remove it.) Meanwhile I work the security list (Q1).
 
 ## Answered
 
