@@ -3,6 +3,7 @@
 // Status, Backups, Choose apps and Setup each mount one into their #…Side in index.html; the sidebar shows the one whose
 // screen is open. A pick goes straight to its part: no animation.
 import { render } from 'preact';
+import { useEffect, useRef, useState } from 'preact/hooks';
 
 export interface SideItem {
   key: string;
@@ -65,6 +66,38 @@ export function SideMenu({ label, items, here, pick }: SideMenuProps) {
     </ul>
   );
 }
+
+/** The same menu as one button on a phone's narrow page (the owner, Nov 25: "like a drop down menu"): where you are,
+ * with a chevron; a tap lists every item, as the sidebar has them, and a pick goes there and closes it. A press
+ * anywhere else, or Escape, closes it too. */
+export function SideDropdown({ label, items, here, pick }: SideMenuProps) {
+  const [open, setOpen] = useState(false);
+  const wrap = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const outside = (e: Event) => { if (!wrap.current?.contains(e.target as Node)) setOpen(false); };
+    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') { setOpen(false); wrap.current?.querySelector<HTMLButtonElement>('.sidedropbtn')?.focus(); } };
+    document.addEventListener('mousedown', outside, true);
+    document.addEventListener('touchstart', outside, true);
+    document.addEventListener('keydown', esc);
+    return () => { document.removeEventListener('mousedown', outside, true); document.removeEventListener('touchstart', outside, true); document.removeEventListener('keydown', esc); };
+  }, [open]);
+  const now = items.find((i) => i.key === here) || items[0];
+  const waiting = items.some((i) => i.dot);
+  return (
+    <div class={'sidedrop' + (open ? ' open' : '')} ref={wrap}>
+      <button type="button" class="sidedropbtn" aria-haspopup="true" aria-expanded={open} onClick={() => setOpen(!open)}>
+        {now && <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d={now.icon} /></svg>}
+        <span>{now?.label}</span>{waiting && !open && <span class="sidedot" role="img" aria-label="One stopped" />}
+        <svg class="icon chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+      </button>
+      {open && <SideMenu label={label} items={items} here={here} pick={(k) => { setOpen(false); pick(k); }} />}
+    </div>
+  );
+}
+
+/** Draws the dropdown into el; null clears it. */
+export const mountSideDropdown = (el: Element, props: SideMenuProps | null) => render(props && <SideDropdown {...props} />, el);
 
 /** Draws a screen's menu into its place in the sidebar; null clears it. */
 export const mountSideMenu = (el: Element, props: SideMenuProps | null) => render(props && <SideMenu {...props} />, el);

@@ -5015,6 +5015,45 @@
       !!it.total && /* @__PURE__ */ u3("span", { class: "total", children: it.total })
     ] }) }, it.key)) });
   }
+  function SideDropdown({ label, items, here: here3, pick }) {
+    const [open5, setOpen] = d2(false);
+    const wrap = A2(null);
+    h2(() => {
+      if (!open5) return;
+      const outside = (e3) => {
+        if (!wrap.current?.contains(e3.target)) setOpen(false);
+      };
+      const esc2 = (e3) => {
+        if (e3.key === "Escape") {
+          setOpen(false);
+          wrap.current?.querySelector(".sidedropbtn")?.focus();
+        }
+      };
+      document.addEventListener("mousedown", outside, true);
+      document.addEventListener("touchstart", outside, true);
+      document.addEventListener("keydown", esc2);
+      return () => {
+        document.removeEventListener("mousedown", outside, true);
+        document.removeEventListener("touchstart", outside, true);
+        document.removeEventListener("keydown", esc2);
+      };
+    }, [open5]);
+    const now2 = items.find((i3) => i3.key === here3) || items[0];
+    const waiting2 = items.some((i3) => i3.dot);
+    return /* @__PURE__ */ u3("div", { class: "sidedrop" + (open5 ? " open" : ""), ref: wrap, children: [
+      /* @__PURE__ */ u3("button", { type: "button", class: "sidedropbtn", "aria-haspopup": "true", "aria-expanded": open5, onClick: () => setOpen(!open5), children: [
+        now2 && /* @__PURE__ */ u3("svg", { class: "icon", viewBox: "0 0 24 24", "aria-hidden": "true", children: /* @__PURE__ */ u3("path", { d: now2.icon }) }),
+        /* @__PURE__ */ u3("span", { children: now2?.label }),
+        waiting2 && !open5 && /* @__PURE__ */ u3("span", { class: "sidedot", role: "img", "aria-label": "One stopped" }),
+        /* @__PURE__ */ u3("svg", { class: "icon chev", viewBox: "0 0 24 24", "aria-hidden": "true", children: /* @__PURE__ */ u3("path", { d: "M6 9l6 6 6-6" }) })
+      ] }),
+      open5 && /* @__PURE__ */ u3(SideMenu, { label, items, here: here3, pick: (k3) => {
+        setOpen(false);
+        pick(k3);
+      } })
+    ] });
+  }
+  var mountSideDropdown = (el3, props) => R(props && /* @__PURE__ */ u3(SideDropdown, { ...props }), el3);
   var mountSideMenu = (el3, props) => R(props && /* @__PURE__ */ u3(SideMenu, { ...props }), el3);
   function goToPart(screen, el3) {
     if (el3) el3.scrollIntoView({ block: "start" });
@@ -7868,7 +7907,7 @@
   function showEveryApp() {
     setFold({ all: true, picked: {} });
   }
-  var listView = () => fold.all || filter.on;
+  var listView = () => fold.all || filter.on || Object.values(fold.picked).some(Boolean);
   var viewers = [];
   function onListView(f4) {
     viewers.push(f4);
@@ -8308,7 +8347,7 @@
       ] }) })
     ] });
   }
-  function CategoryPage({ label, apps: apps2, add, here: here3, list, install, sets = [], installSet, addOwn, addLabel, goes = [], find: typed = "" }) {
+  function CategoryPage({ label, apps: apps2, add, here: here3, list, install, sets = [], installSet, addOwn, addLabel, goes = [], trail, find: typed = "" }) {
     const [menu2, setMenu] = d2(null);
     const [find2, setFind] = d2(typed);
     const running5 = apps2.filter((a3) => a3.state === "running").length;
@@ -8324,6 +8363,7 @@
     const change = !list.companion;
     const facts2 = [`${apps2.length} ${here3.replace(/^On /, "on ")}`, apps2.length ? `${running5} running` : "", add.length ? `${add.length} to add` : ""].filter(Boolean).join(" · ");
     return /* @__PURE__ */ u3("div", { class: "catpage", children: [
+      trail && /* @__PURE__ */ u3(Crumbs, { trail, here: label }),
       /* @__PURE__ */ u3("div", { class: "row header", children: [
         /* @__PURE__ */ u3("div", { children: [
           /* @__PURE__ */ u3("h1", { children: label }),
@@ -9276,7 +9316,7 @@
       items: [{ key: "overview", label: "Overview", icon: sideIcons.overview }, { key: "analytics", label: "Analytics", icon: sideIcons.analytics }, { key: "subscriptions", label: "Subscriptions", icon: sideIcons.finance }, ...statusSide]
     };
     mountSideMenu($("statusSide"), menu2);
-    mountSideMenu($("statusChips"), onPhone() ? { ...menu2, label: "Status parts" } : null);
+    mountSideDropdown($("statusChips"), onPhone() ? { ...menu2, label: "Status parts", here: statusHere.startsWith("add:") ? "" : statusHere } : null);
   }
   var storeFrom = "overview";
   function drawStatusPart() {
@@ -9368,6 +9408,7 @@
       apps: part.apps,
       add: part.add,
       list: appList,
+      trail: [{ label: "Status", go: () => pickStatusPart("overview") }],
       here: appList.companion ? "On the server" : "On " + thisMachine.replace(/^This/, "this"),
       install: (id2) => openInstall([id2]),
       addOwn: part.id === "own" ? openCustom : void 0

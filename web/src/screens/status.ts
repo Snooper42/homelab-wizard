@@ -19,7 +19,7 @@ let offersAsked = false;
 import { store } from '../store';
 import { icons, onIcon, wantIcons } from '../status/appIcons';
 import { shippedLogo } from '../parts/AppMark';
-import { goToPart, mountSideMenu, type SideItem, sideIcons } from '../parts/SideMenu';
+import { goToPart, mountSideDropdown, mountSideMenu, type SideItem, sideIcons } from '../parts/SideMenu';
 import { mountCategoryPage } from '../status/CategoryPage';
 import { keepsTabs, tabChanged } from '../tabs';
 import { mountAnalytics, recordTotals, type Totals } from '../status/Analytics';
@@ -224,7 +224,9 @@ function drawStatusSide() {
   };
   // The sidebar's, and on a phone's narrow page the same items as a row of chips atop Status (the tab bar has no room).
   mountSideMenu($('statusSide'), menu);
-  mountSideMenu($('statusChips'), onPhone() ? { ...menu, label: 'Status parts' } : null);
+  // A phone's narrow page: the same menu as one dropdown at the top (the owner, Nov 25: "a more effective way of
+  // displaying the stacks on mobile… like a drop down menu"); a category's page has breadcrumbs back too.
+  mountSideDropdown($('statusChips'), onPhone() ? { ...menu, label: 'Status parts', here: statusHere.startsWith('add:') ? '' : statusHere } : null);
 }
 /** Shows the overview, or the category picked, with the apps as last read. */
 /** The Status page an app's page to add was opened from (a category, All apps), for its breadcrumbs and Back. */
@@ -282,7 +284,7 @@ function drawStatusPart() {
   if (!part || !appList) { mountCategoryPage($('statusPart'), null); return; }
   wantIcons(part.apps.filter((a) => a.state !== 'missing' && !shippedLogo(a.id)).map((a) => a.id));
   mountCategoryPage($('statusPart'), {
-    label: part.label, apps: part.apps, add: part.add, list: appList,
+    label: part.label, apps: part.apps, add: part.add, list: appList, trail: [{ label: 'Status', go: () => pickStatusPart('overview') }],
     here: appList.companion ? 'On the server' : 'On ' + thisMachine.replace(/^This/, 'this'),
     install: (id) => openInstall([id]),
     addOwn: part.id === 'own' ? openCustom : undefined,

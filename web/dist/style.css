@@ -3547,14 +3547,25 @@ nav .sidemenulist .sidedot + .total { margin-left:8px; }
 @media (max-width: 700px) { html.companion nav .sidemenu { display:none !important; } }
 #statusChips { display:none; }
 @media (max-width: 700px) {
-  html.companion #statusChips { display:block; margin:0 0 12px; }
-  html.companion #statusChips .sidemenulist { display:flex; flex-direction:row; flex-wrap:wrap; gap:6px; list-style:none; margin:0; padding:0; }
-  #statusChips .finmenuitem { display:inline-flex; align-items:center; gap:5px; white-space:nowrap; min-height:36px; padding:4px 12px; border:1px solid var(--line); border-radius:999px; background:var(--panel); color:var(--text); font:inherit; font-size:13px; max-width:100%; }
-  #statusChips .finmenuitem > span:first-of-type { overflow:hidden; text-overflow:ellipsis; }
-  #statusChips .finmenuitem.on { background:var(--text); color:var(--bg); border-color:transparent; }
-  #statusChips .finmenuitem .icon { display:none; }
-  #statusChips .total { color:inherit; opacity:.6; font-size:12px; }
-  #statusChips .sidedot { width:7px; height:7px; border-radius:50%; background:var(--amber); }
+  html.companion #statusChips { display:block; margin:0 0 14px; }
+  /* First on every Status page; on the overview its heading and Find an app above it. */
+  html.companion #status.active { display:flex; flex-direction:column; }
+  html.companion #status:not([data-part]) > .row.header { order:-1; }
+  html.companion .catpage > .crumbs { display:none; }
+  .sidedrop { position:relative; }
+  .sidedropbtn { display:flex; align-items:center; gap:10px; width:100%; min-height:44px; padding:8px 14px; border:1px solid var(--line); border-radius:12px; background:var(--panel); color:var(--text); font:inherit; font-size:15px; font-weight:600; text-align:left; }
+  .sidedropbtn > span:first-of-type { flex:1; }
+  .sidedropbtn .chev { color:var(--muted); transition:none; }
+  .sidedrop.open .sidedropbtn .chev { transform:rotate(180deg); }
+  .sidedrop .sidedot { width:8px; height:8px; border-radius:50%; background:var(--amber); }
+  .sidedrop .sidemenulist { position:absolute; z-index:20; left:0; right:0; top:calc(100% + 6px); max-height:60vh; overflow:auto; margin:0; padding:6px; list-style:none; display:flex; flex-direction:column; gap:1px; border:1px solid var(--line); border-radius:14px; background:var(--panel); box-shadow:0 12px 30px var(--shade-2); }
+  .sidedrop .finmenuitem { display:flex; align-items:center; gap:12px; width:100%; min-height:44px; padding:8px 10px; border:0; border-radius:9px; background:none; color:var(--text); font:inherit; font-size:15px; text-align:left; }
+  .sidedrop .finmenuitem.on { background:var(--sunken); font-weight:600; }
+  .sidedrop .finmenuitem .icon { width:18px; height:18px; color:var(--muted); }
+  .sidedrop .finmenuitem.on .icon { color:var(--fin-accent); }
+  .sidedrop .total { margin-left:auto; color:var(--muted); font-size:13px; font-variant-numeric:tabular-nums; }
+  .sidedrop .sidedot + .total { margin-left:8px; }
+  .sidedrop .finmenuitem .sidedot { margin-left:auto; }
 }
 /* Installing (choose/InstallSheet.tsx): the app's page atop the plan, in a sheet; Find an app on the overview; a tile to
    add opens its sheet; Your own apps' Add tile. */
@@ -3658,8 +3669,8 @@ nav .sidemenulist .sidedot + .total { margin-left:8px; }
 .ovname strong { font-size:15px; }
 .ovname .muted { font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .ovrow > .icon { color:var(--muted); }
-@container (max-width: 860px) { #tiles.tiles { grid-template-columns:1fr; } #tiles .ovcard { min-height:0; } .ovrows { grid-template-columns:1fr; } }
-@media (max-width: 700px) { #tiles.tiles { grid-template-columns:1fr; } .ovrows { grid-template-columns:1fr; } }
+@container (max-width: 860px) { #tiles.tiles { grid-template-columns:1fr; } #tiles .ovcard { min-height:0; } .ovrows { grid-template-columns:minmax(0, 1fr); } }
+@media (max-width: 700px) { #tiles.tiles { grid-template-columns:1fr; } .ovrows { grid-template-columns:minmax(0, 1fr); } .ovpanel { padding:4px 14px; } .ovrow { gap:10px; } .ovname { margin-left:4px; } .ovrow .pill { padding:2px 8px; } }
 #tiles .ovcard { background:color-mix(in srgb, var(--panel) 78%, transparent); border:1px solid var(--line); box-shadow:none; backdrop-filter:blur(12px); }
 @media (prefers-color-scheme: dark) and (prefers-contrast: no-preference) { #tiles .ovcard { background:var(--glow-04); border-color:var(--glow-1); } }
 @media (prefers-contrast: more) { #tiles .ovcard { background:var(--panel); border-color:var(--line-strong); } }

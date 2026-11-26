@@ -557,7 +557,7 @@ function setFold(f: Fold) {
 /** Every app in the list (the overview's See them, Start all's companion). */
 export function showEveryApp() { setFold({ all: true, picked: {} }); }
 /** Whether the overview shows the whole list (Show every app, or a filter typed) rather than its categories' panel. */
-export const listView = () => fold.all || filter.on;
+export const listView = () => fold.all || filter.on || Object.values(fold.picked).some(Boolean);
 const viewers: (() => void)[] = [];
 /** Calls back when that changes. */
 export function onListView(f: () => void) { viewers.push(f); }
