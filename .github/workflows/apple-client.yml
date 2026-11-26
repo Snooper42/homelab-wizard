@@ -314,7 +314,7 @@ jobs:
           APP="$(ls -d "$RUNNER_TEMP"/shots/Build/Products/Debug-iphonesimulator/*.app | grep -v Widget | head -1)"
           BID="$(/usr/libexec/PlistBuddy -c 'Print CFBundleIdentifier' "$APP/Info.plist")"
           mkdir -p "$RUNNER_TEMP/pictures"
-          shots="status backups finances spending inbox loading transactions transaction budgets bills recurring cashflow calendar paychecks review accounts investments goals setup settings settings-all phones storage lock app"
+          shots="status backups finances spending inbox loading transactions transaction budgets bills recurring cashflow calendar paychecks review accounts investments goals setup settings settings-all phones storage lock app category"
           # shoot <simulator> <file>: the picture, and again up to three times, six seconds apart, while it's a
           # plain white or black screen (the app still opening is a small file). Every picture goes through it:
           # the largest text had no retake, and ipad-land-large-transactions was plain white (Nov 19).
@@ -406,7 +406,7 @@ jobs:
         run: |
           out="$RUNNER_TEMP/docs-pictures/docs/images"
           mkdir -p "$out"
-          for shot in status app backups finances spending transactions budgets investments lock settings; do
+          for shot in status app category backups finances spending transactions budgets investments lock settings; do
             for look in light dark; do
               src="$RUNNER_TEMP/pictures/$look-$shot.png"
               [ -f "$src" ] || { echo "no $look-$shot to keep"; continue; }
