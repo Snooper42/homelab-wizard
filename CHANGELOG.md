@@ -8,6 +8,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### New
 
+- **The web page answers only at home:** a device on Tailscale is let in while it's on the home network, and turned away when it's away, so a lost or stolen phone can't use it from outside. Away from home, the iPhone app's look-only view through the tunnel stays.
 <!-- The iPhone and iPad app (lane 4): add a line just below this one. -->
 - **Fewer words in empty and in-between places on the Homelab app:** on the iPhone and iPad, Recurring with nothing says *Nothing repeats yet.*, Alerts with none *No alerts yet. Each is kept 90 days.*, Add Payment drops its line on what a payment does, a later day on the Calendar keeps only why its balance isn't shown, and the iPad's empty Setup pane has no sentence.
 - **Cash Flow and Month in Review in the quieter look on the Homelab app:** on the iPhone and iPad, their first card is a plain card like the rest, not a dark one with a heavy shadow: what was left over in green (red when more went out), In and Out beside it.

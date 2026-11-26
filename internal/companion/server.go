@@ -76,6 +76,11 @@ type Server struct {
 	// away from home through the tunnel (ADR-0023); nil, or not set up,
 	// refuses the tunnel as before.
 	Access func() Access
+	// AtHome is whether the device at a tailnet address is on the home
+	// network now (tailnet.AtHome, from Tailscale's status): the web page
+	// answers only at home (the owner, Nov 26), so a device on the tailnet
+	// that's away is turned away. Nil lets the tailnet in, as before.
+	AtHome func(ip netip.Addr) bool
 	// Now is the clock; nil is time.Now.
 	Now func() time.Time
 
@@ -123,6 +128,10 @@ func (s *Server) guard(next http.Handler) http.Handler {
 			http.Error(w, "the phone companion answers only at home and on the tailnet", http.StatusForbidden)
 			return
 		}
+		if ip, ok := tailnetClient(r); ok && s.AtHome != nil && !s.AtHome(ip) {
+			http.Error(w, "the web page answers only at home: this device is away from the home network", http.StatusForbidden)
+			return
+		}
 		h := w.Header()
 		h.Set("X-Content-Type-Options", "nosniff")
 		h.Set("Referrer-Policy", "no-referrer")
@@ -138,6 +147,8 @@ func (s *Server) guard(next http.Handler) http.Handler {
 var (
 	// tailnet is Tailscale's address range (CGNAT space).
 	tailnet = netip.MustParsePrefix("100.64.0.0/10")
+	// tailnet6 is Tailscale's IPv6 range.
+	tailnet6 = netip.MustParsePrefix("fd7a:115c:a1e0::/48")
 	// thisNetwork holds OrbStack's address for the Mac as containers see it
 	// (0.250.250.254), so the proxy's requests are let in; nothing on the
 	// internet can come from it.
@@ -161,6 +172,34 @@ func Local(r *http.Request) bool {
 	}
 	ip = ip.Unmap()
 	return ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() || tailnet.Contains(ip) || thisNetwork.Contains(ip)
+}
+
+// tailnetClient is the tailnet address a request came from, ok false for
+// one that didn't: straight from the tailnet, or through this machine's
+// Tailscale Serve (https) or the companion's proxy, which name the device
+// they passed it on for last in X-Forwarded-For. A device on the home Wi-Fi
+// could write anything there, but it gains nothing: only a tailnet address
+// is ever turned away for it.
+func tailnetClient(r *http.Request) (netip.Addr, bool) {
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		host = r.RemoteAddr
+	}
+	ip, err := netip.ParseAddr(host)
+	if err != nil {
+		return netip.Addr{}, false
+	}
+	ip = ip.Unmap()
+	if ip.IsLoopback() || ip.IsPrivate() || thisNetwork.Contains(ip) {
+		hops := strings.Split(r.Header.Get("X-Forwarded-For"), ",")
+		if last, err := netip.ParseAddr(strings.TrimSpace(hops[len(hops)-1])); err == nil {
+			ip = last.Unmap()
+		}
+	}
+	if tailnet.Contains(ip) || tailnet6.Contains(ip) {
+		return ip, true
+	}
+	return netip.Addr{}, false
 }
 
 // Encrypted reports whether a request reached the companion in a way
