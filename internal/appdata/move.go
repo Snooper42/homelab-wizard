@@ -74,6 +74,7 @@ func Copy(from, to string, progress func(files int, bytes int64)) (int, int64, e
 			if err != nil {
 				return err
 			}
+			// #nosec G122 -- the apps are stopped while their folder is copied, and a link is copied as a link, never followed
 			if err := os.Symlink(target, dst); err != nil {
 				return err
 			}

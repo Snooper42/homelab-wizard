@@ -13,6 +13,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
 	"os"
 	"path/filepath"
 	"slices"
@@ -226,8 +227,9 @@ func (h *homelab) appdataMove(ctx context.Context, args []string) error {
 		at = up
 	}
 	if vols := diskspace.Check([]diskspace.Location{{Name: "to", Path: at}}); len(vols) > 0 {
-		if need := uint64(total) + diskspace.Threshold(vols[0].Total); vols[0].Free < need {
-			return fmt.Errorf("%s has %s free; the apps' data is %s, and the drive should keep %s to spare", at, size(int64(vols[0].Free)), size(total), size(int64(diskspace.Threshold(vols[0].Total))))
+		free, spare := vols[0].Free, diskspace.Threshold(vols[0].Total)
+		if need := uint64(max(total, 0)) + spare; free < need { // #nosec G115 -- a folder's size in bytes, never negative
+			return fmt.Errorf("%s has %s free; the apps' data is %s, and the drive should keep %s to spare", at, size(int64(min(free, math.MaxInt64))), size(total), size(int64(min(spare, math.MaxInt64)))) // #nosec G115 -- capped to int64's range
 		}
 	}
 	u.Title("Move the apps' data")
