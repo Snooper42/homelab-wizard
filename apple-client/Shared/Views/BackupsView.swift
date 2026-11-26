@@ -101,7 +101,7 @@ struct BackupsView: View {
                     CopyRow(copy: copy, nights: overview.nights(of: copy))
                 }
             } header: {
-                CountHeader(title: "Needs You", count: copies.count, tint: overview.needingALook.isEmpty ? .secondary : Theme.warning)
+                CountHeader(title: "Skipped", count: copies.count, tint: overview.needingALook.isEmpty ? .secondary : Theme.warning)
             } footer: {
                 if !notes.isEmpty { Text(verbatim: notes.joined(separator: "\n")) }
             }
