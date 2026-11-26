@@ -13,6 +13,7 @@ import { Address } from '../parts/Address';
 import { AppMark } from '../parts/AppMark';
 import { Hover } from '../parts/Hover';
 import { awaitingJobs } from './Tiles';
+import { fitMenu } from '../parts/place';
 import { formatMem } from './memory';
 import { keptRestarting, stopChoices, stoppedByItself, stoppedWords } from './stopFor';
 import { RowMenu, type RowMenuActions } from './RowMenu';
@@ -393,7 +394,6 @@ function GroupMenu({ g, p, count, tone }: { g: Group; p: AppListProps; count: st
   // Stop for a while: the menu shows the times to choose from instead.
   const [later, setLater] = useState(false);
   const [doing, setDoing] = useState<{ action: string; at: number; of: number } | null>(null);
-  const [up, setUp] = useState(false);
   const wrap = useRef<HTMLSpanElement>(null);
   const btn = useRef<HTMLButtonElement>(null);
   const list = useRef<HTMLDivElement>(null);
@@ -422,13 +422,7 @@ function GroupMenu({ g, p, count, tone }: { g: Group; p: AppListProps; count: st
   }, [open]);
   // Opened near the bottom of what scrolls, it opens upward when there is
   // room above (both measured on the page, so the text size cannot skew it).
-  useLayoutEffect(() => {
-    if (!open) { setUp(false); return; }
-    const menu = list.current, box = wrap.current?.closest('main'), at = btn.current;
-    if (!menu || !box || !at) return;
-    const m = menu.getBoundingClientRect(), b = box.getBoundingClientRect(), a = at.getBoundingClientRect();
-    setUp(m.bottom > b.bottom && a.top - b.top > m.height);
-  }, [open]);
+  useLayoutEffect(() => { if (open && list.current) fitMenu(list.current, btn.current); }, [open, later]);
   if (p.companion || g.alert) return <span class={'n' + (tone ? ' countpill ' + tone : '')}>{count}</span>;
   // Stop asks for a second click; Stop for a while has had it (the time).
   const run = (action: 'start' | 'stop' | 'restart', apps: api.AppStatus[], until?: string) => {
@@ -464,7 +458,7 @@ function GroupMenu({ g, p, count, tone }: { g: Group; p: AppListProps; count: st
         {label}<span class="drop" aria-hidden="true">▾</span>
       </button>
       {open && later && (
-        <div ref={list} class={'menu groupmenulist' + (up ? ' up' : '')} role="menu" aria-label={`${g.label}: stop for a while`}>
+        <div ref={list} class="menu groupmenulist" role="menu" aria-label={`${g.label}: stop for a while`}>
           <p class="menuhead">{running.length === 1 ? `Stop ${running[0].name} for a while` : `Stop the ${running.length} running for a while`}</p>
           {stopChoices().map((c) => <button key={c.until} type="button" role="menuitem" disabled={p.busy} onClick={() => run('stop', running, c.until)}>{c.label}</button>)}
           <button type="button" role="menuitem" class="menuback" onClick={() => showLater(false)}>‹ Back</button>
@@ -472,7 +466,7 @@ function GroupMenu({ g, p, count, tone }: { g: Group; p: AppListProps; count: st
         </div>
       )}
       {open && !later && (
-        <div ref={list} class={'menu groupmenulist' + (up ? ' up' : '')} role="menu" aria-label={`${g.label}: all its apps`}>
+        <div ref={list} class="menu groupmenulist" role="menu" aria-label={`${g.label}: all its apps`}>
           <p class="menuhead">{mem ? (used ? `${formatMem(used)} in memory now` : 'Nothing in memory now') : 'Memory: measuring…'}</p>
           {byMem.length > 0 && (
             <ul class="memlist" aria-label="Memory by app">

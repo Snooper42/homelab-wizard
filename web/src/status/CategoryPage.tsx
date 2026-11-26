@@ -57,7 +57,7 @@ export function tileLine(a: api.AppStatus, p: Pick<AppListProps, 'pending' | 'ba
   return [cls, cls === 'ok' && a.since ? upFor(a.since, now) : words];
 }
 
-interface MenuAt { id: string; x: number; y: number; from: Element | null }
+interface MenuAt { id: string; x: number; y: number; up?: number; from: Element | null }
 
 function Tile({ a, p, menu, setMenu }: { a: api.AppStatus; p: AppListProps; menu: MenuAt | null; setMenu: (m: MenuAt | null) => void }) {
   const [cls, line] = tileLine(a, p);
@@ -75,13 +75,13 @@ function Tile({ a, p, menu, setMenu }: { a: api.AppStatus; p: AppListProps; menu
       onClick={a.state !== 'missing' ? (e) => { if (!(e.target as Element).closest('button, .rowmenu')) p.on.page(a); } : undefined}>
       <span class={'dot ' + cls} role="img" aria-label={line} />
       {menuable && <button type="button" class="iconbtn catmore" aria-label={`${a.name}: more`} aria-haspopup="menu"
-        onClick={(e) => { const r = (e.currentTarget as HTMLElement).getBoundingClientRect(); setMenu({ id: a.id, x: r.right - 200, y: r.bottom + 4, from: e.currentTarget }); }}>
+        onClick={(e) => { const r = (e.currentTarget as HTMLElement).getBoundingClientRect(); setMenu({ id: a.id, x: r.right - 200, y: r.bottom + 4, up: r.top - 4, from: e.currentTarget }); }}>
         <Icon name="more" /></button>}
       <AppMark id={a.id} name={a.name} icon={p.icons?.[a.id] || ''} />
       <strong class="catname">{a.name}</strong>
       <span class={'catline' + (cls === 'bad' ? ' bad' : '')} title={line}>{said || line}</span>
       <span class="catbtn"><Actions a={a} entry={entry} busy={p.busy || (!!pend && !pend.failed)} os={p.os} on={p.on} marks /></span>
-      {menu?.id === a.id && <RowMenu a={a} x={menu.x} y={menu.y} native={entry?.kind === 'native'} busy={p.busy} companion={p.companion} on={p.on.menu} close={close} said={say} />}
+      {menu?.id === a.id && <RowMenu a={a} x={menu.x} y={menu.y} up={menu.up} native={entry?.kind === 'native'} busy={p.busy} companion={p.companion} on={p.on.menu} close={close} said={say} />}
     </li>
   );
 }

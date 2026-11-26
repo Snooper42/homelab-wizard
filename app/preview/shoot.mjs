@@ -616,6 +616,65 @@ function stoppedByItself() {
       : a.id === 'vikunja' ? { ...a, state: 'stopped', health: '', since: undefined, stoppedAt: at(-1, 21, 40) } : a) } };
 }
 
+// Opens every pop-up it finds on the screen and says which is cut off, out of the window, covered, or far from what opened it.
+const popupsWhole = async () => {
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const vis = (e) => e && e.checkVisibility() && e.getBoundingClientRect().width > 0;
+  const out = [];
+  const name = (e) => (e.getAttribute('aria-label') || e.title || e.textContent || e.className || e.tagName).trim().slice(0, 40);
+  const checkBox = (what, box, items, trigger) => {
+    const r = box.getBoundingClientRect();
+    if (r.left < -1 || r.top < -1 || r.right > innerWidth + 1 || r.bottom > innerHeight + 1) out.push(`${what}: out of the window ${Math.round(r.left)},${Math.round(r.top)}–${Math.round(r.right)},${Math.round(r.bottom)} in ${innerWidth}×${innerHeight}`);
+    const main = document.querySelector('main')?.getBoundingClientRect();
+    if (trigger) {
+      const t = trigger.getBoundingClientRect();
+      const gap = Math.max(0, r.left - t.right, t.left - r.right, r.top - t.bottom, t.top - r.bottom);
+      if (gap > 40) out.push(`${what}: ${Math.round(gap)}px away from its trigger`);
+    }
+    for (const it of items) {
+      const b = it.getBoundingClientRect();
+      if (box.scrollHeight > box.clientHeight + 1 && (b.top < r.top || b.bottom > r.bottom)) continue; // scrolled out of a scrolling menu
+
+      for (const [x, y] of [[b.left + 4, b.top + b.height / 2], [b.right - 4, b.top + b.height / 2]]) {
+        const at = document.elementFromPoint(x, y);
+        if (!at || !box.contains(at)) { out.push(`${what}: "${name(it)}" covered by ${at ? (at.id || at.className || at.tagName) : 'nothing (offscreen)'}`); break; }
+      }
+    }
+  };
+  // Menus behind a button.
+  for (const btn of [...document.querySelectorAll('[aria-haspopup]')].filter(vis)) {
+    const before = new Set([...document.querySelectorAll('[role=menu],[role=listbox],.menu')].filter(vis));
+    btn.scrollIntoView({ block: 'center' });
+    btn.click(); await sleep(150);
+    const menus = [...document.querySelectorAll('[role=menu],[role=listbox],.menu')].filter((m) => vis(m) && !before.has(m));
+    if (!menus.length) out.push(`menu of "${name(btn)}": nothing opened`);
+    for (const m of menus) checkBox(`menu of "${name(btn)}"`, m, [...m.querySelectorAll('[role=menuitem],[role=option],button')].filter(vis), btn);
+    document.activeElement?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    document.body.dispatchEvent(new MouseEvent('mousedown', { bubbles: true })); await sleep(80);
+    if (btn.getAttribute('aria-expanded') === 'true') { btn.click(); await sleep(80); }
+  }
+  // Hover cards.
+  for (const t of [...document.querySelectorAll('[aria-describedby]')].filter(vis)) {
+    const card = document.getElementById(t.getAttribute('aria-describedby'));
+    if (!card || !card.classList.contains('hovercard')) continue;
+    t.scrollIntoView({ block: 'center' });
+    t.dispatchEvent(new FocusEvent('focus')); t.focus(); await sleep(80);
+    if (vis(card)) checkBox(`hover card of "${name(t)}"`, card, [card], t);
+    t.blur(); await sleep(30);
+  }
+  // Right-click menus on rows and tiles.
+  for (const row of [...document.querySelectorAll('#statusRows tr, .cattile, .tile')].filter(vis).slice(0, 3)) {
+    row.scrollIntoView({ block: 'center' });
+    const r = row.getBoundingClientRect();
+    row.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: r.left + 20, clientY: r.top + r.height / 2 })); await sleep(120);
+    const m = document.querySelector('.rowmenu');
+    if (vis(m)) { checkBox(`right-click menu of "${name(row)}"`, m, [...m.querySelectorAll('[role=menuitem]')], null);
+      const mr = m.getBoundingClientRect(); if (Math.abs(mr.left - (r.left + 20)) > 40 && Math.abs(mr.right - (r.left + 20)) > 40) out.push(`right-click menu of "${name(row)}": opened ${Math.round(mr.left - r.left - 20)}px from the pointer`); }
+    document.body.dispatchEvent(new MouseEvent('mousedown', { bubbles: true })); await sleep(50);
+  }
+  return out;
+};
+
 const smokes = [
   // Parity with the computer on the web page (the owner, Nov 26): on a wide window, from a device that may change things,
   // an app's page has Open on a phone (its QR code), its sign-in details' ⚙ and Remove; Status has Update apps; Backups'
@@ -647,6 +706,20 @@ const smokes = [
     await page.waitForSelector('#status.active', { timeout: 5000 });
     if (await page.isVisible('#updateAll')) throw new Error('Update apps shows on a device that only looks');
   } },
+  // Every pop-up whole, in sight and on top (the owner, Nov 25: "hunt for this across the application"): every menu behind
+  // a button, every hover card and the right-click menus, on each screen, at 1280×800 and in a small window at text size
+  // 1.5 (html's zoom once put every hover card 150px off), and on the phone: each item hit-tested where it shows.
+  ...['status', 'app:vikunja', 'backups', 'settings', 'setup', 'finances', 'tidy'].flatMap((screen) => [[1280, 800, '1'], [860, 560, '1.5']].map(([w, h, z]) => ({ name: `Every pop-up on ${screen} opens whole, in sight and on top, ${w}×${h} at text size ${z}`, screen, run: async (page) => {
+    await page.setViewportSize({ width: w, height: h });
+    await page.evaluate((z) => document.documentElement.style.setProperty('--zoom', z), z);
+    await page.waitForTimeout(300);
+    const out = await page.evaluate(popupsWhole);
+    if (out.length) throw new Error([...new Set(out)].join(' | '));
+  } }))),
+  ...['status', 'finances', 'app:vikunja'].map((screen) => ({ name: `Every pop-up on ${screen} opens whole, in sight and on top, on the phone`, screen, phone: ['companion', 'finances'], run: async (page) => {
+    const out = await page.evaluate(popupsWhole);
+    if (out.length) throw new Error([...new Set(out)].join(' | '));
+  } })),
   // Every card on Tidy Up holds its words and buttons inside its edges, as Status's do (its own cards once had none),
   // on every tab and while a job runs.
   { name: 'Tidy Up: every card keeps its contents off its edges', screen: 'tidy', mock: { tidyHold: true, tidy: { ...tidy, libraries: tidy.libraries.map((l) => (l.kind === 'audiobooks' ? { ...l, found: true } : l)) }, tidyEvents: { 'audiobooks scan': [{ type: 'step', n: 1, total: 2, text: 'Reading' }, { type: 'progress', label: 'Books', done: 5, total: 20, note: 'Dune' }] } }, run: async (page) => {
