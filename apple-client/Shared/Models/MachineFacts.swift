@@ -14,8 +14,6 @@ struct MachineFacts: Sendable, Equatable {
     let power: String
     /// It keeps itself awake while plugged in (KEEP_AWAKE).
     let keptAwake: Bool
-    /// When it last started, where the system tells it (0.44 on); nil otherwise.
-    var booted: Date? = nil
 
     static func from(_ v: JSONValue?) -> MachineFacts? {
         guard case .number(let total)? = v?["total"], total > 0, case .number(let free)? = v?["free"] else { return nil }
@@ -25,9 +23,7 @@ struct MachineFacts: Sendable, Equatable {
         }
         var power = ""
         if case .string(let s)? = v?["power"] { power = s }
-        var booted: Date?
-        if case .string(let s)? = v?["booted"], !s.hasPrefix("0001-") { booted = GoTime.parse(s) }
-        return MachineFacts(free: Int64(free), total: Int64(total), low: flag("low"), power: power, keptAwake: flag("keptAwake"), booted: booted)
+        return MachineFacts(free: Int64(free), total: Int64(total), low: flag("low"), power: power, keptAwake: flag("keptAwake"))
     }
 
     /// "412 GB": the figure, with "free" beside it, in 1024s as the computer counts its disks (`diskspace.Size`),
@@ -57,18 +53,6 @@ struct MachineFacts: Sendable, Equatable {
 
     /// The share of the drive used, 0.01 to 1, for its bar.
     var usedShare: Double { total > 0 ? min(1, max(0.01, 1 - Double(free) / Double(total))) : 0 }
-
-    /// How long it has been up, as the computer's card says it (`upFor` in web/src/status/Tiles.tsx):
-    /// "Up 23 days", "Up 5 hours", "Up 12 minutes"; nil when it isn't known.
-    static func upFor(_ booted: Date?, now: Date = .now) -> String? {
-        guard let booted else { return nil }
-        let minutes = Int(now.timeIntervalSince(booted) / 60)
-        guard minutes >= 0 else { return nil }
-        if minutes < 60 { return "Up " + (minutes <= 1 ? "a minute" : "\(minutes) minutes") }
-        let hours = minutes / 60
-        if hours < 48 { return "Up " + (hours == 1 ? "an hour" : "\(hours) hours") }
-        return "Up \(hours / 24) days"
-    }
 
     /// Something on it that needs a look (little room, on battery, or it may sleep).
     var needsALook: Bool { low || power == "battery" || (power == "plugged" && !keptAwake) }

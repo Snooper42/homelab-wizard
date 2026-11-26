@@ -1,10 +1,8 @@
 import Charts
 import SwiftUI
 
-/// Analytics on Status, as the computer's (app-status-analytics.png): Processor, Memory and Drives as three cards of
-/// the Overview's anatomy, the apps' processor and memory over the minutes since it opened, and what each app uses,
-/// heaviest first, eight then Show All. The usage card is read again every 15 seconds while it's open; Day, Week and
-/// Month are the computer's kept history (`UsageHistory`), from a computer that serves it to a phone.
+/// Analytics on Status: Processor, Memory and Drives, the apps' use over time, and what each app uses, heaviest first.
+/// The usage card is read again every 15 seconds while it's open; Day, Week and Month are the computer's history.
 struct AnalyticsPage: View {
     let model: DashboardViewModel
     @State private var all = false
@@ -180,7 +178,7 @@ struct AnalyticsPage: View {
                     .font(.subheadline)
                     .foregroundStyle(Theme.danger)
             } else {
-                Text(period == .now ? "Drawn as Status reads the apps, every 15 seconds" : "Nothing kept yet for this stretch")
+                Text(period == .now ? "Reading…" : "None yet")
                     .font(.subheadline)
                     .foregroundStyle(Theme.secondaryInk)
             }
@@ -316,10 +314,12 @@ struct AnalyticsRow: View {
                 Text("Analytics")
                     .font(.headline)
                     .foregroundStyle(Theme.ink)
-                Text(verbatim: now.read ? "\(UsageNow.percent(now.processor))% of a core · \(UsageNow.memory(now.memory)) in use" : "Processor, memory and drives")
-                    .font(.subheadline)
-                    .foregroundStyle(Theme.secondaryInk)
-                    .lineLimit(1)
+                if now.read {
+                    Text(verbatim: "\(UsageNow.percent(now.processor))% of a core · \(UsageNow.memory(now.memory)) in use")
+                        .font(.subheadline)
+                        .foregroundStyle(Theme.secondaryInk)
+                        .lineLimit(1)
+                }
             }
         }
         .padding(.vertical, 4)

@@ -37,9 +37,9 @@ struct SubscriptionsTests {
         // Library apart from the total.
         #expect(s.counted == 3 && abs(s.year - (59.88 + 240 + 249.99)) < 0.001)
         #expect(abs(s.month - (4.99 + 25 + 249.99 / 12)) < 0.001)
-        #expect(s.library == 1 && s.libraryYear == 263.88)
-        #expect(s.libraryLine == "+ $264 a year more if you own the media (1 like Spotify Premium Family)")
-        #expect(s.lead == "$550 a year, $50.82 a month, instead of 3 subscriptions")
+        // Spotify is still a tile, just not in the total.
+        #expect(s.now.contains { $0.service == "Spotify Premium Family" })
+        #expect(s.lead == "$550 a year · $50.82 a month")
         #expect(s.more.map(\.service) == ["Dropbox Plus"] && s.could == 119.88)
         // Where it comes from: Security (CrowdSec and Vaultwarden) first, then Documents.
         #expect(s.parts.map(\.label) == ["Security", "Documents"])
@@ -47,10 +47,10 @@ struct SubscriptionsTests {
 
     @Test func nothingRunYet() {
         let s = SubscriptionsSummary.from(offers: offers, running: [], catalog: catalog)
-        #expect(s.now.isEmpty && s.year == 0 && s.libraryLine == nil && s.parts.isEmpty)
+        #expect(s.now.isEmpty && s.year == 0 && s.parts.isEmpty)
         // A service once even among the ones that could be.
         #expect(s.more.filter { $0.service == "Spotify Premium Family" }.count == 1)
-        #expect(s.lead == "$0.00 a year, $0.00 a month, instead of 0 subscriptions")
+        #expect(s.lead == "$0.00 a year · $0.00 a month")
     }
 
     @Test func theRowsAsTheComputerSendsThem() throws {

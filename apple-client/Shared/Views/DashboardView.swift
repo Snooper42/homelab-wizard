@@ -162,6 +162,9 @@ private struct PhoneDashboard: View {
         Binding(
             get: {
                 let screen = (Screen(storageKey: savedTab) ?? .status(.all)).row
+                // Backups is one of Status' pages on the iPhone, and Setup one of Settings', as on the computer.
+                if screen == .backups { return .status(.all) }
+                if screen == .setup { return isMember ? .status(.all) : .settings }
                 return IntentInbox.landing(screen, isMember: isMember, canSeeFinances: finances.canSeePlan)
             },
             set: { screen in
@@ -176,16 +179,8 @@ private struct PhoneDashboard: View {
         TabView(selection: tab) {
             PhoneStatus(model: model, computer: computer, isMember: isMember)
                 .tabItem { Label("Status", systemImage: Screen.status(.all).systemImage) }
-                .badge(model.attentionCount)
+                .badge(model.attentionCount + (isMember ? 0 : model.backups.needsAttention))
                 .tag(Screen.status(.all))
-            if !isMember {
-                NavigationStack {
-                    BackupsView(backups: model.backups)
-                }
-                .tabItem { Label("Backups", systemImage: Screen.backups.systemImage) }
-                .badge(model.backups.needsAttention)
-                .tag(Screen.backups)
-            }
             if finances.canSeePlan {
                 NavigationStack {
                     financesRoot
@@ -199,13 +194,6 @@ private struct PhoneDashboard: View {
                 }
                 .tabItem { Label("Finances", systemImage: Screen.finances.systemImage) }
                 .tag(Screen.finances)
-            }
-            if !isMember {
-                NavigationStack {
-                    ComputerView(computer: computer, page: .setup)
-                }
-                .tabItem { Label("Setup", systemImage: Screen.setup.systemImage) }
-                .tag(Screen.setup)
             }
             NavigationStack {
                 if isMember {
@@ -226,14 +214,26 @@ private struct PhoneDashboard: View {
         // phone has it (the tab's own rules still apply).
         .onChange(of: IntentInbox.shared.screen, initial: true) { _, screen in
             guard let screen else { return }
-            savedTab = screen.storageKey
+            if screen == .backups || screen == .setup {
+                savedTab = Screen.status(.all).storageKey
+                if !isMember { IntentInbox.shared.statusPage = screen == .backups ? .backups : .setup }
+            } else {
+                savedTab = screen.storageKey
+            }
             IntentInbox.shared.screen = nil
             // No Finances on this phone: no page of it waits either.
             if !finances.canSeePlan { IntentInbox.shared.financePage = nil }
         }
         #if SCREENSHOTS
         .onAppear {
-            if let tab = screenshotTab { savedTab = tab.storageKey }
+            if let tab = screenshotTab {
+                if tab == .backups || tab == .setup {
+                    savedTab = Screen.status(.all).storageKey
+                    IntentInbox.shared.statusPage = tab == .backups ? .backups : .setup
+                } else {
+                    savedTab = tab.storageKey
+                }
+            }
             finances.amountsShown = !ScreenshotMode.hidesAmounts
         }
         #endif
@@ -351,6 +351,16 @@ private struct PhoneStatus: View {
                             .padding(.bottom, 6)
                             .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 0, trailing: 0))
                             .listRowBackground(Color.clear)
+                        if !isMember, let steps = computer.setupSteps, !steps.isEmpty, !SetupChecklist.progress(steps).allDone {
+                            Button { path.append(.setup) } label: {
+                                SetupCard(steps: steps)
+                            }
+                            .buttonStyle(PressableButtonStyle())
+                            .accessibilityHint("Opens Setup")
+                            .padding(.bottom, 6)
+                            .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 0, trailing: 0))
+                            .listRowBackground(Color.clear)
+                        }
                     }
                     // Analytics, as the first of the computer's Status menu after the Overview (not a member's).
                     if !isMember {
@@ -363,6 +373,10 @@ private struct PhoneStatus: View {
                                     SubscriptionsRow(model: model)
                                 }
                             }
+                            NavigationLink(value: StatusPlace.backups) {
+                                BackupsRow(model: model)
+                            }
+                            .badge(model.backups.needsAttention)
                         }
                     }
                     // The categories as one list, a row each (the computer's panel): a tap opens its page.
@@ -410,6 +424,10 @@ private struct PhoneStatus: View {
                     AnalyticsPage(model: model)
                 case .subscriptions:
                     SubscriptionsPage(model: model)
+                case .backups:
+                    BackupsView(backups: model.backups)
+                case .setup:
+                    ComputerView(computer: computer, page: .setup)
                 }
             }
             // Stage Manager and Split View: the app open beside the list when the
@@ -440,10 +458,18 @@ private struct PhoneStatus: View {
             }
             // The Backups card and the tab's badge, read once if that tab hasn't yet.
             .task { if !isMember, model.backups.overview == nil { await model.backups.load() } }
+            // Finish setting up's card, while steps are left.
+            .task(id: model.hasLoaded) { if !isMember, model.hasLoaded { await computer.loadSetup() } }
             // Siri or a shortcut: the app's page, and the action asked for,
             // once Status is read (after unlock).
             .onChange(of: IntentInbox.shared.pending, initial: true) { takeRequest() }
             .onChange(of: model.hasLoaded) { takeRequest() }
+            // A link, the Backups card or a screenshot asked for one of Status' pages.
+            .onChange(of: IntentInbox.shared.statusPage, initial: true) { _, page in
+                guard let page else { return }
+                path = [page]
+                IntentInbox.shared.statusPage = nil
+            }
             .toolbar {
                 #if os(iOS)
                 ToolbarItem(placement: .topBarLeading) {
@@ -620,7 +646,8 @@ private struct SplitDashboard: View {
         if isMember {
             return [.status(.all)] + (finances.canSeePlan ? [.finances] : []) + [.settings]
         }
-        return [.status(.all), .backups] + (finances.canSeePlan ? [.finances] : []) + [.setup, .settings]
+        // Backups is one of Status' pages and Setup one of Settings', as on the computer.
+        return [.status(.all)] + (finances.canSeePlan ? [.finances] : []) + [.settings]
     }
 
     /// The highlighted row: Status for any of its filters. Picking Status
@@ -653,7 +680,12 @@ private struct SplitDashboard: View {
         // Where it was left, then what a link, Siri or a shortcut asked
         // for while it was locked (after, so the place kept doesn't undo it).
         .onAppear {
-            model.sidebar = Screen(storageKey: savedSidebar) ?? .status(.all)
+            let saved = Screen(storageKey: savedSidebar) ?? .status(.all)
+            if (saved == .backups || saved == .setup) && !isMember {
+                model.sidebar = .status(.all)
+            } else {
+                model.sidebar = saved
+            }
             takeScreen()
             takeRequest()
         }
@@ -680,6 +712,7 @@ private struct SplitDashboard: View {
             model.search = ""
             model.sidebar = .status(.all)
             model.selectedAppID = id
+            IntentInbox.shared.statusPage = .app(id)
         }
         // Wider at the largest text, where it starts hidden (below) and is shown with its button.
         .navigationSplitViewColumnWidth(min: 190, ideal: typeSize.isAccessibilitySize ? 320 : 220)
@@ -695,7 +728,10 @@ private struct SplitDashboard: View {
 
     /// Backups and Setup, beside the sidebar across the whole width: a household member's iPad has neither.
     /// (Setup opens nothing, so its right side would only ever be empty: landscape pictures, Nov 15.)
-    private var wideScreen: Bool { (model.sidebar == .backups || model.sidebar == .setup) && !isMember }
+    private var wideScreen: Bool { statusWide || ((model.sidebar == .backups || model.sidebar == .setup) && !isMember) }
+
+    /// Status beside the sidebar across the whole width, as the iPhone's: the Overview, its pages opening over it.
+    private var statusWide: Bool { model.sidebar == .status(.all) }
 
     var body: some View {
         Group {
@@ -705,6 +741,9 @@ private struct SplitDashboard: View {
                 NavigationSplitView(columnVisibility: $columns) {
                     sidebar
                 } detail: {
+                    if statusWide {
+                        PhoneStatus(model: model, computer: computer, isMember: isMember)
+                    } else {
                     NavigationStack {
                         Group {
                             if model.sidebar == .setup {
@@ -715,6 +754,7 @@ private struct SplitDashboard: View {
                         }
                         .modifier(HealthLineInset(model: model) { model.sidebar = .status(.attention) })
                         .toolbar { toolbarItems }
+                    }
                     }
                 }
             } else {
@@ -813,7 +853,8 @@ private struct SplitDashboard: View {
             model.sidebar = screen
         }
         .onChange(of: model.hasLoaded, initial: true) {
-            guard model.hasLoaded, model.selectedAppID == nil,
+            // Status' own stack opens the app for the app shot; the Overview stays for the others.
+            guard model.hasLoaded, model.selectedAppID == nil, model.sidebar != .status(.all),
                   ScreenshotMode.shot == "status" || ScreenshotMode.shot == "app",
                   let app = model.app(id: "vikunja") ?? model.latestApps.first else { return }
             model.selectedAppID = app.id
@@ -872,6 +913,7 @@ private struct SplitDashboard: View {
             model.search = ""
             model.sidebar = .status(.all)
             model.selectedAppID = id
+            IntentInbox.shared.statusPage = .app(id)
         case .app(let id, let action):
             guard let a = app(id) else { return }
             // Stop was asked twice in the palette, as the computer's: it runs now (Face ID first).
@@ -920,6 +962,12 @@ private struct SplitDashboard: View {
         guard let screen = inbox.screen else { return }
         inbox.screen = nil
         let landing = IntentInbox.landing(screen, isMember: isMember, canSeeFinances: finances.canSeePlan)
+        if landing == .backups || landing == .setup {
+            model.sidebar = .status(.all)
+            inbox.statusPage = landing == .backups ? .backups : .setup
+            inbox.financePage = nil
+            return
+        }
         model.sidebar = landing
         // No Finances here: no page of it waits either.
         if landing != .finances { inbox.financePage = nil }
@@ -929,21 +977,9 @@ private struct SplitDashboard: View {
     /// the iPhone does: the app's page in the full list, then what waits on
     /// it. An app it can't tell is searched for, so the list shows what matches.
     private func takeRequest() {
-        let inbox = IntentInbox.shared
-        guard let request = inbox.pending, model.hasLoaded else { return }
-        inbox.pending = nil
-        let outcome = IntentInbox.outcome(of: request, in: model.apps(for: .all), available: { actions.available(for: $0) })
+        // Status' own stack opens the app's page and does what waits on it, as on the iPhone.
+        guard IntentInbox.shared.pending != nil, model.hasLoaded else { return }
         model.sidebar = .status(.all)
-        switch outcome {
-        case .search(let said):
-            model.search = said
-        case .open(let id, let then):
-            model.search = ""
-            model.selectedAppID = id
-            if let then, let app = model.app(id: id) {
-                follow(then, on: app, model: model, actions: actions) { linkAsk = $0 }
-            }
-        }
     }
 
     /// Whether the list beside the detail is Status's apps (the content
@@ -958,7 +994,7 @@ private struct SplitDashboard: View {
 
     private func badge(for screen: Screen) -> Int {
         switch screen {
-        case .status: model.attentionCount
+        case .status: model.attentionCount + (isMember ? 0 : model.backups.needsAttention)
         case .backups: model.backups.needsAttention
         default: 0
         }

@@ -37,6 +37,8 @@ final class IntentInbox {
     var screen: DashboardViewModel.SidebarItem?
     /// A page of Finances a link asked for (`homelab://finances/budgets`).
     var financePage: DeepLink.FinancePage?
+    /// A page of Status to open on the iPhone (Backups), until Status shows it.
+    var statusPage: StatusPlace?
 
     func post(_ request: Request) { pending = request }
 

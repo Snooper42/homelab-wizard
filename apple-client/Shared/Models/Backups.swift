@@ -263,7 +263,6 @@ extension BackupOverview {
                 ? run.formatted(date: .omitted, time: .shortened)
                 : run.formatted(.relative(presentation: .named)))
         }
-        if destinationOK, !destination.isEmpty { parts.append("Encrypted to \(Self.placeName(destination))") }
         let skipped = copies.filter { $0.state == "stale" }
         let chip: String? = skipped.isEmpty ? nil : skipped.count == 1 ? "\(skipped[0].name) skipped" : "\(skipped.count) skipped"
         return LastNight(figure: "\(count.fresh)", unit: "of \(count.of) copied", caption: parts.joined(separator: " · "), chip: chip)
