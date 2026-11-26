@@ -1,3 +1,4 @@
+// A right-click on a screen in the sidebar opens its menu; each item does what that screen's own button does.
 import { openContextMenu, type ContextEntry } from '../parts/ContextMenu';
 import { financesData, openFinanceForm, toggleHideAmounts } from '../screens/finances';
 import { navigate, reloadScreen } from '../app';
@@ -12,14 +13,8 @@ export function navItems(screen: string): ContextEntry[] {
   if (screen === 'status') {
     const items: ContextEntry[] = [again, '-', { label: 'Update all apps…', run: on('status', () => $('updateAll').click()), disabled: ($('updateAll') as HTMLButtonElement).disabled }];
     if (!$('fixIt').hidden) items.push({ label: 'Fix it', run: on('status', () => $('fixIt').click()) });
+    items.push({ label: 'Back up now', run: on('backups', () => $('backupNow').click()), disabled: ($('backupNow') as HTMLButtonElement).disabled });
     return items;
-  }
-  if (screen === 'backups') {
-    // Test a restore is there once a backup is, on Backups itself.
-    const test = () => document.getElementById('restoreTest') as HTMLButtonElement | null;
-    return [again, '-',
-      { label: 'Back up now', run: on('backups', () => $('backupNow').click()), disabled: ($('backupNow') as HTMLButtonElement).disabled },
-      { label: 'Test a restore', run: on('backups', () => test()?.click()), disabled: !test() || test()!.disabled }];
   }
   if (screen === 'finances') {
     const v = financesData.value;

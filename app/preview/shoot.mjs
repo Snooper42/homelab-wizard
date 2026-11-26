@@ -524,7 +524,12 @@ async function toStatusPart(page, key) {
   await page.click('#statusChips .sidedropbtn');
   await page.click(`#statusChips .sidemenulist button[data-key="${key}"]`);
 }
-/** Backups, an item in Status' menu (the owner, Nov 25; the strip's button gone): Status first from another screen. */
+/** Picks a screen as a person would: Backups through Status' menu, the rest by their button in the strip. */
+async function pickScreen(page, screen) {
+  if (screen === 'backups') return toBackups(page);
+  await page.click(`nav button[data-screen="${screen}"]`);
+}
+/** Backups, an item in Status' menu: Status first from another screen. */
 async function toBackups(page) {
   if (!(await page.evaluate(() => !!document.querySelector('nav > button[data-screen="status"].active')))) await page.click('nav > button[data-screen="status"]');
   await toStatusPart(page, 'backups');
@@ -4432,7 +4437,7 @@ const smokes = [
       return b;
     };
     const b = await rightClick('status');
-    if ((await items()).join('|') !== 'Check again|Update all apps…') throw new Error('Status: ' + (await items()).join(', '));
+    if ((await items()).join('|') !== 'Check again|Update all apps…|Back up now') throw new Error('Status: ' + (await items()).join(', '));
     if ((await menu.getAttribute('aria-label')) !== 'Status') throw new Error('the menu is named ' + await menu.getAttribute('aria-label'));
     const m = await menu.boundingBox();
     if (Math.abs(m.x - (b.x + 30)) > 2 || Math.abs(m.y - (b.y + b.height / 2)) > 2) throw new Error(`the menu opened at ${m.x},${m.y}, not at the pointer`);
@@ -4442,8 +4447,6 @@ const smokes = [
     await page.keyboard.press('Escape');
     await menu.waitFor({ state: 'detached', timeout: 1000 });
     // Backups: Back up now and Test a restore.
-    await rightClick('backups');
-    if ((await items()).join('|') !== 'Check again|Back up now|Test a restore') throw new Error('Backups: ' + (await items()).join(', '));
     await page.locator('#tiles').dispatchEvent('mousedown', { detail: 1 });
     await menu.waitFor({ state: 'detached', timeout: 1000 });
     // Finances, from the keyboard: Shift+F10 on its button, the first item focused, the arrows, Return.
@@ -5022,12 +5025,12 @@ const smokes = [
   { name: 'Going back to a screen draws what was read', screen: 'status', run: async (page) => {
     await page.waitForSelector('#statusRows tr', { timeout: 5000 });
     for (const screen of ['backups', 'setup', 'settings', 'status']) {
-      await page.click(`nav button[data-screen="${screen}"]`);
+      await pickScreen(page, screen);
       await page.waitForTimeout(400);
     }
     await page.waitForSelector('#settingsNav .pagebtn', { state: 'attached', timeout: 5000 });
     const before = await backendCalls(page);
-    for (const screen of ['backups', 'setup', 'settings', 'status', 'setup', 'status']) await page.click(`nav button[data-screen="${screen}"]`);
+    for (const screen of ['backups', 'setup', 'settings', 'status', 'setup', 'status']) await pickScreen(page, screen);
     await page.waitForTimeout(300);
     await page.waitForSelector('#statusRows tr', { timeout: 2000 });
     const asked = diffCalls(before, await backendCalls(page));
@@ -6494,7 +6497,7 @@ const smokes = [
   // Settings › Appearance › Motion and Transparency, on every screen.
   { name: 'Motion None: nothing moves on any screen, a running job and an open sheet included', screen: 'status', mock: { look: { motion: 'none' }, actionDelay: 1500 }, run: async (page) => {
     for (const screen of ['backups', 'setup', 'settings', 'finances', 'status']) {
-      await page.click(`nav button[data-screen="${screen}"]`);
+      await pickScreen(page, screen);
       await page.waitForTimeout(250);
       const moving = await page.evaluate(movingNow);
       if (moving.length) throw new Error(`${screen}: ${moving.slice(0, 4).join('; ')}`);
@@ -6546,7 +6549,7 @@ const smokes = [
     for (const phone of [false, true]) {
       if (phone) await page.evaluate(() => document.documentElement.classList.add('companion'));
       for (const screen of ['settings', 'status', 'backups']) {
-        if (screen !== 'settings') await page.click(`nav button[data-screen="${screen}"]`);
+        if (screen !== 'settings') await pickScreen(page, screen);
         const blurred = await page.evaluate(() => [...document.querySelectorAll('*')].filter((e) => {
           const cs = getComputedStyle(e);
           return (cs.backdropFilter && cs.backdropFilter !== 'none') || (cs.webkitBackdropFilter && cs.webkitBackdropFilter !== 'none');
@@ -6816,7 +6819,7 @@ const smokes = [
     const current = async () => (await page.textContent('#finMenu [aria-current="page"]'))?.trim();
     if ((await current()) !== 'Dashboard') throw new Error(`the menu opens on ${await current()}`);
     if (await page.locator('#finances .seg').filter({ hasText: 'Spending' }).count()) throw new Error("the tabs are still on Finances' page");
-    for (const s of ['status', 'backups', 'tidy', 'finances']) {
+    for (const s of ['status', 'tidy', 'finances']) {
       const b = page.locator(`nav > button[data-screen="${s}"]`);
       if (!(await b.isVisible())) throw new Error(`the ${s} icon is not in the strip`);
       if ((await b.boundingBox()).width > 60) throw new Error(`the ${s} button is a whole line, not an icon`);
