@@ -32,6 +32,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/custom"
 	"github.com/Snooper42/homelab-wizard/internal/diskspace"
 	"github.com/Snooper42/homelab-wizard/internal/docker"
+	"github.com/Snooper42/homelab-wizard/internal/docs"
 	"github.com/Snooper42/homelab-wizard/internal/domain"
 	"github.com/Snooper42/homelab-wizard/internal/downloads"
 	"github.com/Snooper42/homelab-wizard/internal/duplicati"
@@ -1073,6 +1074,17 @@ func (a *App) UsageHistory(days int) (usage.History, error) {
 
 func (a *App) SavingsHistory() []savings.Point {
 	return savings.LoadHistory(savings.HistoryPath(a.root))
+}
+
+// AppGuide is the app's note read for its page before it's installed (Status
+// › Add an app): what it's for, its setup, everyday use, what it works with,
+// where to read more, about how much memory it takes, and how it updates.
+func (a *App) AppGuide(id string) (docs.Guide, error) {
+	c, err := a.catalog()
+	if err != nil {
+		return docs.Guide{}, err
+	}
+	return docs.ReadGuide(a.root, c, id)
 }
 
 // SavingsRows is every subscription the apps can replace, at its price, from
