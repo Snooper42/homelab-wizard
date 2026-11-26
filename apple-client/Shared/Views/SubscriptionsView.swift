@@ -1,9 +1,7 @@
 import SwiftUI
 
-/// Status › Subscriptions, as the computer's (app-status-subscriptions.png): what the apps save a year and a month,
-/// Library services apart; where it comes from by kind of app; what more the apps you don't run could save; then each
-/// paid service replaced now as a tile (its logo, its price a month and a year, the apps that replace it), and the
-/// ones that could be, faded.
+/// Status › Subscriptions: what the apps save, where it comes from, what more could be saved, then each paid service
+/// replaced now as a tile, and the ones that could be, faded.
 struct SubscriptionsPage: View {
     let model: DashboardViewModel
 
@@ -14,16 +12,9 @@ struct SubscriptionsPage: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 12) {
                 if let summary {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(verbatim: summary.lead)
-                            .font(.subheadline)
-                            .foregroundStyle(Theme.secondaryInk)
-                        if let library = summary.libraryLine {
-                            Text(verbatim: library)
-                                .font(.footnote)
-                                .foregroundStyle(Theme.secondaryInk)
-                        }
-                    }
+                    Text(verbatim: summary.lead)
+                        .font(.subheadline)
+                        .foregroundStyle(Theme.secondaryInk)
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 300), spacing: 12, alignment: .top)], spacing: 12) {
                         whereFrom(summary)
                         if summary.could > 0 { couldSave(summary) }
@@ -53,21 +44,10 @@ struct SubscriptionsPage: View {
 
     /// Where it comes from: each kind of app's share of the year, as a bar and a legend.
     private func whereFrom(_ s: SubscriptionsSummary) -> some View {
-        let points = model.cards.savingsPoints.filter { $0.annual > 0 }
-        let since = points.count > 1 ? (points.last?.annual ?? 0) - (points.first?.annual ?? 0) : 0
-        let sinceDay = points.first?.day?.formatted(.dateTime.month(.abbreviated).day()) ?? ""
-        return VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .firstTextBaseline) {
-                Text("Where it comes from")
-                    .font(.headline)
-                    .foregroundStyle(Theme.ink)
-                Spacer()
-                if since > 0 {
-                    Text(verbatim: "+\(SubscriptionsSummary.money(since)) since \(sinceDay)")
-                        .font(.subheadline)
-                        .foregroundStyle(Theme.secondaryInk)
-                }
-            }
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Where it comes from")
+                .font(.headline)
+                .foregroundStyle(Theme.ink)
             if s.year > 0 {
                 GeometryReader { geo in
                     HStack(spacing: 2) {
@@ -109,15 +89,9 @@ struct SubscriptionsPage: View {
     /// Could save more: the three dearest the apps you don't run could replace.
     private func couldSave(_ s: SubscriptionsSummary) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .firstTextBaseline) {
-                Text(verbatim: "Could save \(SubscriptionsSummary.money(s.could)) more")
-                    .font(.headline)
-                    .foregroundStyle(Theme.ink)
-                Spacer()
-                Text("a year")
-                    .font(.subheadline)
-                    .foregroundStyle(Theme.secondaryInk)
-            }
+            Text(verbatim: "Could save \(SubscriptionsSummary.money(s.could)) more a year")
+                .font(.headline)
+                .foregroundStyle(Theme.ink)
             let next = Array(s.more.filter { !$0.isLibrary }.prefix(3))
             ForEach(Array(next.enumerated()), id: \.offset) { i, o in
                 HStack(spacing: 12) {
@@ -126,7 +100,7 @@ struct SubscriptionsPage: View {
                         Text(verbatim: o.apps.map(name).joined(separator: " + "))
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(Theme.ink)
-                        Text(verbatim: "instead of \(o.replaces)")
+                        Text(verbatim: o.replaces)
                             .font(.subheadline)
                             .foregroundStyle(Theme.secondaryInk)
                             .lineLimit(2)
@@ -182,8 +156,8 @@ private struct TileShelf: View {
     }
 }
 
-/// One paid service: its logo and name, its kind, its price a month and a year, and the apps that replace it (each
-/// opening its page). What it takes for the saving to be real is under them.
+/// One paid service: its logo and name, its kind, its price a month and a year, and the apps that replace it, each
+/// opening its page.
 private struct ServiceTile: View {
     let offer: SubscriptionOffer
     let faded: Bool
@@ -237,11 +211,6 @@ private struct ServiceTile: View {
                     }
                 }
             }
-            if !offer.condition.isEmpty {
-                Text(verbatim: offer.condition)
-                    .font(.footnote)
-                    .foregroundStyle(Theme.secondaryInk)
-            }
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -267,10 +236,12 @@ struct SubscriptionsRow: View {
                 Text("Subscriptions")
                     .font(.headline)
                     .foregroundStyle(Theme.ink)
-                Text(verbatim: summary.map { "\(SubscriptionsSummary.money($0.year)) a year instead of \($0.counted)" } ?? "What the apps stand in for")
-                    .font(.subheadline)
-                    .foregroundStyle(Theme.secondaryInk)
-                    .lineLimit(1)
+                if let summary {
+                    Text(verbatim: "\(SubscriptionsSummary.money(summary.year)) a year")
+                        .font(.subheadline)
+                        .foregroundStyle(Theme.secondaryInk)
+                        .lineLimit(1)
+                }
             }
         }
         .padding(.vertical, 4)
