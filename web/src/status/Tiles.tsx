@@ -129,12 +129,32 @@ export interface TilesProps {
   mac?: HealthProps | null;
   /** On a phone: the computer's free space and power as it sends them (the machine card), for This machine. */
   machine?: MachineFacts | null;
+  /** What the apps hold in memory now, in bytes (the usage reading's sum), for the machine card's bar; 0 before it's read. */
+  appsMemory?: number;
 }
 
-/** The computer's free space and power, as `core.MachineFacts` sends them to a phone. */
-export interface MachineFacts { free: number; total: number; low: boolean; power?: string; keptAwake: boolean }
+/** The computer's free space, power, memory and boot time, as `core.MachineFacts` sends them (memory and booted from
+ * 0.44, and only where the system tells them: lane D, D5). */
+export interface MachineFacts { free: number; total: number; low: boolean; power?: string; keptAwake: boolean; memory?: number; booted?: string }
 
-export function Tiles({ status: st, history, onPause, onChoose, words, start, logs, open, backups, openBackups, mac, machine, week, nights, startAll, seeAll }: TilesProps) {
+/** Memory in GB as the machine's own spec says it (powers of 1024: 32 GB, not 34.4): whole from 10 up, else to a tenth. */
+function gb(n: number): string {
+  const g = n / 2 ** 30;
+  return g >= 10 ? String(Math.round(g)) : g.toFixed(1).replace(/\.0$/, '');
+}
+
+/** How long the machine has been up: "Up 23 days", "Up 5 hours", "Up 12 minutes"; '' when it isn't known. */
+export function upFor(booted?: string, now = Date.now()): string {
+  if (!booted || booted.startsWith('0001-')) return '';
+  const mins = Math.floor((now - new Date(booted).getTime()) / 60000);
+  if (!(mins >= 0)) return '';
+  if (mins < 60) return `Up ${mins <= 1 ? 'a minute' : `${mins} minutes`}`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 48) return `Up ${hours === 1 ? 'an hour' : `${hours} hours`}`;
+  return `Up ${Math.floor(hours / 24)} days`;
+}
+
+export function Tiles({ status: st, history, onPause, onChoose, words, start, logs, open, backups, openBackups, mac, machine, week, nights, startAll, seeAll, appsMemory }: TilesProps) {
   // No app yet: no 0-of-0 tiles, but what to do first (the empty list hides with it).
   if (!st.apps.length) {
     return (
@@ -186,7 +206,7 @@ export function Tiles({ status: st, history, onPause, onChoose, words, start, lo
         <div class="antline muted">{!backups ? 'Reading last night…' : <span>{backups.at}{backups.skipped.length ? <>{' · '}<span class="warn">{backups.skipped.join(', ')} skipped</span></> : ''}</span>}</div>
         <div class="antfoot">{nights?.length ? <span class="ovdays" role="img" aria-label={`The last ${Math.min(14, nights.length)} nights`}>{nights.slice(-14).map((n) => <i key={n.date} class={nightTone(n)} title={nightWords(n, (id) => id)} />)}</span> : <span class="antempty" />}</div>
       </Card>
-      {mac ? <MacCard mac={mac} updates={u} onPause={onPause} /> : machine?.total ? <MachineCard m={machine} updates={u} onPause={onPause} /> : (
+      {mac ? <MacCard mac={mac} facts={machine} appsMemory={appsMemory} updates={u} onPause={onPause} /> : machine?.total ? <MachineCard m={machine} appsMemory={appsMemory} updates={u} onPause={onPause} /> : (
         <Card kind="tile ovcard" id="statusMachine">
           <div class="anthead"><h2>Updates</h2><span class="muted" /></div>
           <div class="antfig">{u?.paused ? 'Paused' : 'On'}</div>
@@ -200,12 +220,12 @@ export function Tiles({ status: st, history, onPause, onChoose, words, start, lo
 
 /** The machine's card (the picture's *The server*): free space as the figure, power and what runs the apps on its
  * line, and the drive's room as a bar with the nightly updates' Pause at its foot. On a phone, from what the computer sends. */
-function MachineCard({ m, updates: u, onPause }: { m: MachineFacts; updates: api.Status['updates']; onPause: (paused: boolean) => Promise<void> }) {
+function MachineCard({ m, appsMemory, updates: u, onPause }: { m: MachineFacts; appsMemory?: number; updates: api.Status['updates']; onPause: (paused: boolean) => Promise<void> }) {
   const power = m.power === 'battery' ? { words: 'On battery', tone: 'warn' } : m.power === 'plugged' ? (m.keptAwake ? { words: 'Plugged in', tone: '' } : { words: 'Plugged in, may sleep', tone: 'warn' }) : null;
-  return <Machine id="statusMachine" name="This machine" free={m.free} total={m.total} low={m.low} line={power ? <span class={power.tone}>{power.words}</span> : null} u={u} onPause={onPause} />;
+  return <Machine id="statusMachine" name="This machine" free={m.free} total={m.total} low={m.low} line={power ? <span class={power.tone}>{power.words}</span> : null} u={u} onPause={onPause} memory={m.memory} appsMemory={appsMemory} booted={m.booted} />;
 }
 
-function MacCard({ mac, updates: u, onPause }: { mac: HealthProps; updates: api.Status['updates']; onPause: (paused: boolean) => Promise<void> }) {
+function MacCard({ mac, facts: m, appsMemory, updates: u, onPause }: { mac: HealthProps; facts?: MachineFacts | null; appsMemory?: number; updates: api.Status['updates']; onPause: (paused: boolean) => Promise<void> }) {
   const all = facts(mac);
   const of = (k: string) => all.find((f) => f.key === k);
   const power = of('power'), runtime = of('runtime');
@@ -217,19 +237,27 @@ function MacCard({ mac, updates: u, onPause }: { mac: HealthProps; updates: api.
   return (
     <Machine id="statusMac" name={name} free={d?.free || 0} total={d?.total || 0} low={!!d?.low} u={u} onPause={onPause}
       line={<>{fine && <span>{fine}</span>}{wrong.map((f, i) => <Fragment key={f.key}>{fine || i ? ' · ' : ''}<span class={f.tone}>{f.short}</span></Fragment>)}</>}
-      extra={stopped ? <StartAgent id="startAgentMac" start={mac.startAgent} /> : null} />
+      extra={stopped ? <StartAgent id="startAgentMac" start={mac.startAgent} /> : null} memory={m?.memory} appsMemory={appsMemory} booted={m?.booted} />
   );
 }
 
-function Machine({ id, name, free, total, low, line, u, onPause, extra }: { id: string; name: string; free: number; total: number; low: boolean; line: ComponentChildren; u: api.Status['updates']; onPause: (paused: boolean) => Promise<void>; extra?: ComponentChildren }) {
+/** The picture's *The server* (lane D, D5): how long it's been up in the title row, and its memory as the bar, "Memory ·
+ * 11 of 32 GB": what the apps hold of the machine's memory (amber past 85%). From a computer that doesn't send them,
+ * the nightly updates in the title row and the drive's room as the bar, as before; the updates move to the line then. */
+function Machine({ id, name, free, total, low, line, u, onPause, extra, memory, appsMemory, booted }: { id: string; name: string; free: number; total: number; low: boolean; line: ComponentChildren; u: api.Status['updates']; onPause: (paused: boolean) => Promise<void>; extra?: ComponentChildren; memory?: number; appsMemory?: number; booted?: string }) {
   const used = total ? Math.min(100, Math.max(1, Math.round(100 * (1 - free / total)))) : 0;
+  const updates = u?.paused ? 'Updates paused' : `Updates ${u?.schedule || 'nightly'}`;
+  const up = upFor(booted);
+  const share = memory && appsMemory ? Math.min(1, appsMemory / memory) : 0;
+  const pct = Math.round(share * 100);
   return (
     <Card kind="tile ovcard" id={id}>
-      <div class="anthead"><h2>{name}</h2><span class="muted">{u?.paused ? 'Updates paused' : `Updates ${u?.schedule || 'nightly'}`}</span></div>
+      <div class="anthead"><h2>{name}</h2><span class="muted">{up || updates}</span></div>
       <div class={'antfig' + (low ? ' bad' : '')}>{total ? <>{bytes(free).replace(/ \S+$/, '')}<span class="muted"> {bytes(free).replace(/^\S+ /, '')} free</span></> : '—'}</div>
-      <div class="antline muted">{line}{extra}</div>
+      <div class="antline muted">{line}{up ? <> · {updates.charAt(0).toLowerCase() + updates.slice(1)}</> : null}{extra}</div>
       <div class="antfoot ovmachine">
-        {total ? <span class="ovbar"><span class="antbar" role="img" aria-label={`${used}% used`}><span style={{ width: `${used}%` }} /></span><small class="muted">{bytes(total - free)} of {bytes(total)} used</small></span> : <span class="antempty" />}
+        {memory ? <span class={'ovbar memline' + (share > 0.85 ? ' warn' : '')}><span class="antbar" role="meter" aria-label="Memory the apps use" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct}><span style={{ width: `${Math.max(appsMemory ? 2 : 0, pct)}%` }} /></span><small class="muted">Memory · {appsMemory ? `${gb(appsMemory)} of ${gb(memory)} GB` : `${gb(memory)} GB`}</small></span>
+          : total ? <span class="ovbar"><span class="antbar" role="img" aria-label={`${used}% used`}><span style={{ width: `${used}%` }} /></span><small class="muted">{bytes(total - free)} of {bytes(total)} used</small></span> : <span class="antempty" />}
         <PauseButton paused={!!u?.paused} onPause={onPause} />
       </div>
     </Card>

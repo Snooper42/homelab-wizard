@@ -1967,7 +1967,20 @@
     return [...by].map(([k3, names5]) => `${names5.length > 3 ? `${names5.slice(0, 2).join(", ")} +${names5.length - 2}` : names5.join(", ")} ${k3}`).join(" · ");
   }
   var troubled = (a3, held3 = {}) => a3.health === "unhealthy" || a3.health === "restarting" || !!a3.notAnswering || a3.state === "missing" || a3.state === "stopped" && (!held3[a3.id] || keptRestarting(held3[a3.id]));
-  function Tiles({ status: st, history: history2, onPause, onChoose, words: words5, start, logs, open: open5, backups, openBackups, mac, machine, week: week2, nights, startAll, seeAll }) {
+  function gb(n3) {
+    const g2 = n3 / 2 ** 30;
+    return g2 >= 10 ? String(Math.round(g2)) : g2.toFixed(1).replace(/\.0$/, "");
+  }
+  function upFor(booted, now2 = Date.now()) {
+    if (!booted || booted.startsWith("0001-")) return "";
+    const mins = Math.floor((now2 - new Date(booted).getTime()) / 6e4);
+    if (!(mins >= 0)) return "";
+    if (mins < 60) return `Up ${mins <= 1 ? "a minute" : `${mins} minutes`}`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 48) return `Up ${hours === 1 ? "an hour" : `${hours} hours`}`;
+    return `Up ${Math.floor(hours / 24)} days`;
+  }
+  function Tiles({ status: st, history: history2, onPause, onChoose, words: words5, start, logs, open: open5, backups, openBackups, mac, machine, week: week2, nights, startAll, seeAll, appsMemory }) {
     if (!st.apps.length) {
       return /* @__PURE__ */ u3(Card, { kind: "emptystate", id: "statusEmpty", children: [
         /* @__PURE__ */ u3("h2", { children: "No apps yet" }),
@@ -2053,7 +2066,7 @@
         ] }) }),
         /* @__PURE__ */ u3("div", { class: "antfoot", children: nights?.length ? /* @__PURE__ */ u3("span", { class: "ovdays", role: "img", "aria-label": `The last ${Math.min(14, nights.length)} nights`, children: nights.slice(-14).map((n3) => /* @__PURE__ */ u3("i", { class: nightTone(n3), title: nightWords(n3, (id2) => id2) }, n3.date)) }) : /* @__PURE__ */ u3("span", { class: "antempty" }) })
       ] }),
-      mac ? /* @__PURE__ */ u3(MacCard, { mac, updates: u4, onPause }) : machine?.total ? /* @__PURE__ */ u3(MachineCard, { m: machine, updates: u4, onPause }) : /* @__PURE__ */ u3(Card, { kind: "tile ovcard", id: "statusMachine", children: [
+      mac ? /* @__PURE__ */ u3(MacCard, { mac, facts: machine, appsMemory, updates: u4, onPause }) : machine?.total ? /* @__PURE__ */ u3(MachineCard, { m: machine, appsMemory, updates: u4, onPause }) : /* @__PURE__ */ u3(Card, { kind: "tile ovcard", id: "statusMachine", children: [
         /* @__PURE__ */ u3("div", { class: "anthead", children: [
           /* @__PURE__ */ u3("h2", { children: "Updates" }),
           /* @__PURE__ */ u3("span", { class: "muted" })
@@ -2064,11 +2077,11 @@
       ] })
     ] });
   }
-  function MachineCard({ m: m3, updates: u4, onPause }) {
+  function MachineCard({ m: m3, appsMemory, updates: u4, onPause }) {
     const power = m3.power === "battery" ? { words: "On battery", tone: "warn" } : m3.power === "plugged" ? m3.keptAwake ? { words: "Plugged in", tone: "" } : { words: "Plugged in, may sleep", tone: "warn" } : null;
-    return /* @__PURE__ */ u3(Machine, { id: "statusMachine", name: "This machine", free: m3.free, total: m3.total, low: m3.low, line: power ? /* @__PURE__ */ u3("span", { class: power.tone, children: power.words }) : null, u: u4, onPause });
+    return /* @__PURE__ */ u3(Machine, { id: "statusMachine", name: "This machine", free: m3.free, total: m3.total, low: m3.low, line: power ? /* @__PURE__ */ u3("span", { class: power.tone, children: power.words }) : null, u: u4, onPause, memory: m3.memory, appsMemory, booted: m3.booted });
   }
-  function MacCard({ mac, updates: u4, onPause }) {
+  function MacCard({ mac, facts: m3, appsMemory, updates: u4, onPause }) {
     const all = facts(mac);
     const of = (k3) => all.find((f4) => f4.key === k3);
     const power = of("power"), runtime = of("runtime");
@@ -2094,16 +2107,23 @@
             /* @__PURE__ */ u3("span", { class: f4.tone, children: f4.short })
           ] }, f4.key))
         ] }),
-        extra: stopped2 ? /* @__PURE__ */ u3(StartAgent, { id: "startAgentMac", start: mac.startAgent }) : null
+        extra: stopped2 ? /* @__PURE__ */ u3(StartAgent, { id: "startAgentMac", start: mac.startAgent }) : null,
+        memory: m3?.memory,
+        appsMemory,
+        booted: m3?.booted
       }
     );
   }
-  function Machine({ id: id2, name, free, total, low, line, u: u4, onPause, extra }) {
+  function Machine({ id: id2, name, free, total, low, line, u: u4, onPause, extra, memory: memory3, appsMemory, booted }) {
     const used = total ? Math.min(100, Math.max(1, Math.round(100 * (1 - free / total)))) : 0;
+    const updates = u4?.paused ? "Updates paused" : `Updates ${u4?.schedule || "nightly"}`;
+    const up = upFor(booted);
+    const share4 = memory3 && appsMemory ? Math.min(1, appsMemory / memory3) : 0;
+    const pct2 = Math.round(share4 * 100);
     return /* @__PURE__ */ u3(Card, { kind: "tile ovcard", id: id2, children: [
       /* @__PURE__ */ u3("div", { class: "anthead", children: [
         /* @__PURE__ */ u3("h2", { children: name }),
-        /* @__PURE__ */ u3("span", { class: "muted", children: u4?.paused ? "Updates paused" : `Updates ${u4?.schedule || "nightly"}` })
+        /* @__PURE__ */ u3("span", { class: "muted", children: up || updates })
       ] }),
       /* @__PURE__ */ u3("div", { class: "antfig" + (low ? " bad" : ""), children: total ? /* @__PURE__ */ u3(S, { children: [
         bytes(free).replace(/ \S+$/, ""),
@@ -2115,10 +2135,20 @@
       ] }) : "—" }),
       /* @__PURE__ */ u3("div", { class: "antline muted", children: [
         line,
+        up ? /* @__PURE__ */ u3(S, { children: [
+          " · ",
+          updates.charAt(0).toLowerCase() + updates.slice(1)
+        ] }) : null,
         extra
       ] }),
       /* @__PURE__ */ u3("div", { class: "antfoot ovmachine", children: [
-        total ? /* @__PURE__ */ u3("span", { class: "ovbar", children: [
+        memory3 ? /* @__PURE__ */ u3("span", { class: "ovbar memline" + (share4 > 0.85 ? " warn" : ""), children: [
+          /* @__PURE__ */ u3("span", { class: "antbar", role: "meter", "aria-label": "Memory the apps use", "aria-valuemin": 0, "aria-valuemax": 100, "aria-valuenow": pct2, children: /* @__PURE__ */ u3("span", { style: { width: `${Math.max(appsMemory ? 2 : 0, pct2)}%` } }) }),
+          /* @__PURE__ */ u3("small", { class: "muted", children: [
+            "Memory · ",
+            appsMemory ? `${gb(appsMemory)} of ${gb(memory3)} GB` : `${gb(memory3)} GB`
+          ] })
+        ] }) : total ? /* @__PURE__ */ u3("span", { class: "ovbar", children: [
           /* @__PURE__ */ u3("span", { class: "antbar", role: "img", "aria-label": `${used}% used`, children: /* @__PURE__ */ u3("span", { style: { width: `${used}%` } }) }),
           /* @__PURE__ */ u3("small", { class: "muted", children: [
             bytes(total - free),
@@ -8340,7 +8370,7 @@
   var plainOf = (s3) => s3.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
   var wordsOf = (x3) => plainOf([x3.name, x3.description, ...x3.aliases || [], ...x3.replaces || []].join(" "));
   var doing2 = { start: "Starting…", stop: "Stopping…", restart: "Restarting…", update: "Updating…", rollback: "Rolling back…" };
-  function upFor(since, now2 = Date.now()) {
+  function upFor2(since, now2 = Date.now()) {
     const mins = Math.max(0, Math.round((now2 - new Date(since).getTime()) / 6e4)), hours = Math.round(mins / 60);
     return mins < 2 ? "Up a minute" : mins < 60 ? `Up ${mins} min` : hours < 48 ? `Up ${hours} ${hours === 1 ? "hour" : "hours"}` : `Up ${Math.round(hours / 24)} days`;
   }
@@ -8350,7 +8380,7 @@
     const [cls, words5] = stateOf(a3, p3.batteryPaused, p3.held);
     if (pend?.failed) return ["bad", `Could not ${pend.action}`];
     if (cls === "ok" && a3.health === "native") return [cls, "Running"];
-    return [cls, cls === "ok" && a3.since ? upFor(a3.since, now2) : words5];
+    return [cls, cls === "ok" && a3.since ? upFor2(a3.since, now2) : words5];
   }
   function Tile3({ a: a3, p: p3, menu: menu2, setMenu }) {
     const [cls, line] = tileLine(a3, p3);
@@ -9314,7 +9344,8 @@
       seeAll: () => showEveryApp(),
       openBackups: () => navigate("backups"),
       mac: machineNow(),
-      machine: onPhone() ? phoneMachine : null
+      machine: onPhone() || phoneMachine?.memory ? phoneMachine : null,
+      appsMemory: lastStats.reduce((n4, x3) => n4 + parseMem(x3.mem), 0)
     });
     mountSavings($("savingsCard"), { status: st, history: savingsHistory });
     if (!backupsData.value && Date.now() - backupsAsked > 6e4) {
@@ -9624,12 +9655,16 @@
   }
   var boardNo = 0;
   var phoneMachine = null;
+  var machineAt = 0;
   var boardStatus = null;
   var boardFailed = false;
   var boardAnswers = null;
   async function readStatus() {
     const want = ["watchdog", "crash", "alerts", "storage"];
-    if (onPhone()) want.push("machine");
+    if (onPhone() || Date.now() - machineAt > 6e4) {
+      machineAt = Date.now();
+      want.push("machine");
+    }
     if (!savingsHistory.length) want.push("savings");
     if (Date.now() - protectionAt > 6e4) {
       protectionAt = Date.now();
@@ -9706,7 +9741,7 @@
         break;
       case "machine":
         phoneMachine = err ? null : data2;
-        if (phoneMachine?.total) {
+        if (onPhone() && phoneMachine?.total) {
           const m3 = phoneMachine;
           drawFoot({ machine: { words: `${bytes(m3.free)} free${m3.power === "battery" ? " · on battery" : m3.power === "plugged" ? " · plugged in" : ""}`, tone: m3.low ? "bad" : m3.power === "battery" ? "warn" : "ok" } });
         }
@@ -9882,6 +9917,7 @@
     mountUsage($("usageCard"), { stats, history: usageHistory, nameOf: (id2) => catalog?.apps.find((a3) => a3.id === id2)?.name || id2 });
     memory = memoryByApp(stats, catalog);
     if (appList) mountAppList($("statusRows"), appList = { ...appList, memory });
+    if (lastStatus) renderTiles(lastStatus);
   }
   var memory;
   var lastStats = [];
