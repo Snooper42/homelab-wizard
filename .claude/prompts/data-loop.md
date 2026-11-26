@@ -41,7 +41,7 @@ owner has seen in a picture and asked for.
   watchdog keeps 7, `health.WeekDays`). Keep 14 days in `health.State.Days` and `Outages`; keep `Week()` as the last 7
   so "% up this week" stays true; add the per-day results to the Summary the computer sends (`days: { date, failed }[]`).
 - [x] **D4. Tidy Up on the phone's page: dropped** (the owner, Nov 26: "Tidy Up isn't needed on the phone or wall screens"). Nothing built.
-- [ ] **D5. The machine's memory and uptime for the machine card's bar** (the picture: *Memory · 11 of 32 GB*, *Up 23
+- [x] **D5. The machine's memory and uptime for the machine card's bar** (the picture: *Memory · 11 of 32 GB*, *Up 23
   days*): total memory and boot time in the machine facts (`core.Machine`, `internal/host`), sent to a phone too.
 
 ## Start line for lane D
