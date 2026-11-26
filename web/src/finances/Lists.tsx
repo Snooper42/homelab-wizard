@@ -184,7 +184,7 @@ function FoundWidget({ v, add }: { v: finance.View; add?: (x: finance.Payment) =
   );
 }
 
-export function Recurring({ v, L, edit, keep, running, fromWallos }: ListProps & { keep?: (plan: finance.Plan) => Promise<boolean>; running?: Running[]; fromWallos?: () => Promise<app.AppSubscription[]> }) {
+export function Recurring({ v, L, edit, keep, running, fromWallos }: ListProps & { keep?: (plan: finance.Plan) => Promise<boolean>; running?: Running[]; fromWallos?: () => Promise<financeapps.Subscription[]> }) {
   const [filter, setFilter] = useState(() => { const f = opening || 'all'; opening = ''; return f; });
   // Soonest first (by the next day each comes), or what each costs a month, largest first.
   const [order, setOrder] = useState<'next' | 'size'>('next');

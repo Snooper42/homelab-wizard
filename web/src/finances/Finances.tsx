@@ -54,7 +54,7 @@ export interface FinancesProps {
   /** The apps running here, each with the paid services it stands in for (Recurring says which payments they do the job of). */
   running?: Running[];
   /** Wallos's subscriptions, read on a click (Recurring); on the computer, while Wallos runs. */
-  fromWallos?: () => Promise<app.AppSubscription[]>;
+  fromWallos?: () => Promise<financeapps.Subscription[]>;
   /** Reads a receipt by its name: a phone allowed only to look shows it under its transaction. */
   readReceipt: (name: string) => Promise<string>;
   /** A card of the Collection's picture, by its name, as a data URL. */
