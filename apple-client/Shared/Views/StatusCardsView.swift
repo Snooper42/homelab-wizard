@@ -275,8 +275,8 @@ struct SnoozeMenu: View {
 }
 
 /// Memory nearly full: the biggest apps, each with Stop for a device that
-/// may make changes, as the computer's Watchdog card lists them.
-private struct MemoryPressureView: View {
+/// may make changes.
+struct MemoryPressureView: View {
     @Environment(AppActionsViewModel.self) private var actions
     @Environment(DashboardViewModel.self) private var dashboard
     let memory: MemoryPressure
