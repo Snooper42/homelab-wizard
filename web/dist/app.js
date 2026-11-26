@@ -761,6 +761,67 @@
     ] });
   }
 
+  // web/src/parts/place.ts
+  function putAt(el3, left, top) {
+    el3.style.left = "0px";
+    el3.style.top = "0px";
+    const o3 = el3.getBoundingClientRect();
+    el3.style.left = "100px";
+    el3.style.top = "100px";
+    const p3 = el3.getBoundingClientRect();
+    const kx = (p3.left - o3.left) / 100 || 1, ky = (p3.top - o3.top) / 100 || 1;
+    el3.style.left = `${(left - o3.left) / kx}px`;
+    el3.style.top = `${(top - o3.top) / ky}px`;
+  }
+  function putInside(el3, x3, y3, up) {
+    const pad = 8;
+    const r3 = el3.getBoundingClientRect();
+    const left = Math.max(pad, Math.min(x3, innerWidth - r3.width - pad));
+    let top = y3;
+    if (y3 + r3.height > innerHeight - pad) top = Math.max(pad, (up ?? y3) - r3.height);
+    putAt(el3, left, top);
+  }
+  function scale(el3) {
+    const w3 = el3.offsetWidth;
+    return w3 ? el3.getBoundingClientRect().width / w3 : 1;
+  }
+  function fitMenu(m3, button) {
+    const s3 = m3.style;
+    s3.left = s3.right = s3.top = s3.bottom = s3.maxHeight = s3.overflowY = "";
+    const area = (m3.closest("main") || document.body).getBoundingClientRect();
+    const lo = Math.max(area.left, 0) + 4, hi = Math.min(area.right, innerWidth) - 4;
+    let r3 = m3.getBoundingClientRect();
+    if (r3.left < lo) {
+      s3.left = "0";
+      s3.right = "auto";
+      r3 = m3.getBoundingClientRect();
+    }
+    if (r3.right > hi) {
+      s3.right = "0";
+      s3.left = "auto";
+      r3 = m3.getBoundingClientRect();
+    }
+    if (r3.left < lo) {
+      s3.left = "0";
+      s3.right = "auto";
+    }
+    const b2 = (button || m3.parentElement).getBoundingClientRect();
+    const below = innerHeight - b2.bottom - 12, above = b2.top - 12;
+    if (r3.height <= below) return;
+    const k3 = scale(m3);
+    if (r3.height <= above || above > below) {
+      s3.top = "auto";
+      s3.bottom = "calc(100% + 6px)";
+      if (r3.height > above) {
+        s3.maxHeight = `${above / k3}px`;
+        s3.overflowY = "auto";
+      }
+    } else {
+      s3.maxHeight = `${below / k3}px`;
+      s3.overflowY = "auto";
+    }
+  }
+
   // web/src/parts/Hover.tsx
   var made = 0;
   function useHoverCard(tip, { wide, side = "below", lazy } = {}) {
@@ -781,7 +842,7 @@
     _2(() => {
       const t3 = at2.current, c4 = box.current;
       if (!open5 || !t3 || !c4) return;
-      const r3 = t3.getBoundingClientRect(), w3 = c4.offsetWidth, h3 = c4.offsetHeight, pad = 8;
+      const r3 = t3.getBoundingClientRect(), cr = c4.getBoundingClientRect(), w3 = cr.width, h3 = cr.height, pad = 8;
       let left, top;
       if (side === "right") {
         left = Math.min(r3.right + 8, innerWidth - w3 - pad);
@@ -790,9 +851,9 @@
         left = Math.max(pad, Math.min(r3.left, innerWidth - w3 - pad));
         const below = r3.bottom + 6;
         top = below + h3 > innerHeight - pad && r3.top - h3 - 6 > pad ? r3.top - h3 - 6 : below;
+        top = Math.max(pad, Math.min(top, innerHeight - h3 - pad));
       }
-      c4.style.left = `${left}px`;
-      c4.style.top = `${top}px`;
+      putAt(c4, left, top);
     }, [open5]);
     const on2 = {
       ref: at2,
@@ -3054,21 +3115,20 @@
   }
 
   // web/src/status/RowMenu.tsx
-  function RowMenu({ a: a3, x: x3, y: y3, native, busy: busy2, companion: companion2, on: on2, close: close3, said: said2 }) {
+  function RowMenu({ a: a3, x: x3, y: y3, up, native, busy: busy2, companion: companion2, on: on2, close: close3, said: said2 }) {
     const box = A2(null);
     const [sure, setSure] = d2(false);
     const [later2, setLater] = d2(false);
     const [sending, setSending] = d2(false);
     const phones = companion2 ? [] : on2.targets(a3);
-    const [at2, setAt] = d2({ left: x3, top: y3 });
     const items = () => [...box.current?.querySelectorAll("[role^=menuitem]:not([disabled])") || []];
     _2(() => {
-      const m3 = box.current?.getBoundingClientRect();
-      if (!m3) return;
-      setAt({ left: Math.max(8, Math.min(x3, innerWidth - m3.width - 8)), top: y3 + m3.height > innerHeight - 8 ? Math.max(8, y3 - m3.height) : y3 });
-    }, [x3, y3, later2]);
-    h2(() => {
+      if (box.current) putInside(box.current, x3, y3, up);
+    }, [x3, y3, up, later2, sending]);
+    _2(() => {
       items()[0]?.focus();
+    }, []);
+    _2(() => {
       const outside = (e3) => {
         if (!box.current?.contains(e3.target)) close3();
       };
@@ -3106,7 +3166,6 @@
         class: "menu rowmenu",
         role: "menu",
         "aria-label": later2 ? `Stop ${a3.name} for a while` : sending ? `Send ${a3.name} to a phone` : a3.name,
-        style: { left: at2.left + "px", top: at2.top + "px" },
         onKeyDown: (e3) => {
           if (e3.key === "Escape") {
             e3.preventDefault();
@@ -3515,7 +3574,6 @@
     const [sure, setSure] = d2(false);
     const [later2, setLater] = d2(false);
     const [doing4, setDoing] = d2(null);
-    const [up, setUp] = d2(false);
     const wrap = A2(null);
     const btn = A2(null);
     const list = A2(null);
@@ -3546,15 +3604,8 @@
       return () => document.removeEventListener("mousedown", outside, true);
     }, [open5]);
     _2(() => {
-      if (!open5) {
-        setUp(false);
-        return;
-      }
-      const menu2 = list.current, box = wrap.current?.closest("main"), at2 = btn.current;
-      if (!menu2 || !box || !at2) return;
-      const m3 = menu2.getBoundingClientRect(), b2 = box.getBoundingClientRect(), a3 = at2.getBoundingClientRect();
-      setUp(m3.bottom > b2.bottom && a3.top - b2.top > m3.height);
-    }, [open5]);
+      if (open5 && list.current) fitMenu(list.current, btn.current);
+    }, [open5, later2]);
     if (p3.companion || g2.alert) return /* @__PURE__ */ u3("span", { class: "n" + (tone ? " countpill " + tone : ""), children: count2 });
     const run2 = (action, apps2, until) => {
       if (action === "stop" && !sure && !until) {
@@ -3626,13 +3677,13 @@
               ]
             }
           ),
-          open5 && later2 && /* @__PURE__ */ u3("div", { ref: list, class: "menu groupmenulist" + (up ? " up" : ""), role: "menu", "aria-label": `${g2.label}: stop for a while`, children: [
+          open5 && later2 && /* @__PURE__ */ u3("div", { ref: list, class: "menu groupmenulist", role: "menu", "aria-label": `${g2.label}: stop for a while`, children: [
             /* @__PURE__ */ u3("p", { class: "menuhead", children: running5.length === 1 ? `Stop ${running5[0].name} for a while` : `Stop the ${running5.length} running for a while` }),
             stopChoices().map((c4) => /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", disabled: p3.busy, onClick: () => run2("stop", running5, c4.until), children: c4.label }, c4.until)),
             /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", class: "menuback", onClick: () => showLater(false), children: "‹ Back" }),
             /* @__PURE__ */ u3("p", { class: "menufoot muted", children: running5.length === 1 ? "It starts again by itself then." : "They start again by themselves then." })
           ] }),
-          open5 && !later2 && /* @__PURE__ */ u3("div", { ref: list, class: "menu groupmenulist" + (up ? " up" : ""), role: "menu", "aria-label": `${g2.label}: all its apps`, children: [
+          open5 && !later2 && /* @__PURE__ */ u3("div", { ref: list, class: "menu groupmenulist", role: "menu", "aria-label": `${g2.label}: all its apps`, children: [
             /* @__PURE__ */ u3("p", { class: "menuhead", children: mem ? used ? `${formatMem(used)} in memory now` : "Nothing in memory now" : "Memory: measuring…" }),
             byMem.length > 0 && /* @__PURE__ */ u3("ul", { class: "memlist", "aria-label": "Memory by app", children: byMem.slice(0, 8).map((a3) => /* @__PURE__ */ u3("li", { children: [
               /* @__PURE__ */ u3("span", { children: a3.name }),
@@ -4120,7 +4171,7 @@
               "aria-haspopup": "menu",
               onClick: (e3) => {
                 const r3 = e3.currentTarget.getBoundingClientRect();
-                setMenu({ id: a3.id, x: r3.right - 200, y: r3.bottom + 4, from: e3.currentTarget });
+                setMenu({ id: a3.id, x: r3.right - 200, y: r3.bottom + 4, up: r3.top - 4, from: e3.currentTarget });
               },
               children: /* @__PURE__ */ u3(Icon, { name: "more" })
             }
@@ -4129,7 +4180,7 @@
           /* @__PURE__ */ u3("strong", { class: "catname", children: a3.name }),
           /* @__PURE__ */ u3("span", { class: "catline" + (cls === "bad" ? " bad" : ""), title: line, children: said2 || line }),
           /* @__PURE__ */ u3("span", { class: "catbtn", children: /* @__PURE__ */ u3(Actions2, { a: a3, entry, busy: p3.busy || !!pend && !pend.failed, os: p3.os, on: p3.on, marks: true }) }),
-          menu2?.id === a3.id && /* @__PURE__ */ u3(RowMenu, { a: a3, x: menu2.x, y: menu2.y, native: entry?.kind === "native", busy: p3.busy, companion: p3.companion, on: p3.on.menu, close: close3, said: say })
+          menu2?.id === a3.id && /* @__PURE__ */ u3(RowMenu, { a: a3, x: menu2.x, y: menu2.y, up: menu2.up, native: entry?.kind === "native", busy: p3.busy, companion: p3.companion, on: p3.on.menu, close: close3, said: say })
         ]
       }
     );
@@ -9987,6 +10038,7 @@
   function openMenu(at2) {
     $("statusMenu").hidden = false;
     $("statusMore").setAttribute("aria-expanded", "true");
+    fitMenu($("statusMenu"), $("statusMore"));
     const items = menuItems();
     if (at2 && items.length) items[at2 === "first" ? 0 : items.length - 1].focus();
   }
@@ -10086,22 +10138,7 @@
     _2(() => {
       const m3 = menu2.current;
       if (!open5 || !m3) return;
-      m3.style.left = m3.style.right = m3.style.top = m3.style.bottom = "";
-      const area = (m3.closest("main") || document.body).getBoundingClientRect();
-      let r3 = m3.getBoundingClientRect();
-      if (r3.left < area.left + 4) {
-        m3.style.left = "0";
-        m3.style.right = "auto";
-        r3 = m3.getBoundingClientRect();
-      }
-      if (r3.right > Math.min(area.right, innerWidth) - 4) {
-        m3.style.right = "0";
-        m3.style.left = "auto";
-      }
-      if (r3.bottom > innerHeight - 4 && r3.top - r3.height - 12 > 0) {
-        m3.style.top = "auto";
-        m3.style.bottom = "calc(100% + 6px)";
-      }
+      fitMenu(m3, btn.current);
     }, [open5]);
     return /* @__PURE__ */ u3(
       "span",
@@ -12338,8 +12375,8 @@
   }
   async function shrink(f4) {
     const bmp = await createImageBitmap(f4);
-    const n3 = 96, scale = Math.min(n3 / bmp.width, n3 / bmp.height, 1);
-    const w3 = Math.max(1, Math.round(bmp.width * scale)), h3 = Math.max(1, Math.round(bmp.height * scale));
+    const n3 = 96, scale2 = Math.min(n3 / bmp.width, n3 / bmp.height, 1);
+    const w3 = Math.max(1, Math.round(bmp.width * scale2)), h3 = Math.max(1, Math.round(bmp.height * scale2));
     const c4 = new OffscreenCanvas(n3, n3);
     c4.getContext("2d").drawImage(bmp, (n3 - w3) / 2, (n3 - h3) / 2, w3, h3);
     const url = (b2) => new Promise((ok, bad) => {
@@ -12353,8 +12390,8 @@
   }
   async function shrinkPhoto(f4) {
     const bmp = await createImageBitmap(f4);
-    const scale = Math.min(800 / bmp.width, 800 / bmp.height, 1);
-    const w3 = Math.max(1, Math.round(bmp.width * scale)), h3 = Math.max(1, Math.round(bmp.height * scale));
+    const scale2 = Math.min(800 / bmp.width, 800 / bmp.height, 1);
+    const w3 = Math.max(1, Math.round(bmp.width * scale2)), h3 = Math.max(1, Math.round(bmp.height * scale2));
     const c4 = new OffscreenCanvas(w3, h3);
     c4.getContext("2d").drawImage(bmp, 0, 0, w3, h3);
     return asDataURL(await c4.convertToBlob({ type: "image/jpeg", quality: 0.85 }));
@@ -12373,8 +12410,8 @@
     } catch {
       throw new Error("The website gave an image this can't read: use your own image instead.");
     }
-    const n3 = 96, w0 = img.naturalWidth || n3, h0 = img.naturalHeight || n3, scale = Math.min(n3 / w0, n3 / h0);
-    const w3 = Math.max(1, Math.round(w0 * scale)), h3 = Math.max(1, Math.round(h0 * scale));
+    const n3 = 96, w0 = img.naturalWidth || n3, h0 = img.naturalHeight || n3, scale2 = Math.min(n3 / w0, n3 / h0);
+    const w3 = Math.max(1, Math.round(w0 * scale2)), h3 = Math.max(1, Math.round(h0 * scale2));
     const c4 = new OffscreenCanvas(n3, n3);
     c4.getContext("2d").drawImage(img, (n3 - w3) / 2, (n3 - h3) / 2, w3, h3);
     const png = await asDataURL(await c4.convertToBlob({ type: "image/png" }));
@@ -12399,8 +12436,8 @@
     } catch {
       throw new Error("That file is not a picture this can read: try a photo, a PNG, or a PDF.");
     }
-    const scale = Math.min(1600 / Math.max(bmp.width, bmp.height), 1);
-    const c4 = new OffscreenCanvas(Math.max(1, Math.round(bmp.width * scale)), Math.max(1, Math.round(bmp.height * scale)));
+    const scale2 = Math.min(1600 / Math.max(bmp.width, bmp.height), 1);
+    const c4 = new OffscreenCanvas(Math.max(1, Math.round(bmp.width * scale2)), Math.max(1, Math.round(bmp.height * scale2)));
     c4.getContext("2d").drawImage(bmp, 0, 0, c4.width, c4.height);
     for (const quality of [0.82, 0.6, 0.4]) {
       const b2 = await c4.convertToBlob({ type: "image/jpeg", quality });
@@ -23218,16 +23255,15 @@ ${pays}
   // web/src/parts/ContextMenu.tsx
   function ContextMenu({ label, x: x3, y: y3, items, close: close3 }) {
     const box = A2(null);
-    const [at2, setAt] = d2({ left: x3, top: y3 });
     const [sure, setSure] = d2("");
     const buttons = () => [...box.current?.querySelectorAll("[role=menuitem]:not([disabled])") || []];
     _2(() => {
-      const m3 = box.current?.getBoundingClientRect();
-      if (!m3) return;
-      setAt({ left: Math.max(8, Math.min(x3, innerWidth - m3.width - 8)), top: y3 + m3.height > innerHeight - 8 ? Math.max(8, y3 - m3.height) : y3 });
+      if (box.current) putInside(box.current, x3, y3);
     }, [x3, y3]);
-    h2(() => {
+    _2(() => {
       buttons()[0]?.focus();
+    }, []);
+    _2(() => {
       const outside = (e3) => {
         if (!box.current?.contains(e3.target)) close3();
       };
@@ -23248,7 +23284,6 @@ ${pays}
         class: "menu rowmenu",
         role: "menu",
         "aria-label": label,
-        style: { left: at2.left + "px", top: at2.top + "px" },
         onKeyDown: (e3) => {
           if (e3.key === "Escape") {
             e3.preventDefault();
