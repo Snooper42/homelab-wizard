@@ -7919,8 +7919,12 @@
   var settingsFocus = [];
   var settingsData = store(async () => {
     if (onPhone()) {
+      loadPhones();
+      loadTailnet();
+      loadPeople();
+      const tests2 = testable ? null : go().SettingTests().catch(() => []);
       const r3 = await go().Settings();
-      testable = /* @__PURE__ */ new Set();
+      if (tests2) testable = new Set(await tests2);
       return phoneSettings(r3);
     }
     loadPhones();
@@ -8101,7 +8105,7 @@
   var navGroups = [];
   function renderSettingsNav(pages) {
     const installed2 = (name) => Object.values(statusById || {}).some((a3) => a3.name === name && a3.state !== "missing");
-    const general = [...pages.filter((p3) => p3.kind === "general").map((p3) => p3.name), ...onPhone() ? [] : extraPages];
+    const general = [...pages.filter((p3) => p3.kind === "general").map((p3) => p3.name), ...onPhone() ? ["People", "Phones"] : extraPages];
     const apps2 = pages.filter((p3) => p3.kind === "app");
     const known3 = Object.keys(statusById || {}).length > 0;
     const mine = known3 ? apps2.filter((p3) => installed2(p3.name) || p3.name === "Other apps") : apps2;

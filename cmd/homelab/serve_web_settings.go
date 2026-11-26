@@ -3,9 +3,11 @@ package main
 // The web page's parity with the computer, part 3: Settings. The household
 // (People: add someone, a new welcome page or password, their sign-in off;
 // their welcome page and fridge sheet opened here; who keeps Finances
-// private), each setting's Test, and the tailnet's devices. Pairing a phone
-// or giving one more stays on the computer (serve.go's LowerPhone: a phone
-// can't give itself more), and so does taking the homelab off the machine.
+// private), each setting's Test, the tailnet's devices, Phones (pairing one,
+// and giving one more or less), and taking the homelab off the machine. The
+// owner, Nov 26: the same powers as the computer, because the web page
+// answers only at home (companion.Server.AtHome), so a stolen device away
+// gets nothing.
 
 import (
 	"context"
@@ -19,6 +21,7 @@ import (
 
 	"github.com/Snooper42/homelab-wizard/internal/companion"
 	"github.com/Snooper42/homelab-wizard/internal/core"
+	"github.com/Snooper42/homelab-wizard/internal/domain"
 	"github.com/Snooper42/homelab-wizard/internal/finance"
 	"github.com/Snooper42/homelab-wizard/internal/people"
 	"github.com/Snooper42/homelab-wizard/internal/setup"
@@ -123,6 +126,146 @@ func (h *homelab) webSettingsMethods() map[string]companion.Method {
 			defer cancel()
 			v, err := core.TailnetDevices(ctx, root)
 			return v, nil, err
+		}},
+	}
+}
+
+// webPairing is a one-time code for a phone, as the computer's PairPhone
+// gives it: the links that carry it, and the first link as QR codes.
+type webPairing struct {
+	Code   string   `json:"code"`
+	Links  []string `json:"links"`
+	QR     string   `json:"qr"`
+	WallQR string   `json:"wallQR"`
+	Off    bool     `json:"off"`
+}
+
+// webUninstall is what Settings › This machine › Take the homelab off this
+// machine removes besides the containers, images, and jobs.
+type webUninstall struct {
+	Data           bool `json:"data"`
+	Folder         bool `json:"folder"`
+	Backups        bool `json:"backups"`
+	App            bool `json:"app"`
+	EverythingElse bool `json:"everythingElse"`
+}
+
+func (o webUninstall) args() []string {
+	args := []string{"uninstall"}
+	for _, f := range []struct {
+		on   bool
+		flag string
+	}{{o.Data, "--data"}, {o.Folder, "--folder"}, {o.Backups, "--backups"}, {o.App, "--app"}, {o.EverythingElse, "--everything-else"}} {
+		if f.on {
+			args = append(args, f.flag)
+		}
+	}
+	return args
+}
+
+// webPhoneMethods are Phones and Take the homelab off this machine, as on the computer.
+func (h *homelab) webPhoneMethods() map[string]companion.Method {
+	root := h.root
+	store := func() *companion.Store { return companion.NewStore(companion.StorePath(root)) }
+	phoneArgs := func(args []json.RawMessage, what string, v any) (string, error) {
+		var id string
+		if len(args) < 2 || json.Unmarshal(args[0], &id) != nil || json.Unmarshal(args[1], v) != nil {
+			return "", errors.New("takes a phone and " + what)
+		}
+		return id, nil
+	}
+	uninstall := func(args []json.RawMessage) (webUninstall, error) {
+		var o webUninstall
+		if len(args) < 1 || json.Unmarshal(args[0], &o) != nil {
+			return o, errors.New("takes what to remove besides the apps")
+		}
+		return o, nil
+	}
+	return map[string]companion.Method{
+		"PairPhone": {Change: true, Private: true, Call: func(_ context.Context, args []json.RawMessage) (any, []string, error) {
+			var name, finances string
+			var canChange bool
+			if len(args) < 3 || json.Unmarshal(args[0], &name) != nil || json.Unmarshal(args[1], &canChange) != nil || json.Unmarshal(args[2], &finances) != nil {
+				return nil, nil, errors.New("PairPhone takes a name, whether it may change things, and its Finances")
+			}
+			code, err := store().NewPairing(name, canChange, finances)
+			if err != nil {
+				return nil, nil, err
+			}
+			env := core.Env(root)
+			lan, _ := domain.LANAddress()
+			p := webPairing{Code: code, Links: companion.Links(env, lan, code), Off: strings.EqualFold(env["PHONE_COMPANION"], "false")}
+			if len(p.Links) > 0 {
+				if p.QR, err = companion.QRDataURL(p.Links[0]); err == nil {
+					p.WallQR, err = companion.QRDataURL(p.Links[0] + "&kiosk")
+				}
+			}
+			return p, nil, err
+		}},
+		"SetPhoneCanChange": {Change: true, Private: true, Call: func(_ context.Context, args []json.RawMessage) (any, []string, error) {
+			var on bool
+			id, err := phoneArgs(args, "true or false", &on)
+			if err != nil {
+				return nil, nil, err
+			}
+			st := store()
+			_, err = st.SetCanChange(id, on)
+			return st.Phones(), nil, err
+		}},
+		"SetPhoneFinances": {Change: true, Private: true, Call: func(_ context.Context, args []json.RawMessage) (any, []string, error) {
+			var level string
+			id, err := phoneArgs(args, "a Finances level", &level)
+			if err != nil {
+				return nil, nil, err
+			}
+			st := store()
+			_, err = st.SetFinances(id, level)
+			return st.Phones(), nil, err
+		}},
+		"SetPhoneUntil": {Change: true, Private: true, Call: func(_ context.Context, args []json.RawMessage) (any, []string, error) {
+			var hours int
+			id, err := phoneArgs(args, "hours", &hours)
+			if err != nil {
+				return nil, nil, err
+			}
+			var until time.Time
+			if hours > 0 {
+				until = time.Now().Add(time.Duration(hours) * time.Hour)
+			}
+			st := store()
+			_, err = st.SetUntil(id, until)
+			return st.Phones(), nil, err
+		}},
+		"RemovePhone": {Change: true, Private: true, Call: func(_ context.Context, args []json.RawMessage) (any, []string, error) {
+			a, err := strArgs(args, 1)
+			if err != nil {
+				return nil, nil, errors.New("RemovePhone takes a phone")
+			}
+			st := store()
+			_, err = st.Remove(a[0])
+			return st.Phones(), nil, err
+		}},
+		"UninstallPlan": {Change: true, Private: true, Call: func(ctx context.Context, args []json.RawMessage) (any, []string, error) {
+			o, err := uninstall(args)
+			if err != nil {
+				return nil, nil, fmt.Errorf("UninstallPlan %w", err)
+			}
+			lines, err := h.runSelfFor(ctx, 30*time.Second, o.args()...)
+			plan := strings.TrimSpace(strings.Replace(strings.Join(lines, "\n"), "Preview only: nothing was changed. Run again with --apply to go ahead.", "", 1))
+			if err != nil && plan == "" {
+				return nil, nil, err
+			}
+			return plan, nil, nil
+		}},
+		"Uninstall": {Change: true, Private: true, Call: func(ctx context.Context, args []json.RawMessage) (any, []string, error) {
+			o, err := uninstall(args)
+			if err != nil {
+				return nil, nil, fmt.Errorf("Uninstall %w", err)
+			}
+			cmd := append(o.args(), "--apply")
+			// Once started it runs to the end, even if this page closes or loses the link.
+			lines, err := h.runSelfFor(context.WithoutCancel(ctx), time.Hour, cmd...)
+			return nil, append([]string{"$ homelab " + strings.Join(cmd, " ")}, lines...), err
 		}},
 	}
 }

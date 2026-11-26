@@ -148,10 +148,11 @@ let settingsFocus: string[] = [];
 export const settingsData = store(async () => {
   // The phone's page (#596's gap 6): the settings this phone may change, as
   // the computer lists them for a phone (serve.go's listPhoneSettings), and
-  // none of its secrets nor what it connects through. People, the tailnet's
-  // devices and each setting's Test as on the computer (the owner, Nov 26:
-  // parity); Phones stay the phone's own (giving one more is the computer's).
+  // none of its secrets nor what it connects through. People, Phones, the
+  // tailnet's devices and each setting's Test as on the computer (the owner,
+  // Nov 26: parity; the web page answers only at home).
   if (onPhone()) {
+    loadPhones();
     loadTailnet();
     loadPeople();
     const tests = testable ? null : go().SettingTests().catch(() => []);
@@ -340,8 +341,8 @@ const pageGroups: [string, string[]][] = [
 let navGroups: NavGroup[] = [];
 function renderSettingsNav(pages) {
   const installed = (name) => Object.values(statusById || {}).some((a) => a.name === name && a.state !== 'missing');
-  // Appearance and Phones are the computer's own: on the web page, People only.
-  const general = [...pages.filter((p) => p.kind === 'general').map((p) => p.name), ...(onPhone() ? ['People'] : extraPages)];
+  // Appearance is the computer's own window: on the web page, People and Phones.
+  const general = [...pages.filter((p) => p.kind === 'general').map((p) => p.name), ...(onPhone() ? ['People', 'Phones'] : extraPages)];
   const apps = pages.filter((p) => p.kind === 'app');
   const known = Object.keys(statusById || {}).length > 0;
   const mine = known ? apps.filter((p) => installed(p.name) || p.name === 'Other apps') : apps;
