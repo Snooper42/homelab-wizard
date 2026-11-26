@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/netip"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -763,5 +764,51 @@ func TestTheProxysWordNeedsItsKey(t *testing.T) {
 	old := &Server{}
 	if !old.encrypted(req("172.18.0.1:5000", "X-Forwarded-Proto", "https")) {
 		t.Error("with no key yet, the proxy's https is no longer believed: a domain set up before would lose its phones' changes")
+	}
+}
+
+// The web page answers only at home (the owner, Nov 26): a device on the tailnet gets in while Tailscale says it's on
+// the home network, straight or through Tailscale Serve's https or the proxy; away, it's turned away. The home Wi-Fi
+// and this machine get in as before, whatever they write in X-Forwarded-For.
+func TestOnlyAtHome(t *testing.T) {
+	home := map[string]bool{"100.64.0.7": true, "fd7a:115c:a1e0::7": true}
+	s := &Server{Store: NewStore(filepath.Join(t.TempDir(), "phones.json")), Files: fstest.MapFS{
+		"index.html": {Data: []byte(`<html lang="en"><head></head><body><script src="app.js"></script></body></html>`)},
+		"app.js":     {Data: []byte("//")},
+	}, Methods: map[string]Method{}, AtHome: func(ip netip.Addr) bool { return home[ip.String()] }}
+	h := s.Handler()
+	for _, c := range []struct {
+		what, from, forwarded string
+		want                  int
+	}{
+		{"at home on the tailnet", "100.64.0.7:5000", "", 200},
+		{"at home on the tailnet, IPv6", "[fd7a:115c:a1e0::7]:5000", "", 200},
+		{"away on the tailnet", "100.64.0.8:5000", "", 403},
+		{"away, through Tailscale Serve's https", "127.0.0.1:5000", "100.64.0.8", 403},
+		{"away, through the proxy, a home address written before it", "172.18.0.5:5000", "192.168.1.9, 100.64.0.8", 403},
+		{"at home, through Tailscale Serve's https", "127.0.0.1:5000", "100.64.0.7", 200},
+		{"the home Wi-Fi", "192.168.1.9:5000", "", 200},
+		{"the home Wi-Fi, writing a tailnet address", "192.168.1.9:5000", "100.64.0.7", 200},
+		{"this machine", "127.0.0.1:5000", "", 200},
+	} {
+		r := httptest.NewRequest(http.MethodGet, "/", nil)
+		r.RemoteAddr = c.from
+		if c.forwarded != "" {
+			r.Header.Set("X-Forwarded-For", c.forwarded)
+		}
+		w := httptest.NewRecorder()
+		h.ServeHTTP(w, r)
+		if w.Code != c.want {
+			t.Errorf("%s: %d, want %d", c.what, w.Code, c.want)
+		}
+	}
+	// Without AtHome, the tailnet gets in as before.
+	s.AtHome = nil
+	r := httptest.NewRequest(http.MethodGet, "/", nil)
+	r.RemoteAddr = "100.64.0.8:5000"
+	w := httptest.NewRecorder()
+	s.Handler().ServeHTTP(w, r)
+	if w.Code != 200 {
+		t.Errorf("no AtHome: %d", w.Code)
 	}
 }

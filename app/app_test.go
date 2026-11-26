@@ -27,6 +27,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/docker"
 	"github.com/Snooper42/homelab-wizard/internal/finance"
 	"github.com/Snooper42/homelab-wizard/internal/host"
+	"github.com/Snooper42/homelab-wizard/internal/usage"
 )
 
 // window stands in for the Wails window: it records the events the App
@@ -1018,5 +1019,21 @@ func TestSavingsRows(t *testing.T) {
 	}
 	if r := rows[0]; r.Replaces != "NextDNS Pro" || len(r.Apps) != 1 || r.Apps[0] != "adguard-home" || r.Kind != "Direct" || r.Monthly != 1.99 || !r.Counted {
 		t.Errorf("the first row: %+v", r)
+	}
+}
+
+// Lane D, D2: Analytics reads the month the agent keeps; nothing kept yet is an empty history, not an error.
+func TestUsageHistory(t *testing.T) {
+	a, _ := testApp(t)
+	h, err := a.UsageHistory(7)
+	if err != nil || len(h.At) != 0 || h.Apps == nil || h.Jobs == nil {
+		t.Fatalf("before any sample: %+v %v", h, err)
+	}
+	now := time.Now()
+	if err := usage.Record(usage.Path(a.root), now.Add(-time.Minute), map[string]usage.Reading{"vaultwarden": {CPU: 1.5, Mem: 20 << 20}}); err != nil {
+		t.Fatal(err)
+	}
+	if h, err = a.UsageHistory(1); err != nil || len(h.At) != 1 || h.CPU[0] != 1.5 || h.Apps["vaultwarden"].Mem[0] != 20<<20 {
+		t.Fatalf("after one: %+v %v", h, err)
 	}
 }
