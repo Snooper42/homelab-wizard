@@ -102,22 +102,27 @@
     <div id="wallCard" hidden></div>
     <div id="tiles" class="tiles"></div>
     <div id="setupOnStatus" class="companion-only"></div>
-    <div id="downloadsCard" class="card alerts" hidden></div>
     <div id="statusWiring"></div>
     <div class="statusbar"><div id="statusNote" class="muted statusline" aria-live="polite"></div><span id="statusAllBox"></span></div>
+    <div id="statusPanel"></div>
     <table class="grouped"><thead><tr><th>App</th><th>State</th><th>Address</th><th></th></tr></thead><tbody id="statusRows"></tbody></table>
     <p id="statusAloud" class="sr" role="status" aria-live="polite"></p>
-    <div id="savingsCard" class="tiles savingsrow"></div>
-    <div id="watchCard" class="card alerts" hidden></div>
-    <div class="duo">
-      <div class="stack">
-        <div id="protectCard" class="card alerts" hidden></div>
-        <div id="storageCard" class="card alerts" hidden></div>
-        <div id="usageCard" class="card alerts" hidden></div>
+    <!-- Below Analytics (the owner, Nov 25: off the overview, each where it's useful): the checks, the alerts, the week,
+         protection, downloads, who keeps what, what's using power. Instead of subscriptions is Subscriptions' own. -->
+    <div id="analyticsMore">
+      <div id="watchCard" class="card alerts" hidden></div>
+      <div class="duo">
+        <div class="stack">
+          <div id="protectCard" class="card alerts" hidden></div>
+          <div id="downloadsCard" class="card alerts" hidden></div>
+          <div id="storageCard" class="card alerts" hidden></div>
+          <div id="usageCard" class="card alerts" hidden></div>
+        </div>
+        <div id="alertsCard" class="card alerts" hidden></div>
       </div>
-      <div id="alertsCard" class="card alerts" hidden></div>
+      <div id="weekCard" class="card alerts" hidden></div>
     </div>
-    <div id="weekCard" class="card alerts" hidden></div>
+    <div id="subscriptionsMore"><div id="savingsCard" class="tiles savingsrow"></div></div>
   </section>
   <section id="app" class="screen" aria-label="An app"><div id="appPage"></div></section>
   <!-- The command and log sheets, over whichever screen opened them. -->

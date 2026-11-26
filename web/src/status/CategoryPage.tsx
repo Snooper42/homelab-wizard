@@ -8,6 +8,7 @@ import { AppMark } from '../parts/AppMark';
 import { Icon } from '../Icon';
 import { type AppListProps, Actions, matches, stateOf } from './AppList';
 import { RowMenu } from './RowMenu';
+import { type Crumb, Crumbs } from '../parts/Crumbs';
 
 export interface CategoryPageProps {
   /** Its name, as the menu has it. */
@@ -31,6 +32,8 @@ export interface CategoryPageProps {
   addLabel?: string;
   /** Apps that go with ones you run (All apps), first, as Choose apps suggested them. */
   goes?: api.App[];
+  /** Its breadcrumbs: Status, and back to it. */
+  trail?: Crumb[];
   /** What Find an app starts with (typed on the overview). */
   find?: string;
 }
@@ -111,7 +114,7 @@ function SetTile({ set, catalog, icons, install, change }: { set: api.Preset; ca
   );
 }
 
-export function CategoryPage({ label, apps, add, here, list, install, sets = [], installSet, addOwn, addLabel, goes = [], find: typed = '' }: CategoryPageProps) {
+export function CategoryPage({ label, apps, add, here, list, install, sets = [], installSet, addOwn, addLabel, goes = [], trail, find: typed = '' }: CategoryPageProps) {
   const [menu, setMenu] = useState<MenuAt | null>(null);
   const [find, setFind] = useState(typed);
   const running = apps.filter((a) => a.state === 'running').length;
@@ -128,6 +131,7 @@ export function CategoryPage({ label, apps, add, here, list, install, sets = [],
   const facts = [`${apps.length} ${here.replace(/^On /, 'on ')}`, apps.length ? `${running} running` : '', add.length ? `${add.length} to add` : ''].filter(Boolean).join(' · ');
   return (
     <div class="catpage">
+      {trail && <Crumbs trail={trail} here={label} />}
       <div class="row header">
         <div><h1>{label}</h1><p class="lead">{facts}</p></div>
         <label class="catfind"><Icon name="search" /><input type="search" placeholder="Find an app" aria-label="Find an app" value={find} autoFocus={!!typed} onInput={(e) => setFind((e.currentTarget as HTMLInputElement).value)} /></label>
