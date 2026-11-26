@@ -2149,7 +2149,7 @@ const smokes = [
     : c.id === 'navidrome' ? { ...c, before: 6.1e6 }
     : c.id === 'vikunja' ? { ...c, before: 405e3 } : c) } }, run: async (page) => {
     const row = (name) => page.locator(`#copiesCard tr.copy:has(td.name:has-text("${name}"))`).first();
-    await row('Immich database').locator('.note.bad').getByText('Less than half the night before\'s 58 MB: check that Immich database still has its data').waitFor({ timeout: 5000 });
+    await row('Immich database').locator('.note.bad').getByText('Under half the night before\'s 58 MB').waitFor({ timeout: 5000 });
     if (!(await row('Immich database').locator('.dot.bad').count())) throw new Error('the shrunk copy has no red dot');
     // Grown by a third: both sizes shown. Within a tenth: its own size only, the night before's on hover.
     await row('Navidrome').locator('td.size .was').getByText('(was 5.8 MB)').waitFor({ timeout: 3000 });
