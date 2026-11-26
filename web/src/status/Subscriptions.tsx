@@ -16,6 +16,9 @@ export interface Offer {
   annual: number;
   /** What it takes for the saving to be real. */
   condition: string;
+  /** The row the computer counts for its service (docs/Savings.md: the dearest, of equals the one whose note says
+   * "counted once, here"); absent from a computer before 0.43 (lane D, D1). */
+  counted?: boolean;
 }
 
 export interface SubscriptionsProps {
@@ -58,13 +61,17 @@ const serviceOf = (o: Offer) => o.replaces.replace(/\s*\(.*\)$/, '').trim().toLo
 /** A Library service (Spotify, Netflix…): a saving only if you own the media, so kept apart from the total (the owner, Nov 26). */
 const isLibrary = (o: Offer) => o.kind === 'Library';
 
-/** The offers, one per paid service: the dearest row's price, with every app that can stand in for it (any one of them does). */
+/** The offers, one per paid service, with every app that can stand in for it (any one of them does). Its price, kind
+ * and condition are the row the computer counts (`counted`, so this page and Status' yearly figure agree), else the
+ * dearest row's (a computer before it sent `counted`). */
 function perService(list: Offer[]): Offer[] {
   const out = new Map<string, Offer>();
   for (const o of list) {
     const k = serviceOf(o), had = out.get(k);
     if (!had) { out.set(k, { ...o, apps: [...o.apps] }); continue; }
-    for (const id of o.apps) if (!had.apps.includes(id)) had.apps.push(id);
+    const apps = [...had.apps];
+    for (const id of o.apps) if (!apps.includes(id)) apps.push(id);
+    out.set(k, o.counted && !had.counted ? { ...o, apps } : { ...had, apps });
   }
   return [...out.values()];
 }

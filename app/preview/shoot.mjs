@@ -83,6 +83,8 @@ const savingsRows = readFileSync(join(root, 'docs', 'Savings.md'), 'utf8').split
   const num = (x) => Number(String(x).replace(/[$,*]/g, ''));
   return ids.length && c.length >= 7 && !Number.isNaN(num(c[5])) ? [{ apps: ids, replaces: c[2], kind: c[3], monthly: num(c[4]), annual: num(c[5]), condition: c[6].replace(/\[([^\]]+)\]\(<[^>]+>\)/g, '$1') }] : [];
 });
+// Counted as internal/savings counts it (lane D, D1): each service's dearest row, of equals the later.
+{ const best = {}; savingsRows.forEach((r, i) => { if (best[r.replaces] === undefined || r.annual >= savingsRows[best[r.replaces]].annual) best[r.replaces] = i; }); savingsRows.forEach((r, i) => { r.counted = best[r.replaces] === i; }); }
 // What docker stats says over a minute: Immich indexing photos, Jellyfin
 // streaming, Paperless reading a scan.
 const usageSeries = [[162, 18, 9], [148, 22, 31], [171, 19, 12], [139, 25, 8], [155, 21, 6], [176, 17, 24], [151, 23, 7], [164, 20, 11]]
@@ -3929,6 +3931,22 @@ const smokes = [
     // The categories as one panel, each row opening its page.
     await page.click('#statusPanel .ovrow[data-key="media"]');
     await page.waitForSelector('#statusPart .catpage h1:text-is("Media")', { timeout: 5000 });
+  } },
+  // Subscriptions takes each service's price and kind from the row the computer counts (lane D, D1: `counted`), so the
+  // page and Status' yearly figure agree: here a service two apps replace at different prices, the cheaper one counted.
+  { name: 'Subscriptions: a service two apps replace shows the counted row', screen: 'status', mock: {
+    savingsRows: [
+      { apps: ['vaultwarden'], replaces: 'Test Vault', kind: 'Equivalent', monthly: 9, annual: 90, condition: 'a', counted: false },
+      { apps: ['ntfy'], replaces: 'Test Vault', kind: 'Direct', monthly: 5, annual: 50, condition: 'b', counted: true },
+    ],
+  }, run: async (page) => {
+    await page.click('#statusSide button[data-key="subscriptions"]', { timeout: 5000 });
+    const tile = '#subNow .subtile:has-text("Test Vault")';
+    await page.waitForSelector(tile, { timeout: 5000 });
+    if (await page.locator('#subNow .subtile:has-text("Test Vault")').count() !== 1) throw new Error('the service shows twice');
+    const said = (await page.textContent(tile)).replace(/\s+/g, ' ');
+    if (!/\$5\.00 a month/.test(said) || !/Direct/.test(said) || !/\$50\.00 a year/.test(said)) throw new Error('not the counted row: ' + said);
+    if (!/Vaultwarden/.test(said) || !/ntfy/.test(said)) throw new Error('not both apps: ' + said);
   } },
   // The owner's picture has 14 squares (lane D, D3): from the watchdog's daily summary, two weeks, each with its day's
   // words on hover; a day it didn't run is grey, a day an app was down amber.

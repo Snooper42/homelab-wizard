@@ -8245,7 +8245,9 @@
         out.set(k3, { ...o3, apps: [...o3.apps] });
         continue;
       }
-      for (const id2 of o3.apps) if (!had.apps.includes(id2)) had.apps.push(id2);
+      const apps2 = [...had.apps];
+      for (const id2 of o3.apps) if (!apps2.includes(id2)) apps2.push(id2);
+      out.set(k3, o3.counted && !had.counted ? { ...o3, apps: apps2 } : { ...had, apps: apps2 });
     }
     return [...out.values()];
   }
