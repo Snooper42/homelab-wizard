@@ -79,6 +79,11 @@ The loops add questions here: the question, the options, the one they recommend,
 
   Meanwhile Analytics shows what exists, and the redesign carries on with the phone's page.
 
+- **Tidy Up on the phone's page (lane D, D4, Nov 26):** a new call lets a phone look at Tidy Up: what it filed today, what needs a look, each library's size and last run, the drive's room, the inbox, and whether it's at work. Nothing a phone calls moves, undoes or deletes a file; no folder or file path is sent. A wall screen gets it without titles and file names.
+  - **Question 1:** add it? (Recommended: yes.)
+  - **Question 2:** who sees it? **(a) Recommended:** your phones and wall screens only, as the Downloads card. **(b)** A household member's phone too (they'd see what was downloaded and filed today).
+  - Meanwhile lane D carries on with its other items; the pull request merges on your yes.
+
 ## Answered
 
 The loops move a question here once they've read your answer.

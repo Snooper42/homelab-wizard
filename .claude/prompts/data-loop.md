@@ -40,7 +40,7 @@ owner has seen in a picture and asked for.
 - [ ] **D3. Fourteen days of each app's checks for the Overview's Apps card** (the owner's picture has 14 squares; the
   watchdog keeps 7, `health.WeekDays`). Keep 14 days in `health.State.Days` and `Outages`; keep `Week()` as the last 7
   so "% up this week" stays true; add the per-day results to the Summary the computer sends (`days: { date, failed }[]`).
-- [ ] **D4. Tidy Up on the phone's page** (the owner: "build out the web to match the computer"): Tidy Up's read-only
+- [x] **D4. Tidy Up on the phone's page** (the owner: "build out the web to match the computer"): Tidy Up's read-only
   methods in `phoneMethods` (`serve.go`), the household's member level only, nothing that moves or deletes a file.
   *Needs Q's review* (see Rules).
 - [ ] **D5. The machine's memory and uptime for the machine card's bar** (the picture: *Memory · 11 of 32 GB*, *Up 23

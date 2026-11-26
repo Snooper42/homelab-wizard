@@ -465,6 +465,16 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 			}
 			return c, err
 		}),
+		// Tidy Up, look only (lane D, D4): nothing a phone calls moves or deletes a file. No paths; a wall screen,
+		// which anyone walking past can read, gets it without the titles and file names. Not a household
+		// member's phone, as with Downloads.
+		"TidyOverview": read(func(ctx context.Context, _ []json.RawMessage) (any, error) {
+			t := core.TidyOverview(root, time.Now())
+			if kiosk(ctx) {
+				t = t.WithoutNames()
+			}
+			return t, nil
+		}),
 		"Backups":       read(func(ctx context.Context, _ []json.RawMessage) (any, error) { return core.Backups(ctx, root) }),
 		"DuplicatiJobs": read(func(ctx context.Context, _ []json.RawMessage) (any, error) { return core.DuplicatiJobs(ctx, root) }),
 		"Alerts":        read(func(ctx context.Context, _ []json.RawMessage) (any, error) { return core.RecentAlerts(ctx, root) }),

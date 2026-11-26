@@ -69,6 +69,7 @@
         "StatusBoard",
         "StatusFolds",
         "StopUntil",
+        "TidyOverview",
         "UnsealFinances",
         "Watchdog"
       ],
