@@ -30,7 +30,7 @@ owner has seen in a picture and asked for.
   the total matches the app's yearly figure. A binding `SavingsRows() ([]Offer, error)` in `app/app.go`, JSON fields
   exactly: `apps []string` (catalog IDs), `replaces string`, `kind string`, `monthly number` (0 when the table has none),
   `annual number`, `condition string` (links as plain text), `counted bool`. Lane R's page already calls it by that name.
-- [ ] **D2. A month of the machine's processor and memory, kept on the machine, for Analytics' Day / Week / Month.**
+- [x] **D2. A month of the machine's processor and memory, kept on the machine, for Analytics' Day / Week / Month.**
   Nothing keeps it today (Status samples only while open). The agent writes one sample every 5 minutes: the apps'
   processor (sum of `docker stats`' CPU %) and memory (bytes), and each app's own, to `data/usage-history.json` (about
   1 MB a month; the oldest dropped past 31 days; written whole under a lock as `savings`' history is). A binding
@@ -40,9 +40,7 @@ owner has seen in a picture and asked for.
 - [ ] **D3. Fourteen days of each app's checks for the Overview's Apps card** (the owner's picture has 14 squares; the
   watchdog keeps 7, `health.WeekDays`). Keep 14 days in `health.State.Days` and `Outages`; keep `Week()` as the last 7
   so "% up this week" stays true; add the per-day results to the Summary the computer sends (`days: { date, failed }[]`).
-- [ ] **D4. Tidy Up on the phone's page** (the owner: "build out the web to match the computer"): Tidy Up's read-only
-  methods in `phoneMethods` (`serve.go`), the household's member level only, nothing that moves or deletes a file.
-  *Needs Q's review* (see Rules).
+- [x] **D4. Tidy Up on the phone's page: dropped** (the owner, Nov 26: "Tidy Up isn't needed on the phone or wall screens"). Nothing built.
 - [ ] **D5. The machine's memory and uptime for the machine card's bar** (the picture: *Memory · 11 of 32 GB*, *Up 23
   days*): total memory and boot time in the machine facts (`core.Machine`, `internal/host`), sent to a phone too.
 
