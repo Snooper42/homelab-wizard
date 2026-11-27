@@ -114,6 +114,11 @@ func TestStartRuntimeSaysWhyItFailed(t *testing.T) {
 
 func TestJobPathAndCurrent(t *testing.T) {
 	home := filepath.Join("home", "anna")
+	// Docker Desktop's per-user folder and the app's own, where its
+	// credential helper is: without them a pull under launchd fails.
+	if p := For("darwin").JobPath(home); !strings.Contains(p, ":"+filepath.Join(home, ".docker", "bin")+":/Applications/Docker.app/Contents/Resources/bin:/usr/local/bin:") {
+		t.Errorf("darwin: no Docker Desktop folders before the system's: %s", p)
+	}
 	if p := For("darwin").JobPath(home); !strings.HasPrefix(p, filepath.Join(home, ".orbstack", "bin")+":/opt/homebrew/bin:") || !strings.HasSuffix(p, ":/sbin") {
 		t.Errorf("darwin: %s", p)
 	}

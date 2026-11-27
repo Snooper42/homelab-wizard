@@ -84,3 +84,4 @@ internal/usage 90
 internal/wiring 79
 internal/proc 93
 mobile/finance 95
+internal/bootcheck 95

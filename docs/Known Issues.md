@@ -14,9 +14,9 @@ Open issues, risks, and items to verify on the Mac. Close an issue by moving it 
 | ISSUE-0002 | Client addresses for LAN requests through OrbStack | Low | To verify |
 | ISSUE-0003 | Duplicati writing into the Proton Drive folder | High | READY FOR MAC VERIFICATION |
 | ISSUE-0004 | Domain automation not yet run against the live services | Medium | Partly verified, to verify |
-| ISSUE-0005 | Scheduled jobs not yet run under launchd | Medium | To verify |
+| ISSUE-0005 | Scheduled jobs not yet run under launchd | Medium | READY FOR MAC VERIFICATION |
 | ISSUE-0006 | No alert when OrbStack itself is down | Medium | Fixed, to verify |
-| ISSUE-0007 | Nothing starts after a restart until someone logs in | Medium | Accepted |
+| ISSUE-0007 | Nothing starts after a restart until someone logs in | Medium | Accepted; doctor now says it (READY FOR MAC VERIFICATION) |
 | ISSUE-0008 | With a domain, each device's DNS is set by hand | Low | Accepted |
 | ISSUE-0009 | MoneyMatter runs Intel-only images under Rosetta | Low | Accepted |
 | ISSUE-0010 | Immich machine learning runs on the CPU | Low | Accepted |
@@ -96,6 +96,15 @@ Only with a domain; Home mode does not use it. `./homelab domain setup` is teste
 
 **Verify:** after `./homelab schedule install`, log out and back in, then check `./homelab schedule status` and the logs in `scripts/logs`. The next morning, confirm a new dump in `recovery-staging/databases`.
 
+**Progress (Nov 27, 2026, the reliability reset; `MERGED`, not `VERIFIED`):** the job's environment under launchd was traced. launchd gives a job only the `PATH` its plist names. That `PATH` had OrbStack's and Homebrew's folders but not Docker Desktop's: its per-user install keeps `docker` and the credential helper every pull asks (`docker-credential-desktop`) in `~/.docker/bin`. So under Docker Desktop, the nightly update's pulls would fail with *executable file not found*. `JobPath` and the docker lookup now include `~/.docker/bin` and the app's own `Contents/Resources/bin`. An agent started from an older plist adds them itself, so no reinstall is needed (`cmd/homelab/agent.go`, `mergePath`).
+
+**Verify on the Mac (READY FOR MAC VERIFICATION):**
+1. `./homelab schedule install --apply`, then `plutil -lint ~/Library/LaunchAgents/com.homelab.agent.plist`: it should print *OK*.
+2. Log out and back in, then `./homelab schedule status`: `com.homelab.agent` should read *installed*, and `tail -n 20 scripts/logs/agent.log` should show no *not found*.
+3. The next morning, `ls -t recovery-staging/databases/*/ | head`: today's dumps should be there.
+
+Phase 4's live runner checks steps 1 and 2 and the job's `PATH`.
+
 ## ISSUE-0006: No alert when OrbStack itself is down
 
 The watchdog notices that OrbStack is down, but ntfy runs inside OrbStack, so the alert cannot be delivered. The failure is written to `scripts/logs/watchdog.log`.
@@ -107,6 +116,16 @@ The watchdog notices that OrbStack is down, but ntfy runs inside OrbStack, so th
 FileVault prevents automatic login. OrbStack and the jobs run in the login session.
 
 **Mitigation:** install macOS updates by hand, then log in straight away. The startup job brings the baseline back.
+
+**Feasibility of starting without a login (Nov 27, 2026, the reliability reset):** not safely possible with today's runtime. OrbStack and Docker Desktop are the logged-in person's apps: macOS starts them only in a login session. A LaunchDaemon, which runs at boot before anyone logs in, cannot start them, and with FileVault on the disk is not even unlocked until someone types the password. The routes, safest first:
+1. **Planned restarts (macOS updates):** `sudo fdesetup authrestart` unlocks FileVault once, and the Mac logs in by itself. The owner's own step, nothing to install.
+2. **Power cuts:** *Start up automatically after a power failure* (`sudo pmset autorestart 1`) turns the Mac on again. It then waits at FileVault's screen, and the heartbeat (ISSUE-0006) is what tells the owner.
+3. **Fully unattended:** FileVault off plus automatic login. That trades disk encryption for uptime: the owner's security choice, never made by the homelab.
+4. **Not built:** a root runtime (Colima or Lima as a LaunchDaemon). It changes the runtime and the file permissions under every app, a project of its own, not a reliability fix.
+
+**What changed:** `homelab doctor` on a Mac now has *After a restart*, in plain English: whether FileVault stops a restart, whether it logs in by itself, whether it turns on again after a power cut, and how the owner hears it is waiting (`internal/bootcheck`).
+
+**Verify on the Mac (READY FOR MAC VERIFICATION):** run `./homelab doctor` and paste its *After a restart* section. Its lines should match System Settings › Privacy & Security › FileVault, Users & Groups › Automatically log in, and Energy › Start up automatically after a power failure.
 
 ## ISSUE-0008: With a domain, each device's DNS is set by hand
 

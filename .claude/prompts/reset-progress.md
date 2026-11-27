@@ -8,7 +8,7 @@ The one backlog during the stop-the-line reliability reset (`CLAUDE.md`, `lanes.
 |---|---|---|
 | 1 | Governance: `CLAUDE.md`, one Core Reliability lane, Owner Notice Test, two-stage Done, anti-shortcut rules, scope freeze | `MERGED` (#961, Nov 27) |
 | 2 | SRE audit (`docs/SRE-Audit-2026-11.md`) and fixes for every Critical and High finding | PR 2 (C1, H1 to H6 fixed; M1 to M8 recorded) |
-| 3 | Known Issues' real-hardware gaps, one PR per flow: backups and blind restore; `launchd` jobs and start at boot; updates and rollback; app wiring against live Docker | Flow 1 committed locally (PR 3, opens once #963 merges) |
+| 3 | Known Issues' real-hardware gaps, one PR per flow: backups and blind restore; `launchd` jobs and start at boot; updates and rollback; app wiring against live Docker | Flows 1 and 2 committed locally (PRs 3 and 4, opened one at a time after #963) |
 | 4 | Live Mac verification runner; Gold Tier catalog; disk-full runway warning | Not started |
 | 5 | The owner's handoff: *Run This On Your Mac Tonight* at the top of `owner.md` | Not started |
 
@@ -29,6 +29,11 @@ The one backlog during the stop-the-line reliability reset (`CLAUDE.md`, `lanes.
 
 - **Owner notice:** on a Mac whose Proton Drive keeps the backup online only, `homelab rebuild` and `homelab restore-test --auto` now download those files first and say *downloaded N file(s)*, instead of Duplicati failing or stalling on placeholders.
 - **Files:** `internal/backup/{hydrate,dataless_darwin,dataless_other}.go` (new) and their tests `internal/backup/{hydrate,hydrate_unix}_test.go`; `cmd/homelab/{rebuild,jobs}.go`, `cmd/homelab/hydrate_test.go` (new); `docs/Known Issues.md` (ISSUE-0003 and ISSUE-0016: READY FOR MAC VERIFICATION); `CHANGELOG.md`.
+
+### PR 4: `launchd` jobs and start at boot (Phase 3, flow 2)
+
+- **Owner notice:** `homelab doctor` on the Mac now has *After a restart*, saying whether the homelab comes back by itself after a restart or a power cut. Under Docker Desktop the nightly agent finds its credential helper, so its pulls stop failing with *not found*.
+- **Files:** `internal/bootcheck/` (new, with tests), `cmd/homelab/{bootcheck,bootcheck_test}.go` (new), `cmd/homelab/{doctor,agent,agent_test}.go`, `internal/host/{host.go,start_test.go,words_test.go}`, `internal/docker/{docker.go,client_test.go}`, `internal/core/core.go`, `coverage-floors.txt` (`internal/bootcheck 95`, added), `docs/Known Issues.md` (ISSUE-0005 and ISSUE-0007), `CHANGELOG.md`.
 
 ## Open risks
 

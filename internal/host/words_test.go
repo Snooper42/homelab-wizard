@@ -34,6 +34,7 @@ var macWordsAllowed = []struct{ file, text, why string }{
 	{"internal/docker/front.go", "this Mac, so trusting the private ranges is safe", "the old starter configuration word for word, to recognise it"},
 	{"cmd/homelab/main.go", "macOS with OrbStack, Linux with Docker Engine", "names each system's runtime"},
 	{"internal/recovery/kit.go", "(OrbStack on a Mac)", "names the Mac's runtime among others"},
+	{"internal/bootcheck/bootcheck.go", "this Mac", "reads macOS's own settings (FileVault, the login window, pmset); doctor asks it only on a Mac (hp.OS)"},
 }
 
 func TestNoMacOnlyWordsElsewhere(t *testing.T) {

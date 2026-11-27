@@ -142,7 +142,12 @@ func (p Profile) JobPath(home string) string {
 	dirs := []string{"/usr/local/bin", "/usr/bin", "/bin", "/usr/sbin", "/sbin"}
 	switch p.OS {
 	case "darwin":
-		dirs = append([]string{filepath.Join(home, ".orbstack", "bin"), "/opt/homebrew/bin"}, dirs...)
+		// Docker Desktop's own folders too, after OrbStack's: its per-user
+		// install puts docker and its credential helper (docker-credential-
+		// desktop, which every pull asks) in ~/.docker/bin, and only an
+		// administrator's install links them into /usr/local/bin. Without
+		// them a job under launchd could not pull an image.
+		dirs = append([]string{filepath.Join(home, ".orbstack", "bin"), "/opt/homebrew/bin", filepath.Join(home, ".docker", "bin"), "/Applications/Docker.app/Contents/Resources/bin"}, dirs...)
 	case "linux":
 		// After the system's own: where Homebrew and Nix put what they install, the usual way to
 		// add ffmpeg and the like on a system whose / is read-only (SteamOS).

@@ -265,7 +265,8 @@ func FindCLI() (string, error) {
 	home, _ := os.UserHomeDir()
 	for _, p := range []string{
 		filepath.Join(home, ".orbstack", "bin", "docker"),
-		filepath.Join(rootless.BinDir(home), "docker"), // homelab runtime install
+		filepath.Join(home, ".docker", "bin", "docker"), // Docker Desktop, installed for this account only
+		filepath.Join(rootless.BinDir(home), "docker"),  // homelab runtime install
 		filepath.Join(home, ".local", "bin", "docker"),
 		filepath.Join(home, "bin", "docker"),
 		"/opt/homebrew/bin/docker",
