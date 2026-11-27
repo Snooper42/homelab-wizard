@@ -3747,7 +3747,7 @@
       ] }) })
     ] });
     if (part === "facts") return /* @__PURE__ */ u3(S, { children: /* @__PURE__ */ u3("div", { class: "tiles facts storefacts", children: [
-      /* @__PURE__ */ u3(Tile, { label: "Kind", value: cat, sub: app.kind === "native" ? "Installed on this machine itself" : "Runs in the homelab" }),
+      /* @__PURE__ */ u3(Tile, { label: "Kind", value: cat, sub: app.kind === "native" ? "Installed on this machine itself" : "" }),
       /* @__PURE__ */ u3(Tile, { label: "Replaces", value: app.replaces?.length ? app.replaces[0] : /* @__PURE__ */ u3("span", { class: "muted", children: "Nothing" }), sub: app.replaces && app.replaces.length > 1 ? app.replaces.slice(1).join(", ") : "" }),
       /* @__PURE__ */ u3(
         Tile,
@@ -3757,7 +3757,7 @@
           sub: goes.length ? goes[0][1] : needs.length ? "Installed with it" : ""
         }
       ),
-      /* @__PURE__ */ u3(Tile, { label: "Asks you", value: asks ? `${asks} ${asks === 1 ? "thing" : "things"}` : "Nothing", sub: asks ? "Beside, before it installs" : "Ready as it comes" })
+      /* @__PURE__ */ u3(Tile, { label: "Asks you", value: asks ? `${asks} ${asks === 1 ? "thing" : "things"}` : "Nothing", sub: "" })
     ] }) });
     const mine = offers2.filter((o3) => o3.apps.includes(app.id));
     const yearly = mine.filter((o3) => o3.counted && priced(o3.annual)).reduce((t3, o3) => t3 + o3.annual, 0);
