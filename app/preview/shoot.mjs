@@ -2706,6 +2706,13 @@ const smokes = [
     await page.fill('#uninstallTyped', 'delete everything');
     if (await page.isDisabled('#uninstallGo')) throw new Error('delete everything is not accepted');
   } },
+  // The owner, Nov 27, 2026: a phone or the web page never takes the homelab off, nor deletes its data or backups.
+  { name: 'On a phone that may change things, This machine has no Take the homelab off this machine', screen: 'settings', phone: ['companion', 'can-change'], run: async (page) => {
+    // The card is made when Settings loads, whichever page shows, so it is looked for in the whole page.
+    await page.waitForSelector('#uninstallCard', { state: 'attached', timeout: 5000 });
+    await page.waitForTimeout(300);
+    if (await page.$('#uninstall, #uninstallReview, #uninstallGo')) throw new Error('the web page offers to take the homelab off');
+  } },
   { name: 'SteamOS: Set up Docker for me moves its bar through the download', screen: 'setup', mock: {
     host: { ...host, os: 'Linux (SteamOS 3.7)', machine: 'Steam Machine', desktop: 'kde', runtimeOK: false },
     setup: [{ id: 'runtime', title: 'Docker', why: 'The apps run in Docker.', state: 'todo', run: [['runtime', 'install', '--apply']], runLabel: 'Set up Docker for me' }],

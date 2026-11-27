@@ -4489,7 +4489,7 @@
       }
     }
   };
-  mountUninstall($("uninstallCard"), { machine: thisMachine, on: uninstallActions });
+  if (!onPhone()) mountUninstall($("uninstallCard"), { machine: thisMachine, on: uninstallActions });
   var settingsFocus = [];
   var settingsData = store(async () => {
     if (onPhone()) {

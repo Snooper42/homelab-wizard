@@ -1,6 +1,7 @@
 package main
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -226,6 +227,20 @@ func (h *homelab) backup(ctx context.Context, args []string) error {
 		return err
 	}
 	now := time.Now()
+	if len(selected) == 0 {
+		// What would make tonight's off-site backups wrong without Duplicati
+		// failing: its folder gone, or a drive's folder empty in place of
+		// the photos it backed up before (duplicati.Preflight).
+		if st, _ := report.State("duplicati"); st != detect.NotInstalled {
+			env := h.envMap()
+			env["SYNC_ROOT"] = h.hostPath(cmp.Or(env["SYNC_ROOT"], "./data/sync"))
+			home, _ := os.UserHomeDir()
+			for _, line := range duplicati.Preflight(env, home, h.hostPath(cmp.Or(env["BACKUP_DESTINATION"], "./backups"))) {
+				failures = append(failures, line)
+				u.Fail("%s", line)
+			}
+		}
+	}
 	// The steps of a whole backup; the dump before an update (--apps)
 	// is a part of that update's step, so it reports none.
 	steps, n := len(jobs)+len(volumes)+3, 0

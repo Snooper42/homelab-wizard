@@ -88,7 +88,11 @@ The loops add questions here: the question, the options, the one they recommend,
 
 Small engineering choices made without asking (`CLAUDE.md`, rule 8): the safest option, written here so you can overrule it.
 
-- (none yet)
+- **Immich's restore fix applied to every PostgreSQL dump load (Phase 2, H1):** the dump's `set_config('search_path', '', false)` line is rewritten as Immich's own restore instructions do. pg_dump names every object with its schema, so the other apps' loads are unchanged; without it, an Immich rollback would now fail loudly on its indexes.
+- **A dump load fails on any psql error but two (Phase 2, H1):** "current user cannot be dropped" and "role … already exists", which every `pg_dumpall --clean` load prints. If a real load on the Mac prints another harmless one, the rollback stops with the app left stopped and today's data kept. Paste its output and it is added to the list.
+- **A rollback that only partly put the data back leaves the app stopped (Phase 2, H2),** rather than starting it on a mix of both days. Starting it again is a click once someone has looked.
+- **The nightly backup fails when the photos' drive is unplugged (Phase 2, H5),** but only for a job that has backed up before, so a homelab without photos is never flagged.
+- **The computer's own Settings keeps *Take the homelab off this machine*** behind its typed confirmation: "local host access and explicit confirmation". Only the phone's web page lost it.
 
 ## Parked with lane R (paused)
 

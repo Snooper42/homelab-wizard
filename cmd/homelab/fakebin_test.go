@@ -167,6 +167,14 @@ func fakeDockerMain(d string, args []string) int {
 		}
 	case "exec":
 		switch {
+		case arg(1) == "-i" && has("psql -q"):
+			// A dump loaded into PostgreSQL: what it was sent is kept in
+			// psql-stdin.sql; FAKE_PSQL_OUT is what psql printed (\n for
+			// each line), its errors among it, as it still exits 0.
+			if data, err := io.ReadAll(os.Stdin); err == nil {
+				_ = os.WriteFile(filepath.Join(d, "psql-stdin.sql"), data, 0o644)
+			}
+			fmt.Print(strings.ReplaceAll(os.Getenv("FAKE_PSQL_OUT"), `\n`, "\n"))
 		case has("pg_dumpall"):
 			fmt.Print("CREATE ROLE x;\n-- PostgreSQL database cluster dump complete\n")
 		case has("from pg_database"):
@@ -225,6 +233,12 @@ func fakeDockerMain(d string, args []string) int {
 			}
 		}
 	case "run":
+		// FAKE_LOAD_FAILS: putting a folder or volume back from its archive
+		// fails halfway (a short read), after it was emptied.
+		if os.Getenv("FAKE_LOAD_FAILS") != "" && has("tar xzf") {
+			fmt.Fprintln(os.Stderr, "tar: short read")
+			return 2
+		}
 		if has("duplicati-cli") && has(" restore ") {
 			// Duplicati's restore, from the backup folder's <job>/files into
 			// the restore folder; <job>/passphrase is the one that opens it.
@@ -281,6 +295,12 @@ func fakeDockerMain(d string, args []string) int {
 			fmt.Print("SQLite format 3\x00the rest of the database")
 		}
 	case "compose":
+		// An app's log through Compose, with a secret it printed bare
+		// (FAKE_LOG_SECRET), as no pattern would find it.
+		if has(" logs ") || strings.HasSuffix(all, " logs") {
+			fmt.Println("ntfy  | starting")
+			fmt.Println("ntfy  | could not sign in with " + os.Getenv("FAKE_LOG_SECRET") + " for the upstream server")
+		}
 		if arg(1) == "version" {
 			fmt.Println("2.40.3")
 		}

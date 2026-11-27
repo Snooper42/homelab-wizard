@@ -163,9 +163,6 @@ func TestWebSettingsMethods(t *testing.T) {
 	if _, _, err := h.webSettingsMethods()["OpenWelcome"].Call(context.Background(), []json.RawMessage{json.RawMessage(`"../../etc/passwd"`)}); err == nil {
 		t.Error("a path taken as a person")
 	}
-	if got := (webUninstall{Data: true, App: true}).args(); strings.Join(got, " ") != "uninstall --data --app" {
-		t.Errorf("uninstall's flags: %v", got)
-	}
 }
 
 // Finances on the web page (serve_web_finances.go): reading the apps and a logo change Finances, so a device that may

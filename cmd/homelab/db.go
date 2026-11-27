@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bufio"
+	"bytes"
 	"compress/gzip"
 	"context"
 	"errors"
@@ -235,9 +237,18 @@ func pgReady(ctx context.Context, client *docker.Client, ctr string, limit time.
 	}
 }
 
-// restoreDump loads a gzipped pg_dumpall into the database's container.
-// The dump drops and recreates what it holds; the errors about the role
-// psql connects as (it cannot drop itself) are expected.
+// restoreDump loads a gzipped pg_dumpall into the database's container and
+// checks that it loaded: psql carries on past an error and still exits 0,
+// so a dump that failed halfway (a database it could not drop while an app
+// held it open, tables that a newer version's migration had already
+// changed) would otherwise read as loaded, leaving a database that is
+// neither the dump nor today's (docs/SRE-Audit-2026-11.md, H1).
+//
+// The database's other sessions are ended first, so the dump's DROP
+// DATABASE can go ahead; and the dump's empty search_path is relaxed, as
+// Immich's own restore instructions do, or its indexes on functions it
+// names without their schema fail to build. The errors every such load
+// prints are allowed (restoreDumpExpected); any other fails it.
 func restoreDump(ctx context.Context, client *docker.Client, ctr, dump string) ([]byte, error) {
 	f, err := os.Open(dump)
 	if err != nil {
@@ -248,7 +259,79 @@ func restoreDump(ctx context.Context, client *docker.Client, ctr, dump string) (
 	if err != nil {
 		return nil, err
 	}
-	return client.ExecStdin(ctx, zr, ctr, "sh", "-c", `psql -q -U "$POSTGRES_USER" -d postgres`)
+	_, _ = client.Exec(ctx, ctr, "sh", "-c", `psql -q -U "$POSTGRES_USER" -d postgres -c "select pg_terminate_backend(pid) from pg_stat_activity where pid <> pg_backend_pid() and datname is not null"`)
+	in := searchPathRelaxed(zr)
+	out, err := client.ExecStdin(ctx, in, ctr, "sh", "-c", `psql -q -U "$POSTGRES_USER" -d postgres`)
+	in.CloseWithError(io.ErrClosedPipe) // psql gone early: the copier stops
+	if err != nil {
+		return out, err
+	}
+	if bad := dumpErrors(out); len(bad) > 0 {
+		return out, fmt.Errorf("the dump did not load cleanly: %d error(s), the first: %s", len(bad), bad[0])
+	}
+	return out, nil
+}
+
+// restoreDumpExpected are the errors a pg_dumpall --clean load always
+// prints and which change nothing: the role psql connects as cannot drop
+// itself, so it is still there when the dump creates it.
+var restoreDumpExpected = []*regexp.Regexp{
+	regexp.MustCompile(`current user cannot be dropped`),
+	regexp.MustCompile(`role "[^"]*" already exists`),
+}
+
+// dumpErrors are psql's ERROR and FATAL lines in out, but the expected ones.
+func dumpErrors(out []byte) []string {
+	var bad []string
+	for _, line := range strings.Split(string(out), "\n") {
+		if !strings.Contains(line, "ERROR:") && !strings.Contains(line, "FATAL:") {
+			continue
+		}
+		expected := false
+		for _, re := range restoreDumpExpected {
+			expected = expected || re.MatchString(line)
+		}
+		if !expected {
+			bad = append(bad, strings.TrimSpace(line))
+		}
+	}
+	return bad
+}
+
+// The line pg_dump writes at the start of each database, and what Immich's
+// restore instructions put in its place (outside a transaction it keeps the
+// default search_path).
+var (
+	searchPathEmpty   = []byte("SELECT pg_catalog.set_config('search_path', '', false);")
+	searchPathDefault = []byte("SELECT pg_catalog.set_config('search_path', 'public, pg_catalog', true);")
+)
+
+// searchPathRelaxed is r with each searchPathEmpty line replaced, read a
+// line at a time (a COPY line can be long), every other byte as it was.
+func searchPathRelaxed(r io.Reader) *io.PipeReader {
+	pr, pw := io.Pipe()
+	go func() {
+		br := bufio.NewReaderSize(r, 64<<10)
+		for {
+			line, err := br.ReadBytes('\n')
+			if body := bytes.TrimRight(line, "\r\n"); bytes.Equal(body, searchPathEmpty) {
+				line = append(append([]byte{}, searchPathDefault...), line[len(body):]...)
+			}
+			if len(line) > 0 {
+				if _, werr := pw.Write(line); werr != nil {
+					return
+				}
+			}
+			if err != nil {
+				if err == io.EOF {
+					err = nil
+				}
+				pw.CloseWithError(err)
+				return
+			}
+		}
+	}()
+	return pr
 }
 
 // pgBack returns a database to the major version it had: the setting,

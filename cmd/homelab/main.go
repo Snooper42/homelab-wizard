@@ -16,6 +16,7 @@ import (
 	"path/filepath"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/Snooper42/homelab-wizard/internal/catalog"
 	"github.com/Snooper42/homelab-wizard/internal/compose"
@@ -378,6 +379,11 @@ type homelab struct {
 	turnAs   string
 	turnCtx  context.Context
 	turnHeld func()
+	// dumpsSince is when beforeUpdate began dumping the databases of the
+	// apps this command updates: a copy kept before an update holds only
+	// dumps made since, never an older one that a rollback would load in
+	// place of today's data (docs/SRE-Audit-2026-11.md, H3).
+	dumpsSince time.Time
 }
 
 func newHomelab(u *ui.UI, root string) (*homelab, error) {

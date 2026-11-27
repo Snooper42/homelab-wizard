@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 )
@@ -307,9 +308,11 @@ func TestExecuteStopsOnBattery(t *testing.T) {
 	powerEvery = 50 * time.Millisecond
 	j := fakeJob(t, "music", "run", nil, 0)
 	t.Setenv("TIDY_FAKE_HOLD", "1")
-	plugged := true
-	onBattery = func() bool { return !plugged }
-	go func() { time.Sleep(200 * time.Millisecond); plugged = false }()
+	// Read by Execute's power check while the goroutine below unplugs it.
+	var plugged atomic.Bool
+	plugged.Store(true)
+	onBattery = func() bool { return !plugged.Load() }
+	go func() { time.Sleep(200 * time.Millisecond); plugged.Store(false) }()
 	start := time.Now()
 	run, err := Execute(context.Background(), j)
 	if !errors.Is(err, ErrOnBattery) || run.Exit != 130 || time.Since(start) > 4*time.Second {

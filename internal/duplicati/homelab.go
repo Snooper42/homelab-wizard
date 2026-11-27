@@ -143,3 +143,35 @@ func or(v, def string) string {
 	}
 	return v
 }
+
+// Preflight is what would make tonight's backups wrong without Duplicati
+// failing, a line each (docs/SRE-Audit-2026-11.md, H5 and H6):
+//
+//   - the backup folder (dest, as this machine sees it) is not there: its
+//     drive unplugged, or the cloud drive's app not running. Docker would
+//     make an empty folder in its place, on the internal disk;
+//   - a large job's folder here is empty or missing while its backup at dest
+//     holds files: its drive is unplugged, and Docker has put an empty
+//     folder where it was. Duplicati would back that up as every photo
+//     deleted, and the newest version a blind restore takes would be empty.
+//
+// env gives the folders as Plan reads them (SYNC_ROOT resolved by the
+// caller); home is this account's home folder.
+func Preflight(env map[string]string, home, dest string) []string {
+	if dest == "" {
+		return nil
+	}
+	if st, err := os.Stat(dest); err != nil || !st.IsDir() {
+		return []string{"the backup folder " + dest + " is not there (is its drive plugged in, or the cloud drive's app running?): tonight's backups have nowhere to go"}
+	}
+	var out []string
+	for _, j := range HomelabJobs {
+		if j.Host == nil || !HasBackup(filepath.Join(dest, j.Folder)) {
+			continue
+		}
+		if src := j.Host(env, home); isEmpty(src) {
+			out = append(out, j.Name+": "+src+" is empty or missing (is its drive plugged in?), though its backup holds files: backed up like this, it would read as everything deleted")
+		}
+	}
+	return out
+}
