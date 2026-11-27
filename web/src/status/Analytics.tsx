@@ -3,7 +3,7 @@ import { useState } from 'preact/hooks';
 import { AppMark } from '../parts/AppMark';
 import { Card } from '../parts/Card';
 import { Row, Rows } from '../parts/Row';
-import { ago } from '../format';
+import { ago, bytes } from '../format';
 import { Spark } from '../Spark';
 import { formatMem, memoryByApp } from './memory';
 import type { History } from './Usage';
@@ -66,11 +66,8 @@ function Pressure({ m, stop }: { m: health.Memory; stop?: (id: string) => void }
 }
 
 /** Bytes on a drive, short: "3.4 TB", "412 GB". */
-export function formatDisk(b: number): string {
-  if (b >= 1e12) return `${(b / 1e12).toFixed(b >= 1e13 ? 0 : 1)} TB`;
-  if (b >= 1e9) return `${Math.round(b / 1e9)} GB`;
-  return `${Math.max(0, Math.round(b / 1e6))} MB`;
-}
+/** A drive's or a folder's size in 1024s, as This Mac, the sidebar and the CLI give it. */
+export const formatDisk = (b: number): string => bytes(Math.max(0, b));
 
 const pct = (n: number) => (n >= 10 ? Math.round(n) : Math.round(n * 10) / 10);
 const minutesOf = (t: Totals) => (t.at.length > 1 ? Math.max(1, Math.round((t.at[t.at.length - 1] - t.at[0]) / 60000)) : 0);
@@ -119,6 +116,8 @@ export function Analytics({ stats, history, totals, cores, disk, storage, apps, 
   const heaviest = rows[0];
   const read = stats.length > 0;
   const mins = minutesOf(totals);
+  // An app's processor as a share of the whole machine, as the card's figure and the chart are.
+  const share = (v: number) => (cores ? v / cores : v);
   const span = mins ? (mins === 1 ? 'The last minute' : `The last ${mins} minutes`) : 'Now';
   const who = (id: string | undefined, words: string) => id
     ? <span class="antwho"><AppMark id={id} name={nameOf(id)} icon={icons?.[id] || ''} small /><span class="antname">{nameOf(id)}</span><span class="antfigs">{words}</span></span>
@@ -133,7 +132,7 @@ export function Analytics({ stats, history, totals, cores, disk, storage, apps, 
         <Card kind="anttile" id="antCpu">
           <div class="anthead"><h2>Processor</h2><span class="muted">{cores ? `${cores} cores` : ''}</span></div>
           <div class="antfig">{read ? <>{cores ? pct(totalCpu / cores) : pct(totalCpu)}<small>%</small> <span class="muted">{cores ? 'in use' : 'of a core'}</span></> : '—'}</div>
-          <div class="antline muted">{read && busiest && cpu[busiest] >= 0.1 ? who(busiest, `· ${pct(cpu[busiest])}%`) : read ? <span class="antwho">Every app idle</span> : who(undefined, '')}</div>
+          <div class="antline muted">{read && busiest && cpu[busiest] >= 0.1 ? who(busiest, `· ${pct(share(cpu[busiest]))}%`) : read ? <span class="antwho">Every app idle</span> : who(undefined, '')}</div>
           <div class="antfoot">{totals.cpu.length > 2 ? <Spark values={totals.cpu} w={240} h={36} title={`The apps' processor, ${span.toLowerCase()}`} /> : <span class="antempty" />}</div>
         </Card>
         <Card kind="anttile" id="antMem">
@@ -167,7 +166,7 @@ export function Analytics({ stats, history, totals, cores, disk, storage, apps, 
                 <td><span class="antapp"><AppMark id={id} name={nameOf(id)} icon={icons?.[id] || ''} small />{nameOf(id)}</span></td>
                 <td><span class="antmem"><span class="antbar"><span style={{ width: `${Math.max(2, Math.round(((mem[id] || 0) / most) * 100))}%` }} /></span>{formatMem(mem[id] || 0)}</span></td>
                 <td class="antspark">{(past[id]?.length || 0) > 2 ? <Spark values={past[id]} w={120} h={18} title={`${nameOf(id)}'s processor, ${span.toLowerCase()}`} /> : null}</td>
-                <td class="num">{pct(cpu[id] || 0)}%</td>
+                <td class="num">{pct(share(cpu[id] || 0))}%</td>
                 <td class="num">{disked[id] ? formatDisk(disked[id]) : '—'}</td>
               </tr>
             ))}

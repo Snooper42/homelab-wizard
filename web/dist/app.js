@@ -8268,11 +8268,7 @@
       ] }) }, a3.name)) })
     ] });
   }
-  function formatDisk(b2) {
-    if (b2 >= 1e12) return `${(b2 / 1e12).toFixed(b2 >= 1e13 ? 0 : 1)} TB`;
-    if (b2 >= 1e9) return `${Math.round(b2 / 1e9)} GB`;
-    return `${Math.max(0, Math.round(b2 / 1e6))} MB`;
-  }
+  var formatDisk = (b2) => bytes(Math.max(0, b2));
   var pct = (n3) => n3 >= 10 ? Math.round(n3) : Math.round(n3 * 10) / 10;
   var minutesOf = (t3) => t3.at.length > 1 ? Math.max(1, Math.round((t3.at[t3.at.length - 1] - t3.at[0]) / 6e4)) : 0;
   function Chart({ values, kind, label, mark }) {
@@ -8314,6 +8310,7 @@
     const heaviest = rows[0];
     const read = stats.length > 0;
     const mins = minutesOf(totals3);
+    const share4 = (v3) => cores ? v3 / cores : v3;
     const span = mins ? mins === 1 ? "The last minute" : `The last ${mins} minutes` : "Now";
     const who = (id2, words5) => id2 ? /* @__PURE__ */ u3("span", { class: "antwho", children: [
       /* @__PURE__ */ u3(AppMark, { id: id2, name: nameOf(id2), icon: icons4?.[id2] || "", small: true }),
@@ -8337,7 +8334,7 @@
             " ",
             /* @__PURE__ */ u3("span", { class: "muted", children: cores ? "in use" : "of a core" })
           ] }) : "—" }),
-          /* @__PURE__ */ u3("div", { class: "antline muted", children: read && busiest && cpu[busiest] >= 0.1 ? who(busiest, `· ${pct(cpu[busiest])}%`) : read ? /* @__PURE__ */ u3("span", { class: "antwho", children: "Every app idle" }) : who(void 0, "") }),
+          /* @__PURE__ */ u3("div", { class: "antline muted", children: read && busiest && cpu[busiest] >= 0.1 ? who(busiest, `· ${pct(share4(cpu[busiest]))}%`) : read ? /* @__PURE__ */ u3("span", { class: "antwho", children: "Every app idle" }) : who(void 0, "") }),
           /* @__PURE__ */ u3("div", { class: "antfoot", children: totals3.cpu.length > 2 ? /* @__PURE__ */ u3(Spark, { values: totals3.cpu, w: 240, h: 36, title: `The apps' processor, ${span.toLowerCase()}` }) : /* @__PURE__ */ u3("span", { class: "antempty" }) })
         ] }),
         /* @__PURE__ */ u3(Card, { kind: "anttile", id: "antMem", children: [
@@ -8404,7 +8401,7 @@
             ] }) }),
             /* @__PURE__ */ u3("td", { class: "antspark", children: (past[id2]?.length || 0) > 2 ? /* @__PURE__ */ u3(Spark, { values: past[id2], w: 120, h: 18, title: `${nameOf(id2)}'s processor, ${span.toLowerCase()}` }) : null }),
             /* @__PURE__ */ u3("td", { class: "num", children: [
-              pct(cpu[id2] || 0),
+              pct(share4(cpu[id2] || 0)),
               "%"
             ] }),
             /* @__PURE__ */ u3("td", { class: "num", children: disked[id2] ? formatDisk(disked[id2]) : "—" })
