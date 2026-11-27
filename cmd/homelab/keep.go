@@ -5,9 +5,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -15,6 +17,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/backup"
 	"github.com/Snooper42/homelab-wizard/internal/catalog"
 	"github.com/Snooper42/homelab-wizard/internal/docker"
+	"github.com/Snooper42/homelab-wizard/internal/updates"
 )
 
 // defaultCopyLimit is UPDATE_COPY_LIMIT's default: the largest folder or
@@ -289,11 +292,12 @@ func partlyIf(changed bool, err error) error {
 // copyUpdating copies the data of each app whose image the pull just
 // changed, and returns the apps to start on their new images. An app whose
 // copy failed starts again as it was and is not updated.
-func (h *homelab) copyUpdating(ctx context.Context, client *docker.Client, ids []string) (update, notCopied []string) {
+func (h *homelab) copyUpdating(ctx context.Context, client *docker.Client, ids []string) (update, notCopied []string, copied map[string]docker.Container) {
+	copied = map[string]docker.Container{}
 	containers, err := client.Containers(ctx)
 	if err != nil {
 		h.ui.Warn("no copies before the update: %v", err)
-		return nil, ids
+		return nil, ids, copied
 	}
 	for _, id := range ids {
 		a, ok := h.catalog.Get(id)
@@ -324,6 +328,57 @@ func (h *homelab) copyUpdating(ctx context.Context, client *docker.Client, ids [
 		}
 		h.ui.Info("%s: %s (%s)", a.Name(), h.copySaid(cp), h.rel(cp.Dir))
 		update = append(update, id)
+		copied[id] = ctr
 	}
-	return update, notCopied
+	return update, notCopied, copied
+}
+
+// backAfterFailedUp puts each app that was stopped for its copy, and whose
+// new image then did not start (Compose's up failed: a port taken, a
+// dependency unwell, a new image that cannot run here), back on the image
+// it ran, with its data from just before. It never came up on the new one,
+// so nothing new is lost (ADR-0020). Before, it stayed stopped: the update
+// had stopped it, the watchdog starts no stopped app, and no rollback knew
+// of an earlier image, as the new one had never run (Phase 3, flow 3).
+func (h *homelab) backAfterFailedUp(ctx context.Context, client *docker.Client, copied map[string]docker.Container, why error) {
+	if len(copied) == 0 {
+		return
+	}
+	path := updates.HistoryPath(h.root)
+	hist := updates.LoadHistory(path)
+	was := hist.Clone()
+	for _, id := range slices.Sorted(maps.Keys(copied)) {
+		ctr := copied[id]
+		a, ok := h.catalog.Get(id)
+		if !ok {
+			continue
+		}
+		cp, ok := backup.LatestCopy(h.stagingDir(), id)
+		if !ok || cp.ImageID != ctr.ImageID {
+			h.ui.Warn("%s: its new image did not start (%v), and no copy from just before is kept: homelab start %s", a.Name(), why, id)
+			continue
+		}
+		if err := client.Tag(ctx, ctr.ImageID, updates.RollbackRef(id)); err != nil {
+			h.ui.Warn("%s: its new image did not start, and its earlier one is not here to go back to (%v): homelab start %s", a.Name(), err, id)
+			continue
+		}
+		r := hist.Apps[id]
+		if r == nil {
+			r = &updates.Record{}
+			hist.Apps[id] = r
+		}
+		r.Ref, r.Previous, r.Updated, r.HealthyAfter = ctr.Image, ctr.ImageID, time.Now(), time.Time{}
+		if now, err := client.ImageID(ctx, ctr.Image); err == nil {
+			r.Current = now
+		}
+		if _, err := h.doRollback(ctx, client, a, ctr, &hist, &cp); err != nil {
+			h.ui.Warn("%s: its new image did not start, and going back failed too: %v", a.Name(), err)
+			continue
+		}
+		h.ui.OK("%s: its new image did not start, so it runs the one from before again, with its data from just before; its updates are held until homelab updates release %s", a.Name(), id)
+		h.record("rollback", id, h.who(), "Went back to the version from before its update, which did not start")
+	}
+	if err := updates.SaveChanges(path, was, hist); err != nil {
+		h.ui.Warn("could not save the update history: %v", err)
+	}
 }
