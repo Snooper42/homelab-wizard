@@ -537,9 +537,9 @@ export function todosFor(l: app.TidyLibrary, d: app.TidyUp, act: TidyActions, re
 }
 
 /** The list: each thing's mark, words, what it wins back, and its button (off while a job runs). */
-function TodoRows({ todos, job }: { todos: Todo[]; job: TidyJob | null }) {
+function TodoRows({ todos, job, plain }: { todos: Todo[]; job: TidyJob | null; plain?: boolean }) {
   // One main button, on the first thing to do (the list is in the order to do them), never on one that throws things
-  // away; the rest are there, quieter.
+  // away; the rest are there, quieter. Plain: none here (the Overview's card above holds it).
   const first = todos.findIndex((t) => t.go && !t.go.quiet && !t.go.risky);
   let warned = 0;
   while (warned < todos.length && todos[warned].warn) warned++;
@@ -549,7 +549,7 @@ function TodoRows({ todos, job }: { todos: Todo[]; job: TidyJob | null }) {
     <Rows kind="fx-rows tidytodo">
       {order.map((t, i) => (
         <Row key={t.kind + t.title + i} lead={<LibIcon kind={t.kind} />} title={t.title} sub={t.sub} subTone={t.warn ? 'warn' : undefined}
-          end={<>{!!t.gain && <><span class="fx-amount fx-in tidygain">{size(t.gain)}</span><span class="sr"> to win back</span></>}{t.go && <Go label={t.go.label} primary={t === main} job={job} onClick={t.go.run} />}</>} />
+          end={<>{!!t.gain && <><span class="fx-amount fx-in tidygain">{size(t.gain)}</span><span class="sr"> to win back</span></>}{t.go && <Go label={t.go.label} primary={!plain && t === main} job={job} onClick={t.go.run} />}</>} />
       ))}
     </Rows>
   );
@@ -619,6 +619,43 @@ function GenresWidget({ d, job, act, only, span = 1 }: { d: app.TidyUp; job: Tid
         <Legend items={slices.map((s) => ({ label: s.label, color: s.color, value: `${Math.round((s.value / g.total) * 100)}%` }))} />
       </div>
     </Widget>
+  );
+}
+
+/** The Overview's three cards, built as Status' are (title, one figure, one line, a footer at one height): what was
+ * filed today, what waits on your OK with its first step, and the drive. */
+function TidyTiles({ d, todos, job, act }: { d: app.TidyUp; todos: Todo[]; job: TidyJob | null; act: TidyActions }) {
+  const filed = (d.today || []).filter((f) => !f.undone);
+  const newest = filed[0];
+  const from = (d.inbox?.folders || []).map(watchedName);
+  const waiting = todos.filter((t) => t.go).length;
+  const gain = todos.reduce((t, x) => t + (x.gain || 0), 0);
+  const first = todos.find((t) => t.go && !t.go.quiet && !t.go.risky);
+  const dr = d.drive;
+  const parts = d.libraries.filter((l) => l.size).map((l) => ({ label: names[l.kind], value: l.size || 0, color: looks[l.kind].hue })).sort((a, b) => b.value - a.value);
+  // A size's figure and its unit apart, as Status' cards draw them ("1.2" big, "TB free" beside it).
+  const num = (s: string) => s.replace(/ \S+$/, ''), unit = (s: string) => s.replace(/^\S+ /, '');
+  return (
+    <div class="tidytilesbox"><div class="tiles tidytiles">
+      <Card kind="tile ovcard" id="tidyTodayTile">
+        <div class="anthead"><h2>Today</h2></div>
+        <div class="antfig">{filed.length ? <>{filed.length}<span class="muted"> {filed.length === 1 ? 'download' : 'downloads'} filed</span></> : <span class="muted tidynone">Nothing filed yet</span>}</div>
+        <div class="antline muted">{from.length ? `From ${from.length > 2 ? `${from.slice(0, 2).join(', ')} and ${from.length - 2} more` : from.join(' and ')}` : ''}</div>
+        <div class="antfoot">{newest ? <span class="ovacts tidynewest"><LibIcon kind={newest.kind} /><span class="tidynewestname">{newest.title}</span>{newest.undo && <Go label="Undo" job={job} title={`Put ${newest.title} back where it came from`} onClick={() => act.run('inbox', 'undo', [newest.id])} />}</span> : <span class="antempty" />}</div>
+      </Card>
+      <Card kind="tile ovcard" id="tidyGainTile">
+        <div class="anthead"><h2>To tidy</h2></div>
+        <div class="antfig">{waiting ? <>{waiting}<span class="muted"> {waiting === 1 ? 'thing' : 'things'}</span></> : <span class="muted tidynone">Everything is tidy</span>}</div>
+        <div class="antline muted">{gain ? `${size(gain)} to win back` : ''}</div>
+        <div class="antfoot">{first?.go ? <span class="ovacts tidynewest"><Go primary label={first.go.label} job={job} onClick={first.go.run} /><span class="tidynewestname muted">{first.title}</span></span> : <span class="antempty" />}</div>
+      </Card>
+      <Card kind="tile ovcard" id="tidyDriveTile">
+        <div class="anthead"><h2>{dr?.name ? `The ${dr.name} drive` : 'This machine'}</h2></div>
+        <div class="antfig">{dr ? <>{num(size(dr.free))}<span class="muted"> {unit(size(dr.free))} free</span></> : '—'}</div>
+        <div class="antline muted">{dr ? `Of ${size(dr.total)}` : ''}</div>
+        <div class="antfoot">{dr ? <span class="ovbar"><SplitBar parts={[...parts, { label: 'Free', value: dr.free, color: 'track' as Hue }]} label="The drive" size="sm" /><small class="muted">{parts.slice(0, 3).map((p) => `${p.label} ${size(p.value)}`).join(' · ')}</small></span> : <span class="antempty" />}</div>
+      </Card>
+    </div></div>
   );
 }
 
@@ -754,15 +791,18 @@ function Overview({ d, job, act, review, pick, placing, folders }: { d: app.Tidy
   return (
     <>
       {folders && <div class="fx-board"><InboxWidget d={d} job={job} act={act} /></div>}
-      <div class="fx-board tidynow"><TodayWidget d={d} job={job} act={act} wide={!(d.needs || []).length} /><NeedsLookWidget d={d} job={job} act={act} /></div>
-      <div class="fx-board tidytop">
-        <Widget title="Needs your OK" kind="fx-paycheck tidyneeds" actions={waiting ? <span class="muted">{count(waiting, 'thing')}{gain ? ' · ' + size(gain) + ' to win back' : ''}</span> : undefined}>
-          {todos.length ? <TodoRows todos={todos} job={job} /> : (
+      <TidyTiles d={d} todos={todos} job={job} act={act} />
+      {(!!(d.today || []).length || !!(d.needs || []).length) && <div class="fx-board tidynow">
+        {!!(d.today || []).length && <TodayWidget d={d} job={job} act={act} wide={!(d.needs || []).length} bare />}
+        <NeedsLookWidget d={d} job={job} act={act} />
+      </div>}
+      <div class="fx-board">
+        <Widget title="Needs your OK" span="all" kind="fx-paycheck tidyneeds tidylist" actions={waiting ? <span class="muted">{count(waiting, 'thing')}</span> : undefined}>
+          {todos.length ? <TodoRows todos={todos} job={job} plain /> : (
             <div class="tidyclear"><span class="fmark logo tidyicon fx-h-in" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" /></svg></span>
               <div><strong>Everything's tidy</strong></div></div>
           )}
         </Widget>
-        <DriveWidget d={d} />
       </div>
       <Shelf d={d} act={act} review={review} pick={pick} />
       <div class="fx-board tidybottom">
@@ -974,14 +1014,14 @@ function watchedName(p: string): string {
   return drive ? `${drive}/${last}` : last;
 }
 
-function TodayWidget({ d, job, act, wide }: { d: app.TidyUp; job: TidyJob | null; act: TidyActions; wide?: boolean }) {
+function TodayWidget({ d, job, act, wide, bare }: { d: app.TidyUp; job: TidyJob | null; act: TidyActions; wide?: boolean; bare?: boolean }) {
   const today = d.today || [];
   const folders = d.inbox?.folders || [];
   const from = folders.map(watchedName);
   const where = from.length ? <span class="muted tidyfrom" title={folders.join('\n')}>From {from.length > 2 ? `${from.slice(0, 2).join(', ')} and ${from.length - 2} more` : from.join(' and ')}</span> : undefined;
   return (
-    <Widget title="What I did today" span={wide ? 'all' : 1} kind="tidytoday" actions={where}>
-      {!!today.length && <Stat value={<span class="fx-amount">{today.filter((f) => !f.undone).length}<small> {today.filter((f) => !f.undone).length === 1 ? 'download' : 'downloads'} filed</small></span>} caption="Since midnight" />}
+    <Widget title="What I did today" span={wide ? 'all' : 1} kind="tidytoday" actions={bare ? undefined : where}>
+      {!!today.length && !bare && <Stat value={<span class="fx-amount">{today.filter((f) => !f.undone).length}<small> {today.filter((f) => !f.undone).length === 1 ? 'download' : 'downloads'} filed</small></span>} caption="Since midnight" />}
       {today.length ? (
         <Rows kind="fx-rows tidytoday">
           {today.map((f) => (

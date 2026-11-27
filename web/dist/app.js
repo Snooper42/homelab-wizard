@@ -24,7 +24,7 @@
   var minute = 6e4;
   var errorText = (e3) => String(e3 && e3.message || e3);
 
-  // node_modules/preact/dist/preact.module.js
+  // ../homelab-wizard/node_modules/preact/dist/preact.module.js
   var n;
   var l;
   var u;
@@ -304,7 +304,7 @@
     return n3.__v.__b - l3.__v.__b;
   }, H.__r = 0, f = Math.random().toString(8), c = "__d" + f, a = "__a" + f, s = /(PointerCapture)$|Capture$/i, h = 0, p = V(false), v = V(true), y = 0;
 
-  // node_modules/preact/hooks/dist/hooks.module.js
+  // ../homelab-wizard/node_modules/preact/hooks/dist/hooks.module.js
   var t2;
   var r2;
   var u2;
@@ -453,7 +453,7 @@
     return "function" == typeof t3 ? t3(n3) : t3;
   }
 
-  // node_modules/preact/jsx-runtime/dist/jsxRuntime.module.js
+  // ../homelab-wizard/node_modules/preact/jsx-runtime/dist/jsxRuntime.module.js
   var f3 = 0;
   function u3(e3, t3, n3, o3, i3, u4) {
     t3 || (t3 = {});
@@ -21710,7 +21710,7 @@ ${pays}
     }
     return out;
   }
-  function TodoRows({ todos, job: job2 }) {
+  function TodoRows({ todos, job: job2, plain: plain2 }) {
     const first2 = todos.findIndex((t3) => t3.go && !t3.go.quiet && !t3.go.risky);
     let warned = 0;
     while (warned < todos.length && todos[warned].warn) warned++;
@@ -21728,7 +21728,7 @@ ${pays}
             /* @__PURE__ */ u3("span", { class: "fx-amount fx-in tidygain", children: size(t3.gain) }),
             /* @__PURE__ */ u3("span", { class: "sr", children: " to win back" })
           ] }),
-          t3.go && /* @__PURE__ */ u3(Go, { label: t3.go.label, primary: t3 === main2, job: job2, onClick: t3.go.run })
+          t3.go && /* @__PURE__ */ u3(Go, { label: t3.go.label, primary: !plain2 && t3 === main2, job: job2, onClick: t3.go.run })
         ] })
       },
       t3.kind + t3.title + i3
@@ -21792,36 +21792,66 @@ ${pays}
       ] })
     ] });
   }
-  function DriveWidget({ d: d3 }) {
+  function TidyTiles({ d: d3, todos, job: job2, act }) {
+    const filed = (d3.today || []).filter((f4) => !f4.undone);
+    const newest3 = filed[0];
+    const from2 = (d3.inbox?.folders || []).map(watchedName);
+    const waiting2 = todos.filter((t3) => t3.go).length;
+    const gain = todos.reduce((t3, x3) => t3 + (x3.gain || 0), 0);
+    const first2 = todos.find((t3) => t3.go && !t3.go.quiet && !t3.go.risky);
     const dr = d3.drive;
-    if (!dr) return null;
     const parts3 = d3.libraries.filter((l3) => l3.size).map((l3) => ({ label: names3[l3.kind], value: l3.size || 0, color: looks[l3.kind].hue })).sort((a3, b2) => b2.value - a3.value);
-    const measuring = d3.libraries.some((l3) => l3.found && !l3.size);
-    const slices = [...parts3, { label: "Free", value: dr.free, color: "track" }];
-    return /* @__PURE__ */ u3(Widget, { title: dr.name ? `On the ${dr.name} drive` : "On this machine", kind: "fx-flow tidydrivecard", children: [
-      /* @__PURE__ */ u3(
-        Stat,
-        {
-          value: /* @__PURE__ */ u3("span", { class: "fx-amount", children: [
-            size(dr.free),
-            /* @__PURE__ */ u3("small", { children: " free" })
-          ] }),
-          caption: `Of ${size(dr.total)}`,
-          aside: d3.freed ? /* @__PURE__ */ u3(Chip, { dir: "up", good: true, value: `${size(d3.freed)} won back` }) : void 0
-        }
-      ),
-      /* @__PURE__ */ u3("div", { class: "fx-donutrow", children: [
-        /* @__PURE__ */ u3(Donut, { slices, size: 124, label: "The drive", center: /* @__PURE__ */ u3(S, { children: [
-          /* @__PURE__ */ u3("strong", { children: [
-            dr.total ? Math.round(dr.free / dr.total * 100) : 0,
-            "%"
-          ] }),
-          "free"
-        ] }) }),
-        /* @__PURE__ */ u3(Legend, { items: slices.map((p3) => ({ label: p3.label, color: p3.color, value: size(p3.value) })) })
+    const num2 = (s3) => s3.replace(/ \S+$/, ""), unit2 = (s3) => s3.replace(/^\S+ /, "");
+    return /* @__PURE__ */ u3("div", { class: "tidytilesbox", children: /* @__PURE__ */ u3("div", { class: "tiles tidytiles", children: [
+      /* @__PURE__ */ u3(Card, { kind: "tile ovcard", id: "tidyTodayTile", children: [
+        /* @__PURE__ */ u3("div", { class: "anthead", children: /* @__PURE__ */ u3("h2", { children: "Today" }) }),
+        /* @__PURE__ */ u3("div", { class: "antfig", children: filed.length ? /* @__PURE__ */ u3(S, { children: [
+          filed.length,
+          /* @__PURE__ */ u3("span", { class: "muted", children: [
+            " ",
+            filed.length === 1 ? "download" : "downloads",
+            " filed"
+          ] })
+        ] }) : /* @__PURE__ */ u3("span", { class: "muted tidynone", children: "Nothing filed yet" }) }),
+        /* @__PURE__ */ u3("div", { class: "antline muted", children: from2.length ? `From ${from2.length > 2 ? `${from2.slice(0, 2).join(", ")} and ${from2.length - 2} more` : from2.join(" and ")}` : "" }),
+        /* @__PURE__ */ u3("div", { class: "antfoot", children: newest3 ? /* @__PURE__ */ u3("span", { class: "ovacts tidynewest", children: [
+          /* @__PURE__ */ u3(LibIcon, { kind: newest3.kind }),
+          /* @__PURE__ */ u3("span", { class: "tidynewestname", children: newest3.title }),
+          newest3.undo && /* @__PURE__ */ u3(Go, { label: "Undo", job: job2, title: `Put ${newest3.title} back where it came from`, onClick: () => act.run("inbox", "undo", [newest3.id]) })
+        ] }) : /* @__PURE__ */ u3("span", { class: "antempty" }) })
       ] }),
-      measuring && /* @__PURE__ */ u3("p", { class: "fx-sub", children: "Measuring the rest: it takes a few minutes on a big drive." })
-    ] });
+      /* @__PURE__ */ u3(Card, { kind: "tile ovcard", id: "tidyGainTile", children: [
+        /* @__PURE__ */ u3("div", { class: "anthead", children: /* @__PURE__ */ u3("h2", { children: "To tidy" }) }),
+        /* @__PURE__ */ u3("div", { class: "antfig", children: waiting2 ? /* @__PURE__ */ u3(S, { children: [
+          waiting2,
+          /* @__PURE__ */ u3("span", { class: "muted", children: [
+            " ",
+            waiting2 === 1 ? "thing" : "things"
+          ] })
+        ] }) : /* @__PURE__ */ u3("span", { class: "muted tidynone", children: "Everything is tidy" }) }),
+        /* @__PURE__ */ u3("div", { class: "antline muted", children: gain ? `${size(gain)} to win back` : "" }),
+        /* @__PURE__ */ u3("div", { class: "antfoot", children: first2?.go ? /* @__PURE__ */ u3("span", { class: "ovacts tidynewest", children: [
+          /* @__PURE__ */ u3(Go, { primary: true, label: first2.go.label, job: job2, onClick: first2.go.run }),
+          /* @__PURE__ */ u3("span", { class: "tidynewestname muted", children: first2.title })
+        ] }) : /* @__PURE__ */ u3("span", { class: "antempty" }) })
+      ] }),
+      /* @__PURE__ */ u3(Card, { kind: "tile ovcard", id: "tidyDriveTile", children: [
+        /* @__PURE__ */ u3("div", { class: "anthead", children: /* @__PURE__ */ u3("h2", { children: dr?.name ? `The ${dr.name} drive` : "This machine" }) }),
+        /* @__PURE__ */ u3("div", { class: "antfig", children: dr ? /* @__PURE__ */ u3(S, { children: [
+          num2(size(dr.free)),
+          /* @__PURE__ */ u3("span", { class: "muted", children: [
+            " ",
+            unit2(size(dr.free)),
+            " free"
+          ] })
+        ] }) : "—" }),
+        /* @__PURE__ */ u3("div", { class: "antline muted", children: dr ? `Of ${size(dr.total)}` : "" }),
+        /* @__PURE__ */ u3("div", { class: "antfoot", children: dr ? /* @__PURE__ */ u3("span", { class: "ovbar", children: [
+          /* @__PURE__ */ u3(SplitBar, { parts: [...parts3, { label: "Free", value: dr.free, color: "track" }], label: "The drive", size: "sm" }),
+          /* @__PURE__ */ u3("small", { class: "muted", children: parts3.slice(0, 3).map((p3) => `${p3.label} ${size(p3.value)}`).join(" · ") })
+        ] }) : /* @__PURE__ */ u3("span", { class: "antempty" }) })
+      ] })
+    ] }) });
   }
   function SpaceWidget({ l: l3, d: d3 }) {
     const c4 = l3.counts || {};
@@ -21938,20 +21968,15 @@ ${pays}
     const gain = todos.reduce((t3, x3) => t3 + (x3.gain || 0), 0);
     return /* @__PURE__ */ u3(S, { children: [
       folders && /* @__PURE__ */ u3("div", { class: "fx-board", children: /* @__PURE__ */ u3(InboxWidget, { d: d3, job: job2, act }) }),
-      /* @__PURE__ */ u3("div", { class: "fx-board tidynow", children: [
-        /* @__PURE__ */ u3(TodayWidget, { d: d3, job: job2, act, wide: !(d3.needs || []).length }),
+      /* @__PURE__ */ u3(TidyTiles, { d: d3, todos, job: job2, act }),
+      (!!(d3.today || []).length || !!(d3.needs || []).length) && /* @__PURE__ */ u3("div", { class: "fx-board tidynow", children: [
+        !!(d3.today || []).length && /* @__PURE__ */ u3(TodayWidget, { d: d3, job: job2, act, wide: !(d3.needs || []).length, bare: true }),
         /* @__PURE__ */ u3(NeedsLookWidget, { d: d3, job: job2, act })
       ] }),
-      /* @__PURE__ */ u3("div", { class: "fx-board tidytop", children: [
-        /* @__PURE__ */ u3(Widget, { title: "Needs your OK", kind: "fx-paycheck tidyneeds", actions: waiting2 ? /* @__PURE__ */ u3("span", { class: "muted", children: [
-          count(waiting2, "thing"),
-          gain ? " · " + size(gain) + " to win back" : ""
-        ] }) : void 0, children: todos.length ? /* @__PURE__ */ u3(TodoRows, { todos, job: job2 }) : /* @__PURE__ */ u3("div", { class: "tidyclear", children: [
-          /* @__PURE__ */ u3("span", { class: "fmark logo tidyicon fx-h-in", "aria-hidden": "true", children: /* @__PURE__ */ u3("svg", { viewBox: "0 0 24 24", children: /* @__PURE__ */ u3("path", { d: "M20 6 9 17l-5-5" }) }) }),
-          /* @__PURE__ */ u3("div", { children: /* @__PURE__ */ u3("strong", { children: "Everything's tidy" }) })
-        ] }) }),
-        /* @__PURE__ */ u3(DriveWidget, { d: d3 })
-      ] }),
+      /* @__PURE__ */ u3("div", { class: "fx-board", children: /* @__PURE__ */ u3(Widget, { title: "Needs your OK", span: "all", kind: "fx-paycheck tidyneeds tidylist", actions: waiting2 ? /* @__PURE__ */ u3("span", { class: "muted", children: count(waiting2, "thing") }) : void 0, children: todos.length ? /* @__PURE__ */ u3(TodoRows, { todos, job: job2, plain: true }) : /* @__PURE__ */ u3("div", { class: "tidyclear", children: [
+        /* @__PURE__ */ u3("span", { class: "fmark logo tidyicon fx-h-in", "aria-hidden": "true", children: /* @__PURE__ */ u3("svg", { viewBox: "0 0 24 24", children: /* @__PURE__ */ u3("path", { d: "M20 6 9 17l-5-5" }) }) }),
+        /* @__PURE__ */ u3("div", { children: /* @__PURE__ */ u3("strong", { children: "Everything's tidy" }) })
+      ] }) }) }),
       /* @__PURE__ */ u3(Shelf2, { d: d3, act, review: review2, pick }),
       /* @__PURE__ */ u3("div", { class: "fx-board tidybottom", children: [
         /* @__PURE__ */ u3(GenresWidget, { d: d3, job: job2, act }),
@@ -22180,7 +22205,7 @@ ${pays}
     const drive = at2 >= 0 && at2 < parts3.length - 1 ? parts3[at2] : "";
     return drive ? `${drive}/${last2}` : last2;
   }
-  function TodayWidget({ d: d3, job: job2, act, wide: wide2 }) {
+  function TodayWidget({ d: d3, job: job2, act, wide: wide2, bare }) {
     const today = d3.today || [];
     const folders = d3.inbox?.folders || [];
     const from2 = folders.map(watchedName);
@@ -22188,8 +22213,8 @@ ${pays}
       "From ",
       from2.length > 2 ? `${from2.slice(0, 2).join(", ")} and ${from2.length - 2} more` : from2.join(" and ")
     ] }) : void 0;
-    return /* @__PURE__ */ u3(Widget, { title: "What I did today", span: wide2 ? "all" : 1, kind: "tidytoday", actions: where, children: [
-      !!today.length && /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3("span", { class: "fx-amount", children: [
+    return /* @__PURE__ */ u3(Widget, { title: "What I did today", span: wide2 ? "all" : 1, kind: "tidytoday", actions: bare ? void 0 : where, children: [
+      !!today.length && !bare && /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3("span", { class: "fx-amount", children: [
         today.filter((f4) => !f4.undone).length,
         /* @__PURE__ */ u3("small", { children: [
           " ",
