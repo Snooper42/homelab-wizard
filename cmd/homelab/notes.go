@@ -148,7 +148,9 @@ func (h *homelab) explainLogs(ctx context.Context, client *docker.Client, a *cat
 		return fmt.Errorf("reading %s's log: %w", a.ID, err)
 	}
 	h.ui.Info("asking %s on this machine what %s's log says (it stays here)", model, a.Name())
-	answer, err := explain.Explain(ctx, model, a.Name(), string(out))
+	// Without .env's values, as the app and a phone send it: a log can print
+	// a password that no pattern finds (docs/SRE-Audit-2026-11.md, H4).
+	answer, err := explain.Explain(ctx, model, a.Name(), h.phoneLog(string(out)))
 	if err != nil {
 		return err
 	}

@@ -335,6 +335,13 @@ Finances reads nothing from the internet but this, which the owner asked for (No
 - A picture comes only from `assets.tcgdex.net` over https (a redirect, for a picture or a question, only to TCGdex's own hosts over https: N75), at most 2 MB, a JPEG, PNG or WebP by its own bytes and at most 2,048 pixels on a side; it is saved on the computer (`data/finance-cards/`) and every screen shows it from there.
 - An answer is read up to 4 MB; a price over $10 million is not one. A failure to reach TCGdex changes nothing.
 
+## SRE audit: data loss and the phone's powers (November 2026)
+
+The reliability reset's audit is [SRE-Audit-2026-11](<SRE-Audit-2026-11.md>). For this page:
+
+- **Nothing a phone or the web page can call deletes the apps' data or the backups** (the owner, Nov 27, 2026). The web page's *Take the homelab off this machine* (#916) and its `cleanup --volumes` are gone (C1). That stays on the computer, behind its typed confirmation. `TestNoWipeFromThePhone` and `TestServedCodeNamesNoDeletingCommand` fail if one comes back.
+- **`homelab logs --explain` hides `.env`'s values from the model**, as the app and a phone already did (H4).
+
 ## Incident response
 
 1. Look: `cscli alerts list`, the proxy logs, the app's logs.

@@ -289,10 +289,12 @@ func (h *homelab) webHomelab(phone companion.Method) companion.Method {
 			}
 			cmd = []string{"adopt", target}
 		case "cleanup":
-			cmd = []string{"cleanup"}
+			// The old containers only: their volumes are an app's data, and
+			// deleting data stays on the computer (webPhoneMethods).
 			if target == "volumes" {
-				cmd = append(cmd, "--volumes")
+				return nil, nil, errors.New("removing old containers' volumes deletes their data, so it is done on the computer: Homelab Wizard there, or homelab cleanup --volumes")
 			}
+			cmd = []string{"cleanup"}
 		case "signups-close":
 			cmd, apply = []string{"signups", "close"}, false
 		case "duplicati-setup":

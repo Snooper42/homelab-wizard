@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -156,6 +157,13 @@ func (h *homelab) copyBeforeUpdate(ctx context.Context, client *docker.Client, a
 		if dump == "" {
 			continue
 		}
+		// Only the dump made for this update: an older one (its database
+		// was not running, so beforeUpdate made none) would take the
+		// database back to that night if the update were rolled back.
+		if info, err := os.Stat(dump); err != nil || h.dumpsSince.IsZero() || info.ModTime().Before(h.dumpsSince) {
+			cp.Skipped = append(cp.Skipped, backup.SkippedMount{Kind: "dump", Source: id, Why: "no dump of it was made just before this update, so a rollback leaves its database as it is"})
+			continue
+		}
 		name := id + "-" + filepath.Base(dump)
 		if err := os.Link(dump, filepath.Join(cp.Dir, name)); err != nil {
 			if err := copyFile(dump, filepath.Join(cp.Dir, name)); err != nil {
@@ -194,6 +202,10 @@ func (h *homelab) copySaid(cp backup.UpdateCopy) string {
 		s = "copied " + strings.Join(held, ", ")
 	}
 	for _, sk := range cp.Skipped {
+		if sk.Kind == "dump" {
+			s += "; not kept: " + sk.Source + "'s dump (" + sk.Why + ")"
+			continue
+		}
 		s += "; not copied: " + h.rel(sk.Source) + " (" + size(sk.Bytes) + ", " + sk.Why + ")"
 	}
 	return s
@@ -226,9 +238,11 @@ func (h *homelab) putBack(ctx context.Context, client *docker.Client, a *catalog
 			return aside, fmt.Errorf("setting today's %s aside, so nothing was put back: %w", m.Source, err)
 		}
 	}
+	// From here on, what fails has changed the app's data: the caller must
+	// not start it on what is half put back (errPartlyPutBack).
 	for _, m := range cp.Mounts {
 		if err := loadVolume(ctx, client, m.Source, filepath.Join(cp.Dir, m.Archive)); err != nil {
-			return aside, fmt.Errorf("putting back %s (today's is in %s): %w", m.Source, h.rel(aside), err)
+			return aside, partly(fmt.Errorf("putting back %s (today's is in %s): %w", m.Source, h.rel(aside), err))
 		}
 	}
 	for _, d := range cp.Dumps {
@@ -238,22 +252,38 @@ func (h *homelab) putBack(ctx context.Context, client *docker.Client, a *catalog
 		}
 		// Today's database first, beside today's folders.
 		if err := h.backup(ctx, []string{"--apply", "--apps", d.App}); err != nil {
-			return aside, fmt.Errorf("dumping today's %s, so its dump was not loaded: %w", d.App, err)
+			return aside, partlyIf(len(cp.Mounts) > 0, fmt.Errorf("dumping today's %s, so its dump was not loaded: %w", d.App, err))
 		}
 		if today := newestIn(h.stagingDir("databases", d.App)); today != "" {
 			if err := copyFile(today, filepath.Join(aside, d.App+"-"+filepath.Base(today))); err != nil {
-				return aside, err
+				return aside, partlyIf(len(cp.Mounts) > 0, err)
 			}
 		}
 		ctr, err := h.containerOf(ctx, client, db)
 		if err != nil {
-			return aside, err
+			return aside, partlyIf(len(cp.Mounts) > 0, err)
 		}
 		if out, err := restoreDump(ctx, client, ctr, filepath.Join(cp.Dir, d.File)); err != nil {
-			return aside, fmt.Errorf("loading %s's dump: %w\n%s", d.App, err, lastLines(out, 5))
+			return aside, partly(fmt.Errorf("loading %s's dump (today's is in %s): %w\n%s", d.App, h.rel(aside), err, lastLines(out, 5)))
 		}
 	}
 	return aside, nil
+}
+
+// errPartlyPutBack marks a putBack that failed after it had changed the
+// app's data: some of it is from before the update and some from today.
+// Starting the app on that (a database whose schema an older image does not
+// know, beside folders it does) can damage it further, so the caller leaves
+// it stopped and says where today's data was set aside.
+var errPartlyPutBack = errors.New("its data was only partly put back")
+
+func partly(err error) error { return fmt.Errorf("%w: %w", errPartlyPutBack, err) }
+
+func partlyIf(changed bool, err error) error {
+	if changed {
+		return partly(err)
+	}
+	return err
 }
 
 // copyUpdating copies the data of each app whose image the pull just

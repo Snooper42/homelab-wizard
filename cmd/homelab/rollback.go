@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"slices"
 	"strings"
@@ -133,6 +134,12 @@ func (h *homelab) doRollback(ctx context.Context, client *docker.Client, a *cata
 	var dataErr error
 	if cp != nil {
 		aside, dataErr = h.putBack(ctx, client, a, *cp)
+		if errors.Is(dataErr, errPartlyPutBack) {
+			// Half from before the update and half from today: not started
+			// on that, on either image (errPartlyPutBack).
+			_ = client.RemoveImage(ctx, updates.RollbackRef(a.ID))
+			return aside, fmt.Errorf("%s is left stopped, so nothing changes its data further: %w. What it held today is in %s; docs/Disaster Recovery.md says how to put it back", a.Name(), dataErr, h.rel(aside))
+		}
 	}
 	if err := client.Compose(ctx, h.project(a.File), a.Profiles, "up", "--detach", "--no-deps", "--force-recreate", a.ID); err != nil {
 		return aside, err
@@ -271,6 +278,9 @@ func (h *homelab) restoreData(ctx context.Context, client *docker.Client, a *cat
 		return err
 	}
 	aside, err := h.putBack(ctx, client, a, *cp)
+	if errors.Is(err, errPartlyPutBack) {
+		return fmt.Errorf("%s is left stopped, so nothing changes its data further: %w. What it held today is in %s; docs/Disaster Recovery.md says how to put it back", a.Name(), err, h.rel(aside))
+	}
 	if uerr := client.Compose(ctx, h.project(a.File), a.Profiles, "up", "--detach", "--no-deps", a.ID); err == nil {
 		err = uerr
 	}
@@ -290,6 +300,9 @@ func (h *homelab) beforeUpdate(ctx context.Context, client *docker.Client, apps 
 		return err
 	}
 	h.trackUpdates(ctx, client, containers, false)
+	// A second's grace: a dump's file time is the file system's, which may
+	// round down.
+	h.dumpsSince = time.Now().Add(-time.Second)
 	dumps := h.dumpsFor(detect.Analyze(h.catalog, containers), apps)
 	if len(dumps) == 0 {
 		return nil

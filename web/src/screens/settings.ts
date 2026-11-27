@@ -154,7 +154,9 @@ const uninstallActions: UninstallActions = {
     } catch (e) { showError(e); throw e; }
   },
 };
-mountUninstall($('uninstallCard'), { machine: thisMachine, on: uninstallActions });
+// On the computer only: a phone or the web page never takes the homelab off, nor deletes its data or backups
+// (the owner, Nov 27, 2026), and the web page has no such method to call.
+if (!onPhone()) mountUninstall($('uninstallCard'), { machine: thisMachine, on: uninstallActions });
 
 // Settings as last read (store.ts), with Phones and People beside them.
 // The settings marked (focus) are a Setup step's, asked for from there.
