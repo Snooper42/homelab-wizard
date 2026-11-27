@@ -779,6 +779,12 @@ const smokes = [
     const lefts = await page.$$eval('#statusPanelCard .ovname', (els) => els.map((e) => Math.round(e.getBoundingClientRect().left)));
     if (new Set(lefts).size > 2) throw new Error(`category names start at ${lefts.join(', ')}`);
   } },
+  { name: 'Subscriptions: every card’s heading sits the same way at its top', screen: 'status', run: async (page) => {
+    await toStatusPart(page, 'subscriptions');
+    await page.waitForSelector('#subNow .subtile', { timeout: 5000 });
+    const heads = await page.$$eval('#statusPart .subcard', (cs) => cs.map((c) => { const h = c.querySelector('h2'); return { id: c.id, gap: Math.round(h.getBoundingClientRect().top - c.getBoundingClientRect().top), size: getComputedStyle(h).fontSize }; }));
+    if (new Set(heads.map((h) => `${h.gap} ${h.size}`)).size > 1) throw new Error(JSON.stringify(heads));
+  } },
   { name: 'Analytics: no memory warning while memory is fine', screen: 'status', run: async (page) => {
     await toStatusPart(page, 'analytics');
     await page.waitForSelector('#antMem', { timeout: 5000 });
