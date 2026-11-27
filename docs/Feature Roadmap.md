@@ -9,7 +9,9 @@ The features that would make Homelab Wizard a pleasure to use, grouped by area: 
 Each item has a size and a status:
 
 - **Size:** **S** is a day or less, **M** a few days, **L** a week or more, or a piece of the backend that does not exist yet.
-- **Status:** *Idea* (only written here), *Mocked up* (drawn, not built), *Next* (the next batch), or *Built* (in the app, with the pull request).
+- **Status:** *Idea* (only written here), *Mocked up* (drawn, not built), *Next* (the next batch), *Partly built* (some of it is in the app, and the rest is said), or *Built* (in the app, with the pull request).
+
+**Paused (Nov 27, 2026):** nothing new is built from this page during the reliability reset (`CLAUDE.md`). The work goes into making backups, restores, the jobs at boot, updates and rollbacks reliable on the real Mac first. The statuses below are as of Nov 27.
 
 The Finances screen's history and rules are in [the Finances loop's file](<../.claude/prompts/finances-loop.md>); its unfinished items are under **Finances** below.
 
@@ -74,7 +76,7 @@ What started this page: small features asked for one by one, each now in the app
 
 ## Next
 
-The first batch, chosen because each makes the group menu safer or quicker. A loop builds this page in order, one pull request per feature ([its prompt](<../.claude/prompts/features-loop.md>)):
+The first batch, chosen because each makes the group menu safer or quicker, all four built in November 2026. The loop that built them (`.claude/prompts/features-loop.md`) is history, and nothing comes next until the reset ends (above):
 
 1. Right-click an app's row (Everyday control): *Built*
 2. Stopped on purpose (Everyday control): *Built*
@@ -113,7 +115,7 @@ Questions the screen can answer without a click.
 
 So a laptop or a small machine stays responsive, and you can see why when it does not.
 
-- **A Memory screen** (L, *Mocked up*): what OrbStack (or Docker Desktop) uses of the machine's memory, split into the apps, the runtime and its cache, and what is free; today's peak; a chart of the day with its spikes named (the nightly updates, Immich reading photos); every group and app with its memory now and its peak; and Ways to free memory. Needs a day of samples kept by the agent, and the runtime's own total.
+- **A Memory screen** (L, *Partly built*: Analytics shows the processor, the memory and the drives, each with the app that uses the most, and says when memory is nearly full with the biggest apps and **Stop**. The day's chart isn't built, since the owner chose on Nov 27 not to keep samples over time): what OrbStack (or Docker Desktop) uses of the machine's memory, split into the apps, the runtime and its cache, and what is free; today's peak; a chart of the day with its spikes named (the nightly updates, Immich reading photos); every group and app with its memory now and its peak; and Ways to free memory. Needs a day of samples kept by the agent, and the runtime's own total.
 - **An app's Memory tab** (M, *Mocked up*): each part of an app (its server, its database, its machine learning) with its line over the day, its peak, and how often it was stopped for memory.
 - **Stop for a while** (S, *Built*, #367): Stop for an hour, until tonight, or until tomorrow, then it starts again by itself; from the group menu and an app's page, and later from a row's right-click and the Memory screen.
 - **Memory limits** (M, *Mocked up*): a limit for an app or one part of it, suggested from its peak; reaching it restarts that part, and the watchdog says so.
@@ -183,7 +185,7 @@ The homelab as something a family uses, not one person.
 
 Picking, trying, and using apps.
 
-- **Import music on a button** (M, *Idea*): beets' import from Status, with the albums it is unsure of asked in the app instead of Terminal. The [Roadmap](<Roadmap.md#the-library-in-order>) has the library work in order.
+- **Import music on a button** (M, *Partly built*: [Tidy Up](<Tidy Up.md>) files each new download into the music library with beets, by itself or with **Tidy up now**, and what it can't place waits under *Needs a look*. Albums it's unsure of aren't asked about one by one yet): beets' import from Status, with the albums it is unsure of asked in the app instead of Terminal. The [Roadmap](<Roadmap.md#the-library-in-order>) has the library work in order.
 - **Try an app for a day** (M, *Idea*): install an app on trial; tomorrow the app asks to keep it or removes it with its data.
 - **Suggestions from what you use** (S, *Built*, #445): with Navidrome, beets; with Sonarr, Bazarr; each with one line on why. Thirteen, in each app's `goes_with`, under Choose apps › Add more › *Suggested for what you run*.
 - **Two apps that do the same job** (S, *Built*, #438): Choose apps says when you already run one that does it (Komga and Kavita, Navidrome and Jellyfin's music), and why you might want both. Eight pairs, in each app's `same_job`.
@@ -197,8 +199,8 @@ The app at home on each system.
 - **An app's submenu in the menu bar** (S, *Idea*): Open an app ▸ Immich ▸ Open, Restart, Logs.
 - **⌥-click the menu bar item** (S, *Idea*): Option-click (as with Wi-Fi) for more: each app's memory, the runtime's version, Restart the runtime.
 - **A global shortcut** (S, *Idea*): one key anywhere opens the command palette over whatever you are doing.
-- **Shortcuts and Siri** (L, *Idea*): actions for the Shortcuts app: back up now, stop an app, the homelab's state.
-- **Widgets** (L, *Idea*): Status and net worth on the desktop and the phone's home screen, once signing is in place (the [Roadmap](<Roadmap.md#later>) has the iOS app).
+- **Shortcuts and Siri** (L, *Partly built*: on the iPhone, Siri, Shortcuts and the Action button answer "Is everything running in Homelab?" and "Am I on track?". The actions below aren't built yet): actions for the Shortcuts app: back up now, stop an app, the homelab's state.
+- **Widgets** (L, *Partly built*: on the iPhone and iPad, the homelab's line on the Home Screen, the money's words on the Home Screen and Lock Screen, and both side by side as a medium widget. None on the desktop yet): Status and net worth on the desktop and the phone's home screen, once signing is in place (the [Roadmap](<Roadmap.md#later>) has the iOS app).
 
 ## The phone companion
 
