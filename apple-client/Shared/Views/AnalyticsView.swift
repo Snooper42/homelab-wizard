@@ -42,7 +42,11 @@ struct AnalyticsPage: View {
                     memory(now, samples: samples)
                     drives(machine, appsData: now.appsData)
                 }
-                timeline(timelineSamples(samples), span: period == .now ? span : period.heading)
+                // The timeline once samples come: no card for it before.
+                let drawn = timelineSamples(samples)
+                if drawn.count > 2 {
+                    timeline(drawn, span: period == .now ? span : period.heading)
+                }
                 uses(now, apps: apps)
             }
             .padding(.horizontal)

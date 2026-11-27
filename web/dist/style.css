@@ -2946,6 +2946,7 @@ nav .sidemenulist .sidedot + .total { margin-left:8px; }
 .antwho { display:inline-flex; align-items:center; gap:4px; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .antwho .appmark.mini, .antapp .appmark.mini { width:20px; height:20px; border-radius:6px; font-size:11px; }
 .antfoot { margin-top:auto; padding-top:14px; height:52px; display:flex; align-items:flex-end; }
+.antfoot:has(> .antempty:only-child) { display:none; }
 .antfoot .spark { width:100%; height:36px; color:var(--violet); }
 .antbar { display:block; flex:1; height:8px; border-radius:999px; background:var(--sunken); overflow:hidden; }
 .antbar > span { display:block; height:100%; border-radius:inherit; background:var(--violet); }
