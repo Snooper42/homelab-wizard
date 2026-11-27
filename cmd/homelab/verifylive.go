@@ -367,16 +367,26 @@ func findRestored(into, rel string) ([]byte, error) {
 // plistPathRe is the PATH a plist gives its job.
 var plistPathRe = regexp.MustCompile(`<key>PATH</key>\s*<string>([^<]*)</string>`)
 
+// liveOS is the system verify-live checks as: tests take one path on every
+// machine, as a CI runner's own LaunchAgents are not the test's.
+var liveOS = runtime.GOOS
+
 func (r *liveRun) launchd(ctx context.Context) {
 	const check = "The scheduled agent (launchd)"
-	if runtime.GOOS != "darwin" {
+	if liveOS != "darwin" {
 		r.add(check, "SKIP", "not a Mac")
 		return
 	}
 	home, _ := os.UserHomeDir()
+	job := schedule.Jobs()[0]
+	installed := filepath.Join(home, "Library", "LaunchAgents", job.Label+".plist")
+	info, err := os.Stat(installed)
+	if err != nil {
+		r.add(check, "FAIL", "not installed: ./homelab schedule install --apply")
+		return
+	}
 	// A plist as homelab schedule install writes it, checked by macOS's own
 	// parser; then the one installed.
-	job := schedule.Jobs()[0]
 	fresh := filepath.Join(r.ws, job.Label+".plist")
 	if err := os.WriteFile(fresh, job.Plist("/Applications/Homelab Wizard.app/Contents/MacOS/homelab", r.h.root, r.h.logsDir(), r.h.host.JobPath(home)), 0o644); err != nil {
 		r.add(check, "FAIL", err.Error())
@@ -384,12 +394,6 @@ func (r *liveRun) launchd(ctx context.Context) {
 	}
 	if out, err := exec.CommandContext(ctx, "plutil", "-lint", fresh).CombinedOutput(); err != nil {
 		r.add(check, "FAIL", "the plist homelab writes does not parse: "+strings.TrimSpace(string(out)))
-		return
-	}
-	installed := filepath.Join(home, "Library", "LaunchAgents", job.Label+".plist")
-	info, err := os.Stat(installed)
-	if err != nil {
-		r.add(check, "FAIL", "not installed: ./homelab schedule install --apply")
 		return
 	}
 	if out, err := exec.CommandContext(ctx, "plutil", "-lint", installed).CombinedOutput(); err != nil {
