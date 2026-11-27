@@ -5180,7 +5180,7 @@
       !!it.total && /* @__PURE__ */ u3("span", { class: "total", children: it.total })
     ] }) }, it.key)) });
   }
-  function SideDropdown({ label, items, here: here3, pick }) {
+  function SideDropdown({ label, items, here: here3, pick, shown: shown9 }) {
     const [open5, setOpen] = d2(false);
     const wrap = A2(null);
     h2(() => {
@@ -5203,7 +5203,7 @@
         document.removeEventListener("keydown", esc2);
       };
     }, [open5]);
-    const now2 = items.find((i3) => i3.key === here3) || items[0];
+    const now2 = items.find((i3) => i3.key === here3) || shown9 || items[0];
     const waiting2 = items.some((i3) => i3.dot);
     return /* @__PURE__ */ u3("div", { class: "sidedrop" + (open5 ? " open" : ""), ref: wrap, children: [
       /* @__PURE__ */ u3("button", { type: "button", class: "sidedropbtn", "aria-haspopup": "true", "aria-expanded": open5, onClick: () => setOpen(!open5), children: [
@@ -9038,7 +9038,12 @@
       ]
     };
     mountSideMenu($("statusSide"), menu2);
-    mountSideDropdown($("statusChips"), onPhone() ? { ...menu2, label: "Status parts", here: statusHere.startsWith("add:") ? "" : statusHere } : null);
+    mountSideDropdown($("statusChips"), onPhone() ? {
+      ...menu2,
+      label: "Status parts",
+      here: statusHere.startsWith("add:") ? "" : statusHere,
+      shown: statusHere === "find" ? { key: "find", label: "All apps", icon: sideIcons.apps } : void 0
+    } : null);
   }
   var storeFrom = "overview";
   function drawStatusPart() {

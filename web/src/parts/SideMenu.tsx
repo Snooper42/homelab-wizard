@@ -21,6 +21,8 @@ export interface SideMenuProps {
   /** The item marked as shown. */
   here: string;
   pick: (key: string) => void;
+  /** What the dropdown names while a page outside the menu shows (Status' All apps); else the first item. */
+  shown?: SideItem;
 }
 
 /** Feather's icons for the menus (feathericons.com, MIT): the catalog's categories by id, and each screen's parts. */
@@ -64,7 +66,7 @@ export function SideMenu({ label, items, here, pick }: SideMenuProps) {
   );
 }
 
-export function SideDropdown({ label, items, here, pick }: SideMenuProps) {
+export function SideDropdown({ label, items, here, pick, shown }: SideMenuProps) {
   const [open, setOpen] = useState(false);
   const wrap = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -76,7 +78,7 @@ export function SideDropdown({ label, items, here, pick }: SideMenuProps) {
     document.addEventListener('keydown', esc);
     return () => { document.removeEventListener('mousedown', outside, true); document.removeEventListener('touchstart', outside, true); document.removeEventListener('keydown', esc); };
   }, [open]);
-  const now = items.find((i) => i.key === here) || items[0];
+  const now = items.find((i) => i.key === here) || shown || items[0];
   const waiting = items.some((i) => i.dot);
   return (
     <div class={'sidedrop' + (open ? ' open' : '')} ref={wrap}>
