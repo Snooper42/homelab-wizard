@@ -765,6 +765,13 @@ const smokes = [
     await page.waitForSelector('#memoryPressure li:has-text("Immich")', { timeout: 5000 });
     if (await page.isVisible('#memoryPressure button.memstop')) throw new Error('a phone that only looks may stop an app');
   } },
+  { name: 'Status lines up: More… beside Update apps, and every category name in one column', screen: 'status', mock: { statusOpen: '' }, run: async (page) => {
+    await page.waitForSelector('#statusPanelCard .ovrow', { timeout: 5000 });
+    const [update, more] = await Promise.all(['#updateAll', '#statusMore'].map((s) => page.locator(s).boundingBox()));
+    if (Math.abs(update.y - more.y) > 1 || Math.abs(update.height - more.height) > 1) throw new Error(`Update apps ${JSON.stringify(update)}, More… ${JSON.stringify(more)}`);
+    const lefts = await page.$$eval('#statusPanelCard .ovname', (els) => els.map((e) => Math.round(e.getBoundingClientRect().left)));
+    if (new Set(lefts).size > 2) throw new Error(`category names start at ${lefts.join(', ')}`);
+  } },
   { name: 'Analytics: no memory warning while memory is fine', screen: 'status', run: async (page) => {
     await toStatusPart(page, 'analytics');
     await page.waitForSelector('#antMem', { timeout: 5000 });
