@@ -106,6 +106,9 @@ func (h *homelab) rebuild(ctx context.Context, args []string) error {
 		}
 		image := h.duplicatiImage()
 		staging := h.stagingDir("secrets")
+		if err := h.hydrateBackup(ctx, filepath.Join(folder, "secrets")); err != nil {
+			return fmt.Errorf("Homelab Secrets: %w", err)
+		}
 		if err := restoreJob(ctx, client, image, folder, "secrets", staging, secret); err != nil {
 			return fmt.Errorf("Homelab Secrets: %w", err)
 		}
@@ -128,6 +131,9 @@ func (h *homelab) rebuild(ctx context.Context, args []string) error {
 			return fmt.Errorf("the restored .env has no %s, which the other jobs need", duplicati.PassphraseKey)
 		}
 		for _, j := range jobs {
+			if err := h.hydrateBackup(ctx, filepath.Join(folder, j.job.Folder)); err != nil {
+				return fmt.Errorf("%s: %w", j.job.Name, err)
+			}
 			if err := restoreJob(ctx, client, image, folder, j.job.Folder, j.dir(h), pass); err != nil {
 				return fmt.Errorf("%s: %w", j.job.Name, err)
 			}
@@ -205,6 +211,25 @@ func rebuildJobs(folder string) []rebuildJob {
 		out = append(out, w)
 	}
 	return out
+}
+
+// datalessFile says which files a cloud drive keeps online only
+// (backup.Dataless); a test stands in for macOS's flag.
+var datalessFile = backup.Dataless
+
+// hydrateBackup makes a backup job's folder whole on this machine before
+// Duplicati reads it from inside Docker: on a new Mac, Proton Drive (or any
+// cloud drive) has synced it as placeholders, which a restore from inside
+// Docker's Linux machine cannot be relied on to fetch (ISSUE-0003).
+func (h *homelab) hydrateBackup(ctx context.Context, dir string) error {
+	n, err := backup.Hydrate(ctx, dir, datalessFile, backup.HydrateEach)
+	if n > 0 {
+		h.ui.OK("downloaded %d file(s) of %s the cloud drive kept online only", n, h.rel(dir))
+	}
+	if err != nil {
+		return fmt.Errorf("its backup is not all on this machine yet: %w", err)
+	}
+	return nil
 }
 
 // restoreJob restores the newest version of the job whose backup is in
