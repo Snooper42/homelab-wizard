@@ -6,7 +6,7 @@
 // open one in a browser to inspect it), then its pictures to
 // docs/images/redesign/: the first screen in light and dark, and the whole
 // page scrolled. Mocks only: nothing here is the app's code.
-import { mkdirSync } from 'node:fs';
+import { mkdirSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createRequire } from 'node:module';
@@ -77,19 +77,9 @@ for (const scheme of ['light', 'dark']) {
 }
 await browser.close();
 
-// A third of the size with no visible change: 256 colours, no dithering
-// (flat UI colours), where Python's imaging library is installed.
-const shrink = `
-import glob, sys
-from PIL import Image
-for p in glob.glob(sys.argv[1] + '/*.png'):
-    im = Image.open(p)
-    if im.mode == 'P':
-        continue
-    im.convert('RGB').quantize(colors=256, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE).save(p, optimize=True)
-`;
+// A third of the size with no visible change: 256 colours (../shrink.py), where Python's imaging library is installed.
 try {
-  execFileSync('python3', ['-c', shrink, pics], { stdio: 'pipe' });
+  execFileSync('python3', ['-I', join(here, '..', 'shrink.py'), ...readdirSync(pics).filter((f) => f.endsWith('.png')).map((f) => join(pics, f))], { stdio: 'pipe' });
 } catch {
   console.log('Pictures kept at full size (no python3 with Pillow to shrink them)');
 }

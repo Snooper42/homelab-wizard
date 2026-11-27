@@ -11626,14 +11626,9 @@ for (const scheme of ['light', 'dark']) {
 }
 await browser.close();
 
-// Shrink the files to 256 colours when Pillow is around (UI pictures look
-// the same at about 40% of the size).
-const shrink = `import sys
-from PIL import Image
-for f in sys.argv[1:]:
-    Image.open(f).convert('RGB').quantize(colors=256, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE).save(f, optimize=True)`;
+// Shrink the files to 256 colours when Pillow is around (shrink.py).
 try {
-  execFileSync('python3', ['-I', '-c', shrink, ...written], { stdio: 'pipe' });
+  execFileSync('python3', ['-I', join(here, 'shrink.py'), ...written], { stdio: 'pipe' });
   console.log(`shrank ${written.length} file(s)`);
 } catch {
   console.log('Pillow not found: kept the full-colour files');
