@@ -2913,6 +2913,8 @@ main:has(> #status.active[data-part]) { background:radial-gradient(60% 40% at 25
 .cattile .catname { font-size:15px; font-weight:600; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .cattile .catline { font-size:13px; color:var(--muted); max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .cattile .catline.bad { color:var(--bad); }
+.cattile.toadd .catline { white-space:normal; overflow:visible; text-align:center; overflow-wrap:break-word; }
+@media (max-width: 700px) { .cattile.toadd .catline { display:none; } }
 .cattile .catbtn { margin-top:auto; padding-top:12px; display:flex; gap:6px; }
 .cattile .catbtn button.small { border-radius:999px; padding:4px 14px; font-weight:600; }
 .cattile .catbtn button.small .icon { width:13px; height:13px; }

@@ -785,6 +785,15 @@ const smokes = [
     const cut = await page.$$eval('#statusPanelCard .ovname .muted', (ls) => ls.filter((l) => l.scrollWidth > l.clientWidth + 1).map((l) => l.textContent));
     if (cut.length) throw new Error('cut short: ' + cut.join(' | '));
   } })),
+  ...[['the computer', undefined], ['a phone', ['companion', 'can-change']]].map(([on, phone]) => ({ name: `All apps: what each app to add does is said whole or not at all, on ${on}`, screen: 'status', phone, run: async (page) => {
+    await page.evaluate(() => window.__emit('navigate', 'choose'));
+    await page.waitForSelector('#statusPart .cattile.toadd .catname', { timeout: 5000 });
+    const cut = await page.$$eval('#statusPart .cattile.toadd .catline', (ls) => ls.filter((l) => l.scrollWidth > l.clientWidth + 1 || l.scrollHeight > l.clientHeight + 1).map((l) => l.textContent));
+    if (cut.length) throw new Error(`${cut.length} cut short: ` + cut.slice(0, 3).join(' | '));
+    // On the computer each says it; on a phone's narrow page a tile is its logo, its name and Install, and its page says it.
+    const shown = await page.$$eval('#statusPart .cattile.toadd .catline', (ls) => ls.filter((l) => l.checkVisibility()).length);
+    if (phone ? shown : !shown) throw new Error(`${shown} descriptions shown on ${on}`);
+  } })),
   { name: 'Status lines up: More… beside Update apps, and every category name in one column', screen: 'status', mock: { statusOpen: '' }, run: async (page) => {
     await page.waitForSelector('#statusPanelCard .ovrow', { timeout: 5000 });
     const [update, more] = await Promise.all(['#updateAll', '#statusMore'].map((s) => page.locator(s).boundingBox()));
