@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path"
 	"path/filepath"
@@ -26,8 +27,15 @@ func KeptKey(dir, file string) (string, error) {
 	}
 	p := filepath.Join(dir, filepath.FromSlash(clean))
 	data, err := os.ReadFile(p)
-	if err != nil {
+	switch {
+	case errors.Is(err, fs.ErrNotExist):
 		return "", errors.New("it hasn't made its API key yet: open it once, then try again")
+	case errors.Is(err, fs.ErrPermission):
+		// The container wrote it as another account (root, under Docker
+		// Engine): opening the app again would never make it readable.
+		return "", fmt.Errorf("its %s can't be read by this account (the app wrote it as another one): give it back with sudo chown \"$USER\" %q, then try again", clean, p)
+	case err != nil:
+		return "", fmt.Errorf("reading its %s: %w", clean, err)
 	}
 	var key string
 	switch strings.ToLower(path.Ext(clean)) {
