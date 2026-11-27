@@ -15,7 +15,7 @@ struct AlertLogView: View {
                 Text(verbatim: problem).foregroundStyle(.secondary)
             } else if let alerts {
                 if alerts.isEmpty {
-                    Text("No alerts yet. Each is kept 90 days.")
+                    Text("None yet")
                         .foregroundStyle(.secondary)
                 } else {
                     ForEach(alerts) { alert in
@@ -39,7 +39,7 @@ struct AlertLogView: View {
                 ProgressView()
             }
         }
-        .navigationTitle("Every Alert")
+        .navigationTitle("Alerts Sent")
         .refreshable { await load() }
         .task { await load() }
     }
