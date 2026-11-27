@@ -7965,6 +7965,7 @@
 
   // web/src/status/Subscriptions.tsx
   var money3 = (n3) => "$" + (n3 >= 100 ? Math.round(n3).toLocaleString("en-US") : n3.toFixed(2));
+  var dollars = (n3) => "$" + Math.round(n3).toLocaleString("en-US");
   function Tile2({ o: o3, p: p3, faded }) {
     const name = (id2) => p3.catalog?.apps.find((a3) => a3.id === id2)?.name || id2;
     const service = o3.replaces.replace(/\s*\(.*\)$/, "");
@@ -7980,7 +7981,7 @@
         /* @__PURE__ */ u3("span", { class: "subbig", children: money3(o3.monthly) }),
         /* @__PURE__ */ u3("span", { class: "muted", children: " a month" }),
         /* @__PURE__ */ u3("span", { class: "subyear", children: [
-          money3(o3.annual),
+          dollars(o3.annual),
           " a year"
         ] })
       ] }),
@@ -8029,24 +8030,24 @@
     return /* @__PURE__ */ u3("div", { class: "subpage", children: [
       /* @__PURE__ */ u3("div", { class: "row header", children: /* @__PURE__ */ u3("div", { children: [
         /* @__PURE__ */ u3("h1", { children: "Subscriptions" }),
-        /* @__PURE__ */ u3("p", { class: "lead", children: p3.offers ? `${money3(year)} a year · ${money3(month3)} a month` : "Reading the prices…" })
+        /* @__PURE__ */ u3("p", { class: "lead", children: p3.offers ? `${dollars(year)} a year · ${money3(month3)} a month` : "Reading the prices…" })
       ] }) }),
       /* @__PURE__ */ u3("div", { class: "subtop", children: [
         /* @__PURE__ */ u3(Card, { kind: "subcard", id: "subWhere", children: [
           /* @__PURE__ */ u3("div", { class: "anthead", children: /* @__PURE__ */ u3("h2", { children: "Where it comes from" }) }),
           year > 0 ? /* @__PURE__ */ u3(S, { children: [
-            /* @__PURE__ */ u3("div", { class: "subbar", role: "img", "aria-label": parts3.map((x3) => `${x3.label} ${money3(x3.n)}`).join(", "), children: parts3.map((x3) => /* @__PURE__ */ u3("span", { style: { width: `${100 * x3.n / year}%`, background: x3.tone } }, x3.id)) }),
+            /* @__PURE__ */ u3("div", { class: "subbar", role: "img", "aria-label": parts3.map((x3) => `${x3.label} ${dollars(x3.n)}`).join(", "), children: parts3.map((x3) => /* @__PURE__ */ u3("span", { style: { width: `${100 * x3.n / year}%`, background: x3.tone } }, x3.id)) }),
             /* @__PURE__ */ u3("ul", { class: "sublegend", children: parts3.map((x3) => /* @__PURE__ */ u3("li", { children: [
               /* @__PURE__ */ u3("i", { style: { background: x3.tone } }),
               x3.label,
-              /* @__PURE__ */ u3("strong", { children: money3(x3.n) })
+              /* @__PURE__ */ u3("strong", { children: dollars(x3.n) })
             ] }, x3.id)) })
           ] }) : /* @__PURE__ */ u3("p", { class: "muted", children: "None of your apps replaces a paid service yet." })
         ] }),
         /* @__PURE__ */ u3(Card, { kind: "subcard", id: "subCould", children: [
           /* @__PURE__ */ u3("div", { class: "anthead", children: /* @__PURE__ */ u3("h2", { children: [
             "Could save ",
-            money3(could),
+            dollars(could),
             " more a year"
           ] }) }),
           /* @__PURE__ */ u3("ul", { class: "subnext", children: more2.filter((o3) => !isLibrary(o3)).slice(0, 3).map((o3) => /* @__PURE__ */ u3("li", { children: /* @__PURE__ */ u3("button", { type: "button", class: "subapp", onClick: () => p3.open(o3.apps[0]), children: [
@@ -8055,7 +8056,7 @@
               /* @__PURE__ */ u3("strong", { children: o3.apps.map(appName2).join(" + ") }),
               /* @__PURE__ */ u3("span", { class: "muted", children: o3.replaces })
             ] }),
-            /* @__PURE__ */ u3("span", { class: "subprice", children: /* @__PURE__ */ u3("strong", { children: money3(o3.annual) }) })
+            /* @__PURE__ */ u3("span", { class: "subprice", children: /* @__PURE__ */ u3("strong", { children: dollars(o3.annual) }) })
           ] }) }, o3.replaces + o3.apps.join())) })
         ] })
       ] }),

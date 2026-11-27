@@ -50,7 +50,7 @@ struct SubscriptionsTests {
         #expect(s.now.isEmpty && s.year == 0 && s.parts.isEmpty)
         // A service once even among the ones that could be.
         #expect(s.more.filter { $0.service == "Spotify Premium Family" }.count == 1)
-        #expect(s.lead == "$0.00 a year · $0.00 a month")
+        #expect(s.lead == "$0 a year · $0.00 a month")
     }
 
     @Test func theRowsAsTheComputerSendsThem() throws {
@@ -58,5 +58,7 @@ struct SubscriptionsTests {
         #expect(rows[0].service == "Google One 2 TB" && rows[0].counted)
         #expect(rows[1].apps.isEmpty && rows[1].annual == 0 && !rows[1].counted)
         #expect(SubscriptionsSummary.money(1457.2) == "$1,457" && SubscriptionsSummary.money(21.99) == "$21.99")
+        // A year's sums in whole dollars, small ones too.
+        #expect(SubscriptionsSummary.dollars(60) == "$60" && SubscriptionsSummary.dollars(1457.2) == "$1,457" && SubscriptionsSummary.dollars(99.99) == "$100")
     }
 }

@@ -125,10 +125,15 @@ struct SubscriptionsSummary: Equatable {
     }
 
     /// The line under the title: "$1,457 a year · $150 a month".
-    var lead: String { "\(Self.money(year)) a year · \(Self.money(month)) a month" }
+    var lead: String { "\(Self.dollars(year)) a year · \(Self.money(month)) a month" }
 
     /// "$1,457", "$21.99", as the computer writes them.
     static func money(_ n: Double) -> String {
         n >= 100 ? "$" + Int(n.rounded()).formatted(.number.locale(Locale(identifier: "en_US"))) : "$" + String(format: "%.2f", n)
+    }
+
+    /// A year's amount in whole dollars, as every sum is: "$60", "$1,457" (the computer's `dollars`).
+    static func dollars(_ n: Double) -> String {
+        "$" + Int(n.rounded()).formatted(.number.locale(Locale(identifier: "en_US")))
     }
 }

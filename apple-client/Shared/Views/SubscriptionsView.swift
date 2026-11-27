@@ -61,14 +61,14 @@ struct SubscriptionsPage: View {
                 }
                 .frame(height: 10)
                 .accessibilityElement()
-                .accessibilityLabel(Text(verbatim: s.parts.map { "\($0.label) \(SubscriptionsSummary.money($0.amount))" }.joined(separator: ", ")))
+                .accessibilityLabel(Text(verbatim: s.parts.map { "\($0.label) \(SubscriptionsSummary.dollars($0.amount))" }.joined(separator: ", ")))
                 LazyVGrid(columns: [GridItem(.flexible(), spacing: 16), GridItem(.flexible())], alignment: .leading, spacing: 8) {
                     ForEach(Array(s.parts.enumerated()), id: \.element.id) { i, part in
                         HStack(spacing: 8) {
                             RoundedRectangle(cornerRadius: 2).fill(Self.tone(i)).frame(width: 10, height: 10)
                             Text(verbatim: part.label).lineLimit(1).minimumScaleFactor(0.8)
                             Spacer(minLength: 4)
-                            Text(verbatim: SubscriptionsSummary.money(part.amount)).fontWeight(.semibold).monospacedDigit()
+                            Text(verbatim: SubscriptionsSummary.dollars(part.amount)).fontWeight(.semibold).monospacedDigit()
                         }
                         .font(.subheadline)
                         .foregroundStyle(Theme.ink)
@@ -89,7 +89,7 @@ struct SubscriptionsPage: View {
     /// Could save more: the three dearest the apps you don't run could replace.
     private func couldSave(_ s: SubscriptionsSummary) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text(verbatim: "Could save \(SubscriptionsSummary.money(s.could)) more a year")
+            Text(verbatim: "Could save \(SubscriptionsSummary.dollars(s.could)) more a year")
                 .font(.headline)
                 .foregroundStyle(Theme.ink)
             let next = Array(s.more.filter { !$0.isLibrary }.prefix(3))
@@ -106,7 +106,7 @@ struct SubscriptionsPage: View {
                             .lineLimit(2)
                     }
                     Spacer(minLength: 8)
-                    Text(verbatim: SubscriptionsSummary.money(o.annual))
+                    Text(verbatim: SubscriptionsSummary.dollars(o.annual))
                         .font(.subheadline.weight(.semibold))
                         .monospacedDigit()
                         .foregroundStyle(Theme.ink)
@@ -185,7 +185,7 @@ private struct ServiceTile: View {
                     .font(.subheadline)
                     .foregroundStyle(Theme.secondaryInk)
             }
-            Text(verbatim: "\(SubscriptionsSummary.money(offer.annual)) a year")
+            Text(verbatim: "\(SubscriptionsSummary.dollars(offer.annual)) a year")
                 .font(.subheadline)
                 .foregroundStyle(Theme.secondaryInk)
             Divider()
@@ -237,7 +237,7 @@ struct SubscriptionsRow: View {
                     .font(.headline)
                     .foregroundStyle(Theme.ink)
                 if let summary {
-                    Text(verbatim: "\(SubscriptionsSummary.money(summary.year)) a year")
+                    Text(verbatim: "\(SubscriptionsSummary.dollars(summary.year)) a year")
                         .font(.subheadline)
                         .foregroundStyle(Theme.secondaryInk)
                         .lineLimit(1)
