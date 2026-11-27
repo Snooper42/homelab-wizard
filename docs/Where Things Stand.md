@@ -8,7 +8,7 @@ What Homelab Wizard does today, what has been tried on a real machine, and what 
 
 ## In one paragraph
 
-The homelab runs a real household on a Mac every day. The last full pass of the Mac's checklist was on **Nov 3, 2026: 13 of its 18 steps passed**, and the other five haven't been run yet. About 300 releases have shipped since then (v0.18.0 to v0.46.9, one for each change to main). Each one passed its tests against stand-ins for Docker and the Mac's scheduler, and every night CI runs the homelab against a real Docker Engine on Linux. Neither of those proves the Mac, so the changes since Nov 3 still need the Mac's checklist run again. The Windows PC and the Steam Machine haven't had a step run yet.
+The homelab runs a real household on a Mac every day. The last full pass of the Mac's checklist was on **Nov 3, 2026: 13 of its 18 steps passed**, and the other five haven't been run yet. About 300 releases have shipped since then (v0.18.0 to v0.46.9, one for each change to main). Each one passed its tests against stand-ins for Docker and the Mac's scheduler, and every night CI runs the homelab against a real Docker Engine on Linux. Neither of those proves the Mac, so the changes since Nov 3 still need the Mac's checklist run again. The nightly run itself has failed twice this week: on Nov 25, installing Immich in the weekly catalog check, and on Nov 27, because Paperless-AI's newest image now asks for a setup code at first start, and the run's step that fills in Paperless-AI's own setup page doesn't give one. The Windows PC and the Steam Machine haven't had a step run yet.
 
 ## What it does
 
@@ -48,7 +48,7 @@ Known and accepted: nothing starts after a restart until someone logs in (ISSUE-
 
 ## What's happening now
 
-From Nov 27, 2026, the work moves to **making the core flows reliable on the real Mac** before anything new: backups and a restore from nothing, the jobs starting at boot, updates and rolling back, and the apps' wiring against live Docker. New features, redesigns and new catalog apps wait until those are checked on the Mac. Finances, the iPhone and iPad app, the Ollama log explanations and the catalog get only security and data-loss fixes meanwhile. The plan is in review in pull request #961.
+From Nov 27, 2026, the work moves to **making the core flows reliable on the real Mac** before anything new: backups and a restore from nothing, the jobs starting at boot, updates and rolling back, and the apps' wiring against live Docker. New features, redesigns and new catalog apps wait until those are checked on the Mac. Finances, the iPhone and iPad app, the Ollama log explanations and the catalog get only security and data-loss fixes meanwhile. The rules are in `CLAUDE.md` and the steps in `.claude/prompts/reset-progress.md` (from pull request #961).
 
 ## How to bring this page up to date
 

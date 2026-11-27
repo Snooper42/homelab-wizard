@@ -13,8 +13,10 @@ Tracks the master hygiene handoff (Stages 1 to 4) so it can be resumed in a new 
 | Stage | State |
 |---|---|
 | 1: finish active task, bookmark | Done (nothing was active) |
-| 2A: disable future attribution, scrub allowed files | PR 1 open: #962 |
-| Owner's ask, Nov 27: bring the repo's picture of the app up to date | In #962: `docs/Where Things Stand.md` (new), README's Beta note, both docs indexes. Release history split waits for Stage 3 (needs `release.yml`'s notes to skip moved lines). Version stamps: by design (they track `VERSION`), no change |
+| 2A: disable future attribution, scrub allowed files | Merged: #962 |
+| Owner's ask, Nov 27: bring the repo's picture of the app up to date | Merged in #962: `docs/Where Things Stand.md` (new), README's Beta note, both docs indexes. Version stamps: by design (they track `VERSION`), no change |
+| Owner's ask, Nov 27: the Roadmap matches the releases | PR open: a releases table matching the CHANGELOG, 0.11 and 0.15 marked released with what they left open, progress where Tidy Up and the iPhone app moved past the text |
+| Owner's ask, Nov 27: the CHANGELOG split, now | Ready, held: #963 (Account 1) adds lines to `CHANGELOG.md`, and a split would conflict with it. Once #963 merges: regenerate from main (each entry to the minor of the first tag containing the commit that last changed its line), plus `release.yml`'s notes skipping moved lines and `docs/Releasing.md`'s *Cutting the sections*. That PR publishes one routine release |
 | 2B onward, 3, 4 | Waiting: the handoff's text stopped partway through Phase 2A; the rest is needed before starting |
 
 ## Pull requests
@@ -28,6 +30,8 @@ Tracks the master hygiene handoff (Stages 1 to 4) so it can be resumed in a new 
   - **Candidates, not changed:** claude.ai canvas links and "Claude Code" mentions in history prompt files (`handoff.md`, `apple-loop.md`); `docs/Usability.md` line 7 names "Account 3, `.claude/prompts/audit-loop.md`". `owner.md` line 11 is in PR #961 (deferred below).
 
 ## Deferred Until Account 1 Finishes
+
+- **The nightly run is red (Nov 27):** `TestAHomelabsLife/data_in_each_app`, `paperless-ai: Paperless-AI's setup: 403 Forbidden ... setup_code_required`. Paperless-AI's newest image asks for a setup code (its log, `data/setup-code`) at first start; `test/realdocker/apps_test.go`'s `seedPaperlessAI` and `services/documents/Paperless-AI.md` don't know it. Both paths are read-only for this handoff; Core Reliability's to fix. Nov 25's red was `TestTheCatalogStarts/immich-server` (install exit 1), not looked into.
 
 Files PR #961 touches (read-only until it merges or closes): `CLAUDE.md`, `.claude/prompts/lanes.md`, `owner.md`, `reset-progress.md`, `redesign-loop.md`, `money-loop.md`, `web-loop.md`, `setup-loop.md`, `quality-loop.md`, `.github/pull_request_template.md`, `docs/Known Issues.md`.
 

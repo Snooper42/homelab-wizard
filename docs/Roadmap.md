@@ -4,9 +4,67 @@ version: 0.17.0
 
 # Roadmap
 
-Where the app is, and what comes next. Every build of main has its own number (0.9.1, 0.9.2, …; [Releasing](<Releasing.md#version-numbers>)); each heading below is the next minor version, and 1.0 is the stable release once the 0.x work has proven itself. Open problems live in [Known Issues](<Known Issues.md>); what changed, and when, in the [CHANGELOG](<../CHANGELOG.md>).
+Where the app is, and what comes next. Every build of main has its own number, and since 0.17 the minor goes up by itself after each `.10` (0.46.9 on Nov 27, 2026; [Releasing](<Releasing.md#version-numbers>)). So the headings below (0.11, 0.15) name a body of work by the version it was planned for, not the build it lands in, and 1.0 is the stable release once the 0.x work has proven itself. Open problems live in [Known Issues](<Known Issues.md>); what changed, and when, in the [CHANGELOG](<../CHANGELOG.md>).
 
 Each version says what it is for, then its items. An item is done when its **Done when** holds, not when the code is merged: a check that runs in CI, a number measured on a real machine, or a person doing it without help. Items marked ✓ are in the builds already; what they left open is listed under them.
+
+## Now (Nov 27, 2026)
+
+The work is on making the core flows reliable on the real Mac before anything new: backups and a restore from nothing, the jobs starting at boot, updates and rolling back, and the apps' wiring against live Docker. Each one is checked on the Mac, not only in CI. The rules are in `CLAUDE.md` and the steps in `.claude/prompts/reset-progress.md` (from pull request #961). [Where things stand](<Where Things Stand.md>) says what has been tried on a real machine and what has only passed tests. It's the same ground as *Still open from the first months* below, and the 1.0 bar's first line.
+
+## The releases
+
+Every version so far, as the [CHANGELOG](<../CHANGELOG.md>) has them, newest first, to v0.46.9 on Nov 27, 2026. Up to 0.17.0 a version was cut by hand when its work was done. Since then each build of main has been a release, and the minor goes up after each `.10`, so one row is the eleven builds of a minor, with how many lines the CHANGELOG has for them and the first of them. What each version below was *planned* to do and left open is under its own heading further down.
+
+| Versions | Built (2026) | What they brought |
+|---|---|---|
+| 0.46.0 to 0.46.9 | Nov 27 | 10 changes, among them: Finish setting up says how many are left; Backups: every copy with its logo, and fewer words; Analytics without empty space while it starts. |
+| 0.45.0 to 0.45.10 | Nov 26 to 27 | 22 changes, among them: An app's page in the Homelab app says less; Settings' Setup row shows how many steps are left; Backups' Skipped list in a word, as on the computer. |
+| 0.44.0 to 0.44.10 | Nov 26 | 15 changes, among them: Status on the iPhone opens on the computer's Overview; Your own app's passwords stay private while it's added; The Mac app takes an update only from its own signer, with a certificate of your own too. |
+| 0.43.0 to 0.43.10 | Nov 25 | 12 changes, among them: The web page answers only at home; Fewer words in empty and in-between places on the Homelab app; Two weeks of each app's checks. |
+| 0.42.0 to 0.42.10 | Nov 24 to 25 | 39 changes, among them: Cash Flow and Month in Review in the quieter look on the Homelab app; Fewer words on Recurring and Spending on the Homelab app; Money Flow without its sentence on the Homelab app. |
+| 0.41.0 to 0.41.10 | Nov 24 | 24 changes, among them: Settings on the Homelab app in the redesign's order; Backups' restore test and off-site as two cards on the Homelab app; Backups on the Homelab app, as the redesign. |
+| 0.40.0 to 0.40.10 | Nov 21 to 24 | 15 changes, among them: The Homelab app and the computer show the same version; Edit a whole bill on the Homelab app; Budgets on the Homelab app, as on the computer. |
+| 0.39.0 to 0.39.10 | Nov 20 to 21 | 12 changes, among them: A warning on your phone before the media drive fills; Downloads on Status, in plain words; Setup says when there are no search sites yet. |
+| 0.38.0 to 0.38.10 | Nov 20 | 19 changes, among them: This month and more filters on the Homelab app's Transactions; Sort Transactions on the Homelab app; Sort these on the Homelab app's Transactions. |
+| 0.37.0 to 0.37.10 | Nov 19 to 20 | 20 changes, among them: qBittorrent starts with its login; No more "Authentication required" in Prowlarr, Sonarr, Radarr and Lidarr; Saved in Proton Pass?. |
+| 0.36.0 to 0.36.10 | Nov 14 to 19 | 69 changes, among them: A goal over several accounts in the Homelab app; Phones and iPads in the Homelab app; Homelab and Money, a medium widget. |
+| 0.35.0 to 0.35.10 | Nov 13 | 8 changes, among them: Finances reminders for private Finances; Private Finances offline in the Homelab app; Private Finances open in the Homelab app. |
+| 0.34.0 to 0.34.10 | Nov 12 to 13 | 20 changes, among them: Finances offline in the Homelab app; Add cards from the iPhone and iPad; The Collection in the Homelab app. |
+| 0.33.0 to 0.33.10 | Nov 12 | 27 changes, among them: The Dashboard looks back; Arrange the Dashboard; A loan's page on the iPhone and iPad. |
+| 0.32.0 to 0.32.10 | Nov 11 to 12 | 16 changes, among them: Settings on the phone's page; Snooze from Every alert; Tidy Up lists sizes as Finances lists amounts. |
+| 0.31.0 to 0.31.10 | Nov 11 | 11 changes, among them: What was done and Every Alert on the iPad and the Mac; Links into the app on the iPad and the Mac; The Dashboard by month. |
+| 0.30.0 to 0.30.10 | Nov 10 to 11 | 16 changes, among them: Every alert, kept; Rules in Finances; Back and Forward between screens. |
+| 0.29.0 to 0.29.10 | Nov 10 | 10 changes, among them: Finances in four tabs; A stopped app on the iPhone says what to do; Games go where they belong. |
+| 0.28.0 to 0.28.10 | Nov 9 to 10 | 13 changes, among them: Home only; What was done, on the iPhone; Recently done, on each app's page. |
+| 0.27.0 to 0.27.10 | Nov 8 to 9 | 63 changes, among them: The iPhone app away from home, the computer's part; Tdarr rests while it has nothing to do; Packed downloads say so. |
+| 0.26.0 to 0.26.10 | Nov 8 | 34 changes, among them: Drop anything here; Make a Calibre library from your books; Spending on the iPhone. |
+| 0.25.0 to 0.25.10 | Nov 7 | 26 changes, among them: Homelab on your iPhone, iPad and Mac; Add investments from Finances; Investments from the iPhone app. |
+| 0.24.0 to 0.24.10 | Nov 6 | 34 changes, among them: Health in one line; Snooze an alert; Devices on your tailnet. |
+| 0.23.0 to 0.23.10 | Nov 6 | 18 changes, among them: Weekly integrity check; Memory pressure alert; An update window per app. |
+| 0.22.0 to 0.22.10 | Nov 5 to 6 | 13 changes, among them: A sheet of shortcuts; Quick actions on the phone; A sheet for the fridge. |
+| 0.21.0 to 0.21.10 | Nov 5 | 11 changes, among them: Two apps that do the same job; What the apps have saved so far; What changed since last night. |
+| 0.20.0 to 0.20.10 | Nov 5 | 12 changes, among them: What happened overnight; A restart that keeps failing; An update's notes. |
+| 0.19.0 to 0.19.10 | Nov 3 to 5 | 13 changes, among them: Right-click the sidebar; Why an app restarted; A balance's accounts. |
+| 0.18.0 to 0.18.10 | Nov 3 | 14 changes, among them: Tidy Up gets ffmpeg for you; Type to find an app on Status; Type a command. |
+| 0.17.1 to 0.17.10 | Nov 2 to 3 | 15 changes, among them: Tidy Up; New downloads filed by themselves; Lyrics that scroll. |
+| 0.17.0 | Nov 2 | Apps you stop stay stopped, money hides at a keypress, and a right-click on any app. |
+| 0.16.0 | Oct 31 | Finances, redrawn, on your phones, and by your own banks' logos. |
+| 0.15.0 | Oct 29 | Docker's own API, and a Status that keeps itself current. |
+| 0.14.0 | Oct 29 | A frontend that grows, and a Mac that feels finished. |
+| 0.13.0 | Oct 28 | More apps. |
+| 0.12.0 | Oct 28 | The same on every system. |
+| 0.11.0 | Oct 28 | Proven against real Docker. |
+| 0.10.0-beta | Oct 28 | Fast, everywhere. |
+| 0.9.0-beta | Oct 24 | The beta. |
+| 0.8.0 | Oct 23 | Clearer messages, and Windows fixes. |
+| 0.7.0 | Oct 23 | A first run anyone can do, in each system's own look. |
+| 0.6.0 | Oct 23 | Security pass. |
+| 0.5.0 | Oct 23 | Live Status, and apps that heal themselves. |
+| 0.4.0 | Oct 22 | Windows and Linux. |
+| 0.3.0 | Oct 21 | The Mac app grows up. |
+| 0.2.0 | Oct 15 | The Mac, tested. |
+| 0.1.0-alpha | Oct 9 | First release, for a Mac. |
 
 ## The two goals
 
@@ -29,7 +87,7 @@ A heavy app (Nextcloud, Frigate, Tdarr) is optional and in no starter or preset 
 
 ## Where it stands (November 2026)
 
-A desktop app (macOS, Windows, Linux) and the `homelab` CLI that install, connect, back up, update, and watch over 72 self-hosted apps on one computer (the count in the README's generated table).
+A desktop app (macOS, Windows, Linux) and the `homelab` CLI that install, connect, back up, update, and watch over 73 self-hosted apps on one computer (the count in the README's generated table).
 
 - **Setting up:** Choose apps (starters, presets, every app by category, your own apps), a Setup checklist that runs the ready steps for you and leaves the sidebar once they are done, Home mode on the tailnet by default, and a domain with the proxy, AdGuard Home, Cloudflare Tunnel, and CrowdSec when wanted
 - **Running:** Status follows the container runtime live through Docker's own API (one engine, served by the background agent, which sends each change with the Status read after it and reads Status's cards once for every window and phone), says why an app failed to start or stopped answering, starts apps waiting for a drive, pauses heavy apps on battery, and gives background work a smaller CPU share
@@ -72,6 +130,8 @@ These need the real machines, accounts, or money, not code. 0.11 proves in CI wh
   - **Done when:** the session is written up in [Testing](<Testing.md#a-newcomers-first-run>), and each stop is either fixed or in Known Issues
 
 ## 0.11: proven against real Docker
+
+**Released as 0.11.0 on Oct 28, 2026,** with the nightly run against real Docker. Ticked items below are in it; the unticked one is still open.
 
 New in the October 2026 audit. Most of the "To verify" in [Known Issues](<Known Issues.md>) wait for a real runtime, not for the Mac: CI can start real containers, run the tests on each system, and click through the app. This version moves as much of that proof as it can from "try it on the machine" to "CI shows it every night", before more features are built on top.
 
@@ -150,6 +210,8 @@ New in the October 2026 audit. Most of the "To verify" in [Known Issues](<Known 
 
 ## 0.15: the Docker API, in the agent
 
+**Released as 0.15.0 on Oct 29, 2026,** with Docker's own API in the agent and a Status that keeps itself current. Ticked items below are in it; the unticked ones are still open.
+
 ADR-0018 left the Go SDK out while the CLI's output was enough; on Windows its cost is now measured in 0.10. The agent becomes the one place that reads the runtime.
 
 - [ ] The timings measured on each real machine, with a number to hold (from 0.10)
@@ -209,8 +271,11 @@ Music and books arrive messy; the homelab tidies them, the same way on every sys
 
 - [ ] Import music: beets as an app, one job with two sources (new downloads, or an archive folder), albums then loose tracks, into the folder Navidrome reads; what moved and what did not, in the app and through ntfy
   - **Done when:** an import of a messy test folder (tagged and untagged albums, loose tracks, duplicates) puts each album in Navidrome once, and leaves what it could not match in a folder named in the result
+  - Progress in November 2026: [Tidy Up](<Tidy Up.md>) files each download into its library and cleans the music with beets (MusicBrainz, the household's genres, artwork) into the folder Navidrome reads, and what it couldn't place goes under *Needs a look* with why. *What I did today* in the app lists what moved
 - [ ] Books: Calibre-Web Automated's ingest folder (convert, fetch metadata, add), genres put into the household's own list, publishers' blurbs cleaned, with a preview before it touches the library
+  - Progress in November 2026: Tidy Up's books review (titles, series, publishers, genres, covers, misfiled books) applies with Calibre-Web paused, and can be undone
 - [ ] Both from a button and on a schedule; neither needs PowerShell, Calibre, or Python on the computer
+  - Progress in November 2026: **Tidy up now** and the agent's own times (when a watched folder changes, once after 03:00, or only by hand). Still open: Tidy Up's scripts in `tools/media` need Python 3.8 or newer on the computer
 - [ ] Both covered by the backups: the library's folders before an import, so one bad import can be undone
 
 ### The dashboard
@@ -222,6 +287,7 @@ Music and books arrive messy; the homelab tidies them, the same way on every sys
 ### Later
 
 - [ ] A native iOS app with widgets and Lock Screen status in the App Store, once signing is in place (the app itself is in `apple-client/`, built with Xcode on your own Mac)
+  - Progress in November 2026: the Homelab app for iPhone and iPad has Status, each app's page, Backups, Finances, alerts, a Home Screen widget and a money widget, behind Face ID ([apple-client](<../apple-client/README.md>)). Still open: the App Store, which waits for signing
 - [ ] The taskbar and Dock icon in the colour picked in Appearance
 - [ ] A router that can hand out the AdGuard DNS server (ISSUE-0008)
 - [ ] MoneyMatter on native arm64 images when upstream publishes them (ISSUE-0009)
