@@ -2,6 +2,80 @@
 
 The one file you need. The loops read it at the start of every session.
 
+## Run This On Your Mac Tonight (10 Minutes)
+
+The reliability reset (Nov 27, 2026) fixed what's below against fakes. Nothing is `VERIFIED` until you run this on the real Mac and paste the output back. **It changes nothing of the household's:** the live check makes its own throwaway containers, volumes and folder (`homelab-verify-…`, `recovery-staging/verify-live-…`), removes them, and only reads your apps.
+
+**Before you start:** the reset's pull requests must be merged. The newest release on GitHub (Releases) should be dated after them.
+
+### 1. Get the new build (2 minutes)
+
+- **The app:** open Homelab Wizard. Click **Update now** on the line at the top (or quit it and open it again). Settings › This Mac should show the newest version.
+- **The homelab folder, in Terminal:**
+
+      cd "<your homelab folder>"        # Settings › This Mac › Homelab folder shows it
+      ./homelab upgrade --apply          # a git checkout: the newest files, then up
+      ./homelab schedule install --apply # the agent's plist again, with the new PATH
+
+### 2. The live check (5 to 8 minutes; the first run downloads PostgreSQL 17, about 100 MB)
+
+    ./homelab doctor --live             # or: scripts/verify-mac-live.sh (a git checkout)
+
+**What a working Mac prints** (your sizes, versions and paths will differ):
+
+    Live check of this machine (nothing of the household's is changed)
+
+      Result  Check                              What it found
+      PASS    Docker engine                      answers: orbstack 28.x OrbStack (/Users/you/.orbstack/bin/docker)
+      PASS    Container start, stop, remove      a throwaway container ran, stopped, and was removed
+      PASS    A folder shared with a container   a container wrote into the homelab folder as this account
+      PASS    A volume backed up and restored    every file came back the same
+      PASS    A database dumped and restored     PostgreSQL's dump loaded cleanly into a new database, rows and all
+      PASS    Duplicati: a blind restore         a backup made with Duplicati came back from its files alone, every file the same
+      PASS    The scheduled agent (launchd)      the plist parses, only you can change it, it runs, and its PATH finds /Users/you/.orbstack/bin/docker
+      PASS    Connected app: Sonarr              its key is readable and it answers at http://localhost:8989
+      PASS    Disk space: homelab folder, …      412 GB free of 994 GB (41%); not filling (or too few days kept yet to tell)
+
+      9 passed, 0 failed, 0 skipped. …
+
+A `SKIP` is fine when it says why (no Duplicati installed, no connected apps running). **Paste the whole table back**, FAILs included: each FAIL says what it found and what to do.
+
+### 3. Three more readings (2 minutes)
+
+    ./homelab doctor | sed -n '/After a restart/,/^$/p'   # matches System Settings: FileVault, automatic login, start after a power failure
+    ./homelab backup --apply 2>&1 | tail -n 5              # no "is not there" or "is empty or missing" line
+    ./homelab restore-test --auto 2>&1 | tail -n 5         # ends with a pass; "downloaded N file(s)" first if Proton Drive kept files online only
+
+Paste all three back. Each promotes an item in `docs/Known Issues.md` from `READY FOR MAC VERIFICATION` to `VERIFIED`:
+
+| Your output | Promotes |
+|---|---|
+| Step 2: the backup, database and Duplicati rows PASS; step 3: backup and restore test | ISSUE-0003, ISSUE-0016 (backups and blind restore) |
+| Step 2: the launchd row PASS; step 3: *After a restart* | ISSUE-0005, ISSUE-0007 (scheduled jobs, start after a restart) |
+| Step 1 (the app updated and reopened); `./homelab update ntfy` then `./homelab rollback ntfy --apply` | ISSUE-0017 (updates and rollback) |
+| Step 2: every *Connected app* row PASS | ISSUE-0015 (app wiring) |
+| Step 2: the *Disk space* rows match `df -h ~ /Volumes/Media` | ISSUE-0018 (disk readings and runway) |
+
+### What the reset fixed (Critical and High)
+
+- **Critical, a phone could wipe everything:** the phone's web page offered *Take the homelab off this machine*, with the apps' data and the backups. It's gone, and nothing a phone can call deletes data or backups (C1).
+- **A rollback said "your data is back" over a half-restored database:** psql's errors were ignored. Now a dump that doesn't load cleanly stops the rollback (H1).
+- **A half-done rollback started the app on a mix of two days' data:** now the app is left stopped, with today's data set aside (H2).
+- **A rollback could load last week's database over today's:** now only the dump made for that update is used (H3).
+- **`homelab logs --explain` could send a password to the model:** `.env`'s values are now hidden, as elsewhere (H4).
+- **An unplugged photos drive was backed up as "every photo deleted," silently,** and a missing backup folder went unnoticed. The nightly backup now fails and alerts on both (H5, H6).
+- **A restore from Proton Drive on a new Mac could read placeholders instead of files:** they are downloaded first (ISSUE-0003).
+- **Under Docker Desktop, the nightly agent couldn't find its credential helper,** so its pulls failed (ISSUE-0005).
+- **An app update whose new version couldn't start left the app stopped:** it now goes straight back to the version it ran (ISSUE-0017).
+
+The whole audit, Medium items included: `docs/SRE-Audit-2026-11.md`.
+
+### Only you can do these
+
+- **Apple Developer ID signing and notarization:** the Mac build is signed ad hoc today, so Gatekeeper and Login Items treat it as unknown. `docs/Releasing.md` lists the secrets to add to the repository (a Developer ID certificate and an app-specific password, from a $99/year Apple Developer account).
+- **Backup engine go/no-go:** the audit's assessment (`docs/SRE-Audit-2026-11.md`, *Duplicati or Restic?*) recommends making Kopia, which the homelab already ships, the main engine, rather than adding Restic, over about 4 to 6 pull requests, with Duplicati kept read-only for its year. Write **go**, **not now**, or **Restic instead** under *Waiting on you*.
+- **After a power cut:** decide whether this Mac should come back by itself. Turn on *Start up automatically after a power failure* (System Settings › Energy) and use `sudo fdesetup authrestart` for macOS updates. Turning FileVault off for automatic login is a security trade only you can make. Doctor's *After a restart* says where you stand.
+
 **To tell them something:** add a line under **Doesn't work or bugs me** and commit it. On GitHub from your phone: `github.com/Snooper42/homelab-wizard`, this file, the pencil, then *Commit changes* to main.
 
 **To answer a question:** write your answer under it and commit. A loop that asks you also sends a push notification, and carries on with other work while it waits.
