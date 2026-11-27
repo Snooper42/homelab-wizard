@@ -841,6 +841,13 @@ const smokes = [
     if (!years.length || cents.length) throw new Error('with cents: ' + cents.join(', '));
     if (!(await page.$$eval('#statusPart .subbig', (es) => es.some((e) => /\.\d\d$/.test(e.textContent.trim()))))) throw new Error('no month with its cents');
   } },
+  { name: 'Backups: every copy of an app shows its logo, MoneyMatter’s attachments too', screen: 'backups', run: async (page) => {
+    await page.waitForSelector('#backupTiles', { timeout: 5000 });
+    await page.evaluate(() => document.querySelectorAll('tr.copygroup:not(.open)').forEach((r) => r.click()));
+    await page.waitForSelector('td.name:has-text("MoneyMatter (attachments)")', { timeout: 5000 });
+    const letters = await page.$$eval('td.name', (ts) => ts.filter((t) => t.querySelector('.appmark') && !t.querySelector('.appmark img')).map((t) => t.textContent.trim()));
+    if (letters.length) throw new Error('a letter for a logo: ' + letters.join(', '));
+  } },
   { name: 'Analytics: no memory warning while memory is fine', screen: 'status', run: async (page) => {
     await toStatusPart(page, 'analytics');
     await page.waitForSelector('#antMem', { timeout: 5000 });
@@ -2393,7 +2400,7 @@ const smokes = [
     await page.waitForSelector('#offsiteTile .value:text-is("Proton Drive")', { timeout: 5000 });
     await page.waitForSelector('#offsiteTile:has-text("homelab-backups")');
     // Paused is folded, with its names and why; stale and up to date are open.
-    await page.waitForSelector('tr.copygroup.paused:not(.open) .names:has-text("Komga, Kavita wait for the Hobbies drive; their last copies (13 days ago) are kept")');
+    await page.waitForSelector('tr.copygroup.paused:not(.open) .names:text-is("Komga, Kavita wait for the Hobbies drive")');
     if (await page.isVisible('tr.copy.paused')) throw new Error('the paused copies show before their group is opened');
     await page.waitForSelector('tr.copygroup.stale.open + tr.copy.stale:has-text("Mealie")');
     await page.click('tr.copygroup.paused .foldbtn');

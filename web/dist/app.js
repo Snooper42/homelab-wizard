@@ -1360,12 +1360,10 @@
   // web/src/parts/AppMark.tsx
   function logoId(id2) {
     if (!id2) return "";
-    if (appLogos.has(id2)) return id2;
-    for (let base = id2; base.includes("-"); ) {
-      base = base.slice(0, base.lastIndexOf("-"));
+    for (let base = id2; ; base = base.slice(0, base.lastIndexOf("-"))) {
       for (const c4 of [base, base + "-server", base + "-frontend"]) if (appLogos.has(c4)) return c4;
+      if (!base.includes("-")) return "";
     }
-    return "";
   }
   var shippedLogo = (id2) => {
     const l3 = logoId(id2);
@@ -1669,7 +1667,6 @@
     const copies = sortedCopies(o3);
     const of = (state3) => copies.filter((c4) => c4.state === state3);
     const paused = of("paused"), none2 = of("none");
-    const oldest = paused.filter((c4) => !never(c4.newest)).map((c4) => c4.newest).sort()[0];
     return [
       { key: "stale", label: "Out of date", tone: "bad", copies: of("stale"), note: "" },
       { key: "fresh", label: "Up to date", tone: "ok", copies: of("fresh"), note: "" },
@@ -1678,7 +1675,7 @@
         label: "Paused",
         tone: "",
         copies: paused,
-        note: `${paused.map((c4) => c4.name).join(", ")} ${paused.length === 1 ? "waits" : "wait"} for ${drivesOf(paused)}` + (oldest ? `; ${paused.length === 1 ? "its last copy" : "their last copies"} (${ago(oldest)}) ${paused.length === 1 ? "is" : "are"} kept` : "")
+        note: `${paused.map((c4) => c4.name).join(", ")} ${paused.length === 1 ? "waits" : "wait"} for ${drivesOf(paused)}`
       },
       { key: "none", label: "Not copied yet", tone: "", copies: none2, note: `${none2.map((c4) => c4.name).join(", ")}, tonight` }
     ].filter((g2) => g2.copies.length);
@@ -1741,17 +1738,13 @@
   }
   function Vault({ o: o3 }) {
     const plain2 = o3.plainExports || [];
-    const [tone, said2] = plain2.length ? ["bad", "A plain export is lying in recovery-staging/secrets: delete it"] : never(o3.vaultExport) ? ["warn", "Never made yet"] : o3.vaultDue ? ["warn", `Due: the last one is from ${ago(o3.vaultExport)}`] : ["ok", `The last one ${ago(o3.vaultExport)}`];
+    const [tone, said2] = plain2.length ? ["bad", "A plain export is lying in recovery-staging/secrets: delete it"] : never(o3.vaultExport) ? ["warn", "Never made yet"] : o3.vaultDue ? ["warn", `Due: the last one is from ${ago(o3.vaultExport)}`] : ["ok", ago(o3.vaultExport)];
     return /* @__PURE__ */ u3("details", { class: "morerow", open: !!plain2.length, children: [
       /* @__PURE__ */ u3("summary", { children: [
         /* @__PURE__ */ u3("span", { class: "dot " + tone }),
         /* @__PURE__ */ u3("span", { class: "grow", children: [
           /* @__PURE__ */ u3("strong", { children: "Password vault export" }),
-          /* @__PURE__ */ u3("span", { class: "sub " + (tone === "bad" ? "bad" : "muted"), children: [
-            "A copy of your passwords you can open anywhere, once a month. ",
-            said2,
-            "."
-          ] })
+          /* @__PURE__ */ u3("span", { class: "sub " + (tone === "bad" ? "bad" : "muted"), children: said2.charAt(0).toUpperCase() + said2.slice(1) })
         ] }),
         /* @__PURE__ */ u3("span", { class: "btn small", children: "How" })
       ] }),

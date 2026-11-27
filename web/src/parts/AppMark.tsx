@@ -4,15 +4,14 @@
 import { useState } from 'preact/hooks';
 import { appLogos } from '../status/appLogos';
 
-/** The app whose logo an id shows: its own, else, for a helper (immich-database, paperless-db, moneymatter-db), its app's. */
+/** The app whose logo an id shows: its own, else its app's, for a helper (immich-database, paperless-db, moneymatter-db)
+ * or an app named without its part (moneymatter, whose logo is moneymatter-frontend's). */
 export function logoId(id?: string): string {
   if (!id) return '';
-  if (appLogos.has(id)) return id;
-  for (let base = id; base.includes('-');) {
-    base = base.slice(0, base.lastIndexOf('-'));
+  for (let base = id; ; base = base.slice(0, base.lastIndexOf('-'))) {
     for (const c of [base, base + '-server', base + '-frontend']) if (appLogos.has(c)) return c;
+    if (!base.includes('-')) return '';
   }
-  return '';
 }
 
 /** The logo shipped for an app (web/dist/applogos, the iPhone app's set), or '' when there's none. */

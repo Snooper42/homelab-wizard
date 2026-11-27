@@ -177,12 +177,11 @@ export function copyGroups(o: backup.Overview): CopyGroup[] {
   const copies = sortedCopies(o);
   const of = (state: string) => copies.filter((c) => c.state === state);
   const paused = of('paused'), none = of('none');
-  const oldest = paused.filter((c) => !never(c.newest)).map((c) => c.newest).sort()[0];
   return [
     { key: 'stale', label: 'Out of date', tone: 'bad' as Tone, copies: of('stale'), note: '' },
     { key: 'fresh', label: 'Up to date', tone: 'ok' as Tone, copies: of('fresh'), note: '' },
     { key: 'paused', label: 'Paused', tone: '' as Tone, copies: paused,
-      note: `${paused.map((c) => c.name).join(', ')} ${paused.length === 1 ? 'waits' : 'wait'} for ${drivesOf(paused)}` + (oldest ? `; ${paused.length === 1 ? 'its last copy' : 'their last copies'} (${ago(oldest)}) ${paused.length === 1 ? 'is' : 'are'} kept` : '') },
+      note: `${paused.map((c) => c.name).join(', ')} ${paused.length === 1 ? 'waits' : 'wait'} for ${drivesOf(paused)}` },
     { key: 'none', label: 'Not copied yet', tone: '' as Tone, copies: none, note: `${none.map((c) => c.name).join(', ')}, tonight` },
   ].filter((g) => g.copies.length);
 }
@@ -250,12 +249,12 @@ export function Vault({ o }: { o: backup.Overview }) {
   const [tone, said]: [Tone, string] = plain.length ? ['bad', 'A plain export is lying in recovery-staging/secrets: delete it']
     : never(o.vaultExport) ? ['warn', 'Never made yet']
     : o.vaultDue ? ['warn', `Due: the last one is from ${ago(o.vaultExport)}`]
-    : ['ok', `The last one ${ago(o.vaultExport)}`];
+    : ['ok', ago(o.vaultExport)];
   return (
     <details class="morerow" open={!!plain.length}>
       <summary>
         <span class={'dot ' + tone} />
-        <span class="grow"><strong>Password vault export</strong><span class={'sub ' + (tone === 'bad' ? 'bad' : 'muted')}>A copy of your passwords you can open anywhere, once a month. {said}.</span></span>
+        <span class="grow"><strong>Password vault export</strong><span class={'sub ' + (tone === 'bad' ? 'bad' : 'muted')}>{said.charAt(0).toUpperCase() + said.slice(1)}</span></span>
         <span class="btn small">How</span>
       </summary>
       {!!plain.length && <p class="bad">{plain.join(', ')} in recovery-staging/secrets holds every password readable. Delete it, then export again encrypted.</p>}
