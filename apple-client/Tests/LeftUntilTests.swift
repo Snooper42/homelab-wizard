@@ -55,7 +55,7 @@ import Testing
         #expect(LeftUntil(empty) == nil)
     }
 
-    /// The money widget's words (the owner's pick, Nov 16: words only): on
+    /// The money widget's words: on
     /// track until the day, or under the cushion or short on a weekday, and
     /// the next bill's day, never an amount. Made-up figures.
     @Test func theMoneyWidgetSaysItInWordsOnly() throws {

@@ -5,7 +5,7 @@ import UIKit
 import AppKit
 #endif
 
-/// The app's look: a plain iPhone app, quiet and warm (the owner, Nov 24): a
+/// The app's look: a plain iPhone app, quiet and warm: a
 /// violet accent, a warm off-white canvas behind white cards with hairline
 /// edges (a warm near-black behind dark ones), lighter headings, calm
 /// status colours, and pills for states. Every colour has a light and a
@@ -17,7 +17,7 @@ import AppKit
 enum Theme {
     /// The accent: links, bordered buttons' text, the selection, the "changed"
     /// dot. Light in dark mode so it reads as text: 8.2:1 on a card, 4.9:1 on a
-    /// bordered button's own tint (Nov 14: 0x8C7BFF gave 3.6:1 there).
+    /// bordered button's own tint.
     static let accent = Color(light: 0x6A4FF0, dark: 0xB4AAFF)
     /// The accent as a fill under white text: filled buttons, the lock screen's
     /// Unlock, a picked chip. The light accent in both looks (white on it 5.3:1);
@@ -26,7 +26,7 @@ enum Theme {
     /// The accent's deeper end, for the app mark's gradient.
     static let accentDeep = Color(light: 0x4B32C3, dark: 0x5B45D6)
 
-    /// Behind grouped lists and forms: warm off-white by day; by night the owner's dark (Nov 25), a near-black.
+    /// Behind grouped lists and forms: warm off-white by day; by night the owner's dark, a near-black.
     static let canvas = Color(light: 0xF6F4EF, dark: 0x0A0A0D)
     /// A card on the canvas: white by day, a shade above the near-black by night.
     static let surface = Color(light: 0xFFFFFF, dark: 0x15151A)
@@ -132,7 +132,7 @@ struct AppMark: View {
     var badge: String?
 
     var body: some View {
-        // As the app icon: a violet rack on a white tile (Nov 2026, "more like Proton Mail").
+        // As the app icon: a violet rack on a white tile ("more like Proton Mail").
         RoundedRectangle(cornerRadius: size * 0.27, style: .continuous)
             .fill(LinearGradient(colors: [.white, Color(light: 0xEEEBFB, dark: 0xEEEBFB)],
                                  startPoint: .topLeading, endPoint: .bottomTrailing))

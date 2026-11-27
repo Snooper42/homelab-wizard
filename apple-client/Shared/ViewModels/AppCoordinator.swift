@@ -11,10 +11,10 @@ import UIKit
 ///             bootstrap
 ///                 │
 ///      no credential │ credential (or Keychain unreadable: fail closed)
-///          ▼             ▼
+///          ▼ ▼
 ///      .pairing ──► .unlocked ◄──── authenticate ──── .locked
-///          ▲             │                              ▲
-///          │             └── background / sleep / ⌘L ───┘
+///          ▲ │ ▲
+///          │ └── background / sleep / ⌘L ───┘
 ///          └──── unpair, or the computer answers 401
 /// ```
 ///

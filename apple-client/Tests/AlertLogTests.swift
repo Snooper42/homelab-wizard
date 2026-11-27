@@ -32,7 +32,7 @@ struct AlertLogTests {
         #expect(alert(checks: []).fate(now: now) == nil)
     }
 
-    /// Snooze… on an alert whose check still fails (#596's gap 3): not on
+    /// Snooze… on an alert whose check still fails: not on
     /// one that cleared, one about no check, or one whose check passes now.
     @Test func snoozeOnlyWhereItsCheckStillFails() throws {
         let watchdog = try JSONDecoder.homelab().decode(WatchdogSummary.self, from: Data(#"""

@@ -1,7 +1,7 @@
 import Foundation
 
 /// Settings' Automatic Care and Household rows as the redesign's phone
-/// picture (phone-settings.png): each care setting its symbol, a short title
+/// picture: each care setting its symbol, a short title
 /// and one line under it, in the computer's words (Settings › General,
 /// web/src/settings/General.tsx); Phones with how many are paired and which
 /// only look.

@@ -2,7 +2,7 @@ import Foundation
 import Testing
 @testable import HomelabClient
 
-// Status › Subscriptions (P4): each paid service once, Library services apart, as the computer's (#914).
+// Status › Subscriptions: each paid service once, Library services apart, as the computer's.
 @Suite("Subscriptions")
 struct SubscriptionsTests {
     private let catalog: AppCatalog = {

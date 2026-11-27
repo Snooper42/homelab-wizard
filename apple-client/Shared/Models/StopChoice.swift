@@ -54,7 +54,7 @@ struct StopRecord: Codable, Sendable, Equatable, Hashable {
     let until: Date?
     /// Who stopped it when not a person (`stopped.Stop.Why`):
     /// `restarting` is the watchdog, after Docker restarted it over and
-    /// over (main #427). It stays stopped until someone starts it.
+    /// over. It stays stopped until someone starts it.
     let why: String?
     /// How many times Docker restarted it in the hour, for `restarting`.
     let restarts: Int

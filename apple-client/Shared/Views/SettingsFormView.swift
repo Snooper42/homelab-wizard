@@ -6,7 +6,7 @@ import SwiftUI
 /// A setting opens its own page, with what it does, its key, and the field
 /// to change it. A device allowed changes may change the everyday ones; a
 /// secret shows only whether it is set, and secrets and the settings this
-/// device connects through are changed on the computer (main #491).
+/// device connects through are changed on the computer.
 struct SettingsFormView: View {
     let computer: ComputerViewModel
     /// One section, or nil for every setting.
@@ -129,7 +129,7 @@ struct SettingRow: View {
     let form: HomelabSettingsForm
     let label: String
     @Binding var about: String?
-    /// Automatic Care's look (phone-settings.png): its symbol and a line under it, in place of the ⓘ.
+    /// Automatic Care's look: its symbol and a line under it, in place of the ⓘ.
     var look: CareLook.Row?
 
     var body: some View {

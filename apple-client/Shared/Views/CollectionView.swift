@@ -1,7 +1,7 @@
 import PhotosUI
 import SwiftUI
 
-/// The Collection (the owner's mockup, Nov 13): what the cards are worth
+/// The Collection: what the cards are worth
 /// now and the gain on what was paid, then each card with its picture,
 /// what it's worth and its gain; a card opens its own page, large. Update
 /// Prices (a phone allowed to change Finances) has the computer read

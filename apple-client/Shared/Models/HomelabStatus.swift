@@ -70,14 +70,14 @@ struct AppStatus: Codable, Sendable, Equatable, Identifiable, Hashable {
     let updatedAt: String?
     let held: Bool?
     /// The days the nightly update takes it ("sun", "sat"), when not every
-    /// night (main #457).
+    /// night.
     var updateDays: [String]? = nil
     let quiet: Bool?
     /// At the top of Status (homelab pin).
     let pinned: Bool?
     /// How a public app may be reached once the domain has the Cloudflare
     /// tunnel: "away" (through the tunnel too) or "home" (home only); nil
-    /// when it has no such switch (main #559).
+    /// when it has no such switch.
     var reach: String? = nil
     let waitingFor: String?
     let notAnswering: String?

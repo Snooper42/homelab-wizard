@@ -10,7 +10,7 @@ import SwiftUI
 /// amounts is on at the computer.
 struct FinancesView: View {
     @Bindable var finances: FinancesViewModel
-    /// The floating +'s Add Transaction (the owner's look, Nov 25).
+    /// The floating +'s Add Transaction.
     @State private var adding = false
 
     var body: some View {
@@ -58,7 +58,7 @@ struct FinancesView: View {
                     // Net worth and Cash flow side by side, as the redesign's picture; the full line is on Accounts.
                     NetWorthFullCard(view: view, finances: finances)
                     CashFlowFullCard(view: view, finances: finances)
-                    // Spending this month against last, as a line (the owner's Monarch feel, Nov 24).
+                    // Spending this month against last, as a line.
                     SpendingPaceCard(view: view, finances: finances)
                     // This paycheck's bills, then the latest transactions and the budgets worth a look.
                     PaycheckBillsCards(view: view, finances: finances)
@@ -138,7 +138,7 @@ struct FinancesView: View {
         .sensoryFeedback(.success, trigger: finances.savedCount)
         .animation(.smooth, value: finances.amountsShown)
         .modifier(AwayClashSheet(finances: finances))
-        // A floating + to add a transaction (the owner's look, Nov 25), where this device may.
+        // A floating + to add a transaction, where this device may.
         .overlay(alignment: .bottomTrailing) {
             if finances.plan != nil, finances.canAddTransactions {
                 Button {
@@ -252,7 +252,7 @@ func amountText(_ value: Double, _ currency: String, _ finances: FinancesViewMod
 /// A card's heading: its name, and a link or a note on the right.
 struct CardHeading<Trailing: View>: View {
     let title: LocalizedStringKey
-    /// A small symbol before the title (the owner's look, Nov 25).
+    /// A small symbol before the title.
     var icon: String? = nil
     @ViewBuilder var trailing: () -> Trailing
 
@@ -290,7 +290,7 @@ private struct CardTitleLabelStyle: LabelStyle {
     }
 }
 
-/// A card's round ↗ (the owner's look, Nov 25): opens what's behind the card.
+/// A card's round ↗: opens what's behind the card.
 private struct OpenButton: View {
     var label: LocalizedStringKey = "Open"
 
@@ -304,7 +304,7 @@ private struct OpenButton: View {
     }
 }
 
-/// Finances' top, as the redesign's phone picture (phone-finances.png): what's
+/// Finances' top, as the redesign's phone picture: what's
 /// left after this paycheck's bills, then the accounts as a row of cards.
 private struct CheckingHero: View {
     let now: FinanceWorking
@@ -313,8 +313,8 @@ private struct CheckingHero: View {
 
     var body: some View {
         VStack(spacing: 10) {
-            // What's left first: the number people open Finances for (apple-loop.md item 1), as the redesign's
-            // card (phone-finances.png): the figure, its chart through the period, and Now, Payday and Bills under it.
+            // What's left first: the number people open Finances for, as the redesign's
+            // card: the figure, its chart through the period, and Now, Payday and Bills under it.
             if let lead = FinanceLead(view), let left = LeftUntil(view) {
                 FinanceLeadCard(lead: lead, left: left, now: now, view: view, finances: finances)
                     .padding(.bottom, 8)
@@ -336,7 +336,7 @@ private struct CheckingHero: View {
 }
 
 /// The accounts as small cards in a row, as the redesign's phone picture
-/// (phone-finances.png): checking first, each with its bank's logo, its
+/// : checking first, each with its bank's logo, its
 /// balance (what a card owes as less than nothing) and its name; a swipe for
 /// the rest. Each opens its account's page.
 private struct AccountsRow: View {
@@ -403,7 +403,7 @@ private struct AccountsRow: View {
     }
 }
 
-/// Finances' first card as the redesign's phone picture (phone-finances.png) and the computer's Dashboard: Left after
+/// Finances' first card as the redesign's phone picture and the computer's Dashboard: Left after
 /// this paycheck's bills, the figure with its cents smaller, in checking on the period's last day after its bills, a chip
 /// against the period before, checking each day as steps with a dot at each bill and the cushion dashed, then Now,
 /// Payday and Bills. The card opens Bills, paycheck by paycheck; Now and Payday open how each adds up.
@@ -652,7 +652,7 @@ private struct NetWorthCard: View {
         .animation(.smooth(duration: 0.35), value: group)
     }
 
-    /// Net worth, then each group of accounts, as chips (the owner's reference: Net worth, Cash, Credit cards).
+    /// Net worth, then each group of accounts, as chips (Cash, Credit cards).
     private var groupChips: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 6) {
@@ -722,7 +722,7 @@ private struct NetWorthCard: View {
     }
 }
 
-/// Net worth as a full card (the owner's reference, Nov 25): today's figure with its cents smaller, its change
+/// Net worth as a full card: today's figure with its cents smaller, its change
 /// over three months as a % chip, and its line with a scale, dotted green or red where it moved most. ↗ opens
 /// Accounts, where the line has its ranges and each group.
 private struct NetWorthFullCard: View {
@@ -800,7 +800,7 @@ private struct NetWorthFullCard: View {
     }
 }
 
-/// Cash flow as a full card (the owner's reference, Nov 25): this month's in less out with its change against
+/// Cash flow as a full card: this month's in less out with its change against
 /// last month by the same day, a bar of what was kept and what went out, Income · Expenses · Saved, and the last
 /// six months as bars of what each kept, the savings rate dotted over them. ↗ opens Cash Flow. With no
 /// transactions this month, no card.
@@ -1148,7 +1148,7 @@ private struct SpendingPaceCard: View {
     }
 }
 
-/// This paycheck's bills (the owner's pick, Nov 24): what's still to come out of checking before payday,
+/// This paycheck's bills: what's still to come out of checking before payday,
 /// with what's left to pay and how long until each, and what's been paid since the last payday, ticked.
 /// Upcoming's heading opens Calendar; each row shows how often it comes.
 private struct PaycheckBillsCards: View {
@@ -1588,7 +1588,7 @@ private struct BudgetRow: View {
     }
 }
 
-/// Add a Budget (the owner's yes, Nov 21, on the canvas's *Idea: Budgets*):
+/// Add a Budget (on the canvas's *Idea: Budgets*):
 /// a category or a group, an amount, each month or each pay period, and
 /// whether it rolls over, as the computer's Edit budgets adds one.
 private struct AddBudgetView: View {
@@ -1722,14 +1722,14 @@ private struct FinanceBillsPage: View {
         .sensoryFeedback(.success, trigger: finances.savedCount)
         .navigationTitle("Bills")
         .modifier(AddPaymentButton(finances: finances))
-        // All of it, as the computer's form (the owner's yes, Nov 21): not only what it costs.
+        // All of it, as the computer's form: not only what it costs.
         .sheet(item: $editingPayment) { payment in
             EditPaymentView(payment: payment, finances: finances)
         }
     }
 }
 
-/// New transactions to review, as a stack of cards (the owner's pick, Nov 24): one at a time, its logo, amount
+/// New transactions to review, as a stack of cards: one at a time, its logo, amount
 /// and payee, its other times at that payee one tap away, its category as chips (its own, its payee's, the most
 /// used, and Other), and the day and account. Reviewed (or a swipe right) keeps the category picked and marks it;
 /// Skip (or a swipe left) leaves it for later. The note and tags are on the transaction's page.
@@ -2157,7 +2157,7 @@ private struct FinanceSpendingPage: View {
                     if let before, before > 0, finances.amountsShown, !finances.amountsHiddenByPlan {
                         let change = total - before
                         // Against what: the month before, in the words the month's review uses ("+$1,021 on Sep"),
-                        // not a bare red number (apple-loop.md item 1).
+                        // not a bare red number.
                         let last = Calendar.current.date(byAdding: .month, value: -1, to: month) ?? month
                         Text(verbatim: "\(change > 0 ? "+" : "−")\(amountText(abs(change), view.plan.currency, finances, whole: true)) on \(last.formatted(.dateTime.month(.abbreviated)))")
                             .font(.caption2.weight(.semibold))
@@ -2485,7 +2485,7 @@ private struct FinanceRecurringPage: View {
                     }
                     .font(.body.weight(.semibold))
                 }
-                // When it comes next, under its amount (the owner's reference: "in 10 days").
+                // When it comes next, under its amount.
                 if let next = item.next, let today = view.today {
                     Text(verbatim: PaycheckBills.due(next, today: today))
                         .font(.caption)
@@ -2502,7 +2502,7 @@ private struct FinanceRecurringPage: View {
 
 /// Investments, as Ghostfolio last read them; where Finances may be
 /// changed, Read Now reads Ghostfolio again and Add a Holding records a
-/// buy or a sale there (main #494, #498).
+/// buy or a sale there.
 private struct FinanceInvestmentsPage: View {
     @Bindable var finances: FinancesViewModel
     @State private var adding = false
@@ -2515,7 +2515,7 @@ private struct FinanceInvestmentsPage: View {
                         if finances.canEdit { actions }
                     }
                     readNote
-                    // The owner, Nov 12: no bar of each holding's share; the holdings separate, and a Watchlist.
+                    // No bar of each holding's share; the holdings separate, and a Watchlist.
                     HoldingsCard(investments: investments, view: view, finances: finances)
                     WatchlistCard(view: view, finances: finances)
                     Text(Self.readWhen(view).map { "From Ghostfolio, \($0)." } ?? "From Ghostfolio.")
@@ -2833,7 +2833,7 @@ private struct HoldingsCard: View {
                     .font(.body.weight(.semibold))
                     .foregroundStyle(Theme.ink)
                 // Two lines, so a long fund's name doesn't cut off the account it's in
-                // ("Vanguard Total International Stock ETF · Fidelity 40…", Nov 16).
+                // ("Vanguard Total International Stock ETF · Fidelity 40…").
                 Text(verbatim: line.holding.map { "\($0.title) · \(line.account.name)" } ?? "Not in a holding · \(line.account.name)")
                     .font(.caption)
                     .foregroundStyle(Theme.secondaryInk)
@@ -3233,7 +3233,7 @@ private struct FinanceAccountsPage: View {
             .padding(.bottom, 6)
             ForEach(Array(group.accounts.enumerated()), id: \.element.id) { i, account in
                 if i > 0 { Divider().padding(.leading, 54) }
-                // Its own page (the owner, Nov 12), as on the computer: Update Balance is a button there.
+                // Its own page, as on the computer: Update Balance is a button there.
                 NavigationLink {
                     AccountDetailView(account: account, finances: finances)
                 } label: {
@@ -3247,7 +3247,7 @@ private struct FinanceAccountsPage: View {
         .card()
     }
 
-    /// Track from: the day the charts and totals count from (the owner, Nov 16).
+    /// Track from: the day the charts and totals count from.
     private func trackFromCard(_ view: FinancesPlanView) -> some View {
         Button {
             finances.clearSaveError()
@@ -3906,12 +3906,12 @@ struct TransactionsView: View {
     /// Money in or out, a category, or the larger ones only.
     @State private var filter = TransactionFilter()
     /// Select (iPhone and iPad): transactions picked together, for one
-    /// category, Move to…, or Delete (Parity gap 5).
+    /// category, Move to…, or Delete.
     @State private var selecting = false
     @State private var selected = Set<String>()
     @State private var categorizingSelected = false
     @State private var confirmingDelete = false
-    /// Import a File (Parity gap 5): a bank's CSV or OFX, read here.
+    /// Import a File: a bank's CSV or OFX, read here.
     @State private var importing = false
     /// The rules imports follow (import 4 of 4).
     @State private var showingRules = false
@@ -3921,7 +3921,7 @@ struct TransactionsView: View {
     @State private var drawn = TransactionSort.page
     @Namespace private var zoom
 
-    /// Opened on every account, as the redesign's picture (the owner, Nov 24);
+    /// Opened on every account, as the redesign's picture;
     /// from a budget, on its category and month.
     init(finances: FinancesViewModel, filter: TransactionFilter = TransactionFilter()) {
         _finances = Bindable(finances)

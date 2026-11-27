@@ -1,6 +1,6 @@
 import Foundation
 
-// MARK: - The Settings form (`Settings` and `SaveSettings`, main #491)
+// MARK: - The Settings form (`Settings` and `SaveSettings`)
 
 /// One `.env` setting as the computer lists it (`settings.Setting`): a
 /// secret says only whether it is set, never its value.
@@ -67,7 +67,7 @@ struct HomelabSettingsForm: Decodable, Sendable, Equatable {
     var sections: [SettingGroup] { SettingGroup.grouping(settings) }
 
     /// The homelab's settings people change most, atop the iPhone's
-    /// Settings in plain words (the owner's redesign, Nov 12), in this
+    /// Settings in plain words, in this
     /// order, where the computer has them; the rest are a tap down.
     /// Automatic Care's order, as the computer's Settings › General and the redesign's phone picture.
     static let firstKeys = ["AUTO_HEAL", "AUTO_ROLLBACK", "QUIET_HOURS", "DESKTOP_ALERTS"]

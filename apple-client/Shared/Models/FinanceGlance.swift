@@ -30,7 +30,7 @@ enum CompactMoney {
     }
 }
 
-/// Cash flow as the redesign's phone picture (phone-finances.png) has it,
+/// Cash flow as the redesign's phone picture has it,
 /// beside Net worth: this month from the transactions, what came in less
 /// what went out, how much of what came in was kept, and the change against
 /// last month by the same day. Counted as Cash Flow counts (`CashFlow`): a
@@ -110,7 +110,7 @@ enum BudgetsGlance {
     }
 }
 
-/// Net worth's line marked where it moved most (the owner's reference): the
+/// Net worth's line marked where it moved most: the
 /// `count` biggest changes from one point to the next, up in green, down in red.
 enum NetWorthJumps {
     struct Jump: Equatable, Identifiable {
@@ -130,7 +130,7 @@ enum NetWorthJumps {
     }
 }
 
-/// Cash flow's last months as bars (the owner's reference): what each kept,
+/// Cash flow's last months as bars: what each kept,
 /// and what share of what came in that was, the savings rate.
 enum CashFlowHistory {
     struct Month: Equatable, Identifiable {

@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// ⌘K on the iPad (item 3; the owner approved the mock with the pop-up, Nov 15),
+/// ⌘K on the iPad,
 /// as the computer's palette: type, ↑↓ pick, Return runs, Escape closes. The
 /// matches are under what they are (Screens, Commands, Finances, Apps,
 /// Groups), each with its shortcut or group on the right. Stop asks for a

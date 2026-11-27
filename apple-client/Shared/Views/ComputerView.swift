@@ -246,7 +246,7 @@ struct ComputerView: View {
         }
     }
 
-    /// Settings › Phones: the other paired phones and iPads (the owner's yes, Nov 19).
+    /// Settings › Phones: the other paired phones and iPads.
     private var phonesSection: some View {
         Section {
             NavigationLink {
@@ -281,7 +281,7 @@ struct ComputerView: View {
                 Toggle(isOn: Binding(get: { widgetOn }, set: { on in Task { await setWidget(on) } })) {
                     IconTileLabel(title: widgetName, systemImage: "square.grid.2x2", tint: TileColour.blue)
                 }
-                // Words only, never an amount (the owner's pick, Nov 16).
+                // Words only, never an amount.
                 Toggle(isOn: Binding(get: { moneyWidgetOn }, set: { on in Task { await setMoneyWidget(on) } })) {
                     IconTileLabel(title: "Money widget", systemImage: "dollarsign.square", tint: TileColour.green)
                 }
@@ -400,7 +400,7 @@ struct ComputerView: View {
     }
 
     /// The Settings form, a row a section with its icon, as the computer's
-    /// Settings lists its pages (main #491).
+    /// Settings lists its pages.
     @ViewBuilder
     private var homelabSettingsSection: some View {
         Section {

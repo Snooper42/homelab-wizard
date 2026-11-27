@@ -42,7 +42,7 @@ struct IntentsTests {
         #expect(!CheckHomelabIntent.answer(WidgetSummary(needALook: 3, at: now), enabled: true, available: true).contains("Jellyfin"))
     }
 
-    /// "Am I on track?" says the money widget's words, never an amount (Nov 16).
+    /// "Am I on track?" says the money widget's words, never an amount.
     @Test func whatSiriSaysAboutMoney() {
         let now = Date()
         #expect(CheckMoneyIntent.answer(nil, enabled: false, available: false) == "Open Finances in Homelab to see how you stand.")

@@ -414,7 +414,7 @@ final class DashboardViewModel {
     /// The apps as last shown, kept to be saved as seen when the dashboard goes.
     @ObservationIgnored var latestApps: [AppStatus] = []
 
-    // MARK: Status read aloud (main #451)
+    // MARK: Status read aloud
 
     /// Each app's words at the last reading, for what to say when they change.
     /// In memory only, and gone with the dashboard on lock.
@@ -507,7 +507,7 @@ final class DashboardViewModel {
     }
 
     /// For the sidebar badge and the phone's overview row: failing checks.
-    // MARK: Health in one line (main #470)
+    // MARK: Health in one line
 
     /// The line atop every screen but Status and an app's page: nil until
     /// Status has been read, "" when all is well, else the one thing that
@@ -540,7 +540,7 @@ final class DashboardViewModel {
     }
 
     /// What the Overview's watchdog card has to show: failing checks, and
-    /// memory nearly full (main #458).
+    /// memory nearly full.
     var failingChecks: Int {
         (cards.watchdog?.failing.count ?? 0) + (cards.watchdog?.memory == nil ? 0 : 1)
     }
@@ -557,7 +557,7 @@ struct AppGroup: Identifiable, Equatable, Sendable {
 
     var id: String { label }
 
-    /// The redesign's pill on a category (phone-status.png), as the
+    /// The redesign's pill on a category, as the
     /// computer's Status: "✓ 4 running" when every app that counts runs,
     /// "1 of 2 running" when one doesn't. None on Needs a look or Pinned,
     /// which keep their count.

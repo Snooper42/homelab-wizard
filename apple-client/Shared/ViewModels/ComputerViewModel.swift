@@ -15,7 +15,7 @@ final class ComputerViewModel {
     /// Kept only while its sheet is open.
     var report: DiagnosticsReport?
 
-    // The Settings form (main #491).
+    // The Settings form.
     private(set) var form: HomelabSettingsForm?
     private(set) var formError: String?
     /// The computer's Homelab Wizard is older than Settings on a phone: it
@@ -75,7 +75,7 @@ final class ComputerViewModel {
         }
     }
 
-    // Setup's checklist (the owner's yes, Nov 19).
+    // Setup's checklist.
     private(set) var setupSteps: [SetupStepInfo]?
     private(set) var setupError: String?
     /// The step being done for the person now.
@@ -125,7 +125,7 @@ final class ComputerViewModel {
         }
     }
 
-    // Settings › Phones (the owner's yes, Nov 19).
+    // Settings › Phones.
     private(set) var phones: [PairedPhone]?
     private(set) var phonesError: String?
     private(set) var isChangingPhone = false

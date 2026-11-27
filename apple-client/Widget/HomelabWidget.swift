@@ -150,7 +150,7 @@ struct HealthWidget: Widget {
     }
 }
 
-// The money widget (the owner's pick, Nov 16: words only): how Finances
+// The money widget: how Finances
 // stands until the next payday and when the next bill comes, never an
 // amount. It reads only the words the unlocked app left (MoneyLineStore).
 
@@ -269,7 +269,7 @@ struct MoneyWidget: Widget {
     }
 }
 
-// The medium widget (the owner's pick, Nov 16, on the canvas): the
+// The medium widget (on the canvas): the
 // homelab's line and the money's words side by side, each half only if
 // that one is turned on; the left opens Status, the right Finances. No app
 // names, never an amount, as the small ones.

@@ -160,7 +160,7 @@ struct AwayChangesTests {
     }
 }
 
-/// Track from on the phone (the owner, Nov 16: Jan 1, 2026): set in the
+/// Track from on the phone: set in the
 /// plan as the computer keeps it, or taken out to count everything; kept
 /// away as one change (a second takes the first's place) and replayed on
 /// the newest plan; the months before it marked on Transactions.

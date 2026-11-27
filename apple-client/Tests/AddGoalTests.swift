@@ -2,7 +2,7 @@ import Foundation
 import Testing
 @testable import HomelabClient
 
-/// Add a Goal on the phone (Parity gap 5, apple-loop.md item 2): a new goal
+/// Add a Goal on the phone: a new goal
 /// made as the computer's own form makes one, checked as the computer checks
 /// it (`cleanGoals`), everything else in the plan kept as it came.
 @Suite("Adding a goal")
@@ -39,7 +39,7 @@ struct AddGoalTests {
         #expect(goals[1]["date"] == nil)
     }
 
-    /// Over several accounts, as the computer's goals hold (the owner's yes, Nov 19).
+    /// Over several accounts, as the computer's goals hold.
     @Test func addsOverSeveralAccounts() throws {
         let edited = try #require(FinancePlanEdit.addingGoal(
             name: "House", target: 40000, date: "2028-06-30",

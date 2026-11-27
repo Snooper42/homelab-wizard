@@ -2,7 +2,7 @@ import Foundation
 import Testing
 @testable import HomelabClient
 
-/// A loan's papers typed in on the phone (the owner's yes, Nov 19), saved as
+/// A loan's papers typed in on the phone, saved as
 /// the computer's account form saves them: the papers on the account, and
 /// what it owes today from them as its balance (`FinancePlanEdit.settingPapers`).
 /// Made-up loans; what it owes is the computer's own reading
