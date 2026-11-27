@@ -201,7 +201,7 @@ export function statusSideChanged() { drawStatusSide(); }
 function drawStatusSide() {
   const onBackups = $('backups').classList.contains('active');
   const menu = {
-    label: 'Status', here: onBackups ? 'backups' : statusHere, pick: pickStatusPart,
+    label: 'Home', here: onBackups ? 'backups' : statusHere, pick: pickStatusPart,
     items: [{ key: 'overview', label: 'Overview', icon: sideIcons.overview }, { key: 'analytics', label: 'Analytics', icon: sideIcons.analytics }, { key: 'subscriptions', label: 'Subscriptions', icon: sideIcons.finance },
       { key: 'backups', label: 'Backups', icon: sideIcons.backups, count: backupProblems || undefined }, ...statusSide],
   };
@@ -220,7 +220,7 @@ function drawStatusPart() {
     mountAnalytics($('statusPart'), null);
     mountCategoryPage($('statusPart'), null);
     const fromLabel = storeFrom === 'find' ? 'All apps' : statusParts.find((p) => p.id === storeFrom)?.label;
-    const trail = [{ label: 'Status', go: () => pickStatusPart('overview') }, ...(fromLabel ? [{ label: fromLabel, go: () => pickStatusPart(storeFrom) }] : [])];
+    const trail = [{ label: 'Home', go: () => pickStatusPart('overview') }, ...(fromLabel ? [{ label: fromLabel, go: () => pickStatusPart(storeFrom) }] : [])];
     showStore(statusHere.slice(4), trail);
     return;
   }
@@ -269,7 +269,7 @@ function drawStatusPart() {
   if (!part || !appList) { mountCategoryPage($('statusPart'), null); return; }
   wantIcons(part.apps.filter((a) => a.state !== 'missing' && !shippedLogo(a.id)).map((a) => a.id));
   mountCategoryPage($('statusPart'), {
-    label: part.label, apps: part.apps, add: part.add, list: appList, trail: [{ label: 'Status', go: () => pickStatusPart('overview') }],
+    label: part.label, apps: part.apps, add: part.add, list: appList, trail: [{ label: 'Home', go: () => pickStatusPart('overview') }],
     here: appList.companion ? 'On the server' : 'On ' + thisMachine.replace(/^This/, 'this'),
     install: (id) => openInstall([id]),
     addOwn: part.id === 'own' ? openCustom : undefined,

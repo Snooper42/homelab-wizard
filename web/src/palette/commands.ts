@@ -37,13 +37,13 @@ export function match(list: Command[], query: string): Command[] {
 }
 
 const screenList: [string, string, string, string][] = [
-  ['choose', 'Find an app', '1', 'install add apps choose'],
-  ['status', 'Status', '2', 'apps running'],
-  ['backups', 'Backups', '3', 'backup restore'],
-  ['setup', 'Setup', '4', ''],
+  ['status', 'Home', '1', 'status apps running overview'],
+  ['tidy', 'Tidy Up', '2', 'media library music books films'],
+  ['finances', 'Finances', '3', 'money budget bills'],
+  ['backups', 'Backups', '4', 'backup restore'],
+  ['choose', 'Find an app', '5', 'install add apps choose'],
   ['settings', 'Settings', ',', 'preferences options'],
-  ['finances', 'Finances', '6', 'money budget bills'],
-  ['tidy', 'Tidy Up', '7', 'media library music books films'],
+  ['setup', 'Setup', '', 'steps first run'],
 ];
 
 /** Finances' tabs as a link and a phone name them. */
@@ -54,7 +54,7 @@ function sendable(): { link: string; title: string } | null {
   const p = here();
   if (!p) return null;
   if (p.screen === 'app' && p.app) return { link: 'homelab://app/' + p.app, title: statusById[p.app]?.name || p.app };
-  if (p.screen === 'status' || p.screen === 'backups') return { link: 'homelab://' + p.screen, title: p.screen === 'status' ? 'Status' : 'Backups' };
+  if (p.screen === 'status' || p.screen === 'backups') return { link: 'homelab://' + p.screen, title: p.screen === 'status' ? 'Home' : 'Backups' };
   if (p.screen === 'finances') {
     const tab = p.tab && finTabs[p.tab] ? p.tab : 'overview';
     return { link: tab === 'overview' ? 'homelab://finances' : 'homelab://finances/' + tab, title: tab === 'overview' ? 'Finances' : `Finances › ${finTabs[tab]}` };
@@ -84,7 +84,7 @@ export function commands(): Command[] {
   if (page && !phone) for (const t of targetsFor(page.link)) add({ id: `send:${t.id}`, label: `Send ${page.title} to ${t.name}`, also: 'send to my phone open on', run: () => sendTo(t, page.link, page.title) });
   for (const [id, label, key, also] of screenList) {
     if (phone && (id === 'setup' || id === 'choose')) continue;
-    add({ id: 'screen:' + id, label, hint: mod + key, also: 'screen go ' + also, run: () => navigate(id) });
+    add({ id: 'screen:' + id, label, hint: key ? mod + key : undefined, also: 'screen go ' + also, run: () => navigate(id) });
   }
 
   const apps = Object.values(statusById);

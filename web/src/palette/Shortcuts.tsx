@@ -6,7 +6,7 @@ import { isMac, mod, onPhone } from '../core';
 type Line = [keys: string[], what: string];
 
 const names: Record<string, string> = {
-  choose: 'Find an app', status: 'Status', backups: 'Backups', setup: 'Setup', settings: 'Settings', finances: 'Finances', tidy: 'Tidy Up',
+  choose: 'Find an app', status: 'Home', backups: 'Backups', setup: 'Setup', settings: 'Settings', finances: 'Finances', tidy: 'Tidy Up',
 };
 
 /** What each screen adds to the shortcuts that work everywhere. */
@@ -51,8 +51,8 @@ function everywhere(): Line[] {
 }
 
 const screens = (): Line[] => [
-  [[mod + '1'], 'Choose apps'], [[mod + '2'], 'Status'], [[mod + '3'], 'Backups'], [[mod + '4'], 'Setup'],
-  [[mod + ','], 'Settings'], [[mod + '6'], 'Finances'], [[mod + '7'], 'Tidy Up'],
+  [[mod + '1'], 'Home'], [[mod + '2'], 'Tidy Up'], [[mod + '3'], 'Finances'], [[mod + '4'], 'Backups'],
+  [[mod + '5'], 'Find an app'], [[mod + ','], 'Settings'],
 ];
 
 function Table({ lines }: { lines: Line[] }) {

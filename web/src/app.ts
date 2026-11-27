@@ -199,7 +199,9 @@ addEventListener('wheel', (e) => {
 addEventListener('mouseup', (e) => { if (e.button === 3 && goBack()) e.preventDefault(); if (e.button === 4 && goForward()) e.preventDefault(); });
 // Cmd (Ctrl elsewhere) with a number picks a screen: the first five as they
 // always were, Finances after them, then Tidy Up.
-const screens = ['choose', 'status', 'backups', 'setup', 'settings', 'finances', 'tidy'];
+// ⌘1 to ⌘5 (Ctrl elsewhere): the strip's three first, Home, Tidy Up and Finances (the owner, Nov 27), then Backups and
+// Find an app; Settings is ⌘, and Setup, in Settings now, has no number.
+const screens = ['status', 'tidy', 'finances', 'backups', 'choose'];
 // Quitting: where the screen showing was, for next time. Opening: the screen it starts on is put back at once,
 // not only once the app picks it.
 addEventListener('pagehide', () => leavePlace(document.querySelector('.screen.active')?.id));

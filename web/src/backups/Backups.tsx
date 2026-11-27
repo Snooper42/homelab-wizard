@@ -281,7 +281,7 @@ const jobMark: Record<string, [Tone, string]> = { ok: ['ok', 'Ran'], failed: ['b
 export function jobsProblem(problem: string, waitingFor?: string): string {
   if (/DUPLICATI_PASSWORD is empty/.test(problem)) return 'Shown here once DUPLICATI_PASSWORD is in Settings.';
   if (waitingFor) return `Duplicati waits for ${driveName(waitingFor)}: the jobs show here once it is plugged in.`;
-  if (/connection refused|dial tcp|no such host|timeout|EOF/i.test(problem)) return 'Duplicati is not answering: start it on Status, and the jobs show here.';
+  if (/connection refused|dial tcp|no such host|timeout|EOF/i.test(problem)) return 'Duplicati is not answering: start it on Home, and the jobs show here.';
   return problem;
 }
 

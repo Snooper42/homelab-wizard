@@ -224,7 +224,7 @@ Each phone sees Finances at the level it was paired with: none, the money card, 
 
 | Feature | Computer | Phone's page | iPhone | iPad | Phone calls |
 |---|---|---|---|---|---|
-| A screen's key (⌘2 to ⌘6, Ctrl on Windows and Linux) | yes | on purpose: tabs at the bottom | on purpose: tabs | yes | |
+| A screen's key (⌘1 Home, ⌘2 Tidy Up, ⌘3 Finances, ⌘4 Backups, ⌘5 Find an app; Ctrl on Windows and Linux) | yes | on purpose: tabs at the bottom | on purpose: tabs | yes | |
 | Finances' pages and Import from the keyboard | no: its tabs and Import button, with no keys of their own | on purpose: no keyboard | on purpose | yes: the Finances menu, ⌥⌘1 to ⌥⌘9 for its pages (as a link opens them), ⇧⌘I for Import a File on Transactions | |
 | Type a command (⌘K) and the sheet of shortcuts (?) | yes | on purpose: no keyboard | on purpose | partly: ⌘K opens the palette (`CommandPaletteView`, `Palette.commands` as commands.ts), with screens, Finances' pages, each app's Open, Restart, Start, Stop (asked twice) and Logs, each group's, Back Up Now, Show or Hide Amounts, Import a File and Add a Transaction; no sheet of shortcuts (holding ⌘ shows the menus' own) | |
 | Pointer hover on rows and cards | yes | on purpose: no pointer | on purpose | yes: a list's rows, and every card and round action (`PressableButtonStyle`) | |

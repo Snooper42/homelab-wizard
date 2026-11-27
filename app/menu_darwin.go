@@ -22,11 +22,14 @@ func appMenu(a *App) *menu.Menu {
 	go2 := func(screen string) menu.Callback {
 		return func(*menu.CallbackData) { runtime.EventsEmit(a.ctx, "navigate", screen) }
 	}
-	view.AddText("Choose Apps", keys.CmdOrCtrl("1"), go2("choose"))
-	view.AddText("Status", keys.CmdOrCtrl("2"), go2("status"))
-	view.AddText("Backups", keys.CmdOrCtrl("3"), go2("backups"))
-	view.AddText("Setup", keys.CmdOrCtrl("4"), go2("setup"))
-	view.AddText("Finances", keys.CmdOrCtrl("6"), go2("finances"))
+	// The strip's three first, as the sidebar has them (the owner, Nov 27), then Backups and Find an App; Setup is in
+	// Settings now, with no number of its own.
+	view.AddText("Home", keys.CmdOrCtrl("1"), go2("status"))
+	view.AddText("Tidy Up", keys.CmdOrCtrl("2"), go2("tidy"))
+	view.AddText("Finances", keys.CmdOrCtrl("3"), go2("finances"))
+	view.AddText("Backups", keys.CmdOrCtrl("4"), go2("backups"))
+	view.AddText("Find an App", keys.CmdOrCtrl("5"), go2("choose"))
+	view.AddText("Setup", nil, go2("setup"))
 	view.AddText("Settings…", keys.CmdOrCtrl(","), go2("settings"))
 	view.AddSeparator()
 	// Every money figure as $•••, or back: the page toggles it (⌘⇧H).

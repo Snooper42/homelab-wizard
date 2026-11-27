@@ -2567,22 +2567,23 @@ const smokes = [
     if (await page.evaluate(() => document.querySelector('#setupDetails').open)) throw new Error('the log of steps that went fine stays open');
     if (await page.isVisible('#runAll')) throw new Error('nothing is left to run');
   } },
-  // Setup is in the sidebar while something needs you; once every step is
-  // done it leaves (owner, 29 Oct), and still opens from its shortcut.
-  { name: 'Setup leaves the sidebar once nothing needs you', screen: 'status', mock: { setup: setup.map((s) => ({ ...s, state: 'done' })) }, run: async (page) => {
-    await page.waitForSelector('nav button[data-screen="setup"]', { state: 'hidden', timeout: 5000 });
-    const mod = (await page.evaluate(() => navigator.platform)).startsWith('Mac') ? 'Meta' : 'Control';
-    await page.keyboard.press(`${mod}+4`);
-    await page.waitForSelector('#setup.active #checkTitle:text-is("Everything is set up")', { timeout: 5000 });
-    if (!(await page.isVisible('nav button[data-screen="setup"]'))) throw new Error('Setup, open, is not in the sidebar');
-    await page.waitForSelector('#checklist li.alldone:has-text("steps are done")');
-    await page.click('nav button[data-screen="status"]');
-    await page.waitForSelector('nav button[data-screen="setup"]', { state: 'hidden', timeout: 5000 });
-  } },
-  { name: 'Setup stays in the sidebar while a step is left', screen: 'status', run: async (page) => {
-    await page.waitForSelector('#statusRows tr', { timeout: 5000 });
+  // Setup is never in the strip now (the owner, Nov 27): it's first in Settings' list while something is left, with how
+  // many, and leaves the list once every step is done; the command palette still opens it.
+  { name: 'Setup leaves Settings\' list once every step is done', screen: 'settings', mock: { setup: setup.map((s) => ({ ...s, state: 'done' })) }, run: async (page) => {
+    await page.waitForSelector('#settingsNav .pagebtn[data-page="General"]', { timeout: 5000 });
     await page.waitForTimeout(300);
-    if (!(await page.isVisible('nav button[data-screen="setup"]'))) throw new Error('Setup left the sidebar with steps to do');
+    if (await page.$('#settingsNav .pagebtn[data-page="Setup"]')) throw new Error('Setup in Settings with nothing left');
+    if (await page.isVisible('nav button[data-screen="setup"]')) throw new Error('Setup in the strip');
+  } },
+  { name: 'Setup is first in Settings\' list while a step is left, and opens from it', screen: 'settings', run: async (page) => {
+    const item = '#settingsNav .pagebtn[data-page="Setup"]';
+    await page.waitForSelector(item, { timeout: 5000 });
+    const first = await page.$eval('#settingsNav .pagebtn', (b) => b.dataset.page);
+    if (first !== 'Setup') throw new Error(`Settings' list starts with ${first}`);
+    if (!/^\d+ left$/.test((await page.textContent(`${item} .n`)).trim())) throw new Error('no count of what is left');
+    if (await page.isVisible('nav button[data-screen="setup"]')) throw new Error('Setup in the strip');
+    await page.click(item);
+    await page.waitForSelector('#setup.screen.active', { timeout: 5000 });
   } },
   { name: "Setup's tiles: a stopped agent says so, and Start it starts it", screen: 'setup', mock: { health: { agent: 'stopped', lastCheck: '0001-01-01T00:00:00Z', power: 'battery', keptAwake: true } }, run: async (page) => {
     await page.waitForSelector('#health-agent:has-text("Stopped")', { timeout: 5000 });
@@ -2659,9 +2660,17 @@ const smokes = [
     if (!(await page.locator('#statusMachine .ovbar:has-text("used")').count())) throw new Error("the drive's bar is gone");
     if (/\bUp (\d|a |an )/.test(await page.textContent('#statusMachine'))) throw new Error('Up without a boot time');
   } },
-  { name: "The computer's Status doesn't repeat Setup's steps", screen: 'status', run: async (page) => {
-    await page.waitForSelector('#statusApps', { timeout: 5000 });
-    if (await page.isVisible('#setupOnStatus')) throw new Error("Setup's steps on the computer's Status");
+  // Setup is in Settings' list now, not the strip (the owner, Nov 27): while steps are left, Home says so under its three
+  // cards, the next few named, and Continue opens Setup.
+  { name: "The computer's Home says Finish setting up, and Continue opens Setup", screen: 'status', run: async (page) => {
+    const card = '#setupOnStatus .setuponstatus';
+    await page.waitForSelector(`${card}:has-text("Finish setting up")`, { timeout: 5000 });
+    if (!/^\d+ left$/.test((await page.textContent(`${card} p`)).trim())) throw new Error('no count of what is left');
+    if (!(await page.locator(`${card} .setupnext li`).count())) throw new Error('no next step named');
+    const [tiles, setup] = await page.$$eval('#tiles, #setupOnStatus', (es) => es.map((e) => e.getBoundingClientRect().top));
+    if (!(setup > tiles)) throw new Error('not under the three cards');
+    await page.click(`${card} button:text-is("Continue")`);
+    await page.waitForSelector('#setup.screen.active', { timeout: 5000 });
   } },
   // The machine's line moved into Status' This Mac card and the sidebar's foot (the redesign): what's wrong in its tone,
   // once, and the foot's dot as the worst; the system and version in the foot's tooltip.
@@ -2856,7 +2865,7 @@ const smokes = [
     if (thin.length) throw new Error(`values a few letters wide: ${thin.join(', ')}`);
   } },
   // Usability task 7, item 15: with an app stopped, the line atop Settings shows whole, above the heading, and its
-  // Open Status is uncovered and clicks through, at full width and at 320px with big text.
+  // See it is uncovered and clicks through, at full width and at 320px with big text.
   ...[[1280, 800, '1'], [320, 640, '1.25']].map(([w, h, zoom]) => ({ name: `Settings with an app stopped: the line on top shows whole, ${w}px`, screen: 'settings', run: async (page) => {
     await page.setViewportSize({ width: w, height: h });
     await page.evaluate((z) => document.documentElement.style.setProperty('--zoom', z), zoom);
@@ -2866,7 +2875,7 @@ const smokes = [
       const line = document.getElementById('oneLine'), r = line.getBoundingClientRect(), btn = document.getElementById('oneOpen').getBoundingClientRect();
       const at = (x, y) => { const e = document.elementFromPoint(x, y); return e && line.contains(e); };
       const out = [];
-      if (!at(btn.left + btn.width / 2, btn.top + btn.height / 2)) out.push('Open Status is covered');
+      if (!at(btn.left + btn.width / 2, btn.top + btn.height / 2)) out.push('See it is covered');
       if (!at(r.left + r.width / 2, r.bottom - 3)) out.push('the line’s lower edge is covered');
       const head = document.querySelector('#settings h1').getBoundingClientRect();
       if (head.top < r.bottom - 1) out.push('the heading sits over the line');
@@ -3511,8 +3520,8 @@ const smokes = [
     const mark = await page.$eval('nav > button.active', (e) => { const a = getComputedStyle(e, '::before'); return a.display !== 'none' && parseFloat(a.width) >= 3 && a.forcedColorAdjust === 'none'; });
     if (!mark) throw new Error('the current screen has no bar of its own');
   } })),
-  { name: 'Keyboard: Ctrl+2 opens Status on Windows', screen: 'setup', mock: { platform: 'Win32' }, run: async (page) => {
-    await page.keyboard.press('Control+2');
+  { name: 'Keyboard: Ctrl+1 opens Home on Windows', screen: 'setup', mock: { platform: 'Win32' }, run: async (page) => {
+    await page.keyboard.press('Control+1');
     await page.waitForSelector('#status.screen.active', { timeout: 5000 });
     if (!(await page.$('html.os-windows'))) throw new Error('no os-windows class');
   } },
@@ -3547,9 +3556,15 @@ const smokes = [
     const css = await page.evaluate(() => { const s = getComputedStyle(document.documentElement); return [s.getPropertyValue('--line').trim(), s.getPropertyValue('--line-strong').trim()]; });
     if (css[0] !== css[1] || !css[0]) throw new Error(`--line ${css[0]}, --line-strong ${css[1]}`);
   } },
-  { name: 'Keyboard: ⌘2 opens Status on a Mac', screen: 'setup', run: async (page) => {
-    await page.keyboard.press('Meta+2');
-    await page.waitForSelector('#status.screen.active', { timeout: 5000 });
+  // The strip's three are ⌘1 to ⌘3 (the owner, Nov 27), then Backups and Find an app.
+  { name: 'Keyboard: ⌘1, ⌘2 and ⌘3 open Home, Tidy Up and Finances on a Mac', screen: 'setup', run: async (page) => {
+    for (const [key, screen] of [['1', 'status'], ['2', 'tidy'], ['3', 'finances'], ['4', 'backups']]) {
+      await page.keyboard.press('Meta+' + key);
+      await page.waitForSelector(`#${screen}.screen.active`, { timeout: 5000 });
+    }
+    // ⌘5: Find an app, which opens in Home.
+    await page.keyboard.press('Meta+5');
+    await page.waitForSelector('#status.screen.active #statusPart .catfind', { timeout: 5000 });
   } },
   { name: 'Keyboard: ⌘, opens Settings, and the View menu\'s events work', screen: 'status', run: async (page) => {
     await page.keyboard.press('Meta+Comma');
@@ -3613,8 +3628,8 @@ const smokes = [
     await page.click('#setting-CLOUDFLARE_API_TOKEN button:has-text("Copy")');
     await page.waitForSelector('#setting-CLOUDFLARE_API_TOKEN .test:has-text("Copied")', { timeout: 5000 });
   } },
-  // Health in one line: at the top of every screen but Status, the one thing that needs you, or All well.
-  { name: 'Health in one line: on Backups the one app that needs a look, and Open Status', screen: 'backups', run: async (page) => {
+  // Health in one line: at the top of every screen but Home, the one thing that needs a look; nothing when all is well.
+  { name: 'Health in one line: on Backups the one app that needs a look, and See it', screen: 'backups', run: async (page) => {
     await page.waitForSelector('#oneLine.trouble:has-text("Mealie: Stopped")', { timeout: 5000 });
     await page.click('#oneOpen');
     await page.waitForSelector('#status.active', { timeout: 3000 });
@@ -3623,8 +3638,11 @@ const smokes = [
     await page.waitForSelector('#settings.active', { timeout: 5000 });
     await page.waitForSelector('#oneLine:has-text("Mealie: Stopped")', { timeout: 5000 });
   } },
-  { name: 'Health in one line: All well, and several apps in one line', screen: 'settings', mock: { status: { ...status, apps: status.apps.filter((a) => a.state === 'running' && !['unhealthy', 'restarting'].includes(a.health) && !a.notAnswering) } }, run: async (page) => {
-    await page.waitForSelector('#oneLine:not(.trouble):has-text("All well")', { timeout: 5000 });
+  { name: 'Health in one line: nothing when all is well, and several apps in one line', screen: 'settings', mock: { status: { ...status, apps: status.apps.filter((a) => a.state === 'running' && !['unhealthy', 'restarting'].includes(a.health) && !a.notAnswering) } }, run: async (page) => {
+    // No "All well" over the title (the owner, Nov 27): the line is there only for something wrong.
+    await page.waitForSelector('#settings.active', { timeout: 5000 });
+    await page.waitForTimeout(800); // Status read by now (the line is drawn from it)
+    if (await page.isVisible('#oneLine')) throw new Error('a line with nothing wrong: ' + await page.textContent('#oneLine'));
     await page.evaluate(() => window.__emit('status:changed', { status: { ...window.__MOCK.status, apps: window.__MOCK.status.apps.map((a, i) => (i < 4 ? { ...a, health: 'unhealthy' } : a)) } }));
     await page.waitForSelector('#oneLine.trouble:has-text("4 apps need a look:"):has-text("and 2 more")', { timeout: 5000 });
   } },
@@ -4625,7 +4643,7 @@ const smokes = [
     };
     const b = await rightClick('status');
     if ((await items()).join('|') !== 'Check again|Update all apps…|Back up now') throw new Error('Status: ' + (await items()).join(', '));
-    if ((await menu.getAttribute('aria-label')) !== 'Status') throw new Error('the menu is named ' + await menu.getAttribute('aria-label'));
+    if ((await menu.getAttribute('aria-label')) !== 'Home') throw new Error('the menu is named ' + await menu.getAttribute('aria-label'));
     const m = await menu.boundingBox();
     if (Math.abs(m.x - (b.x + 30)) > 2 || Math.abs(m.y - (b.y + b.height / 2)) > 2) throw new Error(`the menu opened at ${m.x},${m.y}, not at the pointer`);
     const missed = await page.$$eval('#contextMenu [role=menuitem]', (bs) => bs.filter((x) => { const r = x.getBoundingClientRect(); const at = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return !at || !x.contains(at); }).map((x) => x.textContent.trim()));
@@ -4789,9 +4807,9 @@ const smokes = [
     await page.waitForSelector('#statusRows tr', { timeout: 5000 });
     await page.keyboard.press('?');
     await page.waitForSelector(`${sheet}:not([hidden])`, { timeout: 3000 });
-    if ((await heads()).join('|') !== 'On Status|Everywhere|The screens') throw new Error(`the sections: ${await heads()}`);
+    if ((await heads()).join('|') !== 'On Home|Everywhere|The screens') throw new Error(`the sections: ${await heads()}`);
     let said = await text();
-    for (const want of ['Start typing an app’s name', '⌘K The command palette', '⌘R Check the screen again', '⌘⇧H Hide every amount', '⌘2 Status', '⌘, Settings']) {
+    for (const want of ['Start typing an app’s name', '⌘K The command palette', '⌘R Check the screen again', '⌘⇧H Hide every amount', '⌘1 Home', '⌘2 Tidy Up', '⌘3 Finances', '⌘, Settings']) {
       if (!said.includes(want)) throw new Error(`no "${want}" in: ${said}`);
     }
     if (said.includes('Ctrl') || /\bF1 /.test(said) || said.includes('F5')) throw new Error(`another system's keys on a Mac: ${said}`);
@@ -5586,7 +5604,7 @@ const smokes = [
     await page.setViewportSize({ width: 1600, height: 1000 });
     await page.evaluate(() => document.documentElement.style.setProperty('--zoom', '1.5'));
     await page.waitForTimeout(200);
-    if (!(await page.isVisible('nav button[data-screen="status"] span:text-is("Status")'))) throw new Error('the sidebar lost its names in a wide window');
+    if (!(await page.isVisible('nav button[data-screen="status"] span:text-is("Home")'))) throw new Error('the sidebar lost its names in a wide window');
   } },
   ...[['Mac', { platform: 'MacIntel' }], ['Windows', { platform: 'Win32' }]].map(([sys, m]) => ({ name: `A screen's toolbar stays one line at big text, ${sys}`, screen: 'backups', mock: m, run: async (page) => {
     await page.setViewportSize({ width: 860, height: 560 });
@@ -5773,20 +5791,18 @@ const smokes = [
     });
     if (out.length) throw new Error(out.slice(0, 5).join('; '));
   } })),
-  // The icon sidebar: a two-digit count stays readable on its icon's corner.
-  ...[['Mac', 'MacIntel'], ['Windows', 'Win32'], ['Linux', 'Linux x86_64']].map(([os, platform]) => ({ name: `${os}: in the icon sidebar, a two-digit count is solid and on top of its icon`, screen: 'status', mock: { platform, status: { ...status, apps: status.apps.map((a, i) => (i < 16 ? { ...a, state: 'stopped', health: '' } : a)) } }, run: async (page) => {
-    await page.setViewportSize({ width: 860, height: 560 });
-    await page.evaluate(() => document.documentElement.style.setProperty('--zoom', '1.5'));
-    await page.waitForTimeout(400);
-    const c = await page.$eval('nav button[data-screen="status"] .count', (e) => {
-      const r = e.getBoundingClientRect(), bg = getComputedStyle(e).backgroundColor;
-      const alpha = /rgba?\(([^)]+)\)/.test(bg) ? (bg.match(/rgba?\(([^)]+)\)/)[1].split(/[,\s/]+/).filter(Boolean)[3] ?? '1') : '1';
-      const hit = document.elementFromPoint(r.left + 3, r.top + r.height / 2);
-      return { text: e.textContent, alpha: parseFloat(alpha), onTop: e.contains(hit), w: r.width };
-    });
-    if (!/^\d\d$/.test(c.text)) throw new Error(`the count says "${c.text}"`);
-    if (c.alpha < 1) throw new Error(`the count is see-through (alpha ${c.alpha})`);
-    if (!c.onTop) throw new Error('the icon covers the count');
+  // No badges on the strip or the icon rail (the owner, Nov 27: "I also don't want badge indicators"): sixteen apps
+  // stopped, and neither the wide sidebar nor the rail of a small window shows a count on Home or any other screen.
+  ...[['Mac', 'MacIntel'], ['Windows', 'Win32'], ['Linux', 'Linux x86_64']].map(([os, platform]) => ({ name: `${os}: no badge on the strip or the icon rail, with apps stopped`, screen: 'status', mock: { platform, status: { ...status, apps: status.apps.map((a, i) => (i < 16 ? { ...a, state: 'stopped', health: '' } : a)) } }, run: async (page) => {
+    // The count is still kept (the Dock's badge reads it): it just isn't drawn on the strip.
+    await page.waitForFunction(() => Number(document.getElementById('statusCount').textContent) > 9, null, { timeout: 5000 });
+    for (const [w, zoom] of [[1280, '1'], [860, '1.5']]) {
+      await page.setViewportSize({ width: w, height: 560 });
+      await page.evaluate((z) => document.documentElement.style.setProperty('--zoom', z), zoom);
+      await page.waitForTimeout(300);
+      const shown = await page.$$eval('nav > button[data-screen] .count', (cs) => cs.filter((c) => c.getClientRects().length).map((c) => c.textContent));
+      if (shown.length) throw new Error(`badges at ${w}px: ${shown.join(', ')}`);
+    }
   } })),
   // Counts in words: "1 of the homelab's own apps is down", "7 other containers … aren't".
   ...[[1, 1, "1 of the homelab's own apps is down", '1 other container on this machine isn’t a catalog app.'], [3, 7, "3 of the homelab's own apps are down", '7 other containers on this machine aren’t catalog apps.']].map(([missing, unmatched, down, other]) => ({ name: `Status counts in words: ${down}, ${unmatched} other container${unmatched === 1 ? '' : 's'}`, screen: 'status', mock: { status: { ...status, missing, unmatched } }, run: async (page) => {
@@ -6897,7 +6913,7 @@ const smokes = [
     await page.waitForSelector('#statusSide [aria-current="page"][data-key="backups"]', { timeout: 3000 });
     if (!(await page.isVisible('nav > button[data-screen="status"].active'))) throw new Error('Status is not the screen picked on Backups');
     for (const part of ['#copiesTile', '#restoreTile', '#offsiteTile', '#copiesCard']) if (!(await page.$(part))) throw new Error(`Backups' page has no ${part}`);
-    await page.click('#backupsCrumbs button.crumb:text-is("Status")');
+    await page.click('#backupsCrumbs button.crumb:text-is("Home")');
     await page.waitForSelector('#status.screen.active', { timeout: 3000 });
     await page.waitForSelector('#statusSide [aria-current="page"][data-key="overview"]', { timeout: 3000 });
   } },
@@ -9385,10 +9401,10 @@ const smokes = [
     await page.click('#statusRows tr:has(strong:text-is("Vikunja")) td.state', { timeout: 5000 });
     await page.waitForSelector('#app.active .crumbs', { timeout: 5000 });
     const trail = async (root) => (await page.textContent(`${root} .crumbs ol`)).replace(/\s*›\s*/g, ' › ').trim();
-    if ((await trail('#app')) !== 'Status › Vikunja') throw new Error(`the app's page: ${await trail('#app')}`);
-    if ((await page.getAttribute('#app .crumbs .back', 'aria-label')) !== 'Back to Status') throw new Error('the back button is not named');
+    if ((await trail('#app')) !== 'Home › Vikunja') throw new Error(`the app's page: ${await trail('#app')}`);
+    if ((await page.getAttribute('#app .crumbs .back', 'aria-label')) !== 'Back to Home') throw new Error('the back button is not named');
     if ((await page.getAttribute('#app .crumbs [aria-current="page"]', 'aria-current')) !== 'page') throw new Error('the page itself is not marked');
-    await page.click('#app .crumbs button.crumb:text-is("Status")');
+    await page.click('#app .crumbs button.crumb:text-is("Home")');
     await page.waitForSelector('#status.active', { timeout: 5000 });
     // An account's page, under Net worth: the step's link goes up, as the back button does.
     await page.click('nav button[data-screen="finances"]');
@@ -9407,7 +9423,7 @@ const smokes = [
     await page.click('#statusAll', { timeout: 5000 });
     await page.click('#statusRows tr:has(strong:text-is("Vikunja")) td.state', { timeout: 5000 });
     await page.waitForSelector('#app.active .crumbs .back', { timeout: 5000 });
-    if ((await page.textContent('#app .crumbs .back')).trim() !== 'Status') throw new Error(`the phone's back: ${await page.textContent('#app .crumbs .back')}`);
+    if ((await page.textContent('#app .crumbs .back')).trim() !== 'Home') throw new Error(`the phone's back: ${await page.textContent('#app .crumbs .back')}`);
     if (await page.isVisible('#app .crumbs ol')) throw new Error('the trail shows on the phone');
   } },
   // Transactions opened from another view has Back to it: from Reports (a payee), and from the Dashboard (See all); picked

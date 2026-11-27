@@ -424,7 +424,7 @@ function Stopped({ stopped }: { stopped: crowdsec.Protection | null | 'reading' 
       {reading && <Empty>Asking CrowdSec…</Empty>}
       {!s && !reading && <Empty>CrowdSec can't be read: it and the proxy need to be running.</Empty>}
       {s && !s.enforced && (
-        <Rows><Row dot="bad" title="Bans aren't reaching the proxy" sub={`${s.bouncer}. Status › Protection › Fix reconnects them.`} /></Rows>
+        <Rows><Row dot="bad" title="Bans aren't reaching the proxy" sub={`${s.bouncer}. Its page's Fix reconnects them.`} /></Rows>
       )}
       {s && (today.length ? (
         <Rows>
@@ -509,7 +509,7 @@ function Settings({ p }: { p: AppPageProps }) {
           sub={!updates ? 'Held' : ownDays ? `On ${daysText} only` : 'Every night'} />}
         {container && updates && <Switch label={`Only on ${daysText}`} disabled={busy || 'sundays' in switching} on={ownDays} set={(v) => on.setting('sundays', v)} />}
         <Switch label="Tell me if it stops" disabled={busy || 'alerts' in switching} on={alerts} set={(v) => on.setting('alerts', v)}
-          sub={alerts ? `On your phone and ${p.machine}` : 'Shown on Status, without an alert'} />
+          sub={alerts ? `On your phone and ${p.machine}` : 'Shown on Home, without an alert'} />
         {a.reach && <Switch label="Reach it away from home" disabled={busy || 'away' in switching} on={away} set={(v) => on.setting('away', v)}
           sub={away ? 'Opens anywhere through your Cloudflare tunnel; away from home, Cloudflare can see what passes' : 'Home only: it opens on your home Wi-Fi, and nobody outside can reach it'} />}
         <Row title="In the nightly backup" sub={kept} end={<ActionLink onClick={on.openBackups}>Backups ›</ActionLink>} />
@@ -540,7 +540,7 @@ function More({ p }: { p: AppPageProps }) {
 export function AppPage(p: AppPageProps) {
   return (
     <div class="apppage">
-      <Crumbs trail={p.on.from ? [{ label: 'Status', go: p.on.overview || p.on.back }, p.on.from] : [{ label: 'Status', go: p.on.back }]} here={p.a.name} />
+      <Crumbs trail={p.on.from ? [{ label: 'Home', go: p.on.overview || p.on.back }, p.on.from] : [{ label: 'Home', go: p.on.back }]} here={p.a.name} />
       <Header p={p} />
       <Facts p={p} />
       <div class="pagecols">

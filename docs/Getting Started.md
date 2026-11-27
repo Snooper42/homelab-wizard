@@ -111,7 +111,7 @@ The steps are grouped as **Needs you**, **Can wait**, and **Done**.
 
 If a step does not turn green, open Settings › This Mac (This PC, This machine) and click **Make a diagnostics report**. It writes one file with every check and log, with all passwords and tokens removed, that you can share when asking for help.
 
-Once every step is done, Setup leaves the sidebar. It comes back by itself, with a count, if a step comes undone (a token runs out, the backup drive goes away) or the homelab has an update; ⌘4 (Ctrl+4) opens it any time. The machine's details stay in Settings › This Mac, and Status keeps a line on how this machine looks after the homelab.
+While steps are left, Setup is the first entry in Settings' list, with how many are left, and Home shows **Finish setting up** with the next few. Once every step is done, Setup leaves the list. It comes back by itself if a step comes undone (a token runs out, the backup drive goes away) or the homelab has an update; the command palette (⌘K, Ctrl+K) opens it any time. The machine's details stay in Settings › This Mac, and Home keeps a line on how this machine looks after the homelab.
 
 ### Later: a domain of your own
 

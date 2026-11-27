@@ -9,7 +9,7 @@
 <body>
 <nav aria-label="Screens">
   <div class="brand"><img src="logo.svg" alt=""><span>Homelab Wizard<small>Your apps, at home</small></span></div>
-  <button data-screen="status" class="active"><svg class="icon" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span>Status</span><span class="count" id="statusCount"></span></button>
+  <button data-screen="status" class="active"><svg class="icon" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span>Home</span><span class="count" id="statusCount"></span></button>
   <button data-screen="backups" hidden><svg class="icon" viewBox="0 0 24 24"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg><span>Backups</span><span class="count" id="backupsCount"></span></button>
   <button data-screen="tidy"><svg class="icon" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M7 12h10"/><path d="M10 18h4"/></svg><span>Tidy Up</span><span class="count" id="tidyCount"></span></button>
   <button data-screen="finances"><svg class="icon" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg><span>Finances</span><span class="count" id="financesCount"></span></button>
@@ -30,7 +30,7 @@
 </nav>
 <main>
   <p id="awayNote" class="awaynote" role="status" hidden></p>
-  <p id="oneLine" class="oneline" hidden><span id="oneText"></span> <button id="oneOpen" class="linkbtn" hidden>Open Status</button></p>
+  <p id="oneLine" class="oneline" hidden><span id="oneText"></span> <button id="oneOpen" class="linkbtn" hidden>See it</button></p>
   <div id="updateLine" class="updateline" role="status" aria-live="polite" hidden></div>
   <div id="undoNote"></div>
   <div id="swipeHint" aria-hidden="true"></div>
@@ -86,7 +86,7 @@
     <div id="statusPart"></div>
     <div id="statusStore"><div id="storeHead"></div><div id="storeFacts"></div><div id="storeNotes"></div><div id="storePlan" class="card"></div></div>
     <div class="row header">
-      <div><h1>Status</h1><p class="lead statuslead"><span id="statusAge" hidden></span></p></div>
+      <div><h1>Home</h1><p class="lead statuslead"><span id="statusAge" hidden></span></p></div>
       <div class="toolbar"><label class="catfind statusfind"><svg class="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input id="statusFind" type="search" placeholder="Find an app" aria-label="Find an app" autocomplete="off" spellcheck="false"></label><button id="phoneReport" class="btn companion-only">Send a report</button>
         <button id="fixIt" class="btn primary" hidden>Fix it</button>
         <button id="updateAll" class="btn">Update apps</button>
@@ -99,7 +99,7 @@
     <div id="crashNote" hidden></div>
     <div id="wallCard" hidden></div>
     <div id="tiles" class="tiles"></div>
-    <div id="setupOnStatus" class="companion-only"></div>
+    <div id="setupOnStatus"></div>
     <div id="statusWiring"></div>
     <div class="statusbar"><div id="statusNote" class="muted statusline" aria-live="polite"></div><span id="statusAllBox"></span></div>
     <div id="statusPanel"></div>

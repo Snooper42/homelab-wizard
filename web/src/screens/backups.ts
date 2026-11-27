@@ -132,4 +132,4 @@ $('recoveryKit').onclick = async () => {
   btn.disabled = false;
 };
 
-render(h(Crumbs, { trail: [{ label: 'Status', go: () => pickStatusPart('overview') }], here: 'Backups' }), $('backupsCrumbs'));
+render(h(Crumbs, { trail: [{ label: 'Home', go: () => pickStatusPart('overview') }], here: 'Backups' }), $('backupsCrumbs'));

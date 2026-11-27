@@ -24,7 +24,7 @@
   var minute = 6e4;
   var errorText = (e3) => String(e3 && e3.message || e3);
 
-  // ../homelab-wizard/node_modules/preact/dist/preact.module.js
+  // node_modules/preact/dist/preact.module.js
   var n;
   var l;
   var u;
@@ -304,7 +304,7 @@
     return n3.__v.__b - l3.__v.__b;
   }, H.__r = 0, f = Math.random().toString(8), c = "__d" + f, a = "__a" + f, s = /(PointerCapture)$|Capture$/i, h = 0, p = V(false), v = V(true), y = 0;
 
-  // ../homelab-wizard/node_modules/preact/hooks/dist/hooks.module.js
+  // node_modules/preact/hooks/dist/hooks.module.js
   var t2;
   var r2;
   var u2;
@@ -453,7 +453,7 @@
     return "function" == typeof t3 ? t3(n3) : t3;
   }
 
-  // ../homelab-wizard/node_modules/preact/jsx-runtime/dist/jsxRuntime.module.js
+  // node_modules/preact/jsx-runtime/dist/jsxRuntime.module.js
   var f3 = 0;
   function u3(e3, t3, n3, o3, i3, u4) {
     t3 || (t3 = {});
@@ -1759,7 +1759,7 @@
   function jobsProblem(problem, waitingFor) {
     if (/DUPLICATI_PASSWORD is empty/.test(problem)) return "Shown here once DUPLICATI_PASSWORD is in Settings.";
     if (waitingFor) return `Duplicati waits for ${driveName(waitingFor)}: the jobs show here once it is plugged in.`;
-    if (/connection refused|dial tcp|no such host|timeout|EOF/i.test(problem)) return "Duplicati is not answering: start it on Status, and the jobs show here.";
+    if (/connection refused|dial tcp|no such host|timeout|EOF/i.test(problem)) return "Duplicati is not answering: start it on Home, and the jobs show here.";
     return problem;
   }
   function Jobs({ jobs, place: place2, problem, waitingFor, create }) {
@@ -5611,7 +5611,7 @@
   var stepsData = store(() => go().Setup());
   stepsData.watch(() => {
     if (stepsData.error) return notOnPhone(stepsData.error) ? void 0 : showError(stepsData.error);
-    if (onPhone()) mountSetupOnStatus($("setupOnStatus"), { steps: stepsData.value || null, open: () => navigate("setup") });
+    mountSetupOnStatus($("setupOnStatus"), { steps: stepsData.value || null, open: () => navigate("setup") });
     renderSetup(stepsData.value);
     if (form) drawSettings(false, false);
   });
@@ -8683,7 +8683,7 @@
     if (!el3 || !text2 || !btn) return;
     const on2 = document.querySelector(".screen.active")?.id;
     const said2 = trouble();
-    el3.hidden = !apps || on2 === "status" || on2 === "app";
+    el3.hidden = !apps || on2 === "status" || on2 === "app" || !said2;
     el3.classList.toggle("trouble", !!said2);
     text2.className = said2 ? "bad" : "ok";
     text2.textContent = said2 || "✓ All well";
@@ -8843,7 +8843,7 @@
     }
     btn.disabled = false;
   };
-  R(k(Crumbs, { trail: [{ label: "Status", go: () => pickStatusPart("overview") }], here: "Backups" }), $("backupsCrumbs"));
+  R(k(Crumbs, { trail: [{ label: "Home", go: () => pickStatusPart("overview") }], here: "Backups" }), $("backupsCrumbs"));
 
   // web/src/screens/status.ts
   var offers = null;
@@ -9025,7 +9025,7 @@
   function drawStatusSide() {
     const onBackups = $("backups").classList.contains("active");
     const menu2 = {
-      label: "Status",
+      label: "Home",
       here: onBackups ? "backups" : statusHere,
       pick: pickStatusPart,
       items: [
@@ -9052,7 +9052,7 @@
       mountAnalytics($("statusPart"), null);
       mountCategoryPage($("statusPart"), null);
       const fromLabel = storeFrom === "find" ? "All apps" : statusParts.find((p3) => p3.id === storeFrom)?.label;
-      const trail = [{ label: "Status", go: () => pickStatusPart("overview") }, ...fromLabel ? [{ label: fromLabel, go: () => pickStatusPart(storeFrom) }] : []];
+      const trail = [{ label: "Home", go: () => pickStatusPart("overview") }, ...fromLabel ? [{ label: fromLabel, go: () => pickStatusPart(storeFrom) }] : []];
       showStore(statusHere.slice(4), trail);
       return;
     }
@@ -9140,7 +9140,7 @@
       apps: part.apps,
       add: part.add,
       list: appList,
-      trail: [{ label: "Status", go: () => pickStatusPart("overview") }],
+      trail: [{ label: "Home", go: () => pickStatusPart("overview") }],
       here: appList.companion ? "On the server" : "On " + thisMachine.replace(/^This/, "this"),
       install: (id2) => openInstall([id2]),
       addOwn: part.id === "own" ? openCustom : void 0
@@ -10447,7 +10447,7 @@
       /* @__PURE__ */ u3(CardHead, { title: "What CrowdSec stopped today", children: head && /* @__PURE__ */ u3("span", { class: "muted", children: head }) }),
       reading3 && /* @__PURE__ */ u3(Empty, { children: "Asking CrowdSec…" }),
       !s3 && !reading3 && /* @__PURE__ */ u3(Empty, { children: "CrowdSec can't be read: it and the proxy need to be running." }),
-      s3 && !s3.enforced && /* @__PURE__ */ u3(Rows, { children: /* @__PURE__ */ u3(Row, { dot: "bad", title: "Bans aren't reaching the proxy", sub: `${s3.bouncer}. Status › Protection › Fix reconnects them.` }) }),
+      s3 && !s3.enforced && /* @__PURE__ */ u3(Rows, { children: /* @__PURE__ */ u3(Row, { dot: "bad", title: "Bans aren't reaching the proxy", sub: `${s3.bouncer}. Its page's Fix reconnects them.` }) }),
       s3 && (today.length ? /* @__PURE__ */ u3(Rows, { children: [
         today.map((a3, i3) => /* @__PURE__ */ u3(
           Row,
@@ -10541,7 +10541,7 @@
             disabled: busy2 || "alerts" in switching2,
             on: alerts,
             set: (v3) => on2.setting("alerts", v3),
-            sub: alerts ? `On your phone and ${p3.machine}` : "Shown on Status, without an alert"
+            sub: alerts ? `On your phone and ${p3.machine}` : "Shown on Home, without an alert"
           }
         ),
         a3.reach && /* @__PURE__ */ u3(
@@ -10578,7 +10578,7 @@
   }
   function AppPage(p3) {
     return /* @__PURE__ */ u3("div", { class: "apppage", children: [
-      /* @__PURE__ */ u3(Crumbs, { trail: p3.on.from ? [{ label: "Status", go: p3.on.overview || p3.on.back }, p3.on.from] : [{ label: "Status", go: p3.on.back }], here: p3.a.name }),
+      /* @__PURE__ */ u3(Crumbs, { trail: p3.on.from ? [{ label: "Home", go: p3.on.overview || p3.on.back }, p3.on.from] : [{ label: "Home", go: p3.on.back }], here: p3.a.name }),
       /* @__PURE__ */ u3(Header, { p: p3 }),
       /* @__PURE__ */ u3(Facts, { p: p3 }),
       /* @__PURE__ */ u3("div", { class: "pagecols", children: [
@@ -22775,7 +22775,7 @@ ${pays}
   // web/src/palette/Shortcuts.tsx
   var names4 = {
     choose: "Find an app",
-    status: "Status",
+    status: "Home",
     backups: "Backups",
     setup: "Setup",
     settings: "Settings",
@@ -22821,13 +22821,12 @@ ${pays}
     return lines;
   }
   var screens = () => [
-    [[mod + "1"], "Choose apps"],
-    [[mod + "2"], "Status"],
-    [[mod + "3"], "Backups"],
-    [[mod + "4"], "Setup"],
-    [[mod + ","], "Settings"],
-    [[mod + "6"], "Finances"],
-    [[mod + "7"], "Tidy Up"]
+    [[mod + "1"], "Home"],
+    [[mod + "2"], "Tidy Up"],
+    [[mod + "3"], "Finances"],
+    [[mod + "4"], "Backups"],
+    [[mod + "5"], "Find an app"],
+    [[mod + ","], "Settings"]
   ];
   function Table({ lines }) {
     return /* @__PURE__ */ u3("table", { class: "keys", children: /* @__PURE__ */ u3("tbody", { children: lines.map(([keys2, what2]) => /* @__PURE__ */ u3("tr", { children: [
@@ -22890,20 +22889,20 @@ ${pays}
     return scored.sort((a3, b2) => b2.score - a3.score || a3.i - b2.i).map((s3) => s3.c);
   }
   var screenList = [
-    ["choose", "Find an app", "1", "install add apps choose"],
-    ["status", "Status", "2", "apps running"],
-    ["backups", "Backups", "3", "backup restore"],
-    ["setup", "Setup", "4", ""],
+    ["status", "Home", "1", "status apps running overview"],
+    ["tidy", "Tidy Up", "2", "media library music books films"],
+    ["finances", "Finances", "3", "money budget bills"],
+    ["backups", "Backups", "4", "backup restore"],
+    ["choose", "Find an app", "5", "install add apps choose"],
     ["settings", "Settings", ",", "preferences options"],
-    ["finances", "Finances", "6", "money budget bills"],
-    ["tidy", "Tidy Up", "7", "media library music books films"]
+    ["setup", "Setup", "", "steps first run"]
   ];
   var finTabs = { overview: "Dashboard", transactions: "Transactions", reports: "Reports", calendar: "Calendar", recurring: "Recurring", pay: "Paychecks", worth: "Net worth" };
   function sendable() {
     const p3 = here2();
     if (!p3) return null;
     if (p3.screen === "app" && p3.app) return { link: "homelab://app/" + p3.app, title: statusById[p3.app]?.name || p3.app };
-    if (p3.screen === "status" || p3.screen === "backups") return { link: "homelab://" + p3.screen, title: p3.screen === "status" ? "Status" : "Backups" };
+    if (p3.screen === "status" || p3.screen === "backups") return { link: "homelab://" + p3.screen, title: p3.screen === "status" ? "Home" : "Backups" };
     if (p3.screen === "finances") {
       const tab3 = p3.tab && finTabs[p3.tab] ? p3.tab : "overview";
       return { link: tab3 === "overview" ? "homelab://finances" : "homelab://finances/" + tab3, title: tab3 === "overview" ? "Finances" : `Finances › ${finTabs[tab3]}` };
@@ -22936,7 +22935,7 @@ ${pays}
     if (page && !phone2) for (const t3 of targetsFor(page.link)) add({ id: `send:${t3.id}`, label: `Send ${page.title} to ${t3.name}`, also: "send to my phone open on", run: () => sendTo(t3, page.link, page.title) });
     for (const [id2, label, key6, also] of screenList) {
       if (phone2 && (id2 === "setup" || id2 === "choose")) continue;
-      add({ id: "screen:" + id2, label, hint: mod + key6, also: "screen go " + also, run: () => navigate(id2) });
+      add({ id: "screen:" + id2, label, hint: key6 ? mod + key6 : void 0, also: "screen go " + also, run: () => navigate(id2) });
     }
     const apps2 = Object.values(statusById);
     if (!apps2.length) return list;
@@ -23560,7 +23559,7 @@ ${pays}
     if (e3.button === 3 && goBack()) e3.preventDefault();
     if (e3.button === 4 && goForward()) e3.preventDefault();
   });
-  var screens2 = ["choose", "status", "backups", "setup", "settings", "finances", "tidy"];
+  var screens2 = ["status", "tidy", "finances", "backups", "choose"];
   addEventListener("pagehide", () => leavePlace(document.querySelector(".screen.active")?.id));
   {
     const first2 = document.querySelector(".screen.active")?.id;

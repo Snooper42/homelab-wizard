@@ -26,7 +26,7 @@ function trouble(): string {
   return '';
 }
 
-/** Draws the line for the screen showing: none on Status or an app's page. */
+/** Draws the line for the screen showing: none on Home or an app's page, and none when all is well. */
 export function drawHealth() {
   const el = document.getElementById('oneLine');
   const text = document.getElementById('oneText');
@@ -34,7 +34,8 @@ export function drawHealth() {
   if (!el || !text || !btn) return;
   const on = document.querySelector('.screen.active')?.id;
   const said = trouble();
-  el.hidden = !apps || on === 'status' || on === 'app';
+  // Only when something is wrong (the owner, Nov 27: no "All well" over every screen's title).
+  el.hidden = !apps || on === 'status' || on === 'app' || !said;
   el.classList.toggle('trouble', !!said);
   text.className = said ? 'bad' : 'ok';
   text.textContent = said || '✓ All well';

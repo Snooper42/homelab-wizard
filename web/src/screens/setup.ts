@@ -319,7 +319,9 @@ function setupBadge(left) {
 export const stepsData = store(() => go().Setup());
 stepsData.watch(() => {
   if (stepsData.error) return notOnPhone(stepsData.error) ? undefined : showError(stepsData.error);
-  if (onPhone()) mountSetupOnStatus($('setupOnStatus'), { steps: stepsData.value || null, open: () => navigate('setup') });
+  // Finish setting up on Home while steps are left: on the computer too, now Setup is in Settings rather than the strip
+  // (the owner, Nov 27), so a new homelab still finds it.
+  mountSetupOnStatus($('setupOnStatus'), { steps: stepsData.value || null, open: () => navigate('setup') });
   renderSetup(stepsData.value!);
   if (form) drawSettings(false, false); // each setting's step, marked under it
 });
