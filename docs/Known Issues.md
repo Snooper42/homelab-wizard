@@ -12,7 +12,7 @@ Open issues, risks, and items to verify on the Mac. Close an issue by moving it 
 |---|---|---|---|
 | ISSUE-0001 | Custom proxy image not yet built on the Mac | High | Verified on Linux, to verify on the Mac |
 | ISSUE-0002 | Client addresses for LAN requests through OrbStack | Low | To verify |
-| ISSUE-0003 | Duplicati writing into the Proton Drive folder | High | To verify |
+| ISSUE-0003 | Duplicati writing into the Proton Drive folder | High | READY FOR MAC VERIFICATION |
 | ISSUE-0004 | Domain automation not yet run against the live services | Medium | Partly verified, to verify |
 | ISSUE-0005 | Scheduled jobs not yet run under launchd | Medium | To verify |
 | ISSUE-0006 | No alert when OrbStack itself is down | Medium | Fixed, to verify |
@@ -25,7 +25,7 @@ Open issues, risks, and items to verify on the Mac. Close an issue by moving it 
 | ISSUE-0013 | Windows host profile not yet run on the Windows PC | Medium | To verify |
 | ISSUE-0014 | Release builds not yet opened on a Mac, a Windows PC, or SteamOS | Medium | Partly verified, to verify |
 | ISSUE-0015 | App wiring and the menu bar item not yet run against real apps | Medium | Partly verified, to verify |
-| ISSUE-0016 | Duplicati jobs, restores, and repairs through its API not yet run against the real image | High | Partly verified, to verify |
+| ISSUE-0016 | Duplicati jobs, restores, and repairs through its API not yet run against the real image | High | Partly verified on Linux; READY FOR MAC VERIFICATION |
 | ISSUE-0017 | Updates from the app not yet run on the Mac | Medium | To verify |
 | ISSUE-0018 | Disk space readings not yet compared on the Mac | Low | To verify |
 | ISSUE-0019 | A cloud drive's own quota cannot be read | Low | Accepted |
@@ -70,6 +70,19 @@ Proton Drive on macOS stores its folder under `~/Library/CloudStorage` (a File P
 **Verify:** run the Homelab Secrets job, confirm the files appear in the Proton Drive web app, then restore one file to `/staging/restore`.
 
 **If it fails:** point `BACKUP_DESTINATION` at a plain local folder and use the Proton Drive app's folder sync, or use Duplicati's own remote destination.
+
+**Progress (Nov 27, 2026, the reliability reset; `MERGED`, not `VERIFIED`):** three failure modes found by reading the code are now handled.
+- **Placeholders:** Proton Drive keeps synced files online only until a Mac program reads them, and Duplicati reads the backup from inside Docker's Linux machine. `homelab rebuild` and `homelab restore-test --auto` now read every placeholder (macOS's `SF_DATALESS`) through the Mac first, a file at a time, each within 5 minutes. They say how many they fetched, and stop with *open its app, let it finish syncing* if the drive doesn't hand one over (`internal/backup/hydrate.go`).
+- **The folder gone:** if `BACKUP_DESTINATION` isn't there (Proton Drive not running, a drive unplugged), the nightly backup now fails and alerts (`duplicati.Preflight`; SRE audit H6).
+- **A drive's empty folder:** if the photos' folder is empty while its backup holds files, the nightly backup fails and alerts rather than letting Duplicati record every photo deleted (H5).
+
+**Verify on the Mac (READY FOR MAC VERIFICATION):**
+1. `./homelab backup --apply`: it ends with no *is not there* or *is empty or missing* line.
+2. Duplicati's UI › Homelab Secrets › **Run now**. Then confirm the newest `duplicati-*.dlist.zip.aes` in the Proton Drive web app.
+3. In Finder, right-click the backup folder › **Remove Download**, then `./homelab restore-test --auto`. It should say *downloaded N file(s) of …* and then pass.
+4. Paste both outputs back.
+
+Phase 4's live runner (`scripts/verify-mac-live.sh`) does steps 1 and 3 in a temporary folder.
 
 ## ISSUE-0004: Domain automation not yet run against the live services
 
@@ -174,6 +187,11 @@ Still unproven: opening each on its real machine (step 2 of [Testing](<Testing.m
 **Verify:** Setup › **Create the backup jobs**: Duplicati's UI lists the jobs with the right sources, the `/destination/<folder>` targets, AES, and smart retention; Settings › Default options shows `send-http-url`; the first runs finish (Backups › Off-site jobs), and each job shows "next in N hours" matching Duplicati's own *Next scheduled task*. Then Backups › **Test a restore** passes and its tile says how long it took.
 
 **Progress (October 2026):** the nightly run against real Docker (`lscr.io/linuxserver/duplicati:latest`) now does most of this. It gives Duplicati a backup folder and runs `duplicati setup --apply`, then reads each job back through Duplicati's own API: its sources, its `/destination/<folder>` target, AES, smart retention, and its schedule. It checks that `send-http-url` is a default option once the alert token exists, and that Backups (`homelab duplicati jobs`) knows each job's next run. Once Homelab AppData's first run finishes, `restore-test --auto` restores a sample and passes. After the move, the run plays a new machine: the jobs are taken out of Duplicati (their backups stay), `duplicati setup --apply` makes them again and rebuilds each one's database from its backup, and Homelab AppData then backs up into its old folder without an error. Beside it, the nightly `rebuild` job runs every job into a folder, wipes the homelab, and restores each one from its backup files alone with Duplicati's own command line (`homelab rebuild`), then makes the jobs again from their backups. Still to verify: the same on the Mac with Proton Drive (ISSUE-0003).
+
+**Progress (Nov 27, 2026, the reliability reset; `MERGED`, not `VERIFIED`):** a blind restore is checked further. Each PostgreSQL dump `rebuild` loads must load cleanly: psql's output is read, since it exits 0 after errors (SRE audit H1). A cloud drive's placeholders are fetched before Duplicati reads the folder (ISSUE-0003).
+
+**Verify on the Mac (READY FOR MAC VERIFICATION):** Phase 4's live runner rebuilds into a temporary folder from a fresh backup, with nothing of the household's touched. Paste its output back.
+
 
 ## ISSUE-0017: Updates from the app not yet run on the Mac
 

@@ -473,6 +473,16 @@ func (h *homelab) autoRestoreTest(ctx context.Context, job string) error {
 		return err
 	}
 	started := time.Now()
+	// The job's backup whole on this machine first, as a rebuild has it
+	// (hydrateBackup): a cloud drive's placeholders are not a restore test
+	// of the backup, only of the drive's sync.
+	for _, j := range duplicati.HomelabJobs {
+		if j.Name == job {
+			if err := h.hydrateBackup(ctx, filepath.Join(h.hostPath(cmp.Or(env["BACKUP_DESTINATION"], "./backups")), j.Folder)); err != nil {
+				return fmt.Errorf("%s: %w", job, err)
+			}
+		}
+	}
 	h.ui.Step(1, 3, "Picking files to test")
 	original := appdata.Dir(h.root)
 	files, err := backup.SampleFiles(original, 12, time.Now(), rand.New(rand.NewSource(time.Now().UnixNano())), "duplicati") // #nosec G404 -- picks which backed-up files to test, nothing secret
