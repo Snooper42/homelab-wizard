@@ -63,8 +63,8 @@ struct FinancesCommands: Commands {
     }
 }
 
-/// ⌘2 to ⌘6 pick a screen, the same numbers as on the computer (Choose apps
-/// is its ⌘1 and Tidy Up its ⌘7, there only). In the View menu, as there.
+/// ⌘1, ⌘3, ⌘4 and ⌘, pick a screen, the same keys as on the computer (Library
+/// is its ⌘2, there only). In the View menu, as there.
 struct ScreenCommands: Commands {
     @FocusedValue(\.screenChoice) private var choice
 
@@ -88,10 +88,9 @@ struct ScreenCommands: Commands {
         }
     }
 
-    private func button(_ screen: DashboardViewModel.SidebarItem) -> some View {
-        Button(screen.title) { choice?.pick(screen) }
-            .keyboardShortcut(KeyEquivalent(screen.shortcut))
-            .disabled(choice == nil)
+    @ViewBuilder private func button(_ screen: DashboardViewModel.SidebarItem) -> some View {
+        let b = Button(screen.title) { choice?.pick(screen) }.disabled(choice == nil)
+        if let key = screen.shortcut { b.keyboardShortcut(KeyEquivalent(key)) } else { b }
     }
 }
 

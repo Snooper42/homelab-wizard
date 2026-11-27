@@ -81,21 +81,21 @@ final class DashboardViewModel {
             return self
         }
 
-        /// The computer's shortcut for it, ⌘ and this number (web/src/app.ts:
-        /// Choose apps is 1 and Tidy Up 7, on the computer only).
-        var shortcut: Character {
+        /// The computer's shortcut for it, ⌘ and this key (web/src/app.ts, the owner, Nov 27: Home 1, Library 2 on the
+        /// computer only, Finances 3, Backups 4, Settings the comma); Setup, in Settings now, has none.
+        var shortcut: Character? {
             switch self {
-            case .status: "2"
-            case .backups: "3"
-            case .setup: "4"
-            case .settings: "5"
-            case .finances: "6"
+            case .status: "1"
+            case .finances: "3"
+            case .backups: "4"
+            case .settings: ","
+            case .setup: nil
             }
         }
 
         var title: String {
             switch self {
-            case .status: "Status"
+            case .status: "Home"
             case .backups: "Backups"
             case .finances: "Finances"
             case .setup: "Setup"

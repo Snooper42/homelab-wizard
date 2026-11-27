@@ -362,9 +362,9 @@ struct SidebarPlaceTests {
 
     @Test func theComputersOrderNamesAndShortcuts() {
         let screens: [DashboardViewModel.SidebarItem] = [.status(.all), .backups, .finances, .setup, .settings]
-        #expect(screens.map(\.title) == ["Status", "Backups", "Finances", "Setup", "Settings"])
-        // As on the computer: ⌘2 Status, ⌘3 Backups, ⌘4 Setup, ⌘5 Settings, ⌘6 Finances.
-        #expect(screens.map(\.shortcut) == ["2", "3", "6", "4", "5"])
+        #expect(screens.map(\.title) == ["Home", "Backups", "Finances", "Setup", "Settings"])
+        // As on the computer (the owner, Nov 27): ⌘1 Home, ⌘4 Backups, ⌘3 Finances, Setup none, ⌘, Settings.
+        #expect(screens.map(\.shortcut) == ["1", "4", "3", nil, ","])
         // Every Status filter highlights the one Status row.
         #expect(DashboardViewModel.SidebarItem.status(.attention).row == .status(.all))
         #expect(DashboardViewModel.SidebarItem.backups.row == .backups)

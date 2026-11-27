@@ -178,7 +178,7 @@ private struct PhoneDashboard: View {
     var body: some View {
         TabView(selection: tab) {
             PhoneStatus(model: model, computer: computer, isMember: isMember)
-                .tabItem { Label("Status", systemImage: Screen.status(.all).systemImage) }
+                .tabItem { Label("Home", systemImage: Screen.status(.all).systemImage) }
                 .badge(model.attentionCount + (isMember ? 0 : model.backups.needsAttention))
                 .tag(Screen.status(.all))
             if finances.canSeePlan {
@@ -410,7 +410,7 @@ private struct PhoneStatus: View {
             }
             .themedCanvas()
             .searchable(text: $model.search, prompt: "Find an app")
-            .navigationTitle("Status")
+            .navigationTitle("Home")
             .navigationDestination(for: StatusPlace.self) { place in
                 switch place {
                 case .app(let id):
@@ -1061,7 +1061,7 @@ private struct SplitDashboard: View {
             }
         }
         .searchable(text: $model.search, prompt: "Filter Apps")
-        .navigationTitle(filter == .all ? "Status" : filter.title)
+        .navigationTitle(filter == .all ? "Home" : filter.title)
         #if os(macOS)
         .navigationSubtitle(model.summary)
         #endif

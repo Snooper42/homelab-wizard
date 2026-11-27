@@ -78,7 +78,7 @@ enum Palette {
                          available: (AppStatus) -> [AppAction]) -> [PaletteCommand] {
         var out: [PaletteCommand] = []
         for screen in screens {
-            out.append(PaletteCommand(id: "screen:\(screen.storageKey)", label: screen.title, hint: "\u{2318}\(screen.shortcut)",
+            out.append(PaletteCommand(id: "screen:\(screen.storageKey)", label: screen.title, hint: screen.shortcut.map { "\u{2318}\($0)" },
                                       also: screenWords(screen), section: "Screens", action: .screen(screen)))
         }
         if can.backUp {
@@ -153,7 +153,7 @@ enum Palette {
     /// Other words a screen is found by, as the computer's (commands.ts's screenList).
     private static func screenWords(_ screen: DashboardViewModel.SidebarItem) -> String {
         switch screen {
-        case .status: "apps running"
+        case .status: "status apps running"
         case .backups: "backup restore"
         case .finances: "money budget bills"
         case .setup: ""
