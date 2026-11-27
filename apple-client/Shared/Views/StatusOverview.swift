@@ -820,9 +820,16 @@ struct AppTile: View {
     }
 }
 
-/// A catalog app not on this machine yet, faded: its logo, its name and what it does.
+/// A catalog app not on this machine yet, faded: its logo, its name and what it does. What it does is said whole
+/// where there's room (the iPad, the Mac) and not at all on an iPhone, as the computer's web page does: never cut short.
 struct ShelfTile: View {
     let entry: CatalogEntry
+    #if os(iOS)
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    private var narrow: Bool { sizeClass == .compact }
+    #else
+    private let narrow = false
+    #endif
 
     var body: some View {
         VStack(spacing: 6) {
@@ -832,17 +839,20 @@ struct ShelfTile: View {
                 .foregroundStyle(Theme.ink)
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
-            Text(verbatim: entry.description)
-                .font(.subheadline)
-                .foregroundStyle(Theme.secondaryInk)
-                .multilineTextAlignment(.center)
-                .lineLimit(2)
+            if !narrow {
+                Text(verbatim: entry.description)
+                    .font(.subheadline)
+                    .foregroundStyle(Theme.secondaryInk)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
         .frame(maxWidth: .infinity)
         .padding(14)
         .card()
         .opacity(0.55)
         .accessibilityElement(children: .combine)
+        .accessibilityValue(narrow ? Text(verbatim: entry.description) : Text(verbatim: ""))
         .accessibilityHint("Add it on the computer")
     }
 }
