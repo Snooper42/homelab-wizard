@@ -2,7 +2,7 @@
 
 **Started by** the accounts' start lines in `lanes.md`: the table *Which account runs what* says which account runs lane R when.
 
-**Paused:** no
+**Paused:** yes (the owner, Nov 27, 2026: stop-the-line reliability reset; see `CLAUDE.md` and `lanes.md`, *One lane: Core Reliability*)
 
 ## The job
 

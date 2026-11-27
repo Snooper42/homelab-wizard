@@ -6,6 +6,8 @@ version: 0.17.0
 
 Open issues, risks, and items to verify on the Mac. Close an issue by moving it to Resolved with the date and what fixed it.
 
+**How an item's status reads (the reliability reset, Nov 27, 2026):** a fix can be `MERGED` (on main, CI green against fakes: it proves the logic, not the machine), then `READY FOR MAC VERIFICATION` (the owner has the exact commands and expected output in `.claude/prompts/owner.md`), then `VERIFIED` (the owner ran it on the real machine and pasted the output back). Only the owner's pasted output makes an item `VERIFIED`; CI passing never does. "To verify" in the table below means none of these yet.
+
 | ID | Title | Severity | Status |
 |---|---|---|---|
 | ISSUE-0001 | Custom proxy image not yet built on the Mac | High | Verified on Linux, to verify on the Mac |

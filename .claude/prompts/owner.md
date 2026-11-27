@@ -6,7 +6,22 @@ The one file you need. The loops read it at the start of every session.
 
 **To answer a question:** write your answer under it and commit. A loop that asks you also sends a push notification, and carries on with other work while it waits.
 
+## Stop-the-line reliability reset (Nov 27, 2026)
+
+All feature work, redesigns and polish are paused. Every account runs one lane, **Core Reliability** (`lanes.md`), through the phases in `.claude/prompts/reset-progress.md`. The rules are in `CLAUDE.md` at the repository's root.
+
+**What "done" means now:** `MERGED` is CI green against fakes. `VERIFIED` is only ever set from output you ran on your Mac and pasted back. Until then a real-hardware item says `READY FOR MAC VERIFICATION`.
+
+**Your decisions, locked in (Nov 27):**
+- **Wiping from the phone's web page:** hard no. A phone or web page can never wipe the homelab, the apps' data, or the backups; that needs someone at the computer and an explicit CLI confirmation.
+- **30-day CPU and memory samples for Analytics:** skipped. Health focuses on "is something broken?" and plain-English disk-full runway warnings.
+- **"Move the apps' data…" button:** deferred.
+- **Frozen:** new features in the iPhone and iPad app, Finances, Ollama log explanations, and new catalog apps (critical security or data-loss fixes only).
+- **Paused lanes:** R (Redesign), M (Money), W (Phone Web).
+
 ## Starting the loops
+
+**During the reset every account runs Core Reliability** (`lanes.md`); the per-account lanes in the list below are history. The start line is unchanged.
 
 Once per account: open Claude Code on the web, start a session on this repository, and paste this line, with the account's letter at the end. Each account's first session sets up a scheduled task that keeps it going; `.claude/prompts/lanes.md`, *Which account runs what*, says what each one does and when.
 
@@ -69,26 +84,26 @@ The loops add questions here: the question, the options, the one they recommend,
   - **Question 2:** when did you last build the iPhone app in Xcode?
 
   Meanwhile the loops carry on with the redesign's card (S3).
+## Assumptions the agents made
+
+Small engineering choices made without asking (`CLAUDE.md`, rule 8): the safest option, written here so you can overrule it.
+
+- (none yet)
+
+## Parked with lane R (paused)
+
+Not asked again until the redesign lane is unpaused.
+
 - **From the redesign (Nov 23):** show your wife the *Finances on a partner's phone* picture (`docs/Redesign.md`, *On the iPhone*). Is that what she'd want?
 - **From the redesign (Nov 23):** Setup off the phone's tab bar, with its unfinished steps shown on Status: OK?
 - **From the redesign (Nov 23):** the phone's accounts as small cards to swipe, or as a list?
-- **From lane Q (Nov 26): wiping the homelab from the web page.** #916 gives the web page *Take the homelab off this machine*, including **delete the apps' data** and **delete the backups**, for any device allowed to make changes. On the computer that needs someone at the machine; from the web page, a phone left unlocked at home could wipe everything, backups too, with no way back.
-  - **(a) Recommended:** the web page can take the homelab off, but deleting the data and the backups stays on the computer.
-  - **(b)** All of it on the web page, as #916 has it now.
-  - **(c)** None of it on the web page: uninstall stays the computer's, as Appearance does.
-
-  Meanwhile #916 waits on this (and on two other changes in its review), and lane Q carries on with its list.
-- **From the redesign (Nov 25): Analytics' week.** Nothing on the machine keeps the processor and memory over time: Status samples them only while it's open. So Analytics draws the minutes since Status opened, and says *A week isn't kept yet*. Drawing your picture's week and month needs the agent to keep a sample (new work, lane Q's Go side):
-  - **(a) Recommended:** the agent keeps one sample every 5 minutes for a month, in a small file in the homelab's data folder (about 1 MB; nothing leaves the machine). Then Day, Week and Month, the nightly jobs dotted.
-  - **(b)** Read Beszel's history where Beszel is installed (nothing kept by us, but only with Beszel).
-  - **(c)** Keep it live only.
-
-  Meanwhile Analytics shows what exists, and the redesign carries on with the phone's page.
-- **Moving the apps' data (quality-loop D3, Nov 25):** the apps' data folder can now live somewhere else (`APPDATA_ROOT` in `.env`, empty means `data/appdata` as today); nothing moves on its own. The next step is a **Move the apps' data…** button in Settings › Storage: it stops the apps, copies the folder to the drive you pick, checks every file, starts the apps on the new place, runs a restore test, and keeps the old folder until you press **Remove the old copy** (that's the Undo). It moves your files, so it waits for your yes.
-  - **Question:** build the move button? (Recommended: yes, with the old copy kept until you remove it.) Meanwhile I work the security list (Q1).
 
 ## Answered
 
 The loops move a question here once they've read your answer.
 
 - **Account C's scheduled task (Nov 23):** a session isn't allowed to make one, so you made *Homelab loop, account C* by hand (every 5 hours at 4 past, a custom cron). **Do the same for A and B** when they start, named exactly *Homelab loop, account A* (every 3 hours: `4 */3 * * *`) and *Homelab loop, account B* (every 5 hours: `4 */5 * * *`), each with its start line as the instructions: a session looks for that exact name.
+
+- **Wiping the homelab from the web page (asked Nov 26; answered Nov 27):** hard no, stricter than option (c): the web page cannot take the homelab off the machine at all, and nothing reachable from a phone deletes data or backups. Removed in the reset's Phase 2 pull request.
+- **Analytics' week (asked Nov 25; answered Nov 27):** (c) skip: no 30-day CPU and memory samples.
+- **Moving the apps' data (asked Nov 25; answered Nov 27):** deferred: no move button for now.
