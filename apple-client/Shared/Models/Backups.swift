@@ -334,8 +334,8 @@ extension BackupOverview {
 
     /// The redesign's two cards under Needs You (phone-backups.png, as the
     /// computer's Restore test and Off-site): the restore test's result in
-    /// big, when, and what it checked; where the copies go, encrypted, and
-    /// the second copy or the settings file. Built from `tiles`, so they
+    /// big and when; where the copies go; a failure's reason, and the second
+    /// copy or the settings file when it's wrong. Built from `tiles`, so they
     /// say each the same way.
     struct Card: Equatable, Sendable, Identifiable {
         let id: String
@@ -348,17 +348,18 @@ extension BackupOverview {
     func cards(now: Date = Date()) -> [Card] {
         let t = tiles(now: now)
         let restore = t[0], third = t[2]
+        // When it passed; a failed one's reason too, as the computer's card (few words: a pass's summary isn't said).
         var restoreLines = [restore.detail].compactMap { $0 }
         if let failed = restoreTest.failedSince, !failed.summary.isEmpty {
             restoreLines.append(failed.summary)
-        } else if restoreTest.failedSince == nil, let summary = restoreTest.lastSummary, !summary.isEmpty {
-            restoreLines.append(summary)
         }
+        // Where: the place and its folder, as the computer's; the second copy or the settings file only when it's wrong.
+        let folder = destination.split(separator: "/").last.map(String.init) ?? destination
         let offsite = Card(
             id: "offsite", title: "Off-site",
             value: destinationOK ? Self.placeName(destination) : "Not set",
-            lines: (destinationOK ? ["Encrypted before it leaves"] : ["Choose where on the computer, under Backups go to"])
-                + ["\(third.title): \([third.value, third.detail].compactMap { $0 }.joined(separator: ", "))"],
+            lines: (destinationOK ? [folder] : ["Settings › Backups go to"])
+                + (third.tone == .good ? [] : ["\(third.title): \([third.value, third.detail].compactMap { $0 }.joined(separator: ", "))"]),
             tone: !destinationOK ? .warn : third.tone)
         return [Card(id: "restore", title: restore.title, value: restore.value, lines: restoreLines, tone: restore.tone), offsite]
     }

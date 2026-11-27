@@ -565,28 +565,18 @@ private struct LinkAskDialog: ViewModifier {
 
 // MARK: - Mac & iPad
 
-/// Homelab Wizard's name and line, atop the sidebar as on the computer.
+/// Homelab Wizard's mark and name, atop the sidebar as on the computer.
 private struct BrandHeader: View {
-    @Environment(\.dynamicTypeSize) private var typeSize
-
     var body: some View {
         HStack(spacing: 10) {
             AppMark(size: 30)
-            VStack(alignment: .leading, spacing: 1) {
-                // On one line at every size (at the largest it broke as "Ho mel ab Wiz ard").
-                // The theme's own inks: in the sidebar's header `.primary` read grey (4.0:1) and
-                // `.secondary` fainter still, 1.7:1 in light and 2.4:1 in dark (ipad-land-*-status).
-                Text("Homelab Wizard")
-                    .font(.headline)
-                    .foregroundStyle(Theme.ink)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.6)
-                if !typeSize.isAccessibilitySize {
-                    Text("Your apps, at home")
-                        .font(.caption)
-                        .foregroundStyle(Theme.secondaryInk)
-                }
-            }
+            // On one line at every size (at the largest it broke as "Ho mel ab Wiz ard"), in the theme's
+            // own ink: in the sidebar's header `.primary` read grey (4.0:1) (ipad-land-*-status).
+            Text("Homelab Wizard")
+                .font(.headline)
+                .foregroundStyle(Theme.ink)
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
         }
         .textCase(nil)
         .padding(.vertical, 6)
