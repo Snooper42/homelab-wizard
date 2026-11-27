@@ -784,6 +784,7 @@ html:is(.os-mac, .os-windows, .os-linux) .card.howto.fold { padding:12px 16px; }
   html.companion .tile .sub { font-size:11.5px; }
   html.companion .alertlist li { flex-wrap:wrap; row-gap:2px; }
   html.companion .alertlist li .grow { flex-basis:calc(100% - 30px); }
+  html.companion .alertlist li:has(> .appmark) .grow { flex-basis:calc(100% - 66px); }
   html.companion .alertlist li .size, html.companion .alertlist li .when { margin-left:22px; }
   html.companion .alertlist li .size + .when { margin-left:8px; }
   html.companion nav button, html.companion nav button.active, html.companion nav button:hover, html.companion nav .finmenuitem.on { background:none !important; color:var(--muted); font-weight:500; }
@@ -2855,8 +2856,6 @@ html.os-mac:not(.companion) nav #settingsNav .pagebtn.active .icon { color:var(-
 .tiles > .tile:not(.headline) .label { display:flex; align-items:baseline; gap:10px; }
 .tiles > .tile:not(.headline) .label .statusmore { margin-left:0; }
 .tiles > .tile:not(.headline) .sub.statusupdates { justify-content:flex-start; gap:10px; }
-#backupTiles > .bkcard:not(.bkneeds):where(:not(#gapsTile)), #backupTiles > .bkcard.bkneeds:not(:has(.bkneedlist)) { background:none; border:0; box-shadow:none; border-radius:0; padding:2px 20px 2px 18px; border-left:1px solid var(--line); }
-#backupTiles > .bkcard:first-child { border-left:0; padding-left:0; }
 #backupTiles .bkcard .value { font-size:19px; font-weight:600; letter-spacing:-.01em; }
 #backupTiles .bkcard .value small { font-size:13px; }
 #backupTiles .bkcard > h2, #backupTiles .bkcard > .row h2 { font-size:12.5px; font-weight:500; color:var(--muted); }
@@ -2868,7 +2867,7 @@ html.os-mac:not(.companion) nav #settingsNav .pagebtn.active .icon { color:var(-
 .bkfacts dd { margin:0; font-size:13px; font-weight:600; white-space:nowrap; }
 #backupTiles .card-figurevalue { font-size:19px; font-weight:600; }
 #backupTiles .card-figurevalue .value { font-size:inherit; font-weight:inherit; }
-#backupTiles { display:flex; flex-wrap:wrap; align-items:flex-start; gap:14px 0; }
+#backupTiles { display:flex; flex-wrap:wrap; align-items:stretch; gap:14px; }
 #backupTiles > .bkcard:not(.bkneeds):where(:not(#gapsTile)), #backupTiles > .bkcard.bkneeds:not(:has(.bkneedlist)) { flex:1 1 220px; }
 #backupTiles > .bkcard.bklast { flex:2 1 360px; }
 #backupTiles > .bkcard.bkneeds:has(.bkneedlist) { flex:1 1 100%; order:9; }
