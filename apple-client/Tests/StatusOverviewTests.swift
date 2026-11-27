@@ -150,12 +150,16 @@ struct StatusOverviewTests {
     @Test func aCategoryRowSaysItsAppsAndHowManyRun() throws {
         let s = try JSONDecoder.homelab().decode(HomelabStatus.self, from: Data(#"{"apps":[{"id":"a","name":"AdGuard Home","state":"running"},{"id":"b","name":"Cloudflare Tunnel","state":"running"},{"id":"c","name":"Speedtest Tracker","state":"stopped"}]}"#.utf8))
         let network = StatusCategory(id: "network", label: "Network", apps: s.apps)
-        #expect(network.line == "Speedtest Tracker stopped · AdGuard Home +1")
+        #expect(network.line == "Speedtest Tracker stopped +2")
         #expect(network.pill.words == "2 of 3 running" && !network.pill.fine)
         #expect(network.spoken == "Network, 2 of 3 running: AdGuard Home, Cloudflare Tunnel, Speedtest Tracker")
         let fine = StatusCategory(id: "network", label: "Network", apps: Array(s.apps.prefix(2)))
-        #expect(fine.line == "AdGuard Home, Cloudflare Tunnel" && fine.pill.words == "2 running" && fine.pill.fine)
+        #expect(fine.line == "AdGuard Home +1" && fine.pill.words == "2 running" && fine.pill.fine)
         #expect(fine.spoken == "Network, 2 running: AdGuard Home, Cloudflare Tunnel")
+        // Two short names both fit on the row; a stopped one still comes first, alone when the two would not fit.
+        let short = try JSONDecoder.homelab().decode(HomelabStatus.self, from: Data(#"{"apps":[{"id":"d","name":"Duplicati","state":"running"},{"id":"z","name":"Dozzle","state":"running"},{"id":"g","name":"Glances","state":"stopped"}]}"#.utf8))
+        #expect(StatusCategory(id: "system", label: "System", apps: Array(short.apps.prefix(2))).line == "Duplicati, Dozzle")
+        #expect(StatusCategory(id: "system", label: "System", apps: short.apps).line == "Glances stopped +2")
         // Media automation says what it does while none stopped.
         let automation = StatusCategory(id: StatusCategory.automation, label: "Media automation", apps: Array(s.apps.prefix(1)), summary: "Finds and downloads")
         #expect(automation.line == "Finds and downloads")
