@@ -7951,11 +7951,11 @@
           /* @__PURE__ */ u3("span", { class: "muted", children: line })
         ] }),
         /* @__PURE__ */ u3("span", { class: "pill " + (warn ? "warn" : "ok"), children: [
-          warn ? `${running5} of ${r3.apps.length}` : /* @__PURE__ */ u3(S, { children: [
-            /* @__PURE__ */ u3(Icon, { name: "check" }),
-            running5
-          ] }),
-          /* @__PURE__ */ u3("span", { class: "pillword", children: " running" })
+          !warn && /* @__PURE__ */ u3(Icon, { name: "check" }),
+          /* @__PURE__ */ u3("span", { children: [
+            warn ? `${running5} of ${r3.apps.length}` : running5,
+            /* @__PURE__ */ u3("span", { class: "pillword", children: " running" })
+          ] })
         ] }),
         /* @__PURE__ */ u3(Icon, { name: "chevron" })
       ] }) }, r3.id);
