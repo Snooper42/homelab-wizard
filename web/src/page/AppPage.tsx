@@ -249,7 +249,7 @@ function Log({ explainer, machine, dozzle, on }: { explainer: string; machine: s
           {answer && <p class="answer">{answer}</p>}
           {problem && <p class="muted">{problem}</p>}
           <div class="row">
-            <span class="muted"><Icon name="lock" /> Explained on {machine} by {explainer.replace(/:latest$/, '')}; the log never left it</span>
+            <span class="muted"><Icon name="lock" /> On {machine} · {explainer.replace(/:latest$/, '')}</span>
             <span class="actions"><ActionLink onClick={ask}>Ask again</ActionLink><ActionLink onClick={() => { setAnswer(''); setProblem(''); }}>Hide</ActionLink></span>
           </div>
         </div>
@@ -349,10 +349,10 @@ function Updates({ p }: { p: AppPageProps }) {
   const { a, busy, on } = p;
   const rows: ComponentChildren[] = [];
   if (a.updatedAt) {
-    rows.push(<Row key="now" dot="ok" title="The version it runs now" sub={`Updated ${ago(a.updatedAt)}; the one before is kept for a week`}
+    rows.push(<Row key="now" dot="ok" title="The version it runs now" sub={`Updated ${ago(a.updatedAt)}`}
       end={<button class="small change" disabled={busy} title="Go back to the version it ran before, and hold its updates" onClick={() => on.act('rollback')}>Roll back</button>} />);
   }
-  if (a.held) rows.push(<Row key="held" dot="warn" title="Its updates are held" sub={`After a rollback, the nightly update leaves it out; homelab updates release ${a.id} puts it back`} />);
+  if (a.held) rows.push(<Row key="held" dot="warn" title="Its updates are held" />);
   return (
     <Card kind="alerts pagecard" id="appUpdates">
       <CardHead title="Updates">
@@ -500,7 +500,7 @@ function Settings({ p }: { p: AppPageProps }) {
   // the database it uses), and its files in the homelab folder.
   const ids = [a.id, ...(entry?.dependsOn || [])];
   const copy = o?.copies?.find((c) => ids.includes(c.id) && !c.volume && !never(c.newest));
-  const kept = container ? (copy ? `Its files, and its database's copy from ${when(copy.newest)}` : 'Its files in the homelab folder, every night') : 'It runs on its own, outside the homelab; its own app keeps its data';
+  const kept = container ? (copy ? when(copy.newest) : undefined) : 'Outside the homelab';
   return (
     <Card kind="alerts pagecard" id="appSettings">
       <CardHead title="Settings">{null}</CardHead>
