@@ -3118,7 +3118,7 @@ nav .sidemenulist .sidedot + .total { margin-left:8px; }
 .ovname .muted { font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .ovrow > .icon { color:var(--muted); }
 @container (max-width: 860px) { #tiles.tiles { grid-template-columns:1fr; } #tiles .ovcard { min-height:0; } .ovrows { grid-template-columns:minmax(0, 1fr); } }
-@media (max-width: 700px) { #tiles.tiles { grid-template-columns:1fr; } .ovrows { grid-template-columns:minmax(0, 1fr); } .ovpanel { padding:4px 14px; } .ovrow { gap:10px; } .ovname { margin-left:4px; } .ovrow .pill { padding:2px 8px; } }
+@media (max-width: 700px) { #tiles.tiles { grid-template-columns:1fr; } .ovrows { grid-template-columns:minmax(0, 1fr); } .ovpanel { padding:4px 14px; } .ovrow { gap:10px; } .ovname { margin-left:4px; } .ovrow .pill { padding:2px 8px; } .ovrow .pillword { display:none; } }
 #tiles .ovcard { background:color-mix(in srgb, var(--panel) 78%, transparent); border:1px solid var(--line); box-shadow:none; backdrop-filter:blur(12px); }
 @media (prefers-color-scheme: dark) and (prefers-contrast: no-preference) { #tiles .ovcard { background:var(--glow-04); border-color:var(--glow-1); } }
 @media (prefers-contrast: more) { #tiles .ovcard { background:var(--panel); border-color:var(--line-strong); } }

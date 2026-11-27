@@ -780,6 +780,11 @@ const smokes = [
     const foot = (await page.locator('#foot .machine .part').innerText()).split(' · ')[0];
     if (card !== foot) throw new Error(`Analytics says ${card}, the sidebar ${foot}`);
   } },
+  ...[['the computer', undefined], ['a phone', ['companion', 'can-change']]].map(([on, phone]) => ({ name: `Status: no category's line is cut short, on ${on}`, screen: 'status', phone, mock: { statusOpen: '' }, run: async (page) => {
+    await page.waitForSelector('#statusPanelCard .ovrow', { timeout: 5000 });
+    const cut = await page.$$eval('#statusPanelCard .ovname .muted', (ls) => ls.filter((l) => l.scrollWidth > l.clientWidth + 1).map((l) => l.textContent));
+    if (cut.length) throw new Error('cut short: ' + cut.join(' | '));
+  } })),
   { name: 'Status lines up: More… beside Update apps, and every category name in one column', screen: 'status', mock: { statusOpen: '' }, run: async (page) => {
     await page.waitForSelector('#statusPanelCard .ovrow', { timeout: 5000 });
     const [update, more] = await Promise.all(['#updateAll', '#statusMore'].map((s) => page.locator(s).boundingBox()));

@@ -7934,13 +7934,15 @@
   }
 
   // web/src/status/CategoryPanel.tsx
+  var lineFits = 18;
   function CategoryPanel({ rows, icons: icons4, open: open5 }) {
     if (!rows.length) return null;
     return /* @__PURE__ */ u3(Card, { kind: "ovpanel", id: "statusPanelCard", children: /* @__PURE__ */ u3("ul", { class: "ovrows", children: rows.map((r3) => {
       const running5 = r3.apps.filter((a3) => a3.state === "running").length;
       const names5 = r3.apps.map((a3) => a3.name);
       const lead2 = r3.stopped.length ? [`${r3.stopped.join(", ")} stopped`, ...names5.filter((n3) => !r3.stopped.includes(n3))] : names5;
-      const line = !r3.stopped.length && r3.summary ? r3.summary : lead2.slice(0, 2).join(r3.stopped.length ? " · " : ", ") + (lead2.length > 2 ? ` +${lead2.length - 2}` : "");
+      const shown9 = lead2.length > 1 && lead2[0].length + lead2[1].length <= lineFits ? 2 : 1;
+      const line = !r3.stopped.length && r3.summary ? r3.summary : lead2.slice(0, shown9).join(r3.stopped.length ? " · " : ", ") + (lead2.length > shown9 ? ` +${lead2.length - shown9}` : "");
       const warn = r3.stopped.length > 0;
       return /* @__PURE__ */ u3("li", { children: /* @__PURE__ */ u3("button", { type: "button", class: "ovrow", "data-key": r3.id, title: names5.join(", "), onClick: () => open5(r3.id), children: [
         /* @__PURE__ */ u3("span", { class: "ovlogos", "aria-hidden": "true", children: r3.apps.slice(0, 3).map((a3) => /* @__PURE__ */ u3(AppMark, { id: a3.id, name: a3.name, icon: icons4?.[a3.id] || "", small: true }, a3.id)) }),
@@ -7948,11 +7950,13 @@
           /* @__PURE__ */ u3("strong", { children: r3.label }),
           /* @__PURE__ */ u3("span", { class: "muted", children: line })
         ] }),
-        /* @__PURE__ */ u3("span", { class: "pill " + (warn ? "warn" : "ok"), children: warn ? `${running5} of ${r3.apps.length} running` : /* @__PURE__ */ u3(S, { children: [
-          /* @__PURE__ */ u3(Icon, { name: "check" }),
-          running5,
-          " running"
-        ] }) }),
+        /* @__PURE__ */ u3("span", { class: "pill " + (warn ? "warn" : "ok"), children: [
+          !warn && /* @__PURE__ */ u3(Icon, { name: "check" }),
+          /* @__PURE__ */ u3("span", { children: [
+            warn ? `${running5} of ${r3.apps.length}` : running5,
+            /* @__PURE__ */ u3("span", { class: "pillword", children: " running" })
+          ] })
+        ] }),
         /* @__PURE__ */ u3(Icon, { name: "chevron" })
       ] }) }, r3.id);
     }) }) });

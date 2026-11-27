@@ -186,7 +186,9 @@ struct StatusCategory: Identifiable, Equatable {
         if stopped.isEmpty, let summary { return summary }
         let names = apps.map(\.name)
         let lead = stopped.isEmpty ? names : ["\(stopped.joined(separator: ", ")) stopped"] + names.filter { !stopped.contains($0) }
-        return lead.prefix(2).joined(separator: stopped.isEmpty ? ", " : " · ") + (lead.count > 2 ? " +\(lead.count - 2)" : "")
+        // Two while they fit on the row beside the logos, else one (web/src/status/CategoryPanel.tsx's lineFits).
+        let shown = lead.count > 1 && lead[0].count + lead[1].count <= 18 ? 2 : 1
+        return lead.prefix(shown).joined(separator: stopped.isEmpty ? ", " : " · ") + (lead.count > shown ? " +\(lead.count - shown)" : "")
     }
 
     /// "4 running" when all of them run, "1 of 2 running" in amber when one doesn't.
