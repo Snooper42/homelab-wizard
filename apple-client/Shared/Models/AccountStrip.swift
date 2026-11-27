@@ -1,7 +1,7 @@
 import Foundation
 
 /// The accounts as a row of small cards under Finances' first card, as the
-/// redesign's phone picture (phone-finances.png): checking first, then the
+/// redesign's phone picture: checking first, then the
 /// others in the order the screen lists kinds, each with its balance. A home,
 /// a car or a collection isn't an account you spend from, so it isn't here
 /// (it's on Net worth).

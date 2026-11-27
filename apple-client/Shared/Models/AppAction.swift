@@ -80,7 +80,7 @@ enum AppAction: String, Sendable, CaseIterable, Identifiable {
     }
 
     /// The group menu's own name, by what it can do for the group: "All of
-    /// These" didn't say it was a menu of actions (apple-loop.md item 1).
+    /// These" didn't say it was a menu of actions.
     static func groupMenuTitle(starting: Int, running: Int) -> String {
         switch (starting > 0, running > 0) {
         case (true, true): "Start or Stop All"
@@ -145,7 +145,7 @@ enum AppSetting: String, Sendable, CaseIterable, Identifiable {
     /// Off: its updates are held (`homelab updates hold`). Container apps only.
     case updates
     /// On: the nightly update takes it on Sundays only, or the days the CLI
-    /// set (`homelab updates days <app> sun`); off: every night (main #457).
+    /// set (`homelab updates days <app> sun`); off: every night.
     /// Offered while its updates are on.
     case sundays
     /// On: the watchdog alerts when it stops (`homelab notify on`).
@@ -154,7 +154,7 @@ enum AppSetting: String, Sendable, CaseIterable, Identifiable {
     case pinned
     /// On: a public app opens away from home through the Cloudflare tunnel
     /// (`homelab away on`); off: home only (`homelab away off`). Offered
-    /// where Status gives its reach (main #559).
+    /// where Status gives its reach.
     case away
 
     var id: Self { self }

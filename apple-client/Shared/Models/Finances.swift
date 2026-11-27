@@ -246,7 +246,7 @@ struct FinancePlan: Decodable, Sendable, Equatable {
     let currency: String
     /// Every device follows this: no amounts are shown at all while it's on.
     let hideAmounts: Bool
-    /// When the investments were last read from Ghostfolio (main #489).
+    /// When the investments were last read from Ghostfolio.
     let holdingsRead: Date?
     /// The household's own pictures for a logo (finance.Plan's Logos): a
     /// small PNG, JPEG or WebP as a data URL, by a brand's key ("chase") or
@@ -354,7 +354,7 @@ struct FinanceAccount: Decodable, Sendable, Equatable, Identifiable {
     let balance: Double?
     /// Its balance on each day it was kept, oldest first.
     let history: [FinancePoint]
-    /// What an investment account holds, as Ghostfolio last read it (main #489).
+    /// What an investment account holds, as Ghostfolio last read it.
     let holdings: [FinanceHolding]
     /// The day its balance was typed in (local midnight), for its page's
     /// balance after each day (AccountBalance).
@@ -412,7 +412,7 @@ struct FinancePayment: Decodable, Sendable, Equatable, Identifiable {
     /// A card whose whole balance it pays (`Payment.Card`).
     let card: String?
     /// Someone outside the household who sends it ("Jamie", for a share of
-    /// the mortgage): money in, from none of the household's accounts (main #483).
+    /// the mortgage): money in, from none of the household's accounts.
     let payer: String?
     /// How often it comes (`finance.Schedule`).
     var schedule: FinanceSchedule? = nil
@@ -1033,7 +1033,7 @@ extension FinancesPlanView {
     }
 }
 
-// MARK: - Investments from Ghostfolio, read or added from the phone (main #494, #498)
+// MARK: - Investments from Ghostfolio, read or added from the phone
 
 /// A ticker Ghostfolio found for what was typed (`ghostfolio.Symbol`).
 struct InvestmentSymbol: Decodable, Sendable, Hashable, Identifiable {

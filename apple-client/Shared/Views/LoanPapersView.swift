@@ -1,12 +1,12 @@
 import SwiftUI
 
-/// A loan's page from Loans (the owner's pick on the mocks canvas, Nov 15):
+/// A loan's page from Loans:
 /// what's owed and its rate, and where its papers are typed in on the
 /// computer, the ring of payments made, what's paid down of what was
 /// borrowed, the next payment split, who pays it each month, when it's half
 /// paid and paid off, and every payment (`LoanPapers`, as the computer's Loans).
 /// Where Finances may change, Type In Its Papers… (or Change Its Papers…)
-/// opens `LoanPapersEditor` (the owner's yes, Nov 19).
+/// opens `LoanPapersEditor`.
 struct LoanPage: View {
     let loan: FinancePayoff
     @Bindable var finances: FinancesViewModel

@@ -3,7 +3,7 @@ import SwiftUI
 /// A new goal, as the computer's Add a goal makes one (the owner's pick,
 /// Nov 14): its name and what it needs, the day it's wanted by (or none:
 /// whenever), and the share of each account that counts toward it: one or
-/// several (the owner's yes, Nov 19), each no more than other goals leave.
+/// several, each no more than other goals leave.
 struct AddGoalView: View {
     let finances: FinancesViewModel
     @Environment(\.dismiss) private var dismiss

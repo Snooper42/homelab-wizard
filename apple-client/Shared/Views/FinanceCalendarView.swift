@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Finances › Calendar (the owner's pick on the mocks canvas, Nov 15): the
+/// Finances › Calendar: the
 /// money month by month, as the computer's Calendar. Each day shows its
 /// paydays and payments as logos and checking at its end, outlined in
 /// orange under the cushion; days before today what was recorded. Tap a day

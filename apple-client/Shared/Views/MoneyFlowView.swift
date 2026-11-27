@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Money flow on Cash Flow (the owner's pick on the mocks canvas, Nov 15),
+/// Money flow on Cash Flow,
 /// as the computer's: where a month's money came from, all of it together,
 /// then taxes, spending and saved, and on to each kind of spending and each
 /// account it was saved in (`FinanceFlow`). A month the ledger has, or a

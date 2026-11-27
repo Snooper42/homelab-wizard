@@ -44,7 +44,7 @@ struct ScreenLead: View {
             EmptyView()
         } header: {
             // The calm grey at 4.5:1: `.secondary` in a header, already grey, dimmed it twice
-            // (1.9:1 in light-setup, 2.8:1 in dark-setup; main's pictures after #745).
+            // (1.9:1 in light-setup, 2.8:1 in dark-setup).
             Text(verbatim: text)
                 .font(.callout)
                 .foregroundStyle(Theme.secondaryInk)
@@ -203,7 +203,7 @@ private struct WatchdogCard: View {
                         Text(failure.problem)
                             .font(.callout)
                             .foregroundStyle(.secondary)
-                        // Snoozed on the computer (main #469): still checked, no alerts for now.
+                        // Snoozed on the computer: still checked, no alerts for now.
                         if let until = summary.snoozedUntil(failure.name) {
                             Label("No alerts about it until \(WatchdogSummary.wakeText(until))", systemImage: "bell.slash")
                                 .font(.caption)
@@ -362,7 +362,7 @@ private struct ProtectionCard: View {
 }
 
 /// What CrowdSec stopped since midnight, as the proxy's page lists it
-/// (main #430): each attack, then "and N more today".
+/// : each attack, then "and N more today".
 struct StoppedToday: View {
     let protection: Protection
 

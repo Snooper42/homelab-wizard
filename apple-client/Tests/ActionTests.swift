@@ -22,7 +22,7 @@ struct AppActionTests {
         #expect(AppAction.available(for: try app(state: "elsewhere")).isEmpty)
     }
 
-    // A group's menu says what it does ("All of These" didn't, apple-loop.md item 1).
+    // A group's menu says what it does ("All of These" didn't).
     @Test func aGroupsMenuSaysWhatItDoes() {
         #expect(AppAction.groupMenuTitle(starting: 2, running: 3) == "Start or Stop All")
         #expect(AppAction.groupMenuTitle(starting: 1, running: 0) == "Start All")
@@ -219,7 +219,7 @@ struct AppSettingTests {
         #expect(!AppSetting.available(for: held).contains(.sundays))
     }
 
-    // Home only (main #559): Status's reach says a public app has the switch,
+    // Home only: Status's reach says a public app has the switch,
     // once the domain has the tunnel; on is "away", off "home".
     @Test func reachItAwayFromHome() throws {
         let away = try app(#"{"id":"immich-server","name":"Immich","state":"running","reach":"away"}"#)
@@ -319,7 +319,7 @@ struct SidebarPlaceTests {
         #expect(!DashboardViewModel.startsWithSidebar(width: 700, largeText: false))
     }
 
-    /// Every Alert beside the list on the Mac and iPad (#596's gap 4): it
+    /// Every Alert beside the list on the Mac and iPad: it
     /// takes the app's place, and picking an app or another screen closes it.
     @Test @MainActor func everyAlertTakesTheAppsPlaceUntilAnotherIsPicked() {
         let live = LiveEventManager(api: APIClient(keychain: FakeCredentialStore(), protocolClasses: [StubProtocol.self]))
@@ -591,7 +591,7 @@ struct StatusGroupTests {
         #expect(StatusFolds.isOpen(other, in: "not json"))             // a bad record is no choice
     }
 
-    // The folds are the computer's, the same on every device (the owner, Nov 10): its answer becomes this device's
+    // The folds are the computer's, the same on every device: its answer becomes this device's
     // folds; a change is saved for every device only when the person made it (not the computer's answer coming
     // back, in whatever order), on a device allowed changes, with a computer that keeps them.
     @Test func foldsAreTheComputers() throws {

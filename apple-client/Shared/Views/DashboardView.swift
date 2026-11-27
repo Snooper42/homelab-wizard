@@ -94,7 +94,7 @@ struct DashboardView: View {
         .task { await model.loadForMorning() }
         // Alerts from this app (Settings › Alerts From), while it runs.
         .task { await LocalAlerts.watch(read: { try await model.alertLog() }, computerKeeps: { actions.computerAnswers("AlertLog") }) }
-        // When Homelab Wizard last stopped unexpectedly: Status's crash note (the owner's pick, Nov 16).
+        // When Homelab Wizard last stopped unexpectedly: Status's crash note.
         .task { if actions.computerAnswers("LastCrash") { await model.readCrash() } }
         // Kept as it arrives, so leaving (a lock clears the status first) still saves what was seen.
         .onChange(of: model.liveEvents.status) { _, status in
@@ -121,7 +121,7 @@ struct DashboardView: View {
         }
         // The cards change slowly: read them now, then every 5 minutes while
         // unlocked. What this device may do is read again with them: the
-        // computer can give a phone its changes for a while only (main #455),
+        // computer can give a phone its changes for a while only,
         // and when that ends it only looks, without telling the phone.
         .task {
             var first = true
@@ -301,7 +301,7 @@ extension ScreenshotMode {
 }
 #endif
 
-/// Status on iPhone, as the computer's Overview (the owner's pictures, Nov 25): Apps, Backups and the machine as
+/// Status on iPhone, as the computer's Overview: Apps, Backups and the machine as
 /// three cards of one anatomy, then the categories, each opening its page. Nothing below them. While searching,
 /// only the apps that match.
 private struct PhoneStatus: View {
@@ -443,7 +443,7 @@ private struct PhoneStatus: View {
             // it: an overlay on the list showed both, apple-loop.md item 1).
             .onChange(of: model.hasLoaded, initial: true) {
                 guard path.isEmpty, model.hasLoaded else { return }
-                // A category's page: Media, as the computer's picture (app-status-category-phone.png).
+                // A category's page: Media, as the computer's picture.
                 if ScreenshotMode.shot == "category" { path.append(.category("media")) }
                 guard ScreenshotMode.shot == "app", let app = model.app(id: "vikunja") ?? model.latestApps.first else { return }
                 path.append(.app(app.id))
@@ -571,7 +571,7 @@ private struct BrandHeader: View {
             VStack(alignment: .leading, spacing: 1) {
                 // On one line at every size (at the largest it broke as "Ho mel ab Wiz ard").
                 // The theme's own inks: in the sidebar's header `.primary` read grey (4.0:1) and
-                // `.secondary` fainter still, 1.7:1 in light and 2.4:1 in dark (ipad-land-*-status, Nov 19).
+                // `.secondary` fainter still, 1.7:1 in light and 2.4:1 in dark (ipad-land-*-status).
                 Text("Homelab Wizard")
                     .font(.headline)
                     .foregroundStyle(Theme.ink)
@@ -615,13 +615,13 @@ private struct SplitDashboard: View {
     @Environment(AppActionsViewModel.self) private var actions
     @Environment(AppCoordinator.self) private var coordinator
     @Environment(HomelabTasksViewModel.self) private var tasks
-    /// ⌘K (item 3): the palette, and Transactions' own commands while it's in front.
+    /// ⌘K: the palette, and Transactions' own commands while it's in front.
     @State private var paletteOpen = false
     /// Transactions' own commands, when it was in front as ⌘K opened the palette
     /// (passed in by the menu: this view reads no focused value, FocusedValueTests).
     @State private var transactionsFocus: TransactionsFocus?
     /// The sidebar's choice, kept across launches as the computer keeps each
-    /// screen's place (#417). Only the choice is kept, never what it shows.
+    /// screen's place. Only the choice is kept, never what it shows.
     @SceneStorage(DashboardViewModel.placeKey) private var savedSidebar = "apps:all"
     /// Which Status groups are open (StatusFolds), as on iPhone, and the
     /// computer's for every device (FoldSync).
@@ -727,7 +727,7 @@ private struct SplitDashboard: View {
     }
 
     /// Backups and Setup, beside the sidebar across the whole width: a household member's iPad has neither.
-    /// (Setup opens nothing, so its right side would only ever be empty: landscape pictures, Nov 15.)
+    /// (Setup opens nothing, so its right side would only ever be empty: landscape pictures)
     private var wideScreen: Bool { statusWide || ((model.sidebar == .backups || model.sidebar == .setup) && !isMember) }
 
     /// Status beside the sidebar across the whole width, as the iPhone's: the Overview, its pages opening over it.
@@ -736,7 +736,7 @@ private struct SplitDashboard: View {
     var body: some View {
         Group {
             if wideScreen {
-                // Backups across the whole width (the owner's pick, Nov 15): the sidebar and Backups, its More pages
+                // Backups across the whole width: the sidebar and Backups, its More pages
                 // opening over it.
                 NavigationSplitView(columnVisibility: $columns) {
                     sidebar
@@ -1249,7 +1249,7 @@ private struct HealthLineInset: ViewModifier {
     }
 }
 
-/// Health in one line (main #470): atop every screen but Status and an
+/// Health in one line: atop every screen but Status and an
 /// app's page, "All well" or the one thing that needs you. On iPhone, Back
 /// is the way to Status; on the Mac and iPad, Open Status shows the apps
 /// that need a look.
@@ -1261,7 +1261,7 @@ struct HealthLineBar: View {
     var body: some View {
         if let line = model.healthLine {
             // Side by side; at the largest sizes one over the other, so the app's
-            // name isn't broken in a narrow column ("Mealie / : Sto…", Nov 16).
+            // name isn't broken in a narrow column ("Mealie /: Sto…").
             let stacked = typeSize.isAccessibilitySize
             let layout = stacked ? AnyLayout(VStackLayout(alignment: .leading, spacing: 4)) : AnyLayout(HStackLayout(spacing: 8))
             layout {
@@ -1285,7 +1285,7 @@ struct HealthLineBar: View {
             .font(.callout.weight(.medium))
             // A bar under every screen grows no further than the first accessibility size, as
             // Open Its Page: at the largest it took a quarter of the iPad's Finances column on
-            // three lines (ipad-land-large-finances, Nov 19). Still one over the other there.
+            // three lines (ipad-land-large-finances). Still one over the other there.
             .dynamicTypeSize(...DynamicTypeSize.accessibility1)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal)
@@ -1312,7 +1312,7 @@ struct GroupHeader: View {
                         .foregroundStyle(.secondary)
                         .rotationEffect(.degrees(open ? 90 : 0))
                     // Shrunk to fit rather than cut: at the largest text the iPad's
-                    // column read "Net…" and "Sec…" (Nov 16).
+                    // column read "Net…" and "Sec…".
                     Text(verbatim: group.label)
                         .lineLimit(1)
                         .minimumScaleFactor(0.55)
@@ -1394,10 +1394,10 @@ struct OvernightLine: View {
     var body: some View {
         if let words = model.overnightLine {
             // At the largest sizes the button goes under the words: beside them, in the
-            // iPad's column, both broke a letter or two a line ("Over / nigh / t:", Nov 16).
+            // iPad's column, both broke a letter or two a line ("Over / nigh / t:").
             if typeSize.isAccessibilitySize {
                 // The words the whole width, without the moon beside them: in the iPad's column the
-                // colon still went to a line of its own ("Overnight / : 2 apps", Nov 20).
+                // colon still went to a line of its own ("Overnight /: 2 apps").
                 VStack(alignment: .leading, spacing: 6) {
                     Text(words).font(.callout)
                     hide

@@ -2,7 +2,7 @@ import Foundation
 import Testing
 @testable import HomelabClient
 
-/// Transactions selected together (Parity gap 5, apple-loop.md item 2): one
+/// Transactions selected together: one
 /// category, Move to another account, or Delete, for each that can take it.
 @Suite("Transactions selected together")
 struct SelectTogetherTests {

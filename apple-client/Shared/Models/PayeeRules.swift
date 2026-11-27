@@ -4,7 +4,7 @@ import Foundation
 /// Edit.tsx's RulesForm and "Always do this for…"): each payee's name as it
 /// comes in, or the words names start with, and the name and category it
 /// becomes. Every import follows them before anything is guessed. Import 4 of
-/// 4 (the owner approved the mock with the pop-up, Nov 15). They change the
+/// 4. They change the
 /// plan for every device, so they're saved only while the Homelab answers.
 enum PayeeRules {
     typealias Rule = BankImport.Rule

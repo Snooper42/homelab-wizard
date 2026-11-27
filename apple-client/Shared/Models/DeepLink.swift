@@ -1,6 +1,6 @@
 import Foundation
 
-/// A link into the app (`homelab://…`, unison-handoff.md section 4, item 1),
+/// A link into the app (`homelab://…`, unison-handoff.md section 4),
 /// from an alert's button, a shortcut, or anywhere else. Anyone can send a
 /// link, so **a link never changes anything by itself**: an action link opens
 /// the app's page with the action waiting for one confirming tap, and only
@@ -20,7 +20,7 @@ enum DeepLink: Equatable, Sendable {
     case backups
     case finances(page: FinancePage?)
     /// Tidy Up's Inbox lives on the computer; on the phone it opens Status
-    /// until Tidy Up's questions come to the phone (item 9).
+    /// until Tidy Up's questions come to the phone.
     case tidyInbox
 
     /// What an app link asks for once its page is open.

@@ -464,7 +464,7 @@ struct BackupsTests {
         #expect(o.upToDate.fresh == 1 && o.upToDate.of == 3)
     }
 
-    /// Backups as the owner picked it (Nov 12): what needs a look first, the
+    /// Backups as the owner picked it: what needs a look first, the
     /// fresh ones folded, and the three tiles under the top card.
     @Test func backupsLeadWithWhatNeedsALook() throws {
         let o = try JSONDecoder.homelab().decode(BackupOverview.self, from: Data(#"""
@@ -477,7 +477,7 @@ struct BackupsTests {
         #expect(o.waitingGroups.map(\.state) == ["paused", "none"])
     }
 
-    /// Backups as the redesign's phone picture (Nov 24): what needs you in one list, and the Last night card's words.
+    /// Backups as the redesign's phone picture: what needs you in one list, and the Last night card's words.
     @Test func lastNightSaysWhatWasCopiedAndSkipped() throws {
         let o = try JSONDecoder.homelab().decode(BackupOverview.self, from: Data(#"""
         {"lastRun":"2026-11-24T08:41:00Z","destination":"/Users/me/Library/CloudStorage/ProtonDrive-me/homelab-backups","destinationOK":true,
@@ -539,14 +539,14 @@ struct BackupsTests {
         #expect(try tiles("{}") == ["restore: None yet warn", "vault: Never exported warn", "settingsFile: Not copied warn"])
         // The detail is in words, relative to now.
         #expect(try overview(#"{"restoreTest":{"lastTest":"2026-11-08T14:00:00Z"}}"#).tiles(now: now)[0].detail == "3 days ago")
-        // More › Restore tests says it in the same words as the tile (Nov 16: "last week" against "2 weeks ago").
+        // More › Restore tests says it in the same words as the tile.
         let tested = Date(timeIntervalSince1970: 1_794_405_600 - 10 * 86_400)
         let tile = try overview(#"{"restoreTest":{"lastTest":"2026-11-01T14:00:00Z"}}"#).tiles(now: now)[0].detail
         #expect(tile == BackupOverview.ago(tested, now: now))
     }
 
     /// Backups in two columns only where each has room: the iPad in
-    /// landscape beside the sidebar, not upright (Nov 16).
+    /// landscape beside the sidebar, not upright.
     @Test func backupsTakeTwoColumnsOnlyWhereTheyFit() {
         #expect(BackupsLayout.columns(asked: 2, width: 960) == 2)
         #expect(BackupsLayout.columns(asked: 2, width: 594) == 1)
@@ -964,7 +964,7 @@ struct StaleCopyTests {
 
 @Suite("Settings on a phone")
 struct HomelabSettingsTests {
-    // As the computer sends it (main #491): a secret says only that it is set.
+    // As the computer sends it: a secret says only that it is set.
     let json = #"""
     {"settings":[
       {"key":"TZ","section":"This Mac","help":"Your time zone.","secret":false,"set":true,"value":"Europe/Lisbon"},
@@ -985,7 +985,7 @@ struct HomelabSettingsTests {
           {"key":"QUIET_HOURS","section":"Notifications","secret":false,"set":true,"value":"22-7"},
           {"key":"AUTO_HEAL","section":"Updates","secret":false,"set":true,"value":"true"}]}
         """#.utf8))
-        // Automatic Care's order (Nov 24): restarting, then quiet hours and alerts.
+        // Automatic Care's order: restarting, then quiet hours and alerts.
         #expect(form.firstSettings.map(\.key) == ["AUTO_HEAL", "QUIET_HOURS", "DESKTOP_ALERTS"])
         #expect(form.firstSettings.map { SettingWords.label($0.key, apps: []) }
             == ["Restart an app that stops answering", "Quiet hours (no sound at night)", "Alerts on the computer's screen"])

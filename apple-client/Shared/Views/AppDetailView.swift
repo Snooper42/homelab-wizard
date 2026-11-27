@@ -141,12 +141,12 @@ struct AppDetailView: View {
             // the rest behind More.
             glanceSection(for: app)
 
-            // Its passwords and keys, as the computer's ⚙ (only on the owner's devices).
+            // Its passwords and keys, as the computer's ⚙.
             if actions.canSeeSignIns {
                 SignInDetailsSection(app: app)
             }
 
-            // Who uses it, by name, as the computer's page (only on the owner's devices).
+            // Who uses it, by name, as the computer's page.
             if actions.canSeeAppPeople {
                 WhoUsesItSection(app: app)
             }
@@ -229,7 +229,7 @@ struct AppDetailView: View {
             if let restarts = app.restarts, restarts > 0 {
                 LabeledContent("Restarts", value: restarts.formatted())
             }
-            // What it takes on the computer (item 4): memory and processor while it runs, and its folder.
+            // What it takes on the computer: memory and processor while it runs, and its folder.
             let uses = dashboard.cards.resources(of: app.id)
             if app.isRunning, let memory = uses.memory {
                 LabeledContent("Memory", value: memory.formatted(.byteCount(style: .memory)))
@@ -460,7 +460,7 @@ struct AppDetailView: View {
     }
 
     /// The proxy's and CrowdSec's pages: what CrowdSec stopped today
-    /// (main #430), from the Protection card the dashboard already holds.
+    /// , from the Protection card the dashboard already holds.
     static let guardApps: Set<String> = ["nginx-proxy-manager", "crowdsec"]
 
     @ViewBuilder
@@ -608,7 +608,7 @@ struct AppDetailView: View {
                     Label(warning, systemImage: "exclamationmark.triangle")
                         .foregroundStyle(Theme.warning)
                 }
-                // Others installed here that do much the same job (main #438).
+                // Others installed here that do much the same job.
                 let installed = Set((dashboard.liveEvents.status?.apps ?? [])
                     .filter { $0.state == "running" || $0.state == "stopped" }.map(\.id))
                 ForEach(dashboard.catalog?.sameJob(as: app.id, among: installed) ?? []) { pair in
@@ -658,7 +658,7 @@ struct AppDetailView: View {
     }
 
     /// Where it can be reached from, as the computer's Address tile says it.
-    /// A public app kept home only (main #559) says so.
+    /// A public app kept home only says so.
     nonisolated static func reach(isPublic: Bool, hasAddress: Bool, homeOnly: Bool = false) -> String {
         if isPublic && homeOnly { return "At home only: kept off the internet." }
         if isPublic { return "At home, and on the internet through the Cloudflare Tunnel." }

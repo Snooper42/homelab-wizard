@@ -1,7 +1,7 @@
 import Foundation
 
 /// The line under Transactions' review strip, as the redesign's picture
-/// (phone-transactions.png: *2 matched to bills, 1 needs a category*): what
+/// (1 needs a category*): what
 /// looks like a planned payment or a transfer, sorted just under it, and how
 /// many of the new ones have no category yet. Nil when there's nothing to say.
 enum ReviewStrip {

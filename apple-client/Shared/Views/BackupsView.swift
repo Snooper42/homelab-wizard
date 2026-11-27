@@ -10,7 +10,7 @@ struct BackupsView: View {
     /// The fresh copies, opened from their row of logos. Kept like Status's folds.
     @SceneStorage("backupsFreshOpen") private var freshOpen = false
 
-    /// Two columns across the iPad's width (the owner's pick, Nov 15): the summary and what needs
+    /// Two columns across the iPad's width: the summary and what needs
     /// a look on the left, the fresh copies and More on the right. One column elsewhere.
     var columns = 1
     /// Its own width, for whether two columns fit (`BackupsLayout`).
@@ -372,7 +372,7 @@ private struct JobRow: View {
             if let message = job.errorMessage, !message.isEmpty {
                 Text(message).font(.caption).foregroundStyle(Theme.danger).lineLimit(4)
             } else if job.damaged, let checked = job.checked, let problem = job.checkProblem {
-                // Sunday's check found a damaged file (main #463).
+                // Sunday's check found a damaged file.
                 Text("Failed its check \(checked.formatted(Self.checkTime)): \(problem)")
                     .font(.caption).foregroundStyle(Theme.danger).lineLimit(5)
             } else if job.state == "stale" {
@@ -434,7 +434,7 @@ private struct JobRow: View {
     }
 }
 
-/// The top of Backups, as the redesign's phone picture (phone-backups.png)
+/// The top of Backups, as the redesign's phone picture
 /// and the computer's Last night card: a chip for what was skipped, how many
 /// of last night's copies were made ("11 of 12 copied"), when it finished
 /// and where they went, then Back Up Now and Test a Restore side by side.
@@ -540,7 +540,7 @@ private struct BackupsHero: View {
     }
 }
 
-/// The last fourteen nights, oldest first, as the computer's (R7): green
+/// The last fourteen nights, oldest first, as the computer's: green
 /// when every copy was made, amber when an app was stopped, red when one
 /// failed; the night in words for VoiceOver.
 private struct NightSquares: View {

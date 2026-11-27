@@ -138,7 +138,7 @@ struct LockStateMachineTests {
         #expect(auth.prompts == 1)
     }
 
-    // Lock After (the owner, Nov 14: not Face ID "every single second").
+    // Lock After.
     @Test func backWithinLockAfterTheAppIsAsItWasLeft() async {
         let auth = FakeOwnerAuthenticator(), clock = TestClock()
         let c = make(store: FakeCredentialStore(Self.credential()), auth: auth, clock: clock)

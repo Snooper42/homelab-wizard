@@ -163,7 +163,7 @@ struct FinanceFlowTests {
     }
 
     /// Track from on a month's 15th: the flow counts that month from the
-    /// 15th, not whole, and no month before it (Nov 16).
+    /// 15th, not whole, and no month before it.
     @Test func countedFromTrackFromsDay() throws {
         let ledger: JSONValue = .object(["transactions": .array([
             .object(["id": .string("a"), "date": .string("2026-09-30"), "amount": .number(-10)]),

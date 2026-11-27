@@ -5,13 +5,13 @@ import Foundation
 ///
 /// The wire contract, as the server implements it:
 ///
-/// | Endpoint                   | Auth   | Body / answer                                   |
+/// | Endpoint | Auth | Body / answer |
 /// |----------------------------|--------|-------------------------------------------------|
-/// | `POST /api/pair`           | none   | `{code, name, kiosk}` → `{token, device}`       |
-/// | `GET  /api/me`             | Bearer | → `{id, name, canChange, finances}`             |
-/// | `POST /api/call/<Method>`  | Bearer | JSON array of args → `{result, log}` / `{error}`|
-/// | `GET  /api/events`         | Bearer | `text/event-stream`, `data: <engine.Change>`    |
-/// | `POST /api/tunnel` (away)  | sealed | `{device, nonce, box}` → `{nonce, box}`         |
+/// | `POST /api/pair` | none | `{code, name, kiosk}` → `{token, device}` |
+/// | `GET /api/me` | Bearer | → `{id, name, canChange, finances}` |
+/// | `POST /api/call/<Method>` | Bearer | JSON array of args → `{result, log}` / `{error}`|
+/// | `GET /api/events` | Bearer | `text/event-stream`, `data: <engine.Change>` |
+/// | `POST /api/tunnel` (away) | sealed | `{device, nonce, box}` → `{nonce, box}` |
 ///
 /// Away from home (ADR-0023): a read that can't reach home goes through
 /// the Cloudflare tunnel instead, sealed end to end with the key agreed at
@@ -48,10 +48,10 @@ actor APIClient {
     nonisolated let streamingSession: URLSession
     /// For changes. A start or restart can pull an image first, which takes
     /// minutes with no bytes in between, longer still while it waits out a
-    /// busy registry (up to 3 min 40 s of tries since main #429). Its idle
+    /// busy registry. Its idle
     /// timeout of 5 minutes covers that. The computer gives a command up to
     /// 30 minutes. A change that waits its turn behind a nightly backup
-    /// (main #425) can outlast it; it then still runs, and Status shows it.
+    /// can outlast it; it then still runs, and Status shows it.
     private let actionSession: URLSession
     /// Home, tried briefly when the tunnel is there to fall back on.
     private let quickSession: URLSession
@@ -289,7 +289,7 @@ actor APIClient {
         }
     }
 
-    // MARK: Settings (main #491)
+    // MARK: Settings
 
     /// The Settings form: every `.env` setting, a secret only as set or not.
     func settingsForm() async throws -> HomelabSettingsForm {
@@ -438,7 +438,7 @@ actor APIClient {
     }
 
     /// Reads Ghostfolio now and keeps what each account holds on the
-    /// plan's account of its name (main #494). It needs the edit level,
+    /// plan's account of its name. It needs the edit level,
     /// over https, and it's never retried.
     func financesReadInvestments() async throws -> InvestmentsReadResult {
         let (request, endpoint) = try callRequest("FinancesReadInvestments", [])
@@ -689,7 +689,7 @@ actor APIClient {
     ///
     /// - The device needs `canChange`. The computer checks that too, and
     ///   answers 403 otherwise.
-    /// - The computer makes one change at a time (main #425): a change from
+    /// - The computer makes one change at a time: a change from
     ///   a phone waits its turn behind the app's, another phone's, or a
     ///   nightly job's, so it can take a while. It no longer fails as busy.
     /// - This is never retried. A change isn't idempotent, and a timed-out

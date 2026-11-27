@@ -54,7 +54,7 @@ struct TransactionsWalletTests {
          {"id":"sav","name":"High-Yield Savings","kind":"savings"},
          {"id":"chk","name":"Everyday Checking","kind":"checking"}]
         """#.utf8))
-        // It opens on every account (the owner, Nov 24), so nothing picks one first.
+        // It opens on every account, so nothing picks one first.
         // A home, a car and a collectible have no transactions: not in the switcher.
         #expect(TransactionsView.switcherAccounts(accounts).map(\.id) == ["chk", "sav", "visa"])
     }

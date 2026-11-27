@@ -294,7 +294,7 @@ enum FinancePlanEdit {
     }
 
     /// `plan` with the payment `id` changed as the computer's Edit a payment
-    /// changes one (the owner's yes, Nov 21, on the canvas's *Idea: Bills*):
+    /// changes one (on the canvas's *Idea: Bills*):
     /// its name, kind, what it costs and whether that's about, its schedule,
     /// and the account it comes out of. What the sheet doesn't show is kept
     /// as it was: who sends money in and where it goes, the account it moves
@@ -780,7 +780,7 @@ struct GoalShare: Codable, Sendable, Equatable, Identifiable {
     var id: String { account }
 }
 
-/// A payment typed on the phone's Add Payment (the owner's mock, Nov 15):
+/// A payment typed on the phone's Add Payment:
 /// out of an account, or money in from someone outside the household, on a
 /// schedule that may be twice a month or with each paycheck.
 struct NewPayment: Codable, Sendable, Equatable {
