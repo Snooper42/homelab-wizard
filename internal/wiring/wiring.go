@@ -385,11 +385,7 @@ func (w *Wirer) call(ctx context.Context, id, key, method, path string, body, ou
 	defer resp.Body.Close()
 	data, _ := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
 	if resp.StatusCode/100 != 2 {
-		msg := strings.TrimSpace(string(data))
-		if len(msg) > 200 {
-			msg = msg[:200] + "…"
-		}
-		return &statusError{fmt.Sprintf("%s %s: %s %s", w.name(id), path, resp.Status, msg), resp.StatusCode}
+		return &statusError{refusal(w.name(id), resp.Status, data), resp.StatusCode}
 	}
 	if out != nil {
 		return json.Unmarshal(data, out)

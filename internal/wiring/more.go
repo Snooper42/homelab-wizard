@@ -115,16 +115,53 @@ func (w *Wirer) send(ctx context.Context, id, method, path string, header map[st
 	defer resp.Body.Close()
 	data, _ := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
 	if resp.StatusCode/100 != 2 {
-		msg := strings.TrimSpace(string(data))
-		if len(msg) > 200 {
-			msg = msg[:200] + "…"
-		}
-		return &statusError{fmt.Sprintf("%s %s: %s %s", w.name(id), path, resp.Status, msg), resp.StatusCode}
+		return &statusError{refusal(w.name(id), resp.Status, data), resp.StatusCode}
 	}
 	if out != nil {
 		return json.Unmarshal(data, out)
 	}
 	return nil
+}
+
+// refusal is an app's answer to a request it turned down, in its own
+// words: Seerr's message, an *arr's validation errors, else its text (cut
+// at 200 characters), else the status.
+func refusal(name, status string, data []byte) string {
+	var said []string
+	var one struct {
+		Message any `json:"message"`
+	}
+	var many []struct {
+		ErrorMessage string `json:"errorMessage"`
+	}
+	switch {
+	case json.Unmarshal(data, &one) == nil && one.Message != nil:
+		switch m := one.Message.(type) {
+		case string:
+			said = append(said, m)
+		case []any:
+			for _, x := range m {
+				said = append(said, fmt.Sprint(x))
+			}
+		}
+	case json.Unmarshal(data, &many) == nil:
+		for _, e := range many {
+			if e.ErrorMessage != "" {
+				said = append(said, e.ErrorMessage)
+			}
+		}
+	}
+	msg := strings.Join(said, "; ")
+	if msg == "" {
+		msg = strings.TrimSpace(string(data))
+		if len(msg) > 200 {
+			msg = msg[:200] + "…"
+		}
+	}
+	if msg == "" {
+		msg = status
+	}
+	return name + " refused it: " + msg
 }
 
 type statusError struct {
@@ -319,8 +356,12 @@ func (w *Wirer) seerr(ctx context.Context, arr, folder string) (string, string, 
 		if len(wrong) == 0 {
 			return "already", "", nil
 		}
+		// The id is in the path; Seerr refuses it in the body (read-only
+		// in its OpenAPI spec: "request/body/id is read-only").
+		id := cur["id"]
+		delete(cur, "id")
 		body, _ := json.Marshal(cur)
-		if err := w.send(ctx, "seerr", http.MethodPut, fmt.Sprintf("%s/%v", path, cur["id"]), header, body, nil); err != nil {
+		if err := w.send(ctx, "seerr", http.MethodPut, fmt.Sprintf("%s/%v", path, id), header, body, nil); err != nil {
 			return "", "", err
 		}
 		sort.Strings(wrong)

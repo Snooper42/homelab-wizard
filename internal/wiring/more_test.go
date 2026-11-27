@@ -124,20 +124,28 @@ func fakeSeerr(t *testing.T, key string) (string, map[string][]resource) {
 		}
 		parts := strings.Split(strings.TrimPrefix(r.URL.Path, "/api/v1/settings/"), "/")
 		kind := parts[0]
+		var body resource
+		if r.Method == http.MethodPost || r.Method == http.MethodPut {
+			json.NewDecoder(r.Body).Decode(&body)
+			// Seerr checks a body against its OpenAPI spec, where a
+			// server's id is read-only (the owner's Connect apps, Nov 27).
+			if _, ok := body["id"]; ok {
+				w.WriteHeader(http.StatusBadRequest)
+				w.Write([]byte(`{"message":"request/body/id is read-only","errors":[{"path":"/body/id","message":"is read-only","errorCode":"readOnly.openapi.validation"}]}`))
+				return
+			}
+		}
 		switch r.Method {
 		case http.MethodGet:
 			json.NewEncoder(w).Encode(saved[kind])
 		case http.MethodPost:
-			var body resource
-			json.NewDecoder(r.Body).Decode(&body)
 			body["id"] = float64(len(saved[kind]))
 			saved[kind] = append(saved[kind], body)
 			w.WriteHeader(http.StatusCreated)
 		case http.MethodPut:
-			var body resource
-			json.NewDecoder(r.Body).Decode(&body)
 			for i, cur := range saved[kind] {
 				if len(parts) > 1 && jsonString(cur["id"]) == parts[1] {
+					body["id"] = cur["id"]
 					saved[kind][i] = body
 				}
 			}
@@ -226,5 +234,23 @@ func TestARootFolderTheAppCannotUseIsANextStep(t *testing.T) {
 func TestHostPort(t *testing.T) {
 	if h, p := hostPort("http://gluetun:8082"); h != "gluetun" || p != 8082 {
 		t.Fatalf("%s %d", h, p)
+	}
+}
+
+// An app that turns a change down is quoted in its own words on Connect
+// apps, not as a request path and its JSON (the owner, Nov 27: "this looks
+// ugly"): Seerr's message, an *arr's validation errors, else its text.
+func TestARefusalSaysWhatTheAppSaid(t *testing.T) {
+	for _, c := range []struct{ body, want string }{
+		{`{"message":"request/body/id is read-only","errors":[{"path":"/body/id","message":"is read-only"}]}`, "Seerr refused it: request/body/id is read-only"},
+		{`{"message":"INVALID_CREDENTIALS"}`, "Seerr refused it: INVALID_CREDENTIALS"},
+		{`[{"propertyName":"Path","errorMessage":"Folder is not writable by user abc"},{"propertyName":"Path","errorMessage":"Path does not exist"}]`, "Seerr refused it: Folder is not writable by user abc; Path does not exist"},
+		{"Fails.", "Seerr refused it: Fails."},
+		{"", "Seerr refused it: 502 Bad Gateway"},
+		{strings.Repeat("x", 300), "Seerr refused it: " + strings.Repeat("x", 200) + "…"},
+	} {
+		if got := refusal("Seerr", "502 Bad Gateway", []byte(c.body)); got != c.want {
+			t.Errorf("%.40q: %q, want %q", c.body, got, c.want)
+		}
 	}
 }
