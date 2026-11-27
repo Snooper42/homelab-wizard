@@ -13,6 +13,7 @@ Everything runs from a terminal in the homelab folder: `./homelab` on macOS and 
 ./homelab status        # what runs, its health, and its addresses (--all: the helpers too)
 ./homelab status --timing   # how long each part of Status takes on this machine
 ./homelab doctor        # anything wrong with this machine, the runtime, disk space, drive health, or .env
+./homelab doctor --live # the real engine, a backup and a blind restore, the scheduled agent, and the apps, in a throwaway workspace: a PASS/FAIL table to paste back (scripts/verify-mac-live.sh)
 ./homelab runtime install --apply   # Linux and SteamOS: Docker in your home folder, run as you, kept across system updates
 ./homelab kit           # a folder the app made: which build of the homelab files it is
 ./homelab kit update homelab-kit.tar.gz   # bring such a folder up to a newer kit (never .env, data, or your own apps)

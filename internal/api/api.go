@@ -35,15 +35,18 @@ type Category struct {
 
 // App is one catalog entry.
 type App struct {
-	ID          string   `json:"id"`
-	Name        string   `json:"name"`
-	Category    string   `json:"category"`
-	Description string   `json:"description"`
-	Kind        string   `json:"kind"` // baseline, optional, native, or helper
-	Stack       string   `json:"stack,omitempty"`
-	Aliases     []string `json:"aliases,omitempty"`
-	DependsOn   []string `json:"dependsOn,omitempty"`
-	Conflicts   []string `json:"conflicts,omitempty"`
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	Category    string `json:"category"`
+	Description string `json:"description"`
+	Kind        string `json:"kind"` // baseline, optional, native, or helper
+	// Tier is gold for the household's core apps (catalog.GoldTier), which
+	// the homelab keeps working first, or experimental.
+	Tier      string   `json:"tier"`
+	Stack     string   `json:"stack,omitempty"`
+	Aliases   []string `json:"aliases,omitempty"`
+	DependsOn []string `json:"dependsOn,omitempty"`
+	Conflicts []string `json:"conflicts,omitempty"`
 	// GoesWith are the apps this one adds to, by ID, each with what it
 	// brings them (x-homelab goes_with): suggested to those who run one.
 	GoesWith map[string]string `json:"goesWith,omitempty"`
@@ -139,7 +142,7 @@ func appOf(c *catalog.Catalog, a *catalog.App) App {
 		kind = "optional"
 	}
 	out := App{
-		ID: a.ID, Name: a.Name(), Category: a.Category(), Description: a.Meta.Description, Kind: kind,
+		ID: a.ID, Name: a.Name(), Category: a.Category(), Description: a.Meta.Description, Kind: kind, Tier: a.Tier(),
 		Aliases: a.Meta.Aliases, DependsOn: a.DependsOn, Conflicts: a.Meta.Conflicts, GoesWith: a.Meta.GoesWith, SameJob: a.Meta.SameJob,
 		Inputs: a.Meta.Requires, Login: a.Meta.Login, Keys: a.Meta.Keys, Recovery: a.Meta.Recovery, KeyFile: a.Meta.KeyFile != "", Phone: a.Phone(), Public: a.Public(), Warning: a.Meta.Warning, Next: a.Meta.Next,
 	}

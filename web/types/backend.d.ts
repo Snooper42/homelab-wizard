@@ -9,6 +9,7 @@ declare namespace api {
     category: string;
     description: string;
     kind: string;
+    tier: string;
     stack?: string;
     aliases?: string[];
     dependsOn?: string[];

@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Snooper42/homelab-wizard/internal/diskspace"
 	"github.com/Snooper42/homelab-wizard/internal/docker"
 	"github.com/Snooper42/homelab-wizard/internal/ui"
 	"github.com/Snooper42/homelab-wizard/internal/updates"
@@ -278,5 +279,57 @@ func TestAnUpdateWhoseNewImageCannotStartGoesBack(t *testing.T) {
 	}
 	if held := envMapOf(t, root)[updates.HeldKey]; !strings.Contains(held, "ntfy") {
 		t.Errorf("its updates are not held (%q), so tonight would try again", held)
+	}
+}
+
+// Phase 4: a disk filling fast enough to be full within two weeks fails its
+// watchdog check, in plain words, weeks before it is Low; a disk already Low
+// is not alerted twice, and a steady one passes.
+func TestRunwayChecks(t *testing.T) {
+	now := time.Date(2026, 11, 27, 12, 0, 0, 0, time.Local)
+	const gb = 1 << 30
+	var filling, steady []diskspace.Sample
+	for i := 0; i < 10; i++ {
+		day := now.AddDate(0, 0, i-9).Format(time.DateOnly)
+		filling = append(filling, diskspace.Sample{Day: day, Free: uint64(57-5*i) * gb, Total: 1000 * gb})
+		steady = append(steady, diskspace.Sample{Day: day, Free: 500 * gb, Total: 1000 * gb})
+	}
+	hist := diskspace.History{"homelab folder": filling, "media": steady, "photos": filling}
+	vols := []diskspace.Volume{
+		{Names: []string{"homelab folder", "backups"}, Free: 12 * gb, Total: 100 * gb}, // above its 10 GB threshold
+		{Names: []string{"media"}, Free: 500 * gb, Total: 1000 * gb},
+		{Names: []string{"photos"}, Free: 5 * gb, Total: 1000 * gb}, // Low already
+	}
+	rs := runwayChecks(hist, vols, now)
+	if len(rs) != 3 {
+		t.Fatalf("%+v", rs)
+	}
+	if rs[0].Err == nil || !strings.Contains(rs[0].Err.Error(), "homelab folder, backups is filling by about 5.0 GB a day") {
+		t.Errorf("filling: %v", rs[0].Err)
+	}
+	if rs[1].Err != nil || rs[2].Err != nil {
+		t.Errorf("steady %v, already low %v", rs[1].Err, rs[2].Err)
+	}
+}
+
+// Phase 4: homelab apps marks each app gold or experimental, --gold lists
+// only the household's core apps, and --json says each one's tier; no app
+// is removed for it.
+func TestAppsSaysEachTier(t *testing.T) {
+	root, _ := repoCopy(t)
+	out, code := homelabCmd(t, root, "", "apps", "--gold")
+	if code != 0 || !strings.Contains(out, "vaultwarden") || !strings.Contains(out, "immich-server") || strings.Contains(out, "frigate") || strings.Contains(out, "Finance") {
+		t.Fatalf("--gold: exit %d\n%s", code, out)
+	}
+	all, code := homelabCmd(t, root, "", "apps")
+	if code != 0 || !strings.Contains(all, "frigate") || !strings.Contains(all, "experimental") {
+		t.Fatalf("all: exit %d\n%s", code, all)
+	}
+	if out, code := homelabCmd(t, root, "", "apps", "--gold", "--category", "finance"); code == 0 || !strings.Contains(out, "no Gold Tier apps") {
+		t.Errorf("an empty tier: exit %d\n%s", code, out)
+	}
+	js, code := homelabCmd(t, root, "", "--json", "apps")
+	if code != 0 || !strings.Contains(js, `"id":"vaultwarden"`) || !strings.Contains(js, `"tier":"gold"`) || !strings.Contains(js, `"tier":"experimental"`) {
+		t.Fatalf("--json: exit %d\n%.400s", code, js)
 	}
 }

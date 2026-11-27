@@ -41,7 +41,10 @@ func airPlayPorts(hp host.Profile) []int {
 	return nil
 }
 
-func (h *homelab) doctor(ctx context.Context, _ []string) error {
+func (h *homelab) doctor(ctx context.Context, args []string) error {
+	if slices.Contains(args, "--live") {
+		return h.verifyLive(ctx, slices.DeleteFunc(slices.Clone(args), func(a string) bool { return a == "--live" }))
+	}
 	u := h.ui
 	problems := 0
 	fail := func(format string, args ...any) { problems++; u.Fail(format, args...) }
@@ -321,11 +324,16 @@ func (h *homelab) doctor(ctx context.Context, _ []string) error {
 	}
 
 	u.Title("Disk space")
+	diskHist := diskspace.LoadHistory(diskspace.HistoryPath(h.root))
 	for _, v := range diskspace.Check(diskspace.Locations(h.root, home, m)) {
 		if v.Low() {
 			u.Warn("%s: %s, under %s; %s", v.Label(), v.Describe(), diskspace.Size(diskspace.Threshold(v.Total)), diskspace.Advice)
 		} else {
 			u.OK("%s: %s", v.Label(), v.Describe())
+		}
+		// The trend the watchdog keeps a day at a time: weeks ahead of Low.
+		if days, per, ok := diskspace.Runway(diskHist[v.Names[0]], time.Now()); ok && days <= diskspace.RunwayNoteDays {
+			u.Warn("%s", diskspace.RunwayWords(v.Label(), days, per, time.Now()))
 		}
 	}
 	u.Title("Drive health")

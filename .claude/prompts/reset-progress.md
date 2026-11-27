@@ -9,7 +9,7 @@ The one backlog during the stop-the-line reliability reset (`CLAUDE.md`, `lanes.
 | 1 | Governance: `CLAUDE.md`, one Core Reliability lane, Owner Notice Test, two-stage Done, anti-shortcut rules, scope freeze | `MERGED` (#961, Nov 27) |
 | 2 | SRE audit (`docs/SRE-Audit-2026-11.md`) and fixes for every Critical and High finding | PR 2 (C1, H1 to H6 fixed; M1 to M8 recorded) |
 | 3 | Known Issues' real-hardware gaps, one PR per flow: backups and blind restore; `launchd` jobs and start at boot; updates and rollback; app wiring against live Docker | Flows 1 to 4 committed locally (PRs 3 to 6, opened one at a time after #963) |
-| 4 | Live Mac verification runner; Gold Tier catalog; disk-full runway warning | Not started |
+| 4 | Live Mac verification runner; Gold Tier catalog; disk-full runway warning | Committed locally (PR 7) |
 | 5 | The owner's handoff: *Run This On Your Mac Tonight* at the top of `owner.md` | Not started |
 
 ## Pull requests
@@ -44,6 +44,11 @@ The one backlog during the stop-the-line reliability reset (`CLAUDE.md`, `lanes.
 
 - **Owner notice:** when *Connect the apps* can't read an app's API key because the container saved it as another account, it now says so and gives the one `chown` that fixes it, instead of *open it once, then try again* forever.
 - **Files:** `internal/wiring/{keptkey.go,keptkey_test.go}`, `docs/Known Issues.md` (ISSUE-0015), `CHANGELOG.md`.
+
+### PR 7: the live check, Gold Tier, and the disk runway (Phase 4)
+
+- **Owner notice:** `./scripts/verify-mac-live.sh` (`homelab doctor --live`) prints a PASS/FAIL table of the real engine, backups and blind restores, the agent and the apps, in a throwaway workspace. `homelab apps --gold` lists the household's core apps. An alert comes two weeks before a disk fills.
+- **Files:** `cmd/homelab/verifylive.go` (new) and `verifylive_test.go` (new); `cmd/homelab/{doctor,main,apps,jobs}.go`; `cmd/homelab/{fakebin,rollback_safety}_test.go`; `scripts/verify-mac-live.sh` (new); `Makefile` (bash -n on it); `internal/diskspace/{runway,runway_test}.go` (new); `internal/catalog/{tier,tier_test}.go` (new); `internal/api/api.go` (`tier`, added); `web/types/backend.d.ts` (regenerated); `docs/{Commands,Known Issues}.md`; `CHANGELOG.md`.
 
 ## Open risks
 

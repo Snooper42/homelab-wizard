@@ -138,6 +138,8 @@ Maintenance:
   homelab kit [update FILE]            a folder the desktop app made: its kit, or update it
   homelab homepage                     write Homepage's list of apps (also after installs)
   homelab doctor                       check this machine, the container runtime, and settings
+  homelab doctor --live                the real engine, backups, restores, jobs, and apps, in a
+                                       throwaway workspace: a PASS/FAIL table (also verify-live)
   homelab runtime install              Linux (SteamOS too): set up Docker in your home folder, run
                                        as you, kept across system updates
   homelab fix                          repair what usually goes wrong: the runtime stopped,
@@ -273,6 +275,7 @@ func run(ctx context.Context, u *ui.UI, args []string) int {
 		"unpin":        h.pin(false),
 		"schedule":     h.schedule,
 		"doctor":       h.doctor,
+		"verify-live":  h.verifyLive,
 		"report":       h.report,
 		"setup":        h.setupChecklist,
 		"docs":         h.docs,

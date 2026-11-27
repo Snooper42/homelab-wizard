@@ -20,7 +20,7 @@ lint:
 	go vet ./...
 	go vet -tags forreal ./...
 	python3 -m py_compile tools/media/*.py
-	bash -n homelab dockerfiles/npm-crowdsec/homelab-init.sh app/packaging/appimage.sh app/packaging/appimage-smoke.sh
+	bash -n homelab dockerfiles/npm-crowdsec/homelab-init.sh app/packaging/appimage.sh app/packaging/appimage-smoke.sh scripts/verify-mac-live.sh
 	sh -n install.sh
 
 # What CI runs: formatting, vet, tests, and the catalog/docs validation.

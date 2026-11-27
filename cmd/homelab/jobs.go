@@ -629,6 +629,21 @@ func diskChecks(vols []diskspace.Volume, advice string) []health.Result {
 	return results
 }
 
+// runwayChecks is one watchdog check per disk, failing while it is filling
+// fast enough to be full within diskspace.RunwayWarnDays. A disk already Low
+// has its own failing check, so it is not alerted twice.
+func runwayChecks(hist diskspace.History, vols []diskspace.Volume, now time.Time) []health.Result {
+	var results []health.Result
+	for _, v := range vols {
+		r := health.Result{Name: "disk runway (" + v.Names[0] + ")", Status: 200}
+		if days, per, ok := diskspace.Runway(hist[v.Names[0]], now); ok && days <= diskspace.RunwayWarnDays && !v.Low() {
+			r.Err = errors.New(diskspace.RunwayWords(v.Label(), days, per, now))
+		}
+		results = append(results, r)
+	}
+	return results
+}
+
 func anyLow(vols []diskspace.Volume) bool {
 	for _, v := range vols {
 		if v.Low() {
@@ -886,6 +901,13 @@ func (h *homelab) watchdog(ctx context.Context, args []string) error {
 		cancel()
 	}
 	results = append(results, diskChecks(vols, advice)...)
+	// Today's free space, kept a day at a time, and how soon each disk is
+	// full at the rate it has been filling (diskspace.Runway).
+	diskHist := diskspace.HistoryPath(h.root)
+	if err := diskspace.Record(diskHist, vols, time.Now()); err != nil {
+		h.ui.Warn("could not keep today's free space: %v", err)
+	}
+	results = append(results, runwayChecks(diskspace.LoadHistory(diskHist), vols, time.Now())...)
 	if drives, err := checkDrives(ctx); err == nil {
 		results = append(results, driveChecks(drives)...)
 	}

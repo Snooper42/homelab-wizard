@@ -152,6 +152,11 @@ func fakeDockerMain(d string, args []string) int {
 	case "ps":
 		cat("ids.txt")
 	case "inspect":
+		// verify-live's own throwaway containers run.
+		if has("{{.State.Running}}") && has("homelab-verify-") {
+			fmt.Println("true")
+			break
+		}
 		cat("inspect.json")
 	case "network":
 		net := filepath.Join(d, "net-"+arg(2))
@@ -183,6 +188,8 @@ func fakeDockerMain(d string, args []string) int {
 				n = "1"
 			}
 			fmt.Println(n)
+		case has("from photos"):
+			fmt.Println("500") // verify-live's restored table
 		case has("from pg_tables"):
 			fmt.Println("public|tx|public.tx")
 		case has("(select * from"):
@@ -238,6 +245,44 @@ func fakeDockerMain(d string, args []string) int {
 		if os.Getenv("FAKE_LOAD_FAILS") != "" && has("tar xzf") {
 			fmt.Fprintln(os.Stderr, "tar: short read")
 			return 2
+		}
+		// A container writing into a folder shared with it (verify-live).
+		if has("/w/probe") {
+			for i, a := range args {
+				if a == "-v" && i+1 < len(args) && strings.HasSuffix(args[i+1], ":/w") {
+					_ = os.WriteFile(filepath.Join(strings.TrimSuffix(args[i+1], ":/w"), "probe"), []byte("homelab\n"), 0o644)
+				}
+			}
+			return 0
+		}
+		if has("sha256sum") {
+			fmt.Println("2f1e…  ./receipt.pdf") // the same listing for every volume
+			return 0
+		}
+		// Duplicati's backup with its command line: the source's files in the
+		// stand-in's layout (<job>/files, <job>/passphrase), as restore reads it.
+		if has("duplicati-cli") && has(" backup ") {
+			var src, dest, job string
+			for i, a := range args {
+				if a == "-v" && i+1 < len(args) {
+					switch v := args[i+1]; {
+					case strings.HasSuffix(v, ":/source:ro"):
+						src = strings.TrimSuffix(v, ":/source:ro")
+					case strings.HasSuffix(v, ":/destination"):
+						dest = strings.TrimSuffix(v, ":/destination")
+					}
+				}
+				if j, ok := strings.CutPrefix(a, "file:///destination/"); ok {
+					job = j
+				}
+			}
+			if err := copyTree(src, filepath.Join(dest, job, "files"), false); err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				return 1
+			}
+			_ = os.WriteFile(filepath.Join(dest, job, "passphrase"), []byte(os.Getenv("PASSPHRASE")), 0o600)
+			_ = os.WriteFile(filepath.Join(dest, job, "duplicati-20261127T050000Z.dlist.zip.aes"), nil, 0o600)
+			return 0
 		}
 		if has("duplicati-cli") && has(" restore ") {
 			// Duplicati's restore, from the backup folder's <job>/files into

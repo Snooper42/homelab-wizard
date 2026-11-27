@@ -27,7 +27,7 @@ Open issues, risks, and items to verify on the Mac. Close an issue by moving it 
 | ISSUE-0015 | App wiring and the menu bar item not yet run against real apps | Medium | Partly verified on Linux; READY FOR MAC VERIFICATION |
 | ISSUE-0016 | Duplicati jobs, restores, and repairs through its API not yet run against the real image | High | Partly verified on Linux; READY FOR MAC VERIFICATION |
 | ISSUE-0017 | Updates from the app not yet run on the Mac | Medium | READY FOR MAC VERIFICATION |
-| ISSUE-0018 | Disk space readings not yet compared on the Mac | Low | To verify |
+| ISSUE-0018 | Disk space readings not yet compared on the Mac | Low | To verify; runway warning added (READY FOR MAC VERIFICATION) |
 | ISSUE-0019 | A cloud drive's own quota cannot be read | Low | Accepted |
 | ISSUE-0020 | Vaultwarden web vault shows a black screen in LibreWolf | Low | Accepted |
 | ISSUE-0021 | Installing and updating the app on Windows and Linux not yet run everywhere | Medium | To verify |
@@ -237,6 +237,10 @@ Paste the outputs of steps 2 and 3 back.
 Settings › This Mac › Storage, `homelab doctor`, and the watchdog read free space with `statfs`, as `df` does: the space free right now. Finder's *Available* also counts purgeable space (caches and iCloud copies macOS deletes when room is needed), so on the Mac the homelab's number can be lower than Finder's, and a disk could read low while Finder still shows room. That errs on the side of warning early. On Windows the reading comes from `GetDiskFreeSpaceEx`. Disks are grouped by device, so folders on the Mac's disk (the homelab folder, the Proton Drive folder) share one line, and the media drive gets its own.
 
 **Verify:** Settings › This Mac › Storage shows two lines, the Mac's disk and the media drive, with free space matching `df -h ~ /Volumes/Media`. With the drive unplugged, its line goes away instead of showing the Mac's disk under its name.
+
+**Progress (Nov 27, 2026, the reliability reset; `MERGED`, not `VERIFIED`):** a disk-full runway. The watchdog keeps each disk's free space once a day (`data/disk-history.json`, 60 days) and fits a line through the last three weeks. If that line reaches full within 14 days, an alert says it in words: which disk, how fast it fills, and roughly when it is full. `homelab doctor` and the live check say so from 30 days. A disk already under its threshold keeps its own alert, so it is not warned twice.
+
+**Verify on the Mac (READY FOR MAC VERIFICATION):** after a week of the watchdog running, `./homelab doctor --live` lists each disk under *Disk space* with its free space (compare `df -h ~ /Volumes/Media`) and, once it has enough days, how many days it has at the rate it fills.
 
 ## ISSUE-0019: A cloud drive's own quota cannot be read
 
