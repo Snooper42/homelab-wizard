@@ -89,21 +89,18 @@ struct BackupsView: View {
         }
     }
 
-    /// What needs you, in one list as the redesign's picture: the copies out of date or shrunk, then the ones waiting
-    /// for their drive or not copied yet, each with its fix (Start for a stopped app); the waiting ones' notes under it.
+    /// Skipped, in one list: the copies out of date or shrunk, then the ones waiting for their drive or not copied
+    /// yet, each with its fix (Start for a stopped app).
     @ViewBuilder
     private func needsYou(_ overview: BackupOverview) -> some View {
         let copies = overview.needingYou
         if !copies.isEmpty {
-            let notes = overview.waitingGroups.compactMap(\.note)
             Section {
                 ForEach(copies) { copy in
                     CopyRow(copy: copy, nights: overview.nights(of: copy))
                 }
             } header: {
                 CountHeader(title: "Skipped", count: copies.count, tint: overview.needingALook.isEmpty ? .secondary : Theme.warning)
-            } footer: {
-                if !notes.isEmpty { Text(verbatim: notes.joined(separator: "\n")) }
             }
         }
     }

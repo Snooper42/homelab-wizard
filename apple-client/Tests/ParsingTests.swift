@@ -946,10 +946,11 @@ struct StaleCopyTests {
         let stopped = try app("vikunja", "stopped"), restarting = try app("vikunja", "restarting")
         let running = try app("vikunja", "running"), other = try app("other", "running")
         #expect(stale.app == "vikunja")
-        #expect(stale.staleWhy(apps: [stopped])?.hasPrefix("It's stopped, so the nightly copy skips it.") == true)
-        #expect(stale.staleWhy(apps: [restarting]) == "It isn't running, so the nightly copy skips it.")
-        #expect(stale.staleWhy(apps: [running])?.hasPrefix("Last night's copy didn't come.") == true)
-        #expect(stale.staleWhy(apps: [other]) == "It isn't installed any more: its last copies are kept.")
+        // In a word, as the computer's; nothing when its app runs.
+        #expect(stale.staleWhy(apps: [stopped]) == "Stopped")
+        #expect(stale.staleWhy(apps: [restarting]) == "Not running")
+        #expect(stale.staleWhy(apps: [running]) == nil)
+        #expect(stale.staleWhy(apps: [other]) == "Removed")
     }
 
     @Test func saysNothingWhenItIsntKnown() throws {

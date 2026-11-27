@@ -422,19 +422,14 @@ struct BackupCopy: Decodable, Sendable, Equatable, Identifiable {
         app = try c.decodeIfPresent(String.self, forKey: .app)
     }
 
-    /// Why a stale copy is stale, from its app's state, and what helps, in
-    /// the computer's words (`staleWhy`, main #474). Nil when that isn't
-    /// known: not stale, no app, or Status not read yet (`apps` nil).
+    /// Why a stale copy is stale, in a word, as the computer's (`staleWhy`): Removed, Stopped, Not running.
+    /// Nil when its app runs, or when that isn't known: not stale, no app, or Status not read yet (`apps` nil).
     func staleWhy(apps: [AppStatus]?) -> String? {
         guard state == "stale", let apps, let id = app, !id.isEmpty else { return nil }
-        guard let app = apps.first(where: { $0.id == id }) else {
-            return "It isn't installed any more: its last copies are kept."
-        }
-        if app.state == "stopped" {
-            return "It's stopped, so the nightly copy skips it. Start it, and tonight's copy catches up."
-        }
-        if app.state != "running" { return "It isn't running, so the nightly copy skips it." }
-        return "Last night's copy didn't come. Back up now tries again; if it fails, the backup's log says why."
+        guard let app = apps.first(where: { $0.id == id }) else { return "Removed" }
+        if app.state == "stopped" { return "Stopped" }
+        if app.state != "running" { return "Not running" }
+        return nil
     }
 }
 
