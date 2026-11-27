@@ -1216,10 +1216,6 @@
     return /* @__PURE__ */ u3(Card, { kind: "setuponstatus", id: "setupOnStatusCard", children: [
       /* @__PURE__ */ u3(CardHead, { title: "Finish setting up", children: /* @__PURE__ */ u3("button", { type: "button", class: "small primary", onClick: open5, children: "Continue" }) }),
       /* @__PURE__ */ u3("p", { class: "muted", children: [
-        p3.done,
-        " of ",
-        p3.total,
-        " done · ",
         p3.left,
         " left"
       ] }),
