@@ -38,7 +38,7 @@ enum AccountBalance {
         }
     }
 
-    /// Transactions' running balance for one account (Parity gap 5): for
+    /// Transactions' running balance for one account: for
     /// each day in `shown` (newest first), its latest transaction, by id,
     /// with what the account held (a card or loan: owed) after the day, as
     /// the computer's Transactions shows it once a day. Empty when it can't

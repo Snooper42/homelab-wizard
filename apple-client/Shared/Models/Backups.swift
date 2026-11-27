@@ -11,7 +11,7 @@ struct BackupOverview: Decodable, Sendable, Equatable {
     let envCopied: Date?
     let copies: [BackupCopy]
     let stale: Int
-    /// Copies less than half the night before's (main #435).
+    /// Copies less than half the night before's.
     let shrank: Int
     /// Not fresh, while their apps wait for a drive.
     let paused: Int
@@ -222,7 +222,7 @@ extension BackupOverview {
         return parts.last ?? destination
     }
 
-    // MARK: Backups as the owner picked it (Nov 12)
+    // MARK: Backups as the owner picked it
 
     /// The copies that need a look first: out of date, or less than half
     /// the night before's.
@@ -234,9 +234,9 @@ extension BackupOverview {
     /// Paused and not copied yet, each with its note (copyGroups').
     var waitingGroups: [CopyGroup] { copyGroups.filter { $0.state == "paused" || $0.state == "none" } }
 
-    // MARK: Backups as the redesign's phone picture (Nov 24)
+    // MARK: Backups as the redesign's phone picture
 
-    /// What needs you, in one list (phone-backups.png's Needs You): the
+    /// What needs you, in one list: the
     /// copies out of date or shrunk first, then the ones waiting for their
     /// drive or not copied yet.
     var needingYou: [BackupCopy] { needingALook + waitingGroups.flatMap(\.copies) }
@@ -284,7 +284,7 @@ extension BackupOverview {
 
     /// How long ago, said one way everywhere on Backups ("yesterday", "last
     /// week", "3 days ago"): the tiles and the rows under More once read the
-    /// same restore test as "last week" and "2 weeks ago" (Nov 16).
+    /// same restore test as "last week" and "2 weeks ago".
     static func ago(_ date: Date, now: Date = Date()) -> String {
         let words = RelativeDateTimeFormatter()
         words.dateTimeStyle = .named
@@ -402,7 +402,7 @@ struct BackupCopy: Decodable, Sendable, Equatable, Identifiable {
     /// fresh, stale, none, or paused.
     let state: String
     let waitingFor: String?
-    /// The catalog app it's a copy of, when the computer knows (main #474).
+    /// The catalog app it's a copy of, when the computer knows.
     let app: String?
 
     enum CodingKeys: String, CodingKey { case id, name, volume, newest, size, count, before, shrank, state, waitingFor, app }
@@ -556,7 +556,7 @@ struct DuplicatiJob: Decodable, Sendable, Equatable, Identifiable {
     let state: String
     /// Nil when it isn't scheduled.
     let nextRun: Date?
-    /// What its last run was (main #418): how long it took, in seconds (0
+    /// What its last run was: how long it took, in seconds (0
     /// when Duplicati didn't say), what it holds of yours ("48.2 GB") and
     /// in how many files, how many versions it keeps, and the folders it copies.
     let took: Int
@@ -564,7 +564,7 @@ struct DuplicatiJob: Decodable, Sendable, Equatable, Identifiable {
     let files: Int
     let versions: Int
     let sources: [String]
-    /// Its last weekly integrity check (main #463, `homelab backup-check`):
+    /// Its last weekly integrity check (`homelab backup-check`):
     /// when, and what Duplicati found wrong; nil when its files matched.
     let checked: Date?
     let checkProblem: String?
@@ -631,7 +631,7 @@ struct DuplicatiJob: Decodable, Sendable, Equatable, Identifiable {
 
 extension DuplicatiJob {
     /// Its last run went fine, but Sunday's check found a damaged file: a
-    /// version may not restore (main #463).
+    /// version may not restore.
     var damaged: Bool { state == "ok" && checkProblem != nil }
 
     /// As the computer counts "need a look": not backed up, or a check
@@ -642,7 +642,7 @@ extension DuplicatiJob {
 /// How many columns Backups takes: the two the iPad asks for (the owner's
 /// pick, Nov 15) only where each still has room, else one. Upright, beside
 /// the sidebar, two squeezed Back Up Now onto three lines and the tiles to
-/// "Restore t…" and "Export-ed" (main's pictures, Nov 16).
+/// "Restore t…" and "Export-ed" (main's pictures).
 enum BackupsLayout {
     /// The least width two columns need.
     static let twoFrom: CGFloat = 900

@@ -478,7 +478,7 @@ final class PayeeLogos: @unchecked Sendable {
     }
 
     /// The shop alone, its town and state taken off (payees.ts's `shopOf`):
-    /// American Express pads a line into columns ("BLUE BOTTLE COFFEE  OAKLAND
+    /// American Express pads a line into columns ("BLUE BOTTLE COFFEE OAKLAND
     /// CA"), glues the town to a full column's store number ("PET SUPERMARKET
     /// #100SUNRISE FL"), and gives a shop online its website as its town
     /// ("AMAZON.COM AMZN.COM/BILL WA"). Anything else comes back as it was.

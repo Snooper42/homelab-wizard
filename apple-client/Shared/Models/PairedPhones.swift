@@ -1,7 +1,7 @@
 import Foundation
 
 /// A paired phone or iPad as Settings › Phones lists it (the computer's
-/// `Phones`, the owner's yes, Nov 19): who it is and what it may do today.
+/// `Phones`): who it is and what it may do today.
 /// Never a token: the computer doesn't send one.
 struct PairedPhone: Decodable, Sendable, Equatable, Identifiable {
     let id: String

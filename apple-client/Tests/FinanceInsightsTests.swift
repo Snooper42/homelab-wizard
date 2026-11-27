@@ -49,7 +49,7 @@ struct FinanceInsightsTests {
     /// every transaction that brought money in, and every one that took it
     /// out; only a move between the household's own accounts is neither. A
     /// paycheck with no category, or one not marked as income, is money in
-    /// (the owner's Cash Flow, Nov 16, read $0 in every month).
+    /// (read $0 in every month).
     @Test func cashFlowCountsAllMoneyInAsTheComputerDoes() throws {
         let ledger = try JSONDecoder.homelab().decode(FinanceLedger.self, from: Data(#"""
         {"transactions":[
@@ -69,7 +69,7 @@ struct FinanceInsightsTests {
         // Month in Review's "came in" the same way (the computer's Reports, totals).
         let review = MonthReview.make(ledger.transactions, month: try day(2026, 10, 15), categories: categories, calendar: calendar)
         #expect(review.income == 3520)
-        // And its Left over as Cash Flow's, in less out (main's pictures, Nov 16: $5,536 there, $5,504 on Cash Flow).
+        // And its Left over as Cash Flow's, in less out (main's pictures, 536 there, $5, 504 on Cash Flow).
         #expect(review.saved == 3380 && review.moneyOut == 140)
     }
 
@@ -161,7 +161,7 @@ struct FinanceInsightsTests {
 
     /// A month's days before today come from the computer's due days
     /// (`dues`), so its earlier bills have their dots: not a one-off, not
-    /// a day ahead twice, nothing from another month (Nov 16).
+    /// a day ahead twice, nothing from another month.
     @Test func recurringMarksTheMonthsEarlierBills() throws {
         let view = try JSONDecoder.homelab().decode(FinancesPlanView.self, from: Data(#"""
         {"today":"2026-11-20","checking":"chk","start":{"chk":2400},

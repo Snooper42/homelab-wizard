@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Edit a Payment (the owner's yes, Nov 21, on the canvas's *Idea: Bills*):
+/// Edit a Payment (on the canvas's *Idea: Bills*):
 /// a tap on a bill changes all of it, as the computer's form does: its name
 /// and kind, what it costs and whether that's about, how often and its next
 /// day, whether it ends, the account it comes out of, or Delete. Money from

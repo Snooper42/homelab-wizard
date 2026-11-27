@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Investments' Watchlist (the owner, Nov 12), as the computer's card has it:
+/// Investments' Watchlist, as the computer's card has it:
 /// tickers followed without owning them, each with its price as last read and
 /// how far it has moved since it was followed; never counted in the worth.
 /// Follow a Ticker looks one up in Ghostfolio and follows it, after Face ID;

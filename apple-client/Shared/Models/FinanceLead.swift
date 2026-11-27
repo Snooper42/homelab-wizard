@@ -1,6 +1,6 @@
 import Foundation
 
-/// Finances' first card as the redesign's phone picture (phone-finances.png)
+/// Finances' first card as the redesign's phone picture
 /// and the computer's Dashboard (widgets/Now.tsx, `LeadWidget`): what's left
 /// in checking on the last day of the next paycheck's period, after its
 /// bills; how that compares with the period before; checking each day of the

@@ -32,7 +32,7 @@ import Testing
         // Out of checking only: not one paid from a card, not money moved into savings.
         #expect(bills.upcoming.map(\.payment) == ["hoa", "netflix", "xfinity"])
         #expect(abs(bills.leftToPay - 395.49) < 0.001)
-        // Linked to a planned payment, since the last payday (Nov 13) and before today, newest first.
+        // Linked to a planned payment, since the last payday and before today, newest first.
         #expect(bills.paid.map(\.payment) == ["pge", "car"])
         #expect(bills.paid.map(\.amount) == [136.42, 412])
     }

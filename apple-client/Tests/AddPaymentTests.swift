@@ -2,7 +2,7 @@ import Foundation
 import Testing
 @testable import HomelabClient
 
-/// Add a Payment on the phone (Parity gap 5, apple-loop.md item 2): a new
+/// Add a Payment on the phone: a new
 /// payment made as the computer's own form makes one, everything else in the
 /// plan kept as it came.
 @Suite("Adding a payment")

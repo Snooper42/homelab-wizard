@@ -2,7 +2,7 @@ import Foundation
 import Testing
 @testable import HomelabClient
 
-/// Setup's checklist on the owner's phone (the owner's yes, Nov 19): counted
+/// Setup's checklist on the owner's phone: counted
 /// and worded as the computer's Setup counts and words it, and only the steps
 /// the computer marks the phone's to do offered.
 @Suite struct SetupChecklistTests {

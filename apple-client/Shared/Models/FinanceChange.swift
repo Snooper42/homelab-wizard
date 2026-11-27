@@ -21,18 +21,18 @@ enum FinanceChange: Codable, Sendable, Equatable {
     case addAccount(name: String, kind: String, balance: Double, today: String)
     case addPayment(name: String, amount: Double, every: String, start: String, kind: String, from: String, estimate: Bool)
     case addGoal(name: String, target: Double, date: String?, account: String, percent: Double)
-    /// Add Payment with money in, twice a month, or with each paycheck (Nov 15); `addPayment` stays for changes kept before it.
+    /// Add Payment with money in, twice a month, or with each paycheck; `addPayment` stays for changes kept before it.
     case addNewPayment(NewPayment)
-    /// Track from (Nov 16): the day the charts count from, nil for every day.
+    /// Track from: the day the charts count from, nil for every day.
     case trackFrom(String?)
-    /// Add Goal over several accounts (the owner's yes, Nov 19); `addGoal` stays for changes kept before it.
+    /// Add Goal over several accounts; `addGoal` stays for changes kept before it.
     case addGoalShares(name: String, target: Double, date: String?, shares: [GoalShare])
-    /// A loan's papers typed in (the owner's yes, Nov 19): what it owes is read from them.
+    /// A loan's papers typed in: what it owes is read from them.
     case loanPapers(account: String, papers: LoanPapersTyped, planMonthly: Double, today: String)
-    /// Add a Budget and its removal (the owner's yes, Nov 21).
+    /// Add a Budget and its removal.
     case addBudget(category: String, amount: Double, perPaycheck: Bool, rollover: Bool)
     case removeBudget(category: String)
-    /// Edit a Payment and its Delete (the owner's yes, Nov 21).
+    /// Edit a Payment and its Delete.
     case editPayment(id: String, NewPayment)
     case removePayment(id: String)
 

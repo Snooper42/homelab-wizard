@@ -2,7 +2,7 @@ import Foundation
 import Testing
 @testable import HomelabClient
 
-/// Settings › Phones (the owner's yes, Nov 19): the computer's paired phones
+/// Settings › Phones: the computer's paired phones
 /// read as it sends them, and only less offered from the phone, never more.
 @Suite struct PairedPhonesTests {
     private func phones() throws -> [PairedPhone] {

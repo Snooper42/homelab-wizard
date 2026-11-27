@@ -282,7 +282,7 @@ extension AppStatus {
         if state != "running", pausedOnBattery { return "Paused on battery" }
         if let drive = waitingFor, !drive.isEmpty { return "Waiting for the \(Self.driveName(drive)) drive" }
         if awaitingJobs { return "Starts with the scheduled jobs (Setup)" }
-        // Stopped by itself, not from here: when, and why when Docker knows (main #474).
+        // Stopped by itself, not from here: when, and why when Docker knows.
         if state == "stopped" { return Self.stoppedByItself(at: stoppedAt.flatMap(GoTime.parse), why: stoppedWhy) }
         switch health {
         case "restarting": return "Restarting"
@@ -374,7 +374,7 @@ extension AppStatus {
     var isDown: Bool {
         health == "restarting" || health == "unhealthy" || state == "missing"
             || !(notAnswering ?? "").isEmpty || stoppedOnPurpose?.keptRestarting == true
-            // A crash: it stopped by itself and Docker says why (main #474).
+            // A crash: it stopped by itself and Docker says why.
             || (state == "stopped" && stoppedOnPurpose == nil && !(stoppedWhy ?? "").isEmpty)
     }
 
@@ -386,7 +386,7 @@ extension AppStatus {
     var symbolName: String {
         if heldByYou { return "stop.circle.fill" }
         if isWaiting { return pausedOnBattery ? "bolt.slash.circle.fill" : "externaldrive.fill.badge.exclamationmark" }
-        // As the computer's dots (main #449): a triangle to look at, a cross
+        // As the computer's dots: a triangle to look at, a cross
         // when down, so a state reads without telling orange from red.
         if needsAttention { return isDown ? "xmark.circle.fill" : "exclamationmark.triangle.fill" }
         if health == "starting" { return "hourglass.circle.fill" }

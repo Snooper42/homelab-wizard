@@ -665,7 +665,7 @@ extension NetworkRuleTests {
     }
 }
 
-// What the computer can do (unison-handoff.md section 4, item 3): a call the
+// What the computer can do (unison-handoff.md section 4): a call the
 // computer says it doesn't answer isn't sent; the phone says to update the
 // computer instead. A computer older than that says nothing, and every call
 // goes as before.
@@ -701,7 +701,7 @@ extension NetworkRuleTests {
     }
 }
 
-// What the computer can do, on screen (item 3): what it doesn't answer isn't
+// What the computer can do, on screen: what it doesn't answer isn't
 // offered, and an app's page says to update the computer; one that says
 // nothing about itself is offered everything, as before.
 extension NetworkRuleTests {
@@ -730,7 +730,7 @@ extension NetworkRuleTests {
         #expect(silent.updateHint(for: app) == nil)
     }
 
-    // Home only (main #559): the switch only where the computer says it takes "away".
+    // Home only: the switch only where the computer says it takes "away".
     @Test @MainActor func reachOnlyWhereTheComputerTakesIt() {
         let app = Self.apps(#"[{"id":"paperless","name":"Paperless-ngx","state":"running","reach":"home"}]"#)[0]
         let without = actions(computer: #"{"version":"0.28.0","methods":["SetAppSetting"],"features":["tunnel"]}"#)
@@ -741,7 +741,7 @@ extension NetworkRuleTests {
     }
 }
 
-// What was done (item 4): the phone asks the computer's record for one
+// What was done: the phone asks the computer's record for one
 // app's, or everything matching a search, and reads its lines as Go sends them.
 extension NetworkRuleTests {
     @Test func historyAsksForOneAppsOrASearchAndReadsTheLines() async throws {
@@ -764,7 +764,7 @@ extension NetworkRuleTests {
     }
 }
 
-// A stopped app on the phone (audit-loop.md, For Account 2, item 2): a device
+// A stopped app on the phone (For Account 2): a device
 // allowed changes is offered Start, one that only looks is told to start it
 // from the computer, and a running app is offered neither. As on the
 // computer's page for a phone (`.lookonly` in web/src/status/AppList.tsx).

@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Worth a look (the owner's pick on the mocks canvas, Nov 15): the
+/// Worth a look: the
 /// computer's Dashboard prompts at the top of Finances' home. A
 /// subscription's new price (Update the Plan, or Keep), a bill whose average
 /// is off the plan's (Use it, or Keep), and a bill not seen yet (Find It in

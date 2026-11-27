@@ -1,6 +1,6 @@
 import Foundation
 
-/// Who uses an app (`AppPeople`, the owner's yes, Nov 20, on the canvas's
+/// Who uses an app (`AppPeople`, on the canvas's
 /// *Idea: Who uses it*): the household members who sign in to it, as the
 /// computer's app page shows them, by name only; never an email or a sign-in.
 struct AppPeople: Decodable, Sendable, Equatable {

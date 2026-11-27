@@ -1,7 +1,7 @@
 import Foundation
 import Observation
 
-/// Start, Stop and Restart, run the way the computer runs them (#402):
+/// Start, Stop and Restart, run the way the computer runs them:
 ///
 /// - A tap answers at once. The row says what it's doing ("Restarting…")
 ///   until Status is read again. A failure puts the row back and says why,
@@ -125,7 +125,7 @@ final class AppActionsViewModel {
     /// Start, Stop, Restart and Roll back: this device may, and the computer can.
     var canChangeApps: Bool { canChange && computerAnswers("AppAction") }
 
-    /// Open on the Computer (the owner, Nov 12): a phone allowed to change
+    /// Open on the Computer: a phone allowed to change
     /// things, on a computer that answers it; no Face ID, since it changes no data.
     var canOpenOnComputer: Bool { canChange && device()?.computer?.answers("OpenOnComputer") == true }
     /// What the last Open on the Computer said, under its button.
@@ -413,7 +413,7 @@ final class AppActionsViewModel {
                 log = lines
             case .transport(.timedOut):
                 // It may well still be running, or waiting its turn behind
-                // another job (main #425). A change isn't retried.
+                // another job. A change isn't retried.
                 message = "The computer is still working on it, or waiting for another job to finish first. The status will show the result when it's done."
             default:
                 message = apiError.errorDescription ?? "It didn't work."

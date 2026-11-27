@@ -1,6 +1,6 @@
 import Foundation
 
-/// Accounts' top card and rows, as the owner's reference pictures (Nov 24):
+/// Accounts' top card and rows, as the owner's reference pictures:
 /// how a line moved over its range, with its share, and how long ago an
 /// account's balance was typed in.
 enum AccountsLook {

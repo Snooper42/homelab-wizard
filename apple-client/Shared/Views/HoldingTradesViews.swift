@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// A holding's buys and sales as Ghostfolio keeps them, each opening a sheet
-/// to put it right or delete it (Parity gap 5, the owner's pick, Nov 14).
+/// to put it right or delete it.
 /// Only where this device may change Finances; Face ID asks first, and
 /// Ghostfolio is read again after.
 struct HoldingTradesSection: View {

@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Settings › Phones (the owner's yes, Nov 19, from the mocks canvas): this
+/// Settings › Phones (from the mocks canvas): this
 /// device, then every other paired phone and iPad, whose it is, what it may
 /// do and when it was last seen. From here a phone is only given less;
 /// pairing one, or giving one more, stays on the computer.
@@ -224,7 +224,7 @@ struct SetupChecklistSections: View {
                 Section { Text(verbatim: error).foregroundStyle(Theme.secondaryInk) }
             } else if computer.setupSteps == nil {
                 // Something for the task below to run on: with nothing drawn yet, a group's
-                // .task never ran, so the checklist showed only after a pull to refresh (light-setup, Nov 20).
+                // .task never ran, so the checklist showed only after a pull to refresh (light-setup).
                 Section {
                     HStack(spacing: 8) {
                         ProgressView()

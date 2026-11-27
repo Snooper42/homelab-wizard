@@ -44,7 +44,7 @@ final class FinancesViewModel {
     @ObservationIgnored private let device: @MainActor () -> DeviceInfo?
     @ObservationIgnored private let authorize: @MainActor (String) async -> Bool
 
-    // MARK: Offline (the owner, Nov 13)
+    // MARK: Offline
 
     /// The Finances kept on this device for when the Homelab doesn't answer.
     @ObservationIgnored private let offline: OfflineFinances
@@ -57,7 +57,7 @@ final class FinancesViewModel {
     /// When the Finances shown were read, while they're the kept ones
     /// because the Homelab doesn't answer; nil when they're live.
     private(set) var offlineAsOf: Date?
-    // MARK: Changes made away (offline Finances 2 of 3, the owner, Nov 14)
+    // MARK: Changes made away (offline Finances 2 of 3)
 
     /// The changes made while the Homelab didn't answer, kept sealed (`AwayChanges`).
     @ObservationIgnored private let away: AwayChanges
@@ -562,7 +562,7 @@ final class FinancesViewModel {
                           reason: "Change the \(budget.category) budget.")
     }
 
-    /// Add a Budget (the owner's yes, Nov 21): a category, an amount a month
+    /// Add a Budget: a category, an amount a month
     /// or each pay period, and whether it rolls over, as the computer's Edit
     /// budgets adds one. Away from home it waits, as other changes do.
     func addBudget(category: String, amount: Double, perPaycheck: Bool, rollover: Bool) async -> Bool {
@@ -576,7 +576,7 @@ final class FinancesViewModel {
                           edited: edited, reason: "Add a \(category) budget.")
     }
 
-    /// Edit a Payment (the owner's yes, Nov 21): all of it, as the
+    /// Edit a Payment: all of it, as the
     /// computer's form changes one. Away from home it waits.
     func updatePayment(_ payment: FinancePayment, with p: NewPayment) async -> Bool {
         guard canEditPlan, !isSaving, let raw = rawPlan else { return false }
@@ -634,7 +634,7 @@ final class FinancesViewModel {
         }
     }
 
-    // MARK: Investments, from Ghostfolio (main #494, #498)
+    // MARK: Investments, from Ghostfolio
 
     /// What Read Now last said, or why it couldn't read, and Ghostfolio's
     /// accounts nothing here matched.
@@ -804,7 +804,7 @@ final class FinancesViewModel {
         }
     }
 
-    // MARK: Export (Parity gap 5, the computer's F18)
+    // MARK: Export (the computer's F18)
 
     /// The plan and the year ahead, as files, from what was last read (live
     /// or kept for offline); none before Finances are read, while amounts are
@@ -833,7 +833,7 @@ final class FinancesViewModel {
         return out
     }
 
-    // MARK: A holding's buys and sales (Parity gap 5: Change or Delete a buy)
+    // MARK: A holding's buys and sales
 
     /// The buys and sales of `symbol` in `account`, newest first, or why they couldn't be read.
     func trades(of symbol: String, in account: String) async -> Result<[InvestmentTrade], TradeProblem> {
@@ -1366,7 +1366,7 @@ final class FinancesViewModel {
         return await makeLedger(.update(id: original.id, t), edited: edited, reason: "Change a transaction in your Finances.")
     }
 
-    // MARK: Rules (Parity gap 5, import 4 of 4)
+    // MARK: Rules (import 4 of 4)
 
     /// The household's rules, as the plan keeps them.
     var rules: [BankImport.Rule] { BankImport.rules(in: rawPlan) }
@@ -1536,7 +1536,7 @@ final class FinancesViewModel {
         return saved
     }
 
-    // MARK: Selected together (Parity gap 5)
+    // MARK: Selected together
 
     /// How many of the transactions selected the last change was made for,
     /// of how many: a transfer or split one is changed on the computer.
@@ -1590,7 +1590,7 @@ final class FinancesViewModel {
 
     func dismissTogetherDone() { togetherDone = nil }
 
-    // MARK: Import a bank's file (Parity gap 5, import 1 of 3)
+    // MARK: Import a bank's file (import 1 of 3)
 
     /// What `rows` of a bank's file would bring into `account`, against the
     /// ledger and the plan's rules as last read.

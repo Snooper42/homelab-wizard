@@ -96,7 +96,7 @@ struct PressableButtonStyle: ButtonStyle {
             .opacity(configuration.isPressed ? 0.85 : 1)
             .animation(.spring(response: 0.25, dampingFraction: 0.7), value: configuration.isPressed)
             #if os(iOS)
-            // Under the iPad's pointer, a card or a round action lights up, as a list's row does (item 3).
+            // Under the iPad's pointer, a card or a round action lights up, as a list's row does.
             .contentShape(.hoverEffect, RoundedRectangle(cornerRadius: 20, style: .continuous))
             .hoverEffect(.highlight)
             #endif
@@ -667,7 +667,7 @@ struct SkeletonCards: View {
     }
 }
 
-/// A card's title with a small symbol before it (the owner's look, Nov 25), as Finances' cards have.
+/// A card's title with a small symbol before it, as Finances' cards have.
 struct SymbolTitle: View {
     let text: String
     let icon: String

@@ -2,7 +2,7 @@ import Foundation
 
 /// One buy or sale of a holding, as Ghostfolio keeps it (`ghostfolio.Trade`,
 /// the `FinancesInvestmentTrades` call), for Change and Delete on the
-/// holding's page (Parity gap 5: "Change or Delete a buy").
+/// holding's page.
 struct InvestmentTrade: Codable, Sendable, Equatable, Identifiable {
     var id: String
     var account: String
