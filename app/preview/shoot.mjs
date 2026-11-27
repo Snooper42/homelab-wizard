@@ -833,6 +833,14 @@ const smokes = [
     await page.click('#statusChips .sidemenulist button[data-key="overview"]');
     await page.waitForSelector('#statusChips .sidedropbtn:has-text("Overview")', { timeout: 5000 });
   } },
+  { name: 'Subscriptions: each year’s sum in whole dollars, a month’s price with its cents', screen: 'status', phone: ['companion', 'can-change'], run: async (page) => {
+    await toStatusPart(page, 'subscriptions');
+    await page.waitForSelector('#subNow .subtile', { timeout: 5000 });
+    const years = await page.$$eval('#statusPart .sublegend strong, #subCould .subprice strong, #statusPart .subyear', (es) => es.map((e) => e.textContent.trim()));
+    const cents = years.filter((t) => /\.\d\d/.test(t));
+    if (!years.length || cents.length) throw new Error('with cents: ' + cents.join(', '));
+    if (!(await page.$$eval('#statusPart .subbig', (es) => es.some((e) => /\.\d\d$/.test(e.textContent.trim()))))) throw new Error('no month with its cents');
+  } },
   { name: 'Analytics: no memory warning while memory is fine', screen: 'status', run: async (page) => {
     await toStatusPart(page, 'analytics');
     await page.waitForSelector('#antMem', { timeout: 5000 });
@@ -4145,7 +4153,7 @@ const smokes = [
     await page.waitForSelector(tile, { timeout: 5000 });
     if (await page.locator('#subNow .subtile:has-text("Test Vault")').count() !== 1) throw new Error('the service shows twice');
     const said = (await page.textContent(tile)).replace(/\s+/g, ' ');
-    if (!/\$5\.00 a month/.test(said) || !/Direct/.test(said) || !/\$50\.00 a year/.test(said)) throw new Error('not the counted row: ' + said);
+    if (!/\$5\.00 a month/.test(said) || !/Direct/.test(said) || !/\$50 a year/.test(said)) throw new Error('not the counted row: ' + said);
     if (!/Vaultwarden/.test(said) || !/ntfy/.test(said)) throw new Error('not both apps: ' + said);
   } },
   // The owner's picture has 14 squares (lane D, D3): from the watchdog's daily summary, two weeks, each with its day's

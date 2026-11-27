@@ -29,6 +29,8 @@ export interface SubscriptionsProps {
 }
 
 const money = (n: number) => '$' + (n >= 100 ? Math.round(n).toLocaleString('en-US') : n.toFixed(2));
+/** A year's amount in whole dollars, as every sum here is: "$60", "$1,457". */
+const dollars = (n: number) => '$' + Math.round(n).toLocaleString('en-US');
 
 function Tile({ o, p, faded }: { o: Offer; p: SubscriptionsProps; faded?: boolean }) {
   const name = (id: string) => p.catalog?.apps.find((a) => a.id === id)?.name || id;
@@ -39,7 +41,7 @@ function Tile({ o, p, faded }: { o: Offer; p: SubscriptionsProps; faded?: boolea
         <Mark brand={brandOf(undefined, o.replaces)} name={service} size="lg" auto />
         <span class="subsvcname"><strong>{service}</strong><span class={'pill ' + (o.kind === 'Direct' ? 'ok' : '')}>{o.kind}</span></span>
       </div>
-      <div class="subcost"><span class="subbig">{money(o.monthly)}</span><span class="muted"> a month</span><span class="subyear">{money(o.annual)} a year</span></div>
+      <div class="subcost"><span class="subbig">{money(o.monthly)}</span><span class="muted"> a month</span><span class="subyear">{dollars(o.annual)} a year</span></div>
       <button type="button" class="subby" onClick={() => p.open(o.apps[0])}>
         <span class="muted">{faded ? 'Could be' : 'Replaced by'}</span>
         <span class="subapps">{o.apps.map((id) => <span key={id} class="subappname"><AppMark id={id} name={name(id)} icon={p.icons?.[id] || ''} small />{name(id)}</span>)}</span>
@@ -85,22 +87,22 @@ export function Subscriptions(p: SubscriptionsProps) {
   const parts = [...byCat.entries()].sort((x, y) => y[1] - x[1]).map(([id, n], i) => ({ id, label: cats.find((c) => c.id === id)?.label || 'Your own', n, tone: `var(--cat-${(i % 8) + 1})` }));
   return (
     <div class="subpage">
-      <div class="row header"><div><h1>Subscriptions</h1><p class="lead">{p.offers ? `${money(year)} a year · ${money(month)} a month` : 'Reading the prices…'}</p></div></div>
+      <div class="row header"><div><h1>Subscriptions</h1><p class="lead">{p.offers ? `${dollars(year)} a year · ${money(month)} a month` : 'Reading the prices…'}</p></div></div>
       <div class="subtop">
         <Card kind="subcard" id="subWhere">
           <div class="anthead"><h2>Where it comes from</h2></div>
           {year > 0 ? <>
-            <div class="subbar" role="img" aria-label={parts.map((x) => `${x.label} ${money(x.n)}`).join(', ')}>{parts.map((x) => <span key={x.id} style={{ width: `${(100 * x.n) / year}%`, background: x.tone }} />)}</div>
-            <ul class="sublegend">{parts.map((x) => <li key={x.id}><i style={{ background: x.tone }} />{x.label}<strong>{money(x.n)}</strong></li>)}</ul>
+            <div class="subbar" role="img" aria-label={parts.map((x) => `${x.label} ${dollars(x.n)}`).join(', ')}>{parts.map((x) => <span key={x.id} style={{ width: `${(100 * x.n) / year}%`, background: x.tone }} />)}</div>
+            <ul class="sublegend">{parts.map((x) => <li key={x.id}><i style={{ background: x.tone }} />{x.label}<strong>{dollars(x.n)}</strong></li>)}</ul>
           </> : <p class="muted">None of your apps replaces a paid service yet.</p>}
         </Card>
         <Card kind="subcard" id="subCould">
-          <div class="anthead"><h2>Could save {money(could)} more a year</h2></div>
+          <div class="anthead"><h2>Could save {dollars(could)} more a year</h2></div>
           <ul class="subnext">{more.filter((o) => !isLibrary(o)).slice(0, 3).map((o) => (
             <li key={o.replaces + o.apps.join()}><button type="button" class="subapp" onClick={() => p.open(o.apps[0])}>
               <span class="sublogos" aria-hidden="true"><AppMark id={o.apps[0]} name={appName(o.apps[0])} icon={p.icons?.[o.apps[0]] || ''} small /></span>
               <span class="subnames"><strong>{o.apps.map(appName).join(' + ')}</strong><span class="muted">{o.replaces}</span></span>
-              <span class="subprice"><strong>{money(o.annual)}</strong></span>
+              <span class="subprice"><strong>{dollars(o.annual)}</strong></span>
             </button></li>
           ))}</ul>
         </Card>
