@@ -52,7 +52,6 @@ function Tile({ o, p, faded }: { o: Offer; p: SubscriptionsProps; faded?: boolea
 
 /** The paid service an offer replaces, by its name without the note in brackets: two apps that replace one service count it once. */
 const serviceOf = (o: Offer) => o.replaces.replace(/\s*\(.*\)$/, '').trim().toLowerCase();
-const isLibrary = (o: Offer) => o.kind === 'Library';
 
 /** The offers, one per paid service, with every app that can stand in for it (any one of them does). Its price, kind
  * and condition are the row the computer counts (`counted`, so this page and Status' yearly figure agree), else the
@@ -76,12 +75,11 @@ export function Subscriptions(p: SubscriptionsProps) {
   const now = perService(offers.filter(runs));
   const replaced = new Set(now.map(serviceOf));
   const more = perService(offers.filter((o) => !runs(o) && !replaced.has(serviceOf(o))));
-  // A Library service (Spotify, Netflix…) saves only if you own the media: kept apart from the total (the owner, Nov 26),
-  // and said beside it, so every tile under Replaced now is counted somewhere on the page.
-  const counted = now.filter((o) => !isLibrary(o)), library = now.filter(isLibrary);
+  // Every service replaced counts, Library ones (Spotify, Netflix…) too, as the computer's yearly figure does (the
+  // menu bar, the weekly summary): the owner, Nov 27. Their tiles still say Library.
+  const counted = now;
   const year = counted.reduce((t, o) => t + o.annual, 0), month = counted.reduce((t, o) => t + o.monthly, 0);
-  const libraryYear = library.reduce((t, o) => t + o.annual, 0);
-  const could = more.filter((o) => !isLibrary(o)).reduce((t, o) => t + o.annual, 0);
+  const could = more.reduce((t, o) => t + o.annual, 0);
   const appName = (id: string) => p.catalog?.apps.find((a) => a.id === id)?.name || id;
   // Where the saving comes from: each kind of app's share of the year, largest first, in its category's colour.
   const cats = p.catalog?.categories || [];
@@ -90,7 +88,7 @@ export function Subscriptions(p: SubscriptionsProps) {
   const parts = [...byCat.entries()].sort((x, y) => y[1] - x[1]).map(([id, n], i) => ({ id, label: cats.find((c) => c.id === id)?.label || 'Your own', n, tone: `var(--cat-${(i % 8) + 1})` }));
   return (
     <div class="subpage">
-      <div class="row header"><div><h1>Subscriptions</h1><p class="lead">{p.offers ? <>{`${dollars(year)} a year · ${money(month)} a month`}{libraryYear > 0 && <span class="sublibrary" title={`${library.map((o) => o.replaces.replace(/\s*\(.*\)$/, '')).join(', ')}: a saving if you own the films, music and books they'd play`}>{` · +${dollars(libraryYear)} with media you own`}</span>}</> : 'Reading the prices…'}</p></div></div>
+      <div class="row header"><div><h1>Subscriptions</h1><p class="lead">{p.offers ? `${dollars(year)} a year · ${money(month)} a month` : 'Reading the prices…'}</p></div></div>
       <div class="subtop">
         <Card kind="subcard" id="subWhere">
           <div class="anthead"><h2>Where it comes from</h2></div>
@@ -101,7 +99,7 @@ export function Subscriptions(p: SubscriptionsProps) {
         </Card>
         <Card kind="subcard" id="subCould">
           <div class="anthead"><h2>Could save {dollars(could)} more a year</h2></div>
-          <ul class="subnext">{more.filter((o) => !isLibrary(o)).slice(0, 3).map((o) => (
+          <ul class="subnext">{more.slice(0, 3).map((o) => (
             <li key={o.replaces + o.apps.join()}><button type="button" class="subapp" onClick={() => p.open(o.apps[0])}>
               <span class="sublogos" aria-hidden="true"><AppMark id={o.apps[0]} name={appName(o.apps[0])} icon={p.icons?.[o.apps[0]] || ''} small /></span>
               <span class="subnames"><strong>{o.apps.map(appName).join(' + ')}</strong><span class="muted">{o.replaces}</span></span>

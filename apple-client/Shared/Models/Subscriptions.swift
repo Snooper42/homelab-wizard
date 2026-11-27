@@ -55,11 +55,11 @@ struct SubscriptionsSummary: Equatable {
     let now: [SubscriptionOffer]
     /// Each one the apps you don't run could replace, dearest first.
     let more: [SubscriptionOffer]
-    /// The counted services (Library apart): a year, a month, how many.
+    /// The services replaced now, Library ones too (as the computer's yearly figure): a year, a month, how many.
     let year: Double
     let month: Double
     let counted: Int
-    /// What the apps you don't run could save more a year (Library apart).
+    /// What the apps you don't run could save more a year.
     let could: Double
     /// Where the year comes from: each catalog category's share, largest first.
     let parts: [Part]
@@ -83,7 +83,7 @@ struct SubscriptionsSummary: Equatable {
         let now = perService(all.filter(runs))
         let replaced = Set(now.map(key))
         let more = perService(all.filter { !runs($0) && !replaced.contains(key($0)) })
-        let counted = now.filter { !$0.isLibrary }
+        let counted = now
         let year = counted.reduce(0) { $0 + $1.annual }
         var byCategory: [(id: String, amount: Double)] = []
         for o in counted {
@@ -97,7 +97,7 @@ struct SubscriptionsSummary: Equatable {
             }
         return SubscriptionsSummary(
             now: now, more: more, year: year, month: counted.reduce(0) { $0 + $1.monthly }, counted: counted.count,
-            could: more.filter { !$0.isLibrary }.reduce(0) { $0 + $1.annual }, parts: parts)
+            could: more.reduce(0) { $0 + $1.annual }, parts: parts)
     }
 
     /// Two apps that replace one service count it once: by its name, whatever its note or case.

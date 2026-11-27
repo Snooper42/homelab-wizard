@@ -2,7 +2,7 @@ import Foundation
 import Testing
 @testable import HomelabClient
 
-// Status › Subscriptions: each paid service once, Library services apart, as the computer's.
+// Status › Subscriptions: each paid service once, Library services counted too, as the computer's.
 @Suite("Subscriptions")
 struct SubscriptionsTests {
     private let catalog: AppCatalog = {
@@ -28,21 +28,19 @@ struct SubscriptionsTests {
         SubscriptionOffer(apps: ["filebrowser", "nextcloud"], replaces: "Dropbox Plus", kind: "Equivalent", monthly: 9.99, annual: 119.88),
     ]
 
-    @Test func eachServiceOnceLibraryApart() {
+    @Test func eachServiceOnceLibraryCounted() {
         let s = SubscriptionsSummary.from(offers: offers, running: ["vaultwarden", "crowdsec", "navidrome", "feishin", "paperless-ngx"], catalog: catalog)
         #expect(s.now.map(\.service) == ["Spotify Premium Family", "Evernote Advanced", "Cloudflare Pro", "1Password Families"])
         let cloudflare = s.now.first { $0.service == "Cloudflare Pro" }
         #expect(cloudflare?.annual == 240 && cloudflare?.apps == ["crowdsec", "vaultwarden"])
         #expect(s.now.first?.apps == ["navidrome", "feishin"])
-        // Library apart from the total.
-        #expect(s.counted == 3 && abs(s.year - (59.88 + 240 + 249.99)) < 0.001)
-        #expect(abs(s.month - (4.99 + 25 + 249.99 / 12)) < 0.001)
-        // Spotify is still a tile, just not in the total.
-        #expect(s.now.contains { $0.service == "Spotify Premium Family" })
-        #expect(s.lead == "$550 a year · $50.82 a month")
+        // Library counted in the total too (the owner, Nov 27), as the computer's yearly figure.
+        #expect(s.counted == 4 && abs(s.year - (263.88 + 59.88 + 240 + 249.99)) < 0.001)
+        #expect(abs(s.month - (21.99 + 4.99 + 25 + 249.99 / 12)) < 0.001)
+        #expect(s.lead == "$814 a year · $72.81 a month")
         #expect(s.more.map(\.service) == ["Dropbox Plus"] && s.could == 119.88)
-        // Where it comes from: Security (CrowdSec and Vaultwarden) first, then Documents.
-        #expect(s.parts.map(\.label) == ["Security", "Documents"])
+        // Where it comes from: Security (CrowdSec and Vaultwarden) first, then Media (Spotify), then Documents.
+        #expect(s.parts.map(\.label) == ["Security", "Media", "Documents"])
     }
 
     @Test func nothingRunYet() {

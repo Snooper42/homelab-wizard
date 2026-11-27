@@ -7984,7 +7984,6 @@
     ] });
   }
   var serviceOf = (o3) => o3.replaces.replace(/\s*\(.*\)$/, "").trim().toLowerCase();
-  var isLibrary = (o3) => o3.kind === "Library";
   function perService(list) {
     const out = /* @__PURE__ */ new Map();
     for (const o3 of list) {
@@ -8005,10 +8004,9 @@
     const now2 = perService(offers2.filter(runs2));
     const replaced = new Set(now2.map(serviceOf));
     const more2 = perService(offers2.filter((o3) => !runs2(o3) && !replaced.has(serviceOf(o3))));
-    const counted2 = now2.filter((o3) => !isLibrary(o3)), library = now2.filter(isLibrary);
+    const counted2 = now2;
     const year = counted2.reduce((t3, o3) => t3 + o3.annual, 0), month3 = counted2.reduce((t3, o3) => t3 + o3.monthly, 0);
-    const libraryYear = library.reduce((t3, o3) => t3 + o3.annual, 0);
-    const could = more2.filter((o3) => !isLibrary(o3)).reduce((t3, o3) => t3 + o3.annual, 0);
+    const could = more2.reduce((t3, o3) => t3 + o3.annual, 0);
     const appName2 = (id2) => p3.catalog?.apps.find((a3) => a3.id === id2)?.name || id2;
     const cats = p3.catalog?.categories || [];
     const byCat = /* @__PURE__ */ new Map();
@@ -8020,10 +8018,7 @@
     return /* @__PURE__ */ u3("div", { class: "subpage", children: [
       /* @__PURE__ */ u3("div", { class: "row header", children: /* @__PURE__ */ u3("div", { children: [
         /* @__PURE__ */ u3("h1", { children: "Subscriptions" }),
-        /* @__PURE__ */ u3("p", { class: "lead", children: p3.offers ? /* @__PURE__ */ u3(S, { children: [
-          `${dollars(year)} a year · ${money3(month3)} a month`,
-          libraryYear > 0 && /* @__PURE__ */ u3("span", { class: "sublibrary", title: `${library.map((o3) => o3.replaces.replace(/\s*\(.*\)$/, "")).join(", ")}: a saving if you own the films, music and books they'd play`, children: ` · +${dollars(libraryYear)} with media you own` })
-        ] }) : "Reading the prices…" })
+        /* @__PURE__ */ u3("p", { class: "lead", children: p3.offers ? `${dollars(year)} a year · ${money3(month3)} a month` : "Reading the prices…" })
       ] }) }),
       /* @__PURE__ */ u3("div", { class: "subtop", children: [
         /* @__PURE__ */ u3(Card, { kind: "subcard", id: "subWhere", children: [
@@ -8043,7 +8038,7 @@
             dollars(could),
             " more a year"
           ] }) }),
-          /* @__PURE__ */ u3("ul", { class: "subnext", children: more2.filter((o3) => !isLibrary(o3)).slice(0, 3).map((o3) => /* @__PURE__ */ u3("li", { children: /* @__PURE__ */ u3("button", { type: "button", class: "subapp", onClick: () => p3.open(o3.apps[0]), children: [
+          /* @__PURE__ */ u3("ul", { class: "subnext", children: more2.slice(0, 3).map((o3) => /* @__PURE__ */ u3("li", { children: /* @__PURE__ */ u3("button", { type: "button", class: "subapp", onClick: () => p3.open(o3.apps[0]), children: [
             /* @__PURE__ */ u3("span", { class: "sublogos", "aria-hidden": "true", children: /* @__PURE__ */ u3(AppMark, { id: o3.apps[0], name: appName2(o3.apps[0]), icon: p3.icons?.[o3.apps[0]] || "", small: true }) }),
             /* @__PURE__ */ u3("span", { class: "subnames", children: [
               /* @__PURE__ */ u3("strong", { children: o3.apps.map(appName2).join(" + ") }),

@@ -92,7 +92,7 @@ struct SubscriptionsPage: View {
             Text(verbatim: "Could save \(SubscriptionsSummary.dollars(s.could)) more a year")
                 .font(.headline)
                 .foregroundStyle(Theme.ink)
-            let next = Array(s.more.filter { !$0.isLibrary }.prefix(3))
+            let next = Array(s.more.prefix(3))
             ForEach(Array(next.enumerated()), id: \.offset) { i, o in
                 HStack(spacing: 12) {
                     AppLogo(id: o.apps.first, size: 36)

@@ -841,21 +841,20 @@ const smokes = [
     if (!years.length || cents.length) throw new Error('with cents: ' + cents.join(', '));
     if (!(await page.$$eval('#statusPart .subbig', (es) => es.some((e) => /\.\d\d$/.test(e.textContent.trim()))))) throw new Error('no month with its cents');
   } },
-  // Every tile under Replaced now is counted on the page: the total is the services you'd stop paying for, and the Library
-  // ones (a saving if you own the media, the owner's Nov 26) are said beside it, so the two add up to every tile's year.
-  { name: 'Subscriptions: the total and the media you own add up to every tile', screen: 'status', run: async (page) => {
+  // Every tile under Replaced now counts in the yearly figure, the Library ones too (the owner, Nov 27), so the line is
+  // the tiles' sum, as the menu bar's and the weekly summary's figure is.
+  { name: 'Subscriptions: the yearly figure is every tile under Replaced now', screen: 'status', run: async (page) => {
     await toStatusPart(page, 'subscriptions');
     await page.waitForSelector('#subNow .subtile', { timeout: 5000 });
     const dollar = (t) => Number(t.replace(/[^\d.]/g, ''));
     const tiles = await page.$$eval('#subNow .subtile', (ts) => ts.map((t) => [t.querySelector('.pill')?.textContent.trim(), t.querySelector('.subyear').textContent]));
+    if (!tiles.some(([k]) => k === 'Library')) throw new Error('no Library tile to count');
     const lead = await page.textContent('#statusPart .subpage .lead');
-    const m = lead.match(/^\$([\d,]+) a year .* \+\$([\d,]+) with media you own$/);
+    const m = lead.match(/^\$([\d,]+) a year · \$[\d,.]+ a month$/);
     if (!m) throw new Error('the line: ' + lead);
-    const sum = (f) => tiles.filter(f).reduce((n, [, y]) => n + dollar(y), 0);
-    const [total, lib] = [dollar(m[1]), dollar(m[2])];
-    // Each tile's year is rounded on its own: the sums may differ from the line by a dollar a tile.
-    if (Math.abs(sum(([k]) => k !== 'Library') - total) > tiles.length) throw new Error(`the total ${total}, the tiles ${sum(([k]) => k !== 'Library')}`);
-    if (Math.abs(sum(([k]) => k === 'Library') - lib) > tiles.length) throw new Error(`media you own ${lib}, its tiles ${sum(([k]) => k === 'Library')}`);
+    // Each tile's year is rounded on its own: the sum may differ from the line by a dollar a tile.
+    const sum = tiles.reduce((n, [, y]) => n + dollar(y), 0);
+    if (Math.abs(sum - dollar(m[1])) > tiles.length) throw new Error(`the line says ${m[1]}, the tiles ${sum}`);
   } },
   { name: 'Backups: every copy of an app shows its logo, MoneyMatter’s attachments too', screen: 'backups', run: async (page) => {
     await page.waitForSelector('#backupTiles', { timeout: 5000 });
