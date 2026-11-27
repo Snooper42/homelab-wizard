@@ -287,7 +287,7 @@ func TestTidyReviewAndCovers(t *testing.T) {
 func TestTidyRevealOnlyItsOwnFolders(t *testing.T) {
 	a, _ := testApp(t)
 	_ = os.MkdirAll(media.ReportsDir(a.root), 0o755)
-	if err := a.TidyReveal(filepath.Join(a.root, ".env")); err == nil || !strings.Contains(err.Error(), "isn't one of Tidy Up's folders") {
+	if err := a.TidyReveal(filepath.Join(a.root, ".env")); err == nil || !strings.Contains(err.Error(), "isn't one of Library's folders") {
 		t.Errorf(".env: %v", err)
 	}
 	if err := a.TidyReveal(filepath.Join(media.ReportsDir(a.root), "gone.csv")); err == nil {
@@ -491,7 +491,7 @@ func TestTidySetInbox(t *testing.T) {
 		title = o.Title
 		return "/picked", nil
 	}
-	if p, err := a.TidyPickFolder(); err != nil || p != "/picked" || title != "Choose a folder for Tidy Up to watch" {
+	if p, err := a.TidyPickFolder(); err != nil || p != "/picked" || title != "Choose a folder for Library to watch" {
 		t.Errorf("picker: %q %v %q", p, err, title)
 	}
 }

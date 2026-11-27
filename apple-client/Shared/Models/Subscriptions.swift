@@ -46,7 +46,8 @@ struct SubscriptionOffer: Decodable, Sendable, Equatable {
         replaces.replacingOccurrences(of: #"\s*\(.*\)$"#, with: "", options: .regularExpression)
     }
 
-    var isLibrary: Bool { kind == "Library" }
+    /// A saving only with media you own (Spotify, Netflix…): the kind docs/Savings.md calls Own media.
+    var isOwnMedia: Bool { kind == "Own media" }
 }
 
 /// The page's figures and lists, from the offers and the apps running, so they can be tested without a screen.

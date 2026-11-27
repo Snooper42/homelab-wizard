@@ -25,7 +25,7 @@ func appMenu(a *App) *menu.Menu {
 	// The strip's three first, as the sidebar has them (the owner, Nov 27), then Backups and Find an App; Setup is in
 	// Settings now, with no number of its own.
 	view.AddText("Home", keys.CmdOrCtrl("1"), go2("status"))
-	view.AddText("Tidy Up", keys.CmdOrCtrl("2"), go2("tidy"))
+	view.AddText("Library", keys.CmdOrCtrl("2"), go2("tidy"))
 	view.AddText("Finances", keys.CmdOrCtrl("3"), go2("finances"))
 	view.AddText("Backups", keys.CmdOrCtrl("4"), go2("backups"))
 	view.AddText("Find an App", keys.CmdOrCtrl("5"), go2("choose"))

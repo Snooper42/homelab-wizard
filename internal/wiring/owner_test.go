@@ -113,23 +113,23 @@ func TestConnectHandsOver(t *testing.T) {
 	}
 	env := map[string]string{"DOWNLOADS_ROOT": "/Volumes/Media/downloads", "TIDY_UP": "true", "TIDY_INBOX": "true"}
 	plan := texts(newWirer(env).Plan())
-	if !strings.Contains(plan, "Sonarr stops renaming files=planned") || !strings.Contains(plan, "Sonarr leaves finished downloads for Tidy Up=planned") {
+	if !strings.Contains(plan, "Sonarr stops renaming files=planned") || !strings.Contains(plan, "Sonarr leaves finished downloads for Library=planned") {
 		t.Fatalf("Connect apps hands over: %s", plan)
 	}
 	run := func(w *Wirer) string {
 		var got []Link
 		for _, l := range w.Apply(context.Background(), nil) {
-			if strings.Contains(l.Text, "renaming") || strings.Contains(l.Text, "Tidy Up") {
+			if strings.Contains(l.Text, "renaming") || strings.Contains(l.Text, "Library") {
 				got = append(got, l)
 			}
 		}
 		return texts(got)
 	}
-	if got := run(newWirer(env)); got != "Sonarr stops renaming files=done; Sonarr leaves finished downloads for Tidy Up=done" {
+	if got := run(newWirer(env)); got != "Sonarr stops renaming files=done; Sonarr leaves finished downloads for Library=done" {
 		t.Fatalf("first run: %s", got)
 	}
 	before := puts
-	if got := run(newWirer(env)); got != "Sonarr stops renaming files=already; Sonarr leaves finished downloads for Tidy Up=already" || puts != before {
+	if got := run(newWirer(env)); got != "Sonarr stops renaming files=already; Sonarr leaves finished downloads for Library=already" || puts != before {
 		t.Fatalf("second run changes nothing: %s (%d saves)", got, puts-before)
 	}
 

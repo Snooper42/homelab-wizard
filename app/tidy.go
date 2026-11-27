@@ -120,7 +120,7 @@ func (a *App) TidySetInbox(folders []string, when string) (TidyUp, error) {
 		}
 	}
 	if len(keep) == 0 {
-		return TidyUp{}, errors.New("keep at least one folder for Tidy Up to watch")
+		return TidyUp{}, errors.New("keep at least one folder for Library to watch")
 	}
 	if !slices.Contains(inboxWhens, when) {
 		return TidyUp{}, fmt.Errorf("when is arrive, daily, or manual, not %q", when)
@@ -134,7 +134,7 @@ func (a *App) TidySetInbox(folders []string, when string) (TidyUp, error) {
 // TidyPickFolder opens the system's folder picker for a folder to watch;
 // "" when cancelled.
 func (a *App) TidyPickFolder() (string, error) {
-	return directoryDialog(a.ctx, runtime.OpenDialogOptions{Title: "Choose a folder for Tidy Up to watch", CanCreateDirectories: true})
+	return directoryDialog(a.ctx, runtime.OpenDialogOptions{Title: "Choose a folder for Library to watch", CanCreateDirectories: true})
 }
 
 // TidyFindAlbums is Name these songs' Look it up: the albums MusicBrainz
@@ -380,7 +380,7 @@ func (a *App) TidyRun(kind, action string, args []string, yes bool) error {
 	tidy.mu.Lock()
 	if tidy.cancel != nil {
 		tidy.mu.Unlock()
-		return errors.New("a Tidy Up job is running: wait for it, or stop it")
+		return errors.New("a Library job is running: wait for it, or stop it")
 	}
 	ctx, cancel := context.WithCancel(a.ctx)
 	tidy.cancel = cancel
@@ -452,7 +452,7 @@ func tidyArgs(kind, action string, args []string, yes bool) ([]string, error) {
 	case "install":
 		// The Install button beside a missing tool: ffmpeg is the one it fetches.
 		if action != "ffmpeg" {
-			return nil, fmt.Errorf("no install of %q in Tidy Up", action)
+			return nil, fmt.Errorf("no install of %q in Library", action)
 		}
 		cli = []string{"media", "install", "ffmpeg"}
 	default:
@@ -514,11 +514,11 @@ func tidyScreenArgs(kind, action string, args []string) ([]string, error) {
 			}
 			return append(out, rest...), nil
 		default:
-			return nil, fmt.Errorf("Tidy Up doesn't run a job with %q", a)
+			return nil, fmt.Errorf("Library doesn't run a job with %q", a)
 		}
 	}
 	if kind == "inbox" && (action == "name" || action == "leave") {
-		return nil, errors.New("Tidy Up doesn't run that: which download?")
+		return nil, errors.New("Library doesn't run that: which download?")
 	}
 	if (kind == "trash" || kind == "inbox" && action == "undo") && runs != 1 {
 		return nil, errors.New("Undo puts back one run at a time")
@@ -531,7 +531,7 @@ func tidyScreenArgs(kind, action string, args []string) ([]string, error) {
 // release id>. A word that looks
 // like a flag is refused, so a title can't turn into --library.
 func tidyNameArgs(action string, args []string) ([]string, error) {
-	bad := errors.New("Tidy Up doesn't run that: say what it is")
+	bad := errors.New("Library doesn't run that: say what it is")
 	if len(args) == 0 || !filepath.IsAbs(args[0]) {
 		return nil, bad
 	}
@@ -663,7 +663,7 @@ func (a *App) TidyStop() {
 func (a *App) TidyStopElsewhere(pid int, start string) error {
 	shown, err := time.Parse(time.RFC3339Nano, start)
 	if err != nil {
-		return errors.New("that isn't a job Tidy Up showed")
+		return errors.New("that isn't a job Library showed")
 	}
 	l, running := media.ReadLock(a.root)
 	if !running {
@@ -671,7 +671,7 @@ func (a *App) TidyStopElsewhere(pid int, start string) error {
 		return nil
 	}
 	if l.PID != pid || !l.Start.Equal(shown) {
-		return errors.New("another Tidy Up job is running now; stop that one from its own card")
+		return errors.New("another Library job is running now; stop that one from its own card")
 	}
 	if pid <= 1 || pid == os.Getpid() {
 		return errors.New("that job is this window's own: use its Stop")
@@ -706,7 +706,7 @@ func (a *App) TidyReveal(path string) error {
 			return core.Reveal(clean)
 		}
 	}
-	return errors.New("that isn't one of Tidy Up's folders")
+	return errors.New("that isn't one of Library's folders")
 }
 
 // TidyBook is one book in the books review: what would change, and its covers.

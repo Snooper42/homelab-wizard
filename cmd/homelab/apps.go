@@ -846,7 +846,7 @@ func (h *homelab) lifecycle(action string) func(context.Context, []string) error
 		if action == "update" && !all && media.Held(h.root) {
 			for _, a := range sel.Apps {
 				if sel.Requested[a.ID] && media.IsApp(a.ID) {
-					return fmt.Errorf("Tidy Up is moving files in the libraries %s reads: update it once that's done", a.Name())
+					return fmt.Errorf("Library is moving files in the libraries %s reads: update it once that's done", a.Name())
 				}
 			}
 		}
@@ -1108,7 +1108,7 @@ func (h *homelab) updatable(ctx context.Context) ([]string, error) {
 		}
 	}
 	if len(waiting) > 0 {
-		h.ui.Printf("Tidy Up is moving files, so these wait for the next update: %s.\n", strings.Join(waiting, ", "))
+		h.ui.Printf("Library is moving files, so these wait for the next update: %s.\n", strings.Join(waiting, ", "))
 	}
 	if len(notToday) > 0 {
 		h.ui.Printf("Updated on their own days, so not today: %s.\n", strings.Join(notToday, ", "))

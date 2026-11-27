@@ -10,7 +10,7 @@ import (
 type Offer struct {
 	Apps      []string `json:"apps"` // the apps' catalog IDs, every one needed
 	Replaces  string   `json:"replaces"`
-	Kind      string   `json:"kind"`    // Direct, Equivalent or Library
+	Kind      string   `json:"kind"`    // Direct, Equivalent or Own media
 	Monthly   float64  `json:"monthly"` // 0 when the table has none
 	Annual    float64  `json:"annual"`
 	Condition string   `json:"condition"`

@@ -180,7 +180,7 @@ const noFolderYet = (d: app.TidyUp, l: app.TidyLibrary) => !l.found && d.librari
 /** What a tab says while its library's folder is not there, above everything else. */
 function Gone({ l, d }: { l: app.TidyLibrary; d: app.TidyUp }) {
   if (l.found) return null;
-  if (noFolderYet(d, l)) return <Card kind="notice" role="status"><strong>{names[l.kind]}: no folder yet</strong><span class="muted">Tidy Up looks in {l.folder}: put your {names[l.kind].toLowerCase()} there and it starts on them.</span></Card>;
+  if (noFolderYet(d, l)) return <Card kind="notice" role="status"><strong>{names[l.kind]}: no folder yet</strong><span class="muted">Put your {names[l.kind].toLowerCase()} in {l.folder} and they show up here.</span></Card>;
   return <Card kind="notice" role="status"><strong>{names[l.kind]}: its folder isn't there</strong><span class="muted">{l.folder} could not be found. Plug in the drive it is on: nothing here runs until it is back.</span></Card>;
 }
 
@@ -810,7 +810,7 @@ function InboxWidget({ d, job, act }: { d: app.TidyUp; job: TidyJob | null; act:
   // While a job runs (here or elsewhere), the card's controls wait, as every button on the screen does.
   const other = useContext(Elsewhere);
   const waits = busy(job) || !!other;
-  const state = (f: string) => gone.has(f) ? "Not there now: plug in its drive" : !ib.watching ? "Not watched: Tidy Up's background work is off in Settings" : when === 'manual' ? 'Tidied when you press Tidy up now' : when === 'daily' ? 'Tidied once a day, after 3 AM' : 'Watched: tidied as things arrive';
+  const state = (f: string) => gone.has(f) ? "Not there now: plug in its drive" : !ib.watching ? "Not watched: tidying in the background is off in Settings" : when === 'manual' ? 'Tidied when you press Tidy up now' : when === 'daily' ? 'Tidied once a day, after 3 AM' : 'Watched: tidied as things arrive';
   return (
     <Widget title="Drop anything here" span="all" kind="tidyinbox">
       <fieldset class="tidyinboxset" disabled={waits}>
@@ -819,11 +819,11 @@ function InboxWidget({ d, job, act }: { d: app.TidyUp; job: TidyJob | null; act:
           <Row key={f} lead={<LibIcon kind="folder" />} title={folderName(f)} sub={`${f} · ${state(f)}`} subTone={gone.has(f) ? 'warn' : undefined}
             end={folders.length > 1 && <button class="small" aria-label={`Remove ${folderName(f)}`} onClick={() => act.inbox(folders.filter((x) => x !== f), when)}>Remove</button>} />
         ))}
-        <Row lead={<LibIcon kind="inbox" />} title="Add a folder…" sub="Another folder, or a folder on a drive, for Tidy Up to watch" end={<button class="small" onClick={add}>Add…</button>} />
+        <Row lead={<LibIcon kind="inbox" />} title="Add a folder…" sub="Another folder, or a folder on a drive, to watch" end={<button class="small" onClick={add}>Add…</button>} />
       </Rows>
       <div class="tidyinboxwhen">
         <span class="muted">Tidy up</span>
-        <Segmented label="When Tidy Up files what's in these folders" value={when} pick={(v) => act.inbox(folders, v)} options={WHENS} />
+        <Segmented label="When what's in these folders is filed" value={when} pick={(v) => act.inbox(folders, v)} options={WHENS} />
       </div>
       </fieldset>
       <div class="tidyinboxgo"><button class="small" onClick={() => act.settings()}>More in Settings…</button></div>
@@ -877,7 +877,7 @@ function PlacesWidget({ d, job, act, first }: { d: app.TidyUp; job: TidyJob | nu
   };
   return (
     <Widget title="Where should your libraries live?" span="all" kind="tidyplaces">
-      <p class="muted tidyinboxlead">{first ? "Pick the drive for your music, films, shows, books, and audiobooks. Tidy Up looks for libraries already on it, and files everything new there. You can change this later." : 'Pick the drive or folder for your music, films, shows, books, and audiobooks. Nothing is moved or copied: Tidy Up and your apps look there from now on.'}</p>
+      <p class="muted tidyinboxlead">{first ? "Pick the drive for your music, films, shows, books, and audiobooks. The libraries already on it are found, and everything new is filed there. You can change this later." : 'Pick the drive or folder for your music, films, shows, books, and audiobooks. Nothing is moved or copied: Library and your apps look there from now on.'}</p>
       {!drives ? <Empty>Looking at your drives…</Empty> : (
         <div class="tidydrives" role="radiogroup" aria-label="Where your libraries live">
           {drives.map((x) => (
@@ -935,7 +935,7 @@ function NeedsLookWidget({ d, job, act }: { d: app.TidyUp; job: TidyJob | null; 
     try { const [n, y] = JSON.parse(v.picked || ''); return [String(n), y ? String(y) : '']; } catch { return null; }
   };
   const film = (x: media.Need) => act.ask({
-    title: `Which film is ${x.name}?`, lead: 'Its title, and its year if you know it, or Look it up and pick it: Tidy Up renames it to that and files it in Movies.', action: 'File it',
+    title: `Which film is ${x.name}?`, lead: "Its title, and its year if you know it, or Look it up and pick it: it's renamed to that and filed in Movies.", action: 'File it',
     fields: [{ key: 'title', label: 'Film' }, { key: 'year', label: 'Year', number: true, optional: true }],
     find: { label: 'Look it up', what: 'Films found', needs: 'title', optional: true, run: titleChoices('movie'),
       none: 'Nothing by that name. Check the spelling, or file it as typed.' },
@@ -944,7 +944,7 @@ function NeedsLookWidget({ d, job, act }: { d: app.TidyUp; job: TidyJob | null; 
   // Songs with no names: the artist and album, looked up on MusicBrainz, and the one they are picked.
   const album = (x: media.Need) => act.ask({
     title: `Which album is ${x.name}?`, action: 'File them',
-    lead: "Its name, and the artist if you know it. Tidy Up looks it up on MusicBrainz; pick the one these songs are, and it writes the album's names onto them and files them in Music.",
+    lead: "Its name, and the artist if you know it. It's looked up on MusicBrainz: pick the one these songs are, and they get the album's names and are filed in Music.",
     fields: [{ key: 'artist', label: 'Artist', optional: true }, { key: 'album', label: 'Album' }],
     find: {
       label: 'Look it up', what: 'Albums found',
@@ -956,7 +956,7 @@ function NeedsLookWidget({ d, job, act }: { d: app.TidyUp; job: TidyJob | null; 
     go: (v) => act.run('inbox', 'name', [x.path, 'album', v.picked]),
   });
   const episode = (x: media.Need) => act.ask({
-    title: `Which show is ${x.name}?`, lead: "The show and the season, and the episode if it's one: Tidy Up renames it to that and files it in TV. A folder of episodes keeps each one's own number.", action: 'File it',
+    title: `Which show is ${x.name}?`, lead: "The show and the season, and the episode if it's one: it's renamed to that and filed in TV. A folder of episodes keeps each one's own number.", action: 'File it',
     fields: [{ key: 'show', label: 'Show' }, { key: 'season', label: 'Season', number: true }, { key: 'episode', label: 'Episode', number: true, optional: true }],
     find: { label: 'Look it up', what: 'Shows found', needs: 'show', optional: true, run: titleChoices('show'),
       none: 'Nothing by that name. Check the spelling, or file it as typed.' },
@@ -964,7 +964,7 @@ function NeedsLookWidget({ d, job, act }: { d: app.TidyUp; job: TidyJob | null; 
   });
   return (
     <Widget title="Needs a look" kind="tidyneedslook" actions={<span class="tidycount" title={count(needs.length, 'thing')}>{needs.length}</span>}>
-      <p class="muted tidyneedslead">{needs.length === 1 ? "Tidy Up couldn't place it; nothing else waits on it." : "Tidy Up couldn't place these; nothing else waits on them."}</p>
+      <p class="muted tidyneedslead">{needs.length === 1 ? "Couldn't place it; nothing else waits on it." : "Couldn't place these; nothing else waits on them."}</p>
       <Rows kind="fx-rows tidytodo">
         {needs.map((x) => (
           <Row key={x.path} lead={<LibIcon kind={x.kind || 'inbox'} />} title={x.name} sub={x.why} subTone="warn"
@@ -975,7 +975,7 @@ function NeedsLookWidget({ d, job, act }: { d: app.TidyUp; job: TidyJob | null; 
                 <Go label="It's an episode…" job={job} onClick={() => episode(x)} />
               </>}
               <button class="small" onClick={() => act.reveal(x.path)}>{showIn}</button>
-              <Go label="Leave it" job={job} title={`Leave ${x.name} where it is: Tidy Up won't file it`} onClick={() => act.run('inbox', 'leave', [x.path])} />
+              <Go label="Leave it" job={job} title={`Leave ${x.name} where it is: it won't be filed`} onClick={() => act.run('inbox', 'leave', [x.path])} />
             </span>} />
         ))}
       </Rows>
@@ -1151,7 +1151,7 @@ function LibraryTab({ kind, d, job, act, review, reviewError, reloadReview, skip
   }
   // Until the download apps are handed over (that leaves a line in what was done), it's offered here.
   if ((kind === 'movies' || kind === 'tv') && l.found && !d.activity.some((a) => a.kind === 'arr')) {
-    extra.push({ kind: 'inbox', title: kind === 'tv' ? 'Let Tidy Up file what Sonarr downloads' : 'Let Tidy Up file what Radarr downloads', sub: 'They find and download; Tidy Up renames and files', go: { label: 'Hand over…', quiet: true, run: () => act.ask({ title: 'Let Tidy Up file the downloads?', action: 'Hand over', lead: "Sonarr, Radarr, and Lidarr keep finding and downloading; they stop renaming files and stop moving finished downloads into the libraries. Tidy Up files them instead, so the two never rename each other's files.", go: () => act.run('arr', 'apply') }) } });
+    extra.push({ kind: 'inbox', title: kind === 'tv' ? 'Let Library file what Sonarr downloads' : 'Let Library file what Radarr downloads', sub: 'They find and download; Library renames and files', go: { label: 'Hand over…', quiet: true, run: () => act.ask({ title: 'Let Library file the downloads?', action: 'Hand over', lead: "Sonarr, Radarr, and Lidarr keep finding and downloading; they stop renaming files and stop moving finished downloads into the libraries. Library files them instead, so the two never rename each other's files.", go: () => act.run('arr', 'apply') }) } });
   }
   // The tools this library needs and hasn't got (Calibre's for books, ffmpeg for films and TV), as one row.
   const tools = l.found ? toolsRow(d, act, (needs) => needs === 'all' || (toolFor[needs] || []).includes(kind)) : [];
@@ -1242,13 +1242,13 @@ export function TidyScreen(p: TidyProps) {
   return (
     <>
       <div class="row header">
-        <div><h1>Tidy Up</h1><p class="lead">{say || 'Your music, films, TV, books, and audiobooks: sorted, tagged, and lean'}</p></div>
+        <div><h1>Library</h1><p class="lead">{say || 'Your music, films, TV, books, and audiobooks: sorted, tagged, and lean'}</p></div>
         <div class="toolbar tidytools">
-          <button type="button" class={'btn tidyfoldersbtn' + (folders ? ' on' : '')} aria-expanded={folders} title="The folders Tidy Up watches, and when it tidies" onClick={() => setFolders(!folders)}>Folders and when…</button>
+          <button type="button" class={'btn tidyfoldersbtn' + (folders ? ' on' : '')} aria-expanded={folders} title="The folders it watches, and when it tidies" onClick={() => setFolders(!folders)}>Folders and when…</button>
           {d && <Elsewhere.Provider value={other ? jobTitle(other.kind, other.action, other.flags || []) : ''}><Go primary label="Tidy up now" job={job} onClick={() => act.run('inbox', 'scan', ['--apply'])} /></Elsewhere.Provider>}
         </div>
       </div>
-      <div class="tidytabs"><Segmented label="Tidy Up sections" value={tab} pick={(v) => p.pick(v as TidyTab)} options={[['overview', 'Inbox'], ...LIBRARIES.map((k): [string, string] => [k, names[k]])]} /></div>
+      <div class="tidytabs"><Segmented label="Library sections" value={tab} pick={(v) => p.pick(v as TidyTab)} options={[['overview', 'Inbox'], ...LIBRARIES.map((k): [string, string] => [k, names[k]])]} /></div>
       {other && <RunningCard lock={other} now={p.running?.lock ? p.running.now : undefined} stop={() => p.act.stopElsewhere(other)} stopping={p.stoppingElsewhere === other.start} />}
       {d?.stale && !other && !job && (() => {
         const c = carryOn(d.stale, d, act, p.pick);
@@ -1257,7 +1257,7 @@ export function TidyScreen(p: TidyProps) {
       {job && <JobPanel job={job} stop={act.stop} done={p.closeJob} fix={installFix(job, p.d, act)}
         // A job that asked first (a swap, an apply) is tried again from its own button, which asks again.
         again={job.yes ? undefined : () => act.run(job.kind, job.action, job.args || [])} />}
-      {p.error && !d && <Card kind="notice" id="tidyError" role="alert"><strong>Tidy Up couldn't read its record</strong><span class="muted">{p.error}. Nothing in your libraries changed. <button class="small" onClick={p.reload}>Try again</button></span></Card>}
+      {p.error && !d && <Card kind="notice" id="tidyError" role="alert"><strong>Library couldn't read its record</strong><span class="muted">{p.error}. Nothing in your libraries changed. <button class="small" onClick={p.reload}>Try again</button></span></Card>}
       {!d ? (!p.error && <Empty>Reading…</Empty>) : (
         <Elsewhere.Provider value={other ? jobTitle(other.kind, other.action, other.flags || []) : ''}>
           <div class="finbody tidybody">
@@ -1282,7 +1282,7 @@ function TidyMenu({ tab, pick, d }: { tab: TidyTab; pick: (t: TidyTab) => void; 
   );
   return (
     <>
-      <ul class="finmenu tidymenu" aria-label="Tidy Up">
+      <ul class="finmenu tidymenu" aria-label="Library">
         {item('overview', 'Overview', 'M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z', (d?.needs || []).length || undefined)}
         {LIBRARIES.map((k) => item(k, names[k], looks[k].icon))}
       </ul>

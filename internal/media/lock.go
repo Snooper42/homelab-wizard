@@ -32,7 +32,7 @@ type Lock struct {
 func LockPath(root string) string { return filepath.Join(root, "data", "homelab.media.lock") }
 
 // ErrBusy is returned when another media job holds the lock.
-var ErrBusy = errors.New("another Tidy Up job is moving files")
+var ErrBusy = errors.New("another Library job is moving files")
 
 // alive and started are this machine's processes (internal/proc); tests
 // replace them.

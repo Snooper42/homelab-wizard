@@ -99,7 +99,7 @@ func (j Job) Command() ([]string, error) {
 	}
 	script := filepath.Join(ToolsDir(j.Root), a.Script)
 	if _, err := os.Stat(script); err != nil {
-		return nil, fmt.Errorf("Tidy Up's engines are missing from %s: update the homelab folder (homelab upgrade)", ToolsDir(j.Root))
+		return nil, fmt.Errorf("Library's engines are missing from %s: update the homelab folder (homelab upgrade)", ToolsDir(j.Root))
 	}
 	cmd := append(append([]string{}, j.Python...), script)
 	action := j.Action

@@ -26,7 +26,7 @@ export function Started({ started, also = [], open, close }: { started: api.Star
 /** One link the wiring made (internal/wiring), as it reports it. */
 export interface WireLink { state: string; text: string; detail?: string; fix?: string }
 /** A link's one-click fix (wiring.Link.Fix), by its name: the button's words. */
-const fixes: Record<string, string> = { 'inbox-arrive': 'Let Tidy Up file downloads as they arrive', 'seerr-signin': 'Sign Seerr in', 'qbit-password': 'Give qBittorrent the password in Settings' };
+const fixes: Record<string, string> = { 'inbox-arrive': 'Let Library file downloads as they arrive', 'seerr-signin': 'Sign Seerr in', 'qbit-password': 'Give qBittorrent the password in Settings' };
 
 function SeerrSignIn({ send }: { send: (user: string, password: string) => void }) {
   const [user, setUser] = useState('');

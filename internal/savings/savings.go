@@ -19,7 +19,7 @@ type Row struct {
 	Annual   float64 // the annual-plan price in dollars
 	// The columns below are optional: a table without them leaves them empty (lane D, D1).
 	Monthly   float64 // the monthly price in dollars, 0 when the table has none
-	Kind      string  // Direct, Equivalent or Library
+	Kind      string  // Direct, Equivalent or Own media (a saving only with media you own)
 	Condition string  // when the saving is real, links as plain text
 	// Counted is false for a row whose paid service another row counts already (Dropbox Plus for both File Browser
 	// and Nextcloud): the counted rows add up to the Everything total. Of a service's rows, the dearest is counted,

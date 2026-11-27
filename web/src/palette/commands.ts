@@ -38,7 +38,7 @@ export function match(list: Command[], query: string): Command[] {
 
 const screenList: [string, string, string, string][] = [
   ['status', 'Home', '1', 'status apps running overview'],
-  ['tidy', 'Tidy Up', '2', 'media library music books films'],
+  ['tidy', 'Library', '2', 'tidy up media music books films shows'],
   ['finances', 'Finances', '3', 'money budget bills'],
   ['backups', 'Backups', '4', 'backup restore'],
   ['choose', 'Find an app', '5', 'install add apps choose'],

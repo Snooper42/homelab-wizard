@@ -54,7 +54,7 @@ func Gaps(env map[string]string, home string, existing []Job) []Gap {
 		}
 		why := "Too big for a nightly copy: keep a copy of your own"
 		if f.key == "DOWNLOADS_ROOT" {
-			why = "Not copied: Tidy Up files what finishes into the library"
+			why = "Not copied: Library files what finishes into the libraries"
 		}
 		out = append(out, Gap{Name: f.name, Path: filepath.Clean(dir), Why: why})
 	}

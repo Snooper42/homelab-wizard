@@ -2955,7 +2955,7 @@
     "Reaching the apps": "M12 2a10 10 0 1 0 0 20 10 10 0 1 0 0-20zM2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z",
     Storage: "M22 12H2M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11zM6 16h.01M10 16h.01",
     Appearance: "M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42M12 7a5 5 0 1 0 0 10 5 5 0 1 0 0-10z",
-    "Tidy Up": "M3 6h18M7 12h10M10 18h4",
+    Library: "M3 6h18M7 12h10M10 18h4",
     Setup: "M22 11.08V12a10 10 0 1 1-5.93-9.14M22 4 12 14.01l-3-3"
   };
   var machineIcon = "M2 3h20v14H2zM8 21h8M12 17v4";
@@ -3358,7 +3358,7 @@
       /* @__PURE__ */ u3("button", { type: "button", id: "installClose", class: "small", onClick: close3, children: "Close" })
     ] });
   }
-  var fixes = { "inbox-arrive": "Let Tidy Up file downloads as they arrive", "seerr-signin": "Sign Seerr in", "qbit-password": "Give qBittorrent the password in Settings" };
+  var fixes = { "inbox-arrive": "Let Library file downloads as they arrive", "seerr-signin": "Sign Seerr in", "qbit-password": "Give qBittorrent the password in Settings" };
   function SeerrSignIn({ send }) {
     const [user, setUser] = d2("");
     const [password, setPassword] = d2("");
@@ -4675,7 +4675,7 @@
   }
   var pageGroups = [
     ["", ["General", "People", "Phones", "Automatic care", "Alerts", "Reaching the apps"]],
-    [thisMachine, [thisMachine, "Storage", "Appearance", "Tidy Up"]]
+    [thisMachine, [thisMachine, "Storage", "Appearance", "Library"]]
   ];
   var navGroups = [];
   function renderSettingsNav(pages) {
@@ -21326,11 +21326,11 @@ ${pays}
         ": no folder yet"
       ] }),
       /* @__PURE__ */ u3("span", { class: "muted", children: [
-        "Tidy Up looks in ",
-        l3.folder,
-        ": put your ",
+        "Put your ",
         names3[l3.kind].toLowerCase(),
-        " there and it starts on them."
+        " in ",
+        l3.folder,
+        " and they show up here."
       ] })
     ] });
     return /* @__PURE__ */ u3(Card, { kind: "notice", role: "status", children: [
@@ -22000,7 +22000,7 @@ ${pays}
     };
     const other = x2(Elsewhere);
     const waits2 = busy(job2) || !!other;
-    const state3 = (f4) => gone.has(f4) ? "Not there now: plug in its drive" : !ib.watching ? "Not watched: Tidy Up's background work is off in Settings" : when3 === "manual" ? "Tidied when you press Tidy up now" : when3 === "daily" ? "Tidied once a day, after 3 AM" : "Watched: tidied as things arrive";
+    const state3 = (f4) => gone.has(f4) ? "Not there now: plug in its drive" : !ib.watching ? "Not watched: tidying in the background is off in Settings" : when3 === "manual" ? "Tidied when you press Tidy up now" : when3 === "daily" ? "Tidied once a day, after 3 AM" : "Watched: tidied as things arrive";
     return /* @__PURE__ */ u3(Widget, { title: "Drop anything here", span: "all", kind: "tidyinbox", children: [
       /* @__PURE__ */ u3("fieldset", { class: "tidyinboxset", disabled: waits2, children: [
         /* @__PURE__ */ u3(Rows, { kind: "fx-rows tidytodo", children: [
@@ -22015,11 +22015,11 @@ ${pays}
             },
             f4
           )),
-          /* @__PURE__ */ u3(Row, { lead: /* @__PURE__ */ u3(LibIcon, { kind: "inbox" }), title: "Add a folder…", sub: "Another folder, or a folder on a drive, for Tidy Up to watch", end: /* @__PURE__ */ u3("button", { class: "small", onClick: add, children: "Add…" }) })
+          /* @__PURE__ */ u3(Row, { lead: /* @__PURE__ */ u3(LibIcon, { kind: "inbox" }), title: "Add a folder…", sub: "Another folder, or a folder on a drive, to watch", end: /* @__PURE__ */ u3("button", { class: "small", onClick: add, children: "Add…" }) })
         ] }),
         /* @__PURE__ */ u3("div", { class: "tidyinboxwhen", children: [
           /* @__PURE__ */ u3("span", { class: "muted", children: "Tidy up" }),
-          /* @__PURE__ */ u3(Segmented, { label: "When Tidy Up files what's in these folders", value: when3, pick: (v3) => act.inbox(folders, v3), options: WHENS })
+          /* @__PURE__ */ u3(Segmented, { label: "When what's in these folders is filed", value: when3, pick: (v3) => act.inbox(folders, v3), options: WHENS })
         ] })
       ] }),
       /* @__PURE__ */ u3("div", { class: "tidyinboxgo", children: /* @__PURE__ */ u3("button", { class: "small", onClick: () => act.settings(), children: "More in Settings…" }) }),
@@ -22067,7 +22067,7 @@ ${pays}
       return x3.total ? `${free}Nothing here yet` : "A folder you chose";
     };
     return /* @__PURE__ */ u3(Widget, { title: "Where should your libraries live?", span: "all", kind: "tidyplaces", children: [
-      /* @__PURE__ */ u3("p", { class: "muted tidyinboxlead", children: first2 ? "Pick the drive for your music, films, shows, books, and audiobooks. Tidy Up looks for libraries already on it, and files everything new there. You can change this later." : "Pick the drive or folder for your music, films, shows, books, and audiobooks. Nothing is moved or copied: Tidy Up and your apps look there from now on." }),
+      /* @__PURE__ */ u3("p", { class: "muted tidyinboxlead", children: first2 ? "Pick the drive for your music, films, shows, books, and audiobooks. The libraries already on it are found, and everything new is filed there. You can change this later." : "Pick the drive or folder for your music, films, shows, books, and audiobooks. Nothing is moved or copied: Library and your apps look there from now on." }),
       !drives ? /* @__PURE__ */ u3(Empty, { children: "Looking at your drives…" }) : /* @__PURE__ */ u3("div", { class: "tidydrives", role: "radiogroup", "aria-label": "Where your libraries live", children: [
         drives.map((x3) => /* @__PURE__ */ u3("button", { role: "radio", "aria-checked": x3.root === picked, class: "tidydrive" + (x3.root === picked ? " picked" : ""), disabled: x3.backups, onClick: () => setPicked(x3.root), children: [
           /* @__PURE__ */ u3(LibIcon, { kind: x3.internal ? "machine" : "drive" }),
@@ -22130,7 +22130,7 @@ ${pays}
     };
     const film = (x3) => act.ask({
       title: `Which film is ${x3.name}?`,
-      lead: "Its title, and its year if you know it, or Look it up and pick it: Tidy Up renames it to that and files it in Movies.",
+      lead: "Its title, and its year if you know it, or Look it up and pick it: it's renamed to that and filed in Movies.",
       action: "File it",
       fields: [{ key: "title", label: "Film" }, { key: "year", label: "Year", number: true, optional: true }],
       find: {
@@ -22149,7 +22149,7 @@ ${pays}
     const album = (x3) => act.ask({
       title: `Which album is ${x3.name}?`,
       action: "File them",
-      lead: "Its name, and the artist if you know it. Tidy Up looks it up on MusicBrainz; pick the one these songs are, and it writes the album's names onto them and files them in Music.",
+      lead: "Its name, and the artist if you know it. It's looked up on MusicBrainz: pick the one these songs are, and they get the album's names and are filed in Music.",
       fields: [{ key: "artist", label: "Artist", optional: true }, { key: "album", label: "Album" }],
       find: {
         label: "Look it up",
@@ -22165,7 +22165,7 @@ ${pays}
     });
     const episode = (x3) => act.ask({
       title: `Which show is ${x3.name}?`,
-      lead: "The show and the season, and the episode if it's one: Tidy Up renames it to that and files it in TV. A folder of episodes keeps each one's own number.",
+      lead: "The show and the season, and the episode if it's one: it's renamed to that and filed in TV. A folder of episodes keeps each one's own number.",
       action: "File it",
       fields: [{ key: "show", label: "Show" }, { key: "season", label: "Season", number: true }, { key: "episode", label: "Episode", number: true, optional: true }],
       find: {
@@ -22179,7 +22179,7 @@ ${pays}
       go: (v3) => act.run("inbox", "name", [x3.path, "episode", picked(v3)?.[0] || v3.show, v3.season, ...opt(v3.episode)])
     });
     return /* @__PURE__ */ u3(Widget, { title: "Needs a look", kind: "tidyneedslook", actions: /* @__PURE__ */ u3("span", { class: "tidycount", title: count(needs.length, "thing"), children: needs.length }), children: [
-      /* @__PURE__ */ u3("p", { class: "muted tidyneedslead", children: needs.length === 1 ? "Tidy Up couldn't place it; nothing else waits on it." : "Tidy Up couldn't place these; nothing else waits on them." }),
+      /* @__PURE__ */ u3("p", { class: "muted tidyneedslead", children: needs.length === 1 ? "Couldn't place it; nothing else waits on it." : "Couldn't place these; nothing else waits on them." }),
       /* @__PURE__ */ u3(Rows, { kind: "fx-rows tidytodo", children: needs.map((x3) => /* @__PURE__ */ u3(
         Row,
         {
@@ -22194,7 +22194,7 @@ ${pays}
               /* @__PURE__ */ u3(Go, { label: "It's an episode…", job: job2, onClick: () => episode(x3) })
             ] }),
             /* @__PURE__ */ u3("button", { class: "small", onClick: () => act.reveal(x3.path), children: showIn }),
-            /* @__PURE__ */ u3(Go, { label: "Leave it", job: job2, title: `Leave ${x3.name} where it is: Tidy Up won't file it`, onClick: () => act.run("inbox", "leave", [x3.path]) })
+            /* @__PURE__ */ u3(Go, { label: "Leave it", job: job2, title: `Leave ${x3.name} where it is: it won't be filed`, onClick: () => act.run("inbox", "leave", [x3.path]) })
           ] })
         },
         x3.path
@@ -22356,7 +22356,7 @@ ${pays}
       extra.push({ kind: "tv", title: `${count(gaps, "episode")} ${gaps === 1 ? "is" : "are"} missing from ${count(new Set(list.map((g2) => g2.show)).size, "show")}`, sub: where + (list.length > 3 ? ` · and ${count(list.length - 3, "season")} more` : "") });
     }
     if ((kind === "movies" || kind === "tv") && l3.found && !d3.activity.some((a3) => a3.kind === "arr")) {
-      extra.push({ kind: "inbox", title: kind === "tv" ? "Let Tidy Up file what Sonarr downloads" : "Let Tidy Up file what Radarr downloads", sub: "They find and download; Tidy Up renames and files", go: { label: "Hand over…", quiet: true, run: () => act.ask({ title: "Let Tidy Up file the downloads?", action: "Hand over", lead: "Sonarr, Radarr, and Lidarr keep finding and downloading; they stop renaming files and stop moving finished downloads into the libraries. Tidy Up files them instead, so the two never rename each other's files.", go: () => act.run("arr", "apply") }) } });
+      extra.push({ kind: "inbox", title: kind === "tv" ? "Let Library file what Sonarr downloads" : "Let Library file what Radarr downloads", sub: "They find and download; Library renames and files", go: { label: "Hand over…", quiet: true, run: () => act.ask({ title: "Let Library file the downloads?", action: "Hand over", lead: "Sonarr, Radarr, and Lidarr keep finding and downloading; they stop renaming files and stop moving finished downloads into the libraries. Library files them instead, so the two never rename each other's files.", go: () => act.run("arr", "apply") }) } });
     }
     const tools = l3.found ? toolsRow(d3, act, (needs) => needs === "all" || (toolFor[needs] || []).includes(kind)) : [];
     const rows = [...tools, ...todos, ...extra];
@@ -22407,15 +22407,15 @@ ${pays}
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3("div", { class: "row header", children: [
         /* @__PURE__ */ u3("div", { children: [
-          /* @__PURE__ */ u3("h1", { children: "Tidy Up" }),
+          /* @__PURE__ */ u3("h1", { children: "Library" }),
           /* @__PURE__ */ u3("p", { class: "lead", children: say || "Your music, films, TV, books, and audiobooks: sorted, tagged, and lean" })
         ] }),
         /* @__PURE__ */ u3("div", { class: "toolbar tidytools", children: [
-          /* @__PURE__ */ u3("button", { type: "button", class: "btn tidyfoldersbtn" + (folders ? " on" : ""), "aria-expanded": folders, title: "The folders Tidy Up watches, and when it tidies", onClick: () => setFolders(!folders), children: "Folders and when…" }),
+          /* @__PURE__ */ u3("button", { type: "button", class: "btn tidyfoldersbtn" + (folders ? " on" : ""), "aria-expanded": folders, title: "The folders it watches, and when it tidies", onClick: () => setFolders(!folders), children: "Folders and when…" }),
           d3 && /* @__PURE__ */ u3(Elsewhere.Provider, { value: other ? jobTitle(other.kind, other.action, other.flags || []) : "", children: /* @__PURE__ */ u3(Go, { primary: true, label: "Tidy up now", job: job2, onClick: () => act.run("inbox", "scan", ["--apply"]) }) })
         ] })
       ] }),
-      /* @__PURE__ */ u3("div", { class: "tidytabs", children: /* @__PURE__ */ u3(Segmented, { label: "Tidy Up sections", value: tab3, pick: (v3) => p3.pick(v3), options: [["overview", "Inbox"], ...LIBRARIES.map((k3) => [k3, names3[k3]])] }) }),
+      /* @__PURE__ */ u3("div", { class: "tidytabs", children: /* @__PURE__ */ u3(Segmented, { label: "Library sections", value: tab3, pick: (v3) => p3.pick(v3), options: [["overview", "Inbox"], ...LIBRARIES.map((k3) => [k3, names3[k3]])] }) }),
       other && /* @__PURE__ */ u3(RunningCard, { lock: other, now: p3.running?.lock ? p3.running.now : void 0, stop: () => p3.act.stopElsewhere(other), stopping: p3.stoppingElsewhere === other.start }),
       d3?.stale && !other && !job2 && (() => {
         const c4 = carryOn(d3.stale, d3, act, p3.pick);
@@ -22448,7 +22448,7 @@ ${pays}
         }
       ),
       p3.error && !d3 && /* @__PURE__ */ u3(Card, { kind: "notice", id: "tidyError", role: "alert", children: [
-        /* @__PURE__ */ u3("strong", { children: "Tidy Up couldn't read its record" }),
+        /* @__PURE__ */ u3("strong", { children: "Library couldn't read its record" }),
         /* @__PURE__ */ u3("span", { class: "muted", children: [
           p3.error,
           ". Nothing in your libraries changed. ",
@@ -22467,7 +22467,7 @@ ${pays}
       !!n3 && /* @__PURE__ */ u3("span", { class: "count", children: n3 })
     ] }) }, key6);
     return /* @__PURE__ */ u3(S, { children: [
-      /* @__PURE__ */ u3("ul", { class: "finmenu tidymenu", "aria-label": "Tidy Up", children: [
+      /* @__PURE__ */ u3("ul", { class: "finmenu tidymenu", "aria-label": "Library", children: [
         item("overview", "Overview", "M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z", (d3?.needs || []).length || void 0),
         LIBRARIES.map((k3) => item(k3, names3[k3], looks[k3].icon))
       ] }),
@@ -22780,7 +22780,7 @@ ${pays}
     setup: "Setup",
     settings: "Settings",
     finances: "Finances",
-    tidy: "Tidy Up"
+    tidy: "Library"
   };
   function here(screen) {
     switch (screen) {
@@ -22822,7 +22822,7 @@ ${pays}
   }
   var screens = () => [
     [[mod + "1"], "Home"],
-    [[mod + "2"], "Tidy Up"],
+    [[mod + "2"], "Library"],
     [[mod + "3"], "Finances"],
     [[mod + "4"], "Backups"],
     [[mod + "5"], "Find an app"],
@@ -22890,7 +22890,7 @@ ${pays}
   }
   var screenList = [
     ["status", "Home", "1", "status apps running overview"],
-    ["tidy", "Tidy Up", "2", "media library music books films"],
+    ["tidy", "Library", "2", "tidy up media music books films shows"],
     ["finances", "Finances", "3", "money budget bills"],
     ["backups", "Backups", "4", "backup restore"],
     ["choose", "Find an app", "5", "install add apps choose"],

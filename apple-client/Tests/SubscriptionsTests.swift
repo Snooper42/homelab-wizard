@@ -20,8 +20,8 @@ struct SubscriptionsTests {
         // Two rows for one service: counted once, its apps together, the counted row's price.
         SubscriptionOffer(apps: ["crowdsec"], replaces: "Cloudflare Pro", kind: "Equivalent", monthly: 25, annual: 240, counted: true),
         SubscriptionOffer(apps: ["vaultwarden"], replaces: "Cloudflare Pro (WAF)", kind: "Equivalent", monthly: 20, annual: 200, counted: false),
-        SubscriptionOffer(apps: ["navidrome"], replaces: "Spotify Premium Family", kind: "Library", monthly: 21.99, annual: 263.88),
-        SubscriptionOffer(apps: ["feishin"], replaces: "Spotify Premium Family", kind: "Library", monthly: 21.99, annual: 263.88),
+        SubscriptionOffer(apps: ["navidrome"], replaces: "Spotify Premium Family", kind: "Own media", monthly: 21.99, annual: 263.88),
+        SubscriptionOffer(apps: ["feishin"], replaces: "Spotify Premium Family", kind: "Own media", monthly: 21.99, annual: 263.88),
         // Priced only by the year: a twelfth a month.
         SubscriptionOffer(apps: ["paperless-ngx"], replaces: "Evernote Advanced", kind: "Direct", monthly: 0, annual: 249.99),
         // Not run: could be, with both its apps.

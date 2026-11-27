@@ -529,6 +529,12 @@ async function toStatusPart(page, key) {
 /** Picks a screen as a person would: Backups through Status' menu, the rest by their button in the strip. */
 async function pickScreen(page, screen) {
   if (screen === 'backups') return toBackups(page);
+  // Setup is in Settings' list, not the strip (the owner, Nov 27).
+  if (screen === 'setup') {
+    await page.click('nav button[data-screen="settings"]');
+    await page.click('#settingsNav .pagebtn[data-page="Setup"]', { timeout: 5000 });
+    return;
+  }
   await page.click(`nav button[data-screen="${screen}"]`);
 }
 /** Backups, an item in Status' menu: Status first from another screen. */
@@ -848,7 +854,7 @@ const smokes = [
     await page.waitForSelector('#subNow .subtile', { timeout: 5000 });
     const dollar = (t) => Number(t.replace(/[^\d.]/g, ''));
     const tiles = await page.$$eval('#subNow .subtile', (ts) => ts.map((t) => [t.querySelector('.pill')?.textContent.trim(), t.querySelector('.subyear').textContent]));
-    if (!tiles.some(([k]) => k === 'Library')) throw new Error('no Library tile to count');
+    if (!tiles.some(([k]) => k === 'Own media')) throw new Error('no Own media tile to count');
     const lead = await page.textContent('#statusPart .subpage .lead');
     const m = lead.match(/^\$([\d,]+) a year · \$[\d,.]+ a month$/);
     if (!m) throw new Error('the line: ' + lead);
@@ -1504,7 +1510,7 @@ const smokes = [
   } },
   // A record that can't be read says nothing changed, with Try again.
   { name: 'Tidy Up: a record that can’t be read has Try again', screen: 'tidy', mock: { tidyUpFails: 1 }, run: async (page) => {
-    await page.waitForSelector('#tidyError strong:text-is("Tidy Up couldn\'t read its record")', { timeout: 5000 });
+    await page.waitForSelector('#tidyError strong:text-is("Library couldn\'t read its record")', { timeout: 5000 });
     await page.click('#tidyError button:text-is("Try again")');
     await page.waitForSelector('#tidy .tidyneeds', { timeout: 5000 });
     if (await page.locator('#tidyError').count()) throw new Error('the error stayed');
@@ -3601,8 +3607,9 @@ const smokes = [
   // Advanced; Automatic care has the updates' and self-repair's settings, Alerts what Notifications had.
   { name: 'Settings: the list as the redesign, with Automatic care and Alerts as pages', screen: 'settings', run: async (page) => {
     await page.waitForSelector('#settingsNav .pagebtn[data-page="General"]', { timeout: 5000 });
-    const order = await page.$$eval('#settingsNav > .pagebtn', (b) => b.map((x) => x.dataset.page).slice(0, 6));
-    if (order.join() !== 'General,People,Phones,Automatic care,Alerts,Reaching the apps') throw new Error(`the list: ${order}`);
+    // Setup first while steps are left (the owner, Nov 27), then the redesign's pages.
+    const order = await page.$$eval('#settingsNav > .pagebtn', (b) => b.map((x) => x.dataset.page).slice(0, 7));
+    if (order.join() !== 'Setup,General,People,Phones,Automatic care,Alerts,Reaching the apps') throw new Error(`the list: ${order}`);
     await page.click('#settingsNav .pagebtn[data-page="Automatic care"]');
     await page.waitForSelector('#setting-AUTO_HEAL', { timeout: 5000 });
     await page.waitForSelector('#setting-AUTO_ROLLBACK');
@@ -5376,7 +5383,7 @@ const smokes = [
   ...[['Mac', { platform: 'MacIntel' }], ['Windows', { platform: 'Win32' }], ['GNOME', { platform: 'Linux x86_64', host: { ...host, os: 'Ubuntu 24.04', machine: 'this machine', desktop: 'gnome' } }]]
     .map(([sys, m]) => ({ name: `The sidebar becomes icons when the text is big for the window, ${sys}`, screen: 'status', mock: m, run: async (page) => {
       await page.setViewportSize({ width: 860, height: 560 });
-      await page.waitForSelector('#statusCount:not(:empty)', { timeout: 5000 });
+      await page.waitForSelector('#statusApps', { timeout: 5000 });
       const nav = async () => page.evaluate(() => {
         const n = document.querySelector('nav'), b = document.querySelector('nav button[data-screen="status"]'), label = b.querySelector('span:not(.count)'), count = b.querySelector('.count');
         const r = b.getBoundingClientRect(), c = count.getBoundingClientRect(), z = parseFloat(getComputedStyle(document.documentElement).zoom) || 1;
@@ -5392,9 +5399,8 @@ const smokes = [
         const rail = await nav();
         if (rail.width > 80) throw new Error(`at text size ${zoom} the sidebar is still ${Math.round(rail.width)}px wide`);
         if (rail.label > 3) throw new Error(`at text size ${zoom} the screen names still show in the rail`);
-        if (!rail.countIn) throw new Error(`at text size ${zoom} Status' count is not on its icon`);
         if (rail.cut) throw new Error(`at text size ${zoom} the sidebar is cut off at the bottom`);
-        if (await page.getByRole('button', { name: /^Status/ }).count() !== 1) throw new Error('the Status button lost its name');
+        if (await page.getByRole('button', { name: /^Home/ }).count() !== 1) throw new Error('the Home button lost its name');
       }
       await toBackups(page);
     } })),
@@ -5644,7 +5650,7 @@ const smokes = [
     await page.click('#statusRows tr:has(strong:text-is("Vikunja")) button.topage');
     await page.waitForSelector('#app.active', { timeout: 3000 });
     if (await page.evaluate(() => localStorage.getItem('homelab.statusSeen'))) throw new Error('an app’s page counted as leaving Status');
-    await page.click('nav button[data-screen=setup]');
+    await pickScreen(page, 'setup');
     await page.waitForSelector('#setup.active', { timeout: 3000 });
     // Meanwhile: Vikunja restarted, Navidrome updated, Mealie started, Immich stopped.
     await page.evaluate(() => {
@@ -6380,7 +6386,7 @@ const smokes = [
   { name: 'Connect apps: one line for the apps that file their own downloads, and a button to hand them over', screen: 'status', mock: { wireLinks: [{ state: 'manual', text: 'Sonarr, Radarr and Lidarr file their own downloads', detail: 'Tidy Up files downloads only when you press Tidy up now, so they file what they download themselves', fix: 'inbox-arrive' }] }, run: async (page) => {
     await page.click('#statusMore');
     await page.click('#connect');
-    const btn = page.locator('#statusWiring button:has-text("Let Tidy Up file downloads as they arrive")');
+    const btn = page.locator('#statusWiring button:has-text("Let Library file downloads as they arrive")');
     await btn.waitFor({ timeout: 3000 });
     if (await page.locator('#statusWiring li').count() !== 1) throw new Error('more than one line');
     await btn.click();
@@ -6882,16 +6888,17 @@ const smokes = [
   // menu (parts/SideMenu), then Settings and the computer's line at the foot; a pick in the menu goes to its part.
   { name: "Every screen's sidebar is laid out as Finances': the icons in a strip, then its own menu", screen: 'status', run: async (page) => {
     for (const [screen, menu, first] of [['status', '#statusSide', 'Overview'], ['setup', '#setupSide', 'Steps'], ['finances', '#finMenu', 'Dashboard'], ['tidy', '#tidyMenu', 'Overview']]) {
-      await page.click(`nav > button[data-screen="${screen}"]`);
+      await pickScreen(page, screen);
       await page.waitForSelector(`#${screen}.active`, { timeout: 5000 });
       await page.waitForSelector(`${menu} [aria-current="page"]:has-text("${first}")`, { timeout: 5000 });
-      const tops = [];
+      // The strip (the owner, Nov 27): Home, Library and Finances side by side in one box, each a third of it.
+      const tops = [], widths = [];
       for (const s of ['status', 'tidy', 'finances']) {
         const box = await page.locator(`nav > button[data-screen="${s}"]`).boundingBox();
-        if (!box || box.width > 60) throw new Error(`on ${screen}, the ${s} button is a whole line, not an icon`);
-        tops.push(Math.round(box.y));
+        if (!box || box.width > 120) throw new Error(`on ${screen}, the ${s} button is a whole line, not a third of the strip`);
+        tops.push(Math.round(box.y)); widths.push(Math.round(box.width));
       }
-      if (new Set(tops).size !== 1) throw new Error(`on ${screen}, the icons are not one row: ${tops}`);
+      if (new Set(tops).size !== 1 || Math.max(...widths) - Math.min(...widths) > 2) throw new Error(`on ${screen}, the strip is not one row of thirds: ${tops} ${widths}`);
       const shown = await page.$$eval('.sidemenu, #finMenu, #tidyMenu', (els) => els.filter((e) => e.getClientRects().length && e.textContent.trim()).map((e) => e.id));
       if (shown.length !== 1 || `#${shown[0]}` !== menu) throw new Error(`on ${screen}, the menus shown: ${shown}`);
       const menuBox = await page.locator(menu).boundingBox(), settings = await page.locator('nav > button[data-screen="settings"]').boundingBox();

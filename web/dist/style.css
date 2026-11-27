@@ -3275,3 +3275,9 @@ html:not(.companion) #setupOnStatus .setupnext { grid-column:2; grid-row:1 / spa
 html:not(.companion) #setupOnStatus .setupnext li { white-space:nowrap; }
 html:not(.companion) #setupOnStatus .setupnext li + li::before { content:"·"; margin:0 10px 0 -10px; }
 html:not(.companion) nav #settingsNav .pagebtn .n.badge { background:none; box-shadow:none; border:0; padding:0; }
+@container (max-width: 640px) {
+  html:not(.companion) #setupOnStatus .setuponstatus { grid-template-columns:minmax(0, 1fr) auto; }
+  html:not(.companion) #setupOnStatus .setuponstatus > .row > button { grid-row:1; grid-column:2; }
+  html:not(.companion) #setupOnStatus .setupnext { grid-column:1 / -1; grid-row:3; }
+  html:not(.companion) #setupOnStatus .setupnext li { white-space:normal; }
+}

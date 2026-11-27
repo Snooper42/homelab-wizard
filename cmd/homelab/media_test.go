@@ -276,11 +276,11 @@ func TestMediaLockIsOneJobAtATime(t *testing.T) {
 		}
 		time.Sleep(10 * time.Millisecond)
 	}
-	if out, code := homelabCmd(t, root, "", "media", "music", "file", "/x"); code == 0 || !strings.Contains(out, "another Tidy Up job is moving files") {
+	if out, code := homelabCmd(t, root, "", "media", "music", "file", "/x"); code == 0 || !strings.Contains(out, "another Library job is moving files") {
 		t.Errorf("a second job while the first moves files (exit %d):\n%s", code, out)
 	}
 	// While it holds the lock, the media apps aren't updated alone.
-	if out, code := homelabCmd(t, root, "", "update", "navidrome", "--apply"); code == 0 || !strings.Contains(out, "Tidy Up is moving files") {
+	if out, code := homelabCmd(t, root, "", "update", "navidrome", "--apply"); code == 0 || !strings.Contains(out, "Library is moving files") {
 		t.Errorf("updating Navidrome mid-job (exit %d):\n%s", code, out)
 	}
 	_ = os.WriteFile(hold, nil, 0o644)

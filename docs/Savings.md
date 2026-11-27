@@ -31,7 +31,7 @@ Used to the full, the homelab replaces about **$4,487 a year** in subscriptions,
 | Kind | What it means | Services | Annual plan |
 |---|---|---:|---:|
 | Direct | The app does the same job; the saving is real as soon as you switch | 15 | $1,376.39 |
-| Library | Needs media you own (films, music, books); the app replaces the service's player and catalogue | 12 | $2,027.96 |
+| Own media | Needs media you own (films, music, books); the app replaces the service's player and catalogue | 12 | $2,027.96 |
 | Equivalent | A paid product with the same function that a household may not otherwise buy | 12 | $1,082.73 |
 
 **How to read the numbers**
@@ -130,19 +130,19 @@ Not counted: Wallos (it finds savings rather than replacing a paid service; trac
 | App | Runs | Replaces | Kind | Monthly | Annual plan | Condition |
 |---|---|---|---|---:|---:|---|
 | [Jellyfin](<../services/media/Jellyfin.md>) | Native | Plex Pass | Direct | $6.99 | $69.99 | Jellyfin is the media server |
-| [Jellyfin](<../services/media/Jellyfin.md>) | Native | Netflix Standard | Library | $19.99 | $239.88 | Your own library; no annual plan exists |
-| [Jellyfin](<../services/media/Jellyfin.md>) | Native | Hulu (No Ads) | Library | $18.99 | $227.88 | Your own library; no annual plan exists |
-| [Jellyfin](<../services/media/Jellyfin.md>) | Native | Disney+ Premium | Library | $21.49 | $214.99 | Your own library |
-| [Jellyfin](<../services/media/Jellyfin.md>) | Native | HBO Max Standard | Library | $18.49 | $184.99 | Your own library |
-| [Jellyfin](<../services/media/Jellyfin.md>) | Native | Peacock Premium Plus | Library | $19.99 | $199.99 | Your own library |
-| [Jellyfin](<../services/media/Jellyfin.md>) | Native | Paramount+ Premium | Library | $13.99 | $139.99 | Your own library |
-| [Jellyfin](<../services/media/Jellyfin.md>) | Native | Apple TV | Library | $14.99 | $119.00 | Your own library |
-| [Navidrome](<../services/media/Navidrome.md>) + [Feishin](<../services/media/Feishin.md>) | Baseline | Spotify Premium Family | Library | $21.99 | $263.88 | Your music library covers what the household plays; no annual plan exists |
-| [Audiobookshelf](<../services/media/Audiobookshelf.md>) | Baseline | Audible Premium Plus | Library | $14.95 | $149.50 | Audiobooks you own (for example DRM-free purchases) |
+| [Jellyfin](<../services/media/Jellyfin.md>) | Native | Netflix Standard | Own media | $19.99 | $239.88 | Your own library; no annual plan exists |
+| [Jellyfin](<../services/media/Jellyfin.md>) | Native | Hulu (No Ads) | Own media | $18.99 | $227.88 | Your own library; no annual plan exists |
+| [Jellyfin](<../services/media/Jellyfin.md>) | Native | Disney+ Premium | Own media | $21.49 | $214.99 | Your own library |
+| [Jellyfin](<../services/media/Jellyfin.md>) | Native | HBO Max Standard | Own media | $18.49 | $184.99 | Your own library |
+| [Jellyfin](<../services/media/Jellyfin.md>) | Native | Peacock Premium Plus | Own media | $19.99 | $199.99 | Your own library |
+| [Jellyfin](<../services/media/Jellyfin.md>) | Native | Paramount+ Premium | Own media | $13.99 | $139.99 | Your own library |
+| [Jellyfin](<../services/media/Jellyfin.md>) | Native | Apple TV | Own media | $14.99 | $119.00 | Your own library |
+| [Navidrome](<../services/media/Navidrome.md>) + [Feishin](<../services/media/Feishin.md>) | Baseline | Spotify Premium Family | Own media | $21.99 | $263.88 | Your music library covers what the household plays; no annual plan exists |
+| [Audiobookshelf](<../services/media/Audiobookshelf.md>) | Baseline | Audible Premium Plus | Own media | $14.95 | $149.50 | Audiobooks you own (for example DRM-free purchases) |
 | [Audiobookshelf](<../services/media/Audiobookshelf.md>) | Baseline | Pocket Casts Plus | Direct | $3.99 | $39.99 | Podcasts sync across devices through Audiobookshelf |
-| [Calibre-Web](<../services/media/Calibre-Web.md>) | Baseline | Kindle Unlimited | Library | $11.99 | $143.88 | Reading comes from your own e-book library; counted at 12 × monthly |
-| [Komga](<../services/media/Komga.md>) | Baseline | Marvel Unlimited | Library | $9.99 | $68.99 | Comics come from your own collection |
-| [Komga](<../services/media/Komga.md>) | Baseline | DC Universe Infinite | Library | $7.99 | $74.99 | Comics come from your own collection |
+| [Calibre-Web](<../services/media/Calibre-Web.md>) | Baseline | Kindle Unlimited | Own media | $11.99 | $143.88 | Reading comes from your own e-book library; counted at 12 × monthly |
+| [Komga](<../services/media/Komga.md>) | Baseline | Marvel Unlimited | Own media | $9.99 | $68.99 | Comics come from your own collection |
+| [Komga](<../services/media/Komga.md>) | Baseline | DC Universe Infinite | Own media | $7.99 | $74.99 | Comics come from your own collection |
 | **Subtotal** | | | | **$205.82** | **$2,137.94** | |
 
 **Streaming video.** Jellyfin with a library of films and shows you own (ripped discs, DRM-free purchases, home video) covers what the seven streaming services would provide: $1,327 a year on their own. Drop only the services your library actually covers; the rows are independent, so the total shrinks one row at a time.

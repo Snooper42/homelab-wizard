@@ -52,7 +52,7 @@ func TestOffersReadEveryColumn(t *testing.T) {
 	if o := find("Trakt VIP", "")[0]; !slices.Equal(o.Apps, []string{"sonarr", "radarr", "seerr"}) {
 		t.Errorf("Trakt VIP: %v", o.Apps)
 	}
-	if o := find("Spotify Premium Family", "")[0]; o.Kind != "Library" || len(o.Apps) != 2 {
+	if o := find("Spotify Premium Family", "")[0]; o.Kind != "Own media" || len(o.Apps) != 2 {
 		t.Errorf("Spotify: %+v", o)
 	}
 	// A service two apps replace is counted once, on the row whose note says "counted once, here".

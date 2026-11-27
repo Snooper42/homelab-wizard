@@ -322,7 +322,7 @@ function settingsPages(list) {
 
 const pageGroups: [string, string[]][] = [
   ['', ['General', 'People', 'Phones', 'Automatic care', 'Alerts', 'Reaching the apps']],
-  [thisMachine, [thisMachine, 'Storage', 'Appearance', 'Tidy Up']],
+  [thisMachine, [thisMachine, 'Storage', 'Appearance', 'Library']],
 ];
 let navGroups: NavGroup[] = [];
 function renderSettingsNav(pages) {

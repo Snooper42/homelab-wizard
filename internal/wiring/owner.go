@@ -59,13 +59,13 @@ func (w *Wirer) handOverSteps() []step {
 			step{fmt.Sprintf("%s stops renaming files", w.name(id)), func(ctx context.Context) (string, string, error) {
 				return w.setConfig(ctx, id, "config/naming", rename, false)
 			}},
-			step{fmt.Sprintf("%s leaves finished downloads for Tidy Up", w.name(id)), func(ctx context.Context) (string, string, error) {
+			step{fmt.Sprintf("%s leaves finished downloads for Library", w.name(id)), func(ctx context.Context) (string, string, error) {
 				return w.setConfig(ctx, id, "config/downloadclient", "enableCompletedDownloadHandling", false)
 			}})
 	}
 	if w.has("lazylibrarian") {
-		steps = append(steps, step{"LazyLibrarian leaves finished downloads for Tidy Up", func(context.Context) (string, string, error) {
-			return "manual", "In LazyLibrarian › Config › Processing, turn post-processing off; Tidy Up picks its books up from the download folder", nil
+		steps = append(steps, step{"LazyLibrarian leaves finished downloads for Library", func(context.Context) (string, string, error) {
+			return "manual", "In LazyLibrarian › Config › Processing, turn post-processing off; Library picks its books up from the download folder", nil
 		}})
 	}
 	return steps
@@ -138,7 +138,7 @@ const FixInboxArrive = "inbox-arrive"
 // without the settings' code names, with a fix when one click makes it
 // file; "" when it will.
 func (w *Wirer) tidyNotFiling() (string, string) {
-	const then = ", so they file what they download themselves, and Tidy Up doesn't"
+	const then = ", so they file what they download themselves, and Library doesn't"
 	off := func(k string) bool {
 		v := strings.ToLower(strings.TrimSpace(w.Env[k]))
 		return v == "false" || v == "0" || v == "no" || v == "off"
@@ -146,11 +146,11 @@ func (w *Wirer) tidyNotFiling() (string, string) {
 	dl := strings.TrimSpace(w.Env["DOWNLOADS_ROOT"])
 	switch {
 	case off("TIDY_UP"):
-		return "Tidy Up is turned off" + then, ""
+		return "Library is turned off" + then, ""
 	case off("TIDY_INBOX"):
-		return "Tidy Up's inbox is turned off" + then, ""
+		return "Library's inbox is turned off" + then, ""
 	case strings.EqualFold(strings.TrimSpace(w.Env["TIDY_INBOX_WHEN"]), "manual"):
-		return "Tidy Up files downloads only when you press Tidy up now" + then + ". Let it file them as they arrive, and Connect apps hands them over to it", FixInboxArrive
+		return "Library files downloads only when you press Tidy up now" + then + ". Let it file them as they arrive, and Connect apps hands them over to it", FixInboxArrive
 	case dl == "":
 		return "no downloads folder is set" + then, ""
 	}
@@ -166,5 +166,5 @@ func (w *Wirer) tidyNotFiling() (string, string) {
 			return "", ""
 		}
 	}
-	return "Tidy Up's inbox doesn't watch the downloads folder (" + dl + ")" + then, ""
+	return "Library's inbox doesn't watch the downloads folder (" + dl + ")" + then, ""
 }
