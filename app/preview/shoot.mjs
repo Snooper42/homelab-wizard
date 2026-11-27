@@ -804,6 +804,13 @@ const smokes = [
     const heads = await page.$$eval('#statusPart .subcard', (cs) => cs.map((c) => { const h = c.querySelector('h2'); return { id: c.id, gap: Math.round(h.getBoundingClientRect().top - c.getBoundingClientRect().top), size: getComputedStyle(h).fontSize }; }));
     if (new Set(heads.map((h) => `${h.gap} ${h.size}`)).size > 1) throw new Error(JSON.stringify(heads));
   } },
+  { name: 'Backups on a phone: each skipped app’s name beside its logo, and the cards padded', screen: 'backups', phone: ['companion', 'can-change'], run: async (page) => {
+    await page.waitForSelector('#needsYou .bkneedlist li', { timeout: 5000 });
+    const rows = await page.$$eval('#needsYou .bkneedlist li', (ls) => ls.map((l) => { const m = l.querySelector('.appmark').getBoundingClientRect(); const n = l.querySelector('.grow strong').getBoundingClientRect(); return { name: l.querySelector('.grow strong').textContent, beside: n.top < m.bottom && n.left > m.right }; }));
+    if (rows.some((r) => !r.beside)) throw new Error('names below their logos: ' + rows.filter((r) => !r.beside).map((r) => r.name).join(', '));
+    const pads = await page.$$eval('#backupTiles > .bkcard', (cs) => cs.map((c) => [c.id, Math.round(c.querySelector('h2, .row').getBoundingClientRect().left - c.getBoundingClientRect().left)]));
+    if (pads.some(([, p]) => p < 8)) throw new Error('a card without padding: ' + JSON.stringify(pads));
+  } },
   { name: 'Analytics: no memory warning while memory is fine', screen: 'status', run: async (page) => {
     await toStatusPart(page, 'analytics');
     await page.waitForSelector('#antMem', { timeout: 5000 });
