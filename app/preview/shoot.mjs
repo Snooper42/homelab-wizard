@@ -6918,7 +6918,9 @@ const smokes = [
     if (keys[1] !== 'analytics') throw new Error('the menu: ' + keys.join(', '));
     await page.click('#statusSide button[data-key="analytics"]');
     await page.waitForSelector('#statusPart .antpage h1:text-is("Analytics")', { timeout: 5000 });
-    for (const id of ['antCpu', 'antMem', 'antDisk', 'antTime', 'antApps']) if (!(await page.isVisible('#' + id))) throw new Error(`no ${id}`);
+    for (const id of ['antCpu', 'antMem', 'antDisk', 'antApps']) if (!(await page.isVisible('#' + id))) throw new Error(`no ${id}`);
+    // The timeline once samples come: no card for it before.
+    if (await page.locator('#antTime').count()) throw new Error('a timeline card before any samples');
     const tops = await page.$$eval('.anttiles > .card', (cs) => cs.map((c) => [Math.round(c.getBoundingClientRect().top), Math.round(c.getBoundingClientRect().height)]));
     if (new Set(tops.map((t) => t.join())).size !== 1) throw new Error('the three cards differ in place or height: ' + JSON.stringify(tops));
     await page.clock.runFor(65000);

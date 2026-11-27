@@ -8372,15 +8372,13 @@
         ] })
       ] }),
       pressure && pressure.total > 0 && /* @__PURE__ */ u3(Pressure, { m: pressure, stop: stop2 }),
-      /* @__PURE__ */ u3(Card, { kind: "antweek", id: "antTime", children: [
+      totals3.cpu.length > 2 && /* @__PURE__ */ u3(Card, { kind: "antweek", id: "antTime", children: [
         /* @__PURE__ */ u3("div", { class: "anthead", children: [
           /* @__PURE__ */ u3("h2", { children: span }),
           /* @__PURE__ */ u3("span", { class: "muted" })
         ] }),
-        totals3.cpu.length > 2 ? /* @__PURE__ */ u3(S, { children: [
-          /* @__PURE__ */ u3(Chart, { values: totals3.cpu, kind: "cpu", label: "Processor", mark: (v3) => `${Math.round(cores ? v3 / cores : v3)}%` }),
-          /* @__PURE__ */ u3(Chart, { values: totals3.mem, kind: "mem", label: "Memory", mark: (v3) => formatMem(v3) })
-        ] }) : /* @__PURE__ */ u3("p", { class: "muted antwait", children: "Drawn as Status reads the apps, every 10 seconds" })
+        /* @__PURE__ */ u3(Chart, { values: totals3.cpu, kind: "cpu", label: "Processor", mark: (v3) => `${Math.round(cores ? v3 / cores : v3)}%` }),
+        /* @__PURE__ */ u3(Chart, { values: totals3.mem, kind: "mem", label: "Memory", mark: (v3) => formatMem(v3) })
       ] }),
       /* @__PURE__ */ u3(Card, { kind: "antapps", id: "antApps", children: [
         /* @__PURE__ */ u3("div", { class: "anthead", children: [

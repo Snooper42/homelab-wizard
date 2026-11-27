@@ -149,13 +149,11 @@ export function Analytics({ stats, history, totals, cores, disk, storage, apps, 
         </Card>
       </div>
       {pressure && pressure.total > 0 && <Pressure m={pressure} stop={stop} />}
-      <Card kind="antweek" id="antTime">
+      {totals.cpu.length > 2 && <Card kind="antweek" id="antTime">
         <div class="anthead"><h2>{span}</h2><span class="muted" /></div>
-        {totals.cpu.length > 2 ? <>
-          <Chart values={totals.cpu} kind="cpu" label="Processor" mark={(v) => `${Math.round(cores ? v / cores : v)}%`} />
-          <Chart values={totals.mem} kind="mem" label="Memory" mark={(v) => formatMem(v)} />
-        </> : <p class="muted antwait">Drawn as Status reads the apps, every 10 seconds</p>}
-      </Card>
+        <Chart values={totals.cpu} kind="cpu" label="Processor" mark={(v) => `${Math.round(cores ? v / cores : v)}%`} />
+        <Chart values={totals.mem} kind="mem" label="Memory" mark={(v) => formatMem(v)} />
+      </Card>}
       <Card kind="antapps" id="antApps">
         <div class="anthead"><h2>What each app uses</h2><span class="muted" /></div>
         {rows.length ? <table class="anttable">
