@@ -24,7 +24,7 @@
   var minute = 6e4;
   var errorText = (e3) => String(e3 && e3.message || e3);
 
-  // ../homelab-wizard/node_modules/preact/dist/preact.module.js
+  // node_modules/preact/dist/preact.module.js
   var n;
   var l;
   var u;
@@ -304,7 +304,7 @@
     return n3.__v.__b - l3.__v.__b;
   }, H.__r = 0, f = Math.random().toString(8), c = "__d" + f, a = "__a" + f, s = /(PointerCapture)$|Capture$/i, h = 0, p = V(false), v = V(true), y = 0;
 
-  // ../homelab-wizard/node_modules/preact/hooks/dist/hooks.module.js
+  // node_modules/preact/hooks/dist/hooks.module.js
   var t2;
   var r2;
   var u2;
@@ -453,7 +453,7 @@
     return "function" == typeof t3 ? t3(n3) : t3;
   }
 
-  // ../homelab-wizard/node_modules/preact/jsx-runtime/dist/jsxRuntime.module.js
+  // node_modules/preact/jsx-runtime/dist/jsxRuntime.module.js
   var f3 = 0;
   function u3(e3, t3, n3, o3, i3, u4) {
     t3 || (t3 = {});
@@ -21802,8 +21802,8 @@ ${pays}
     const dr = d3.drive;
     const parts3 = d3.libraries.filter((l3) => l3.size).map((l3) => ({ label: names3[l3.kind], value: l3.size || 0, color: looks[l3.kind].hue })).sort((a3, b2) => b2.value - a3.value);
     const num2 = (s3) => s3.replace(/ \S+$/, ""), unit2 = (s3) => s3.replace(/^\S+ /, "");
-    return /* @__PURE__ */ u3("div", { class: "tidytilesbox", children: /* @__PURE__ */ u3("div", { class: "tiles tidytiles", children: [
-      /* @__PURE__ */ u3(Card, { kind: "tile ovcard", id: "tidyTodayTile", children: [
+    return /* @__PURE__ */ u3("div", { class: "tidytilesbox", children: /* @__PURE__ */ u3("div", { class: "tidytiles", children: [
+      /* @__PURE__ */ u3(Card, { kind: "fx-widget ovcard", id: "tidyTodayTile", children: [
         /* @__PURE__ */ u3("div", { class: "anthead", children: /* @__PURE__ */ u3("h2", { children: "Today" }) }),
         /* @__PURE__ */ u3("div", { class: "antfig", children: filed.length ? /* @__PURE__ */ u3(S, { children: [
           filed.length,
@@ -21820,7 +21820,7 @@ ${pays}
           newest3.undo && /* @__PURE__ */ u3(Go, { label: "Undo", job: job2, title: `Put ${newest3.title} back where it came from`, onClick: () => act.run("inbox", "undo", [newest3.id]) })
         ] }) : /* @__PURE__ */ u3("span", { class: "antempty" }) })
       ] }),
-      /* @__PURE__ */ u3(Card, { kind: "tile ovcard", id: "tidyGainTile", children: [
+      /* @__PURE__ */ u3(Card, { kind: "fx-widget ovcard", id: "tidyGainTile", children: [
         /* @__PURE__ */ u3("div", { class: "anthead", children: /* @__PURE__ */ u3("h2", { children: "To tidy" }) }),
         /* @__PURE__ */ u3("div", { class: "antfig", children: waiting2 ? /* @__PURE__ */ u3(S, { children: [
           waiting2,
@@ -21835,7 +21835,7 @@ ${pays}
           /* @__PURE__ */ u3("span", { class: "tidynewestname muted", children: first2.title })
         ] }) : /* @__PURE__ */ u3("span", { class: "antempty" }) })
       ] }),
-      /* @__PURE__ */ u3(Card, { kind: "tile ovcard", id: "tidyDriveTile", children: [
+      /* @__PURE__ */ u3(Card, { kind: "fx-widget ovcard", id: "tidyDriveTile", children: [
         /* @__PURE__ */ u3("div", { class: "anthead", children: /* @__PURE__ */ u3("h2", { children: dr?.name ? `The ${dr.name} drive` : "This machine" }) }),
         /* @__PURE__ */ u3("div", { class: "antfig", children: dr ? /* @__PURE__ */ u3(S, { children: [
           num2(size(dr.free)),

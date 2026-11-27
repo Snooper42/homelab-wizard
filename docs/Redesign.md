@@ -117,6 +117,8 @@ Grouped by what a household does: People, Phones, Automatic care, Alerts and qui
 
 Leads with what happened and what needs you: Today (each download filed, with Undo; one still downloading), Needs a look (the downloads it couldn't place, each with its button), Needs your OK (the next step first, largest; a step that throws things away never gets the main button), the drive, Your libraries, Recently done, Genres ([the whole page](<images/redesign/computer-tidy-full.png>)). Watched folders and when to tidy move behind the settings button. A library's own step-by-step clean-up moves into its page.
 
+**Built as Status' Overview** (the owner, Nov 27, over the picture above: *"it needs to obviously mesh nicely into our app"*): three cards of Status' anatomy first, *Today* (how many downloads were filed, from which folders, the newest with Undo), *To tidy* (how many things, the space they'd win back, the first one's button: the screen's one main button) and the drive (what's free, one bar of what each library takes, largest first). Then Needs a look when something waits, What I did today only on a day something was filed, *Needs your OK* as one plain list with no main button of its own, the libraries as plain cards (colour on the icon and the bar only), and Genres beside Recently done.
+
 ### On the iPhone
 
 <p>

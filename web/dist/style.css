@@ -3096,8 +3096,8 @@ nav .sidemenulist .sidedot + .total { margin-left:8px; }
   #settings .savebar { background:color-mix(in srgb, var(--fin-night) 55%, transparent); }
 }
 .statusfind { border-color:var(--line); background:color-mix(in srgb, var(--panel) 72%, transparent); }
-:is(#tiles, .tidytiles).tiles { grid-template-columns:repeat(3, minmax(0, 1fr)); margin:4px 0 16px; }
-:is(#tiles, .tidytiles) .ovcard { display:flex; flex-direction:column; min-height:204px; padding:18px 20px; border-radius:20px; }
+#tiles.tiles { grid-template-columns:repeat(3, minmax(0, 1fr)); margin:4px 0 16px; }
+#tiles .ovcard { display:flex; flex-direction:column; min-height:204px; padding:18px 20px; border-radius:20px; }
 :is(#tiles, .tidytiles) .anthead h2 { margin:0; font-size:15px; font-weight:600; }
 :is(#tiles, .tidytiles) .antfig .muted { font-size:16px; font-weight:500; letter-spacing:0; margin-left:4px; }
 #tiles .antfig.warn { color:var(--warn); }
@@ -3134,9 +3134,9 @@ nav .sidemenulist .sidedot + .total { margin-left:8px; }
 @container (min-width: 441px) and (max-width: 700px) { html:not(.companion) #tiles.tiles { grid-template-columns:repeat(2, minmax(0, 1fr)); } html:not(.companion) #tiles > .ovcard:first-child { grid-column:1 / -1; } }
 @container (min-width: 701px) and (max-width: 860px) { html:not(.companion) .ovbar small { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; } }
 @media (max-width: 700px) { #tiles.tiles { grid-template-columns:1fr; } .ovrows { grid-template-columns:minmax(0, 1fr); } .ovpanel { padding:4px 14px; } .ovrow { gap:10px; } .ovname { margin-left:4px; } .ovrow .pill { padding:2px 8px; } .ovrow .pillword { display:none; } }
-:is(#tiles, .tidytiles) .ovcard { background:color-mix(in srgb, var(--panel) 78%, transparent); border:1px solid var(--line); box-shadow:none; backdrop-filter:blur(12px); }
-@media (prefers-color-scheme: dark) and (prefers-contrast: no-preference) { :is(#tiles, .tidytiles) .ovcard { background:var(--glow-04); border-color:var(--glow-1); } }
-@media (prefers-contrast: more) { :is(#tiles, .tidytiles) .ovcard { background:var(--panel); border-color:var(--line-strong); } }
+#tiles .ovcard { background:color-mix(in srgb, var(--panel) 78%, transparent); border:1px solid var(--line); box-shadow:none; backdrop-filter:blur(12px); }
+@media (prefers-color-scheme: dark) and (prefers-contrast: no-preference) { #tiles .ovcard { background:var(--glow-04); border-color:var(--glow-1); } }
+@media (prefers-contrast: more) { #tiles .ovcard { background:var(--panel); border-color:var(--line-strong); } }
 .subpage .card { padding:18px 20px; border-radius:20px; margin-bottom:14px; }
 .subpage .anttiles .card { margin:0; }
 .card.subcard h2 { margin:0 0 6px; font-size:15px; font-weight:600; }
@@ -3217,7 +3217,9 @@ html.companion main { overscroll-behavior:contain; overflow-x:hidden; overflow-x
 html.companion main > .screen { max-width:100%; overflow-x:clip; }
 
 /* Tidy Up's Overview, built as Status' (its three cards), then one plain list and calmer library tiles. */
-.tiles.tidytiles { display:grid; gap:16px; margin:0 0 var(--fin-gap); }
+.tidytiles { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:var(--fin-gap); margin:0 0 var(--fin-gap); }
+/* Tidy Up's own cards (fx-widget, as its others), laid out as Status' Overview cards: title, figure, line, a footer at one height. */
+#tidyRoot .tidytiles > .card.fx-widget.ovcard { gap:0; min-height:196px; }
 .tidytiles .anthead { display:flex; align-items:baseline; justify-content:space-between; gap:8px; }
 .tidytiles .anthead > .muted { font-size:13px; }
 .tidytiles .antfig .tidynone { margin-left:0; font-size:22px; font-weight:600; }
@@ -3228,8 +3230,8 @@ html.companion main > .screen { max-width:100%; overflow-x:clip; }
 .tidytiles .ovbar .fx-split { width:100%; }
 .tidytilesbox { container:tidytiles / inline-size; }
 #tidy .tidytiles .antfig .tidynone { margin-left:0; font-size:22px; font-weight:600; }
-@container tidytiles (max-width: 820px) { #tidy .tidytiles.tiles { grid-template-columns:repeat(2, minmax(0, 1fr)); } #tidy .tidytiles > .ovcard:first-child { grid-column:1 / -1; min-height:0; } }
-@container tidytiles (max-width: 480px) { #tidy .tidytiles.tiles { grid-template-columns:minmax(0, 1fr); } }
+@container tidytiles (max-width: 820px) { #tidy .tidytiles { grid-template-columns:repeat(2, minmax(0, 1fr)); } #tidy .tidytiles > .ovcard:first-child { grid-column:1 / -1; min-height:0; } }
+@container tidytiles (max-width: 480px) { #tidy .tidytiles { grid-template-columns:minmax(0, 1fr); } }
 .tidylist .tidytodo > li { padding-top:12px; padding-bottom:12px; }
 .tidyshelf .tidytile { background:var(--panel); box-shadow:inset 0 0 0 1px var(--line); }
 .tidyshelf .tidytile:hover { background:var(--panel); box-shadow:inset 0 0 0 1px var(--line-strong); }

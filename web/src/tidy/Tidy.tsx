@@ -636,47 +636,26 @@ function TidyTiles({ d, todos, job, act }: { d: app.TidyUp; todos: Todo[]; job: 
   // A size's figure and its unit apart, as Status' cards draw them ("1.2" big, "TB free" beside it).
   const num = (s: string) => s.replace(/ \S+$/, ''), unit = (s: string) => s.replace(/^\S+ /, '');
   return (
-    <div class="tidytilesbox"><div class="tiles tidytiles">
-      <Card kind="tile ovcard" id="tidyTodayTile">
+    <div class="tidytilesbox"><div class="tidytiles">
+      <Card kind="fx-widget ovcard" id="tidyTodayTile">
         <div class="anthead"><h2>Today</h2></div>
         <div class="antfig">{filed.length ? <>{filed.length}<span class="muted"> {filed.length === 1 ? 'download' : 'downloads'} filed</span></> : <span class="muted tidynone">Nothing filed yet</span>}</div>
         <div class="antline muted">{from.length ? `From ${from.length > 2 ? `${from.slice(0, 2).join(', ')} and ${from.length - 2} more` : from.join(' and ')}` : ''}</div>
         <div class="antfoot">{newest ? <span class="ovacts tidynewest"><LibIcon kind={newest.kind} /><span class="tidynewestname">{newest.title}</span>{newest.undo && <Go label="Undo" job={job} title={`Put ${newest.title} back where it came from`} onClick={() => act.run('inbox', 'undo', [newest.id])} />}</span> : <span class="antempty" />}</div>
       </Card>
-      <Card kind="tile ovcard" id="tidyGainTile">
+      <Card kind="fx-widget ovcard" id="tidyGainTile">
         <div class="anthead"><h2>To tidy</h2></div>
         <div class="antfig">{waiting ? <>{waiting}<span class="muted"> {waiting === 1 ? 'thing' : 'things'}</span></> : <span class="muted tidynone">Everything is tidy</span>}</div>
         <div class="antline muted">{gain ? `${size(gain)} to win back` : ''}</div>
         <div class="antfoot">{first?.go ? <span class="ovacts tidynewest"><Go primary label={first.go.label} job={job} onClick={first.go.run} /><span class="tidynewestname muted">{first.title}</span></span> : <span class="antempty" />}</div>
       </Card>
-      <Card kind="tile ovcard" id="tidyDriveTile">
+      <Card kind="fx-widget ovcard" id="tidyDriveTile">
         <div class="anthead"><h2>{dr?.name ? `The ${dr.name} drive` : 'This machine'}</h2></div>
         <div class="antfig">{dr ? <>{num(size(dr.free))}<span class="muted"> {unit(size(dr.free))} free</span></> : '—'}</div>
         <div class="antline muted">{dr ? `Of ${size(dr.total)}` : ''}</div>
         <div class="antfoot">{dr ? <span class="ovbar"><SplitBar parts={[...parts, { label: 'Free', value: dr.free, color: 'track' as Hue }]} label="The drive" size="sm" /><small class="muted">{parts.slice(0, 3).map((p) => `${p.label} ${size(p.value)}`).join(' · ')}</small></span> : <span class="antempty" />}</div>
       </Card>
     </div></div>
-  );
-}
-
-/** The media drive: how much each library takes, and what is free. */
-function DriveWidget({ d }: { d: app.TidyUp }) {
-  const dr = d.drive;
-  if (!dr) return null;
-  // The largest library first, as the ring draws them, and what's free last.
-  const parts = d.libraries.filter((l) => l.size).map((l) => ({ label: names[l.kind], value: l.size || 0, color: looks[l.kind].hue })).sort((a, b) => b.value - a.value);
-  const measuring = d.libraries.some((l) => l.found && !l.size);
-  const slices = [...parts, { label: 'Free', value: dr.free, color: 'track' as Hue }];
-  return (
-    <Widget title={dr.name ? `On the ${dr.name} drive` : 'On this machine'} kind="fx-flow tidydrivecard">
-      <Stat value={<span class="fx-amount">{size(dr.free)}<small> free</small></span>} caption={`Of ${size(dr.total)}`}
-        aside={d.freed ? <Chip dir="up" good value={`${size(d.freed)} won back`} /> : undefined} />
-      <div class="fx-donutrow">
-        <Donut slices={slices} size={124} label="The drive" center={<><strong>{dr.total ? Math.round((dr.free / dr.total) * 100) : 0}%</strong>free</>} />
-        <Legend items={slices.map((p) => ({ label: p.label, color: p.color, value: size(p.value) }))} />
-      </div>
-      {measuring && <p class="fx-sub">Measuring the rest: it takes a few minutes on a big drive.</p>}
-    </Widget>
   );
 }
 

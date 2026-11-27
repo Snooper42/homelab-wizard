@@ -1256,8 +1256,8 @@ const smokes = [
   // Merging audiobooks wins space back too: its row says how much, as films' Shrink does, and Needs your OK counts it.
   { name: 'Tidy Up: Merge says what it wins back, as Shrink does', screen: 'tidy', mock: { tidy: { ...tidy, libraries: tidy.libraries.map((l) => (l.kind === 'audiobooks' ? { ...l, found: true, last: { scan: tidyRun('scan', 1, { books: 4, files: 96, bytes: 20e9, saving: 7e9, whole: 170 }) } } : l)) } }, run: async (page) => {
     await page.waitForSelector('#tidy .tidyneeds li:has-text("Merge 4 audiobooks")', { timeout: 5000 });
-    const said = await page.textContent('#tidy .tidyneeds .muted');
-    if (!said.includes('387 GB to win back')) throw new Error(`Needs your OK: ${said} (380 GB from Shrink and 7 GB from Merge)`);
+    const said = await page.textContent('#tidyGainTile .antline');
+    if (!said.includes('387 GB to win back')) throw new Error(`To tidy: ${said} (380 GB from Shrink and 7 GB from Merge)`);
     await tidyTab(page, 'Audiobooks');
     const row = page.locator('#tidy .tidyneeds li:has-text("Merge 4 audiobooks")');
     if ((await row.locator('.tidygain').textContent({ timeout: 5000 })) !== '7 GB') throw new Error(`Merge: ${await row.textContent()}`);
@@ -1323,13 +1323,14 @@ const smokes = [
   // The drive: its name, what is free, and each library's size.
   { name: 'Tidy Up: the drive card names the drive and what each library takes', screen: 'tidy', run: async (page) => {
     await tidyTab(page, 'Inbox');
-    const t = await page.textContent('#tidy .tidydrivecard', { timeout: 5000 });
-    for (const w of ['On the Hobbies drive', '1.2 TB free', 'Of 4 TB', 'Movies1.4 TB', 'Music520 GB', 'Free1.2 TB']) if (!t.includes(w)) throw new Error(`the drive card has no “${w}”: ${t}`);
-    // Largest first, Free last; and the card is a card, not the look of the drive picker's buttons (it shared their class).
-    const order = await page.$$eval('#tidy .tidydrivecard .fx-legendlabel', (ls) => ls.map((l) => l.textContent.trim()));
-    if (order.join() !== 'Movies,TV,Music,Books,Free') throw new Error('the drive legend: ' + order.join());
-    const [card, row] = await page.$$eval('#tidy .tidydrivecard, #tidy .tidydrivecard .fx-donutrow', (es) => es.map((e) => e.getBoundingClientRect().width));
-    if (row < card - 80) throw new Error(`the ring and its legend take ${row}px of a ${card}px card`);
+    const t = (await page.textContent('#tidyDriveTile', { timeout: 5000 })).replace(/\s+/g, ' ');
+    for (const w of ['The Hobbies drive', '1.2 TB free', 'Of 4 TB', 'Movies 1.4 TB · TV 820 GB · Music 520 GB']) if (!t.includes(w)) throw new Error(`the drive card has no “${w}”: ${t}`);
+    // One bar, the largest library first and what's free last.
+    const bar = await page.getAttribute('#tidyDriveTile .fx-split', 'aria-label');
+    if (!/^The drive: Movies \d+%, TV \d+%, Music \d+%, Books \d+%, Free \d+%$/.test(bar || '')) throw new Error('the drive bar: ' + bar);
+    // The three cards of one anatomy, as Status' are: their tops and heights the same.
+    const boxes = await page.$$eval('#tidy .tidytiles > .ovcard', (cs) => cs.map((c) => { const r = c.getBoundingClientRect(); return [Math.round(r.top), Math.round(r.height)].join(); }));
+    if (boxes.length !== 3 || new Set(boxes).size !== 1) throw new Error('the cards differ: ' + boxes.join(' | '));
   } },
   // Undo on the swap asks first, then puts the old library back.
   { name: 'Tidy Up: Undo on the swap asks first, then puts the old library back', screen: 'tidy', run: async (page) => {
@@ -1472,8 +1473,8 @@ const smokes = [
     if (!lead.startsWith('412 GB won back so far')) throw new Error(`the first line: ${lead}`);
     const done = page.locator('#tidy .tidydone .fx-rows li:has-text("12 files replaced")');
     if ((await done.locator('.tidygain').textContent({ timeout: 5000 })) !== '412 GB') throw new Error(`Recently done: ${await done.textContent()}`);
-    const drive = await page.textContent('#tidy .tidydrivecard .chip-pill');
-    if (drive !== '412 GB won back') throw new Error(`the drive: ${drive}`);
+    const drive = (await page.textContent('#tidyDriveTile .antfig')).replace(/\s+/g, ' ').trim();
+    if (drive !== '1.2 TB free') throw new Error(`the drive: ${drive}`);
     const gain = await page.textContent('#tidy .tidyneeds .tidygain');
     if (gain !== '380 GB') throw new Error(`what Shrink wins back: ${gain} (the scan's saving is 380e9)`);
   } },
@@ -1512,8 +1513,9 @@ const smokes = [
   // What the screen says first: one main button, on the first thing to do, never on a step that throws things away.
   { name: 'Tidy Up: Overview has one main button, and never on a step that throws things away', screen: 'tidy', run: async (page) => {
     await page.waitForSelector('#tidy .tidyneeds button:text-is("Free it…")', { timeout: 5000 });
-    const main = await page.$$eval('#tidy .tidyneeds button.primary', (b) => b.map((x) => x.textContent));
-    if (main.length !== 1 || main[0] !== 'Add lyrics') throw new Error(`main buttons: ${JSON.stringify(main)}`);
+    // The main button is the To tidy card's first step; the list under it has none of its own.
+    const main = await page.$$eval('#tidy .tidybody button.primary', (b) => b.map((x) => x.textContent));
+    if (main.length !== 1 || main[0] !== 'Add lyrics' || !(await page.$('#tidyGainTile button.primary'))) throw new Error(`main buttons: ${JSON.stringify(main)}`);
   } },
   // Music's space is its header's (tidy-loop.md's look, L3): no card that is one figure the header already shows, and
   // Genres takes the whole row rather than leave half of it empty. Tdarr's row says what it holds, not that it has
@@ -1615,7 +1617,9 @@ const smokes = [
   } },
   { name: 'Tidy Up: What I did today with nothing yet says how to start', screen: 'tidy', mock: { tidy: { ...tidy, today: [] } }, run: async (page) => {
     await tidyTab(page, 'Inbox');
-    await page.waitForSelector('#tidy .tidytoday:has-text("Nothing yet today.")', { timeout: 5000 });
+    // The Today card says so, and no list of today's downloads stands empty under it.
+    await page.waitForSelector('#tidyTodayTile:has-text("Nothing filed yet")', { timeout: 5000 });
+    if (await page.$('#tidy .tidytoday')) throw new Error('an empty What I did today');
   } },
   // Needs a look (the owner's Nov 8 mockup; beside What I did today since the redesign, R9): what Tidy Up couldn't place,
   // with why. A video can be named a film or an episode in a sheet (File it waits for what it needs; a number box takes
@@ -1628,8 +1632,9 @@ const smokes = [
     await tidyTab(page, 'Inbox');
     const card = '#tidy .tidyneedslook';
     await page.waitForSelector(`${card} h2:text-is("Needs a look")`, { timeout: 5000 });
-    const order = await page.$$eval('#tidy .tidybody .fx-board:first-child > .fx-widget h2', (e) => e.map((x) => x.firstChild.textContent.trim()));
-    if (JSON.stringify(order) !== JSON.stringify(['What I did today', 'Needs a look'])) throw new Error(JSON.stringify(order));
+    // Under the three cards, before Needs your OK (nothing was filed today here, so it stands alone).
+    const order = await page.$$eval('#tidy .tidybody .fx-board.tidynow > .fx-widget h2', (e) => e.map((x) => x.firstChild.textContent.trim()));
+    if (JSON.stringify(order) !== JSON.stringify(['Needs a look'])) throw new Error(JSON.stringify(order));
     await page.waitForSelector(`${card} li:has(strong:text-is("IMG_2041.mov")) .warn:has-text("Couldn't tell which film it is from its name.")`, { timeout: 2000 });
     const song = `${card} li:has(strong:text-is("track01.mp3"))`;
     if (await page.$(`${song} button:text-is("It's a film…")`)) throw new Error('a song offered as a film');
@@ -1795,7 +1800,7 @@ const smokes = [
   } },
   { name: 'Tidy Up: with nothing to look at, Needs a look is not there', screen: 'tidy', mock: { tidy: { ...tidy, needs: [] } }, run: async (page) => {
     await tidyTab(page, 'Inbox');
-    await page.waitForSelector('#tidy .tidytoday', { timeout: 5000 });
+    await page.waitForSelector('#tidyTodayTile', { timeout: 5000 });
     if (await page.$('#tidy .tidyneedslook')) throw new Error('an empty Needs a look');
   } },
   // Nov 9, the owner: piece 4, Where should your libraries live?, "completely okay": the first time it comes first;
@@ -2012,8 +2017,9 @@ const smokes = [
   // what it waits on; a tile opens its tab, which opens on that library.
   { name: 'Tidy Up: Overview leads with the next thing to do, and the shelf opens each library', screen: 'tidy', run: async (page) => {
     await page.waitForSelector('#tidy .tidyneeds li', { timeout: 5000 });
-    const first = await page.$eval('#tidy .tidyneeds li', (li) => [li.querySelector('strong')?.textContent.trim(), !!li.querySelector('button.primary')]);
-    if (first[0] !== '2,402 songs could get lyrics' || !first[1]) throw new Error(`Needs your OK starts with ${JSON.stringify(first)}`);
+    const first = await page.$eval('#tidy .tidyneeds li', (li) => li.querySelector('strong')?.textContent.trim());
+    const next = (await page.textContent('#tidyGainTile .antfoot')).replace(/\s+/g, ' ').trim();
+    if (first !== '2,402 songs could get lyrics' || next !== 'Add lyrics2,402 songs could get lyrics') throw new Error(`Needs your OK starts with ${first}; To tidy offers ${next}`);
     const tiles = await page.$$eval('#tidy .tidyshelf .tidytile', (b) => b.map((x) => x.textContent.replace(/\s+/g, ' ').trim()));
     const want = ['Music13,932 songs · 520 GB83% with lyrics', 'Movies356 films · 1.4 TB87% already lean', 'TV820 GB', 'Books412 books · 12 GB', 'AudiobooksNo folder yet'];
     if (tiles.length !== 5 || want.some((w, i) => !tiles[i].startsWith(w))) throw new Error(`the shelf: ${JSON.stringify(tiles)}`);
