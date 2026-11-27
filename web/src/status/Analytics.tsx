@@ -128,18 +128,18 @@ export function Analytics({ stats, history, totals, cores, disk, storage, apps, 
   const photos = (storage?.photos || []).reduce((s, p) => s + p.bytes, 0);
   return (
     <div class="antpage">
-      <div class="row header"><div><h1>Analytics</h1><p class="lead">{span}</p></div></div>
+      <div class="row header"><div><h1>Analytics</h1></div></div>
       <div class="anttiles">
         <Card kind="anttile" id="antCpu">
           <div class="anthead"><h2>Processor</h2><span class="muted">{cores ? `${cores} cores` : ''}</span></div>
           <div class="antfig">{read ? <>{cores ? pct(totalCpu / cores) : pct(totalCpu)}<small>%</small> <span class="muted">{cores ? 'in use' : 'of a core'}</span></> : '—'}</div>
-          <div class="antline muted">{read && busiest && cpu[busiest] >= 0.1 ? who(busiest, `uses the most · ${pct(cpu[busiest])}%`) : read ? <span class="antwho">Every app idle</span> : who(undefined, '')}</div>
+          <div class="antline muted">{read && busiest && cpu[busiest] >= 0.1 ? who(busiest, `· ${pct(cpu[busiest])}%`) : read ? <span class="antwho">Every app idle</span> : who(undefined, '')}</div>
           <div class="antfoot">{totals.cpu.length > 2 ? <Spark values={totals.cpu} w={240} h={36} title={`The apps' processor, ${span.toLowerCase()}`} /> : <span class="antempty" />}</div>
         </Card>
         <Card kind="anttile" id="antMem">
           <div class="anthead"><h2>Memory</h2><span class="muted" /></div>
           <div class="antfig">{read ? <>{formatMem(totalMem).replace(/ (\w+)$/, '')}<small>{formatMem(totalMem).replace(/^[^ ]+/, '')}</small> <span class="muted">in use</span></> : '—'}</div>
-          <div class="antline muted">{read && heaviest ? who(heaviest, `uses the most · ${formatMem(mem[heaviest] || 0)}`) : who(undefined, '')}</div>
+          <div class="antline muted">{read && heaviest ? who(heaviest, `· ${formatMem(mem[heaviest] || 0)}`) : who(undefined, '')}</div>
           <div class="antfoot">{totals.mem.length > 2 ? <Spark values={totals.mem} w={240} h={36} title={`The apps' memory, ${span.toLowerCase()}`} /> : <span class="antempty" />}</div>
         </Card>
         <Card kind="anttile" id="antDisk">
@@ -151,14 +151,14 @@ export function Analytics({ stats, history, totals, cores, disk, storage, apps, 
       </div>
       {pressure && pressure.total > 0 && <Pressure m={pressure} stop={stop} />}
       <Card kind="antweek" id="antTime">
-        <div class="anthead"><h2>{span}</h2><span class="muted">A week isn't kept yet</span></div>
+        <div class="anthead"><h2>{span}</h2><span class="muted" /></div>
         {totals.cpu.length > 2 ? <>
           <Chart values={totals.cpu} kind="cpu" label="Processor" mark={(v) => `${Math.round(cores ? v / cores : v)}%`} />
           <Chart values={totals.mem} kind="mem" label="Memory" mark={(v) => formatMem(v)} />
         </> : <p class="muted antwait">Drawn as Status reads the apps, every 10 seconds</p>}
       </Card>
       <Card kind="antapps" id="antApps">
-        <div class="anthead"><h2>What each app uses</h2><span class="muted">Heaviest first</span></div>
+        <div class="anthead"><h2>What each app uses</h2><span class="muted" /></div>
         {rows.length ? <table class="anttable">
           <thead><tr><th>App</th><th>Memory now</th><th class="antspark">Recent</th><th class="num">Processor</th><th class="num">On disk</th></tr></thead>
           <tbody>

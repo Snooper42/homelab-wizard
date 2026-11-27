@@ -42,7 +42,7 @@ struct AnalyticsPage: View {
                     memory(now, samples: samples)
                     drives(machine, appsData: now.appsData)
                 }
-                timeline(timelineSamples(samples), span: period == .now ? span : period.heading, kept: kept)
+                timeline(timelineSamples(samples), span: period == .now ? span : period.heading)
                 uses(now, apps: apps)
             }
             .padding(.horizontal)
@@ -77,7 +77,7 @@ struct AnalyticsPage: View {
             if !now.read {
                 Text("Not read yet")
             } else if let busiest = now.busiest {
-                who(busiest, words: "uses the most · \(UsageNow.percent(busiest.processor))%")
+                who(busiest, words: "· \(UsageNow.percent(busiest.processor))%")
             } else {
                 Text("Every app idle")
             }
@@ -89,7 +89,7 @@ struct AnalyticsPage: View {
     private func memory(_ now: UsageNow, samples: [UsageSample]) -> some View {
         OverviewCard(title: "Memory", figure: now.read ? UsageNow.memory(now.memory) : "—", unit: now.read ? "in use" : "") {
             if let heaviest = now.heaviest {
-                who(heaviest, words: "uses the most · \(UsageNow.memory(heaviest.memory))")
+                who(heaviest, words: "· \(UsageNow.memory(heaviest.memory))")
             } else {
                 Text("Not read yet")
             }
@@ -132,19 +132,11 @@ struct AnalyticsPage: View {
     // MARK: Over time
 
     @ViewBuilder
-    private func timeline(_ samples: [UsageSample], span: String, kept: Bool) -> some View {
+    private func timeline(_ samples: [UsageSample], span: String) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .firstTextBaseline) {
-                Text(verbatim: span)
-                    .font(.headline)
-                    .foregroundStyle(Theme.ink)
-                Spacer()
-                if !kept {
-                    Text("A week isn't kept yet")
-                        .font(.subheadline)
-                        .foregroundStyle(Theme.secondaryInk)
-                }
-            }
+            Text(verbatim: span)
+                .font(.headline)
+                .foregroundStyle(Theme.ink)
             if samples.count > 2 {
                 Text("Processor")
                     .font(.subheadline)
@@ -202,15 +194,9 @@ struct AnalyticsPage: View {
     @ViewBuilder
     private func uses(_ now: UsageNow, apps: [AppStatus]) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .firstTextBaseline) {
-                Text("What each app uses")
-                    .font(.headline)
-                    .foregroundStyle(Theme.ink)
-                Spacer()
-                Text("Heaviest first")
-                    .font(.subheadline)
-                    .foregroundStyle(Theme.secondaryInk)
-            }
+            Text("What each app uses")
+                .font(.headline)
+                .foregroundStyle(Theme.ink)
             if now.rows.isEmpty {
                 Text("Not read yet")
                     .font(.subheadline)
