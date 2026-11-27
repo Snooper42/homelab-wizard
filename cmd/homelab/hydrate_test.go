@@ -35,7 +35,7 @@ func TestRebuildDownloadsTheCloudDrivesPlaceholdersFirst(t *testing.T) {
 	_ = os.Remove(filepath.Join(fresh, ".env"))
 	t.Setenv("DUPLICATI_SECRETS_PASSPHRASE", "sesame")
 	out, _ := homelabCmd(t, fresh, "", "rebuild", folder, "--apply")
-	fetched, restored := strings.Index(out, "downloaded 1 file(s) of "+folder+"/secrets"), strings.Index(out, ".env and the household's records restored")
+	fetched, restored := strings.Index(out, "downloaded 1 file(s) of "+filepath.Join(folder, "secrets")), strings.Index(out, ".env and the household's records restored")
 	if fetched < 0 || restored < fetched {
 		t.Fatalf("the placeholders fetched before the restore:\n%s", out)
 	}
