@@ -9,7 +9,7 @@ export function SetupOnStatus({ steps, open }: { steps: setup.Step[]; open: () =
   return (
     <Card kind="setuponstatus" id="setupOnStatusCard">
       <CardHead title="Finish setting up"><button type="button" class="small primary" onClick={open}>Continue</button></CardHead>
-      <p class="muted">{p.done} of {p.total} done · {p.left} left</p>
+      <p class="muted">{p.left} left</p>
       <ul class="setupnext">{next.map((s) => <li key={s.id}>{s.title}</li>)}</ul>
     </Card>
   );
