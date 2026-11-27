@@ -10198,11 +10198,10 @@
         /* @__PURE__ */ u3("div", { class: "row", children: [
           /* @__PURE__ */ u3("span", { class: "muted", children: [
             /* @__PURE__ */ u3(Icon, { name: "lock" }),
-            " Explained on ",
+            " On ",
             machine,
-            " by ",
-            explainer2.replace(/:latest$/, ""),
-            "; the log never left it"
+            " · ",
+            explainer2.replace(/:latest$/, "")
           ] }),
           /* @__PURE__ */ u3("span", { class: "actions", children: [
             /* @__PURE__ */ u3(ActionLink, { onClick: ask, children: "Ask again" }),
@@ -10389,13 +10388,13 @@
         {
           dot: "ok",
           title: "The version it runs now",
-          sub: `Updated ${ago(a3.updatedAt)}; the one before is kept for a week`,
+          sub: `Updated ${ago(a3.updatedAt)}`,
           end: /* @__PURE__ */ u3("button", { class: "small change", disabled: busy2, title: "Go back to the version it ran before, and hold its updates", onClick: () => on2.act("rollback"), children: "Roll back" })
         },
         "now"
       ));
     }
-    if (a3.held) rows.push(/* @__PURE__ */ u3(Row, { dot: "warn", title: "Its updates are held", sub: `After a rollback, the nightly update leaves it out; homelab updates release ${a3.id} puts it back` }, "held"));
+    if (a3.held) rows.push(/* @__PURE__ */ u3(Row, { dot: "warn", title: "Its updates are held" }, "held"));
     return /* @__PURE__ */ u3(Card, { kind: "alerts pagecard", id: "appUpdates", children: [
       /* @__PURE__ */ u3(CardHead, { title: "Updates", children: a3.state === "running" && /* @__PURE__ */ u3("button", { class: "small change", disabled: busy2, title: "Shows what it brings first: its newer releases' notes", onClick: on2.update, children: "Check for an update" }) }),
       rows.length ? /* @__PURE__ */ u3(Rows, { children: rows }) : /* @__PURE__ */ u3(Empty, { children: "No update since it last started." })
@@ -10521,7 +10520,7 @@
     const daysText = switching2.sundays || !days.length ? "Sundays" : weekdaysText(days);
     const ids = [a3.id, ...entry2?.dependsOn || []];
     const copy = o3?.copies?.find((c4) => ids.includes(c4.id) && !c4.volume && !never(c4.newest));
-    const kept6 = container ? copy ? `Its files, and its database's copy from ${when(copy.newest)}` : "Its files in the homelab folder, every night" : "It runs on its own, outside the homelab; its own app keeps its data";
+    const kept6 = container ? copy ? when(copy.newest) : void 0 : "Outside the homelab";
     return /* @__PURE__ */ u3(Card, { kind: "alerts pagecard", id: "appSettings", children: [
       /* @__PURE__ */ u3(CardHead, { title: "Settings", children: null }),
       /* @__PURE__ */ u3(Rows, { children: [
