@@ -142,7 +142,7 @@ const actionLog = {
 
 const host = { os: 'macOS 26.0', machine: 'Mac mini (M4)', runtime: 'OrbStack', scheduler: 'launchd', supported: true, root: '/Users/you/Homelab', rootOK: true, runtimeOK: true, runtimeFound: 'OrbStack, engine 28.4.0', version: readFileSync(join(root, 'VERSION'), 'utf8').trim(),
   disks: [
-    { label: 'homelab folder, backups, Jellyfin data', space: '412 GB free of 994 GB (41%)', low: false, free: 412e9, total: 994e9 },
+    { label: 'homelab folder, backups, Jellyfin data', space: '412 GB free of 994 GB (41%)', low: false, free: 412 * 2 ** 30, total: 994 * 2 ** 30 },
     { label: 'photos, media, downloads', space: '1.6 TB free of 3.6 TB (44%)', low: false, name: 'Hobbies', free: 1.6e12, total: 3.6e12 },
   ] };
 const envFor = { vikunja: ['VIKUNJA_PORT', 'VIKUNJA_SECRET'], grocy: ['GROCY_PORT'], karakeep: ['KARAKEEP_PORT', 'KARAKEEP_NEXTAUTH_SECRET'], 'home-assistant': ['HOME_ASSISTANT_PORT'] };
@@ -764,6 +764,13 @@ const smokes = [
     await toStatusPart(page, 'analytics');
     await page.waitForSelector('#memoryPressure li:has-text("Immich")', { timeout: 5000 });
     if (await page.isVisible('#memoryPressure button.memstop')) throw new Error('a phone that only looks may stop an app');
+  } },
+  { name: 'Status: This Mac and the sidebar give the same free space', screen: 'status', mock: { statusOpen: '' }, run: async (page) => {
+    await page.waitForSelector('#statusMac .antfig', { timeout: 5000 });
+    await page.waitForSelector('#foot .machine .part', { timeout: 5000 });
+    const card = (await page.locator('#statusMac .antfig').innerText()).replace(/\s+/g, ' ').trim();
+    const foot = (await page.locator('#foot .machine .part').innerText()).split(' · ')[0];
+    if (card !== foot) throw new Error(`This Mac says ${card}, the sidebar ${foot}`);
   } },
   { name: 'Status lines up: More… beside Update apps, and every category name in one column', screen: 'status', mock: { statusOpen: '' }, run: async (page) => {
     await page.waitForSelector('#statusPanelCard .ovrow', { timeout: 5000 });
