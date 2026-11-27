@@ -2073,7 +2073,8 @@ const smokes = [
     await page.click('#createHomelab');
     await page.waitForSelector('#newHomelab', { state: 'hidden', timeout: 5000 });
     await page.click('nav button[data-screen="settings"]');
-    await page.waitForSelector('#hostInfo:has-text("/Users/you/Homelab")');
+    await page.click('#settingsNav .pagebtn[data-page="This Mac"]', { timeout: 5000 });
+    await page.waitForSelector('#hostInfo:has-text("/Users/you/Homelab")', { timeout: 5000 });
   } },
   { name: 'A starter set installs its apps together', screen: 'status', run: async (page) => {
     await findApp(page, '');
