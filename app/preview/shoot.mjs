@@ -1527,7 +1527,8 @@ const smokes = [
   // finished it.
   { name: 'Tidy Up: Music’s space is in its header, Genres takes the row, and Tdarr’s row says what it is shrinking', screen: 'tidy', run: async (page) => {
     await tidyTab(page, 'Music');
-    await page.waitForSelector('#tidy .tidyhero .tidyfacts div:has(dt:text-is("On the drive")) dd:text-is("520 GB")', { timeout: 5000 });
+    // Its On the drive card (the library pages as the Overview, the owner, Nov 27).
+    await page.waitForSelector('#tidyLibDriveTile .antfig:has-text("520")', { timeout: 5000 });
     await page.waitForSelector('#tidy .tidygenres', { timeout: 5000 });
     if (await page.$('#tidy .tidyspace')) throw new Error('a Space card repeats the header\'s figure');
     const widths = await page.$eval('#tidy .tidygenres', (g) => [g.getBoundingClientRect().width, g.parentElement.getBoundingClientRect().width]);
@@ -2031,15 +2032,18 @@ const smokes = [
     if (!tiles[0].includes('2,402 songs could get lyrics') || !tiles[1].includes('Shrink 42 films')) throw new Error(`the tiles don't say what waits: ${JSON.stringify(tiles)}`);
     await page.click('#tidy .tidyshelf .tidytile:has-text("Movies")');
     await page.waitForSelector(tidyItem('Movies') + '.on', { timeout: 3000 });
-    await page.waitForSelector('#tidy .tidyhero h2:has-text("Movies")', { timeout: 3000 });
+    await page.waitForSelector('#tidy .tidylibhead h2:has-text("Movies")', { timeout: 3000 });
   } },
   { name: 'Tidy Up: Music opens on its steps, each done one with when, and freeing the space next', screen: 'tidy', run: async (page) => {
     await tidyTab(page, 'Music');
-    await page.waitForSelector('#tidy .tidyhero .tidytrack', { timeout: 3000 });
+    await page.waitForSelector('#tidy .tidystepscard .tidytrack', { timeout: 3000 });
     const steps = await page.$$eval('#tidy .tidytrack li', (ls) => ls.map((l) => `${l.className}:${l.querySelector('strong').textContent}`));
     if (JSON.stringify(steps) !== JSON.stringify(['done:Scanned', 'done:Tidy copy built', 'done:Swapped in', 'done:Every song checked', 'now:Old library freed'])) throw new Error(`steps: ${JSON.stringify(steps)}`);
-    const facts = (await page.textContent('#tidy .tidyhero .tidyfacts')).replace(/\s+/g, '');
-    if (!facts.includes('Songs13,932') || !facts.includes('Onthedrive520GB') || !facts.includes('Withlyrics83%')) throw new Error(`the facts: ${facts}`);
+    // Its three cards, as the Overview's: what's in it and how far along, what waits, and the drive.
+    const facts = (await page.$eval('#tidy .tidytiles', (e) => e.innerText)).replace(/\s+/g, ' ');
+    for (const w of ["What's in it 13,932 songs 83% with lyrics", 'To tidy', 'Add lyrics', 'On the drive 520 GB 13% of the Hobbies drive']) if (!facts.includes(w)) throw new Error(`the cards have no “${w}”: ${facts}`);
+    const boxes = await page.$$eval('#tidy .tidytiles > .ovcard', (cs) => cs.map((c) => { const r = c.getBoundingClientRect(); return [Math.round(r.top), Math.round(r.height)].join(); }));
+    if (boxes.length !== 3 || new Set(boxes).size !== 1) throw new Error('the cards differ: ' + boxes.join(' | '));
   } },
   { name: 'After a crash, Status says so and sends the report', screen: 'status', mock: { crash: crashed }, run: async (page) => {
     await page.waitForSelector('#crashNote:not([hidden]) strong:has-text("The background agent stopped unexpectedly yesterday")', { timeout: 5000 });

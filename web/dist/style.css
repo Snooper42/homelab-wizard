@@ -3282,3 +3282,15 @@ html:not(.companion) nav #settingsNav .pagebtn .n.badge { background:none; box-s
   html:not(.companion) #setupOnStatus .setupnext li { white-space:normal; }
 }
 @media (prefers-color-scheme: dark) { @container window (min-width: 701px) { html:not(.companion) nav > button:is([data-screen="status"], [data-screen="tidy"], [data-screen="finances"]).active > span:not(.count) { color:var(--text); } } }
+/* A library's page (the owner, Nov 27): its name and folder, then the Overview's three cards. */
+.tidylibhead { display:flex; align-items:center; gap:12px; margin:0 0 var(--fin-gap); min-width:0; }
+.tidylibhead .tidyicon { width:36px; height:36px; border-radius:10px; flex:none; }
+#tidyRoot .tidylibhead h2 { margin:0; font-size:22px; font-weight:700; letter-spacing:-.01em; }
+.tidylibhead .tidyfolder { font-size:13px; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.tidylibbar { height:8px; }
+.tidylibbar > span { background:var(--fx-hue); }
+#tidyRoot .tidystepscard .tidysteps { margin:0; }
+.fx-board > :is(.tidylibhead, .tidytilesbox) { grid-column:1 / -1; }
+.fx-board > .tidytilesbox > .tidytiles { margin:0; }
+.fx-board > .tidylibhead { margin:0; }
+#tidyLibDriveTile .fx-split .fx-h-muted { background:var(--line-strong); }

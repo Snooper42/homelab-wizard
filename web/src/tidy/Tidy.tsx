@@ -1091,27 +1091,54 @@ function MusicSteps({ l }: { l: app.TidyLibrary }) {
   );
 }
 
-/** A library's tab opens on it: its mark and colour, where it is, what it holds, and (music) how far its clean-up is. */
-function LibHero({ l }: { l: app.TidyLibrary }) {
+/** A library's tab opens as the Overview does (the owner, Nov 27: "build out the library pages"): its name and folder,
+ * then three cards of Status' anatomy: what it holds and how far along it is, what waits to be tidied with the first
+ * step's button, and what it takes of the drive. */
+function LibHead({ l }: { l: app.TidyLibrary }) {
+  return (
+    <div class="tidylibhead">
+      <LibIcon kind={l.kind} />
+      <h2>{names[l.kind]}</h2>
+      <span class="muted tidyfolder" title={l.folder}>{l.folder}</span>
+    </div>
+  );
+}
+
+function LibTiles({ l, d, todos, job }: { l: app.TidyLibrary; d: app.TidyUp; todos: Todo[]; job: TidyJob | null }) {
   const c = l.counts || {};
   const many = l.kind === 'music' ? n(last(l, 'run')?.result?.in_library) || n(last(l, 'scan')?.result?.files)
     : l.kind === 'movies' || l.kind === 'tv' ? n(c.lean) + n(c.bloated) + n(c.queued) + n(l.waiting)
     : l.kind === 'books' ? n(last(l, 'review')?.result?.books) || n(l.loose) : 0;
   const m = meterOf(l);
-  const facts: [string, string][] = [
-    ...(many ? [[lead(unit[l.kind][1]), many.toLocaleString()] as [string, string]] : []),
-    ...(l.size ? [['On the drive', size(l.size)] as [string, string]] : []),
-    ...(m ? [[lead(m.words), `${Math.round(m.share * 100)}%`] as [string, string]] : []),
-    ...(l.freed ? [['Won back', size(l.freed)] as [string, string]] : []),
-  ];
+  const pct = m ? Math.round(m.share * 100) : 0;
+  const waiting = todos.filter((t) => t.go).length;
+  const gain = todos.reduce((t, x) => t + (x.gain || 0), 0);
+  const first = todos.find((t) => t.go && !t.go.quiet && !t.go.risky) || todos.find((t) => t.go && !t.go.risky);
+  const dr = d.drive;
+  const others = d.libraries.filter((x) => x.kind !== l.kind).reduce((t, x) => t + (x.size || 0), 0);
+  const num = (s: string) => s.replace(/ \S+$/, ''), unitOf = (s: string) => s.replace(/^\S+ /, '');
+  const share = dr?.total && l.size ? Math.max(1, Math.round((100 * l.size) / dr.total)) : 0;
   return (
-    <Widget title={<><LibIcon kind={l.kind} />{names[l.kind]}</>} span="all" kind={'tidyhero ' + hue(looks[l.kind].hue)}>
-      <div class="tidyherorow">
-        <span class="muted tidyfolder">{l.folder}</span>
-        {!!facts.length && <dl class="tidyfacts">{facts.map(([k, v]) => <div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}</dl>}
-      </div>
-      {l.kind === 'music' && <MusicSteps l={l} />}
-    </Widget>
+    <div class="tidytilesbox"><div class="tidytiles">
+      <Card kind="fx-widget ovcard" id="tidyLibTile">
+        <div class="anthead"><h2>What's in it</h2></div>
+        <div class="antfig">{many ? <>{many.toLocaleString()}<span class="muted"> {unit[l.kind][many === 1 ? 0 : 1]}</span></> : <span class="muted tidynone">Not counted yet</span>}</div>
+        <div class="antline muted">{m ? `${pct}% ${m.words}` : many ? '' : l.kind === 'tv' || l.kind === 'movies' ? 'Counted on its first scan' : ''}</div>
+        <div class="antfoot">{m ? <span class="ovbar"><span class={'antbar tidylibbar ' + hue(looks[l.kind].hue)} role="meter" aria-label={`${pct}% ${m.words}`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct}><span style={{ width: `${pct}%` }} /></span></span> : <span class="antempty" />}</div>
+      </Card>
+      <Card kind="fx-widget ovcard" id="tidyLibGainTile">
+        <div class="anthead"><h2>To tidy</h2></div>
+        <div class="antfig">{waiting ? <>{waiting}<span class="muted"> {waiting === 1 ? 'thing' : 'things'}</span></> : <span class="muted tidynone">All tidy</span>}</div>
+        <div class="antline muted">{gain ? `${size(gain)} to win back` : l.freed ? `${size(l.freed)} won back so far` : ''}</div>
+        <div class="antfoot">{first?.go ? <span class="ovacts tidynewest"><Go primary={!first.go.quiet} label={first.go.label} job={job} onClick={first.go.run} /><span class="tidynewestname muted">{first.title}</span></span> : <span class="antempty" />}</div>
+      </Card>
+      <Card kind="fx-widget ovcard" id="tidyLibDriveTile">
+        <div class="anthead"><h2>On the drive</h2></div>
+        <div class="antfig">{l.size ? <>{num(size(l.size))}<span class="muted"> {unitOf(size(l.size))}</span></> : <span class="muted tidynone">Measuring…</span>}</div>
+        <div class="antline muted">{share && dr ? `${share}% of ${dr.name ? `the ${dr.name} drive` : 'this machine'}` : ''}{l.freed && gain ? ` · ${size(l.freed)} won back` : ''}</div>
+        <div class="antfoot">{dr && l.size ? <span class="ovbar"><SplitBar parts={[{ label: names[l.kind], value: l.size, color: looks[l.kind].hue }, { label: 'The other libraries', value: others, color: 'muted' as Hue }, { label: 'Free', value: dr.free, color: 'track' as Hue }]} label="The drive" size="sm" /><small class="muted">{size(dr.free)} free of {size(dr.total)}</small></span> : <span class="antempty" />}</div>
+      </Card>
+    </div></div>
   );
 }
 
@@ -1166,9 +1193,11 @@ function LibraryTab({ kind, d, job, act, review, reviewError, reloadReview, skip
     <FolderGone.Provider value={!l.found}>
       <Gone l={l} d={d} />
       <div class="fx-board">
-        {l.found && <LibHero l={l} />}
-        <Widget title="Can be tidier" span="all" kind="fx-paycheck tidyneeds" actions={again || undefined}>
-          {rows.length ? <TodoRows todos={rows} job={job} /> : <Empty>{l.found ? `Your ${names[kind].toLowerCase()} ${kind === 'music' ? 'is' : 'are'} tidy. Anything new shows up here.` : 'Plug in its drive to see what could be tidier.'}</Empty>}
+        {l.found && <LibHead l={l} />}
+        {l.found && <LibTiles l={l} d={d} todos={rows} job={job} />}
+        {l.found && kind === 'music' && <Widget title="The clean-up, step by step" span="all" kind="tidystepscard"><MusicSteps l={l} /></Widget>}
+        <Widget title="Can be tidier" span="all" kind="fx-paycheck tidyneeds tidylist" actions={again || undefined}>
+          {rows.length ? <TodoRows todos={rows} job={job} plain /> : <Empty>{l.found ? `Your ${names[kind].toLowerCase()} ${kind === 'music' ? 'is' : 'are'} tidy. Anything new shows up here.` : noFolderYet(d, l) ? `Nothing to tidy until there are ${names[kind].toLowerCase()}.` : 'Plug in its drive to see what could be tidier.'}</Empty>}
         </Widget>
         {kind === 'books' && !l.noCalibre && !review && reviewError && (
           <Widget title="The review" id="tidyReviewError" span="all" kind="fx-renewing tidyreview">
