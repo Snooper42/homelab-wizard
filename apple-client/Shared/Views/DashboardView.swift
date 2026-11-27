@@ -667,7 +667,10 @@ private struct SplitDashboard: View {
                         .tag(screen)
                 }
             } header: {
+                // The name once: on the iPad the column's title already says it above; on the Mac the title is the window's.
+                #if os(macOS)
                 BrandHeader()
+                #endif
             }
         }
         .navigationTitle("Homelab Wizard")
