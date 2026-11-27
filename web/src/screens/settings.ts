@@ -344,10 +344,15 @@ function renderSettingsNav(pages) {
     .filter((f) => f.pages.length);
   const loose = mine.filter((p) => p.name !== 'Other apps' && !cats.some((c) => c.id === catOf(p.name))).map((p) => p.name);
   const other = mine.some((p) => p.name === 'Other apps') ? ['Other apps'] : [];
+  // Setup, out of the strip (the owner, Nov 27): first in Settings' list while it has steps left, with how many.
+  if (!onPhone() && setupWanted()) groups[0].items.unshift('Setup');
   navGroups = [...groups,
     { head: 'Advanced', items: [...loose, ...folds, ...other, ...(others.length ? [{ label: "Apps you don't have", pages: others.map((p) => p.name) }] : [])] }];
 }
+/** Setup is still wanted (steps left, or the machine not ready): its button, kept for its links and shortcut, says so. */
+const setupWanted = () => !(document.querySelector('nav button[data-screen="setup"]') as HTMLButtonElement | null)?.hidden;
 function pickSettingsPage(name) {
+  if (name === 'Setup') { navigate('setup'); return; }
   settingsPage = name;
   $('settingsSearch').value = '';
   filterSettings();
@@ -436,7 +441,8 @@ function filterSettings() {
   for (const [id, name] of [['thisMacCard', thisMachine], ['appearanceCard', 'Appearance'], ['peopleCard', 'People'], ['phonesCard', 'Phones'], ['tailnetCard', 'Phones'], ['alertHistoryCard', 'Alerts']]) $(id).classList.toggle('offpage', searching || settingsPage !== name);
   loadAlertHistory();
   if (!onPhone() && $('settingsNav').parentElement !== $('settingsSide')) $('settingsSide').appendChild($('settingsNav'));
-  const nav = { groups: navGroups, active: settingsPage, counts: searching ? sh.counts : null, pick: pickSettingsPage };
+  const left = $('setupCount').textContent || '';
+  const nav = { groups: navGroups, active: settingsPage, counts: searching ? sh.counts : null, pick: pickSettingsPage, badges: left ? { Setup: `${left} left` } : undefined };
   mountNav($('settingsNav'), nav);
   if (!onPhone()) mountPagePicker($('settingsPick'), nav);
   renderGeneral();

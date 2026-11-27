@@ -3235,3 +3235,28 @@ html.companion main > .screen { max-width:100%; overflow-x:clip; }
 .tidyshelf .tidytile { background:var(--panel); box-shadow:inset 0 0 0 1px var(--line); }
 .tidyshelf .tidytile:hover { background:var(--panel); box-shadow:inset 0 0 0 1px var(--line-strong); }
 .tidyshelf .tidytile .tidymeter { background:var(--line); }
+
+/* The strip (the owner, Nov 27: "just Status, Tidy Up, and then Finances … a box with dividers between the 3
+   sections"): the three screens as one segmented box, the screen shown raised in it; Setup is in Settings' list. */
+@container window (min-width: 701px) {
+  html:not(.companion) nav { grid-template-columns:repeat(3, minmax(0, 1fr)); column-gap:0; }
+  html:not(.companion) nav:has(> button[data-screen="setup"]:not([hidden])) { grid-template-columns:repeat(3, minmax(0, 1fr)); }
+  html:not(.companion) nav > button[data-screen="setup"] { display:none; }
+  html:not(.companion) nav::before { content:""; grid-row:2; grid-column:1 / -1; margin:0 0 12px; border-radius:12px; background:var(--strip-box); box-shadow:inset 0 0 0 1px var(--strip-edge); }
+  html:not(.companion) nav > button:is([data-screen="status"], [data-screen="tidy"], [data-screen="finances"]) { margin:3px 3px 15px; padding:7px 0; border-radius:9px; color:var(--muted); }
+  html:not(.companion) nav > button[data-screen="status"] { grid-column:1; z-index:1; }
+  html:not(.companion) nav > button[data-screen="tidy"] { grid-column:2; z-index:1; }
+  html:not(.companion) nav > button[data-screen="finances"] { grid-column:3; z-index:1; }
+  html:not(.companion) nav > button:is([data-screen="status"], [data-screen="tidy"], [data-screen="finances"]):hover { background:transparent; color:var(--text); }
+  html:not(.companion) nav > button:is([data-screen="status"], [data-screen="tidy"], [data-screen="finances"]).active { background:var(--panel); color:var(--fin-accent-ink); box-shadow:0 1px 2px var(--shade-1), 0 0 0 1px var(--strip-edge); }
+  html:not(.companion) nav > button:is([data-screen="tidy"], [data-screen="finances"])::after { content:""; position:absolute; left:-3px; top:25%; bottom:25%; width:1px; background:var(--strip-edge); }
+  html:not(.companion) nav > button.active::after, html:not(.companion) nav:has(> button[data-screen="status"].active) > button[data-screen="tidy"]::after,
+  html:not(.companion) nav:has(> button[data-screen="tidy"].active) > button[data-screen="finances"]::after { opacity:0; }
+  /* With their names under them (html.strip-named). */
+  html.strip-named:not(.companion) nav > button:is([data-screen="status"], [data-screen="tidy"], [data-screen="finances"]) { flex-direction:column; gap:3px; padding:7px 0 6px; }
+  html.strip-named:not(.companion) nav > button:is([data-screen="status"], [data-screen="tidy"], [data-screen="finances"]) > span:not(.count) { position:static; width:auto; height:auto; overflow:visible; clip:auto; font-size:11.5px; font-weight:500; white-space:nowrap; }
+}
+:root { --strip-box:var(--shade-04); --strip-edge:var(--shade-08); }
+@media (prefers-color-scheme: dark) { :root { --strip-box:var(--glow-04); --strip-edge:var(--glow-1); } }
+html:not(.companion) nav #settingsNav .pagebtn .n.badge { opacity:1; padding:0 6px; border-radius:9px; line-height:17px; font-weight:700; background:var(--warn-soft); color:var(--warn); }
+@media (prefers-color-scheme: dark) { @container window (min-width: 701px) { html:not(.companion) nav > button:is([data-screen="status"], [data-screen="tidy"], [data-screen="finances"]).active { background:var(--glow-12); box-shadow:0 0 0 1px var(--strip-edge); } } }

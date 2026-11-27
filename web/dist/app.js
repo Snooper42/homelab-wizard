@@ -24,7 +24,7 @@
   var minute = 6e4;
   var errorText = (e3) => String(e3 && e3.message || e3);
 
-  // node_modules/preact/dist/preact.module.js
+  // ../homelab-wizard/node_modules/preact/dist/preact.module.js
   var n;
   var l;
   var u;
@@ -304,7 +304,7 @@
     return n3.__v.__b - l3.__v.__b;
   }, H.__r = 0, f = Math.random().toString(8), c = "__d" + f, a = "__a" + f, s = /(PointerCapture)$|Capture$/i, h = 0, p = V(false), v = V(true), y = 0;
 
-  // node_modules/preact/hooks/dist/hooks.module.js
+  // ../homelab-wizard/node_modules/preact/hooks/dist/hooks.module.js
   var t2;
   var r2;
   var u2;
@@ -453,7 +453,7 @@
     return "function" == typeof t3 ? t3(n3) : t3;
   }
 
-  // node_modules/preact/jsx-runtime/dist/jsxRuntime.module.js
+  // ../homelab-wizard/node_modules/preact/jsx-runtime/dist/jsxRuntime.module.js
   var f3 = 0;
   function u3(e3, t3, n3, o3, i3, u4) {
     t3 || (t3 = {});
@@ -2955,17 +2955,18 @@
     "Reaching the apps": "M12 2a10 10 0 1 0 0 20 10 10 0 1 0 0-20zM2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z",
     Storage: "M22 12H2M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11zM6 16h.01M10 16h.01",
     Appearance: "M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42M12 7a5 5 0 1 0 0 10 5 5 0 1 0 0-10z",
-    "Tidy Up": "M3 6h18M7 12h10M10 18h4"
+    "Tidy Up": "M3 6h18M7 12h10M10 18h4",
+    Setup: "M22 11.08V12a10 10 0 1 1-5.93-9.14M22 4 12 14.01l-3-3"
   };
   var machineIcon = "M2 3h20v14H2zM8 21h8M12 17v4";
-  function PageButton({ name, active: active2, counts, pick, inFold }) {
+  function PageButton({ name, active: active2, counts, pick, inFold, badge }) {
     const icon = inFold ? "" : pageIcons[name] || (/^This /.test(name) ? machineIcon : "");
     return /* @__PURE__ */ u3("button", { class: "pagebtn" + (inFold ? " infold" : "") + (!counts && name === active2 ? " active" : "") + (counts && !counts[name] ? " nomatch" : ""), "data-page": name, onClick: () => pick(name), children: [
       /* @__PURE__ */ u3("span", { class: "pagename", children: [
         icon && /* @__PURE__ */ u3("svg", { class: "icon", viewBox: "0 0 24 24", "aria-hidden": "true", children: /* @__PURE__ */ u3("path", { d: icon }) }),
         /* @__PURE__ */ u3("span", { children: name })
       ] }),
-      /* @__PURE__ */ u3("span", { class: "n", children: counts && counts[name] ? String(counts[name]) : "" })
+      /* @__PURE__ */ u3("span", { class: "n" + (!counts && badge ? " badge" : ""), children: counts ? counts[name] ? String(counts[name]) : "" : badge || "" })
     ] }, name);
   }
   function PagePicker({ groups: groups4, active: active2, counts, pick }) {
@@ -2985,7 +2986,7 @@
       ] })
     ] });
   }
-  function Nav({ groups: groups4, active: active2, counts, pick }) {
+  function Nav({ groups: groups4, active: active2, counts, pick, badges }) {
     const [picked, setPicked] = d2({});
     const matches3 = (f4) => !!counts && f4.pages.some((p3) => counts[p3]);
     const isOpen2 = (f4) => counts ? matches3(f4) : picked[f4.label] ?? f4.pages.includes(active2);
@@ -2994,7 +2995,7 @@
       groups4.filter((g2) => g2.items.length).map((g2) => [
         g2.head && /* @__PURE__ */ u3("div", { class: "navhead", children: g2.head }, "h:" + g2.head),
         ...g2.items.map((item) => {
-          if (typeof item === "string") return /* @__PURE__ */ u3(PageButton, { name: item, active: active2, counts, pick }, item);
+          if (typeof item === "string") return /* @__PURE__ */ u3(PageButton, { name: item, active: active2, counts, pick, badge: badges?.[item] }, item);
           const f4 = item, open5 = isOpen2(f4);
           const n3 = counts ? f4.pages.reduce((sum, p3) => sum + (counts[p3] || 0), 0) : f4.pages.length;
           return [
@@ -4692,12 +4693,18 @@
     const folds = cats.map((c4) => ({ label: c4.label, pages: mine.filter((p3) => p3.name !== "Other apps" && catOf(p3.name) === c4.id).map((p3) => p3.name) })).filter((f4) => f4.pages.length);
     const loose2 = mine.filter((p3) => p3.name !== "Other apps" && !cats.some((c4) => c4.id === catOf(p3.name))).map((p3) => p3.name);
     const other = mine.some((p3) => p3.name === "Other apps") ? ["Other apps"] : [];
+    if (!onPhone() && setupWanted()) groups4[0].items.unshift("Setup");
     navGroups = [
       ...groups4,
       { head: "Advanced", items: [...loose2, ...folds, ...other, ...others2.length ? [{ label: "Apps you don't have", pages: others2.map((p3) => p3.name) }] : []] }
     ];
   }
+  var setupWanted = () => !document.querySelector('nav button[data-screen="setup"]')?.hidden;
   function pickSettingsPage(name) {
+    if (name === "Setup") {
+      navigate("setup");
+      return;
+    }
     settingsPage = name;
     $("settingsSearch").value = "";
     filterSettings();
@@ -4865,7 +4872,8 @@
     for (const [id2, name] of [["thisMacCard", thisMachine], ["appearanceCard", "Appearance"], ["peopleCard", "People"], ["phonesCard", "Phones"], ["tailnetCard", "Phones"], ["alertHistoryCard", "Alerts"]]) $(id2).classList.toggle("offpage", searching || settingsPage !== name);
     loadAlertHistory();
     if (!onPhone() && $("settingsNav").parentElement !== $("settingsSide")) $("settingsSide").appendChild($("settingsNav"));
-    const nav = { groups: navGroups, active: settingsPage, counts: searching ? sh.counts : null, pick: pickSettingsPage };
+    const left = $("setupCount").textContent || "";
+    const nav = { groups: navGroups, active: settingsPage, counts: searching ? sh.counts : null, pick: pickSettingsPage, badges: left ? { Setup: `${left} left` } : void 0 };
     mountNav($("settingsNav"), nav);
     if (!onPhone()) mountPagePicker($("settingsPick"), nav);
     renderGeneral();
