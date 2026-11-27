@@ -154,3 +154,19 @@ func TestWatchDue(t *testing.T) {
 		t.Errorf("a minute on: due %v woke %v", due, woke)
 	}
 }
+
+// An agent started from an older plist keeps its PATH's order and gains the
+// folders JobPath has since added (Docker Desktop's ~/.docker/bin, its
+// credential helper's): nothing it found first changes, and none is twice.
+func TestMergePath(t *testing.T) {
+	sep := string(os.PathListSeparator)
+	have := strings.Join([]string{"/Users/a/.orbstack/bin", "/opt/homebrew/bin", "/usr/bin"}, sep)
+	more := strings.Join([]string{"/Users/a/.orbstack/bin", "/opt/homebrew/bin", "/Users/a/.docker/bin", "/usr/bin", ""}, sep)
+	want := strings.Join([]string{"/Users/a/.orbstack/bin", "/opt/homebrew/bin", "/usr/bin", "/Users/a/.docker/bin"}, sep)
+	if got := mergePath(have, more); got != want {
+		t.Errorf("got %q\nwant %q", got, want)
+	}
+	if got := mergePath("", "/usr/bin"); got != "/usr/bin" {
+		t.Errorf("an empty PATH: %q", got)
+	}
+}

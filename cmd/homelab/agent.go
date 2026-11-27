@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"slices"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -76,6 +77,13 @@ func (h *homelab) agent(ctx context.Context, args []string) error {
 		h.ui.Out, os.Stdout, os.Stderr = f, f, f
 		home, _ := os.UserHomeDir()
 		os.Setenv("PATH", h.host.JobPath(home)+string(os.PathListSeparator)+os.Getenv("PATH"))
+	} else {
+		// Started from a plist written by an older version, whose PATH lacks
+		// folders JobPath has since gained (Docker Desktop's ~/.docker/bin,
+		// where its credential helper is): they are added after its own, so
+		// the agent pulls images without homelab schedule install again.
+		home, _ := os.UserHomeDir()
+		os.Setenv("PATH", mergePath(os.Getenv("PATH"), h.host.JobPath(home)))
 	}
 	// A crash here goes to scripts/logs/crash-<date>.log (internal/crash).
 	if err := crash.Watch(h.logsDir(), "agent", version); err != nil {
@@ -318,4 +326,16 @@ func loadAgentState(path string) agentState {
 func saveAgentState(path string, s agentState) error {
 	data, _ := json.MarshalIndent(s, "", "  ")
 	return lockedfile.Write(path, data, 0o600)
+}
+
+// mergePath is have's folders in their order, then each of more's that have
+// lacks: nothing have finds first changes.
+func mergePath(have, more string) string {
+	dirs := filepath.SplitList(have)
+	for _, d := range filepath.SplitList(more) {
+		if d != "" && !slices.Contains(dirs, d) {
+			dirs = append(dirs, d)
+		}
+	}
+	return strings.Join(dirs, string(os.PathListSeparator))
 }

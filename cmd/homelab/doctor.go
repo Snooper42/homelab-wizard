@@ -383,6 +383,10 @@ func (h *homelab) doctor(ctx context.Context, _ []string) error {
 		}
 	}
 
+	if hp.OS == "darwin" {
+		h.afterRestart(ctx, macCommand)
+	}
+
 	// What the last fetch found (the nightly job's, or the app's); no network here.
 	if c, err := upgrade.Inspect(ctx, h.root, false); err == nil {
 		switch {

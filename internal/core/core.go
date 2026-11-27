@@ -296,7 +296,7 @@ func FixPath() {
 	home, _ := os.UserHomeDir()
 	extra := host.Current().JobPath(home)
 	if goos == "darwin" {
-		extra += ":/Applications/Docker.app/Contents/Resources/bin:/usr/local/go/bin"
+		extra += ":/usr/local/go/bin" // Docker Desktop's folders are JobPath's
 	}
 	if extra == "" {
 		return

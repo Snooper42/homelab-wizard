@@ -226,6 +226,15 @@ func TestExecRunnerAndFindCLI(t *testing.T) {
 	} else if err != nil && !errors.Is(err, ErrNoDocker) {
 		t.Errorf("no docker anywhere: %v", err)
 	}
+	// Docker Desktop installed for this account only (no administrator):
+	// its docker is in ~/.docker/bin, which launchd's PATH never has.
+	desktop := filepath.Join(home, ".docker", "bin", "docker")
+	_ = os.MkdirAll(filepath.Dir(desktop), 0o755)
+	_ = os.WriteFile(desktop, []byte("#!/bin/sh\n"), 0o755)
+	if p, err := FindCLI(); err != nil || p != desktop {
+		t.Errorf("Docker Desktop's per-user docker: %q %v", p, err)
+	}
+	// OrbStack's comes first when both are there.
 	orb := filepath.Join(home, ".orbstack", "bin", "docker")
 	_ = os.MkdirAll(filepath.Dir(orb), 0o755)
 	_ = os.WriteFile(orb, []byte("#!/bin/sh\n"), 0o755)
