@@ -43,7 +43,6 @@ struct ComputerView: View {
                 }
             }
         }
-        .task { await computer.loadSetup() }
     }
 
     var body: some View {
@@ -87,13 +86,16 @@ struct ComputerView: View {
                 await computer.loadPhones()
             }
         }
+        // Settings' Setup row: how many steps are left, once this device may see them (known after unlock).
+        .task(id: computer.canSeeSetup) { if page == .settings { await computer.loadSetup() } }
         .refreshable {
             await computer.load()
             if page == .settings {
                 await computer.loadForm()
                 await computer.loadPhones()
             }
-            if page == .setup { await computer.loadSetup() }
+            // Setup's page, and Settings' Setup row with how many steps are left.
+            await computer.loadSetup()
         }
         .sheet(item: $computer.report) { report in
             ReportView(report: report)
