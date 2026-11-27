@@ -309,6 +309,8 @@ private struct PhoneStatus: View {
     let computer: ComputerViewModel
     /// A household member's phone: their apps only (and no backups to read).
     var isMember = false
+    /// Whether it says Live itself: not while the iPad's sidebar shows, which says it at its foot.
+    var showsConnection = true
     /// An app's page grows out of its row (iOS 18).
     @Namespace private var zoom
     @Environment(AppActionsViewModel.self) private var actions
@@ -472,8 +474,10 @@ private struct PhoneStatus: View {
             }
             .toolbar {
                 #if os(iOS)
-                ToolbarItem(placement: .topBarLeading) {
-                    ConnectionBadge(state: model.liveEvents.connection)
+                if showsConnection {
+                    ToolbarItem(placement: .topBarLeading) {
+                        ConnectionBadge(state: model.liveEvents.connection)
+                    }
                 }
                 #endif
                 ToolbarItem(placement: .primaryAction) {
@@ -732,7 +736,7 @@ private struct SplitDashboard: View {
                     sidebar
                 } detail: {
                     if statusWide {
-                        PhoneStatus(model: model, computer: computer, isMember: isMember)
+                        PhoneStatus(model: model, computer: computer, isMember: isMember, showsConnection: columns == .detailOnly)
                     } else {
                     NavigationStack {
                         Group {
