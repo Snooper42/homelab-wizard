@@ -249,3 +249,34 @@ func TestBackupFailsWhenDuplicatiWouldBackUpNothing(t *testing.T) {
 		t.Fatalf("all there: exit %d\n%s", code, out)
 	}
 }
+
+// Phase 3, flow 3: an update stops the app for its copy; when its new image
+// then can't start, it goes back on the image it ran, with that copy, rather
+// than staying stopped with no earlier image any rollback knew of.
+func TestAnUpdateWhoseNewImageCannotStartGoesBack(t *testing.T) {
+	root, _ := repoCopy(t)
+	_ = os.MkdirAll(filepath.Join(root, "data", "appdata", "ntfy"), 0o755)
+	calls := fakeDocker(t, []docker.FakeContainer{ntfyWith(root, "sha256:old")})
+	t.Setenv("FAKE_IMAGE_ID", "sha256:new")
+	t.Setenv("FAKE_UP_FAILS", "ntfy")
+	out, code := homelabCmd(t, root, "", "update", "ntfy")
+	log := readCalls(t, calls)
+	if code == 0 {
+		t.Fatalf("a failed update reads as done:\n%s", out)
+	}
+	if !strings.Contains(out, "runs the one from before again") {
+		t.Fatalf("not put back:\n%s\n%s", out, log)
+	}
+	stop, failedUp, back := strings.Index(log, "stop ntfy"), strings.Index(log, "up --detach ntfy"), strings.LastIndex(log, "up --detach --no-deps --force-recreate ntfy")
+	tag := strings.Index(log, "tag sha256:old "+updates.RollbackRef("ntfy"))
+	if stop < 0 || failedUp < stop || tag < failedUp || back < tag {
+		t.Fatalf("stopped, its new image refused, the old one tagged, then started on it:\n%s", log)
+	}
+	r := updates.LoadHistory(updates.HistoryPath(root)).Apps["ntfy"]
+	if r == nil || r.Current != "sha256:old" || r.RolledBack.IsZero() {
+		t.Errorf("history: %+v", r)
+	}
+	if held := envMapOf(t, root)[updates.HeldKey]; !strings.Contains(held, "ntfy") {
+		t.Errorf("its updates are not held (%q), so tonight would try again", held)
+	}
+}

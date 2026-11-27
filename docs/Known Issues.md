@@ -26,7 +26,7 @@ Open issues, risks, and items to verify on the Mac. Close an issue by moving it 
 | ISSUE-0014 | Release builds not yet opened on a Mac, a Windows PC, or SteamOS | Medium | Partly verified, to verify |
 | ISSUE-0015 | App wiring and the menu bar item not yet run against real apps | Medium | Partly verified, to verify |
 | ISSUE-0016 | Duplicati jobs, restores, and repairs through its API not yet run against the real image | High | Partly verified on Linux; READY FOR MAC VERIFICATION |
-| ISSUE-0017 | Updates from the app not yet run on the Mac | Medium | To verify |
+| ISSUE-0017 | Updates from the app not yet run on the Mac | Medium | READY FOR MAC VERIFICATION |
 | ISSUE-0018 | Disk space readings not yet compared on the Mac | Low | To verify |
 | ISSUE-0019 | A cloud drive's own quota cannot be read | Low | Accepted |
 | ISSUE-0020 | Vaultwarden web vault shows a black screen in LibreWolf | Low | Accepted |
@@ -217,6 +217,15 @@ Still unproven: opening each on its real machine (step 2 of [Testing](<Testing.m
 **Update now** (the line at the top of the window) moves the homelab files forward, then on a Mac downloads the newest Homelab Wizard (the latest build, or the newest `v*` release with `UPDATE_CHANNEL=stable`), checks it against GitHub's SHA-256 checksum, replaces the running app, and opens it again. For a git checkout, the update check runs `git fetch` as the user, with prompts turned off (`GIT_TERMINAL_PROMPT=0`, `ssh -o BatchMode=yes`), and moving forward is a fast-forward to the newest release tag whose build provenance names the commit it points at, followed by `up`. An app opened from Finder relies on the macOS SSH agent (or the keychain) for the GitHub key; without it the check says GitHub could not be reached and uses the last fetch. A folder the app made (**Set it up for me**) moves forward from the files inside the newer app instead.
 
 **Verify:** within 15 minutes of a build of a merged change (or on bringing the window forward), the line at the top says the update is ready, with no **Check again**; **Update now** brings the files in and runs `up`, then replaces the app and opens the new one, which says *Updated to …*; the menu bar's *Update to …* goes away. When only the app is behind, **Update now** does the app alone. With a build from the release workflow, the version row shows `build <commit>`.
+
+**Progress (Nov 27, 2026, the reliability reset; `MERGED`, not `VERIFIED`):** the swap was traced end to end. It keeps the old app until the new one is in place, holds the new build to the installed one's signer, takes the quarantine off, and restarts the agent; no change was needed there. What a waiting update brings is shown on the line: each change merged since the build you run, one plain sentence each, from `selfupdate.Notes`, with *What's new* listing them all. The apps' own updates gained one fix (SRE audit follow-up): an update stops an app to copy its data, and when the new image then could not start (a port taken, a dependency unwell), the app stayed stopped, with no earlier image any rollback knew of. It now goes straight back on the image it ran, with its data from just before, and its updates are held (`backAfterFailedUp`). Rollbacks also now check what they put back (H1 to H3 in `docs/SRE-Audit-2026-11.md`).
+
+**Verify on the Mac (READY FOR MAC VERIFICATION):**
+1. After the next merge to main, wait up to 15 minutes, or bring the window forward. The line at the top should say an update is ready, with one plain sentence per change under *What's new*.
+2. Click **Update now**. The app should reopen and say *Updated to …*, and Settings › This Mac should show the new version.
+3. Run `./homelab update ntfy`, then `./homelab rollback ntfy --apply`. It should end with *runs the image from before*, and `./homelab status` should show ntfy running.
+
+Paste the outputs of steps 2 and 3 back.
 
 ## ISSUE-0018: Disk space readings not yet compared on the Mac
 

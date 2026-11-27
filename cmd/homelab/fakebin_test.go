@@ -317,6 +317,13 @@ func fakeDockerMain(d string, args []string) int {
 				_ = r.Save(v[:i])
 			}
 		}
+		// FAKE_UP_FAILS=svc: an update's up of svc on its new image fails (a
+		// port taken, a dependency unwell); a rollback's up, which recreates
+		// it on the image before, still works.
+		if svc := os.Getenv("FAKE_UP_FAILS"); svc != "" && has(" up ") && has(" "+svc) && !has("--force-recreate") {
+			fmt.Fprintln(os.Stderr, "Error response from daemon: driver failed programming external connectivity: Bind for 127.0.0.1:2586 failed: port is already allocated")
+			return 1
+		}
 		// FAKE_START_FAILS=svc: a start that names the service fails.
 		if svc := os.Getenv("FAKE_START_FAILS"); svc != "" && has(" start ") && has(" "+svc) {
 			return 1
