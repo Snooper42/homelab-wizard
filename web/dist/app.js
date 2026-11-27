@@ -8324,10 +8324,7 @@
     const folders = (storage?.apps || []).reduce((s3, f4) => s3 + f4.bytes, 0);
     const photos = (storage?.photos || []).reduce((s3, p3) => s3 + p3.bytes, 0);
     return /* @__PURE__ */ u3("div", { class: "antpage", children: [
-      /* @__PURE__ */ u3("div", { class: "row header", children: /* @__PURE__ */ u3("div", { children: [
-        /* @__PURE__ */ u3("h1", { children: "Analytics" }),
-        /* @__PURE__ */ u3("p", { class: "lead", children: span })
-      ] }) }),
+      /* @__PURE__ */ u3("div", { class: "row header", children: /* @__PURE__ */ u3("div", { children: /* @__PURE__ */ u3("h1", { children: "Analytics" }) }) }),
       /* @__PURE__ */ u3("div", { class: "anttiles", children: [
         /* @__PURE__ */ u3(Card, { kind: "anttile", id: "antCpu", children: [
           /* @__PURE__ */ u3("div", { class: "anthead", children: [
@@ -8340,7 +8337,7 @@
             " ",
             /* @__PURE__ */ u3("span", { class: "muted", children: cores ? "in use" : "of a core" })
           ] }) : "—" }),
-          /* @__PURE__ */ u3("div", { class: "antline muted", children: read && busiest && cpu[busiest] >= 0.1 ? who(busiest, `uses the most · ${pct(cpu[busiest])}%`) : read ? /* @__PURE__ */ u3("span", { class: "antwho", children: "Every app idle" }) : who(void 0, "") }),
+          /* @__PURE__ */ u3("div", { class: "antline muted", children: read && busiest && cpu[busiest] >= 0.1 ? who(busiest, `· ${pct(cpu[busiest])}%`) : read ? /* @__PURE__ */ u3("span", { class: "antwho", children: "Every app idle" }) : who(void 0, "") }),
           /* @__PURE__ */ u3("div", { class: "antfoot", children: totals3.cpu.length > 2 ? /* @__PURE__ */ u3(Spark, { values: totals3.cpu, w: 240, h: 36, title: `The apps' processor, ${span.toLowerCase()}` }) : /* @__PURE__ */ u3("span", { class: "antempty" }) })
         ] }),
         /* @__PURE__ */ u3(Card, { kind: "anttile", id: "antMem", children: [
@@ -8354,7 +8351,7 @@
             " ",
             /* @__PURE__ */ u3("span", { class: "muted", children: "in use" })
           ] }) : "—" }),
-          /* @__PURE__ */ u3("div", { class: "antline muted", children: read && heaviest ? who(heaviest, `uses the most · ${formatMem(mem[heaviest] || 0)}`) : who(void 0, "") }),
+          /* @__PURE__ */ u3("div", { class: "antline muted", children: read && heaviest ? who(heaviest, `· ${formatMem(mem[heaviest] || 0)}`) : who(void 0, "") }),
           /* @__PURE__ */ u3("div", { class: "antfoot", children: totals3.mem.length > 2 ? /* @__PURE__ */ u3(Spark, { values: totals3.mem, w: 240, h: 36, title: `The apps' memory, ${span.toLowerCase()}` }) : /* @__PURE__ */ u3("span", { class: "antempty" }) })
         ] }),
         /* @__PURE__ */ u3(Card, { kind: "anttile", id: "antDisk", children: [
@@ -8376,7 +8373,7 @@
       /* @__PURE__ */ u3(Card, { kind: "antweek", id: "antTime", children: [
         /* @__PURE__ */ u3("div", { class: "anthead", children: [
           /* @__PURE__ */ u3("h2", { children: span }),
-          /* @__PURE__ */ u3("span", { class: "muted", children: "A week isn't kept yet" })
+          /* @__PURE__ */ u3("span", { class: "muted" })
         ] }),
         totals3.cpu.length > 2 ? /* @__PURE__ */ u3(S, { children: [
           /* @__PURE__ */ u3(Chart, { values: totals3.cpu, kind: "cpu", label: "Processor", mark: (v3) => `${Math.round(cores ? v3 / cores : v3)}%` }),
@@ -8386,7 +8383,7 @@
       /* @__PURE__ */ u3(Card, { kind: "antapps", id: "antApps", children: [
         /* @__PURE__ */ u3("div", { class: "anthead", children: [
           /* @__PURE__ */ u3("h2", { children: "What each app uses" }),
-          /* @__PURE__ */ u3("span", { class: "muted", children: "Heaviest first" })
+          /* @__PURE__ */ u3("span", { class: "muted" })
         ] }),
         rows.length ? /* @__PURE__ */ u3("table", { class: "anttable", children: [
           /* @__PURE__ */ u3("thead", { children: /* @__PURE__ */ u3("tr", { children: [
