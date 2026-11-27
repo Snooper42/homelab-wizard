@@ -3,6 +3,7 @@ package diskspace
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -93,7 +94,8 @@ func TestRecord(t *testing.T) {
 	if len(h["media"]) != 2 || h["gone"] != nil || len(h) != 2 {
 		t.Errorf("%+v", h)
 	}
-	if info, err := os.Stat(path); err != nil || info.Mode().Perm() != 0o600 {
+	// Private where the system has permission bits; Windows has none to read.
+	if info, err := os.Stat(path); err != nil || runtime.GOOS != "windows" && info.Mode().Perm() != 0o600 {
 		t.Errorf("not private: %v %v", info.Mode(), err)
 	}
 	// A broken file is an empty history, not an error.
