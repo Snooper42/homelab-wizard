@@ -535,6 +535,7 @@ struct CategoryRow: View {
                     AppIconView(app: app, size: size, stateBadge: false)
                 }
             }
+            .frame(width: typeSize.isAccessibilitySize ? nil : size * 2.4, alignment: .leading)
             VStack(alignment: .leading, spacing: 2) {
                 Text(verbatim: category.label)
                     .font(.headline)
