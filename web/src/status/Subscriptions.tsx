@@ -76,8 +76,11 @@ export function Subscriptions(p: SubscriptionsProps) {
   const now = perService(offers.filter(runs));
   const replaced = new Set(now.map(serviceOf));
   const more = perService(offers.filter((o) => !runs(o) && !replaced.has(serviceOf(o))));
-  const counted = now.filter((o) => !isLibrary(o));
+  // A Library service (Spotify, Netflix…) saves only if you own the media: kept apart from the total (the owner, Nov 26),
+  // and said beside it, so every tile under Replaced now is counted somewhere on the page.
+  const counted = now.filter((o) => !isLibrary(o)), library = now.filter(isLibrary);
   const year = counted.reduce((t, o) => t + o.annual, 0), month = counted.reduce((t, o) => t + o.monthly, 0);
+  const libraryYear = library.reduce((t, o) => t + o.annual, 0);
   const could = more.filter((o) => !isLibrary(o)).reduce((t, o) => t + o.annual, 0);
   const appName = (id: string) => p.catalog?.apps.find((a) => a.id === id)?.name || id;
   // Where the saving comes from: each kind of app's share of the year, largest first, in its category's colour.
@@ -87,7 +90,7 @@ export function Subscriptions(p: SubscriptionsProps) {
   const parts = [...byCat.entries()].sort((x, y) => y[1] - x[1]).map(([id, n], i) => ({ id, label: cats.find((c) => c.id === id)?.label || 'Your own', n, tone: `var(--cat-${(i % 8) + 1})` }));
   return (
     <div class="subpage">
-      <div class="row header"><div><h1>Subscriptions</h1><p class="lead">{p.offers ? `${dollars(year)} a year · ${money(month)} a month` : 'Reading the prices…'}</p></div></div>
+      <div class="row header"><div><h1>Subscriptions</h1><p class="lead">{p.offers ? <>{`${dollars(year)} a year · ${money(month)} a month`}{libraryYear > 0 && <span class="sublibrary" title={`${library.map((o) => o.replaces.replace(/\s*\(.*\)$/, '')).join(', ')}: a saving if you own the films, music and books they'd play`}>{` · +${dollars(libraryYear)} with media you own`}</span>}</> : 'Reading the prices…'}</p></div></div>
       <div class="subtop">
         <Card kind="subcard" id="subWhere">
           <div class="anthead"><h2>Where it comes from</h2></div>

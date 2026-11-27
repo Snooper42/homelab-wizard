@@ -841,6 +841,22 @@ const smokes = [
     if (!years.length || cents.length) throw new Error('with cents: ' + cents.join(', '));
     if (!(await page.$$eval('#statusPart .subbig', (es) => es.some((e) => /\.\d\d$/.test(e.textContent.trim()))))) throw new Error('no month with its cents');
   } },
+  // Every tile under Replaced now is counted on the page: the total is the services you'd stop paying for, and the Library
+  // ones (a saving if you own the media, the owner's Nov 26) are said beside it, so the two add up to every tile's year.
+  { name: 'Subscriptions: the total and the media you own add up to every tile', screen: 'status', run: async (page) => {
+    await toStatusPart(page, 'subscriptions');
+    await page.waitForSelector('#subNow .subtile', { timeout: 5000 });
+    const dollar = (t) => Number(t.replace(/[^\d.]/g, ''));
+    const tiles = await page.$$eval('#subNow .subtile', (ts) => ts.map((t) => [t.querySelector('.pill')?.textContent.trim(), t.querySelector('.subyear').textContent]));
+    const lead = await page.textContent('#statusPart .subpage .lead');
+    const m = lead.match(/^\$([\d,]+) a year .* \+\$([\d,]+) with media you own$/);
+    if (!m) throw new Error('the line: ' + lead);
+    const sum = (f) => tiles.filter(f).reduce((n, [, y]) => n + dollar(y), 0);
+    const [total, lib] = [dollar(m[1]), dollar(m[2])];
+    // Each tile's year is rounded on its own: the sums may differ from the line by a dollar a tile.
+    if (Math.abs(sum(([k]) => k !== 'Library') - total) > tiles.length) throw new Error(`the total ${total}, the tiles ${sum(([k]) => k !== 'Library')}`);
+    if (Math.abs(sum(([k]) => k === 'Library') - lib) > tiles.length) throw new Error(`media you own ${lib}, its tiles ${sum(([k]) => k === 'Library')}`);
+  } },
   { name: 'Backups: every copy of an app shows its logo, MoneyMatter’s attachments too', screen: 'backups', run: async (page) => {
     await page.waitForSelector('#backupTiles', { timeout: 5000 });
     await page.evaluate(() => document.querySelectorAll('tr.copygroup:not(.open)').forEach((r) => r.click()));
@@ -991,7 +1007,7 @@ const smokes = [
     await tidyTab(page, 'Inbox');
     await page.waitForSelector('#tidy .tidyneeds li', { timeout: 5000 });
     const rows = await page.$$eval('#tidy .tidyneeds li', (ls) => ls.map((l) => [l.querySelector('strong')?.textContent.trim(), l.querySelector('button')?.textContent.trim() || '']));
-    const want = [['Free the old music library', 'Free it…'], ['2,402 songs could get lyrics', 'Add lyrics'], ['Shrink 42 films', 'Shrink'], ['Tdarr is shrinking 4 films', 'Collect'], ['2 books could look tidier', 'Look…'], ['Look at your TV first', 'Scan'], ['Audiobooks: its drive isn\'t plugged in', '']];
+    const want = [['Free the old music library', 'Free it…'], ['2,402 songs could get lyrics', 'Add lyrics'], ['Shrink 42 films', 'Shrink'], ['Tdarr is shrinking 4 films', 'Collect'], ['2 books could look tidier', 'Look…'], ['Look at your TV first', 'Scan'], ['Audiobooks: no folder yet', '']];
     const sorted = (a) => JSON.stringify([...a].sort((x, y) => x[0].localeCompare(y[0])));
     if (sorted(rows) !== sorted(want)) throw new Error('rows: ' + JSON.stringify(rows));
     if (!(await page.textContent('#tidy .tidyneeds li:has-text("Shrink 42 films")')).includes('380 GB')) throw new Error('the shrink does not say what it wins back');
