@@ -13,7 +13,7 @@ Tracks the master hygiene handoff (Stages 1 to 4) so it can be resumed in a new 
 | Stage | State |
 |---|---|
 | 1: finish active task, bookmark | Done (nothing was active) |
-| 2A: disable future attribution, scrub allowed files | PR 1 open |
+| 2A: disable future attribution, scrub allowed files | PR 1 open: #962 |
 | 2B onward, 3, 4 | Waiting: the handoff's text stopped partway through Phase 2A; the rest is needed before starting |
 
 ## Pull requests
