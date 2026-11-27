@@ -772,12 +772,31 @@ const smokes = [
     const foot = (await page.locator('#foot .machine .part').innerText()).split(' · ')[0];
     if (card !== foot) throw new Error(`This Mac says ${card}, the sidebar ${foot}`);
   } },
+  { name: 'Analytics: Drives and the sidebar give the same free space', screen: 'status', run: async (page) => {
+    await toStatusPart(page, 'analytics');
+    await page.waitForSelector('#antDisk .antfig', { timeout: 5000 });
+    await page.waitForSelector('#foot .machine .part', { timeout: 5000 });
+    const card = (await page.locator('#antDisk .antfig').innerText()).replace(/\s+/g, ' ').trim();
+    const foot = (await page.locator('#foot .machine .part').innerText()).split(' · ')[0];
+    if (card !== foot) throw new Error(`Analytics says ${card}, the sidebar ${foot}`);
+  } },
   { name: 'Status lines up: More… beside Update apps, and every category name in one column', screen: 'status', mock: { statusOpen: '' }, run: async (page) => {
     await page.waitForSelector('#statusPanelCard .ovrow', { timeout: 5000 });
     const [update, more] = await Promise.all(['#updateAll', '#statusMore'].map((s) => page.locator(s).boundingBox()));
     if (Math.abs(update.y - more.y) > 1 || Math.abs(update.height - more.height) > 1) throw new Error(`Update apps ${JSON.stringify(update)}, More… ${JSON.stringify(more)}`);
     const lefts = await page.$$eval('#statusPanelCard .ovname', (els) => els.map((e) => Math.round(e.getBoundingClientRect().left)));
     if (new Set(lefts).size > 2) throw new Error(`category names start at ${lefts.join(', ')}`);
+  } },
+  { name: 'Analytics: no app uses more of the processor than all of them together', screen: 'status', clock: true, mock: { usageSeries }, run: async (page) => {
+    await toStatusPart(page, 'analytics');
+    await page.waitForSelector('#antCpu .antwho .antfigs', { timeout: 5000 });
+    const num = (t) => Number((t.match(/(\d+(?:\.\d+)?)%/) || [])[1]);
+    const total = num(await page.textContent('#antCpu .antfig'));
+    const busiest = num(await page.textContent('#antCpu .antwho .antfigs'));
+    const cells = await page.$$eval('#antApps tbody td', (ts) => ts.map((t) => t.textContent || '').filter((t) => /^\s*\d+(\.\d+)?%\s*$/.test(t)));
+    const each = cells.map(num);
+    if (!each.length) throw new Error('no processor figures in the list');
+    if (!(busiest <= total) || each.some((n) => n > total)) throw new Error(`the machine ${total}%, the busiest app ${busiest}%, the list ${each.join(', ')}`);
   } },
   { name: 'Analytics: no memory warning while memory is fine', screen: 'status', run: async (page) => {
     await toStatusPart(page, 'analytics');
