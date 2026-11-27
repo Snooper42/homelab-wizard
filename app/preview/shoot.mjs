@@ -4816,7 +4816,7 @@ const smokes = [
     await page.waitForSelector(`${sheet}:not([hidden])`, { timeout: 3000 });
     if ((await heads()).join('|') !== 'On Home|Everywhere|The screens') throw new Error(`the sections: ${await heads()}`);
     let said = await text();
-    for (const want of ['Start typing an app’s name', '⌘K The command palette', '⌘R Check the screen again', '⌘⇧H Hide every amount', '⌘1 Home', '⌘2 Tidy Up', '⌘3 Finances', '⌘, Settings']) {
+    for (const want of ['Start typing an app’s name', '⌘K The command palette', '⌘R Check the screen again', '⌘⇧H Hide every amount', '⌘1 Home', '⌘2 Library', '⌘3 Finances', '⌘, Settings']) {
       if (!said.includes(want)) throw new Error(`no "${want}" in: ${said}`);
     }
     if (said.includes('Ctrl') || /\bF1 /.test(said) || said.includes('F5')) throw new Error(`another system's keys on a Mac: ${said}`);

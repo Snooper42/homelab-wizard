@@ -3281,3 +3281,4 @@ html:not(.companion) nav #settingsNav .pagebtn .n.badge { background:none; box-s
   html:not(.companion) #setupOnStatus .setupnext { grid-column:1 / -1; grid-row:3; }
   html:not(.companion) #setupOnStatus .setupnext li { white-space:normal; }
 }
+@media (prefers-color-scheme: dark) { @container window (min-width: 701px) { html:not(.companion) nav > button:is([data-screen="status"], [data-screen="tidy"], [data-screen="finances"]).active > span:not(.count) { color:var(--text); } } }
