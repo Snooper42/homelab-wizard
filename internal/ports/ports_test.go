@@ -136,3 +136,21 @@ func TestReservedPortsAreNeverHandedOut(t *testing.T) {
 		t.Fatalf("change %+v", ch)
 	}
 }
+
+// AppWebURL is an app's page without a plan: its own ports, and for an app in another's network (qBittorrent in
+// Gluetun's) that app's, which publish its page; an app with no page of its own has none.
+func TestAppWebURL(t *testing.T) {
+	c, _ := setup(t, nil)
+	lookup := compose.MapLookup(nil)
+	qb, _ := c.Get("qbittorrent")
+	if url := AppWebURL(c, qb, lookup); url != "http://localhost:8082" {
+		t.Fatalf("qBittorrent, published by Gluetun: %q", url)
+	}
+	if url := AppWebURL(nil, qb, lookup); url != "" {
+		t.Fatalf("qBittorrent without the catalog to find Gluetun in: %q", url)
+	}
+	fr, _ := c.Get("freshrss")
+	if url := AppWebURL(c, fr, lookup); url != "http://localhost:8085" {
+		t.Fatalf("FreshRSS, its own port: %q", url)
+	}
+}

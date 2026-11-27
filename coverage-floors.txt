@@ -54,7 +54,7 @@ internal/notify 97  # target 75
 internal/npm 75
 internal/people 91  # target 70
 internal/pgexec 99
-internal/ports 83
+internal/ports 87
 internal/procattr 99
 internal/progress 89
 internal/recovery 99  # target 80
