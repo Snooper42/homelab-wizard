@@ -811,6 +811,14 @@ const smokes = [
     const pads = await page.$$eval('#backupTiles > .bkcard', (cs) => cs.map((c) => [c.id, Math.round(c.querySelector('h2, .row').getBoundingClientRect().left - c.getBoundingClientRect().left)]));
     if (pads.some(([, p]) => p < 8)) throw new Error('a card without padding: ' + JSON.stringify(pads));
   } },
+  { name: 'On a phone, Status’ menu names All apps while it shows, and Overview again after', screen: 'status', phone: ['companion', 'can-change'], run: async (page) => {
+    await page.evaluate(() => window.__emit('navigate', 'choose'));
+    await page.waitForSelector('#statusPart .catpage h1:text-is("All apps")', { timeout: 5000 });
+    await page.waitForSelector('#statusChips .sidedropbtn:has-text("All apps")', { timeout: 5000 });
+    await page.click('#statusChips .sidedropbtn');
+    await page.click('#statusChips .sidemenulist button[data-key="overview"]');
+    await page.waitForSelector('#statusChips .sidedropbtn:has-text("Overview")', { timeout: 5000 });
+  } },
   { name: 'Analytics: no memory warning while memory is fine', screen: 'status', run: async (page) => {
     await toStatusPart(page, 'analytics');
     await page.waitForSelector('#antMem', { timeout: 5000 });
