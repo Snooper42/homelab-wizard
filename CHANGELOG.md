@@ -10,6 +10,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 - **The web page answers only at home:** a device on Tailscale is let in while it's on the home network, and turned away when it's away, so a lost or stolen phone can't use it from outside. Away from home, the iPhone app's look-only view through the tunnel stays.
 <!-- The iPhone and iPad app (lane 4): add a line just below this one. -->
+- **Storage with logos and fewer words:** on the iPhone and iPad, Settings › Storage shows each app's logo beside its folder's size, and says when it was measured (*5 hours ago*) instead of *Each app's folder, as the nightly backup measured it… Photos and films on their own drive aren't counted.* An app whose logo ships under its part's name (Immich, MoneyMatter) shows it everywhere, as on the computer.
 - **The iPad's sidebar says Homelab Wizard once:** its title at the top, without the same name again in a row under it.
 - **An app to add, never cut short:** on the iPad, a category's *Add to* tiles say what each app does in full instead of cutting it with *…*; on the iPhone a tile is its logo and name, as on the computer's web page. VoiceOver still reads what it does.
 - **The iPad's sidebar is its mark and name, as the computer's:** without *Your apps, at home* under *Homelab Wizard*.

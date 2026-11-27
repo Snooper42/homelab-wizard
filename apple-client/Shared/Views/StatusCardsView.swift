@@ -554,7 +554,7 @@ private struct SavingsCard: View {
 // MARK: - Storage
 
 /// What the apps keep, as the computer's Storage card: the six largest
-/// folders with a bar each, the rest counted, and when they were measured.
+/// folders, each with its logo and a bar, the rest counted, and when they were measured.
 /// Under Status's list on the iPad; on its own page from Settings (`StoragePage`).
 struct StorageSection: View {
     let storage: StorageCard
@@ -570,14 +570,21 @@ struct StorageSection: View {
                 } label: {
                     Text("What the apps keep").fontWeight(.semibold)
                 }
-                Text(lead)
-                    .font(.footnote)
-                    .foregroundStyle(Theme.secondaryInk)
+                if let measured = storage.measured {
+                    Text(measured, format: .relative(presentation: .named))
+                        .font(.footnote)
+                        .foregroundStyle(Theme.secondaryInk)
+                }
             }
             ForEach(storage.rows) { row in
                 VStack(alignment: .leading, spacing: 6) {
-                    LabeledContent(nameOf(row.app)) {
+                    LabeledContent {
                         Text(row.bytes.formatted(.byteCount(style: .file))).monospacedDigit()
+                    } label: {
+                        HStack(spacing: 10) {
+                            AppLogo(id: row.app, size: 24)
+                            Text(verbatim: nameOf(row.app))
+                        }
                     }
                     StorageBar(share: Double(row.bytes) / Double(max(storage.rows.first?.bytes ?? 1, 1)))
                         .frame(height: 6)
@@ -596,11 +603,6 @@ struct StorageSection: View {
         } header: {
             if showsHeader { Label("Storage", systemImage: "internaldrive") }
         }
-    }
-
-    private var lead: String {
-        let when = storage.measured.map { " (\($0.formatted(.relative(presentation: .named))))" } ?? ""
-        return "Each app's folder, as the nightly backup measured it\(when). Photos and films on their own drive aren't counted."
     }
 }
 

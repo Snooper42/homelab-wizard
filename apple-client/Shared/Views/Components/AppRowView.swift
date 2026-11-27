@@ -164,15 +164,32 @@ struct AppLogo: View {
 
 /// The logos the app ships for the homelab's catalog apps
 /// (Shared/Assets.xcassets/AppLogos, from homarr-labs/dashboard-icons,
-/// Apache 2.0; scripts/fetch-app-logos.py). Looked up by app id, once each.
+/// Apache 2.0; scripts/fetch-app-logos.py). Looked up by app id, once each:
+/// its own, else its app's, for a helper or an app named without its part
+/// (immich → immich-server, moneymatter-db → moneymatter-frontend), as the
+/// computer's logoId (web/src/parts/AppMark.tsx).
 @MainActor
 enum BundledLogo {
     private static var known: [String: Bool] = [:]
 
     static func image(for id: String) -> Image? {
-        guard AppStatus.isValidID(id) else { return nil }
+        guard AppStatus.isValidID(id), let name = name(for: id) else { return nil }
+        return Image("AppLogos/\(name)")
+    }
+
+    /// The shipped logo an id shows, or nil.
+    static func name(for id: String) -> String? {
+        var base = id
+        while true {
+            for candidate in [base, base + "-server", base + "-frontend"] where has(candidate) { return candidate }
+            guard let dash = base.lastIndex(of: "-") else { return nil }
+            base = String(base[..<dash])
+        }
+    }
+
+    private static func has(_ id: String) -> Bool {
+        if let has = known[id] { return has }
         let name = "AppLogos/\(id)"
-        if let has = known[id] { return has ? Image(name) : nil }
         #if canImport(UIKit)
         let has = UIImage(named: name) != nil
         #elseif canImport(AppKit)
@@ -181,15 +198,15 @@ enum BundledLogo {
         let has = false
         #endif
         known[id] = has
-        return has ? Image(name) : nil
+        return has
     }
 
     #if os(macOS)
     /// The logo at a menu item's size, for the menu bar's Needs a look list
     /// (a menu shows an image at its own size, not a frame's).
     static func menuIcon(for id: String) -> NSImage? {
-        guard image(for: id) != nil,
-              let logo = NSImage(named: "AppLogos/\(id)")?.copy() as? NSImage
+        guard AppStatus.isValidID(id), let name = name(for: id),
+              let logo = NSImage(named: "AppLogos/\(name)")?.copy() as? NSImage
         else { return nil }
         logo.size = NSSize(width: 16, height: 16)
         return logo
