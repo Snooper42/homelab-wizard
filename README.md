@@ -39,7 +39,7 @@
 </p>
 
 > [!NOTE]
-> **Beta.** Homelab Wizard runs a real household on a Mac, and it is now being tested on Windows and Linux machines too. The builds are not signed yet (no Apple Developer ID or Windows code-signing certificate), so each system asks once whether to trust them. Open problems are in [Known Issues](docs/Known%20Issues.md); what changed in each version is in the [CHANGELOG](CHANGELOG.md).
+> **Beta.** Homelab Wizard runs a real household on a Mac every day. The last full pass of its Mac checklist was on Nov 3, 2026 (13 of 18 steps). The releases since then have passed their tests against stand-ins and a nightly run on real Docker, but haven't yet been tried on a Windows PC or a Steam Machine. Until the core flows (backups and restore, the jobs at boot, updates and rollback) are checked on the Mac again, the work goes into making them reliable, not new features. [Where things stand](docs/Where%20Things%20Stand.md) has the detail. The builds are not signed yet (no Apple Developer ID or Windows code-signing certificate), so each system asks once whether to trust them. Open problems are in [Known Issues](docs/Known%20Issues.md); what changed in each version is in the [CHANGELOG](CHANGELOG.md).
 
 ## What it is
 
@@ -417,6 +417,7 @@ Over 70 apps in nine categories: the baseline ones start with the homelab, the r
 | If you want to… | Read |
 |---|---|
 | Set it up, step by step, without code | [Getting Started](docs/Getting%20Started.md) |
+| See what works today, and what has been tried on a real machine | [Where things stand](docs/Where%20Things%20Stand.md) |
 | Fix something | [Troubleshooting](docs/Troubleshooting.md), [Known Issues](docs/Known%20Issues.md) |
 | Run it day to day | [Everyday tasks](docs/Everyday%20Tasks.md), [Runbooks](docs/Runbooks.md), [Backups](docs/Backups.md), [Monitoring](docs/Monitoring.md), [Automation](docs/Automation.md), [Tidy Up](docs/Tidy%20Up.md) |
 | Recover from a lost machine, or move to a new one | [Disaster Recovery](docs/Disaster%20Recovery.md) |

@@ -86,6 +86,7 @@ The full app list with addresses and ports is in [Inventory](<Inventory.md>). It
 
 | Page | For |
 |---|---|
+| [Where things stand](<Where Things Stand.md>) | What works today, what has been tried on a real machine, and what has only passed tests |
 | [Roadmap](<Roadmap.md>) | What comes next, version by version |
 | [Feature Roadmap](<Feature Roadmap.md>) | Features to build, by area: usability, memory, security, backups, and more |
 | [Decisions](<Decisions.md>) | Architecture decisions and why they were made |
