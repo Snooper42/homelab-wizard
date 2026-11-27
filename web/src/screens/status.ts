@@ -207,7 +207,8 @@ function drawStatusSide() {
   };
   // The sidebar's, and on a phone's narrow page the same items as a row of chips atop Status (the tab bar has no room).
   mountSideMenu($('statusSide'), menu);
-  mountSideDropdown($('statusChips'), onPhone() ? { ...menu, label: 'Status parts', here: statusHere.startsWith('add:') ? '' : statusHere } : null);
+  mountSideDropdown($('statusChips'), onPhone() ? { ...menu, label: 'Status parts', here: statusHere.startsWith('add:') ? '' : statusHere,
+    shown: statusHere === 'find' ? { key: 'find', label: 'All apps', icon: sideIcons.apps } : undefined } : null);
 }
 /** Shows the overview, or the category picked, with the apps as last read. */
 /** The Status page an app's page to add was opened from (a category, All apps), for its breadcrumbs and Back. */
