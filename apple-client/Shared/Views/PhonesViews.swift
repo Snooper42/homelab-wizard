@@ -206,8 +206,6 @@ struct SetupChecklistSections: View {
                 } footer: {
                     if let error = computer.setupError {
                         Text(verbatim: error).foregroundStyle(Theme.danger)
-                    } else if computer.canDoSetup, SetupChecklist.buttonTitle(steps) != nil {
-                        Text("Asks Face ID first. Only steps the homelab does by itself; anything that needs typing, a sign-in, a drive or a password is the computer's.")
                     }
                 }
                 let left = steps.filter { !$0.isDone && !$0.waits }
