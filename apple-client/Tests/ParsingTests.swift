@@ -498,8 +498,9 @@ struct BackupsTests {
         #expect(try JSONDecoder.homelab().decode(BackupOverview.self, from: Data(#"{"copies":[{"id":"a","name":"A","state":"fresh"}]}"#.utf8)).lastNight().chip == nil)
     }
 
-    /// The redesign's two cards: the restore test's result, when and what it checked; where the copies go, and the
-    /// second copy or the settings file. A password export due goes to a line at the top.
+    /// The redesign's two cards, as the computer's: the restore test's result and when (a failure's reason too); where
+    /// the copies go and their folder, and the second copy or the settings file only when it's wrong. A password export
+    /// due goes to a line at the top.
     @Test func backupsCardsSayTheRestoreTestAndOffsite() throws {
         let now = Date(timeIntervalSince1970: 1_794_405_600) // 2026-11-11 14:00 UTC
         func overview(_ json: String) throws -> BackupOverview {
@@ -508,13 +509,13 @@ struct BackupsTests {
         let fine = try overview(#"{"destination":"/Users/me/Library/CloudStorage/ProtonDrive-me/homelab-backups","destinationOK":true,"envCopied":"2026-11-10T14:00:00Z","vaultExport":"2026-11-01T14:00:00Z","restoreTest":{"lastTest":"2026-11-08T14:00:00Z","lastSummary":"12 files checked, all the same as now"}}"#)
         let cards = fine.cards(now: now)
         #expect(cards.map(\.id) == ["restore", "offsite"])
-        #expect(cards[0].value == "Passed" && cards[0].lines == ["3 days ago", "12 files checked, all the same as now"] && cards[0].tone == .good)
-        #expect(cards[1].value == "Proton Drive" && cards[1].lines == ["Encrypted before it leaves", "Settings file: Copied, yesterday"])
+        #expect(cards[0].value == "Passed" && cards[0].lines == ["3 days ago"] && cards[0].tone == .good)
+        #expect(cards[1].value == "Proton Drive" && cards[1].lines == ["homelab-backups"])
         #expect(fine.vaultNeedsDoing(now: now) == nil)
         let unset = try overview(#"{"destinationOK":false,"restoreTest":{"history":[{"when":"2026-11-10T14:00:00Z","seconds":60,"passed":false,"summary":"3 files differ"}]}}"#)
         let bad = unset.cards(now: now)
         #expect(bad[0].value == "Failed" && bad[0].lines.last == "3 files differ" && bad[0].tone == .bad)
-        #expect(bad[1].value == "Not set" && bad[1].tone == .warn)
+        #expect(bad[1].value == "Not set" && bad[1].lines.first == "Settings › Backups go to" && bad[1].tone == .warn)
         #expect(unset.vaultNeedsDoing(now: now)?.value == "Never exported")
     }
 
