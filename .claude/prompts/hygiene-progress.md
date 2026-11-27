@@ -14,6 +14,7 @@ Tracks the master hygiene handoff (Stages 1 to 4) so it can be resumed in a new 
 |---|---|
 | 1: finish active task, bookmark | Done (nothing was active) |
 | 2A: disable future attribution, scrub allowed files | PR 1 open: #962 |
+| Owner's ask, Nov 27: bring the repo's picture of the app up to date | In #962: `docs/Where Things Stand.md` (new), README's Beta note, both docs indexes. Release history split waits for Stage 3 (needs `release.yml`'s notes to skip moved lines). Version stamps: by design (they track `VERSION`), no change |
 | 2B onward, 3, 4 | Waiting: the handoff's text stopped partway through Phase 2A; the rest is needed before starting |
 
 ## Pull requests
