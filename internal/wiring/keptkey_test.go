@@ -3,6 +3,7 @@ package wiring
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -46,5 +47,35 @@ func TestKeptKey(t *testing.T) {
 	}
 	if _, err := KeptKey("", "config.xml"); err == nil {
 		t.Error("no folder: says so")
+	}
+}
+
+// Phase 3, flow 4: a key file the app's container wrote as another account
+// (root under Docker Engine, mode 0600) is said to be so, with the fix,
+// rather than "open it once", which would never make it readable.
+func TestKeptKeyThatIsNotOurs(t *testing.T) {
+	dir := t.TempDir()
+	// Missing is still "open it once".
+	if _, err := KeptKey(dir, "settings.json"); err == nil || !strings.Contains(err.Error(), "open it once") {
+		t.Errorf("missing: %v", err)
+	}
+	p := filepath.Join(dir, "config.xml")
+	if err := os.WriteFile(p, []byte("<Config><ApiKey>abc123</ApiKey></Config>"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chmod(p, 0o000); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Chmod(p, 0o600) })
+	_, err := KeptKey(dir, "config.xml")
+	if _, rerr := os.ReadFile(p); rerr == nil {
+		// Root reads it anyway: the key comes back.
+		if err != nil {
+			t.Fatalf("root: %v", err)
+		}
+		return
+	}
+	if err == nil || !strings.Contains(err.Error(), "can't be read by this account") || !strings.Contains(err.Error(), "chown") {
+		t.Fatalf("%v", err)
 	}
 }

@@ -8,7 +8,7 @@ The one backlog during the stop-the-line reliability reset (`CLAUDE.md`, `lanes.
 |---|---|---|
 | 1 | Governance: `CLAUDE.md`, one Core Reliability lane, Owner Notice Test, two-stage Done, anti-shortcut rules, scope freeze | `MERGED` (#961, Nov 27) |
 | 2 | SRE audit (`docs/SRE-Audit-2026-11.md`) and fixes for every Critical and High finding | PR 2 (C1, H1 to H6 fixed; M1 to M8 recorded) |
-| 3 | Known Issues' real-hardware gaps, one PR per flow: backups and blind restore; `launchd` jobs and start at boot; updates and rollback; app wiring against live Docker | Flows 1 to 3 committed locally (PRs 3 to 5, opened one at a time after #963) |
+| 3 | Known Issues' real-hardware gaps, one PR per flow: backups and blind restore; `launchd` jobs and start at boot; updates and rollback; app wiring against live Docker | Flows 1 to 4 committed locally (PRs 3 to 6, opened one at a time after #963) |
 | 4 | Live Mac verification runner; Gold Tier catalog; disk-full runway warning | Not started |
 | 5 | The owner's handoff: *Run This On Your Mac Tonight* at the top of `owner.md` | Not started |
 
@@ -40,6 +40,11 @@ The one backlog during the stop-the-line reliability reset (`CLAUDE.md`, `lanes.
 - **Owner notice:** when a nightly app update's new version can't start (a port taken, say), the app no longer sits stopped until you notice. It is back on the version it ran, with its data, and its updates are held. The app's update line was traced: it already lists what changed in plain sentences.
 - **Files:** `cmd/homelab/{keep,apps}.go` (`backAfterFailedUp`), `cmd/homelab/{fakebin,rollback_safety}_test.go` (`FAKE_UP_FAILS`, `TestAnUpdateWhoseNewImageCannotStartGoesBack`), `docs/Known Issues.md` (ISSUE-0017), `CHANGELOG.md`.
 
+### PR 6: app wiring against live Docker (Phase 3, flow 4)
+
+- **Owner notice:** when *Connect the apps* can't read an app's API key because the container saved it as another account, it now says so and gives the one `chown` that fixes it, instead of *open it once, then try again* forever.
+- **Files:** `internal/wiring/{keptkey.go,keptkey_test.go}`, `docs/Known Issues.md` (ISSUE-0015), `CHANGELOG.md`.
+
 ## Open risks
 
 - **Each Phase 2 fix is `MERGED` at most:** it is proven against a fake `docker` and fake `psql`. A real Immich or Paperless rollback across a schema change (H1) and a real unplugged drive (H5) are for the Mac run in Phase 4.
@@ -50,4 +55,4 @@ The one backlog during the stop-the-line reliability reset (`CLAUDE.md`, `lanes.
 
 ## Next concrete step
 
-Phase 3, flow 1 (backups and blind restore): trace `homelab rebuild` and `restore-test` on macOS, the launchd environment, Proton Drive's File Provider folder, Duplicati's large-job guard; fix the real failure modes; mark ISSUE-0003 and ISSUE-0016 `READY FOR MAC VERIFICATION`.
+Open PRs 3 to 6 one at a time as each merges (rebase each onto main). Then Phase 4: `scripts/verify-mac-live.sh` (`homelab doctor --live`), the Gold Tier catalog field, and the disk-full runway warning.
