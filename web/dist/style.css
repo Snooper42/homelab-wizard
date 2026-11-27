@@ -3222,7 +3222,6 @@ html.companion main > .screen { max-width:100%; overflow-x:clip; }
 #tidyRoot .tidytiles > .card.fx-widget.ovcard { gap:0; min-height:196px; }
 .tidytiles .anthead { display:flex; align-items:baseline; justify-content:space-between; gap:8px; }
 .tidytiles .anthead > .muted { font-size:13px; }
-.tidytiles .antfig .tidynone { margin-left:0; font-size:22px; font-weight:600; }
 .tidytiles .antline { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .tidynewest { flex:1; min-width:0; flex-wrap:nowrap; }
 .tidynewest .tidyicon { width:28px; height:28px; border-radius:8px; flex:none; }
