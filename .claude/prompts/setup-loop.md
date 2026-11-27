@@ -2,7 +2,7 @@
 
 **Started by** the accounts' start lines in `lanes.md`: the table *Which account runs what* says which account runs lane S when.
 
-**Paused:** no
+**Paused:** yes (the owner, Nov 27, 2026: folded into Core Reliability; see `lanes.md`)
 
 ## The job
 

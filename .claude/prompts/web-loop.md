@@ -2,7 +2,7 @@
 
 **Started by** account B's start line (`lanes.md`: M and W by turns from Wed Nov 25, 9 PM; the owner, Nov 25), or by the launcher below.
 
-**Paused:** no
+**Paused:** yes (the owner, Nov 27, 2026: stop-the-line reliability reset; see `CLAUDE.md` and `lanes.md`, *One lane: Core Reliability*)
 
 ## The focus (the owner, Nov 25)
 
