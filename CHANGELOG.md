@@ -21,17 +21,18 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 <!-- The iPhone and iPad app (lane 4): add a line just below this one. -->
 <!-- Everything else (the other lanes): add a line just below this one. -->
-- **Connect apps sends Seerr's requests to Sonarr and Radarr again:** a Seerr that already had them, set up by hand or by an older homelab, refused the correction (*request/body/id is read-only*), so both steps failed. A step an app turns down now says what the app said, in its own words, not the address it was sent to and its raw reply.
 
 ## [0.47.0] - 2026-11-27
 
-**v0.47.0 to v0.47.1, Nov 27, 2026: 3 changes.** Among them: The nightly jobs find Docker Desktop's tools; `homelab doctor` says what happens after a restart; A restore from Proton Drive on a new Mac gets whole files.
+**v0.47.0 to v0.47.2, Nov 27, 2026: 5 changes.** Among them: An update that can't start goes back by itself; The nightly jobs find Docker Desktop's tools; `homelab doctor` says what happens after a restart.
 
 ### Fixed
 
+- **An update that can't start goes back by itself:** an app's update stops it to copy its data first; when its new version then couldn't start (a port already taken, say), it stayed stopped until someone noticed. It now goes straight back to the version it ran, with its data from just before, and its updates wait until you release them.
 - **The nightly jobs find Docker Desktop's tools:** under Docker Desktop installed for your account only, the background agent couldn't find its sign-in helper, so the nightly updates' downloads failed; it now looks in Docker Desktop's own folders, with no need to install the jobs again.
 - **`homelab doctor` says what happens after a restart:** on a Mac, *After a restart* says in plain words whether FileVault stops it at the unlock screen, whether it logs in by itself, whether it turns on again after a power cut, and how you hear that it's waiting for you.
 - **A restore from Proton Drive on a new Mac gets whole files:** `homelab rebuild` and the restore test first download each backup file Proton Drive (or any cloud drive) still keeps online only, and say how many, so Duplicati never reads a placeholder; a drive that doesn't hand one over stops it with what to do.
+- **Connect apps sends Seerr's requests to Sonarr and Radarr again:** a Seerr that already had them, set up by hand or by an older homelab, refused the correction (*request/body/id is read-only*), so both steps failed. A step an app turns down now says what the app said, in its own words, not the address it was sent to and its raw reply.
 
 ## [0.46.0] - 2026-11-27
 

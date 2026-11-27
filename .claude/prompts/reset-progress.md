@@ -8,7 +8,7 @@ The one backlog during the stop-the-line reliability reset (`CLAUDE.md`, `lanes.
 |---|---|---|
 | 1 | Governance: `CLAUDE.md`, one Core Reliability lane, Owner Notice Test, two-stage Done, anti-shortcut rules, scope freeze | `MERGED` (#961, Nov 27) |
 | 2 | SRE audit (`docs/SRE-Audit-2026-11.md`) and fixes for every Critical and High finding | PR 2 (C1, H1 to H6 fixed; M1 to M8 recorded) |
-| 3 | Known Issues' real-hardware gaps, one PR per flow: backups and blind restore; `launchd` jobs and start at boot; updates and rollback; app wiring against live Docker | Flows 1 and 2 committed locally (PRs 3 and 4, opened one at a time after #963) |
+| 3 | Known Issues' real-hardware gaps, one PR per flow: backups and blind restore; `launchd` jobs and start at boot; updates and rollback; app wiring against live Docker | Flows 1 to 3 committed locally (PRs 3 to 5, opened one at a time after #963) |
 | 4 | Live Mac verification runner; Gold Tier catalog; disk-full runway warning | Not started |
 | 5 | The owner's handoff: *Run This On Your Mac Tonight* at the top of `owner.md` | Not started |
 
@@ -34,6 +34,11 @@ The one backlog during the stop-the-line reliability reset (`CLAUDE.md`, `lanes.
 
 - **Owner notice:** `homelab doctor` on the Mac now has *After a restart*, saying whether the homelab comes back by itself after a restart or a power cut. Under Docker Desktop the nightly agent finds its credential helper, so its pulls stop failing with *not found*.
 - **Files:** `internal/bootcheck/` (new, with tests), `cmd/homelab/{bootcheck,bootcheck_test}.go` (new), `cmd/homelab/{doctor,agent,agent_test}.go`, `internal/host/{host.go,start_test.go,words_test.go}`, `internal/docker/{docker.go,client_test.go}`, `internal/core/core.go`, `coverage-floors.txt` (`internal/bootcheck 95`, added), `docs/Known Issues.md` (ISSUE-0005 and ISSUE-0007), `CHANGELOG.md`.
+
+### PR 5: updates and rollback (Phase 3, flow 3)
+
+- **Owner notice:** when a nightly app update's new version can't start (a port taken, say), the app no longer sits stopped until you notice. It is back on the version it ran, with its data, and its updates are held. The app's update line was traced: it already lists what changed in plain sentences.
+- **Files:** `cmd/homelab/{keep,apps}.go` (`backAfterFailedUp`), `cmd/homelab/{fakebin,rollback_safety}_test.go` (`FAKE_UP_FAILS`, `TestAnUpdateWhoseNewImageCannotStartGoesBack`), `docs/Known Issues.md` (ISSUE-0017), `CHANGELOG.md`.
 
 ## Open risks
 

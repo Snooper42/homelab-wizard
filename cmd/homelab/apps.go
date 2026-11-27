@@ -919,11 +919,15 @@ func (h *homelab) lifecycle(action string) func(context.Context, []string) error
 				if err == nil {
 					// The new images are here: a copy of each app's
 					// data before it moves to its new one.
-					ids, notCopied := h.copyUpdating(ctx, client, pa.ids)
+					ids, notCopied, copied := h.copyUpdating(ctx, client, pa.ids)
 					failed = append(failed, notCopied...)
 					if len(ids) > 0 {
 						if err = run(append([]string{"up", "--detach"}, ids...)...); err == nil {
 							updated = append(updated, ids...)
+						} else {
+							// Stopped for their copies, and not started on the new
+							// images: back on the ones they ran, not left stopped.
+							h.backAfterFailedUp(ctx, client, copied, err)
 						}
 					}
 				}

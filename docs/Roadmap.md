@@ -4,7 +4,7 @@ version: 0.17.0
 
 # Roadmap
 
-Where the app is, and what comes next. Every build of main has its own number, and since 0.17 the minor goes up by itself after each `.10` (0.47.1 on Nov 27, 2026; [Releasing](<Releasing.md#version-numbers>)). So the headings below (0.11, 0.15) name a body of work by the version it was planned for, not the build it lands in, and 1.0 is the stable release once the 0.x work has proven itself. Open problems live in [Known Issues](<Known Issues.md>); what changed, and when, in the [CHANGELOG](<../CHANGELOG.md>).
+Where the app is, and what comes next. Every build of main has its own number, and since 0.17 the minor goes up by itself after each `.10` (0.47.2 on Nov 27, 2026; [Releasing](<Releasing.md#version-numbers>)). So the headings below (0.11, 0.15) name a body of work by the version it was planned for, not the build it lands in, and 1.0 is the stable release once the 0.x work has proven itself. Open problems live in [Known Issues](<Known Issues.md>); what changed, and when, in the [CHANGELOG](<../CHANGELOG.md>).
 
 Each version says what it is for, then its items. An item is done when its **Done when** holds, not when the code is merged: a check that runs in CI, a number measured on a real machine, or a person doing it without help. Items marked ✓ are in the builds already; what they left open is listed under them.
 
@@ -14,11 +14,11 @@ The work is on making the core flows reliable on the real Mac before anything ne
 
 ## The releases
 
-Every version so far, as the [CHANGELOG](<../CHANGELOG.md>) has them, newest first, to v0.47.1 on Nov 27, 2026. Up to 0.17.0 a version was cut by hand when its work was done. Since then each build of main has been a release, and the minor goes up after each `.10`, so one row is the eleven builds of a minor, with how many lines the CHANGELOG has for them and the first of them. What each version below was *planned* to do and left open is under its own heading further down.
+Every version so far, as the [CHANGELOG](<../CHANGELOG.md>) has them, newest first, to v0.47.2 on Nov 27, 2026. Up to 0.17.0 a version was cut by hand when its work was done. Since then each build of main has been a release, and the minor goes up after each `.10`, so one row is the eleven builds of a minor, with how many lines the CHANGELOG has for them and the first of them. What each version below was *planned* to do and left open is under its own heading further down.
 
 | Versions | Built (2026) | What they brought |
 |---|---|---|
-| 0.47.0 to 0.47.1 | Nov 27 | 3 changes so far, among them: The nightly jobs find Docker Desktop's tools; `homelab doctor` says what happens after a restart; A restore from Proton Drive on a new Mac gets whole files. |
+| 0.47.0 to 0.47.2 | Nov 27 | 5 changes so far, among them: An update that can't start goes back by itself; The nightly jobs find Docker Desktop's tools; `homelab doctor` says what happens after a restart. |
 | 0.46.0 to 0.46.10 | Nov 27 | 20 changes, among them: Storage with logos and fewer words; The iPad's sidebar says Homelab Wizard once; An app to add, never cut short. |
 | 0.45.0 to 0.45.10 | Nov 26 to 27 | 22 changes, among them: An app's page in the Homelab app says less; Settings' Setup row shows how many steps are left; Backups' Skipped list in a word, as on the computer. |
 | 0.44.0 to 0.44.10 | Nov 26 | 15 changes, among them: Status on the iPhone opens on the computer's Overview; Your own app's passwords stay private while it's added; The Mac app takes an update only from its own signer, with a certificate of your own too. |
