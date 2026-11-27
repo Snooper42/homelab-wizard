@@ -41,7 +41,7 @@ extension FocusedValues {
     @Entry var palette: PaletteFocus?
 }
 
-/// The Finances menu (iPad with a keyboard, item 3): each of its pages on
+/// The Finances menu (iPad with a keyboard): each of its pages on
 /// ⌥⌘1 to ⌥⌘8, opened as a link to it opens (IntentInbox), and Import a
 /// File… (⇧⌘I) on Transactions.
 struct FinancesCommands: Commands {

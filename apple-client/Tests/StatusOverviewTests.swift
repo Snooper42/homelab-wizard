@@ -90,7 +90,7 @@ struct StatusOverviewTests {
         #expect(try !app("missing").isPlainlyFine)
     }
 
-    // When all is well: all answering, and the watchdog's days as squares (lane D's D3: fourteen of them).
+    // When all is well: all answering, and the watchdog's days as squares.
     @Test func allAnsweringAndTheDays() throws {
         func w(_ json: String) throws -> WatchdogSummary { try JSONDecoder.homelab().decode(WatchdogSummary.self, from: Data(json.utf8)) }
         let status = try JSONDecoder.homelab().decode(HomelabStatus.self, from: Data(#"{"apps":[{"id":"a","name":"A","state":"running"},{"id":"b","name":"B","state":"running"},{"id":"homelab-companion","name":"Phone companion","state":"not running"}]}"#.utf8))
@@ -179,7 +179,7 @@ struct StatusOverviewTests {
         #expect(list[2].label == "Your own apps" && list[2].apps.map(\.id) == ["mine"])
     }
 
-    // A category's page (P2): each tile's dot and one live line, as the computer's `tileLine`.
+    // A category's page: each tile's dot and one live line, as the computer's `tileLine`.
     @Test func aTileSaysHowLongItsBeenUpOrWhatHappened() throws {
         func app(_ json: String) throws -> AppStatus {
             try JSONDecoder.homelab().decode(HomelabStatus.self, from: Data(#"{"apps":[\#(json)]}"#.utf8)).apps[0]

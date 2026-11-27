@@ -77,7 +77,7 @@ struct FinancesPlanTests {
     /// A card paid off with each paycheck is a payment "card:<its account>" in
     /// the computer's view, made from the card (money.ts's allPayments), not
     /// one in the plan's list: named for the card, with its logo, as the
-    /// computer shows it (the owner's Bills read "Payment" with no logo, Nov 16).
+    /// computer shows it.
     @Test func aCardPaidOffIsNamedForTheCard() throws {
         let view = try JSONDecoder.homelab().decode(FinancesPlanView.self, from: Data(json.utf8))
         let payoff = try #require(view.payment("card:visa"))
@@ -101,7 +101,7 @@ struct FinancesPlanTests {
         #expect(goesOn.endWords(today: "2026-11-16") == nil && goesOn.timesAMonth(today: "2026-11-16") == 1)
     }
 
-    /// Track from (the owner, Nov 16): the days the computer worked
+    /// Track from: the days the computer worked
     /// back before the first balance kept (View.WorthEstimated) come first
     /// in net worth's line, marked so the chart draws them dashed.
     @Test func netWorthWorkedBackComesFirst() throws {
@@ -120,7 +120,7 @@ struct FinancesPlanTests {
         #expect(view.netWorthSeries(days: 12).allSatisfy { !$0.estimated })
     }
 
-    /// Track from (the owner, Nov 16: Jan 1, 2026): the charts count no
+    /// Track from: the charts count no
     /// transaction dated before it, and draw no month before its, though
     /// the ledger keeps every row. Made-up figures.
     @Test func trackFromLeavesOutWhatCameBefore() throws {
@@ -649,7 +649,7 @@ struct CushionEditTests {
 
 @Suite("Checking now and after payday")
 struct FinanceWorkingTests {
-    // As the computer sends it (finance.Working and finance.Step, main #482):
+    // As the computer sends it (finance.Working and finance.Step):
     // typed in on the 3rd, a transaction and interest since; then the bills
     // before Sam's paycheck, Jamie's share, and the paycheck.
     let json = #"""
@@ -721,7 +721,7 @@ struct FinanceWorkingTests {
 
 @Suite("Investments from Ghostfolio")
 struct FinanceInvestmentsTests {
-    // As the plan keeps them (main #489): a brokerage with two holdings and
+    // As the plan keeps them: a brokerage with two holdings and
     // $50 of cash, and an IRA with one; checking has none.
     let json = #"""
     {"today":"2026-11-08","checking":"chk",

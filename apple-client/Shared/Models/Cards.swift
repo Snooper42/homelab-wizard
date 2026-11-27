@@ -16,12 +16,12 @@ struct WatchdogSummary: Decodable, Sendable, Equatable {
     let week: [String: Double]
     /// Each check's times down this week, oldest first, by app id.
     let outages: [String: [WatchdogOutage]]
-    /// Memory nearly full, while the watchdog has alerted about it (main #458).
+    /// Memory nearly full, while the watchdog has alerted about it.
     let memory: MemoryPressure?
     /// Failing checks whose alerts are snoozed on the computer, and until
-    /// when, by check name (main #469). Still checked and shown.
+    /// when, by check name. Still checked and shown.
     let snoozed: [String: Date]
-    /// The last fourteen days to today, oldest first, all checks together (`health.Day`, lane D's D3): the
+    /// The last fourteen days to today, oldest first, all checks together (`health.Day`): the
     /// Overview's Apps card draws a square for each. Empty from a computer that doesn't keep them.
     let daily: [WatchdogDay]
 
@@ -97,7 +97,7 @@ struct WatchdogSummary: Decodable, Sendable, Equatable {
 }
 
 /// The apps together using nearly all the memory Docker has, for long
-/// enough that the watchdog alerted (`health.Memory`, main #458). Status
+/// enough that the watchdog alerted (`health.Memory`). Status
 /// names the biggest, each with Stop, until it comes down.
 struct MemoryPressure: Decodable, Sendable, Equatable {
     /// Bytes, all the apps together.
@@ -223,7 +223,7 @@ struct Protection: Decodable, Sendable, Equatable {
     /// Newest first, at most 5.
     let recent: [Attack]
     /// What it stopped since midnight on the computer, newest first, at
-    /// most `maxToday` (main #430); `todayCount` is all of them.
+    /// most `maxToday`; `todayCount` is all of them.
     let today: [Attack]
     let todayCount: Int
 

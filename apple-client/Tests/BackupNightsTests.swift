@@ -3,7 +3,7 @@ import Testing
 @testable import HomelabClient
 
 /// The last fourteen nights as squares under Last night, and each app's last
-/// seven as dots, as the computer's Backups (R7). Made-up apps and nights.
+/// seven as dots, as the computer's Backups. Made-up apps and nights.
 @Suite struct BackupNightsTests {
     private func overview(_ nights: String) throws -> BackupOverview {
         try JSONDecoder.homelab().decode(BackupOverview.self, from: Data(#"""

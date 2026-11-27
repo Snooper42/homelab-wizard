@@ -48,7 +48,7 @@ struct CollectionTests {
     }
 }
 
-/// Add a Card on the iPhone and iPad (the owner, Nov 13): the card goes
+/// Add a Card on the iPhone and iPad: the card goes
 /// into the plan as the computer sent it, in an account that holds cards
 /// already, or a new Pokémon cards account when none does; the computer
 /// gives it its id. What the form doesn't show (TCGdex's id) is kept.

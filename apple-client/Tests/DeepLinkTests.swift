@@ -81,7 +81,7 @@ struct DeepLinkTests {
     }
 
     /// What the iPhone's tabs and the iPad's and Mac's split view both do
-    /// with a request (#596's gap 1: the split view did nothing with one).
+    /// with a request.
     @Test @MainActor func aRequestComesToTheSameOnEveryLayout() throws {
         let apps = try Self.apps()
         let all: (AppStatus) -> [AppAction] = { _ in [.restart, .stop] }
@@ -148,10 +148,10 @@ struct DeepLinkTests {
             #expect(DeepLink.parse(URL(string: "homelab://finances/\(page.rawValue)")!) == .finances(page: page))
         }
         #expect(DeepLink.FinancePage.cashflow.title == "Cash Flow")
-        // The Calendar (Nov 15) is the ninth, ⌥⌘9, and a link opens it.
+        // The Calendar is the ninth, ⌥⌘9, and a link opens it.
         #expect(order.last == .calendar && DeepLink.FinancePage.calendar.title == "Calendar")
         #expect(DeepLink.parse(URL(string: "homelab://finances/calendar")!) == .finances(page: .calendar))
-        // Paychecks (Nov 20) is a page a link opens, beyond the menu's nine.
+        // Paychecks is a page a link opens, beyond the menu's nine.
         #expect(DeepLink.parse(URL(string: "homelab://finances/paychecks")!) == .finances(page: .paychecks))
         #expect(DeepLink.FinancePage.paychecks.title == "Paychecks" && !order.contains(.paychecks))
     }

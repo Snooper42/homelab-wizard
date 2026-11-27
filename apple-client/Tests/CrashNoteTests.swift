@@ -2,7 +2,7 @@ import Foundation
 import Testing
 @testable import HomelabClient
 
-/// Status's crash note (the owner's pick, Nov 16): the computer's words for
+/// Status's crash note: the computer's words for
 /// which part of Homelab Wizard stopped and when, read from `LastCrash`
 /// (who and when only), and Hide kept on this device for that crash alone.
 @Suite struct CrashNoteTests {

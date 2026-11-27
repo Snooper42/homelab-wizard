@@ -1,6 +1,6 @@
 import Foundation
 
-/// Transactions as the redesign's phone picture (phone-transactions.png)
+/// Transactions as the redesign's phone picture
 /// lists them: a day at a time, each day with its total, and over the list
 /// how many there are with what came in and what went out.
 enum TransactionDays {

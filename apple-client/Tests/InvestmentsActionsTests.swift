@@ -2,7 +2,7 @@ import Foundation
 import Testing
 @testable import HomelabClient
 
-// Read Now and Add a Holding from the phone (main #494, #498): what's
+// Read Now and Add a Holding from the phone: what's
 // checked before the computer is asked, what's sent, and what's said.
 @Suite("Investments from the phone")
 struct InvestmentsActionsTests {

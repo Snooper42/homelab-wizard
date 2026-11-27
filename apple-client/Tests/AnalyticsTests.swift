@@ -2,7 +2,7 @@ import Foundation
 import Testing
 @testable import HomelabClient
 
-// Analytics on Status (P3): what each app uses now, the totals, and the words, as the computer's Analytics.tsx.
+// Analytics on Status: what each app uses now, the totals, and the words, as the computer's Analytics.tsx.
 @Suite("Analytics")
 struct AnalyticsTests {
     private func status(_ json: String) throws -> HomelabStatus {

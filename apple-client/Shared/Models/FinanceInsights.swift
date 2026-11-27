@@ -183,7 +183,7 @@ extension FinancesPlanView {
             }
         }
         // The month's days before today, from the computer's due days: its earlier
-        // bills have their dots too, not only the days ahead (main's pictures, Nov 16).
+        // bills have their dots too, not only the days ahead (main's pictures).
         let todayStart = calendar.startOfDay(for: today ?? Date())
         for (id, days) in dues {
             guard let item = sortOf[id] else { continue }
@@ -297,7 +297,7 @@ struct ThisMonth: Equatable, Sendable {
         let spent = all.filter { ($0.to ?? "").isEmpty }
         let now = spent.filter { t in t.date.map { calendar.isDate($0, equalTo: today, toGranularity: .month) } ?? false }
         let moneyIn = now.filter { $0.amount > 0 }.reduce(0.0) { $0 + $1.amount }
-        // abs, not a minus: nothing out is 0, never -0 ("-$0", main's pictures after #800).
+        // abs, not a minus: nothing out is 0, never -0 ("-$0").
         let moneyOut = abs(now.filter { $0.amount < 0 }.reduce(0.0) { $0 + $1.amount })
         var lastDay: Date?
         var outBefore: Double?

@@ -33,7 +33,7 @@ import Testing
         #expect(ClockWords.schedule("daily at 04:00", locale: uk) == "Every night at 04:00")
     }
 
-    /// Settings showed the computer's "America/New_York" (main's pictures after #745, `light-settings-all`).
+    /// Settings showed the computer's "America/New_York" (`light-settings-all`).
     @Test func aTimeZoneByItsCity() throws {
         #expect(ClockWords.timeZone("America/New_York") == "New York")
         #expect(ClockWords.timeZone(" America/Argentina/Buenos_Aires ") == "Buenos Aires")

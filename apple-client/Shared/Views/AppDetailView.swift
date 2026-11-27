@@ -110,7 +110,7 @@ struct AppDetailView: View {
                 Section("Problem") {
                     Label(stop.words(), systemImage: "arrow.triangle.2.circlepath.circle")
                         .foregroundStyle(Theme.danger)
-                    Text("Docker kept restarting it, so the watchdog stopped it and left it stopped. Its log says why. Start it once that's fixed.")
+                    Text("Its log says why.")
                         .font(.callout)
                         .foregroundStyle(.secondary)
                 }
@@ -141,12 +141,12 @@ struct AppDetailView: View {
             // the rest behind More.
             glanceSection(for: app)
 
-            // Its passwords and keys, as the computer's ⚙ (only on the owner's devices).
+            // Its passwords and keys, as the computer's ⚙.
             if actions.canSeeSignIns {
                 SignInDetailsSection(app: app)
             }
 
-            // Who uses it, by name, as the computer's page (only on the owner's devices).
+            // Who uses it, by name, as the computer's page.
             if actions.canSeeAppPeople {
                 WhoUsesItSection(app: app)
             }
@@ -229,7 +229,7 @@ struct AppDetailView: View {
             if let restarts = app.restarts, restarts > 0 {
                 LabeledContent("Restarts", value: restarts.formatted())
             }
-            // What it takes on the computer (item 4): memory and processor while it runs, and its folder.
+            // What it takes on the computer: memory and processor while it runs, and its folder.
             let uses = dashboard.cards.resources(of: app.id)
             if app.isRunning, let memory = uses.memory {
                 LabeledContent("Memory", value: memory.formatted(.byteCount(style: .memory)))
@@ -247,9 +247,6 @@ struct AppDetailView: View {
             }
             if let drive = app.waitingFor, !drive.isEmpty {
                 LabeledContent("Waiting for drive", value: AppStatus.driveName(drive))
-                Text("It starts by itself within a minute of the drive being plugged in again.")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
             }
         }
     }
@@ -319,8 +316,6 @@ struct AppDetailView: View {
             } footer: {
                 if let hint {
                     Text(hint)
-                } else if available.contains(.stop) {
-                    Text("Stopped for a while, it starts again by itself.")
                 }
             }
         }
@@ -449,8 +444,6 @@ struct AppDetailView: View {
                 }
             } header: {
                 Text("This Week")
-            } footer: {
-                Text(outages.isEmpty ? "No outages this week. The watchdog checks it every 15 minutes." : "The watchdog checks it every 15 minutes.")
             }
         }
     }
@@ -460,7 +453,7 @@ struct AppDetailView: View {
     }
 
     /// The proxy's and CrowdSec's pages: what CrowdSec stopped today
-    /// (main #430), from the Protection card the dashboard already holds.
+    /// , from the Protection card the dashboard already holds.
     static let guardApps: Set<String> = ["nginx-proxy-manager", "crowdsec"]
 
     @ViewBuilder
@@ -497,7 +490,7 @@ struct AppDetailView: View {
                 if let updated {
                     VStack(alignment: .leading, spacing: 2) {
                         Text("The version it runs now")
-                        Text("Updated \(updated, format: .relative(presentation: .named)); the one before is kept for a week, for Roll back.")
+                        Text("Updated \(updated, format: .relative(presentation: .named))")
                             .font(.caption).foregroundStyle(.secondary)
                     }
                     .accessibilityElement(children: .combine)
@@ -506,8 +499,6 @@ struct AppDetailView: View {
                     VStack(alignment: .leading, spacing: 2) {
                         Label("Its updates are held", systemImage: "pause.circle")
                             .foregroundStyle(Theme.warning)
-                        Text("After a rollback, the nightly update leaves it out. Nightly updates, under Settings, puts it back.")
-                            .font(.caption).foregroundStyle(.secondary)
                     }
                     .accessibilityElement(children: .combine)
                 }
@@ -522,7 +513,7 @@ struct AppDetailView: View {
         let backups = dashboard.backups
         Section {
             if app.isNative {
-                Text("It runs on its own, outside the homelab; its own app keeps its data.")
+                Text("Outside the homelab")
                     .foregroundStyle(.secondary)
             } else if let overview = backups.overview {
                 LabeledContent("Last nightly backup") {
@@ -549,15 +540,10 @@ struct AppDetailView: View {
                         }
                     }
                     if copy.shrank {
-                        Label("Less than half the night before's \(copy.before.formatted(.byteCount(style: .memory))): check that \(app.name) still has its data.",
+                        Label("Under half the night before's \(copy.before.formatted(.byteCount(style: .memory)))",
                               systemImage: "exclamationmark.triangle.fill")
                             .foregroundStyle(Theme.danger)
                     }
-                    Text("Its files, and its database's copy, every night.")
-                        .font(.callout).foregroundStyle(.secondary)
-                } else {
-                    Text("Its files in the homelab folder, every night.")
-                        .font(.callout).foregroundStyle(.secondary)
                 }
                 LabeledContent("Restore test") {
                     if let tested = overview.restoreTest.lastTest {
@@ -608,7 +594,7 @@ struct AppDetailView: View {
                     Label(warning, systemImage: "exclamationmark.triangle")
                         .foregroundStyle(Theme.warning)
                 }
-                // Others installed here that do much the same job (main #438).
+                // Others installed here that do much the same job.
                 let installed = Set((dashboard.liveEvents.status?.apps ?? [])
                     .filter { $0.state == "running" || $0.state == "stopped" }.map(\.id))
                 ForEach(dashboard.catalog?.sameJob(as: app.id, among: installed) ?? []) { pair in
@@ -658,7 +644,7 @@ struct AppDetailView: View {
     }
 
     /// Where it can be reached from, as the computer's Address tile says it.
-    /// A public app kept home only (main #559) says so.
+    /// A public app kept home only says so.
     nonisolated static func reach(isPublic: Bool, hasAddress: Bool, homeOnly: Bool = false) -> String {
         if isPublic && homeOnly { return "At home only: kept off the internet." }
         if isPublic { return "At home, and on the internet through the Cloudflare Tunnel." }

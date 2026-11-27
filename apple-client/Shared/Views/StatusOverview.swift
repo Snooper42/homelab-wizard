@@ -200,7 +200,7 @@ struct StatusCategory: Identifiable, Equatable {
     static func list(apps: [AppStatus], catalog: AppCatalog?) -> [StatusCategory] {
         let sorted = apps.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
         var categoryOf = Dictionary((catalog?.apps ?? []).map { ($0.id, $0.category) }, uniquingKeysWith: { first, _ in first })
-        // Seerr sits in Media, beside Jellyfin: a household asks there and watches there (arr item 8).
+        // Seerr sits in Media, beside Jellyfin: a household asks there and watches there.
         if categoryOf["seerr"] == automation { categoryOf["seerr"] = "media" }
         let all = catalog?.categories ?? []
         let categories = all.filter { $0.id != automation } + all.filter { $0.id == automation }
@@ -711,7 +711,7 @@ struct CategoryPage: View {
     }
 }
 
-/// "On the server  6": a shelf's heading and how many it has.
+/// "On the server 6": a shelf's heading and how many it has.
 private struct TileHeading: View {
     let title: String
     let count: Int

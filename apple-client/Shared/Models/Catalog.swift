@@ -18,7 +18,7 @@ struct AppCatalog: Decodable, Sendable, Equatable {
     func entry(_ id: String) -> CatalogEntry? { apps.first { $0.id == id } }
 
     /// Apps that do much the same job as `id`, each with why one might keep
-    /// one or both (main #438). A pair is written on one side (`sameJob`) and
+    /// one or both. A pair is written on one side (`sameJob`) and
     /// said on both, as `sameJob` in web/src/choose/Choose.tsx.
     func sameJob(as id: String, among ids: Set<String>) -> [SameJob] {
         let mine = entry(id)?.sameJob ?? [:]
