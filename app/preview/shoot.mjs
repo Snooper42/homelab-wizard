@@ -6531,7 +6531,8 @@ const smokes = [
     if (!/^https?:\/\//.test(copied || '')) throw new Error('copied ' + copied);
     await page.click('#appLog button:has-text("Explain this")');
     await page.waitForSelector('#appLog .explained .answer:has-text("Vikunja is fine.")', { timeout: 5000 });
-    await page.waitForSelector('#appLog .explained:has-text("the log never left it")');
+    // Where it was explained: on this machine (the lock), by the model named.
+    await page.waitForSelector('#appLog .explained .row .muted:has(svg):has-text("On this Mac · llama3.2")');
     await page.click('#appLog .explained a:has-text("Hide")');
     await page.waitForSelector('#appLog .explained', { state: 'detached', timeout: 2000 });
   } },
