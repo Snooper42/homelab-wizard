@@ -50,7 +50,6 @@ struct ComputerView: View {
         Form {
             switch page {
             case .setup:
-                ScreenLead(text: "What's left to set up, and how this machine is doing.")
                 if computer.canSeeSetup { SetupChecklistSections(computer: computer) }
                 hostSection
                 fixSection
