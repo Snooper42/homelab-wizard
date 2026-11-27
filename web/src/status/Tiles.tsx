@@ -49,7 +49,7 @@ function PauseButton({ paused, onPause }: { paused: boolean; onPause: (paused: b
       setBusy(false);
     }
   };
-  return <button class="small change" disabled={busy} onClick={click}>{paused ? 'Resume' : 'Pause'}</button>;
+  return <button class="small change" disabled={busy} onClick={click} title={paused ? 'Resume the nightly app updates' : 'Pause the nightly app updates'}>{paused ? 'Resume' : 'Pause'}</button>;
 }
 
 /** The phone companion before the scheduled jobs that run it: not counted yet. */

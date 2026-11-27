@@ -2327,6 +2327,7 @@ tr.menued > td { background:var(--accent-soft); }
 }
 .tidystep { margin:2px 0 8px; font-size:12px; font-weight:600; letter-spacing:.04em; text-transform:uppercase; color:var(--muted); }
 .tidynow { margin:0 0 8px; overflow-wrap:anywhere; }
+.tidytoday > .empty { padding:2px 0 0; }
 .tidyplan, .tidykeep { margin:6px 0 14px; padding-left:22px; }
 .tidyplan li, .tidykeep li { margin:4px 0; }
 .tidycovers { display:inline-flex; align-items:center; gap:6px; margin-right:10px; color:var(--muted); }
@@ -2343,7 +2344,7 @@ tr.menued > td { background:var(--accent-soft); }
 .tidytodo > li:has(button.primary) .tidygain { font-size:18px; }
 .tidyshelf { margin:var(--fin-gap) 0; }
 #tidyRoot .tidyshelf > h2 { margin:0 0 12px; font-size:18px; font-weight:700; letter-spacing:-.01em; }
-.tidyshelf > ul { list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(auto-fill, minmax(min(100%, 140px), 1fr)); gap:12px; }
+.tidyshelf > ul { list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(auto-fit, minmax(min(100%, 140px), 1fr)); gap:12px; }
 .tidyshelf > ul > li { display:flex; min-width:0; }
 .tidytile { flex:1; min-width:0; display:flex; flex-direction:column; align-items:flex-start; gap:4px; margin:0; padding:16px; border:0; border-radius:var(--fin-radius); background:color-mix(in srgb, var(--fx-hue) 12%, var(--panel)); color:var(--text); font:inherit; text-align:left; box-shadow:none; }
 .tidytile:hover { background:color-mix(in srgb, var(--fx-hue) 18%, var(--panel)); }
@@ -2355,11 +2356,19 @@ tr.menued > td { background:var(--accent-soft); }
 .tidytilenext { margin-top:auto; padding-top:8px; font-size:13px; line-height:1.4; overflow-wrap:anywhere; }
 .tidytile.away { background:var(--panel); box-shadow:inset 0 0 0 1.5px var(--line-strong); }
 .tidytile.away .tidyicon { background:var(--line); color:var(--text); }
-.tidytile.away .tidytilefacts { color:var(--warn); }
+.tidytile.away:not(.unmade) .tidytilefacts { color:var(--warn); }
 #tidyRoot .card.fx-widget.tidyhero { background:color-mix(in srgb, var(--fx-hue) 10%, var(--panel)); }
 #tidyRoot .card.fx-widget.tidyhero > h2, #tidyRoot .card.fx-widget.tidyhero > .row h2 { display:flex; align-items:center; gap:12px; font-size:20px; font-weight:700; }
 .tidyhero h2 .tidyicon { width:36px; height:36px; border-radius:10px; }
 .tidyherorow { display:flex; justify-content:space-between; align-items:flex-end; gap:12px 24px; flex-wrap:wrap; }
+/* The figures on the title's row and the folder under the title: no band between the two (wrapped under both when narrow). */
+#tidyRoot .card.fx-widget.tidyhero { display:grid; grid-template-columns:minmax(0, 1fr) auto; column-gap:24px; row-gap:6px; align-items:center; }
+.tidyhero .tidyherorow { display:contents; }
+.tidyhero > h2, .tidyhero > .row { grid-column:1; grid-row:1; margin:0; }
+.tidyhero .tidyfolder { grid-column:1; grid-row:2; }
+.tidyhero .tidyfacts { grid-column:2; grid-row:1 / span 2; justify-content:flex-end; }
+.tidyhero > .tidysteps { grid-column:1 / -1; margin-bottom:0; }
+@container (max-width: 700px) { .tidyhero .tidyfacts { grid-column:1 / -1; grid-row:3; justify-content:flex-start; } }
 .tidyhero .tidyfolder { color:var(--text); font-size:13px; }
 .tidyfacts { display:flex; gap:12px 28px; flex-wrap:wrap; margin:0; }
 .tidyfacts dt { font-size:12px; }
@@ -3120,7 +3129,10 @@ nav .sidemenulist .sidedot + .total { margin-left:8px; }
 .ovname strong { font-size:15px; }
 .ovname .muted { font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .ovrow > .icon { color:var(--muted); }
-@container (max-width: 860px) { #tiles.tiles { grid-template-columns:1fr; } #tiles .ovcard { min-height:0; } .ovrows { grid-template-columns:minmax(0, 1fr); } }
+@container (max-width: 860px) { #tiles.tiles { gap:12px; } #tiles .ovcard { min-height:184px; padding:16px; } .ovrows { grid-template-columns:minmax(0, 1fr); } }
+@container (max-width: 700px) { #tiles.tiles { grid-template-columns:1fr; } #tiles .ovcard { min-height:0; } html:not(.companion) #tiles .ovdays { max-width:420px; } }
+@container (min-width: 441px) and (max-width: 700px) { html:not(.companion) #tiles.tiles { grid-template-columns:repeat(2, minmax(0, 1fr)); } html:not(.companion) #tiles > .ovcard:first-child { grid-column:1 / -1; } }
+.ovbar small { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 @media (max-width: 700px) { #tiles.tiles { grid-template-columns:1fr; } .ovrows { grid-template-columns:minmax(0, 1fr); } .ovpanel { padding:4px 14px; } .ovrow { gap:10px; } .ovname { margin-left:4px; } .ovrow .pill { padding:2px 8px; } .ovrow .pillword { display:none; } }
 #tiles .ovcard { background:color-mix(in srgb, var(--panel) 78%, transparent); border:1px solid var(--line); box-shadow:none; backdrop-filter:blur(12px); }
 @media (prefers-color-scheme: dark) and (prefers-contrast: no-preference) { #tiles .ovcard { background:var(--glow-04); border-color:var(--glow-1); } }

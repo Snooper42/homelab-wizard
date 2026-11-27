@@ -2,7 +2,7 @@ import { createContext, render, type ComponentChildren } from 'preact';
 import { useContext, useEffect, useState } from 'preact/hooks';
 import { errorText, osName, thisMachine } from '../core';
 import { ago, never, startedText } from '../format';
-import { Card, CardHead } from '../parts/Card';
+import { Card, CardHead, Chip } from '../parts/Card';
 import { Empty } from '../parts/Empty';
 import { Row, Rows, type Tone } from '../parts/Row';
 import { Segmented } from '../parts/Segmented';
@@ -172,9 +172,15 @@ export const worrying = (text: string) => !/\bnothing went missing\b/i.test(text
 /** A library's tab while its folder is not there (its drive unplugged): its jobs are off. */
 const FolderGone = createContext(false);
 
+const parentOf = (p: string) => p.replace(/[\\/]+$/, '').replace(/[\\/][^\\/]*$/, '');
+/** A library away while one in the same folder is there: its drive is plugged in, and only its own folder is missing
+ * (a household with no audiobooks yet), so there's no drive to ask for. */
+const noFolderYet = (d: app.TidyUp, l: app.TidyLibrary) => !l.found && d.libraries.some((x) => x.found && parentOf(x.folder) === parentOf(l.folder));
+
 /** What a tab says while its library's folder is not there, above everything else. */
-function Gone({ l }: { l: app.TidyLibrary }) {
+function Gone({ l, d }: { l: app.TidyLibrary; d: app.TidyUp }) {
   if (l.found) return null;
+  if (noFolderYet(d, l)) return <Card kind="notice" role="status"><strong>{names[l.kind]}: no folder yet</strong><span class="muted">Tidy Up looks in {l.folder}: put your {names[l.kind].toLowerCase()} there and it starts on them.</span></Card>;
   return <Card kind="notice" role="status"><strong>{names[l.kind]}: its folder isn't there</strong><span class="muted">{l.folder} could not be found. Plug in the drive it is on: nothing here runs until it is back.</span></Card>;
 }
 
@@ -620,12 +626,14 @@ function GenresWidget({ d, job, act, only, span = 1 }: { d: app.TidyUp; job: Tid
 function DriveWidget({ d }: { d: app.TidyUp }) {
   const dr = d.drive;
   if (!dr) return null;
-  const parts = d.libraries.filter((l) => l.size).map((l) => ({ label: names[l.kind], value: l.size || 0, color: looks[l.kind].hue }));
+  // The largest library first, as the ring draws them, and what's free last.
+  const parts = d.libraries.filter((l) => l.size).map((l) => ({ label: names[l.kind], value: l.size || 0, color: looks[l.kind].hue })).sort((a, b) => b.value - a.value);
   const measuring = d.libraries.some((l) => l.found && !l.size);
   const slices = [...parts, { label: 'Free', value: dr.free, color: 'track' as Hue }];
   return (
-    <Widget title={dr.name ? `On the ${dr.name} drive` : 'On this machine'} kind="fx-flow tidydrive">
-      <Stat value={<span class="fx-amount">{size(dr.free)}<small> free</small></span>} caption={`Of ${size(dr.total)}${d.freed ? ' · ' + size(d.freed) + ' won back so far' : ''}`} />
+    <Widget title={dr.name ? `On the ${dr.name} drive` : 'On this machine'} kind="fx-flow tidydrivecard">
+      <Stat value={<span class="fx-amount">{size(dr.free)}<small> free</small></span>} caption={`Of ${size(dr.total)}`}
+        aside={d.freed ? <Chip dir="up" good value={`${size(d.freed)} won back`} /> : undefined} />
       <div class="fx-donutrow">
         <Donut slices={slices} size={124} label="The drive" center={<><strong>{dr.total ? Math.round((dr.free / dr.total) * 100) : 0}%</strong>free</>} />
         <Legend items={slices.map((p) => ({ label: p.label, color: p.color, value: size(p.value) }))} />
@@ -723,7 +731,9 @@ function needsFor(d: app.TidyUp, act: TidyActions, review: app.TidyBook[] | null
   const plug: Todo[] = drive ? [{ kind: 'machine', warn: true, title: `Plug in ${drive.name.replace(/^The /, 'the ')}`,
     sub: `${onIt.length ? `${listed(onIt)} ${onIt.length === 1 ? 'is' : 'are'} on it (${root})` : `${root} isn't there`}. Each shows up here once it's back; or choose the folder your media is in.`,
     go: { label: 'Choose another…', run: () => act.places(true), quiet: true } }] : [];
-  const gone: Todo[] = away.filter((l) => !onIt.includes(l)).map((l) => ({ kind: l.kind, title: `${names[l.kind]}: its drive isn't plugged in`, sub: `${l.folder} could not be found. It shows up here again once it's back.`, warn: true }));
+  const gone: Todo[] = away.filter((l) => !onIt.includes(l)).map((l) => (noFolderYet(d, l)
+    ? { kind: l.kind, title: `${names[l.kind]}: no folder yet`, sub: `Put them in ${l.folder}` }
+    : { kind: l.kind, title: `${names[l.kind]}: its drive isn't plugged in`, sub: `${l.folder} could not be found. It shows up here again once it's back.`, warn: true }));
   // A tool only a library that's away needs waits for it: with the drive unplugged, only Python is asked for.
   const here = new Set(d.libraries.filter((l) => l.found).map((l) => l.kind));
   const tools = toolsRow(d, act, (needs) => needs === 'all' || (toolFor[needs] || []).some((k) => here.has(k)));
@@ -954,10 +964,23 @@ function NeedsLookWidget({ d, job, act }: { d: app.TidyUp; job: TidyJob | null; 
   );
 }
 
+/** A watched folder as Today's heading names it: its own name, after its drive's when it's on one ("Hobbies/downloads"). */
+function watchedName(p: string): string {
+  const parts = p.split(/[\\/]+/).filter(Boolean);
+  const last = parts[parts.length - 1] || p;
+  // Where each system puts a drive: /Volumes/Hobbies, /media/you/Hobbies, /run/media/you/Hobbies, /mnt/Hobbies, D:\.
+  const at = parts[0] === 'Volumes' || parts[0] === 'mnt' ? 1 : parts[0] === 'media' ? 2 : parts[0] === 'run' && parts[1] === 'media' ? 3 : /^[A-Za-z]:$/.test(parts[0] || '') ? 0 : -1;
+  const drive = at >= 0 && at < parts.length - 1 ? parts[at] : '';
+  return drive ? `${drive}/${last}` : last;
+}
+
 function TodayWidget({ d, job, act, wide }: { d: app.TidyUp; job: TidyJob | null; act: TidyActions; wide?: boolean }) {
   const today = d.today || [];
+  const folders = d.inbox?.folders || [];
+  const from = folders.map(watchedName);
+  const where = from.length ? <span class="muted tidyfrom" title={folders.join('\n')}>From {from.length > 2 ? `${from.slice(0, 2).join(', ')} and ${from.length - 2} more` : from.join(' and ')}</span> : undefined;
   return (
-    <Widget title="What I did today" span={wide ? 'all' : 1} kind="tidytoday">
+    <Widget title="What I did today" span={wide ? 'all' : 1} kind="tidytoday" actions={where}>
       {!!today.length && <Stat value={<span class="fx-amount">{today.filter((f) => !f.undone).length}<small> {today.filter((f) => !f.undone).length === 1 ? 'download' : 'downloads'} filed</small></span>} caption="Since midnight" />}
       {today.length ? (
         <Rows kind="fx-rows tidytoday">
@@ -993,7 +1016,8 @@ function factsOf(l: app.TidyLibrary): string {
   const many = l.kind === 'music' ? n(last(l, 'run')?.result?.in_library) || n(last(l, 'scan')?.result?.files)
     : l.kind === 'movies' || l.kind === 'tv' ? n(c.lean) + n(c.bloated) + n(c.queued) + n(l.waiting)
     : l.kind === 'books' ? n(last(l, 'review')?.result?.books) : 0;
-  return [many ? things(l.kind, many) : '', l.size ? size(l.size) : ''].filter(Boolean).join(' · ');
+  // A size keeps its figure and unit together ("520 GB", never "520" over "GB").
+  return [many ? things(l.kind, many) : '', l.size ? size(l.size).replace(' ', '\u00a0') : ''].filter(Boolean).join(' · ');
 }
 
 /** The libraries side by side, each in its colour: what it holds, how far along it is, and what it waits on. A tile
@@ -1013,12 +1037,12 @@ function Shelf({ d, act, review, pick }: { d: app.TidyUp; act: TidyActions; revi
           const pct = m ? Math.round(m.share * 100) : 0;
           return (
             <li key={k}>
-              <button type="button" class={'tidytile ' + hue(looks[k].hue) + (l.found ? '' : ' away')} onClick={() => pick(k)}>
+              <button type="button" class={'tidytile ' + hue(looks[k].hue) + (l.found ? '' : noFolderYet(d, l) ? ' away unmade' : ' away')} onClick={() => pick(k)}>
                 <LibIcon kind={k} />
                 <span class="tidytilename">{names[k]}</span>
-                <span class="tidytilefacts">{l.found ? facts || 'Not looked at yet' : "Its drive isn't plugged in"}</span>
+                <span class="tidytilefacts">{l.found ? facts || 'Not looked at yet' : noFolderYet(d, l) ? 'No folder yet' : "Its drive isn't plugged in"}</span>
                 {m && <span class="tidymeter" aria-hidden="true"><span style={{ width: `${pct}%` }} /></span>}
-                <span class="tidytilenext">{m && <strong>{pct}% {m.words}</strong>}{m && next && <br />}{l.found ? next ? next.title : 'Nothing to tidy' : 'Shows up again once it is back'}</span>
+                <span class="tidytilenext">{m && <strong>{pct}% {m.words}</strong>}{m && next && <br />}{l.found ? next ? next.title : 'Nothing to tidy' : noFolderYet(d, l) ? 'Nothing to tidy yet' : 'Shows up again once it is back'}</span>
               </button>
             </li>
           );
@@ -1093,8 +1117,9 @@ function LibraryTab({ kind, d, job, act, review, reviewError, reloadReview, skip
       // Said short, to fit one line (L5): "songs" once, then the counts.
       const parts = [['synced', 'time-synced'], ['plain', 'plain'], ['none', 'without lyrics'], ['not_found', 'not on LRCLIB yet']]
         .filter(([key]) => n(ly[key]) > 0).map(([key, words], i) => `${i ? n(ly[key]).toLocaleString() : count(n(ly[key]), 'song')} ${words}`);
-      const found = n(ly.to_clean) ? `${count(n(ly.to_clean), 'song')} with two languages on one line` : 'none with two languages on one line';
-      extra.push({ kind: 'lyrics', title: 'Lyrics', sub: `${parts.join(' · ') || 'No songs read yet'} · ${found} · checked ${ago(lr.at)}`,
+      // Two languages on one line only when there are some (they have a row of their own to tidy them too).
+      const found = n(ly.to_clean) ? ` · ${count(n(ly.to_clean), 'song')} with two languages on one line` : '';
+      extra.push({ kind: 'lyrics', title: 'Lyrics', sub: `${parts.join(' · ') || 'No songs read yet'}${found} · checked ${ago(lr.at)}`,
         go: { label: 'Check again', run: () => act.run('music', 'lyrics', ['--check']), quiet: true } });
     }
   }
@@ -1120,7 +1145,7 @@ function LibraryTab({ kind, d, job, act, review, reviewError, reloadReview, skip
   });
   return (
     <FolderGone.Provider value={!l.found}>
-      <Gone l={l} />
+      <Gone l={l} d={d} />
       <div class="fx-board">
         {l.found && <LibHero l={l} />}
         <Widget title="Can be tidier" span="all" kind="fx-paycheck tidyneeds" actions={again || undefined}>

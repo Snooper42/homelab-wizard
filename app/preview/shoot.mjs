@@ -1307,8 +1307,13 @@ const smokes = [
   // The drive: its name, what is free, and each library's size.
   { name: 'Tidy Up: the drive card names the drive and what each library takes', screen: 'tidy', run: async (page) => {
     await tidyTab(page, 'Inbox');
-    const t = await page.textContent('#tidy .tidydrive', { timeout: 5000 });
+    const t = await page.textContent('#tidy .tidydrivecard', { timeout: 5000 });
     for (const w of ['On the Hobbies drive', '1.2 TB free', 'Of 4 TB', 'Movies1.4 TB', 'Music520 GB', 'Free1.2 TB']) if (!t.includes(w)) throw new Error(`the drive card has no “${w}”: ${t}`);
+    // Largest first, Free last; and the card is a card, not the look of the drive picker's buttons (it shared their class).
+    const order = await page.$$eval('#tidy .tidydrivecard .fx-legendlabel', (ls) => ls.map((l) => l.textContent.trim()));
+    if (order.join() !== 'Movies,TV,Music,Books,Free') throw new Error('the drive legend: ' + order.join());
+    const [card, row] = await page.$$eval('#tidy .tidydrivecard, #tidy .tidydrivecard .fx-donutrow', (es) => es.map((e) => e.getBoundingClientRect().width));
+    if (row < card - 80) throw new Error(`the ring and its legend take ${row}px of a ${card}px card`);
   } },
   // Undo on the swap asks first, then puts the old library back.
   { name: 'Tidy Up: Undo on the swap asks first, then puts the old library back', screen: 'tidy', run: async (page) => {
@@ -1342,11 +1347,13 @@ const smokes = [
   // A library whose folder is not there (the fixture's audiobooks) says so on its tab, and runs nothing until it is back.
   { name: 'Tidy Up: a library whose folder is gone says so, and runs nothing', screen: 'tidy', run: async (page) => {
     await tidyTab(page, 'Audiobooks');
-    await page.waitForSelector('#tidy .notice:has-text("Audiobooks: its folder isn\'t there")', { timeout: 3000 });
+    // Its drive is plugged in (Music is there beside it): only its folder is missing, so no drive is asked for.
+    await page.waitForSelector('#tidy .notice:has-text("Audiobooks: no folder yet")', { timeout: 3000 });
+    if (await page.$('#tidy .notice:has-text("Plug in")')) throw new Error('it asks for a drive that is plugged in');
     if (await page.$('#tidy .fx-board button:enabled')) throw new Error('something can run on a folder that is not there');
     await tidyTab(page, 'Movies');
     await page.waitForSelector('#tidy .tidyneeds', { timeout: 3000 });
-    if (await page.$('#tidy .notice:has-text("folder isn\'t there")')) throw new Error('a library that is there says it is not');
+    if (await page.$('#tidy .notice:has-text("folder")')) throw new Error('a library that is there says it is not');
     if (await page.isDisabled('#tidy .tidyneeds button:text-is("Scan again")')) throw new Error('Movies cannot scan');
   } },
   // The words: good news never reads as a warning, one download as one, a language by its name, and H.264 written one way.
@@ -1449,8 +1456,8 @@ const smokes = [
     if (!lead.startsWith('412 GB won back so far')) throw new Error(`the first line: ${lead}`);
     const done = page.locator('#tidy .tidydone .fx-rows li:has-text("12 files replaced")');
     if ((await done.locator('.tidygain').textContent({ timeout: 5000 })) !== '412 GB') throw new Error(`Recently done: ${await done.textContent()}`);
-    const drive = await page.textContent('#tidy .tidydrive');
-    if (!drive.includes('Of 4 TB · 412 GB won back so far')) throw new Error(`the drive: ${drive}`);
+    const drive = await page.textContent('#tidy .tidydrivecard .chip-pill');
+    if (drive !== '412 GB won back') throw new Error(`the drive: ${drive}`);
     const gain = await page.textContent('#tidy .tidyneeds .tidygain');
     if (gain !== '380 GB') throw new Error(`what Shrink wins back: ${gain} (the scan's saving is 380e9)`);
   } },
@@ -1992,7 +1999,7 @@ const smokes = [
     const first = await page.$eval('#tidy .tidyneeds li', (li) => [li.querySelector('strong')?.textContent.trim(), !!li.querySelector('button.primary')]);
     if (first[0] !== '2,402 songs could get lyrics' || !first[1]) throw new Error(`Needs your OK starts with ${JSON.stringify(first)}`);
     const tiles = await page.$$eval('#tidy .tidyshelf .tidytile', (b) => b.map((x) => x.textContent.replace(/\s+/g, ' ').trim()));
-    const want = ['Music13,932 songs · 520 GB83% with lyrics', 'Movies356 films · 1.4 TB87% already lean', 'TV820 GB', 'Books412 books · 12 GB', "AudiobooksIts drive isn't plugged in"];
+    const want = ['Music13,932 songs · 520 GB83% with lyrics', 'Movies356 films · 1.4 TB87% already lean', 'TV820 GB', 'Books412 books · 12 GB', 'AudiobooksNo folder yet'];
     if (tiles.length !== 5 || want.some((w, i) => !tiles[i].startsWith(w))) throw new Error(`the shelf: ${JSON.stringify(tiles)}`);
     if (!tiles[0].includes('2,402 songs could get lyrics') || !tiles[1].includes('Shrink 42 films')) throw new Error(`the tiles don't say what waits: ${JSON.stringify(tiles)}`);
     await page.click('#tidy .tidyshelf .tidytile:has-text("Movies")');
@@ -4147,6 +4154,23 @@ const smokes = [
     await page.click('#statusPanel .ovrow[data-key="media"]');
     await page.waitForSelector('#statusPart .catpage h1:text-is("Media")', { timeout: 5000 });
   } },
+  // A smaller window: the three cards stay side by side down to a narrow one, then Apps across the top with Backups and
+  // the machine side by side, never three tall cards one under the other; the squares never stretch into bricks.
+  { name: 'Status: the Overview cards in a smaller window', screen: 'status', mock: { statusOpen: '' }, run: async (page) => {
+    const rows = async (w) => {
+      await page.setViewportSize({ width: w, height: 800 });
+      await page.waitForTimeout(150);
+      return page.$$eval('#tiles > .ovcard', (cs) => cs.map((c) => { const r = c.getBoundingClientRect(); return { top: Math.round(r.top), w: Math.round(r.width) }; }));
+    };
+    await page.waitForSelector('#tiles > .ovcard', { timeout: 5000 });
+    const three = await rows(1000);
+    if (three.length !== 3 || new Set(three.map((c) => c.top)).size !== 1) throw new Error('at 1000px not three in a row: ' + JSON.stringify(three));
+    const [apps, bk, mac] = await rows(880);
+    if (!(apps.top < bk.top && bk.top === mac.top && apps.w > bk.w * 1.8)) throw new Error('at 880px not Apps over two: ' + JSON.stringify([apps, bk, mac]));
+    const sq = await page.$eval('#tiles .ovdays i', (i) => i.getBoundingClientRect().width);
+    if (sq > 70) throw new Error(`a square is ${sq}px wide`);
+    await page.setViewportSize({ width: 1280, height: 800 });
+  } },
   // Subscriptions takes each service's price and kind from the row the computer counts (lane D, D1: `counted`), so the
   // page and Status' yearly figure agree: here a service two apps replace at different prices, the cheaper one counted.
   { name: 'Subscriptions: a service two apps replace shows the counted row', screen: 'status', mock: {
@@ -4328,7 +4352,8 @@ const smokes = [
       { name: 'Lyrics checked, nothing to do: Music still has a Lyrics row and Check again', screen: 'tidy', mock: { tidy: withLyrics({ check: true, synced: 13700, plain: 228, none: 0, to_clean: 0, instrumental: 4 }) }, run: async (page) => {
         await tidyTab(page, 'Music');
         const row = '#tidy .tidyneeds li:has-text("Lyrics"):has-text("13,700 songs time-synced")';
-        await page.waitForSelector(`${row}:has-text("none with two languages on one line") button:text-is("Check again")`, { timeout: 5000 });
+        await page.waitForSelector(`${row} button:text-is("Check again")`, { timeout: 5000 });
+        if (await page.$(`${row}:has-text("two languages")`)) throw new Error('the Lyrics row says what there is none of');
       } },
     ];
   })(),
@@ -11600,7 +11625,7 @@ if (process.argv.includes('--smoke')) {
 {
   const fine = status.apps.find((a) => a.id === 'vikunja');
   mock.status = { ...status, apps: status.apps.map((a) => (a.id === 'mealie' ? { ...a, state: 'running', health: 'healthy', since: fine.since, updatedAt: fine.updatedAt } : a)) };
-  mock.backups = { ...backups, stale: 0, copies: backups.copies.map((c) => (c.id === 'mealie' ? { ...c, newest: hoursAgo(7.5), state: 'fresh' } : c)) };
+  mock.backups = { ...backups, stale: 0, copies: backups.copies.map((c) => (c.id === 'mealie' ? { ...c, newest: hoursAgo(7.5), state: 'fresh' } : c)), nights: backups.nights.map((n) => ({ ...n, apps: { ...n.apps, mealie: 'copied' } })) };
 }
 // And the version a visitor sees on GitHub: the newest release runs in the
 // pictures, and the update line offers the one after it. VERSION is only the

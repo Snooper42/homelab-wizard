@@ -1866,7 +1866,7 @@
         setBusy(false);
       }
     };
-    return /* @__PURE__ */ u3("button", { class: "small change", disabled: busy2, onClick: click, children: paused ? "Resume" : "Pause" });
+    return /* @__PURE__ */ u3("button", { class: "small change", disabled: busy2, onClick: click, title: paused ? "Resume the nightly app updates" : "Pause the nightly app updates", children: paused ? "Resume" : "Pause" });
   }
   var awaitingJobs = (a3) => a3.id === "homelab-companion" && a3.state === "not running";
   function troubleLine(apps2) {
@@ -21309,8 +21309,23 @@ ${pays}
   }
   var worrying = (text2) => !/\bnothing went missing\b/i.test(text2) && /missing|stopped|kept/i.test(text2);
   var FolderGone = X(false);
-  function Gone({ l: l3 }) {
+  var parentOf = (p3) => p3.replace(/[\\/]+$/, "").replace(/[\\/][^\\/]*$/, "");
+  var noFolderYet = (d3, l3) => !l3.found && d3.libraries.some((x3) => x3.found && parentOf(x3.folder) === parentOf(l3.folder));
+  function Gone({ l: l3, d: d3 }) {
     if (l3.found) return null;
+    if (noFolderYet(d3, l3)) return /* @__PURE__ */ u3(Card, { kind: "notice", role: "status", children: [
+      /* @__PURE__ */ u3("strong", { children: [
+        names3[l3.kind],
+        ": no folder yet"
+      ] }),
+      /* @__PURE__ */ u3("span", { class: "muted", children: [
+        "Tidy Up looks in ",
+        l3.folder,
+        ": put your ",
+        names3[l3.kind].toLowerCase(),
+        " there and it starts on them."
+      ] })
+    ] });
     return /* @__PURE__ */ u3(Card, { kind: "notice", role: "status", children: [
       /* @__PURE__ */ u3("strong", { children: [
         names3[l3.kind],
@@ -21776,14 +21791,21 @@ ${pays}
   function DriveWidget({ d: d3 }) {
     const dr = d3.drive;
     if (!dr) return null;
-    const parts3 = d3.libraries.filter((l3) => l3.size).map((l3) => ({ label: names3[l3.kind], value: l3.size || 0, color: looks[l3.kind].hue }));
+    const parts3 = d3.libraries.filter((l3) => l3.size).map((l3) => ({ label: names3[l3.kind], value: l3.size || 0, color: looks[l3.kind].hue })).sort((a3, b2) => b2.value - a3.value);
     const measuring = d3.libraries.some((l3) => l3.found && !l3.size);
     const slices = [...parts3, { label: "Free", value: dr.free, color: "track" }];
-    return /* @__PURE__ */ u3(Widget, { title: dr.name ? `On the ${dr.name} drive` : "On this machine", kind: "fx-flow tidydrive", children: [
-      /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3("span", { class: "fx-amount", children: [
-        size(dr.free),
-        /* @__PURE__ */ u3("small", { children: " free" })
-      ] }), caption: `Of ${size(dr.total)}${d3.freed ? " · " + size(d3.freed) + " won back so far" : ""}` }),
+    return /* @__PURE__ */ u3(Widget, { title: dr.name ? `On the ${dr.name} drive` : "On this machine", kind: "fx-flow tidydrivecard", children: [
+      /* @__PURE__ */ u3(
+        Stat,
+        {
+          value: /* @__PURE__ */ u3("span", { class: "fx-amount", children: [
+            size(dr.free),
+            /* @__PURE__ */ u3("small", { children: " free" })
+          ] }),
+          caption: `Of ${size(dr.total)}`,
+          aside: d3.freed ? /* @__PURE__ */ u3(Chip, { dir: "up", good: true, value: `${size(d3.freed)} won back` }) : void 0
+        }
+      ),
       /* @__PURE__ */ u3("div", { class: "fx-donutrow", children: [
         /* @__PURE__ */ u3(Donut, { slices, size: 124, label: "The drive", center: /* @__PURE__ */ u3(S, { children: [
           /* @__PURE__ */ u3("strong", { children: [
@@ -21898,7 +21920,7 @@ ${pays}
       sub: `${onIt.length ? `${listed3(onIt)} ${onIt.length === 1 ? "is" : "are"} on it (${root})` : `${root} isn't there`}. Each shows up here once it's back; or choose the folder your media is in.`,
       go: { label: "Choose another…", run: () => act.places(true), quiet: true }
     }] : [];
-    const gone = away2.filter((l3) => !onIt.includes(l3)).map((l3) => ({ kind: l3.kind, title: `${names3[l3.kind]}: its drive isn't plugged in`, sub: `${l3.folder} could not be found. It shows up here again once it's back.`, warn: true }));
+    const gone = away2.filter((l3) => !onIt.includes(l3)).map((l3) => noFolderYet(d3, l3) ? { kind: l3.kind, title: `${names3[l3.kind]}: no folder yet`, sub: `Put them in ${l3.folder}` } : { kind: l3.kind, title: `${names3[l3.kind]}: its drive isn't plugged in`, sub: `${l3.folder} could not be found. It shows up here again once it's back.`, warn: true });
     const here3 = new Set(d3.libraries.filter((l3) => l3.found).map((l3) => l3.kind));
     const tools = toolsRow(d3, act, (needs) => needs === "all" || (toolFor[needs] || []).some((k3) => here3.has(k3)));
     const machine = d3.checks.filter((c4) => !c4.ok && c4.needs && c4.id !== "drive" && !TOOLS.has(c4.id)).map((c4) => ({ kind: "machine", title: c4.name, sub: `${c4.note}. ${c4.fix}`, warn: true }));
@@ -22147,9 +22169,22 @@ ${pays}
       )) })
     ] });
   }
+  function watchedName(p3) {
+    const parts3 = p3.split(/[\\/]+/).filter(Boolean);
+    const last2 = parts3[parts3.length - 1] || p3;
+    const at2 = parts3[0] === "Volumes" || parts3[0] === "mnt" ? 1 : parts3[0] === "media" ? 2 : parts3[0] === "run" && parts3[1] === "media" ? 3 : /^[A-Za-z]:$/.test(parts3[0] || "") ? 0 : -1;
+    const drive = at2 >= 0 && at2 < parts3.length - 1 ? parts3[at2] : "";
+    return drive ? `${drive}/${last2}` : last2;
+  }
   function TodayWidget({ d: d3, job: job2, act, wide: wide2 }) {
     const today = d3.today || [];
-    return /* @__PURE__ */ u3(Widget, { title: "What I did today", span: wide2 ? "all" : 1, kind: "tidytoday", children: [
+    const folders = d3.inbox?.folders || [];
+    const from2 = folders.map(watchedName);
+    const where = from2.length ? /* @__PURE__ */ u3("span", { class: "muted tidyfrom", title: folders.join("\n"), children: [
+      "From ",
+      from2.length > 2 ? `${from2.slice(0, 2).join(", ")} and ${from2.length - 2} more` : from2.join(" and ")
+    ] }) : void 0;
+    return /* @__PURE__ */ u3(Widget, { title: "What I did today", span: wide2 ? "all" : 1, kind: "tidytoday", actions: where, children: [
       !!today.length && /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3("span", { class: "fx-amount", children: [
         today.filter((f4) => !f4.undone).length,
         /* @__PURE__ */ u3("small", { children: [
@@ -22189,7 +22224,7 @@ ${pays}
   function factsOf(l3) {
     const c4 = l3.counts || {};
     const many = l3.kind === "music" ? n2(last(l3, "run")?.result?.in_library) || n2(last(l3, "scan")?.result?.files) : l3.kind === "movies" || l3.kind === "tv" ? n2(c4.lean) + n2(c4.bloated) + n2(c4.queued) + n2(l3.waiting) : l3.kind === "books" ? n2(last(l3, "review")?.result?.books) : 0;
-    return [many ? things(l3.kind, many) : "", l3.size ? size(l3.size) : ""].filter(Boolean).join(" · ");
+    return [many ? things(l3.kind, many) : "", l3.size ? size(l3.size).replace(" ", " ") : ""].filter(Boolean).join(" · ");
   }
   function Shelf2({ d: d3, act, review: review2, pick }) {
     return /* @__PURE__ */ u3("section", { class: "tidyshelf", "aria-labelledby": "tidyShelfTitle", children: [
@@ -22202,10 +22237,10 @@ ${pays}
         const m3 = l3.found ? meterOf(l3) : void 0;
         const facts2 = l3.found ? factsOf(l3) : "";
         const pct2 = m3 ? Math.round(m3.share * 100) : 0;
-        return /* @__PURE__ */ u3("li", { children: /* @__PURE__ */ u3("button", { type: "button", class: "tidytile " + hue(looks[k3].hue) + (l3.found ? "" : " away"), onClick: () => pick(k3), children: [
+        return /* @__PURE__ */ u3("li", { children: /* @__PURE__ */ u3("button", { type: "button", class: "tidytile " + hue(looks[k3].hue) + (l3.found ? "" : noFolderYet(d3, l3) ? " away unmade" : " away"), onClick: () => pick(k3), children: [
           /* @__PURE__ */ u3(LibIcon, { kind: k3 }),
           /* @__PURE__ */ u3("span", { class: "tidytilename", children: names3[k3] }),
-          /* @__PURE__ */ u3("span", { class: "tidytilefacts", children: l3.found ? facts2 || "Not looked at yet" : "Its drive isn't plugged in" }),
+          /* @__PURE__ */ u3("span", { class: "tidytilefacts", children: l3.found ? facts2 || "Not looked at yet" : noFolderYet(d3, l3) ? "No folder yet" : "Its drive isn't plugged in" }),
           m3 && /* @__PURE__ */ u3("span", { class: "tidymeter", "aria-hidden": "true", children: /* @__PURE__ */ u3("span", { style: { width: `${pct2}%` } }) }),
           /* @__PURE__ */ u3("span", { class: "tidytilenext", children: [
             m3 && /* @__PURE__ */ u3("strong", { children: [
@@ -22214,7 +22249,7 @@ ${pays}
               m3.words
             ] }),
             m3 && next && /* @__PURE__ */ u3("br", {}),
-            l3.found ? next ? next.title : "Nothing to tidy" : "Shows up again once it is back"
+            l3.found ? next ? next.title : "Nothing to tidy" : noFolderYet(d3, l3) ? "Nothing to tidy yet" : "Shows up again once it is back"
           ] })
         ] }) }, k3);
       }) })
@@ -22273,11 +22308,11 @@ ${pays}
       const lr = last(l3, "lyrics"), ly = lr?.result;
       if (lr && ly) {
         const parts3 = [["synced", "time-synced"], ["plain", "plain"], ["none", "without lyrics"], ["not_found", "not on LRCLIB yet"]].filter(([key6]) => n2(ly[key6]) > 0).map(([key6, words5], i3) => `${i3 ? n2(ly[key6]).toLocaleString() : count(n2(ly[key6]), "song")} ${words5}`);
-        const found2 = n2(ly.to_clean) ? `${count(n2(ly.to_clean), "song")} with two languages on one line` : "none with two languages on one line";
+        const found2 = n2(ly.to_clean) ? ` · ${count(n2(ly.to_clean), "song")} with two languages on one line` : "";
         extra.push({
           kind: "lyrics",
           title: "Lyrics",
-          sub: `${parts3.join(" · ") || "No songs read yet"} · ${found2} · checked ${ago(lr.at)}`,
+          sub: `${parts3.join(" · ") || "No songs read yet"}${found2} · checked ${ago(lr.at)}`,
           go: { label: "Check again", run: () => act.run("music", "lyrics", ["--check"]), quiet: true }
         });
       }
@@ -22301,7 +22336,7 @@ ${pays}
       go: () => act.run("books", "apply", skip2.size ? ["--skip", [...skip2].join(",")] : [], true)
     });
     return /* @__PURE__ */ u3(FolderGone.Provider, { value: !l3.found, children: [
-      /* @__PURE__ */ u3(Gone, { l: l3 }),
+      /* @__PURE__ */ u3(Gone, { l: l3, d: d3 }),
       /* @__PURE__ */ u3("div", { class: "fx-board", children: [
         l3.found && /* @__PURE__ */ u3(LibHero, { l: l3 }),
         /* @__PURE__ */ u3(Widget, { title: "Can be tidier", span: "all", kind: "fx-paycheck tidyneeds", actions: again || void 0, children: rows.length ? /* @__PURE__ */ u3(TodoRows, { todos: rows, job: job2 }) : /* @__PURE__ */ u3(Empty, { children: l3.found ? `Your ${names3[kind].toLowerCase()} ${kind === "music" ? "is" : "are"} tidy. Anything new shows up here.` : "Plug in its drive to see what could be tidier." }) }),
