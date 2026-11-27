@@ -20,7 +20,11 @@ Each minor after its `.10` starts by itself; set one by hand only to jump ahead 
 
 ## Release notes
 
-`CHANGELOG.md` is the patch notes: each version's **New**, **Improved**, and **Fixed**, one plain line each (CONTRIBUTING.md says how to write one). The `publish` job makes each build's notes from it: the version's own section for the first build of a version, then the CHANGELOG lines added since the release before (each commit's first line when a build added none). The app shows them before an update.
+`CHANGELOG.md` is the patch notes: each version's **New**, **Improved**, and **Fixed**, one plain line each (CONTRIBUTING.md says how to write one). The `publish` job makes each build's notes from it: the version's own section for the first build of a version, then the CHANGELOG entries the release before didn't have (each commit's first line when a build added none). The app shows them before an update.
+
+### Cutting the sections
+
+New lines go under `[Unreleased]`, and a version's section is cut afterwards, a minor version at a time: `## [0.46.0] - <the date v0.46.0 was built>`, a bold line saying which builds it covers, when, and its first headlines, then its **New**, **Improved** and **Fixed**. An entry goes to the minor of the first release whose commit contains the commit that last changed its line (`git blame` on `CHANGELOG.md`, then the first `v*` tag on main at or after that commit). Entries keep their wording and their order, and lines no release contains yet stay under `[Unreleased]` with the two marker comments. Moving an entry changes neither the notes of the next build (the `publish` job lists only entries the release before didn't have) nor what the app shows before an update (`internal/upgrade`'s notes skip entries the installed CHANGELOG already has). The sections from 0.17.1 to 0.47.0 were cut this way on Nov 27, 2026 (0.47.0's while its builds were still coming); 0.17.1 covers v0.17.1 to v0.17.10, as 0.17.0 has its own.
 
 The versions before numbered releases (0.2.0 to 0.9.0-beta) were tagged afterwards at the commit where each ended, and their releases published by hand from their CHANGELOG sections. They have notes and no builds, so the stable channel skips them. A workflow could not publish them: its token may not tag a commit whose `.github/workflows` differ from main's.
 
