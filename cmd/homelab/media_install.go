@@ -94,7 +94,7 @@ func (h *homelab) mediaInstall(ctx context.Context, args []string) error {
 		return err
 	}
 	say("step", "Checked, and it runs", "n", 2, "total", 2)
-	say("ok", fmt.Sprintf("ffmpeg %s is ready: Tidy Up uses it from now on", pin.Version))
+	say("ok", fmt.Sprintf("ffmpeg %s is ready: Library uses it from now on", pin.Version))
 	return nil
 }
 
@@ -123,13 +123,13 @@ func (h *homelab) mediaInstallWith(ctx context.Context, m media.Manager, say fun
 	if err := c.Wait(); err != nil {
 		return fmt.Errorf("%s stopped (%v): %s", m.Shown, err, last)
 	}
-	say("step", "Checking Tidy Up finds it", "n", 2, "total", 2)
+	say("step", "Checking Library finds it", "n", 2, "total", 2)
 	for _, ch := range media.Preflight(ctx, mediaProbe(), h.envMap(), homeDir()) {
 		if ch.ID == "ffmpeg" && !ch.OK {
-			return fmt.Errorf("%s finished, but ffmpeg isn't where Tidy Up looks: open Tidy Up again", m.Shown)
+			return fmt.Errorf("%s finished, but ffmpeg isn't where Library looks: open Library again", m.Shown)
 		}
 	}
-	say("ok", "ffmpeg is ready: Tidy Up uses it from now on")
+	say("ok", "ffmpeg is ready: Library uses it from now on")
 	return nil
 }
 

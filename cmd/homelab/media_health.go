@@ -43,7 +43,7 @@ const healthAfter = 30 * time.Minute
 func plainHealth(app, name, source, kind, message string) string {
 	switch source {
 	case "ImportMechanismCheck", "RemotePathMappingCheck", "DownloadClientRootFolderCheck":
-		return "" // Tidy Up files downloads (Hand over), so the apps don't import them
+		return "" // Library files downloads (Hand over), so the apps don't import them
 	case "DownloadClientCheck", "DownloadClientStatusCheck":
 		if app == "prowlarr" {
 			return "" // Prowlarr's own download clients aren't used

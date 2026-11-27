@@ -77,7 +77,7 @@ func (h *homelab) tdarrAccount(ctx context.Context, env map[string]string) {
 		return
 	}
 	env["TDARR_USER"], env["TDARR_PASSWORD"] = "homelab", pw
-	h.ui.Info("Made Tdarr's account for Tidy Up: homelab (its password is in Settings › Tidy Up)")
+	h.ui.Info("Made Tdarr's account for Library: homelab (its password is in Settings › Library)")
 }
 
 // tdarrKey gives Tidy Up a key to Tdarr when Tdarr takes no sign-up (Tdarr 3
@@ -99,10 +99,10 @@ func (h *homelab) tdarrKey(ctx context.Context, env map[string]string) {
 	}
 	env["TDARR_API_KEY"] = key
 	if err := client.Compose(ctx, h.project(a.File), a.Profiles, "up", "--detach", "--force-recreate", a.ID); err != nil {
-		h.ui.Warn("Tdarr: couldn't restart it to take its key for Tidy Up: %v", err)
+		h.ui.Warn("Tdarr: couldn't restart it to take its key for Library: %v", err)
 		return
 	}
-	h.ui.Info("Gave Tdarr a key for Tidy Up (TDARR_API_KEY, in Settings › Tidy Up) and restarted it to take it")
+	h.ui.Info("Gave Tdarr a key for Library (TDARR_API_KEY, in Settings › Library) and restarted it to take it")
 	body := []byte(`{"data":{"collection":"LibrarySettingsJSONDB","mode":"getAll"}}`)
 	url := "http://127.0.0.1:" + cmp.Or(env["TDARR_PORT"], "8265") + "/api/v2/cruddb"
 	for deadline := time.Now().Add(tdarrStartWait); time.Now().Before(deadline); time.Sleep(2 * time.Second) {
@@ -440,5 +440,5 @@ func (h *homelab) restTdarr(ctx context.Context, env map[string]string, home str
 	rec = media.LoadRecord(h.root)
 	rec.TdarrResting = true
 	_ = rec.Save(h.root)
-	h.ui.Info("Tdarr is resting: Tidy Up starts it again when it has a video to shrink")
+	h.ui.Info("Tdarr is resting: Library starts it again when it has a video to shrink")
 }

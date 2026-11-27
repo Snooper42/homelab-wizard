@@ -154,17 +154,17 @@ func (h *homelab) offerWireFix(fix string) (bool, *wiring.JellyfinAdmin, error) 
 	switch fix {
 	case wiring.FixInboxArrive:
 		if !u.Interactive {
-			u.Printf("\n%s\n", u.Dim("To hand them over, let Tidy Up file downloads as they arrive (Tidy Up › Inbox), then connect again."))
+			u.Printf("\n%s\n", u.Dim("To hand them over, let Library file downloads as they arrive (Library › Folders and when…), then connect again."))
 			return false, nil, nil
 		}
 		u.Println()
-		if !u.Confirm("Let Tidy Up file downloads as they arrive, and hand them over to it?", true) {
+		if !u.Confirm("Let Library file downloads as they arrive, and hand them over to it?", true) {
 			return false, nil, nil
 		}
 		if err := h.setEnv("TIDY_INBOX_WHEN", "arrive"); err != nil {
 			return false, nil, err
 		}
-		u.OK("Tidy Up files downloads as they arrive")
+		u.OK("Library files downloads as they arrive")
 		return true, nil, nil
 	case wiring.FixQbitPassword:
 		if !u.Interactive {

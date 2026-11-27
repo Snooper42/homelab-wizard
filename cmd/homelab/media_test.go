@@ -216,7 +216,7 @@ func TestMediaRemovesABrokenBeetsVenv(t *testing.T) {
 		}
 		want := "beets setup stopped working"
 		if events {
-			want = `{"type":"warn","text":"Tidy Up's beets setup stopped working`
+			want = `{"type":"warn","text":"Library's beets setup stopped working`
 		}
 		if !strings.Contains(out, want) {
 			t.Errorf("missing %q in:\n%s", want, out)

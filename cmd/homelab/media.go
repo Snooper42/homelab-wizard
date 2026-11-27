@@ -19,11 +19,11 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/wiring"
 )
 
-const mediaUsage = `homelab media: Tidy Up, your music, books, films, TV, and audiobooks sorted, tagged, and lean
+const mediaUsage = `homelab media: Library, your music, books, films, TV, and audiobooks sorted, tagged, and lean
 
   homelab media [status] [--json]          each library, the lock, and the last runs
-  homelab media preflight [--json]         what Tidy Up needs on this machine, with the fixes
-  homelab media install ffmpeg [--yes]     fetch ffmpeg and ffprobe for Tidy Up alone (a pinned,
+  homelab media preflight [--json]         what Library needs on this machine, with the fixes
+  homelab media install ffmpeg [--yes]     fetch ffmpeg and ffprobe for Library alone (a pinned,
                                            checked build in ~/.homelab-media/bin): no Terminal
   homelab media <library> <action> [...]   run an engine; library is music, books, movies, tv, or audiobooks
       music       scan, run, finalize, verify, free-space, navidrome-cleanup, playlists,
@@ -38,13 +38,13 @@ const mediaUsage = `homelab media: Tidy Up, your music, books, films, TV, and au
   homelab media inbox name <path> movie "<title>" [<year>]
   homelab media inbox name <path> episode "<show>" <season> [<episode>]
   homelab media inbox name <path> album <MusicBrainz release id>
-                                           file a download Tidy Up couldn't place, as you name it
-  homelab media inbox leave <path>         leave a download be: Tidy Up never files it
+                                           file a download Library couldn't place, as you name it
+  homelab media inbox leave <path>         leave a download be: Library never files it
   homelab media scrub [--apply]            sweep leftovers whose film, song or book is gone
   homelab media tdarr setup [--apply]      Tdarr's space-saving libraries for films and TV
-  homelab media restore <run> [--yes]      put back what one run put in %[1]s (Undo on Tidy Up)
+  homelab media restore <run> [--yes]      put back what one run put in %[1]s (Undo in Library)
   homelab media arr [--apply]              Sonarr, Radarr and Lidarr stop renaming and importing:
-                                           Tidy Up files their downloads instead
+                                           Library files their downloads instead
 
   --events json   one JSON object per line, for apps (the engines' own events)
   --yes           the step that asks (finalize, undo, apply) goes ahead: only after you agreed
@@ -85,7 +85,7 @@ func (h *homelab) media(ctx context.Context, args []string) error {
 		return h.mediaArr(ctx, args[1:])
 	case "restore":
 		if len(args) < 2 || strings.HasPrefix(args[1], "-") {
-			return errors.New("homelab media restore <run> [--yes]: the run is in Tidy Up's record (data/media.json)")
+			return errors.New("homelab media restore <run> [--yes]: the run is in Library's record (data/media.json)")
 		}
 		return h.mediaEngine(ctx, "trash", "restore", args[1:])
 	case "tick":
@@ -93,7 +93,7 @@ func (h *homelab) media(ctx context.Context, args []string) error {
 	}
 	if !slices.Contains(media.Kinds, args[0]) {
 		fmt.Fprintf(h.ui.Out, mediaUsage, media.TrashName(runtime.GOOS))
-		return fmt.Errorf("no %q in Tidy Up", args[0])
+		return fmt.Errorf("no %q in Library", args[0])
 	}
 	if len(args) < 2 {
 		return fmt.Errorf("homelab media %s <%s>", args[0], strings.Join(media.Actions(args[0]), "|"))
@@ -154,7 +154,7 @@ func (h *homelab) mediaPython(ctx context.Context) ([]string, error) {
 	if py == nil {
 		for _, c := range media.Preflight(ctx, p, h.envMap(), homeDir()) {
 			if c.ID == "python" {
-				return nil, fmt.Errorf("Tidy Up needs Python 3.8 or newer. %s", c.Fix)
+				return nil, fmt.Errorf("Library needs Python 3.8 or newer. %s", c.Fix)
 			}
 		}
 	}
@@ -303,9 +303,9 @@ func (h *homelab) mediaEngine(ctx context.Context, kind, action string, args []s
 	// A beets venv left pointing at a Python that was upgraded away fails
 	// every music job: it goes, and the engine makes it again.
 	if removed, rerr := media.RepairVenv(ctx, homeDir()); rerr != nil || removed {
-		msg := "Tidy Up's beets setup stopped working (its Python was updated); it's installed again on this run, which takes about a minute"
+		msg := "Library's beets setup stopped working (its Python was updated); it's installed again on this run, which takes about a minute"
 		if rerr != nil {
-			msg = fmt.Sprintf("Tidy Up's beets setup in %s doesn't work and couldn't be removed (%v). Delete that folder and run again", media.VenvPath(homeDir()), rerr)
+			msg = fmt.Sprintf("Library's beets setup in %s doesn't work and couldn't be removed (%v). Delete that folder and run again", media.VenvPath(homeDir()), rerr)
 		}
 		warn(msg)
 	}
@@ -346,13 +346,13 @@ func (h *homelab) mediaEngine(ctx context.Context, kind, action string, args []s
 			rec.LastScrub = time.Now().UTC()
 		}
 		if serr := rec.Save(h.root); serr != nil {
-			h.ui.Warn("Tidy Up's record: %v", serr)
+			h.ui.Warn("Library's record: %v", serr)
 		}
 		// Still under the media lock, which the engines write the trash
 		// log under: what Undo can no longer reach goes.
 		if lock {
 			if terr := media.TrimTrashLog(h.root, rec, time.Now()); terr != nil {
-				h.ui.Warn("Tidy Up's trash log: %v", terr)
+				h.ui.Warn("Library's trash log: %v", terr)
 			}
 		}
 	}
@@ -405,7 +405,7 @@ func (h *homelab) mediaBackground(kind, action string, args []string) error {
 	if err := c.Start(); err != nil {
 		return err
 	}
-	h.ui.OK("Running in the background (process %d); Tidy Up shows its progress, and scripts/logs/media has its log.", c.Process.Pid)
+	h.ui.OK("Running in the background (process %d); Library shows its progress, and scripts/logs/media has its log.", c.Process.Pid)
 	return c.Process.Release()
 }
 
@@ -439,7 +439,7 @@ func (h *homelab) mediaStatus(ctx context.Context, args []string) error {
 		return nil
 	}
 	u := h.ui
-	u.Title("Tidy Up")
+	u.Title("Library")
 	for _, l := range libs {
 		state := u.Green("found")
 		if !l.Found {
@@ -486,7 +486,7 @@ func (h *homelab) mediaPreflight(ctx context.Context, args []string) error {
 		fmt.Fprintln(h.ui.Out, string(data))
 		return nil
 	}
-	h.ui.Title("Tidy Up: this machine")
+	h.ui.Title("Library: this machine")
 	for _, c := range checks {
 		if c.OK {
 			h.ui.OK("%s: %s", c.Name, c.Note)
@@ -525,7 +525,7 @@ func (h *homelab) mediaArr(ctx context.Context, args []string) error {
 	if u.JSON {
 		emit(u, "handover", plan)
 	} else {
-		u.Title("Tidy Up owns the libraries")
+		u.Title("Library owns the libraries")
 		for _, l := range plan {
 			u.Info("%s", l.Text)
 		}

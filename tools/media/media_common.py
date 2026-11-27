@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-What the Tidy Up engines share: the screen and app events, the settings file, the Trash, ffprobe,
+What the Library engines share: the screen and app events, the settings file, the Trash, ffprobe,
 Tdarr's API, the media servers' targeted refreshes, and subtitle alignment.
 
 The screen/event code, the settings file and the confirmation prompt are the vendored music
@@ -101,7 +101,7 @@ def expand(p):
 def library_dir(section):
     lib = expand(cfg(section, "library"))
     if not lib:
-        die("Which %s folder?" % section, "Set it in Tidy Up › Settings, or pass --library.")
+        die("Which %s folder?" % section, "Set it in Settings › Library, or pass --library.")
     if not lib.is_dir():
         die("Folder not found: %s" % lib, "Is the drive plugged in? Check the path and try again.")
     return lib
@@ -828,7 +828,7 @@ class Tdarr:
     SKIPPED = {"Not required"}
 
     # Tdarr asks for a sign-in (its accounts, on since 2.4x): said plainly, with where the login goes.
-    SIGN_IN = ("Tdarr asks for a sign-in: put your Tdarr user name and password in Settings › Tidy Up "
+    SIGN_IN = ("Tdarr asks for a sign-in: put your Tdarr user name and password in Settings › Library "
                "(TDARR_USER and TDARR_PASSWORD), then try again")
 
     def __init__(self, url, api_key="", user="", password=""):
@@ -843,11 +843,11 @@ class Tdarr:
                             {"username": self.user, "password": self.password}, timeout=15)
         except RuntimeError as e:
             if "answered 4" in str(e):
-                raise Expected("Tdarr refused TDARR_USER and TDARR_PASSWORD: check them in Settings › Tidy Up")
+                raise Expected("Tdarr refused TDARR_USER and TDARR_PASSWORD: check them in Settings › Library")
             raise
         token = got.get("token") if isinstance(got, dict) else None
         if not token:
-            raise Expected("Tdarr's sign-in gave no token: check TDARR_USER and TDARR_PASSWORD in Settings › Tidy Up")
+            raise Expected("Tdarr's sign-in gave no token: check TDARR_USER and TDARR_PASSWORD in Settings › Library")
         self.headers["Authorization"] = "Bearer " + token
 
     def _call(self, method, path, body=None, timeout=60):

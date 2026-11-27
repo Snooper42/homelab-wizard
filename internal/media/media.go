@@ -103,7 +103,7 @@ var actions = map[string]map[string]Action{
 func Lookup(kind, name string) (Action, error) {
 	acts, ok := actions[kind]
 	if !ok {
-		return Action{}, fmt.Errorf("no %q in Tidy Up: music, books, movies, tv, or audiobooks", kind)
+		return Action{}, fmt.Errorf("no %q in Library: music, books, movies, tv, or audiobooks", kind)
 	}
 	a, ok := acts[name]
 	if !ok {

@@ -9,7 +9,7 @@ The inbox: watches Downloads, and files every finished download into the right l
   python3 inbox.py name <path> movie "<title>" [<year>]
   python3 inbox.py name <path> episode "<show>" <season> [<episode>]
   python3 inbox.py name <path> album <MusicBrainz release id>
-                                     a download Tidy Up couldn't place (Needs a look): rename it as you
+                                     a download Library couldn't place (Needs a look): rename it as you
                                      say, and file it
   python3 inbox.py leave <path>      Needs a look's Leave it: the sweep never touches it again
 
@@ -196,7 +196,7 @@ def classify(item):
 ARCHIVES = {".rar": ".rar", ".7z": ".7z"}
 # A .rar's later parts (.r00, .r01…) and .7z's (.7z.001): one archive, said once.
 ARCHIVE_PART_RE = re.compile(r"(?i)\.(r\d{2}|7z\.\d{3}|\d{3})$")
-ARCHIVE_WHY = ("It's packed in a %s file, which Tidy Up doesn't open. Open it (double-click it), and what's inside "
+ARCHIVE_WHY = ("It's packed in a %s file, which Library doesn't open. Open it (double-click it), and what's inside "
                "is filed next time; or Leave it.")
 
 
@@ -483,7 +483,7 @@ def name_as(path, what, words):
     # The path comes from Needs a look's record, under data/, which a homelab moved in from someone else's file
     # brings: only something inside an inbox folder (links and .. resolved) is renamed and filed.
     if not mc.inside(item, mc.inbox_roots()):
-        mc.die("%s isn't in a folder Tidy Up watches for downloads" % item.name)
+        mc.die("%s isn't in a folder Library watches for downloads" % item.name)
     if what == "album":
         return name_album(item, words)
     kind = {"movie": "movies", "episode": "tv"}.get(what)

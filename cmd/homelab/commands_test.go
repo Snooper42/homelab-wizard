@@ -619,9 +619,9 @@ func TestWireOffersInboxFix(t *testing.T) {
 		want        bool
 		says        string
 	}{
-		{"no terminal", "", false, false, "Tidy Up › Inbox"},
+		{"no terminal", "", false, false, "Library › Folders and when…"},
 		{"no", "n\n", true, false, "as they arrive"},
-		{"yes", "\n", true, true, "Tidy Up files downloads as they arrive"},
+		{"yes", "\n", true, true, "Library files downloads as they arrive"},
 	} {
 		var out strings.Builder
 		h := &homelab{ui: &ui.UI{Out: &out, In: bufio.NewReader(strings.NewReader(c.in)), Interactive: c.interactive}, envFile: env}

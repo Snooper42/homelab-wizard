@@ -281,7 +281,7 @@ func (h *homelab) restArr(ctx context.Context, env map[string]string, now time.T
 	rec = media.LoadRecord(h.root)
 	rec.ArrResting, rec.ArrStopped, rec.ArrRested, rec.ArrBusy = true, resting, now.UTC(), time.Time{}
 	_ = rec.Save(h.root)
-	h.ui.Info("Resting: %s. Tidy Up starts them again every 12 hours, for a request, or for a job", strings.Join(resting, ", "))
+	h.ui.Info("Resting: %s. Library starts them again every 12 hours, for a request, or for a job", strings.Join(resting, ", "))
 }
 
 // onlySeerr is apps with only Seerr in it: what's asked while the rest rest.

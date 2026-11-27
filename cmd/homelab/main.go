@@ -121,11 +121,11 @@ Phones:
   homelab phone until <id> 7d|never    its changes and Finances end then; it only looks
   homelab phone remove <id>            unpair a phone; its token stops working
 
-Tidy Up (homelab media help for more):
+Library (homelab media help for more):
   homelab media [status]               your music, books, films, TV, and audiobooks: each library
   homelab media <library> <action>     music|books|movies|tv|audiobooks scan, run, file, ...
   homelab media inbox|scrub [--apply]  file finished downloads; sweep leftovers to the Trash
-  homelab media arr [--apply]          the *arr apps stop renaming and importing: Tidy Up files
+  homelab media arr [--apply]          the *arr apps stop renaming and importing: Library files
 
 Maintenance:
   homelab setup                        the first-time setup checklist, with live checks

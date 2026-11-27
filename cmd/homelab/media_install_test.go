@@ -71,7 +71,7 @@ func TestMediaInstallFFmpeg(t *testing.T) {
 		t.Fatal("the preview fetched it")
 	}
 	out, code = homelabCmd(t, root, "", "media", "install", "ffmpeg", "--events", "json", "--yes")
-	if code != 0 || !strings.Contains(out, `"type":"progress"`) || !strings.Contains(out, `"text":"ffmpeg 7.1 is ready: Tidy Up uses it from now on"`) {
+	if code != 0 || !strings.Contains(out, `"type":"progress"`) || !strings.Contains(out, `"text":"ffmpeg 7.1 is ready: Library uses it from now on"`) {
 		t.Fatalf("exit %d\n%s", code, out)
 	}
 	if _, err := os.Stat(ffmpeg); err != nil || ran != 1 {
@@ -125,13 +125,13 @@ func TestMediaInstallFFmpegWithHomebrew(t *testing.T) {
 		t.Fatal("the preview ran brew")
 	}
 	out, code = homelabCmd(t, root, "", "media", "install", "ffmpeg", "--events", "json", "--yes")
-	if code != 0 || !strings.Contains(out, "Pouring ffmpeg") || !strings.Contains(out, `"text":"1 install ffmpeg"`) || !strings.Contains(out, `"text":"ffmpeg is ready: Tidy Up uses it from now on"`) {
+	if code != 0 || !strings.Contains(out, "Pouring ffmpeg") || !strings.Contains(out, `"text":"1 install ffmpeg"`) || !strings.Contains(out, `"text":"ffmpeg is ready: Library uses it from now on"`) {
 		t.Fatalf("exit %d\n%s", code, out)
 	}
 	// brew went through, but ffmpeg isn't found: said, not "ready".
 	os.Remove(installed)
 	os.WriteFile(brew, []byte("#!/bin/sh\necho done\n"), 0o755)
-	if out, code := homelabCmd(t, root, "", "media", "install", "ffmpeg", "--yes"); code == 0 || !strings.Contains(out, "isn't where Tidy Up looks") {
+	if out, code := homelabCmd(t, root, "", "media", "install", "ffmpeg", "--yes"); code == 0 || !strings.Contains(out, "isn't where Library looks") {
 		t.Errorf("exit %d\n%s", code, out)
 	}
 	// brew fails: its last line is the reason.

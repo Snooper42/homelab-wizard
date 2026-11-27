@@ -124,7 +124,7 @@ def scrub(roots, apply):
         ui.ok(mc.trash_words("Swept: %s leftovers and %s empty folders went to %TRASH%") % (mc.fmt_n(total_files), mc.fmt_n(total_dirs)))
         # A drive with no Recycle Bin: what Tidy Up put in its own .tidy-trash over a month ago goes for good.
         for day in mc.empty_old_tidy_trash():
-            ui.to_log("       emptied %s (over %d days in Tidy Up's trash)" % (day, mc.TIDY_TRASH_DAYS))
+            ui.to_log("       emptied %s (over %d days in Library's trash)" % (day, mc.TIDY_TRASH_DAYS))
     ui.result(action="scrub", ok=True, applied=apply, files=total_files, bytes=total_bytes, folders=total_dirs,
               sample=listing[:100])
 
