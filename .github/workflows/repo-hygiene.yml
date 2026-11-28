@@ -1,0 +1,119 @@
+# Repository hygiene (scripts/repo-hygiene.sh, the owner's call of Nov 28,
+# 2026).
+#
+# On each pull request: no AI-attribution line in the repository, the
+# links and the docs' versions, and no co-author or session trailer, or
+# "Generated with Claude Code" footer, in the pull request's title,
+# description or commits. It reports and doesn't block yet, while the
+# reliability reset runs (CLAUDE.md); flip continue-on-error to false after.
+#
+# Weekly (Monday, and by hand): go mod tidy and the generated service
+# notes, in one "Weekly repo hygiene" pull request that is opened or brought
+# up to date only when something changed, and the branches untouched for 14
+# days in the run's summary.
+name: Repo hygiene
+
+on:
+  pull_request:
+  schedule:
+    - cron: "17 9 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: repo-hygiene-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    # FLIP TO false AFTER RELIABILITY RESET
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+      - name: The repository's own hygiene
+        run: scripts/repo-hygiene.sh --check
+      - name: No AI-attribution footer in the pull request
+        # Read from the event's own file as data, never put into the script
+        # (internal/docs' TestWorkflowsGiveAPullRequestNothing).
+        run: |
+          TITLE="$(jq -r '.pull_request.title // ""' "$GITHUB_EVENT_PATH")"
+          BODY="$(jq -r '.pull_request.body // ""' "$GITHUB_EVENT_PATH")"
+          BASE="$(jq -r '.pull_request.base.sha' "$GITHUB_EVENT_PATH")"
+          HEAD="$(jq -r '.pull_request.head.sha' "$GITHUB_EVENT_PATH")"
+          pat='^[[:space:]]*(Co-Authored-By:.*(Claude|anthropic)|Claude-Session:|(🤖[[:space:]]*)?_?Generated (with|by) \[Claude Code\]\()|claude\.ai/code/session_'
+          {
+            printf '%s\n%s\n' "$TITLE" "$BODY"
+            git log --format=%B "$BASE..$HEAD"
+          } > "$RUNNER_TEMP/pr.txt"
+          if grep -n -i -E "$pat" "$RUNNER_TEMP/pr.txt"; then
+            echo "::error::An AI-attribution line is in this pull request's title, description or commits (above). Take it out; .githooks/commit-msg strips it from commits on your machine."
+            exit 1
+          fi
+          echo "No AI-attribution lines."
+
+  weekly:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    env:
+      BRANCH: repo-hygiene/weekly
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+      - name: Start from the open weekly pull request, else from main
+        run: |
+          if git ls-remote --exit-code --heads origin "$BRANCH" >/dev/null; then
+            git fetch origin "$BRANCH"
+            git checkout -B "$BRANCH" FETCH_HEAD
+            git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' merge --no-edit origin/main
+          else
+            git checkout -B "$BRANCH"
+          fi
+      - name: The checks, as they stand
+        run: |
+          {
+            echo "## Repo hygiene"
+            echo '```'
+            scripts/repo-hygiene.sh --check --check-deps --check-generated || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Branches untouched for 14 days
+        run: |
+          {
+            echo "## Branches"
+            echo '```'
+            scripts/cleanup-branches.sh --older-than 14
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: go mod tidy and the generated docs
+        run: scripts/repo-hygiene.sh --fix
+      - name: Open or update the weekly pull request
+        run: |
+          if git diff --quiet; then
+            echo "Nothing to change this week." | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
+            commit -qam "Weekly repo hygiene: go mod tidy and the generated service notes"
+          git push origin "$BRANCH"
+          if [ -z "$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number')" ]; then
+            gh pr create --head "$BRANCH" --base main --title "Weekly repo hygiene" \
+              --body "What \`scripts/repo-hygiene.sh --fix\` changed this week: \`go mod tidy\` in both modules, and the generated service notes (\`homelab docs\`). Review it like any other pull request; the run's summary lists the checks and the branches untouched for 14 days." \
+              || echo "::warning::Couldn't open the pull request: let Actions create pull requests (Settings › Actions › General › Workflow permissions), or open it from the $BRANCH branch by hand."
+          fi

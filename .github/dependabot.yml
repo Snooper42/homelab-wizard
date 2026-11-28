@@ -1,12 +1,37 @@
+# Dependabot opens at most one pull request a week for each kind of
+# dependency, grouped, so updates arrive as a few reviewable batches rather
+# than one pull request per package (the owner, Nov 28, 2026).
+#
 # The workflows use each action at a fixed commit, so a moved tag cannot
-# change what runs (docs/Security.md, M1). Dependabot proposes the new
-# commit when an action releases, once a month.
+# change what runs (docs/Security.md, M1): Dependabot proposes the new
+# commit when an action releases.
 version: 2
 updates:
   - package-ecosystem: github-actions
     directory: /
     schedule:
-      interval: monthly
+      interval: weekly
+      day: monday
     groups:
       actions:
+        patterns: ["*"]
+  # The CLI and the engine (go.mod) and the desktop app (app/go.mod).
+  - package-ecosystem: gomod
+    directories: [/, /app]
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 2
+    groups:
+      go:
+        patterns: ["*"]
+  # The frontend's build tools (package.json).
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 2
+    groups:
+      npm:
         patterns: ["*"]
