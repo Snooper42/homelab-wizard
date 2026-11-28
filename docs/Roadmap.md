@@ -18,7 +18,7 @@ Every version so far, as the [CHANGELOG](<../CHANGELOG.md>) has them, newest fir
 
 | Versions | Built (2026) | What they brought |
 |---|---|---|
-| 0.47.0 to 0.47.2 | Nov 27 | 5 changes so far, among them: An update that can't start goes back by itself; The nightly jobs find Docker Desktop's tools; `homelab doctor` says what happens after a restart. |
+| 0.47.0 to 0.47.2 | Nov 27 | Still being built, so its lines are under the CHANGELOG's *Unreleased* until its `.10`; 5 changes so far, among them: An update that can't start goes back by itself; The nightly jobs find Docker Desktop's tools; `homelab doctor` says what happens after a restart. |
 | 0.46.0 to 0.46.10 | Nov 27 | 20 changes, among them: Storage with logos and fewer words; The iPad's sidebar says Homelab Wizard once; An app to add, never cut short. |
 | 0.45.0 to 0.45.10 | Nov 26 to 27 | 22 changes, among them: An app's page in the Homelab app says less; Settings' Setup row shows how many steps are left; Backups' Skipped list in a word, as on the computer. |
 | 0.44.0 to 0.44.10 | Nov 26 | 15 changes, among them: Status on the iPhone opens on the computer's Overview; Your own app's passwords stay private while it's added; The Mac app takes an update only from its own signer, with a certificate of your own too. |
