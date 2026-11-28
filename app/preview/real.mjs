@@ -36,11 +36,26 @@ async function step(what, fn) {
   }
 }
 
+// Backups is one of Status' pages (#921): the sidebar's button on a wide
+// window, Status' dropdown on a phone (as app/preview/shoot.mjs's toBackups).
+async function toBackups() {
+  if (!(await page.isVisible('nav > button[data-screen="status"].active'))) await page.click('nav > button[data-screen="status"]', { timeout: 10000 });
+  await page.waitForFunction(() => [document.querySelector('#statusSide button[data-key="backups"]'), document.querySelector('#statusChips .sidedropbtn')].some((e) => e?.checkVisibility()), null, { timeout: 10000 });
+  if (await page.isVisible('#statusSide button[data-key="backups"]')) {
+    await page.click('#statusSide button[data-key="backups"]');
+  } else {
+    await page.click('#statusChips .sidedropbtn');
+    await page.click('#statusChips .sidemenulist button[data-key="backups"]');
+  }
+  await page.waitForSelector('#backups.screen.active', { timeout: 10000 });
+}
+
 await step('paired with a one-time code', async () => {
   await page.goto(`${address}/#pair=${code}`);
   await page.fill('#pairName', 'Nightly run', { timeout: 30000 });
   await page.click('#pairBtn');
-  await page.waitForSelector('#statusRows tr', { timeout: 60000 });
+  // Paired, the page opens on Status (its Overview since #914).
+  await page.waitForSelector('#status.screen.active', { timeout: 60000 });
 });
 
 await step('Status lists every app the run installed', async () => {
@@ -53,7 +68,7 @@ await step('Status lists every app the run installed', async () => {
 // An app with no database yet (Uptime Kuma before its first monitor) is
 // under "Not copied yet", as it would be on a new homelab; none may be stale.
 await step("Backups shows the nightly backup's copies, fresh", async () => {
-  await page.click('nav button[data-screen="backups"]', { timeout: 10000 });
+  await toBackups();
   await page.waitForSelector('#backupRows tr.copy.fresh', { timeout: 60000 });
   const rows = await page.$$eval('#backupRows tr.copy', (trs) => trs.map((r) => [r.querySelector('.name')?.textContent, r.className.replace(/^copy /, '')]));
   console.log('     ', rows.map(([name, state]) => `${name}: ${state}`).join('; '));

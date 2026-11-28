@@ -74,6 +74,7 @@ The one backlog during the stop-the-line reliability reset (`CLAUDE.md`, `lanes.
 - **Files:** `test/realdocker/live_test.go` (new), `.github/workflows/nightly.yml` (the `live` job), `cmd/homelab/{verifylive,verifylive_test,fakebin_test}.go`, `docs/{Known Issues,SRE-Audit-2026-11}.md`, `.claude/prompts/owner.md` (the expected rows).
 - **Proven against real Docker 29.9.3 (Linux):** 8 passed, 0 failed; Immich's round needs `ghcr.io`, which CI reaches and this container does not.
 - **Also fixed here:** the nightly `real-docker` job was red on main since Nov 27: Paperless-AI's newest image asks for a setup code when it already holds Paperless's token. The run now reads the code from its log and sends it (`x-setup-code`), and the app's note tells the household where it is.
+- **And behind it:** the nightly's phone page script (`app/preview/real.mjs`) still waited for Status' rows right after pairing and for a Backups button in the strip, both gone since #914 and #921 (Status opens on its Overview; Backups is one of Status' pages, in its dropdown on a phone). It now goes as `app/preview/shoot.mjs`'s `toBackups` does; tried against a real companion here.
 
 ## Open risks
 
