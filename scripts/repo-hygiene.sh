@@ -41,7 +41,7 @@ ok() { echo "✓ $*"; }
 # The lines that say an AI tool wrote a commit or a pull request. The
 # Finances payee *ANTHROPIC CLAUDE* (a card merchant) is product data and
 # matches none of them.
-attribution='Co-Authored-By:.*(Claude|anthropic)|Claude-Session:|Generated (with|by) \[?Claude Code|claude\.ai/code/session_|🤖 Generated with'
+attribution='Co-Authored-By:.*(Claude|anthropic)|Claude-Session:|Generated (with|by) \[Claude Code\]\(|claude\.ai/code/session_|🤖 Generated with'
 
 if [ "$fix" = 1 ]; then
 	for d in . app; do

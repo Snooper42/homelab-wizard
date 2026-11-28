@@ -42,14 +42,14 @@ jobs:
       - name: The repository's own hygiene
         run: scripts/repo-hygiene.sh --check
       - name: No AI-attribution footer in the pull request
-        env:
-          # Passed as data, never pasted into the script.
-          TITLE: ${{ github.event.pull_request.title }}
-          BODY: ${{ github.event.pull_request.body }}
-          BASE: ${{ github.event.pull_request.base.sha }}
-          HEAD: ${{ github.event.pull_request.head.sha }}
+        # Read from the event's own file as data, never put into the script
+        # (internal/docs' TestWorkflowsGiveAPullRequestNothing).
         run: |
-          pat='Co-Authored-By:.*(Claude|anthropic)|Claude-Session:|Generated (with|by) \[?Claude Code|claude\.ai/code/session_|🤖 Generated with'
+          TITLE="$(jq -r '.pull_request.title // ""' "$GITHUB_EVENT_PATH")"
+          BODY="$(jq -r '.pull_request.body // ""' "$GITHUB_EVENT_PATH")"
+          BASE="$(jq -r '.pull_request.base.sha' "$GITHUB_EVENT_PATH")"
+          HEAD="$(jq -r '.pull_request.head.sha' "$GITHUB_EVENT_PATH")"
+          pat='Co-Authored-By:.*(Claude|anthropic)|Claude-Session:|Generated (with|by) \[Claude Code\]\(|claude\.ai/code/session_|🤖 Generated with'
           {
             printf '%s\n%s\n' "$TITLE" "$BODY"
             git log --format=%B "$BASE..$HEAD"
