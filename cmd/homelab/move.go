@@ -326,14 +326,28 @@ func (h *homelab) restoreVolumes(ctx context.Context, client *docker.Client) err
 	return nil
 }
 
-// loadVolume replaces a volume's contents with a gzipped tar.
+// loadScript replaces the folder $1 with the gzipped tar on stdin, the
+// archive read whole first: it goes into a folder beside the contents, and
+// only once it has read to its end are the old contents removed and the new
+// moved in (a rename, within the folder). Before, the folder was emptied
+// first, so an archive cut short left it half full, the data from before
+// gone (docs/SRE-Audit-2026-11.md, M2); now it is left as it was.
+const loadScript = `set -e
+v="$1"; new="$v/.homelab-loading"
+rm -rf "$new"; mkdir "$new"
+if ! tar xzf - -C "$new"; then rm -rf "$new"; echo "the archive did not read whole, so $v was left as it was" >&2; exit 3; fi
+find "$v" -mindepth 1 -maxdepth 1 ! -name .homelab-loading -exec rm -rf {} +
+find "$new" -mindepth 1 -maxdepth 1 -exec mv {} "$v/" \;
+rmdir "$new"`
+
+// loadVolume replaces a volume's contents with a gzipped tar (loadScript).
 func loadVolume(ctx context.Context, client *docker.Client, volume, archive string) error {
 	f, err := os.Open(archive)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
-	cmd := procattr.Hide(exec.CommandContext(ctx, client.Bin, "run", "--rm", "-i", "-v", volume+":/v", "alpine:3", "sh", "-c", "rm -rf /v/* /v/.[!.]* /v/..?*; tar xzf - -C /v"))
+	cmd := procattr.Hide(exec.CommandContext(ctx, client.Bin, "run", "--rm", "-i", "-v", volume+":/v", "alpine:3", "sh", "-c", loadScript, "sh", "/v"))
 	cmd.Stdin = f
 	if out, err := cmd.CombinedOutput(); err != nil {
 		return fmt.Errorf("loading %s: %w\n%s", volume, err, lastLines(out, 3))

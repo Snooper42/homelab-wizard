@@ -48,10 +48,17 @@ func TestVerifyLiveChecksAndCleansUp(t *testing.T) {
 
 	// Only its own: every removal names homelab-verify-…, nothing is stopped
 	// but its own, and no Compose project is touched.
-	removal := regexp.MustCompile(`(?m)^(rm|stop|volume rm|kill)\b.*$`)
-	for _, line := range removal.FindAllString(log, -1) {
-		if !strings.Contains(line, "homelab-verify-") {
-			t.Errorf("touched something not its own: %s", line)
+	// Each docker removal, stop or kill, and the name it was given (a line
+	// of a script passed to a container, which the calls log keeps too, is
+	// not one: its arguments start with a dash or a quote).
+	removal := regexp.MustCompile(`(?m)^(?:rm|stop|volume rm|kill)(?: -f| -v| --time \d+)* ([^-"\s]\S*)`)
+	found := removal.FindAllStringSubmatch(log, -1)
+	if len(found) == 0 {
+		t.Fatal("no removal seen: the check is not reading the calls")
+	}
+	for _, m := range found {
+		if !strings.HasPrefix(m[1], "homelab-verify-") {
+			t.Errorf("touched something not its own: %s", m[0])
 		}
 	}
 	if strings.Contains(log, "compose") && regexp.MustCompile(`compose .*(stop|down|rm|up)`).MatchString(log) {

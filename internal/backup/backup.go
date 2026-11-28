@@ -51,7 +51,7 @@ func PostgresDump(ctx context.Context, ex Execer, container, dir, name string, n
 	if cerr := gz.Close(); err == nil {
 		err = cerr
 	}
-	if cerr := tmp.Close(); err == nil {
+	if cerr := syncClose(tmp); err == nil {
 		err = cerr
 	}
 	if err != nil {
@@ -63,7 +63,7 @@ func PostgresDump(ctx context.Context, ex Execer, container, dir, name string, n
 	if err := os.Chmod(tmp.Name(), 0o600); err != nil {
 		return "", err
 	}
-	return final, os.Rename(tmp.Name(), final)
+	return final, keep(tmp.Name(), final)
 }
 
 // SQLiteImage has sqlite3 and su-exec; homelab backup builds it from
@@ -103,7 +103,7 @@ func SQLiteDump(ctx context.Context, r Runner, container, db, dir, name string, 
 	if cerr := gz.Close(); err == nil {
 		err = cerr
 	}
-	if cerr := tmp.Close(); err == nil {
+	if cerr := syncClose(tmp); err == nil {
 		err = cerr
 	}
 	if err != nil {
@@ -122,7 +122,7 @@ func SQLiteDump(ctx context.Context, r Runner, container, db, dir, name string, 
 	if err := os.Chmod(tmp.Name(), 0o600); err != nil {
 		return "", err
 	}
-	return final, os.Rename(tmp.Name(), final)
+	return final, keep(tmp.Name(), final)
 }
 
 // headWriter keeps the first max bytes written.
@@ -171,7 +171,7 @@ func VolumeArchive(ctx context.Context, r Runner, volume, dir, name string, now 
 	}
 	defer os.Remove(tmp.Name())
 	err = r.RunTo(ctx, tmp, "-v", volume+":/data:ro", "alpine:3", "tar", "czf", "-", "-C", "/data", ".")
-	if cerr := tmp.Close(); err == nil {
+	if cerr := syncClose(tmp); err == nil {
 		err = cerr
 	}
 	if err != nil {
@@ -184,7 +184,7 @@ func VolumeArchive(ctx context.Context, r Runner, volume, dir, name string, now 
 	if err := os.Chmod(tmp.Name(), 0o600); err != nil {
 		return "", 0, err
 	}
-	return final, entries, os.Rename(tmp.Name(), final)
+	return final, entries, keep(tmp.Name(), final)
 }
 
 func countTar(path string) (int, error) {
@@ -207,6 +207,31 @@ func countTar(path string) (int, error) {
 		}
 		n++
 	}
+}
+
+// syncClose writes f's contents to the disk, then closes it: a dump renamed
+// into place before its data reached the disk can read back empty after a
+// power cut, though its name says it is whole (docs/SRE-Audit-2026-11.md, M1).
+func syncClose(f *os.File) error {
+	err := f.Sync()
+	if cerr := f.Close(); err == nil {
+		err = cerr
+	}
+	return err
+}
+
+// keep renames a finished file into place, then writes the folder's entry
+// to the disk too, so the new name outlasts a power cut. Folders can't be
+// synced everywhere (Windows): that part is best effort.
+func keep(tmp, final string) error {
+	if err := os.Rename(tmp, final); err != nil {
+		return err
+	}
+	if d, err := os.Open(filepath.Dir(final)); err == nil {
+		_ = d.Sync()
+		_ = d.Close()
+	}
+	return nil
 }
 
 // Rotate deletes all but the newest keep dumps, archives, or image records

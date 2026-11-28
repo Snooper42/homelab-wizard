@@ -19,14 +19,14 @@ Every fix here is `MERGED` at most. None is `VERIFIED` until the owner runs it o
 | H4 | High | Secrets | `homelab logs --explain` sends `.env` values to the model | Fixed |
 | H5 | High | Backups | An unplugged media drive is backed up as every photo deleted, silently | Fixed (detected, alerted, and Duplicati's own run refused) |
 | H6 | High | Backups | A missing backup folder is not caught before the night's backups | Fixed (detected and alerted) |
-| M1 | Medium | Backups | Dumps and archives are renamed into place without `fsync` | Open |
-| M2 | Medium | Restore | Putting a volume back empties it before extracting | Open (mitigated) |
+| M1 | Medium | Backups | Dumps and archives are renamed into place without `fsync` | Fixed (Nov 28) |
+| M2 | Medium | Restore | Putting a volume back empties it before extracting | Fixed (Nov 28) |
 | M3 | Medium | Rollback | Folders and volumes over `UPDATE_COPY_LIMIT` are not copied before an update | Open (by design, said) |
 | M4 | Medium | Restore | The nightly restore test samples Homelab AppData only | Open |
 | M5 | Medium | Secrets | `OLLAMA_HOST` can point off the machine while the CLI says "it stays here" | Open |
 | M6 | Medium | Security | The Beszel agent holds the raw Docker socket on the host network | Open (documented, N18) |
 | M7 | Medium | Backups | Duplicati is `:latest`, unpinned | Open (ISSUE-0016) |
-| M8 | Medium | Host | `diskspace.Mounted` is true on macOS for any folder that exists | Open |
+| M8 | Medium | Host | `diskspace.Mounted` is true on macOS for any folder that exists | Fixed (Nov 28) |
 
 ### C1: the phone's web page could wipe the homelab (Critical)
 
@@ -79,6 +79,11 @@ Every fix here is `MERGED` at most. None is `VERIFIED` until the owner runs it o
 - **M6:** `stacks/beszel/compose.yaml:69`: `:ro` on a socket does not limit the Docker API. The agent can do anything Docker can. It is pinned and documented (N18).
 - **M7:** `compose/system.yaml:34`: `lscr.io/linuxserver/duplicati:latest` can change its API under the homelab (ISSUE-0016).
 - **M8:** `internal/diskspace/diskspace.go:206`: on macOS a drive counts as mounted whenever its folder exists. An empty `/Volumes/<name>` left behind reads as the drive.
+
+**Fixed after the audit (Nov 28):**
+- **M1:** each dump and archive is written to the disk (`fsync`) before it is renamed into place, and its folder after (`internal/backup/backup.go`, `syncClose` and `keep`).
+- **M2:** putting a volume back reads the archive into a folder beside the contents first. Only once it has read whole do the old contents go and the new move in (`cmd/homelab/move.go`, `loadScript`, also used by `db upgrade`'s way back). Proven in `alpine:3` against real Docker: an archive cut short left the volume as it was.
+- **M8:** on a Mac, a drive counts as mounted only when its folder is on another device from `/Volumes`, as on Linux. The macOS CI job's real disk image (`TestExternalDriveForReal`) checks it attached and detached.
 
 ## Area notes
 
