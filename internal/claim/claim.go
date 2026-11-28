@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -64,10 +65,16 @@ func Claimed(ctx context.Context, app, base string) (bool, string) {
 	if err != nil {
 		return false, err.Error()
 	}
+	client := http.DefaultClient
 	if c.basic[0] != "" {
 		req.SetBasicAuth(c.basic[0], c.basic[1])
+		// Not followed: the answer is the app's own, and the default login
+		// goes nowhere else. Followed, Calibre-Web with no library set sent
+		// /opds to its sign-in page, whose 200 read as the default login
+		// working (the owner's Mac, Nov 28, 2026).
+		client = &http.Client{CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}
 	}
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := client.Do(req)
 	if err != nil {
 		return false, "it did not answer whether it has its first account"
 	}
@@ -82,6 +89,21 @@ func Claimed(ctx context.Context, app, base string) (bool, string) {
 		// The default login refused: it has been changed.
 		if resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden {
 			return true, ""
+		}
+		if resp.StatusCode/100 == 3 {
+			loc := resp.Header.Get("Location")
+			switch {
+			case strings.Contains(loc, "dbconfig"):
+				// Every page goes to the sign-in, on to the library's
+				// setting, whatever the login: it can't be told yet.
+				return false, "its library isn't set yet, so whether its default login (" + c.basic[0] + "/" + c.basic[1] + ") was changed can't be told: sign in, then Admin › Edit Basic Configuration › Location of Calibre database (/books)"
+			case strings.Contains(loc, "/login"):
+				return true, "" // the default login sent back to sign in: refused
+			}
+			return false, "it did not answer whether its default login was changed"
+		}
+		if resp.StatusCode != http.StatusOK {
+			return false, "it did not answer whether its default login was changed"
 		}
 		return false, "its default login (" + c.basic[0] + "/" + c.basic[1] + ") still works"
 	case resp.StatusCode != http.StatusOK:
