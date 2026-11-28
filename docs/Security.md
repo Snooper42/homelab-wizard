@@ -341,6 +341,7 @@ The reliability reset's audit is [SRE-Audit-2026-11](<SRE-Audit-2026-11.md>). Fo
 
 - **Nothing a phone or the web page can call deletes the apps' data or the backups** (the owner, Nov 27, 2026). The web page's *Take the homelab off this machine* (#916) and its `cleanup --volumes` are gone (C1). That stays on the computer, behind its typed confirmation. `TestNoWipeFromThePhone` and `TestServedCodeNamesNoDeletingCommand` fail if one comes back.
 - **`homelab logs --explain` hides `.env`'s values from the model**, as the app and a phone already did (H4).
+- **A home-only app is checked to be off the internet, not assumed so** (ISSUE-0025, Nov 28): the watchdog, `doctor` and `domain status` ask Cloudflare's public resolver for each home-only app's name, and alert when it gives a public address. That is how Vaultwarden and Paperless-ngx, left on the tunnel from before they were kept home only, would have been caught.
 
 ## Incident response
 

@@ -57,6 +57,12 @@ The one backlog during the stop-the-line reliability reset (`CLAUDE.md`, `lanes.
 - **Owner notice:** the top of `owner.md` says exactly what to run on the Mac tonight, what a working Mac prints, and which Known Issues each pasted output promotes to `VERIFIED`.
 - **Files:** `.claude/prompts/owner.md`, `.claude/prompts/reset-progress.md`.
 
+### PR 9: a home-only app is checked to be off the internet (from #975's findings)
+
+- **Owner notice:** if Vaultwarden, Paperless-ngx or any app you keep home only answers from the internet again (a tunnel hostname left in Cloudflare), the watchdog alerts, `homelab doctor` fails it, and `homelab domain status` warns, all without a Cloudflare token.
+- **Files:** `internal/domain/{exposed,exposed_test}.go` (new), `cmd/homelab/{away,away_test,jobs,doctor,domain,main_test}.go`, `docs/{Known Issues,Security}.md` (ISSUE-0025), `CHANGELOG.md`.
+- **Changed expectation:** `TestAwayWithoutTheTunnelIsKept` asserted the old claim *it isn't on the internet now*, which was the unverified line behind #975. The new wording is proven by `TestAwayOffWithoutTheTokenAsksTheInternet` against both answers.
+
 ## Open risks
 
 - **Each Phase 2 fix is `MERGED` at most:** it is proven against a fake `docker` and fake `psql`. A real Immich or Paperless rollback across a schema change (H1) and a real unplugged drive (H5) are for the Mac run in Phase 4.
@@ -67,7 +73,4 @@ The one backlog during the stop-the-line reliability reset (`CLAUDE.md`, `lanes.
 
 ## Next concrete step
 
-1. Merge this pull request when it is green. Then the reset's code is all on main: every real-hardware item it touched is `READY FOR MAC VERIFICATION`, none `VERIFIED`.
-2. When the owner pastes the output of *Run This On Your Mac Tonight* (`owner.md`): fix any FAIL first, in its own pull request, then promote each matching item in `docs/Known Issues.md` to `VERIFIED`, quoting the output.
-3. The owner's three decisions (`owner.md`, *Only you can do these*): Developer ID signing, the backup engine go/no-go, and what the Mac does after a power cut. Nothing waits on them but the work they name.
-4. If nothing is left but polish: stop and say so in `owner.md` (`CLAUDE.md`, rule 2). Medium findings M1 to M8 (`docs/SRE-Audit-2026-11.md`) are real work, not polish, but each needs an Owner Notice sentence before it starts.
+The owner's go (Nov 28): everything that needs no hardware, one PR each. In order: the Calibre-Web false alarm, the `app/tray` race and rule 9's `-race` timeout (#975); the live check in the nightly CI; a real Postgres rollback across a schema change in the nightly (Paperless 18, Immich 14 with its extensions); the live check on Postgres 18 and Immich's image; Duplicati's guard against an empty drive; M1, M2, M4 and M8; then M7 (pin Duplicati), M5 (Ollama off the machine) and the live check's `--cloud` mode. When the owner pastes the Mac run's output, that comes first.

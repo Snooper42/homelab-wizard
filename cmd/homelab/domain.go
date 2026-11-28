@@ -667,6 +667,12 @@ func (h *homelab) domainStatus(ctx context.Context) error {
 	}
 	if len(homeOnly) > 0 {
 		u.Info("home only: %s", homeOnlyNames(homeOnly))
+		// Checked, not assumed: as the internet sees each name.
+		for _, r := range h.homeOnlyChecks(ctx, dom) {
+			if r.Err != nil {
+				u.Warn("%v", r.Err)
+			}
+		}
 	}
 	if st, _ := report.State(npmID); st != detect.Running {
 		u.Warn("Nginx Proxy Manager is not running")

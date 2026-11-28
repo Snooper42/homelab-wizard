@@ -33,9 +33,26 @@ Open issues, risks, and items to verify on the Mac. Close an issue by moving it 
 | ISSUE-0021 | Installing and updating the app on Windows and Linux not yet run everywhere | Medium | To verify |
 | ISSUE-0022 | A rollback brings back the image, not the data the newer version changed | Medium | Resolved |
 | ISSUE-0023 | Nextcloud's default port is the phone companion's | Low | Resolved |
+| ISSUE-0025 | A home-only app could stay on the internet, unnoticed | High | Fixed; READY FOR MAC VERIFICATION |
 | ISSUE-0024 | The homelab's own records in `data/` were not in the off-site backup | Medium | Resolved |
 
 ---
+
+## ISSUE-0025: A home-only app could stay on the internet, unnoticed
+
+Found on the owner's machine (Nov 28, 2026; `.claude/prompts/hygiene-progress.md`): Vaultwarden and Paperless-ngx were reachable from the internet, though `domain status` listed them *home only*. Cloudflare's tunnel still had their public hostnames (`passwords`, `docs`) from before they were kept home only, and Set up the domain hadn't run since. The owner's `domain setup --apply` took them off; `dig @1.1.1.1` then gave the home record's private address for both.
+
+**Why nothing noticed:** every screen said *home only* from the household's list, never from what the internet sees. And `homelab away off <app>` without `CLOUDFLARE_API_TOKEN` said *it isn't on the internet now* without being able to change, or read, the tunnel.
+
+**Fixed (Nov 28, 2026; `MERGED`, not `VERIFIED`):** each home-only app's name is now checked as the internet sees it, through Cloudflare's public resolver (1.1.1.1), so no Cloudflare token is needed. A public address means it is reachable from outside.
+- **The watchdog:** a failing check, *home only (Vaultwarden)*, alerts every run it stays so.
+- **`homelab doctor`:** a problem, with what to do.
+- **`homelab domain status`:** warns beside its *home only* line.
+- **`homelab away off` without the token:** says the name still answers from the internet, instead of the claim.
+
+A name that can't be looked up (no network) gives no verdict, rather than a pass (`internal/domain/exposed.go`, `cmd/homelab/away.go`).
+
+**Verify on the Mac (READY FOR MAC VERIFICATION):** `./homelab doctor` shows no *answers from the internet* line, and `./homelab domain status` shows *home only: Vaultwarden, Paperless-ngx* with no warning under it. Paste both back.
 
 ## ISSUE-0001: Custom proxy image not yet built on the Mac
 

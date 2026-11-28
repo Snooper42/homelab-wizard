@@ -1,8 +1,10 @@
 package main
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -14,6 +16,7 @@ import (
 
 	"github.com/Snooper42/homelab-wizard/internal/applist"
 	"github.com/Snooper42/homelab-wizard/internal/docker"
+	"github.com/Snooper42/homelab-wizard/internal/ui"
 )
 
 // fakeTunnel is a Cloudflare with one tunnel and one zone: its ingress
@@ -148,7 +151,7 @@ func TestAwayWithoutTheTunnelIsKept(t *testing.T) {
 	fakeDocker(t, nil)
 	root, _ := repoCopy(t)
 	out, code := homelabCmd(t, root, "", "away", "off", "paperless")
-	if code != 0 || !strings.Contains(out, "Paperless-ngx is home only: it isn't on the internet now") {
+	if code != 0 || !strings.Contains(out, "Paperless-ngx is home only: the internet's DNS doesn't reach it") {
 		t.Fatalf("exit %d:\n%s", code, out)
 	}
 	if data, _ := os.ReadFile(filepath.Join(root, "data", "home-only.json")); !strings.Contains(string(data), `"paperless"`) {
@@ -169,5 +172,64 @@ func TestANewPublicAppStartsHomeOnly(t *testing.T) {
 	}
 	if got := strings.Join(applist.HomeOnly.Load(root, nil), ","); got != "audiobookshelf" {
 		t.Errorf("home only after the install: %q, want audiobookshelf alone", got)
+	}
+}
+
+// #975: with no Cloudflare token, away off can't change the tunnel, so it
+// asks the internet instead of claiming the app is off it. A name still
+// answering from the internet (a tunnel hostname from before) is said so.
+func TestAwayOffWithoutTheTokenAsksTheInternet(t *testing.T) {
+	fakeDocker(t, nil)
+	root, _ := repoCopy(t, "HOMELAB_DOMAIN=example.com", "TUNNEL_TOKEN=", "CLOUDFLARE_API_TOKEN=")
+	t.Setenv("FAKE_PUBLIC_DNS", "docs.example.com=104.21.32.1,172.67.150.2")
+	out, code := homelabCmd(t, root, "", "away", "off", "paperless")
+	if code != 0 || !strings.Contains(out, "docs.example.com still answers from the internet (104.21.32.1, 172.67.150.2)") || strings.Contains(out, "doesn't reach it") {
+		t.Fatalf("still public: exit %d\n%s", code, out)
+	}
+	// Once its name leads home only, it says so.
+	t.Setenv("FAKE_PUBLIC_DNS", "docs.example.com=10.0.0.16")
+	if out, code := homelabCmd(t, root, "", "away", "off", "paperless"); code != 0 || !strings.Contains(out, "the internet's DNS doesn't reach it") {
+		t.Fatalf("home record: exit %d\n%s", code, out)
+	}
+}
+
+// #975: each app kept home only is checked as the internet sees its name,
+// failing while it answers from a public address; a name that can't be
+// looked up now has no check at all, rather than a pass.
+func TestHomeOnlyChecks(t *testing.T) {
+	root, _ := repoCopy(t, "HOMELAB_DOMAIN=example.com")
+	h, err := newHomelab(&ui.UI{Out: &strings.Builder{}}, root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, id := range []string{"vaultwarden", "paperless"} {
+		if err := applist.HomeOnly.Set(root, id, true); err != nil {
+			t.Fatal(err)
+		}
+	}
+	vw, _ := h.catalog.Get("vaultwarden")
+	pl, _ := h.catalog.Get("paperless")
+	t.Setenv("FAKE_PUBLIC_DNS", vw.Subdomain()+".example.com=104.21.32.1;"+pl.Subdomain()+".example.com=10.0.0.16")
+	rs := h.homeOnlyChecks(context.Background(), "example.com")
+	byName := map[string]error{}
+	for _, r := range rs {
+		byName[r.Name] = r.Err
+	}
+	if len(rs) != 2 {
+		t.Fatalf("%+v", rs)
+	}
+	if err := byName["home only (Vaultwarden)"]; err == nil || !strings.Contains(err.Error(), "answers from the internet at 104.21.32.1 (Cloudflare's, so through the tunnel)") || !strings.Contains(err.Error(), "domain setup --apply") {
+		t.Errorf("Vaultwarden through the tunnel: %v", err)
+	}
+	if err := byName["home only (Paperless-ngx)"]; err != nil {
+		t.Errorf("Paperless-ngx on the home record: %v", err)
+	}
+
+	// No network: no verdict, so no check that would read as recovered.
+	was := publicLookup
+	publicLookup = func(context.Context, string) ([]string, error) { return nil, errors.New("network is unreachable") }
+	t.Cleanup(func() { publicLookup = was })
+	if rs := h.homeOnlyChecks(context.Background(), "example.com"); len(rs) != 0 {
+		t.Errorf("no network: %+v", rs)
 	}
 }
