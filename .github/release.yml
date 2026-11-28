@@ -1,0 +1,17 @@
+# Grouping for the notes GitHub writes itself (Generate release notes, or
+# gh release create --generate-notes), as plain-English sections. The
+# numbered releases' own notes come from CHANGELOG.md (docs/Release
+# Process.md); this is for a release whose notes are generated instead.
+changelog:
+  exclude:
+    labels: [chore, ci, docs, polish, dependencies, skip-changelog]
+    authors: [dependabot, "dependabot[bot]", "github-actions[bot]"]
+  categories:
+    - title: New
+      labels: [new, feature, enhancement]
+    - title: Improved
+      labels: [improved, improvement]
+    - title: Fixed
+      labels: [fixed, fix, bug, security]
+    - title: Everything else
+      labels: ["*"]
