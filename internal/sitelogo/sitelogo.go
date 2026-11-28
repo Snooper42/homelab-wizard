@@ -84,9 +84,13 @@ var Public = func(ip net.IP) bool {
 var errPrivate = errors.New("that address is on this machine or the home network, not a company's website")
 
 func client() *http.Client {
+	// Read once: the transport can still dial in the background after a
+	// fetch returns (a spare connection it had started), and that dial must
+	// not read Public while it is being changed.
+	public := Public
 	dialer := &net.Dialer{Timeout: 8 * time.Second, Control: func(_, address string, _ syscall.RawConn) error {
 		host, _, err := net.SplitHostPort(address)
-		if err != nil || !Public(net.ParseIP(host)) {
+		if err != nil || !public(net.ParseIP(host)) {
 			return errPrivate
 		}
 		return nil
