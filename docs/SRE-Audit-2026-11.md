@@ -17,7 +17,7 @@ Every fix here is `MERGED` at most. None is `VERIFIED` until the owner runs it o
 | H2 | High | Rollback | A rollback that put data back only in part starts the app on the mix | Fixed |
 | H3 | High | Rollback | The pre-update copy can keep an old dump, which a rollback then loads | Fixed |
 | H4 | High | Secrets | `homelab logs --explain` sends `.env` values to the model | Fixed |
-| H5 | High | Backups | An unplugged media drive is backed up as every photo deleted, silently | Fixed (detected and alerted) |
+| H5 | High | Backups | An unplugged media drive is backed up as every photo deleted, silently | Fixed (detected, alerted, and Duplicati's own run refused) |
 | H6 | High | Backups | A missing backup folder is not caught before the night's backups | Fixed (detected and alerted) |
 | M1 | Medium | Backups | Dumps and archives are renamed into place without `fsync` | Open |
 | M2 | Medium | Restore | Putting a volume back empties it before extracting | Open (mitigated) |
@@ -67,7 +67,7 @@ Every fix here is `MERGED` at most. None is `VERIFIED` until the owner runs it o
   - **H5:** the media drive is unplugged, and Duplicati's Homelab Photos job backs up Docker's empty folder: every photo is recorded as deleted, and the job succeeds. Smart retention keeps older versions for up to a year, but the *newest* version, which a blind restore takes, is empty.
   - **H6:** the backup drive is unplugged, or Proton Drive is not running. The backups have nowhere real to go.
 - **Fixed:** the nightly backup now runs `duplicati.Preflight` when Duplicati is installed. It fails, and therefore alerts, when the backup folder is not there, or when a large job's folder here is empty or missing while its backup holds files. A new homelab with nothing backed up yet is not flagged. Held by `TestPreflight` and `TestBackupFailsWhenDuplicatiWouldBackUpNothing`.
-- **Not done (needs the Mac):** stopping Duplicati's own scheduled run. Duplicati runs on its own clock, inside its container. The safe follow-up is a `run-script-before-required` check in each large job; it is listed for Phase 3 because it can only be proven against the real image.
+- **Duplicati's own run is now stopped too (Nov 28):** each large job runs a guard before it backs up (`run-script-before-required`, `internal/duplicati/guard.go`), which refuses while the job's folder is empty or holds only hidden files. `duplicati setup` puts it on new jobs, and the nightly backup adds it to jobs made before. Proven against the real `linuxserver/duplicati` image and server: with the folder empty, no new version, and the job's last error the guard's; with a photo in it, the next version as before. Writing a job back keeps its passphrase (Duplicati returns it masked): its next backup opened with the real passphrase and refused the mask.
 
 ### Medium (recorded, not fixed in the reset)
 

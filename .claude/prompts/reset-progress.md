@@ -68,7 +68,7 @@ The one backlog during the stop-the-line reliability reset (`CLAUDE.md`, `lanes.
 - **Owner notice:** `homelab doctor` no longer says Calibre-Web's default login still works when its library isn't set yet; it says to set *Location of Calibre database* instead.
 - **Files:** `internal/claim/{claim,claim_test}.go`, `app/tray/menu_linux_test.go`, `CLAUDE.md` (rule 9: `-timeout 30m`), `CHANGELOG.md`.
 
-### PR 11: the live check every night against real Docker, PostgreSQL 18 and Immich's image
+### PR 11: the live check every night against real Docker, PostgreSQL 18 and Immich's image, #980, merged
 
 - **Owner notice:** `./homelab doctor --live` now also puts a PostgreSQL 18 database back across an update's schema change with an app's session still open, and dumps and restores Immich's own database image, and the nightly CI runs the whole live check against real Docker, so a break shows up the next morning, not on the Mac.
 - **Files:** `test/realdocker/live_test.go` (new), `.github/workflows/nightly.yml` (the `live` job), `cmd/homelab/{verifylive,verifylive_test,fakebin_test}.go`, `docs/{Known Issues,SRE-Audit-2026-11}.md`, `.claude/prompts/owner.md` (the expected rows).
@@ -76,10 +76,16 @@ The one backlog during the stop-the-line reliability reset (`CLAUDE.md`, `lanes.
 - **Also fixed here:** the nightly `real-docker` job was red on main since Nov 27: Paperless-AI's newest image asks for a setup code when it already holds Paperless's token. The run now reads the code from its log and sends it (`x-setup-code`), and the app's note tells the household where it is.
 - **And behind it:** the nightly's phone page script (`app/preview/real.mjs`) still waited for Status' rows right after pairing and for a Backups button in the strip, both gone since #914 and #921 (Status opens on its Overview; Backups is one of Status' pages, in its dropdown on a phone). It now goes as `app/preview/shoot.mjs`'s `toBackups` does; tried against a real companion here.
 
+### PR 12: Duplicati refuses to back up an unplugged drive's empty folder (SRE audit H5, the rest of it)
+
+- **Owner notice:** if the photos' drive (or Jellyfin's, Calibre's, the synced Files') is unplugged when Duplicati's own 1 AM schedule runs, that job now stops with an error and an alert instead of recording every photo as deleted; with the drive back, the next run backs up as before.
+- **Files:** `internal/duplicati/{guard,guard_test,guard_unix_test}.go` (new), `internal/duplicati/create.go` (`NewJob.Guard`), `cmd/homelab/duplicati.go` (`ensureGuards`, on setup and on the nightly's missing-jobs pass), `docs/SRE-Audit-2026-11.md` (H5), `CHANGELOG.md`.
+- **Proven against the real `linuxserver/duplicati` server (Linux):** an empty source made no new version and left the guard's error as the job's last; with a photo, the next run made one. A job written back through the API keeps its real passphrase (the API returns it masked): its next backup opened with the real one and refused the mask.
+
 ## Open risks
 
 - **Each Phase 2 fix is `MERGED` at most:** it is proven against a fake `docker` and fake `psql`. A real Immich or Paperless rollback across a schema change (H1) and a real unplugged drive (H5) are for the Mac run in Phase 4.
-- **Duplicati still runs its own schedule:** the preflight alerts, but cannot stop the 1 AM Photos job from backing up an empty folder. The follow-up is a `run-script-before-required` guard on large jobs, which needs the real image (Phase 3, backups).
+- **Duplicati's own schedule:** a large job's `run-script-before-required` guard (PR 12) stops a run on an empty folder; it is proven against the real server on Linux, `READY FOR MAC VERIFICATION` with a real unplugged drive.
 - **M1 to M8** in the audit are recorded, not fixed.
 - **`make coverage` here** reads `internal/ports` at 82.7% (floor 83%). That package is unchanged, and this container runs as root, so its not-root branch goes unrun here. CI, which is not root, measures it. The floor is not lowered.
 - `lanes.md` rule 6 still applies to phone-facing changes. PR 2 only removes powers, as the owner decided on Nov 27.
