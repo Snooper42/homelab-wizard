@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/Snooper42/homelab-wizard/internal/catalog"
@@ -99,5 +100,35 @@ func TestEveryPublicAppIsClaimedBeforeItIsPublic(t *testing.T) {
 	}
 	if n < 5 {
 		t.Errorf("only %d public apps: the test no longer sees them", n)
+	}
+}
+
+// The owner's Mac, Nov 28, 2026: a Calibre-Web with no library set sends
+// every page, /opds and its default login included, to /login?next=/admin/dbconfig.
+// Followed, that sign-in page's 200 read as "its default login still works".
+// The redirect is the app's answer: to the library's setting, it can't be told
+// (and says which setting); to the sign-in alone, the login was refused.
+func TestCalibreWebsRedirects(t *testing.T) {
+	for _, c := range []struct {
+		location string
+		claimed  bool
+		why      string
+	}{
+		{"/login?next=%2Fadmin%2Fdbconfig", false, "Location of Calibre database"},
+		{"/login", true, ""},
+		{"/elsewhere", false, "did not answer"},
+	} {
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.URL.Path != "/opds" {
+				_, _ = w.Write([]byte("<form>sign in</form>")) // the sign-in page, 200
+				return
+			}
+			http.Redirect(w, r, c.location, http.StatusFound)
+		}))
+		got, why := Claimed(context.Background(), "calibre-web", srv.URL)
+		srv.Close()
+		if got != c.claimed || !strings.Contains(why, c.why) || strings.Contains(why, "still works") {
+			t.Errorf("redirected to %s: %v %q", c.location, got, why)
+		}
 	}
 }
