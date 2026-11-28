@@ -178,6 +178,9 @@ func (h *homelab) duplicatiSetup(ctx context.Context, args []string) error {
 	}
 	if creating == 0 {
 		u.OK("nothing to create")
+		if *apply {
+			h.ensureGuards(ctx, c, existing)
+		}
 		return h.duplicatiAlerts(ctx, c, env, true)
 	}
 	newKeys := []string{}
@@ -219,12 +222,17 @@ func (h *homelab) duplicatiSetup(ctx context.Context, args []string) error {
 		}
 		u.OK("passphrases saved in .env (%s)", strings.Join(newKeys, ", "))
 	}
-	// The folders the jobs read and write, so a first run finds them.
+	// The folders the jobs read and write, so a first run finds them, and
+	// the large jobs' guards, which each runs before it backs up.
 	for _, d := range []string{"databases", "volumes", "secrets"} {
 		if err := os.MkdirAll(h.stagingDir(d), 0o755); err != nil {
 			return err
 		}
 	}
+	if err := duplicati.WriteGuards(h.stagingDir()); err != nil {
+		return fmt.Errorf("writing the large jobs' guards: %w", err)
+	}
+	h.ensureGuards(ctx, c, existing)
 	for _, p := range plan {
 		if p.Action == "create" {
 			if err := os.MkdirAll(filepath.Join(dest, p.Job.Folder), 0o755); err != nil {
@@ -260,7 +268,7 @@ func (h *homelab) duplicatiSetup(ctx context.Context, args []string) error {
 		id, err := c.Create(ctx, duplicati.NewJob{
 			Name: p.Job.Name, Description: "Made by homelab duplicati setup (docs/Automation.md)",
 			Sources: p.Job.Sources, Exclude: p.Job.Exclude, Target: "file:///destination/" + p.Job.Folder,
-			Passphrase: env[key], Every: p.Job.Every, First: p.First,
+			Passphrase: env[key], Every: p.Job.Every, First: p.First, Guard: duplicati.GuardPath(p.Job),
 		})
 		if err != nil {
 			return fmt.Errorf("creating %s: %w", p.Job.Name, err)
@@ -404,6 +412,32 @@ func (h *homelab) hostPath(p string) string {
 	return filepath.Join(h.root, p)
 }
 
+// ensureGuards writes the large jobs' guards and puts each in its job in
+// Duplicati, for jobs made before they had one: Duplicati then refuses to
+// back up an unplugged drive's empty folder (internal/duplicati/guard.go).
+// Best effort, said when it can't: the job runs as before.
+func (h *homelab) ensureGuards(ctx context.Context, c *duplicati.Client, existing []duplicati.Job) {
+	if err := duplicati.WriteGuards(h.stagingDir()); err != nil {
+		h.ui.Warn("the large backup jobs' guards: %v", err)
+		return
+	}
+	for _, e := range existing {
+		for _, j := range duplicati.HomelabJobs {
+			guard := duplicati.GuardPath(j)
+			if guard == "" || !strings.EqualFold(e.Name, j.Name) {
+				continue
+			}
+			changed, err := c.EnsureGuard(ctx, e.ID, guard)
+			switch {
+			case err != nil:
+				h.ui.Warn("%s: its guard against an unplugged drive could not be added: %v", j.Name, err)
+			case changed:
+				h.ui.OK("%s: won't back up its folder while the folder is empty (an unplugged drive)", j.Name)
+			}
+		}
+	}
+}
+
 // addMissingBackupJobs makes the homelab's backup jobs added since Setup
 // made the others (Homelab Files, N76), so a homelab set up before they
 // existed gets them too: only once Setup has made jobs, and only those
@@ -427,6 +461,8 @@ func (h *homelab) addMissingBackupJobs(ctx context.Context) {
 	if !setUp {
 		return // Setup › Create the backup jobs makes them all
 	}
+	// The large jobs made before they had a guard get it (ensureGuards).
+	h.ensureGuards(ctx, c, existing)
 	env := h.envMap()
 	env["SYNC_ROOT"] = h.hostPath(cmp.Or(env["SYNC_ROOT"], "./data/sync"))
 	home, _ := os.UserHomeDir()

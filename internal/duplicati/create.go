@@ -25,6 +25,9 @@ type NewJob struct {
 	Passphrase  string
 	Every       string    // how often: 1D or 1W
 	First       time.Time // the first scheduled run; later runs keep its time of day
+	// Guard is a script Duplicati runs before each backup, which stops it
+	// on failing (GuardPath); "" for none.
+	Guard string
 }
 
 // Create adds the job and returns its ID. Duplicati refuses a name that
@@ -43,6 +46,16 @@ func (c *Client) Create(ctx context.Context, j NewJob) (string, error) {
 	for i, x := range j.Exclude {
 		filters = append(filters, filter{Order: i, Include: false, Expression: x})
 	}
+	settings := []setting{
+		{"encryption-module", "aes"},
+		{"compression-module", "zip"},
+		{"dblock-size", "50mb"},
+		{"passphrase", j.Passphrase},
+		{"retention-policy", SmartRetention},
+	}
+	if j.Guard != "" {
+		settings = append(settings, setting{GuardOption, j.Guard})
+	}
 	body, _ := json.Marshal(map[string]any{
 		"Backup": map[string]any{
 			"Name":        j.Name,
@@ -51,13 +64,7 @@ func (c *Client) Create(ctx context.Context, j NewJob) (string, error) {
 			"TargetURL":   j.Target,
 			"Sources":     j.Sources,
 			"Filters":     filters,
-			"Settings": []setting{
-				{"encryption-module", "aes"},
-				{"compression-module", "zip"},
-				{"dblock-size", "50mb"},
-				{"passphrase", j.Passphrase},
-				{"retention-policy", SmartRetention},
-			},
+			"Settings":    settings,
 		},
 		"Schedule": map[string]any{
 			"Repeat": j.Every,
