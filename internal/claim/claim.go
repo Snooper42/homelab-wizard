@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -31,6 +32,10 @@ type claimCheck struct {
 	basic [2]string      // a login a fresh install takes, refused once claimed
 }
 
+// NoLibrary starts the why of a Calibre-Web with no Calibre library set yet:
+// until it has one it can't say whether its default login was changed.
+const NoLibrary = "its library isn't set yet"
+
 var claimChecks = map[string]claimCheck{
 	"immich-server":  {path: "/api/server/config", field: "isInitialized"},
 	"audiobookshelf": {path: "/status", field: "isInit"},
@@ -40,6 +45,15 @@ var claimChecks = map[string]claimCheck{
 	// Its sign-up page says so only while it is the first account (asked
 	// with no Accept-Language, so in its default English).
 	"paperless": {path: "/accounts/signup/", page: regexp.MustCompile(`first user account for this installation`)},
+}
+
+// Advice is the line Set up the domain shows for an app named name that
+// waits, given why it waits: what to do so it can go through the tunnel.
+func Advice(name, why string) string {
+	if strings.HasPrefix(why, NoLibrary) {
+		return name + " stays off the internet until its library is set: sign in at home (or on the tailnet), set Admin › Database configuration › Location of Calibre database to /books, then Set up the domain again"
+	}
+	return name + " stays off the internet until it has its first account: " + why + ". Open it at home (or on the tailnet) and make it, then Set up the domain again"
 }
 
 // Claimed says whether app, answering at base, has its first account,
@@ -64,10 +78,14 @@ func Claimed(ctx context.Context, app, base string) (bool, string) {
 	if err != nil {
 		return false, err.Error()
 	}
+	client := http.DefaultClient
 	if c.basic[0] != "" {
 		req.SetBasicAuth(c.basic[0], c.basic[1])
+		// A redirect is the answer: followed, it lands on a sign-in page
+		// that opens whatever the login (Calibre-Web with no library).
+		client = &http.Client{CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}
 	}
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := client.Do(req)
 	if err != nil {
 		return false, "it did not answer whether it has its first account"
 	}
@@ -82,6 +100,14 @@ func Claimed(ctx context.Context, app, base string) (bool, string) {
 		// The default login refused: it has been changed.
 		if resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden {
 			return true, ""
+		}
+		if loc := resp.Header.Get("Location"); resp.StatusCode/100 == 3 && loc != "" {
+			// Calibre-Web with no library sends every page to its
+			// database settings by way of the sign-in page.
+			if strings.Contains(loc, "dbconfig") {
+				return false, NoLibrary
+			}
+			return false, "it did not say whether its default login was changed: it sent the question to another page"
 		}
 		return false, "its default login (" + c.basic[0] + "/" + c.basic[1] + ") still works"
 	case resp.StatusCode != http.StatusOK:

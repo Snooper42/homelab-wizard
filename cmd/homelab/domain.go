@@ -370,6 +370,11 @@ func (h *homelab) domainSetup(ctx context.Context, args []string) error {
 			apps = append(apps, r.App)
 		}
 		u.Info("home only, kept off the internet: %s %s", homeOnlyNames(apps), u.Dim("(Reach it away from home, on each one's page)"))
+		if exposed, _, err := h.homeOnlyOnTheInternet(ctx, envMap); err == nil {
+			for _, e := range exposed {
+				u.Warn("on the internet now, though kept home only: %s: taken off when this goes ahead", e)
+			}
+		}
 	}
 	scheme := "http"
 	if o.ssl || h.hasWildcard(ctx, envMap, dom) {
@@ -668,6 +673,7 @@ func (h *homelab) domainStatus(ctx context.Context) error {
 	if len(homeOnly) > 0 {
 		u.Info("home only: %s", homeOnlyNames(homeOnly))
 	}
+	h.sayHomeOnlyExposure(ctx, env, false)
 	if st, _ := report.State(npmID); st != detect.Running {
 		u.Warn("Nginx Proxy Manager is not running")
 		return nil

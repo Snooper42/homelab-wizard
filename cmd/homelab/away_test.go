@@ -171,3 +171,44 @@ func TestANewPublicAppStartsHomeOnly(t *testing.T) {
 		t.Errorf("home only after the install: %q, want audiobookshelf alone", got)
 	}
 }
+
+// An app kept home only whose tunnel route and DNS record are still in
+// Cloudflare (made before it was marked home only, with Set up the domain
+// not run since: Vaultwarden and Paperless-ngx on the owner's homelab, Nov
+// 28) is said, loudly, by domain status, domain setup's plan and doctor,
+// and doctor fails; once it is off, domain status says so.
+func TestAHomeOnlyAppStillOnTheInternetIsSaid(t *testing.T) {
+	fakeDocker(t, []docker.FakeContainer{
+		{Name: "homelab_security-vaultwarden-1", Image: "vaultwarden/server", Running: true, Project: "homelab_security", Service: "vaultwarden"},
+	})
+	f := newFakeTunnel(t)
+	f.ingress = []map[string]any{
+		{"hostname": "passwords.example.com", "service": tunnelService},
+		{"service": "http_status:404"},
+	}
+	f.dns["passwords.example.com"] = "tun-1.cfargotunnel.com"
+	token := base64.StdEncoding.EncodeToString([]byte(`{"a":"acct","t":"tun-1","s":"c2VjcmV0"}`))
+	root, _ := repoCopy(t, "TUNNEL_TOKEN="+token, "CLOUDFLARE_API_TOKEN=cf-token", "HOMELAB_DOMAIN=example.com")
+	if err := applist.HomeOnly.Set(root, "vaultwarden", true); err != nil {
+		t.Fatal(err)
+	}
+	said := "on the internet, though kept home only: Vaultwarden (passwords.example.com: its record in Cloudflare DNS points at the tunnel"
+
+	out, _ := homelabCmd(t, root, "", "domain", "status")
+	if !strings.Contains(out, said) || !strings.Contains(out, "homelab domain setup --apply") {
+		t.Fatalf("domain status doesn't say Vaultwarden is on the internet:\n%s", out)
+	}
+	if out, _ := homelabCmd(t, root, "", "domain", "setup", "--dry-run"); !strings.Contains(out, "on the internet now, though kept home only: Vaultwarden") {
+		t.Errorf("domain setup's plan doesn't say it:\n%s", out)
+	}
+	out, code := homelabCmd(t, root, "", "doctor")
+	if !strings.Contains(out, said) || code == 0 {
+		t.Errorf("doctor (exit %d) should fail on it:\n%s", code, out)
+	}
+
+	f.ingress = []map[string]any{{"service": "http_status:404"}}
+	delete(f.dns, "passwords.example.com")
+	if out, _ := homelabCmd(t, root, "", "domain", "status"); strings.Contains(out, "on the internet, though") || !strings.Contains(out, "the home-only apps are off the internet (asked Cloudflare)") {
+		t.Errorf("once it's off:\n%s", out)
+	}
+}

@@ -233,6 +233,56 @@ func Unpublish(ctx context.Context, cf *Cloudflare, t Tunnel, zone string, hosts
 	return un, nil
 }
 
+// Exposed says which of hosts still open away from home, and why, only
+// reading: the tunnel sends a request for the name on (its own rule, a
+// wildcard rule, or a catch-all that isn't a refusal), and Cloudflare's DNS
+// sends the name to the tunnel (its own CNAME record, or, when it has no
+// record of its own, the zone's wildcard). For the home-only apps: on the
+// owner's homelab, Vaultwarden and Paperless-ngx were, from records made
+// before they were marked home only, while Set up the domain hadn't run.
+func Exposed(ctx context.Context, cf *Cloudflare, t Tunnel, zone string, hosts []string) ([]string, error) {
+	_, rules, err := cf.TunnelIngress(ctx, t)
+	if err != nil {
+		return nil, err
+	}
+	zoneID, err := cf.ZoneID(ctx, zone)
+	if err != nil {
+		return nil, err
+	}
+	var out []string
+	for _, h := range hosts {
+		h = strings.ToLower(h)
+		rule := carrier(rules, h)
+		if rule == "" {
+			continue
+		}
+		own, err := cf.records(ctx, zoneID, h)
+		if err != nil {
+			return nil, err
+		}
+		via := ""
+		switch {
+		case len(own) > 0:
+			if cnameTo(own, t.Target()) {
+				via = "its record"
+			}
+		case strings.Contains(h, "."):
+			wild := "*." + h[strings.Index(h, ".")+1:]
+			recs, err := cf.records(ctx, zoneID, wild)
+			if err != nil {
+				return nil, err
+			}
+			if cnameTo(recs, t.Target()) {
+				via = wild
+			}
+		}
+		if via != "" {
+			out = append(out, h+": "+via+" in Cloudflare DNS points at the tunnel, and the tunnel's "+rule+" sends it on")
+		}
+	}
+	return out, nil
+}
+
 // carrier names the tunnel's rule that a request for host meets first
 // once its own is gone, when that rule sends it somewhere (not a plain
 // refusal, http_status:…); "" when none does. Rules are matched as

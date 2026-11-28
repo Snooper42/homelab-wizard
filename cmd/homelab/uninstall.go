@@ -12,6 +12,7 @@ import (
 
 	"github.com/Snooper42/homelab-wizard/internal/backup"
 	"github.com/Snooper42/homelab-wizard/internal/docker"
+	"github.com/Snooper42/homelab-wizard/internal/domain"
 	"github.com/Snooper42/homelab-wizard/internal/host"
 	"github.com/Snooper42/homelab-wizard/internal/notify"
 	"github.com/Snooper42/homelab-wizard/internal/procattr"
@@ -109,6 +110,13 @@ func (h *homelab) uninstall(ctx context.Context, args []string) error {
 		u.Warn("DELETE EVERYTHING ELSE in %s: every other container, image, volume (with its data), and network, the homelab's or not, and the build cache", h.host.Runtime)
 	}
 	u.Info("keep the media drive")
+	// Left behind, the rule that sends the domain's names to AdGuard Home
+	// here breaks them on this machine once the homelab is gone (the
+	// owner's PC, Nov 28).
+	resolver := env["HOMELAB_DOMAIN"] != "" && domain.ResolverPresent(env["HOMELAB_DOMAIN"])
+	if resolver {
+		u.Info("take back %s, so %s names are looked up as before the homelab", domain.ResolverWhere(env["HOMELAB_DOMAIN"]), env["HOMELAB_DOMAIN"])
+	}
 	if err := h.goAhead(*apply, "\nUninstall?"); err != nil {
 		return err
 	}
@@ -222,7 +230,13 @@ func (h *homelab) uninstall(ctx context.Context, args []string) error {
 		}
 	}
 
-	if h.findsByName() {
+	if resolver {
+		if err := domain.RemoveResolver(env["HOMELAB_DOMAIN"]); err != nil {
+			u.Warn("%s still sends %s names to AdGuard Home (%v): homelab domain resolver --undo takes that back", h.host.Machine, env["HOMELAB_DOMAIN"], err)
+		} else {
+			u.OK("took back %s", domain.ResolverWhere(env["HOMELAB_DOMAIN"]))
+		}
+	} else if h.findsByName() {
 		u.Info("%s still finds its apps by name: homelab domain resolver --undo takes that back (it asks for the administrator's password)", h.host.Machine)
 	}
 	var left []string

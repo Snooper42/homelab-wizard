@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/Snooper42/homelab-wizard/internal/applist"
 	"github.com/Snooper42/homelab-wizard/internal/catalog"
@@ -90,4 +91,65 @@ func homeOnlyNames(list []*catalog.App) string {
 		names = append(names, a.Name())
 	}
 	return strings.Join(names, ", ")
+}
+
+// homeOnlyOnTheInternet asks Cloudflare whether any app kept home only still
+// opens away from home (domain.Exposed): a tunnel route and a DNS record
+// left from before it was marked home only, which nothing else notices
+// until Set up the domain runs again (Vaultwarden and Paperless-ngx on the
+// owner's homelab, Nov 28). checked is false when it can't be asked: no
+// domain, tunnel or Cloudflare token, or no app kept home only.
+func (h *homelab) homeOnlyOnTheInternet(ctx context.Context, env map[string]string) (exposed []string, checked bool, err error) {
+	dom := env["HOMELAB_DOMAIN"]
+	if dom == "" || env["TUNNEL_TOKEN"] == "" || env["CLOUDFLARE_API_TOKEN"] == "" {
+		return nil, false, nil
+	}
+	var hosts []string
+	names := map[string]string{}
+	for _, a := range h.catalog.Apps {
+		if a.Public() && h.homeOnly(a) {
+			host := strings.ToLower(a.Subdomain() + "." + dom)
+			hosts = append(hosts, host)
+			names[host] = a.Name()
+		}
+	}
+	if len(hosts) == 0 {
+		return nil, false, nil
+	}
+	tunnel, err := domain.ParseTunnelToken(env["TUNNEL_TOKEN"])
+	if err != nil {
+		return nil, false, err
+	}
+	cf := domain.NewCloudflare(env["CLOUDFLARE_API_TOKEN"])
+	cf.BaseURL = cloudflareAPI
+	ctx, cancel := context.WithTimeout(ctx, 20*time.Second)
+	defer cancel()
+	found, err := domain.Exposed(ctx, cf, tunnel, dom, hosts)
+	if err != nil {
+		return nil, false, err
+	}
+	for _, f := range found {
+		host, _, _ := strings.Cut(f, ":")
+		exposed = append(exposed, names[host]+" ("+f+")")
+	}
+	return exposed, true, nil
+}
+
+// sayHomeOnlyExposure says, loudly, each app kept home only that still opens
+// away from home, and what takes it off; it returns how many.
+func (h *homelab) sayHomeOnlyExposure(ctx context.Context, env map[string]string, quietWhenFine bool) int {
+	u := h.ui
+	exposed, checked, err := h.homeOnlyOnTheInternet(ctx, env)
+	switch {
+	case err != nil:
+		u.Warn("couldn't ask Cloudflare whether the home-only apps are off the internet: %v", err)
+	case len(exposed) > 0:
+		for _, e := range exposed {
+			u.Fail("on the internet, though kept home only: %s", e)
+		}
+		u.Info("Set up the domain takes it off (Setup › Set up the domain, or homelab domain setup --apply)")
+	case checked && !quietWhenFine:
+		u.OK("the home-only apps are off the internet (asked Cloudflare)")
+	}
+	return len(exposed)
 }

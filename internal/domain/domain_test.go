@@ -621,3 +621,66 @@ func TestRoutesProwlarrThroughTheVPN(t *testing.T) {
 		}
 	}
 }
+
+// Exposed says which home-only hostnames still open away from home, only
+// reading: the tunnel sends a request for the name on (its own rule, a
+// wildcard rule, or a catch-all that isn't a refusal) and Cloudflare's DNS
+// sends the name to the tunnel (its own CNAME, or the zone's wildcard when
+// it has no record of its own). Vaultwarden and Paperless-ngx were found
+// that way on the owner's homelab on Nov 28, while domain status said
+// "home only, kept off the internet".
+func TestExposed(t *testing.T) {
+	const proxy = "http://nginx-proxy-manager:80"
+	config := map[string]any{"ingress": []map[string]any{
+		{"hostname": "passwords.example.com", "service": proxy},
+		{"hostname": "notes.example.com", "service": proxy},
+		{"hostname": "*.media.example.com", "service": proxy},
+		{"service": "http_status:404"},
+	}}
+	records := []map[string]any{
+		{"name": "passwords.example.com", "type": "CNAME", "content": "tun-1.cfargotunnel.com."},
+		{"name": "notes.example.com", "type": "A", "content": "203.0.113.4"},                  // its own record: the tunnel never sees it
+		{"name": "*.media.example.com", "type": "CNAME", "content": "tun-1.cfargotunnel.com"}, // the household's wildcard
+		{"name": "*.example.com", "type": "A", "content": "192.168.1.10"},                     // the home record
+	}
+	gets := 0
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ok := func(v any) { _ = json.NewEncoder(w).Encode(map[string]any{"success": true, "result": v}) }
+		switch {
+		case strings.HasSuffix(r.URL.Path, "/cfd_tunnel/tun-1/configurations") && r.Method == http.MethodGet:
+			ok(map[string]any{"config": config})
+		case r.URL.Path == "/zones":
+			ok([]map[string]string{{"id": "z1"}})
+		case r.URL.Path == "/zones/z1/dns_records" && r.Method == http.MethodGet:
+			gets++
+			var hits []map[string]any
+			for _, rec := range records {
+				if rec["name"] == r.URL.Query().Get("name") {
+					hits = append(hits, rec)
+				}
+			}
+			ok(hits)
+		default:
+			t.Errorf("Exposed only reads: %s %s", r.Method, r.URL.Path)
+			w.WriteHeader(404)
+		}
+	}))
+	defer srv.Close()
+	cf := NewCloudflare("tok")
+	cf.BaseURL = srv.URL
+	hosts := []string{"Passwords.example.com", "notes.example.com", "docs.media.example.com", "books.example.com"}
+	got, err := Exposed(context.Background(), cf, Tunnel{AccountID: "acct", ID: "tun-1"}, "example.com", hosts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []string{
+		"passwords.example.com: its record in Cloudflare DNS points at the tunnel, and the tunnel's rule for passwords.example.com (" + proxy + ") sends it on",
+		"docs.media.example.com: *.media.example.com in Cloudflare DNS points at the tunnel, and the tunnel's rule for *.media.example.com (" + proxy + ") sends it on",
+	}
+	if strings.Join(got, "\n") != strings.Join(want, "\n") {
+		t.Errorf("exposed:\n%s\nwant:\n%s", strings.Join(got, "\n"), strings.Join(want, "\n"))
+	}
+	if gets == 0 {
+		t.Error("DNS never asked")
+	}
+}

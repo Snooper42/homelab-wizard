@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/Snooper42/homelab-wizard/internal/catalog"
@@ -58,6 +59,40 @@ func TestClaimed(t *testing.T) {
 	}
 }
 
+// Calibre-Web with no library set sends every page, its feed and the default
+// login's too, to the sign-in page on the way to its database settings
+// (/login?next=/admin/dbconfig; the owner's Mac, Nov 28). That says nothing
+// about the default login: it was taken for it working. Any other redirect
+// can't tell either; neither is ever counted as claimed.
+func TestCalibreWebWithoutItsLibrary(t *testing.T) {
+	for _, c := range []struct {
+		location, why string
+	}{
+		{"/login?next=%2Fadmin%2Fdbconfig", NoLibrary},
+		{"http://127.0.0.1:8083/login?next=%2Fadmin%2Fdbconfig", NoLibrary},
+		{"/login?next=%2Fopds", "it did not say"},
+	} {
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.URL.Path != "/opds" {
+				_, _ = w.Write([]byte("<form>Sign in</form>")) // what following the redirect would find
+				return
+			}
+			http.Redirect(w, r, c.location, http.StatusFound)
+		}))
+		got, why := Claimed(context.Background(), "calibre-web", srv.URL)
+		srv.Close()
+		if got || !strings.HasPrefix(why, c.why) || strings.Contains(why, "still works") {
+			t.Errorf("redirected to %s: claimed %v, %q; want not claimed, %q", c.location, got, why, c.why)
+		}
+	}
+}
+
+func TestNoAppClaimedByAnUnknownApp(t *testing.T) {
+	if ok, _ := Claimed(context.Background(), "vaultwarden", "http://127.0.0.1:1"); !ok {
+		t.Error("an app no one can claim from the web held back")
+	}
+}
+
 // The question (Calibre-Web's carries its default login) goes only to this
 // machine's loopback: an address elsewhere is never asked.
 func TestAskedOnlyOnThisMachine(t *testing.T) {
@@ -99,5 +134,16 @@ func TestEveryPublicAppIsClaimedBeforeItIsPublic(t *testing.T) {
 	}
 	if n < 5 {
 		t.Errorf("only %d public apps: the test no longer sees them", n)
+	}
+}
+
+// Advice says what to do next for each reason an app waits: make its first
+// account, or, for Calibre-Web with no library, set the library.
+func TestAdviceForEachReason(t *testing.T) {
+	if a := Advice("Calibre-Web", NoLibrary); !strings.Contains(a, "/books") || strings.Contains(a, "first account") {
+		t.Errorf("no library: %q", a)
+	}
+	if a := Advice("Immich", "no one has made its first account yet"); !strings.HasPrefix(a, "Immich stays off the internet until it has its first account: no one has made") || !strings.Contains(a, "make it, then Set up the domain again") {
+		t.Errorf("no first account: %q", a)
 	}
 }

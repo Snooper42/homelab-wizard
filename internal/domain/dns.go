@@ -466,6 +466,30 @@ func (c *Cloudflare) UpsertHome(ctx context.Context, zoneID, name, ip string) (s
 	return "created", c.call(ctx, http.MethodPost, fmt.Sprintf("/zones/%s/dns_records", zoneID), rec, nil)
 }
 
+// dnsRecord is a DNS record's kind and what it holds.
+type dnsRecord struct {
+	Type    string `json:"type"`
+	Content string `json:"content"`
+}
+
+// records are name's DNS records in the zone (exact name, as Cloudflare
+// keeps it: "*.example.com" is the wildcard's own record).
+func (c *Cloudflare) records(ctx context.Context, zoneID, name string) ([]dnsRecord, error) {
+	var out []dnsRecord
+	err := c.call(ctx, http.MethodGet, fmt.Sprintf("/zones/%s/dns_records?name=%s", zoneID, url.QueryEscape(name)), nil, &out)
+	return out, err
+}
+
+// cnameTo is whether one of records is a CNAME pointing at target.
+func cnameTo(records []dnsRecord, target string) bool {
+	for _, r := range records {
+		if r.Type == "CNAME" && strings.EqualFold(strings.TrimSuffix(r.Content, "."), target) {
+			return true
+		}
+	}
+	return false
+}
+
 // pointsAt is whether name has a CNAME record pointing at target.
 func (c *Cloudflare) pointsAt(ctx context.Context, zoneID, name, target string) (bool, error) {
 	var records []struct {

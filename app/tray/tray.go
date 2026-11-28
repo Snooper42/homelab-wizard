@@ -209,6 +209,7 @@ type menu struct {
 
 	paused              atomic.Bool
 	backingUp, updating atomic.Bool
+	jobs                sync.WaitGroup             // Back up now and Update apps now while they run, so a test can wait for their last title
 	found               Found                      // the last look for updates
 	pushed              atomic.Pointer[api.Status] // the agent's Status with the last change, for the next refresh
 	checked             time.Time                  // the last good reading
@@ -427,14 +428,18 @@ func (m *menu) clicked(item *systray.MenuItem, openWizard func(string)) {
 		openWizard("update")
 	case m.backupNow:
 		if m.backingUp.CompareAndSwap(false, true) {
+			m.jobs.Add(1)
 			go func() {
+				defer m.jobs.Done()
 				defer m.backingUp.Store(false)
 				runBackup(m.backupNow, m.root)
 			}()
 		}
 	case m.updateNow:
 		if m.updating.CompareAndSwap(false, true) {
+			m.jobs.Add(1)
 			go func() {
+				defer m.jobs.Done()
 				defer m.updating.Store(false)
 				runUpdateAll(m.updateNow, m.root)
 			}()

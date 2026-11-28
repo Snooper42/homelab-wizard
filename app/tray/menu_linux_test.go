@@ -92,10 +92,14 @@ func TestMenu(t *testing.T) {
 
 	m.clicked(m.backupNow, open)
 	m.clicked(m.updateNow, open)
-	for end := time.Now().Add(10 * time.Second); time.Now().Before(end); time.Sleep(20 * time.Millisecond) {
-		if strings.Contains(m.backupNow.String(), "done") && strings.Contains(m.updateNow.String(), "done") {
-			break
-		}
+	// Each job sets its item's title from its own goroutine: wait for both
+	// to end (their last title written before Done) before reading them.
+	finished := make(chan struct{})
+	go func() { m.jobs.Wait(); close(finished) }()
+	select {
+	case <-finished:
+	case <-time.After(10 * time.Second):
+		t.Fatal("Back up now and Update apps now didn't finish within 10 seconds")
 	}
 	if !strings.Contains(m.backupNow.String(), "done") || !strings.Contains(m.updateNow.String(), "done") {
 		t.Fatalf("the jobs: %s, %s", m.backupNow.String(), m.updateNow.String())

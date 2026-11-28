@@ -36,7 +36,8 @@ Publishes the public apps on the internet without opening a single router port. 
 - A visitor's request goes Cloudflare's edge (TLS, firewall rules, DDoS protection) → the tunnel → `http://nginx-proxy-manager:80` on the tunnel's own network, `homelab-tunnel` → the app. Cloudflare holds the public certificate; inside the tunnel the request is plain HTTP to the proxy.
 - The proxy reads the visitor's real address from `CF-Connecting-IP`, so CrowdSec judges the visitor, not the tunnel. It takes that header only from cloudflared's fixed address on `homelab-tunnel` (198.18.89.2): a device at home or another app sending it is seen as itself.
 - cloudflared is on `homelab-tunnel` alone, so the proxy is all it can reach: a route added by hand in Cloudflare's dashboard that points straight at an app (`http://jellyfin:8096`) no longer works. Point it at `http://nginx-proxy-manager:80` with a proxy host for the name instead.
-- `./homelab domain setup` writes the routes and the DNS records through the Cloudflare API with `CLOUDFLARE_API_TOKEN`. It adds and updates; it never removes routes.
+- `./homelab domain setup` writes the routes and the DNS records through the Cloudflare API with `CLOUDFLARE_API_TOKEN`. It adds and updates, and removes only what it made for an app kept home only (*Reach it away from home* off); a route or record you added by hand stays.
+- `./homelab domain status` and `./homelab doctor` ask the same API whether an app kept home only still opens away from home (a route and a record left from before it was marked home only), and say so in red; `doctor` fails until Set up the domain takes it off.
 
 ## Where things live
 

@@ -21,7 +21,7 @@ func (h *homelab) mayPublish(ctx context.Context, a *catalog.App, env map[string
 	lookup := compose.MapLookup(env)
 	ok, why := claim.Claimed(ctx, a.ID, ports.WebURL(a, ports.AppBindings(a, lookup), lookup))
 	if !ok {
-		return false, a.Name() + " stays off the internet until it has its first account: " + why + ". Open it at home (or on the tailnet) and make it, then Set up the domain again"
+		return false, claim.Advice(a.Name(), why)
 	}
 	return true, ""
 }

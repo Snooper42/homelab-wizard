@@ -190,6 +190,7 @@ func (h *homelab) doctor(ctx context.Context, args []string) error {
 			u.Warn("the apps reach this machine's own apps (Jellyfin, the phone companion, Ollama) at %s (HOST_GATEWAY), but this machine's address is now %s: set it to %s in Settings, then homelab up; reserve the address in the router so it stays", gw, lan, lan)
 		}
 	}
+	exposedHomeOnly := h.sayHomeOnlyExposure(ctx, h.envMap(), true)
 	if name, ok := domain.DefaultVPN(); ok {
 		u.Warn("a VPN (%s) carries this machine's traffic, so phones and computers may not reach the homelab: turn the VPN off on this machine, or allow LAN connections and turn off its kill switch", name)
 	}
@@ -211,7 +212,7 @@ func (h *homelab) doctor(ctx context.Context, args []string) error {
 
 	u.Title("Settings")
 	issues := h.catalog.Validate(h.declaredVars())
-	errs := 0
+	errs := exposedHomeOnly // an app kept home only, on the internet: a failure, not a note
 	for _, i := range issues {
 		if i.Error {
 			errs++
