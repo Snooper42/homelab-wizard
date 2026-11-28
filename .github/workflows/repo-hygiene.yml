@@ -15,6 +15,9 @@ name: Repo hygiene
 
 on:
   pull_request:
+    # edited: a description fixed after opening is checked again (a re-run
+    # reads the event as it was when the run started).
+    types: [opened, synchronize, reopened, edited]
   schedule:
     - cron: "17 9 * * 1"
   workflow_dispatch:
