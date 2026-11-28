@@ -30,7 +30,7 @@ Before you branch, write one sentence that says **what the owner can click, run,
 6. **Destructive actions need the machine itself.** No phone, web page or remote caller can wipe the homelab, delete app data, or delete backups. Those need someone at the host and an explicit CLI confirmation (`--apply`, and the command's own prompt).
 7. **Track state.** After every phase or pull request, update `.claude/prompts/reset-progress.md`: completed pull requests, open risks, the exact files touched, and the next concrete step.
 8. **Decide the small things.** For a minor engineering choice, take the safest, most conservative option, write the assumption in `owner.md` under *Assumptions the agents made*, and keep going. Stop and ask only when an action could risk real household data or needs a secret or credential.
-9. **The checks every pull request passes:** `go test -race ./...`, `go vet ./...` (and `-tags forreal`), `make coverage` against `coverage-floors.txt`, `make security` (govulncheck and gosec), `go run ./cmd/homelab --root . validate`, and every CI job on the pull request.
+9. **The checks every pull request passes:** `go test -race -timeout 30m ./...` and `cd app && go test -race -timeout 30m ./...` (`cmd/homelab` alone takes over 10 minutes under `-race`, past Go's default timeout), `go vet ./...` (and `-tags forreal`), `make coverage` against `coverage-floors.txt`, `make security` (govulncheck and gosec), `go run ./cmd/homelab --root . validate`, and every CI job on the pull request.
 10. **Never commit to main directly.** No model name in a commit, a pull request, or a file.
 
 ## Scope freeze

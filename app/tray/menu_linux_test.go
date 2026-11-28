@@ -92,10 +92,12 @@ func TestMenu(t *testing.T) {
 
 	m.clicked(m.backupNow, open)
 	m.clicked(m.updateNow, open)
-	for end := time.Now().Add(10 * time.Second); time.Now().Before(end); time.Sleep(20 * time.Millisecond) {
-		if strings.Contains(m.backupNow.String(), "done") && strings.Contains(m.updateNow.String(), "done") {
-			break
-		}
+	// Waited on through the jobs' own flags, which they clear after their
+	// last title: the titles are read only then, as systray's SetTitle and
+	// String take no lock (go test -race found the read racing the write).
+	end := time.Now().Add(10 * time.Second)
+	for (m.backingUp.Load() || m.updating.Load()) && time.Now().Before(end) {
+		time.Sleep(20 * time.Millisecond)
 	}
 	if !strings.Contains(m.backupNow.String(), "done") || !strings.Contains(m.updateNow.String(), "done") {
 		t.Fatalf("the jobs: %s, %s", m.backupNow.String(), m.updateNow.String())
