@@ -908,6 +908,11 @@ func (h *homelab) watchdog(ctx context.Context, args []string) error {
 		h.ui.Warn("could not keep today's free space: %v", err)
 	}
 	results = append(results, runwayChecks(diskspace.LoadHistory(diskHist), vols, time.Now())...)
+	// Home-only apps checked to be home only, as the internet sees their
+	// names (homeOnlyChecks): whether or not the engine runs.
+	if dom := env["HOMELAB_DOMAIN"]; dom != "" {
+		results = append(results, h.homeOnlyChecks(ctx, dom)...)
+	}
 	if drives, err := checkDrives(ctx); err == nil {
 		results = append(results, driveChecks(drives)...)
 	}

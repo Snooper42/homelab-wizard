@@ -209,6 +209,16 @@ func (h *homelab) doctor(ctx context.Context, args []string) error {
 		}
 	}
 
+	if dom := h.envMap()["HOMELAB_DOMAIN"]; dom != "" {
+		// Kept home only, checked as the internet sees each name.
+		for _, r := range h.homeOnlyChecks(ctx, dom) {
+			if r.Err != nil {
+				problems++
+				u.Fail("%v", r.Err)
+			}
+		}
+	}
+
 	u.Title("Settings")
 	issues := h.catalog.Validate(h.declaredVars())
 	errs := 0

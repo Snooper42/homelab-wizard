@@ -9,6 +9,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/applist"
 	"github.com/Snooper42/homelab-wizard/internal/catalog"
 	"github.com/Snooper42/homelab-wizard/internal/domain"
+	"github.com/Snooper42/homelab-wizard/internal/health"
 )
 
 // away turns a public app's Reach it away from home on or off (homelab
@@ -40,9 +41,18 @@ func (h *homelab) away(ctx context.Context, args []string) error {
 	if dom == "" || err != nil || env["CLOUDFLARE_API_TOKEN"] == "" {
 		if on {
 			u.OK("%s may be reached away from home: Set up the domain, with the Cloudflare tunnel, puts it there", a.Name())
-		} else {
-			u.OK("%s is home only: it isn't on the internet now, and Set up the domain keeps it off", a.Name())
+			return nil
 		}
+		// The tunnel can't be changed from here, so whether it is off the
+		// internet is asked of the internet, not assumed: a hostname Set up
+		// the domain published before stays until it runs again (#975).
+		if dom != "" {
+			if public, err := domain.Reachable(ctx, publicLookup, host); err == nil && len(public) > 0 {
+				u.Warn("%s is kept home only, but %s still answers from the internet (%s): CLOUDFLARE_API_TOKEN is empty, so the tunnel can't be changed from here. Set up the domain with the token takes it off, or remove its public hostname from the tunnel in Cloudflare", a.Name(), host, strings.Join(public, ", "))
+				return nil
+			}
+		}
+		u.OK("%s is home only: the internet's DNS doesn't reach it, and Set up the domain keeps it off", a.Name())
 		return nil
 	}
 	cf := domain.NewCloudflare(env["CLOUDFLARE_API_TOKEN"])
@@ -90,4 +100,45 @@ func homeOnlyNames(list []*catalog.App) string {
 		names = append(names, a.Name())
 	}
 	return strings.Join(names, ", ")
+}
+
+// publicLookup sees a name as the internet does (domain.PublicLookup);
+// tests stand in for it.
+var publicLookup domain.Lookup = domain.PublicLookup
+
+// homeOnlyChecks is one watchdog check per app the household keeps home
+// only, failing while its name answers from the internet: a tunnel
+// hostname left from before it was kept home only, or one added by hand
+// in Cloudflare. Vaultwarden and Paperless-ngx were found so on Nov 28,
+// 2026, while every screen said "home only" (#975). It asks a public
+// resolver, so it needs no Cloudflare token; an app whose name can't be
+// looked up now (no network) has no check this run, rather than a pass.
+func (h *homelab) homeOnlyChecks(ctx context.Context, dom string) []health.Result {
+	var results []health.Result
+	for _, a := range h.catalog.Apps {
+		if !a.Public() || !h.homeOnly(a) {
+			continue
+		}
+		host := a.Subdomain() + "." + dom
+		public, err := domain.Reachable(ctx, publicLookup, host)
+		if err != nil {
+			continue
+		}
+		r := health.Result{Name: "home only (" + a.Name() + ")", URL: "https://" + host, Status: 200}
+		if len(public) > 0 {
+			r.Err = fmt.Errorf("%s answers from the internet at %s (%s), though %s is kept home only: Set up the domain again (homelab domain setup --apply) takes it off, or remove its public hostname from the tunnel in Cloudflare", host, strings.Join(public, ", "), cloudflareOrNot(public), a.Name())
+		}
+		results = append(results, r)
+	}
+	return results
+}
+
+// cloudflareOrNot says whose addresses those are, when it is Cloudflare's.
+func cloudflareOrNot(addrs []string) string {
+	for _, a := range addrs {
+		if strings.HasPrefix(a, "104.16.") || strings.HasPrefix(a, "104.21.") || strings.HasPrefix(a, "172.67.") || strings.HasPrefix(a, "2606:4700:") {
+			return "Cloudflare's, so through the tunnel"
+		}
+	}
+	return "a public address"
 }

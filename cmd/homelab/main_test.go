@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"github.com/Snooper42/homelab-wizard/internal/backup"
 	"io"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -49,6 +50,10 @@ func TestMain(m *testing.M) {
 	desktopNotify = func(context.Context, string, string) error { return nil }
 	installJobs = func(context.Context, *homelab) error { return nil }
 	releases.API = "http://127.0.0.1:1" // never GitHub
+	// The internet's DNS, never 1.1.1.1: every name is unknown unless
+	// FAKE_PUBLIC_DNS says otherwise (host=ip,ip;host=ip), which commands
+	// this binary starts inherit.
+	publicLookup = fakePublicLookup
 	// The tests' stand-in docker answers every read, never a real engine's
 	// socket (a CI runner has one); the commands they start inherit it.
 	os.Setenv("DOCKER_API", "off")
@@ -1205,4 +1210,15 @@ func envValue(t *testing.T, root, key string) string {
 		}
 	}
 	return ""
+}
+
+// fakePublicLookup answers as the internet's DNS would from FAKE_PUBLIC_DNS
+// (host=ip,ip;host=ip); any other name does not exist.
+func fakePublicLookup(_ context.Context, host string) ([]string, error) {
+	for _, e := range strings.Split(os.Getenv("FAKE_PUBLIC_DNS"), ";") {
+		if name, addrs, ok := strings.Cut(e, "="); ok && strings.EqualFold(name, host) {
+			return strings.Split(addrs, ","), nil
+		}
+	}
+	return nil, &net.DNSError{Err: "no such host", Name: host, IsNotFound: true}
 }
