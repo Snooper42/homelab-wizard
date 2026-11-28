@@ -76,11 +76,17 @@ The one backlog during the stop-the-line reliability reset (`CLAUDE.md`, `lanes.
 - **Also fixed here:** the nightly `real-docker` job was red on main since Nov 27: Paperless-AI's newest image asks for a setup code when it already holds Paperless's token. The run now reads the code from its log and sends it (`x-setup-code`), and the app's note tells the household where it is.
 - **And behind it:** the nightly's phone page script (`app/preview/real.mjs`) still waited for Status' rows right after pairing and for a Backups button in the strip, both gone since #914 and #921 (Status opens on its Overview; Backups is one of Status' pages, in its dropdown on a phone). It now goes as `app/preview/shoot.mjs`'s `toBackups` does; tried against a real companion here.
 
-### PR 12: Duplicati refuses to back up an unplugged drive's empty folder (SRE audit H5, the rest of it)
+### PR 12: Duplicati refuses to back up an unplugged drive's empty folder (SRE audit H5, the rest of it), #985, merged
 
 - **Owner notice:** if the photos' drive (or Jellyfin's, Calibre's, the synced Files') is unplugged when Duplicati's own 1 AM schedule runs, that job now stops with an error and an alert instead of recording every photo as deleted; with the drive back, the next run backs up as before.
 - **Files:** `internal/duplicati/{guard,guard_test,guard_unix_test}.go` (new), `internal/duplicati/create.go` (`NewJob.Guard`), `cmd/homelab/duplicati.go` (`ensureGuards`, on setup and on the nightly's missing-jobs pass), `docs/SRE-Audit-2026-11.md` (H5), `CHANGELOG.md`.
 - **Proven against the real `linuxserver/duplicati` server (Linux):** an empty source made no new version and left the guard's error as the job's last; with a photo, the next run made one. A job written back through the API keeps its real passphrase (the API returns it masked): its next backup opened with the real one and refused the mask.
+
+### PR 13: putting data back reads the whole copy first; dumps reach the disk; a leftover /Volumes folder (SRE audit M1, M2, M8)
+
+- **Owner notice:** a rollback or a database upgrade's way back no longer empties an app's volume before its copy has read whole, so a copy cut short leaves the data as it was; a dump or archive the nightly backup made survives a power cut right after; and on the Mac an empty `/Volumes/<drive>` folder left behind no longer passes for the plugged-in drive.
+- **Files:** `cmd/homelab/{move,db}.go` (`loadScript`, `loadVolume` for both), `cmd/homelab/{loadvolume_unix,db,verifylive}_test.go`, `internal/backup/{backup,backup_test}.go` (`syncClose`, `keep`), `internal/diskspace/{diskspace,diskspace_test}.go`, `docs/SRE-Audit-2026-11.md`, `CHANGELOG.md`.
+- **Proven:** `loadScript` in BusyBox (`alpine:3`) against real Docker: an archive cut short left the volume as it was. M8's device check runs on the macOS CI job's real disk image (`TestExternalDriveForReal`).
 
 ## Open risks
 
