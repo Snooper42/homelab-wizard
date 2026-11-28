@@ -15,8 +15,8 @@ Tracks the master hygiene handoff (Stages 1 to 4) so it can be resumed in a new 
 | 1: finish active task, bookmark | Done (nothing was active) |
 | 2A: disable future attribution, scrub allowed files | Merged: #962 |
 | Owner's ask, Nov 27: bring the repo's picture of the app up to date | Merged in #962: `docs/Where Things Stand.md` (new), README's Beta note, both docs indexes. Version stamps: by design (they track `VERSION`), no change |
-| Owner's ask, Nov 27: the Roadmap matches the releases | PR open: a releases table matching the CHANGELOG, 0.11 and 0.15 marked released with what they left open, progress where Tidy Up and the iPhone app moved past the text |
-| Owner's ask, Nov 27: the CHANGELOG split, now | Ready, held: #963 (Account 1) adds lines to `CHANGELOG.md`, and a split would conflict with it. Once #963 merges: regenerate from main (each entry to the minor of the first tag containing the commit that last changed its line), plus `release.yml`'s notes skipping moved lines and `docs/Releasing.md`'s *Cutting the sections*. That PR publishes one routine release |
+| Owner's ask, Nov 27: the Roadmap matches the releases | Merged: #964 (both roadmaps), table kept current in #970 |
+| Owner's ask, Nov 27: the CHANGELOG split, now | Merged: #970 (`release.yml`'s notes list only entries the release before didn't have; first run, v0.47.5, listed exactly its one new line) and #974 (`CHANGELOG.md` only: 30 sections, 0.17.1 to 0.46). Next: 0.47's section once v0.47.10 is built, `CHANGELOG.md` only (fast CI) |
 | 2B onward, 3, 4 | Waiting: the handoff's text stopped partway through Phase 2A; the rest is needed before starting |
 
 ## Pull requests
@@ -29,6 +29,20 @@ Tracks the master hygiene handoff (Stages 1 to 4) so it can be resumed in a new 
   - **Kept, product functionality:** Finances' payee cleanup of the card merchant *ANTHROPIC CLAUDE* (`web/src/finances/payees.ts`, `Mark.tsx`, `apple-client/...PayeeVectors.json`, `PayeeLogoTests.swift`, `make-payee-logos.mjs`, `app/preview/shoot.mjs`, a `CHANGELOG.md` line). The Ollama log explanations: untouched.
   - **Candidates, not changed:** claude.ai canvas links and "Claude Code" mentions in history prompt files (`handoff.md`, `apple-loop.md`); `docs/Usability.md` line 7 names "Account 3, `.claude/prompts/audit-loop.md`". `owner.md` line 11 is in PR #961 (deferred below).
 
+## Verified on the owner's Mac (their pasted output, Nov 27 and 28)
+
+- **#967, Seerr → Sonarr and Radarr in Connect apps:** both green, "corrected activeProfileId…" (screenshot, Nov 27).
+- **#972, qBittorrent 5.2's 204 sign-in:** Connect apps shows 30 connected, nothing failing (screenshot, Nov 28). The cause was read on the Mac first: `HTTP/1.1 204`, cookie `QBT_SID_8082`.
+- **The Windows PC reaches every app by name with Proton VPN on:** Proton's custom DNS a public server (94.140.14.14), Allow LAN connections on, and the Cloudflare home record (`*.snooper42.com → 10.0.0.16`, already there). Proton on Windows sends custom DNS through its tunnel, so a LAN address (10.0.0.16) as custom DNS can't work there; on the iPhone it does.
+
+## Found, for Core Reliability
+
+- **A stale Windows name rule breaks the domain on a PC that stopped being the host:** the owner's PC kept an NRPT rule `.snooper42.com → 10.0.0.242` (no Comment) from when it ran the homelab; every lookup under the domain went there and timed out, overriding Proton's DNS and even `Resolve-DnsName -Server`. Removing it fixed the PC. Fix to make: give the rule a Comment (*managed by homelab*), and have uninstall and Set up the domain remove one that points elsewhere. Go code, `cmd/homelab/domain.go`'s resolver, Windows.
+- **Vaultwarden and Paperless-ngx were reachable from the internet until Nov 28,** though `domain status` listed them home only: Cloudflare still had their tunnel hostnames (`passwords`, `docs`) from before they were marked home only, and Set up the domain hadn't run since. The owner ran `domain setup --apply` ("took 2 home-only hostname(s) off the internet"); `dig @1.1.1.1` now gives the home record's 10.0.0.16 for both. The gap to fix: nothing notices the drift. `domain status` and `domain setup --dry-run` say *home only, kept off the internet* without asking Cloudflare; `doctor` or the watchdog should compare Cloudflare's tunnel hostnames with the home-only list and alert.
+- **Calibre-Web's "default login still works" was a false alarm, from a missing library setting:** with no Calibre database location set, Calibre-Web sends every page, `/opds` included, to `/login?next=/admin/dbconfig`. `internal/claim`'s check (`/opds` with admin/admin123, following redirects) gets that sign-in page with 200 and calls it the default login working. On the owner's Mac, the fixes were: the admin password set in `app.db` (Calibre-Web's own `cps.py -s` refused a password meeting every rule), then *Location of Calibre database* `/books`. Fix to make: don't follow the redirect, and read a redirect to `/login` as refused, or as *its library isn't set yet*, with that step in the message. Also note that a wrong password makes Calibre-Web answer 429 for a while (already handled).
+- **`app/tray`'s `TestMenu` has a data race** under `-race`, on main too; CI runs without `-race`, so it goes unseen.
+- **`cmd/homelab` passes 10 minutes under `-race`** in a cloud container (it passes without in about a minute): `CLAUDE.md` rule 9's `go test -race ./...` needs a longer `-timeout` there.
+
 ## Deferred Until Account 1 Finishes
 
 - **The nightly run is red (Nov 27):** `TestAHomelabsLife/data_in_each_app`, `paperless-ai: Paperless-AI's setup: 403 Forbidden ... setup_code_required`. Paperless-AI's newest image asks for a setup code (its log, `data/setup-code`) at first start; `test/realdocker/apps_test.go`'s `seedPaperlessAI` and `services/documents/Paperless-AI.md` don't know it. Both paths are read-only for this handoff; Core Reliability's to fix. Nov 25's red was `TestTheCatalogStarts/immich-server` (install exit 1), not looked into.
@@ -39,4 +53,4 @@ Files PR #961 touches (read-only until it merges or closes): `CLAUDE.md`, `.clau
 
 ## Next concrete step
 
-Merge PR 1 on green CI. Then get the rest of the handoff (Phase 2A's remaining steps, 2B onward, Stages 3 and 4) and continue from there.
+The owner's answer on Vaultwarden (above). Then, on their yes, the Windows name-rule fix. The handoff's text after Phase 2A (2B onward, Stages 3 and 4) was never sent; ask for it before starting them.
