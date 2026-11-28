@@ -436,7 +436,12 @@ jobs:
             if [ -n "$section" ]; then
               echo "$section"
             elif [ -n "$prev" ] && [ "$prev" != nightly ] && git rev-parse -q --verify "refs/tags/$prev" >/dev/null; then
-              added="$(git diff "$prev" "$GITHUB_SHA" -- CHANGELOG.md | sed -n 's/^+- /- /p')"
+              # The entries the release before didn't have, in this
+              # CHANGELOG's order: an entry moved under a version's own
+              # heading (docs/Releasing.md, Cutting the sections) is old news,
+              # where a diff would list it as added.
+              git show "$prev:CHANGELOG.md" 2>/dev/null | grep '^- ' > "$RUNNER_TEMP/prev-notes" || true
+              added="$(grep '^- ' CHANGELOG.md | grep -vxF -f "$RUNNER_TEMP/prev-notes" || true)"
               if [ -n "$added" ]; then
                 echo "What's new since $prev:"
                 echo
