@@ -200,7 +200,12 @@ func TestWire(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	// Each link fails at once (no app answers, and it doesn't wait), so the
+	// deadline is only a safety net: under go test -race, docker ps alone
+	// outlived the 2 seconds it had been.
+	defer func(d time.Duration) { wireWait = d }(wireWait)
+	wireWait = time.Millisecond
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	if err := h.wire(ctx, []string{"--apply"}); err == nil || !strings.Contains(err.Error(), "link(s) failed") {
 		t.Fatalf("--apply without the apps' APIs: %v\n%s", err, buf.String())

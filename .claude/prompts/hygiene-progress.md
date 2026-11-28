@@ -2,6 +2,14 @@
 
 Tracks the master hygiene handoff (Stages 1 to 4) so it can be resumed in a new session. Updated after every pull request and every stage. Runs alongside Account 1's Core Reliability Reset (`.claude/prompts/reset-progress.md`, on its open pull request) and never touches its files.
 
+## Morning summary (Nov 28)
+
+- **Merged:** #976 (release process, `reset-releases.sh`, unused pictures removed) and #978 (repo hygiene check, weekly tidy-up, branch script, commit hook).
+- **Account 1 did two of the deferred fixes:** #977 (home-only apps checked against Cloudflare) and #979 (Calibre-Web's false alarm, the tray race).
+- **This PR:** the rest. Windows' leftover name rule comes off on uninstall; races fixed in `internal/sitelogo` and `internal/companion` (the latter was why `TestARemovedPhonesStreamEnds` failed under load); `TestWire` no longer depends on machine speed.
+- **Waiting for the owner:** PR B, releases cut by hand, parked on `claude/master-handoff-hygiene-7on3sb-release`. Merge it when awake, then cut v0.48.0 (Actions › Release › Run workflow › minor) and run `scripts/reset-releases.sh --apply --confirm`.
+- **Still open:** `internal/ports` measures 82.7% in a cloud container against its 83% floor (CI passes it).
+
 ## Paused Work Bookmark
 
 - **Active task when the handoff arrived:** none. This session started fresh with the handoff as its first message (Nov 27, 2026): no task in progress, no open pull request, no branch of its own besides `claude/master-handoff-hygiene-7on3sb` (at `origin/main`, `e04638b`).

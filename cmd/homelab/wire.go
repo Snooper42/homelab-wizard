@@ -6,11 +6,18 @@ import (
 	"fmt"
 	"os"
 	"slices"
+	"time"
 
 	"github.com/Snooper42/homelab-wizard/internal/wiring"
 )
 
 // wire connects the running apps to each other (internal/wiring).
+
+// wireWait is how long Connect apps waits for an app's API to answer, as
+// wiring's own (3 minutes); a test of links to apps that aren't there sets
+// it short, so they fail at once rather than at a deadline.
+var wireWait = 3 * time.Minute
+
 func (h *homelab) wire(ctx context.Context, args []string) error {
 	fs := newFlags("wire")
 	apply := applyFlag(fs)
@@ -39,6 +46,7 @@ func (h *homelab) wire(ctx context.Context, args []string) error {
 	}
 	home, _ := os.UserHomeDir()
 	w := wiring.New(h.catalog, containers, h.envMap(), home)
+	w.Wait = wireWait
 	w.JellyfinAdmin = admin
 	u := h.ui
 	plan := w.Plan()
