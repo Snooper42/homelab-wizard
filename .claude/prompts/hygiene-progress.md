@@ -17,10 +17,11 @@ Tracks the master hygiene handoff (Stages 1 to 4) so it can be resumed in a new 
 | Owner's ask, Nov 27: bring the repo's picture of the app up to date | Merged in #962: `docs/Where Things Stand.md` (new), README's Beta note, both docs indexes. Version stamps: by design (they track `VERSION`), no change |
 | Owner's ask, Nov 27: the Roadmap matches the releases | Merged: #964 (both roadmaps), table kept current in #970 |
 | Owner's ask, Nov 27: the CHANGELOG split, now | Merged: #970 (`release.yml`'s notes list only entries the release before didn't have; first run, v0.47.5, listed exactly its one new line) and #974 (`CHANGELOG.md` only: 30 sections, 0.17.1 to 0.46). Next: 0.47's section once v0.47.10 is built, `CHANGELOG.md` only (fast CI) |
-| 2B: dead weight and docs | PR 2: `docs/images/tidy-look/` (61 images, 6.5 MB) removed; no stale CLI command or broken link found |
-| 2C: release policy and reset tool | PR 2: `docs/Release Process.md`, `scripts/reset-releases.sh`. The CHANGELOG work was already merged (#970, #974) |
-| 2D: branches and automation | PR 3 (next) |
-| 3, 4 | After PR 3 |
+| 2B: dead weight and docs | Merged, #976: `docs/images/tidy-look/` (61 images, 6.5 MB) removed; no stale CLI command or broken link found |
+| 2C: release policy and reset tool | Merged, #976: `docs/Release Process.md`, `scripts/reset-releases.sh`. The CHANGELOG work was already merged (#970, #974) |
+| 2D: branches and automation | PR 3: `scripts/repo-hygiene.sh`, `scripts/cleanup-branches.sh`, `.github/workflows/repo-hygiene.yml` (reporting, not blocking), `.github/release.yml`, weekly grouped `dependabot.yml`, `.githooks/commit-msg`. `delete_branch_on_merge` was already on |
+| 3 | **WAITING FOR ACCOUNT 1** (below) |
+| 4 | At clean baseline after PR 3 (below) |
 
 ## Pull requests
 
@@ -82,6 +83,38 @@ None of the `claude/*` branches had a pull request, and none is merged into main
 | `claude/data-appdata-move` | Nov 26 | Unique: *Move the apps' data to another drive* | Keep: the owner deferred it on Nov 27 |
 | `claude/busy-mendel-whfrtc` | Nov 27 (under 24 hours) | Unique: Tidy Up called *Library*, 18 commits of redesign | Not touched (recent); lane R is paused |
 | `gh-pages`, `iphone-screenshots` | live | Infrastructure: the docs site; the iPhone screenshots `apple-client.yml` fetches | Keep |
+
+## STAGE 3: WAITING FOR ACCOUNT 1
+
+Checked Nov 28, 04:16 UTC: reset-progress.md's phases 1 to 5 are merged, but Account 1 opened **#977** (*A home-only app is checked to be off the internet, not assumed so*): `cmd/homelab/{away,doctor,domain,jobs}.go`, `internal/domain/exposed.go`, `docs/Known Issues.md`, `docs/Security.md`. Account 1 is running, so Branch B: no Go, no `services/`, no existing workflow, no blocking mode.
+
+**Deferred Code Fixes, item 1 (the home-only exposure guard) is Account 1's in #977.** Once it merges, check it covers `domain status`, Set up the domain's plan and `doctor` (red, doctor failing), the zone's wildcard as well as a host's own CNAME, and that a host with its own record is not counted.
+
+**Ready to go once Account 1 has no open pull request** (built and tested in this session; each needs a fresh branch from main):
+
+- **PR A, the other three fixes, each with a regression test that failed first:**
+  - *Calibre-Web with no library* (`internal/claim`): with the default login, don't follow redirects; `Location` with `dbconfig` → `claim.NoLibrary` (*its library isn't set yet*), any other redirect can't tell; `claim.Advice(name, why)` says *set Location of Calibre database to /books*. Tests: `TestCalibreWebWithoutItsLibrary`, `TestAdviceForEachReason`.
+  - *Windows' name rule* (`internal/domain/undo.go`): `nrptRules` (comment and servers per rule) and `homelabs()` (comment `homelab`, or no comment and only private, loopback or link-local servers, no zone); `ResolverPresent` and `RemoveResolver` use them, naming an older homelab's rule by its servers; `uninstall --apply` takes the rule back (plan line *take back …*), reading the domain before the folder goes. Test: `TestRemoveResolverWindows` rewritten on an NRPT table fake, keeping that a rule with someone's comment or a public server stays.
+  - *`app/tray` `TestMenu` race*: `menu.jobs sync.WaitGroup` (Add before each job's goroutine, Done last); the test waits on it with a 10 s limit instead of polling titles.
+  - *`internal/sitelogo` race* (found running `-race` on main): `client()` copies `Public` once; a background dial read it while a test restored it (1 report in 10 runs before, 0 in 20 after).
+  - CHANGELOG lines (Fixed) for the first two and item 1 if #977 hasn't one; `services/network/Cloudflare Tunnel.md`'s *never removes routes* corrected (#977 may already).
+- **PR B, the release cutover:** `internal/tools/nextversion` gets a fourth argument `patch|minor|beta` (`cut`; 12 cases in `TestCut`, `next` unchanged); `release.yml`: `on.push` only `tags: [v*]`; `workflow_dispatch` input `release: [test, patch, minor, beta]`; the version job passes `$KIND`; build jobs build every system unless `test`; `publish` only for a by-hand release from main (today a by-hand run from main publishes too: its `if` is only `github.ref == 'refs/heads/main'`); a beta `--prerelease --latest=false`, and no nightly replacement; `concurrency.cancel-in-progress: false`. Then the docs: `docs/Release Process.md` without its *not in effect* banner, `docs/Releasing.md`, `docs/README.md`'s quick reference, the Roadmap's intro, CONTRIBUTING's *Releases*, and `docs/Decisions.md`'s ADR (a *Since then* line). And `repo-hygiene.yml`: `continue-on-error: false`, `--check-deps --check-generated` in the PR job.
+- **`go test -race -timeout 15m ./...` in a cloud container:** `cmd/homelab` takes more than 15 minutes under `-race` here (it timed out at 900 s; about 1 minute without `-race`), so the full run can't pass in this container whatever the code; CI runs without `-race`. `internal/companion`'s `TestARemovedPhonesStreamEnds` failed once in the full parallel run and passed 30 of 30 alone (`-cpu=1`): not changed without a failure message to go on.
+
+**Release plan (Option B, recommended):** after PR B merges, the owner runs `scripts/reset-releases.sh` (dry run: 476 releases, 113 kept, 363 patch builds to take off, tags kept), then `scripts/reset-releases.sh --apply --confirm`, then **Actions › Release › Run workflow** with `release: minor` for **v0.48.0**.
+
+**Scrubbing old commit trailers (optional, offline, the owner's call; rewrites history and needs a force-push, so not done here):**
+
+```bash
+git clone --mirror https://github.com/Snooper42/homelab-wizard.git hw-mirror && cd hw-mirror
+pip install git-filter-repo
+git filter-repo --message-callback 'import re; return re.sub(rb"(?im)^(Co-Authored-By:.*(claude|anthropic).*|Claude-Session:.*|.*Generated with \[Claude Code\].*)\r?\n?", b"", message)'
+# Every commit hash changes: every open pull request, clone and tag must move to the new history.
+```
+
+## At Clean Baseline — Awaiting Direction
+
+After PR 3: main checked out, nothing uncommitted. The bookmarked work (none from before this handoff; the lanes R, M and W are paused in `lanes.md`, and `CLAUDE.md` freezes the iPhone app, Finances, the Ollama log explanations and new catalog apps) doesn't resume on its own. Next, on the owner's word or once Account 1 has no open pull request: PR A, then PR B.
 
 ## Deferred Until Account 1 Finishes
 

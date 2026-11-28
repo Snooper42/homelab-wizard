@@ -25,6 +25,16 @@ Go 1.26 or newer for the CLI and the desktop app (Go fetches the version in `go.
 | A screen the docs show | `make screenshots` (every picture in `docs/images`, light and dark), and `node app/preview/tour.mjs` and `node app/preview/tour.mjs dark` for the README's walkthrough (`docs/images/tour.gif`, `tour-dark.gif`; needs ffmpeg) |
 | A screen of the Homelab app (iPhone) the docs show | Nothing by hand: after a build of main that changes `apple-client/`, its CI puts the docs' ten iPhone pictures on the `iphone-screenshots` branch. Take them with `git fetch origin iphone-screenshots && git checkout FETCH_HEAD -- docs/images`, and commit |
 
+### Repository hygiene
+
+Once in each checkout, turn on the commit hook, which takes AI-attribution trailers (a co-author or session line naming Claude) out of commit messages:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+`scripts/repo-hygiene.sh` runs what CI's *Repo hygiene* check runs: no AI-attribution line in the repository, the Markdown links and the docs' versions (`--check`, the default), and `go mod tidy` and the generated service notes (`--check-deps`, `--check-generated`; `--fix` rewrites them). `scripts/cleanup-branches.sh` lists the remote branches whose work is already on main (`--apply` deletes those; it never deletes one with unique work, an open pull request, or a change in the last day). `scripts/reset-releases.sh` takes the build releases from before [the release process](<docs/Release Process.md>) off the releases page (a dry run unless `--apply --confirm`).
+
 ## Layout
 
 | Path | What |

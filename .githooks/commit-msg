@@ -1,0 +1,14 @@
+#!/bin/sh
+# Takes AI-attribution lines out of a commit message before the commit is
+# made: a Co-Authored-By trailer naming Claude or anthropic.com, a
+# Claude-Session trailer, and a "Generated with Claude Code" footer (the
+# owner, Nov 28, 2026; CI checks the same in .github/workflows/repo-hygiene.yml).
+# Trailing blank lines left behind go too.
+#
+# Turn it on once in each checkout:  git config core.hooksPath .githooks
+msg="$1"
+tmp="$(mktemp)" || exit 1
+grep -v -i -E '^[[:space:]]*(Co-Authored-By:.*(Claude|anthropic\.com)|Claude-Session:|.*Generated (with|by) \[?Claude Code)' "$msg" |
+	awk '{ lines[NR] = $0 } END { n = NR; while (n > 0 && lines[n] ~ /^[[:space:]]*$/) n--; for (i = 1; i <= n; i++) print lines[i] }' > "$tmp"
+cat "$tmp" > "$msg"
+rm -f "$tmp"
