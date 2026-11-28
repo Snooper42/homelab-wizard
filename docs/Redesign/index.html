@@ -1,0 +1,2816 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Your household's photos, passwords, documents, money, music, and books, on a computer you own.">
+      
+      
+      
+        <link rel="canonical" href="https://snooper42.github.io/homelab-wizard/docs/Redesign/">
+      
+      
+        <link rel="prev" href="../Usability/">
+      
+      
+        <link rel="next" href="../Storage/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/logo.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+    
+    
+      
+        <title>Redesign - Homelab Wizard</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.57a0d79d.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.fb2fffe2.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#redesign" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Homelab Wizard" class="md-header__button md-logo" aria-label="Homelab Wizard" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Homelab Wizard
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Redesign
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue"  aria-label="Dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="blue"  aria-label="Light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Snooper42/homelab-wizard" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Snooper42/homelab-wizard
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Homelab Wizard" class="md-nav__button md-logo" aria-label="Homelab Wizard" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    Homelab Wizard
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Snooper42/homelab-wizard" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Snooper42/homelab-wizard
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Start here
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Start here
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Tour/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    A tour of the app
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Getting%20Started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Everyday%20Tasks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Everyday tasks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing a new build
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Upgrading/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Upgrading
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Commands/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Run it
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Run it
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Runbooks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Runbooks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Automation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Automation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Monitoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Monitoring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Backups/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backups
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Tidy%20Up/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tidy Up
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Private%20Finances/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Private Finances
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Disaster%20Recovery/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Disaster Recovery
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Known%20Issues/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Known Issues
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How it works
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    How it works
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Networking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Networking
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Usability/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Usability
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Redesign
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Redesign
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#why" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-the-owner-decided" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What the owner decided
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-pattern" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The pattern
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The pattern">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#cards" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cards
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-computers-sidebar" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The computer's sidebar
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-top-bar" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The top bar
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-phone" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The phone
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#words" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Words
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#colours-and-type" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Colours and type
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#each-screen" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Each screen
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Each screen">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#finances-on-the-computer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Finances on the computer
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#backups-on-the-computer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Backups on the computer
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#settings-on-the-computer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Settings on the computer
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tidy-up-on-the-computer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tidy Up on the computer
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#on-the-iphone" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        On the iPhone
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-phones-page" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The phone's page
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The phone&#39;s page">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#a-categorys-page-the-apps-as-a-home-screen" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A category's page: the apps as a home screen
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#analytics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Analytics
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#toward-10-an-app-store" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Toward 1.0: an app store
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#logos-for-every-payee" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Logos for every payee
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#new-work-behind-the-pictures" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New work behind the pictures
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#still-to-decide" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Still to decide
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#redrawing-the-mocks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Redrawing the mocks
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Storage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Storage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Docker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docker
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Parity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What each device can do
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../apple-client/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The iPhone and iPad app
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Host/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Host
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Environment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Environment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The apps
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    The apps
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Services/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Services
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Inventory/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Inventory
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Savings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Savings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Service%20Organization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Service Organization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The project
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    The project
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Roadmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Feature%20Roadmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Feature Roadmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Decisions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Decisions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../CHANGELOG/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What's new
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../CONTRIBUTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing (services)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Standards/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Standards
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Releasing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Releasing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../SECURITY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security policy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Homelab%20Manifest/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Homelab Manifest
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Homelab%20Context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Homelab Context
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Maintainer%20Guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Maintainer Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../To-do/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    To-do
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Knowledge base index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#why" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-the-owner-decided" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What the owner decided
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-pattern" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The pattern
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The pattern">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#cards" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cards
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-computers-sidebar" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The computer's sidebar
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-top-bar" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The top bar
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-phone" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The phone
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#words" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Words
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#colours-and-type" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Colours and type
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#each-screen" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Each screen
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Each screen">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#finances-on-the-computer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Finances on the computer
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#backups-on-the-computer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Backups on the computer
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#settings-on-the-computer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Settings on the computer
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tidy-up-on-the-computer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tidy Up on the computer
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#on-the-iphone" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        On the iPhone
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-phones-page" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The phone's page
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The phone&#39;s page">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#a-categorys-page-the-apps-as-a-home-screen" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A category's page: the apps as a home screen
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#analytics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Analytics
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#toward-10-an-app-store" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Toward 1.0: an app store
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#logos-for-every-payee" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Logos for every payee
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#new-work-behind-the-pictures" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New work behind the pictures
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#still-to-decide" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Still to decide
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#redrawing-the-mocks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Redrawing the mocks
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="redesign">Redesign<a class="headerlink" href="#redesign" title="Permanent link">&para;</a></h1>
+<p>What the screens are being rebuilt toward, on the computer and on the iPhone, agreed with the owner on Nov 23, 2026 from the mocks below. <strong>Nothing here is built yet.</strong> The pictures are mocks drawn from <code>app/preview/redesign</code> (<code>make redesign</code>) with the screenshots' example household, not the app. Each screen is rebuilt to match its picture, one screen at a time, and this page says what "matching" means.</p>
+<h2 id="why">Why<a class="headerlink" href="#why" title="Permanent link">&para;</a></h2>
+<p>Finances had fallen well behind <a href="https://moneymatter.app">MoneyMatter's live demo</a>, the owner's reference for how a money app should feel. Compared at the same window size, MoneyMatter's first screen showed five answers (balance trend, latest transactions, cash flow, where the money went, progress to retiring early). Ours showed controls: a stopped-app banner, a title and subtitle, four header buttons, two rows of tabs, the period bar, a row holding only "Arrange the Dashboard", and then two numbers. Transactions showed no transactions on its first screen.</p>
+<p>The reasons, so they don't come back:</p>
+<ul>
+<li><strong>Nobody owned the whole screen.</strong> Each pull request added one feature and was judged by a picture of that one feature, so every feature became another card further down.</li>
+<li><strong>Every card was built differently.</strong> No shared shape, no comparison to the period before, so no figure said whether it was good or bad.</li>
+<li><strong>Browser controls.</strong> Native dropdowns where a designed one belongs.</li>
+<li><strong>Sentences as labels.</strong> "Now, as typed in today" where a product says "Checking now" and explains on hover.</li>
+<li><strong>The homelab leaked into the money,</strong> and the money into the homelab: a stopped app's banner on Finances, and every bank balance in the sidebar of every screen.</li>
+</ul>
+<p>The other screens had the same habits: Status trying to be everything, Backups a list of twelve identical rows, Settings opening on Cloudflare token fields, Tidy Up opening on its own settings.</p>
+<h2 id="what-the-owner-decided">What the owner decided<a class="headerlink" href="#what-the-owner-decided" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Finances: separate, with shared bills.</strong> Each person has their own Finances; a shared bill (the mortgage, power, internet) is typed once with its split, and each person's Finances counts their share. The split varies by bill: 50/50, a fixed amount, or one person pays it all.</li>
+<li><strong>All of it:</strong> transactions, categories, budgets and reports, as well as the paycheck plan.</li>
+<li><strong>SimpleFIN, opt-in for everyone.</strong> Off until that person turns it on with their own SimpleFIN setup code; one person's connection never sees another's banks. Without it: bank files dropped in a watched folder. This changes the "no bank connection" decision (<code>Decisions.md</code>), which is rewritten when SimpleFIN is built.</li>
+<li><strong>As close to MoneyMatter as possible,</strong> inside our own Finances, which keeps the paycheck plan MoneyMatter doesn't have.</li>
+<li><strong>A partner's Finances are "just separate",</strong> not locked from the owner (<code>Private Finances.md</code> stays for whoever wants it, not the default).</li>
+<li><strong>A partner without the iPhone app</strong> (no paid Apple Developer account yet) uses the phone's page, built to the same design as the app.</li>
+<li><strong>Tidy Up stays on the computer.</strong> No Tidy Up on the phone.</li>
+<li><strong>A logo for every payee, from a logo service, opt-in</strong> (the owner's pick, Nov 23): as MoneyMatter does, below.</li>
+</ul>
+<h2 id="the-pattern">The pattern<a class="headerlink" href="#the-pattern" title="Permanent link">&para;</a></h2>
+<p>Every screen is built from the same few parts. A screen that matches its picture but breaks one of these doesn't match.</p>
+<h3 id="cards">Cards<a class="headerlink" href="#cards" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>One shape:</strong> a title (with at most two small icon buttons on its right), one big figure, a small capitalised label under it, and on the right a green or red chip comparing it with the period before ("↗ +$331.86 vs last paycheck"). Cents smaller than dollars.</li>
+<li><strong>A grid,</strong> three columns on the computer, one on the phone. The first screen holds four or five cards, never a row of buttons.</li>
+<li><strong>Rows inside a card</strong> have a logo or icon on the left, a name with a short line under it, and the amount or the action on the right.</li>
+<li><strong>Every card opens what it summarises</strong> (its ↗).</li>
+<li><strong>Nothing empty:</strong> a card's height comes from what it holds; no tall card beside a short one leaving a hole.</li>
+<li><strong>Cards in a row are built the same way</strong> (the owner, Nov 25: <em>"we need to stop doing that"</em>, of three cards on a row each laid out differently): the title row, then <strong>one figure on the same line in every card</strong>, then <strong>one line under it</strong>, then a <strong>footer pinned to the bottom at the same height</strong> (the buttons, the nights, a bar). <strong>No boxes inside a card</strong>, no text that wraps in a figure, no empty band under one card's content where its neighbour has more. If one card has more to say, it goes behind its ↗, not into the card.</li>
+<li><strong>Every card is drawn in every state it can be in</strong> (the owner, Nov 25: <em>"what's gonna happen to that box … once we start it up again"</em>): all well, one problem, several, no data yet. A card never appears, disappears or changes size when the state changes; only what's inside it does. A card <em>about</em> a problem ("Stopped", "Decypharr") isn't a card: the card is the thing the problem belongs to (Apps), and the problem is its state.</li>
+</ul>
+<h3 id="the-computers-sidebar">The computer's sidebar<a class="headerlink" href="#the-computers-sidebar" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Every screen's sidebar is laid out as Finances'</strong> (the owner, Nov 24, changing the pictures' plain menu: "making sure both of these are the same"): the homelab's screens as a strip of icons at the top, then that screen's own menu (Finances: Dashboard, Transactions, Budgets, Bills &amp; paychecks, Calendar, Shared with …, Net worth, Reports; Tidy Up: Overview and each library; Status: Overview and each category; Backups: Last night, Needs you, Restore test, Off-site, Each app; Choose apps: its categories; Setup: its steps), then its lists (accounts; drives), and Settings at the foot, with one line on the computer (free space, power).</li>
+<li><strong>Bank accounts appear only in Finances.</strong></li>
+<li>Finances' sidebar ends with whose Finances these are, and when the banks were last read.</li>
+</ul>
+<h3 id="the-top-bar">The top bar<a class="headerlink" href="#the-top-bar" title="Permanent link">&para;</a></h3>
+<p>One row: the main action (Add transaction, Back up now, Tidy up now) and, in Finances, the period ("‹ Alex's paycheck, Nov 6 – 19 ›" with Paycheck or Month) and three icon buttons (hide amounts, read banks now, customise). No subtitle, no second row of tabs.</p>
+<h3 id="the-phone">The phone<a class="headerlink" href="#the-phone" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Four tabs:</strong> Status, Backups, Finances, Settings. Setup leaves the tab bar (unfinished steps show on Status). A partner's phone has three: Finances, Apps (her homelab apps, one tap each), Settings.</li>
+<li><strong>One problem, one badge.</strong> A stopped app badges Status, not Status and Backups.</li>
+<li><strong>The same cards as the computer,</strong> one column, the same figures and words.</li>
+<li>A detail page has a back button and its own title, and no search bar from the screen before.</li>
+</ul>
+<h3 id="words">Words<a class="headerlink" href="#words" title="Permanent link">&para;</a></h3>
+<p>Short labels, the explanation one tap or hover away; sentence case on both systems ("Open its page", not "Open Its Page"); one unit style (GB and MB, a space before the unit). The plain-words rules still hold: no code names, no jargon without its meaning.</p>
+<h3 id="colours-and-type">Colours and type<a class="headerlink" href="#colours-and-type" title="Permanent link">&para;</a></h3>
+<p>The app's own tokens (<code>--fin-accent</code>, <code>--fin-in</code>, <code>--fin-out</code>, the category hues in <code>hues.ts</code>), the near-black dark theme with cards a step lighter, the logos in <code>web/src/finances/logos.ts</code> and <code>apple-client/Shared/Assets.xcassets/AppLogos</code>. Every picture below has a dark twin (<code>-dark.png</code>).</p>
+<h2 id="each-screen">Each screen<a class="headerlink" href="#each-screen" title="Permanent link">&para;</a></h2>
+<p>Light pictures; the dark ones sit beside them in <code>images/redesign/</code>, and <code>-full</code> ones show the whole page scrolled.</p>
+<h3 id="finances-on-the-computer">Finances on the computer<a class="headerlink" href="#finances-on-the-computer" title="Permanent link">&para;</a></h3>
+<p><picture>
+  <source media="(prefers-color-scheme: dark)" srcset="images/redesign/computer-finances-dark.png">
+  <img alt="Finances' Dashboard redesigned: one top bar, Finances' own sidebar, and a grid of cards led by what's left after this paycheck's bills" src="images/redesign/computer-finances.png">
+</picture></p>
+<p>Leads with <strong>Left after this paycheck's bills</strong>: the figure, a step chart of checking through the period (each bill a dot, the cushion a dashed line), and Checking now, After payday and Bills left under it. Then Latest transactions, Net worth, Cash flow, Where the money went, Coming up, Shared with …, Budgets and Investments (<a href="../images/redesign/computer-finances-full.png">the whole page</a>).</p>
+<p><picture>
+  <source media="(prefers-color-scheme: dark)" srcset="images/redesign/computer-transactions-dark.png">
+  <img alt="Transactions redesigned: one row of filters, what the banks brought in this morning, and the table grouped by day" src="images/redesign/computer-transactions.png">
+</picture></p>
+<p><strong>Transactions</strong> starts with the table: filters in one row of designed dropdowns, a strip for what the banks brought in ("3 new … 1 needs a category", Review), then the rows grouped by day with each day's total, the payee's logo, the category's coloured tag, the account, and what planned bill or paycheck the row paid. Budgets and This month move to their own pages.</p>
+<h3 id="backups-on-the-computer">Backups on the computer<a class="headerlink" href="#backups-on-the-computer" title="Permanent link">&para;</a></h3>
+<p><picture>
+  <source media="(prefers-color-scheme: dark)" srcset="images/redesign/computer-backups-dark.png">
+  <img alt="Backups redesigned: last night with fourteen nights at a glance, what needs you, the restore test, off-site, what isn't in any backup, and getting something back" src="images/redesign/computer-backups.png">
+</picture></p>
+<p>Last night ("11 of 12 copied", what was skipped, fourteen nights as squares, the next run), Needs you (with Start), Restore test, Off-site, <strong>Not in any backup</strong>, <strong>Get something back</strong> (an app, a night, one file or the whole app), and each app compactly, with its last seven nights as dots (<a href="../images/redesign/computer-backups-full.png">the whole page</a>).</p>
+<h3 id="settings-on-the-computer">Settings on the computer<a class="headerlink" href="#settings-on-the-computer" title="Permanent link">&para;</a></h3>
+<p><picture>
+  <source media="(prefers-color-scheme: dark)" srcset="images/redesign/computer-settings-dark.png">
+  <img alt="Settings redesigned: people, phones, automatic care, alerts, bank connections, reaching the apps, and this Mac, with each app's own settings under Advanced" src="images/redesign/computer-settings.png">
+</picture></p>
+<p>Grouped by what a household does: People, Phones, Automatic care, Alerts and quiet hours, <strong>Bank connections</strong> (each person's SimpleFIN, on or off), Reaching the apps (home only, or your own domain), This Mac. Each app's own keys and tokens, today's first screen, move under <strong>Advanced</strong>.</p>
+<h3 id="tidy-up-on-the-computer">Tidy Up on the computer<a class="headerlink" href="#tidy-up-on-the-computer" title="Permanent link">&para;</a></h3>
+<p><picture>
+  <source media="(prefers-color-scheme: dark)" srcset="images/redesign/computer-tidy-dark.png">
+  <img alt="Tidy Up redesigned: what was filed today with Undo, what needs a look, what needs your OK with the next step first, the drive, and the libraries" src="images/redesign/computer-tidy.png">
+</picture></p>
+<p>Leads with what happened and what needs you: Today (each download filed, with Undo; one still downloading), Needs a look (the downloads it couldn't place, each with its button), Needs your OK (the next step first, largest; a step that throws things away never gets the main button), the drive, Your libraries, Recently done, Genres (<a href="../images/redesign/computer-tidy-full.png">the whole page</a>). Watched folders and when to tidy move behind the settings button. A library's own step-by-step clean-up moves into its page.</p>
+<h3 id="on-the-iphone">On the iPhone<a class="headerlink" href="#on-the-iphone" title="Permanent link">&para;</a></h3>
+<p>
+<picture><source media="(prefers-color-scheme: dark)" srcset="images/redesign/phone-finances-dark.png"><img alt="Finances on the iPhone: whose Finances, the period, the same lead card, accounts to swipe, net worth and cash flow" src="images/redesign/phone-finances.png" width="200"></picture>
+<picture><source media="(prefers-color-scheme: dark)" srcset="images/redesign/phone-transactions-dark.png"><img alt="Transactions on the iPhone: search, filter chips, what the banks brought in, and rows by day" src="images/redesign/phone-transactions.png" width="200"></picture>
+<picture><source media="(prefers-color-scheme: dark)" srcset="images/redesign/phone-status-dark.png"><img alt="Status on the iPhone: one app needs you with Start, backups and this Mac, and each category as one row" src="images/redesign/phone-status.png" width="200"></picture>
+</p>
+<p>
+<picture><source media="(prefers-color-scheme: dark)" srcset="images/redesign/phone-partner-dark.png"><img alt="Finances on a partner's phone: her own paycheck, her side of the shared bills with Mark sent, and SimpleFIN offered" src="images/redesign/phone-partner.png" width="200"></picture>
+<picture><source media="(prefers-color-scheme: dark)" srcset="images/redesign/phone-backups-dark.png"><img alt="Backups on the iPhone: last night with fourteen nights, what needs you, the restore test and off-site" src="images/redesign/phone-backups.png" width="200"></picture>
+<picture><source media="(prefers-color-scheme: dark)" srcset="images/redesign/phone-settings-dark.png"><img alt="Settings on the iPhone: household, automatic care, Finances' bank connection, and this iPhone" src="images/redesign/phone-settings.png" width="200"></picture>
+</p>
+
+<ul>
+<li><strong>Finances:</strong> whose Finances at the top left, the period as one pill, the same lead card, the accounts as small cards to swipe (in place of one card the width of the screen), then Net worth and Cash flow side by side, Coming up, Shared with …, Latest transactions, Budgets (<a href="../images/redesign/phone-finances-full.png">whole</a>).</li>
+<li><strong>Transactions:</strong> no account card above them; search, filter chips, the banks' strip, rows by day (<a href="../images/redesign/phone-transactions-full.png">whole</a>).</li>
+<li><strong>Status:</strong> "1 app needs you" with Start, Logs and Its page; Backups and This Mac; each category one row with a few names and "4 running" (<a href="../images/redesign/phone-status-full.png">whole</a>).</li>
+<li><strong>A partner's Finances:</strong> her own paycheck, <strong>Shared with …</strong> from her side (what to send, Mark sent, what she pays herself), and SimpleFIN offered as hers to turn on (<a href="../images/redesign/phone-partner-full.png">whole</a>).</li>
+<li><strong>Backups</strong> and <strong>Settings:</strong> the computer's, in one column (<a href="../images/redesign/phone-backups-full.png">Backups whole</a>, <a href="../images/redesign/phone-settings-full.png">Settings whole</a>).</li>
+</ul>
+<h3 id="the-phones-page">The phone's page<a class="headerlink" href="#the-phones-page" title="Permanent link">&para;</a></h3>
+<p>How far the phone's page (<code>homelab serve</code>) can go toward the Homelab app, drawn on a server's homelab: tailnet only, with streaming apps added as its own (Nov 25, from a tester's server). It's the desktop app's own screens, so every screen above reaches it; these four show what it adds.</p>
+<p>
+<picture><source media="(prefers-color-scheme: dark)" srcset="images/redesign/web-status-dark.png"><img alt="The phone's page on an iPhone, added to the Home Screen: Status with alerts offered, the stopped app, Backups and the server, and each category" src="images/redesign/web-status.png" width="200"></picture>
+<picture><source media="(prefers-color-scheme: dark)" srcset="images/redesign/web-app-dark.png"><img alt="An app's page on the phone's page: Immich with Open, Restart, Logs and Stop, its week, its backups, and its last update with Roll back" src="images/redesign/web-app.png" width="200"></picture>
+<picture><source media="(prefers-color-scheme: dark)" srcset="images/redesign/web-push-dark.png"><img alt="The Lock Screen with two alerts from the phone's page: an app stopped, and last night's backup" src="images/redesign/web-push.png" width="200"></picture>
+</p>
+
+<p><picture><source media="(prefers-color-scheme: dark)" srcset="images/redesign/web-wide-dark.png"><img alt="The phone's page on a tablet: the computer's sidebar with the screens as a strip of icons and Status' own menu, then the stopped app, Backups, the server, and each category" src="images/redesign/web-wide.png"></picture></p>
+<p><picture><source media="(prefers-color-scheme: dark)" srcset="images/redesign/web-wide-ok-dark.png"><img alt="The same page with every app running: Apps says 18 running, all answering, with the last fourteen days as squares (one amber), in the place where Start and Logs were" src="images/redesign/web-wide-ok.png"></picture></p>
+<p><strong>Status' first card is Apps, always.</strong> All well: how many run, <em>All answering · 1 outage in 14 days</em>, and the last fourteen days as squares (amber on a day any app was down), as Backups shows its nights. Something stopped: the figure turns amber (<em>17 of 18 running</em>), the line names it with its logo (<em>Decypharr stopped 20 min ago</em>), and the footer becomes <strong>Start</strong>, <strong>Logs</strong> and ⋯ (two or more: <strong>Start all</strong> and <strong>See them</strong>). Start it and the card goes back without moving.</p>
+<ul>
+<li><strong>Status:</strong> the phone's Status above, with the server in place of This Mac, and <strong>Alerts on this phone</strong> offered once.</li>
+<li><strong>An app's page:</strong> a back button and its own title; Open, Restart, Logs and Stop; its week, its backups (with Get something back), its last update with Roll back.</li>
+<li><strong>Alerts:</strong> Web Push to the page added to the Home Screen (iOS 16.4 and later), from the alerts the computer already keeps, quiet hours kept. No Apple Developer account needed, unlike the app's push.</li>
+<li><strong>On a tablet or a wide window:</strong> the computer's sidebar, the screens as a strip of icons then Status' own menu: <strong>Overview, then each category, your own apps last</strong> (a box, never a +, which read as <em>add an app</em> in the middle of the list). <strong>No <em>Stopped</em> item</strong> (the owner, Nov 25): a category holding a stopped app shows an amber dot by its count, and Status' badge on the strip still counts it; today the phone's page keeps the old list above 700 px (every strip rule is <code>html:not(.companion)</code>, and the screens mount no menu on the phone).</li>
+</ul>
+<h4 id="a-categorys-page-the-apps-as-a-home-screen">A category's page: the apps as a home screen<a class="headerlink" href="#a-categorys-page-the-apps-as-a-home-screen" title="Permanent link">&para;</a></h4>
+<p>The owner, Nov 25: click a category in Status' menu (Network, Media, …) and get its apps as tiles, three across, with CasaOS's dashboard as the reference (its ideas only, never its look, words or pictures; its own screenshot is in its repository's README). After two passes the owner liked this one: <strong>the icon is the hero</strong>, the tiles are light and see-through over a soft backdrop, and the live numbers live in widgets rather than on every tile.</p>
+<p><picture><source media="(prefers-color-scheme: dark)" srcset="images/redesign/web-category-dark.png"><img alt="Media's page on a tablet: On this server, three big-icon tiles (Jellyfin and Jellystat running with Open, jfa-go stopped with Start); Add to Media, every Media app not installed, three across, each with Install" src="images/redesign/web-category.png"></picture></p>
+<p>
+<picture><source media="(prefers-color-scheme: dark)" srcset="images/redesign/web-category-duo-dark.png"><img alt="Media's page on the iPhone Duo unfolded upright: three tiles across, the tab bar at the foot" src="images/redesign/web-category-duo.png" width="300"></picture>
+<picture><source media="(prefers-color-scheme: dark)" srcset="images/redesign/web-category-phone-dark.png"><img alt="Media's page on a phone: two tiles across" src="images/redesign/web-category-phone.png" width="200"></picture>
+</p>
+
+<ul>
+<li><strong>A tile:</strong> the app's logo, big (64 px; 56 on a phone) and centred; its name; one short live line (<em>2 watching now</em>, <em>Up 6 days</em>, <em>Stopped 20 min ago</em>); one small button, <strong>Open</strong> (or <strong>Start</strong>, in the accent, when stopped); a status dot top left (green running, amber stopped); ⋯ top right for the rest (Its page, Restart, Stop, Logs, Remove). Nothing else on the tile.</li>
+<li><strong>No widgets on a category's page</strong> (the owner, Nov 25: the machine's numbers <em>"need[s] its own dedicated analytics screen"</em>): only the title, <em>3 on this server · 2 running · 9 more to add</em>, and the apps. Processor, memory, drives and what each app uses live on <strong>Analytics</strong>, under Overview in Status' menu (its picture is being mocked on another account; lay it out from that, in this pattern).</li>
+<li><strong>On this server</strong>, then <strong>Add to <category></strong>: <strong>every</strong> app of that category not installed (the owner, Nov 25: no <em>More</em> tile, show them all), faded with a dashed edge, each with <strong>Install</strong>, in the catalog's order. A long category simply scrolls; Find an app narrows it.</li>
+<li><strong>The backdrop:</strong> the page's own colour with two soft glows (violet top left, teal bottom right; lighter by day); tiles and widgets are translucent with a blur, a hairline edge, radius 20.</li>
+<li><strong>Every app has a logo</strong> (owner, Nov 25: <em>"add logos everywhere"</em>): the catalog's, or for your own apps the app's own icon (below, and <code>web-loop.md</code> W17); letters only while none is found.</li>
+<li><strong>Three across</strong> on a tablet, a wide window and the iPhone Duo unfolded; <strong>two</strong> on a phone.</li>
+<li><strong>Install</strong> on the phone's page waits for the owner's yes for Choose apps on the phone (W13).</li>
+</ul>
+<p><strong>On the computer too</strong> (the owner, Nov 25: <em>"I want this incorporated into the computer app"</em>): Homelab Wizard's own window gets the same pages, with its full strip of screens and <em>On this Mac</em> (<a href="../images/redesign/computer-category-full-dark.png">the whole page</a>).</p>
+<p><picture><source media="(prefers-color-scheme: dark)" srcset="images/redesign/computer-category-dark.png"><img alt="Media's page in Homelab Wizard on the computer: the strip of Choose apps, Status, Backups, Tidy Up and Finances; Status' menu with Analytics and each category; On this Mac, three tiles; Add to Media, every Media app to install" src="images/redesign/computer-category.png"></picture></p>
+<h4 id="analytics">Analytics<a class="headerlink" href="#analytics" title="Permanent link">&para;</a></h4>
+<p>The owner, Nov 25: the machine's numbers on a screen of their own, under Overview in Status' menu, not on every category (<a href="../images/redesign/web-analytics-full-dark.png">the whole page</a>).</p>
+<p><picture><source media="(prefers-color-scheme: dark)" srcset="images/redesign/web-analytics-dark.png"><img alt="Analytics: Day, Week, Month on top; three cards built one way (processor 7% on average, busiest at the nightly backup; memory 11 of 32 GB, Immich uses the most; drives 3.4 TB free, both healthy); this week's processor and memory as one chart with each night's backups marked; what each app uses, heaviest first" src="images/redesign/web-analytics.png"></picture></p>
+<p><picture><source media="(prefers-color-scheme: dark)" srcset="images/redesign/web-analytics-phone-dark.png"><img alt="Analytics on a phone: Day, Week, Month; memory and processor cards; what each app uses" src="images/redesign/web-analytics-phone.png" width="200"></picture></p>
+<ul>
+<li><strong>Day, Week, Month</strong> on top, changing every part of the page.</li>
+<li><strong>Three cards built one way</strong> (<em>Cards</em>, above): <strong>Processor</strong> (the average, when it was busiest and why: <em>the nightly backup</em>), <strong>Memory</strong> (in use of the total, the app that uses most with its logo), <strong>Drives</strong> (free space, health, <em>full in about 3 years</em> from the growth so far). Each footer is the last 24 hours as a line, scaled to its own range, or the drive's bar.</li>
+<li><strong>This week</strong>, two charts on one timeline: processor in %, memory in GB (never two units on one axis), the scale in a gutter on the right, each night's backup and updates as a dotted line so a spike explains itself.</li>
+<li><strong>What each app uses</strong>, heaviest first, the eight heaviest then <strong>Show all</strong>: its logo, memory now as a bar and a figure, <strong>its week as a line</strong> on a fair scale (half to one and a half times its usual, so a steady app reads flat and a growing one, like Immich as photos arrive, reads as growing), processor, and what it keeps on disk. A row opens the app's page. On a phone: memory and processor only.</li>
+<li><strong>Figures with their units as one piece</strong> (<em>7%</em>, <em>11 GB</em>, <em>3.4 TB</em>), the detail small after them.</li>
+<li>Its data: <code>StatusBoard</code>'s <code>usage</code> and <code>storage</code>, the history the computer keeps (Beszel's where it runs, else the agent's own samples), and the jobs' times. Nothing new leaves the machine.</li>
+</ul>
+<h4 id="toward-10-an-app-store">Toward 1.0: an app store<a class="headerlink" href="#toward-10-an-app-store" title="Permanent link">&para;</a></h4>
+<p>The owner, Nov 25: <em>"little by little once we reach 1.0 I could add more and more apps and this could become sort of like an App Store where anybody on any platform could just download this or access it via the web and then they could configure and add any apps they want."</em> So a category's <em>Add to …</em> half is the store's shelf, and every choice now should let it grow:</p>
+<ul>
+<li><strong>The catalog grows without a release of the app:</strong> apps described as data (<code>compose/</code>, <code>x-homelab</code>), so an added app reaches every homelab with the homelab files' update, and <em>Add to …</em> shows it.</li>
+<li><strong>The same shelf everywhere:</strong> the computer, the phone's page and the iPhone app all show a category's apps to add from the same catalog call; Install where the device may make changes.</li>
+<li><strong>An app's store page:</strong> what it does, its pictures, what it needs (memory, a domain, another app), what it replaces, and Install; reached from a tile's ⋯ or by tapping a faded tile.</li>
+<li><strong>Anyone's app, safely:</strong> your own apps (<code>homelab custom add</code>, the pasted compose file) stay the way to run something the catalog doesn't have; a shared catalog of other people's entries is a later decision (who reviews them, how they're signed), for the owner.</li>
+</ul>
+<h2 id="logos-for-every-payee">Logos for every payee<a class="headerlink" href="#logos-for-every-payee" title="Permanent link">&para;</a></h2>
+<p>Every row in the pictures has its payee's logo; in the app today most imported payees are a letter. How the others do it:</p>
+<ul>
+<li><strong>MoneyMatter</strong> keeps a website for each payee and shows that website's logo from a logo service (<code>img.logo.dev/nike.com</code>, seen in its live demo), with a logo search to pick the brand when a payee has none, and its first letter while nothing has loaded.</li>
+<li><strong>Monarch Money</strong> gets a cleaned merchant name, website and logo with each transaction from the bank-data companies it reads banks through (Plaid, MX and others), with its own merchant list on top.</li>
+<li><strong>SimpleFIN gives none of that:</strong> only the bank's own text ("SQ *BLUE BOTTLE 0423 OAKLAND CA"). The logos are this app's job either way.</li>
+</ul>
+<p>A logo takes three steps, and the app is good only at the last:</p>
+<ol>
+<li><strong>The bank's text to a merchant</strong> ("SQ *BLUE BOTTLE 0423 OAKLAND CA" to Blue Bottle Coffee): <code>cleanPayee</code> and <code>shopOf</code> in <code>payees.ts</code> (and their Swift port), extended to the card processors' prefixes and a merchant list's spellings.</li>
+<li><strong>The merchant to its website</strong> (bluebottlecoffee.com): today 337 brands and a guess of the name plus .com (<code>sites.ts</code>).</li>
+<li><strong>The website to its logo:</strong> today <strong>Get the real logo</strong> (<code>internal/sitelogo</code>), only when clicked.</li>
+</ol>
+<p>What the owner picked:</p>
+<ul>
+<li><strong>Built in, always:</strong> every brand in the simple-icons package (about 3,300, not 337), and a list of common merchants with how banks spell them and their websites. Nothing leaves the computer for these.</li>
+<li><strong>A logo service, off until turned on</strong> (logo.dev, which MoneyMatter uses, or Brandfetch: picked when it's built). When on, a payee the app doesn't know is looked up by name for its website and logo, <strong>once</strong>, and the logo kept in the plan from then on. One plain line before it's on: the service sees which shops you use, never an amount. Its key is kept like the other secrets and asked for by the computer, never by a page or the phone, so the key stays home. Per person, like SimpleFIN: a partner's Finances use it only if she turns it on. The security session reviews the new host.</li>
+<li><strong>Fix one by hand:</strong> a payee's website, and a logo search ("blue bottle", then pick), as MoneyMatter's.</li>
+<li><strong>Nothing found</strong> (a person, an HOA, a loan): the category's icon or a monogram in the category's colour, never a grey letter.</li>
+</ul>
+<p><strong>Done when</strong> the owner's last month of transactions shows a real logo on at least nine rows in ten with the service on, and every other row its category's mark.</p>
+<h2 id="new-work-behind-the-pictures">New work behind the pictures<a class="headerlink" href="#new-work-behind-the-pictures" title="Permanent link">&para;</a></h2>
+<p>Most of the redesign is the same data laid out again. These pieces need something the app doesn't do yet, and each is its own item, not part of "the layout":</p>
+<table>
+<thead>
+<tr>
+<th>Piece</th>
+<th>Where it shows</th>
+<th>What it needs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>SimpleFIN, per person</strong></td>
+<td>Finances (banks read, Review), Settings › Bank connections, a partner's phone</td>
+<td>Claiming a person's setup code, reading accounts, balances and transactions each morning and on Read now, through the import's path (duplicates, rules, planned bills); off by default; the new host reviewed for security; <code>Decisions.md</code> rewritten</td>
+</tr>
+<tr>
+<td><strong>Balances from the bank</strong></td>
+<td>Finances, Update balances</td>
+<td>A balance from SimpleFIN or a bank file's balance line (OFX <code>LEDGERBAL</code>) sets the account; today an import never changes a balance</td>
+</tr>
+<tr>
+<td><strong>The watched folder</strong></td>
+<td>Transactions</td>
+<td>Bank files dropped in a folder, imported and moved aside, for whoever doesn't use SimpleFIN</td>
+</tr>
+<tr>
+<td><strong>Shared bills with splits</strong></td>
+<td>Shared with … (both people's Finances), Coming up</td>
+<td>A bill marked shared with its split (50/50, an amount, or one person), each person's share counted in their own plan, what's been paid; replacing <code>homelab person share</code>, today a terminal command</td>
+</tr>
+<tr>
+<td><strong>Who's Finances, and a partner's own tabs</strong></td>
+<td>Finances' sidebar foot, the phone</td>
+<td>Switching between your Finances and the shared view; a partner's phone with Finances, Apps and Settings only</td>
+</tr>
+<tr>
+<td><strong>Get something back</strong></td>
+<td>Backups</td>
+<td>One file or a whole app from a chosen night, through the backup engine, saved as a copy or put back</td>
+</tr>
+<tr>
+<td><strong>Not in any backup</strong></td>
+<td>Backups</td>
+<td>Working out what's left out (Syncthing's folder today), and adding it</td>
+</tr>
+<tr>
+<td><strong>Each app's last nights</strong></td>
+<td>Backups</td>
+<td>Each night's result per app kept, if it isn't already</td>
+</tr>
+<tr>
+<td><strong>Comparison chips</strong></td>
+<td>Every Finances card</td>
+<td>The same figure for the period before</td>
+</tr>
+<tr>
+<td><strong>Web Push</strong></td>
+<td>The phone's page, Lock Screen</td>
+<td>The computer's own VAPID keys, a subscription per paired phone kept with it, the kept alerts sent to Apple's and the browsers' push services as well as ntfy, quiet hours honoured; the new outgoing hosts reviewed for security</td>
+</tr>
+<tr>
+<td><strong>The phone's page on a wide screen</strong></td>
+<td>The phone's page on a tablet</td>
+<td>The sidebar's strip and each screen's menu for <code>html.companion</code> above 700 px, sized to the screens a phone has; a phone in landscape keeps the tab bar</td>
+</tr>
+<tr>
+<td><strong>Logos for every payee</strong></td>
+<td>Every row with a payee, on both systems</td>
+<td>All of simple-icons and a merchant list built in; the opt-in logo service (above); a payee's website and a logo search; the category's mark when nothing is found</td>
+</tr>
+</tbody>
+</table>
+<h2 id="still-to-decide">Still to decide<a class="headerlink" href="#still-to-decide" title="Permanent link">&para;</a></h2>
+<ul>
+<li>A partner's Finances as drawn: the owner shows it to her.</li>
+<li>Setup off the phone's tab bar, with its unfinished steps on Status.</li>
+<li>The phone's accounts as small cards to swipe, or a list.</li>
+<li>Choose apps, an app's page and Setup aren't mocked: they follow the pattern above.</li>
+</ul>
+<h2 id="redrawing-the-mocks">Redrawing the mocks<a class="headerlink" href="#redrawing-the-mocks" title="Permanent link">&para;</a></h2>
+<p><code>make redesign</code> (or <code>node app/preview/redesign/build.mjs</code>) draws every mock from <code>app/preview/redesign/</code> into <code>docs/images/redesign/</code>, in light and dark, and leaves its pages in <code>app/preview/redesign/html/</code> to open in a browser. The accounts, bills, paychecks and net worth are the screenshots' example household (<code>app/preview/finance.json</code>); November's transactions, a partner's figures and Tidy Up's day are made up to fill the screens. Change a mock there, redraw it, and change this page with it: the pictures are the target the screens are built to.</p>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../Usability/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Usability">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Usability
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../Storage/" class="md-footer__link md-footer__link--next" aria-label="Next: Storage">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Storage
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.top", "navigation.footer", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.a5f9d56c.min.js"></script>
+      
+    
+  </body>
+</html>
