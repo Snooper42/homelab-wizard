@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"github.com/Snooper42/homelab-wizard/internal/backup"
+	"github.com/Snooper42/homelab-wizard/internal/compose"
 	"github.com/Snooper42/homelab-wizard/internal/detect"
 	"github.com/Snooper42/homelab-wizard/internal/diskspace"
 	"github.com/Snooper42/homelab-wizard/internal/docker"
@@ -77,9 +78,10 @@ func (r *liveRun) docker(ctx context.Context, args ...string) (string, error) {
 	return strings.TrimSpace(string(out)), err
 }
 
-// verifyPostgresImage is the database the round trip runs: small, and the
-// major version most of the homelab's databases use.
-const verifyPostgresImage = "postgres:17-alpine"
+// verifyPostgresImage is the database the rounds run: small, and the
+// major version most of the catalog's databases use (Paperless-ngx,
+// Nextcloud, Firefly III, Tandoor, Linkwarden: 18).
+const verifyPostgresImage = "postgres:18-alpine"
 
 func (h *homelab) verifyLive(ctx context.Context, args []string) error {
 	fs := newFlags("verify-live")
@@ -123,7 +125,9 @@ func (h *homelab) verifyLive(ctx context.Context, args []string) error {
 		{"Container start, stop, remove", r.lifecycle, "a throwaway container ran, stopped, and was removed"},
 		{"A folder shared with a container", r.sharedFolder, "a container wrote into the homelab folder as this account"},
 		{"A volume backed up and restored", r.volumeRoundTrip, "every file came back the same"},
-		{"A database dumped and restored", r.postgresRoundTrip, "PostgreSQL's dump loaded cleanly into a new database, rows and all"},
+		{"A database dumped and restored", r.postgresRoundTrip, "PostgreSQL 18's dump loaded cleanly into a new database: every row, its index, and the function it is built on"},
+		{"A database put back after a schema change", r.postgresSchemaRollback, "the dump from before an update's migration put back over it, an app's session open: the database exactly as before"},
+		{"Immich's database dumped and restored", r.immichRoundTrip, "Immich's own database image: its dump loaded cleanly, vectors included"},
 		{"Duplicati: a blind restore", r.duplicatiRoundTrip, "a backup made with Duplicati came back from its files alone, every file the same"},
 	}
 	for _, s := range steps {
@@ -266,43 +270,178 @@ func (r *liveRun) volumeRoundTrip(ctx context.Context) error {
 	return nil
 }
 
-func (r *liveRun) postgresRoundTrip(ctx context.Context) error {
-	if err := r.client.EnsureImage(ctx, verifyPostgresImage); err != nil {
-		return fmt.Errorf("getting %s: %w", verifyPostgresImage, err)
+// pgSeedOf is the test database: 500 photos, and, as Immich's schema has,
+// an index on a function that calls an extension's function. bare names
+// that function as Immich's schema (made for PostgreSQL 14) does,
+// unqualified: pg_dump writes an empty search_path before each database,
+// under which that index can't be built again, and restoreDump relaxes it
+// as Immich's restore instructions do, which the Immich round proves.
+// PostgreSQL 17 and later build every index with a search path of their
+// own (pg_catalog), so a schema made for them names it in full.
+func pgSeedOf(bare bool) string {
+	call := "public.unaccent('public.unaccent', $1)"
+	if bare {
+		call = "unaccent('unaccent', $1)"
+	}
+	return `create extension if not exists unaccent;
+create function f_unaccent(text) returns text language sql immutable parallel safe as 'select ` + strings.ReplaceAll(call, "'", "''") + `';
+create table photos (id int primary key, name text);
+insert into photos select g, 'IMG_' || g from generate_series(1, 500) g;
+create index photos_name on photos (f_unaccent(lower(name)));`
+}
+
+// pgStart starts a throwaway database of image, with a password of its own,
+// and waits until it answers.
+func (r *liveRun) pgStart(ctx context.Context, image, name string) error {
+	if err := r.client.EnsureImage(ctx, image); err != nil {
+		return fmt.Errorf("getting %s: %w", image, err)
 	}
 	b := make([]byte, 12)
 	_, _ = rand.Read(b)
-	pass := hex.EncodeToString(b) // this throwaway database's alone
-	start := func(name string) error {
-		r.containers = append(r.containers, name)
-		_, err := r.docker(ctx, "run", "-d", "--name", name, "--label", "homelab.verify=1",
-			"-e", "POSTGRES_USER=verify", "-e", "POSTGRES_PASSWORD="+pass, "-e", "POSTGRES_DB=household", verifyPostgresImage)
-		if err != nil {
-			return fmt.Errorf("starting %s: %w", verifyPostgresImage, err)
-		}
-		return pgReady(ctx, r.client, name, 2*time.Minute)
+	r.containers = append(r.containers, name)
+	_, err := r.docker(ctx, "run", "-d", "--name", name, "--label", "homelab.verify=1",
+		"-e", "POSTGRES_USER=verify", "-e", "POSTGRES_PASSWORD="+hex.EncodeToString(b), "-e", "POSTGRES_DB=household", image)
+	if err != nil {
+		return fmt.Errorf("starting %s: %w", image, err)
 	}
-	from, to := r.tag+"-db-from", r.tag+"-db-to"
-	if err := start(from); err != nil {
+	return pgReady(ctx, r.client, name, 2*time.Minute)
+}
+
+// psql runs sql in a throwaway database, with no shell between (the SQL has
+// dollar signs and quotes), and returns what it printed, trimmed.
+func (r *liveRun) psql(ctx context.Context, ctr, sql string) (string, error) {
+	out, err := r.client.Exec(ctx, ctr, "psql", "-tA", "-v", "ON_ERROR_STOP=1", "-U", "verify", "-d", "household", "-c", sql)
+	if err != nil {
+		return "", fmt.Errorf("%w %s", err, strings.TrimSpace(string(out)))
+	}
+	return strings.TrimSpace(string(out)), nil
+}
+
+// pgWant runs a query and says what it got when that is not want.
+func (r *liveRun) pgWant(ctx context.Context, ctr, sql, want, what string) error {
+	got, err := r.psql(ctx, ctr, sql)
+	if err != nil || got != want {
+		return fmt.Errorf("after the restore, %s: got %q, want %q (%v)", what, got, want, err)
+	}
+	return nil
+}
+
+// pgSeeded is the seed as the restore must give it back: every row, the
+// index, and the function it is built on working.
+func (r *liveRun) pgSeeded(ctx context.Context, ctr string) error {
+	if err := r.pgWant(ctx, ctr, "select count(*) from photos", "500", "the photos"); err != nil {
 		return err
 	}
-	seed := `psql -q -v ON_ERROR_STOP=1 -U verify -d household -c "create table photos (id int primary key, name text); insert into photos select g, 'IMG_' || g from generate_series(1, 500) g; create index photos_name on photos (lower(name));"`
-	if out, err := r.client.Exec(ctx, from, "sh", "-c", seed); err != nil {
-		return fmt.Errorf("making the test table: %w %s", err, strings.TrimSpace(string(out)))
+	if err := r.pgWant(ctx, ctr, "select count(*) from pg_indexes where indexname = 'photos_name'", "1", "the index on f_unaccent"); err != nil {
+		return err
+	}
+	return r.pgWant(ctx, ctr, "select count(*) from photos where f_unaccent(name) = 'IMG_1'", "1", "the function the index is built on")
+}
+
+func (r *liveRun) postgresRoundTrip(ctx context.Context) error {
+	from, to := r.tag+"-db-from", r.tag+"-db-to"
+	if err := r.pgStart(ctx, verifyPostgresImage, from); err != nil {
+		return err
+	}
+	if _, err := r.psql(ctx, from, pgSeedOf(false)); err != nil {
+		return fmt.Errorf("making the test database: %w", err)
 	}
 	dump, err := backup.PostgresDump(ctx, r.client, from, filepath.Join(r.ws, "databases"), "verify", time.Now())
 	if err != nil {
 		return err
 	}
-	if err := start(to); err != nil {
+	if err := r.pgStart(ctx, verifyPostgresImage, to); err != nil {
 		return err
 	}
 	if out, err := restoreDump(ctx, r.client, to, dump); err != nil {
 		return fmt.Errorf("%w\n%s", err, lastLines(out, 3))
 	}
-	n, err := r.client.Exec(ctx, to, "sh", "-c", `psql -tA -U verify -d household -c "select count(*) from photos"`)
-	if err != nil || strings.TrimSpace(string(n)) != "500" {
-		return fmt.Errorf("after the restore the table holds %q rows, not 500 (%v)", strings.TrimSpace(string(n)), err)
+	return r.pgSeeded(ctx, to)
+}
+
+// postgresSchemaRollback is a rollback of an app whose update moved its
+// schema on (SRE audit H1): the dump taken before the update, a migration
+// (a new column, a new table, a new row), an app's session still open on
+// the database, then the dump loaded back over it by the rollback's own
+// loader. The database must be the one from before the update, exactly.
+func (r *liveRun) postgresSchemaRollback(ctx context.Context) error {
+	ctr := r.tag + "-db-rollback"
+	if err := r.pgStart(ctx, verifyPostgresImage, ctr); err != nil {
+		return err
+	}
+	if _, err := r.psql(ctx, ctr, pgSeedOf(false)); err != nil {
+		return fmt.Errorf("making the test database: %w", err)
+	}
+	dump, err := backup.PostgresDump(ctx, r.client, ctr, filepath.Join(r.ws, "databases"), "verify-before", time.Now())
+	if err != nil {
+		return err
+	}
+	migrate := "alter table photos add column taken timestamptz; create table albums (id int primary key, title text); insert into photos values (501, 'IMG_501', now()); insert into albums values (1, 'Summer')"
+	if _, err := r.psql(ctx, ctr, migrate); err != nil {
+		return fmt.Errorf("the update's migration: %w", err)
+	}
+	// An app that still holds the database open, as one that was not
+	// stopped would: its session would keep DROP DATABASE from going ahead.
+	if _, err := r.docker(ctx, "exec", "-d", ctr, "psql", "-U", "verify", "-d", "household", "-c", "select pg_sleep(600)"); err != nil {
+		return fmt.Errorf("holding a session open: %w", err)
+	}
+	if out, err := restoreDump(ctx, r.client, ctr, dump); err != nil {
+		return fmt.Errorf("%w\n%s", err, lastLines(out, 3))
+	}
+	if err := r.pgSeeded(ctx, ctr); err != nil {
+		return err
+	}
+	if err := r.pgWant(ctx, ctr, "select count(*) from information_schema.columns where table_name = 'photos' and column_name = 'taken'", "0", "the update's new column"); err != nil {
+		return err
+	}
+	return r.pgWant(ctx, ctr, "select coalesce(to_regclass('albums')::text, 'gone')", "gone", "the update's new table")
+}
+
+// immichRoundTrip is the same round on Immich's own database image, with its
+// vector extensions where the image has them: where a restore is most likely
+// to trip. Only where the image is already on this machine (Immich is
+// installed, or the nightly run fetched it): it is large to fetch for a check.
+func (r *liveRun) immichRoundTrip(ctx context.Context) error {
+	a, ok := r.h.catalog.Get("immich-database")
+	if !ok {
+		return skipLive("the catalog has no Immich database")
+	}
+	image, err := compose.Interpolate(a.Image, compose.MapLookup(r.h.envMap()))
+	if err != nil || image == "" {
+		return skipLive("Immich's database image can't be named")
+	}
+	if _, err := r.client.ImageID(ctx, image); err != nil {
+		return skipLive("Immich's database image isn't on this machine (Immich isn't installed)")
+	}
+	from, to := r.tag+"-immich-from", r.tag+"-immich-to"
+	if err := r.pgStart(ctx, image, from); err != nil {
+		return err
+	}
+	if _, err := r.psql(ctx, from, pgSeedOf(true)); err != nil {
+		return fmt.Errorf("making the test database: %w", err)
+	}
+	vectors, _ := r.psql(ctx, from, "select count(*) from pg_available_extensions where name = 'vector'")
+	if vectors == "1" {
+		faces := "create extension if not exists vector; create table faces (id int primary key, embedding vector(3)); insert into faces select g, ('[' || g || ',1,0]')::vector from generate_series(1, 50) g; create index faces_embedding on faces using hnsw (embedding vector_cosine_ops)"
+		if _, err := r.psql(ctx, from, faces); err != nil {
+			return fmt.Errorf("making the test faces: %w", err)
+		}
+	}
+	dump, err := backup.PostgresDump(ctx, r.client, from, filepath.Join(r.ws, "databases"), "verify-immich", time.Now())
+	if err != nil {
+		return err
+	}
+	if err := r.pgStart(ctx, image, to); err != nil {
+		return err
+	}
+	if out, err := restoreDump(ctx, r.client, to, dump); err != nil {
+		return fmt.Errorf("%w\n%s", err, lastLines(out, 3))
+	}
+	if err := r.pgSeeded(ctx, to); err != nil {
+		return err
+	}
+	if vectors == "1" {
+		return r.pgWant(ctx, to, "select count(*) from faces", "50", "the faces' vectors")
 	}
 	return nil
 }

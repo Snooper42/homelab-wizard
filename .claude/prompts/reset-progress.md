@@ -57,11 +57,24 @@ The one backlog during the stop-the-line reliability reset (`CLAUDE.md`, `lanes.
 - **Owner notice:** the top of `owner.md` says exactly what to run on the Mac tonight, what a working Mac prints, and which Known Issues each pasted output promotes to `VERIFIED`.
 - **Files:** `.claude/prompts/owner.md`, `.claude/prompts/reset-progress.md`.
 
-### PR 9: a home-only app is checked to be off the internet (from #975's findings)
+### PR 9: a home-only app is checked to be off the internet (from #975's findings), #977, merged
 
 - **Owner notice:** if Vaultwarden, Paperless-ngx or any app you keep home only answers from the internet again (a tunnel hostname left in Cloudflare), the watchdog alerts, `homelab doctor` fails it, and `homelab domain status` warns, all without a Cloudflare token.
 - **Files:** `internal/domain/{exposed,exposed_test}.go` (new), `cmd/homelab/{away,away_test,jobs,doctor,domain,main_test}.go`, `docs/{Known Issues,Security}.md` (ISSUE-0025), `CHANGELOG.md`.
 - **Changed expectation:** `TestAwayWithoutTheTunnelIsKept` asserted the old claim *it isn't on the internet now*, which was the unverified line behind #975. The new wording is proven by `TestAwayOffWithoutTheTokenAsksTheInternet` against both answers.
+
+### PR 10: Calibre-Web's false alarm, the tray test's race, rule 9's timeout (from #975), #979, merged
+
+- **Owner notice:** `homelab doctor` no longer says Calibre-Web's default login still works when its library isn't set yet; it says to set *Location of Calibre database* instead.
+- **Files:** `internal/claim/{claim,claim_test}.go`, `app/tray/menu_linux_test.go`, `CLAUDE.md` (rule 9: `-timeout 30m`), `CHANGELOG.md`.
+
+### PR 11: the live check every night against real Docker, PostgreSQL 18 and Immich's image
+
+- **Owner notice:** `./homelab doctor --live` now also puts a PostgreSQL 18 database back across an update's schema change with an app's session still open, and dumps and restores Immich's own database image, and the nightly CI runs the whole live check against real Docker, so a break shows up the next morning, not on the Mac.
+- **Files:** `test/realdocker/live_test.go` (new), `.github/workflows/nightly.yml` (the `live` job), `cmd/homelab/{verifylive,verifylive_test,fakebin_test}.go`, `docs/{Known Issues,SRE-Audit-2026-11}.md`, `.claude/prompts/owner.md` (the expected rows).
+- **Proven against real Docker 29.9.3 (Linux):** 8 passed, 0 failed; Immich's round needs `ghcr.io`, which CI reaches and this container does not.
+- **Also fixed here:** the nightly `real-docker` job was red on main since Nov 27: Paperless-AI's newest image asks for a setup code when it already holds Paperless's token. The run now reads the code from its log and sends it (`x-setup-code`), and the app's note tells the household where it is.
+- **And behind it:** the nightly's phone page script (`app/preview/real.mjs`) still waited for Status' rows right after pairing and for a Backups button in the strip, both gone since #914 and #921 (Status opens on its Overview; Backups is one of Status' pages, in its dropdown on a phone). It now goes as `app/preview/shoot.mjs`'s `toBackups` does; tried against a real companion here.
 
 ## Open risks
 

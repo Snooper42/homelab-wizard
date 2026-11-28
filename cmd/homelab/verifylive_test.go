@@ -37,7 +37,7 @@ func TestVerifyLiveChecksAndCleansUp(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("exit %d:\n%s\n%s", code, out, log)
 	}
-	for _, want := range []string{"Docker engine", "Container start, stop, remove", "A folder shared with a container", "A volume backed up and restored", "A database dumped and restored", "Duplicati: a blind restore", "The scheduled agent (launchd)", "Disk space", "0 failed"} {
+	for _, want := range []string{"Docker engine", "Container start, stop, remove", "A folder shared with a container", "A volume backed up and restored", "A database dumped and restored", "A database put back after a schema change", "Immich's database dumped and restored", "Duplicati: a blind restore", "The scheduled agent (launchd)", "Disk space", "0 failed"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("no %q in:\n%s", want, out)
 		}
@@ -76,7 +76,7 @@ func TestVerifyLiveSaysWhatFailed(t *testing.T) {
 	t.Setenv("FAKE_IMAGE_ID", "sha256:here")
 	t.Setenv("FAKE_PSQL_OUT", `psql:<stdin>:9: ERROR:  relation "photos" already exists\n`)
 	out, code := homelabCmd(t, root, "", "verify-live")
-	if code == 0 || !strings.Contains(out, "FAIL") || !strings.Contains(out, `relation "photos" already exists`) || !strings.Contains(out, "1 failed") {
+	if code == 0 || !strings.Contains(out, "FAIL") || !strings.Contains(out, `relation "photos" already exists`) || !strings.Contains(out, "3 failed") {
 		t.Fatalf("exit %d:\n%s", code, out)
 	}
 	if !strings.Contains(readCalls(t, calls), "rm -f -v homelab-verify-") {
