@@ -955,7 +955,19 @@ func seedPaperlessAI(l *lab) error {
 			"ai":        map[string]any{"provider": "custom", "custom": map[string]any{"baseUrl": base, "apiKey": "nightly", "model": "nightly"}},
 		},
 	})
-	resp, err := slow.Post(ai+"/api/setup", "application/json", bytes.NewReader(setup))
+	// The token the homelab gives it makes its setup ask for the code it
+	// writes to its log (Paperless-AI 4.x, since Nov 2026), as the
+	// household reads it there (services/documents/Paperless-AI.md, step 5).
+	code, err := paperlessAISetupCode(l)
+	if err != nil {
+		return err
+	}
+	req, _ := http.NewRequest("POST", ai+"/api/setup", bytes.NewReader(setup))
+	req.Header.Set("Content-Type", "application/json")
+	if code != "" {
+		req.Header.Set("x-setup-code", code)
+	}
+	resp, err := slow.Do(req)
 	if err != nil {
 		return err
 	}
@@ -986,6 +998,27 @@ func seedPaperlessAI(l *lab) error {
 		time.Sleep(5 * time.Second)
 	}
 	return fmt.Errorf("Paperless shows no document titled %q (the last scan: %s)", paperlessAITitle, last)
+}
+
+// paperlessAISetupCode is the setup code Paperless-AI's log gives, as
+// `homelab logs paperless-ai` shows it; "" when its log asks for none (an
+// image from before the code).
+func paperlessAISetupCode(l *lab) (string, error) {
+	code := regexp.MustCompile(`the setup asks for this code: ([A-Z0-9-]{12,})`)
+	var last string
+	for range 12 {
+		out, err := l.try("logs", "paperless-ai", "--tail", "400")
+		if err != nil {
+			last = err.Error()
+		} else if m := code.FindStringSubmatch(out); m != nil {
+			return m[1], nil
+		} else if strings.Contains(out, "Paperless-AI") || strings.Contains(out, "listening") {
+			last = tail(out, 3)
+		}
+		time.Sleep(5 * time.Second)
+	}
+	l.t.Logf("Paperless-AI's log names no setup code (an older image?): %s", last)
+	return "", nil
 }
 
 // paperlessUpload puts a short text document in Paperless and waits for

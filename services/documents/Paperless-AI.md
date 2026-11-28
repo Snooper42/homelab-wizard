@@ -33,7 +33,7 @@ Reads each new document in [Paperless-ngx](<Paperless-ngx.md>) and asks an AI mo
 2. Have a model it can use: Ollama on this machine (Setup shows how on each system, once Paperless-AI is installed, and [Open WebUI](<Open WebUI.md>)'s Setup has the details), then `ollama pull llama3.2` or a larger model if the machine has the memory; or the address and key of an OpenAI-compatible service.
 3. In Paperless, open your account (top right) › **My Profile** and create an **API Auth Token**. Paperless-AI acts as that account and needs to see its tags, correspondents, document types, custom fields, and users, so an administrator's token is simplest.
 4. Put the token in Settings › `PAPERLESS_AI_PAPERLESS_TOKEN`, then `./homelab install paperless-ai`: it installs only once the token is set. Its image is about a 135 MB download (version 4).
-5. Open Paperless-AI. Its setup page has Paperless's address (`http://paperless:8000`) and the token filled in; add your Paperless username, then:
+5. Open Paperless-AI. It first asks for a **setup code**, because the homelab already gave it Paperless's token: the code is in `appdata/paperless-ai/setup-code` in the homelab folder, and in its log (`./homelab logs paperless-ai`, the line *the setup asks for this code*). Its setup page then has Paperless's address (`http://paperless:8000`) and the token filled in; add your Paperless username, then:
    - **AI provider:** Ollama, at `http://host.docker.internal:11434` with the model you pulled; or Custom, with the service's address, key, and model.
    - Your own username and password for Paperless-AI.
 6. Save. The settings take effect at once (no restart), and it works through the documents it has not seen yet on its schedule. **Scan Now** on its dashboard starts at once.

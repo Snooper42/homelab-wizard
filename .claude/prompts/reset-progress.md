@@ -73,6 +73,7 @@ The one backlog during the stop-the-line reliability reset (`CLAUDE.md`, `lanes.
 - **Owner notice:** `./homelab doctor --live` now also puts a PostgreSQL 18 database back across an update's schema change with an app's session still open, and dumps and restores Immich's own database image, and the nightly CI runs the whole live check against real Docker, so a break shows up the next morning, not on the Mac.
 - **Files:** `test/realdocker/live_test.go` (new), `.github/workflows/nightly.yml` (the `live` job), `cmd/homelab/{verifylive,verifylive_test,fakebin_test}.go`, `docs/{Known Issues,SRE-Audit-2026-11}.md`, `.claude/prompts/owner.md` (the expected rows).
 - **Proven against real Docker 29.9.3 (Linux):** 8 passed, 0 failed; Immich's round needs `ghcr.io`, which CI reaches and this container does not.
+- **Also fixed here:** the nightly `real-docker` job was red on main since Nov 27: Paperless-AI's newest image asks for a setup code when it already holds Paperless's token. The run now reads the code from its log and sends it (`x-setup-code`), and the app's note tells the household where it is.
 
 ## Open risks
 
