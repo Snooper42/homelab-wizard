@@ -19,6 +19,10 @@ import (
 // QBT_SID_<its Web UI port> from 5.2 (webapplication.cpp).
 var fakeQbitCookie = "SID"
 
+// fakeQbitSignedIn is how its sign-in answers a right password: 200 "Ok."
+// up to qBittorrent 5.1, 204 with no body from 5.2 (the owner's Mac, Nov 27).
+var fakeQbitSignedIn = http.StatusOK
+
 func fakeQbit(t *testing.T, password string) (url string, prefs map[string]any, saves *int) {
 	t.Helper()
 	prefs = map[string]any{
@@ -39,6 +43,10 @@ func fakeQbit(t *testing.T, password string) (url string, prefs map[string]any, 
 				return
 			}
 			http.SetCookie(w, &http.Cookie{Name: fakeQbitCookie, Value: "s"})
+			if fakeQbitSignedIn != http.StatusOK {
+				w.WriteHeader(fakeQbitSignedIn)
+				return
+			}
 			w.Write([]byte("Ok."))
 			return
 		}
@@ -196,5 +204,27 @@ func TestQbittorrent52SessionCookie(t *testing.T) {
 	state, _, err := w.qbitSharing(context.Background())
 	if err != nil || state != "done" || prefs["max_ratio_enabled"] != true {
 		t.Fatalf("qBittorrent 5.2: %s %v %v", state, err, prefs)
+	}
+}
+
+// qBittorrent 5.2 answers a sign-in with 204 and no body, not 200 "Ok."
+// (the owner's Mac, Nov 27: HTTP/1.1 204, set-cookie QBT_SID_8082). Connect
+// apps took that for "refused the sign-in".
+func TestQbittorrentSignInAnswered204(t *testing.T) {
+	fakeQbitCookie, fakeQbitSignedIn = "QBT_SID_8082", http.StatusNoContent
+	t.Cleanup(func() { fakeQbitCookie, fakeQbitSignedIn = "SID", http.StatusOK })
+	url, prefs, _ := fakeQbit(t, "pw")
+	w := &Wirer{Apps: map[string]App{"qbittorrent": {ID: "qbittorrent", Name: "qBittorrent", URL: url}}, Env: map[string]string{"QBITTORRENT_PASSWORD": "pw"}, Wait: time.Second}
+	state, _, err := w.qbitSharing(context.Background())
+	if err != nil || state != "done" || prefs["max_ratio_enabled"] != true {
+		t.Fatalf("a 204 sign-in: %s %v %v", state, err, prefs)
+	}
+	if _, err := w.qbitSignIn(context.Background()); err != nil {
+		t.Fatalf("sign-in: %v", err)
+	}
+	// A wrong password is still refused: 200 "Fails." and no cookie.
+	w.Env["QBITTORRENT_PASSWORD"] = "wrong"
+	if _, err := w.qbitSignIn(context.Background()); err == nil {
+		t.Fatal("a wrong password signed in")
 	}
 }
