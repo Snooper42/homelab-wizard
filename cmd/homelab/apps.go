@@ -628,6 +628,7 @@ func (h *homelab) apps(_ context.Context, args []string) error {
 	fs := newFlags("apps")
 	category := fs.String("category", "", "")
 	all := fs.Bool("all", false, "")
+	gold := fs.Bool("gold", false, "")
 	if _, err := parseFlags(fs, args); err != nil {
 		return err
 	}
@@ -641,9 +642,11 @@ func (h *homelab) apps(_ context.Context, args []string) error {
 		if *category != "" && g.ID != *category {
 			continue
 		}
-		u.Printf("\n  %s %s\n", u.Bold(g.Label), u.Dim("cat:"+g.ID))
 		var rows [][]string
 		for _, a := range g.Apps {
+			if *gold && a.Tier() != catalog.TierGold {
+				continue
+			}
 			names := a.ID
 			if len(a.Meta.Aliases) > 0 {
 				names += u.Dim(" (" + strings.Join(a.Meta.Aliases, ", ") + ")")
@@ -657,15 +660,26 @@ func (h *homelab) apps(_ context.Context, args []string) error {
 			case a.Optional():
 				kind = u.Dim("optional")
 			}
-			rows = append(rows, []string{names, kind, u.Dim(a.Meta.Description)})
+			tier := u.Dim("experimental")
+			if a.Tier() == catalog.TierGold {
+				tier = u.Yellow("gold")
+			}
+			rows = append(rows, []string{names, kind, tier, u.Dim(a.Meta.Description)})
 			shown++
 		}
-		u.Table(nil, rows)
+		if len(rows) > 0 {
+			u.Printf("\n  %s %s\n", u.Bold(g.Label), u.Dim("cat:"+g.ID))
+			u.Table(nil, rows)
+		}
+	}
+	if shown == 0 && *gold {
+		return fmt.Errorf("no Gold Tier apps in category %q", *category)
 	}
 	if shown == 0 {
 		return fmt.Errorf("no apps in category %q", *category)
 	}
 	u.Printf("\n  %s\n", u.Dim(fmt.Sprintf("%d apps. Baseline apps start with homelab up; add optional ones with homelab install <app>.", shown)))
+	u.Printf("  %s\n", u.Dim("Gold: the household's core apps, kept working first; experimental: installs and runs, with less behind it (homelab apps --gold)."))
 	return nil
 }
 
