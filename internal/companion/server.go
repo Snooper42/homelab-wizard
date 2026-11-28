@@ -594,8 +594,11 @@ func (s *Server) events(w http.ResponseWriter, r *http.Request) {
 	}
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
+	// Read here, while the handler runs: the goroutine can start after it
+	// returns, and the server waits for its handlers, not for that.
+	every := streamRecheck
 	go func() {
-		tick := time.NewTicker(streamRecheck)
+		tick := time.NewTicker(every)
 		defer tick.Stop()
 		for {
 			select {
