@@ -109,9 +109,11 @@ func TestExternalDriveEverywhere(t *testing.T) {
 	}
 }
 
-func TestMountedNeedsADriveOnLinux(t *testing.T) {
-	dir := t.TempDir() // a plain folder: on Linux the same device as its parent
-	if runtime.GOOS == "linux" && Mounted(dir) {
+func TestMountedNeedsADrive(t *testing.T) {
+	// A plain folder, as a /Volumes/<name> left behind is: the same device
+	// as its parent, on Linux and on a Mac.
+	dir := t.TempDir()
+	if runtime.GOOS != "windows" && Mounted(dir) {
 		t.Errorf("%s is a folder, not a mounted drive", dir)
 	}
 	if Mounted(filepath.Join(dir, "missing")) {

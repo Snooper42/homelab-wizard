@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
 	"regexp"
 	"slices"
 	"strconv"
@@ -21,7 +20,6 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/detect"
 	"github.com/Snooper42/homelab-wizard/internal/docker"
 	"github.com/Snooper42/homelab-wizard/internal/envfile"
-	"github.com/Snooper42/homelab-wizard/internal/procattr"
 )
 
 // dbCmd is homelab db upgrade: a PostgreSQL database to a new major
@@ -344,15 +342,8 @@ func (h *homelab) pgBack(ctx context.Context, client *docker.Client, a *catalog.
 		return fmt.Errorf("could not stop %s, so %s was left as it is: %w", a.ID, volume, err)
 	}
 	if archive != "" {
-		f, err := os.Open(archive)
-		if err != nil {
-			return err
-		}
-		defer f.Close()
-		cmd := procattr.Hide(exec.CommandContext(ctx, client.Bin, "run", "--rm", "-i", "-v", volume+":/v", "alpine:3", "sh", "-c", "rm -rf /v/* /v/.[!.]* /v/..?*; tar xzf - -C /v"))
-		cmd.Stdin = f
-		if out, err := cmd.CombinedOutput(); err != nil {
-			return fmt.Errorf("restoring %s: %w\n%s", volume, err, lastLines(out, 3))
+		if err := loadVolume(ctx, client, volume, archive); err != nil {
+			return fmt.Errorf("restoring %s: %w", volume, err)
 		}
 	}
 	if err := h.setEnv(key, strconv.Itoa(version)); err != nil {

@@ -195,14 +195,17 @@ func externalDrive(p, user, systemDrive string) string {
 	return ""
 }
 
-// Mounted reports whether drive (from ExternalDrive) is there. On Linux an
-// empty mount point stays when its drive is unplugged, so it must also be
-// on a different device from its folder.
+// Mounted reports whether drive (from ExternalDrive) is there: its folder,
+// on a different device from the folder it is in. On Linux an empty mount
+// point stays when its drive is unplugged; on a Mac a /Volumes/<name> folder
+// can be left behind (an unclean eject, or something that made the folder
+// while the drive was out), which is no drive either
+// (docs/SRE-Audit-2026-11.md, M8). Windows' drive letters are drives.
 func Mounted(drive string) bool {
 	if _, err := os.Stat(drive); err != nil {
 		return false
 	}
-	if runtime.GOOS != "linux" {
+	if runtime.GOOS == "windows" {
 		return true
 	}
 	return volumeID(drive) != volumeID(filepath.Dir(drive))

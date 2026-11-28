@@ -216,3 +216,34 @@ func TestRestoreSummaryInPlainWords(t *testing.T) {
 		}
 	}
 }
+
+// M1: a finished dump is on the disk under its name, and nothing is left
+// under its temporary one; a file that can't be synced (closed already)
+// fails rather than being kept.
+func TestSyncCloseAndKeep(t *testing.T) {
+	dir := t.TempDir()
+	f, err := os.CreateTemp(dir, ".dump-*.partial")
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, _ = f.WriteString("-- PostgreSQL database cluster dump complete\n")
+	if err := syncClose(f); err != nil {
+		t.Fatal(err)
+	}
+	final := filepath.Join(dir, "app-20261128-010000.sql.gz")
+	if err := keep(f.Name(), final); err != nil {
+		t.Fatal(err)
+	}
+	if data, err := os.ReadFile(final); err != nil || len(data) == 0 {
+		t.Errorf("kept: %q %v", data, err)
+	}
+	if left, _ := filepath.Glob(filepath.Join(dir, ".dump-*")); len(left) != 0 {
+		t.Errorf("left: %v", left)
+	}
+	if err := syncClose(f); err == nil {
+		t.Error("a closed file synced")
+	}
+	if err := keep(filepath.Join(dir, "missing"), final); err == nil {
+		t.Error("a missing file kept")
+	}
+}

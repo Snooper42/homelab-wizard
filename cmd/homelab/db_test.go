@@ -46,7 +46,8 @@ func TestDBUpgradeGoesBackWhenTheRestoreIsEmpty(t *testing.T) {
 	if code == 0 || !strings.Contains(out, "back on PostgreSQL 17") {
 		t.Fatalf("exit %d:\n%s", code, out)
 	}
-	if log := readCalls(t, calls); !strings.Contains(log, "tar xzf - -C /v") {
+	// Put back by loadScript, which reads the archive whole before the volume's files go.
+	if log := readCalls(t, calls); !strings.Contains(log, `tar xzf - -C "$new"`) || !strings.Contains(log, ".homelab-loading") {
 		t.Errorf("the volume was not restored:\n%s", log)
 	}
 	env, _ := envfile.Load(filepath.Join(root, ".env"))
