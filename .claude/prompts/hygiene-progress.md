@@ -17,7 +17,10 @@ Tracks the master hygiene handoff (Stages 1 to 4) so it can be resumed in a new 
 | Owner's ask, Nov 27: bring the repo's picture of the app up to date | Merged in #962: `docs/Where Things Stand.md` (new), README's Beta note, both docs indexes. Version stamps: by design (they track `VERSION`), no change |
 | Owner's ask, Nov 27: the Roadmap matches the releases | Merged: #964 (both roadmaps), table kept current in #970 |
 | Owner's ask, Nov 27: the CHANGELOG split, now | Merged: #970 (`release.yml`'s notes list only entries the release before didn't have; first run, v0.47.5, listed exactly its one new line) and #974 (`CHANGELOG.md` only: 30 sections, 0.17.1 to 0.46). Next: 0.47's section once v0.47.10 is built, `CHANGELOG.md` only (fast CI) |
-| 2B onward, 3, 4 | Waiting: the handoff's text stopped partway through Phase 2A; the rest is needed before starting |
+| 2B: dead weight and docs | PR 2: `docs/images/tidy-look/` (61 images, 6.5 MB) removed; no stale CLI command or broken link found |
+| 2C: release policy and reset tool | PR 2: `docs/Release Process.md`, `scripts/reset-releases.sh`. The CHANGELOG work was already merged (#970, #974) |
+| 2D: branches and automation | PR 3 (next) |
+| 3, 4 | After PR 3 |
 
 ## Pull requests
 
@@ -35,15 +38,55 @@ Tracks the master hygiene handoff (Stages 1 to 4) so it can be resumed in a new 
 - **#972, qBittorrent 5.2's 204 sign-in:** Connect apps shows 30 connected, nothing failing (screenshot, Nov 28). The cause was read on the Mac first: `HTTP/1.1 204`, cookie `QBT_SID_8082`.
 - **The Windows PC reaches every app by name with Proton VPN on:** Proton's custom DNS a public server (94.140.14.14), Allow LAN connections on, and the Cloudflare home record (`*.snooper42.com → 10.0.0.16`, already there). Proton on Windows sends custom DNS through its tunnel, so a LAN address (10.0.0.16) as custom DNS can't work there; on the iPhone it does.
 
-## Found, for Core Reliability
+## Deferred Code Fixes
 
-- **A stale Windows name rule breaks the domain on a PC that stopped being the host:** the owner's PC kept an NRPT rule `.snooper42.com → 10.0.0.242` (no Comment) from when it ran the homelab; every lookup under the domain went there and timed out, overriding Proton's DNS and even `Resolve-DnsName -Server`. Removing it fixed the PC. Fix to make: give the rule a Comment (*managed by homelab*), and have uninstall and Set up the domain remove one that points elsewhere. Go code, `cmd/homelab/domain.go`'s resolver, Windows.
-- **Vaultwarden and Paperless-ngx were reachable from the internet until Nov 28,** though `domain status` listed them home only: Cloudflare still had their tunnel hostnames (`passwords`, `docs`) from before they were marked home only, and Set up the domain hadn't run since. The owner ran `domain setup --apply` ("took 2 home-only hostname(s) off the internet"); `dig @1.1.1.1` now gives the home record's 10.0.0.16 for both. The gap to fix: nothing notices the drift. `domain status` and `domain setup --dry-run` say *home only, kept off the internet* without asking Cloudflare; `doctor` or the watchdog should compare Cloudflare's tunnel hostnames with the home-only list and alert.
-- **Calibre-Web's "default login still works" was a false alarm, from a missing library setting:** with no Calibre database location set, Calibre-Web sends every page, `/opds` included, to `/login?next=/admin/dbconfig`. `internal/claim`'s check (`/opds` with admin/admin123, following redirects) gets that sign-in page with 200 and calls it the default login working. On the owner's Mac, the fixes were: the admin password set in `app.db` (Calibre-Web's own `cps.py -s` refused a password meeting every rule), then *Location of Calibre database* `/books`. Fix to make: don't follow the redirect, and read a redirect to `/login` as refused, or as *its library isn't set yet*, with that step in the message. Also note that a wrong password makes Calibre-Web answer 429 for a while (already handled).
-- **`app/tray`'s `TestMenu` has a data race** under `-race`, on main too; CI runs without `-race`, so it goes unseen.
-- **`cmd/homelab` passes 10 minutes under `-race`** in a cloud container (it passes without in about a minute): `CLAUDE.md` rule 9's `go test -race ./...` needs a longer `-timeout` there.
+Go code, frozen for this handoff while Account 1 runs (Stage 2's forbidden paths); each needs a regression test when it's done (Stage 3, PR A). In priority order:
+
+1. **CRITICAL, the home-only exposure guard. Vaultwarden and Paperless-ngx were reachable from the internet until Nov 28,** though `domain status` listed them home only: Cloudflare still had their tunnel hostnames (`passwords`, `docs`) from before they were marked home only, and Set up the domain hadn't run since. The owner ran `domain setup --apply` ("took 2 home-only hostname(s) off the internet"); `dig @1.1.1.1` now gives the home record's 10.0.0.16 for both. The gap to fix: nothing notices the drift. `domain status` and `domain setup --dry-run` say *home only, kept off the internet* without asking Cloudflare; `doctor` or the watchdog should compare Cloudflare's tunnel hostnames with the home-only list and alert.
+2. **A stale Windows name rule breaks the domain on a PC that stopped being the host:** the owner's PC kept an NRPT rule `.snooper42.com → 10.0.0.242` (no Comment) from when it ran the homelab; every lookup under the domain went there and timed out, overriding Proton's DNS and even `Resolve-DnsName -Server`. Removing it fixed the PC. Fix to make: give the rule a Comment (*managed by homelab*), and have uninstall and Set up the domain remove one that points elsewhere. Go code, `cmd/homelab/domain.go`'s resolver, Windows.
+3. **Calibre-Web's "default login still works" was a false alarm, from a missing library setting:** with no Calibre database location set, Calibre-Web sends every page, `/opds` included, to `/login?next=/admin/dbconfig`. `internal/claim`'s check (`/opds` with admin/admin123, following redirects) gets that sign-in page with 200 and calls it the default login working. On the owner's Mac, the fixes were: the admin password set in `app.db` (Calibre-Web's own `cps.py -s` refused a password meeting every rule), then *Location of Calibre database* `/books`. Fix to make: don't follow the redirect, and read a redirect to `/login` as refused, or as *its library isn't set yet*, with that step in the message. Also note that a wrong password makes Calibre-Web answer 429 for a while (already handled).
+4. **`app/tray`'s `TestMenu` has a data race** under `-race`, on main too; CI runs without `-race`, so it goes unseen.
+5. **`cmd/homelab` passes 10 minutes under `-race`** in a cloud container (it passes without in about a minute): `CLAUDE.md` rule 9's `go test -race ./...` needs a longer `-timeout` there.
+
+## PR 2: dead weight, release policy, reset tool (Phase 2B and 2C)
+
+**Removed, with the proof nothing uses it:** `docs/images/tidy-look/` (61 PNGs, 6.5 MB), the before-and-after pictures of the Tidy Up redesign's rounds (#485, #601, #615, #618, #620, #622). No file in the repository names `tidy-look` (`rg tidy-look --glob '!*.png'`: nothing), no generator writes them (`app/preview/shoot.mjs` writes `docs/images/app-*.png`, `app/preview/redesign/build.mjs` writes `docs/images/redesign/`), and the six pull requests mention the paths as text only, with no image link to them (no `blob/` or `raw/` URL in their descriptions).
+
+**Kept, though a filename search finds no mention:** `docs/images/app-*.png` and `docs/images/redesign/*-full*.png` are what `make screenshots` and `make redesign` write, named in code (`{ name: 'status-add', … }`); `tools/media/requirements/music-3.*.txt` is generated and read by the `Makefile` (`music-$$v.txt`); `config/nextcloud/*/homelab.sh` is mounted by `stacks/nextcloud/compose.yaml`.
+
+**Docs:** `validate` finds no broken link in `README.md`, `CHANGELOG.md`, `CONTRIBUTING.md`, `docs/` or `services/`. Every `./homelab <command>` the README and docs mention is one of the CLI's 70 commands (`cmd/homelab/main.go`'s table); the one other hit, `./homelab builds`, is prose (*builds itself on first run*).
+
+**Drift (read only):** `go mod tidy -diff` changes nothing in either module; `homelab docs --check`: up to date.
+
+### Option A or B: the releases from before the new process
+
+What reads a version number, from the code:
+- The desktop app's updater **doesn't**: it installs the repository's *Latest* release whenever it was built from another commit (`internal/selfupdate`, `Release.Newer`). A lower number would still reach every Mac; no reinstall needed for the app.
+- The iPhone app's version is the newest tag (`apple-client/scripts/app-version.sh`); `internal/tools/nextversion` picks one more than the newest tag; `testdata/upgrades/<tag>` keeps folders by tag; the stable channel takes `vX.Y.0`.
+
+- **Option A (reset low, e.g. v0.1.0 or v0.2.0-beta.1):** needs every v0.17.1 to v0.47.x tag deleted (about 400) so the newest tag is the new low one. That breaks the iPhone app's version, the upgrade tests' tags, and the CHANGELOG's links to the history. Not worth it.
+- **Option B, recommended:** keep every tag, take the 363 patch builds off the releases page (`scripts/reset-releases.sh --apply --confirm`, tags kept), and cut the next version on purpose upward: **v0.48.0** (a monotonic minor, honest about not being 1.0 yet; [Roadmap](<../../docs/Roadmap.md#10-stable>) says what 1.0 needs), then `1.0.0-beta.1` once the reset's flows are `VERIFIED`.
+
+Dry run, Nov 28: 476 releases; Latest v0.47.5; 113 kept; 363 patch builds to take off the page, their tags kept.
+
+## Branches (Nov 28)
+
+None of the `claude/*` branches had a pull request, and none is merged into main (none is an ancestor of main, and merging each changes main), so none was deleted. GitHub already deletes a branch when its pull request merges (`delete_branch_on_merge: true`).
+
+| Branch | Last change | Class | For the owner |
+|---|---|---|---|
+| `claude/iphone-few-words` | Nov 26 | Superseded: both its headlines are in the CHANGELOG | Delete |
+| `claude/iphone-backups-in-status` | Nov 26 | Superseded: all 3 headlines in the CHANGELOG | Delete |
+| `claude/ipad-status` | Nov 26 | Mostly superseded: 4 of 5 headlines in the CHANGELOG | Delete, unless the fifth (*Setup is one of Settings' pages on the iPhone, with a Finish setting up card*) is wanted |
+| `claude/data-phone-tidy` | Nov 26 | Unique: Tidy Up to look at from a phone; what each app replaces, for Subscriptions | Keep or drop (lane W is paused) |
+| `claude/data-appdata-move` | Nov 26 | Unique: *Move the apps' data to another drive* | Keep: the owner deferred it on Nov 27 |
+| `claude/busy-mendel-whfrtc` | Nov 27 (under 24 hours) | Unique: Tidy Up called *Library*, 18 commits of redesign | Not touched (recent); lane R is paused |
+| `gh-pages`, `iphone-screenshots` | live | Infrastructure: the docs site; the iPhone screenshots `apple-client.yml` fetches | Keep |
 
 ## Deferred Until Account 1 Finishes
+
+- **`release.yml`, for the new release process** (`docs/Release Process.md`): drop `branches: [main]` and its `paths:` from `on.push` (keep `tags: ["v*"]`); give `workflow_dispatch` an input `kind` (`patch`, `minor`, `beta`); have the `version` job pass it to `internal/tools/nextversion` (which then needs a `kind` argument: Go, frozen until then); publish as *Latest* only for `patch` and `minor` (`--latest=false --prerelease` for `beta`); the notes stay the version's own CHANGELOG section, else the entries the release before didn't have (#970). Retire the *Replace the nightly release* step, or rename it `beta-nightly` as a pre-release.
+- **`ci.yml`:** the Go tests could run `-race` with `-timeout 15m` once `app/tray`'s race is fixed (Deferred Code Fixes).
 
 - **The nightly run is red (Nov 27):** `TestAHomelabsLife/data_in_each_app`, `paperless-ai: Paperless-AI's setup: 403 Forbidden ... setup_code_required`. Paperless-AI's newest image asks for a setup code (its log, `data/setup-code`) at first start; `test/realdocker/apps_test.go`'s `seedPaperlessAI` and `services/documents/Paperless-AI.md` don't know it. Both paths are read-only for this handoff; Core Reliability's to fix. Nov 25's red was `TestTheCatalogStarts/immich-server` (install exit 1), not looked into.
 

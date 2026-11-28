@@ -6,6 +6,8 @@ version: 0.17.0
 
 `.github/workflows/release.yml` builds the desktop app and the CLI for macOS, Windows, and Linux, signs what it has certificates for, and drafts a GitHub release for each `v*` tag. Every change to main that touches the app or the engine also publishes a numbered release with the builds for every system as the latest build (Releases › Latest).
 
+**Changing (the owner, Nov 28, 2026):** merges are to stop publishing releases, and versions are to be cut by hand instead: [Release process](<Release Process.md>). Until the workflow changes, this page describes how releases work today.
+
 ## Version numbers
 
 Every build of main is a release of its own, numbered one more than the newest release: `0.17.0`, `0.17.1`, … `0.17.10`, then `0.18.0` by itself, and so on (the release workflow's `version` job, `internal/tools/nextversion`; the owner's call of November 2026, after builds numbered by their commits reached 0.16.41). `VERSION` is the floor: a newer minor or major there makes the next build that, and a re-run of a released commit keeps its number. Before 0.17.0, a build's patch was the commits since `VERSION` changed. Versions carry no `-beta` from 0.11.0 on (October 2026, the owner's call); 0.9.0-beta to 0.10.0-beta kept it. Nothing needs committing for a build to get its number. A push that changes none of the built paths (docs alone) builds nothing, so the numbers can skip.
