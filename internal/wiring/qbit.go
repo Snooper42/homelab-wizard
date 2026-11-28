@@ -199,6 +199,22 @@ func QbitSession(c *http.Cookie) bool {
 	return c.Name == "SID" || strings.HasPrefix(c.Name, "QBT_SID_")
 }
 
+// QbitSignedIn is the session cookie a sign-in's answer gives, or nil when
+// it was refused. qBittorrent answers a right password with 200 "Ok." up
+// to 5.1 and 204 with no body from 5.2, each with the cookie; a wrong one
+// with 200 "Fails." and no cookie, so the cookie decides, with any 2xx.
+func QbitSignedIn(resp *http.Response) *http.Cookie {
+	if resp.StatusCode/100 != 2 {
+		return nil
+	}
+	for _, c := range resp.Cookies() {
+		if QbitSession(c) {
+			return c
+		}
+	}
+	return nil
+}
+
 // qbitSignIn signs in to qBittorrent's Web API and returns the session
 // cookie. qBittorrent starts only once Gluetun's tunnel is up, so a refused
 // connection is tried again until w.Wait runs out.
@@ -221,10 +237,8 @@ func (w *Wirer) qbitSignIn(ctx context.Context) (*http.Cookie, error) {
 		if err == nil {
 			io.Copy(io.Discard, io.LimitReader(resp.Body, 512))
 			resp.Body.Close()
-			for _, c := range resp.Cookies() {
-				if QbitSession(c) && resp.StatusCode == http.StatusOK {
-					return c, nil
-				}
+			if c := QbitSignedIn(resp); c != nil {
+				return c, nil
 			}
 			return nil, w.qbitWhyRefused(resp.StatusCode)
 		}

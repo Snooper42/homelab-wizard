@@ -151,13 +151,8 @@ func QbitList(ctx context.Context, client *http.Client, base string, env map[str
 	}
 	body, _ := io.ReadAll(io.LimitReader(resp.Body, 512))
 	resp.Body.Close()
-	var sid *http.Cookie
-	for _, c := range resp.Cookies() {
-		if wiring.QbitSession(c) {
-			sid = c
-		}
-	}
-	if resp.StatusCode != http.StatusOK || sid == nil {
+	sid := wiring.QbitSignedIn(resp)
+	if sid == nil {
 		return nil, fmt.Errorf("qBittorrent's sign-in answered %d %s", resp.StatusCode, strings.TrimSpace(string(body)))
 	}
 	req, err = http.NewRequestWithContext(ctx, http.MethodGet, base+"/api/v2/torrents/info", nil)
