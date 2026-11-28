@@ -8,7 +8,7 @@
 # Turn it on once in each checkout:  git config core.hooksPath .githooks
 msg="$1"
 tmp="$(mktemp)" || exit 1
-grep -v -i -E '^[[:space:]]*(Co-Authored-By:.*(Claude|anthropic\.com)|Claude-Session:|.*Generated (with|by) \[Claude Code\]\()' "$msg" |
+grep -v -i -E '^[[:space:]]*(Co-Authored-By:.*(Claude|anthropic\.com)|Claude-Session:|(🤖[[:space:]]*)?_?Generated (with|by) \[Claude Code\]\()' "$msg" |
 	awk '{ lines[NR] = $0 } END { n = NR; while (n > 0 && lines[n] ~ /^[[:space:]]*$/) n--; for (i = 1; i <= n; i++) print lines[i] }' > "$tmp"
 cat "$tmp" > "$msg"
 rm -f "$tmp"

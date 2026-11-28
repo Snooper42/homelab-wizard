@@ -49,7 +49,7 @@ jobs:
           BODY="$(jq -r '.pull_request.body // ""' "$GITHUB_EVENT_PATH")"
           BASE="$(jq -r '.pull_request.base.sha' "$GITHUB_EVENT_PATH")"
           HEAD="$(jq -r '.pull_request.head.sha' "$GITHUB_EVENT_PATH")"
-          pat='Co-Authored-By:.*(Claude|anthropic)|Claude-Session:|Generated (with|by) \[Claude Code\]\(|claude\.ai/code/session_|🤖 Generated with'
+          pat='^[[:space:]]*(Co-Authored-By:.*(Claude|anthropic)|Claude-Session:|(🤖[[:space:]]*)?_?Generated (with|by) \[Claude Code\]\()|claude\.ai/code/session_'
           {
             printf '%s\n%s\n' "$TITLE" "$BODY"
             git log --format=%B "$BASE..$HEAD"
