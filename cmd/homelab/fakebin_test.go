@@ -188,8 +188,15 @@ func fakeDockerMain(d string, args []string) int {
 				n = "1"
 			}
 			fmt.Println(n)
+		// verify-live's restored database, as a clean restore leaves it.
+		case has("f_unaccent(name) ="), has("indexname = 'photos_name'"):
+			fmt.Println("1")
+		case has("information_schema.columns"):
+			fmt.Println("0")
+		case has("to_regclass"):
+			fmt.Println("gone")
 		case has("from photos"):
-			fmt.Println("500") // verify-live's restored table
+			fmt.Println("500")
 		case has("from pg_tables"):
 			fmt.Println("public|tx|public.tx")
 		case has("(select * from"):

@@ -17,7 +17,7 @@ The reliability reset (Nov 27, 2026) fixed what's below against fakes. Nothing i
       ./homelab upgrade --apply          # a git checkout: the newest files, then up
       ./homelab schedule install --apply # the agent's plist again, with the new PATH
 
-### 2. The live check (5 to 8 minutes; the first run downloads PostgreSQL 17, about 100 MB)
+### 2. The live check (5 to 8 minutes; the first run downloads PostgreSQL 18, about 100 MB)
 
     ./homelab doctor --live             # or: scripts/verify-mac-live.sh (a git checkout)
 
@@ -30,15 +30,17 @@ The reliability reset (Nov 27, 2026) fixed what's below against fakes. Nothing i
       PASS    Container start, stop, remove      a throwaway container ran, stopped, and was removed
       PASS    A folder shared with a container   a container wrote into the homelab folder as this account
       PASS    A volume backed up and restored    every file came back the same
-      PASS    A database dumped and restored     PostgreSQL's dump loaded cleanly into a new database, rows and all
+      PASS    A database dumped and restored     PostgreSQL 18's dump loaded cleanly into a new database: every row, its index, …
+      PASS    A database put back after a schema change   the dump from before an update's migration put back over it, …
+      PASS    Immich's database dumped and restored       Immich's own database image: its dump loaded cleanly, vectors included
       PASS    Duplicati: a blind restore         a backup made with Duplicati came back from its files alone, every file the same
       PASS    The scheduled agent (launchd)      the plist parses, only you can change it, it runs, and its PATH finds /Users/you/.orbstack/bin/docker
       PASS    Connected app: Sonarr              its key is readable and it answers at http://localhost:8989
       PASS    Disk space: homelab folder, …      412 GB free of 994 GB (41%); not filling (or too few days kept yet to tell)
 
-      9 passed, 0 failed, 0 skipped. …
+      11 passed, 0 failed, 0 skipped. …
 
-A `SKIP` is fine when it says why (no Duplicati installed, no connected apps running). **Paste the whole table back**, FAILs included: each FAIL says what it found and what to do.
+A `SKIP` is fine when it says why (no Duplicati installed, no connected apps running, Immich not installed). **Paste the whole table back**, FAILs included: each FAIL says what it found and what to do.
 
 ### 3. Three more readings (2 minutes)
 
