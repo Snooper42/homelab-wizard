@@ -92,6 +92,7 @@ The full app list with addresses and ports is in [Inventory](<Inventory.md>). It
 | [Decisions](<Decisions.md>) | Architecture decisions and why they were made |
 | [Contributing](<Contributing.md>) | Changing the homelab safely; adding a service |
 | [Standards](<Standards.md>) | Engineering standards |
+| [Release process](<Release Process.md>) | How a version is cut and published by hand, once merges stop publishing releases (not in effect yet) |
 | [Releasing](<Releasing.md>) | Building and publishing the desktop app, numbered releases and their patch notes, and self-update |
 | [Homelab Manifest](<Homelab Manifest.md>) | Mission, values, and rules |
 | [Homelab Context](<Homelab Context.md>) | The household, host, and network the project is designed around, and the code layout |
