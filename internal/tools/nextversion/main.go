@@ -5,7 +5,12 @@
 // minor or major (0.19.0, 1.0.0), the next build is that. A build of a
 // commit already released (a re-run) keeps its number.
 //
-//	go run ./internal/tools/nextversion "$(cat VERSION)" "$(git tag -l 'v*')" "$(git tag --points-at HEAD 'v*')"
+// With a fourth argument, the kind of a release cut by hand (docs/Release
+// Process.md), it prints that release's number instead: patch (one more,
+// past .10 too), minor (the next minor at .0), or beta (the next minor's
+// next beta, 0.48.0-beta.1).
+//
+//	go run ./internal/tools/nextversion "$(cat VERSION)" "$(git tag -l 'v*')" "$(git tag --points-at HEAD 'v*')" [patch|minor|beta]
 package main
 
 import (
@@ -81,12 +86,71 @@ func next(floor string, tags, here []string) (string, error) {
 	return n.String(), nil
 }
 
+var beta = regexp.MustCompile(`^v?(\d+\.\d+\.\d+)-beta\.(\d+)$`)
+
+// cut is the version a release cut by hand gets (docs/Release Process.md):
+// kind patch is one more than the newest numbered release (past .10 too),
+// minor the next minor at .0, beta the next minor's next beta (0.48.0-beta.1,
+// then .2). VERSION is the floor, a re-run keeps its number, and a beta tag
+// never moves the numbering.
+func cut(kind, floor string, tags, here []string) (string, error) {
+	for _, t := range here {
+		if v, ok := parse(t); ok {
+			return v.String(), nil
+		}
+		if m := beta.FindStringSubmatch(strings.TrimSpace(t)); m != nil {
+			return m[1] + "-beta." + m[2], nil
+		}
+	}
+	f, ok := parse(floor)
+	if !ok {
+		return "", fmt.Errorf("VERSION is %q, not a version like 0.17.0", strings.TrimSpace(floor))
+	}
+	var latest version
+	found := false
+	for _, t := range tags {
+		if v, ok := parse(t); ok && (!found || latest.less(v)) {
+			latest, found = v, true
+		}
+	}
+	var n version
+	switch kind {
+	case "patch":
+		n = version{latest.major, latest.minor, latest.patch + 1}
+	case "minor", "beta":
+		n = version{latest.major, latest.minor + 1, 0}
+	default:
+		return "", fmt.Errorf("the kind of release is %q: patch, minor or beta", kind)
+	}
+	if !found || n.less(f) {
+		n = f
+	}
+	if kind != "beta" {
+		return n.String(), nil
+	}
+	last := 0
+	for _, t := range tags {
+		if m := beta.FindStringSubmatch(strings.TrimSpace(t)); m != nil && m[1] == n.String() {
+			if b, _ := strconv.Atoi(m[2]); b > last {
+				last = b
+			}
+		}
+	}
+	return n.String() + "-beta." + strconv.Itoa(last+1), nil
+}
+
 func main() {
-	if len(os.Args) != 4 {
-		fmt.Fprintln(os.Stderr, `usage: nextversion "<VERSION>" "<every v* tag>" "<the v* tags on HEAD>"`)
+	var v string
+	var err error
+	switch len(os.Args) {
+	case 4:
+		v, err = next(os.Args[1], strings.Fields(os.Args[2]), strings.Fields(os.Args[3]))
+	case 5:
+		v, err = cut(os.Args[4], os.Args[1], strings.Fields(os.Args[2]), strings.Fields(os.Args[3]))
+	default:
+		fmt.Fprintln(os.Stderr, `usage: nextversion "<VERSION>" "<every v* tag>" "<the v* tags on HEAD>" [patch|minor|beta]`)
 		os.Exit(2)
 	}
-	v, err := next(os.Args[1], strings.Fields(os.Args[2]), strings.Fields(os.Args[3]))
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)

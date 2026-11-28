@@ -1,13 +1,17 @@
 # Builds the desktop app and the CLI for macOS, Windows, and Linux, signs
-# what it has certificates for, and drafts a GitHub release for v* tags.
-# Every change to main that touches the app also builds it for every
-# platform and publishes it as a numbered release, the repository's Latest
-# (v0.9.1-beta, v0.9.2-beta, …: the version job says how the number is
-# made), which the app's Update button installs (internal/selfupdate). A Windows or Linux build that fails leaves the
-# Mac build to be published without it.
-# Run it by hand (workflow_dispatch) to get the files without a release:
-# the Mac build by default, kept 3 days so test builds do not fill the
-# artifact storage (tagged builds are kept 14).
+# what it has certificates for, and publishes a release only when one is
+# cut by hand (docs/Release Process.md, the owner's call of Nov 28, 2026):
+# Actions › Release › Run workflow with "release" patch, minor or beta
+# builds every system from main and publishes the numbered release (the
+# version job says how the number is made). patch and minor become the
+# repository's Latest, which the app's Update button installs
+# (internal/selfupdate); a beta is a pre-release no app takes by itself. A
+# Windows or Linux build that fails leaves the Mac build to be published
+# without it. Merging to main publishes nothing.
+# With "release" test (the default), a by-hand run makes the files without
+# a release: the Mac build by default, kept 3 days so test builds do not
+# fill the artifact storage (tagged builds are kept 14). A v* tag pushed by
+# hand builds a draft release.
 # Secrets and setup: docs/Releasing.md. Without signing secrets the files
 # are built unsigned, and the job summary says so.
 name: Release
@@ -15,20 +19,15 @@ name: Release
 on:
   push:
     tags: ["v*"]
-    branches: [main]
-    paths:
-      - "app/**"
-      - "web/**"
-      - "cmd/**"
-      - "internal/**"
-      - "go.mod"
-      - "go.sum"
-      - "VERSION"
-      - ".github/workflows/release.yml"
   workflow_dispatch:
     inputs:
+      release:
+        description: What to publish (docs/Release Process.md); test publishes nothing
+        type: choice
+        options: [test, patch, minor, beta]
+        default: test
       platforms:
-        description: Which builds to make (a by-hand run keeps them 3 days)
+        description: Which builds a test makes (a release builds every system; a test's are kept 3 days)
         type: choice
         options: [macos, all, windows, linux]
         default: macos
@@ -36,10 +35,10 @@ on:
 permissions:
   contents: read
 
-# A newer push to main replaces a nightly build still running.
+# One release at a time; a second waits for the first rather than cutting it short.
 concurrency:
   group: release-${{ github.ref }}
-  cancel-in-progress: ${{ github.ref == 'refs/heads/main' }}
+  cancel-in-progress: false
 
 env:
   WAILS: github.com/wailsapp/wails/v2/cmd/wails@v2.16.0
@@ -47,13 +46,12 @@ env:
   TRAY: github.com/Snooper42/homelab-wizard/app/tray
 
 jobs:
-  # The build's version: one more than the newest numbered release (0.17.0,
-  # 0.17.1, … 0.17.10), and after .10 the next minor at .0 (0.18.0), so
-  # every build has its own number without a commit to bump it
-  # (internal/tools/nextversion, the owner's call of November 2026). VERSION
-  # is the floor: raising its minor or major makes the next build that
-  # (0.19.0, 1.0.0). A re-run of a released commit keeps its number, and a
-  # v* tag is its own version.
+  # The build's version (internal/tools/nextversion): a release cut by hand
+  # is one more patch, the next minor at .0, or the next minor's next beta
+  # (0.48.1, 0.49.0, 0.49.0-beta.1); a test build is numbered as the next
+  # build would have been. VERSION is the floor: raising its minor or major
+  # makes the next minor that (0.49.0, 1.0.0). A re-run of a released commit
+  # keeps its number, and a v* tag is its own version.
   version:
     runs-on: ubuntu-latest
     outputs:
@@ -66,9 +64,13 @@ jobs:
         with:
           go-version-file: go.mod
       - id: v
+        env:
+          KIND: ${{ inputs.release }}
         run: |
           if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
             v="${GITHUB_REF_NAME#v}"
+          elif [ -n "$KIND" ] && [ "$KIND" != test ]; then
+            v="$(go run ./internal/tools/nextversion "$(cat VERSION)" "$(git tag -l 'v*')" "$(git tag --points-at HEAD 'v*')" "$KIND")"
           else
             v="$(go run ./internal/tools/nextversion "$(cat VERSION)" "$(git tag -l 'v*')" "$(git tag --points-at HEAD 'v*')")"
           fi
@@ -77,7 +79,7 @@ jobs:
 
   macos:
     needs: version
-    if: github.event_name != 'workflow_dispatch' || contains(fromJSON('["all", "macos"]'), inputs.platforms)
+    if: github.event_name != 'workflow_dispatch' || inputs.release != 'test' || contains(fromJSON('["all", "macos"]'), inputs.platforms)
     # macOS 14 images retire on November 2, 2026; their brownouts cancelled
     # the Mac build (and with it the release) of 0.16.0.
     runs-on: macos-15
@@ -203,7 +205,7 @@ jobs:
 
   windows:
     needs: version
-    if: github.event_name == 'push' || contains(fromJSON('["all", "windows"]'), inputs.platforms)
+    if: github.event_name == 'push' || inputs.release != 'test' || contains(fromJSON('["all", "windows"]'), inputs.platforms)
     runs-on: windows-2022
     env:
       WINDOWS_CERT_PFX: ${{ secrets.WINDOWS_CERT_PFX }}
@@ -310,7 +312,7 @@ jobs:
 
   linux:
     needs: version
-    if: github.event_name == 'push' || contains(fromJSON('["all", "linux"]'), inputs.platforms)
+    if: github.event_name == 'push' || inputs.release != 'test' || contains(fromJSON('["all", "linux"]'), inputs.platforms)
     # The oldest supported Ubuntu: the app needs this glibc or newer, so one
     # build serves Ubuntu 22.04 and later, Debian 12, Fedora, Arch, and the
     # AppImage for SteamOS.
@@ -381,7 +383,8 @@ jobs:
   # update brings a build that follows the numbered ones.
   publish:
     needs: [version, macos, windows, linux]
-    if: always() && github.ref == 'refs/heads/main' && needs.macos.result == 'success'
+    # Only a release cut by hand from main publishes (a test build doesn't).
+    if: always() && github.event_name == 'workflow_dispatch' && inputs.release != 'test' && github.ref == 'refs/heads/main' && needs.macos.result == 'success'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -393,6 +396,7 @@ jobs:
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
       VERSION: ${{ needs.version.outputs.version }}
+      KIND: ${{ inputs.release }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -457,9 +461,14 @@ jobs:
           } > notes.md
           # A re-run of the same build replaces it.
           gh release delete "v$VERSION" --yes --cleanup-tag 2>/dev/null || true
-          gh release create "v$VERSION" dist/* --latest --target "$GITHUB_SHA" \
+          # A beta is a pre-release, never the Latest the apps install.
+          latest=--latest
+          [ "$KIND" = beta ] && latest="--latest=false --prerelease"
+          # shellcheck disable=SC2086 # two flags for a beta
+          gh release create "v$VERSION" dist/* $latest --target "$GITHUB_SHA" \
             --title "Homelab Wizard $VERSION" --notes-file notes.md
       - name: Replace the nightly release, for apps from before numbered releases
+        if: inputs.release != 'beta'
         run: |
           gh release delete nightly --yes --cleanup-tag || true
           gh release create nightly dist/* --latest=false --prerelease --target "$GITHUB_SHA" \
