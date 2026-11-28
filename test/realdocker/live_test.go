@@ -3,6 +3,7 @@
 package realdocker
 
 import (
+	"context"
 	"os"
 	"os/exec"
 	"strings"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/Snooper42/homelab-wizard/internal/catalog"
 	"github.com/Snooper42/homelab-wizard/internal/compose"
+	engine "github.com/Snooper42/homelab-wizard/internal/docker"
 )
 
 // TestTheLiveCheckPasses runs the live check the owner runs on their Mac
@@ -26,31 +28,43 @@ func TestTheLiveCheckPasses(t *testing.T) {
 		t.Skip("REALDOCKER_LIVE is not set")
 	}
 	l := newLab(t)
+	// The catalog's images, as a homelab with no .env of its own runs them.
+	c, err := catalog.Load(l.root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	image := func(id string) string {
+		a, ok := c.Get(id)
+		if !ok {
+			t.Fatalf("no %s in the catalog", id)
+		}
+		ref, err := compose.Interpolate(a.Image, compose.MapLookup(map[string]string{}))
+		if err != nil || ref == "" {
+			t.Fatalf("%s's image: %q %v", id, ref, err)
+		}
+		return ref
+	}
+	// Pulled as the homelab pulls, waiting out a registry's rate limit
+	// (ghcr.io's toomanyrequests is shared by every CI runner).
+	client, err := engine.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx := context.Background()
 	// The household's machine has Duplicati's image; this one gets it, so
 	// the blind restore's row runs rather than says it can't.
-	const duplicati = "lscr.io/linuxserver/duplicati:latest"
-	if exec.Command("docker", "image", "inspect", duplicati).Run() != nil {
-		if out, err := exec.Command("docker", "pull", "--quiet", duplicati).CombinedOutput(); err != nil {
-			t.Fatalf("pulling Duplicati's image: %v\n%s", err, out)
-		}
+	if err := client.EnsureImage(ctx, image("duplicati")); err != nil {
+		t.Fatalf("pulling Duplicati's image: %v", err)
 	}
 	// Immich's own database image, for its round: fetched where it can be.
 	// CI always can, and must run it; a machine that can't reach its
 	// registry runs the rest.
-	immich := ""
-	if c, err := catalog.Load(l.root); err == nil {
-		if a, ok := c.Get("immich-database"); ok {
-			immich, _ = compose.Interpolate(a.Image, compose.MapLookup(map[string]string{}))
-		}
-	}
-	if immich == "" {
-		t.Fatal("no Immich database image in the catalog")
-	}
-	if out, err := exec.Command("docker", "pull", "--quiet", immich).CombinedOutput(); err != nil {
+	immich := image("immich-database")
+	if err := client.EnsureImage(ctx, immich); err != nil {
 		if os.Getenv("GITHUB_ACTIONS") == "true" {
-			t.Fatalf("pulling %s: %v\n%s", immich, err, out)
+			t.Fatalf("pulling %s: %v", immich, err)
 		}
-		t.Logf("Immich's database image can't be fetched here, so its round is skipped: %s", strings.TrimSpace(string(out)))
+		t.Logf("Immich's database image can't be fetched here, so its round is skipped: %v", err)
 	}
 	out, err := l.try("doctor", "--live")
 	if err != nil {
