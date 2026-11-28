@@ -231,7 +231,7 @@ Still unproven: opening each on its real machine (step 2 of [Testing](<Testing.m
 
 **Progress (Nov 27, 2026, the reliability reset; `MERGED`, not `VERIFIED`):** a blind restore is checked further. Each PostgreSQL dump `rebuild` loads must load cleanly: psql's output is read, since it exits 0 after errors (SRE audit H1). A cloud drive's placeholders are fetched before Duplicati reads the folder (ISSUE-0003).
 
-**Verify on the Mac (READY FOR MAC VERIFICATION):** Phase 4's live runner rebuilds into a temporary folder from a fresh backup, with nothing of the household's touched. Paste its output back.
+**Verify on the Mac (READY FOR MAC VERIFICATION):** Phase 4's live runner rebuilds into a temporary folder from a fresh backup, with nothing of the household's touched. Paste its output back. **Proven against real Docker (Nov 28, Linux):** the live check's database and Duplicati rows pass against real PostgreSQL 17 and the real `linuxserver/duplicati` image, a dump loaded through the checked loader and a backup restored from its files alone. The nightly workflow's `live` job runs them every night; the Mac run confirms the same with OrbStack.
 
 
 ## ISSUE-0017: Updates from the app not yet run on the Mac

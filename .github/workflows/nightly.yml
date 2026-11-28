@@ -259,6 +259,22 @@ jobs:
           path: ${{ runner.temp }}/realdocker/
           retention-days: 14
 
+  # The live check the owner runs on their Mac (homelab doctor --live,
+  # TestTheLiveCheckPasses): every row that needs no Mac, against real
+  # Docker, and nothing it made left behind.
+  live:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+      - name: The live check, against real Docker
+        env:
+          REALDOCKER_LIVE: "1"
+        run: go test -tags realdocker -v -timeout 25m -run TestTheLiveCheckPasses ./test/realdocker
+
   # The homelab's own proxy image with CrowdSec (TestTheProxyBlocksABannedAddress,
   # ISSUE-0001): the bouncer pulling, and a banned address getting 403. Each
   # night and by hand, on a homelab of its own, beside the life run.
